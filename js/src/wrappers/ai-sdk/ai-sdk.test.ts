@@ -1869,6 +1869,103 @@ describe("ai sdk client unit tests", TEST_SUITE_OPTIONS, () => {
     });
   });
 
+  test("metadata.tools is in ToolFunctionDefinition format", async () => {
+    // Test that metadata.tools follows the ToolFunctionDefinition schema:
+    // { type: "function", function: { name, description?, parameters?, strict? } }
+    expect(await backgroundLogger.drain()).toHaveLength(0);
+
+    const calculatorTool = {
+      description: "Perform a calculation",
+      inputSchema: z.object({
+        operation: z.enum(["add", "subtract"]),
+        a: z.number(),
+        b: z.number(),
+      }),
+      execute: async (args: { operation: string; a: number; b: number }) => {
+        return args.operation === "add"
+          ? String(args.a + args.b)
+          : String(args.a - args.b);
+      },
+    };
+
+    const model = openai(TEST_MODEL);
+
+    const result = await wrappedAI.generateText({
+      model,
+      tools: {
+        calculator: calculatorTool,
+      },
+      toolChoice: "required",
+      prompt: "Use the calculator to add 5 and 3",
+      stopWhen: ai.stepCountIs(1),
+    });
+
+    assert.ok(result);
+
+    const spans = await backgroundLogger.drain();
+
+    // Find the generateText root span
+    const generateTextSpan = spans.find(
+      (s: any) => s.span_attributes?.name === "generateText",
+    ) as any;
+
+    expect(generateTextSpan).toBeDefined();
+    expect(generateTextSpan.metadata.tools).toBeDefined();
+    expect(Array.isArray(generateTextSpan.metadata.tools)).toBe(true);
+    expect(generateTextSpan.metadata.tools).toHaveLength(1);
+
+    // Verify ToolFunctionDefinition format
+    const toolDef = generateTextSpan.metadata.tools[0];
+    expect(toolDef.type).toBe("function");
+    expect(toolDef.function).toBeDefined();
+    expect(toolDef.function.name).toBe("calculator");
+    expect(toolDef.function.description).toBe("Perform a calculation");
+    expect(toolDef.function.parameters).toBeDefined();
+    expect(toolDef.function.parameters.type).toBe("object");
+    expect(toolDef.function.parameters.properties).toBeDefined();
+    expect(toolDef.function.parameters.properties.operation).toBeDefined();
+    expect(toolDef.function.parameters.properties.a).toBeDefined();
+    expect(toolDef.function.parameters.properties.b).toBeDefined();
+
+    // Find doGenerate child span - should also have tools in metadata
+    const doGenerateSpan = spans.find(
+      (s: any) => s.span_attributes?.name === "doGenerate",
+    ) as any;
+
+    expect(doGenerateSpan).toBeDefined();
+    expect(doGenerateSpan.metadata.tools).toBeDefined();
+    expect(Array.isArray(doGenerateSpan.metadata.tools)).toBe(true);
+
+    // Verify child span also has ToolFunctionDefinition format
+    const childToolDef = doGenerateSpan.metadata.tools[0];
+    expect(childToolDef.type).toBe("function");
+    expect(childToolDef.function.name).toBe("calculator");
+  });
+
+  test("metadata.tools is not set when no tools are used", async () => {
+    expect(await backgroundLogger.drain()).toHaveLength(0);
+
+    const model = openai(TEST_MODEL);
+
+    const result = await wrappedAI.generateText({
+      model,
+      prompt: "Say hello",
+      maxOutputTokens: 50,
+    });
+
+    assert.ok(result);
+
+    const spans = await backgroundLogger.drain();
+
+    const generateTextSpan = spans.find(
+      (s: any) => s.span_attributes?.name === "generateText",
+    ) as any;
+
+    expect(generateTextSpan).toBeDefined();
+    // metadata.tools should not be set (not even an empty array)
+    expect(generateTextSpan.metadata.tools).toBeUndefined();
+  });
+
   test("ai sdk string model ID resolution with per-step spans", async () => {
     expect(await backgroundLogger.drain()).toHaveLength(0);
 
