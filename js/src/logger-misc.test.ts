@@ -13,6 +13,7 @@ import {
   initDataset,
   initExperiment,
   initLogger,
+  login,
   NOOP_SPAN,
   permalink,
   BraintrustState,
@@ -26,6 +27,55 @@ configureNode();
 
 const { extractAttachments, deepCopyEvent, validateTags } =
   _exportsForTestingOnly;
+
+const TEST_API_KEY = "___TEST_API_KEY__THIS_IS_NOT_REAL___";
+
+type HttpLogger = ReturnType<BraintrustState["httpLogger"]>;
+
+function getOnFlushError(bgLogger: HttpLogger) {
+  return (
+    bgLogger as unknown as {
+      onFlushError?: (error: unknown) => void;
+    }
+  ).onFlushError;
+}
+
+function mockFlushFailure(state: BraintrustState, error: Error): HttpLogger {
+  vi.spyOn(console, "warn").mockImplementation(() => {});
+  vi.spyOn(state.apiConn(), "get_json").mockResolvedValue({
+    logs3_payload_max_bytes: null,
+  });
+
+  const bgLogger = state.httpLogger();
+  bgLogger.numTries = 1;
+  vi.spyOn(
+    bgLogger as unknown as {
+      submitLogsRequest: () => Promise<void>;
+    },
+    "submitLogsRequest",
+  ).mockRejectedValue(error);
+  return bgLogger;
+}
+
+function mockExperimentRegister(state: BraintrustState) {
+  vi.spyOn(state.appConn(), "post_json").mockImplementation(async (path) => {
+    if (path === "api/experiment/register") {
+      return {
+        project: {
+          id: "test-project-id",
+          name: "test-project",
+        },
+        experiment: {
+          id: "test-experiment-id",
+          name: "test-experiment",
+          created: "2024-01-01T00:00:00.000Z",
+        },
+      };
+    }
+
+    throw new Error(`Unexpected app connection request: ${path}`);
+  });
+}
 
 describe("validateTags", () => {
   test("accepts valid tags", () => {
@@ -561,4 +611,87 @@ test("disable logging", async () => {
   await bgLogger.flush();
   expect(submitLogsRequestSpy).toHaveBeenCalledTimes(1);
   expect(submittedItems.length).toEqual(0);
+});
+
+describe("onFlushError wiring", () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    _exportsForTestingOnly.simulateLogoutForTests();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    _exportsForTestingOnly.simulateLogoutForTests();
+  });
+
+  test("initLogger updates an existing background logger callback", async () => {
+    const state = new BraintrustState({});
+    await state.login({
+      apiKey: TEST_API_KEY,
+      appUrl: "https://braintrust.dev",
+    });
+    const flushError = new Error("initLogger flush failure");
+    const onFlushError = vi.fn();
+
+    mockFlushFailure(state, flushError);
+
+    const logger = initLogger({
+      projectName: "test-project",
+      projectId: "test-project-id",
+      onFlushError,
+      state,
+    });
+
+    const span = logger.startSpan({ name: "test-span" });
+    span.end();
+    await logger.flush();
+
+    expect(onFlushError).toHaveBeenCalledTimes(1);
+    expect(onFlushError).toHaveBeenCalledWith(flushError);
+  });
+
+  test("login fast path updates an existing background logger callback", async () => {
+    const state = await _exportsForTestingOnly.simulateLoginForTests();
+    const onFlushError = vi.fn();
+    const bgLogger = state.httpLogger();
+
+    await login({
+      apiKey: state.loginToken!,
+      appUrl: state.appUrl!,
+      orgName: state.orgName!,
+      onFlushError,
+    });
+
+    expect(getOnFlushError(bgLogger)).toBe(onFlushError);
+    expect(getOnFlushError(state.httpLogger())).toBe(onFlushError);
+  });
+
+  test("initExperiment updates an existing background logger callback", async () => {
+    const state = new BraintrustState({});
+    await state.login({
+      apiKey: TEST_API_KEY,
+      appUrl: "https://braintrust.dev",
+    });
+    const flushError = new Error("initExperiment flush failure");
+    const onFlushError = vi.fn();
+
+    mockFlushFailure(state, flushError);
+    mockExperimentRegister(state);
+
+    const experiment = initExperiment({
+      project: "test-project",
+      projectId: "test-project-id",
+      experiment: "test-experiment",
+      onFlushError,
+      repoInfo: {},
+      state,
+    });
+
+    const span = experiment.startSpan({ name: "test-span" });
+    span.end();
+    await experiment.flush();
+
+    expect(onFlushError).toHaveBeenCalledTimes(1);
+    expect(onFlushError).toHaveBeenCalledWith(flushError);
+  });
 });
