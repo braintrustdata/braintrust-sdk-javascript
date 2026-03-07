@@ -990,6 +990,89 @@ describe("framework2 metadata support", () => {
 
       expect(funcDef.metadata).toBeUndefined();
     });
+
+    test("toFunctionDefinition includes environments for single environment", async () => {
+      const project = projects.create({ name: "test-project" });
+
+      const codePrompt = new CodePrompt(
+        project,
+        {
+          prompt: { type: "completion", content: "Hello {{name}}" },
+          options: { model: "gpt-4" },
+        },
+        [],
+        {
+          name: "test-prompt",
+          slug: "test-prompt",
+          environments: ["production"],
+        },
+      );
+
+      const mockProjectMap = {
+        resolve: vi.fn().mockResolvedValue("project-123"),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any;
+
+      const funcDef = await codePrompt.toFunctionDefinition(mockProjectMap);
+
+      expect(funcDef.environments).toEqual([{ slug: "production" }]);
+    });
+
+    test("toFunctionDefinition includes environments for multiple environments", async () => {
+      const project = projects.create({ name: "test-project" });
+
+      const codePrompt = new CodePrompt(
+        project,
+        {
+          prompt: { type: "completion", content: "Hello {{name}}" },
+          options: { model: "gpt-4" },
+        },
+        [],
+        {
+          name: "test-prompt",
+          slug: "test-prompt",
+          environments: ["staging", "production"],
+        },
+      );
+
+      const mockProjectMap = {
+        resolve: vi.fn().mockResolvedValue("project-123"),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any;
+
+      const funcDef = await codePrompt.toFunctionDefinition(mockProjectMap);
+
+      expect(funcDef.environments).toEqual([
+        { slug: "staging" },
+        { slug: "production" },
+      ]);
+    });
+
+    test("toFunctionDefinition excludes environments when undefined", async () => {
+      const project = projects.create({ name: "test-project" });
+
+      const codePrompt = new CodePrompt(
+        project,
+        {
+          prompt: { type: "completion", content: "Hello {{name}}" },
+          options: { model: "gpt-4" },
+        },
+        [],
+        {
+          name: "test-prompt",
+          slug: "test-prompt",
+        },
+      );
+
+      const mockProjectMap = {
+        resolve: vi.fn().mockResolvedValue("project-123"),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any;
+
+      const funcDef = await codePrompt.toFunctionDefinition(mockProjectMap);
+
+      expect(funcDef.environments).toBeUndefined();
+    });
   });
 
   describe("CodeParameters defaults", () => {

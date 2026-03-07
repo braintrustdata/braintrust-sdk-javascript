@@ -25,6 +25,7 @@ export const promptDefinitionSchema = promptContentsSchema.and(
     model: z.string(),
     params: modelParamsSchema.optional(),
     templateFormat: z.enum(["mustache", "nunjucks", "none"]).optional(),
+    environments: z.array(z.string()).optional(),
   }),
 );
 

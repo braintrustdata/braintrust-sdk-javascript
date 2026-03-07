@@ -425,6 +425,7 @@ export class CodePrompt {
   public readonly functionType?: FunctionType;
   public readonly toolFunctions: (SavedFunctionId | GenericCodeFunction)[];
   public readonly metadata?: Record<string, unknown>;
+  public readonly environmentSlugs?: string[];
 
   constructor(
     project: Project,
@@ -446,6 +447,7 @@ export class CodePrompt {
     this.id = opts.id;
     this.functionType = functionType;
     this.metadata = opts.metadata;
+    this.environmentSlugs = opts.environments;
   }
 
   async toFunctionDefinition(
@@ -487,6 +489,10 @@ export class CodePrompt {
       prompt_data,
       if_exists: this.ifExists,
       metadata: this.metadata,
+      environments:
+        this.environmentSlugs && this.environmentSlugs.length > 0
+          ? this.environmentSlugs.map((slug) => ({ slug }))
+          : undefined,
     };
   }
 }
@@ -783,6 +789,7 @@ export interface FunctionEvent {
   function_type?: FunctionType;
   if_exists?: IfExists;
   metadata?: Record<string, unknown>;
+  environments?: { slug: string }[];
 }
 
 export class ProjectNameIdMap {
