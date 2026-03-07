@@ -35,7 +35,7 @@
     "typescript": "^5.3.3",
     "vitest": "^2.1.9",
     "zod": "^3.25.34",
-    "zod-to-json-schema": "^3.22.5"
+    "zod-to-json-schema": "^3.25.1"
   },
   "peerDependencies": {
     "@langchain/core": ">=0.3.42",

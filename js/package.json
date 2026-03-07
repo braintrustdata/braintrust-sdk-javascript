@@ -204,7 +204,7 @@
     "termi-link": "^1.0.1",
     "unplugin": "^2.3.5",
     "uuid": "^9.0.1",
-    "zod-to-json-schema": "^3.25.0"
+    "zod-to-json-schema": "^3.25.1"
   },
   "peerDependencies": {
     "zod": "^3.25.34 || ^4.0"
