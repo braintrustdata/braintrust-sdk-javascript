@@ -74,6 +74,96 @@ const OUT_EXT = "js";
 
 configureNode();
 
+// Resolve tsconfig extends that point to node_modules packages
+// esbuild doesn't resolve package-style extends like TypeScript does
+function resolveTsconfigExtends(tsconfigPath: string): string | undefined {
+  try {
+    const tsconfigContent = fs.readFileSync(tsconfigPath, "utf-8");
+    // Strip comments and trailing commas for JSON.parse (simple regex, not perfect)
+    const cleanedContent = tsconfigContent
+      .replace(/\/\/.*$/gm, "")
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/,(\s*[}\]])/g, "$1");
+    const tsconfig = JSON.parse(cleanedContent);
+
+    if (!tsconfig.extends) {
+      return tsconfigPath;
+    }
+
+    const extendsPath = tsconfig.extends;
+
+    // If it's already a relative path or absolute path, no resolution needed
+    if (extendsPath.startsWith(".") || extendsPath.startsWith("/")) {
+      return tsconfigPath;
+    }
+
+    // Try to resolve the extends path from node_modules
+    const tsconfigDir = path.dirname(tsconfigPath);
+    let resolvedExtendsPath: string;
+    try {
+      // Try to resolve as a package
+      resolvedExtendsPath = require.resolve(extendsPath, {
+        paths: [tsconfigDir],
+      });
+    } catch {
+      // If that fails, try adding .json extension
+      try {
+        resolvedExtendsPath = require.resolve(`${extendsPath}.json`, {
+          paths: [tsconfigDir],
+        });
+      } catch {
+        // Can't resolve - just return original and let esbuild handle the error
+        return tsconfigPath;
+      }
+    }
+
+    // Create a temporary tsconfig with the resolved extends path
+    const tmpDir = path.join(
+      os.tmpdir(),
+      `bt-tsconfig-${uuidv4().slice(0, 8)}`,
+    );
+    fs.mkdirSync(tmpDir, { recursive: true });
+    const tmpTsconfigPath = path.join(tmpDir, "tsconfig.json");
+
+    // Make the extends path relative to the temp directory
+    const relativeExtendsPath = path.relative(tmpDir, resolvedExtendsPath);
+    tsconfig.extends = relativeExtendsPath;
+
+    // Also need to resolve any relative paths in the original tsconfig
+    // to be relative to the temp directory
+    if (tsconfig.compilerOptions?.baseUrl) {
+      const resolvedBaseUrl = path.resolve(
+        tsconfigDir,
+        tsconfig.compilerOptions.baseUrl,
+      );
+      tsconfig.compilerOptions.baseUrl = path.relative(tmpDir, resolvedBaseUrl);
+    }
+
+    // Include/exclude paths should be relative to the original tsconfig
+    if (tsconfig.include) {
+      tsconfig.include = tsconfig.include.map((p: string) =>
+        path.resolve(tsconfigDir, p),
+      );
+    }
+    if (tsconfig.exclude) {
+      tsconfig.exclude = tsconfig.exclude.map((p: string) =>
+        path.resolve(tsconfigDir, p),
+      );
+    }
+    if (tsconfig.files) {
+      tsconfig.files = tsconfig.files.map((p: string) =>
+        path.resolve(tsconfigDir, p),
+      );
+    }
+
+    fs.writeFileSync(tmpTsconfigPath, JSON.stringify(tsconfig, null, 2));
+    return tmpTsconfigPath;
+  } catch {
+    // If anything goes wrong, return original path
+    return tsconfigPath;
+  }
+}
+
 function evaluateBuildResults(
   inFile: string,
   buildResult: esbuild.BuildResult,
@@ -700,8 +790,10 @@ import { createMarkKnownPackagesExternalPlugin } from "./util/external-packages-
 const nativeNodeModulesPlugin = {
   name: "native-node-modules",
   setup(build: esbuild.PluginBuild) {
-    // Keep track of packages that contain .node files
+    // Keep track of packages that contain .node or .wasm files
     const nativePackages = new Set<string>();
+    // Track packages we've already checked for wasm files
+    const checkedPackages = new Set<string>();
 
     // Helper to add a package and its platform-specific variants
     const addNativePackage = (pkgName: string) => {
@@ -718,11 +810,60 @@ const nativeNodeModulesPlugin = {
       }
     };
 
+    // Check if a package directory contains wasm files
+    const packageContainsWasm = (pkgPath: string): boolean => {
+      try {
+        const checkDir = (dir: string, depth = 0): boolean => {
+          if (depth > 2) return false; // Limit recursion depth
+          const entries = fs.readdirSync(dir, { withFileTypes: true });
+          for (const entry of entries) {
+            if (entry.isFile() && entry.name.endsWith(".wasm")) {
+              return true;
+            }
+            if (
+              entry.isDirectory() &&
+              !entry.name.startsWith(".") &&
+              entry.name !== "node_modules"
+            ) {
+              if (checkDir(path.join(dir, entry.name), depth + 1)) {
+                return true;
+              }
+            }
+          }
+          return false;
+        };
+        return checkDir(pkgPath);
+      } catch {
+        return false;
+      }
+    };
+
     // When a .node file is imported, mark its package as native
     build.onResolve({ filter: /\.node$/ }, (args) => {
       try {
-        const path = require.resolve(args.path, { paths: [args.resolveDir] });
-        const match = path.match(
+        const resolvedPath = require.resolve(args.path, {
+          paths: [args.resolveDir],
+        });
+        const match = resolvedPath.match(
+          /node_modules[/\\]((?:@[^/\\]+[/\\])?[^/\\]+)/,
+        );
+        if (match) {
+          addNativePackage(match[1]);
+        }
+      } catch {
+        // Ignore errors
+      }
+      return { path: args.path, external: true };
+    });
+
+    // When a .wasm file is imported, mark its package as native
+    // This ensures packages like libpg-query can find their .wasm files at runtime
+    build.onResolve({ filter: /\.wasm$/ }, (args) => {
+      try {
+        const resolvedPath = require.resolve(args.path, {
+          paths: [args.resolveDir],
+        });
+        const match = resolvedPath.match(
           /node_modules[/\\]((?:@[^/\\]+[/\\])?[^/\\]+)/,
         );
         if (match) {
@@ -747,11 +888,34 @@ const nativeNodeModulesPlugin = {
     );
 
     // Mark all imports from native packages as external
+    // Also check if packages contain wasm files and mark them external
     build.onResolve({ filter: /.*/ }, (args) => {
       if (!args.path.startsWith(".") && !args.path.startsWith("/")) {
         const match = args.path.match(/^(?:@[^/]+\/)?[^/]+/);
-        if (match && nativePackages.has(match[0])) {
-          return { path: require.resolve(args.path), external: true };
+        if (match) {
+          const pkgName = match[0];
+
+          // Check if already marked as native
+          if (nativePackages.has(pkgName)) {
+            return { path: require.resolve(args.path), external: true };
+          }
+
+          // Check if this package contains wasm files (only check once per package)
+          if (!checkedPackages.has(pkgName)) {
+            checkedPackages.add(pkgName);
+            try {
+              const pkgJsonPath = require.resolve(`${pkgName}/package.json`, {
+                paths: [args.resolveDir],
+              });
+              const pkgDir = path.dirname(pkgJsonPath);
+              if (packageContainsWasm(pkgDir)) {
+                addNativePackage(pkgName);
+                return { path: require.resolve(args.path), external: true };
+              }
+            } catch {
+              // Ignore errors - package might not have package.json accessible
+            }
+          }
         }
       }
       return null;
@@ -779,6 +943,12 @@ function buildOpts({
     createMarkKnownPackagesExternalPlugin(externalPackages),
     ...(argPlugins || []).map((fn) => fn(fileName)),
   ];
+
+  // Resolve tsconfig extends that point to node_modules packages
+  const resolvedTsconfig = tsconfig
+    ? resolveTsconfigExtends(path.resolve(tsconfig))
+    : undefined;
+
   return {
     entryPoints: [fileName],
     bundle: true,
@@ -788,7 +958,7 @@ function buildOpts({
     write: false,
     // Remove the leading "v" from process.version
     target: `node${process.version.slice(1)}`,
-    tsconfig,
+    tsconfig: resolvedTsconfig,
     external: ["node_modules/*", "fsevents"],
     plugins: plugins,
   };
