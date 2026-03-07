@@ -5518,7 +5518,21 @@ export class ObjectFetcher<RecordType> implements AsyncIterable<
   ): AsyncGenerator<WithTransactionId<RecordType>> {
     const state = await this.getState();
     const objectId = await this.id;
-    const limit = batchSize ?? DEFAULT_FETCH_BATCH_SIZE;
+    const batchLimit = batchSize ?? DEFAULT_FETCH_BATCH_SIZE;
+    const internalLimit = (
+      this._internal_btql as { limit?: number } | undefined
+    )?.limit;
+    const limit =
+      batchSize !== undefined ? batchSize : (internalLimit ?? batchLimit);
+    const internalBtqlWithoutReservedQueryKeys = Object.fromEntries(
+      Object.entries(this._internal_btql ?? {}).filter(
+        ([key]) =>
+          key !== "cursor" &&
+          key !== "limit" &&
+          key !== "select" &&
+          key !== "from",
+      ),
+    );
     let cursor = undefined;
     let iterations = 0;
     while (true) {
@@ -5526,7 +5540,6 @@ export class ObjectFetcher<RecordType> implements AsyncIterable<
         `btql`,
         {
           query: {
-            ...this._internal_btql,
             select: [
               {
                 op: "star",
@@ -5547,6 +5560,7 @@ export class ObjectFetcher<RecordType> implements AsyncIterable<
             },
             cursor,
             limit,
+            ...internalBtqlWithoutReservedQueryKeys,
           },
           use_columnstore: false,
           brainstore_realtime: true,
