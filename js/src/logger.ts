@@ -5645,6 +5645,8 @@ export type EvalCase<Input, Expected, Metadata> = {
   created?: string | null;
   // This field is used to help re-run a particular experiment row.
   upsert_id?: string;
+  // The number of times to run the evaluator for this specific input.
+  trialCount?: number;
 } & (Expected extends void ? object : { expected: Expected }) &
   (Metadata extends void ? object : { metadata: Metadata });
 
