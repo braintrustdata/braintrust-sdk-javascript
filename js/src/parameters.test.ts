@@ -183,3 +183,58 @@ test("object parameter is handled correctly", async () => {
   expect(result.results).toHaveLength(1);
   expect(result.results[0].output).toBe("test");
 });
+
+test("model parameter defaults to configured value", async () => {
+  const result = await runEvaluator(
+    null,
+    {
+      projectName: "test-model-parameter-default",
+      evalName: "test",
+      data: [{ input: "test" }],
+      task: async (input: string, { parameters }) => {
+        expect(parameters.model).toBe("gpt-5-mini");
+        return input;
+      },
+      scores: [],
+      parameters: {
+        model: {
+          type: "model",
+          default: "gpt-5-mini",
+        },
+      },
+    },
+    new NoopProgressReporter(),
+    [],
+    undefined,
+    undefined,
+    true,
+  );
+
+  expect(result.results).toHaveLength(1);
+  expect(result.results[0].output).toBe("test");
+});
+
+test("model parameter is required when default is missing", async () => {
+  await expect(
+    runEvaluator(
+      null,
+      {
+        projectName: "test-model-parameter-required",
+        evalName: "test",
+        data: [{ input: "test" }],
+        task: async (input: string) => input,
+        scores: [],
+        parameters: {
+          model: {
+            type: "model",
+          },
+        },
+      },
+      new NoopProgressReporter(),
+      [],
+      undefined,
+      undefined,
+      true,
+    ),
+  ).rejects.toThrow("Parameter 'model' is required");
+});

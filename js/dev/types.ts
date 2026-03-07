@@ -40,6 +40,11 @@ export const staticParametersSchema = z.record(
       description: z.string().optional(),
     }),
     z.object({
+      type: z.literal("model"),
+      default: z.string().optional(),
+      description: z.string().optional(),
+    }),
+    z.object({
       type: z.literal("data"),
       schema: z.record(z.unknown()),
       default: z.unknown().optional(),

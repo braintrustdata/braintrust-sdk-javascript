@@ -129,6 +129,22 @@ describe("serializeEvalParametersToStaticParametersSchema with Zod v3", () => {
     expect(result.tags.description).toBe("Tags for filtering");
     expect(result.tags.default).toEqual(["default"]);
   });
+
+  test("model parameter serializes correctly", () => {
+    const parameters = {
+      model: {
+        type: "model" as const,
+        description: "Model to use",
+        default: "gpt-5-mini",
+      },
+    };
+
+    const result = serializeEvalParametersToStaticParametersSchema(parameters);
+
+    expect(result.model.type).toBe("model");
+    expect(result.model.description).toBe("Model to use");
+    expect(result.model.default).toBe("gpt-5-mini");
+  });
 });
 
 describe("serializeRemoteEvalParametersContainer with Zod v3", () => {

@@ -1019,6 +1019,10 @@ describe("framework2 metadata support", () => {
               model: "gpt-4",
             },
           },
+          model: {
+            type: "model",
+            default: "gpt-5-mini",
+          },
         },
       });
 
@@ -1052,6 +1056,12 @@ describe("framework2 metadata support", () => {
             model: "gpt-4",
           },
         },
+        model: "gpt-5-mini",
+      });
+      expect(funcDef.function_data.__schema.properties.model).toMatchObject({
+        type: "string",
+        "x-bt-type": "model",
+        default: "gpt-5-mini",
       });
       expect(funcDef.function_data.data).not.toHaveProperty("datasetName");
     });
@@ -1071,6 +1081,9 @@ describe("framework2 metadata support", () => {
           }),
           main: {
             type: "prompt",
+          },
+          model: {
+            type: "model",
           },
         },
       });
@@ -1094,6 +1107,7 @@ describe("framework2 metadata support", () => {
       expect(funcDef.function_data.data).not.toHaveProperty("tags");
       expect(funcDef.function_data.data).not.toHaveProperty("config");
       expect(funcDef.function_data.data).not.toHaveProperty("main");
+      expect(funcDef.function_data.data).not.toHaveProperty("model");
     });
   });
 

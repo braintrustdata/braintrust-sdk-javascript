@@ -16,6 +16,11 @@ export const evalParametersSchema = z.record(
       default: promptDefinitionWithToolsSchema.optional(),
       description: z.string().optional(),
     }),
+    z.object({
+      type: z.literal("model"),
+      default: z.string().optional(),
+      description: z.string().optional(),
+    }),
     z.instanceof(z.ZodType), // For Zod schemas
   ]),
 );
@@ -25,9 +30,11 @@ export type EvalParameters = z.infer<typeof evalParametersSchema>;
 // Type helper to infer the type of a parameter value
 type InferParameterValue<T> = T extends { type: "prompt" }
   ? Prompt
-  : T extends z.ZodType
-    ? z.infer<T>
-    : never;
+  : T extends { type: "model" }
+    ? string
+    : T extends z.ZodType
+      ? z.infer<T>
+      : never;
 
 // Type helper to infer the full parameters type
 export type InferParameters<T extends EvalParameters> = {
@@ -100,6 +107,17 @@ function validateParametersWithZod<
             throw new Error(`Parameter '${name}' is required`);
           }
           return [name, Prompt.fromPromptData(name, promptData)];
+        } else if ("type" in schema && schema.type === "model") {
+          const model = value ?? schema.default;
+          if (model === undefined) {
+            throw new Error(`Parameter '${name}' is required`);
+          }
+          if (typeof model !== "string") {
+            throw new Error(
+              `Parameter '${name}' must be a string model identifier`,
+            );
+          }
+          return [name, model];
         } else {
           // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
           const schemaCasted = schema as z.ZodSchema<unknown>;

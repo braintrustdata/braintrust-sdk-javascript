@@ -667,6 +667,15 @@ export function serializeEvalParametersToStaticParametersSchema(
             description: value.description,
           },
         ];
+      } else if ("type" in value && value.type === "model") {
+        return [
+          name,
+          {
+            type: "model",
+            default: value.default,
+            description: value.description,
+          },
+        ];
       } else {
         // Since this schema is bundled, it won't pass an instanceof check. For
         // some reason, aliasing it to `z.ZodSchema` leads to `error TS2589:
@@ -709,6 +718,17 @@ function serializeEvalParameterstoParametersSchema(
       };
 
       if (!defaultPromptData) {
+        required.push(name);
+      }
+    } else if ("type" in value && value.type === "model") {
+      properties[name] = {
+        type: "string",
+        "x-bt-type": "model",
+        ...(value.description ? { description: value.description } : {}),
+        ...("default" in value ? { default: value.default } : {}),
+      };
+
+      if (!("default" in value)) {
         required.push(name);
       }
     } else {
