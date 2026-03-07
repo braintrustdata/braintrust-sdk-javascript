@@ -1,0 +1,134 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`trace-context-and-continuation supports reattachment and late span updates > late-update-payloads 1`] = `
+[
+  {
+    "context": {
+      "caller_filename": "<repo>/e2e/scenarios/trace-context-and-continuation.ts",
+      "caller_functionname": "main",
+      "caller_lineno": 70,
+    },
+    "created": "<timestamp>",
+    "id": "<span:1>",
+    "log_id": "g",
+    "metadata": {
+      "kind": "late-update",
+      "testRunId": "<run:1>",
+    },
+    "metrics": {
+      "end": 0,
+      "start": 0,
+    },
+    "project_id": "<uuid:2>",
+    "root_span_id": "<span:3>",
+    "span_attributes": {
+      "exec_counter": 3,
+      "name": "late-update",
+      "type": "task",
+    },
+    "span_id": "<span:3>",
+  },
+  {
+    "_is_merge": true,
+    "id": "<span:1>",
+    "log_id": "g",
+    "metadata": {
+      "kind": "late-update",
+      "patched": true,
+      "testRunId": "<run:1>",
+    },
+    "output": {
+      "state": "updated",
+    },
+    "project_id": "<uuid:2>",
+    "root_span_id": "<span:3>",
+    "span_id": "<span:3>",
+  },
+]
+`;
+
+exports[`trace-context-and-continuation supports reattachment and late span updates > span-events 1`] = `
+[
+  {
+    "error": null,
+    "input": null,
+    "metadata": {
+      "scenario": "trace-context-and-continuation",
+      "testRunId": "<run:1>",
+    },
+    "name": "context-root",
+    "output": null,
+    "root_span_id": "<span:1>",
+    "span_attributes": {
+      "exec_counter": 0,
+      "name": "context-root",
+      "type": "task",
+    },
+    "span_id": "<span:1>",
+    "span_parents": null,
+  },
+  {
+    "error": null,
+    "input": null,
+    "metadata": {
+      "kind": "current-child",
+      "testRunId": "<run:1>",
+    },
+    "name": "current-child",
+    "output": {
+      "source": "withCurrent",
+    },
+    "root_span_id": "<span:1>",
+    "span_attributes": {
+      "exec_counter": 1,
+      "name": "current-child",
+    },
+    "span_id": "<span:2>",
+    "span_parents": [
+      "<span:1>",
+    ],
+  },
+  {
+    "error": null,
+    "input": null,
+    "metadata": {
+      "kind": "reattached-child",
+      "testRunId": "<run:1>",
+    },
+    "name": "reattached-child",
+    "output": {
+      "resumed": true,
+    },
+    "root_span_id": "<span:1>",
+    "span_attributes": {
+      "exec_counter": 2,
+      "name": "reattached-child",
+    },
+    "span_id": "<span:3>",
+    "span_parents": [
+      "<span:1>",
+    ],
+  },
+  {
+    "error": null,
+    "input": null,
+    "metadata": {
+      "kind": "late-update",
+      "patched": true,
+      "testRunId": "<run:1>",
+    },
+    "name": "late-update",
+    "output": {
+      "state": "updated",
+    },
+    "root_span_id": "<span:4>",
+    "span_attributes": {
+      "exec_counter": 3,
+      "name": "late-update",
+      "type": "task",
+    },
+    "span_id": "<span:4>",
+    "span_parents": null,
+  },
+]
+`;

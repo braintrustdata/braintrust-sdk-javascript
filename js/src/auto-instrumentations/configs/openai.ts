@@ -18,8 +18,36 @@ export const openaiConfigs: InstrumentationConfig[] = [
     channelName: OPENAI_CHANNEL_SUFFIX.CHAT_COMPLETIONS_CREATE,
     module: {
       name: "openai",
-      versionRange: ">=4.0.0",
+      versionRange: ">=4.0.0 <5.0.0",
       filePath: "resources/chat/completions.mjs",
+    },
+    functionQuery: {
+      className: "Completions",
+      methodName: "create",
+      kind: "Async",
+    },
+  },
+
+  {
+    channelName: OPENAI_CHANNEL_SUFFIX.CHAT_COMPLETIONS_CREATE,
+    module: {
+      name: "openai",
+      versionRange: ">=4.0.0 <5.0.0",
+      filePath: "resources/chat/completions/completions.mjs",
+    },
+    functionQuery: {
+      className: "Completions",
+      methodName: "create",
+      kind: "Async",
+    },
+  },
+
+  {
+    channelName: OPENAI_CHANNEL_SUFFIX.CHAT_COMPLETIONS_CREATE,
+    module: {
+      name: "openai",
+      versionRange: ">=5.0.0",
+      filePath: "resources/chat/completions/completions.mjs",
     },
     functionQuery: {
       className: "Completions",
@@ -48,8 +76,22 @@ export const openaiConfigs: InstrumentationConfig[] = [
     channelName: OPENAI_CHANNEL_SUFFIX.BETA_CHAT_COMPLETIONS_PARSE,
     module: {
       name: "openai",
-      versionRange: ">=4.0.0",
+      versionRange: ">=4.0.0 <5.0.0",
       filePath: "resources/beta/chat/completions.mjs",
+    },
+    functionQuery: {
+      className: "Completions",
+      methodName: "parse",
+      kind: "Async",
+    },
+  },
+
+  {
+    channelName: OPENAI_CHANNEL_SUFFIX.BETA_CHAT_COMPLETIONS_PARSE,
+    module: {
+      name: "openai",
+      versionRange: ">=5.0.0",
+      filePath: "resources/chat/completions/completions.mjs",
     },
     functionQuery: {
       className: "Completions",
@@ -78,8 +120,22 @@ export const openaiConfigs: InstrumentationConfig[] = [
     channelName: OPENAI_CHANNEL_SUFFIX.BETA_CHAT_COMPLETIONS_STREAM,
     module: {
       name: "openai",
-      versionRange: ">=4.0.0",
+      versionRange: ">=4.0.0 <5.0.0",
       filePath: "resources/beta/chat/completions.mjs",
+    },
+    functionQuery: {
+      className: "Completions",
+      methodName: "stream",
+      kind: "Sync",
+    },
+  },
+
+  {
+    channelName: OPENAI_CHANNEL_SUFFIX.BETA_CHAT_COMPLETIONS_STREAM,
+    module: {
+      name: "openai",
+      versionRange: ">=5.0.0",
+      filePath: "resources/chat/completions/completions.mjs",
     },
     functionQuery: {
       className: "Completions",

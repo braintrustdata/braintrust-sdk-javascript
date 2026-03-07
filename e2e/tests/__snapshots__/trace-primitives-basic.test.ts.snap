@@ -1,0 +1,379 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`trace-primitives-basic collects a minimal manual trace tree > request-flow 1`] = `
+[
+  {
+    "headers": null,
+    "jsonBody": null,
+    "method": "POST",
+    "path": "/api/apikey/login",
+    "query": null,
+    "rawBody": null,
+  },
+  {
+    "headers": null,
+    "jsonBody": {
+      "org_id": "mock-org-id",
+      "project_name": "e2e-trace-primitives-basic-e2e-<uuid:1>",
+    },
+    "method": "POST",
+    "path": "/api/project/register",
+    "query": null,
+    "rawBody": {
+      "org_id": "mock-org-id",
+      "project_name": "e2e-trace-primitives-basic-e2e-<uuid:1>",
+    },
+  },
+  {
+    "headers": null,
+    "jsonBody": null,
+    "method": "GET",
+    "path": "/version",
+    "query": null,
+    "rawBody": null,
+  },
+  {
+    "headers": null,
+    "jsonBody": {
+      "api_version": 2,
+      "rows": [
+        {
+          "_is_merge": false,
+          "context": {
+            "caller_filename": "<repo>/e2e/scenarios/trace-primitives-basic.ts",
+            "caller_functionname": "main",
+            "caller_lineno": 10,
+          },
+          "created": "<timestamp>",
+          "id": "<span:2>",
+          "input": {
+            "scenario": "trace-primitives-basic",
+            "testRunId": "<run:1>",
+          },
+          "log_id": "g",
+          "metadata": {
+            "scenario": "trace-primitives-basic",
+            "testRunId": "<run:1>",
+          },
+          "metrics": {
+            "start": 0,
+          },
+          "project_id": "<uuid:4>",
+          "root_span_id": "<span:3>",
+          "span_attributes": {
+            "exec_counter": 0,
+            "name": "trace-primitives-root",
+            "type": "task",
+          },
+          "span_id": "<span:3>",
+        },
+      ],
+    },
+    "method": "POST",
+    "path": "/logs3",
+    "query": null,
+    "rawBody": {
+      "api_version": 2,
+      "rows": [
+        {
+          "_is_merge": false,
+          "context": {
+            "caller_filename": "<repo>/e2e/scenarios/trace-primitives-basic.ts",
+            "caller_functionname": "main",
+            "caller_lineno": 10,
+          },
+          "created": "<timestamp>",
+          "id": "<span:2>",
+          "input": {
+            "scenario": "trace-primitives-basic",
+            "testRunId": "<run:1>",
+          },
+          "log_id": "g",
+          "metadata": {
+            "scenario": "trace-primitives-basic",
+            "testRunId": "<run:1>",
+          },
+          "metrics": {
+            "start": 0,
+          },
+          "project_id": "<uuid:4>",
+          "root_span_id": "<span:3>",
+          "span_attributes": {
+            "exec_counter": 0,
+            "name": "trace-primitives-root",
+            "type": "task",
+          },
+          "span_id": "<span:3>",
+        },
+      ],
+    },
+  },
+  {
+    "headers": null,
+    "jsonBody": {
+      "api_version": 2,
+      "rows": [
+        {
+          "context": {
+            "caller_filename": "<repo>/e2e/scenarios/trace-primitives-basic.ts",
+            "caller_functionname": "logger.traced.name",
+            "caller_lineno": 12,
+          },
+          "created": "<timestamp>",
+          "id": "<span:5>",
+          "input": {
+            "step": "child",
+            "testRunId": "<run:1>",
+          },
+          "log_id": "g",
+          "metadata": {
+            "kind": "basic-child",
+            "testRunId": "<run:1>",
+          },
+          "metrics": {
+            "end": 0,
+            "start": 0,
+          },
+          "output": {
+            "ok": true,
+          },
+          "project_id": "<uuid:4>",
+          "root_span_id": "<span:3>",
+          "span_attributes": {
+            "exec_counter": 1,
+            "name": "basic-child",
+          },
+          "span_id": "<span:6>",
+          "span_parents": [
+            "<span:3>",
+          ],
+        },
+        {
+          "context": {
+            "caller_filename": "<repo>/e2e/scenarios/trace-primitives-basic.ts",
+            "caller_functionname": "logger.traced.name",
+            "caller_lineno": 32,
+          },
+          "created": "<timestamp>",
+          "error": "basic boom
+
+Error: basic boom
+    at logger.traced.name (<repo>/e2e/scenarios/trace-primitives-basic.ts:0:0)
+    at <repo>/js/dist/index.js:0:0
+    at AsyncLocalStorage.run (node:<internal>:0:0)
+    at BraintrustContextManager.runInContext (<repo>/js/dist/index.js:0:0)
+    at withCurrent (<repo>/js/dist/index.js:0:0)
+    at <repo>/js/dist/index.js:0:0
+    at runCatchFinally (<repo>/js/dist/index.js:0:0)
+    at _class9.traced (<repo>/js/dist/index.js:0:0)
+    at main (<repo>/e2e/scenarios/trace-primitives-basic.ts:0:0)
+    at runMain (<repo>/e2e/scenarios/helpers.ts:0:0)",
+          "id": "<span:7>",
+          "log_id": "g",
+          "metadata": {
+            "kind": "basic-error",
+            "testRunId": "<run:1>",
+          },
+          "metrics": {
+            "end": 0,
+            "start": 0,
+          },
+          "project_id": "<uuid:4>",
+          "root_span_id": "<span:3>",
+          "span_attributes": {
+            "exec_counter": 2,
+            "name": "basic-error",
+          },
+          "span_id": "<span:8>",
+          "span_parents": [
+            "<span:3>",
+          ],
+        },
+        {
+          "_is_merge": true,
+          "id": "<span:2>",
+          "log_id": "g",
+          "metrics": {
+            "end": 0,
+          },
+          "output": {
+            "status": "ok",
+          },
+          "project_id": "<uuid:4>",
+          "root_span_id": "<span:3>",
+          "span_id": "<span:3>",
+        },
+      ],
+    },
+    "method": "POST",
+    "path": "/logs3",
+    "query": null,
+    "rawBody": {
+      "api_version": 2,
+      "rows": [
+        {
+          "context": {
+            "caller_filename": "<repo>/e2e/scenarios/trace-primitives-basic.ts",
+            "caller_functionname": "logger.traced.name",
+            "caller_lineno": 12,
+          },
+          "created": "<timestamp>",
+          "id": "<span:5>",
+          "input": {
+            "step": "child",
+            "testRunId": "<run:1>",
+          },
+          "log_id": "g",
+          "metadata": {
+            "kind": "basic-child",
+            "testRunId": "<run:1>",
+          },
+          "metrics": {
+            "end": 0,
+            "start": 0,
+          },
+          "output": {
+            "ok": true,
+          },
+          "project_id": "<uuid:4>",
+          "root_span_id": "<span:3>",
+          "span_attributes": {
+            "exec_counter": 1,
+            "name": "basic-child",
+          },
+          "span_id": "<span:6>",
+          "span_parents": [
+            "<span:3>",
+          ],
+        },
+        {
+          "context": {
+            "caller_filename": "<repo>/e2e/scenarios/trace-primitives-basic.ts",
+            "caller_functionname": "logger.traced.name",
+            "caller_lineno": 32,
+          },
+          "created": "<timestamp>",
+          "error": "basic boom
+
+Error: basic boom
+    at logger.traced.name (<repo>/e2e/scenarios/trace-primitives-basic.ts:0:0)
+    at <repo>/js/dist/index.js:0:0
+    at AsyncLocalStorage.run (node:<internal>:0:0)
+    at BraintrustContextManager.runInContext (<repo>/js/dist/index.js:0:0)
+    at withCurrent (<repo>/js/dist/index.js:0:0)
+    at <repo>/js/dist/index.js:0:0
+    at runCatchFinally (<repo>/js/dist/index.js:0:0)
+    at _class9.traced (<repo>/js/dist/index.js:0:0)
+    at main (<repo>/e2e/scenarios/trace-primitives-basic.ts:0:0)
+    at runMain (<repo>/e2e/scenarios/helpers.ts:0:0)",
+          "id": "<span:7>",
+          "log_id": "g",
+          "metadata": {
+            "kind": "basic-error",
+            "testRunId": "<run:1>",
+          },
+          "metrics": {
+            "end": 0,
+            "start": 0,
+          },
+          "project_id": "<uuid:4>",
+          "root_span_id": "<span:3>",
+          "span_attributes": {
+            "exec_counter": 2,
+            "name": "basic-error",
+          },
+          "span_id": "<span:8>",
+          "span_parents": [
+            "<span:3>",
+          ],
+        },
+        {
+          "_is_merge": true,
+          "id": "<span:2>",
+          "log_id": "g",
+          "metrics": {
+            "end": 0,
+          },
+          "output": {
+            "status": "ok",
+          },
+          "project_id": "<uuid:4>",
+          "root_span_id": "<span:3>",
+          "span_id": "<span:3>",
+        },
+      ],
+    },
+  },
+]
+`;
+
+exports[`trace-primitives-basic collects a minimal manual trace tree > span-events 1`] = `
+[
+  {
+    "error": null,
+    "input": {
+      "scenario": "trace-primitives-basic",
+      "testRunId": "<run:1>",
+    },
+    "metadata": {
+      "scenario": "trace-primitives-basic",
+      "testRunId": "<run:1>",
+    },
+    "name": "trace-primitives-root",
+    "output": {
+      "status": "ok",
+    },
+    "root_span_id": "<span:1>",
+    "span_attributes": {
+      "exec_counter": 0,
+      "name": "trace-primitives-root",
+      "type": "task",
+    },
+    "span_id": "<span:1>",
+    "span_parents": null,
+  },
+  {
+    "error": null,
+    "input": {
+      "step": "child",
+      "testRunId": "<run:1>",
+    },
+    "metadata": {
+      "kind": "basic-child",
+      "testRunId": "<run:1>",
+    },
+    "name": "basic-child",
+    "output": {
+      "ok": true,
+    },
+    "root_span_id": "<span:1>",
+    "span_attributes": {
+      "exec_counter": 1,
+      "name": "basic-child",
+    },
+    "span_id": "<span:2>",
+    "span_parents": [
+      "<span:1>",
+    ],
+  },
+  {
+    "error": "basic boom",
+    "input": null,
+    "metadata": {
+      "kind": "basic-error",
+      "testRunId": "<run:1>",
+    },
+    "name": "basic-error",
+    "output": null,
+    "root_span_id": "<span:1>",
+    "span_attributes": {
+      "exec_counter": 2,
+      "name": "basic-error",
+    },
+    "span_id": "<span:3>",
+    "span_parents": [
+      "<span:1>",
+    ],
+  },
+]
+`;

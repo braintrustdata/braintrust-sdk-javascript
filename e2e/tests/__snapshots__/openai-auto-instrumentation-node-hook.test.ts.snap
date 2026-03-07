@@ -1,0 +1,157 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`openai auto-instrumentation via node hook collects traces without manual wrapping (openai 4.104.0) > span-events 1`] = `
+[
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "has_model": false,
+      "openaiSdkVersion": "4.104.0",
+      "operation": null,
+      "provider": null,
+      "scenario": "openai-auto-instrumentation-node-hook",
+    },
+    "metric_keys": [],
+    "name": "openai-auto-hook-root",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:1>",
+    "span_parents": [],
+    "type": "task",
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "has_model": true,
+      "openaiSdkVersion": null,
+      "operation": null,
+      "provider": "openai",
+      "scenario": null,
+    },
+    "metric_keys": [
+      "completion_accepted_prediction_tokens",
+      "completion_audio_tokens",
+      "completion_reasoning_tokens",
+      "completion_rejected_prediction_tokens",
+      "completion_tokens",
+      "prompt_audio_tokens",
+      "prompt_cached_tokens",
+      "prompt_tokens",
+      "time_to_first_token",
+      "tokens",
+    ],
+    "name": "Chat Completion",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:2>",
+    "span_parents": [
+      "<span:1>",
+    ],
+    "type": "llm",
+  },
+]
+`;
+
+exports[`openai auto-instrumentation via node hook collects traces without manual wrapping (openai 5.11.0) > span-events 1`] = `
+[
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "has_model": false,
+      "openaiSdkVersion": "5.11.0",
+      "operation": null,
+      "provider": null,
+      "scenario": "openai-auto-instrumentation-node-hook",
+    },
+    "metric_keys": [],
+    "name": "openai-auto-hook-root",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:1>",
+    "span_parents": [],
+    "type": "task",
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "has_model": true,
+      "openaiSdkVersion": null,
+      "operation": null,
+      "provider": "openai",
+      "scenario": null,
+    },
+    "metric_keys": [
+      "completion_accepted_prediction_tokens",
+      "completion_audio_tokens",
+      "completion_reasoning_tokens",
+      "completion_rejected_prediction_tokens",
+      "completion_tokens",
+      "prompt_audio_tokens",
+      "prompt_cached_tokens",
+      "prompt_tokens",
+      "time_to_first_token",
+      "tokens",
+    ],
+    "name": "Chat Completion",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:2>",
+    "span_parents": [
+      "<span:1>",
+    ],
+    "type": "llm",
+  },
+]
+`;
+
+exports[`openai auto-instrumentation via node hook collects traces without manual wrapping (openai 6.25.0) > span-events 1`] = `
+[
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "has_model": false,
+      "openaiSdkVersion": "6.25.0",
+      "operation": null,
+      "provider": null,
+      "scenario": "openai-auto-instrumentation-node-hook",
+    },
+    "metric_keys": [],
+    "name": "openai-auto-hook-root",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:1>",
+    "span_parents": [],
+    "type": "task",
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "has_model": true,
+      "openaiSdkVersion": null,
+      "operation": null,
+      "provider": "openai",
+      "scenario": null,
+    },
+    "metric_keys": [
+      "completion_accepted_prediction_tokens",
+      "completion_audio_tokens",
+      "completion_reasoning_tokens",
+      "completion_rejected_prediction_tokens",
+      "completion_tokens",
+      "prompt_audio_tokens",
+      "prompt_cached_tokens",
+      "prompt_tokens",
+      "time_to_first_token",
+      "tokens",
+    ],
+    "name": "Chat Completion",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:2>",
+    "span_parents": [
+      "<span:1>",
+    ],
+    "type": "llm",
+  },
+]
+`;

@@ -30,6 +30,45 @@ importers:
         specifier: ^2.5.6
         version: 2.5.6
 
+  e2e:
+    devDependencies:
+      '@braintrust/otel':
+        specifier: workspace:^
+        version: link:../integrations/otel-js
+      '@opentelemetry/api':
+        specifier: '>=1.9.0'
+        version: 1.9.0
+      '@opentelemetry/context-async-hooks':
+        specifier: '>=1.9.0'
+        version: 2.6.0(@opentelemetry/api@1.9.0)
+      '@opentelemetry/sdk-trace-base':
+        specifier: '>=1.9.0'
+        version: 2.2.0(@opentelemetry/api@1.9.0)
+      '@types/node':
+        specifier: ^20.10.5
+        version: 20.19.16
+      braintrust:
+        specifier: workspace:^
+        version: link:../js
+      openai:
+        specifier: 6.25.0
+        version: 6.25.0(ws@8.18.3)(zod@3.25.76)
+      openai-v4:
+        specifier: npm:openai@4.104.0
+        version: openai@4.104.0(ws@8.18.3)(zod@3.25.76)
+      openai-v5:
+        specifier: npm:openai@5.11.0
+        version: openai@5.11.0(ws@8.18.3)(zod@3.25.76)
+      tsx:
+        specifier: ^3.14.0
+        version: 3.14.0
+      typescript:
+        specifier: 5.4.4
+        version: 5.4.4
+      vitest:
+        specifier: ^2.1.9
+        version: 2.1.9(@types/node@20.19.16)(msw@2.6.6(@types/node@20.19.16)(typescript@5.4.4))(terser@5.44.1)
+
   integrations/browser-js:
     dependencies:
       als-browser:
@@ -2050,6 +2089,12 @@ packages:
   '@opentelemetry/api@1.9.0':
     resolution: {integrity: sha512-3giAOQvZiH5F9bMlMiv8+GSPMeqg0dbaeo58/0SlA9sxSqZhnUtxzX9/2FzyhS9sWQf5S0GJE0AKBrFqjpeYcg==}
     engines: {node: '>=8.0.0'}
+
+  '@opentelemetry/context-async-hooks@2.6.0':
+    resolution: {integrity: sha512-L8UyDwqpTcbkIK5cgwDRDYDoEhQoj8wp8BwsO19w3LB1Z41yEQm2VJyNfAi9DrLP/YTqXqWpKHyZfR9/tFYo1Q==}
+    engines: {node: ^18.19.0 || >=20.6.0}
+    peerDependencies:
+      '@opentelemetry/api': '>=1.0.0 <1.10.0'
 
   '@opentelemetry/core@2.2.0':
     resolution: {integrity: sha512-FuabnnUm8LflnieVxs6eP7Z383hgQU4W1e3KJS6aOG3RxWxcHyBxH8fDMHNgu/gFx/M2jvTOW/4/PHhLz6bjWw==}
@@ -4758,18 +4803,6 @@ packages:
     peerDependencies:
       ws: ^8.18.0
       zod: ^3.23.8
-    peerDependenciesMeta:
-      ws:
-        optional: true
-      zod:
-        optional: true
-
-  openai@6.15.0:
-    resolution: {integrity: sha512-F1Lvs5BoVvmZtzkUEVyh8mDQPPFolq4F+xdsx/DO8Hee8YF3IGAlZqUIsF+DVGhqf4aU0a3bTghsxB6OIsRy1g==}
-    hasBin: true
-    peerDependencies:
-      ws: ^8.18.0
-      zod: ^3.25 || ^4.0
     peerDependenciesMeta:
       ws:
         optional: true
@@ -7738,7 +7771,7 @@ snapshots:
     dependencies:
       '@langchain/core': 1.1.10(@opentelemetry/api@1.9.0)(@opentelemetry/sdk-trace-base@2.2.0(@opentelemetry/api@1.9.0))(openai@6.25.0(ws@8.18.3)(zod@3.25.76))
       js-tiktoken: 1.0.21
-      openai: 6.15.0(ws@8.18.3)(zod@3.25.76)
+      openai: 6.25.0(ws@8.18.3)(zod@3.25.76)
       zod: 3.25.76
     transitivePeerDependencies:
       - ws
@@ -7910,6 +7943,10 @@ snapshots:
       '@opentelemetry/api': 1.9.0
 
   '@opentelemetry/api@1.9.0': {}
+
+  '@opentelemetry/context-async-hooks@2.6.0(@opentelemetry/api@1.9.0)':
+    dependencies:
+      '@opentelemetry/api': 1.9.0
 
   '@opentelemetry/core@2.2.0(@opentelemetry/api@1.9.0)':
     dependencies:
@@ -11324,11 +11361,6 @@ snapshots:
     optional: true
 
   openai@5.11.0(ws@8.18.3)(zod@3.25.76):
-    optionalDependencies:
-      ws: 8.18.3
-      zod: 3.25.76
-
-  openai@6.15.0(ws@8.18.3)(zod@3.25.76):
     optionalDependencies:
       ws: 8.18.3
       zod: 3.25.76

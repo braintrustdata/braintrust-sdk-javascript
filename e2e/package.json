@@ -1,0 +1,23 @@
+{
+  "name": "@braintrust/js-e2e-tests",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "test:e2e": "vitest run",
+    "test:e2e:update": "vitest run --update"
+  },
+  "devDependencies": {
+    "@braintrust/otel": "workspace:^",
+    "@opentelemetry/api": ">=1.9.0",
+    "@opentelemetry/context-async-hooks": ">=1.9.0",
+    "@opentelemetry/sdk-trace-base": ">=1.9.0",
+    "@types/node": "^20.10.5",
+    "braintrust": "workspace:^",
+    "openai": "6.25.0",
+    "openai-v4": "npm:openai@4.104.0",
+    "openai-v5": "npm:openai@5.11.0",
+    "tsx": "^3.14.0",
+    "typescript": "5.4.4",
+    "vitest": "^2.1.9"
+  }
+}
