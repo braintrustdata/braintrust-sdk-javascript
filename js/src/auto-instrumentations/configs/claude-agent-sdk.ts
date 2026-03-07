@@ -1,4 +1,5 @@
 import type { InstrumentationConfig } from "@apm-js-collab/code-transformer";
+import { claudeAgentSDKChannels } from "../../instrumentation/plugins/claude-agent-sdk-channels";
 
 /**
  * Instrumentation configuration for the Claude Agent SDK.
@@ -14,7 +15,7 @@ import type { InstrumentationConfig } from "@apm-js-collab/code-transformer";
 export const claudeAgentSDKConfigs: InstrumentationConfig[] = [
   // query - Main entry point for agent interactions (top-level exported async generator function)
   {
-    channelName: "query",
+    channelName: claudeAgentSDKChannels.query.name,
     module: {
       name: "@anthropic-ai/claude-agent-sdk",
       versionRange: ">=0.1.0",

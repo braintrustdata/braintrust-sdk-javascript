@@ -1,6 +1,10 @@
-import iso from "../../isomorph";
-import { BasePlugin, isAsyncIterable, patchStreamIfNeeded } from "../core";
-import type { StartEvent } from "../core";
+import {
+  BasePlugin,
+  type ChannelMessage,
+  isAsyncIterable,
+  patchStreamIfNeeded,
+} from "../core";
+import type { IsoChannelHandlers } from "../../isomorph";
 import { startSpan } from "../../logger";
 import type { Span } from "../../logger";
 import { SpanTypeAttribute } from "../../../util/index";
@@ -9,10 +13,10 @@ import {
   extractAnthropicCacheTokens,
   finalizeAnthropicTokens,
 } from "../../wrappers/anthropic-tokens-util";
+import { claudeAgentSDKChannels } from "./claude-agent-sdk-channels";
 import type {
   ClaudeAgentSDKMessage,
   ClaudeAgentSDKQueryOptions,
-  ClaudeAgentSDKQueryParams,
 } from "../../vendor-sdk-types/claude-agent-sdk";
 
 /**
@@ -202,9 +206,9 @@ async function createLLMSpanForMessages(
  * represent higher-level workflows. Individual LLM calls within the agent
  * are traced separately as LLM spans.
  */
-export class ClaudeAgentSDKPlugin extends BasePlugin {
-  protected unsubscribers: Array<() => void> = [];
-
+export class ClaudeAgentSDKPlugin extends BasePlugin<
+  typeof claudeAgentSDKChannels
+> {
   protected onEnable(): void {
     this.subscribeToQuery();
   }
@@ -222,9 +226,7 @@ export class ClaudeAgentSDKPlugin extends BasePlugin {
    * and individual LLM calls.
    */
   private subscribeToQuery(): void {
-    const channel = iso.newTracingChannel(
-      "orchestrion:@anthropic-ai/claude-agent-sdk:query",
-    );
+    const channel = claudeAgentSDKChannels.query.tracingChannel();
 
     const spans = new WeakMap<
       WeakKey,
@@ -239,12 +241,13 @@ export class ClaudeAgentSDKPlugin extends BasePlugin {
       }
     >();
 
-    const handlers = {
-      start: (event: StartEvent) => {
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        const params = (event.arguments[0] ?? {}) as ClaudeAgentSDKQueryParams;
-
-        const { prompt, options = {} } = params;
+    const handlers: IsoChannelHandlers<
+      ChannelMessage<typeof claudeAgentSDKChannels.query>
+    > = {
+      start: (event) => {
+        const params = event.arguments[0];
+        const prompt = params?.prompt;
+        const options = params?.options ?? {};
 
         const span = startSpan({
           name: "Claude Agent",
@@ -281,13 +284,18 @@ export class ClaudeAgentSDKPlugin extends BasePlugin {
         });
       },
 
-      asyncEnd: (event: Record<string, unknown>) => {
+      asyncEnd: (event) => {
         const spanData = spans.get(event);
         if (!spanData) {
           return;
         }
 
         const eventResult = event.result;
+        if (eventResult === undefined) {
+          spanData.span.end();
+          spans.delete(event);
+          return;
+        }
 
         // Check if result is a stream
         if (isAsyncIterable(eventResult)) {
@@ -295,10 +303,9 @@ export class ClaudeAgentSDKPlugin extends BasePlugin {
           patchStreamIfNeeded(eventResult, {
             onChunk: async (message: ClaudeAgentSDKMessage) => {
               const currentTime = getCurrentUnixTimestamp();
-              // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-              const params = ((event.arguments as unknown[])?.[0] ??
-                {}) as ClaudeAgentSDKQueryParams;
-              const { prompt, options = {} } = params;
+              const params = event.arguments[0];
+              const prompt = params?.prompt;
+              const options = params?.options ?? {};
 
               const messageId = message.message?.id;
 
@@ -387,10 +394,9 @@ export class ClaudeAgentSDKPlugin extends BasePlugin {
             },
             onComplete: async () => {
               try {
-                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-                const params = ((event.arguments as unknown[])?.[0] ??
-                  {}) as ClaudeAgentSDKQueryParams;
-                const { prompt, options = {} } = params;
+                const params = event.arguments[0];
+                const prompt = params?.prompt;
+                const options = params?.options ?? {};
 
                 // Create span for final message group
                 if (spanData.currentMessages.length > 0) {
@@ -455,18 +461,16 @@ export class ClaudeAgentSDKPlugin extends BasePlugin {
         }
       },
 
-      error: (event: Record<string, unknown>) => {
+      error: (event) => {
         const spanData = spans.get(event);
-        if (!spanData) {
+        if (!spanData || !event.error) {
           return;
         }
 
         const { span } = spanData;
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        const eventError = event.error as Error | undefined;
 
         span.log({
-          error: eventError?.message,
+          error: event.error.message,
         });
         span.end();
         spans.delete(event);

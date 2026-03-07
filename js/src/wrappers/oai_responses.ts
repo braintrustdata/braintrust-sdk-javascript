@@ -1,11 +1,12 @@
-import { OPENAI_CHANNEL } from "../instrumentation/plugins/channels";
-import iso from "../isomorph";
+import type { ArgsOf, ResultOf } from "../instrumentation/core";
+import { openAIChannels } from "../instrumentation/plugins/openai-channels";
 import { parseMetricsFromUsage } from "../openai-utils";
 import {
   APIPromise,
-  ChannelContext,
+  createChannelContext,
   createLazyAPIPromise,
   EnhancedResponse,
+  splitSpanInfo,
   tracePromiseWithResponse,
 } from "./openai-promise-utils";
 
@@ -24,17 +25,17 @@ export function responsesProxy(openai: any) {
       if (name === "create") {
         return wrapResponsesAsync(
           target.create.bind(target),
-          OPENAI_CHANNEL.RESPONSES_CREATE,
+          openAIChannels.responsesCreate,
         );
       } else if (name === "stream") {
         return wrapResponsesSyncStream(
           target.stream.bind(target),
-          OPENAI_CHANNEL.RESPONSES_STREAM,
+          openAIChannels.responsesStream,
         );
       } else if (name === "parse") {
         return wrapResponsesAsync(
           target.parse.bind(target),
-          OPENAI_CHANNEL.RESPONSES_PARSE,
+          openAIChannels.responsesParse,
         );
       }
       return Reflect.get(target, name, receiver);
@@ -42,31 +43,40 @@ export function responsesProxy(openai: any) {
   });
 }
 
-function wrapResponsesAsync<TParams, TResult>(
-  target: (params: TParams, options?: unknown) => APIPromise<TResult>,
-  channelName: string,
-): (params: TParams & SpanInfo, options?: unknown) => APIPromise<TResult> {
-  return (
-    allParams: TParams & SpanInfo,
+function wrapResponsesAsync<
+  TChannel extends
+    | typeof openAIChannels.responsesCreate
+    | typeof openAIChannels.responsesParse,
+>(
+  target: (
+    params: ArgsOf<TChannel>[0],
     options?: unknown,
-  ): APIPromise<TResult> => {
-    const { span_info, ...params } = allParams;
+  ) => APIPromise<ResultOf<TChannel>>,
+  channel: TChannel,
+): (
+  params: ArgsOf<TChannel>[0] & SpanInfo,
+  options?: unknown,
+) => APIPromise<ResultOf<TChannel>> {
+  return (
+    allParams: ArgsOf<TChannel>[0] & SpanInfo,
+    options?: unknown,
+  ): APIPromise<ResultOf<TChannel>> => {
+    const { span_info, params } = splitSpanInfo<
+      ArgsOf<TChannel>[0],
+      SpanInfo["span_info"]
+    >(allParams);
 
-    let executionPromise: Promise<EnhancedResponse<TResult>> | null = null;
+    let executionPromise: Promise<EnhancedResponse<ResultOf<TChannel>>> | null =
+      null;
 
-    const ensureExecuted = (): Promise<EnhancedResponse<TResult>> => {
+    const ensureExecuted = (): Promise<
+      EnhancedResponse<ResultOf<TChannel>>
+    > => {
       if (!executionPromise) {
         executionPromise = (async () => {
-          const traceContext: ChannelContext = {
-            arguments: [params],
-            span_info,
-          };
-          const apiPromise = target(params as TParams, options);
-          return tracePromiseWithResponse(
-            channelName,
-            traceContext,
-            apiPromise,
-          );
+          const traceContext = createChannelContext(channel, params, span_info);
+          const apiPromise = target(params, options);
+          return tracePromiseWithResponse(channel, traceContext, apiPromise);
         })();
       }
 
@@ -77,14 +87,25 @@ function wrapResponsesAsync<TParams, TResult>(
   };
 }
 
-function wrapResponsesSyncStream<TParams, TResult>(
-  target: (params: TParams, options?: unknown) => TResult,
-  channelName: string,
-): (params: TParams & SpanInfo, options?: unknown) => TResult {
-  return (allParams: TParams & SpanInfo, options?: unknown): TResult => {
-    const { span_info, ...params } = allParams;
-    const channel = iso.newTracingChannel(channelName);
-    return channel.traceSync(() => target(params as TParams, options), {
+function wrapResponsesSyncStream<TResult>(
+  target: (
+    params: ArgsOf<typeof openAIChannels.responsesStream>[0],
+    options?: unknown,
+  ) => TResult,
+  channel: typeof openAIChannels.responsesStream,
+): (
+  params: ArgsOf<typeof openAIChannels.responsesStream>[0] & SpanInfo,
+  options?: unknown,
+) => TResult {
+  return (
+    allParams: ArgsOf<typeof openAIChannels.responsesStream>[0] & SpanInfo,
+    options?: unknown,
+  ): TResult => {
+    const { span_info, params } = splitSpanInfo<
+      ArgsOf<typeof openAIChannels.responsesStream>[0],
+      SpanInfo["span_info"]
+    >(allParams);
+    return channel.traceSync(() => target(params, options), {
       arguments: [params],
       span_info,
     });

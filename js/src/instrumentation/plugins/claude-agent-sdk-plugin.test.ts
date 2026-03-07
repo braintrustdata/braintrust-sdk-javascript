@@ -53,47 +53,52 @@ vi.mock("../../wrappers/anthropic-tokens-util", () => ({
   })),
 }));
 
-vi.mock("../core", () => ({
-  BasePlugin: class BasePlugin {
-    protected enabled = false;
-    protected unsubscribers: Array<() => void> = [];
+vi.mock("../core", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../core")>();
 
-    enable(): void {
-      if (this.enabled) {
-        return;
+  return {
+    ...actual,
+    BasePlugin: class BasePlugin {
+      protected enabled = false;
+      protected unsubscribers: Array<() => void> = [];
+
+      enable(): void {
+        if (this.enabled) {
+          return;
+        }
+        this.enabled = true;
+        this.onEnable();
       }
-      this.enabled = true;
-      this.onEnable();
-    }
 
-    disable(): void {
-      if (!this.enabled) {
-        return;
+      disable(): void {
+        if (!this.enabled) {
+          return;
+        }
+        this.enabled = false;
+        this.onDisable();
       }
-      this.enabled = false;
-      this.onDisable();
-    }
 
-    protected onEnable(): void {
-      // To be implemented by subclass
-    }
+      protected onEnable(): void {
+        // To be implemented by subclass
+      }
 
-    protected onDisable(): void {
-      // To be implemented by subclass
-    }
-  },
-  isAsyncIterable: vi.fn(
-    (val: unknown) =>
-      val !== null &&
-      typeof val === "object" &&
-      Symbol.asyncIterator in val &&
-      typeof (val as any)[Symbol.asyncIterator] === "function",
-  ),
-  patchStreamIfNeeded: vi.fn((stream, callbacks) => {
-    // Return the stream unchanged for simple tests
-    return stream;
-  }),
-}));
+      protected onDisable(): void {
+        // To be implemented by subclass
+      }
+    },
+    isAsyncIterable: vi.fn(
+      (val: unknown) =>
+        val !== null &&
+        typeof val === "object" &&
+        Symbol.asyncIterator in val &&
+        typeof (val as any)[Symbol.asyncIterator] === "function",
+    ),
+    patchStreamIfNeeded: vi.fn((stream, _callbacks) => {
+      // Return the stream unchanged for simple tests
+      return stream;
+    }),
+  };
+});
 
 describe("ClaudeAgentSDKPlugin", () => {
   let plugin: ClaudeAgentSDKPlugin;

@@ -49,7 +49,7 @@ export interface IsoTracingChannel<M = any> {
     message: M,
     thisArg?: ThisParameterType<F>,
     ...args: Parameters<F>
-  ): Promise<ReturnType<F>>;
+  ): Promise<Awaited<ReturnType<F>>>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   traceCallback<F extends (...args: any[]) => any>(
     fn: F,
@@ -94,7 +94,7 @@ class DefaultTracingChannel<M> implements IsoTracingChannel<M> {
     _message: M,
     thisArg?: ThisParameterType<F>,
     ...args: Parameters<F>
-  ): Promise<ReturnType<F>> {
+  ): Promise<Awaited<ReturnType<F>>> {
     return Promise.resolve(fn.apply(thisArg, args));
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

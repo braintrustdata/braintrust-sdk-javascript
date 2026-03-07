@@ -1,4 +1,9 @@
-import iso from "../isomorph";
+import type { ArgsOf, ResultOf } from "../instrumentation/core";
+import type {
+  OpenAIAsyncChannel,
+  OpenAIChannel,
+  OpenAIStartContext,
+} from "../instrumentation/plugins/openai-channels";
 
 export type EnhancedResponse<T> = {
   response: Response;
@@ -9,21 +14,51 @@ export interface APIPromise<T> extends Promise<T> {
   withResponse(): Promise<EnhancedResponse<T>>;
 }
 
-export type ChannelContext = {
-  arguments: unknown[];
-  span_info?: unknown;
-  response?: Response;
-};
+export type ChannelContext<TChannel extends OpenAIAsyncChannel> =
+  OpenAIStartContext<TChannel>;
 
-export async function tracePromiseWithResponse<T>(
-  channelName: string,
-  traceContext: ChannelContext,
-  apiPromise: APIPromise<T>,
-): Promise<EnhancedResponse<T>> {
-  const channel = iso.newTracingChannel(channelName);
-  let enhancedResponse: EnhancedResponse<T> | undefined;
+type ChannelParam<TChannel extends OpenAIChannel> = ArgsOf<TChannel>[0];
 
-  const data = await channel.tracePromise(async () => {
+export function splitSpanInfo<T, TSpanInfo = unknown>(
+  allParams: T & { span_info?: TSpanInfo },
+): { params: T; span_info: TSpanInfo | undefined } {
+  const { span_info, ...params } = allParams;
+  return {
+    params: params as T,
+    span_info,
+  };
+}
+
+export function createChannelContext<TChannel extends OpenAIAsyncChannel>(
+  _channel: TChannel,
+  params: ChannelParam<TChannel>,
+  span_info: ChannelContext<TChannel>["span_info"],
+): ChannelContext<TChannel> {
+  return {
+    arguments:
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      [params] as ArgsOf<TChannel>,
+    span_info,
+  } as ChannelContext<TChannel>;
+}
+
+export async function tracePromiseWithResponse<
+  TChannel extends OpenAIAsyncChannel,
+  TResult extends ResultOf<TChannel>,
+>(
+  channel: TChannel,
+  traceContext: ChannelContext<TChannel>,
+  apiPromise: APIPromise<TResult>,
+): Promise<EnhancedResponse<TResult>> {
+  let enhancedResponse: EnhancedResponse<TResult> | undefined;
+  const tracePromise =
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    channel.tracePromise as (
+      fn: () => Promise<TResult>,
+      context: ChannelContext<TChannel>,
+    ) => Promise<TResult>;
+
+  const data = await tracePromise(async () => {
     enhancedResponse = await apiPromise.withResponse();
     traceContext.response = enhancedResponse.response;
     return enhancedResponse.data;

@@ -1,4 +1,5 @@
 import type { InstrumentationConfig } from "@apm-js-collab/code-transformer";
+import { anthropicChannels } from "../../instrumentation/plugins/anthropic-channels";
 
 /**
  * Instrumentation configurations for the Anthropic SDK.
@@ -14,7 +15,7 @@ import type { InstrumentationConfig } from "@apm-js-collab/code-transformer";
 export const anthropicConfigs: InstrumentationConfig[] = [
   // Messages API - create (supports streaming via stream=true parameter)
   {
-    channelName: "messages.create",
+    channelName: anthropicChannels.messagesCreate.name,
     module: {
       name: "@anthropic-ai/sdk",
       versionRange: ">=0.60.0",
@@ -29,7 +30,7 @@ export const anthropicConfigs: InstrumentationConfig[] = [
 
   // Beta Messages API - create (supports streaming via stream=true parameter)
   {
-    channelName: "beta.messages.create",
+    channelName: anthropicChannels.betaMessagesCreate.name,
     module: {
       name: "@anthropic-ai/sdk",
       versionRange: ">=0.60.0",

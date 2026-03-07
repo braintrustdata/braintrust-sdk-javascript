@@ -15,17 +15,41 @@
  */
 
 export { BasePlugin } from "./core";
+export { channel, defineChannels } from "./core";
 export { BraintrustPlugin } from "./braintrust-plugin";
 export type { BraintrustPluginConfig } from "./braintrust-plugin";
 
 // Re-export core types for external instrumentation packages
 export type {
+  ChannelKind,
+  ChannelMap,
+  ChannelMessage,
+  ChannelSpec,
+  AnyTypedChannel,
+  AnyAsyncChannel,
+  AnySyncStreamChannel,
+  TypedChannel,
+  TypedAsyncChannel,
+  TypedSyncStreamChannel,
+  ArgsOf,
+  ResultOf,
+  ExtraOf,
+  ChunkOf,
+  StartOf,
+  AsyncEndOf,
+  EndOf,
+  ErrorOf,
+  EventArguments,
   BaseContext,
   StartEvent,
   EndEvent,
   ErrorEvent,
   AsyncStartEvent,
   AsyncEndEvent,
+  StartEventWith,
+  EndEventWith,
+  AsyncEndEventWith,
+  ErrorEventWith,
   ChannelHandlers,
 } from "./core";
 export {

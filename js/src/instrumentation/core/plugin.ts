@@ -1,7 +1,21 @@
-import iso from "../../isomorph";
-import type { IsoChannelHandlers } from "../../isomorph";
+import type { IsoChannelHandlers, IsoTracingChannel } from "../../isomorph";
 import { isAsyncIterable, patchStreamIfNeeded } from "./stream-patcher";
-import type { StartEvent } from "./types";
+import type {
+  AnyAsyncChannel,
+  ArgsOf,
+  ChannelMap,
+  ChannelMessage,
+  ChunkOf,
+  ExtraOf,
+  ResultOf,
+} from "./channel-spec";
+import type {
+  AsyncEndEventWith,
+  ErrorEventWith,
+  EventArguments,
+  StartEvent,
+  StartEventWith,
+} from "./types";
 import { startSpan } from "../../logger";
 import type { Span } from "../../logger";
 import { getCurrentUnixTimestamp, isObject, mergeDicts } from "../../util";
@@ -17,7 +31,148 @@ type ChannelSpanInfo = {
   metadata?: Record<string, unknown>;
 };
 
-function getChannelSpanInfo(event: StartEvent): ChannelSpanInfo | undefined {
+type ChannelEventExtras = {
+  span_info?: ChannelSpanInfo;
+};
+
+type ChannelLifecycleEvent<
+  TArguments extends EventArguments,
+  TResult,
+  TExtra extends object = Record<string, never>,
+> = StartEventWith<TArguments, TExtra & ChannelEventExtras> &
+  Partial<Pick<AsyncEndEventWith<TResult, TArguments>, "result">> &
+  Partial<Pick<ErrorEventWith<TArguments>, "error">>;
+
+type ChannelState = {
+  span: Span;
+  startTime: number;
+};
+
+type ExtractedInput<TInput = unknown, TMetadata = unknown> = {
+  input: TInput;
+  metadata: TMetadata;
+};
+
+type NonStreamingResult<TResult> = Exclude<TResult, AsyncIterable<unknown>>;
+
+type ChannelSubscriptionConfig<
+  TArguments extends EventArguments,
+  TResult,
+  TExtra extends object = Record<string, never>,
+  TInput = unknown,
+  TMetadata = unknown,
+  TOutput = unknown,
+  TOutputMetadata extends Record<string, unknown> = Record<string, unknown>,
+> = ChannelConfig & {
+  extractInput: (args: [...TArguments]) => ExtractedInput<TInput, TMetadata>;
+  extractOutput: (
+    result: TResult,
+    endEvent?: AsyncEndEventWith<
+      TResult,
+      TArguments,
+      TExtra & ChannelEventExtras
+    >,
+  ) => TOutput;
+  extractMetadata?: (
+    result: TResult,
+    endEvent?: AsyncEndEventWith<
+      TResult,
+      TArguments,
+      TExtra & ChannelEventExtras
+    >,
+  ) => TOutputMetadata | undefined;
+  extractMetrics: (
+    result: TResult,
+    startTime?: number,
+    endEvent?: AsyncEndEventWith<
+      TResult,
+      TArguments,
+      TExtra & ChannelEventExtras
+    >,
+  ) => Record<string, number>;
+};
+
+type StreamingChannelSubscriptionConfig<
+  TArguments extends EventArguments,
+  TResult,
+  TChunk = unknown,
+  TExtra extends object = Record<string, never>,
+  TInput = unknown,
+  TMetadata = unknown,
+  TOutput = unknown,
+  TOutputMetadata extends Record<string, unknown> = Record<string, unknown>,
+  THasAggregate extends boolean = false,
+  TStreamOutput = TOutput,
+  TStreamOutputMetadata extends Record<string, unknown> = TOutputMetadata,
+> = ChannelConfig & {
+  extractInput: (args: [...TArguments]) => ExtractedInput<TInput, TMetadata>;
+  extractOutput: (
+    result: THasAggregate extends true ? NonStreamingResult<TResult> : TResult,
+    endEvent?: AsyncEndEventWith<
+      TResult,
+      TArguments,
+      TExtra & ChannelEventExtras
+    >,
+  ) => TOutput;
+  extractMetadata?: (
+    result: THasAggregate extends true ? NonStreamingResult<TResult> : TResult,
+    endEvent?: AsyncEndEventWith<
+      TResult,
+      TArguments,
+      TExtra & ChannelEventExtras
+    >,
+  ) => TOutputMetadata | undefined;
+  extractMetrics: (
+    result: THasAggregate extends true ? NonStreamingResult<TResult> : TResult,
+    startTime?: number,
+    endEvent?: AsyncEndEventWith<
+      TResult,
+      TArguments,
+      TExtra & ChannelEventExtras
+    >,
+  ) => Record<string, number>;
+} & (THasAggregate extends true
+    ? {
+        aggregateChunks: (
+          chunks: TChunk[],
+          result?: TResult,
+          endEvent?: AsyncEndEventWith<
+            TResult,
+            TArguments,
+            TExtra & ChannelEventExtras
+          >,
+          startTime?: number,
+        ) => {
+          output: TStreamOutput;
+          metrics: Record<string, number>;
+          metadata?: TStreamOutputMetadata;
+        };
+      }
+    : {
+        aggregateChunks?: undefined;
+      });
+
+type SyncStreamChannelSubscriptionConfig<
+  TArguments extends EventArguments,
+  _TResult,
+  TStreamEvent = unknown,
+  _TExtra extends object = Record<string, never>,
+  TInput = unknown,
+  TMetadata = unknown,
+  TOutput = unknown,
+  TOutputMetadata extends Record<string, unknown> = Record<string, unknown>,
+> = ChannelConfig & {
+  extractInput: (args: [...TArguments]) => ExtractedInput<TInput, TMetadata>;
+  extractFromEvent?: (event: TStreamEvent) => {
+    output?: TOutput;
+    metrics?: Record<string, number>;
+    metadata?: TOutputMetadata;
+  };
+};
+
+function getChannelSpanInfo(
+  event: StartEvent<EventArguments> & Partial<ChannelEventExtras>,
+): ChannelSpanInfo | undefined {
   const fromContext = (event as Record<string, unknown>).span_info;
   if (isObject(fromContext)) {
     return fromContext as ChannelSpanInfo;
@@ -40,7 +195,7 @@ function getChannelSpanInfo(event: StartEvent): ChannelSpanInfo | undefined {
  */
 function buildStartSpanArgs(
   config: ChannelConfig,
-  event: StartEvent,
+  event: StartEvent<EventArguments> & Partial<ChannelEventExtras>,
 ): {
   name: string;
   spanAttributes: Record<string, unknown>;
@@ -88,13 +243,64 @@ function mergeInputMetadata(
   return mergedMetadata;
 }
 
+function hasResult<
+  TArguments extends EventArguments,
+  TResult,
+  TExtra extends object,
+>(
+  event: ChannelLifecycleEvent<TArguments, TResult, TExtra>,
+): event is ChannelLifecycleEvent<TArguments, TResult, TExtra> & {
+  result: TResult;
+} {
+  return "result" in event;
+}
+
+function hasError<
+  TArguments extends EventArguments,
+  TResult,
+  TExtra extends object,
+>(
+  event: ChannelLifecycleEvent<TArguments, TResult, TExtra>,
+): event is ChannelLifecycleEvent<TArguments, TResult, TExtra> & {
+  error: Error;
+} {
+  return "error" in event;
+}
+
+function isStreamingResult<TResult>(
+  result: TResult,
+): result is Extract<TResult, AsyncIterable<unknown>> {
+  return isAsyncIterable(result);
+}
+
+type SyncStreamLike<TStreamEvent> = {
+  on(event: "chunk", handler: (payload?: unknown) => void): unknown;
+  on(
+    event: "chatCompletion",
+    handler: (payload?: { choices?: unknown }) => void,
+  ): unknown;
+  on(event: "event", handler: (payload: TStreamEvent) => void): unknown;
+  on(event: "end", handler: () => void): unknown;
+  on(event: "error", handler: (error: Error) => void): unknown;
+};
+
+function isSyncStreamLike<TStreamEvent>(
+  value: unknown,
+): value is SyncStreamLike<TStreamEvent> {
+  return isObject(value) && typeof value.on === "function";
+}
+
+function hasChoices(value: unknown): value is { choices?: unknown } {
+  return isObject(value) && "choices" in value;
+}
+
 /**
  * Base class for creating instrumentation plugins.
  *
  * Plugins subscribe to diagnostics_channel events and convert them
  * into spans, logs, or other observability data.
  */
-export abstract class BasePlugin {
+export abstract class BasePlugin<TChannels extends ChannelMap = ChannelMap> {
   protected enabled = false;
   protected unsubscribers: Array<() => void> = [];
 
@@ -135,39 +341,53 @@ export abstract class BasePlugin {
   /**
    * Helper to subscribe to a channel with raw handlers.
    *
-   * @param channelName - The channel name to subscribe to
+   * @param channel - The typed channel to subscribe to
    * @param handlers - Event handlers
    */
-  protected subscribe(channelName: string, handlers: IsoChannelHandlers): void {
-    const channel = iso.newTracingChannel(channelName);
-    channel.subscribe(handlers);
+  protected subscribe<TChannel extends TChannels[keyof TChannels]>(
+    channel: TChannel,
+    handlers: IsoChannelHandlers<ChannelMessage<TChannel>>,
+  ): void {
+    const tracingChannel = channel.tracingChannel() as IsoTracingChannel<
+      ChannelMessage<TChannel>
+    >;
+    tracingChannel.subscribe(handlers);
   }
 
   /**
    * Subscribe to a channel for async methods (non-streaming).
    * Creates a span and logs input/output/metrics.
    */
-  protected subscribeToChannel(
-    channelName: string,
-    config: {
-      name: string;
-      type: string;
-      extractInput: (args: any[]) => { input: any; metadata: any };
-      extractOutput: (result: any, endEvent?: any) => any;
-      extractMetadata?: (result: any, endEvent?: any) => any;
-      extractMetrics: (
-        result: any,
-        startTime?: number,
-        endEvent?: any,
-      ) => Record<string, number>;
-    },
+  protected subscribeToChannel<
+    TChannel extends Extract<TChannels[keyof TChannels], AnyAsyncChannel>,
+    TInput = unknown,
+    TMetadata = unknown,
+    TOutput = unknown,
+    TOutputMetadata extends Record<string, unknown> = Record<string, unknown>,
+  >(
+    channel: TChannel,
+    config: ChannelSubscriptionConfig<
+      ArgsOf<TChannel>,
+      ResultOf<TChannel>,
+      ExtraOf<TChannel>,
+      TInput,
+      TMetadata,
+      TOutput,
+      TOutputMetadata
+    >,
   ): void {
-    const channel = iso.newTracingChannel(channelName);
+    type TArguments = ArgsOf<TChannel>;
+    type TResult = ResultOf<TChannel>;
+    type TExtra = ExtraOf<TChannel>;
+    type TEvent = ChannelLifecycleEvent<TArguments, TResult, TExtra>;
+    const channelName = channel.fullName;
+    const tracingChannel =
+      channel.tracingChannel() as IsoTracingChannel<TEvent>;
 
-    const spans = new WeakMap<any, { span: Span; startTime: number }>();
+    const spans = new WeakMap<object, ChannelState>();
 
-    const handlers = {
-      start: (event: StartEvent) => {
+    const handlers: IsoChannelHandlers<TEvent> = {
+      start: (event) => {
         const { name, spanAttributes, spanInfoMetadata } = buildStartSpanArgs(
           config,
           event,
@@ -191,18 +411,20 @@ export abstract class BasePlugin {
         }
       },
 
-      asyncEnd: (event: any) => {
+      asyncEnd: (event) => {
         const spanData = spans.get(event);
-        if (!spanData) {
+        if (!spanData || !hasResult(event)) {
           return;
         }
 
         const { span, startTime } = spanData;
+        const endEvent = event;
+        const result = endEvent.result;
 
         try {
-          const output = config.extractOutput(event.result, event);
-          const metrics = config.extractMetrics(event.result, startTime, event);
-          const metadata = config.extractMetadata?.(event.result, event);
+          const output = config.extractOutput(result, endEvent);
+          const metrics = config.extractMetrics(result, startTime, endEvent);
+          const metadata = config.extractMetadata?.(result, endEvent);
 
           span.log({
             output,
@@ -217,9 +439,9 @@ export abstract class BasePlugin {
         }
       },
 
-      error: (event: any) => {
+      error: (event) => {
         const spanData = spans.get(event);
-        if (!spanData) {
+        if (!spanData || !hasError(event)) {
           return;
         }
 
@@ -233,11 +455,11 @@ export abstract class BasePlugin {
       },
     };
 
-    channel.subscribe(handlers);
+    tracingChannel.subscribe(handlers);
 
     // Store unsubscribe function
     this.unsubscribers.push(() => {
-      channel.unsubscribe(handlers);
+      tracingChannel.unsubscribe(handlers);
     });
   }
 
@@ -245,36 +467,87 @@ export abstract class BasePlugin {
    * Subscribe to a channel for async methods that may return streams.
    * Handles both streaming and non-streaming responses.
    */
-  protected subscribeToStreamingChannel(
-    channelName: string,
-    config: {
-      name: string;
-      type: string;
-      extractInput: (args: any[]) => { input: any; metadata: any };
-      extractOutput: (result: any, endEvent?: any) => any;
-      extractMetadata?: (result: any, endEvent?: any) => any;
-      extractMetrics: (
-        result: any,
-        startTime?: number,
-        endEvent?: any,
-      ) => Record<string, number>;
-      aggregateChunks?: (
-        chunks: any[],
-        result?: any,
-        endEvent?: any,
-      ) => {
-        output: any;
-        metrics: Record<string, number>;
-        metadata?: any;
-      };
-    },
+  protected subscribeToStreamingChannel<
+    TChannel extends Extract<TChannels[keyof TChannels], AnyAsyncChannel>,
+    TInput = unknown,
+    TMetadata = unknown,
+    TOutput = unknown,
+    TOutputMetadata extends Record<string, unknown> = Record<string, unknown>,
+    TStreamOutput = TOutput,
+    TStreamOutputMetadata extends Record<string, unknown> = TOutputMetadata,
+  >(
+    channel: TChannel,
+    config: StreamingChannelSubscriptionConfig<
+      ArgsOf<TChannel>,
+      ResultOf<TChannel>,
+      ChunkOf<TChannel>,
+      ExtraOf<TChannel>,
+      TInput,
+      TMetadata,
+      TOutput,
+      TOutputMetadata,
+      true,
+      TStreamOutput,
+      TStreamOutputMetadata
+    >,
+  ): void;
+  protected subscribeToStreamingChannel<
+    TChannel extends Extract<TChannels[keyof TChannels], AnyAsyncChannel>,
+    TInput = unknown,
+    TMetadata = unknown,
+    TOutput = unknown,
+    TOutputMetadata extends Record<string, unknown> = Record<string, unknown>,
+  >(
+    channel: TChannel,
+    config: StreamingChannelSubscriptionConfig<
+      ArgsOf<TChannel>,
+      ResultOf<TChannel>,
+      ChunkOf<TChannel>,
+      ExtraOf<TChannel>,
+      TInput,
+      TMetadata,
+      TOutput,
+      TOutputMetadata,
+      false
+    >,
+  ): void;
+  protected subscribeToStreamingChannel<
+    TChannel extends Extract<TChannels[keyof TChannels], AnyAsyncChannel>,
+    TInput = unknown,
+    TMetadata = unknown,
+    TOutput = unknown,
+    TOutputMetadata extends Record<string, unknown> = Record<string, unknown>,
+    TStreamOutput = TOutput,
+    TStreamOutputMetadata extends Record<string, unknown> = TOutputMetadata,
+  >(
+    channel: TChannel,
+    config: StreamingChannelSubscriptionConfig<
+      ArgsOf<TChannel>,
+      ResultOf<TChannel>,
+      ChunkOf<TChannel>,
+      ExtraOf<TChannel>,
+      TInput,
+      TMetadata,
+      TOutput,
+      TOutputMetadata,
+      boolean,
+      TStreamOutput,
+      TStreamOutputMetadata
+    >,
   ): void {
-    const channel = iso.newTracingChannel(channelName);
+    type TArguments = ArgsOf<TChannel>;
+    type TResult = ResultOf<TChannel>;
+    type TChunk = ChunkOf<TChannel>;
+    type TExtra = ExtraOf<TChannel>;
+    type TEvent = ChannelLifecycleEvent<TArguments, TResult, TExtra>;
+    const channelName = channel.fullName;
+    const tracingChannel =
+      channel.tracingChannel() as IsoTracingChannel<TEvent>;
 
-    const spans = new WeakMap<any, { span: Span; startTime: number }>();
+    const spans = new WeakMap<object, ChannelState>();
 
-    const handlers = {
-      start: (event: StartEvent) => {
+    const handlers: IsoChannelHandlers<TEvent> = {
+      start: (event) => {
         const { name, spanAttributes, spanInfoMetadata } = buildStartSpanArgs(
           config,
           event,
@@ -298,43 +571,58 @@ export abstract class BasePlugin {
         }
       },
 
-      asyncEnd: (event: any) => {
+      asyncEnd: (event) => {
         const spanData = spans.get(event);
-        if (!spanData) {
+        if (!spanData || !hasResult(event)) {
           return;
         }
 
         const { span, startTime } = spanData;
+        const endEvent = event;
+        const result = endEvent.result;
 
         // Check if result is a stream
-        if (isAsyncIterable(event.result)) {
+        if (isStreamingResult(result)) {
           let firstChunkTime: number | undefined;
 
           // Patch the stream to collect chunks
-          patchStreamIfNeeded(event.result, {
+          patchStreamIfNeeded<TChunk>(result, {
             onChunk: () => {
               if (firstChunkTime === undefined) {
                 firstChunkTime = getCurrentUnixTimestamp();
               }
             },
-            onComplete: (chunks: any[]) => {
+            onComplete: (chunks: TChunk[]) => {
               try {
-                let output: any;
+                let output: TOutput | TStreamOutput;
                 let metrics: Record<string, number>;
-                let metadata: any;
+                let metadata:
+                  | TOutputMetadata
+                  | TStreamOutputMetadata
+                  | undefined;
 
                 if (config.aggregateChunks) {
                   const aggregated = config.aggregateChunks(
                     chunks,
-                    event.result,
-                    event,
+                    result,
+                    endEvent,
+                    startTime,
                   );
                   output = aggregated.output;
                   metrics = aggregated.metrics;
                   metadata = aggregated.metadata;
                 } else {
-                  output = config.extractOutput(chunks, event);
-                  metrics = config.extractMetrics(chunks, startTime, event);
+                  output = config.extractOutput(
+                    // Without an aggregateChunks handler, fall back to passing the
+                    // collected stream chunks to the extractor callbacks.
+                    chunks as TResult,
+                    endEvent,
+                  );
+                  metrics = config.extractMetrics(
+                    chunks as TResult,
+                    startTime,
+                    endEvent,
+                  );
                 }
 
                 // Add time_to_first_token if not already present
@@ -377,14 +665,15 @@ export abstract class BasePlugin {
         } else {
           // Non-streaming response
           try {
-            const output = config.extractOutput(event.result, event);
+            const nonStreamingResult = result;
+            const output = config.extractOutput(nonStreamingResult, endEvent);
             const metadata = config.extractMetadata
-              ? config.extractMetadata(event.result, event)
+              ? config.extractMetadata(nonStreamingResult, endEvent)
               : undefined;
             const metrics = config.extractMetrics(
-              event.result,
+              nonStreamingResult,
               startTime,
-              event,
+              endEvent,
             );
 
             span.log({
@@ -401,9 +690,9 @@ export abstract class BasePlugin {
         }
       },
 
-      error: (event: any) => {
+      error: (event) => {
         const spanData = spans.get(event);
-        if (!spanData) {
+        if (!spanData || !hasError(event)) {
           return;
         }
 
@@ -417,11 +706,11 @@ export abstract class BasePlugin {
       },
     };
 
-    channel.subscribe(handlers);
+    tracingChannel.subscribe(handlers);
 
     // Store unsubscribe function
     this.unsubscribers.push(() => {
-      channel.unsubscribe(handlers);
+      tracingChannel.unsubscribe(handlers);
     });
   }
 
@@ -429,25 +718,38 @@ export abstract class BasePlugin {
    * Subscribe to a channel for sync methods that return event-based streams.
    * Used for methods like beta.chat.completions.stream() and responses.stream().
    */
-  protected subscribeToSyncStreamChannel(
-    channelName: string,
-    config: {
-      name: string;
-      type: string;
-      extractInput: (args: any[]) => { input: any; metadata: any };
-      extractFromEvent?: (event: any) => {
-        output?: any;
-        metrics?: Record<string, number>;
-        metadata?: any;
-      };
-    },
+  protected subscribeToSyncStreamChannel<
+    TChannel extends Exclude<TChannels[keyof TChannels], AnyAsyncChannel>,
+    TInput = unknown,
+    TMetadata = unknown,
+    TOutput = unknown,
+    TOutputMetadata extends Record<string, unknown> = Record<string, unknown>,
+  >(
+    channel: TChannel,
+    config: SyncStreamChannelSubscriptionConfig<
+      ArgsOf<TChannel>,
+      ResultOf<TChannel>,
+      ChunkOf<TChannel>,
+      ExtraOf<TChannel>,
+      TInput,
+      TMetadata,
+      TOutput,
+      TOutputMetadata
+    >,
   ): void {
-    const channel = iso.newTracingChannel(channelName);
+    type TArguments = ArgsOf<TChannel>;
+    type TResult = ResultOf<TChannel>;
+    type TStreamEvent = ChunkOf<TChannel>;
+    type TExtra = ExtraOf<TChannel>;
+    type TEvent = ChannelLifecycleEvent<TArguments, TResult, TExtra>;
+    const channelName = channel.fullName;
+    const tracingChannel =
+      channel.tracingChannel() as IsoTracingChannel<TEvent>;
 
-    const spans = new WeakMap<any, { span: Span; startTime: number }>();
+    const spans = new WeakMap<object, ChannelState>();
 
-    const handlers = {
-      start: (event: StartEvent) => {
+    const handlers: IsoChannelHandlers<TEvent> = {
+      start: (event) => {
         const { name, spanAttributes, spanInfoMetadata } = buildStartSpanArgs(
           config,
           event,
@@ -471,16 +773,17 @@ export abstract class BasePlugin {
         }
       },
 
-      end: (event: any) => {
+      end: (event) => {
         const spanData = spans.get(event);
-        if (!spanData) {
+        if (!spanData || !hasResult(event)) {
           return;
         }
 
         const { span, startTime } = spanData;
-        const stream = event.result;
+        const endEvent = event;
+        const stream = endEvent.result;
 
-        if (!stream || typeof stream.on !== "function") {
+        if (!isSyncStreamLike<TStreamEvent>(stream)) {
           // Not a stream, just end the span
           span.end();
           spans.delete(event);
@@ -490,7 +793,7 @@ export abstract class BasePlugin {
         let first = true;
 
         // Listen for stream events
-        stream.on("chunk", (chunk: any) => {
+        stream.on("chunk", (_chunk: unknown) => {
           if (first) {
             const now = getCurrentUnixTimestamp();
             span.log({
@@ -502,11 +805,13 @@ export abstract class BasePlugin {
           }
         });
 
-        stream.on("chatCompletion", (completion: any) => {
+        stream.on("chatCompletion", (completion: unknown) => {
           try {
-            span.log({
-              output: completion.choices,
-            });
+            if (hasChoices(completion)) {
+              span.log({
+                output: completion.choices,
+              });
+            }
           } catch (error) {
             console.error(
               `Error extracting chatCompletion for ${channelName}:`,
@@ -515,7 +820,7 @@ export abstract class BasePlugin {
           }
         });
 
-        stream.on("event", (streamEvent: any) => {
+        stream.on("event", (streamEvent) => {
           if (config.extractFromEvent) {
             try {
               if (first) {
@@ -549,9 +854,9 @@ export abstract class BasePlugin {
         // Don't delete the span from the map - it will be deleted when the stream ends
       },
 
-      error: (event: any) => {
+      error: (event) => {
         const spanData = spans.get(event);
-        if (!spanData) {
+        if (!spanData || !hasError(event)) {
           return;
         }
 
@@ -565,11 +870,11 @@ export abstract class BasePlugin {
       },
     };
 
-    channel.subscribe(handlers);
+    tracingChannel.subscribe(handlers);
 
     // Store unsubscribe function
     this.unsubscribers.push(() => {
-      channel.unsubscribe(handlers);
+      tracingChannel.unsubscribe(handlers);
     });
   }
 }

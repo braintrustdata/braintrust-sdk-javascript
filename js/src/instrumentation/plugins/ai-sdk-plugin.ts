@@ -1,11 +1,8 @@
-import iso from "../../isomorph";
-import { BasePlugin, isAsyncIterable, patchStreamIfNeeded } from "../core";
-import type { StartEvent } from "../core";
-import { startSpan } from "../../logger";
-import type { Span } from "../../logger";
+import { BasePlugin } from "../core";
 import { SpanTypeAttribute } from "../../../util/index";
 import { getCurrentUnixTimestamp } from "../../util";
 import { processInputAttachments } from "../../wrappers/attachment-utils";
+import { aiSDKChannels } from "./ai-sdk-channels";
 import type {
   AISDKCallParams,
   AISDKModel,
@@ -58,8 +55,7 @@ const DEFAULT_DENY_OUTPUT_PATHS: string[] = [
  * - Tool calls and structured outputs
  * - Streaming responses with time-to-first-token
  */
-export class AISDKPlugin extends BasePlugin {
-  protected unsubscribers: Array<() => void> = [];
+export class AISDKPlugin extends BasePlugin<typeof aiSDKChannels> {
   private config: AISDKPluginConfig;
 
   constructor(config: AISDKPluginConfig = {}) {
@@ -83,21 +79,18 @@ export class AISDKPlugin extends BasePlugin {
       this.config.denyOutputPaths || DEFAULT_DENY_OUTPUT_PATHS;
 
     // generateText - async function that may return streams
-    this.subscribeToStreamingChannel("orchestrion:ai:generateText", {
+    this.subscribeToStreamingChannel(aiSDKChannels.generateText, {
       name: "generateText",
       type: SpanTypeAttribute.LLM,
-      extractInput: (args: unknown[]) => {
-        const params = (args[0] || {}) as AISDKCallParams;
+      extractInput: ([params]) => {
         return {
           input: processAISDKInput(params),
           metadata: extractMetadataFromParams(params),
         };
       },
-      extractOutput: (result: unknown) => {
-        return processAISDKOutput(result as AISDKResult, denyOutputPaths);
-      },
-      extractMetrics: (result: unknown, startTime?: number) => {
-        const metrics = extractTokenMetrics(result as AISDKResult);
+      extractOutput: (result) => processAISDKOutput(result, denyOutputPaths),
+      extractMetrics: (result, startTime) => {
+        const metrics = extractTokenMetrics(result);
         if (startTime) {
           metrics.time_to_first_token = getCurrentUnixTimestamp() - startTime;
         }
@@ -107,21 +100,18 @@ export class AISDKPlugin extends BasePlugin {
     });
 
     // streamText - async function returning stream
-    this.subscribeToStreamingChannel("orchestrion:ai:streamText", {
+    this.subscribeToStreamingChannel(aiSDKChannels.streamText, {
       name: "streamText",
       type: SpanTypeAttribute.LLM,
-      extractInput: (args: unknown[]) => {
-        const params = (args[0] || {}) as AISDKCallParams;
+      extractInput: ([params]) => {
         return {
           input: processAISDKInput(params),
           metadata: extractMetadataFromParams(params),
         };
       },
-      extractOutput: (result: unknown) => {
-        return processAISDKOutput(result as AISDKResult, denyOutputPaths);
-      },
-      extractMetrics: (result: unknown, startTime?: number) => {
-        const metrics = extractTokenMetrics(result as AISDKResult);
+      extractOutput: (result) => processAISDKOutput(result, denyOutputPaths),
+      extractMetrics: (result, startTime) => {
+        const metrics = extractTokenMetrics(result);
         if (startTime) {
           metrics.time_to_first_token = getCurrentUnixTimestamp() - startTime;
         }
@@ -131,21 +121,18 @@ export class AISDKPlugin extends BasePlugin {
     });
 
     // generateObject - async function that may return streams
-    this.subscribeToStreamingChannel("orchestrion:ai:generateObject", {
+    this.subscribeToStreamingChannel(aiSDKChannels.generateObject, {
       name: "generateObject",
       type: SpanTypeAttribute.LLM,
-      extractInput: (args: unknown[]) => {
-        const params = (args[0] || {}) as AISDKCallParams;
+      extractInput: ([params]) => {
         return {
           input: processAISDKInput(params),
           metadata: extractMetadataFromParams(params),
         };
       },
-      extractOutput: (result: unknown) => {
-        return processAISDKOutput(result as AISDKResult, denyOutputPaths);
-      },
-      extractMetrics: (result: unknown, startTime?: number) => {
-        const metrics = extractTokenMetrics(result as AISDKResult);
+      extractOutput: (result) => processAISDKOutput(result, denyOutputPaths),
+      extractMetrics: (result, startTime) => {
+        const metrics = extractTokenMetrics(result);
         if (startTime) {
           metrics.time_to_first_token = getCurrentUnixTimestamp() - startTime;
         }
@@ -155,21 +142,18 @@ export class AISDKPlugin extends BasePlugin {
     });
 
     // streamObject - async function returning stream
-    this.subscribeToStreamingChannel("orchestrion:ai:streamObject", {
+    this.subscribeToStreamingChannel(aiSDKChannels.streamObject, {
       name: "streamObject",
       type: SpanTypeAttribute.LLM,
-      extractInput: (args: unknown[]) => {
-        const params = (args[0] || {}) as AISDKCallParams;
+      extractInput: ([params]) => {
         return {
           input: processAISDKInput(params),
           metadata: extractMetadataFromParams(params),
         };
       },
-      extractOutput: (result: unknown) => {
-        return processAISDKOutput(result as AISDKResult, denyOutputPaths);
-      },
-      extractMetrics: (result: unknown, startTime?: number) => {
-        const metrics = extractTokenMetrics(result as AISDKResult);
+      extractOutput: (result) => processAISDKOutput(result, denyOutputPaths),
+      extractMetrics: (result, startTime) => {
+        const metrics = extractTokenMetrics(result);
         if (startTime) {
           metrics.time_to_first_token = getCurrentUnixTimestamp() - startTime;
         }
@@ -179,21 +163,18 @@ export class AISDKPlugin extends BasePlugin {
     });
 
     // Agent.generate - async method
-    this.subscribeToStreamingChannel("orchestrion:ai:Agent.generate", {
+    this.subscribeToStreamingChannel(aiSDKChannels.agentGenerate, {
       name: "Agent.generate",
       type: SpanTypeAttribute.LLM,
-      extractInput: (args: unknown[]) => {
-        const params = (args[0] || {}) as AISDKCallParams;
+      extractInput: ([params]) => {
         return {
           input: processAISDKInput(params),
           metadata: extractMetadataFromParams(params),
         };
       },
-      extractOutput: (result: unknown) => {
-        return processAISDKOutput(result as AISDKResult, denyOutputPaths);
-      },
-      extractMetrics: (result: unknown, startTime?: number) => {
-        const metrics = extractTokenMetrics(result as AISDKResult);
+      extractOutput: (result) => processAISDKOutput(result, denyOutputPaths),
+      extractMetrics: (result, startTime) => {
+        const metrics = extractTokenMetrics(result);
         if (startTime) {
           metrics.time_to_first_token = getCurrentUnixTimestamp() - startTime;
         }
@@ -203,21 +184,18 @@ export class AISDKPlugin extends BasePlugin {
     });
 
     // Agent.stream - async method returning stream
-    this.subscribeToStreamingChannel("orchestrion:ai:Agent.stream", {
+    this.subscribeToStreamingChannel(aiSDKChannels.agentStream, {
       name: "Agent.stream",
       type: SpanTypeAttribute.LLM,
-      extractInput: (args: unknown[]) => {
-        const params = (args[0] || {}) as AISDKCallParams;
+      extractInput: ([params]) => {
         return {
           input: processAISDKInput(params),
           metadata: extractMetadataFromParams(params),
         };
       },
-      extractOutput: (result: unknown) => {
-        return processAISDKOutput(result as AISDKResult, denyOutputPaths);
-      },
-      extractMetrics: (result: unknown, startTime?: number) => {
-        const metrics = extractTokenMetrics(result as AISDKResult);
+      extractOutput: (result) => processAISDKOutput(result, denyOutputPaths),
+      extractMetrics: (result, startTime) => {
+        const metrics = extractTokenMetrics(result);
         if (startTime) {
           metrics.time_to_first_token = getCurrentUnixTimestamp() - startTime;
         }
@@ -226,158 +204,6 @@ export class AISDKPlugin extends BasePlugin {
       aggregateChunks: aggregateAISDKChunks,
     });
   }
-
-  /**
-   * Subscribe to a channel for async methods that may return streams.
-   * Handles both streaming and non-streaming responses.
-   */
-  protected subscribeToStreamingChannel(
-    channelName: string,
-    config: StreamingChannelConfig,
-  ): void {
-    const channel = iso.newTracingChannel(channelName);
-
-    const spans = new WeakMap<WeakKey, { span: Span; startTime: number }>();
-
-    const handlers = {
-      start: (event: StartEvent) => {
-        const span = startSpan({
-          name: config.name,
-          spanAttributes: {
-            type: config.type,
-          },
-        });
-
-        const startTime = getCurrentUnixTimestamp();
-        spans.set(event, { span, startTime });
-
-        try {
-          const { input, metadata } = config.extractInput(event.arguments);
-          span.log({
-            input,
-            metadata,
-          });
-        } catch (error) {
-          console.error(`Error extracting input for ${channelName}:`, error);
-        }
-      },
-
-      asyncEnd: (event: Record<string, unknown>) => {
-        const spanData = spans.get(event);
-        if (!spanData) {
-          return;
-        }
-
-        const { span, startTime } = spanData;
-        const eventResult = event.result;
-
-        // Check if result is a stream
-        if (isAsyncIterable(eventResult)) {
-          // Patch the stream to collect chunks
-          patchStreamIfNeeded(eventResult, {
-            onComplete: (chunks: unknown[]) => {
-              try {
-                let output: unknown;
-                let metrics: Record<string, number>;
-
-                if (config.aggregateChunks) {
-                  const aggregated = config.aggregateChunks(chunks);
-                  output = aggregated.output;
-                  metrics = aggregated.metrics;
-                } else {
-                  output = config.extractOutput(chunks);
-                  metrics = config.extractMetrics(chunks, startTime);
-                }
-
-                // Add time_to_first_token if not already present
-                if (!metrics.time_to_first_token && chunks.length > 0) {
-                  metrics.time_to_first_token =
-                    getCurrentUnixTimestamp() - startTime;
-                }
-
-                span.log({
-                  output,
-                  metrics,
-                });
-              } catch (error) {
-                console.error(
-                  `Error extracting output for ${channelName}:`,
-                  error,
-                );
-              } finally {
-                span.end();
-              }
-            },
-            onError: (error: Error) => {
-              span.log({
-                error: error.message,
-              });
-              span.end();
-            },
-          });
-
-          // Don't delete the span from the map yet - it will be ended by the stream
-        } else {
-          // Non-streaming response
-          try {
-            const output = config.extractOutput(eventResult);
-            const metrics = config.extractMetrics(eventResult, startTime);
-
-            span.log({
-              output,
-              metrics,
-            });
-          } catch (error) {
-            console.error(`Error extracting output for ${channelName}:`, error);
-          } finally {
-            span.end();
-            spans.delete(event);
-          }
-        }
-      },
-
-      error: (event: Record<string, unknown>) => {
-        const spanData = spans.get(event);
-        if (!spanData) {
-          return;
-        }
-
-        const { span } = spanData;
-        const eventError = event.error as Error | undefined;
-
-        span.log({
-          error: eventError?.message,
-        });
-        span.end();
-        spans.delete(event);
-      },
-    };
-
-    channel.subscribe(handlers);
-
-    // Store unsubscribe function
-    this.unsubscribers.push(() => {
-      channel.unsubscribe(handlers);
-    });
-  }
-}
-
-interface StreamingChannelConfig {
-  name: string;
-  type: string;
-  extractInput: (args: unknown[]) => {
-    input: unknown;
-    metadata: Record<string, unknown>;
-  };
-  extractOutput: (result: unknown) => unknown;
-  extractMetrics: (
-    result: unknown,
-    startTime?: number,
-  ) => Record<string, number>;
-  aggregateChunks?: (chunks: unknown[]) => {
-    output: unknown;
-    metrics: Record<string, number>;
-  };
 }
 
 /**

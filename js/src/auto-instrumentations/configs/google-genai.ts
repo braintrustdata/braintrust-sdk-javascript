@@ -1,4 +1,5 @@
 import type { InstrumentationConfig } from "@apm-js-collab/code-transformer";
+import { googleGenAIChannels } from "../../instrumentation/plugins/google-genai-channels";
 
 /**
  * Instrumentation configurations for the Google GenAI SDK.
@@ -15,7 +16,7 @@ export const googleGenAIConfigs: InstrumentationConfig[] = [
   // Models.generateContentInternal - The actual class method (Node.js entry point)
   // Note: generateContent is an arrow function property that calls this internal method
   {
-    channelName: "models.generateContent",
+    channelName: googleGenAIChannels.generateContent.name,
     module: {
       name: "@google/genai",
       versionRange: ">=1.0.0",
@@ -31,7 +32,7 @@ export const googleGenAIConfigs: InstrumentationConfig[] = [
   // Models.generateContentStreamInternal - The actual class method (Node.js entry point)
   // Note: generateContentStream is an arrow function property that calls this internal method
   {
-    channelName: "models.generateContentStream",
+    channelName: googleGenAIChannels.generateContentStream.name,
     module: {
       name: "@google/genai",
       versionRange: ">=1.0.0",

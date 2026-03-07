@@ -1,10 +1,8 @@
-import iso from "../../isomorph";
-import { BasePlugin, isAsyncIterable, patchStreamIfNeeded } from "../core";
-import type { StartEvent } from "../core";
-import { startSpan, Attachment } from "../../logger";
-import type { Span } from "../../logger";
+import { BasePlugin } from "../core";
+import { Attachment } from "../../logger";
 import { SpanTypeAttribute } from "../../../util/index";
 import { getCurrentUnixTimestamp } from "../../util";
+import { googleGenAIChannels } from "./google-genai-channels";
 import type {
   GoogleGenAIGenerateContentParams,
   GoogleGenAIGenerateContentResponse,
@@ -27,9 +25,7 @@ import type {
  * - Converting inline data (images) to Attachment objects
  * - Tool calls (functionCall, functionResponse) and executable code results
  */
-export class GoogleGenAIPlugin extends BasePlugin {
-  protected unsubscribers: Array<() => void> = [];
-
+export class GoogleGenAIPlugin extends BasePlugin<typeof googleGenAIChannels> {
   protected onEnable(): void {
     this.subscribeToGoogleGenAIChannels();
   }
@@ -43,43 +39,29 @@ export class GoogleGenAIPlugin extends BasePlugin {
 
   private subscribeToGoogleGenAIChannels(): void {
     // GenerativeModel.generateContent (non-streaming)
-    this.subscribeToChannel(
-      "orchestrion:@google/genai:models.generateContent",
-      {
-        name: "google-genai.generateContent",
-        type: SpanTypeAttribute.LLM,
-        extractInput: (args: unknown[]) => {
-          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-          const params = (args[0] || {}) as GoogleGenAIGenerateContentParams;
-          const input = serializeInput(params);
-          const metadata = extractMetadata(params);
-          return {
-            input,
-            metadata: { ...metadata, provider: "google-genai" },
-          };
-        },
-        extractOutput: (result: unknown) => {
-          return result;
-        },
-        extractMetrics: (result: unknown, startTime?: number) => {
-          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-          const response = result as
-            | GoogleGenAIGenerateContentResponse
-            | undefined;
-          return extractGenerateContentMetrics(response, startTime);
-        },
+    this.subscribeToChannel(googleGenAIChannels.generateContent, {
+      name: "google-genai.generateContent",
+      type: SpanTypeAttribute.LLM,
+      extractInput: ([params]) => {
+        const input = serializeInput(params);
+        const metadata = extractMetadata(params);
+        return {
+          input,
+          metadata: { ...metadata, provider: "google-genai" },
+        };
       },
-    );
+      extractOutput: (result) => result,
+      extractMetrics: (result, startTime) =>
+        extractGenerateContentMetrics(result, startTime),
+    });
 
     // GenerativeModel.generateContentStream (streaming)
-    this.subscribeToGoogleStreamingChannel(
-      "orchestrion:@google/genai:models.generateContentStream",
+    this.subscribeToStreamingChannel(
+      googleGenAIChannels.generateContentStream,
       {
         name: "google-genai.generateContentStream",
         type: SpanTypeAttribute.LLM,
-        extractInput: (args: unknown[]) => {
-          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-          const params = (args[0] || {}) as GoogleGenAIGenerateContentParams;
+        extractInput: ([params]) => {
           const input = serializeInput(params);
           const metadata = extractMetadata(params);
           return {
@@ -87,222 +69,12 @@ export class GoogleGenAIPlugin extends BasePlugin {
             metadata: { ...metadata, provider: "google-genai" },
           };
         },
+        extractOutput: (result) => result,
+        extractMetrics: () => ({}),
         aggregateChunks: aggregateGenerateContentChunks,
       },
     );
   }
-
-  protected subscribeToChannel(
-    channelName: string,
-    config: ChannelConfig,
-  ): void {
-    const channel = iso.newTracingChannel(channelName);
-
-    const spans = new WeakMap<WeakKey, { span: Span; startTime: number }>();
-
-    const handlers = {
-      start: (event: StartEvent) => {
-        const span = startSpan({
-          name: config.name,
-          spanAttributes: {
-            type: config.type,
-          },
-        });
-
-        const startTime = getCurrentUnixTimestamp();
-        spans.set(event, { span, startTime });
-
-        try {
-          const { input, metadata } = config.extractInput(event.arguments);
-          span.log({
-            input,
-            metadata,
-          });
-        } catch (error) {
-          console.error(`Error extracting input for ${channelName}:`, error);
-        }
-      },
-
-      asyncEnd: (event: Record<string, unknown>) => {
-        const spanData = spans.get(event);
-        if (!spanData) {
-          return;
-        }
-
-        const { span, startTime } = spanData;
-
-        try {
-          const output = config.extractOutput(event.result);
-          const metrics = config.extractMetrics(event.result, startTime);
-
-          span.log({
-            output,
-            metrics,
-          });
-        } catch (error) {
-          console.error(`Error extracting output for ${channelName}:`, error);
-        } finally {
-          span.end();
-          spans.delete(event);
-        }
-      },
-
-      error: (event: Record<string, unknown>) => {
-        const spanData = spans.get(event);
-        if (!spanData) {
-          return;
-        }
-
-        const { span } = spanData;
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        const eventError = event.error as Error | undefined;
-
-        span.log({
-          error: eventError?.message,
-        });
-        span.end();
-        spans.delete(event);
-      },
-    };
-
-    channel.subscribe(handlers);
-
-    this.unsubscribers.push(() => {
-      channel.unsubscribe(handlers);
-    });
-  }
-
-  private subscribeToGoogleStreamingChannel(
-    channelName: string,
-    config: StreamingChannelConfig,
-  ): void {
-    const channel = iso.newTracingChannel(channelName);
-
-    const spans = new WeakMap<WeakKey, { span: Span; startTime: number }>();
-
-    const handlers = {
-      start: (event: StartEvent) => {
-        const span = startSpan({
-          name: config.name,
-          spanAttributes: {
-            type: config.type,
-          },
-        });
-
-        const startTime = getCurrentUnixTimestamp();
-        spans.set(event, { span, startTime });
-
-        try {
-          const { input, metadata } = config.extractInput(event.arguments);
-          span.log({
-            input,
-            metadata,
-          });
-        } catch (error) {
-          console.error(`Error extracting input for ${channelName}:`, error);
-        }
-      },
-
-      asyncEnd: (event: Record<string, unknown>) => {
-        const spanData = spans.get(event);
-        if (!spanData) {
-          return;
-        }
-
-        const { span, startTime } = spanData;
-
-        // Check if result is a stream
-        if (isAsyncIterable(event.result)) {
-          // Patch the stream to collect chunks
-          patchStreamIfNeeded(event.result, {
-            onComplete: (chunks: unknown[]) => {
-              try {
-                const { output, metrics } = config.aggregateChunks(
-                  chunks,
-                  startTime,
-                );
-
-                span.log({
-                  output,
-                  metrics,
-                });
-              } catch (error) {
-                console.error(
-                  `Error extracting output for ${channelName}:`,
-                  error,
-                );
-              } finally {
-                span.end();
-              }
-            },
-            onError: (error: Error) => {
-              span.log({
-                error: error.message,
-              });
-              span.end();
-            },
-          });
-        } else {
-          // Non-streaming response (shouldn't happen for generateContentStream)
-          span.end();
-          spans.delete(event);
-        }
-      },
-
-      error: (event: Record<string, unknown>) => {
-        const spanData = spans.get(event);
-        if (!spanData) {
-          return;
-        }
-
-        const { span } = spanData;
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        const eventError = event.error as Error | undefined;
-
-        span.log({
-          error: eventError?.message,
-        });
-        span.end();
-        spans.delete(event);
-      },
-    };
-
-    channel.subscribe(handlers);
-
-    this.unsubscribers.push(() => {
-      channel.unsubscribe(handlers);
-    });
-  }
-}
-
-interface ChannelConfig {
-  name: string;
-  type: string;
-  extractInput: (args: unknown[]) => {
-    input: unknown;
-    metadata: Record<string, unknown>;
-  };
-  extractOutput: (result: unknown) => unknown;
-  extractMetrics: (
-    result: unknown,
-    startTime?: number,
-  ) => Record<string, number>;
-}
-
-interface StreamingChannelConfig {
-  name: string;
-  type: string;
-  extractInput: (args: unknown[]) => {
-    input: unknown;
-    metadata: Record<string, unknown>;
-  };
-  aggregateChunks: (
-    chunks: unknown[],
-    startTime: number,
-  ) => {
-    output: unknown;
-    metrics: Record<string, number>;
-  };
 }
 
 /**
@@ -520,20 +292,26 @@ function populateUsageMetrics(
  * Aggregate chunks from streaming generateContentStream response.
  */
 function aggregateGenerateContentChunks(
-  chunks: unknown[],
-  startTime: number,
+  chunks: GoogleGenAIGenerateContentResponse[],
+  _result?:
+    | GoogleGenAIGenerateContentResponse
+    | AsyncIterable<GoogleGenAIGenerateContentResponse>,
+  _endEvent?: unknown,
+  startTime?: number,
 ): {
   output: Record<string, unknown>;
   metrics: Record<string, number>;
 } {
-  const end = getCurrentUnixTimestamp();
-  const metrics: Record<string, number> = {
-    duration: end - startTime,
-  };
+  const metrics: Record<string, number> = {};
+
+  if (startTime !== undefined) {
+    const end = getCurrentUnixTimestamp();
+    metrics.duration = end - startTime;
+  }
 
   let firstTokenTime: number | null = null;
 
-  if (chunks.length > 0 && firstTokenTime === null) {
+  if (chunks.length > 0 && firstTokenTime === null && startTime !== undefined) {
     firstTokenTime = getCurrentUnixTimestamp();
     metrics.time_to_first_token = firstTokenTime - startTime;
   }
@@ -549,16 +327,14 @@ function aggregateGenerateContentChunks(
   let lastResponse: GoogleGenAIGenerateContentResponse | null = null;
 
   for (const chunk of chunks) {
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    const typedChunk = chunk as GoogleGenAIGenerateContentResponse;
-    lastResponse = typedChunk;
+    lastResponse = chunk;
 
-    if (typedChunk.usageMetadata) {
-      usageMetadata = typedChunk.usageMetadata;
+    if (chunk.usageMetadata) {
+      usageMetadata = chunk.usageMetadata;
     }
 
-    if (typedChunk.candidates && Array.isArray(typedChunk.candidates)) {
-      for (const candidate of typedChunk.candidates) {
+    if (chunk.candidates && Array.isArray(chunk.candidates)) {
+      for (const candidate of chunk.candidates) {
         if (candidate.content?.parts) {
           for (const part of candidate.content.parts) {
             if (part.text !== undefined) {

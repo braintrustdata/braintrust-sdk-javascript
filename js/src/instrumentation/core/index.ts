@@ -10,6 +10,7 @@
  */
 
 export { BasePlugin } from "./plugin";
+export { channel, defineChannels } from "./channel-spec";
 export {
   createChannelName,
   parseChannelName,
@@ -17,12 +18,37 @@ export {
 } from "./channel";
 export { isAsyncIterable, patchStreamIfNeeded } from "./stream-patcher";
 export type {
+  ChannelKind,
+  ChannelMap,
+  ChannelMessage,
+  ChannelSpec,
+  AnyTypedChannel,
+  AnyAsyncChannel,
+  AnySyncStreamChannel,
+  TypedChannel,
+  TypedAsyncChannel,
+  TypedSyncStreamChannel,
+  ArgsOf,
+  ResultOf,
+  ExtraOf,
+  ChunkOf,
+  StartOf,
+  AsyncEndOf,
+  EndOf,
+  ErrorOf,
+} from "./channel-spec";
+export type {
+  EventArguments,
   BaseContext,
   StartEvent,
   EndEvent,
   ErrorEvent,
   AsyncStartEvent,
   AsyncEndEvent,
+  StartEventWith,
+  EndEventWith,
+  AsyncEndEventWith,
+  ErrorEventWith,
   ChannelHandlers,
 } from "./types";
 export type { StreamPatchOptions } from "./stream-patcher";

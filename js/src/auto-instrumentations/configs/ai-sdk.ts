@@ -1,4 +1,5 @@
 import type { InstrumentationConfig } from "@apm-js-collab/code-transformer";
+import { aiSDKChannels } from "../../instrumentation/plugins/ai-sdk-channels";
 
 /**
  * Instrumentation configurations for the Vercel AI SDK.
@@ -14,7 +15,7 @@ import type { InstrumentationConfig } from "@apm-js-collab/code-transformer";
 export const aiSDKConfigs: InstrumentationConfig[] = [
   // generateText - async function
   {
-    channelName: "generateText",
+    channelName: aiSDKChannels.generateText.name,
     module: {
       name: "ai",
       versionRange: ">=3.0.0",
@@ -28,7 +29,7 @@ export const aiSDKConfigs: InstrumentationConfig[] = [
 
   // streamText - async function
   {
-    channelName: "streamText",
+    channelName: aiSDKChannels.streamText.name,
     module: {
       name: "ai",
       versionRange: ">=3.0.0",
@@ -42,7 +43,7 @@ export const aiSDKConfigs: InstrumentationConfig[] = [
 
   // generateObject - async function
   {
-    channelName: "generateObject",
+    channelName: aiSDKChannels.generateObject.name,
     module: {
       name: "ai",
       versionRange: ">=3.0.0",
@@ -56,7 +57,7 @@ export const aiSDKConfigs: InstrumentationConfig[] = [
 
   // streamObject - async function
   {
-    channelName: "streamObject",
+    channelName: aiSDKChannels.streamObject.name,
     module: {
       name: "ai",
       versionRange: ">=3.0.0",
@@ -70,7 +71,7 @@ export const aiSDKConfigs: InstrumentationConfig[] = [
 
   // Agent.generate - async method (v3-v5 only, Agent structure changed in v6)
   {
-    channelName: "Agent.generate",
+    channelName: aiSDKChannels.agentGenerate.name,
     module: {
       name: "ai",
       versionRange: ">=3.0.0 <6.0.0",
@@ -85,7 +86,7 @@ export const aiSDKConfigs: InstrumentationConfig[] = [
 
   // Agent.stream - async method (v3-v5 only, Agent structure changed in v6)
   {
-    channelName: "Agent.stream",
+    channelName: aiSDKChannels.agentStream.name,
     module: {
       name: "ai",
       versionRange: ">=3.0.0 <6.0.0",
