@@ -18,6 +18,7 @@ import {
   Attachment,
   deepCopyEvent,
   renderMessage,
+  renderMessageImpl,
 } from "./logger";
 import {
   parseTemplateFormat,
@@ -62,7 +63,15 @@ test("renderMessage with file content parts", () => {
     ],
   };
 
-  const rendered = renderMessage(
+  const variables = {
+    item: "document",
+    image_url: "https://example.com/image.png",
+    file_data: "base64data",
+    file_id: "file-456",
+    filename: "report.pdf",
+  };
+
+  const rendered = renderMessageImpl(
     (template) =>
       template
         .replace("{{item}}", "document")
@@ -71,6 +80,7 @@ test("renderMessage with file content parts", () => {
         .replace("{{file_id}}", "file-456")
         .replace("{{filename}}", "report.pdf"),
     message,
+    variables,
   );
 
   expect(rendered.content).toEqual([
@@ -91,6 +101,293 @@ test("renderMessage with file content parts", () => {
         file_id: "file-456",
         filename: "report.pdf",
       },
+    },
+  ]);
+});
+
+test("renderMessage expands attachment array in image_url parts", () => {
+  const message = {
+    role: "user" as const,
+    content: [
+      {
+        type: "image_url" as const,
+        image_url: { url: "{{images}}" },
+      },
+    ],
+  };
+
+  const variables = {
+    images: ["https://example.com/img1.jpg", "https://example.com/img2.jpg"],
+  };
+
+  const rendered = renderMessageImpl(
+    (template) => template, // Template rendering shouldn't happen for attachment arrays
+    message,
+    variables,
+  );
+
+  expect(rendered.content).toEqual([
+    {
+      type: "image_url",
+      image_url: {
+        url: "https://example.com/img1.jpg",
+      },
+    },
+    {
+      type: "image_url",
+      image_url: {
+        url: "https://example.com/img2.jpg",
+      },
+    },
+  ]);
+});
+
+test("renderMessage expands inline attachment array in image_url parts", () => {
+  const message = {
+    role: "user" as const,
+    content: [
+      {
+        type: "image_url" as const,
+        image_url: { url: "{{images}}" },
+      },
+    ],
+  };
+
+  const variables = {
+    images: [
+      {
+        type: "inline_attachment",
+        src: "data:image/png;base64,abc",
+        content_type: "image/png",
+      },
+      {
+        type: "inline_attachment",
+        src: "data:image/jpeg;base64,def",
+        content_type: "image/jpeg",
+      },
+    ],
+  };
+
+  const rendered = renderMessageImpl(
+    (template) => template,
+    message,
+    variables,
+  );
+
+  expect(rendered.content).toEqual([
+    {
+      type: "image_url",
+      image_url: {
+        url: {
+          type: "inline_attachment",
+          src: "data:image/png;base64,abc",
+          content_type: "image/png",
+        },
+      },
+    },
+    {
+      type: "image_url",
+      image_url: {
+        url: {
+          type: "inline_attachment",
+          src: "data:image/jpeg;base64,def",
+          content_type: "image/jpeg",
+        },
+      },
+    },
+  ]);
+});
+
+test("renderMessage does NOT expand mixed content (text + variable)", () => {
+  const message = {
+    role: "user" as const,
+    content: "Look at {{images}}",
+  };
+
+  const variables = {
+    images: ["https://example.com/img1.jpg", "https://example.com/img2.jpg"],
+  };
+
+  const rendered = renderMessageImpl(
+    (template) => template.replace("{{images}}", "[array]"),
+    message,
+    variables,
+  );
+
+  // Mixed content is not expanded - just rendered normally
+  expect(rendered.content).toBe("Look at [array]");
+});
+
+test("renderMessage expands nested attachment arrays in image_url parts", () => {
+  const message = {
+    role: "user" as const,
+    content: [
+      {
+        type: "image_url" as const,
+        image_url: { url: "{{data.images}}" },
+      },
+    ],
+  };
+
+  const variables = {
+    data: {
+      images: ["https://example.com/img1.jpg", "https://example.com/img2.jpg"],
+    },
+  };
+
+  const rendered = renderMessageImpl(
+    (template) => template, // Template rendering shouldn't happen
+    message,
+    variables,
+  );
+
+  expect(rendered.content).toEqual([
+    {
+      type: "image_url",
+      image_url: {
+        url: "https://example.com/img1.jpg",
+      },
+    },
+    {
+      type: "image_url",
+      image_url: {
+        url: "https://example.com/img2.jpg",
+      },
+    },
+  ]);
+});
+
+test("renderMessage expands deeply nested attachment arrays in image_url parts", () => {
+  const message = {
+    role: "user" as const,
+    content: [
+      {
+        type: "image_url" as const,
+        image_url: { url: "{{user.profile.images}}" },
+      },
+    ],
+  };
+
+  const variables = {
+    user: {
+      profile: {
+        images: [
+          {
+            type: "inline_attachment",
+            src: "data:image/png;base64,abc",
+            content_type: "image/png",
+          },
+          {
+            type: "inline_attachment",
+            src: "data:image/jpeg;base64,def",
+            content_type: "image/jpeg",
+          },
+        ],
+      },
+    },
+  };
+
+  const rendered = renderMessageImpl(
+    (template) => template,
+    message,
+    variables,
+  );
+
+  expect(rendered.content).toEqual([
+    {
+      type: "image_url",
+      image_url: {
+        url: {
+          type: "inline_attachment",
+          src: "data:image/png;base64,abc",
+          content_type: "image/png",
+        },
+      },
+    },
+    {
+      type: "image_url",
+      image_url: {
+        url: {
+          type: "inline_attachment",
+          src: "data:image/jpeg;base64,def",
+          content_type: "image/jpeg",
+        },
+      },
+    },
+  ]);
+});
+
+test("renderMessage handles single image_url (no array)", () => {
+  const message = {
+    role: "user" as const,
+    content: [
+      {
+        type: "image_url" as const,
+        image_url: {
+          url: "{{image}}",
+        },
+      },
+    ],
+  };
+
+  const variables = {
+    image: "https://example.com/single.jpg",
+  };
+
+  const rendered = renderMessageImpl(
+    (template) =>
+      template.replace("{{image}}", "https://example.com/single.jpg"),
+    message,
+    variables,
+  );
+
+  expect(rendered.content).toEqual([
+    {
+      type: "image_url",
+      image_url: {
+        url: "https://example.com/single.jpg",
+      },
+    },
+  ]);
+});
+
+test("renderMessage expands attachment arrays in structured content", () => {
+  // This tests the case where content is already an array with structured parts,
+  // and one part has a template variable for an attachment array
+  const message = {
+    role: "user" as const,
+    content: [
+      { type: "text" as const, text: "Describe these images" },
+      { type: "image_url" as const, image_url: { url: "{{attachments}}" } },
+    ],
+  };
+
+  const variables = {
+    attachments: [
+      "https://example.com/img1.jpg",
+      "https://example.com/img2.jpg",
+    ],
+  };
+
+  const rendered = renderMessageImpl(
+    (template) => template,
+    message,
+    variables,
+  );
+
+  // Should expand {{attachments}} into multiple image_url parts
+  expect(rendered.content).toEqual([
+    {
+      type: "text",
+      text: "Describe these images",
+    },
+    {
+      type: "image_url",
+      image_url: { url: "https://example.com/img1.jpg" },
+    },
+    {
+      type: "image_url",
+      image_url: { url: "https://example.com/img2.jpg" },
     },
   ]);
 });

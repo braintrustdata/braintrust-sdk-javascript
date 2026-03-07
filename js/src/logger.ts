@@ -38,6 +38,7 @@ import {
   VALID_SOURCES,
   isArray,
   isObject,
+  getObjValueByPath,
 } from "./util";
 import {
   type AnyModelParamsType as AnyModelParam,
@@ -125,6 +126,14 @@ import { lintTemplate as _lintMustacheTemplate } from "./template/mustache-utils
 import { prettifyXact } from "../util/index";
 import { SpanCache, CachedSpan } from "./span-cache";
 import type { EvalParameters, InferParameters } from "./eval-parameters";
+
+// Manual type definition for inline attachments (not in generated_types)
+const InlineAttachmentReferenceSchema = z.object({
+  type: z.literal("inline_attachment"),
+  src: z.string().min(1),
+  content_type: z.string().optional(),
+  filename: z.string().optional(),
+});
 
 // Context management interfaces
 export interface ContextParentSpanIds {
@@ -6977,9 +6986,80 @@ export type DefaultPromptArgs = Partial<
   CompiledPromptParams & AnyModelParam & ChatPrompt & CompletionPrompt
 >;
 
+function isAttachmentObject(value: unknown): boolean {
+  return (
+    BraintrustAttachmentReferenceSchema.safeParse(value).success ||
+    InlineAttachmentReferenceSchema.safeParse(value).success ||
+    ExternalAttachmentReferenceSchema.safeParse(value).success
+  );
+}
+
+// Simple URL validation all braintrust attachment urls or generic links
+function isURL(url: string): boolean {
+  try {
+    const parsedUrl = new URL(url.trim());
+    return parsedUrl.protocol === "http:" || parsedUrl.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Detect and expand attachment array variables before template rendering.
+ * Supports both simple variables ({{images}}) and nested paths ({{data.images}}).
+ * @param content The message content (should be a template variable like "{{images}}" or "{{data.images}}")
+ * @param variables The variables object with array values
+ * @returns Array of image_url parts if expansion occurred, null otherwise
+ */
+function expandAttachmentArrayPreTemplate(
+  content: unknown,
+  variables: Record<string, unknown>,
+): unknown[] | null {
+  if (typeof content !== "string") return null;
+
+  // Detect {{varName}} or {{nested.path}} pattern (exact match only - no mixed content)
+  // Supports: {{images}}, {{data.images}}, {{user.profile.images}}, etc.
+  const match = content.match(/^\{\{\s*([\w.]+)\s*\}\}$/);
+  if (!match) return null;
+
+  const varPath = match[1];
+
+  const value = varPath.includes(".")
+    ? getObjValueByPath(variables, varPath.split("."))
+    : variables[varPath];
+
+  if (!Array.isArray(value)) return null;
+
+  // Check if array contains attachments or image URLs
+  const allValid = value.every(
+    (v) => isAttachmentObject(v) || (typeof v === "string" && isURL(v)),
+  );
+
+  if (!allValid) return null;
+
+  // Expand directly to image_url parts
+  return value.map((item) => ({
+    type: "image_url" as const,
+    image_url: { url: item },
+  }));
+}
+
 export function renderMessage<T extends Message>(
   render: (template: string) => string,
   message: T,
+): T;
+
+export function renderMessage<T extends Message>(
+  render: (template: string) => string,
+  message: T,
+): T {
+  return renderMessageImpl(render, message, {});
+}
+
+export function renderMessageImpl<T extends Message>(
+  render: (template: string) => string,
+  message: T,
+  variables?: Record<string, unknown>,
 ): T {
   return {
     ...message,
@@ -6989,36 +7069,54 @@ export function renderMessage<T extends Message>(
             ? undefined
             : typeof message.content === "string"
               ? render(message.content)
-              : message.content.map((c) => {
+              : message.content.flatMap((c) => {
                   switch (c.type) {
                     case "text":
-                      return { ...c, text: render(c.text) };
+                      return [{ ...c, text: render(c.text) }];
                     case "image_url":
                       if (isObject(c.image_url.url)) {
                         throw new Error(
                           "Attachments must be replaced with URLs before calling `build()`",
                         );
                       }
-                      return {
-                        ...c,
-                        image_url: {
-                          ...c.image_url,
-                          url: render(c.image_url.url),
+
+                      if (variables) {
+                        const expanded = expandAttachmentArrayPreTemplate(
+                          c.image_url.url,
+                          variables,
+                        );
+                        if (expanded) {
+                          return expanded;
+                        }
+                      }
+
+                      // Otherwise render the URL template normally
+                      return [
+                        {
+                          ...c,
+                          image_url: {
+                            ...c.image_url,
+                            url: render(c.image_url.url),
+                          },
                         },
-                      };
+                      ];
                     case "file":
-                      return {
-                        ...c,
-                        file: {
-                          file_data: render(c.file.file_data || ""),
-                          ...(c.file.file_id && {
-                            file_id: render(c.file.file_id),
-                          }),
-                          ...(c.file.filename && {
-                            filename: render(c.file.filename),
-                          }),
+                      return [
+                        {
+                          ...c,
+                          file: {
+                            ...(c.file.file_data && {
+                              file_data: render(c.file.file_data),
+                            }),
+                            ...(c.file.file_id && {
+                              file_id: render(c.file.file_id),
+                            }),
+                            ...(c.file.filename && {
+                              filename: render(c.file.filename),
+                            }),
+                          },
                         },
-                      };
+                      ];
                     default:
                       const _exhaustiveCheck: never = c;
                       return _exhaustiveCheck;
@@ -7422,7 +7520,7 @@ export class Prompt<
         });
 
       const baseMessages = (prompt.messages || []).map((m) =>
-        renderMessage(render, m),
+        renderMessageImpl(render, m, variables),
       );
       const hasSystemPrompt = baseMessages.some((m) => m.role === "system");
 
