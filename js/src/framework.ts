@@ -228,6 +228,12 @@ export interface Evaluator<
   scores: EvalScorer<Input, Output, Expected, Metadata>[];
 
   /**
+   * Optional span types per scorer. When provided, same length as `scores`.
+   * Use `"classifier"` for classifier spans; otherwise `"score"`.
+   */
+  scorerSpanTypes?: ("score" | "classifier")[];
+
+  /**
    * A set of parameters that will be passed to the evaluator.
    * Can be:
    * - A raw EvalParameters schema (Zod schemas)
@@ -1156,6 +1162,7 @@ async function runEvaluatorInternal(
               output,
               trace,
             };
+            const scorerSpanTypes = evaluator.scorerSpanTypes ?? [];
             const scoreResults = await Promise.all(
               evaluator.scores.map(async (score, score_idx) => {
                 try {
@@ -1194,7 +1201,14 @@ async function runEvaluatorInternal(
                           ];
 
                     const getOtherFields = (s: Score) => {
-                      const { metadata: _metadata, name: _name, ...rest } = s;
+                      const {
+                        metadata: _metadata,
+                        name: _name,
+                        classification: _classification,
+                        id: _id,
+                        label: _label,
+                        ...rest
+                      } = s;
                       return rest;
                     };
 
@@ -1214,31 +1228,36 @@ async function runEvaluatorInternal(
                         ? getOtherFields(results[0])
                         : results.reduce(
                             (prev, s) =>
-                              mergeDicts(prev, { [s.name]: getOtherFields(s) }),
+                              mergeDicts(prev, {
+                                [s.name]: getOtherFields(s),
+                              }),
                             {},
                           );
 
-                    const scores = results.reduce(
-                      (prev, s) => mergeDicts(prev, { [s.name]: s.score }),
+                    const scoresRecord = results.reduce(
+                      (prev, s) =>
+                        mergeDicts(prev, { [s.name]: s.score }),
                       {},
                     );
 
                     span.log({
                       output: resultOutput,
                       metadata: resultMetadata,
-                      scores: scores,
+                      scores: scoresRecord,
                     });
                     return results;
                   };
 
-                  // Exclude trace from logged input since it contains internal state
-                  // that shouldn't be serialized (spansFlushPromise, spansFlushed, etc.)
                   const { trace: _trace, ...scoringArgsForLogging } =
                     scoringArgs;
+                  const spanType =
+                    scorerSpanTypes[score_idx] === "classifier"
+                      ? SpanTypeAttribute.CLASSIFIER
+                      : SpanTypeAttribute.SCORE;
                   const results = await rootSpan.traced(runScorer, {
                     name: scorerNames[score_idx],
                     spanAttributes: {
-                      type: SpanTypeAttribute.SCORE,
+                      type: spanType,
                       purpose: "scorer",
                     },
                     propagatedEvent: makeScorerPropagatedEvent(
@@ -1252,20 +1271,40 @@ async function runEvaluatorInternal(
                 }
               }),
             );
-            // Resolve each promise on its own so that we can separate the passing
-            // from the failing ones.
             const failingScorersAndResults: { name: string; error: unknown }[] =
               [];
+            const classifications: Record<
+              string,
+              { id: string; label: string }[]
+            > = {};
             scoreResults.forEach((results, i) => {
               const name = scorerNames[i];
               if (results.kind === "score") {
                 (results.value || []).forEach((result) => {
                   scores[result.name] = result.score;
+                  if (result.id != null) {
+                    classifications[result.name] = [
+                      { id: result.id, label: result.label ?? result.id },
+                    ];
+                  } else if (result.classification != null) {
+                    classifications[result.name] = [
+                      {
+                        id: result.classification,
+                        label: result.classification,
+                      },
+                    ];
+                  }
                 });
               } else {
                 failingScorersAndResults.push({ name, error: results.value });
               }
             });
+
+            if (Object.keys(classifications).length > 0) {
+              rootSpan.log({ classifications } as Parameters<
+                typeof rootSpan.log
+              >[0]);
+            }
 
             unhandledScores = null;
             if (failingScorersAndResults.length) {
