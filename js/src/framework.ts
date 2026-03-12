@@ -1,6 +1,7 @@
 import {
   makeScorerPropagatedEvent,
   mergeDicts,
+  Classification,
   Score,
   SpanComponentsV3,
   SpanTypeAttribute,
@@ -186,6 +187,17 @@ export type EvalScorer<
   args: EvalScorerArgs<Input, Output, Expected, Metadata>,
 ) => OneOrMoreScores | Promise<OneOrMoreScores>;
 
+export type OneOrMoreClassifications = Classification | Classification[] | null;
+
+export type EvalClassifier<
+  Input,
+  Output,
+  Expected,
+  Metadata extends BaseMetadata = DefaultMetadataType,
+> = (
+  args: EvalScorerArgs<Input, Output, Expected, Metadata>,
+) => OneOrMoreClassifications | Promise<OneOrMoreClassifications>;
+
 export type EvalResult<
   Input,
   Output,
@@ -223,15 +235,16 @@ export interface Evaluator<
   task: EvalTask<Input, Output, Expected, Metadata, Parameters>;
 
   /**
-   * A set of functions that take an input, output, and expected value and return a score.
+   * A set of functions that take an input, output, and expected value and return a {@link Score}.
    */
   scores: EvalScorer<Input, Output, Expected, Metadata>[];
 
   /**
-   * Optional span types per scorer. When provided, same length as `scores`.
-   * Use `"classifier"` for classifier spans; otherwise `"score"`.
+   * A set of functions that take an input, output, and expected value and return a
+   * classification. Each function must return a {@link Classification} with a required
+   * `classification` field. Results are recorded under the `classifications` column.
    */
-  scorerSpanTypes?: ("score" | "classifier")[];
+  classifications: EvalClassifier<Input, Output, Expected, Metadata>[];
 
   /**
    * A set of parameters that will be passed to the evaluator.
@@ -872,6 +885,102 @@ export function scorerName(
   return scorer.name || `scorer_${scorer_idx}`;
 }
 
+export function classifierName(
+  classifier: EvalClassifier<any, any, any, any>,
+  classifier_idx: number,
+) {
+  return classifier.name || `classifier_${classifier_idx}`;
+}
+
+function buildSpanMetadata(
+  results: Array<{ name: string; metadata?: Record<string, unknown> }>,
+) {
+  return results.length === 1
+    ? results[0].metadata
+    : results.reduce(
+        (prev, s) => mergeDicts(prev, { [s.name]: s.metadata }),
+        {},
+      );
+}
+
+function buildSpanScores(
+  results: Array<{
+    name: string;
+    score: number | null;
+    metadata?: Record<string, unknown>;
+  }>,
+) {
+  const scoresRecord = results.reduce(
+    (prev, s) => mergeDicts(prev, { [s.name]: s.score }),
+    {},
+  );
+  return { resultMetadata: buildSpanMetadata(results), scoresRecord };
+}
+
+async function runInScorerSpan<T>(
+  rootSpan: Span,
+  spanName: string,
+  spanType: SpanTypeAttribute,
+  propagatedEvent: ReturnType<typeof makeScorerPropagatedEvent>,
+  eventInput: unknown,
+  fn: (span: Span) => Promise<T[] | null>,
+): Promise<
+  { kind: "score"; value: T[] | null } | { kind: "error"; value: unknown }
+> {
+  try {
+    const value = await rootSpan.traced(fn, {
+      name: spanName,
+      spanAttributes: { type: spanType, purpose: "scorer" },
+      propagatedEvent,
+      event: { input: eventInput },
+    });
+    return { kind: "score", value };
+  } catch (e) {
+    return { kind: "error", value: e };
+  }
+}
+
+function collectScoringResults<T extends { name: string }>(
+  runResults: Array<
+    { kind: "score"; value: T[] | null } | { kind: "error"; value: unknown }
+  >,
+  names: string[],
+  onResult: (result: T) => void,
+): { name: string; error: unknown }[] {
+  const failing: { name: string; error: unknown }[] = [];
+  runResults.forEach((r, i) => {
+    if (r.kind === "score") {
+      (r.value ?? []).forEach(onResult);
+    } else {
+      failing.push({ name: names[i], error: r.value });
+    }
+  });
+  return failing;
+}
+
+function logScoringFailures(
+  kind: string,
+  failures: { name: string; error: unknown }[],
+  metadata: Record<string, unknown>,
+  rootSpan: Span,
+  state: BraintrustState | undefined,
+): string[] {
+  if (!failures.length) return [];
+  const errorMap = Object.fromEntries(
+    failures.map(({ name, error }) => [
+      name,
+      error instanceof Error ? error.stack : `${error}`,
+    ]),
+  );
+  metadata[`${kind}_errors`] = errorMap;
+  rootSpan.log({ metadata: { [`${kind}_errors`]: errorMap } });
+  debugLogger.forState(state).warn(
+    `Found exceptions for the following ${kind}s: ${Object.keys(errorMap).join(", ")}`,
+    failures.map((f) => f.error),
+  );
+  return Object.keys(errorMap);
+}
+
 export async function runEvaluator(
   experiment: Experiment | null,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1098,6 +1207,7 @@ async function runEvaluatorInternal(
           let tags: string[] = [...(datum.tags ?? [])];
           const scores: Record<string, number | null> = {};
           const scorerNames = evaluator.scores.map(scorerName);
+          const classifierNames = evaluator.classifications.map(classifierName);
           let unhandledScores: string[] | null = scorerNames;
           try {
             const meta = (o: Record<string, unknown>) =>
@@ -1162,143 +1272,162 @@ async function runEvaluatorInternal(
               output,
               trace,
             };
-            const scorerSpanTypes = evaluator.scorerSpanTypes ?? [];
-            const scoreResults = await Promise.all(
-              evaluator.scores.map(async (score, score_idx) => {
-                try {
-                  const runScorer = async (span: Span) => {
-                    const scoreResult = score(scoringArgs);
-                    const scoreValue =
-                      scoreResult instanceof Promise
-                        ? await scoreResult
-                        : scoreResult;
+            const { trace: _trace, ...scoringArgsForLogging } = scoringArgs;
+            const propagatedEvent = makeScorerPropagatedEvent(
+              await rootSpan.export(),
+            );
 
-                    if (scoreValue === null) {
-                      return null;
-                    }
+            const getOtherFields = (s: Score) => {
+              const { metadata: _metadata, name: _name, ...rest } = s;
+              return rest;
+            };
 
-                    if (Array.isArray(scoreValue)) {
-                      for (const s of scoreValue) {
-                        if (!(typeof s === "object" && !isEmpty(s))) {
-                          throw new Error(
-                            `When returning an array of scores, each score must be a non-empty object. Got: ${JSON.stringify(
-                              s,
-                            )}`,
-                          );
+            const [scoreResults, classificationResults] = await Promise.all([
+              Promise.all(
+                evaluator.scores.map((score, score_idx) =>
+                  runInScorerSpan(
+                    rootSpan,
+                    scorerNames[score_idx],
+                    SpanTypeAttribute.SCORE,
+                    propagatedEvent,
+                    scoringArgsForLogging,
+                    async (span) => {
+                      const scoreValue = await Promise.resolve(
+                        score(scoringArgs),
+                      );
+                      if (scoreValue === null) return null;
+                      if (Array.isArray(scoreValue)) {
+                        for (const s of scoreValue) {
+                          if (!(typeof s === "object" && !isEmpty(s))) {
+                            throw new Error(
+                              `When returning an array of scores, each score must be a non-empty object. Got: ${JSON.stringify(s)}`,
+                            );
+                          }
                         }
                       }
-                    }
-
-                    const results = Array.isArray(scoreValue)
-                      ? scoreValue
-                      : typeof scoreValue === "object" && !isEmpty(scoreValue)
-                        ? [scoreValue]
-                        : [
-                            {
-                              name: scorerNames[score_idx],
-                              score: scoreValue,
-                            },
-                          ];
-
-                    const getOtherFields = (s: Score) => {
-                      const {
-                        metadata: _metadata,
-                        name: _name,
-                        classification: _classification,
-                        id: _id,
-                        label: _label,
-                        ...rest
-                      } = s;
-                      return rest;
-                    };
-
-                    const resultMetadata =
-                      results.length === 1
-                        ? results[0].metadata
-                        : results.reduce(
-                            (prev, s) =>
-                              mergeDicts(prev, {
-                                [s.name]: s.metadata,
-                              }),
-                            {},
-                          );
-
-                    const resultOutput =
-                      results.length === 1
-                        ? getOtherFields(results[0])
-                        : results.reduce(
-                            (prev, s) =>
-                              mergeDicts(prev, {
-                                [s.name]: getOtherFields(s),
-                              }),
-                            {},
-                          );
-
-                    const scoresRecord = results.reduce(
-                      (prev, s) =>
-                        mergeDicts(prev, { [s.name]: s.score }),
-                      {},
-                    );
-
-                    span.log({
-                      output: resultOutput,
-                      metadata: resultMetadata,
-                      scores: scoresRecord,
-                    });
-                    return results;
-                  };
-
-                  const { trace: _trace, ...scoringArgsForLogging } =
-                    scoringArgs;
-                  const spanType =
-                    scorerSpanTypes[score_idx] === "classifier"
-                      ? SpanTypeAttribute.CLASSIFIER
-                      : SpanTypeAttribute.SCORE;
-                  const results = await rootSpan.traced(runScorer, {
-                    name: scorerNames[score_idx],
-                    spanAttributes: {
-                      type: spanType,
-                      purpose: "scorer",
+                      const results: Score[] = Array.isArray(scoreValue)
+                        ? scoreValue
+                        : typeof scoreValue === "object" && !isEmpty(scoreValue)
+                          ? [scoreValue]
+                          : [
+                              {
+                                name: scorerNames[score_idx],
+                                score: scoreValue,
+                              },
+                            ];
+                      const { resultMetadata, scoresRecord } =
+                        buildSpanScores(results);
+                      const resultOutput =
+                        results.length === 1
+                          ? getOtherFields(results[0])
+                          : results.reduce(
+                              (prev, s) =>
+                                mergeDicts(prev, {
+                                  [s.name]: getOtherFields(s),
+                                }),
+                              {},
+                            );
+                      span.log({
+                        output: resultOutput,
+                        metadata: resultMetadata,
+                        scores: scoresRecord,
+                      });
+                      return results;
                     },
-                    propagatedEvent: makeScorerPropagatedEvent(
-                      await rootSpan.export(),
-                    ),
-                    event: { input: scoringArgsForLogging },
-                  });
-                  return { kind: "score", value: results } as const;
-                } catch (e) {
-                  return { kind: "error", value: e } as const;
-                }
-              }),
+                  ),
+                ),
+              ),
+              Promise.all(
+                evaluator.classifications.map((classifier, idx) =>
+                  runInScorerSpan(
+                    rootSpan,
+                    classifierNames[idx],
+                    SpanTypeAttribute.CLASSIFIER,
+                    propagatedEvent,
+                    scoringArgsForLogging,
+                    async (span) => {
+                      const classifierValue = await Promise.resolve(
+                        classifier(scoringArgs),
+                      );
+                      if (classifierValue === null) return null;
+                      const rawResults = Array.isArray(classifierValue)
+                        ? classifierValue
+                        : [classifierValue];
+                      // Normalize: if the result is a raw classification value
+                      // (string or { id, label? }) rather than a full
+                      // Classification object, wrap it using the classifier name.
+                      const toClassification = (r: unknown): Classification => {
+                        if (
+                          r !== null &&
+                          typeof r === "object" &&
+                          "classification" in r &&
+                          "name" in r
+                        ) {
+                          return r as Classification;
+                        }
+                        return {
+                          name: classifierNames[idx],
+                          classification: r as
+                            | string
+                            | { id: string; label?: string },
+                        };
+                      };
+                      const results = rawResults.map(toClassification);
+                      const toIdLabel = (
+                        c: string | { id: string; label?: string } | undefined,
+                      ) =>
+                        c == null
+                          ? null
+                          : typeof c === "string"
+                            ? { id: c, label: c }
+                            : { id: c.id, label: c.label ?? c.id };
+                      const resultOutput =
+                        results.length === 1
+                          ? toIdLabel(results[0].classification)
+                          : results.reduce(
+                              (prev, r) =>
+                                mergeDicts(prev, {
+                                  [r.name]: toIdLabel(r.classification),
+                                }),
+                              {},
+                            );
+                      span.log({
+                        output: resultOutput,
+                        metadata: buildSpanMetadata(results),
+                      });
+                      return results;
+                    },
+                  ),
+                ),
+              ),
+            ]);
+
+            const failingScorers = collectScoringResults(
+              scoreResults,
+              scorerNames,
+              (result) => {
+                scores[result.name] = result.score;
+              },
             );
-            const failingScorersAndResults: { name: string; error: unknown }[] =
-              [];
+
             const classifications: Record<
               string,
               { id: string; label: string }[]
             > = {};
-            scoreResults.forEach((results, i) => {
-              const name = scorerNames[i];
-              if (results.kind === "score") {
-                (results.value || []).forEach((result) => {
-                  scores[result.name] = result.score;
-                  if (result.id != null) {
-                    classifications[result.name] = [
-                      { id: result.id, label: result.label ?? result.id },
-                    ];
-                  } else if (result.classification != null) {
-                    classifications[result.name] = [
-                      {
-                        id: result.classification,
-                        label: result.classification,
-                      },
-                    ];
-                  }
-                });
-              } else {
-                failingScorersAndResults.push({ name, error: results.value });
-              }
-            });
+            const failingClassifiers = collectScoringResults(
+              classificationResults,
+              classifierNames,
+              (result) => {
+                const c = result.classification;
+                if (typeof c === "string") {
+                  classifications[result.name] = [{ id: c, label: c }];
+                } else {
+                  classifications[result.name] = [
+                    { id: c.id, label: c.label ?? c.id },
+                  ];
+                }
+              },
+            );
 
             if (Object.keys(classifications).length > 0) {
               rootSpan.log({ classifications } as Parameters<
@@ -1306,28 +1435,23 @@ async function runEvaluatorInternal(
               >[0]);
             }
 
-            unhandledScores = null;
-            if (failingScorersAndResults.length) {
-              const scorerErrors = Object.fromEntries(
-                failingScorersAndResults.map(({ name, error }) => [
-                  name,
-                  error instanceof Error ? error.stack : `${error}`,
-                ]),
-              );
-              metadata["scorer_errors"] = scorerErrors;
-              rootSpan.log({
-                metadata: { scorer_errors: scorerErrors },
-              });
-              const names = Object.keys(scorerErrors).join(", ");
-              const errors = failingScorersAndResults.map((item) => item.error);
-              unhandledScores = Object.keys(scorerErrors);
-              debugLogger
-                .forState(evaluator.state)
-                .warn(
-                  `Found exceptions for the following scorers: ${names}`,
-                  errors,
-                );
-            }
+            const failedScorerNames = logScoringFailures(
+              "scorer",
+              failingScorers,
+              metadata,
+              rootSpan,
+              evaluator.state,
+            );
+            unhandledScores = failedScorerNames.length
+              ? failedScorerNames
+              : null;
+            logScoringFailures(
+              "classifier",
+              failingClassifiers,
+              metadata,
+              rootSpan,
+              evaluator.state,
+            );
           } catch (e) {
             logSpanError(rootSpan, e);
             error = e;

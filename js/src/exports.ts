@@ -186,6 +186,7 @@ export type {
   EvalResult,
   EvalScorerArgs,
   EvalScorer,
+  EvalClassifier,
   EvaluatorDef,
   EvaluatorFile,
   ReporterBody,
