@@ -55,7 +55,7 @@ export {
   ensureNewDatasetRecord,
 } from "./object";
 
-export type { Score, Scorer, ScorerArgs } from "./score";
+export type { Classification, Score, Scorer, ScorerArgs } from "./score";
 
 export { constructJsonArray, deterministicReplacer } from "./json_util";
 
