@@ -21,6 +21,7 @@ export type OtherExperimentLogFields = {
   error: unknown;
   tags: string[];
   scores: Record<string, number | null>;
+  classifications?: Record<string, { id: string; label: string }[]>;
   metadata: Record<string, unknown>;
   metrics: Record<string, unknown>;
   datasetRecordId: string;

@@ -2,6 +2,7 @@ import {
   makeScorerPropagatedEvent,
   mergeDicts,
   Classification,
+  ClassificationItem,
   Score,
   SpanComponentsV3,
   SpanTypeAttribute,
@@ -205,9 +206,10 @@ export type EvalResult<
   Metadata extends BaseMetadata = DefaultMetadataType,
 > = EvalCase<Input, Expected, Metadata> & {
   output: Output;
-  scores: Record<string, number | null>;
   error: unknown;
   origin?: ObjectReference;
+  scores: Record<string, number | null>;
+  classifications?: Record<string, ClassificationItem[]>;
 };
 
 type ErrorScoreHandler = (args: {
@@ -241,10 +243,9 @@ export interface Evaluator<
 
   /**
    * A set of functions that take an input, output, and expected value and return a
-   * classification. Each function must return a {@link Classification} with a required
-   * `classification` field. Results are recorded under the `classifications` column.
+   * {@link Classification}. Results are recorded under the `classifications` column.
    */
-  classifications: EvalClassifier<Input, Output, Expected, Metadata>[];
+  classifications?: EvalClassifier<Input, Output, Expected, Metadata>[];
 
   /**
    * A set of parameters that will be passed to the evaluator.
@@ -885,7 +886,7 @@ export function scorerName(
   return scorer.name || `scorer_${scorer_idx}`;
 }
 
-export function classifierName(
+function classifierName(
   classifier: EvalClassifier<any, any, any, any>,
   classifier_idx: number,
 ) {
@@ -956,6 +957,37 @@ function collectScoringResults<T extends { name: string }>(
     }
   });
   return failing;
+}
+
+function validateClassificationResult(
+  value: unknown,
+  scorerName: string,
+): Classification {
+  if (!(typeof value === "object" && value !== null && !isEmpty(value))) {
+    throw new Error(
+      `When returning structured classifier results, each classification must be a non-empty object. Got: ${JSON.stringify(value)}`,
+    );
+  }
+  if (!("name" in value) || typeof value.name !== "string" || !value.name) {
+    throw new Error(
+      `Classifier ${scorerName} must return classifications with a non-empty string name. Got: ${JSON.stringify(value)}`,
+    );
+  }
+  if (!("id" in value) || typeof value.id !== "string" || !value.id) {
+    throw new Error(
+      `Classifier ${scorerName} must return classifications with a non-empty string id. Got: ${JSON.stringify(value)}`,
+    );
+  }
+  return value as Classification;
+}
+
+function toClassificationItem(c: Classification): ClassificationItem {
+  return {
+    id: c.id,
+    label: c.label ?? c.id,
+    ...(c.confidence !== undefined ? { confidence: c.confidence } : {}),
+    ...(c.metadata !== undefined ? { metadata: c.metadata } : {}),
+  };
 }
 
 function logScoringFailures(
@@ -1206,8 +1238,11 @@ async function runEvaluatorInternal(
           let error: unknown | undefined = undefined;
           let tags: string[] = [...(datum.tags ?? [])];
           const scores: Record<string, number | null> = {};
+          const classifications: Record<string, ClassificationItem[]> = {};
           const scorerNames = evaluator.scores.map(scorerName);
-          const classifierNames = evaluator.classifications.map(classifierName);
+          const classifierNames = (evaluator.classifications ?? []).map(
+            classifierName,
+          );
           let unhandledScores: string[] | null = scorerNames;
           try {
             const meta = (o: Record<string, unknown>) =>
@@ -1338,7 +1373,7 @@ async function runEvaluatorInternal(
                 ),
               ),
               Promise.all(
-                evaluator.classifications.map((classifier, idx) =>
+                (evaluator.classifications ?? []).map((classifier, idx) =>
                   runInScorerSpan(
                     rootSpan,
                     classifierNames[idx],
@@ -1350,52 +1385,31 @@ async function runEvaluatorInternal(
                         classifier(scoringArgs),
                       );
                       if (classifierValue === null) return null;
-                      const rawResults = Array.isArray(classifierValue)
-                        ? classifierValue
-                        : [classifierValue];
-                      // Normalize: if the result is a raw classification value
-                      // (string or { id, label? }) rather than a full
-                      // Classification object, wrap it using the classifier name.
-                      const toClassification = (r: unknown): Classification => {
-                        if (
-                          r !== null &&
-                          typeof r === "object" &&
-                          "classification" in r &&
-                          "name" in r
-                        ) {
-                          return r as Classification;
-                        }
-                        return {
-                          name: classifierNames[idx],
-                          classification: r as
-                            | string
-                            | { id: string; label?: string },
-                        };
-                      };
-                      const results = rawResults.map(toClassification);
-                      const toIdLabel = (
-                        c: string | { id: string; label?: string } | undefined,
-                      ) =>
-                        c == null
-                          ? null
-                          : typeof c === "string"
-                            ? { id: c, label: c }
-                            : { id: c.id, label: c.label ?? c.id };
+                      const rawResults = (
+                        Array.isArray(classifierValue)
+                          ? classifierValue
+                          : [classifierValue]
+                      ).map((result) =>
+                        validateClassificationResult(
+                          result,
+                          classifierNames[idx],
+                        ),
+                      );
                       const resultOutput =
-                        results.length === 1
-                          ? toIdLabel(results[0].classification)
-                          : results.reduce(
+                        rawResults.length === 1
+                          ? toClassificationItem(rawResults[0])
+                          : rawResults.reduce(
                               (prev, r) =>
                                 mergeDicts(prev, {
-                                  [r.name]: toIdLabel(r.classification),
+                                  [r.name]: toClassificationItem(r),
                                 }),
                               {},
                             );
                       span.log({
                         output: resultOutput,
-                        metadata: buildSpanMetadata(results),
+                        metadata: buildSpanMetadata(rawResults),
                       });
-                      return results;
+                      return rawResults;
                     },
                   ),
                 ),
@@ -1410,29 +1424,20 @@ async function runEvaluatorInternal(
               },
             );
 
-            const classifications: Record<
-              string,
-              { id: string; label: string }[]
-            > = {};
             const failingClassifiers = collectScoringResults(
               classificationResults,
               classifierNames,
               (result) => {
-                const c = result.classification;
-                if (typeof c === "string") {
-                  classifications[result.name] = [{ id: c, label: c }];
-                } else {
-                  classifications[result.name] = [
-                    { id: c.id, label: c.label ?? c.id },
-                  ];
+                const item = toClassificationItem(result);
+                if (!classifications[result.name]) {
+                  classifications[result.name] = [];
                 }
+                classifications[result.name].push(item);
               },
             );
 
             if (Object.keys(classifications).length > 0) {
-              rootSpan.log({ classifications } as Parameters<
-                typeof rootSpan.log
-              >[0]);
+              rootSpan.log({ classifications });
             }
 
             const failedScorerNames = logScoringFailures(
@@ -1475,15 +1480,21 @@ async function runEvaluatorInternal(
           }
 
           if (collectResults) {
-            collectedResults.push({
+            const baseResult = {
               input: datum.input,
               ...("expected" in datum ? { expected: datum.expected } : {}),
               output,
               tags: tags.length ? tags : undefined,
               metadata,
-              scores: mergedScores,
               error,
               origin: baseEvent.event?.origin,
+            };
+            collectedResults.push({
+              ...baseResult,
+              scores: mergedScores,
+              ...(Object.keys(classifications).length > 0
+                ? { classifications }
+                : {}),
             });
           }
         };

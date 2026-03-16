@@ -52,7 +52,6 @@ test("meta (write) is passed to task", async () => {
         return input * 2;
       },
       scores: [],
-      classifications: [],
     },
     new NoopProgressReporter(),
     [],
@@ -91,7 +90,6 @@ test("metadata (read/write) is passed to task", async () => {
         return input * 2;
       },
       scores: [],
-      classifications: [],
     },
     new NoopProgressReporter(),
     [],
@@ -132,7 +130,6 @@ test("expected (read/write) is passed to task", async () => {
         return input * 2;
       },
       scores: [],
-      classifications: [],
     },
     new NoopProgressReporter(),
     [],
@@ -183,12 +180,10 @@ describe("runEvaluator", () => {
           scores: Array.from({ length: 3 }, (_, i) =>
             makeTestScorer(`scorer_${i}`),
           ),
-          classifications: [],
         },
         new NoopProgressReporter(),
         [],
         undefined,
-        true,
       );
 
       expect(out.results.every((r) => Object.keys(r.scores).length === 0)).toBe(
@@ -211,13 +206,11 @@ describe("runEvaluator", () => {
               scores: Array.from({ length: 3 }, (_, i) =>
                 makeTestScorer(`scorer_${i}`),
               ),
-              classifications: [],
               errorScoreHandler: defaultErrorScoreHandler,
             },
             new NoopProgressReporter(),
             [],
             undefined,
-            true,
           );
 
           expect(
@@ -242,13 +235,11 @@ describe("runEvaluator", () => {
               scores: Array.from({ length: 3 }, (_, i) =>
                 makeTestScorer(`scorer_${i}`, i === 0),
               ),
-              classifications: [],
               errorScoreHandler: defaultErrorScoreHandler,
             },
             new NoopProgressReporter(),
             [],
             undefined,
-            true,
           );
 
           expect(
@@ -277,13 +268,11 @@ describe("runEvaluator", () => {
               scores: Array.from({ length: 3 }, (_, i) =>
                 makeTestScorer(`scorer_${i}`),
               ),
-              classifications: [],
               errorScoreHandler: () => undefined,
             },
             new NoopProgressReporter(),
             [],
             undefined,
-            true,
           );
 
           expect(
@@ -304,13 +293,11 @@ describe("runEvaluator", () => {
               scores: Array.from({ length: 3 }, (_, i) =>
                 makeTestScorer(`scorer_${i}`),
               ),
-              classifications: [],
               errorScoreHandler: () => ({ error_score: 1 }),
             },
             new NoopProgressReporter(),
             [],
             undefined,
-            true,
           );
 
           expect(
@@ -383,7 +370,6 @@ describe("runEvaluator", () => {
               return input * 2;
             },
             scores: [],
-            classifications: [],
             timeout: 10,
             maxConcurrency: 1,
           },
@@ -433,7 +419,6 @@ describe("runEvaluator", () => {
               return input * 2;
             },
             scores: [],
-            classifications: [],
             signal: abortController.signal,
             maxConcurrency: 1,
           },
@@ -471,7 +456,6 @@ describe("runEvaluator", () => {
             return input * 2;
           },
           scores: [],
-          classifications: [],
         },
         new NoopProgressReporter(),
         [],
@@ -499,7 +483,6 @@ test("trialIndex is passed to task", async () => {
         return input * 2;
       },
       scores: [],
-      classifications: [],
       trialCount: 3,
     },
     new NoopProgressReporter(),
@@ -519,7 +502,7 @@ test("trialIndex is passed to task", async () => {
   // All results should be correct
   results.forEach((result) => {
     expect(result.input).toBe(1);
-    expect(result.expected).toBe(2);
+    expect("expected" in result ? result.expected : undefined).toBe(2);
     expect(result.output).toBe(2);
     expect(result.error).toBeUndefined();
   });
@@ -542,7 +525,6 @@ test("trialIndex with multiple inputs", async () => {
         return input * 2;
       },
       scores: [],
-      classifications: [],
       trialCount: 2,
     },
     new NoopProgressReporter(),
@@ -589,7 +571,6 @@ test("Eval with noSendLogs: true runs locally without creating experiment", asyn
         }),
         () => ({ name: "simple_scorer", score: 0.8 }),
       ],
-      classifications: [],
     },
     { noSendLogs: true, returnResults: true },
   );
@@ -619,9 +600,8 @@ test("Eval with noSendLogs: true runs locally without creating experiment", asyn
 
 test("Eval with returnResults: false produces empty results but valid summary", async () => {
   const result = await Eval(
-    "test-no-results",
+    "test-no-results-project",
     {
-      projectName: "test-no-results-project",
       data: [
         { input: "hello", expected: "hello world" },
         { input: "test", expected: "test world" },
@@ -636,7 +616,6 @@ test("Eval with returnResults: false produces empty results but valid summary", 
         () => ({ name: "length_score", score: 0.75 }),
         () => ({ name: "quality_score", score: 0.9 }),
       ],
-      classifications: [],
     },
     { noSendLogs: true, returnResults: false },
   );
@@ -660,9 +639,8 @@ test("Eval with returnResults: false produces empty results but valid summary", 
 
 test("Eval with returnResults: true collects all results", async () => {
   const result = await Eval(
-    "test-with-results",
+    "test-with-results-project",
     {
-      projectName: "test-with-results-project",
       data: [
         { input: "hello", expected: "hello world" },
         { input: "test", expected: "test world" },
@@ -674,7 +652,6 @@ test("Eval with returnResults: true collects all results", async () => {
           score: args.output === args.expected ? 1 : 0,
         }),
       ],
-      classifications: [],
     },
     { noSendLogs: true, returnResults: true },
   );
@@ -714,11 +691,10 @@ test("tags can be appended and logged to root span", async () => {
       evalName: "js-tags-append",
       data: [{ input: "hello", expected: "hello world", tags: initialTags }],
       task: (input, hooks) => {
-        for (const t of appendedTags) hooks.tags.push(t);
+        for (const t of appendedTags) hooks.tags!.push(t);
         return input;
       },
       scores: [() => ({ name: "simple_scorer", score: 0.8 })],
-      classifications: [],
       summarizeScores: false,
     },
     new NoopProgressReporter(),
@@ -768,7 +744,6 @@ test.each([
         return input;
       },
       scores: [() => ({ name: "simple_scorer", score: 0.8 })],
-      classifications: [],
       summarizeScores: false,
     },
     new NoopProgressReporter(),
@@ -809,7 +784,6 @@ test("tags are persisted with a failing scorer", async () => {
           throw new Error("test error");
         },
       ],
-      classifications: [],
       summarizeScores: false,
     },
     new NoopProgressReporter(),
@@ -843,7 +817,6 @@ test("tags remain empty when not set", async () => {
         return input;
       },
       scores: [() => ({ name: "simple_scorer", score: 0.8 })],
-      classifications: [],
       summarizeScores: false,
     },
     new NoopProgressReporter(),
@@ -875,12 +848,11 @@ test("scorer spans have purpose='scorer' attribute", async () => {
       data: [{ input: "hello", expected: "hello" }],
       task: async (input: string) => input,
       scores: [
-        (args: { input: string; output: string; expected: string }) => ({
+        (args: { output: string; expected?: string }) => ({
           name: "simple_scorer",
           score: args.output === args.expected ? 1 : 0,
         }),
       ],
-      classifications: [],
     },
     new NoopProgressReporter(),
     [],
@@ -1023,11 +995,12 @@ describe("framework2 metadata support", () => {
           options: { model: "gpt-4" },
         },
         [],
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         {
           name: "test-prompt",
           slug: "test-prompt",
           metadata,
-        },
+        } as any,
       );
 
       const mockProjectMap = {
@@ -1052,10 +1025,8 @@ describe("framework2 metadata support", () => {
           options: { model: "gpt-4" },
         },
         [],
-        {
-          name: "test-prompt",
-          slug: "test-prompt",
-        },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        { name: "test-prompt", slug: "test-prompt" } as any,
       );
 
       const mockProjectMap = {
@@ -1078,11 +1049,12 @@ describe("framework2 metadata support", () => {
           options: { model: "gpt-4" },
         },
         [],
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         {
           name: "test-prompt",
           slug: "test-prompt",
           environments: ["production"],
-        },
+        } as any,
       );
 
       const mockProjectMap = {
@@ -1105,11 +1077,12 @@ describe("framework2 metadata support", () => {
           options: { model: "gpt-4" },
         },
         [],
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         {
           name: "test-prompt",
           slug: "test-prompt",
           environments: ["staging", "production"],
-        },
+        } as any,
       );
 
       const mockProjectMap = {
@@ -1135,10 +1108,8 @@ describe("framework2 metadata support", () => {
           options: { model: "gpt-4" },
         },
         [],
-        {
-          name: "test-prompt",
-          slug: "test-prompt",
-        },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        { name: "test-prompt", slug: "test-prompt" } as any,
       );
 
       const mockProjectMap = {
@@ -1181,11 +1152,8 @@ describe("framework2 metadata support", () => {
           options: { model: "gpt-4" },
         },
         [],
-        {
-          name: "test-prompt",
-          slug: "test-prompt",
-          tags,
-        },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        { name: "test-prompt", slug: "test-prompt", tags } as any,
       );
 
       const mockProjectMap = {
@@ -1210,10 +1178,8 @@ describe("framework2 metadata support", () => {
           options: { model: "gpt-4" },
         },
         [],
-        {
-          name: "test-prompt",
-          slug: "test-prompt",
-        },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        { name: "test-prompt", slug: "test-prompt" } as any,
       );
 
       const mockProjectMap = {
@@ -1579,7 +1545,6 @@ test("Eval with enableCache: false does not use span cache", async () => {
       data: [{ input: 1, expected: 2 }],
       task: (input) => input * 2,
       scores: [],
-      classifications: [],
       state,
     },
     { noSendLogs: true, enableCache: false },
@@ -1605,7 +1570,6 @@ test("Eval with enableCache: true (default) uses span cache", async () => {
       data: [{ input: 1, expected: 2 }],
       task: (input) => input * 2,
       scores: [],
-      classifications: [],
       state,
     },
     { noSendLogs: true }, // enableCache defaults to true
@@ -1649,4 +1613,132 @@ test("Eval with parent flushes evaluator state, not global state", async () => {
 
   _exportsForTestingOnly.clearTestBackgroundLogger();
   _exportsForTestingOnly.simulateLogoutForTests();
+});
+
+test("classifier-only evaluator populates classifications field", async () => {
+  const result = await Eval(
+    "test-classifier-only",
+    {
+      data: [{ input: "hello", expected: "greeting" }],
+      task: (input) => input,
+      scores: [],
+      classifications: [
+        () => ({
+          name: "category",
+          id: "greeting",
+          label: "Greeting",
+          confidence: 0.91,
+          metadata: { source: "unit-test" },
+        }),
+      ],
+    },
+    { noSendLogs: true, returnResults: true },
+  );
+
+  expect(result.results).toHaveLength(1);
+  const r = result.results[0];
+  expect(r.classifications?.category).toEqual([
+    {
+      id: "greeting",
+      label: "Greeting",
+      confidence: 0.91,
+      metadata: { source: "unit-test" },
+    },
+  ]);
+});
+
+test("scorer-only evaluator populates scores field", async () => {
+  const result = await Eval(
+    "test-scorer-only",
+    {
+      data: [{ input: "hello", expected: "hello" }],
+      task: (input) => input,
+      scores: [
+        (args) => ({
+          name: "exact_match",
+          score: args.output === args.expected ? 1 : 0,
+        }),
+      ],
+    },
+    { noSendLogs: true, returnResults: true },
+  );
+
+  expect(result.results).toHaveLength(1);
+  expect(result.results[0].scores.exact_match).toBe(1);
+  expect(result.results[0].classifications).toBeUndefined();
+});
+
+test("multiple classifiers returning the same name append items correctly", async () => {
+  const result = await Eval(
+    "test-classifier-append",
+    {
+      data: [{ input: "hello" }],
+      task: (input) => input,
+      scores: [],
+      classifications: [
+        () => [
+          { name: "category", id: "greeting", label: "Greeting" },
+          { name: "category", id: "informal", label: "Informal" },
+        ],
+      ],
+    },
+    { noSendLogs: true, returnResults: true },
+  );
+
+  expect(result.results).toHaveLength(1);
+  expect(result.results[0].classifications?.category).toHaveLength(2);
+  expect(result.results[0].classifications?.category[0]).toEqual({
+    id: "greeting",
+    label: "Greeting",
+  });
+  expect(result.results[0].classifications?.category[1]).toEqual({
+    id: "informal",
+    label: "Informal",
+  });
+});
+
+test("mixed evaluator populates both scores and classifications", async () => {
+  const result = await Eval(
+    "test-score-and-classify",
+    {
+      data: [{ input: "hello", expected: "hello" }],
+      task: (input) => input,
+      scores: [
+        (args) => ({
+          name: "exact_match",
+          score: args.output === args.expected ? 1 : 0,
+        }),
+      ],
+      classifications: [
+        () => ({ name: "category", id: "greeting", label: "Greeting" }),
+      ],
+    },
+    { noSendLogs: true, returnResults: true },
+  );
+
+  expect(result.results).toHaveLength(1);
+  expect(result.results[0].scores.exact_match).toBe(1);
+  expect(result.results[0].classifications?.category).toEqual([
+    { id: "greeting", label: "Greeting" },
+  ]);
+});
+
+test("malformed classifier output fails clearly", async () => {
+  const result = await Eval(
+    "test-invalid-classifier-output",
+    {
+      data: [{ input: "hello" }],
+      task: (input) => input,
+      scores: [],
+      classifications: [() => ({}) as never],
+    },
+    { noSendLogs: true, returnResults: true },
+  );
+
+  expect(result.results).toHaveLength(1);
+  expect((result.results[0] as any).metadata?.classifier_errors).toMatchObject({
+    classifier_0: expect.stringMatching(
+      /must return classifications with a non-empty string name/,
+    ),
+  });
 });
