@@ -6,7 +6,6 @@ export interface Classification {
   name: string;
   id: string;
   label?: string;
-  confidence?: number | null;
   metadata?: Record<string, unknown>;
 }
 
@@ -16,7 +15,6 @@ export interface Classification {
 export interface ClassificationItem {
   id: string;
   label: string;
-  confidence?: number | null;
   metadata?: Record<string, unknown>;
 }
 

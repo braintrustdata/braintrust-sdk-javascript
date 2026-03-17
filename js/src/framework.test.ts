@@ -1626,7 +1626,6 @@ test("classifier-only evaluator populates classifications field", async () => {
           name: "category",
           id: "greeting",
           label: "Greeting",
-          confidence: 0.91,
           metadata: { source: "unit-test" },
         }),
       ],
@@ -1640,7 +1639,6 @@ test("classifier-only evaluator populates classifications field", async () => {
     {
       id: "greeting",
       label: "Greeting",
-      confidence: 0.91,
       metadata: { source: "unit-test" },
     },
   ]);
