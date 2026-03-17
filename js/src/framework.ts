@@ -219,13 +219,13 @@ type ErrorScoreHandler = (args: {
   unhandledScores: string[];
 }) => Record<string, number> | undefined | void;
 
-export interface Evaluator<
+type EvaluatorBase<
   Input,
   Output,
   Expected,
   Metadata extends BaseMetadata = DefaultMetadataType,
   Parameters extends EvalParameters = EvalParameters,
-> {
+> = {
   /**
    * A function that returns a list of inputs, expected outputs, and metadata.
    */
@@ -235,17 +235,6 @@ export interface Evaluator<
    * A function that takes an input and returns an output.
    */
   task: EvalTask<Input, Output, Expected, Metadata, Parameters>;
-
-  /**
-   * A set of functions that take an input, output, and expected value and return a {@link Score}.
-   */
-  scores: EvalScorer<Input, Output, Expected, Metadata>[];
-
-  /**
-   * A set of functions that take an input, output, and expected value and return a
-   * {@link Classification}. Results are recorded under the `classifications` column.
-   */
-  classifications?: EvalClassifier<Input, Output, Expected, Metadata>[];
 
   /**
    * A set of parameters that will be passed to the evaluator.
@@ -364,7 +353,42 @@ export interface Evaluator<
    * Flushes spans before calling scoring functions
    */
   flushBeforeScoring?: boolean;
-}
+};
+
+/**
+ * Defines an evaluator. At least one of `scores` or `classifiers` must be provided.
+ */
+export type Evaluator<
+  Input,
+  Output,
+  Expected,
+  Metadata extends BaseMetadata = DefaultMetadataType,
+  Parameters extends EvalParameters = EvalParameters,
+> = EvaluatorBase<Input, Output, Expected, Metadata, Parameters> &
+  (
+    | {
+        /**
+         * A set of functions that take an input, output, and expected value and return a {@link Score}.
+         */
+        scores: EvalScorer<Input, Output, Expected, Metadata>[];
+        /**
+         * A set of functions that take an input, output, and expected value and return a
+         * {@link Classification}. Results are recorded under the `classifications` column.
+         */
+        classifiers?: EvalClassifier<Input, Output, Expected, Metadata>[];
+      }
+    | {
+        /**
+         * A set of functions that take an input, output, and expected value and return a {@link Score}.
+         */
+        scores?: EvalScorer<Input, Output, Expected, Metadata>[];
+        /**
+         * A set of functions that take an input, output, and expected value and return a
+         * {@link Classification}. Results are recorded under the `classifications` column.
+         */
+        classifiers: EvalClassifier<Input, Output, Expected, Metadata>[];
+      }
+  );
 
 export class EvalResultWithSummary<
   Input,
@@ -1025,6 +1049,11 @@ export async function runEvaluator(
   enableCache = true,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<EvalResultWithSummary<any, any, any, any>> {
+  if (!evaluator.scores && !evaluator.classifiers) {
+    throw new Error(
+      "Evaluator must include at least one of `scores` or `classifiers`",
+    );
+  }
   return await runEvaluatorInternal(
     experiment,
     evaluator,
@@ -1239,8 +1268,8 @@ async function runEvaluatorInternal(
           let tags: string[] = [...(datum.tags ?? [])];
           const scores: Record<string, number | null> = {};
           const classifications: Record<string, ClassificationItem[]> = {};
-          const scorerNames = evaluator.scores.map(scorerName);
-          const classifierNames = (evaluator.classifications ?? []).map(
+          const scorerNames = (evaluator.scores ?? []).map(scorerName);
+          const classifierNames = (evaluator.classifiers ?? []).map(
             classifierName,
           );
           let unhandledScores: string[] | null = scorerNames;
@@ -1319,7 +1348,7 @@ async function runEvaluatorInternal(
 
             const [scoreResults, classificationResults] = await Promise.all([
               Promise.all(
-                evaluator.scores.map((score, score_idx) =>
+                (evaluator.scores ?? []).map((score, score_idx) =>
                   runInScorerSpan(
                     rootSpan,
                     scorerNames[score_idx],
@@ -1373,7 +1402,7 @@ async function runEvaluatorInternal(
                 ),
               ),
               Promise.all(
-                (evaluator.classifications ?? []).map((classifier, idx) =>
+                (evaluator.classifiers ?? []).map((classifier, idx) =>
                   runInScorerSpan(
                     rootSpan,
                     classifierNames[idx],
