@@ -117,7 +117,7 @@ export function runDevServer(
 
         evalDefs[name] = {
           parameters,
-          scores: evaluator.scores.map((score, idx) => ({
+          scores: (evaluator.scores ?? []).map((score, idx) => ({
             name: scorerName(score, idx),
           })),
         };
@@ -209,7 +209,7 @@ export function runDevServer(
           {
             ...evaluator,
             data: evalData.data,
-            scores: evaluator.scores.concat(
+            scores: (evaluator.scores ?? []).concat(
               scores?.map((score) =>
                 makeScorer(
                   state,
