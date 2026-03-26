@@ -52,7 +52,7 @@ export async function resolve(
     }
 
     const version = getPackageVersion(resolvedModule.basedir);
-    // Normalize module path for WASM transformer (expects forward slashes)
+    // Normalize module path for transformer (expects forward slashes)
     const normalizedModulePath = resolvedModule.path.replace(/\\/g, "/");
 
     const transformer = instrumentator.getTransformer(
@@ -86,9 +86,15 @@ export async function load(url: string, context: any, nextLoad: Function) {
   if (code) {
     const transformer = transformers.get(url);
     try {
+      const moduleType =
+        result.format === "module"
+          ? "esm"
+          : result.format === "commonjs"
+            ? "cjs"
+            : "unknown";
       const transformedCode = transformer.transform(
         code.toString("utf8"),
-        "unknown",
+        moduleType,
       );
       result.source = transformedCode?.code;
       result.shortCircuit = true;

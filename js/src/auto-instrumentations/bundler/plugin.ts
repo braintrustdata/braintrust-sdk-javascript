@@ -127,7 +127,7 @@ export const unplugin = createUnplugin<BundlerPluginOptions>((options = {}) => {
       }
 
       // Try to get a transformer for this file
-      // Normalize the module path for Windows compatibility (WASM transformer expects forward slashes)
+      // Normalize the module path for Windows compatibility (transformer expects forward slashes)
       const normalizedModulePath = moduleDetails.path.replace(/\\/g, "/");
       const transformer = instrumentationMatcher.getTransformer(
         moduleName,
