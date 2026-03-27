@@ -7,6 +7,7 @@ import { finalizeAnthropicTokens } from "../../wrappers/anthropic-tokens-util";
 import { anthropicChannels } from "./anthropic-channels";
 import type {
   AnthropicBase64Source,
+  AnthropicCitation,
   AnthropicCreateParams,
   AnthropicInputMessage,
   AnthropicMessage,
@@ -136,6 +137,11 @@ export function parseMetricsFromUsage(
  * - message_delta: Final usage stats and metadata
  * - message_stop: End of stream
  */
+type ContentBlockAccumulator = {
+  textDeltas: string[];
+  citations: AnthropicCitation[];
+};
+
 export function aggregateAnthropicStreamChunks(
   chunks: AnthropicStreamEvent[],
 ): {
@@ -145,7 +151,7 @@ export function aggregateAnthropicStreamChunks(
 } {
   const fallbackTextDeltas: string[] = [];
   const contentBlocks: Record<number, AnthropicOutputContentBlock> = {};
-  const contentBlockDeltas: Record<number, string[]> = {};
+  const contentBlockDeltas: Record<number, ContentBlockAccumulator> = {};
   let metrics: Record<string, number> = {};
   let metadata: Record<string, unknown> = {};
   let role: string | undefined;
@@ -166,32 +172,42 @@ export function aggregateAnthropicStreamChunks(
       case "content_block_start":
         if (event.content_block) {
           contentBlocks[event.index] = event.content_block;
-          contentBlockDeltas[event.index] = [];
+          contentBlockDeltas[event.index] = { textDeltas: [], citations: [] };
         }
         break;
 
-      case "content_block_delta":
-        if (event.delta?.type === "text_delta") {
-          const text = event.delta.text;
+      case "content_block_delta": {
+        const acc = contentBlockDeltas[event.index];
+        const delta = event.delta;
+        if (delta?.type === "text_delta") {
+          const text = delta.text;
           if (text) {
-            if (
-              contentBlocks[event.index] !== undefined ||
-              contentBlockDeltas[event.index] !== undefined
-            ) {
-              contentBlockDeltas[event.index] ??= [];
-              contentBlockDeltas[event.index].push(text);
+            if (acc !== undefined) {
+              acc.textDeltas.push(text);
             } else {
               fallbackTextDeltas.push(text);
             }
           }
-        } else if (event.delta?.type === "input_json_delta") {
-          const partialJson = event.delta.partial_json;
+        } else if (delta?.type === "input_json_delta") {
+          const partialJson = delta.partial_json;
           if (partialJson) {
-            contentBlockDeltas[event.index] ??= [];
-            contentBlockDeltas[event.index].push(partialJson);
+            if (acc !== undefined) {
+              acc.textDeltas.push(partialJson);
+            }
+          }
+        } else if (delta?.type === "thinking_delta") {
+          const thinking = delta.thinking;
+          if (thinking && acc !== undefined) {
+            acc.textDeltas.push(thinking);
+          }
+        } else if (delta?.type === "citations_delta") {
+          if (acc !== undefined) {
+            acc.citations.push(delta.citation);
           }
         }
+        // signature_delta: ignored (not needed for tracing)
         break;
+      }
 
       case "content_block_stop":
         finalizeContentBlock(
@@ -227,7 +243,10 @@ export function aggregateAnthropicStreamChunks(
 
   let output: unknown = fallbackTextDeltas.join("");
   if (orderedContent.length > 0) {
-    if (orderedContent.every(isTextContentBlock)) {
+    if (
+      orderedContent.every(isTextContentBlock) &&
+      orderedContent.every((block) => !block.citations?.length)
+    ) {
       output = orderedContent.map((block) => block.text).join("");
     } else {
       output = {
@@ -255,7 +274,7 @@ export function aggregateAnthropicStreamChunks(
 function finalizeContentBlock(
   index: number,
   contentBlocks: Record<number, AnthropicOutputContentBlock>,
-  contentBlockDeltas: Record<number, string[]>,
+  contentBlockDeltas: Record<number, ContentBlockAccumulator>,
   fallbackTextDeltas: string[],
 ): void {
   const contentBlock = contentBlocks[index];
@@ -263,7 +282,8 @@ function finalizeContentBlock(
     return;
   }
 
-  const text = contentBlockDeltas[index]?.join("") ?? "";
+  const acc = contentBlockDeltas[index];
+  const text = acc?.textDeltas.join("") ?? "";
 
   if (isToolUseContentBlock(contentBlock)) {
     if (!text) {
@@ -288,17 +308,36 @@ function finalizeContentBlock(
       return;
     }
 
+    const updated: AnthropicOutputContentBlock = { ...contentBlock, text };
+    if (acc?.citations.length) {
+      (
+        updated as {
+          type: "text";
+          text: string;
+          citations?: AnthropicCitation[];
+        }
+      ).citations = acc.citations;
+    }
+    contentBlocks[index] = updated;
+    return;
+  }
+
+  if (isThinkingContentBlock(contentBlock)) {
+    if (!text) {
+      delete contentBlocks[index];
+      return;
+    }
+
     contentBlocks[index] = {
       ...contentBlock,
-      text,
+      thinking: text,
     };
     return;
   }
 
-  if (text) {
-    fallbackTextDeltas.push(text);
-  }
-  delete contentBlocks[index];
+  // Forward-compatible default: preserve unrecognized blocks as-is rather than deleting.
+  // This ensures future Anthropic content block types (server_tool_use, web_search_tool_result, etc.)
+  // are not silently dropped from traces.
 }
 
 function isTextContentBlock(
@@ -311,6 +350,12 @@ function isToolUseContentBlock(
   contentBlock: AnthropicOutputContentBlock,
 ): contentBlock is Extract<AnthropicOutputContentBlock, { type: "tool_use" }> {
   return contentBlock.type === "tool_use";
+}
+
+function isThinkingContentBlock(
+  contentBlock: AnthropicOutputContentBlock,
+): contentBlock is Extract<AnthropicOutputContentBlock, { type: "thinking" }> {
+  return contentBlock.type === "thinking";
 }
 
 function isAnthropicBase64ContentBlock(
