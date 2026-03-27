@@ -278,7 +278,6 @@ export async function runWrappedAnthropicInstrumentation(Anthropic, options) {
 export async function runAutoAnthropicInstrumentation(Anthropic, options) {
   await runAnthropicInstrumentationScenario(Anthropic, {
     ...options,
-    useMessagesStreamHelper: false,
   });
 }
 
