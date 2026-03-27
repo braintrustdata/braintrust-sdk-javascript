@@ -179,8 +179,9 @@ export function aggregateAnthropicStreamChunks(
       case "content_block_delta": {
         const acc = contentBlockDeltas[event.index];
         const delta = event.delta;
-        if (delta?.type === "text_delta") {
-          const text = delta.text;
+        if (!delta) break;
+        if (delta.type === "text_delta" && "text" in delta) {
+          const text = (delta as { type: string; text: string }).text;
           if (text) {
             if (acc !== undefined) {
               acc.textDeltas.push(text);
@@ -188,24 +189,30 @@ export function aggregateAnthropicStreamChunks(
               fallbackTextDeltas.push(text);
             }
           }
-        } else if (delta?.type === "input_json_delta") {
-          const partialJson = delta.partial_json;
-          if (partialJson) {
-            if (acc !== undefined) {
-              acc.textDeltas.push(partialJson);
-            }
+        } else if (
+          delta.type === "input_json_delta" &&
+          "partial_json" in delta
+        ) {
+          const partialJson = (delta as { type: string; partial_json: string })
+            .partial_json;
+          if (partialJson && acc !== undefined) {
+            acc.textDeltas.push(partialJson);
           }
-        } else if (delta?.type === "thinking_delta") {
-          const thinking = delta.thinking;
+        } else if (delta.type === "thinking_delta" && "thinking" in delta) {
+          const thinking = (delta as { type: string; thinking: string })
+            .thinking;
           if (thinking && acc !== undefined) {
             acc.textDeltas.push(thinking);
           }
-        } else if (delta?.type === "citations_delta") {
-          if (acc !== undefined) {
-            acc.citations.push(delta.citation);
+        } else if (delta.type === "citations_delta" && "citation" in delta) {
+          const citation = (
+            delta as { type: string; citation: AnthropicCitation }
+          ).citation;
+          if (citation && acc !== undefined) {
+            acc.citations.push(citation);
           }
         }
-        // signature_delta: ignored (not needed for tracing)
+        // signature_delta and unknown future delta types: ignored
         break;
       }
 
