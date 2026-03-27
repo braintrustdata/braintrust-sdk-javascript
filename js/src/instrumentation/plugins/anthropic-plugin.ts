@@ -11,11 +11,9 @@ import { finalizeAnthropicTokens } from "../../wrappers/anthropic-tokens-util";
 import { anthropicChannels } from "./anthropic-channels";
 import type {
   AnthropicBase64Source,
-  AnthropicBatchCreateParams,
   AnthropicCreateParams,
   AnthropicInputMessage,
   AnthropicMessage,
-  AnthropicMessageBatch,
   AnthropicOutputContentBlock,
   AnthropicStreamEvent,
   AnthropicUsage,
@@ -107,14 +105,14 @@ export class AnthropicPlugin extends BasePlugin {
       traceAsyncChannel(anthropicChannels.messagesBatchesCreate, {
         name: "anthropic.messages.batches.create",
         type: SpanTypeAttribute.LLM,
-        extractInput: ([params]: [AnthropicBatchCreateParams]) => ({
+        extractInput: ([params]) => ({
           input: params.requests,
           metadata: {
             ...filterFrom(params, ["requests"]),
             provider: "anthropic",
           },
         }),
-        extractOutput: (result: AnthropicMessageBatch) => result ?? null,
+        extractOutput: (result) => result ?? null,
         extractMetrics: () => ({}),
       }),
     );
@@ -123,11 +121,11 @@ export class AnthropicPlugin extends BasePlugin {
       traceAsyncChannel(anthropicChannels.messagesBatchesRetrieve, {
         name: "anthropic.messages.batches.retrieve",
         type: SpanTypeAttribute.LLM,
-        extractInput: ([batchId]: [string]) => ({
+        extractInput: ([batchId]) => ({
           input: batchId,
           metadata: { provider: "anthropic" },
         }),
-        extractOutput: (result: AnthropicMessageBatch) => result ?? null,
+        extractOutput: (result) => result ?? null,
         extractMetrics: () => ({}),
       }),
     );
@@ -149,11 +147,11 @@ export class AnthropicPlugin extends BasePlugin {
       traceAsyncChannel(anthropicChannels.messagesBatchesCancel, {
         name: "anthropic.messages.batches.cancel",
         type: SpanTypeAttribute.LLM,
-        extractInput: ([batchId]: [string]) => ({
+        extractInput: ([batchId]) => ({
           input: batchId,
           metadata: { provider: "anthropic" },
         }),
-        extractOutput: (result: AnthropicMessageBatch) => result ?? null,
+        extractOutput: (result) => result ?? null,
         extractMetrics: () => ({}),
       }),
     );
@@ -162,7 +160,7 @@ export class AnthropicPlugin extends BasePlugin {
       traceAsyncChannel(anthropicChannels.messagesBatchesDelete, {
         name: "anthropic.messages.batches.delete",
         type: SpanTypeAttribute.LLM,
-        extractInput: ([batchId]: [string]) => ({
+        extractInput: ([batchId]) => ({
           input: batchId,
           metadata: { provider: "anthropic" },
         }),
