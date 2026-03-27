@@ -40,8 +40,12 @@ const openaiScenarios = await Promise.all(
 );
 
 for (const scenario of openaiScenarios) {
+  const assertPrivateFieldMethodsOperation =
+    scenario.snapshotName === "openai-v6";
+
   describe(`openai sdk ${scenario.version}`, () => {
     defineOpenAIInstrumentationAssertions({
+      assertPrivateFieldMethodsOperation,
       name: "wrapped instrumentation",
       runScenario: async ({ runScenarioDir }) => {
         await runScenarioDir({
