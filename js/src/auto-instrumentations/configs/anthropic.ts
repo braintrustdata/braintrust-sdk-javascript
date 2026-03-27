@@ -57,4 +57,71 @@ export const anthropicConfigs: InstrumentationConfig[] = [
       kind: "Async",
     },
   },
+
+  // Message Batches API (>=0.39.0 layout)
+  {
+    channelName: anthropicChannels.messagesBatchesCreate.channelName,
+    module: {
+      name: "@anthropic-ai/sdk",
+      versionRange: ">=0.39.0",
+      filePath: "resources/messages/batches.mjs",
+    },
+    functionQuery: {
+      className: "Batches",
+      methodName: "create",
+      kind: "Async",
+    },
+  },
+  {
+    channelName: anthropicChannels.messagesBatchesRetrieve.channelName,
+    module: {
+      name: "@anthropic-ai/sdk",
+      versionRange: ">=0.39.0",
+      filePath: "resources/messages/batches.mjs",
+    },
+    functionQuery: {
+      className: "Batches",
+      methodName: "retrieve",
+      kind: "Async",
+    },
+  },
+  {
+    channelName: anthropicChannels.messagesBatchesList.channelName,
+    module: {
+      name: "@anthropic-ai/sdk",
+      versionRange: ">=0.39.0",
+      filePath: "resources/messages/batches.mjs",
+    },
+    functionQuery: {
+      className: "Batches",
+      methodName: "list",
+      kind: "Async",
+    },
+  },
+  {
+    channelName: anthropicChannels.messagesBatchesCancel.channelName,
+    module: {
+      name: "@anthropic-ai/sdk",
+      versionRange: ">=0.39.0",
+      filePath: "resources/messages/batches.mjs",
+    },
+    functionQuery: {
+      className: "Batches",
+      methodName: "cancel",
+      kind: "Async",
+    },
+  },
+  {
+    channelName: anthropicChannels.messagesBatchesDelete.channelName,
+    module: {
+      name: "@anthropic-ai/sdk",
+      versionRange: ">=0.39.0",
+      filePath: "resources/messages/batches.mjs",
+    },
+    functionQuery: {
+      className: "Batches",
+      methodName: "delete",
+      kind: "Async",
+    },
+  },
 ];

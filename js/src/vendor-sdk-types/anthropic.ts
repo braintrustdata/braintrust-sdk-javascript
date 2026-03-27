@@ -23,6 +23,51 @@ export interface AnthropicMessages {
   ) => AnthropicAPIPromise<
     AnthropicMessage | AsyncIterable<AnthropicStreamEvent>
   >;
+  batches: AnthropicBatches;
+}
+
+// Batches API
+
+export interface AnthropicBatches {
+  create: (
+    params: AnthropicBatchCreateParams,
+  ) => AnthropicAPIPromise<AnthropicMessageBatch>;
+  retrieve: (batchId: string) => AnthropicAPIPromise<AnthropicMessageBatch>;
+  list: (params?: AnthropicBatchListParams) => AnthropicAPIPromise<unknown>;
+  cancel: (batchId: string) => AnthropicAPIPromise<AnthropicMessageBatch>;
+  delete: (batchId: string) => AnthropicAPIPromise<unknown>;
+}
+
+export interface AnthropicBatchCreateParams {
+  requests: AnthropicBatchRequest[];
+  [key: string]: unknown;
+}
+
+export interface AnthropicBatchRequest {
+  custom_id: string;
+  params: AnthropicCreateParams;
+}
+
+export interface AnthropicBatchListParams {
+  [key: string]: unknown;
+}
+
+export interface AnthropicMessageBatch {
+  id: string;
+  type: "message_batch";
+  processing_status: "in_progress" | "canceling" | "ended" | string;
+  request_counts: {
+    processing: number;
+    succeeded: number;
+    errored: number;
+    canceled: number;
+    expired: number;
+  };
+  created_at: string;
+  expires_at: string;
+  archived_at?: string | null;
+  cancel_initiated_at?: string | null;
+  results_url?: string | null;
 }
 
 export interface AnthropicAPIPromise<T> extends Promise<T> {

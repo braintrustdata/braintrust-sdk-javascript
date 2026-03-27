@@ -1,6 +1,7 @@
 import { anthropicChannels } from "../instrumentation/plugins/anthropic-channels";
 import { TypedApplyProxy } from "../typed-instrumentation-helpers";
 import type {
+  AnthropicBatches,
   AnthropicBeta,
   AnthropicClient,
   AnthropicMessages,
@@ -79,7 +80,82 @@ function messagesProxy(
         return createProxy(target.create, channel);
       }
 
+      if (prop === "batches" && target.batches) {
+        return batchesProxy(target.batches);
+      }
+
       return Reflect.get(target, prop, receiver);
+    },
+  });
+}
+
+function batchesProxy(batches: AnthropicBatches): AnthropicBatches {
+  return new Proxy(batches, {
+    get(target, prop, receiver) {
+      switch (prop) {
+        case "create":
+          return new TypedApplyProxy(target.create, {
+            apply(fn, thisArg, args) {
+              return anthropicChannels.messagesBatchesCreate.tracePromise(
+                () =>
+                  Reflect.apply(fn, thisArg, args) as ReturnType<
+                    AnthropicBatches["create"]
+                  >,
+                { arguments: args },
+              );
+            },
+          });
+        case "retrieve":
+          return new TypedApplyProxy(target.retrieve, {
+            apply(fn, thisArg, args) {
+              return anthropicChannels.messagesBatchesRetrieve.tracePromise(
+                () =>
+                  Reflect.apply(fn, thisArg, args) as ReturnType<
+                    AnthropicBatches["retrieve"]
+                  >,
+                { arguments: args },
+              );
+            },
+          });
+        case "list":
+          return new TypedApplyProxy(target.list, {
+            apply(fn, thisArg, args) {
+              return anthropicChannels.messagesBatchesList.tracePromise(
+                () =>
+                  Reflect.apply(fn, thisArg, args) as ReturnType<
+                    AnthropicBatches["list"]
+                  >,
+                { arguments: args },
+              );
+            },
+          });
+        case "cancel":
+          return new TypedApplyProxy(target.cancel, {
+            apply(fn, thisArg, args) {
+              return anthropicChannels.messagesBatchesCancel.tracePromise(
+                () =>
+                  Reflect.apply(fn, thisArg, args) as ReturnType<
+                    AnthropicBatches["cancel"]
+                  >,
+                { arguments: args },
+              );
+            },
+          });
+        case "delete":
+          return new TypedApplyProxy(target.delete, {
+            apply(fn, thisArg, args) {
+              return anthropicChannels.messagesBatchesDelete.tracePromise(
+                () =>
+                  Reflect.apply(fn, thisArg, args) as ReturnType<
+                    AnthropicBatches["delete"]
+                  >,
+                { arguments: args },
+              );
+            },
+          });
+        default:
+          return Reflect.get(target, prop, receiver);
+      }
     },
   });
 }

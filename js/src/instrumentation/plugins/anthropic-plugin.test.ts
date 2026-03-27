@@ -93,8 +93,8 @@ describe("AnthropicPlugin", () => {
       plugin.enable();
       plugin.disable();
 
-      // Should have subscribed twice
-      expect(mockChannel.subscribe).toHaveBeenCalledTimes(4); // 2 channels × 2 enables
+      // Should have subscribed twice (7 channels × 2 enables)
+      expect(mockChannel.subscribe).toHaveBeenCalledTimes(14); // 7 channels × 2 enables
     });
   });
 });
