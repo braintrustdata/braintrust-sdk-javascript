@@ -25,7 +25,7 @@
     "@opentelemetry/resources": "2.0.0",
     "@opentelemetry/sdk-node": "^0.205.0",
     "@opentelemetry/sdk-trace-base": "2.0.0",
-    "ai": "5.0.76",
+    "ai": "6.0.141",
     "braintrust": "next",
     "openai": "^5.23.2",
     "tsx": "^4.20.6",

@@ -26,7 +26,7 @@
     "@opentelemetry/sdk-node": "0.35.0",
     "@opentelemetry/sdk-trace-base": "1.9.0",
     "@vercel/otel": "^0.1.0",
-    "ai": "5.0.76",
+    "ai": "6.0.141",
     "braintrust": "next",
     "openai": "^5.23.2",
     "tsx": "^4.20.6",
