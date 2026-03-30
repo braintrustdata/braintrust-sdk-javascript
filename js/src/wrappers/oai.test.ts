@@ -35,6 +35,20 @@ test("openai is installed", () => {
   assert.ok(OpenAI);
 });
 
+test("wrapOpenAI keeps private-field helper methods callable", async () => {
+  const wrapped = wrapOpenAI(new OpenAI({ apiKey: "test-key" }));
+
+  expect(wrapped.buildURL).toBe(wrapped.buildURL);
+  expect(wrapped.buildRequest).toBe(wrapped.buildRequest);
+  expect(() => wrapped.buildURL("/files", null)).not.toThrow();
+
+  const request = await wrapped.buildRequest(
+    { method: "post", path: "/files" },
+    { retryCount: 0 },
+  );
+  expect(request.url).toContain("/files");
+});
+
 describe("openai client unit tests", TEST_SUITE_OPTIONS, () => {
   let oai: OpenAI;
   let client: OpenAI;

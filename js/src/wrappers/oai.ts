@@ -74,6 +74,12 @@ type OpenAILike = OpenAIV4Client;
 export function wrapOpenAIv4<T extends OpenAILike>(openai: T): T {
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   const typedOpenai = openai as OpenAIV4Client;
+  // Recover `this` for fallback methods so private fields and internal slots
+  // keep seeing the original OpenAI instance instead of the proxy.
+  const fallbackMethodCache = new WeakMap<
+    (...args: unknown[]) => unknown,
+    (...args: unknown[]) => unknown
+  >();
 
   const completionProxy = new Proxy(typedOpenai.chat.completions, {
     get(target, name, receiver) {
@@ -142,8 +148,8 @@ export function wrapOpenAIv4<T extends OpenAILike>(openai: T): T {
   }
 
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  return new Proxy(typedOpenai, {
-    get(target, name, receiver) {
+  const topLevelProxy = new Proxy(typedOpenai, {
+    get(target, name) {
       switch (name) {
         case "chat":
           return chatProxy;
@@ -158,9 +164,33 @@ export function wrapOpenAIv4<T extends OpenAILike>(openai: T): T {
       if (name === "beta" && betaProxy) {
         return betaProxy;
       }
-      return Reflect.get(target, name, receiver);
+
+      const baseVal = Reflect.get(target, name, target);
+      if (typeof baseVal !== "function") {
+        return baseVal;
+      }
+
+      const typedBaseVal = baseVal as (...args: unknown[]) => unknown;
+      const cached = fallbackMethodCache.get(typedBaseVal);
+      if (cached) {
+        return cached;
+      }
+
+      const recoveredThisMethod = function (
+        this: unknown,
+        ...args: unknown[]
+      ): unknown {
+        const thisArg = this === topLevelProxy ? target : this;
+        const output = Reflect.apply(typedBaseVal, thisArg, args);
+        return output === target ? topLevelProxy : output;
+      };
+
+      fallbackMethodCache.set(typedBaseVal, recoveredThisMethod);
+      return recoveredThisMethod;
     },
-  }) as T;
+  });
+
+  return topLevelProxy as T;
 }
 
 type SpanInfo = {
