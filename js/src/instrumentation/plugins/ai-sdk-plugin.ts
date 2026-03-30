@@ -144,6 +144,7 @@ export class AISDKPlugin extends BasePlugin {
       traceSyncStreamChannel(aiSDKChannels.streamTextSync, {
         name: "streamText",
         type: SpanTypeAttribute.LLM,
+        resolvePromiseResult: true,
         extractInput: ([params], event, span) =>
           prepareAISDKInput(params, event, span, denyOutputPaths),
         patchResult: ({ endEvent, result, span, startTime }) =>
@@ -208,6 +209,7 @@ export class AISDKPlugin extends BasePlugin {
       traceSyncStreamChannel(aiSDKChannels.streamObjectSync, {
         name: "streamObject",
         type: SpanTypeAttribute.LLM,
+        resolvePromiseResult: true,
         extractInput: ([params], event, span) =>
           prepareAISDKInput(params, event, span, denyOutputPaths),
         patchResult: ({ endEvent, result, span, startTime }) =>
@@ -809,6 +811,8 @@ function patchAISDKStreamingResult(args: {
   }
 
   const resultRecord = result as Record<string, unknown>;
+  attachKnownResultPromiseHandlers(resultRecord);
+
   if (isReadableStreamLike(resultRecord.baseStream)) {
     let firstChunkTime: number | undefined;
 
@@ -916,6 +920,34 @@ function patchAISDKStreamingResult(args: {
   return true;
 }
 
+function attachKnownResultPromiseHandlers(
+  result: Record<string, unknown>,
+): void {
+  const promiseLikeFields = [
+    "content",
+    "text",
+    "object",
+    "finishReason",
+    "usage",
+    "totalUsage",
+    "steps",
+  ];
+
+  for (const field of promiseLikeFields) {
+    try {
+      if (!(field in result)) {
+        continue;
+      }
+      const value = result[field];
+      if (isPromiseLike(value)) {
+        void Promise.resolve(value).catch(() => {});
+      }
+    } catch {
+      // Ignore getter failures while attaching safeguards.
+    }
+  }
+}
+
 function isReadableStreamLike(value: unknown): value is {
   pipeThrough<T>(transform: TransformStream<unknown, T>): ReadableStream<T>;
 } {
@@ -991,9 +1023,15 @@ async function processAISDKStreamingOutput(
   }
 
   const outputRecord = output as Record<string, unknown>;
+  const isObjectStreamingResult =
+    result != null &&
+    typeof result === "object" &&
+    "partialObjectStream" in result;
 
   try {
-    if ("text" in result) {
+    // Object-stream results can expose a text getter that rejects when no text
+    // output exists. Skip probing text for those streams.
+    if (!isObjectStreamingResult && "text" in result) {
       const resolvedText = await Promise.resolve(result.text);
       if (typeof resolvedText === "string") {
         outputRecord.text = resolvedText;
@@ -1055,15 +1093,18 @@ function buildResolvedMetadataPayload(result: AISDKResult): {
   if (gatewayInfo?.model) {
     metadata.model = gatewayInfo.model;
   }
-  if (
-    result.finishReason !== undefined &&
-    !(
-      result.finishReason &&
-      typeof result.finishReason === "object" &&
-      typeof (result.finishReason as { then?: unknown }).then === "function"
-    )
-  ) {
-    metadata.finish_reason = result.finishReason;
+
+  let finishReason: unknown;
+  try {
+    finishReason = result.finishReason;
+  } catch {
+    finishReason = undefined;
+  }
+
+  if (isPromiseLike(finishReason)) {
+    void Promise.resolve(finishReason).catch(() => {});
+  } else if (finishReason !== undefined) {
+    metadata.finish_reason = finishReason;
   }
 
   return Object.keys(metadata).length > 0 ? { metadata } : {};
@@ -1135,19 +1176,16 @@ function processAISDKOutput(
 function extractTokenMetrics(result: AISDKResult): Record<string, number> {
   const metrics: Record<string, number> = {};
 
-  // Agent results use totalUsage, other results use usage
-  let usage: AISDKUsage | undefined = result?.totalUsage || result?.usage;
+  let usage: AISDKUsage | undefined;
+  const totalUsageValue = safeResultFieldRead(result, "totalUsage");
+  if (totalUsageValue !== undefined && !isPromiseLike(totalUsageValue)) {
+    usage = totalUsageValue as AISDKUsage;
+  }
 
-  // Try as getter if not directly accessible
-  if (!usage && result) {
-    try {
-      if ("totalUsage" in result && typeof result.totalUsage !== "function") {
-        usage = result.totalUsage;
-      } else if ("usage" in result && typeof result.usage !== "function") {
-        usage = result.usage;
-      }
-    } catch {
-      // Ignore errors accessing getters
+  if (!usage) {
+    const usageValue = safeResultFieldRead(result, "usage");
+    if (usageValue !== undefined && !isPromiseLike(usageValue)) {
+      usage = usageValue as AISDKUsage;
     }
   }
 
@@ -1194,6 +1232,29 @@ function extractTokenMetrics(result: AISDKResult): Record<string, number> {
   return metrics;
 }
 
+function safeResultFieldRead(
+  result: AISDKResult,
+  field: "usage" | "totalUsage",
+): unknown {
+  return safeSerializableFieldRead(result, field);
+}
+
+function safeSerializableFieldRead(
+  obj: Record<string, unknown> | AISDKResult,
+  field: string,
+): unknown {
+  try {
+    const value = obj?.[field as keyof typeof obj];
+    if (isPromiseLike(value)) {
+      void Promise.resolve(value).catch(() => {});
+      return undefined;
+    }
+    return value;
+  } catch {
+    return undefined;
+  }
+}
+
 /**
  * Aggregate AI SDK streaming chunks into a single response.
  */
@@ -1222,17 +1283,21 @@ function aggregateAISDKChunks(
     metadata = buildResolvedMetadataPayload(lastChunk).metadata;
 
     // Extract common output fields
-    if (lastChunk.text !== undefined) {
-      output.text = lastChunk.text;
+    const text = safeSerializableFieldRead(lastChunk, "text");
+    if (text !== undefined) {
+      output.text = text;
     }
-    if (lastChunk.object !== undefined) {
-      output.object = lastChunk.object;
+    const objectValue = safeSerializableFieldRead(lastChunk, "object");
+    if (objectValue !== undefined) {
+      output.object = objectValue;
     }
-    if (lastChunk.finishReason !== undefined) {
-      output.finishReason = lastChunk.finishReason;
+    const finishReason = safeSerializableFieldRead(lastChunk, "finishReason");
+    if (finishReason !== undefined) {
+      output.finishReason = finishReason;
     }
-    if (lastChunk.toolCalls !== undefined) {
-      output.toolCalls = lastChunk.toolCalls;
+    const toolCalls = safeSerializableFieldRead(lastChunk, "toolCalls");
+    if (toolCalls !== undefined) {
+      output.toolCalls = toolCalls;
     }
   }
 
@@ -1267,8 +1332,20 @@ function extractGetterValues(
 
   for (const name of getterNames) {
     try {
-      if (obj && name in obj && isSerializableOutputValue(obj[name])) {
-        getterValues[name] = obj[name];
+      if (!obj || !(name in obj)) {
+        continue;
+      }
+
+      const value = obj[name];
+      if (isPromiseLike(value)) {
+        // Some AI SDK getters return promises that may reject when no output
+        // was generated. Consume rejections for values we are not logging.
+        void Promise.resolve(value).catch(() => {});
+        continue;
+      }
+
+      if (isSerializableOutputValue(value)) {
+        getterValues[name] = value;
       }
     } catch {
       // Ignore errors accessing getters
@@ -1296,6 +1373,10 @@ function extractSerializableOutputFields(
   for (const name of directFieldNames) {
     try {
       const value = output?.[name];
+      if (isPromiseLike(value)) {
+        void Promise.resolve(value).catch(() => {});
+        continue;
+      }
       if (isSerializableOutputValue(value)) {
         serialized[name] = value;
       }
@@ -1308,6 +1389,14 @@ function extractSerializableOutputFields(
     ...serialized,
     ...extractGetterValues(output),
   };
+}
+
+function isPromiseLike(value: unknown): value is PromiseLike<unknown> {
+  return (
+    value != null &&
+    typeof value === "object" &&
+    typeof (value as { then?: unknown }).then === "function"
+  );
 }
 
 function isSerializableOutputValue(value: unknown): boolean {
@@ -1391,8 +1480,10 @@ function extractGatewayRoutingInfo(result: AISDKResult): {
   model?: string;
   provider?: string;
 } | null {
-  if (result?.steps && Array.isArray(result.steps) && result.steps.length > 0) {
-    const routing = result.steps[0]?.providerMetadata?.gateway?.routing;
+  const steps = safeSerializableFieldRead(result, "steps");
+  if (Array.isArray(steps) && steps.length > 0) {
+    const routing = (steps[0] as { providerMetadata?: any })?.providerMetadata
+      ?.gateway?.routing;
     if (routing) {
       return {
         provider: routing.resolvedProvider || routing.finalProvider,
@@ -1401,7 +1492,12 @@ function extractGatewayRoutingInfo(result: AISDKResult): {
     }
   }
 
-  const routing = result?.providerMetadata?.gateway?.routing;
+  const providerMetadata = safeSerializableFieldRead(
+    result,
+    "providerMetadata",
+  );
+  const routing = (providerMetadata as { gateway?: any } | undefined)?.gateway
+    ?.routing;
   if (routing) {
     return {
       provider: routing.resolvedProvider || routing.finalProvider,
@@ -1417,10 +1513,11 @@ function extractGatewayRoutingInfo(result: AISDKResult): {
  */
 function extractCostFromResult(result: AISDKResult): number | undefined {
   // Check for cost in steps (multi-step results)
-  if (result?.steps && Array.isArray(result.steps) && result.steps.length > 0) {
+  const steps = safeSerializableFieldRead(result, "steps");
+  if (Array.isArray(steps) && steps.length > 0) {
     let totalCost = 0;
     let foundCost = false;
-    for (const step of result.steps) {
+    for (const step of steps) {
       const gateway = step?.providerMetadata?.gateway;
       const stepCost =
         parseGatewayCost(gateway?.cost) ||
@@ -1436,7 +1533,11 @@ function extractCostFromResult(result: AISDKResult): number | undefined {
   }
 
   // Check direct providerMetadata
-  const gateway = result?.providerMetadata?.gateway;
+  const providerMetadata = safeSerializableFieldRead(
+    result,
+    "providerMetadata",
+  );
+  const gateway = (providerMetadata as { gateway?: any } | undefined)?.gateway;
   const directCost =
     parseGatewayCost(gateway?.cost) || parseGatewayCost(gateway?.marketCost);
   if (directCost !== undefined && directCost > 0) {

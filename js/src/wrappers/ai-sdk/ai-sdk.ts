@@ -436,7 +436,7 @@ function createAISDKChannelContext(
  * Parses a gateway model string like "openai/gpt-5-mini" into provider and model.
  * Returns { provider, model } if parseable, otherwise { model } only.
  */
-function parseGatewayModelString(modelString: string): {
+function _parseGatewayModelString(modelString: string): {
   model: string;
   provider?: string;
 } {
@@ -459,7 +459,7 @@ function parseGatewayModelString(modelString: string): {
  *
  * @param model - Either a model object (with modelId and optional provider) or a model string
  */
-function serializeModelWithProvider(model: AISDKModel | undefined): {
+function _serializeModelWithProvider(model: AISDKModel | undefined): {
   model: string | undefined;
   provider?: string;
 } {
@@ -472,7 +472,7 @@ function serializeModelWithProvider(model: AISDKModel | undefined): {
     return { model: modelId, provider: explicitProvider };
   }
 
-  const parsed = parseGatewayModelString(modelId);
+  const parsed = _parseGatewayModelString(modelId);
   return {
     model: parsed.model,
     provider: explicitProvider || parsed.provider,
@@ -483,7 +483,7 @@ function serializeModelWithProvider(model: AISDKModel | undefined): {
  * Extracts gateway routing info from the result's providerMetadata.
  * This provides the actual resolved provider and model used by the gateway.
  */
-function extractGatewayRoutingInfo(result: AISDKResult): {
+function _extractGatewayRoutingInfo(result: AISDKResult): {
   model?: string;
   provider?: string;
 } | null {
@@ -777,7 +777,7 @@ export const processInputAttachmentsSync = (
  * For v5: responseFormat is a plain object - captured fully
  * For v6: responseFormat is a Promise - awaited and captured fully
  */
-const processInputAttachments = async (
+const _processInputAttachments = async (
   input: AISDKCallParams,
 ): Promise<AISDKCallParams> => {
   if (!input) return input;
@@ -1091,7 +1091,7 @@ const extractGetterValues = (
   return getterValues;
 };
 
-const processOutput = async (
+const _processOutput = async (
   output: AISDKResult,
   denyOutputPaths?: string[],
 ) => {

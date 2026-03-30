@@ -128,6 +128,11 @@ export type SyncStreamChannelSpanConfig<TChannel extends AnySyncStreamChannel> =
       span: Span;
       startTime: number;
     }) => boolean;
+    /**
+     * Allow resolving promise-like sync-stream results before patching/inspection.
+     * Keep this opt-in to avoid changing behavior for all sync-stream channels.
+     */
+    resolvePromiseResult?: boolean;
   };
 
 type SyncStreamLike<TStreamEvent> = {
@@ -148,6 +153,14 @@ function isSyncStreamLike<TStreamEvent>(
     !!value &&
     typeof value === "object" &&
     typeof (value as { on?: unknown }).on === "function"
+  );
+}
+
+function isPromiseLike<T = unknown>(value: unknown): value is PromiseLike<T> {
+  return (
+    value != null &&
+    typeof value === "object" &&
+    typeof (value as { then?: unknown }).then === "function"
   );
 }
 
@@ -568,62 +581,35 @@ export function traceSyncStreamChannel<TChannel extends AnySyncStreamChannel>(
 
       const { span, startTime } = spanData;
       const endEvent = event as EndOf<TChannel>;
-      const result = endEvent.result;
-
-      if (
-        config.patchResult?.({
-          channelName,
-          endEvent,
+      const handleResolvedResult = (result: ResultOf<TChannel>) => {
+        const resolvedEndEvent = {
+          ...endEvent,
           result,
-          span,
-          startTime,
-        })
-      ) {
-        return;
-      }
+        } as EndOf<TChannel>;
 
-      const stream = result;
-
-      if (!isSyncStreamLike<ChunkOf<TChannel>>(stream)) {
-        span.end();
-        states.delete(event as object);
-        return;
-      }
-
-      let first = true;
-
-      stream.on("chunk", () => {
-        if (first) {
-          span.log({
-            metrics: {
-              time_to_first_token: getCurrentUnixTimestamp() - startTime,
-            },
-          });
-          first = false;
-        }
-      });
-
-      stream.on("chatCompletion", (completion) => {
-        try {
-          if (hasChoices(completion)) {
-            span.log({
-              output: completion.choices,
-            });
-          }
-        } catch (error) {
-          console.error(
-            `Error extracting chatCompletion for ${channelName}:`,
-            error,
-          );
-        }
-      });
-
-      stream.on("event", (streamEvent) => {
-        if (!config.extractFromEvent) {
+        if (
+          config.patchResult?.({
+            channelName,
+            endEvent: resolvedEndEvent,
+            result,
+            span,
+            startTime,
+          })
+        ) {
           return;
         }
 
-        try {
+        const stream = result;
+
+        if (!isSyncStreamLike<ChunkOf<TChannel>>(stream)) {
+          span.end();
+          states.delete(event as object);
+          return;
+        }
+
+        let first = true;
+
+        stream.on("chunk", () => {
           if (first) {
             span.log({
               metrics: {
@@ -632,28 +618,79 @@ export function traceSyncStreamChannel<TChannel extends AnySyncStreamChannel>(
             });
             first = false;
           }
-
-          const extracted = config.extractFromEvent(streamEvent);
-          if (extracted && Object.keys(extracted).length > 0) {
-            span.log(extracted);
-          }
-        } catch (error) {
-          console.error(`Error extracting event for ${channelName}:`, error);
-        }
-      });
-
-      stream.on("end", () => {
-        span.end();
-        states.delete(event as object);
-      });
-
-      stream.on("error", (error: Error) => {
-        span.log({
-          error: error.message,
         });
-        span.end();
-        states.delete(event as object);
-      });
+
+        stream.on("chatCompletion", (completion) => {
+          try {
+            if (hasChoices(completion)) {
+              span.log({
+                output: completion.choices,
+              });
+            }
+          } catch (error) {
+            console.error(
+              `Error extracting chatCompletion for ${channelName}:`,
+              error,
+            );
+          }
+        });
+
+        stream.on("event", (streamEvent) => {
+          if (!config.extractFromEvent) {
+            return;
+          }
+
+          try {
+            if (first) {
+              span.log({
+                metrics: {
+                  time_to_first_token: getCurrentUnixTimestamp() - startTime,
+                },
+              });
+              first = false;
+            }
+
+            const extracted = config.extractFromEvent(streamEvent);
+            if (extracted && Object.keys(extracted).length > 0) {
+              span.log(extracted);
+            }
+          } catch (error) {
+            console.error(`Error extracting event for ${channelName}:`, error);
+          }
+        });
+
+        stream.on("end", () => {
+          span.end();
+          states.delete(event as object);
+        });
+
+        stream.on("error", (error: Error) => {
+          span.log({
+            error: error.message,
+          });
+          span.end();
+          states.delete(event as object);
+        });
+      };
+
+      const result = endEvent.result;
+      if (
+        config.resolvePromiseResult &&
+        isPromiseLike<ResultOf<TChannel>>(result)
+      ) {
+        Promise.resolve(result)
+          .then(handleResolvedResult)
+          .catch((error) => {
+            span.log({
+              error: error instanceof Error ? error.message : String(error),
+            });
+            span.end();
+            states.delete(event as object);
+          });
+        return;
+      }
+
+      handleResolvedResult(result);
     },
     error: (event) => {
       logErrorAndEnd(states, event as ErrorOf<TChannel>);
