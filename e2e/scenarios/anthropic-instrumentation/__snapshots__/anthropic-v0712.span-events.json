@@ -244,12 +244,87 @@
     "has_input": false,
     "has_output": false,
     "metadata": {
+      "operation": "batches"
+    },
+    "metric_keys": [],
+    "name": "anthropic-batches-operation",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:14>",
+    "span_parents": [
+      "<span:1>"
+    ],
+    "type": null
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "provider": "anthropic"
+    },
+    "metric_keys": [],
+    "name": "anthropic.messages.batches.create",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:15>",
+    "span_parents": [
+      "<span:14>"
+    ],
+    "type": "llm"
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "provider": "anthropic"
+    },
+    "metric_keys": [],
+    "name": "anthropic.messages.batches.retrieve",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:16>",
+    "span_parents": [
+      "<span:14>"
+    ],
+    "type": "llm"
+  },
+  {
+    "has_input": false,
+    "has_output": true,
+    "metadata": {
+      "provider": "anthropic"
+    },
+    "metric_keys": [],
+    "name": "anthropic.messages.batches.list",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:17>",
+    "span_parents": [
+      "<span:14>"
+    ],
+    "type": "llm"
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "provider": "anthropic"
+    },
+    "metric_keys": [],
+    "name": "anthropic.messages.batches.cancel",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:18>",
+    "span_parents": [
+      "<span:14>"
+    ],
+    "type": "llm"
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
       "operation": "beta-create"
     },
     "metric_keys": [],
     "name": "anthropic-beta-create-operation",
     "root_span_id": "<span:1>",
-    "span_id": "<span:14>",
+    "span_id": "<span:19>",
     "span_parents": [
       "<span:1>"
     ],
@@ -272,9 +347,9 @@
     ],
     "name": "anthropic.messages.create",
     "root_span_id": "<span:1>",
-    "span_id": "<span:15>",
+    "span_id": "<span:20>",
     "span_parents": [
-      "<span:14>"
+      "<span:19>"
     ],
     "type": "llm"
   },
@@ -287,7 +362,7 @@
     "metric_keys": [],
     "name": "anthropic-beta-stream-operation",
     "root_span_id": "<span:1>",
-    "span_id": "<span:16>",
+    "span_id": "<span:21>",
     "span_parents": [
       "<span:1>"
     ],
@@ -310,9 +385,9 @@
     ],
     "name": "anthropic.messages.create",
     "root_span_id": "<span:1>",
-    "span_id": "<span:17>",
+    "span_id": "<span:22>",
     "span_parents": [
-      "<span:16>"
+      "<span:21>"
     ],
     "type": "llm"
   }

@@ -75,6 +75,68 @@ function summarizeAnthropicPayload(event: CapturedLogEvent): Json {
     type: event.span.type ?? null,
   } satisfies Json;
 
+  // Normalize volatile fields in batch API responses.
+  if (event.span.name?.startsWith("anthropic.messages.batches.")) {
+    // Normalize batch ID input (used in retrieve/cancel/delete operations).
+    if (
+      typeof summary.input === "string" &&
+      (summary.input as string).startsWith("msgbatch_")
+    ) {
+      summary.input = "<msgbatch_id>" as Json;
+    }
+
+    const output = structuredClone(
+      summary.output as Record<string, Json> | null,
+    );
+    if (output && typeof output === "object" && !Array.isArray(output)) {
+      if ("processing_status" in output) {
+        output.processing_status = "<processing_status>";
+      }
+      if (
+        "request_counts" in output &&
+        typeof output.request_counts === "object" &&
+        output.request_counts !== null
+      ) {
+        output.request_counts = Object.fromEntries(
+          Object.keys(output.request_counts as Record<string, Json>).map(
+            (k) => [k, 0],
+          ),
+        ) as Json;
+      }
+      if ("first_id" in output) {
+        output.first_id = output.first_id ? "<msgbatch_id>" : null;
+      }
+      if ("last_id" in output) {
+        output.last_id = output.last_id ? "<msgbatch_id>" : null;
+      }
+      if (Array.isArray((output as { data?: unknown }).data)) {
+        output.data = "<batch-list-data>";
+      }
+      // Some SDK versions wrap list results in a `body` property.
+      if (
+        typeof (output as { body?: unknown }).body === "object" &&
+        (output as { body?: unknown }).body !== null
+      ) {
+        output.body = "<batch-list-body>";
+      }
+      // Normalize timestamp fields that use +00:00 offset (not caught by the
+      // default ISO_DATE_REGEX in normalize.ts which only matches Z suffix).
+      for (const key of [
+        "created_at",
+        "expires_at",
+        "ended_at",
+        "cancel_initiated_at",
+        "archived_at",
+      ] as const) {
+        if (key in output && typeof output[key] === "string") {
+          output[key] = output[key] !== null ? "<timestamp>" : null;
+        }
+      }
+    }
+    summary.output = output as Json;
+    return summary;
+  }
+
   if (
     event.span.name !== "anthropic.messages.create" ||
     !Array.isArray((summary.output as { content?: unknown[] } | null)?.content)
@@ -122,6 +184,7 @@ function summarizeAnthropicPayload(event: CapturedLogEvent): Json {
 function buildSpanSummary(
   events: CapturedLogEvent[],
   supportsBetaMessages: boolean,
+  supportsBatches: boolean,
 ): Json {
   const createOperation = findLatestSpan(events, "anthropic-create-operation");
   const attachmentOperation = findLatestSpan(
@@ -138,6 +201,10 @@ function buildSpanSummary(
     "anthropic-stream-tool-operation",
   );
   const toolOperation = findLatestSpan(events, "anthropic-tool-operation");
+  const batchesOperation = findLatestSpan(
+    events,
+    "anthropic-batches-operation",
+  );
   const betaCreateOperation = findLatestSpan(
     events,
     "anthropic-beta-create-operation",
@@ -174,6 +241,23 @@ function buildSpanSummary(
       findAnthropicSpan(events, toolOperation?.span.id, [
         "anthropic.messages.create",
       ]),
+      ...(supportsBatches
+        ? [
+            batchesOperation,
+            findAnthropicSpan(events, batchesOperation?.span.id, [
+              "anthropic.messages.batches.create",
+            ]),
+            findAnthropicSpan(events, batchesOperation?.span.id, [
+              "anthropic.messages.batches.retrieve",
+            ]),
+            findAnthropicSpan(events, batchesOperation?.span.id, [
+              "anthropic.messages.batches.list",
+            ]),
+            findAnthropicSpan(events, batchesOperation?.span.id, [
+              "anthropic.messages.batches.cancel",
+            ]),
+          ]
+        : []),
       ...(supportsBetaMessages
         ? [
             betaCreateOperation,
@@ -202,6 +286,7 @@ function buildSpanSummary(
 function buildPayloadSummary(
   events: CapturedLogEvent[],
   supportsBetaMessages: boolean,
+  supportsBatches: boolean,
 ): Json {
   const createOperation = findLatestSpan(events, "anthropic-create-operation");
   const attachmentOperation = findLatestSpan(
@@ -218,6 +303,10 @@ function buildPayloadSummary(
     "anthropic-stream-tool-operation",
   );
   const toolOperation = findLatestSpan(events, "anthropic-tool-operation");
+  const batchesOperation = findLatestSpan(
+    events,
+    "anthropic-batches-operation",
+  );
   const betaCreateOperation = findLatestSpan(
     events,
     "anthropic-beta-create-operation",
@@ -254,6 +343,23 @@ function buildPayloadSummary(
       findAnthropicSpan(events, toolOperation?.span.id, [
         "anthropic.messages.create",
       ]),
+      ...(supportsBatches
+        ? [
+            batchesOperation,
+            findAnthropicSpan(events, batchesOperation?.span.id, [
+              "anthropic.messages.batches.create",
+            ]),
+            findAnthropicSpan(events, batchesOperation?.span.id, [
+              "anthropic.messages.batches.retrieve",
+            ]),
+            findAnthropicSpan(events, batchesOperation?.span.id, [
+              "anthropic.messages.batches.list",
+            ]),
+            findAnthropicSpan(events, batchesOperation?.span.id, [
+              "anthropic.messages.batches.cancel",
+            ]),
+          ]
+        : []),
       ...(supportsBetaMessages
         ? [
             betaCreateOperation,
@@ -275,6 +381,7 @@ function buildPayloadSummary(
 export function defineAnthropicInstrumentationAssertions(options: {
   name: string;
   snapshotName: string;
+  supportsBatches: boolean;
   supportsBetaMessages: boolean;
   testFileUrl: string;
   timeoutMs: number;
@@ -479,6 +586,42 @@ export function defineAnthropicInstrumentationAssertions(options: {
       },
     );
 
+    if (options.supportsBatches) {
+      test(
+        "captures traces for messages.batches operations",
+        testConfig,
+        () => {
+          const root = findLatestSpan(events, ROOT_NAME);
+          const operation = findLatestSpan(
+            events,
+            "anthropic-batches-operation",
+          );
+          const createSpan = findAnthropicSpan(events, operation?.span.id, [
+            "anthropic.messages.batches.create",
+          ]);
+          const retrieveSpan = findAnthropicSpan(events, operation?.span.id, [
+            "anthropic.messages.batches.retrieve",
+          ]);
+          const listSpan = findAnthropicSpan(events, operation?.span.id, [
+            "anthropic.messages.batches.list",
+          ]);
+          const cancelSpan = findAnthropicSpan(events, operation?.span.id, [
+            "anthropic.messages.batches.cancel",
+          ]);
+
+          expect(operation).toBeDefined();
+          expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
+          expect(createSpan).toBeDefined();
+          expect(retrieveSpan).toBeDefined();
+          expect(listSpan).toBeDefined();
+          expect(cancelSpan).toBeDefined();
+          expect(
+            (createSpan?.output as { id?: unknown } | undefined)?.id,
+          ).toMatch(/^msgbatch_/);
+        },
+      );
+    }
+
     if (options.supportsBetaMessages) {
       test(
         "captures trace for client.beta.messages.create()",
@@ -535,7 +678,11 @@ export function defineAnthropicInstrumentationAssertions(options: {
     test("matches the shared span snapshot", testConfig, async () => {
       await expect(
         formatJsonFileSnapshot(
-          buildSpanSummary(events, options.supportsBetaMessages),
+          buildSpanSummary(
+            events,
+            options.supportsBetaMessages,
+            options.supportsBatches,
+          ),
         ),
       ).toMatchFileSnapshot(spanSnapshotPath);
     });
@@ -543,7 +690,11 @@ export function defineAnthropicInstrumentationAssertions(options: {
     test("matches the shared payload snapshot", testConfig, async () => {
       await expect(
         formatJsonFileSnapshot(
-          buildPayloadSummary(events, options.supportsBetaMessages),
+          buildPayloadSummary(
+            events,
+            options.supportsBetaMessages,
+            options.supportsBatches,
+          ),
         ),
       ).toMatchFileSnapshot(payloadSnapshotPath);
     });

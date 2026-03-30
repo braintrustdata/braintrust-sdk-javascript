@@ -28,6 +28,7 @@ async function runAnthropicInstrumentationScenario(
   Anthropic,
   {
     decorateClient,
+    useBatches = false,
     useBetaMessages = true,
     useMessagesStreamHelper = true,
   } = {},
@@ -196,6 +197,36 @@ async function runAnthropicInstrumentationScenario(
           ],
         });
       });
+
+      if (useBatches) {
+        await runOperation(
+          "anthropic-batches-operation",
+          "batches",
+          async () => {
+            const batch = await client.messages.batches.create({
+              requests: [
+                {
+                  custom_id: "braintrust-e2e-test",
+                  params: {
+                    model: ANTHROPIC_MODEL,
+                    max_tokens: 16,
+                    messages: [
+                      { role: "user", content: "Reply with exactly OK." },
+                    ],
+                  },
+                },
+              ],
+            });
+            const batchId = batch.id;
+
+            await client.messages.batches.retrieve(batchId);
+
+            await client.messages.batches.list();
+
+            await client.messages.batches.cancel(batchId);
+          },
+        );
+      }
 
       if (useBetaMessages) {
         await runOperation(

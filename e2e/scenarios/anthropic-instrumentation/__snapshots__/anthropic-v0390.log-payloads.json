@@ -304,6 +304,149 @@
   },
   {
     "metadata": {
+      "operation": "batches"
+    },
+    "metrics": {
+      "end": 0,
+      "start": 0
+    },
+    "name": "anthropic-batches-operation",
+    "type": null
+  },
+  {
+    "input": [
+      {
+        "custom_id": "braintrust-e2e-test",
+        "params": {
+          "max_tokens": 16,
+          "messages": [
+            {
+              "content": "Reply with exactly OK.",
+              "role": "user"
+            }
+          ],
+          "model": "claude-3-haiku-20240307"
+        }
+      }
+    ],
+    "metadata": {
+      "provider": "anthropic"
+    },
+    "metrics": {
+      "end": 0,
+      "start": 0
+    },
+    "name": "anthropic.messages.batches.create",
+    "output": {
+      "archived_at": null,
+      "cancel_initiated_at": null,
+      "created_at": "<timestamp>",
+      "ended_at": null,
+      "expires_at": "<timestamp>",
+      "id": "<span:3>",
+      "processing_status": "<processing_status>",
+      "request_counts": {
+        "canceled": 0,
+        "errored": 0,
+        "expired": 0,
+        "processing": 0,
+        "succeeded": 0
+      },
+      "results_url": null,
+      "type": "message_batch"
+    },
+    "type": "llm"
+  },
+  {
+    "input": "<msgbatch_id>",
+    "metadata": {
+      "provider": "anthropic"
+    },
+    "metrics": {
+      "end": 0,
+      "start": 0
+    },
+    "name": "anthropic.messages.batches.retrieve",
+    "output": {
+      "archived_at": null,
+      "cancel_initiated_at": null,
+      "created_at": "<timestamp>",
+      "ended_at": null,
+      "expires_at": "<timestamp>",
+      "id": "<span:3>",
+      "processing_status": "<processing_status>",
+      "request_counts": {
+        "canceled": 0,
+        "errored": 0,
+        "expired": 0,
+        "processing": 0,
+        "succeeded": 0
+      },
+      "results_url": null,
+      "type": "message_batch"
+    },
+    "type": "llm"
+  },
+  {
+    "input": null,
+    "metadata": {
+      "provider": "anthropic"
+    },
+    "metrics": {
+      "end": 0,
+      "start": 0
+    },
+    "name": "anthropic.messages.batches.list",
+    "output": {
+      "body": "<batch-list-body>",
+      "data": "<batch-list-data>",
+      "first_id": "<msgbatch_id>",
+      "has_more": true,
+      "last_id": "<msgbatch_id>",
+      "options": {
+        "method": "get",
+        "path": "/v1/messages/batches",
+        "query": {}
+      },
+      "response": {
+        "size": 0,
+        "timeout": 0
+      }
+    },
+    "type": "llm"
+  },
+  {
+    "input": "<msgbatch_id>",
+    "metadata": {
+      "provider": "anthropic"
+    },
+    "metrics": {
+      "end": 0,
+      "start": 0
+    },
+    "name": "anthropic.messages.batches.cancel",
+    "output": {
+      "archived_at": null,
+      "cancel_initiated_at": "<timestamp>",
+      "created_at": "<timestamp>",
+      "ended_at": null,
+      "expires_at": "<timestamp>",
+      "id": "<span:3>",
+      "processing_status": "<processing_status>",
+      "request_counts": {
+        "canceled": 0,
+        "errored": 0,
+        "expired": 0,
+        "processing": 0,
+        "succeeded": 0
+      },
+      "results_url": null,
+      "type": "message_batch"
+    },
+    "type": "llm"
+  },
+  {
+    "metadata": {
       "operation": "beta-create"
     },
     "metrics": {
