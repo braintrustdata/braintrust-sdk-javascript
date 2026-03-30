@@ -4,6 +4,7 @@ import { vi, expect, test, describe, beforeEach, afterEach } from "vitest";
 import {
   _exportsForTestingOnly,
   init,
+  initDataset,
   initLogger,
   Prompt,
   BraintrustState,
@@ -453,6 +454,93 @@ test("init accepts dataset with id and version", () => {
   expect(datasetWithVersion.version).toBe("v2");
 });
 
+test("init accepts dataset with id and environment", () => {
+  const datasetWithEnvironment = {
+    id: "dataset-id-123",
+    environment: "production",
+  };
+
+  expect(datasetWithEnvironment.id).toBe("dataset-id-123");
+  expect(datasetWithEnvironment.environment).toBe("production");
+});
+
+test("dataset.toEvalData preserves dataset_environment", async () => {
+  const state = await _exportsForTestingOnly.simulateLoginForTests();
+  vi.spyOn(state, "login").mockResolvedValue(state);
+  vi.spyOn(state.appConn(), "post_json").mockResolvedValue({
+    project: {
+      id: "00000000-0000-0000-0000-000000000001",
+      name: "test-project",
+    },
+    dataset: {
+      id: "00000000-0000-0000-0000-000000000002",
+      name: "test-dataset",
+    },
+  });
+
+  const dataset = initDataset({
+    project: "test-project",
+    dataset: "test-dataset",
+    environment: "production",
+    state,
+  });
+
+  await expect(dataset.toEvalData()).resolves.toEqual({
+    dataset_id: "00000000-0000-0000-0000-000000000002",
+    dataset_environment: "production",
+  });
+
+  _exportsForTestingOnly.simulateLogoutForTests();
+  vi.restoreAllMocks();
+});
+
+test("init resolves dataset environment before experiment registration", async () => {
+  const state = await _exportsForTestingOnly.simulateLoginForTests();
+  vi.spyOn(state, "login").mockResolvedValue(state);
+  const getJson = vi.spyOn(state.apiConn(), "get_json").mockResolvedValue({
+    object_version: "123",
+  });
+  const postJson = vi.spyOn(state.appConn(), "post_json").mockResolvedValue({
+    project: {
+      id: "00000000-0000-0000-0000-000000000001",
+      name: "test-project",
+    },
+    experiment: {
+      id: "00000000-0000-0000-0000-000000000003",
+      project_id: "00000000-0000-0000-0000-000000000001",
+      name: "test-experiment",
+      public: false,
+    },
+  });
+
+  const experiment = init({
+    project: "test-project",
+    experiment: "test-experiment",
+    dataset: {
+      id: "00000000-0000-0000-0000-000000000002",
+      environment: "production",
+    },
+    setCurrent: false,
+    state,
+  });
+
+  await experiment.id;
+
+  expect(getJson).toHaveBeenCalledWith(
+    "environment-object/dataset/00000000-0000-0000-0000-000000000002/production",
+  );
+  expect(postJson).toHaveBeenCalledWith(
+    "api/experiment/register",
+    expect.objectContaining({
+      dataset_id: "00000000-0000-0000-0000-000000000002",
+      dataset_version: "123",
+    }),
+  );
+
+  _exportsForTestingOnly.simulateLogoutForTests();
+  vi.restoreAllMocks();
+});
+
 describe("loader version precedence", () => {
   let state: BraintrustState;
   let getJson: ReturnType<typeof vi.spyOn>;
@@ -613,6 +701,44 @@ describe("loader version precedence", () => {
     expect(getJson).toHaveBeenCalledWith(`v1/function/${parametersRow.id}`, {
       version: "v1",
     });
+  });
+
+  test("initDataset resolves env to version before fetching dataset rows", async () => {
+    vi.spyOn(state.appConn(), "post_json").mockResolvedValue({
+      project: {
+        id: "00000000-0000-0000-0000-000000000001",
+        name: "test-project",
+      },
+      dataset: {
+        id: "00000000-0000-0000-0000-000000000002",
+        name: "test-dataset",
+      },
+    });
+    getJson.mockResolvedValueOnce({
+      object_version: "123",
+    });
+    const post = vi.spyOn(state.apiConn(), "post").mockResolvedValue({
+      json: vi.fn().mockResolvedValue({ data: [], cursor: undefined }),
+    } as Response);
+
+    const dataset = initDataset({
+      project: "test-project",
+      dataset: "test-dataset",
+      environment: "production",
+      state,
+    });
+
+    await dataset.fetchedData();
+
+    expect(getJson).toHaveBeenCalledWith(
+      "environment-object/dataset/00000000-0000-0000-0000-000000000002/production",
+    );
+    const requestBody = post.mock.calls[0]?.[1] as Record<string, unknown>;
+    expect(requestBody).toMatchObject({
+      version: "123",
+      query_source: "js_sdk_object_fetcher_dataset",
+    });
+    expect(requestBody).not.toHaveProperty("env");
   });
 });
 
