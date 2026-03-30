@@ -12,6 +12,6 @@
     "ai": "5.0.76",
     "typescript": "5.4.4",
     "vite-tsconfig-paths": "^4.3.2",
-    "vitest": "^4.1.0"
+    "vitest": "^4.1.2"
   }
 }

@@ -1,0 +1,702 @@
+[
+  {
+    "headers": null,
+    "jsonBody": null,
+    "method": "POST",
+    "path": "/api/apikey/login",
+    "query": null,
+    "rawBody": null
+  },
+  {
+    "headers": null,
+    "jsonBody": {
+      "org_id": "mock-org-id",
+      "project_name": "<project_name>"
+    },
+    "method": "POST",
+    "path": "/api/project/register",
+    "query": null,
+    "rawBody": {
+      "org_id": "mock-org-id",
+      "project_name": "<project_name>"
+    }
+  },
+  {
+    "headers": null,
+    "jsonBody": {
+      "api_version": 2,
+      "rows": [
+        {
+          "context": {
+            "caller_filename": "<repo>/e2e/scenarios/test-framework-evals-jest/runner.case.cjs",
+            "caller_functionname": "Object.<anonymous>",
+            "caller_lineno": 0
+          },
+          "created": "<timestamp>",
+          "expected": "Paris",
+          "id": "<span:2>",
+          "input": "What is the capital of France?",
+          "log_id": "g",
+          "metadata": {
+            "case": "basic-span",
+            "scenario": "test-framework-evals-jest",
+            "testRunId": "<run:1>",
+            "transport": "http"
+          },
+          "metrics": {
+            "end": 0,
+            "start": 0
+          },
+          "output": "Paris",
+          "project_id": "<project_id>",
+          "root_span_id": "<span:3>",
+          "span_attributes": {
+            "exec_counter": 0,
+            "name": "jest basic span",
+            "type": "task"
+          },
+          "span_id": "<span:3>"
+        }
+      ]
+    },
+    "method": "POST",
+    "path": "/logs3",
+    "query": null,
+    "rawBody": {
+      "api_version": 2,
+      "rows": [
+        {
+          "context": {
+            "caller_filename": "<repo>/e2e/scenarios/test-framework-evals-jest/runner.case.cjs",
+            "caller_functionname": "Object.<anonymous>",
+            "caller_lineno": 0
+          },
+          "created": "<timestamp>",
+          "expected": "Paris",
+          "id": "<span:2>",
+          "input": "What is the capital of France?",
+          "log_id": "g",
+          "metadata": {
+            "case": "basic-span",
+            "scenario": "test-framework-evals-jest",
+            "testRunId": "<run:1>",
+            "transport": "http"
+          },
+          "metrics": {
+            "end": 0,
+            "start": 0
+          },
+          "output": "Paris",
+          "project_id": "<project_id>",
+          "root_span_id": "<span:3>",
+          "span_attributes": {
+            "exec_counter": 0,
+            "name": "jest basic span",
+            "type": "task"
+          },
+          "span_id": "<span:3>"
+        }
+      ]
+    }
+  },
+  {
+    "headers": null,
+    "jsonBody": {
+      "org_id": "mock-org-id",
+      "project_name": "<project_name>"
+    },
+    "method": "POST",
+    "path": "/api/project/register",
+    "query": null,
+    "rawBody": {
+      "org_id": "mock-org-id",
+      "project_name": "<project_name>"
+    }
+  },
+  {
+    "headers": null,
+    "jsonBody": {
+      "api_version": 2,
+      "rows": [
+        {
+          "_is_merge": false,
+          "context": {
+            "caller_filename": "<repo>/e2e/scenarios/test-framework-evals-jest/runner.case.cjs",
+            "caller_functionname": "Object.<anonymous>",
+            "caller_lineno": 0
+          },
+          "created": "<timestamp>",
+          "id": "<span:5>",
+          "input": {
+            "transcript": {
+              "content_type": "application/json",
+              "filename": "conversation_transcript.json",
+              "key": "<uuid:7>",
+              "type": "braintrust_attachment"
+            },
+            "type": "chat_completion"
+          },
+          "log_id": "g",
+          "metadata": {
+            "case": "json-attachment",
+            "scenario": "test-framework-evals-jest",
+            "testRunId": "<run:1>"
+          },
+          "metrics": {
+            "start": 0
+          },
+          "output": {
+            "attachment": true
+          },
+          "project_id": "<project_id>",
+          "root_span_id": "<span:6>",
+          "span_attributes": {
+            "exec_counter": 1,
+            "name": "root",
+            "type": "task"
+          },
+          "span_id": "<span:6>"
+        }
+      ]
+    },
+    "method": "POST",
+    "path": "/logs3",
+    "query": null,
+    "rawBody": {
+      "api_version": 2,
+      "rows": [
+        {
+          "_is_merge": false,
+          "context": {
+            "caller_filename": "<repo>/e2e/scenarios/test-framework-evals-jest/runner.case.cjs",
+            "caller_functionname": "Object.<anonymous>",
+            "caller_lineno": 0
+          },
+          "created": "<timestamp>",
+          "id": "<span:5>",
+          "input": {
+            "transcript": {
+              "content_type": "application/json",
+              "filename": "conversation_transcript.json",
+              "key": "<uuid:7>",
+              "type": "braintrust_attachment"
+            },
+            "type": "chat_completion"
+          },
+          "log_id": "g",
+          "metadata": {
+            "case": "json-attachment",
+            "scenario": "test-framework-evals-jest",
+            "testRunId": "<run:1>"
+          },
+          "metrics": {
+            "start": 0
+          },
+          "output": {
+            "attachment": true
+          },
+          "project_id": "<project_id>",
+          "root_span_id": "<span:6>",
+          "span_attributes": {
+            "exec_counter": 1,
+            "name": "root",
+            "type": "task"
+          },
+          "span_id": "<span:6>"
+        }
+      ]
+    }
+  },
+  {
+    "headers": null,
+    "jsonBody": {
+      "org_id": "mock-org-id",
+      "project_name": "<project_name>"
+    },
+    "method": "POST",
+    "path": "/api/project/register",
+    "query": null,
+    "rawBody": {
+      "org_id": "mock-org-id",
+      "project_name": "<project_name>"
+    }
+  },
+  {
+    "headers": null,
+    "jsonBody": {
+      "api_version": 2,
+      "rows": [
+        {
+          "_is_merge": true,
+          "id": "<span:5>",
+          "log_id": "g",
+          "metrics": {
+            "end": 0
+          },
+          "project_id": "<project_id>",
+          "root_span_id": "<span:6>",
+          "span_id": "<span:6>"
+        },
+        {
+          "context": {
+            "caller_filename": "<repo>/e2e/scenarios/test-framework-evals-jest/runner.case.cjs",
+            "caller_functionname": "Object.<anonymous>",
+            "caller_lineno": 0
+          },
+          "created": "<timestamp>",
+          "id": "<span:8>",
+          "input": {
+            "phase": "parent",
+            "testRunId": "<run:1>"
+          },
+          "log_id": "g",
+          "metadata": {
+            "case": "parent-span",
+            "scenario": "test-framework-evals-jest",
+            "testRunId": "<run:1>"
+          },
+          "metrics": {
+            "end": 0,
+            "start": 0
+          },
+          "output": {
+            "ok": true,
+            "phase": "parent"
+          },
+          "project_id": "<project_id>",
+          "root_span_id": "<span:9>",
+          "span_attributes": {
+            "exec_counter": 2,
+            "name": "jest parent span",
+            "type": "task"
+          },
+          "span_id": "<span:9>"
+        },
+        {
+          "context": {
+            "caller_filename": "<repo>/e2e/scenarios/test-framework-evals-jest/runner.case.cjs",
+            "caller_functionname": "traced.name",
+            "caller_lineno": 0
+          },
+          "created": "<timestamp>",
+          "id": "<span:10>",
+          "input": {
+            "step": "child",
+            "testRunId": "<run:1>"
+          },
+          "log_id": "g",
+          "metadata": {
+            "case": "child-span",
+            "scenario": "test-framework-evals-jest",
+            "testRunId": "<run:1>"
+          },
+          "metrics": {
+            "end": 0,
+            "start": 0
+          },
+          "output": {
+            "ok": true,
+            "phase": "child"
+          },
+          "project_id": "<project_id>",
+          "root_span_id": "<span:9>",
+          "span_attributes": {
+            "exec_counter": 3,
+            "name": "jest child span"
+          },
+          "span_id": "<span:11>",
+          "span_parents": [
+            "<span:9>"
+          ]
+        }
+      ]
+    },
+    "method": "POST",
+    "path": "/logs3",
+    "query": null,
+    "rawBody": {
+      "api_version": 2,
+      "rows": [
+        {
+          "_is_merge": true,
+          "id": "<span:5>",
+          "log_id": "g",
+          "metrics": {
+            "end": 0
+          },
+          "project_id": "<project_id>",
+          "root_span_id": "<span:6>",
+          "span_id": "<span:6>"
+        },
+        {
+          "context": {
+            "caller_filename": "<repo>/e2e/scenarios/test-framework-evals-jest/runner.case.cjs",
+            "caller_functionname": "Object.<anonymous>",
+            "caller_lineno": 0
+          },
+          "created": "<timestamp>",
+          "id": "<span:8>",
+          "input": {
+            "phase": "parent",
+            "testRunId": "<run:1>"
+          },
+          "log_id": "g",
+          "metadata": {
+            "case": "parent-span",
+            "scenario": "test-framework-evals-jest",
+            "testRunId": "<run:1>"
+          },
+          "metrics": {
+            "end": 0,
+            "start": 0
+          },
+          "output": {
+            "ok": true,
+            "phase": "parent"
+          },
+          "project_id": "<project_id>",
+          "root_span_id": "<span:9>",
+          "span_attributes": {
+            "exec_counter": 2,
+            "name": "jest parent span",
+            "type": "task"
+          },
+          "span_id": "<span:9>"
+        },
+        {
+          "context": {
+            "caller_filename": "<repo>/e2e/scenarios/test-framework-evals-jest/runner.case.cjs",
+            "caller_functionname": "traced.name",
+            "caller_lineno": 0
+          },
+          "created": "<timestamp>",
+          "id": "<span:10>",
+          "input": {
+            "step": "child",
+            "testRunId": "<run:1>"
+          },
+          "log_id": "g",
+          "metadata": {
+            "case": "child-span",
+            "scenario": "test-framework-evals-jest",
+            "testRunId": "<run:1>"
+          },
+          "metrics": {
+            "end": 0,
+            "start": 0
+          },
+          "output": {
+            "ok": true,
+            "phase": "child"
+          },
+          "project_id": "<project_id>",
+          "root_span_id": "<span:9>",
+          "span_attributes": {
+            "exec_counter": 3,
+            "name": "jest child span"
+          },
+          "span_id": "<span:11>",
+          "span_parents": [
+            "<span:9>"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "headers": null,
+    "jsonBody": {
+      "org_id": "mock-org-id",
+      "project_name": "<project_name>"
+    },
+    "method": "POST",
+    "path": "/api/project/register",
+    "query": null,
+    "rawBody": {
+      "org_id": "mock-org-id",
+      "project_name": "<project_name>"
+    }
+  },
+  {
+    "headers": null,
+    "jsonBody": {
+      "api_version": 2,
+      "rows": [
+        {
+          "context": {
+            "caller_filename": "<repo>/e2e/scenarios/test-framework-evals-jest/runner.case.cjs",
+            "caller_functionname": "Object.<anonymous>",
+            "caller_lineno": 0
+          },
+          "created": "<timestamp>",
+          "id": "<span:12>",
+          "log_id": "g",
+          "metadata": {
+            "case": "nested-parent",
+            "scenario": "test-framework-evals-jest",
+            "testRunId": "<run:1>"
+          },
+          "metrics": {
+            "end": 0,
+            "start": 0
+          },
+          "project_id": "<project_id>",
+          "root_span_id": "<span:13>",
+          "span_attributes": {
+            "exec_counter": 4,
+            "name": "jest nested parent span",
+            "type": "task"
+          },
+          "span_id": "<span:13>"
+        },
+        {
+          "context": {
+            "caller_filename": "<repo>/e2e/scenarios/test-framework-evals-jest/runner.case.cjs",
+            "caller_functionname": "traced.name",
+            "caller_lineno": 0
+          },
+          "created": "<timestamp>",
+          "id": "<span:14>",
+          "log_id": "g",
+          "metadata": {
+            "case": "nested-child",
+            "scenario": "test-framework-evals-jest",
+            "testRunId": "<run:1>"
+          },
+          "metrics": {
+            "end": 0,
+            "start": 0
+          },
+          "project_id": "<project_id>",
+          "root_span_id": "<span:13>",
+          "span_attributes": {
+            "exec_counter": 5,
+            "name": "jest nested child span"
+          },
+          "span_id": "<span:15>",
+          "span_parents": [
+            "<span:13>"
+          ]
+        },
+        {
+          "context": {
+            "caller_filename": "<repo>/e2e/scenarios/test-framework-evals-jest/runner.case.cjs",
+            "caller_functionname": "traced.name",
+            "caller_lineno": 0
+          },
+          "created": "<timestamp>",
+          "id": "<span:16>",
+          "log_id": "g",
+          "metadata": {
+            "case": "nested-grandchild",
+            "scenario": "test-framework-evals-jest",
+            "testRunId": "<run:1>"
+          },
+          "metrics": {
+            "end": 0,
+            "start": 0
+          },
+          "output": {
+            "depth": 3
+          },
+          "project_id": "<project_id>",
+          "root_span_id": "<span:13>",
+          "span_attributes": {
+            "exec_counter": 6,
+            "name": "jest nested grandchild span"
+          },
+          "span_id": "<span:17>",
+          "span_parents": [
+            "<span:15>"
+          ]
+        }
+      ]
+    },
+    "method": "POST",
+    "path": "/logs3",
+    "query": null,
+    "rawBody": {
+      "api_version": 2,
+      "rows": [
+        {
+          "context": {
+            "caller_filename": "<repo>/e2e/scenarios/test-framework-evals-jest/runner.case.cjs",
+            "caller_functionname": "Object.<anonymous>",
+            "caller_lineno": 0
+          },
+          "created": "<timestamp>",
+          "id": "<span:12>",
+          "log_id": "g",
+          "metadata": {
+            "case": "nested-parent",
+            "scenario": "test-framework-evals-jest",
+            "testRunId": "<run:1>"
+          },
+          "metrics": {
+            "end": 0,
+            "start": 0
+          },
+          "project_id": "<project_id>",
+          "root_span_id": "<span:13>",
+          "span_attributes": {
+            "exec_counter": 4,
+            "name": "jest nested parent span",
+            "type": "task"
+          },
+          "span_id": "<span:13>"
+        },
+        {
+          "context": {
+            "caller_filename": "<repo>/e2e/scenarios/test-framework-evals-jest/runner.case.cjs",
+            "caller_functionname": "traced.name",
+            "caller_lineno": 0
+          },
+          "created": "<timestamp>",
+          "id": "<span:14>",
+          "log_id": "g",
+          "metadata": {
+            "case": "nested-child",
+            "scenario": "test-framework-evals-jest",
+            "testRunId": "<run:1>"
+          },
+          "metrics": {
+            "end": 0,
+            "start": 0
+          },
+          "project_id": "<project_id>",
+          "root_span_id": "<span:13>",
+          "span_attributes": {
+            "exec_counter": 5,
+            "name": "jest nested child span"
+          },
+          "span_id": "<span:15>",
+          "span_parents": [
+            "<span:13>"
+          ]
+        },
+        {
+          "context": {
+            "caller_filename": "<repo>/e2e/scenarios/test-framework-evals-jest/runner.case.cjs",
+            "caller_functionname": "traced.name",
+            "caller_lineno": 0
+          },
+          "created": "<timestamp>",
+          "id": "<span:16>",
+          "log_id": "g",
+          "metadata": {
+            "case": "nested-grandchild",
+            "scenario": "test-framework-evals-jest",
+            "testRunId": "<run:1>"
+          },
+          "metrics": {
+            "end": 0,
+            "start": 0
+          },
+          "output": {
+            "depth": 3
+          },
+          "project_id": "<project_id>",
+          "root_span_id": "<span:13>",
+          "span_attributes": {
+            "exec_counter": 6,
+            "name": "jest nested grandchild span"
+          },
+          "span_id": "<span:17>",
+          "span_parents": [
+            "<span:15>"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "headers": null,
+    "jsonBody": {
+      "org_id": "mock-org-id",
+      "project_name": "<project_name>"
+    },
+    "method": "POST",
+    "path": "/api/project/register",
+    "query": null,
+    "rawBody": {
+      "org_id": "mock-org-id",
+      "project_name": "<project_name>"
+    }
+  },
+  {
+    "headers": null,
+    "jsonBody": {
+      "api_version": 2,
+      "rows": [
+        {
+          "context": {
+            "caller_filename": "<repo>/e2e/scenarios/test-framework-evals-jest/runner.case.cjs",
+            "caller_functionname": "Object.<anonymous>",
+            "caller_lineno": 0
+          },
+          "created": "<timestamp>",
+          "id": "<span:18>",
+          "log_id": "g",
+          "metadata": {
+            "case": "current-span",
+            "scenario": "test-framework-evals-jest",
+            "testRunId": "<run:1>"
+          },
+          "metrics": {
+            "end": 0,
+            "start": 0
+          },
+          "output": {
+            "observedSpanId": "<span:19>"
+          },
+          "project_id": "<project_id>",
+          "root_span_id": "<span:19>",
+          "span_attributes": {
+            "exec_counter": 7,
+            "name": "jest current span",
+            "type": "task"
+          },
+          "span_id": "<span:19>"
+        }
+      ]
+    },
+    "method": "POST",
+    "path": "/logs3",
+    "query": null,
+    "rawBody": {
+      "api_version": 2,
+      "rows": [
+        {
+          "context": {
+            "caller_filename": "<repo>/e2e/scenarios/test-framework-evals-jest/runner.case.cjs",
+            "caller_functionname": "Object.<anonymous>",
+            "caller_lineno": 0
+          },
+          "created": "<timestamp>",
+          "id": "<span:18>",
+          "log_id": "g",
+          "metadata": {
+            "case": "current-span",
+            "scenario": "test-framework-evals-jest",
+            "testRunId": "<run:1>"
+          },
+          "metrics": {
+            "end": 0,
+            "start": 0
+          },
+          "output": {
+            "observedSpanId": "<span:19>"
+          },
+          "project_id": "<project_id>",
+          "root_span_id": "<span:19>",
+          "span_attributes": {
+            "exec_counter": 7,
+            "name": "jest current span",
+            "type": "task"
+          },
+          "span_id": "<span:19>"
+        }
+      ]
+    }
+  }
+]

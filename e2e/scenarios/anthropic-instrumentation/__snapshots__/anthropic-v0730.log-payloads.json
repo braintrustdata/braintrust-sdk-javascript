@@ -1,0 +1,389 @@
+[
+  {
+    "metadata": {
+      "scenario": "anthropic-instrumentation"
+    },
+    "metrics": {
+      "end": 0,
+      "start": 0
+    },
+    "name": "anthropic-instrumentation-root",
+    "type": "task"
+  },
+  {
+    "metadata": {
+      "operation": "create"
+    },
+    "metrics": {
+      "end": 0,
+      "start": 0
+    },
+    "name": "anthropic-create-operation",
+    "type": null
+  },
+  {
+    "input": [
+      {
+        "content": "Reply with exactly OK.",
+        "role": "user"
+      }
+    ],
+    "metadata": {
+      "model": "claude-3-haiku-20240307",
+      "provider": "anthropic",
+      "stop_reason": "end_turn",
+      "stop_sequence": null
+    },
+    "metrics": {
+      "completion_tokens": 5,
+      "end": 0,
+      "prompt_cache_creation_tokens": 0,
+      "prompt_cached_tokens": 0,
+      "prompt_tokens": 12,
+      "start": 0,
+      "time_to_first_token": 0,
+      "tokens": 17
+    },
+    "name": "anthropic.messages.create",
+    "output": {
+      "content": [
+        {
+          "text": "OK.",
+          "type": "text"
+        }
+      ],
+      "role": "assistant"
+    },
+    "type": "llm"
+  },
+  {
+    "metadata": {
+      "operation": "attachment"
+    },
+    "metrics": {
+      "end": 0,
+      "start": 0
+    },
+    "name": "anthropic-attachment-operation",
+    "type": null
+  },
+  {
+    "input": [
+      {
+        "content": [
+          {
+            "text": "Describe the attached image in one short sentence.",
+            "type": "text"
+          },
+          {
+            "source": {
+              "data": {
+                "content_type": "image/png",
+                "filename": "image.png",
+                "key": "<uuid:1>",
+                "type": "braintrust_attachment"
+              },
+              "media_type": "image/png",
+              "type": "base64"
+            },
+            "type": "image"
+          }
+        ],
+        "role": "user"
+      }
+    ],
+    "metadata": {
+      "model": "claude-3-haiku-20240307",
+      "provider": "anthropic",
+      "stop_reason": "end_turn",
+      "stop_sequence": null
+    },
+    "metrics": {
+      "completion_tokens": 29,
+      "end": 0,
+      "prompt_cache_creation_tokens": 0,
+      "prompt_cached_tokens": 0,
+      "prompt_tokens": 1389,
+      "start": 0,
+      "time_to_first_token": 0,
+      "tokens": 1418
+    },
+    "name": "anthropic.messages.create",
+    "output": {
+      "content": [
+        {
+          "text": "<anthropic-attachment-description>",
+          "type": "text"
+        }
+      ],
+      "role": "assistant"
+    },
+    "type": "llm"
+  },
+  {
+    "metadata": {
+      "operation": "stream"
+    },
+    "metrics": {
+      "end": 0,
+      "start": 0
+    },
+    "name": "anthropic-stream-operation",
+    "type": null
+  },
+  {
+    "input": [
+      {
+        "content": "Count from 1 to 3 and include the words one two three.",
+        "role": "user"
+      }
+    ],
+    "metadata": {
+      "model": "claude-3-haiku-20240307",
+      "provider": "anthropic",
+      "stop_reason": "end_turn",
+      "stop_sequence": null
+    },
+    "metrics": {
+      "completion_tokens": 18,
+      "end": 0,
+      "prompt_cache_creation_tokens": 0,
+      "prompt_cached_tokens": 0,
+      "prompt_tokens": 24,
+      "start": 0,
+      "time_to_first_token": 0,
+      "tokens": 42
+    },
+    "name": "anthropic.messages.create",
+    "output": "1 - one\n2 - two\n3 - three",
+    "type": "llm"
+  },
+  {
+    "metadata": {
+      "operation": "stream-with-response"
+    },
+    "metrics": {
+      "end": 0,
+      "start": 0
+    },
+    "name": "anthropic-stream-with-response-operation",
+    "type": null
+  },
+  {
+    "input": [
+      {
+        "content": "Count from 1 to 3 and include the words one two three.",
+        "role": "user"
+      }
+    ],
+    "metadata": {
+      "model": "claude-3-haiku-20240307",
+      "provider": "anthropic",
+      "stop_reason": "end_turn",
+      "stop_sequence": null
+    },
+    "metrics": {
+      "completion_tokens": 18,
+      "end": 0,
+      "prompt_cache_creation_tokens": 0,
+      "prompt_cached_tokens": 0,
+      "prompt_tokens": 24,
+      "start": 0,
+      "time_to_first_token": 0,
+      "tokens": 42
+    },
+    "name": "anthropic.messages.create",
+    "output": "1 - one\n2 - two\n3 - three",
+    "type": "llm"
+  },
+  {
+    "metadata": {
+      "operation": "stream-tool"
+    },
+    "metrics": {
+      "end": 0,
+      "start": 0
+    },
+    "name": "anthropic-stream-tool-operation",
+    "type": null
+  },
+  {
+    "input": [
+      {
+        "content": "Use the get_weather tool for Paris, France. Do not answer from memory.",
+        "role": "user"
+      }
+    ],
+    "metadata": {
+      "model": "claude-3-haiku-20240307",
+      "provider": "anthropic",
+      "stop_reason": "tool_use",
+      "stop_sequence": null
+    },
+    "metrics": {
+      "completion_tokens": 26,
+      "end": 0,
+      "prompt_cache_creation_tokens": 0,
+      "prompt_cached_tokens": 0,
+      "prompt_tokens": 454,
+      "start": 0,
+      "time_to_first_token": 0,
+      "tokens": 480
+    },
+    "name": "anthropic.messages.create",
+    "output": {
+      "content": [
+        {
+          "caller": {
+            "type": "direct"
+          },
+          "id": "<span:1>",
+          "input": {
+            "location": "Paris, France"
+          },
+          "name": "get_weather",
+          "type": "tool_use"
+        }
+      ],
+      "role": "assistant"
+    },
+    "type": "llm"
+  },
+  {
+    "metadata": {
+      "operation": "tool"
+    },
+    "metrics": {
+      "end": 0,
+      "start": 0
+    },
+    "name": "anthropic-tool-operation",
+    "type": null
+  },
+  {
+    "input": [
+      {
+        "content": "Use the get_weather tool for Paris, France. Do not answer from memory.",
+        "role": "user"
+      }
+    ],
+    "metadata": {
+      "model": "claude-3-haiku-20240307",
+      "provider": "anthropic",
+      "stop_reason": "tool_use",
+      "stop_sequence": null
+    },
+    "metrics": {
+      "completion_tokens": 55,
+      "end": 0,
+      "prompt_cache_creation_tokens": 0,
+      "prompt_cached_tokens": 0,
+      "prompt_tokens": 357,
+      "start": 0,
+      "time_to_first_token": 0,
+      "tokens": 412
+    },
+    "name": "anthropic.messages.create",
+    "output": {
+      "content": [
+        {
+          "caller": {
+            "type": "direct"
+          },
+          "id": "<span:2>",
+          "input": {
+            "location": "Paris, France"
+          },
+          "name": "get_weather",
+          "type": "tool_use"
+        }
+      ],
+      "role": "assistant"
+    },
+    "type": "llm"
+  },
+  {
+    "metadata": {
+      "operation": "beta-create"
+    },
+    "metrics": {
+      "end": 0,
+      "start": 0
+    },
+    "name": "anthropic-beta-create-operation",
+    "type": null
+  },
+  {
+    "input": [
+      {
+        "content": "Reply with exactly BETA.",
+        "role": "user"
+      }
+    ],
+    "metadata": {
+      "model": "claude-3-haiku-20240307",
+      "provider": "anthropic",
+      "stop_reason": "end_turn",
+      "stop_sequence": null
+    },
+    "metrics": {
+      "completion_tokens": 6,
+      "end": 0,
+      "prompt_cache_creation_tokens": 0,
+      "prompt_cached_tokens": 0,
+      "prompt_tokens": 13,
+      "start": 0,
+      "time_to_first_token": 0,
+      "tokens": 19
+    },
+    "name": "anthropic.messages.create",
+    "output": {
+      "content": [
+        {
+          "text": "BETA.",
+          "type": "text"
+        }
+      ],
+      "role": "assistant"
+    },
+    "type": "llm"
+  },
+  {
+    "metadata": {
+      "operation": "beta-stream"
+    },
+    "metrics": {
+      "end": 0,
+      "start": 0
+    },
+    "name": "anthropic-beta-stream-operation",
+    "type": null
+  },
+  {
+    "input": [
+      {
+        "content": "Count from 1 to 3 and include the words one two three.",
+        "role": "user"
+      }
+    ],
+    "metadata": {
+      "model": "claude-3-haiku-20240307",
+      "provider": "anthropic",
+      "stop_reason": "end_turn",
+      "stop_sequence": null
+    },
+    "metrics": {
+      "completion_tokens": 18,
+      "end": 0,
+      "prompt_cache_creation_tokens": 0,
+      "prompt_cached_tokens": 0,
+      "prompt_tokens": 24,
+      "start": 0,
+      "time_to_first_token": 0,
+      "tokens": 42
+    },
+    "name": "anthropic.messages.create",
+    "output": "1 - one\n2 - two\n3 - three",
+    "type": "llm"
+  }
+]

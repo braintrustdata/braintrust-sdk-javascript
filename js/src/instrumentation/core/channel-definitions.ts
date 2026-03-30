@@ -13,7 +13,7 @@ export type ChannelKind = "async" | "sync-stream";
 type ChannelTypeInfo<
   TArgs extends EventArguments,
   TResult,
-  TExtra extends object = Record<string, never>,
+  TExtra extends object = Record<string, unknown>,
   TChunk = never,
   TKind extends ChannelKind = "async",
 > = {
@@ -27,7 +27,7 @@ type ChannelTypeInfo<
 export type ChannelSpec<
   TArgs extends EventArguments,
   TResult,
-  TExtra extends object = Record<string, never>,
+  TExtra extends object = Record<string, unknown>,
   TChunk = never,
   TKind extends ChannelKind = "async",
 > = ChannelTypeInfo<TArgs, TResult, TExtra, TChunk, TKind> & {
@@ -129,10 +129,10 @@ type BaseTypedChannel<TSpec extends AnyChannelSpec> = TSpec & {
 
 export type TypedAsyncChannel<TSpec extends AnyAsyncChannelSpec> =
   BaseTypedChannel<TSpec> & {
-    tracePromise<TResult extends ResultOf<TSpec>>(
-      fn: () => Promise<TResult>,
+    tracePromise<TReturn extends PromiseLike<ResultOf<TSpec>>>(
+      fn: () => TReturn,
       context: StartOf<TSpec>,
-    ): Promise<TResult>;
+    ): TReturn;
   };
 
 export type TypedSyncStreamChannel<TSpec extends AnySyncStreamChannelSpec> =
@@ -152,7 +152,7 @@ type ChannelSpecMap = Record<string, AnyChannelSpec>;
 export function channel<
   TArgs extends EventArguments,
   TResult,
-  TExtra extends object = Record<string, never>,
+  TExtra extends object = Record<string, unknown>,
   TChunk = never,
 >(spec: {
   channelName: string;
@@ -161,7 +161,7 @@ export function channel<
 export function channel<
   TArgs extends EventArguments,
   TResult,
-  TExtra extends object = Record<string, never>,
+  TExtra extends object = Record<string, unknown>,
   TChunk = never,
 >(spec: {
   channelName: string;
@@ -208,15 +208,15 @@ export function defineChannels<T extends ChannelSpecMap>(
           {
             ...asyncSpec,
             tracingChannel,
-            tracePromise: <TResult>(
-              fn: () => Promise<TResult>,
+            tracePromise: <TReturn extends Promise<ResultOf<typeof asyncSpec>>>(
+              fn: () => TReturn,
               context: StartOf<AnyAsyncChannelSpec>,
             ) =>
               tracingChannel().tracePromise(
                 fn,
                 // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
                 context as ChannelMessage<AnyAsyncChannelSpec>,
-              ),
+              ) as TReturn,
           } as AnyAsyncChannel,
         ];
       }

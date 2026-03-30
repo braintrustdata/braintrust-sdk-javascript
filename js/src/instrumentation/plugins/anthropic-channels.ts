@@ -11,7 +11,7 @@ export const anthropicChannels = defineChannels("@anthropic-ai/sdk", {
   messagesCreate: channel<
     [AnthropicCreateParams],
     AnthropicResult,
-    Record<string, never>,
+    Record<string, unknown>,
     AnthropicStreamEvent
   >({
     channelName: "messages.create",
@@ -20,7 +20,7 @@ export const anthropicChannels = defineChannels("@anthropic-ai/sdk", {
   betaMessagesCreate: channel<
     [AnthropicCreateParams],
     AnthropicResult,
-    Record<string, never>,
+    Record<string, unknown>,
     AnthropicStreamEvent
   >({
     channelName: "beta.messages.create",

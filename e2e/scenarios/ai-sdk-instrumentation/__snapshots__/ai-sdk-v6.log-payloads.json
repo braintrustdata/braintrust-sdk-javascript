@@ -1,0 +1,452 @@
+[
+  {
+    "input": null,
+    "metadata": {
+      "aiSdkVersion": "<ai-sdk-version>",
+      "scenario": "ai-sdk-instrumentation"
+    },
+    "name": "ai-sdk-instrumentation-root",
+    "output": null
+  },
+  {
+    "input": null,
+    "metadata": {
+      "operation": "generate"
+    },
+    "name": "ai-sdk-generate-operation",
+    "output": null
+  },
+  {
+    "input": {
+      "prompt": "<prompt>"
+    },
+    "metadata": {
+      "model": "gpt-4o-mini",
+      "provider": "openai.responses"
+    },
+    "name": "generateText",
+    "output": {}
+  },
+  {
+    "input": null,
+    "metadata": {
+      "operation": "stream"
+    },
+    "name": "ai-sdk-stream-operation",
+    "output": null
+  },
+  {
+    "input": {
+      "prompt": "<prompt>"
+    },
+    "metadata": {
+      "model": "gpt-4o-mini",
+      "provider": "openai.responses"
+    },
+    "name": "streamText",
+    "output": {}
+  },
+  {
+    "input": null,
+    "metadata": {
+      "operation": "tool"
+    },
+    "name": "ai-sdk-tool-operation",
+    "output": null
+  },
+  {
+    "input": {
+      "prompt": "<prompt>"
+    },
+    "metadata": {
+      "model": "gpt-4o-mini",
+      "provider": "openai.responses"
+    },
+    "name": "generateText",
+    "output": {}
+  },
+  {
+    "input": [
+      {
+        "location": "Paris, France"
+      },
+      {
+        "messages": [
+          {
+            "content": "Use the get_weather tool for Paris, France. If you do not call the tool, the answer is invalid.",
+            "role": "user"
+          }
+        ],
+        "toolCallId": "<toolCallId:1>"
+      }
+    ],
+    "metadata": null,
+    "name": "get_weather",
+    "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
+  },
+  {
+    "input": [
+      {
+        "location": "Paris, France"
+      },
+      {
+        "messages": [
+          {
+            "content": "Use the get_weather tool for Paris, France. If you do not call the tool, the answer is invalid.",
+            "role": "user"
+          },
+          {
+            "content": [
+              {
+                "input": {
+                  "location": "Paris, France"
+                },
+                "providerOptions": {
+                  "openai": {
+                    "itemId": "<itemId:3>"
+                  }
+                },
+                "toolCallId": "<toolCallId:1>",
+                "toolName": "get_weather",
+                "type": "tool-call"
+              }
+            ],
+            "role": "assistant"
+          },
+          {
+            "content": [
+              {
+                "output": {
+                  "type": "text",
+                  "value": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
+                },
+                "providerOptions": {
+                  "openai": {
+                    "itemId": "<itemId:3>"
+                  }
+                },
+                "toolCallId": "<toolCallId:1>",
+                "toolName": "get_weather",
+                "type": "tool-result"
+              }
+            ],
+            "role": "tool"
+          }
+        ],
+        "toolCallId": "<toolCallId:2>"
+      }
+    ],
+    "metadata": null,
+    "name": "get_weather",
+    "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
+  },
+  {
+    "input": [
+      {
+        "location": "Paris, France"
+      },
+      {
+        "messages": [
+          {
+            "content": "Use the get_weather tool for Paris, France. If you do not call the tool, the answer is invalid.",
+            "role": "user"
+          },
+          {
+            "content": [
+              {
+                "input": {
+                  "location": "Paris, France"
+                },
+                "providerOptions": {
+                  "openai": {
+                    "itemId": "<itemId:3>"
+                  }
+                },
+                "toolCallId": "<toolCallId:1>",
+                "toolName": "get_weather",
+                "type": "tool-call"
+              }
+            ],
+            "role": "assistant"
+          },
+          {
+            "content": [
+              {
+                "output": {
+                  "type": "text",
+                  "value": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
+                },
+                "providerOptions": {
+                  "openai": {
+                    "itemId": "<itemId:3>"
+                  }
+                },
+                "toolCallId": "<toolCallId:1>",
+                "toolName": "get_weather",
+                "type": "tool-result"
+              }
+            ],
+            "role": "tool"
+          },
+          {
+            "content": [
+              {
+                "input": {
+                  "location": "Paris, France"
+                },
+                "providerOptions": {
+                  "openai": {
+                    "itemId": "<itemId:5>"
+                  }
+                },
+                "toolCallId": "<toolCallId:2>",
+                "toolName": "get_weather",
+                "type": "tool-call"
+              }
+            ],
+            "role": "assistant"
+          },
+          {
+            "content": [
+              {
+                "output": {
+                  "type": "text",
+                  "value": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
+                },
+                "providerOptions": {
+                  "openai": {
+                    "itemId": "<itemId:5>"
+                  }
+                },
+                "toolCallId": "<toolCallId:2>",
+                "toolName": "get_weather",
+                "type": "tool-result"
+              }
+            ],
+            "role": "tool"
+          }
+        ],
+        "toolCallId": "<toolCallId:4>"
+      }
+    ],
+    "metadata": null,
+    "name": "get_weather",
+    "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
+  },
+  {
+    "input": [
+      {
+        "location": "Paris, France"
+      },
+      {
+        "messages": [
+          {
+            "content": "Use the get_weather tool for Paris, France. If you do not call the tool, the answer is invalid.",
+            "role": "user"
+          },
+          {
+            "content": [
+              {
+                "input": {
+                  "location": "Paris, France"
+                },
+                "providerOptions": {
+                  "openai": {
+                    "itemId": "<itemId:3>"
+                  }
+                },
+                "toolCallId": "<toolCallId:1>",
+                "toolName": "get_weather",
+                "type": "tool-call"
+              }
+            ],
+            "role": "assistant"
+          },
+          {
+            "content": [
+              {
+                "output": {
+                  "type": "text",
+                  "value": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
+                },
+                "providerOptions": {
+                  "openai": {
+                    "itemId": "<itemId:3>"
+                  }
+                },
+                "toolCallId": "<toolCallId:1>",
+                "toolName": "get_weather",
+                "type": "tool-result"
+              }
+            ],
+            "role": "tool"
+          },
+          {
+            "content": [
+              {
+                "input": {
+                  "location": "Paris, France"
+                },
+                "providerOptions": {
+                  "openai": {
+                    "itemId": "<itemId:5>"
+                  }
+                },
+                "toolCallId": "<toolCallId:2>",
+                "toolName": "get_weather",
+                "type": "tool-call"
+              }
+            ],
+            "role": "assistant"
+          },
+          {
+            "content": [
+              {
+                "output": {
+                  "type": "text",
+                  "value": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
+                },
+                "providerOptions": {
+                  "openai": {
+                    "itemId": "<itemId:5>"
+                  }
+                },
+                "toolCallId": "<toolCallId:2>",
+                "toolName": "get_weather",
+                "type": "tool-result"
+              }
+            ],
+            "role": "tool"
+          },
+          {
+            "content": [
+              {
+                "input": {
+                  "location": "Paris, France"
+                },
+                "providerOptions": {
+                  "openai": {
+                    "itemId": "<itemId:7>"
+                  }
+                },
+                "toolCallId": "<toolCallId:4>",
+                "toolName": "get_weather",
+                "type": "tool-call"
+              }
+            ],
+            "role": "assistant"
+          },
+          {
+            "content": [
+              {
+                "output": {
+                  "type": "text",
+                  "value": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
+                },
+                "providerOptions": {
+                  "openai": {
+                    "itemId": "<itemId:7>"
+                  }
+                },
+                "toolCallId": "<toolCallId:4>",
+                "toolName": "get_weather",
+                "type": "tool-result"
+              }
+            ],
+            "role": "tool"
+          }
+        ],
+        "toolCallId": "<toolCallId:6>"
+      }
+    ],
+    "metadata": null,
+    "name": "get_weather",
+    "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
+  },
+  {
+    "input": null,
+    "metadata": {
+      "operation": "generate-object"
+    },
+    "name": "ai-sdk-generate-object-operation",
+    "output": null
+  },
+  {
+    "input": {
+      "prompt": "<prompt>",
+      "schema": "<schema>"
+    },
+    "metadata": {
+      "model": "gpt-4o-mini",
+      "provider": "openai.responses"
+    },
+    "name": "generateObject",
+    "output": {}
+  },
+  {
+    "input": null,
+    "metadata": {
+      "operation": "stream-object"
+    },
+    "name": "ai-sdk-stream-object-operation",
+    "output": null
+  },
+  {
+    "input": {
+      "prompt": "<prompt>",
+      "schema": "<schema>"
+    },
+    "metadata": {
+      "model": "gpt-4o-mini",
+      "provider": "openai.responses"
+    },
+    "name": "streamObject",
+    "output": {}
+  },
+  {
+    "input": null,
+    "metadata": {
+      "operation": "agent-generate"
+    },
+    "name": "ai-sdk-agent-generate-operation",
+    "output": null
+  },
+  {
+    "input": {
+      "prompt": [
+        {
+          "role": "user"
+        }
+      ]
+    },
+    "metadata": {
+      "model": "gpt-4o-mini",
+      "provider": "openai.responses"
+    },
+    "name": "ToolLoopAgent.generate",
+    "output": {}
+  },
+  {
+    "input": null,
+    "metadata": {
+      "operation": "agent-stream"
+    },
+    "name": "ai-sdk-agent-stream-operation",
+    "output": null
+  },
+  {
+    "input": {
+      "prompt": [
+        {
+          "role": "user"
+        }
+      ]
+    },
+    "metadata": {
+      "model": "gpt-4o-mini",
+      "provider": "openai.responses"
+    },
+    "name": "ToolLoopAgent.stream",
+    "output": {}
+  }
+]

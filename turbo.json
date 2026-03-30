@@ -4,7 +4,8 @@
     "OPENAI_API_KEY",
     "OPENAI_BASE_URL",
     "ANTHROPIC_API_KEY",
-    "GEMINI_API_KEY"
+    "GEMINI_API_KEY",
+    "OPENROUTER_API_KEY"
   ],
   "tasks": {
     "build": {
@@ -22,7 +23,8 @@
         "BRAINTRUST_API_KEY",
         "GEMINI_API_KEY",
         "OPENAI_API_KEY",
-        "OPENAI_BASE_URL"
+        "OPENAI_BASE_URL",
+        "OPENROUTER_API_KEY"
       ],
       "dependsOn": ["^build"],
       "outputs": []
@@ -33,18 +35,8 @@
         "BRAINTRUST_API_KEY",
         "GEMINI_API_KEY",
         "OPENAI_API_KEY",
-        "OPENAI_BASE_URL"
-      ],
-      "dependsOn": ["^build"],
-      "outputs": []
-    },
-    "test:e2e:external": {
-      "env": [
-        "ANTHROPIC_API_KEY",
-        "BRAINTRUST_API_KEY",
-        "GEMINI_API_KEY",
-        "OPENAI_API_KEY",
-        "OPENAI_BASE_URL"
+        "OPENAI_BASE_URL",
+        "OPENROUTER_API_KEY"
       ],
       "dependsOn": ["^build"],
       "outputs": []
@@ -59,7 +51,8 @@
         "BRAINTRUST_API_KEY",
         "GEMINI_API_KEY",
         "OPENAI_API_KEY",
-        "OPENAI_BASE_URL"
+        "OPENAI_BASE_URL",
+        "OPENROUTER_API_KEY"
       ],
       "dependsOn": ["^build"],
       "outputs": []
@@ -70,7 +63,8 @@
         "BRAINTRUST_API_KEY",
         "GEMINI_API_KEY",
         "OPENAI_API_KEY",
-        "OPENAI_BASE_URL"
+        "OPENAI_BASE_URL",
+        "OPENROUTER_API_KEY"
       ],
       "dependsOn": ["^build"],
       "outputs": []
@@ -97,7 +91,8 @@
         "ANTHROPIC_API_KEY",
         "BRAINTRUST_API_KEY",
         "GEMINI_API_KEY",
-        "OPENAI_API_KEY"
+        "OPENAI_API_KEY",
+        "OPENROUTER_API_KEY"
       ],
       "dependsOn": ["^build", "build"]
     },
@@ -107,7 +102,8 @@
         "ANTHROPIC_API_KEY",
         "BRAINTRUST_API_KEY",
         "GEMINI_API_KEY",
-        "OPENAI_API_KEY"
+        "OPENAI_API_KEY",
+        "OPENROUTER_API_KEY"
       ],
       "dependsOn": ["^build", "build"]
     },
@@ -117,7 +113,8 @@
         "ANTHROPIC_API_KEY",
         "BRAINTRUST_API_KEY",
         "GEMINI_API_KEY",
-        "OPENAI_API_KEY"
+        "OPENAI_API_KEY",
+        "OPENROUTER_API_KEY"
       ],
       "dependsOn": ["^build", "build"]
     }

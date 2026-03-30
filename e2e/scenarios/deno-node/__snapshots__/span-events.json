@@ -1,0 +1,184 @@
+[
+  {
+    "error": null,
+    "input": "What is the capital of France?",
+    "metadata": {
+      "case": "basic-span",
+      "scenario": "deno-node",
+      "testRunId": "<run:1>",
+      "transport": "http"
+    },
+    "name": "deno node basic span",
+    "output": "Paris",
+    "root_span_id": "<span:1>",
+    "span_attributes": {
+      "exec_counter": 0,
+      "name": "deno node basic span",
+      "type": "task"
+    },
+    "span_id": "<span:1>",
+    "span_parents": null
+  },
+  {
+    "error": null,
+    "input": {
+      "transcript": {
+        "content_type": "application/json",
+        "filename": "conversation_transcript.json",
+        "key": "<uuid:2>",
+        "type": "braintrust_attachment"
+      },
+      "type": "chat_completion"
+    },
+    "metadata": {
+      "case": "json-attachment",
+      "scenario": "deno-node",
+      "testRunId": "<run:1>"
+    },
+    "name": "deno node json attachment span",
+    "output": {
+      "attachment": true
+    },
+    "root_span_id": "<span:3>",
+    "span_attributes": {
+      "exec_counter": 1,
+      "name": "deno node json attachment span",
+      "type": "task"
+    },
+    "span_id": "<span:3>",
+    "span_parents": null
+  },
+  {
+    "error": null,
+    "input": {
+      "phase": "parent",
+      "testRunId": "<run:1>"
+    },
+    "metadata": {
+      "case": "parent-span",
+      "scenario": "deno-node",
+      "testRunId": "<run:1>"
+    },
+    "name": "deno node parent span",
+    "output": {
+      "ok": true,
+      "phase": "parent"
+    },
+    "root_span_id": "<span:4>",
+    "span_attributes": {
+      "exec_counter": 2,
+      "name": "deno node parent span",
+      "type": "task"
+    },
+    "span_id": "<span:4>",
+    "span_parents": null
+  },
+  {
+    "error": null,
+    "input": {
+      "step": "child",
+      "testRunId": "<run:1>"
+    },
+    "metadata": {
+      "case": "child-span",
+      "scenario": "deno-node",
+      "testRunId": "<run:1>"
+    },
+    "name": "deno node child span",
+    "output": {
+      "ok": true,
+      "phase": "child"
+    },
+    "root_span_id": "<span:4>",
+    "span_attributes": {
+      "exec_counter": 3,
+      "name": "deno node child span"
+    },
+    "span_id": "<span:5>",
+    "span_parents": [
+      "<span:4>"
+    ]
+  },
+  {
+    "error": null,
+    "input": null,
+    "metadata": {
+      "case": "nested-parent",
+      "scenario": "deno-node",
+      "testRunId": "<run:1>"
+    },
+    "name": "deno node nested parent span",
+    "output": null,
+    "root_span_id": "<span:6>",
+    "span_attributes": {
+      "exec_counter": 4,
+      "name": "deno node nested parent span",
+      "type": "task"
+    },
+    "span_id": "<span:6>",
+    "span_parents": null
+  },
+  {
+    "error": null,
+    "input": null,
+    "metadata": {
+      "case": "nested-child",
+      "scenario": "deno-node",
+      "testRunId": "<run:1>"
+    },
+    "name": "deno node nested child span",
+    "output": null,
+    "root_span_id": "<span:6>",
+    "span_attributes": {
+      "exec_counter": 5,
+      "name": "deno node nested child span"
+    },
+    "span_id": "<span:7>",
+    "span_parents": [
+      "<span:6>"
+    ]
+  },
+  {
+    "error": null,
+    "input": null,
+    "metadata": {
+      "case": "nested-grandchild",
+      "scenario": "deno-node",
+      "testRunId": "<run:1>"
+    },
+    "name": "deno node nested grandchild span",
+    "output": {
+      "depth": 3
+    },
+    "root_span_id": "<span:6>",
+    "span_attributes": {
+      "exec_counter": 6,
+      "name": "deno node nested grandchild span"
+    },
+    "span_id": "<span:8>",
+    "span_parents": [
+      "<span:7>"
+    ]
+  },
+  {
+    "error": null,
+    "input": null,
+    "metadata": {
+      "case": "current-span",
+      "scenario": "deno-node",
+      "testRunId": "<run:1>"
+    },
+    "name": "deno node current span",
+    "output": {
+      "observedSpanId": "<uuid:9>"
+    },
+    "root_span_id": "<uuid:9>",
+    "span_attributes": {
+      "exec_counter": 7,
+      "name": "deno node current span",
+      "type": "task"
+    },
+    "span_id": "<uuid:9>",
+    "span_parents": null
+  }
+]

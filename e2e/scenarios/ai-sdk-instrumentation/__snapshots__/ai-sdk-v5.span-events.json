@@ -1,0 +1,247 @@
+[
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "aiSdkVersion": "<ai-sdk-version>",
+      "scenario": "ai-sdk-instrumentation"
+    },
+    "name": "ai-sdk-instrumentation-root",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:1>",
+    "span_parents": []
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "operation": "generate"
+    },
+    "name": "ai-sdk-generate-operation",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:2>",
+    "span_parents": [
+      "<span:1>"
+    ]
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "model": "gpt-4o-mini",
+      "provider": "openai.responses"
+    },
+    "name": "generateText",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:3>",
+    "span_parents": [
+      "<span:2>"
+    ]
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "operation": "stream"
+    },
+    "name": "ai-sdk-stream-operation",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:4>",
+    "span_parents": [
+      "<span:1>"
+    ]
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "model": "gpt-4o-mini",
+      "provider": "openai.responses"
+    },
+    "name": "streamText",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:5>",
+    "span_parents": [
+      "<span:4>"
+    ]
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "operation": "tool"
+    },
+    "name": "ai-sdk-tool-operation",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:6>",
+    "span_parents": [
+      "<span:1>"
+    ]
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "model": "gpt-4o-mini",
+      "provider": "openai.responses"
+    },
+    "name": "generateText",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:7>",
+    "span_parents": [
+      "<span:6>"
+    ]
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": null,
+    "name": "get_weather",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:8>",
+    "span_parents": [
+      "<span:7>"
+    ]
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": null,
+    "name": "get_weather",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:9>",
+    "span_parents": [
+      "<span:7>"
+    ]
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": null,
+    "name": "get_weather",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:10>",
+    "span_parents": [
+      "<span:7>"
+    ]
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": null,
+    "name": "get_weather",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:11>",
+    "span_parents": [
+      "<span:7>"
+    ]
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "operation": "generate-object"
+    },
+    "name": "ai-sdk-generate-object-operation",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:12>",
+    "span_parents": [
+      "<span:1>"
+    ]
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "model": "gpt-4o-mini",
+      "provider": "openai.responses"
+    },
+    "name": "generateObject",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:13>",
+    "span_parents": [
+      "<span:12>"
+    ]
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "operation": "stream-object"
+    },
+    "name": "ai-sdk-stream-object-operation",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:14>",
+    "span_parents": [
+      "<span:1>"
+    ]
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "model": "gpt-4o-mini",
+      "provider": "openai.responses"
+    },
+    "name": "streamObject",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:15>",
+    "span_parents": [
+      "<span:14>"
+    ]
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "operation": "agent-generate"
+    },
+    "name": "ai-sdk-agent-generate-operation",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:16>",
+    "span_parents": [
+      "<span:1>"
+    ]
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "model": "gpt-4o-mini",
+      "provider": "openai.responses"
+    },
+    "name": "Agent.generate",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:17>",
+    "span_parents": [
+      "<span:16>"
+    ]
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "operation": "agent-stream"
+    },
+    "name": "ai-sdk-agent-stream-operation",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:18>",
+    "span_parents": [
+      "<span:1>"
+    ]
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "model": "gpt-4o-mini",
+      "provider": "openai.responses"
+    },
+    "name": "Agent.stream",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:19>",
+    "span_parents": [
+      "<span:18>"
+    ]
+  }
+]

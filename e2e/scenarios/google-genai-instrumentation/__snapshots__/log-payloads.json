@@ -1,0 +1,418 @@
+[
+  {
+    "metadata": {
+      "scenario": "google-genai-instrumentation"
+    },
+    "metrics": {
+      "end": 0,
+      "start": 0
+    },
+    "name": "google-genai-instrumentation-root",
+    "type": "task"
+  },
+  {
+    "metadata": {
+      "operation": "generate"
+    },
+    "metrics": {
+      "end": 0,
+      "start": 0
+    },
+    "name": "google-generate-operation",
+    "type": null
+  },
+  {
+    "input": {
+      "config": {
+        "maxOutputTokens": 16,
+        "temperature": 0
+      },
+      "contents": {
+        "text": "Reply with exactly PARIS."
+      },
+      "model": "gemini-2.5-flash-lite"
+    },
+    "metadata": {
+      "model": "gemini-2.5-flash-lite"
+    },
+    "metrics": {
+      "completion_tokens": 2,
+      "duration": 0,
+      "end": 0,
+      "prompt_tokens": 6,
+      "start": 0,
+      "tokens": 8
+    },
+    "name": "generate_content",
+    "output": {
+      "candidates": [
+        {
+          "content": {
+            "parts": [
+              {
+                "text": "PARIS"
+              }
+            ],
+            "role": "model"
+          },
+          "finishReason": "STOP",
+          "index": 0
+        }
+      ],
+      "modelVersion": "gemini-2.5-flash-lite",
+      "responseId": "<responseId:1>",
+      "sdkHttpResponse": {
+        "headers": {
+          "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
+          "content-encoding": "gzip",
+          "content-type": "application/json; charset=UTF-8",
+          "date": "<timestamp>",
+          "server": "scaffolding on HTTPServer2",
+          "server-timing": "<server-timing>",
+          "transfer-encoding": "chunked",
+          "vary": "Origin, X-Origin, Referer",
+          "x-content-type-options": "nosniff",
+          "x-frame-options": "SAMEORIGIN",
+          "x-gemini-service-tier": "<x-gemini-service-tier>",
+          "x-xss-protection": "0"
+        }
+      },
+      "usageMetadata": {
+        "candidatesTokenCount": 2,
+        "promptTokenCount": 6,
+        "promptTokensDetails": [
+          {
+            "modality": "TEXT",
+            "tokenCount": 6
+          }
+        ],
+        "totalTokenCount": 8
+      }
+    },
+    "type": "llm"
+  },
+  {
+    "metadata": {
+      "operation": "attachment"
+    },
+    "metrics": {
+      "end": 0,
+      "start": 0
+    },
+    "name": "google-attachment-operation",
+    "type": null
+  },
+  {
+    "input": {
+      "config": {
+        "maxOutputTokens": 24,
+        "temperature": 0
+      },
+      "contents": [
+        {
+          "parts": [
+            {
+              "image_url": {
+                "url": {
+                  "content_type": "image/png",
+                  "filename": "file.png",
+                  "key": "<uuid:2>",
+                  "type": "braintrust_attachment"
+                }
+              }
+            },
+            {
+              "text": "Describe the attached image in one short sentence."
+            }
+          ],
+          "role": "user"
+        }
+      ],
+      "model": "gemini-2.5-flash-lite"
+    },
+    "metadata": {
+      "model": "gemini-2.5-flash-lite"
+    },
+    "metrics": {
+      "completion_tokens": 14,
+      "duration": 0,
+      "end": 0,
+      "prompt_tokens": 268,
+      "start": 0,
+      "tokens": 282
+    },
+    "name": "generate_content",
+    "output": {
+      "candidates": [
+        {
+          "content": {
+            "parts": [
+              {
+                "text": "A majestic sailing ship battles a fierce storm with towering waves and lightning."
+              }
+            ],
+            "role": "model"
+          },
+          "finishReason": "STOP",
+          "index": 0
+        }
+      ],
+      "modelVersion": "gemini-2.5-flash-lite",
+      "responseId": "<responseId:2>",
+      "sdkHttpResponse": {
+        "headers": {
+          "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
+          "content-encoding": "gzip",
+          "content-type": "application/json; charset=UTF-8",
+          "date": "<timestamp>",
+          "server": "scaffolding on HTTPServer2",
+          "server-timing": "<server-timing>",
+          "transfer-encoding": "chunked",
+          "vary": "Origin, X-Origin, Referer",
+          "x-content-type-options": "nosniff",
+          "x-frame-options": "SAMEORIGIN",
+          "x-gemini-service-tier": "<x-gemini-service-tier>",
+          "x-xss-protection": "0"
+        }
+      },
+      "usageMetadata": {
+        "candidatesTokenCount": 14,
+        "promptTokenCount": 268,
+        "promptTokensDetails": [
+          {
+            "modality": "IMAGE",
+            "tokenCount": 258
+          },
+          {
+            "modality": "TEXT",
+            "tokenCount": 10
+          }
+        ],
+        "totalTokenCount": 282
+      }
+    },
+    "type": "llm"
+  },
+  {
+    "metadata": {
+      "operation": "stream"
+    },
+    "metrics": {
+      "end": 0,
+      "start": 0
+    },
+    "name": "google-stream-operation",
+    "type": null
+  },
+  {
+    "input": {
+      "config": {
+        "maxOutputTokens": 32,
+        "temperature": 0
+      },
+      "contents": {
+        "text": "Count from 1 to 3 and include the words one two three."
+      },
+      "model": "gemini-2.5-flash-lite"
+    },
+    "metadata": {
+      "model": "gemini-2.5-flash-lite"
+    },
+    "metrics": {
+      "completion_tokens": 28,
+      "duration": 0,
+      "end": 0,
+      "prompt_tokens": 16,
+      "start": 0,
+      "time_to_first_token": 0,
+      "tokens": 44
+    },
+    "name": "generate_content_stream",
+    "output": {
+      "candidates": [
+        {
+          "content": {
+            "parts": [
+              {
+                "text": "Here's the count from 1 to 3, including the words:\n\n1. One\n2. Two\n3. Three"
+              }
+            ],
+            "role": "model"
+          },
+          "finishReason": "STOP"
+        }
+      ],
+      "text": "Here's the count from 1 to 3, including the words:\n\n1. One\n2. Two\n3. Three",
+      "usageMetadata": {
+        "candidatesTokenCount": 28,
+        "promptTokenCount": 16,
+        "promptTokensDetails": [
+          {
+            "modality": "TEXT",
+            "tokenCount": 16
+          }
+        ],
+        "totalTokenCount": 44
+      }
+    },
+    "type": "llm"
+  },
+  {
+    "metadata": {
+      "operation": "stream-return"
+    },
+    "metrics": {
+      "end": 0,
+      "start": 0
+    },
+    "name": "google-stream-return-operation",
+    "type": null
+  },
+  {
+    "input": {
+      "config": {
+        "maxOutputTokens": 16,
+        "temperature": 0
+      },
+      "contents": {
+        "text": "Reply with exactly BONJOUR."
+      },
+      "model": "gemini-2.5-flash-lite"
+    },
+    "metadata": {
+      "model": "gemini-2.5-flash-lite"
+    },
+    "metrics": {
+      "completion_tokens": 2,
+      "duration": 0,
+      "end": 0,
+      "prompt_tokens": 7,
+      "start": 0,
+      "time_to_first_token": 0,
+      "tokens": 9
+    },
+    "name": "generate_content_stream",
+    "output": {
+      "candidates": [
+        {
+          "content": {
+            "parts": [
+              {
+                "text": "BONJOUR"
+              }
+            ],
+            "role": "model"
+          },
+          "finishReason": "STOP"
+        }
+      ],
+      "text": "BONJOUR",
+      "usageMetadata": {
+        "candidatesTokenCount": 2,
+        "promptTokenCount": 7,
+        "promptTokensDetails": [
+          {
+            "modality": "TEXT",
+            "tokenCount": 7
+          }
+        ],
+        "totalTokenCount": 9
+      }
+    },
+    "type": "llm"
+  },
+  {
+    "metadata": {
+      "operation": "tool"
+    },
+    "metrics": {
+      "end": 0,
+      "start": 0
+    },
+    "name": "google-tool-operation",
+    "type": null
+  },
+  {
+    "input": {
+      "config": {
+        "maxOutputTokens": 128,
+        "temperature": 0,
+        "toolConfig": {
+          "functionCallingConfig": {
+            "allowedFunctionNames": [
+              "get_weather"
+            ],
+            "mode": "ANY"
+          }
+        }
+      },
+      "contents": {
+        "text": "Use the get_weather function for Paris, France. Do not answer from memory."
+      },
+      "model": "gemini-2.5-flash-lite"
+    },
+    "metadata": {
+      "model": "gemini-2.5-flash-lite"
+    },
+    "metrics": {
+      "completion_tokens": 17,
+      "duration": 0,
+      "end": 0,
+      "prompt_tokens": 65,
+      "start": 0,
+      "tokens": 82
+    },
+    "name": "generate_content",
+    "output": {
+      "candidates": [
+        {
+          "content": {
+            "parts": [
+              {
+                "functionCall": {
+                  "args": {
+                    "location": "Paris, France"
+                  },
+                  "name": "get_weather"
+                }
+              }
+            ],
+            "role": "model"
+          },
+          "finishReason": "STOP",
+          "index": 0
+        }
+      ],
+      "modelVersion": "gemini-2.5-flash-lite",
+      "responseId": "<responseId:3>",
+      "sdkHttpResponse": {
+        "headers": {
+          "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
+          "content-encoding": "gzip",
+          "content-type": "application/json; charset=UTF-8",
+          "date": "<timestamp>",
+          "server": "scaffolding on HTTPServer2",
+          "server-timing": "<server-timing>",
+          "transfer-encoding": "chunked",
+          "vary": "Origin, X-Origin, Referer",
+          "x-content-type-options": "nosniff",
+          "x-frame-options": "SAMEORIGIN",
+          "x-gemini-service-tier": "<x-gemini-service-tier>",
+          "x-xss-protection": "0"
+        }
+      },
+      "usageMetadata": {
+        "candidatesTokenCount": 17,
+        "promptTokenCount": 65,
+        "promptTokensDetails": [
+          {
+            "modality": "TEXT",
+            "tokenCount": 65
+          }
+        ],
+        "totalTokenCount": 82
+      }
+    },
+    "type": "llm"
+  }
+]

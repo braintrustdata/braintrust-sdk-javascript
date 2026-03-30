@@ -8,3 +8,7 @@ source = "getsentry/dotagents"
 [[skills]]
 name = "e2e-tests"
 source = "path:.agents/skills/e2e-tests"
+
+[[skills]]
+name = "instrumentation"
+source = "path:.agents/skills/instrumentation"

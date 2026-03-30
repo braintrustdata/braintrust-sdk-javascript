@@ -17,6 +17,7 @@ import {
 } from "@opentelemetry/sdk-trace-base";
 import {
   IDGenerator,
+  currentSpan,
   registerOtelFlush,
   type Span as BraintrustSpan,
 } from "braintrust";
@@ -349,6 +350,14 @@ export class BraintrustSpanProcessor implements SpanProcessor {
         // Priority 3: Check if parent OTEL span has braintrust.parent attribute
         if (!parentValue && parentContext) {
           parentValue = this._getParentOtelBraintrustParent(parentContext);
+        }
+
+        // Priority 4: Check the active Braintrust span directly
+        if (!parentValue) {
+          const braintrustSpan = currentSpan();
+          if (braintrustSpan.rootSpanId && braintrustSpan.spanId) {
+            parentValue = getOtelParentFromSpan(braintrustSpan);
+          }
         }
 
         // Set the attribute if we found a parent value

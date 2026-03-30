@@ -1,7 +1,0 @@
-{
-  "name": "@braintrust/e2e-wrap-claude-agent-sdk-traces",
-  "private": true,
-  "dependencies": {
-    "@anthropic-ai/claude-agent-sdk": "file:../../helpers/mock-claude-agent-sdk"
-  }
-}

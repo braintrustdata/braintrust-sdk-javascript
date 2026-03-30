@@ -13,17 +13,31 @@ import { claudeAgentSDKChannels } from "../../instrumentation/plugins/claude-age
  * names like: "orchestrion:claude-agent-sdk:query"
  */
 export const claudeAgentSDKConfigs: InstrumentationConfig[] = [
-  // query - Main entry point for agent interactions (top-level exported async generator function)
+  // query - Main entry point for agent interactions. The SDK returns an async
+  // iterable, but the exported query function itself is synchronous.
   {
     channelName: claudeAgentSDKChannels.query.channelName,
     module: {
       name: "@anthropic-ai/claude-agent-sdk",
-      versionRange: ">=0.1.0",
+      versionRange: ">=0.1.0 <0.2.0",
       filePath: "sdk.mjs",
     },
     functionQuery: {
       functionName: "query",
-      kind: "Async",
+      kind: "Sync",
+    },
+  },
+  {
+    channelName: claudeAgentSDKChannels.query.channelName,
+    module: {
+      name: "@anthropic-ai/claude-agent-sdk",
+      versionRange: ">=0.2.0",
+      filePath: "sdk.mjs",
+    },
+    functionQuery: {
+      functionName: "query",
+      kind: "Sync",
+      isExportAlias: true,
     },
   },
 ];

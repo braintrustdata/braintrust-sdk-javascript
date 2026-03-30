@@ -6,6 +6,7 @@ import type {
   ServerResponse,
 } from "node:http";
 import type { AddressInfo } from "node:net";
+import type { ProdForwarding } from "./prod-forwarding";
 
 export type JsonValue =
   | null
@@ -62,6 +63,12 @@ interface MockBraintrustServer {
   payloads: CapturedLogPayload[];
   requests: CapturedRequest[];
   url: string;
+}
+
+interface StartMockBraintrustServerOptions {
+  apiKey?: string;
+  prodForwarding?: ProdForwarding | null;
+  testRunId?: string;
 }
 
 const DEFAULT_API_KEY = "mock-braintrust-api-key";
@@ -248,8 +255,11 @@ function capturedRequestFrom(
 }
 
 export async function startMockBraintrustServer(
-  apiKey = DEFAULT_API_KEY,
+  options: StartMockBraintrustServerOptions = {},
 ): Promise<MockBraintrustServer> {
+  const apiKey = options.apiKey ?? DEFAULT_API_KEY;
+  const prodForwarding = options.prodForwarding ?? null;
+  const testRunId = options.testRunId;
   const requests: CapturedRequest[] = [];
   const payloads: CapturedLogPayload[] = [];
   const events: CapturedLogEvent[] = [];
@@ -266,6 +276,14 @@ export async function startMockBraintrustServer(
   >();
   let serverUrl = "";
   let xactCursor = 0;
+  const pendingProdForwarding = new Set<Promise<void>>();
+
+  if (prodForwarding) {
+    projectsByName.set(prodForwarding.projectName, {
+      id: prodForwarding.projectId,
+      name: prodForwarding.projectName,
+    });
+  }
 
   function nextXactId(): string {
     xactCursor += 1;
@@ -296,8 +314,26 @@ export async function startMockBraintrustServer(
       return existing;
     }
 
-    const created = { id: randomUUID(), name };
+    const created = {
+      id:
+        prodForwarding && name === prodForwarding.projectName
+          ? prodForwarding.projectId
+          : randomUUID(),
+      name,
+    };
     projectsByName.set(name, created);
+    return created;
+  }
+
+  function upsertProject(project: { id: string; name: string }): {
+    id: string;
+    name: string;
+  } {
+    const created = {
+      id: project.id,
+      name: project.name,
+    };
+    projectsByName.set(project.name, created);
     return created;
   }
 
@@ -326,6 +362,81 @@ export async function startMockBraintrustServer(
     return created;
   }
 
+  function upsertExperiment(
+    project: { id: string; name: string },
+    experiment: { created: string; id: string; name: string },
+  ): {
+    created: string;
+    id: string;
+    name: string;
+    projectId: string;
+  } {
+    const key = `${project.id}:${experiment.name}`;
+    const created = {
+      created: experiment.created,
+      id: experiment.id,
+      name: experiment.name,
+      projectId: project.id,
+    };
+    experimentsByProjectAndName.set(key, created);
+    return created;
+  }
+
+  function trackProdForwarding(promise: Promise<void>): void {
+    pendingProdForwarding.add(promise);
+    promise.finally(() => {
+      pendingProdForwarding.delete(promise);
+    });
+  }
+
+  async function forwardProdRequest(
+    capturedRequest: CapturedRequest,
+  ): Promise<Response> {
+    if (!prodForwarding) {
+      throw new Error("prodForwarding is not enabled");
+    }
+
+    const baseUrl = capturedRequest.path.startsWith("/api/")
+      ? prodForwarding.appUrl
+      : prodForwarding.apiUrl;
+    const url = new URL(capturedRequest.path, baseUrl);
+    for (const [key, value] of Object.entries(capturedRequest.query)) {
+      url.searchParams.set(key, value);
+    }
+
+    const headers = new Headers();
+    for (const [key, value] of Object.entries(capturedRequest.headers)) {
+      if (
+        key === "authorization" ||
+        key === "connection" ||
+        key === "content-length" ||
+        key === "host"
+      ) {
+        continue;
+      }
+
+      headers.set(key, value);
+    }
+    headers.set("authorization", `Bearer ${prodForwarding.apiKey}`);
+
+    const response = await fetch(url, {
+      body:
+        capturedRequest.method === "GET" || capturedRequest.method === "HEAD"
+          ? undefined
+          : capturedRequest.rawBody,
+      headers,
+      method: capturedRequest.method,
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        `prodForwarding failed for ${capturedRequest.method} ${capturedRequest.path}: ${response.status} ${response.statusText}`,
+      );
+    }
+
+    return response;
+  }
+
   const server = createServer((req, res) => {
     void (async () => {
       try {
@@ -340,8 +451,19 @@ export async function startMockBraintrustServer(
           req.headers,
           rawBody,
         );
+        const recordedRequest = clone(capturedRequest);
+        if (
+          prodForwarding &&
+          testRunId &&
+          recordedRequest.path === "/otel/v1/traces" &&
+          recordedRequest.headers["x-bt-parent"] ===
+            `project_name:${prodForwarding.projectName}`
+        ) {
+          recordedRequest.headers["x-bt-parent"] =
+            `project_name:${testRunId.toLowerCase().replace(/[^a-z0-9-]/g, "-")}`;
+        }
 
-        requests.push(capturedRequest);
+        requests.push(recordedRequest);
 
         if (
           capturedRequest.method === "POST" &&
@@ -370,6 +492,32 @@ export async function startMockBraintrustServer(
               ? capturedRequest.jsonBody.project_name
               : "project";
 
+          if (prodForwarding) {
+            try {
+              const forwardedResponse =
+                await forwardProdRequest(capturedRequest);
+              const forwardedBody =
+                (await forwardedResponse.json()) as JsonValue;
+
+              if (
+                isRecord(forwardedBody) &&
+                isRecord(forwardedBody.project) &&
+                typeof forwardedBody.project.id === "string" &&
+                typeof forwardedBody.project.name === "string"
+              ) {
+                respondJson(res, 200, {
+                  project: upsertProject({
+                    id: forwardedBody.project.id,
+                    name: forwardedBody.project.name,
+                  }),
+                });
+                return;
+              }
+            } catch {
+              // Fall back to local registration so e2e assertions still run.
+            }
+          }
+
           respondJson(res, 200, {
             project: projectForName(projectName),
           });
@@ -391,6 +539,45 @@ export async function startMockBraintrustServer(
               ? capturedRequest.jsonBody.experiment_name
               : "experiment";
           const project = projectForName(projectName);
+
+          if (prodForwarding) {
+            try {
+              const forwardedResponse =
+                await forwardProdRequest(capturedRequest);
+              const forwardedBody =
+                (await forwardedResponse.json()) as JsonValue;
+
+              if (
+                isRecord(forwardedBody) &&
+                isRecord(forwardedBody.project) &&
+                isRecord(forwardedBody.experiment) &&
+                typeof forwardedBody.project.id === "string" &&
+                typeof forwardedBody.project.name === "string" &&
+                typeof forwardedBody.experiment.created === "string" &&
+                typeof forwardedBody.experiment.id === "string" &&
+                typeof forwardedBody.experiment.name === "string"
+              ) {
+                const forwardedProject = upsertProject({
+                  id: forwardedBody.project.id,
+                  name: forwardedBody.project.name,
+                });
+                const forwardedExperiment = upsertExperiment(forwardedProject, {
+                  created: forwardedBody.experiment.created,
+                  id: forwardedBody.experiment.id,
+                  name: forwardedBody.experiment.name,
+                });
+
+                respondJson(res, 200, {
+                  experiment: forwardedExperiment,
+                  project: forwardedProject,
+                });
+                return;
+              }
+            } catch {
+              // Fall back to local registration so e2e assertions still run.
+            }
+          }
+
           const experiment = experimentForProject(project, experimentName);
 
           respondJson(res, 200, {
@@ -437,6 +624,13 @@ export async function startMockBraintrustServer(
           if (payload) {
             persistPayload(payload);
           }
+          if (prodForwarding) {
+            trackProdForwarding(
+              forwardProdRequest(capturedRequest)
+                .then(() => undefined)
+                .catch(() => undefined),
+            );
+          }
           respondJson(res, 200, { ok: true });
           return;
         }
@@ -445,6 +639,13 @@ export async function startMockBraintrustServer(
           capturedRequest.method === "POST" &&
           capturedRequest.path === "/otel/v1/traces"
         ) {
+          if (prodForwarding) {
+            trackProdForwarding(
+              forwardProdRequest(capturedRequest)
+                .then(() => undefined)
+                .catch(() => undefined),
+            );
+          }
           respondJson(res, 200, { ok: true });
           return;
         }
@@ -469,10 +670,12 @@ export async function startMockBraintrustServer(
 
   return {
     apiKey,
-    close: () =>
-      new Promise<void>((resolve, reject) => {
+    close: async () => {
+      await new Promise<void>((resolve, reject) => {
         server.close((error) => (error ? reject(error) : resolve()));
-      }),
+      });
+      await Promise.allSettled([...pendingProdForwarding]);
+    },
     events,
     payloads,
     requests,

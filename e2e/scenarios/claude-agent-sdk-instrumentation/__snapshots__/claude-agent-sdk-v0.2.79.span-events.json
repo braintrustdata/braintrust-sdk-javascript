@@ -1,0 +1,283 @@
+{
+  "async_prompt": {
+    "llm": {
+      "has_input": true,
+      "has_output": true,
+      "input_contents": [
+        "Part 1",
+        "Part 2"
+      ],
+      "metadata": {
+        "model": "claude-haiku-4-5-20251001"
+      },
+      "metric_keys": [
+        "completion_tokens",
+        "prompt_tokens",
+        "tokens"
+      ],
+      "name": "anthropic.messages.create",
+      "root_span_id": "<span:1>",
+      "span_id": "<span:2>",
+      "span_parents": [
+        "<span:3>"
+      ],
+      "type": "llm"
+    },
+    "operation": {
+      "has_input": false,
+      "has_output": false,
+      "metadata": {
+        "operation": "async-prompt"
+      },
+      "metric_keys": [],
+      "name": "claude-agent-async-prompt-operation",
+      "root_span_id": "<span:1>",
+      "span_id": "<span:4>",
+      "span_parents": [
+        "<span:1>"
+      ],
+      "type": null
+    },
+    "task": {
+      "has_input": true,
+      "has_output": true,
+      "input_contents": [
+        "Part 1",
+        "Part 2"
+      ],
+      "metadata": {
+        "model": "claude-haiku-4-5-20251001"
+      },
+      "metric_keys": [],
+      "name": "Claude Agent",
+      "root_span_id": "<span:1>",
+      "span_id": "<span:3>",
+      "span_parents": [
+        "<span:4>"
+      ],
+      "type": "task"
+    }
+  },
+  "basic": {
+    "llm": {
+      "has_input": true,
+      "has_output": true,
+      "input_contents": [
+        "Use the calculator tool to multiply 15 by 7. Do not answer from memory."
+      ],
+      "metadata": {
+        "model": "claude-haiku-4-5-20251001"
+      },
+      "metric_keys": [
+        "completion_tokens",
+        "prompt_tokens",
+        "tokens"
+      ],
+      "name": "anthropic.messages.create",
+      "root_span_id": "<span:1>",
+      "span_id": "<span:5>",
+      "span_parents": [
+        "<span:6>"
+      ],
+      "type": "llm"
+    },
+    "operation": {
+      "has_input": false,
+      "has_output": false,
+      "metadata": {
+        "operation": "basic"
+      },
+      "metric_keys": [],
+      "name": "claude-agent-basic-operation",
+      "root_span_id": "<span:1>",
+      "span_id": "<span:7>",
+      "span_parents": [
+        "<span:1>"
+      ],
+      "type": null
+    },
+    "task": {
+      "has_input": true,
+      "has_output": true,
+      "metadata": {
+        "model": "claude-haiku-4-5-20251001"
+      },
+      "metric_keys": [],
+      "name": "Claude Agent",
+      "root_span_id": "<span:1>",
+      "span_id": "<span:6>",
+      "span_parents": [
+        "<span:7>"
+      ],
+      "type": "task"
+    },
+    "tool": {
+      "has_input": true,
+      "has_output": true,
+      "metadata": {
+        "gen_ai.tool.name": "calculator",
+        "mcp.server": "calculator"
+      },
+      "metric_keys": [],
+      "name": "tool: calculator/calculator",
+      "root_span_id": "<span:1>",
+      "span_id": "<span:8>",
+      "span_parents": [
+        "<span:6>"
+      ],
+      "type": "tool"
+    }
+  },
+  "failure": {
+    "llm": {
+      "has_input": true,
+      "has_output": true,
+      "input_contents": [
+        "Use the calculator tool to divide 2 by 0. Do not recover from the error."
+      ],
+      "metadata": {
+        "model": "claude-haiku-4-5-20251001"
+      },
+      "metric_keys": [
+        "completion_tokens",
+        "prompt_tokens",
+        "tokens"
+      ],
+      "name": "anthropic.messages.create",
+      "root_span_id": "<span:1>",
+      "span_id": "<span:9>",
+      "span_parents": [
+        "<span:10>"
+      ],
+      "type": "llm"
+    },
+    "operation": {
+      "has_input": false,
+      "has_output": false,
+      "metadata": {
+        "operation": "failure"
+      },
+      "metric_keys": [],
+      "name": "claude-agent-failure-operation",
+      "root_span_id": "<span:1>",
+      "span_id": "<span:11>",
+      "span_parents": [
+        "<span:1>"
+      ],
+      "type": null
+    },
+    "task": {
+      "has_input": true,
+      "has_output": true,
+      "metadata": {
+        "model": "claude-haiku-4-5-20251001"
+      },
+      "metric_keys": [],
+      "name": "Claude Agent",
+      "root_span_id": "<span:1>",
+      "span_id": "<span:10>",
+      "span_parents": [
+        "<span:11>"
+      ],
+      "type": "task"
+    },
+    "tool": {
+      "error": "division by zero",
+      "has_input": true,
+      "has_output": false,
+      "metadata": {
+        "gen_ai.tool.name": "calculator",
+        "mcp.server": "calculator"
+      },
+      "metric_keys": [],
+      "name": "tool: calculator/calculator",
+      "root_span_id": "<span:1>",
+      "span_id": "<span:12>",
+      "span_parents": [
+        "<span:10>"
+      ],
+      "type": "tool"
+    }
+  },
+  "root": {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "scenario": "claude-agent-sdk-traces"
+    },
+    "metric_keys": [],
+    "name": "claude-agent-sdk-root",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:1>",
+    "span_parents": [],
+    "type": "task"
+  },
+  "subagent": {
+    "llm": {
+      "has_input": true,
+      "has_output": true,
+      "input_contents": [
+        "Spawn a math-expert subagent to add 15 and 27 using the calculator tool. Report the result. Do not solve it yourself."
+      ],
+      "metadata": {
+        "model": "claude-haiku-4-5-20251001"
+      },
+      "metric_keys": [
+        "completion_tokens",
+        "prompt_tokens",
+        "tokens"
+      ],
+      "name": "anthropic.messages.create",
+      "root_span_id": "<span:1>",
+      "span_id": "<span:13>",
+      "span_parents": [
+        "<span:14>"
+      ],
+      "type": "llm"
+    },
+    "nested_task": {
+      "has_input": false,
+      "has_output": false,
+      "metadata": null,
+      "metric_keys": [],
+      "name": "Agent: sub-agent",
+      "root_span_id": "<span:1>",
+      "span_id": "<span:15>",
+      "span_parents": [
+        "<span:14>"
+      ],
+      "type": "task"
+    },
+    "operation": {
+      "has_input": false,
+      "has_output": false,
+      "metadata": {
+        "operation": "subagent"
+      },
+      "metric_keys": [],
+      "name": "claude-agent-subagent-operation",
+      "root_span_id": "<span:1>",
+      "span_id": "<span:16>",
+      "span_parents": [
+        "<span:1>"
+      ],
+      "type": null
+    },
+    "task_root": {
+      "has_input": true,
+      "has_output": true,
+      "metadata": {
+        "model": "claude-haiku-4-5-20251001"
+      },
+      "metric_keys": [],
+      "name": "Claude Agent",
+      "root_span_id": "<span:1>",
+      "span_id": "<span:14>",
+      "span_parents": [
+        "<span:16>"
+      ],
+      "type": "task"
+    },
+    "tool": null
+  }
+}

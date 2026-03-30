@@ -183,7 +183,7 @@ jobs:
           echo "Templates-nunjucks tarball: ${{ steps.prepare_templates_nunjucks_artifact.outputs.packed_nunjucks_tarball }}"
           ls -la js/artifacts/
       - name: Upload build artifacts
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: ${{ steps.artifact.outputs.name }}-dist
           path: |
@@ -198,6 +198,9 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: denoland/setup-deno@667a34cdef165d8d2b2e98dde39547c9daac7282 # v2.0.4
+        with:
+          deno-version-file: .tool-versions
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version-file: .tool-versions
@@ -500,6 +503,7 @@ jobs:
       - ensure-pinned-actions
       - js-test
       - js-build
+      - e2e-hermetic
       - js-api-compatibility
       - js-smoke-discover
       - js-smoke-test
@@ -532,6 +536,7 @@ jobs:
           check_result "ensure-pinned-actions" "${{ needs.ensure-pinned-actions.result }}"
           check_result "js-test" "${{ needs.js-test.result }}"
           check_result "js-build" "${{ needs.js-build.result }}"
+          check_result "e2e-hermetic" "${{ needs.e2e-hermetic.result }}"
           check_result "js-api-compatibility" "${{ needs.js-api-compatibility.result }}"
           check_result "js-smoke-discover" "${{ needs.js-smoke-discover.result }}"
           check_result "js-smoke-test" "${{ needs.js-smoke-test.result }}"

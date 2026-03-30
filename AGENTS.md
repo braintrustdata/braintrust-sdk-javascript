@@ -78,11 +78,3 @@ pnpm run lint            # Run eslint checks
 pnpm run fix:formatting  # Auto-fix formatting
 pnpm run fix:lint        # Auto-fix eslint issues
 ```
-
-## Adding Agent Skills
-
-Use the `dotagents` skill (in `.agents/skills/dotagents/`) to add new skills to this repo. For example:
-
-```bash
-dotagents add getsentry/skills find-bugs
-```

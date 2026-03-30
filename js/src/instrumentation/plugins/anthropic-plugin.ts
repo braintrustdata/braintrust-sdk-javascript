@@ -2,7 +2,7 @@ import { BasePlugin } from "../core";
 import { traceStreamingChannel, unsubscribeAll } from "../core/channel-tracing";
 import { Attachment } from "../../logger";
 import { SpanTypeAttribute, isObject } from "../../../util/index";
-import { getCurrentUnixTimestamp } from "../../util";
+import { filterFrom, getCurrentUnixTimestamp } from "../../util";
 import { finalizeAnthropicTokens } from "../../wrappers/anthropic-tokens-util";
 import { anthropicChannels } from "./anthropic-channels";
 import type {
@@ -10,6 +10,7 @@ import type {
   AnthropicCreateParams,
   AnthropicInputMessage,
   AnthropicMessage,
+  AnthropicOutputContentBlock,
   AnthropicStreamEvent,
   AnthropicUsage,
 } from "../../vendor-sdk-types/anthropic";
@@ -91,7 +92,7 @@ export class AnthropicPlugin extends BasePlugin {
     this.unsubscribers.push(
       traceStreamingChannel(anthropicChannels.betaMessagesCreate, {
         ...anthropicConfig,
-        name: "anthropic.beta.messages.create",
+        name: "anthropic.messages.create",
       }),
     );
   }
@@ -138,13 +139,16 @@ export function parseMetricsFromUsage(
 export function aggregateAnthropicStreamChunks(
   chunks: AnthropicStreamEvent[],
 ): {
-  output: string;
+  output: unknown;
   metrics: Record<string, number>;
   metadata: Record<string, unknown>;
 } {
-  const deltas: string[] = [];
+  const fallbackTextDeltas: string[] = [];
+  const contentBlocks: Record<number, AnthropicOutputContentBlock> = {};
+  const contentBlockDeltas: Record<number, string[]> = {};
   let metrics: Record<string, number> = {};
   let metadata: Record<string, unknown> = {};
+  let role: string | undefined;
 
   for (const event of chunks) {
     switch (event?.type) {
@@ -154,16 +158,48 @@ export function aggregateAnthropicStreamChunks(
           const initialMetrics = parseMetricsFromUsage(event.message.usage);
           metrics = { ...metrics, ...initialMetrics };
         }
+        if (typeof event.message?.role === "string") {
+          role = event.message.role;
+        }
+        break;
+
+      case "content_block_start":
+        if (event.content_block) {
+          contentBlocks[event.index] = event.content_block;
+          contentBlockDeltas[event.index] = [];
+        }
         break;
 
       case "content_block_delta":
-        // Collect text deltas
         if (event.delta?.type === "text_delta") {
           const text = event.delta.text;
           if (text) {
-            deltas.push(text);
+            if (
+              contentBlocks[event.index] !== undefined ||
+              contentBlockDeltas[event.index] !== undefined
+            ) {
+              contentBlockDeltas[event.index] ??= [];
+              contentBlockDeltas[event.index].push(text);
+            } else {
+              fallbackTextDeltas.push(text);
+            }
+          }
+        } else if (event.delta?.type === "input_json_delta") {
+          const partialJson = event.delta.partial_json;
+          if (partialJson) {
+            contentBlockDeltas[event.index] ??= [];
+            contentBlockDeltas[event.index].push(partialJson);
           }
         }
+        break;
+
+      case "content_block_stop":
+        finalizeContentBlock(
+          event.index,
+          contentBlocks,
+          contentBlockDeltas,
+          fallbackTextDeltas,
+        );
         break;
 
       case "message_delta":
@@ -180,7 +216,26 @@ export function aggregateAnthropicStreamChunks(
     }
   }
 
-  const output = deltas.join("");
+  const orderedContent = Object.entries(contentBlocks)
+    .map(([index, block]) => ({
+      block,
+      index: Number(index),
+    }))
+    .filter(({ block }) => block !== undefined)
+    .sort((left, right) => left.index - right.index)
+    .map(({ block }) => block);
+
+  let output: unknown = fallbackTextDeltas.join("");
+  if (orderedContent.length > 0) {
+    if (orderedContent.every(isTextContentBlock)) {
+      output = orderedContent.map((block) => block.text).join("");
+    } else {
+      output = {
+        ...(role ? { role } : {}),
+        content: orderedContent,
+      };
+    }
+  }
 
   const finalized = finalizeAnthropicTokens(metrics);
   // Filter out undefined values to match Record<string, number> type
@@ -195,6 +250,67 @@ export function aggregateAnthropicStreamChunks(
     metrics: filteredMetrics,
     metadata,
   };
+}
+
+function finalizeContentBlock(
+  index: number,
+  contentBlocks: Record<number, AnthropicOutputContentBlock>,
+  contentBlockDeltas: Record<number, string[]>,
+  fallbackTextDeltas: string[],
+): void {
+  const contentBlock = contentBlocks[index];
+  if (!contentBlock) {
+    return;
+  }
+
+  const text = contentBlockDeltas[index]?.join("") ?? "";
+
+  if (isToolUseContentBlock(contentBlock)) {
+    if (!text) {
+      return;
+    }
+
+    try {
+      contentBlocks[index] = {
+        ...contentBlock,
+        input: JSON.parse(text),
+      };
+    } catch {
+      fallbackTextDeltas.push(text);
+      delete contentBlocks[index];
+    }
+    return;
+  }
+
+  if (isTextContentBlock(contentBlock)) {
+    if (!text) {
+      delete contentBlocks[index];
+      return;
+    }
+
+    contentBlocks[index] = {
+      ...contentBlock,
+      text,
+    };
+    return;
+  }
+
+  if (text) {
+    fallbackTextDeltas.push(text);
+  }
+  delete contentBlocks[index];
+}
+
+function isTextContentBlock(
+  contentBlock: AnthropicOutputContentBlock,
+): contentBlock is Extract<AnthropicOutputContentBlock, { type: "text" }> {
+  return contentBlock.type === "text";
+}
+
+function isToolUseContentBlock(
+  contentBlock: AnthropicOutputContentBlock,
+): contentBlock is Extract<AnthropicOutputContentBlock, { type: "tool_use" }> {
+  return contentBlock.type === "tool_use";
 }
 
 function isAnthropicBase64ContentBlock(
@@ -294,20 +410,4 @@ function coalesceInput(
     input.push({ role: "system", content: system });
   }
   return input;
-}
-
-/**
- * Filter out specified fields from an object.
- */
-function filterFrom(
-  obj: Record<string, unknown>,
-  fieldsToRemove: string[],
-): Record<string, unknown> {
-  const result: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(obj)) {
-    if (!fieldsToRemove.includes(key)) {
-      result[key] = value;
-    }
-  }
-  return result;
 }

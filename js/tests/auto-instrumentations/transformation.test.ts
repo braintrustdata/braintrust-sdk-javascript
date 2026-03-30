@@ -196,6 +196,181 @@ describe("Orchestrion Transformation Tests", () => {
     });
   });
 
+  describe("webpack", () => {
+    async function runWebpack(
+      config: object,
+    ): Promise<{ errors: string[]; output: string; outputPath: string }> {
+      const webpack = (await import("webpack")).default;
+      return new Promise((resolve, reject) => {
+        webpack(config as any, (err, stats) => {
+          if (err) return reject(err);
+          if (!stats) return reject(new Error("No stats returned"));
+
+          const info = stats.toJson({ source: true });
+          const errors = (info.errors ?? []).map((e: any) =>
+            typeof e === "string" ? e : e.message,
+          );
+
+          const outputPath = (config as any).output?.path ?? outputDir;
+          const filename = (config as any).output?.filename ?? "bundle.js";
+          const fullPath = path.join(outputPath, filename);
+          const output = fs.existsSync(fullPath)
+            ? fs.readFileSync(fullPath, "utf-8")
+            : "";
+
+          resolve({ errors, output, outputPath: fullPath });
+        });
+      });
+    }
+
+    it("should transform OpenAI SDK code with tracingChannel", async () => {
+      const { webpackPlugin } =
+        await import("../../src/auto-instrumentations/bundler/webpack.js");
+
+      const { errors, output } = await runWebpack({
+        entry: path.join(fixturesDir, "test-app.js"),
+        output: {
+          path: outputDir,
+          filename: "webpack-bundle.js",
+          library: { type: "module" },
+        },
+        experiments: { outputModule: true },
+        mode: "development",
+        resolve: { modules: [nodeModulesDir, "node_modules"] },
+        externals: { diagnostics_channel: "module diagnostics_channel" },
+        plugins: [webpackPlugin({ browser: false })],
+      });
+
+      expect(errors).toHaveLength(0);
+      expect(output).toContain("tracingChannel");
+      expect(output).toContain("orchestrion:openai:chat.completions.create");
+      expect(output).toContain("tracePromise");
+    });
+
+    it("should bundle dc-browser module when browser: true", async () => {
+      const { webpackPlugin } =
+        await import("../../src/auto-instrumentations/bundler/webpack.js");
+
+      const { errors, output } = await runWebpack({
+        entry: path.join(fixturesDir, "test-app.js"),
+        output: {
+          path: outputDir,
+          filename: "webpack-browser-bundle.js",
+          library: { type: "module" },
+        },
+        experiments: { outputModule: true },
+        mode: "development",
+        resolve: { modules: [nodeModulesDir, "node_modules"] },
+        plugins: [webpackPlugin({ browser: true })],
+      });
+
+      expect(errors).toHaveLength(0);
+      expect(output).toContain("tracingChannel");
+      expect(output).toContain("orchestrion:openai:chat.completions.create");
+      expect(output).toContain("TracingChannel");
+      expect(output).not.toMatch(/require\(["']diagnostics_channel["']\)/);
+    });
+  });
+
+  describe("turbopack / webpack loader", () => {
+    const webpackLoaderPath = path.resolve(
+      __dirname,
+      "../../dist/auto-instrumentations/bundler/webpack-loader.cjs",
+    );
+
+    async function runWebpackWithLoader(
+      config: object,
+    ): Promise<{ errors: string[]; output: string }> {
+      const webpack = (await import("webpack")).default;
+      return new Promise((resolve, reject) => {
+        webpack(config as any, (err, stats) => {
+          if (err) return reject(err);
+          if (!stats) return reject(new Error("No stats returned"));
+
+          const info = stats.toJson({ source: true });
+          const errors = (info.errors ?? []).map((e: any) =>
+            typeof e === "string" ? e : e.message,
+          );
+
+          const outputPath = (config as any).output?.path ?? outputDir;
+          const filename = (config as any).output?.filename ?? "bundle.js";
+          const fullPath = path.join(outputPath, filename);
+          const output = fs.existsSync(fullPath)
+            ? fs.readFileSync(fullPath, "utf-8")
+            : "";
+
+          resolve({ errors, output });
+        });
+      });
+    }
+
+    it("should transform OpenAI SDK code with tracingChannel (turbopack loader-only mode)", async () => {
+      const { errors, output } = await runWebpackWithLoader({
+        entry: path.join(fixturesDir, "test-app.js"),
+        output: {
+          path: outputDir,
+          filename: "turbopack-bundle.js",
+          library: { type: "module" },
+        },
+        experiments: { outputModule: true },
+        mode: "development",
+        resolve: { modules: [nodeModulesDir, "node_modules"] },
+        externals: { diagnostics_channel: "module diagnostics_channel" },
+        // No plugins — only the loader, mirroring turbopack's constraint
+        module: {
+          rules: [
+            {
+              use: [
+                {
+                  loader: webpackLoaderPath,
+                  options: { browser: false },
+                },
+              ],
+            },
+          ],
+        },
+      });
+
+      expect(errors).toHaveLength(0);
+      expect(output).toContain("tracingChannel");
+      expect(output).toContain("orchestrion:openai:chat.completions.create");
+      expect(output).toContain("tracePromise");
+    });
+
+    it("should bundle dc-browser polyfill when browser: true (turbopack loader-only mode)", async () => {
+      const { errors, output } = await runWebpackWithLoader({
+        entry: path.join(fixturesDir, "test-app.js"),
+        output: {
+          path: outputDir,
+          filename: "turbopack-browser-bundle.js",
+          library: { type: "module" },
+        },
+        experiments: { outputModule: true },
+        mode: "development",
+        resolve: { modules: [nodeModulesDir, "node_modules"] },
+        // No plugins — only the loader, mirroring turbopack's constraint
+        module: {
+          rules: [
+            {
+              use: [
+                {
+                  loader: webpackLoaderPath,
+                  options: { browser: true },
+                },
+              ],
+            },
+          ],
+        },
+      });
+
+      expect(errors).toHaveLength(0);
+      expect(output).toContain("tracingChannel");
+      expect(output).toContain("orchestrion:openai:chat.completions.create");
+      expect(output).toContain("TracingChannel");
+      expect(output).not.toMatch(/require\(["']diagnostics_channel["']\)/);
+    });
+  });
+
   describe("rollup", () => {
     it("should transform OpenAI SDK code with tracingChannel", async () => {
       const { rollup } = await import("rollup");

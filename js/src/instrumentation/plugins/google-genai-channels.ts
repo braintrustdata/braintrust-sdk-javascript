@@ -19,7 +19,7 @@ export const googleGenAIChannels = defineChannels("@google/genai", {
   generateContentStream: channel<
     [GoogleGenAIGenerateContentParams],
     GoogleGenAIStreamingResult,
-    Record<string, never>,
+    Record<string, unknown>,
     GoogleGenAIGenerateContentResponse
   >({
     channelName: "models.generateContentStream",

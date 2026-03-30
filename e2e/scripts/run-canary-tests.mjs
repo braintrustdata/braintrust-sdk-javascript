@@ -19,7 +19,7 @@ async function fileExists(filePath) {
 
 async function getCanaryTestFiles() {
   const entries = await readdir(SCENARIOS_DIR, { withFileTypes: true });
-  const testFiles = [];
+  const testFiles = new Set();
 
   for (const entry of entries) {
     if (!entry.isDirectory()) {
@@ -44,17 +44,24 @@ async function getCanaryTestFiles() {
       continue;
     }
 
-    const testPath = path.join(scenarioDir, "scenario.test.ts");
+    const configuredTestFile = manifest?.braintrustScenario?.canary?.testFile;
+    const testPath =
+      typeof configuredTestFile === "string" && configuredTestFile.length > 0
+        ? path.resolve(scenarioDir, configuredTestFile)
+        : path.join(scenarioDir, "scenario.test.ts");
     if (!(await fileExists(testPath))) {
       throw new Error(
-        `Canary scenario ${entry.name} is missing scenario.test.ts`,
+        `Canary scenario ${entry.name} is missing test file ${path.relative(
+          E2E_ROOT,
+          testPath,
+        )}`,
       );
     }
 
-    testFiles.push(path.relative(E2E_ROOT, testPath));
+    testFiles.add(path.relative(E2E_ROOT, testPath));
   }
 
-  return testFiles.sort();
+  return [...testFiles].sort();
 }
 
 async function runVitest(testFiles) {

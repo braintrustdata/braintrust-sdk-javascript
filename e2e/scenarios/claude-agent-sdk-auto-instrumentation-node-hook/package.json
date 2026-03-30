@@ -1,7 +1,0 @@
-{
-  "name": "@braintrust/e2e-claude-agent-sdk-auto-instrumentation-node-hook",
-  "private": true,
-  "dependencies": {
-    "@anthropic-ai/claude-agent-sdk": "file:../../helpers/mock-claude-agent-sdk"
-  }
-}

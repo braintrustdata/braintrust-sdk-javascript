@@ -1,5 +1,5 @@
 import { test, expect } from "vitest";
-import { wrapAnthropic } from "./wrappers/anthropic";
+import { wrapAnthropic } from "./anthropic";
 
 test("wrapAnthropic works even if not installed", () => {
   expect(wrapAnthropic).toBeDefined();

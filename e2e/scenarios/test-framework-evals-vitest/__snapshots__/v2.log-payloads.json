@@ -1,0 +1,174 @@
+[
+  {
+    "context": {
+      "caller_filename": "<repo>/js/src/wrappers/shared/traced-eval.ts",
+      "caller_functionname": "Module.runTracedEval",
+      "caller_lineno": 0
+    },
+    "created": "<timestamp>",
+    "experiment_id": "<uuid:3>",
+    "id": "<span:1>",
+    "metadata": {
+      "case": "simple-pass",
+      "scenario": "test-framework-evals-vitest",
+      "testRunId": "<run:1>"
+    },
+    "metrics": {
+      "end": 0,
+      "start": 0
+    },
+    "output": {
+      "phase": "simple-pass"
+    },
+    "root_span_id": "<span:2>",
+    "scores": {
+      "pass": 1
+    },
+    "span_attributes": {
+      "exec_counter": 0,
+      "name": "vitest simple pass",
+      "type": "task"
+    },
+    "span_id": "<span:2>"
+  },
+  {
+    "context": {
+      "caller_filename": "<repo>/js/src/wrappers/shared/traced-eval.ts",
+      "caller_functionname": "Module.runTracedEval",
+      "caller_lineno": 0
+    },
+    "created": "<timestamp>",
+    "expected": 10,
+    "experiment_id": "<uuid:3>",
+    "id": "<span:4>",
+    "input": {
+      "value": 5
+    },
+    "metadata": {
+      "case": "configured-span",
+      "scenario": "test-framework-evals-vitest",
+      "testRunId": "<run:1>"
+    },
+    "metrics": {
+      "end": 0,
+      "start": 0
+    },
+    "output": {
+      "phase": "configured-span",
+      "result": 10
+    },
+    "root_span_id": "<span:5>",
+    "scores": {
+      "correctness": 1,
+      "pass": 1,
+      "quality": 0.9
+    },
+    "span_attributes": {
+      "exec_counter": 1,
+      "name": "vitest configured span",
+      "type": "task"
+    },
+    "span_id": "<span:5>",
+    "tags": [
+      "math",
+      "configured"
+    ]
+  },
+  {
+    "context": {
+      "caller_filename": "<repo>/js/src/wrappers/shared/traced-eval.ts",
+      "caller_functionname": "Module.runTracedEval",
+      "caller_lineno": 0
+    },
+    "created": "<timestamp>",
+    "experiment_id": "<uuid:3>",
+    "id": "<span:6>",
+    "metadata": {
+      "case": "concurrent-alpha",
+      "scenario": "test-framework-evals-vitest",
+      "testRunId": "<run:1>"
+    },
+    "metrics": {
+      "end": 0,
+      "start": 0
+    },
+    "output": {
+      "phase": "concurrent-alpha"
+    },
+    "root_span_id": "<span:7>",
+    "scores": {
+      "pass": 1
+    },
+    "span_attributes": {
+      "exec_counter": 2,
+      "name": "vitest concurrent alpha",
+      "type": "task"
+    },
+    "span_id": "<span:7>"
+  },
+  {
+    "context": {
+      "caller_filename": "<repo>/js/src/wrappers/shared/traced-eval.ts",
+      "caller_functionname": "Module.runTracedEval",
+      "caller_lineno": 0
+    },
+    "created": "<timestamp>",
+    "experiment_id": "<uuid:3>",
+    "id": "<span:8>",
+    "metadata": {
+      "case": "concurrent-beta",
+      "scenario": "test-framework-evals-vitest",
+      "testRunId": "<run:1>"
+    },
+    "metrics": {
+      "end": 0,
+      "start": 0
+    },
+    "output": {
+      "phase": "concurrent-beta"
+    },
+    "root_span_id": "<span:9>",
+    "scores": {
+      "pass": 1
+    },
+    "span_attributes": {
+      "exec_counter": 3,
+      "name": "vitest concurrent beta",
+      "type": "task"
+    },
+    "span_id": "<span:9>"
+  },
+  {
+    "context": {
+      "caller_filename": "<repo>/js/src/wrappers/shared/traced-eval.ts",
+      "caller_functionname": "Module.runTracedEval",
+      "caller_lineno": 0
+    },
+    "created": "<timestamp>",
+    "error": "expected 'wrong' to be 'right' // Object.is equality\n\nAssertionError: expected 'wrong' to be 'right' // Object.is equality\n    at <repo>/e2e/scenarios/test-framework-evals-vitest/runner.case.ts:0:0\n    at Object.fn (<repo>/js/src/wrappers/vitest/wrapper.ts:0:0)\n    at args.experiment.traced.name (<repo>/js/src/wrappers/shared/traced-eval.ts:0:0)\n    at <repo>/js/src/logger.ts:0:0\n    at AsyncLocalStorage.run (node:<internal>:0:0)\n    at BraintrustContextManager.runInContext (<repo>/js/src/logger.ts:0:0)\n    at withCurrent (<repo>/js/src/logger.ts:0:0)\n    at <repo>/js/src/logger.ts:0:0\n    at Module.runCatchFinally (<repo>/js/src/util.ts:0:0)\n    at Experiment.traced (<repo>/js/src/logger.ts:0:0)",
+    "experiment_id": "<uuid:3>",
+    "id": "<span:10>",
+    "metadata": {
+      "case": "expected-failure",
+      "scenario": "test-framework-evals-vitest",
+      "testRunId": "<run:1>"
+    },
+    "metrics": {
+      "end": 0,
+      "start": 0
+    },
+    "output": {
+      "phase": "expected-failure"
+    },
+    "root_span_id": "<span:11>",
+    "scores": {
+      "pass": 0
+    },
+    "span_attributes": {
+      "exec_counter": 4,
+      "name": "vitest expected failure",
+      "type": "task"
+    },
+    "span_id": "<span:11>"
+  }
+]

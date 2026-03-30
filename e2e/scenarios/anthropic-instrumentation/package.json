@@ -1,0 +1,19 @@
+{
+  "name": "@braintrust/e2e-anthropic-instrumentation",
+  "private": true,
+  "braintrustScenario": {
+    "canary": {
+      "dependencies": {
+        "@anthropic-ai/sdk": "latest"
+      }
+    }
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "0.80.0",
+    "anthropic-sdk-v0273": "npm:@anthropic-ai/sdk@0.27.3",
+    "anthropic-sdk-v0390": "npm:@anthropic-ai/sdk@0.39.0",
+    "anthropic-sdk-v0712": "npm:@anthropic-ai/sdk@0.71.2",
+    "anthropic-sdk-v0730": "npm:@anthropic-ai/sdk@0.73.0",
+    "anthropic-sdk-v0780": "npm:@anthropic-ai/sdk@0.78.0"
+  }
+}

@@ -8,6 +8,7 @@ import {
   type CapturedLogEvent,
   type CapturedLogPayload,
   type CapturedRequest,
+  type JsonValue,
 } from "./mock-braintrust-server";
 import {
   installScenarioDependencies,
@@ -29,6 +30,7 @@ interface ScenarioResult {
 }
 
 const tsxCliPath = createRequire(import.meta.url).resolve("tsx/cli");
+const DENO_COMMAND = process.platform === "win32" ? "deno.exe" : "deno";
 const DEFAULT_SCENARIO_TIMEOUT_MS = 15_000;
 const HELPERS_DIR = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(HELPERS_DIR, "../..");
@@ -57,6 +59,118 @@ function filterItems<T>(items: T[], predicate?: (item: T) => boolean): T[] {
   return predicate ? items.filter(predicate) : [...items];
 }
 
+function requestRowIdentity(row: Record<string, unknown>): string {
+  return JSON.stringify(
+    [
+      "org_id",
+      "project_id",
+      "experiment_id",
+      "dataset_id",
+      "prompt_session_id",
+      "log_id",
+      "id",
+    ].map((key) => row[key]),
+  );
+}
+
+function mergeValue(base: unknown, incoming: unknown): unknown {
+  if (isRecord(base) && isRecord(incoming)) {
+    const merged: Record<string, unknown> = { ...base };
+    for (const [key, value] of Object.entries(incoming)) {
+      merged[key] = key in merged ? mergeValue(merged[key], value) : value;
+    }
+    return merged;
+  }
+
+  return incoming;
+}
+
+function mergeRequestRow(
+  existing: Record<string, unknown> | undefined,
+  incoming: Record<string, unknown>,
+): Record<string, unknown> {
+  if (!existing || incoming._is_merge !== true) {
+    return structuredClone(incoming);
+  }
+
+  const preserveNoMerge = existing._is_merge !== true;
+  const merged = mergeValue(existing, incoming) as Record<string, unknown>;
+  if (preserveNoMerge) {
+    delete merged._is_merge;
+  }
+  return structuredClone(merged);
+}
+
+function mergeLogs3RequestBody(
+  left: JsonValue | null,
+  right: JsonValue | null,
+): JsonValue | null {
+  if (
+    !isRecord(left) ||
+    !Array.isArray(left.rows) ||
+    !isRecord(right) ||
+    !Array.isArray(right.rows)
+  ) {
+    return right ?? left;
+  }
+
+  const mergedRows = new Map<string, Record<string, unknown>>();
+  const rowOrder: string[] = [];
+  for (const row of [...left.rows, ...right.rows]) {
+    if (!isRecord(row)) {
+      continue;
+    }
+    const key = requestRowIdentity(row);
+    if (!mergedRows.has(key)) {
+      rowOrder.push(key);
+    }
+    mergedRows.set(key, mergeRequestRow(mergedRows.get(key), row));
+  }
+
+  const rows = rowOrder
+    .map((key) => mergedRows.get(key))
+    .filter((row): row is Record<string, unknown> => row !== undefined);
+
+  return {
+    ...left,
+    ...right,
+    rows: rows as JsonValue[],
+  } as JsonValue;
+}
+
+function normalizeCapturedRequests(
+  requests: CapturedRequest[],
+): CapturedRequest[] {
+  const normalized: CapturedRequest[] = [];
+
+  for (const request of requests) {
+    const previous = normalized.at(-1);
+    if (
+      previous &&
+      previous.method === "POST" &&
+      previous.path === "/logs3" &&
+      request.method === "POST" &&
+      request.path === "/logs3"
+    ) {
+      const mergedBody = mergeLogs3RequestBody(
+        previous.jsonBody,
+        request.jsonBody,
+      );
+      normalized[normalized.length - 1] = {
+        ...previous,
+        jsonBody: mergedBody,
+        rawBody:
+          mergedBody === null ? previous.rawBody : JSON.stringify(mergedBody),
+      };
+      continue;
+    }
+
+    normalized.push(structuredClone(request));
+  }
+
+  return normalized;
+}
+
 function createTestRunId(): string {
   return `e2e-${randomUUID()}`;
 }
@@ -64,26 +178,30 @@ function createTestRunId(): string {
 function getTestServerEnv(
   testRunId: string,
   server: { apiKey: string; url: string },
+  prodForwardingProjectName: string,
 ): Record<string, string> {
   return {
     BRAINTRUST_API_KEY: server.apiKey,
     BRAINTRUST_API_URL: server.url,
     BRAINTRUST_APP_URL: server.url,
     BRAINTRUST_APP_PUBLIC_URL: server.url,
+    BRAINTRUST_E2E_PROJECT_NAME: prodForwardingProjectName,
     BRAINTRUST_PROXY_URL: server.url,
     BRAINTRUST_E2E_RUN_ID: testRunId,
     BRAINTRUST_E2E_REPO_ROOT: REPO_ROOT,
+    BRAINTRUST_ORG_NAME: "mock-org",
   };
 }
 
 async function runProcess(
+  command: string,
   args: string[],
   cwd: string,
   env: Record<string, string>,
   timeoutMs: number,
 ): Promise<ScenarioResult> {
   return await new Promise<ScenarioResult>((resolve, reject) => {
-    const child = spawn(process.execPath, args, {
+    const child = spawn(command, args, {
       cwd,
       env: {
         ...process.env,
@@ -94,7 +212,9 @@ async function runProcess(
     const timeout = setTimeout(() => {
       child.kill("SIGTERM");
       reject(
-        new Error(`Process ${args.join(" ")} timed out after ${timeoutMs}ms`),
+        new Error(
+          `Process ${command} ${args.join(" ")} timed out after ${timeoutMs}ms`,
+        ),
       );
     }, timeoutMs);
 
@@ -146,6 +266,7 @@ async function runScenarioDirOrThrow(
       ? [...(options.nodeArgs ?? []), scenarioPath]
       : [tsxCliPath, scenarioPath];
   const result = await runProcess(
+    process.execPath,
     args,
     scenarioDir,
     env,
@@ -192,6 +313,39 @@ export async function runNodeScenarioDir(options: {
   });
 }
 
+export async function runDenoScenarioDir(options: {
+  args?: string[];
+  entry?: string;
+  env?: Record<string, string>;
+  scenarioDir: string;
+  timeoutMs?: number;
+}): Promise<ScenarioResult> {
+  const entry = options.entry ?? "runner.case.ts";
+  const result = await runProcess(
+    DENO_COMMAND,
+    [
+      "test",
+      "--no-check",
+      "--allow-env",
+      "--allow-net",
+      "--allow-read",
+      ...(options.args ?? []),
+      resolveEntryPath(options.scenarioDir, entry),
+    ],
+    options.scenarioDir,
+    options.env ?? {},
+    options.timeoutMs ?? DEFAULT_SCENARIO_TIMEOUT_MS,
+  );
+
+  if (result.exitCode !== 0) {
+    throw new Error(
+      `Scenario ${path.join(options.scenarioDir, entry)} failed with exit code ${result.exitCode}\nSTDOUT:\n${result.stdout}\nSTDERR:\n${result.stderr}`,
+    );
+  }
+
+  return result;
+}
+
 interface ScenarioHarness {
   events: (predicate?: EventPredicate) => CapturedLogEvent[];
   payloads: (predicate?: PayloadPredicate) => CapturedLogPayload[];
@@ -200,6 +354,13 @@ interface ScenarioHarness {
     after: number,
     predicate?: RequestPredicate,
   ) => CapturedRequest[];
+  runDenoScenarioDir: (options: {
+    args?: string[];
+    entry?: string;
+    env?: Record<string, string>;
+    scenarioDir: string;
+    timeoutMs?: number;
+  }) => Promise<ScenarioResult>;
   runNodeScenarioDir: (options: {
     entry?: string;
     env?: Record<string, string>;
@@ -220,9 +381,18 @@ interface ScenarioHarness {
 export async function withScenarioHarness(
   body: (harness: ScenarioHarness) => Promise<void>,
 ): Promise<void> {
-  const server = await startMockBraintrustServer();
+  const { getProdForwarding } = await import("./prod-forwarding");
+  const prodForwarding = getProdForwarding();
   const testRunId = createTestRunId();
-  const testEnv = getTestServerEnv(testRunId, server);
+  const server = await startMockBraintrustServer({
+    prodForwarding,
+    testRunId,
+  });
+  const testEnv = getTestServerEnv(
+    testRunId,
+    server,
+    prodForwarding?.projectName ?? "",
+  );
 
   try {
     await body({
@@ -230,7 +400,17 @@ export async function withScenarioHarness(
       payloads: (predicate) => filterItems(server.payloads, predicate),
       requestCursor: () => server.requests.length,
       requestsAfter: (after, predicate) =>
-        filterItems(server.requests.slice(after), predicate),
+        normalizeCapturedRequests(
+          filterItems(server.requests.slice(after), predicate),
+        ),
+      runDenoScenarioDir: (options) =>
+        runDenoScenarioDir({
+          ...options,
+          env: {
+            ...testEnv,
+            ...(options.env ?? {}),
+          },
+        }),
       runNodeScenarioDir: (options) =>
         runNodeScenarioDir({
           ...options,

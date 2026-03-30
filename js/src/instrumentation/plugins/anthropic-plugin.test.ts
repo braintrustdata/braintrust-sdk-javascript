@@ -25,6 +25,7 @@ vi.mock("../../logger", () => ({
     log: vi.fn(),
     end: vi.fn(),
   })),
+  _internalGetGlobalState: vi.fn(() => undefined),
   Attachment: class Attachment {
     reference: any;
     constructor(opts: any) {
@@ -382,6 +383,77 @@ describe("aggregateAnthropicStreamChunks", () => {
     const result = aggregateAnthropicStreamChunks(chunks);
 
     expect(result.output).toBe("Hello world");
+  });
+
+  it("should aggregate streamed tool_use output", () => {
+    const chunks = [
+      {
+        type: "message_start",
+        message: {
+          role: "assistant",
+          usage: {
+            input_tokens: 25,
+            output_tokens: 0,
+          },
+        },
+      },
+      {
+        type: "content_block_start",
+        index: 0,
+        content_block: {
+          type: "tool_use",
+          id: "toolu_123",
+          name: "get_weather",
+          input: {},
+        },
+      },
+      {
+        type: "content_block_delta",
+        index: 0,
+        delta: {
+          type: "input_json_delta",
+          partial_json: '{"location":"Paris, France"}',
+        },
+      },
+      {
+        type: "content_block_stop",
+        index: 0,
+      },
+      {
+        type: "message_delta",
+        delta: {
+          stop_reason: "tool_use",
+          stop_sequence: null,
+        },
+        usage: {
+          output_tokens: 12,
+        },
+      },
+    ];
+
+    const result = aggregateAnthropicStreamChunks(chunks);
+
+    expect(result.output).toEqual({
+      role: "assistant",
+      content: [
+        {
+          type: "tool_use",
+          id: "toolu_123",
+          name: "get_weather",
+          input: {
+            location: "Paris, France",
+          },
+        },
+      ],
+    });
+    expect(result.metrics).toMatchObject({
+      prompt_tokens: 25,
+      completion_tokens: 12,
+    });
+    expect(result.metadata).toEqual({
+      stop_reason: "tool_use",
+      stop_sequence: null,
+    });
   });
 
   it("should handle chunks without delta or usage", () => {

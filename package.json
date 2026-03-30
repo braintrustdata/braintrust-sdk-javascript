@@ -17,7 +17,6 @@
     "knip": "knip --config knip.jsonc --no-config-hints",
     "test": "turbo run test --filter=\"!@braintrust/otel\"",
     "test:e2e": "turbo run test:e2e",
-    "test:e2e:external": "turbo run test:e2e:external",
     "test:e2e:hermetic": "turbo run test:e2e:hermetic",
     "test:e2e:canary": "turbo run test:e2e:canary",
     "test:e2e:update": "turbo run test:e2e:update",

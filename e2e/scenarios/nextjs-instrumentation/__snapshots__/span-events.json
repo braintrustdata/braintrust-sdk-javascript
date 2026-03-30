@@ -1,0 +1,56 @@
+[
+  {
+    "error": null,
+    "input": {
+      "route": "/api/smoke-test/edge",
+      "runtime": "edge"
+    },
+    "metadata": {
+      "runtime": "edge",
+      "scenario": "nextjs-instrumentation",
+      "testRunId": "<run:1>",
+      "transport": "http"
+    },
+    "name": "nextjs edge logger span",
+    "output": {
+      "ok": true,
+      "route": "/api/smoke-test/edge",
+      "runtime": "edge"
+    },
+    "root_span_id": "<span:1>",
+    "span_attributes": {
+      "exec_counter": 0,
+      "name": "nextjs edge logger span",
+      "type": "task"
+    },
+    "span_id": "<span:1>",
+    "span_parents": null
+  },
+  {
+    "error": null,
+    "input": {
+      "route": "/api/smoke-test/node",
+      "runtime": "nodejs"
+    },
+    "metadata": {
+      "runtime": "nodejs",
+      "scenario": "nextjs-instrumentation",
+      "testRunId": "<run:1>",
+      "transport": "http"
+    },
+    "name": "nextjs nodejs logger span",
+    "output": {
+      "ok": true,
+      "route": "/api/smoke-test/node",
+      "runtime": "nodejs"
+    },
+    "root_span_id": "<span:2>",
+    "span_attributes": {
+      "exec_counter": 0,
+      "name": "nextjs nodejs logger span",
+      "type": "task"
+    },
+    "span_id": "<span:2>",
+    "span_parents": null
+  }
+]

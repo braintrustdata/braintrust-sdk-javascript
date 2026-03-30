@@ -84,6 +84,9 @@ const BRAINTRUST_ATTACHMENT =
 const EXTERNAL_ATTACHMENT = ExternalAttachmentReferenceSchema.shape.type.value;
 export const LOGS3_OVERFLOW_REFERENCE_TYPE = "logs3_overflow";
 const BRAINTRUST_PARAMS = Object.keys(braintrustModelParamsSchema.shape);
+const RESET_CONTEXT_MANAGER_STATE = Symbol.for(
+  "braintrust.resetContextManagerState",
+);
 // 6 MB for the AWS lambda gateway (from our own testing).
 export const DEFAULT_MAX_REQUEST_SIZE = 6 * 1024 * 1024;
 
@@ -417,6 +420,10 @@ export interface Span extends Exportable {
   kind: "span";
 }
 
+export const BRAINTRUST_CURRENT_SPAN_STORE = Symbol.for(
+  "braintrust.currentSpanStore",
+);
+
 export abstract class ContextManager {
   abstract getParentSpanIds(): ContextParentSpanIds | undefined;
   abstract runInContext<R>(span: Span, callback: () => R): R;
@@ -425,10 +432,12 @@ export abstract class ContextManager {
 
 class BraintrustContextManager extends ContextManager {
   private _currentSpan: IsoAsyncLocalStorage<Span>;
+  [BRAINTRUST_CURRENT_SPAN_STORE]: IsoAsyncLocalStorage<Span>;
 
   constructor() {
     super();
     this._currentSpan = iso.newAsyncLocalStorage();
+    this[BRAINTRUST_CURRENT_SPAN_STORE] = this._currentSpan;
   }
 
   getParentSpanIds(): ContextParentSpanIds | undefined {
@@ -719,6 +728,10 @@ export class BraintrustState {
   public resetIdGenState() {
     // Reset the ID generator so it gets recreated with current environment variables
     this._idGenerator = null;
+  }
+
+  public [RESET_CONTEXT_MANAGER_STATE]() {
+    this._contextManager = null;
   }
 
   public get idGenerator(): IDGenerator {
@@ -8163,6 +8176,8 @@ async function simulateLoginForTests() {
 function simulateLogoutForTests() {
   const state = _internalGetGlobalState();
   state.resetLoginInfo();
+  state.resetIdGenState();
+  state[RESET_CONTEXT_MANAGER_STATE]();
   state.appUrl = "https://www.braintrust.dev";
   return state;
 }

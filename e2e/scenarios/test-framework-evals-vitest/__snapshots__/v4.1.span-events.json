@@ -1,0 +1,77 @@
+[
+  {
+    "has_input": false,
+    "has_output": true,
+    "metadata": {
+      "case": "simple-pass",
+      "scenario": "test-framework-evals-vitest",
+      "testRunId": "<run:1>"
+    },
+    "metric_keys": [],
+    "name": "vitest simple pass",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:1>",
+    "span_parents": [],
+    "type": "task"
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "case": "configured-span",
+      "scenario": "test-framework-evals-vitest",
+      "testRunId": "<run:1>"
+    },
+    "metric_keys": [],
+    "name": "vitest configured span",
+    "root_span_id": "<span:2>",
+    "span_id": "<span:2>",
+    "span_parents": [],
+    "type": "task"
+  },
+  {
+    "has_input": false,
+    "has_output": true,
+    "metadata": {
+      "case": "concurrent-alpha",
+      "scenario": "test-framework-evals-vitest",
+      "testRunId": "<run:1>"
+    },
+    "metric_keys": [],
+    "name": "vitest concurrent alpha",
+    "root_span_id": "<span:3>",
+    "span_id": "<span:3>",
+    "span_parents": [],
+    "type": "task"
+  },
+  {
+    "has_input": false,
+    "has_output": true,
+    "metadata": {
+      "case": "concurrent-beta",
+      "scenario": "test-framework-evals-vitest",
+      "testRunId": "<run:1>"
+    },
+    "metric_keys": [],
+    "name": "vitest concurrent beta",
+    "root_span_id": "<span:4>",
+    "span_id": "<span:4>",
+    "span_parents": [],
+    "type": "task"
+  },
+  {
+    "has_input": false,
+    "has_output": true,
+    "metadata": {
+      "case": "expected-failure",
+      "scenario": "test-framework-evals-vitest",
+      "testRunId": "<run:1>"
+    },
+    "metric_keys": [],
+    "name": "vitest expected failure",
+    "root_span_id": "<span:5>",
+    "span_id": "<span:5>",
+    "span_parents": [],
+    "type": "task"
+  }
+]

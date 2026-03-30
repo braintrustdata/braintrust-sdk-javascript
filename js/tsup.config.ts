@@ -109,6 +109,20 @@ export default defineConfig([
     clean: true,
   },
   {
+    entry: {
+      "bundler/webpack-loader":
+        "src/auto-instrumentations/bundler/webpack-loader.ts",
+    },
+    format: ["cjs"],
+    outDir: "dist/auto-instrumentations",
+    dts: true,
+    external: ["@apm-js-collab/code-transformer", "zod"],
+    outExtension() {
+      return { js: ".cjs" };
+    },
+    clean: false,
+  },
+  {
     entry: [
       "src/auto-instrumentations/hook.mts",
       "src/auto-instrumentations/loader/esm-hook.mts",

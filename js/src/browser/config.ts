@@ -2,6 +2,7 @@ import { tracingChannel } from "dc-browser";
 import iso from "../isomorph";
 import { _internalSetInitialState } from "../logger";
 import { registry } from "../instrumentation/registry";
+import { patchTracingChannel } from "../auto-instrumentations/patch-tracing-channel";
 
 // This is copied from next.js. It seems they define AsyncLocalStorage in the edge
 // environment, even though it's not defined in the browser.
@@ -35,6 +36,10 @@ export function configureBrowser(): void {
 
   iso.newTracingChannel = <_M = any>(nameOrChannels: string | object) =>
     tracingChannel(nameOrChannels as any) as any;
+
+  // Patch TracingChannel.prototype.tracePromise to handle APIPromise and other
+  // Promise subclasses (mirrors the fix in hook.mts for the --import loader path).
+  patchTracingChannel(tracingChannel);
 
   iso.getEnv = (name: string) => {
     if (typeof process === "undefined" || typeof process.env === "undefined") {

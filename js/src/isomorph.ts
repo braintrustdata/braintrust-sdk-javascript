@@ -123,12 +123,12 @@ export interface IsoTracingChannel<
     ...args: Parameters<F>
   ): ReturnType<F>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  tracePromise<F extends (...args: any[]) => any>(
+  tracePromise<F extends (...args: any[]) => PromiseLike<any>>(
     fn: F,
     message?: M,
     thisArg?: ThisParameterType<F>,
     ...args: Parameters<F>
-  ): Promise<Awaited<ReturnType<F>>>;
+  ): ReturnType<F>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   traceCallback<F extends (...args: any[]) => any>(
     fn: F,
@@ -203,13 +203,14 @@ class DefaultTracingChannel<M> implements IsoTracingChannel<M> {
     return fn.apply(thisArg, args);
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  tracePromise<F extends (...args: any[]) => any>(
+  tracePromise<F extends (...args: any[]) => PromiseLike<any>>(
     fn: F,
     _message?: M,
     thisArg?: ThisParameterType<F>,
     ...args: Parameters<F>
-  ): Promise<Awaited<ReturnType<F>>> {
-    return Promise.resolve(fn.apply(thisArg, args));
+  ): ReturnType<F> {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any
+    return fn.apply(thisArg, args) as any;
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   traceCallback<F extends (...args: any[]) => any>(

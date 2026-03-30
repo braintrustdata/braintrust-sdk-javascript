@@ -25,6 +25,7 @@ import { anthropicConfigs } from "../configs/anthropic";
 import { aiSDKConfigs } from "../configs/ai-sdk";
 import { claudeAgentSDKConfigs } from "../configs/claude-agent-sdk";
 import { googleGenAIConfigs } from "../configs/google-genai";
+import { openRouterConfigs } from "../configs/openrouter";
 
 export interface BundlerPluginOptions {
   /**
@@ -71,6 +72,7 @@ export const unplugin = createUnplugin<BundlerPluginOptions>((options = {}) => {
     ...aiSDKConfigs,
     ...claudeAgentSDKConfigs,
     ...googleGenAIConfigs,
+    ...openRouterConfigs,
     ...(options.instrumentations || []),
   ];
 

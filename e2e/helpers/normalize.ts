@@ -47,6 +47,8 @@ const DYNAMIC_HEADER_KEYS = new Set([
   "x-request-id",
 ]);
 const PROVIDER_ID_KEYS = new Set(["itemId", "responseId", "toolCallId"]);
+const PROJECT_ID_KEYS = new Set(["project_id", "projectId"]);
+const PROJECT_NAME_KEYS = new Set(["project_name", "projectName"]);
 const HELPERS_DIR = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(HELPERS_DIR, "../..").replace(/\\/g, "/");
 const STACK_FRAME_REPO_PATH_REGEX =
@@ -57,8 +59,6 @@ const NODE_INTERNAL_FRAME_REGEX = /node:[^)\n]+:\d+:\d+/g;
 const TEMP_SCENARIO_PATH_REGEX =
   /\/e2e\/\.bt-tmp\/[^/\s)]+\/scenarios\/([^/\s)]+)\/?/g;
 const TEMP_HELPER_PATH_REGEX = /\/e2e\/\.bt-tmp\/[^/\s)]+\/helpers\/?/g;
-const WRAP_AI_SDK_GENERATION_TRACES_SCENARIO_PATH =
-  "/e2e/scenarios/wrap-ai-sdk-generation-traces/";
 const PROVIDER_HELPER_CALLER_REGEX = /^<repo>\/e2e\/helpers\/.+-scenario\.mjs$/;
 const ANTHROPIC_MESSAGE_STREAM_PATH_REGEX =
   /([/\\]node_modules[/\\]\.pnpm[/\\]@anthropic-ai\+sdk@[^/\\\s)]+[/\\]node_modules[/\\]@anthropic-ai[/\\]sdk[/\\])(?:src[/\\]lib[/\\]MessageStream\.ts|lib[/\\]MessageStream\.js)/g;
@@ -67,53 +67,6 @@ const ANTHROPIC_PNPM_VERSION_REGEX =
 
 function isRecord(value: Json | undefined): value is { [key: string]: Json } {
   return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function getSpanAttribute(
-  value: { [key: string]: Json },
-  key: string,
-): Json | undefined {
-  const spanAttributes = value.span_attributes;
-  if (!isRecord(spanAttributes as Json | undefined)) {
-    return undefined;
-  }
-
-  return spanAttributes[key];
-}
-
-function shouldNormalizeWrapAISDKGenerationTracesCaller(
-  row: { [key: string]: Json },
-  context: { [key: string]: Json },
-  callerFilename: string | undefined,
-): boolean {
-  const normalizedCallerFilename =
-    typeof callerFilename === "string"
-      ? normalizeCallerFilename(callerFilename)
-      : undefined;
-
-  if (
-    typeof normalizedCallerFilename !== "string" ||
-    !normalizedCallerFilename.includes(
-      WRAP_AI_SDK_GENERATION_TRACES_SCENARIO_PATH,
-    )
-  ) {
-    return false;
-  }
-
-  const spanName = getSpanAttribute(row, "name");
-  const execCounter = getSpanAttribute(row, "exec_counter");
-
-  return (
-    (spanName === "generateText" &&
-      execCounter === 2 &&
-      normalizedCallerFilename.endsWith("/scenario.impl.ts") &&
-      context.caller_functionname === "logger.traced.name") ||
-    (spanName === "doGenerate" &&
-      execCounter === 3 &&
-      normalizedCallerFilename.includes("/node_modules/.pnpm/ai@") &&
-      normalizedCallerFilename.endsWith("/node_modules/ai/dist/index.js") &&
-      context.caller_functionname === "fn")
-  );
 }
 
 function normalizeCallerFilename(value: string): string {
@@ -202,8 +155,6 @@ function shouldNormalizeNodeInternalStyleCaller(
 function normalizeObject(
   value: { [key: string]: Json },
   tokenMaps: TokenMaps,
-  currentKey?: string,
-  parentObject?: { [key: string]: Json },
 ): Json {
   const callerFilename =
     typeof value.caller_filename === "string"
@@ -211,18 +162,10 @@ function normalizeObject(
       : undefined;
   const isNodeInternalCaller =
     shouldNormalizeNodeInternalStyleCaller(callerFilename);
-  const shouldNormalizeScenarioCaller =
-    currentKey === "context"
-      ? shouldNormalizeWrapAISDKGenerationTracesCaller(
-          parentObject ?? value,
-          value,
-          callerFilename,
-        )
-      : false;
 
   return Object.fromEntries(
     Object.entries(value).map(([key, entry]) => {
-      if (isNodeInternalCaller || shouldNormalizeScenarioCaller) {
+      if (isNodeInternalCaller) {
         if (key === "caller_filename") {
           return [key, "<node-internal>"];
         }
@@ -234,7 +177,7 @@ function normalizeObject(
         }
       }
 
-      return [key, normalizeValue(entry as Json, tokenMaps, key, value)];
+      return [key, normalizeValue(entry as Json, tokenMaps, key)];
     }),
   );
 }
@@ -258,24 +201,21 @@ function normalizeValue(
   value: Json,
   tokenMaps: TokenMaps,
   currentKey?: string,
-  parentObject?: { [key: string]: Json },
 ): Json {
   if (Array.isArray(value)) {
     if (currentKey === "span_parents") {
       return value.map((entry) =>
         typeof entry === "string"
           ? tokenFor(tokenMaps.ids, entry, "span")
-          : normalizeValue(entry, tokenMaps, undefined, parentObject),
+          : normalizeValue(entry, tokenMaps),
       );
     }
 
-    return value.map((entry) =>
-      normalizeValue(entry, tokenMaps, undefined, parentObject),
-    );
+    return value.map((entry) => normalizeValue(entry, tokenMaps));
   }
 
   if (value && typeof value === "object") {
-    return normalizeObject(value, tokenMaps, currentKey, parentObject);
+    return normalizeObject(value, tokenMaps);
   }
 
   if (typeof value === "number") {
@@ -302,6 +242,26 @@ function normalizeValue(
 
     if (currentKey === "_xact_id") {
       return tokenFor(tokenMaps.xacts, value, "xact");
+    }
+
+    if (currentKey && PROJECT_ID_KEYS.has(currentKey)) {
+      if (UUID_REGEX.test(value)) {
+        tokenFor(tokenMaps.ids, value, "uuid");
+      }
+      return "<project_id>";
+    }
+
+    if (currentKey && PROJECT_NAME_KEYS.has(currentKey)) {
+      let consumedProjectNameToken = false;
+      value.replace(UUID_SUBSTRING_REGEX, (match) => {
+        tokenFor(tokenMaps.ids, match, "uuid");
+        consumedProjectNameToken = true;
+        return match;
+      });
+      if (!consumedProjectNameToken) {
+        tokenFor(tokenMaps.ids, `project_name:${value}`, "uuid");
+      }
+      return "<project_name>";
     }
 
     if (currentKey && DYNAMIC_HEADER_KEYS.has(currentKey)) {
@@ -334,6 +294,27 @@ function normalizeValue(
 
     if (ISO_DATE_REGEX.test(value)) {
       return "<timestamp>";
+    }
+
+    if (value.startsWith("project_id:")) {
+      const projectIdValue = value.slice("project_id:".length);
+      if (UUID_REGEX.test(projectIdValue)) {
+        tokenFor(tokenMaps.ids, projectIdValue, "uuid");
+      }
+      return "project_id:<project_id>";
+    }
+
+    if (value.startsWith("project_name:")) {
+      let consumedProjectNameToken = false;
+      value.replace(UUID_SUBSTRING_REGEX, (match) => {
+        tokenFor(tokenMaps.ids, match, "uuid");
+        consumedProjectNameToken = true;
+        return match;
+      });
+      if (!consumedProjectNameToken) {
+        tokenFor(tokenMaps.ids, value, "uuid");
+      }
+      return "project_name:<project_name>";
     }
 
     const withNormalizedUuids = value.replace(UUID_SUBSTRING_REGEX, (match) =>

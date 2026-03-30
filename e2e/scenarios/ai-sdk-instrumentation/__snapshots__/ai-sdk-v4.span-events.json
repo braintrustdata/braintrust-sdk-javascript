@@ -1,0 +1,160 @@
+[
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "aiSdkVersion": "<ai-sdk-version>",
+      "scenario": "ai-sdk-instrumentation"
+    },
+    "name": "ai-sdk-instrumentation-root",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:1>",
+    "span_parents": []
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "operation": "generate"
+    },
+    "name": "ai-sdk-generate-operation",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:2>",
+    "span_parents": [
+      "<span:1>"
+    ]
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "model": "gpt-4o-mini",
+      "provider": "openai.chat"
+    },
+    "name": "generateText",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:3>",
+    "span_parents": [
+      "<span:2>"
+    ]
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "operation": "stream"
+    },
+    "name": "ai-sdk-stream-operation",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:4>",
+    "span_parents": [
+      "<span:1>"
+    ]
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "model": "gpt-4o-mini",
+      "provider": "openai.chat"
+    },
+    "name": "streamText",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:5>",
+    "span_parents": [
+      "<span:4>"
+    ]
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "operation": "tool"
+    },
+    "name": "ai-sdk-tool-operation",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:6>",
+    "span_parents": [
+      "<span:1>"
+    ]
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "model": "gpt-4o-mini",
+      "provider": "openai.chat"
+    },
+    "name": "generateText",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:7>",
+    "span_parents": [
+      "<span:6>"
+    ]
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": null,
+    "name": "get_weather",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:8>",
+    "span_parents": [
+      "<span:7>"
+    ]
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "operation": "generate-object"
+    },
+    "name": "ai-sdk-generate-object-operation",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:9>",
+    "span_parents": [
+      "<span:1>"
+    ]
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "model": "gpt-4o-mini",
+      "provider": "openai.chat"
+    },
+    "name": "generateObject",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:10>",
+    "span_parents": [
+      "<span:9>"
+    ]
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "operation": "stream-object"
+    },
+    "name": "ai-sdk-stream-object-operation",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:11>",
+    "span_parents": [
+      "<span:1>"
+    ]
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "model": "gpt-4o-mini",
+      "provider": "openai.chat"
+    },
+    "name": "streamObject",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:12>",
+    "span_parents": [
+      "<span:11>"
+    ]
+  }
+]

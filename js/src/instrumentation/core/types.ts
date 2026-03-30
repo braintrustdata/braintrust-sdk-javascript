@@ -91,7 +91,8 @@ export interface ErrorEvent extends BaseContext {
 export interface TypedStartEvent<
   TArguments extends EventArguments = unknown[],
 > extends BaseContext {
-  arguments: [...TArguments];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  arguments: [...TArguments, ...any[]];
 }
 
 export interface TypedEndEvent<
@@ -99,14 +100,16 @@ export interface TypedEndEvent<
   TArguments extends EventArguments = unknown[],
 > extends BaseContext {
   result: TResult;
-  arguments?: [...TArguments];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  arguments?: [...TArguments, ...any[]];
 }
 
 export interface TypedErrorEvent<
   TArguments extends EventArguments = unknown[],
 > extends BaseContext {
   error: Error;
-  arguments?: [...TArguments];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  arguments?: [...TArguments, ...any[]];
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type

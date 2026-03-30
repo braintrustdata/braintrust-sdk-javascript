@@ -10,12 +10,11 @@ make test-smoke                    # Run all scenarios
 
 # From sdk/js/smoke/:
 make test                          # Run all scenarios (local + integration)
-make test deno-node                # Run specific local scenario
 make test templates-nunjucks/jest  # Run integration scenario
 make list                          # List all discovered scenarios
 
 # From a specific scenario:
-cd scenarios/deno-node
+cd scenarios/<scenario-name>
 make test                          # Auto-creates tarball if needed
 ```
 
@@ -78,8 +77,6 @@ if (failed.length > 0) {
 ### Patterns
 
 **Node.js + npm:** Use tarball paths in package.json. See `scenarios/otel-v1/`.
-
-**Deno:** Use workspace links via `deno.json`. See `scenarios/deno-node/`.
 
 **Multi-test:** Each test uses `displayTestResults()`. Makefile runs all tests (don't fail early), then exits with failure if any failed. See `scenarios/otel-v1/` for example.
 
@@ -330,7 +327,6 @@ smoke/
 │   │   ├── mise.toml      # Environment definition
 │   │   ├── package.json   # Dependencies only (no scripts)
 │   │   └── README.md
-│   └── deno-node/
 ├── Makefile         # Top-level orchestration (auto-discovery)
 └── README.md        # This file
 ```
@@ -359,7 +355,5 @@ See `shared/README.md` for complete test suite documentation, individual test fu
 ## Reference Scenarios
 
 - **Node.js + OTEL:** `scenarios/otel-v1/`
-- **Deno:** `scenarios/deno-node/`, `scenarios/deno-browser/`
 - **Cloudflare Workers:** `scenarios/cloudflare-worker-*/`
 - **Multi-test:** `scenarios/cloudflare-vite-hono/`
-- **Next.js:** `scenarios/nextjs-instrumentation/`

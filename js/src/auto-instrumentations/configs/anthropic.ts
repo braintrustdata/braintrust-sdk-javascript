@@ -13,12 +13,27 @@ import { anthropicChannels } from "../../instrumentation/plugins/anthropic-chann
  * "orchestrion:@anthropic-ai/sdk:messages.create"
  */
 export const anthropicConfigs: InstrumentationConfig[] = [
+  // Messages API - create in older SDK layouts (supports streaming via stream=true parameter)
+  {
+    channelName: anthropicChannels.messagesCreate.channelName,
+    module: {
+      name: "@anthropic-ai/sdk",
+      versionRange: ">=0.27.0 <0.39.0",
+      filePath: "resources/messages.mjs",
+    },
+    functionQuery: {
+      className: "Messages",
+      methodName: "create",
+      kind: "Async",
+    },
+  },
+
   // Messages API - create (supports streaming via stream=true parameter)
   {
     channelName: anthropicChannels.messagesCreate.channelName,
     module: {
       name: "@anthropic-ai/sdk",
-      versionRange: ">=0.60.0",
+      versionRange: ">=0.39.0",
       filePath: "resources/messages/messages.mjs",
     },
     functionQuery: {
@@ -33,7 +48,7 @@ export const anthropicConfigs: InstrumentationConfig[] = [
     channelName: anthropicChannels.betaMessagesCreate.channelName,
     module: {
       name: "@anthropic-ai/sdk",
-      versionRange: ">=0.60.0",
+      versionRange: ">=0.39.0",
       filePath: "resources/beta/messages/messages.mjs",
     },
     functionQuery: {

@@ -14,7 +14,7 @@ export const claudeAgentSDKChannels = defineChannels(
       ClaudeAgentSDKMessage
     >({
       channelName: "query",
-      kind: "async",
+      kind: "sync-stream",
     }),
   },
 );

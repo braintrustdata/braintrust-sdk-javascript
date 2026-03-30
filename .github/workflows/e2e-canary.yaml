@@ -32,8 +32,10 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           BRAINTRUST_API_KEY: ${{ secrets.BRAINTRUST_API_KEY }}
+          BRAINTRUST_E2E_PROJECT_NAME: ${{ secrets.BRAINTRUST_E2E_PROJECT_NAME }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
         run: pnpm test:e2e:canary
       - name: Create or update nightly canary issue
         if: ${{ failure() && github.event_name == 'schedule' }}

@@ -5,7 +5,6 @@
   "type": "module",
   "scripts": {
     "test:e2e": "vitest run",
-    "test:e2e:external": "vitest run --tags-filter=external-api",
     "test:e2e:hermetic": "vitest run --tags-filter=hermetic",
     "test:e2e:canary": "node ./scripts/run-canary-tests.mjs",
     "test:e2e:update": "vitest run --update"
@@ -20,6 +19,7 @@
     "braintrust": "workspace:^",
     "tsx": "^4.21.0",
     "typescript": "5.4.4",
-    "vitest": "^4.1.0"
+    "vitest": "^4.1.2",
+    "zod": "4.3.6"
   }
 }

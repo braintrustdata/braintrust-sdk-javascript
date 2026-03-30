@@ -19,6 +19,7 @@ vi.mock("../../logger", () => ({
     log: vi.fn(),
     end: vi.fn(),
   })),
+  _internalGetGlobalState: vi.fn(() => undefined),
   Attachment: class MockAttachment {
     reference: any;
     constructor(params: any) {

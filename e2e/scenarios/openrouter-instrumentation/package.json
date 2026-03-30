@@ -1,0 +1,15 @@
+{
+  "name": "@braintrust/e2e-openrouter-instrumentation",
+  "private": true,
+  "braintrustScenario": {
+    "canary": {
+      "dependencies": {
+        "@openrouter/sdk": "latest"
+      }
+    }
+  },
+  "dependencies": {
+    "@openrouter/sdk": "0.9.11",
+    "zod": "4.1.11"
+  }
+}

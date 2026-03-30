@@ -290,6 +290,7 @@ export const testClientWrapperExports = register(
     const optionalWrappers = [
       "wrapAnthropic",
       "wrapGoogleGenAI",
+      "wrapOpenRouter",
       "wrapAISDK",
       "wrapMastraAgent",
       "wrapClaudeAgentSDK",

@@ -1,0 +1,16 @@
+import OpenAI from "openai-v5";
+import {
+  getInstalledPackageVersion,
+  runMain,
+} from "../../helpers/provider-runtime.mjs";
+import { runAutoOpenAIInstrumentation } from "./scenario.impl.mjs";
+
+runMain(async () =>
+  runAutoOpenAIInstrumentation(OpenAI, {
+    chatHelperNamespace: "ga",
+    openaiSdkVersion: await getInstalledPackageVersion(
+      import.meta.url,
+      "openai-v5",
+    ),
+  }),
+);

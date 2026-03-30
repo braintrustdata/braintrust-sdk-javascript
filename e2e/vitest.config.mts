@@ -5,13 +5,8 @@ export default defineConfig({
   test: {
     hookTimeout: 20_000,
     include: ["scenarios/**/*.test.ts"],
+    setupFiles: ["./vitest.setup.ts"],
     tags: [
-      {
-        name: E2E_TAGS.externalApi,
-        description:
-          "Tests that call real external APIs and require provider credentials.",
-        retry: 1,
-      },
       {
         name: E2E_TAGS.hermetic,
         description:

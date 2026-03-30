@@ -13,7 +13,6 @@ import {
   extractOtelSpans,
   summarizeRequest,
 } from "../../helpers/trace-summary";
-import { E2E_TAGS } from "../../helpers/tags";
 
 const scenarioDir = await prepareScenarioDir({
   scenarioDir: resolveScenarioDir(import.meta.url),
@@ -44,7 +43,6 @@ for (const scenario of scenarios) {
   test(
     `ai-sdk-otel-export sends AI SDK telemetry spans to Braintrust via BraintrustExporter (ai ${scenario.version})`,
     {
-      tags: [E2E_TAGS.externalApi],
       timeout: TIMEOUT_MS,
     },
     async () => {

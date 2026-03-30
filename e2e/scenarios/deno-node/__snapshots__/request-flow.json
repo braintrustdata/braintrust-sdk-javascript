@@ -1,0 +1,560 @@
+[
+  {
+    "headers": null,
+    "jsonBody": null,
+    "method": "POST",
+    "path": "/api/apikey/login",
+    "query": null,
+    "rawBody": null
+  },
+  {
+    "headers": null,
+    "jsonBody": {
+      "org_id": "mock-org-id",
+      "project_name": "<project_name>"
+    },
+    "method": "POST",
+    "path": "/api/project/register",
+    "query": null,
+    "rawBody": {
+      "org_id": "mock-org-id",
+      "project_name": "<project_name>"
+    }
+  },
+  {
+    "headers": null,
+    "jsonBody": {
+      "api_version": 2,
+      "rows": [
+        {
+          "context": {
+            "caller_filename": "ext:cli/40_test.js",
+            "caller_functionname": "innerWrapped",
+            "caller_lineno": 0
+          },
+          "created": "<timestamp>",
+          "expected": "Paris",
+          "id": "<span:2>",
+          "input": "What is the capital of France?",
+          "log_id": "g",
+          "metadata": {
+            "case": "basic-span",
+            "scenario": "deno-node",
+            "testRunId": "<run:1>",
+            "transport": "http"
+          },
+          "metrics": {
+            "end": 0,
+            "start": 0
+          },
+          "output": "Paris",
+          "project_id": "<project_id>",
+          "root_span_id": "<span:3>",
+          "span_attributes": {
+            "exec_counter": 0,
+            "name": "deno node basic span",
+            "type": "task"
+          },
+          "span_id": "<span:3>"
+        },
+        {
+          "context": {
+            "caller_filename": "ext:cli/40_test.js",
+            "caller_functionname": "innerWrapped",
+            "caller_lineno": 0
+          },
+          "created": "<timestamp>",
+          "id": "<span:5>",
+          "input": {
+            "transcript": {
+              "content_type": "application/json",
+              "filename": "conversation_transcript.json",
+              "key": "<uuid:6>",
+              "type": "braintrust_attachment"
+            },
+            "type": "chat_completion"
+          },
+          "log_id": "g",
+          "metadata": {
+            "case": "json-attachment",
+            "scenario": "deno-node",
+            "testRunId": "<run:1>"
+          },
+          "metrics": {
+            "end": 0,
+            "start": 0
+          },
+          "output": {
+            "attachment": true
+          },
+          "project_id": "<project_id>",
+          "root_span_id": "<span:7>",
+          "span_attributes": {
+            "exec_counter": 1,
+            "name": "deno node json attachment span",
+            "type": "task"
+          },
+          "span_id": "<span:7>"
+        },
+        {
+          "context": {
+            "caller_filename": "ext:cli/40_test.js",
+            "caller_functionname": "innerWrapped",
+            "caller_lineno": 0
+          },
+          "created": "<timestamp>",
+          "id": "<span:8>",
+          "input": {
+            "phase": "parent",
+            "testRunId": "<run:1>"
+          },
+          "log_id": "g",
+          "metadata": {
+            "case": "parent-span",
+            "scenario": "deno-node",
+            "testRunId": "<run:1>"
+          },
+          "metrics": {
+            "end": 0,
+            "start": 0
+          },
+          "output": {
+            "ok": true,
+            "phase": "parent"
+          },
+          "project_id": "<project_id>",
+          "root_span_id": "<span:9>",
+          "span_attributes": {
+            "exec_counter": 2,
+            "name": "deno node parent span",
+            "type": "task"
+          },
+          "span_id": "<span:9>"
+        },
+        {
+          "context": {
+            "caller_filename": "<repo>/e2e/scenarios/deno-node/runner.case.ts",
+            "caller_functionname": "braintrust.traced.name",
+            "caller_lineno": 0
+          },
+          "created": "<timestamp>",
+          "id": "<span:10>",
+          "input": {
+            "step": "child",
+            "testRunId": "<run:1>"
+          },
+          "log_id": "g",
+          "metadata": {
+            "case": "child-span",
+            "scenario": "deno-node",
+            "testRunId": "<run:1>"
+          },
+          "metrics": {
+            "end": 0,
+            "start": 0
+          },
+          "output": {
+            "ok": true,
+            "phase": "child"
+          },
+          "project_id": "<project_id>",
+          "root_span_id": "<span:9>",
+          "span_attributes": {
+            "exec_counter": 3,
+            "name": "deno node child span"
+          },
+          "span_id": "<span:11>",
+          "span_parents": [
+            "<span:9>"
+          ]
+        },
+        {
+          "context": {
+            "caller_filename": "ext:cli/40_test.js",
+            "caller_functionname": "async innerWrapped",
+            "caller_lineno": 0
+          },
+          "created": "<timestamp>",
+          "id": "<span:12>",
+          "log_id": "g",
+          "metadata": {
+            "case": "nested-parent",
+            "scenario": "deno-node",
+            "testRunId": "<run:1>"
+          },
+          "metrics": {
+            "end": 0,
+            "start": 0
+          },
+          "project_id": "<project_id>",
+          "root_span_id": "<span:13>",
+          "span_attributes": {
+            "exec_counter": 4,
+            "name": "deno node nested parent span",
+            "type": "task"
+          },
+          "span_id": "<span:13>"
+        },
+        {
+          "context": {
+            "caller_filename": "<repo>/e2e/scenarios/deno-node/runner.case.ts",
+            "caller_functionname": "braintrust.traced.name",
+            "caller_lineno": 0
+          },
+          "created": "<timestamp>",
+          "id": "<span:14>",
+          "log_id": "g",
+          "metadata": {
+            "case": "nested-child",
+            "scenario": "deno-node",
+            "testRunId": "<run:1>"
+          },
+          "metrics": {
+            "end": 0,
+            "start": 0
+          },
+          "project_id": "<project_id>",
+          "root_span_id": "<span:13>",
+          "span_attributes": {
+            "exec_counter": 5,
+            "name": "deno node nested child span"
+          },
+          "span_id": "<span:15>",
+          "span_parents": [
+            "<span:13>"
+          ]
+        },
+        {
+          "context": {
+            "caller_filename": "<repo>/e2e/scenarios/deno-node/runner.case.ts",
+            "caller_functionname": "braintrust.traced.name",
+            "caller_lineno": 0
+          },
+          "created": "<timestamp>",
+          "id": "<span:16>",
+          "log_id": "g",
+          "metadata": {
+            "case": "nested-grandchild",
+            "scenario": "deno-node",
+            "testRunId": "<run:1>"
+          },
+          "metrics": {
+            "end": 0,
+            "start": 0
+          },
+          "output": {
+            "depth": 3
+          },
+          "project_id": "<project_id>",
+          "root_span_id": "<span:13>",
+          "span_attributes": {
+            "exec_counter": 6,
+            "name": "deno node nested grandchild span"
+          },
+          "span_id": "<span:17>",
+          "span_parents": [
+            "<span:15>"
+          ]
+        },
+        {
+          "context": {
+            "caller_filename": "ext:cli/40_test.js",
+            "caller_functionname": "async innerWrapped",
+            "caller_lineno": 0
+          },
+          "created": "<timestamp>",
+          "id": "<span:18>",
+          "log_id": "g",
+          "metadata": {
+            "case": "current-span",
+            "scenario": "deno-node",
+            "testRunId": "<run:1>"
+          },
+          "metrics": {
+            "end": 0,
+            "start": 0
+          },
+          "output": {
+            "observedSpanId": "<uuid:19>"
+          },
+          "project_id": "<project_id>",
+          "root_span_id": "<uuid:19>",
+          "span_attributes": {
+            "exec_counter": 7,
+            "name": "deno node current span",
+            "type": "task"
+          },
+          "span_id": "<uuid:19>"
+        }
+      ]
+    },
+    "method": "POST",
+    "path": "/logs3",
+    "query": null,
+    "rawBody": {
+      "api_version": 2,
+      "rows": [
+        {
+          "context": {
+            "caller_filename": "ext:cli/40_test.js",
+            "caller_functionname": "innerWrapped",
+            "caller_lineno": 0
+          },
+          "created": "<timestamp>",
+          "expected": "Paris",
+          "id": "<span:2>",
+          "input": "What is the capital of France?",
+          "log_id": "g",
+          "metadata": {
+            "case": "basic-span",
+            "scenario": "deno-node",
+            "testRunId": "<run:1>",
+            "transport": "http"
+          },
+          "metrics": {
+            "end": 0,
+            "start": 0
+          },
+          "output": "Paris",
+          "project_id": "<project_id>",
+          "root_span_id": "<span:3>",
+          "span_attributes": {
+            "exec_counter": 0,
+            "name": "deno node basic span",
+            "type": "task"
+          },
+          "span_id": "<span:3>"
+        },
+        {
+          "context": {
+            "caller_filename": "ext:cli/40_test.js",
+            "caller_functionname": "innerWrapped",
+            "caller_lineno": 0
+          },
+          "created": "<timestamp>",
+          "id": "<span:5>",
+          "input": {
+            "transcript": {
+              "content_type": "application/json",
+              "filename": "conversation_transcript.json",
+              "key": "<uuid:6>",
+              "type": "braintrust_attachment"
+            },
+            "type": "chat_completion"
+          },
+          "log_id": "g",
+          "metadata": {
+            "case": "json-attachment",
+            "scenario": "deno-node",
+            "testRunId": "<run:1>"
+          },
+          "metrics": {
+            "end": 0,
+            "start": 0
+          },
+          "output": {
+            "attachment": true
+          },
+          "project_id": "<project_id>",
+          "root_span_id": "<span:7>",
+          "span_attributes": {
+            "exec_counter": 1,
+            "name": "deno node json attachment span",
+            "type": "task"
+          },
+          "span_id": "<span:7>"
+        },
+        {
+          "context": {
+            "caller_filename": "ext:cli/40_test.js",
+            "caller_functionname": "innerWrapped",
+            "caller_lineno": 0
+          },
+          "created": "<timestamp>",
+          "id": "<span:8>",
+          "input": {
+            "phase": "parent",
+            "testRunId": "<run:1>"
+          },
+          "log_id": "g",
+          "metadata": {
+            "case": "parent-span",
+            "scenario": "deno-node",
+            "testRunId": "<run:1>"
+          },
+          "metrics": {
+            "end": 0,
+            "start": 0
+          },
+          "output": {
+            "ok": true,
+            "phase": "parent"
+          },
+          "project_id": "<project_id>",
+          "root_span_id": "<span:9>",
+          "span_attributes": {
+            "exec_counter": 2,
+            "name": "deno node parent span",
+            "type": "task"
+          },
+          "span_id": "<span:9>"
+        },
+        {
+          "context": {
+            "caller_filename": "<repo>/e2e/scenarios/deno-node/runner.case.ts",
+            "caller_functionname": "braintrust.traced.name",
+            "caller_lineno": 0
+          },
+          "created": "<timestamp>",
+          "id": "<span:10>",
+          "input": {
+            "step": "child",
+            "testRunId": "<run:1>"
+          },
+          "log_id": "g",
+          "metadata": {
+            "case": "child-span",
+            "scenario": "deno-node",
+            "testRunId": "<run:1>"
+          },
+          "metrics": {
+            "end": 0,
+            "start": 0
+          },
+          "output": {
+            "ok": true,
+            "phase": "child"
+          },
+          "project_id": "<project_id>",
+          "root_span_id": "<span:9>",
+          "span_attributes": {
+            "exec_counter": 3,
+            "name": "deno node child span"
+          },
+          "span_id": "<span:11>",
+          "span_parents": [
+            "<span:9>"
+          ]
+        },
+        {
+          "context": {
+            "caller_filename": "ext:cli/40_test.js",
+            "caller_functionname": "async innerWrapped",
+            "caller_lineno": 0
+          },
+          "created": "<timestamp>",
+          "id": "<span:12>",
+          "log_id": "g",
+          "metadata": {
+            "case": "nested-parent",
+            "scenario": "deno-node",
+            "testRunId": "<run:1>"
+          },
+          "metrics": {
+            "end": 0,
+            "start": 0
+          },
+          "project_id": "<project_id>",
+          "root_span_id": "<span:13>",
+          "span_attributes": {
+            "exec_counter": 4,
+            "name": "deno node nested parent span",
+            "type": "task"
+          },
+          "span_id": "<span:13>"
+        },
+        {
+          "context": {
+            "caller_filename": "<repo>/e2e/scenarios/deno-node/runner.case.ts",
+            "caller_functionname": "braintrust.traced.name",
+            "caller_lineno": 0
+          },
+          "created": "<timestamp>",
+          "id": "<span:14>",
+          "log_id": "g",
+          "metadata": {
+            "case": "nested-child",
+            "scenario": "deno-node",
+            "testRunId": "<run:1>"
+          },
+          "metrics": {
+            "end": 0,
+            "start": 0
+          },
+          "project_id": "<project_id>",
+          "root_span_id": "<span:13>",
+          "span_attributes": {
+            "exec_counter": 5,
+            "name": "deno node nested child span"
+          },
+          "span_id": "<span:15>",
+          "span_parents": [
+            "<span:13>"
+          ]
+        },
+        {
+          "context": {
+            "caller_filename": "<repo>/e2e/scenarios/deno-node/runner.case.ts",
+            "caller_functionname": "braintrust.traced.name",
+            "caller_lineno": 0
+          },
+          "created": "<timestamp>",
+          "id": "<span:16>",
+          "log_id": "g",
+          "metadata": {
+            "case": "nested-grandchild",
+            "scenario": "deno-node",
+            "testRunId": "<run:1>"
+          },
+          "metrics": {
+            "end": 0,
+            "start": 0
+          },
+          "output": {
+            "depth": 3
+          },
+          "project_id": "<project_id>",
+          "root_span_id": "<span:13>",
+          "span_attributes": {
+            "exec_counter": 6,
+            "name": "deno node nested grandchild span"
+          },
+          "span_id": "<span:17>",
+          "span_parents": [
+            "<span:15>"
+          ]
+        },
+        {
+          "context": {
+            "caller_filename": "ext:cli/40_test.js",
+            "caller_functionname": "async innerWrapped",
+            "caller_lineno": 0
+          },
+          "created": "<timestamp>",
+          "id": "<span:18>",
+          "log_id": "g",
+          "metadata": {
+            "case": "current-span",
+            "scenario": "deno-node",
+            "testRunId": "<run:1>"
+          },
+          "metrics": {
+            "end": 0,
+            "start": 0
+          },
+          "output": {
+            "observedSpanId": "<uuid:19>"
+          },
+          "project_id": "<project_id>",
+          "root_span_id": "<uuid:19>",
+          "span_attributes": {
+            "exec_counter": 7,
+            "name": "deno node current span",
+            "type": "task"
+          },
+          "span_id": "<uuid:19>"
+        }
+      ]
+    }
+  }
+]

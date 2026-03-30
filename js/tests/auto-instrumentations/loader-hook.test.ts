@@ -1,12 +1,10 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { Worker } from "node:worker_threads";
-import * as fs from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const fixturesDir = path.join(__dirname, "fixtures");
-const nodeModulesDir = path.join(fixturesDir, "node_modules");
 
 // Path to unified loader hook (built dist file)
 const hookPath = path.join(
@@ -18,6 +16,10 @@ const hookPath = path.join(
 const listenerPath = path.join(fixturesDir, "listener-esm.mjs");
 const testAppEsmPath = path.join(fixturesDir, "test-app-esm.mjs");
 const testAppCjsPath = path.join(fixturesDir, "test-app-cjs.cjs");
+const helperPromisePath = path.join(
+  fixturesDir,
+  "test-api-promise-preservation.mjs",
+);
 
 interface TestResult {
   events: { start: any[]; end: any[]; error: any[] };
@@ -53,6 +55,26 @@ describe("Unified Loader Hook Integration Tests", () => {
       expect(result.events.start.length).toBeGreaterThan(0);
       expect(result.events.end.length).toBeGreaterThan(0);
     });
+
+    it("should preserve helper methods on promise subclasses", async () => {
+      const result = await runWithWorkerMessage<{
+        awaitedValue: string;
+        constructorName: string;
+        hasWithResponse: boolean;
+        withResponseData: string;
+        withResponseOk: boolean;
+      }>({
+        execArgv: ["--import", hookPath],
+        messageType: "helper-result",
+        script: helperPromisePath,
+      });
+
+      expect(result.hasWithResponse).toBe(true);
+      expect(result.awaitedValue).toBe("ok");
+      expect(result.withResponseData).toBe("ok");
+      expect(result.withResponseOk).toBe(true);
+      expect(result.constructorName).toBe("HelperPromise");
+    });
   });
 });
 
@@ -60,8 +82,19 @@ async function runWithWorker(options: {
   execArgv: string[];
   script: string;
 }): Promise<TestResult> {
+  return runWithWorkerMessage({
+    ...options,
+    messageType: "events",
+  });
+}
+
+async function runWithWorkerMessage<T>(options: {
+  execArgv: string[];
+  messageType: string;
+  script: string;
+}): Promise<T> {
   return new Promise((resolve, reject) => {
-    let result: TestResult | null = null;
+    let result: T | null = null;
 
     // Convert execArgv paths to file URLs on Windows
     // On Windows, Node.js --import requires file:// URLs
@@ -94,8 +127,8 @@ async function runWithWorker(options: {
     });
 
     worker.on("message", (msg) => {
-      if (msg.type === "events") {
-        result = { events: msg.events };
+      if (msg.type === options.messageType) {
+        result = (msg.result ?? { events: msg.events }) as T;
       }
     });
 

@@ -130,6 +130,48 @@ function splitTerminalMergeRow(row: CapturedLogRow): CapturedLogRow[] {
   return rows;
 }
 
+function payloadRowIdentity(row: CapturedLogRow): string {
+  return JSON.stringify(
+    [
+      "org_id",
+      "project_id",
+      "experiment_id",
+      "dataset_id",
+      "prompt_session_id",
+      "log_id",
+      "id",
+    ].map((key) => row[key]),
+  );
+}
+
+function mergeValue(base: unknown, incoming: unknown): unknown {
+  if (isRecord(base) && isRecord(incoming)) {
+    const merged: Record<string, unknown> = { ...base };
+    for (const [key, value] of Object.entries(incoming)) {
+      merged[key] = key in merged ? mergeValue(merged[key], value) : value;
+    }
+    return merged;
+  }
+
+  return incoming;
+}
+
+function mergePayloadRow(
+  existing: CapturedLogRow | undefined,
+  incoming: CapturedLogRow,
+): CapturedLogRow {
+  if (!existing || !incoming._is_merge) {
+    return structuredClone(incoming);
+  }
+
+  const preserveNoMerge = !existing._is_merge;
+  const merged = mergeValue(existing, incoming) as CapturedLogRow;
+  if (preserveNoMerge) {
+    delete merged._is_merge;
+  }
+  return structuredClone(merged);
+}
+
 function sortPayloadRows(rows: CapturedLogRow[]): CapturedLogRow[] {
   const spanOrder = new Map<string, number>();
   for (const row of rows) {
@@ -198,8 +240,13 @@ export function payloadRowsForTestRunId(
   payloads: CapturedLogPayload[],
   testRunId: string,
 ): CapturedLogRow[] {
-  const rows = payloads
-    .flatMap((payload) => payload.rows)
+  const mergedRows = new Map<string, CapturedLogRow>();
+  for (const row of payloads.flatMap((payload) => payload.rows)) {
+    const key = payloadRowIdentity(row);
+    mergedRows.set(key, mergePayloadRow(mergedRows.get(key), row));
+  }
+
+  const rows = [...mergedRows.values()]
     .filter((row) => hasTestRunId(row, testRunId))
     .flatMap((row) => splitTerminalMergeRow(row));
 

@@ -20,6 +20,7 @@ export interface InstrumentationConfig {
     aisdk?: boolean;
     google?: boolean;
     claudeAgentSDK?: boolean;
+    openrouter?: boolean;
   };
 }
 
@@ -104,6 +105,7 @@ class PluginRegistry {
       aisdk: true,
       google: true,
       claudeAgentSDK: true,
+      openrouter: true,
     };
   }
 

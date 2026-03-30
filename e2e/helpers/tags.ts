@@ -1,5 +1,4 @@
 export const E2E_TAGS = {
-  externalApi: "external-api",
   hermetic: "hermetic",
 } as const;
 

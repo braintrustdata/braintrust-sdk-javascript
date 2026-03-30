@@ -56,10 +56,10 @@ export async function tracePromiseWithResponse<
   let enhancedResponse: EnhancedResponse<TResult> | undefined;
   const tracePromise =
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    channel.tracePromise as (
-      fn: () => Promise<TResult>,
+    channel.tracePromise as unknown as <TReturn extends Promise<TResult>>(
+      fn: () => TReturn,
       context: ChannelContext<TChannel>,
-    ) => Promise<TResult>;
+    ) => TReturn;
 
   const data = await tracePromise(async () => {
     enhancedResponse = await apiPromise.withResponse();

@@ -1,9 +1,0 @@
-{
-  "imports": {
-    "@std/assert": "jsr:@std/assert@^1.0.14",
-    "@braintrust/smoke-test-shared": "jsr:@braintrust/smoke-test-shared",
-    "braintrust": "npm:braintrust"
-  },
-  "nodeModulesDir": "auto",
-  "links": ["../../..", "../../shared"]
-}

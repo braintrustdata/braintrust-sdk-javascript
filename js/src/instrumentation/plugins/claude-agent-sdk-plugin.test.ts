@@ -26,6 +26,7 @@ vi.mock("../../../util/index", () => ({
   SpanTypeAttribute: {
     TASK: "task",
     LLM: "llm",
+    TOOL: "tool",
   },
   isObject: vi.fn((val: unknown) => val !== null && typeof val === "object"),
 }));
@@ -35,6 +36,7 @@ vi.mock("../../../util", () => ({
   SpanTypeAttribute: {
     TASK: "task",
     LLM: "llm",
+    TOOL: "tool",
   },
 }));
 
@@ -133,7 +135,7 @@ describe("ClaudeAgentSDKPlugin", () => {
       expect(mockChannel.subscribe).toHaveBeenCalledWith(
         expect.objectContaining({
           start: expect.any(Function),
-          asyncEnd: expect.any(Function),
+          end: expect.any(Function),
           error: expect.any(Function),
         }),
       );
@@ -270,7 +272,7 @@ describe("ClaudeAgentSDKPlugin", () => {
       });
     });
 
-    describe("asyncEnd handler for non-streaming", () => {
+    describe("end handler for sync stream results", () => {
       it("should handle non-streaming result", () => {
         const startEvent = {
           arguments: [
@@ -293,19 +295,19 @@ describe("ClaudeAgentSDKPlugin", () => {
           },
         };
 
-        handlers.asyncEnd(endEvent);
+        handlers.end(endEvent);
 
         // Verify no errors thrown
         expect(true).toBe(true);
       });
 
-      it("should handle asyncEnd without matching start", () => {
+      it("should handle end without matching start", () => {
         const endEvent = {
           arguments: [{ prompt: "Test" }],
           result: { type: "result" },
         };
 
-        handlers.asyncEnd(endEvent);
+        handlers.end(endEvent);
 
         // Should not throw
         expect(true).toBe(true);

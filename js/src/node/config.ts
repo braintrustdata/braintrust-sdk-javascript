@@ -1,6 +1,7 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import * as diagnostics_channel from "node:diagnostics_channel";
 import * as path from "node:path";
+import { patchTracingChannel } from "../auto-instrumentations/patch-tracing-channel";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as fsSync from "node:fs";
@@ -24,6 +25,10 @@ export function configureNode() {
   iso.newAsyncLocalStorage = <T>() => new AsyncLocalStorage<T>();
   iso.newTracingChannel = <_M = any>(nameOrChannels: string | object) =>
     (diagnostics_channel as any).tracingChannel(nameOrChannels) as any;
+
+  // Patch TracingChannel.prototype.tracePromise to handle APIPromise and other
+  // Promise subclasses (mirrors the fix in hook.mts for the --import loader path).
+  patchTracingChannel((diagnostics_channel as any).tracingChannel);
   iso.processOn = (event: string, handler: (code: unknown) => void) => {
     process.on(event, handler);
   };

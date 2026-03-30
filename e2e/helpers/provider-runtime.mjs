@@ -1,5 +1,5 @@
 import { initLogger, startSpan, withCurrent } from "braintrust";
-import { existsSync, readFileSync } from "node:fs";
+import { promises as fs } from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -19,6 +19,10 @@ export function getTestRunId() {
 }
 
 export function scopedName(base, testRunId = getTestRunId()) {
+  if (process.env.BRAINTRUST_E2E_PROJECT_NAME) {
+    return process.env.BRAINTRUST_E2E_PROJECT_NAME;
+  }
+
   const suffix = testRunId.toLowerCase().replace(/[^a-z0-9-]/g, "-");
   return `${base}-${suffix}`;
 }
@@ -79,11 +83,13 @@ export async function getInstalledPackageVersion(importMetaUrl, packageName) {
 
   while (true) {
     const manifestPath = path.join(currentDir, "package.json");
-    if (existsSync(manifestPath)) {
-      const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
+    try {
+      const manifest = JSON.parse(await fs.readFile(manifestPath, "utf8"));
       if (manifest && typeof manifest.version === "string") {
         return manifest.version;
       }
+    } catch {
+      // Keep walking upward until we find the package root.
     }
 
     const parentDir = path.dirname(currentDir);

@@ -14,14 +14,14 @@ exports[`trace-primitives-basic collects a minimal manual trace tree > request-f
     "headers": null,
     "jsonBody": {
       "org_id": "mock-org-id",
-      "project_name": "e2e-trace-primitives-basic-e2e-<uuid:1>",
+      "project_name": "<project_name>",
     },
     "method": "POST",
     "path": "/api/project/register",
     "query": null,
     "rawBody": {
       "org_id": "mock-org-id",
-      "project_name": "e2e-trace-primitives-basic-e2e-<uuid:1>",
+      "project_name": "<project_name>",
     },
   },
   {
@@ -38,7 +38,6 @@ exports[`trace-primitives-basic collects a minimal manual trace tree > request-f
       "api_version": 2,
       "rows": [
         {
-          "_is_merge": false,
           "context": {
             "caller_filename": "<repo>/e2e/scenarios/trace-primitives-basic/scenario.ts",
             "caller_functionname": "main",
@@ -56,9 +55,13 @@ exports[`trace-primitives-basic collects a minimal manual trace tree > request-f
             "testRunId": "<run:1>",
           },
           "metrics": {
+            "end": 0,
             "start": 0,
           },
-          "project_id": "<uuid:4>",
+          "output": {
+            "status": "ok",
+          },
+          "project_id": "<project_id>",
           "root_span_id": "<span:3>",
           "span_attributes": {
             "exec_counter": 0,
@@ -67,52 +70,6 @@ exports[`trace-primitives-basic collects a minimal manual trace tree > request-f
           },
           "span_id": "<span:3>",
         },
-      ],
-    },
-    "method": "POST",
-    "path": "/logs3",
-    "query": null,
-    "rawBody": {
-      "api_version": 2,
-      "rows": [
-        {
-          "_is_merge": false,
-          "context": {
-            "caller_filename": "<repo>/e2e/scenarios/trace-primitives-basic/scenario.ts",
-            "caller_functionname": "main",
-            "caller_lineno": 0,
-          },
-          "created": "<timestamp>",
-          "id": "<span:2>",
-          "input": {
-            "scenario": "trace-primitives-basic",
-            "testRunId": "<run:1>",
-          },
-          "log_id": "g",
-          "metadata": {
-            "scenario": "trace-primitives-basic",
-            "testRunId": "<run:1>",
-          },
-          "metrics": {
-            "start": 0,
-          },
-          "project_id": "<uuid:4>",
-          "root_span_id": "<span:3>",
-          "span_attributes": {
-            "exec_counter": 0,
-            "name": "trace-primitives-root",
-            "type": "task",
-          },
-          "span_id": "<span:3>",
-        },
-      ],
-    },
-  },
-  {
-    "headers": null,
-    "jsonBody": {
-      "api_version": 2,
-      "rows": [
         {
           "context": {
             "caller_filename": "<repo>/e2e/scenarios/trace-primitives-basic/scenario.ts",
@@ -137,7 +94,7 @@ exports[`trace-primitives-basic collects a minimal manual trace tree > request-f
           "output": {
             "ok": true,
           },
-          "project_id": "<uuid:4>",
+          "project_id": "<project_id>",
           "root_span_id": "<span:3>",
           "span_attributes": {
             "exec_counter": 1,
@@ -178,7 +135,7 @@ Error: basic boom
             "end": 0,
             "start": 0,
           },
-          "project_id": "<uuid:4>",
+          "project_id": "<project_id>",
           "root_span_id": "<span:3>",
           "span_attributes": {
             "exec_counter": 2,
@@ -189,20 +146,6 @@ Error: basic boom
             "<span:3>",
           ],
         },
-        {
-          "_is_merge": true,
-          "id": "<span:2>",
-          "log_id": "g",
-          "metrics": {
-            "end": 0,
-          },
-          "output": {
-            "status": "ok",
-          },
-          "project_id": "<uuid:4>",
-          "root_span_id": "<span:3>",
-          "span_id": "<span:3>",
-        },
       ],
     },
     "method": "POST",
@@ -211,6 +154,39 @@ Error: basic boom
     "rawBody": {
       "api_version": 2,
       "rows": [
+        {
+          "context": {
+            "caller_filename": "<repo>/e2e/scenarios/trace-primitives-basic/scenario.ts",
+            "caller_functionname": "main",
+            "caller_lineno": 0,
+          },
+          "created": "<timestamp>",
+          "id": "<span:2>",
+          "input": {
+            "scenario": "trace-primitives-basic",
+            "testRunId": "<run:1>",
+          },
+          "log_id": "g",
+          "metadata": {
+            "scenario": "trace-primitives-basic",
+            "testRunId": "<run:1>",
+          },
+          "metrics": {
+            "end": 0,
+            "start": 0,
+          },
+          "output": {
+            "status": "ok",
+          },
+          "project_id": "<project_id>",
+          "root_span_id": "<span:3>",
+          "span_attributes": {
+            "exec_counter": 0,
+            "name": "trace-primitives-root",
+            "type": "task",
+          },
+          "span_id": "<span:3>",
+        },
         {
           "context": {
             "caller_filename": "<repo>/e2e/scenarios/trace-primitives-basic/scenario.ts",
@@ -235,7 +211,7 @@ Error: basic boom
           "output": {
             "ok": true,
           },
-          "project_id": "<uuid:4>",
+          "project_id": "<project_id>",
           "root_span_id": "<span:3>",
           "span_attributes": {
             "exec_counter": 1,
@@ -276,7 +252,7 @@ Error: basic boom
             "end": 0,
             "start": 0,
           },
-          "project_id": "<uuid:4>",
+          "project_id": "<project_id>",
           "root_span_id": "<span:3>",
           "span_attributes": {
             "exec_counter": 2,
@@ -286,20 +262,6 @@ Error: basic boom
           "span_parents": [
             "<span:3>",
           ],
-        },
-        {
-          "_is_merge": true,
-          "id": "<span:2>",
-          "log_id": "g",
-          "metrics": {
-            "end": 0,
-          },
-          "output": {
-            "status": "ok",
-          },
-          "project_id": "<uuid:4>",
-          "root_span_id": "<span:3>",
-          "span_id": "<span:3>",
         },
       ],
     },

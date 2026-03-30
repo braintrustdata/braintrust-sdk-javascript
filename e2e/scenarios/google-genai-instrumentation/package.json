@@ -1,0 +1,17 @@
+{
+  "name": "@braintrust/e2e-google-genai-instrumentation",
+  "private": true,
+  "braintrustScenario": {
+    "canary": {
+      "dependencies": {
+        "@google/genai": "latest"
+      }
+    }
+  },
+  "dependencies": {
+    "@google/genai": "1.46.0",
+    "google-genai-sdk-v1300": "npm:@google/genai@1.30.0",
+    "google-genai-sdk-v1440": "npm:@google/genai@1.44.0",
+    "google-genai-sdk-v1450": "npm:@google/genai@1.45.0"
+  }
+}

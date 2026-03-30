@@ -1,0 +1,365 @@
+[
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "openaiSdkVersion": "<openai-sdk-version>",
+      "scenario": "openai-instrumentation"
+    },
+    "metrics": {
+      "has_time_to_first_token": false
+    },
+    "name": "openai-instrumentation-root",
+    "type": "task"
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "operation": "chat"
+    },
+    "metrics": {
+      "has_time_to_first_token": false
+    },
+    "name": "openai-chat-operation",
+    "type": null
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "model": "gpt-4o-mini",
+      "provider": "openai"
+    },
+    "metrics": {
+      "has_time_to_first_token": true
+    },
+    "name": "Chat Completion",
+    "type": "llm"
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "operation": "chat-with-response"
+    },
+    "metrics": {
+      "has_time_to_first_token": false
+    },
+    "name": "openai-chat-with-response-operation",
+    "type": null
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "model": "gpt-4o-mini",
+      "provider": "openai"
+    },
+    "metrics": {
+      "has_time_to_first_token": true
+    },
+    "name": "Chat Completion",
+    "type": "llm"
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "operation": "stream"
+    },
+    "metrics": {
+      "has_time_to_first_token": false
+    },
+    "name": "openai-stream-operation",
+    "type": null
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "model": "gpt-4o-mini",
+      "provider": "openai"
+    },
+    "metrics": {
+      "has_time_to_first_token": true
+    },
+    "name": "Chat Completion",
+    "type": "llm"
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "operation": "stream-with-response"
+    },
+    "metrics": {
+      "has_time_to_first_token": false
+    },
+    "name": "openai-stream-with-response-operation",
+    "type": null
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "model": "gpt-4o-mini",
+      "provider": "openai"
+    },
+    "metrics": {
+      "has_time_to_first_token": true
+    },
+    "name": "Chat Completion",
+    "type": "llm"
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "operation": "parse"
+    },
+    "metrics": {
+      "has_time_to_first_token": false
+    },
+    "name": "openai-parse-operation",
+    "type": null
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "model": "gpt-4o-mini",
+      "provider": "openai"
+    },
+    "metrics": {
+      "has_time_to_first_token": true
+    },
+    "name": "Chat Completion",
+    "type": "llm"
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "operation": "sync-stream"
+    },
+    "metrics": {
+      "has_time_to_first_token": false
+    },
+    "name": "openai-sync-stream-operation",
+    "type": null
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "model": "gpt-4o-mini",
+      "provider": "openai"
+    },
+    "metrics": {
+      "has_time_to_first_token": true
+    },
+    "name": "Chat Completion",
+    "type": "llm"
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "operation": "embeddings"
+    },
+    "metrics": {
+      "has_time_to_first_token": false
+    },
+    "name": "openai-embeddings-operation",
+    "type": null
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "model": "text-embedding-3-small",
+      "provider": "openai"
+    },
+    "metrics": {
+      "has_time_to_first_token": false
+    },
+    "name": "Embedding",
+    "type": "llm"
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "operation": "moderations"
+    },
+    "metrics": {
+      "has_time_to_first_token": false
+    },
+    "name": "openai-moderations-operation",
+    "type": null
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "model": "omni-moderation-latest",
+      "provider": "openai"
+    },
+    "metrics": {
+      "has_time_to_first_token": false
+    },
+    "name": "Moderation",
+    "type": "llm"
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "operation": "responses"
+    },
+    "metrics": {
+      "has_time_to_first_token": false
+    },
+    "name": "openai-responses-operation",
+    "type": null
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "model": "gpt-4o-mini-2024-07-18",
+      "provider": "openai"
+    },
+    "metrics": {
+      "has_time_to_first_token": true
+    },
+    "name": "openai.responses.create",
+    "type": "llm"
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "operation": "responses-with-response"
+    },
+    "metrics": {
+      "has_time_to_first_token": false
+    },
+    "name": "openai-responses-with-response-operation",
+    "type": null
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "model": "gpt-4o-mini-2024-07-18",
+      "provider": "openai"
+    },
+    "metrics": {
+      "has_time_to_first_token": true
+    },
+    "name": "openai.responses.create",
+    "type": "llm"
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "operation": "responses-create-stream"
+    },
+    "metrics": {
+      "has_time_to_first_token": false
+    },
+    "name": "openai-responses-create-stream-operation",
+    "type": null
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "model": "gpt-4o-mini-2024-07-18",
+      "provider": "openai"
+    },
+    "metrics": {
+      "has_time_to_first_token": true
+    },
+    "name": "openai.responses.create",
+    "type": "llm"
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "operation": "responses-stream"
+    },
+    "metrics": {
+      "has_time_to_first_token": false
+    },
+    "name": "openai-responses-stream-operation",
+    "type": null
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "model": "gpt-4o-mini-2024-07-18",
+      "provider": "openai"
+    },
+    "metrics": {
+      "has_time_to_first_token": true
+    },
+    "name": "openai.responses.create",
+    "type": "llm"
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "operation": "responses-stream-partial"
+    },
+    "metrics": {
+      "has_time_to_first_token": false
+    },
+    "name": "openai-responses-stream-partial-operation",
+    "type": null
+  },
+  {
+    "has_input": true,
+    "has_output": false,
+    "metadata": {
+      "model": "gpt-4o-mini",
+      "provider": "openai"
+    },
+    "metrics": {
+      "has_time_to_first_token": true
+    },
+    "name": "openai.responses.create",
+    "type": "llm"
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "operation": "responses-parse"
+    },
+    "metrics": {
+      "has_time_to_first_token": false
+    },
+    "name": "openai-responses-parse-operation",
+    "type": null
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "model": "gpt-4o-mini-2024-07-18",
+      "provider": "openai"
+    },
+    "metrics": {
+      "has_time_to_first_token": true
+    },
+    "name": "openai.responses.parse",
+    "type": "llm"
+  }
+]

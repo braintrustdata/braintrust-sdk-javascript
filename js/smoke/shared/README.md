@@ -563,9 +563,9 @@ export const testSomething = register("testSomething", async (braintrust) => {
 
 1. Make changes to test suites in `src/`
 2. Run `npm run build` to rebuild
-3. Test in target environment (e.g., Deno):
+3. Test in a target smoke scenario:
    ```bash
-   cd ../scenarios/deno-node
+   cd ../scenarios/<scenario-name>
    make test
    ```
 4. Verify tests pass in multiple environments

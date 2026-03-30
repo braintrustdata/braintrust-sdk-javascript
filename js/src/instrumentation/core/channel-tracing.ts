@@ -1,5 +1,13 @@
-import type { IsoChannelHandlers, IsoTracingChannel } from "../../isomorph";
-import { startSpan } from "../../logger";
+import type {
+  IsoAsyncLocalStorage,
+  IsoChannelHandlers,
+  IsoTracingChannel,
+} from "../../isomorph";
+import {
+  _internalGetGlobalState,
+  BRAINTRUST_CURRENT_SPAN_STORE,
+  startSpan,
+} from "../../logger";
 import type { Span } from "../../logger";
 import { getCurrentUnixTimestamp, isObject } from "../../util";
 import type {
@@ -29,7 +37,7 @@ type SpanState = {
 export type AsyncChannelSpanConfig<TChannel extends AnyAsyncChannel> =
   ChannelConfig & {
     extractInput: (
-      args: [...ArgsOf<TChannel>],
+      args: [...ArgsOf<TChannel>, ...any[]],
       event: StartOf<TChannel>,
       span: Span,
     ) => {
@@ -59,7 +67,7 @@ type StreamingResult<TChannel extends AnyAsyncChannel> = Exclude<
 export type StreamingChannelSpanConfig<TChannel extends AnyAsyncChannel> =
   ChannelConfig & {
     extractInput: (
-      args: [...ArgsOf<TChannel>],
+      args: [...ArgsOf<TChannel>, ...any[]],
       event: StartOf<TChannel>,
       span: Span,
     ) => {
@@ -101,7 +109,7 @@ export type StreamingChannelSpanConfig<TChannel extends AnyAsyncChannel> =
 export type SyncStreamChannelSpanConfig<TChannel extends AnySyncStreamChannel> =
   ChannelConfig & {
     extractInput: (
-      args: [...ArgsOf<TChannel>],
+      args: [...ArgsOf<TChannel>, ...any[]],
       event: StartOf<TChannel>,
       span: Span,
     ) => {
@@ -158,7 +166,7 @@ function startSpanForEvent<
 >(
   config: ChannelConfig & {
     extractInput: (
-      args: [...ArgsOf<TChannel>],
+      args: [...ArgsOf<TChannel>, ...any[]],
       event: StartOf<TChannel>,
       span: Span,
     ) => {
@@ -196,6 +204,81 @@ function startSpanForEvent<
   return { span, startTime };
 }
 
+function ensureSpanStateForEvent<
+  TChannel extends AnyAsyncChannel | AnySyncStreamChannel,
+>(
+  states: WeakMap<object, SpanState>,
+  config: ChannelConfig & {
+    extractInput: (
+      args: [...ArgsOf<TChannel>, ...any[]],
+      event: StartOf<TChannel>,
+      span: Span,
+    ) => {
+      input: unknown;
+      metadata: unknown;
+    };
+  },
+  event: StartOf<TChannel>,
+  channelName: string,
+): SpanState {
+  const key = event as object;
+  const existing = states.get(key);
+  if (existing) {
+    return existing;
+  }
+
+  const created = startSpanForEvent<TChannel>(config, event, channelName);
+  states.set(key, created);
+  return created;
+}
+
+function bindCurrentSpanStoreToStart<
+  TChannel extends AnyAsyncChannel | AnySyncStreamChannel,
+>(
+  tracingChannel: IsoTracingChannel<ChannelMessage<TChannel>>,
+  states: WeakMap<object, SpanState>,
+  config: ChannelConfig & {
+    extractInput: (
+      args: [...ArgsOf<TChannel>, ...any[]],
+      event: StartOf<TChannel>,
+      span: Span,
+    ) => {
+      input: unknown;
+      metadata: unknown;
+    };
+  },
+  channelName: string,
+): (() => void) | undefined {
+  const state = _internalGetGlobalState();
+  const startChannel = tracingChannel.start;
+  const currentSpanStore = state?.contextManager
+    ? (
+        state.contextManager as {
+          [BRAINTRUST_CURRENT_SPAN_STORE]?: IsoAsyncLocalStorage<Span>;
+        }
+      )[BRAINTRUST_CURRENT_SPAN_STORE]
+    : undefined;
+
+  if (!currentSpanStore || !startChannel) {
+    return undefined;
+  }
+
+  startChannel.bindStore(
+    currentSpanStore,
+    (event: ChannelMessage<TChannel>) =>
+      ensureSpanStateForEvent<TChannel>(
+        states,
+        config,
+        event as StartOf<TChannel>,
+        channelName,
+      ).span,
+  );
+
+  return () => {
+    startChannel.unbindStore(currentSpanStore);
+  };
+}
+
 function logErrorAndEnd<
   TChannel extends AnyAsyncChannel | AnySyncStreamChannel,
 >(states: WeakMap<object, SpanState>, event: ErrorOf<TChannel>): void {
@@ -220,16 +303,20 @@ export function traceAsyncChannel<TChannel extends AnyAsyncChannel>(
   >;
   const states = new WeakMap<object, SpanState>();
   const channelName = channel.channelName;
+  const unbindCurrentSpanStore = bindCurrentSpanStoreToStart(
+    tracingChannel,
+    states,
+    config,
+    channelName,
+  );
 
   const handlers: IsoChannelHandlers<ChannelMessage<TChannel>> = {
     start: (event) => {
-      states.set(
-        event as object,
-        startSpanForEvent<TChannel>(
-          config,
-          event as StartOf<TChannel>,
-          channelName,
-        ),
+      ensureSpanStateForEvent<TChannel>(
+        states,
+        config,
+        event as StartOf<TChannel>,
+        channelName,
       );
     },
     asyncEnd: (event) => {
@@ -278,6 +365,7 @@ export function traceAsyncChannel<TChannel extends AnyAsyncChannel>(
   tracingChannel.subscribe(handlers);
 
   return () => {
+    unbindCurrentSpanStore?.();
     tracingChannel.unsubscribe(handlers);
   };
 }
@@ -291,16 +379,20 @@ export function traceStreamingChannel<TChannel extends AnyAsyncChannel>(
   >;
   const states = new WeakMap<object, SpanState>();
   const channelName = channel.channelName;
+  const unbindCurrentSpanStore = bindCurrentSpanStoreToStart(
+    tracingChannel,
+    states,
+    config,
+    channelName,
+  );
 
   const handlers: IsoChannelHandlers<ChannelMessage<TChannel>> = {
     start: (event) => {
-      states.set(
-        event as object,
-        startSpanForEvent<TChannel>(
-          config,
-          event as StartOf<TChannel>,
-          channelName,
-        ),
+      ensureSpanStateForEvent<TChannel>(
+        states,
+        config,
+        event as StartOf<TChannel>,
+        channelName,
       );
     },
     asyncEnd: (event) => {
@@ -438,6 +530,7 @@ export function traceStreamingChannel<TChannel extends AnyAsyncChannel>(
   tracingChannel.subscribe(handlers);
 
   return () => {
+    unbindCurrentSpanStore?.();
     tracingChannel.unsubscribe(handlers);
   };
 }
@@ -451,16 +544,20 @@ export function traceSyncStreamChannel<TChannel extends AnySyncStreamChannel>(
   >;
   const states = new WeakMap<object, SpanState>();
   const channelName = channel.channelName;
+  const unbindCurrentSpanStore = bindCurrentSpanStoreToStart(
+    tracingChannel,
+    states,
+    config,
+    channelName,
+  );
 
   const handlers: IsoChannelHandlers<ChannelMessage<TChannel>> = {
     start: (event) => {
-      states.set(
-        event as object,
-        startSpanForEvent<TChannel>(
-          config,
-          event as StartOf<TChannel>,
-          channelName,
-        ),
+      ensureSpanStateForEvent<TChannel>(
+        states,
+        config,
+        event as StartOf<TChannel>,
+        channelName,
       );
     },
     end: (event) => {
@@ -565,6 +662,7 @@ export function traceSyncStreamChannel<TChannel extends AnySyncStreamChannel>(
   tracingChannel.subscribe(handlers);
 
   return () => {
+    unbindCurrentSpanStore?.();
     tracingChannel.unsubscribe(handlers);
   };
 }

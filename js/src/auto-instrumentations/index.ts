@@ -33,6 +33,7 @@ export { anthropicConfigs } from "./configs/anthropic";
 export { aiSDKConfigs } from "./configs/ai-sdk";
 export { claudeAgentSDKConfigs } from "./configs/claude-agent-sdk";
 export { googleGenAIConfigs } from "./configs/google-genai";
+export { openRouterConfigs } from "./configs/openrouter";
 
 // Re-export orchestrion configuration types
 // Note: ModuleMetadata and FunctionQuery are properties of InstrumentationConfig,

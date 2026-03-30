@@ -5,14 +5,16 @@ import { AnthropicPlugin } from "./plugins/anthropic-plugin";
 import { AISDKPlugin } from "./plugins/ai-sdk-plugin";
 import { ClaudeAgentSDKPlugin } from "./plugins/claude-agent-sdk-plugin";
 import { GoogleGenAIPlugin } from "./plugins/google-genai-plugin";
+import { OpenRouterPlugin } from "./plugins/openrouter-plugin";
 
 function createPluginClassMock() {
-  return vi.fn(
-    class MockPlugin {
-      enable = vi.fn();
-      disable = vi.fn();
-    },
-  );
+  return vi.fn(function MockPlugin(this: {
+    enable: ReturnType<typeof vi.fn>;
+    disable: ReturnType<typeof vi.fn>;
+  }) {
+    this.enable = vi.fn();
+    this.disable = vi.fn();
+  });
 }
 
 // Mock all sub-plugins but preserve the utility functions
@@ -40,6 +42,10 @@ vi.mock("./plugins/claude-agent-sdk-plugin", () => ({
 
 vi.mock("./plugins/google-genai-plugin", () => ({
   GoogleGenAIPlugin: createPluginClassMock(),
+}));
+
+vi.mock("./plugins/openrouter-plugin", () => ({
+  OpenRouterPlugin: createPluginClassMock(),
 }));
 
 describe("BraintrustPlugin", () => {
@@ -94,6 +100,15 @@ describe("BraintrustPlugin", () => {
       expect(mockInstance.enable).toHaveBeenCalledTimes(1);
     });
 
+    it("should create and enable OpenRouter plugin by default", () => {
+      const plugin = new BraintrustPlugin();
+      plugin.enable();
+
+      expect(OpenRouterPlugin).toHaveBeenCalledTimes(1);
+      const mockInstance = vi.mocked(OpenRouterPlugin).mock.results[0].value;
+      expect(mockInstance.enable).toHaveBeenCalledTimes(1);
+    });
+
     it("should create all plugins when enabled with no config", () => {
       const plugin = new BraintrustPlugin();
       plugin.enable();
@@ -103,6 +118,7 @@ describe("BraintrustPlugin", () => {
       expect(AISDKPlugin).toHaveBeenCalledTimes(1);
       expect(ClaudeAgentSDKPlugin).toHaveBeenCalledTimes(1);
       expect(GoogleGenAIPlugin).toHaveBeenCalledTimes(1);
+      expect(OpenRouterPlugin).toHaveBeenCalledTimes(1);
     });
 
     it("should create all plugins when enabled with empty config", () => {
@@ -114,6 +130,7 @@ describe("BraintrustPlugin", () => {
       expect(AISDKPlugin).toHaveBeenCalledTimes(1);
       expect(ClaudeAgentSDKPlugin).toHaveBeenCalledTimes(1);
       expect(GoogleGenAIPlugin).toHaveBeenCalledTimes(1);
+      expect(OpenRouterPlugin).toHaveBeenCalledTimes(1);
     });
 
     it("should create all plugins when enabled with empty integrations config", () => {
@@ -125,6 +142,7 @@ describe("BraintrustPlugin", () => {
       expect(AISDKPlugin).toHaveBeenCalledTimes(1);
       expect(ClaudeAgentSDKPlugin).toHaveBeenCalledTimes(1);
       expect(GoogleGenAIPlugin).toHaveBeenCalledTimes(1);
+      expect(OpenRouterPlugin).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -141,6 +159,7 @@ describe("BraintrustPlugin", () => {
       expect(AISDKPlugin).toHaveBeenCalledTimes(1);
       expect(ClaudeAgentSDKPlugin).toHaveBeenCalledTimes(1);
       expect(GoogleGenAIPlugin).toHaveBeenCalledTimes(1);
+      expect(OpenRouterPlugin).toHaveBeenCalledTimes(1);
     });
 
     it("should not create Anthropic plugin when anthropic: false", () => {
@@ -155,6 +174,7 @@ describe("BraintrustPlugin", () => {
       expect(AISDKPlugin).toHaveBeenCalledTimes(1);
       expect(ClaudeAgentSDKPlugin).toHaveBeenCalledTimes(1);
       expect(GoogleGenAIPlugin).toHaveBeenCalledTimes(1);
+      expect(OpenRouterPlugin).toHaveBeenCalledTimes(1);
     });
 
     it("should not create AI SDK plugin when aisdk: false", () => {
@@ -169,6 +189,7 @@ describe("BraintrustPlugin", () => {
       expect(AnthropicPlugin).toHaveBeenCalledTimes(1);
       expect(ClaudeAgentSDKPlugin).toHaveBeenCalledTimes(1);
       expect(GoogleGenAIPlugin).toHaveBeenCalledTimes(1);
+      expect(OpenRouterPlugin).toHaveBeenCalledTimes(1);
     });
 
     it("should not create Claude Agent SDK plugin when claudeAgentSDK: false", () => {
@@ -183,6 +204,7 @@ describe("BraintrustPlugin", () => {
       expect(AnthropicPlugin).toHaveBeenCalledTimes(1);
       expect(AISDKPlugin).toHaveBeenCalledTimes(1);
       expect(GoogleGenAIPlugin).toHaveBeenCalledTimes(1);
+      expect(OpenRouterPlugin).toHaveBeenCalledTimes(1);
     });
 
     it("should not create Google GenAI plugin when googleGenAI: false", () => {
@@ -197,6 +219,21 @@ describe("BraintrustPlugin", () => {
       expect(AnthropicPlugin).toHaveBeenCalledTimes(1);
       expect(AISDKPlugin).toHaveBeenCalledTimes(1);
       expect(ClaudeAgentSDKPlugin).toHaveBeenCalledTimes(1);
+      expect(OpenRouterPlugin).toHaveBeenCalledTimes(1);
+    });
+
+    it("should not create OpenRouter plugin when openrouter: false", () => {
+      const plugin = new BraintrustPlugin({
+        integrations: { openrouter: false },
+      });
+      plugin.enable();
+
+      expect(OpenRouterPlugin).not.toHaveBeenCalled();
+      expect(OpenAIPlugin).toHaveBeenCalledTimes(1);
+      expect(AnthropicPlugin).toHaveBeenCalledTimes(1);
+      expect(AISDKPlugin).toHaveBeenCalledTimes(1);
+      expect(ClaudeAgentSDKPlugin).toHaveBeenCalledTimes(1);
+      expect(GoogleGenAIPlugin).toHaveBeenCalledTimes(1);
     });
 
     it("should not create any plugins when all are disabled", () => {
@@ -207,6 +244,7 @@ describe("BraintrustPlugin", () => {
           aisdk: false,
           claudeAgentSDK: false,
           googleGenAI: false,
+          openrouter: false,
         },
       });
       plugin.enable();
@@ -216,6 +254,7 @@ describe("BraintrustPlugin", () => {
       expect(AISDKPlugin).not.toHaveBeenCalled();
       expect(ClaudeAgentSDKPlugin).not.toHaveBeenCalled();
       expect(GoogleGenAIPlugin).not.toHaveBeenCalled();
+      expect(OpenRouterPlugin).not.toHaveBeenCalled();
     });
 
     it("should allow selective enabling of plugins", () => {
@@ -226,12 +265,14 @@ describe("BraintrustPlugin", () => {
           aisdk: false,
           claudeAgentSDK: true,
           googleGenAI: false,
+          openrouter: true,
         },
       });
       plugin.enable();
 
       expect(OpenAIPlugin).toHaveBeenCalledTimes(1);
       expect(ClaudeAgentSDKPlugin).toHaveBeenCalledTimes(1);
+      expect(OpenRouterPlugin).toHaveBeenCalledTimes(1);
       expect(AnthropicPlugin).not.toHaveBeenCalled();
       expect(AISDKPlugin).not.toHaveBeenCalled();
       expect(GoogleGenAIPlugin).not.toHaveBeenCalled();
@@ -334,12 +375,14 @@ describe("BraintrustPlugin", () => {
         vi.mocked(ClaudeAgentSDKPlugin).mock.results[0].value;
       const googleGenAIMock =
         vi.mocked(GoogleGenAIPlugin).mock.results[0].value;
+      const openRouterMock = vi.mocked(OpenRouterPlugin).mock.results[0].value;
 
       expect(openaiMock.enable).toHaveBeenCalledTimes(1);
       expect(anthropicMock.enable).toHaveBeenCalledTimes(1);
       expect(aiSDKMock.enable).toHaveBeenCalledTimes(1);
       expect(claudeAgentSDKMock.enable).toHaveBeenCalledTimes(1);
       expect(googleGenAIMock.enable).toHaveBeenCalledTimes(1);
+      expect(openRouterMock.enable).toHaveBeenCalledTimes(1);
     });
 
     it("should disable and nullify all sub-plugins when disabled", () => {
@@ -353,6 +396,7 @@ describe("BraintrustPlugin", () => {
         vi.mocked(ClaudeAgentSDKPlugin).mock.results[0].value;
       const googleGenAIMock =
         vi.mocked(GoogleGenAIPlugin).mock.results[0].value;
+      const openRouterMock = vi.mocked(OpenRouterPlugin).mock.results[0].value;
 
       plugin.disable();
 
@@ -361,6 +405,7 @@ describe("BraintrustPlugin", () => {
       expect(aiSDKMock.disable).toHaveBeenCalledTimes(1);
       expect(claudeAgentSDKMock.disable).toHaveBeenCalledTimes(1);
       expect(googleGenAIMock.disable).toHaveBeenCalledTimes(1);
+      expect(openRouterMock.disable).toHaveBeenCalledTimes(1);
     });
 
     it("should be idempotent on multiple enable calls", () => {
@@ -399,6 +444,7 @@ describe("BraintrustPlugin", () => {
       expect(AISDKPlugin).not.toHaveBeenCalled();
       expect(ClaudeAgentSDKPlugin).not.toHaveBeenCalled();
       expect(GoogleGenAIPlugin).not.toHaveBeenCalled();
+      expect(OpenRouterPlugin).not.toHaveBeenCalled();
     });
 
     it("should allow re-enabling after disable", () => {
@@ -415,6 +461,7 @@ describe("BraintrustPlugin", () => {
       expect(AISDKPlugin).toHaveBeenCalledTimes(1);
       expect(ClaudeAgentSDKPlugin).toHaveBeenCalledTimes(1);
       expect(GoogleGenAIPlugin).toHaveBeenCalledTimes(1);
+      expect(OpenRouterPlugin).toHaveBeenCalledTimes(1);
     });
 
     it("should only disable plugins that were enabled", () => {
@@ -425,6 +472,7 @@ describe("BraintrustPlugin", () => {
           aisdk: true,
           claudeAgentSDK: false,
           googleGenAI: true,
+          openrouter: true,
         },
       });
       plugin.enable();
@@ -433,12 +481,14 @@ describe("BraintrustPlugin", () => {
       const aiSDKMock = vi.mocked(AISDKPlugin).mock.results[0].value;
       const googleGenAIMock =
         vi.mocked(GoogleGenAIPlugin).mock.results[0].value;
+      const openRouterMock = vi.mocked(OpenRouterPlugin).mock.results[0].value;
 
       plugin.disable();
 
       expect(openaiMock.disable).toHaveBeenCalledTimes(1);
       expect(aiSDKMock.disable).toHaveBeenCalledTimes(1);
       expect(googleGenAIMock.disable).toHaveBeenCalledTimes(1);
+      expect(openRouterMock.disable).toHaveBeenCalledTimes(1);
     });
   });
 });

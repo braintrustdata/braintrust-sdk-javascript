@@ -1,0 +1,228 @@
+[
+  {
+    "headers": {
+      "content-type": "application/json"
+    },
+    "jsonBody": null,
+    "method": "POST",
+    "path": "/api/apikey/login",
+    "query": null,
+    "rawBody": null
+  },
+  {
+    "headers": {
+      "content-type": "application/json"
+    },
+    "jsonBody": {
+      "org_id": "mock-org-id",
+      "project_name": "<project_name>"
+    },
+    "method": "POST",
+    "path": "/api/project/register",
+    "query": null,
+    "rawBody": "{\"project_name\":\"e2e-nextjs-instrumentation-nodejs-e2e-<uuid:1>\",\"org_id\":\"mock-org-id\"}"
+  },
+  {
+    "headers": {
+      "content-type": "application/json"
+    },
+    "jsonBody": {
+      "api_version": 2,
+      "rows": [
+        {
+          "context": {},
+          "created": "<timestamp>",
+          "id": "<span:2>",
+          "input": {
+            "route": "/api/smoke-test/node",
+            "runtime": "nodejs"
+          },
+          "log_id": "g",
+          "metadata": {
+            "runtime": "nodejs",
+            "scenario": "nextjs-instrumentation",
+            "testRunId": "<run:1>",
+            "transport": "http"
+          },
+          "metrics": {
+            "end": 0,
+            "start": 0
+          },
+          "output": {
+            "ok": true,
+            "route": "/api/smoke-test/node",
+            "runtime": "nodejs"
+          },
+          "project_id": "<project_id>",
+          "root_span_id": "<span:3>",
+          "span_attributes": {
+            "exec_counter": 0,
+            "name": "nextjs nodejs logger span",
+            "type": "task"
+          },
+          "span_id": "<span:3>"
+        }
+      ]
+    },
+    "method": "POST",
+    "path": "/logs3",
+    "query": null,
+    "rawBody": {
+      "api_version": 2,
+      "rows": [
+        {
+          "context": {},
+          "created": "<timestamp>",
+          "id": "<span:2>",
+          "input": {
+            "route": "/api/smoke-test/node",
+            "runtime": "nodejs"
+          },
+          "log_id": "g",
+          "metadata": {
+            "runtime": "nodejs",
+            "scenario": "nextjs-instrumentation",
+            "testRunId": "<run:1>",
+            "transport": "http"
+          },
+          "metrics": {
+            "end": 0,
+            "start": 0
+          },
+          "output": {
+            "ok": true,
+            "route": "/api/smoke-test/node",
+            "runtime": "nodejs"
+          },
+          "project_id": "<project_id>",
+          "root_span_id": "<span:3>",
+          "span_attributes": {
+            "exec_counter": 0,
+            "name": "nextjs nodejs logger span",
+            "type": "task"
+          },
+          "span_id": "<span:3>"
+        }
+      ]
+    }
+  },
+  {
+    "headers": {
+      "content-type": "application/json",
+      "x-bt-parent": "<x-bt-parent>"
+    },
+    "jsonBody": "<omitted>",
+    "method": "POST",
+    "path": "/otel/v1/traces",
+    "query": null,
+    "rawBody": "<omitted>"
+  },
+  {
+    "headers": {
+      "content-type": "application/json"
+    },
+    "jsonBody": {
+      "org_id": "mock-org-id",
+      "project_name": "<project_name>"
+    },
+    "method": "POST",
+    "path": "/api/project/register",
+    "query": null,
+    "rawBody": "{\"project_name\":\"e2e-nextjs-instrumentation-edge-e2e-<uuid:1>\",\"org_id\":\"mock-org-id\"}"
+  },
+  {
+    "headers": {
+      "content-type": "application/json"
+    },
+    "jsonBody": {
+      "api_version": 2,
+      "rows": [
+        {
+          "context": {},
+          "created": "<timestamp>",
+          "id": "<span:5>",
+          "input": {
+            "route": "/api/smoke-test/edge",
+            "runtime": "edge"
+          },
+          "log_id": "g",
+          "metadata": {
+            "runtime": "edge",
+            "scenario": "nextjs-instrumentation",
+            "testRunId": "<run:1>",
+            "transport": "http"
+          },
+          "metrics": {
+            "end": 0,
+            "start": 0
+          },
+          "output": {
+            "ok": true,
+            "route": "/api/smoke-test/edge",
+            "runtime": "edge"
+          },
+          "project_id": "<project_id>",
+          "root_span_id": "<span:6>",
+          "span_attributes": {
+            "exec_counter": 0,
+            "name": "nextjs edge logger span",
+            "type": "task"
+          },
+          "span_id": "<span:6>"
+        }
+      ]
+    },
+    "method": "POST",
+    "path": "/logs3",
+    "query": null,
+    "rawBody": {
+      "api_version": 2,
+      "rows": [
+        {
+          "context": {},
+          "created": "<timestamp>",
+          "id": "<span:5>",
+          "input": {
+            "route": "/api/smoke-test/edge",
+            "runtime": "edge"
+          },
+          "log_id": "g",
+          "metadata": {
+            "runtime": "edge",
+            "scenario": "nextjs-instrumentation",
+            "testRunId": "<run:1>",
+            "transport": "http"
+          },
+          "metrics": {
+            "end": 0,
+            "start": 0
+          },
+          "output": {
+            "ok": true,
+            "route": "/api/smoke-test/edge",
+            "runtime": "edge"
+          },
+          "project_id": "<project_id>",
+          "root_span_id": "<span:6>",
+          "span_attributes": {
+            "exec_counter": 0,
+            "name": "nextjs edge logger span",
+            "type": "task"
+          },
+          "span_id": "<span:6>"
+        }
+      ]
+    }
+  },
+  {
+    "headers": {
+      "content-type": "application/json",
+      "x-bt-parent": "<x-bt-parent>"
+    },
+    "jsonBody": "<omitted>",
+    "method": "POST",
+    "path": "/otel/v1/traces",
+    "query": null,
+    "rawBody": "<omitted>"
+  }
+]

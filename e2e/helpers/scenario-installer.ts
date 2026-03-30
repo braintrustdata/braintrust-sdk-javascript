@@ -1,4 +1,4 @@
-import { promises as fs, rmSync } from "node:fs";
+import { promises as fs } from "node:fs";
 import { spawn } from "node:child_process";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -25,6 +25,7 @@ const INSTALL_SECRET_ENV_VARS = [
   "GITHUB_TOKEN",
   "GH_TOKEN",
   "OPENAI_API_KEY",
+  "OPENROUTER_API_KEY",
 ] as const;
 
 const cleanupDirs = new Set<string>();
@@ -102,24 +103,29 @@ function registerCleanupHandlers() {
 
   cleanupRegistered = true;
 
-  const cleanupAll = () => {
+  const cleanupAll = async () => {
     for (const dir of cleanupDirs) {
       try {
-        rmSync(dir, { force: true, recursive: true });
+        await fs.rm(dir, { force: true, recursive: true });
       } catch {
         // Best-effort cleanup for ephemeral test directories.
       }
     }
+    cleanupDirs.clear();
   };
 
-  process.on("exit", cleanupAll);
+  process.on("beforeExit", () => {
+    void cleanupAll();
+  });
   process.on("SIGINT", () => {
-    cleanupAll();
-    process.exit(130);
+    void cleanupAll().finally(() => {
+      process.exit(130);
+    });
   });
   process.on("SIGTERM", () => {
-    cleanupAll();
-    process.exit(143);
+    void cleanupAll().finally(() => {
+      process.exit(143);
+    });
   });
 }
 

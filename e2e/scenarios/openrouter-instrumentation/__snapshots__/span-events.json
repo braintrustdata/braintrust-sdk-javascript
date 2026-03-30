@@ -1,0 +1,260 @@
+[
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "scenario": "openrouter-instrumentation"
+    },
+    "metric_keys": [],
+    "name": "openrouter-root",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:1>",
+    "span_parents": [],
+    "type": "task"
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "operation": "chat"
+    },
+    "metric_keys": [],
+    "name": "openrouter-chat-operation",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:2>",
+    "span_parents": [
+      "<span:1>"
+    ],
+    "type": null
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "model": "gpt-4o-mini",
+      "provider": "openai"
+    },
+    "metric_keys": [
+      "completion_audio_tokens",
+      "completion_reasoning_tokens",
+      "completion_tokens",
+      "prompt_audio_tokens",
+      "prompt_cache_write_tokens",
+      "prompt_cached_tokens",
+      "prompt_tokens",
+      "prompt_video_tokens",
+      "time_to_first_token",
+      "tokens"
+    ],
+    "name": "openrouter.chat.send",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:3>",
+    "span_parents": [
+      "<span:2>"
+    ],
+    "type": "llm"
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "operation": "chat-stream"
+    },
+    "metric_keys": [],
+    "name": "openrouter-chat-stream-operation",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:4>",
+    "span_parents": [
+      "<span:1>"
+    ],
+    "type": null
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "model": "gpt-4o-mini",
+      "provider": "openai"
+    },
+    "metric_keys": [
+      "completion_audio_tokens",
+      "completion_reasoning_tokens",
+      "completion_tokens",
+      "prompt_audio_tokens",
+      "prompt_cache_write_tokens",
+      "prompt_cached_tokens",
+      "prompt_tokens",
+      "prompt_video_tokens",
+      "time_to_first_token",
+      "tokens"
+    ],
+    "name": "openrouter.chat.send",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:5>",
+    "span_parents": [
+      "<span:4>"
+    ],
+    "type": "llm"
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "operation": "embeddings"
+    },
+    "metric_keys": [],
+    "name": "openrouter-embeddings-operation",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:6>",
+    "span_parents": [
+      "<span:1>"
+    ],
+    "type": null
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "embedding_model": "text-embedding-3-small",
+      "model": "text-embedding-3-small",
+      "provider": "openai"
+    },
+    "metric_keys": [
+      "cost",
+      "prompt_tokens",
+      "tokens"
+    ],
+    "name": "openrouter.embeddings.generate",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:7>",
+    "span_parents": [
+      "<span:6>"
+    ],
+    "type": "llm"
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "operation": "responses"
+    },
+    "metric_keys": [],
+    "name": "openrouter-responses-operation",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:8>",
+    "span_parents": [
+      "<span:1>"
+    ],
+    "type": null
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "model": "gpt-4o-mini",
+      "provider": "openai"
+    },
+    "metric_keys": [
+      "completion_reasoning_tokens",
+      "completion_tokens",
+      "cost",
+      "cost_upstream_inference_cost",
+      "cost_upstream_inference_input_cost",
+      "cost_upstream_inference_output_cost",
+      "prompt_cached_tokens",
+      "prompt_tokens",
+      "time_to_first_token",
+      "tokens"
+    ],
+    "name": "openrouter.beta.responses.send",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:9>",
+    "span_parents": [
+      "<span:8>"
+    ],
+    "type": "llm"
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "operation": "responses-stream"
+    },
+    "metric_keys": [],
+    "name": "openrouter-responses-stream-operation",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:10>",
+    "span_parents": [
+      "<span:1>"
+    ],
+    "type": null
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "model": "gpt-4o-mini",
+      "provider": "openai"
+    },
+    "metric_keys": [
+      "completion_reasoning_tokens",
+      "completion_tokens",
+      "cost",
+      "cost_upstream_inference_cost",
+      "cost_upstream_inference_input_cost",
+      "cost_upstream_inference_output_cost",
+      "prompt_cached_tokens",
+      "prompt_tokens",
+      "time_to_first_token",
+      "tokens"
+    ],
+    "name": "openrouter.beta.responses.send",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:11>",
+    "span_parents": [
+      "<span:10>"
+    ],
+    "type": "llm"
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "operation": "call-model"
+    },
+    "metric_keys": [],
+    "name": "openrouter-call-model-operation",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:12>",
+    "span_parents": [
+      "<span:1>"
+    ],
+    "type": null
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "model": "gpt-4o-mini",
+      "provider": "openai"
+    },
+    "metric_keys": [
+      "completion_reasoning_tokens",
+      "completion_tokens",
+      "cost",
+      "cost_upstream_inference_cost",
+      "cost_upstream_inference_input_cost",
+      "cost_upstream_inference_output_cost",
+      "prompt_cached_tokens",
+      "prompt_tokens",
+      "tokens"
+    ],
+    "name": "openrouter.callModel",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:13>",
+    "span_parents": [
+      "<span:12>"
+    ],
+    "type": "llm"
+  }
+]

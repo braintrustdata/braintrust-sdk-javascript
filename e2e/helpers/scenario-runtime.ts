@@ -23,6 +23,10 @@ export function getTestRunId(): string {
 }
 
 export function scopedName(base: string, testRunId = getTestRunId()): string {
+  if (process.env.BRAINTRUST_E2E_PROJECT_NAME) {
+    return process.env.BRAINTRUST_E2E_PROJECT_NAME;
+  }
+
   const suffix = testRunId.toLowerCase().replace(/[^a-z0-9-]/g, "-");
   return `${base}-${suffix}`;
 }

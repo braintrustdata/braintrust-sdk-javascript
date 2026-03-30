@@ -1,0 +1,177 @@
+[
+  {
+    "error": null,
+    "input": "What is the capital of France?",
+    "metadata": {
+      "case": "basic-span",
+      "scenario": "deno-browser",
+      "testRunId": "<run:1>",
+      "transport": "http"
+    },
+    "name": "deno browser basic span",
+    "output": "Paris",
+    "root_span_id": "<span:1>",
+    "span_attributes": {
+      "exec_counter": 0,
+      "name": "deno browser basic span",
+      "type": "task"
+    },
+    "span_id": "<span:1>",
+    "span_parents": null
+  },
+  {
+    "error": null,
+    "input": {
+      "transcript": {
+        "content_type": "application/json",
+        "filename": "conversation_transcript.json",
+        "key": "<uuid:2>",
+        "type": "braintrust_attachment"
+      },
+      "type": "chat_completion"
+    },
+    "metadata": {
+      "case": "json-attachment",
+      "scenario": "deno-browser",
+      "testRunId": "<run:1>"
+    },
+    "name": "deno browser json attachment span",
+    "output": {
+      "attachment": true
+    },
+    "root_span_id": "<span:3>",
+    "span_attributes": {
+      "exec_counter": 1,
+      "name": "deno browser json attachment span",
+      "type": "task"
+    },
+    "span_id": "<span:3>",
+    "span_parents": null
+  },
+  {
+    "error": null,
+    "input": {
+      "phase": "parent",
+      "testRunId": "<run:1>"
+    },
+    "metadata": {
+      "case": "parent-span",
+      "scenario": "deno-browser",
+      "testRunId": "<run:1>"
+    },
+    "name": "deno browser parent span",
+    "output": {
+      "ok": true,
+      "phase": "parent"
+    },
+    "root_span_id": "<span:4>",
+    "span_attributes": {
+      "exec_counter": 2,
+      "name": "deno browser parent span",
+      "type": "task"
+    },
+    "span_id": "<span:4>",
+    "span_parents": null
+  },
+  {
+    "error": null,
+    "input": {
+      "step": "child",
+      "testRunId": "<run:1>"
+    },
+    "metadata": {
+      "case": "child-span",
+      "scenario": "deno-browser",
+      "testRunId": "<run:1>"
+    },
+    "name": "deno browser child span",
+    "output": {
+      "ok": true,
+      "phase": "child"
+    },
+    "root_span_id": "<span:5>",
+    "span_attributes": {
+      "exec_counter": 3,
+      "name": "deno browser child span",
+      "type": "task"
+    },
+    "span_id": "<span:5>",
+    "span_parents": null
+  },
+  {
+    "error": null,
+    "input": null,
+    "metadata": {
+      "case": "nested-parent",
+      "scenario": "deno-browser",
+      "testRunId": "<run:1>"
+    },
+    "name": "deno browser nested parent span",
+    "output": null,
+    "root_span_id": "<span:6>",
+    "span_attributes": {
+      "exec_counter": 4,
+      "name": "deno browser nested parent span",
+      "type": "task"
+    },
+    "span_id": "<span:6>",
+    "span_parents": null
+  },
+  {
+    "error": null,
+    "input": null,
+    "metadata": {
+      "case": "nested-child",
+      "scenario": "deno-browser",
+      "testRunId": "<run:1>"
+    },
+    "name": "deno browser nested child span",
+    "output": null,
+    "root_span_id": "<span:7>",
+    "span_attributes": {
+      "exec_counter": 5,
+      "name": "deno browser nested child span",
+      "type": "task"
+    },
+    "span_id": "<span:7>",
+    "span_parents": null
+  },
+  {
+    "error": null,
+    "input": null,
+    "metadata": {
+      "case": "nested-grandchild",
+      "scenario": "deno-browser",
+      "testRunId": "<run:1>"
+    },
+    "name": "deno browser nested grandchild span",
+    "output": null,
+    "root_span_id": "<span:8>",
+    "span_attributes": {
+      "exec_counter": 6,
+      "name": "deno browser nested grandchild span",
+      "type": "task"
+    },
+    "span_id": "<span:8>",
+    "span_parents": null
+  },
+  {
+    "error": null,
+    "input": null,
+    "metadata": {
+      "case": "current-span",
+      "scenario": "deno-browser",
+      "testRunId": "<run:1>"
+    },
+    "name": "deno browser current span",
+    "output": null,
+    "root_span_id": "<span:9>",
+    "span_attributes": {
+      "exec_counter": 7,
+      "name": "deno browser current span",
+      "type": "task"
+    },
+    "span_id": "<span:9>",
+    "span_parents": null
+  }
+]
