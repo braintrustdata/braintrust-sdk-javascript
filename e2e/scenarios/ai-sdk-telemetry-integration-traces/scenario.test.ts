@@ -134,7 +134,80 @@ describe("ai sdk telemetry integration traces", () => {
         expect(toolMetrics?.duration).toBeDefined();
 
         // --------------------------------------------------
-        // 4. generateText with error
+        // 4. generateText with nested sub-agent tool calls
+        // --------------------------------------------------
+        const nestedToolGenSpans = findAllSpans(
+          events,
+          "nested-tool-call-generate",
+        );
+        expect(nestedToolGenSpans.length).toBe(1);
+        const nestedToolGenSpan = nestedToolGenSpans[0];
+
+        const nestedParentStep0 = findChildSpans(
+          events,
+          "step-0",
+          nestedToolGenSpan.span.id,
+        );
+        expect(nestedParentStep0.length).toBe(1);
+
+        const nestedParentStep1 = findChildSpans(
+          events,
+          "step-1",
+          nestedToolGenSpan.span.id,
+        );
+        expect(nestedParentStep1.length).toBe(1);
+
+        const nestedParentStep2 = findChildSpans(
+          events,
+          "step-2",
+          nestedToolGenSpan.span.id,
+        );
+        expect(nestedParentStep2.length).toBe(1);
+
+        const researchToolSpans = findChildSpans(
+          events,
+          "researchCity",
+          nestedParentStep0[0].span.id,
+        );
+        expect(researchToolSpans.length).toBe(1);
+
+        const secondResearchToolSpans = findChildSpans(
+          events,
+          "researchCity",
+          nestedParentStep1[0].span.id,
+        );
+        expect(secondResearchToolSpans.length).toBe(1);
+
+        const nestedSubagentRoot1 = findChildSpans(
+          events,
+          "generateText",
+          researchToolSpans[0].span.id,
+        );
+        expect(nestedSubagentRoot1.length).toBe(1);
+
+        const nestedSubagentRoot2 = findChildSpans(
+          events,
+          "generateText",
+          secondResearchToolSpans[0].span.id,
+        );
+        expect(nestedSubagentRoot2.length).toBe(1);
+
+        const nestedSubagentStep1 = findChildSpans(
+          events,
+          "step-0",
+          nestedSubagentRoot1[0].span.id,
+        );
+        expect(nestedSubagentStep1.length).toBe(1);
+
+        const nestedSubagentStep2 = findChildSpans(
+          events,
+          "step-0",
+          nestedSubagentRoot2[0].span.id,
+        );
+        expect(nestedSubagentStep2.length).toBe(1);
+
+        // --------------------------------------------------
+        // 5. generateText with error
         // --------------------------------------------------
         const errorSpans = findAllSpans(events, "error-generate");
         expect(errorSpans.length).toBe(1);

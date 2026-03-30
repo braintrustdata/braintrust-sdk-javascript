@@ -1,6 +1,7 @@
 import { initLogger } from "braintrust";
 import { BraintrustTelemetryIntegration } from "braintrust";
 import {
+  Experimental_Agent,
   generateText,
   streamText,
   tool,
@@ -155,6 +156,69 @@ function createToolCallModel(): MockLanguageModelV4 {
 }
 
 /**
+ * Creates a mock model that makes two tool calls, allowing us to verify
+ * nested sub-agent traces are parented under each tool span.
+ */
+function createNestedToolCallModel(): MockLanguageModelV4 {
+  let callCount = 0;
+  return new MockLanguageModelV4({
+    provider: "mock-provider",
+    modelId: "mock-model",
+    doGenerate: async () => {
+      callCount++;
+      if (callCount <= 2) {
+        const city = callCount === 1 ? "Paris" : "Tokyo";
+        return {
+          content: [
+            {
+              type: "tool-call" as const,
+              toolCallId: `research-city-${callCount}`,
+              toolName: "researchCity",
+              input: JSON.stringify({ city }),
+            },
+          ],
+          finishReason: "tool-calls" as const,
+          usage: { inputTokens: 15, outputTokens: 20 },
+          request: { body: "{}" },
+          response: {
+            id: `nested-response-${callCount}`,
+            modelId: "mock-model",
+            timestamp: new Date(0),
+            headers: {},
+            body: undefined,
+          },
+          rawResponse: undefined,
+          warnings: [],
+          providerMetadata: undefined,
+        };
+      }
+
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: "Finished researching cities.",
+          },
+        ],
+        finishReason: "stop" as const,
+        usage: { inputTokens: 25, outputTokens: 15 },
+        request: { body: "{}" },
+        response: {
+          id: "nested-response-final",
+          modelId: "mock-model",
+          timestamp: new Date(0),
+          headers: {},
+          body: undefined,
+        },
+        rawResponse: undefined,
+        warnings: [],
+        providerMetadata: undefined,
+      };
+    },
+  });
+}
+
+/**
  * Creates a mock model that throws an error during generation.
  */
 function createErrorModel(): MockLanguageModelV4 {
@@ -240,7 +304,40 @@ export async function runTelemetryIntegrationScenario(): Promise<void> {
         },
       });
 
-      // 4. generateText with error
+      // 4. generateText with nested sub-agent tool calls
+      const researchAgent = new Experimental_Agent({
+        model: createTextModel("Nested research complete."),
+        instructions: "You are a city researcher.",
+      });
+
+      await generateText({
+        model: createNestedToolCallModel(),
+        prompt: "Research Paris and Tokyo.",
+        tools: {
+          researchCity: tool({
+            description: "Research a city",
+            parameters: z.object({
+              city: z.string().describe("The city to research"),
+            }),
+            execute: async ({ city }) => {
+              const result = await researchAgent.generate({
+                prompt: `Research ${city}`,
+              });
+              return JSON.stringify({ city, summary: result.text });
+            },
+          }),
+        },
+        stopWhen: stepCountIs(5),
+        experimental_telemetry: {
+          metadata: {
+            braintrust: {
+              name: "nested-tool-call-generate",
+            },
+          },
+        },
+      });
+
+      // 5. generateText with error
       try {
         await generateText({
           model: createErrorModel(),
