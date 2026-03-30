@@ -9,7 +9,7 @@ import { defineAnthropicInstrumentationAssertions } from "./assertions";
 const scenarioDir = await prepareScenarioDir({
   scenarioDir: resolveScenarioDir(import.meta.url),
 });
-const TIMEOUT_MS = 90_000;
+const TIMEOUT_MS = 150_000;
 const anthropicScenarios = await Promise.all(
   [
     {

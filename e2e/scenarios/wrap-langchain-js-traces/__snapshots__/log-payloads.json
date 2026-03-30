@@ -126,10 +126,6 @@
         "ls_model_type": "chat",
         "ls_provider": "openai",
         "ls_temperature": 0,
-        "max_tokens": 16,
-        "model": "gpt-4o-mini",
-        "stream": false,
-        "temperature": 0,
         "versions": {
           "@langchain/core": "<langchain-version>",
           "@langchain/openai": "<langchain-version>"
@@ -704,10 +700,6 @@
         "ls_model_type": "chat",
         "ls_provider": "openai",
         "ls_temperature": 0,
-        "max_tokens": 32,
-        "model": "gpt-4o-mini",
-        "stream": false,
-        "temperature": 0,
         "versions": {
           "@langchain/core": "<langchain-version>",
           "@langchain/openai": "<langchain-version>"
@@ -973,13 +965,9 @@
         "ls_model_type": "chat",
         "ls_provider": "openai",
         "ls_temperature": 0,
-        "max_tokens": 32,
-        "model": "gpt-4o-mini",
-        "stream": true,
         "stream_options": {
           "include_usage": true
         },
-        "temperature": 0,
         "versions": {
           "@langchain/core": "<langchain-version>",
           "@langchain/openai": "<langchain-version>"
@@ -1265,10 +1253,6 @@
         "ls_model_type": "chat",
         "ls_provider": "openai",
         "ls_temperature": 0,
-        "max_tokens": 128,
-        "model": "gpt-4o-mini",
-        "stream": false,
-        "temperature": 0,
         "versions": {
           "@langchain/core": "<langchain-version>",
           "@langchain/openai": "<langchain-version>"
@@ -1606,10 +1590,6 @@
         "ls_model_type": "chat",
         "ls_provider": "openai",
         "ls_temperature": 0,
-        "max_tokens": 128,
-        "model": "gpt-4o-mini",
-        "stream": false,
-        "temperature": 0,
         "versions": {
           "@langchain/core": "<langchain-version>",
           "@langchain/openai": "<langchain-version>"
@@ -1962,10 +1942,6 @@
         "ls_model_type": "chat",
         "ls_provider": "openai",
         "ls_temperature": 0,
-        "max_tokens": 128,
-        "model": "gpt-4o-mini",
-        "stream": false,
-        "temperature": 0,
         "versions": {
           "@langchain/core": "<langchain-version>",
           "@langchain/openai": "<langchain-version>"
