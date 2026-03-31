@@ -233,10 +233,10 @@ jobs:
         with:
           version: 10.33.0
           cache: true
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
       - name: Run hermetic e2e tests
-        run: |
-          pnpm install --frozen-lockfile
-          pnpm run test:e2e:hermetic
+        run: pnpm run test:e2e:hermetic
 
   js-api-compatibility:
     runs-on: ubuntu-latest
@@ -297,10 +297,10 @@ jobs:
 
           echo "BASELINE_DIR=$BASELINE_DIR" >> "$GITHUB_ENV"
           echo "Baseline created at $BASELINE_DIR"
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
       - name: Build current branch
-        run: |
-          pnpm install --frozen-lockfile
-          pnpm run build
+        run: pnpm run build
       - name: Run API compatibility test
         env:
           BASELINE_DIR: ${{ env.BASELINE_DIR }}

@@ -5,12 +5,6 @@ packages:
   - js/src/wrappers/*
   - "!js/vendor/**"
 
-allowBuilds:
-  "@swc/core": false
-  esbuild: false
-  msw: false
-  protobufjs: false
-
 blockExoticSubdeps: true
 minimumReleaseAge: 4320 # 3 days (in minutes)
 strictDepBuilds: true
