@@ -6,6 +6,7 @@ packages:
   - "!js/vendor/**"
 
 ignoredBuiltDependencies:
+  - "@swc/core"
   - esbuild
   - msw
   - protobufjs
