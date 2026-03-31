@@ -39,12 +39,17 @@ const RUN_CONTEXT_DIR_ENV = "BRAINTRUST_E2E_RUN_CONTEXT_DIR";
 
 type ScenarioRunner = "deno" | "node" | "tsx";
 
+interface ScenarioRunContext {
+  variantKey?: string;
+}
+
 interface ScenarioRunContextRecord {
   entry: string;
   runner: ScenarioRunner;
   scenarioDirName: string;
   testRunId: string;
   timestamp: string;
+  variantKey?: string;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -325,6 +330,7 @@ export function resolveScenarioDir(importMetaUrl: string): string {
 export async function runScenarioDir(options: {
   env?: Record<string, string>;
   entry?: string;
+  runContext?: ScenarioRunContext;
   scenarioDir: string;
   timeoutMs?: number;
 }): Promise<ScenarioResult> {
@@ -338,6 +344,7 @@ export async function runNodeScenarioDir(options: {
   env?: Record<string, string>;
   entry?: string;
   nodeArgs?: string[];
+  runContext?: ScenarioRunContext;
   scenarioDir: string;
   timeoutMs?: number;
 }): Promise<ScenarioResult> {
@@ -353,6 +360,7 @@ export async function runDenoScenarioDir(options: {
   args?: string[];
   entry?: string;
   env?: Record<string, string>;
+  runContext?: ScenarioRunContext;
   scenarioDir: string;
   timeoutMs?: number;
 }): Promise<ScenarioResult> {
@@ -394,6 +402,7 @@ interface ScenarioHarness {
     args?: string[];
     entry?: string;
     env?: Record<string, string>;
+    runContext?: ScenarioRunContext;
     scenarioDir: string;
     timeoutMs?: number;
   }) => Promise<ScenarioResult>;
@@ -401,12 +410,14 @@ interface ScenarioHarness {
     entry?: string;
     env?: Record<string, string>;
     nodeArgs?: string[];
+    runContext?: ScenarioRunContext;
     scenarioDir: string;
     timeoutMs?: number;
   }) => Promise<ScenarioResult>;
   runScenarioDir: (options: {
     entry?: string;
     env?: Record<string, string>;
+    runContext?: ScenarioRunContext;
     scenarioDir: string;
     timeoutMs?: number;
   }) => Promise<ScenarioResult>;
@@ -432,6 +443,7 @@ export async function withScenarioHarness(
   const runWithContext = async (
     options: {
       entry?: string;
+      runContext?: ScenarioRunContext;
       scenarioDir: string;
     },
     runner: ScenarioRunner,
@@ -445,6 +457,7 @@ export async function withScenarioHarness(
       scenarioDirName: path.basename(options.scenarioDir),
       testRunId,
       timestamp: new Date().toISOString(),
+      variantKey: options.runContext?.variantKey,
     });
     return result;
   };

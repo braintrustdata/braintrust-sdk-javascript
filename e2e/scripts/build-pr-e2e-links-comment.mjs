@@ -4,6 +4,7 @@ import path from "node:path";
 const COMMENT_MARKER = "<!-- braintrust-e2e-links -->";
 const DEFAULT_APP_URL = "https://www.braintrust.dev";
 const DEFAULT_PROJECT_NAME = "sdk-e2e-tests";
+const DEFAULT_VARIANT_KEY = "default";
 const DEFAULT_SCENARIO_CONFIG = path.resolve(
   process.cwd(),
   "e2e/config/pr-comment-scenarios.json",
@@ -66,18 +67,47 @@ async function readScenarioConfig(configPath) {
       );
     }
 
+    const variants = Array.isArray(entry.variants)
+      ? entry.variants.map((variantEntry, variantIndex) => {
+          if (
+            !variantEntry ||
+            typeof variantEntry !== "object" ||
+            typeof variantEntry.variantKey !== "string" ||
+            typeof variantEntry.label !== "string"
+          ) {
+            throw new Error(
+              `Invalid variant at scenario index ${index}, variant index ${variantIndex} in ${configPath}`,
+            );
+          }
+
+          const variantKey = variantEntry.variantKey.trim();
+          const variantLabel = variantEntry.label.trim();
+          if (!variantKey || !variantLabel) {
+            throw new Error(
+              `Variant key/label must be non-empty at scenario index ${index}, variant index ${variantIndex} in ${configPath}`,
+            );
+          }
+
+          return {
+            label: variantLabel,
+            variantKey,
+          };
+        })
+      : [];
+
     return {
       label: entry.label,
       metadataScenario: entry.metadataScenario,
       scenarioDirName: entry.scenarioDirName,
+      variants,
     };
   });
 }
 
 async function readRunContextRecords(runContextDir) {
-  const runIdsByScenario = new Map();
+  const runIdsByScenarioAndVariant = new Map();
   if (!runContextDir) {
-    return runIdsByScenario;
+    return runIdsByScenarioAndVariant;
   }
 
   const entries = await readdir(runContextDir, { withFileTypes: true });
@@ -116,14 +146,24 @@ async function readRunContextRecords(runContextDir) {
         continue;
       }
 
-      if (!runIdsByScenario.has(parsed.scenarioDirName)) {
-        runIdsByScenario.set(parsed.scenarioDirName, new Set());
+      const scenarioDirName = parsed.scenarioDirName;
+      const variantKey =
+        typeof parsed.variantKey === "string" && parsed.variantKey.trim()
+          ? parsed.variantKey.trim()
+          : DEFAULT_VARIANT_KEY;
+      if (!runIdsByScenarioAndVariant.has(scenarioDirName)) {
+        runIdsByScenarioAndVariant.set(scenarioDirName, new Map());
       }
-      runIdsByScenario.get(parsed.scenarioDirName).add(parsed.testRunId);
+
+      const variants = runIdsByScenarioAndVariant.get(scenarioDirName);
+      if (!variants.has(variantKey)) {
+        variants.set(variantKey, new Set());
+      }
+      variants.get(variantKey).add(parsed.testRunId);
     }
   }
 
-  return runIdsByScenario;
+  return runIdsByScenarioAndVariant;
 }
 
 async function resolveOrgName() {
@@ -236,43 +276,95 @@ function buildCommentBody(options) {
     lines.push("");
   }
 
-  lines.push("| Scenario | Braintrust Logs | testRunIds | Status |");
-  lines.push("| --- | --- | --- | --- |");
+  lines.push("| Scenario | Braintrust Logs | Status |");
+  lines.push("| --- | --- | --- |");
 
-  for (const scenario of options.scenarios) {
-    const observedRunIds = [
-      ...(options.runIdsByScenario.get(scenario.scenarioDirName) ?? []),
-    ].sort();
-    let logsCell = "N/A";
-    let status = "Not observed in this run";
-
-    if (observedRunIds.length > 0) {
-      if (options.orgName) {
-        const search = scenarioFilterExpression(
-          scenario.metadataScenario,
-          observedRunIds,
-        );
-        const logsUrl = buildLogsUrl({
-          appUrl: options.appPublicUrl,
-          orgName: options.orgName,
-          projectName: options.projectName,
-          search,
-        });
-        logsCell = `[Open logs](${logsUrl})`;
-        status = "Observed";
-      } else {
-        status = "Observed (link unavailable)";
-      }
+  const pushScenarioRow = ({
+    rowLabel,
+    metadataScenario,
+    observedRunIds,
+    statusSuffix,
+  }) => {
+    if (observedRunIds.length === 0) {
+      lines.push(`| ${rowLabel} | N/A | Not observed in this run |`);
+      return;
     }
 
-    const runIdsCell =
-      observedRunIds.length > 0
-        ? observedRunIds.map(markdownInlineCode).join(", ")
-        : markdownInlineCode("-");
+    if (!options.orgName) {
+      lines.push(`| ${rowLabel} | N/A | Observed (link unavailable) |`);
+      return;
+    }
 
-    lines.push(
-      `| ${scenario.label} | ${logsCell} | ${runIdsCell} | ${status} |`,
+    const search = scenarioFilterExpression(metadataScenario, observedRunIds);
+    const logsUrl = buildLogsUrl({
+      appUrl: options.appPublicUrl,
+      orgName: options.orgName,
+      projectName: options.projectName,
+      search,
+    });
+    const runCount = observedRunIds.length;
+    const runWord = runCount === 1 ? "run" : "runs";
+    const status = statusSuffix
+      ? `Observed (${runCount} ${runWord}, ${statusSuffix})`
+      : `Observed (${runCount} ${runWord})`;
+
+    lines.push(`| ${rowLabel} | [Open logs](${logsUrl}) | ${status} |`);
+  };
+
+  for (const scenario of options.scenarios) {
+    const observedVariants =
+      options.runIdsByScenarioAndVariant.get(scenario.scenarioDirName) ??
+      new Map();
+    const configuredVariants = Array.isArray(scenario.variants)
+      ? scenario.variants
+      : [];
+    const hasConfiguredVariants = configuredVariants.length > 0;
+
+    if (!hasConfiguredVariants) {
+      const observedRunIds = [
+        ...new Set(
+          [...observedVariants.values()].flatMap((runIds) => [...runIds]),
+        ),
+      ].sort();
+      pushScenarioRow({
+        metadataScenario: scenario.metadataScenario,
+        observedRunIds,
+        rowLabel: scenario.label,
+      });
+      continue;
+    }
+
+    const configuredVariantKeys = new Set(
+      configuredVariants.map((variant) => variant.variantKey),
     );
+
+    for (const variant of configuredVariants) {
+      const observedRunIds = [
+        ...(observedVariants.get(variant.variantKey) ?? []),
+      ].sort();
+      pushScenarioRow({
+        metadataScenario: scenario.metadataScenario,
+        observedRunIds,
+        rowLabel: `${scenario.label} (${variant.label})`,
+      });
+    }
+
+    const extraVariantKeys = [...observedVariants.keys()]
+      .filter((variantKey) => !configuredVariantKeys.has(variantKey))
+      .sort((left, right) =>
+        left.localeCompare(right, undefined, { numeric: true }),
+      );
+    for (const variantKey of extraVariantKeys) {
+      const observedRunIds = [
+        ...(observedVariants.get(variantKey) ?? []),
+      ].sort();
+      pushScenarioRow({
+        metadataScenario: scenario.metadataScenario,
+        observedRunIds,
+        rowLabel: `${scenario.label} (${variantKey})`,
+        statusSuffix: "unconfigured variant",
+      });
+    }
   }
 
   lines.push("");
@@ -292,14 +384,19 @@ async function main() {
     );
   }
 
-  const [scenarios, runIdsByScenario, orgResult] = await Promise.all([
+  const [scenarios, runIdsByScenarioAndVariant, orgResult] = await Promise.all([
     readScenarioConfig(configPath),
     readRunContextRecords(runContextDir),
     resolveOrgName(),
   ]);
 
-  const recordsFound = [...runIdsByScenario.values()].reduce(
-    (count, runIds) => count + runIds.size,
+  const recordsFound = [...runIdsByScenarioAndVariant.values()].reduce(
+    (count, variants) =>
+      count +
+      [...variants.values()].reduce(
+        (variantCount, runIds) => variantCount + runIds.size,
+        0,
+      ),
     0,
   );
   const projectName =
@@ -314,7 +411,7 @@ async function main() {
     orgName: orgResult.orgName,
     projectName,
     recordsFound,
-    runIdsByScenario,
+    runIdsByScenarioAndVariant,
     scenarios,
     warning: orgResult.warning,
   });

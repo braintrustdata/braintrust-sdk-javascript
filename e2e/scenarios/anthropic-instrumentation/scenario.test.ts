@@ -70,6 +70,7 @@ for (const scenario of anthropicScenarios) {
       runScenario: async ({ runScenarioDir }) => {
         await runScenarioDir({
           entry: scenario.wrapperEntry,
+          runContext: { variantKey: scenario.snapshotName },
           scenarioDir,
           timeoutMs: TIMEOUT_MS,
         });
@@ -86,6 +87,7 @@ for (const scenario of anthropicScenarios) {
         await runNodeScenarioDir({
           entry: scenario.autoEntry,
           nodeArgs: ["--import", "braintrust/hook.mjs"],
+          runContext: { variantKey: scenario.snapshotName },
           scenarioDir,
           timeoutMs: TIMEOUT_MS,
         });

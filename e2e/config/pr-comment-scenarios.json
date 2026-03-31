@@ -2,31 +2,75 @@
   {
     "scenarioDirName": "openai-instrumentation",
     "label": "OpenAI Instrumentation",
-    "metadataScenario": "openai-instrumentation"
+    "metadataScenario": "openai-instrumentation",
+    "variants": [
+      { "variantKey": "openai-v4", "label": "v4" },
+      { "variantKey": "openai-v5", "label": "v5" },
+      { "variantKey": "openai-v6", "label": "v6" }
+    ]
   },
   {
     "scenarioDirName": "anthropic-instrumentation",
     "label": "Anthropic Instrumentation",
-    "metadataScenario": "anthropic-instrumentation"
+    "metadataScenario": "anthropic-instrumentation",
+    "variants": [
+      { "variantKey": "anthropic-v0273", "label": "v0.27.3" },
+      { "variantKey": "anthropic-v0390", "label": "v0.39.0" },
+      { "variantKey": "anthropic-v0712", "label": "v0.71.2" },
+      { "variantKey": "anthropic-v0730", "label": "v0.73.0" },
+      { "variantKey": "anthropic-v0780", "label": "v0.78.0" },
+      { "variantKey": "anthropic-v0800", "label": "v0.80.0" }
+    ]
   },
   {
     "scenarioDirName": "google-genai-instrumentation",
     "label": "Google GenAI Instrumentation",
-    "metadataScenario": "google-genai-instrumentation"
+    "metadataScenario": "google-genai-instrumentation",
+    "variants": [
+      { "variantKey": "google-genai-v1300", "label": "v1.30.0" },
+      { "variantKey": "google-genai-v1440", "label": "v1.44.0" },
+      { "variantKey": "google-genai-v1450", "label": "v1.45.0" },
+      { "variantKey": "google-genai-v1460", "label": "v1.46.0" }
+    ]
   },
   {
     "scenarioDirName": "openrouter-instrumentation",
     "label": "OpenRouter Instrumentation",
-    "metadataScenario": "openrouter-instrumentation"
+    "metadataScenario": "openrouter-instrumentation",
+    "variants": [{ "variantKey": "openrouter-current", "label": "Current" }]
   },
   {
     "scenarioDirName": "ai-sdk-instrumentation",
     "label": "AI SDK Instrumentation",
-    "metadataScenario": "ai-sdk-instrumentation"
+    "metadataScenario": "ai-sdk-instrumentation",
+    "variants": [
+      { "variantKey": "ai-sdk-v3", "label": "v3" },
+      { "variantKey": "ai-sdk-v4", "label": "v4" },
+      { "variantKey": "ai-sdk-v5", "label": "v5" },
+      { "variantKey": "ai-sdk-v6", "label": "v6" }
+    ]
   },
   {
     "scenarioDirName": "claude-agent-sdk-instrumentation",
     "label": "Claude Agent SDK Instrumentation",
-    "metadataScenario": "claude-agent-sdk-traces"
+    "metadataScenario": "claude-agent-sdk-traces",
+    "variants": [
+      {
+        "variantKey": "claude-agent-sdk-v0.1",
+        "label": "v0.1"
+      },
+      {
+        "variantKey": "claude-agent-sdk-v0.2.76",
+        "label": "v0.2.76"
+      },
+      {
+        "variantKey": "claude-agent-sdk-v0.2.79",
+        "label": "v0.2.79"
+      },
+      {
+        "variantKey": "claude-agent-sdk-v0.2.81",
+        "label": "v0.2.81"
+      }
+    ]
   }
 ]

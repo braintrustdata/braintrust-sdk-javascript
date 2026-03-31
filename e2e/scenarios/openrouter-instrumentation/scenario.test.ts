@@ -13,6 +13,7 @@ const openrouterSdkVersion = await readInstalledPackageVersion(
   scenarioDir,
   "@openrouter/sdk",
 );
+const OPENROUTER_VARIANT_KEY = "openrouter-current";
 const TIMEOUT_MS = 90_000;
 
 describe(`openrouter sdk ${openrouterSdkVersion}`, () => {
@@ -21,6 +22,7 @@ describe(`openrouter sdk ${openrouterSdkVersion}`, () => {
     runScenario: async ({ runScenarioDir }) => {
       await runScenarioDir({
         entry: "scenario.ts",
+        runContext: { variantKey: OPENROUTER_VARIANT_KEY },
         scenarioDir,
         timeoutMs: TIMEOUT_MS,
       });
@@ -35,6 +37,7 @@ describe(`openrouter sdk ${openrouterSdkVersion}`, () => {
       await runNodeScenarioDir({
         entry: "scenario.mjs",
         nodeArgs: ["--import", "braintrust/hook.mjs"],
+        runContext: { variantKey: OPENROUTER_VARIANT_KEY },
         scenarioDir,
         timeoutMs: TIMEOUT_MS,
       });

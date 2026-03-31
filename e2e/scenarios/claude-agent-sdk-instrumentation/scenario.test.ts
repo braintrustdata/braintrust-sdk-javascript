@@ -52,6 +52,7 @@ describe("wrapped instrumentation", () => {
       runScenario: async ({ runScenarioDir }) => {
         await runScenarioDir({
           entry: scenario.wrapperEntry,
+          runContext: { variantKey: scenario.snapshotName },
           scenarioDir,
           timeoutMs: TIMEOUT_MS,
         });
@@ -71,6 +72,7 @@ describe("auto-hook instrumentation", () => {
         await runNodeScenarioDir({
           entry: scenario.autoEntry,
           nodeArgs: ["--import", "braintrust/hook.mjs"],
+          runContext: { variantKey: scenario.snapshotName },
           scenarioDir,
           timeoutMs: TIMEOUT_MS,
         });
