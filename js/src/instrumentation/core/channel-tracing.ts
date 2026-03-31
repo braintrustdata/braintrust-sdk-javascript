@@ -619,6 +619,7 @@ export function traceSyncStreamChannel<TChannel extends AnySyncStreamChannel>(
               });
             }
           } catch (error) {
+            // eslint-disable-next-line no-restricted-properties
             console.error(
               `Error extracting chatCompletion for ${channelName}:`,
               error,
@@ -646,6 +647,7 @@ export function traceSyncStreamChannel<TChannel extends AnySyncStreamChannel>(
               span.log(extracted);
             }
           } catch (error) {
+            // eslint-disable-next-line no-restricted-properties
             console.error(`Error extracting event for ${channelName}:`, error);
           }
         });
