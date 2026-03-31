@@ -1,11 +1,11 @@
 [
   {
     "hasParent": false,
-    "name": "ai.generateText.doGenerate"
+    "name": "ai.generateText"
   },
   {
     "hasParent": false,
-    "name": "ai.generateText"
+    "name": "ai.generateText.doGenerate"
   },
   {
     "hasParent": false,

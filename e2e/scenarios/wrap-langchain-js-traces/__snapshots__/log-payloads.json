@@ -965,9 +965,6 @@
         "ls_model_type": "chat",
         "ls_provider": "openai",
         "ls_temperature": 0,
-        "stream_options": {
-          "include_usage": true
-        },
         "versions": {
           "@langchain/core": "<langchain-version>",
           "@langchain/openai": "<langchain-version>"

@@ -144,6 +144,7 @@ const LANGCHAIN_LS_VOLATILE_KEYS = new Set([
   "max_tokens",
   "model",
   "stream",
+  "stream_options",
   "temperature",
 ]);
 
