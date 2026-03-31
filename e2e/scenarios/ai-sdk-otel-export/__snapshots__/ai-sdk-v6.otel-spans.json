@@ -5,11 +5,27 @@
   },
   {
     "hasParent": false,
+    "name": "ai.generateText"
+  },
+  {
+    "hasParent": false,
     "name": "ai.generateText.doGenerate"
   },
   {
     "hasParent": false,
-    "name": "ai.streamText.doStream"
+    "name": "ai.generateText.doGenerate"
+  },
+  {
+    "hasParent": false,
+    "name": "ai.generateText.doGenerate"
+  },
+  {
+    "hasParent": false,
+    "name": "ai.generateText.doGenerate"
+  },
+  {
+    "hasParent": false,
+    "name": "ai.generateText.doGenerate"
   },
   {
     "hasParent": false,
@@ -17,7 +33,7 @@
   },
   {
     "hasParent": false,
-    "name": "ai.generateText.doGenerate"
+    "name": "ai.streamText.doStream"
   },
   {
     "hasParent": false,
@@ -25,7 +41,7 @@
   },
   {
     "hasParent": false,
-    "name": "ai.generateText.doGenerate"
+    "name": "ai.toolCall"
   },
   {
     "hasParent": false,
@@ -33,22 +49,6 @@
   },
   {
     "hasParent": false,
-    "name": "ai.generateText.doGenerate"
-  },
-  {
-    "hasParent": false,
     "name": "ai.toolCall"
-  },
-  {
-    "hasParent": false,
-    "name": "ai.generateText.doGenerate"
-  },
-  {
-    "hasParent": false,
-    "name": "ai.toolCall"
-  },
-  {
-    "hasParent": false,
-    "name": "ai.generateText"
   }
 ]
