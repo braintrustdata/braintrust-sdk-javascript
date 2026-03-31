@@ -6,10 +6,14 @@ import {
 } from "../core/channel-tracing";
 import { SpanTypeAttribute } from "../../../util/index";
 import { getCurrentUnixTimestamp } from "../../util";
-import { type Span, withCurrent } from "../../logger";
-import { processInputAttachmentsSync } from "../../wrappers/ai-sdk/ai-sdk";
+import { Attachment, type Span, withCurrent } from "../../logger";
+import {
+  convertDataToBlob,
+  getExtensionFromMediaType,
+} from "../../wrappers/attachment-utils";
 import { normalizeAISDKLoggedOutput } from "../../wrappers/ai-sdk/normalize-logged-output";
 import { serializeAISDKToolsForLogging } from "../../wrappers/ai-sdk/tool-serialization";
+import { zodToJsonSchema } from "../../zod/utils";
 import { aiSDKChannels } from "./ai-sdk-channels";
 import type {
   AISDK,
@@ -17,6 +21,8 @@ import type {
   AISDKLanguageModel,
   AISDKModel,
   AISDKModelStreamChunk,
+  AISDKOutputObject,
+  AISDKOutputResponseFormat,
   AISDKResult,
   AISDKTool,
   AISDKTools,
@@ -324,12 +330,402 @@ function resolveDenyOutputPaths(
   return event?.denyOutputPaths ?? defaultDenyOutputPaths;
 }
 
+interface ProcessInputSyncResult {
+  input: AISDKCallParams;
+  outputPromise?: Promise<{
+    output: {
+      response_format: AISDKOutputResponseFormat;
+    };
+  }>;
+}
+
+const isZodSchema = (value: any): boolean => {
+  return (
+    value != null &&
+    typeof value === "object" &&
+    "_def" in value &&
+    typeof value._def === "object"
+  );
+};
+
+const serializeZodSchema = (schema: unknown): AISDKOutputResponseFormat => {
+  try {
+    return zodToJsonSchema(schema as any) as AISDKOutputResponseFormat;
+  } catch {
+    return {
+      type: "object",
+      description: "Zod schema (conversion failed)",
+    };
+  }
+};
+
+const isOutputObject = (value: unknown): value is AISDKOutputObject => {
+  if (value == null || typeof value !== "object") {
+    return false;
+  }
+
+  const output = value as AISDKOutputObject;
+  if (!("responseFormat" in output)) {
+    return false;
+  }
+
+  if (output.type === "object" || output.type === "text") {
+    return true;
+  }
+
+  if (
+    typeof output.responseFormat === "function" ||
+    typeof output.responseFormat === "object"
+  ) {
+    return true;
+  }
+
+  return false;
+};
+
+const serializeOutputObject = (
+  output: AISDKOutputObject,
+  model: AISDKModel | undefined,
+): {
+  type?: string;
+  response_format:
+    | AISDKOutputResponseFormat
+    | Promise<AISDKOutputResponseFormat>
+    | null;
+} => {
+  try {
+    const result: {
+      type?: string;
+      response_format:
+        | AISDKOutputResponseFormat
+        | Promise<AISDKOutputResponseFormat>
+        | null;
+    } = {
+      response_format: null,
+    };
+
+    if (output.type) {
+      result.type = output.type;
+    }
+
+    let responseFormat:
+      | AISDKOutputResponseFormat
+      | Promise<AISDKOutputResponseFormat>
+      | undefined;
+
+    if (typeof output.responseFormat === "function") {
+      const mockModelForSchema = {
+        supportsStructuredOutputs: true,
+        ...(model && typeof model === "object" ? model : {}),
+      };
+      responseFormat = output.responseFormat({ model: mockModelForSchema });
+    } else if (
+      output.responseFormat != null &&
+      typeof output.responseFormat === "object"
+    ) {
+      responseFormat = output.responseFormat;
+    }
+
+    if (responseFormat) {
+      if (typeof responseFormat.then === "function") {
+        result.response_format = Promise.resolve(responseFormat).then(
+          (resolved) => {
+            if (resolved.schema && isZodSchema(resolved.schema)) {
+              return {
+                ...resolved,
+                schema: serializeZodSchema(resolved.schema),
+              };
+            }
+            return resolved;
+          },
+        );
+      } else {
+        const syncResponseFormat = responseFormat as AISDKOutputResponseFormat;
+        if (
+          syncResponseFormat.schema &&
+          isZodSchema(syncResponseFormat.schema)
+        ) {
+          responseFormat = {
+            ...syncResponseFormat,
+            schema: serializeZodSchema(syncResponseFormat.schema),
+          };
+        }
+        result.response_format = responseFormat;
+      }
+    }
+
+    return result;
+  } catch {
+    return {
+      response_format: null,
+    };
+  }
+};
+
+const processInputAttachmentsSync = (
+  input: AISDKCallParams,
+): ProcessInputSyncResult => {
+  if (!input) return { input };
+
+  const processed: AISDKCallParams = { ...input };
+
+  if (input.messages && Array.isArray(input.messages)) {
+    processed.messages = input.messages.map(processMessage);
+  }
+
+  if (input.prompt && typeof input.prompt === "object") {
+    if (Array.isArray(input.prompt)) {
+      processed.prompt = input.prompt.map(processMessage);
+    } else {
+      processed.prompt = processPromptContent(input.prompt);
+    }
+  }
+
+  if (input.schema && isZodSchema(input.schema)) {
+    processed.schema = serializeZodSchema(input.schema);
+  }
+
+  if (input.callOptionsSchema && isZodSchema(input.callOptionsSchema)) {
+    processed.callOptionsSchema = serializeZodSchema(input.callOptionsSchema);
+  }
+
+  if (input.tools) {
+    processed.tools = serializeAISDKToolsForLogging(input.tools);
+  }
+
+  let outputPromise:
+    | Promise<{
+        output: {
+          response_format: AISDKOutputResponseFormat;
+        };
+      }>
+    | undefined;
+
+  if (input.output && isOutputObject(input.output)) {
+    const serialized = serializeOutputObject(input.output, input.model);
+
+    if (
+      serialized.response_format &&
+      typeof serialized.response_format.then === "function"
+    ) {
+      processed.output = { ...serialized, response_format: {} };
+      outputPromise = serialized.response_format.then(
+        (resolvedFormat: AISDKOutputResponseFormat) => ({
+          output: { ...serialized, response_format: resolvedFormat },
+        }),
+      );
+    } else {
+      processed.output = serialized;
+    }
+  }
+
+  if (
+    "prepareCall" in processed &&
+    typeof processed.prepareCall === "function"
+  ) {
+    processed.prepareCall = "[Function]";
+  }
+
+  return { input: processed, outputPromise };
+};
+
+const processMessage = (message: any): any => {
+  if (!message || typeof message !== "object") return message;
+
+  if (Array.isArray(message.content)) {
+    return {
+      ...message,
+      content: message.content.map(processContentPart),
+    };
+  }
+
+  if (typeof message.content === "object" && message.content !== null) {
+    return {
+      ...message,
+      content: processContentPart(message.content),
+    };
+  }
+
+  return message;
+};
+
+const processPromptContent = (prompt: any): any => {
+  if (Array.isArray(prompt)) {
+    return prompt.map(processContentPart);
+  }
+
+  if (prompt.content) {
+    if (Array.isArray(prompt.content)) {
+      return {
+        ...prompt,
+        content: prompt.content.map(processContentPart),
+      };
+    } else if (typeof prompt.content === "object") {
+      return {
+        ...prompt,
+        content: processContentPart(prompt.content),
+      };
+    }
+  }
+
+  return prompt;
+};
+
+const processContentPart = (part: any): any => {
+  if (!part || typeof part !== "object") return part;
+
+  try {
+    if (part.type === "image" && part.image) {
+      const imageAttachment = convertImageToAttachment(
+        part.image,
+        part.mimeType || part.mediaType,
+      );
+      if (imageAttachment) {
+        return {
+          ...part,
+          image: imageAttachment,
+        };
+      }
+    }
+
+    if (
+      part.type === "file" &&
+      part.data &&
+      (part.mimeType || part.mediaType)
+    ) {
+      const fileAttachment = convertDataToAttachment(
+        part.data,
+        part.mimeType || part.mediaType,
+        part.name || part.filename,
+      );
+      if (fileAttachment) {
+        return {
+          ...part,
+          data: fileAttachment,
+        };
+      }
+    }
+
+    if (part.type === "image_url" && part.image_url) {
+      if (typeof part.image_url === "object" && part.image_url.url) {
+        const imageAttachment = convertImageToAttachment(part.image_url.url);
+        if (imageAttachment) {
+          return {
+            ...part,
+            image_url: {
+              ...part.image_url,
+              url: imageAttachment,
+            },
+          };
+        }
+      }
+    }
+  } catch (error) {
+    console.warn("Error processing content part:", error);
+  }
+
+  return part;
+};
+
+const convertImageToAttachment = (
+  image: any,
+  explicitMimeType?: string,
+): Attachment | null => {
+  try {
+    if (typeof image === "string" && image.startsWith("data:")) {
+      const [mimeTypeSection, base64Data] = image.split(",");
+      const mimeType = mimeTypeSection.match(/data:(.*?);/)?.[1];
+      if (mimeType && base64Data) {
+        const blob = convertDataToBlob(base64Data, mimeType);
+        if (blob) {
+          return new Attachment({
+            data: blob,
+            filename: `image.${getExtensionFromMediaType(mimeType)}`,
+            contentType: mimeType,
+          });
+        }
+      }
+    }
+
+    if (explicitMimeType) {
+      if (image instanceof Uint8Array) {
+        return new Attachment({
+          data: new Blob([image], { type: explicitMimeType }),
+          filename: `image.${getExtensionFromMediaType(explicitMimeType)}`,
+          contentType: explicitMimeType,
+        });
+      }
+
+      if (typeof Buffer !== "undefined" && Buffer.isBuffer(image)) {
+        return new Attachment({
+          data: new Blob([image], { type: explicitMimeType }),
+          filename: `image.${getExtensionFromMediaType(explicitMimeType)}`,
+          contentType: explicitMimeType,
+        });
+      }
+    }
+
+    if (image instanceof Blob && image.type) {
+      return new Attachment({
+        data: image,
+        filename: `image.${getExtensionFromMediaType(image.type)}`,
+        contentType: image.type,
+      });
+    }
+
+    if (image instanceof Attachment) {
+      return image;
+    }
+  } catch (error) {
+    console.warn("Error converting image to attachment:", error);
+  }
+
+  return null;
+};
+
+const convertDataToAttachment = (
+  data: any,
+  mimeType: string,
+  filename?: string,
+): Attachment | null => {
+  if (!mimeType) return null;
+
+  try {
+    let blob: Blob | null = null;
+
+    if (typeof data === "string" && data.startsWith("data:")) {
+      const [, base64Data] = data.split(",");
+      if (base64Data) {
+        blob = convertDataToBlob(base64Data, mimeType);
+      }
+    } else if (typeof data === "string" && data.length > 0) {
+      blob = convertDataToBlob(data, mimeType);
+    } else if (data instanceof Uint8Array) {
+      blob = new Blob([data], { type: mimeType });
+    } else if (typeof Buffer !== "undefined" && Buffer.isBuffer(data)) {
+      blob = new Blob([data], { type: mimeType });
+    } else if (data instanceof Blob) {
+      blob = data;
+    }
+
+    if (blob) {
+      return new Attachment({
+        data: blob,
+        filename: filename || `file.${getExtensionFromMediaType(mimeType)}`,
+        contentType: mimeType,
+      });
+    }
+  } catch (error) {
+    console.warn("Error converting data to attachment:", error);
+  }
+
+  return null;
+};
+
 /**
  * Process AI SDK input parameters, converting attachments as needed.
  */
-function processAISDKInput(
-  params: AISDKCallParams,
-): ReturnType<typeof processInputAttachmentsSync> {
+function processAISDKInput(params: AISDKCallParams): ProcessInputSyncResult {
   return processInputAttachmentsSync(params);
 }
 
