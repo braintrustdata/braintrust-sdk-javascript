@@ -1,0 +1,32 @@
+[
+  {
+    "scenarioDirName": "openai-instrumentation",
+    "label": "OpenAI Instrumentation",
+    "metadataScenario": "openai-instrumentation"
+  },
+  {
+    "scenarioDirName": "anthropic-instrumentation",
+    "label": "Anthropic Instrumentation",
+    "metadataScenario": "anthropic-instrumentation"
+  },
+  {
+    "scenarioDirName": "google-genai-instrumentation",
+    "label": "Google GenAI Instrumentation",
+    "metadataScenario": "google-genai-instrumentation"
+  },
+  {
+    "scenarioDirName": "openrouter-instrumentation",
+    "label": "OpenRouter Instrumentation",
+    "metadataScenario": "openrouter-instrumentation"
+  },
+  {
+    "scenarioDirName": "ai-sdk-instrumentation",
+    "label": "AI SDK Instrumentation",
+    "metadataScenario": "ai-sdk-instrumentation"
+  },
+  {
+    "scenarioDirName": "claude-agent-sdk-instrumentation",
+    "label": "Claude Agent SDK Instrumentation",
+    "metadataScenario": "claude-agent-sdk-traces"
+  }
+]
