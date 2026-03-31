@@ -258,6 +258,7 @@ jobs:
         with:
           version: 10.33.0
           cache: true
+          standalone: true
       - name: Get published braintrust version for cache key
         id: published-version
         shell: bash
@@ -296,6 +297,10 @@ jobs:
 
           echo "BASELINE_DIR=$BASELINE_DIR" >> "$GITHUB_ENV"
           echo "Baseline created at $BASELINE_DIR"
+      - name: Check pnpm version
+        run: |
+          which pnpm
+          pnpm --version
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Build current branch
