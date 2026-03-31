@@ -740,6 +740,160 @@ describe("loader version precedence", () => {
     });
     expect(requestBody).not.toHaveProperty("env");
   });
+
+  test("createSnapshot returns the created snapshot from the register response", async () => {
+    const postJson = vi.spyOn(state.appConn(), "post_json");
+    postJson
+      .mockResolvedValueOnce({
+        project: {
+          id: "00000000-0000-0000-0000-000000000001",
+          name: "test-project",
+        },
+        dataset: {
+          id: "00000000-0000-0000-0000-000000000002",
+          name: "test-dataset",
+        },
+      })
+      .mockResolvedValueOnce({
+        dataset_snapshot: {
+          id: "00000000-0000-0000-0000-000000000003",
+          dataset_id: "00000000-0000-0000-0000-000000000002",
+          name: "production",
+          description: "Pinned snapshot",
+          xact_id: "123",
+          created: "2026-03-31T00:00:00.000Z",
+        },
+        found_existing: false,
+      });
+
+    const dataset = initDataset({
+      project: "test-project",
+      dataset: "test-dataset",
+      version: "123",
+      state,
+    });
+
+    await expect(
+      dataset.createSnapshot({
+        name: "production",
+        description: "Pinned snapshot",
+      }),
+    ).resolves.toEqual({
+      id: "00000000-0000-0000-0000-000000000003",
+      dataset_id: "00000000-0000-0000-0000-000000000002",
+      name: "production",
+      description: "Pinned snapshot",
+      xact_id: "123",
+      created: "2026-03-31T00:00:00.000Z",
+    });
+
+    expect(postJson).toHaveBeenNthCalledWith(
+      2,
+      "api/dataset_snapshot/register",
+      {
+        dataset_id: "00000000-0000-0000-0000-000000000002",
+        name: "production",
+        description: "Pinned snapshot",
+        xact_id: "123",
+      },
+    );
+  });
+
+  test("listSnapshots returns dataset snapshots", async () => {
+    vi.spyOn(state.appConn(), "post_json").mockResolvedValue({
+      project: {
+        id: "00000000-0000-0000-0000-000000000001",
+        name: "test-project",
+      },
+      dataset: {
+        id: "00000000-0000-0000-0000-000000000002",
+        name: "test-dataset",
+      },
+    });
+    const appGetJson = vi
+      .spyOn(state.appConn(), "get_json")
+      .mockResolvedValueOnce([
+        {
+          id: "00000000-0000-0000-0000-000000000003",
+          dataset_id: "00000000-0000-0000-0000-000000000002",
+          name: "production",
+          description: null,
+          xact_id: "123",
+          created: "2026-03-31T00:00:00.000Z",
+        },
+      ]);
+
+    const dataset = initDataset({
+      project: "test-project",
+      dataset: "test-dataset",
+      version: "123",
+      state,
+    });
+
+    await expect(dataset.listSnapshots()).resolves.toEqual([
+      {
+        id: "00000000-0000-0000-0000-000000000003",
+        dataset_id: "00000000-0000-0000-0000-000000000002",
+        name: "production",
+        description: null,
+        xact_id: "123",
+        created: "2026-03-31T00:00:00.000Z",
+      },
+    ]);
+
+    expect(appGetJson).toHaveBeenCalledWith("api/dataset_snapshot/get", {
+      dataset_id: "00000000-0000-0000-0000-000000000002",
+    });
+  });
+
+  test("deleteSnapshot returns the deleted snapshot", async () => {
+    const postJson = vi.spyOn(state.appConn(), "post_json");
+    postJson
+      .mockResolvedValueOnce({
+        project: {
+          id: "00000000-0000-0000-0000-000000000001",
+          name: "test-project",
+        },
+        dataset: {
+          id: "00000000-0000-0000-0000-000000000002",
+          name: "test-dataset",
+        },
+      })
+      .mockResolvedValueOnce({
+        id: "00000000-0000-0000-0000-000000000003",
+        dataset_id: "00000000-0000-0000-0000-000000000002",
+        name: "production",
+        description: null,
+        xact_id: "123",
+        created: "2026-03-31T00:00:00.000Z",
+      });
+
+    const dataset = initDataset({
+      project: "test-project",
+      dataset: "test-dataset",
+      version: "123",
+      state,
+    });
+
+    await expect(
+      dataset.deleteSnapshot("00000000-0000-0000-0000-000000000003"),
+    ).resolves.toEqual({
+      id: "00000000-0000-0000-0000-000000000003",
+      dataset_id: "00000000-0000-0000-0000-000000000002",
+      name: "production",
+      description: null,
+      xact_id: "123",
+      created: "2026-03-31T00:00:00.000Z",
+    });
+
+    expect(postJson).toHaveBeenNthCalledWith(
+      2,
+      "api/dataset_snapshot/delete_id",
+      {
+        id: "00000000-0000-0000-0000-000000000003",
+      },
+    );
+  });
 });
 
 describe("prompt.build structured output templating", () => {

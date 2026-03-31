@@ -314,9 +314,12 @@ async function getDataset(
       state,
       project: data.project_name,
       dataset: data.dataset_name,
+      version: data.dataset_version ?? undefined,
+      environment: data.dataset_environment ?? undefined,
       _internal_btql: data._internal_btql ?? undefined,
     });
-  } else if ("dataset_id" in data) {
+  }
+  if ("dataset_id" in data) {
     const datasetInfo = await getDatasetById({
       state,
       datasetId: data.dataset_id,
@@ -325,12 +328,14 @@ async function getDataset(
       state,
       projectId: datasetInfo.projectId,
       dataset: datasetInfo.dataset,
+      version: data.dataset_version ?? undefined,
+      environment: data.dataset_environment ?? undefined,
       _internal_btql: data._internal_btql ?? undefined,
     });
-  } else {
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    return data.data as EvalCase<unknown, unknown, BaseMetadata>[];
   }
+
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  return data.data as EvalCase<unknown, unknown, BaseMetadata>[];
 }
 
 const datasetFetchSchema = z.object({

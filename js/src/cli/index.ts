@@ -1070,7 +1070,7 @@ async function datasetSnapshotCommand(
         id: snapshot.id,
         name: snapshot.name,
         xact_id: snapshot.xact_id,
-        created_at: snapshot.created_at,
+        created: snapshot.created,
       },
       null,
       2,
@@ -1087,7 +1087,7 @@ async function datasetSnapshotsCommand(args: DatasetCommandArgs) {
   }
   for (const snap of snapshots) {
     console.log(
-      `${snap.name}\txact_id=${snap.xact_id}\tid=${snap.id}\tcreated=${snap.created_at}`,
+      `${snap.name}\txact_id=${snap.xact_id}\tid=${snap.id}\tcreated=${snap.created}`,
     );
   }
 }
@@ -1097,17 +1097,18 @@ async function datasetTagEnvCommand(
 ) {
   const dataset = await openDataset(args);
   const datasetId = await dataset.id;
-  const objectVersion =
-    args.version ?? (await dataset.version());
+  const objectVersion = args.version ?? (await dataset.version());
   if (!objectVersion) {
     console.error("Dataset has no records — nothing to tag.");
     process.exit(1);
   }
   const state = _internalGetGlobalState();
-  await state.apiConn().put_json(
-    `environment-object/dataset/${datasetId}/${encodeURIComponent(args.env)}`,
-    { object_version: objectVersion },
-  );
+  await state
+    .apiConn()
+    .put_json(
+      `environment-object/dataset/${datasetId}/${encodeURIComponent(args.env)}`,
+      { object_version: objectVersion },
+    );
   console.log(
     `Tagged version ${objectVersion} with environment "${args.env}".`,
   );

@@ -96,9 +96,14 @@ const datasetSnapshotResponseSchema = z.object({
   name: z.string(),
   description: z.string().nullish(),
   xact_id: z.string(),
-  created_at: z.string(),
+  created: z.string(),
 });
 export type DatasetSnapshot = z.infer<typeof datasetSnapshotResponseSchema>;
+
+const datasetSnapshotRegisterResponseSchema = z.object({
+  dataset_snapshot: datasetSnapshotResponseSchema,
+  found_existing: z.boolean().optional(),
+});
 
 const parametersRowSchema = z.object({
   id: z.string().uuid(),
@@ -3848,14 +3853,12 @@ async function resolveDatasetVersion({
   const metadata = await lazyMetadata.get();
   const datasetId = metadata.dataset.id;
   try {
-    const snapshots = await state
-      .appConn()
-      .get_json("api/dataset_snapshot/get", {
+    const snapshots = datasetSnapshotResponseSchema.array().parse(
+      await state.appConn().get_json("api/dataset_snapshot/get", {
         dataset_id: datasetId,
-      });
-    const match = (snapshots as { name: string; xact_id: string }[]).find(
-      (s) => s.name === version,
+      }),
     );
+    const match = snapshots.find((s) => s.name === version);
     if (match) {
       return match.xact_id;
     }
@@ -7296,7 +7299,8 @@ export class Dataset<
         description,
         xact_id: currentVersion,
       });
-    return datasetSnapshotResponseSchema.parse(response);
+    return datasetSnapshotRegisterResponseSchema.parse(response)
+      .dataset_snapshot;
   }
 
   /**
