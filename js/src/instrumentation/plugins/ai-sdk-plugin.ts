@@ -1,9 +1,5 @@
 import { BasePlugin } from "../core";
-import {
-  traceStreamingChannel,
-  traceSyncStreamChannel,
-  unsubscribeAll,
-} from "../core/channel-tracing";
+import { traceStreamingChannel, unsubscribeAll } from "../core/channel-tracing";
 import { SpanTypeAttribute } from "../../../util/index";
 import { getCurrentUnixTimestamp } from "../../util";
 import { Attachment, type Span, withCurrent } from "../../logger";
@@ -65,9 +61,9 @@ const AUTO_PATCHED_TOOL = Symbol.for("braintrust.ai-sdk.auto-patched-tool");
  *
  * This plugin handles:
  * - generateText (async function)
- * - streamText (async function returning stream)
+ * - streamText (function returning stream)
  * - generateObject (async function)
- * - streamObject (async function returning stream)
+ * - streamObject (function returning stream)
  * - Agent.generate (async method)
  * - Agent.stream (async method returning stream)
  * - ToolLoopAgent.generate (async method)
@@ -119,7 +115,7 @@ export class AISDKPlugin extends BasePlugin {
       }),
     );
 
-    // streamText - async function returning stream
+    // streamText - function returning stream
     this.unsubscribers.push(
       traceStreamingChannel(aiSDKChannels.streamText, {
         name: "streamText",
@@ -134,25 +130,6 @@ export class AISDKPlugin extends BasePlugin {
         extractMetrics: (result, startTime, endEvent) =>
           extractTopLevelAISDKMetrics(result, endEvent, startTime),
         aggregateChunks: aggregateAISDKChunks,
-        patchResult: ({ endEvent, result, span, startTime }) =>
-          patchAISDKStreamingResult({
-            defaultDenyOutputPaths: denyOutputPaths,
-            endEvent,
-            result,
-            span,
-            startTime,
-          }),
-      }),
-    );
-
-    // streamText - sync function returning stream (CommonJS bundle)
-    this.unsubscribers.push(
-      traceSyncStreamChannel(aiSDKChannels.streamTextSync, {
-        name: "streamText",
-        type: SpanTypeAttribute.LLM,
-        resolvePromiseResult: true,
-        extractInput: ([params], event, span) =>
-          prepareAISDKInput(params, event, span, denyOutputPaths),
         patchResult: ({ endEvent, result, span, startTime }) =>
           patchAISDKStreamingResult({
             defaultDenyOutputPaths: denyOutputPaths,
@@ -184,7 +161,7 @@ export class AISDKPlugin extends BasePlugin {
       }),
     );
 
-    // streamObject - async function returning stream
+    // streamObject - function returning stream
     this.unsubscribers.push(
       traceStreamingChannel(aiSDKChannels.streamObject, {
         name: "streamObject",
@@ -199,25 +176,6 @@ export class AISDKPlugin extends BasePlugin {
         extractMetrics: (result, startTime, endEvent) =>
           extractTopLevelAISDKMetrics(result, endEvent, startTime),
         aggregateChunks: aggregateAISDKChunks,
-        patchResult: ({ endEvent, result, span, startTime }) =>
-          patchAISDKStreamingResult({
-            defaultDenyOutputPaths: denyOutputPaths,
-            endEvent,
-            result,
-            span,
-            startTime,
-          }),
-      }),
-    );
-
-    // streamObject - sync function returning stream (CommonJS bundle)
-    this.unsubscribers.push(
-      traceSyncStreamChannel(aiSDKChannels.streamObjectSync, {
-        name: "streamObject",
-        type: SpanTypeAttribute.LLM,
-        resolvePromiseResult: true,
-        extractInput: ([params], event, span) =>
-          prepareAISDKInput(params, event, span, denyOutputPaths),
         patchResult: ({ endEvent, result, span, startTime }) =>
           patchAISDKStreamingResult({
             defaultDenyOutputPaths: denyOutputPaths,

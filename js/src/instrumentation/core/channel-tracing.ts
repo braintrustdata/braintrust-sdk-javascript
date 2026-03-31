@@ -128,11 +128,6 @@ export type SyncStreamChannelSpanConfig<TChannel extends AnySyncStreamChannel> =
       span: Span;
       startTime: number;
     }) => boolean;
-    /**
-     * Allow resolving promise-like sync-stream results before patching/inspection.
-     * Keep this opt-in to avoid changing behavior for all sync-stream channels.
-     */
-    resolvePromiseResult?: boolean;
   };
 
 type SyncStreamLike<TStreamEvent> = {
@@ -153,14 +148,6 @@ function isSyncStreamLike<TStreamEvent>(
     !!value &&
     typeof value === "object" &&
     typeof (value as { on?: unknown }).on === "function"
-  );
-}
-
-function isPromiseLike<T = unknown>(value: unknown): value is PromiseLike<T> {
-  return (
-    value != null &&
-    typeof value === "object" &&
-    typeof (value as { then?: unknown }).then === "function"
   );
 }
 
@@ -673,24 +660,7 @@ export function traceSyncStreamChannel<TChannel extends AnySyncStreamChannel>(
         });
       };
 
-      const result = endEvent.result;
-      if (
-        config.resolvePromiseResult &&
-        isPromiseLike<ResultOf<TChannel>>(result)
-      ) {
-        Promise.resolve(result)
-          .then(handleResolvedResult)
-          .catch((error) => {
-            span.log({
-              error: error instanceof Error ? error.message : String(error),
-            });
-            span.end();
-            states.delete(event as object);
-          });
-        return;
-      }
-
-      handleResolvedResult(result);
+      handleResolvedResult(endEvent.result);
     },
     error: (event) => {
       logErrorAndEnd(states, event as ErrorOf<TChannel>);

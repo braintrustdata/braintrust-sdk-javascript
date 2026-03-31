@@ -197,7 +197,6 @@ const wrapAgentStream = (
   return (params: AISDKCallParams & SpanInfo) =>
     makeStreamWrapper(
       aiSDKChannels.agentStream,
-      aiSDKChannels.streamTextSync,
       defaultName,
       stream.bind(instance),
       {
@@ -271,14 +270,11 @@ const wrapGenerateObject = (
 };
 
 const makeStreamWrapper = (
-  asyncChannel:
+  channel:
     | typeof aiSDKChannels.streamText
     | typeof aiSDKChannels.streamObject
     | typeof aiSDKChannels.agentStream
     | typeof aiSDKChannels.toolLoopAgentStream,
-  syncChannel:
-    | typeof aiSDKChannels.streamTextSync
-    | typeof aiSDKChannels.streamObjectSync,
   name: string,
   streamText: AISDKStreamFunction,
   contextOptions: {
@@ -288,8 +284,6 @@ const makeStreamWrapper = (
   } = {},
   options: WrapAISDKOptions = {},
 ) => {
-  const useAsyncChannel = isAsyncFunction(streamText);
-
   const wrapper = function (allParams: AISDKCallParams & SpanInfo) {
     const { span_info, ...params } = allParams;
     const tracedParams = { ...params };
@@ -303,14 +297,7 @@ const makeStreamWrapper = (
       }),
     });
 
-    if (useAsyncChannel) {
-      return asyncChannel.tracePromise(
-        () => Promise.resolve(streamText(tracedParams)),
-        context,
-      );
-    }
-
-    return syncChannel.traceSync(() => streamText(tracedParams), context);
+    return channel.tracePromise(() => streamText(tracedParams) as any, context);
   };
   Object.defineProperty(wrapper, "name", { value: name, writable: false });
   return wrapper;
@@ -323,7 +310,6 @@ const wrapStreamText = (
 ) => {
   return makeStreamWrapper(
     aiSDKChannels.streamText,
-    aiSDKChannels.streamTextSync,
     "streamText",
     streamText,
     { aiSDK },
@@ -338,7 +324,6 @@ const wrapStreamObject = (
 ) => {
   return makeStreamWrapper(
     aiSDKChannels.streamObject,
-    aiSDKChannels.streamObjectSync,
     "streamObject",
     streamObject,
     { aiSDK },
@@ -375,10 +360,6 @@ function mergeSpanInfo(
         }
       : {}),
   };
-}
-
-function isAsyncFunction(fn: unknown): boolean {
-  return typeof fn === "function" && fn.constructor?.name === "AsyncFunction";
 }
 
 function createAISDKChannelContext(
