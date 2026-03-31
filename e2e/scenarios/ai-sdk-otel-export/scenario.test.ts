@@ -119,10 +119,17 @@ for (const scenario of scenarios) {
 
           // Snapshot the span names and key structure (not full payloads, since
           // response content and token counts are non-deterministic).
-          const spanSummary = allSpans.map((span) => ({
-            hasParent: !!span.parentSpanId,
-            name: span.name,
-          }));
+          // Sort for determinism — OTel spans arrive in non-deterministic order.
+          const spanSummary = allSpans
+            .map((span) => ({
+              hasParent: !!span.parentSpanId,
+              name: span.name,
+            }))
+            .sort((a, b) =>
+              a.name !== b.name
+                ? a.name.localeCompare(b.name)
+                : Number(a.hasParent) - Number(b.hasParent),
+            );
           await expect(formatJsonFileSnapshot(spanSummary)).toMatchFileSnapshot(
             resolveFileSnapshotPath(
               import.meta.url,
