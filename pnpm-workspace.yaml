@@ -5,12 +5,6 @@ packages:
   - js/src/wrappers/*
   - "!js/vendor/**"
 
-ignoredBuiltDependencies:
-  - esbuild
-  - msw
-  - protobufjs
-  - "@swc/core"
-
 blockExoticSubdeps: true
 minimumReleaseAge: 4320 # 3 days (in minutes)
 trustPolicy: no-downgrade
