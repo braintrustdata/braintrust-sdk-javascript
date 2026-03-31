@@ -19,7 +19,7 @@ import {
   Logger,
   TestBackgroundLogger,
 } from "../../logger";
-import { wrapAISDK, wrapAgentClass, omit, extractTokenMetrics } from "./ai-sdk";
+import { wrapAISDK, wrapAgentClass } from "./ai-sdk";
 import { getCurrentUnixTimestamp } from "../../util";
 import { readFileSync } from "fs";
 import { join } from "path";
@@ -2555,6 +2555,253 @@ describe.skipIf(!AI_GATEWAY_API_KEY)(
     });
   },
 );
+
+function firstNumber(...values: unknown[]): number | undefined {
+  for (const v of values) {
+    if (typeof v === "number") {
+      return v;
+    }
+  }
+  return undefined;
+}
+
+function extractTokenMetrics(result: any): Record<string, number> {
+  const metrics: Record<string, number> = {};
+
+  let usage = result?.totalUsage || result?.usage;
+
+  if (!usage && result) {
+    try {
+      if ("totalUsage" in result && typeof result.totalUsage !== "function") {
+        usage = result.totalUsage;
+      } else if ("usage" in result && typeof result.usage !== "function") {
+        usage = result.usage;
+      }
+    } catch {
+      // Ignore errors accessing getters
+    }
+  }
+
+  if (!usage) {
+    return metrics;
+  }
+
+  const promptTokens = firstNumber(
+    usage.inputTokens?.total,
+    usage.inputTokens,
+    usage.promptTokens,
+    usage.prompt_tokens,
+  );
+  if (promptTokens !== undefined) {
+    metrics.prompt_tokens = promptTokens;
+  }
+
+  const completionTokens = firstNumber(
+    usage.outputTokens?.total,
+    usage.outputTokens,
+    usage.completionTokens,
+    usage.completion_tokens,
+  );
+  if (completionTokens !== undefined) {
+    metrics.completion_tokens = completionTokens;
+  }
+
+  const totalTokens = firstNumber(
+    usage.totalTokens,
+    usage.tokens,
+    usage.total_tokens,
+  );
+  if (totalTokens !== undefined) {
+    metrics.tokens = totalTokens;
+  }
+
+  const promptCachedTokens = firstNumber(
+    usage.inputTokens?.cacheRead,
+    usage.cachedInputTokens,
+    usage.promptCachedTokens,
+    usage.prompt_cached_tokens,
+  );
+  if (promptCachedTokens !== undefined) {
+    metrics.prompt_cached_tokens = promptCachedTokens;
+  }
+
+  const promptCacheCreationTokens = firstNumber(
+    usage.promptCacheCreationTokens,
+    usage.prompt_cache_creation_tokens,
+  );
+  if (promptCacheCreationTokens !== undefined) {
+    metrics.prompt_cache_creation_tokens = promptCacheCreationTokens;
+  }
+
+  const promptReasoningTokens = firstNumber(
+    usage.promptReasoningTokens,
+    usage.prompt_reasoning_tokens,
+  );
+  if (promptReasoningTokens !== undefined) {
+    metrics.prompt_reasoning_tokens = promptReasoningTokens;
+  }
+
+  const completionCachedTokens = firstNumber(
+    usage.completionCachedTokens,
+    usage.completion_cached_tokens,
+  );
+  if (completionCachedTokens !== undefined) {
+    metrics.completion_cached_tokens = completionCachedTokens;
+  }
+
+  const reasoningTokenCount = firstNumber(
+    usage.outputTokens?.reasoning,
+    usage.reasoningTokens,
+    usage.completionReasoningTokens,
+    usage.completion_reasoning_tokens,
+    usage.reasoning_tokens,
+    usage.thinkingTokens,
+    usage.thinking_tokens,
+  );
+  if (reasoningTokenCount !== undefined) {
+    metrics.completion_reasoning_tokens = reasoningTokenCount;
+    metrics.reasoning_tokens = reasoningTokenCount;
+  }
+
+  const completionAudioTokens = firstNumber(
+    usage.completionAudioTokens,
+    usage.completion_audio_tokens,
+  );
+  if (completionAudioTokens !== undefined) {
+    metrics.completion_audio_tokens = completionAudioTokens;
+  }
+
+  const cost = extractCostFromResult(result);
+  if (cost !== undefined) {
+    metrics.estimated_cost = cost;
+  }
+
+  return metrics;
+}
+
+function extractCostFromResult(result: any): number | undefined {
+  if (result?.steps && Array.isArray(result.steps) && result.steps.length > 0) {
+    let totalCost = 0;
+    let foundCost = false;
+    for (const step of result.steps) {
+      const gateway = step?.providerMetadata?.gateway;
+      const stepCost =
+        parseGatewayCost(gateway?.cost) ||
+        parseGatewayCost(gateway?.marketCost);
+      if (stepCost !== undefined && stepCost > 0) {
+        totalCost += stepCost;
+        foundCost = true;
+      }
+    }
+    if (foundCost) {
+      return totalCost;
+    }
+  }
+
+  const gateway = result?.providerMetadata?.gateway;
+  const directCost =
+    parseGatewayCost(gateway?.cost) || parseGatewayCost(gateway?.marketCost);
+  if (directCost !== undefined && directCost > 0) {
+    return directCost;
+  }
+
+  return undefined;
+}
+
+function parseGatewayCost(cost: unknown): number | undefined {
+  if (cost === undefined || cost === null) {
+    return undefined;
+  }
+  if (typeof cost === "number") {
+    return cost;
+  }
+  if (typeof cost === "string") {
+    const parsed = parseFloat(cost);
+    if (!isNaN(parsed)) {
+      return parsed;
+    }
+  }
+  return undefined;
+}
+
+function deepCopy(obj: Record<string, unknown>): Record<string, unknown> {
+  return JSON.parse(JSON.stringify(obj));
+}
+
+function parsePath(path: string): (string | number)[] {
+  const keys: (string | number)[] = [];
+  let current = "";
+
+  for (let i = 0; i < path.length; i++) {
+    const char = path[i];
+
+    if (char === ".") {
+      if (current) {
+        keys.push(current);
+        current = "";
+      }
+    } else if (char === "[") {
+      if (current) {
+        keys.push(current);
+        current = "";
+      }
+      let bracketContent = "";
+      i++;
+      while (i < path.length && path[i] !== "]") {
+        bracketContent += path[i];
+        i++;
+      }
+      if (bracketContent === "") {
+        keys.push("[]");
+      } else {
+        const index = parseInt(bracketContent, 10);
+        keys.push(isNaN(index) ? bracketContent : index);
+      }
+    } else {
+      current += char;
+    }
+  }
+
+  if (current) {
+    keys.push(current);
+  }
+
+  return keys;
+}
+
+function omitAtPath(obj: any, keys: (string | number)[]): void {
+  if (keys.length === 0) return;
+
+  const firstKey = keys[0];
+  const remainingKeys = keys.slice(1);
+
+  if (firstKey === "[]") {
+    if (Array.isArray(obj)) {
+      obj.forEach((item) => {
+        if (remainingKeys.length > 0) {
+          omitAtPath(item, remainingKeys);
+        }
+      });
+    }
+  } else if (remainingKeys.length === 0) {
+    if (obj && typeof obj === "object" && firstKey in obj) {
+      obj[firstKey] = "<omitted>";
+    }
+  } else if (obj && typeof obj === "object" && firstKey in obj) {
+    omitAtPath(obj[firstKey], remainingKeys);
+  }
+}
+
+function omit(obj: Record<string, unknown>, paths: string[]) {
+  const result = deepCopy(obj);
+
+  for (const path of paths) {
+    const keys = parsePath(path);
+    omitAtPath(result, keys);
+  }
+
+  return result;
+}
 
 describe("extractTokenMetrics", () => {
   test("handles null values in usage without including them in metrics", () => {
