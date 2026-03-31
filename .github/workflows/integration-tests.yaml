@@ -15,7 +15,6 @@ on:
 
 permissions:
   contents: read
-  issues: write
 
 jobs:
   js-provider-tests:
@@ -70,7 +69,6 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Prepare e2e run context directory
         id: run_context
-        if: ${{ github.event_name == 'pull_request' }}
         shell: bash
         run: |
           RUN_CONTEXT_DIR="$(mktemp -d)"
@@ -79,9 +77,8 @@ jobs:
         env:
           BRAINTRUST_E2E_RUN_CONTEXT_DIR: ${{ steps.run_context.outputs.dir }}
         run: pnpm test:e2e
-      - name: Build PR e2e links comment
-        id: e2e_comment
-        if: ${{ always() && github.event_name == 'pull_request' && !github.event.pull_request.head.repo.fork }}
+      - name: Build e2e Braintrust links summary
+        if: ${{ always() }}
         shell: bash
         env:
           BRAINTRUST_E2E_RUN_CONTEXT_DIR: ${{ steps.run_context.outputs.dir }}
@@ -92,52 +89,9 @@ jobs:
           GITHUB_RUN_ID: ${{ github.run_id }}
           GITHUB_SERVER_URL: ${{ github.server_url }}
         run: |
-          COMMENT_BODY_PATH="$RUNNER_TEMP/e2e-pr-links-comment.md"
-          node e2e/scripts/build-pr-e2e-links-comment.mjs --output "$COMMENT_BODY_PATH"
-          echo "path=$COMMENT_BODY_PATH" >> "$GITHUB_OUTPUT"
-      - name: Upsert PR e2e links comment
-        if: ${{ always() && github.event_name == 'pull_request' && !github.event.pull_request.head.repo.fork }}
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
-        env:
-          E2E_COMMENT_PATH: ${{ steps.e2e_comment.outputs.path }}
-        with:
-          script: |
-            const fs = require("node:fs");
-            const marker = "<!-- braintrust-e2e-links -->";
-            const body = fs.readFileSync(process.env.E2E_COMMENT_PATH, "utf8");
-            const { owner, repo } = context.repo;
-            const issue_number = context.issue.number;
-
-            const comments = await github.paginate(github.rest.issues.listComments, {
-              owner,
-              repo,
-              issue_number,
-              per_page: 100,
-            });
-
-            const existing = comments.find(
-              (comment) =>
-                comment.user?.type === "Bot" &&
-                typeof comment.body === "string" &&
-                comment.body.includes(marker),
-            );
-
-            if (existing) {
-              await github.rest.issues.updateComment({
-                owner,
-                repo,
-                comment_id: existing.id,
-                body,
-              });
-              return;
-            }
-
-            await github.rest.issues.createComment({
-              owner,
-              repo,
-              issue_number,
-              body,
-            });
+          SUMMARY_PATH="$RUNNER_TEMP/e2e-braintrust-links-summary.md"
+          node e2e/scripts/build-pr-e2e-links-comment.mjs --output "$SUMMARY_PATH"
+          cat "$SUMMARY_PATH" >> "$GITHUB_STEP_SUMMARY"
 
   e2e-canary:
     if: ${{ github.event_name == 'pull_request' }}

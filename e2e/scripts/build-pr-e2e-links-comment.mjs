@@ -205,6 +205,8 @@ function buildLogsUrl({ appUrl, orgName, projectName, search }) {
 }
 
 function buildCommentBody(options) {
+  const includeCommentMarker =
+    process.env.BRAINTRUST_E2E_INCLUDE_COMMENT_MARKER === "1";
   const branchName =
     process.env.GITHUB_HEAD_REF || process.env.GITHUB_REF_NAME || "unknown";
   const repository = process.env.GITHUB_REPOSITORY || "unknown";
@@ -215,7 +217,7 @@ function buildCommentBody(options) {
       : null;
 
   const lines = [
-    COMMENT_MARKER,
+    ...(includeCommentMarker ? [COMMENT_MARKER] : []),
     "## E2E Braintrust Scenario Links",
     "",
     `- Branch: ${markdownInlineCode(branchName)}`,
