@@ -20,7 +20,7 @@
     "method": "POST",
     "path": "/api/project/register",
     "query": null,
-    "rawBody": "{\"project_name\":\"sdk-e2e-tests\",\"org_id\":\"mock-org-id\"}"
+    "rawBody": "{\"project_name\":\"<project_name>\",\"org_id\":\"mock-org-id\"}"
   },
   {
     "headers": {
