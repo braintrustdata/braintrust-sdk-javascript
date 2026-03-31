@@ -33,6 +33,8 @@
       "env": [
         "ANTHROPIC_API_KEY",
         "BRAINTRUST_API_KEY",
+        "BRAINTRUST_E2E_PROJECT_NAME",
+        "BRAINTRUST_E2E_RUN_CONTEXT_DIR",
         "GEMINI_API_KEY",
         "OPENAI_API_KEY",
         "OPENAI_BASE_URL",
@@ -42,6 +44,7 @@
       "outputs": []
     },
     "test:e2e:hermetic": {
+      "env": ["BRAINTRUST_E2E_RUN_CONTEXT_DIR"],
       "dependsOn": ["^build"],
       "outputs": []
     },
@@ -49,6 +52,8 @@
       "env": [
         "ANTHROPIC_API_KEY",
         "BRAINTRUST_API_KEY",
+        "BRAINTRUST_E2E_PROJECT_NAME",
+        "BRAINTRUST_E2E_RUN_CONTEXT_DIR",
         "GEMINI_API_KEY",
         "OPENAI_API_KEY",
         "OPENAI_BASE_URL",
@@ -61,6 +66,8 @@
       "env": [
         "ANTHROPIC_API_KEY",
         "BRAINTRUST_API_KEY",
+        "BRAINTRUST_E2E_PROJECT_NAME",
+        "BRAINTRUST_E2E_RUN_CONTEXT_DIR",
         "GEMINI_API_KEY",
         "OPENAI_API_KEY",
         "OPENAI_BASE_URL",

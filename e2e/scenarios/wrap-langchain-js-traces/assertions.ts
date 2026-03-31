@@ -137,6 +137,17 @@ function normalizeToolCallIds(obj: unknown): void {
   }
 }
 
+// Fields that older @langchain/openai included in the ls_* metadata block but
+// newer versions removed. Normalize them out so the snapshot is stable across
+// both locked and canary (latest) langchain versions.
+const LANGCHAIN_LS_VOLATILE_KEYS = new Set([
+  "max_tokens",
+  "model",
+  "stream",
+  "stream_options",
+  "temperature",
+]);
+
 function normalizeLangchainVersions(obj: unknown): void {
   if (!obj || typeof obj !== "object") return;
 
@@ -158,6 +169,15 @@ function normalizeLangchainVersions(obj: unknown): void {
       if (key.startsWith("@langchain/") && typeof versions[key] === "string") {
         versions[key] = "<langchain-version>";
       }
+    }
+  }
+
+  // If this object is the ls_* metadata block (identified by the presence of
+  // any `ls_` key), remove volatile keys that newer langchain drops.
+  const hasLsKey = Object.keys(record).some((k) => k.startsWith("ls_"));
+  if (hasLsKey) {
+    for (const key of LANGCHAIN_LS_VOLATILE_KEYS) {
+      delete record[key];
     }
   }
 

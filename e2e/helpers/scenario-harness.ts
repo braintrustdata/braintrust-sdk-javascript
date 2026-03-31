@@ -1,5 +1,6 @@
 import { spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
+import { appendFile, mkdir } from "node:fs/promises";
 import { createRequire } from "node:module";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -34,6 +35,22 @@ const DENO_COMMAND = process.platform === "win32" ? "deno.exe" : "deno";
 const DEFAULT_SCENARIO_TIMEOUT_MS = 15_000;
 const HELPERS_DIR = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(HELPERS_DIR, "../..");
+const RUN_CONTEXT_DIR_ENV = "BRAINTRUST_E2E_RUN_CONTEXT_DIR";
+
+type ScenarioRunner = "deno" | "node" | "tsx";
+
+interface ScenarioRunContext {
+  variantKey?: string;
+}
+
+interface ScenarioRunContextRecord {
+  entry: string;
+  runner: ScenarioRunner;
+  scenarioDirName: string;
+  testRunId: string;
+  timestamp: string;
+  variantKey?: string;
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -175,6 +192,30 @@ function createTestRunId(): string {
   return `e2e-${randomUUID()}`;
 }
 
+function getRunContextDir(): string | null {
+  const runContextDir = process.env[RUN_CONTEXT_DIR_ENV]?.trim();
+  if (!runContextDir) {
+    return null;
+  }
+  return runContextDir;
+}
+
+async function recordScenarioRunContext(
+  record: ScenarioRunContextRecord,
+): Promise<void> {
+  const runContextDir = getRunContextDir();
+  if (!runContextDir) {
+    return;
+  }
+
+  await mkdir(runContextDir, { recursive: true });
+  const recordPath = path.join(
+    runContextDir,
+    `run-context-${process.pid}.ndjson`,
+  );
+  await appendFile(recordPath, `${JSON.stringify(record)}\n`, "utf8");
+}
+
 function getTestServerEnv(
   testRunId: string,
   server: { apiKey: string; url: string },
@@ -289,6 +330,7 @@ export function resolveScenarioDir(importMetaUrl: string): string {
 export async function runScenarioDir(options: {
   env?: Record<string, string>;
   entry?: string;
+  runContext?: ScenarioRunContext;
   scenarioDir: string;
   timeoutMs?: number;
 }): Promise<ScenarioResult> {
@@ -302,6 +344,7 @@ export async function runNodeScenarioDir(options: {
   env?: Record<string, string>;
   entry?: string;
   nodeArgs?: string[];
+  runContext?: ScenarioRunContext;
   scenarioDir: string;
   timeoutMs?: number;
 }): Promise<ScenarioResult> {
@@ -317,6 +360,7 @@ export async function runDenoScenarioDir(options: {
   args?: string[];
   entry?: string;
   env?: Record<string, string>;
+  runContext?: ScenarioRunContext;
   scenarioDir: string;
   timeoutMs?: number;
 }): Promise<ScenarioResult> {
@@ -358,6 +402,7 @@ interface ScenarioHarness {
     args?: string[];
     entry?: string;
     env?: Record<string, string>;
+    runContext?: ScenarioRunContext;
     scenarioDir: string;
     timeoutMs?: number;
   }) => Promise<ScenarioResult>;
@@ -365,12 +410,14 @@ interface ScenarioHarness {
     entry?: string;
     env?: Record<string, string>;
     nodeArgs?: string[];
+    runContext?: ScenarioRunContext;
     scenarioDir: string;
     timeoutMs?: number;
   }) => Promise<ScenarioResult>;
   runScenarioDir: (options: {
     entry?: string;
     env?: Record<string, string>;
+    runContext?: ScenarioRunContext;
     scenarioDir: string;
     timeoutMs?: number;
   }) => Promise<ScenarioResult>;
@@ -393,6 +440,27 @@ export async function withScenarioHarness(
     server,
     prodForwarding?.projectName ?? "",
   );
+  const runWithContext = async (
+    options: {
+      entry?: string;
+      runContext?: ScenarioRunContext;
+      scenarioDir: string;
+    },
+    runner: ScenarioRunner,
+    defaultEntry: string,
+    run: () => Promise<ScenarioResult>,
+  ): Promise<ScenarioResult> => {
+    const result = await run();
+    await recordScenarioRunContext({
+      entry: options.entry ?? defaultEntry,
+      runner,
+      scenarioDirName: path.basename(options.scenarioDir),
+      testRunId,
+      timestamp: new Date().toISOString(),
+      variantKey: options.runContext?.variantKey,
+    });
+    return result;
+  };
 
   try {
     await body({
@@ -404,29 +472,35 @@ export async function withScenarioHarness(
           filterItems(server.requests.slice(after), predicate),
         ),
       runDenoScenarioDir: (options) =>
-        runDenoScenarioDir({
-          ...options,
-          env: {
-            ...testEnv,
-            ...(options.env ?? {}),
-          },
-        }),
+        runWithContext(options, "deno", "runner.case.ts", async () =>
+          runDenoScenarioDir({
+            ...options,
+            env: {
+              ...testEnv,
+              ...(options.env ?? {}),
+            },
+          }),
+        ),
       runNodeScenarioDir: (options) =>
-        runNodeScenarioDir({
-          ...options,
-          env: {
-            ...testEnv,
-            ...(options.env ?? {}),
-          },
-        }),
+        runWithContext(options, "node", "scenario.mjs", async () =>
+          runNodeScenarioDir({
+            ...options,
+            env: {
+              ...testEnv,
+              ...(options.env ?? {}),
+            },
+          }),
+        ),
       runScenarioDir: (options) =>
-        runScenarioDir({
-          ...options,
-          env: {
-            ...testEnv,
-            ...(options.env ?? {}),
-          },
-        }),
+        runWithContext(options, "tsx", "scenario.ts", async () =>
+          runScenarioDir({
+            ...options,
+            env: {
+              ...testEnv,
+              ...(options.env ?? {}),
+            },
+          }),
+        ),
       testRunEvents: (predicate) =>
         filterItems(
           server.events,

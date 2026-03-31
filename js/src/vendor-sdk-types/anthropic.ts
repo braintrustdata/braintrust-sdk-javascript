@@ -82,14 +82,20 @@ export interface AnthropicMessage {
   stop_sequence?: string | null;
 }
 
+export interface AnthropicCitation {
+  type: string;
+  [key: string]: unknown;
+}
+
 export type AnthropicOutputContentBlock =
-  | { type: "text"; text: string }
+  | { type: "text"; text: string; citations?: AnthropicCitation[] }
   | {
       type: "tool_use";
       id: string;
       name: string;
       input: Record<string, unknown>;
     }
+  | { type: "thinking"; thinking: string }
   | { type: string };
 
 export interface AnthropicUsage {
@@ -111,7 +117,11 @@ export type AnthropicStreamEvent =
       index: number;
       delta:
         | { type: "text_delta"; text: string }
-        | { type: "input_json_delta"; partial_json: string };
+        | { type: "input_json_delta"; partial_json: string }
+        | { type: "thinking_delta"; thinking: string }
+        | { type: "citations_delta"; citation: AnthropicCitation }
+        | { type: "signature_delta"; signature: string }
+        | { type: string };
     }
   | { type: "content_block_stop"; index: number }
   | {

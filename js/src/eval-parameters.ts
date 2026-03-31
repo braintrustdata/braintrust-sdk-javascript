@@ -150,6 +150,33 @@ function validateParametersWithJsonSchema<T extends Record<string, unknown>>(
     throw Error(`Invalid parameters: ${errorMessages}`);
   }
 
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  return parameters as T;
+  return rehydrateRemoteParameters(parameters, schema) as T;
+}
+
+function rehydrateRemoteParameters(
+  parameters: Record<string, unknown>,
+  schema: Record<string, unknown>,
+): Record<string, unknown> {
+  const schemaProperties = schema.properties;
+  if (typeof schemaProperties !== "object" || schemaProperties === null) {
+    return parameters;
+  }
+
+  return Object.fromEntries(
+    Object.entries(parameters).map(([name, value]) => {
+      const propertySchema = Reflect.get(schemaProperties, name);
+      if (typeof propertySchema !== "object" || propertySchema === null) {
+        return [name, value];
+      }
+
+      if (Reflect.get(propertySchema, "x-bt-type") === "prompt") {
+        return [
+          name,
+          Prompt.fromPromptData(name, promptDataSchema.parse(value)),
+        ];
+      }
+
+      return [name, value];
+    }),
+  );
 }
