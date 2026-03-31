@@ -23,7 +23,17 @@ const aiSDKScenarios = await Promise.all(
   })),
 );
 
+function parseMajorVersion(version: string): number {
+  const major = Number.parseInt(version.split(".")[0] ?? "", 10);
+  return Number.isFinite(major) ? major : 0;
+}
+
 for (const scenario of aiSDKScenarios) {
+  const sdkMajorVersion = parseMajorVersion(scenario.version);
+  const supportsRichInputScenarios = sdkMajorVersion >= 5;
+  const supportsOutputObjectScenario = supportsRichInputScenarios;
+  const supportsAttachmentScenario = supportsRichInputScenarios;
+
   describe(`ai sdk ${scenario.version}`, () => {
     defineAISDKInstrumentationAssertions({
       agentSpanName: scenario.agentSpanName,
@@ -37,7 +47,10 @@ for (const scenario of aiSDKScenarios) {
         });
       },
       snapshotName: scenario.snapshotName,
+      supportsAttachmentScenario,
+      supportsDenyOutputOverrideScenario: supportsRichInputScenarios,
       supportsGenerateObject: scenario.supportsGenerateObject,
+      supportsOutputObjectScenario,
       supportsStreamObject: scenario.supportsStreamObject,
       supportsToolExecution: scenario.supportsToolExecution,
       testFileUrl: import.meta.url,
@@ -57,7 +70,10 @@ for (const scenario of aiSDKScenarios) {
         });
       },
       snapshotName: scenario.snapshotName,
+      supportsAttachmentScenario,
+      supportsDenyOutputOverrideScenario: supportsRichInputScenarios,
       supportsGenerateObject: scenario.supportsGenerateObject,
+      supportsOutputObjectScenario,
       supportsStreamObject: scenario.supportsStreamObject,
       supportsToolExecution: scenario.supportsToolExecution,
       testFileUrl: import.meta.url,
