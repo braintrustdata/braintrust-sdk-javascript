@@ -20,11 +20,13 @@ type RunAISDKScenario = (harness: {
   runNodeScenarioDir: (options: {
     entry: string;
     nodeArgs: string[];
+    runContext?: { variantKey: string };
     scenarioDir: string;
     timeoutMs: number;
   }) => Promise<unknown>;
   runScenarioDir: (options: {
     entry: string;
+    runContext?: { variantKey: string };
     scenarioDir: string;
     timeoutMs: number;
   }) => Promise<unknown>;

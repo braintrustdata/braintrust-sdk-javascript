@@ -13,11 +13,15 @@ import { ROOT_NAME, SCENARIO_NAME } from "./scenario.impl.mjs";
 
 type RunAnthropicScenario = (harness: {
   runNodeScenarioDir: (options: {
+    entry?: string;
     nodeArgs: string[];
+    runContext?: { variantKey: string };
     scenarioDir: string;
     timeoutMs: number;
   }) => Promise<unknown>;
   runScenarioDir: (options: {
+    entry?: string;
+    runContext?: { variantKey: string };
     scenarioDir: string;
     timeoutMs: number;
   }) => Promise<unknown>;

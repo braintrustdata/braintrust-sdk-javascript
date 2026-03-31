@@ -20,7 +20,7 @@
     "method": "POST",
     "path": "/api/project/register",
     "query": null,
-    "rawBody": "{\"project_name\":\"e2e-nextjs-instrumentation-nodejs-e2e-<uuid:1>\",\"org_id\":\"mock-org-id\"}"
+    "rawBody": "{\"project_name\":\"<project_name>\",\"org_id\":\"mock-org-id\"}"
   },
   {
     "headers": {
@@ -116,19 +116,6 @@
     "path": "/otel/v1/traces",
     "query": null,
     "rawBody": "<omitted>"
-  },
-  {
-    "headers": {
-      "content-type": "application/json"
-    },
-    "jsonBody": {
-      "org_id": "mock-org-id",
-      "project_name": "<project_name>"
-    },
-    "method": "POST",
-    "path": "/api/project/register",
-    "query": null,
-    "rawBody": "{\"project_name\":\"e2e-nextjs-instrumentation-edge-e2e-<uuid:1>\",\"org_id\":\"mock-org-id\"}"
   },
   {
     "headers": {
