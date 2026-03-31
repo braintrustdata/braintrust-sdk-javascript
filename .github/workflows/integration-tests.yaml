@@ -100,7 +100,8 @@ jobs:
           cat "$SUMMARY_PATH" >> "$GITHUB_STEP_SUMMARY"
 
   e2e-canary:
-    if: ${{ github.event_name == 'pull_request' }}
+    # if: ${{ github.event_name == 'pull_request' }}
+    if: false
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:

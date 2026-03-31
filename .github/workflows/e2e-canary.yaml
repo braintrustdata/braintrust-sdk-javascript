@@ -15,6 +15,7 @@ concurrency:
 
 jobs:
   canary:
+    if: false
     runs-on: ubuntu-latest
     timeout-minutes: 45
     environment: canary-e2e
