@@ -427,6 +427,7 @@ function buildPayloadSummary(events: CapturedLogEvent[]): Json {
 }
 
 export function defineOpenAIInstrumentationAssertions(options: {
+  assertPrivateFieldMethodsOperation?: boolean;
   name: string;
   runScenario: RunOpenAIScenario;
   snapshotName: string;
@@ -465,6 +466,26 @@ export function defineOpenAIInstrumentationAssertions(options: {
         scenario: SCENARIO_NAME,
       });
     });
+
+    if (options.assertPrivateFieldMethodsOperation) {
+      test(
+        "keeps wrapped v6 client private-field methods callable",
+        testConfig,
+        () => {
+          const root = findLatestSpan(events, ROOT_NAME);
+          const operation = findLatestSpan(
+            events,
+            "openai-client-private-fields-operation",
+          );
+
+          expect(operation).toBeDefined();
+          expect(operation?.row.metadata).toMatchObject({
+            operation: "client-private-fields",
+          });
+          expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
+        },
+      );
+    }
 
     for (const spec of OPERATION_SPECS) {
       test(spec.testName, testConfig, () => {

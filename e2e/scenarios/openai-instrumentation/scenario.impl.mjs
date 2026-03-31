@@ -44,6 +44,15 @@ async function awaitMaybeWithResponse(request) {
   };
 }
 
+function parseMajorVersion(version) {
+  if (typeof version !== "string") {
+    return null;
+  }
+
+  const major = Number.parseInt(version.split(".")[0], 10);
+  return Number.isNaN(major) ? null : major;
+}
+
 export async function runOpenAIInstrumentationScenario(options) {
   const baseClient = new options.OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
@@ -52,9 +61,51 @@ export async function runOpenAIInstrumentationScenario(options) {
   const client = options.decorateClient
     ? options.decorateClient(baseClient)
     : baseClient;
+  const openAIMajorVersion = parseMajorVersion(options.openaiSdkVersion);
+  const shouldCheckPrivateFieldMethods =
+    typeof options.decorateClient === "function" &&
+    openAIMajorVersion !== null &&
+    openAIMajorVersion >= 6;
 
   await runTracedScenario({
     callback: async () => {
+      if (shouldCheckPrivateFieldMethods) {
+        await runOperation(
+          "openai-client-private-fields-operation",
+          "client-private-fields",
+          async () => {
+            if (
+              typeof client.buildURL !== "function" ||
+              typeof client.buildRequest !== "function"
+            ) {
+              throw new Error(
+                "Expected wrapped OpenAI v6 client to expose buildURL and buildRequest",
+              );
+            }
+
+            const builtUrl = client.buildURL("/files", null);
+            if (typeof builtUrl !== "string" || !builtUrl.includes("/files")) {
+              throw new Error(
+                `Unexpected buildURL result: ${String(builtUrl)}`,
+              );
+            }
+
+            const builtRequest = await client.buildRequest(
+              { method: "post", path: "/files" },
+              { retryCount: 0 },
+            );
+            if (
+              typeof builtRequest?.url !== "string" ||
+              !builtRequest.url.includes("/files")
+            ) {
+              throw new Error(
+                `Unexpected buildRequest result: ${String(builtRequest?.url)}`,
+              );
+            }
+          },
+        );
+      }
+
       await runOperation("openai-chat-operation", "chat", async () => {
         await client.chat.completions.create({
           model: OPENAI_MODEL,

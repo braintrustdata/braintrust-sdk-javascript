@@ -14,12 +14,14 @@ const openaiScenarios = await Promise.all(
   [
     {
       autoEntry: "scenario.openai-v4.mjs",
+      disablePrivateFieldMethodsAssertion: true,
       dependencyName: "openai-v4",
       snapshotName: "openai-v4",
       wrapperEntry: "scenario.openai-v4.ts",
     },
     {
       autoEntry: "scenario.openai-v5.mjs",
+      disablePrivateFieldMethodsAssertion: true,
       dependencyName: "openai-v5",
       snapshotName: "openai-v5",
       wrapperEntry: "scenario.openai-v5.ts",
@@ -40,8 +42,12 @@ const openaiScenarios = await Promise.all(
 );
 
 for (const scenario of openaiScenarios) {
+  const assertPrivateFieldMethodsOperation =
+    !scenario.disablePrivateFieldMethodsAssertion;
+
   describe(`openai sdk ${scenario.version}`, () => {
     defineOpenAIInstrumentationAssertions({
+      assertPrivateFieldMethodsOperation,
       name: "wrapped instrumentation",
       runScenario: async ({ runScenarioDir }) => {
         await runScenarioDir({
