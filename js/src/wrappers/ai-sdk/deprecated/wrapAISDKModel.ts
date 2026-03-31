@@ -25,6 +25,7 @@ export function wrapAISDKModel<T extends object>(model: T): T {
   ) {
     return new BraintrustLanguageModelWrapper(m) as any as T;
   } else {
+    // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
     console.warn("Unsupported AI SDK model. Not wrapping.");
     return model;
   }

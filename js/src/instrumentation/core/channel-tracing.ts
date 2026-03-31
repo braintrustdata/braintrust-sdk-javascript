@@ -198,6 +198,7 @@ function startSpanForEvent<
       metadata: mergeInputMetadata(metadata, spanInfoMetadata),
     });
   } catch (error) {
+    // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
     console.error(`Error extracting input for ${channelName}:`, error);
   }
 
@@ -351,6 +352,7 @@ export function traceAsyncChannel<TChannel extends AnyAsyncChannel>(
           metrics,
         });
       } catch (error) {
+        // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
         console.error(`Error extracting output for ${channelName}:`, error);
       } finally {
         span.end();
@@ -460,6 +462,7 @@ export function traceStreamingChannel<TChannel extends AnyAsyncChannel>(
                 metrics,
               });
             } catch (error) {
+              // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
               console.error(
                 `Error extracting output for ${channelName}:`,
                 error,
@@ -516,6 +519,7 @@ export function traceStreamingChannel<TChannel extends AnyAsyncChannel>(
           metrics,
         });
       } catch (error) {
+        // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
         console.error(`Error extracting output for ${channelName}:`, error);
       } finally {
         span.end();
@@ -610,6 +614,7 @@ export function traceSyncStreamChannel<TChannel extends AnySyncStreamChannel>(
             });
           }
         } catch (error) {
+          // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
           console.error(
             `Error extracting chatCompletion for ${channelName}:`,
             error,
@@ -637,6 +642,7 @@ export function traceSyncStreamChannel<TChannel extends AnySyncStreamChannel>(
             span.log(extracted);
           }
         } catch (error) {
+          // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
           console.error(`Error extracting event for ${channelName}:`, error);
         }
       });

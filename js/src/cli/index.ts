@@ -127,6 +127,7 @@ async function initExperiment(
         fallback: (_text: string, url: string) => url,
       })
     : "locally";
+  // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
   console.error(
     chalk.cyan("▶") +
       ` Experiment ${chalk.bold(info.experimentName)} is running at ${linkText}`,
@@ -219,13 +220,17 @@ function buildWatchPluginForEvaluator(
     name: "run-evalutator-on-end",
     setup(build: esbuild.PluginBuild) {
       build.onEnd(async (result) => {
+        // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
         console.error(`Done building ${inFile}`);
 
         if (!result.outputFiles) {
           if (opts.showDetailedErrors) {
+            // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
             console.warn(`Failed to compile ${inFile}`);
+            // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
             console.warn(result.errors);
           } else {
+            // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
             console.warn(`Failed to compile ${inFile}: ${result.errors}`);
           }
           return;
@@ -306,6 +311,7 @@ function buildWatchPluginForEvaluator(
         )) {
           const success = await reporter.reportRun(await Promise.all(results));
           if (!success) {
+            // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
             console.error(error(`Reporter ${reporterName} failed.`));
           }
         }
@@ -421,9 +427,12 @@ export function handleBuildFailure({
   if (terminateOnFailure) {
     throw result.error;
   } else if (showDetailedErrors) {
+    // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
     console.warn(`Failed to compile ${result.sourceFile}`);
+    // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
     console.warn(result.error);
   } else {
+    // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
     console.warn(
       `Failed to compile ${result.sourceFile}: ${result.error.message}`,
     );
@@ -466,6 +475,7 @@ function updateEvaluators(
         evaluators.reporters[reporterName] &&
         evaluators.reporters[reporterName] !== reporter
       ) {
+        // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
         console.warn(
           warning(
             `Reporter '${reporterName}' already exists. Will skip '${reporterName}' from ${result.sourceFile}.`,
@@ -486,12 +496,14 @@ async function runAndWatch({
   onExit?: () => void;
 }) {
   const count = Object.keys(handles).length;
+  // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
   console.error(`Watching ${pluralize("file", count, true)}...`);
 
   Object.values(handles).map((handle) => handle.watch());
 
   ["SIGINT", "SIGTERM"].forEach((signal: string) => {
     process.on(signal, function () {
+      // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
       console.error("Stopped watching.");
       for (const handle of Object.values(handles)) {
         handle.destroy();
@@ -540,6 +552,7 @@ async function runOnce(
 
   if (opts.list) {
     for (const evaluator of evaluators.evaluators) {
+      // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
       console.log(evaluator.evaluator.evalName);
     }
     return true;
@@ -581,6 +594,7 @@ async function runOnce(
     }
   });
 
+  // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
   console.error(
     chalk.dim(
       `Processing ${chalk.bold(resultPromises.length)} evaluator${resultPromises.length === 1 ? "" : "s"}...`,
@@ -588,6 +602,7 @@ async function runOnce(
   );
   const allEvalsResults = await Promise.all(resultPromises);
   opts.progressReporter.stop();
+  // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
   console.error("");
 
   const evalReports: Record<
@@ -685,6 +700,7 @@ async function collectFiles(
   try {
     pathStat = fs.lstatSync(inputPath);
   } catch (e) {
+    // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
     console.error(error(`Error reading ${inputPath}: ${e}`));
     process.exit(1);
   }
@@ -699,6 +715,7 @@ async function collectFiles(
       )
     ) {
       const prefix = mode === "eval" ? ".eval" : "";
+      // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
       console.warn(
         warning(
           `Reading ${inputPath} because it was specified directly. Rename it to end in ${prefix}.ts or ` +
@@ -848,6 +865,7 @@ export async function initializeHandles({
   for (const inputPath of inputPaths) {
     const newFiles = await collectFiles(inputPath, mode);
     if (newFiles.length == 0) {
+      // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
       console.warn(
         warning(
           `Provided path ${inputPath} is not an eval file or a directory containing eval files, skipping...`,
@@ -860,6 +878,7 @@ export async function initializeHandles({
   }
 
   if (Object.keys(files).length == 0) {
+    // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
     console.warn(
       warning("No eval files were found in any of the provided paths."),
     );
@@ -906,6 +925,7 @@ async function run(args: RunArgs) {
     // Load via dotenv library
     const loaded = dotenv.config({ path: args.env_file });
     if (loaded.error) {
+      // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
       console.error(error(`Error loading ${args.env_file}: ${loaded.error}`));
       process.exit(1);
     }
@@ -930,6 +950,7 @@ async function run(args: RunArgs) {
   };
 
   if (args.list && args.watch) {
+    // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
     console.error(error("Cannot specify both --list and --watch."));
     process.exit(1);
   }

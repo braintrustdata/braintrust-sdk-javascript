@@ -102,6 +102,7 @@ export function wrapVitest<
     flushExperiment: async (options?: { displaySummary?: boolean }) => {
       const ctx = getExperimentContext();
       if (!ctx) {
+        // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
         console.warn(
           "Braintrust: No experiment context found. Make sure you're using bt.describe() and calling flushExperiment() within an afterAll() hook.",
         );

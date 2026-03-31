@@ -1725,6 +1725,7 @@ const processContentPart = (part: any): any => {
       }
     }
   } catch (error) {
+    // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
     console.warn("Error processing content part:", error);
   }
 
@@ -1787,6 +1788,7 @@ const convertImageToAttachment = (
       return image;
     }
   } catch (error) {
+    // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
     console.warn("Error converting image to attachment:", error);
   }
 
@@ -1835,6 +1837,7 @@ const convertDataToAttachment = (
       });
     }
   } catch (error) {
+    // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
     console.warn("Error converting data to attachment:", error);
   }
 
@@ -1898,6 +1901,7 @@ const processOutputAttachments = async (output: AISDKResult) => {
   try {
     return await doProcessOutputAttachments(output);
   } catch (error) {
+    // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
     console.error("Error processing output attachments:", error);
     return output;
   }
@@ -1955,6 +1959,7 @@ const convertFileToAttachment = (
     }
 
     if (!blob) {
+      // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
       console.warn(`Failed to convert file at index ${index} to Blob`);
       return file; // Return original if conversion fails
     }
@@ -1965,6 +1970,7 @@ const convertFileToAttachment = (
       contentType: mediaType,
     });
   } catch (error) {
+    // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
     console.warn(`Error processing file at index ${index}:`, error);
     return file; // Return original on error
   }

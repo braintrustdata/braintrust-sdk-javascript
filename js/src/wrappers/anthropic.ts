@@ -28,6 +28,7 @@ export function wrapAnthropic<T extends object>(anthropic: T): T {
     return anthropicProxy(au as AnthropicClient) as T;
   }
 
+  // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
   console.warn("Unsupported Anthropic library. Not wrapping.");
   return anthropic;
 }

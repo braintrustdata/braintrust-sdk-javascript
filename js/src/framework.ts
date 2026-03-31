@@ -773,8 +773,10 @@ export async function Eval<
       return ret;
     } finally {
       if (experiment) {
+        // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
         await experiment.flush().catch(console.error);
       } else if (options.parent) {
+        // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
         await flush({ state: evaluator.state }).catch(console.error);
       }
     }
@@ -1485,8 +1487,10 @@ export const warning = (text: string) => `Warning: ${text}`;
 
 export function logError(e: unknown, verbose: boolean) {
   if (!verbose) {
+    // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
     console.error(`${e}`);
   } else {
+    // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
     console.error(e);
   }
 }
@@ -1562,12 +1566,14 @@ export function reportFailures<
     // TODO: We may want to support a non-strict mode (and make this the "strict" behavior), so that
     // users can still log imperfect evaluations. In the meantime, they should handle these cases inside
     // of their tasks.
+    // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
     console.error(
       warning(
         `Evaluator ${evaluator.evalName} failed with ${failingResults.length} error${failingResults.length === 1 ? "" : "s"}. This evaluation ("${evaluator.evalName}") will not be fully logged.`,
       ),
     );
     if (jsonl) {
+      // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
       console.log(
         JSON.stringify({
           evaluatorName: evaluator.evalName,
@@ -1582,6 +1588,7 @@ export function reportFailures<
       }
     }
     if (!verbose && !jsonl) {
+      // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
       console.error(
         warning(
           "Use --debug-logging debug to see full stack traces and troubleshooting details.",

@@ -20,6 +20,7 @@ export async function loadCLIEnv(args: AuthArgs & CommonArgs) {
     // Load via dotenv library
     const loaded = dotenv.config({ path: args.env_file });
     if (loaded.error) {
+      // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
       console.error(error(`Error loading ${args.env_file}: ${loaded.error}`));
       process.exit(1);
     }

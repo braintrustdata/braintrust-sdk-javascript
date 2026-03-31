@@ -174,6 +174,7 @@ export const fancyReporter: ReporterDef<boolean> = {
     );
 
     if (failingResults.length > 0) {
+      // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
       console.error(
         warning(
           `Evaluator ${evaluator.evalName} failed with ${pluralize("error", failingResults.length, true)}. This evaluation ("${evaluator.evalName}") will not be fully logged.`,
@@ -186,6 +187,7 @@ export const fancyReporter: ReporterDef<boolean> = {
         }
       } else if (verbose) {
         for (const result of failingResults) {
+          // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
           console.error(result);
         }
       }

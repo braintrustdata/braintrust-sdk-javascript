@@ -82,30 +82,6 @@ export default [
       "@typescript-eslint/no-empty-object-type": "error",
       "@typescript-eslint/no-unsafe-function-type": "error",
       "@typescript-eslint/prefer-as-const": "error",
-      // Require node: protocol for Node.js built-in imports (for Deno compatibility)
-      // This plugin automatically detects ALL Node.js built-ins - no manual list needed!
-      "node-import/prefer-node-protocol": "error",
-    },
-  },
-  {
-    files: ["src/**/*.ts", "src/**/*.tsx"],
-    ignores: [
-      "src/cli/**",
-      "src/debug-logger.ts",
-      "src/framework.ts",
-      "src/framework2.ts",
-      "src/isomorph.ts",
-      "src/sandbox.ts",
-      "src/template/**",
-      "src/reporters/**",
-      "src/prompt-cache/**",
-      "src/eval-parameters.ts",
-      "src/wrappers/**",
-      "src/instrumentation/**",
-      "src/auto-instrumentations/**",
-      "src/queue.bench.ts",
-    ],
-    rules: {
       "no-restricted-properties": [
         "error",
         {
@@ -139,6 +115,35 @@ export default [
           message: "Use debugLogger instead of console for SDK logging.",
         },
       ],
+      // Require node: protocol for Node.js built-in imports (for Deno compatibility)
+      // This plugin automatically detects ALL Node.js built-ins - no manual list needed!
+      "node-import/prefer-node-protocol": "error",
+    },
+  },
+  {
+    files: ["src/queue.bench.ts"],
+    rules: {
+      "no-restricted-properties": "off",
+    },
+  },
+  {
+    files: ["src/**/*.ts", "src/**/*.tsx"],
+    ignores: [
+      "src/cli/**",
+      "src/debug-logger.ts",
+      "src/framework.ts",
+      "src/framework2.ts",
+      "src/isomorph.ts",
+      "src/sandbox.ts",
+      "src/template/**",
+      "src/reporters/**",
+      "src/prompt-cache/**",
+      "src/eval-parameters.ts",
+      "src/wrappers/**",
+      "src/instrumentation/**",
+      "src/auto-instrumentations/**",
+    ],
+    rules: {
       "no-restricted-imports": [
         "error",
         {

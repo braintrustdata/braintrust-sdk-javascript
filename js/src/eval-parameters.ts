@@ -124,6 +124,7 @@ function validateParametersWithZod<
           return [name, schemaCasted.parse(value)];
         }
       } catch (e) {
+        // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
         console.error("Error validating parameter", name, e);
         throw Error(
           `Invalid parameter '${name}': ${e instanceof Error ? e.message : String(e)}`,
