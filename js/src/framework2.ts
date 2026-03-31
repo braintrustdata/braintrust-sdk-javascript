@@ -274,6 +274,9 @@ export class ScorerBuilder {
           use_cot: opts.useCot,
           choice_scores: opts.choiceScores,
         },
+        ...(opts.templateFormat
+          ? { template_format: opts.templateFormat }
+          : {}),
       };
       const codePrompt = new CodePrompt(
         this.project,

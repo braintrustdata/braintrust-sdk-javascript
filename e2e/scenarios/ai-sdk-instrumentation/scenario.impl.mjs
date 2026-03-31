@@ -72,6 +72,36 @@ function tokenLimit(key, value) {
   return { [key]: value };
 }
 
+const DENY_OUTPUT_PATHS_SYMBOL = Symbol.for(
+  "braintrust.ai-sdk.deny-output-paths",
+);
+
+function parseMajorVersion(version) {
+  const parsed = Number.parseInt(String(version).split(".")[0] ?? "", 10);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function createOutputObjectIfSupported(ai) {
+  try {
+    if (
+      ai &&
+      typeof ai === "object" &&
+      ai.Output &&
+      typeof ai.Output.object === "function"
+    ) {
+      return ai.Output.object({
+        schema: z.object({
+          answer: z.string(),
+        }),
+      });
+    }
+  } catch {
+    // Ignore unsupported Output.object variants.
+  }
+
+  return undefined;
+}
+
 function createWeatherTool(ai, schemaKey) {
   const zodSchema = z.object({
     location: z.string().describe("The city and country"),
@@ -95,6 +125,9 @@ async function runAISDKInstrumentationScenario(
 ) {
   const instrumentedAI = decorateAI ? decorateAI(options.ai) : options.ai;
   const openaiModel = options.openai("gpt-4o-mini");
+  const sdkMajorVersion = parseMajorVersion(options.sdkVersion);
+  const supportsRichInputScenarios = sdkMajorVersion >= 5;
+  const outputObject = createOutputObjectIfSupported(options.ai);
 
   await runTracedScenario({
     callback: async () => {
@@ -106,6 +139,24 @@ async function runAISDKInstrumentationScenario(
           ...tokenLimit(options.maxTokensKey, 16),
         });
       });
+
+      if (outputObject) {
+        await runOperation(
+          "ai-sdk-output-object-operation",
+          "output-object",
+          async () => {
+            await instrumentedAI.generateText({
+              model: openaiModel,
+              prompt:
+                "Return a short answer for 2 + 2. Keep the answer concise.",
+              output: outputObject,
+              experimental_output: outputObject,
+              temperature: 0,
+              ...tokenLimit(options.maxTokensKey, 32),
+            });
+          },
+        );
+      }
 
       await runOperation("ai-sdk-stream-operation", "stream", async () => {
         const result = await instrumentedAI.streamText({
@@ -139,6 +190,23 @@ async function runAISDKInstrumentationScenario(
 
         await instrumentedAI.generateText(toolRequest);
       });
+
+      if (supportsRichInputScenarios) {
+        await runOperation(
+          "ai-sdk-deny-output-override-operation",
+          "deny-output-override",
+          async () => {
+            const params = {
+              model: openaiModel,
+              prompt: "Reply with the word DENIED and nothing else.",
+              temperature: 0,
+              ...tokenLimit(options.maxTokensKey, 16),
+            };
+            params[DENY_OUTPUT_PATHS_SYMBOL] = ["text", "_output"];
+            await instrumentedAI.generateText(params);
+          },
+        );
+      }
 
       if (options.supportsGenerateObject) {
         await runOperation(
@@ -221,6 +289,41 @@ async function runAISDKInstrumentationScenario(
               ...tokenLimit(options.maxTokensKey, 16),
             });
             for await (const _chunk of result.textStream) {
+            }
+          },
+        );
+      }
+
+      if (supportsRichInputScenarios) {
+        await runOperation(
+          "ai-sdk-attachment-operation",
+          "attachment",
+          async () => {
+            try {
+              await instrumentedAI.generateText({
+                model: openaiModel,
+                messages: [
+                  {
+                    role: "user",
+                    content: [
+                      {
+                        type: "file",
+                        data: Buffer.from("tiny test file", "utf8"),
+                        mediaType: "text/plain",
+                        filename: "tiny.txt",
+                      },
+                      {
+                        type: "text",
+                        text: "Read the file and summarize it in one short sentence.",
+                      },
+                    ],
+                  },
+                ],
+                temperature: 0,
+                ...tokenLimit(options.maxTokensKey, 48),
+              });
+            } catch {
+              // Input attachment processing is exercised before provider errors.
             }
           },
         );

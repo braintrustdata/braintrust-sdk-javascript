@@ -1439,6 +1439,63 @@ describe("framework2 metadata support", () => {
       expect(scorers).toHaveLength(1);
       expect(scorers[0].tags).toBeUndefined();
     });
+
+    test("LLM scorer (chat) stores templateFormat in promptData", () => {
+      const project = projects.create({ name: "test-project" });
+
+      project.scorers.create({
+        name: "nunjucks-scorer",
+        messages: [{ role: "user", content: "Grade: {{ output }}" }],
+        model: "gpt-4o",
+        useCot: true,
+        choiceScores: { pass: 1, fail: 0 },
+        templateFormat: "nunjucks",
+      });
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const prompts = (project as any)._publishablePrompts;
+      expect(prompts).toHaveLength(1);
+      // template_format must be present on the stored PromptData, which is
+      // spread directly into the API payload by toFunctionDefinition().
+      expect(prompts[0].prompt.template_format).toBe("nunjucks");
+    });
+
+    test("LLM scorer (completion) stores templateFormat in promptData", () => {
+      const project = projects.create({ name: "test-project" });
+
+      project.scorers.create({
+        name: "none-format-scorer",
+        prompt: "Grade the output.",
+        model: "gpt-4o",
+        useCot: false,
+        choiceScores: { pass: 1, fail: 0 },
+        templateFormat: "none",
+      });
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const prompts = (project as any)._publishablePrompts;
+      expect(prompts).toHaveLength(1);
+      expect(prompts[0].prompt.template_format).toBe("none");
+    });
+
+    test("LLM scorer without templateFormat leaves template_format absent", () => {
+      const project = projects.create({ name: "test-project" });
+
+      project.scorers.create({
+        name: "default-format-scorer",
+        prompt: "Is this correct?",
+        model: "gpt-4o",
+        useCot: false,
+        choiceScores: { yes: 1, no: 0 },
+      });
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const prompts = (project as any)._publishablePrompts;
+      expect(prompts).toHaveLength(1);
+      // No templateFormat passed → field must be absent so the API applies its
+      // own default rather than receiving an explicit undefined.
+      expect(prompts[0].prompt.template_format).toBeUndefined();
+    });
   });
 
   describe("Project with messages", () => {

@@ -572,62 +572,35 @@ export function traceSyncStreamChannel<TChannel extends AnySyncStreamChannel>(
 
       const { span, startTime } = spanData;
       const endEvent = event as EndOf<TChannel>;
+      const handleResolvedResult = (result: ResultOf<TChannel>) => {
+        const resolvedEndEvent = {
+          ...endEvent,
+          result,
+        } as EndOf<TChannel>;
 
-      if (
-        config.patchResult?.({
-          channelName,
-          endEvent,
-          result: endEvent.result,
-          span,
-          startTime,
-        })
-      ) {
-        return;
-      }
-
-      const stream = endEvent.result;
-
-      if (!isSyncStreamLike<ChunkOf<TChannel>>(stream)) {
-        span.end();
-        states.delete(event as object);
-        return;
-      }
-
-      let first = true;
-
-      stream.on("chunk", () => {
-        if (first) {
-          span.log({
-            metrics: {
-              time_to_first_token: getCurrentUnixTimestamp() - startTime,
-            },
-          });
-          first = false;
-        }
-      });
-
-      stream.on("chatCompletion", (completion) => {
-        try {
-          if (hasChoices(completion)) {
-            span.log({
-              output: completion.choices,
-            });
-          }
-        } catch (error) {
-          // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-          console.error(
-            `Error extracting chatCompletion for ${channelName}:`,
-            error,
-          );
-        }
-      });
-
-      stream.on("event", (streamEvent) => {
-        if (!config.extractFromEvent) {
+        if (
+          config.patchResult?.({
+            channelName,
+            endEvent: resolvedEndEvent,
+            result,
+            span,
+            startTime,
+          })
+        ) {
           return;
         }
 
-        try {
+        const stream = result;
+
+        if (!isSyncStreamLike<ChunkOf<TChannel>>(stream)) {
+          span.end();
+          states.delete(event as object);
+          return;
+        }
+
+        let first = true;
+
+        stream.on("chunk", () => {
           if (first) {
             span.log({
               metrics: {
@@ -636,29 +609,62 @@ export function traceSyncStreamChannel<TChannel extends AnySyncStreamChannel>(
             });
             first = false;
           }
-
-          const extracted = config.extractFromEvent(streamEvent);
-          if (extracted && Object.keys(extracted).length > 0) {
-            span.log(extracted);
-          }
-        } catch (error) {
-          // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-          console.error(`Error extracting event for ${channelName}:`, error);
-        }
-      });
-
-      stream.on("end", () => {
-        span.end();
-        states.delete(event as object);
-      });
-
-      stream.on("error", (error: Error) => {
-        span.log({
-          error: error.message,
         });
-        span.end();
-        states.delete(event as object);
-      });
+
+        stream.on("chatCompletion", (completion) => {
+          try {
+            if (hasChoices(completion)) {
+              span.log({
+                output: completion.choices,
+              });
+            }
+          } catch (error) {
+            console.error(
+              `Error extracting chatCompletion for ${channelName}:`,
+              error,
+            );
+          }
+        });
+
+        stream.on("event", (streamEvent) => {
+          if (!config.extractFromEvent) {
+            return;
+          }
+
+          try {
+            if (first) {
+              span.log({
+                metrics: {
+                  time_to_first_token: getCurrentUnixTimestamp() - startTime,
+                },
+              });
+              first = false;
+            }
+
+            const extracted = config.extractFromEvent(streamEvent);
+            if (extracted && Object.keys(extracted).length > 0) {
+              span.log(extracted);
+            }
+          } catch (error) {
+            console.error(`Error extracting event for ${channelName}:`, error);
+          }
+        });
+
+        stream.on("end", () => {
+          span.end();
+          states.delete(event as object);
+        });
+
+        stream.on("error", (error: Error) => {
+          span.log({
+            error: error.message,
+          });
+          span.end();
+          states.delete(event as object);
+        });
+      };
+
+      handleResolvedResult(endEvent.result);
     },
     error: (event) => {
       logErrorAndEnd(states, event as ErrorOf<TChannel>);
