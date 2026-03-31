@@ -147,6 +147,38 @@ function findGenerateTrace(events: CapturedLogEvent[]) {
   return { child, operation, parent };
 }
 
+function findGenerateTextTraceForOperation(
+  events: CapturedLogEvent[],
+  operationSpanName: string,
+) {
+  const operation = findLatestSpan(events, operationSpanName);
+  const parent = findParentSpan(events, "generateText", operation?.span.id);
+  const child = findLatestModelSpan(events, parent?.span.id, "doGenerate");
+
+  return { child, operation, parent };
+}
+
+function findOutputObjectTrace(events: CapturedLogEvent[]) {
+  return findGenerateTextTraceForOperation(
+    events,
+    "ai-sdk-output-object-operation",
+  );
+}
+
+function findAttachmentTrace(events: CapturedLogEvent[]) {
+  return findGenerateTextTraceForOperation(
+    events,
+    "ai-sdk-attachment-operation",
+  );
+}
+
+function findDenyOutputOverrideTrace(events: CapturedLogEvent[]) {
+  return findGenerateTextTraceForOperation(
+    events,
+    "ai-sdk-deny-output-override-operation",
+  );
+}
+
 function findStreamTrace(events: CapturedLogEvent[]) {
   const operation = findLatestSpan(events, "ai-sdk-stream-operation");
   const parent = findParentSpan(events, "streamText", operation?.span.id);
@@ -294,6 +326,62 @@ function toolNamesFromInput(input: unknown): string[] {
       return typeof maybeName === "string" ? maybeName : undefined;
     })
     .filter((name): name is string => typeof name === "string");
+}
+
+function extractOutputRecord(
+  event: CapturedLogEvent | undefined,
+): Record<string, unknown> | undefined {
+  return isRecord(event?.output) ? event.output : undefined;
+}
+
+function extractFinishReason(
+  event: CapturedLogEvent | undefined,
+): string | undefined {
+  const output = extractOutputRecord(event);
+  const outputFinishReason = output?.finishReason;
+  if (typeof outputFinishReason === "string") {
+    return outputFinishReason;
+  }
+
+  const metadata = event?.row.metadata;
+  if (!isRecord(metadata)) {
+    return undefined;
+  }
+
+  return typeof metadata.finish_reason === "string"
+    ? metadata.finish_reason
+    : undefined;
+}
+
+function extractFileAttachmentReference(
+  input: unknown,
+): Record<string, unknown> | undefined {
+  if (!isRecord(input) || !Array.isArray(input.messages)) {
+    return undefined;
+  }
+
+  for (const message of input.messages) {
+    if (!isRecord(message) || !Array.isArray(message.content)) {
+      continue;
+    }
+
+    for (const part of message.content) {
+      if (!isRecord(part) || part.type !== "file") {
+        continue;
+      }
+
+      const data = part.data;
+      if (isRecord(data) && isRecord(data.reference)) {
+        return data.reference;
+      }
+
+      if (isRecord(data) && data.type === "braintrust_attachment") {
+        return data;
+      }
+    }
+  }
+
+  return undefined;
 }
 
 function normalizeAISDKContext(value: unknown): Json {
@@ -556,7 +644,10 @@ export function defineAISDKInstrumentationAssertions(options: {
   name: string;
   runScenario: RunAISDKScenario;
   snapshotName: string;
+  supportsAttachmentScenario: boolean;
+  supportsDenyOutputOverrideScenario: boolean;
   supportsGenerateObject: boolean;
+  supportsOutputObjectScenario: boolean;
   supportsStreamObject: boolean;
   supportsToolExecution: boolean;
   testFileUrl: string;
@@ -608,6 +699,9 @@ export function defineAISDKInstrumentationAssertions(options: {
         completion_tokens: expect.any(Number),
         prompt_tokens: expect.any(Number),
       });
+      expect(trace.parent?.metrics?.completion_tokens).toBeUndefined();
+      expect(trace.parent?.metrics?.prompt_tokens).toBeUndefined();
+      expect(trace.parent?.metrics?.tokens).toBeUndefined();
       expect(operationName(trace.operation)).toBe("generate");
       expect(hasPromptLikeInput(trace.parent?.input)).toBe(true);
       expect(
@@ -634,6 +728,9 @@ export function defineAISDKInstrumentationAssertions(options: {
         completion_tokens: expect.any(Number),
         prompt_tokens: expect.any(Number),
       });
+      expect(trace.parent?.metrics?.completion_tokens).toBeUndefined();
+      expect(trace.parent?.metrics?.prompt_tokens).toBeUndefined();
+      expect(trace.parent?.metrics?.tokens).toBeUndefined();
       expect(operationName(trace.operation)).toBe("stream");
       expect(hasPromptLikeInput(trace.parent?.input)).toBe(true);
       expect(
@@ -644,7 +741,67 @@ export function defineAISDKInstrumentationAssertions(options: {
           "toolCalls",
         ]),
       ).toBe(true);
+      expect(extractFinishReason(trace.parent)).toEqual(expect.any(String));
+      const output = extractOutputRecord(trace.parent);
+      expect(output).toBeDefined();
+      if (output) {
+        const finalText = output.text ?? output._output;
+        expect(typeof finalText).toBe("string");
+        expect(String(finalText).length).toBeGreaterThan(0);
+      }
     });
+
+    if (options.supportsOutputObjectScenario) {
+      test(
+        "captures Output.object schema on generateText()",
+        testConfig,
+        () => {
+          const root = findLatestSpan(events, ROOT_NAME);
+          const trace = findOutputObjectTrace(events);
+
+          expectOperationParentedByRoot(trace.operation, root);
+          expectAISDKParentSpan(trace.parent);
+          expect(operationName(trace.operation)).toBe("output-object");
+          const input = isRecord(trace.parent?.input)
+            ? trace.parent.input
+            : null;
+          expect(input).toBeTruthy();
+          expect(isRecord(input?.output)).toBe(true);
+
+          const outputInput = isRecord(input?.output) ? input.output : null;
+          expect(outputInput).toBeTruthy();
+          expect("response_format" in (outputInput ?? {})).toBe(true);
+          if (isRecord(outputInput?.response_format)) {
+            expect(typeof outputInput.response_format.type).toBe("string");
+            expect(outputInput.response_format.schema).toBeDefined();
+          }
+        },
+      );
+    }
+
+    if (options.supportsAttachmentScenario) {
+      test(
+        "captures file attachment normalization in input",
+        testConfig,
+        () => {
+          const root = findLatestSpan(events, ROOT_NAME);
+          const trace = findAttachmentTrace(events);
+
+          expectOperationParentedByRoot(trace.operation, root);
+          expectAISDKParentSpan(trace.parent);
+          expect(operationName(trace.operation)).toBe("attachment");
+          const attachmentRef = extractFileAttachmentReference(
+            trace.parent?.input,
+          );
+          expect(attachmentRef).toBeDefined();
+          expect(attachmentRef).toMatchObject({
+            content_type: "text/plain",
+            key: expect.any(String),
+            type: "braintrust_attachment",
+          });
+        },
+      );
+    }
 
     test("captures trace for generateText() with tools", testConfig, () => {
       const root = findLatestSpan(events, ROOT_NAME);
@@ -763,6 +920,28 @@ export function defineAISDKInstrumentationAssertions(options: {
         expect(trace.modelChildren.length).toBeGreaterThanOrEqual(1);
         expect(trace.latestChild?.output).toBeDefined();
       });
+    }
+
+    if (options.supportsDenyOutputOverrideScenario) {
+      test(
+        "captures denyOutputPaths override on instrumentation events",
+        testConfig,
+        () => {
+          const root = findLatestSpan(events, ROOT_NAME);
+          const trace = findDenyOutputOverrideTrace(events);
+
+          expectOperationParentedByRoot(trace.operation, root);
+          expectAISDKParentSpan(trace.parent);
+          expect(operationName(trace.operation)).toBe("deny-output-override");
+
+          const output = extractOutputRecord(trace.parent);
+          expect(output).toBeDefined();
+          if (output) {
+            expect([undefined, "<omitted>"]).toContain(output.text);
+            expect([undefined, "<omitted>"]).toContain(output._output);
+          }
+        },
+      );
     }
 
     test("matches the shared span snapshot", testConfig, async () => {

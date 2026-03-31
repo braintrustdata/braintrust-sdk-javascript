@@ -54,6 +54,9 @@ const DEFAULT_DENY_OUTPUT_PATHS: string[] = [
 
 const AUTO_PATCHED_MODEL = Symbol.for("braintrust.ai-sdk.auto-patched-model");
 const AUTO_PATCHED_TOOL = Symbol.for("braintrust.ai-sdk.auto-patched-tool");
+const RUNTIME_DENY_OUTPUT_PATHS = Symbol.for(
+  "braintrust.ai-sdk.deny-output-paths",
+);
 
 /**
  * AI SDK plugin that subscribes to instrumentation channels
@@ -282,10 +285,37 @@ export class AISDKPlugin extends BasePlugin {
 }
 
 function resolveDenyOutputPaths(
-  event: { denyOutputPaths?: string[] } | undefined,
+  event:
+    | {
+        arguments?: ArrayLike<unknown>;
+        denyOutputPaths?: string[];
+      }
+    | undefined,
   defaultDenyOutputPaths: string[],
 ): string[] {
-  return event?.denyOutputPaths ?? defaultDenyOutputPaths;
+  if (Array.isArray(event?.denyOutputPaths)) {
+    return event.denyOutputPaths;
+  }
+
+  const firstArgument =
+    event?.arguments && event.arguments.length > 0
+      ? event.arguments[0]
+      : undefined;
+  if (!firstArgument || typeof firstArgument !== "object") {
+    return defaultDenyOutputPaths;
+  }
+
+  const runtimeDenyOutputPaths = (
+    firstArgument as Record<string | symbol, unknown>
+  )[RUNTIME_DENY_OUTPUT_PATHS];
+  if (
+    Array.isArray(runtimeDenyOutputPaths) &&
+    runtimeDenyOutputPaths.every((path) => typeof path === "string")
+  ) {
+    return runtimeDenyOutputPaths;
+  }
+
+  return defaultDenyOutputPaths;
 }
 
 interface ProcessInputSyncResult {
