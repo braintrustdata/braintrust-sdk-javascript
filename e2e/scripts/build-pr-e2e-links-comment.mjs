@@ -38,12 +38,32 @@ function markdownInlineCode(value) {
   return `\`${String(value).replaceAll("`", "\\`")}\``;
 }
 
-function scenarioFilterExpression(metadataScenario, testRunIds) {
-  const runIdPredicates = testRunIds
+function scenarioPredicate(metadataScenario) {
+  return `metadata.scenario = ${quoteFilterValue(metadataScenario)}`;
+}
+
+function testRunIdPredicate(testRunIds) {
+  return testRunIds
     .map((id) => `metadata.testRunId = ${quoteFilterValue(id)}`)
     .join(" OR ");
+}
 
-  return `metadata.scenario = ${quoteFilterValue(metadataScenario)} AND (${runIdPredicates})`;
+function btqlFilterClause(predicate) {
+  const encoded = encodeURIComponent(predicate);
+  return {
+    label: encoded,
+    originType: "btql",
+    text: encoded,
+  };
+}
+
+function buildSearchParam(metadataScenario, testRunIds) {
+  return JSON.stringify({
+    filter: [
+      btqlFilterClause(scenarioPredicate(metadataScenario)),
+      btqlFilterClause(testRunIdPredicate(testRunIds)),
+    ],
+  });
 }
 
 async function readScenarioConfig(configPath) {
@@ -240,6 +260,7 @@ function buildLogsUrl({ appUrl, orgName, projectName, search }) {
     `/app/${encodeURIComponent(orgName)}/p/${encodeURIComponent(projectName)}/logs`,
     appUrl,
   );
+  url.searchParams.set("tvt", "trace");
   url.searchParams.set("search", search);
   return url.toString();
 }
@@ -295,7 +316,7 @@ function buildCommentBody(options) {
       return;
     }
 
-    const search = scenarioFilterExpression(metadataScenario, observedRunIds);
+    const search = buildSearchParam(metadataScenario, observedRunIds);
     const logsUrl = buildLogsUrl({
       appUrl: options.appPublicUrl,
       orgName: options.orgName,
