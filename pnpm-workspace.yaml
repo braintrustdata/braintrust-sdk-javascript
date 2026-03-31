@@ -5,16 +5,16 @@ packages:
   - js/src/wrappers/*
   - "!js/vendor/**"
 
-ignoredBuiltDependencies:
-  - "@swc/core"
-  - esbuild
-  - msw
-  - protobufjs
+allowBuilds:
+  "@swc/core": false
+  esbuild: false
+  msw: false
+  protobufjs: false
 
-strictDepBuilds: true
 blockExoticSubdeps: true
+minimumReleaseAge: 4320 # 3 days (in minutes)
+strictDepBuilds: true
 trustPolicy: no-downgrade
 # Ignore the check for packages published more than 30 days ago (pnpm 10.27+)
 # Useful for older packages that pre-date provenance support
 trustPolicyIgnoreAfter: 43200 # minutes (30 days)
-minimumReleaseAge: 4320 # 3 days (in minutes)
