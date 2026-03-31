@@ -30,6 +30,7 @@ async function runAnthropicInstrumentationScenario(
     decorateClient,
     useBetaMessages = true,
     useMessagesStreamHelper = true,
+    supportsThinking = false,
   } = {},
 ) {
   const imageBase64 = (
@@ -196,6 +197,32 @@ async function runAnthropicInstrumentationScenario(
           ],
         });
       });
+
+      if (supportsThinking) {
+        await runOperation(
+          "anthropic-stream-thinking-operation",
+          "stream-thinking",
+          async () => {
+            const stream = await client.messages.create({
+              model: "claude-sonnet-4-5",
+              max_tokens: 2048,
+              temperature: 1,
+              thinking: {
+                type: "enabled",
+                budget_tokens: 1024,
+              },
+              stream: true,
+              messages: [
+                {
+                  role: "user",
+                  content: "What is 2+2? Reply with the number only.",
+                },
+              ],
+            });
+            await collectAsync(stream);
+          },
+        );
+      }
 
       if (useBetaMessages) {
         await runOperation(
