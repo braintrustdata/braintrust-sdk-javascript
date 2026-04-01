@@ -3836,7 +3836,43 @@ export type FullInitDatasetOptions<IsLegacyDataset extends boolean> = {
   project?: string;
 } & InitDatasetOptions<IsLegacyDataset>;
 
+async function getDatasetSnapshots({
+  state,
+  datasetId,
+}: {
+  state: BraintrustState;
+  datasetId: string;
+}): Promise<DatasetSnapshot[]> {
+  return datasetSnapshotResponseSchema.array().parse(
+    await state.appConn().get_json("api/dataset_snapshot/get", {
+      dataset_id: datasetId,
+    }),
+  );
+}
+
 async function resolveDatasetVersion({
+  state,
+  datasetId,
+  version,
+}: {
+  state: BraintrustState;
+  datasetId: string;
+  version: string;
+}): Promise<string> {
+  // If it looks like a numeric xact_id, use it directly.
+  if (/^\d+$/.test(version)) {
+    return version;
+  }
+
+  const snapshots = await getDatasetSnapshots({ state, datasetId });
+  const match = snapshots.find((s) => s.name === version);
+  if (!match) {
+    throw new Error(`Dataset snapshot "${version}" not found for ${datasetId}`);
+  }
+  return match.xact_id;
+}
+
+async function resolveDatasetVersionForMetadata({
   state,
   lazyMetadata,
   version,
@@ -3844,29 +3880,13 @@ async function resolveDatasetVersion({
   state: BraintrustState;
   lazyMetadata: LazyValue<ProjectDatasetMetadata>;
   version: string;
-}): Promise<string | undefined> {
-  // If it looks like a numeric xact_id, use it directly.
-  if (/^\d+$/.test(version)) {
-    return version;
-  }
-  // Otherwise, treat it as a snapshot name and resolve via API.
+}): Promise<string> {
   const metadata = await lazyMetadata.get();
-  const datasetId = metadata.dataset.id;
-  try {
-    const snapshots = datasetSnapshotResponseSchema.array().parse(
-      await state.appConn().get_json("api/dataset_snapshot/get", {
-        dataset_id: datasetId,
-      }),
-    );
-    const match = snapshots.find((s) => s.name === version);
-    if (match) {
-      return match.xact_id;
-    }
-  } catch (e) {
-    console.warn(e);
-    // Fall through to HEAD on error.
-  }
-  return undefined;
+  return await resolveDatasetVersion({
+    state,
+    datasetId: metadata.dataset.id,
+    version,
+  });
 }
 
 async function resolveDatasetEnvironment({
@@ -3877,19 +3897,14 @@ async function resolveDatasetEnvironment({
   state: BraintrustState;
   datasetId: string;
   environment: string;
-}): Promise<string | undefined> {
-  try {
-    const response = await state
-      .apiConn()
-      .get_json(
-        `environment-object/dataset/${datasetId}/${encodeURIComponent(environment)}`,
-      );
-    return z.object({ object_version: z.string() }).parse(response)
-      .object_version;
-  } catch (e) {
-    console.warn(e);
-    return undefined;
-  }
+}): Promise<string> {
+  const response = await state
+    .apiConn()
+    .get_json(
+      `environment-object/dataset/${datasetId}/${encodeURIComponent(environment)}`,
+    );
+  return z.object({ object_version: z.string() }).parse(response)
+    .object_version;
 }
 
 async function resolveDatasetEnvironmentForMetadata({
@@ -3900,7 +3915,7 @@ async function resolveDatasetEnvironmentForMetadata({
   state: BraintrustState;
   lazyMetadata: LazyValue<ProjectDatasetMetadata>;
   environment: string;
-}): Promise<string | undefined> {
+}): Promise<string> {
   const metadata = await lazyMetadata.get();
   return await resolveDatasetEnvironment({
     state,
@@ -3934,9 +3949,19 @@ async function serializeDatasetForExperiment({
       };
     }
 
+    if (dataset.version !== undefined) {
+      return {
+        datasetId: dataset.id,
+        datasetVersion: await resolveDatasetVersion({
+          state,
+          datasetId: dataset.id,
+          version: dataset.version,
+        }),
+      };
+    }
+
     return {
       datasetId: dataset.id,
-      datasetVersion: dataset.version,
     };
   }
 
@@ -3952,9 +3977,19 @@ async function serializeDatasetForExperiment({
     };
   }
 
+  if (evalData.dataset_version !== undefined) {
+    return {
+      datasetId: evalData.dataset_id,
+      datasetVersion: await resolveDatasetVersion({
+        state,
+        datasetId: evalData.dataset_id,
+        version: evalData.dataset_version,
+      }),
+    };
+  }
+
   return {
     datasetId: evalData.dataset_id,
-    datasetVersion: evalData.dataset_version,
   };
 }
 
@@ -3965,8 +4000,8 @@ async function serializeDatasetForExperiment({
  * @param options.project The name of the project to create the dataset in. Must specify at least one of `project` or `projectId`.
  * @param options.dataset The name of the dataset to create. If not specified, a name will be generated automatically.
  * @param options.description An optional description of the dataset.
- * @param options.version Pin the dataset to a specific version. Can be a numeric xact_id or a snapshot name. If a snapshot name is provided and no matching snapshot is found, falls back to the latest version.
- * @param options.environment Pin the dataset to the version tagged with this environment slug. If no version is tagged with the environment, falls back to the latest version.
+ * @param options.version Pin the dataset to a specific version. Can be a numeric xact_id or a snapshot name. Snapshot names are resolved to a concrete xact_id and throw if no matching snapshot exists.
+ * @param options.environment Pin the dataset to the version tagged with this environment slug. Throws if the environment lookup fails.
  * @param options.appUrl The URL of the Braintrust App. Defaults to https://www.braintrust.dev.
  * @param options.apiKey The API key to use. If the parameter is not specified, will try to use the `BRAINTRUST_API_KEY` environment variable. If no API key is specified, will prompt the user to login.
  * @param options.orgName (Optional) The name of a specific organization to connect to. This is useful if you belong to multiple.
@@ -4084,7 +4119,7 @@ export function initDataset<
   const resolvedVersion =
     version !== undefined
       ? new LazyValue(async () => {
-          return await resolveDatasetVersion({
+          return await resolveDatasetVersionForMetadata({
             state,
             lazyMetadata,
             version,
@@ -7060,6 +7095,7 @@ export class Dataset<
     dataset_environment?: string;
     _internal_btql?: Record<string, unknown>;
   }> {
+    await this.getState();
     const metadata = await this.lazyMetadata.get();
 
     return {
