@@ -3969,11 +3969,7 @@ async function serializeDatasetForExperiment({
   if (evalData.dataset_environment !== undefined) {
     return {
       datasetId: evalData.dataset_id,
-      datasetVersion: await resolveDatasetEnvironment({
-        state,
-        datasetId: evalData.dataset_id,
-        environment: evalData.dataset_environment,
-      }),
+      datasetVersion: await dataset.version(),
     };
   }
 
@@ -5842,7 +5838,9 @@ function validateAndSanitizeExperimentLogFullArgs(
     throw new Error("scores must be specified");
   }
 
-  if (!hasDataset && event.datasetRecordId !== undefined) {
+  if (hasDataset && event.datasetRecordId === undefined) {
+    throw new Error("datasetRecordId must be specified when using a dataset");
+  } else if (!hasDataset && event.datasetRecordId !== undefined) {
     throw new Error(
       "datasetRecordId cannot be specified when not using a dataset",
     );
