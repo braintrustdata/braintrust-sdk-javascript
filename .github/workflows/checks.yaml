@@ -23,8 +23,6 @@ jobs:
           node-version-file: .tool-versions
       - name: Setup pnpm
         uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
-        with:
-          version: 10.33.0
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Check formatting
@@ -40,8 +38,6 @@ jobs:
           node-version-file: .tool-versions
       - name: Setup pnpm
         uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
-        with:
-          version: 10.33.0
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Lint
@@ -57,8 +53,6 @@ jobs:
           node-version-file: .tool-versions
       - name: Setup pnpm
         uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
-        with:
-          version: 10.33.0
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Check typings
@@ -74,8 +68,6 @@ jobs:
           node-version-file: .tool-versions
       - name: Setup pnpm
         uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
-        with:
-          version: 10.33.0
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Check dead code
@@ -104,8 +96,6 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - name: Setup pnpm
         uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
-        with:
-          version: 10.33.0
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Build
@@ -130,8 +120,6 @@ jobs:
           registry-url: "https://registry.npmjs.org"
       - name: Setup pnpm
         uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
-        with:
-          version: 10.33.0
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Build
@@ -224,8 +212,6 @@ jobs:
           node-version-file: .tool-versions
       - name: Setup pnpm
         uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
-        with:
-          version: 10.33.0
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Run hermetic e2e tests
@@ -248,8 +234,6 @@ jobs:
           registry-url: "https://registry.npmjs.org"
       - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
         name: Install pnpm
-        with:
-          version: 10.33.0
       - name: Get published braintrust version for cache key
         id: published-version
         shell: bash
@@ -338,8 +322,6 @@ jobs:
           node-version-file: .tool-versions
       - name: Setup pnpm
         uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
-        with:
-          version: 10.33.0
       - name: Download build artifacts
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
@@ -416,8 +398,6 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - name: Setup pnpm
         uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
-        with:
-          version: 10.33.0
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Build braintrust
@@ -444,8 +424,6 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - name: Setup pnpm
         uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
-        with:
-          version: 10.33.0
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Build braintrust
@@ -497,8 +475,6 @@ jobs:
           fetch-depth: 1
       - name: Setup pnpm
         uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
-        with:
-          version: 10.33.0
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:

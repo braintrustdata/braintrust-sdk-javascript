@@ -38,8 +38,6 @@ jobs:
           registry-url: "https://registry.npmjs.org"
       - name: Setup pnpm
         uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
-        with:
-          version: 10.33.0
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Build
@@ -69,8 +67,6 @@ jobs:
           node-version-file: .tool-versions
       - name: Setup pnpm
         uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
-        with:
-          version: 10.33.0
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Prepare e2e run context directory
@@ -100,8 +96,6 @@ jobs:
           cat "$SUMMARY_PATH" >> "$GITHUB_STEP_SUMMARY"
 
   e2e-canary:
-    # if: ${{ github.event_name == 'pull_request' }}
-    if: false
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
@@ -118,8 +112,6 @@ jobs:
           node-version-file: .tool-versions
       - name: Setup pnpm
         uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
-        with:
-          version: 10.33.0
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Run canary e2e tests
