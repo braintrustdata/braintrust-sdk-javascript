@@ -17,6 +17,7 @@ const anthropicScenarios = await Promise.all(
       dependencyName: "anthropic-sdk-v0273",
       snapshotName: "anthropic-v0273",
       supportsBetaMessages: false,
+      supportsThinking: false,
       wrapperEntry: "scenario.anthropic-v0273.ts",
     },
     {
@@ -24,6 +25,7 @@ const anthropicScenarios = await Promise.all(
       dependencyName: "anthropic-sdk-v0390",
       snapshotName: "anthropic-v0390",
       supportsBetaMessages: true,
+      supportsThinking: false,
       wrapperEntry: "scenario.anthropic-v0390.ts",
     },
     {
@@ -31,6 +33,7 @@ const anthropicScenarios = await Promise.all(
       dependencyName: "anthropic-sdk-v0712",
       snapshotName: "anthropic-v0712",
       supportsBetaMessages: true,
+      supportsThinking: true,
       wrapperEntry: "scenario.anthropic-v0712.ts",
     },
     {
@@ -38,6 +41,7 @@ const anthropicScenarios = await Promise.all(
       dependencyName: "anthropic-sdk-v0730",
       snapshotName: "anthropic-v0730",
       supportsBetaMessages: true,
+      supportsThinking: true,
       wrapperEntry: "scenario.anthropic-v0730.ts",
     },
     {
@@ -45,6 +49,7 @@ const anthropicScenarios = await Promise.all(
       dependencyName: "anthropic-sdk-v0780",
       snapshotName: "anthropic-v0780",
       supportsBetaMessages: true,
+      supportsThinking: true,
       wrapperEntry: "scenario.anthropic-v0780.ts",
     },
     {
@@ -52,6 +57,7 @@ const anthropicScenarios = await Promise.all(
       dependencyName: "@anthropic-ai/sdk",
       snapshotName: "anthropic-v0800",
       supportsBetaMessages: true,
+      supportsThinking: true,
       wrapperEntry: "scenario.ts",
     },
   ].map(async (scenario) => ({
@@ -70,12 +76,14 @@ for (const scenario of anthropicScenarios) {
       runScenario: async ({ runScenarioDir }) => {
         await runScenarioDir({
           entry: scenario.wrapperEntry,
+          runContext: { variantKey: scenario.snapshotName },
           scenarioDir,
           timeoutMs: TIMEOUT_MS,
         });
       },
       snapshotName: scenario.snapshotName,
       supportsBetaMessages: scenario.supportsBetaMessages,
+      supportsThinking: scenario.supportsThinking,
       testFileUrl: import.meta.url,
       timeoutMs: TIMEOUT_MS,
     });
@@ -86,12 +94,14 @@ for (const scenario of anthropicScenarios) {
         await runNodeScenarioDir({
           entry: scenario.autoEntry,
           nodeArgs: ["--import", "braintrust/hook.mjs"],
+          runContext: { variantKey: scenario.snapshotName },
           scenarioDir,
           timeoutMs: TIMEOUT_MS,
         });
       },
       snapshotName: scenario.snapshotName,
       supportsBetaMessages: scenario.supportsBetaMessages,
+      supportsThinking: scenario.supportsThinking,
       testFileUrl: import.meta.url,
       timeoutMs: TIMEOUT_MS,
     });

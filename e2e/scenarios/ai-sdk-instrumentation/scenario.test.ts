@@ -41,6 +41,7 @@ for (const scenario of aiSDKScenarios) {
       runScenario: async ({ runScenarioDir }) => {
         await runScenarioDir({
           entry: scenario.wrapperEntry,
+          runContext: { variantKey: scenario.snapshotName },
           scenarioDir,
           timeoutMs: AI_SDK_SCENARIO_TIMEOUT_MS,
         });
@@ -63,6 +64,7 @@ for (const scenario of aiSDKScenarios) {
         await runNodeScenarioDir({
           entry: scenario.autoEntry,
           nodeArgs: ["--import", "braintrust/hook.mjs"],
+          runContext: { variantKey: scenario.snapshotName },
           scenarioDir,
           timeoutMs: AI_SDK_SCENARIO_TIMEOUT_MS,
         });

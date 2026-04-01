@@ -75,6 +75,12 @@ type OpenAILike = OpenAIV4Client;
 export function wrapOpenAIv4<T extends OpenAILike>(openai: T): T {
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   const typedOpenai = openai as OpenAIV4Client;
+  // Recover `this` for fallback methods so private fields and internal slots
+  // keep seeing the original OpenAI instance instead of the proxy.
+  const privateMethodWorkaroundCache = new WeakMap<
+    (...args: unknown[]) => unknown,
+    (...args: unknown[]) => unknown
+  >();
 
   const completionProxy = new Proxy(typedOpenai.chat.completions, {
     get(target, name, receiver) {
@@ -143,8 +149,8 @@ export function wrapOpenAIv4<T extends OpenAILike>(openai: T): T {
   }
 
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  return new Proxy(typedOpenai, {
-    get(target, name, receiver) {
+  const topLevelProxy = new Proxy(typedOpenai, {
+    get(target, name) {
       switch (name) {
         case "chat":
           return chatProxy;
@@ -159,9 +165,44 @@ export function wrapOpenAIv4<T extends OpenAILike>(openai: T): T {
       if (name === "beta" && betaProxy) {
         return betaProxy;
       }
-      return Reflect.get(target, name, receiver);
+
+      // The following rather convoluted code is a workaround for https://github.com/braintrustdata/braintrust-sdk-javascript/issues/1693
+      // The problem is that Proxies are inherently difficult to work with native private class fields because when a
+      // class function accesses a private field, JS checks whether `this` is equal to the actual instance with the
+      // private field and if that's not the case, it throws a `TypeError`.
+      // We could have also done `if (typeof value === "function") return value.bind(target);`, but it would have
+      // created a new function on each function access, so we are caching, and also it would have always stomped on
+      // someone passing another `this` which may clash with different instrumentations.
+
+      // Use the real client as receiver when reading fallback members.
+      const value = Reflect.get(target, name, target);
+      if (typeof value !== "function") {
+        return value;
+      }
+
+      const cachedValue = privateMethodWorkaroundCache.get(value);
+      if (cachedValue) {
+        return cachedValue;
+      }
+
+      const thisBoundValue = function (
+        this: unknown,
+        ...args: unknown[]
+      ): unknown {
+        // Calling through the proxy would set `this` to the proxy and break
+        // native private-field methods, so recover the original target.
+        const thisArg = this === topLevelProxy ? target : this;
+        const output = Reflect.apply(value, thisArg, args);
+        // Preserve chaining on wrapped clients (method returns `this`).
+        return output === target ? topLevelProxy : output;
+      };
+
+      privateMethodWorkaroundCache.set(value, thisBoundValue);
+      return thisBoundValue;
     },
-  }) as T;
+  });
+
+  return topLevelProxy as T;
 }
 
 type SpanInfo = {

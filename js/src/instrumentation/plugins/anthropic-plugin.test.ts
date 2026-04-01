@@ -471,6 +471,230 @@ describe("aggregateAnthropicStreamChunks", () => {
 
     expect(result.output).toBe("Hi");
   });
+
+  it("should capture thinking content blocks from thinking_delta events", () => {
+    const chunks = [
+      {
+        type: "content_block_start",
+        index: 0,
+        content_block: { type: "thinking" },
+      },
+      {
+        type: "content_block_delta",
+        index: 0,
+        delta: { type: "thinking_delta", thinking: "Let me think..." },
+      },
+      {
+        type: "content_block_delta",
+        index: 0,
+        delta: { type: "thinking_delta", thinking: " Yes, I understand." },
+      },
+      { type: "content_block_stop", index: 0 },
+      {
+        type: "content_block_start",
+        index: 1,
+        content_block: { type: "text" },
+      },
+      {
+        type: "content_block_delta",
+        index: 1,
+        delta: { type: "text_delta", text: "The answer is 42." },
+      },
+      { type: "content_block_stop", index: 1 },
+    ];
+
+    const result = aggregateAnthropicStreamChunks(chunks);
+
+    expect(result.output).toEqual({
+      content: [
+        { type: "thinking", thinking: "Let me think... Yes, I understand." },
+        { type: "text", text: "The answer is 42." },
+      ],
+    });
+  });
+
+  it("should capture citations from citations_delta events and attach to text blocks", () => {
+    const citation1 = {
+      type: "char_location",
+      cited_text: "source text",
+      document_index: 0,
+      start_char_index: 0,
+      end_char_index: 11,
+    };
+    const chunks = [
+      {
+        type: "content_block_start",
+        index: 0,
+        content_block: { type: "text" },
+      },
+      {
+        type: "content_block_delta",
+        index: 0,
+        delta: { type: "text_delta", text: "According to the document." },
+      },
+      {
+        type: "content_block_delta",
+        index: 0,
+        delta: { type: "citations_delta", citation: citation1 },
+      },
+      { type: "content_block_stop", index: 0 },
+    ];
+
+    const result = aggregateAnthropicStreamChunks(chunks);
+
+    expect(result.output).toEqual({
+      content: [
+        {
+          type: "text",
+          text: "According to the document.",
+          citations: [citation1],
+        },
+      ],
+    });
+  });
+
+  it("should preserve server_tool_use blocks without deltas", () => {
+    const chunks = [
+      {
+        type: "content_block_start",
+        index: 0,
+        content_block: {
+          type: "server_tool_use",
+          id: "srvtoolu_abc123",
+          name: "web_search",
+          input: { query: "braintrust" },
+        },
+      },
+      { type: "content_block_stop", index: 0 },
+    ];
+
+    const result = aggregateAnthropicStreamChunks(chunks);
+
+    expect(result.output).toEqual({
+      content: [
+        {
+          type: "server_tool_use",
+          id: "srvtoolu_abc123",
+          name: "web_search",
+          input: { query: "braintrust" },
+        },
+      ],
+    });
+  });
+
+  it("should preserve web_search_tool_result blocks without deltas", () => {
+    const chunks = [
+      {
+        type: "content_block_start",
+        index: 0,
+        content_block: {
+          type: "web_search_tool_result",
+          tool_use_id: "srvtoolu_abc123",
+          content: [
+            {
+              type: "web_search_result",
+              url: "https://example.com",
+              title: "Example",
+            },
+          ],
+        },
+      },
+      { type: "content_block_stop", index: 0 },
+    ];
+
+    const result = aggregateAnthropicStreamChunks(chunks);
+
+    expect(result.output).toEqual({
+      content: [
+        {
+          type: "web_search_tool_result",
+          tool_use_id: "srvtoolu_abc123",
+          content: [
+            {
+              type: "web_search_result",
+              url: "https://example.com",
+              title: "Example",
+            },
+          ],
+        },
+      ],
+    });
+  });
+
+  it("should preserve unknown future content block types", () => {
+    const chunks = [
+      {
+        type: "content_block_start",
+        index: 0,
+        content_block: { type: "some_future_type", data: "value" },
+      },
+      { type: "content_block_stop", index: 0 },
+    ];
+
+    const result = aggregateAnthropicStreamChunks(chunks);
+
+    expect(result.output).toEqual({
+      content: [{ type: "some_future_type", data: "value" }],
+    });
+  });
+
+  it("should handle mixed content: thinking + text + tool_use", () => {
+    const chunks = [
+      {
+        type: "content_block_start",
+        index: 0,
+        content_block: { type: "thinking" },
+      },
+      {
+        type: "content_block_delta",
+        index: 0,
+        delta: { type: "thinking_delta", thinking: "Reasoning..." },
+      },
+      { type: "content_block_stop", index: 0 },
+      {
+        type: "content_block_start",
+        index: 1,
+        content_block: { type: "text" },
+      },
+      {
+        type: "content_block_delta",
+        index: 1,
+        delta: { type: "text_delta", text: "I'll use a tool." },
+      },
+      { type: "content_block_stop", index: 1 },
+      {
+        type: "content_block_start",
+        index: 2,
+        content_block: {
+          type: "tool_use",
+          id: "tu_123",
+          name: "calc",
+          input: {},
+        },
+      },
+      {
+        type: "content_block_delta",
+        index: 2,
+        delta: { type: "input_json_delta", partial_json: '{"x":' },
+      },
+      {
+        type: "content_block_delta",
+        index: 2,
+        delta: { type: "input_json_delta", partial_json: "1}" },
+      },
+      { type: "content_block_stop", index: 2 },
+    ];
+
+    const result = aggregateAnthropicStreamChunks(chunks);
+
+    expect(result.output).toEqual({
+      content: [
+        { type: "thinking", thinking: "Reasoning..." },
+        { type: "text", text: "I'll use a tool." },
+        { type: "tool_use", id: "tu_123", name: "calc", input: { x: 1 } },
+      ],
+    });
+  });
 });
 
 describe("processAttachmentsInInput", () => {

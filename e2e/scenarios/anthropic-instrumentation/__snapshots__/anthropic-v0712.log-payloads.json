@@ -304,6 +304,56 @@
   },
   {
     "metadata": {
+      "operation": "stream-thinking"
+    },
+    "metrics": {
+      "end": 0,
+      "start": 0
+    },
+    "name": "anthropic-stream-thinking-operation",
+    "type": null
+  },
+  {
+    "input": [
+      {
+        "content": "What is 2+2? Reply with the number only.",
+        "role": "user"
+      }
+    ],
+    "metadata": {
+      "model": "claude-sonnet-4-5",
+      "provider": "anthropic",
+      "stop_reason": "end_turn",
+      "stop_sequence": null
+    },
+    "metrics": {
+      "completion_tokens": 0,
+      "end": 0,
+      "prompt_cache_creation_tokens": 0,
+      "prompt_cached_tokens": 0,
+      "prompt_tokens": 49,
+      "start": 0,
+      "time_to_first_token": 0,
+      "tokens": 0
+    },
+    "name": "anthropic.messages.create",
+    "output": {
+      "content": [
+        {
+          "thinking": "<thinking-content>",
+          "type": "thinking"
+        },
+        {
+          "text": "<thinking-answer>",
+          "type": "text"
+        }
+      ],
+      "role": "assistant"
+    },
+    "type": "llm"
+  },
+  {
+    "metadata": {
       "operation": "beta-create"
     },
     "metrics": {

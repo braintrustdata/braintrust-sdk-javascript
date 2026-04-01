@@ -51,6 +51,55 @@ function parseScenarioResponses(stdout: string): RuntimeResponse[] {
   return JSON.parse(line.slice(RESULT_MARKER.length)) as RuntimeResponse[];
 }
 
+function isObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function normalizeProjectRegisterRequestSummary(
+  summary: Record<string, unknown>,
+) {
+  if (summary.path !== "/api/project/register") {
+    return summary;
+  }
+
+  const orgId =
+    isObject(summary.jsonBody) && typeof summary.jsonBody.org_id === "string"
+      ? summary.jsonBody.org_id
+      : "mock-org-id";
+
+  return {
+    ...summary,
+    jsonBody: {
+      org_id: orgId,
+      project_name: "<project_name>",
+    },
+    rawBody: JSON.stringify({
+      project_name: "<project_name>",
+      org_id: orgId,
+    }),
+  };
+}
+
+function dedupeProjectRegisterRequestSummaries(
+  summaries: Record<string, unknown>[],
+) {
+  const seen = new Set<string>();
+
+  return summaries.filter((summary) => {
+    if (summary.path !== "/api/project/register") {
+      return true;
+    }
+
+    const key = JSON.stringify(summary);
+    if (seen.has(key)) {
+      return false;
+    }
+
+    seen.add(key);
+    return true;
+  });
+}
+
 test(
   "nextjs-instrumentation builds a Next.js app and captures Node and Edge runtime traces",
   {
@@ -187,29 +236,31 @@ test(
 
         await expect(
           formatJsonFileSnapshot(
-            requests.map((request) => {
-              const summary = summarizeRequest(request, {
-                includeHeaders: ["content-type", "x-bt-parent"],
-                normalizeJsonRawBody: request.path === "/logs3",
-              }) as Record<string, unknown>;
+            dedupeProjectRegisterRequestSummaries(
+              requests.map((request) => {
+                const summary = summarizeRequest(request, {
+                  includeHeaders: ["content-type", "x-bt-parent"],
+                  normalizeJsonRawBody: request.path === "/logs3",
+                }) as Record<string, unknown>;
 
-              if (request.path === "/otel/v1/traces") {
-                return {
-                  ...summary,
-                  jsonBody: "<omitted>",
-                  rawBody: "<omitted>",
-                  headers:
-                    summary.headers && typeof summary.headers === "object"
-                      ? {
-                          ...(summary.headers as Record<string, unknown>),
-                          "x-bt-parent": "<x-bt-parent>",
-                        }
-                      : summary.headers,
-                };
-              }
+                if (request.path === "/otel/v1/traces") {
+                  return {
+                    ...summary,
+                    jsonBody: "<omitted>",
+                    rawBody: "<omitted>",
+                    headers:
+                      summary.headers && typeof summary.headers === "object"
+                        ? {
+                            ...(summary.headers as Record<string, unknown>),
+                            "x-bt-parent": "<x-bt-parent>",
+                          }
+                        : summary.headers,
+                  };
+                }
 
-              return summary;
-            }) as Json,
+                return normalizeProjectRegisterRequestSummary(summary);
+              }),
+            ) as Json,
           ),
         ).toMatchFileSnapshot(
           resolveFileSnapshotPath(import.meta.url, "request-flow.json"),

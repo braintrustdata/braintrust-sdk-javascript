@@ -13,11 +13,15 @@ import { ROOT_NAME, SCENARIO_NAME } from "./scenario.impl.mjs";
 
 type RunAnthropicScenario = (harness: {
   runNodeScenarioDir: (options: {
+    entry?: string;
     nodeArgs: string[];
+    runContext?: { variantKey: string };
     scenarioDir: string;
     timeoutMs: number;
   }) => Promise<unknown>;
   runScenarioDir: (options: {
+    entry?: string;
+    runContext?: { variantKey: string };
     scenarioDir: string;
     timeoutMs: number;
   }) => Promise<unknown>;
@@ -84,9 +88,42 @@ function summarizeAnthropicPayload(event: CapturedLogEvent): Json {
 
   const output = structuredClone(
     summary.output as {
-      content: Array<{ text?: string; type?: string }>;
+      content: Array<{
+        text?: string;
+        type?: string;
+        thinking?: string;
+        signature?: string;
+      }>;
     },
   );
+
+  const hasThinkingBlock = output.content.some(
+    (block) => block.type === "thinking",
+  );
+
+  if (hasThinkingBlock) {
+    for (const block of output.content) {
+      if (block.type === "thinking") {
+        block.thinking = "<thinking-content>";
+        delete block.signature;
+      } else if (block.type === "text" && typeof block.text === "string") {
+        block.text = "<thinking-answer>";
+      }
+    }
+    summary.output = output as Json;
+    // Thinking token counts vary per run (temperature=1, variable thinking depth).
+    // Zero them out so the payload snapshot is stable.
+    if (summary.metrics && typeof summary.metrics === "object") {
+      const metrics = summary.metrics as Record<string, Json>;
+      for (const key of ["completion_tokens", "tokens"]) {
+        if (key in metrics) {
+          metrics[key] = 0;
+        }
+      }
+    }
+    return summary;
+  }
+
   const textBlock = output.content.find(
     (block) => block.type === "text" && typeof block.text === "string",
   );
@@ -122,6 +159,7 @@ function summarizeAnthropicPayload(event: CapturedLogEvent): Json {
 function buildSpanSummary(
   events: CapturedLogEvent[],
   supportsBetaMessages: boolean,
+  supportsThinking: boolean,
 ): Json {
   const createOperation = findLatestSpan(events, "anthropic-create-operation");
   const attachmentOperation = findLatestSpan(
@@ -138,6 +176,10 @@ function buildSpanSummary(
     "anthropic-stream-tool-operation",
   );
   const toolOperation = findLatestSpan(events, "anthropic-tool-operation");
+  const thinkingStreamOperation = findLatestSpan(
+    events,
+    "anthropic-stream-thinking-operation",
+  );
   const betaCreateOperation = findLatestSpan(
     events,
     "anthropic-beta-create-operation",
@@ -174,6 +216,14 @@ function buildSpanSummary(
       findAnthropicSpan(events, toolOperation?.span.id, [
         "anthropic.messages.create",
       ]),
+      ...(supportsThinking
+        ? [
+            thinkingStreamOperation,
+            findAnthropicSpan(events, thinkingStreamOperation?.span.id, [
+              "anthropic.messages.create",
+            ]),
+          ]
+        : []),
       ...(supportsBetaMessages
         ? [
             betaCreateOperation,
@@ -202,6 +252,7 @@ function buildSpanSummary(
 function buildPayloadSummary(
   events: CapturedLogEvent[],
   supportsBetaMessages: boolean,
+  supportsThinking: boolean,
 ): Json {
   const createOperation = findLatestSpan(events, "anthropic-create-operation");
   const attachmentOperation = findLatestSpan(
@@ -218,6 +269,10 @@ function buildPayloadSummary(
     "anthropic-stream-tool-operation",
   );
   const toolOperation = findLatestSpan(events, "anthropic-tool-operation");
+  const thinkingStreamOperation = findLatestSpan(
+    events,
+    "anthropic-stream-thinking-operation",
+  );
   const betaCreateOperation = findLatestSpan(
     events,
     "anthropic-beta-create-operation",
@@ -254,6 +309,14 @@ function buildPayloadSummary(
       findAnthropicSpan(events, toolOperation?.span.id, [
         "anthropic.messages.create",
       ]),
+      ...(supportsThinking
+        ? [
+            thinkingStreamOperation,
+            findAnthropicSpan(events, thinkingStreamOperation?.span.id, [
+              "anthropic.messages.create",
+            ]),
+          ]
+        : []),
       ...(supportsBetaMessages
         ? [
             betaCreateOperation,
@@ -276,6 +339,7 @@ export function defineAnthropicInstrumentationAssertions(options: {
   name: string;
   snapshotName: string;
   supportsBetaMessages: boolean;
+  supportsThinking: boolean;
   testFileUrl: string;
   timeoutMs: number;
   runScenario: RunAnthropicScenario;
@@ -479,6 +543,40 @@ export function defineAnthropicInstrumentationAssertions(options: {
       },
     );
 
+    if (options.supportsThinking) {
+      test("captures trace for streaming extended thinking", testConfig, () => {
+        const root = findLatestSpan(events, ROOT_NAME);
+        const operation = findLatestSpan(
+          events,
+          "anthropic-stream-thinking-operation",
+        );
+        const span = findAnthropicSpan(events, operation?.span.id, [
+          "anthropic.messages.create",
+        ]);
+        const output = span?.output as
+          | { content?: Array<{ type?: string }> }
+          | undefined;
+
+        expect(operation).toBeDefined();
+        expect(span).toBeDefined();
+        expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
+        expect(span?.row.metadata).toMatchObject({
+          provider: "anthropic",
+        });
+        expect(span?.metrics).toMatchObject({
+          time_to_first_token: expect.any(Number),
+          prompt_tokens: expect.any(Number),
+          completion_tokens: expect.any(Number),
+        });
+        expect(
+          output?.content?.some((block) => block.type === "thinking"),
+        ).toBe(true);
+        expect(output?.content?.some((block) => block.type === "text")).toBe(
+          true,
+        );
+      });
+    }
+
     if (options.supportsBetaMessages) {
       test(
         "captures trace for client.beta.messages.create()",
@@ -535,7 +633,11 @@ export function defineAnthropicInstrumentationAssertions(options: {
     test("matches the shared span snapshot", testConfig, async () => {
       await expect(
         formatJsonFileSnapshot(
-          buildSpanSummary(events, options.supportsBetaMessages),
+          buildSpanSummary(
+            events,
+            options.supportsBetaMessages,
+            options.supportsThinking,
+          ),
         ),
       ).toMatchFileSnapshot(spanSnapshotPath);
     });
@@ -543,7 +645,11 @@ export function defineAnthropicInstrumentationAssertions(options: {
     test("matches the shared payload snapshot", testConfig, async () => {
       await expect(
         formatJsonFileSnapshot(
-          buildPayloadSummary(events, options.supportsBetaMessages),
+          buildPayloadSummary(
+            events,
+            options.supportsBetaMessages,
+            options.supportsThinking,
+          ),
         ),
       ).toMatchFileSnapshot(payloadSnapshotPath);
     });

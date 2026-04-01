@@ -1,5 +1,7 @@
 import { expect, test, beforeAll } from "vitest";
+import { validateParameters } from "./eval-parameters";
 import { runEvaluator } from "./framework";
+import { RemoteEvalParameters } from "./logger";
 import { z } from "zod/v3";
 import { type ProgressReporter } from "./reporters/types";
 import { configureNode } from "./node/config";
@@ -85,6 +87,59 @@ test("prompt parameter is passed correctly", async () => {
 
   expect(result.results).toHaveLength(1);
   expect(result.results[0].output).toBe("test input");
+});
+
+test("remote prompt parameter is rehydrated correctly", async () => {
+  const parameters = new RemoteEvalParameters<
+    true,
+    true,
+    {
+      main: {
+        build: (args: { input: string }) => {
+          messages: Array<{ role: string; content: string }>;
+          model?: string;
+        };
+      };
+    }
+  >({
+    id: "11111111-1111-4111-8111-111111111111",
+    _xact_id: "v1",
+    project_id: "22222222-2222-4222-8222-222222222222",
+    name: "Saved parameters",
+    slug: "saved-parameters",
+    function_type: "parameters",
+    function_data: {
+      type: "parameters",
+      data: {
+        main: {
+          prompt: {
+            type: "chat",
+            messages: [{ role: "user", content: "{{input}}" }],
+          },
+          options: {
+            model: "gpt-5-mini",
+          },
+        },
+      },
+      __schema: {
+        type: "object",
+        properties: {
+          main: {
+            type: "object",
+            "x-bt-type": "prompt",
+          },
+        },
+        additionalProperties: true,
+      },
+    },
+  });
+
+  const validated = await validateParameters({}, parameters);
+
+  expect(validated.main.build({ input: "test input" })).toMatchObject({
+    messages: [{ role: "user", content: "test input" }],
+    model: "gpt-5-mini",
+  });
 });
 
 test("custom parameter values override defaults", async () => {
