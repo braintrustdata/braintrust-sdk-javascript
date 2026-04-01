@@ -8,6 +8,7 @@
     "js"
   ],
   "scripts": {
+    "preinstall": "node -e \"const userAgent = process.env.npm_config_user_agent || ''; if (process.env.INIT_CWD === process.cwd() && !userAgent.includes('pnpm/')) { console.error('Use pnpm in this repo.'); process.exit(1); }\"",
     "build": "turbo run build",
     "check:typings": "turbo run check:typings",
     "dev": "turbo run dev",
@@ -28,6 +29,18 @@
     "lint": "turbo run lint",
     "fix:formatting": "prettier --write .",
     "fix:lint": "turbo run fix:lint"
+  },
+  "engines": {
+    "pnpm": ">=10.27.0",
+    "npm": "please-use-pnpm",
+    "yarn": "please-use-pnpm"
+  },
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": ">=10.27.0",
+      "onFail": "error"
+    }
   },
   "devDependencies": {
     "eslint": "^9.39.2",
