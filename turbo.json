@@ -59,7 +59,7 @@
         "OPENAI_BASE_URL",
         "OPENROUTER_API_KEY"
       ],
-      "dependsOn": ["^build"],
+      "dependsOn": [],
       "outputs": []
     },
     "test:e2e:update": {

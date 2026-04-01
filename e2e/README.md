@@ -119,6 +119,8 @@ Non-hermetic scenarios require provider credentials in addition to the mock Brai
 
 `claude-agent-sdk-instrumentation` also uses `ANTHROPIC_API_KEY`, because it runs the real Claude Agent SDK against Anthropic in the same style as the existing live Anthropic wrapper coverage.
 
+`test:e2e:canary` runs inside Docker because it installs packages on the latest versions and those packages may contain malicious code (supply-chain attacks).
+
 ### Scenario-local `package.json`
 
 Scenario-local manifests are optional and should stay slim. They are only for scenario-specific external dependencies, such as OpenAI version matrices. Shared test tooling and workspace-local packages stay in `e2e/package.json`.
@@ -128,7 +130,8 @@ Scenario-local manifests are optional and should stay slim. They are only for sc
 ## Running
 
 ```bash
-pnpm run test:e2e            # Run all e2e tests
-pnpm run test:e2e:hermetic   # Run hermetic-only e2e tests
-pnpm run test:e2e:update     # Run tests and update snapshots
+pnpm run test:e2e # Run all e2e tests
+pnpm run test:e2e:hermetic # Run hermetic-only e2e tests
+pnpm run test:e2e:canary # Run canary e2e tests
+pnpm run test:e2e:update # Run tests and update snapshots (won't update canary snapshots)
 ```
