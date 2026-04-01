@@ -27,11 +27,13 @@ export function wrapGoogleGenAI<T extends Record<string, any>>(
   googleGenAI: T,
 ): T {
   if (!googleGenAI || typeof googleGenAI !== "object") {
+    // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
     console.warn("Invalid Google GenAI module. Not wrapping.");
     return googleGenAI;
   }
 
   if (!("GoogleGenAI" in googleGenAI)) {
+    // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
     console.warn(
       "GoogleGenAI class not found in module. Not wrapping. Make sure you're passing the module itself (import * as googleGenAI from '@google/genai').",
     );

@@ -609,6 +609,7 @@ const processContentPart = (part: any): any => {
       }
     }
   } catch (error) {
+    // eslint-disable-next-line no-restricted-properties
     console.warn("Error processing content part:", error);
   }
 
@@ -665,6 +666,7 @@ const convertImageToAttachment = (
       return image;
     }
   } catch (error) {
+    // eslint-disable-next-line no-restricted-properties
     console.warn("Error converting image to attachment:", error);
   }
 
@@ -704,6 +706,7 @@ const convertDataToAttachment = (
       });
     }
   } catch (error) {
+    // eslint-disable-next-line no-restricted-properties
     console.warn("Error converting data to attachment:", error);
   }
 

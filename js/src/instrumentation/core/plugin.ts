@@ -109,6 +109,7 @@ export abstract class BasePlugin {
             metadata: mergeInputMetadata(metadata, spanInfoMetadata),
           });
         } catch (error) {
+          // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
           console.error(`Error extracting input for ${channelName}:`, error);
         }
       },
@@ -132,6 +133,7 @@ export abstract class BasePlugin {
             metrics,
           });
         } catch (error) {
+          // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
           console.error(`Error extracting output for ${channelName}:`, error);
         } finally {
           span.end();
@@ -216,6 +218,7 @@ export abstract class BasePlugin {
             metadata: mergeInputMetadata(metadata, spanInfoMetadata),
           });
         } catch (error) {
+          // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
           console.error(`Error extracting input for ${channelName}:`, error);
         }
       },
@@ -279,6 +282,7 @@ export abstract class BasePlugin {
                   metrics,
                 });
               } catch (error) {
+                // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
                 console.error(
                   `Error extracting output for ${channelName}:`,
                   error,
@@ -315,6 +319,7 @@ export abstract class BasePlugin {
               metrics,
             });
           } catch (error) {
+            // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
             console.error(`Error extracting output for ${channelName}:`, error);
           } finally {
             span.end();
@@ -389,6 +394,7 @@ export abstract class BasePlugin {
             metadata: mergeInputMetadata(metadata, spanInfoMetadata),
           });
         } catch (error) {
+          // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
           console.error(`Error extracting input for ${channelName}:`, error);
         }
       },
@@ -430,6 +436,7 @@ export abstract class BasePlugin {
               output: completion.choices,
             });
           } catch (error) {
+            // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
             console.error(
               `Error extracting chatCompletion for ${channelName}:`,
               error,
@@ -455,6 +462,7 @@ export abstract class BasePlugin {
                 span.log(extracted);
               }
             } catch (error) {
+              // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
               console.error(
                 `Error extracting event for ${channelName}:`,
                 error,

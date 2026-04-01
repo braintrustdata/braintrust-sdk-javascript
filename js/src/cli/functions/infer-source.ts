@@ -71,6 +71,7 @@ export async function findCodeDefinition({
   if (location.type === "experiment" || location.type === "sandbox") {
     const evaluator = outFileModule.evaluators[location.eval_name]?.evaluator;
     if (!evaluator) {
+      // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
       console.warn(
         warning(
           `Warning: failed to find evaluator for ${location.eval_name}. Will not display preview.`,
@@ -94,6 +95,7 @@ export async function findCodeDefinition({
   }
 
   if (!fn) {
+    // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
     console.warn(
       warning(
         `Warning: failed to find ${locationToString(location)}. Will not display preview.`,
@@ -118,6 +120,7 @@ export async function findCodeDefinition({
   }
 
   if (columnNumber === -1) {
+    // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
     console.warn(
       warning(
         `Warning: failed to find code definition for ${fn.name}. Will not display preview.`,
@@ -195,6 +198,7 @@ async function getTsModule() {
     try {
       tsModule = require("typescript");
     } catch {
+      // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
       console.warn(
         warning(
           "Failed to load TypeScript module. Will not use TypeScript to derive preview.",

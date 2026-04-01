@@ -96,6 +96,7 @@ export class DiskCache<T> {
         return undefined;
       }
       if (this.logWarnings) {
+        // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
         console.warn("Failed to read from disk cache", e);
       }
       return undefined;
@@ -121,6 +122,7 @@ export class DiskCache<T> {
       await this.evictOldestIfFull();
     } catch (e) {
       if (this.logWarnings) {
+        // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
         console.warn("Failed to write to disk cache", e);
       }
       return;

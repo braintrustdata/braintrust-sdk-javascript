@@ -24,6 +24,7 @@ export function wrapClaudeAgentSDK<T extends object>(sdk: T): T {
     return claudeAgentSDKProxy(s as ClaudeAgentSDKModule) as unknown as T;
   }
 
+  // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
   console.warn("Unsupported Claude Agent SDK. Not wrapping.");
   return sdk;
 }
