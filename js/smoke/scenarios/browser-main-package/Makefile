@@ -1,14 +1,14 @@
 .PHONY: install build test clean
 
 install:
-	npm install
-	npx playwright install --with-deps chromium
+	pnpm install --ignore-workspace --lockfile=false
+	pnpm exec playwright install --with-deps chromium
 
 build: install
 	node esbuild.config.mjs
 
 test: build
-	npx playwright test
+	pnpm exec playwright test
 
 clean:
-	rm -rf node_modules dist package-lock.json
+	rm -rf node_modules dist

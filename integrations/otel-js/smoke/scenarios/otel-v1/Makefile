@@ -27,7 +27,7 @@ setup:
 	@# Build shared package (if not running from parent)
 	@if [ -z "$(SMOKE_V2_SHARED_DIST)" ]; then \
 		echo "==> Building shared package"; \
-		cd ../../../shared && npm ci && npm run build; \
+		cd ../../../shared && pnpm install --ignore-workspace --frozen-lockfile && pnpm run build; \
 	fi
 
 	@# Check if BRAINTRUST_OTEL_TAR is set (from parent or CI), otherwise build
@@ -45,7 +45,7 @@ setup:
 		done; \
 	fi
 
-	npm install --no-package-lock
+	pnpm install --ignore-workspace --lockfile=false
 
 # =============================================================================
 # Test
@@ -54,7 +54,7 @@ setup:
 test: setup
 	@echo "==> Running otel-v1 tests"
 	@FAILED=0; \
-	npx tsx tests/basic.test.ts || FAILED=1; \
-	npx tsx tests/filtering.test.ts || FAILED=1; \
-	npx tsx tests/shared-suite.test.ts || FAILED=1; \
+	pnpm exec tsx tests/basic.test.ts || FAILED=1; \
+	pnpm exec tsx tests/filtering.test.ts || FAILED=1; \
+	pnpm exec tsx tests/shared-suite.test.ts || FAILED=1; \
 	exit $$FAILED

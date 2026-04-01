@@ -23,7 +23,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "npx http-server . -p 3001 -c-1 --cors",
+    command: "pnpm exec http-server . -p 3001 -c-1 --cors",
     port: 3001,
     cwd: __dirname,
     reuseExistingServer: !process.env.CI,

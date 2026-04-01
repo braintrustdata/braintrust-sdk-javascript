@@ -38,7 +38,7 @@ make install
 make build
 
 # Run Playwright tests
-npx playwright test
+pnpm exec playwright test
 ```
 
 ## What Gets Verified

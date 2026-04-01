@@ -4,13 +4,13 @@
   "description": "Examples using BraintrustSpanProcessor with OpenTelemetry v1.x",
   "main": "nodesdk_example.ts",
   "scripts": {
-    "start": "npx tsx nodesdk_example.ts",
-    "example:nodesdk": "npx tsx nodesdk_example.ts",
-    "example:aisdk": "npx tsx aisdk_example.ts",
-    "example:custom": "npx tsx custom_otel_example.ts",
-    "example:distributed": "npx tsx distributed-tracing.ts",
-    "example:compat": "npx tsx otel_compat.ts",
-    "example:vercel-ai": "npx tsx vercel_ai_sdk_example.ts",
+    "start": "tsx nodesdk_example.ts",
+    "example:nodesdk": "tsx nodesdk_example.ts",
+    "example:aisdk": "tsx aisdk_example.ts",
+    "example:custom": "tsx custom_otel_example.ts",
+    "example:distributed": "tsx distributed-tracing.ts",
+    "example:compat": "tsx otel_compat.ts",
+    "example:vercel-ai": "tsx vercel_ai_sdk_example.ts",
     "example:all": "pnpm run example:nodesdk && pnpm run example:aisdk && pnpm run example:custom && pnpm run example:distributed && pnpm run example:compat && pnpm run example:vercel-ai"
   },
   "dependencies": {
@@ -29,12 +29,12 @@
     "ai": "5.0.76",
     "braintrust": "next",
     "openai": "^5.23.2",
-    "tsx": "^4.20.6",
     "zod": "^3.25.76",
     "zod-to-json-schema": "^3.25.0"
   },
   "devDependencies": {
     "@types/node": "^20.19.25",
+    "tsx": "^4.20.6",
     "typescript": "^5.9.3"
   }
 }

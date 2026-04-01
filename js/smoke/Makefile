@@ -86,7 +86,7 @@ setup:
 	else \
 		if [ ! -d shared/dist ]; then \
 			echo "==> Building shared package"; \
-			cd shared && npm ci && npm run build; \
+			cd shared && pnpm install --ignore-workspace --frozen-lockfile && pnpm run build; \
 		else \
 			echo "==> Shared package already built"; \
 		fi; \

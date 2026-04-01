@@ -32,10 +32,14 @@ async function waitForServer() {
 async function runTest() {
   killPort(PORT);
 
-  const wrangler = spawn("npx", ["wrangler", "dev", "--port", String(PORT)], {
-    stdio: ["ignore", "pipe", "pipe"],
-    shell: true,
-  });
+  const wrangler = spawn(
+    "pnpm",
+    ["exec", "wrangler", "dev", "--port", String(PORT)],
+    {
+      stdio: ["ignore", "pipe", "pipe"],
+      shell: true,
+    },
+  );
 
   let output = "";
   wrangler.stdout.on("data", (d) => (output += d));

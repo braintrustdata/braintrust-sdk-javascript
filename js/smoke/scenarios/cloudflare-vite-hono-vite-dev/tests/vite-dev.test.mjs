@@ -44,7 +44,7 @@ async function testViteDevServer() {
     rmSync("node_modules/.vite", { recursive: true, force: true });
   } catch {}
 
-  const vite = spawn("npx", ["vite", "--port", String(PORT)], {
+  const vite = spawn("pnpm", ["exec", "vite", "--port", String(PORT)], {
     stdio: ["ignore", "pipe", "pipe"],
     shell: true,
   });

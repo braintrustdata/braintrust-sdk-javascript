@@ -18,7 +18,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "npx http-server -p 8765",
+    command: "pnpm exec http-server -p 8765",
     port: 8765,
     reuseExistingServer: !process.env.CI,
     timeout: 10000,

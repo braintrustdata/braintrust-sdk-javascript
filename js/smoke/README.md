@@ -180,9 +180,9 @@ app.get("/api/test", async (c) => {
 test: setup
 	@echo "==> Running tests"
 	@FAILED=0; \
-	npx tsx tests/test1.test.ts || FAILED=1; \
-	npx tsx tests/test2.test.ts || FAILED=1; \
-	npx tsx tests/test3.test.ts || FAILED=1; \
+	pnpm exec tsx tests/test1.test.ts || FAILED=1; \
+	pnpm exec tsx tests/test2.test.ts || FAILED=1; \
+	pnpm exec tsx tests/test3.test.ts || FAILED=1; \
 	exit $$FAILED
 ```
 
@@ -291,7 +291,7 @@ Build all artifacts BEFORE installing dependencies that reference them. Prevents
 
 ### Track Lock Files
 
-Commit `package-lock.json` and `deno.lock`. Changes signal new dependencies, version conflicts, or packaging issues.
+Commit `pnpm-lock.yaml` for standalone packages with stable dependencies. Tarball-driven smoke scenarios are the exception: they intentionally install with `pnpm install --ignore-workspace --lockfile=false` so regenerated SDK tarballs do not force lockfile churn. Smoke scenarios should never commit `package-lock.json`; keep `deno.lock` when Deno manages dependencies.
 
 ### Makefiles Are the Source of Truth
 
@@ -301,7 +301,7 @@ No npm scripts in package.json. All commands in Makefile. Single clear path to r
 
 ### "ENOENT: no such file or directory" for tarball
 
-Ensure Makefile builds packages BEFORE `npm install`.
+Ensure Makefile builds packages BEFORE `pnpm install`.
 
 ### "Unsupported URL Type 'workspace:'"
 

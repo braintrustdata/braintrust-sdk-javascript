@@ -386,8 +386,8 @@ jobs:
         working-directory: js/smoke/shared
         shell: bash
         run: |
-          npm ci
-          npm run build
+          pnpm install --ignore-workspace --frozen-lockfile
+          pnpm run build
       - name: Run scenario ${{ matrix.scenario }}
         working-directory: js/smoke
         shell: bash

@@ -8,7 +8,7 @@ export default defineConfig({
   testDir: "./tests",
   timeout: 30000,
   webServer: {
-    command: "npx next dev --port 3456",
+    command: "pnpm exec next dev --port 3456",
     port: 3456,
     cwd: __dirname,
     timeout: 120000,
