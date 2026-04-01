@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test:e2e": "vitest run",
+    "test:e2e": "vitest run --run",
     "test:e2e:hermetic": "vitest run --tags-filter=hermetic",
     "test:e2e:canary": "node ./scripts/run-canary-tests-docker.mjs",
     "test:e2e:update": "vitest run --update"
