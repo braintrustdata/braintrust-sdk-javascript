@@ -208,7 +208,7 @@ export type EvalResult<
   output: Output;
   error: unknown;
   origin?: ObjectReference;
-  scores: Record<string, number | null>;
+  scores?: Record<string, number | null>;
   classifications?: Record<string, ClassificationItem[]>;
 };
 
@@ -219,17 +219,13 @@ type ErrorScoreHandler = (args: {
   unhandledScores: string[];
 }) => Record<string, number> | undefined | void;
 
-/**
- * Defines an evaluator. At least one of `scores` or `classifiers` must be provided;
- * a runtime error is raised if neither is present.
- */
-export interface Evaluator<
+type EvaluatorBase<
   Input,
   Output,
   Expected,
   Metadata extends BaseMetadata = DefaultMetadataType,
   Parameters extends EvalParameters = EvalParameters,
-> {
+> = {
   /**
    * A function that returns a list of inputs, expected outputs, and metadata.
    */
@@ -239,19 +235,6 @@ export interface Evaluator<
    * A function that takes an input and returns an output.
    */
   task: EvalTask<Input, Output, Expected, Metadata, Parameters>;
-
-  /**
-   * A set of functions that take an input, output, and expected value and return a {@link Score}.
-   * At least one of `scores` or `classifiers` must be provided.
-   */
-  scores?: EvalScorer<Input, Output, Expected, Metadata>[];
-
-  /**
-   * A set of functions that take an input, output, and expected value and return a
-   * {@link Classification}. Results are recorded under the `classifications` column.
-   * At least one of `scores` or `classifiers` must be provided.
-   */
-  classifiers?: EvalClassifier<Input, Output, Expected, Metadata>[];
 
   /**
    * A set of parameters that will be passed to the evaluator.
@@ -370,7 +353,41 @@ export interface Evaluator<
    * Flushes spans before calling scoring functions
    */
   flushBeforeScoring?: boolean;
-}
+};
+
+type EvaluatorScoringConfig<
+  Input,
+  Output,
+  Expected,
+  Metadata extends BaseMetadata = DefaultMetadataType,
+> =
+  | {
+      /**
+       * A set of functions that take an input, output, and expected value and return a {@link Score}.
+       */
+      scores: EvalScorer<Input, Output, Expected, Metadata>[];
+      classifiers?: EvalClassifier<Input, Output, Expected, Metadata>[];
+    }
+  | {
+      /**
+       * A set of functions that take an input, output, and expected value and return a
+       * {@link Classification}. Results are recorded under the `classifications` column.
+       */
+      classifiers: EvalClassifier<Input, Output, Expected, Metadata>[];
+      scores?: EvalScorer<Input, Output, Expected, Metadata>[];
+    };
+
+/**
+ * Defines an evaluator. At least one of `scores` or `classifiers` must be provided.
+ */
+export type Evaluator<
+  Input,
+  Output,
+  Expected,
+  Metadata extends BaseMetadata = DefaultMetadataType,
+  Parameters extends EvalParameters = EvalParameters,
+> = EvaluatorBase<Input, Output, Expected, Metadata, Parameters> &
+  EvaluatorScoringConfig<Input, Output, Expected, Metadata>;
 
 export class EvalResultWithSummary<
   Input,
@@ -892,7 +909,7 @@ export function scorerName(
   return scorer.name || `scorer_${scorer_idx}`;
 }
 
-function classifierName(
+export function classifierName(
   classifier: EvalClassifier<any, any, any, any>,
   classifier_idx: number,
 ) {
@@ -975,14 +992,9 @@ function validateClassificationResult(
     );
   }
   if (!("name" in value) || typeof value.name !== "string" || !value.name) {
-    throw new Error(
-      `Classifier ${scorerName} must return classifications with a non-empty string name. Got: ${JSON.stringify(value)}`,
-    );
-  }
-  if (!("id" in value) || typeof value.id !== "string" || !value.id) {
-    throw new Error(
-      `Classifier ${scorerName} must return classifications with a non-empty string id. Got: ${JSON.stringify(value)}`,
-    );
+    const classification = value as Classification;
+    classification.name = scorerName;
+    return classification;
   }
   return value as Classification;
 }
@@ -1501,7 +1513,9 @@ async function runEvaluatorInternal(
             };
             collectedResults.push({
               ...baseResult,
-              scores: mergedScores,
+              ...(Object.keys(mergedScores).length > 0
+                ? { scores: mergedScores }
+                : {}),
               ...(Object.keys(classifications).length > 0
                 ? { classifications }
                 : {}),
@@ -1685,8 +1699,11 @@ type ScoreAccumulator = {
 
 function accumulateScores(
   accumulator: ScoreAccumulator,
-  scores: Record<string, number | null>,
+  scores: Record<string, number | null> | undefined,
 ) {
+  if (!scores) {
+    return;
+  }
   for (const [name, score] of Object.entries(scores)) {
     if (score === null || score === undefined) {
       continue;

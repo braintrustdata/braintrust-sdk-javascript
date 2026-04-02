@@ -8,6 +8,7 @@ import {
   EvalScorer,
   EvaluatorDef,
   OneOrMoreScores,
+  classifierName,
   scorerName,
 } from "../src/framework";
 import { errorHandler } from "./errorHandler";
@@ -119,6 +120,9 @@ export function runDevServer(
           parameters,
           scores: (evaluator.scores ?? []).map((score, idx) => ({
             name: scorerName(score, idx),
+          })),
+          classifiers: (evaluator.classifiers ?? []).map((classifier, idx) => ({
+            name: classifierName(classifier, idx),
           })),
         };
       }
