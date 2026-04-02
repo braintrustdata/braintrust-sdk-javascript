@@ -329,7 +329,7 @@ async function runMistralInstrumentationScenario(
                     {
                       role: "user",
                       content:
-                        "Call the get_weather tool. Do not answer with plain text.",
+                        "Call the get_weather tool for Vienna. Do not answer with plain text.",
                     },
                   ],
                   tools: [
@@ -338,6 +338,34 @@ async function runMistralInstrumentationScenario(
                       function: {
                         name: "get_weather",
                         description: "Get weather for a city.",
+                        parameters: {},
+                      },
+                    },
+                  ],
+                  toolChoice: "required",
+                  maxTokens: 48,
+                  temperature: 0,
+                }),
+              { attempts: 3, delayMs: 1_000 },
+            );
+
+            await withRetry(
+              async () =>
+                client.chat.complete({
+                  model: CHAT_MODEL,
+                  messages: [
+                    {
+                      role: "user",
+                      content:
+                        "Call the get_exchange_rate tool for USD to EUR. Do not answer with plain text.",
+                    },
+                  ],
+                  tools: [
+                    {
+                      type: "function",
+                      function: {
+                        name: "get_exchange_rate",
+                        description: "Get currency exchange rate.",
                         parameters: {},
                       },
                     },

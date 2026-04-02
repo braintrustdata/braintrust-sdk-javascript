@@ -5,6 +5,7 @@ import {
   unsubscribeAll,
 } from "../core/channel-tracing";
 import { SpanTypeAttribute, isObject } from "../../../util/index";
+import type { Span } from "../../logger";
 import { processInputAttachments } from "../../wrappers/attachment-utils";
 import { getCurrentUnixTimestamp } from "../../util";
 import { mistralChannels } from "./mistral-channels";
@@ -37,6 +38,11 @@ export class MistralPlugin extends BasePlugin {
         extractMetadata: (result) => extractMistralResponseMetadata(result),
         extractMetrics: (result, startTime) =>
           extractMistralMetrics(result?.usage, startTime),
+        onComplete: ({ output, result, span }) =>
+          createMistralToolCallSpans(span, {
+            output,
+            result,
+          }),
       }),
     );
 
@@ -50,6 +56,11 @@ export class MistralPlugin extends BasePlugin {
         extractMetrics: (result, startTime) =>
           extractMistralStreamingMetrics(result, startTime),
         aggregateChunks: aggregateMistralStreamChunks,
+        onComplete: ({ output, result, span }) =>
+          createMistralToolCallSpans(span, {
+            output,
+            result,
+          }),
       }),
     );
 
@@ -80,6 +91,11 @@ export class MistralPlugin extends BasePlugin {
         extractMetadata: (result) => extractMistralResponseMetadata(result),
         extractMetrics: (result, startTime) =>
           extractMistralMetrics(result?.usage, startTime),
+        onComplete: ({ output, result, span }) =>
+          createMistralToolCallSpans(span, {
+            output,
+            result,
+          }),
       }),
     );
 
@@ -107,6 +123,11 @@ export class MistralPlugin extends BasePlugin {
         extractMetadata: (result) => extractMistralResponseMetadata(result),
         extractMetrics: (result, startTime) =>
           extractMistralMetrics(result?.usage, startTime),
+        onComplete: ({ output, result, span }) =>
+          createMistralToolCallSpans(span, {
+            output,
+            result,
+          }),
       }),
     );
 
@@ -120,6 +141,11 @@ export class MistralPlugin extends BasePlugin {
         extractMetrics: (result, startTime) =>
           extractMistralStreamingMetrics(result, startTime),
         aggregateChunks: aggregateMistralStreamChunks,
+        onComplete: ({ output, result, span }) =>
+          createMistralToolCallSpans(span, {
+            output,
+            result,
+          }),
       }),
     );
   }
@@ -340,6 +366,142 @@ function extractMistralMetrics(
 
 function extractMistralStreamOutput(result: unknown): unknown {
   return isObject(result) ? result.choices : undefined;
+}
+
+function getMessageToolCalls(
+  message: Record<string, unknown> | undefined,
+): Record<string, unknown>[] {
+  if (!message) {
+    return [];
+  }
+
+  const rawToolCalls =
+    (Array.isArray(message.toolCalls) && message.toolCalls) ||
+    (Array.isArray(message.tool_calls) && message.tool_calls) ||
+    [];
+
+  return rawToolCalls.filter((toolCall) => isObject(toolCall));
+}
+
+type MistralExtractedToolCall = {
+  arguments?: string;
+  choiceIndex: number;
+  id?: string;
+  index?: number;
+  name?: string;
+  type?: string;
+};
+
+export function extractMistralToolCallsFromOutput(
+  output: unknown,
+): MistralExtractedToolCall[] {
+  const choices = Array.isArray(output)
+    ? output
+    : isArrayLike(output)
+      ? Array.from(output)
+      : undefined;
+
+  if (!choices) {
+    return [];
+  }
+
+  const extracted: MistralExtractedToolCall[] = [];
+
+  for (const rawChoice of choices) {
+    if (!isObject(rawChoice) || !isObject(rawChoice.message)) {
+      continue;
+    }
+
+    const choiceIndex =
+      typeof rawChoice.index === "number" && rawChoice.index >= 0
+        ? rawChoice.index
+        : 0;
+    const toolCalls = getMessageToolCalls(rawChoice.message);
+
+    for (const toolCall of toolCalls) {
+      const toolFunction = isObject(toolCall.function) ? toolCall.function : {};
+      extracted.push({
+        ...(typeof toolCall.id === "string" ? { id: toolCall.id } : {}),
+        ...(typeof toolCall.index === "number"
+          ? { index: toolCall.index }
+          : {}),
+        ...(typeof toolCall.type === "string" ? { type: toolCall.type } : {}),
+        ...(typeof toolFunction.name === "string"
+          ? { name: toolFunction.name }
+          : {}),
+        ...(typeof toolFunction.arguments === "string"
+          ? { arguments: toolFunction.arguments }
+          : {}),
+        choiceIndex,
+      });
+    }
+  }
+
+  return extracted;
+}
+
+function parseToolArguments(argumentsValue: string | undefined): unknown {
+  if (typeof argumentsValue !== "string") {
+    return undefined;
+  }
+
+  try {
+    return JSON.parse(argumentsValue);
+  } catch {
+    return argumentsValue;
+  }
+}
+
+function createMistralToolCallSpansFromOutput(
+  parentSpan: Span,
+  output: unknown,
+): void {
+  const toolCalls = extractMistralToolCallsFromOutput(output);
+  for (const toolCall of toolCalls) {
+    const parsedToolArguments = parseToolArguments(toolCall.arguments);
+    const toolSpan = parentSpan.startSpan({
+      name: "mistral.tool",
+      spanAttributes: {
+        type: SpanTypeAttribute.TOOL,
+      },
+    });
+
+    toolSpan.log({
+      ...(parsedToolArguments !== undefined
+        ? { input: parsedToolArguments }
+        : {}),
+      metadata: {
+        provider: "mistral",
+        ...(toolCall.name ? { tool_name: toolCall.name } : {}),
+        ...(toolCall.id ? { tool_call_id: toolCall.id } : {}),
+        ...(toolCall.index !== undefined ? { tool_index: toolCall.index } : {}),
+        ...(toolCall.type ? { tool_type: toolCall.type } : {}),
+        choice_index: toolCall.choiceIndex,
+      },
+    });
+    toolSpan.end();
+  }
+}
+
+function createMistralToolCallSpans(
+  parentSpan: Span,
+  args: {
+    output: unknown;
+    result: unknown;
+  },
+): void {
+  const outputToolCalls = extractMistralToolCallsFromOutput(args.output);
+  if (outputToolCalls.length > 0) {
+    createMistralToolCallSpansFromOutput(parentSpan, args.output);
+    return;
+  }
+
+  const resultToolCalls = isObject(args.result)
+    ? extractMistralToolCallsFromOutput(args.result.choices)
+    : [];
+  if (resultToolCalls.length > 0) {
+    createMistralToolCallSpansFromOutput(parentSpan, args.result.choices);
+  }
 }
 
 function extractMistralStreamingMetrics(

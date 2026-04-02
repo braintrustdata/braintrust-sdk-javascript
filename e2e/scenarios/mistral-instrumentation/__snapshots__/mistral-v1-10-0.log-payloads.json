@@ -135,6 +135,62 @@
     "span_id": "<span:7>"
   },
   {
+    "has_input": true,
+    "has_output": false,
+    "input": {
+      "type": "object"
+    },
+    "metadata": {
+      "provider": "mistral"
+    },
+    "metric_keys": [],
+    "output": null,
+    "span_id": "<span:8>"
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "input": {
+      "item_count": 1,
+      "roles": [
+        "user"
+      ],
+      "type": "messages"
+    },
+    "metadata": {
+      "model": "mistral-small-latest",
+      "provider": "mistral"
+    },
+    "metric_keys": [
+      "completion_tokens",
+      "prompt_tokens",
+      "time_to_first_token",
+      "tokens"
+    ],
+    "output": {
+      "choice_count": 1,
+      "finish_reason": "tool_calls",
+      "has_content": false,
+      "role": "assistant",
+      "tool_call_count": 1,
+      "type": "choices"
+    },
+    "span_id": "<span:9>"
+  },
+  {
+    "has_input": true,
+    "has_output": false,
+    "input": {
+      "type": "object"
+    },
+    "metadata": {
+      "provider": "mistral"
+    },
+    "metric_keys": [],
+    "output": null,
+    "span_id": "<span:10>"
+  },
+  {
     "has_input": false,
     "has_output": false,
     "input": null,
@@ -143,7 +199,7 @@
     },
     "metric_keys": [],
     "output": null,
-    "span_id": "<span:8>"
+    "span_id": "<span:11>"
   },
   {
     "has_input": true,
@@ -167,7 +223,7 @@
       "tool_call_count": 0,
       "type": "choices"
     },
-    "span_id": "<span:9>"
+    "span_id": "<span:12>"
   },
   {
     "has_input": false,
@@ -178,7 +234,7 @@
     },
     "metric_keys": [],
     "output": null,
-    "span_id": "<span:10>"
+    "span_id": "<span:13>"
   },
   {
     "has_input": true,
@@ -202,7 +258,7 @@
       "tool_call_count": 0,
       "type": "choices"
     },
-    "span_id": "<span:11>"
+    "span_id": "<span:14>"
   },
   {
     "has_input": false,
@@ -213,7 +269,7 @@
     },
     "metric_keys": [],
     "output": null,
-    "span_id": "<span:12>"
+    "span_id": "<span:15>"
   },
   {
     "has_input": true,
@@ -243,7 +299,7 @@
       "tool_call_count": 0,
       "type": "choices"
     },
-    "span_id": "<span:13>"
+    "span_id": "<span:16>"
   },
   {
     "has_input": false,
@@ -254,7 +310,7 @@
     },
     "metric_keys": [],
     "output": null,
-    "span_id": "<span:14>"
+    "span_id": "<span:17>"
   },
   {
     "has_input": true,
@@ -284,7 +340,7 @@
       "tool_call_count": 0,
       "type": "choices"
     },
-    "span_id": "<span:15>"
+    "span_id": "<span:18>"
   },
   {
     "has_input": false,
@@ -295,7 +351,7 @@
     },
     "metric_keys": [],
     "output": null,
-    "span_id": "<span:16>"
+    "span_id": "<span:19>"
   },
   {
     "has_input": true,
@@ -314,6 +370,6 @@
       "embedding_length": "<number>",
       "type": "embedding"
     },
-    "span_id": "<span:17>"
+    "span_id": "<span:20>"
   }
 ]

@@ -3,6 +3,7 @@ import {
   aggregateMistralStreamChunks,
   extractMistralRequestMetadata,
   extractMistralResponseMetadata,
+  extractMistralToolCallsFromOutput,
   parseMistralMetricsFromUsage,
 } from "./mistral-plugin";
 
@@ -66,6 +67,65 @@ describe("extractMistralResponseMetadata", () => {
         choices: [{ index: 0 }],
       }),
     ).toBeUndefined();
+  });
+});
+
+describe("extractMistralToolCallsFromOutput", () => {
+  it("extracts tool calls from snake_case and camelCase output", () => {
+    expect(
+      extractMistralToolCallsFromOutput([
+        {
+          index: 0,
+          message: {
+            tool_calls: [
+              {
+                id: "call_1",
+                index: 0,
+                type: "function",
+                function: {
+                  name: "lookup_weather",
+                  arguments: '{"city":"Vienna"}',
+                },
+              },
+            ],
+          },
+        },
+        {
+          index: 1,
+          message: {
+            toolCalls: [
+              {
+                id: "call_2",
+                function: {
+                  name: "lookup_time",
+                  arguments: '{"timezone":"Europe/Vienna"}',
+                },
+              },
+            ],
+          },
+        },
+      ]),
+    ).toEqual([
+      {
+        choiceIndex: 0,
+        id: "call_1",
+        index: 0,
+        type: "function",
+        name: "lookup_weather",
+        arguments: '{"city":"Vienna"}',
+      },
+      {
+        choiceIndex: 1,
+        id: "call_2",
+        name: "lookup_time",
+        arguments: '{"timezone":"Europe/Vienna"}',
+      },
+    ]);
+  });
+
+  it("returns empty list for non-choice output", () => {
+    expect(extractMistralToolCallsFromOutput(undefined)).toEqual([]);
+    expect(extractMistralToolCallsFromOutput({})).toEqual([]);
   });
 });
 

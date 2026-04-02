@@ -81,7 +81,10 @@ function pickMetadata(
   return Object.keys(picked).length > 0 ? (picked as Json) : null;
 }
 
-function summarizeInput(input: unknown): Json {
+function summarizeInput(
+  input: unknown,
+  options?: { omitObjectKeys?: boolean },
+): Json {
   if (Array.isArray(input)) {
     const roles = input
       .map((message) =>
@@ -104,6 +107,12 @@ function summarizeInput(input: unknown): Json {
 
   if (!isRecord(input as Json)) {
     return null;
+  }
+
+  if (options?.omitObjectKeys) {
+    return {
+      type: "object",
+    };
   }
 
   return {
@@ -167,18 +176,24 @@ function summarizeOutput(output: unknown): Json {
   };
 }
 
-function summarizePayloadRow(row: CapturedLogRow): Json {
+function summarizePayloadRow(
+  row: CapturedLogRow,
+  options?: { spanName?: string },
+): Json {
   const metrics =
     typeof row.metrics === "object" &&
     row.metrics !== null &&
     !Array.isArray(row.metrics)
       ? (row.metrics as Record<string, unknown>)
       : {};
+  const omitObjectKeysForInput = options?.spanName === "mistral.tool";
 
   return {
     has_input: row.input !== undefined && row.input !== null,
     has_output: row.output !== undefined && row.output !== null,
-    input: summarizeInput(row.input),
+    input: summarizeInput(row.input, {
+      omitObjectKeys: omitObjectKeysForInput,
+    }),
     metadata: pickMetadata(
       row.metadata as Record<string, unknown> | undefined,
       ["model", "operation", "provider", "scenario"],
@@ -325,6 +340,14 @@ function buildSpanSummary(
     events,
     "mistral-chat-tool-call-operation",
   );
+  const chatToolCallSpans = findChildSpans(
+    events,
+    "mistral.chat.complete",
+    chatToolCallOperation?.span.id,
+  );
+  const chatToolSpans = chatToolCallSpans.flatMap((chatToolCallSpan) =>
+    findChildSpans(events, "mistral.tool", chatToolCallSpan.span.id),
+  );
   const fimCompleteOperation = findLatestSpan(
     events,
     "mistral-fim-complete-operation",
@@ -358,9 +381,8 @@ function buildSpanSummary(
         "mistral.chat.stream",
       ]),
       chatToolCallOperation,
-      findMistralSpan(events, chatToolCallOperation?.span.id, [
-        "mistral.chat.complete",
-      ]),
+      ...chatToolCallSpans,
+      ...chatToolSpans,
       fimCompleteOperation,
       findMistralSpan(events, fimCompleteOperation?.span.id, [
         "mistral.fim.complete",
@@ -414,15 +436,18 @@ function buildPayloadSummary(
   const payloadRows = payloadRowsForRootSpan(payloads, root?.span.id);
   const mergedRows = mergePayloadRows(payloadRows);
   return normalizeForSnapshot(
-    mergedRows.map((row) =>
-      normalizeLegacyV134PayloadSummaryRow(
-        summarizePayloadRow(row),
-        snapshotName,
+    mergedRows.map((row) => {
+      const spanName =
         typeof row.span_id === "string"
           ? spanNameById.get(row.span_id)
-          : undefined,
-      ),
-    ),
+          : undefined;
+
+      return normalizeLegacyV134PayloadSummaryRow(
+        summarizePayloadRow(row, { spanName }),
+        snapshotName,
+        spanName,
+      );
+    }),
   );
 }
 
@@ -512,43 +537,95 @@ export function defineMistralInstrumentationAssertions(options: {
         events,
         "mistral-chat-tool-call-operation",
       );
-      const span = findMistralSpan(events, operation?.span.id, [
+      const spans = findChildSpans(
+        events,
         "mistral.chat.complete",
-      ]);
-      const output = span?.output as
-        | Array<{
-            finishReason?: unknown;
-            finish_reason?: unknown;
-            message?: {
-              toolCalls?: unknown;
-              tool_calls?: unknown;
-            };
-          }>
-        | undefined;
-      const firstChoice = Array.isArray(output) ? output[0] : undefined;
-      const toolCalls =
-        (Array.isArray(firstChoice?.message?.tool_calls) &&
-          firstChoice.message.tool_calls) ||
-        (Array.isArray(firstChoice?.message?.toolCalls) &&
-          firstChoice.message.toolCalls) ||
-        [];
-      const finishReason =
-        typeof firstChoice?.finishReason === "string"
-          ? firstChoice.finishReason
-          : typeof firstChoice?.finish_reason === "string"
-            ? firstChoice.finish_reason
-            : undefined;
+        operation?.span.id,
+      );
+      const spanIds = new Set(spans.map((span) => span.span.id));
+      const toolSpans = spans.flatMap((span) =>
+        findChildSpans(events, "mistral.tool", span.span.id),
+      );
+      const spansWithToolCalls = spans.filter((span) => {
+        const output = span.output as
+          | Array<{
+              message?: {
+                toolCalls?: unknown;
+                tool_calls?: unknown;
+              };
+            }>
+          | undefined;
+        const firstChoice = Array.isArray(output) ? output[0] : undefined;
+        const toolCalls =
+          (Array.isArray(firstChoice?.message?.tool_calls) &&
+            firstChoice.message.tool_calls) ||
+          (Array.isArray(firstChoice?.message?.toolCalls) &&
+            firstChoice.message.toolCalls) ||
+          [];
+        return toolCalls.length > 0;
+      });
+      const finishReasons = spans
+        .map((span) => {
+          const output = span.output as
+            | Array<{
+                finishReason?: unknown;
+                finish_reason?: unknown;
+              }>
+            | undefined;
+          const firstChoice = Array.isArray(output) ? output[0] : undefined;
+          if (typeof firstChoice?.finishReason === "string") {
+            return firstChoice.finishReason;
+          }
+          if (typeof firstChoice?.finish_reason === "string") {
+            return firstChoice.finish_reason;
+          }
+          return undefined;
+        })
+        .filter((value): value is string => typeof value === "string");
+      const toolParentIds = new Set(
+        toolSpans.flatMap((toolSpan) =>
+          toolSpan.span.parentIds.filter((parentId) => spanIds.has(parentId)),
+        ),
+      );
+      const toolNames = new Set(
+        toolSpans
+          .map(
+            (toolSpan) =>
+              (toolSpan.row.metadata as { tool_name?: unknown } | undefined)
+                ?.tool_name,
+          )
+          .filter((name): name is string => typeof name === "string"),
+      );
 
       expect(operation).toBeDefined();
-      expect(span).toBeDefined();
       expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
-      expect(span?.span.type).toBe("llm");
-      expect(span?.row.metadata).toMatchObject({
-        model: CHAT_MODEL,
-        provider: "mistral",
-      });
-      expect(toolCalls.length).toBeGreaterThan(0);
-      expect(finishReason).toEqual(expect.any(String));
+      expect(spans.length).toBeGreaterThanOrEqual(2);
+      expect(spansWithToolCalls.length).toBeGreaterThanOrEqual(2);
+      expect(finishReasons.length).toBeGreaterThanOrEqual(2);
+
+      for (const span of spans) {
+        expect(span.span.type).toBe("llm");
+        expect(span.row.metadata).toMatchObject({
+          model: CHAT_MODEL,
+          provider: "mistral",
+        });
+      }
+
+      expect(toolSpans.length).toBeGreaterThanOrEqual(2);
+      expect(toolParentIds.size).toBeGreaterThanOrEqual(2);
+      for (const toolSpan of toolSpans) {
+        expect(toolSpan.span.type).toBe("tool");
+        expect(toolSpan.row.metadata).toMatchObject({
+          provider: "mistral",
+          tool_name: expect.any(String),
+        });
+        expect(
+          toolSpan.span.parentIds.some((parentId) => spanIds.has(parentId)),
+        ).toBe(true);
+        expect(toolSpan.input).toBeDefined();
+      }
+      expect(toolNames.has("get_weather")).toBe(true);
+      expect(toolNames.has("get_exchange_rate")).toBe(true);
     });
 
     test("captures trace for fim.complete()", testConfig, () => {
