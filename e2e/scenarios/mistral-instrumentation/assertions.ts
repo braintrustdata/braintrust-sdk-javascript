@@ -118,11 +118,20 @@ function summarizeOutput(output: unknown): Json {
     if (!isRecord(firstChoice) || !isRecord(firstChoice.message)) {
       return {
         choice_count: output.length,
+        finish_reason: null,
         type: "array",
       };
     }
 
     const message = firstChoice.message;
+    const finishReason =
+      typeof firstChoice.finishReason === "string" ||
+      firstChoice.finishReason === null
+        ? firstChoice.finishReason
+        : typeof firstChoice.finish_reason === "string" ||
+            firstChoice.finish_reason === null
+          ? firstChoice.finish_reason
+          : null;
     const toolCalls =
       (Array.isArray(message.tool_calls) && message.tool_calls) ||
       (Array.isArray(message.toolCalls) && message.toolCalls) ||
@@ -130,6 +139,7 @@ function summarizeOutput(output: unknown): Json {
 
     return {
       choice_count: output.length,
+      finish_reason: finishReason,
       has_content:
         typeof message.content === "string"
           ? message.content.length > 0
@@ -251,6 +261,10 @@ function buildSpanSummary(events: CapturedLogEvent[]): Json {
     events,
     "mistral-chat-stream-operation",
   );
+  const chatToolCallOperation = findLatestSpan(
+    events,
+    "mistral-chat-tool-call-operation",
+  );
   const fimCompleteOperation = findLatestSpan(
     events,
     "mistral-fim-complete-operation",
@@ -282,6 +296,10 @@ function buildSpanSummary(events: CapturedLogEvent[]): Json {
       chatStreamOperation,
       findMistralSpan(events, chatStreamOperation?.span.id, [
         "mistral.chat.stream",
+      ]),
+      chatToolCallOperation,
+      findMistralSpan(events, chatToolCallOperation?.span.id, [
+        "mistral.chat.complete",
       ]),
       fimCompleteOperation,
       findMistralSpan(events, fimCompleteOperation?.span.id, [
@@ -404,6 +422,51 @@ export function defineMistralInstrumentationAssertions(options: {
       });
       expect(span?.metrics?.time_to_first_token).toEqual(expect.any(Number));
       expect(span?.output).toBeDefined();
+    });
+
+    test("captures trace for chat.complete() tool calling", testConfig, () => {
+      const root = findLatestSpan(events, ROOT_NAME);
+      const operation = findLatestSpan(
+        events,
+        "mistral-chat-tool-call-operation",
+      );
+      const span = findMistralSpan(events, operation?.span.id, [
+        "mistral.chat.complete",
+      ]);
+      const output = span?.output as
+        | Array<{
+            finishReason?: unknown;
+            finish_reason?: unknown;
+            message?: {
+              toolCalls?: unknown;
+              tool_calls?: unknown;
+            };
+          }>
+        | undefined;
+      const firstChoice = Array.isArray(output) ? output[0] : undefined;
+      const toolCalls =
+        (Array.isArray(firstChoice?.message?.tool_calls) &&
+          firstChoice.message.tool_calls) ||
+        (Array.isArray(firstChoice?.message?.toolCalls) &&
+          firstChoice.message.toolCalls) ||
+        [];
+      const finishReason =
+        typeof firstChoice?.finishReason === "string"
+          ? firstChoice.finishReason
+          : typeof firstChoice?.finish_reason === "string"
+            ? firstChoice.finish_reason
+            : undefined;
+
+      expect(operation).toBeDefined();
+      expect(span).toBeDefined();
+      expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
+      expect(span?.span.type).toBe("llm");
+      expect(span?.row.metadata).toMatchObject({
+        model: CHAT_MODEL,
+        provider: "mistral",
+      });
+      expect(toolCalls.length).toBeGreaterThan(0);
+      expect(finishReason).toEqual(expect.any(String));
     });
 
     test("captures trace for fim.complete()", testConfig, () => {

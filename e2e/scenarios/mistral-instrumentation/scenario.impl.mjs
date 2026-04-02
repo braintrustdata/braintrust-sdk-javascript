@@ -318,6 +318,40 @@ async function runMistralInstrumentationScenario(
         );
 
         await runOperation(
+          "mistral-chat-tool-call-operation",
+          "chat-tool-call",
+          async () => {
+            await withRetry(
+              async () =>
+                client.chat.complete({
+                  model: CHAT_MODEL,
+                  messages: [
+                    {
+                      role: "user",
+                      content:
+                        "Call the get_weather tool. Do not answer with plain text.",
+                    },
+                  ],
+                  tools: [
+                    {
+                      type: "function",
+                      function: {
+                        name: "get_weather",
+                        description: "Get weather for a city.",
+                        parameters: {},
+                      },
+                    },
+                  ],
+                  toolChoice: "required",
+                  maxTokens: 48,
+                  temperature: 0,
+                }),
+              { attempts: 3, delayMs: 1_000 },
+            );
+          },
+        );
+
+        await runOperation(
           "mistral-fim-complete-operation",
           "fim-complete",
           async () => {

@@ -88,10 +88,10 @@
     "has_input": false,
     "has_output": false,
     "metadata": {
-      "operation": "fim-complete"
+      "operation": "chat-tool-call"
     },
     "metric_keys": [],
-    "name": "mistral-fim-complete-operation",
+    "name": "mistral-chat-tool-call-operation",
     "root_span_id": "<span:1>",
     "span_id": "<span:6>",
     "span_parents": [
@@ -103,7 +103,7 @@
     "has_input": true,
     "has_output": true,
     "metadata": {
-      "model": "codestral-latest",
+      "model": "mistral-small-latest",
       "provider": "mistral"
     },
     "metric_keys": [
@@ -112,7 +112,7 @@
       "time_to_first_token",
       "tokens"
     ],
-    "name": "mistral.fim.complete",
+    "name": "mistral.chat.complete",
     "root_span_id": "<span:1>",
     "span_id": "<span:7>",
     "span_parents": [
@@ -124,10 +124,10 @@
     "has_input": false,
     "has_output": false,
     "metadata": {
-      "operation": "fim-stream"
+      "operation": "fim-complete"
     },
     "metric_keys": [],
-    "name": "mistral-fim-stream-operation",
+    "name": "mistral-fim-complete-operation",
     "root_span_id": "<span:1>",
     "span_id": "<span:8>",
     "span_parents": [
@@ -148,7 +148,7 @@
       "time_to_first_token",
       "tokens"
     ],
-    "name": "mistral.fim.stream",
+    "name": "mistral.fim.complete",
     "root_span_id": "<span:1>",
     "span_id": "<span:9>",
     "span_parents": [
@@ -160,10 +160,10 @@
     "has_input": false,
     "has_output": false,
     "metadata": {
-      "operation": "agents-complete"
+      "operation": "fim-stream"
     },
     "metric_keys": [],
-    "name": "mistral-agents-complete-operation",
+    "name": "mistral-fim-stream-operation",
     "root_span_id": "<span:1>",
     "span_id": "<span:10>",
     "span_parents": [
@@ -175,7 +175,7 @@
     "has_input": true,
     "has_output": true,
     "metadata": {
-      "model": "mistral-small-latest",
+      "model": "codestral-latest",
       "provider": "mistral"
     },
     "metric_keys": [
@@ -184,7 +184,7 @@
       "time_to_first_token",
       "tokens"
     ],
-    "name": "mistral.agents.complete",
+    "name": "mistral.fim.stream",
     "root_span_id": "<span:1>",
     "span_id": "<span:11>",
     "span_parents": [
@@ -196,10 +196,10 @@
     "has_input": false,
     "has_output": false,
     "metadata": {
-      "operation": "agents-stream"
+      "operation": "agents-complete"
     },
     "metric_keys": [],
-    "name": "mistral-agents-stream-operation",
+    "name": "mistral-agents-complete-operation",
     "root_span_id": "<span:1>",
     "span_id": "<span:12>",
     "span_parents": [
@@ -220,11 +220,47 @@
       "time_to_first_token",
       "tokens"
     ],
-    "name": "mistral.agents.stream",
+    "name": "mistral.agents.complete",
     "root_span_id": "<span:1>",
     "span_id": "<span:13>",
     "span_parents": [
       "<span:12>"
+    ],
+    "type": "llm"
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "operation": "agents-stream"
+    },
+    "metric_keys": [],
+    "name": "mistral-agents-stream-operation",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:14>",
+    "span_parents": [
+      "<span:1>"
+    ],
+    "type": null
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "model": "mistral-small-latest",
+      "provider": "mistral"
+    },
+    "metric_keys": [
+      "completion_tokens",
+      "prompt_tokens",
+      "time_to_first_token",
+      "tokens"
+    ],
+    "name": "mistral.agents.stream",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:15>",
+    "span_parents": [
+      "<span:14>"
     ],
     "type": "llm"
   },
@@ -237,7 +273,7 @@
     "metric_keys": [],
     "name": "mistral-embeddings-operation",
     "root_span_id": "<span:1>",
-    "span_id": "<span:14>",
+    "span_id": "<span:16>",
     "span_parents": [
       "<span:1>"
     ],
@@ -257,9 +293,9 @@
     ],
     "name": "mistral.embeddings.create",
     "root_span_id": "<span:1>",
-    "span_id": "<span:15>",
+    "span_id": "<span:17>",
     "span_parents": [
-      "<span:14>"
+      "<span:16>"
     ],
     "type": "llm"
   }

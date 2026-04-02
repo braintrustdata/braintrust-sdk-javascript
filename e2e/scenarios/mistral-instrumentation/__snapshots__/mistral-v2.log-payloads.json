@@ -45,6 +45,7 @@
     ],
     "output": {
       "choice_count": 1,
+      "finish_reason": "stop",
       "has_content": true,
       "role": "assistant",
       "tool_call_count": 0,
@@ -86,6 +87,7 @@
     ],
     "output": {
       "choice_count": 1,
+      "finish_reason": "stop",
       "has_content": true,
       "role": "assistant",
       "tool_call_count": 0,
@@ -98,81 +100,11 @@
     "has_output": false,
     "input": null,
     "metadata": {
-      "operation": "fim-complete"
+      "operation": "chat-tool-call"
     },
     "metric_keys": [],
     "output": null,
     "span_id": "<span:6>"
-  },
-  {
-    "has_input": true,
-    "has_output": true,
-    "input": "<string>",
-    "metadata": {
-      "model": "codestral-latest",
-      "provider": "mistral"
-    },
-    "metric_keys": [
-      "completion_tokens",
-      "prompt_cached_tokens",
-      "prompt_tokens",
-      "time_to_first_token",
-      "tokens"
-    ],
-    "output": {
-      "choice_count": 1,
-      "has_content": true,
-      "role": "assistant",
-      "tool_call_count": 0,
-      "type": "choices"
-    },
-    "span_id": "<span:7>"
-  },
-  {
-    "has_input": false,
-    "has_output": false,
-    "input": null,
-    "metadata": {
-      "operation": "fim-stream"
-    },
-    "metric_keys": [],
-    "output": null,
-    "span_id": "<span:8>"
-  },
-  {
-    "has_input": true,
-    "has_output": true,
-    "input": "<string>",
-    "metadata": {
-      "model": "codestral-latest",
-      "provider": "mistral"
-    },
-    "metric_keys": [
-      "completion_tokens",
-      "prompt_cached_tokens",
-      "prompt_tokens",
-      "time_to_first_token",
-      "tokens"
-    ],
-    "output": {
-      "choice_count": 1,
-      "has_content": true,
-      "role": "assistant",
-      "tool_call_count": 0,
-      "type": "choices"
-    },
-    "span_id": "<span:9>"
-  },
-  {
-    "has_input": false,
-    "has_output": false,
-    "input": null,
-    "metadata": {
-      "operation": "agents-complete"
-    },
-    "metric_keys": [],
-    "output": null,
-    "span_id": "<span:10>"
   },
   {
     "has_input": true,
@@ -197,6 +129,79 @@
     ],
     "output": {
       "choice_count": 1,
+      "finish_reason": "tool_calls",
+      "has_content": false,
+      "role": "assistant",
+      "tool_call_count": 1,
+      "type": "choices"
+    },
+    "span_id": "<span:7>"
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "input": null,
+    "metadata": {
+      "operation": "fim-complete"
+    },
+    "metric_keys": [],
+    "output": null,
+    "span_id": "<span:8>"
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "input": "<string>",
+    "metadata": {
+      "model": "codestral-latest",
+      "provider": "mistral"
+    },
+    "metric_keys": [
+      "completion_tokens",
+      "prompt_cached_tokens",
+      "prompt_tokens",
+      "time_to_first_token",
+      "tokens"
+    ],
+    "output": {
+      "choice_count": 1,
+      "finish_reason": "stop",
+      "has_content": true,
+      "role": "assistant",
+      "tool_call_count": 0,
+      "type": "choices"
+    },
+    "span_id": "<span:9>"
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "input": null,
+    "metadata": {
+      "operation": "fim-stream"
+    },
+    "metric_keys": [],
+    "output": null,
+    "span_id": "<span:10>"
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "input": "<string>",
+    "metadata": {
+      "model": "codestral-latest",
+      "provider": "mistral"
+    },
+    "metric_keys": [
+      "completion_tokens",
+      "prompt_cached_tokens",
+      "prompt_tokens",
+      "time_to_first_token",
+      "tokens"
+    ],
+    "output": {
+      "choice_count": 1,
+      "finish_reason": "length",
       "has_content": true,
       "role": "assistant",
       "tool_call_count": 0,
@@ -209,7 +214,7 @@
     "has_output": false,
     "input": null,
     "metadata": {
-      "operation": "agents-stream"
+      "operation": "agents-complete"
     },
     "metric_keys": [],
     "output": null,
@@ -238,6 +243,7 @@
     ],
     "output": {
       "choice_count": 1,
+      "finish_reason": "stop",
       "has_content": true,
       "role": "assistant",
       "tool_call_count": 0,
@@ -250,11 +256,53 @@
     "has_output": false,
     "input": null,
     "metadata": {
-      "operation": "embeddings-create"
+      "operation": "agents-stream"
     },
     "metric_keys": [],
     "output": null,
     "span_id": "<span:14>"
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "input": {
+      "item_count": 1,
+      "roles": [
+        "user"
+      ],
+      "type": "messages"
+    },
+    "metadata": {
+      "model": "mistral-small-latest",
+      "provider": "mistral"
+    },
+    "metric_keys": [
+      "completion_tokens",
+      "prompt_cached_tokens",
+      "prompt_tokens",
+      "time_to_first_token",
+      "tokens"
+    ],
+    "output": {
+      "choice_count": 1,
+      "finish_reason": "stop",
+      "has_content": true,
+      "role": "assistant",
+      "tool_call_count": 0,
+      "type": "choices"
+    },
+    "span_id": "<span:15>"
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "input": null,
+    "metadata": {
+      "operation": "embeddings-create"
+    },
+    "metric_keys": [],
+    "output": null,
+    "span_id": "<span:16>"
   },
   {
     "has_input": true,
@@ -273,6 +321,6 @@
       "embedding_length": "<number>",
       "type": "embedding"
     },
-    "span_id": "<span:15>"
+    "span_id": "<span:17>"
   }
 ]
