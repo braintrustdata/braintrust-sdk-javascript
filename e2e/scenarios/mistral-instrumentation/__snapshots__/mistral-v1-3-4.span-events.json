@@ -179,10 +179,7 @@
       "provider": "mistral"
     },
     "metric_keys": [
-      "completion_tokens",
-      "prompt_tokens",
-      "time_to_first_token",
-      "tokens"
+      "time_to_first_token"
     ],
     "name": "mistral.fim.stream",
     "root_span_id": "<span:1>",

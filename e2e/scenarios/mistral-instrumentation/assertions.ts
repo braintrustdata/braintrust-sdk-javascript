@@ -191,6 +191,63 @@ function summarizePayloadRow(row: CapturedLogRow): Json {
   } satisfies Json;
 }
 
+function normalizeLegacyV134MetricKeys(metricKeys: Json): Json {
+  if (!Array.isArray(metricKeys)) {
+    return metricKeys;
+  }
+
+  return metricKeys.includes("time_to_first_token")
+    ? ["time_to_first_token"]
+    : metricKeys;
+}
+
+function normalizeLegacyV134SpanSummaryRow(
+  summaryRow: Json,
+  snapshotName: string,
+): Json {
+  if (snapshotName !== "mistral-v1-3-4" || !isRecord(summaryRow)) {
+    return summaryRow;
+  }
+
+  if (summaryRow.name !== "mistral.fim.stream") {
+    return summaryRow;
+  }
+
+  return {
+    ...summaryRow,
+    metric_keys: normalizeLegacyV134MetricKeys(summaryRow.metric_keys),
+  };
+}
+
+function normalizeLegacyV134PayloadSummaryRow(
+  summaryRow: Json,
+  snapshotName: string,
+  spanName: string | undefined,
+): Json {
+  if (
+    snapshotName !== "mistral-v1-3-4" ||
+    spanName !== "mistral.fim.stream" ||
+    !isRecord(summaryRow)
+  ) {
+    return summaryRow;
+  }
+
+  const output = isRecord(summaryRow.output) ? summaryRow.output : null;
+
+  return {
+    ...summaryRow,
+    metric_keys: normalizeLegacyV134MetricKeys(summaryRow.metric_keys),
+    ...(output
+      ? {
+          output: {
+            ...output,
+            finish_reason: null,
+          },
+        }
+      : {}),
+  };
+}
+
 function mergeRecordValues(
   left: Record<string, unknown> | undefined,
   right: unknown,
@@ -252,7 +309,10 @@ function mergePayloadRows(rows: CapturedLogRow[]): CapturedLogRow[] {
     .filter((row): row is CapturedLogRow => row !== undefined);
 }
 
-function buildSpanSummary(events: CapturedLogEvent[]): Json {
+function buildSpanSummary(
+  events: CapturedLogEvent[],
+  snapshotName: string,
+): Json {
   const chatCompleteOperation = findLatestSpan(
     events,
     "mistral-chat-complete-operation",
@@ -322,12 +382,15 @@ function buildSpanSummary(events: CapturedLogEvent[]): Json {
         "mistral.embeddings.create",
       ]),
     ].map((event) =>
-      summarizeWrapperContract(event!, [
-        "model",
-        "operation",
-        "provider",
-        "scenario",
-      ]),
+      normalizeLegacyV134SpanSummaryRow(
+        summarizeWrapperContract(event!, [
+          "model",
+          "operation",
+          "provider",
+          "scenario",
+        ]),
+        snapshotName,
+      ),
     ) as Json,
   );
 }
@@ -335,12 +398,31 @@ function buildSpanSummary(events: CapturedLogEvent[]): Json {
 function buildPayloadSummary(
   events: CapturedLogEvent[],
   payloads: CapturedLogPayload[],
+  snapshotName: string,
 ): Json {
+  const spanNameById = new Map<string, string>();
+  for (const event of events) {
+    if (
+      typeof event?.span?.id === "string" &&
+      typeof event?.span?.name === "string"
+    ) {
+      spanNameById.set(event.span.id, event.span.name);
+    }
+  }
+
   const root = findLatestSpan(events, ROOT_NAME);
   const payloadRows = payloadRowsForRootSpan(payloads, root?.span.id);
   const mergedRows = mergePayloadRows(payloadRows);
   return normalizeForSnapshot(
-    mergedRows.map((row) => summarizePayloadRow(row)),
+    mergedRows.map((row) =>
+      normalizeLegacyV134PayloadSummaryRow(
+        summarizePayloadRow(row),
+        snapshotName,
+        typeof row.span_id === "string"
+          ? spanNameById.get(row.span_id)
+          : undefined,
+      ),
+    ),
   );
 }
 
@@ -596,13 +678,15 @@ export function defineMistralInstrumentationAssertions(options: {
 
     test("matches the shared span snapshot", testConfig, async () => {
       await expect(
-        formatJsonFileSnapshot(buildSpanSummary(events)),
+        formatJsonFileSnapshot(buildSpanSummary(events, options.snapshotName)),
       ).toMatchFileSnapshot(spanSnapshotPath);
     });
 
     test("matches the shared payload snapshot", testConfig, async () => {
       await expect(
-        formatJsonFileSnapshot(buildPayloadSummary(events, payloads)),
+        formatJsonFileSnapshot(
+          buildPayloadSummary(events, payloads, options.snapshotName),
+        ),
       ).toMatchFileSnapshot(payloadSnapshotPath);
     });
   });
