@@ -25,7 +25,7 @@ Uses esbuild to bundle test code for the browser:
 Uses well-known tarball path for SDK installation:
 
 - `braintrust-latest.tgz` ensures package.json never changes
-- Build happens before `npm install` to ensure tarball exists
+- Build happens before `pnpm install` to ensure tarball exists
 
 ### Shared Test Suites
 

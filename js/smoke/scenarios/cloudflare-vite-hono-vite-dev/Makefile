@@ -19,10 +19,10 @@ setup:
 	@# Build shared package (if not running from parent)
 	@if [ -z "$(SMOKE_V2_SHARED_DIST)" ]; then \
 		echo "==> Building shared package"; \
-		cd ../../shared && npm ci && npm run build; \
+		cd ../../shared && pnpm install --ignore-workspace --frozen-lockfile && pnpm run build; \
 	fi
-	npm install --no-package-lock
+	pnpm install --ignore-workspace --lockfile=false
 
 test: setup
 	@echo "==> Running cloudflare-vite-hono-vite-dev test"
-	@npx tsx tests/vite-dev.test.mjs
+	@pnpm exec tsx tests/vite-dev.test.mjs

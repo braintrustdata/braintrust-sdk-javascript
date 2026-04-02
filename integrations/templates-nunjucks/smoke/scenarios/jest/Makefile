@@ -23,7 +23,7 @@ setup:
 	@# Build shared package (if not running from parent)
 	@if [ -z "$(SMOKE_V2_SHARED_DIST)" ]; then \
 		echo "==> Building shared package"; \
-		cd ../../../../../js/smoke/shared && npm install && npm run build; \
+		cd ../../../../../js/smoke/shared && pnpm install --ignore-workspace --frozen-lockfile && pnpm run build; \
 	fi
 
 	@# Build @braintrust/templates-nunjucks-js package
@@ -40,9 +40,9 @@ setup:
 		done; \
 	fi
 
-	npm install --no-package-lock
+	pnpm install --ignore-workspace --lockfile=false
 
 test: setup
 	@echo "==> Running jest tests"
 	@# Run only tests under the local tests/ directory to avoid workspace-wide discovery
-	npx jest --passWithNoTests --roots ./tests
+	pnpm exec jest --passWithNoTests --roots ./tests

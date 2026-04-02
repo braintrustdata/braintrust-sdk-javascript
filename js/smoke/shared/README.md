@@ -49,8 +49,8 @@ shared/
 
 ```bash
 cd smoke/shared
-npm install
-npm run build
+pnpm install --ignore-workspace --frozen-lockfile
+pnpm run build
 ```
 
 This produces both CJS and ESM builds in the `dist/` directory.
@@ -480,7 +480,7 @@ export { testMyFeature } from "./suites/my-suite";
 3. **Rebuild:**
 
 ```bash
-npm run build
+pnpm run build
 ```
 
 4. **Use in scenarios:**
@@ -562,7 +562,7 @@ export const testSomething = register("testSomething", async (braintrust) => {
 ## Development Workflow
 
 1. Make changes to test suites in `src/`
-2. Run `npm run build` to rebuild
+2. Run `pnpm run build` to rebuild
 3. Test in a target smoke scenario:
    ```bash
    cd ../scenarios/<scenario-name>

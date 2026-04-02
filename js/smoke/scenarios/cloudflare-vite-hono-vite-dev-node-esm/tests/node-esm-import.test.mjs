@@ -42,7 +42,7 @@ async function testViteDevServerWithNodeEsm() {
   } catch {}
 
   // Try to start Vite dev server with node-esm config
-  const vite = spawn("npx", ["vite", "--config", viteConfig], {
+  const vite = spawn("pnpm", ["exec", "vite", "--config", viteConfig], {
     stdio: ["ignore", "pipe", "pipe"],
     shell: true,
     cwd: scenarioDir,

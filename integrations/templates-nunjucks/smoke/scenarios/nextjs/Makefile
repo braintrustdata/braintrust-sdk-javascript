@@ -23,7 +23,7 @@ setup:
 	@# Build shared package (if not running from parent)
 	@if [ -z "$(SMOKE_V2_SHARED_DIST)" ]; then \
 		echo "==> Building shared package"; \
-		cd ../../../../../js/smoke/shared && npm install && npm run build; \
+		cd ../../../../../js/smoke/shared && pnpm install --ignore-workspace --frozen-lockfile && pnpm run build; \
 	fi
 
 	@# Build @braintrust/templates-nunjucks-js package
@@ -45,12 +45,12 @@ setup:
 	fi
 
 	@echo "==> Cleaning and reinstalling node_modules to pick up new tarballs"
-	rm -rf node_modules package-lock.json .next
-	npm install --no-package-lock
+	rm -rf node_modules .next
+	pnpm install --ignore-workspace --lockfile=false
 
 test: setup
 	@echo "==> Running Next.js integration test"
 	@echo "==> Building Next.js app"
-	npx next build
+	pnpm exec next build
 	@echo "==> Starting Next.js dev server and running Playwright tests"
-	npx playwright test
+	pnpm exec playwright test

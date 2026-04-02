@@ -6,7 +6,7 @@ setup:
 	@# Build shared test package (if not running from parent)
 	@if [ -z "$(SMOKE_V2_SHARED_DIST)" ]; then \
 		echo "==> Building shared package"; \
-		cd ../../shared && npm ci && npm run build; \
+		cd ../../shared && pnpm install --ignore-workspace --frozen-lockfile && pnpm run build; \
 	fi
 	@# Check if BRAINTRUST_TAR is set (from parent or CI), otherwise build
 	@if [ -n "$(BRAINTRUST_TAR)" ]; then \
@@ -21,9 +21,9 @@ setup:
 			break; \
 		done; \
 	fi
-	npm install --no-package-lock
-	npx playwright install --with-deps chromium
+	pnpm install --ignore-workspace --lockfile=false
+	pnpm exec playwright install --with-deps chromium
 	node esbuild.config.mjs
 
 test: setup
-	npx playwright test
+	pnpm exec playwright test
