@@ -496,11 +496,14 @@ function createMistralToolCallSpans(
     return;
   }
 
-  const resultToolCalls = isObject(args.result)
-    ? extractMistralToolCallsFromOutput(args.result.choices)
-    : [];
+  if (!isObject(args.result)) {
+    return;
+  }
+
+  const resultChoices = args.result.choices;
+  const resultToolCalls = extractMistralToolCallsFromOutput(resultChoices);
   if (resultToolCalls.length > 0) {
-    createMistralToolCallSpansFromOutput(parentSpan, args.result.choices);
+    createMistralToolCallSpansFromOutput(parentSpan, resultChoices);
   }
 }
 
