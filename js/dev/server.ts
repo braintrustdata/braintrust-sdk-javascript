@@ -310,28 +310,88 @@ async function getDataset(
   data: RunEvalRequest["data"],
 ): Promise<EvalData<unknown, unknown, BaseMetadata>> {
   if ("project_name" in data) {
-    return initDataset({
+    const selectorCount = [
+      data.dataset_version,
+      data.dataset_snapshot_name,
+      data.dataset_environment,
+    ].filter((value) => value != null).length;
+    if (selectorCount > 1) {
+      throw new Error(
+        "Cannot specify more than one of dataset_version, dataset_snapshot_name, and dataset_environment.",
+      );
+    }
+
+    const commonArgs = {
       state,
       project: data.project_name,
       dataset: data.dataset_name,
-      version: data.dataset_version ?? undefined,
-      environment: data.dataset_environment ?? undefined,
       _internal_btql: data._internal_btql ?? undefined,
-    });
+    };
+
+    if (data.dataset_version != null) {
+      return initDataset({
+        ...commonArgs,
+        version: data.dataset_version,
+      });
+    }
+    if (data.dataset_snapshot_name != null) {
+      return initDataset({
+        ...commonArgs,
+        snapshotName: data.dataset_snapshot_name,
+      });
+    }
+    if (data.dataset_environment != null) {
+      return initDataset({
+        ...commonArgs,
+        environment: data.dataset_environment,
+      });
+    }
+
+    return initDataset(commonArgs);
   }
   if ("dataset_id" in data) {
+    const selectorCount = [
+      data.dataset_version,
+      data.dataset_snapshot_name,
+      data.dataset_environment,
+    ].filter((value) => value != null).length;
+    if (selectorCount > 1) {
+      throw new Error(
+        "Cannot specify more than one of dataset_version, dataset_snapshot_name, and dataset_environment.",
+      );
+    }
+
     const datasetInfo = await getDatasetById({
       state,
       datasetId: data.dataset_id,
     });
-    return initDataset({
+    const commonArgs = {
       state,
       projectId: datasetInfo.projectId,
       dataset: datasetInfo.dataset,
-      version: data.dataset_version ?? undefined,
-      environment: data.dataset_environment ?? undefined,
       _internal_btql: data._internal_btql ?? undefined,
-    });
+    };
+
+    if (data.dataset_version != null) {
+      return initDataset({
+        ...commonArgs,
+        version: data.dataset_version,
+      });
+    }
+    if (data.dataset_snapshot_name != null) {
+      return initDataset({
+        ...commonArgs,
+        snapshotName: data.dataset_snapshot_name,
+      });
+    }
+    if (data.dataset_environment != null) {
+      return initDataset({
+        ...commonArgs,
+        environment: data.dataset_environment,
+      });
+    }
+
+    return initDataset(commonArgs);
   }
 
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
