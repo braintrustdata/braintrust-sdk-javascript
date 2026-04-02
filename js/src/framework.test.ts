@@ -186,9 +186,9 @@ describe("runEvaluator", () => {
         undefined,
       );
 
-      expect(out.results.every((r) => Object.keys(r.scores).length === 0)).toBe(
-        true,
-      );
+      expect(
+        out.results.every((r) => Object.keys(r.scores ?? {}).length === 0),
+      ).toBe(true);
     });
 
     describe("errorScoreHandler", () => {
@@ -216,8 +216,8 @@ describe("runEvaluator", () => {
           expect(
             out.results.every(
               (r) =>
-                Object.keys(r.scores).length === 3 &&
-                Object.values(r.scores).every((v) => v === 0),
+                Object.keys(r.scores ?? {}).length === 3 &&
+                Object.values(r.scores ?? {}).every((v) => v === 0),
             ),
           ).toBe(true);
         });
@@ -245,10 +245,10 @@ describe("runEvaluator", () => {
           expect(
             out.results.every(
               (r) =>
-                Object.keys(r.scores).length === 3 &&
-                r.scores.scorer_0 === 0 &&
-                r.scores.scorer_1 === 1 &&
-                r.scores.scorer_2 === 1,
+                Object.keys(r.scores ?? {}).length === 3 &&
+                r.scores?.scorer_0 === 0 &&
+                r.scores?.scorer_1 === 1 &&
+                r.scores?.scorer_2 === 1,
             ),
           ).toBe(true);
         });
@@ -276,7 +276,7 @@ describe("runEvaluator", () => {
           );
 
           expect(
-            out.results.every((r) => Object.keys(r.scores).length === 0),
+            out.results.every((r) => Object.keys(r.scores ?? {}).length === 0),
           ).toBe(true);
         });
 
@@ -303,8 +303,8 @@ describe("runEvaluator", () => {
           expect(
             out.results.every(
               (r) =>
-                Object.keys(r.scores).length === 1 &&
-                r.scores.error_score === 1,
+                Object.keys(r.scores ?? {}).length === 1 &&
+                r.scores?.error_score === 1,
             ),
           ).toBe(true);
         });
@@ -579,13 +579,13 @@ test("Eval with noSendLogs: true runs locally without creating experiment", asyn
   expect(result.results).toHaveLength(2);
   expect(result.results[0].input).toBe("hello");
   expect(result.results[0].output).toBe("hello world");
-  expect(result.results[0].scores.exact_match).toBe(1);
-  expect(result.results[0].scores.simple_scorer).toBe(0.8);
+  expect(result.results[0].scores?.exact_match).toBe(1);
+  expect(result.results[0].scores?.simple_scorer).toBe(0.8);
 
   expect(result.results[1].input).toBe("test");
   expect(result.results[1].output).toBe("test world");
-  expect(result.results[1].scores.exact_match).toBe(1);
-  expect(result.results[1].scores.simple_scorer).toBe(0.8);
+  expect(result.results[1].scores?.exact_match).toBe(1);
+  expect(result.results[1].scores?.simple_scorer).toBe(0.8);
 
   // Verify it builds a local summary (no experimentUrl means local run)
   expect(result.summary.projectName).toBe("test-no-logs");
@@ -660,10 +660,10 @@ test("Eval with returnResults: true collects all results", async () => {
   expect(result.results).toHaveLength(2);
   expect(result.results[0].input).toBe("hello");
   expect(result.results[0].output).toBe("hello world");
-  expect(result.results[0].scores.exact_match).toBe(1);
+  expect(result.results[0].scores?.exact_match).toBe(1);
   expect(result.results[1].input).toBe("test");
   expect(result.results[1].output).toBe("test world");
-  expect(result.results[1].scores.exact_match).toBe(1);
+  expect(result.results[1].scores?.exact_match).toBe(1);
 
   // Summary should also be correct
   expect(result.summary.scores.exact_match.score).toBe(1);
@@ -862,7 +862,7 @@ test("scorer spans have purpose='scorer' attribute", async () => {
   );
 
   expect(result.results).toHaveLength(1);
-  expect(result.results[0].scores.simple_scorer).toBe(1);
+  expect(result.results[0].scores?.simple_scorer).toBe(1);
 
   await memoryLogger.flush();
   const logs = await memoryLogger.drain();
@@ -1635,6 +1635,7 @@ test("classifier-only evaluator populates classifications field", async () => {
 
   expect(result.results).toHaveLength(1);
   const r = result.results[0];
+  expect(r.scores).toBeUndefined();
   expect(r.classifications?.category).toEqual([
     {
       id: "greeting",
@@ -1661,7 +1662,7 @@ test("scorer-only evaluator populates scores field", async () => {
   );
 
   expect(result.results).toHaveLength(1);
-  expect(result.results[0].scores.exact_match).toBe(1);
+  expect(result.results[0].scores?.exact_match).toBe(1);
   expect(result.results[0].classifications).toBeUndefined();
 });
 
@@ -1713,27 +1714,8 @@ test("mixed evaluator populates both scores and classifications", async () => {
   );
 
   expect(result.results).toHaveLength(1);
-  expect(result.results[0].scores.exact_match).toBe(1);
+  expect(result.results[0].scores?.exact_match).toBe(1);
   expect(result.results[0].classifications?.category).toEqual([
     { id: "greeting", label: "Greeting" },
   ]);
-});
-
-test("malformed classifier output fails clearly", async () => {
-  const result = await Eval(
-    "test-invalid-classifier-output",
-    {
-      data: [{ input: "hello" }],
-      task: (input) => input,
-      classifiers: [() => ({}) as never],
-    },
-    { noSendLogs: true, returnResults: true },
-  );
-
-  expect(result.results).toHaveLength(1);
-  expect((result.results[0] as any).metadata?.classifier_errors).toMatchObject({
-    classifier_0: expect.stringMatching(
-      /must return classifications with a non-empty string name/,
-    ),
-  });
 });

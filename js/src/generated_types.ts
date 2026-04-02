@@ -508,6 +508,10 @@ export const CodeBundle = z.object({
       position: z.union([
         z.object({ type: z.literal("task") }),
         z.object({ type: z.literal("scorer"), index: z.number().int().gte(0) }),
+        z.object({
+          type: z.literal("classifier"),
+          index: z.number().int().gte(0),
+        }),
       ]),
     }),
     z.object({ type: z.literal("function"), index: z.number().int().gte(0) }),
