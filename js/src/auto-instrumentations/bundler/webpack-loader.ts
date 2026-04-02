@@ -2,21 +2,23 @@
  * Webpack loader for auto-instrumentation.
  *
  * This is a webpack loader (not a plugin) for compatibility with tools that only support loaders,
- * such as Next.js Turbopack. Unlike the other exports in this package, this does not use unplugin.
+ * such as Next.js Turbopack.
  *
  * Usage in next.config.js / next.config.ts:
  * ```javascript
- * export default {
- *   webpack(config) {
- *     config.module.rules.unshift({
- *       use: [{ loader: 'braintrust/webpack-loader' }],
- *     });
- *     return config;
+ * const nextConfig: NextConfig = {
+ *   turbopack: {
+ *     rules: {
+ *       // Apply the loader to all JS/MJS/CJS files from node_modules.
+ *       // condition: "foreign" restricts the rule to third-party packages only.
+ *       "*.{js,mjs,cjs}": {
+ *         condition: "foreign",
+ *         loaders: [{ loader: require.resolve("braintrust/webpack-loader") }],
+ *       },
+ *     },
  *   },
  * };
  * ```
- *
- * For browser builds, the loader automatically uses 'dc-browser' for diagnostics_channel polyfill.
  */
 
 import {

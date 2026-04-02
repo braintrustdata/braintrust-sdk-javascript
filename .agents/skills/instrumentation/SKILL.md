@@ -1,6 +1,6 @@
 ---
 name: instrumentation
-description: Add or update Braintrust SDK instrumentation. Use when working on auto-instrumentation configs, tracing channels, provider plugins, vendored SDK typings, wrappers, or instrumentation-specific tests.
+description: Add or update Braintrust SDK instrumentation. Use when working on instrumentation of any kind - like wrappers, auto-instrumentation configs, tracing channels, provider plugins, vendored SDK typings, or instrumentation-specific tests.
 ---
 
 # Instrumentation Rules
@@ -26,7 +26,7 @@ Map the change before editing:
 - Non-invasive: instrumentation must not change user-visible behavior. Errors must still propagate, streams and promise subclasses must keep their original semantics, and any patch must be behavior-preserving and idempotent.
 - Inputs are untrusted: treat args, results, events, headers, and metadata as hostile. Prototype pollution is a concrete risk here. Avoid unsafe property access patterns, prototype-sensitive operations, and unnecessary mutation of third-party objects.
 - Support both auto-instrumentation and manual instrumentation. Auto-instrumentation does not cover every environment, loader, or framework.
-- For orchestrion auto-instrumentation, prefer targeting public API functions. Instrumenting internal helpers is more likely to break across SDK versions.
+- For orchestrion auto-instrumentation, prefer targeting public API functions. Instrumenting internal helpers is more likely to break across library versions.
 - Auto and manual paths should share logic. Prefer both paths emitting the same tracing-channel events, with provider plugins converting those events into spans/logs/errors. Manual wrappers should not directly emit observability data.
 - If a public instrumentation surface changes, check whether the export surface also needs updates in `js/src/instrumentation/index.ts` or `js/src/exports.ts`.
 - Preserve async context propagation. Changes around tracing channels, stream patching, or loader hooks must keep the current span context across awaits and stream consumption.
@@ -36,6 +36,7 @@ Map the change before editing:
 - Contain instrumentation failures. Extraction/logging bugs should be logged or ignored as appropriate, but must not break the user call path.
 - Log only the useful surface. Prefer narrow, stable payloads over dumping full request/response objects; exclude redundant or overly large data when possible.
 - We want to limit our instrumentation to operations that are relevant for AI generations and operations (LLMs, embeddings, media generation, ...). Things like creating entities on platforms (CRUD for Workflows of Agent entities) is irrelevant to us.
+- When building instrumentation, we should always have a vendored type/interface for what we are wrapping. The type or interface should not be larger than what is relevant to the instrumentation. The type or interface should be used for typing tracing channels and also should be used to assert the type on whatever is passed into wrappers as soon as the wrapper has verified that the passed in value is plausibly what should be wrapped.
 
 ## Process
 
