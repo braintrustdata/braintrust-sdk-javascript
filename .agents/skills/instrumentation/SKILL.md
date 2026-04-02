@@ -35,6 +35,7 @@ Map the change before editing:
 - Promise/stream behavior must be preserved. Patches need to keep subclass/helper semantics intact.
 - Contain instrumentation failures. Extraction/logging bugs should be logged or ignored as appropriate, but must not break the user call path.
 - Log only the useful surface. Prefer narrow, stable payloads over dumping full request/response objects; exclude redundant or overly large data when possible.
+- We want to limit our instrumentation to operations that are relevant for AI generations and operations (LLMs, embeddings, media generation, ...). Things like creating entities on platforms (CRUD for Workflows of Agent entities) is irrelevant to us.
 
 ## Process
 

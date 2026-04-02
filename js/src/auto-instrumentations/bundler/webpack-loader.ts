@@ -33,6 +33,7 @@ import { aiSDKConfigs } from "../configs/ai-sdk";
 import { claudeAgentSDKConfigs } from "../configs/claude-agent-sdk";
 import { googleGenAIConfigs } from "../configs/google-genai";
 import { openRouterConfigs } from "../configs/openrouter";
+import { mistralConfigs } from "../configs/mistral";
 import { type BundlerPluginOptions } from "./plugin";
 
 /**
@@ -66,6 +67,7 @@ function getMatcher(options: BundlerPluginOptions): InstrumentationMatcher {
     ...claudeAgentSDKConfigs,
     ...googleGenAIConfigs,
     ...openRouterConfigs,
+    ...mistralConfigs,
     ...(options.instrumentations ?? []),
   ];
   const dcModule = options.browser ? "dc-browser" : undefined;
