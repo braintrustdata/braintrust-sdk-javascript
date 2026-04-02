@@ -318,7 +318,7 @@ function mergeToolCallDeltas(
     return toolCalls;
   }
 
-  let merged = toolCalls ? [...toolCalls] : [];
+  const merged = toolCalls ? [...toolCalls] : [];
 
   for (const delta of deltas) {
     const current = merged[merged.length - 1];
