@@ -84,4 +84,37 @@ describe("buildBundledFunctionEntry", () => {
 
     expect(entry.tags).toBeUndefined();
   });
+
+  test("preserves classifier experiment locations", async () => {
+    const entry = await buildBundledFunctionEntry({
+      spec: {
+        project_id: "proj-123",
+        name: "test-classifier",
+        slug: "test-classifier",
+        description: "Test classifier",
+        location: {
+          type: "experiment" as const,
+          eval_name: "eval-1",
+          position: {
+            type: "classifier" as const,
+            index: 0,
+          },
+        },
+        function_type: "classifier" as const,
+      },
+      runtime_context: { runtime: "node", version: "22.0.0" },
+      bundleId: "bundle-123",
+      sourceMapContext: undefined,
+    });
+
+    expect(entry.function_type).toBe("classifier");
+    expect(entry.function_data.data.location).toEqual({
+      type: "experiment",
+      eval_name: "eval-1",
+      position: {
+        type: "classifier",
+        index: 0,
+      },
+    });
+  });
 });

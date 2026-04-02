@@ -86,7 +86,9 @@ export async function findCodeDefinition({
       fn =
         location.position.type === "task"
           ? evaluator.task
-          : (evaluator.scores ?? [])[location.position.index];
+          : location.position.type === "scorer"
+            ? (evaluator.scores ?? [])[location.position.index]
+            : (evaluator.classifiers ?? [])[location.position.index];
     }
   } else if (location.type === "function") {
     fn = outFileModule.functions[location.index].handler;

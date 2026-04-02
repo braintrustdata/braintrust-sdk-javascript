@@ -4,7 +4,7 @@ import {
   type IfExistsType as IfExists,
 } from "../../generated_types";
 import type { BuildSuccess, EvaluatorState, FileHandle } from "../types";
-import { scorerName, warning } from "../../framework";
+import { classifierName, scorerName, warning } from "../../framework";
 import {
   _internalGetGlobalState,
   Experiment,
@@ -200,6 +200,23 @@ export async function uploadHandleBundles({
             };
           },
         ),
+        ...(evaluator.evaluator.classifiers ?? []).map(
+          (classifier, i): BundledFunctionSpec => {
+            const name = classifierName(classifier, i);
+            return {
+              ...baseInfo,
+              ...formatNameAndSlug(["eval", namePrefix, "classifier", name]),
+              description: `Classifier ${name} for eval ${namePrefix}`,
+              location: {
+                type: "experiment",
+                eval_name: evaluator.evaluator.evalName,
+                position: { type: "classifier", index: i },
+              },
+              function_type: "classifier",
+              origin,
+            };
+          },
+        ),
       ];
 
       bundleSpecs.push(...fileSpecs);
@@ -225,6 +242,11 @@ export async function uploadHandleBundles({
           scores: (evaluator.evaluator.scores ?? []).map((score, i) => ({
             name: scorerName(score, i),
           })),
+          classifiers: (evaluator.evaluator.classifiers ?? []).map(
+            (classifier, i) => ({
+              name: classifierName(classifier, i),
+            }),
+          ),
         };
 
         bundleSpecs.push({
