@@ -5,16 +5,13 @@ import type {
   ErrorOf,
   StartOf,
 } from "../core/channel-definitions";
-import type {
-  IsoAsyncLocalStorage,
-  IsoChannelHandlers,
-  IsoTracingChannel,
-} from "../../isomorph";
+import type { IsoChannelHandlers, IsoTracingChannel } from "../../isomorph";
 import {
   _internalGetGlobalState,
   Attachment,
   BRAINTRUST_CURRENT_SPAN_STORE,
   startSpan,
+  type CurrentSpanStore,
   type StartSpanArgs,
   type Span,
 } from "../../logger";
@@ -227,19 +224,20 @@ function bindCurrentSpanStoreToStart<TChannel extends GenerateContentChannel>(
   create: (event: StartOf<TChannel>) => SpanState,
 ): (() => void) | undefined {
   const state = _internalGetGlobalState();
+  const contextManager = state?.contextManager;
   const startChannel = tracingChannel.start as
     | ({
         bindStore?: (
-          store: IsoAsyncLocalStorage<Span>,
-          callback: (event: ChannelMessage<TChannel>) => Span,
+          store: CurrentSpanStore,
+          callback: (event: ChannelMessage<TChannel>) => unknown,
         ) => void;
-        unbindStore?: (store: IsoAsyncLocalStorage<Span>) => void;
+        unbindStore?: (store: CurrentSpanStore) => void;
       } & object)
     | undefined;
-  const currentSpanStore = state?.contextManager
+  const currentSpanStore = contextManager
     ? (
-        state.contextManager as {
-          [BRAINTRUST_CURRENT_SPAN_STORE]?: IsoAsyncLocalStorage<Span>;
+        contextManager as {
+          [BRAINTRUST_CURRENT_SPAN_STORE]?: CurrentSpanStore;
         }
       )[BRAINTRUST_CURRENT_SPAN_STORE]
     : undefined;
@@ -248,13 +246,12 @@ function bindCurrentSpanStoreToStart<TChannel extends GenerateContentChannel>(
     return undefined;
   }
 
-  startChannel.bindStore(
-    currentSpanStore,
-    (event) =>
-      ensureSpanState(states, event as object, () =>
-        create(event as StartOf<TChannel>),
-      ).span,
-  );
+  startChannel.bindStore(currentSpanStore, (event) => {
+    const span = ensureSpanState(states, event as object, () =>
+      create(event as StartOf<TChannel>),
+    ).span;
+    return contextManager!.wrapSpanForStore(span);
+  });
 
   return () => {
     startChannel.unbindStore?.(currentSpanStore);

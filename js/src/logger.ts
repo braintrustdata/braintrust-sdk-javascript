@@ -414,10 +414,33 @@ export const BRAINTRUST_CURRENT_SPAN_STORE = Symbol.for(
   "braintrust.currentSpanStore",
 );
 
+/**
+ * The type of AsyncLocalStorage exposed via {@link BRAINTRUST_CURRENT_SPAN_STORE}.
+ *
+ * The stored value is intentionally opaque (`unknown`) because the concrete type
+ * depends on the active context manager:
+ * - Default (`BraintrustContextManager`): stores a `Span`
+ * - OTEL compat (`OtelContextManager`): stores an OTEL `Context` object
+ *
+ * TracingChannel's `bindStore` transform (via `wrapSpanForStore`) produces the
+ * correct value type for whichever mode is active.
+ */
+export type CurrentSpanStore = IsoAsyncLocalStorage<unknown>;
+
 export abstract class ContextManager {
   abstract getParentSpanIds(): ContextParentSpanIds | undefined;
   abstract runInContext<R>(span: Span, callback: () => R): R;
   abstract getCurrentSpan(): Span | undefined;
+
+  /**
+   * Returns the value to store in the ALS bound to a TracingChannel's start event.
+   * In default mode this is the Span itself; in OTEL mode it is the OTEL Context
+   * containing the span so that OTEL's own ALS stores a proper Context object.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  wrapSpanForStore(span: Span): unknown {
+    return span;
+  }
 }
 
 class BraintrustContextManager extends ContextManager {

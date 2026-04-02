@@ -10,6 +10,7 @@ import {
   initLogger,
   currentSpan,
   getContextManager,
+  BRAINTRUST_CURRENT_SPAN_STORE,
   _exportsForTestingOnly,
   runEvaluator,
 } from "braintrust";
@@ -18,8 +19,11 @@ import {
   InMemorySpanExporter,
   SimpleSpanProcessor,
 } from "@opentelemetry/sdk-trace-base";
-import { context as otelContext } from "@opentelemetry/api";
-import { AsyncHooksContextManager } from "@opentelemetry/context-async-hooks";
+import { context as otelContext, trace as otelTrace } from "@opentelemetry/api";
+import {
+  AsyncHooksContextManager,
+  AsyncLocalStorageContextManager,
+} from "@opentelemetry/context-async-hooks";
 import {
   getExportVersion,
   createTracerProvider,
@@ -673,6 +677,218 @@ describe("OTEL compatibility mode", () => {
 
       childSpan.end();
     });
+  });
+});
+
+describe("OtelContextManager TracingChannel integration", () => {
+  let contextManager: AsyncLocalStorageContextManager;
+
+  beforeEach(async () => {
+    setupOtelCompat();
+    await _exportsForTestingOnly.simulateLoginForTests();
+    _exportsForTestingOnly.useTestBackgroundLogger();
+
+    // AsyncLocalStorageContextManager (not AsyncHooksContextManager) exposes
+    // _asyncLocalStorage which is required for TracingChannel bindStore.
+    contextManager = new AsyncLocalStorageContextManager();
+    contextManager.enable();
+    otelContext.setGlobalContextManager(contextManager);
+  });
+
+  afterEach(() => {
+    if (contextManager) {
+      otelContext.disable();
+      contextManager.disable();
+    }
+    _exportsForTestingOnly.clearTestBackgroundLogger();
+    _exportsForTestingOnly.simulateLogoutForTests();
+    resetOtelCompat();
+  });
+
+  test("OtelContextManager exposes OTEL ALS via BRAINTRUST_CURRENT_SPAN_STORE", () => {
+    const cm = getContextManager();
+    expect(cm.constructor.name).toBe("OtelContextManager");
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const store = (cm as any)[BRAINTRUST_CURRENT_SPAN_STORE];
+    expect(store).toBeDefined();
+    expect(typeof store.run).toBe("function");
+    expect(typeof store.getStore).toBe("function");
+  });
+
+  test("wrapSpanForStore returns OTEL Context that makes currentSpan() work", () => {
+    const cm = getContextManager();
+    const mockSpan = {
+      spanId: "abc123def456789a",
+      rootSpanId: "00000000000000000000000000000001",
+      spanParents: [],
+      getParentInfo: () => undefined,
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const ctx = cm.wrapSpanForStore(mockSpan as any);
+    expect(ctx).toBeDefined();
+
+    // Running in the returned context should expose the BT span via currentSpan()
+    otelContext.with(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ctx as any,
+      () => {
+        expect(currentSpan()).toBe(mockSpan);
+      },
+    );
+  });
+
+  test("store.run() with wrapSpanForStore output propagates span to currentSpan()", () => {
+    const cm = getContextManager();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const store = (cm as any)[BRAINTRUST_CURRENT_SPAN_STORE];
+    expect(store).toBeDefined();
+
+    const mockSpan = {
+      spanId: "deadbeef12345678",
+      rootSpanId: "00000000000000000000000000000002",
+      spanParents: [],
+      getParentInfo: () => undefined,
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const wrappedCtx = cm.wrapSpanForStore(mockSpan as any);
+
+    // Simulate what TracingChannel's runStores does: call store.run(value, fn)
+    store.run(wrappedCtx, () => {
+      expect(currentSpan()).toBe(mockSpan);
+    });
+  });
+
+  test("nested store.run() calls maintain correct span chain", () => {
+    const cm = getContextManager();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const store = (cm as any)[BRAINTRUST_CURRENT_SPAN_STORE];
+
+    const parentSpan = {
+      spanId: "1111111111111111",
+      rootSpanId: "00000000000000000000000000000003",
+      spanParents: [],
+      getParentInfo: () => undefined,
+    };
+    const childSpan = {
+      spanId: "2222222222222222",
+      rootSpanId: "00000000000000000000000000000003",
+      spanParents: ["1111111111111111"],
+      getParentInfo: () => undefined,
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    store.run(cm.wrapSpanForStore(parentSpan as any), () => {
+      expect(currentSpan()).toBe(parentSpan);
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      store.run(cm.wrapSpanForStore(childSpan as any), () => {
+        expect(currentSpan()).toBe(childSpan);
+      });
+
+      // After inner run completes, outer span is restored
+      expect(currentSpan()).toBe(parentSpan);
+    });
+
+    // After all runs, no BT span is active (getCurrentSpan returns undefined)
+    expect(getContextManager().getCurrentSpan()).toBeUndefined();
+  });
+
+  test("wrapSpanForStore result sets OTEL active span with matching IDs", () => {
+    const cm = getContextManager();
+    const mockSpan = {
+      spanId: "aabbccddeeff0011",
+      rootSpanId: "aabbccddeeff00112233445566778899",
+      spanParents: [],
+      getParentInfo: () => undefined,
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const ctx = cm.wrapSpanForStore(mockSpan as any);
+
+    otelContext.with(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ctx as any,
+      () => {
+        const activeSpan = otelTrace.getActiveSpan();
+        expect(activeSpan).toBeDefined();
+
+        const spanCtx = activeSpan!.spanContext();
+        expect(spanCtx.traceId).toBe(mockSpan.rootSpanId);
+        expect(spanCtx.spanId).toBe(mockSpan.spanId);
+      },
+    );
+  });
+});
+
+describe("OtelContextManager fallback ALS (AsyncHooksContextManager)", () => {
+  let hooksContextManager: AsyncHooksContextManager;
+
+  beforeEach(async () => {
+    setupOtelCompat();
+    await _exportsForTestingOnly.simulateLoginForTests();
+    _exportsForTestingOnly.useTestBackgroundLogger();
+
+    // AsyncHooksContextManager does NOT expose _asyncLocalStorage, so
+    // OtelContextManager should create its own fallback ALS.
+    hooksContextManager = new AsyncHooksContextManager();
+    hooksContextManager.enable();
+    otelContext.setGlobalContextManager(hooksContextManager);
+  });
+
+  afterEach(() => {
+    if (hooksContextManager) {
+      otelContext.disable();
+      hooksContextManager.disable();
+    }
+    _exportsForTestingOnly.clearTestBackgroundLogger();
+    _exportsForTestingOnly.simulateLogoutForTests();
+    resetOtelCompat();
+  });
+
+  test("exposes fallback ALS via BRAINTRUST_CURRENT_SPAN_STORE when OTEL ALS is unavailable", () => {
+    const cm = getContextManager();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const store = (cm as any)[BRAINTRUST_CURRENT_SPAN_STORE];
+    expect(store).toBeDefined();
+    expect(typeof store.run).toBe("function");
+    expect(typeof store.getStore).toBe("function");
+  });
+
+  test("wrapSpanForStore returns span directly (not OTEL Context) in fallback mode", () => {
+    const cm = getContextManager();
+    const mockSpan = {
+      spanId: "1234567890abcdef",
+      rootSpanId: "00000000000000000000000000000010",
+      spanParents: [],
+      getParentInfo: () => undefined,
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = cm.wrapSpanForStore(mockSpan as any);
+    // In fallback mode, the span is stored directly (not wrapped in OTEL Context)
+    expect(result).toBe(mockSpan);
+  });
+
+  test("store.run() with span in fallback mode makes getCurrentSpan() work", () => {
+    const cm = getContextManager();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const store = (cm as any)[BRAINTRUST_CURRENT_SPAN_STORE];
+
+    const mockSpan = {
+      spanId: "fedcba0987654321",
+      rootSpanId: "00000000000000000000000000000011",
+      spanParents: [],
+      getParentInfo: () => undefined,
+    };
+
+    store.run(mockSpan, () => {
+      expect(cm.getCurrentSpan()).toBe(mockSpan);
+    });
+
+    expect(cm.getCurrentSpan()).toBeUndefined();
   });
 });
 

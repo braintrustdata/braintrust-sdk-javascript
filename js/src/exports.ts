@@ -49,8 +49,10 @@ export type {
 export {
   Attachment,
   BaseAttachment,
+  BRAINTRUST_CURRENT_SPAN_STORE,
   BraintrustState,
   ContextManager,
+  CurrentSpanStore,
   DEFAULT_FETCH_BATCH_SIZE,
   DEFAULT_MAX_REQUEST_SIZE,
   Dataset,
