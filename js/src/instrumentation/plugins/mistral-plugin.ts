@@ -310,6 +310,51 @@ function getDeltaToolCalls(
   return toolCalls.filter((toolCall) => isObject(toolCall));
 }
 
+function getToolCallIndex(toolCall: MistralToolCallDelta): number | undefined {
+  return typeof toolCall.index === "number" && toolCall.index >= 0
+    ? toolCall.index
+    : undefined;
+}
+
+function createMergedToolCallDelta(
+  delta: MistralToolCallDelta,
+): MistralToolCallDelta {
+  return {
+    ...delta,
+    function: {
+      ...delta.function,
+      arguments:
+        typeof delta.function?.arguments === "string"
+          ? delta.function.arguments
+          : "",
+    },
+  };
+}
+
+function mergeToolCallDeltaPair(
+  current: MistralToolCallDelta,
+  delta: MistralToolCallDelta,
+): MistralToolCallDelta {
+  const currentArguments =
+    typeof current.function?.arguments === "string"
+      ? current.function.arguments
+      : "";
+  const deltaArguments =
+    typeof delta.function?.arguments === "string"
+      ? delta.function.arguments
+      : "";
+
+  return {
+    ...current,
+    ...delta,
+    function: {
+      ...(current.function || {}),
+      ...(delta.function || {}),
+      arguments: `${currentArguments}${deltaArguments}`,
+    },
+  };
+}
+
 function mergeToolCallDeltas(
   toolCalls: MistralToolCallDelta[] | undefined,
   deltas: MistralToolCallDelta[],
@@ -319,47 +364,62 @@ function mergeToolCallDeltas(
   }
 
   const merged = toolCalls ? [...toolCalls] : [];
+  const indexToPosition = new Map<number, number>();
+  const idToPosition = new Map<string, number>();
+
+  for (const [position, toolCall] of merged.entries()) {
+    const index = getToolCallIndex(toolCall);
+    if (index !== undefined && !indexToPosition.has(index)) {
+      indexToPosition.set(index, position);
+    }
+
+    if (typeof toolCall.id === "string" && !idToPosition.has(toolCall.id)) {
+      idToPosition.set(toolCall.id, position);
+    }
+  }
 
   for (const delta of deltas) {
-    const current = merged[merged.length - 1];
-    const sameTool =
-      current &&
-      typeof current.id === "string" &&
-      typeof delta.id === "string" &&
-      current.id === delta.id;
+    const deltaIndex = getToolCallIndex(delta);
+    const existingByIndex =
+      deltaIndex !== undefined ? indexToPosition.get(deltaIndex) : undefined;
+    const existingById =
+      typeof delta.id === "string" ? idToPosition.get(delta.id) : undefined;
+    const existingPosition = existingByIndex ?? existingById;
 
-    if (!sameTool) {
-      merged.push({
-        ...delta,
-        function: {
-          ...delta.function,
-          arguments:
-            typeof delta.function?.arguments === "string"
-              ? delta.function.arguments
-              : "",
-        },
-      });
+    if (existingPosition === undefined) {
+      const newToolCall = createMergedToolCallDelta(delta);
+      merged.push(newToolCall);
+
+      const newPosition = merged.length - 1;
+      const newIndex = getToolCallIndex(newToolCall);
+      if (newIndex !== undefined && !indexToPosition.has(newIndex)) {
+        indexToPosition.set(newIndex, newPosition);
+      }
+      if (
+        typeof newToolCall.id === "string" &&
+        !idToPosition.has(newToolCall.id)
+      ) {
+        idToPosition.set(newToolCall.id, newPosition);
+      }
       continue;
     }
 
-    const currentArguments =
-      typeof current.function?.arguments === "string"
-        ? current.function.arguments
-        : "";
-    const deltaArguments =
-      typeof delta.function?.arguments === "string"
-        ? delta.function.arguments
-        : "";
+    const mergedToolCall = mergeToolCallDeltaPair(
+      merged[existingPosition],
+      delta,
+    );
+    merged[existingPosition] = mergedToolCall;
 
-    merged[merged.length - 1] = {
-      ...current,
-      ...delta,
-      function: {
-        ...(current.function || {}),
-        ...(delta.function || {}),
-        arguments: `${currentArguments}${deltaArguments}`,
-      },
-    };
+    const mergedIndex = getToolCallIndex(mergedToolCall);
+    if (mergedIndex !== undefined && !indexToPosition.has(mergedIndex)) {
+      indexToPosition.set(mergedIndex, existingPosition);
+    }
+    if (
+      typeof mergedToolCall.id === "string" &&
+      !idToPosition.has(mergedToolCall.id)
+    ) {
+      idToPosition.set(mergedToolCall.id, existingPosition);
+    }
   }
 
   return merged.length > 0 ? merged : undefined;

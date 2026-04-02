@@ -166,4 +166,82 @@ describe("aggregateMistralStreamChunks", () => {
       finishReason: "tool_calls",
     });
   });
+
+  it("merges interleaved tool call deltas by index", () => {
+    const aggregated = aggregateMistralStreamChunks([
+      {
+        data: {
+          choices: [
+            {
+              delta: {
+                toolCalls: [
+                  {
+                    index: 0,
+                    id: "tool_0",
+                    function: {
+                      name: "first_tool",
+                      arguments: '{"city":"Vie',
+                    },
+                  },
+                  {
+                    index: 1,
+                    id: "tool_1",
+                    function: {
+                      name: "second_tool",
+                      arguments: '{"unit":"c"}',
+                    },
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      },
+      {
+        data: {
+          choices: [
+            {
+              delta: {
+                tool_calls: [
+                  {
+                    index: 0,
+                    id: "tool_0",
+                    function: {
+                      arguments: 'nna"}',
+                    },
+                  },
+                ],
+              },
+              finishReason: "tool_calls",
+            },
+          ],
+        },
+      },
+    ]);
+
+    expect(aggregated.output?.[0]).toMatchObject({
+      message: {
+        content: null,
+        toolCalls: [
+          {
+            index: 0,
+            id: "tool_0",
+            function: {
+              name: "first_tool",
+              arguments: '{"city":"Vienna"}',
+            },
+          },
+          {
+            index: 1,
+            id: "tool_1",
+            function: {
+              name: "second_tool",
+              arguments: '{"unit":"c"}',
+            },
+          },
+        ],
+      },
+      finishReason: "tool_calls",
+    });
+  });
 });
