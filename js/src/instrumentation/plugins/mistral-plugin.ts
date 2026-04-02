@@ -151,6 +151,43 @@ const TOKEN_DETAIL_PREFIX_MAP: Record<string, string> = {
   output_tokens_details: "completion",
 };
 
+const MISTRAL_REQUEST_METADATA_ALLOWLIST = new Set([
+  "agentId",
+  "agent_id",
+  "encodingFormat",
+  "encoding_format",
+  "frequencyPenalty",
+  "frequency_penalty",
+  "maxTokens",
+  "max_tokens",
+  "model",
+  "n",
+  "presencePenalty",
+  "presence_penalty",
+  "randomSeed",
+  "random_seed",
+  "responseFormat",
+  "response_format",
+  "safePrompt",
+  "safe_prompt",
+  "stream",
+  "stop",
+  "temperature",
+  "toolChoice",
+  "tool_choice",
+  "topP",
+  "top_p",
+]);
+
+const MISTRAL_RESPONSE_METADATA_ALLOWLIST = new Set([
+  "agentId",
+  "agent_id",
+  "created",
+  "id",
+  "model",
+  "object",
+]);
+
 function camelToSnake(value: string): string {
   return value.replace(/[A-Z]/g, (match) => `_${match.toLowerCase()}`);
 }
@@ -193,16 +230,54 @@ function addMistralProviderMetadata(
   };
 }
 
+function pickAllowedMetadata(
+  metadata: Record<string, unknown> | undefined,
+  allowlist: ReadonlySet<string>,
+): Record<string, unknown> {
+  if (!metadata) {
+    return {};
+  }
+
+  const picked: Record<string, unknown> = {};
+  for (const key of allowlist) {
+    const value = metadata[key];
+    if (value !== undefined) {
+      picked[key] = value;
+    }
+  }
+  return picked;
+}
+
+export function extractMistralRequestMetadata(
+  metadata: Record<string, unknown> | undefined,
+): Record<string, unknown> {
+  return pickAllowedMetadata(metadata, MISTRAL_REQUEST_METADATA_ALLOWLIST);
+}
+
+function isMistralChatCompletionChunk(
+  value: unknown,
+): value is MistralChatCompletionChunk {
+  return isObject(value);
+}
+
+function isMistralChunkChoice(
+  value: unknown,
+): value is MistralChatCompletionChunkChoice {
+  return isObject(value);
+}
+
 function extractMessagesInputWithMetadata(args: unknown[] | unknown): {
   input: unknown;
   metadata: Record<string, unknown>;
 } {
   const params = getMistralRequestArg(args);
-  const { messages, ...metadata } = params || {};
+  const { messages, ...rawMetadata } = params || {};
 
   return {
     input: processInputAttachments(messages),
-    metadata: addMistralProviderMetadata(metadata),
+    metadata: addMistralProviderMetadata(
+      extractMistralRequestMetadata(rawMetadata),
+    ),
   };
 }
 
@@ -211,11 +286,13 @@ function extractEmbeddingInputWithMetadata(args: unknown[] | unknown): {
   metadata: Record<string, unknown>;
 } {
   const params = getMistralRequestArg(args);
-  const { inputs, ...metadata } = params || {};
+  const { inputs, ...rawMetadata } = params || {};
 
   return {
     input: inputs,
-    metadata: addMistralProviderMetadata(metadata),
+    metadata: addMistralProviderMetadata(
+      extractMistralRequestMetadata(rawMetadata),
+    ),
   };
 }
 
@@ -224,29 +301,30 @@ function extractPromptInputWithMetadata(args: unknown[] | unknown): {
   metadata: Record<string, unknown>;
 } {
   const params = getMistralRequestArg(args);
-  const { prompt, ...metadata } = params || {};
+  const { prompt, ...rawMetadata } = params || {};
 
   return {
     input: prompt,
-    metadata: addMistralProviderMetadata(metadata),
+    metadata: addMistralProviderMetadata(
+      extractMistralRequestMetadata(rawMetadata),
+    ),
   };
 }
 
-function extractMistralResponseMetadata(
+export function extractMistralResponseMetadata(
   result: unknown,
 ): Record<string, unknown> | undefined {
   if (!isObject(result)) {
     return undefined;
   }
 
-  const {
-    choices: _choices,
-    usage: _usage,
-    data: _data,
-    ...metadata
-  } = result as Record<string, unknown>;
+  const { choices: _choices, usage: _usage, data: _data, ...metadata } = result;
+  const picked = pickAllowedMetadata(
+    metadata,
+    MISTRAL_RESPONSE_METADATA_ALLOWLIST,
+  );
 
-  return Object.keys(metadata).length > 0 ? metadata : undefined;
+  return Object.keys(picked).length > 0 ? picked : undefined;
 }
 
 function extractMistralMetrics(
@@ -442,6 +520,15 @@ function getChoiceFinishReason(
   return undefined;
 }
 
+type MistralChoiceAccumulator = {
+  content?: string;
+  finishReason?: string | null;
+  index: number;
+  order: number;
+  role?: string;
+  toolCalls?: MistralToolCallDelta[];
+};
+
 export function parseMistralMetricsFromUsage(
   usage: unknown,
 ): Record<string, number> {
@@ -485,16 +572,16 @@ export function aggregateMistralStreamChunks(
   metrics: Record<string, number>;
   metadata?: Record<string, unknown>;
 } {
-  let role: string | undefined;
-  let content: string | undefined;
-  let toolCalls: MistralToolCallDelta[] | undefined;
-  let finishReason: string | null | undefined;
+  const choiceAccumulators = new Map<string, MistralChoiceAccumulator>();
+  const indexToAccumulatorKey = new Map<number, string>();
+  const positionToAccumulatorKey = new Map<number, string>();
+  let nextAccumulatorOrder = 0;
   let metrics: Record<string, number> = {};
   let metadata: Record<string, unknown> | undefined;
 
   for (const event of chunks) {
-    const chunk = isObject(event?.data)
-      ? (event.data as MistralChatCompletionChunk)
+    const chunk = isMistralChatCompletionChunk(event?.data)
+      ? event.data
       : undefined;
     if (!chunk) {
       continue;
@@ -512,47 +599,87 @@ export function aggregateMistralStreamChunks(
       metadata = { ...(metadata || {}), ...chunkMetadata };
     }
 
-    for (const rawChoice of chunk.choices || []) {
-      if (!isObject(rawChoice)) {
+    for (const [choicePosition, rawChoice] of (chunk.choices || []).entries()) {
+      if (!isMistralChunkChoice(rawChoice)) {
         continue;
       }
-      const choice = rawChoice as MistralChatCompletionChunkChoice;
+      const choice = rawChoice;
+      const choiceIndex =
+        typeof choice.index === "number" && choice.index >= 0
+          ? choice.index
+          : undefined;
+      let accumulatorKey =
+        choiceIndex !== undefined
+          ? indexToAccumulatorKey.get(choiceIndex)
+          : undefined;
+      if (!accumulatorKey) {
+        accumulatorKey = positionToAccumulatorKey.get(choicePosition);
+      }
+      if (!accumulatorKey) {
+        const initialIndex = choiceIndex ?? choicePosition;
+        const keyPrefix = choiceIndex !== undefined ? "index" : "position";
+        accumulatorKey = `${keyPrefix}:${initialIndex}`;
+        choiceAccumulators.set(accumulatorKey, {
+          index: initialIndex,
+          order: nextAccumulatorOrder++,
+        });
+      }
 
-      const delta = isObject(choice.delta)
-        ? (choice.delta as Record<string, unknown>)
-        : undefined;
+      const accumulator = choiceAccumulators.get(accumulatorKey);
+      if (!accumulator) {
+        continue;
+      }
+
+      if (choiceIndex !== undefined) {
+        accumulator.index = choiceIndex;
+        indexToAccumulatorKey.set(choiceIndex, accumulatorKey);
+      }
+      positionToAccumulatorKey.set(choicePosition, accumulatorKey);
+
+      const delta = isObject(choice.delta) ? choice.delta : undefined;
       if (delta) {
-        if (!role && typeof delta.role === "string") {
-          role = delta.role;
+        if (!accumulator.role && typeof delta.role === "string") {
+          accumulator.role = delta.role;
         }
 
         const deltaText = extractDeltaText(delta.content);
         if (deltaText) {
-          content = (content || "") + deltaText;
+          accumulator.content = `${accumulator.content || ""}${deltaText}`;
         }
 
-        toolCalls = mergeToolCallDeltas(toolCalls, getDeltaToolCalls(delta));
+        accumulator.toolCalls = mergeToolCallDeltas(
+          accumulator.toolCalls,
+          getDeltaToolCalls(delta),
+        );
       }
 
       const choiceFinishReason = getChoiceFinishReason(choice);
       if (choiceFinishReason !== undefined) {
-        finishReason = choiceFinishReason;
+        accumulator.finishReason = choiceFinishReason;
       }
     }
   }
 
-  return {
-    output: [
-      {
-        index: 0,
-        message: {
-          ...(role ? { role } : {}),
-          content: content ?? null,
-          ...(toolCalls ? { toolCalls } : {}),
-        },
-        ...(finishReason !== undefined ? { finishReason } : {}),
+  const output = Array.from(choiceAccumulators.values())
+    .sort((left, right) =>
+      left.index === right.index
+        ? left.order - right.order
+        : left.index - right.index,
+    )
+    .map((choice) => ({
+      index: choice.index,
+      message: {
+        ...(choice.role ? { role: choice.role } : {}),
+        content: choice.content ?? null,
+        ...(choice.toolCalls ? { toolCalls: choice.toolCalls } : {}),
       },
-    ],
+      ...(choice.finishReason !== undefined
+        ? { finishReason: choice.finishReason }
+        : {}),
+    }));
+
+  return {
+    output,
     metrics,
     ...(metadata ? { metadata } : {}),
   };

@@ -1,8 +1,73 @@
 import { describe, expect, it } from "vitest";
 import {
   aggregateMistralStreamChunks,
+  extractMistralRequestMetadata,
+  extractMistralResponseMetadata,
   parseMistralMetricsFromUsage,
 } from "./mistral-plugin";
+
+describe("extractMistralRequestMetadata", () => {
+  it("keeps only allowlisted request metadata", () => {
+    expect(
+      extractMistralRequestMetadata({
+        model: "mistral-large-latest",
+        maxTokens: 128,
+        temperature: 0.4,
+        n: 2,
+        safe_prompt: true,
+        toolChoice: "auto",
+        messages: [{ role: "user", content: "hi" }],
+        tools: [{ type: "function" }],
+        suffix: "ignored",
+        arbitrary: "ignored",
+      }),
+    ).toEqual({
+      model: "mistral-large-latest",
+      maxTokens: 128,
+      temperature: 0.4,
+      n: 2,
+      safe_prompt: true,
+      toolChoice: "auto",
+    });
+  });
+
+  it("returns empty metadata for missing input", () => {
+    expect(extractMistralRequestMetadata(undefined)).toEqual({});
+  });
+});
+
+describe("extractMistralResponseMetadata", () => {
+  it("keeps only allowlisted response metadata", () => {
+    expect(
+      extractMistralResponseMetadata({
+        id: "cmpl_123",
+        created: 1234,
+        object: "chat.completion",
+        model: "mistral-large-latest",
+        agentId: "agent_123",
+        usage: { total_tokens: 20 },
+        choices: [{ index: 0 }],
+        data: [{ embedding: [0.1] }],
+        arbitrary: "ignored",
+      }),
+    ).toEqual({
+      id: "cmpl_123",
+      created: 1234,
+      object: "chat.completion",
+      model: "mistral-large-latest",
+      agentId: "agent_123",
+    });
+  });
+
+  it("returns undefined when no allowlisted keys are present", () => {
+    expect(
+      extractMistralResponseMetadata({
+        usage: { total_tokens: 20 },
+        choices: [{ index: 0 }],
+      }),
+    ).toBeUndefined();
+  });
+});
 
 describe("parseMistralMetricsFromUsage", () => {
   it("returns empty metrics for missing usage", () => {
@@ -243,5 +308,63 @@ describe("aggregateMistralStreamChunks", () => {
       },
       finishReason: "tool_calls",
     });
+  });
+
+  it("keeps streamed choices separated when multiple choices are returned", () => {
+    const aggregated = aggregateMistralStreamChunks([
+      {
+        data: {
+          choices: [
+            {
+              index: 0,
+              delta: {
+                role: "assistant",
+                content: "a",
+              },
+            },
+            {
+              index: 1,
+              delta: {
+                role: "assistant",
+                content: "b",
+              },
+            },
+          ],
+        },
+      },
+      {
+        data: {
+          choices: [
+            {
+              index: 0,
+              finishReason: "stop",
+            },
+            {
+              index: 1,
+              finishReason: "length",
+            },
+          ],
+        },
+      },
+    ]);
+
+    expect(aggregated.output).toEqual([
+      {
+        index: 0,
+        message: {
+          role: "assistant",
+          content: "a",
+        },
+        finishReason: "stop",
+      },
+      {
+        index: 1,
+        message: {
+          role: "assistant",
+          content: "b",
+        },
+        finishReason: "length",
+      },
+    ]);
   });
 });
