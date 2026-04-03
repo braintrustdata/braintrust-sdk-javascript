@@ -100,6 +100,17 @@ export type StreamingChannelSpanConfig<TChannel extends AnyAsyncChannel> =
       span: Span;
       startTime: number;
     }) => boolean;
+    onComplete?: (args: {
+      channelName: string;
+      chunks?: ChunkOf<TChannel>[];
+      endEvent: AsyncEndOf<TChannel>;
+      metadata?: Record<string, unknown>;
+      metrics: Record<string, number>;
+      output: unknown;
+      result: StreamingResult<TChannel>;
+      span: Span;
+      startTime: number;
+    }) => void;
   };
 
 export type SyncStreamChannelSpanConfig<TChannel extends AnySyncStreamChannel> =
@@ -294,6 +305,40 @@ function logErrorAndEnd<
   states.delete(event as object);
 }
 
+function runStreamingCompletionHook<TChannel extends AnyAsyncChannel>(args: {
+  channelName: string;
+  config: StreamingChannelSpanConfig<TChannel>;
+  chunks?: ChunkOf<TChannel>[];
+  endEvent: AsyncEndOf<TChannel>;
+  metadata?: Record<string, unknown>;
+  metrics: Record<string, number>;
+  output: unknown;
+  result: StreamingResult<TChannel>;
+  span: Span;
+  startTime: number;
+}): void {
+  if (!args.config.onComplete) {
+    return;
+  }
+
+  try {
+    args.config.onComplete({
+      channelName: args.channelName,
+      ...(args.chunks ? { chunks: args.chunks } : {}),
+      endEvent: args.endEvent,
+      ...(args.metadata !== undefined ? { metadata: args.metadata } : {}),
+      metrics: args.metrics,
+      output: args.output,
+      result: args.result,
+      span: args.span,
+      startTime: args.startTime,
+    });
+  } catch (error) {
+    // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
+    console.error(`Error in onComplete hook for ${args.channelName}:`, error);
+  }
+}
+
 export function traceAsyncChannel<TChannel extends AnyAsyncChannel>(
   channel: TChannel,
   config: AsyncChannelSpanConfig<TChannel>,
@@ -455,6 +500,19 @@ export function traceStreamingChannel<TChannel extends AnyAsyncChannel>(
                   getCurrentUnixTimestamp() - startTime;
               }
 
+              runStreamingCompletionHook<TChannel>({
+                channelName,
+                chunks,
+                config,
+                endEvent: asyncEndEvent,
+                ...(metadata !== undefined ? { metadata } : {}),
+                metrics,
+                output,
+                result: asyncEndEvent.result as StreamingResult<TChannel>,
+                span,
+                startTime,
+              });
+
               span.log({
                 output,
                 ...(metadata !== undefined ? { metadata } : {}),
@@ -509,6 +567,20 @@ export function traceStreamingChannel<TChannel extends AnyAsyncChannel>(
           asyncEndEvent.result as StreamingResult<TChannel>,
           asyncEndEvent,
         );
+
+        runStreamingCompletionHook<TChannel>({
+          channelName,
+          config,
+          endEvent: asyncEndEvent,
+          ...(normalizeMetadata(metadata) !== undefined
+            ? { metadata: normalizeMetadata(metadata) }
+            : {}),
+          metrics,
+          output,
+          result: asyncEndEvent.result as StreamingResult<TChannel>,
+          span,
+          startTime,
+        });
 
         span.log({
           output,

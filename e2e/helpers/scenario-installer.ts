@@ -26,6 +26,7 @@ const INSTALL_SECRET_ENV_VARS = [
   "GH_TOKEN",
   "OPENAI_API_KEY",
   "OPENROUTER_API_KEY",
+  "MISTRAL_API_KEY",
 ] as const;
 
 const cleanupDirs = new Set<string>();
