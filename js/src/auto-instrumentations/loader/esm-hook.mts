@@ -11,7 +11,7 @@ import {
   type InstrumentationConfig,
 } from "@apm-js-collab/code-transformer";
 import moduleDetailsFromPath from "module-details-from-path";
-import { getPackageVersion } from "./get-package-version.js";
+import { getPackageName, getPackageVersion } from "./get-package-version.js";
 
 let instrumentator: any;
 let packages: Set<string>;
@@ -44,14 +44,19 @@ export async function resolve(
 
   const resolvedModule = moduleDetailsFromPath(normalizedForPlatform);
 
-  if (resolvedModule && packages?.has(resolvedModule.name)) {
-    const version = getPackageVersion(resolvedModule.basedir);
+  if (resolvedModule) {
+    const packageName =
+      getPackageName(resolvedModule.basedir) ?? resolvedModule.name;
+    if (!packages?.has(packageName)) {
+      return url;
+    }
 
+    const version = getPackageVersion(resolvedModule.basedir);
     // Normalize module path for WASM transformer (expects forward slashes)
     const normalizedModulePath = resolvedModule.path.replace(/\\/g, "/");
 
     const transformer = instrumentator.getTransformer(
-      resolvedModule.name,
+      packageName,
       version,
       normalizedModulePath,
     );

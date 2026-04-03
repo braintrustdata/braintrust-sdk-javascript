@@ -41,22 +41,20 @@ for (const scenario of mistralScenarios) {
       timeoutMs: MISTRAL_SCENARIO_TIMEOUT_MS,
     });
 
-    if (scenario.supportsAutoHook) {
-      defineMistralInstrumentationAssertions({
-        name: "auto-hook instrumentation",
-        runScenario: async ({ runNodeScenarioDir }) => {
-          await runNodeScenarioDir({
-            entry: scenario.autoEntry,
-            nodeArgs: ["--import", "braintrust/hook.mjs"],
-            runContext: { variantKey: scenario.snapshotName },
-            scenarioDir,
-            timeoutMs: MISTRAL_SCENARIO_TIMEOUT_MS,
-          });
-        },
-        snapshotName: scenario.snapshotName,
-        testFileUrl: import.meta.url,
-        timeoutMs: MISTRAL_SCENARIO_TIMEOUT_MS,
-      });
-    }
+    defineMistralInstrumentationAssertions({
+      name: "auto-hook instrumentation",
+      runScenario: async ({ runNodeScenarioDir }) => {
+        await runNodeScenarioDir({
+          entry: scenario.autoEntry,
+          nodeArgs: ["--import", "braintrust/hook.mjs"],
+          runContext: { variantKey: scenario.snapshotName },
+          scenarioDir,
+          timeoutMs: MISTRAL_SCENARIO_TIMEOUT_MS,
+        });
+      },
+      snapshotName: scenario.snapshotName,
+      testFileUrl: import.meta.url,
+      timeoutMs: MISTRAL_SCENARIO_TIMEOUT_MS,
+    });
   });
 }
