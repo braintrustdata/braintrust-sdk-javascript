@@ -3,10 +3,12 @@
 import { vi, expect, test, describe, beforeEach, afterEach } from "vitest";
 import {
   _exportsForTestingOnly,
+  _experimental,
   init,
   initLogger,
   Prompt,
   BraintrustState,
+  currentLogger,
   loadPrompt,
   loadParameters,
   wrapTraced,
@@ -1393,6 +1395,125 @@ describe("wrapTraced generator support", () => {
     expect(log.input).toBeUndefined(); // no input because noTraceIO
     expect(log.span_attributes?.name).toBe("main");
     expect(log.metadata).toEqual({ a: "b", total: 6 });
+  });
+});
+
+describe("_experimental.withConfig", () => {
+  beforeEach(() => {
+    _exportsForTestingOnly.simulateLogoutForTests();
+  });
+
+  test("scopes logger selection and restores existing current logger", () => {
+    const baseLogger = initLogger({
+      projectName: "base-project",
+      projectId: "base-project-id",
+    });
+    expect(currentLogger()).toBe(baseLogger);
+
+    _experimental.withConfig({ project: "scoped-project" }, () => {
+      const scopedLogger = currentLogger();
+      expect(scopedLogger).toBeDefined();
+      expect(scopedLogger).not.toBe(baseLogger);
+    });
+
+    expect(currentLogger()).toBe(baseLogger);
+  });
+
+  test("maintains scoped logger across async boundaries", async () => {
+    const baseLogger = initLogger({
+      projectName: "base-project",
+      projectId: "base-project-id",
+    });
+    let scopedLogger: ReturnType<typeof currentLogger> | undefined;
+
+    await _experimental.withConfig({ project: "async-project" }, async () => {
+      await Promise.resolve();
+      scopedLogger = currentLogger();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(currentLogger()).toBe(scopedLogger);
+    });
+
+    expect(scopedLogger).toBeDefined();
+    expect(currentLogger()).toBe(baseLogger);
+  });
+
+  test("nested calls reuse scoped logger and apply inner project config", () => {
+    initLogger({
+      projectName: "base-project",
+      projectId: "base-project-id",
+    });
+
+    let outerLogger: ReturnType<typeof currentLogger> | undefined;
+    let innerLogger: ReturnType<typeof currentLogger> | undefined;
+
+    _experimental.withConfig({ project: "outer-project" }, () => {
+      outerLogger = currentLogger();
+      const outerSpan = startSpan({ name: "outer-project-span" });
+      expect(outerSpan.getParentInfo()?.computeObjectMetadataArgs).toEqual({
+        project_name: "outer-project",
+      });
+      outerSpan.end();
+
+      _experimental.withConfig({ project: "inner-project" }, () => {
+        innerLogger = currentLogger();
+        expect(innerLogger).toBeDefined();
+        expect(innerLogger).toBe(outerLogger);
+        const innerSpan = startSpan({ name: "inner-project-span" });
+        expect(innerSpan.getParentInfo()?.computeObjectMetadataArgs).toEqual({
+          project_name: "inner-project",
+        });
+        innerSpan.end();
+      });
+
+      const outerSpanAfterInner = startSpan({ name: "outer-project-span-2" });
+      expect(
+        outerSpanAfterInner.getParentInfo()?.computeObjectMetadataArgs,
+      ).toEqual({
+        project_name: "outer-project",
+      });
+      outerSpanAfterInner.end();
+
+      expect(currentLogger()).toBe(outerLogger);
+    });
+  });
+
+  test("top-level scopes reuse cached experimental logger instance", () => {
+    initLogger({
+      projectName: "base-project",
+      projectId: "base-project-id",
+    });
+
+    let firstLogger: ReturnType<typeof currentLogger> | undefined;
+    let secondLogger: ReturnType<typeof currentLogger> | undefined;
+
+    _experimental.withConfig({ project: "project-one" }, () => {
+      firstLogger = currentLogger();
+      const span = startSpan({ name: "project-one-span" });
+      expect(span.getParentInfo()?.computeObjectMetadataArgs).toEqual({
+        project_name: "project-one",
+      });
+      span.end();
+    });
+
+    _experimental.withConfig({ project: "project-two" }, () => {
+      secondLogger = currentLogger();
+      const span = startSpan({ name: "project-two-span" });
+      expect(span.getParentInfo()?.computeObjectMetadataArgs).toEqual({
+        project_name: "project-two",
+      });
+      span.end();
+    });
+
+    expect(firstLogger).toBeDefined();
+    expect(secondLogger).toBe(firstLogger);
+  });
+
+  test("requires a non-empty project name", () => {
+    expect(() =>
+      _experimental.withConfig({ project: "   " }, () => {}),
+    ).toThrow(
+      "withConfig requires a non-empty project name in `configuration.project`",
+    );
   });
 });
 
