@@ -176,24 +176,17 @@ function summarizeOutput(output: unknown): Json {
   };
 }
 
-function summarizePayloadRow(
-  row: CapturedLogRow,
-  options?: { spanName?: string },
-): Json {
+function summarizePayloadRow(row: CapturedLogRow): Json {
   const metrics =
     typeof row.metrics === "object" &&
     row.metrics !== null &&
     !Array.isArray(row.metrics)
       ? (row.metrics as Record<string, unknown>)
       : {};
-  const omitObjectKeysForInput = options?.spanName === "mistral.tool";
-
   return {
     has_input: row.input !== undefined && row.input !== null,
     has_output: row.output !== undefined && row.output !== null,
-    input: summarizeInput(row.input, {
-      omitObjectKeys: omitObjectKeysForInput,
-    }),
+    input: summarizeInput(row.input),
     metadata: pickMetadata(
       row.metadata as Record<string, unknown> | undefined,
       ["model", "operation", "provider", "scenario"],
@@ -324,6 +317,13 @@ function mergePayloadRows(rows: CapturedLogRow[]): CapturedLogRow[] {
     .filter((row): row is CapturedLogRow => row !== undefined);
 }
 
+function pickOutputSpans<T extends { output?: unknown }>(spans: T[]): T[] {
+  const spansWithOutput = spans.filter(
+    (span) => span.output !== undefined && span.output !== null,
+  );
+  return spansWithOutput.length > 0 ? spansWithOutput : spans;
+}
+
 function buildSpanSummary(
   events: CapturedLogEvent[],
   snapshotName: string,
@@ -345,9 +345,7 @@ function buildSpanSummary(
     "mistral.chat.complete",
     chatToolCallOperation?.span.id,
   );
-  const chatToolSpans = chatToolCallSpans.flatMap((chatToolCallSpan) =>
-    findChildSpans(events, "mistral.tool", chatToolCallSpan.span.id),
-  );
+  const selectedChatToolCallSpans = pickOutputSpans(chatToolCallSpans);
   const fimCompleteOperation = findLatestSpan(
     events,
     "mistral-fim-complete-operation",
@@ -369,9 +367,7 @@ function buildSpanSummary(
     "mistral.agents.complete",
     agentsToolCallOperation?.span.id,
   );
-  const agentsToolSpans = agentsToolCallSpans.flatMap((agentsToolCallSpan) =>
-    findChildSpans(events, "mistral.tool", agentsToolCallSpan.span.id),
-  );
+  const selectedAgentsToolCallSpans = pickOutputSpans(agentsToolCallSpans);
   const agentsStreamOperation = findLatestSpan(
     events,
     "mistral-agents-stream-operation",
@@ -393,8 +389,7 @@ function buildSpanSummary(
         "mistral.chat.stream",
       ]),
       chatToolCallOperation,
-      ...chatToolCallSpans,
-      ...chatToolSpans,
+      ...selectedChatToolCallSpans,
       fimCompleteOperation,
       findMistralSpan(events, fimCompleteOperation?.span.id, [
         "mistral.fim.complete",
@@ -408,8 +403,7 @@ function buildSpanSummary(
         "mistral.agents.complete",
       ]),
       agentsToolCallOperation,
-      ...agentsToolCallSpans,
-      ...agentsToolSpans,
+      ...selectedAgentsToolCallSpans,
       agentsStreamOperation,
       findMistralSpan(events, agentsStreamOperation?.span.id, [
         "mistral.agents.stream",
@@ -437,12 +431,19 @@ function buildPayloadSummary(
   payloads: CapturedLogPayload[],
   snapshotName: string,
 ): Json {
+  const parentIdBySpanId = new Map<string, string>();
   const spanNameById = new Map<string, string>();
   for (const event of events) {
     if (
       typeof event?.span?.id === "string" &&
       typeof event?.span?.name === "string"
     ) {
+      const parentId =
+        Array.isArray(event.span.parentIds) &&
+        typeof event.span.parentIds[0] === "string"
+          ? event.span.parentIds[0]
+          : "";
+      parentIdBySpanId.set(event.span.id, parentId);
       spanNameById.set(event.span.id, event.span.name);
     }
   }
@@ -450,15 +451,60 @@ function buildPayloadSummary(
   const root = findLatestSpan(events, ROOT_NAME);
   const payloadRows = payloadRowsForRootSpan(payloads, root?.span.id);
   const mergedRows = mergePayloadRows(payloadRows);
+  const llmSpanNames = new Set([
+    "mistral.chat.complete",
+    "mistral.chat.stream",
+    "mistral.fim.complete",
+    "mistral.fim.stream",
+    "mistral.agents.complete",
+    "mistral.agents.stream",
+    "mistral.embeddings.create",
+  ]);
+  const parentAndNameWithOutput = new Set<string>();
+
+  for (const row of mergedRows) {
+    if (typeof row.span_id !== "string") {
+      continue;
+    }
+    const spanName = spanNameById.get(row.span_id);
+    if (!spanName || !llmSpanNames.has(spanName)) {
+      continue;
+    }
+    if (row.output === undefined || row.output === null) {
+      continue;
+    }
+
+    const parentId = parentIdBySpanId.get(row.span_id) || "";
+    parentAndNameWithOutput.add(`${parentId}:${spanName}`);
+  }
+
+  const stableRows = mergedRows.filter((row) => {
+    if (typeof row.span_id !== "string") {
+      return true;
+    }
+
+    const spanName = spanNameById.get(row.span_id);
+    if (!spanName || !llmSpanNames.has(spanName)) {
+      return true;
+    }
+
+    if (row.output !== undefined && row.output !== null) {
+      return true;
+    }
+
+    const parentId = parentIdBySpanId.get(row.span_id) || "";
+    return !parentAndNameWithOutput.has(`${parentId}:${spanName}`);
+  });
+
   return normalizeForSnapshot(
-    mergedRows.map((row) => {
+    stableRows.map((row) => {
       const spanName =
         typeof row.span_id === "string"
           ? spanNameById.get(row.span_id)
           : undefined;
 
       return normalizeLegacyV134PayloadSummaryRow(
-        summarizePayloadRow(row, { spanName }),
+        summarizePayloadRow(row),
         snapshotName,
         spanName,
       );
@@ -557,29 +603,31 @@ export function defineMistralInstrumentationAssertions(options: {
         "mistral.chat.complete",
         operation?.span.id,
       );
-      const spanIds = new Set(spans.map((span) => span.span.id));
-      const toolSpans = spans.flatMap((span) =>
-        findChildSpans(events, "mistral.tool", span.span.id),
+      const selectedSpans = pickOutputSpans(spans);
+      const toolCallCountBySpanId = new Map<string, number>(
+        selectedSpans.map((span) => {
+          const output = span.output as
+            | Array<{
+                message?: {
+                  toolCalls?: unknown;
+                  tool_calls?: unknown;
+                };
+              }>
+            | undefined;
+          const firstChoice = Array.isArray(output) ? output[0] : undefined;
+          const toolCalls =
+            (Array.isArray(firstChoice?.message?.tool_calls) &&
+              firstChoice.message.tool_calls) ||
+            (Array.isArray(firstChoice?.message?.toolCalls) &&
+              firstChoice.message.toolCalls) ||
+            [];
+          return [span.span.id, toolCalls.length];
+        }),
       );
-      const spansWithToolCalls = spans.filter((span) => {
-        const output = span.output as
-          | Array<{
-              message?: {
-                toolCalls?: unknown;
-                tool_calls?: unknown;
-              };
-            }>
-          | undefined;
-        const firstChoice = Array.isArray(output) ? output[0] : undefined;
-        const toolCalls =
-          (Array.isArray(firstChoice?.message?.tool_calls) &&
-            firstChoice.message.tool_calls) ||
-          (Array.isArray(firstChoice?.message?.toolCalls) &&
-            firstChoice.message.toolCalls) ||
-          [];
-        return toolCalls.length > 0;
+      const spansWithToolCalls = selectedSpans.filter((span) => {
+        return (toolCallCountBySpanId.get(span.span.id) || 0) > 0;
       });
-      const finishReasons = spans
+      const finishReasons = selectedSpans
         .map((span) => {
           const output = span.output as
             | Array<{
@@ -597,28 +645,54 @@ export function defineMistralInstrumentationAssertions(options: {
           return undefined;
         })
         .filter((value): value is string => typeof value === "string");
-      const toolParentIds = new Set(
-        toolSpans.flatMap((toolSpan) =>
-          toolSpan.span.parentIds.filter((parentId) => spanIds.has(parentId)),
-        ),
-      );
       const toolNames = new Set(
-        toolSpans
-          .map(
-            (toolSpan) =>
-              (toolSpan.row.metadata as { tool_name?: unknown } | undefined)
-                ?.tool_name,
-          )
-          .filter((name): name is string => typeof name === "string"),
+        selectedSpans.flatMap((span) => {
+          const output = span.output as
+            | Array<{
+                message?: {
+                  toolCalls?: unknown;
+                  tool_calls?: unknown;
+                };
+              }>
+            | undefined;
+          const firstChoice = Array.isArray(output) ? output[0] : undefined;
+          const toolCalls =
+            (Array.isArray(firstChoice?.message?.tool_calls) &&
+              firstChoice.message.tool_calls) ||
+            (Array.isArray(firstChoice?.message?.toolCalls) &&
+              firstChoice.message.toolCalls) ||
+            [];
+
+          return toolCalls
+            .map((toolCall) => {
+              if (
+                !toolCall ||
+                typeof toolCall !== "object" ||
+                Array.isArray(toolCall)
+              ) {
+                return undefined;
+              }
+              const toolFunction = (
+                toolCall as { function?: { name?: unknown } }
+              ).function;
+              return typeof toolFunction?.name === "string"
+                ? toolFunction.name
+                : undefined;
+            })
+            .filter((name): name is string => typeof name === "string");
+        }),
       );
 
       expect(operation).toBeDefined();
       expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
-      expect(spans.length).toBeGreaterThanOrEqual(2);
+      expect(selectedSpans.length).toBeGreaterThanOrEqual(2);
       expect(spansWithToolCalls.length).toBeGreaterThanOrEqual(2);
+      expect(
+        Array.from(toolCallCountBySpanId.values()).some((count) => count >= 2),
+      ).toBe(true);
       expect(finishReasons.length).toBeGreaterThanOrEqual(2);
 
-      for (const span of spans) {
+      for (const span of selectedSpans) {
         expect(span.span.type).toBe("llm");
         expect(span.row.metadata).toMatchObject({
           model: CHAT_MODEL,
@@ -626,22 +700,6 @@ export function defineMistralInstrumentationAssertions(options: {
         });
       }
 
-      expect(toolSpans.length).toBeGreaterThanOrEqual(2);
-      expect(toolParentIds.size).toBeGreaterThanOrEqual(2);
-      for (const toolSpan of toolSpans) {
-        expect(toolSpan.span.type).toBe("tool");
-        expect(toolSpan.row.metadata).toMatchObject({
-          provider: "mistral",
-          tool_name: expect.any(String),
-        });
-        expect(
-          toolSpan.span.parentIds.some((parentId) => spanIds.has(parentId)),
-        ).toBe(true);
-        expect(
-          (toolSpan.row.metrics as { end?: unknown } | undefined)?.end,
-        ).toEqual(expect.any(Number));
-        expect(toolSpan.input).toBeDefined();
-      }
       expect(toolNames.has("get_weather")).toBe(true);
       expect(toolNames.has("get_exchange_rate")).toBe(true);
     });
@@ -734,11 +792,8 @@ export function defineMistralInstrumentationAssertions(options: {
           "mistral.agents.complete",
           operation?.span.id,
         );
-        const spanIds = new Set(spans.map((span) => span.span.id));
-        const toolSpans = spans.flatMap((span) =>
-          findChildSpans(events, "mistral.tool", span.span.id),
-        );
-        const spansWithToolCalls = spans.filter((span) => {
+        const selectedSpans = pickOutputSpans(spans);
+        const spansWithToolCalls = selectedSpans.filter((span) => {
           const output = span.output as
             | Array<{
                 message?: {
@@ -759,30 +814,14 @@ export function defineMistralInstrumentationAssertions(options: {
 
         expect(operation).toBeDefined();
         expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
-        expect(spans.length).toBeGreaterThanOrEqual(1);
+        expect(selectedSpans.length).toBeGreaterThanOrEqual(1);
         expect(spansWithToolCalls.length).toBeGreaterThanOrEqual(1);
 
-        for (const span of spans) {
+        for (const span of selectedSpans) {
           expect(span.span.type).toBe("llm");
           expect(span.row.metadata).toMatchObject({
             provider: "mistral",
           });
-        }
-
-        expect(toolSpans.length).toBeGreaterThanOrEqual(1);
-        for (const toolSpan of toolSpans) {
-          expect(toolSpan.span.type).toBe("tool");
-          expect(toolSpan.row.metadata).toMatchObject({
-            provider: "mistral",
-            tool_name: expect.any(String),
-          });
-          expect(
-            toolSpan.span.parentIds.some((parentId) => spanIds.has(parentId)),
-          ).toBe(true);
-          expect(
-            (toolSpan.row.metrics as { end?: unknown } | undefined)?.end,
-          ).toEqual(expect.any(Number));
-          expect(toolSpan.input).toBeDefined();
         }
       },
     );

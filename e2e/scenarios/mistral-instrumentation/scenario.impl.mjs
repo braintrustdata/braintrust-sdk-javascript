@@ -15,6 +15,11 @@ import {
 
 export const MISTRAL_SCENARIO_TIMEOUT_MS = 240_000;
 const TEST_TOOL_DELAY_MS = 50;
+const MISTRAL_REQUEST_RETRY_OPTIONS = {
+  attempts: 5,
+  delayMs: 2_000,
+  maxDelayMs: 10_000,
+};
 export const MISTRAL_SCENARIO_SPECS = [
   {
     autoEntry: "scenario.mistral-v1-3-4.mjs",
@@ -195,7 +200,10 @@ function getAgentCreatePayload() {
   };
 }
 
-async function withRetry(callback, { attempts = 3, delayMs = 1_000 } = {}) {
+async function withRetry(
+  callback,
+  { attempts = 3, delayMs = 1_000, maxDelayMs = Number.POSITIVE_INFINITY } = {},
+) {
   let lastError;
   for (let attempt = 1; attempt <= attempts; attempt++) {
     try {
@@ -205,7 +213,8 @@ async function withRetry(callback, { attempts = 3, delayMs = 1_000 } = {}) {
       if (attempt === attempts) {
         throw error;
       }
-      await new Promise((resolve) => setTimeout(resolve, delayMs * attempt));
+      const retryDelayMs = Math.min(delayMs * attempt, maxDelayMs);
+      await new Promise((resolve) => setTimeout(resolve, retryDelayMs));
     }
   }
 
@@ -228,7 +237,7 @@ async function createAgentViaHttp(client, apiKey) {
         },
         method: "POST",
       }),
-    { attempts: 3, delayMs: 1_000 },
+    MISTRAL_REQUEST_RETRY_OPTIONS,
   );
   const responseBody = await response.text();
   if (!response.ok) {
@@ -270,7 +279,7 @@ async function createAgentViaSdk(client, apiKey) {
 
   const created = await withRetry(
     async () => createAgent.call(agentManager, getAgentCreatePayload()),
-    { attempts: 3, delayMs: 1_000 },
+    MISTRAL_REQUEST_RETRY_OPTIONS,
   );
   const createdAgentId = getAgentId(created);
   if (!createdAgentId) {
@@ -370,7 +379,7 @@ async function runMistralInstrumentationScenario(
                   maxTokens: 16,
                   temperature: 0,
                 }),
-              { attempts: 3, delayMs: 1_000 },
+              MISTRAL_REQUEST_RETRY_OPTIONS,
             );
           },
         );
@@ -379,24 +388,21 @@ async function runMistralInstrumentationScenario(
           "mistral-chat-stream-operation",
           "chat-stream",
           async () => {
-            await withRetry(
-              async () => {
-                const stream = await client.chat.stream({
-                  model: CHAT_MODEL,
-                  messages: [
-                    {
-                      role: "user",
-                      content: "Reply with exactly: streamed output",
-                    },
-                  ],
-                  maxTokens: 24,
-                  stream: true,
-                  temperature: 0,
-                });
-                await collectAsync(stream);
-              },
-              { attempts: 3, delayMs: 1_000 },
-            );
+            await withRetry(async () => {
+              const stream = await client.chat.stream({
+                model: CHAT_MODEL,
+                messages: [
+                  {
+                    role: "user",
+                    content: "Reply with exactly: streamed output",
+                  },
+                ],
+                maxTokens: 24,
+                stream: true,
+                temperature: 0,
+              });
+              await collectAsync(stream);
+            }, MISTRAL_REQUEST_RETRY_OPTIONS);
           },
         );
 
@@ -404,76 +410,114 @@ async function runMistralInstrumentationScenario(
           "mistral-chat-tool-call-operation",
           "chat-tool-call",
           async () => {
-            await withRetry(
-              async () => {
-                const request = {
-                  model: CHAT_MODEL,
-                  messages: [
-                    {
-                      role: "user",
-                      content:
-                        "Call the get_weather tool for Vienna. Do not answer with plain text.",
-                    },
-                  ],
-                  toolChoice: "required",
-                  maxTokens: 48,
-                  temperature: 0,
-                };
+            await withRetry(async () => {
+              const request = {
+                model: CHAT_MODEL,
+                messages: [
+                  {
+                    role: "user",
+                    content:
+                      "Call the get_weather tool for Vienna. Do not answer with plain text.",
+                  },
+                ],
+                toolChoice: "required",
+                maxTokens: 48,
+                temperature: 0,
+              };
 
-                try {
-                  return await client.chat.complete({
-                    ...request,
-                    tools: [getWeatherToolDefinition()],
-                  });
-                } catch (error) {
-                  if (!isMistralInputValidationError(error)) {
-                    throw error;
-                  }
-
-                  return await client.chat.complete({
-                    ...request,
-                    tools: [getWeatherToolDefinition({ legacy: true })],
-                  });
+              try {
+                return await client.chat.complete({
+                  ...request,
+                  tools: [getWeatherToolDefinition()],
+                });
+              } catch (error) {
+                if (!isMistralInputValidationError(error)) {
+                  throw error;
                 }
-              },
-              { attempts: 3, delayMs: 1_000 },
-            );
+
+                return await client.chat.complete({
+                  ...request,
+                  tools: [getWeatherToolDefinition({ legacy: true })],
+                });
+              }
+            }, MISTRAL_REQUEST_RETRY_OPTIONS);
             await simulateToolExecutionDelay();
 
-            await withRetry(
-              async () => {
-                const request = {
-                  model: CHAT_MODEL,
-                  messages: [
-                    {
-                      role: "user",
-                      content:
-                        "Call the get_exchange_rate tool for USD to EUR. Do not answer with plain text.",
-                    },
-                  ],
-                  toolChoice: "required",
-                  maxTokens: 48,
-                  temperature: 0,
-                };
+            await withRetry(async () => {
+              const request = {
+                model: CHAT_MODEL,
+                messages: [
+                  {
+                    role: "user",
+                    content:
+                      "Call the get_exchange_rate tool for USD to EUR. Do not answer with plain text.",
+                  },
+                ],
+                toolChoice: "required",
+                maxTokens: 48,
+                temperature: 0,
+              };
 
-                try {
-                  return await client.chat.complete({
-                    ...request,
-                    tools: [getExchangeRateToolDefinition()],
-                  });
-                } catch (error) {
-                  if (!isMistralInputValidationError(error)) {
-                    throw error;
-                  }
-
-                  return await client.chat.complete({
-                    ...request,
-                    tools: [getExchangeRateToolDefinition({ legacy: true })],
-                  });
+              try {
+                return await client.chat.complete({
+                  ...request,
+                  tools: [getExchangeRateToolDefinition()],
+                });
+              } catch (error) {
+                if (!isMistralInputValidationError(error)) {
+                  throw error;
                 }
-              },
-              { attempts: 3, delayMs: 1_000 },
-            );
+
+                return await client.chat.complete({
+                  ...request,
+                  tools: [getExchangeRateToolDefinition({ legacy: true })],
+                });
+              }
+            }, MISTRAL_REQUEST_RETRY_OPTIONS);
+            await simulateToolExecutionDelay();
+
+            await withRetry(async () => {
+              const request = {
+                model: CHAT_MODEL,
+                messages: [
+                  {
+                    role: "system",
+                    content:
+                      "You must return only tool calls and no plain text.",
+                  },
+                  {
+                    role: "user",
+                    content:
+                      "In a single assistant response, call exactly two tools: get_weather with location Vienna and get_exchange_rate with from_currency USD and to_currency EUR.",
+                  },
+                ],
+                toolChoice: "required",
+                maxTokens: 96,
+                temperature: 0,
+              };
+
+              try {
+                return await client.chat.complete({
+                  ...request,
+                  tools: [
+                    getWeatherToolDefinition(),
+                    getExchangeRateToolDefinition(),
+                  ],
+                });
+              } catch (error) {
+                if (!isMistralInputValidationError(error)) {
+                  throw error;
+                }
+
+                return await client.chat.complete({
+                  ...request,
+                  tools: [
+                    getWeatherToolDefinition({ legacy: true }),
+                    getExchangeRateToolDefinition({ legacy: true }),
+                  ],
+                });
+              }
+            }, MISTRAL_REQUEST_RETRY_OPTIONS);
             await simulateToolExecutionDelay();
           },
         );
@@ -491,7 +535,7 @@ async function runMistralInstrumentationScenario(
                   maxTokens: 24,
                   temperature: 0,
                 }),
-              { attempts: 3, delayMs: 1_000 },
+              MISTRAL_REQUEST_RETRY_OPTIONS,
             );
           },
         );
@@ -500,20 +544,17 @@ async function runMistralInstrumentationScenario(
           "mistral-fim-stream-operation",
           "fim-stream",
           async () => {
-            await withRetry(
-              async () => {
-                const stream = await client.fim.stream({
-                  model: FIM_MODEL,
-                  prompt: "const project = ",
-                  suffix: ";",
-                  maxTokens: 16,
-                  stream: true,
-                  temperature: 0,
-                });
-                await collectAsync(stream);
-              },
-              { attempts: 3, delayMs: 1_000 },
-            );
+            await withRetry(async () => {
+              const stream = await client.fim.stream({
+                model: FIM_MODEL,
+                prompt: "const project = ",
+                suffix: ";",
+                maxTokens: 16,
+                stream: true,
+                temperature: 0,
+              });
+              await collectAsync(stream);
+            }, MISTRAL_REQUEST_RETRY_OPTIONS);
           },
         );
 
@@ -537,7 +578,7 @@ async function runMistralInstrumentationScenario(
                   maxTokens: 12,
                   temperature: 0,
                 }),
-              { attempts: 3, delayMs: 1_000 },
+              MISTRAL_REQUEST_RETRY_OPTIONS,
             );
           },
         );
@@ -546,43 +587,40 @@ async function runMistralInstrumentationScenario(
           "mistral-agents-tool-call-operation",
           "agents-tool-call",
           async () => {
-            await withRetry(
-              async () => {
-                const request = {
-                  agentId,
-                  messages: [
-                    {
-                      role: "user",
-                      content:
-                        "Call the get_time_in_city tool for Vienna. Do not answer with plain text.",
-                    },
-                  ],
-                  responseFormat: {
-                    type: "text",
+            await withRetry(async () => {
+              const request = {
+                agentId,
+                messages: [
+                  {
+                    role: "user",
+                    content:
+                      "Call the get_time_in_city tool for Vienna. Do not answer with plain text.",
                   },
-                  toolChoice: "required",
-                  maxTokens: 32,
-                  temperature: 0,
-                };
+                ],
+                responseFormat: {
+                  type: "text",
+                },
+                toolChoice: "required",
+                maxTokens: 32,
+                temperature: 0,
+              };
 
-                try {
-                  return await client.agents.complete({
-                    ...request,
-                    tools: [getAgentTimeToolDefinition()],
-                  });
-                } catch (error) {
-                  if (!isMistralInputValidationError(error)) {
-                    throw error;
-                  }
-
-                  return await client.agents.complete({
-                    ...request,
-                    tools: [getAgentTimeToolDefinition({ legacy: true })],
-                  });
+              try {
+                return await client.agents.complete({
+                  ...request,
+                  tools: [getAgentTimeToolDefinition()],
+                });
+              } catch (error) {
+                if (!isMistralInputValidationError(error)) {
+                  throw error;
                 }
-              },
-              { attempts: 3, delayMs: 1_000 },
-            );
+
+                return await client.agents.complete({
+                  ...request,
+                  tools: [getAgentTimeToolDefinition({ legacy: true })],
+                });
+              }
+            }, MISTRAL_REQUEST_RETRY_OPTIONS);
             await simulateToolExecutionDelay();
           },
         );
@@ -591,27 +629,24 @@ async function runMistralInstrumentationScenario(
           "mistral-agents-stream-operation",
           "agents-stream",
           async () => {
-            await withRetry(
-              async () => {
-                const stream = await client.agents.stream({
-                  agentId,
-                  messages: [
-                    {
-                      role: "user",
-                      content: "Reply with exactly: agent stream",
-                    },
-                  ],
-                  responseFormat: {
-                    type: "text",
+            await withRetry(async () => {
+              const stream = await client.agents.stream({
+                agentId,
+                messages: [
+                  {
+                    role: "user",
+                    content: "Reply with exactly: agent stream",
                   },
-                  maxTokens: 12,
-                  stream: true,
-                  temperature: 0,
-                });
-                await collectAsync(stream);
-              },
-              { attempts: 3, delayMs: 1_000 },
-            );
+                ],
+                responseFormat: {
+                  type: "text",
+                },
+                maxTokens: 12,
+                stream: true,
+                temperature: 0,
+              });
+              await collectAsync(stream);
+            }, MISTRAL_REQUEST_RETRY_OPTIONS);
           },
         );
 
@@ -625,7 +660,7 @@ async function runMistralInstrumentationScenario(
                   model: EMBEDDING_MODEL,
                   inputs: "braintrust mistral instrumentation",
                 }),
-              { attempts: 3, delayMs: 1_000 },
+              MISTRAL_REQUEST_RETRY_OPTIONS,
             );
           },
         );

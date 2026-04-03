@@ -139,15 +139,26 @@
   },
   {
     "has_input": true,
-    "has_output": false,
+    "has_output": true,
     "input": {
+      "keys": [
+        "location"
+      ],
       "type": "object"
     },
     "metadata": {
       "provider": "mistral"
     },
     "metric_keys": [],
-    "output": null,
+    "output": {
+      "keys": [
+        "choice_index",
+        "tool_call_id",
+        "tool_index",
+        "tool_name"
+      ],
+      "type": "object"
+    },
     "span_id": "<span:8>"
   },
   {
@@ -183,16 +194,109 @@
   },
   {
     "has_input": true,
-    "has_output": false,
+    "has_output": true,
     "input": {
+      "keys": [
+        "from_currency",
+        "to_currency"
+      ],
       "type": "object"
     },
     "metadata": {
       "provider": "mistral"
     },
     "metric_keys": [],
-    "output": null,
+    "output": {
+      "keys": [
+        "choice_index",
+        "tool_call_id",
+        "tool_index",
+        "tool_name"
+      ],
+      "type": "object"
+    },
     "span_id": "<span:10>"
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "input": {
+      "item_count": 2,
+      "roles": [
+        "system",
+        "user"
+      ],
+      "type": "messages"
+    },
+    "metadata": {
+      "model": "mistral-small-latest",
+      "provider": "mistral"
+    },
+    "metric_keys": [
+      "completion_tokens",
+      "prompt_cached_tokens",
+      "prompt_tokens",
+      "time_to_first_token",
+      "tokens"
+    ],
+    "output": {
+      "choice_count": 1,
+      "finish_reason": "tool_calls",
+      "has_content": false,
+      "role": "assistant",
+      "tool_call_count": 2,
+      "type": "choices"
+    },
+    "span_id": "<span:11>"
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "input": {
+      "keys": [
+        "location"
+      ],
+      "type": "object"
+    },
+    "metadata": {
+      "provider": "mistral"
+    },
+    "metric_keys": [],
+    "output": {
+      "keys": [
+        "choice_index",
+        "tool_call_id",
+        "tool_index",
+        "tool_name"
+      ],
+      "type": "object"
+    },
+    "span_id": "<span:12>"
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "input": {
+      "keys": [
+        "from_currency",
+        "to_currency"
+      ],
+      "type": "object"
+    },
+    "metadata": {
+      "provider": "mistral"
+    },
+    "metric_keys": [],
+    "output": {
+      "keys": [
+        "choice_index",
+        "tool_call_id",
+        "tool_index",
+        "tool_name"
+      ],
+      "type": "object"
+    },
+    "span_id": "<span:13>"
   },
   {
     "has_input": false,
@@ -203,7 +307,7 @@
     },
     "metric_keys": [],
     "output": null,
-    "span_id": "<span:11>"
+    "span_id": "<span:14>"
   },
   {
     "has_input": true,
@@ -228,7 +332,7 @@
       "tool_call_count": 0,
       "type": "choices"
     },
-    "span_id": "<span:12>"
+    "span_id": "<span:15>"
   },
   {
     "has_input": false,
@@ -239,7 +343,7 @@
     },
     "metric_keys": [],
     "output": null,
-    "span_id": "<span:13>"
+    "span_id": "<span:16>"
   },
   {
     "has_input": true,
@@ -264,7 +368,7 @@
       "tool_call_count": 0,
       "type": "choices"
     },
-    "span_id": "<span:14>"
+    "span_id": "<span:17>"
   },
   {
     "has_input": false,
@@ -275,7 +379,7 @@
     },
     "metric_keys": [],
     "output": null,
-    "span_id": "<span:15>"
+    "span_id": "<span:18>"
   },
   {
     "has_input": true,
@@ -306,7 +410,7 @@
       "tool_call_count": 0,
       "type": "choices"
     },
-    "span_id": "<span:16>"
+    "span_id": "<span:19>"
   },
   {
     "has_input": false,
@@ -317,7 +421,7 @@
     },
     "metric_keys": [],
     "output": null,
-    "span_id": "<span:17>"
+    "span_id": "<span:20>"
   },
   {
     "has_input": true,
@@ -348,20 +452,31 @@
       "tool_call_count": 1,
       "type": "choices"
     },
-    "span_id": "<span:18>"
+    "span_id": "<span:21>"
   },
   {
     "has_input": true,
-    "has_output": false,
+    "has_output": true,
     "input": {
+      "keys": [
+        "city"
+      ],
       "type": "object"
     },
     "metadata": {
       "provider": "mistral"
     },
     "metric_keys": [],
-    "output": null,
-    "span_id": "<span:19>"
+    "output": {
+      "keys": [
+        "choice_index",
+        "tool_call_id",
+        "tool_index",
+        "tool_name"
+      ],
+      "type": "object"
+    },
+    "span_id": "<span:22>"
   },
   {
     "has_input": false,
@@ -372,7 +487,7 @@
     },
     "metric_keys": [],
     "output": null,
-    "span_id": "<span:20>"
+    "span_id": "<span:23>"
   },
   {
     "has_input": true,
@@ -403,7 +518,7 @@
       "tool_call_count": 0,
       "type": "choices"
     },
-    "span_id": "<span:21>"
+    "span_id": "<span:24>"
   },
   {
     "has_input": false,
@@ -414,7 +529,7 @@
     },
     "metric_keys": [],
     "output": null,
-    "span_id": "<span:22>"
+    "span_id": "<span:25>"
   },
   {
     "has_input": true,
@@ -433,6 +548,6 @@
       "embedding_length": "<number>",
       "type": "embedding"
     },
-    "span_id": "<span:23>"
+    "span_id": "<span:26>"
   }
 ]

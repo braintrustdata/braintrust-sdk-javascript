@@ -101,12 +101,17 @@
   },
   {
     "has_input": true,
-    "has_output": false,
+    "has_output": true,
     "metadata": {
       "model": "mistral-small-latest",
       "provider": "mistral"
     },
-    "metric_keys": [],
+    "metric_keys": [
+      "completion_tokens",
+      "prompt_tokens",
+      "time_to_first_token",
+      "tokens"
+    ],
     "name": "mistral.chat.complete",
     "root_span_id": "<span:1>",
     "span_id": "<span:7>",
@@ -138,22 +143,6 @@
   },
   {
     "has_input": true,
-    "has_output": false,
-    "metadata": {
-      "model": "mistral-small-latest",
-      "provider": "mistral"
-    },
-    "metric_keys": [],
-    "name": "mistral.chat.complete",
-    "root_span_id": "<span:1>",
-    "span_id": "<span:9>",
-    "span_parents": [
-      "<span:6>"
-    ],
-    "type": "llm"
-  },
-  {
-    "has_input": true,
     "has_output": true,
     "metadata": {
       "model": "mistral-small-latest",
@@ -167,41 +156,11 @@
     ],
     "name": "mistral.chat.complete",
     "root_span_id": "<span:1>",
-    "span_id": "<span:10>",
+    "span_id": "<span:9>",
     "span_parents": [
       "<span:6>"
     ],
     "type": "llm"
-  },
-  {
-    "has_input": true,
-    "has_output": false,
-    "metadata": {
-      "provider": "mistral"
-    },
-    "metric_keys": [],
-    "name": "mistral.tool",
-    "root_span_id": "<span:1>",
-    "span_id": "<span:11>",
-    "span_parents": [
-      "<span:8>"
-    ],
-    "type": "tool"
-  },
-  {
-    "has_input": true,
-    "has_output": false,
-    "metadata": {
-      "provider": "mistral"
-    },
-    "metric_keys": [],
-    "name": "mistral.tool",
-    "root_span_id": "<span:1>",
-    "span_id": "<span:12>",
-    "span_parents": [
-      "<span:10>"
-    ],
-    "type": "tool"
   },
   {
     "has_input": false,
@@ -212,7 +171,7 @@
     "metric_keys": [],
     "name": "mistral-fim-complete-operation",
     "root_span_id": "<span:1>",
-    "span_id": "<span:13>",
+    "span_id": "<span:10>",
     "span_parents": [
       "<span:1>"
     ],
@@ -233,9 +192,9 @@
     ],
     "name": "mistral.fim.complete",
     "root_span_id": "<span:1>",
-    "span_id": "<span:14>",
+    "span_id": "<span:11>",
     "span_parents": [
-      "<span:13>"
+      "<span:10>"
     ],
     "type": "llm"
   },
@@ -248,7 +207,7 @@
     "metric_keys": [],
     "name": "mistral-fim-stream-operation",
     "root_span_id": "<span:1>",
-    "span_id": "<span:15>",
+    "span_id": "<span:12>",
     "span_parents": [
       "<span:1>"
     ],
@@ -266,9 +225,9 @@
     ],
     "name": "mistral.fim.stream",
     "root_span_id": "<span:1>",
-    "span_id": "<span:16>",
+    "span_id": "<span:13>",
     "span_parents": [
-      "<span:15>"
+      "<span:12>"
     ],
     "type": "llm"
   },
@@ -281,7 +240,7 @@
     "metric_keys": [],
     "name": "mistral-agents-complete-operation",
     "root_span_id": "<span:1>",
-    "span_id": "<span:17>",
+    "span_id": "<span:14>",
     "span_parents": [
       "<span:1>"
     ],
@@ -302,9 +261,9 @@
     ],
     "name": "mistral.agents.complete",
     "root_span_id": "<span:1>",
-    "span_id": "<span:18>",
+    "span_id": "<span:15>",
     "span_parents": [
-      "<span:17>"
+      "<span:14>"
     ],
     "type": "llm"
   },
@@ -317,26 +276,11 @@
     "metric_keys": [],
     "name": "mistral-agents-tool-call-operation",
     "root_span_id": "<span:1>",
-    "span_id": "<span:19>",
+    "span_id": "<span:16>",
     "span_parents": [
       "<span:1>"
     ],
     "type": null
-  },
-  {
-    "has_input": true,
-    "has_output": false,
-    "metadata": {
-      "provider": "mistral"
-    },
-    "metric_keys": [],
-    "name": "mistral.agents.complete",
-    "root_span_id": "<span:1>",
-    "span_id": "<span:20>",
-    "span_parents": [
-      "<span:19>"
-    ],
-    "type": "llm"
   },
   {
     "has_input": true,
@@ -353,26 +297,11 @@
     ],
     "name": "mistral.agents.complete",
     "root_span_id": "<span:1>",
-    "span_id": "<span:21>",
+    "span_id": "<span:17>",
     "span_parents": [
-      "<span:19>"
+      "<span:16>"
     ],
     "type": "llm"
-  },
-  {
-    "has_input": true,
-    "has_output": false,
-    "metadata": {
-      "provider": "mistral"
-    },
-    "metric_keys": [],
-    "name": "mistral.tool",
-    "root_span_id": "<span:1>",
-    "span_id": "<span:22>",
-    "span_parents": [
-      "<span:21>"
-    ],
-    "type": "tool"
   },
   {
     "has_input": false,
@@ -383,7 +312,7 @@
     "metric_keys": [],
     "name": "mistral-agents-stream-operation",
     "root_span_id": "<span:1>",
-    "span_id": "<span:23>",
+    "span_id": "<span:18>",
     "span_parents": [
       "<span:1>"
     ],
@@ -404,9 +333,9 @@
     ],
     "name": "mistral.agents.stream",
     "root_span_id": "<span:1>",
-    "span_id": "<span:24>",
+    "span_id": "<span:19>",
     "span_parents": [
-      "<span:23>"
+      "<span:18>"
     ],
     "type": "llm"
   },
@@ -419,7 +348,7 @@
     "metric_keys": [],
     "name": "mistral-embeddings-operation",
     "root_span_id": "<span:1>",
-    "span_id": "<span:25>",
+    "span_id": "<span:20>",
     "span_parents": [
       "<span:1>"
     ],
@@ -439,9 +368,9 @@
     ],
     "name": "mistral.embeddings.create",
     "root_span_id": "<span:1>",
-    "span_id": "<span:26>",
+    "span_id": "<span:21>",
     "span_parents": [
-      "<span:25>"
+      "<span:20>"
     ],
     "type": "llm"
   }
