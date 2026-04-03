@@ -1,3 +1,23 @@
+/**
+ * The result returned by a classifier function. Unlike `Score`, `id` is
+ * required and the span will be recorded as a classifier span.
+ */
+export interface Classification {
+  name: string;
+  id: string;
+  label?: string;
+  metadata?: Record<string, unknown>;
+}
+
+/**
+ * The serialized form of a classification stored in the `classifications` log record.
+ */
+export interface ClassificationItem {
+  id: string;
+  label: string;
+  metadata?: Record<string, unknown>;
+}
+
 export interface Score {
   name: string;
   score: number | null;

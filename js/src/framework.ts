@@ -1,6 +1,8 @@
 import {
   makeScorerPropagatedEvent,
   mergeDicts,
+  Classification,
+  ClassificationItem,
   Score,
   SpanComponentsV3,
   SpanTypeAttribute,
@@ -186,6 +188,17 @@ export type EvalScorer<
   args: EvalScorerArgs<Input, Output, Expected, Metadata>,
 ) => OneOrMoreScores | Promise<OneOrMoreScores>;
 
+export type OneOrMoreClassifications = Classification | Classification[] | null;
+
+export type EvalClassifier<
+  Input,
+  Output,
+  Expected,
+  Metadata extends BaseMetadata = DefaultMetadataType,
+> = (
+  args: EvalScorerArgs<Input, Output, Expected, Metadata>,
+) => OneOrMoreClassifications | Promise<OneOrMoreClassifications>;
+
 export type EvalResult<
   Input,
   Output,
@@ -193,9 +206,10 @@ export type EvalResult<
   Metadata extends BaseMetadata = DefaultMetadataType,
 > = EvalCase<Input, Expected, Metadata> & {
   output: Output;
-  scores: Record<string, number | null>;
   error: unknown;
   origin?: ObjectReference;
+  scores?: Record<string, number | null>;
+  classifications?: Record<string, ClassificationItem[]>;
 };
 
 type ErrorScoreHandler = (args: {
@@ -205,13 +219,13 @@ type ErrorScoreHandler = (args: {
   unhandledScores: string[];
 }) => Record<string, number> | undefined | void;
 
-export interface Evaluator<
+type EvaluatorBase<
   Input,
   Output,
   Expected,
   Metadata extends BaseMetadata = DefaultMetadataType,
   Parameters extends EvalParameters = EvalParameters,
-> {
+> = {
   /**
    * A function that returns a list of inputs, expected outputs, and metadata.
    */
@@ -221,11 +235,6 @@ export interface Evaluator<
    * A function that takes an input and returns an output.
    */
   task: EvalTask<Input, Output, Expected, Metadata, Parameters>;
-
-  /**
-   * A set of functions that take an input, output, and expected value and return a score.
-   */
-  scores: EvalScorer<Input, Output, Expected, Metadata>[];
 
   /**
    * A set of parameters that will be passed to the evaluator.
@@ -344,7 +353,41 @@ export interface Evaluator<
    * Flushes spans before calling scoring functions
    */
   flushBeforeScoring?: boolean;
-}
+};
+
+type EvaluatorScoringConfig<
+  Input,
+  Output,
+  Expected,
+  Metadata extends BaseMetadata = DefaultMetadataType,
+> =
+  | {
+      /**
+       * A set of functions that take an input, output, and expected value and return a {@link Score}.
+       */
+      scores: EvalScorer<Input, Output, Expected, Metadata>[];
+      classifiers?: EvalClassifier<Input, Output, Expected, Metadata>[];
+    }
+  | {
+      /**
+       * A set of functions that take an input, output, and expected value and return a
+       * {@link Classification}. Results are recorded under the `classifications` column.
+       */
+      classifiers: EvalClassifier<Input, Output, Expected, Metadata>[];
+      scores?: EvalScorer<Input, Output, Expected, Metadata>[];
+    };
+
+/**
+ * Defines an evaluator. At least one of `scores` or `classifiers` must be provided.
+ */
+export type Evaluator<
+  Input,
+  Output,
+  Expected,
+  Metadata extends BaseMetadata = DefaultMetadataType,
+  Parameters extends EvalParameters = EvalParameters,
+> = EvaluatorBase<Input, Output, Expected, Metadata, Parameters> &
+  EvaluatorScoringConfig<Input, Output, Expected, Metadata>;
 
 export class EvalResultWithSummary<
   Input,
@@ -866,6 +909,127 @@ export function scorerName(
   return scorer.name || `scorer_${scorer_idx}`;
 }
 
+export function classifierName(
+  classifier: EvalClassifier<any, any, any, any>,
+  classifier_idx: number,
+) {
+  return classifier.name || `classifier_${classifier_idx}`;
+}
+
+function buildSpanMetadata(
+  results: Array<{ name: string; metadata?: Record<string, unknown> }>,
+) {
+  return results.length === 1
+    ? results[0].metadata
+    : results.reduce(
+        (prev, s) => mergeDicts(prev, { [s.name]: s.metadata }),
+        {},
+      );
+}
+
+function buildSpanScores(
+  results: Array<{
+    name: string;
+    score: number | null;
+    metadata?: Record<string, unknown>;
+  }>,
+) {
+  const scoresRecord = results.reduce(
+    (prev, s) => mergeDicts(prev, { [s.name]: s.score }),
+    {},
+  );
+  return { resultMetadata: buildSpanMetadata(results), scoresRecord };
+}
+
+async function runInScorerSpan<T>(
+  rootSpan: Span,
+  spanName: string,
+  spanType: SpanTypeAttribute,
+  propagatedEvent: ReturnType<typeof makeScorerPropagatedEvent>,
+  eventInput: unknown,
+  fn: (span: Span) => Promise<T[] | null>,
+): Promise<
+  { kind: "score"; value: T[] | null } | { kind: "error"; value: unknown }
+> {
+  try {
+    const value = await rootSpan.traced(fn, {
+      name: spanName,
+      spanAttributes: { type: spanType, purpose: "scorer" },
+      propagatedEvent,
+      event: { input: eventInput },
+    });
+    return { kind: "score", value };
+  } catch (e) {
+    return { kind: "error", value: e };
+  }
+}
+
+function collectScoringResults<T extends { name: string }>(
+  runResults: Array<
+    { kind: "score"; value: T[] | null } | { kind: "error"; value: unknown }
+  >,
+  names: string[],
+  onResult: (result: T) => void,
+): { name: string; error: unknown }[] {
+  const failing: { name: string; error: unknown }[] = [];
+  runResults.forEach((r, i) => {
+    if (r.kind === "score") {
+      (r.value ?? []).forEach(onResult);
+    } else {
+      failing.push({ name: names[i], error: r.value });
+    }
+  });
+  return failing;
+}
+
+function validateClassificationResult(
+  value: unknown,
+  scorerName: string,
+): Classification {
+  if (!(typeof value === "object" && value !== null && !isEmpty(value))) {
+    throw new Error(
+      `When returning structured classifier results, each classification must be a non-empty object. Got: ${JSON.stringify(value)}`,
+    );
+  }
+  if (!("name" in value) || typeof value.name !== "string" || !value.name) {
+    const classification = value as Classification;
+    classification.name = scorerName;
+    return classification;
+  }
+  return value as Classification;
+}
+
+function toClassificationItem(c: Classification): ClassificationItem {
+  return {
+    id: c.id,
+    label: c.label ?? c.id,
+    ...(c.metadata !== undefined ? { metadata: c.metadata } : {}),
+  };
+}
+
+function logScoringFailures(
+  kind: string,
+  failures: { name: string; error: unknown }[],
+  metadata: Record<string, unknown>,
+  rootSpan: Span,
+  state: BraintrustState | undefined,
+): string[] {
+  if (!failures.length) return [];
+  const errorMap = Object.fromEntries(
+    failures.map(({ name, error }) => [
+      name,
+      error instanceof Error ? error.stack : `${error}`,
+    ]),
+  );
+  metadata[`${kind}_errors`] = errorMap;
+  rootSpan.log({ metadata: { [`${kind}_errors`]: errorMap } });
+  debugLogger.forState(state).warn(
+    `Found exceptions for the following ${kind}s: ${Object.keys(errorMap).join(", ")}`,
+    failures.map((f) => f.error),
+  );
+  return Object.keys(errorMap);
+}
+
 export async function runEvaluator(
   experiment: Experiment | null,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -878,6 +1042,11 @@ export async function runEvaluator(
   enableCache = true,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<EvalResultWithSummary<any, any, any, any>> {
+  if (!evaluator.scores && !evaluator.classifiers) {
+    throw new Error(
+      "Evaluator must include at least one of `scores` or `classifiers`",
+    );
+  }
   return await runEvaluatorInternal(
     experiment,
     evaluator,
@@ -1091,7 +1260,11 @@ async function runEvaluatorInternal(
           let error: unknown | undefined = undefined;
           let tags: string[] = [...(datum.tags ?? [])];
           const scores: Record<string, number | null> = {};
-          const scorerNames = evaluator.scores.map(scorerName);
+          const classifications: Record<string, ClassificationItem[]> = {};
+          const scorerNames = (evaluator.scores ?? []).map(scorerName);
+          const classifierNames = (evaluator.classifiers ?? []).map(
+            classifierName,
+          );
           let unhandledScores: string[] | null = scorerNames;
           try {
             const meta = (o: Record<string, unknown>) =>
@@ -1156,139 +1329,156 @@ async function runEvaluatorInternal(
               output,
               trace,
             };
-            const scoreResults = await Promise.all(
-              evaluator.scores.map(async (score, score_idx) => {
-                try {
-                  const runScorer = async (span: Span) => {
-                    const scoreResult = score(scoringArgs);
-                    const scoreValue =
-                      scoreResult instanceof Promise
-                        ? await scoreResult
-                        : scoreResult;
+            const { trace: _trace, ...scoringArgsForLogging } = scoringArgs;
+            const propagatedEvent = makeScorerPropagatedEvent(
+              await rootSpan.export(),
+            );
 
-                    if (scoreValue === null) {
-                      return null;
-                    }
+            const getOtherFields = (s: Score) => {
+              const { metadata: _metadata, name: _name, ...rest } = s;
+              return rest;
+            };
 
-                    if (Array.isArray(scoreValue)) {
-                      for (const s of scoreValue) {
-                        if (!(typeof s === "object" && !isEmpty(s))) {
-                          throw new Error(
-                            `When returning an array of scores, each score must be a non-empty object. Got: ${JSON.stringify(
-                              s,
-                            )}`,
-                          );
+            const [scoreResults, classificationResults] = await Promise.all([
+              Promise.all(
+                (evaluator.scores ?? []).map((score, score_idx) =>
+                  runInScorerSpan(
+                    rootSpan,
+                    scorerNames[score_idx],
+                    SpanTypeAttribute.SCORE,
+                    propagatedEvent,
+                    scoringArgsForLogging,
+                    async (span) => {
+                      const scoreValue = await Promise.resolve(
+                        score(scoringArgs),
+                      );
+                      if (scoreValue === null) return null;
+                      if (Array.isArray(scoreValue)) {
+                        for (const s of scoreValue) {
+                          if (!(typeof s === "object" && !isEmpty(s))) {
+                            throw new Error(
+                              `When returning an array of scores, each score must be a non-empty object. Got: ${JSON.stringify(s)}`,
+                            );
+                          }
                         }
                       }
-                    }
-
-                    const results = Array.isArray(scoreValue)
-                      ? scoreValue
-                      : typeof scoreValue === "object" && !isEmpty(scoreValue)
-                        ? [scoreValue]
-                        : [
-                            {
-                              name: scorerNames[score_idx],
-                              score: scoreValue,
-                            },
-                          ];
-
-                    const getOtherFields = (s: Score) => {
-                      const { metadata: _metadata, name: _name, ...rest } = s;
-                      return rest;
-                    };
-
-                    const resultMetadata =
-                      results.length === 1
-                        ? results[0].metadata
-                        : results.reduce(
-                            (prev, s) =>
-                              mergeDicts(prev, {
-                                [s.name]: s.metadata,
-                              }),
-                            {},
-                          );
-
-                    const resultOutput =
-                      results.length === 1
-                        ? getOtherFields(results[0])
-                        : results.reduce(
-                            (prev, s) =>
-                              mergeDicts(prev, { [s.name]: getOtherFields(s) }),
-                            {},
-                          );
-
-                    const scores = results.reduce(
-                      (prev, s) => mergeDicts(prev, { [s.name]: s.score }),
-                      {},
-                    );
-
-                    span.log({
-                      output: resultOutput,
-                      metadata: resultMetadata,
-                      scores: scores,
-                    });
-                    return results;
-                  };
-
-                  // Exclude trace from logged input since it contains internal state
-                  // that shouldn't be serialized (spansFlushPromise, spansFlushed, etc.)
-                  const { trace: _trace, ...scoringArgsForLogging } =
-                    scoringArgs;
-                  const results = await rootSpan.traced(runScorer, {
-                    name: scorerNames[score_idx],
-                    spanAttributes: {
-                      type: SpanTypeAttribute.SCORE,
-                      purpose: "scorer",
+                      const results: Score[] = Array.isArray(scoreValue)
+                        ? scoreValue
+                        : typeof scoreValue === "object" && !isEmpty(scoreValue)
+                          ? [scoreValue]
+                          : [
+                              {
+                                name: scorerNames[score_idx],
+                                score: scoreValue,
+                              },
+                            ];
+                      const { resultMetadata, scoresRecord } =
+                        buildSpanScores(results);
+                      const resultOutput =
+                        results.length === 1
+                          ? getOtherFields(results[0])
+                          : results.reduce(
+                              (prev, s) =>
+                                mergeDicts(prev, {
+                                  [s.name]: getOtherFields(s),
+                                }),
+                              {},
+                            );
+                      span.log({
+                        output: resultOutput,
+                        metadata: resultMetadata,
+                        scores: scoresRecord,
+                      });
+                      return results;
                     },
-                    propagatedEvent: makeScorerPropagatedEvent(
-                      await rootSpan.export(),
-                    ),
-                    event: { input: scoringArgsForLogging },
-                  });
-                  return { kind: "score", value: results } as const;
-                } catch (e) {
-                  return { kind: "error", value: e } as const;
-                }
-              }),
-            );
-            // Resolve each promise on its own so that we can separate the passing
-            // from the failing ones.
-            const failingScorersAndResults: { name: string; error: unknown }[] =
-              [];
-            scoreResults.forEach((results, i) => {
-              const name = scorerNames[i];
-              if (results.kind === "score") {
-                (results.value || []).forEach((result) => {
-                  scores[result.name] = result.score;
-                });
-              } else {
-                failingScorersAndResults.push({ name, error: results.value });
-              }
-            });
+                  ),
+                ),
+              ),
+              Promise.all(
+                (evaluator.classifiers ?? []).map((classifier, idx) =>
+                  runInScorerSpan(
+                    rootSpan,
+                    classifierNames[idx],
+                    SpanTypeAttribute.CLASSIFIER,
+                    propagatedEvent,
+                    scoringArgsForLogging,
+                    async (span) => {
+                      const classifierValue = await Promise.resolve(
+                        classifier(scoringArgs),
+                      );
+                      if (classifierValue === null) return null;
+                      const rawResults = (
+                        Array.isArray(classifierValue)
+                          ? classifierValue
+                          : [classifierValue]
+                      ).map((result) =>
+                        validateClassificationResult(
+                          result,
+                          classifierNames[idx],
+                        ),
+                      );
+                      const resultOutput =
+                        rawResults.length === 1
+                          ? toClassificationItem(rawResults[0])
+                          : rawResults.reduce(
+                              (prev, r) =>
+                                mergeDicts(prev, {
+                                  [r.name]: toClassificationItem(r),
+                                }),
+                              {},
+                            );
+                      span.log({
+                        output: resultOutput,
+                        metadata: buildSpanMetadata(rawResults),
+                      });
+                      return rawResults;
+                    },
+                  ),
+                ),
+              ),
+            ]);
 
-            unhandledScores = null;
-            if (failingScorersAndResults.length) {
-              const scorerErrors = Object.fromEntries(
-                failingScorersAndResults.map(({ name, error }) => [
-                  name,
-                  error instanceof Error ? error.stack : `${error}`,
-                ]),
-              );
-              metadata["scorer_errors"] = scorerErrors;
-              rootSpan.log({
-                metadata: { scorer_errors: scorerErrors },
-              });
-              const names = Object.keys(scorerErrors).join(", ");
-              const errors = failingScorersAndResults.map((item) => item.error);
-              unhandledScores = Object.keys(scorerErrors);
-              debugLogger
-                .forState(evaluator.state)
-                .warn(
-                  `Found exceptions for the following scorers: ${names}`,
-                  errors,
-                );
+            const failingScorers = collectScoringResults(
+              scoreResults,
+              scorerNames,
+              (result) => {
+                scores[result.name] = result.score;
+              },
+            );
+
+            const failingClassifiers = collectScoringResults(
+              classificationResults,
+              classifierNames,
+              (result) => {
+                const item = toClassificationItem(result);
+                if (!classifications[result.name]) {
+                  classifications[result.name] = [];
+                }
+                classifications[result.name].push(item);
+              },
+            );
+
+            if (Object.keys(classifications).length > 0) {
+              rootSpan.log({ classifications });
             }
+
+            const failedScorerNames = logScoringFailures(
+              "scorer",
+              failingScorers,
+              metadata,
+              rootSpan,
+              evaluator.state,
+            );
+            unhandledScores = failedScorerNames.length
+              ? failedScorerNames
+              : null;
+            logScoringFailures(
+              "classifier",
+              failingClassifiers,
+              metadata,
+              rootSpan,
+              evaluator.state,
+            );
           } catch (e) {
             logSpanError(rootSpan, e);
             error = e;
@@ -1312,15 +1502,23 @@ async function runEvaluatorInternal(
           }
 
           if (collectResults) {
-            collectedResults.push({
+            const baseResult = {
               input: datum.input,
               ...("expected" in datum ? { expected: datum.expected } : {}),
               output,
               tags: tags.length ? tags : undefined,
               metadata,
-              scores: mergedScores,
               error,
               origin: baseEvent.event?.origin,
+            };
+            collectedResults.push({
+              ...baseResult,
+              ...(Object.keys(mergedScores).length > 0
+                ? { scores: mergedScores }
+                : {}),
+              ...(Object.keys(classifications).length > 0
+                ? { classifications }
+                : {}),
             });
           }
         };
@@ -1501,8 +1699,11 @@ type ScoreAccumulator = {
 
 function accumulateScores(
   accumulator: ScoreAccumulator,
-  scores: Record<string, number | null>,
+  scores: Record<string, number | null> | undefined,
 ) {
+  if (!scores) {
+    return;
+  }
   for (const [name, score] of Object.entries(scores)) {
     if (score === null || score === undefined) {
       continue;

@@ -111,6 +111,7 @@ export type SerializedParametersContainer = z.infer<
 export const evaluatorDefinitionSchema = z.object({
   parameters: serializedParametersContainerSchema.optional(),
   scores: z.array(z.object({ name: z.string() })).optional(),
+  classifiers: z.array(z.object({ name: z.string() })).optional(),
 });
 export type EvaluatorDefinition = z.infer<typeof evaluatorDefinitionSchema>;
 
