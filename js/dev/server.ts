@@ -305,97 +305,115 @@ const asyncHandler =
     Promise.resolve(fn(req, res, next)).catch(next);
   };
 
+type RunEvalDatasetSelector =
+  | {
+      version: string;
+      environment?: never;
+      snapshotName?: never;
+    }
+  | {
+      version?: never;
+      environment: string;
+      snapshotName?: never;
+    }
+  | {
+      version?: never;
+      environment?: never;
+      snapshotName: string;
+    }
+  | {
+      version?: never;
+      environment?: never;
+      snapshotName?: never;
+    };
+
+type RunEvalDatasetReference =
+  | Extract<RunEvalRequest["data"], { project_name: string }>
+  | Extract<RunEvalRequest["data"], { dataset_id: string }>;
+
+type RunEvalDatasetInitArgs = {
+  state: BraintrustState;
+  dataset: string;
+  _internal_btql?: Record<string, unknown>;
+} & (
+  | { project: string; projectId?: never }
+  | { project?: never; projectId: string }
+) &
+  RunEvalDatasetSelector;
+
+const RUN_EVAL_DATASET_SELECTOR_ERROR =
+  "Cannot specify more than one of dataset_version, dataset_snapshot_name, and dataset_environment.";
+
+function getRunEvalDatasetSelector(
+  data: RunEvalDatasetReference,
+): RunEvalDatasetSelector {
+  const selectorCount = [
+    data.dataset_version,
+    data.dataset_snapshot_name,
+    data.dataset_environment,
+  ].filter((value) => value != null).length;
+
+  if (selectorCount > 1) {
+    throw new Error(RUN_EVAL_DATASET_SELECTOR_ERROR);
+  }
+
+  if (data.dataset_version != null) {
+    return { version: data.dataset_version };
+  }
+  if (data.dataset_snapshot_name != null) {
+    return { snapshotName: data.dataset_snapshot_name };
+  }
+  if (data.dataset_environment != null) {
+    return { environment: data.dataset_environment };
+  }
+
+  return {};
+}
+
+async function buildRunEvalDatasetInitArgs(
+  state: BraintrustState,
+  data: RunEvalDatasetReference,
+  lookupDatasetById: typeof getDatasetById = getDatasetById,
+): Promise<RunEvalDatasetInitArgs> {
+  const commonArgs = {
+    state,
+    ...(data._internal_btql != null
+      ? { _internal_btql: data._internal_btql }
+      : {}),
+    ...getRunEvalDatasetSelector(data),
+  };
+
+  if ("project_name" in data) {
+    const args = {
+      ...commonArgs,
+      project: data.project_name,
+      dataset: data.dataset_name,
+    } satisfies RunEvalDatasetInitArgs;
+    return args;
+  }
+
+  const datasetInfo = await lookupDatasetById({
+    state,
+    datasetId: data.dataset_id,
+  });
+  const args = {
+    ...commonArgs,
+    projectId: datasetInfo.projectId,
+    dataset: datasetInfo.dataset,
+  } satisfies RunEvalDatasetInitArgs;
+  return args;
+}
+
 async function getDataset(
   state: BraintrustState,
   data: RunEvalRequest["data"],
 ): Promise<EvalData<unknown, unknown, BaseMetadata>> {
-  if ("project_name" in data) {
-    const selectorCount = [
-      data.dataset_version,
-      data.dataset_snapshot_name,
-      data.dataset_environment,
-    ].filter((value) => value != null).length;
-    if (selectorCount > 1) {
-      throw new Error(
-        "Cannot specify more than one of dataset_version, dataset_snapshot_name, and dataset_environment.",
-      );
-    }
-
-    const commonArgs = {
-      state,
-      project: data.project_name,
-      dataset: data.dataset_name,
-      _internal_btql: data._internal_btql ?? undefined,
-    };
-
-    if (data.dataset_version != null) {
-      return initDataset({
-        ...commonArgs,
-        version: data.dataset_version,
-      });
-    }
-    if (data.dataset_snapshot_name != null) {
-      return initDataset({
-        ...commonArgs,
-        snapshotName: data.dataset_snapshot_name,
-      });
-    }
-    if (data.dataset_environment != null) {
-      return initDataset({
-        ...commonArgs,
-        environment: data.dataset_environment,
-      });
-    }
-
-    return initDataset(commonArgs);
-  }
-  if ("dataset_id" in data) {
-    const selectorCount = [
-      data.dataset_version,
-      data.dataset_snapshot_name,
-      data.dataset_environment,
-    ].filter((value) => value != null).length;
-    if (selectorCount > 1) {
-      throw new Error(
-        "Cannot specify more than one of dataset_version, dataset_snapshot_name, and dataset_environment.",
-      );
-    }
-
-    const datasetInfo = await getDatasetById({
-      state,
-      datasetId: data.dataset_id,
-    });
-    const commonArgs = {
-      state,
-      projectId: datasetInfo.projectId,
-      dataset: datasetInfo.dataset,
-      _internal_btql: data._internal_btql ?? undefined,
-    };
-
-    if (data.dataset_version != null) {
-      return initDataset({
-        ...commonArgs,
-        version: data.dataset_version,
-      });
-    }
-    if (data.dataset_snapshot_name != null) {
-      return initDataset({
-        ...commonArgs,
-        snapshotName: data.dataset_snapshot_name,
-      });
-    }
-    if (data.dataset_environment != null) {
-      return initDataset({
-        ...commonArgs,
-        environment: data.dataset_environment,
-      });
-    }
-
-    return initDataset(commonArgs);
+  if ("data" in data) {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    return data.data as EvalCase<unknown, unknown, BaseMetadata>[];
   }
 
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  return data.data as EvalCase<unknown, unknown, BaseMetadata>[];
+  return initDataset(await buildRunEvalDatasetInitArgs(state, data));
 }
 
 const datasetFetchSchema = z.object({
@@ -418,6 +436,11 @@ async function getDatasetById({
   }
   return { projectId: parsed[0].project_id, dataset: parsed[0].name };
 }
+
+export const _exportsForTestingOnly = {
+  buildRunEvalDatasetInitArgs,
+  getRunEvalDatasetSelector,
+};
 
 function makeScorer(
   state: BraintrustState,
