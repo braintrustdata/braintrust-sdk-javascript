@@ -1,14 +1,10 @@
-import type {
-  IsoAsyncLocalStorage,
-  IsoChannelHandlers,
-  IsoTracingChannel,
-} from "../../isomorph";
+import type { IsoChannelHandlers, IsoTracingChannel } from "../../isomorph";
 import {
   _internalGetGlobalState,
   BRAINTRUST_CURRENT_SPAN_STORE,
   startSpan,
 } from "../../logger";
-import type { Span } from "../../logger";
+import type { CurrentSpanStore, Span } from "../../logger";
 import { getCurrentUnixTimestamp, isObject } from "../../util";
 import type {
   AnyAsyncChannel,
@@ -252,10 +248,11 @@ function bindCurrentSpanStoreToStart<
 ): (() => void) | undefined {
   const state = _internalGetGlobalState();
   const startChannel = tracingChannel.start;
-  const currentSpanStore = state?.contextManager
+  const contextManager = state?.contextManager;
+  const currentSpanStore = contextManager
     ? (
-        state.contextManager as {
-          [BRAINTRUST_CURRENT_SPAN_STORE]?: IsoAsyncLocalStorage<Span>;
+        contextManager as {
+          [BRAINTRUST_CURRENT_SPAN_STORE]?: CurrentSpanStore;
         }
       )[BRAINTRUST_CURRENT_SPAN_STORE]
     : undefined;
@@ -266,13 +263,15 @@ function bindCurrentSpanStoreToStart<
 
   startChannel.bindStore(
     currentSpanStore,
-    (event: ChannelMessage<TChannel>) =>
-      ensureSpanStateForEvent<TChannel>(
+    (event: ChannelMessage<TChannel>) => {
+      const span = ensureSpanStateForEvent<TChannel>(
         states,
         config,
         event as StartOf<TChannel>,
         channelName,
-      ).span,
+      ).span;
+      return contextManager!.wrapSpanForStore(span);
+    },
   );
 
   return () => {
