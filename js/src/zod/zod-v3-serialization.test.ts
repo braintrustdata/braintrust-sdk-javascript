@@ -19,6 +19,7 @@ import {
   serializeEvalParametersToStaticParametersSchema,
   serializeRemoteEvalParametersContainer,
 } from "../framework2";
+import { serializedParametersContainerSchema } from "../../dev/types";
 // Detect which zod version is installed by checking for v4-specific properties
 function getInstalledZodVersion(): 3 | 4 {
   const testSchema = zodModule.z.string();
@@ -169,5 +170,32 @@ describe("serializeRemoteEvalParametersContainer with Zod v3", () => {
       expect(result.schema.instructions).toBeDefined();
       expect(result.schema.instructions.type).toBe("data");
     }
+  });
+});
+
+describe("serializedParametersContainerSchema parsing", () => {
+  const schema = {
+    model: {
+      type: "model" as const,
+      description: "Model to use",
+      default: "gpt-5-mini",
+    },
+  };
+
+  test("parses braintrust.staticParameters with source: null", () => {
+    const result = serializedParametersContainerSchema.safeParse({
+      type: "braintrust.staticParameters",
+      schema,
+      source: null,
+    });
+    expect(result.success).toBe(true);
+  });
+
+  test("parses braintrust.staticParameters with source omitted", () => {
+    const result = serializedParametersContainerSchema.safeParse({
+      type: "braintrust.staticParameters",
+      schema,
+    });
+    expect(result.success).toBe(true);
   });
 });
