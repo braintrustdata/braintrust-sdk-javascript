@@ -290,10 +290,10 @@
     "has_input": false,
     "has_output": false,
     "metadata": {
-      "operation": "agents-stream"
+      "operation": "agents-tool-call"
     },
     "metric_keys": [],
-    "name": "mistral-agents-stream-operation",
+    "name": "mistral-agents-tool-call-operation",
     "root_span_id": "<span:1>",
     "span_id": "<span:17>",
     "span_parents": [
@@ -315,11 +315,63 @@
       "time_to_first_token",
       "tokens"
     ],
-    "name": "mistral.agents.stream",
+    "name": "mistral.agents.complete",
     "root_span_id": "<span:1>",
     "span_id": "<span:18>",
     "span_parents": [
       "<span:17>"
+    ],
+    "type": "llm"
+  },
+  {
+    "has_input": true,
+    "has_output": false,
+    "metadata": {
+      "provider": "mistral"
+    },
+    "metric_keys": [],
+    "name": "mistral.tool",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:19>",
+    "span_parents": [
+      "<span:18>"
+    ],
+    "type": "tool"
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "operation": "agents-stream"
+    },
+    "metric_keys": [],
+    "name": "mistral-agents-stream-operation",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:20>",
+    "span_parents": [
+      "<span:1>"
+    ],
+    "type": null
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "model": "mistral-small-latest",
+      "provider": "mistral"
+    },
+    "metric_keys": [
+      "completion_tokens",
+      "prompt_cached_tokens",
+      "prompt_tokens",
+      "time_to_first_token",
+      "tokens"
+    ],
+    "name": "mistral.agents.stream",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:21>",
+    "span_parents": [
+      "<span:20>"
     ],
     "type": "llm"
   },
@@ -332,7 +384,7 @@
     "metric_keys": [],
     "name": "mistral-embeddings-operation",
     "root_span_id": "<span:1>",
-    "span_id": "<span:19>",
+    "span_id": "<span:22>",
     "span_parents": [
       "<span:1>"
     ],
@@ -352,9 +404,9 @@
     ],
     "name": "mistral.embeddings.create",
     "root_span_id": "<span:1>",
-    "span_id": "<span:20>",
+    "span_id": "<span:23>",
     "span_parents": [
-      "<span:19>"
+      "<span:22>"
     ],
     "type": "llm"
   }

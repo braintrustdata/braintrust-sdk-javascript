@@ -14,6 +14,7 @@ import {
 } from "./constants.mjs";
 
 export const MISTRAL_SCENARIO_TIMEOUT_MS = 240_000;
+const TEST_TOOL_DELAY_MS = 50;
 export const MISTRAL_SCENARIO_SPECS = [
   {
     autoEntry: "scenario.mistral-v1-3-4.mjs",
@@ -63,6 +64,84 @@ function nonEmptyString(value) {
   return typeof value === "string" && value.trim().length > 0
     ? value.trim()
     : null;
+}
+
+function isMistralInputValidationError(error) {
+  return (
+    error instanceof Error &&
+    typeof error.message === "string" &&
+    error.message.includes("Input validation failed")
+  );
+}
+
+function getWeatherToolDefinition({ legacy = false } = {}) {
+  return {
+    type: "function",
+    function: {
+      name: "get_weather",
+      description: "Get weather for a city.",
+      parameters: legacy
+        ? {}
+        : {
+            type: "object",
+            properties: {
+              location: {
+                type: "string",
+                description: "City name, e.g. Vienna.",
+              },
+            },
+            required: ["location"],
+          },
+    },
+  };
+}
+
+function getExchangeRateToolDefinition({ legacy = false } = {}) {
+  return {
+    type: "function",
+    function: {
+      name: "get_exchange_rate",
+      description: "Get currency exchange rate.",
+      parameters: legacy
+        ? {}
+        : {
+            type: "object",
+            properties: {
+              from_currency: {
+                type: "string",
+                description: "Base currency code, e.g. USD.",
+              },
+              to_currency: {
+                type: "string",
+                description: "Target currency code, e.g. EUR.",
+              },
+            },
+            required: ["from_currency", "to_currency"],
+          },
+    },
+  };
+}
+
+function getAgentTimeToolDefinition({ legacy = false } = {}) {
+  return {
+    type: "function",
+    function: {
+      name: "get_time_in_city",
+      description: "Get the local time in a city.",
+      parameters: legacy
+        ? {}
+        : {
+            type: "object",
+            properties: {
+              city: {
+                type: "string",
+                description: "City name, e.g. Vienna.",
+              },
+            },
+            required: ["city"],
+          },
+    },
+  };
 }
 
 function isRecord(value) {
@@ -131,6 +210,10 @@ async function withRetry(callback, { attempts = 3, delayMs = 1_000 } = {}) {
   }
 
   throw lastError;
+}
+
+async function simulateToolExecutionDelay() {
+  await new Promise((resolve) => setTimeout(resolve, TEST_TOOL_DELAY_MS));
 }
 
 async function createAgentViaHttp(client, apiKey) {
@@ -322,8 +405,8 @@ async function runMistralInstrumentationScenario(
           "chat-tool-call",
           async () => {
             await withRetry(
-              async () =>
-                client.chat.complete({
+              async () => {
+                const request = {
                   model: CHAT_MODEL,
                   messages: [
                     {
@@ -332,26 +415,34 @@ async function runMistralInstrumentationScenario(
                         "Call the get_weather tool for Vienna. Do not answer with plain text.",
                     },
                   ],
-                  tools: [
-                    {
-                      type: "function",
-                      function: {
-                        name: "get_weather",
-                        description: "Get weather for a city.",
-                        parameters: {},
-                      },
-                    },
-                  ],
                   toolChoice: "required",
                   maxTokens: 48,
                   temperature: 0,
-                }),
+                };
+
+                try {
+                  return await client.chat.complete({
+                    ...request,
+                    tools: [getWeatherToolDefinition()],
+                  });
+                } catch (error) {
+                  if (!isMistralInputValidationError(error)) {
+                    throw error;
+                  }
+
+                  return await client.chat.complete({
+                    ...request,
+                    tools: [getWeatherToolDefinition({ legacy: true })],
+                  });
+                }
+              },
               { attempts: 3, delayMs: 1_000 },
             );
+            await simulateToolExecutionDelay();
 
             await withRetry(
-              async () =>
-                client.chat.complete({
+              async () => {
+                const request = {
                   model: CHAT_MODEL,
                   messages: [
                     {
@@ -360,22 +451,30 @@ async function runMistralInstrumentationScenario(
                         "Call the get_exchange_rate tool for USD to EUR. Do not answer with plain text.",
                     },
                   ],
-                  tools: [
-                    {
-                      type: "function",
-                      function: {
-                        name: "get_exchange_rate",
-                        description: "Get currency exchange rate.",
-                        parameters: {},
-                      },
-                    },
-                  ],
                   toolChoice: "required",
                   maxTokens: 48,
                   temperature: 0,
-                }),
+                };
+
+                try {
+                  return await client.chat.complete({
+                    ...request,
+                    tools: [getExchangeRateToolDefinition()],
+                  });
+                } catch (error) {
+                  if (!isMistralInputValidationError(error)) {
+                    throw error;
+                  }
+
+                  return await client.chat.complete({
+                    ...request,
+                    tools: [getExchangeRateToolDefinition({ legacy: true })],
+                  });
+                }
+              },
               { attempts: 3, delayMs: 1_000 },
             );
+            await simulateToolExecutionDelay();
           },
         );
 
@@ -440,6 +539,51 @@ async function runMistralInstrumentationScenario(
                 }),
               { attempts: 3, delayMs: 1_000 },
             );
+          },
+        );
+
+        await runOperation(
+          "mistral-agents-tool-call-operation",
+          "agents-tool-call",
+          async () => {
+            await withRetry(
+              async () => {
+                const request = {
+                  agentId,
+                  messages: [
+                    {
+                      role: "user",
+                      content:
+                        "Call the get_time_in_city tool for Vienna. Do not answer with plain text.",
+                    },
+                  ],
+                  responseFormat: {
+                    type: "text",
+                  },
+                  toolChoice: "required",
+                  maxTokens: 32,
+                  temperature: 0,
+                };
+
+                try {
+                  return await client.agents.complete({
+                    ...request,
+                    tools: [getAgentTimeToolDefinition()],
+                  });
+                } catch (error) {
+                  if (!isMistralInputValidationError(error)) {
+                    throw error;
+                  }
+
+                  return await client.agents.complete({
+                    ...request,
+                    tools: [getAgentTimeToolDefinition({ legacy: true })],
+                  });
+                }
+              },
+              { attempts: 3, delayMs: 1_000 },
+            );
+            await simulateToolExecutionDelay();
           },
         );
 

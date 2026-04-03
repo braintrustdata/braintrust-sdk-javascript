@@ -104,6 +104,21 @@ describe("extractMistralToolCallsFromOutput", () => {
             ],
           },
         },
+        {
+          index: 2,
+          message: {
+            tool_calls: [
+              {
+                id: "call_3",
+                function: {
+                  name: "lookup_clock",
+                  arguments: { city: "Vienna" },
+                  output: { current_time: "09:00" },
+                },
+              },
+            ],
+          },
+        },
       ]),
     ).toEqual([
       {
@@ -119,6 +134,13 @@ describe("extractMistralToolCallsFromOutput", () => {
         id: "call_2",
         name: "lookup_time",
         arguments: '{"timezone":"Europe/Vienna"}',
+      },
+      {
+        choiceIndex: 2,
+        id: "call_3",
+        name: "lookup_clock",
+        arguments: { city: "Vienna" },
+        output: { current_time: "09:00" },
       },
     ]);
   });

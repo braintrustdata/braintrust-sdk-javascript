@@ -384,13 +384,37 @@ function getMessageToolCalls(
 }
 
 type MistralExtractedToolCall = {
-  arguments?: string;
+  arguments?: unknown;
   choiceIndex: number;
   id?: string;
   index?: number;
   name?: string;
+  output?: unknown;
   type?: string;
 };
+
+function extractToolCallOutput(
+  toolCall: Record<string, unknown>,
+  toolFunction: Record<string, unknown>,
+): unknown {
+  const candidates = [
+    toolFunction.output,
+    toolFunction.result,
+    toolCall.output,
+    toolCall.result,
+    toolCall.response,
+    toolCall.toolOutput,
+    toolCall.tool_output,
+  ];
+
+  for (const candidate of candidates) {
+    if (candidate !== undefined) {
+      return candidate;
+    }
+  }
+
+  return undefined;
+}
 
 export function extractMistralToolCallsFromOutput(
   output: unknown,
@@ -420,6 +444,7 @@ export function extractMistralToolCallsFromOutput(
 
     for (const toolCall of toolCalls) {
       const toolFunction = isObject(toolCall.function) ? toolCall.function : {};
+      const toolCallOutput = extractToolCallOutput(toolCall, toolFunction);
       extracted.push({
         ...(typeof toolCall.id === "string" ? { id: toolCall.id } : {}),
         ...(typeof toolCall.index === "number"
@@ -429,9 +454,10 @@ export function extractMistralToolCallsFromOutput(
         ...(typeof toolFunction.name === "string"
           ? { name: toolFunction.name }
           : {}),
-        ...(typeof toolFunction.arguments === "string"
+        ...(toolFunction.arguments !== undefined
           ? { arguments: toolFunction.arguments }
           : {}),
+        ...(toolCallOutput !== undefined ? { output: toolCallOutput } : {}),
         choiceIndex,
       });
     }
@@ -440,9 +466,13 @@ export function extractMistralToolCallsFromOutput(
   return extracted;
 }
 
-function parseToolArguments(argumentsValue: string | undefined): unknown {
-  if (typeof argumentsValue !== "string") {
+function parseToolArguments(argumentsValue: unknown): unknown {
+  if (argumentsValue === undefined) {
     return undefined;
+  }
+
+  if (typeof argumentsValue !== "string") {
+    return argumentsValue;
   }
 
   try {
@@ -452,13 +482,37 @@ function parseToolArguments(argumentsValue: string | undefined): unknown {
   }
 }
 
+function normalizeToolPayloadValue(value: unknown): unknown {
+  if (value === undefined || value === null) {
+    return value;
+  }
+
+  if (
+    typeof value === "string" ||
+    typeof value === "number" ||
+    typeof value === "boolean"
+  ) {
+    return value;
+  }
+
+  try {
+    return JSON.parse(JSON.stringify(value));
+  } catch {
+    return String(value);
+  }
+}
+
 function createMistralToolCallSpansFromOutput(
   parentSpan: Span,
   output: unknown,
 ): void {
   const toolCalls = extractMistralToolCallsFromOutput(output);
   for (const toolCall of toolCalls) {
-    const parsedToolArguments = parseToolArguments(toolCall.arguments);
+    const endTime = getCurrentUnixTimestamp();
+    const parsedToolArguments = normalizeToolPayloadValue(
+      parseToolArguments(toolCall.arguments),
+    );
+    const parsedToolOutput = normalizeToolPayloadValue(toolCall.output);
     const toolSpan = parentSpan.startSpan({
       name: "mistral.tool",
       spanAttributes: {
@@ -470,6 +524,10 @@ function createMistralToolCallSpansFromOutput(
       ...(parsedToolArguments !== undefined
         ? { input: parsedToolArguments }
         : {}),
+      ...(parsedToolOutput !== undefined ? { output: parsedToolOutput } : {}),
+      metrics: {
+        end: endTime,
+      },
       metadata: {
         provider: "mistral",
         ...(toolCall.name ? { tool_name: toolCall.name } : {}),
@@ -479,7 +537,7 @@ function createMistralToolCallSpansFromOutput(
         choice_index: toolCall.choiceIndex,
       },
     });
-    toolSpan.end();
+    toolSpan.end({ endTime });
   }
 }
 

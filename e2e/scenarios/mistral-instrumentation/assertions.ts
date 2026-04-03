@@ -360,6 +360,18 @@ function buildSpanSummary(
     events,
     "mistral-agents-complete-operation",
   );
+  const agentsToolCallOperation = findLatestSpan(
+    events,
+    "mistral-agents-tool-call-operation",
+  );
+  const agentsToolCallSpans = findChildSpans(
+    events,
+    "mistral.agents.complete",
+    agentsToolCallOperation?.span.id,
+  );
+  const agentsToolSpans = agentsToolCallSpans.flatMap((agentsToolCallSpan) =>
+    findChildSpans(events, "mistral.tool", agentsToolCallSpan.span.id),
+  );
   const agentsStreamOperation = findLatestSpan(
     events,
     "mistral-agents-stream-operation",
@@ -395,6 +407,9 @@ function buildSpanSummary(
       findMistralSpan(events, agentsCompleteOperation?.span.id, [
         "mistral.agents.complete",
       ]),
+      agentsToolCallOperation,
+      ...agentsToolCallSpans,
+      ...agentsToolSpans,
       agentsStreamOperation,
       findMistralSpan(events, agentsStreamOperation?.span.id, [
         "mistral.agents.stream",
@@ -622,6 +637,9 @@ export function defineMistralInstrumentationAssertions(options: {
         expect(
           toolSpan.span.parentIds.some((parentId) => spanIds.has(parentId)),
         ).toBe(true);
+        expect(
+          (toolSpan.row.metrics as { end?: unknown } | undefined)?.end,
+        ).toEqual(expect.any(Number));
         expect(toolSpan.input).toBeDefined();
       }
       expect(toolNames.has("get_weather")).toBe(true);
@@ -701,6 +719,73 @@ export function defineMistralInstrumentationAssertions(options: {
       expect(span?.metrics?.time_to_first_token).toEqual(expect.any(Number));
       expect(span?.output).toBeDefined();
     });
+
+    test(
+      "captures trace for agents.complete() tool calling",
+      testConfig,
+      () => {
+        const root = findLatestSpan(events, ROOT_NAME);
+        const operation = findLatestSpan(
+          events,
+          "mistral-agents-tool-call-operation",
+        );
+        const spans = findChildSpans(
+          events,
+          "mistral.agents.complete",
+          operation?.span.id,
+        );
+        const spanIds = new Set(spans.map((span) => span.span.id));
+        const toolSpans = spans.flatMap((span) =>
+          findChildSpans(events, "mistral.tool", span.span.id),
+        );
+        const spansWithToolCalls = spans.filter((span) => {
+          const output = span.output as
+            | Array<{
+                message?: {
+                  toolCalls?: unknown;
+                  tool_calls?: unknown;
+                };
+              }>
+            | undefined;
+          const firstChoice = Array.isArray(output) ? output[0] : undefined;
+          const toolCalls =
+            (Array.isArray(firstChoice?.message?.tool_calls) &&
+              firstChoice.message.tool_calls) ||
+            (Array.isArray(firstChoice?.message?.toolCalls) &&
+              firstChoice.message.toolCalls) ||
+            [];
+          return toolCalls.length > 0;
+        });
+
+        expect(operation).toBeDefined();
+        expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
+        expect(spans.length).toBeGreaterThanOrEqual(1);
+        expect(spansWithToolCalls.length).toBeGreaterThanOrEqual(1);
+
+        for (const span of spans) {
+          expect(span.span.type).toBe("llm");
+          expect(span.row.metadata).toMatchObject({
+            provider: "mistral",
+          });
+        }
+
+        expect(toolSpans.length).toBeGreaterThanOrEqual(1);
+        for (const toolSpan of toolSpans) {
+          expect(toolSpan.span.type).toBe("tool");
+          expect(toolSpan.row.metadata).toMatchObject({
+            provider: "mistral",
+            tool_name: expect.any(String),
+          });
+          expect(
+            toolSpan.span.parentIds.some((parentId) => spanIds.has(parentId)),
+          ).toBe(true);
+          expect(
+            (toolSpan.row.metrics as { end?: unknown } | undefined)?.end,
+          ).toEqual(expect.any(Number));
+          expect(toolSpan.input).toBeDefined();
+        }
+      },
+    );
 
     test("captures trace for agents.stream()", testConfig, () => {
       const root = findLatestSpan(events, ROOT_NAME);
