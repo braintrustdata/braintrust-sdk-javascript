@@ -209,11 +209,12 @@ export async function invoke<Input, Output, Stream extends boolean = false>(
   const headers: Record<string, string> = {
     Accept: stream ? "text/event-stream" : "application/json",
   };
+  const effectiveOrgName = orgName ?? state.orgName;
   if (projectId) {
     headers["x-bt-project-id"] = projectId;
   }
-  if (orgName) {
-    headers["x-bt-org-name"] = orgName;
+  if (effectiveOrgName) {
+    headers["x-bt-org-name"] = effectiveOrgName;
   }
 
   const resp = await state.proxyConn().post(`function/invoke`, request, {
