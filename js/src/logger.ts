@@ -588,6 +588,9 @@ const loginSchema = z.strictObject({
 });
 
 export type SerializedBraintrustState = z.infer<typeof loginSchema>;
+type WithConfigOptions = {
+  project: string;
+};
 
 let stateNonce = 0;
 
@@ -597,6 +600,12 @@ export class BraintrustState {
   // Note: the value of IsAsyncFlush doesn't really matter here, since we
   // (safely) dynamically cast it whenever retrieving the logger.
   public currentLogger: Logger<false> | undefined;
+  public scopedLogger: IsoAsyncLocalStorage<Logger<boolean> | undefined>;
+  public scopedConfig: IsoAsyncLocalStorage<WithConfigOptions | undefined>;
+  public cachedWithConfigLoggers: {
+    async?: Logger<boolean>;
+    sync?: Logger<boolean>;
+  };
   public currentParent: IsoAsyncLocalStorage<string>;
   public currentSpan: IsoAsyncLocalStorage<Span>;
   // Any time we re-log in, we directly update the apiConn inside the logger.
@@ -634,6 +643,9 @@ export class BraintrustState {
     this.id = `${new Date().toLocaleString()}-${stateNonce++}`; // This is for debugging. uuidv4() breaks on platforms like Cloudflare.
     this.currentExperiment = undefined;
     this.currentLogger = undefined;
+    this.scopedLogger = iso.newAsyncLocalStorage();
+    this.scopedConfig = iso.newAsyncLocalStorage();
+    this.cachedWithConfigLoggers = {};
     this.currentParent = iso.newAsyncLocalStorage();
     this.currentSpan = iso.newAsyncLocalStorage();
 
@@ -1302,6 +1314,13 @@ interface OrgProjectMetadata {
   project: ObjectMetadata;
 }
 
+interface LoggerRuntimeContext {
+  lazyMetadata: LazyValue<OrgProjectMetadata>;
+  lazyId: LazyValue<string>;
+  computeMetadataArgs?: Record<string, any>;
+  linkArgs?: LinkArgs;
+}
+
 export interface LinkArgs {
   org_name?: string;
   app_url?: string;
@@ -1313,6 +1332,8 @@ export interface LogOptions<IsAsyncFlush> {
   asyncFlush?: IsAsyncFlush;
   computeMetadataArgs?: Record<string, any>;
   linkArgs?: LinkArgs;
+  // Internal: resolve logging context dynamically (e.g. withConfig scoped config).
+  _resolveRuntimeContext?: () => LoggerRuntimeContext;
 }
 
 export type PromiseUnless<B, R> = B extends true ? R : Promise<Awaited<R>>;
@@ -2235,6 +2256,7 @@ export class Logger<IsAsyncFlush extends boolean> implements Exportable {
   private _asyncFlush: IsAsyncFlush | undefined;
   private computeMetadataArgs: Record<string, any> | undefined;
   private _linkArgs: LinkArgs | undefined;
+  private _resolveRuntimeContext: (() => LoggerRuntimeContext) | undefined;
   private lastStartTime: number;
   private lazyId: LazyValue<string>;
   private calledStartSpan: boolean;
@@ -2251,21 +2273,37 @@ export class Logger<IsAsyncFlush extends boolean> implements Exportable {
     this._asyncFlush = logOptions.asyncFlush;
     this.computeMetadataArgs = logOptions.computeMetadataArgs;
     this._linkArgs = logOptions.linkArgs;
+    this._resolveRuntimeContext = logOptions._resolveRuntimeContext;
     this.lastStartTime = getCurrentUnixTimestamp();
     this.lazyId = new LazyValue(async () => await this.id);
     this.calledStartSpan = false;
     this.state = state;
   }
 
+  private getRuntimeContext(): LoggerRuntimeContext {
+    if (this._resolveRuntimeContext) {
+      return this._resolveRuntimeContext();
+    }
+
+    return {
+      lazyMetadata: this.lazyMetadata,
+      lazyId: this.lazyId,
+      computeMetadataArgs: this.computeMetadataArgs,
+      linkArgs: this._linkArgs,
+    };
+  }
+
   public get org_id(): Promise<string> {
+    const context = this.getRuntimeContext();
     return (async () => {
-      return (await this.lazyMetadata.get()).org_id;
+      return (await context.lazyMetadata.get()).org_id;
     })();
   }
 
   public get project(): Promise<ObjectMetadata> {
+    const context = this.getRuntimeContext();
     return (async () => {
-      return (await this.lazyMetadata.get()).project;
+      return (await context.lazyMetadata.get()).project;
     })();
   }
 
@@ -2373,6 +2411,7 @@ export class Logger<IsAsyncFlush extends boolean> implements Exportable {
   }
 
   private startSpanImpl(args?: StartSpanArgs): Span {
+    const context = this.getRuntimeContext();
     return new SpanImpl({
       ...args,
       // Sometimes `args` gets passed directly into this function, and it contains an undefined value for `state`.
@@ -2382,8 +2421,8 @@ export class Logger<IsAsyncFlush extends boolean> implements Exportable {
         state: this.state,
         parent: args?.parent,
         parentObjectType: this.parentObjectType(),
-        parentObjectId: this.lazyId,
-        parentComputeObjectMetadataArgs: this.computeMetadataArgs,
+        parentObjectId: context.lazyId,
+        parentComputeObjectMetadataArgs: context.computeMetadataArgs,
         parentSpanIds: args?.parentSpanIds,
         propagatedEvent: args?.propagatedEvent,
       }),
@@ -2403,7 +2442,8 @@ export class Logger<IsAsyncFlush extends boolean> implements Exportable {
    * @param event.source (Optional) the source of the feedback. Must be one of "external" (default), "app", or "api".
    */
   public logFeedback(event: LogFeedbackFullArgs): void {
-    logFeedbackImpl(this.state, this.parentObjectType(), this.lazyId, event);
+    const context = this.getRuntimeContext();
+    logFeedbackImpl(this.state, this.parentObjectType(), context.lazyId, event);
   }
 
   /**
@@ -2423,7 +2463,7 @@ export class Logger<IsAsyncFlush extends boolean> implements Exportable {
     updateSpanImpl({
       state: this.state,
       parentObjectType: this.parentObjectType(),
-      parentObjectId: this.lazyId,
+      parentObjectId: this.getRuntimeContext().lazyId,
       id,
       root_span_id,
       span_id,
@@ -2437,15 +2477,16 @@ export class Logger<IsAsyncFlush extends boolean> implements Exportable {
    * See {@link Span.startSpan} for more details.
    */
   public async export(): Promise<string> {
+    const context = this.getRuntimeContext();
     // Note: it is important that the object id we are checking for
     // `has_computed` is the same as the one we are passing into the span
     // logging functions. So that if the spans actually do get logged, then this
     // `_lazy_id` object specifically will also be marked as computed.
     return new (getSpanComponentsClass())({
       object_type: this.parentObjectType(),
-      ...(this.computeMetadataArgs && !this.lazyId.hasSucceeded
-        ? { compute_object_metadata_args: this.computeMetadataArgs }
-        : { object_id: await this.lazyId.get() }),
+      ...(context.computeMetadataArgs && !context.lazyId.hasSucceeded
+        ? { compute_object_metadata_args: context.computeMetadataArgs }
+        : { object_id: await context.lazyId.get() }),
     }).toStr();
   }
 
@@ -2466,7 +2507,7 @@ export class Logger<IsAsyncFlush extends boolean> implements Exportable {
    * Resolution order: state -> linkArgs -> env var
    */
   public _getLinkBaseUrl(): string | null {
-    return _getLinkBaseUrl(this.state, this._linkArgs);
+    return _getLinkBaseUrl(this.state, this.getRuntimeContext().linkArgs);
   }
 }
 
@@ -3763,6 +3804,131 @@ export function withLogger<IsAsyncFlush extends boolean = false, R = void>(
   return callback(logger);
 }
 
+function normalizeWithConfig(
+  configuration: Readonly<WithConfigOptions>,
+): WithConfigOptions {
+  const project = configuration.project?.trim();
+  if (typeof project !== "string" || project.length === 0) {
+    throw new Error(
+      "withConfig requires a non-empty project name in `configuration.project`",
+    );
+  }
+
+  return { project };
+}
+
+function reconcileWithConfig(
+  parentConfig: Readonly<WithConfigOptions> | undefined,
+  nextConfig: Readonly<WithConfigOptions>,
+): WithConfigOptions {
+  return {
+    // Nested scopes use the innermost project.
+    project:
+      parentConfig?.project === nextConfig.project
+        ? parentConfig.project
+        : nextConfig.project,
+  };
+}
+
+function getConfig(state: BraintrustState): WithConfigOptions | undefined {
+  return state.scopedConfig.getStore();
+}
+
+function createLoggerRuntimeContext(
+  state: BraintrustState,
+  config: Readonly<WithConfigOptions>,
+): LoggerRuntimeContext {
+  const computeMetadataArgs = {
+    project_name: config.project,
+  };
+
+  const lazyMetadata: LazyValue<OrgProjectMetadata> = new LazyValue(
+    async () => {
+      await state.login({});
+      return computeLoggerMetadata(state, computeMetadataArgs);
+    },
+  );
+
+  const lazyId: LazyValue<string> = new LazyValue(
+    async () => (await lazyMetadata.get()).project.id,
+  );
+
+  return {
+    lazyMetadata,
+    lazyId,
+    computeMetadataArgs,
+    linkArgs: { project_name: config.project },
+  };
+}
+
+function createScopedLogger(
+  state: BraintrustState,
+  initialConfig: Readonly<WithConfigOptions>,
+  asyncFlush: boolean,
+): Logger<boolean> {
+  const runtimeContextCache = new Map<string, LoggerRuntimeContext>();
+
+  const getRuntimeContextForConfig = (
+    config: Readonly<WithConfigOptions>,
+  ): LoggerRuntimeContext => {
+    const cached = runtimeContextCache.get(config.project);
+    if (cached) {
+      return cached;
+    }
+    const created = createLoggerRuntimeContext(state, config);
+    runtimeContextCache.set(config.project, created);
+    return created;
+  };
+
+  const initialContext = getRuntimeContextForConfig(initialConfig);
+
+  return new Logger<boolean>(state, initialContext.lazyMetadata, {
+    asyncFlush,
+    computeMetadataArgs: initialContext.computeMetadataArgs,
+    linkArgs: initialContext.linkArgs,
+    _resolveRuntimeContext: () =>
+      getRuntimeContextForConfig(getConfig(state) ?? initialConfig),
+  });
+}
+
+function getOrCreateScopedLogger(
+  state: BraintrustState,
+  initialConfig: Readonly<WithConfigOptions>,
+): Logger<boolean> {
+  const inheritedAsyncFlush = state.currentLogger?.asyncFlush ?? true;
+  const cacheKey = inheritedAsyncFlush ? "async" : "sync";
+
+  const cached = state.cachedWithConfigLoggers[cacheKey];
+  if (cached) {
+    return cached;
+  }
+
+  const created = createScopedLogger(state, initialConfig, inheritedAsyncFlush);
+  state.cachedWithConfigLoggers[cacheKey] = created;
+  return created;
+}
+
+function withConfig<R>(
+  configuration: Readonly<WithConfigOptions>,
+  callback: () => R,
+): R {
+  const state = _globalState;
+  const normalizedConfig = normalizeWithConfig(configuration);
+  const parentConfig = state.scopedConfig.getStore();
+  const resolvedConfig = reconcileWithConfig(parentConfig, normalizedConfig);
+  const logger =
+    state.scopedLogger.getStore() ??
+    getOrCreateScopedLogger(state, resolvedConfig);
+
+  return state.scopedConfig.run(resolvedConfig, () =>
+    state.scopedLogger.run(logger, callback),
+  );
+}
+
+export const _experimental = {
+  withConfig,
+} as const;
+
 type UseOutputOption<IsLegacyDataset extends boolean> = {
   useOutput?: IsLegacyDataset;
 };
@@ -4737,7 +4903,10 @@ export function currentLogger<IsAsyncFlush extends boolean>(
   options?: AsyncFlushArg<IsAsyncFlush> & OptionalStateArg,
 ): Logger<IsAsyncFlush> | undefined {
   const state = options?.state ?? _globalState;
-  return castLogger(state.currentLogger, options?.asyncFlush);
+  return castLogger(
+    state.scopedLogger.getStore() ?? state.currentLogger,
+    options?.asyncFlush,
+  );
 }
 
 /**

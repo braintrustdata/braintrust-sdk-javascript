@@ -72,6 +72,7 @@ export {
   SpanImpl,
   TestBackgroundLogger,
   _exportsForTestingOnly,
+  _experimental,
   _internalGetGlobalState,
   _internalSetInitialState,
   constructLogs3OverflowRequest,
