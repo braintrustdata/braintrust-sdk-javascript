@@ -31,7 +31,7 @@
   },
   "dependencies": {
     "@ai-sdk/provider": "^0.0.11",
-    "ai": "^3.2.16",
+    "ai": "^5.0.52",
     "braintrust": "workspace:*"
   },
   "peerDependencies": {
