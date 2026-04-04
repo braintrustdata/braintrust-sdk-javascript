@@ -27,6 +27,26 @@ import { SpanComponentsV3 } from "../util/span_identifier_v3";
 
 configureNode();
 
+test("extractLastXactIdFromLogs3Response returns the last xact id", () => {
+  expect(
+    _exportsForTestingOnly.extractLastXactIdFromLogs3Response({
+      rows: [{ _xact_id: "xact-1" }, { _xact_id: "xact-2" }],
+    }),
+  ).toBe("xact-2");
+
+  expect(
+    _exportsForTestingOnly.extractLastXactIdFromLogs3Response({
+      xact_ids: ["xact-1", "xact-2"],
+    }),
+  ).toBe("xact-2");
+});
+
+test("maxXactId keeps the numerically largest xact id", () => {
+  expect(_exportsForTestingOnly.maxXactId("10", "9")).toBe("10");
+  expect(_exportsForTestingOnly.maxXactId("10", "11")).toBe("11");
+  expect(_exportsForTestingOnly.maxXactId(null, "11")).toBe("11");
+});
+
 test("renderMessage with file content parts", () => {
   const message = {
     role: "user" as const,
