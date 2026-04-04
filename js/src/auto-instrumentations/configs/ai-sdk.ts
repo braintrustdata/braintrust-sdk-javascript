@@ -53,7 +53,7 @@ export const aiSDKConfigs: InstrumentationConfig[] = [
     },
   },
   {
-    channelName: aiSDKChannels.streamText.channelName,
+    channelName: aiSDKChannels.streamTextSync.channelName,
     module: {
       name: "ai",
       versionRange: ">=3.0.0",
@@ -61,7 +61,7 @@ export const aiSDKConfigs: InstrumentationConfig[] = [
     },
     functionQuery: {
       functionName: "streamText",
-      kind: "Async",
+      kind: "Sync",
     },
   },
 
@@ -105,7 +105,7 @@ export const aiSDKConfigs: InstrumentationConfig[] = [
     },
   },
   {
-    channelName: aiSDKChannels.streamObject.channelName,
+    channelName: aiSDKChannels.streamObjectSync.channelName,
     module: {
       name: "ai",
       versionRange: ">=3.0.0",
@@ -113,7 +113,7 @@ export const aiSDKConfigs: InstrumentationConfig[] = [
     },
     functionQuery: {
       functionName: "streamObject",
-      kind: "Async",
+      kind: "Sync",
     },
   },
 

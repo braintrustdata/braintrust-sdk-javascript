@@ -1,5 +1,9 @@
 import { BasePlugin } from "../core";
-import { traceStreamingChannel, unsubscribeAll } from "../core/channel-tracing";
+import {
+  traceStreamingChannel,
+  traceSyncStreamChannel,
+  unsubscribeAll,
+} from "../core/channel-tracing";
 import { SpanTypeAttribute } from "../../../util/index";
 import { getCurrentUnixTimestamp } from "../../util";
 import { Attachment, type Span, withCurrent } from "../../logger";
@@ -144,6 +148,24 @@ export class AISDKPlugin extends BasePlugin {
       }),
     );
 
+    // streamText - sync function returning stream (CommonJS bundle)
+    this.unsubscribers.push(
+      traceSyncStreamChannel(aiSDKChannels.streamTextSync, {
+        name: "streamText",
+        type: SpanTypeAttribute.LLM,
+        extractInput: ([params], event, span) =>
+          prepareAISDKInput(params, event, span, denyOutputPaths),
+        patchResult: ({ endEvent, result, span, startTime }) =>
+          patchAISDKStreamingResult({
+            defaultDenyOutputPaths: denyOutputPaths,
+            endEvent,
+            result,
+            span,
+            startTime,
+          }),
+      }),
+    );
+
     // generateObject - async function that may return streams
     this.unsubscribers.push(
       traceStreamingChannel(aiSDKChannels.generateObject, {
@@ -179,6 +201,24 @@ export class AISDKPlugin extends BasePlugin {
         extractMetrics: (result, startTime, endEvent) =>
           extractTopLevelAISDKMetrics(result, endEvent, startTime),
         aggregateChunks: aggregateAISDKChunks,
+        patchResult: ({ endEvent, result, span, startTime }) =>
+          patchAISDKStreamingResult({
+            defaultDenyOutputPaths: denyOutputPaths,
+            endEvent,
+            result,
+            span,
+            startTime,
+          }),
+      }),
+    );
+
+    // streamObject - sync function returning stream (CommonJS bundle)
+    this.unsubscribers.push(
+      traceSyncStreamChannel(aiSDKChannels.streamObjectSync, {
+        name: "streamObject",
+        type: SpanTypeAttribute.LLM,
+        extractInput: ([params], event, span) =>
+          prepareAISDKInput(params, event, span, denyOutputPaths),
         patchResult: ({ endEvent, result, span, startTime }) =>
           patchAISDKStreamingResult({
             defaultDenyOutputPaths: denyOutputPaths,

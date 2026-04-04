@@ -145,7 +145,7 @@ function codeTransformerLoader(
     return callback(null, code, inputSourceMap);
   }
 
-  // Normalize the module path for Windows compatibility (WASM transformer expects forward slashes)
+  // Normalize the module path for Windows compatibility (transformer expects forward slashes)
   const normalizedModulePath = moduleDetails.path.replace(/\\/g, "/");
 
   const matcher = getMatcher(options);

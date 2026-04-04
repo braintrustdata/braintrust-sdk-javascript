@@ -54,7 +54,7 @@ export class ModulePatch {
 
         const version = getPackageVersion(resolvedModule.basedir);
 
-        // Normalize module path for WASM transformer (expects forward slashes)
+        // Normalize module path for transformer (expects forward slashes)
         const normalizedModulePath = resolvedModule.path.replace(/\\/g, "/");
 
         const transformer = self.instrumentator.getTransformer(

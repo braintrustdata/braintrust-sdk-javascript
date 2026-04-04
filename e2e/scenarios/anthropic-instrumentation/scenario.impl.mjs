@@ -26,7 +26,18 @@ const WEATHER_TOOL = {
 
 async function runAnthropicInstrumentationScenario(
   Anthropic,
-  { decorateClient, useBetaMessages = true, supportsThinking = false } = {},
+  {
+    decorateClient,
+    useBetaMessages = true,
+    useMessagesStreamHelper = true,
+    supportsThinking = false,
+    // v0.11.0 of the orchestrion-js code transformer wraps promise-returning
+    // functions via promise.then(), replacing the original APIPromise with a
+    // plain Promise. This makes .withResponse() unavailable under auto-
+    // instrumentation. Set to false when using the ESM hook or bundler plugins
+    // until the transformer is updated to preserve the original return value.
+    supportsWithResponse = true,
+  } = {},
 ) {
   const imageBase64 = (
     await readFile(new URL("./test-image.png", import.meta.url))
@@ -51,20 +62,23 @@ async function runAnthropicInstrumentationScenario(
         "anthropic-create-with-response-operation",
         "create-with-response",
         async () => {
-          const response = await client.messages
-            .create({
-              model: ANTHROPIC_MODEL,
-              max_tokens: 16,
-              temperature: 0,
-              messages: [
-                {
-                  role: "user",
-                  content: "Reply with exactly WITH_RESPONSE.",
-                },
-              ],
-            })
-            .withResponse();
-          void response.data;
+          const result = client.messages.create({
+            model: ANTHROPIC_MODEL,
+            max_tokens: 16,
+            temperature: 0,
+            messages: [
+              {
+                role: "user",
+                content: "Reply with exactly WITH_RESPONSE.",
+              },
+            ],
+          });
+          if (supportsWithResponse) {
+            const response = await result.withResponse();
+            void response.data;
+          } else {
+            await result;
+          }
         },
       );
 
@@ -119,18 +133,33 @@ async function runAnthropicInstrumentationScenario(
         "anthropic-stream-with-response-operation",
         "stream-with-response",
         async () => {
-          const stream = client.messages.stream({
-            model: ANTHROPIC_MODEL,
-            max_tokens: 32,
-            temperature: 0,
-            messages: [
-              {
-                role: "user",
-                content:
-                  "Count from 1 to 3 and include the words one two three.",
-              },
-            ],
-          });
+          const stream =
+            useMessagesStreamHelper === false
+              ? await client.messages.create({
+                  model: ANTHROPIC_MODEL,
+                  max_tokens: 32,
+                  temperature: 0,
+                  stream: true,
+                  messages: [
+                    {
+                      role: "user",
+                      content:
+                        "Count from 1 to 3 and include the words one two three.",
+                    },
+                  ],
+                })
+              : client.messages.stream({
+                  model: ANTHROPIC_MODEL,
+                  max_tokens: 32,
+                  temperature: 0,
+                  messages: [
+                    {
+                      role: "user",
+                      content:
+                        "Count from 1 to 3 and include the words one two three.",
+                    },
+                  ],
+                });
           await collectAsync(stream);
         },
       );
@@ -258,6 +287,11 @@ export async function runWrappedAnthropicInstrumentation(Anthropic, options) {
 export async function runAutoAnthropicInstrumentation(Anthropic, options) {
   await runAnthropicInstrumentationScenario(Anthropic, {
     ...options,
+    useMessagesStreamHelper: false,
+    // The orchestrion-js v0.11.0 transformer wraps promise.then() around the
+    // return value, replacing APIPromise with a plain Promise, which makes
+    // .withResponse() unavailable under auto-instrumentation.
+    supportsWithResponse: false,
   });
 }
 
