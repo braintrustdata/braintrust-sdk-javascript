@@ -133,18 +133,33 @@ async function runAnthropicInstrumentationScenario(
         "anthropic-stream-with-response-operation",
         "stream-with-response",
         async () => {
-          const stream = client.messages.stream({
-            model: ANTHROPIC_MODEL,
-            max_tokens: 32,
-            temperature: 0,
-            messages: [
-              {
-                role: "user",
-                content:
-                  "Count from 1 to 3 and include the words one two three.",
-              },
-            ],
-          });
+          const stream =
+            useMessagesStreamHelper === false
+              ? await client.messages.create({
+                  model: ANTHROPIC_MODEL,
+                  max_tokens: 32,
+                  temperature: 0,
+                  stream: true,
+                  messages: [
+                    {
+                      role: "user",
+                      content:
+                        "Count from 1 to 3 and include the words one two three.",
+                    },
+                  ],
+                })
+              : client.messages.stream({
+                  model: ANTHROPIC_MODEL,
+                  max_tokens: 32,
+                  temperature: 0,
+                  messages: [
+                    {
+                      role: "user",
+                      content:
+                        "Count from 1 to 3 and include the words one two three.",
+                    },
+                  ],
+                });
           await collectAsync(stream);
         },
       );
