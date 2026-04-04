@@ -4,9 +4,6 @@
   "repository": "https://github.com/braintrustdata/braintrust-sdk-javascript",
   "license": "MIT",
   "private": true,
-  "workspaces": [
-    "js"
-  ],
   "scripts": {
     "preinstall": "node -e \"const userAgent = process.env.npm_config_user_agent || ''; if (process.env.INIT_CWD === process.cwd() && !userAgent.includes('pnpm/')) { console.error('Use pnpm in this repo.'); process.exit(1); }\"",
     "build": "turbo run build",
@@ -21,6 +18,9 @@
     "test:e2e:hermetic": "turbo run test:e2e:hermetic",
     "test:e2e:canary": "turbo run test:e2e:canary",
     "test:e2e:update": "turbo run test:e2e:update",
+    "changeset": "changeset",
+    "changeset:status": "changeset status",
+    "changeset:version": "changeset version",
     "playground": "turbo run playground --filter=\"braintrust\"",
     "playground:cli:push": "turbo run playground:cli:push --filter=\"braintrust\"",
     "playground:cli:eval": "turbo run playground:cli:eval --filter=\"braintrust\"",
@@ -43,6 +43,8 @@
     }
   },
   "devDependencies": {
+    "@changesets/changelog-github": "^0.6.0",
+    "@changesets/cli": "^2.30.0",
     "eslint": "^9.39.2",
     "husky": "^9.1.7",
     "knip": "^5.85.0",
