@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-export const REPO_ROOT = path.resolve(__dirname, "../..");
+const REPO_ROOT = path.resolve(__dirname, "../..");
 export const NPM_REGISTRY = "https://registry.npmjs.org/";
 export const GITHUB_REPO_URL =
   "git+https://github.com/braintrustdata/braintrust-sdk-javascript.git";
@@ -39,14 +39,9 @@ export const PRIVATE_WORKSPACE_PACKAGES = [
   { dir: "e2e", name: "@braintrust/js-e2e-tests" },
 ];
 
-export const PUBLISHABLE_PACKAGE_NAMES = PUBLISHABLE_PACKAGES.map(
-  (pkg) => pkg.name,
-);
-export const PUBLISHABLE_PACKAGE_DIRS = new Set(
-  PUBLISHABLE_PACKAGES.map((pkg) => pkg.dir),
-);
-export const PUBLISHABLE_PACKAGE_NAME_SET = new Set(PUBLISHABLE_PACKAGE_NAMES);
-export const PUBLISHABLE_PACKAGE_MAP = new Map(
+const PUBLISHABLE_PACKAGE_NAMES = PUBLISHABLE_PACKAGES.map((pkg) => pkg.name);
+const PUBLISHABLE_PACKAGE_NAME_SET = new Set(PUBLISHABLE_PACKAGE_NAMES);
+const PUBLISHABLE_PACKAGE_MAP = new Map(
   PUBLISHABLE_PACKAGES.map((pkg) => [pkg.name, pkg]),
 );
 
@@ -54,7 +49,7 @@ export function repoPath(...segments) {
   return path.join(REPO_ROOT, ...segments);
 }
 
-export function readJson(relativePath) {
+function readJson(relativePath) {
   return JSON.parse(readFileSync(repoPath(relativePath), "utf8"));
 }
 
@@ -68,16 +63,8 @@ export function readPackage(relativeDir) {
   };
 }
 
-export function getApprovedPackage(relativeDir) {
-  return PUBLISHABLE_PACKAGES.find((pkg) => pkg.dir === relativeDir);
-}
-
 export function getApprovedPackageByName(name) {
   return PUBLISHABLE_PACKAGE_MAP.get(name);
-}
-
-export function toPosixPath(filePath) {
-  return filePath.split(path.sep).join(path.posix.sep);
 }
 
 export function escapeRegExp(value) {
