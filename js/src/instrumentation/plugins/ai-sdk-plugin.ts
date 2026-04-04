@@ -210,7 +210,7 @@ export class AISDKPlugin extends BasePlugin {
       }),
     );
 
-    // Agent.stream - async method returning stream
+    // Agent.stream - async method returning stream (v5, used by wrapAISDK)
     this.unsubscribers.push(
       traceStreamingChannel(aiSDKChannels.agentStream, {
         name: "Agent.stream",
@@ -225,6 +225,24 @@ export class AISDKPlugin extends BasePlugin {
         extractMetrics: (result, startTime, endEvent) =>
           extractTopLevelAISDKMetrics(result, endEvent, startTime),
         aggregateChunks: aggregateAISDKChunks,
+        patchResult: ({ endEvent, result, span, startTime }) =>
+          patchAISDKStreamingResult({
+            defaultDenyOutputPaths: denyOutputPaths,
+            endEvent,
+            result,
+            span,
+            startTime,
+          }),
+      }),
+    );
+
+    // Agent.stream - sync method returning stream (v5, used by auto-hook)
+    this.unsubscribers.push(
+      traceSyncStreamChannel(aiSDKChannels.agentStreamSync, {
+        name: "Agent.stream",
+        type: SpanTypeAttribute.LLM,
+        extractInput: ([params], event, span) =>
+          prepareAISDKInput(params, event, span, denyOutputPaths),
         patchResult: ({ endEvent, result, span, startTime }) =>
           patchAISDKStreamingResult({
             defaultDenyOutputPaths: denyOutputPaths,

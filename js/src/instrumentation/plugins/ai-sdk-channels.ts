@@ -69,6 +69,15 @@ export const aiSDKChannels = defineChannels("ai", {
     channelName: "Agent.stream",
     kind: "async",
   }),
+  agentStreamSync: channel<
+    [AISDKCallParams],
+    AISDKResult,
+    AISDKChannelContext,
+    unknown
+  >({
+    channelName: "Agent.stream.sync",
+    kind: "sync-stream",
+  }),
   toolLoopAgentGenerate: channel<
     [AISDKCallParams],
     AISDKStreamResult,
