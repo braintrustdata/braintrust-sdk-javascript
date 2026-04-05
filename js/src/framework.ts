@@ -1360,7 +1360,7 @@ async function runEvaluatorInternal(
         if (!filters.every((f) => evaluateFilter(datum, f))) {
           continue;
         }
-        const trialCount = evaluator.trialCount ?? 1;
+        const trialCount = datum.trialCount ?? evaluator.trialCount ?? 1;
         for (let trialIndex = 0; trialIndex < trialCount; trialIndex++) {
           if (cancelled) {
             break;
