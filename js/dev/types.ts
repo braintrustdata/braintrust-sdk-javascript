@@ -90,7 +90,7 @@ export type ParametersContainer = z.infer<typeof parametersContainerSchema>;
 const staticParametersContainerSchema = z.object({
   type: z.literal("braintrust.staticParameters"),
   schema: staticParametersSchema,
-  source: z.null(),
+  source: z.null().nullish(),
 });
 
 export type StaticParametersContainer = z.infer<
