@@ -191,7 +191,7 @@ export const openaiConfigs: InstrumentationConfig[] = [
     channelName: openAIChannels.responsesCompact.channelName,
     module: {
       name: "openai",
-      versionRange: ">=4.87.0",
+      versionRange: ">=6.10.0",
       filePath: "resources/responses/responses.mjs",
     },
     functionQuery: {
