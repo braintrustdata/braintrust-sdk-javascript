@@ -14,21 +14,31 @@ import { displayTestResults } from "../../../shared/dist/index.mjs";
 const PORT = 5173;
 const MAX_RETRIES = 40;
 const RETRY_DELAY_MS = 250;
+const REQUEST_TIMEOUT_MS = 1000;
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 function killPort(port) {
   try {
-    execSync(`lsof -ti:${port} | xargs kill -9 2>/dev/null || true`, {
-      stdio: "ignore",
-    });
+    execSync(
+      `lsof -tiTCP:${port} -sTCP:LISTEN | xargs kill -9 2>/dev/null || true`,
+      {
+        stdio: "ignore",
+      },
+    );
   } catch {}
 }
 
-async function waitForServer() {
+async function waitForServer(serverProcess) {
   for (let i = 0; i < MAX_RETRIES; i++) {
+    if (serverProcess.exitCode !== null) {
+      return false;
+    }
+
     try {
-      const res = await fetch(`http://localhost:${PORT}/`);
+      const res = await fetch(`http://localhost:${PORT}/`, {
+        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      });
       if (res.ok) return true;
     } catch {}
     await sleep(RETRY_DELAY_MS);
@@ -47,32 +57,47 @@ async function testViteDevServer() {
   const vite = spawn("pnpm", ["exec", "vite", "--port", String(PORT)], {
     stdio: ["ignore", "pipe", "pipe"],
     shell: true,
+    detached: process.platform !== "win32",
   });
 
   let output = "";
   vite.stdout.on("data", (d) => (output += d));
   vite.stderr.on("data", (d) => (output += d));
 
-  const killVite = () => {
-    return new Promise((resolve) => {
-      if (vite.exitCode !== null) {
-        resolve();
+  const killProcessTree = (signal) => {
+    if (vite.pid == null) {
+      return;
+    }
+
+    if (process.platform !== "win32") {
+      try {
+        process.kill(-vite.pid, signal);
         return;
+      } catch {}
+    }
+
+    try {
+      vite.kill(signal);
+    } catch {}
+  };
+
+  const killVite = async () => {
+    if (vite.exitCode === null) {
+      killProcessTree("SIGTERM");
+      await sleep(1000);
+      if (vite.exitCode === null) {
+        killProcessTree("SIGKILL");
+        await sleep(250);
       }
-      vite.once("exit", resolve);
-      vite.kill("SIGTERM");
-      setTimeout(() => {
-        if (vite.exitCode === null) {
-          vite.kill("SIGKILL");
-        }
-      }, 1000);
-    });
+    }
+    killPort(PORT);
+    vite.unref();
   };
 
   let exitCode = 1;
 
   try {
-    if (!(await waitForServer())) {
+    if (!(await waitForServer(vite))) {
       await killVite();
       return 1;
     }

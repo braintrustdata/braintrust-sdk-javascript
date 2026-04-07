@@ -1,4 +1,3 @@
-import { tool } from "@openrouter/sdk";
 import { wrapOpenRouter } from "braintrust";
 import { z } from "zod";
 import {
@@ -14,19 +13,36 @@ import {
 } from "./constants.mjs";
 
 function createWeatherTool() {
-  return tool({
-    name: "lookup_weather",
-    description: "Look up the weather forecast for a city.",
-    inputSchema: z.object({
-      city: z.string(),
-    }),
-    outputSchema: z.object({
-      forecast: z.string(),
-    }),
-    execute: async ({ city }) => ({
-      forecast: `Sunny in ${city}`,
-    }),
-  });
+  return {
+    type: "function",
+    function: {
+      name: "lookup_weather",
+      description: "Look up the weather forecast for a city.",
+      inputSchema: z.object({
+        city: z.string(),
+      }),
+      outputSchema: z.object({
+        forecast: z.string(),
+      }),
+      execute: async ({ city }) => ({
+        forecast: `Sunny in ${city}`,
+      }),
+    },
+  };
+}
+
+function withCompatibleChatRequest(chatGenerationParams) {
+  return {
+    chatGenerationParams,
+    chatRequest: chatGenerationParams,
+  };
+}
+
+function withCompatibleResponsesRequest(openResponsesRequest) {
+  return {
+    openResponsesRequest,
+    responsesRequest: openResponsesRequest,
+  };
 }
 
 async function runOpenRouterInstrumentationScenario(
@@ -41,22 +57,22 @@ async function runOpenRouterInstrumentationScenario(
   await runTracedScenario({
     callback: async () => {
       await runOperation("openrouter-chat-operation", "chat", async () => {
-        await client.chat.send({
-          chatGenerationParams: {
+        await client.chat.send(
+          withCompatibleChatRequest({
             model: CHAT_MODEL,
             messages: [{ role: "user", content: "Reply with exactly OK." }],
             maxTokens: 16,
             temperature: 0,
-          },
-        });
+          }),
+        );
       });
 
       await runOperation(
         "openrouter-chat-stream-operation",
         "chat-stream",
         async () => {
-          const stream = await client.chat.send({
-            chatGenerationParams: {
+          const stream = await client.chat.send(
+            withCompatibleChatRequest({
               model: CHAT_MODEL,
               messages: [
                 { role: "user", content: "Reply with exactly STREAM." },
@@ -67,8 +83,8 @@ async function runOpenRouterInstrumentationScenario(
                 includeUsage: true,
               },
               temperature: 0,
-            },
-          });
+            }),
+          );
           await collectAsync(stream);
         },
       );
@@ -91,14 +107,14 @@ async function runOpenRouterInstrumentationScenario(
         "openrouter-responses-operation",
         "responses",
         async () => {
-          await client.beta.responses.send({
-            openResponsesRequest: {
+          await client.beta.responses.send(
+            withCompatibleResponsesRequest({
               input: "Reply with exactly OBSERVABILITY.",
               maxOutputTokens: 16,
               model: CHAT_MODEL,
               temperature: 0,
-            },
-          });
+            }),
+          );
         },
       );
 
@@ -106,15 +122,15 @@ async function runOpenRouterInstrumentationScenario(
         "openrouter-responses-stream-operation",
         "responses-stream",
         async () => {
-          const stream = await client.beta.responses.send({
-            openResponsesRequest: {
+          const stream = await client.beta.responses.send(
+            withCompatibleResponsesRequest({
               input: "Reply with exactly STREAMED RESPONSE.",
               maxOutputTokens: 16,
               model: CHAT_MODEL,
               stream: true,
               temperature: 0,
-            },
-          });
+            }),
+          );
           await collectAsync(stream);
         },
       );
