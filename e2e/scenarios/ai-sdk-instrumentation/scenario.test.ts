@@ -53,6 +53,7 @@ for (const scenario of aiSDKScenarios) {
       supportsOutputObjectScenario,
       supportsStreamObject: scenario.supportsStreamObject,
       supportsToolExecution: scenario.supportsToolExecution,
+      sdkMajorVersion,
       testFileUrl: import.meta.url,
       timeoutMs: AI_SDK_SCENARIO_TIMEOUT_MS,
     });
@@ -76,6 +77,7 @@ for (const scenario of aiSDKScenarios) {
       supportsOutputObjectScenario,
       supportsStreamObject: scenario.supportsStreamObject,
       supportsToolExecution: scenario.supportsToolExecution,
+      sdkMajorVersion,
       testFileUrl: import.meta.url,
       timeoutMs: AI_SDK_SCENARIO_TIMEOUT_MS,
     });

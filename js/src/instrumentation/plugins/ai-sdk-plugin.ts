@@ -1,5 +1,9 @@
 import { BasePlugin } from "../core";
-import { traceStreamingChannel, unsubscribeAll } from "../core/channel-tracing";
+import {
+  traceStreamingChannel,
+  traceSyncStreamChannel,
+  unsubscribeAll,
+} from "../core/channel-tracing";
 import { SpanTypeAttribute } from "../../../util/index";
 import { getCurrentUnixTimestamp } from "../../util";
 import { Attachment, type Span, withCurrent } from "../../logger";
@@ -144,6 +148,24 @@ export class AISDKPlugin extends BasePlugin {
       }),
     );
 
+    // streamText - sync function returning stream (v4+, used by auto-hook)
+    this.unsubscribers.push(
+      traceSyncStreamChannel(aiSDKChannels.streamTextSync, {
+        name: "streamText",
+        type: SpanTypeAttribute.LLM,
+        extractInput: ([params], event, span) =>
+          prepareAISDKInput(params, event, span, denyOutputPaths),
+        patchResult: ({ endEvent, result, span, startTime }) =>
+          patchAISDKStreamingResult({
+            defaultDenyOutputPaths: denyOutputPaths,
+            endEvent,
+            result,
+            span,
+            startTime,
+          }),
+      }),
+    );
+
     // generateObject - async function that may return streams
     this.unsubscribers.push(
       traceStreamingChannel(aiSDKChannels.generateObject, {
@@ -190,6 +212,24 @@ export class AISDKPlugin extends BasePlugin {
       }),
     );
 
+    // streamObject - sync function returning stream (v4+, used by auto-hook)
+    this.unsubscribers.push(
+      traceSyncStreamChannel(aiSDKChannels.streamObjectSync, {
+        name: "streamObject",
+        type: SpanTypeAttribute.LLM,
+        extractInput: ([params], event, span) =>
+          prepareAISDKInput(params, event, span, denyOutputPaths),
+        patchResult: ({ endEvent, result, span, startTime }) =>
+          patchAISDKStreamingResult({
+            defaultDenyOutputPaths: denyOutputPaths,
+            endEvent,
+            result,
+            span,
+            startTime,
+          }),
+      }),
+    );
+
     // Agent.generate - async method
     this.unsubscribers.push(
       traceStreamingChannel(aiSDKChannels.agentGenerate, {
@@ -210,7 +250,7 @@ export class AISDKPlugin extends BasePlugin {
       }),
     );
 
-    // Agent.stream - async method returning stream
+    // Agent.stream - async method returning stream (v5, used by wrapAISDK)
     this.unsubscribers.push(
       traceStreamingChannel(aiSDKChannels.agentStream, {
         name: "Agent.stream",
@@ -225,6 +265,24 @@ export class AISDKPlugin extends BasePlugin {
         extractMetrics: (result, startTime, endEvent) =>
           extractTopLevelAISDKMetrics(result, endEvent, startTime),
         aggregateChunks: aggregateAISDKChunks,
+        patchResult: ({ endEvent, result, span, startTime }) =>
+          patchAISDKStreamingResult({
+            defaultDenyOutputPaths: denyOutputPaths,
+            endEvent,
+            result,
+            span,
+            startTime,
+          }),
+      }),
+    );
+
+    // Agent.stream - sync method returning stream (v5, used by auto-hook)
+    this.unsubscribers.push(
+      traceSyncStreamChannel(aiSDKChannels.agentStreamSync, {
+        name: "Agent.stream",
+        type: SpanTypeAttribute.LLM,
+        extractInput: ([params], event, span) =>
+          prepareAISDKInput(params, event, span, denyOutputPaths),
         patchResult: ({ endEvent, result, span, startTime }) =>
           patchAISDKStreamingResult({
             defaultDenyOutputPaths: denyOutputPaths,
