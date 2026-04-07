@@ -1,4 +1,8 @@
 import iso from "../isomorph";
+import type {
+  IsoTracingChannel,
+  IsoTracingChannelCollection,
+} from "../isomorph";
 import { _internalSetInitialState } from "../logger";
 import { resolveRuntimeAsyncLocalStorage } from "../runtime-async-local-storage";
 import { tracingChannel } from "dc-browser";
@@ -23,8 +27,11 @@ export function configureEdgeLight(): void {
     iso.newAsyncLocalStorage = <T>() => new runtimeAsyncLocalStorage<T>();
   }
 
-  iso.newTracingChannel = <_M = unknown>(nameOrChannels: string | object) =>
-    tracingChannel(nameOrChannels);
+  iso.newTracingChannel = <M = unknown>(
+    nameOrChannels: string | IsoTracingChannelCollection<M>,
+  ) =>
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    tracingChannel(nameOrChannels as string | object) as IsoTracingChannel<M>;
   patchTracingChannel(tracingChannel);
 
   iso.getEnv = (name: string) => {
