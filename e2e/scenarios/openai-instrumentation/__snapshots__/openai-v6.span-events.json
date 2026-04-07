@@ -361,5 +361,30 @@
     },
     "name": "openai.responses.parse",
     "type": "llm"
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "operation": "responses-compact"
+    },
+    "metrics": {
+      "has_time_to_first_token": false
+    },
+    "name": "openai-responses-compact-operation",
+    "type": null
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "model": "gpt-4o-mini",
+      "provider": "openai"
+    },
+    "metrics": {
+      "has_time_to_first_token": true
+    },
+    "name": "openai.responses.compact",
+    "type": "llm"
   }
 ]

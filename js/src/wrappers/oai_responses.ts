@@ -26,20 +26,25 @@ export function responsesProxy(openai: any) {
 
   return new Proxy(openai.responses, {
     get(target, name, receiver) {
-      if (name === "create") {
+      if (name === "create" && typeof target.create === "function") {
         return wrapResponsesAsync(
           target.create.bind(target),
           openAIChannels.responsesCreate,
         );
-      } else if (name === "stream") {
+      } else if (name === "stream" && typeof target.stream === "function") {
         return wrapResponsesSyncStream(
           target.stream.bind(target),
           openAIChannels.responsesStream,
         );
-      } else if (name === "parse") {
+      } else if (name === "parse" && typeof target.parse === "function") {
         return wrapResponsesAsync(
           target.parse.bind(target),
           openAIChannels.responsesParse,
+        );
+      } else if (name === "compact" && typeof target.compact === "function") {
+        return wrapResponsesAsync(
+          target.compact.bind(target),
+          openAIChannels.responsesCompact,
         );
       }
       return Reflect.get(target, name, receiver);
@@ -50,7 +55,8 @@ export function responsesProxy(openai: any) {
 function wrapResponsesAsync<
   TChannel extends
     | typeof openAIChannels.responsesCreate
-    | typeof openAIChannels.responsesParse,
+    | typeof openAIChannels.responsesParse
+    | typeof openAIChannels.responsesCompact,
 >(
   target: (
     params: ArgsOf<TChannel>[0],
