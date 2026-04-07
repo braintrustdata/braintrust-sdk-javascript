@@ -11,6 +11,11 @@ import {
   finalizeAnthropicTokens,
 } from "../../wrappers/anthropic-tokens-util";
 import { claudeAgentSDKChannels } from "./claude-agent-sdk-channels";
+import { CLAUDE_AGENT_SDK_SKIP_LOCAL_TOOL_HOOKS_OPTION } from "./claude-agent-sdk-instrumentation-constants";
+import {
+  collectLocalMcpServerToolHookNames,
+  wrapLocalMcpServerToolHandlers,
+} from "./claude-agent-sdk-local-tool-spans";
 import type {
   ClaudeAgentSDKHookCallback,
   ClaudeAgentSDKHookCallbackMatcher,
@@ -28,6 +33,15 @@ type ParsedToolName = {
   toolName: string;
 };
 type ParentSpanResolver = (toolUseID: string) => Promise<string>;
+type LLMSpanResult = {
+  finalMessage: ClaudeConversationMessage | undefined;
+  spanExport: string;
+};
+const ROOT_LLM_PARENT_KEY = "__root__";
+
+function llmParentKey(parentToolUseId: string | null): string {
+  return parentToolUseId ?? ROOT_LLM_PARENT_KEY;
+}
 
 function isSubAgentToolName(toolName: string): boolean {
   return toolName === "Agent" || toolName === "Task";
@@ -153,7 +167,8 @@ async function createLLMSpanForMessages(
   startTime: number,
   capturedPromptMessages: ClaudeAgentSDKMessage[] | undefined,
   parentSpan: string,
-): Promise<ClaudeConversationMessage | undefined> {
+  existingSpan?: Span,
+): Promise<LLMSpanResult | undefined> {
   if (messages.length === 0) {
     return undefined;
   }
@@ -181,14 +196,16 @@ async function createLLMSpanForMessages(
         c !== undefined,
     );
 
-  const span = startSpan({
-    name: "anthropic.messages.create",
-    parent: parentSpan,
-    spanAttributes: {
-      type: SpanTypeAttribute.LLM,
-    },
-    startTime,
-  });
+  const span =
+    existingSpan ??
+    startSpan({
+      name: "anthropic.messages.create",
+      parent: parentSpan,
+      spanAttributes: {
+        type: SpanTypeAttribute.LLM,
+      },
+      startTime,
+    });
 
   span.log({
     input,
@@ -197,11 +214,18 @@ async function createLLMSpanForMessages(
     output: outputs,
   });
 
+  const spanExport = await span.export();
   await span.end();
 
-  return lastMessage.message?.content && lastMessage.message?.role
-    ? { content: lastMessage.message.content, role: lastMessage.message.role }
-    : undefined;
+  const finalMessage =
+    lastMessage.message?.content && lastMessage.message?.role
+      ? { content: lastMessage.message.content, role: lastMessage.message.role }
+      : undefined;
+
+  return {
+    finalMessage,
+    spanExport,
+  };
 }
 
 function getMcpServerMetadata(
@@ -259,10 +283,61 @@ function parseToolName(rawToolName: string): ParsedToolName {
   };
 }
 
+function isLocalToolUse(
+  rawToolName: string,
+  mcpServers: ClaudeAgentSDKMcpServersConfig | undefined,
+): boolean {
+  const parsed = parseToolName(rawToolName);
+  if (!parsed.mcpServer || !mcpServers) {
+    return false;
+  }
+
+  const serverConfig = mcpServers[parsed.mcpServer];
+  if (!serverConfig || typeof serverConfig !== "object") {
+    return false;
+  }
+
+  return serverConfig.type === "sdk" || "transport" in serverConfig;
+}
+
+function prepareLocalToolHandlersInMcpServers(
+  mcpServers: ClaudeAgentSDKMcpServersConfig | undefined,
+): { hasLocalToolHandlers: boolean; localToolHookNames: Set<string> } {
+  const localToolHookNames = new Set<string>();
+  if (!mcpServers) {
+    return {
+      hasLocalToolHandlers: false,
+      localToolHookNames,
+    };
+  }
+
+  let hasLocalToolHandlers = false;
+  for (const [serverName, serverConfig] of Object.entries(mcpServers)) {
+    const toolNames = collectLocalMcpServerToolHookNames(
+      serverName,
+      serverConfig,
+    );
+    for (const toolName of toolNames) {
+      localToolHookNames.add(toolName);
+    }
+    if (toolNames.size > 0) {
+      hasLocalToolHandlers = true;
+    }
+
+    if (wrapLocalMcpServerToolHandlers(serverName, serverConfig)) {
+      hasLocalToolHandlers = true;
+    }
+  }
+
+  return { hasLocalToolHandlers, localToolHookNames };
+}
+
 function createToolTracingHooks(
   resolveParentSpan: ParentSpanResolver,
   activeToolSpans: Map<string, Span>,
   mcpServers: ClaudeAgentSDKMcpServersConfig | undefined,
+  localToolHookNames: Set<string>,
+  skipLocalToolHooks: boolean,
   subAgentSpans: Map<string, Span>,
   endedSubAgentSpans: Set<string>,
 ): {
@@ -272,6 +347,14 @@ function createToolTracingHooks(
 } {
   const preToolUse: ClaudeAgentSDKHookCallback = async (input, toolUseID) => {
     if (input.hook_event_name !== "PreToolUse" || !toolUseID) {
+      return {};
+    }
+
+    if (
+      skipLocalToolHooks &&
+      (isLocalToolUse(input.tool_name, mcpServers) ||
+        localToolHookNames.has(input.tool_name))
+    ) {
       return {};
     }
 
@@ -304,6 +387,14 @@ function createToolTracingHooks(
 
   const postToolUse: ClaudeAgentSDKHookCallback = async (input, toolUseID) => {
     if (input.hook_event_name !== "PostToolUse" || !toolUseID) {
+      return {};
+    }
+
+    if (
+      skipLocalToolHooks &&
+      (isLocalToolUse(input.tool_name, mcpServers) ||
+        localToolHookNames.has(input.tool_name))
+    ) {
       return {};
     }
 
@@ -360,6 +451,14 @@ function createToolTracingHooks(
       return {};
     }
 
+    if (
+      skipLocalToolHooks &&
+      (isLocalToolUse(input.tool_name, mcpServers) ||
+        localToolHookNames.has(input.tool_name))
+    ) {
+      return {};
+    }
+
     const subAgentSpan = subAgentSpans.get(toolUseID);
     if (subAgentSpan) {
       try {
@@ -404,6 +503,8 @@ function injectTracingHooks(
   options: ClaudeAgentSDKQueryOptions,
   resolveParentSpan: ParentSpanResolver,
   activeToolSpans: Map<string, Span>,
+  localToolHookNames: Set<string>,
+  skipLocalToolHooks: boolean,
   subAgentSpans: Map<string, Span>,
   endedSubAgentSpans: Set<string>,
 ): ClaudeAgentSDKQueryOptions {
@@ -412,6 +513,8 @@ function injectTracingHooks(
       resolveParentSpan,
       activeToolSpans,
       options.mcpServers,
+      localToolHookNames,
+      skipLocalToolHooks,
       subAgentSpans,
       endedSubAgentSpans,
     );
@@ -442,6 +545,7 @@ function injectTracingHooks(
 
 type QueryState = {
   accumulatedOutputTokens: number;
+  activeLlmSpansByParentToolUse: Map<string, Span>;
   activeToolSpans: Map<string, Span>;
   capturedPromptMessages: ClaudeAgentSDKMessage[] | undefined;
   currentMessageId: string | undefined;
@@ -457,6 +561,8 @@ type QueryState = {
   promptStarted: () => boolean;
   span: Span;
   subAgentSpans: Map<string, Span>;
+  latestLlmParentBySubAgentToolUse: Map<string, string>;
+  latestRootLlmParentRef: { value: string | undefined };
   toolUseToParent: Map<string, string | null>;
 };
 
@@ -466,6 +572,7 @@ async function finalizeCurrentMessageGroup(state: QueryState): Promise<void> {
   }
 
   const parentToolUseId = state.currentMessages[0]?.parent_tool_use_id ?? null;
+  const parentKey = llmParentKey(parentToolUseId);
   let parentSpan = await state.span.export();
   if (parentToolUseId) {
     const subAgentSpan = state.subAgentSpans.get(parentToolUseId);
@@ -473,8 +580,9 @@ async function finalizeCurrentMessageGroup(state: QueryState): Promise<void> {
       parentSpan = await subAgentSpan.export();
     }
   }
+  const existingLlmSpan = state.activeLlmSpansByParentToolUse.get(parentKey);
 
-  const finalMessage = await createLLMSpanForMessages(
+  const llmSpanResult = await createLLMSpanForMessages(
     state.currentMessages,
     state.originalPrompt,
     state.finalResults,
@@ -482,10 +590,23 @@ async function finalizeCurrentMessageGroup(state: QueryState): Promise<void> {
     state.currentMessageStartTime,
     state.capturedPromptMessages,
     parentSpan,
+    existingLlmSpan,
   );
+  state.activeLlmSpansByParentToolUse.delete(parentKey);
 
-  if (finalMessage) {
-    state.finalResults.push(finalMessage);
+  if (llmSpanResult) {
+    if (parentToolUseId) {
+      state.latestLlmParentBySubAgentToolUse.set(
+        parentToolUseId,
+        llmSpanResult.spanExport,
+      );
+    } else {
+      state.latestRootLlmParentRef.value = llmSpanResult.spanExport;
+    }
+
+    if (llmSpanResult.finalMessage) {
+      state.finalResults.push(llmSpanResult.finalMessage);
+    }
   }
 
   const lastMessage = state.currentMessages[state.currentMessages.length - 1];
@@ -677,6 +798,11 @@ async function finalizeQuerySpan(state: QueryState): Promise<void> {
       }
     }
   } finally {
+    for (const llmSpan of state.activeLlmSpansByParentToolUse.values()) {
+      llmSpan.end();
+    }
+    state.activeLlmSpansByParentToolUse.clear();
+
     for (const [id, subAgentSpan] of state.subAgentSpans) {
       if (!state.endedSubAgentSpans.has(id)) {
         subAgentSpan.end();
@@ -761,26 +887,80 @@ export class ClaudeAgentSDKPlugin extends BasePlugin {
         }
 
         const activeToolSpans = new Map<string, Span>();
+        const activeLlmSpansByParentToolUse = new Map<string, Span>();
         const subAgentSpans = new Map<string, Span>();
         const endedSubAgentSpans = new Set<string>();
         const toolUseToParent = new Map<string, string | null>();
+        const latestLlmParentBySubAgentToolUse = new Map<string, string>();
+        const latestRootLlmParentRef = {
+          value: undefined as string | undefined,
+        };
         const pendingSubAgentNames = new Map<string, string>();
+        const { hasLocalToolHandlers, localToolHookNames } =
+          prepareLocalToolHandlersInMcpServers(options.mcpServers);
+        const skipLocalToolHooks =
+          options[CLAUDE_AGENT_SDK_SKIP_LOCAL_TOOL_HOOKS_OPTION] === true ||
+          hasLocalToolHandlers;
         const optionsWithHooks = injectTracingHooks(
           options,
           async (toolUseID) => {
             const parentToolUseId = toolUseToParent.get(toolUseID);
+            const parentKey = llmParentKey(parentToolUseId ?? null);
+            const activeLlmSpan = activeLlmSpansByParentToolUse.get(parentKey);
+            if (activeLlmSpan) {
+              return activeLlmSpan.export();
+            }
+
             if (parentToolUseId) {
+              const parentLlm =
+                latestLlmParentBySubAgentToolUse.get(parentToolUseId);
+              if (parentLlm) {
+                return parentLlm;
+              }
+
               const subAgentSpan = await ensureSubAgentSpan(
                 pendingSubAgentNames,
                 span,
                 subAgentSpans,
                 parentToolUseId,
               );
-              return subAgentSpan.export();
+              const parentSpan = await subAgentSpan.export();
+              const llmSpan = startSpan({
+                name: "anthropic.messages.create",
+                parent: parentSpan,
+                spanAttributes: {
+                  type: SpanTypeAttribute.LLM,
+                },
+                startTime: getCurrentUnixTimestamp(),
+              });
+              activeLlmSpansByParentToolUse.set(parentKey, llmSpan);
+              const llmSpanExport = await llmSpan.export();
+              latestLlmParentBySubAgentToolUse.set(
+                parentToolUseId,
+                llmSpanExport,
+              );
+              return llmSpanExport;
             }
-            return span.export();
+            if (latestRootLlmParentRef.value) {
+              return latestRootLlmParentRef.value;
+            }
+            const parentSpan = await span.export();
+            const llmSpan = startSpan({
+              name: "anthropic.messages.create",
+              parent: parentSpan,
+              spanAttributes: {
+                type: SpanTypeAttribute.LLM,
+              },
+              startTime: getCurrentUnixTimestamp(),
+            });
+            activeLlmSpansByParentToolUse.set(parentKey, llmSpan);
+            const llmSpanExport = await llmSpan.export();
+            latestRootLlmParentRef.value = llmSpanExport;
+            return llmSpanExport;
           },
           activeToolSpans,
+          localToolHookNames,
+          skipLocalToolHooks,
           subAgentSpans,
           endedSubAgentSpans,
         );
@@ -790,6 +970,7 @@ export class ClaudeAgentSDKPlugin extends BasePlugin {
 
         spans.set(event, {
           accumulatedOutputTokens: 0,
+          activeLlmSpansByParentToolUse,
           activeToolSpans,
           capturedPromptMessages,
           currentMessageId: undefined,
@@ -805,6 +986,8 @@ export class ClaudeAgentSDKPlugin extends BasePlugin {
           promptStarted: () => promptStarted,
           span,
           subAgentSpans,
+          latestLlmParentBySubAgentToolUse,
+          latestRootLlmParentRef,
           toolUseToParent,
         });
       },

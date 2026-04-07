@@ -123,7 +123,7 @@
       "root_span_id": "<span:1>",
       "span_id": "<span:8>",
       "span_parents": [
-        "<span:6>"
+        "<span:7>"
       ],
       "type": "tool"
     }
@@ -194,7 +194,7 @@
       "root_span_id": "<span:1>",
       "span_id": "<span:12>",
       "span_parents": [
-        "<span:10>"
+        "<span:11>"
       ],
       "type": "tool"
     }
@@ -290,7 +290,7 @@
       "root_span_id": "<span:1>",
       "span_id": "<span:17>",
       "span_parents": [
-        "<span:15>"
+        "<span:16>"
       ],
       "type": "tool"
     }

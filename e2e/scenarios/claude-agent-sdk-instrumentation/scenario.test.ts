@@ -48,6 +48,7 @@ const claudeAgentSDKScenarios = await Promise.all(
 describe("wrapped instrumentation", () => {
   for (const scenario of claudeAgentSDKScenarios) {
     defineClaudeAgentSDKInstrumentationAssertions({
+      assertLocalToolHandlerParenting: true,
       name: `claude agent sdk ${scenario.version}`,
       runScenario: async ({ runScenarioDir }) => {
         await runScenarioDir({
@@ -67,6 +68,7 @@ describe("wrapped instrumentation", () => {
 describe("auto-hook instrumentation", () => {
   for (const scenario of claudeAgentSDKScenarios) {
     defineClaudeAgentSDKInstrumentationAssertions({
+      assertLocalToolHandlerParenting: true,
       name: `claude agent sdk ${scenario.version}`,
       runScenario: async ({ runNodeScenarioDir }) => {
         await runNodeScenarioDir({

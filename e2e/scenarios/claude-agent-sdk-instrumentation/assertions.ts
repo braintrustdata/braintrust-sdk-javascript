@@ -92,6 +92,35 @@ function summarizeSpan(
   return summary;
 }
 
+function findToolSpanByOperation(
+  events: CapturedLogEvent[],
+  operation: "add" | "divide" | "multiply" | "subtract",
+): CapturedLogEvent | undefined {
+  return findAllSpans(events, "tool: calculator/calculator").find((event) => {
+    const input = event.input as { operation?: string } | undefined;
+    return input?.operation === operation;
+  });
+}
+
+function findToolSpanByLocalHandler(
+  events: CapturedLogEvent[],
+  handlerSpanName: string,
+): CapturedLogEvent | undefined {
+  const handlerSpan = findAllSpans(events, handlerSpanName).at(-1);
+  if (!handlerSpan) {
+    return undefined;
+  }
+
+  const parentId = handlerSpan.span.parentIds[0];
+  if (!parentId) {
+    return undefined;
+  }
+
+  return findAllSpans(events, "tool: calculator/calculator").find(
+    (event) => event.span.id === parentId,
+  );
+}
+
 function buildSpanSummary(events: CapturedLogEvent[]): Json {
   const root = findLatestSpan(events, ROOT_NAME);
   const basicOperation = findLatestSpan(events, "claude-agent-basic-operation");
@@ -151,21 +180,21 @@ function buildSpanSummary(events: CapturedLogEvent[]): Json {
     failureTask?.span.id,
   ).at(-1);
 
-  const basicTool = findAllSpans(events, "tool: calculator/calculator").find(
-    (event) => event.span.parentIds.includes(basicTask?.span.id ?? ""),
-  );
+  const basicTool =
+    findToolSpanByLocalHandler(events, "calculator-local-handler-multiply") ??
+    findToolSpanByOperation(events, "multiply");
   const subAgentTask = events.find(
     (event) =>
       event.span.type === "task" &&
       event.span.parentIds.includes(subAgentTaskRoot?.span.id ?? "") &&
       event.span.name?.startsWith("Agent:"),
   );
-  const subAgentTool = findAllSpans(events, "tool: calculator/calculator").find(
-    (event) => event.span.parentIds.includes(subAgentTask?.span.id ?? ""),
-  );
-  const failureTool = findAllSpans(events, "tool: calculator/calculator").find(
-    (event) => event.span.parentIds.includes(failureTask?.span.id ?? ""),
-  );
+  const subAgentTool =
+    findToolSpanByLocalHandler(events, "calculator-local-handler-add") ??
+    findToolSpanByOperation(events, "add");
+  const failureTool =
+    findToolSpanByLocalHandler(events, "calculator-local-handler-divide") ??
+    findToolSpanByOperation(events, "divide");
 
   return normalizeForSnapshot({
     async_prompt: {
@@ -197,6 +226,7 @@ function buildSpanSummary(events: CapturedLogEvent[]): Json {
 }
 
 export function defineClaudeAgentSDKInstrumentationAssertions(options: {
+  assertLocalToolHandlerParenting?: boolean;
   name: string;
   runScenario: RunClaudeAgentSDKScenario;
   snapshotName: string;
@@ -243,17 +273,58 @@ export function defineClaudeAgentSDKInstrumentationAssertions(options: {
         "anthropic.messages.create",
         task?.span.id,
       ).at(-1);
-      const tool = findAllSpans(events, "tool: calculator/calculator").find(
-        (event) => event.span.parentIds.includes(task?.span.id ?? ""),
-      );
+      const tool =
+        findToolSpanByLocalHandler(
+          events,
+          "calculator-local-handler-multiply",
+        ) ?? findToolSpanByOperation(events, "multiply");
 
       expect(operation).toBeDefined();
       expect(task).toBeDefined();
       expect(llm).toBeDefined();
       expect(tool).toBeDefined();
       expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
-      expect(tool?.span.parentIds).toEqual([task?.span.id ?? ""]);
     });
+
+    if (options.assertLocalToolHandlerParenting) {
+      test(
+        "nests local tool handler spans under tool spans",
+        testConfig,
+        () => {
+          const basicTool =
+            findToolSpanByLocalHandler(
+              events,
+              "calculator-local-handler-multiply",
+            ) ?? findToolSpanByOperation(events, "multiply");
+          const basicHandler = findAllSpans(
+            events,
+            "calculator-local-handler-multiply",
+          ).at(-1);
+
+          const failureTool =
+            findToolSpanByLocalHandler(
+              events,
+              "calculator-local-handler-divide",
+            ) ?? findToolSpanByOperation(events, "divide");
+          const failureHandler = findAllSpans(
+            events,
+            "calculator-local-handler-divide",
+          ).at(-1);
+
+          expect(basicTool).toBeDefined();
+          expect(basicHandler).toBeDefined();
+          expect(basicHandler?.span.parentIds).toEqual([
+            basicTool?.span.id ?? "",
+          ]);
+
+          expect(failureTool).toBeDefined();
+          expect(failureHandler).toBeDefined();
+          expect(failureHandler?.span.parentIds).toEqual([
+            failureTool?.span.id ?? "",
+          ]);
+        },
+      );
+    }
 
     test(
       "captures async prompt input on both task and llm spans",
@@ -309,8 +380,11 @@ export function defineClaudeAgentSDKInstrumentationAssertions(options: {
           event.span.parentIds.includes(taskRoot?.span.id ?? "") &&
           event.span.name?.startsWith("Agent:"),
       );
-      const tool = findAllSpans(events, "tool: calculator/calculator").find(
-        (event) => event.span.parentIds.includes(nestedTask?.span.id ?? ""),
+      const tool =
+        findToolSpanByLocalHandler(events, "calculator-local-handler-add") ??
+        findToolSpanByOperation(events, "add");
+      const toolParent = events.find(
+        (event) => event.span.id === tool?.span.parentIds[0],
       );
 
       expect(operation).toBeDefined();
@@ -318,8 +392,12 @@ export function defineClaudeAgentSDKInstrumentationAssertions(options: {
       expect(llm).toBeDefined();
       expect(nestedTask).toBeDefined();
       if (tool) {
-        expect(tool.span.parentIds).toContain(nestedTask?.span.id ?? "");
         expect(tool.span.parentIds).not.toContain(taskRoot?.span.id ?? "");
+        if (toolParent?.span.type === "llm") {
+          expect(toolParent.span.parentIds).not.toContain(
+            taskRoot?.span.id ?? "",
+          );
+        }
       }
     });
 
@@ -338,9 +416,9 @@ export function defineClaudeAgentSDKInstrumentationAssertions(options: {
         "anthropic.messages.create",
         task?.span.id,
       ).at(-1);
-      const tool = findAllSpans(events, "tool: calculator/calculator").find(
-        (event) => event.span.parentIds.includes(task?.span.id ?? ""),
-      );
+      const tool =
+        findToolSpanByLocalHandler(events, "calculator-local-handler-divide") ??
+        findToolSpanByOperation(events, "divide");
 
       expect(operation).toBeDefined();
       expect(task).toBeDefined();
