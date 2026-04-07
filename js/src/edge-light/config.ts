@@ -1,6 +1,9 @@
 import iso from "../isomorph";
 import { _internalSetInitialState } from "../logger";
 import { resolveRuntimeAsyncLocalStorage } from "../runtime-async-local-storage";
+import { tracingChannel } from "dc-browser";
+import { patchTracingChannel } from "../auto-instrumentations/patch-tracing-channel";
+import { registry } from "../instrumentation/registry";
 
 let edgeLightConfigured = false;
 
@@ -19,6 +22,10 @@ export function configureEdgeLight(): void {
   if (runtimeAsyncLocalStorage) {
     iso.newAsyncLocalStorage = <T>() => new runtimeAsyncLocalStorage<T>();
   }
+
+  iso.newTracingChannel = <_M = unknown>(nameOrChannels: string | object) =>
+    tracingChannel(nameOrChannels);
+  patchTracingChannel(tracingChannel);
 
   iso.getEnv = (name: string) => {
     if (typeof process === "undefined" || typeof process.env === "undefined") {
@@ -39,5 +46,6 @@ export function configureEdgeLight(): void {
   };
 
   _internalSetInitialState();
+  registry.enable();
   edgeLightConfigured = true;
 }

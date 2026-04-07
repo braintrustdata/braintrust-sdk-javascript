@@ -108,5 +108,44 @@ describe.each([
       expect(result.childRootSpanId).toBe(root.spanId);
       expect(await backgroundLogger.drain()).toHaveLength(3);
     });
+
+    test("wrapAISDK logs spans in edge runtimes", async () => {
+      const braintrust = await import(entrypoint);
+
+      braintrust._exportsForTestingOnly.setInitialTestState();
+      await braintrust._exportsForTestingOnly.simulateLoginForTests();
+
+      const backgroundLogger =
+        braintrust._exportsForTestingOnly.useTestBackgroundLogger();
+      braintrust.initLogger({
+        projectId: "test-project-id",
+        projectName,
+      });
+
+      await braintrust.traced(async () => "ok", { name: "root" });
+
+      const wrapped = braintrust.wrapAISDK({
+        generateText: async () => ({
+          finishReason: "stop",
+          text: "ok",
+          usage: {
+            completionTokens: 1,
+            promptTokens: 1,
+            totalTokens: 2,
+          },
+        }),
+      });
+
+      await wrapped.generateText({
+        model: { modelId: "fake-model", provider: "fake-provider" },
+        prompt: "hello",
+      });
+
+      const spans = await backgroundLogger.drain();
+      const spanNames = spans.map((span) => span.span_attributes?.name);
+
+      expect(spanNames).toContain("root");
+      expect(spanNames).toContain("generateText");
+    });
   },
 );
