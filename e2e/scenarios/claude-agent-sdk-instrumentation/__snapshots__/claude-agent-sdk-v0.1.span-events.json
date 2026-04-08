@@ -123,7 +123,7 @@
       "root_span_id": "<span:1>",
       "span_id": "<span:8>",
       "span_parents": [
-        "<span:7>"
+        "<span:9>"
       ],
       "type": "tool"
     }
@@ -145,9 +145,9 @@
       ],
       "name": "anthropic.messages.create",
       "root_span_id": "<span:1>",
-      "span_id": "<span:9>",
+      "span_id": "<span:10>",
       "span_parents": [
-        "<span:10>"
+        "<span:11>"
       ],
       "type": "llm"
     },
@@ -160,7 +160,7 @@
       "metric_keys": [],
       "name": "claude-agent-failure-operation",
       "root_span_id": "<span:1>",
-      "span_id": "<span:11>",
+      "span_id": "<span:12>",
       "span_parents": [
         "<span:1>"
       ],
@@ -175,9 +175,9 @@
       "metric_keys": [],
       "name": "Claude Agent",
       "root_span_id": "<span:1>",
-      "span_id": "<span:10>",
+      "span_id": "<span:11>",
       "span_parents": [
-        "<span:11>"
+        "<span:12>"
       ],
       "type": "task"
     },
@@ -192,9 +192,9 @@
       "metric_keys": [],
       "name": "tool: calculator/calculator",
       "root_span_id": "<span:1>",
-      "span_id": "<span:12>",
+      "span_id": "<span:13>",
       "span_parents": [
-        "<span:11>"
+        "<span:14>"
       ],
       "type": "tool"
     }
@@ -229,9 +229,9 @@
       ],
       "name": "anthropic.messages.create",
       "root_span_id": "<span:1>",
-      "span_id": "<span:13>",
+      "span_id": "<span:15>",
       "span_parents": [
-        "<span:14>"
+        "<span:16>"
       ],
       "type": "llm"
     },
@@ -242,9 +242,9 @@
       "metric_keys": [],
       "name": "Agent: math-expert",
       "root_span_id": "<span:1>",
-      "span_id": "<span:15>",
+      "span_id": "<span:17>",
       "span_parents": [
-        "<span:14>"
+        "<span:16>"
       ],
       "type": "task"
     },
@@ -257,7 +257,7 @@
       "metric_keys": [],
       "name": "claude-agent-subagent-operation",
       "root_span_id": "<span:1>",
-      "span_id": "<span:16>",
+      "span_id": "<span:18>",
       "span_parents": [
         "<span:1>"
       ],
@@ -272,9 +272,9 @@
       "metric_keys": [],
       "name": "Claude Agent",
       "root_span_id": "<span:1>",
-      "span_id": "<span:14>",
+      "span_id": "<span:16>",
       "span_parents": [
-        "<span:16>"
+        "<span:18>"
       ],
       "type": "task"
     },
@@ -288,9 +288,9 @@
       "metric_keys": [],
       "name": "tool: calculator/calculator",
       "root_span_id": "<span:1>",
-      "span_id": "<span:17>",
+      "span_id": "<span:19>",
       "span_parents": [
-        "<span:16>"
+        "<span:20>"
       ],
       "type": "tool"
     }

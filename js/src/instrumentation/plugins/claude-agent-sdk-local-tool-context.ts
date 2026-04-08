@@ -54,7 +54,7 @@ export function createClaudeLocalToolContext(): ClaudeAgentSDKLocalToolContext {
   return {};
 }
 
-export function runWithClaudeLocalToolContext<R>(
+function runWithClaudeLocalToolContext<R>(
   callback: () => R,
   context?: ClaudeAgentSDKLocalToolContext,
 ): R {
@@ -64,7 +64,7 @@ export function runWithClaudeLocalToolContext<R>(
   );
 }
 
-export function ensureClaudeLocalToolContext():
+function ensureClaudeLocalToolContext():
   | ClaudeAgentSDKLocalToolContext
   | undefined {
   const existing = localToolContextStore.getStore();
