@@ -39,17 +39,31 @@ export const aiSDKConfigs: InstrumentationConfig[] = [
     },
   },
 
-  // streamText - function returning stream
+  // streamText - async function (v3 only, before the sync refactor in v4)
   {
     channelName: aiSDKChannels.streamText.channelName,
     module: {
       name: "ai",
-      versionRange: ">=3.0.0",
+      versionRange: ">=3.0.0 <4.0.0",
       filePath: "dist/index.mjs",
     },
     functionQuery: {
       functionName: "streamText",
       kind: "Async",
+    },
+  },
+
+  // streamText - sync function returning stream (v4+)
+  {
+    channelName: aiSDKChannels.streamTextSync.channelName,
+    module: {
+      name: "ai",
+      versionRange: ">=4.0.0",
+      filePath: "dist/index.mjs",
+    },
+    functionQuery: {
+      functionName: "streamText",
+      kind: "Sync",
     },
   },
   {
@@ -143,17 +157,31 @@ export const aiSDKConfigs: InstrumentationConfig[] = [
     },
   },
 
-  // streamObject - function returning stream
+  // streamObject - async function (v3 only, before the sync refactor in v4)
   {
     channelName: aiSDKChannels.streamObject.channelName,
     module: {
       name: "ai",
-      versionRange: ">=3.0.0",
+      versionRange: ">=3.0.0 <4.0.0",
       filePath: "dist/index.mjs",
     },
     functionQuery: {
       functionName: "streamObject",
       kind: "Async",
+    },
+  },
+
+  // streamObject - sync function returning stream (v4+)
+  {
+    channelName: aiSDKChannels.streamObjectSync.channelName,
+    module: {
+      name: "ai",
+      versionRange: ">=4.0.0",
+      filePath: "dist/index.mjs",
+    },
+    functionQuery: {
+      functionName: "streamObject",
+      kind: "Sync",
     },
   },
   {
@@ -199,11 +227,11 @@ export const aiSDKConfigs: InstrumentationConfig[] = [
     },
   },
 
-  // Agent.stream - async method (v5 only)
+  // Agent.stream - sync method (v5 only)
   // The compiled AI SDK bundle emits this as an anonymous class method, so we
-  // target the first async `stream` method in the file instead of a class name.
+  // target the first sync `stream` method in the file instead of a class name.
   {
-    channelName: aiSDKChannels.agentStream.channelName,
+    channelName: aiSDKChannels.agentStreamSync.channelName,
     module: {
       name: "ai",
       versionRange: ">=5.0.0 <6.0.0",
@@ -211,12 +239,12 @@ export const aiSDKConfigs: InstrumentationConfig[] = [
     },
     functionQuery: {
       methodName: "stream",
-      kind: "Async",
+      kind: "Sync",
       index: 0,
     },
   },
   {
-    channelName: aiSDKChannels.agentStream.channelName,
+    channelName: aiSDKChannels.agentStreamSync.channelName,
     module: {
       name: "ai",
       versionRange: ">=5.0.0 <6.0.0",
@@ -224,7 +252,7 @@ export const aiSDKConfigs: InstrumentationConfig[] = [
     },
     functionQuery: {
       methodName: "stream",
-      kind: "Async",
+      kind: "Sync",
       index: 0,
     },
   },

@@ -1,4 +1,4 @@
-// Auto-generated file (content hash f3497ec890b91a97) -- do not modify
+// Auto-generated file (content hash 2c789f9d429f1363) -- do not modify
 
 import { z } from "zod/v3";
 
@@ -250,6 +250,19 @@ export const NullableSavedFunctionId = z.union([
 export type NullableSavedFunctionIdType = z.infer<
   typeof NullableSavedFunctionId
 >;
+export const TopicMapGenerationSettings = z.object({
+  algorithm: z.enum(["hdbscan", "kmeans"]),
+  dimension_reduction: z.enum(["umap", "pca", "none"]),
+  sample_size: z.number().int().gt(0).optional(),
+  n_clusters: z.number().int().gt(0).optional(),
+  min_cluster_size: z.number().int().gt(0).optional(),
+  min_samples: z.number().int().gt(0).optional(),
+  hierarchy_threshold: z.number().int().gt(0).optional(),
+  naming_model: z.string().optional(),
+});
+export type TopicMapGenerationSettingsType = z.infer<
+  typeof TopicMapGenerationSettings
+>;
 export const TopicMapData = z.object({
   type: z.literal("topic_map"),
   source_facet: z.string(),
@@ -257,6 +270,7 @@ export const TopicMapData = z.object({
   bundle_key: z.string().optional(),
   report_key: z.string().optional(),
   topic_names: z.record(z.string()).optional(),
+  generation_settings: TopicMapGenerationSettings.optional(),
   distance_threshold: z.number().optional(),
 });
 export type TopicMapDataType = z.infer<typeof TopicMapData>;
@@ -535,6 +549,7 @@ export const Dataset = z.object({
   created: z.union([z.string(), z.null()]).optional(),
   deleted_at: z.union([z.string(), z.null()]).optional(),
   user_id: z.union([z.string(), z.null()]).optional(),
+  tags: z.union([z.array(z.string()), z.null()]).optional(),
   metadata: z
     .union([z.object({}).partial().passthrough(), z.null()])
     .optional(),
@@ -632,6 +647,15 @@ export const DatasetEvent = z.object({
     .optional(),
 });
 export type DatasetEventType = z.infer<typeof DatasetEvent>;
+export const DatasetSnapshot = z.object({
+  id: z.string().uuid(),
+  dataset_id: z.string().uuid(),
+  name: z.string(),
+  description: z.union([z.string(), z.null()]),
+  xact_id: z.string(),
+  created: z.union([z.string(), z.null()]),
+});
+export type DatasetSnapshotType = z.infer<typeof DatasetSnapshot>;
 export const EnvVar = z.object({
   id: z.string().uuid(),
   object_type: z.enum(["organization", "project", "function"]),
@@ -1541,6 +1565,8 @@ export const TopicAutomationConfig = z.object({
   scope: z.union([SpanScope, TraceScope, GroupScope, z.null()]).optional(),
   data_scope: TopicAutomationDataScope.optional(),
   btql_filter: z.union([z.string(), z.null()]).optional(),
+  rerun_seconds: z.union([z.number(), z.null()]).optional(),
+  relabel_overlap_seconds: z.union([z.number(), z.null()]).optional(),
   backfill_time_range: z
     .union([
       z.string(),
@@ -1930,6 +1956,7 @@ export const User = z.object({
   email: z.union([z.string(), z.null()]).optional(),
   avatar_url: z.union([z.string(), z.null()]).optional(),
   created: z.union([z.string(), z.null()]).optional(),
+  last_active_at: z.union([z.number(), z.null()]).optional(),
 });
 export type UserType = z.infer<typeof User>;
 export const ViewDataSearch = z.union([
