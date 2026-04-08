@@ -114,15 +114,15 @@
         "sdk_language": "javascript"
       },
       "invocation_params": {
-        "max_tokens": 16,
-        "model": "gpt-4o-mini",
+        "max_tokens": 24,
+        "model": "gpt-4o-mini-2024-07-18",
         "stream": false,
         "temperature": 0
       },
       "metadata": {
         "ls_integration": "langchain_chat_model",
-        "ls_max_tokens": 16,
-        "ls_model_name": "gpt-4o-mini",
+        "ls_max_tokens": 24,
+        "ls_model_name": "gpt-4o-mini-2024-07-18",
         "ls_model_type": "chat",
         "ls_provider": "openai",
         "ls_temperature": 0,
@@ -141,8 +141,8 @@
           "ChatOpenAI"
         ],
         "kwargs": {
-          "max_tokens": 16,
-          "model": "gpt-4o-mini",
+          "max_tokens": 24,
+          "model": "gpt-4o-mini-2024-07-18",
           "openai_api_key": {
             "id": [
               "OPENAI_API_KEY"
@@ -418,7 +418,7 @@
             ],
             "kwargs": {
               "max_tokens": 32,
-              "model": "gpt-4o-mini",
+              "model": "gpt-4o-mini-2024-07-18",
               "openai_api_key": {
                 "id": [
                   "OPENAI_API_KEY"
@@ -689,14 +689,14 @@
       },
       "invocation_params": {
         "max_tokens": 32,
-        "model": "gpt-4o-mini",
+        "model": "gpt-4o-mini-2024-07-18",
         "stream": false,
         "temperature": 0
       },
       "metadata": {
         "ls_integration": "langchain_chat_model",
         "ls_max_tokens": 32,
-        "ls_model_name": "gpt-4o-mini",
+        "ls_model_name": "gpt-4o-mini-2024-07-18",
         "ls_model_type": "chat",
         "ls_provider": "openai",
         "ls_temperature": 0,
@@ -717,7 +717,7 @@
         ],
         "kwargs": {
           "max_tokens": 32,
-          "model": "gpt-4o-mini",
+          "model": "gpt-4o-mini-2024-07-18",
           "openai_api_key": {
             "id": [
               "OPENAI_API_KEY"
@@ -951,7 +951,7 @@
       },
       "invocation_params": {
         "max_tokens": 32,
-        "model": "gpt-4o-mini",
+        "model": "gpt-4o-mini-2024-07-18",
         "stream": true,
         "stream_options": {
           "include_usage": true
@@ -961,7 +961,7 @@
       "metadata": {
         "ls_integration": "langchain_chat_model",
         "ls_max_tokens": 32,
-        "ls_model_name": "gpt-4o-mini",
+        "ls_model_name": "gpt-4o-mini-2024-07-18",
         "ls_model_type": "chat",
         "ls_provider": "openai",
         "ls_temperature": 0,
@@ -981,7 +981,7 @@
         ],
         "kwargs": {
           "max_tokens": 32,
-          "model": "gpt-4o-mini",
+          "model": "gpt-4o-mini-2024-07-18",
           "openai_api_key": {
             "id": [
               "OPENAI_API_KEY"
@@ -1216,7 +1216,7 @@
       },
       "invocation_params": {
         "max_tokens": 128,
-        "model": "gpt-4o-mini",
+        "model": "gpt-4o-mini-2024-07-18",
         "stream": false,
         "temperature": 0,
         "tools": [
@@ -1246,7 +1246,7 @@
       "metadata": {
         "ls_integration": "langchain_chat_model",
         "ls_max_tokens": 128,
-        "ls_model_name": "gpt-4o-mini",
+        "ls_model_name": "gpt-4o-mini-2024-07-18",
         "ls_model_type": "chat",
         "ls_provider": "openai",
         "ls_temperature": 0,
@@ -1290,7 +1290,7 @@
         ],
         "kwargs": {
           "max_tokens": 128,
-          "model": "gpt-4o-mini",
+          "model": "gpt-4o-mini-2024-07-18",
           "openai_api_key": {
             "id": [
               "OPENAI_API_KEY"
@@ -1540,7 +1540,7 @@
       },
       "invocation_params": {
         "max_tokens": 128,
-        "model": "gpt-4o-mini",
+        "model": "gpt-4o-mini-2024-07-18",
         "stream": false,
         "temperature": 0,
         "tools": [
@@ -1583,7 +1583,7 @@
       "metadata": {
         "ls_integration": "langchain_chat_model",
         "ls_max_tokens": 128,
-        "ls_model_name": "gpt-4o-mini",
+        "ls_model_name": "gpt-4o-mini-2024-07-18",
         "ls_model_type": "chat",
         "ls_provider": "openai",
         "ls_temperature": 0,
@@ -1640,7 +1640,7 @@
         ],
         "kwargs": {
           "max_tokens": 128,
-          "model": "gpt-4o-mini",
+          "model": "gpt-4o-mini-2024-07-18",
           "openai_api_key": {
             "id": [
               "OPENAI_API_KEY"
@@ -1892,7 +1892,7 @@
       },
       "invocation_params": {
         "max_tokens": 128,
-        "model": "gpt-4o-mini",
+        "model": "gpt-4o-mini-2024-07-18",
         "stream": false,
         "temperature": 0,
         "tools": [
@@ -1935,7 +1935,7 @@
       "metadata": {
         "ls_integration": "langchain_chat_model",
         "ls_max_tokens": 128,
-        "ls_model_name": "gpt-4o-mini",
+        "ls_model_name": "gpt-4o-mini-2024-07-18",
         "ls_model_type": "chat",
         "ls_provider": "openai",
         "ls_temperature": 0,
@@ -1992,7 +1992,7 @@
         ],
         "kwargs": {
           "max_tokens": 128,
-          "model": "gpt-4o-mini",
+          "model": "gpt-4o-mini-2024-07-18",
           "openai_api_key": {
             "id": [
               "OPENAI_API_KEY"

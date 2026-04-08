@@ -124,7 +124,7 @@ async function runAISDKInstrumentationScenario(
   { decorateAI, flushCount, flushDelayMs } = {},
 ) {
   const instrumentedAI = decorateAI ? decorateAI(options.ai) : options.ai;
-  const openaiModel = options.openai("gpt-4o-mini");
+  const openaiModel = options.openai("gpt-4o-mini-2024-07-18");
   const sdkMajorVersion = parseMajorVersion(options.sdkVersion);
   const supportsRichInputScenarios = sdkMajorVersion >= 5;
   const outputObject = createOutputObjectIfSupported(options.ai);
@@ -136,7 +136,7 @@ async function runAISDKInstrumentationScenario(
           model: openaiModel,
           prompt: "Reply with the single token PARIS and no punctuation.",
           temperature: 0,
-          ...tokenLimit(options.maxTokensKey, 16),
+          ...tokenLimit(options.maxTokensKey, 24),
         });
       });
 
@@ -200,7 +200,7 @@ async function runAISDKInstrumentationScenario(
               model: openaiModel,
               prompt: "Reply with the word DENIED and nothing else.",
               temperature: 0,
-              ...tokenLimit(options.maxTokensKey, 16),
+              ...tokenLimit(options.maxTokensKey, 24),
             };
             params[DENY_OUTPUT_PATHS_SYMBOL] = ["text", "_output"];
             await instrumentedAI.generateText(params);
@@ -264,7 +264,7 @@ async function runAISDKInstrumentationScenario(
                   content: "Reply with exactly HELLO and no punctuation.",
                 },
               ],
-              ...tokenLimit(options.maxTokensKey, 16),
+              ...tokenLimit(options.maxTokensKey, 24),
             });
           },
         );
@@ -286,7 +286,7 @@ async function runAISDKInstrumentationScenario(
                     "Reply with exactly STREAM HELLO and no punctuation.",
                 },
               ],
-              ...tokenLimit(options.maxTokensKey, 16),
+              ...tokenLimit(options.maxTokensKey, 24),
             });
             for await (const _chunk of result.textStream) {
             }

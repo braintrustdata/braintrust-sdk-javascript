@@ -11,7 +11,7 @@ import {
 } from "../../helpers/provider-runtime.mjs";
 import { runMain } from "../../helpers/scenario-runtime";
 
-const OPENAI_MODEL = "gpt-4o-mini";
+const OPENAI_MODEL = "gpt-4o-mini-2024-07-18";
 
 runMain(async () => {
   await runTracedScenario({
@@ -23,7 +23,7 @@ runMain(async () => {
       await runOperation("langchain-invoke-operation", "invoke", async () => {
         const model = new ChatOpenAI({
           model: OPENAI_MODEL,
-          maxTokens: 16,
+          maxTokens: 24,
           temperature: 0,
           callbacks: [handler],
         });

@@ -28,7 +28,7 @@
     "has_input": true,
     "has_output": true,
     "metadata": {
-      "model": "gpt-4o-mini",
+      "model": "gpt-4o-mini-2024-07-18",
       "provider": "openai"
     },
     "metrics": {
@@ -53,7 +53,7 @@
     "has_input": true,
     "has_output": true,
     "metadata": {
-      "model": "gpt-4o-mini",
+      "model": "gpt-4o-mini-2024-07-18",
       "provider": "openai"
     },
     "metrics": {
@@ -78,7 +78,7 @@
     "has_input": true,
     "has_output": true,
     "metadata": {
-      "model": "gpt-4o-mini",
+      "model": "gpt-4o-mini-2024-07-18",
       "provider": "openai"
     },
     "metrics": {
@@ -103,7 +103,7 @@
     "has_input": true,
     "has_output": true,
     "metadata": {
-      "model": "gpt-4o-mini",
+      "model": "gpt-4o-mini-2024-07-18",
       "provider": "openai"
     },
     "metrics": {
@@ -128,7 +128,7 @@
     "has_input": true,
     "has_output": true,
     "metadata": {
-      "model": "gpt-4o-mini",
+      "model": "gpt-4o-mini-2024-07-18",
       "provider": "openai"
     },
     "metrics": {
@@ -153,7 +153,7 @@
     "has_input": true,
     "has_output": true,
     "metadata": {
-      "model": "gpt-4o-mini",
+      "model": "gpt-4o-mini-2024-07-18",
       "provider": "openai"
     },
     "metrics": {
@@ -203,7 +203,7 @@
     "has_input": true,
     "has_output": true,
     "metadata": {
-      "model": "omni-moderation-latest",
+      "model": "omni-moderation-2024-09-26",
       "provider": "openai"
     },
     "metrics": {
@@ -328,7 +328,7 @@
     "has_input": true,
     "has_output": false,
     "metadata": {
-      "model": "gpt-4o-mini",
+      "model": "gpt-4o-mini-2024-07-18",
       "provider": "openai"
     },
     "metrics": {
