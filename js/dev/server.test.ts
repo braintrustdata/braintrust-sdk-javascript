@@ -49,16 +49,30 @@ describe("run eval dataset selector helpers", () => {
     });
   });
 
-  test("rejects multiple dataset selectors", () => {
-    expect(() =>
+  test("prefers dataset_version over other dataset selectors", () => {
+    expect(
       _exportsForTestingOnly.getRunEvalDatasetSelector({
         project_name: "test-project",
         dataset_name: "test-dataset",
         dataset_version: "123",
+        dataset_snapshot_name: "release-candidate",
         dataset_environment: "production",
       }),
-    ).toThrow(
-      "Cannot specify more than one of dataset_version, dataset_snapshot_name, and dataset_environment.",
-    );
+    ).toEqual({
+      version: "123",
+    });
+  });
+
+  test("prefers dataset_snapshot_name over dataset_environment", () => {
+    expect(
+      _exportsForTestingOnly.getRunEvalDatasetSelector({
+        project_name: "test-project",
+        dataset_name: "test-dataset",
+        dataset_snapshot_name: "release-candidate",
+        dataset_environment: "production",
+      }),
+    ).toEqual({
+      snapshotName: "release-candidate",
+    });
   });
 });

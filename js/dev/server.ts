@@ -341,22 +341,9 @@ type RunEvalDatasetInitArgs = {
 ) &
   RunEvalDatasetSelector;
 
-const RUN_EVAL_DATASET_SELECTOR_ERROR =
-  "Cannot specify more than one of dataset_version, dataset_snapshot_name, and dataset_environment.";
-
 function getRunEvalDatasetSelector(
   data: RunEvalDatasetReference,
 ): RunEvalDatasetSelector {
-  const selectorCount = [
-    data.dataset_version,
-    data.dataset_snapshot_name,
-    data.dataset_environment,
-  ].filter((value) => value != null).length;
-
-  if (selectorCount > 1) {
-    throw new Error(RUN_EVAL_DATASET_SELECTOR_ERROR);
-  }
-
   if (data.dataset_version != null) {
     return { version: data.dataset_version };
   }

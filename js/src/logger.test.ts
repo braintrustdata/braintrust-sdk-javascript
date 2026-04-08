@@ -474,6 +474,37 @@ test("init accepts dataset with id and snapshotName", () => {
   expect(datasetWithSnapshot.snapshotName).toBe("123");
 });
 
+test("initDataset prefers version over environment in eval data", async () => {
+  const state = await _exportsForTestingOnly.simulateLoginForTests();
+  vi.spyOn(state, "login").mockResolvedValue(state);
+  vi.spyOn(state.appConn(), "post_json").mockResolvedValue({
+    project: {
+      id: "00000000-0000-0000-0000-000000000001",
+      name: "test-project",
+    },
+    dataset: {
+      id: "00000000-0000-0000-0000-000000000002",
+      name: "test-dataset",
+    },
+  });
+
+  const dataset = initDataset({
+    project: "test-project",
+    dataset: "test-dataset",
+    version: "123",
+    environment: "production",
+    state,
+  });
+
+  await expect(dataset.toEvalData()).resolves.toEqual({
+    dataset_id: "00000000-0000-0000-0000-000000000002",
+    dataset_version: "123",
+  });
+
+  _exportsForTestingOnly.simulateLogoutForTests();
+  vi.restoreAllMocks();
+});
+
 test("dataset.toEvalData preserves dataset_environment", async () => {
   const state = await _exportsForTestingOnly.simulateLoginForTests();
   vi.spyOn(state, "login").mockResolvedValue(state);
@@ -622,6 +653,50 @@ test("init resolves dataset environment before experiment registration", async (
     id: "00000000-0000-0000-0000-000000000002",
     environment: "production",
   });
+  expect(postJson).toHaveBeenCalledWith(
+    "api/experiment/register",
+    expect.objectContaining({
+      dataset_id: "00000000-0000-0000-0000-000000000002",
+      dataset_version: "123",
+    }),
+  );
+
+  _exportsForTestingOnly.simulateLogoutForTests();
+  vi.restoreAllMocks();
+});
+
+test("init prefers dataset version over environment before experiment registration", async () => {
+  const state = await _exportsForTestingOnly.simulateLoginForTests();
+  vi.spyOn(state, "login").mockResolvedValue(state);
+  const getJson = vi.spyOn(state.apiConn(), "get_json");
+  const postJson = vi.spyOn(state.appConn(), "post_json").mockResolvedValue({
+    project: {
+      id: "00000000-0000-0000-0000-000000000001",
+      name: "test-project",
+    },
+    experiment: {
+      id: "00000000-0000-0000-0000-000000000003",
+      project_id: "00000000-0000-0000-0000-000000000001",
+      name: "test-experiment",
+      public: false,
+    },
+  });
+
+  const experiment = init({
+    project: "test-project",
+    experiment: "test-experiment",
+    dataset: {
+      id: "00000000-0000-0000-0000-000000000002",
+      version: "123",
+      environment: "production",
+    },
+    setCurrent: false,
+    state,
+  });
+
+  await experiment.id;
+
+  expect(getJson).not.toHaveBeenCalled();
   expect(postJson).toHaveBeenCalledWith(
     "api/experiment/register",
     expect.objectContaining({

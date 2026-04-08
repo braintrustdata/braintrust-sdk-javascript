@@ -3425,27 +3425,11 @@ type InitOpenOption<IsOpen extends boolean> = {
   open?: IsOpen;
 };
 
-type DatasetSelection =
-  | {
-      version: string;
-      environment?: never;
-      snapshotName?: never;
-    }
-  | {
-      version?: never;
-      environment: string;
-      snapshotName?: never;
-    }
-  | {
-      version?: never;
-      environment?: never;
-      snapshotName: string;
-    }
-  | {
-      version?: never;
-      environment?: never;
-      snapshotName?: never;
-    };
+type DatasetSelection = {
+  version?: string;
+  environment?: string;
+  snapshotName?: string;
+};
 
 /**
  * Reference to a dataset by ID and optional explicit selector.
@@ -3867,7 +3851,7 @@ async function getDatasetSnapshots({
   );
 }
 
-function countSpecifiedDatasetSelectors({
+function normalizeDatasetSelection({
   version,
   environment,
   snapshotName,
@@ -3875,10 +3859,20 @@ function countSpecifiedDatasetSelectors({
   version?: string;
   environment?: string;
   snapshotName?: string;
-}): number {
-  return [version, environment, snapshotName].filter(
-    (value) => value !== undefined,
-  ).length;
+}): DatasetSelection {
+  if (version !== undefined) {
+    return { version };
+  }
+
+  if (snapshotName !== undefined) {
+    return { snapshotName };
+  }
+
+  if (environment !== undefined) {
+    return { environment };
+  }
+
+  return {};
 }
 
 async function resolveDatasetSnapshotName({
@@ -3960,38 +3954,34 @@ async function serializeDatasetForExperiment({
   state: BraintrustState;
 }): Promise<{ datasetId: string; datasetVersion?: string }> {
   if (!Dataset.isDataset(dataset)) {
-    if (countSpecifiedDatasetSelectors(dataset) > 1) {
-      throw new Error(
-        "Cannot specify more than one of dataset.version, dataset.environment, and dataset.snapshotName. Use exactly one selector.",
-      );
-    }
+    const selection = normalizeDatasetSelection(dataset);
 
-    if (dataset.environment !== undefined) {
+    if (selection.version !== undefined) {
       return {
         datasetId: dataset.id,
-        datasetVersion: await resolveDatasetEnvironment({
-          state,
-          datasetId: dataset.id,
-          environment: dataset.environment,
-        }),
+        datasetVersion: selection.version,
       };
     }
 
-    if (dataset.snapshotName !== undefined) {
+    if (selection.snapshotName !== undefined) {
       return {
         datasetId: dataset.id,
         datasetVersion: await resolveDatasetSnapshotName({
           state,
           datasetId: dataset.id,
-          snapshotName: dataset.snapshotName,
+          snapshotName: selection.snapshotName,
         }),
       };
     }
 
-    if (dataset.version !== undefined) {
+    if (selection.environment !== undefined) {
       return {
         datasetId: dataset.id,
-        datasetVersion: dataset.version,
+        datasetVersion: await resolveDatasetEnvironment({
+          state,
+          datasetId: dataset.id,
+          environment: selection.environment,
+        }),
       };
     }
 
@@ -4001,24 +3991,26 @@ async function serializeDatasetForExperiment({
   }
 
   const evalData = await dataset.toEvalData();
-  if (evalData.dataset_environment !== undefined) {
+  const selection = normalizeDatasetSelection({
+    version: evalData.dataset_version,
+    environment: evalData.dataset_environment,
+    snapshotName: evalData.dataset_snapshot_name,
+  });
+
+  if (selection.version !== undefined) {
     return {
       datasetId: evalData.dataset_id,
-      datasetVersion: await dataset.version(),
+      datasetVersion: selection.version,
     };
   }
 
-  if (evalData.dataset_snapshot_name !== undefined) {
+  if (
+    selection.environment !== undefined ||
+    selection.snapshotName !== undefined
+  ) {
     return {
       datasetId: evalData.dataset_id,
       datasetVersion: await dataset.version(),
-    };
-  }
-
-  if (evalData.dataset_version !== undefined) {
-    return {
-      datasetId: evalData.dataset_id,
-      datasetVersion: evalData.dataset_version,
     };
   }
 
@@ -4034,9 +4026,9 @@ async function serializeDatasetForExperiment({
  * @param options.project The name of the project to create the dataset in. Must specify at least one of `project` or `projectId`.
  * @param options.dataset The name of the dataset to create. If not specified, a name will be generated automatically.
  * @param options.description An optional description of the dataset.
- * @param options.version Pin the dataset to a specific version xact_id.
- * @param options.snapshotName Pin the dataset to the version captured by this named snapshot. Snapshot names are resolved to a concrete xact_id and throw if no matching snapshot exists.
- * @param options.environment Pin the dataset to the version tagged with this environment slug. Throws if the environment lookup fails.
+ * @param options.version Pin the dataset to a specific version xact_id. If `snapshotName` or `environment` are also provided, `version` takes precedence.
+ * @param options.snapshotName Pin the dataset to the version captured by this named snapshot. Snapshot names are resolved to a concrete xact_id and throw if no matching snapshot exists. If `environment` is also provided, `snapshotName` takes precedence.
+ * @param options.environment Pin the dataset to the version tagged with this environment slug. Throws if the environment lookup fails when it is the selected dataset selector.
  * @param options.appUrl The URL of the Braintrust App. Defaults to https://www.braintrust.dev.
  * @param options.apiKey The API key to use. If the parameter is not specified, will try to use the `BRAINTRUST_API_KEY` environment variable. If no API key is specified, will prompt the user to login.
  * @param options.orgName (Optional) The name of a specific organization to connect to. This is useful if you belong to multiple.
@@ -4106,18 +4098,14 @@ export function initDataset<
     state: stateArg,
     _internal_btql,
   } = options;
-
-  if (
-    countSpecifiedDatasetSelectors({
-      version,
-      environment,
-      snapshotName,
-    }) > 1
-  ) {
-    throw new Error(
-      "Cannot specify more than one of `version`, `environment`, and `snapshotName`. Use exactly one selector.",
-    );
-  }
+  const selection = normalizeDatasetSelection({
+    version,
+    environment,
+    snapshotName,
+  });
+  const normalizedVersion = selection.version;
+  const normalizedEnvironment = selection.environment;
+  const normalizedSnapshotName = selection.snapshotName;
 
   const state = stateArg ?? _globalState;
 
@@ -4159,22 +4147,22 @@ export function initDataset<
   );
 
   const resolvedVersion =
-    version !== undefined
-      ? version
-      : snapshotName !== undefined
+    normalizedVersion !== undefined
+      ? normalizedVersion
+      : normalizedSnapshotName !== undefined
         ? new LazyValue(async () => {
             return await resolveDatasetSnapshotNameForMetadata({
               state,
               lazyMetadata,
-              snapshotName,
+              snapshotName: normalizedSnapshotName,
             });
           })
-        : environment !== undefined
+        : normalizedEnvironment !== undefined
           ? new LazyValue(async () => {
               return await resolveDatasetEnvironmentForMetadata({
                 state,
                 lazyMetadata,
-                environment,
+                environment: normalizedEnvironment,
               });
             })
           : undefined;
@@ -4183,8 +4171,8 @@ export function initDataset<
     stateArg ?? _globalState,
     lazyMetadata,
     resolvedVersion,
-    environment,
-    snapshotName,
+    normalizedEnvironment,
+    normalizedSnapshotName,
     legacy,
     _internal_btql,
   );
