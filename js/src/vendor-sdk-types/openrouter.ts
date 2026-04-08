@@ -1,3 +1,5 @@
+// @openrouter/sdk types
+
 export type OpenRouterChatCreateParams = {
   httpReferer?: string;
   xTitle?: string;

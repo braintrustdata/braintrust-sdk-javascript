@@ -1,0 +1,40 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .:
+    dependencies:
+      '@openrouter/agent':
+        specifier: 0.1.2
+        version: 0.1.2
+      zod:
+        specifier: 4.1.11
+        version: 4.1.11
+
+packages:
+
+  '@openrouter/agent@0.1.2':
+    resolution: {integrity: sha512-nlbatensa2OpQTVJHKAEnzkfcO/aBOIz+ao9YZ/gh6R3cxCXBHejp0sH7ZC3afXMNKtxUikF+gLfxHyrIky2Ng==}
+
+  '@openrouter/sdk@0.11.2':
+    resolution: {integrity: sha512-uu8zu7vd4hA2l4vUD1UiZuefxqaH2/ixFcUG8GIO9+qcEJkWX4AYAil7SpGmZOTgy8STLFTEk4M4MmyUW0YMLg==}
+
+  zod@4.1.11:
+    resolution: {integrity: sha512-WPsqwxITS2tzx1bzhIKsEs19ABD5vmCVa4xBo2tq/SrV4RNZtfws1EnCWQXM6yh8bD08a1idvkB5MZSBiZsjwg==}
+
+snapshots:
+
+  '@openrouter/agent@0.1.2':
+    dependencies:
+      '@openrouter/sdk': 0.11.2
+      zod: 4.1.11
+
+  '@openrouter/sdk@0.11.2':
+    dependencies:
+      zod: 4.1.11
+
+  zod@4.1.11: {}
