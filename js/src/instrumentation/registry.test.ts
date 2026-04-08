@@ -119,6 +119,7 @@ describe("configureInstrumentation API", () => {
         openai: false,
         anthropic: true,
         openrouter: false,
+        mistral: false,
       },
     });
   });

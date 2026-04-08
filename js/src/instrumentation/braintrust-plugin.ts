@@ -6,6 +6,7 @@ import { ClaudeAgentSDKPlugin } from "./plugins/claude-agent-sdk-plugin";
 import { GoogleGenAIPlugin } from "./plugins/google-genai-plugin";
 import { OpenRouterAgentPlugin } from "./plugins/openrouter-agent-plugin";
 import { OpenRouterPlugin } from "./plugins/openrouter-plugin";
+import { MistralPlugin } from "./plugins/mistral-plugin";
 
 export interface BraintrustPluginConfig {
   integrations?: {
@@ -18,6 +19,7 @@ export interface BraintrustPluginConfig {
     claudeAgentSDK?: boolean;
     openrouter?: boolean;
     openrouterAgent?: boolean;
+    mistral?: boolean;
   };
 }
 
@@ -30,6 +32,7 @@ export interface BraintrustPluginConfig {
  * - Claude Agent SDK (agent interactions)
  * - Vercel AI SDK (generateText, streamText, etc.)
  * - Google GenAI SDK
+ * - Mistral SDK
  *
  * The plugin is automatically enabled when the Braintrust library is loaded.
  * Individual integrations can be disabled via configuration.
@@ -43,6 +46,7 @@ export class BraintrustPlugin extends BasePlugin {
   private googleGenAIPlugin: GoogleGenAIPlugin | null = null;
   private openRouterPlugin: OpenRouterPlugin | null = null;
   private openRouterAgentPlugin: OpenRouterAgentPlugin | null = null;
+  private mistralPlugin: MistralPlugin | null = null;
 
   constructor(config: BraintrustPluginConfig = {}) {
     super();
@@ -93,6 +97,11 @@ export class BraintrustPlugin extends BasePlugin {
       this.openRouterAgentPlugin = new OpenRouterAgentPlugin();
       this.openRouterAgentPlugin.enable();
     }
+
+    if (integrations.mistral !== false) {
+      this.mistralPlugin = new MistralPlugin();
+      this.mistralPlugin.enable();
+    }
   }
 
   protected onDisable(): void {
@@ -129,6 +138,11 @@ export class BraintrustPlugin extends BasePlugin {
     if (this.openRouterAgentPlugin) {
       this.openRouterAgentPlugin.disable();
       this.openRouterAgentPlugin = null;
+    }
+
+    if (this.mistralPlugin) {
+      this.mistralPlugin.disable();
+      this.mistralPlugin = null;
     }
   }
 }

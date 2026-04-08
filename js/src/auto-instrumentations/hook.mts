@@ -21,6 +21,7 @@ import { claudeAgentSDKConfigs } from "./configs/claude-agent-sdk.js";
 import { googleGenAIConfigs } from "./configs/google-genai.js";
 import { openRouterAgentConfigs } from "./configs/openrouter-agent.js";
 import { openRouterConfigs } from "./configs/openrouter.js";
+import { mistralConfigs } from "./configs/mistral.js";
 import { ModulePatch } from "./loader/cjs-patch.js";
 import { patchTracingChannel } from "./patch-tracing-channel.js";
 
@@ -40,6 +41,7 @@ const allConfigs = [
   ...googleGenAIConfigs,
   ...openRouterConfigs,
   ...openRouterAgentConfigs,
+  ...mistralConfigs,
 ];
 
 // 1. Register ESM loader for ESM modules

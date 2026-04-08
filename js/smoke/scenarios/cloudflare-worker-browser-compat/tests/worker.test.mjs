@@ -7,21 +7,31 @@ import {
 const PORT = 8801;
 const MAX_RETRIES = 20;
 const RETRY_DELAY_MS = 250;
+const REQUEST_TIMEOUT_MS = 1000;
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 function killPort(port) {
   try {
-    execSync(`lsof -ti:${port} | xargs kill -9 2>/dev/null || true`, {
-      stdio: "ignore",
-    });
+    execSync(
+      `lsof -tiTCP:${port} -sTCP:LISTEN | xargs kill -9 2>/dev/null || true`,
+      {
+        stdio: "ignore",
+      },
+    );
   } catch {}
 }
 
-async function waitForServer() {
+async function waitForServer(serverProcess) {
   for (let i = 0; i < MAX_RETRIES; i++) {
+    if (serverProcess.exitCode !== null) {
+      return false;
+    }
+
     try {
-      const res = await fetch(`http://localhost:${PORT}/`);
+      const res = await fetch(`http://localhost:${PORT}/`, {
+        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      });
       if (res.ok) return true;
     } catch {}
     await sleep(RETRY_DELAY_MS);
@@ -49,6 +59,7 @@ async function main() {
     {
       stdio: ["ignore", "pipe", "pipe"],
       shell: true,
+      detached: process.platform !== "win32",
     },
   );
 
@@ -56,24 +67,38 @@ async function main() {
   wrangler.stdout.on("data", (data) => (wranglerOutput += data));
   wrangler.stderr.on("data", (data) => (wranglerOutput += data));
 
-  const killWrangler = () => {
-    return new Promise((resolve) => {
-      if (wrangler.exitCode !== null) {
-        resolve();
+  const killProcessTree = (signal) => {
+    if (wrangler.pid == null) {
+      return;
+    }
+
+    if (process.platform !== "win32") {
+      try {
+        process.kill(-wrangler.pid, signal);
         return;
+      } catch {}
+    }
+
+    try {
+      wrangler.kill(signal);
+    } catch {}
+  };
+
+  const killWrangler = async () => {
+    if (wrangler.exitCode === null) {
+      killProcessTree("SIGTERM");
+      await sleep(1000);
+      if (wrangler.exitCode === null) {
+        killProcessTree("SIGKILL");
+        await sleep(250);
       }
-      wrangler.once("exit", resolve);
-      wrangler.kill("SIGTERM");
-      setTimeout(() => {
-        if (wrangler.exitCode === null) {
-          wrangler.kill("SIGKILL");
-        }
-      }, 1000);
-    });
+    }
+    killPort(PORT);
+    wrangler.unref();
   };
 
   try {
-    const serverStartedSuccessfully = await waitForServer();
+    const serverStartedSuccessfully = await waitForServer(wrangler);
 
     if (!serverStartedSuccessfully) {
       console.error("Server failed to start:\n", wranglerOutput);

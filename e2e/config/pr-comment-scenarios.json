@@ -34,6 +34,19 @@
     ]
   },
   {
+    "scenarioDirName": "mistral-instrumentation",
+    "label": "Mistral Instrumentation",
+    "metadataScenario": "mistral-instrumentation",
+    "variants": [
+      { "variantKey": "mistral-v1-3-4", "label": "v1.3.4" },
+      { "variantKey": "mistral-v1-10-0", "label": "v1.10.0" },
+      { "variantKey": "mistral-v1-14-1", "label": "v1.14.1" },
+      { "variantKey": "mistral-v1-15-1", "label": "v1.15.1" },
+      { "variantKey": "mistral-v1", "label": "latest v1" },
+      { "variantKey": "mistral-v2", "label": "latest v2" }
+    ]
+  },
+  {
     "scenarioDirName": "openrouter-instrumentation",
     "label": "OpenRouter Instrumentation",
     "metadataScenario": "openrouter-instrumentation",

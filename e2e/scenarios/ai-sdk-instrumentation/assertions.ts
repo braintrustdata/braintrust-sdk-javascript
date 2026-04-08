@@ -645,6 +645,7 @@ export function defineAISDKInstrumentationAssertions(options: {
   agentSpanName?: AgentSpanName;
   name: string;
   runScenario: RunAISDKScenario;
+  sdkMajorVersion: number;
   snapshotName: string;
   supportsAttachmentScenario: boolean;
   supportsDenyOutputOverrideScenario: boolean;
@@ -894,6 +895,32 @@ export function defineAISDKInstrumentationAssertions(options: {
       });
     }
 
+    if (options.sdkMajorVersion >= 4) {
+      test(
+        "captures sync streamText()/streamObject() paths in v4+",
+        testConfig,
+        () => {
+          const root = findLatestSpan(events, ROOT_NAME);
+          const streamTrace = findStreamTrace(events);
+
+          expectOperationParentedByRoot(streamTrace.operation, root);
+          expectAISDKParentSpan(streamTrace.parent);
+          expect(operationName(streamTrace.operation)).toBe("stream");
+          expect(streamTrace.parent?.span.name).toBe("streamText");
+
+          if (options.supportsStreamObject) {
+            const streamObjectTrace = findStreamObjectTrace(events);
+            expectOperationParentedByRoot(streamObjectTrace.operation, root);
+            expectAISDKParentSpan(streamObjectTrace.parent);
+            expect(operationName(streamObjectTrace.operation)).toBe(
+              "stream-object",
+            );
+            expect(streamObjectTrace.parent?.span.name).toBe("streamObject");
+          }
+        },
+      );
+    }
+
     if (options.agentSpanName) {
       test("captures trace for agent.generate()", testConfig, () => {
         const root = findLatestSpan(events, ROOT_NAME);
@@ -922,6 +949,18 @@ export function defineAISDKInstrumentationAssertions(options: {
         expect(trace.modelChildren.length).toBeGreaterThanOrEqual(1);
         expect(trace.latestChild?.output).toBeDefined();
       });
+
+      if (options.sdkMajorVersion === 5 && options.agentSpanName === "Agent") {
+        test("captures Agent.stream() path in v5", testConfig, () => {
+          const root = findLatestSpan(events, ROOT_NAME);
+          const trace = findAgentStreamTrace(events, "Agent");
+
+          expectOperationParentedByRoot(trace.operation, root);
+          expectAISDKParentSpan(trace.parent);
+          expect(operationName(trace.operation)).toBe("agent-stream");
+          expect(trace.parent?.span.name).toBe("Agent.stream");
+        });
+      }
     }
 
     if (options.supportsDenyOutputOverrideScenario) {

@@ -7,7 +7,7 @@ import {
   create,
   type InstrumentationConfig,
 } from "@apm-js-collab/code-transformer";
-import * as Module from "node:module";
+import * as NodeModule from "node:module";
 import { sep } from "node:path";
 import moduleDetailsFromPath from "module-details-from-path";
 import { getPackageName, getPackageVersion } from "./get-package-version.js";
@@ -15,14 +15,18 @@ import { getPackageName, getPackageVersion } from "./get-package-version.js";
 export class ModulePatch {
   private packages: Set<string>;
   private instrumentator: any;
+  private modulePrototype: { _compile?: (...args: any[]) => unknown };
   private originalCompile: any;
 
   constructor({
     instrumentations = [],
   }: { instrumentations?: InstrumentationConfig[] } = {}) {
+    const modulePrototype = resolveModulePrototype() as any;
+
     this.packages = new Set(instrumentations.map((i) => i.module.name));
     this.instrumentator = create(instrumentations);
-    this.originalCompile = (Module.prototype as any)._compile;
+    this.modulePrototype = modulePrototype;
+    this.originalCompile = modulePrototype._compile;
   }
 
   /**
@@ -32,9 +36,7 @@ export class ModulePatch {
    */
   patch() {
     const self = this;
-    (Module.prototype as any)._compile = function wrappedCompile(
-      ...args: any[]
-    ) {
+    this.modulePrototype._compile = function wrappedCompile(...args: any[]) {
       const [content, filename] = args;
 
       // Normalize path to platform-specific separator for module-details-from-path
@@ -82,6 +84,19 @@ export class ModulePatch {
    * **Note**: This is intended to be used in testing only.
    */
   unpatch() {
-    (Module.prototype as any)._compile = this.originalCompile;
+    this.modulePrototype._compile = this.originalCompile;
   }
+}
+
+function resolveModulePrototype():
+  | { _compile?: (...args: any[]) => unknown }
+  | undefined {
+  const moduleCtor = (NodeModule as any).Module;
+  if (moduleCtor && typeof moduleCtor === "function") {
+    return moduleCtor.prototype as { _compile?: (...args: any[]) => unknown };
+  }
+
+  return (NodeModule as any).prototype as
+    | { _compile?: (...args: any[]) => unknown }
+    | undefined;
 }
