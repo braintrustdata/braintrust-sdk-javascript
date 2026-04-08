@@ -105,6 +105,58 @@ export const aiSDKConfigs: InstrumentationConfig[] = [
     },
   },
 
+  // embed - async function
+  {
+    channelName: aiSDKChannels.embed.channelName,
+    module: {
+      name: "ai",
+      versionRange: ">=3.0.0",
+      filePath: "dist/index.mjs",
+    },
+    functionQuery: {
+      functionName: "embed",
+      kind: "Async",
+    },
+  },
+  {
+    channelName: aiSDKChannels.embed.channelName,
+    module: {
+      name: "ai",
+      versionRange: ">=3.0.0",
+      filePath: "dist/index.js",
+    },
+    functionQuery: {
+      functionName: "embed",
+      kind: "Async",
+    },
+  },
+
+  // embedMany - async function
+  {
+    channelName: aiSDKChannels.embedMany.channelName,
+    module: {
+      name: "ai",
+      versionRange: ">=3.0.0",
+      filePath: "dist/index.mjs",
+    },
+    functionQuery: {
+      functionName: "embedMany",
+      kind: "Async",
+    },
+  },
+  {
+    channelName: aiSDKChannels.embedMany.channelName,
+    module: {
+      name: "ai",
+      versionRange: ">=3.0.0",
+      filePath: "dist/index.js",
+    },
+    functionQuery: {
+      functionName: "embedMany",
+      kind: "Async",
+    },
+  },
+
   // streamObject - async function (v3 only, before the sync refactor in v4)
   {
     channelName: aiSDKChannels.streamObject.channelName,

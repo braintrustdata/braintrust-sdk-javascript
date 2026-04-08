@@ -125,6 +125,9 @@ async function runAISDKInstrumentationScenario(
 ) {
   const instrumentedAI = decorateAI ? decorateAI(options.ai) : options.ai;
   const openaiModel = options.openai("gpt-4o-mini");
+  const openaiEmbeddingModel = options.openai.textEmbeddingModel(
+    "text-embedding-3-small",
+  );
   const sdkMajorVersion = parseMajorVersion(options.sdkVersion);
   const supportsRichInputScenarios = sdkMajorVersion >= 5;
   const outputObject = createOutputObjectIfSupported(options.ai);
@@ -168,6 +171,28 @@ async function runAISDKInstrumentationScenario(
         for await (const _chunk of result.textStream) {
         }
       });
+
+      await runOperation("ai-sdk-embed-operation", "embed", async () => {
+        await instrumentedAI.embed({
+          model: openaiEmbeddingModel,
+          value: "Paris is the capital of France.",
+        });
+      });
+
+      await runOperation(
+        "ai-sdk-embed-many-operation",
+        "embed-many",
+        async () => {
+          await instrumentedAI.embedMany({
+            model: openaiEmbeddingModel,
+            values: [
+              "Paris is in France.",
+              "Berlin is in Germany.",
+              "Vienna is in Austria.",
+            ],
+          });
+        },
+      );
 
       await runOperation("ai-sdk-tool-operation", "tool", async () => {
         const toolRequest = {

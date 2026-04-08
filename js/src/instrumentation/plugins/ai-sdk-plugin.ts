@@ -1,5 +1,6 @@
 import { BasePlugin } from "../core";
 import {
+  traceAsyncChannel,
   traceStreamingChannel,
   traceSyncStreamChannel,
   unsubscribeAll,
@@ -18,6 +19,8 @@ import { aiSDKChannels } from "./ai-sdk-channels";
 import type {
   AISDK,
   AISDKCallParams,
+  AISDKEmbedParams,
+  AISDKEmbeddingResult,
   AISDKLanguageModel,
   AISDKModel,
   AISDKModelStreamChunk,
@@ -71,6 +74,8 @@ const RUNTIME_DENY_OUTPUT_PATHS = Symbol.for(
  * - streamText (function returning stream)
  * - generateObject (async function)
  * - streamObject (function returning stream)
+ * - embed (async function)
+ * - embedMany (async function)
  * - Agent.generate (async method)
  * - Agent.stream (async method returning stream)
  * - ToolLoopAgent.generate (async method)
@@ -108,7 +113,7 @@ export class AISDKPlugin extends BasePlugin {
         name: "generateText",
         type: SpanTypeAttribute.LLM,
         extractInput: ([params], event, span) =>
-          prepareAISDKInput(params, event, span, denyOutputPaths),
+          prepareAISDKCallInput(params, event, span, denyOutputPaths),
         extractOutput: (result, endEvent) => {
           finalizeAISDKChildTracing(endEvent as { [key: string]: unknown });
           return processAISDKOutput(
@@ -128,7 +133,7 @@ export class AISDKPlugin extends BasePlugin {
         name: "streamText",
         type: SpanTypeAttribute.LLM,
         extractInput: ([params], event, span) =>
-          prepareAISDKInput(params, event, span, denyOutputPaths),
+          prepareAISDKCallInput(params, event, span, denyOutputPaths),
         extractOutput: (result, endEvent) =>
           processAISDKOutput(
             result,
@@ -154,7 +159,7 @@ export class AISDKPlugin extends BasePlugin {
         name: "streamText",
         type: SpanTypeAttribute.LLM,
         extractInput: ([params], event, span) =>
-          prepareAISDKInput(params, event, span, denyOutputPaths),
+          prepareAISDKCallInput(params, event, span, denyOutputPaths),
         patchResult: ({ endEvent, result, span, startTime }) =>
           patchAISDKStreamingResult({
             defaultDenyOutputPaths: denyOutputPaths,
@@ -172,7 +177,7 @@ export class AISDKPlugin extends BasePlugin {
         name: "generateObject",
         type: SpanTypeAttribute.LLM,
         extractInput: ([params], event, span) =>
-          prepareAISDKInput(params, event, span, denyOutputPaths),
+          prepareAISDKCallInput(params, event, span, denyOutputPaths),
         extractOutput: (result, endEvent) => {
           finalizeAISDKChildTracing(endEvent as { [key: string]: unknown });
           return processAISDKOutput(
@@ -192,7 +197,7 @@ export class AISDKPlugin extends BasePlugin {
         name: "streamObject",
         type: SpanTypeAttribute.LLM,
         extractInput: ([params], event, span) =>
-          prepareAISDKInput(params, event, span, denyOutputPaths),
+          prepareAISDKCallInput(params, event, span, denyOutputPaths),
         extractOutput: (result, endEvent) =>
           processAISDKOutput(
             result,
@@ -218,7 +223,7 @@ export class AISDKPlugin extends BasePlugin {
         name: "streamObject",
         type: SpanTypeAttribute.LLM,
         extractInput: ([params], event, span) =>
-          prepareAISDKInput(params, event, span, denyOutputPaths),
+          prepareAISDKCallInput(params, event, span, denyOutputPaths),
         patchResult: ({ endEvent, result, span, startTime }) =>
           patchAISDKStreamingResult({
             defaultDenyOutputPaths: denyOutputPaths,
@@ -230,13 +235,47 @@ export class AISDKPlugin extends BasePlugin {
       }),
     );
 
+    // embed - async embedding function
+    this.unsubscribers.push(
+      traceAsyncChannel(aiSDKChannels.embed, {
+        name: "embed",
+        type: SpanTypeAttribute.LLM,
+        extractInput: ([params], event) =>
+          prepareAISDKEmbedInput(params, event.self),
+        extractOutput: (result, endEvent) =>
+          processAISDKEmbeddingOutput(
+            result,
+            resolveDenyOutputPaths(endEvent, denyOutputPaths),
+          ),
+        extractMetrics: (result, _startTime, endEvent) =>
+          extractTopLevelAISDKMetrics(result, endEvent),
+      }),
+    );
+
+    // embedMany - async embedding batch function
+    this.unsubscribers.push(
+      traceAsyncChannel(aiSDKChannels.embedMany, {
+        name: "embedMany",
+        type: SpanTypeAttribute.LLM,
+        extractInput: ([params], event) =>
+          prepareAISDKEmbedInput(params, event.self),
+        extractOutput: (result, endEvent) =>
+          processAISDKEmbeddingOutput(
+            result,
+            resolveDenyOutputPaths(endEvent, denyOutputPaths),
+          ),
+        extractMetrics: (result, _startTime, endEvent) =>
+          extractTopLevelAISDKMetrics(result, endEvent),
+      }),
+    );
+
     // Agent.generate - async method
     this.unsubscribers.push(
       traceStreamingChannel(aiSDKChannels.agentGenerate, {
         name: "Agent.generate",
         type: SpanTypeAttribute.LLM,
         extractInput: ([params], event, span) =>
-          prepareAISDKInput(params, event, span, denyOutputPaths),
+          prepareAISDKCallInput(params, event, span, denyOutputPaths),
         extractOutput: (result, endEvent) => {
           finalizeAISDKChildTracing(endEvent as { [key: string]: unknown });
           return processAISDKOutput(
@@ -256,7 +295,7 @@ export class AISDKPlugin extends BasePlugin {
         name: "Agent.stream",
         type: SpanTypeAttribute.LLM,
         extractInput: ([params], event, span) =>
-          prepareAISDKInput(params, event, span, denyOutputPaths),
+          prepareAISDKCallInput(params, event, span, denyOutputPaths),
         extractOutput: (result, endEvent) =>
           processAISDKOutput(
             result,
@@ -282,7 +321,7 @@ export class AISDKPlugin extends BasePlugin {
         name: "Agent.stream",
         type: SpanTypeAttribute.LLM,
         extractInput: ([params], event, span) =>
-          prepareAISDKInput(params, event, span, denyOutputPaths),
+          prepareAISDKCallInput(params, event, span, denyOutputPaths),
         patchResult: ({ endEvent, result, span, startTime }) =>
           patchAISDKStreamingResult({
             defaultDenyOutputPaths: denyOutputPaths,
@@ -300,7 +339,7 @@ export class AISDKPlugin extends BasePlugin {
         name: "ToolLoopAgent.generate",
         type: SpanTypeAttribute.LLM,
         extractInput: ([params], event, span) =>
-          prepareAISDKInput(params, event, span, denyOutputPaths),
+          prepareAISDKCallInput(params, event, span, denyOutputPaths),
         extractOutput: (result, endEvent) => {
           finalizeAISDKChildTracing(endEvent as { [key: string]: unknown });
           return processAISDKOutput(
@@ -320,7 +359,7 @@ export class AISDKPlugin extends BasePlugin {
         name: "ToolLoopAgent.stream",
         type: SpanTypeAttribute.LLM,
         extractInput: ([params], event, span) =>
-          prepareAISDKInput(params, event, span, denyOutputPaths),
+          prepareAISDKCallInput(params, event, span, denyOutputPaths),
         extractOutput: (result, endEvent) =>
           processAISDKOutput(
             result,
@@ -376,7 +415,7 @@ function resolveDenyOutputPaths(
   return defaultDenyOutputPaths;
 }
 
-interface ProcessInputSyncResult {
+interface ProcessCallInputSyncResult {
   input: AISDKCallParams;
   outputPromise?: Promise<{
     output: {
@@ -510,7 +549,7 @@ const serializeOutputObject = (
 
 const processInputAttachmentsSync = (
   input: AISDKCallParams,
-): ProcessInputSyncResult => {
+): ProcessCallInputSyncResult => {
   if (!input) return { input };
 
   const processed: AISDKCallParams = { ...input };
@@ -774,11 +813,13 @@ const convertDataToAttachment = (
 /**
  * Process AI SDK input parameters, converting attachments as needed.
  */
-function processAISDKInput(params: AISDKCallParams): ProcessInputSyncResult {
+function processAISDKCallInput(
+  params: AISDKCallParams,
+): ProcessCallInputSyncResult {
   return processInputAttachmentsSync(params);
 }
 
-function prepareAISDKInput(
+function prepareAISDKCallInput(
   params: AISDKCallParams,
   event: {
     aiSDK?: AISDK;
@@ -792,7 +833,7 @@ function prepareAISDKInput(
   input: unknown;
   metadata: Record<string, unknown>;
 } {
-  const { input, outputPromise } = processAISDKInput(params);
+  const { input, outputPromise } = processAISDKCallInput(params);
   if (outputPromise && input && typeof input === "object") {
     outputPromise
       .then((resolvedData) => {
@@ -808,7 +849,7 @@ function prepareAISDKInput(
       });
   }
 
-  const metadata = extractMetadataFromParams(params, event.self);
+  const metadata = extractMetadataFromCallParams(params, event.self);
   const childTracing = prepareAISDKChildTracing(
     params,
     event.self,
@@ -824,6 +865,19 @@ function prepareAISDKInput(
   return {
     input,
     metadata,
+  };
+}
+
+function prepareAISDKEmbedInput(
+  params: AISDKEmbedParams,
+  self?: unknown,
+): {
+  input: unknown;
+  metadata: Record<string, unknown>;
+} {
+  return {
+    input: { ...params },
+    metadata: extractMetadataFromEmbedParams(params, self),
   };
 }
 
@@ -850,49 +904,63 @@ function hasModelChildTracing(event?: { [key: string]: unknown }): boolean {
   );
 }
 
-/**
- * Extract metadata from AI SDK parameters.
- * Includes model, provider, and integration info.
- */
-function extractMetadataFromParams(
-  params: AISDKCallParams,
-  self?: unknown,
-): Record<string, unknown> {
-  const metadata: Record<string, unknown> = {
+function createAISDKIntegrationMetadata(): Record<string, unknown> {
+  return {
     braintrust: {
       integration_name: "ai-sdk",
       sdk_language: "typescript",
     },
   };
+}
 
-  // Extract model information
-  const agentModel =
-    self &&
+function resolveModelFromSelf(self?: unknown): AISDKModel | undefined {
+  return self &&
     typeof self === "object" &&
     "model" in self &&
     (self as { model?: AISDKModel }).model
-      ? (self as { model?: AISDKModel }).model
-      : self &&
-          typeof self === "object" &&
-          "settings" in self &&
-          (self as { settings?: { model?: AISDKModel } }).settings?.model
-        ? (self as { settings?: { model?: AISDKModel } }).settings?.model
-        : undefined;
-  const { model, provider } = serializeModelWithProvider(
-    params.model ?? agentModel,
+    ? (self as { model?: AISDKModel }).model
+    : self &&
+        typeof self === "object" &&
+        "settings" in self &&
+        (self as { settings?: { model?: AISDKModel } }).settings?.model
+      ? (self as { settings?: { model?: AISDKModel } }).settings?.model
+      : undefined;
+}
+
+function extractBaseMetadata(
+  model: AISDKModel | undefined,
+  self?: unknown,
+): Record<string, unknown> {
+  const metadata: Record<string, unknown> = createAISDKIntegrationMetadata();
+  const { model: modelId, provider } = serializeModelWithProvider(
+    model ?? resolveModelFromSelf(self),
   );
-  if (model) {
-    metadata.model = model;
+  if (modelId) {
+    metadata.model = modelId;
   }
   if (provider) {
     metadata.provider = provider;
   }
+  return metadata;
+}
+
+function extractMetadataFromCallParams(
+  params: AISDKCallParams,
+  self?: unknown,
+): Record<string, unknown> {
+  const metadata = extractBaseMetadata(params.model, self);
   const tools = serializeAISDKToolsForLogging(params.tools);
   if (tools) {
     metadata.tools = tools;
   }
-
   return metadata;
+}
+
+function extractMetadataFromEmbedParams(
+  params: AISDKEmbedParams,
+  self?: unknown,
+): Record<string, unknown> {
+  return extractBaseMetadata(params.model, self);
 }
 
 function prepareAISDKChildTracing(
@@ -958,7 +1026,7 @@ function prepareAISDKChildTracing(
             type: SpanTypeAttribute.LLM,
           },
           event: {
-            input: processAISDKInput(options).input,
+            input: processAISDKCallInput(options).input,
             metadata: baseMetadata,
           },
         },
@@ -975,7 +1043,7 @@ function prepareAISDKChildTracing(
             type: SpanTypeAttribute.LLM,
           },
           event: {
-            input: processAISDKInput(options).input,
+            input: processAISDKCallInput(options).input,
             metadata: baseMetadata,
           },
         });
@@ -1372,9 +1440,14 @@ function attachKnownResultPromiseHandlers(
     "content",
     "text",
     "object",
+    "value",
+    "values",
     "finishReason",
+    "embedding",
+    "embeddings",
     "usage",
     "totalUsage",
+    "responses",
     "steps",
   ];
 
@@ -1615,6 +1688,48 @@ function processAISDKOutput(
   return normalizeAISDKLoggedOutput(omit(merged, denyOutputPaths));
 }
 
+function processAISDKEmbeddingOutput(
+  output: AISDKEmbeddingResult,
+  denyOutputPaths: string[],
+): Record<string, unknown> | AISDKEmbeddingResult {
+  if (!output || typeof output !== "object") {
+    return output;
+  }
+
+  const summarized: Record<string, unknown> = {};
+  const whitelistedFields = [
+    "usage",
+    "totalUsage",
+    "warnings",
+    "providerMetadata",
+    "experimental_providerMetadata",
+  ] as const;
+
+  for (const field of whitelistedFields) {
+    const value = safeSerializableFieldRead(output, field);
+    if (value !== undefined && isSerializableOutputValue(value)) {
+      summarized[field] = value;
+    }
+  }
+
+  const embedding = safeSerializableFieldRead(output, "embedding");
+  if (Array.isArray(embedding)) {
+    summarized.embedding_length = embedding.length;
+  }
+
+  const embeddings = safeSerializableFieldRead(output, "embeddings");
+  if (Array.isArray(embeddings)) {
+    summarized.embedding_count = embeddings.length;
+
+    const firstEmbedding = embeddings.find((item) => Array.isArray(item));
+    if (Array.isArray(firstEmbedding)) {
+      summarized.embedding_length = firstEmbedding.length;
+    }
+  }
+
+  return normalizeAISDKLoggedOutput(omit(summarized, denyOutputPaths));
+}
+
 /**
  * Extract token metrics from AI SDK result.
  */
@@ -1763,12 +1878,17 @@ function extractGetterValues(
     "content",
     "text",
     "object",
+    "value",
+    "values",
+    "embedding",
+    "embeddings",
     "finishReason",
     "usage",
     "totalUsage",
     "toolCalls",
     "toolResults",
     "warnings",
+    "responses",
     "experimental_providerMetadata",
     "providerMetadata",
     "rawResponse",

@@ -883,6 +883,53 @@ describe("AI SDK utility functions", () => {
       expect(result).toBeUndefined();
     });
   });
+
+  describe("processAISDKEmbeddingOutput", () => {
+    it("should summarize single embedding length", () => {
+      const output = {
+        embedding: [0.1, 0.2, 0.3, 0.4],
+        usage: {
+          totalTokens: 10,
+        },
+      };
+
+      const result = processAISDKEmbeddingOutput(output, []);
+      expect(result.embedding).toBeUndefined();
+      expect(result.embedding_length).toBe(4);
+      expect(result.usage).toMatchObject({
+        totalTokens: 10,
+      });
+    });
+
+    it("should summarize embedding batches", () => {
+      const output = {
+        embeddings: [
+          [0.1, 0.2, 0.3],
+          [0.4, 0.5, 0.6],
+        ],
+      };
+
+      const result = processAISDKEmbeddingOutput(output, []);
+      expect(result.embeddings).toBeUndefined();
+      expect(result.embedding_count).toBe(2);
+      expect(result.embedding_length).toBe(3);
+    });
+
+    it("should omit non-whitelisted fields like responses", () => {
+      const output = {
+        embeddings: [[0.1, 0.2, 0.3]],
+        response: { body: "too much" },
+        responses: [{ body: "way too much" }],
+        usage: { totalTokens: 8 },
+      };
+
+      const result = processAISDKEmbeddingOutput(output, []);
+      expect(result.response).toBeUndefined();
+      expect(result.responses).toBeUndefined();
+      expect(result.usage).toMatchObject({ totalTokens: 8 });
+      expect(result.embedding_count).toBe(1);
+    });
+  });
 });
 
 // Helper functions exported for testing
@@ -1038,12 +1085,17 @@ function extractGetterValues(obj: any): any {
   const getterNames = [
     "text",
     "object",
+    "value",
+    "values",
+    "embedding",
+    "embeddings",
     "finishReason",
     "usage",
     "totalUsage",
     "toolCalls",
     "toolResults",
     "warnings",
+    "responses",
     "experimental_providerMetadata",
     "providerMetadata",
     "rawResponse",
@@ -1209,4 +1261,46 @@ function processAISDKOutput(output: any, denyOutputPaths: string[]): any {
   const merged = { ...output, ...getterValues };
 
   return omit(merged, denyOutputPaths);
+}
+
+function processAISDKEmbeddingOutput(
+  output: any,
+  denyOutputPaths: string[],
+): any {
+  if (!output || typeof output !== "object") {
+    return output;
+  }
+
+  const processed: Record<string, unknown> = {};
+  const whitelistedFields = [
+    "usage",
+    "totalUsage",
+    "warnings",
+    "providerMetadata",
+    "experimental_providerMetadata",
+  ];
+
+  for (const field of whitelistedFields) {
+    const value = output?.[field];
+    if (value !== undefined && typeof value !== "function") {
+      processed[field] = value;
+    }
+  }
+
+  if (Array.isArray(output?.embedding)) {
+    processed.embedding_length = output.embedding.length;
+  }
+
+  if (Array.isArray(output?.embeddings)) {
+    processed.embedding_count = output.embeddings.length;
+
+    const firstEmbedding = output.embeddings.find((item: unknown) =>
+      Array.isArray(item),
+    );
+    if (Array.isArray(firstEmbedding)) {
+      processed.embedding_length = firstEmbedding.length;
+    }
+  }
+
+  return processed;
 }
