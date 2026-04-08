@@ -7,6 +7,8 @@ import type {
   AISDKAgentClass,
   AISDKAgentInstance,
   AISDKCallParams,
+  AISDKEmbedFunction,
+  AISDKEmbedParams,
   AISDKGenerateFunction,
   AISDKStreamFunction,
 } from "../../vendor-sdk-types/ai-sdk";
@@ -122,6 +124,10 @@ export function wrapAISDK<T>(aiSDK: T, options: WrapAISDKOptions = {}): T {
           );
         case "streamObject":
           return wrapStreamObject(typedAISDK.streamObject, options, typedAISDK);
+        case "embed":
+          return wrapEmbed(typedAISDK.embed, options, typedAISDK);
+        case "embedMany":
+          return wrapEmbedMany(typedAISDK.embedMany, options, typedAISDK);
         case "Agent":
         case "Experimental_Agent":
         case "ToolLoopAgent":
@@ -269,6 +275,66 @@ const wrapGenerateObject = (
   );
 };
 
+const makeEmbedWrapper = (
+  channel: typeof aiSDKChannels.embed | typeof aiSDKChannels.embedMany,
+  name: string,
+  embed: AISDKEmbedFunction,
+  contextOptions: {
+    aiSDK?: AISDK;
+    self?: unknown;
+    spanType?: SpanTypeAttribute;
+  } = {},
+  options: WrapAISDKOptions = {},
+) => {
+  const wrapper = async function (allParams: AISDKEmbedParams & SpanInfo) {
+    const { span_info, ...params } = allParams;
+    const tracedParams = { ...params };
+
+    return channel.tracePromise(
+      () => embed(tracedParams),
+      createAISDKChannelContext(tracedParams, {
+        aiSDK: contextOptions.aiSDK,
+        denyOutputPaths: options.denyOutputPaths,
+        self: contextOptions.self,
+        span_info: mergeSpanInfo(span_info, {
+          name,
+          spanType: contextOptions.spanType,
+        }),
+      }),
+    );
+  };
+  Object.defineProperty(wrapper, "name", { value: name, writable: false });
+  return wrapper;
+};
+
+const wrapEmbed = (
+  embed: AISDKEmbedFunction,
+  options: WrapAISDKOptions = {},
+  aiSDK?: AISDK,
+) => {
+  return makeEmbedWrapper(
+    aiSDKChannels.embed,
+    "embed",
+    embed,
+    { aiSDK },
+    options,
+  );
+};
+
+const wrapEmbedMany = (
+  embedMany: AISDKEmbedFunction,
+  options: WrapAISDKOptions = {},
+  aiSDK?: AISDK,
+) => {
+  return makeEmbedWrapper(
+    aiSDKChannels.embedMany,
+    "embedMany",
+    embedMany,
+    { aiSDK },
+    options,
+  );
+};
+
 const makeStreamWrapper = (
   channel:
     | typeof aiSDKChannels.streamText
@@ -362,8 +428,8 @@ function mergeSpanInfo(
   };
 }
 
-function createAISDKChannelContext(
-  params: AISDKCallParams,
+function createAISDKChannelContext<TParams extends Record<string, unknown>>(
+  params: TParams,
   context: {
     aiSDK?: AISDK;
     denyOutputPaths?: string[];
@@ -372,7 +438,7 @@ function createAISDKChannelContext(
   } = {},
 ) {
   return {
-    arguments: [params] as [AISDKCallParams],
+    arguments: [params] as [TParams],
     ...(context.aiSDK ? { aiSDK: context.aiSDK } : {}),
     ...(context.denyOutputPaths
       ? { denyOutputPaths: context.denyOutputPaths }

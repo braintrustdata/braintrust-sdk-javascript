@@ -4,9 +4,9 @@ import {
   runTracedScenario,
 } from "../../helpers/provider-runtime.mjs";
 
-const OPENAI_MODEL = "gpt-4o-mini";
+const OPENAI_MODEL = "gpt-4o-mini-2024-07-18";
 const EMBEDDING_MODEL = "text-embedding-3-small";
-const MODERATION_MODEL = "omni-moderation-latest";
+const MODERATION_MODEL = "omni-moderation-2024-09-26";
 const ROOT_NAME = "openai-instrumentation-root";
 const SCENARIO_NAME = "openai-instrumentation";
 
@@ -110,7 +110,7 @@ export async function runOpenAIInstrumentationScenario(options) {
         await client.chat.completions.create({
           model: OPENAI_MODEL,
           messages: [{ role: "user", content: "Reply with exactly OK." }],
-          max_tokens: 8,
+          max_tokens: 12,
           temperature: 0,
         });
       });
@@ -123,7 +123,7 @@ export async function runOpenAIInstrumentationScenario(options) {
             client.chat.completions.create({
               model: OPENAI_MODEL,
               messages: [{ role: "user", content: "Reply with exactly FOUR." }],
-              max_tokens: 8,
+              max_tokens: 12,
               temperature: 0,
             }),
           );
@@ -135,7 +135,7 @@ export async function runOpenAIInstrumentationScenario(options) {
           model: OPENAI_MODEL,
           messages: [{ role: "user", content: "Reply with exactly STREAM." }],
           stream: true,
-          max_tokens: 8,
+          max_tokens: 12,
           temperature: 0,
           stream_options: {
             include_usage: true,
@@ -158,7 +158,7 @@ export async function runOpenAIInstrumentationScenario(options) {
                 },
               ],
               stream: true,
-              max_tokens: 16,
+              max_tokens: 24,
               temperature: 0,
               stream_options: {
                 include_usage: true,
@@ -200,7 +200,7 @@ export async function runOpenAIInstrumentationScenario(options) {
             messages: [
               { role: "user", content: "Reply with exactly SYNC STREAM." },
             ],
-            max_tokens: 16,
+            max_tokens: 24,
             temperature: 0,
           };
 
@@ -252,7 +252,7 @@ export async function runOpenAIInstrumentationScenario(options) {
           await client.responses.create({
             model: OPENAI_MODEL,
             input: "Reply with exactly PARIS.",
-            max_output_tokens: 16,
+            max_output_tokens: 24,
           });
         },
       );
@@ -265,7 +265,7 @@ export async function runOpenAIInstrumentationScenario(options) {
             client.responses.create({
               model: OPENAI_MODEL,
               input: "What is 2 + 2? Reply with just the number.",
-              max_output_tokens: 16,
+              max_output_tokens: 24,
             }),
           );
         },
@@ -279,7 +279,7 @@ export async function runOpenAIInstrumentationScenario(options) {
             client.responses.create({
               model: OPENAI_MODEL,
               input: "Reply with exactly RESPONSE STREAM.",
-              max_output_tokens: 16,
+              max_output_tokens: 24,
               stream: true,
             }),
           );
@@ -294,7 +294,7 @@ export async function runOpenAIInstrumentationScenario(options) {
           const stream = client.responses.stream({
             model: OPENAI_MODEL,
             input: "What is 6 x 6? Reply with just the number.",
-            max_output_tokens: 16,
+            max_output_tokens: 24,
           });
           await collectAsync(stream);
           await stream.finalResponse();
@@ -308,7 +308,7 @@ export async function runOpenAIInstrumentationScenario(options) {
           const stream = client.responses.stream({
             model: OPENAI_MODEL,
             input: "Reply with exactly PARTIAL.",
-            max_output_tokens: 16,
+            max_output_tokens: 24,
           });
           await collectOneAndReturn(stream);
         },
@@ -337,6 +337,39 @@ export async function runOpenAIInstrumentationScenario(options) {
           }
         },
       );
+
+      if (typeof client.responses?.compact === "function") {
+        await runOperation(
+          "openai-responses-compact-operation",
+          "responses-compact",
+          async () => {
+            await client.responses.compact({
+              model: OPENAI_MODEL,
+              input: [
+                {
+                  role: "user",
+                  content: [
+                    {
+                      type: "input_text",
+                      text: "I live in Paris and prefer concise answers.",
+                    },
+                  ],
+                },
+                {
+                  role: "assistant",
+                  content: [
+                    {
+                      type: "output_text",
+                      text: "Understood. I will keep answers concise.",
+                    },
+                  ],
+                },
+              ],
+              instructions: "Preserve only durable user preferences.",
+            });
+          },
+        );
+      }
     },
     metadata: {
       openaiSdkVersion: options.openaiSdkVersion,

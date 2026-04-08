@@ -149,6 +149,13 @@ export interface AISDKTool {
 
 export type AISDKTools = AISDKTool[] | Record<string, AISDKTool>;
 
+export interface AISDKEmbedParams {
+  model?: AISDKModel;
+  value?: unknown;
+  values?: unknown[];
+  [key: string]: unknown;
+}
+
 export interface AISDKCallParams {
   model?: AISDKModel;
   prompt?: AISDKMessage[] | Record<string, unknown>;
@@ -186,6 +193,18 @@ export interface AISDKResult {
   [key: string]: unknown;
 }
 
+export interface AISDKEmbeddingResult extends AISDKResult {
+  embedding?: number[];
+  embeddings?: number[][];
+  value?: unknown;
+  values?: unknown[];
+  responses?: unknown[];
+}
+
+export type AISDKEmbedFunction = (
+  params: AISDKEmbedParams,
+) => Promise<AISDKEmbeddingResult>;
+
 export type AISDKGenerateFunction = (
   params: AISDKCallParams,
 ) => Promise<AISDKResult>;
@@ -216,6 +235,8 @@ export interface AISDKNamespaceBase {
   streamText: AISDKStreamFunction;
   generateObject: AISDKGenerateFunction;
   streamObject: AISDKStreamFunction;
+  embed: AISDKEmbedFunction;
+  embedMany: AISDKEmbedFunction;
   gateway?: AISDKProviderResolver;
   [key: string]: unknown;
 }

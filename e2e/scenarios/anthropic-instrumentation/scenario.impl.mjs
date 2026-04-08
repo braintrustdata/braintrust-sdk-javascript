@@ -41,7 +41,7 @@ async function runAnthropicInstrumentationScenario(
       await runOperation("anthropic-create-operation", "create", async () => {
         await client.messages.create({
           model: ANTHROPIC_MODEL,
-          max_tokens: 16,
+          max_tokens: 24,
           temperature: 0,
           messages: [{ role: "user", content: "Reply with exactly OK." }],
         });
@@ -54,7 +54,7 @@ async function runAnthropicInstrumentationScenario(
           const response = await client.messages
             .create({
               model: ANTHROPIC_MODEL,
-              max_tokens: 16,
+              max_tokens: 24,
               temperature: 0,
               messages: [
                 {
@@ -184,7 +184,7 @@ async function runAnthropicInstrumentationScenario(
           "stream-thinking",
           async () => {
             const stream = await client.messages.create({
-              model: "claude-sonnet-4-5",
+              model: "claude-sonnet-4-5-20250929",
               max_tokens: 2048,
               temperature: 1,
               thinking: {
@@ -211,7 +211,7 @@ async function runAnthropicInstrumentationScenario(
           async () => {
             await client.beta.messages.create({
               model: ANTHROPIC_MODEL,
-              max_tokens: 16,
+              max_tokens: 24,
               temperature: 0,
               messages: [{ role: "user", content: "Reply with exactly BETA." }],
             });

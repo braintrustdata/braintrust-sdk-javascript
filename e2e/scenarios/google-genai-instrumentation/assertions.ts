@@ -9,7 +9,7 @@ import { withScenarioHarness } from "../../helpers/scenario-harness";
 import { findChildSpans, findLatestSpan } from "../../helpers/trace-selectors";
 import { summarizeWrapperContract } from "../../helpers/wrapper-contract";
 
-import { ROOT_NAME, SCENARIO_NAME } from "./scenario.impl.mjs";
+import { GOOGLE_MODEL, ROOT_NAME, SCENARIO_NAME } from "./scenario.impl.mjs";
 
 type RunGoogleGenAIScenario = (harness: {
   runNodeScenarioDir: (options: {
@@ -351,7 +351,7 @@ export function defineGoogleGenAIInstrumentationAssertions(options: {
         expect(span).toBeDefined();
         expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
         expect(span?.row.metadata).toMatchObject({
-          model: "gemini-2.5-flash-lite",
+          model: GOOGLE_MODEL,
         });
       },
     );
@@ -368,7 +368,7 @@ export function defineGoogleGenAIInstrumentationAssertions(options: {
       expect(span).toBeDefined();
       expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
       expect(span?.row.metadata).toMatchObject({
-        model: "gemini-2.5-flash-lite",
+        model: GOOGLE_MODEL,
       });
       expect(JSON.stringify(span?.input)).toContain("file.png");
     });
@@ -388,7 +388,7 @@ export function defineGoogleGenAIInstrumentationAssertions(options: {
         expect(span).toBeDefined();
         expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
         expect(span?.row.metadata).toMatchObject({
-          model: "gemini-2.5-flash-lite",
+          model: GOOGLE_MODEL,
         });
         expect(span?.metrics).toMatchObject({
           time_to_first_token: expect.any(Number),
@@ -416,7 +416,7 @@ export function defineGoogleGenAIInstrumentationAssertions(options: {
         expect(span).toBeDefined();
         expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
         expect(span?.row.metadata).toMatchObject({
-          model: "gemini-2.5-flash-lite",
+          model: GOOGLE_MODEL,
         });
         expect(span?.metrics).toMatchObject({
           time_to_first_token: expect.any(Number),
@@ -449,7 +449,7 @@ export function defineGoogleGenAIInstrumentationAssertions(options: {
       expect(span).toBeDefined();
       expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
       expect(span?.row.metadata).toMatchObject({
-        model: "gemini-2.5-flash-lite",
+        model: GOOGLE_MODEL,
       });
       expect(
         output?.functionCalls?.some((call) => call.name === "get_weather") ||

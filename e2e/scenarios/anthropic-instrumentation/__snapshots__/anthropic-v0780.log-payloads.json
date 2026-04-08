@@ -321,7 +321,7 @@
       }
     ],
     "metadata": {
-      "model": "claude-sonnet-4-5",
+      "model": "claude-sonnet-4-5-20250929",
       "provider": "anthropic",
       "stop_reason": "end_turn",
       "stop_sequence": null

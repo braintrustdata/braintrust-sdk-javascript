@@ -24,7 +24,7 @@
   {
     "input": {
       "config": {
-        "maxOutputTokens": 16,
+        "maxOutputTokens": 24,
         "temperature": 0
       },
       "contents": {
@@ -105,7 +105,7 @@
   {
     "input": {
       "config": {
-        "maxOutputTokens": 24,
+        "maxOutputTokens": 48,
         "temperature": 0
       },
       "contents": [
@@ -207,7 +207,7 @@
   {
     "input": {
       "config": {
-        "maxOutputTokens": 32,
+        "maxOutputTokens": 64,
         "temperature": 0
       },
       "contents": {
@@ -271,7 +271,7 @@
   {
     "input": {
       "config": {
-        "maxOutputTokens": 16,
+        "maxOutputTokens": 24,
         "temperature": 0
       },
       "contents": {

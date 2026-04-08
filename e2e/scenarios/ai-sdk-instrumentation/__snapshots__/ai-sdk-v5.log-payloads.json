@@ -21,7 +21,7 @@
       "prompt": "<prompt>"
     },
     "metadata": {
-      "model": "gpt-4o-mini",
+      "model": "gpt-4o-mini-2024-07-18",
       "provider": "openai.responses"
     },
     "name": "generateText",
@@ -40,7 +40,7 @@
       "prompt": "<prompt>"
     },
     "metadata": {
-      "model": "gpt-4o-mini",
+      "model": "gpt-4o-mini-2024-07-18",
       "provider": "openai.responses"
     },
     "name": "streamText",
@@ -59,7 +59,7 @@
       "prompt": "<prompt>"
     },
     "metadata": {
-      "model": "gpt-4o-mini",
+      "model": "gpt-4o-mini-2024-07-18",
       "provider": "openai.responses"
     },
     "name": "generateText",
@@ -347,7 +347,7 @@
       "schema": "<schema>"
     },
     "metadata": {
-      "model": "gpt-4o-mini",
+      "model": "gpt-4o-mini-2024-07-18",
       "provider": "openai.responses"
     },
     "name": "generateObject",
@@ -367,7 +367,7 @@
       "schema": "<schema>"
     },
     "metadata": {
-      "model": "gpt-4o-mini",
+      "model": "gpt-4o-mini-2024-07-18",
       "provider": "openai.responses"
     },
     "name": "streamObject",
@@ -390,7 +390,7 @@
       ]
     },
     "metadata": {
-      "model": "gpt-4o-mini",
+      "model": "gpt-4o-mini-2024-07-18",
       "provider": "openai.responses"
     },
     "name": "Agent.generate",
@@ -413,7 +413,7 @@
       ]
     },
     "metadata": {
-      "model": "gpt-4o-mini",
+      "model": "gpt-4o-mini-2024-07-18",
       "provider": "openai.responses"
     },
     "name": "Agent.stream",

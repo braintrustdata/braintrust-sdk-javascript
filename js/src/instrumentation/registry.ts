@@ -21,6 +21,7 @@ export interface InstrumentationConfig {
     google?: boolean;
     claudeAgentSDK?: boolean;
     openrouter?: boolean;
+    openrouterAgent?: boolean;
     mistral?: boolean;
   };
 }
@@ -108,6 +109,7 @@ class PluginRegistry {
       google: true,
       claudeAgentSDK: true,
       openrouter: true,
+      openrouterAgent: true,
       mistral: true,
     };
   }

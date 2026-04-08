@@ -12,8 +12,6 @@ import { initLogger, _exportsForTestingOnly } from "../../logger";
 import { configureNode } from "../../node/config";
 import { z } from "zod/v3";
 
-debugger;
-
 const makePromptMessage = (content: string) => ({
   type: "user",
   message: { role: "user", content },
@@ -761,10 +759,14 @@ describe.skipIf(!claudeSDK)("claude-agent-sdk integration tests", () => {
       );
     });
 
-    // Verify span hierarchy (all children should reference the root task span)
+    // Verify span hierarchy
     const rootSpanId = taskSpan!.span_id;
     spans
-      .filter((s) => s.span_id !== rootSpanId)
+      .filter(
+        (s) =>
+          s.span_id !== rootSpanId &&
+          (s["span_attributes"] as Record<string, unknown>).type !== "tool",
+      )
       .forEach((span) => {
         expect(span.root_span_id).toBe(rootSpanId);
         expect(span.span_parents).toContain(rootSpanId);
@@ -933,15 +935,53 @@ describe.skipIf(!claudeSDK)("claude-agent-sdk integration tests", () => {
     );
     expect(subAgentLlmSpans.length).toBeGreaterThanOrEqual(1);
 
-    // Tool spans within the sub-agent should be parented under the sub-agent, not root
+    const spanById = new Map(
+      spans.map((span) => [span.span_id, span] as const),
+    );
+    const isDescendantOf = (
+      span: (typeof spans)[number],
+      ancestorId: string,
+    ): boolean => {
+      const queue = [...((span.span_parents as string[] | undefined) ?? [])];
+      const visited = new Set<string>();
+
+      while (queue.length > 0) {
+        const parentId = queue.shift();
+        if (!parentId || visited.has(parentId)) {
+          continue;
+        }
+        if (parentId === ancestorId) {
+          return true;
+        }
+        visited.add(parentId);
+        const parentSpan = spanById.get(parentId);
+        if (!parentSpan) {
+          continue;
+        }
+        const parentAncestors =
+          (parentSpan.span_parents as string[] | undefined) ?? [];
+        queue.push(...parentAncestors);
+      }
+
+      return false;
+    };
+
+    // Local tool spans should be nested under the sub-agent.
     const subAgentToolSpans = spans.filter(
       (s) =>
         (s["span_attributes"] as Record<string, unknown>).type === "tool" &&
-        (s.span_parents as string[])?.includes(subAgentSpan!.span_id as string),
+        (s["span_attributes"] as Record<string, unknown>).name ===
+          "tool: calculator/calculator" &&
+        isDescendantOf(s, subAgentSpan!.span_id as string),
     );
     expect(subAgentToolSpans.length).toBeGreaterThanOrEqual(1);
     subAgentToolSpans.forEach((toolSpan) => {
-      expect(toolSpan.span_parents).not.toContain(rootSpan!.span_id);
+      const metadata = toolSpan.metadata as Record<string, unknown>;
+      expect(metadata["gen_ai.tool.name"]).toBe("calculator");
+      expect(metadata["mcp.server"]).toBe("calculator");
+      expect(metadata["claude_agent_sdk.raw_tool_name"]).toBe(
+        "mcp__calculator__calculator",
+      );
     });
   }, 60000);
 });

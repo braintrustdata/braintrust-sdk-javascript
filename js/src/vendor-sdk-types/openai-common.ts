@@ -39,6 +39,11 @@ export interface OpenAIResponseCreateParams {
   [key: string]: unknown;
 }
 
+export interface OpenAIResponseCompactParams {
+  input: unknown;
+  [key: string]: unknown;
+}
+
 // Responses
 
 export interface OpenAIUsage {
@@ -208,6 +213,10 @@ export interface OpenAIResponses {
     params: OpenAIResponseCreateParams,
     options?: unknown,
   ) => OpenAIAPIPromise<OpenAIResponse | OpenAIResponseStream>;
+  compact?: (
+    params: OpenAIResponseCompactParams,
+    options?: unknown,
+  ) => OpenAIAPIPromise<OpenAIResponse>;
   parse?: (
     params: OpenAIResponseCreateParams,
     options?: unknown,

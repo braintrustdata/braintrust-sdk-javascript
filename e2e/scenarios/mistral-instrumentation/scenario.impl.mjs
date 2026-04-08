@@ -370,7 +370,7 @@ async function runMistralInstrumentationScenario(
                       content: "Reply with exactly: observability",
                     },
                   ],
-                  maxTokens: 16,
+                  maxTokens: 24,
                   temperature: 0,
                 }),
               MISTRAL_REQUEST_RETRY_OPTIONS,
@@ -569,7 +569,7 @@ async function runMistralInstrumentationScenario(
                   responseFormat: {
                     type: "text",
                   },
-                  maxTokens: 12,
+                  maxTokens: 16,
                   temperature: 0,
                 }),
               MISTRAL_REQUEST_RETRY_OPTIONS,
@@ -635,7 +635,7 @@ async function runMistralInstrumentationScenario(
                 responseFormat: {
                   type: "text",
                 },
-                maxTokens: 12,
+                maxTokens: 16,
                 stream: true,
                 temperature: 0,
               });

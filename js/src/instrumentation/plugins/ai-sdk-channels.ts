@@ -3,6 +3,8 @@ import type { ChannelSpanInfo } from "../core/types";
 import type {
   AISDK,
   AISDKCallParams,
+  AISDKEmbedParams,
+  AISDKEmbeddingResult,
   AISDKResult,
 } from "../../vendor-sdk-types/ai-sdk";
 
@@ -68,6 +70,20 @@ export const aiSDKChannels = defineChannels("ai", {
   >({
     channelName: "streamObject.sync",
     kind: "sync-stream",
+  }),
+  embed: channel<[AISDKEmbedParams], AISDKEmbeddingResult, AISDKChannelContext>(
+    {
+      channelName: "embed",
+      kind: "async",
+    },
+  ),
+  embedMany: channel<
+    [AISDKEmbedParams],
+    AISDKEmbeddingResult,
+    AISDKChannelContext
+  >({
+    channelName: "embedMany",
+    kind: "async",
   }),
   agentGenerate: channel<
     [AISDKCallParams],

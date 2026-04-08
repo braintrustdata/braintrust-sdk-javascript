@@ -29,7 +29,7 @@ import type {
  * - Embeddings
  * - Moderations
  * - Beta API (parse, stream)
- * - Responses API (create, stream, parse)
+ * - Responses API (create, stream, parse, compact)
  */
 export class OpenAIPlugin extends BasePlugin {
   constructor() {
@@ -271,6 +271,42 @@ export class OpenAIPlugin extends BasePlugin {
           return metrics;
         },
         aggregateChunks: aggregateResponseStreamEvents,
+      }),
+    );
+
+    // Responses API - compact
+    this.unsubscribers.push(
+      traceAsyncChannel(openAIChannels.responsesCompact, {
+        name: "openai.responses.compact",
+        type: SpanTypeAttribute.LLM,
+        extractInput: ([params]) => {
+          const { input, ...metadata } = params;
+          return {
+            input: processInputAttachments(input),
+            metadata: { ...metadata, provider: "openai" },
+          };
+        },
+        extractOutput: (result) => {
+          return processImagesInOutput(result?.output);
+        },
+        extractMetadata: (result) => {
+          if (!result) {
+            return undefined;
+          }
+          const { output: _output, usage: _usage, ...metadata } = result;
+          return Object.keys(metadata).length > 0 ? metadata : undefined;
+        },
+        extractMetrics: (result, startTime, endEvent) => {
+          const metrics = withCachedMetric(
+            parseMetricsFromUsage(result?.usage),
+            result,
+            endEvent,
+          );
+          if (startTime) {
+            metrics.time_to_first_token = getCurrentUnixTimestamp() - startTime;
+          }
+          return metrics;
+        },
       }),
     );
   }

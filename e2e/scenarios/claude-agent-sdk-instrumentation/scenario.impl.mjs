@@ -1,4 +1,4 @@
-import { wrapClaudeAgentSDK } from "braintrust";
+import { traced, wrapClaudeAgentSDK } from "braintrust";
 import {
   collectAsync,
   runOperation,
@@ -33,27 +33,28 @@ async function runClaudeAgentSDKScenario({ decorateSDK, sdk }) {
       b: z.number(),
     },
     async (args) => {
-      let result;
-
-      switch (args.operation) {
-        case "add":
-          result = args.a + args.b;
-          break;
-        case "subtract":
-          result = args.a - args.b;
-          break;
-        case "multiply":
-          result = args.a * args.b;
-          break;
-        case "divide":
-          if (args.b === 0) {
-            throw new Error("division by zero");
+      const result = await traced(
+        async () => {
+          switch (args.operation) {
+            case "add":
+              return args.a + args.b;
+            case "subtract":
+              return args.a - args.b;
+            case "multiply":
+              return args.a * args.b;
+            case "divide":
+              if (args.b === 0) {
+                throw new Error("division by zero");
+              }
+              return args.a / args.b;
+            default:
+              throw new Error(`unsupported operation: ${args.operation}`);
           }
-          result = args.a / args.b;
-          break;
-        default:
-          throw new Error(`unsupported operation: ${args.operation}`);
-      }
+        },
+        {
+          name: `calculator-local-handler-${args.operation}`,
+        },
+      );
 
       return {
         content: [
@@ -121,7 +122,7 @@ async function runClaudeAgentSDKScenario({ decorateSDK, sdk }) {
                 agents: {
                   "math-expert": {
                     description: "Math specialist",
-                    model: "haiku",
+                    model: CLAUDE_AGENT_MODEL,
                     prompt:
                       "You are a math expert. Use the calculator tool for calculations. Be concise.",
                   },

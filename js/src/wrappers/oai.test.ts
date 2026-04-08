@@ -734,6 +734,74 @@ describe("openai client unit tests", TEST_SUITE_OPTIONS, () => {
     assert.isTrue(m.completion_reasoning_tokens >= 0);
   });
 
+  test("openai.responses.compact", async (context) => {
+    if (!oai.responses || typeof oai.responses.compact !== "function") {
+      context.skip();
+    }
+    const wrappedCompact = client.responses?.compact;
+    if (typeof wrappedCompact !== "function") {
+      context.skip();
+    }
+
+    assert.lengthOf(await backgroundLogger.drain(), 0);
+
+    const compactInput = [
+      {
+        role: "user",
+        content: [
+          {
+            type: "input_text",
+            text: "My name is Ada and I like concise responses.",
+          },
+        ],
+      },
+      {
+        role: "assistant",
+        content: [
+          {
+            type: "output_text",
+            text: "Nice to meet you, Ada. I will keep responses concise.",
+          },
+        ],
+      },
+    ];
+
+    const compactArgs = {
+      model: TEST_MODEL,
+      input: compactInput,
+      instructions: "Keep only durable user preferences.",
+    };
+
+    const unwrappedResponse = await oai.responses.compact(compactArgs);
+    assert.ok(unwrappedResponse);
+    assert.lengthOf(await backgroundLogger.drain(), 0);
+
+    const start = getCurrentUnixTimestamp();
+    const response = await wrappedCompact(compactArgs);
+    const end = getCurrentUnixTimestamp();
+
+    assert.ok(response);
+
+    const spans = await backgroundLogger.drain();
+    assert.lengthOf(spans, 1);
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any
+    const span = spans[0] as any;
+    assert.equal(span.span_attributes.name, "openai.responses.compact");
+    assert.equal(span.span_attributes.type, "llm");
+    assert.deepEqual(span.input, compactInput);
+    assert.equal(span.metadata.provider, "openai");
+    assert.equal(span.metadata.instructions, compactArgs.instructions);
+    assert.ok(span.metadata.model.startsWith(TEST_MODEL));
+    assert.isDefined(span.output);
+
+    const m = span.metrics;
+    assert.isTrue(start <= m.start && m.start < m.end && m.end <= end);
+    if (m.tokens !== undefined) {
+      assert.isTrue(m.tokens > 0);
+      assert.isTrue(m.prompt_tokens > 0);
+    }
+  });
+
   test("openai.chat.completions.parse (v5 GA method)", async () => {
     // Test that the parse method is properly wrapped in the GA namespace (v5)
     if (!oai.chat?.completions?.parse) {

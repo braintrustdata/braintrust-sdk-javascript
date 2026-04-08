@@ -1,8 +1,15 @@
 import { claudeAgentSDKChannels } from "../../instrumentation/plugins/claude-agent-sdk-channels";
+import { CLAUDE_AGENT_SDK_SKIP_LOCAL_TOOL_HOOKS_OPTION } from "../../instrumentation/plugins/claude-agent-sdk-instrumentation-constants";
+import { wrapLocalClaudeToolHandler } from "../../instrumentation/plugins/claude-agent-sdk-local-tool-spans";
 import type {
   ClaudeAgentSDKModule,
   ClaudeAgentSDKQueryParams,
 } from "../../vendor-sdk-types/claude-agent-sdk";
+
+type LocalToolMetadata = {
+  serverName?: string;
+  toolName: string;
+};
 
 /**
  * Wraps the Claude Agent SDK with Braintrust tracing. Query calls only publish
@@ -36,16 +43,22 @@ function wrapClaudeAgentQuery(
   const proxy = new Proxy(queryFn, {
     apply(target, thisArg, argArray) {
       const params = (argArray[0] ?? {}) as ClaudeAgentSDKQueryParams;
+      const wrappedParams: ClaudeAgentSDKQueryParams = {
+        ...params,
+        options: {
+          ...(params.options ?? {}),
+          [CLAUDE_AGENT_SDK_SKIP_LOCAL_TOOL_HOOKS_OPTION]: true,
+        },
+      };
       const invocationTarget: unknown =
         thisArg === proxy || thisArg === undefined
           ? (defaultThis ?? thisArg)
           : thisArg;
       return claudeAgentSDKChannels.query.traceSync(
-        // Async iterator shenanigans are handled purely in the plugin which consumes this channel emission.
-        () => Reflect.apply(target, invocationTarget, [params]),
+        () => Reflect.apply(target, invocationTarget, [wrappedParams]),
         // The channel carries no extra context fields, but the generated
         // StartOf<> type for Record<string, never> is overly strict here.
-        { arguments: [params] } as never,
+        { arguments: [wrappedParams] } as never,
       );
     },
   });
@@ -53,8 +66,91 @@ function wrapClaudeAgentQuery(
   return proxy;
 }
 
+function wrapClaudeAgentTool(
+  toolFn: ClaudeAgentSDKModule["tool"],
+  localToolMetadataByTool: WeakMap<object, LocalToolMetadata>,
+  defaultThis?: unknown,
+): ClaudeAgentSDKModule["tool"] {
+  const proxy = new Proxy(toolFn, {
+    apply(target, thisArg, argArray) {
+      const invocationTarget: unknown =
+        thisArg === proxy || thisArg === undefined
+          ? (defaultThis ?? thisArg)
+          : thisArg;
+      const wrappedArgs = [...argArray];
+
+      const toolName = wrappedArgs[0];
+      let handlerIndex = -1;
+      for (let i = wrappedArgs.length - 1; i >= 0; i -= 1) {
+        if (typeof wrappedArgs[i] === "function") {
+          handlerIndex = i;
+          break;
+        }
+      }
+      if (typeof toolName !== "string" || handlerIndex === -1) {
+        return Reflect.apply(target, invocationTarget, wrappedArgs);
+      }
+
+      const localToolMetadata: LocalToolMetadata = { toolName };
+      const originalHandler = wrappedArgs[handlerIndex] as (
+        ...args: unknown[]
+      ) => unknown;
+      wrappedArgs[handlerIndex] = wrapLocalClaudeToolHandler(
+        originalHandler,
+        () => localToolMetadata,
+      );
+
+      const wrappedTool = Reflect.apply(target, invocationTarget, wrappedArgs);
+      if (wrappedTool && typeof wrappedTool === "object") {
+        localToolMetadataByTool.set(wrappedTool, localToolMetadata);
+      }
+
+      return wrappedTool;
+    },
+  });
+
+  return proxy;
+}
+
+function wrapCreateSdkMcpServer(
+  createSdkMcpServerFn: (...args: unknown[]) => unknown,
+  localToolMetadataByTool: WeakMap<object, LocalToolMetadata>,
+  defaultThis?: unknown,
+): (...args: unknown[]) => unknown {
+  const proxy = new Proxy(createSdkMcpServerFn, {
+    apply(target, thisArg, argArray) {
+      const invocationTarget: unknown =
+        thisArg === proxy || thisArg === undefined
+          ? (defaultThis ?? thisArg)
+          : thisArg;
+      const config = argArray[0] as
+        | { name?: unknown; tools?: unknown[] }
+        | undefined;
+      const serverName = config?.name;
+
+      if (typeof serverName === "string" && Array.isArray(config?.tools)) {
+        for (const tool of config.tools) {
+          if (!tool || typeof tool !== "object") {
+            continue;
+          }
+
+          const metadata = localToolMetadataByTool.get(tool);
+          if (metadata) {
+            metadata.serverName = serverName;
+          }
+        }
+      }
+
+      return Reflect.apply(target, invocationTarget, argArray);
+    },
+  });
+
+  return proxy as (...args: unknown[]) => unknown;
+}
+
 function claudeAgentSDKProxy(sdk: ClaudeAgentSDKModule): ClaudeAgentSDKModule {
   const cache = new Map<PropertyKey, unknown>();
+  const localToolMetadataByTool = new WeakMap<object, LocalToolMetadata>();
 
   return new Proxy(sdk, {
     get(target, prop, receiver) {
@@ -68,6 +164,26 @@ function claudeAgentSDKProxy(sdk: ClaudeAgentSDKModule): ClaudeAgentSDKModule {
         const wrappedQuery = wrapClaudeAgentQuery(target.query, target);
         cache.set(prop, wrappedQuery);
         return wrappedQuery;
+      }
+
+      if (prop === "tool" && typeof value === "function") {
+        const wrappedTool = wrapClaudeAgentTool(
+          target.tool,
+          localToolMetadataByTool,
+          target,
+        );
+        cache.set(prop, wrappedTool);
+        return wrappedTool;
+      }
+
+      if (prop === "createSdkMcpServer" && typeof value === "function") {
+        const wrappedCreateSdkMcpServer = wrapCreateSdkMcpServer(
+          value as (...args: unknown[]) => unknown,
+          localToolMetadataByTool,
+          target,
+        );
+        cache.set(prop, wrappedCreateSdkMcpServer);
+        return wrappedCreateSdkMcpServer;
       }
 
       if (typeof value === "function") {

@@ -28,7 +28,7 @@
     "has_input": true,
     "has_output": true,
     "metadata": {
-      "model": "gpt-4o-mini",
+      "model": "gpt-4o-mini-2024-07-18",
       "provider": "openai.responses"
     },
     "name": "generateText",
@@ -55,7 +55,7 @@
     "has_input": true,
     "has_output": true,
     "metadata": {
-      "model": "gpt-4o-mini",
+      "model": "gpt-4o-mini-2024-07-18",
       "provider": "openai.responses"
     },
     "name": "streamText",
@@ -82,7 +82,7 @@
     "has_input": true,
     "has_output": true,
     "metadata": {
-      "model": "gpt-4o-mini",
+      "model": "gpt-4o-mini-2024-07-18",
       "provider": "openai.responses"
     },
     "name": "generateText",
@@ -153,7 +153,7 @@
     "has_input": true,
     "has_output": true,
     "metadata": {
-      "model": "gpt-4o-mini",
+      "model": "gpt-4o-mini-2024-07-18",
       "provider": "openai.responses"
     },
     "name": "generateObject",
@@ -180,7 +180,7 @@
     "has_input": true,
     "has_output": true,
     "metadata": {
-      "model": "gpt-4o-mini",
+      "model": "gpt-4o-mini-2024-07-18",
       "provider": "openai.responses"
     },
     "name": "streamObject",
@@ -207,7 +207,7 @@
     "has_input": true,
     "has_output": true,
     "metadata": {
-      "model": "gpt-4o-mini",
+      "model": "gpt-4o-mini-2024-07-18",
       "provider": "openai.responses"
     },
     "name": "ToolLoopAgent.generate",
@@ -234,7 +234,7 @@
     "has_input": true,
     "has_output": true,
     "metadata": {
-      "model": "gpt-4o-mini",
+      "model": "gpt-4o-mini-2024-07-18",
       "provider": "openai.responses"
     },
     "name": "ToolLoopAgent.stream",

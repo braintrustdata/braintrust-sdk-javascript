@@ -31,7 +31,7 @@
     "has_input": true,
     "has_output": true,
     "metadata": {
-      "model": "mistral-small-latest",
+      "model": "mistral-small-2506",
       "provider": "mistral"
     },
     "metric_keys": [
@@ -67,7 +67,7 @@
     "has_input": true,
     "has_output": true,
     "metadata": {
-      "model": "mistral-small-latest",
+      "model": "mistral-small-2506",
       "provider": "mistral"
     },
     "metric_keys": [
@@ -103,7 +103,7 @@
     "has_input": true,
     "has_output": true,
     "metadata": {
-      "model": "mistral-small-latest",
+      "model": "mistral-small-2506",
       "provider": "mistral"
     },
     "metric_keys": [
@@ -124,7 +124,7 @@
     "has_input": true,
     "has_output": true,
     "metadata": {
-      "model": "mistral-small-latest",
+      "model": "mistral-small-2506",
       "provider": "mistral"
     },
     "metric_keys": [
@@ -145,7 +145,7 @@
     "has_input": true,
     "has_output": true,
     "metadata": {
-      "model": "mistral-small-latest",
+      "model": "mistral-small-2506",
       "provider": "mistral"
     },
     "metric_keys": [
@@ -181,7 +181,7 @@
     "has_input": true,
     "has_output": true,
     "metadata": {
-      "model": "codestral-latest",
+      "model": "codestral-2508",
       "provider": "mistral"
     },
     "metric_keys": [
@@ -217,7 +217,7 @@
     "has_input": true,
     "has_output": true,
     "metadata": {
-      "model": "codestral-latest",
+      "model": "codestral-2508",
       "provider": "mistral"
     },
     "metric_keys": [
@@ -250,7 +250,7 @@
     "has_input": true,
     "has_output": true,
     "metadata": {
-      "model": "mistral-small-latest",
+      "model": "mistral-small-2506",
       "provider": "mistral"
     },
     "metric_keys": [
@@ -286,7 +286,7 @@
     "has_input": true,
     "has_output": true,
     "metadata": {
-      "model": "mistral-small-latest",
+      "model": "mistral-small-2506",
       "provider": "mistral"
     },
     "metric_keys": [
@@ -322,7 +322,7 @@
     "has_input": true,
     "has_output": true,
     "metadata": {
-      "model": "mistral-small-latest",
+      "model": "mistral-small-2506",
       "provider": "mistral"
     },
     "metric_keys": [
