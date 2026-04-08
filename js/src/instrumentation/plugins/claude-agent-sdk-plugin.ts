@@ -729,6 +729,31 @@ async function handleStreamMessage(
   }
 
   if (message.type === "assistant" && message.message?.usage) {
+    const parentToolUseId = message.parent_tool_use_id ?? null;
+    const parentKey = llmParentKey(parentToolUseId);
+    if (!state.activeLlmSpansByParentToolUse.has(parentKey)) {
+      let llmParentSpan = await state.span.export();
+      if (parentToolUseId) {
+        const subAgentSpan = await ensureSubAgentSpan(
+          state.pendingSubAgentNames,
+          state.span,
+          state.subAgentSpans,
+          parentToolUseId,
+        );
+        llmParentSpan = await subAgentSpan.export();
+      }
+
+      const llmSpan = startSpan({
+        name: "anthropic.messages.create",
+        parent: llmParentSpan,
+        spanAttributes: {
+          type: SpanTypeAttribute.LLM,
+        },
+        startTime: state.currentMessageStartTime,
+      });
+      state.activeLlmSpansByParentToolUse.set(parentKey, llmSpan);
+    }
+
     state.currentMessages.push(message);
   }
 
@@ -912,8 +937,8 @@ export class ClaudeAgentSDKPlugin extends BasePlugin {
         const resolveToolUseParentSpan: ParentSpanResolver = async (
           toolUseID,
         ) => {
-          const parentToolUseId = toolUseToParent.get(toolUseID);
-          const parentKey = llmParentKey(parentToolUseId ?? null);
+          const parentToolUseId = toolUseToParent.get(toolUseID) ?? null;
+          const parentKey = llmParentKey(parentToolUseId);
           const activeLlmSpan = activeLlmSpansByParentToolUse.get(parentKey);
           if (activeLlmSpan) {
             return activeLlmSpan.export();
@@ -932,41 +957,14 @@ export class ClaudeAgentSDKPlugin extends BasePlugin {
               subAgentSpans,
               parentToolUseId,
             );
-            const parentSpan = await subAgentSpan.export();
-            const llmSpan = startSpan({
-              name: "anthropic.messages.create",
-              parent: parentSpan,
-              spanAttributes: {
-                type: SpanTypeAttribute.LLM,
-              },
-              startTime: getCurrentUnixTimestamp(),
-            });
-            activeLlmSpansByParentToolUse.set(parentKey, llmSpan);
-            const llmSpanExport = await llmSpan.export();
-            latestLlmParentBySubAgentToolUse.set(
-              parentToolUseId,
-              llmSpanExport,
-            );
-            return llmSpanExport;
+            return subAgentSpan.export();
           }
 
           if (latestRootLlmParentRef.value) {
             return latestRootLlmParentRef.value;
           }
 
-          const parentSpan = await span.export();
-          const llmSpan = startSpan({
-            name: "anthropic.messages.create",
-            parent: parentSpan,
-            spanAttributes: {
-              type: SpanTypeAttribute.LLM,
-            },
-            startTime: getCurrentUnixTimestamp(),
-          });
-          activeLlmSpansByParentToolUse.set(parentKey, llmSpan);
-          const llmSpanExport = await llmSpan.export();
-          latestRootLlmParentRef.value = llmSpanExport;
-          return llmSpanExport;
+          return span.export();
         };
 
         localToolContext.resolveLocalToolParent = resolveToolUseParentSpan;
