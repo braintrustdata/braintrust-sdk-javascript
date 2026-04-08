@@ -45,7 +45,7 @@ async function runGoogleGenAIInstrumentationScenario(sdk, options = {}) {
           model: GOOGLE_MODEL,
           contents: "Reply with exactly PARIS.",
           config: {
-            maxOutputTokens: 16,
+            maxOutputTokens: 24,
             temperature: 0,
           },
         });
@@ -74,7 +74,7 @@ async function runGoogleGenAIInstrumentationScenario(sdk, options = {}) {
               },
             ],
             config: {
-              maxOutputTokens: 24,
+              maxOutputTokens: 48,
               temperature: 0,
             },
           });
@@ -86,7 +86,7 @@ async function runGoogleGenAIInstrumentationScenario(sdk, options = {}) {
           model: GOOGLE_MODEL,
           contents: "Count from 1 to 3 and include the words one two three.",
           config: {
-            maxOutputTokens: 32,
+            maxOutputTokens: 64,
             temperature: 0,
           },
         });
@@ -101,7 +101,7 @@ async function runGoogleGenAIInstrumentationScenario(sdk, options = {}) {
             model: GOOGLE_MODEL,
             contents: "Reply with exactly BONJOUR.",
             config: {
-              maxOutputTokens: 16,
+              maxOutputTokens: 24,
               temperature: 0,
             },
           });
@@ -149,4 +149,4 @@ export async function runAutoGoogleGenAIInstrumentation(sdk) {
   await runGoogleGenAIInstrumentationScenario(sdk);
 }
 
-export { ROOT_NAME, SCENARIO_NAME };
+export { GOOGLE_MODEL, ROOT_NAME, SCENARIO_NAME };

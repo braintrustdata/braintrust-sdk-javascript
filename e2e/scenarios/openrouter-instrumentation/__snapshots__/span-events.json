@@ -31,7 +31,7 @@
     "has_input": true,
     "has_output": true,
     "metadata": {
-      "model": "gpt-4o-mini",
+      "model": "gpt-4o-mini-2024-07-18",
       "provider": "openai"
     },
     "metric_keys": [
@@ -73,7 +73,7 @@
     "has_input": true,
     "has_output": true,
     "metadata": {
-      "model": "gpt-4o-mini",
+      "model": "gpt-4o-mini-2024-07-18",
       "provider": "openai"
     },
     "metric_keys": [
@@ -151,7 +151,7 @@
     "has_input": true,
     "has_output": true,
     "metadata": {
-      "model": "gpt-4o-mini",
+      "model": "gpt-4o-mini-2024-07-18",
       "provider": "openai"
     },
     "metric_keys": [
@@ -193,7 +193,7 @@
     "has_input": true,
     "has_output": true,
     "metadata": {
-      "model": "gpt-4o-mini",
+      "model": "gpt-4o-mini-2024-07-18",
       "provider": "openai"
     },
     "metric_keys": [
@@ -235,7 +235,7 @@
     "has_input": true,
     "has_output": true,
     "metadata": {
-      "model": "gpt-4o-mini",
+      "model": "gpt-4o-mini-2024-07-18",
       "provider": "openai"
     },
     "metric_keys": [

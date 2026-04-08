@@ -33,7 +33,7 @@
       "type": "messages"
     },
     "metadata": {
-      "model": "mistral-small-latest",
+      "model": "mistral-small-2506",
       "provider": "mistral"
     },
     "metric_keys": [
@@ -74,7 +74,7 @@
       "type": "messages"
     },
     "metadata": {
-      "model": "mistral-small-latest",
+      "model": "mistral-small-2506",
       "provider": "mistral"
     },
     "metric_keys": [
@@ -115,7 +115,7 @@
       "type": "messages"
     },
     "metadata": {
-      "model": "mistral-small-latest",
+      "model": "mistral-small-2506",
       "provider": "mistral"
     },
     "metric_keys": [
@@ -145,7 +145,7 @@
       "type": "messages"
     },
     "metadata": {
-      "model": "mistral-small-latest",
+      "model": "mistral-small-2506",
       "provider": "mistral"
     },
     "metric_keys": [
@@ -176,7 +176,7 @@
       "type": "messages"
     },
     "metadata": {
-      "model": "mistral-small-latest",
+      "model": "mistral-small-2506",
       "provider": "mistral"
     },
     "metric_keys": [
@@ -211,7 +211,7 @@
     "has_output": true,
     "input": "<string>",
     "metadata": {
-      "model": "codestral-latest",
+      "model": "codestral-2508",
       "provider": "mistral"
     },
     "metric_keys": [
@@ -246,7 +246,7 @@
     "has_output": true,
     "input": "<string>",
     "metadata": {
-      "model": "codestral-latest",
+      "model": "codestral-2508",
       "provider": "mistral"
     },
     "metric_keys": [
@@ -284,7 +284,7 @@
       "type": "messages"
     },
     "metadata": {
-      "model": "mistral-small-latest",
+      "model": "mistral-small-2506",
       "provider": "mistral"
     },
     "metric_keys": [
@@ -325,7 +325,7 @@
       "type": "messages"
     },
     "metadata": {
-      "model": "mistral-small-latest",
+      "model": "mistral-small-2506",
       "provider": "mistral"
     },
     "metric_keys": [
@@ -366,7 +366,7 @@
       "type": "messages"
     },
     "metadata": {
-      "model": "mistral-small-latest",
+      "model": "mistral-small-2506",
       "provider": "mistral"
     },
     "metric_keys": [

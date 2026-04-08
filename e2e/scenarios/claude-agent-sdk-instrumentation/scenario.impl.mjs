@@ -121,7 +121,7 @@ async function runClaudeAgentSDKScenario({ decorateSDK, sdk }) {
                 agents: {
                   "math-expert": {
                     description: "Math specialist",
-                    model: "haiku",
+                    model: CLAUDE_AGENT_MODEL,
                     prompt:
                       "You are a math expert. Use the calculator tool for calculations. Be concise.",
                   },

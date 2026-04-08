@@ -36,7 +36,7 @@
       }
     ],
     "metadata": {
-      "model": "gpt-4o-mini",
+      "model": "gpt-4o-mini-2024-07-18",
       "provider": "openai"
     },
     "metrics": {
@@ -73,7 +73,7 @@
       }
     ],
     "metadata": {
-      "model": "gpt-4o-mini",
+      "model": "gpt-4o-mini-2024-07-18",
       "provider": "openai"
     },
     "metrics": {
@@ -110,7 +110,7 @@
       }
     ],
     "metadata": {
-      "model": "gpt-4o-mini",
+      "model": "gpt-4o-mini-2024-07-18",
       "provider": "openai"
     },
     "metrics": {
@@ -147,7 +147,7 @@
       }
     ],
     "metadata": {
-      "model": "gpt-4o-mini",
+      "model": "gpt-4o-mini-2024-07-18",
       "provider": "openai"
     },
     "metrics": {
@@ -184,7 +184,7 @@
       }
     ],
     "metadata": {
-      "model": "gpt-4o-mini",
+      "model": "gpt-4o-mini-2024-07-18",
       "provider": "openai"
     },
     "metrics": {
@@ -223,7 +223,7 @@
       }
     ],
     "metadata": {
-      "model": "gpt-4o-mini",
+      "model": "gpt-4o-mini-2024-07-18",
       "provider": "openai"
     },
     "metrics": {
@@ -288,7 +288,7 @@
       "kind": "text"
     },
     "metadata": {
-      "model": "omni-moderation-latest",
+      "model": "omni-moderation-2024-09-26",
       "provider": "openai"
     },
     "metrics": {
@@ -476,7 +476,7 @@
       "kind": "text"
     },
     "metadata": {
-      "model": "gpt-4o-mini",
+      "model": "gpt-4o-mini-2024-07-18",
       "provider": "openai"
     },
     "metrics": {
@@ -554,7 +554,7 @@
       }
     ],
     "metadata": {
-      "model": "gpt-4o-mini",
+      "model": "gpt-4o-mini-2024-07-18",
       "provider": "openai"
     },
     "metrics": {

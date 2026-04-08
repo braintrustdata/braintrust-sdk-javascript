@@ -43,7 +43,7 @@ export async function runAISDKOtelExport(options: AISDKOtelScenarioOptions) {
   const { trace } = await import("@opentelemetry/api");
   trace.setGlobalTracerProvider(provider);
 
-  const model = options.openai("gpt-4o-mini") as any;
+  const model = options.openai("gpt-4o-mini-2024-07-18") as any;
   const telemetryBase = {
     isEnabled: true,
     metadata: {
@@ -58,7 +58,7 @@ export async function runAISDKOtelExport(options: AISDKOtelScenarioOptions) {
     model,
     prompt: "Reply with the single token PARIS and no punctuation.",
     temperature: 0,
-    ...tokenLimit(options.maxTokensKey, 16),
+    ...tokenLimit(options.maxTokensKey, 24),
     experimental_telemetry: {
       ...telemetryBase,
       functionId: "otel-generate",

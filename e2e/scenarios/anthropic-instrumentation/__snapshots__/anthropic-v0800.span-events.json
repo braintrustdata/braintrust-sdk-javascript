@@ -259,7 +259,7 @@
     "has_input": true,
     "has_output": true,
     "metadata": {
-      "model": "claude-sonnet-4-5",
+      "model": "claude-sonnet-4-5-20250929",
       "provider": "anthropic"
     },
     "metric_keys": [

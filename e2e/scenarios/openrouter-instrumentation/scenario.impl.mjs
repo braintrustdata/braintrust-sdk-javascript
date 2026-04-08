@@ -61,7 +61,7 @@ async function runOpenRouterInstrumentationScenario(
           withCompatibleChatRequest({
             model: CHAT_MODEL,
             messages: [{ role: "user", content: "Reply with exactly OK." }],
-            maxTokens: 16,
+            maxTokens: 24,
             temperature: 0,
           }),
         );
@@ -77,7 +77,7 @@ async function runOpenRouterInstrumentationScenario(
               messages: [
                 { role: "user", content: "Reply with exactly STREAM." },
               ],
-              maxTokens: 16,
+              maxTokens: 24,
               stream: true,
               streamOptions: {
                 includeUsage: true,
@@ -110,7 +110,7 @@ async function runOpenRouterInstrumentationScenario(
           await client.beta.responses.send(
             withCompatibleResponsesRequest({
               input: "Reply with exactly OBSERVABILITY.",
-              maxOutputTokens: 16,
+              maxOutputTokens: 24,
               model: CHAT_MODEL,
               temperature: 0,
             }),
@@ -125,7 +125,7 @@ async function runOpenRouterInstrumentationScenario(
           const stream = await client.beta.responses.send(
             withCompatibleResponsesRequest({
               input: "Reply with exactly STREAMED RESPONSE.",
-              maxOutputTokens: 16,
+              maxOutputTokens: 24,
               model: CHAT_MODEL,
               stream: true,
               temperature: 0,
@@ -142,7 +142,7 @@ async function runOpenRouterInstrumentationScenario(
           const result = client.callModel({
             input:
               "Use the lookup_weather tool for Vienna exactly once, then answer with only the forecast.",
-            maxOutputTokens: 16,
+            maxOutputTokens: 24,
             maxToolCalls: 1,
             model: CHAT_MODEL,
             temperature: 0,
