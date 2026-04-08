@@ -40,6 +40,14 @@
     "variants": [{ "variantKey": "openrouter-current", "label": "Current" }]
   },
   {
+    "scenarioDirName": "openrouter-agent-instrumentation",
+    "label": "OpenRouter Agent Instrumentation",
+    "metadataScenario": "openrouter-agent-instrumentation",
+    "variants": [
+      { "variantKey": "openrouter-agent-current", "label": "Current" }
+    ]
+  },
+  {
     "scenarioDirName": "ai-sdk-instrumentation",
     "label": "AI SDK Instrumentation",
     "metadataScenario": "ai-sdk-instrumentation",

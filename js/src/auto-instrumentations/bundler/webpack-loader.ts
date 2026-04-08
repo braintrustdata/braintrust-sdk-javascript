@@ -34,6 +34,7 @@ import { anthropicConfigs } from "../configs/anthropic";
 import { aiSDKConfigs } from "../configs/ai-sdk";
 import { claudeAgentSDKConfigs } from "../configs/claude-agent-sdk";
 import { googleGenAIConfigs } from "../configs/google-genai";
+import { openRouterAgentConfigs } from "../configs/openrouter-agent";
 import { openRouterConfigs } from "../configs/openrouter";
 import { type BundlerPluginOptions } from "./plugin";
 
@@ -68,6 +69,7 @@ function getMatcher(options: BundlerPluginOptions): InstrumentationMatcher {
     ...claudeAgentSDKConfigs,
     ...googleGenAIConfigs,
     ...openRouterConfigs,
+    ...openRouterAgentConfigs,
     ...(options.instrumentations ?? []),
   ];
   const dcModule = options.browser ? "dc-browser" : undefined;

@@ -4,6 +4,7 @@ import { AnthropicPlugin } from "./plugins/anthropic-plugin";
 import { AISDKPlugin } from "./plugins/ai-sdk-plugin";
 import { ClaudeAgentSDKPlugin } from "./plugins/claude-agent-sdk-plugin";
 import { GoogleGenAIPlugin } from "./plugins/google-genai-plugin";
+import { OpenRouterAgentPlugin } from "./plugins/openrouter-agent-plugin";
 import { OpenRouterPlugin } from "./plugins/openrouter-plugin";
 
 export interface BraintrustPluginConfig {
@@ -16,6 +17,7 @@ export interface BraintrustPluginConfig {
     googleGenAI?: boolean;
     claudeAgentSDK?: boolean;
     openrouter?: boolean;
+    openrouterAgent?: boolean;
   };
 }
 
@@ -40,6 +42,7 @@ export class BraintrustPlugin extends BasePlugin {
   private claudeAgentSDKPlugin: ClaudeAgentSDKPlugin | null = null;
   private googleGenAIPlugin: GoogleGenAIPlugin | null = null;
   private openRouterPlugin: OpenRouterPlugin | null = null;
+  private openRouterAgentPlugin: OpenRouterAgentPlugin | null = null;
 
   constructor(config: BraintrustPluginConfig = {}) {
     super();
@@ -85,6 +88,11 @@ export class BraintrustPlugin extends BasePlugin {
       this.openRouterPlugin = new OpenRouterPlugin();
       this.openRouterPlugin.enable();
     }
+
+    if (integrations.openrouterAgent !== false) {
+      this.openRouterAgentPlugin = new OpenRouterAgentPlugin();
+      this.openRouterAgentPlugin.enable();
+    }
   }
 
   protected onDisable(): void {
@@ -116,6 +124,11 @@ export class BraintrustPlugin extends BasePlugin {
     if (this.openRouterPlugin) {
       this.openRouterPlugin.disable();
       this.openRouterPlugin = null;
+    }
+
+    if (this.openRouterAgentPlugin) {
+      this.openRouterAgentPlugin.disable();
+      this.openRouterAgentPlugin = null;
     }
   }
 }

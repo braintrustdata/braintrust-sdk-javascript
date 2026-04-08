@@ -33,6 +33,7 @@ export { anthropicConfigs } from "./configs/anthropic";
 export { aiSDKConfigs } from "./configs/ai-sdk";
 export { claudeAgentSDKConfigs } from "./configs/claude-agent-sdk";
 export { googleGenAIConfigs } from "./configs/google-genai";
+export { openRouterAgentConfigs } from "./configs/openrouter-agent";
 export { openRouterConfigs } from "./configs/openrouter";
 
 // Re-export orchestrion configuration types
