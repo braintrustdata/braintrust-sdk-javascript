@@ -1,5 +1,6 @@
 import { startSpan, withCurrent } from "../../logger";
 import { SpanTypeAttribute } from "../../../util/index";
+import { getClaudeLocalToolParentResolver } from "./claude-agent-sdk-local-tool-context";
 
 export type LocalToolSpanMetadata = {
   serverName?: string;
@@ -25,6 +26,20 @@ function isPromiseLike(value: unknown): value is Promise<unknown> {
   );
 }
 
+function getToolUseIdFromExtra(extra: unknown): string | undefined {
+  if (!extra || typeof extra !== "object" || !("_meta" in extra)) {
+    return undefined;
+  }
+
+  const meta = Reflect.get(extra, "_meta");
+  if (!meta || typeof meta !== "object") {
+    return undefined;
+  }
+
+  const toolUseId = Reflect.get(meta, "claudecode/toolUseId");
+  return typeof toolUseId === "string" ? toolUseId : undefined;
+}
+
 export function wrapLocalClaudeToolHandler(
   handler: LocalToolHandler,
   getMetadata: () => LocalToolSpanMetadata,
@@ -42,46 +57,62 @@ export function wrapLocalClaudeToolHandler(
     ...handlerArgs: unknown[]
   ) {
     const metadata = getMetadata();
+    const rawToolName = metadata.serverName
+      ? `mcp__${metadata.serverName}__${metadata.toolName}`
+      : metadata.toolName;
+    const toolUseId = getToolUseIdFromExtra(handlerArgs[1]);
+    const localToolParentResolver = getClaudeLocalToolParentResolver();
     const spanName = metadata.serverName
       ? `tool: ${metadata.serverName}/${metadata.toolName}`
       : `tool: ${metadata.toolName}`;
-    const span = startSpan({
-      event: {
-        input: handlerArgs[0],
-        metadata: {
-          "gen_ai.tool.name": metadata.toolName,
-          ...(metadata.serverName && {
-            "mcp.server": metadata.serverName,
-          }),
+    const runWithResolvedParent = async () => {
+      const parent =
+        toolUseId && localToolParentResolver
+          ? await localToolParentResolver(toolUseId).catch(() => undefined)
+          : undefined;
+      const span = startSpan({
+        event: {
+          input: handlerArgs[0],
+          metadata: {
+            "claude_agent_sdk.raw_tool_name": rawToolName,
+            "gen_ai.tool.name": metadata.toolName,
+            ...(toolUseId && { "gen_ai.tool.call.id": toolUseId }),
+            ...(metadata.serverName && {
+              "mcp.server": metadata.serverName,
+            }),
+          },
         },
-      },
-      name: spanName,
-      spanAttributes: { type: SpanTypeAttribute.TOOL },
-    });
+        name: spanName,
+        ...(parent && { parent }),
+        spanAttributes: { type: SpanTypeAttribute.TOOL },
+      });
 
-    const runHandler = () => Reflect.apply(handler, this, handlerArgs);
-    const finalizeSuccess = (result: unknown) => {
-      span.log({ output: result });
-      span.end();
-      return result;
-    };
-    const finalizeError = (error: unknown) => {
-      span.log({ error: toErrorMessage(error) });
-      span.end();
-      throw error;
-    };
+      const runHandler = () => Reflect.apply(handler, this, handlerArgs);
+      const finalizeSuccess = (result: unknown) => {
+        span.log({ output: result });
+        span.end();
+        return result;
+      };
+      const finalizeError = (error: unknown) => {
+        span.log({ error: toErrorMessage(error) });
+        span.end();
+        throw error;
+      };
 
-    return withCurrent(span, () => {
-      try {
-        const result = runHandler();
-        if (isPromiseLike(result)) {
-          return result.then(finalizeSuccess, finalizeError);
+      return withCurrent(span, () => {
+        try {
+          const result = runHandler();
+          if (isPromiseLike(result)) {
+            return result.then(finalizeSuccess, finalizeError);
+          }
+          return finalizeSuccess(result);
+        } catch (error) {
+          return finalizeError(error);
         }
-        return finalizeSuccess(result);
-      } catch (error) {
-        return finalizeError(error);
-      }
-    });
+      });
+    };
+
+    return runWithResolvedParent();
   };
 
   Object.defineProperty(wrappedHandler, LOCAL_TOOL_HANDLER_WRAPPED, {

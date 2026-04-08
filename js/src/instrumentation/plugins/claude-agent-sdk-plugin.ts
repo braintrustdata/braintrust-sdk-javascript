@@ -16,6 +16,12 @@ import {
   collectLocalMcpServerToolHookNames,
   wrapLocalMcpServerToolHandlers,
 } from "./claude-agent-sdk-local-tool-spans";
+import {
+  bindClaudeLocalToolContextToAsyncIterable,
+  createClaudeLocalToolContext,
+  setClaudeLocalToolParentResolver,
+  type ClaudeAgentSDKLocalToolContext,
+} from "./claude-agent-sdk-local-tool-context";
 import type {
   ClaudeAgentSDKHookCallback,
   ClaudeAgentSDKHookCallbackMatcher,
@@ -564,6 +570,7 @@ type QueryState = {
   latestLlmParentBySubAgentToolUse: Map<string, string>;
   latestRootLlmParentRef: { value: string | undefined };
   toolUseToParent: Map<string, string | null>;
+  localToolContext: ClaudeAgentSDKLocalToolContext;
 };
 
 async function finalizeCurrentMessageGroup(state: QueryState): Promise<void> {
@@ -896,55 +903,36 @@ export class ClaudeAgentSDKPlugin extends BasePlugin {
           value: undefined as string | undefined,
         };
         const pendingSubAgentNames = new Map<string, string>();
+        const localToolContext = createClaudeLocalToolContext();
         const { hasLocalToolHandlers, localToolHookNames } =
           prepareLocalToolHandlersInMcpServers(options.mcpServers);
         const skipLocalToolHooks =
           options[CLAUDE_AGENT_SDK_SKIP_LOCAL_TOOL_HOOKS_OPTION] === true ||
           hasLocalToolHandlers;
-        const optionsWithHooks = injectTracingHooks(
-          options,
-          async (toolUseID) => {
-            const parentToolUseId = toolUseToParent.get(toolUseID);
-            const parentKey = llmParentKey(parentToolUseId ?? null);
-            const activeLlmSpan = activeLlmSpansByParentToolUse.get(parentKey);
-            if (activeLlmSpan) {
-              return activeLlmSpan.export();
+        const resolveToolUseParentSpan: ParentSpanResolver = async (
+          toolUseID,
+        ) => {
+          const parentToolUseId = toolUseToParent.get(toolUseID);
+          const parentKey = llmParentKey(parentToolUseId ?? null);
+          const activeLlmSpan = activeLlmSpansByParentToolUse.get(parentKey);
+          if (activeLlmSpan) {
+            return activeLlmSpan.export();
+          }
+
+          if (parentToolUseId) {
+            const parentLlm =
+              latestLlmParentBySubAgentToolUse.get(parentToolUseId);
+            if (parentLlm) {
+              return parentLlm;
             }
 
-            if (parentToolUseId) {
-              const parentLlm =
-                latestLlmParentBySubAgentToolUse.get(parentToolUseId);
-              if (parentLlm) {
-                return parentLlm;
-              }
-
-              const subAgentSpan = await ensureSubAgentSpan(
-                pendingSubAgentNames,
-                span,
-                subAgentSpans,
-                parentToolUseId,
-              );
-              const parentSpan = await subAgentSpan.export();
-              const llmSpan = startSpan({
-                name: "anthropic.messages.create",
-                parent: parentSpan,
-                spanAttributes: {
-                  type: SpanTypeAttribute.LLM,
-                },
-                startTime: getCurrentUnixTimestamp(),
-              });
-              activeLlmSpansByParentToolUse.set(parentKey, llmSpan);
-              const llmSpanExport = await llmSpan.export();
-              latestLlmParentBySubAgentToolUse.set(
-                parentToolUseId,
-                llmSpanExport,
-              );
-              return llmSpanExport;
-            }
-            if (latestRootLlmParentRef.value) {
-              return latestRootLlmParentRef.value;
-            }
-            const parentSpan = await span.export();
+            const subAgentSpan = await ensureSubAgentSpan(
+              pendingSubAgentNames,
+              span,
+              subAgentSpans,
+              parentToolUseId,
+            );
+            const parentSpan = await subAgentSpan.export();
             const llmSpan = startSpan({
               name: "anthropic.messages.create",
               parent: parentSpan,
@@ -955,9 +943,37 @@ export class ClaudeAgentSDKPlugin extends BasePlugin {
             });
             activeLlmSpansByParentToolUse.set(parentKey, llmSpan);
             const llmSpanExport = await llmSpan.export();
-            latestRootLlmParentRef.value = llmSpanExport;
+            latestLlmParentBySubAgentToolUse.set(
+              parentToolUseId,
+              llmSpanExport,
+            );
             return llmSpanExport;
-          },
+          }
+
+          if (latestRootLlmParentRef.value) {
+            return latestRootLlmParentRef.value;
+          }
+
+          const parentSpan = await span.export();
+          const llmSpan = startSpan({
+            name: "anthropic.messages.create",
+            parent: parentSpan,
+            spanAttributes: {
+              type: SpanTypeAttribute.LLM,
+            },
+            startTime: getCurrentUnixTimestamp(),
+          });
+          activeLlmSpansByParentToolUse.set(parentKey, llmSpan);
+          const llmSpanExport = await llmSpan.export();
+          latestRootLlmParentRef.value = llmSpanExport;
+          return llmSpanExport;
+        };
+
+        localToolContext.resolveLocalToolParent = resolveToolUseParentSpan;
+        setClaudeLocalToolParentResolver(resolveToolUseParentSpan);
+        const optionsWithHooks = injectTracingHooks(
+          options,
+          resolveToolUseParentSpan,
           activeToolSpans,
           localToolHookNames,
           skipLocalToolHooks,
@@ -989,6 +1005,7 @@ export class ClaudeAgentSDKPlugin extends BasePlugin {
           latestLlmParentBySubAgentToolUse,
           latestRootLlmParentRef,
           toolUseToParent,
+          localToolContext,
         });
       },
 
@@ -998,7 +1015,10 @@ export class ClaudeAgentSDKPlugin extends BasePlugin {
           return;
         }
 
-        const eventResult = event.result;
+        const eventResult = bindClaudeLocalToolContextToAsyncIterable(
+          event.result,
+          state.localToolContext,
+        );
         if (eventResult === undefined) {
           state.span.end();
           spans.delete(event);

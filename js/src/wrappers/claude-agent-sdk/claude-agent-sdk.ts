@@ -55,7 +55,6 @@ function wrapClaudeAgentQuery(
           ? (defaultThis ?? thisArg)
           : thisArg;
       return claudeAgentSDKChannels.query.traceSync(
-        // Async iterator shenanigans are handled purely in the plugin which consumes this channel emission.
         () => Reflect.apply(target, invocationTarget, [wrappedParams]),
         // The channel carries no extra context fields, but the generated
         // StartOf<> type for Record<string, never> is overly strict here.
