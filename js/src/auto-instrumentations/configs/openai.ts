@@ -186,4 +186,18 @@ export const openaiConfigs: InstrumentationConfig[] = [
       kind: "Async",
     },
   },
+
+  {
+    channelName: openAIChannels.responsesCompact.channelName,
+    module: {
+      name: "openai",
+      versionRange: ">=6.10.0",
+      filePath: "resources/responses/responses.mjs",
+    },
+    functionQuery: {
+      className: "Responses",
+      methodName: "compact",
+      kind: "Async",
+    },
+  },
 ];

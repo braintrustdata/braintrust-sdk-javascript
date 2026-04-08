@@ -337,6 +337,39 @@ export async function runOpenAIInstrumentationScenario(options) {
           }
         },
       );
+
+      if (typeof client.responses?.compact === "function") {
+        await runOperation(
+          "openai-responses-compact-operation",
+          "responses-compact",
+          async () => {
+            await client.responses.compact({
+              model: OPENAI_MODEL,
+              input: [
+                {
+                  role: "user",
+                  content: [
+                    {
+                      type: "input_text",
+                      text: "I live in Paris and prefer concise answers.",
+                    },
+                  ],
+                },
+                {
+                  role: "assistant",
+                  content: [
+                    {
+                      type: "output_text",
+                      text: "Understood. I will keep answers concise.",
+                    },
+                  ],
+                },
+              ],
+              instructions: "Preserve only durable user preferences.",
+            });
+          },
+        );
+      }
     },
     metadata: {
       openaiSdkVersion: options.openaiSdkVersion,

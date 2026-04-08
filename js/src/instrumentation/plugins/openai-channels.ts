@@ -12,6 +12,7 @@ import type {
   OpenAIModerationCreateParams,
   OpenAIModerationResponse,
   OpenAIResponse,
+  OpenAIResponseCompactParams,
   OpenAIResponseCreateParams,
   OpenAIResponseStreamEvent,
 } from "../../vendor-sdk-types/openai";
@@ -102,6 +103,15 @@ export const openAIChannels = defineChannels("openai", {
     OpenAIResponseStreamEvent
   >({
     channelName: "responses.parse",
+    kind: "async",
+  }),
+
+  responsesCompact: channel<
+    [OpenAIResponseCompactParams],
+    OpenAIResponse,
+    OpenAIResponsesChannelExtras
+  >({
+    channelName: "responses.compact",
     kind: "async",
   }),
 });
