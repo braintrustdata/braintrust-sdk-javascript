@@ -189,6 +189,20 @@ function findStreamTrace(events: CapturedLogEvent[]) {
   return { child, operation, parent };
 }
 
+function findEmbedTrace(events: CapturedLogEvent[]) {
+  const operation = findLatestSpan(events, "ai-sdk-embed-operation");
+  const parent = findParentSpan(events, "embed", operation?.span.id);
+
+  return { operation, parent };
+}
+
+function findEmbedManyTrace(events: CapturedLogEvent[]) {
+  const operation = findLatestSpan(events, "ai-sdk-embed-many-operation");
+  const parent = findParentSpan(events, "embedMany", operation?.span.id);
+
+  return { operation, parent };
+}
+
 function findToolTrace(events: CapturedLogEvent[]) {
   const operation = findLatestSpan(events, "ai-sdk-tool-operation");
   const parent = findParentSpan(events, "generateText", operation?.span.id);
@@ -641,6 +655,24 @@ function expectAISDKParentSpan(span: CapturedLogEvent | undefined) {
   ).toBe("string");
 }
 
+function expectEmbeddingTokenMetrics(span: CapturedLogEvent | undefined) {
+  const metrics = span?.metrics as Record<string, unknown> | undefined;
+  const totalTokens = metrics?.tokens;
+  const promptTokens = metrics?.prompt_tokens;
+
+  const tokenMetric =
+    typeof totalTokens === "number"
+      ? totalTokens
+      : typeof promptTokens === "number"
+        ? promptTokens
+        : undefined;
+
+  expect(tokenMetric).toEqual(expect.any(Number));
+  if (typeof tokenMetric === "number") {
+    expect(tokenMetric).toBeGreaterThan(0);
+  }
+}
+
 export function defineAISDKInstrumentationAssertions(options: {
   agentSpanName?: AgentSpanName;
   name: string;
@@ -751,6 +783,49 @@ export function defineAISDKInstrumentationAssertions(options: {
         const finalText = output.text ?? output._output;
         expect(typeof finalText).toBe("string");
         expect(String(finalText).length).toBeGreaterThan(0);
+      }
+    });
+
+    test("captures trace for embed()", testConfig, () => {
+      const root = findLatestSpan(events, ROOT_NAME);
+      const trace = findEmbedTrace(events);
+
+      expectOperationParentedByRoot(trace.operation, root);
+      expectAISDKParentSpan(trace.parent);
+      expect(operationName(trace.operation)).toBe("embed");
+      expectEmbeddingTokenMetrics(trace.parent);
+      const input = isRecord(trace.parent?.input) ? trace.parent.input : null;
+      expect(typeof input?.value).toBe("string");
+      const output = extractOutputRecord(trace.parent);
+      expect(output).toBeDefined();
+      if (output) {
+        expect(output.embedding).toBeUndefined();
+        expect(output.embedding_length).toEqual(expect.any(Number));
+        expect(output.embedding_length).toBeGreaterThan(0);
+      }
+    });
+
+    test("captures trace for embedMany()", testConfig, () => {
+      const root = findLatestSpan(events, ROOT_NAME);
+      const trace = findEmbedManyTrace(events);
+
+      expectOperationParentedByRoot(trace.operation, root);
+      expectAISDKParentSpan(trace.parent);
+      expect(operationName(trace.operation)).toBe("embed-many");
+      expectEmbeddingTokenMetrics(trace.parent);
+      const input = isRecord(trace.parent?.input) ? trace.parent.input : null;
+      expect(Array.isArray(input?.values)).toBe(true);
+      if (Array.isArray(input?.values)) {
+        expect(input.values.length).toBeGreaterThanOrEqual(2);
+      }
+      const output = extractOutputRecord(trace.parent);
+      expect(output).toBeDefined();
+      if (output) {
+        expect(output.embeddings).toBeUndefined();
+        expect(output.embedding_count).toEqual(expect.any(Number));
+        expect(output.embedding_count).toBeGreaterThanOrEqual(2);
+        expect(output.embedding_length).toEqual(expect.any(Number));
+        expect(output.embedding_length).toBeGreaterThan(0);
       }
     });
 
