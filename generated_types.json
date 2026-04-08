@@ -1558,6 +1558,13 @@
             "format": "uuid",
             "description": "Identifies the user who created the dataset"
           },
+          "tags": {
+            "type": ["array", "null"],
+            "items": {
+              "type": "string"
+            },
+            "description": "A list of tags for the dataset"
+          },
           "metadata": {
             "type": ["object", "null"],
             "additionalProperties": {},
@@ -1743,6 +1750,45 @@
           "dataset_id",
           "span_id",
           "root_span_id"
+        ]
+      },
+      "DatasetSnapshot": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier for the dataset snapshot"
+          },
+          "dataset_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier for the dataset that this snapshot belongs to"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the dataset snapshot"
+          },
+          "description": {
+            "type": ["string", "null"]
+          },
+          "xact_id": {
+            "type": "string",
+            "description": "Transaction id of the brainstore version at the time of the snapshot"
+          },
+          "created": {
+            "type": ["string", "null"],
+            "format": "date-time",
+            "description": "Date of dataset snapshot creation"
+          }
+        },
+        "required": [
+          "id",
+          "dataset_id",
+          "name",
+          "description",
+          "xact_id",
+          "created"
         ]
       },
       "EnvVar": {
@@ -3996,7 +4042,7 @@
             "description": "Textual description of the project automation"
           },
           "config": {
-            "anyOf": [
+            "oneOf": [
               {
                 "type": "object",
                 "properties": {
@@ -5958,6 +6004,16 @@
             "type": ["string", "null"],
             "description": "Optional BTQL filter applied before topic automation."
           },
+          "rerun_seconds": {
+            "type": ["number", "null"],
+            "minimum": 600,
+            "description": "How often to recompute topic maps"
+          },
+          "relabel_overlap_seconds": {
+            "type": ["number", "null"],
+            "minimum": 60,
+            "description": "How much recent history to relabel after a new topic map version becomes active"
+          },
           "backfill_time_range": {
             "anyOf": [
               {
@@ -5979,7 +6035,7 @@
                 "type": "null"
               }
             ],
-            "description": "Optional default time range for backfill operations."
+            "description": "Topic window used for classification coverage and initial backfill."
           }
         },
         "required": [
@@ -6060,6 +6116,9 @@
             },
             "description": "Mapping from topic_id to topic name"
           },
+          "generation_settings": {
+            "$ref": "#/components/schemas/TopicMapGenerationSettings"
+          },
           "distance_threshold": {
             "type": "number",
             "description": "Maximum distance to nearest centroid. If exceeded, returns no_match."
@@ -6086,6 +6145,44 @@
           }
         },
         "required": ["function"]
+      },
+      "TopicMapGenerationSettings": {
+        "type": "object",
+        "properties": {
+          "algorithm": {
+            "type": "string",
+            "enum": ["hdbscan", "kmeans"]
+          },
+          "dimension_reduction": {
+            "type": "string",
+            "enum": ["umap", "pca", "none"]
+          },
+          "sample_size": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "n_clusters": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "min_cluster_size": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "min_samples": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "hierarchy_threshold": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "naming_model": {
+            "type": "string"
+          }
+        },
+        "required": ["algorithm", "dimension_reduction"],
+        "description": "Clustering and naming settings used to generate this topic map"
       },
       "TraceScope": {
         "type": "object",
@@ -6199,6 +6296,10 @@
             "type": ["string", "null"],
             "format": "date-time",
             "description": "Date of user creation"
+          },
+          "last_active_at": {
+            "type": ["number", "null"],
+            "description": "Unix timestamp in milliseconds of the user's last activity, when available"
           }
         },
         "required": ["id"]
