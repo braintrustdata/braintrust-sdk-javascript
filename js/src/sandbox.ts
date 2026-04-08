@@ -120,6 +120,7 @@ export async function registerSandbox(
         provider: options.sandbox.provider,
         snapshot_ref: options.sandbox.snapshotRef,
       },
+      runtime_context: runtimeContext,
       entrypoints: options.entrypoints,
       project_id: projectId,
     },
