@@ -527,5 +527,58 @@
       }
     ],
     "type": "llm"
+  },
+  {
+    "input": {
+      "kind": "undefined"
+    },
+    "metadata": {
+      "operation": "responses-compact"
+    },
+    "metrics": {
+      "has_time_to_first_token": false
+    },
+    "name": "openai-responses-compact-operation",
+    "output": null,
+    "type": null
+  },
+  {
+    "input": [
+      {
+        "content_kind": "blocks",
+        "role": "user"
+      },
+      {
+        "content_kind": "blocks",
+        "role": "assistant"
+      }
+    ],
+    "metadata": {
+      "model": "gpt-4o-mini",
+      "provider": "openai"
+    },
+    "metrics": {
+      "has_time_to_first_token": true
+    },
+    "name": "openai.responses.compact",
+    "output": [
+      {
+        "content_types": [
+          "input_text"
+        ],
+        "json_keys": [],
+        "role": "user",
+        "status": "completed",
+        "type": "message"
+      },
+      {
+        "content_types": [],
+        "json_keys": [],
+        "role": null,
+        "status": null,
+        "type": "compaction"
+      }
+    ],
+    "type": "llm"
   }
 ]

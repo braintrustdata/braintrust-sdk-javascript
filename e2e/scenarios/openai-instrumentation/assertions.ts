@@ -37,6 +37,7 @@ type OperationSpec = {
   expectsTimeToFirstToken: boolean;
   name: string;
   operation: string;
+  requiresResponsesCompact?: boolean;
   testName: string;
   validate?: (span: CapturedLogEvent | undefined) => void;
 };
@@ -173,7 +174,35 @@ const OPERATION_SPECS: readonly OperationSpec[] = [
       expect(output).toContain("value");
     },
   },
+  {
+    childNames: ["openai.responses.compact"],
+    expectsOutput: true,
+    expectsTimeToFirstToken: false,
+    name: "openai-responses-compact-operation",
+    operation: "responses-compact",
+    requiresResponsesCompact: true,
+    testName: "captures trace for client.responses.compact()",
+  },
 ] as const;
+
+function supportsResponsesCompact(version: string): boolean {
+  const [majorRaw, minorRaw] = version.split(".");
+  const major = Number.parseInt(majorRaw ?? "", 10);
+  const minor = Number.parseInt(minorRaw ?? "", 10);
+
+  return (
+    Number.isFinite(major) &&
+    Number.isFinite(minor) &&
+    (major > 6 || (major === 6 && minor >= 10))
+  );
+}
+
+function getOperationSpecs(version: string): OperationSpec[] {
+  const compactSupported = supportsResponsesCompact(version);
+  return OPERATION_SPECS.filter(
+    (spec) => !spec.requiresResponsesCompact || compactSupported,
+  );
+}
 
 function pickMetadata(
   metadata: Record<string, unknown> | undefined,
@@ -335,7 +364,11 @@ function summarizeOutput(name: string, output: Json): Json {
       : null;
   }
 
-  if (name === "openai.responses.create" || name === "openai.responses.parse") {
+  if (
+    name === "openai.responses.create" ||
+    name === "openai.responses.parse" ||
+    name === "openai.responses.compact"
+  ) {
     return summarizeResponsesOutput(output);
   }
 
@@ -395,12 +428,15 @@ function findOpenAISpan(
   return undefined;
 }
 
-function buildRelevantEvents(events: CapturedLogEvent[]) {
+function buildRelevantEvents(
+  events: CapturedLogEvent[],
+  operationSpecs: OperationSpec[],
+) {
   const relevantEvents: RelevantEvent[] = [
     { event: findLatestSpan(events, ROOT_NAME)! },
   ];
 
-  for (const spec of OPERATION_SPECS) {
+  for (const spec of operationSpecs) {
     const operation = findLatestSpan(events, spec.name)!;
     relevantEvents.push({ event: operation });
     relevantEvents.push({
@@ -412,17 +448,23 @@ function buildRelevantEvents(events: CapturedLogEvent[]) {
   return relevantEvents;
 }
 
-function buildSpanSummary(events: CapturedLogEvent[]): Json {
+function buildSpanSummary(
+  events: CapturedLogEvent[],
+  operationSpecs: OperationSpec[],
+): Json {
   return normalizeForSnapshot(
-    buildRelevantEvents(events).map(({ event, summaryName }) =>
+    buildRelevantEvents(events, operationSpecs).map(({ event, summaryName }) =>
       summarizeOpenAISpan(event, summaryName),
     ) as Json,
   );
 }
 
-function buildPayloadSummary(events: CapturedLogEvent[]): Json {
+function buildPayloadSummary(
+  events: CapturedLogEvent[],
+  operationSpecs: OperationSpec[],
+): Json {
   return normalizeForSnapshot(
-    buildRelevantEvents(events).map(({ event, summaryName }) =>
+    buildRelevantEvents(events, operationSpecs).map(({ event, summaryName }) =>
       summarizeOpenAIPayload(event, summaryName),
     ) as Json,
   );
@@ -437,6 +479,7 @@ export function defineOpenAIInstrumentationAssertions(options: {
   timeoutMs: number;
   version: string;
 }): void {
+  const operationSpecs = getOperationSpecs(options.version);
   const spanSnapshotPath = resolveFileSnapshotPath(
     options.testFileUrl,
     `${options.snapshotName}.span-events.json`,
@@ -489,7 +532,7 @@ export function defineOpenAIInstrumentationAssertions(options: {
       );
     }
 
-    for (const spec of OPERATION_SPECS) {
+    for (const spec of operationSpecs) {
       test(spec.testName, testConfig, () => {
         const root = findLatestSpan(events, ROOT_NAME);
         const operation = findLatestSpan(events, spec.name);
@@ -530,13 +573,13 @@ export function defineOpenAIInstrumentationAssertions(options: {
 
     test("matches the shared span snapshot", testConfig, async () => {
       await expect(
-        formatJsonFileSnapshot(buildSpanSummary(events)),
+        formatJsonFileSnapshot(buildSpanSummary(events, operationSpecs)),
       ).toMatchFileSnapshot(spanSnapshotPath);
     });
 
     test("matches the shared payload snapshot", testConfig, async () => {
       await expect(
-        formatJsonFileSnapshot(buildPayloadSummary(events)),
+        formatJsonFileSnapshot(buildPayloadSummary(events, operationSpecs)),
       ).toMatchFileSnapshot(payloadSnapshotPath);
     });
   });
