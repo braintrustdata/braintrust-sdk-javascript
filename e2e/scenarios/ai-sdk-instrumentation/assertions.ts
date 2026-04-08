@@ -822,6 +822,7 @@ export function defineAISDKInstrumentationAssertions(options: {
       expect(output).toBeDefined();
       if (output) {
         expect(output.embeddings).toBeUndefined();
+        expect(output.responses).toBeUndefined();
         expect(output.embedding_count).toEqual(expect.any(Number));
         expect(output.embedding_count).toBeGreaterThanOrEqual(2);
         expect(output.embedding_length).toEqual(expect.any(Number));

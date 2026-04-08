@@ -1692,21 +1692,33 @@ function processAISDKEmbeddingOutput(
   output: AISDKEmbeddingResult,
   denyOutputPaths: string[],
 ): Record<string, unknown> | AISDKEmbeddingResult {
-  const processed = processAISDKOutput(output, denyOutputPaths);
-  if (!processed || typeof processed !== "object") {
-    return processed;
+  if (!output || typeof output !== "object") {
+    return output;
   }
 
-  const summarized = processed as Record<string, unknown>;
+  const summarized: Record<string, unknown> = {};
+  const whitelistedFields = [
+    "usage",
+    "totalUsage",
+    "warnings",
+    "providerMetadata",
+    "experimental_providerMetadata",
+  ] as const;
+
+  for (const field of whitelistedFields) {
+    const value = safeSerializableFieldRead(output, field);
+    if (value !== undefined && isSerializableOutputValue(value)) {
+      summarized[field] = value;
+    }
+  }
+
   const embedding = safeSerializableFieldRead(output, "embedding");
   if (Array.isArray(embedding)) {
-    delete summarized.embedding;
     summarized.embedding_length = embedding.length;
   }
 
   const embeddings = safeSerializableFieldRead(output, "embeddings");
   if (Array.isArray(embeddings)) {
-    delete summarized.embeddings;
     summarized.embedding_count = embeddings.length;
 
     const firstEmbedding = embeddings.find((item) => Array.isArray(item));
@@ -1715,7 +1727,7 @@ function processAISDKEmbeddingOutput(
     }
   }
 
-  return summarized;
+  return normalizeAISDKLoggedOutput(omit(summarized, denyOutputPaths));
 }
 
 /**

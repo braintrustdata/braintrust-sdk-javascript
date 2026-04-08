@@ -914,6 +914,21 @@ describe("AI SDK utility functions", () => {
       expect(result.embedding_count).toBe(2);
       expect(result.embedding_length).toBe(3);
     });
+
+    it("should omit non-whitelisted fields like responses", () => {
+      const output = {
+        embeddings: [[0.1, 0.2, 0.3]],
+        response: { body: "too much" },
+        responses: [{ body: "way too much" }],
+        usage: { totalTokens: 8 },
+      };
+
+      const result = processAISDKEmbeddingOutput(output, []);
+      expect(result.response).toBeUndefined();
+      expect(result.responses).toBeUndefined();
+      expect(result.usage).toMatchObject({ totalTokens: 8 });
+      expect(result.embedding_count).toBe(1);
+    });
   });
 });
 
@@ -1252,18 +1267,31 @@ function processAISDKEmbeddingOutput(
   output: any,
   denyOutputPaths: string[],
 ): any {
-  const processed = processAISDKOutput(output, denyOutputPaths);
-  if (!processed || typeof processed !== "object") {
-    return processed;
+  if (!output || typeof output !== "object") {
+    return output;
+  }
+
+  const processed: Record<string, unknown> = {};
+  const whitelistedFields = [
+    "usage",
+    "totalUsage",
+    "warnings",
+    "providerMetadata",
+    "experimental_providerMetadata",
+  ];
+
+  for (const field of whitelistedFields) {
+    const value = output?.[field];
+    if (value !== undefined && typeof value !== "function") {
+      processed[field] = value;
+    }
   }
 
   if (Array.isArray(output?.embedding)) {
-    delete processed.embedding;
     processed.embedding_length = output.embedding.length;
   }
 
   if (Array.isArray(output?.embeddings)) {
-    delete processed.embeddings;
     processed.embedding_count = output.embeddings.length;
 
     const firstEmbedding = output.embeddings.find((item: unknown) =>
