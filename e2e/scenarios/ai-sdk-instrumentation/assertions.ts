@@ -638,6 +638,7 @@ function expectOperationParentedByRoot(
 
 function expectAISDKParentSpan(span: CapturedLogEvent | undefined) {
   expect(span).toBeDefined();
+  expect(span?.span.type).toBe("function");
   expect(span?.row.metadata).toMatchObject({
     braintrust: {
       integration_name: "ai-sdk",
@@ -653,6 +654,12 @@ function expectAISDKParentSpan(span: CapturedLogEvent | undefined) {
   expect(
     typeof (span?.row.metadata as { model?: unknown } | undefined)?.model,
   ).toBe("string");
+}
+
+function expectAISDKModelChildSpan(span: CapturedLogEvent | undefined) {
+  expect(span).toBeDefined();
+  expect(span?.span.type).toBe("llm");
+  expect(["doGenerate", "doStream"]).toContain(span?.span.name);
 }
 
 function expectEmbeddingTokenMetrics(span: CapturedLogEvent | undefined) {
@@ -730,6 +737,7 @@ export function defineAISDKInstrumentationAssertions(options: {
       expectOperationParentedByRoot(trace.operation, root);
       expectAISDKParentSpan(trace.parent);
       expect(trace.child).toBeDefined();
+      expectAISDKModelChildSpan(trace.child);
       expect(trace.child?.metrics).toMatchObject({
         completion_tokens: expect.any(Number),
         prompt_tokens: expect.any(Number),
@@ -755,6 +763,7 @@ export function defineAISDKInstrumentationAssertions(options: {
 
       expectOperationParentedByRoot(trace.operation, root);
       expectAISDKParentSpan(trace.parent);
+      expectAISDKModelChildSpan(trace.child);
       expect(trace.parent?.metrics?.time_to_first_token).toEqual(
         expect.any(Number),
       );
@@ -895,6 +904,7 @@ export function defineAISDKInstrumentationAssertions(options: {
 
       if (options.supportsToolExecution) {
         expect(trace.modelChildren.length).toBeGreaterThanOrEqual(2);
+        trace.modelChildren.forEach(expectAISDKModelChildSpan);
         expect(trace.toolSpans.length).toBeGreaterThanOrEqual(1);
         expect(trace.toolSpans[0]?.input).toBeDefined();
         expect(trace.toolSpans[0]?.output).toBeDefined();
@@ -903,6 +913,7 @@ export function defineAISDKInstrumentationAssertions(options: {
         );
       } else {
         expect(trace.modelChildren.length).toBeGreaterThanOrEqual(1);
+        trace.modelChildren.forEach(expectAISDKModelChildSpan);
         expect(collectToolCallNames(trace.parent?.output)).toContain(
           "get_weather",
         );
@@ -929,6 +940,7 @@ export function defineAISDKInstrumentationAssertions(options: {
           object: { city: "Paris" },
         });
         if (trace.child) {
+          expectAISDKModelChildSpan(trace.child);
           expect(trace.child.output).toBeDefined();
         }
       });
@@ -966,6 +978,7 @@ export function defineAISDKInstrumentationAssertions(options: {
           expect(trace.parent?.output).toBeDefined();
         }
         if (trace.child) {
+          expectAISDKModelChildSpan(trace.child);
           expect(trace.child.output).toBeDefined();
         }
       });
@@ -1008,6 +1021,7 @@ export function defineAISDKInstrumentationAssertions(options: {
         expect(hasPromptLikeInput(trace.parent?.input)).toBe(true);
         expect(trace.parent?.output).toBeDefined();
         expect(trace.modelChildren.length).toBeGreaterThanOrEqual(1);
+        trace.modelChildren.forEach(expectAISDKModelChildSpan);
         expect(trace.latestChild?.output).toBeDefined();
       });
 
@@ -1023,6 +1037,7 @@ export function defineAISDKInstrumentationAssertions(options: {
           expect.any(Number),
         );
         expect(trace.modelChildren.length).toBeGreaterThanOrEqual(1);
+        trace.modelChildren.forEach(expectAISDKModelChildSpan);
         expect(trace.latestChild?.output).toBeDefined();
       });
 

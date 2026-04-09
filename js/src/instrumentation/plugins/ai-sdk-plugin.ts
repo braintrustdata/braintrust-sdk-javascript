@@ -111,7 +111,7 @@ export class AISDKPlugin extends BasePlugin {
     this.unsubscribers.push(
       traceStreamingChannel(aiSDKChannels.generateText, {
         name: "generateText",
-        type: SpanTypeAttribute.LLM,
+        type: SpanTypeAttribute.FUNCTION,
         extractInput: ([params], event, span) =>
           prepareAISDKCallInput(params, event, span, denyOutputPaths),
         extractOutput: (result, endEvent) => {
@@ -131,7 +131,7 @@ export class AISDKPlugin extends BasePlugin {
     this.unsubscribers.push(
       traceStreamingChannel(aiSDKChannels.streamText, {
         name: "streamText",
-        type: SpanTypeAttribute.LLM,
+        type: SpanTypeAttribute.FUNCTION,
         extractInput: ([params], event, span) =>
           prepareAISDKCallInput(params, event, span, denyOutputPaths),
         extractOutput: (result, endEvent) =>
@@ -157,7 +157,7 @@ export class AISDKPlugin extends BasePlugin {
     this.unsubscribers.push(
       traceSyncStreamChannel(aiSDKChannels.streamTextSync, {
         name: "streamText",
-        type: SpanTypeAttribute.LLM,
+        type: SpanTypeAttribute.FUNCTION,
         extractInput: ([params], event, span) =>
           prepareAISDKCallInput(params, event, span, denyOutputPaths),
         patchResult: ({ endEvent, result, span, startTime }) =>
@@ -175,7 +175,7 @@ export class AISDKPlugin extends BasePlugin {
     this.unsubscribers.push(
       traceStreamingChannel(aiSDKChannels.generateObject, {
         name: "generateObject",
-        type: SpanTypeAttribute.LLM,
+        type: SpanTypeAttribute.FUNCTION,
         extractInput: ([params], event, span) =>
           prepareAISDKCallInput(params, event, span, denyOutputPaths),
         extractOutput: (result, endEvent) => {
@@ -195,7 +195,7 @@ export class AISDKPlugin extends BasePlugin {
     this.unsubscribers.push(
       traceStreamingChannel(aiSDKChannels.streamObject, {
         name: "streamObject",
-        type: SpanTypeAttribute.LLM,
+        type: SpanTypeAttribute.FUNCTION,
         extractInput: ([params], event, span) =>
           prepareAISDKCallInput(params, event, span, denyOutputPaths),
         extractOutput: (result, endEvent) =>
@@ -221,7 +221,7 @@ export class AISDKPlugin extends BasePlugin {
     this.unsubscribers.push(
       traceSyncStreamChannel(aiSDKChannels.streamObjectSync, {
         name: "streamObject",
-        type: SpanTypeAttribute.LLM,
+        type: SpanTypeAttribute.FUNCTION,
         extractInput: ([params], event, span) =>
           prepareAISDKCallInput(params, event, span, denyOutputPaths),
         patchResult: ({ endEvent, result, span, startTime }) =>
@@ -239,7 +239,7 @@ export class AISDKPlugin extends BasePlugin {
     this.unsubscribers.push(
       traceAsyncChannel(aiSDKChannels.embed, {
         name: "embed",
-        type: SpanTypeAttribute.LLM,
+        type: SpanTypeAttribute.FUNCTION,
         extractInput: ([params], event) =>
           prepareAISDKEmbedInput(params, event.self),
         extractOutput: (result, endEvent) =>
@@ -256,7 +256,7 @@ export class AISDKPlugin extends BasePlugin {
     this.unsubscribers.push(
       traceAsyncChannel(aiSDKChannels.embedMany, {
         name: "embedMany",
-        type: SpanTypeAttribute.LLM,
+        type: SpanTypeAttribute.FUNCTION,
         extractInput: ([params], event) =>
           prepareAISDKEmbedInput(params, event.self),
         extractOutput: (result, endEvent) =>
@@ -273,7 +273,7 @@ export class AISDKPlugin extends BasePlugin {
     this.unsubscribers.push(
       traceStreamingChannel(aiSDKChannels.agentGenerate, {
         name: "Agent.generate",
-        type: SpanTypeAttribute.LLM,
+        type: SpanTypeAttribute.FUNCTION,
         extractInput: ([params], event, span) =>
           prepareAISDKCallInput(params, event, span, denyOutputPaths),
         extractOutput: (result, endEvent) => {
@@ -293,7 +293,7 @@ export class AISDKPlugin extends BasePlugin {
     this.unsubscribers.push(
       traceStreamingChannel(aiSDKChannels.agentStream, {
         name: "Agent.stream",
-        type: SpanTypeAttribute.LLM,
+        type: SpanTypeAttribute.FUNCTION,
         extractInput: ([params], event, span) =>
           prepareAISDKCallInput(params, event, span, denyOutputPaths),
         extractOutput: (result, endEvent) =>
@@ -319,7 +319,7 @@ export class AISDKPlugin extends BasePlugin {
     this.unsubscribers.push(
       traceSyncStreamChannel(aiSDKChannels.agentStreamSync, {
         name: "Agent.stream",
-        type: SpanTypeAttribute.LLM,
+        type: SpanTypeAttribute.FUNCTION,
         extractInput: ([params], event, span) =>
           prepareAISDKCallInput(params, event, span, denyOutputPaths),
         patchResult: ({ endEvent, result, span, startTime }) =>
@@ -337,7 +337,7 @@ export class AISDKPlugin extends BasePlugin {
     this.unsubscribers.push(
       traceStreamingChannel(aiSDKChannels.toolLoopAgentGenerate, {
         name: "ToolLoopAgent.generate",
-        type: SpanTypeAttribute.LLM,
+        type: SpanTypeAttribute.FUNCTION,
         extractInput: ([params], event, span) =>
           prepareAISDKCallInput(params, event, span, denyOutputPaths),
         extractOutput: (result, endEvent) => {
@@ -357,7 +357,7 @@ export class AISDKPlugin extends BasePlugin {
     this.unsubscribers.push(
       traceStreamingChannel(aiSDKChannels.toolLoopAgentStream, {
         name: "ToolLoopAgent.stream",
-        type: SpanTypeAttribute.LLM,
+        type: SpanTypeAttribute.FUNCTION,
         extractInput: ([params], event, span) =>
           prepareAISDKCallInput(params, event, span, denyOutputPaths),
         extractOutput: (result, endEvent) =>
