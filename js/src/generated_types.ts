@@ -1,4 +1,4 @@
-// Auto-generated file (content hash 2c789f9d429f1363) -- do not modify
+// Auto-generated file (content hash a509e50cf535df8c) -- do not modify
 
 import { z } from "zod/v3";
 
@@ -2003,6 +2003,7 @@ export const ViewOptions = z.union([
       rowHeight: z.union([z.string(), z.null()]),
       tallGroupRows: z.union([z.boolean(), z.null()]),
       layout: z.union([z.string(), z.null()]),
+      topicMapReportKey: z.union([z.string(), z.null()]),
       chartHeight: z.union([z.number(), z.null()]),
       excludedMeasures: z.union([
         z.array(
@@ -2045,6 +2046,7 @@ export const ViewOptions = z.union([
         z.null(),
       ]),
       queryShape: z.union([z.enum(["traces", "spans"]), z.null()]),
+      cluster: z.union([z.string(), z.null()]),
       freezeColumns: z.union([z.boolean(), z.null()]),
     })
     .partial(),

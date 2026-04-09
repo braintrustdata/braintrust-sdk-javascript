@@ -6495,6 +6495,9 @@
               "layout": {
                 "type": ["string", "null"]
               },
+              "topicMapReportKey": {
+                "type": ["string", "null"]
+              },
               "chartHeight": {
                 "type": ["number", "null"]
               },
@@ -6597,6 +6600,9 @@
               "queryShape": {
                 "type": ["string", "null"],
                 "enum": ["traces", "spans"]
+              },
+              "cluster": {
+                "type": ["string", "null"]
               },
               "freezeColumns": {
                 "type": ["boolean", "null"]
