@@ -23,6 +23,12 @@
     ]
   },
   {
+    "scenarioDirName": "google-adk-instrumentation",
+    "label": "Google ADK Instrumentation",
+    "metadataScenario": "google-adk-instrumentation",
+    "variants": [{ "variantKey": "google-adk-v061", "label": "v0.6.1" }]
+  },
+  {
     "scenarioDirName": "google-genai-instrumentation",
     "label": "Google GenAI Instrumentation",
     "metadataScenario": "google-genai-instrumentation",

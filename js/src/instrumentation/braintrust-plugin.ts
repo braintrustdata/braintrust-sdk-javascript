@@ -7,6 +7,7 @@ import { GoogleGenAIPlugin } from "./plugins/google-genai-plugin";
 import { OpenRouterAgentPlugin } from "./plugins/openrouter-agent-plugin";
 import { OpenRouterPlugin } from "./plugins/openrouter-plugin";
 import { MistralPlugin } from "./plugins/mistral-plugin";
+import { GoogleADKPlugin } from "./plugins/google-adk-plugin";
 
 export interface BraintrustPluginConfig {
   integrations?: {
@@ -20,6 +21,7 @@ export interface BraintrustPluginConfig {
     openrouter?: boolean;
     openrouterAgent?: boolean;
     mistral?: boolean;
+    googleADK?: boolean;
   };
 }
 
@@ -47,6 +49,7 @@ export class BraintrustPlugin extends BasePlugin {
   private openRouterPlugin: OpenRouterPlugin | null = null;
   private openRouterAgentPlugin: OpenRouterAgentPlugin | null = null;
   private mistralPlugin: MistralPlugin | null = null;
+  private googleADKPlugin: GoogleADKPlugin | null = null;
 
   constructor(config: BraintrustPluginConfig = {}) {
     super();
@@ -102,6 +105,12 @@ export class BraintrustPlugin extends BasePlugin {
       this.mistralPlugin = new MistralPlugin();
       this.mistralPlugin.enable();
     }
+
+    // Enable Google ADK integration (default: true)
+    if (integrations.googleADK !== false) {
+      this.googleADKPlugin = new GoogleADKPlugin();
+      this.googleADKPlugin.enable();
+    }
   }
 
   protected onDisable(): void {
@@ -143,6 +152,11 @@ export class BraintrustPlugin extends BasePlugin {
     if (this.mistralPlugin) {
       this.mistralPlugin.disable();
       this.mistralPlugin = null;
+    }
+
+    if (this.googleADKPlugin) {
+      this.googleADKPlugin.disable();
+      this.googleADKPlugin = null;
     }
   }
 }
