@@ -90,6 +90,21 @@ const RESET_CONTEXT_MANAGER_STATE = Symbol.for(
 // 6 MB for the AWS lambda gateway (from our own testing).
 export const DEFAULT_MAX_REQUEST_SIZE = 6 * 1024 * 1024;
 
+const datasetSnapshotResponseSchema = z.object({
+  id: z.string().uuid(),
+  dataset_id: z.string().uuid(),
+  name: z.string(),
+  description: z.string().nullish(),
+  xact_id: z.string(),
+  created: z.string(),
+});
+export type DatasetSnapshot = z.infer<typeof datasetSnapshotResponseSchema>;
+
+const datasetSnapshotRegisterResponseSchema = z.object({
+  dataset_snapshot: datasetSnapshotResponseSchema,
+  found_existing: z.boolean().optional(),
+});
+
 const parametersRowSchema = z.object({
   id: z.string().uuid(),
   _xact_id: z.string(),
@@ -1287,6 +1302,50 @@ class HTTPConnection {
     const resp = await this.post(`${object_type}`, args, {
       headers: { "Content-Type": "application/json" },
     });
+    return await resp.json();
+  }
+
+  async put_json(
+    path: string,
+    args: Record<string, unknown> | undefined = undefined,
+  ) {
+    const this_fetch = this.fetch;
+    const this_base_url = this.base_url;
+    const this_headers = this.headers;
+    const resp = await checkResponse(
+      await this_fetch(_urljoin(this_base_url, path), {
+        method: "PUT",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          ...this_headers,
+        },
+        body: args ? JSON.stringify(args) : undefined,
+        keepalive: true,
+      }),
+    );
+    return await resp.json();
+  }
+
+  async delete_json(
+    path: string,
+    args: Record<string, unknown> | undefined = undefined,
+  ) {
+    const this_fetch = this.fetch;
+    const this_base_url = this.base_url;
+    const this_headers = this.headers;
+    const resp = await checkResponse(
+      await this_fetch(_urljoin(this_base_url, path), {
+        method: "DELETE",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          ...this_headers,
+        },
+        body: args ? JSON.stringify(args) : undefined,
+        keepalive: true,
+      }),
+    );
     return await resp.json();
   }
 
@@ -3389,13 +3448,18 @@ type InitOpenOption<IsOpen extends boolean> = {
   open?: IsOpen;
 };
 
-/**
- * Reference to a dataset by ID and optional version.
- */
-export interface DatasetRef {
-  id: string;
+type DatasetSelection = {
   version?: string;
-}
+  environment?: string;
+  snapshotName?: string;
+};
+
+/**
+ * Reference to a dataset by ID and optional explicit selector.
+ */
+export type DatasetRef = {
+  id: string;
+} & DatasetSelection;
 
 export interface ParametersRef {
   id: string;
@@ -3621,20 +3685,13 @@ export function init<IsOpen extends boolean = false>(
       }
 
       if (dataset !== undefined) {
-        if (
-          "id" in dataset &&
-          typeof dataset.id === "string" &&
-          !("__braintrust_dataset_marker" in dataset)
-        ) {
-          // Simple {id: ..., version?: ...} object
-          args["dataset_id"] = dataset.id;
-          if ("version" in dataset && dataset.version !== undefined) {
-            args["dataset_version"] = dataset.version;
-          }
-        } else {
-          // Full Dataset object
-          args["dataset_id"] = await (dataset as AnyDataset).id;
-          args["dataset_version"] = await (dataset as AnyDataset).version();
+        const datasetSelection = await serializeDatasetForExperiment({
+          dataset,
+          state,
+        });
+        args["dataset_id"] = datasetSelection.datasetId;
+        if (datasetSelection.datasetVersion !== undefined) {
+          args["dataset_version"] = datasetSelection.datasetVersion;
         }
       }
 
@@ -3704,9 +3761,7 @@ export function init<IsOpen extends boolean = false>(
   const ret = new Experiment(
     state,
     lazyMetadata,
-    dataset !== undefined && "version" in dataset
-      ? (dataset as AnyDataset)
-      : undefined,
+    dataset !== undefined ? (dataset as AnyDataset) : undefined,
   );
   if (options.setCurrent ?? true) {
     state.currentExperiment = ret;
@@ -3718,7 +3773,7 @@ export function init<IsOpen extends boolean = false>(
  * Alias for init(options).
  */
 export function initExperiment<IsOpen extends boolean = false>(
-  options: Readonly<InitOptions<IsOpen>>,
+  options: Readonly<FullInitOptions<IsOpen>>,
 ): InitializedExperiment<IsOpen>;
 
 /**
@@ -3735,7 +3790,7 @@ export function initExperiment<IsOpen extends boolean = false>(
  * `initExperiment(project, options)`.
  */
 export function initExperiment<IsOpen extends boolean = false>(
-  projectOrOptions: string | Readonly<InitOptions<IsOpen>>,
+  projectOrOptions: string | Readonly<FullInitOptions<IsOpen>>,
   optionalOptions?: Readonly<InitOptions<IsOpen>>,
 ): InitializedExperiment<IsOpen> {
   const options = ((): Readonly<FullInitOptions<IsOpen>> => {
@@ -3794,16 +3849,198 @@ export type InitDatasetOptions<IsLegacyDataset extends boolean> =
   FullLoginOptions & {
     dataset?: string;
     description?: string;
-    version?: string;
     projectId?: string;
     metadata?: Record<string, unknown>;
     state?: BraintrustState;
     _internal_btql?: Record<string, unknown>;
-  } & UseOutputOption<IsLegacyDataset>;
+  } & DatasetSelection &
+    UseOutputOption<IsLegacyDataset>;
 
 export type FullInitDatasetOptions<IsLegacyDataset extends boolean> = {
   project?: string;
 } & InitDatasetOptions<IsLegacyDataset>;
+
+async function getDatasetSnapshots({
+  state,
+  datasetId,
+}: {
+  state: BraintrustState;
+  datasetId: string;
+}): Promise<DatasetSnapshot[]> {
+  return datasetSnapshotResponseSchema.array().parse(
+    await state.appConn().get_json("api/dataset_snapshot/get", {
+      dataset_id: datasetId,
+    }),
+  );
+}
+
+function normalizeDatasetSelection({
+  version,
+  environment,
+  snapshotName,
+}: {
+  version?: string;
+  environment?: string;
+  snapshotName?: string;
+}): DatasetSelection {
+  if (version !== undefined) {
+    return { version };
+  }
+
+  if (snapshotName !== undefined) {
+    return { snapshotName };
+  }
+
+  if (environment !== undefined) {
+    return { environment };
+  }
+
+  return {};
+}
+
+async function resolveDatasetSnapshotName({
+  state,
+  datasetId,
+  snapshotName,
+}: {
+  state: BraintrustState;
+  datasetId: string;
+  snapshotName: string;
+}): Promise<string> {
+  const snapshots = await getDatasetSnapshots({ state, datasetId });
+  const match = snapshots.find((s) => s.name === snapshotName);
+  if (!match) {
+    throw new Error(
+      `Dataset snapshot "${snapshotName}" not found for ${datasetId}`,
+    );
+  }
+  return match.xact_id;
+}
+
+async function resolveDatasetSnapshotNameForMetadata({
+  state,
+  lazyMetadata,
+  snapshotName,
+}: {
+  state: BraintrustState;
+  lazyMetadata: LazyValue<ProjectDatasetMetadata>;
+  snapshotName: string;
+}): Promise<string> {
+  const metadata = await lazyMetadata.get();
+  return await resolveDatasetSnapshotName({
+    state,
+    datasetId: metadata.dataset.id,
+    snapshotName,
+  });
+}
+
+async function resolveDatasetEnvironment({
+  state,
+  datasetId,
+  environment,
+}: {
+  state: BraintrustState;
+  datasetId: string;
+  environment: string;
+}): Promise<string> {
+  const response = await state
+    .apiConn()
+    .get_json(
+      `environment-object/dataset/${datasetId}/${encodeURIComponent(environment)}`,
+    );
+  return z.object({ object_version: z.string() }).parse(response)
+    .object_version;
+}
+
+async function resolveDatasetEnvironmentForMetadata({
+  state,
+  lazyMetadata,
+  environment,
+}: {
+  state: BraintrustState;
+  lazyMetadata: LazyValue<ProjectDatasetMetadata>;
+  environment: string;
+}): Promise<string> {
+  const metadata = await lazyMetadata.get();
+  return await resolveDatasetEnvironment({
+    state,
+    datasetId: metadata.dataset.id,
+    environment,
+  });
+}
+
+async function serializeDatasetForExperiment({
+  dataset,
+  state,
+}: {
+  dataset: AnyDataset | DatasetRef;
+  state: BraintrustState;
+}): Promise<{ datasetId: string; datasetVersion?: string }> {
+  if (!Dataset.isDataset(dataset)) {
+    const selection = normalizeDatasetSelection(dataset);
+
+    if (selection.version !== undefined) {
+      return {
+        datasetId: dataset.id,
+        datasetVersion: selection.version,
+      };
+    }
+
+    if (selection.snapshotName !== undefined) {
+      return {
+        datasetId: dataset.id,
+        datasetVersion: await resolveDatasetSnapshotName({
+          state,
+          datasetId: dataset.id,
+          snapshotName: selection.snapshotName,
+        }),
+      };
+    }
+
+    if (selection.environment !== undefined) {
+      return {
+        datasetId: dataset.id,
+        datasetVersion: await resolveDatasetEnvironment({
+          state,
+          datasetId: dataset.id,
+          environment: selection.environment,
+        }),
+      };
+    }
+
+    return {
+      datasetId: dataset.id,
+    };
+  }
+
+  const evalData = await dataset.toEvalData();
+  const selection = normalizeDatasetSelection({
+    version: evalData.dataset_version,
+    environment: evalData.dataset_environment,
+    snapshotName: evalData.dataset_snapshot_name,
+  });
+
+  if (selection.version !== undefined) {
+    return {
+      datasetId: evalData.dataset_id,
+      datasetVersion: selection.version,
+    };
+  }
+
+  if (
+    selection.environment !== undefined ||
+    selection.snapshotName !== undefined
+  ) {
+    return {
+      datasetId: evalData.dataset_id,
+      datasetVersion: await dataset.version(),
+    };
+  }
+
+  return {
+    datasetId: evalData.dataset_id,
+  };
+}
 
 /**
  * Create a new dataset in a specified project. If the project does not exist, it will be created.
@@ -3812,6 +4049,9 @@ export type FullInitDatasetOptions<IsLegacyDataset extends boolean> = {
  * @param options.project The name of the project to create the dataset in. Must specify at least one of `project` or `projectId`.
  * @param options.dataset The name of the dataset to create. If not specified, a name will be generated automatically.
  * @param options.description An optional description of the dataset.
+ * @param options.version Pin the dataset to a specific version xact_id. If `snapshotName` or `environment` are also provided, `version` takes precedence.
+ * @param options.snapshotName Pin the dataset to the version captured by this named snapshot. Snapshot names are resolved to a concrete xact_id and throw if no matching snapshot exists. If `environment` is also provided, `snapshotName` takes precedence.
+ * @param options.environment Pin the dataset to the version tagged with this environment slug. Throws if the environment lookup fails when it is the selected dataset selector.
  * @param options.appUrl The URL of the Braintrust App. Defaults to https://www.braintrust.dev.
  * @param options.apiKey The API key to use. If the parameter is not specified, will try to use the `BRAINTRUST_API_KEY` environment variable. If no API key is specified, will prompt the user to login.
  * @param options.orgName (Optional) The name of a specific organization to connect to. This is useful if you belong to multiple.
@@ -3868,6 +4108,8 @@ export function initDataset<
     dataset,
     description,
     version,
+    snapshotName,
+    environment,
     appUrl,
     apiKey,
     orgName,
@@ -3879,6 +4121,14 @@ export function initDataset<
     state: stateArg,
     _internal_btql,
   } = options;
+  const selection = normalizeDatasetSelection({
+    version,
+    environment,
+    snapshotName,
+  });
+  const normalizedVersion = selection.version;
+  const normalizedEnvironment = selection.environment;
+  const normalizedSnapshotName = selection.snapshotName;
 
   const state = stateArg ?? _globalState;
 
@@ -3919,10 +4169,33 @@ export function initDataset<
     },
   );
 
+  const resolvedVersion =
+    normalizedVersion !== undefined
+      ? normalizedVersion
+      : normalizedSnapshotName !== undefined
+        ? new LazyValue(async () => {
+            return await resolveDatasetSnapshotNameForMetadata({
+              state,
+              lazyMetadata,
+              snapshotName: normalizedSnapshotName,
+            });
+          })
+        : normalizedEnvironment !== undefined
+          ? new LazyValue(async () => {
+              return await resolveDatasetEnvironmentForMetadata({
+                state,
+                lazyMetadata,
+                environment: normalizedEnvironment,
+              });
+            })
+          : undefined;
+
   return new Dataset(
     stateArg ?? _globalState,
     lazyMetadata,
-    version,
+    resolvedVersion,
+    normalizedEnvironment,
+    normalizedSnapshotName,
     legacy,
     _internal_btql,
   );
@@ -5654,10 +5927,11 @@ export class ObjectFetcher<RecordType> implements AsyncIterable<
       | "experiment"
       | "project_logs"
       | "playground_logs",
-    private pinnedVersion: string | undefined,
+    protected pinnedVersion: string | undefined,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private mutateRecord?: (r: any) => WithTransactionId<RecordType>,
-    private _internal_btql?: Record<string, unknown>,
+    protected _internal_btql?: Record<string, unknown>,
+    protected pinnedEnvironment?: string,
   ) {}
 
   public get id(): Promise<string> {
@@ -5725,6 +5999,12 @@ export class ObjectFetcher<RecordType> implements AsyncIterable<
                 version: this.pinnedVersion,
               }
             : {}),
+          ...(this.pinnedVersion === undefined &&
+          this.pinnedEnvironment !== undefined
+            ? {
+                env: this.pinnedEnvironment,
+              }
+            : {}),
         },
         { headers: { "Accept-Encoding": "gzip" } },
       );
@@ -5788,6 +6068,10 @@ export class ObjectFetcher<RecordType> implements AsyncIterable<
   }
 
   public async version(options?: { batchSize?: number }) {
+    // Resolve any lazy pinned version (e.g. from environment lookup) before
+    // checking the field — subclasses like Dataset populate pinnedVersion
+    // inside getState().
+    await this.getState();
     if (this.pinnedVersion !== undefined) {
       return this.pinnedVersion;
     } else {
@@ -6800,13 +7084,17 @@ export class Dataset<
   IsLegacyDataset extends boolean = typeof DEFAULT_IS_LEGACY_DATASET,
 > extends ObjectFetcher<DatasetRecord<IsLegacyDataset>> {
   private readonly lazyMetadata: LazyValue<ProjectDatasetMetadata>;
+  private readonly lazyPinnedVersion: LazyValue<string | undefined> | undefined;
+  private readonly pinnedSnapshotName: string | undefined;
   private readonly __braintrust_dataset_marker = true;
   private newRecords = 0;
 
   constructor(
     private state: BraintrustState,
     lazyMetadata: LazyValue<ProjectDatasetMetadata>,
-    pinnedVersion?: string,
+    pinnedVersion?: string | LazyValue<string | undefined>,
+    pinnedEnvironment?: string,
+    pinnedSnapshotName?: string,
     legacy?: IsLegacyDataset,
     _internal_btql?: Record<string, unknown>,
   ) {
@@ -6820,9 +7108,11 @@ export class Dataset<
           `Records will be fetched from this dataset in the legacy format, with the "expected" field renamed to "output". Please update your code to use "expected", and use \`braintrust.initDataset()\` with \`{ useOutput: false }\`, which will become the default in a future version of Braintrust.`,
         );
     }
+    const staticVersion =
+      pinnedVersion instanceof LazyValue ? undefined : pinnedVersion;
     super(
       "dataset",
-      pinnedVersion,
+      staticVersion,
       (r: AnyDatasetRecord) =>
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         ensureDatasetRecord(
@@ -6830,8 +7120,12 @@ export class Dataset<
           isLegacyDataset,
         ) as WithTransactionId<DatasetRecord<IsLegacyDataset>>,
       _internal_btql,
+      pinnedEnvironment,
     );
     this.lazyMetadata = lazyMetadata;
+    this.lazyPinnedVersion =
+      pinnedVersion instanceof LazyValue ? pinnedVersion : undefined;
+    this.pinnedSnapshotName = pinnedSnapshotName;
   }
 
   public get id(): Promise<string> {
@@ -6856,9 +7150,53 @@ export class Dataset<
     return this.state;
   }
 
+  public async toEvalData(): Promise<{
+    dataset_id: string;
+    dataset_version?: string;
+    dataset_environment?: string;
+    dataset_snapshot_name?: string;
+    _internal_btql?: Record<string, unknown>;
+  }> {
+    await this.getState();
+    const metadata = await this.lazyMetadata.get();
+
+    return {
+      dataset_id: metadata.dataset.id,
+      ...(this.pinnedEnvironment !== undefined
+        ? {
+            dataset_environment: this.pinnedEnvironment,
+          }
+        : {}),
+      ...(this.pinnedEnvironment === undefined &&
+      this.pinnedSnapshotName !== undefined
+        ? {
+            dataset_snapshot_name: this.pinnedSnapshotName,
+          }
+        : {}),
+      ...(this.pinnedEnvironment === undefined &&
+      this.pinnedSnapshotName === undefined &&
+      this.pinnedVersion !== undefined
+        ? {
+            dataset_version: this.pinnedVersion,
+          }
+        : {}),
+      ...(this._internal_btql !== undefined
+        ? { _internal_btql: this._internal_btql }
+        : {}),
+    };
+  }
+
   protected async getState(): Promise<BraintrustState> {
     // Ensure the login state is populated by awaiting lazyMetadata.
     await this.lazyMetadata.get();
+    // Resolve lazy pinned version (e.g. from environment or snapshot-name
+    // lookup).
+    if (
+      this.lazyPinnedVersion !== undefined &&
+      this.pinnedVersion === undefined
+    ) {
+      this.pinnedVersion = await this.lazyPinnedVersion.get();
+    }
     return this.state;
   }
 
@@ -7036,6 +7374,71 @@ export class Dataset<
 
     this.state.bgLogger().log([args]);
     return id;
+  }
+
+  /**
+   * Create a named snapshot of the dataset at the current version. Flushes any pending writes first.
+   *
+   * @param options.name A human-readable name for the snapshot. Must be unique within the dataset.
+   * @param options.description An optional description of the snapshot.
+   * @returns The created snapshot object.
+   */
+  public async createSnapshot({
+    name,
+    description,
+  }: {
+    readonly name: string;
+    readonly description?: string;
+  }): Promise<DatasetSnapshot> {
+    await this.flush();
+    const state = await this.getState();
+    const datasetId = await this.id;
+    const currentVersion = await this.version();
+    if (currentVersion === undefined) {
+      throw new Error("Cannot create snapshot: dataset has no records");
+    }
+    const response = await state
+      .appConn()
+      .post_json("api/dataset_snapshot/register", {
+        dataset_id: datasetId,
+        name,
+        description,
+        xact_id: currentVersion,
+      });
+    return datasetSnapshotRegisterResponseSchema.parse(response)
+      .dataset_snapshot;
+  }
+
+  /**
+   * List all named snapshots for this dataset.
+   *
+   * @returns An array of snapshot objects, ordered by creation time (newest first).
+   */
+  public async listSnapshots(): Promise<DatasetSnapshot[]> {
+    const state = await this.getState();
+    const datasetId = await this.id;
+    const response = await state
+      .appConn()
+      .get_json("api/dataset_snapshot/get", {
+        dataset_id: datasetId,
+      });
+    return datasetSnapshotResponseSchema.array().parse(response);
+  }
+
+  /**
+   * Delete a named snapshot from this dataset.
+   *
+   * @param snapshotId The unique identifier of the snapshot to delete.
+   * @returns The deleted snapshot object.
+   */
+  public async deleteSnapshot(snapshotId: string): Promise<DatasetSnapshot> {
+    const state = await this.getState();
+    const response = await state
+      .appConn()
+      .post_json("api/dataset_snapshot/delete_id", {
+        id: snapshotId,
+      });
+    return datasetSnapshotResponseSchema.parse(response);
   }
 
   /**

@@ -14,11 +14,13 @@ import pluralize from "pluralize";
 import {
   login,
   init as _initExperiment,
+  initDataset,
   Experiment,
   BaseMetadata,
   Dataset,
   type ParametersRef,
   RemoteEvalParameters,
+  _internalGetGlobalState,
 } from "../logger";
 import type { ProgressReporter } from "../reporters/types";
 import {
@@ -1053,6 +1055,86 @@ function addCompileArgs(parser: ArgumentParser) {
   });
 }
 
+interface DatasetCommandArgs {
+  api_key?: string;
+  org_name?: string;
+  app_url?: string;
+  project: string;
+  dataset: string;
+  debug_logging?: "error" | "warn" | "info" | "debug";
+}
+
+async function openDataset(args: DatasetCommandArgs) {
+  await login({
+    apiKey: args.api_key,
+    orgName: args.org_name,
+    appUrl: args.app_url,
+    debugLogLevel: args.debug_logging,
+  });
+  return initDataset({
+    project: args.project,
+    dataset: args.dataset,
+  });
+}
+
+async function datasetSnapshotCommand(
+  args: DatasetCommandArgs & { name: string; description?: string },
+) {
+  const dataset = await openDataset(args);
+  const snapshot = await dataset.createSnapshot({
+    name: args.name,
+    description: args.description,
+  });
+  console.log(
+    JSON.stringify(
+      {
+        id: snapshot.id,
+        name: snapshot.name,
+        xact_id: snapshot.xact_id,
+        created: snapshot.created,
+      },
+      null,
+      2,
+    ),
+  );
+}
+
+async function datasetSnapshotsCommand(args: DatasetCommandArgs) {
+  const dataset = await openDataset(args);
+  const snapshots = await dataset.listSnapshots();
+  if (snapshots.length === 0) {
+    console.log("No snapshots.");
+    return;
+  }
+  for (const snap of snapshots) {
+    console.log(
+      `${snap.name}\txact_id=${snap.xact_id}\tid=${snap.id}\tcreated=${snap.created}`,
+    );
+  }
+}
+
+async function datasetTagEnvCommand(
+  args: DatasetCommandArgs & { env: string; version?: string },
+) {
+  const dataset = await openDataset(args);
+  const datasetId = await dataset.id;
+  const objectVersion = args.version ?? (await dataset.version());
+  if (!objectVersion) {
+    console.error("Dataset has no records — nothing to tag.");
+    process.exit(1);
+  }
+  const state = _internalGetGlobalState();
+  await state
+    .apiConn()
+    .put_json(
+      `environment-object/dataset/${datasetId}/${encodeURIComponent(args.env)}`,
+      { object_version: objectVersion },
+    );
+  console.log(
+    `Tagged version ${objectVersion} with environment "${args.env}".`,
+  );
+}
+
 async function main() {
   const parser = new ArgumentParser({
     description: "Braintrust CLI",
@@ -1177,6 +1259,71 @@ async function main() {
     help: "Overwrite local files if they have uncommitted changes.",
   });
   parser_pull.set_defaults({ func: pullCommand });
+
+  // -- dataset-snapshot: create a named snapshot --
+  const parser_dataset_snapshot = subparser.add_parser("dataset-snapshot", {
+    help: "Create a named snapshot of a dataset's current version.",
+    parents: [parentParser],
+  });
+  addAuthArgs(parser_dataset_snapshot);
+  addDebugLoggingArg(parser_dataset_snapshot);
+  parser_dataset_snapshot.add_argument("--project", {
+    help: "The project containing the dataset.",
+    required: true,
+  });
+  parser_dataset_snapshot.add_argument("--dataset", {
+    help: "The name of the dataset.",
+    required: true,
+  });
+  parser_dataset_snapshot.add_argument("--name", {
+    help: "A name for the snapshot.",
+    required: true,
+  });
+  parser_dataset_snapshot.add_argument("--description", {
+    help: "An optional description for the snapshot.",
+  });
+  parser_dataset_snapshot.set_defaults({ func: datasetSnapshotCommand });
+
+  // -- dataset-snapshots: list snapshots --
+  const parser_dataset_snapshots = subparser.add_parser("dataset-snapshots", {
+    help: "List all named snapshots for a dataset.",
+    parents: [parentParser],
+  });
+  addAuthArgs(parser_dataset_snapshots);
+  addDebugLoggingArg(parser_dataset_snapshots);
+  parser_dataset_snapshots.add_argument("--project", {
+    help: "The project containing the dataset.",
+    required: true,
+  });
+  parser_dataset_snapshots.add_argument("--dataset", {
+    help: "The name of the dataset.",
+    required: true,
+  });
+  parser_dataset_snapshots.set_defaults({ func: datasetSnapshotsCommand });
+
+  // -- dataset-tag-env: tag a version with an environment --
+  const parser_dataset_tag_env = subparser.add_parser("dataset-tag-env", {
+    help: "Tag a dataset version with an environment (e.g. staging, production).",
+    parents: [parentParser],
+  });
+  addAuthArgs(parser_dataset_tag_env);
+  addDebugLoggingArg(parser_dataset_tag_env);
+  parser_dataset_tag_env.add_argument("--project", {
+    help: "The project containing the dataset.",
+    required: true,
+  });
+  parser_dataset_tag_env.add_argument("--dataset", {
+    help: "The name of the dataset.",
+    required: true,
+  });
+  parser_dataset_tag_env.add_argument("--env", {
+    help: "The environment slug to tag (e.g. staging, production).",
+    required: true,
+  });
+  parser_dataset_tag_env.add_argument("--version", {
+    help: "The version (xact_id) to tag. If omitted, uses the dataset's current version.",
+  });
+  parser_dataset_tag_env.set_defaults({ func: datasetTagEnvCommand });
 
   const parsed = normalizeDebugLoggingArgs(parser.parse_args());
 

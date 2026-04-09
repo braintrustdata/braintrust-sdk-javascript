@@ -1295,6 +1295,9 @@ export const RunEval = z.object({
   data: z.union([
     z.object({
       dataset_id: z.string(),
+      dataset_version: z.union([z.string(), z.null()]).optional(),
+      dataset_environment: z.union([z.string(), z.null()]).optional(),
+      dataset_snapshot_name: z.union([z.string(), z.null()]).optional(),
       _internal_btql: z
         .union([z.object({}).partial().passthrough(), z.null()])
         .optional(),
@@ -1302,6 +1305,9 @@ export const RunEval = z.object({
     z.object({
       project_name: z.string(),
       dataset_name: z.string(),
+      dataset_version: z.union([z.string(), z.null()]).optional(),
+      dataset_environment: z.union([z.string(), z.null()]).optional(),
+      dataset_snapshot_name: z.union([z.string(), z.null()]).optional(),
       _internal_btql: z
         .union([z.object({}).partial().passthrough(), z.null()])
         .optional(),
