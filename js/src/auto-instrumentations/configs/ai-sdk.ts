@@ -70,12 +70,24 @@ export const aiSDKConfigs: InstrumentationConfig[] = [
     channelName: aiSDKChannels.streamText.channelName,
     module: {
       name: "ai",
-      versionRange: ">=3.0.0",
+      versionRange: ">=3.0.0 <4.0.0",
       filePath: "dist/index.js",
     },
     functionQuery: {
       functionName: "streamText",
       kind: "Async",
+    },
+  },
+  {
+    channelName: aiSDKChannels.streamTextSync.channelName,
+    module: {
+      name: "ai",
+      versionRange: ">=4.0.0",
+      filePath: "dist/index.js",
+    },
+    functionQuery: {
+      functionName: "streamText",
+      kind: "Sync",
     },
   },
 
@@ -188,12 +200,24 @@ export const aiSDKConfigs: InstrumentationConfig[] = [
     channelName: aiSDKChannels.streamObject.channelName,
     module: {
       name: "ai",
-      versionRange: ">=3.0.0",
+      versionRange: ">=3.0.0 <4.0.0",
       filePath: "dist/index.js",
     },
     functionQuery: {
       functionName: "streamObject",
       kind: "Async",
+    },
+  },
+  {
+    channelName: aiSDKChannels.streamObjectSync.channelName,
+    module: {
+      name: "ai",
+      versionRange: ">=4.0.0",
+      filePath: "dist/index.js",
+    },
+    functionQuery: {
+      functionName: "streamObject",
+      kind: "Sync",
     },
   },
 
