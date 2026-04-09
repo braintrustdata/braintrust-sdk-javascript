@@ -106,7 +106,7 @@ describe("ai sdk client unit tests", TEST_SUITE_OPTIONS, () => {
       span_id: expect.any(String),
       root_span_id: expect.any(String),
       span_attributes: {
-        type: "llm",
+        type: "function",
         name: "generateText",
       },
       metadata: expect.objectContaining({
@@ -244,7 +244,7 @@ describe("ai sdk client unit tests", TEST_SUITE_OPTIONS, () => {
       span_id: expect.any(String),
       root_span_id: expect.any(String),
       span_attributes: {
-        type: "llm",
+        type: "function",
         name: "generateText",
       },
       metadata: expect.objectContaining({
@@ -360,7 +360,7 @@ describe("ai sdk client unit tests", TEST_SUITE_OPTIONS, () => {
       span_id: expect.any(String),
       root_span_id: expect.any(String),
       span_attributes: {
-        type: "llm",
+        type: "function",
         name: "generateText",
       },
       metadata: expect.objectContaining({
@@ -473,7 +473,7 @@ describe("ai sdk client unit tests", TEST_SUITE_OPTIONS, () => {
     ) as any;
 
     expect(span.span_attributes.name).toBe("streamText");
-    expect(span.span_attributes.type).toBe("llm");
+    expect(span.span_attributes.type).toBe("function");
 
     const { metrics } = span;
     expect(start).toBeLessThanOrEqual(metrics.start);
