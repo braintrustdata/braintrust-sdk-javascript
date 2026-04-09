@@ -36,5 +36,15 @@
   },
   "peerDependencies": {
     "braintrust": ">=0.0.141"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/braintrustdata/braintrust-sdk-javascript.git",
+    "directory": "integrations/vercel-ai-sdk"
+  },
+  "homepage": "https://www.braintrust.dev/docs",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   }
 }

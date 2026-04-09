@@ -81,6 +81,22 @@ jobs:
       - name: Ensure SHA pinned actions
         uses: zgosalvez/github-actions-ensure-sha-pinned-actions@ca46236c6ce584ae24bc6283ba8dcf4b3ec8a066 # v5.0.4
 
+  changeset-required:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: .tool-versions
+      - name: Fetch pull request base ref
+        run: git fetch origin "${{ github.base_ref }}:refs/remotes/origin/${{ github.base_ref }}"
+      - name: Enforce changeset requirement for publishable package changes
+        run: node scripts/release/enforce-changeset.mjs
+
   js-test:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
@@ -131,72 +147,16 @@ jobs:
         run: |
           echo "Artifact: $ARTIFACT_NAME"
           echo "name=$ARTIFACT_NAME" >> "$GITHUB_OUTPUT"
-      - name: Prepare artifact
-        id: prepare_artifact
-        working-directory: js
-        shell: bash
-        run: |
-          mkdir -p artifacts
-          PACKED_TARBALL=$(npm pack --pack-destination artifacts)
-          echo "packed_tarball=$PACKED_TARBALL" >> "$GITHUB_OUTPUT"
-      - name: Pack @braintrust/browser
-        id: prepare_browser_artifact
-        working-directory: integrations/browser-js
-        shell: bash
-        run: |
-          PACKED_BROWSER_TARBALL=$(npm pack --pack-destination ../../js/artifacts)
-          echo "packed_browser_tarball=$PACKED_BROWSER_TARBALL" >> "$GITHUB_OUTPUT"
-      - name: Build and pack @braintrust/otel
-        id: prepare_otel_artifact
-        shell: bash
-        run: |
-          BRAINTRUST_TARBALL=$(ls js/artifacts/braintrust-*.tgz | head -n 1)
-          if [ -z "$BRAINTRUST_TARBALL" ]; then
-            echo "Error: braintrust tarball not found"
-            exit 1
-          fi
-          echo "Using braintrust tarball: $BRAINTRUST_TARBALL"
-
-          cd integrations/otel-js
-          if ! npm_config_save=false npm_config_lockfile=false pnpm add \
-            file:../../$BRAINTRUST_TARBALL \
-            @opentelemetry/api@^1.9.0 \
-            @opentelemetry/core@^1.9.0 \
-            @opentelemetry/exporter-trace-otlp-http@^0.35.0 \
-            @opentelemetry/sdk-trace-base@^1.9.0; then
-            echo "Error: Failed to install dependencies"
-            exit 1
-          fi
-
-          pnpm run build
-
-          PACKED_OTEL_TARBALL=$(npm pack --pack-destination ../../js/artifacts)
-          echo "packed_otel_tarball=$PACKED_OTEL_TARBALL" >> "$GITHUB_OUTPUT"
-      - name: Build and pack @braintrust/templates-nunjucks
-        id: prepare_templates_nunjucks_artifact
-        shell: bash
-        run: |
-          cd integrations/templates-nunjucks
-          pnpm run build
-          PACKED_NUNJUCKS_TARBALL=$(npm pack --pack-destination ../../js/artifacts)
-          echo "packed_nunjucks_tarball=$PACKED_NUNJUCKS_TARBALL" >> "$GITHUB_OUTPUT"
+      - name: Pack publishable packages
+        run: node scripts/release/pack-publishable-packages.mjs --output-dir js/artifacts
       - name: List artifacts before upload
         shell: bash
-        run: |
-          echo "Braintrust tarball: ${{ steps.prepare_artifact.outputs.packed_tarball }}"
-          echo "Browser tarball: ${{ steps.prepare_browser_artifact.outputs.packed_browser_tarball }}"
-          echo "Otel tarball: ${{ steps.prepare_otel_artifact.outputs.packed_otel_tarball }}"
-          echo "Templates-nunjucks tarball: ${{ steps.prepare_templates_nunjucks_artifact.outputs.packed_nunjucks_tarball }}"
-          ls -la js/artifacts/
+        run: ls -la js/artifacts/
       - name: Upload build artifacts
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: ${{ steps.artifact.outputs.name }}-dist
-          path: |
-            js/artifacts/${{ steps.prepare_artifact.outputs.packed_tarball }}
-            js/artifacts/${{ steps.prepare_browser_artifact.outputs.packed_browser_tarball }}
-            js/artifacts/${{ steps.prepare_otel_artifact.outputs.packed_otel_tarball }}
-            js/artifacts/${{ steps.prepare_templates_nunjucks_artifact.outputs.packed_nunjucks_tarball }}
+          path: js/artifacts/*.tgz
           retention-days: 1
 
   e2e-hermetic:
@@ -238,7 +198,7 @@ jobs:
         id: published-version
         shell: bash
         run: |
-          PUBLISHED_VERSION=$(npm view braintrust version 2>/dev/null || echo "none")
+          PUBLISHED_VERSION=$(cd /tmp && npm view braintrust version 2>/dev/null || echo "none")
           echo "version=$PUBLISHED_VERSION" >> "$GITHUB_OUTPUT"
           echo "Published version: $PUBLISHED_VERSION"
       - name: Cache API compatibility test tarball
@@ -512,6 +472,7 @@ jobs:
       - check-typings
       - dead-code
       - ensure-pinned-actions
+      - changeset-required
       - js-test
       - js-build
       - e2e-hermetic
@@ -545,6 +506,7 @@ jobs:
           check_result "check-typings" "${{ needs.check-typings.result }}"
           check_result "dead-code" "${{ needs.dead-code.result }}"
           check_result "ensure-pinned-actions" "${{ needs.ensure-pinned-actions.result }}"
+          check_result "changeset-required" "${{ needs.changeset-required.result }}"
           check_result "js-test" "${{ needs.js-test.result }}"
           check_result "js-build" "${{ needs.js-build.result }}"
           check_result "e2e-hermetic" "${{ needs.e2e-hermetic.result }}"
