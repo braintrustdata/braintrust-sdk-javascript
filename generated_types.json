@@ -5504,6 +5504,14 @@
                   "dataset_id": {
                     "type": "string"
                   },
+                  "dataset_version": {
+                    "type": ["string", "null"],
+                    "description": "The version of the dataset to evaluate"
+                  },
+                  "dataset_environment": {
+                    "type": ["string", "null"],
+                    "description": "The environment tag that resolves to the dataset version to evaluate"
+                  },
                   "_internal_btql": {
                     "type": ["object", "null"],
                     "additionalProperties": {}
@@ -5521,6 +5529,14 @@
                   },
                   "dataset_name": {
                     "type": "string"
+                  },
+                  "dataset_version": {
+                    "type": ["string", "null"],
+                    "description": "The version of the dataset to evaluate"
+                  },
+                  "dataset_environment": {
+                    "type": ["string", "null"],
+                    "description": "The environment tag that resolves to the dataset version to evaluate"
                   },
                   "_internal_btql": {
                     "type": ["object", "null"],
