@@ -992,6 +992,7 @@ async function maybeHandleTaskLifecycleMessage(
   const subAgentSpan = await ensureSubAgentSpan(
     state.subAgentDetailsByToolUseId,
     state.span,
+    state.activeToolSpans,
     state.subAgentSpans,
     toolUseId,
   );
