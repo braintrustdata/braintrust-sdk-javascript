@@ -150,6 +150,50 @@ function findToolSpanByLocalHandler(
   );
 }
 
+function findSpanById(
+  events: CapturedLogEvent[],
+  spanId: string | undefined,
+): CapturedLogEvent | undefined {
+  if (!spanId) {
+    return undefined;
+  }
+
+  return events.find((event) => event.span.id === spanId);
+}
+
+function hasSubAgentHandoffToolName(
+  event: CapturedLogEvent | undefined,
+): boolean {
+  if (event?.span.type !== "tool") {
+    return false;
+  }
+
+  const metadata = event.row.metadata as Record<string, unknown> | undefined;
+  return (
+    metadata?.["gen_ai.tool.name"] === "Agent" ||
+    metadata?.["gen_ai.tool.name"] === "Task"
+  );
+}
+
+function findSubAgentTaskSpan(
+  events: CapturedLogEvent[],
+): CapturedLogEvent | undefined {
+  return events.find(
+    (event) =>
+      event.span.type === "task" && event.span.name?.startsWith("Agent:"),
+  );
+}
+
+function findSubAgentHandoffTool(
+  events: CapturedLogEvent[],
+  subAgentTask: CapturedLogEvent | undefined,
+): CapturedLogEvent | undefined {
+  const parentId = subAgentTask?.span.parentIds[0];
+  const parentSpan = findSpanById(events, parentId);
+
+  return hasSubAgentHandoffToolName(parentSpan) ? parentSpan : undefined;
+}
+
 function buildSpanSummary(events: CapturedLogEvent[]): Json {
   const root = findLatestSpan(events, ROOT_NAME);
   const basicOperation = findLatestSpan(events, "claude-agent-basic-operation");
@@ -200,9 +244,13 @@ function buildSpanSummary(events: CapturedLogEvent[]): Json {
     const input = event.input as Array<{ content?: string }> | undefined;
     return Array.isArray(input) && input.some((item) => item.content);
   });
-  const subAgentLlm = findAllSpans(events, "anthropic.messages.create").find(
-    (event) => event.span.parentIds.includes(subAgentTaskRoot?.span.id ?? ""),
-  );
+  const subAgentTask = findSubAgentTaskSpan(events);
+  const subAgentLlm = findChildSpans(
+    events,
+    "anthropic.messages.create",
+    subAgentTask?.span.id,
+  ).at(-1);
+  const subAgentHandoffTool = findSubAgentHandoffTool(events, subAgentTask);
   const failureLlm = findChildSpans(
     events,
     "anthropic.messages.create",
@@ -212,12 +260,6 @@ function buildSpanSummary(events: CapturedLogEvent[]): Json {
   const basicTool =
     findToolSpanByLocalHandler(events, "calculator-local-handler-multiply") ??
     findToolSpanByOperation(events, "multiply");
-  const subAgentTask = events.find(
-    (event) =>
-      event.span.type === "task" &&
-      event.span.parentIds.includes(subAgentTaskRoot?.span.id ?? "") &&
-      event.span.name?.startsWith("Agent:"),
-  );
   const subAgentTool =
     findToolSpanByLocalHandler(events, "calculator-local-handler-add") ??
     findToolSpanByOperation(events, "add");
@@ -245,6 +287,7 @@ function buildSpanSummary(events: CapturedLogEvent[]): Json {
     },
     root: summarizeSpan(root),
     subagent: {
+      handoff_tool: summarizeSpan(subAgentHandoffTool),
       llm: summarizeSpan(subAgentLlm),
       nested_task: summarizeSpan(subAgentTask),
       operation: summarizeSpan(subAgentOperation),
@@ -404,12 +447,13 @@ export function defineClaudeAgentSDKInstrumentationAssertions(options: {
       const llm = findAllSpans(events, "anthropic.messages.create").find(
         (event) => event.span.parentIds.includes(taskRoot?.span.id ?? ""),
       );
-      const nestedTask = events.find(
-        (event) =>
-          event.span.type === "task" &&
-          event.span.parentIds.includes(taskRoot?.span.id ?? "") &&
-          event.span.name?.startsWith("Agent:"),
-      );
+      const nestedTask = findSubAgentTaskSpan(events);
+      const handoffTool = findSubAgentHandoffTool(events, nestedTask);
+      const nestedTaskLlm = findChildSpans(
+        events,
+        "anthropic.messages.create",
+        nestedTask?.span.id,
+      ).at(-1);
       const tool =
         findToolSpanByLocalHandler(events, "calculator-local-handler-add") ??
         findToolSpanByOperation(events, "add");
@@ -430,6 +474,16 @@ export function defineClaudeAgentSDKInstrumentationAssertions(options: {
         // Rich lifecycle naming should avoid the old coarse fallback label.
         expect(nestedTask?.span.name).not.toBe("Agent: sub-agent");
       }
+      expect(handoffTool).toBeDefined();
+      expect(hasSubAgentHandoffToolName(handoffTool)).toBe(true);
+      expect(nestedTask?.span.parentIds).toEqual([handoffTool?.span.id ?? ""]);
+      expect(nestedTaskLlm).toBeDefined();
+      expect(nestedTaskLlm?.span.parentIds).toContain(
+        nestedTask?.span.id ?? "",
+      );
+      expect(nestedTaskLlm?.span.parentIds).not.toContain(
+        taskRoot?.span.id ?? "",
+      );
       if (tool) {
         expect(tool.span.parentIds).not.toContain(taskRoot?.span.id ?? "");
         if (toolParent?.span.type === "llm") {
