@@ -3826,12 +3826,14 @@ export type InitDatasetOptions<IsLegacyDataset extends boolean> =
   FullLoginOptions & {
     dataset?: string;
     description?: string;
+    version?: string;
+    environment?: string;
+    snapshotName?: string;
     projectId?: string;
     metadata?: Record<string, unknown>;
     state?: BraintrustState;
     _internal_btql?: Record<string, unknown>;
-  } & DatasetSelection &
-    UseOutputOption<IsLegacyDataset>;
+  } & UseOutputOption<IsLegacyDataset>;
 
 export type FullInitDatasetOptions<IsLegacyDataset extends boolean> = {
   project?: string;
