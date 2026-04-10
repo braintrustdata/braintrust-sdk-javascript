@@ -20,7 +20,3 @@ Dockerfile.local
 CLAUDE.local.md
 .zed
 tsconfig.tsbuildinfo
-
-# dotagents
-.agents/.gitignore
-agents.lock
