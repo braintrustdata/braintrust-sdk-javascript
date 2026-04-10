@@ -42,6 +42,28 @@ type OperationSpec = {
   validate?: (span: CapturedLogEvent | undefined) => void;
 };
 
+function asRecord(value: unknown): Record<string, unknown> | undefined {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : undefined;
+}
+
+function validateStreamFixtureOutput(span: CapturedLogEvent | undefined): void {
+  const firstChoice = Array.isArray(span?.output) ? span?.output[0] : undefined;
+  const choice = asRecord(firstChoice);
+  const message = asRecord(choice?.message);
+
+  expect(choice?.logprobs).toEqual(
+    expect.objectContaining({
+      content: expect.arrayContaining([
+        expect.objectContaining({ token: "NO" }),
+        expect.objectContaining({ token: "PE" }),
+      ]),
+    }),
+  );
+  expect(message?.refusal).toBe("NOPE");
+}
+
 const OPERATION_SPECS: readonly OperationSpec[] = [
   {
     childNames: ["Chat Completion"],
@@ -76,6 +98,16 @@ const OPERATION_SPECS: readonly OperationSpec[] = [
     operation: "stream-with-response",
     testName:
       "captures trace for streamed chat completion with response metadata",
+  },
+  {
+    childNames: ["Chat Completion"],
+    expectsOutput: true,
+    expectsTimeToFirstToken: true,
+    name: "openai-stream-fixture-operation",
+    operation: "stream-fixture",
+    testName:
+      "captures trace for streamed chat completion with logprobs and refusal",
+    validate: validateStreamFixtureOutput,
   },
   {
     childNames: ["Chat Completion"],

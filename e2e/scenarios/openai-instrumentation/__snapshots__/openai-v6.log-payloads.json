@@ -167,6 +167,43 @@
       "kind": "undefined"
     },
     "metadata": {
+      "operation": "stream-fixture"
+    },
+    "metrics": {
+      "has_time_to_first_token": false
+    },
+    "name": "openai-stream-fixture-operation",
+    "output": null,
+    "type": null
+  },
+  {
+    "input": [
+      {
+        "content_kind": "string",
+        "role": "user"
+      }
+    ],
+    "metadata": {
+      "model": "gpt-4o-mini-2024-07-18",
+      "provider": "openai"
+    },
+    "metrics": {
+      "has_time_to_first_token": true
+    },
+    "name": "Chat Completion",
+    "output": [
+      {
+        "json_keys": [],
+        "role": "assistant"
+      }
+    ],
+    "type": "llm"
+  },
+  {
+    "input": {
+      "kind": "undefined"
+    },
+    "metadata": {
       "operation": "parse"
     },
     "metrics": {
