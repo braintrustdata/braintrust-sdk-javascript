@@ -220,7 +220,7 @@
     "module-details-from-path": "^1.0.4",
     "mustache": "^4.2.0",
     "pluralize": "^8.0.0",
-    "simple-git": "^3.21.0",
+    "simple-git": "^3.32.3",
     "source-map": "^0.7.4",
     "termi-link": "^1.0.1",
     "unplugin": "^2.3.5",
