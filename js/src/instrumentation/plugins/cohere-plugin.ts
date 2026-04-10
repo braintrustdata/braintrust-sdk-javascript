@@ -307,7 +307,7 @@ export function extractCohereResponseMetadata(
   return Object.keys(metadata).length > 0 ? metadata : undefined;
 }
 
-export function extractCohereChatOutput(result: unknown): unknown {
+function extractCohereChatOutput(result: unknown): unknown {
   if (!isObject(result)) {
     return undefined;
   }
