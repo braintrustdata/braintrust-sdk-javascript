@@ -238,9 +238,12 @@
     "nested_task": {
       "has_input": false,
       "has_output": false,
-      "metadata": null,
+      "metadata": {
+        "claude_agent_sdk.agent_type": "general-purpose",
+        "claude_agent_sdk.description": "<description>"
+      },
       "metric_keys": [],
-      "name": "Agent: general-purpose",
+      "name": "Agent: <task>",
       "root_span_id": "<span:1>",
       "span_id": "<span:17>",
       "span_parents": [
