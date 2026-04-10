@@ -734,7 +734,7 @@ describe("openai client unit tests", TEST_SUITE_OPTIONS, () => {
     assert.isTrue(m.completion_reasoning_tokens >= 0);
   });
 
-  test("openai.responses.compact", async (context) => {
+  test("openai.responses.compact", { timeout: 30000 }, async (context) => {
     if (!oai.responses || typeof oai.responses.compact !== "function") {
       context.skip();
     }
