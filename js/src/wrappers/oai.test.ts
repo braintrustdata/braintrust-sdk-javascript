@@ -23,7 +23,7 @@ import { parseMetricsFromUsage } from "./oai_responses";
 
 // use the cheapest model for tests
 const TEST_MODEL = "gpt-4o-mini";
-const TEST_SUITE_OPTIONS = { timeout: 10000, retry: 3 };
+const TEST_SUITE_OPTIONS = { timeout: 30000, retry: 3 };
 
 try {
   configureNode();
@@ -74,49 +74,53 @@ describe("openai client unit tests", TEST_SUITE_OPTIONS, () => {
     _exportsForTestingOnly.clearTestBackgroundLogger();
   });
 
-  test("openai.chat.completions.streaming", async (context) => {
-    assert.lengthOf(await backgroundLogger.drain(), 0);
+  test(
+    "openai.chat.completions.streaming",
+    { timeout: 30000 },
+    async (context) => {
+      assert.lengthOf(await backgroundLogger.drain(), 0);
 
-    for (const includeUsage of [false, true]) {
-      const start = getCurrentUnixTimestamp();
-      const stream = await client.chat.completions.create({
-        messages: [{ role: "user", content: "1+1" }],
-        model: TEST_MODEL,
-        stream: true,
-        stream_options: {
-          include_usage: includeUsage,
-        },
-      });
+      for (const includeUsage of [false, true]) {
+        const start = getCurrentUnixTimestamp();
+        const stream = await client.chat.completions.create({
+          messages: [{ role: "user", content: "1+1" }],
+          model: TEST_MODEL,
+          stream: true,
+          stream_options: {
+            include_usage: includeUsage,
+          },
+        });
 
-      let ttft = -1.0;
-      for await (const event of stream) {
-        if (ttft < 0) {
-          ttft = getCurrentUnixTimestamp() - start;
+        let ttft = -1.0;
+        for await (const event of stream) {
+          if (ttft < 0) {
+            ttft = getCurrentUnixTimestamp() - start;
+          }
+          assert.ok(event);
         }
-        assert.ok(event);
-      }
-      const end = getCurrentUnixTimestamp();
+        const end = getCurrentUnixTimestamp();
 
-      const spans = await backgroundLogger.drain();
-      assert.lengthOf(spans, 1);
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any
-      const span = spans[0] as any;
-      assert.equal(span.span_attributes.name, "Chat Completion");
-      assert.equal(span.span_attributes.type, "llm");
-      const m = span.metrics;
-      assert.isTrue(start <= m.start && m.start < m.end && m.end <= end);
-      assert.isTrue(ttft >= m.time_to_first_token);
-      if (includeUsage) {
-        assert.isTrue(m.tokens > 0);
-        assert.isTrue(m.prompt_tokens > 0);
-        assert.isTrue(m.time_to_first_token > 0);
-        assert.isTrue(m.prompt_cached_tokens >= 0);
-        assert.isTrue(m.completion_reasoning_tokens >= 0);
-      } else {
-        assert.isTrue(m.tokens === undefined);
+        const spans = await backgroundLogger.drain();
+        assert.lengthOf(spans, 1);
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any
+        const span = spans[0] as any;
+        assert.equal(span.span_attributes.name, "Chat Completion");
+        assert.equal(span.span_attributes.type, "llm");
+        const m = span.metrics;
+        assert.isTrue(start <= m.start && m.start < m.end && m.end <= end);
+        assert.isTrue(ttft >= m.time_to_first_token);
+        if (includeUsage) {
+          assert.isTrue(m.tokens > 0);
+          assert.isTrue(m.prompt_tokens > 0);
+          assert.isTrue(m.time_to_first_token > 0);
+          assert.isTrue(m.prompt_cached_tokens >= 0);
+          assert.isTrue(m.completion_reasoning_tokens >= 0);
+        } else {
+          assert.isTrue(m.tokens === undefined);
+        }
       }
-    }
-  });
+    },
+  );
 
   test("openai.chat.completions", async (context) => {
     assert.lengthOf(await backgroundLogger.drain(), 0);
