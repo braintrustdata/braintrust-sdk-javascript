@@ -720,7 +720,7 @@ function populateUsageMetrics(
 /**
  * Aggregate chunks from streaming generateContentStream response.
  */
-export function aggregateGenerateContentChunks(
+function aggregateGenerateContentChunks(
   chunks: GoogleGenAIGenerateContentResponse[],
   startTime: number,
   firstTokenTime: number | null,
@@ -849,7 +849,7 @@ function cleanMetrics(metrics: Record<string, number>): Record<string, number> {
   return cleaned;
 }
 
-export function extractResponseMetadata(
+function extractResponseMetadata(
   response: unknown,
 ): Record<string, unknown> | undefined {
   const responseDict = tryToDict(response);
