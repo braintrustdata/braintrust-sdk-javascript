@@ -1282,50 +1282,6 @@ class HTTPConnection {
     return await resp.json();
   }
 
-  async put_json(
-    path: string,
-    args: Record<string, unknown> | undefined = undefined,
-  ) {
-    const this_fetch = this.fetch;
-    const this_base_url = this.base_url;
-    const this_headers = this.headers;
-    const resp = await checkResponse(
-      await this_fetch(_urljoin(this_base_url, path), {
-        method: "PUT",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-          ...this_headers,
-        },
-        body: args ? JSON.stringify(args) : undefined,
-        keepalive: true,
-      }),
-    );
-    return await resp.json();
-  }
-
-  async delete_json(
-    path: string,
-    args: Record<string, unknown> | undefined = undefined,
-  ) {
-    const this_fetch = this.fetch;
-    const this_base_url = this.base_url;
-    const this_headers = this.headers;
-    const resp = await checkResponse(
-      await this_fetch(_urljoin(this_base_url, path), {
-        method: "DELETE",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-          ...this_headers,
-        },
-        body: args ? JSON.stringify(args) : undefined,
-        keepalive: true,
-      }),
-    );
-    return await resp.json();
-  }
-
   // Custom inspect for Node.js console.log
   [Symbol.for("nodejs.util.inspect.custom")](): string {
     return `HTTPConnection {
