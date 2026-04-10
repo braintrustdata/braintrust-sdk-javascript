@@ -320,7 +320,7 @@ describe("openai client unit tests", TEST_SUITE_OPTIONS, () => {
     expect(start <= m.start && m.start < m.end && m.end <= end).toBe(true);
   });
 
-  test("openai.chat.completions.tools", async () => {
+  test("openai.chat.completions.tools", { timeout: 30000 }, async () => {
     expect(await backgroundLogger.drain()).toHaveLength(0);
 
     // Define tools that can be called in parallel
@@ -734,7 +734,7 @@ describe("openai client unit tests", TEST_SUITE_OPTIONS, () => {
     assert.isTrue(m.completion_reasoning_tokens >= 0);
   });
 
-  test("openai.responses.compact", async (context) => {
+  test("openai.responses.compact", { timeout: 30000 }, async (context) => {
     if (!oai.responses || typeof oai.responses.compact !== "function") {
       context.skip();
     }
