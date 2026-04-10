@@ -310,12 +310,17 @@ function summarizeChatOutput(output: Json): Json {
   }) satisfies Json;
 }
 
-function summarizeResponsesOutput(output: Json): Json {
+function summarizeResponsesOutput(
+  output: Json,
+  options?: {
+    dropEmptyOutputTextMessages?: boolean;
+  },
+): Json {
   if (!Array.isArray(output)) {
     return null;
   }
 
-  return output.map((item) => {
+  const summaries = output.map((item) => {
     if (!isRecord(item as Json)) {
       return null;
     }
@@ -337,7 +342,28 @@ function summarizeResponsesOutput(output: Json): Json {
       status: item.status ?? null,
       type: item.type ?? null,
     } satisfies Json;
-  }) satisfies Json;
+  });
+
+  if (options?.dropEmptyOutputTextMessages) {
+    return summaries.filter((item) => {
+      if (!isRecord(item as Json)) {
+        return true;
+      }
+
+      return !(
+        item.role === "assistant" &&
+        item.status === "completed" &&
+        item.type === "message" &&
+        Array.isArray(item.content_types) &&
+        item.content_types.length === 1 &&
+        item.content_types[0] === "output_text" &&
+        Array.isArray(item.json_keys) &&
+        item.json_keys.length === 0
+      );
+    }) satisfies Json;
+  }
+
+  return summaries satisfies Json;
 }
 
 function summarizeOutput(name: string, output: Json): Json {
@@ -366,10 +392,15 @@ function summarizeOutput(name: string, output: Json): Json {
 
   if (
     name === "openai.responses.create" ||
-    name === "openai.responses.parse" ||
     name === "openai.responses.compact"
   ) {
     return summarizeResponsesOutput(output);
+  }
+
+  if (name === "openai.responses.parse") {
+    return summarizeResponsesOutput(output, {
+      dropEmptyOutputTextMessages: true,
+    });
   }
 
   return output === null || output === undefined

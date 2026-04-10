@@ -142,6 +142,13 @@ type ContentBlockAccumulator = {
   citations: AnthropicCitation[];
 };
 
+type ToolUseLikeContentBlock = {
+  type: "tool_use" | "server_tool_use";
+  id: string;
+  name: string;
+  input: Record<string, unknown>;
+};
+
 export function aggregateAnthropicStreamChunks(
   chunks: AnthropicStreamEvent[],
 ): {
@@ -292,16 +299,34 @@ function finalizeContentBlock(
   const acc = contentBlockDeltas[index];
   const text = acc?.textDeltas.join("") ?? "";
 
-  if (isToolUseContentBlock(contentBlock)) {
+  if (isToolUseLikeContentBlock(contentBlock)) {
     if (!text) {
       return;
     }
 
     try {
-      contentBlocks[index] = {
-        ...contentBlock,
-        input: JSON.parse(text),
-      };
+      const parsedInput = JSON.parse(text) as unknown;
+      if (!isObject(parsedInput)) {
+        fallbackTextDeltas.push(text);
+        delete contentBlocks[index];
+        return;
+      }
+
+      if (contentBlock.type === "tool_use") {
+        contentBlocks[index] = {
+          type: "tool_use",
+          id: contentBlock.id,
+          name: contentBlock.name,
+          input: parsedInput,
+        };
+      } else {
+        contentBlocks[index] = {
+          type: "server_tool_use",
+          id: contentBlock.id,
+          name: contentBlock.name,
+          input: parsedInput,
+        };
+      }
     } catch {
       fallbackTextDeltas.push(text);
       delete contentBlocks[index];
@@ -353,10 +378,16 @@ function isTextContentBlock(
   return contentBlock.type === "text";
 }
 
-function isToolUseContentBlock(
+function isToolUseLikeContentBlock(
   contentBlock: AnthropicOutputContentBlock,
-): contentBlock is Extract<AnthropicOutputContentBlock, { type: "tool_use" }> {
-  return contentBlock.type === "tool_use";
+): contentBlock is ToolUseLikeContentBlock {
+  return (
+    (contentBlock.type === "tool_use" ||
+      contentBlock.type === "server_tool_use") &&
+    typeof (contentBlock as { id?: unknown }).id === "string" &&
+    typeof (contentBlock as { name?: unknown }).name === "string" &&
+    isObject((contentBlock as { input?: unknown }).input)
+  );
 }
 
 function isThinkingContentBlock(
