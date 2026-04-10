@@ -67,6 +67,93 @@ export type BaseExperiment<
   name?: string;
 };
 
+const ENSURE_SPANS_FLUSH_INITIAL_BACKOFF_MS = 100;
+const ENSURE_SPANS_FLUSH_MAX_BACKOFF_MS = 2_000;
+const ENSURE_SPANS_FLUSH_TIMEOUT_MS = 30_000;
+
+async function waitForLogs3XactIngestion(args: {
+  state: BraintrustState;
+  objectType: "experiment" | "project_logs" | "playground_logs";
+  objectId: string;
+  rootSpanId: string;
+  xactId: string;
+  initialBackoffMs?: number;
+  maxBackoffMs?: number;
+  timeoutMs?: number;
+}): Promise<void> {
+  const {
+    state,
+    objectType,
+    objectId,
+    rootSpanId,
+    xactId,
+    initialBackoffMs = ENSURE_SPANS_FLUSH_INITIAL_BACKOFF_MS,
+    maxBackoffMs = ENSURE_SPANS_FLUSH_MAX_BACKOFF_MS,
+    timeoutMs = ENSURE_SPANS_FLUSH_TIMEOUT_MS,
+  } = args;
+
+  await state.login({});
+
+  const startedAt = Date.now();
+  let backoffMs = initialBackoffMs;
+
+  while (true) {
+    const response = await state.apiConn().post(
+      "btql",
+      {
+        query: {
+          select: [
+            {
+              alias: "id",
+              expr: { op: "ident", name: ["id"] },
+            },
+          ],
+          from: {
+            op: "function",
+            name: {
+              op: "ident",
+              name: [objectType],
+            },
+            args: [{ op: "literal", value: objectId }],
+          },
+          filter: {
+            op: "and",
+            children: [
+              {
+                op: "eq",
+                left: { op: "ident", name: ["root_span_id"] },
+                right: { op: "literal", value: rootSpanId },
+              },
+              {
+                op: "eq",
+                left: { op: "ident", name: ["_xact_id"] },
+                right: { op: "literal", value: xactId },
+              },
+            ],
+          },
+          limit: 1,
+        },
+        brainstore_realtime: false,
+        query_source: `sdk_ensure_spans_flushed_de15bf`,
+      },
+      { headers: { "Accept-Encoding": "gzip" } },
+    );
+    const result = await response.json();
+    if (Array.isArray(result.data) && result.data.length > 0) {
+      return;
+    }
+
+    if (Date.now() - startedAt >= timeoutMs) {
+      throw new Error(
+        `Timed out waiting for logs3 xact ${xactId} to become queryable`,
+      );
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, backoffMs));
+    backoffMs = Math.min(backoffMs * 2, maxBackoffMs);
+  }
+}
+
 /**
  * Use this to specify that the dataset should actually be the data from a previous (base) experiment.
  * If you do not specify a name, Braintrust will automatically figure out the best base experiment to
@@ -1043,7 +1130,20 @@ async function runEvaluatorInternal(
         };
 
         const callback = async (rootSpan: Span) => {
-          const state = evaluator.state ?? _internalGetGlobalState();
+          const state =
+            experiment?.loggingState ??
+            evaluator.state ??
+            _internalGetGlobalState();
+          const parentStr = state.currentParent.getStore();
+          const parentComponents = parentStr
+            ? SpanComponentsV3.fromStr(parentStr)
+            : null;
+          const traceObjectType = parentComponents
+            ? spanObjectTypeV3ToTypedString(parentComponents.data.object_type)
+            : "experiment";
+          const traceObjectId =
+            parentComponents?.data.object_id ??
+            (experimentIdPromise ? ((await experimentIdPromise) ?? "") : "");
           const ensureSpansFlushed = async () => {
             // Flush native Braintrust spans
             if (experiment) {
@@ -1058,25 +1158,23 @@ async function runEvaluatorInternal(
             if (state) {
               await state.flushOtel();
             }
-          };
 
-          const parentStr = state.currentParent.getStore();
-          const parentComponents = parentStr
-            ? SpanComponentsV3.fromStr(parentStr)
-            : null;
+            const xactId = state?.bgLogger().lastFlushedXactId();
+            if (state && xactId && traceObjectId) {
+              await waitForLogs3XactIngestion({
+                state,
+                objectType: traceObjectType,
+                objectId: traceObjectId,
+                rootSpanId: rootSpan.rootSpanId,
+                xactId,
+              });
+            }
+          };
 
           const trace = state
             ? new LocalTrace({
-                objectType: parentComponents
-                  ? spanObjectTypeV3ToTypedString(
-                      parentComponents.data.object_type,
-                    )
-                  : "experiment",
-                objectId:
-                  parentComponents?.data.object_id ??
-                  (experimentIdPromise
-                    ? ((await experimentIdPromise) ?? "")
-                    : ""),
+                objectType: traceObjectType,
+                objectId: traceObjectId,
                 rootSpanId: rootSpan.rootSpanId,
                 ensureSpansFlushed,
                 state,
@@ -1723,4 +1821,8 @@ const defaultReporter: ReporterDef<boolean> = {
   async reportRun(evalReports: boolean[]) {
     return evalReports.every((r) => r);
   },
+};
+
+export const _exportsForTestingOnly = {
+  waitForLogs3XactIngestion,
 };

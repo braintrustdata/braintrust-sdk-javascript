@@ -8,13 +8,14 @@ import {
   vi,
 } from "vitest";
 import {
+  _exportsForTestingOnly as frameworkExportsForTestingOnly,
   defaultErrorScoreHandler,
   Eval,
   EvalScorer,
   runEvaluator,
 } from "./framework";
 import {
-  _exportsForTestingOnly,
+  _exportsForTestingOnly as loggerExportsForTestingOnly,
   BraintrustState,
   initLogger,
   TestBackgroundLogger,
@@ -32,6 +33,60 @@ class NoopProgressReporter implements ProgressReporter {
   public stop() {}
   public increment() {}
 }
+
+test("waitForLogs3XactIngestion polls btql until the xact is queryable", async () => {
+  const post = vi
+    .fn()
+    .mockResolvedValueOnce({
+      json: async () => ({ data: [] }),
+    })
+    .mockResolvedValueOnce({
+      json: async () => ({ data: [{ id: "span-1" }] }),
+    });
+  const state = {
+    login: vi.fn().mockResolvedValue(undefined),
+    apiConn: () => ({ post }),
+  } as unknown as BraintrustState;
+
+  await frameworkExportsForTestingOnly.waitForLogs3XactIngestion({
+    state,
+    objectType: "experiment",
+    objectId: "exp-123",
+    rootSpanId: "root-456",
+    xactId: "xact-789",
+    initialBackoffMs: 0,
+    maxBackoffMs: 0,
+    timeoutMs: 100,
+  });
+
+  expect(state.login).toHaveBeenCalledWith({});
+  expect(post).toHaveBeenCalledTimes(2);
+  expect(post).toHaveBeenNthCalledWith(
+    1,
+    "btql",
+    expect.objectContaining({
+      query: expect.objectContaining({
+        select: [{ op: "literal", value: 1 }],
+        filter: {
+          op: "and",
+          children: [
+            {
+              op: "eq",
+              left: { op: "ident", name: ["root_span_id"] },
+              right: { op: "literal", value: "root-456" },
+            },
+            {
+              op: "eq",
+              left: { op: "ident", name: ["_xact_id"] },
+              right: { op: "literal", value: "xact-789" },
+            },
+          ],
+        },
+      }),
+    }),
+    { headers: { "Accept-Encoding": "gzip" } },
+  );
+});
 
 test("meta (write) is passed to task", async () => {
   const metadata = {
@@ -559,7 +614,7 @@ test("trialIndex with multiple inputs", async () => {
 });
 
 test("Eval with noSendLogs: true runs locally without creating experiment", async () => {
-  const memoryLogger = _exportsForTestingOnly.useTestBackgroundLogger();
+  const memoryLogger = loggerExportsForTestingOnly.useTestBackgroundLogger();
 
   const result = await Eval(
     "test-no-logs",
@@ -677,10 +732,10 @@ test("Eval with returnResults: true collects all results", async () => {
 });
 
 test("tags can be appended and logged to root span", async () => {
-  await _exportsForTestingOnly.simulateLoginForTests();
-  const memoryLogger = _exportsForTestingOnly.useTestBackgroundLogger();
+  await loggerExportsForTestingOnly.simulateLoginForTests();
+  const memoryLogger = loggerExportsForTestingOnly.useTestBackgroundLogger();
   const experiment =
-    _exportsForTestingOnly.initTestExperiment("js-tags-append");
+    loggerExportsForTestingOnly.initTestExperiment("js-tags-append");
 
   const initialTags = ["cookies n cream"];
   const appendedTags = ["chocolate", "vanilla", "strawberry"];
@@ -736,9 +791,10 @@ test.each([
     expectedTags: ["chocolate", "vanilla", "strawberry"],
   },
 ])("$title", async ({ providedTags, expectedTags }) => {
-  await _exportsForTestingOnly.simulateLoginForTests();
-  const memoryLogger = _exportsForTestingOnly.useTestBackgroundLogger();
-  const experiment = _exportsForTestingOnly.initTestExperiment("js-tags-list");
+  await loggerExportsForTestingOnly.simulateLoginForTests();
+  const memoryLogger = loggerExportsForTestingOnly.useTestBackgroundLogger();
+  const experiment =
+    loggerExportsForTestingOnly.initTestExperiment("js-tags-list");
 
   const result = await runEvaluator(
     experiment,
@@ -769,9 +825,10 @@ test.each([
 });
 
 test("tags are persisted with a failing scorer", async () => {
-  await _exportsForTestingOnly.simulateLoginForTests();
-  const memoryLogger = _exportsForTestingOnly.useTestBackgroundLogger();
-  const experiment = _exportsForTestingOnly.initTestExperiment("js-tags-list");
+  await loggerExportsForTestingOnly.simulateLoginForTests();
+  const memoryLogger = loggerExportsForTestingOnly.useTestBackgroundLogger();
+  const experiment =
+    loggerExportsForTestingOnly.initTestExperiment("js-tags-list");
 
   const expectedTags = ["chocolate", "vanilla", "strawberry"];
 
@@ -809,10 +866,10 @@ test("tags are persisted with a failing scorer", async () => {
 });
 
 test("tags remain empty when not set", async () => {
-  await _exportsForTestingOnly.simulateLoginForTests();
-  const memoryLogger = _exportsForTestingOnly.useTestBackgroundLogger();
+  await loggerExportsForTestingOnly.simulateLoginForTests();
+  const memoryLogger = loggerExportsForTestingOnly.useTestBackgroundLogger();
   const experiment =
-    _exportsForTestingOnly.initTestExperiment("js-tags-append");
+    loggerExportsForTestingOnly.initTestExperiment("js-tags-append");
 
   const result = await runEvaluator(
     experiment,
@@ -842,10 +899,10 @@ test("tags remain empty when not set", async () => {
 });
 
 test("scorer spans have purpose='scorer' attribute", async () => {
-  await _exportsForTestingOnly.simulateLoginForTests();
-  const memoryLogger = _exportsForTestingOnly.useTestBackgroundLogger();
+  await loggerExportsForTestingOnly.simulateLoginForTests();
+  const memoryLogger = loggerExportsForTestingOnly.useTestBackgroundLogger();
   const experiment =
-    _exportsForTestingOnly.initTestExperiment("js-scorer-purpose");
+    loggerExportsForTestingOnly.initTestExperiment("js-scorer-purpose");
 
   const result = await runEvaluator(
     experiment,
@@ -892,8 +949,8 @@ test("scorer spans have purpose='scorer' attribute", async () => {
     expect((span as any).span_attributes?.purpose).not.toBe("scorer");
   }
 
-  _exportsForTestingOnly.clearTestBackgroundLogger();
-  _exportsForTestingOnly.simulateLogoutForTests();
+  loggerExportsForTestingOnly.clearTestBackgroundLogger();
+  loggerExportsForTestingOnly.simulateLogoutForTests();
 });
 
 // ========== framework2 metadata tests ==========
@@ -1543,7 +1600,7 @@ describe("framework2 metadata support", () => {
 });
 
 test("Eval with enableCache: false does not use span cache", async () => {
-  await _exportsForTestingOnly.simulateLoginForTests();
+  await loggerExportsForTestingOnly.simulateLoginForTests();
   const state = new BraintrustState({
     apiKey: "test-api-key",
     appUrl: "https://example.com",
@@ -1568,7 +1625,7 @@ test("Eval with enableCache: false does not use span cache", async () => {
 });
 
 test("Eval with enableCache: true (default) uses span cache", async () => {
-  await _exportsForTestingOnly.simulateLoginForTests();
+  await loggerExportsForTestingOnly.simulateLoginForTests();
   const state = new BraintrustState({
     apiKey: "test-api-key",
     appUrl: "https://example.com",
@@ -1593,9 +1650,9 @@ test("Eval with enableCache: true (default) uses span cache", async () => {
 });
 
 test("Eval with parent flushes evaluator state, not global state", async () => {
-  await _exportsForTestingOnly.simulateLoginForTests();
+  await loggerExportsForTestingOnly.simulateLoginForTests();
 
-  _exportsForTestingOnly.useTestBackgroundLogger();
+  loggerExportsForTestingOnly.useTestBackgroundLogger();
 
   const evaluatorState = new BraintrustState({
     apiKey: "test-api-key",
@@ -1624,6 +1681,6 @@ test("Eval with parent flushes evaluator state, not global state", async () => {
 
   expect(evaluatorFlushSpy).toHaveBeenCalled();
 
-  _exportsForTestingOnly.clearTestBackgroundLogger();
-  _exportsForTestingOnly.simulateLogoutForTests();
+  loggerExportsForTestingOnly.clearTestBackgroundLogger();
+  loggerExportsForTestingOnly.simulateLogoutForTests();
 });
