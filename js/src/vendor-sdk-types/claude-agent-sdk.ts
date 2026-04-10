@@ -12,6 +12,12 @@ interface Usage {
   cache_creation_input_tokens?: number;
 }
 
+interface TaskUsage {
+  duration_ms?: number;
+  tool_uses?: number;
+  total_tokens?: number;
+}
+
 // Shared base fields for all hook inputs
 interface BaseHookInput {
   session_id: string;
@@ -24,6 +30,7 @@ interface BaseHookInput {
 
 export interface ClaudeAgentSDKMessage {
   type: string;
+  subtype?: string;
   message?: {
     id?: string;
     role?: string;
@@ -32,9 +39,19 @@ export interface ClaudeAgentSDKMessage {
     usage?: Usage;
   };
   parent_tool_use_id?: string | null;
-  usage?: Usage;
+  usage?: Usage | TaskUsage;
   num_turns?: number;
   session_id?: string;
+  task_id?: string;
+  tool_use_id?: string;
+  status?: string;
+  output_file?: string;
+  summary?: string;
+  description?: string;
+  task_type?: string;
+  workflow_name?: string;
+  prompt?: string;
+  last_tool_name?: string;
   [key: string]: unknown;
 }
 
@@ -117,8 +134,10 @@ export type ClaudeAgentSDKHookCallback = (
     | (BaseHookInput & {
         hook_event_name: "SubagentStop";
         agent_id: string;
+        agent_type?: string;
         agent_transcript_path?: string;
-        stop_hook_active?: boolean;
+        stop_hook_active: boolean;
+        last_assistant_message?: string;
       }),
   toolUseID: string | undefined,
   options: { signal: AbortSignal },

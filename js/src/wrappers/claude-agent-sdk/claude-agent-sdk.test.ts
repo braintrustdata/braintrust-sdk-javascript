@@ -375,6 +375,37 @@ describe("wrapClaudeAgentSDK property forwarding", () => {
     expect(capturedOptions.hooks.PostToolUseFailure.length).toBeGreaterThan(0);
   });
 
+  test("injects SubagentStart and SubagentStop hooks for lifecycle tracing", async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let capturedOptions: any;
+
+    const mockSDK = {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      query: (params: any) => {
+        capturedOptions = params.options;
+        const generator = (async function* () {
+          yield { type: "result", result: "done" };
+        })();
+        return generator;
+      },
+    };
+
+    const wrappedSDK = wrapClaudeAgentSDK(mockSDK);
+
+    for await (const _msg of wrappedSDK.query({
+      prompt: "test",
+      options: { model: "test-model" },
+    })) {
+      // consume
+    }
+
+    expect(capturedOptions.hooks).toBeDefined();
+    expect(capturedOptions.hooks.SubagentStart).toBeDefined();
+    expect(capturedOptions.hooks.SubagentStart.length).toBeGreaterThan(0);
+    expect(capturedOptions.hooks.SubagentStop).toBeDefined();
+    expect(capturedOptions.hooks.SubagentStop.length).toBeGreaterThan(0);
+  });
+
   test("PreToolUse hook handles undefined toolUseID gracefully", async () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let capturedOptions: any;
