@@ -512,6 +512,10 @@ export function aggregateChatCompletionChunks(
       continue;
     }
 
+    if (delta.finish_reason) {
+      finish_reason = delta.finish_reason;
+    }
+
     if (!role && delta.role) {
       role = delta.role;
     }
@@ -555,7 +559,7 @@ export function aggregateChatCompletionChunks(
         message: {
           role,
           content,
-          refusal,
+          ...(refusal !== undefined ? { refusal } : {}),
           tool_calls,
         },
         logprobs: logprobs ?? null,
