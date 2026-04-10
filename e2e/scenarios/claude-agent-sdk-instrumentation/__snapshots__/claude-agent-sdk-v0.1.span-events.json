@@ -240,7 +240,8 @@
       "has_output": false,
       "metadata": {
         "claude_agent_sdk.agent_type": "general-purpose",
-        "claude_agent_sdk.description": "<description>"
+        "claude_agent_sdk.description": "<description>",
+        "claude_agent_sdk.tool_use_id": "<tool-use-id>"
       },
       "metric_keys": [],
       "name": "Agent: <task>",

@@ -110,6 +110,14 @@ function summarizeSpan(
     if (typeof metadata["claude_agent_sdk.tool_use_id"] === "string") {
       metadata["claude_agent_sdk.tool_use_id"] = "<tool-use-id>";
     }
+    if (
+      event.span.type === "task" &&
+      typeof summary.name === "string" &&
+      summary.name.startsWith("Agent:") &&
+      metadata["claude_agent_sdk.tool_use_id"] === undefined
+    ) {
+      metadata["claude_agent_sdk.tool_use_id"] = "<tool-use-id>";
+    }
   }
   if (typeof summary.name === "string" && summary.name.startsWith("Agent: ")) {
     summary.name = "Agent: <task>";

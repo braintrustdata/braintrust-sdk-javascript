@@ -242,7 +242,8 @@
         "claude_agent_sdk.agent_type": "math-expert",
         "claude_agent_sdk.description": "<description>",
         "claude_agent_sdk.task_id": "<task-id>",
-        "claude_agent_sdk.task_type": "local_agent"
+        "claude_agent_sdk.task_type": "local_agent",
+        "claude_agent_sdk.tool_use_id": "<tool-use-id>"
       },
       "metric_keys": [],
       "name": "Agent: <task>",
