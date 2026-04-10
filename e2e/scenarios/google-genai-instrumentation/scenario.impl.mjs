@@ -7,6 +7,7 @@ import {
 } from "../../helpers/provider-runtime.mjs";
 
 const GOOGLE_MODEL = "gemini-2.5-flash-lite";
+const GOOGLE_GROUNDING_MODEL = "gemini-2.0-flash";
 const ROOT_NAME = "google-genai-instrumentation-root";
 const SCENARIO_NAME = "google-genai-instrumentation";
 const WEATHER_TOOL = {
@@ -26,6 +27,9 @@ const WEATHER_TOOL = {
       },
     },
   ],
+};
+const GOOGLE_SEARCH_TOOL = {
+  googleSearch: {},
 };
 
 async function runGoogleGenAIInstrumentationScenario(sdk, options = {}) {
@@ -109,6 +113,41 @@ async function runGoogleGenAIInstrumentationScenario(sdk, options = {}) {
           for await (const _chunk of stream) {
             break;
           }
+        },
+      );
+
+      await runOperation(
+        "google-grounded-generate-operation",
+        "grounded-generate",
+        async () => {
+          await client.models.generateContent({
+            model: GOOGLE_GROUNDING_MODEL,
+            contents:
+              "Use Google Search grounding and answer in one sentence: What is the current population of Paris, France?",
+            config: {
+              maxOutputTokens: 256,
+              temperature: 0,
+              tools: [GOOGLE_SEARCH_TOOL],
+            },
+          });
+        },
+      );
+
+      await runOperation(
+        "google-grounded-stream-operation",
+        "grounded-stream",
+        async () => {
+          const stream = await client.models.generateContentStream({
+            model: GOOGLE_GROUNDING_MODEL,
+            contents:
+              "Use Google Search grounding and answer in one sentence: What is the current weather in Paris?",
+            config: {
+              maxOutputTokens: 256,
+              temperature: 0,
+              tools: [GOOGLE_SEARCH_TOOL],
+            },
+          });
+          await collectAsync(stream);
         },
       );
 
