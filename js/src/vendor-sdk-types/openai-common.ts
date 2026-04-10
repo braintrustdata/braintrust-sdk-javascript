@@ -74,7 +74,22 @@ export interface OpenAIChatToolCall {
 export interface OpenAIChatMessage {
   role?: string;
   content?: unknown;
+  refusal?: string;
   tool_calls?: OpenAIChatToolCall[];
+  [key: string]: unknown;
+}
+
+export interface OpenAIChatTokenLogprob {
+  token?: string;
+  logprob?: number;
+  bytes?: number[] | null;
+  top_logprobs?: OpenAIChatTokenLogprob[];
+  [key: string]: unknown;
+}
+
+export interface OpenAIChatLogprobs {
+  content?: OpenAIChatTokenLogprob[] | null;
+  refusal?: OpenAIChatTokenLogprob[] | null;
   [key: string]: unknown;
 }
 
@@ -82,7 +97,7 @@ export interface OpenAIChatChoice {
   index: number;
   message: OpenAIChatMessage;
   finish_reason?: string | null;
-  logprobs?: unknown;
+  logprobs?: OpenAIChatLogprobs | null;
   [key: string]: unknown;
 }
 
@@ -95,6 +110,7 @@ export interface OpenAIChatCompletion {
 export interface OpenAIChatDelta {
   role?: string;
   content?: string;
+  refusal?: string;
   tool_calls?: OpenAIChatToolCall[];
   finish_reason?: string | null;
   [key: string]: unknown;
@@ -103,6 +119,7 @@ export interface OpenAIChatDelta {
 export interface OpenAIChatChunkChoice {
   delta?: OpenAIChatDelta;
   finish_reason?: string | null;
+  logprobs?: OpenAIChatLogprobs | null;
   [key: string]: unknown;
 }
 

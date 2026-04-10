@@ -18,6 +18,7 @@ import {
 import type {
   OpenAIChatChoice,
   OpenAIChatCompletionChunk,
+  OpenAIChatLogprobs,
   OpenAIResponseStreamEvent,
 } from "../../vendor-sdk-types/openai";
 
@@ -417,6 +418,55 @@ export function processImagesInOutput(output: any): any {
   return output;
 }
 
+function mergeLogprobTokens(
+  existing: OpenAIChatLogprobs["content"] | OpenAIChatLogprobs["refusal"],
+  incoming: OpenAIChatLogprobs["content"] | OpenAIChatLogprobs["refusal"],
+): OpenAIChatLogprobs["content"] | OpenAIChatLogprobs["refusal"] {
+  if (incoming === undefined) {
+    return existing;
+  }
+
+  if (incoming === null) {
+    return existing ?? null;
+  }
+
+  if (Array.isArray(existing)) {
+    return [...existing, ...incoming];
+  }
+
+  return [...incoming];
+}
+
+function aggregateChatLogprobs(
+  existing: OpenAIChatLogprobs | null | undefined,
+  incoming: OpenAIChatLogprobs | null | undefined,
+): OpenAIChatLogprobs | null | undefined {
+  if (incoming === undefined) {
+    return existing;
+  }
+
+  if (incoming === null) {
+    return existing ?? null;
+  }
+
+  const aggregated: OpenAIChatLogprobs =
+    existing && existing !== null
+      ? { ...existing, ...incoming }
+      : { ...incoming };
+
+  const content = mergeLogprobTokens(existing?.content, incoming.content);
+  if (content !== undefined) {
+    aggregated.content = content;
+  }
+
+  const refusal = mergeLogprobTokens(existing?.refusal, incoming.refusal);
+  if (refusal !== undefined) {
+    aggregated.refusal = refusal;
+  }
+
+  return aggregated;
+}
+
 /**
  * Aggregate chat completion chunks into a single response.
  * Combines role (first), content (concatenated), tool_calls (by id),
@@ -432,7 +482,9 @@ export function aggregateChatCompletionChunks(
 } {
   let role = undefined;
   let content = undefined;
+  let refusal = undefined;
   let tool_calls = undefined;
+  let logprobs: OpenAIChatLogprobs | null | undefined = undefined;
   let finish_reason = undefined;
   let metrics: Record<string, number> = {};
 
@@ -444,21 +496,36 @@ export function aggregateChatCompletionChunks(
       };
     }
 
-    const delta = chunk.choices?.[0]?.delta;
-    if (!delta) {
+    const choice = chunk.choices?.[0];
+    if (!choice) {
       continue;
     }
 
-    if (!role && delta.role) {
-      role = delta.role;
+    if (choice.finish_reason) {
+      finish_reason = choice.finish_reason;
+    }
+
+    logprobs = aggregateChatLogprobs(logprobs, choice.logprobs);
+
+    const delta = choice.delta;
+    if (!delta) {
+      continue;
     }
 
     if (delta.finish_reason) {
       finish_reason = delta.finish_reason;
     }
 
+    if (!role && delta.role) {
+      role = delta.role;
+    }
+
     if (delta.content) {
       content = (content || "") + delta.content;
+    }
+
+    if (delta.refusal) {
+      refusal = (refusal || "") + delta.refusal;
     }
 
     if (delta.tool_calls) {
@@ -492,9 +559,10 @@ export function aggregateChatCompletionChunks(
         message: {
           role,
           content,
+          ...(refusal !== undefined ? { refusal } : {}),
           tool_calls,
         },
-        logprobs: null,
+        logprobs: logprobs ?? null,
         finish_reason,
       },
     ],
