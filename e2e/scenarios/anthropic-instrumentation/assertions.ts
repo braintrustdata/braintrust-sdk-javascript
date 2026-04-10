@@ -184,6 +184,21 @@ function summarizeAnthropicPayload(event: CapturedLogEvent): Json {
     return summary;
   }
 
+  const hasToolUseCallerMetadata = output.content.some(
+    (block) =>
+      (block.type === "tool_use" || block.type === "server_tool_use") &&
+      "caller" in block,
+  );
+
+  if (hasToolUseCallerMetadata) {
+    for (const block of output.content as Array<Record<string, unknown>>) {
+      if (block.type === "tool_use" || block.type === "server_tool_use") {
+        delete block.caller;
+      }
+    }
+    summary.output = output as Json;
+  }
+
   const textBlock = output.content.find(
     (block) => block.type === "text" && typeof block.text === "string",
   );
