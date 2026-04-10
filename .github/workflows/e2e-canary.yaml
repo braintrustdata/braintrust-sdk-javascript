@@ -17,7 +17,6 @@ jobs:
   canary:
     runs-on: ubuntu-latest
     timeout-minutes: 45
-    environment: canary-e2e
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
