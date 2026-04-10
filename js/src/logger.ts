@@ -5515,10 +5515,14 @@ function isDeepCopyAttachmentPlaceholder(
     return false;
   }
 
+  const attachmentIndex = record._bt_internal_saved_attachment_idx;
+  const marker = record._bt_internal_saved_attachment_marker;
+
   return (
-    Number.isInteger(record._bt_internal_saved_attachment_idx) &&
-    record._bt_internal_saved_attachment_idx >= 0 &&
-    record._bt_internal_saved_attachment_marker === attachmentMarker
+    typeof attachmentIndex === "number" &&
+    Number.isInteger(attachmentIndex) &&
+    attachmentIndex >= 0 &&
+    marker === attachmentMarker
   );
 }
 
@@ -5683,9 +5687,9 @@ export type WithTransactionId<R> = R & {
 export const DEFAULT_FETCH_BATCH_SIZE = 1000;
 export const MAX_BTQL_ITERATIONS = 10000;
 
-export class ObjectFetcher<RecordType>
-  implements AsyncIterable<WithTransactionId<RecordType>>
-{
+export class ObjectFetcher<RecordType> implements AsyncIterable<
+  WithTransactionId<RecordType>
+> {
   private _fetchedData: WithTransactionId<RecordType>[] | undefined = undefined;
 
   constructor(
