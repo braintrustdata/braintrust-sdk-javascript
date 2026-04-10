@@ -251,6 +251,65 @@
   },
   {
     "metadata": {
+      "operation": "stream-server-tool"
+    },
+    "metrics": {
+      "end": 0,
+      "start": 0
+    },
+    "name": "anthropic-stream-server-tool-operation",
+    "type": null
+  },
+  {
+    "input": [
+      {
+        "content": "Use the web_search tool to find the official Braintrust documentation homepage and include the URL in one sentence.",
+        "role": "user"
+      }
+    ],
+    "metadata": {
+      "model": "claude-sonnet-4-5-20250929",
+      "provider": "anthropic",
+      "stop_reason": "end_turn",
+      "stop_sequence": null
+    },
+    "metrics": {
+      "completion_tokens": 0,
+      "end": 0,
+      "prompt_cache_creation_tokens": 0,
+      "prompt_cached_tokens": 0,
+      "prompt_tokens": 0,
+      "start": 0,
+      "time_to_first_token": 0,
+      "tokens": 0
+    },
+    "name": "anthropic.messages.create",
+    "output": {
+      "content": [
+        {
+          "has_input": true,
+          "name": "web_search",
+          "type": "server_tool_use"
+        },
+        {
+          "has_results": true,
+          "type": "web_search_tool_result"
+        },
+        {
+          "text": "<web-search-answer>",
+          "type": "text"
+        },
+        {
+          "text": "<web-search-answer>",
+          "type": "text"
+        }
+      ],
+      "role": "assistant"
+    },
+    "type": "llm"
+  },
+  {
+    "metadata": {
       "operation": "tool"
     },
     "metrics": {

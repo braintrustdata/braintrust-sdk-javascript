@@ -124,6 +124,66 @@ function summarizeAnthropicPayload(event: CapturedLogEvent): Json {
     return summary;
   }
 
+  const hasServerToolBlocks = output.content.some(
+    (block) =>
+      block.type === "server_tool_use" ||
+      block.type === "web_search_tool_result",
+  );
+
+  if (hasServerToolBlocks) {
+    const serverToolOutput = summary.output as {
+      content: Array<Record<string, unknown>>;
+      role?: string;
+    };
+    const normalizedContent = serverToolOutput.content.map((block) => {
+      if (block.type === "server_tool_use") {
+        const input =
+          typeof block.input === "object" && block.input !== null
+            ? (block.input as Record<string, unknown>)
+            : null;
+        return {
+          type: "server_tool_use",
+          name: typeof block.name === "string" ? block.name : null,
+          has_input: input !== null && Object.keys(input).length > 0,
+        };
+      }
+
+      if (block.type === "web_search_tool_result") {
+        const resultBlocks = Array.isArray(block.content) ? block.content : [];
+        return {
+          type: "web_search_tool_result",
+          has_results: resultBlocks.length > 0,
+        };
+      }
+
+      if (block.type === "text") {
+        return {
+          type: "text",
+          text: "<web-search-answer>",
+        };
+      }
+
+      return {
+        type: typeof block.type === "string" ? block.type : "<unknown>",
+      };
+    });
+    summary.output = {
+      ...(typeof serverToolOutput.role === "string"
+        ? { role: serverToolOutput.role }
+        : {}),
+      content: normalizedContent,
+    };
+    if (summary.metrics && typeof summary.metrics === "object") {
+      const metrics = summary.metrics as Record<string, Json>;
+      for (const key of Object.keys(metrics)) {
+        if (key.endsWith("tokens")) {
+          metrics[key] = 0;
+        }
+      }
+    }
+    return summary;
+  }
+
   const textBlock = output.content.find(
     (block) => block.type === "text" && typeof block.text === "string",
   );
@@ -159,6 +219,7 @@ function summarizeAnthropicPayload(event: CapturedLogEvent): Json {
 function buildSpanSummary(
   events: CapturedLogEvent[],
   supportsBetaMessages: boolean,
+  supportsServerTools: boolean,
   supportsThinking: boolean,
 ): Json {
   const createOperation = findLatestSpan(events, "anthropic-create-operation");
@@ -174,6 +235,10 @@ function buildSpanSummary(
   const toolStreamOperation = findLatestSpan(
     events,
     "anthropic-stream-tool-operation",
+  );
+  const serverToolStreamOperation = findLatestSpan(
+    events,
+    "anthropic-stream-server-tool-operation",
   );
   const toolOperation = findLatestSpan(events, "anthropic-tool-operation");
   const thinkingStreamOperation = findLatestSpan(
@@ -212,6 +277,14 @@ function buildSpanSummary(
       findAnthropicSpan(events, toolStreamOperation?.span.id, [
         "anthropic.messages.create",
       ]),
+      ...(supportsServerTools
+        ? [
+            serverToolStreamOperation,
+            findAnthropicSpan(events, serverToolStreamOperation?.span.id, [
+              "anthropic.messages.create",
+            ]),
+          ]
+        : []),
       toolOperation,
       findAnthropicSpan(events, toolOperation?.span.id, [
         "anthropic.messages.create",
@@ -252,6 +325,7 @@ function buildSpanSummary(
 function buildPayloadSummary(
   events: CapturedLogEvent[],
   supportsBetaMessages: boolean,
+  supportsServerTools: boolean,
   supportsThinking: boolean,
 ): Json {
   const createOperation = findLatestSpan(events, "anthropic-create-operation");
@@ -267,6 +341,10 @@ function buildPayloadSummary(
   const toolStreamOperation = findLatestSpan(
     events,
     "anthropic-stream-tool-operation",
+  );
+  const serverToolStreamOperation = findLatestSpan(
+    events,
+    "anthropic-stream-server-tool-operation",
   );
   const toolOperation = findLatestSpan(events, "anthropic-tool-operation");
   const thinkingStreamOperation = findLatestSpan(
@@ -305,6 +383,14 @@ function buildPayloadSummary(
       findAnthropicSpan(events, toolStreamOperation?.span.id, [
         "anthropic.messages.create",
       ]),
+      ...(supportsServerTools
+        ? [
+            serverToolStreamOperation,
+            findAnthropicSpan(events, serverToolStreamOperation?.span.id, [
+              "anthropic.messages.create",
+            ]),
+          ]
+        : []),
       toolOperation,
       findAnthropicSpan(events, toolOperation?.span.id, [
         "anthropic.messages.create",
@@ -339,6 +425,7 @@ export function defineAnthropicInstrumentationAssertions(options: {
   name: string;
   snapshotName: string;
   supportsBetaMessages: boolean;
+  supportsServerTools: boolean;
   supportsThinking: boolean;
   testFileUrl: string;
   timeoutMs: number;
@@ -515,6 +602,59 @@ export function defineAnthropicInstrumentationAssertions(options: {
       ).toBe(true);
     });
 
+    if (options.supportsServerTools) {
+      test(
+        "captures trace for streamed server-side tool use",
+        testConfig,
+        () => {
+          const root = findLatestSpan(events, ROOT_NAME);
+          const operation = findLatestSpan(
+            events,
+            "anthropic-stream-server-tool-operation",
+          );
+          const span = findAnthropicSpan(events, operation?.span.id, [
+            "anthropic.messages.create",
+          ]);
+          const output = span?.output as
+            | {
+                content?: Array<{
+                  input?: Record<string, unknown>;
+                  name?: string;
+                  type?: string;
+                }>;
+              }
+            | undefined;
+          const serverToolUse = output?.content?.find(
+            (block) =>
+              block.type === "server_tool_use" && block.name === "web_search",
+          );
+
+          expect(operation).toBeDefined();
+          expect(span).toBeDefined();
+          expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
+          expect(span?.row.metadata).toMatchObject({
+            provider: "anthropic",
+          });
+          expect(
+            output?.content?.some(
+              (block) =>
+                block.type === "server_tool_use" && block.name === "web_search",
+            ),
+          ).toBe(true);
+          expect(
+            output?.content?.some(
+              (block) => block.type === "web_search_tool_result",
+            ),
+          ).toBe(true);
+          expect(
+            typeof serverToolUse?.input === "object" &&
+              serverToolUse.input !== null &&
+              Object.keys(serverToolUse.input).length > 0,
+          ).toBe(true);
+        },
+      );
+    }
+
     test(
       "captures trace for client.messages.create() with tools",
       testConfig,
@@ -636,6 +776,7 @@ export function defineAnthropicInstrumentationAssertions(options: {
           buildSpanSummary(
             events,
             options.supportsBetaMessages,
+            options.supportsServerTools,
             options.supportsThinking,
           ),
         ),
@@ -648,6 +789,7 @@ export function defineAnthropicInstrumentationAssertions(options: {
           buildPayloadSummary(
             events,
             options.supportsBetaMessages,
+            options.supportsServerTools,
             options.supportsThinking,
           ),
         ),

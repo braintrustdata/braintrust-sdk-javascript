@@ -7,6 +7,7 @@ import {
 } from "../../helpers/provider-runtime.mjs";
 
 const ANTHROPIC_MODEL = "claude-3-haiku-20240307";
+const SERVER_TOOL_MODEL = "claude-sonnet-4-5-20250929";
 const ROOT_NAME = "anthropic-instrumentation-root";
 const SCENARIO_NAME = "anthropic-instrumentation";
 const WEATHER_TOOL = {
@@ -23,10 +24,20 @@ const WEATHER_TOOL = {
     required: ["location"],
   },
 };
+const WEB_SEARCH_TOOL = {
+  type: "web_search_20250305",
+  name: "web_search",
+  max_uses: 1,
+};
 
 async function runAnthropicInstrumentationScenario(
   Anthropic,
-  { decorateClient, useBetaMessages = true, supportsThinking = false } = {},
+  {
+    decorateClient,
+    useBetaMessages = true,
+    supportsThinking = false,
+    supportsServerTools = true,
+  } = {},
 ) {
   const imageBase64 = (
     await readFile(new URL("./test-image.png", import.meta.url))
@@ -162,6 +173,34 @@ async function runAnthropicInstrumentationScenario(
         },
       );
 
+      if (supportsServerTools) {
+        await runOperation(
+          "anthropic-stream-server-tool-operation",
+          "stream-server-tool",
+          async () => {
+            const stream = await client.messages.create({
+              model: SERVER_TOOL_MODEL,
+              max_tokens: 256,
+              temperature: 0,
+              stream: true,
+              tool_choice: {
+                type: "tool",
+                name: WEB_SEARCH_TOOL.name,
+              },
+              tools: [WEB_SEARCH_TOOL],
+              messages: [
+                {
+                  role: "user",
+                  content:
+                    "Use the web_search tool to find the official Braintrust documentation homepage and include the URL in one sentence.",
+                },
+              ],
+            });
+            await collectAsync(stream);
+          },
+        );
+      }
+
       await runOperation("anthropic-tool-operation", "tool", async () => {
         await client.messages.create({
           model: ANTHROPIC_MODEL,
@@ -184,7 +223,7 @@ async function runAnthropicInstrumentationScenario(
           "stream-thinking",
           async () => {
             const stream = await client.messages.create({
-              model: "claude-sonnet-4-5-20250929",
+              model: SERVER_TOOL_MODEL,
               max_tokens: 2048,
               temperature: 1,
               thinking: {

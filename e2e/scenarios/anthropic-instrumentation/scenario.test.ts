@@ -17,6 +17,8 @@ const anthropicScenarios = await Promise.all(
       dependencyName: "anthropic-sdk-v0273",
       snapshotName: "anthropic-v0273",
       supportsBetaMessages: false,
+      // Anthropic server-side tools were added in @anthropic-ai/sdk v0.41.0.
+      supportsServerTools: false,
       supportsThinking: false,
       wrapperEntry: "scenario.anthropic-v0273.ts",
     },
@@ -25,6 +27,7 @@ const anthropicScenarios = await Promise.all(
       dependencyName: "anthropic-sdk-v0390",
       snapshotName: "anthropic-v0390",
       supportsBetaMessages: true,
+      supportsServerTools: false,
       supportsThinking: false,
       wrapperEntry: "scenario.anthropic-v0390.ts",
     },
@@ -62,6 +65,7 @@ const anthropicScenarios = await Promise.all(
     },
   ].map(async (scenario) => ({
     ...scenario,
+    supportsServerTools: scenario.supportsServerTools ?? true,
     version: await readInstalledPackageVersion(
       scenarioDir,
       scenario.dependencyName,
@@ -83,6 +87,7 @@ for (const scenario of anthropicScenarios) {
       },
       snapshotName: scenario.snapshotName,
       supportsBetaMessages: scenario.supportsBetaMessages,
+      supportsServerTools: scenario.supportsServerTools,
       supportsThinking: scenario.supportsThinking,
       testFileUrl: import.meta.url,
       timeoutMs: TIMEOUT_MS,
@@ -101,6 +106,7 @@ for (const scenario of anthropicScenarios) {
       },
       snapshotName: scenario.snapshotName,
       supportsBetaMessages: scenario.supportsBetaMessages,
+      supportsServerTools: scenario.supportsServerTools,
       supportsThinking: scenario.supportsThinking,
       testFileUrl: import.meta.url,
       timeoutMs: TIMEOUT_MS,
