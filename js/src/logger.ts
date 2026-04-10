@@ -5446,8 +5446,9 @@ export function deepCopyEvent<T extends Partial<BackgroundLogEvent>>(
   event: T,
 ): T {
   const attachments: BaseAttachment[] = [];
-  const IDENTIFIER = "_bt_internal_saved_attachment";
-  const savedAttachmentSchema = z.strictObject({ [IDENTIFIER]: z.number() });
+  const ATTACHMENT_INDEX_KEY = "_bt_internal_saved_attachment_idx";
+  const ATTACHMENT_MARKER_KEY = "_bt_internal_saved_attachment_marker";
+  const attachmentMarker = ++deepCopyEventMarkerCounter;
 
   // We both check for serializability and round-trip `event` through JSON in
   // order to create a "deep copy". This has the benefit of cutting out any
@@ -5466,20 +5467,59 @@ export function deepCopyEvent<T extends Partial<BackgroundLogEvent>>(
       return `<logger>`;
     } else if (v instanceof BaseAttachment) {
       const idx = attachments.push(v);
-      return { [IDENTIFIER]: idx - 1 };
+      return {
+        [ATTACHMENT_INDEX_KEY]: idx - 1,
+        [ATTACHMENT_MARKER_KEY]: attachmentMarker,
+      };
     } else if (v instanceof ReadonlyAttachment) {
       return v.reference;
     }
     return v;
   });
   const x = JSON.parse(serialized, (_k, v) => {
-    const parsedAttachment = savedAttachmentSchema.safeParse(v);
-    if (parsedAttachment.success) {
-      return attachments[parsedAttachment.data[IDENTIFIER]];
+    if (isDeepCopyAttachmentPlaceholder(v, attachmentMarker)) {
+      return attachments[v[ATTACHMENT_INDEX_KEY]];
     }
     return v;
   });
   return x;
+}
+
+let deepCopyEventMarkerCounter = 0;
+
+function isDeepCopyAttachmentPlaceholder(
+  value: unknown,
+  attachmentMarker: number,
+): value is Record<
+  "_bt_internal_saved_attachment_idx" | "_bt_internal_saved_attachment_marker",
+  number
+> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return false;
+  }
+
+  const prototype = Object.getPrototypeOf(value);
+  if (prototype !== Object.prototype && prototype !== null) {
+    return false;
+  }
+
+  const record = value as Record<string, unknown>;
+  if (
+    !Object.hasOwn(record, "_bt_internal_saved_attachment_idx") ||
+    !Object.hasOwn(record, "_bt_internal_saved_attachment_marker")
+  ) {
+    return false;
+  }
+
+  if (Object.keys(record).length !== 2) {
+    return false;
+  }
+
+  return (
+    Number.isInteger(record._bt_internal_saved_attachment_idx) &&
+    record._bt_internal_saved_attachment_idx >= 0 &&
+    record._bt_internal_saved_attachment_marker === attachmentMarker
+  );
 }
 
 /**
@@ -5643,9 +5683,9 @@ export type WithTransactionId<R> = R & {
 export const DEFAULT_FETCH_BATCH_SIZE = 1000;
 export const MAX_BTQL_ITERATIONS = 10000;
 
-export class ObjectFetcher<RecordType> implements AsyncIterable<
-  WithTransactionId<RecordType>
-> {
+export class ObjectFetcher<RecordType>
+  implements AsyncIterable<WithTransactionId<RecordType>>
+{
   private _fetchedData: WithTransactionId<RecordType>[] | undefined = undefined;
 
   constructor(

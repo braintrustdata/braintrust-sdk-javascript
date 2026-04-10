@@ -180,6 +180,44 @@ test("deepCopyEvent basic", () => {
   expect(copy.output).not.toBe(original.output);
 });
 
+test("deepCopyEvent preserves attachments", () => {
+  const attachment = new Attachment({
+    data: new Blob(["data"]),
+    filename: "filename",
+    contentType: "text/plain",
+  });
+  const externalAttachment = new ExternalAttachment({
+    url: "s3://bucket/path/to/key.pdf",
+    filename: "filename2",
+    contentType: "application/pdf",
+  });
+
+  const original = {
+    output: {
+      attachment,
+      externalAttachment,
+      nested: [attachment, externalAttachment],
+      fake: {
+        _bt_internal_saved_attachment_idx: 0,
+        _bt_internal_saved_attachment_marker: 0,
+      },
+    },
+  };
+
+  const copy = deepCopyEvent(original);
+
+  expect(copy).not.toBe(original);
+  expect(copy.output).not.toBe(original.output);
+  expect(copy.output.attachment).toBe(attachment);
+  expect(copy.output.externalAttachment).toBe(externalAttachment);
+  expect(copy.output.nested[0]).toBe(attachment);
+  expect(copy.output.nested[1]).toBe(externalAttachment);
+  expect(copy.output.fake).toEqual({
+    _bt_internal_saved_attachment_idx: 0,
+    _bt_internal_saved_attachment_marker: 0,
+  });
+});
+
 test.skip("deepCopyEvent with attachments", () => {
   const attachment1 = new Attachment({
     data: new Blob(["data"]),
