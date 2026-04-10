@@ -208,7 +208,7 @@ export type EvalResult<
   output: Output;
   error: unknown;
   origin?: ObjectReference;
-  scores?: Record<string, number | null>;
+  scores: Record<string, number | null>;
   classifications?: Record<string, ClassificationItem[]>;
 };
 
@@ -219,13 +219,16 @@ type ErrorScoreHandler = (args: {
   unhandledScores: string[];
 }) => Record<string, number> | undefined | void;
 
-type EvaluatorBase<
+/**
+ * Defines an evaluator. At least one of `scores` or `classifiers` must be provided.
+ */
+export interface Evaluator<
   Input,
   Output,
   Expected,
   Metadata extends BaseMetadata = DefaultMetadataType,
   Parameters extends EvalParameters = EvalParameters,
-> = {
+> {
   /**
    * A function that returns a list of inputs, expected outputs, and metadata.
    */
@@ -235,6 +238,19 @@ type EvaluatorBase<
    * A function that takes an input and returns an output.
    */
   task: EvalTask<Input, Output, Expected, Metadata, Parameters>;
+
+  /**
+   * A set of functions that take an input, output, and expected value and return a {@link Score}.
+   * At least one of `scores` or `classifiers` must be provided.
+   */
+  scores?: EvalScorer<Input, Output, Expected, Metadata>[];
+
+  /**
+   * A set of functions that take an input, output, and expected value and return a
+   * {@link Classification}. Results are recorded under the `classifications` column.
+   * At least one of `scores` or `classifiers` must be provided.
+   */
+  classifiers?: EvalClassifier<Input, Output, Expected, Metadata>[];
 
   /**
    * A set of parameters that will be passed to the evaluator.
@@ -353,41 +369,7 @@ type EvaluatorBase<
    * Flushes spans before calling scoring functions
    */
   flushBeforeScoring?: boolean;
-};
-
-type EvaluatorScoringConfig<
-  Input,
-  Output,
-  Expected,
-  Metadata extends BaseMetadata = DefaultMetadataType,
-> =
-  | {
-      /**
-       * A set of functions that take an input, output, and expected value and return a {@link Score}.
-       */
-      scores: EvalScorer<Input, Output, Expected, Metadata>[];
-      classifiers?: EvalClassifier<Input, Output, Expected, Metadata>[];
-    }
-  | {
-      /**
-       * A set of functions that take an input, output, and expected value and return a
-       * {@link Classification}. Results are recorded under the `classifications` column.
-       */
-      classifiers: EvalClassifier<Input, Output, Expected, Metadata>[];
-      scores?: EvalScorer<Input, Output, Expected, Metadata>[];
-    };
-
-/**
- * Defines an evaluator. At least one of `scores` or `classifiers` must be provided.
- */
-export type Evaluator<
-  Input,
-  Output,
-  Expected,
-  Metadata extends BaseMetadata = DefaultMetadataType,
-  Parameters extends EvalParameters = EvalParameters,
-> = EvaluatorBase<Input, Output, Expected, Metadata, Parameters> &
-  EvaluatorScoringConfig<Input, Output, Expected, Metadata>;
+}
 
 export class EvalResultWithSummary<
   Input,
@@ -1513,9 +1495,7 @@ async function runEvaluatorInternal(
             };
             collectedResults.push({
               ...baseResult,
-              ...(Object.keys(mergedScores).length > 0
-                ? { scores: mergedScores }
-                : {}),
+              scores: mergedScores,
               ...(Object.keys(classifications).length > 0
                 ? { classifications }
                 : {}),

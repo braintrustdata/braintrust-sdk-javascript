@@ -1635,7 +1635,7 @@ test("classifier-only evaluator populates classifications field", async () => {
 
   expect(result.results).toHaveLength(1);
   const r = result.results[0];
-  expect(r.scores).toBeUndefined();
+  expect(r.scores).toEqual({});
   expect(r.classifications?.category).toEqual([
     {
       id: "greeting",
