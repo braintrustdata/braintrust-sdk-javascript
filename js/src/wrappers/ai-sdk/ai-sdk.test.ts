@@ -1537,122 +1537,130 @@ describe("ai sdk client unit tests", TEST_SUITE_OPTIONS, () => {
   // Once processInputAttachments is made async and properly handles the Promise,
   // we should verify that the schema is serialized correctly in the logs.
 
-  test("ai sdk multi-round tool use with metrics", async () => {
-    expect(await backgroundLogger.drain()).toHaveLength(0);
+  test(
+    "ai sdk multi-round tool use with metrics",
+    { timeout: 180000, retry: 0 },
+    async () => {
+      expect(await backgroundLogger.drain()).toHaveLength(0);
 
-    const getStorePriceTool = ai.tool({
-      description: "Get the price of an item from a specific store",
-      inputSchema: z.object({
-        store: z.string().describe("The store name (e.g., 'StoreA', 'StoreB')"),
-        item: z.string().describe("The item to get the price for"),
-      }),
-      execute: async (args: { store: string; item: string }) => {
-        const prices: Record<string, Record<string, number>> = {
-          StoreA: { laptop: 999, mouse: 25, keyboard: 75 },
-          StoreB: { laptop: 1099, mouse: 20, keyboard: 80 },
-        };
-        const price = prices[args.store]?.[args.item] ?? 0;
-        return JSON.stringify({ store: args.store, item: args.item, price });
-      },
-    });
+      const getStorePriceTool = ai.tool({
+        description: "Get the price of an item from a specific store",
+        inputSchema: z.object({
+          store: z
+            .string()
+            .describe("The store name (e.g., 'StoreA', 'StoreB')"),
+          item: z.string().describe("The item to get the price for"),
+        }),
+        execute: async (args: { store: string; item: string }) => {
+          const prices: Record<string, Record<string, number>> = {
+            StoreA: { laptop: 999, mouse: 25, keyboard: 75 },
+            StoreB: { laptop: 1099, mouse: 20, keyboard: 80 },
+          };
+          const price = prices[args.store]?.[args.item] ?? 0;
+          return JSON.stringify({ store: args.store, item: args.item, price });
+        },
+      });
 
-    const applyDiscountTool = ai.tool({
-      description: "Apply a discount code to a total amount",
-      inputSchema: z.object({
-        total: z.number().describe("The total amount before discount"),
-        discountCode: z.string().describe("The discount code to apply"),
-      }),
-      execute: async (args: { total: number; discountCode: string }) => {
-        const discounts: Record<string, number> = {
-          SAVE10: 0.1,
-          SAVE20: 0.2,
-        };
-        const discountRate = discounts[args.discountCode] ?? 0;
-        const finalTotal = args.total - args.total * discountRate;
-        return JSON.stringify({
-          originalTotal: args.total,
-          discountCode: args.discountCode,
-          finalTotal,
-        });
-      },
-    });
+      const applyDiscountTool = ai.tool({
+        description: "Apply a discount code to a total amount",
+        inputSchema: z.object({
+          total: z.number().describe("The total amount before discount"),
+          discountCode: z.string().describe("The discount code to apply"),
+        }),
+        execute: async (args: { total: number; discountCode: string }) => {
+          const discounts: Record<string, number> = {
+            SAVE10: 0.1,
+            SAVE20: 0.2,
+          };
+          const discountRate = discounts[args.discountCode] ?? 0;
+          const finalTotal = args.total - args.total * discountRate;
+          return JSON.stringify({
+            originalTotal: args.total,
+            discountCode: args.discountCode,
+            finalTotal,
+          });
+        },
+      });
 
-    const model = openai(TEST_MODEL);
-    const start = getCurrentUnixTimestamp();
+      const model = openai(TEST_MODEL);
+      const start = getCurrentUnixTimestamp();
 
-    const result = await wrappedAI.generateText({
-      model,
-      system:
-        "You are a shopping assistant. When asked about prices, always get the price from each store mentioned using get_store_price, then apply any discount codes using apply_discount. Use the tools provided.",
-      tools: {
-        get_store_price: getStorePriceTool,
-        apply_discount: applyDiscountTool,
-      },
-      toolChoice: "required",
-      prompt:
-        "I want to buy a laptop. Get the price from StoreA and StoreB, then apply the discount code SAVE20 to whichever is cheaper.",
-      stopWhen: ai.stepCountIs(6),
-    });
+      const result = await wrappedAI.generateText({
+        model,
+        system:
+          "You are a shopping assistant. When asked about prices, always get the price from each store mentioned using get_store_price, then apply any discount codes using apply_discount. Use the tools provided.",
+        tools: {
+          get_store_price: getStorePriceTool,
+          apply_discount: applyDiscountTool,
+        },
+        toolChoice: "required",
+        prompt:
+          "I want to buy a laptop. Get the price from StoreA and StoreB, then apply the discount code SAVE20 to whichever is cheaper.",
+        stopWhen: ai.stepCountIs(6),
+      });
 
-    const end = getCurrentUnixTimestamp();
-    assert.ok(result);
+      const end = getCurrentUnixTimestamp();
+      assert.ok(result);
 
-    const spans = await backgroundLogger.drain();
+      const spans = await backgroundLogger.drain();
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const llmSpans = spans.filter(
-      (s: any) =>
-        s.span_attributes?.type === "llm" &&
-        s.span_attributes?.name === "doGenerate",
-    );
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const toolSpans = spans.filter(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (s: any) => s.span_attributes?.type === "tool",
-    );
-
-    // Should have multiple doGenerate spans - one per LLM round/step
-    // This allows visualizing the LLM ↔ tool roundtrips
-    expect(llmSpans.length).toBeGreaterThanOrEqual(2);
-
-    // Should have tool spans for get_store_price calls (at least 2 for StoreA and StoreB)
-    expect(toolSpans.length).toBeGreaterThanOrEqual(2);
-
-    // Verify each doGenerate span has its own metrics
-    for (const llmSpan of llmSpans) {
+      const llmSpans = spans.filter(
+        (s: any) =>
+          s.span_attributes?.type === "llm" &&
+          s.span_attributes?.name === "doGenerate",
+      );
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const span = llmSpan as any;
-      expect(span.metrics).toBeDefined();
-      expect(span.metrics.start).toBeDefined();
-      expect(span.metrics.end).toBeDefined();
-      expect(start).toBeLessThanOrEqual(span.metrics.start);
-      expect(span.metrics.end).toBeLessThanOrEqual(end);
+      const toolSpans = spans.filter(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (s: any) => s.span_attributes?.type === "tool",
+      );
 
-      // Token metrics structure varies by AI SDK version
-      // v5: metrics.tokens, prompt_tokens, completion_tokens are defined
-      // v6: metrics structure may differ - see v5-specific tests for strict assertions
-    }
+      // Should have multiple doGenerate spans - one per LLM round/step
+      // This allows visualizing the LLM ↔ tool roundtrips
+      expect(llmSpans.length).toBeGreaterThanOrEqual(2);
 
-    // Verify tool spans have the expected structure
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const storePriceSpans = toolSpans.filter(
+      // Should have tool spans for get_store_price calls (at least 2 for StoreA and StoreB)
+      expect(toolSpans.length).toBeGreaterThanOrEqual(2);
+
+      // Verify each doGenerate span has its own metrics
+      for (const llmSpan of llmSpans) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const span = llmSpan as any;
+        expect(span.metrics).toBeDefined();
+        expect(span.metrics.start).toBeDefined();
+        expect(span.metrics.end).toBeDefined();
+        expect(start).toBeLessThanOrEqual(span.metrics.start);
+        expect(span.metrics.end).toBeLessThanOrEqual(end);
+
+        // Token metrics structure varies by AI SDK version
+        // v5: metrics.tokens, prompt_tokens, completion_tokens are defined
+        // v6: metrics structure may differ - see v5-specific tests for strict assertions
+      }
+
+      // Verify tool spans have the expected structure
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (s: any) => s.span_attributes?.name === "get_store_price",
-    );
-    expect(storePriceSpans.length).toBeGreaterThanOrEqual(2);
+      const storePriceSpans = toolSpans.filter(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (s: any) => s.span_attributes?.name === "get_store_price",
+      );
+      expect(storePriceSpans.length).toBeGreaterThanOrEqual(2);
 
-    // Verify tool spans have input/output
-    for (const toolSpan of storePriceSpans) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const span = toolSpan as any;
-      expect(span.input).toBeDefined();
-      expect(span.output).toBeDefined();
+      // Verify tool spans have input/output
+      for (const toolSpan of storePriceSpans) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const span = toolSpan as any;
+        expect(span.input).toBeDefined();
+        expect(span.output).toBeDefined();
 
-      const inputData = Array.isArray(span.input) ? span.input[0] : span.input;
-      expect(inputData.store).toMatch(/^Store[AB]$/);
-      expect(inputData.item).toBe("laptop");
-    }
-  });
+        const inputData = Array.isArray(span.input)
+          ? span.input[0]
+          : span.input;
+        expect(inputData.store).toMatch(/^Store[AB]$/);
+        expect(inputData.item).toBe("laptop");
+      }
+    },
+  );
 
   test("ai sdk multi-round tool use span hierarchy", async () => {
     expect(await backgroundLogger.drain()).toHaveLength(0);
