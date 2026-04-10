@@ -8,6 +8,7 @@ import { GoogleGenAIPlugin } from "./plugins/google-genai-plugin";
 import { OpenRouterAgentPlugin } from "./plugins/openrouter-agent-plugin";
 import { OpenRouterPlugin } from "./plugins/openrouter-plugin";
 import { MistralPlugin } from "./plugins/mistral-plugin";
+import { CoherePlugin } from "./plugins/cohere-plugin";
 
 function createPluginClassMock() {
   return vi.fn(function MockPlugin(this: {
@@ -56,6 +57,10 @@ vi.mock("./plugins/openrouter-agent-plugin", () => ({
 
 vi.mock("./plugins/mistral-plugin", () => ({
   MistralPlugin: createPluginClassMock(),
+}));
+
+vi.mock("./plugins/cohere-plugin", () => ({
+  CoherePlugin: createPluginClassMock(),
 }));
 
 describe("BraintrustPlugin", () => {
@@ -139,6 +144,15 @@ describe("BraintrustPlugin", () => {
       expect(mockInstance.enable).toHaveBeenCalledTimes(1);
     });
 
+    it("should create and enable Cohere plugin by default", () => {
+      const plugin = new BraintrustPlugin();
+      plugin.enable();
+
+      expect(CoherePlugin).toHaveBeenCalledTimes(1);
+      const mockInstance = vi.mocked(CoherePlugin).mock.results[0].value;
+      expect(mockInstance.enable).toHaveBeenCalledTimes(1);
+    });
+
     it("should create all plugins when enabled with no config", () => {
       const plugin = new BraintrustPlugin();
       plugin.enable();
@@ -151,6 +165,7 @@ describe("BraintrustPlugin", () => {
       expect(OpenRouterPlugin).toHaveBeenCalledTimes(1);
       expect(OpenRouterAgentPlugin).toHaveBeenCalledTimes(1);
       expect(MistralPlugin).toHaveBeenCalledTimes(1);
+      expect(CoherePlugin).toHaveBeenCalledTimes(1);
     });
 
     it("should create all plugins when enabled with empty config", () => {
@@ -165,6 +180,7 @@ describe("BraintrustPlugin", () => {
       expect(OpenRouterPlugin).toHaveBeenCalledTimes(1);
       expect(OpenRouterAgentPlugin).toHaveBeenCalledTimes(1);
       expect(MistralPlugin).toHaveBeenCalledTimes(1);
+      expect(CoherePlugin).toHaveBeenCalledTimes(1);
     });
 
     it("should create all plugins when enabled with empty integrations config", () => {
@@ -179,6 +195,7 @@ describe("BraintrustPlugin", () => {
       expect(OpenRouterPlugin).toHaveBeenCalledTimes(1);
       expect(OpenRouterAgentPlugin).toHaveBeenCalledTimes(1);
       expect(MistralPlugin).toHaveBeenCalledTimes(1);
+      expect(CoherePlugin).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -297,6 +314,22 @@ describe("BraintrustPlugin", () => {
       expect(OpenRouterPlugin).toHaveBeenCalledTimes(1);
     });
 
+    it("should not create Cohere plugin when cohere: false", () => {
+      const plugin = new BraintrustPlugin({
+        integrations: { cohere: false },
+      });
+      plugin.enable();
+
+      expect(CoherePlugin).not.toHaveBeenCalled();
+      expect(OpenAIPlugin).toHaveBeenCalledTimes(1);
+      expect(AnthropicPlugin).toHaveBeenCalledTimes(1);
+      expect(AISDKPlugin).toHaveBeenCalledTimes(1);
+      expect(ClaudeAgentSDKPlugin).toHaveBeenCalledTimes(1);
+      expect(GoogleGenAIPlugin).toHaveBeenCalledTimes(1);
+      expect(OpenRouterPlugin).toHaveBeenCalledTimes(1);
+      expect(MistralPlugin).toHaveBeenCalledTimes(1);
+    });
+
     it("should not create OpenRouter Agent plugin when openrouterAgent: false", () => {
       const plugin = new BraintrustPlugin({
         integrations: { openrouterAgent: false },
@@ -318,6 +351,7 @@ describe("BraintrustPlugin", () => {
           openrouter: false,
           openrouterAgent: false,
           mistral: false,
+          cohere: false,
         },
       });
       plugin.enable();
@@ -330,6 +364,7 @@ describe("BraintrustPlugin", () => {
       expect(OpenRouterPlugin).not.toHaveBeenCalled();
       expect(OpenRouterAgentPlugin).not.toHaveBeenCalled();
       expect(MistralPlugin).not.toHaveBeenCalled();
+      expect(CoherePlugin).not.toHaveBeenCalled();
     });
 
     it("should allow selective enabling of plugins", () => {
@@ -461,6 +496,7 @@ describe("BraintrustPlugin", () => {
       const openRouterAgentMock = vi.mocked(OpenRouterAgentPlugin).mock
         .results[0].value;
       const mistralMock = vi.mocked(MistralPlugin).mock.results[0].value;
+      const cohereMock = vi.mocked(CoherePlugin).mock.results[0].value;
 
       expect(openaiMock.enable).toHaveBeenCalledTimes(1);
       expect(anthropicMock.enable).toHaveBeenCalledTimes(1);
@@ -470,6 +506,7 @@ describe("BraintrustPlugin", () => {
       expect(openRouterMock.enable).toHaveBeenCalledTimes(1);
       expect(openRouterAgentMock.enable).toHaveBeenCalledTimes(1);
       expect(mistralMock.enable).toHaveBeenCalledTimes(1);
+      expect(cohereMock.enable).toHaveBeenCalledTimes(1);
     });
 
     it("should disable and nullify all sub-plugins when disabled", () => {
@@ -487,6 +524,7 @@ describe("BraintrustPlugin", () => {
       const openRouterAgentMock = vi.mocked(OpenRouterAgentPlugin).mock
         .results[0].value;
       const mistralMock = vi.mocked(MistralPlugin).mock.results[0].value;
+      const cohereMock = vi.mocked(CoherePlugin).mock.results[0].value;
 
       plugin.disable();
 
@@ -498,6 +536,7 @@ describe("BraintrustPlugin", () => {
       expect(openRouterMock.disable).toHaveBeenCalledTimes(1);
       expect(openRouterAgentMock.disable).toHaveBeenCalledTimes(1);
       expect(mistralMock.disable).toHaveBeenCalledTimes(1);
+      expect(cohereMock.disable).toHaveBeenCalledTimes(1);
     });
 
     it("should be idempotent on multiple enable calls", () => {
@@ -539,6 +578,7 @@ describe("BraintrustPlugin", () => {
       expect(OpenRouterPlugin).not.toHaveBeenCalled();
       expect(OpenRouterAgentPlugin).not.toHaveBeenCalled();
       expect(MistralPlugin).not.toHaveBeenCalled();
+      expect(CoherePlugin).not.toHaveBeenCalled();
     });
 
     it("should allow re-enabling after disable", () => {
@@ -558,6 +598,7 @@ describe("BraintrustPlugin", () => {
       expect(OpenRouterPlugin).toHaveBeenCalledTimes(1);
       expect(OpenRouterAgentPlugin).toHaveBeenCalledTimes(1);
       expect(MistralPlugin).toHaveBeenCalledTimes(1);
+      expect(CoherePlugin).toHaveBeenCalledTimes(1);
     });
 
     it("should only disable plugins that were enabled", () => {
@@ -571,6 +612,7 @@ describe("BraintrustPlugin", () => {
           openrouter: true,
           openrouterAgent: true,
           mistral: false,
+          cohere: false,
         },
       });
       plugin.enable();
@@ -591,8 +633,7 @@ describe("BraintrustPlugin", () => {
       expect(openRouterMock.disable).toHaveBeenCalledTimes(1);
       expect(openRouterAgentMock.disable).toHaveBeenCalledTimes(1);
       expect(MistralPlugin).not.toHaveBeenCalled();
-      expect(openRouterAgentMock.disable).toHaveBeenCalledTimes(1);
-      expect(MistralPlugin).not.toHaveBeenCalled();
+      expect(CoherePlugin).not.toHaveBeenCalled();
     });
   });
 });

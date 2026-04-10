@@ -178,6 +178,7 @@ export { wrapGoogleGenAI } from "./wrappers/google-genai";
 export { wrapOpenRouterAgent } from "./wrappers/openrouter-agent";
 export { wrapOpenRouter } from "./wrappers/openrouter";
 export { wrapMistral } from "./wrappers/mistral";
+export { wrapCohere } from "./wrappers/cohere";
 export { wrapVitest } from "./wrappers/vitest";
 export { initNodeTestSuite } from "./wrappers/node-test";
 

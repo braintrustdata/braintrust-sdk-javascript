@@ -47,6 +47,18 @@
     ]
   },
   {
+    "scenarioDirName": "cohere-instrumentation",
+    "label": "Cohere Instrumentation",
+    "metadataScenario": "cohere-instrumentation",
+    "variants": [
+      { "variantKey": "cohere-v7-14-0", "label": "v7.14.0" },
+      { "variantKey": "cohere-v7-20-0", "label": "v7.20.0" },
+      { "variantKey": "cohere-v7-21-0", "label": "v7.21.0" },
+      { "variantKey": "cohere-v7", "label": "latest v7" },
+      { "variantKey": "cohere-v8", "label": "latest v8" }
+    ]
+  },
+  {
     "scenarioDirName": "openrouter-instrumentation",
     "label": "OpenRouter Instrumentation",
     "metadataScenario": "openrouter-instrumentation",
