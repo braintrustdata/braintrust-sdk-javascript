@@ -1,0 +1,105 @@
+[
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "scenario": "google-adk-instrumentation"
+    },
+    "metric_keys": [],
+    "name": "google-adk-instrumentation-root",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:1>",
+    "span_parents": [],
+    "type": "task"
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "operation": "simple-run"
+    },
+    "metric_keys": [],
+    "name": "adk-simple-run-operation",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:2>",
+    "span_parents": [
+      "<span:1>"
+    ],
+    "type": null
+  },
+  {
+    "has_input": true,
+    "has_output": false,
+    "metadata": {
+      "google_adk.session_id": "test-session-1",
+      "google_adk.user_id": "test-user",
+      "provider": "google-adk"
+    },
+    "metric_keys": [],
+    "name": "Google ADK Runner",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:3>",
+    "span_parents": [
+      "<span:2>"
+    ],
+    "type": "task"
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "google_adk.agent_name": "weather_agent",
+      "model": "gemini-2.5-flash-lite",
+      "provider": "google-adk"
+    },
+    "metric_keys": [],
+    "name": "Agent: weather_agent",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:4>",
+    "span_parents": [
+      "<span:2>"
+    ],
+    "type": "task"
+  },
+  {
+    "has_input": false,
+    "has_output": true,
+    "metadata": {
+      "google_adk.agent_name": "weather_agent",
+      "model": "gemini-2.5-flash-lite",
+      "provider": "google-adk"
+    },
+    "metric_keys": [
+      "duration"
+    ],
+    "name": "Agent: weather_agent",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:4>",
+    "span_parents": [
+      "<span:2>"
+    ],
+    "type": "task"
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "google_adk.session_id": "test-session-1",
+      "google_adk.user_id": "test-user",
+      "provider": "google-adk"
+    },
+    "metric_keys": [
+      "completion_tokens",
+      "duration",
+      "prompt_tokens",
+      "tokens"
+    ],
+    "name": "Google ADK Runner",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:3>",
+    "span_parents": [
+      "<span:2>"
+    ],
+    "type": "task"
+  }
+]

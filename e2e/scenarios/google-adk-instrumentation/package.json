@@ -1,0 +1,14 @@
+{
+  "name": "@braintrust/e2e-google-adk-instrumentation",
+  "private": true,
+  "braintrustScenario": {
+    "canary": {
+      "dependencies": {
+        "@google/adk": "latest"
+      }
+    }
+  },
+  "dependencies": {
+    "@google/adk": "0.6.1"
+  }
+}
