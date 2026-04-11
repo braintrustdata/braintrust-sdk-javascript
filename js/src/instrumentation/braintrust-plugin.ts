@@ -7,6 +7,7 @@ import { GoogleGenAIPlugin } from "./plugins/google-genai-plugin";
 import { OpenRouterAgentPlugin } from "./plugins/openrouter-agent-plugin";
 import { OpenRouterPlugin } from "./plugins/openrouter-plugin";
 import { MistralPlugin } from "./plugins/mistral-plugin";
+import { CoherePlugin } from "./plugins/cohere-plugin";
 
 export interface BraintrustPluginConfig {
   integrations?: {
@@ -20,6 +21,7 @@ export interface BraintrustPluginConfig {
     openrouter?: boolean;
     openrouterAgent?: boolean;
     mistral?: boolean;
+    cohere?: boolean;
   };
 }
 
@@ -33,6 +35,7 @@ export interface BraintrustPluginConfig {
  * - Vercel AI SDK (generateText, streamText, etc.)
  * - Google GenAI SDK
  * - Mistral SDK
+ * - Cohere SDK
  *
  * The plugin is automatically enabled when the Braintrust library is loaded.
  * Individual integrations can be disabled via configuration.
@@ -47,6 +50,7 @@ export class BraintrustPlugin extends BasePlugin {
   private openRouterPlugin: OpenRouterPlugin | null = null;
   private openRouterAgentPlugin: OpenRouterAgentPlugin | null = null;
   private mistralPlugin: MistralPlugin | null = null;
+  private coherePlugin: CoherePlugin | null = null;
 
   constructor(config: BraintrustPluginConfig = {}) {
     super();
@@ -102,6 +106,11 @@ export class BraintrustPlugin extends BasePlugin {
       this.mistralPlugin = new MistralPlugin();
       this.mistralPlugin.enable();
     }
+
+    if (integrations.cohere !== false) {
+      this.coherePlugin = new CoherePlugin();
+      this.coherePlugin.enable();
+    }
   }
 
   protected onDisable(): void {
@@ -143,6 +152,11 @@ export class BraintrustPlugin extends BasePlugin {
     if (this.mistralPlugin) {
       this.mistralPlugin.disable();
       this.mistralPlugin = null;
+    }
+
+    if (this.coherePlugin) {
+      this.coherePlugin.disable();
+      this.coherePlugin = null;
     }
   }
 }

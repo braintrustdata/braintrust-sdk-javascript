@@ -120,6 +120,7 @@ describe("configureInstrumentation API", () => {
         anthropic: true,
         openrouter: false,
         mistral: false,
+        cohere: false,
       },
     });
   });
