@@ -5498,11 +5498,6 @@ function isDeepCopyAttachmentPlaceholder(
     return false;
   }
 
-  const prototype = Object.getPrototypeOf(value);
-  if (prototype !== Object.prototype && prototype !== null) {
-    return false;
-  }
-
   const record = value as Record<string, unknown>;
   if (
     !Object.hasOwn(record, "_bt_internal_saved_attachment_idx") ||
@@ -5515,11 +5510,10 @@ function isDeepCopyAttachmentPlaceholder(
     return false;
   }
 
-  const attachmentIndex = record._bt_internal_saved_attachment_idx;
+  const attachmentIndex = record._bt_internal_saved_attachment_idx as number;
   const marker = record._bt_internal_saved_attachment_marker;
 
   return (
-    typeof attachmentIndex === "number" &&
     Number.isInteger(attachmentIndex) &&
     attachmentIndex >= 0 &&
     marker === attachmentMarker
