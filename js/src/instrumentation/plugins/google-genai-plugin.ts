@@ -142,7 +142,9 @@ export class GoogleGenAIPlugin extends BasePlugin {
           }
 
           try {
+            const responseMetadata = extractResponseMetadata(event.result);
             spanState.span.log({
+              ...(responseMetadata ? { metadata: responseMetadata } : {}),
               metrics: cleanMetrics(
                 extractGenerateContentMetrics(
                   event.result,
@@ -331,7 +333,11 @@ function patchGoogleGenAIStreamingResult(args: {
 
     if (options.result) {
       const { end, ...metricsWithoutEnd } = options.result.metrics;
+      const responseMetadata = extractResponseMetadata(
+        options.result.aggregated,
+      );
       span.log({
+        ...(responseMetadata ? { metadata: responseMetadata } : {}),
         metrics: cleanMetrics(metricsWithoutEnd),
         output: options.result.aggregated,
       });
@@ -740,6 +746,7 @@ function aggregateGenerateContentChunks(
   let text = "";
   let thoughtText = "";
   const otherParts: Record<string, unknown>[] = [];
+  let groundingMetadata: unknown = undefined;
   let usageMetadata: GoogleGenAIUsageMetadata | null = null;
   let lastResponse: GoogleGenAIGenerateContentResponse | null = null;
 
@@ -748,6 +755,9 @@ function aggregateGenerateContentChunks(
 
     if (chunk.usageMetadata) {
       usageMetadata = chunk.usageMetadata;
+    }
+    if (chunk.groundingMetadata !== undefined) {
+      groundingMetadata = chunk.groundingMetadata;
     }
 
     if (chunk.candidates && Array.isArray(chunk.candidates)) {
@@ -799,6 +809,12 @@ function aggregateGenerateContentChunks(
       if (candidate.finishReason !== undefined) {
         candidateDict.finishReason = candidate.finishReason;
       }
+      if (candidate.groundingMetadata !== undefined) {
+        candidateDict.groundingMetadata = candidate.groundingMetadata;
+        if (groundingMetadata === undefined) {
+          groundingMetadata = candidate.groundingMetadata;
+        }
+      }
       if (candidate.safetyRatings) {
         candidateDict.safetyRatings = candidate.safetyRatings;
       }
@@ -811,6 +827,9 @@ function aggregateGenerateContentChunks(
   if (usageMetadata) {
     aggregated.usageMetadata = usageMetadata;
     populateUsageMetrics(metrics, usageMetadata);
+  }
+  if (groundingMetadata !== undefined) {
+    aggregated.groundingMetadata = groundingMetadata;
   }
 
   if (text) {
@@ -828,6 +847,38 @@ function cleanMetrics(metrics: Record<string, number>): Record<string, number> {
     }
   }
   return cleaned;
+}
+
+function extractResponseMetadata(
+  response: unknown,
+): Record<string, unknown> | undefined {
+  const responseDict = tryToDict(response);
+  if (!responseDict) {
+    return undefined;
+  }
+
+  const metadata: Record<string, unknown> = {};
+  const responseGroundingMetadata = responseDict.groundingMetadata;
+  const candidateGroundingMetadata: unknown[] = [];
+
+  if (Array.isArray(responseDict.candidates)) {
+    for (const candidate of responseDict.candidates) {
+      const candidateDict = tryToDict(candidate);
+      if (candidateDict?.groundingMetadata !== undefined) {
+        candidateGroundingMetadata.push(candidateDict.groundingMetadata);
+      }
+    }
+  }
+
+  if (responseGroundingMetadata !== undefined) {
+    metadata.groundingMetadata = responseGroundingMetadata;
+  } else if (candidateGroundingMetadata.length === 1) {
+    [metadata.groundingMetadata] = candidateGroundingMetadata;
+  } else if (candidateGroundingMetadata.length > 1) {
+    metadata.groundingMetadata = candidateGroundingMetadata;
+  }
+
+  return Object.keys(metadata).length > 0 ? metadata : undefined;
 }
 
 /**
