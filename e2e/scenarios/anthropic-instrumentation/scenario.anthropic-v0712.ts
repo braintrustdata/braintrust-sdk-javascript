@@ -3,5 +3,7 @@ import { runMain } from "../../helpers/scenario-runtime";
 import { runWrappedAnthropicInstrumentation } from "./scenario.impl.mjs";
 
 runMain(async () =>
-  runWrappedAnthropicInstrumentation(Anthropic, { supportsThinking: true }),
+  runWrappedAnthropicInstrumentation(Anthropic, {
+    supportsThinking: true,
+  }),
 );

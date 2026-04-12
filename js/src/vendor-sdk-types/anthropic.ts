@@ -103,6 +103,13 @@ export interface AnthropicUsage {
   output_tokens: number;
   cache_read_input_tokens?: number;
   cache_creation_input_tokens?: number;
+  server_tool_use?: AnthropicServerToolUseUsage;
+  [key: string]: unknown;
+}
+
+export interface AnthropicServerToolUseUsage {
+  web_search_requests?: number;
+  [key: string]: unknown;
 }
 
 export type AnthropicStreamEvent =

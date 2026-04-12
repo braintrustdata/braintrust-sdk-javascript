@@ -124,6 +124,14 @@ export function parseMetricsFromUsage(
   saveIfExistsTo("cache_read_input_tokens", "prompt_cached_tokens");
   saveIfExistsTo("cache_creation_input_tokens", "prompt_cache_creation_tokens");
 
+  if (isObject(usage.server_tool_use)) {
+    for (const [name, value] of Object.entries(usage.server_tool_use)) {
+      if (typeof value === "number") {
+        metrics[`server_tool_use_${name}`] = value;
+      }
+    }
+  }
+
   return metrics;
 }
 
