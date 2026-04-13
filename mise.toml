@@ -13,4 +13,4 @@ npm = "11.11.1"
 pnpm = "10.33.0"
 
 [hooks]
-postinstall = "pnpm install --frozen-lockfile && dotagents install"
+postinstall = "pnpm install --frozen-lockfile"

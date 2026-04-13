@@ -344,26 +344,40 @@ function summarizeResponsesOutput(
     } satisfies Json;
   });
 
-  if (options?.dropEmptyOutputTextMessages) {
-    return summaries.filter((item) => {
-      if (!isRecord(item as Json)) {
-        return true;
-      }
+  const filtered = options?.dropEmptyOutputTextMessages
+    ? summaries.filter((item) => {
+        if (!isRecord(item as Json)) {
+          return true;
+        }
 
-      return !(
-        item.role === "assistant" &&
-        item.status === "completed" &&
-        item.type === "message" &&
-        Array.isArray(item.content_types) &&
-        item.content_types.length === 1 &&
-        item.content_types[0] === "output_text" &&
-        Array.isArray(item.json_keys) &&
-        item.json_keys.length === 0
-      );
-    }) satisfies Json;
+        return !(
+          item.role === "assistant" &&
+          item.status === "completed" &&
+          item.type === "message" &&
+          Array.isArray(item.content_types) &&
+          item.content_types.length === 1 &&
+          item.content_types[0] === "output_text" &&
+          Array.isArray(item.json_keys) &&
+          item.json_keys.length === 0
+        );
+      })
+    : summaries;
+
+  // Deduplicate identical items — the Responses API occasionally returns
+  // duplicate output entries (e.g., two identical "message" items when
+  // streaming), which would cause non-deterministic snapshot failures.
+  const seen = new Set<string>();
+  const deduped: Json[] = [];
+
+  for (const summarized of filtered) {
+    const key = JSON.stringify(summarized);
+    if (!seen.has(key)) {
+      seen.add(key);
+      deduped.push(summarized);
+    }
   }
 
-  return summaries satisfies Json;
+  return deduped;
 }
 
 function summarizeOutput(name: string, output: Json): Json {
