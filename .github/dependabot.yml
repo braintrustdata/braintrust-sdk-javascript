@@ -12,8 +12,53 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Etc/UTC"
     versioning-strategy: increase
     open-pull-requests-limit: 5
+    cooldown:
+      default-days: 3
+      semver-major-days: 14
+    exclude-paths:
+      - "e2e/**"
+      - "js/examples/**"
+      - "js/smoke/**"
+      - "js/tests/**"
+      - "integrations/**/examples/**"
+      - "integrations/**/smoke/**"
+      - "js/src/wrappers/**"
+    groups:
+      production-patch-minor:
+        dependency-type: "production"
+        update-types:
+          - "patch"
+          - "minor"
+      dev-tooling-patch-minor:
+        dependency-type: "development"
+        patterns:
+          - "eslint"
+          - "@typescript-eslint/*"
+          - "prettier"
+          - "turbo"
+          - "typescript"
+          - "tsup"
+          - "tsx"
+          - "vitest"
+          - "vite"
+          - "vite-tsconfig-paths"
+          - "rollup"
+          - "webpack"
+          - "typedoc"
+          - "typedoc-*"
+          - "cross-env"
+        update-types:
+          - "patch"
+          - "minor"
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-major"
     commit-message:
       prefix: feat
       prefix-development: chore
