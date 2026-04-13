@@ -9,6 +9,12 @@ import {
 const GOOGLE_MODEL = "gemini-2.5-flash-lite";
 const ROOT_NAME = "google-genai-instrumentation-root";
 const SCENARIO_NAME = "google-genai-instrumentation";
+const GOOGLE_GENAI_RETRY_OPTIONS = {
+  attempts: 3,
+  delayMs: 1_000,
+  maxDelayMs: 5_000,
+  shouldRetry: isRetriableGoogleGenAIError,
+};
 const WEATHER_TOOL = {
   functionDeclarations: [
     {
@@ -28,6 +34,72 @@ const WEATHER_TOOL = {
   ],
 };
 
+function isObject(value) {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function getRetryStatus(error) {
+  if (!isObject(error)) {
+    return undefined;
+  }
+
+  const directStatus = error.status;
+  if (typeof directStatus === "number") {
+    return directStatus;
+  }
+
+  const nestedError = error.error;
+  if (
+    isObject(nestedError) &&
+    typeof nestedError.code === "number" &&
+    Number.isFinite(nestedError.code)
+  ) {
+    return nestedError.code;
+  }
+
+  return undefined;
+}
+
+function isRetriableGoogleGenAIError(error) {
+  const status = getRetryStatus(error);
+  if (status === 429 || status === 500 || status === 503 || status === 504) {
+    return true;
+  }
+
+  const message = error instanceof Error ? error.message : String(error ?? "");
+  return (
+    message.includes("request timed out") ||
+    message.includes("UNAVAILABLE") ||
+    message.includes("temporarily unavailable")
+  );
+}
+
+async function withRetry(
+  callback,
+  {
+    attempts = 3,
+    delayMs = 1_000,
+    maxDelayMs = Number.POSITIVE_INFINITY,
+    shouldRetry = () => true,
+  } = {},
+) {
+  let lastError;
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    try {
+      return await callback();
+    } catch (error) {
+      lastError = error;
+      if (attempt === attempts || !shouldRetry(error)) {
+        throw error;
+      }
+      const retryDelayMs = Math.min(delayMs * attempt, maxDelayMs);
+      await new Promise((resolve) => setTimeout(resolve, retryDelayMs));
+    }
+  }
+
+  throw lastError;
+}
+
 async function runGoogleGenAIInstrumentationScenario(sdk, options = {}) {
   const imageBase64 = (
     await readFile(new URL("./test-image.png", import.meta.url))
@@ -41,94 +113,104 @@ async function runGoogleGenAIInstrumentationScenario(sdk, options = {}) {
   await runTracedScenario({
     callback: async () => {
       await runOperation("google-generate-operation", "generate", async () => {
-        await client.models.generateContent({
-          model: GOOGLE_MODEL,
-          contents: "Reply with exactly PARIS.",
-          config: {
-            maxOutputTokens: 24,
-            temperature: 0,
-          },
-        });
+        await withRetry(async () => {
+          await client.models.generateContent({
+            model: GOOGLE_MODEL,
+            contents: "Reply with exactly PARIS.",
+            config: {
+              maxOutputTokens: 24,
+              temperature: 0,
+            },
+          });
+        }, GOOGLE_GENAI_RETRY_OPTIONS);
       });
 
       await runOperation(
         "google-attachment-operation",
         "attachment",
         async () => {
-          await client.models.generateContent({
-            model: GOOGLE_MODEL,
-            contents: [
-              {
-                parts: [
-                  {
-                    inlineData: {
-                      data: imageBase64,
-                      mimeType: "image/png",
+          await withRetry(async () => {
+            await client.models.generateContent({
+              model: GOOGLE_MODEL,
+              contents: [
+                {
+                  parts: [
+                    {
+                      inlineData: {
+                        data: imageBase64,
+                        mimeType: "image/png",
+                      },
                     },
-                  },
-                  {
-                    text: "Describe the attached image in one short sentence.",
-                  },
-                ],
-                role: "user",
+                    {
+                      text: "Describe the attached image in one short sentence.",
+                    },
+                  ],
+                  role: "user",
+                },
+              ],
+              config: {
+                maxOutputTokens: 48,
+                temperature: 0,
               },
-            ],
-            config: {
-              maxOutputTokens: 48,
-              temperature: 0,
-            },
-          });
+            });
+          }, GOOGLE_GENAI_RETRY_OPTIONS);
         },
       );
 
       await runOperation("google-stream-operation", "stream", async () => {
-        const stream = await client.models.generateContentStream({
-          model: GOOGLE_MODEL,
-          contents: "Count from 1 to 3 and include the words one two three.",
-          config: {
-            maxOutputTokens: 64,
-            temperature: 0,
-          },
-        });
-        await collectAsync(stream);
+        await withRetry(async () => {
+          const stream = await client.models.generateContentStream({
+            model: GOOGLE_MODEL,
+            contents: "Count from 1 to 3 and include the words one two three.",
+            config: {
+              maxOutputTokens: 64,
+              temperature: 0,
+            },
+          });
+          await collectAsync(stream);
+        }, GOOGLE_GENAI_RETRY_OPTIONS);
       });
 
       await runOperation(
         "google-stream-return-operation",
         "stream-return",
         async () => {
-          const stream = await client.models.generateContentStream({
-            model: GOOGLE_MODEL,
-            contents: "Reply with exactly BONJOUR.",
-            config: {
-              maxOutputTokens: 24,
-              temperature: 0,
-            },
-          });
+          await withRetry(async () => {
+            const stream = await client.models.generateContentStream({
+              model: GOOGLE_MODEL,
+              contents: "Reply with exactly BONJOUR.",
+              config: {
+                maxOutputTokens: 24,
+                temperature: 0,
+              },
+            });
 
-          for await (const _chunk of stream) {
-            break;
-          }
+            for await (const _chunk of stream) {
+              break;
+            }
+          }, GOOGLE_GENAI_RETRY_OPTIONS);
         },
       );
 
       await runOperation("google-tool-operation", "tool", async () => {
-        await client.models.generateContent({
-          model: GOOGLE_MODEL,
-          contents:
-            "Use the get_weather function for Paris, France. Do not answer from memory.",
-          config: {
-            maxOutputTokens: 128,
-            temperature: 0,
-            tools: [WEATHER_TOOL],
-            toolConfig: {
-              functionCallingConfig: {
-                allowedFunctionNames: ["get_weather"],
-                mode: sdk.FunctionCallingConfigMode.ANY,
+        await withRetry(async () => {
+          await client.models.generateContent({
+            model: GOOGLE_MODEL,
+            contents:
+              "Use the get_weather function for Paris, France. Do not answer from memory.",
+            config: {
+              maxOutputTokens: 128,
+              temperature: 0,
+              tools: [WEATHER_TOOL],
+              toolConfig: {
+                functionCallingConfig: {
+                  allowedFunctionNames: ["get_weather"],
+                  mode: sdk.FunctionCallingConfigMode.ANY,
+                },
               },
             },
-          },
-        });
+          });
+        }, GOOGLE_GENAI_RETRY_OPTIONS);
       });
     },
     metadata: {

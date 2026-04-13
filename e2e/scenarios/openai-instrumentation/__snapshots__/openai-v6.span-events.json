@@ -116,6 +116,31 @@
     "has_input": false,
     "has_output": false,
     "metadata": {
+      "operation": "stream-fixture"
+    },
+    "metrics": {
+      "has_time_to_first_token": false
+    },
+    "name": "openai-stream-fixture-operation",
+    "type": null
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "model": "gpt-4o-mini-2024-07-18",
+      "provider": "openai"
+    },
+    "metrics": {
+      "has_time_to_first_token": true
+    },
+    "name": "Chat Completion",
+    "type": "llm"
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
       "operation": "parse"
     },
     "metrics": {
