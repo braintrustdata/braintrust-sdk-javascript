@@ -69,10 +69,27 @@ export interface GoogleGenAIGenerateContentResponse {
       role?: string;
     };
     finishReason?: string;
+    groundingMetadata?: GoogleGenAIGroundingMetadata;
     safetyRatings?: Record<string, unknown>[];
   }[];
+  groundingMetadata?: GoogleGenAIGroundingMetadata;
   usageMetadata?: GoogleGenAIUsageMetadata;
   text?: string;
+  [key: string]: unknown;
+}
+
+export interface GoogleGenAIGroundingMetadata {
+  groundingChunks?: Array<{
+    web?: {
+      title?: string;
+      uri?: string;
+      [key: string]: unknown;
+    };
+    [key: string]: unknown;
+  }>;
+  groundingSupports?: Record<string, unknown>[];
+  searchEntryPoint?: Record<string, unknown>;
+  webSearchQueries?: string[];
   [key: string]: unknown;
 }
 
