@@ -232,9 +232,14 @@ function normalizeLegacyV134PayloadSummaryRow(
   snapshotName: string,
   spanName: string | undefined,
 ): Json {
+  const unstableLegacyV134SpanNames = new Set([
+    "mistral.chat.stream",
+    "mistral.fim.stream",
+  ]);
   if (
     snapshotName !== "mistral-v1-3-4" ||
-    spanName !== "mistral.fim.stream" ||
+    !spanName ||
+    !unstableLegacyV134SpanNames.has(spanName) ||
     !isRecord(summaryRow)
   ) {
     return summaryRow;

@@ -213,6 +213,21 @@
     "type": "task"
   },
   "subagent": {
+    "handoff_tool": {
+      "has_input": true,
+      "has_output": false,
+      "metadata": {
+        "gen_ai.tool.name": "Agent"
+      },
+      "metric_keys": [],
+      "name": "tool: Agent",
+      "root_span_id": "<span:1>",
+      "span_id": "<span:15>",
+      "span_parents": [
+        "<span:16>"
+      ],
+      "type": "tool"
+    },
     "llm": {
       "has_input": true,
       "has_output": true,
@@ -229,9 +244,9 @@
       ],
       "name": "anthropic.messages.create",
       "root_span_id": "<span:1>",
-      "span_id": "<span:15>",
+      "span_id": "<span:17>",
       "span_parents": [
-        "<span:16>"
+        "<span:18>"
       ],
       "type": "llm"
     },
@@ -248,9 +263,9 @@
       "metric_keys": [],
       "name": "Agent: <task>",
       "root_span_id": "<span:1>",
-      "span_id": "<span:17>",
+      "span_id": "<span:18>",
       "span_parents": [
-        "<span:16>"
+        "<span:15>"
       ],
       "type": "task"
     },
@@ -263,7 +278,7 @@
       "metric_keys": [],
       "name": "claude-agent-subagent-operation",
       "root_span_id": "<span:1>",
-      "span_id": "<span:18>",
+      "span_id": "<span:19>",
       "span_parents": [
         "<span:1>"
       ],
@@ -278,9 +293,9 @@
       "metric_keys": [],
       "name": "Claude Agent",
       "root_span_id": "<span:1>",
-      "span_id": "<span:16>",
+      "span_id": "<span:20>",
       "span_parents": [
-        "<span:18>"
+        "<span:19>"
       ],
       "type": "task"
     },
@@ -294,9 +309,9 @@
       "metric_keys": [],
       "name": "tool: calculator/calculator",
       "root_span_id": "<span:1>",
-      "span_id": "<span:19>",
+      "span_id": "<span:21>",
       "span_parents": [
-        "<span:20>"
+        "<span:17>"
       ],
       "type": "tool"
     }
