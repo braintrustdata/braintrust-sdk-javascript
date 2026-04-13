@@ -76,7 +76,7 @@ export class CoherePlugin extends BasePlugin {
             return undefined;
           }
 
-          return result.results.slice(0, 10).map((item) => ({
+          return result.results.slice(0, 100).map((item) => ({
             index: isObject(item) ? item.index : undefined,
             relevance_score: isObject(item)
               ? ((typeof item.relevanceScore === "number"
