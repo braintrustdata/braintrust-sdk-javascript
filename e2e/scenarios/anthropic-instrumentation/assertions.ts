@@ -89,6 +89,10 @@ function summarizeAnthropicPayload(event: CapturedLogEvent): Json {
   const output = structuredClone(
     summary.output as {
       content: Array<{
+        caller?: unknown;
+        input?: Record<string, unknown>;
+        name?: string;
+        id?: string;
         text?: string;
         type?: string;
         thinking?: string;
@@ -122,6 +126,17 @@ function summarizeAnthropicPayload(event: CapturedLogEvent): Json {
       }
     }
     return summary;
+  }
+
+  // `caller` is only present in newer Anthropic SDK responses.
+  // Drop it so payload snapshots stay stable across SDK versions.
+  for (const block of output.content) {
+    if (
+      (block.type === "tool_use" || block.type === "server_tool_use") &&
+      "caller" in block
+    ) {
+      delete block.caller;
+    }
   }
 
   const textBlock = output.content.find(
