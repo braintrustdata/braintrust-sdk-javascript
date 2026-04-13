@@ -37,6 +37,7 @@ import { googleGenAIConfigs } from "../configs/google-genai";
 import { openRouterAgentConfigs } from "../configs/openrouter-agent";
 import { openRouterConfigs } from "../configs/openrouter";
 import { mistralConfigs } from "../configs/mistral";
+import { cohereConfigs } from "../configs/cohere";
 import { type BundlerPluginOptions } from "./plugin";
 
 /**
@@ -72,6 +73,7 @@ function getMatcher(options: BundlerPluginOptions): InstrumentationMatcher {
     ...openRouterConfigs,
     ...openRouterAgentConfigs,
     ...mistralConfigs,
+    ...cohereConfigs,
     ...(options.instrumentations ?? []),
   ];
   const dcModule = options.browser ? "dc-browser" : undefined;
