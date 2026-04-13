@@ -1,4 +1,5 @@
 import { huggingFaceChannels } from "../instrumentation/plugins/huggingface-channels";
+import { isObject } from "../../util";
 import type {
   HuggingFaceChatCompletion,
   HuggingFaceChatCompletionChunk,
@@ -61,13 +62,9 @@ function isHuggingFaceConstructorKey(
   return HUGGINGFACE_CONSTRUCTOR_KEY_SET.has(value);
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
-}
-
 function hasFunction(value: unknown, methodName: string): boolean {
   return (
-    isRecord(value) &&
+    isObject(value) &&
     methodName in value &&
     typeof value[methodName] === "function"
   );
@@ -76,7 +73,7 @@ function hasFunction(value: unknown, methodName: string): boolean {
 function isSupportedHuggingFaceModule(
   value: unknown,
 ): value is HuggingFaceModule {
-  if (!isRecord(value)) {
+  if (!isObject(value)) {
     return false;
   }
 

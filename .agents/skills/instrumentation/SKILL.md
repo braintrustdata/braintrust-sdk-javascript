@@ -28,6 +28,7 @@ Map the change before editing:
 - Support both auto-instrumentation and manual instrumentation. Auto-instrumentation does not cover every environment, loader, or framework.
 - For orchestrion auto-instrumentation, prefer targeting public API functions. Instrumenting internal helpers is more likely to break across library versions.
 - Auto and manual paths should share logic. Prefer both paths emitting the same tracing-channel events, with provider plugins converting those events into spans/logs/errors. Manual wrappers should not directly emit observability data.
+- Reuse shared repo utilities before introducing local helpers. Check `js/util/index.ts`, neighboring instrumentation files, and existing plugins/wrappers for utilities like `isObject`, merge helpers, and sanitizers before adding ad hoc replacements.
 - If a public instrumentation surface changes, check whether the export surface also needs updates in `js/src/instrumentation/index.ts` or `js/src/exports.ts`.
 - Preserve async context propagation. Changes around tracing channels, stream patching, or loader hooks must keep the current span context across awaits and stream consumption.
 - Maintain isomorphic behavior. Node and browser/bundled paths must use compatible channel implementations and avoid channel-registry mismatches.

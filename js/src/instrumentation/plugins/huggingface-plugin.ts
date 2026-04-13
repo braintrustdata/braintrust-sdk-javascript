@@ -312,6 +312,7 @@ function patchChatCompletionStream(args: {
     },
     onComplete: (chunks) => {
       const lastChunk = chunks.at(-1);
+      const responseMetadata = extractResponseMetadata(lastChunk);
       const metrics = {
         ...parseMetricsFromUsage(lastChunk?.usage),
         ...(firstChunkTime !== undefined
@@ -321,9 +322,7 @@ function patchChatCompletionStream(args: {
 
       span.log({
         output: aggregateChatCompletionChunks(chunks),
-        ...(extractResponseMetadata(lastChunk)
-          ? { metadata: extractResponseMetadata(lastChunk) }
-          : {}),
+        ...(responseMetadata ? { metadata: responseMetadata } : {}),
         metrics,
       });
       span.end();
@@ -358,13 +357,10 @@ function patchTextGenerationStream(args: {
     },
     onComplete: (chunks) => {
       const lastChunk = chunks.at(-1);
+      const streamMetadata = extractTextGenerationStreamMetadata(chunks);
       span.log({
         output: aggregateTextGenerationStreamChunks(chunks),
-        ...(extractTextGenerationStreamMetadata(chunks)
-          ? {
-              metadata: extractTextGenerationStreamMetadata(chunks),
-            }
-          : {}),
+        ...(streamMetadata ? { metadata: streamMetadata } : {}),
         metrics: {
           ...extractTextGenerationMetrics(lastChunk?.details ?? null),
           ...parseMetricsFromUsage(lastChunk?.usage),
