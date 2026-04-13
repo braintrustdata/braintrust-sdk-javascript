@@ -1624,7 +1624,7 @@ test("classifier-only evaluator populates classifications field", async () => {
       classifiers: [
         () => ({
           name: "category",
-          id: "greeting",
+          result: "greeting",
           label: "Greeting",
           metadata: { source: "unit-test" },
         }),
@@ -1674,8 +1674,8 @@ test("multiple classifiers returning the same name append items correctly", asyn
       task: (input) => input,
       classifiers: [
         () => [
-          { name: "category", id: "greeting", label: "Greeting" },
-          { name: "category", id: "informal", label: "Informal" },
+          { name: "category", result: "greeting", label: "Greeting" },
+          { name: "category", result: "informal", label: "Informal" },
         ],
       ],
     },
@@ -1707,7 +1707,7 @@ test("mixed evaluator populates both scores and classifications", async () => {
         }),
       ],
       classifiers: [
-        () => ({ name: "category", id: "greeting", label: "Greeting" }),
+        () => ({ name: "category", result: "greeting", label: "Greeting" }),
       ],
     },
     { noSendLogs: true, returnResults: true },
