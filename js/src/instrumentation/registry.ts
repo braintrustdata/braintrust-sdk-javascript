@@ -19,6 +19,7 @@ export interface InstrumentationConfig {
     vercel?: boolean;
     aisdk?: boolean;
     google?: boolean;
+    huggingface?: boolean;
     claudeAgentSDK?: boolean;
     openrouter?: boolean;
     openrouterAgent?: boolean;
@@ -107,6 +108,7 @@ class PluginRegistry {
       vercel: true,
       aisdk: true,
       google: true,
+      huggingface: true,
       claudeAgentSDK: true,
       openrouter: true,
       openrouterAgent: true,

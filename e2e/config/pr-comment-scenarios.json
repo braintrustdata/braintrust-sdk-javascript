@@ -34,6 +34,16 @@
     ]
   },
   {
+    "scenarioDirName": "huggingface-instrumentation",
+    "label": "HuggingFace Instrumentation",
+    "metadataScenario": "huggingface-instrumentation",
+    "variants": [
+      { "variantKey": "huggingface-v281", "label": "v2.8.1" },
+      { "variantKey": "huggingface-v3150", "label": "v3.15.0" },
+      { "variantKey": "huggingface-v41315", "label": "v4.13.15" }
+    ]
+  },
+  {
     "scenarioDirName": "mistral-instrumentation",
     "label": "Mistral Instrumentation",
     "metadataScenario": "mistral-instrumentation",

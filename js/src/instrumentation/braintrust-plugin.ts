@@ -4,6 +4,7 @@ import { AnthropicPlugin } from "./plugins/anthropic-plugin";
 import { AISDKPlugin } from "./plugins/ai-sdk-plugin";
 import { ClaudeAgentSDKPlugin } from "./plugins/claude-agent-sdk-plugin";
 import { GoogleGenAIPlugin } from "./plugins/google-genai-plugin";
+import { HuggingFacePlugin } from "./plugins/huggingface-plugin";
 import { OpenRouterAgentPlugin } from "./plugins/openrouter-agent-plugin";
 import { OpenRouterPlugin } from "./plugins/openrouter-plugin";
 import { MistralPlugin } from "./plugins/mistral-plugin";
@@ -16,6 +17,7 @@ export interface BraintrustPluginConfig {
     aisdk?: boolean;
     google?: boolean;
     googleGenAI?: boolean;
+    huggingface?: boolean;
     claudeAgentSDK?: boolean;
     openrouter?: boolean;
     openrouterAgent?: boolean;
@@ -32,6 +34,7 @@ export interface BraintrustPluginConfig {
  * - Claude Agent SDK (agent interactions)
  * - Vercel AI SDK (generateText, streamText, etc.)
  * - Google GenAI SDK
+ * - HuggingFace Inference SDK
  * - Mistral SDK
  *
  * The plugin is automatically enabled when the Braintrust library is loaded.
@@ -44,6 +47,7 @@ export class BraintrustPlugin extends BasePlugin {
   private aiSDKPlugin: AISDKPlugin | null = null;
   private claudeAgentSDKPlugin: ClaudeAgentSDKPlugin | null = null;
   private googleGenAIPlugin: GoogleGenAIPlugin | null = null;
+  private huggingFacePlugin: HuggingFacePlugin | null = null;
   private openRouterPlugin: OpenRouterPlugin | null = null;
   private openRouterAgentPlugin: OpenRouterAgentPlugin | null = null;
   private mistralPlugin: MistralPlugin | null = null;
@@ -88,6 +92,11 @@ export class BraintrustPlugin extends BasePlugin {
       this.googleGenAIPlugin.enable();
     }
 
+    if (integrations.huggingface !== false) {
+      this.huggingFacePlugin = new HuggingFacePlugin();
+      this.huggingFacePlugin.enable();
+    }
+
     if (integrations.openrouter !== false) {
       this.openRouterPlugin = new OpenRouterPlugin();
       this.openRouterPlugin.enable();
@@ -128,6 +137,11 @@ export class BraintrustPlugin extends BasePlugin {
     if (this.googleGenAIPlugin) {
       this.googleGenAIPlugin.disable();
       this.googleGenAIPlugin = null;
+    }
+
+    if (this.huggingFacePlugin) {
+      this.huggingFacePlugin.disable();
+      this.huggingFacePlugin = null;
     }
 
     if (this.openRouterPlugin) {

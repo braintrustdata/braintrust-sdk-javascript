@@ -22,6 +22,7 @@ const ALLOWED_ENV_KEYS = [
   "OPENAI_BASE_URL",
   "OPENROUTER_API_KEY",
   "MISTRAL_API_KEY",
+  "HUGGINGFACE_API_KEY",
 ];
 
 function getAllowedEnv() {
