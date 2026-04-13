@@ -313,6 +313,7 @@ function summarizeChatOutput(output: Json): Json {
 function summarizeResponsesOutput(
   output: Json,
   options?: {
+    // For normalization across SDK versions
     dropEmptyOutputTextMessages?: boolean;
   },
 ): Json {

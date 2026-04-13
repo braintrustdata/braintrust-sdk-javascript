@@ -312,21 +312,12 @@ function finalizeContentBlock(
         return;
       }
 
-      if (contentBlock.type === "tool_use") {
-        contentBlocks[index] = {
-          type: "tool_use",
-          id: contentBlock.id,
-          name: contentBlock.name,
-          input: parsedInput,
-        };
-      } else {
-        contentBlocks[index] = {
-          type: "server_tool_use",
-          id: contentBlock.id,
-          name: contentBlock.name,
-          input: parsedInput,
-        };
-      }
+      contentBlocks[index] = {
+        type: contentBlock.type,
+        id: contentBlock.id,
+        name: contentBlock.name,
+        input: parsedInput,
+      };
     } catch {
       fallbackTextDeltas.push(text);
       delete contentBlocks[index];
