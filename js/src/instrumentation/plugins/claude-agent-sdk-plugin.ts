@@ -43,6 +43,15 @@ type LLMSpanResult = {
   finalMessage: ClaudeConversationMessage | undefined;
   spanExport: string;
 };
+type SubAgentDetails = {
+  agentId?: string;
+  agentType?: string;
+  description?: string;
+  taskId?: string;
+  taskType?: string;
+  toolUseId?: string;
+  workflowName?: string;
+};
 const ROOT_LLM_PARENT_KEY = "__root__";
 
 function llmParentKey(parentToolUseId: string | null): string {
@@ -89,6 +98,94 @@ function getNumberProperty(obj: unknown, key: string): number | undefined {
   }
   const value = Reflect.get(obj, key);
   return typeof value === "number" ? value : undefined;
+}
+
+function getStringProperty(obj: unknown, key: string): string | undefined {
+  if (!obj || typeof obj !== "object" || !(key in obj)) {
+    return undefined;
+  }
+  const value = Reflect.get(obj, key);
+  return typeof value === "string" ? value : undefined;
+}
+
+function upsertSubAgentDetails(
+  detailsByToolUseId: Map<string, SubAgentDetails>,
+  toolUseId: string,
+  update: SubAgentDetails,
+): SubAgentDetails {
+  const existing = detailsByToolUseId.get(toolUseId) ?? {};
+  const merged = {
+    ...existing,
+    ...Object.fromEntries(
+      Object.entries(update).filter(([, value]) => value !== undefined),
+    ),
+  } satisfies SubAgentDetails;
+  detailsByToolUseId.set(toolUseId, merged);
+  return merged;
+}
+
+function formatSubAgentSpanName(details: SubAgentDetails | undefined): string {
+  if (details?.description) {
+    return `Agent: ${details.description}`;
+  }
+
+  if (details?.agentType) {
+    return `Agent: ${details.agentType}`;
+  }
+
+  return "Agent: sub-agent";
+}
+
+function subAgentDetailsToMetadata(
+  details: SubAgentDetails | undefined,
+): Record<string, unknown> {
+  if (!details) {
+    return {};
+  }
+
+  const metadata: Record<string, unknown> = {};
+
+  if (details.agentId) {
+    metadata["claude_agent_sdk.agent_id"] = details.agentId;
+  }
+  if (details.agentType) {
+    metadata["claude_agent_sdk.agent_type"] = details.agentType;
+  }
+  if (details.description) {
+    metadata["claude_agent_sdk.description"] = details.description;
+  }
+  if (details.taskId) {
+    metadata["claude_agent_sdk.task_id"] = details.taskId;
+  }
+  if (details.taskType) {
+    metadata["claude_agent_sdk.task_type"] = details.taskType;
+  }
+  if (details.toolUseId) {
+    metadata["claude_agent_sdk.tool_use_id"] = details.toolUseId;
+  }
+  if (details.workflowName) {
+    metadata["claude_agent_sdk.workflow_name"] = details.workflowName;
+  }
+
+  return metadata;
+}
+
+function resolveTaskToolUseId(
+  taskIdToToolUseId: Map<string, string>,
+  message: ClaudeAgentSDKMessage,
+): string | undefined {
+  const messageToolUseId =
+    typeof message.tool_use_id === "string" ? message.tool_use_id : undefined;
+  if (messageToolUseId && typeof message.task_id === "string") {
+    taskIdToToolUseId.set(message.task_id, messageToolUseId);
+  }
+  if (messageToolUseId) {
+    return messageToolUseId;
+  }
+  if (typeof message.task_id === "string") {
+    return taskIdToToolUseId.get(message.task_id);
+  }
+  return undefined;
 }
 
 function extractUsageFromMessage(
@@ -344,12 +441,15 @@ function createToolTracingHooks(
   mcpServers: ClaudeAgentSDKMcpServersConfig | undefined,
   localToolHookNames: Set<string>,
   skipLocalToolHooks: boolean,
+  subAgentDetailsByToolUseId: Map<string, SubAgentDetails>,
   subAgentSpans: Map<string, Span>,
   endedSubAgentSpans: Set<string>,
 ): {
   postToolUse: ClaudeAgentSDKHookCallback;
   postToolUseFailure: ClaudeAgentSDKHookCallback;
   preToolUse: ClaudeAgentSDKHookCallback;
+  subagentStart: ClaudeAgentSDKHookCallback;
+  subagentStop: ClaudeAgentSDKHookCallback;
 } {
   const preToolUse: ClaudeAgentSDKHookCallback = async (input, toolUseID) => {
     if (input.hook_event_name !== "PreToolUse" || !toolUseID) {
@@ -406,11 +506,19 @@ function createToolTracingHooks(
 
     const subAgentSpan = subAgentSpans.get(toolUseID);
     if (subAgentSpan) {
+      if (endedSubAgentSpans.has(toolUseID)) {
+        return {};
+      }
+
       try {
         const response = input.tool_response as
           | Record<string, unknown>
           | undefined;
-        const metadata: Record<string, unknown> = {};
+        const metadata: Record<string, unknown> = {
+          ...subAgentDetailsToMetadata(
+            subAgentDetailsByToolUseId.get(toolUseID),
+          ),
+        };
         if (response?.status) {
           metadata["claude_agent_sdk.status"] = response.status;
         }
@@ -467,8 +575,17 @@ function createToolTracingHooks(
 
     const subAgentSpan = subAgentSpans.get(toolUseID);
     if (subAgentSpan) {
+      if (endedSubAgentSpans.has(toolUseID)) {
+        return {};
+      }
+
       try {
-        subAgentSpan.log({ error: input.error });
+        subAgentSpan.log({
+          error: input.error,
+          metadata: subAgentDetailsToMetadata(
+            subAgentDetailsByToolUseId.get(toolUseID),
+          ),
+        });
       } finally {
         subAgentSpan.end();
         endedSubAgentSpans.add(toolUseID);
@@ -502,7 +619,81 @@ function createToolTracingHooks(
     return {};
   };
 
-  return { postToolUse, postToolUseFailure, preToolUse };
+  const subagentStart: ClaudeAgentSDKHookCallback = async (
+    input,
+    toolUseID,
+  ) => {
+    if (input.hook_event_name !== "SubagentStart" || !toolUseID) {
+      return {};
+    }
+
+    const details = upsertSubAgentDetails(
+      subAgentDetailsByToolUseId,
+      toolUseID,
+      {
+        agentId: input.agent_id,
+        agentType: input.agent_type,
+        toolUseId: toolUseID,
+      },
+    );
+
+    const subAgentSpan = subAgentSpans.get(toolUseID);
+    if (subAgentSpan && !endedSubAgentSpans.has(toolUseID)) {
+      subAgentSpan.log({
+        metadata: subAgentDetailsToMetadata(details),
+      });
+    }
+
+    return {};
+  };
+
+  const subagentStop: ClaudeAgentSDKHookCallback = async (input, toolUseID) => {
+    if (input.hook_event_name !== "SubagentStop" || !toolUseID) {
+      return {};
+    }
+
+    const details = upsertSubAgentDetails(
+      subAgentDetailsByToolUseId,
+      toolUseID,
+      {
+        agentId: input.agent_id,
+        agentType: input.agent_type,
+        toolUseId: toolUseID,
+      },
+    );
+    const subAgentSpan = subAgentSpans.get(toolUseID);
+    if (!subAgentSpan || endedSubAgentSpans.has(toolUseID)) {
+      return {};
+    }
+
+    const metadata = {
+      ...subAgentDetailsToMetadata(details),
+      ...(input.agent_transcript_path && {
+        "claude_agent_sdk.agent_transcript_path": input.agent_transcript_path,
+      }),
+      "claude_agent_sdk.stop_hook_active": input.stop_hook_active,
+    };
+
+    try {
+      subAgentSpan.log({
+        metadata,
+        output: input.last_assistant_message,
+      });
+    } finally {
+      subAgentSpan.end();
+      endedSubAgentSpans.add(toolUseID);
+    }
+
+    return {};
+  };
+
+  return {
+    postToolUse,
+    postToolUseFailure,
+    preToolUse,
+    subagentStart,
+    subagentStop,
+  };
 }
 
 function injectTracingHooks(
@@ -511,19 +702,26 @@ function injectTracingHooks(
   activeToolSpans: Map<string, Span>,
   localToolHookNames: Set<string>,
   skipLocalToolHooks: boolean,
+  subAgentDetailsByToolUseId: Map<string, SubAgentDetails>,
   subAgentSpans: Map<string, Span>,
   endedSubAgentSpans: Set<string>,
 ): ClaudeAgentSDKQueryOptions {
-  const { preToolUse, postToolUse, postToolUseFailure } =
-    createToolTracingHooks(
-      resolveParentSpan,
-      activeToolSpans,
-      options.mcpServers,
-      localToolHookNames,
-      skipLocalToolHooks,
-      subAgentSpans,
-      endedSubAgentSpans,
-    );
+  const {
+    preToolUse,
+    postToolUse,
+    postToolUseFailure,
+    subagentStart,
+    subagentStop,
+  } = createToolTracingHooks(
+    resolveParentSpan,
+    activeToolSpans,
+    options.mcpServers,
+    localToolHookNames,
+    skipLocalToolHooks,
+    subAgentDetailsByToolUseId,
+    subAgentSpans,
+    endedSubAgentSpans,
+  );
 
   const existingHooks = options.hooks ?? {};
 
@@ -545,6 +743,18 @@ function injectTracingHooks(
         ...(existingHooks.PreToolUse ?? []),
         { hooks: [preToolUse] } satisfies ClaudeAgentSDKHookCallbackMatcher,
       ],
+      SubagentStart: [
+        ...(existingHooks.SubagentStart ?? []),
+        {
+          hooks: [subagentStart],
+        } satisfies ClaudeAgentSDKHookCallbackMatcher,
+      ],
+      SubagentStop: [
+        ...(existingHooks.SubagentStop ?? []),
+        {
+          hooks: [subagentStop],
+        } satisfies ClaudeAgentSDKHookCallbackMatcher,
+      ],
     },
   };
 }
@@ -561,12 +771,13 @@ type QueryState = {
   finalResults: ClaudeConversationMessage[];
   options: ClaudeAgentSDKQueryOptions;
   originalPrompt: string | AsyncIterable<ClaudeAgentSDKMessage> | undefined;
-  pendingSubAgentNames: Map<string, string>;
   processing: Promise<void>;
   promptDone: Promise<void>;
   promptStarted: () => boolean;
   span: Span;
+  subAgentDetailsByToolUseId: Map<string, SubAgentDetails>;
   subAgentSpans: Map<string, Span>;
+  taskIdToToolUseId: Map<string, string>;
   latestLlmParentBySubAgentToolUse: Map<string, string>;
   latestRootLlmParentRef: { value: string | undefined };
   toolUseToParent: Map<string, string | null>;
@@ -653,13 +864,16 @@ function maybeTrackToolUseContext(
     state.toolUseToParent.set(block.id, parentToolUseId);
 
     if (
-      block.name === "Task" &&
+      typeof block.name === "string" &&
+      isSubAgentToolName(block.name) &&
       typeof block.input === "object" &&
-      block.input !== null &&
-      "subagent_type" in block.input &&
-      typeof block.input.subagent_type === "string"
+      block.input !== null
     ) {
-      state.pendingSubAgentNames.set(block.id, block.input.subagent_type);
+      upsertSubAgentDetails(state.subAgentDetailsByToolUseId, block.id, {
+        agentType: getStringProperty(block.input, "subagent_type"),
+        description: getStringProperty(block.input, "description"),
+        toolUseId: block.id,
+      });
     }
   }
 }
@@ -678,7 +892,7 @@ async function maybeStartSubAgentSpan(
   }
 
   await ensureSubAgentSpan(
-    state.pendingSubAgentNames,
+    state.subAgentDetailsByToolUseId,
     state.span,
     state.subAgentSpans,
     parentToolUseId,
@@ -686,7 +900,7 @@ async function maybeStartSubAgentSpan(
 }
 
 async function ensureSubAgentSpan(
-  pendingSubAgentNames: Map<string, string>,
+  subAgentDetailsByToolUseId: Map<string, SubAgentDetails>,
   rootSpan: Span,
   subAgentSpans: Map<string, Span>,
   parentToolUseId: string,
@@ -696,14 +910,12 @@ async function ensureSubAgentSpan(
     return existingSpan;
   }
 
-  const agentName = pendingSubAgentNames.get(parentToolUseId);
-  const spanName = agentName ? `Agent: ${agentName}` : "Agent: sub-agent";
+  const details = subAgentDetailsByToolUseId.get(parentToolUseId);
+  const spanName = formatSubAgentSpanName(details);
 
   const subAgentSpan = startSpan({
     event: {
-      metadata: {
-        ...(agentName && { "claude_agent_sdk.agent_type": agentName }),
-      },
+      metadata: subAgentDetailsToMetadata(details),
     },
     name: spanName,
     parent: await rootSpan.export(),
@@ -714,11 +926,131 @@ async function ensureSubAgentSpan(
   return subAgentSpan;
 }
 
+async function maybeHandleTaskLifecycleMessage(
+  state: QueryState,
+  message: ClaudeAgentSDKMessage,
+): Promise<boolean> {
+  if (message.type !== "system") {
+    return false;
+  }
+
+  if (
+    message.subtype !== "task_started" &&
+    message.subtype !== "task_progress" &&
+    message.subtype !== "task_notification"
+  ) {
+    return false;
+  }
+
+  const toolUseId = resolveTaskToolUseId(state.taskIdToToolUseId, message);
+  if (!toolUseId) {
+    return true;
+  }
+
+  const details = upsertSubAgentDetails(
+    state.subAgentDetailsByToolUseId,
+    toolUseId,
+    {
+      description: getStringProperty(message, "description"),
+      taskId: getStringProperty(message, "task_id"),
+      taskType: getStringProperty(message, "task_type"),
+      toolUseId,
+      workflowName: getStringProperty(message, "workflow_name"),
+    },
+  );
+  const subAgentSpan = await ensureSubAgentSpan(
+    state.subAgentDetailsByToolUseId,
+    state.span,
+    state.subAgentSpans,
+    toolUseId,
+  );
+  if (state.endedSubAgentSpans.has(toolUseId)) {
+    return true;
+  }
+
+  const usage = message.usage;
+  const usageTotalTokens = getNumberProperty(usage, "total_tokens");
+  const usageToolUses = getNumberProperty(usage, "tool_uses");
+  const usageDurationMs = getNumberProperty(usage, "duration_ms");
+  const metadata: Record<string, unknown> = {
+    ...subAgentDetailsToMetadata(details),
+    "claude_agent_sdk.tool_use_id": toolUseId,
+    ...(usageTotalTokens !== undefined && {
+      "claude_agent_sdk.total_tokens": usageTotalTokens,
+    }),
+    ...(usageToolUses !== undefined && {
+      "claude_agent_sdk.tool_use_count": usageToolUses,
+    }),
+    ...(usageDurationMs !== undefined && {
+      "claude_agent_sdk.duration_ms": usageDurationMs,
+    }),
+  };
+
+  if (message.subtype === "task_started") {
+    const prompt = getStringProperty(message, "prompt");
+    subAgentSpan.log({
+      input: prompt,
+      metadata,
+    });
+    return true;
+  }
+
+  const summary = getStringProperty(message, "summary");
+  if (summary) {
+    metadata["claude_agent_sdk.summary"] = summary;
+  }
+
+  if (message.subtype === "task_progress") {
+    const lastToolName = getStringProperty(message, "last_tool_name");
+    if (lastToolName) {
+      metadata["claude_agent_sdk.last_tool_name"] = lastToolName;
+    }
+
+    subAgentSpan.log({
+      metadata,
+      output: summary,
+    });
+    return true;
+  }
+
+  const status = getStringProperty(message, "status");
+  const outputFile = getStringProperty(message, "output_file");
+  if (status) {
+    metadata["claude_agent_sdk.task_status"] = status;
+  }
+  if (outputFile) {
+    metadata["claude_agent_sdk.output_file"] = outputFile;
+  }
+
+  const output =
+    summary || outputFile
+      ? {
+          ...(summary && { summary }),
+          ...(outputFile && { output_file: outputFile }),
+        }
+      : undefined;
+
+  try {
+    subAgentSpan.log({
+      metadata,
+      output,
+    });
+  } finally {
+    subAgentSpan.end();
+    state.endedSubAgentSpans.add(toolUseId);
+  }
+
+  return true;
+}
+
 async function handleStreamMessage(
   state: QueryState,
   message: ClaudeAgentSDKMessage,
 ): Promise<void> {
   maybeTrackToolUseContext(state, message);
+  if (await maybeHandleTaskLifecycleMessage(state, message)) {
+    return;
+  }
   await maybeStartSubAgentSpan(state, message);
 
   const messageId = message.message?.id;
@@ -735,7 +1067,7 @@ async function handleStreamMessage(
       let llmParentSpan = await state.span.export();
       if (parentToolUseId) {
         const subAgentSpan = await ensureSubAgentSpan(
-          state.pendingSubAgentNames,
+          state.subAgentDetailsByToolUseId,
           state.span,
           state.subAgentSpans,
           parentToolUseId,
@@ -927,7 +1259,8 @@ export class ClaudeAgentSDKPlugin extends BasePlugin {
         const latestRootLlmParentRef = {
           value: undefined as string | undefined,
         };
-        const pendingSubAgentNames = new Map<string, string>();
+        const subAgentDetailsByToolUseId = new Map<string, SubAgentDetails>();
+        const taskIdToToolUseId = new Map<string, string>();
         const localToolContext = createClaudeLocalToolContext();
         const { hasLocalToolHandlers, localToolHookNames } =
           prepareLocalToolHandlersInMcpServers(options.mcpServers);
@@ -952,7 +1285,7 @@ export class ClaudeAgentSDKPlugin extends BasePlugin {
             }
 
             const subAgentSpan = await ensureSubAgentSpan(
-              pendingSubAgentNames,
+              subAgentDetailsByToolUseId,
               span,
               subAgentSpans,
               parentToolUseId,
@@ -975,6 +1308,7 @@ export class ClaudeAgentSDKPlugin extends BasePlugin {
           activeToolSpans,
           localToolHookNames,
           skipLocalToolHooks,
+          subAgentDetailsByToolUseId,
           subAgentSpans,
           endedSubAgentSpans,
         );
@@ -994,12 +1328,13 @@ export class ClaudeAgentSDKPlugin extends BasePlugin {
           finalResults: [],
           options: optionsWithHooks,
           originalPrompt,
-          pendingSubAgentNames,
           processing: Promise.resolve(),
           promptDone,
           promptStarted: () => promptStarted,
           span,
+          subAgentDetailsByToolUseId,
           subAgentSpans,
+          taskIdToToolUseId,
           latestLlmParentBySubAgentToolUse,
           latestRootLlmParentRef,
           toolUseToParent,

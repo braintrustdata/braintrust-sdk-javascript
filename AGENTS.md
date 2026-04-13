@@ -16,7 +16,7 @@ TypeScript SDKs and integrations for Braintrust. Uses `pnpm` workspaces.
 ## Setup
 
 ```bash
-mise install        # Install toolchain, dependencies, and agent skills
+mise install        # Install toolchain and dependencies
 ```
 
 ## Build
