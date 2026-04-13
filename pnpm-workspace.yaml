@@ -7,6 +7,8 @@ packages:
 
 blockExoticSubdeps: true
 minimumReleaseAge: 4320 # 3 days (in minutes)
+minimumReleaseAgeExclude:
+  - "@apm-js-collab/*" # instrumentation deps we need to pin closely
 trustPolicy: no-downgrade
 # Ignore the check for packages published more than 30 days ago (pnpm 10.27+)
 # Useful for older packages that pre-date provenance support

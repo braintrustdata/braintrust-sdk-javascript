@@ -38,6 +38,20 @@ const SNAPSHOT_METADATA_KEYS = [
   "scenario",
   "mcp.server",
   "gen_ai.tool.name",
+  "claude_agent_sdk.agent_id",
+  "claude_agent_sdk.agent_type",
+  "claude_agent_sdk.description",
+  "claude_agent_sdk.task_id",
+  "claude_agent_sdk.task_type",
+  "claude_agent_sdk.workflow_name",
+  "claude_agent_sdk.tool_use_id",
+  "claude_agent_sdk.task_status",
+  "claude_agent_sdk.last_tool_name",
+  "claude_agent_sdk.summary",
+  "claude_agent_sdk.output_file",
+  "claude_agent_sdk.duration_ms",
+  "claude_agent_sdk.tool_use_count",
+  "claude_agent_sdk.total_tokens",
 ] as const;
 const OMITTED_METRIC_KEYS = new Set([
   "prompt_cached_tokens",
@@ -84,6 +98,29 @@ function summarizeSpan(
   }
   if (metricKeys !== undefined) {
     summary.metric_keys = metricKeys;
+  }
+  if (summary.metadata && typeof summary.metadata === "object") {
+    const metadata = summary.metadata as Record<string, Json>;
+    if (typeof metadata["claude_agent_sdk.description"] === "string") {
+      metadata["claude_agent_sdk.description"] = "<description>";
+    }
+    if (typeof metadata["claude_agent_sdk.task_id"] === "string") {
+      metadata["claude_agent_sdk.task_id"] = "<task-id>";
+    }
+    if (typeof metadata["claude_agent_sdk.tool_use_id"] === "string") {
+      metadata["claude_agent_sdk.tool_use_id"] = "<tool-use-id>";
+    }
+    if (
+      event.span.type === "task" &&
+      typeof summary.name === "string" &&
+      summary.name.startsWith("Agent:") &&
+      metadata["claude_agent_sdk.tool_use_id"] === undefined
+    ) {
+      metadata["claude_agent_sdk.tool_use_id"] = "<tool-use-id>";
+    }
+  }
+  if (typeof summary.name === "string" && summary.name.startsWith("Agent: ")) {
+    summary.name = "Agent: <task>";
   }
   if (Array.isArray(inputContents) && inputContents.length > 0) {
     summary.input_contents = inputContents;
@@ -227,6 +264,7 @@ function buildSpanSummary(events: CapturedLogEvent[]): Json {
 
 export function defineClaudeAgentSDKInstrumentationAssertions(options: {
   assertLocalToolHandlerParenting?: boolean;
+  expectTaskLifecycleDetails?: boolean;
   name: string;
   runScenario: RunClaudeAgentSDKScenario;
   snapshotName: string;
@@ -391,6 +429,15 @@ export function defineClaudeAgentSDKInstrumentationAssertions(options: {
       expect(taskRoot).toBeDefined();
       expect(llm).toBeDefined();
       expect(nestedTask).toBeDefined();
+      if (options.expectTaskLifecycleDetails) {
+        const metadata = (nestedTask?.row.metadata ?? {}) as Record<
+          string,
+          unknown
+        >;
+        expect(typeof metadata["claude_agent_sdk.task_id"]).toBe("string");
+        // Rich lifecycle naming should avoid the old coarse fallback label.
+        expect(nestedTask?.span.name).not.toBe("Agent: sub-agent");
+      }
       if (tool) {
         expect(tool.span.parentIds).not.toContain(taskRoot?.span.id ?? "");
         if (toolParent?.span.type === "llm") {
