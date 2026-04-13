@@ -954,10 +954,6 @@ describe.skipIf(!claudeSDK)("claude-agent-sdk integration tests", () => {
     );
     expect(subAgentSpan).toBeDefined();
 
-    // Sub-agent should be a child of root
-    expect(subAgentSpan!.root_span_id).toBe(rootSpan!.span_id);
-    expect(subAgentSpan!.span_parents).toContain(rootSpan!.span_id);
-
     // There should be LLM spans under the sub-agent
     const subAgentLlmSpans = spans.filter(
       (s) =>
@@ -996,6 +992,35 @@ describe.skipIf(!claudeSDK)("claude-agent-sdk integration tests", () => {
 
       return false;
     };
+
+    // Sub-agent should stay in the root trace and be directly parented by
+    // either the root span (legacy) or the Task/Agent handoff tool span.
+    expect(subAgentSpan!.root_span_id).toBe(rootSpan!.span_id);
+    const subAgentParentIds =
+      (subAgentSpan!.span_parents as string[] | undefined) ?? [];
+    const hasRootDirectParent = subAgentParentIds.includes(
+      rootSpan!.span_id as string,
+    );
+    const hasHandoffToolDirectParent = subAgentParentIds.some((parentId) => {
+      const parentSpan = spanById.get(parentId);
+      if (!parentSpan) {
+        return false;
+      }
+      const spanAttributes = parentSpan["span_attributes"] as Record<
+        string,
+        unknown
+      >;
+      const metadata = parentSpan.metadata as Record<string, unknown>;
+      return (
+        spanAttributes.type === "tool" &&
+        (metadata["gen_ai.tool.name"] === "Task" ||
+          metadata["gen_ai.tool.name"] === "Agent")
+      );
+    });
+    expect(hasRootDirectParent || hasHandoffToolDirectParent).toBe(true);
+    expect(isDescendantOf(subAgentSpan!, rootSpan!.span_id as string)).toBe(
+      true,
+    );
 
     // Local tool spans should be nested under the sub-agent.
     const subAgentToolSpans = spans.filter(
