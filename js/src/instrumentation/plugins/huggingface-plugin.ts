@@ -501,11 +501,15 @@ function extractTextGenerationStreamMetadata(
       continue;
     }
 
-    const finishReason = chunk.choices.findLast(
-      (choice) => choice.finish_reason !== undefined,
-    )?.finish_reason;
-    if (finishReason !== undefined) {
-      return { finish_reason: finishReason };
+    for (
+      let choiceIndex = chunk.choices.length - 1;
+      choiceIndex >= 0;
+      choiceIndex--
+    ) {
+      const choice = chunk.choices[choiceIndex];
+      if (choice?.finish_reason !== undefined) {
+        return { finish_reason: choice.finish_reason };
+      }
     }
   }
 
