@@ -6,7 +6,11 @@ import {
   resolveFileSnapshotPath,
 } from "../../helpers/file-snapshot";
 import { withScenarioHarness } from "../../helpers/scenario-harness";
-import { findChildSpans, findLatestSpan } from "../../helpers/trace-selectors";
+import {
+  findChildSpans,
+  findLatestChildSpan,
+  findLatestSpan,
+} from "../../helpers/trace-selectors";
 import { summarizeWrapperContract } from "../../helpers/wrapper-contract";
 
 import { GOOGLE_MODEL, ROOT_NAME, SCENARIO_NAME } from "./scenario.impl.mjs";
@@ -33,7 +37,9 @@ function findGoogleSpan(
   names: string[],
 ) {
   for (const name of names) {
-    const span = findChildSpans(events, name, parentId)[0];
+    const span =
+      findLatestChildSpan(events, name, parentId) ??
+      findChildSpans(events, name, parentId)[0];
     if (span) {
       return span;
     }

@@ -10,6 +10,10 @@ const GOOGLE_MODEL = "gemini-2.5-flash-lite";
 const GOOGLE_GROUNDING_MODEL = "gemini-2.0-flash";
 const ROOT_NAME = "google-genai-instrumentation-root";
 const SCENARIO_NAME = "google-genai-instrumentation";
+const GOOGLE_RETRY_ATTEMPTS = 4;
+const GOOGLE_RETRY_BASE_DELAY_MS = 1_000;
+const GOOGLE_RETRY_MAX_DELAY_MS = 8_000;
+const GOOGLE_RETRYABLE_STATUS_CODES = new Set([408, 429, 500, 502, 503, 504]);
 const WEATHER_TOOL = {
   functionDeclarations: [
     {
@@ -32,6 +36,51 @@ const GOOGLE_SEARCH_TOOL = {
   googleSearch: {},
 };
 
+function shouldRetryGoogleError(error) {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  const status = "status" in error ? error.status : undefined;
+  if (typeof status === "number" && GOOGLE_RETRYABLE_STATUS_CODES.has(status)) {
+    return true;
+  }
+
+  const message =
+    "message" in error && typeof error.message === "string"
+      ? error.message.toLowerCase()
+      : "";
+  return (
+    message.includes("timed out") ||
+    message.includes("high demand") ||
+    message.includes("unavailable")
+  );
+}
+
+async function withGoogleRetry(callback) {
+  let lastError;
+
+  for (let attempt = 1; attempt <= GOOGLE_RETRY_ATTEMPTS; attempt++) {
+    try {
+      return await callback();
+    } catch (error) {
+      lastError = error;
+
+      if (attempt >= GOOGLE_RETRY_ATTEMPTS || !shouldRetryGoogleError(error)) {
+        throw error;
+      }
+
+      const delayMs = Math.min(
+        GOOGLE_RETRY_BASE_DELAY_MS * attempt,
+        GOOGLE_RETRY_MAX_DELAY_MS,
+      );
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+  }
+
+  throw lastError;
+}
+
 async function runGoogleGenAIInstrumentationScenario(sdk, options = {}) {
   const imageBase64 = (
     await readFile(new URL("./test-image.png", import.meta.url))
@@ -45,13 +94,15 @@ async function runGoogleGenAIInstrumentationScenario(sdk, options = {}) {
   await runTracedScenario({
     callback: async () => {
       await runOperation("google-generate-operation", "generate", async () => {
-        await client.models.generateContent({
-          model: GOOGLE_MODEL,
-          contents: "Reply with exactly PARIS.",
-          config: {
-            maxOutputTokens: 24,
-            temperature: 0,
-          },
+        await withGoogleRetry(async () => {
+          await client.models.generateContent({
+            model: GOOGLE_MODEL,
+            contents: "Reply with exactly PARIS.",
+            config: {
+              maxOutputTokens: 24,
+              temperature: 0,
+            },
+          });
         });
       });
 
@@ -59,60 +110,66 @@ async function runGoogleGenAIInstrumentationScenario(sdk, options = {}) {
         "google-attachment-operation",
         "attachment",
         async () => {
-          await client.models.generateContent({
-            model: GOOGLE_MODEL,
-            contents: [
-              {
-                parts: [
-                  {
-                    inlineData: {
-                      data: imageBase64,
-                      mimeType: "image/png",
+          await withGoogleRetry(async () => {
+            await client.models.generateContent({
+              model: GOOGLE_MODEL,
+              contents: [
+                {
+                  parts: [
+                    {
+                      inlineData: {
+                        data: imageBase64,
+                        mimeType: "image/png",
+                      },
                     },
-                  },
-                  {
-                    text: "Describe the attached image in one short sentence.",
-                  },
-                ],
-                role: "user",
+                    {
+                      text: "Describe the attached image in one short sentence.",
+                    },
+                  ],
+                  role: "user",
+                },
+              ],
+              config: {
+                maxOutputTokens: 48,
+                temperature: 0,
               },
-            ],
-            config: {
-              maxOutputTokens: 48,
-              temperature: 0,
-            },
+            });
           });
         },
       );
 
       await runOperation("google-stream-operation", "stream", async () => {
-        const stream = await client.models.generateContentStream({
-          model: GOOGLE_MODEL,
-          contents: "Count from 1 to 3 and include the words one two three.",
-          config: {
-            maxOutputTokens: 64,
-            temperature: 0,
-          },
+        await withGoogleRetry(async () => {
+          const stream = await client.models.generateContentStream({
+            model: GOOGLE_MODEL,
+            contents: "Count from 1 to 3 and include the words one two three.",
+            config: {
+              maxOutputTokens: 64,
+              temperature: 0,
+            },
+          });
+          await collectAsync(stream);
         });
-        await collectAsync(stream);
       });
 
       await runOperation(
         "google-stream-return-operation",
         "stream-return",
         async () => {
-          const stream = await client.models.generateContentStream({
-            model: GOOGLE_MODEL,
-            contents: "Reply with exactly BONJOUR.",
-            config: {
-              maxOutputTokens: 24,
-              temperature: 0,
-            },
-          });
+          await withGoogleRetry(async () => {
+            const stream = await client.models.generateContentStream({
+              model: GOOGLE_MODEL,
+              contents: "Reply with exactly BONJOUR.",
+              config: {
+                maxOutputTokens: 24,
+                temperature: 0,
+              },
+            });
 
-          for await (const _chunk of stream) {
-            break;
-          }
+            for await (const _chunk of stream) {
+              break;
+            }
+          });
         },
       );
 
@@ -120,15 +177,17 @@ async function runGoogleGenAIInstrumentationScenario(sdk, options = {}) {
         "google-grounded-generate-operation",
         "grounded-generate",
         async () => {
-          await client.models.generateContent({
-            model: GOOGLE_GROUNDING_MODEL,
-            contents:
-              "Use Google Search grounding and answer in one sentence: What is the current population of Paris, France?",
-            config: {
-              maxOutputTokens: 256,
-              temperature: 0,
-              tools: [GOOGLE_SEARCH_TOOL],
-            },
+          await withGoogleRetry(async () => {
+            await client.models.generateContent({
+              model: GOOGLE_GROUNDING_MODEL,
+              contents:
+                "Use Google Search grounding and answer in one sentence: What is the current population of Paris, France?",
+              config: {
+                maxOutputTokens: 256,
+                temperature: 0,
+                tools: [GOOGLE_SEARCH_TOOL],
+              },
+            });
           });
         },
       );
@@ -137,36 +196,40 @@ async function runGoogleGenAIInstrumentationScenario(sdk, options = {}) {
         "google-grounded-stream-operation",
         "grounded-stream",
         async () => {
-          const stream = await client.models.generateContentStream({
-            model: GOOGLE_GROUNDING_MODEL,
-            contents:
-              "Use Google Search grounding and answer in one sentence: What is the current weather in Paris?",
-            config: {
-              maxOutputTokens: 256,
-              temperature: 0,
-              tools: [GOOGLE_SEARCH_TOOL],
-            },
+          await withGoogleRetry(async () => {
+            const stream = await client.models.generateContentStream({
+              model: GOOGLE_GROUNDING_MODEL,
+              contents:
+                "Use Google Search grounding and answer in one sentence: What is the current weather in Paris?",
+              config: {
+                maxOutputTokens: 256,
+                temperature: 0,
+                tools: [GOOGLE_SEARCH_TOOL],
+              },
+            });
+            await collectAsync(stream);
           });
-          await collectAsync(stream);
         },
       );
 
       await runOperation("google-tool-operation", "tool", async () => {
-        await client.models.generateContent({
-          model: GOOGLE_MODEL,
-          contents:
-            "Use the get_weather function for Paris, France. Do not answer from memory.",
-          config: {
-            maxOutputTokens: 128,
-            temperature: 0,
-            tools: [WEATHER_TOOL],
-            toolConfig: {
-              functionCallingConfig: {
-                allowedFunctionNames: ["get_weather"],
-                mode: sdk.FunctionCallingConfigMode.ANY,
+        await withGoogleRetry(async () => {
+          await client.models.generateContent({
+            model: GOOGLE_MODEL,
+            contents:
+              "Use the get_weather function for Paris, France. Do not answer from memory.",
+            config: {
+              maxOutputTokens: 128,
+              temperature: 0,
+              tools: [WEATHER_TOOL],
+              toolConfig: {
+                functionCallingConfig: {
+                  allowedFunctionNames: ["get_weather"],
+                  mode: sdk.FunctionCallingConfigMode.ANY,
+                },
               },
             },
-          },
+          });
         });
       });
     },
