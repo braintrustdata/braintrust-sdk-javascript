@@ -31,7 +31,7 @@
   "license": "MIT",
   "devDependencies": {
     "@temporalio/activity": "^1.14.1",
-    "@temporalio/client": "^1.14.1",
+    "@temporalio/client": "^1.16.0",
     "@temporalio/common": "^1.14.1",
     "@temporalio/worker": "^1.14.1",
     "@temporalio/workflow": "^1.14.1",
