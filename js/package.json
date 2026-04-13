@@ -162,7 +162,7 @@
     "@openai/agents": "^0.0.14",
     "@types/argparse": "^2.0.14",
     "@types/async": "^3.2.24",
-    "@types/cli-progress": "^3.11.5",
+    "@types/cli-progress": "^3.11.6",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/graceful-fs": "^4.1.9",
