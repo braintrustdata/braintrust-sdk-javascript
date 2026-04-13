@@ -58,7 +58,7 @@ function llmParentKey(parentToolUseId: string | null): string {
   return parentToolUseId ?? ROOT_LLM_PARENT_KEY;
 }
 
-function isSubAgentToolName(toolName: string): boolean {
+function isSubAgentDelegationToolName(toolName: string): boolean {
   return toolName === "Agent" || toolName === "Task";
 }
 
@@ -464,10 +464,6 @@ function createToolTracingHooks(
       return {};
     }
 
-    if (isSubAgentToolName(input.tool_name)) {
-      return {};
-    }
-
     const parsed = parseToolName(input.tool_name);
     const toolSpan = startSpan({
       event: {
@@ -505,6 +501,7 @@ function createToolTracingHooks(
     }
 
     const subAgentSpan = subAgentSpans.get(toolUseID);
+    const toolSpan = activeToolSpans.get(toolUseID);
     if (subAgentSpan) {
       if (endedSubAgentSpans.has(toolUseID)) {
         return {};
@@ -539,10 +536,18 @@ function createToolTracingHooks(
         endedSubAgentSpans.add(toolUseID);
       }
 
+      if (toolSpan) {
+        try {
+          toolSpan.log({ output: input.tool_response });
+        } finally {
+          toolSpan.end();
+          activeToolSpans.delete(toolUseID);
+        }
+      }
+
       return {};
     }
 
-    const toolSpan = activeToolSpans.get(toolUseID);
     if (!toolSpan) {
       return {};
     }
@@ -574,6 +579,7 @@ function createToolTracingHooks(
     }
 
     const subAgentSpan = subAgentSpans.get(toolUseID);
+    const toolSpan = activeToolSpans.get(toolUseID);
     if (subAgentSpan) {
       if (endedSubAgentSpans.has(toolUseID)) {
         return {};
@@ -591,10 +597,29 @@ function createToolTracingHooks(
         endedSubAgentSpans.add(toolUseID);
       }
 
+      if (toolSpan) {
+        const parsed = parseToolName(input.tool_name);
+        try {
+          toolSpan.log({
+            error: input.error,
+            metadata: {
+              "claude_agent_sdk.is_interrupt": input.is_interrupt,
+              "claude_agent_sdk.session_id": input.session_id,
+              "claude_agent_sdk.raw_tool_name": parsed.rawToolName,
+              "gen_ai.tool.call.id": toolUseID,
+              "gen_ai.tool.name": parsed.toolName,
+              ...(parsed.mcpServer && { "mcp.server": parsed.mcpServer }),
+            },
+          });
+        } finally {
+          toolSpan.end();
+          activeToolSpans.delete(toolUseID);
+        }
+      }
+
       return {};
     }
 
-    const toolSpan = activeToolSpans.get(toolUseID);
     if (!toolSpan) {
       return {};
     }
@@ -865,7 +890,7 @@ function maybeTrackToolUseContext(
 
     if (
       typeof block.name === "string" &&
-      isSubAgentToolName(block.name) &&
+      isSubAgentDelegationToolName(block.name) &&
       typeof block.input === "object" &&
       block.input !== null
     ) {
@@ -894,6 +919,7 @@ async function maybeStartSubAgentSpan(
   await ensureSubAgentSpan(
     state.subAgentDetailsByToolUseId,
     state.span,
+    state.activeToolSpans,
     state.subAgentSpans,
     parentToolUseId,
   );
@@ -902,6 +928,7 @@ async function maybeStartSubAgentSpan(
 async function ensureSubAgentSpan(
   subAgentDetailsByToolUseId: Map<string, SubAgentDetails>,
   rootSpan: Span,
+  activeToolSpans: Map<string, Span>,
   subAgentSpans: Map<string, Span>,
   parentToolUseId: string,
 ): Promise<Span> {
@@ -912,13 +939,17 @@ async function ensureSubAgentSpan(
 
   const details = subAgentDetailsByToolUseId.get(parentToolUseId);
   const spanName = formatSubAgentSpanName(details);
+  const parentToolSpan = activeToolSpans.get(parentToolUseId);
+  const parentSpan = parentToolSpan
+    ? await parentToolSpan.export()
+    : await rootSpan.export();
 
   const subAgentSpan = startSpan({
     event: {
       metadata: subAgentDetailsToMetadata(details),
     },
     name: spanName,
-    parent: await rootSpan.export(),
+    parent: parentSpan,
     spanAttributes: { type: SpanTypeAttribute.TASK },
   });
 
@@ -961,6 +992,7 @@ async function maybeHandleTaskLifecycleMessage(
   const subAgentSpan = await ensureSubAgentSpan(
     state.subAgentDetailsByToolUseId,
     state.span,
+    state.activeToolSpans,
     state.subAgentSpans,
     toolUseId,
   );
@@ -1069,6 +1101,7 @@ async function handleStreamMessage(
         const subAgentSpan = await ensureSubAgentSpan(
           state.subAgentDetailsByToolUseId,
           state.span,
+          state.activeToolSpans,
           state.subAgentSpans,
           parentToolUseId,
         );
@@ -1166,6 +1199,11 @@ async function finalizeQuerySpan(state: QueryState): Promise<void> {
       llmSpan.end();
     }
     state.activeLlmSpansByParentToolUse.clear();
+
+    for (const toolSpan of state.activeToolSpans.values()) {
+      toolSpan.end();
+    }
+    state.activeToolSpans.clear();
 
     for (const [id, subAgentSpan] of state.subAgentSpans) {
       if (!state.endedSubAgentSpans.has(id)) {
@@ -1287,6 +1325,7 @@ export class ClaudeAgentSDKPlugin extends BasePlugin {
             const subAgentSpan = await ensureSubAgentSpan(
               subAgentDetailsByToolUseId,
               span,
+              activeToolSpans,
               subAgentSpans,
               parentToolUseId,
             );
