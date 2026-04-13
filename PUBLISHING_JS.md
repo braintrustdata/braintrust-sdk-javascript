@@ -148,7 +148,7 @@ Use them when someone wants the newest merged JS SDK code without waiting for th
 ### How it works
 
 ```text
-nightly schedule on main
+nightly scheduler workflow dispatches canary publish on main
 → check for pending changesets
 → check whether HEAD already has a canary
 → check whether latest CI passed
@@ -437,7 +437,8 @@ Yes. Use `release_mode=prerelease`.
 
 ## Reference
 
-- Workflow: `.github/workflows/publish-js-sdk.yaml`
+- Publish workflow: `.github/workflows/publish-js-sdk.yaml`
+- Canary scheduler workflow: `.github/workflows/publish-js-sdk-canary-scheduler.yaml`
 - Release scripts: `scripts/release/*`
 - Tag format: Changesets monorepo tags such as `braintrust@3.8.0` and `@braintrust/otel@0.3.0`
 - Legacy `js-sdk-v<version>` tags are no longer created
