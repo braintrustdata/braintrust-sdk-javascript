@@ -186,285 +186,71 @@ jobs:
 
   prerelease-snapshot:
     if: github.event_name == 'workflow_dispatch' && inputs.release_mode == 'prerelease'
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    permissions:
-      contents: read
-      id-token: write
-    steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
-        with:
-          fetch-depth: 0
-          ref: ${{ inputs.branch || github.ref_name }}
-      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
-        with:
-          node-version-file: .tool-versions
-          cache: pnpm
-          registry-url: https://registry.npmjs.org
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-      - name: Validate publishable package metadata
-        run: node scripts/release/validate-publishable-packages.mjs
-      - name: Compute changeset status
-        run: pnpm exec changeset status --output=.changeset-status.json
-      - name: Check prerelease status
-        id: status_check
-        run: node scripts/release/check-changeset-status.mjs --mode prerelease --status-file .changeset-status.json
-      - name: Version snapshot prerelease packages
-        if: steps.status_check.outputs.has_packages == 'true'
-        run: pnpm exec changeset version --snapshot rc
-      - name: Prepare prerelease manifest
-        if: steps.status_check.outputs.has_packages == 'true'
-        id: manifest
-        run: node scripts/release/prepare-release-manifest.mjs --mode prerelease --status-file .changeset-status.json --output .release-manifest.json
-      - name: Build publishable packages
-        if: steps.status_check.outputs.has_packages == 'true'
-        run: bash scripts/release/build-publishable-packages.sh .release-manifest.json
-      - name: Publish snapshot prereleases
-        if: steps.status_check.outputs.has_packages == 'true'
-        run: pnpm exec changeset publish --tag rc --no-git-tag
-        env:
-          NPM_TOKEN: ""
-      - name: Summarize prerelease publish
-        if: steps.status_check.outputs.has_packages == 'true'
-        id: summary
-        run: node scripts/release/summarize-release.mjs --mode prerelease --manifest .release-manifest.json
-      - name: Post prerelease publish to Slack
-        if: steps.status_check.outputs.has_packages == 'true'
-        uses: slackapi/slack-github-action@af78098f536edbc4de71162a307590698245be95 # v3.0.1
-        with:
-          method: chat.postMessage
-          token: ${{ secrets.SLACK_BOT_TOKEN }}
-          payload: |
-            channel: C0ABHT0SWA2
-            text: "🧪 JavaScript prerelease snapshots published"
-            blocks:
-              - type: "header"
-                text:
-                  type: "plain_text"
-                  text: "🧪 JavaScript prerelease snapshots published"
-              - type: "section"
-                text:
-                  type: "mrkdwn"
-                  text: "*Branch:* `${{ inputs.branch || github.ref_name }}`\n*Tag:* `rc`\n*Packages:*\n${{ steps.summary.outputs.markdown }}\n\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>"
+    uses: ./.github/workflows/_run-js-release-mode.yaml
+    secrets: inherit
+    with:
+      mode: prerelease
+      checkout_ref: ${{ inputs.branch || github.ref_name }}
+      version_command: pnpm exec changeset version --snapshot rc
+      publish_enabled: true
+      publish_command: pnpm exec changeset publish --tag rc --no-git-tag
+      slack_text: "🧪 JavaScript prerelease snapshots published"
+      slack_header: "🧪 JavaScript prerelease snapshots published"
+      slack_details: |
+        *Branch:* `${{ inputs.branch || github.ref_name }}`
+        *Tag:* `rc`
 
   canary-snapshot:
     if: >-
       github.event_name == 'schedule' ||
       (github.event_name == 'workflow_dispatch' && inputs.release_mode == 'canary')
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    permissions:
-      actions: read
-      contents: read
-      id-token: write
-    steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
-        with:
-          fetch-depth: 0
-      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
-        with:
-          node-version-file: .tool-versions
-          cache: pnpm
-          registry-url: https://registry.npmjs.org
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-      - name: Validate publishable package metadata
-        run: node scripts/release/validate-publishable-packages.mjs
-      - name: Compute changeset status
-        run: pnpm exec changeset status --output=.changeset-status.json
-      - name: Check canary status
-        id: status_check
-        run: node scripts/release/check-changeset-status.mjs --mode canary --status-file .changeset-status.json
-      - name: Check if canary already published for HEAD
-        if: steps.status_check.outputs.has_packages == 'true'
-        id: canary_check
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: node scripts/release/should-publish-canary.mjs --status-file .changeset-status.json
-      - name: Version canary snapshot
-        if: steps.status_check.outputs.has_packages == 'true' && steps.canary_check.outputs.should_publish == 'true'
-        run: pnpm exec changeset version --snapshot canary
-      - name: Prepare canary manifest
-        if: steps.status_check.outputs.has_packages == 'true' && steps.canary_check.outputs.should_publish == 'true'
-        id: manifest
-        run: node scripts/release/prepare-release-manifest.mjs --mode canary --status-file .changeset-status.json --output .release-manifest.json
-      - name: Build publishable packages
-        if: steps.status_check.outputs.has_packages == 'true' && steps.canary_check.outputs.should_publish == 'true'
-        run: bash scripts/release/build-publishable-packages.sh .release-manifest.json
-      - name: Publish canary snapshots
-        if: steps.status_check.outputs.has_packages == 'true' && steps.canary_check.outputs.should_publish == 'true'
-        run: pnpm exec changeset publish --tag canary --no-git-tag
-        env:
-          NPM_TOKEN: ""
-      - name: Summarize canary publish
-        if: steps.status_check.outputs.has_packages == 'true' && steps.canary_check.outputs.should_publish == 'true'
-        id: summary
-        run: node scripts/release/summarize-release.mjs --mode canary --manifest .release-manifest.json
-      - name: Post canary publish to Slack
-        if: steps.status_check.outputs.has_packages == 'true' && steps.canary_check.outputs.should_publish == 'true'
-        uses: slackapi/slack-github-action@af78098f536edbc4de71162a307590698245be95 # v3.0.1
-        with:
-          method: chat.postMessage
-          token: ${{ secrets.SLACK_BOT_TOKEN }}
-          payload: |
-            channel: C0ABHT0SWA2
-            text: "🐤 JavaScript canary snapshots published"
-            blocks:
-              - type: "header"
-                text:
-                  type: "plain_text"
-                  text: "🐤 JavaScript canary snapshots published"
-              - type: "section"
-                text:
-                  type: "mrkdwn"
-                  text: "*Tag:* `canary`\n*Commit:* `${{ github.sha }}`\n*Packages:*\n${{ steps.summary.outputs.markdown }}\n\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>"
+    uses: ./.github/workflows/_run-js-release-mode.yaml
+    secrets: inherit
+    with:
+      mode: canary
+      checkout_ref: ${{ github.ref_name }}
+      version_command: pnpm exec changeset version --snapshot canary
+      publish_enabled: true
+      publish_command: pnpm exec changeset publish --tag canary --no-git-tag
+      run_canary_check: true
+      slack_text: "🐤 JavaScript canary snapshots published"
+      slack_header: "🐤 JavaScript canary snapshots published"
+      slack_details: |
+        *Tag:* `canary`
+        *Commit:* `${{ github.sha }}`
 
   dry-run-canary:
     if: github.event_name == 'workflow_dispatch' && inputs.release_mode == 'dry-run-canary'
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
-        with:
-          fetch-depth: 0
-          ref: ${{ inputs.ref || 'main' }}
-      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
-        with:
-          node-version-file: .tool-versions
-          cache: pnpm
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-      - name: Validate publishable package metadata
-        run: node scripts/release/validate-publishable-packages.mjs
-      - name: Compute changeset status
-        run: pnpm exec changeset status --output=.changeset-status.json
-      - name: Check canary dry-run status
-        id: status_check
-        run: node scripts/release/check-changeset-status.mjs --mode dry-run-canary --status-file .changeset-status.json
-      - name: Version canary dry-run packages
-        if: steps.status_check.outputs.has_packages == 'true'
-        run: pnpm exec changeset version --snapshot canary
-      - name: Prepare canary dry-run manifest
-        if: steps.status_check.outputs.has_packages == 'true'
-        run: node scripts/release/prepare-release-manifest.mjs --mode dry-run-canary --status-file .changeset-status.json --output .release-manifest.json
-      - name: Build publishable packages
-        if: steps.status_check.outputs.has_packages == 'true'
-        run: bash scripts/release/build-publishable-packages.sh .release-manifest.json
-      - name: Pack canary dry-run packages
-        if: steps.status_check.outputs.has_packages == 'true'
-        run: node scripts/release/pack-publishable-packages.mjs --manifest .release-manifest.json --output-dir artifacts/dry-run-canary
-      - name: Summarize canary dry run
-        if: steps.status_check.outputs.has_packages == 'true'
-        run: node scripts/release/summarize-release.mjs --mode dry-run-canary --manifest .release-manifest.json
-      - name: Upload canary dry-run artifacts
-        if: steps.status_check.outputs.has_packages == 'true'
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
-        with:
-          name: canary-dry-run-${{ github.run_id }}
-          path: artifacts/dry-run-canary
-          retention-days: 5
+    uses: ./.github/workflows/_run-js-release-mode.yaml
+    secrets: inherit
+    with:
+      mode: dry-run-canary
+      checkout_ref: ${{ inputs.ref || 'main' }}
+      version_command: pnpm exec changeset version --snapshot canary
+      artifact_dir: artifacts/dry-run-canary
+      artifact_name: canary-dry-run-${{ github.run_id }}
 
   dry-run-stable:
     if: github.event_name == 'workflow_dispatch' && inputs.release_mode == 'dry-run-stable'
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
-        with:
-          fetch-depth: 0
-          ref: ${{ inputs.ref || 'main' }}
-      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
-        with:
-          node-version-file: .tool-versions
-          cache: pnpm
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-      - name: Validate publishable package metadata
-        run: node scripts/release/validate-publishable-packages.mjs
-      - name: Compute changeset status
-        run: pnpm exec changeset status --output=.changeset-status.json
-      - name: Check stable dry-run status
-        id: status_check
-        run: node scripts/release/check-changeset-status.mjs --mode dry-run-stable --status-file .changeset-status.json
-      - name: Version stable dry-run packages
-        if: steps.status_check.outputs.has_packages == 'true'
-        run: pnpm exec changeset version && pnpm install --lockfile-only
-      - name: Prepare stable dry-run manifest
-        if: steps.status_check.outputs.has_packages == 'true'
-        run: node scripts/release/prepare-release-manifest.mjs --mode dry-run-stable --status-file .changeset-status.json --output .release-manifest.json
-      - name: Build publishable packages
-        if: steps.status_check.outputs.has_packages == 'true'
-        run: bash scripts/release/build-publishable-packages.sh .release-manifest.json
-      - name: Pack stable dry-run packages
-        if: steps.status_check.outputs.has_packages == 'true'
-        run: node scripts/release/pack-publishable-packages.mjs --manifest .release-manifest.json --output-dir artifacts/dry-run-stable
-      - name: Summarize stable dry run
-        if: steps.status_check.outputs.has_packages == 'true'
-        run: node scripts/release/summarize-release.mjs --mode dry-run-stable --manifest .release-manifest.json
-      - name: Upload stable dry-run artifacts
-        if: steps.status_check.outputs.has_packages == 'true'
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
-        with:
-          name: stable-dry-run-${{ github.run_id }}
-          path: artifacts/dry-run-stable
-          retention-days: 5
+    uses: ./.github/workflows/_run-js-release-mode.yaml
+    secrets: inherit
+    with:
+      mode: dry-run-stable
+      checkout_ref: ${{ inputs.ref || 'main' }}
+      version_command: pnpm exec changeset version && pnpm install --lockfile-only
+      artifact_dir: artifacts/dry-run-stable
+      artifact_name: stable-dry-run-${{ github.run_id }}
 
   dry-run-prerelease:
     if: github.event_name == 'workflow_dispatch' && inputs.release_mode == 'dry-run-prerelease'
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
-        with:
-          fetch-depth: 0
-          ref: ${{ inputs.branch || github.ref_name }}
-      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
-        with:
-          node-version-file: .tool-versions
-          cache: pnpm
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-      - name: Validate publishable package metadata
-        run: node scripts/release/validate-publishable-packages.mjs
-      - name: Compute changeset status
-        run: pnpm exec changeset status --output=.changeset-status.json
-      - name: Check prerelease dry-run status
-        id: status_check
-        run: node scripts/release/check-changeset-status.mjs --mode dry-run-prerelease --status-file .changeset-status.json
-      - name: Version prerelease dry-run packages
-        if: steps.status_check.outputs.has_packages == 'true'
-        run: pnpm exec changeset version --snapshot rc
-      - name: Prepare prerelease dry-run manifest
-        if: steps.status_check.outputs.has_packages == 'true'
-        run: node scripts/release/prepare-release-manifest.mjs --mode dry-run-prerelease --status-file .changeset-status.json --output .release-manifest.json
-      - name: Build publishable packages
-        if: steps.status_check.outputs.has_packages == 'true'
-        run: bash scripts/release/build-publishable-packages.sh .release-manifest.json
-      - name: Pack prerelease dry-run packages
-        if: steps.status_check.outputs.has_packages == 'true'
-        run: node scripts/release/pack-publishable-packages.mjs --manifest .release-manifest.json --output-dir artifacts/dry-run-prerelease
-      - name: Summarize prerelease dry run
-        if: steps.status_check.outputs.has_packages == 'true'
-        run: node scripts/release/summarize-release.mjs --mode dry-run-prerelease --manifest .release-manifest.json
-      - name: Upload prerelease dry-run artifacts
-        if: steps.status_check.outputs.has_packages == 'true'
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
-        with:
-          name: prerelease-dry-run-${{ github.run_id }}
-          path: artifacts/dry-run-prerelease
-          retention-days: 5
+    uses: ./.github/workflows/_run-js-release-mode.yaml
+    secrets: inherit
+    with:
+      mode: dry-run-prerelease
+      checkout_ref: ${{ inputs.branch || github.ref_name }}
+      version_command: pnpm exec changeset version --snapshot rc
+      artifact_dir: artifacts/dry-run-prerelease
+      artifact_name: prerelease-dry-run-${{ github.run_id }}
 
   notify-failure:
     needs:
