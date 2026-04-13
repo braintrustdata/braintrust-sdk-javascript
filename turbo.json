@@ -7,7 +7,8 @@
     "GEMINI_API_KEY",
     "COHERE_API_KEY",
     "OPENROUTER_API_KEY",
-    "MISTRAL_API_KEY"
+    "MISTRAL_API_KEY",
+    "HUGGINGFACE_API_KEY"
   ],
   "tasks": {
     "build": {
@@ -28,7 +29,8 @@
         "OPENAI_API_KEY",
         "OPENAI_BASE_URL",
         "OPENROUTER_API_KEY",
-        "MISTRAL_API_KEY"
+        "MISTRAL_API_KEY",
+        "HUGGINGFACE_API_KEY"
       ],
       "dependsOn": ["^build"],
       "outputs": []
@@ -45,7 +47,8 @@
         "OPENAI_API_KEY",
         "OPENAI_BASE_URL",
         "OPENROUTER_API_KEY",
-        "MISTRAL_API_KEY"
+        "MISTRAL_API_KEY",
+        "HUGGINGFACE_API_KEY"
       ],
       "dependsOn": ["^build"],
       "outputs": []
@@ -67,7 +70,8 @@
         "OPENAI_API_KEY",
         "OPENAI_BASE_URL",
         "OPENROUTER_API_KEY",
-        "MISTRAL_API_KEY"
+        "MISTRAL_API_KEY",
+        "HUGGINGFACE_API_KEY"
       ],
       "dependsOn": [],
       "outputs": []
@@ -84,7 +88,8 @@
         "OPENAI_API_KEY",
         "OPENAI_BASE_URL",
         "OPENROUTER_API_KEY",
-        "MISTRAL_API_KEY"
+        "MISTRAL_API_KEY",
+        "HUGGINGFACE_API_KEY"
       ],
       "dependsOn": ["^build"],
       "outputs": []
@@ -114,7 +119,8 @@
         "COHERE_API_KEY",
         "OPENAI_API_KEY",
         "OPENROUTER_API_KEY",
-        "MISTRAL_API_KEY"
+        "MISTRAL_API_KEY",
+        "HUGGINGFACE_API_KEY"
       ],
       "dependsOn": ["^build", "build"]
     },
@@ -127,7 +133,8 @@
         "COHERE_API_KEY",
         "OPENAI_API_KEY",
         "OPENROUTER_API_KEY",
-        "MISTRAL_API_KEY"
+        "MISTRAL_API_KEY",
+        "HUGGINGFACE_API_KEY"
       ],
       "dependsOn": ["^build", "build"]
     },
@@ -140,7 +147,8 @@
         "COHERE_API_KEY",
         "OPENAI_API_KEY",
         "OPENROUTER_API_KEY",
-        "MISTRAL_API_KEY"
+        "MISTRAL_API_KEY",
+        "HUGGINGFACE_API_KEY"
       ],
       "dependsOn": ["^build", "build"]
     }

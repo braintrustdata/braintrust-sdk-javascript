@@ -118,6 +118,7 @@ describe("configureInstrumentation API", () => {
       integrations: {
         openai: false,
         anthropic: true,
+        huggingface: true,
         openrouter: false,
         mistral: false,
         cohere: false,

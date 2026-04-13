@@ -19,6 +19,7 @@ import { anthropicConfigs } from "./configs/anthropic.js";
 import { aiSDKConfigs } from "./configs/ai-sdk.js";
 import { claudeAgentSDKConfigs } from "./configs/claude-agent-sdk.js";
 import { googleGenAIConfigs } from "./configs/google-genai.js";
+import { huggingFaceConfigs } from "./configs/huggingface.js";
 import { openRouterAgentConfigs } from "./configs/openrouter-agent.js";
 import { openRouterConfigs } from "./configs/openrouter.js";
 import { mistralConfigs } from "./configs/mistral.js";
@@ -40,6 +41,7 @@ const allConfigs = [
   ...aiSDKConfigs,
   ...claudeAgentSDKConfigs,
   ...googleGenAIConfigs,
+  ...huggingFaceConfigs,
   ...openRouterConfigs,
   ...openRouterAgentConfigs,
   ...mistralConfigs,
