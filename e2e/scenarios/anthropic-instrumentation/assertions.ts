@@ -339,6 +339,7 @@ export function defineAnthropicInstrumentationAssertions(options: {
   name: string;
   snapshotName: string;
   supportsBetaMessages: boolean;
+  supportsServerToolUse: boolean;
   supportsThinking: boolean;
   testFileUrl: string;
   timeoutMs: number;
@@ -542,6 +543,38 @@ export function defineAnthropicInstrumentationAssertions(options: {
         ).toBe(true);
       },
     );
+
+    if (options.supportsServerToolUse) {
+      test("captures server tool usage metrics", testConfig, () => {
+        const root = findLatestSpan(events, ROOT_NAME);
+        const operation = findLatestSpan(
+          events,
+          "anthropic-server-tool-use-operation",
+        );
+        const span = findAnthropicSpan(events, operation?.span.id, [
+          "anthropic.messages.create",
+        ]);
+        const output = span?.output as
+          | { content?: Array<{ name?: string; type?: string }> }
+          | undefined;
+
+        expect(operation).toBeDefined();
+        expect(span).toBeDefined();
+        expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
+        expect(span?.row.metadata).toMatchObject({
+          provider: "anthropic",
+        });
+        expect(span?.metrics).toMatchObject({
+          server_tool_use_web_search_requests: expect.any(Number),
+        });
+        expect(
+          output?.content?.some(
+            (block) =>
+              block.type === "server_tool_use" && block.name === "web_search",
+          ),
+        ).toBe(true);
+      });
+    }
 
     if (options.supportsThinking) {
       test("captures trace for streaming extended thinking", testConfig, () => {

@@ -23,10 +23,20 @@ const WEATHER_TOOL = {
     required: ["location"],
   },
 };
+const WEB_SEARCH_SERVER_TOOL = {
+  type: "web_search_20250305",
+  name: "web_search",
+  max_uses: 1,
+};
 
 async function runAnthropicInstrumentationScenario(
   Anthropic,
-  { decorateClient, useBetaMessages = true, supportsThinking = false } = {},
+  {
+    decorateClient,
+    useBetaMessages = true,
+    supportsThinking = false,
+    supportsServerToolUse = true,
+  } = {},
 ) {
   const imageBase64 = (
     await readFile(new URL("./test-image.png", import.meta.url))
@@ -177,6 +187,29 @@ async function runAnthropicInstrumentationScenario(
           ],
         });
       });
+
+      if (supportsServerToolUse) {
+        await runOperation(
+          "anthropic-server-tool-use-operation",
+          "server-tool-use",
+          async () => {
+            await client.messages.create({
+              model: "claude-sonnet-4-5-20250929",
+              max_tokens: 256,
+              temperature: 0,
+              tools: [WEB_SEARCH_SERVER_TOOL],
+              tool_choice: { type: "tool", name: WEB_SEARCH_SERVER_TOOL.name },
+              messages: [
+                {
+                  role: "user",
+                  content:
+                    "Use web_search to find one recent AI SDK release headline and return one short sentence.",
+                },
+              ],
+            });
+          },
+        );
+      }
 
       if (supportsThinking) {
         await runOperation(
