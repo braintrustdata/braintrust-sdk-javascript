@@ -312,12 +312,13 @@ function finalizeContentBlock(
         return;
       }
 
-      contentBlocks[index] = {
+      const parsedToolUseBlock: ToolUseLikeContentBlock = {
         type: contentBlock.type,
         id: contentBlock.id,
         name: contentBlock.name,
         input: parsedInput,
       };
+      contentBlocks[index] = parsedToolUseBlock;
     } catch {
       fallbackTextDeltas.push(text);
       delete contentBlocks[index];
