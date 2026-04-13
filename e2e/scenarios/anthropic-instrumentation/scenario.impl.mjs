@@ -7,7 +7,6 @@ import {
 } from "../../helpers/provider-runtime.mjs";
 
 const ANTHROPIC_MODEL = "claude-3-haiku-20240307";
-const SERVER_TOOL_MODEL = "claude-sonnet-4-5-20250929";
 const ROOT_NAME = "anthropic-instrumentation-root";
 const SCENARIO_NAME = "anthropic-instrumentation";
 const WEATHER_TOOL = {
@@ -24,7 +23,7 @@ const WEATHER_TOOL = {
     required: ["location"],
   },
 };
-const WEB_SEARCH_TOOL = {
+const WEB_SEARCH_SERVER_TOOL = {
   type: "web_search_20250305",
   name: "web_search",
   max_uses: 1,
@@ -36,7 +35,7 @@ async function runAnthropicInstrumentationScenario(
     decorateClient,
     useBetaMessages = true,
     supportsThinking = false,
-    supportsServerTools = true,
+    supportsServerToolUse = true,
   } = {},
 ) {
   const imageBase64 = (
@@ -173,34 +172,6 @@ async function runAnthropicInstrumentationScenario(
         },
       );
 
-      if (supportsServerTools) {
-        await runOperation(
-          "anthropic-stream-server-tool-operation",
-          "stream-server-tool",
-          async () => {
-            const stream = await client.messages.create({
-              model: SERVER_TOOL_MODEL,
-              max_tokens: 256,
-              temperature: 0,
-              stream: true,
-              tool_choice: {
-                type: "tool",
-                name: WEB_SEARCH_TOOL.name,
-              },
-              tools: [WEB_SEARCH_TOOL],
-              messages: [
-                {
-                  role: "user",
-                  content:
-                    "Use the web_search tool to find the official Braintrust documentation homepage and include the URL in one sentence.",
-                },
-              ],
-            });
-            await collectAsync(stream);
-          },
-        );
-      }
-
       await runOperation("anthropic-tool-operation", "tool", async () => {
         await client.messages.create({
           model: ANTHROPIC_MODEL,
@@ -217,13 +188,36 @@ async function runAnthropicInstrumentationScenario(
         });
       });
 
+      if (supportsServerToolUse) {
+        await runOperation(
+          "anthropic-server-tool-use-operation",
+          "server-tool-use",
+          async () => {
+            await client.messages.create({
+              model: "claude-sonnet-4-5-20250929",
+              max_tokens: 256,
+              temperature: 0,
+              tools: [WEB_SEARCH_SERVER_TOOL],
+              tool_choice: { type: "tool", name: WEB_SEARCH_SERVER_TOOL.name },
+              messages: [
+                {
+                  role: "user",
+                  content:
+                    "Use web_search to find one recent AI SDK release headline and return one short sentence.",
+                },
+              ],
+            });
+          },
+        );
+      }
+
       if (supportsThinking) {
         await runOperation(
           "anthropic-stream-thinking-operation",
           "stream-thinking",
           async () => {
             const stream = await client.messages.create({
-              model: SERVER_TOOL_MODEL,
+              model: "claude-sonnet-4-5-20250929",
               max_tokens: 2048,
               temperature: 1,
               thinking: {

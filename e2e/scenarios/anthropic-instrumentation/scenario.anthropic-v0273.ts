@@ -4,7 +4,7 @@ import { runWrappedAnthropicInstrumentation } from "./scenario.impl.mjs";
 
 runMain(async () =>
   runWrappedAnthropicInstrumentation(Anthropic, {
-    supportsServerTools: false,
+    supportsServerToolUse: false,
     useBetaMessages: false,
   }),
 );

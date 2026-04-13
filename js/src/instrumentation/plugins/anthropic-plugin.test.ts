@@ -189,6 +189,45 @@ describe("parseMetricsFromUsage", () => {
   it("should handle empty usage object", () => {
     expect(parseMetricsFromUsage({})).toEqual({});
   });
+
+  it("should flatten server_tool_use metrics", () => {
+    const usage = {
+      input_tokens: 100,
+      output_tokens: 50,
+      server_tool_use: {
+        web_search_requests: 3,
+        ignored: "not-a-number",
+      },
+    };
+
+    const result = parseMetricsFromUsage(usage);
+
+    expect(result).toEqual({
+      prompt_tokens: 100,
+      completion_tokens: 50,
+      server_tool_use_web_search_requests: 3,
+    });
+  });
+
+  it("should flatten web_fetch and tool_search server tool metrics", () => {
+    const usage = {
+      input_tokens: 100,
+      output_tokens: 50,
+      server_tool_use: {
+        web_fetch_requests: 2,
+        tool_search_requests: 4,
+      },
+    };
+
+    const result = parseMetricsFromUsage(usage);
+
+    expect(result).toEqual({
+      prompt_tokens: 100,
+      completion_tokens: 50,
+      server_tool_use_web_fetch_requests: 2,
+      server_tool_use_tool_search_requests: 4,
+    });
+  });
 });
 
 describe("aggregateAnthropicStreamChunks", () => {
