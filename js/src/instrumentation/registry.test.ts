@@ -121,6 +121,7 @@ describe("configureInstrumentation API", () => {
         huggingface: true,
         openrouter: false,
         mistral: false,
+        cohere: false,
       },
     });
   });

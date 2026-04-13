@@ -37,6 +37,7 @@ export { huggingFaceConfigs } from "./configs/huggingface";
 export { openRouterAgentConfigs } from "./configs/openrouter-agent";
 export { openRouterConfigs } from "./configs/openrouter";
 export { mistralConfigs } from "./configs/mistral";
+export { cohereConfigs } from "./configs/cohere";
 
 // Re-export orchestrion configuration types
 // Note: ModuleMetadata and FunctionQuery are properties of InstrumentationConfig,

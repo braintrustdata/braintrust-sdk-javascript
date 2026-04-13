@@ -342,21 +342,20 @@ function summarizeChatOutput(output: Json): Json {
   }) satisfies Json;
 }
 
-function summarizeResponsesOutput(output: Json): Json {
+function summarizeResponsesOutput(
+  output: Json,
+  options?: {
+    // For normalization across SDK versions
+    dropEmptyOutputTextMessages?: boolean;
+  },
+): Json {
   if (!Array.isArray(output)) {
     return null;
   }
 
-  // Deduplicate identical items — the Responses API occasionally returns
-  // duplicate output entries (e.g., two identical "message" items when
-  // streaming), which would cause non-deterministic snapshot failures.
-  const seen = new Set<string>();
-  const result: Json[] = [];
-
-  for (const item of output) {
+  const summaries = output.map((item) => {
     if (!isRecord(item as Json)) {
-      result.push(null);
-      continue;
+      return null;
     }
 
     const content = Array.isArray(item.content) ? item.content : [];
@@ -369,22 +368,49 @@ function summarizeResponsesOutput(output: Json): Json {
       isRecord(entry as Json) ? jsonKeysFromText(entry.text) : [],
     );
 
-    const summarized = {
+    return {
       content_types: contentTypes,
       json_keys: [...new Set(jsonKeys)].sort(),
       role: item.role ?? null,
       status: item.status ?? null,
       type: item.type ?? null,
     } satisfies Json;
+  });
 
+  const filtered = options?.dropEmptyOutputTextMessages
+    ? summaries.filter((item) => {
+        if (!isRecord(item as Json)) {
+          return true;
+        }
+
+        return !(
+          item.role === "assistant" &&
+          item.status === "completed" &&
+          item.type === "message" &&
+          Array.isArray(item.content_types) &&
+          item.content_types.length === 1 &&
+          item.content_types[0] === "output_text" &&
+          Array.isArray(item.json_keys) &&
+          item.json_keys.length === 0
+        );
+      })
+    : summaries;
+
+  // Deduplicate identical items — the Responses API occasionally returns
+  // duplicate output entries (e.g., two identical "message" items when
+  // streaming), which would cause non-deterministic snapshot failures.
+  const seen = new Set<string>();
+  const deduped: Json[] = [];
+
+  for (const summarized of filtered) {
     const key = JSON.stringify(summarized);
     if (!seen.has(key)) {
       seen.add(key);
-      result.push(summarized);
+      deduped.push(summarized);
     }
   }
 
-  return result;
+  return deduped;
 }
 
 function summarizeOutput(name: string, output: Json): Json {
@@ -413,10 +439,15 @@ function summarizeOutput(name: string, output: Json): Json {
 
   if (
     name === "openai.responses.create" ||
-    name === "openai.responses.parse" ||
     name === "openai.responses.compact"
   ) {
     return summarizeResponsesOutput(output);
+  }
+
+  if (name === "openai.responses.parse") {
+    return summarizeResponsesOutput(output, {
+      dropEmptyOutputTextMessages: true,
+    });
   }
 
   return output === null || output === undefined

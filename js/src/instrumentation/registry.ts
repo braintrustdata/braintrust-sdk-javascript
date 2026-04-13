@@ -24,6 +24,7 @@ export interface InstrumentationConfig {
     openrouter?: boolean;
     openrouterAgent?: boolean;
     mistral?: boolean;
+    cohere?: boolean;
   };
 }
 
@@ -113,6 +114,7 @@ class PluginRegistry {
       openrouter: true,
       openrouterAgent: true,
       mistral: true,
+      cohere: true,
     };
   }
 

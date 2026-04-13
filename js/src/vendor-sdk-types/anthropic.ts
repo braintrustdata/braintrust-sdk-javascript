@@ -87,15 +87,42 @@ export interface AnthropicCitation {
   [key: string]: unknown;
 }
 
+export interface AnthropicToolUseContentBlock {
+  type: "tool_use";
+  id: string;
+  name: string;
+  input: Record<string, unknown>;
+}
+
+export interface AnthropicServerToolUseContentBlock {
+  type: "server_tool_use";
+  id: string;
+  name: string;
+  input: Record<string, unknown>;
+}
+
+export interface AnthropicWebSearchResultContentBlock {
+  type: string;
+  [key: string]: unknown;
+}
+
+export interface AnthropicWebSearchToolResultContentBlock {
+  type: "web_search_tool_result";
+  tool_use_id: string;
+  content: AnthropicWebSearchResultContentBlock[];
+}
+
+export interface AnthropicThinkingContentBlock {
+  type: "thinking";
+  thinking: string;
+}
+
 export type AnthropicOutputContentBlock =
   | { type: "text"; text: string; citations?: AnthropicCitation[] }
-  | {
-      type: "tool_use";
-      id: string;
-      name: string;
-      input: Record<string, unknown>;
-    }
-  | { type: "thinking"; thinking: string }
+  | AnthropicToolUseContentBlock
+  | AnthropicServerToolUseContentBlock
+  | AnthropicWebSearchToolResultContentBlock
+  | AnthropicThinkingContentBlock
   | { type: string };
 
 export interface AnthropicUsage {

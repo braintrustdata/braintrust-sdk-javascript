@@ -29,6 +29,7 @@ import { huggingFaceConfigs } from "../configs/huggingface";
 import { openRouterAgentConfigs } from "../configs/openrouter-agent";
 import { openRouterConfigs } from "../configs/openrouter";
 import { mistralConfigs } from "../configs/mistral";
+import { cohereConfigs } from "../configs/cohere";
 
 export interface BundlerPluginOptions {
   /**
@@ -79,6 +80,7 @@ export const unplugin = createUnplugin<BundlerPluginOptions>((options = {}) => {
     ...openRouterConfigs,
     ...openRouterAgentConfigs,
     ...mistralConfigs,
+    ...cohereConfigs,
     ...(options.instrumentations || []),
   ];
 
