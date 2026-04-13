@@ -138,6 +138,7 @@ function summarizeAnthropicPayload(event: CapturedLogEvent): Json {
       delete block.caller;
     }
   }
+  summary.output = output as Json;
 
   const textBlock = output.content.find(
     (block) => block.type === "text" && typeof block.text === "string",
