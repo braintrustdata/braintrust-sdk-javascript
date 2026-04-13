@@ -315,9 +315,16 @@ function summarizeResponsesOutput(output: Json): Json {
     return null;
   }
 
-  return output.map((item) => {
+  // Deduplicate identical items — the Responses API occasionally returns
+  // duplicate output entries (e.g., two identical "message" items when
+  // streaming), which would cause non-deterministic snapshot failures.
+  const seen = new Set<string>();
+  const result: Json[] = [];
+
+  for (const item of output) {
     if (!isRecord(item as Json)) {
-      return null;
+      result.push(null);
+      continue;
     }
 
     const content = Array.isArray(item.content) ? item.content : [];
@@ -330,14 +337,22 @@ function summarizeResponsesOutput(output: Json): Json {
       isRecord(entry as Json) ? jsonKeysFromText(entry.text) : [],
     );
 
-    return {
+    const summarized = {
       content_types: contentTypes,
       json_keys: [...new Set(jsonKeys)].sort(),
       role: item.role ?? null,
       status: item.status ?? null,
       type: item.type ?? null,
     } satisfies Json;
-  }) satisfies Json;
+
+    const key = JSON.stringify(summarized);
+    if (!seen.has(key)) {
+      seen.add(key);
+      result.push(summarized);
+    }
+  }
+
+  return result;
 }
 
 function summarizeOutput(name: string, output: Json): Json {

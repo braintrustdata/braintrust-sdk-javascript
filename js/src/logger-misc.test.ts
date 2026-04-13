@@ -180,87 +180,42 @@ test("deepCopyEvent basic", () => {
   expect(copy.output).not.toBe(original.output);
 });
 
-test.skip("deepCopyEvent with attachments", () => {
-  const attachment1 = new Attachment({
+test("deepCopyEvent preserves attachments", () => {
+  const attachment = new Attachment({
     data: new Blob(["data"]),
     filename: "filename",
     contentType: "text/plain",
   });
-  const attachment2 = new Attachment({
-    data: new Blob(["data2"]),
-    filename: "filename2",
-    contentType: "text/plain",
-  });
-  const attachment3 = new ExternalAttachment({
+  const externalAttachment = new ExternalAttachment({
     url: "s3://bucket/path/to/key.pdf",
-    filename: "filename3",
+    filename: "filename2",
     contentType: "application/pdf",
   });
-  const date = new Date("2024-10-23T05:02:48.796Z");
-
-  const span = NOOP_SPAN;
-  const logger = initLogger();
-  const experiment = initExperiment("project");
-  const dataset = initDataset({});
 
   const original = {
-    input: "Testing",
     output: {
-      span,
-      myIllegalObjects: [experiment, dataset, logger],
-      myOtherWeirdObjects: [Math.max, date, null, undefined],
-      attachment: attachment1,
-      another_attachment: attachment3,
-      attachmentList: [attachment1, attachment2, "string", attachment3],
-      nestedAttachment: {
-        attachment: attachment2,
-        another_attachment: attachment3,
-      },
+      attachment,
+      externalAttachment,
+      nested: [attachment, externalAttachment],
       fake: {
-        _bt_internal_saved_attachment: "not a number",
+        _bt_internal_saved_attachment_idx: 0,
+        _bt_internal_saved_attachment_marker: 0,
       },
     },
   };
 
   const copy = deepCopyEvent(original);
 
-  expect(copy).toEqual({
-    input: "Testing",
-    output: {
-      span: "<span>",
-      myIllegalObjects: ["<experiment>", "<dataset>", "<logger>"],
-      myOtherWeirdObjects: [null, "2024-10-23T05:02:48.796Z", null, null],
-      attachment: attachment1,
-      another_attachment: attachment3,
-      attachmentList: [attachment1, attachment2, "string", attachment3],
-      nestedAttachment: {
-        attachment: attachment2,
-        another_attachment: attachment3,
-      },
-      fake: {
-        _bt_internal_saved_attachment: "not a number",
-      },
-    },
-  });
-
   expect(copy).not.toBe(original);
-
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any
-  expect((copy.output as any).attachment).toBe(attachment1);
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any
-  expect((copy.output as any).another_attachment).toBe(attachment3);
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any
-  expect((copy.output as any).nestedAttachment.attachment).toBe(attachment2);
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any
-  expect((copy.output as any).nestedAttachment.another_attachment).toBe(
-    attachment3,
-  );
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any
-  expect((copy.output as any).attachmentList[0]).toBe(attachment1);
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any
-  expect((copy.output as any).attachmentList[1]).toBe(attachment2);
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any
-  expect((copy.output as any).attachmentList[3]).toBe(attachment3);
+  expect(copy.output).not.toBe(original.output);
+  expect(copy.output.attachment).toBe(attachment);
+  expect(copy.output.externalAttachment).toBe(externalAttachment);
+  expect(copy.output.nested[0]).toBe(attachment);
+  expect(copy.output.nested[1]).toBe(externalAttachment);
+  expect(copy.output.fake).toEqual({
+    _bt_internal_saved_attachment_idx: 0,
+    _bt_internal_saved_attachment_marker: 0,
+  });
 });
 
 describe("span.link", () => {
