@@ -311,7 +311,7 @@
       "root_span_id": "<span:1>",
       "span_id": "<span:21>",
       "span_parents": [
-        "<span:17>"
+        "<span:18>"
       ],
       "type": "tool"
     }
