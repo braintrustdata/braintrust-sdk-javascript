@@ -5,9 +5,11 @@ import { AnthropicPlugin } from "./plugins/anthropic-plugin";
 import { AISDKPlugin } from "./plugins/ai-sdk-plugin";
 import { ClaudeAgentSDKPlugin } from "./plugins/claude-agent-sdk-plugin";
 import { GoogleGenAIPlugin } from "./plugins/google-genai-plugin";
+import { HuggingFacePlugin } from "./plugins/huggingface-plugin";
 import { OpenRouterAgentPlugin } from "./plugins/openrouter-agent-plugin";
 import { OpenRouterPlugin } from "./plugins/openrouter-plugin";
 import { MistralPlugin } from "./plugins/mistral-plugin";
+import { CoherePlugin } from "./plugins/cohere-plugin";
 
 function createPluginClassMock() {
   return vi.fn(function MockPlugin(this: {
@@ -46,6 +48,10 @@ vi.mock("./plugins/google-genai-plugin", () => ({
   GoogleGenAIPlugin: createPluginClassMock(),
 }));
 
+vi.mock("./plugins/huggingface-plugin", () => ({
+  HuggingFacePlugin: createPluginClassMock(),
+}));
+
 vi.mock("./plugins/openrouter-plugin", () => ({
   OpenRouterPlugin: createPluginClassMock(),
 }));
@@ -56,6 +62,10 @@ vi.mock("./plugins/openrouter-agent-plugin", () => ({
 
 vi.mock("./plugins/mistral-plugin", () => ({
   MistralPlugin: createPluginClassMock(),
+}));
+
+vi.mock("./plugins/cohere-plugin", () => ({
+  CoherePlugin: createPluginClassMock(),
 }));
 
 describe("BraintrustPlugin", () => {
@@ -110,6 +120,15 @@ describe("BraintrustPlugin", () => {
       expect(mockInstance.enable).toHaveBeenCalledTimes(1);
     });
 
+    it("should create and enable HuggingFace plugin by default", () => {
+      const plugin = new BraintrustPlugin();
+      plugin.enable();
+
+      expect(HuggingFacePlugin).toHaveBeenCalledTimes(1);
+      const mockInstance = vi.mocked(HuggingFacePlugin).mock.results[0].value;
+      expect(mockInstance.enable).toHaveBeenCalledTimes(1);
+    });
+
     it("should create and enable OpenRouter plugin by default", () => {
       const plugin = new BraintrustPlugin();
       plugin.enable();
@@ -139,6 +158,15 @@ describe("BraintrustPlugin", () => {
       expect(mockInstance.enable).toHaveBeenCalledTimes(1);
     });
 
+    it("should create and enable Cohere plugin by default", () => {
+      const plugin = new BraintrustPlugin();
+      plugin.enable();
+
+      expect(CoherePlugin).toHaveBeenCalledTimes(1);
+      const mockInstance = vi.mocked(CoherePlugin).mock.results[0].value;
+      expect(mockInstance.enable).toHaveBeenCalledTimes(1);
+    });
+
     it("should create all plugins when enabled with no config", () => {
       const plugin = new BraintrustPlugin();
       plugin.enable();
@@ -148,9 +176,11 @@ describe("BraintrustPlugin", () => {
       expect(AISDKPlugin).toHaveBeenCalledTimes(1);
       expect(ClaudeAgentSDKPlugin).toHaveBeenCalledTimes(1);
       expect(GoogleGenAIPlugin).toHaveBeenCalledTimes(1);
+      expect(HuggingFacePlugin).toHaveBeenCalledTimes(1);
       expect(OpenRouterPlugin).toHaveBeenCalledTimes(1);
       expect(OpenRouterAgentPlugin).toHaveBeenCalledTimes(1);
       expect(MistralPlugin).toHaveBeenCalledTimes(1);
+      expect(CoherePlugin).toHaveBeenCalledTimes(1);
     });
 
     it("should create all plugins when enabled with empty config", () => {
@@ -162,9 +192,11 @@ describe("BraintrustPlugin", () => {
       expect(AISDKPlugin).toHaveBeenCalledTimes(1);
       expect(ClaudeAgentSDKPlugin).toHaveBeenCalledTimes(1);
       expect(GoogleGenAIPlugin).toHaveBeenCalledTimes(1);
+      expect(HuggingFacePlugin).toHaveBeenCalledTimes(1);
       expect(OpenRouterPlugin).toHaveBeenCalledTimes(1);
       expect(OpenRouterAgentPlugin).toHaveBeenCalledTimes(1);
       expect(MistralPlugin).toHaveBeenCalledTimes(1);
+      expect(CoherePlugin).toHaveBeenCalledTimes(1);
     });
 
     it("should create all plugins when enabled with empty integrations config", () => {
@@ -176,9 +208,11 @@ describe("BraintrustPlugin", () => {
       expect(AISDKPlugin).toHaveBeenCalledTimes(1);
       expect(ClaudeAgentSDKPlugin).toHaveBeenCalledTimes(1);
       expect(GoogleGenAIPlugin).toHaveBeenCalledTimes(1);
+      expect(HuggingFacePlugin).toHaveBeenCalledTimes(1);
       expect(OpenRouterPlugin).toHaveBeenCalledTimes(1);
       expect(OpenRouterAgentPlugin).toHaveBeenCalledTimes(1);
       expect(MistralPlugin).toHaveBeenCalledTimes(1);
+      expect(CoherePlugin).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -195,6 +229,7 @@ describe("BraintrustPlugin", () => {
       expect(AISDKPlugin).toHaveBeenCalledTimes(1);
       expect(ClaudeAgentSDKPlugin).toHaveBeenCalledTimes(1);
       expect(GoogleGenAIPlugin).toHaveBeenCalledTimes(1);
+      expect(HuggingFacePlugin).toHaveBeenCalledTimes(1);
       expect(OpenRouterPlugin).toHaveBeenCalledTimes(1);
       expect(OpenRouterAgentPlugin).toHaveBeenCalledTimes(1);
     });
@@ -211,6 +246,7 @@ describe("BraintrustPlugin", () => {
       expect(AISDKPlugin).toHaveBeenCalledTimes(1);
       expect(ClaudeAgentSDKPlugin).toHaveBeenCalledTimes(1);
       expect(GoogleGenAIPlugin).toHaveBeenCalledTimes(1);
+      expect(HuggingFacePlugin).toHaveBeenCalledTimes(1);
       expect(OpenRouterPlugin).toHaveBeenCalledTimes(1);
       expect(OpenRouterAgentPlugin).toHaveBeenCalledTimes(1);
     });
@@ -227,6 +263,7 @@ describe("BraintrustPlugin", () => {
       expect(AnthropicPlugin).toHaveBeenCalledTimes(1);
       expect(ClaudeAgentSDKPlugin).toHaveBeenCalledTimes(1);
       expect(GoogleGenAIPlugin).toHaveBeenCalledTimes(1);
+      expect(HuggingFacePlugin).toHaveBeenCalledTimes(1);
       expect(OpenRouterPlugin).toHaveBeenCalledTimes(1);
       expect(OpenRouterAgentPlugin).toHaveBeenCalledTimes(1);
       expect(MistralPlugin).toHaveBeenCalledTimes(1);
@@ -243,6 +280,24 @@ describe("BraintrustPlugin", () => {
       expect(OpenAIPlugin).toHaveBeenCalledTimes(1);
       expect(AnthropicPlugin).toHaveBeenCalledTimes(1);
       expect(AISDKPlugin).toHaveBeenCalledTimes(1);
+      expect(GoogleGenAIPlugin).toHaveBeenCalledTimes(1);
+      expect(HuggingFacePlugin).toHaveBeenCalledTimes(1);
+      expect(OpenRouterPlugin).toHaveBeenCalledTimes(1);
+      expect(OpenRouterAgentPlugin).toHaveBeenCalledTimes(1);
+      expect(MistralPlugin).toHaveBeenCalledTimes(1);
+    });
+
+    it("should not create HuggingFace plugin when huggingface: false", () => {
+      const plugin = new BraintrustPlugin({
+        integrations: { huggingface: false },
+      });
+      plugin.enable();
+
+      expect(HuggingFacePlugin).not.toHaveBeenCalled();
+      expect(OpenAIPlugin).toHaveBeenCalledTimes(1);
+      expect(AnthropicPlugin).toHaveBeenCalledTimes(1);
+      expect(AISDKPlugin).toHaveBeenCalledTimes(1);
+      expect(ClaudeAgentSDKPlugin).toHaveBeenCalledTimes(1);
       expect(GoogleGenAIPlugin).toHaveBeenCalledTimes(1);
       expect(OpenRouterPlugin).toHaveBeenCalledTimes(1);
       expect(OpenRouterAgentPlugin).toHaveBeenCalledTimes(1);
@@ -279,6 +334,7 @@ describe("BraintrustPlugin", () => {
       expect(AISDKPlugin).toHaveBeenCalledTimes(1);
       expect(ClaudeAgentSDKPlugin).toHaveBeenCalledTimes(1);
       expect(GoogleGenAIPlugin).toHaveBeenCalledTimes(1);
+      expect(HuggingFacePlugin).toHaveBeenCalledTimes(1);
       expect(MistralPlugin).toHaveBeenCalledTimes(1);
     });
 
@@ -294,7 +350,24 @@ describe("BraintrustPlugin", () => {
       expect(AISDKPlugin).toHaveBeenCalledTimes(1);
       expect(ClaudeAgentSDKPlugin).toHaveBeenCalledTimes(1);
       expect(GoogleGenAIPlugin).toHaveBeenCalledTimes(1);
+      expect(HuggingFacePlugin).toHaveBeenCalledTimes(1);
       expect(OpenRouterPlugin).toHaveBeenCalledTimes(1);
+    });
+
+    it("should not create Cohere plugin when cohere: false", () => {
+      const plugin = new BraintrustPlugin({
+        integrations: { cohere: false },
+      });
+      plugin.enable();
+
+      expect(CoherePlugin).not.toHaveBeenCalled();
+      expect(OpenAIPlugin).toHaveBeenCalledTimes(1);
+      expect(AnthropicPlugin).toHaveBeenCalledTimes(1);
+      expect(AISDKPlugin).toHaveBeenCalledTimes(1);
+      expect(ClaudeAgentSDKPlugin).toHaveBeenCalledTimes(1);
+      expect(GoogleGenAIPlugin).toHaveBeenCalledTimes(1);
+      expect(OpenRouterPlugin).toHaveBeenCalledTimes(1);
+      expect(MistralPlugin).toHaveBeenCalledTimes(1);
     });
 
     it("should not create OpenRouter Agent plugin when openrouterAgent: false", () => {
@@ -315,9 +388,11 @@ describe("BraintrustPlugin", () => {
           aisdk: false,
           claudeAgentSDK: false,
           googleGenAI: false,
+          huggingface: false,
           openrouter: false,
           openrouterAgent: false,
           mistral: false,
+          cohere: false,
         },
       });
       plugin.enable();
@@ -327,9 +402,11 @@ describe("BraintrustPlugin", () => {
       expect(AISDKPlugin).not.toHaveBeenCalled();
       expect(ClaudeAgentSDKPlugin).not.toHaveBeenCalled();
       expect(GoogleGenAIPlugin).not.toHaveBeenCalled();
+      expect(HuggingFacePlugin).not.toHaveBeenCalled();
       expect(OpenRouterPlugin).not.toHaveBeenCalled();
       expect(OpenRouterAgentPlugin).not.toHaveBeenCalled();
       expect(MistralPlugin).not.toHaveBeenCalled();
+      expect(CoherePlugin).not.toHaveBeenCalled();
     });
 
     it("should allow selective enabling of plugins", () => {
@@ -340,6 +417,7 @@ describe("BraintrustPlugin", () => {
           aisdk: false,
           claudeAgentSDK: true,
           googleGenAI: false,
+          huggingface: true,
           openrouter: true,
           mistral: false,
         },
@@ -348,6 +426,7 @@ describe("BraintrustPlugin", () => {
 
       expect(OpenAIPlugin).toHaveBeenCalledTimes(1);
       expect(ClaudeAgentSDKPlugin).toHaveBeenCalledTimes(1);
+      expect(HuggingFacePlugin).toHaveBeenCalledTimes(1);
       expect(OpenRouterPlugin).toHaveBeenCalledTimes(1);
       expect(OpenRouterAgentPlugin).toHaveBeenCalledTimes(1);
       expect(AnthropicPlugin).not.toHaveBeenCalled();
@@ -370,6 +449,7 @@ describe("BraintrustPlugin", () => {
       expect(AnthropicPlugin).toHaveBeenCalledTimes(1);
       expect(ClaudeAgentSDKPlugin).toHaveBeenCalledTimes(1);
       expect(GoogleGenAIPlugin).toHaveBeenCalledTimes(1);
+      expect(HuggingFacePlugin).toHaveBeenCalledTimes(1);
       expect(OpenRouterPlugin).toHaveBeenCalledTimes(1);
       expect(MistralPlugin).toHaveBeenCalledTimes(1);
     });
@@ -386,6 +466,7 @@ describe("BraintrustPlugin", () => {
       expect(AnthropicPlugin).toHaveBeenCalledTimes(1);
       expect(AISDKPlugin).toHaveBeenCalledTimes(1);
       expect(ClaudeAgentSDKPlugin).toHaveBeenCalledTimes(1);
+      expect(HuggingFacePlugin).toHaveBeenCalledTimes(1);
       expect(OpenRouterPlugin).toHaveBeenCalledTimes(1);
       expect(MistralPlugin).toHaveBeenCalledTimes(1);
     });
@@ -457,19 +538,24 @@ describe("BraintrustPlugin", () => {
         vi.mocked(ClaudeAgentSDKPlugin).mock.results[0].value;
       const googleGenAIMock =
         vi.mocked(GoogleGenAIPlugin).mock.results[0].value;
+      const huggingFaceMock =
+        vi.mocked(HuggingFacePlugin).mock.results[0].value;
       const openRouterMock = vi.mocked(OpenRouterPlugin).mock.results[0].value;
       const openRouterAgentMock = vi.mocked(OpenRouterAgentPlugin).mock
         .results[0].value;
       const mistralMock = vi.mocked(MistralPlugin).mock.results[0].value;
+      const cohereMock = vi.mocked(CoherePlugin).mock.results[0].value;
 
       expect(openaiMock.enable).toHaveBeenCalledTimes(1);
       expect(anthropicMock.enable).toHaveBeenCalledTimes(1);
       expect(aiSDKMock.enable).toHaveBeenCalledTimes(1);
       expect(claudeAgentSDKMock.enable).toHaveBeenCalledTimes(1);
       expect(googleGenAIMock.enable).toHaveBeenCalledTimes(1);
+      expect(huggingFaceMock.enable).toHaveBeenCalledTimes(1);
       expect(openRouterMock.enable).toHaveBeenCalledTimes(1);
       expect(openRouterAgentMock.enable).toHaveBeenCalledTimes(1);
       expect(mistralMock.enable).toHaveBeenCalledTimes(1);
+      expect(cohereMock.enable).toHaveBeenCalledTimes(1);
     });
 
     it("should disable and nullify all sub-plugins when disabled", () => {
@@ -483,10 +569,13 @@ describe("BraintrustPlugin", () => {
         vi.mocked(ClaudeAgentSDKPlugin).mock.results[0].value;
       const googleGenAIMock =
         vi.mocked(GoogleGenAIPlugin).mock.results[0].value;
+      const huggingFaceMock =
+        vi.mocked(HuggingFacePlugin).mock.results[0].value;
       const openRouterMock = vi.mocked(OpenRouterPlugin).mock.results[0].value;
       const openRouterAgentMock = vi.mocked(OpenRouterAgentPlugin).mock
         .results[0].value;
       const mistralMock = vi.mocked(MistralPlugin).mock.results[0].value;
+      const cohereMock = vi.mocked(CoherePlugin).mock.results[0].value;
 
       plugin.disable();
 
@@ -495,9 +584,11 @@ describe("BraintrustPlugin", () => {
       expect(aiSDKMock.disable).toHaveBeenCalledTimes(1);
       expect(claudeAgentSDKMock.disable).toHaveBeenCalledTimes(1);
       expect(googleGenAIMock.disable).toHaveBeenCalledTimes(1);
+      expect(huggingFaceMock.disable).toHaveBeenCalledTimes(1);
       expect(openRouterMock.disable).toHaveBeenCalledTimes(1);
       expect(openRouterAgentMock.disable).toHaveBeenCalledTimes(1);
       expect(mistralMock.disable).toHaveBeenCalledTimes(1);
+      expect(cohereMock.disable).toHaveBeenCalledTimes(1);
     });
 
     it("should be idempotent on multiple enable calls", () => {
@@ -536,9 +627,11 @@ describe("BraintrustPlugin", () => {
       expect(AISDKPlugin).not.toHaveBeenCalled();
       expect(ClaudeAgentSDKPlugin).not.toHaveBeenCalled();
       expect(GoogleGenAIPlugin).not.toHaveBeenCalled();
+      expect(HuggingFacePlugin).not.toHaveBeenCalled();
       expect(OpenRouterPlugin).not.toHaveBeenCalled();
       expect(OpenRouterAgentPlugin).not.toHaveBeenCalled();
       expect(MistralPlugin).not.toHaveBeenCalled();
+      expect(CoherePlugin).not.toHaveBeenCalled();
     });
 
     it("should allow re-enabling after disable", () => {
@@ -555,9 +648,11 @@ describe("BraintrustPlugin", () => {
       expect(AISDKPlugin).toHaveBeenCalledTimes(1);
       expect(ClaudeAgentSDKPlugin).toHaveBeenCalledTimes(1);
       expect(GoogleGenAIPlugin).toHaveBeenCalledTimes(1);
+      expect(HuggingFacePlugin).toHaveBeenCalledTimes(1);
       expect(OpenRouterPlugin).toHaveBeenCalledTimes(1);
       expect(OpenRouterAgentPlugin).toHaveBeenCalledTimes(1);
       expect(MistralPlugin).toHaveBeenCalledTimes(1);
+      expect(CoherePlugin).toHaveBeenCalledTimes(1);
     });
 
     it("should only disable plugins that were enabled", () => {
@@ -568,9 +663,11 @@ describe("BraintrustPlugin", () => {
           aisdk: true,
           claudeAgentSDK: false,
           googleGenAI: true,
+          huggingface: true,
           openrouter: true,
           openrouterAgent: true,
           mistral: false,
+          cohere: false,
         },
       });
       plugin.enable();
@@ -579,6 +676,8 @@ describe("BraintrustPlugin", () => {
       const aiSDKMock = vi.mocked(AISDKPlugin).mock.results[0].value;
       const googleGenAIMock =
         vi.mocked(GoogleGenAIPlugin).mock.results[0].value;
+      const huggingFaceMock =
+        vi.mocked(HuggingFacePlugin).mock.results[0].value;
       const openRouterMock = vi.mocked(OpenRouterPlugin).mock.results[0].value;
       const openRouterAgentMock = vi.mocked(OpenRouterAgentPlugin).mock
         .results[0].value;
@@ -588,11 +687,11 @@ describe("BraintrustPlugin", () => {
       expect(openaiMock.disable).toHaveBeenCalledTimes(1);
       expect(aiSDKMock.disable).toHaveBeenCalledTimes(1);
       expect(googleGenAIMock.disable).toHaveBeenCalledTimes(1);
+      expect(huggingFaceMock.disable).toHaveBeenCalledTimes(1);
       expect(openRouterMock.disable).toHaveBeenCalledTimes(1);
       expect(openRouterAgentMock.disable).toHaveBeenCalledTimes(1);
       expect(MistralPlugin).not.toHaveBeenCalled();
-      expect(openRouterAgentMock.disable).toHaveBeenCalledTimes(1);
-      expect(MistralPlugin).not.toHaveBeenCalled();
+      expect(CoherePlugin).not.toHaveBeenCalled();
     });
   });
 });

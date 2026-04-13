@@ -1,0 +1,18 @@
+{
+  "name": "@braintrust/e2e-huggingface-instrumentation",
+  "private": true,
+  "braintrustScenario": {
+    "canary": {
+      "dependencies": {
+        "@huggingface/inference": "@huggingface/inference@4",
+        "huggingface-inference-sdk-v2": "@huggingface/inference@2",
+        "huggingface-inference-sdk-v3": "@huggingface/inference@3"
+      }
+    }
+  },
+  "dependencies": {
+    "@huggingface/inference": "4.13.15",
+    "huggingface-inference-sdk-v2": "npm:@huggingface/inference@2.8.1",
+    "huggingface-inference-sdk-v3": "npm:@huggingface/inference@3.15.0"
+  }
+}

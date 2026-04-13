@@ -1,0 +1,65 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .:
+    dependencies:
+      '@huggingface/inference':
+        specifier: 4.13.15
+        version: 4.13.15
+      huggingface-inference-sdk-v2:
+        specifier: npm:@huggingface/inference@2.8.1
+        version: '@huggingface/inference@2.8.1'
+      huggingface-inference-sdk-v3:
+        specifier: npm:@huggingface/inference@3.15.0
+        version: '@huggingface/inference@3.15.0'
+
+packages:
+
+  '@huggingface/inference@2.8.1':
+    resolution: {integrity: sha512-EfsNtY9OR6JCNaUa5bZu2mrs48iqeTz0Gutwf+fU0Kypx33xFQB4DKMhp8u4Ee6qVbLbNWvTHuWwlppLQl4p4Q==}
+    engines: {node: '>=18'}
+
+  '@huggingface/inference@3.15.0':
+    resolution: {integrity: sha512-C+Adt4fu4ztlq0Al9EOgEdK5Hl8ebV1eoDEWegJPdAJ97U8A1aqBbl1Sp4S4+wIy3nLApTrtcLuoizGZmLtDMA==}
+    engines: {node: '>=18'}
+
+  '@huggingface/inference@4.13.15':
+    resolution: {integrity: sha512-V7B13KFDVhYkQqgx8vpMcmtEG+PoePlh65IUvpphTTItHAq6zRLcsS4torh1QavUaT+6nEwho4wFXzBQNGBwKQ==}
+    engines: {node: '>=18'}
+
+  '@huggingface/jinja@0.5.6':
+    resolution: {integrity: sha512-MyMWyLnjqo+KRJYSH7oWNbsOn5onuIvfXYPcc0WOGxU0eHUV7oAYUoQTl2BMdu7ml+ea/bu11UM+EshbeHwtIA==}
+    engines: {node: '>=18'}
+
+  '@huggingface/tasks@0.12.30':
+    resolution: {integrity: sha512-A1ITdxbEzx9L8wKR8pF7swyrTLxWNDFIGDLUWInxvks2ruQ8PLRBZe8r0EcjC3CDdtlj9jV1V4cgV35K/iy3GQ==}
+
+  '@huggingface/tasks@0.19.90':
+    resolution: {integrity: sha512-nfV9luJbvwGQ/5oKXkKhCV9h4X7mwh1YaGG3ORd6UMLDSwr1OFSSatcBX0O9OtBtmNK19aGSjbLFqqgcIR6+IA==}
+
+snapshots:
+
+  '@huggingface/inference@2.8.1':
+    dependencies:
+      '@huggingface/tasks': 0.12.30
+
+  '@huggingface/inference@3.15.0':
+    dependencies:
+      '@huggingface/jinja': 0.5.6
+      '@huggingface/tasks': 0.19.90
+
+  '@huggingface/inference@4.13.15':
+    dependencies:
+      '@huggingface/jinja': 0.5.6
+      '@huggingface/tasks': 0.19.90
+
+  '@huggingface/jinja@0.5.6': {}
+
+  '@huggingface/tasks@0.12.30': {}
+
+  '@huggingface/tasks@0.19.90': {}

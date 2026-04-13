@@ -19,10 +19,12 @@ import { anthropicConfigs } from "./configs/anthropic.js";
 import { aiSDKConfigs } from "./configs/ai-sdk.js";
 import { claudeAgentSDKConfigs } from "./configs/claude-agent-sdk.js";
 import { googleGenAIConfigs } from "./configs/google-genai.js";
+import { huggingFaceConfigs } from "./configs/huggingface.js";
 import { openRouterAgentConfigs } from "./configs/openrouter-agent.js";
 import { openRouterConfigs } from "./configs/openrouter.js";
 import { mistralConfigs } from "./configs/mistral.js";
 import { googleADKConfigs } from "./configs/google-adk.js";
+import { cohereConfigs } from "./configs/cohere.js";
 import { ModulePatch } from "./loader/cjs-patch.js";
 import { patchTracingChannel } from "./patch-tracing-channel.js";
 
@@ -68,6 +70,9 @@ const allConfigs = [
   ...(isDisabled(disabledIntegrations, "google", "google-genai")
     ? []
     : googleGenAIConfigs),
+  ...(isDisabled(disabledIntegrations, "huggingface")
+    ? []
+    : huggingFaceConfigs),
   ...(isDisabled(disabledIntegrations, "openrouter") ? [] : openRouterConfigs),
   ...(isDisabled(disabledIntegrations, "openrouteragent", "openrouter-agent")
     ? []
@@ -76,6 +81,7 @@ const allConfigs = [
   ...(isDisabled(disabledIntegrations, "googleadk", "google-adk")
     ? []
     : googleADKConfigs),
+  ...(isDisabled(disabledIntegrations, "cohere") ? [] : cohereConfigs),
 ];
 
 // 1. Register ESM loader for ESM modules

@@ -1,0 +1,158 @@
+[
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "scenario": "cohere-instrumentation"
+    },
+    "metric_keys": [],
+    "name": "cohere-instrumentation-root",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:1>",
+    "span_parents": [],
+    "type": "task"
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "operation": "chat"
+    },
+    "metric_keys": [],
+    "name": "cohere-chat-operation",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:2>",
+    "span_parents": [
+      "<span:1>"
+    ],
+    "type": null
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "model": "command-a-03-2025",
+      "provider": "cohere"
+    },
+    "metric_keys": [
+      "completion_tokens",
+      "prompt_cached_tokens",
+      "prompt_tokens",
+      "time_to_first_token",
+      "tokens"
+    ],
+    "name": "cohere.chat",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:3>",
+    "span_parents": [
+      "<span:2>"
+    ],
+    "type": "llm"
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "operation": "chat-stream"
+    },
+    "metric_keys": [],
+    "name": "cohere-chat-stream-operation",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:4>",
+    "span_parents": [
+      "<span:1>"
+    ],
+    "type": null
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "model": "command-a-03-2025",
+      "provider": "cohere"
+    },
+    "metric_keys": [
+      "completion_tokens",
+      "prompt_cached_tokens",
+      "prompt_tokens",
+      "time_to_first_token",
+      "tokens"
+    ],
+    "name": "cohere.chatStream",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:5>",
+    "span_parents": [
+      "<span:4>"
+    ],
+    "type": "llm"
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "operation": "embed"
+    },
+    "metric_keys": [],
+    "name": "cohere-embed-operation",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:6>",
+    "span_parents": [
+      "<span:1>"
+    ],
+    "type": null
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "inputType": "search_document",
+      "model": "embed-english-v3.0",
+      "provider": "cohere"
+    },
+    "metric_keys": [
+      "prompt_tokens"
+    ],
+    "name": "cohere.embed",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:7>",
+    "span_parents": [
+      "<span:6>"
+    ],
+    "type": "llm"
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "operation": "rerank"
+    },
+    "metric_keys": [],
+    "name": "cohere-rerank-operation",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:8>",
+    "span_parents": [
+      "<span:1>"
+    ],
+    "type": null
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "document_count": 3,
+      "model": "rerank-english-v3.0",
+      "provider": "cohere",
+      "topN": 2
+    },
+    "metric_keys": [
+      "search_units"
+    ],
+    "name": "cohere.rerank",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:9>",
+    "span_parents": [
+      "<span:8>"
+    ],
+    "type": "llm"
+  }
+]

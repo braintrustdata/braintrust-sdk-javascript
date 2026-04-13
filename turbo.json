@@ -5,8 +5,10 @@
     "OPENAI_BASE_URL",
     "ANTHROPIC_API_KEY",
     "GEMINI_API_KEY",
+    "COHERE_API_KEY",
     "OPENROUTER_API_KEY",
-    "MISTRAL_API_KEY"
+    "MISTRAL_API_KEY",
+    "HUGGINGFACE_API_KEY"
   ],
   "tasks": {
     "build": {
@@ -23,10 +25,12 @@
         "ANTHROPIC_API_KEY",
         "BRAINTRUST_API_KEY",
         "GEMINI_API_KEY",
+        "COHERE_API_KEY",
         "OPENAI_API_KEY",
         "OPENAI_BASE_URL",
         "OPENROUTER_API_KEY",
-        "MISTRAL_API_KEY"
+        "MISTRAL_API_KEY",
+        "HUGGINGFACE_API_KEY"
       ],
       "dependsOn": ["^build"],
       "outputs": []
@@ -39,10 +43,12 @@
         "BRAINTRUST_E2E_PROJECT_NAME",
         "BRAINTRUST_E2E_RUN_CONTEXT_DIR",
         "GEMINI_API_KEY",
+        "COHERE_API_KEY",
         "OPENAI_API_KEY",
         "OPENAI_BASE_URL",
         "OPENROUTER_API_KEY",
-        "MISTRAL_API_KEY"
+        "MISTRAL_API_KEY",
+        "HUGGINGFACE_API_KEY"
       ],
       "dependsOn": ["^build"],
       "outputs": []
@@ -60,10 +66,12 @@
         "BRAINTRUST_E2E_PROJECT_NAME",
         "BRAINTRUST_E2E_RUN_CONTEXT_DIR",
         "GEMINI_API_KEY",
+        "COHERE_API_KEY",
         "OPENAI_API_KEY",
         "OPENAI_BASE_URL",
         "OPENROUTER_API_KEY",
-        "MISTRAL_API_KEY"
+        "MISTRAL_API_KEY",
+        "HUGGINGFACE_API_KEY"
       ],
       "dependsOn": [],
       "outputs": []
@@ -76,10 +84,12 @@
         "BRAINTRUST_E2E_PROJECT_NAME",
         "BRAINTRUST_E2E_RUN_CONTEXT_DIR",
         "GEMINI_API_KEY",
+        "COHERE_API_KEY",
         "OPENAI_API_KEY",
         "OPENAI_BASE_URL",
         "OPENROUTER_API_KEY",
-        "MISTRAL_API_KEY"
+        "MISTRAL_API_KEY",
+        "HUGGINGFACE_API_KEY"
       ],
       "dependsOn": ["^build"],
       "outputs": []
@@ -106,9 +116,11 @@
         "ANTHROPIC_API_KEY",
         "BRAINTRUST_API_KEY",
         "GEMINI_API_KEY",
+        "COHERE_API_KEY",
         "OPENAI_API_KEY",
         "OPENROUTER_API_KEY",
-        "MISTRAL_API_KEY"
+        "MISTRAL_API_KEY",
+        "HUGGINGFACE_API_KEY"
       ],
       "dependsOn": ["^build", "build"]
     },
@@ -118,9 +130,11 @@
         "ANTHROPIC_API_KEY",
         "BRAINTRUST_API_KEY",
         "GEMINI_API_KEY",
+        "COHERE_API_KEY",
         "OPENAI_API_KEY",
         "OPENROUTER_API_KEY",
-        "MISTRAL_API_KEY"
+        "MISTRAL_API_KEY",
+        "HUGGINGFACE_API_KEY"
       ],
       "dependsOn": ["^build", "build"]
     },
@@ -130,9 +144,11 @@
         "ANTHROPIC_API_KEY",
         "BRAINTRUST_API_KEY",
         "GEMINI_API_KEY",
+        "COHERE_API_KEY",
         "OPENAI_API_KEY",
         "OPENROUTER_API_KEY",
-        "MISTRAL_API_KEY"
+        "MISTRAL_API_KEY",
+        "HUGGINGFACE_API_KEY"
       ],
       "dependsOn": ["^build", "build"]
     }

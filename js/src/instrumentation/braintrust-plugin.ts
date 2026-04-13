@@ -4,10 +4,12 @@ import { AnthropicPlugin } from "./plugins/anthropic-plugin";
 import { AISDKPlugin } from "./plugins/ai-sdk-plugin";
 import { ClaudeAgentSDKPlugin } from "./plugins/claude-agent-sdk-plugin";
 import { GoogleGenAIPlugin } from "./plugins/google-genai-plugin";
+import { HuggingFacePlugin } from "./plugins/huggingface-plugin";
 import { OpenRouterAgentPlugin } from "./plugins/openrouter-agent-plugin";
 import { OpenRouterPlugin } from "./plugins/openrouter-plugin";
 import { MistralPlugin } from "./plugins/mistral-plugin";
 import { GoogleADKPlugin } from "./plugins/google-adk-plugin";
+import { CoherePlugin } from "./plugins/cohere-plugin";
 
 export interface BraintrustPluginConfig {
   integrations?: {
@@ -17,11 +19,13 @@ export interface BraintrustPluginConfig {
     aisdk?: boolean;
     google?: boolean;
     googleGenAI?: boolean;
+    huggingface?: boolean;
     claudeAgentSDK?: boolean;
     openrouter?: boolean;
     openrouterAgent?: boolean;
     mistral?: boolean;
     googleADK?: boolean;
+    cohere?: boolean;
   };
 }
 
@@ -34,7 +38,9 @@ export interface BraintrustPluginConfig {
  * - Claude Agent SDK (agent interactions)
  * - Vercel AI SDK (generateText, streamText, etc.)
  * - Google GenAI SDK
+ * - HuggingFace Inference SDK
  * - Mistral SDK
+ * - Cohere SDK
  *
  * The plugin is automatically enabled when the Braintrust library is loaded.
  * Individual integrations can be disabled via configuration.
@@ -46,10 +52,12 @@ export class BraintrustPlugin extends BasePlugin {
   private aiSDKPlugin: AISDKPlugin | null = null;
   private claudeAgentSDKPlugin: ClaudeAgentSDKPlugin | null = null;
   private googleGenAIPlugin: GoogleGenAIPlugin | null = null;
+  private huggingFacePlugin: HuggingFacePlugin | null = null;
   private openRouterPlugin: OpenRouterPlugin | null = null;
   private openRouterAgentPlugin: OpenRouterAgentPlugin | null = null;
   private mistralPlugin: MistralPlugin | null = null;
   private googleADKPlugin: GoogleADKPlugin | null = null;
+  private coherePlugin: CoherePlugin | null = null;
 
   constructor(config: BraintrustPluginConfig = {}) {
     super();
@@ -91,6 +99,11 @@ export class BraintrustPlugin extends BasePlugin {
       this.googleGenAIPlugin.enable();
     }
 
+    if (integrations.huggingface !== false) {
+      this.huggingFacePlugin = new HuggingFacePlugin();
+      this.huggingFacePlugin.enable();
+    }
+
     if (integrations.openrouter !== false) {
       this.openRouterPlugin = new OpenRouterPlugin();
       this.openRouterPlugin.enable();
@@ -110,6 +123,11 @@ export class BraintrustPlugin extends BasePlugin {
     if (integrations.googleADK !== false) {
       this.googleADKPlugin = new GoogleADKPlugin();
       this.googleADKPlugin.enable();
+    }
+
+    if (integrations.cohere !== false) {
+      this.coherePlugin = new CoherePlugin();
+      this.coherePlugin.enable();
     }
   }
 
@@ -139,6 +157,11 @@ export class BraintrustPlugin extends BasePlugin {
       this.googleGenAIPlugin = null;
     }
 
+    if (this.huggingFacePlugin) {
+      this.huggingFacePlugin.disable();
+      this.huggingFacePlugin = null;
+    }
+
     if (this.openRouterPlugin) {
       this.openRouterPlugin.disable();
       this.openRouterPlugin = null;
@@ -157,6 +180,11 @@ export class BraintrustPlugin extends BasePlugin {
     if (this.googleADKPlugin) {
       this.googleADKPlugin.disable();
       this.googleADKPlugin = null;
+    }
+
+    if (this.coherePlugin) {
+      this.coherePlugin.disable();
+      this.coherePlugin = null;
     }
   }
 }
