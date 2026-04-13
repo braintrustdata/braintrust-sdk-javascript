@@ -29,9 +29,9 @@
   "devDependencies": {
     "@types/node": "^20.10.5",
     "braintrust": "workspace:*",
-    "tsup": "^8.3.5",
-    "typescript": "^5.3.3",
-    "vitest": "^4.1.2"
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.4"
   },
   "peerDependencies": {
     "zod": "^3.25.34 || ^4.0"

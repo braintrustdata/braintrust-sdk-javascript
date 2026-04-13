@@ -27,11 +27,11 @@
     "@openai/agents": "^0.0.15",
     "@types/node": "^20.10.5",
     "braintrust": "workspace:^",
-    "tsup": "^8.3.5",
+    "tsup": "^8.5.1",
     "tsx": "^4.21.0",
-    "typedoc": "^0.25.13",
-    "typescript": "^5.3.3",
-    "vitest": "^4.1.2",
+    "typedoc": "^0.28.18",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.4",
     "zod": "^3.25.34"
   },
   "peerDependencies": {
