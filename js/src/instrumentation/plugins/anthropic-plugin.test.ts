@@ -621,6 +621,51 @@ describe("aggregateAnthropicStreamChunks", () => {
     });
   });
 
+  it("should parse streamed input_json_delta for server_tool_use blocks", () => {
+    const chunks = [
+      {
+        type: "content_block_start",
+        index: 0,
+        content_block: {
+          type: "server_tool_use",
+          id: "srvtoolu_abc123",
+          name: "web_search",
+          input: {},
+        },
+      },
+      {
+        type: "content_block_delta",
+        index: 0,
+        delta: {
+          type: "input_json_delta",
+          partial_json: '{"query":"braintrust"',
+        },
+      },
+      {
+        type: "content_block_delta",
+        index: 0,
+        delta: {
+          type: "input_json_delta",
+          partial_json: ',"max_uses":1}',
+        },
+      },
+      { type: "content_block_stop", index: 0 },
+    ];
+
+    const result = aggregateAnthropicStreamChunks(chunks);
+
+    expect(result.output).toEqual({
+      content: [
+        {
+          type: "server_tool_use",
+          id: "srvtoolu_abc123",
+          name: "web_search",
+          input: { query: "braintrust", max_uses: 1 },
+        },
+      ],
+    });
+  });
+
   it("should preserve web_search_tool_result blocks without deltas", () => {
     const chunks = [
       {

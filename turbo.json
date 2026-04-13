@@ -32,6 +32,7 @@
       "outputs": []
     },
     "test:e2e": {
+      "cache": false,
       "env": [
         "ANTHROPIC_API_KEY",
         "BRAINTRUST_API_KEY",
@@ -52,6 +53,7 @@
       "outputs": []
     },
     "test:e2e:canary": {
+      "cache": false,
       "env": [
         "ANTHROPIC_API_KEY",
         "BRAINTRUST_API_KEY",
@@ -67,6 +69,7 @@
       "outputs": []
     },
     "test:e2e:update": {
+      "cache": false,
       "env": [
         "ANTHROPIC_API_KEY",
         "BRAINTRUST_API_KEY",
