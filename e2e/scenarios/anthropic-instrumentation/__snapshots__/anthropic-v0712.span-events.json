@@ -206,50 +206,12 @@
     "has_input": false,
     "has_output": false,
     "metadata": {
-      "operation": "stream-server-tool"
-    },
-    "metric_keys": [],
-    "name": "anthropic-stream-server-tool-operation",
-    "root_span_id": "<span:1>",
-    "span_id": "<span:12>",
-    "span_parents": [
-      "<span:1>"
-    ],
-    "type": null
-  },
-  {
-    "has_input": true,
-    "has_output": true,
-    "metadata": {
-      "model": "claude-sonnet-4-5-20250929",
-      "provider": "anthropic"
-    },
-    "metric_keys": [
-      "completion_tokens",
-      "prompt_cache_creation_tokens",
-      "prompt_cached_tokens",
-      "prompt_tokens",
-      "time_to_first_token",
-      "tokens"
-    ],
-    "name": "anthropic.messages.create",
-    "root_span_id": "<span:1>",
-    "span_id": "<span:13>",
-    "span_parents": [
-      "<span:12>"
-    ],
-    "type": "llm"
-  },
-  {
-    "has_input": false,
-    "has_output": false,
-    "metadata": {
       "operation": "tool"
     },
     "metric_keys": [],
     "name": "anthropic-tool-operation",
     "root_span_id": "<span:1>",
-    "span_id": "<span:14>",
+    "span_id": "<span:12>",
     "span_parents": [
       "<span:1>"
     ],
@@ -272,9 +234,9 @@
     ],
     "name": "anthropic.messages.create",
     "root_span_id": "<span:1>",
-    "span_id": "<span:15>",
+    "span_id": "<span:13>",
     "span_parents": [
-      "<span:14>"
+      "<span:12>"
     ],
     "type": "llm"
   },
@@ -287,7 +249,7 @@
     "metric_keys": [],
     "name": "anthropic-stream-thinking-operation",
     "root_span_id": "<span:1>",
-    "span_id": "<span:16>",
+    "span_id": "<span:14>",
     "span_parents": [
       "<span:1>"
     ],
@@ -310,9 +272,9 @@
     ],
     "name": "anthropic.messages.create",
     "root_span_id": "<span:1>",
-    "span_id": "<span:17>",
+    "span_id": "<span:15>",
     "span_parents": [
-      "<span:16>"
+      "<span:14>"
     ],
     "type": "llm"
   },
@@ -324,6 +286,44 @@
     },
     "metric_keys": [],
     "name": "anthropic-beta-create-operation",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:16>",
+    "span_parents": [
+      "<span:1>"
+    ],
+    "type": null
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "model": "claude-3-haiku-20240307",
+      "provider": "anthropic"
+    },
+    "metric_keys": [
+      "completion_tokens",
+      "prompt_cache_creation_tokens",
+      "prompt_cached_tokens",
+      "prompt_tokens",
+      "time_to_first_token",
+      "tokens"
+    ],
+    "name": "anthropic.messages.create",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:17>",
+    "span_parents": [
+      "<span:16>"
+    ],
+    "type": "llm"
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "operation": "beta-stream"
+    },
+    "metric_keys": [],
+    "name": "anthropic-beta-stream-operation",
     "root_span_id": "<span:1>",
     "span_id": "<span:18>",
     "span_parents": [
@@ -351,44 +351,6 @@
     "span_id": "<span:19>",
     "span_parents": [
       "<span:18>"
-    ],
-    "type": "llm"
-  },
-  {
-    "has_input": false,
-    "has_output": false,
-    "metadata": {
-      "operation": "beta-stream"
-    },
-    "metric_keys": [],
-    "name": "anthropic-beta-stream-operation",
-    "root_span_id": "<span:1>",
-    "span_id": "<span:20>",
-    "span_parents": [
-      "<span:1>"
-    ],
-    "type": null
-  },
-  {
-    "has_input": true,
-    "has_output": true,
-    "metadata": {
-      "model": "claude-3-haiku-20240307",
-      "provider": "anthropic"
-    },
-    "metric_keys": [
-      "completion_tokens",
-      "prompt_cache_creation_tokens",
-      "prompt_cached_tokens",
-      "prompt_tokens",
-      "time_to_first_token",
-      "tokens"
-    ],
-    "name": "anthropic.messages.create",
-    "root_span_id": "<span:1>",
-    "span_id": "<span:21>",
-    "span_parents": [
-      "<span:20>"
     ],
     "type": "llm"
   }

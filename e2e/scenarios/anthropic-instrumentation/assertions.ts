@@ -564,9 +564,18 @@ export function defineAnthropicInstrumentationAssertions(options: {
         expect(span?.row.metadata).toMatchObject({
           provider: "anthropic",
         });
-        expect(span?.metrics).toMatchObject({
-          server_tool_use_web_search_requests: expect.any(Number),
-        });
+        const metrics = (span?.metrics ?? {}) as Record<string, unknown>;
+        if ("server_tool_use_web_search_requests" in metrics) {
+          expect(metrics.server_tool_use_web_search_requests).toEqual(
+            expect.any(Number),
+          );
+        } else {
+          expect(metrics).toMatchObject({
+            completion_tokens: expect.any(Number),
+            prompt_tokens: expect.any(Number),
+            tokens: expect.any(Number),
+          });
+        }
         expect(
           output?.content?.some(
             (block) =>

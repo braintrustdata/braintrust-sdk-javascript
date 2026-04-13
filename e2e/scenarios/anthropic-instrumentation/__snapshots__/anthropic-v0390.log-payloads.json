@@ -234,6 +234,9 @@
     "output": {
       "content": [
         {
+          "caller": {
+            "type": "direct"
+          },
           "id": "<span:1>",
           "input": {
             "location": "Paris, France"
@@ -284,6 +287,9 @@
     "output": {
       "content": [
         {
+          "caller": {
+            "type": "direct"
+          },
           "id": "<span:2>",
           "input": {
             "location": "Paris, France"
