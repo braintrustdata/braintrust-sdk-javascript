@@ -7,12 +7,13 @@ import {
 } from "../../helpers/provider-runtime.mjs";
 
 const GOOGLE_MODEL = "gemini-2.5-flash-lite";
+const GOOGLE_GROUNDING_MODEL = "gemini-2.0-flash";
 const ROOT_NAME = "google-genai-instrumentation-root";
 const SCENARIO_NAME = "google-genai-instrumentation";
 const GOOGLE_GENAI_RETRY_OPTIONS = {
-  attempts: 3,
+  attempts: 4,
   delayMs: 1_000,
-  maxDelayMs: 5_000,
+  maxDelayMs: 8_000,
   shouldRetry: isRetriableGoogleGenAIError,
 };
 const WEATHER_TOOL = {
@@ -32,6 +33,9 @@ const WEATHER_TOOL = {
       },
     },
   ],
+};
+const GOOGLE_SEARCH_TOOL = {
+  googleSearch: {},
 };
 
 function isObject(value) {
@@ -62,15 +66,24 @@ function getRetryStatus(error) {
 
 function isRetriableGoogleGenAIError(error) {
   const status = getRetryStatus(error);
-  if (status === 429 || status === 500 || status === 503 || status === 504) {
+  if (
+    status === 408 ||
+    status === 429 ||
+    status === 500 ||
+    status === 502 ||
+    status === 503 ||
+    status === 504
+  ) {
     return true;
   }
 
   const message = error instanceof Error ? error.message : String(error ?? "");
+  const normalizedMessage = message.toLowerCase();
   return (
-    message.includes("request timed out") ||
-    message.includes("UNAVAILABLE") ||
-    message.includes("temporarily unavailable")
+    normalizedMessage.includes("request timed out") ||
+    normalizedMessage.includes("timed out") ||
+    normalizedMessage.includes("unavailable") ||
+    normalizedMessage.includes("high demand")
   );
 }
 
@@ -188,6 +201,45 @@ async function runGoogleGenAIInstrumentationScenario(sdk, options = {}) {
             for await (const _chunk of stream) {
               break;
             }
+          }, GOOGLE_GENAI_RETRY_OPTIONS);
+        },
+      );
+
+      await runOperation(
+        "google-grounded-generate-operation",
+        "grounded-generate",
+        async () => {
+          await withRetry(async () => {
+            await client.models.generateContent({
+              model: GOOGLE_GROUNDING_MODEL,
+              contents:
+                "Use Google Search grounding and answer in one sentence: What is the current population of Paris, France?",
+              config: {
+                maxOutputTokens: 256,
+                temperature: 0,
+                tools: [GOOGLE_SEARCH_TOOL],
+              },
+            });
+          }, GOOGLE_GENAI_RETRY_OPTIONS);
+        },
+      );
+
+      await runOperation(
+        "google-grounded-stream-operation",
+        "grounded-stream",
+        async () => {
+          await withRetry(async () => {
+            const stream = await client.models.generateContentStream({
+              model: GOOGLE_GROUNDING_MODEL,
+              contents:
+                "Use Google Search grounding and answer in one sentence: What is the current weather in Paris?",
+              config: {
+                maxOutputTokens: 256,
+                temperature: 0,
+                tools: [GOOGLE_SEARCH_TOOL],
+              },
+            });
+            await collectAsync(stream);
           }, GOOGLE_GENAI_RETRY_OPTIONS);
         },
       );

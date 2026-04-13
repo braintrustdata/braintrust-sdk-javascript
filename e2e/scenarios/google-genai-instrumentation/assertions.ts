@@ -6,7 +6,11 @@ import {
   resolveFileSnapshotPath,
 } from "../../helpers/file-snapshot";
 import { withScenarioHarness } from "../../helpers/scenario-harness";
-import { findChildSpans, findLatestSpan } from "../../helpers/trace-selectors";
+import {
+  findChildSpans,
+  findLatestChildSpan,
+  findLatestSpan,
+} from "../../helpers/trace-selectors";
 import { summarizeWrapperContract } from "../../helpers/wrapper-contract";
 
 import { GOOGLE_MODEL, ROOT_NAME, SCENARIO_NAME } from "./scenario.impl.mjs";
@@ -33,7 +37,9 @@ function findGoogleSpan(
   names: string[],
 ) {
   for (const name of names) {
-    const span = findChildSpans(events, name, parentId)[0];
+    const span =
+      findLatestChildSpan(events, name, parentId) ??
+      findChildSpans(events, name, parentId)[0];
     if (span) {
       return span;
     }
@@ -61,6 +67,35 @@ function pickMetadata(
 
 function isRecord(value: Json | undefined): value is Record<string, Json> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function extractGroundingMetadataFromOutput(
+  output: Record<string, unknown> | undefined,
+): Record<string, unknown> | undefined {
+  if (!output) {
+    return undefined;
+  }
+
+  if (isRecord(output.groundingMetadata as Json)) {
+    return output.groundingMetadata as Record<string, unknown>;
+  }
+
+  const candidates = output.candidates;
+  if (!Array.isArray(candidates)) {
+    return undefined;
+  }
+
+  for (const candidate of candidates) {
+    if (!isRecord(candidate as Json)) {
+      continue;
+    }
+
+    if (isRecord(candidate.groundingMetadata as Json)) {
+      return candidate.groundingMetadata as Record<string, unknown>;
+    }
+  }
+
+  return undefined;
 }
 
 function normalizeGoogleVariableTokenCounts(value: Json): Json {
@@ -422,6 +457,62 @@ export function defineGoogleGenAIInstrumentationAssertions(options: {
           time_to_first_token: expect.any(Number),
           prompt_tokens: expect.any(Number),
         });
+      },
+    );
+
+    test("captures grounding metadata for generateContent", testConfig, () => {
+      const operation = findLatestSpan(
+        events,
+        "google-grounded-generate-operation",
+      );
+      const span = findGoogleSpan(events, operation?.span.id, [
+        "generate_content",
+        "google-genai.generateContent",
+      ]);
+      const metadata = span?.row.metadata as
+        | Record<string, unknown>
+        | undefined;
+      const output = span?.output as Record<string, unknown> | undefined;
+      const metadataGrounding = metadata?.groundingMetadata as
+        | Record<string, unknown>
+        | undefined;
+      const outputGrounding = extractGroundingMetadataFromOutput(output);
+
+      expect(operation).toBeDefined();
+      expect(span).toBeDefined();
+      expect(metadataGrounding).toBeDefined();
+      expect(outputGrounding).toBeDefined();
+      expect(Array.isArray(metadataGrounding?.webSearchQueries)).toBe(true);
+      expect(Array.isArray(outputGrounding?.webSearchQueries)).toBe(true);
+    });
+
+    test(
+      "captures grounding metadata for generateContentStream",
+      testConfig,
+      () => {
+        const operation = findLatestSpan(
+          events,
+          "google-grounded-stream-operation",
+        );
+        const span = findGoogleSpan(events, operation?.span.id, [
+          "generate_content_stream",
+          "google-genai.generateContentStream",
+        ]);
+        const metadata = span?.row.metadata as
+          | Record<string, unknown>
+          | undefined;
+        const output = span?.output as Record<string, unknown> | undefined;
+        const metadataGrounding = metadata?.groundingMetadata as
+          | Record<string, unknown>
+          | undefined;
+        const outputGrounding = extractGroundingMetadataFromOutput(output);
+
+        expect(operation).toBeDefined();
+        expect(span).toBeDefined();
+        expect(metadataGrounding).toBeDefined();
+        expect(outputGrounding).toBeDefined();
+        expect(Array.isArray(metadataGrounding?.webSearchQueries)).toBe(true);
+        expect(Array.isArray(outputGrounding?.webSearchQueries)).toBe(true);
       },
     );
 
