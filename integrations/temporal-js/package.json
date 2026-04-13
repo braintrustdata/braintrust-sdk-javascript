@@ -30,7 +30,7 @@
   "author": "Braintrust Data Inc.",
   "license": "MIT",
   "devDependencies": {
-    "@temporalio/activity": "^1.14.1",
+    "@temporalio/activity": "^1.16.0",
     "@temporalio/client": "^1.14.1",
     "@temporalio/common": "^1.14.1",
     "@temporalio/worker": "^1.14.1",
