@@ -48,6 +48,7 @@ function normalizeADKVariableTokenCounts(value: Json): Json {
       [
         "candidatesTokenCount",
         "completion_tokens",
+        "prompt_tokens",
         "tokens",
         "totalTokenCount",
         "completion_reasoning_tokens",
@@ -138,6 +139,7 @@ function summarizeADKPayload(event: CapturedLogEvent): Json {
       "google_adk.user_id",
       "google_adk.session_id",
       "google_adk.tool_name",
+      "google_adk.tool_call_id",
     ]) {
       if (key in metadata) {
         pickedMetadata[key] = metadata[key] as Json;
@@ -213,6 +215,23 @@ export function defineGoogleADKInstrumentationAssertions(options: {
       expect(agentSpan).toBeDefined();
     });
 
+    test("captures tool span for Tool.runAsync()", testConfig, () => {
+      const toolSpan = [...events]
+        .reverse()
+        .find(
+          (e) =>
+            e.span.name?.startsWith("tool:") &&
+            e.span.type === "tool" &&
+            e.output !== undefined,
+        );
+
+      expect(toolSpan).toBeDefined();
+      expect(toolSpan?.output).toBeDefined();
+      expect(toolSpan?.row.metadata).toMatchObject({
+        provider: "google-adk",
+      });
+    });
+
     test("nests the agent span under the runner span", testConfig, () => {
       const runnerSpan = findLatestSpan(events, "Google ADK Runner");
       const agentSpan = events.find(
@@ -223,18 +242,6 @@ export function defineGoogleADKInstrumentationAssertions(options: {
       expect(agentSpan).toBeDefined();
       expect(agentSpan?.span.parentIds).toContain(runnerSpan?.span.id);
       expect(agentSpan?.span.rootId).toBe(runnerSpan?.span.rootId);
-    });
-
-    test("captures tool span for FunctionTool.runAsync()", testConfig, () => {
-      const toolSpan = events.find(
-        (e) => e.span.type === "tool" && e.span.name?.includes("tool"),
-      );
-
-      // Tool span may only appear if the LLM decides to call the tool
-      // This is expected behavior — the LLM may or may not call tools
-      if (toolSpan) {
-        expect(toolSpan.span.type).toBe("tool");
-      }
     });
 
     test("captures LLM spans from underlying @google/genai", testConfig, () => {
@@ -265,6 +272,8 @@ export function defineGoogleADKInstrumentationAssertions(options: {
                 "google_adk.agent_name",
                 "google_adk.user_id",
                 "google_adk.session_id",
+                "google_adk.tool_name",
+                "google_adk.tool_call_id",
               ]),
             ),
           ) as Json[],

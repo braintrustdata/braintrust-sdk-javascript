@@ -19,6 +19,7 @@ import type {
   GoogleADKUsageMetadata,
   GoogleADKBaseAgent,
   GoogleADKLlmAgent,
+  GoogleADKBaseTool,
 } from "../../vendor-sdk-types/google-adk";
 
 type RunnerState = {
@@ -32,6 +33,8 @@ type AgentState = {
   span: Span;
   startTime: number;
   events: GoogleADKEvent[];
+  contextKey?: string;
+  name?: string;
 };
 
 type ToolState = {
@@ -57,6 +60,7 @@ type GoogleADKStreamChannel =
  */
 export class GoogleADKPlugin extends BasePlugin {
   private activeRunnerSpans = new Map<string, Span>();
+  private activeAgentSpans = new Map<string, Span>();
 
   protected onEnable(): void {
     this.subscribeToRunnerRunAsync();
@@ -70,6 +74,7 @@ export class GoogleADKPlugin extends BasePlugin {
     }
     this.unsubscribers = [];
     this.activeRunnerSpans.clear();
+    this.activeAgentSpans.clear();
   }
 
   private subscribeToRunnerRunAsync(): void {
@@ -82,7 +87,9 @@ export class GoogleADKPlugin extends BasePlugin {
     const createState = (
       event: ChannelMessage<typeof googleADKChannels.runnerRunAsync>,
     ): RunnerState => {
-      const params = (event.arguments[0] ?? {}) as GoogleADKRunAsyncParams;
+      const params = (event.arguments[0] ?? {}) as
+        | GoogleADKRunAsyncParams
+        | Record<string, unknown>;
       const contextKey = extractRunnerContextKey(params);
 
       const span = startSpan({
@@ -94,16 +101,7 @@ export class GoogleADKPlugin extends BasePlugin {
       const startTime = getCurrentUnixTimestamp();
 
       try {
-        const metadata: Record<string, unknown> = {
-          provider: "google-adk",
-        };
-        if (params.userId) {
-          metadata["google_adk.user_id"] = params.userId;
-        }
-        if (params.sessionId) {
-          metadata["google_adk.session_id"] = params.sessionId;
-        }
-
+        const metadata = extractRunnerMetadata(params);
         span.log({
           input: extractRunnerInput(params),
           metadata,
@@ -207,6 +205,7 @@ export class GoogleADKPlugin extends BasePlugin {
         parentContext,
         this.activeRunnerSpans,
       );
+      const contextKey = extractInvocationContextKey(parentContext);
 
       const span = startSpan({
         name: agentName ? `Agent: ${agentName}` : "Google ADK Agent",
@@ -241,7 +240,11 @@ export class GoogleADKPlugin extends BasePlugin {
         // Silently handle extraction errors
       }
 
-      return { span, startTime, events: [] };
+      if (contextKey && agentName) {
+        this.activeAgentSpans.set(agentContextKey(contextKey, agentName), span);
+      }
+
+      return { span, startTime, events: [], contextKey, name: agentName };
     };
 
     const unbindCurrentSpanStore = bindCurrentSpanStoreToStart(
@@ -271,10 +274,11 @@ export class GoogleADKPlugin extends BasePlugin {
               state.events.push(adkEvent);
             },
             onComplete: () => {
-              finalizeAgentSpan(state);
+              finalizeAgentSpan(state, this.activeAgentSpans);
               states.delete(event);
             },
             onError: (error: Error) => {
+              cleanupActiveAgentSpan(state, this.activeAgentSpans);
               state.span.log({ error: error.message });
               state.span.end();
               states.delete(event);
@@ -286,6 +290,7 @@ export class GoogleADKPlugin extends BasePlugin {
         try {
           state.span.log({ output: result });
         } finally {
+          cleanupActiveAgentSpan(state, this.activeAgentSpans);
           state.span.end();
           states.delete(event);
         }
@@ -296,6 +301,7 @@ export class GoogleADKPlugin extends BasePlugin {
         if (!state || !event.error) {
           return;
         }
+        cleanupActiveAgentSpan(state, this.activeAgentSpans);
         state.span.log({ error: event.error.message });
         state.span.end();
         states.delete(event);
@@ -318,22 +324,35 @@ export class GoogleADKPlugin extends BasePlugin {
     > = {
       start: (event) => {
         const req = (event.arguments[0] ?? {}) as GoogleADKToolRunRequest;
+        const tool = event.self as GoogleADKBaseTool | undefined;
 
-        const toolName = extractToolName(req);
+        const toolName = extractToolName(req, tool);
+        const parentSpan = findToolParentSpan(
+          req,
+          this.activeAgentSpans,
+          this.activeRunnerSpans,
+        );
 
-        const span = startSpan({
-          name: toolName ? `tool: ${toolName}` : "Google ADK Tool",
-          spanAttributes: {
-            type: SpanTypeAttribute.TOOL,
-          },
-          event: {
-            input: req.args,
-            metadata: {
-              provider: "google-adk",
-              ...(toolName && { "google_adk.tool_name": toolName }),
+        const createSpan = () =>
+          startSpan({
+            name: toolName ? `tool: ${toolName}` : "Google ADK Tool",
+            spanAttributes: {
+              type: SpanTypeAttribute.TOOL,
             },
-          },
-        });
+            event: {
+              input: req.args,
+              metadata: {
+                provider: "google-adk",
+                ...(toolName && { "google_adk.tool_name": toolName }),
+                ...(extractToolCallId(req) && {
+                  "google_adk.tool_call_id": extractToolCallId(req),
+                }),
+              },
+            },
+          });
+        const span = parentSpan
+          ? withCurrent(parentSpan, () => createSpan())
+          : createSpan();
         const startTime = getCurrentUnixTimestamp();
 
         states.set(event, { span, startTime });
@@ -402,6 +421,42 @@ function bindAsyncIterableToCurrentSpan(stream: unknown, span: Span): unknown {
 
   if (Object.isFrozen(stream) || Object.isSealed(stream)) {
     return stream;
+  }
+
+  if (
+    "next" in stream &&
+    typeof (stream as { next?: unknown }).next === "function"
+  ) {
+    if ("__braintrust_current_span_bound" in stream) {
+      return stream;
+    }
+
+    try {
+      const iterator = stream as AsyncIterator<unknown> &
+        Partial<AsyncIterable<unknown>>;
+      const originalNext = iterator.next.bind(iterator);
+      iterator.next = (...args: [] | [undefined]) =>
+        withCurrent(span, () => originalNext(...args));
+
+      if (typeof iterator.return === "function") {
+        const originalReturn = iterator.return.bind(iterator);
+        iterator.return = (...args: [unknown?]) =>
+          withCurrent(span, () => originalReturn(...args));
+      }
+
+      if (typeof iterator.throw === "function") {
+        const originalThrow = iterator.throw.bind(iterator);
+        iterator.throw = (...args: [unknown?]) =>
+          withCurrent(span, () => originalThrow(...args));
+      }
+
+      Object.defineProperty(stream, "__braintrust_current_span_bound", {
+        value: true,
+      });
+      return stream;
+    } catch {
+      return stream;
+    }
   }
 
   const originalIteratorFn = stream[Symbol.asyncIterator] as (
@@ -500,13 +555,19 @@ function bindCurrentSpanStoreToStart<
 // ---- Helper functions ----
 
 function extractRunnerContextKey(
-  params: GoogleADKRunAsyncParams,
+  paramsOrContext: GoogleADKRunAsyncParams | Record<string, unknown>,
 ): string | undefined {
-  if (!params.userId || !params.sessionId) {
-    return undefined;
+  const directUserId =
+    "userId" in paramsOrContext ? paramsOrContext.userId : undefined;
+  const directSessionId =
+    "sessionId" in paramsOrContext ? paramsOrContext.sessionId : undefined;
+
+  if (typeof directUserId === "string" && typeof directSessionId === "string") {
+    return `${directUserId}:${directSessionId}`;
   }
 
-  return `${params.userId}:${params.sessionId}`;
+  const invocationContext = paramsOrContext as Record<string, unknown>;
+  return extractInvocationContextKey(invocationContext);
 }
 
 function extractInvocationContextKey(
@@ -540,28 +601,90 @@ function cleanupActiveRunnerSpan(
   }
 }
 
+function agentContextKey(contextKey: string, agentName: string): string {
+  return `${contextKey}:${agentName}`;
+}
+
+function cleanupActiveAgentSpan(
+  state: AgentState,
+  activeAgentSpans: Map<string, Span>,
+): void {
+  if (state.contextKey && state.name) {
+    activeAgentSpans.delete(agentContextKey(state.contextKey, state.name));
+  }
+}
+
 function extractRunnerInput(
-  params: GoogleADKRunAsyncParams,
+  paramsOrContext: GoogleADKRunAsyncParams | Record<string, unknown>,
 ): Record<string, unknown> | undefined {
-  if (!params.newMessage) {
+  const content =
+    "newMessage" in paramsOrContext
+      ? paramsOrContext.newMessage
+      : (paramsOrContext as Record<string, unknown>).userContent;
+  if (!content || typeof content !== "object") {
     return undefined;
   }
 
-  const content = params.newMessage;
-  if (content.parts && Array.isArray(content.parts)) {
-    const textParts = content.parts
+  const normalizedContent = content as {
+    parts?: Array<{ text?: string }>;
+    role?: string;
+  };
+  if (normalizedContent.parts && Array.isArray(normalizedContent.parts)) {
+    const textParts = normalizedContent.parts
       .filter((p) => p.text !== undefined)
       .map((p) => p.text);
     if (textParts.length > 0) {
       return {
         messages: [
-          { role: content.role ?? "user", content: textParts.join("") },
+          {
+            role: normalizedContent.role ?? "user",
+            content: textParts.join(""),
+          },
         ],
       };
     }
   }
 
-  return { messages: [content] };
+  return { messages: [normalizedContent] };
+}
+
+function extractRunnerMetadata(
+  paramsOrContext: GoogleADKRunAsyncParams | Record<string, unknown>,
+): Record<string, unknown> {
+  const metadata: Record<string, unknown> = {
+    provider: "google-adk",
+  };
+
+  const directUserId =
+    "userId" in paramsOrContext ? paramsOrContext.userId : undefined;
+  const directSessionId =
+    "sessionId" in paramsOrContext ? paramsOrContext.sessionId : undefined;
+
+  if (typeof directUserId === "string") {
+    metadata["google_adk.user_id"] = directUserId;
+  }
+  if (typeof directSessionId === "string") {
+    metadata["google_adk.session_id"] = directSessionId;
+  }
+
+  const session =
+    "session" in paramsOrContext
+      ? (paramsOrContext.session as Record<string, unknown> | undefined)
+      : undefined;
+  if (
+    metadata["google_adk.user_id"] === undefined &&
+    typeof session?.userId === "string"
+  ) {
+    metadata["google_adk.user_id"] = session.userId;
+  }
+  if (
+    metadata["google_adk.session_id"] === undefined &&
+    typeof session?.id === "string"
+  ) {
+    metadata["google_adk.session_id"] = session.id;
+  }
+
+  return metadata;
 }
 
 function extractAgentName(
@@ -598,15 +721,66 @@ function extractModelName(
   return undefined;
 }
 
-function extractToolName(req: GoogleADKToolRunRequest): string | undefined {
+function extractToolCallId(req: GoogleADKToolRunRequest): string | undefined {
   const toolContext = req.toolContext as Record<string, unknown> | undefined;
-  if (toolContext) {
-    const functionCallId = toolContext.functionCallId as string | undefined;
-    if (functionCallId) {
-      return functionCallId;
+  return toolContext?.functionCallId as string | undefined;
+}
+
+function extractToolName(
+  req: GoogleADKToolRunRequest,
+  tool: GoogleADKBaseTool | undefined,
+): string | undefined {
+  if (typeof tool?.name === "string" && tool.name.length > 0) {
+    return tool.name;
+  }
+
+  const toolContext = req.toolContext as Record<string, unknown> | undefined;
+  const invocationContext = toolContext?.invocationContext as
+    | Record<string, unknown>
+    | undefined;
+  const toolName = invocationContext?.tool?.name;
+  return typeof toolName === "string" && toolName.length > 0
+    ? toolName
+    : undefined;
+}
+
+function extractToolAgentName(
+  req: GoogleADKToolRunRequest,
+): string | undefined {
+  const toolContext = req.toolContext as Record<string, unknown> | undefined;
+  const directName = toolContext?.agentName;
+  if (typeof directName === "string" && directName.length > 0) {
+    return directName;
+  }
+
+  const invocationContext = toolContext?.invocationContext as
+    | Record<string, unknown>
+    | undefined;
+  return extractAgentName(invocationContext);
+}
+
+function findToolParentSpan(
+  req: GoogleADKToolRunRequest,
+  activeAgentSpans: Map<string, Span>,
+  activeRunnerSpans: Map<string, Span>,
+): Span | undefined {
+  const toolContext = req.toolContext as Record<string, unknown> | undefined;
+  const invocationContext = toolContext?.invocationContext as
+    | Record<string, unknown>
+    | undefined;
+  const contextKey = extractInvocationContextKey(invocationContext);
+  const agentName = extractToolAgentName(req);
+
+  if (contextKey && agentName) {
+    const agentSpan = activeAgentSpans.get(
+      agentContextKey(contextKey, agentName),
+    );
+    if (agentSpan) {
+      return agentSpan;
     }
   }
-  return undefined;
+
+  return contextKey ? activeRunnerSpans.get(contextKey) : undefined;
 }
 
 function finalizeRunnerSpan(
@@ -636,7 +810,10 @@ function finalizeRunnerSpan(
   }
 }
 
-function finalizeAgentSpan(state: AgentState): void {
+function finalizeAgentSpan(
+  state: AgentState,
+  activeAgentSpans: Map<string, Span>,
+): void {
   try {
     const lastEvent = getLastNonPartialEvent(state.events);
     const metrics: Record<string, number> = {};
@@ -650,6 +827,7 @@ function finalizeAgentSpan(state: AgentState): void {
       metrics: cleanMetrics(metrics),
     });
   } finally {
+    cleanupActiveAgentSpan(state, activeAgentSpans);
     state.span.end();
   }
 }

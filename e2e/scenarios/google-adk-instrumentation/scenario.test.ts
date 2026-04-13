@@ -9,21 +9,19 @@ const scenarioDir = await prepareScenarioDir({
   scenarioDir: resolveScenarioDir(import.meta.url),
 });
 const TIMEOUT_MS = 90_000;
-const snapshotName = "google-adk-v061";
-
 describe("google adk sdk 0.6.1", () => {
   defineGoogleADKInstrumentationAssertions({
     name: "wrapped instrumentation",
     runScenario: async ({ runScenarioDir }) => {
       await runScenarioDir({
         entry: "scenario.ts",
-        runContext: { variantKey: snapshotName },
+        runContext: { variantKey: "google-adk-v061-wrapped" },
         scenarioDir,
         timeoutMs: TIMEOUT_MS,
       });
     },
     expectLLMSpan: false,
-    snapshotName,
+    snapshotName: "google-adk-v061-wrapped",
     testFileUrl: import.meta.url,
     timeoutMs: TIMEOUT_MS,
   });
@@ -33,17 +31,14 @@ describe("google adk sdk 0.6.1", () => {
     runScenario: async ({ runNodeScenarioDir }) => {
       await runNodeScenarioDir({
         entry: "scenario.mjs",
-        env: {
-          BRAINTRUST_DISABLE_INSTRUMENTATION: "google-adk",
-        },
         nodeArgs: ["--import", "braintrust/hook.mjs"],
-        runContext: { variantKey: snapshotName },
+        runContext: { variantKey: "google-adk-v061-auto" },
         scenarioDir,
         timeoutMs: TIMEOUT_MS,
       });
     },
     expectLLMSpan: true,
-    snapshotName,
+    snapshotName: "google-adk-v061-auto",
     testFileUrl: import.meta.url,
     timeoutMs: TIMEOUT_MS,
   });

@@ -34,7 +34,7 @@ export const googleADKConfigs: InstrumentationConfig[] = [
   },
 
   // Runner.runAsync — bundled CJS/ESM indexes
-  // The bundled entrypoints minify class names, so target the 11th sync
+  // The bundled entrypoints minify class names, so target the 12th sync
   // `runAsync` method in file order rather than a class name. This mapping is
   // only validated against the current 0.6.x bundle layout, so keep the range
   // tight until we verify newer bundled outputs.
@@ -48,7 +48,7 @@ export const googleADKConfigs: InstrumentationConfig[] = [
     functionQuery: {
       methodName: "runAsync",
       kind: "Sync",
-      index: 10,
+      index: 11,
     },
   },
   {
@@ -61,7 +61,7 @@ export const googleADKConfigs: InstrumentationConfig[] = [
     functionQuery: {
       methodName: "runAsync",
       kind: "Sync",
-      index: 10,
+      index: 11,
     },
   },
 
@@ -146,7 +146,7 @@ export const googleADKConfigs: InstrumentationConfig[] = [
     functionQuery: {
       methodName: "runAsync",
       kind: "Async",
-      index: 0,
+      index: 1,
     },
   },
   {
@@ -159,7 +159,7 @@ export const googleADKConfigs: InstrumentationConfig[] = [
     functionQuery: {
       methodName: "runAsync",
       kind: "Async",
-      index: 0,
+      index: 1,
     },
   },
 ];

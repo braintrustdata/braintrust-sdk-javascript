@@ -121,6 +121,7 @@ function wrapRunnerRunAsync(
   return function (params: GoogleADKRunAsyncParams) {
     return googleADKChannels.runnerRunAsync.traceSync(() => original(params), {
       arguments: [params],
+      self: runner,
     } as Parameters<typeof googleADKChannels.runnerRunAsync.traceSync>[1]);
   };
 }
@@ -156,7 +157,7 @@ function wrapAgentRunAsync(
   return function (parentContext: unknown) {
     return googleADKChannels.agentRunAsync.traceSync(
       () => original(parentContext),
-      { arguments: [parentContext] } as Parameters<
+      { arguments: [parentContext], self: agent } as Parameters<
         typeof googleADKChannels.agentRunAsync.traceSync
       >[1],
     );
@@ -192,6 +193,7 @@ function wrapToolRunAsync(
   return function (req: GoogleADKToolRunRequest) {
     return googleADKChannels.toolRunAsync.tracePromise(() => original(req), {
       arguments: [req],
+      self: tool,
     } as Parameters<typeof googleADKChannels.toolRunAsync.tracePromise>[1]);
   };
 }

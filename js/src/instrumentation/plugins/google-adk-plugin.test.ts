@@ -346,6 +346,73 @@ describe("GoogleADKPlugin", () => {
 
       expect(mockStartSpan).toHaveBeenCalledTimes(1);
     });
+
+    it("nests auto-instrumented agent spans under the active runner span", () => {
+      const runnerSpan = {
+        spanId: "runner-span-id",
+        rootSpanId: "runner-root-span-id",
+        log: vi.fn(),
+        end: vi.fn(),
+        export: vi.fn(() => Promise.resolve("mock-span-export")),
+      };
+      const agentSpan = {
+        spanId: "agent-span-id",
+        rootSpanId: "runner-root-span-id",
+        log: vi.fn(),
+        end: vi.fn(),
+        export: vi.fn(() => Promise.resolve("mock-span-export")),
+      };
+      mockStartSpan.mockReset();
+      mockStartSpan
+        .mockImplementationOnce(() => runnerSpan)
+        .mockImplementationOnce(() => agentSpan);
+
+      plugin.enable();
+
+      const runnerHandlers = subscribeSpy.mock.calls[0][0];
+      const agentHandlers = subscribeSpy.mock.calls[1][0];
+
+      runnerHandlers.start({
+        arguments: [
+          {
+            session: {
+              id: "session-456",
+              userId: "user-123",
+            },
+            userContent: {
+              role: "user",
+              parts: [{ text: "What is the weather?" }],
+            },
+          },
+        ],
+      });
+
+      agentHandlers.start({
+        arguments: [
+          {
+            session: {
+              id: "session-456",
+              userId: "user-123",
+            },
+            agent: {
+              name: "weather_agent",
+              model: "gemini-2.5-flash",
+            },
+          },
+        ],
+      });
+
+      expect(mockStartSpan).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({
+          name: "Agent: weather_agent",
+          parentSpanIds: {
+            spanId: "runner-span-id",
+            rootSpanId: "runner-root-span-id",
+          },
+        }),
+      );
+    });
   });
 
   describe("tool.runAsync channel", () => {
@@ -360,10 +427,13 @@ describe("GoogleADKPlugin", () => {
           {
             args: { city: "New York" },
             toolContext: {
-              functionCallId: "get_weather",
+              functionCallId: "call-123",
             },
           },
         ],
+        self: {
+          name: "get_weather",
+        },
       };
 
       handlers.start(event);
@@ -374,6 +444,10 @@ describe("GoogleADKPlugin", () => {
           spanAttributes: { type: "tool" },
           event: expect.objectContaining({
             input: { city: "New York" },
+            metadata: expect.objectContaining({
+              "google_adk.tool_call_id": "call-123",
+              "google_adk.tool_name": "get_weather",
+            }),
           }),
         }),
       );

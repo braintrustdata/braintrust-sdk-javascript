@@ -50,6 +50,22 @@ export interface StreamPatchOptions<TChunk = unknown, TFinal = unknown> {
   shouldCollect?: (chunk: TChunk) => boolean;
 }
 
+type AsyncIteratorLike<TChunk> = AsyncIterable<TChunk> &
+  Partial<AsyncIterator<TChunk>>;
+
+function hasAsyncIteratorMethods<TChunk>(
+  value: unknown,
+): value is AsyncIteratorLike<TChunk> & {
+  next: (...args: [] | [undefined]) => PromiseLike<IteratorResult<TChunk>>;
+} {
+  return (
+    value !== null &&
+    typeof value === "object" &&
+    "next" in value &&
+    typeof (value as { next?: unknown }).next === "function"
+  );
+}
+
 /**
  * Patch an async iterable to collect chunks as they're consumed.
  *
@@ -106,6 +122,122 @@ export function patchStreamIfNeeded<TChunk = unknown, TFinal = unknown>(
       "Cannot patch frozen/sealed stream. Stream output will not be collected.",
     );
     return stream;
+  }
+
+  if (hasAsyncIteratorMethods<TChunk>(stream)) {
+    if ("__braintrust_patched_iterator_methods" in stream) {
+      return stream;
+    }
+
+    try {
+      const originalNext = stream.next.bind(stream);
+      const originalReturn =
+        typeof stream.return === "function" ? stream.return.bind(stream) : null;
+      const originalThrow =
+        typeof stream.throw === "function" ? stream.throw.bind(stream) : null;
+      const chunks: TChunk[] = [];
+      let completed = false;
+
+      stream.next = async (...args: [] | [undefined]) => {
+        try {
+          const result = await originalNext(...args);
+
+          if (result.done) {
+            if (!completed) {
+              completed = true;
+              try {
+                await options.onComplete(chunks);
+              } catch (error) {
+                // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
+                console.error("Error in stream onComplete handler:", error);
+              }
+            }
+          } else {
+            const chunk = result.value as TChunk;
+            const shouldCollect = options.shouldCollect
+              ? options.shouldCollect(chunk)
+              : true;
+
+            if (shouldCollect) {
+              chunks.push(chunk);
+
+              if (options.onChunk) {
+                try {
+                  await options.onChunk(chunk);
+                } catch (error) {
+                  // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
+                  console.error("Error in stream onChunk handler:", error);
+                }
+              }
+            }
+          }
+
+          return result;
+        } catch (error) {
+          if (!completed) {
+            completed = true;
+            if (options.onError) {
+              try {
+                await options.onError(
+                  error instanceof Error ? error : new Error(String(error)),
+                  chunks,
+                );
+              } catch (handlerError) {
+                // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
+                console.error("Error in stream onError handler:", handlerError);
+              }
+            }
+          }
+          throw error;
+        }
+      };
+
+      if (originalReturn) {
+        stream.return = async (...args: [unknown?]) => {
+          if (!completed) {
+            completed = true;
+            try {
+              await options.onComplete(chunks);
+            } catch (error) {
+              // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
+              console.error("Error in stream onComplete handler:", error);
+            }
+          }
+          return originalReturn(...args);
+        };
+      }
+
+      if (originalThrow) {
+        stream.throw = async (...args: [unknown?]) => {
+          if (!completed) {
+            completed = true;
+            const rawError: unknown = args[0];
+            const error =
+              rawError instanceof Error
+                ? rawError
+                : new Error(String(rawError));
+            if (options.onError) {
+              try {
+                await options.onError(error, chunks);
+              } catch (handlerError) {
+                // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
+                console.error("Error in stream onError handler:", handlerError);
+              }
+            }
+          }
+          return originalThrow(...args);
+        };
+      }
+
+      Object.defineProperty(stream, "__braintrust_patched_iterator_methods", {
+        value: true,
+      });
+
+      return stream;
+    } catch (error) {
+      // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
+      console.warn("Failed to patch stream iterator methods:", error);
+    }
   }
 
   const originalIteratorFn = stream[Symbol.asyncIterator];

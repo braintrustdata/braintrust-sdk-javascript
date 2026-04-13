@@ -12,11 +12,23 @@ const SCENARIO_NAME = "google-adk-instrumentation";
 async function runGoogleADKInstrumentationScenario(adk, options = {}) {
   const decoratedADK = options.decorateSDK ? options.decorateSDK(adk) : adk;
   const { LlmAgent, InMemoryRunner, FunctionTool } = decoratedADK;
+  process.env.GOOGLE_GENAI_API_KEY ??=
+    process.env.GOOGLE_API_KEY ?? process.env.GEMINI_API_KEY;
 
   // Create a simple tool
   const getWeatherTool = new FunctionTool({
     name: "get_weather",
     description: "Get the current weather in a given location",
+    parameters: {
+      type: "object",
+      properties: {
+        location: {
+          type: "string",
+          description: "The city and country to look up",
+        },
+      },
+      required: ["location"],
+    },
     execute: ({ location }) => {
       return { temperature: 72, condition: "sunny", location };
     },
@@ -27,8 +39,11 @@ async function runGoogleADKInstrumentationScenario(adk, options = {}) {
     name: "weather_agent",
     model: GOOGLE_MODEL,
     instruction:
-      "You are a helpful weather assistant. When asked about weather, use the get_weather tool. Be concise.",
+      "For weather questions, first call the get_weather tool exactly once, then answer with the tool result in one short sentence. Do not answer from memory and do not call any tool after you have a tool result.",
     tools: [getWeatherTool],
+    generateContentConfig: {
+      temperature: 0,
+    },
   });
 
   // Create a runner
@@ -50,9 +65,12 @@ async function runGoogleADKInstrumentationScenario(adk, options = {}) {
         for await (const event of runner.runAsync({
           userId,
           sessionId,
+          runConfig: {
+            maxLlmCalls: 4,
+          },
           newMessage: {
             role: "user",
-            parts: [{ text: "What is the weather in Paris?" }],
+            parts: [{ text: "What is the weather in Paris, France?" }],
           },
         })) {
           events.push(event);

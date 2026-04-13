@@ -23,7 +23,7 @@
     "input": {
       "messages": [
         {
-          "content": "What is the weather in Paris?",
+          "content": "What is the weather in Paris, France?",
           "role": "user"
         }
       ]
@@ -52,6 +52,28 @@
     "type": "task"
   },
   {
+    "input": {
+      "location": "Paris, France"
+    },
+    "metadata": {
+      "google_adk.tool_call_id": "adk-<uuid:1>",
+      "google_adk.tool_name": "get_weather",
+      "provider": "google-adk"
+    },
+    "metrics": {
+      "duration": 0,
+      "end": 0,
+      "start": 0
+    },
+    "name": "tool: get_weather",
+    "output": {
+      "condition": "sunny",
+      "location": "Paris, France",
+      "temperature": 72
+    },
+    "type": "tool"
+  },
+  {
     "metadata": {
       "google_adk.agent_name": "weather_agent",
       "model": "gemini-2.5-flash-lite",
@@ -74,7 +96,7 @@
     "input": {
       "messages": [
         {
-          "content": "What is the weather in Paris?",
+          "content": "What is the weather in Paris, France?",
           "role": "user"
         }
       ]
@@ -88,7 +110,7 @@
       "completion_tokens": "<number>",
       "duration": 0,
       "end": 0,
-      "prompt_tokens": 75,
+      "prompt_tokens": "<number>",
       "start": 0,
       "tokens": "<number>"
     },
