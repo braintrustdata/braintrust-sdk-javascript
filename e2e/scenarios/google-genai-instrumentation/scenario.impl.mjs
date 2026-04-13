@@ -10,10 +10,12 @@ const GOOGLE_MODEL = "gemini-2.5-flash-lite";
 const GOOGLE_GROUNDING_MODEL = "gemini-2.0-flash";
 const ROOT_NAME = "google-genai-instrumentation-root";
 const SCENARIO_NAME = "google-genai-instrumentation";
-const GOOGLE_RETRY_ATTEMPTS = 4;
-const GOOGLE_RETRY_BASE_DELAY_MS = 1_000;
-const GOOGLE_RETRY_MAX_DELAY_MS = 8_000;
-const GOOGLE_RETRYABLE_STATUS_CODES = new Set([408, 429, 500, 502, 503, 504]);
+const GOOGLE_GENAI_RETRY_OPTIONS = {
+  attempts: 4,
+  delayMs: 1_000,
+  maxDelayMs: 8_000,
+  shouldRetry: isRetriableGoogleGenAIError,
+};
 const WEATHER_TOOL = {
   functionDeclarations: [
     {
@@ -36,45 +38,75 @@ const GOOGLE_SEARCH_TOOL = {
   googleSearch: {},
 };
 
-function shouldRetryGoogleError(error) {
-  if (!error || typeof error !== "object") {
-    return false;
+function isObject(value) {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function getRetryStatus(error) {
+  if (!isObject(error)) {
+    return undefined;
   }
 
-  const status = "status" in error ? error.status : undefined;
-  if (typeof status === "number" && GOOGLE_RETRYABLE_STATUS_CODES.has(status)) {
+  const directStatus = error.status;
+  if (typeof directStatus === "number") {
+    return directStatus;
+  }
+
+  const nestedError = error.error;
+  if (
+    isObject(nestedError) &&
+    typeof nestedError.code === "number" &&
+    Number.isFinite(nestedError.code)
+  ) {
+    return nestedError.code;
+  }
+
+  return undefined;
+}
+
+function isRetriableGoogleGenAIError(error) {
+  const status = getRetryStatus(error);
+  if (
+    status === 408 ||
+    status === 429 ||
+    status === 500 ||
+    status === 502 ||
+    status === 503 ||
+    status === 504
+  ) {
     return true;
   }
 
-  const message =
-    "message" in error && typeof error.message === "string"
-      ? error.message.toLowerCase()
-      : "";
+  const message = error instanceof Error ? error.message : String(error ?? "");
+  const normalizedMessage = message.toLowerCase();
   return (
-    message.includes("timed out") ||
-    message.includes("high demand") ||
-    message.includes("unavailable")
+    normalizedMessage.includes("request timed out") ||
+    normalizedMessage.includes("timed out") ||
+    normalizedMessage.includes("unavailable") ||
+    normalizedMessage.includes("high demand")
   );
 }
 
-async function withGoogleRetry(callback) {
+async function withRetry(
+  callback,
+  {
+    attempts = 3,
+    delayMs = 1_000,
+    maxDelayMs = Number.POSITIVE_INFINITY,
+    shouldRetry = () => true,
+  } = {},
+) {
   let lastError;
-
-  for (let attempt = 1; attempt <= GOOGLE_RETRY_ATTEMPTS; attempt++) {
+  for (let attempt = 1; attempt <= attempts; attempt++) {
     try {
       return await callback();
     } catch (error) {
       lastError = error;
-
-      if (attempt >= GOOGLE_RETRY_ATTEMPTS || !shouldRetryGoogleError(error)) {
+      if (attempt === attempts || !shouldRetry(error)) {
         throw error;
       }
-
-      const delayMs = Math.min(
-        GOOGLE_RETRY_BASE_DELAY_MS * attempt,
-        GOOGLE_RETRY_MAX_DELAY_MS,
-      );
-      await new Promise((resolve) => setTimeout(resolve, delayMs));
+      const retryDelayMs = Math.min(delayMs * attempt, maxDelayMs);
+      await new Promise((resolve) => setTimeout(resolve, retryDelayMs));
     }
   }
 
@@ -94,7 +126,7 @@ async function runGoogleGenAIInstrumentationScenario(sdk, options = {}) {
   await runTracedScenario({
     callback: async () => {
       await runOperation("google-generate-operation", "generate", async () => {
-        await withGoogleRetry(async () => {
+        await withRetry(async () => {
           await client.models.generateContent({
             model: GOOGLE_MODEL,
             contents: "Reply with exactly PARIS.",
@@ -103,14 +135,14 @@ async function runGoogleGenAIInstrumentationScenario(sdk, options = {}) {
               temperature: 0,
             },
           });
-        });
+        }, GOOGLE_GENAI_RETRY_OPTIONS);
       });
 
       await runOperation(
         "google-attachment-operation",
         "attachment",
         async () => {
-          await withGoogleRetry(async () => {
+          await withRetry(async () => {
             await client.models.generateContent({
               model: GOOGLE_MODEL,
               contents: [
@@ -134,12 +166,12 @@ async function runGoogleGenAIInstrumentationScenario(sdk, options = {}) {
                 temperature: 0,
               },
             });
-          });
+          }, GOOGLE_GENAI_RETRY_OPTIONS);
         },
       );
 
       await runOperation("google-stream-operation", "stream", async () => {
-        await withGoogleRetry(async () => {
+        await withRetry(async () => {
           const stream = await client.models.generateContentStream({
             model: GOOGLE_MODEL,
             contents: "Count from 1 to 3 and include the words one two three.",
@@ -149,14 +181,14 @@ async function runGoogleGenAIInstrumentationScenario(sdk, options = {}) {
             },
           });
           await collectAsync(stream);
-        });
+        }, GOOGLE_GENAI_RETRY_OPTIONS);
       });
 
       await runOperation(
         "google-stream-return-operation",
         "stream-return",
         async () => {
-          await withGoogleRetry(async () => {
+          await withRetry(async () => {
             const stream = await client.models.generateContentStream({
               model: GOOGLE_MODEL,
               contents: "Reply with exactly BONJOUR.",
@@ -169,7 +201,7 @@ async function runGoogleGenAIInstrumentationScenario(sdk, options = {}) {
             for await (const _chunk of stream) {
               break;
             }
-          });
+          }, GOOGLE_GENAI_RETRY_OPTIONS);
         },
       );
 
@@ -177,7 +209,7 @@ async function runGoogleGenAIInstrumentationScenario(sdk, options = {}) {
         "google-grounded-generate-operation",
         "grounded-generate",
         async () => {
-          await withGoogleRetry(async () => {
+          await withRetry(async () => {
             await client.models.generateContent({
               model: GOOGLE_GROUNDING_MODEL,
               contents:
@@ -188,7 +220,7 @@ async function runGoogleGenAIInstrumentationScenario(sdk, options = {}) {
                 tools: [GOOGLE_SEARCH_TOOL],
               },
             });
-          });
+          }, GOOGLE_GENAI_RETRY_OPTIONS);
         },
       );
 
@@ -196,7 +228,7 @@ async function runGoogleGenAIInstrumentationScenario(sdk, options = {}) {
         "google-grounded-stream-operation",
         "grounded-stream",
         async () => {
-          await withGoogleRetry(async () => {
+          await withRetry(async () => {
             const stream = await client.models.generateContentStream({
               model: GOOGLE_GROUNDING_MODEL,
               contents:
@@ -208,12 +240,12 @@ async function runGoogleGenAIInstrumentationScenario(sdk, options = {}) {
               },
             });
             await collectAsync(stream);
-          });
+          }, GOOGLE_GENAI_RETRY_OPTIONS);
         },
       );
 
       await runOperation("google-tool-operation", "tool", async () => {
-        await withGoogleRetry(async () => {
+        await withRetry(async () => {
           await client.models.generateContent({
             model: GOOGLE_MODEL,
             contents:
@@ -230,7 +262,7 @@ async function runGoogleGenAIInstrumentationScenario(sdk, options = {}) {
               },
             },
           });
-        });
+        }, GOOGLE_GENAI_RETRY_OPTIONS);
       });
     },
     metadata: {

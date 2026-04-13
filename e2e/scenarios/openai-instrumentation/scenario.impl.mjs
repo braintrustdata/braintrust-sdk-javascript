@@ -9,6 +9,16 @@ const EMBEDDING_MODEL = "text-embedding-3-small";
 const MODERATION_MODEL = "omni-moderation-2024-09-26";
 const ROOT_NAME = "openai-instrumentation-root";
 const SCENARIO_NAME = "openai-instrumentation";
+const MOCK_CHAT_STREAM_SSE = [
+  'data: {"id":"chatcmpl-fixture","object":"chat.completion.chunk","created":1740000000,"model":"gpt-4o-mini","choices":[{"index":0,"delta":{"role":"assistant"},"logprobs":null,"finish_reason":null}]}',
+  "",
+  'data: {"id":"chatcmpl-fixture","object":"chat.completion.chunk","created":1740000000,"model":"gpt-4o-mini","choices":[{"index":0,"delta":{"refusal":"NO"},"logprobs":{"content":[{"token":"NO","logprob":-0.1,"bytes":[78,79],"top_logprobs":[{"token":"NO","logprob":-0.1,"bytes":[78,79]}]}]},"finish_reason":null}]}',
+  "",
+  'data: {"id":"chatcmpl-fixture","object":"chat.completion.chunk","created":1740000000,"model":"gpt-4o-mini","choices":[{"index":0,"delta":{"refusal":"PE"},"logprobs":{"content":[{"token":"PE","logprob":-0.2,"bytes":[80,69],"top_logprobs":[{"token":"PE","logprob":-0.2,"bytes":[80,69]}]}]},"finish_reason":"stop"}]}',
+  "",
+  "data: [DONE]",
+  "",
+].join("\n");
 
 const CHAT_PARSE_SCHEMA = {
   type: "object",
@@ -53,6 +63,24 @@ function parseMajorVersion(version) {
   return Number.isNaN(major) ? null : major;
 }
 
+function createMockStreamingClient(options) {
+  const baseClient = new options.OpenAI({
+    apiKey: process.env.OPENAI_API_KEY ?? "test-openai-key",
+    baseURL: "https://example.test/v1",
+    fetch: async () =>
+      new Response(MOCK_CHAT_STREAM_SSE, {
+        headers: {
+          "content-type": "text/event-stream",
+        },
+        status: 200,
+      }),
+  });
+
+  return options.decorateClient
+    ? options.decorateClient(baseClient)
+    : baseClient;
+}
+
 export async function runOpenAIInstrumentationScenario(options) {
   const baseClient = new options.OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
@@ -61,6 +89,7 @@ export async function runOpenAIInstrumentationScenario(options) {
   const client = options.decorateClient
     ? options.decorateClient(baseClient)
     : baseClient;
+  const streamFixtureClient = createMockStreamingClient(options);
   const openAIMajorVersion = parseMajorVersion(options.openaiSdkVersion);
   const shouldCheckPrivateFieldMethods =
     typeof options.decorateClient === "function" &&
@@ -165,6 +194,28 @@ export async function runOpenAIInstrumentationScenario(options) {
               },
             }),
           );
+          await collectAsync(chatStream);
+        },
+      );
+
+      await runOperation(
+        "openai-stream-fixture-operation",
+        "stream-fixture",
+        async () => {
+          const chatStream = await streamFixtureClient.chat.completions.create({
+            model: OPENAI_MODEL,
+            messages: [
+              {
+                role: "user",
+                content: "Reply with a refusal stream fixture.",
+              },
+            ],
+            stream: true,
+            logprobs: true,
+            top_logprobs: 2,
+            max_tokens: 12,
+            temperature: 0,
+          });
           await collectAsync(chatStream);
         },
       );
