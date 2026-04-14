@@ -8,6 +8,7 @@ import { HuggingFacePlugin } from "./plugins/huggingface-plugin";
 import { OpenRouterAgentPlugin } from "./plugins/openrouter-agent-plugin";
 import { OpenRouterPlugin } from "./plugins/openrouter-plugin";
 import { MistralPlugin } from "./plugins/mistral-plugin";
+import { GoogleADKPlugin } from "./plugins/google-adk-plugin";
 import { CoherePlugin } from "./plugins/cohere-plugin";
 
 export interface BraintrustPluginConfig {
@@ -23,6 +24,7 @@ export interface BraintrustPluginConfig {
     openrouter?: boolean;
     openrouterAgent?: boolean;
     mistral?: boolean;
+    googleADK?: boolean;
     cohere?: boolean;
   };
 }
@@ -54,6 +56,7 @@ export class BraintrustPlugin extends BasePlugin {
   private openRouterPlugin: OpenRouterPlugin | null = null;
   private openRouterAgentPlugin: OpenRouterAgentPlugin | null = null;
   private mistralPlugin: MistralPlugin | null = null;
+  private googleADKPlugin: GoogleADKPlugin | null = null;
   private coherePlugin: CoherePlugin | null = null;
 
   constructor(config: BraintrustPluginConfig = {}) {
@@ -116,6 +119,12 @@ export class BraintrustPlugin extends BasePlugin {
       this.mistralPlugin.enable();
     }
 
+    // Enable Google ADK integration (default: true)
+    if (integrations.googleADK !== false) {
+      this.googleADKPlugin = new GoogleADKPlugin();
+      this.googleADKPlugin.enable();
+    }
+
     if (integrations.cohere !== false) {
       this.coherePlugin = new CoherePlugin();
       this.coherePlugin.enable();
@@ -166,6 +175,11 @@ export class BraintrustPlugin extends BasePlugin {
     if (this.mistralPlugin) {
       this.mistralPlugin.disable();
       this.mistralPlugin = null;
+    }
+
+    if (this.googleADKPlugin) {
+      this.googleADKPlugin.disable();
+      this.googleADKPlugin = null;
     }
 
     if (this.coherePlugin) {
