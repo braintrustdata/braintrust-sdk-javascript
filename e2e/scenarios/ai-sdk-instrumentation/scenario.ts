@@ -1,4 +1,5 @@
 import { openai } from "ai-sdk-openai-v6";
+import { cohere } from "ai-sdk-cohere-v6";
 import * as ai from "ai-sdk-v6";
 import {
   getInstalledPackageVersion,
@@ -11,6 +12,7 @@ runMain(async () =>
     agentClassExport: "ToolLoopAgent",
     agentSpanName: "ToolLoopAgent",
     ai,
+    cohere,
     maxTokensKey: "maxOutputTokens",
     openai,
     sdkVersion: await getInstalledPackageVersion(import.meta.url, "ai-sdk-v6"),

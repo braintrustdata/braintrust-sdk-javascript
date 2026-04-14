@@ -203,6 +203,13 @@ function findEmbedManyTrace(events: CapturedLogEvent[]) {
   return { operation, parent };
 }
 
+function findRerankTrace(events: CapturedLogEvent[]) {
+  const operation = findLatestSpan(events, "ai-sdk-rerank-operation");
+  const parent = findParentSpan(events, "rerank", operation?.span.id);
+
+  return { operation, parent };
+}
+
 function findToolTrace(events: CapturedLogEvent[]) {
   const operation = findLatestSpan(events, "ai-sdk-tool-operation");
   const parent = findParentSpan(events, "generateText", operation?.span.id);
@@ -561,12 +568,14 @@ function collectSummaryEvents(
   options: {
     agentSpanName?: AgentSpanName;
     supportsGenerateObject: boolean;
+    supportsRerank: boolean;
     supportsStreamObject: boolean;
   },
 ) {
   const generate = findGenerateTrace(events);
   const stream = findStreamTrace(events);
   const tool = findToolTrace(events);
+  const rerank = options.supportsRerank ? findRerankTrace(events) : undefined;
   const generateObject = options.supportsGenerateObject
     ? findGenerateObjectTrace(events)
     : undefined;
@@ -588,6 +597,7 @@ function collectSummaryEvents(
     stream.parent,
     tool.operation,
     tool.parent,
+    ...(rerank ? [rerank.operation, rerank.parent] : []),
     ...tool.toolSpans,
     ...(generateObject
       ? [generateObject.operation, generateObject.parent]
@@ -603,6 +613,7 @@ function buildSpanSummary(
   options: {
     agentSpanName?: AgentSpanName;
     supportsGenerateObject: boolean;
+    supportsRerank: boolean;
     supportsStreamObject: boolean;
   },
 ): Json {
@@ -618,6 +629,7 @@ function buildPayloadSummary(
   options: {
     agentSpanName?: AgentSpanName;
     supportsGenerateObject: boolean;
+    supportsRerank: boolean;
     supportsStreamObject: boolean;
   },
 ): Json {
@@ -636,7 +648,10 @@ function expectOperationParentedByRoot(
   expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
 }
 
-function expectAISDKParentSpan(span: CapturedLogEvent | undefined) {
+function expectAISDKParentSpan(
+  span: CapturedLogEvent | undefined,
+  providerPrefix = "openai",
+) {
   expect(span).toBeDefined();
   expect(span?.span.type).toBe("function");
   expect(span?.row.metadata).toMatchObject({
@@ -649,7 +664,7 @@ function expectAISDKParentSpan(span: CapturedLogEvent | undefined) {
     String(
       (span?.row.metadata as { provider?: unknown } | undefined)?.provider ??
         "",
-    ).startsWith("openai"),
+    ).startsWith(providerPrefix),
   ).toBe(true);
   expect(
     typeof (span?.row.metadata as { model?: unknown } | undefined)?.model,
@@ -690,6 +705,7 @@ export function defineAISDKInstrumentationAssertions(options: {
   supportsDenyOutputOverrideScenario: boolean;
   supportsGenerateObject: boolean;
   supportsOutputObjectScenario: boolean;
+  supportsRerank: boolean;
   supportsStreamObject: boolean;
   supportsToolExecution: boolean;
   testFileUrl: string;
@@ -838,6 +854,34 @@ export function defineAISDKInstrumentationAssertions(options: {
         expect(output.embedding_length).toBeGreaterThan(0);
       }
     });
+
+    if (options.supportsRerank) {
+      test("captures trace for rerank()", testConfig, () => {
+        const root = findLatestSpan(events, ROOT_NAME);
+        const trace = findRerankTrace(events);
+
+        expectOperationParentedByRoot(trace.operation, root);
+        expectAISDKParentSpan(trace.parent, "cohere");
+        expect(operationName(trace.operation)).toBe("rerank");
+        const input = isRecord(trace.parent?.input) ? trace.parent.input : null;
+        expect(typeof input?.query).toBe("string");
+        expect(Array.isArray(input?.documents)).toBe(true);
+        if (Array.isArray(input?.documents)) {
+          expect(input.documents.length).toBeGreaterThanOrEqual(2);
+        }
+        expect(trace.parent?.row.metadata).toMatchObject({
+          document_count: expect.any(Number),
+          topN: 2,
+        });
+        expect(Array.isArray(trace.parent?.output)).toBe(true);
+        expect(
+          (trace.parent?.output as Array<Record<string, unknown>>)?.[0],
+        ).toMatchObject({
+          index: expect.any(Number),
+          relevance_score: expect.any(Number),
+        });
+      });
+    }
 
     if (options.supportsOutputObjectScenario) {
       test(
@@ -1082,6 +1126,7 @@ export function defineAISDKInstrumentationAssertions(options: {
           buildSpanSummary(events, {
             agentSpanName: options.agentSpanName,
             supportsGenerateObject: options.supportsGenerateObject,
+            supportsRerank: options.supportsRerank,
             supportsStreamObject: options.supportsStreamObject,
           }),
         ),
@@ -1094,6 +1139,7 @@ export function defineAISDKInstrumentationAssertions(options: {
           buildPayloadSummary(events, {
             agentSpanName: options.agentSpanName,
             supportsGenerateObject: options.supportsGenerateObject,
+            supportsRerank: options.supportsRerank,
             supportsStreamObject: options.supportsStreamObject,
           }),
         ),

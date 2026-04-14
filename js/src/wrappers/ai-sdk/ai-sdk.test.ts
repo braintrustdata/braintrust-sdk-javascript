@@ -191,6 +191,60 @@ describe("ai sdk client unit tests", TEST_SUITE_OPTIONS, () => {
     });
   });
 
+  test("ai sdk rerank logs normalized rerank output", async () => {
+    const rerank = vi.fn(async (params: any) => ({
+      originalDocuments: params.documents,
+      rerankedDocuments: [params.documents[2], params.documents[0]],
+      ranking: [
+        { originalIndex: 2, score: 0.98, document: params.documents[2] },
+        { originalIndex: 0, score: 0.74, document: params.documents[0] },
+      ],
+      usage: {
+        totalTokens: 9,
+      },
+    }));
+    const wrapped = wrapAISDK({ rerank } as any);
+
+    const result = await wrapped.rerank({
+      documents: ["alpha", "beta", "gamma"],
+      model: { modelId: "cohere/rerank-v3.5", provider: "cohere" },
+      query: "greek letter",
+      topN: 2,
+    });
+
+    expect(result.ranking).toHaveLength(2);
+    expect(rerank).toHaveBeenCalledOnce();
+
+    const spans = await backgroundLogger.drain();
+    expect(spans).toHaveLength(1);
+
+    const span = spans[0] as any;
+    expect(span.span_attributes).toMatchObject({
+      name: "rerank",
+      type: "function",
+    });
+    expect(span.input).toMatchObject({
+      documents: ["alpha", "beta", "gamma"],
+      query: "greek letter",
+    });
+    expect(span.metadata).toMatchObject({
+      provider: "cohere",
+      model: "rerank-v3.5",
+      topN: 2,
+      document_count: 3,
+    });
+    expect(span.output).toEqual([
+      {
+        index: 2,
+        relevance_score: 0.98,
+      },
+      {
+        index: 0,
+        relevance_score: 0.74,
+      },
+    ]);
+  });
+
   test("ai sdk image input", async () => {
     expect(await backgroundLogger.drain()).toHaveLength(0);
 

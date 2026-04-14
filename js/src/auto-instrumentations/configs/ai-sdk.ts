@@ -169,6 +169,32 @@ export const aiSDKConfigs: InstrumentationConfig[] = [
     },
   },
 
+  // rerank - async function
+  {
+    channelName: aiSDKChannels.rerank.channelName,
+    module: {
+      name: "ai",
+      versionRange: ">=5.0.0",
+      filePath: "dist/index.mjs",
+    },
+    functionQuery: {
+      functionName: "rerank",
+      kind: "Async",
+    },
+  },
+  {
+    channelName: aiSDKChannels.rerank.channelName,
+    module: {
+      name: "ai",
+      versionRange: ">=5.0.0",
+      filePath: "dist/index.js",
+    },
+    functionQuery: {
+      functionName: "rerank",
+      kind: "Async",
+    },
+  },
+
   // streamObject - async function (v3 only, before the sync refactor in v4)
   {
     channelName: aiSDKChannels.streamObject.channelName,

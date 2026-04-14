@@ -26,6 +26,8 @@ import type {
   AISDKModelStreamChunk,
   AISDKOutputObject,
   AISDKOutputResponseFormat,
+  AISDKRerankParams,
+  AISDKRerankResult,
   AISDKResult,
   AISDKTool,
   AISDKTools,
@@ -76,6 +78,7 @@ const RUNTIME_DENY_OUTPUT_PATHS = Symbol.for(
  * - streamObject (function returning stream)
  * - embed (async function)
  * - embedMany (async function)
+ * - rerank (async function)
  * - Agent.generate (async method)
  * - Agent.stream (async method returning stream)
  * - ToolLoopAgent.generate (async method)
@@ -261,6 +264,23 @@ export class AISDKPlugin extends BasePlugin {
           prepareAISDKEmbedInput(params, event.self),
         extractOutput: (result, endEvent) =>
           processAISDKEmbeddingOutput(
+            result,
+            resolveDenyOutputPaths(endEvent, denyOutputPaths),
+          ),
+        extractMetrics: (result, _startTime, endEvent) =>
+          extractTopLevelAISDKMetrics(result, endEvent),
+      }),
+    );
+
+    // rerank - async reranking function
+    this.unsubscribers.push(
+      traceAsyncChannel(aiSDKChannels.rerank, {
+        name: "rerank",
+        type: SpanTypeAttribute.FUNCTION,
+        extractInput: ([params], event) =>
+          prepareAISDKRerankInput(params, event.self),
+        extractOutput: (result, endEvent) =>
+          processAISDKRerankOutput(
             result,
             resolveDenyOutputPaths(endEvent, denyOutputPaths),
           ),
@@ -881,6 +901,24 @@ function prepareAISDKEmbedInput(
   };
 }
 
+function prepareAISDKRerankInput(
+  params: AISDKRerankParams,
+  self?: unknown,
+): {
+  input: unknown;
+  metadata: Record<string, unknown>;
+} {
+  const { documents, query } = params;
+
+  return {
+    input: {
+      documents,
+      query,
+    },
+    metadata: extractMetadataFromRerankParams(params, self),
+  };
+}
+
 function extractTopLevelAISDKMetrics(
   result: AISDKResult,
   event?: { [key: string]: unknown },
@@ -961,6 +999,22 @@ function extractMetadataFromEmbedParams(
   self?: unknown,
 ): Record<string, unknown> {
   return extractBaseMetadata(params.model, self);
+}
+
+function extractMetadataFromRerankParams(
+  params: AISDKRerankParams,
+  self?: unknown,
+): Record<string, unknown> {
+  const metadata = extractBaseMetadata(params.model, self);
+
+  if (typeof params.topN === "number") {
+    metadata.topN = params.topN;
+  }
+  if (Array.isArray(params.documents)) {
+    metadata.document_count = params.documents.length;
+  }
+
+  return metadata;
 }
 
 function prepareAISDKChildTracing(
@@ -1728,6 +1782,35 @@ function processAISDKEmbeddingOutput(
   }
 
   return normalizeAISDKLoggedOutput(omit(summarized, denyOutputPaths));
+}
+
+function processAISDKRerankOutput(
+  output: AISDKRerankResult,
+  _denyOutputPaths: string[],
+): unknown {
+  if (!output || typeof output !== "object") {
+    return output;
+  }
+
+  const ranking = safeSerializableFieldRead(output, "ranking");
+  if (Array.isArray(ranking)) {
+    return ranking.slice(0, 100).map((item) => {
+      const entry =
+        item && typeof item === "object"
+          ? (item as Record<string, unknown>)
+          : undefined;
+      return {
+        index:
+          typeof entry?.originalIndex === "number"
+            ? entry.originalIndex
+            : undefined,
+        relevance_score:
+          typeof entry?.score === "number" ? entry.score : undefined,
+      };
+    });
+  }
+
+  return undefined;
 }
 
 /**

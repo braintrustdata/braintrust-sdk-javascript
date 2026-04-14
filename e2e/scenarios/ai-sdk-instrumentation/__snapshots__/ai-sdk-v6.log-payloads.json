@@ -66,6 +66,30 @@
     "output": {}
   },
   {
+    "input": null,
+    "metadata": {
+      "operation": "rerank"
+    },
+    "name": "ai-sdk-rerank-operation",
+    "output": null
+  },
+  {
+    "input": {
+      "documents": [
+        "Athens is in Greece.",
+        "Paris is in France.",
+        "Lima is in Peru."
+      ],
+      "query": "Which document is about France?"
+    },
+    "metadata": {
+      "model": "rerank-v3.5",
+      "provider": "cohere.reranking"
+    },
+    "name": "rerank",
+    "output": {}
+  },
+  {
     "input": [
       {
         "location": "Paris, France"
