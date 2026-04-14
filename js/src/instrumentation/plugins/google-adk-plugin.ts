@@ -738,7 +738,10 @@ function extractToolName(
   const invocationContext = toolContext?.invocationContext as
     | Record<string, unknown>
     | undefined;
-  const toolName = invocationContext?.tool?.name;
+  const invocationTool = invocationContext?.tool as
+    | Record<string, unknown>
+    | undefined;
+  const toolName = invocationTool?.name;
   return typeof toolName === "string" && toolName.length > 0
     ? toolName
     : undefined;

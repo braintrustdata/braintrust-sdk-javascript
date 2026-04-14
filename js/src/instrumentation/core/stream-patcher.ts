@@ -66,6 +66,18 @@ function hasAsyncIteratorMethods<TChunk>(
   );
 }
 
+function isSelfAsyncIterator<TChunk>(
+  value: AsyncIteratorLike<TChunk>,
+): value is AsyncIteratorLike<TChunk> & {
+  next: (...args: [] | [undefined]) => PromiseLike<IteratorResult<TChunk>>;
+} {
+  try {
+    return value[Symbol.asyncIterator]() === value;
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Patch an async iterable to collect chunks as they're consumed.
  *
@@ -124,7 +136,10 @@ export function patchStreamIfNeeded<TChunk = unknown, TFinal = unknown>(
     return stream;
   }
 
-  if (hasAsyncIteratorMethods<TChunk>(stream)) {
+  // Only patch iterator methods directly when the stream is its own iterator.
+  // Some SDKs expose a separate iterator from Symbol.asyncIterator(); patching
+  // stream.next in those cases is a no-op because consumers never call it.
+  if (hasAsyncIteratorMethods<TChunk>(stream) && isSelfAsyncIterator(stream)) {
     if ("__braintrust_patched_iterator_methods" in stream) {
       return stream;
     }
