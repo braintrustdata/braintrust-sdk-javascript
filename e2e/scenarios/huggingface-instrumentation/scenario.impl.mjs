@@ -13,6 +13,7 @@ const ROOT_NAME = "huggingface-instrumentation-root";
 const SCENARIO_NAME = "huggingface-instrumentation";
 const TEXT_GENERATION_MODEL = "meta-llama/Llama-3.1-8B";
 const TEXT_GENERATION_PROVIDER = "featherless-ai";
+const V2_TEXT_GENERATION_MODEL = "arcee-ai/Trinity-Large-Thinking";
 const HUGGINGFACE_SCENARIO_TIMEOUT_MS = 150_000;
 const V2_CHAT_ENDPOINT_URL = "https://router.huggingface.co";
 const V2_FEATURE_EXTRACTION_ENDPOINT_URL =
@@ -168,7 +169,7 @@ async function runHuggingFaceInstrumentationScenario(sdk, options = {}) {
                   endpointUrl: V2_TEXT_GENERATION_ENDPOINT_URL,
                   inputs: "The capital of France is",
                   max_tokens: 4,
-                  model: TEXT_GENERATION_MODEL,
+                  model: V2_TEXT_GENERATION_MODEL,
                   prompt: "The capital of France is",
                 }),
           });

@@ -358,7 +358,7 @@
     "metadata": {
       "endpointUrl": "https://router.huggingface.co/featherless-ai/v1/completions",
       "max_tokens": 4,
-      "model": "meta-llama/Llama-3.1-8B",
+      "model": "arcee-ai/Trinity-Large-Thinking",
       "provider": "huggingface"
     },
     "metrics": {
@@ -382,9 +382,9 @@
     "log_id": "g",
     "metrics": {
       "completion_tokens": 4,
-      "prompt_tokens": 5,
+      "prompt_tokens": 6,
       "time_to_first_token": "<number>",
-      "tokens": 9
+      "tokens": 10
     },
     "project_id": "<project_id>",
     "root_span_id": "<span:2>",
