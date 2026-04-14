@@ -25,6 +25,9 @@ export interface GoogleGenAIModels {
   generateContentStream: (
     params: GoogleGenAIGenerateContentParams,
   ) => Promise<AsyncGenerator<GoogleGenAIGenerateContentResponse>>;
+  embedContent: (
+    params: GoogleGenAIEmbedContentParams,
+  ) => Promise<GoogleGenAIEmbedContentResponse>;
 }
 
 // Requests
@@ -37,6 +40,18 @@ export interface GoogleGenAIGenerateContentParams {
       functionDeclarations?: Record<string, unknown>[];
       [key: string]: unknown;
     }[];
+    toJSON?: () => Record<string, unknown>;
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+}
+
+export interface GoogleGenAIEmbedContentParams {
+  model: string;
+  contents: string | GoogleGenAIContent | GoogleGenAIContent[];
+  config?: {
+    outputDimensionality?: number;
+    taskType?: string;
     toJSON?: () => Record<string, unknown>;
     [key: string]: unknown;
   };
@@ -75,6 +90,18 @@ export interface GoogleGenAIGenerateContentResponse {
   groundingMetadata?: GoogleGenAIGroundingMetadata;
   usageMetadata?: GoogleGenAIUsageMetadata;
   text?: string;
+  [key: string]: unknown;
+}
+
+export interface GoogleGenAIEmbedding {
+  values?: number[];
+  [key: string]: unknown;
+}
+
+export interface GoogleGenAIEmbedContentResponse {
+  embedding?: GoogleGenAIEmbedding;
+  embeddings?: GoogleGenAIEmbedding[];
+  usageMetadata?: GoogleGenAIUsageMetadata;
   [key: string]: unknown;
 }
 

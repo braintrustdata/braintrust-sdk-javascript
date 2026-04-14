@@ -44,4 +44,35 @@ export const googleGenAIConfigs: InstrumentationConfig[] = [
       kind: "Async",
     },
   },
+
+  // Models.embedContent - class method in older SDK versions
+  {
+    channelName: googleGenAIChannels.embedContent.channelName,
+    module: {
+      name: "@google/genai",
+      versionRange: ">=1.0.0 <1.44.0",
+      filePath: "dist/node/index.mjs",
+    },
+    functionQuery: {
+      className: "Models",
+      methodName: "embedContent",
+      kind: "Async",
+    },
+  },
+
+  // Models.embedContentInternal - class method in newer SDK versions
+  // Note: embedContent is an arrow function property that calls this method
+  {
+    channelName: googleGenAIChannels.embedContent.channelName,
+    module: {
+      name: "@google/genai",
+      versionRange: ">=1.44.0",
+      filePath: "dist/node/index.mjs",
+    },
+    functionQuery: {
+      className: "Models",
+      methodName: "embedContentInternal",
+      kind: "Async",
+    },
+  },
 ];
