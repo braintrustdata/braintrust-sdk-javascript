@@ -184,12 +184,11 @@ describe("runEvaluator", () => {
         new NoopProgressReporter(),
         [],
         undefined,
-        true,
       );
 
-      expect(out.results.every((r) => Object.keys(r.scores).length === 0)).toBe(
-        true,
-      );
+      expect(
+        out.results.every((r) => Object.keys(r.scores ?? {}).length === 0),
+      ).toBe(true);
     });
 
     describe("errorScoreHandler", () => {
@@ -212,14 +211,13 @@ describe("runEvaluator", () => {
             new NoopProgressReporter(),
             [],
             undefined,
-            true,
           );
 
           expect(
             out.results.every(
               (r) =>
-                Object.keys(r.scores).length === 3 &&
-                Object.values(r.scores).every((v) => v === 0),
+                Object.keys(r.scores ?? {}).length === 3 &&
+                Object.values(r.scores ?? {}).every((v) => v === 0),
             ),
           ).toBe(true);
         });
@@ -242,16 +240,15 @@ describe("runEvaluator", () => {
             new NoopProgressReporter(),
             [],
             undefined,
-            true,
           );
 
           expect(
             out.results.every(
               (r) =>
-                Object.keys(r.scores).length === 3 &&
-                r.scores.scorer_0 === 0 &&
-                r.scores.scorer_1 === 1 &&
-                r.scores.scorer_2 === 1,
+                Object.keys(r.scores ?? {}).length === 3 &&
+                r.scores?.scorer_0 === 0 &&
+                r.scores?.scorer_1 === 1 &&
+                r.scores?.scorer_2 === 1,
             ),
           ).toBe(true);
         });
@@ -276,11 +273,10 @@ describe("runEvaluator", () => {
             new NoopProgressReporter(),
             [],
             undefined,
-            true,
           );
 
           expect(
-            out.results.every((r) => Object.keys(r.scores).length === 0),
+            out.results.every((r) => Object.keys(r.scores ?? {}).length === 0),
           ).toBe(true);
         });
 
@@ -302,14 +298,13 @@ describe("runEvaluator", () => {
             new NoopProgressReporter(),
             [],
             undefined,
-            true,
           );
 
           expect(
             out.results.every(
               (r) =>
-                Object.keys(r.scores).length === 1 &&
-                r.scores.error_score === 1,
+                Object.keys(r.scores ?? {}).length === 1 &&
+                r.scores?.error_score === 1,
             ),
           ).toBe(true);
         });
@@ -507,7 +502,7 @@ test("trialIndex is passed to task", async () => {
   // All results should be correct
   results.forEach((result) => {
     expect(result.input).toBe(1);
-    expect(result.expected).toBe(2);
+    expect("expected" in result ? result.expected : undefined).toBe(2);
     expect(result.output).toBe(2);
     expect(result.error).toBeUndefined();
   });
@@ -584,13 +579,13 @@ test("Eval with noSendLogs: true runs locally without creating experiment", asyn
   expect(result.results).toHaveLength(2);
   expect(result.results[0].input).toBe("hello");
   expect(result.results[0].output).toBe("hello world");
-  expect(result.results[0].scores.exact_match).toBe(1);
-  expect(result.results[0].scores.simple_scorer).toBe(0.8);
+  expect(result.results[0].scores?.exact_match).toBe(1);
+  expect(result.results[0].scores?.simple_scorer).toBe(0.8);
 
   expect(result.results[1].input).toBe("test");
   expect(result.results[1].output).toBe("test world");
-  expect(result.results[1].scores.exact_match).toBe(1);
-  expect(result.results[1].scores.simple_scorer).toBe(0.8);
+  expect(result.results[1].scores?.exact_match).toBe(1);
+  expect(result.results[1].scores?.simple_scorer).toBe(0.8);
 
   // Verify it builds a local summary (no experimentUrl means local run)
   expect(result.summary.projectName).toBe("test-no-logs");
@@ -605,9 +600,8 @@ test("Eval with noSendLogs: true runs locally without creating experiment", asyn
 
 test("Eval with returnResults: false produces empty results but valid summary", async () => {
   const result = await Eval(
-    "test-no-results",
+    "test-no-results-project",
     {
-      projectName: "test-no-results-project",
       data: [
         { input: "hello", expected: "hello world" },
         { input: "test", expected: "test world" },
@@ -645,9 +639,8 @@ test("Eval with returnResults: false produces empty results but valid summary", 
 
 test("Eval with returnResults: true collects all results", async () => {
   const result = await Eval(
-    "test-with-results",
+    "test-with-results-project",
     {
-      projectName: "test-with-results-project",
       data: [
         { input: "hello", expected: "hello world" },
         { input: "test", expected: "test world" },
@@ -667,10 +660,10 @@ test("Eval with returnResults: true collects all results", async () => {
   expect(result.results).toHaveLength(2);
   expect(result.results[0].input).toBe("hello");
   expect(result.results[0].output).toBe("hello world");
-  expect(result.results[0].scores.exact_match).toBe(1);
+  expect(result.results[0].scores?.exact_match).toBe(1);
   expect(result.results[1].input).toBe("test");
   expect(result.results[1].output).toBe("test world");
-  expect(result.results[1].scores.exact_match).toBe(1);
+  expect(result.results[1].scores?.exact_match).toBe(1);
 
   // Summary should also be correct
   expect(result.summary.scores.exact_match.score).toBe(1);
@@ -698,7 +691,7 @@ test("tags can be appended and logged to root span", async () => {
       evalName: "js-tags-append",
       data: [{ input: "hello", expected: "hello world", tags: initialTags }],
       task: (input, hooks) => {
-        for (const t of appendedTags) hooks.tags.push(t);
+        for (const t of appendedTags) hooks.tags!.push(t);
         return input;
       },
       scores: [() => ({ name: "simple_scorer", score: 0.8 })],
@@ -855,7 +848,7 @@ test("scorer spans have purpose='scorer' attribute", async () => {
       data: [{ input: "hello", expected: "hello" }],
       task: async (input: string) => input,
       scores: [
-        (args: { input: string; output: string; expected: string }) => ({
+        (args: { output: string; expected?: string }) => ({
           name: "simple_scorer",
           score: args.output === args.expected ? 1 : 0,
         }),
@@ -869,7 +862,7 @@ test("scorer spans have purpose='scorer' attribute", async () => {
   );
 
   expect(result.results).toHaveLength(1);
-  expect(result.results[0].scores.simple_scorer).toBe(1);
+  expect(result.results[0].scores?.simple_scorer).toBe(1);
 
   await memoryLogger.flush();
   const logs = await memoryLogger.drain();
@@ -1002,11 +995,12 @@ describe("framework2 metadata support", () => {
           options: { model: "gpt-4" },
         },
         [],
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         {
           name: "test-prompt",
           slug: "test-prompt",
           metadata,
-        },
+        } as any,
       );
 
       const mockProjectMap = {
@@ -1031,10 +1025,8 @@ describe("framework2 metadata support", () => {
           options: { model: "gpt-4" },
         },
         [],
-        {
-          name: "test-prompt",
-          slug: "test-prompt",
-        },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        { name: "test-prompt", slug: "test-prompt" } as any,
       );
 
       const mockProjectMap = {
@@ -1057,11 +1049,12 @@ describe("framework2 metadata support", () => {
           options: { model: "gpt-4" },
         },
         [],
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         {
           name: "test-prompt",
           slug: "test-prompt",
           environments: ["production"],
-        },
+        } as any,
       );
 
       const mockProjectMap = {
@@ -1084,11 +1077,12 @@ describe("framework2 metadata support", () => {
           options: { model: "gpt-4" },
         },
         [],
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         {
           name: "test-prompt",
           slug: "test-prompt",
           environments: ["staging", "production"],
-        },
+        } as any,
       );
 
       const mockProjectMap = {
@@ -1114,10 +1108,8 @@ describe("framework2 metadata support", () => {
           options: { model: "gpt-4" },
         },
         [],
-        {
-          name: "test-prompt",
-          slug: "test-prompt",
-        },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        { name: "test-prompt", slug: "test-prompt" } as any,
       );
 
       const mockProjectMap = {
@@ -1160,11 +1152,8 @@ describe("framework2 metadata support", () => {
           options: { model: "gpt-4" },
         },
         [],
-        {
-          name: "test-prompt",
-          slug: "test-prompt",
-          tags,
-        },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        { name: "test-prompt", slug: "test-prompt", tags } as any,
       );
 
       const mockProjectMap = {
@@ -1189,10 +1178,8 @@ describe("framework2 metadata support", () => {
           options: { model: "gpt-4" },
         },
         [],
-        {
-          name: "test-prompt",
-          slug: "test-prompt",
-        },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        { name: "test-prompt", slug: "test-prompt" } as any,
       );
 
       const mockProjectMap = {
@@ -1626,4 +1613,109 @@ test("Eval with parent flushes evaluator state, not global state", async () => {
 
   _exportsForTestingOnly.clearTestBackgroundLogger();
   _exportsForTestingOnly.simulateLogoutForTests();
+});
+
+test("classifier-only evaluator populates classifications field", async () => {
+  const result = await Eval(
+    "test-classifier-only",
+    {
+      data: [{ input: "hello", expected: "greeting" }],
+      task: (input) => input,
+      classifiers: [
+        () => ({
+          name: "category",
+          id: "greeting",
+          label: "Greeting",
+          metadata: { source: "unit-test" },
+        }),
+      ],
+    },
+    { noSendLogs: true, returnResults: true },
+  );
+
+  expect(result.results).toHaveLength(1);
+  const r = result.results[0];
+  expect(r.scores).toEqual({});
+  expect(r.classifications?.category).toEqual([
+    {
+      id: "greeting",
+      label: "Greeting",
+      metadata: { source: "unit-test" },
+    },
+  ]);
+});
+
+test("scorer-only evaluator populates scores field", async () => {
+  const result = await Eval(
+    "test-scorer-only",
+    {
+      data: [{ input: "hello", expected: "hello" }],
+      task: (input) => input,
+      scores: [
+        (args) => ({
+          name: "exact_match",
+          score: args.output === args.expected ? 1 : 0,
+        }),
+      ],
+    },
+    { noSendLogs: true, returnResults: true },
+  );
+
+  expect(result.results).toHaveLength(1);
+  expect(result.results[0].scores?.exact_match).toBe(1);
+  expect(result.results[0].classifications).toBeUndefined();
+});
+
+test("multiple classifiers returning the same name append items correctly", async () => {
+  const result = await Eval(
+    "test-classifier-append",
+    {
+      data: [{ input: "hello" }],
+      task: (input) => input,
+      classifiers: [
+        () => [
+          { name: "category", id: "greeting", label: "Greeting" },
+          { name: "category", id: "informal", label: "Informal" },
+        ],
+      ],
+    },
+    { noSendLogs: true, returnResults: true },
+  );
+
+  expect(result.results).toHaveLength(1);
+  expect(result.results[0].classifications?.category).toHaveLength(2);
+  expect(result.results[0].classifications?.category[0]).toEqual({
+    id: "greeting",
+    label: "Greeting",
+  });
+  expect(result.results[0].classifications?.category[1]).toEqual({
+    id: "informal",
+    label: "Informal",
+  });
+});
+
+test("mixed evaluator populates both scores and classifications", async () => {
+  const result = await Eval(
+    "test-score-and-classify",
+    {
+      data: [{ input: "hello", expected: "hello" }],
+      task: (input) => input,
+      scores: [
+        (args) => ({
+          name: "exact_match",
+          score: args.output === args.expected ? 1 : 0,
+        }),
+      ],
+      classifiers: [
+        () => ({ name: "category", id: "greeting", label: "Greeting" }),
+      ],
+    },
+    { noSendLogs: true, returnResults: true },
+  );
+
+  expect(result.results).toHaveLength(1);
+  expect(result.results[0].scores?.exact_match).toBe(1);
+  expect(result.results[0].classifications?.category).toEqual([
+    { id: "greeting", label: "Greeting" },
+  ]);
 });

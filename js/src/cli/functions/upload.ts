@@ -4,7 +4,7 @@ import {
   type IfExistsType as IfExists,
 } from "../../generated_types";
 import type { BuildSuccess, EvaluatorState, FileHandle } from "../types";
-import { scorerName, warning } from "../../framework";
+import { classifierName, scorerName, warning } from "../../framework";
 import {
   _internalGetGlobalState,
   Experiment,
@@ -181,23 +181,42 @@ export async function uploadHandleBundles({
           function_type: "task",
           origin,
         },
-        ...evaluator.evaluator.scores.map((score, i): BundledFunctionSpec => {
-          const name = scorerName(score, i);
-          return {
-            ...baseInfo,
-            // There is a very small chance that someone names a function with the same convention, but
-            // let's assume it's low enough that it doesn't matter.
-            ...formatNameAndSlug(["eval", namePrefix, "scorer", name]),
-            description: `Score ${name} for eval ${namePrefix}`,
-            location: {
-              type: "experiment",
-              eval_name: evaluator.evaluator.evalName,
-              position: { type: "scorer", index: i },
-            },
-            function_type: "scorer",
-            origin,
-          };
-        }),
+        ...(evaluator.evaluator.scores ?? []).map(
+          (score, i): BundledFunctionSpec => {
+            const name = scorerName(score, i);
+            return {
+              ...baseInfo,
+              // There is a very small chance that someone names a function with the same convention, but
+              // let's assume it's low enough that it doesn't matter.
+              ...formatNameAndSlug(["eval", namePrefix, "scorer", name]),
+              description: `Score ${name} for eval ${namePrefix}`,
+              location: {
+                type: "experiment",
+                eval_name: evaluator.evaluator.evalName,
+                position: { type: "scorer", index: i },
+              },
+              function_type: "scorer",
+              origin,
+            };
+          },
+        ),
+        ...(evaluator.evaluator.classifiers ?? []).map(
+          (classifier, i): BundledFunctionSpec => {
+            const name = classifierName(classifier, i);
+            return {
+              ...baseInfo,
+              ...formatNameAndSlug(["eval", namePrefix, "classifier", name]),
+              description: `Classifier ${name} for eval ${namePrefix}`,
+              location: {
+                type: "experiment",
+                eval_name: evaluator.evaluator.evalName,
+                position: { type: "classifier", index: i },
+              },
+              function_type: "classifier",
+              origin,
+            };
+          },
+        ),
       ];
 
       bundleSpecs.push(...fileSpecs);
@@ -220,9 +239,14 @@ export async function uploadHandleBundles({
                   serializeRemoteEvalParametersContainer(resolvedParameters),
               }
             : {}),
-          scores: evaluator.evaluator.scores.map((score, i) => ({
+          scores: (evaluator.evaluator.scores ?? []).map((score, i) => ({
             name: scorerName(score, i),
           })),
+          classifiers: (evaluator.evaluator.classifiers ?? []).map(
+            (classifier, i) => ({
+              name: classifierName(classifier, i),
+            }),
+          ),
         };
 
         bundleSpecs.push({
