@@ -835,7 +835,6 @@ async function finalizeCurrentMessageGroup(state: QueryState): Promise<void> {
     parentSpan,
     existingLlmSpan,
   );
-  state.activeLlmSpansByParentToolUse.delete(parentKey);
 
   if (llmSpanResult) {
     if (parentToolUseId) {
@@ -851,6 +850,11 @@ async function finalizeCurrentMessageGroup(state: QueryState): Promise<void> {
       state.finalResults.push(llmSpanResult.finalMessage);
     }
   }
+
+  // Keep the active LLM parent visible until the finalized exported parent
+  // reference has been published. Otherwise tool hooks can race this gap and
+  // fall back to the broader sub-agent task span instead of the LLM span.
+  state.activeLlmSpansByParentToolUse.delete(parentKey);
 
   const lastMessage = state.currentMessages[state.currentMessages.length - 1];
   if (lastMessage?.message?.usage) {

@@ -1031,6 +1031,9 @@ describe.skipIf(!claudeSDK)("claude-agent-sdk integration tests", () => {
         isDescendantOf(s, subAgentSpan!.span_id as string),
     );
     expect(subAgentToolSpans.length).toBeGreaterThanOrEqual(1);
+    const subAgentLlmSpanIds = new Set(
+      subAgentLlmSpans.map((span) => span.span_id as string),
+    );
     subAgentToolSpans.forEach((toolSpan) => {
       const metadata = toolSpan.metadata as Record<string, unknown>;
       expect(metadata["gen_ai.tool.name"]).toBe("calculator");
@@ -1038,6 +1041,11 @@ describe.skipIf(!claudeSDK)("claude-agent-sdk integration tests", () => {
       expect(metadata["claude_agent_sdk.raw_tool_name"]).toBe(
         "mcp__calculator__calculator",
       );
+      expect(
+        ((toolSpan.span_parents as string[] | undefined) ?? []).some(
+          (parentId) => subAgentLlmSpanIds.has(parentId),
+        ),
+      ).toBe(true);
     });
   }, 60000);
 });
