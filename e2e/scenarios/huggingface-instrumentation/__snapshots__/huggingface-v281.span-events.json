@@ -125,7 +125,7 @@
     "metadata": {
       "endpointUrl": "https://router.huggingface.co/featherless-ai/v1/completions",
       "finish_reason": "length",
-      "model": "meta-llama/Llama-3.1-8B",
+      "model": "arcee-ai/Trinity-Large-Thinking",
       "provider": "huggingface"
     },
     "metric_keys": [

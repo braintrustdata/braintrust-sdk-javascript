@@ -185,6 +185,10 @@ jobs:
   prerelease-snapshot:
     if: github.event_name == 'workflow_dispatch' && inputs.release_mode == 'prerelease'
     uses: ./.github/workflows/_run-js-release-mode.yaml
+    permissions:
+      actions: read
+      contents: read
+      id-token: write
     secrets: inherit
     with:
       mode: prerelease
@@ -201,6 +205,10 @@ jobs:
   canary-snapshot:
     if: github.event_name == 'workflow_dispatch' && inputs.release_mode == 'canary'
     uses: ./.github/workflows/_run-js-release-mode.yaml
+    permissions:
+      actions: read
+      contents: read
+      id-token: write
     secrets: inherit
     with:
       mode: canary
@@ -218,6 +226,10 @@ jobs:
   dry-run-canary:
     if: github.event_name == 'workflow_dispatch' && inputs.release_mode == 'dry-run-canary'
     uses: ./.github/workflows/_run-js-release-mode.yaml
+    permissions:
+      actions: read
+      contents: read
+      id-token: write
     secrets: inherit
     with:
       mode: dry-run-canary
@@ -229,6 +241,10 @@ jobs:
   dry-run-stable:
     if: github.event_name == 'workflow_dispatch' && inputs.release_mode == 'dry-run-stable'
     uses: ./.github/workflows/_run-js-release-mode.yaml
+    permissions:
+      actions: read
+      contents: read
+      id-token: write
     secrets: inherit
     with:
       mode: dry-run-stable
@@ -240,6 +256,10 @@ jobs:
   dry-run-prerelease:
     if: github.event_name == 'workflow_dispatch' && inputs.release_mode == 'dry-run-prerelease'
     uses: ./.github/workflows/_run-js-release-mode.yaml
+    permissions:
+      actions: read
+      contents: read
+      id-token: write
     secrets: inherit
     with:
       mode: dry-run-prerelease
