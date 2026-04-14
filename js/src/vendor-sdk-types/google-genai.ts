@@ -95,12 +95,20 @@ export interface GoogleGenAIGenerateContentResponse {
 
 export interface GoogleGenAIEmbedding {
   values?: number[];
-  [key: string]: unknown;
+  statistics?: {
+    tokenCount?: number;
+    truncated?: boolean;
+  };
+}
+
+export interface GoogleGenAIEmbedContentMetadata {
+  billableCharacterCount?: number;
 }
 
 export interface GoogleGenAIEmbedContentResponse {
   embedding?: GoogleGenAIEmbedding;
   embeddings?: GoogleGenAIEmbedding[];
+  metadata?: GoogleGenAIEmbedContentMetadata;
   usageMetadata?: GoogleGenAIUsageMetadata;
   [key: string]: unknown;
 }

@@ -843,7 +843,61 @@ function extractEmbedContentMetrics(
     populateUsageMetrics(metrics, response.usageMetadata);
   }
 
+  const embeddingTokenCount = extractEmbedPromptTokenCount(response);
+  if (embeddingTokenCount !== undefined) {
+    metrics.prompt_tokens = embeddingTokenCount;
+    metrics.tokens = embeddingTokenCount;
+  }
+
   return metrics;
+}
+
+function extractEmbedPromptTokenCount(
+  response: GoogleGenAIEmbedContentResponse | undefined,
+): number | undefined {
+  if (!response) {
+    return undefined;
+  }
+
+  // Embedding token counts are available only on Vertex responses via usageMetadata
+  // and/or embedding.statistics.tokenCount; Gemini Developer API embed responses omit them.
+  const usagePromptTokens = response.usageMetadata?.promptTokenCount;
+  if (
+    typeof usagePromptTokens === "number" &&
+    Number.isFinite(usagePromptTokens)
+  ) {
+    return usagePromptTokens;
+  }
+
+  const usageTotalTokens = response.usageMetadata?.totalTokenCount;
+  if (
+    typeof usageTotalTokens === "number" &&
+    Number.isFinite(usageTotalTokens)
+  ) {
+    return usageTotalTokens;
+  }
+
+  const embeddings = Array.isArray(response.embeddings)
+    ? response.embeddings
+    : response.embedding
+      ? [response.embedding]
+      : [];
+  if (embeddings.length === 0) {
+    return undefined;
+  }
+
+  let total = 0;
+  let sawAny = false;
+  for (const embedding of embeddings) {
+    const embeddingStats = tryToDict(tryToDict(embedding)?.statistics);
+    const tokenCount = embeddingStats?.tokenCount;
+    if (typeof tokenCount === "number" && Number.isFinite(tokenCount)) {
+      total += tokenCount;
+      sawAny = true;
+    }
+  }
+
+  return sawAny ? total : undefined;
 }
 
 function summarizeEmbedContentOutput(
