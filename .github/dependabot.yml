@@ -9,7 +9,12 @@ updates:
       include: scope
 
   - package-ecosystem: "npm"
-    directory: "/"
+    directories:
+      - "/"
+      - "/e2e"
+      - "/js"
+      - "/integrations/*"
+      - "/integrations/otel-js/otel-v*"
     schedule:
       interval: "weekly"
       day: "monday"
@@ -20,14 +25,6 @@ updates:
     cooldown:
       default-days: 3
       semver-major-days: 14
-    exclude-paths:
-      - "e2e/**"
-      - "js/examples/**"
-      - "js/smoke/**"
-      - "js/tests/**"
-      - "integrations/**/examples/**"
-      - "integrations/**/smoke/**"
-      - "js/src/wrappers/**"
     groups:
       production-patch-minor:
         dependency-type: "production"
