@@ -80,6 +80,43 @@ function collectToolCallNames(output: unknown): string[] {
   return [...new Set(names)];
 }
 
+function collectToolResultNames(output: unknown): string[] {
+  if (!isRecord(output)) {
+    return [];
+  }
+
+  const steps = Array.isArray(output.steps) ? output.steps : [];
+  const toolResults = Array.isArray(output.toolResults)
+    ? output.toolResults
+    : [];
+  const names = [
+    ...toolResults,
+    ...steps.flatMap((step) =>
+      isRecord(step)
+        ? [
+            ...(Array.isArray(step.toolResults) ? step.toolResults : []),
+            ...(Array.isArray(step.content) ? step.content : []),
+          ]
+        : [],
+    ),
+  ]
+    .map((result) =>
+      isRecord(result) ? (result.toolName ?? result.name) : undefined,
+    )
+    .filter((name): name is string => typeof name === "string");
+
+  return [...new Set(names)];
+}
+
+function collectMetricValues(
+  events: CapturedLogEvent[],
+  key: string,
+): number[] {
+  return events
+    .map((event) => event.metrics?.[key])
+    .filter((value): value is number => typeof value === "number");
+}
+
 function summarizePrompt(value: unknown): Json {
   if (typeof value === "string") {
     return "<prompt>";
@@ -911,6 +948,12 @@ export function defineAISDKInstrumentationAssertions(options: {
         expect(collectToolCallNames(trace.parent?.output)).toContain(
           "get_weather",
         );
+        expect(collectToolResultNames(trace.parent?.output)).toContain(
+          "get_weather",
+        );
+        expect(
+          collectMetricValues(trace.modelChildren, "prompt_cached_tokens"),
+        ).not.toHaveLength(0);
       } else {
         expect(trace.modelChildren.length).toBeGreaterThanOrEqual(1);
         trace.modelChildren.forEach(expectAISDKModelChildSpan);
