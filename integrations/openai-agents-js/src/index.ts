@@ -322,6 +322,11 @@ export class OpenAIAgentsTraceProcessor {
     const traceData = this.traceSpans.get(trace.traceId);
 
     if (traceData) {
+      for (const [spanId, braintrustSpan] of traceData.childSpans) {
+        braintrustSpan.end();
+        traceData.childSpans.delete(spanId);
+      }
+
       try {
         traceData.rootSpan.log({
           input: traceData.metadata.firstInput,
