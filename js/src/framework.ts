@@ -983,9 +983,8 @@ function validateClassificationResult(
 
 function toClassificationItem(c: Classification): ClassificationItem {
   return {
-    // Result is a friendlier name for the SDK, but the backend uses id still.
-    id: c.result,
-    label: c.label ?? c.result,
+    id: c.id,
+    label: c.label ?? c.id,
     ...(c.metadata !== undefined ? { metadata: c.metadata } : {}),
   };
 }
