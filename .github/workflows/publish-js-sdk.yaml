@@ -57,7 +57,7 @@ jobs:
         run: node scripts/release/validate-publishable-packages.mjs
       - name: Create or update release PR
         id: changesets
-        uses: changesets/action@d4c53c294341eec8a419ec2d1927138bfdeec234
+        uses: changesets/action@6a0a831ff30acef54f2c6aa1cbbc1096b066edaf # v1.7.0
         with:
           version: pnpm exec changeset version && pnpm install --lockfile-only
           commit: "[ci] release"
