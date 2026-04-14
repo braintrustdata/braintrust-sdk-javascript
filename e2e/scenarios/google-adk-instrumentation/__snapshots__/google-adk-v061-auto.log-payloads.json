@@ -1,0 +1,147 @@
+[
+  {
+    "metadata": {
+      "scenario": "google-adk-instrumentation"
+    },
+    "metrics": {
+      "start": 0
+    },
+    "name": "google-adk-instrumentation-root",
+    "type": "task"
+  },
+  {
+    "metadata": {
+      "operation": "simple-run"
+    },
+    "metrics": {
+      "start": 0
+    },
+    "name": "adk-simple-run-operation",
+    "type": null
+  },
+  {
+    "input": {
+      "messages": [
+        {
+          "content": "What is the weather in Paris, France?",
+          "role": "user"
+        }
+      ]
+    },
+    "metadata": {
+      "google_adk.session_id": "test-session-1",
+      "google_adk.user_id": "test-user",
+      "provider": "google-adk"
+    },
+    "metrics": {
+      "start": 0
+    },
+    "name": "Google ADK Runner",
+    "type": "task"
+  },
+  {
+    "metadata": {
+      "google_adk.agent_name": "weather_agent",
+      "model": "gemini-2.5-flash-lite",
+      "provider": "google-adk"
+    },
+    "metrics": {
+      "start": 0
+    },
+    "name": "Agent: weather_agent",
+    "type": "task"
+  },
+  {
+    "input": {
+      "location": "Paris, France"
+    },
+    "metadata": {
+      "google_adk.tool_call_id": "adk-<uuid:1>",
+      "google_adk.tool_name": "get_weather",
+      "provider": "google-adk"
+    },
+    "metrics": {
+      "duration": 0,
+      "end": 0,
+      "start": 0
+    },
+    "name": "tool: get_weather",
+    "output": {
+      "condition": "sunny",
+      "location": "Paris, France",
+      "temperature": 72
+    },
+    "type": "tool"
+  },
+  {
+    "metadata": {
+      "google_adk.agent_name": "weather_agent",
+      "model": "gemini-2.5-flash-lite",
+      "provider": "google-adk"
+    },
+    "metrics": {
+      "duration": 0,
+      "end": 0,
+      "start": 0
+    },
+    "name": "Agent: weather_agent",
+    "output": {
+      "author": "weather_agent",
+      "content": "<text>",
+      "role": "model"
+    },
+    "type": "task"
+  },
+  {
+    "input": {
+      "messages": [
+        {
+          "content": "What is the weather in Paris, France?",
+          "role": "user"
+        }
+      ]
+    },
+    "metadata": {
+      "google_adk.session_id": "test-session-1",
+      "google_adk.user_id": "test-user",
+      "provider": "google-adk"
+    },
+    "metrics": {
+      "completion_tokens": "<number>",
+      "duration": 0,
+      "end": 0,
+      "prompt_tokens": "<number>",
+      "start": 0,
+      "tokens": "<number>"
+    },
+    "name": "Google ADK Runner",
+    "output": {
+      "author": "weather_agent",
+      "content": "<text>",
+      "role": "model"
+    },
+    "type": "task"
+  },
+  {
+    "metadata": {
+      "operation": "simple-run"
+    },
+    "metrics": {
+      "end": 0,
+      "start": 0
+    },
+    "name": "adk-simple-run-operation",
+    "type": null
+  },
+  {
+    "metadata": {
+      "scenario": "google-adk-instrumentation"
+    },
+    "metrics": {
+      "end": 0,
+      "start": 0
+    },
+    "name": "google-adk-instrumentation-root",
+    "type": "task"
+  }
+]

@@ -123,6 +123,43 @@ describe("patchStreamIfNeeded", () => {
     expect(onComplete).toHaveBeenCalledWith(["a", "b", "c"]);
   });
 
+  it("should patch the iterator returned from Symbol.asyncIterator", async () => {
+    const iterator = {
+      values: [1, 2, 3],
+      index: 0,
+      async next() {
+        if (this.index >= this.values.length) {
+          return { done: true, value: undefined };
+        }
+        const value = this.values[this.index++];
+        return { done: false, value };
+      },
+      [Symbol.asyncIterator]() {
+        return this;
+      },
+    };
+    const stream = {
+      next: vi.fn(async () => ({ done: true, value: undefined })),
+      [Symbol.asyncIterator]() {
+        return iterator;
+      },
+    };
+
+    const onChunk = vi.fn();
+    const onComplete = vi.fn();
+    const patched = patchStreamIfNeeded(stream, { onChunk, onComplete });
+
+    const chunks: number[] = [];
+    for await (const chunk of patched as AsyncIterable<number>) {
+      chunks.push(chunk);
+    }
+
+    expect(chunks).toEqual([1, 2, 3]);
+    expect(stream.next).not.toHaveBeenCalled();
+    expect(onChunk).toHaveBeenCalledTimes(3);
+    expect(onComplete).toHaveBeenCalledWith([1, 2, 3]);
+  });
+
   it("should filter chunks with shouldCollect", async () => {
     const stream = {
       async *[Symbol.asyncIterator]() {
