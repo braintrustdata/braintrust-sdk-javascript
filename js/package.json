@@ -5,7 +5,7 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/braintrustdata/braintrust-sdk-javascript.git",
-    "directory": "blob/main/js"
+    "directory": "js"
   },
   "homepage": "https://www.braintrust.dev/docs",
   "main": "./dist/index.js",
@@ -143,7 +143,6 @@
     "test:vitest": "pnpm --filter @braintrust/vitest-wrapper-tests test",
     "test:output": "tsx scripts/test-output.ts --with-comparison --with-metrics --with-progress",
     "bench": "tsx src/queue.bench.ts",
-    "publish:validate": "./scripts/validate-release.sh && pnpm install --frozen-lockfile && pnpm run build && pnpm publish",
     "lint": "eslint .",
     "fix:lint": "eslint --fix .",
     "playground": "tsx playground.ts",
@@ -230,5 +229,9 @@
   },
   "peerDependencies": {
     "zod": "^3.25.34 || ^4.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   }
 }

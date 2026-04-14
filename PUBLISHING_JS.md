@@ -1,107 +1,236 @@
-# JS SDK Release
+# Publishing JavaScript SDK Packages
 
-## Recommended Path
+This guide explains how to release packages from this repository.
 
-Use the [Publish JavaScript SDK workflow](https://github.com/braintrustdata/braintrust-sdk-javascript/actions/workflows/publish-js-sdk.yaml) in GitHub Actions.
+**Important:** all publishing happens in **GitHub Actions**. Do **not** publish from your local machine.
 
-This is the single npm publish entrypoint for stable releases, prereleases, and canaries.
+## TL;DR
 
-We keep all npm publishes in one workflow file because npm trusted publishing only allows one configured GitHub Actions publisher per package.
+- Run `pnpm changeset` in any PR that contains changes that may in any way be user facing
+- Commit the generated `.changeset/*.md` file
+- Merging your PR will update or create a "Release PR"
+- Merging the "Release PR" will trigger a release
+- Release runs need to be approved on GitHub via Deployment Approvals
 
-Stable releases now pause at the `npm-publish` GitHub Actions environment and require approval before the publish job runs.
+## Start here
 
-## Release Types
+| I want to...                                           | What to do                                                                                |
+| ------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
+| Make my PR release something                           | Run `pnpm changeset` and commit the generated `.changeset/*.md` file                      |
+| Ship a normal stable release to npm `latest`           | Merge the auto-created release PR on `main`, then approve the `npm-publish` environment   |
+| Publish a branch build for testing                     | Run the **Release Packages** workflow with `release_mode=prerelease` and your branch name |
+| Manually trigger a canary publish                      | Run the **Release Packages** workflow with `release_mode=canary`                          |
+| Preview what would publish without actually publishing | Run the workflow with a `dry-run-*` mode                                                  |
 
-### Stable release
+## Creating a Changeset
 
-- Publishes the exact version already set in `js/package.json`
-- Publishes to npm as the normal latest release
-- Creates the `js-sdk-v<version>` git tag from the workflow
-- Fails before publishing if that tag already exists on GitHub
-- Waits for approval on the `npm-publish` environment before publishing
+If your PR changes a publishable package, it usually needs a changeset.
 
-### Prerelease
+```bash
+pnpm changeset
+```
 
-- Uses the current `js/package.json` version as the base version
-- Publishes `<version>-rc.<run_number>`
-- Publishes to the `rc` npm dist-tag
-- Does not update `js/package.json` in the repository
+That command will ask:
 
-### Canary
+1. which package(s) changed
+2. whether the bump is `patch`, `minor`, or `major`
+3. what should appear in the changelog
 
-- Can be triggered manually by running the same workflow with `release_type=canary`
-- Publishes `<js/package.json version>-canary.<YYYYMMDD>.<run_number>.g<short_sha>`
-- Publishes to the `canary` npm dist-tag
-- Does not create a GitHub release
-- Skips publishing if the current `HEAD` commit already matches the existing `canary` tag on npm
-- Skips publishing unless the latest completed `js.yaml` run on the target branch succeeded
+Commit the generated `.changeset/*.md` file with your PR.
 
-## Stable Release Checklist
+### How to choose the bump type
 
-1. Bump `js/package.json` according to [SEMVER](https://semver.org/) principles.
-2. Make sure tests and integration tests pass on the PR.
-3. Merge the change to `main` in `braintrust-sdk-javascript` and `braintrust`.
-4. Open the [Publish JavaScript SDK workflow](https://github.com/braintrustdata/braintrust-sdk-javascript/actions/workflows/publish-js-sdk.yaml).
-5. Click `Run workflow`.
-6. Set `release_type=stable`.
-7. Set `branch=main`.
-8. Run the workflow.
-9. Approve the pending `npm-publish` environment deployment when prompted.
-10. Monitor the run at https://github.com/braintrustdata/braintrust-sdk-javascript/actions/workflows/publish-js-sdk.yaml.
-11. Spot check the package at https://www.npmjs.com/package/braintrust.
-12. Update relevant docs ([internal](https://www.notion.so/braintrustdata/SDK-Release-Process-183f7858028980b8a57ac4a81d74f97c#2f1f78580289807ebf35d5e171832d2a)).
-13. Run the test app at https://github.com/braintrustdata/sdk-test-apps (internal) with `make verify-js`.
+| Bump    | Use it for                                                                                         | Examples                                                                                      |
+| ------- | -------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `patch` | Bug fixes, internal refactors, performance work, dependency updates, docs-only API-neutral changes | Fix a crash, improve retry logic, bump a dependency                                           |
+| `minor` | New backwards-compatible functionality                                                             | Add a new method, export a new helper, add an optional parameter                              |
+| `major` | Breaking changes                                                                                   | Remove or rename public API, change behavior in a way that may break users, drop Node support |
 
-## Prerelease Steps
+### Example changeset
 
-1. Open the [Publish JavaScript SDK workflow](https://github.com/braintrustdata/braintrust-sdk-javascript/actions/workflows/publish-js-sdk.yaml).
-2. Click `Run workflow`.
-3. Set `release_type=prerelease`.
-4. Set `branch` to the branch you want to prerelease from.
+```markdown
+---
+"braintrust": patch
+---
+
+Fix span export when using custom headers
+```
+
+You can edit the generated file by hand before committing it.
+
+### When you do not need a changeset
+
+You usually do **not** need one for docs-only, test-only, or CI-only changes.
+
+If your PR touches a publishable package but does not contain any potentially user-facing or user-impacting changes, bypass the check by using one of these:
+
+- add the `skip-changeset` label to the PR
+- include `#skip-changeset` in the PR title or body
+
+---
+
+## Stable release (`latest`)
+
+This is the normal production release flow.
+
+### The important mental model
+
+A stable release is a **two-step process**:
+
+```text
+feature PR with changeset
+→ merge to main
+→ automation opens or updates a release PR
+→ merge the release PR
+→ approve npm-publish
+→ packages publish to npm
+```
+
+**Merging your feature PR does not publish anything by itself.**
+It only feeds changes into the next release PR.
+
+### What to do
+
+1. Merge your PR with its changeset into `main`.
+2. Wait for GitHub Actions to create or update the release PR.
+3. Review the release PR:
+   - are the package bumps correct?
+   - do the changelog entries read well?
+4. Merge the release PR.
+5. Open the workflow run and approve the `npm-publish` environment when prompted.
+6. The workflow publishes to npm, pushes release tags, and creates GitHub Releases.
+
+### What stable release creates
+
+- npm publishes on the `latest` dist-tag
+- Changesets package tags such as `braintrust@3.8.0`
+- GitHub Releases
+
+## Canary release (`canary`)
+
+Canaries are nightly snapshots from `main`.
+
+Use them when someone wants the newest merged JS SDK code without waiting for the next stable release.
+
+### How it works
+
+```text
+nightly scheduler workflow dispatches canary publish on main
+→ check for pending changesets
+→ check whether HEAD already has a canary
+→ check whether latest CI passed
+→ publish @canary if needed
+```
+
+### Behavior
+
+- runs automatically every night at **04:00 UTC**
+- can also be triggered manually with `release_mode=canary`
+- skips if there are no pending changesets
+- skips if the current `main` commit already has a canary
+- skips if the latest required CI run on `main` did not succeed
+
+### Install a canary
+
+```bash
+npm install braintrust@canary
+npm install @braintrust/otel@canary
+```
+
+### Canary version format
+
+```text
+1.2.3-canary.20260404040000.abc1234
+```
+
+That includes:
+
+- the base version
+- a timestamp
+- the short commit hash
+
+### What canaries do not do
+
+- do not create git tags
+- do not create GitHub Releases
+- do not commit version changes back to the repo
+- do not need manual environment approval
+
+## Prerelease from a branch (`rc`)
+
+Use a prerelease when you want to publish a test build from a branch before merging to `main`.
+
+### What to do
+
+1. Open **Actions** in GitHub.
+2. Open the **Release Packages** workflow.
+3. Click **Run workflow**.
+4. Set:
+   - `release_mode=prerelease`
+   - `branch=<your branch>`
 5. Run the workflow.
-
-If you prerelease from a non-`main` branch, make sure that branch is in the state you intend to publish.
-
-## Nightly Canary
-
-Nightly canary scheduling now lives in the separate [Schedule JavaScript SDK Canary Publish workflow](https://github.com/braintrustdata/braintrust-sdk-javascript/actions/workflows/publish-js-sdk-canary-scheduler.yaml).
-
-- The scheduler only dispatches [Publish JavaScript SDK](https://github.com/braintrustdata/braintrust-sdk-javascript/actions/workflows/publish-js-sdk.yaml) with `release_type=canary` and `branch=main`.
-- The actual npm publish still runs in `publish-js-sdk.yaml`, so npm trusted publishing only needs that one workflow configured as the publisher.
-- Manual canary runs still use the publish workflow dispatch form directly.
-- Install with `npm install braintrust@canary`.
-
-The workflow writes a short run summary with the published version and recent commits touching `js/` so there is at least a lightweight change summary even though there is no formal changelog.
-
-## Fallback CLI Trigger
-
-If you do not want to open GitHub Actions manually, you can dispatch the same workflow from the terminal:
+6. After it finishes, install from the `rc` dist-tag:
 
 ```bash
-./js/scripts/dispatch-release-workflow.sh
+npm install braintrust@rc
 ```
 
-To target a different remote branch:
+### Prerelease version format
 
-```bash
-BRANCH=<branch> ./js/scripts/dispatch-release-workflow.sh
+```text
+1.2.3-rc.20260414104840.abcdef1234567890abcdef1234567890abcdef12
 ```
 
-To dispatch a prerelease or canary instead of a stable release:
+That includes:
 
-```bash
-RELEASE_TYPE=prerelease ./js/scripts/dispatch-release-workflow.sh
-RELEASE_TYPE=canary ./js/scripts/dispatch-release-workflow.sh
-```
+- the next base version
+- a timestamp
+- the commit SHA
 
-Notes:
+### What prereleases do not do
 
-- This is a fallback, not the recommended path.
-- It requires `gh` to be installed and authenticated.
-- It does not publish from your local checkout.
-- It dispatches the same GitHub Actions workflow against the selected branch on GitHub.
-- `RELEASE_TYPE` defaults to `stable`.
+- do not create git tags
+- do not create GitHub Releases
+- do not commit version changes back to the repo
+- do not publish packages that have no releasable changesets on that branch
 
-## Repository Setup
+## Dry run
 
-Configure the `npm-publish` environment in GitHub repository settings with the required reviewers who are allowed to approve stable releases.
+Use a dry run when you want to answer: **what would publish if I ran this for real?**
+
+Available modes:
+
+| Mode                 | Simulates                 |
+| -------------------- | ------------------------- |
+| `dry-run-stable`     | stable release from a ref |
+| `dry-run-prerelease` | prerelease from a branch  |
+| `dry-run-canary`     | canary publish from a ref |
+
+Dry runs will:
+
+- compute versions
+- build the publishable packages
+- create tarball artifacts
+- show a summary in the workflow output
+
+Dry runs will **not**:
+
+- publish to npm
+- create tags
+- create GitHub Releases
+- commit anything back to the repo
+
+## FAQ
+
+### Can I manually trigger a stable release from the workflow dispatch UI?
+
+No. Stable release publishing happens from the push-to-`main` flow around the release PR.
+
+### Can I publish a test build from a feature branch?
+
+Yes. Use `release_mode=prerelease` and a specific branch ref.
+
+### What is the difference between canary and prerelease?
+
+- **canary**: automated or manual snapshot from `main`, published to `canary`
+- **prerelease**: manual snapshot from any branch, published to `rc`

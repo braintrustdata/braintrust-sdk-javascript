@@ -1,0 +1,159 @@
+name: Run JS release mode
+
+on:
+  workflow_call:
+    inputs:
+      mode:
+        required: true
+        type: string
+      checkout_ref:
+        required: true
+        type: string
+      version_command:
+        required: true
+        type: string
+      publish_enabled:
+        required: false
+        default: false
+        type: boolean
+      publish_command:
+        required: false
+        default: ""
+        type: string
+      artifact_dir:
+        required: false
+        default: ""
+        type: string
+      artifact_name:
+        required: false
+        default: ""
+        type: string
+      slack_text:
+        required: false
+        default: ""
+        type: string
+      slack_header:
+        required: false
+        default: ""
+        type: string
+      slack_details:
+        required: false
+        default: ""
+        type: string
+      run_canary_check:
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      actions: read
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.checkout_ref }}
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: .tool-versions
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Validate publishable package metadata
+        run: node scripts/release/validate-publishable-packages.mjs
+      - name: Compute changeset status
+        run: pnpm exec changeset status --output=.changeset-status.json
+      - name: Check release status
+        id: status_check
+        run: node scripts/release/check-changeset-status.mjs --mode ${{ inputs.mode }} --status-file .changeset-status.json
+      - name: Check if canary already published for HEAD
+        if: inputs.run_canary_check && steps.status_check.outputs.has_packages == 'true'
+        id: canary_check
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/release/should-publish-canary.mjs --status-file .changeset-status.json
+      - name: Decide whether to continue
+        id: plan
+        env:
+          HAS_PACKAGES: ${{ steps.status_check.outputs.has_packages }}
+          RUN_CANARY_CHECK: ${{ inputs.run_canary_check && 'true' || 'false' }}
+          CANARY_SHOULD_PUBLISH: ${{ steps.canary_check.outputs.should_publish }}
+        run: |
+          should_run="$HAS_PACKAGES"
+          reason="Packages are available."
+
+          if [ "$HAS_PACKAGES" != "true" ]; then
+            should_run=false
+            reason="No publishable packages found."
+          elif [ "$RUN_CANARY_CHECK" = "true" ] && [ "$CANARY_SHOULD_PUBLISH" != "true" ]; then
+            should_run=false
+            reason="Canary already published for HEAD."
+          fi
+
+          echo "should_run=$should_run" >> "$GITHUB_OUTPUT"
+
+          {
+            echo "## Release mode"
+            echo
+            echo '- Mode: `${{ inputs.mode }}`'
+            echo '- Ref: `${{ inputs.checkout_ref }}`'
+            echo "- Decision: $reason"
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Version packages
+        if: steps.plan.outputs.should_run == 'true'
+        run: ${{ inputs.version_command }}
+      - name: Prepare release manifest
+        if: steps.plan.outputs.should_run == 'true'
+        run: node scripts/release/prepare-release-manifest.mjs --mode ${{ inputs.mode }} --status-file .changeset-status.json --output .release-manifest.json
+      - name: Build publishable packages
+        if: steps.plan.outputs.should_run == 'true'
+        run: bash scripts/release/build-publishable-packages.sh .release-manifest.json
+      - name: Publish packages
+        if: steps.plan.outputs.should_run == 'true' && inputs.publish_enabled
+        run: ${{ inputs.publish_command }}
+        env:
+          NPM_TOKEN: ""
+      - name: Summarize release
+        if: steps.plan.outputs.should_run == 'true'
+        id: summary
+        run: node scripts/release/summarize-release.mjs --mode ${{ inputs.mode }} --manifest .release-manifest.json
+      - name: Pack publishable packages
+        if: steps.plan.outputs.should_run == 'true' && inputs.artifact_dir != ''
+        run: node scripts/release/pack-publishable-packages.mjs --manifest .release-manifest.json --output-dir ${{ inputs.artifact_dir }}
+      - name: Upload dry-run artifacts
+        if: steps.plan.outputs.should_run == 'true' && inputs.artifact_dir != '' && inputs.artifact_name != ''
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: ${{ inputs.artifact_name }}
+          path: ${{ inputs.artifact_dir }}
+          retention-days: 5
+      - name: Post release to Slack
+        if: steps.plan.outputs.should_run == 'true' && inputs.slack_text != '' && inputs.slack_header != ''
+        uses: slackapi/slack-github-action@af78098f536edbc4de71162a307590698245be95 # v3.0.1
+        with:
+          method: chat.postMessage
+          token: ${{ secrets.SLACK_BOT_TOKEN }}
+          payload: |
+            channel: C0ABHT0SWA2
+            text: "${{ inputs.slack_text }}"
+            blocks:
+              - type: "header"
+                text:
+                  type: "plain_text"
+                  text: "${{ inputs.slack_header }}"
+              - type: "section"
+                text:
+                  type: "mrkdwn"
+                  text: |
+                    ${{ inputs.slack_details }}
+                    *Packages:*
+                    ${{ steps.summary.outputs.markdown }}
+
+                    <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>

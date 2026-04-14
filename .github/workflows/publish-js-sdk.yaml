@@ -1,534 +1,276 @@
-#
-# This workflow publishes the JavaScript SDK to npm.
-#
-# It supports three modes:
-#
-# 1. STABLE RELEASE:
-#    - Manually triggered via GitHub Actions UI
-#    - Releases the exact version already set in js/package.json
-#    - Fails if a js-sdk-v<version> tag already exists
-#    - Creates and pushes the git tag from the workflow before publishing
-#
-# 2. PRE-RELEASE:
-#    - Manually triggered via GitHub Actions UI
-#    - Automatically appends "rc.{run_number}" to the current package.json version
-#    - Publishes with the "rc" dist-tag
-#    - Does NOT require updating package.json in the repository
-#
-# 3. CANARY RELEASE:
-#    - Triggered manually or by the canary scheduler workflow
-#    - Publishes with the "canary" dist-tag
-#    - Reuses this workflow file so npm trusted publishing only needs one publisher
-#
-
-name: Publish JavaScript SDK
-
-concurrency:
-  group: publish-js-sdk-${{ inputs.release_type }}-${{ inputs.branch }}
-  cancel-in-progress: false
+name: Release Packages
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
     inputs:
-      release_type:
-        description: Release type
+      release_mode:
+        description: Release mode
         required: true
-        default: stable
         type: choice
         options:
-          - stable
           - prerelease
           - canary
+          - dry-run-stable
+          - dry-run-prerelease
+          - dry-run-canary
       branch:
-        description: Branch to release from
-        required: true
+        description: Branch to use for prerelease modes
+        required: false
+        type: string
+      ref:
+        description: Ref to use for stable/canary dry runs
+        required: false
         default: main
         type: string
 
+concurrency:
+  group: >-
+    release-${{ github.event_name == 'push' && format('stable-{0}', github.ref_name) || format('{0}-{1}', inputs.release_mode, inputs.branch || inputs.ref || github.ref_name) }}
+  cancel-in-progress: false
+
+env:
+  HUSKY: "0"
+
 jobs:
-  prepare-release:
+  stable-release-pr:
+    if: github.event_name == 'push' && github.ref_name == 'main'
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-    outputs:
-      version: ${{ steps.release_metadata.outputs.version }}
-      is_prerelease: ${{ steps.release_metadata.outputs.is_prerelease }}
-      is_canary: ${{ steps.release_metadata.outputs.is_canary }}
-      release_tag: ${{ steps.release_metadata.outputs.release_tag }}
-      branch: ${{ steps.release_metadata.outputs.branch }}
-      commit: ${{ steps.release_metadata.outputs.commit }}
-      release_type: ${{ steps.release_metadata.outputs.release_type }}
-    steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
-        with:
-          fetch-depth: 1
-          ref: ${{ inputs.branch }}
-      - name: Set up Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
-        with:
-          node-version-file: .tool-versions
-      - name: Setup mise
-        uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4.0.1
-      - name: Determine release metadata
-        id: release_metadata
-        working-directory: js
-        env:
-          RELEASE_TYPE: ${{ inputs.release_type }}
-          TARGET_BRANCH: ${{ inputs.branch }}
-        run: |
-          set -euo pipefail
-
-          CURRENT_VERSION=$(node -p "require('./package.json').version")
-          RELEASE_COMMIT=$(git rev-parse HEAD)
-          CURRENT_SHA=$(git rev-parse --short=7 HEAD)
-
-          echo "release_type=${RELEASE_TYPE}" >> "$GITHUB_OUTPUT"
-          echo "branch=${TARGET_BRANCH}" >> "$GITHUB_OUTPUT"
-          echo "commit=${RELEASE_COMMIT}" >> "$GITHUB_OUTPUT"
-
-          if [[ "$RELEASE_TYPE" == "stable" ]]; then
-            RELEASE_TAG="js-sdk-v${CURRENT_VERSION}"
-            ./scripts/check-remote-tag.sh "${RELEASE_TAG}"
-
-            echo "version=${CURRENT_VERSION}" >> "$GITHUB_OUTPUT"
-            echo "is_prerelease=false" >> "$GITHUB_OUTPUT"
-            echo "is_canary=false" >> "$GITHUB_OUTPUT"
-            echo "release_tag=${RELEASE_TAG}" >> "$GITHUB_OUTPUT"
-          elif [[ "$RELEASE_TYPE" == "prerelease" ]]; then
-            VERSION="${CURRENT_VERSION}-rc.${GITHUB_RUN_NUMBER}"
-
-            echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
-            echo "is_prerelease=true" >> "$GITHUB_OUTPUT"
-            echo "is_canary=false" >> "$GITHUB_OUTPUT"
-            echo "release_tag=" >> "$GITHUB_OUTPUT"
-          else
-            VERSION="${CURRENT_VERSION}-canary.$(date -u +%Y%m%d).${GITHUB_RUN_NUMBER}.g${CURRENT_SHA}"
-
-            echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
-            echo "is_prerelease=false" >> "$GITHUB_OUTPUT"
-            echo "is_canary=true" >> "$GITHUB_OUTPUT"
-            echo "release_tag=" >> "$GITHUB_OUTPUT"
-          fi
-
-  build-and-publish-stable:
-    needs: prepare-release
-    if: needs.prepare-release.outputs.release_type == 'stable'
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 15
     permissions:
       contents: write
-      id-token: write
-    environment: npm-publish
-    env:
-      VERSION: ${{ needs.prepare-release.outputs.version }}
-      RELEASE_TAG: ${{ needs.prepare-release.outputs.release_tag }}
-      TARGET_BRANCH: ${{ needs.prepare-release.outputs.branch }}
-      RELEASE_COMMIT: ${{ needs.prepare-release.outputs.commit }}
+      pull-requests: write
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           fetch-depth: 0
-          ref: ${{ needs.prepare-release.outputs.branch }}
-      - name: Set up Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version-file: .tool-versions
-          registry-url: "https://registry.npmjs.org"
-      - name: Setup mise
-        uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4.0.1
-      - name: Publish to npm (stable release)
-        working-directory: js
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Validate publishable package metadata
+        run: node scripts/release/validate-publishable-packages.mjs
+      - name: Create or update release PR
+        id: changesets
+        uses: changesets/action@d4c53c294341eec8a419ec2d1927138bfdeec234
+        with:
+          version: pnpm exec changeset version && pnpm install --lockfile-only
+          commit: "[ci] release"
+          title: "[ci] release"
         env:
-          RELEASE_BRANCH: ${{ env.TARGET_BRANCH }}
-        run: pnpm run publish:validate
-
-      - name: Create and push release tag
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Summarize stable release PR state
+        if: always()
         run: |
-          set -euo pipefail
+          if [ "${{ steps.changesets.outputs.hasChangesets }}" = "true" ]; then
+            {
+              echo "## Stable release PR"
+              echo
+              echo "Pending changesets were found and the release PR was refreshed."
+            } >> "$GITHUB_STEP_SUMMARY"
+          else
+            {
+              echo "## Stable release PR"
+              echo
+              echo "No pending changesets to release from main."
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
 
-          ./js/scripts/check-remote-tag.sh "${RELEASE_TAG}"
+  stable-detect-publish:
+    if: github.event_name == 'push' && github.ref_name == 'main'
+    needs: stable-release-pr
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    outputs:
+      has_work: ${{ steps.detect.outputs.has_work }}
+      needs_publish: ${{ steps.detect.outputs.needs_publish }}
+      needs_tags: ${{ steps.detect.outputs.needs_tags }}
+      needs_github_releases: ${{ steps.detect.outputs.needs_github_releases }}
+      manifest_path: ${{ steps.detect.outputs.manifest_path }}
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: .tool-versions
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Validate publishable package metadata
+        run: node scripts/release/validate-publishable-packages.mjs
+      - name: Detect stable publish work
+        id: detect
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/release/should-publish-stable.mjs --output .release-manifest.json
+
+  stable-publish:
+    if: github.event_name == 'push' && github.ref_name == 'main' && needs.stable-detect-publish.outputs.has_work == 'true'
+    needs: stable-detect-publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      id-token: write
+    environment: npm-publish
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: .tool-versions
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Validate publishable package metadata
+        run: node scripts/release/validate-publishable-packages.mjs
+      - name: Detect stable publish work
+        id: detect
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/release/should-publish-stable.mjs --output .release-manifest.json
+      - name: Configure git user
+        run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git tag "${RELEASE_TAG}" "${RELEASE_COMMIT}"
-          git push origin "${RELEASE_TAG}"
-
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
-        with:
-          name: javascript-sdk-release-dist
-          path: js/dist/
-          retention-days: 5
-
-      - name: Generate release notes
-        id: release_notes
-        run: |
-          RELEASE_NOTES=$(.github/scripts/generate-release-notes.sh "${RELEASE_TAG}" "js/")
-          echo "notes<<EOF" >> "$GITHUB_OUTPUT"
-          echo "$RELEASE_NOTES" >> "$GITHUB_OUTPUT"
-          echo "EOF" >> "$GITHUB_OUTPUT"
-          echo "release_name=JavaScript SDK v${VERSION}" >> "$GITHUB_OUTPUT"
-
-      - name: Create GitHub Release
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+      - name: Build publishable packages
+        if: steps.detect.outputs.needs_publish == 'true'
+        run: bash scripts/release/build-publishable-packages.sh .release-manifest.json
+      - name: Publish stable packages to npm
+        if: steps.detect.outputs.needs_publish == 'true'
+        run: pnpm exec changeset publish
         env:
-          RELEASE_NOTES: ${{ steps.release_notes.outputs.notes }}
-          RELEASE_NAME: ${{ steps.release_notes.outputs.release_name }}
-        with:
-          script: |
-            await github.rest.repos.createRelease({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              tag_name: process.env.RELEASE_TAG,
-              name: process.env.RELEASE_NAME,
-              body: process.env.RELEASE_NOTES,
-              draft: false,
-              prerelease: false
-            });
-
-  build-and-publish-prerelease:
-    needs: prepare-release
-    if: needs.prepare-release.outputs.release_type == 'prerelease'
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    permissions:
-      contents: write
-      id-token: write
-    env:
-      VERSION: ${{ needs.prepare-release.outputs.version }}
-    steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
-        with:
-          fetch-depth: 0
-          ref: ${{ needs.prepare-release.outputs.branch }}
-      - name: Set up Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
-        with:
-          node-version-file: .tool-versions
-          registry-url: "https://registry.npmjs.org"
-      - name: Setup mise
-        uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4.0.1
-      - name: Publish pre-release
-        working-directory: js
-        run: ./scripts/publish-prerelease.sh "rc" "$VERSION"
-
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
-        with:
-          name: javascript-sdk-prerelease-dist
-          path: js/dist/
-          retention-days: 5
-
-  publish-canary:
-    needs: prepare-release
-    if: needs.prepare-release.outputs.release_type == 'canary'
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    outputs:
-      published: ${{ steps.publish_status.outputs.published }}
-      version: ${{ steps.publish_status.outputs.version }}
-      package_name: ${{ steps.publish_status.outputs.package_name }}
-      commit_sha: ${{ steps.publish_status.outputs.commit_sha }}
-      reason: ${{ steps.publish_status.outputs.reason }}
-    permissions:
-      actions: read
-      contents: read
-      id-token: write
-    environment: npm-publish
-    env:
-      TARGET_BRANCH: ${{ needs.prepare-release.outputs.branch }}
-      VERSION: ${{ needs.prepare-release.outputs.version }}
-    steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
-        with:
-          fetch-depth: 0
-          ref: ${{ needs.prepare-release.outputs.branch }}
-
-      - name: Set up Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
-        with:
-          node-version-file: .tool-versions
-          registry-url: "https://registry.npmjs.org"
-      - name: Setup mise
-        uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4.0.1
-
-      - name: Check whether a new canary is needed
-        id: should_publish
-        run: |
-          set -euo pipefail
-
-          PACKAGE_NAME="braintrust"
-          CURRENT_SHA=$(git rev-parse --short=7 HEAD)
-          PUBLISHED_VERSION=$(npm view "${PACKAGE_NAME}@canary" version --registry=https://registry.npmjs.org 2>/dev/null || true)
-
-          if [ -z "$PUBLISHED_VERSION" ]; then
-            echo "should_publish=true" >> "$GITHUB_OUTPUT"
-            echo "reason=No existing canary found on npm." >> "$GITHUB_OUTPUT"
-            echo "previous_version=" >> "$GITHUB_OUTPUT"
-            echo "previous_sha=" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          PUBLISHED_SHA=$(printf '%s\n' "$PUBLISHED_VERSION" | sed -n 's/.*\.g\([0-9a-f]\{7\}\)$/\1/p')
-          echo "previous_version=${PUBLISHED_VERSION}" >> "$GITHUB_OUTPUT"
-          echo "previous_sha=${PUBLISHED_SHA}" >> "$GITHUB_OUTPUT"
-
-          if [ "$PUBLISHED_SHA" = "$CURRENT_SHA" ]; then
-            echo "should_publish=false" >> "$GITHUB_OUTPUT"
-            echo "reason=Current HEAD ${CURRENT_SHA} is already published as canary ${PUBLISHED_VERSION}." >> "$GITHUB_OUTPUT"
-          else
-            echo "should_publish=true" >> "$GITHUB_OUTPUT"
-            echo "reason=Published canary ${PUBLISHED_VERSION} does not match HEAD ${CURRENT_SHA}." >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Check JS CI status
-        if: steps.should_publish.outputs.should_publish == 'true'
-        id: ci_status
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+          NPM_TOKEN: ""
+      - name: Push Changesets release tags
+        if: steps.detect.outputs.has_work == 'true'
+        run: node scripts/release/push-release-tags.mjs --manifest .release-manifest.json
+      - name: Create GitHub Releases
+        if: steps.detect.outputs.has_work == 'true'
         env:
-          TARGET_BRANCH: ${{ env.TARGET_BRANCH }}
-        with:
-          script: |
-            const { owner, repo } = context.repo;
-            const response = await github.rest.actions.listWorkflowRuns({
-              owner,
-              repo,
-              workflow_id: "js.yaml",
-              branch: process.env.TARGET_BRANCH,
-              status: "completed",
-              per_page: 1,
-            });
-
-            const run = response.data.workflow_runs[0];
-            if (!run) {
-              core.setOutput("should_publish", "false");
-              core.setOutput("reason", `No completed js.yaml run found on ${process.env.TARGET_BRANCH}.`);
-              return;
-            }
-
-            if (run.conclusion !== "success") {
-              core.setOutput("should_publish", "false");
-              core.setOutput(
-                "reason",
-                `Latest completed js.yaml run on ${process.env.TARGET_BRANCH} concluded with ${run.conclusion} (${run.html_url}).`,
-              );
-              return;
-            }
-
-            core.setOutput("should_publish", "true");
-            core.setOutput(
-              "reason",
-              `Latest completed js.yaml run on ${process.env.TARGET_BRANCH} succeeded (${run.html_url}).`,
-            );
-
-      - name: Install dependencies
-        if: steps.should_publish.outputs.should_publish == 'true' && steps.ci_status.outputs.should_publish == 'true'
-        run: pnpm install --frozen-lockfile
-
-      - name: Prepare canary package metadata
-        if: steps.should_publish.outputs.should_publish == 'true' && steps.ci_status.outputs.should_publish == 'true'
-        id: metadata
-        working-directory: js
-        env:
-          VERSION: ${{ env.VERSION }}
-        run: |
-          set -euo pipefail
-
-          CURRENT_SHA=$(git rev-parse --short=7 HEAD)
-          CANARY_NAME="braintrust"
-          # Do not use `npm version` or `pnpm version` here — both delegate to
-          # npm's arborist which crashes when it encounters pnpm's workspace:*
-          # protocol specifiers in node_modules after `pnpm install`.
-          node -e "
-            const fs = require('fs');
-            const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-            pkg.version = process.env.VERSION;
-            fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
-          "
-
-          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
-          echo "package_name=${CANARY_NAME}" >> "$GITHUB_OUTPUT"
-          echo "commit_sha=${CURRENT_SHA}" >> "$GITHUB_OUTPUT"
-
-      - name: Build SDK
-        if: steps.should_publish.outputs.should_publish == 'true' && steps.ci_status.outputs.should_publish == 'true'
-        working-directory: js
-        run: pnpm run build
-
-      - name: Publish canary to npm
-        if: steps.should_publish.outputs.should_publish == 'true' && steps.ci_status.outputs.should_publish == 'true'
-        working-directory: js
-        run: npm publish --tag canary
-
-      - name: Upload build artifacts
-        if: steps.should_publish.outputs.should_publish == 'true' && steps.ci_status.outputs.should_publish == 'true'
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
-        with:
-          name: javascript-sdk-canary-dist
-          path: js/dist/
-          retention-days: 5
-
-      - name: Summarize canary publish
-        if: steps.should_publish.outputs.should_publish == 'true' && steps.ci_status.outputs.should_publish == 'true'
-        env:
-          PACKAGE_NAME: ${{ steps.metadata.outputs.package_name }}
-          VERSION: ${{ steps.metadata.outputs.version }}
-          COMMIT_SHA: ${{ steps.metadata.outputs.commit_sha }}
-          PREVIOUS_VERSION: ${{ steps.should_publish.outputs.previous_version }}
-          PREVIOUS_SHA: ${{ steps.should_publish.outputs.previous_sha }}
-        run: |
-          set -euo pipefail
-
-          {
-            echo "## JavaScript SDK Canary Published"
-            echo
-            echo "- Package: \`${PACKAGE_NAME}\`"
-            echo "- Version: \`${VERSION}\`"
-            echo "- Commit: \`${COMMIT_SHA}\`"
-            echo "- Registry: \`https://registry.npmjs.org\`"
-            echo "- Install: \`npm install ${PACKAGE_NAME}@canary\`"
-            echo
-            echo "### Included commits"
-            if [ -n "$PREVIOUS_SHA" ]; then
-              echo "- Previous canary: \`${PREVIOUS_VERSION}\`"
-              git log "${PREVIOUS_SHA}..HEAD" --pretty=format:"- %h %s (%an)"
-            else
-              echo "- Previous canary: none"
-              git log -n 20 --pretty=format:"- %h %s (%an)"
-            fi
-          } >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Summarize skipped canary publish
-        if: steps.should_publish.outputs.should_publish != 'true' || steps.ci_status.outputs.should_publish != 'true'
-        env:
-          SHOULD_PUBLISH_REASON: ${{ steps.should_publish.outputs.reason }}
-          CI_REASON: ${{ steps.ci_status.outputs.reason }}
-        run: |
-          set -euo pipefail
-
-          REASON="${CI_REASON:-$SHOULD_PUBLISH_REASON}"
-
-          {
-            echo "## JavaScript SDK Canary Skipped"
-            echo
-            echo "$REASON"
-          } >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Set publish status outputs
-        id: publish_status
-        if: always()
-        env:
-          SHOULD_PUBLISH: ${{ steps.should_publish.outputs.should_publish }}
-          CI_SHOULD_PUBLISH: ${{ steps.ci_status.outputs.should_publish }}
-          VERSION: ${{ steps.metadata.outputs.version }}
-          PACKAGE_NAME: ${{ steps.metadata.outputs.package_name }}
-          COMMIT_SHA: ${{ steps.metadata.outputs.commit_sha }}
-          SHOULD_PUBLISH_REASON: ${{ steps.should_publish.outputs.reason }}
-          CI_REASON: ${{ steps.ci_status.outputs.reason }}
-        run: |
-          set -euo pipefail
-
-          if [ "${SHOULD_PUBLISH}" = "true" ] && [ "${CI_SHOULD_PUBLISH}" = "true" ]; then
-            echo "published=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "published=false" >> "$GITHUB_OUTPUT"
-          fi
-
-          REASON="${CI_REASON:-$SHOULD_PUBLISH_REASON}"
-
-          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
-          echo "package_name=${PACKAGE_NAME}" >> "$GITHUB_OUTPUT"
-          echo "commit_sha=${COMMIT_SHA}" >> "$GITHUB_OUTPUT"
-          echo "reason=${REASON}" >> "$GITHUB_OUTPUT"
-
-  notify-success:
-    needs:
-      [
-        prepare-release,
-        build-and-publish-stable,
-        build-and-publish-prerelease,
-        publish-canary,
-      ]
-    if: |
-      always() &&
-      (
-        needs.build-and-publish-stable.result == 'success' ||
-        needs.build-and-publish-prerelease.result == 'success' ||
-        (needs.publish-canary.result == 'success' && needs.publish-canary.outputs.published == 'true')
-      )
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - name: Post to Slack on success (stable release)
-        if: needs.prepare-release.outputs.release_type == 'stable'
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/release/create-github-releases.mjs --manifest .release-manifest.json
+      - name: Summarize stable release
+        id: summary
+        run: node scripts/release/summarize-release.mjs --mode stable --manifest .release-manifest.json
+      - name: Post stable release to Slack
         uses: slackapi/slack-github-action@af78098f536edbc4de71162a307590698245be95 # v3.0.1
         with:
           method: chat.postMessage
           token: ${{ secrets.SLACK_BOT_TOKEN }}
           payload: |
             channel: C0ABHT0SWA2
-            text: "✅ JavaScript SDK v${{ needs.prepare-release.outputs.version }} published"
+            text: "✅ JavaScript packages published"
             blocks:
               - type: "header"
                 text:
                   type: "plain_text"
-                  text: "✅ JavaScript SDK Published"
+                  text: "✅ JavaScript packages published"
               - type: "section"
                 text:
                   type: "mrkdwn"
-                  text: "*Version:* ${{ needs.prepare-release.outputs.version }}\n*Branch:* `${{ needs.prepare-release.outputs.branch }}`\n*Package:* <https://www.npmjs.com/package/braintrust|braintrust>\n\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>"
+                  text: "*Packages:*\n${{ steps.summary.outputs.markdown }}\n\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>"
 
-      - name: Post to Slack on success (pre-release)
-        if: needs.prepare-release.outputs.release_type == 'prerelease'
-        uses: slackapi/slack-github-action@af78098f536edbc4de71162a307590698245be95 # v3.0.1
-        with:
-          method: chat.postMessage
-          token: ${{ secrets.SLACK_BOT_TOKEN }}
-          payload: |
-            channel: C0ABHT0SWA2
-            text: "🧪 JavaScript SDK pre-release v${{ needs.prepare-release.outputs.version }} published"
-            blocks:
-              - type: "header"
-                text:
-                  type: "plain_text"
-                  text: "🧪 JavaScript SDK Pre-release Published"
-              - type: "section"
-                text:
-                  type: "mrkdwn"
-                  text: "*Version:* ${{ needs.prepare-release.outputs.version }}\n*Branch:* `${{ needs.prepare-release.outputs.branch }}`\n*npm tag:* `rc` (install with `npm install braintrust@rc`)\n*Package:* <https://www.npmjs.com/package/braintrust|braintrust>\n\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>"
+  prerelease-snapshot:
+    if: github.event_name == 'workflow_dispatch' && inputs.release_mode == 'prerelease'
+    uses: ./.github/workflows/_run-js-release-mode.yaml
+    secrets: inherit
+    with:
+      mode: prerelease
+      checkout_ref: ${{ inputs.branch || github.ref_name }}
+      version_command: pnpm exec changeset version --snapshot rc
+      publish_enabled: true
+      publish_command: pnpm exec changeset publish --tag rc --no-git-tag
+      slack_text: "🧪 JavaScript prerelease snapshots published"
+      slack_header: "🧪 JavaScript prerelease snapshots published"
+      slack_details: |
+        *Branch:* `${{ inputs.branch || github.ref_name }}`
+        *Tag:* `rc`
 
-      - name: Post to Slack on success (canary)
-        if: needs.prepare-release.outputs.release_type == 'canary'
-        uses: slackapi/slack-github-action@af78098f536edbc4de71162a307590698245be95 # v3.0.1
-        with:
-          method: chat.postMessage
-          token: ${{ secrets.SLACK_BOT_TOKEN }}
-          payload: |
-            channel: C0ABHT0SWA2
-            text: "🧪 JavaScript SDK canary ${{ needs.publish-canary.outputs.version }} published: https://www.npmjs.com/package/braintrust/v/${{ needs.publish-canary.outputs.version }}"
-            blocks:
-              - type: "header"
-                text:
-                  type: "plain_text"
-                  text: "🧪 JavaScript SDK Canary Published"
-              - type: "section"
-                text:
-                  type: "mrkdwn"
-                  text: "*Version:* ${{ needs.publish-canary.outputs.version }}\n*Branch:* `${{ needs.prepare-release.outputs.branch }}`\n*Commit:* `${{ needs.publish-canary.outputs.commit_sha }}`\n*Package:* <https://www.npmjs.com/package/braintrust/v/${{ needs.publish-canary.outputs.version }}|${{ needs.publish-canary.outputs.package_name }}>\n*Install:* `npm install ${{ needs.publish-canary.outputs.package_name }}@canary`\n\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>"
+  canary-snapshot:
+    if: github.event_name == 'workflow_dispatch' && inputs.release_mode == 'canary'
+    uses: ./.github/workflows/_run-js-release-mode.yaml
+    secrets: inherit
+    with:
+      mode: canary
+      checkout_ref: ${{ github.ref_name }}
+      version_command: pnpm exec changeset version --snapshot canary
+      publish_enabled: true
+      publish_command: pnpm exec changeset publish --tag canary --no-git-tag
+      run_canary_check: true
+      slack_text: "🐤 JavaScript canary snapshots published"
+      slack_header: "🐤 JavaScript canary snapshots published"
+      slack_details: |
+        *Tag:* `canary`
+        *Commit:* `${{ github.sha }}`
+
+  dry-run-canary:
+    if: github.event_name == 'workflow_dispatch' && inputs.release_mode == 'dry-run-canary'
+    uses: ./.github/workflows/_run-js-release-mode.yaml
+    secrets: inherit
+    with:
+      mode: dry-run-canary
+      checkout_ref: ${{ inputs.ref || 'main' }}
+      version_command: pnpm exec changeset version --snapshot canary
+      artifact_dir: artifacts/dry-run-canary
+      artifact_name: canary-dry-run-${{ github.run_id }}
+
+  dry-run-stable:
+    if: github.event_name == 'workflow_dispatch' && inputs.release_mode == 'dry-run-stable'
+    uses: ./.github/workflows/_run-js-release-mode.yaml
+    secrets: inherit
+    with:
+      mode: dry-run-stable
+      checkout_ref: ${{ inputs.ref || 'main' }}
+      version_command: pnpm exec changeset version && pnpm install --lockfile-only
+      artifact_dir: artifacts/dry-run-stable
+      artifact_name: stable-dry-run-${{ github.run_id }}
+
+  dry-run-prerelease:
+    if: github.event_name == 'workflow_dispatch' && inputs.release_mode == 'dry-run-prerelease'
+    uses: ./.github/workflows/_run-js-release-mode.yaml
+    secrets: inherit
+    with:
+      mode: dry-run-prerelease
+      checkout_ref: ${{ inputs.branch || github.ref_name }}
+      version_command: pnpm exec changeset version --snapshot rc
+      artifact_dir: artifacts/dry-run-prerelease
+      artifact_name: prerelease-dry-run-${{ github.run_id }}
 
   notify-failure:
     needs:
       [
-        prepare-release,
-        build-and-publish-stable,
-        build-and-publish-prerelease,
-        publish-canary,
+        stable-release-pr,
+        stable-detect-publish,
+        stable-publish,
+        prerelease-snapshot,
+        canary-snapshot,
+        dry-run-stable,
+        dry-run-prerelease,
+        dry-run-canary,
       ]
     if: |
       always() &&
       (
-        needs.prepare-release.result == 'failure' ||
-        needs.build-and-publish-stable.result == 'failure' ||
-        needs.build-and-publish-prerelease.result == 'failure' ||
-        needs.publish-canary.result == 'failure'
+        needs.stable-release-pr.result == 'failure' ||
+        needs.stable-detect-publish.result == 'failure' ||
+        needs.stable-publish.result == 'failure' ||
+        needs.prerelease-snapshot.result == 'failure' ||
+        needs.canary-snapshot.result == 'failure' ||
+        needs.dry-run-stable.result == 'failure' ||
+        needs.dry-run-prerelease.result == 'failure' ||
+        needs.dry-run-canary.result == 'failure'
       )
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -540,41 +282,13 @@ jobs:
           token: ${{ secrets.SLACK_BOT_TOKEN }}
           payload: |
             channel: C0ABHT0SWA2
-            text: "🚨 JavaScript SDK release failed"
+            text: "🚨 JavaScript release workflow failed"
             blocks:
               - type: "header"
                 text:
                   type: "plain_text"
-                  text: "🚨 JavaScript SDK Release Failed"
+                  text: "🚨 JavaScript release workflow failed"
               - type: "section"
                 text:
                   type: "mrkdwn"
-                  text: "*Release type:* ${{ needs.prepare-release.outputs.release_type || 'canary' }}\n*Branch:* `${{ needs.prepare-release.outputs.branch || 'main' }}`\n*Commit:* ${{ needs.prepare-release.outputs.commit || github.sha }}\n*Triggered by:* ${{ github.event_name }}\n\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>"
-
-  notify-skipped:
-    needs: [prepare-release, publish-canary]
-    if: |
-      always() &&
-      needs.prepare-release.outputs.release_type == 'canary' &&
-      needs.publish-canary.result == 'success' &&
-      needs.publish-canary.outputs.published != 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - name: Post to Slack on intentional skip
-        uses: slackapi/slack-github-action@af78098f536edbc4de71162a307590698245be95 # v3.0.1
-        with:
-          method: chat.postMessage
-          token: ${{ secrets.SLACK_BOT_TOKEN }}
-          payload: |
-            channel: C0ABHT0SWA2
-            text: "⏭️ JavaScript SDK canary publish skipped: ${{ needs.publish-canary.outputs.reason }}"
-            blocks:
-              - type: "header"
-                text:
-                  type: "plain_text"
-                  text: "⏭️ JavaScript SDK Canary Publish Skipped"
-              - type: "section"
-                text:
-                  type: "mrkdwn"
-                  text: "*Branch:* `${{ needs.prepare-release.outputs.branch }}`\n*Commit:* `${{ needs.prepare-release.outputs.commit }}`\n*Reason:* ${{ needs.publish-canary.outputs.reason }}\n\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>"
+                  text: "*Event:* `${{ github.event_name }}`\n*Ref:* `${{ github.ref_name }}`\n*Mode:* `${{ github.event_name == 'push' && 'stable-main' || inputs.release_mode }}`\n\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>"

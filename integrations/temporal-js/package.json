@@ -68,5 +68,15 @@
     "@temporalio/workflow": {
       "optional": false
     }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/braintrustdata/braintrust-sdk-javascript.git",
+    "directory": "integrations/temporal-js"
+  },
+  "homepage": "https://www.braintrust.dev/docs",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   }
 }
