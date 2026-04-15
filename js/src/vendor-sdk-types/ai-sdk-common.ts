@@ -7,6 +7,7 @@
 export interface AISDKTokenBucket {
   total?: number;
   cacheRead?: number;
+  cacheWrite?: number;
   reasoning?: number;
   [key: string]: unknown;
 }
@@ -15,7 +16,14 @@ type AISDKTokenCount = number & AISDKTokenBucket;
 
 export interface AISDKUsage {
   inputTokens?: AISDKTokenCount;
+  inputTokenDetails?: {
+    noCacheTokens?: number;
+    cacheReadTokens?: number;
+    cacheWriteTokens?: number;
+    [key: string]: unknown;
+  };
   outputTokens?: AISDKTokenCount;
+  outputTokenDetails?: Record<string, unknown>;
   totalTokens?: number;
   tokens?: number;
   total_tokens?: number;

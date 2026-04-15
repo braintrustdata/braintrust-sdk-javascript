@@ -9,6 +9,7 @@ import {
 export const ROOT_NAME = "ai-sdk-instrumentation-root";
 export const SCENARIO_NAME = "ai-sdk-instrumentation";
 export const AI_SDK_SCENARIO_TIMEOUT_MS = 120_000;
+const ANTHROPIC_CACHE_PREFIX = "braintrust cache prefix ".repeat(350).trim();
 export const AI_SDK_SCENARIO_SPECS = [
   {
     autoEntry: "scenario.ai-sdk-v3.mjs",
@@ -17,6 +18,7 @@ export const AI_SDK_SCENARIO_SPECS = [
     openaiModuleName: "ai-sdk-openai-v3",
     packageName: "ai-sdk-v3",
     snapshotName: "ai-sdk-v3",
+    supportsProviderCacheAssertions: false,
     supportsGenerateObject: true,
     supportsStreamObject: true,
     supportsToolExecution: false,
@@ -30,6 +32,7 @@ export const AI_SDK_SCENARIO_SPECS = [
     openaiModuleName: "ai-sdk-openai-v4",
     packageName: "ai-sdk-v4",
     snapshotName: "ai-sdk-v4",
+    supportsProviderCacheAssertions: false,
     supportsGenerateObject: true,
     supportsStreamObject: true,
     supportsToolExecution: false,
@@ -45,6 +48,7 @@ export const AI_SDK_SCENARIO_SPECS = [
     openaiModuleName: "ai-sdk-openai-v5",
     packageName: "ai-sdk-v5",
     snapshotName: "ai-sdk-v5",
+    supportsProviderCacheAssertions: true,
     supportsGenerateObject: true,
     supportsStreamObject: true,
     supportsToolExecution: true,
@@ -60,6 +64,7 @@ export const AI_SDK_SCENARIO_SPECS = [
     openaiModuleName: "ai-sdk-openai-v6",
     packageName: "ai-sdk-v6",
     snapshotName: "ai-sdk-v6",
+    supportsProviderCacheAssertions: true,
     supportsGenerateObject: true,
     supportsStreamObject: true,
     supportsToolExecution: true,
@@ -125,6 +130,7 @@ async function runAISDKInstrumentationScenario(
 ) {
   const instrumentedAI = decorateAI ? decorateAI(options.ai) : options.ai;
   const openaiModel = options.openai("gpt-4o-mini-2024-07-18");
+  const anthropicModel = options.anthropic?.("claude-3-haiku-20240307");
   const openaiEmbeddingModel = options.openai.textEmbeddingModel(
     "text-embedding-3-small",
   );
@@ -215,6 +221,49 @@ async function runAISDKInstrumentationScenario(
 
         await instrumentedAI.generateText(toolRequest);
       });
+
+      await runOperation(
+        "ai-sdk-openai-cache-operation",
+        "openai-cache",
+        async () => {
+          await instrumentedAI.generateText({
+            model: openaiModel,
+            prompt: "Reply with exactly CACHE_OK and nothing else.",
+            temperature: 0,
+            ...tokenLimit(options.maxTokensKey, 24),
+          });
+        },
+      );
+
+      if (anthropicModel) {
+        await runOperation(
+          "ai-sdk-anthropic-cache-operation",
+          "anthropic-cache",
+          async () => {
+            await instrumentedAI.generateText({
+              model: anthropicModel,
+              messages: [
+                {
+                  role: "user",
+                  content: [
+                    {
+                      type: "text",
+                      text: `${ANTHROPIC_CACHE_PREFIX}\n\nReply with exactly CACHE_OK and nothing else.`,
+                    },
+                  ],
+                  providerOptions: {
+                    anthropic: {
+                      cacheControl: { type: "ephemeral" },
+                    },
+                  },
+                },
+              ],
+              temperature: 0,
+              ...tokenLimit(options.maxTokensKey, 24),
+            });
+          },
+        );
+      }
 
       if (supportsRichInputScenarios) {
         await runOperation(

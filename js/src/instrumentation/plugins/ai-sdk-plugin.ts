@@ -1785,6 +1785,7 @@ function extractTokenMetrics(result: AISDKResult): Record<string, number> {
 
   const promptCachedTokens = firstNumber(
     usage.inputTokens?.cacheRead,
+    usage.inputTokenDetails?.cacheReadTokens,
     usage.cachedInputTokens,
     usage.promptCachedTokens,
     usage.prompt_cached_tokens,
@@ -1794,8 +1795,11 @@ function extractTokenMetrics(result: AISDKResult): Record<string, number> {
   }
 
   const promptCacheCreationTokens = firstNumber(
+    usage.inputTokens?.cacheWrite,
+    usage.inputTokenDetails?.cacheWriteTokens,
     usage.promptCacheCreationTokens,
     usage.prompt_cache_creation_tokens,
+    extractAnthropicCacheCreationTokens(result),
   );
   if (promptCacheCreationTokens !== undefined) {
     metrics.prompt_cache_creation_tokens = promptCacheCreationTokens;
@@ -1846,6 +1850,27 @@ function extractTokenMetrics(result: AISDKResult): Record<string, number> {
   }
 
   return metrics;
+}
+
+function extractAnthropicCacheCreationTokens(
+  result: AISDKResult,
+): number | undefined {
+  const providerMetadata = safeSerializableFieldRead(
+    result,
+    "providerMetadata",
+  ) as Record<string, unknown> | undefined;
+  const anthropicMetadata = providerMetadata?.anthropic as
+    | Record<string, unknown>
+    | undefined;
+  if (!anthropicMetadata) {
+    return undefined;
+  }
+
+  return firstNumber(
+    anthropicMetadata.cacheCreationInputTokens,
+    (anthropicMetadata.usage as Record<string, unknown> | undefined)
+      ?.cache_creation_input_tokens,
+  );
 }
 
 function safeResultFieldRead(

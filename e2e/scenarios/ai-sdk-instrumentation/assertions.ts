@@ -197,6 +197,20 @@ function findGenerateTextTraceForOperation(
   return { child, operation, parent };
 }
 
+function findOpenAICacheTrace(events: CapturedLogEvent[]) {
+  return findGenerateTextTraceForOperation(
+    events,
+    "ai-sdk-openai-cache-operation",
+  );
+}
+
+function findAnthropicCacheTrace(events: CapturedLogEvent[]) {
+  return findGenerateTextTraceForOperation(
+    events,
+    "ai-sdk-anthropic-cache-operation",
+  );
+}
+
 function findOutputObjectTrace(events: CapturedLogEvent[]) {
   return findGenerateTextTraceForOperation(
     events,
@@ -673,7 +687,10 @@ function expectOperationParentedByRoot(
   expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
 }
 
-function expectAISDKParentSpan(span: CapturedLogEvent | undefined) {
+function expectAISDKParentSpan(
+  span: CapturedLogEvent | undefined,
+  providerPrefix = "openai",
+) {
   expect(span).toBeDefined();
   expect(span?.span.type).toBe("function");
   expect(span?.row.metadata).toMatchObject({
@@ -686,7 +703,7 @@ function expectAISDKParentSpan(span: CapturedLogEvent | undefined) {
     String(
       (span?.row.metadata as { provider?: unknown } | undefined)?.provider ??
         "",
-    ).startsWith("openai"),
+    ).startsWith(providerPrefix),
   ).toBe(true);
   expect(
     typeof (span?.row.metadata as { model?: unknown } | undefined)?.model,
@@ -724,6 +741,7 @@ export function defineAISDKInstrumentationAssertions(options: {
   sdkMajorVersion: number;
   snapshotName: string;
   supportsAttachmentScenario: boolean;
+  supportsProviderCacheAssertions: boolean;
   supportsDenyOutputOverrideScenario: boolean;
   supportsGenerateObject: boolean;
   supportsOutputObjectScenario: boolean;
@@ -793,6 +811,54 @@ export function defineAISDKInstrumentationAssertions(options: {
         ]),
       ).toBe(true);
     });
+
+    if (options.sdkMajorVersion >= 5) {
+      test(
+        "captures cache metrics for OpenAI generateText()",
+        testConfig,
+        () => {
+          const root = findLatestSpan(events, ROOT_NAME);
+          const trace = findOpenAICacheTrace(events);
+
+          expectOperationParentedByRoot(trace.operation, root);
+          expectAISDKParentSpan(trace.parent);
+          expectAISDKModelChildSpan(trace.child);
+          expect(
+            collectMetricValues(
+              trace.child ? [trace.child] : [],
+              "prompt_cached_tokens",
+            ),
+          ).not.toHaveLength(0);
+        },
+      );
+    }
+
+    if (options.supportsProviderCacheAssertions) {
+      test(
+        "captures cache metrics for Anthropic generateText()",
+        testConfig,
+        () => {
+          const root = findLatestSpan(events, ROOT_NAME);
+          const trace = findAnthropicCacheTrace(events);
+
+          expectOperationParentedByRoot(trace.operation, root);
+          expectAISDKParentSpan(trace.parent, "anthropic");
+          expectAISDKModelChildSpan(trace.child);
+          expect(
+            collectMetricValues(
+              trace.child ? [trace.child] : [],
+              "prompt_cached_tokens",
+            ),
+          ).not.toHaveLength(0);
+          expect(
+            collectMetricValues(
+              trace.child ? [trace.child] : [],
+              "prompt_cache_creation_tokens",
+            ),
+          ).not.toHaveLength(0);
+        },
+      );
+    }
 
     test("captures trace for streamText()", testConfig, () => {
       const root = findLatestSpan(events, ROOT_NAME);
