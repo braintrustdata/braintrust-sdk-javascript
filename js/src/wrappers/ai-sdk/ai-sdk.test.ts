@@ -9,6 +9,7 @@ import {
   describe,
   expectTypeOf,
   expect,
+  vi,
 } from "vitest";
 import { configureNode } from "../../node/config";
 import * as ai from "ai";
