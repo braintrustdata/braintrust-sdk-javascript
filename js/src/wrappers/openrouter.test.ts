@@ -16,6 +16,9 @@ const TEST_MODEL_ID = "gpt-4.1-mini";
 const TEST_PROVIDER = "openai";
 const TEST_EMBEDDING_MODEL = "openai/text-embedding-3-small";
 const TEST_EMBEDDING_MODEL_ID = "text-embedding-3-small";
+const TEST_RERANK_MODEL = "cohere/rerank-v3.5";
+const TEST_RERANK_MODEL_ID = "rerank-v3.5";
+const TEST_RERANK_PROVIDER = "cohere";
 
 try {
   configureNode();
@@ -326,6 +329,74 @@ describe("openrouter wrapper", () => {
       prompt_tokens: 4,
       tokens: 4,
     });
+  });
+
+  test("wraps rerank.rerank", async () => {
+    const rerankFn = vi.fn(async () => ({
+      id: "rerank_123",
+      model: TEST_RERANK_MODEL,
+      provider: TEST_RERANK_PROVIDER,
+      results: [
+        {
+          index: 2,
+          relevanceScore: 0.93,
+          document: { text: "gamma" },
+        },
+        {
+          index: 0,
+          relevanceScore: 0.71,
+          document: { text: "alpha" },
+        },
+      ],
+      usage: {
+        totalTokens: 5,
+      },
+    }));
+
+    const client = wrapOpenRouter({
+      rerank: {
+        rerank: rerankFn,
+      },
+    });
+
+    await client.rerank.rerank({
+      requestBody: {
+        documents: ["alpha", "beta", "gamma"],
+        model: TEST_RERANK_MODEL,
+        query: "greek letter",
+        topN: 2,
+      },
+    });
+
+    const spans = await backgroundLogger.drain();
+    expect(spans).toHaveLength(1);
+
+    const span = spans[0] as Record<string, any>;
+    expect(span.span_attributes).toMatchObject({
+      name: "openrouter.rerank.rerank",
+      type: "llm",
+    });
+    expect(span.input).toMatchObject({
+      documents: ["alpha", "beta", "gamma"],
+      query: "greek letter",
+    });
+    expect(span.metadata).toMatchObject({
+      provider: TEST_RERANK_PROVIDER,
+      model: TEST_RERANK_MODEL_ID,
+      topN: 2,
+      document_count: 3,
+      id: "rerank_123",
+    });
+    expect(span.output).toEqual([
+      {
+        index: 2,
+        relevance_score: 0.93,
+      },
+      {
+        index: 0,
+        relevance_score: 0.71,
+      },
+    ]);
   });
 
   test("wraps callModel tool execution with tool spans", async () => {

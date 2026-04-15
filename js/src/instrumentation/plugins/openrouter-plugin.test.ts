@@ -18,6 +18,8 @@ import {
 
 const TEST_PROVIDER = "openai";
 const TEST_MODEL = "gpt-4.1-mini";
+const TEST_RERANK_PROVIDER = "cohere";
+const TEST_RERANK_MODEL = "rerank-v3.5";
 
 try {
   configureNode();
@@ -514,6 +516,76 @@ describe("OpenRouter Plugin", () => {
       });
       expect(toolSpan?.output).toMatchObject({
         forecast: "Sunny in Vienna",
+      });
+    });
+  });
+
+  describe("rerank instrumentation", () => {
+    it("records rerank request metadata and normalized ranking output", async () => {
+      const request = {
+        requestBody: {
+          documents: ["alpha", "beta", "gamma"],
+          model: `${TEST_RERANK_PROVIDER}/${TEST_RERANK_MODEL}`,
+          query: "greek letter",
+          topN: 2,
+        },
+      };
+
+      await openRouterChannels.rerankRerank.tracePromise(
+        async () => ({
+          id: "rerank_123",
+          model: `${TEST_RERANK_PROVIDER}/${TEST_RERANK_MODEL}`,
+          provider: TEST_RERANK_PROVIDER,
+          results: [
+            {
+              index: 2,
+              relevanceScore: 0.93,
+              document: { text: "gamma" },
+            },
+            {
+              index: 0,
+              relevanceScore: 0.71,
+              document: { text: "alpha" },
+            },
+          ],
+          usage: {
+            totalTokens: 5,
+          },
+        }),
+        { arguments: [request] },
+      );
+
+      const spans = await backgroundLogger.drain();
+      expect(spans).toHaveLength(1);
+
+      const span = spans[0] as Record<string, any>;
+      expect(span.span_attributes).toMatchObject({
+        name: "openrouter.rerank.rerank",
+        type: "llm",
+      });
+      expect(span.input).toMatchObject({
+        documents: ["alpha", "beta", "gamma"],
+        query: "greek letter",
+      });
+      expect(span.metadata).toMatchObject({
+        provider: TEST_RERANK_PROVIDER,
+        model: TEST_RERANK_MODEL,
+        topN: 2,
+        document_count: 3,
+        id: "rerank_123",
+      });
+      expect(span.output).toEqual([
+        {
+          index: 2,
+          relevance_score: 0.93,
+        },
+        {
+          index: 0,
+          relevance_score: 0.71,
+        },
+      ]);
+      expect(span.metrics).toMatchObject({
+        tokens: 5,
       });
     });
   });

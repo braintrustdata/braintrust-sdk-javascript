@@ -10,6 +10,8 @@ import type {
   AISDKEmbedFunction,
   AISDKEmbedParams,
   AISDKGenerateFunction,
+  AISDKRerankFunction,
+  AISDKRerankParams,
   AISDKStreamFunction,
 } from "../../vendor-sdk-types/ai-sdk";
 
@@ -128,6 +130,10 @@ export function wrapAISDK<T>(aiSDK: T, options: WrapAISDKOptions = {}): T {
           return wrapEmbed(typedAISDK.embed, options, typedAISDK);
         case "embedMany":
           return wrapEmbedMany(typedAISDK.embedMany, options, typedAISDK);
+        case "rerank":
+          return typedAISDK.rerank
+            ? wrapRerank(typedAISDK.rerank, options, typedAISDK)
+            : typedAISDK.rerank;
         case "Agent":
         case "Experimental_Agent":
         case "ToolLoopAgent":
@@ -333,6 +339,44 @@ const wrapEmbedMany = (
     { aiSDK },
     options,
   );
+};
+
+const makeRerankWrapper = (
+  rerank: AISDKRerankFunction,
+  contextOptions: {
+    aiSDK?: AISDK;
+    self?: unknown;
+    spanType?: SpanTypeAttribute;
+  } = {},
+  options: WrapAISDKOptions = {},
+) => {
+  const wrapper = async function (allParams: AISDKRerankParams & SpanInfo) {
+    const { span_info, ...params } = allParams;
+    const tracedParams = { ...params };
+
+    return aiSDKChannels.rerank.tracePromise(
+      () => rerank(tracedParams),
+      createAISDKChannelContext(tracedParams, {
+        aiSDK: contextOptions.aiSDK,
+        denyOutputPaths: options.denyOutputPaths,
+        self: contextOptions.self,
+        span_info: mergeSpanInfo(span_info, {
+          name: "rerank",
+          spanType: contextOptions.spanType,
+        }),
+      }),
+    );
+  };
+  Object.defineProperty(wrapper, "name", { value: "rerank", writable: false });
+  return wrapper;
+};
+
+const wrapRerank = (
+  rerank: AISDKRerankFunction,
+  options: WrapAISDKOptions = {},
+  aiSDK?: AISDK,
+) => {
+  return makeRerankWrapper(rerank, { aiSDK }, options);
 };
 
 const makeStreamWrapper = (

@@ -18,6 +18,7 @@ export const AI_SDK_SCENARIO_SPECS = [
     packageName: "ai-sdk-v3",
     snapshotName: "ai-sdk-v3",
     supportsGenerateObject: true,
+    supportsRerank: false,
     supportsStreamObject: true,
     supportsToolExecution: false,
     toolSchemaKey: "parameters",
@@ -31,6 +32,7 @@ export const AI_SDK_SCENARIO_SPECS = [
     packageName: "ai-sdk-v4",
     snapshotName: "ai-sdk-v4",
     supportsGenerateObject: true,
+    supportsRerank: false,
     supportsStreamObject: true,
     supportsToolExecution: false,
     toolSchemaKey: "parameters",
@@ -40,12 +42,14 @@ export const AI_SDK_SCENARIO_SPECS = [
     agentClassExport: "Experimental_Agent",
     agentSpanName: "Agent",
     autoEntry: "scenario.ai-sdk-v5.mjs",
+    cohereModuleName: "ai-sdk-cohere-v5",
     dependencyName: "ai-sdk-v5",
     maxTokensKey: "maxOutputTokens",
     openaiModuleName: "ai-sdk-openai-v5",
     packageName: "ai-sdk-v5",
     snapshotName: "ai-sdk-v5",
     supportsGenerateObject: true,
+    supportsRerank: false,
     supportsStreamObject: true,
     supportsToolExecution: true,
     toolSchemaKey: "inputSchema",
@@ -55,6 +59,7 @@ export const AI_SDK_SCENARIO_SPECS = [
     agentClassExport: "ToolLoopAgent",
     agentSpanName: "ToolLoopAgent",
     autoEntry: "scenario.mjs",
+    cohereModuleName: "ai-sdk-cohere-v6",
     dependencyName: "ai-sdk-v6",
     maxTokensKey: "maxOutputTokens",
     openaiModuleName: "ai-sdk-openai-v6",
@@ -128,6 +133,10 @@ async function runAISDKInstrumentationScenario(
   const openaiEmbeddingModel = options.openai.textEmbeddingModel(
     "text-embedding-3-small",
   );
+  const cohereRerankModel =
+    options.cohere && typeof options.cohere.reranking === "function"
+      ? options.cohere.reranking("rerank-v3.5")
+      : undefined;
   const sdkMajorVersion = parseMajorVersion(options.sdkVersion);
   const supportsRichInputScenarios = sdkMajorVersion >= 5;
   const outputObject = createOutputObjectIfSupported(options.ai);
@@ -193,6 +202,25 @@ async function runAISDKInstrumentationScenario(
           });
         },
       );
+
+      if (
+        options.supportsRerank !== false &&
+        typeof instrumentedAI.rerank === "function" &&
+        cohereRerankModel
+      ) {
+        await runOperation("ai-sdk-rerank-operation", "rerank", async () => {
+          await instrumentedAI.rerank({
+            documents: [
+              "Athens is in Greece.",
+              "Paris is in France.",
+              "Lima is in Peru.",
+            ],
+            model: cohereRerankModel,
+            query: "Which document is about France?",
+            topN: 2,
+          });
+        });
+      }
 
       await runOperation("ai-sdk-tool-operation", "tool", async () => {
         const toolRequest = {
