@@ -592,7 +592,7 @@ function serializeGenerateContentInput(
 ): Record<string, unknown> {
   const input: Record<string, unknown> = {
     model: params.model,
-    contents: serializeGenerateContentContents(params.contents),
+    contents: serializeContentCollection(params.contents),
   };
 
   const config = params.config ? tryToDict(params.config) : null;
@@ -614,7 +614,7 @@ function serializeEmbedContentInput(
 ): Record<string, unknown> {
   const input: Record<string, unknown> = {
     model: params.model,
-    contents: serializeEmbedContentContents(params.contents),
+    contents: serializeContentCollection(params.contents),
   };
 
   const config = params.config ? tryToDict(params.config) : null;
@@ -623,18 +623,6 @@ function serializeEmbedContentInput(
   }
 
   return input;
-}
-
-function serializeGenerateContentContents(
-  contents: GoogleGenAIGenerateContentParams["contents"],
-): unknown {
-  return serializeContentCollection(contents);
-}
-
-function serializeEmbedContentContents(
-  contents: GoogleGenAIEmbedContentParams["contents"],
-): unknown {
-  return serializeContentCollection(contents);
 }
 
 /**
