@@ -66,6 +66,23 @@ function pickMetadata(
   return Object.keys(picked).length > 0 ? (picked as Json) : null;
 }
 
+function pickMetrics(
+  metrics: Record<string, unknown> | undefined,
+  keys: string[],
+): Json {
+  if (!metrics) {
+    return null;
+  }
+
+  const picked = Object.fromEntries(
+    keys.flatMap((key) =>
+      key in metrics ? [[key, metrics[key] as Json]] : [],
+    ),
+  );
+
+  return Object.keys(picked).length > 0 ? (picked as Json) : null;
+}
+
 function collectToolCallNames(output: unknown): string[] {
   if (!isRecord(output)) {
     return [];
@@ -563,6 +580,14 @@ function summarizeAISDKSpan(event: CapturedLogEvent): Json {
       event.row.metadata as Record<string, unknown> | undefined,
       ["aiSdkVersion", "provider", "model", "operation", "scenario"],
     ),
+    metrics: pickMetrics(event.metrics, [
+      "completion_tokens",
+      "prompt_tokens",
+      "prompt_cached_tokens",
+      "prompt_cache_creation_tokens",
+      "time_to_first_token",
+      "tokens",
+    ]),
     name: event.span.name ?? null,
     root_span_id: event.span.rootId ?? null,
     span_id: event.span.id ?? null,
@@ -609,6 +634,14 @@ function summarizeAISDKPayload(event: CapturedLogEvent): Json {
       event.row.metadata as Record<string, unknown> | undefined,
       ["aiSdkVersion", "provider", "model", "operation", "scenario"],
     ),
+    metrics: pickMetrics(event.metrics, [
+      "completion_tokens",
+      "prompt_tokens",
+      "prompt_cached_tokens",
+      "prompt_cache_creation_tokens",
+      "time_to_first_token",
+      "tokens",
+    ]),
     name: event.span.name ?? null,
     output: summarizeAISDKOutput(event.span.name ?? null, event.output),
   } satisfies Json;
@@ -618,6 +651,8 @@ function collectSummaryEvents(
   events: CapturedLogEvent[],
   options: {
     agentSpanName?: AgentSpanName;
+    sdkMajorVersion: number;
+    supportsProviderCacheAssertions: boolean;
     supportsGenerateObject: boolean;
     supportsRerank: boolean;
     supportsStreamObject: boolean;
@@ -627,6 +662,11 @@ function collectSummaryEvents(
   const stream = findStreamTrace(events);
   const tool = findToolTrace(events);
   const rerank = options.supportsRerank ? findRerankTrace(events) : undefined;
+  const openaiCache =
+    options.sdkMajorVersion >= 5 ? findOpenAICacheTrace(events) : undefined;
+  const anthropicCache = options.supportsProviderCacheAssertions
+    ? findAnthropicCacheTrace(events)
+    : undefined;
   const generateObject = options.supportsGenerateObject
     ? findGenerateObjectTrace(events)
     : undefined;
@@ -648,6 +688,12 @@ function collectSummaryEvents(
     stream.parent,
     tool.operation,
     tool.parent,
+    ...(openaiCache
+      ? [openaiCache.operation, openaiCache.parent, openaiCache.child]
+      : []),
+    ...(anthropicCache
+      ? [anthropicCache.operation, anthropicCache.parent, anthropicCache.child]
+      : []),
     ...(rerank ? [rerank.operation, rerank.parent] : []),
     ...tool.toolSpans,
     ...(generateObject
@@ -663,6 +709,8 @@ function buildSpanSummary(
   events: CapturedLogEvent[],
   options: {
     agentSpanName?: AgentSpanName;
+    sdkMajorVersion: number;
+    supportsProviderCacheAssertions: boolean;
     supportsGenerateObject: boolean;
     supportsRerank: boolean;
     supportsStreamObject: boolean;
@@ -679,6 +727,8 @@ function buildPayloadSummary(
   events: CapturedLogEvent[],
   options: {
     agentSpanName?: AgentSpanName;
+    sdkMajorVersion: number;
+    supportsProviderCacheAssertions: boolean;
     supportsGenerateObject: boolean;
     supportsRerank: boolean;
     supportsStreamObject: boolean;
@@ -743,6 +793,18 @@ function expectEmbeddingTokenMetrics(span: CapturedLogEvent | undefined) {
   expect(tokenMetric).toEqual(expect.any(Number));
   if (typeof tokenMetric === "number") {
     expect(tokenMetric).toBeGreaterThan(0);
+  }
+}
+
+function expectMetricGreaterThanZero(
+  span: CapturedLogEvent | undefined,
+  key: string,
+) {
+  const metric = span?.metrics?.[key];
+
+  expect(metric).toEqual(expect.any(Number));
+  if (typeof metric === "number") {
+    expect(metric).toBeGreaterThan(0);
   }
 }
 
@@ -836,12 +898,7 @@ export function defineAISDKInstrumentationAssertions(options: {
           expectOperationParentedByRoot(trace.operation, root);
           expectAISDKParentSpan(trace.parent);
           expectAISDKModelChildSpan(trace.child);
-          expect(
-            collectMetricValues(
-              trace.child ? [trace.child] : [],
-              "prompt_cached_tokens",
-            ),
-          ).not.toHaveLength(0);
+          expectMetricGreaterThanZero(trace.child, "prompt_cached_tokens");
         },
       );
     }
@@ -857,12 +914,7 @@ export function defineAISDKInstrumentationAssertions(options: {
           expectOperationParentedByRoot(trace.operation, root);
           expectAISDKParentSpan(trace.parent, "anthropic");
           expectAISDKModelChildSpan(trace.child);
-          expect(
-            collectMetricValues(
-              trace.child ? [trace.child] : [],
-              "prompt_cached_tokens",
-            ),
-          ).not.toHaveLength(0);
+          expectMetricGreaterThanZero(trace.child, "prompt_cached_tokens");
           expect(
             collectMetricValues(
               trace.child ? [trace.child] : [],
@@ -1231,6 +1283,9 @@ export function defineAISDKInstrumentationAssertions(options: {
         formatJsonFileSnapshot(
           buildSpanSummary(events, {
             agentSpanName: options.agentSpanName,
+            sdkMajorVersion: options.sdkMajorVersion,
+            supportsProviderCacheAssertions:
+              options.supportsProviderCacheAssertions,
             supportsGenerateObject: options.supportsGenerateObject,
             supportsRerank: options.supportsRerank,
             supportsStreamObject: options.supportsStreamObject,
@@ -1244,6 +1299,9 @@ export function defineAISDKInstrumentationAssertions(options: {
         formatJsonFileSnapshot(
           buildPayloadSummary(events, {
             agentSpanName: options.agentSpanName,
+            sdkMajorVersion: options.sdkMajorVersion,
+            supportsProviderCacheAssertions:
+              options.supportsProviderCacheAssertions,
             supportsGenerateObject: options.supportsGenerateObject,
             supportsRerank: options.supportsRerank,
             supportsStreamObject: options.supportsStreamObject,

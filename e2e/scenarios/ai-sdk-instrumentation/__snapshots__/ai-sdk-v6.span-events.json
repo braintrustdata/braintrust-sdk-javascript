@@ -6,6 +6,7 @@
       "aiSdkVersion": "<ai-sdk-version>",
       "scenario": "ai-sdk-instrumentation"
     },
+    "metrics": null,
     "name": "ai-sdk-instrumentation-root",
     "root_span_id": "<span:1>",
     "span_id": "<span:1>",
@@ -17,6 +18,7 @@
     "metadata": {
       "operation": "generate"
     },
+    "metrics": null,
     "name": "ai-sdk-generate-operation",
     "root_span_id": "<span:1>",
     "span_id": "<span:2>",
@@ -31,6 +33,7 @@
       "model": "gpt-4o-mini-2024-07-18",
       "provider": "openai.responses"
     },
+    "metrics": null,
     "name": "generateText",
     "root_span_id": "<span:1>",
     "span_id": "<span:3>",
@@ -44,6 +47,7 @@
     "metadata": {
       "operation": "stream"
     },
+    "metrics": null,
     "name": "ai-sdk-stream-operation",
     "root_span_id": "<span:1>",
     "span_id": "<span:4>",
@@ -58,6 +62,9 @@
       "model": "gpt-4o-mini-2024-07-18",
       "provider": "openai.responses"
     },
+    "metrics": {
+      "time_to_first_token": 0
+    },
     "name": "streamText",
     "root_span_id": "<span:1>",
     "span_id": "<span:5>",
@@ -71,6 +78,7 @@
     "metadata": {
       "operation": "tool"
     },
+    "metrics": null,
     "name": "ai-sdk-tool-operation",
     "root_span_id": "<span:1>",
     "span_id": "<span:6>",
@@ -85,6 +93,7 @@
       "model": "gpt-4o-mini-2024-07-18",
       "provider": "openai.responses"
     },
+    "metrics": null,
     "name": "generateText",
     "root_span_id": "<span:1>",
     "span_id": "<span:7>",
@@ -96,11 +105,109 @@
     "has_input": false,
     "has_output": false,
     "metadata": {
-      "operation": "rerank"
+      "operation": "openai-cache"
     },
-    "name": "ai-sdk-rerank-operation",
+    "metrics": null,
+    "name": "ai-sdk-openai-cache-operation",
     "root_span_id": "<span:1>",
     "span_id": "<span:8>",
+    "span_parents": [
+      "<span:1>"
+    ]
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "model": "gpt-4o-mini-2024-07-18",
+      "provider": "openai.responses"
+    },
+    "metrics": null,
+    "name": "generateText",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:9>",
+    "span_parents": [
+      "<span:8>"
+    ]
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "model": "gpt-4o-mini-2024-07-18",
+      "provider": "openai.responses"
+    },
+    "metrics": {
+      "completion_tokens": 3,
+      "prompt_cached_tokens": 3456,
+      "prompt_tokens": 3617
+    },
+    "name": "doGenerate",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:10>",
+    "span_parents": [
+      "<span:9>"
+    ]
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "operation": "anthropic-cache"
+    },
+    "metrics": null,
+    "name": "ai-sdk-anthropic-cache-operation",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:11>",
+    "span_parents": [
+      "<span:1>"
+    ]
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "model": "claude-3-haiku-20240307",
+      "provider": "anthropic.messages"
+    },
+    "metrics": null,
+    "name": "generateText",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:12>",
+    "span_parents": [
+      "<span:11>"
+    ]
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "model": "claude-3-haiku-20240307",
+      "provider": "anthropic.messages"
+    },
+    "metrics": {
+      "completion_tokens": 7,
+      "prompt_cache_creation_tokens": 0,
+      "prompt_cached_tokens": 4516,
+      "prompt_tokens": 4519
+    },
+    "name": "doGenerate",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:13>",
+    "span_parents": [
+      "<span:12>"
+    ]
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "operation": "rerank"
+    },
+    "metrics": null,
+    "name": "ai-sdk-rerank-operation",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:14>",
     "span_parents": [
       "<span:1>"
     ]
@@ -112,31 +219,22 @@
       "model": "rerank-v3.5",
       "provider": "cohere.reranking"
     },
+    "metrics": null,
     "name": "rerank",
     "root_span_id": "<span:1>",
-    "span_id": "<span:9>",
+    "span_id": "<span:15>",
     "span_parents": [
-      "<span:8>"
+      "<span:14>"
     ]
   },
   {
     "has_input": true,
     "has_output": true,
     "metadata": null,
+    "metrics": null,
     "name": "get_weather",
     "root_span_id": "<span:1>",
-    "span_id": "<span:10>",
-    "span_parents": [
-      "<span:7>"
-    ]
-  },
-  {
-    "has_input": true,
-    "has_output": true,
-    "metadata": null,
-    "name": "get_weather",
-    "root_span_id": "<span:1>",
-    "span_id": "<span:11>",
+    "span_id": "<span:16>",
     "span_parents": [
       "<span:7>"
     ]
@@ -145,9 +243,10 @@
     "has_input": true,
     "has_output": true,
     "metadata": null,
+    "metrics": null,
     "name": "get_weather",
     "root_span_id": "<span:1>",
-    "span_id": "<span:12>",
+    "span_id": "<span:17>",
     "span_parents": [
       "<span:7>"
     ]
@@ -156,9 +255,22 @@
     "has_input": true,
     "has_output": true,
     "metadata": null,
+    "metrics": null,
     "name": "get_weather",
     "root_span_id": "<span:1>",
-    "span_id": "<span:13>",
+    "span_id": "<span:18>",
+    "span_parents": [
+      "<span:7>"
+    ]
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": null,
+    "metrics": null,
+    "name": "get_weather",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:19>",
     "span_parents": [
       "<span:7>"
     ]
@@ -169,88 +281,8 @@
     "metadata": {
       "operation": "generate-object"
     },
+    "metrics": null,
     "name": "ai-sdk-generate-object-operation",
-    "root_span_id": "<span:1>",
-    "span_id": "<span:14>",
-    "span_parents": [
-      "<span:1>"
-    ]
-  },
-  {
-    "has_input": true,
-    "has_output": true,
-    "metadata": {
-      "model": "gpt-4o-mini-2024-07-18",
-      "provider": "openai.responses"
-    },
-    "name": "generateObject",
-    "root_span_id": "<span:1>",
-    "span_id": "<span:15>",
-    "span_parents": [
-      "<span:14>"
-    ]
-  },
-  {
-    "has_input": false,
-    "has_output": false,
-    "metadata": {
-      "operation": "stream-object"
-    },
-    "name": "ai-sdk-stream-object-operation",
-    "root_span_id": "<span:1>",
-    "span_id": "<span:16>",
-    "span_parents": [
-      "<span:1>"
-    ]
-  },
-  {
-    "has_input": true,
-    "has_output": true,
-    "metadata": {
-      "model": "gpt-4o-mini-2024-07-18",
-      "provider": "openai.responses"
-    },
-    "name": "streamObject",
-    "root_span_id": "<span:1>",
-    "span_id": "<span:17>",
-    "span_parents": [
-      "<span:16>"
-    ]
-  },
-  {
-    "has_input": false,
-    "has_output": false,
-    "metadata": {
-      "operation": "agent-generate"
-    },
-    "name": "ai-sdk-agent-generate-operation",
-    "root_span_id": "<span:1>",
-    "span_id": "<span:18>",
-    "span_parents": [
-      "<span:1>"
-    ]
-  },
-  {
-    "has_input": true,
-    "has_output": true,
-    "metadata": {
-      "model": "gpt-4o-mini-2024-07-18",
-      "provider": "openai.responses"
-    },
-    "name": "ToolLoopAgent.generate",
-    "root_span_id": "<span:1>",
-    "span_id": "<span:19>",
-    "span_parents": [
-      "<span:18>"
-    ]
-  },
-  {
-    "has_input": false,
-    "has_output": false,
-    "metadata": {
-      "operation": "agent-stream"
-    },
-    "name": "ai-sdk-agent-stream-operation",
     "root_span_id": "<span:1>",
     "span_id": "<span:20>",
     "span_parents": [
@@ -264,11 +296,103 @@
       "model": "gpt-4o-mini-2024-07-18",
       "provider": "openai.responses"
     },
-    "name": "ToolLoopAgent.stream",
+    "metrics": null,
+    "name": "generateObject",
     "root_span_id": "<span:1>",
     "span_id": "<span:21>",
     "span_parents": [
       "<span:20>"
+    ]
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "operation": "stream-object"
+    },
+    "metrics": null,
+    "name": "ai-sdk-stream-object-operation",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:22>",
+    "span_parents": [
+      "<span:1>"
+    ]
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "model": "gpt-4o-mini-2024-07-18",
+      "provider": "openai.responses"
+    },
+    "metrics": {
+      "time_to_first_token": 0
+    },
+    "name": "streamObject",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:23>",
+    "span_parents": [
+      "<span:22>"
+    ]
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "operation": "agent-generate"
+    },
+    "metrics": null,
+    "name": "ai-sdk-agent-generate-operation",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:24>",
+    "span_parents": [
+      "<span:1>"
+    ]
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "model": "gpt-4o-mini-2024-07-18",
+      "provider": "openai.responses"
+    },
+    "metrics": null,
+    "name": "ToolLoopAgent.generate",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:25>",
+    "span_parents": [
+      "<span:24>"
+    ]
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "operation": "agent-stream"
+    },
+    "metrics": null,
+    "name": "ai-sdk-agent-stream-operation",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:26>",
+    "span_parents": [
+      "<span:1>"
+    ]
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "model": "gpt-4o-mini-2024-07-18",
+      "provider": "openai.responses"
+    },
+    "metrics": {
+      "time_to_first_token": 0
+    },
+    "name": "ToolLoopAgent.stream",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:27>",
+    "span_parents": [
+      "<span:26>"
     ]
   }
 ]

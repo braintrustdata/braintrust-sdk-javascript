@@ -9,7 +9,8 @@ import {
 export const ROOT_NAME = "ai-sdk-instrumentation-root";
 export const SCENARIO_NAME = "ai-sdk-instrumentation";
 export const AI_SDK_SCENARIO_TIMEOUT_MS = 120_000;
-const ANTHROPIC_CACHE_PREFIX = "braintrust cache prefix ".repeat(350).trim();
+const CACHE_PROMPT_PREFIX = "braintrust cache prefix ".repeat(900).trim();
+const OPENAI_CACHE_KEY = "braintrust-ai-sdk-e2e-cache";
 export const AI_SDK_SCENARIO_SPECS = [
   {
     autoEntry: "scenario.ai-sdk-v3.mjs",
@@ -250,45 +251,60 @@ async function runAISDKInstrumentationScenario(
         await instrumentedAI.generateText(toolRequest);
       });
 
-      await runOperation(
-        "ai-sdk-openai-cache-operation",
-        "openai-cache",
-        async () => {
-          await instrumentedAI.generateText({
-            model: openaiModel,
-            prompt: "Reply with exactly CACHE_OK and nothing else.",
-            temperature: 0,
-            ...tokenLimit(options.maxTokensKey, 24),
-          });
-        },
-      );
+      if (sdkMajorVersion >= 5) {
+        await runOperation(
+          "ai-sdk-openai-cache-operation",
+          "openai-cache",
+          async () => {
+            const prompt = `${CACHE_PROMPT_PREFIX}\n\nReply with exactly CACHE_OK and nothing else.`;
+
+            for (let index = 0; index < 2; index++) {
+              await instrumentedAI.generateText({
+                model: openaiModel,
+                prompt,
+                providerOptions: {
+                  openai: {
+                    promptCacheKey: OPENAI_CACHE_KEY,
+                  },
+                },
+                temperature: 0,
+                ...tokenLimit(options.maxTokensKey, 24),
+              });
+            }
+          },
+        );
+      }
 
       if (anthropicModel) {
         await runOperation(
           "ai-sdk-anthropic-cache-operation",
           "anthropic-cache",
           async () => {
-            await instrumentedAI.generateText({
-              model: anthropicModel,
-              messages: [
-                {
-                  role: "user",
-                  content: [
-                    {
-                      type: "text",
-                      text: `${ANTHROPIC_CACHE_PREFIX}\n\nReply with exactly CACHE_OK and nothing else.`,
-                    },
-                  ],
-                  providerOptions: {
-                    anthropic: {
-                      cacheControl: { type: "ephemeral" },
-                    },
+            const messages = [
+              {
+                role: "user",
+                content: [
+                  {
+                    type: "text",
+                    text: `${CACHE_PROMPT_PREFIX}\n\nReply with exactly CACHE_OK and nothing else.`,
+                  },
+                ],
+                providerOptions: {
+                  anthropic: {
+                    cacheControl: { type: "ephemeral" },
                   },
                 },
-              ],
-              temperature: 0,
-              ...tokenLimit(options.maxTokensKey, 24),
-            });
+              },
+            ];
+
+            for (let index = 0; index < 2; index++) {
+              await instrumentedAI.generateText({
+                model: anthropicModel,
+                messages,
+                temperature: 0,
+                ...tokenLimit(options.maxTokensKey, 24),
+              });
+            }
           },
         );
       }
