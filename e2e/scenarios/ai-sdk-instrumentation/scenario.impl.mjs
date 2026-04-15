@@ -9,6 +9,9 @@ import {
 export const ROOT_NAME = "ai-sdk-instrumentation-root";
 export const SCENARIO_NAME = "ai-sdk-instrumentation";
 export const AI_SDK_SCENARIO_TIMEOUT_MS = 120_000;
+const CACHE_PROMPT_PREFIX = "braintrust cache prefix ".repeat(900).trim();
+const OPENAI_CACHE_KEY = "braintrust-ai-sdk-e2e-cache";
+const CACHE_FILL_DELAY_MS = 5_000;
 export const AI_SDK_SCENARIO_SPECS = [
   {
     autoEntry: "scenario.ai-sdk-v3.mjs",
@@ -17,6 +20,7 @@ export const AI_SDK_SCENARIO_SPECS = [
     openaiModuleName: "ai-sdk-openai-v3",
     packageName: "ai-sdk-v3",
     snapshotName: "ai-sdk-v3",
+    supportsProviderCacheAssertions: false,
     supportsGenerateObject: true,
     supportsRerank: false,
     supportsStreamObject: true,
@@ -31,6 +35,7 @@ export const AI_SDK_SCENARIO_SPECS = [
     openaiModuleName: "ai-sdk-openai-v4",
     packageName: "ai-sdk-v4",
     snapshotName: "ai-sdk-v4",
+    supportsProviderCacheAssertions: false,
     supportsGenerateObject: true,
     supportsRerank: false,
     supportsStreamObject: true,
@@ -48,6 +53,7 @@ export const AI_SDK_SCENARIO_SPECS = [
     openaiModuleName: "ai-sdk-openai-v5",
     packageName: "ai-sdk-v5",
     snapshotName: "ai-sdk-v5",
+    supportsProviderCacheAssertions: true,
     supportsGenerateObject: true,
     supportsRerank: false,
     supportsStreamObject: true,
@@ -65,6 +71,7 @@ export const AI_SDK_SCENARIO_SPECS = [
     openaiModuleName: "ai-sdk-openai-v6",
     packageName: "ai-sdk-v6",
     snapshotName: "ai-sdk-v6",
+    supportsProviderCacheAssertions: true,
     supportsGenerateObject: true,
     supportsStreamObject: true,
     supportsToolExecution: true,
@@ -75,6 +82,12 @@ export const AI_SDK_SCENARIO_SPECS = [
 
 function tokenLimit(key, value) {
   return { [key]: value };
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
 }
 
 const DENY_OUTPUT_PATHS_SYMBOL = Symbol.for(
@@ -130,6 +143,7 @@ async function runAISDKInstrumentationScenario(
 ) {
   const instrumentedAI = decorateAI ? decorateAI(options.ai) : options.ai;
   const openaiModel = options.openai("gpt-4o-mini-2024-07-18");
+  const anthropicModel = options.anthropic?.("claude-3-haiku-20240307");
   const openaiEmbeddingModel = options.openai.textEmbeddingModel(
     "text-embedding-3-small",
   );
@@ -243,6 +257,78 @@ async function runAISDKInstrumentationScenario(
 
         await instrumentedAI.generateText(toolRequest);
       });
+
+      if (sdkMajorVersion >= 5) {
+        const prompt = `${CACHE_PROMPT_PREFIX}\n\nReply with exactly CACHE_OK and nothing else.`;
+        const openaiCacheRequest = {
+          model: openaiModel,
+          prompt,
+          providerOptions: {
+            openai: {
+              promptCacheKey: OPENAI_CACHE_KEY,
+            },
+          },
+          temperature: 0,
+          ...tokenLimit(options.maxTokensKey, 24),
+        };
+
+        await options.ai.generateText(openaiCacheRequest);
+        await sleep(CACHE_FILL_DELAY_MS);
+
+        await runOperation(
+          "ai-sdk-openai-cache-operation",
+          "openai-cache",
+          async () => {
+            for (let index = 0; index < 2; index++) {
+              await instrumentedAI.generateText(openaiCacheRequest);
+              if (index < 1) {
+                await sleep(CACHE_FILL_DELAY_MS);
+              }
+            }
+          },
+        );
+      }
+
+      if (anthropicModel) {
+        const messages = [
+          {
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text: `${CACHE_PROMPT_PREFIX}\n\nReply with exactly CACHE_OK and nothing else.`,
+              },
+            ],
+            providerOptions: {
+              anthropic: {
+                cacheControl: { type: "ephemeral" },
+              },
+            },
+          },
+        ];
+        const anthropicCacheRequest = {
+          model: anthropicModel,
+          messages,
+          temperature: 0,
+          ...tokenLimit(options.maxTokensKey, 24),
+        };
+
+        await options.ai.generateText(anthropicCacheRequest);
+        await sleep(CACHE_FILL_DELAY_MS);
+
+        await runOperation(
+          "ai-sdk-anthropic-cache-operation",
+          "anthropic-cache",
+          async () => {
+            for (let index = 0; index < 2; index++) {
+              await instrumentedAI.generateText(anthropicCacheRequest);
+              if (index < 1) {
+                await sleep(CACHE_FILL_DELAY_MS);
+              }
+            }
+          },
+        );
+      }
 
       if (supportsRichInputScenarios) {
         await runOperation(

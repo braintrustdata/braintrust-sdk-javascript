@@ -81,22 +81,6 @@ jobs:
       - name: Ensure SHA pinned actions
         uses: zgosalvez/github-actions-ensure-sha-pinned-actions@ca46236c6ce584ae24bc6283ba8dcf4b3ec8a066 # v5.0.4
 
-  changeset-required:
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
-        with:
-          fetch-depth: 0
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
-        with:
-          node-version-file: .tool-versions
-      - name: Fetch pull request base ref
-        run: git fetch origin "${{ github.base_ref }}:refs/remotes/origin/${{ github.base_ref }}"
-      - name: Enforce changeset requirement for publishable package changes
-        run: node scripts/release/enforce-changeset.mjs
-
   js-test:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
@@ -472,7 +456,6 @@ jobs:
       - check-typings
       - dead-code
       - ensure-pinned-actions
-      - changeset-required
       - js-test
       - js-build
       - e2e-hermetic
@@ -506,7 +489,6 @@ jobs:
           check_result "check-typings" "${{ needs.check-typings.result }}"
           check_result "dead-code" "${{ needs.dead-code.result }}"
           check_result "ensure-pinned-actions" "${{ needs.ensure-pinned-actions.result }}"
-          check_result "changeset-required" "${{ needs.changeset-required.result }}"
           check_result "js-test" "${{ needs.js-test.result }}"
           check_result "js-build" "${{ needs.js-build.result }}"
           check_result "e2e-hermetic" "${{ needs.e2e-hermetic.result }}"

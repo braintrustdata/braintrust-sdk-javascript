@@ -66,6 +66,23 @@ function pickMetadata(
   return Object.keys(picked).length > 0 ? (picked as Json) : null;
 }
 
+function pickMetrics(
+  metrics: Record<string, unknown> | undefined,
+  keys: string[],
+): Json {
+  if (!metrics) {
+    return null;
+  }
+
+  const picked = Object.fromEntries(
+    keys.flatMap((key) =>
+      key in metrics ? [[key, metrics[key] as Json]] : [],
+    ),
+  );
+
+  return Object.keys(picked).length > 0 ? (picked as Json) : null;
+}
+
 function collectToolCallNames(output: unknown): string[] {
   if (!isRecord(output)) {
     return [];
@@ -78,6 +95,43 @@ function collectToolCallNames(output: unknown): string[] {
     .filter((name): name is string => typeof name === "string");
 
   return [...new Set(names)];
+}
+
+function collectToolResultNames(output: unknown): string[] {
+  if (!isRecord(output)) {
+    return [];
+  }
+
+  const steps = Array.isArray(output.steps) ? output.steps : [];
+  const toolResults = Array.isArray(output.toolResults)
+    ? output.toolResults
+    : [];
+  const names = [
+    ...toolResults,
+    ...steps.flatMap((step) =>
+      isRecord(step)
+        ? [
+            ...(Array.isArray(step.toolResults) ? step.toolResults : []),
+            ...(Array.isArray(step.content) ? step.content : []),
+          ]
+        : [],
+    ),
+  ]
+    .map((result) =>
+      isRecord(result) ? (result.toolName ?? result.name) : undefined,
+    )
+    .filter((name): name is string => typeof name === "string");
+
+  return [...new Set(names)];
+}
+
+function collectMetricValues(
+  events: CapturedLogEvent[],
+  key: string,
+): number[] {
+  return events
+    .map((event) => event.metrics?.[key])
+    .filter((value): value is number => typeof value === "number");
 }
 
 function summarizePrompt(value: unknown): Json {
@@ -154,10 +208,33 @@ function findGenerateTextTraceForOperation(
   operationSpanName: string,
 ) {
   const operation = findLatestSpan(events, operationSpanName);
-  const parent = findParentSpan(events, "generateText", operation?.span.id);
-  const child = findLatestModelSpan(events, parent?.span.id, "doGenerate");
+  const parents = findChildSpans(events, "generateText", operation?.span.id);
+  const parent = latestEvent(parents);
+  const modelChildren = parents.flatMap((candidate) =>
+    findChildSpans(events, "doGenerate", candidate.span.id),
+  );
 
-  return { child, operation, parent };
+  return {
+    latestChild: latestEvent(modelChildren),
+    modelChildren,
+    operation,
+    parent,
+    parents,
+  };
+}
+
+function findOpenAICacheTrace(events: CapturedLogEvent[]) {
+  return findGenerateTextTraceForOperation(
+    events,
+    "ai-sdk-openai-cache-operation",
+  );
+}
+
+function findAnthropicCacheTrace(events: CapturedLogEvent[]) {
+  return findGenerateTextTraceForOperation(
+    events,
+    "ai-sdk-anthropic-cache-operation",
+  );
 }
 
 function findOutputObjectTrace(events: CapturedLogEvent[]) {
@@ -512,6 +589,14 @@ function summarizeAISDKSpan(event: CapturedLogEvent): Json {
       event.row.metadata as Record<string, unknown> | undefined,
       ["aiSdkVersion", "provider", "model", "operation", "scenario"],
     ),
+    metrics: pickMetrics(event.metrics, [
+      "completion_tokens",
+      "prompt_tokens",
+      "prompt_cached_tokens",
+      "prompt_cache_creation_tokens",
+      "time_to_first_token",
+      "tokens",
+    ]),
     name: event.span.name ?? null,
     root_span_id: event.span.rootId ?? null,
     span_id: event.span.id ?? null,
@@ -558,6 +643,14 @@ function summarizeAISDKPayload(event: CapturedLogEvent): Json {
       event.row.metadata as Record<string, unknown> | undefined,
       ["aiSdkVersion", "provider", "model", "operation", "scenario"],
     ),
+    metrics: pickMetrics(event.metrics, [
+      "completion_tokens",
+      "prompt_tokens",
+      "prompt_cached_tokens",
+      "prompt_cache_creation_tokens",
+      "time_to_first_token",
+      "tokens",
+    ]),
     name: event.span.name ?? null,
     output: summarizeAISDKOutput(event.span.name ?? null, event.output),
   } satisfies Json;
@@ -567,6 +660,8 @@ function collectSummaryEvents(
   events: CapturedLogEvent[],
   options: {
     agentSpanName?: AgentSpanName;
+    sdkMajorVersion: number;
+    supportsProviderCacheAssertions: boolean;
     supportsGenerateObject: boolean;
     supportsRerank: boolean;
     supportsStreamObject: boolean;
@@ -612,6 +707,8 @@ function buildSpanSummary(
   events: CapturedLogEvent[],
   options: {
     agentSpanName?: AgentSpanName;
+    sdkMajorVersion: number;
+    supportsProviderCacheAssertions: boolean;
     supportsGenerateObject: boolean;
     supportsRerank: boolean;
     supportsStreamObject: boolean;
@@ -628,6 +725,8 @@ function buildPayloadSummary(
   events: CapturedLogEvent[],
   options: {
     agentSpanName?: AgentSpanName;
+    sdkMajorVersion: number;
+    supportsProviderCacheAssertions: boolean;
     supportsGenerateObject: boolean;
     supportsRerank: boolean;
     supportsStreamObject: boolean;
@@ -695,6 +794,28 @@ function expectEmbeddingTokenMetrics(span: CapturedLogEvent | undefined) {
   }
 }
 
+function expectMetricGreaterThanZero(
+  span: CapturedLogEvent | undefined,
+  key: string,
+) {
+  const metric = span?.metrics?.[key];
+
+  expect(metric).toEqual(expect.any(Number));
+  if (typeof metric === "number") {
+    expect(metric).toBeGreaterThan(0);
+  }
+}
+
+function expectAnyMetricGreaterThanZero(
+  events: CapturedLogEvent[],
+  key: string,
+) {
+  const metrics = collectMetricValues(events, key);
+
+  expect(metrics).not.toHaveLength(0);
+  expect(metrics.some((metric) => metric > 0)).toBe(true);
+}
+
 export function defineAISDKInstrumentationAssertions(options: {
   agentSpanName?: AgentSpanName;
   name: string;
@@ -702,6 +823,7 @@ export function defineAISDKInstrumentationAssertions(options: {
   sdkMajorVersion: number;
   snapshotName: string;
   supportsAttachmentScenario: boolean;
+  supportsProviderCacheAssertions: boolean;
   supportsDenyOutputOverrideScenario: boolean;
   supportsGenerateObject: boolean;
   supportsOutputObjectScenario: boolean;
@@ -772,6 +894,56 @@ export function defineAISDKInstrumentationAssertions(options: {
         ]),
       ).toBe(true);
     });
+
+    if (options.sdkMajorVersion >= 5) {
+      test(
+        "captures cache metrics for OpenAI generateText()",
+        testConfig,
+        () => {
+          const root = findLatestSpan(events, ROOT_NAME);
+          const trace = findOpenAICacheTrace(events);
+
+          expectOperationParentedByRoot(trace.operation, root);
+          expect(trace.parents.length).toBeGreaterThanOrEqual(2);
+          trace.parents.forEach((parent) => expectAISDKParentSpan(parent));
+          expect(trace.modelChildren.length).toBeGreaterThanOrEqual(2);
+          trace.modelChildren.forEach(expectAISDKModelChildSpan);
+          expectAnyMetricGreaterThanZero(
+            trace.modelChildren,
+            "prompt_cached_tokens",
+          );
+        },
+      );
+    }
+
+    if (options.supportsProviderCacheAssertions) {
+      test(
+        "captures cache metrics for Anthropic generateText()",
+        testConfig,
+        () => {
+          const root = findLatestSpan(events, ROOT_NAME);
+          const trace = findAnthropicCacheTrace(events);
+
+          expectOperationParentedByRoot(trace.operation, root);
+          expect(trace.parents.length).toBeGreaterThanOrEqual(2);
+          trace.parents.forEach((parent) =>
+            expectAISDKParentSpan(parent, "anthropic"),
+          );
+          expect(trace.modelChildren.length).toBeGreaterThanOrEqual(2);
+          trace.modelChildren.forEach(expectAISDKModelChildSpan);
+          expectAnyMetricGreaterThanZero(
+            trace.modelChildren,
+            "prompt_cached_tokens",
+          );
+          expect(
+            collectMetricValues(
+              trace.modelChildren,
+              "prompt_cache_creation_tokens",
+            ),
+          ).not.toHaveLength(0);
+        },
+      );
+    }
 
     test("captures trace for streamText()", testConfig, () => {
       const root = findLatestSpan(events, ROOT_NAME);
@@ -955,6 +1127,12 @@ export function defineAISDKInstrumentationAssertions(options: {
         expect(collectToolCallNames(trace.parent?.output)).toContain(
           "get_weather",
         );
+        expect(collectToolResultNames(trace.parent?.output)).toContain(
+          "get_weather",
+        );
+        expect(
+          collectMetricValues(trace.modelChildren, "prompt_cached_tokens"),
+        ).not.toHaveLength(0);
       } else {
         expect(trace.modelChildren.length).toBeGreaterThanOrEqual(1);
         trace.modelChildren.forEach(expectAISDKModelChildSpan);
@@ -1125,6 +1303,9 @@ export function defineAISDKInstrumentationAssertions(options: {
         formatJsonFileSnapshot(
           buildSpanSummary(events, {
             agentSpanName: options.agentSpanName,
+            sdkMajorVersion: options.sdkMajorVersion,
+            supportsProviderCacheAssertions:
+              options.supportsProviderCacheAssertions,
             supportsGenerateObject: options.supportsGenerateObject,
             supportsRerank: options.supportsRerank,
             supportsStreamObject: options.supportsStreamObject,
@@ -1138,6 +1319,9 @@ export function defineAISDKInstrumentationAssertions(options: {
         formatJsonFileSnapshot(
           buildPayloadSummary(events, {
             agentSpanName: options.agentSpanName,
+            sdkMajorVersion: options.sdkMajorVersion,
+            supportsProviderCacheAssertions:
+              options.supportsProviderCacheAssertions,
             supportsGenerateObject: options.supportsGenerateObject,
             supportsRerank: options.supportsRerank,
             supportsStreamObject: options.supportsStreamObject,

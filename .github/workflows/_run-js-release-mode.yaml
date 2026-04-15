@@ -108,6 +108,8 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Version packages
         if: steps.plan.outputs.should_run == 'true'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: ${{ inputs.version_command }}
       - name: Prepare release manifest
         if: steps.plan.outputs.should_run == 'true'
