@@ -97,6 +97,41 @@
   },
   {
     "input": {
+      "prompt": "<prompt>"
+    },
+    "metadata": {
+      "model": "gpt-4o-mini-2024-07-18",
+      "provider": "openai.responses"
+    },
+    "metrics": null,
+    "name": "generateText",
+    "output": {}
+  },
+  {
+    "input": {
+      "prompt": [
+        {
+          "content_types": [
+            "text"
+          ],
+          "role": "user"
+        }
+      ]
+    },
+    "metadata": {
+      "model": "gpt-4o-mini-2024-07-18",
+      "provider": "openai.responses"
+    },
+    "metrics": {
+      "completion_tokens": 3,
+      "prompt_cached_tokens": 3456,
+      "prompt_tokens": 3617
+    },
+    "name": "doGenerate",
+    "output": {}
+  },
+  {
+    "input": {
       "prompt": [
         {
           "content_types": [
@@ -144,6 +179,49 @@
     },
     "metrics": null,
     "name": "generateText",
+    "output": {}
+  },
+  {
+    "input": {
+      "prompt": [
+        {
+          "content_types": [
+            "text"
+          ],
+          "role": "user"
+        }
+      ]
+    },
+    "metadata": {
+      "model": "claude-3-haiku-20240307",
+      "provider": "anthropic.messages"
+    },
+    "metrics": null,
+    "name": "generateText",
+    "output": {}
+  },
+  {
+    "input": {
+      "prompt": [
+        {
+          "content_types": [
+            "text"
+          ],
+          "role": "user"
+        }
+      ]
+    },
+    "metadata": {
+      "model": "claude-3-haiku-20240307",
+      "provider": "anthropic.messages"
+    },
+    "metrics": {
+      "completion_tokens": 7,
+      "prompt_cache_creation_tokens": 0,
+      "prompt_cached_tokens": 4516,
+      "prompt_tokens": 4519
+    },
+    "name": "doGenerate",
     "output": {}
   },
   {

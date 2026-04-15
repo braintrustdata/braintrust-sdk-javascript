@@ -208,10 +208,19 @@ function findGenerateTextTraceForOperation(
   operationSpanName: string,
 ) {
   const operation = findLatestSpan(events, operationSpanName);
-  const parent = findParentSpan(events, "generateText", operation?.span.id);
-  const child = findLatestModelSpan(events, parent?.span.id, "doGenerate");
+  const parents = findChildSpans(events, "generateText", operation?.span.id);
+  const parent = latestEvent(parents);
+  const modelChildren = parents.flatMap((candidate) =>
+    findChildSpans(events, "doGenerate", candidate.span.id),
+  );
 
-  return { child, operation, parent };
+  return {
+    latestChild: latestEvent(modelChildren),
+    modelChildren,
+    operation,
+    parent,
+    parents,
+  };
 }
 
 function findOpenAICacheTrace(events: CapturedLogEvent[]) {
@@ -572,15 +581,37 @@ function snapshotValue(value: unknown): Json {
   return normalizeAISDKSnapshotValue(structuredClone(value)) as Json;
 }
 
+function normalizeCacheMetricsForSnapshot(
+  event: CapturedLogEvent,
+  metrics: Json,
+): Json {
+  if (!isRecord(metrics)) {
+    return metrics;
+  }
+
+  const operation = (event.row.metadata as { operation?: unknown } | undefined)
+    ?.operation;
+  if (operation !== "openai-cache" && operation !== "anthropic-cache") {
+    return metrics;
+  }
+
+  const normalized = { ...metrics };
+  for (const key of [
+    "prompt_cached_tokens",
+    "prompt_cache_creation_tokens",
+  ] as const) {
+    if (key in normalized) {
+      normalized[key] = "<cache-metric>";
+    }
+  }
+
+  return normalized as Json;
+}
+
 function summarizeAISDKSpan(event: CapturedLogEvent): Json {
-  return {
-    has_input: event.input !== undefined && event.input !== null,
-    has_output: event.output !== undefined && event.output !== null,
-    metadata: pickMetadata(
-      event.row.metadata as Record<string, unknown> | undefined,
-      ["aiSdkVersion", "provider", "model", "operation", "scenario"],
-    ),
-    metrics: pickMetrics(event.metrics, [
+  const metrics = normalizeCacheMetricsForSnapshot(
+    event,
+    pickMetrics(event.metrics, [
       "completion_tokens",
       "prompt_tokens",
       "prompt_cached_tokens",
@@ -588,6 +619,16 @@ function summarizeAISDKSpan(event: CapturedLogEvent): Json {
       "time_to_first_token",
       "tokens",
     ]),
+  );
+
+  return {
+    has_input: event.input !== undefined && event.input !== null,
+    has_output: event.output !== undefined && event.output !== null,
+    metadata: pickMetadata(
+      event.row.metadata as Record<string, unknown> | undefined,
+      ["aiSdkVersion", "provider", "model", "operation", "scenario"],
+    ),
+    metrics,
     name: event.span.name ?? null,
     root_span_id: event.span.rootId ?? null,
     span_id: event.span.id ?? null,
@@ -628,13 +669,9 @@ function summarizeAISDKOutput(name: string | null, value: unknown): Json {
 }
 
 function summarizeAISDKPayload(event: CapturedLogEvent): Json {
-  return {
-    input: summarizeAISDKInput(event.input),
-    metadata: pickMetadata(
-      event.row.metadata as Record<string, unknown> | undefined,
-      ["aiSdkVersion", "provider", "model", "operation", "scenario"],
-    ),
-    metrics: pickMetrics(event.metrics, [
+  const metrics = normalizeCacheMetricsForSnapshot(
+    event,
+    pickMetrics(event.metrics, [
       "completion_tokens",
       "prompt_tokens",
       "prompt_cached_tokens",
@@ -642,6 +679,15 @@ function summarizeAISDKPayload(event: CapturedLogEvent): Json {
       "time_to_first_token",
       "tokens",
     ]),
+  );
+
+  return {
+    input: summarizeAISDKInput(event.input),
+    metadata: pickMetadata(
+      event.row.metadata as Record<string, unknown> | undefined,
+      ["aiSdkVersion", "provider", "model", "operation", "scenario"],
+    ),
+    metrics,
     name: event.span.name ?? null,
     output: summarizeAISDKOutput(event.span.name ?? null, event.output),
   } satisfies Json;
@@ -689,10 +735,18 @@ function collectSummaryEvents(
     tool.operation,
     tool.parent,
     ...(openaiCache
-      ? [openaiCache.operation, openaiCache.parent, openaiCache.child]
+      ? [
+          openaiCache.operation,
+          ...openaiCache.parents,
+          ...openaiCache.modelChildren,
+        ]
       : []),
     ...(anthropicCache
-      ? [anthropicCache.operation, anthropicCache.parent, anthropicCache.child]
+      ? [
+          anthropicCache.operation,
+          ...anthropicCache.parents,
+          ...anthropicCache.modelChildren,
+        ]
       : []),
     ...(rerank ? [rerank.operation, rerank.parent] : []),
     ...tool.toolSpans,
@@ -808,6 +862,16 @@ function expectMetricGreaterThanZero(
   }
 }
 
+function expectAnyMetricGreaterThanZero(
+  events: CapturedLogEvent[],
+  key: string,
+) {
+  const metrics = collectMetricValues(events, key);
+
+  expect(metrics).not.toHaveLength(0);
+  expect(metrics.some((metric) => metric > 0)).toBe(true);
+}
+
 export function defineAISDKInstrumentationAssertions(options: {
   agentSpanName?: AgentSpanName;
   name: string;
@@ -896,9 +960,14 @@ export function defineAISDKInstrumentationAssertions(options: {
           const trace = findOpenAICacheTrace(events);
 
           expectOperationParentedByRoot(trace.operation, root);
-          expectAISDKParentSpan(trace.parent);
-          expectAISDKModelChildSpan(trace.child);
-          expectMetricGreaterThanZero(trace.child, "prompt_cached_tokens");
+          expect(trace.parents.length).toBeGreaterThanOrEqual(2);
+          trace.parents.forEach((parent) => expectAISDKParentSpan(parent));
+          expect(trace.modelChildren.length).toBeGreaterThanOrEqual(2);
+          trace.modelChildren.forEach(expectAISDKModelChildSpan);
+          expectAnyMetricGreaterThanZero(
+            trace.modelChildren,
+            "prompt_cached_tokens",
+          );
         },
       );
     }
@@ -912,12 +981,19 @@ export function defineAISDKInstrumentationAssertions(options: {
           const trace = findAnthropicCacheTrace(events);
 
           expectOperationParentedByRoot(trace.operation, root);
-          expectAISDKParentSpan(trace.parent, "anthropic");
-          expectAISDKModelChildSpan(trace.child);
-          expectMetricGreaterThanZero(trace.child, "prompt_cached_tokens");
+          expect(trace.parents.length).toBeGreaterThanOrEqual(2);
+          trace.parents.forEach((parent) =>
+            expectAISDKParentSpan(parent, "anthropic"),
+          );
+          expect(trace.modelChildren.length).toBeGreaterThanOrEqual(2);
+          trace.modelChildren.forEach(expectAISDKModelChildSpan);
+          expectAnyMetricGreaterThanZero(
+            trace.modelChildren,
+            "prompt_cached_tokens",
+          );
           expect(
             collectMetricValues(
-              trace.child ? [trace.child] : [],
+              trace.modelChildren,
               "prompt_cache_creation_tokens",
             ),
           ).not.toHaveLength(0);

@@ -137,6 +137,21 @@
       "model": "gpt-4o-mini-2024-07-18",
       "provider": "openai.responses"
     },
+    "metrics": null,
+    "name": "generateText",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:10>",
+    "span_parents": [
+      "<span:8>"
+    ]
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "model": "gpt-4o-mini-2024-07-18",
+      "provider": "openai.responses"
+    },
     "metrics": {
       "completion_tokens": 3,
       "prompt_cached_tokens": 3456,
@@ -145,9 +160,29 @@
     },
     "name": "doGenerate",
     "root_span_id": "<span:1>",
-    "span_id": "<span:10>",
+    "span_id": "<span:11>",
     "span_parents": [
       "<span:9>"
+    ]
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "model": "gpt-4o-mini-2024-07-18",
+      "provider": "openai.responses"
+    },
+    "metrics": {
+      "completion_tokens": 3,
+      "prompt_cached_tokens": 3456,
+      "prompt_tokens": 3617,
+      "tokens": 3620
+    },
+    "name": "doGenerate",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:12>",
+    "span_parents": [
+      "<span:10>"
     ]
   },
   {
@@ -159,7 +194,7 @@
     "metrics": null,
     "name": "ai-sdk-anthropic-cache-operation",
     "root_span_id": "<span:1>",
-    "span_id": "<span:11>",
+    "span_id": "<span:13>",
     "span_parents": [
       "<span:1>"
     ]
@@ -174,9 +209,24 @@
     "metrics": null,
     "name": "generateText",
     "root_span_id": "<span:1>",
-    "span_id": "<span:12>",
+    "span_id": "<span:14>",
     "span_parents": [
-      "<span:11>"
+      "<span:13>"
+    ]
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "model": "claude-3-haiku-20240307",
+      "provider": "anthropic.messages"
+    },
+    "metrics": null,
+    "name": "generateText",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:15>",
+    "span_parents": [
+      "<span:13>"
     ]
   },
   {
@@ -195,44 +245,41 @@
     },
     "name": "doGenerate",
     "root_span_id": "<span:1>",
-    "span_id": "<span:13>",
-    "span_parents": [
-      "<span:12>"
-    ]
-  },
-  {
-    "has_input": true,
-    "has_output": true,
-    "metadata": null,
-    "metrics": null,
-    "name": "get_weather",
-    "root_span_id": "<span:1>",
-    "span_id": "<span:14>",
-    "span_parents": [
-      "<span:7>"
-    ]
-  },
-  {
-    "has_input": true,
-    "has_output": true,
-    "metadata": null,
-    "metrics": null,
-    "name": "get_weather",
-    "root_span_id": "<span:1>",
-    "span_id": "<span:15>",
-    "span_parents": [
-      "<span:7>"
-    ]
-  },
-  {
-    "has_input": true,
-    "has_output": true,
-    "metadata": null,
-    "metrics": null,
-    "name": "get_weather",
-    "root_span_id": "<span:1>",
     "span_id": "<span:16>",
     "span_parents": [
+      "<span:14>"
+    ]
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "model": "claude-3-haiku-20240307",
+      "provider": "anthropic.messages"
+    },
+    "metrics": {
+      "completion_tokens": 7,
+      "prompt_cache_creation_tokens": 0,
+      "prompt_cached_tokens": 4516,
+      "prompt_tokens": 3,
+      "tokens": 10
+    },
+    "name": "doGenerate",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:17>",
+    "span_parents": [
+      "<span:15>"
+    ]
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": null,
+    "metrics": null,
+    "name": "get_weather",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:18>",
+    "span_parents": [
       "<span:7>"
     ]
   },
@@ -243,7 +290,31 @@
     "metrics": null,
     "name": "get_weather",
     "root_span_id": "<span:1>",
-    "span_id": "<span:17>",
+    "span_id": "<span:19>",
+    "span_parents": [
+      "<span:7>"
+    ]
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": null,
+    "metrics": null,
+    "name": "get_weather",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:20>",
+    "span_parents": [
+      "<span:7>"
+    ]
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": null,
+    "metrics": null,
+    "name": "get_weather",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:21>",
     "span_parents": [
       "<span:7>"
     ]
@@ -256,66 +327,6 @@
     },
     "metrics": null,
     "name": "ai-sdk-generate-object-operation",
-    "root_span_id": "<span:1>",
-    "span_id": "<span:18>",
-    "span_parents": [
-      "<span:1>"
-    ]
-  },
-  {
-    "has_input": true,
-    "has_output": true,
-    "metadata": {
-      "model": "gpt-4o-mini-2024-07-18",
-      "provider": "openai.responses"
-    },
-    "metrics": null,
-    "name": "generateObject",
-    "root_span_id": "<span:1>",
-    "span_id": "<span:19>",
-    "span_parents": [
-      "<span:18>"
-    ]
-  },
-  {
-    "has_input": false,
-    "has_output": false,
-    "metadata": {
-      "operation": "stream-object"
-    },
-    "metrics": null,
-    "name": "ai-sdk-stream-object-operation",
-    "root_span_id": "<span:1>",
-    "span_id": "<span:20>",
-    "span_parents": [
-      "<span:1>"
-    ]
-  },
-  {
-    "has_input": true,
-    "has_output": true,
-    "metadata": {
-      "model": "gpt-4o-mini-2024-07-18",
-      "provider": "openai.responses"
-    },
-    "metrics": {
-      "time_to_first_token": 0
-    },
-    "name": "streamObject",
-    "root_span_id": "<span:1>",
-    "span_id": "<span:21>",
-    "span_parents": [
-      "<span:20>"
-    ]
-  },
-  {
-    "has_input": false,
-    "has_output": false,
-    "metadata": {
-      "operation": "agent-generate"
-    },
-    "metrics": null,
-    "name": "ai-sdk-agent-generate-operation",
     "root_span_id": "<span:1>",
     "span_id": "<span:22>",
     "span_parents": [
@@ -330,7 +341,7 @@
       "provider": "openai.responses"
     },
     "metrics": null,
-    "name": "Agent.generate",
+    "name": "generateObject",
     "root_span_id": "<span:1>",
     "span_id": "<span:23>",
     "span_parents": [
@@ -341,10 +352,10 @@
     "has_input": false,
     "has_output": false,
     "metadata": {
-      "operation": "agent-stream"
+      "operation": "stream-object"
     },
     "metrics": null,
-    "name": "ai-sdk-agent-stream-operation",
+    "name": "ai-sdk-stream-object-operation",
     "root_span_id": "<span:1>",
     "span_id": "<span:24>",
     "span_parents": [
@@ -361,11 +372,71 @@
     "metrics": {
       "time_to_first_token": 0
     },
-    "name": "Agent.stream",
+    "name": "streamObject",
     "root_span_id": "<span:1>",
     "span_id": "<span:25>",
     "span_parents": [
       "<span:24>"
+    ]
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "operation": "agent-generate"
+    },
+    "metrics": null,
+    "name": "ai-sdk-agent-generate-operation",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:26>",
+    "span_parents": [
+      "<span:1>"
+    ]
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "model": "gpt-4o-mini-2024-07-18",
+      "provider": "openai.responses"
+    },
+    "metrics": null,
+    "name": "Agent.generate",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:27>",
+    "span_parents": [
+      "<span:26>"
+    ]
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "operation": "agent-stream"
+    },
+    "metrics": null,
+    "name": "ai-sdk-agent-stream-operation",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:28>",
+    "span_parents": [
+      "<span:1>"
+    ]
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "model": "gpt-4o-mini-2024-07-18",
+      "provider": "openai.responses"
+    },
+    "metrics": {
+      "time_to_first_token": 0
+    },
+    "name": "Agent.stream",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:29>",
+    "span_parents": [
+      "<span:28>"
     ]
   }
 ]
