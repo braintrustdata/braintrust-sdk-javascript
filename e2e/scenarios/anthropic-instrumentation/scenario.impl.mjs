@@ -23,15 +23,6 @@ const WEATHER_TOOL = {
     required: ["location"],
   },
 };
-const RUNNABLE_WEATHER_TOOL = {
-  ...WEATHER_TOOL,
-  parse(input) {
-    return input;
-  },
-  run(input) {
-    return `The weather in ${input.location} is 18C and sunny.`;
-  },
-};
 const WEB_SEARCH_SERVER_TOOL = {
   type: "web_search_20250305",
   name: "web_search",
@@ -292,7 +283,17 @@ async function runAnthropicInstrumentationScenario(
                 max_tokens: 128,
                 max_iterations: 3,
                 temperature: 0,
-                tools: [RUNNABLE_WEATHER_TOOL],
+                tools: [
+                  {
+                    ...WEATHER_TOOL,
+                    parse(input) {
+                      return input;
+                    },
+                    run(input) {
+                      return `The weather in ${input.location} is 18C and sunny.`;
+                    },
+                  },
+                ],
                 messages: [
                   {
                     role: "user",
