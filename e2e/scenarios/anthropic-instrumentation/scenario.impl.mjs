@@ -23,6 +23,15 @@ const WEATHER_TOOL = {
     required: ["location"],
   },
 };
+const RUNNABLE_WEATHER_TOOL = {
+  ...WEATHER_TOOL,
+  parse(input) {
+    return input;
+  },
+  run(input) {
+    return `The weather in ${input.location} is 18C and sunny.`;
+  },
+};
 const WEB_SEARCH_SERVER_TOOL = {
   type: "web_search_20250305",
   name: "web_search",
@@ -34,6 +43,7 @@ async function runAnthropicInstrumentationScenario(
   {
     decorateClient,
     useBetaMessages = true,
+    supportsBetaToolRunner = true,
     supportsThinking = false,
     supportsServerToolUse = true,
   } = {},
@@ -271,6 +281,30 @@ async function runAnthropicInstrumentationScenario(
             await collectAsync(stream);
           },
         );
+
+        if (supportsBetaToolRunner) {
+          await runOperation(
+            "anthropic-beta-tool-runner-operation",
+            "beta-tool-runner",
+            async () => {
+              const finalMessage = await client.beta.messages.toolRunner({
+                model: ANTHROPIC_MODEL,
+                max_tokens: 128,
+                max_iterations: 3,
+                temperature: 0,
+                tools: [RUNNABLE_WEATHER_TOOL],
+                messages: [
+                  {
+                    role: "user",
+                    content:
+                      "Use the get_weather tool exactly once for Paris, France. After you receive the tool result, reply with exactly that tool result text and do not call any tools again.",
+                  },
+                ],
+              });
+              void finalMessage.content;
+            },
+          );
+        }
       }
     },
     metadata: {

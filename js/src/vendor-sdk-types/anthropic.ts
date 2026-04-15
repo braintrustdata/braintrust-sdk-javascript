@@ -14,15 +14,19 @@ export interface AnthropicClient {
 }
 
 export interface AnthropicBeta {
-  messages: AnthropicMessages;
+  messages: AnthropicBetaMessages;
 }
 
 export interface AnthropicMessages {
   create: (
     params: AnthropicCreateParams,
-  ) => AnthropicAPIPromise<
-    AnthropicMessage | AsyncIterable<AnthropicStreamEvent>
-  >;
+  ) => AnthropicAPIPromise<AnthropicMessage | AnthropicMessageStream>;
+}
+
+export interface AnthropicBetaMessages extends AnthropicMessages {
+  toolRunner: (
+    params: AnthropicToolRunnerParams,
+  ) => AnthropicToolRunner<unknown>;
 }
 
 export interface AnthropicAPIPromise<T> extends Promise<T> {
@@ -33,6 +37,17 @@ export interface AnthropicWithResponse<T> {
   data: T;
 }
 
+export interface AnthropicMessageStream extends AsyncIterable<AnthropicStreamEvent> {
+  finalMessage?: () => Promise<AnthropicMessage>;
+  abort?: () => void;
+}
+
+export interface AnthropicToolRunner<TYield>
+  extends AsyncIterable<TYield>, PromiseLike<AnthropicMessage> {
+  done?: () => Promise<AnthropicMessage>;
+  runUntilDone?: () => Promise<AnthropicMessage>;
+}
+
 // Requests
 
 export interface AnthropicCreateParams {
@@ -40,6 +55,12 @@ export interface AnthropicCreateParams {
   system?: string | { type: "text"; text: string }[];
   stream?: boolean;
   [key: string]: unknown;
+}
+
+export interface AnthropicToolRunnerParams extends AnthropicCreateParams {
+  tools: unknown[];
+  max_iterations?: number;
+  compactionControl?: unknown;
 }
 
 export interface AnthropicInputMessage {

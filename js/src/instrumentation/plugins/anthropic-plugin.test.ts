@@ -70,12 +70,15 @@ describe("AnthropicPlugin", () => {
     it("should subscribe to channels when enabled", () => {
       plugin.enable();
 
-      // Should subscribe to both messages.create and beta.messages.create
+      // Should subscribe to messages.create, beta.messages.create, and beta.messages.toolRunner
       expect(mockNewTracingChannel).toHaveBeenCalledWith(
         "orchestrion:@anthropic-ai/sdk:messages.create",
       );
       expect(mockNewTracingChannel).toHaveBeenCalledWith(
         "orchestrion:@anthropic-ai/sdk:beta.messages.create",
+      );
+      expect(mockNewTracingChannel).toHaveBeenCalledWith(
+        "orchestrion:@anthropic-ai/sdk:beta.messages.toolRunner",
       );
       expect(mockChannel.subscribe).toHaveBeenCalled();
     });
@@ -94,7 +97,7 @@ describe("AnthropicPlugin", () => {
       plugin.disable();
 
       // Should have subscribed twice
-      expect(mockChannel.subscribe).toHaveBeenCalledTimes(4); // 2 channels × 2 enables
+      expect(mockChannel.subscribe).toHaveBeenCalledTimes(6); // 3 channels × 2 enables
     });
   });
 });

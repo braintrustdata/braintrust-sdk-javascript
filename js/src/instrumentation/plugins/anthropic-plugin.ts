@@ -1,6 +1,10 @@
 import { BasePlugin } from "../core";
 import { traceStreamingChannel, unsubscribeAll } from "../core/channel-tracing";
-import { Attachment } from "../../logger";
+import { isAsyncIterable, patchStreamIfNeeded } from "../core/stream-patcher";
+import { Attachment, startSpan, withCurrent } from "../../logger";
+import type { Span } from "../../logger";
+import type { ChannelMessage } from "../core/channel-definitions";
+import type { IsoChannelHandlers, IsoTracingChannel } from "../../isomorph";
 import { SpanTypeAttribute, isObject } from "../../../util/index";
 import { filterFrom, getCurrentUnixTimestamp } from "../../util";
 import { finalizeAnthropicTokens } from "../../wrappers/anthropic-tokens-util";
@@ -11,10 +15,24 @@ import type {
   AnthropicCreateParams,
   AnthropicInputMessage,
   AnthropicMessage,
+  AnthropicMessageStream,
   AnthropicOutputContentBlock,
   AnthropicStreamEvent,
+  AnthropicToolRunner,
+  AnthropicToolRunnerParams,
   AnthropicUsage,
 } from "../../vendor-sdk-types/anthropic";
+
+type AnthropicToolRunnerState = {
+  aggregatedMetrics: Record<string, number>;
+  finalized: boolean;
+  firstTokenTime?: number;
+  iterationCount: number;
+  lastMessage?: AnthropicMessage;
+  seenMessages: WeakSet<object>;
+  span: Span;
+  startTime: number;
+};
 
 /**
  * Auto-instrumentation plugin for the Anthropic SDK.
@@ -33,6 +51,7 @@ import type {
 export class AnthropicPlugin extends BasePlugin {
   protected onEnable(): void {
     this.subscribeToAnthropicChannels();
+    this.subscribeToAnthropicToolRunner();
   }
 
   protected onDisable(): void {
@@ -97,6 +116,74 @@ export class AnthropicPlugin extends BasePlugin {
       }),
     );
   }
+
+  private subscribeToAnthropicToolRunner(): void {
+    const tracingChannel =
+      anthropicChannels.betaMessagesToolRunner.tracingChannel() as IsoTracingChannel<
+        ChannelMessage<typeof anthropicChannels.betaMessagesToolRunner>
+      >;
+    const states = new WeakMap<object, AnthropicToolRunnerState>();
+
+    const handlers: IsoChannelHandlers<
+      ChannelMessage<typeof anthropicChannels.betaMessagesToolRunner>
+    > = {
+      start: (event) => {
+        const params = (event.arguments[0] ?? {}) as AnthropicToolRunnerParams;
+        const span = startSpan({
+          name: "anthropic.beta.messages.toolRunner",
+          spanAttributes: {
+            type: SpanTypeAttribute.TASK,
+          },
+        });
+
+        span.log({
+          input: processAttachmentsInInput(
+            coalesceInput(params.messages ?? [], params.system),
+          ),
+          metadata: {
+            ...extractAnthropicToolRunnerMetadata(params),
+            provider: "anthropic",
+          },
+        });
+
+        states.set(event as object, {
+          aggregatedMetrics: {},
+          finalized: false,
+          iterationCount: 0,
+          seenMessages: new WeakSet<object>(),
+          span,
+          startTime: getCurrentUnixTimestamp(),
+        });
+      },
+
+      end: (event) => {
+        const state = states.get(event as object);
+        if (!state) {
+          return;
+        }
+
+        patchAnthropicToolRunner({
+          runner: event.result as AnthropicToolRunner<unknown>,
+          state,
+        });
+      },
+
+      error: (event) => {
+        const state = states.get(event as object);
+        if (!state || !event.error) {
+          return;
+        }
+
+        finalizeAnthropicToolRunnerError(state, event.error);
+        states.delete(event as object);
+      },
+    };
+
+    tracingChannel.subscribe(handlers);
+    this.unsubscribers.push(() => {
+      tracingChannel.unsubscribe(handlers);
+    });
+  }
 }
 
 /**
@@ -133,6 +220,328 @@ export function parseMetricsFromUsage(
   }
 
   return metrics;
+}
+
+function extractAnthropicToolRunnerMetadata(
+  params: AnthropicToolRunnerParams,
+): Record<string, unknown> {
+  const metadata = filterFrom(params, ["messages", "system", "tools"]);
+  const toolNames = extractAnthropicToolNames(params.tools);
+
+  return {
+    ...metadata,
+    operation: "toolRunner",
+    ...(toolNames.length > 0 ? { tool_names: toolNames } : {}),
+  };
+}
+
+function extractAnthropicToolNames(tools: unknown[]): string[] {
+  const toolNames: string[] = [];
+
+  for (const tool of tools) {
+    if (!tool || typeof tool !== "object") {
+      continue;
+    }
+
+    const toolRecord = tool as {
+      mcp_server_name?: unknown;
+      name?: unknown;
+    };
+
+    if (typeof toolRecord.name === "string") {
+      toolNames.push(toolRecord.name);
+      continue;
+    }
+
+    if (typeof toolRecord.mcp_server_name === "string") {
+      toolNames.push(toolRecord.mcp_server_name);
+    }
+  }
+
+  return toolNames;
+}
+
+function isAnthropicMessage(value: unknown): value is AnthropicMessage {
+  return (
+    !!value &&
+    typeof value === "object" &&
+    typeof (value as { role?: unknown }).role === "string" &&
+    Array.isArray((value as { content?: unknown }).content)
+  );
+}
+
+function isAnthropicMessageStream(
+  value: unknown,
+): value is AnthropicMessageStream & Record<string, unknown> {
+  return (
+    !!value &&
+    typeof value === "object" &&
+    isAsyncIterable(value) &&
+    "finalMessage" in value &&
+    typeof (value as { finalMessage?: unknown }).finalMessage === "function"
+  );
+}
+
+function recordAnthropicToolRunnerMessage(
+  state: AnthropicToolRunnerState,
+  message: AnthropicMessage,
+): void {
+  if (typeof message !== "object" || message === null) {
+    return;
+  }
+
+  if (state.seenMessages.has(message as object)) {
+    state.lastMessage = message;
+    return;
+  }
+
+  state.seenMessages.add(message as object);
+  state.lastMessage = message;
+
+  const parsedMetrics = parseMetricsFromUsage(message.usage);
+  for (const [key, value] of Object.entries(parsedMetrics)) {
+    if (typeof value === "number") {
+      state.aggregatedMetrics[key] =
+        (state.aggregatedMetrics[key] ?? 0) + value;
+    }
+  }
+}
+
+function instrumentAnthropicMessageStream(
+  stream: AnthropicMessageStream & Record<string, unknown>,
+  state: AnthropicToolRunnerState,
+): void {
+  if ("__braintrust_tool_runner_stream_patched" in stream) {
+    return;
+  }
+
+  if (!Object.isFrozen(stream) && !Object.isSealed(stream)) {
+    patchStreamIfNeeded<AnthropicStreamEvent>(stream, {
+      onChunk: () => {
+        if (state.firstTokenTime === undefined) {
+          state.firstTokenTime = getCurrentUnixTimestamp();
+        }
+      },
+      onComplete: () => undefined,
+    });
+  }
+
+  if (typeof stream.finalMessage === "function") {
+    const originalFinalMessage = stream.finalMessage.bind(stream);
+    stream.finalMessage = async () => {
+      const message = await originalFinalMessage();
+      recordAnthropicToolRunnerMessage(state, message);
+      return message;
+    };
+  }
+
+  Object.defineProperty(stream, "__braintrust_tool_runner_stream_patched", {
+    value: true,
+  });
+}
+
+async function finalizeAnthropicToolRunner(
+  state: AnthropicToolRunnerState,
+  finalMessage?: AnthropicMessage,
+): Promise<void> {
+  if (state.finalized) {
+    return;
+  }
+  state.finalized = true;
+
+  const message = finalMessage ?? state.lastMessage;
+  if (message) {
+    recordAnthropicToolRunnerMessage(state, message);
+  }
+
+  const metrics = finalizeAnthropicTokens({
+    ...state.aggregatedMetrics,
+  });
+  if (state.firstTokenTime !== undefined) {
+    metrics.time_to_first_token = state.firstTokenTime - state.startTime;
+  }
+
+  const metadata: Record<string, unknown> = {
+    anthropic_tool_runner_iterations: state.iterationCount,
+  };
+  if (message?.stop_reason !== undefined) {
+    metadata.stop_reason = message.stop_reason;
+  }
+  if (message?.stop_sequence !== undefined) {
+    metadata.stop_sequence = message.stop_sequence;
+  }
+
+  state.span.log({
+    ...(message
+      ? { output: { role: message.role, content: message.content } }
+      : {}),
+    metadata,
+    metrics: Object.fromEntries(
+      Object.entries(metrics).filter(
+        (entry): entry is [string, number] => entry[1] !== undefined,
+      ),
+    ),
+  });
+  state.span.end();
+}
+
+function finalizeAnthropicToolRunnerError(
+  state: AnthropicToolRunnerState,
+  error: unknown,
+): void {
+  if (state.finalized) {
+    return;
+  }
+  state.finalized = true;
+  state.span.log({
+    error: error instanceof Error ? error.message : String(error),
+  });
+  state.span.end();
+}
+
+async function resolveAnthropicToolRunnerFinalMessage(
+  runner: AnthropicToolRunner<unknown>,
+): Promise<AnthropicMessage | undefined> {
+  if (typeof runner.done === "function") {
+    return await runner.done();
+  }
+
+  if (typeof runner.runUntilDone === "function") {
+    return await runner.runUntilDone();
+  }
+
+  return undefined;
+}
+
+function wrapAnthropicToolRunnerPromiseMethod(
+  runnerRecord: Record<string, unknown>,
+  methodName: "done" | "runUntilDone",
+  state: AnthropicToolRunnerState,
+): void {
+  const method = runnerRecord[methodName];
+  if (typeof method !== "function") {
+    return;
+  }
+
+  runnerRecord[methodName] = async (...args: unknown[]) => {
+    return await withCurrent(state.span, async () => {
+      try {
+        const message = (await (
+          method as (...args: unknown[]) => unknown
+        ).apply(runnerRecord, args)) as AnthropicMessage;
+        recordAnthropicToolRunnerMessage(state, message);
+        await finalizeAnthropicToolRunner(state, message);
+        return message;
+      } catch (error) {
+        finalizeAnthropicToolRunnerError(state, error);
+        throw error;
+      }
+    });
+  };
+}
+
+function patchAnthropicToolRunner(args: {
+  runner: AnthropicToolRunner<unknown>;
+  state: AnthropicToolRunnerState;
+}): void {
+  const { runner, state } = args;
+  if (!runner || typeof runner !== "object") {
+    void finalizeAnthropicToolRunner(state);
+    return;
+  }
+
+  const runnerRecord = runner as AnthropicToolRunner<unknown> &
+    Record<string, unknown>;
+  if ("__braintrust_tool_runner_patched" in runnerRecord) {
+    return;
+  }
+
+  wrapAnthropicToolRunnerPromiseMethod(runnerRecord, "done", state);
+  wrapAnthropicToolRunnerPromiseMethod(runnerRecord, "runUntilDone", state);
+
+  if (!isAsyncIterable(runnerRecord)) {
+    Object.defineProperty(runnerRecord, "__braintrust_tool_runner_patched", {
+      value: true,
+    });
+    return;
+  }
+
+  const originalIterator =
+    runnerRecord[Symbol.asyncIterator].bind(runnerRecord);
+  runnerRecord[Symbol.asyncIterator] = function () {
+    const iterator = originalIterator() as AsyncIterator<unknown>;
+
+    return {
+      async next(value?: unknown) {
+        try {
+          const result = await withCurrent(state.span, () =>
+            value === undefined
+              ? iterator.next()
+              : (
+                  iterator.next as (
+                    value: unknown,
+                  ) => Promise<IteratorResult<unknown>>
+                )(value),
+          );
+
+          if (result.done) {
+            const finalMessage =
+              await resolveAnthropicToolRunnerFinalMessage(runner);
+            await finalizeAnthropicToolRunner(state, finalMessage);
+            return result;
+          }
+
+          state.iterationCount += 1;
+          if (isAnthropicMessage(result.value)) {
+            if (state.firstTokenTime === undefined) {
+              state.firstTokenTime = getCurrentUnixTimestamp();
+            }
+            recordAnthropicToolRunnerMessage(state, result.value);
+          } else if (isAnthropicMessageStream(result.value)) {
+            instrumentAnthropicMessageStream(result.value, state);
+          }
+
+          return result;
+        } catch (error) {
+          finalizeAnthropicToolRunnerError(state, error);
+          throw error;
+        }
+      },
+
+      async return(value?: unknown) {
+        try {
+          const result =
+            typeof iterator.return === "function"
+              ? await withCurrent(state.span, () => iterator.return!(value))
+              : ({ done: true, value } as IteratorResult<unknown>);
+          const finalMessage = await resolveAnthropicToolRunnerFinalMessage(
+            runner,
+          ).catch(() => undefined);
+          await finalizeAnthropicToolRunner(state, finalMessage);
+          return result;
+        } catch (error) {
+          finalizeAnthropicToolRunnerError(state, error);
+          throw error;
+        }
+      },
+
+      async throw(error?: unknown) {
+        finalizeAnthropicToolRunnerError(state, error);
+        if (typeof iterator.throw === "function") {
+          return await withCurrent(state.span, () => iterator.throw!(error));
+        }
+        throw error;
+      },
+
+      [Symbol.asyncIterator]() {
+        return this;
+      },
+    };
+  };
+
+  Object.defineProperty(runnerRecord, "__braintrust_tool_runner_patched", {
+    value: true,
+  });
 }
 
 /**
