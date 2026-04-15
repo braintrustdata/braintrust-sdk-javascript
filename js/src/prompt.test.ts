@@ -1,6 +1,6 @@
-import { beforeAll, describe, test, expect, vi } from "vitest";
+import { beforeAll, describe, test, expect, expectTypeOf, vi } from "vitest";
 import { configureNode } from "./node/config";
-import { Prompt } from "./logger";
+import { type CompiledPrompt, Prompt } from "./logger";
 import { type PromptDataType as PromptData } from "./generated_types";
 
 describe("prompt strict mode", () => {
@@ -264,6 +264,96 @@ describe("prompt template_format", () => {
     ).toThrow(
       "Nunjucks templating requires @braintrust/template-nunjucks. Install and import it to enable templateFormat: 'nunjucks'.",
     );
+  });
+
+  test("supports responses flavor in build()", () => {
+    const prompt = new Prompt(
+      {
+        id: "1",
+        _xact_id: "xact_123",
+        created: "2023-10-01T00:00:00Z",
+        project_id: "project_123",
+        prompt_session_id: "session_123",
+        name: "test",
+        slug: "test",
+        prompt_data: {
+          options: {
+            model: "gpt-4o",
+          },
+          prompt: {
+            type: "chat",
+            messages: [{ role: "user", content: "Hello {{name}}" }],
+            tools: JSON.stringify([
+              {
+                type: "function",
+                function: {
+                  name: "greet",
+                  parameters: {
+                    type: "object",
+                    properties: {},
+                  },
+                },
+              },
+            ]),
+          },
+        },
+      },
+      {},
+      true,
+    );
+
+    const result = prompt.build({ name: "World" }, { flavor: "responses" });
+
+    expect(result).toMatchObject({
+      model: "gpt-4o",
+      input: [{ role: "user", content: "Hello World" }],
+      tools: [
+        {
+          type: "function",
+          function: {
+            name: "greet",
+          },
+        },
+      ],
+    });
+    expect(result).not.toHaveProperty("messages");
+  });
+
+  test("supports responses flavor in buildWithAttachments()", async () => {
+    const prompt = new Prompt(
+      {
+        id: "1",
+        _xact_id: "xact_123",
+        created: "2023-10-01T00:00:00Z",
+        project_id: "project_123",
+        prompt_session_id: "session_123",
+        name: "test",
+        slug: "test",
+        prompt_data: {
+          options: {
+            model: "gpt-4o",
+          },
+          prompt: {
+            type: "chat",
+            messages: [{ role: "user", content: "Hello {{name}}" }],
+          },
+        },
+      },
+      {},
+      true,
+    );
+
+    const result = await prompt.buildWithAttachments(
+      { name: "World" },
+      { flavor: "responses" },
+    );
+
+    expectTypeOf(result).toMatchTypeOf<CompiledPrompt<"responses">>();
+    expect(result).toMatchObject({
+      model: "gpt-4o",
+      input: [{ role: "user", content: "Hello World" }],
+    });
+    expect(result).not.toHaveProperty("messages");
   });
 });
 

@@ -7193,11 +7193,15 @@ export type ChatPrompt = {
   messages: OpenAIMessage[];
   tools?: ChatCompletionTool[];
 };
+export type ResponsesPrompt = {
+  input: Message[];
+  tools?: ChatCompletionTool[];
+};
 export type CompletionPrompt = {
   prompt: string;
 };
 
-export type CompiledPrompt<Flavor extends "chat" | "completion"> =
+export type CompiledPrompt<Flavor extends "chat" | "completion" | "responses"> =
   CompiledPromptParams & {
     span_info?: {
       name?: string;
@@ -7215,8 +7219,10 @@ export type CompiledPrompt<Flavor extends "chat" | "completion"> =
       ? ChatPrompt
       : Flavor extends "completion"
         ? CompletionPrompt
-        : // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-          {});
+        : Flavor extends "responses"
+          ? ResponsesPrompt
+          : // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+            {});
 
 export type DefaultPromptArgs = Partial<
   CompiledPromptParams & AnyModelParam & ChatPrompt & CompletionPrompt
@@ -7546,7 +7552,7 @@ export class Prompt<
    *
    * @param buildArgs Args to forward along to the prompt template.
    */
-  public build<Flavor extends "chat" | "completion" = "chat">(
+  public build<Flavor extends "chat" | "completion" | "responses" = "chat">(
     buildArgs: unknown,
     options: {
       flavor?: Flavor;
@@ -7572,7 +7578,7 @@ export class Prompt<
    * @param buildArgs Args to forward along to the prompt template.
    */
   public async buildWithAttachments<
-    Flavor extends "chat" | "completion" = "chat",
+    Flavor extends "chat" | "completion" | "responses" = "chat",
   >(
     buildArgs: unknown,
     options: {
@@ -7596,7 +7602,7 @@ export class Prompt<
     }) as CompiledPrompt<Flavor>;
   }
 
-  private runBuild<Flavor extends "chat" | "completion">(
+  private runBuild<Flavor extends "chat" | "completion" | "responses">(
     buildArgs: unknown,
     options: {
       flavor: Flavor;
@@ -7673,7 +7679,7 @@ export class Prompt<
       options: { ...options, templateFormat: resolvedTemplateFormat },
     });
 
-    if (flavor === "chat") {
+    if (flavor === "chat" || flavor === "responses") {
       if (renderedPrompt.type !== "chat") {
         throw new Error(
           "Prompt is a completion prompt. Use buildCompletion() instead",
@@ -7687,7 +7693,9 @@ export class Prompt<
           templateFormat: resolvedTemplateFormat,
         }),
         ...spanInfo,
-        messages: renderedPrompt.messages,
+        ...(flavor === "chat"
+          ? { messages: renderedPrompt.messages }
+          : { input: renderedPrompt.messages }),
         ...(renderedPrompt.tools
           ? {
               tools: chatCompletionToolSchema

@@ -7,6 +7,7 @@ export type {
   CompiledPrompt,
   CompiledPromptParams,
   CompletionPrompt,
+  ResponsesPrompt,
   ContextParentSpanIds,
   DataSummary,
   DatasetSummary,
