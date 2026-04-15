@@ -12,6 +12,7 @@ import { summarizeWrapperContract } from "../../helpers/wrapper-contract";
 import {
   CHAT_MODEL,
   EMBEDDING_MODEL,
+  RERANK_MODEL,
   ROOT_NAME,
   SCENARIO_NAME,
 } from "./constants.mjs";
@@ -19,7 +20,9 @@ import {
 const CHAT_MODEL_NAME = CHAT_MODEL.split("/").at(-1) ?? CHAT_MODEL;
 const EMBEDDING_MODEL_NAME =
   EMBEDDING_MODEL.split("/").at(-1) ?? EMBEDDING_MODEL;
+const RERANK_MODEL_NAME = RERANK_MODEL.split("/").at(-1) ?? RERANK_MODEL;
 const OPENROUTER_MODEL_PROVIDER = "openai";
+const OPENROUTER_RERANK_PROVIDER = "cohere";
 
 type RunOpenRouterScenario = (harness: {
   runNodeScenarioDir: (options: {
@@ -61,7 +64,10 @@ function findOpenRouterSpan(
   return spans.find((candidate) => candidate.output !== undefined) ?? spans[0];
 }
 
-function buildSpanSummary(events: CapturedLogEvent[]): Json {
+function buildSpanSummary(
+  events: CapturedLogEvent[],
+  options: { supportsRerank: boolean },
+): Json {
   const chatOperation = findLatestSpan(events, "openrouter-chat-operation");
   const chatStreamOperation = findLatestSpan(
     events,
@@ -71,6 +77,7 @@ function buildSpanSummary(events: CapturedLogEvent[]): Json {
     events,
     "openrouter-embeddings-operation",
   );
+  const rerankOperation = findLatestSpan(events, "openrouter-rerank-operation");
   const responsesOperation = findLatestSpan(
     events,
     "openrouter-responses-operation",
@@ -98,6 +105,14 @@ function buildSpanSummary(events: CapturedLogEvent[]): Json {
     findOpenRouterSpan(events, embeddingsOperation?.span.id, [
       "openrouter.embeddings.generate",
     ]),
+    ...(options.supportsRerank
+      ? [
+          rerankOperation,
+          findOpenRouterSpan(events, rerankOperation?.span.id, [
+            "openrouter.rerank.rerank",
+          ]),
+        ]
+      : []),
     responsesOperation,
     findOpenRouterSpan(events, responsesOperation?.span.id, [
       "openrouter.beta.responses.send",
@@ -112,11 +127,13 @@ function buildSpanSummary(events: CapturedLogEvent[]): Json {
     ]),
   ].map((event) =>
     summarizeWrapperContract(event!, [
+      "document_count",
       "embedding_model",
       "model",
       "operation",
       "provider",
       "scenario",
+      "topN",
     ]),
   ) as Json;
 }
@@ -124,12 +141,14 @@ function buildSpanSummary(events: CapturedLogEvent[]): Json {
 export function defineOpenRouterTraceAssertions(options: {
   name: string;
   runScenario: RunOpenRouterScenario;
+  snapshotName: string;
+  supportsRerank: boolean;
   testFileUrl: string;
   timeoutMs: number;
 }): void {
   const spanSnapshotPath = resolveFileSnapshotPath(
     options.testFileUrl,
-    "span-events.json",
+    `${options.snapshotName}.span-events.json`,
   );
   const testConfig = {
     timeout: options.timeoutMs,
@@ -219,6 +238,31 @@ export function defineOpenRouterTraceAssertions(options: {
       expect(output?.embedding_length).toEqual(expect.any(Number));
       expect(output?.embedding_length).toBeGreaterThan(0);
     });
+
+    if (options.supportsRerank) {
+      test("captures trace for client.rerank.rerank()", testConfig, () => {
+        const root = findLatestSpan(events, ROOT_NAME);
+        const operation = findLatestSpan(events, "openrouter-rerank-operation");
+        const span = findOpenRouterSpan(events, operation?.span.id, [
+          "openrouter.rerank.rerank",
+        ]);
+
+        expect(operation).toBeDefined();
+        expect(span).toBeDefined();
+        expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
+        expect(span?.row.metadata).toMatchObject({
+          provider: OPENROUTER_RERANK_PROVIDER,
+          model: RERANK_MODEL_NAME,
+          document_count: 3,
+          topN: 2,
+        });
+        expect(Array.isArray(span?.output)).toBe(true);
+        expect(span?.output?.[0]).toMatchObject({
+          index: expect.any(Number),
+          relevance_score: expect.any(Number),
+        });
+      });
+    }
 
     test("captures trace for client.beta.responses.send()", testConfig, () => {
       const root = findLatestSpan(events, ROOT_NAME);
@@ -324,7 +368,11 @@ export function defineOpenRouterTraceAssertions(options: {
 
     test("matches the shared span snapshot", testConfig, async () => {
       await expect(
-        formatJsonFileSnapshot(buildSpanSummary(events)),
+        formatJsonFileSnapshot(
+          buildSpanSummary(events, {
+            supportsRerank: options.supportsRerank,
+          }),
+        ),
       ).toMatchFileSnapshot(spanSnapshotPath);
     });
   });

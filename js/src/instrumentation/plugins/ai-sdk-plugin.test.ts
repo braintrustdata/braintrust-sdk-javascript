@@ -959,6 +959,37 @@ describe("AI SDK utility functions", () => {
       expect(result.embedding_count).toBe(1);
     });
   });
+
+  describe("processAISDKRerankOutput", () => {
+    it("should summarize rerank results using the shared rerank shape", () => {
+      const output = {
+        ranking: [
+          { originalIndex: 3, score: 0.91, document: "gamma" },
+          { originalIndex: 1, score: 0.72, document: "alpha" },
+        ],
+        usage: {
+          totalTokens: 6,
+        },
+      };
+
+      const result = processAISDKRerankOutput(output, []);
+      expect(result).toEqual([
+        { index: 3, relevance_score: 0.91 },
+        { index: 1, relevance_score: 0.72 },
+      ]);
+    });
+
+    it("should omit non-whitelisted rerank fields", () => {
+      const output = {
+        ranking: [{ originalIndex: 0, score: 0.5 }],
+        response: { body: "too much" },
+        rerankedDocuments: ["alpha"],
+      };
+
+      const result = processAISDKRerankOutput(output, []);
+      expect(result).toEqual([{ index: 0, relevance_score: 0.5 }]);
+    });
+  });
 });
 
 // Helper functions exported for testing
@@ -1366,4 +1397,25 @@ function processAISDKEmbeddingOutput(
   }
 
   return processed;
+}
+
+function processAISDKRerankOutput(
+  output: any,
+  _denyOutputPaths: string[],
+): any {
+  if (!output || typeof output !== "object") {
+    return output;
+  }
+
+  if (Array.isArray(output?.ranking)) {
+    return output.ranking.slice(0, 100).map((item: any) => ({
+      index:
+        typeof item?.originalIndex === "number"
+          ? item.originalIndex
+          : undefined,
+      relevance_score: typeof item?.score === "number" ? item.score : undefined,
+    }));
+  }
+
+  return undefined;
 }

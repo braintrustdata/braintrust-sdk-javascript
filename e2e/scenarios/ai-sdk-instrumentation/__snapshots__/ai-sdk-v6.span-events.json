@@ -93,25 +93,30 @@
     ]
   },
   {
-    "has_input": true,
-    "has_output": true,
-    "metadata": null,
-    "name": "get_weather",
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "operation": "rerank"
+    },
+    "name": "ai-sdk-rerank-operation",
     "root_span_id": "<span:1>",
     "span_id": "<span:8>",
     "span_parents": [
-      "<span:7>"
+      "<span:1>"
     ]
   },
   {
     "has_input": true,
     "has_output": true,
-    "metadata": null,
-    "name": "get_weather",
+    "metadata": {
+      "model": "rerank-v3.5",
+      "provider": "cohere.reranking"
+    },
+    "name": "rerank",
     "root_span_id": "<span:1>",
     "span_id": "<span:9>",
     "span_parents": [
-      "<span:7>"
+      "<span:8>"
     ]
   },
   {
@@ -137,39 +142,34 @@
     ]
   },
   {
+    "has_input": true,
+    "has_output": true,
+    "metadata": null,
+    "name": "get_weather",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:12>",
+    "span_parents": [
+      "<span:7>"
+    ]
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": null,
+    "name": "get_weather",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:13>",
+    "span_parents": [
+      "<span:7>"
+    ]
+  },
+  {
     "has_input": false,
     "has_output": false,
     "metadata": {
       "operation": "generate-object"
     },
     "name": "ai-sdk-generate-object-operation",
-    "root_span_id": "<span:1>",
-    "span_id": "<span:12>",
-    "span_parents": [
-      "<span:1>"
-    ]
-  },
-  {
-    "has_input": true,
-    "has_output": true,
-    "metadata": {
-      "model": "gpt-4o-mini-2024-07-18",
-      "provider": "openai.responses"
-    },
-    "name": "generateObject",
-    "root_span_id": "<span:1>",
-    "span_id": "<span:13>",
-    "span_parents": [
-      "<span:12>"
-    ]
-  },
-  {
-    "has_input": false,
-    "has_output": false,
-    "metadata": {
-      "operation": "stream-object"
-    },
-    "name": "ai-sdk-stream-object-operation",
     "root_span_id": "<span:1>",
     "span_id": "<span:14>",
     "span_parents": [
@@ -183,7 +183,7 @@
       "model": "gpt-4o-mini-2024-07-18",
       "provider": "openai.responses"
     },
-    "name": "streamObject",
+    "name": "generateObject",
     "root_span_id": "<span:1>",
     "span_id": "<span:15>",
     "span_parents": [
@@ -194,9 +194,9 @@
     "has_input": false,
     "has_output": false,
     "metadata": {
-      "operation": "agent-generate"
+      "operation": "stream-object"
     },
-    "name": "ai-sdk-agent-generate-operation",
+    "name": "ai-sdk-stream-object-operation",
     "root_span_id": "<span:1>",
     "span_id": "<span:16>",
     "span_parents": [
@@ -210,7 +210,7 @@
       "model": "gpt-4o-mini-2024-07-18",
       "provider": "openai.responses"
     },
-    "name": "ToolLoopAgent.generate",
+    "name": "streamObject",
     "root_span_id": "<span:1>",
     "span_id": "<span:17>",
     "span_parents": [
@@ -221,9 +221,9 @@
     "has_input": false,
     "has_output": false,
     "metadata": {
-      "operation": "agent-stream"
+      "operation": "agent-generate"
     },
-    "name": "ai-sdk-agent-stream-operation",
+    "name": "ai-sdk-agent-generate-operation",
     "root_span_id": "<span:1>",
     "span_id": "<span:18>",
     "span_parents": [
@@ -237,11 +237,38 @@
       "model": "gpt-4o-mini-2024-07-18",
       "provider": "openai.responses"
     },
-    "name": "ToolLoopAgent.stream",
+    "name": "ToolLoopAgent.generate",
     "root_span_id": "<span:1>",
     "span_id": "<span:19>",
     "span_parents": [
       "<span:18>"
+    ]
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "operation": "agent-stream"
+    },
+    "name": "ai-sdk-agent-stream-operation",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:20>",
+    "span_parents": [
+      "<span:1>"
+    ]
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "model": "gpt-4o-mini-2024-07-18",
+      "provider": "openai.responses"
+    },
+    "name": "ToolLoopAgent.stream",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:21>",
+    "span_parents": [
+      "<span:20>"
     ]
   }
 ]

@@ -7,6 +7,9 @@ import type {
   OpenRouterEmbeddingCreateParams,
   OpenRouterEmbeddingResponse,
   OpenRouterEmbeddings,
+  OpenRouterRerank,
+  OpenRouterRerankCreateParams,
+  OpenRouterRerankResult,
   OpenRouterResponses,
   OpenRouterResponsesCreateParams,
   OpenRouterResponsesResult,
@@ -31,6 +34,10 @@ export function wrapOpenRouter<T>(openrouter: T): T {
       typeof or.embeddings === "object" &&
       or.embeddings &&
       "generate" in or.embeddings) ||
+      ("rerank" in or &&
+        typeof or.rerank === "object" &&
+        or.rerank &&
+        "rerank" in or.rerank) ||
       ("callModel" in or && typeof or.callModel === "function"))
   ) {
     return openRouterProxy(or as OpenRouterClient) as T;
@@ -51,6 +58,8 @@ function openRouterProxy(openrouter: OpenRouterClient): OpenRouterClient {
           return target.embeddings
             ? embeddingsProxy(target.embeddings)
             : target.embeddings;
+        case "rerank":
+          return target.rerank ? rerankProxy(target.rerank) : target.rerank;
         case "beta":
           return target.beta ? betaProxy(target.beta) : target.beta;
         case "callModel":
@@ -110,6 +119,17 @@ function responsesProxy(responses: OpenRouterResponses): OpenRouterResponses {
   });
 }
 
+function rerankProxy(rerank: OpenRouterRerank): OpenRouterRerank {
+  return new Proxy(rerank, {
+    get(target, prop, receiver) {
+      if (prop === "rerank") {
+        return wrapRerank(target.rerank.bind(target));
+      }
+      return Reflect.get(target, prop, receiver);
+    },
+  });
+}
+
 function wrapChatSend(
   send: (
     request: OpenRouterChatCreateParams,
@@ -144,6 +164,19 @@ function wrapResponsesSend(
   return (request, options) =>
     openRouterChannels.betaResponsesSend.tracePromise(
       () => send(request, options),
+      { arguments: [request] },
+    );
+}
+
+function wrapRerank(
+  rerank: (
+    request: OpenRouterRerankCreateParams,
+    options?: unknown,
+  ) => Promise<OpenRouterRerankResult>,
+): OpenRouterRerank["rerank"] {
+  return (request, options) =>
+    openRouterChannels.rerankRerank.tracePromise(
+      () => rerank(request, options),
       { arguments: [request] },
     );
 }

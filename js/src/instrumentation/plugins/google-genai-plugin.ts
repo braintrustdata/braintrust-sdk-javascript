@@ -19,6 +19,8 @@ import { SpanTypeAttribute } from "../../../util/index";
 import { getCurrentUnixTimestamp } from "../../util";
 import { googleGenAIChannels } from "./google-genai-channels";
 import type {
+  GoogleGenAIEmbedContentParams,
+  GoogleGenAIEmbedContentResponse,
   GoogleGenAIGenerateContentParams,
   GoogleGenAIGenerateContentResponse,
   GoogleGenAIContent,
@@ -29,6 +31,10 @@ import type {
 type GenerateContentChannel = typeof googleGenAIChannels.generateContent;
 type GenerateContentStreamChannel =
   typeof googleGenAIChannels.generateContentStream;
+type EmbedContentChannel = typeof googleGenAIChannels.embedContent;
+type GoogleGenAINonStreamingChannel =
+  | GenerateContentChannel
+  | EmbedContentChannel;
 type GenerateContentStreamEvent =
   ChannelMessage<GenerateContentStreamChannel> & {
     googleGenAIInput?: Record<string, unknown>;
@@ -65,6 +71,7 @@ function createWrapperParityEvent(args: {
  * and creates Braintrust spans to track:
  * - models.generateContent (non-streaming)
  * - models.generateContentStream (streaming)
+ * - models.embedContent (embeddings)
  *
  * The plugin handles:
  * - Google-specific token metrics (promptTokenCount, candidatesTokenCount, cachedContentTokenCount)
@@ -84,6 +91,7 @@ export class GoogleGenAIPlugin extends BasePlugin {
   private subscribeToGoogleGenAIChannels(): void {
     this.subscribeToGenerateContentChannel();
     this.subscribeToGenerateContentStreamChannel();
+    this.subscribeToEmbedContentChannel();
   }
 
   private subscribeToGenerateContentChannel(): void {
@@ -97,8 +105,8 @@ export class GoogleGenAIPlugin extends BasePlugin {
       states,
       (event) => {
         const params = event.arguments[0];
-        const input = serializeInput(params);
-        const metadata = extractMetadata(params);
+        const input = serializeGenerateContentInput(params);
+        const metadata = extractGenerateContentMetadata(params);
         const span = startSpan({
           name: "generate_content",
           spanAttributes: {
@@ -119,8 +127,8 @@ export class GoogleGenAIPlugin extends BasePlugin {
         start: (event) => {
           ensureSpanState(states, event, () => {
             const params = event.arguments[0];
-            const input = serializeInput(params);
-            const metadata = extractMetadata(params);
+            const input = serializeGenerateContentInput(params);
+            const metadata = extractGenerateContentMetadata(params);
             const span = startSpan({
               name: "generate_content",
               spanAttributes: {
@@ -182,8 +190,9 @@ export class GoogleGenAIPlugin extends BasePlugin {
       start: (event) => {
         const streamEvent = event as GenerateContentStreamEvent;
         const params = event.arguments[0];
-        streamEvent.googleGenAIInput = serializeInput(params);
-        streamEvent.googleGenAIMetadata = extractMetadata(params);
+        streamEvent.googleGenAIInput = serializeGenerateContentInput(params);
+        streamEvent.googleGenAIMetadata =
+          extractGenerateContentMetadata(params);
         streamEvent.googleGenAIStartTime = getCurrentUnixTimestamp();
       },
       asyncEnd: (event) => {
@@ -200,6 +209,85 @@ export class GoogleGenAIPlugin extends BasePlugin {
 
     tracingChannel.subscribe(handlers);
     this.unsubscribers.push(() => {
+      tracingChannel.unsubscribe(handlers);
+    });
+  }
+
+  private subscribeToEmbedContentChannel(): void {
+    const tracingChannel =
+      googleGenAIChannels.embedContent.tracingChannel() as IsoTracingChannel<
+        ChannelMessage<EmbedContentChannel>
+      >;
+    const states = new WeakMap<object, SpanState>();
+    const unbindCurrentSpanStore = bindCurrentSpanStoreToStart(
+      tracingChannel,
+      states,
+      (event) => {
+        const params = event.arguments[0];
+        const input = serializeEmbedContentInput(params);
+        const metadata = extractEmbedContentMetadata(params);
+        const span = startSpan({
+          name: "embed_content",
+          spanAttributes: {
+            type: SpanTypeAttribute.LLM,
+          },
+          event: createWrapperParityEvent({ input, metadata }),
+        });
+
+        return {
+          span,
+          startTime: getCurrentUnixTimestamp(),
+        };
+      },
+    );
+
+    const handlers: IsoChannelHandlers<ChannelMessage<EmbedContentChannel>> = {
+      start: (event) => {
+        ensureSpanState(states, event, () => {
+          const params = event.arguments[0];
+          const input = serializeEmbedContentInput(params);
+          const metadata = extractEmbedContentMetadata(params);
+          const span = startSpan({
+            name: "embed_content",
+            spanAttributes: {
+              type: SpanTypeAttribute.LLM,
+            },
+            event: createWrapperParityEvent({ input, metadata }),
+          });
+
+          return {
+            span,
+            startTime: getCurrentUnixTimestamp(),
+          };
+        });
+      },
+      asyncEnd: (event) => {
+        const spanState = states.get(event as object);
+        if (!spanState) {
+          return;
+        }
+
+        try {
+          const output = summarizeEmbedContentOutput(event.result);
+          spanState.span.log({
+            ...(output ? { output } : {}),
+            metrics: cleanMetrics(
+              extractEmbedContentMetrics(event.result, spanState.startTime),
+            ),
+          });
+        } finally {
+          spanState.span.end();
+          states.delete(event as object);
+        }
+      },
+      error: (event) => {
+        logErrorAndEndSpan(states, event as ErrorOf<EmbedContentChannel>);
+      },
+    };
+
+    tracingChannel.subscribe(handlers);
+    this.unsubscribers.push(() => {
+      unbindCurrentSpanStore?.();
       tracingChannel.unsubscribe(handlers);
     });
   }
@@ -220,7 +308,9 @@ function ensureSpanState<TEvent extends object>(
   return created;
 }
 
-function bindCurrentSpanStoreToStart<TChannel extends GenerateContentChannel>(
+function bindCurrentSpanStoreToStart<
+  TChannel extends GoogleGenAINonStreamingChannel,
+>(
   tracingChannel: IsoTracingChannel<ChannelMessage<TChannel>>,
   states: WeakMap<object, SpanState>,
   create: (event: StartOf<TChannel>) => SpanState,
@@ -260,7 +350,7 @@ function bindCurrentSpanStoreToStart<TChannel extends GenerateContentChannel>(
   };
 }
 
-function logErrorAndEndSpan<TChannel extends GenerateContentChannel>(
+function logErrorAndEndSpan<TChannel extends GoogleGenAINonStreamingChannel>(
   states: WeakMap<object, SpanState>,
   event: ErrorOf<TChannel>,
 ): void {
@@ -497,28 +587,39 @@ function patchGoogleGenAIStreamingResult(args: {
   return true;
 }
 
-/**
- * Serialize input parameters for Google GenAI API calls.
- */
-function serializeInput(
+function serializeGenerateContentInput(
   params: GoogleGenAIGenerateContentParams,
 ): Record<string, unknown> {
   const input: Record<string, unknown> = {
     model: params.model,
-    contents: serializeContents(params.contents),
+    contents: serializeContentCollection(params.contents),
   };
 
-  if (params.config) {
-    const config = tryToDict(params.config);
-    if (config) {
-      const filteredConfig: Record<string, unknown> = {};
-      Object.keys(config).forEach((key) => {
-        if (key !== "tools") {
-          filteredConfig[key] = config[key];
-        }
-      });
-      input.config = filteredConfig;
-    }
+  const config = params.config ? tryToDict(params.config) : null;
+  if (config) {
+    const filteredConfig: Record<string, unknown> = {};
+    Object.keys(config).forEach((key) => {
+      if (key !== "tools") {
+        filteredConfig[key] = config[key];
+      }
+    });
+    input.config = filteredConfig;
+  }
+
+  return input;
+}
+
+function serializeEmbedContentInput(
+  params: GoogleGenAIEmbedContentParams,
+): Record<string, unknown> {
+  const input: Record<string, unknown> = {
+    model: params.model,
+    contents: serializeContentCollection(params.contents),
+  };
+
+  const config = params.config ? tryToDict(params.config) : null;
+  if (config) {
+    input.config = config;
   }
 
   return input;
@@ -527,8 +628,8 @@ function serializeInput(
 /**
  * Serialize contents, converting inline data to Attachments.
  */
-function serializeContents(
-  contents: GoogleGenAIGenerateContentParams["contents"],
+function serializeContentCollection(
+  contents: string | GoogleGenAIContent | GoogleGenAIContent[],
 ): unknown {
   if (contents === null || contents === undefined) {
     return null;
@@ -620,32 +721,30 @@ function serializePart(part: GoogleGenAIPart): unknown {
   return part;
 }
 
-/**
- * Serialize tools configuration.
- */
-function serializeTools(
+function serializeGenerateContentTools(
   params: GoogleGenAIGenerateContentParams,
 ): Record<string, unknown>[] | null {
-  if (!params.config?.tools) {
+  const config = params.config ? tryToDict(params.config) : null;
+  const tools = config?.tools;
+  if (!Array.isArray(tools)) {
     return null;
   }
 
   try {
-    return params.config.tools.map((tool) => {
-      if (typeof tool === "object" && tool.functionDeclarations) {
-        return tool;
+    const serializedTools: Record<string, unknown>[] = [];
+    for (const tool of tools) {
+      const toolDict = tryToDict(tool);
+      if (toolDict) {
+        serializedTools.push(toolDict);
       }
-      return tool;
-    });
+    }
+    return serializedTools.length > 0 ? serializedTools : null;
   } catch {
     return null;
   }
 }
 
-/**
- * Extract metadata from parameters.
- */
-function extractMetadata(
+function extractGenerateContentMetadata(
   params: GoogleGenAIGenerateContentParams,
 ): Record<string, unknown> {
   const metadata: Record<string, unknown> = {};
@@ -665,9 +764,28 @@ function extractMetadata(
     }
   }
 
-  const tools = serializeTools(params);
+  const tools = serializeGenerateContentTools(params);
   if (tools) {
     metadata.tools = tools;
+  }
+
+  return metadata;
+}
+
+function extractEmbedContentMetadata(
+  params: GoogleGenAIEmbedContentParams,
+): Record<string, unknown> {
+  const metadata: Record<string, unknown> = {};
+
+  if (params.model) {
+    metadata.model = params.model;
+  }
+
+  const config = params.config ? tryToDict(params.config) : null;
+  if (config) {
+    Object.keys(config).forEach((key) => {
+      metadata[key] = config[key];
+    });
   }
 
   return metadata;
@@ -694,6 +812,107 @@ function extractGenerateContentMetrics(
   }
 
   return metrics;
+}
+
+function extractEmbedContentMetrics(
+  response: GoogleGenAIEmbedContentResponse | undefined,
+  startTime?: number,
+): Record<string, number> {
+  const metrics: Record<string, number> = {};
+
+  if (startTime !== undefined) {
+    const end = getCurrentUnixTimestamp();
+    metrics.start = startTime;
+    metrics.end = end;
+    metrics.duration = end - startTime;
+  }
+
+  if (response?.usageMetadata) {
+    populateUsageMetrics(metrics, response.usageMetadata);
+  }
+
+  const embeddingTokenCount = extractEmbedPromptTokenCount(response);
+  if (embeddingTokenCount !== undefined) {
+    metrics.prompt_tokens = embeddingTokenCount;
+    metrics.tokens = embeddingTokenCount;
+  }
+
+  return metrics;
+}
+
+function extractEmbedPromptTokenCount(
+  response: GoogleGenAIEmbedContentResponse | undefined,
+): number | undefined {
+  if (!response) {
+    return undefined;
+  }
+
+  // Embedding token counts are available only on Vertex responses via usageMetadata
+  // and/or embedding.statistics.tokenCount; Gemini Developer API embed responses omit them.
+  const usagePromptTokens = response.usageMetadata?.promptTokenCount;
+  if (
+    typeof usagePromptTokens === "number" &&
+    Number.isFinite(usagePromptTokens)
+  ) {
+    return usagePromptTokens;
+  }
+
+  const usageTotalTokens = response.usageMetadata?.totalTokenCount;
+  if (
+    typeof usageTotalTokens === "number" &&
+    Number.isFinite(usageTotalTokens)
+  ) {
+    return usageTotalTokens;
+  }
+
+  const embeddings = Array.isArray(response.embeddings)
+    ? response.embeddings
+    : response.embedding
+      ? [response.embedding]
+      : [];
+  if (embeddings.length === 0) {
+    return undefined;
+  }
+
+  let total = 0;
+  let sawAny = false;
+  for (const embedding of embeddings) {
+    const embeddingStats = tryToDict(tryToDict(embedding)?.statistics);
+    const tokenCount = embeddingStats?.tokenCount;
+    if (typeof tokenCount === "number" && Number.isFinite(tokenCount)) {
+      total += tokenCount;
+      sawAny = true;
+    }
+  }
+
+  return sawAny ? total : undefined;
+}
+
+function summarizeEmbedContentOutput(
+  response: GoogleGenAIEmbedContentResponse | undefined,
+): Record<string, number> | undefined {
+  if (!response) {
+    return undefined;
+  }
+
+  const embeddings = Array.isArray(response.embeddings)
+    ? response.embeddings
+    : response.embedding
+      ? [response.embedding]
+      : [];
+  if (embeddings.length === 0) {
+    return undefined;
+  }
+
+  const firstValues = embeddings[0]?.values;
+  if (!Array.isArray(firstValues)) {
+    return undefined;
+  }
+
+  return {
+    embedding_count: embeddings.length,
+    embedding_length: firstValues.length,
+  };
 }
 
 function populateUsageMetrics(

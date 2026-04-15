@@ -31,6 +31,20 @@ export const openRouterConfigs: InstrumentationConfig[] = [
   },
 
   {
+    channelName: openRouterChannels.rerankRerank.channelName,
+    module: {
+      name: "@openrouter/sdk",
+      versionRange: ">=0.12.0 <1.0.0",
+      filePath: "esm/sdk/rerank.js",
+    },
+    functionQuery: {
+      className: "Rerank",
+      methodName: "rerank",
+      kind: "Async",
+    },
+  },
+
+  {
     channelName: openRouterChannels.betaResponsesSend.channelName,
     module: {
       name: "@openrouter/sdk",
