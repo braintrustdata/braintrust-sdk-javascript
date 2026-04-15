@@ -585,6 +585,35 @@ describe("AI SDK utility functions", () => {
       });
     });
 
+    it("should extract anthropic cache metrics from provider metadata", () => {
+      const result = {
+        usage: {
+          inputTokens: 100,
+          inputTokenDetails: {
+            cacheReadTokens: 0,
+            cacheWriteTokens: 80,
+          },
+          outputTokens: 20,
+          cachedInputTokens: 0,
+        },
+        providerMetadata: {
+          anthropic: {
+            cacheCreationInputTokens: 80,
+            usage: {
+              cache_creation_input_tokens: 80,
+            },
+          },
+        },
+      };
+      const metrics = extractTokenMetrics(result);
+      expect(metrics).toEqual({
+        prompt_tokens: 100,
+        completion_tokens: 20,
+        prompt_cached_tokens: 0,
+        prompt_cache_creation_tokens: 80,
+      });
+    });
+
     it("should handle missing usage", () => {
       const result = {};
       const metrics = extractTokenMetrics(result);
@@ -930,6 +959,37 @@ describe("AI SDK utility functions", () => {
       expect(result.embedding_count).toBe(1);
     });
   });
+
+  describe("processAISDKRerankOutput", () => {
+    it("should summarize rerank results using the shared rerank shape", () => {
+      const output = {
+        ranking: [
+          { originalIndex: 3, score: 0.91, document: "gamma" },
+          { originalIndex: 1, score: 0.72, document: "alpha" },
+        ],
+        usage: {
+          totalTokens: 6,
+        },
+      };
+
+      const result = processAISDKRerankOutput(output, []);
+      expect(result).toEqual([
+        { index: 3, relevance_score: 0.91 },
+        { index: 1, relevance_score: 0.72 },
+      ]);
+    });
+
+    it("should omit non-whitelisted rerank fields", () => {
+      const output = {
+        ranking: [{ originalIndex: 0, score: 0.5 }],
+        response: { body: "too much" },
+        rerankedDocuments: ["alpha"],
+      };
+
+      const result = processAISDKRerankOutput(output, []);
+      expect(result).toEqual([{ index: 0, relevance_score: 0.5 }]);
+    });
+  });
 });
 
 // Helper functions exported for testing
@@ -1165,12 +1225,46 @@ function extractTokenMetrics(result: any): Record<string, number> {
     metrics.tokens = totalTokens;
   }
 
+  const promptCachedTokens = firstNumber(
+    usage.inputTokens?.cacheRead,
+    usage.inputTokenDetails?.cacheReadTokens,
+    usage.cachedInputTokens,
+    usage.promptCachedTokens,
+    usage.prompt_cached_tokens,
+  );
+  if (promptCachedTokens !== undefined) {
+    metrics.prompt_cached_tokens = promptCachedTokens;
+  }
+
+  const promptCacheCreationTokens = firstNumber(
+    usage.inputTokens?.cacheWrite,
+    usage.inputTokenDetails?.cacheWriteTokens,
+    usage.promptCacheCreationTokens,
+    usage.prompt_cache_creation_tokens,
+    extractAnthropicCacheCreationTokens(result),
+  );
+  if (promptCacheCreationTokens !== undefined) {
+    metrics.prompt_cache_creation_tokens = promptCacheCreationTokens;
+  }
+
   const cost = extractCostFromResult(result);
   if (cost !== undefined) {
     metrics.estimated_cost = cost;
   }
 
   return metrics;
+}
+
+function extractAnthropicCacheCreationTokens(result: any): number | undefined {
+  const anthropicMetadata = result?.providerMetadata?.anthropic;
+  if (!anthropicMetadata || typeof anthropicMetadata !== "object") {
+    return undefined;
+  }
+
+  return firstNumber(
+    anthropicMetadata.cacheCreationInputTokens,
+    anthropicMetadata.usage?.cache_creation_input_tokens,
+  );
 }
 
 function extractCostFromResult(result: any): number | undefined {
@@ -1303,4 +1397,25 @@ function processAISDKEmbeddingOutput(
   }
 
   return processed;
+}
+
+function processAISDKRerankOutput(
+  output: any,
+  _denyOutputPaths: string[],
+): any {
+  if (!output || typeof output !== "object") {
+    return output;
+  }
+
+  if (Array.isArray(output?.ranking)) {
+    return output.ranking.slice(0, 100).map((item: any) => ({
+      index:
+        typeof item?.originalIndex === "number"
+          ? item.originalIndex
+          : undefined,
+      relevance_score: typeof item?.score === "number" ? item.score : undefined,
+    }));
+  }
+
+  return undefined;
 }

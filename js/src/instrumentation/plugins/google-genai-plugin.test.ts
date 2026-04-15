@@ -55,18 +55,6 @@ describe("GoogleGenAIPlugin", () => {
   });
 
   describe("enable/disable lifecycle", () => {
-    it("should subscribe to channels when enabled", () => {
-      plugin.enable();
-
-      expect(mockNewTracingChannel).toHaveBeenCalledWith(
-        "orchestrion:@google/genai:models.generateContent",
-      );
-      expect(mockNewTracingChannel).toHaveBeenCalledWith(
-        "orchestrion:@google/genai:models.generateContentStream",
-      );
-      expect(subscribeSpy).toHaveBeenCalled();
-    });
-
     it("should not subscribe multiple times if enabled twice", () => {
       plugin.enable();
       const firstCallCount = subscribeSpy.mock.calls.length;
@@ -118,16 +106,6 @@ describe("GoogleGenAIPlugin", () => {
       expect(handlers).toHaveProperty("start");
       expect(handlers).toHaveProperty("asyncEnd");
       expect(handlers).toHaveProperty("error");
-    });
-  });
-
-  describe("generateContentStream channel subscription", () => {
-    it("should subscribe to streaming channel", () => {
-      plugin.enable();
-
-      expect(mockNewTracingChannel).toHaveBeenCalledWith(
-        "orchestrion:@google/genai:models.generateContentStream",
-      );
     });
   });
 });

@@ -13,7 +13,12 @@ import {
 } from "../../helpers/trace-selectors";
 import { summarizeWrapperContract } from "../../helpers/wrapper-contract";
 
-import { GOOGLE_MODEL, ROOT_NAME, SCENARIO_NAME } from "./scenario.impl.mjs";
+import {
+  GOOGLE_EMBEDDING_MODEL,
+  GOOGLE_MODEL,
+  ROOT_NAME,
+  SCENARIO_NAME,
+} from "./scenario.impl.mjs";
 
 type RunGoogleGenAIScenario = (harness: {
   runNodeScenarioDir: (options: {
@@ -274,6 +279,7 @@ function summarizeGooglePayload(event: CapturedLogEvent): Json {
 
 function buildRelevantEvents(events: CapturedLogEvent[]): CapturedLogEvent[] {
   const generateOperation = findLatestSpan(events, "google-generate-operation");
+  const embedOperation = findLatestSpan(events, "google-embed-operation");
   const attachmentOperation = findLatestSpan(
     events,
     "google-attachment-operation",
@@ -291,6 +297,11 @@ function buildRelevantEvents(events: CapturedLogEvent[]): CapturedLogEvent[] {
     findGoogleSpan(events, generateOperation?.span.id, [
       "generate_content",
       "google-genai.generateContent",
+    ]),
+    embedOperation,
+    findGoogleSpan(events, embedOperation?.span.id, [
+      "embed_content",
+      "google-genai.embedContent",
     ]),
     attachmentOperation,
     findGoogleSpan(events, attachmentOperation?.span.id, [
@@ -390,6 +401,31 @@ export function defineGoogleGenAIInstrumentationAssertions(options: {
         });
       },
     );
+
+    test("captures trace for client.models.embedContent()", testConfig, () => {
+      const root = findLatestSpan(events, ROOT_NAME);
+      const operation = findLatestSpan(events, "google-embed-operation");
+      const span = findGoogleSpan(events, operation?.span.id, [
+        "embed_content",
+        "google-genai.embedContent",
+      ]);
+
+      expect(operation).toBeDefined();
+      expect(span).toBeDefined();
+      expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
+      expect(span?.row.metadata).toMatchObject({
+        model: GOOGLE_EMBEDDING_MODEL,
+      });
+      expect(span?.output).toMatchObject({
+        embedding_count: expect.any(Number),
+        embedding_length: expect.any(Number),
+      });
+      expect(span?.metrics).toMatchObject({
+        duration: expect.any(Number),
+        end: expect.any(Number),
+        start: expect.any(Number),
+      });
+    });
 
     test("captures trace for sending an attachment", testConfig, () => {
       const root = findLatestSpan(events, ROOT_NAME);

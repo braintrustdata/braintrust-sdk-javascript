@@ -5,6 +5,8 @@ import type {
   AISDKCallParams,
   AISDKEmbedParams,
   AISDKEmbeddingResult,
+  AISDKRerankParams,
+  AISDKRerankResult,
   AISDKResult,
 } from "../../vendor-sdk-types/ai-sdk";
 
@@ -83,6 +85,10 @@ export const aiSDKChannels = defineChannels("ai", {
     AISDKChannelContext
   >({
     channelName: "embedMany",
+    kind: "async",
+  }),
+  rerank: channel<[AISDKRerankParams], AISDKRerankResult, AISDKChannelContext>({
+    channelName: "rerank",
     kind: "async",
   }),
   agentGenerate: channel<

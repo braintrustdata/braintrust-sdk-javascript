@@ -3,10 +3,10 @@
     "has_input": false,
     "has_output": false,
     "metadata": {
-      "scenario": "google-genai-instrumentation"
+      "scenario": "openrouter-instrumentation"
     },
     "metric_keys": [],
-    "name": "google-genai-instrumentation-root",
+    "name": "openrouter-root",
     "root_span_id": "<span:1>",
     "span_id": "<span:1>",
     "span_parents": [],
@@ -16,10 +16,10 @@
     "has_input": false,
     "has_output": false,
     "metadata": {
-      "operation": "generate"
+      "operation": "chat"
     },
     "metric_keys": [],
-    "name": "google-generate-operation",
+    "name": "openrouter-chat-operation",
     "root_span_id": "<span:1>",
     "span_id": "<span:2>",
     "span_parents": [
@@ -31,15 +31,22 @@
     "has_input": true,
     "has_output": true,
     "metadata": {
-      "model": "gemini-2.5-flash-lite"
+      "model": "gpt-4o-mini-2024-07-18",
+      "provider": "openai"
     },
     "metric_keys": [
+      "completion_audio_tokens",
+      "completion_reasoning_tokens",
       "completion_tokens",
-      "duration",
+      "prompt_audio_tokens",
+      "prompt_cache_write_tokens",
+      "prompt_cached_tokens",
       "prompt_tokens",
+      "prompt_video_tokens",
+      "time_to_first_token",
       "tokens"
     ],
-    "name": "generate_content",
+    "name": "openrouter.chat.send",
     "root_span_id": "<span:1>",
     "span_id": "<span:3>",
     "span_parents": [
@@ -51,10 +58,10 @@
     "has_input": false,
     "has_output": false,
     "metadata": {
-      "operation": "embed"
+      "operation": "chat-stream"
     },
     "metric_keys": [],
-    "name": "google-embed-operation",
+    "name": "openrouter-chat-stream-operation",
     "root_span_id": "<span:1>",
     "span_id": "<span:4>",
     "span_parents": [
@@ -66,12 +73,22 @@
     "has_input": true,
     "has_output": true,
     "metadata": {
-      "model": "gemini-embedding-001"
+      "model": "gpt-4o-mini-2024-07-18",
+      "provider": "openai"
     },
     "metric_keys": [
-      "duration"
+      "completion_audio_tokens",
+      "completion_reasoning_tokens",
+      "completion_tokens",
+      "prompt_audio_tokens",
+      "prompt_cache_write_tokens",
+      "prompt_cached_tokens",
+      "prompt_tokens",
+      "prompt_video_tokens",
+      "time_to_first_token",
+      "tokens"
     ],
-    "name": "embed_content",
+    "name": "openrouter.chat.send",
     "root_span_id": "<span:1>",
     "span_id": "<span:5>",
     "span_parents": [
@@ -83,10 +100,10 @@
     "has_input": false,
     "has_output": false,
     "metadata": {
-      "operation": "attachment"
+      "operation": "embeddings"
     },
     "metric_keys": [],
-    "name": "google-attachment-operation",
+    "name": "openrouter-embeddings-operation",
     "root_span_id": "<span:1>",
     "span_id": "<span:6>",
     "span_parents": [
@@ -98,15 +115,16 @@
     "has_input": true,
     "has_output": true,
     "metadata": {
-      "model": "gemini-2.5-flash-lite"
+      "embedding_model": "text-embedding-3-small",
+      "model": "text-embedding-3-small",
+      "provider": "openai"
     },
     "metric_keys": [
-      "completion_tokens",
-      "duration",
+      "cost",
       "prompt_tokens",
       "tokens"
     ],
-    "name": "generate_content",
+    "name": "openrouter.embeddings.generate",
     "root_span_id": "<span:1>",
     "span_id": "<span:7>",
     "span_parents": [
@@ -118,10 +136,10 @@
     "has_input": false,
     "has_output": false,
     "metadata": {
-      "operation": "stream"
+      "operation": "rerank"
     },
     "metric_keys": [],
-    "name": "google-stream-operation",
+    "name": "openrouter-rerank-operation",
     "root_span_id": "<span:1>",
     "span_id": "<span:8>",
     "span_parents": [
@@ -133,16 +151,16 @@
     "has_input": true,
     "has_output": true,
     "metadata": {
-      "model": "gemini-2.5-flash-lite"
+      "document_count": 3,
+      "model": "rerank-v3.5",
+      "provider": "cohere",
+      "topN": 2
     },
     "metric_keys": [
-      "completion_tokens",
-      "duration",
-      "prompt_tokens",
-      "time_to_first_token",
-      "tokens"
+      "cost",
+      "search_units"
     ],
-    "name": "generate_content_stream",
+    "name": "openrouter.rerank.rerank",
     "root_span_id": "<span:1>",
     "span_id": "<span:9>",
     "span_parents": [
@@ -154,10 +172,10 @@
     "has_input": false,
     "has_output": false,
     "metadata": {
-      "operation": "stream-return"
+      "operation": "responses"
     },
     "metric_keys": [],
-    "name": "google-stream-return-operation",
+    "name": "openrouter-responses-operation",
     "root_span_id": "<span:1>",
     "span_id": "<span:10>",
     "span_parents": [
@@ -169,16 +187,22 @@
     "has_input": true,
     "has_output": true,
     "metadata": {
-      "model": "gemini-2.5-flash-lite"
+      "model": "gpt-4o-mini-2024-07-18",
+      "provider": "openai"
     },
     "metric_keys": [
+      "completion_reasoning_tokens",
       "completion_tokens",
-      "duration",
+      "cost",
+      "cost_upstream_inference_cost",
+      "cost_upstream_inference_input_cost",
+      "cost_upstream_inference_output_cost",
+      "prompt_cached_tokens",
       "prompt_tokens",
       "time_to_first_token",
       "tokens"
     ],
-    "name": "generate_content_stream",
+    "name": "openrouter.beta.responses.send",
     "root_span_id": "<span:1>",
     "span_id": "<span:11>",
     "span_parents": [
@@ -190,10 +214,10 @@
     "has_input": false,
     "has_output": false,
     "metadata": {
-      "operation": "tool"
+      "operation": "responses-stream"
     },
     "metric_keys": [],
-    "name": "google-tool-operation",
+    "name": "openrouter-responses-stream-operation",
     "root_span_id": "<span:1>",
     "span_id": "<span:12>",
     "span_parents": [
@@ -205,19 +229,67 @@
     "has_input": true,
     "has_output": true,
     "metadata": {
-      "model": "gemini-2.5-flash-lite"
+      "model": "gpt-4o-mini-2024-07-18",
+      "provider": "openai"
     },
     "metric_keys": [
+      "completion_reasoning_tokens",
       "completion_tokens",
-      "duration",
+      "cost",
+      "cost_upstream_inference_cost",
+      "cost_upstream_inference_input_cost",
+      "cost_upstream_inference_output_cost",
+      "prompt_cached_tokens",
       "prompt_tokens",
+      "time_to_first_token",
       "tokens"
     ],
-    "name": "generate_content",
+    "name": "openrouter.beta.responses.send",
     "root_span_id": "<span:1>",
     "span_id": "<span:13>",
     "span_parents": [
       "<span:12>"
+    ],
+    "type": "llm"
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "operation": "call-model"
+    },
+    "metric_keys": [],
+    "name": "openrouter-call-model-operation",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:14>",
+    "span_parents": [
+      "<span:1>"
+    ],
+    "type": null
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "model": "gpt-4o-mini-2024-07-18",
+      "provider": "openai"
+    },
+    "metric_keys": [
+      "completion_reasoning_tokens",
+      "completion_tokens",
+      "cost",
+      "cost_upstream_inference_cost",
+      "cost_upstream_inference_input_cost",
+      "cost_upstream_inference_output_cost",
+      "prompt_cached_tokens",
+      "prompt_tokens",
+      "tokens"
+    ],
+    "name": "openrouter.callModel",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:15>",
+    "span_parents": [
+      "<span:14>"
     ],
     "type": "llm"
   }

@@ -5,6 +5,7 @@
       "aiSdkVersion": "<ai-sdk-version>",
       "scenario": "ai-sdk-instrumentation"
     },
+    "metrics": null,
     "name": "ai-sdk-instrumentation-root",
     "output": null
   },
@@ -13,6 +14,7 @@
     "metadata": {
       "operation": "generate"
     },
+    "metrics": null,
     "name": "ai-sdk-generate-operation",
     "output": null
   },
@@ -24,6 +26,7 @@
       "model": "gpt-4o-mini-2024-07-18",
       "provider": "openai.responses"
     },
+    "metrics": null,
     "name": "generateText",
     "output": {}
   },
@@ -32,6 +35,7 @@
     "metadata": {
       "operation": "stream"
     },
+    "metrics": null,
     "name": "ai-sdk-stream-operation",
     "output": null
   },
@@ -43,6 +47,9 @@
       "model": "gpt-4o-mini-2024-07-18",
       "provider": "openai.responses"
     },
+    "metrics": {
+      "time_to_first_token": 0
+    },
     "name": "streamText",
     "output": {}
   },
@@ -51,6 +58,7 @@
     "metadata": {
       "operation": "tool"
     },
+    "metrics": null,
     "name": "ai-sdk-tool-operation",
     "output": null
   },
@@ -62,6 +70,7 @@
       "model": "gpt-4o-mini-2024-07-18",
       "provider": "openai.responses"
     },
+    "metrics": null,
     "name": "generateText",
     "output": {}
   },
@@ -81,6 +90,7 @@
       }
     ],
     "metadata": null,
+    "metrics": null,
     "name": "get_weather",
     "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
   },
@@ -132,6 +142,7 @@
       }
     ],
     "metadata": null,
+    "metrics": null,
     "name": "get_weather",
     "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
   },
@@ -215,6 +226,7 @@
       }
     ],
     "metadata": null,
+    "metrics": null,
     "name": "get_weather",
     "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
   },
@@ -330,6 +342,7 @@
       }
     ],
     "metadata": null,
+    "metrics": null,
     "name": "get_weather",
     "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
   },
@@ -338,6 +351,7 @@
     "metadata": {
       "operation": "generate-object"
     },
+    "metrics": null,
     "name": "ai-sdk-generate-object-operation",
     "output": null
   },
@@ -350,6 +364,7 @@
       "model": "gpt-4o-mini-2024-07-18",
       "provider": "openai.responses"
     },
+    "metrics": null,
     "name": "generateObject",
     "output": {}
   },
@@ -358,6 +373,7 @@
     "metadata": {
       "operation": "stream-object"
     },
+    "metrics": null,
     "name": "ai-sdk-stream-object-operation",
     "output": null
   },
@@ -370,6 +386,9 @@
       "model": "gpt-4o-mini-2024-07-18",
       "provider": "openai.responses"
     },
+    "metrics": {
+      "time_to_first_token": 0
+    },
     "name": "streamObject",
     "output": {}
   },
@@ -378,6 +397,7 @@
     "metadata": {
       "operation": "agent-generate"
     },
+    "metrics": null,
     "name": "ai-sdk-agent-generate-operation",
     "output": null
   },
@@ -393,6 +413,7 @@
       "model": "gpt-4o-mini-2024-07-18",
       "provider": "openai.responses"
     },
+    "metrics": null,
     "name": "Agent.generate",
     "output": {}
   },
@@ -401,6 +422,7 @@
     "metadata": {
       "operation": "agent-stream"
     },
+    "metrics": null,
     "name": "ai-sdk-agent-stream-operation",
     "output": null
   },
@@ -415,6 +437,9 @@
     "metadata": {
       "model": "gpt-4o-mini-2024-07-18",
       "provider": "openai.responses"
+    },
+    "metrics": {
+      "time_to_first_token": 0
     },
     "name": "Agent.stream",
     "output": {}

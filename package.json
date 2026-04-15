@@ -21,6 +21,7 @@
     "changeset": "changeset",
     "changeset:status": "changeset status",
     "changeset:version": "changeset version",
+    "changeset:version:lockfile": "changeset version && pnpm install --lockfile-only",
     "playground": "turbo run playground --filter=\"braintrust\"",
     "playground:cli:push": "turbo run playground:cli:push --filter=\"braintrust\"",
     "playground:cli:eval": "turbo run playground:cli:eval --filter=\"braintrust\"",
