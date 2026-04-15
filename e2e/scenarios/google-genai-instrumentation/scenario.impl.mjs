@@ -7,6 +7,7 @@ import {
 } from "../../helpers/provider-runtime.mjs";
 
 const GOOGLE_MODEL = "gemini-2.5-flash-lite";
+const GOOGLE_EMBEDDING_MODEL = "gemini-embedding-001";
 const GOOGLE_GROUNDING_MODEL = "gemini-2.0-flash";
 const ROOT_NAME = "google-genai-instrumentation-root";
 const SCENARIO_NAME = "google-genai-instrumentation";
@@ -134,6 +135,15 @@ async function runGoogleGenAIInstrumentationScenario(sdk, options = {}) {
               maxOutputTokens: 24,
               temperature: 0,
             },
+          });
+        }, GOOGLE_GENAI_RETRY_OPTIONS);
+      });
+
+      await runOperation("google-embed-operation", "embed", async () => {
+        await withRetry(async () => {
+          await client.models.embedContent({
+            model: GOOGLE_EMBEDDING_MODEL,
+            contents: "Paris is the capital of France.",
           });
         }, GOOGLE_GENAI_RETRY_OPTIONS);
       });
@@ -283,4 +293,4 @@ export async function runAutoGoogleGenAIInstrumentation(sdk) {
   await runGoogleGenAIInstrumentationScenario(sdk);
 }
 
-export { GOOGLE_MODEL, ROOT_NAME, SCENARIO_NAME };
+export { GOOGLE_EMBEDDING_MODEL, GOOGLE_MODEL, ROOT_NAME, SCENARIO_NAME };
