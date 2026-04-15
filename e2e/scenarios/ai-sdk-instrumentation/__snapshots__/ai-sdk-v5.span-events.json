@@ -6,6 +6,7 @@
       "aiSdkVersion": "<ai-sdk-version>",
       "scenario": "ai-sdk-instrumentation"
     },
+    "metrics": null,
     "name": "ai-sdk-instrumentation-root",
     "root_span_id": "<span:1>",
     "span_id": "<span:1>",
@@ -17,6 +18,7 @@
     "metadata": {
       "operation": "generate"
     },
+    "metrics": null,
     "name": "ai-sdk-generate-operation",
     "root_span_id": "<span:1>",
     "span_id": "<span:2>",
@@ -31,6 +33,7 @@
       "model": "gpt-4o-mini-2024-07-18",
       "provider": "openai.responses"
     },
+    "metrics": null,
     "name": "generateText",
     "root_span_id": "<span:1>",
     "span_id": "<span:3>",
@@ -44,6 +47,7 @@
     "metadata": {
       "operation": "stream"
     },
+    "metrics": null,
     "name": "ai-sdk-stream-operation",
     "root_span_id": "<span:1>",
     "span_id": "<span:4>",
@@ -58,6 +62,9 @@
       "model": "gpt-4o-mini-2024-07-18",
       "provider": "openai.responses"
     },
+    "metrics": {
+      "time_to_first_token": 0
+    },
     "name": "streamText",
     "root_span_id": "<span:1>",
     "span_id": "<span:5>",
@@ -71,6 +78,7 @@
     "metadata": {
       "operation": "tool"
     },
+    "metrics": null,
     "name": "ai-sdk-tool-operation",
     "root_span_id": "<span:1>",
     "span_id": "<span:6>",
@@ -85,6 +93,7 @@
       "model": "gpt-4o-mini-2024-07-18",
       "provider": "openai.responses"
     },
+    "metrics": null,
     "name": "generateText",
     "root_span_id": "<span:1>",
     "span_id": "<span:7>",
@@ -96,6 +105,7 @@
     "has_input": true,
     "has_output": true,
     "metadata": null,
+    "metrics": null,
     "name": "get_weather",
     "root_span_id": "<span:1>",
     "span_id": "<span:8>",
@@ -107,6 +117,7 @@
     "has_input": true,
     "has_output": true,
     "metadata": null,
+    "metrics": null,
     "name": "get_weather",
     "root_span_id": "<span:1>",
     "span_id": "<span:9>",
@@ -118,6 +129,7 @@
     "has_input": true,
     "has_output": true,
     "metadata": null,
+    "metrics": null,
     "name": "get_weather",
     "root_span_id": "<span:1>",
     "span_id": "<span:10>",
@@ -129,6 +141,7 @@
     "has_input": true,
     "has_output": true,
     "metadata": null,
+    "metrics": null,
     "name": "get_weather",
     "root_span_id": "<span:1>",
     "span_id": "<span:11>",
@@ -142,6 +155,7 @@
     "metadata": {
       "operation": "generate-object"
     },
+    "metrics": null,
     "name": "ai-sdk-generate-object-operation",
     "root_span_id": "<span:1>",
     "span_id": "<span:12>",
@@ -156,6 +170,7 @@
       "model": "gpt-4o-mini-2024-07-18",
       "provider": "openai.responses"
     },
+    "metrics": null,
     "name": "generateObject",
     "root_span_id": "<span:1>",
     "span_id": "<span:13>",
@@ -169,6 +184,7 @@
     "metadata": {
       "operation": "stream-object"
     },
+    "metrics": null,
     "name": "ai-sdk-stream-object-operation",
     "root_span_id": "<span:1>",
     "span_id": "<span:14>",
@@ -183,6 +199,9 @@
       "model": "gpt-4o-mini-2024-07-18",
       "provider": "openai.responses"
     },
+    "metrics": {
+      "time_to_first_token": 0
+    },
     "name": "streamObject",
     "root_span_id": "<span:1>",
     "span_id": "<span:15>",
@@ -196,6 +215,7 @@
     "metadata": {
       "operation": "agent-generate"
     },
+    "metrics": null,
     "name": "ai-sdk-agent-generate-operation",
     "root_span_id": "<span:1>",
     "span_id": "<span:16>",
@@ -210,6 +230,7 @@
       "model": "gpt-4o-mini-2024-07-18",
       "provider": "openai.responses"
     },
+    "metrics": null,
     "name": "Agent.generate",
     "root_span_id": "<span:1>",
     "span_id": "<span:17>",
@@ -223,6 +244,7 @@
     "metadata": {
       "operation": "agent-stream"
     },
+    "metrics": null,
     "name": "ai-sdk-agent-stream-operation",
     "root_span_id": "<span:1>",
     "span_id": "<span:18>",
@@ -236,6 +258,9 @@
     "metadata": {
       "model": "gpt-4o-mini-2024-07-18",
       "provider": "openai.responses"
+    },
+    "metrics": {
+      "time_to_first_token": 0
     },
     "name": "Agent.stream",
     "root_span_id": "<span:1>",

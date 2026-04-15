@@ -1,3 +1,4 @@
+import { anthropic } from "ai-sdk-anthropic-v5";
 import { openai } from "ai-sdk-openai-v5";
 import { cohere } from "ai-sdk-cohere-v5";
 import * as ai from "ai-sdk-v5";
@@ -8,6 +9,7 @@ runAutoAISDKInstrumentationOrExit({
   agentClassExport: "Experimental_Agent",
   agentSpanName: "Agent",
   ai,
+  anthropic,
   cohere,
   maxTokensKey: "maxOutputTokens",
   openai,
