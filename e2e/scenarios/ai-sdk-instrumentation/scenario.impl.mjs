@@ -11,6 +11,7 @@ export const SCENARIO_NAME = "ai-sdk-instrumentation";
 export const AI_SDK_SCENARIO_TIMEOUT_MS = 120_000;
 const CACHE_PROMPT_PREFIX = "braintrust cache prefix ".repeat(900).trim();
 const OPENAI_CACHE_KEY = "braintrust-ai-sdk-e2e-cache";
+const CACHE_FILL_DELAY_MS = 5_000;
 export const AI_SDK_SCENARIO_SPECS = [
   {
     autoEntry: "scenario.ai-sdk-v3.mjs",
@@ -81,6 +82,12 @@ export const AI_SDK_SCENARIO_SPECS = [
 
 function tokenLimit(key, value) {
   return { [key]: value };
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
 }
 
 const DENY_OUTPUT_PATHS_SYMBOL = Symbol.for(
@@ -252,58 +259,72 @@ async function runAISDKInstrumentationScenario(
       });
 
       if (sdkMajorVersion >= 5) {
+        const prompt = `${CACHE_PROMPT_PREFIX}\n\nReply with exactly CACHE_OK and nothing else.`;
+        const openaiCacheRequest = {
+          model: openaiModel,
+          prompt,
+          providerOptions: {
+            openai: {
+              promptCacheKey: OPENAI_CACHE_KEY,
+            },
+          },
+          temperature: 0,
+          ...tokenLimit(options.maxTokensKey, 24),
+        };
+
+        await options.ai.generateText(openaiCacheRequest);
+        await sleep(CACHE_FILL_DELAY_MS);
+
         await runOperation(
           "ai-sdk-openai-cache-operation",
           "openai-cache",
           async () => {
-            const prompt = `${CACHE_PROMPT_PREFIX}\n\nReply with exactly CACHE_OK and nothing else.`;
-
             for (let index = 0; index < 2; index++) {
-              await instrumentedAI.generateText({
-                model: openaiModel,
-                prompt,
-                providerOptions: {
-                  openai: {
-                    promptCacheKey: OPENAI_CACHE_KEY,
-                  },
-                },
-                temperature: 0,
-                ...tokenLimit(options.maxTokensKey, 24),
-              });
+              await instrumentedAI.generateText(openaiCacheRequest);
+              if (index < 1) {
+                await sleep(CACHE_FILL_DELAY_MS);
+              }
             }
           },
         );
       }
 
       if (anthropicModel) {
+        const messages = [
+          {
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text: `${CACHE_PROMPT_PREFIX}\n\nReply with exactly CACHE_OK and nothing else.`,
+              },
+            ],
+            providerOptions: {
+              anthropic: {
+                cacheControl: { type: "ephemeral" },
+              },
+            },
+          },
+        ];
+        const anthropicCacheRequest = {
+          model: anthropicModel,
+          messages,
+          temperature: 0,
+          ...tokenLimit(options.maxTokensKey, 24),
+        };
+
+        await options.ai.generateText(anthropicCacheRequest);
+        await sleep(CACHE_FILL_DELAY_MS);
+
         await runOperation(
           "ai-sdk-anthropic-cache-operation",
           "anthropic-cache",
           async () => {
-            const messages = [
-              {
-                role: "user",
-                content: [
-                  {
-                    type: "text",
-                    text: `${CACHE_PROMPT_PREFIX}\n\nReply with exactly CACHE_OK and nothing else.`,
-                  },
-                ],
-                providerOptions: {
-                  anthropic: {
-                    cacheControl: { type: "ephemeral" },
-                  },
-                },
-              },
-            ];
-
             for (let index = 0; index < 2; index++) {
-              await instrumentedAI.generateText({
-                model: anthropicModel,
-                messages,
-                temperature: 0,
-                ...tokenLimit(options.maxTokensKey, 24),
-              });
+              await instrumentedAI.generateText(anthropicCacheRequest);
+              if (index < 1) {
+                await sleep(CACHE_FILL_DELAY_MS);
+              }
             }
           },
         );

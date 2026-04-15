@@ -581,46 +581,7 @@ function snapshotValue(value: unknown): Json {
   return normalizeAISDKSnapshotValue(structuredClone(value)) as Json;
 }
 
-function normalizeCacheMetricsForSnapshot(
-  event: CapturedLogEvent,
-  metrics: Json,
-): Json {
-  if (!isRecord(metrics)) {
-    return metrics;
-  }
-
-  const operation = (event.row.metadata as { operation?: unknown } | undefined)
-    ?.operation;
-  if (operation !== "openai-cache" && operation !== "anthropic-cache") {
-    return metrics;
-  }
-
-  const normalized = { ...metrics };
-  for (const key of [
-    "prompt_cached_tokens",
-    "prompt_cache_creation_tokens",
-  ] as const) {
-    if (key in normalized) {
-      normalized[key] = "<cache-metric>";
-    }
-  }
-
-  return normalized as Json;
-}
-
 function summarizeAISDKSpan(event: CapturedLogEvent): Json {
-  const metrics = normalizeCacheMetricsForSnapshot(
-    event,
-    pickMetrics(event.metrics, [
-      "completion_tokens",
-      "prompt_tokens",
-      "prompt_cached_tokens",
-      "prompt_cache_creation_tokens",
-      "time_to_first_token",
-      "tokens",
-    ]),
-  );
-
   return {
     has_input: event.input !== undefined && event.input !== null,
     has_output: event.output !== undefined && event.output !== null,
@@ -628,7 +589,14 @@ function summarizeAISDKSpan(event: CapturedLogEvent): Json {
       event.row.metadata as Record<string, unknown> | undefined,
       ["aiSdkVersion", "provider", "model", "operation", "scenario"],
     ),
-    metrics,
+    metrics: pickMetrics(event.metrics, [
+      "completion_tokens",
+      "prompt_tokens",
+      "prompt_cached_tokens",
+      "prompt_cache_creation_tokens",
+      "time_to_first_token",
+      "tokens",
+    ]),
     name: event.span.name ?? null,
     root_span_id: event.span.rootId ?? null,
     span_id: event.span.id ?? null,
@@ -669,9 +637,13 @@ function summarizeAISDKOutput(name: string | null, value: unknown): Json {
 }
 
 function summarizeAISDKPayload(event: CapturedLogEvent): Json {
-  const metrics = normalizeCacheMetricsForSnapshot(
-    event,
-    pickMetrics(event.metrics, [
+  return {
+    input: summarizeAISDKInput(event.input),
+    metadata: pickMetadata(
+      event.row.metadata as Record<string, unknown> | undefined,
+      ["aiSdkVersion", "provider", "model", "operation", "scenario"],
+    ),
+    metrics: pickMetrics(event.metrics, [
       "completion_tokens",
       "prompt_tokens",
       "prompt_cached_tokens",
@@ -679,15 +651,6 @@ function summarizeAISDKPayload(event: CapturedLogEvent): Json {
       "time_to_first_token",
       "tokens",
     ]),
-  );
-
-  return {
-    input: summarizeAISDKInput(event.input),
-    metadata: pickMetadata(
-      event.row.metadata as Record<string, unknown> | undefined,
-      ["aiSdkVersion", "provider", "model", "operation", "scenario"],
-    ),
-    metrics,
     name: event.span.name ?? null,
     output: summarizeAISDKOutput(event.span.name ?? null, event.output),
   } satisfies Json;
@@ -708,11 +671,6 @@ function collectSummaryEvents(
   const stream = findStreamTrace(events);
   const tool = findToolTrace(events);
   const rerank = options.supportsRerank ? findRerankTrace(events) : undefined;
-  const openaiCache =
-    options.sdkMajorVersion >= 5 ? findOpenAICacheTrace(events) : undefined;
-  const anthropicCache = options.supportsProviderCacheAssertions
-    ? findAnthropicCacheTrace(events)
-    : undefined;
   const generateObject = options.supportsGenerateObject
     ? findGenerateObjectTrace(events)
     : undefined;
@@ -734,20 +692,6 @@ function collectSummaryEvents(
     stream.parent,
     tool.operation,
     tool.parent,
-    ...(openaiCache
-      ? [
-          openaiCache.operation,
-          ...openaiCache.parents,
-          ...openaiCache.modelChildren,
-        ]
-      : []),
-    ...(anthropicCache
-      ? [
-          anthropicCache.operation,
-          ...anthropicCache.parents,
-          ...anthropicCache.modelChildren,
-        ]
-      : []),
     ...(rerank ? [rerank.operation, rerank.parent] : []),
     ...tool.toolSpans,
     ...(generateObject
