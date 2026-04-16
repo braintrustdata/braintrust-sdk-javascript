@@ -6,6 +6,7 @@ export type {
   ChatPrompt,
   CompiledPrompt,
   CompiledPromptParams,
+  CompiledResponsesPromptParams,
   CompletionPrompt,
   ResponsesPrompt,
   ContextParentSpanIds,
