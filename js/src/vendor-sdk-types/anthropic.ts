@@ -58,9 +58,15 @@ export interface AnthropicCreateParams {
 }
 
 export interface AnthropicToolRunnerParams extends AnthropicCreateParams {
-  tools: unknown[];
+  tools: AnthropicToolRunnerTool[];
   max_iterations?: number;
   compactionControl?: unknown;
+}
+
+export interface AnthropicToolRunnerTool {
+  name?: string;
+  run?: (...args: unknown[]) => unknown;
+  [key: string]: unknown;
 }
 
 export interface AnthropicInputMessage {

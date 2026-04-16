@@ -474,6 +474,21 @@
     "type": "task"
   },
   {
+    "input": {
+      "location": "Paris, France"
+    },
+    "metadata": {
+      "provider": "anthropic"
+    },
+    "metrics": {
+      "end": 0,
+      "start": 0
+    },
+    "name": "tool: get_weather",
+    "output": "The weather in Paris, France is 18C and sunny.",
+    "type": "tool"
+  },
+  {
     "input": [
       {
         "content": "Use the get_weather tool exactly once for Paris, France. After you receive the tool result, reply with exactly that tool result text and do not call any tools again.",

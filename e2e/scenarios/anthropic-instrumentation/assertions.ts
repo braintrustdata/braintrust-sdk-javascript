@@ -302,6 +302,11 @@ function buildSpanSummary(
     betaToolRunnerSpan?.span.id,
     ["anthropic.messages.create", "anthropic.beta.messages.create"],
   );
+  const betaToolRunnerToolSpans = findAnthropicSpans(
+    events,
+    betaToolRunnerSpan?.span.id,
+    ["tool: get_weather"],
+  );
 
   return normalizeForSnapshot(
     [
@@ -354,6 +359,7 @@ function buildSpanSummary(
               ? [
                   betaToolRunnerOperation,
                   betaToolRunnerSpan,
+                  ...betaToolRunnerToolSpans,
                   ...betaToolRunnerChildSpans,
                 ]
               : []),
@@ -418,6 +424,11 @@ function buildPayloadSummary(
     betaToolRunnerSpan?.span.id,
     ["anthropic.messages.create", "anthropic.beta.messages.create"],
   );
+  const betaToolRunnerToolSpans = findAnthropicSpans(
+    events,
+    betaToolRunnerSpan?.span.id,
+    ["tool: get_weather"],
+  );
 
   return normalizeForSnapshot(
     [
@@ -470,6 +481,7 @@ function buildPayloadSummary(
               ? [
                   betaToolRunnerOperation,
                   betaToolRunnerSpan,
+                  ...betaToolRunnerToolSpans,
                   ...betaToolRunnerChildSpans,
                 ]
               : []),
@@ -829,10 +841,14 @@ export function defineAnthropicInstrumentationAssertions(options: {
             const span = findAnthropicSpan(events, operation?.span.id, [
               "anthropic.beta.messages.toolRunner",
             ]);
+            const toolSpans = findAnthropicSpans(events, span?.span.id, [
+              "tool: get_weather",
+            ]);
             const childSpans = findAnthropicSpans(events, span?.span.id, [
               "anthropic.messages.create",
               "anthropic.beta.messages.create",
             ]);
+            const toolSpan = toolSpans[0];
 
             expect(operation).toBeDefined();
             expect(span).toBeDefined();
@@ -847,6 +863,15 @@ export function defineAnthropicInstrumentationAssertions(options: {
               prompt_tokens: expect.any(Number),
               completion_tokens: expect.any(Number),
             });
+            expect(toolSpan).toBeDefined();
+            expect(toolSpan?.span.parentIds).toEqual([span?.span.id ?? ""]);
+            expect(toolSpan?.span.type).toBe("tool");
+            expect(toolSpan?.input).toEqual({
+              location: "Paris, France",
+            });
+            expect(toolSpan?.output).toBe(
+              "The weather in Paris, France is 18C and sunny.",
+            );
             expect(childSpans.length).toBeGreaterThanOrEqual(2);
             expect(
               childSpans.every(
