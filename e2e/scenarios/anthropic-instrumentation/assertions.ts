@@ -307,6 +307,11 @@ function buildSpanSummary(
     betaToolRunnerSpan?.span.id,
     ["tool: get_weather"],
   );
+  const betaToolRunnerToolChildSpans = findAnthropicSpans(
+    events,
+    betaToolRunnerToolSpans[0]?.span.id,
+    ["get_weather.lookup"],
+  );
 
   return normalizeForSnapshot(
     [
@@ -360,6 +365,7 @@ function buildSpanSummary(
                   betaToolRunnerOperation,
                   betaToolRunnerSpan,
                   ...betaToolRunnerToolSpans,
+                  ...betaToolRunnerToolChildSpans,
                   ...betaToolRunnerChildSpans,
                 ]
               : []),
@@ -429,6 +435,11 @@ function buildPayloadSummary(
     betaToolRunnerSpan?.span.id,
     ["tool: get_weather"],
   );
+  const betaToolRunnerToolChildSpans = findAnthropicSpans(
+    events,
+    betaToolRunnerToolSpans[0]?.span.id,
+    ["get_weather.lookup"],
+  );
 
   return normalizeForSnapshot(
     [
@@ -482,6 +493,7 @@ function buildPayloadSummary(
                   betaToolRunnerOperation,
                   betaToolRunnerSpan,
                   ...betaToolRunnerToolSpans,
+                  ...betaToolRunnerToolChildSpans,
                   ...betaToolRunnerChildSpans,
                 ]
               : []),
@@ -849,6 +861,12 @@ export function defineAnthropicInstrumentationAssertions(options: {
               "anthropic.beta.messages.create",
             ]);
             const toolSpan = toolSpans[0];
+            const toolChildSpans = findAnthropicSpans(
+              events,
+              toolSpan?.span.id,
+              ["get_weather.lookup"],
+            );
+            const toolChildSpan = toolChildSpans[0];
 
             expect(operation).toBeDefined();
             expect(span).toBeDefined();
@@ -872,6 +890,10 @@ export function defineAnthropicInstrumentationAssertions(options: {
             expect(toolSpan?.output).toBe(
               "The weather in Paris, France is 18C and sunny.",
             );
+            expect(toolChildSpan).toBeDefined();
+            expect(toolChildSpan?.span.parentIds).toEqual([
+              toolSpan?.span.id ?? "",
+            ]);
             expect(childSpans.length).toBeGreaterThanOrEqual(2);
             expect(
               childSpans.every(

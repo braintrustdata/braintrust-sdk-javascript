@@ -1,5 +1,5 @@
 import { readFile } from "node:fs/promises";
-import { wrapAnthropic } from "braintrust";
+import { startSpan, wrapAnthropic } from "braintrust";
 import {
   collectAsync,
   runOperation,
@@ -290,6 +290,10 @@ async function runAnthropicInstrumentationScenario(
                       return input;
                     },
                     run(input) {
+                      const lookupSpan = startSpan({
+                        name: "get_weather.lookup",
+                      });
+                      lookupSpan.end();
                       return `The weather in ${input.location} is 18C and sunny.`;
                     },
                   },

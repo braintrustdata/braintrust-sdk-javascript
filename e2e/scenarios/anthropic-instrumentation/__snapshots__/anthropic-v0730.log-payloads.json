@@ -489,6 +489,15 @@
     "type": "tool"
   },
   {
+    "metadata": null,
+    "metrics": {
+      "end": 0,
+      "start": 0
+    },
+    "name": "get_weather.lookup",
+    "type": null
+  },
+  {
     "input": [
       {
         "content": "Use the get_weather tool exactly once for Paris, France. After you receive the tool result, reply with exactly that tool result text and do not call any tools again.",

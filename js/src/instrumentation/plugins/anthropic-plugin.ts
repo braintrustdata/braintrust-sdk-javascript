@@ -5,7 +5,11 @@ import { Attachment, startSpan, withCurrent } from "../../logger";
 import type { Span } from "../../logger";
 import type { ChannelMessage } from "../core/channel-definitions";
 import type { IsoChannelHandlers, IsoTracingChannel } from "../../isomorph";
-import { SpanTypeAttribute, isObject } from "../../../util/index";
+import {
+  SpanTypeAttribute,
+  isObject,
+  isPromiseLike,
+} from "../../../util/index";
 import { filterFrom, getCurrentUnixTimestamp } from "../../util";
 import { finalizeAnthropicTokens } from "../../wrappers/anthropic-tokens-util";
 import { anthropicChannels } from "./anthropic-channels";
@@ -266,15 +270,6 @@ function extractAnthropicToolNames(tools: unknown[]): string[] {
   }
 
   return toolNames;
-}
-
-function isPromiseLike(value: unknown): value is Promise<unknown> {
-  return (
-    value !== null &&
-    typeof value === "object" &&
-    "then" in value &&
-    typeof value.then === "function"
-  );
 }
 
 function toErrorMessage(error: unknown): string {

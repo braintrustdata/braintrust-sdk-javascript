@@ -410,6 +410,19 @@
     "type": "tool"
   },
   {
+    "has_input": false,
+    "has_output": false,
+    "metadata": null,
+    "metric_keys": [],
+    "name": "get_weather.lookup",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:23>",
+    "span_parents": [
+      "<span:22>"
+    ],
+    "type": null
+  },
+  {
     "has_input": true,
     "has_output": true,
     "metadata": {
@@ -426,7 +439,7 @@
     ],
     "name": "anthropic.messages.create",
     "root_span_id": "<span:1>",
-    "span_id": "<span:23>",
+    "span_id": "<span:24>",
     "span_parents": [
       "<span:21>"
     ],
@@ -449,7 +462,7 @@
     ],
     "name": "anthropic.messages.create",
     "root_span_id": "<span:1>",
-    "span_id": "<span:24>",
+    "span_id": "<span:25>",
     "span_parents": [
       "<span:21>"
     ],
