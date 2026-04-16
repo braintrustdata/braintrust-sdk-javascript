@@ -11,6 +11,7 @@ on:
         required: true
         type: choice
         options:
+          - stable
           - prerelease
           - canary
           - dry-run-stable
@@ -21,7 +22,7 @@ on:
         required: false
         type: string
       ref:
-        description: Ref to use for stable/canary dry runs
+        description: Ref to use for stable and dry-run stable/canary modes
         required: false
         default: main
         type: string
@@ -165,6 +166,77 @@ jobs:
         id: summary
         run: node scripts/release/summarize-release.mjs --mode stable --manifest .release-manifest.json
       - name: Post stable release to Slack
+        if: steps.detect.outputs.has_work == 'true'
+        uses: slackapi/slack-github-action@af78098f536edbc4de71162a307590698245be95 # v3.0.1
+        with:
+          method: chat.postMessage
+          token: ${{ secrets.SLACK_BOT_TOKEN }}
+          payload: |
+            channel: C0ABHT0SWA2
+            text: "✅ JavaScript packages published"
+            blocks:
+              - type: "header"
+                text:
+                  type: "plain_text"
+                  text: "✅ JavaScript packages published"
+              - type: "section"
+                text:
+                  type: "mrkdwn"
+                  text: "*Packages:*\n${{ steps.summary.outputs.markdown }}\n\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>"
+
+  stable-manual-release:
+    if: github.event_name == 'workflow_dispatch' && inputs.release_mode == 'stable'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      id-token: write
+    environment: npm-publish
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.ref || 'main' }}
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: .tool-versions
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Validate publishable package metadata
+        run: node scripts/release/validate-publishable-packages.mjs
+      - name: Detect stable publish work
+        id: detect
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/release/should-publish-stable.mjs --output .release-manifest.json
+      - name: Configure git user
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      - name: Build publishable packages
+        if: steps.detect.outputs.needs_publish == 'true'
+        run: bash scripts/release/build-publishable-packages.sh .release-manifest.json
+      - name: Publish stable packages to npm
+        if: steps.detect.outputs.needs_publish == 'true'
+        run: pnpm exec changeset publish
+        env:
+          NPM_TOKEN: ""
+      - name: Push Changesets release tags
+        if: steps.detect.outputs.has_work == 'true'
+        run: node scripts/release/push-release-tags.mjs --manifest .release-manifest.json
+      - name: Create GitHub Releases
+        if: steps.detect.outputs.has_work == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/release/create-github-releases.mjs --manifest .release-manifest.json
+      - name: Summarize stable release
+        id: summary
+        run: node scripts/release/summarize-release.mjs --mode stable --manifest .release-manifest.json
+      - name: Post stable release to Slack
+        if: steps.detect.outputs.has_work == 'true'
         uses: slackapi/slack-github-action@af78098f536edbc4de71162a307590698245be95 # v3.0.1
         with:
           method: chat.postMessage
@@ -274,6 +346,7 @@ jobs:
         stable-release-pr,
         stable-detect-publish,
         stable-publish,
+        stable-manual-release,
         prerelease-snapshot,
         canary-snapshot,
         dry-run-stable,
@@ -286,6 +359,7 @@ jobs:
         needs.stable-release-pr.result == 'failure' ||
         needs.stable-detect-publish.result == 'failure' ||
         needs.stable-publish.result == 'failure' ||
+        needs.stable-manual-release.result == 'failure' ||
         needs.prerelease-snapshot.result == 'failure' ||
         needs.canary-snapshot.result == 'failure' ||
         needs.dry-run-stable.result == 'failure' ||
