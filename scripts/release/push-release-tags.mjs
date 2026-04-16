@@ -6,10 +6,15 @@ import { appendSummary, parseArgs } from "./_shared.mjs";
 const args = parseArgs();
 const manifestPath = args.manifest ?? ".release-manifest.json";
 const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
+const targetCommit = manifest.commit;
 
 if ((manifest.packages ?? []).length === 0) {
   console.log("No release tags to push.");
   process.exit(0);
+}
+
+if (!targetCommit) {
+  throw new Error("Release manifest is missing commit.");
 }
 
 const tags = manifest.packages.map(
@@ -28,13 +33,17 @@ for (const tag of tags) {
 
   if (!localTagExists(tag)) {
     toCreate.push(tag);
+  } else if (getLocalTagTarget(tag) !== targetCommit) {
+    throw new Error(
+      `Local tag ${tag} already exists on ${getLocalTagTarget(tag)}, expected ${targetCommit}.`,
+    );
   }
 
   toPush.push(tag);
 }
 
 for (const tag of toCreate) {
-  execFileSync("git", ["tag", tag], { stdio: "inherit" });
+  execFileSync("git", ["tag", tag, targetCommit], { stdio: "inherit" });
 }
 
 if (toPush.length > 0) {
@@ -63,6 +72,12 @@ function localTagExists(tag) {
       stdio: "ignore",
     }).status === 0
   );
+}
+
+function getLocalTagTarget(tag) {
+  return execFileSync("git", ["rev-list", "-n", "1", tag], {
+    encoding: "utf8",
+  }).trim();
 }
 
 function fetchRemoteTags(tagsToCheck) {

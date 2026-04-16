@@ -14,6 +14,7 @@ import {
 
 const args = parseArgs();
 const outputPath = args.output ?? ".release-manifest.json";
+const allowNonReleaseHead = args["allow-non-release-head"] === true;
 const packages = PUBLISHABLE_PACKAGES.map((approved) => {
   const manifest = readPackage(approved.dir);
   const publishedToNpm = isPublishedToNpm(manifest.name, manifest.version);
@@ -31,19 +32,17 @@ const packages = PUBLISHABLE_PACKAGES.map((approved) => {
 });
 
 const actionablePackages = packages.filter((pkg) => pkg.needsPublish);
-const commit = execFileSync("git", ["rev-parse", "HEAD"], {
+const headCommit = execFileSync("git", ["rev-parse", "HEAD"], {
   encoding: "utf8",
 }).trim();
-const commitMessage = execFileSync("git", ["log", "-1", "--pretty=%B"], {
-  encoding: "utf8",
-}).trim();
-const isReleaseCommit = /\[ci\] release/i.test(commitMessage);
-const hasWork = actionablePackages.length > 0 && isReleaseCommit;
+const headIsReleaseCommit = isReleaseCommit(headCommit);
+const hasWork =
+  actionablePackages.length > 0 && (headIsReleaseCommit || allowNonReleaseHead);
 const releasePackages = hasWork ? actionablePackages : [];
 
 const manifest = {
   mode: "stable",
-  commit,
+  commit: headCommit,
   packages: releasePackages,
 };
 
@@ -63,9 +62,10 @@ writeGithubOutput("package_count", releasePackages.length);
 writeGithubOutput("manifest_path", outputPath);
 
 if (!hasWork) {
-  const message = actionablePackages.length
-    ? "Unpublished package versions exist, but HEAD is not a merged Changesets release commit, so stable publish is skipped."
-    : "No stable publish work is required on this main commit.";
+  const message =
+    actionablePackages.length === 0
+      ? "No stable publish work is required on this main commit."
+      : "Unpublished package versions exist, but HEAD is not a merged Changesets release commit, so stable publish is skipped.";
   console.log(message);
   appendSummary(`## Stable publish\n\n${message}`);
   process.exit(0);
@@ -95,4 +95,15 @@ function isPublishedToNpm(name, version) {
   }
 
   return result.stdout.trim() === version;
+}
+
+function isReleaseCommit(commit) {
+  const commitMessage = execFileSync(
+    "git",
+    ["log", "-1", "--pretty=%B", commit],
+    {
+      encoding: "utf8",
+    },
+  ).trim();
+  return /\[ci\] release/i.test(commitMessage);
 }
