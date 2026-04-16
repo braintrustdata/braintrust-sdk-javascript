@@ -276,6 +276,10 @@ function toErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
+function getAnthropicToolRunnerInput(args: unknown[]): unknown {
+  return args.length > 0 ? args[0] : undefined;
+}
+
 function wrapAnthropicToolRunnerTools(
   params: AnthropicToolRunnerParams,
   state: AnthropicToolRunnerState,
@@ -346,7 +350,7 @@ function wrapAnthropicToolRunnerTool(
         },
         {
           event: {
-            input: args.length === 1 ? args[0] : args,
+            input: getAnthropicToolRunnerInput(args),
             metadata: {
               "gen_ai.tool.name": toolName,
               provider: "anthropic",
