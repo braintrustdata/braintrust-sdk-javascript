@@ -193,7 +193,7 @@ jobs:
     with:
       mode: prerelease
       checkout_ref: ${{ inputs.branch || github.ref_name }}
-      version_command: pnpm exec changeset version --snapshot rc
+      version_command: pnpm run changeset:version -- --snapshot rc
       publish_enabled: true
       publish_command: pnpm exec changeset publish --tag rc --no-git-tag
       slack_text: "🧪 JavaScript prerelease snapshots published"
@@ -213,7 +213,7 @@ jobs:
     with:
       mode: canary
       checkout_ref: ${{ github.ref_name }}
-      version_command: pnpm exec changeset version --snapshot canary
+      version_command: pnpm run changeset:version -- --snapshot canary
       publish_enabled: true
       publish_command: pnpm exec changeset publish --tag canary --no-git-tag
       run_canary_check: true
@@ -234,7 +234,7 @@ jobs:
     with:
       mode: dry-run-canary
       checkout_ref: ${{ inputs.ref || 'main' }}
-      version_command: pnpm exec changeset version --snapshot canary
+      version_command: pnpm run changeset:version -- --snapshot canary
       artifact_dir: artifacts/dry-run-canary
       artifact_name: canary-dry-run-${{ github.run_id }}
 
@@ -249,7 +249,7 @@ jobs:
     with:
       mode: dry-run-stable
       checkout_ref: ${{ inputs.ref || 'main' }}
-      version_command: pnpm exec changeset version && pnpm install --lockfile-only
+      version_command: pnpm run changeset:version:lockfile
       artifact_dir: artifacts/dry-run-stable
       artifact_name: stable-dry-run-${{ github.run_id }}
 
@@ -264,7 +264,7 @@ jobs:
     with:
       mode: dry-run-prerelease
       checkout_ref: ${{ inputs.branch || github.ref_name }}
-      version_command: pnpm exec changeset version --snapshot rc
+      version_command: pnpm run changeset:version -- --snapshot rc
       artifact_dir: artifacts/dry-run-prerelease
       artifact_name: prerelease-dry-run-${{ github.run_id }}
 
