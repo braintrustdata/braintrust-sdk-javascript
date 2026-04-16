@@ -211,7 +211,7 @@ jobs:
         id: detect
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: node scripts/release/should-publish-stable.mjs --output .release-manifest.json
+        run: node scripts/release/should-publish-stable.mjs --allow-non-release-head --output .release-manifest.json
       - name: Configure git user
         run: |
           git config user.name "github-actions[bot]"
