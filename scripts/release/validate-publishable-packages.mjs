@@ -1,3 +1,4 @@
+// @ts-check
 import {
   DOCS_HOMEPAGE,
   GITHUB_REPO_URL,
@@ -8,7 +9,6 @@ import {
 } from "./_shared.mjs";
 
 const errors = [];
-const warnings = [];
 
 const workspaceDirs = new Set(listWorkspacePackageDirs());
 const approvedPublishableDirs = new Set(
@@ -56,24 +56,12 @@ if (errors.length > 0) {
   for (const error of errors) {
     console.error(`- ${error}`);
   }
-  if (warnings.length > 0) {
-    console.error("\nWarnings:");
-    for (const warning of warnings) {
-      console.error(`- ${warning}`);
-    }
-  }
   process.exit(1);
 }
 
 console.log(
   `Validated ${PUBLISHABLE_PACKAGES.length} publishable packages and ${PRIVATE_WORKSPACE_PACKAGES.length} private workspace packages.`,
 );
-if (warnings.length > 0) {
-  console.log("Warnings:");
-  for (const warning of warnings) {
-    console.log(`- ${warning}`);
-  }
-}
 
 function validatePublishablePackage(workspaceDir, manifest) {
   const approved = PUBLISHABLE_PACKAGES.find((pkg) => pkg.dir === workspaceDir);
@@ -117,7 +105,7 @@ function validatePublishablePackage(workspaceDir, manifest) {
   }
 
   if (manifest.homepage !== DOCS_HOMEPAGE) {
-    warnings.push(
+    errors.push(
       `${workspaceDir} (${manifest.name}) homepage should be ${DOCS_HOMEPAGE}`,
     );
   }
