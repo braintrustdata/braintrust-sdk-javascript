@@ -64,12 +64,12 @@ jobs:
           git add -A
           git commit -m "chore: Prepare changelog"
           git push origin HEAD:refs/heads/${{ steps.source.outputs.release_branch }}
-      - name: Create or update release PR
+      - name: Create release PR
         env:
-          GITHUB_TOKEN: ${{ github.token }}
-        run: >
-          node scripts/release/upsert-pull-request.mjs
-          --base release
-          --head "${{ steps.source.outputs.release_branch }}"
-          --title "chore: Prepare for release (${{ steps.source.outputs.short_main_sha }})"
-          --body "Prepares a release by updating changelogs and package versions, and synchronizing everything to the release branch."
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh pr create \
+            --base release \
+            --head "${{ steps.source.outputs.release_branch }}" \
+            --title "chore: Prepare for release (${{ steps.source.outputs.short_main_sha }})" \
+            --body "Prepares a release by updating changelogs and package versions, and synchronizing everything to the release branch."

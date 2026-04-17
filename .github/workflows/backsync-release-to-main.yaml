@@ -1,0 +1,51 @@
+name: Backsync Release To Main
+
+on:
+  push:
+    branches:
+      - release
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: backsync-release-to-main
+  cancel-in-progress: false
+
+env:
+  HUSKY: "0"
+
+jobs:
+  backsync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          fetch-depth: 0
+      - name: Fetch main
+        run: git fetch origin main:refs/remotes/origin/main
+      - name: Create or reuse backsync branch
+        id: backsync_branch
+        run: |
+          release_sha="$(git rev-parse HEAD)"
+          short_release_sha="$(git rev-parse --short=12 "$release_sha")"
+          branch_name="backsync/${short_release_sha}"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch --create "$branch_name" "$release_sha"
+          git push origin "HEAD:refs/heads/$branch_name"
+
+          echo "branch_name=$branch_name" >> "$GITHUB_OUTPUT"
+          echo "short_release_sha=$short_release_sha" >> "$GITHUB_OUTPUT"
+      - name: Create backsync PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh pr create \
+            --base main \
+            --head "${{ steps.backsync_branch.outputs.branch_name }}" \
+            --title "chore: Sync release branch to main (${{ steps.backsync_branch.outputs.short_release_sha }})" \
+            --body "Synchronizes the main branch with the release branch. (changed files should generally only be package versions, changeset files, and changelogs)"
