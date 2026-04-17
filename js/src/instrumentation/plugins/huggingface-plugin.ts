@@ -29,6 +29,8 @@ const REQUEST_METADATA_ALLOWLIST = new Set([
   "stop",
   "stream",
   "temperature",
+  "tool_choice",
+  "tools",
   "top_p",
 ]);
 
@@ -395,13 +397,17 @@ function aggregateChatCompletionChunks(
       content: string;
       finish_reason?: string | null;
       role?: string;
+      toolCallsByIndex: Map<number, Record<string, unknown>>;
     }
   >();
 
   for (const chunk of chunks) {
     for (const choice of chunk.choices ?? []) {
       const index = typeof choice.index === "number" ? choice.index : 0;
-      const existing = aggregatedChoices.get(index) ?? { content: "" };
+      const existing = aggregatedChoices.get(index) ?? {
+        content: "",
+        toolCallsByIndex: new Map<number, Record<string, unknown>>(),
+      };
       const delta = isObject(choice.delta) ? choice.delta : undefined;
       const message = isObject(choice.message) ? choice.message : undefined;
 
@@ -421,6 +427,12 @@ function aggregateChatCompletionChunks(
         existing.finish_reason = choice.finish_reason;
       }
 
+      const toolCallDeltas =
+        getChatToolCallDeltas(delta) ?? getChatToolCallDeltas(message);
+      if (toolCallDeltas) {
+        mergeChatToolCallDeltas(existing.toolCallsByIndex, toolCallDeltas);
+      }
+
       aggregatedChoices.set(index, existing);
     }
   }
@@ -431,6 +443,13 @@ function aggregateChatCompletionChunks(
       message: {
         content: choice.content,
         role: choice.role ?? "assistant",
+        ...(choice.toolCallsByIndex.size > 0
+          ? {
+              tool_calls: [...choice.toolCallsByIndex.entries()]
+                .sort(([leftIndex], [rightIndex]) => leftIndex - rightIndex)
+                .map(([, toolCall]) => toolCall),
+            }
+          : {}),
       },
       ...(choice.finish_reason !== undefined
         ? { finish_reason: choice.finish_reason }
@@ -438,6 +457,95 @@ function aggregateChatCompletionChunks(
     })),
   };
 }
+
+function getChatToolCallDeltas(
+  value: Record<string, unknown> | undefined,
+): Record<string, unknown>[] | undefined {
+  if (!Array.isArray(value?.tool_calls)) {
+    return undefined;
+  }
+
+  const toolCalls = value.tool_calls.filter((toolCall) => isObject(toolCall));
+  return toolCalls.length > 0 ? toolCalls : undefined;
+}
+
+function mergeChatToolCallDeltas(
+  toolCallsByIndex: Map<number, Record<string, unknown>>,
+  toolCallDeltas: Record<string, unknown>[],
+): void {
+  for (const toolDelta of toolCallDeltas) {
+    const toolIndex =
+      typeof toolDelta.index === "number" && toolDelta.index >= 0
+        ? toolDelta.index
+        : 0;
+    const existing = toolCallsByIndex.get(toolIndex);
+
+    if (!existing) {
+      toolCallsByIndex.set(toolIndex, createChatToolCall(toolDelta));
+      continue;
+    }
+
+    mergeChatToolCall(existing, toolDelta);
+  }
+}
+
+function createChatToolCall(
+  toolDelta: Record<string, unknown>,
+): Record<string, unknown> {
+  const toolFunction = isObject(toolDelta.function) ? toolDelta.function : {};
+  const toolCall: Record<string, unknown> = {
+    function: {
+      ...(typeof toolFunction.name === "string"
+        ? { name: toolFunction.name }
+        : {}),
+      arguments:
+        typeof toolFunction.arguments === "string"
+          ? toolFunction.arguments
+          : "",
+    },
+  };
+
+  if (typeof toolDelta.id === "string") {
+    toolCall.id = toolDelta.id;
+  }
+  if (typeof toolDelta.type === "string") {
+    toolCall.type = toolDelta.type;
+  }
+
+  return toolCall;
+}
+
+function mergeChatToolCall(
+  existing: Record<string, unknown>,
+  toolDelta: Record<string, unknown>,
+): void {
+  const currentFunction = isObject(existing.function) ? existing.function : {};
+  const deltaFunction = isObject(toolDelta.function) ? toolDelta.function : {};
+  const currentArguments =
+    typeof currentFunction.arguments === "string"
+      ? currentFunction.arguments
+      : "";
+  const deltaArguments =
+    typeof deltaFunction.arguments === "string" ? deltaFunction.arguments : "";
+
+  if (typeof toolDelta.id === "string" && typeof existing.id !== "string") {
+    existing.id = toolDelta.id;
+  }
+  if (typeof toolDelta.type === "string" && typeof existing.type !== "string") {
+    existing.type = toolDelta.type;
+  }
+
+  existing.function = {
+    ...currentFunction,
+    ...(typeof deltaFunction.name === "string" &&
+    typeof currentFunction.name !== "string"
+      ? { name: deltaFunction.name }
+      : {}),
+    arguments: `${currentArguments}${deltaArguments}`,
+  };
+}
+
+export { aggregateChatCompletionChunks, extractResponseMetadata };
 
 function aggregateTextGenerationStreamChunks(
   chunks: HuggingFaceTextGenerationStreamOutput[],
