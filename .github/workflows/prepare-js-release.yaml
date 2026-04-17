@@ -61,7 +61,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git switch -c "${{ steps.source.outputs.release_branch }}"
           git add -A
-          git commit -m "chore: Prepare changelog"
+          git commit --allow-empty -m "chore: Prepare changelog"
           git push origin HEAD:refs/heads/${{ steps.source.outputs.release_branch }}
       - name: Create release PR
         env:
