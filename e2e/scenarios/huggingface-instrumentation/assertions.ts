@@ -51,6 +51,27 @@ function summarizeChatOutput(output: Json | undefined): Json {
       ? (choice.message as Record<string, Json>)
       : undefined;
     const content = message?.content;
+    const toolCalls = Array.isArray(message?.tool_calls)
+      ? message.tool_calls.map((toolCall) => {
+          if (!isRecord(toolCall as Json)) {
+            return toolCall as Json;
+          }
+
+          const toolFunction = isRecord(toolCall.function as Json)
+            ? (toolCall.function as Record<string, Json>)
+            : undefined;
+          return {
+            id: toolCall.id ?? null,
+            index: toolCall.index ?? null,
+            name: toolFunction?.name ?? null,
+            type: toolCall.type ?? null,
+            arguments:
+              typeof toolFunction?.arguments === "string"
+                ? "<string>"
+                : (toolFunction?.arguments ?? null),
+          } satisfies Json;
+        })
+      : undefined;
     return {
       content:
         typeof content === "string"
@@ -61,6 +82,7 @@ function summarizeChatOutput(output: Json | undefined): Json {
       finish_reason: choice.finish_reason ?? null,
       index: choice.index ?? null,
       role: message?.role ?? null,
+      ...(toolCalls ? { tool_calls: toolCalls } : {}),
     } satisfies Json;
   });
 }
@@ -175,6 +197,10 @@ function buildSpanSummary(events: CapturedLogEvent[]): Json {
     events,
     "huggingface-chat-stream-operation",
   );
+  const chatStreamToolCallOperation = findLatestSpan(
+    events,
+    "huggingface-chat-stream-tool-call-operation",
+  );
   const textGenerationOperation = findLatestSpan(
     events,
     "huggingface-text-generation-operation",
@@ -211,6 +237,18 @@ function buildSpanSummary(events: CapturedLogEvent[]): Json {
             events,
             "huggingface.chat_completion_stream",
             chatStreamOperation.span.id,
+          )!,
+        )
+      : null,
+    chatStreamToolCallOperation
+      ? summarizeWrapperContract(chatStreamToolCallOperation, ["operation"])
+      : null,
+    chatStreamToolCallOperation
+      ? summarizeProviderSpan(
+          findLatestChildSpan(
+            events,
+            "huggingface.chat_completion_stream",
+            chatStreamToolCallOperation.span.id,
           )!,
         )
       : null,
@@ -315,6 +353,64 @@ export function defineHuggingFaceInstrumentationAssertions(options: {
         await expect(formatJsonFileSnapshot(payloadRows)).toMatchFileSnapshot(
           payloadSnapshotPath,
         );
+      },
+    );
+
+    test(
+      "captures streamed tool calls and request tool metadata",
+      { timeout: options.timeoutMs },
+      () => {
+        const operation = findLatestSpan(
+          events,
+          "huggingface-chat-stream-tool-call-operation",
+        );
+        const span = findLatestChildSpan(
+          events,
+          "huggingface.chat_completion_stream",
+          operation?.span.id,
+        );
+        const firstChoice = isRecord(span?.output as Json)
+          ? span?.output.choices
+          : undefined;
+        const firstMessage =
+          Array.isArray(firstChoice) && isRecord(firstChoice[0] as Json)
+            ? (((firstChoice[0] as Record<string, Json>).message as Json) ??
+              null)
+            : null;
+        const message = isRecord(firstMessage) ? firstMessage : undefined;
+        const toolCalls = Array.isArray(message?.tool_calls)
+          ? message.tool_calls
+          : undefined;
+
+        expect(span?.metadata).toMatchObject({
+          model: expect.any(String),
+          provider: "featherless-ai",
+          tool_choice: "required",
+          tools: [
+            {
+              function: {
+                name: "get_current_weather",
+              },
+              type: "function",
+            },
+          ],
+        });
+        expect(toolCalls).toEqual([
+          expect.objectContaining({
+            function: expect.objectContaining({
+              arguments: expect.any(String),
+              name: "get_current_weather",
+            }),
+            type: "function",
+          }),
+        ]);
+        expect(span?.output).toMatchObject({
+          choices: [
+            {
+              finish_reason: "tool_calls",
+            },
+          ],
+        });
       },
     );
   });

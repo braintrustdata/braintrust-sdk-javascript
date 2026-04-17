@@ -308,7 +308,7 @@
     "id": "<span:14>",
     "log_id": "g",
     "metadata": {
-      "operation": "text-generation",
+      "operation": "chat-stream-tool-call",
       "testRunId": "<run:1>"
     },
     "metrics": {
@@ -318,7 +318,7 @@
     "root_span_id": "<span:2>",
     "span_attributes": {
       "exec_counter": 5,
-      "name": "huggingface-text-generation-operation"
+      "name": "huggingface-chat-stream-tool-call-operation"
     },
     "span_id": "<span:15>",
     "span_parents": [
@@ -343,16 +343,40 @@
     "context": {},
     "created": "<timestamp>",
     "id": "<span:16>",
-    "input": "The capital of France is",
+    "input": [
+      {
+        "content": "What is the weather in San Francisco? Call the get_current_weather tool.",
+        "role": "user"
+      }
+    ],
     "log_id": "g",
     "metadata": {
-      "model": "meta-llama/Llama-3.1-8B",
-      "parameters": {
-        "do_sample": false,
-        "max_new_tokens": 4,
-        "return_full_text": false
-      },
-      "provider": "featherless-ai"
+      "max_tokens": 64,
+      "model": "meta-llama/Llama-3.1-8B-Instruct",
+      "provider": "featherless-ai",
+      "temperature": 0,
+      "tool_choice": "required",
+      "tools": [
+        {
+          "function": {
+            "description": "Get the current weather for a location.",
+            "name": "get_current_weather",
+            "parameters": {
+              "properties": {
+                "location": {
+                  "description": "City and state or city and country.",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "location"
+              ],
+              "type": "object"
+            }
+          },
+          "type": "function"
+        }
+      ]
     },
     "metrics": {
       "start": "<timestamp>"
@@ -361,7 +385,7 @@
     "root_span_id": "<span:2>",
     "span_attributes": {
       "exec_counter": 6,
-      "name": "huggingface.text_generation",
+      "name": "huggingface.chat_completion_stream",
       "type": "llm"
     },
     "span_id": "<span:17>",
@@ -373,9 +397,47 @@
     "_is_merge": true,
     "id": "<span:16>",
     "log_id": "g",
-    "metrics": {},
+    "metrics": {
+      "completion_tokens": 16,
+      "prompt_tokens": 203,
+      "time_to_first_token": "<number>",
+      "tokens": 219
+    },
+    "project_id": "<project_id>",
+    "root_span_id": "<span:2>",
+    "span_id": "<span:17>",
+    "span_parents": [
+      "<span:15>"
+    ]
+  },
+  {
+    "_is_merge": true,
+    "id": "<span:16>",
+    "log_id": "g",
+    "metadata": {
+      "created": 0,
+      "id": "<span:19>",
+      "model": "meta-llama/Meta-Llama-3.1-8B-Instruct",
+      "object": "chat.completion.chunk"
+    },
     "output": {
-      "generated_text": "<string>"
+      "choices": [
+        {
+          "content": "<string>",
+          "finish_reason": "tool_calls",
+          "index": 0,
+          "role": "assistant",
+          "tool_calls": [
+            {
+              "arguments": "<string>",
+              "id": "<span:18>",
+              "index": null,
+              "name": "get_current_weather",
+              "type": "function"
+            }
+          ]
+        }
+      ]
     },
     "project_id": "<project_id>",
     "root_span_id": "<span:2>",
@@ -406,10 +468,10 @@
       "caller_lineno": 0
     },
     "created": "<timestamp>",
-    "id": "<span:18>",
+    "id": "<span:20>",
     "log_id": "g",
     "metadata": {
-      "operation": "text-generation-stream",
+      "operation": "text-generation",
       "testRunId": "<run:1>"
     },
     "metrics": {
@@ -419,23 +481,23 @@
     "root_span_id": "<span:2>",
     "span_attributes": {
       "exec_counter": 7,
-      "name": "huggingface-text-generation-stream-operation"
+      "name": "huggingface-text-generation-operation"
     },
-    "span_id": "<span:19>",
+    "span_id": "<span:21>",
     "span_parents": [
       "<span:2>"
     ]
   },
   {
     "_is_merge": true,
-    "id": "<span:18>",
+    "id": "<span:20>",
     "log_id": "g",
     "metrics": {
       "end": "<timestamp>"
     },
     "project_id": "<project_id>",
     "root_span_id": "<span:2>",
-    "span_id": "<span:19>",
+    "span_id": "<span:21>",
     "span_parents": [
       "<span:2>"
     ]
@@ -443,7 +505,7 @@
   {
     "context": {},
     "created": "<timestamp>",
-    "id": "<span:20>",
+    "id": "<span:22>",
     "input": "The capital of France is",
     "log_id": "g",
     "metadata": {
@@ -462,61 +524,41 @@
     "root_span_id": "<span:2>",
     "span_attributes": {
       "exec_counter": 8,
-      "name": "huggingface.text_generation_stream",
+      "name": "huggingface.text_generation",
       "type": "llm"
     },
-    "span_id": "<span:21>",
+    "span_id": "<span:23>",
     "span_parents": [
-      "<span:19>"
+      "<span:21>"
     ]
   },
   {
     "_is_merge": true,
-    "id": "<span:20>",
+    "id": "<span:22>",
     "log_id": "g",
-    "metrics": {
-      "completion_tokens": 4,
-      "prompt_tokens": 5,
-      "time_to_first_token": "<number>",
-      "tokens": 9
-    },
-    "project_id": "<project_id>",
-    "root_span_id": "<span:2>",
-    "span_id": "<span:21>",
-    "span_parents": [
-      "<span:19>"
-    ]
-  },
-  {
-    "_is_merge": true,
-    "id": "<span:20>",
-    "log_id": "g",
-    "metadata": {
-      "finish_reason": "length"
-    },
+    "metrics": {},
     "output": {
-      "finish_reason": "length",
       "generated_text": "<string>"
     },
     "project_id": "<project_id>",
     "root_span_id": "<span:2>",
-    "span_id": "<span:21>",
+    "span_id": "<span:23>",
     "span_parents": [
-      "<span:19>"
+      "<span:21>"
     ]
   },
   {
     "_is_merge": true,
-    "id": "<span:20>",
+    "id": "<span:22>",
     "log_id": "g",
     "metrics": {
       "end": "<timestamp>"
     },
     "project_id": "<project_id>",
     "root_span_id": "<span:2>",
-    "span_id": "<span:21>",
+    "span_id": "<span:23>",
     "span_parents": [
-      "<span:19>"
+      "<span:21>"
     ]
   },
   {
@@ -527,7 +569,128 @@
       "caller_lineno": 0
     },
     "created": "<timestamp>",
-    "id": "<span:22>",
+    "id": "<span:24>",
+    "log_id": "g",
+    "metadata": {
+      "operation": "text-generation-stream",
+      "testRunId": "<run:1>"
+    },
+    "metrics": {
+      "start": "<timestamp>"
+    },
+    "project_id": "<project_id>",
+    "root_span_id": "<span:2>",
+    "span_attributes": {
+      "exec_counter": 9,
+      "name": "huggingface-text-generation-stream-operation"
+    },
+    "span_id": "<span:25>",
+    "span_parents": [
+      "<span:2>"
+    ]
+  },
+  {
+    "_is_merge": true,
+    "id": "<span:24>",
+    "log_id": "g",
+    "metrics": {
+      "end": "<timestamp>"
+    },
+    "project_id": "<project_id>",
+    "root_span_id": "<span:2>",
+    "span_id": "<span:25>",
+    "span_parents": [
+      "<span:2>"
+    ]
+  },
+  {
+    "context": {},
+    "created": "<timestamp>",
+    "id": "<span:26>",
+    "input": "The capital of France is",
+    "log_id": "g",
+    "metadata": {
+      "model": "meta-llama/Llama-3.1-8B",
+      "parameters": {
+        "do_sample": false,
+        "max_new_tokens": 4,
+        "return_full_text": false
+      },
+      "provider": "featherless-ai"
+    },
+    "metrics": {
+      "start": "<timestamp>"
+    },
+    "project_id": "<project_id>",
+    "root_span_id": "<span:2>",
+    "span_attributes": {
+      "exec_counter": 10,
+      "name": "huggingface.text_generation_stream",
+      "type": "llm"
+    },
+    "span_id": "<span:27>",
+    "span_parents": [
+      "<span:25>"
+    ]
+  },
+  {
+    "_is_merge": true,
+    "id": "<span:26>",
+    "log_id": "g",
+    "metrics": {
+      "completion_tokens": 4,
+      "prompt_tokens": 5,
+      "time_to_first_token": "<number>",
+      "tokens": 9
+    },
+    "project_id": "<project_id>",
+    "root_span_id": "<span:2>",
+    "span_id": "<span:27>",
+    "span_parents": [
+      "<span:25>"
+    ]
+  },
+  {
+    "_is_merge": true,
+    "id": "<span:26>",
+    "log_id": "g",
+    "metadata": {
+      "finish_reason": "length"
+    },
+    "output": {
+      "finish_reason": "length",
+      "generated_text": "<string>"
+    },
+    "project_id": "<project_id>",
+    "root_span_id": "<span:2>",
+    "span_id": "<span:27>",
+    "span_parents": [
+      "<span:25>"
+    ]
+  },
+  {
+    "_is_merge": true,
+    "id": "<span:26>",
+    "log_id": "g",
+    "metrics": {
+      "end": "<timestamp>"
+    },
+    "project_id": "<project_id>",
+    "root_span_id": "<span:2>",
+    "span_id": "<span:27>",
+    "span_parents": [
+      "<span:25>"
+    ]
+  },
+  {
+    "_is_merge": false,
+    "context": {
+      "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+      "caller_functionname": "runOperation",
+      "caller_lineno": 0
+    },
+    "created": "<timestamp>",
+    "id": "<span:28>",
     "log_id": "g",
     "metadata": {
       "operation": "feature-extraction",
@@ -539,24 +702,24 @@
     "project_id": "<project_id>",
     "root_span_id": "<span:2>",
     "span_attributes": {
-      "exec_counter": 9,
+      "exec_counter": 11,
       "name": "huggingface-feature-extraction-operation"
     },
-    "span_id": "<span:23>",
+    "span_id": "<span:29>",
     "span_parents": [
       "<span:2>"
     ]
   },
   {
     "_is_merge": true,
-    "id": "<span:22>",
+    "id": "<span:28>",
     "log_id": "g",
     "metrics": {
       "end": "<timestamp>"
     },
     "project_id": "<project_id>",
     "root_span_id": "<span:2>",
-    "span_id": "<span:23>",
+    "span_id": "<span:29>",
     "span_parents": [
       "<span:2>"
     ]
@@ -564,7 +727,7 @@
   {
     "context": {},
     "created": "<timestamp>",
-    "id": "<span:24>",
+    "id": "<span:30>",
     "input": "Paris France",
     "log_id": "g",
     "metadata": {
@@ -577,18 +740,18 @@
     "project_id": "<project_id>",
     "root_span_id": "<span:2>",
     "span_attributes": {
-      "exec_counter": 10,
+      "exec_counter": 12,
       "name": "huggingface.feature_extraction",
       "type": "llm"
     },
-    "span_id": "<span:25>",
+    "span_id": "<span:31>",
     "span_parents": [
-      "<span:23>"
+      "<span:29>"
     ]
   },
   {
     "_is_merge": true,
-    "id": "<span:24>",
+    "id": "<span:30>",
     "log_id": "g",
     "metrics": {},
     "output": {
@@ -596,23 +759,23 @@
     },
     "project_id": "<project_id>",
     "root_span_id": "<span:2>",
-    "span_id": "<span:25>",
+    "span_id": "<span:31>",
     "span_parents": [
-      "<span:23>"
+      "<span:29>"
     ]
   },
   {
     "_is_merge": true,
-    "id": "<span:24>",
+    "id": "<span:30>",
     "log_id": "g",
     "metrics": {
       "end": "<timestamp>"
     },
     "project_id": "<project_id>",
     "root_span_id": "<span:2>",
-    "span_id": "<span:25>",
+    "span_id": "<span:31>",
     "span_parents": [
-      "<span:23>"
+      "<span:29>"
     ]
   }
 ]
