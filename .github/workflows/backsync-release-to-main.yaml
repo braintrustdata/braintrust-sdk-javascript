@@ -44,8 +44,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh pr create \
+          pr_url="$(gh pr create \
             --base main \
             --head "${{ steps.backsync_branch.outputs.branch_name }}" \
             --title "chore: Sync release branch to main (${{ steps.backsync_branch.outputs.short_release_sha }})" \
-            --body "Synchronizes the main branch with the release branch. (changed files should generally only be package versions, changeset files, and changelogs)"
+            --body "Synchronizes the main branch with the release branch. (changed files should generally only be package versions, changeset files, and changelogs)")"
+          gh pr merge --auto --squash "$pr_url"
