@@ -3413,9 +3413,28 @@ type DatasetPinState = {
   pinnedSnapshotName?: string;
 };
 
-// Keep selector state off the public Dataset class shape so adding support for
-// environment/snapshot selectors does not change the emitted .d.ts for Dataset.
-const datasetPinStateByInstance = new WeakMap<object, DatasetPinState>();
+const objectFetcherPrivateAccessUnavailable = (): never => {
+  throw new Error("ObjectFetcher private state is unavailable");
+};
+
+let objectFetcherPrivateAccess: {
+  getPinnedVersion(objectFetcher: unknown): string | undefined;
+  setPinnedVersion(
+    objectFetcher: unknown,
+    pinnedVersion: string | undefined,
+  ): void;
+  getInternalBtql(objectFetcher: unknown): Record<string, unknown> | undefined;
+} = {
+  getPinnedVersion() {
+    return objectFetcherPrivateAccessUnavailable();
+  },
+  setPinnedVersion() {
+    objectFetcherPrivateAccessUnavailable();
+  },
+  getInternalBtql() {
+    return objectFetcherPrivateAccessUnavailable();
+  },
+};
 
 export type DatasetRef = {
   id: string;
@@ -4154,31 +4173,28 @@ export function initDataset<
     typeof resolvedVersion === "string" ? resolvedVersion : undefined,
     legacy,
     _internal_btql,
-  );
-
-  if (
     resolvedVersion instanceof LazyValue ||
-    normalizedEnvironment !== undefined ||
-    normalizedSnapshotName !== undefined
-  ) {
-    datasetPinStateByInstance.set(datasetObject, {
-      ...(resolvedVersion instanceof LazyValue
-        ? {
-            lazyPinnedVersion: resolvedVersion,
-          }
-        : {}),
-      ...(normalizedEnvironment !== undefined
-        ? {
-            pinnedEnvironment: normalizedEnvironment,
-          }
-        : {}),
-      ...(normalizedSnapshotName !== undefined
-        ? {
-            pinnedSnapshotName: normalizedSnapshotName,
-          }
-        : {}),
-    });
-  }
+      normalizedEnvironment !== undefined ||
+      normalizedSnapshotName !== undefined
+      ? {
+          ...(resolvedVersion instanceof LazyValue
+            ? {
+                lazyPinnedVersion: resolvedVersion,
+              }
+            : {}),
+          ...(normalizedEnvironment !== undefined
+            ? {
+                pinnedEnvironment: normalizedEnvironment,
+              }
+            : {}),
+          ...(normalizedSnapshotName !== undefined
+            ? {
+                pinnedSnapshotName: normalizedSnapshotName,
+              }
+            : {}),
+        }
+      : undefined,
+  );
 
   return datasetObject;
 }
@@ -5939,6 +5955,34 @@ export const MAX_BTQL_ITERATIONS = 10000;
 export class ObjectFetcher<RecordType> implements AsyncIterable<
   WithTransactionId<RecordType>
 > {
+  static {
+    objectFetcherPrivateAccess = {
+      getPinnedVersion(objectFetcher: unknown): string | undefined {
+        if (!(objectFetcher instanceof ObjectFetcher)) {
+          return objectFetcherPrivateAccessUnavailable();
+        }
+        return objectFetcher.pinnedVersion;
+      },
+      setPinnedVersion(
+        objectFetcher: unknown,
+        pinnedVersion: string | undefined,
+      ): void {
+        if (!(objectFetcher instanceof ObjectFetcher)) {
+          return objectFetcherPrivateAccessUnavailable();
+        }
+        objectFetcher.pinnedVersion = pinnedVersion;
+      },
+      getInternalBtql(
+        objectFetcher: unknown,
+      ): Record<string, unknown> | undefined {
+        if (!(objectFetcher instanceof ObjectFetcher)) {
+          return objectFetcherPrivateAccessUnavailable();
+        }
+        return objectFetcher._internal_btql;
+      },
+    };
+  }
+
   private _fetchedData: WithTransactionId<RecordType>[] | undefined = undefined;
 
   constructor(
@@ -5947,10 +5991,10 @@ export class ObjectFetcher<RecordType> implements AsyncIterable<
       | "experiment"
       | "project_logs"
       | "playground_logs",
-    protected pinnedVersion: string | undefined,
+    private pinnedVersion: string | undefined,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private mutateRecord?: (r: any) => WithTransactionId<RecordType>,
-    protected _internal_btql?: Record<string, unknown>,
+    private _internal_btql?: Record<string, unknown>,
   ) {}
 
   public get id(): Promise<string> {
@@ -7095,6 +7139,9 @@ export class Dataset<
   IsLegacyDataset extends boolean = typeof DEFAULT_IS_LEGACY_DATASET,
 > extends ObjectFetcher<DatasetRecord<IsLegacyDataset>> {
   private readonly lazyMetadata: LazyValue<ProjectDatasetMetadata>;
+  private lazyPinnedVersion?: LazyValue<string | undefined>;
+  private pinnedEnvironment?: string;
+  private pinnedSnapshotName?: string;
   private readonly __braintrust_dataset_marker = true;
   private newRecords = 0;
 
@@ -7104,6 +7151,7 @@ export class Dataset<
     pinnedVersion?: string,
     legacy?: IsLegacyDataset,
     _internal_btql?: Record<string, unknown>,
+    pinState?: DatasetPinState,
   ) {
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     const isLegacyDataset = (legacy ??
@@ -7127,6 +7175,9 @@ export class Dataset<
       _internal_btql,
     );
     this.lazyMetadata = lazyMetadata;
+    this.lazyPinnedVersion = pinState?.lazyPinnedVersion;
+    this.pinnedEnvironment = pinState?.pinnedEnvironment;
+    this.pinnedSnapshotName = pinState?.pinnedSnapshotName;
   }
 
   public get id(): Promise<string> {
@@ -7160,43 +7211,44 @@ export class Dataset<
   }> {
     await this.getState();
     const metadata = await this.lazyMetadata.get();
-    const pinState = datasetPinStateByInstance.get(this);
+    const pinnedVersion = objectFetcherPrivateAccess.getPinnedVersion(this);
+    const internalBtql = objectFetcherPrivateAccess.getInternalBtql(this);
 
     return {
       dataset_id: metadata.dataset.id,
-      ...(pinState?.pinnedEnvironment !== undefined
+      ...(this.pinnedEnvironment !== undefined
         ? {
-            dataset_environment: pinState.pinnedEnvironment,
+            dataset_environment: this.pinnedEnvironment,
           }
         : {}),
-      ...(pinState?.pinnedEnvironment === undefined &&
-      pinState?.pinnedSnapshotName !== undefined
+      ...(this.pinnedEnvironment === undefined &&
+      this.pinnedSnapshotName !== undefined
         ? {
-            dataset_snapshot_name: pinState.pinnedSnapshotName,
+            dataset_snapshot_name: this.pinnedSnapshotName,
           }
         : {}),
-      ...(pinState?.pinnedEnvironment === undefined &&
-      pinState?.pinnedSnapshotName === undefined &&
-      this.pinnedVersion !== undefined
+      ...(this.pinnedEnvironment === undefined &&
+      this.pinnedSnapshotName === undefined &&
+      pinnedVersion !== undefined
         ? {
-            dataset_version: this.pinnedVersion,
+            dataset_version: pinnedVersion,
           }
         : {}),
-      ...(this._internal_btql !== undefined
-        ? { _internal_btql: this._internal_btql }
-        : {}),
+      ...(internalBtql !== undefined ? { _internal_btql: internalBtql } : {}),
     };
   }
 
   protected async getState(): Promise<BraintrustState> {
     // Ensure the login state is populated by awaiting lazyMetadata.
     await this.lazyMetadata.get();
-    const pinState = datasetPinStateByInstance.get(this);
     if (
-      pinState?.lazyPinnedVersion !== undefined &&
-      this.pinnedVersion === undefined
+      this.lazyPinnedVersion !== undefined &&
+      objectFetcherPrivateAccess.getPinnedVersion(this) === undefined
     ) {
-      this.pinnedVersion = await pinState.lazyPinnedVersion.get();
+      objectFetcherPrivateAccess.setPinnedVersion(
+        this,
+        await this.lazyPinnedVersion.get(),
+      );
     }
     return this.state;
   }
