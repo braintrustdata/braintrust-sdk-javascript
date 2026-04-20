@@ -78,6 +78,20 @@ import {
   type PromptBlockDataType as PromptBlockData,
   type ResponseFormatJsonSchemaType as ResponseFormatJsonSchema,
 } from "./generated_types";
+import type {
+  EasyInputMessage,
+  FunctionTool,
+  ResponseFormatTextConfig,
+  ResponseFunctionCallOutputItemList,
+  ResponseFunctionToolCall,
+  ResponseInputContent as OpenAIResponseInputContent,
+  ResponseCreateParams,
+  ResponseCreateParamsBase,
+  ResponseCreateParamsNonStreaming,
+  ResponseReasoningItem,
+  ResponseCreateParamsStreaming,
+  ResponseTextConfig,
+} from "openai/resources/responses/responses";
 
 const BRAINTRUST_ATTACHMENT =
   BraintrustAttachmentReferenceSchema.shape.type.value;
@@ -7193,29 +7207,87 @@ export type ChatPrompt = {
   messages: OpenAIMessage[];
   tools?: ChatCompletionTool[];
 };
+export type ResponsesTextFormat = ResponseFormatTextConfig;
+export type ResponsesTextConfig = ResponseTextConfig;
+export type ResponsesReasoningConfig = {
+  effort?: CompiledPromptReasoningEffort;
+};
+export type ResponsesToolChoice = NonNullable<
+  ResponseCreateParamsBase["tool_choice"]
+>;
+export type ResponsesTool = FunctionTool;
+export type ResponsesInputContent = OpenAIResponseInputContent;
+export type ResponsesInputItem =
+  | EasyInputMessage
+  | ResponseFunctionToolCall
+  | {
+      type: "function_call_output";
+      call_id: string;
+      output: string | ResponseFunctionCallOutputItemList;
+      id?: string | null;
+      status?: "in_progress" | "completed" | "incomplete" | null;
+    }
+  | ResponseReasoningItem;
+export type CompiledResponsesPromptParams = Omit<
+  CompiledPromptParams,
+  | "function_call"
+  | "frequency_penalty"
+  | "maxOutputTokens"
+  | "max_completion_tokens"
+  | "max_tokens"
+  | "n"
+  | "presence_penalty"
+  | "reasoning_effort"
+  | "response_format"
+  | "stop"
+  | "stream"
+  | "stream_options"
+  | "tool_choice"
+  | "verbosity"
+> & {
+  max_output_tokens?: number;
+  reasoning?: ResponsesReasoningConfig;
+  text?: ResponsesTextConfig;
+  tool_choice?: ResponsesToolChoice;
+} & (
+    | {
+        stream?: ResponseCreateParamsNonStreaming["stream"];
+        stream_options?: ResponseCreateParamsBase["stream_options"];
+      }
+    | {
+        stream: ResponseCreateParamsStreaming["stream"];
+        stream_options?: ResponseCreateParamsBase["stream_options"];
+      }
+  );
 export type ResponsesPrompt = {
-  input: Message[];
-  tools?: ChatCompletionTool[];
+  input: ResponsesInputItem[];
+  tools?: ResponsesTool[];
 };
 export type CompletionPrompt = {
   prompt: string;
 };
 
-export type CompiledPrompt<Flavor extends "chat" | "completion" | "responses"> =
-  CompiledPromptParams & {
-    span_info?: {
-      name?: string;
-      spanAttributes?: Record<any, any>;
-      metadata: {
-        prompt: {
-          variables: Record<string, unknown>;
-          id: string;
-          project_id: string;
-          version: string;
-        };
+type CompiledPromptSpanInfo = {
+  span_info?: {
+    name?: string;
+    spanAttributes?: Record<any, any>;
+    metadata: {
+      prompt: {
+        variables: Record<string, unknown>;
+        id: string;
+        project_id: string;
+        version: string;
       };
     };
-  } & (Flavor extends "chat"
+  };
+};
+
+export type CompiledPrompt<Flavor extends "chat" | "completion" | "responses"> =
+  (Flavor extends "responses"
+    ? CompiledResponsesPromptParams
+    : CompiledPromptParams) &
+    CompiledPromptSpanInfo &
+    (Flavor extends "chat"
       ? ChatPrompt
       : Flavor extends "completion"
         ? CompletionPrompt
@@ -7487,6 +7559,377 @@ export function renderPromptParams(
   return params;
 }
 
+function toResponsesTextFormat(
+  responseFormat: unknown,
+): ResponsesTextFormat | undefined {
+  if (!isObject(responseFormat) || typeof responseFormat.type !== "string") {
+    return undefined;
+  }
+
+  if (responseFormat.type === "text" || responseFormat.type === "json_object") {
+    return { type: responseFormat.type };
+  }
+
+  if (
+    responseFormat.type === "json_schema" &&
+    isObject(responseFormat.json_schema) &&
+    typeof responseFormat.json_schema.name === "string" &&
+    isObject(responseFormat.json_schema.schema)
+  ) {
+    return {
+      type: "json_schema",
+      name: responseFormat.json_schema.name,
+      ...(typeof responseFormat.json_schema.description === "string"
+        ? { description: responseFormat.json_schema.description }
+        : {}),
+      schema: responseFormat.json_schema.schema,
+      ...("strict" in responseFormat.json_schema
+        ? { strict: responseFormat.json_schema.strict as boolean | null }
+        : {}),
+    };
+  }
+
+  return undefined;
+}
+
+function toResponsesToolChoice(
+  toolChoice: unknown,
+  functionCall: unknown,
+): ResponsesToolChoice | undefined {
+  if (
+    toolChoice === "auto" ||
+    toolChoice === "none" ||
+    toolChoice === "required"
+  ) {
+    return toolChoice;
+  }
+
+  if (
+    isObject(toolChoice) &&
+    toolChoice.type === "function" &&
+    isObject(toolChoice.function) &&
+    typeof toolChoice.function.name === "string"
+  ) {
+    return {
+      type: "function",
+      name: toolChoice.function.name,
+    };
+  }
+
+  if (isObject(toolChoice) && typeof toolChoice.type === "string") {
+    return toolChoice as unknown as ResponsesToolChoice;
+  }
+
+  if (functionCall === "auto" || functionCall === "none") {
+    return functionCall;
+  }
+
+  if (isObject(functionCall) && typeof functionCall.name === "string") {
+    return {
+      type: "function",
+      name: functionCall.name,
+    };
+  }
+
+  return undefined;
+}
+
+function toResponsesTools(
+  tools: ChatCompletionTool[] | undefined,
+): ResponsesTool[] | undefined {
+  if (!tools) {
+    return undefined;
+  }
+
+  return tools.flatMap((tool) => {
+    if (
+      tool.type !== "function" ||
+      !("function" in tool) ||
+      !tool.function ||
+      typeof tool.function.name !== "string"
+    ) {
+      return [];
+    }
+
+    const toolFunction = tool.function as Record<string, unknown>;
+
+    return [
+      {
+        type: "function",
+        name: tool.function.name,
+        parameters: tool.function.parameters ?? null,
+        strict:
+          typeof toolFunction.strict === "boolean" ? toolFunction.strict : null,
+        ...(typeof tool.function.description === "string"
+          ? { description: tool.function.description }
+          : {}),
+      },
+    ];
+  });
+}
+
+function toResponsesContent(
+  content: unknown,
+): string | ResponsesInputContent[] | undefined {
+  if (typeof content === "string") {
+    return content;
+  }
+
+  if (!Array.isArray(content)) {
+    return undefined;
+  }
+
+  return content.flatMap<ResponsesInputContent>((part) => {
+    if (!isObject(part) || typeof part.type !== "string") {
+      return [];
+    }
+
+    switch (part.type) {
+      case "text":
+        return typeof part.text === "string"
+          ? [{ type: "input_text" as const, text: part.text }]
+          : [];
+      case "image_url":
+        return [
+          {
+            type: "input_image" as const,
+            detail:
+              isObject(part.image_url) &&
+              typeof part.image_url.detail === "string"
+                ? (part.image_url.detail as "low" | "high" | "auto")
+                : "auto",
+            ...(isObject(part.image_url) &&
+            typeof part.image_url.url === "string"
+              ? { image_url: part.image_url.url }
+              : {}),
+          },
+        ];
+      case "file":
+        return [
+          {
+            type: "input_file" as const,
+            ...(isObject(part.file) && typeof part.file.file_data === "string"
+              ? { file_data: part.file.file_data }
+              : {}),
+            ...(isObject(part.file) && typeof part.file.file_id === "string"
+              ? { file_id: part.file.file_id }
+              : {}),
+            ...(isObject(part.file) && typeof part.file.filename === "string"
+              ? { filename: part.file.filename }
+              : {}),
+          },
+        ];
+      default:
+        return [];
+    }
+  });
+}
+
+function toResponsesInput(messages: Message[]): ResponsesInputItem[] {
+  return messages.flatMap((message, messageIndex) => {
+    switch (message.role) {
+      case "system":
+      case "user":
+      case "developer":
+      case "model": {
+        const content = toResponsesContent(message.content);
+        if (content === undefined) {
+          return [];
+        }
+
+        return [
+          {
+            type: "message",
+            role: message.role === "model" ? "assistant" : message.role,
+            content,
+          },
+        ];
+      }
+      case "assistant": {
+        const items: ResponsesInputItem[] = [];
+        const content = toResponsesContent(message.content);
+        if (
+          content !== undefined &&
+          !(typeof content === "string" && content.length === 0) &&
+          !(Array.isArray(content) && content.length === 0)
+        ) {
+          items.push({
+            type: "message",
+            role: "assistant",
+            content,
+          });
+        }
+
+        if (Array.isArray(message.reasoning)) {
+          items.push(
+            ...message.reasoning
+              .filter(
+                (reasoning): reasoning is { id?: string; content: string } =>
+                  isObject(reasoning) && typeof reasoning.content === "string",
+              )
+              .map((reasoning, reasoningIndex) => ({
+                type: "reasoning" as const,
+                id:
+                  typeof reasoning.id === "string"
+                    ? reasoning.id
+                    : `reasoning_${messageIndex}_${reasoningIndex}`,
+                summary: [
+                  {
+                    type: "summary_text" as const,
+                    text: reasoning.content,
+                  },
+                ],
+              })),
+          );
+        }
+
+        if (isObject(message.function_call)) {
+          items.push({
+            type: "function_call",
+            call_id: message.function_call.name,
+            name: message.function_call.name,
+            arguments: message.function_call.arguments,
+          });
+        }
+
+        if (Array.isArray(message.tool_calls)) {
+          items.push(
+            ...message.tool_calls
+              .filter(
+                (toolCall) =>
+                  toolCall.type === "function" &&
+                  typeof toolCall.id === "string" &&
+                  isObject(toolCall.function),
+              )
+              .map((toolCall) => ({
+                type: "function_call" as const,
+                call_id: toolCall.id,
+                name: toolCall.function.name,
+                arguments: toolCall.function.arguments,
+              })),
+          );
+        }
+
+        return items;
+      }
+      case "tool": {
+        const output = toResponsesContent(message.content);
+        if (output === undefined) {
+          return [];
+        }
+
+        return [
+          {
+            type: "function_call_output",
+            call_id: message.tool_call_id,
+            output,
+          },
+        ];
+      }
+      case "function": {
+        const output = toResponsesContent(message.content);
+        if (output === undefined) {
+          return [];
+        }
+
+        return [
+          {
+            type: "function_call_output",
+            call_id: message.name,
+            output,
+          },
+        ];
+      }
+      default: {
+        const _: never = message;
+        return _;
+      }
+    }
+  });
+}
+
+function renderResponsesPromptParams(
+  params: ModelParams | undefined,
+  args: Record<string, unknown>,
+  options: { strict?: boolean; templateFormat?: TemplateFormat } = {},
+): CompiledResponsesPromptParams {
+  const rendered = (renderPromptParams(params, args, options) ?? {}) as Record<
+    string,
+    unknown
+  >;
+
+  const text = isObject(rendered.text) ? rendered.text : undefined;
+  const reasoning = isObject(rendered.reasoning)
+    ? rendered.reasoning
+    : undefined;
+  const maxOutputTokens =
+    typeof rendered.max_output_tokens === "number"
+      ? rendered.max_output_tokens
+      : typeof rendered.maxOutputTokens === "number"
+        ? rendered.maxOutputTokens
+        : typeof rendered.max_completion_tokens === "number"
+          ? rendered.max_completion_tokens
+          : typeof rendered.max_tokens === "number"
+            ? rendered.max_tokens
+            : undefined;
+  const textFormat = toResponsesTextFormat(rendered.response_format);
+  const responsesToolChoice = toResponsesToolChoice(
+    rendered.tool_choice,
+    rendered.function_call,
+  );
+
+  const {
+    function_call: _functionCall,
+    frequency_penalty: _frequencyPenalty,
+    maxOutputTokens: _maxOutputTokens,
+    max_completion_tokens: _maxCompletionTokens,
+    max_output_tokens: _maxOutputTokensSnake,
+    max_tokens: _maxTokens,
+    n: _n,
+    presence_penalty: _presencePenalty,
+    reasoning_effort: _reasoningEffort,
+    response_format: _responseFormat,
+    stop: _stop,
+    tool_choice: _toolChoice,
+    verbosity: _verbosity,
+    ...rest
+  } = rendered;
+
+  return {
+    ...rest,
+    ...(maxOutputTokens !== undefined
+      ? { max_output_tokens: maxOutputTokens }
+      : {}),
+    ...(textFormat !== undefined || rendered.verbosity !== undefined || text
+      ? {
+          text: {
+            ...(text ?? {}),
+            ...(textFormat !== undefined ? { format: textFormat } : {}),
+            ...(rendered.verbosity !== undefined
+              ? { verbosity: rendered.verbosity as AnyModelParam["verbosity"] }
+              : {}),
+          },
+        }
+      : {}),
+    ...(reasoning || rendered.reasoning_effort !== undefined
+      ? {
+          reasoning: {
+            ...(reasoning ?? {}),
+            ...(rendered.reasoning_effort !== undefined
+              ? {
+                  effort:
+                    rendered.reasoning_effort as CompiledPromptReasoningEffort,
+                }
+              : {}),
+          },
+        }
+      : {}),
+    ...(responsesToolChoice !== undefined
+      ? { tool_choice: responsesToolChoice }
+      : {}),
+  } as CompiledResponsesPromptParams;
+}
+
 export class Prompt<
   HasId extends boolean = true,
   HasVersion extends boolean = true,
@@ -7679,7 +8122,7 @@ export class Prompt<
       options: { ...options, templateFormat: resolvedTemplateFormat },
     });
 
-    if (flavor === "chat" || flavor === "responses") {
+    if (flavor === "chat") {
       if (renderedPrompt.type !== "chat") {
         throw new Error(
           "Prompt is a completion prompt. Use buildCompletion() instead",
@@ -7687,23 +8130,43 @@ export class Prompt<
       }
 
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      const parsedTools = renderedPrompt.tools
+        ? chatCompletionToolSchema
+            .array()
+            .parse(JSON.parse(renderedPrompt.tools))
+        : undefined;
+
       return {
         ...renderPromptParams(params, variables, {
           strict: options.strict,
           templateFormat: resolvedTemplateFormat,
         }),
         ...spanInfo,
-        ...(flavor === "chat"
-          ? { messages: renderedPrompt.messages }
-          : { input: renderedPrompt.messages }),
-        ...(renderedPrompt.tools
-          ? {
-              tools: chatCompletionToolSchema
-                .array()
-                .parse(JSON.parse(renderedPrompt.tools)),
-            }
-          : undefined),
-      } as CompiledPrompt<Flavor>;
+        messages: renderedPrompt.messages,
+      } as unknown as CompiledPrompt<Flavor>;
+    } else if (flavor === "responses") {
+      if (renderedPrompt.type !== "chat") {
+        throw new Error(
+          "Prompt is a completion prompt. Use buildCompletion() instead",
+        );
+      }
+
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      const parsedTools = renderedPrompt.tools
+        ? chatCompletionToolSchema
+            .array()
+            .parse(JSON.parse(renderedPrompt.tools))
+        : undefined;
+
+      return {
+        ...renderResponsesPromptParams(params, variables, {
+          strict: options.strict,
+          templateFormat: resolvedTemplateFormat,
+        }),
+        ...spanInfo,
+        input: toResponsesInput(renderedPrompt.messages),
+        ...(parsedTools ? { tools: toResponsesTools(parsedTools) } : undefined),
+      } as unknown as CompiledPrompt<Flavor>;
     } else if (flavor === "completion") {
       if (renderedPrompt.type !== "completion") {
         throw new Error(`Prompt is a chat prompt. Use flavor: 'chat' instead`);
@@ -7717,7 +8180,7 @@ export class Prompt<
         }),
         ...spanInfo,
         prompt: renderedPrompt.content,
-      } as CompiledPrompt<Flavor>;
+      } as unknown as CompiledPrompt<Flavor>;
     } else {
       throw new Error("never!");
     }
