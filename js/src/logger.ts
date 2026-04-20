@@ -85,7 +85,6 @@ import type {
   ResponseFunctionCallOutputItemList,
   ResponseFunctionToolCall,
   ResponseInputContent as OpenAIResponseInputContent,
-  ResponseCreateParams,
   ResponseCreateParamsBase,
   ResponseCreateParamsNonStreaming,
   ResponseReasoningItem,
@@ -8128,13 +8127,6 @@ export class Prompt<
           "Prompt is a completion prompt. Use buildCompletion() instead",
         );
       }
-
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      const parsedTools = renderedPrompt.tools
-        ? chatCompletionToolSchema
-            .array()
-            .parse(JSON.parse(renderedPrompt.tools))
-        : undefined;
 
       return {
         ...renderPromptParams(params, variables, {
