@@ -141,6 +141,10 @@ function normalizeMetrics(value: Json): Json {
 
   const normalized: Record<string, Json> = {};
   for (const [key, entry] of Object.entries(value)) {
+    if (key === "prompt_cached_tokens") {
+      continue;
+    }
+
     if (
       typeof entry === "number" &&
       ["end", "start", "time_to_first_token"].includes(key)

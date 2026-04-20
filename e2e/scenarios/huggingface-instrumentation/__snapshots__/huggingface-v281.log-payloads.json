@@ -120,7 +120,6 @@
       "completion_reasoning_tokens": 0,
       "completion_rejected_prediction_tokens": 0,
       "completion_tokens": 3,
-      "prompt_cached_tokens": 0,
       "prompt_tokens": 40,
       "tokens": 43
     },
@@ -254,7 +253,6 @@
       "completion_reasoning_tokens": 0,
       "completion_rejected_prediction_tokens": 0,
       "completion_tokens": 3,
-      "prompt_cached_tokens": 0,
       "prompt_tokens": 40,
       "time_to_first_token": "<number>",
       "tokens": 43
@@ -413,7 +411,6 @@
       "completion_reasoning_tokens": 0,
       "completion_rejected_prediction_tokens": 0,
       "completion_tokens": 20,
-      "prompt_cached_tokens": 384,
       "prompt_tokens": 394,
       "time_to_first_token": "<number>",
       "tokens": 414
