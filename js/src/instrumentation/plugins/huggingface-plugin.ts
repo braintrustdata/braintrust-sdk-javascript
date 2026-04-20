@@ -493,16 +493,17 @@ function createChatToolCall(
   toolDelta: Record<string, unknown>,
 ): Record<string, unknown> {
   const toolFunction = isObject(toolDelta.function) ? toolDelta.function : {};
+  const toolCallFunction: Record<string, unknown> = {
+    arguments:
+      typeof toolFunction.arguments === "string" ? toolFunction.arguments : "",
+  };
+
+  if (typeof toolFunction.name === "string") {
+    toolCallFunction.name = toolFunction.name;
+  }
+
   const toolCall: Record<string, unknown> = {
-    function: {
-      ...(typeof toolFunction.name === "string"
-        ? { name: toolFunction.name }
-        : {}),
-      arguments:
-        typeof toolFunction.arguments === "string"
-          ? toolFunction.arguments
-          : "",
-    },
+    function: toolCallFunction,
   };
 
   if (typeof toolDelta.id === "string") {
@@ -535,14 +536,19 @@ function mergeChatToolCall(
     existing.type = toolDelta.type;
   }
 
-  existing.function = {
+  const nextFunction: Record<string, unknown> = {
     ...currentFunction,
-    ...(typeof deltaFunction.name === "string" &&
-    typeof currentFunction.name !== "string"
-      ? { name: deltaFunction.name }
-      : {}),
     arguments: `${currentArguments}${deltaArguments}`,
   };
+
+  if (
+    typeof deltaFunction.name === "string" &&
+    typeof currentFunction.name !== "string"
+  ) {
+    nextFunction.name = deltaFunction.name;
+  }
+
+  existing.function = nextFunction;
 }
 
 export { aggregateChatCompletionChunks, extractResponseMetadata };
