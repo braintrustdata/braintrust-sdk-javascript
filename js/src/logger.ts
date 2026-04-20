@@ -7395,9 +7395,11 @@ export class Dataset<
   public async createSnapshot({
     name,
     description,
+    update,
   }: {
     readonly name: string;
     readonly description?: string;
+    readonly update?: boolean;
   }): Promise<DatasetSnapshot> {
     await this.flush();
     const state = await this.getState();
@@ -7413,6 +7415,7 @@ export class Dataset<
         dataset_snapshot_name: name,
         description,
         xact_id: currentVersion,
+        update,
       });
     return datasetSnapshotRegisterResponseSchema.parse(response)
       .dataset_snapshot;
@@ -7424,6 +7427,26 @@ export class Dataset<
       state,
       datasetId: await this.id,
     });
+  }
+
+  public async updateSnapshot(
+    snapshotId: string,
+    {
+      name,
+      description,
+    }: {
+      readonly name?: string;
+      readonly description?: string | null;
+    },
+  ): Promise<DatasetSnapshot> {
+    const state = await this.getState();
+    return datasetSnapshotSchema.parse(
+      await state.appConn().post_json("api/dataset_snapshot/patch_id", {
+        id: snapshotId,
+        name,
+        description,
+      }),
+    );
   }
 
   public async deleteSnapshot(snapshotId: string): Promise<DatasetSnapshot> {

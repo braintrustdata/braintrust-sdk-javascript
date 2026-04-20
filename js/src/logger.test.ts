@@ -588,6 +588,114 @@ test("dataset.toEvalData preserves dataset_snapshot_name", async () => {
   vi.restoreAllMocks();
 });
 
+test("dataset.createSnapshot forwards update when requested", async () => {
+  const state = await _exportsForTestingOnly.simulateLoginForTests();
+  vi.spyOn(state, "login").mockResolvedValue(state);
+  const postJson = vi
+    .spyOn(state.appConn(), "post_json")
+    .mockResolvedValueOnce({
+      project: {
+        id: "00000000-0000-0000-0000-000000000001",
+        name: "test-project",
+      },
+      dataset: {
+        id: "00000000-0000-0000-0000-000000000002",
+        name: "test-dataset",
+      },
+    })
+    .mockResolvedValueOnce({
+      dataset_snapshot: {
+        id: "00000000-0000-0000-0000-000000000004",
+        dataset_id: "00000000-0000-0000-0000-000000000002",
+        name: "snapshot",
+        description: "updated description",
+        xact_id: "123",
+        created: "2026-03-31T00:00:00.000Z",
+      },
+      found_existing: true,
+    });
+
+  const dataset = initDataset({
+    project: "test-project",
+    dataset: "test-dataset",
+    version: "123",
+    state,
+  });
+
+  await expect(
+    dataset.createSnapshot({
+      name: "snapshot",
+      description: "updated description",
+      update: true,
+    }),
+  ).resolves.toMatchObject({
+    id: "00000000-0000-0000-0000-000000000004",
+    xact_id: "123",
+  });
+
+  expect(postJson).toHaveBeenNthCalledWith(2, "api/dataset_snapshot/register", {
+    dataset_id: "00000000-0000-0000-0000-000000000002",
+    dataset_snapshot_name: "snapshot",
+    description: "updated description",
+    xact_id: "123",
+    update: true,
+  });
+
+  _exportsForTestingOnly.simulateLogoutForTests();
+  vi.restoreAllMocks();
+});
+
+test("dataset.updateSnapshot patches snapshot metadata by id", async () => {
+  const state = await _exportsForTestingOnly.simulateLoginForTests();
+  vi.spyOn(state, "login").mockResolvedValue(state);
+  const postJson = vi
+    .spyOn(state.appConn(), "post_json")
+    .mockResolvedValueOnce({
+      project: {
+        id: "00000000-0000-0000-0000-000000000001",
+        name: "test-project",
+      },
+      dataset: {
+        id: "00000000-0000-0000-0000-000000000002",
+        name: "test-dataset",
+      },
+    })
+    .mockResolvedValueOnce({
+      id: "00000000-0000-0000-0000-000000000004",
+      dataset_id: "00000000-0000-0000-0000-000000000002",
+      name: "renamed snapshot",
+      description: null,
+      xact_id: "123",
+      created: "2026-03-31T00:00:00.000Z",
+    });
+
+  const dataset = initDataset({
+    project: "test-project",
+    dataset: "test-dataset",
+    state,
+  });
+
+  await expect(
+    dataset.updateSnapshot("00000000-0000-0000-0000-000000000004", {
+      name: "renamed snapshot",
+      description: null,
+    }),
+  ).resolves.toMatchObject({
+    id: "00000000-0000-0000-0000-000000000004",
+    name: "renamed snapshot",
+    description: null,
+  });
+
+  expect(postJson).toHaveBeenNthCalledWith(2, "api/dataset_snapshot/patch_id", {
+    id: "00000000-0000-0000-0000-000000000004",
+    name: "renamed snapshot",
+    description: null,
+  });
+
+  _exportsForTestingOnly.simulateLogoutForTests();
+  vi.restoreAllMocks();
+});
+
 test("init keeps plain dataset refs attached to the experiment", async () => {
   const state = await _exportsForTestingOnly.simulateLoginForTests();
   vi.spyOn(state, "login").mockResolvedValue(state);
