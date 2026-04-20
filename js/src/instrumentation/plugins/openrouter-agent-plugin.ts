@@ -6,7 +6,11 @@ import {
   unsubscribeAll,
 } from "../core/channel-tracing";
 import type { ChannelMessage } from "../core/channel-definitions";
-import { SpanTypeAttribute, isObject } from "../../../util/index";
+import {
+  SpanTypeAttribute,
+  isObject,
+  isPromiseLike,
+} from "../../../util/index";
 import { withCurrent } from "../../logger";
 import type { Span } from "../../logger";
 import { zodToJsonSchema } from "../../zod/utils";
@@ -619,15 +623,6 @@ function getToolCallId(context: unknown): string | undefined {
   return typeof toolContext?.toolCall?.id === "string"
     ? toolContext.toolCall.id
     : undefined;
-}
-
-function isPromiseLike(value: unknown): value is PromiseLike<unknown> {
-  return (
-    !!value &&
-    (typeof value === "object" || typeof value === "function") &&
-    "then" in value &&
-    typeof value.then === "function"
-  );
 }
 
 export function aggregateOpenRouterChatChunks(

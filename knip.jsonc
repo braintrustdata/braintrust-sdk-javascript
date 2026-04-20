@@ -2,6 +2,7 @@
   "$schema": "node_modules/knip/schema-jsonc.json",
   "include": ["files", "exports"],
   "ignoreFiles": [
+    ".changeset/changelog.cjs",
     "integrations/otel-js/otel-v1/**",
     "integrations/otel-js/otel-v2/**",
     "integrations/val.town/vals/tutorial/code.ts",
