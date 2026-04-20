@@ -18,8 +18,8 @@
     "@types/node": "^20.10.5",
     "braintrust": "workspace:^",
     "tsx": "^4.21.0",
-    "typescript": "5.4.4",
-    "vitest": "^4.1.2",
+    "typescript": "5.9.3",
+    "vitest": "^4.1.4",
     "zod": "4.3.6"
   }
 }
