@@ -5,7 +5,7 @@ import {
   traceSyncStreamChannel,
   unsubscribeAll,
 } from "../core/channel-tracing";
-import { SpanTypeAttribute } from "../../../util/index";
+import { SpanTypeAttribute, isPromiseLike } from "../../../util/index";
 import { getCurrentUnixTimestamp } from "../../util";
 import { Attachment, type Span, withCurrent } from "../../logger";
 import {
@@ -2120,24 +2120,12 @@ function extractSerializableOutputFields(
   };
 }
 
-function isPromiseLike(value: unknown): value is PromiseLike<unknown> {
-  return (
-    value != null &&
-    typeof value === "object" &&
-    typeof (value as { then?: unknown }).then === "function"
-  );
-}
-
 function isSerializableOutputValue(value: unknown): boolean {
   if (typeof value === "function") {
     return false;
   }
 
-  if (
-    value &&
-    typeof value === "object" &&
-    typeof (value as { then?: unknown }).then === "function"
-  ) {
+  if (isPromiseLike(value)) {
     return false;
   }
 

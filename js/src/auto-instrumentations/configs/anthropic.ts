@@ -57,4 +57,19 @@ export const anthropicConfigs: InstrumentationConfig[] = [
       kind: "Async",
     },
   },
+
+  // Beta Messages API - toolRunner (sync helper returning async iterable/thenable)
+  {
+    channelName: anthropicChannels.betaMessagesToolRunner.channelName,
+    module: {
+      name: "@anthropic-ai/sdk",
+      versionRange: ">=0.39.0",
+      filePath: "resources/beta/messages/messages.mjs",
+    },
+    functionQuery: {
+      className: "Messages",
+      methodName: "toolRunner",
+      kind: "Sync",
+    },
+  },
 ];
