@@ -1,9 +1,5 @@
 # braintrust
 
-## 3.10.0
-
-### Minor Changes
-
 ## 3.9.0
 
 ### Notable Changes
