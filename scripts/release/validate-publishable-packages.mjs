@@ -92,6 +92,12 @@ function validatePublishablePackage(workspaceDir, manifest) {
     );
   }
 
+  if (manifest.publishConfig?.provenance !== true) {
+    errors.push(
+      `${workspaceDir} (${manifest.name}) must set publishConfig.provenance to true`,
+    );
+  }
+
   if (manifest.repository?.url !== GITHUB_REPO_URL) {
     errors.push(
       `${workspaceDir} (${manifest.name}) must point repository.url at ${GITHUB_REPO_URL}`,
