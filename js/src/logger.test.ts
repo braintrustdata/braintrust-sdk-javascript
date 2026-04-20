@@ -551,26 +551,28 @@ test("dataset.toEvalData preserves dataset_environment", async () => {
 test("dataset.toEvalData preserves dataset_snapshot_name", async () => {
   const state = await _exportsForTestingOnly.simulateLoginForTests();
   vi.spyOn(state, "login").mockResolvedValue(state);
-  vi.spyOn(state.appConn(), "get_json").mockResolvedValue([
-    {
-      id: "00000000-0000-0000-0000-000000000004",
-      dataset_id: "00000000-0000-0000-0000-000000000002",
-      name: "123",
-      description: null,
-      xact_id: "456",
-      created: "2026-03-31T00:00:00.000Z",
-    },
-  ]);
-  vi.spyOn(state.appConn(), "post_json").mockResolvedValue({
-    project: {
-      id: "00000000-0000-0000-0000-000000000001",
-      name: "test-project",
-    },
-    dataset: {
-      id: "00000000-0000-0000-0000-000000000002",
-      name: "test-dataset",
-    },
-  });
+  const postJson = vi
+    .spyOn(state.appConn(), "post_json")
+    .mockResolvedValueOnce({
+      project: {
+        id: "00000000-0000-0000-0000-000000000001",
+        name: "test-project",
+      },
+      dataset: {
+        id: "00000000-0000-0000-0000-000000000002",
+        name: "test-dataset",
+      },
+    })
+    .mockResolvedValueOnce([
+      {
+        id: "00000000-0000-0000-0000-000000000004",
+        dataset_id: "00000000-0000-0000-0000-000000000002",
+        name: "123",
+        description: null,
+        xact_id: "456",
+        created: "2026-03-31T00:00:00.000Z",
+      },
+    ]);
 
   const dataset = initDataset({
     project: "test-project",
@@ -582,6 +584,9 @@ test("dataset.toEvalData preserves dataset_snapshot_name", async () => {
   await expect(dataset.toEvalData()).resolves.toEqual({
     dataset_id: "00000000-0000-0000-0000-000000000002",
     dataset_snapshot_name: "123",
+  });
+  expect(postJson).toHaveBeenNthCalledWith(2, "api/dataset_snapshot/get", {
+    dataset_id: "00000000-0000-0000-0000-000000000002",
   });
 
   _exportsForTestingOnly.simulateLogoutForTests();
