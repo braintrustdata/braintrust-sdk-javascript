@@ -13,6 +13,9 @@ import type {
   MistralChatCompletionChunkChoice,
   MistralChatCompletionEvent,
   MistralChatCompletionResponse,
+  MistralContentPart,
+  MistralTextContentPart,
+  MistralThinkingContentPart,
   MistralToolCallDelta,
 } from "../../vendor-sdk-types/mistral";
 
@@ -166,6 +169,8 @@ const MISTRAL_REQUEST_METADATA_ALLOWLIST = new Set([
   "presence_penalty",
   "randomSeed",
   "random_seed",
+  "reasoningEffort",
+  "reasoning_effort",
   "responseFormat",
   "response_format",
   "safePrompt",
@@ -377,6 +382,169 @@ function extractDeltaText(content: unknown): string | undefined {
   return textParts.length > 0 ? textParts.join("") : undefined;
 }
 
+function normalizeMistralTextContentPart(
+  part: unknown,
+): MistralTextContentPart | undefined {
+  if (
+    !isObject(part) ||
+    part.type !== "text" ||
+    typeof part.text !== "string"
+  ) {
+    return undefined;
+  }
+
+  return {
+    type: "text",
+    text: part.text,
+  };
+}
+
+function normalizeMistralThinkingContentPart(
+  part: unknown,
+): MistralThinkingContentPart | undefined {
+  if (!isObject(part) || part.type !== "thinking") {
+    return undefined;
+  }
+
+  const thinking = Array.isArray(part.thinking)
+    ? part.thinking
+        .map((thinkingPart) => normalizeMistralTextContentPart(thinkingPart))
+        .filter(
+          (thinkingPart): thinkingPart is MistralTextContentPart =>
+            thinkingPart !== undefined && typeof thinkingPart.text === "string",
+        )
+    : [];
+
+  if (thinking.length === 0) {
+    return undefined;
+  }
+
+  return {
+    type: "thinking",
+    thinking,
+  };
+}
+
+function normalizeMistralContentParts(content: unknown): MistralContentPart[] {
+  if (!Array.isArray(content)) {
+    return [];
+  }
+
+  return content
+    .map((part) => {
+      return (
+        normalizeMistralTextContentPart(part) ||
+        normalizeMistralThinkingContentPart(part)
+      );
+    })
+    .filter((part): part is MistralContentPart => part !== undefined);
+}
+
+function mergeMistralTextSegments(
+  left: MistralTextContentPart[],
+  right: MistralTextContentPart[],
+): MistralTextContentPart[] {
+  const merged = [...left.map((part) => ({ ...part }))];
+
+  for (const part of right) {
+    const lastPart = merged[merged.length - 1];
+    if (
+      lastPart &&
+      lastPart.type === "text" &&
+      typeof lastPart.text === "string" &&
+      typeof part.text === "string"
+    ) {
+      lastPart.text += part.text;
+      continue;
+    }
+
+    merged.push({ ...part });
+  }
+
+  return merged;
+}
+
+function mergeMistralContentParts(
+  left: MistralContentPart[] | undefined,
+  right: MistralContentPart[],
+): MistralContentPart[] {
+  const merged = [...(left || []).map((part) => structuredClone(part))];
+
+  for (const part of right) {
+    const lastPart = merged[merged.length - 1];
+    if (
+      part.type === "text" &&
+      lastPart?.type === "text" &&
+      typeof lastPart.text === "string" &&
+      typeof part.text === "string"
+    ) {
+      lastPart.text += part.text;
+      continue;
+    }
+
+    if (
+      part.type === "thinking" &&
+      lastPart?.type === "thinking" &&
+      Array.isArray(lastPart.thinking) &&
+      Array.isArray(part.thinking)
+    ) {
+      lastPart.thinking = mergeMistralTextSegments(
+        lastPart.thinking,
+        part.thinking,
+      );
+      continue;
+    }
+
+    merged.push(structuredClone(part));
+  }
+
+  return merged;
+}
+
+function appendMistralContent(
+  accumulator: MistralChoiceAccumulator,
+  content: unknown,
+): void {
+  if (typeof content === "string") {
+    if (accumulator.contentParts) {
+      accumulator.contentParts = mergeMistralContentParts(
+        accumulator.contentParts,
+        [{ type: "text", text: content }],
+      );
+      return;
+    }
+
+    accumulator.content = `${accumulator.content || ""}${content}`;
+    return;
+  }
+
+  const normalizedContentParts = normalizeMistralContentParts(content);
+  if (normalizedContentParts.length === 0) {
+    return;
+  }
+
+  const hasStructuredContent = normalizedContentParts.some(
+    (part) => part.type !== "text",
+  );
+
+  if (!accumulator.contentParts && !hasStructuredContent) {
+    const text = extractDeltaText(content);
+    if (text) {
+      accumulator.content = `${accumulator.content || ""}${text}`;
+    }
+    return;
+  }
+
+  accumulator.contentParts = mergeMistralContentParts(
+    accumulator.contentParts ||
+      (accumulator.content
+        ? [{ type: "text", text: accumulator.content }]
+        : []),
+    normalizedContentParts,
+  );
+  delete accumulator.content;
+}
+
 function getDeltaToolCalls(
   delta: Record<string, unknown>,
 ): MistralToolCallDelta[] {
@@ -522,6 +690,7 @@ function getChoiceFinishReason(
 
 type MistralChoiceAccumulator = {
   content?: string;
+  contentParts?: MistralContentPart[];
   finishReason?: string | null;
   index: number;
   order: number;
@@ -642,10 +811,7 @@ export function aggregateMistralStreamChunks(
           accumulator.role = delta.role;
         }
 
-        const deltaText = extractDeltaText(delta.content);
-        if (deltaText) {
-          accumulator.content = `${accumulator.content || ""}${deltaText}`;
-        }
+        appendMistralContent(accumulator, delta.content);
 
         accumulator.toolCalls = mergeToolCallDeltas(
           accumulator.toolCalls,
@@ -670,7 +836,7 @@ export function aggregateMistralStreamChunks(
       index: choice.index,
       message: {
         ...(choice.role ? { role: choice.role } : {}),
-        content: choice.content ?? null,
+        content: choice.contentParts ?? choice.content ?? null,
         ...(choice.toolCalls ? { toolCalls: choice.toolCalls } : {}),
       },
       ...(choice.finishReason !== undefined

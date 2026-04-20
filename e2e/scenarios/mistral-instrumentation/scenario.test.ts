@@ -37,6 +37,9 @@ for (const scenario of mistralScenarios) {
         });
       },
       snapshotName: scenario.snapshotName,
+      ...(scenario.supportsThinkingStream === false
+        ? { supportsThinkingStream: false }
+        : {}),
       testFileUrl: import.meta.url,
       timeoutMs: MISTRAL_SCENARIO_TIMEOUT_MS,
     });
@@ -53,6 +56,9 @@ for (const scenario of mistralScenarios) {
         });
       },
       snapshotName: scenario.snapshotName,
+      ...(scenario.supportsThinkingStream === false
+        ? { supportsThinkingStream: false }
+        : {}),
       testFileUrl: import.meta.url,
       timeoutMs: MISTRAL_SCENARIO_TIMEOUT_MS,
     });
