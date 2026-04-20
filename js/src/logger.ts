@@ -3413,29 +3413,6 @@ type DatasetPinState = {
   pinnedSnapshotName?: string;
 };
 
-const objectFetcherPrivateAccessUnavailable = (): never => {
-  throw new Error("ObjectFetcher private state is unavailable");
-};
-
-let objectFetcherPrivateAccess: {
-  getPinnedVersion(objectFetcher: unknown): string | undefined;
-  setPinnedVersion(
-    objectFetcher: unknown,
-    pinnedVersion: string | undefined,
-  ): void;
-  getInternalBtql(objectFetcher: unknown): Record<string, unknown> | undefined;
-} = {
-  getPinnedVersion() {
-    return objectFetcherPrivateAccessUnavailable();
-  },
-  setPinnedVersion() {
-    objectFetcherPrivateAccessUnavailable();
-  },
-  getInternalBtql() {
-    return objectFetcherPrivateAccessUnavailable();
-  },
-};
-
 export type DatasetRef = {
   id: string;
 } & DatasetSelection;
@@ -5955,34 +5932,6 @@ export const MAX_BTQL_ITERATIONS = 10000;
 export class ObjectFetcher<RecordType> implements AsyncIterable<
   WithTransactionId<RecordType>
 > {
-  static {
-    objectFetcherPrivateAccess = {
-      getPinnedVersion(objectFetcher: unknown): string | undefined {
-        if (!(objectFetcher instanceof ObjectFetcher)) {
-          return objectFetcherPrivateAccessUnavailable();
-        }
-        return objectFetcher.pinnedVersion;
-      },
-      setPinnedVersion(
-        objectFetcher: unknown,
-        pinnedVersion: string | undefined,
-      ): void {
-        if (!(objectFetcher instanceof ObjectFetcher)) {
-          return objectFetcherPrivateAccessUnavailable();
-        }
-        objectFetcher.pinnedVersion = pinnedVersion;
-      },
-      getInternalBtql(
-        objectFetcher: unknown,
-      ): Record<string, unknown> | undefined {
-        if (!(objectFetcher instanceof ObjectFetcher)) {
-          return objectFetcherPrivateAccessUnavailable();
-        }
-        return objectFetcher._internal_btql;
-      },
-    };
-  }
-
   private _fetchedData: WithTransactionId<RecordType>[] | undefined = undefined;
 
   constructor(
@@ -6003,6 +5952,18 @@ export class ObjectFetcher<RecordType> implements AsyncIterable<
 
   protected async getState(): Promise<BraintrustState> {
     throw new Error("ObjectFetcher subclasses must have a 'getState' method");
+  }
+
+  protected getPinnedVersion(): string | undefined {
+    return this.pinnedVersion;
+  }
+
+  protected setPinnedVersion(pinnedVersion: string | undefined): void {
+    this.pinnedVersion = pinnedVersion;
+  }
+
+  protected getInternalBtql(): Record<string, unknown> | undefined {
+    return this._internal_btql;
   }
 
   private async *fetchRecordsFromApi(
@@ -7211,8 +7172,8 @@ export class Dataset<
   }> {
     await this.getState();
     const metadata = await this.lazyMetadata.get();
-    const pinnedVersion = objectFetcherPrivateAccess.getPinnedVersion(this);
-    const internalBtql = objectFetcherPrivateAccess.getInternalBtql(this);
+    const pinnedVersion = this.getPinnedVersion();
+    const internalBtql = this.getInternalBtql();
 
     return {
       dataset_id: metadata.dataset.id,
@@ -7243,12 +7204,9 @@ export class Dataset<
     await this.lazyMetadata.get();
     if (
       this.lazyPinnedVersion !== undefined &&
-      objectFetcherPrivateAccess.getPinnedVersion(this) === undefined
+      this.getPinnedVersion() === undefined
     ) {
-      objectFetcherPrivateAccess.setPinnedVersion(
-        this,
-        await this.lazyPinnedVersion.get(),
-      );
+      this.setPinnedVersion(await this.lazyPinnedVersion.get());
     }
     return this.state;
   }

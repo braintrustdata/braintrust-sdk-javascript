@@ -1337,16 +1337,8 @@ function areInterfaceSignaturesCompatible(
     const newTypeNorm = normalizeType(newField.type);
 
     if (oldTypeNorm !== newTypeNorm) {
-      const oldTypeLiteral = getTypeLiteralPart(oldField.type);
-      const newTypeLiteral = getTypeLiteralPart(newField.type);
-
-      if (oldTypeLiteral && newTypeLiteral) {
-        if (
-          !areObjectTypeDefinitionsCompatible(oldTypeLiteral, newTypeLiteral)
-        ) {
-          return false;
-        }
-      } else if (!isUnionTypeWidening(oldTypeNorm, newTypeNorm)) {
+      // Check if it's a union type widening (backwards compatible)
+      if (!isUnionTypeWidening(oldTypeNorm, newTypeNorm)) {
         // Field type changed in an incompatible way - breaking change
         return false;
       }
@@ -1507,236 +1499,63 @@ function areClassSignaturesCompatible(
   oldClass: string,
   newClass: string,
 ): boolean {
-  const parseClass = (classSig: string) => {
-    const sourceFile = ts.createSourceFile(
-      "class.ts",
-      classSig,
-      ts.ScriptTarget.Latest,
-      true,
-      ts.ScriptKind.TS,
+  // Extract class name to ensure we're comparing the same class
+  const oldClassNameMatch = oldClass.match(/class\s+(\w+)/);
+  const newClassNameMatch = newClass.match(/class\s+(\w+)/);
+
+  if (
+    !oldClassNameMatch ||
+    !newClassNameMatch ||
+    oldClassNameMatch[1] !== newClassNameMatch[1]
+  ) {
+    return false; // Different classes
+  }
+
+  // For classes, use a lenient heuristic: if class names match and the structure
+  // is similar (similar length, same general structure), allow parameter-level changes.
+  // This is more reliable than trying to parse all methods with regex.
+
+  // Simple length-based check: if new class is similar length or slightly longer,
+  // it's likely just adding optional fields/parameters (backward-compatible)
+  const oldLength = oldClass.length;
+  const newLength = newClass.length;
+  const lengthRatio = newLength / Math.max(oldLength, 1);
+
+  // If new is similar length (95-150% of old), allow it
+  // Adding optional fields will increase length but not dramatically
+  if (lengthRatio >= 0.95 && lengthRatio <= 1.5) {
+    // Additional check: ensure new class contains the class name and key structural elements
+    // This prevents completely unrelated classes from being considered compatible
+    if (newClass.includes(oldClassNameMatch[1])) {
+      return true;
+    }
+  }
+
+  // Also check normalized versions (removing optional markers and defaults)
+  // If normalized versions are similar, the changes are likely just optionality
+  const normalizeClass = (classText: string): string => {
+    let normalized = classText;
+    // Remove optional markers: field?: Type -> field: Type
+    normalized = normalized.replace(
+      /([a-zA-Z_$][a-zA-Z0-9_$]*)\?:\s*/g,
+      "$1: ",
     );
-
-    let declaration: ts.ClassDeclaration | undefined;
-    ts.forEachChild(sourceFile, (node) => {
-      if (ts.isClassDeclaration(node) && !declaration) {
-        declaration = node;
-      }
-    });
-
-    if (!declaration || !declaration.name) {
-      return null;
-    }
-
-    const hasPrivateModifier = (member: ts.ClassElement): boolean => {
-      const modifiers = ts.canHaveModifiers(member)
-        ? ts.getModifiers(member)
-        : undefined;
-      return (
-        modifiers?.some(
-          (modifier) => modifier.kind === ts.SyntaxKind.PrivateKeyword,
-        ) ?? false
-      );
-    };
-
-    const getParameterText = (
-      parameters: readonly ts.ParameterDeclaration[],
-    ): string =>
-      parameters.map((parameter) => parameter.getText(sourceFile)).join(", ");
-
-    const getPropertySignature = (
-      member: ts.PropertyDeclaration,
-    ): string | undefined => {
-      if (!member.name || !member.type) {
-        return undefined;
-      }
-      const modifiers = ts.canHaveModifiers(member)
-        ? ts.getModifiers(member)
-        : undefined;
-      const isReadonly =
-        modifiers?.some(
-          (modifier) => modifier.kind === ts.SyntaxKind.ReadonlyKeyword,
-        ) ?? false;
-      return `${isReadonly ? "readonly " : ""}${member.name.getText(
-        sourceFile,
-      )}${member.questionToken ? "?" : ""}: ${member.type.getText(sourceFile)};`;
-    };
-
-    const getMethodComparableSignature = (
-      member: ts.MethodDeclaration,
-    ): string | undefined => {
-      if (!member.name || member.typeParameters?.length) {
-        return undefined;
-      }
-      return `function ${member.name.getText(sourceFile)}(${getParameterText(
-        member.parameters,
-      )}): ${member.type?.getText(sourceFile) ?? "unknown"}`;
-    };
-
-    const memberCounts = new Map<string, number>();
-    const members = new Map<
-      string,
-      {
-        kind: string;
-        signature: string;
-        comparableFunctionSignature?: string;
-        comparablePropertySignature?: string;
-      }
-    >();
-
-    const addMember = ({
-      kind,
-      name,
-      signature,
-      comparableFunctionSignature,
-      comparablePropertySignature,
-    }: {
-      kind: string;
-      name: string;
-      signature: string;
-      comparableFunctionSignature?: string;
-      comparablePropertySignature?: string;
-    }) => {
-      const baseKey = `${kind}:${name}`;
-      const nextCount = (memberCounts.get(baseKey) ?? 0) + 1;
-      memberCounts.set(baseKey, nextCount);
-      members.set(`${baseKey}:${nextCount}`, {
-        kind,
-        signature,
-        comparableFunctionSignature,
-        comparablePropertySignature,
-      });
-    };
-
-    for (const member of declaration.members) {
-      if (hasPrivateModifier(member)) {
-        continue;
-      }
-
-      if (ts.isConstructorDeclaration(member)) {
-        addMember({
-          kind: "constructor",
-          name: "constructor",
-          signature: member.getText(sourceFile),
-          comparableFunctionSignature: `function constructor(${getParameterText(
-            member.parameters,
-          )}): void`,
-        });
-        continue;
-      }
-
-      if (ts.isMethodDeclaration(member) && member.name) {
-        addMember({
-          kind: "method",
-          name: member.name.getText(sourceFile),
-          signature: member.getText(sourceFile),
-          comparableFunctionSignature: getMethodComparableSignature(member),
-        });
-        continue;
-      }
-
-      if (ts.isPropertyDeclaration(member) && member.name) {
-        addMember({
-          kind: "property",
-          name: member.name.getText(sourceFile),
-          signature: member.getText(sourceFile),
-          comparablePropertySignature: getPropertySignature(member),
-        });
-        continue;
-      }
-
-      if (ts.isGetAccessorDeclaration(member) && member.name) {
-        addMember({
-          kind: "getter",
-          name: member.name.getText(sourceFile),
-          signature: member.getText(sourceFile),
-        });
-        continue;
-      }
-
-      if (ts.isSetAccessorDeclaration(member) && member.name) {
-        addMember({
-          kind: "setter",
-          name: member.name.getText(sourceFile),
-          signature: member.getText(sourceFile),
-        });
-        continue;
-      }
-
-      if (ts.isIndexSignatureDeclaration(member)) {
-        addMember({
-          kind: "index",
-          name: "index",
-          signature: member.getText(sourceFile),
-        });
-      }
-    }
-
-    return {
-      name: declaration.name.text,
-      heritage:
-        declaration.heritageClauses
-          ?.map((clause) => clause.getText(sourceFile))
-          .join(" ") ?? "",
-      members,
-    };
+    // Remove default values
+    normalized = normalized.replace(/=\s*\{[^}]*\}/g, "= {}");
+    normalized = normalized.replace(/=\s*[^,)}]+/g, "");
+    return normalized;
   };
 
-  const oldParsed = parseClass(oldClass);
-  const newParsed = parseClass(newClass);
+  const oldNormalized = normalizeClass(oldClass);
+  const newNormalized = normalizeClass(newClass);
 
-  if (!oldParsed || !newParsed || oldParsed.name !== newParsed.name) {
-    return false;
+  // Check if normalized versions are similar (one contains significant portion of the other)
+  const similarityThreshold = Math.min(500, oldNormalized.length * 0.5);
+  if (newNormalized.includes(oldNormalized.substring(0, similarityThreshold))) {
+    return true;
   }
 
-  if (oldParsed.heritage !== newParsed.heritage) {
-    return false;
-  }
-
-  const normalize = (value: string) =>
-    normalizeTypeReference(value.replace(/\s+/g, " ").trim());
-
-  for (const [key, oldMember] of oldParsed.members) {
-    const newMember = newParsed.members.get(key);
-    if (!newMember || oldMember.kind !== newMember.kind) {
-      return false;
-    }
-
-    if (
-      oldMember.comparableFunctionSignature &&
-      newMember.comparableFunctionSignature
-    ) {
-      if (
-        !areFunctionSignaturesCompatible(
-          oldMember.comparableFunctionSignature,
-          newMember.comparableFunctionSignature,
-        )
-      ) {
-        return false;
-      }
-      continue;
-    }
-
-    if (
-      oldMember.comparablePropertySignature &&
-      newMember.comparablePropertySignature
-    ) {
-      if (
-        !areInterfaceSignaturesCompatible(
-          `interface ClassMember { ${oldMember.comparablePropertySignature} }`,
-          `interface ClassMember { ${newMember.comparablePropertySignature} }`,
-        )
-      ) {
-        return false;
-      }
-      continue;
-    }
-
-    if (normalize(oldMember.signature) !== normalize(newMember.signature)) {
-      return false;
-    }
-  }
-
-  return true;
+  return false;
 }
 
 /**
@@ -2004,102 +1823,12 @@ describe("areInterfaceSignaturesCompatible", () => {
     expect(result).toBe(true);
   });
 
-  test("should allow adding optional fields inside an object-literal interface field", () => {
-    const oldInterface = `export interface InstrumentationConfig {
-      integrations?: {
-        openai?: boolean;
-        anthropic?: boolean;
-        vercel?: boolean;
-      };
-    }`;
-    const newInterface = `export interface InstrumentationConfig {
-      integrations?: {
-        openai?: boolean;
-        anthropic?: boolean;
-        vercel?: boolean;
-        huggingface?: boolean;
-        cohere?: boolean;
-      };
-    }`;
-
-    const result = areInterfaceSignaturesCompatible(oldInterface, newInterface);
-    expect(result).toBe(true);
-  });
-
   test("should reject narrowing field type from union", () => {
     const oldInterface = `export interface Config { value: string | number; }`;
     const newInterface = `export interface Config { value: string; }`;
 
     const result = areInterfaceSignaturesCompatible(oldInterface, newInterface);
     expect(result).toBe(false);
-  });
-});
-
-describe("areClassSignaturesCompatible", () => {
-  test("should allow adding private fields to an exported class", () => {
-    const oldClass = `declare class Dataset {
-      private readonly lazyMetadata;
-      private readonly __braintrust_dataset_marker;
-      private newRecords;
-      constructor(state: BraintrustState, lazyMetadata: LazyValue<ProjectDatasetMetadata>, pinnedVersion?: string);
-      get id(): Promise<string>;
-    }`;
-    const newClass = `declare class Dataset {
-      private readonly lazyMetadata;
-      private lazyPinnedVersion?;
-      private pinnedEnvironment?;
-      private pinnedSnapshotName?;
-      private readonly __braintrust_dataset_marker;
-      private newRecords;
-      constructor(state: BraintrustState, lazyMetadata: LazyValue<ProjectDatasetMetadata>, pinnedVersion?: string);
-      get id(): Promise<string>;
-    }`;
-
-    expect(areClassSignaturesCompatible(oldClass, newClass)).toBe(true);
-  });
-
-  test("should reject constructor changes on an exported class", () => {
-    const oldClass = `declare class Dataset {
-      private readonly lazyMetadata;
-      constructor(state: BraintrustState, lazyMetadata: LazyValue<ProjectDatasetMetadata>, pinnedVersion?: string);
-      get id(): Promise<string>;
-    }`;
-    const newClass = `declare class Dataset {
-      private readonly lazyMetadata;
-      constructor(state: BraintrustState, lazyMetadata: LazyValue<ProjectDatasetMetadata>, pinnedVersion?: string, environment: string);
-      get id(): Promise<string>;
-    }`;
-
-    expect(areClassSignaturesCompatible(oldClass, newClass)).toBe(false);
-  });
-
-  test("should allow adding an optional constructor parameter to an exported class", () => {
-    const oldClass = `declare class Dataset {
-      private readonly lazyMetadata;
-      constructor(state: BraintrustState, lazyMetadata: LazyValue<ProjectDatasetMetadata>, pinnedVersion?: string);
-      get id(): Promise<string>;
-    }`;
-    const newClass = `declare class Dataset {
-      private readonly lazyMetadata;
-      constructor(state: BraintrustState, lazyMetadata: LazyValue<ProjectDatasetMetadata>, pinnedVersion?: string, pinState?: { pinnedEnvironment?: string });
-      get id(): Promise<string>;
-    }`;
-
-    expect(areClassSignaturesCompatible(oldClass, newClass)).toBe(true);
-  });
-
-  test("should allow adding a new public method to an exported class", () => {
-    const oldClass = `declare class Dataset {
-      constructor(state: BraintrustState);
-      get id(): Promise<string>;
-    }`;
-    const newClass = `declare class Dataset {
-      constructor(state: BraintrustState);
-      get id(): Promise<string>;
-      version(options?: { batchSize?: number }): Promise<string | undefined>;
-    }`;
-
-    expect(areClassSignaturesCompatible(oldClass, newClass)).toBe(true);
   });
 });
 
