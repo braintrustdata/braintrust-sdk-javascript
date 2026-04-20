@@ -22,6 +22,7 @@ concurrency:
 
 env:
   HUSKY: "0"
+  NPM_CONFIG_PROVENANCE: "true"
 
 jobs:
   stable-release:
@@ -55,6 +56,8 @@ jobs:
         run: pnpm run build
       - name: Publish stable packages to npm
         if: steps.detect.outputs.needs_publish == 'true'
+        env:
+          NODE_AUTH_TOKEN: ""
         run: pnpm exec changeset publish
       - name: Push Changesets release tags
         if: steps.detect.outputs.has_work == 'true'
@@ -135,6 +138,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
+    environment: npm-publish
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
@@ -162,6 +166,8 @@ jobs:
         run: pnpm run build
       - name: Publish prerelease packages to npm
         if: steps.manifest.outputs.has_packages == 'true'
+        env:
+          NODE_AUTH_TOKEN: ""
         run: pnpm exec changeset publish --tag rc --no-git-tag
       - name: Post prerelease to Slack
         if: steps.manifest.outputs.has_packages == 'true'
