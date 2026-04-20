@@ -99,6 +99,21 @@ const datasetSnapshotRegisterResponseSchema = z.object({
   found_existing: z.boolean().optional(),
 });
 
+const datasetRestorePreviewResultSchema = z.object({
+  rows_to_restore: z.number(),
+  rows_to_delete: z.number(),
+});
+export type DatasetRestorePreviewResult = z.infer<
+  typeof datasetRestorePreviewResultSchema
+>;
+
+const datasetRestoreResultSchema = z.object({
+  xact_id: z.string().nullable(),
+  rows_restored: z.number(),
+  rows_deleted: z.number(),
+});
+export type DatasetRestoreResult = z.infer<typeof datasetRestoreResultSchema>;
+
 const parametersRowSchema = z.object({
   id: z.string().uuid(),
   _xact_id: z.string(),
@@ -3826,7 +3841,7 @@ async function getDatasetSnapshots({
   datasetId: string;
 }): Promise<DatasetSnapshot[]> {
   return datasetSnapshotSchema.array().parse(
-    await state.appConn().get_json("api/dataset_snapshot/get", {
+    await state.appConn().post_json("api/dataset_snapshot/get", {
       dataset_id: datasetId,
     }),
   );
@@ -3901,6 +3916,9 @@ async function resolveDatasetEnvironment({
     .apiConn()
     .get_json(
       `environment-object/dataset/${datasetId}/${encodeURIComponent(environment)}`,
+      {
+        org_name: state.orgName ?? undefined,
+      },
     );
   return z.object({ object_version: z.string() }).parse(response)
     .object_version;
@@ -7454,6 +7472,38 @@ export class Dataset<
     return datasetSnapshotSchema.parse(
       await state.appConn().post_json("api/dataset_snapshot/delete_id", {
         id: snapshotId,
+      }),
+    );
+  }
+
+  public async restorePreview({
+    version,
+  }: {
+    readonly version: string;
+  }): Promise<DatasetRestorePreviewResult> {
+    await this.flush();
+    const state = await this.getState();
+    const datasetId = await this.id;
+    return datasetRestorePreviewResultSchema.parse(
+      await state
+        .apiConn()
+        .post_json(`v1/dataset/${datasetId}/restore/preview`, {
+          version,
+        }),
+    );
+  }
+
+  public async restore({
+    version,
+  }: {
+    readonly version: string;
+  }): Promise<DatasetRestoreResult> {
+    await this.flush();
+    const state = await this.getState();
+    const datasetId = await this.id;
+    return datasetRestoreResultSchema.parse(
+      await state.apiConn().post_json(`v1/dataset/${datasetId}/restore`, {
+        version,
       }),
     );
   }

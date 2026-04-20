@@ -8,6 +8,8 @@ export type {
   CompiledPromptParams,
   CompletionPrompt,
   ContextParentSpanIds,
+  DatasetRestorePreviewResult,
+  DatasetRestoreResult,
   DatasetSnapshot,
   DataSummary,
   DatasetSummary,
