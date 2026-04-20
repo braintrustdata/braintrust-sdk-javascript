@@ -29,26 +29,26 @@
       }
     ],
     "metadata": {
-      "model": "claude-3-haiku-20240307",
+      "model": "claude-haiku-4-5",
       "provider": "anthropic",
       "stop_reason": "end_turn",
       "stop_sequence": null
     },
     "metrics": {
-      "completion_tokens": 5,
+      "completion_tokens": 4,
       "end": 0,
       "prompt_cache_creation_tokens": 0,
       "prompt_cached_tokens": 0,
       "prompt_tokens": 12,
       "start": 0,
       "time_to_first_token": 0,
-      "tokens": 17
+      "tokens": 16
     },
     "name": "anthropic.messages.create",
     "output": {
       "content": [
         {
-          "text": "OK.",
+          "text": "OK",
           "type": "text"
         }
       ],
@@ -93,20 +93,20 @@
       }
     ],
     "metadata": {
-      "model": "claude-3-haiku-20240307",
+      "model": "claude-haiku-4-5",
       "provider": "anthropic",
       "stop_reason": "end_turn",
       "stop_sequence": null
     },
     "metrics": {
-      "completion_tokens": 29,
+      "completion_tokens": 26,
       "end": 0,
       "prompt_cache_creation_tokens": 0,
       "prompt_cached_tokens": 0,
       "prompt_tokens": 1389,
       "start": 0,
       "time_to_first_token": 0,
-      "tokens": 1418
+      "tokens": 1415
     },
     "name": "anthropic.messages.create",
     "output": {
@@ -139,23 +139,23 @@
       }
     ],
     "metadata": {
-      "model": "claude-3-haiku-20240307",
+      "model": "claude-haiku-4-5",
       "provider": "anthropic",
       "stop_reason": "end_turn",
       "stop_sequence": null
     },
     "metrics": {
-      "completion_tokens": 18,
+      "completion_tokens": 15,
       "end": 0,
       "prompt_cache_creation_tokens": 0,
       "prompt_cached_tokens": 0,
       "prompt_tokens": 24,
       "start": 0,
       "time_to_first_token": 0,
-      "tokens": 42
+      "tokens": 39
     },
     "name": "anthropic.messages.create",
-    "output": "1 - one\n2 - two\n3 - three",
+    "output": "1 one\n2 two\n3 three",
     "type": "llm"
   },
   {
@@ -177,23 +177,23 @@
       }
     ],
     "metadata": {
-      "model": "claude-3-haiku-20240307",
+      "model": "claude-haiku-4-5",
       "provider": "anthropic",
       "stop_reason": "end_turn",
       "stop_sequence": null
     },
     "metrics": {
-      "completion_tokens": 18,
+      "completion_tokens": 15,
       "end": 0,
       "prompt_cache_creation_tokens": 0,
       "prompt_cached_tokens": 0,
       "prompt_tokens": 24,
       "start": 0,
       "time_to_first_token": 0,
-      "tokens": 42
+      "tokens": 39
     },
     "name": "anthropic.messages.create",
-    "output": "1 - one\n2 - two\n3 - three",
+    "output": "1 one\n2 two\n3 three",
     "type": "llm"
   },
   {
@@ -215,7 +215,7 @@
       }
     ],
     "metadata": {
-      "model": "claude-3-haiku-20240307",
+      "model": "claude-haiku-4-5",
       "provider": "anthropic",
       "stop_reason": "tool_use",
       "stop_sequence": null
@@ -225,10 +225,10 @@
       "end": 0,
       "prompt_cache_creation_tokens": 0,
       "prompt_cached_tokens": 0,
-      "prompt_tokens": 454,
+      "prompt_tokens": 687,
       "start": 0,
       "time_to_first_token": 0,
-      "tokens": 480
+      "tokens": 713
     },
     "name": "anthropic.messages.create",
     "output": {
@@ -265,20 +265,20 @@
       }
     ],
     "metadata": {
-      "model": "claude-3-haiku-20240307",
+      "model": "claude-haiku-4-5",
       "provider": "anthropic",
       "stop_reason": "tool_use",
       "stop_sequence": null
     },
     "metrics": {
-      "completion_tokens": 55,
+      "completion_tokens": 56,
       "end": 0,
       "prompt_cache_creation_tokens": 0,
       "prompt_cached_tokens": 0,
-      "prompt_tokens": 357,
+      "prompt_tokens": 589,
       "start": 0,
       "time_to_first_token": 0,
-      "tokens": 412
+      "tokens": 645
     },
     "name": "anthropic.messages.create",
     "output": {
