@@ -30,6 +30,7 @@ import { openRouterAgentConfigs } from "../configs/openrouter-agent";
 import { openRouterConfigs } from "../configs/openrouter";
 import { mistralConfigs } from "../configs/mistral";
 import { cohereConfigs } from "../configs/cohere";
+import { groqConfigs } from "../configs/groq";
 
 export interface BundlerPluginOptions {
   /**
@@ -81,6 +82,7 @@ export const unplugin = createUnplugin<BundlerPluginOptions>((options = {}) => {
     ...openRouterAgentConfigs,
     ...mistralConfigs,
     ...cohereConfigs,
+    ...groqConfigs,
     ...(options.instrumentations || []),
   ];
 
