@@ -1,5 +1,11 @@
 # braintrust
 
+## 3.10.0
+
+### Minor Changes
+
+- feat: Instrument Anthropic SDK tool runner
+
 ## 3.9.0
 
 ### Notable Changes
