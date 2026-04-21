@@ -38,7 +38,10 @@ type ParsedToolName = {
   rawToolName: string;
   toolName: string;
 };
-type ParentSpanResolver = (toolUseID: string) => Promise<string>;
+type ParentSpanResolver = (
+  toolUseID: string,
+  context?: { agentId?: string },
+) => Promise<string>;
 type LLMSpanResult = {
   finalMessage: ClaudeConversationMessage | undefined;
   spanExport: string;
@@ -186,6 +189,18 @@ function resolveTaskToolUseId(
     return taskIdToToolUseId.get(message.task_id);
   }
   return undefined;
+}
+
+function seedTaskToolUseIdMapping(
+  taskIdToToolUseId: Map<string, string>,
+  message: ClaudeAgentSDKMessage,
+): void {
+  if (
+    typeof message.task_id === "string" &&
+    typeof message.tool_use_id === "string"
+  ) {
+    taskIdToToolUseId.set(message.task_id, message.tool_use_id);
+  }
 }
 
 function extractUsageFromMessage(
@@ -479,7 +494,9 @@ function createToolTracingHooks(
         },
       },
       name: parsed.displayName,
-      parent: await resolveParentSpan(toolUseID),
+      parent: await resolveParentSpan(toolUseID, {
+        agentId: input.agent_id,
+      }),
       spanAttributes: { type: SpanTypeAttribute.TOOL },
     });
 
@@ -869,6 +886,8 @@ function maybeTrackToolUseContext(
   state: QueryState,
   message: ClaudeAgentSDKMessage,
 ): void {
+  seedTaskToolUseIdMapping(state.taskIdToToolUseId, message);
+
   if (
     message.type !== "assistant" ||
     !Array.isArray(message.message?.content)
@@ -1311,8 +1330,13 @@ export class ClaudeAgentSDKPlugin extends BasePlugin {
           hasLocalToolHandlers;
         const resolveToolUseParentSpan: ParentSpanResolver = async (
           toolUseID,
+          context,
         ) => {
-          const parentToolUseId = toolUseToParent.get(toolUseID) ?? null;
+          const parentToolUseId =
+            toolUseToParent.get(toolUseID) ??
+            (context?.agentId
+              ? (taskIdToToolUseId.get(context.agentId) ?? null)
+              : null);
           const parentKey = llmParentKey(parentToolUseId);
           const activeLlmSpan = activeLlmSpansByParentToolUse.get(parentKey);
           if (activeLlmSpan) {

@@ -169,6 +169,38 @@ function findSpanById(
   return events.find((event) => event.span.id === spanId);
 }
 
+function isDescendantOf(
+  events: CapturedLogEvent[],
+  event: CapturedLogEvent | undefined,
+  ancestorId: string | undefined,
+): boolean {
+  if (!event || !ancestorId) {
+    return false;
+  }
+
+  const spanById = new Map(events.map((span) => [span.span.id, span] as const));
+  const queue = [...event.span.parentIds];
+  const visited = new Set<string>();
+
+  while (queue.length > 0) {
+    const parentId = queue.shift();
+    if (!parentId || visited.has(parentId)) {
+      continue;
+    }
+    if (parentId === ancestorId) {
+      return true;
+    }
+
+    visited.add(parentId);
+    const parentSpan = spanById.get(parentId);
+    if (parentSpan) {
+      queue.push(...parentSpan.span.parentIds);
+    }
+  }
+
+  return false;
+}
+
 function hasSubAgentHandoffToolName(
   event: CapturedLogEvent | undefined,
 ): boolean {
@@ -185,10 +217,13 @@ function hasSubAgentHandoffToolName(
 
 function findSubAgentTaskSpan(
   events: CapturedLogEvent[],
+  ancestorId?: string,
 ): CapturedLogEvent | undefined {
   return events.find(
     (event) =>
-      event.span.type === "task" && event.span.name?.startsWith("Agent:"),
+      event.span.type === "task" &&
+      event.span.name?.startsWith("Agent:") &&
+      (!ancestorId || isDescendantOf(events, event, ancestorId)),
   );
 }
 
@@ -200,6 +235,14 @@ function findSubAgentHandoffTool(
   const parentSpan = findSpanById(events, parentId);
 
   return hasSubAgentHandoffToolName(parentSpan) ? parentSpan : undefined;
+}
+
+function findOperationTaskRoot(
+  events: CapturedLogEvent[],
+  operationName: string,
+): CapturedLogEvent | undefined {
+  const operation = findLatestSpan(events, operationName);
+  return findChildSpans(events, "Claude Agent", operation?.span.id).at(-1);
 }
 
 function buildSpanSummary(events: CapturedLogEvent[]): Json {
@@ -252,7 +295,7 @@ function buildSpanSummary(events: CapturedLogEvent[]): Json {
     const input = event.input as Array<{ content?: string }> | undefined;
     return Array.isArray(input) && input.some((item) => item.content);
   });
-  const subAgentTask = findSubAgentTaskSpan(events);
+  const subAgentTask = findSubAgentTaskSpan(events, subAgentTaskRoot?.span.id);
   const subAgentLlm = findChildSpans(
     events,
     "anthropic.messages.create",
@@ -268,9 +311,16 @@ function buildSpanSummary(events: CapturedLogEvent[]): Json {
   const basicTool =
     findToolSpanByLocalHandler(events, "calculator-local-handler-multiply") ??
     findToolSpanByOperation(events, "multiply");
-  const subAgentTool =
+  const subAgentToolCandidate =
     findToolSpanByLocalHandler(events, "calculator-local-handler-add") ??
     findToolSpanByOperation(events, "add");
+  const subAgentTool = isDescendantOf(
+    events,
+    subAgentToolCandidate,
+    subAgentTask?.span.id,
+  )
+    ? subAgentToolCandidate
+    : undefined;
   const failureTool =
     findToolSpanByLocalHandler(events, "calculator-local-handler-divide") ??
     findToolSpanByOperation(events, "divide");
@@ -447,15 +497,14 @@ export function defineClaudeAgentSDKInstrumentationAssertions(options: {
         events,
         "claude-agent-subagent-operation",
       );
-      const taskRoot = findChildSpans(
+      const taskRoot = findOperationTaskRoot(
         events,
-        "Claude Agent",
-        operation?.span.id,
-      ).at(-1);
+        "claude-agent-subagent-operation",
+      );
       const llm = findAllSpans(events, "anthropic.messages.create").find(
         (event) => event.span.parentIds.includes(taskRoot?.span.id ?? ""),
       );
-      const nestedTask = findSubAgentTaskSpan(events);
+      const nestedTask = findSubAgentTaskSpan(events, taskRoot?.span.id);
       const handoffTool = findSubAgentHandoffTool(events, nestedTask);
       const nestedTaskLlm = findChildSpans(
         events,
@@ -501,6 +550,64 @@ export function defineClaudeAgentSDKInstrumentationAssertions(options: {
         }
       }
     });
+
+    if (options.expectTaskLifecycleDetails) {
+      test(
+        "nests built-in subagent Bash under the subagent llm",
+        testConfig,
+        () => {
+          const operation = findLatestSpan(
+            events,
+            "claude-agent-subagent-built-in-tool-operation",
+          );
+          const taskRoot = findOperationTaskRoot(
+            events,
+            "claude-agent-subagent-built-in-tool-operation",
+          );
+          const taskRootLlm = findAllSpans(
+            events,
+            "anthropic.messages.create",
+          ).find((event) =>
+            event.span.parentIds.includes(taskRoot?.span.id ?? ""),
+          );
+          const nestedTask = findSubAgentTaskSpan(events, taskRoot?.span.id);
+          const handoffTool = findSubAgentHandoffTool(events, nestedTask);
+          const nestedTaskLlm = findChildSpans(
+            events,
+            "anthropic.messages.create",
+            nestedTask?.span.id,
+          ).at(-1);
+          const bashTool = findAllSpans(events, "tool: Bash").find((event) =>
+            isDescendantOf(events, event, taskRoot?.span.id),
+          );
+          const bashToolParent = findSpanById(
+            events,
+            bashTool?.span.parentIds[0],
+          );
+
+          expect(operation).toBeDefined();
+          expect(taskRoot).toBeDefined();
+          expect(nestedTask).toBeDefined();
+          expect(handoffTool).toBeDefined();
+          expect(nestedTaskLlm).toBeDefined();
+          expect(bashTool).toBeDefined();
+          expect(isDescendantOf(events, bashTool, nestedTask?.span.id)).toBe(
+            true,
+          );
+          expect(bashTool?.span.parentIds).not.toContain(
+            taskRootLlm?.span.id ?? "",
+          );
+          if (bashToolParent?.span.type === "llm") {
+            expect(bashToolParent.span.parentIds).toContain(
+              nestedTask?.span.id ?? "",
+            );
+          }
+          if (bashToolParent?.span.type === "task") {
+            expect(bashToolParent.span.id).toBe(nestedTask?.span.id);
+          }
+        },
+      );
+    }
 
     test("captures tool failure details", testConfig, () => {
       const operation = findLatestSpan(
