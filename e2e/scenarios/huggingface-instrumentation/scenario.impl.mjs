@@ -14,6 +14,24 @@ const SCENARIO_NAME = "huggingface-instrumentation";
 const TEXT_GENERATION_MODEL = "meta-llama/Llama-3.1-8B";
 const TEXT_GENERATION_PROVIDER = "featherless-ai";
 const V2_TEXT_GENERATION_MODEL = "arcee-ai/Trinity-Large-Thinking";
+const TOOL_NAME = "get_current_weather";
+const CHAT_TOOL = {
+  type: "function",
+  function: {
+    name: TOOL_NAME,
+    description: "Get the current weather for a location.",
+    parameters: {
+      type: "object",
+      properties: {
+        location: {
+          type: "string",
+          description: "City and state or city and country.",
+        },
+      },
+      required: ["location"],
+    },
+  },
+};
 const HUGGINGFACE_SCENARIO_TIMEOUT_MS = 150_000;
 const V2_CHAT_ENDPOINT_URL = "https://router.huggingface.co";
 const V2_FEATURE_EXTRACTION_ENDPOINT_URL =
@@ -122,6 +140,28 @@ async function runHuggingFaceInstrumentationScenario(sdk, options = {}) {
               ? { provider: CHAT_PROVIDER }
               : {}),
             temperature: 0,
+          });
+          await collectAsync(stream);
+        },
+      );
+
+      await runOperation(
+        "huggingface-chat-stream-tool-call-operation",
+        "chat-stream-tool-call",
+        async () => {
+          const stream = client.chatCompletionStream({
+            max_tokens: 64,
+            messages: [
+              {
+                role: "user",
+                content: `What is the weather in San Francisco? Call the ${TOOL_NAME} tool.`,
+              },
+            ],
+            model: CHAT_MODEL,
+            provider: CHAT_PROVIDER,
+            temperature: 0,
+            tool_choice: "required",
+            tools: [CHAT_TOOL],
           });
           await collectAsync(stream);
         },

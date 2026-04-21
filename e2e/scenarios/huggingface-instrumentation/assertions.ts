@@ -37,7 +37,13 @@ function isRecord(value: Json | undefined): value is Record<string, Json> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function summarizeChatOutput(output: Json | undefined): Json {
+function summarizeChatOutput(
+  output: Json | undefined,
+  options?: {
+    normalizeFinishReason?: boolean;
+    omitToolCalls?: boolean;
+  },
+): Json {
   if (!Array.isArray(output)) {
     return null;
   }
@@ -51,17 +57,49 @@ function summarizeChatOutput(output: Json | undefined): Json {
       ? (choice.message as Record<string, Json>)
       : undefined;
     const content = message?.content;
-    return {
+    const toolCalls =
+      !options?.omitToolCalls && Array.isArray(message?.tool_calls)
+        ? message.tool_calls.map((toolCall) => {
+            if (!isRecord(toolCall as Json)) {
+              return toolCall as Json;
+            }
+
+            const toolFunction = isRecord(toolCall.function as Json)
+              ? (toolCall.function as Record<string, Json>)
+              : undefined;
+            return {
+              id: toolCall.id ?? null,
+              index: toolCall.index ?? null,
+              name: toolFunction?.name ?? null,
+              type: toolCall.type ?? null,
+              arguments:
+                typeof toolFunction?.arguments === "string"
+                  ? "<string>"
+                  : (toolFunction?.arguments ?? null),
+            } satisfies Json;
+          })
+        : undefined;
+    const summary: Record<string, Json> = {
       content:
         typeof content === "string"
           ? "<string>"
           : Array.isArray(content)
             ? "<array>"
             : (content ?? null),
-      finish_reason: choice.finish_reason ?? null,
+      finish_reason:
+        options?.normalizeFinishReason &&
+        typeof choice.finish_reason === "string"
+          ? "<string>"
+          : (choice.finish_reason ?? null),
       index: choice.index ?? null,
       role: message?.role ?? null,
-    } satisfies Json;
+    };
+
+    if (toolCalls) {
+      summary.tool_calls = toolCalls;
+    }
+
+    return summary satisfies Json;
   });
 }
 
@@ -119,6 +157,10 @@ function normalizeMetrics(value: Json): Json {
 
   const normalized: Record<string, Json> = {};
   for (const [key, entry] of Object.entries(value)) {
+    if (key === "prompt_cached_tokens") {
+      continue;
+    }
+
     if (
       typeof entry === "number" &&
       [
@@ -147,14 +189,23 @@ function normalizePayloadOutput(row: Json): Json {
   return "output" in row
     ? {
         ...row,
-        output: normalizeLoggedOutput(row.output),
+        output: normalizeLoggedOutput(row.output, {
+          normalizeFinishReason: true,
+          omitToolCalls: true,
+        }),
       }
     : row;
 }
 
-function normalizeLoggedOutput(output: Json): Json {
+function normalizeLoggedOutput(
+  output: Json,
+  options?: {
+    normalizeFinishReason?: boolean;
+    omitToolCalls?: boolean;
+  },
+): Json {
   if (Array.isArray(output)) {
-    return summarizeChatOutput(output);
+    return summarizeChatOutput(output, options);
   }
 
   if (!isRecord(output)) {
@@ -168,7 +219,7 @@ function normalizeLoggedOutput(output: Json): Json {
   if (Array.isArray(output.choices)) {
     return {
       ...output,
-      choices: summarizeChatOutput(output.choices),
+      choices: summarizeChatOutput(output.choices, options),
     };
   }
 
@@ -181,6 +232,10 @@ function buildSpanSummary(events: CapturedLogEvent[]): Json {
   const chatStreamOperation = findLatestSpan(
     events,
     "huggingface-chat-stream-operation",
+  );
+  const chatStreamToolCallOperation = findLatestSpan(
+    events,
+    "huggingface-chat-stream-tool-call-operation",
   );
   const textGenerationOperation = findLatestSpan(
     events,
@@ -218,6 +273,18 @@ function buildSpanSummary(events: CapturedLogEvent[]): Json {
             events,
             "huggingface.chat_completion_stream",
             chatStreamOperation.span.id,
+          )!,
+        )
+      : null,
+    chatStreamToolCallOperation
+      ? summarizeWrapperContract(chatStreamToolCallOperation, ["operation"])
+      : null,
+    chatStreamToolCallOperation
+      ? summarizeProviderSpan(
+          findLatestChildSpan(
+            events,
+            "huggingface.chat_completion_stream",
+            chatStreamToolCallOperation.span.id,
           )!,
         )
       : null,
@@ -322,6 +389,72 @@ export function defineHuggingFaceInstrumentationAssertions(options: {
         await expect(formatJsonFileSnapshot(payloadRows)).toMatchFileSnapshot(
           payloadSnapshotPath,
         );
+      },
+    );
+
+    test(
+      "captures streamed tool calls and request tool metadata",
+      { timeout: options.timeoutMs },
+      () => {
+        const operation = findLatestSpan(
+          events,
+          "huggingface-chat-stream-tool-call-operation",
+        );
+        const span = findLatestChildSpan(
+          events,
+          "huggingface.chat_completion_stream",
+          operation?.span.id,
+        );
+        const firstChoice = isRecord(span?.output as Json)
+          ? span?.output.choices
+          : undefined;
+        const firstMessage =
+          Array.isArray(firstChoice) && isRecord(firstChoice[0] as Json)
+            ? (((firstChoice[0] as Record<string, Json>).message as Json) ??
+              null)
+            : null;
+        const message = isRecord(firstMessage) ? firstMessage : undefined;
+        const toolCalls = Array.isArray(message?.tool_calls)
+          ? message.tool_calls
+          : undefined;
+        const choice =
+          Array.isArray(firstChoice) && isRecord(firstChoice[0] as Json)
+            ? (firstChoice[0] as Record<string, Json>)
+            : undefined;
+        const finishReason =
+          typeof choice?.finish_reason === "string"
+            ? choice.finish_reason
+            : undefined;
+
+        expect(span?.metadata).toMatchObject({
+          model: expect.any(String),
+          provider: "featherless-ai",
+          tool_choice: "required",
+          tools: [
+            {
+              function: {
+                name: "get_current_weather",
+              },
+              type: "function",
+            },
+          ],
+        });
+
+        if (toolCalls) {
+          expect(toolCalls).toEqual([
+            expect.objectContaining({
+              function: expect.objectContaining({
+                arguments: expect.any(String),
+                name: "get_current_weather",
+              }),
+              type: "function",
+            }),
+          ]);
+          expect(finishReason).toBe("tool_calls");
+          return;
+        }
+
+        expect(finishReason).toEqual(expect.any(String));
       },
     );
   });

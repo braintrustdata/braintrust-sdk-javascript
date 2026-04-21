@@ -120,7 +120,6 @@
       "completion_reasoning_tokens": 0,
       "completion_rejected_prediction_tokens": 0,
       "completion_tokens": "<number>",
-      "prompt_cached_tokens": 0,
       "prompt_tokens": "<number>",
       "tokens": "<number>"
     },
@@ -144,7 +143,7 @@
     "output": [
       {
         "content": "<string>",
-        "finish_reason": "stop",
+        "finish_reason": "<string>",
         "index": 0,
         "role": "assistant"
       }
@@ -254,7 +253,6 @@
       "completion_reasoning_tokens": 0,
       "completion_rejected_prediction_tokens": 0,
       "completion_tokens": "<number>",
-      "prompt_cached_tokens": 0,
       "prompt_tokens": "<number>",
       "time_to_first_token": "<number>",
       "tokens": "<number>"
@@ -280,7 +278,7 @@
       "choices": [
         {
           "content": "<string>",
-          "finish_reason": "stop",
+          "finish_reason": "<string>",
           "index": 0,
           "role": "assistant"
         }
@@ -318,7 +316,7 @@
     "id": "<span:14>",
     "log_id": "g",
     "metadata": {
-      "operation": "text-generation-stream",
+      "operation": "chat-stream-tool-call",
       "testRunId": "<run:1>"
     },
     "metrics": {
@@ -328,7 +326,7 @@
     "root_span_id": "<span:2>",
     "span_attributes": {
       "exec_counter": 5,
-      "name": "huggingface-text-generation-stream-operation"
+      "name": "huggingface-chat-stream-tool-call-operation"
     },
     "span_id": "<span:15>",
     "span_parents": [
@@ -353,13 +351,41 @@
     "context": {},
     "created": "<timestamp>",
     "id": "<span:16>",
-    "input": "The capital of France is",
+    "input": [
+      {
+        "content": "What is the weather in San Francisco? Call the get_current_weather tool.",
+        "role": "user"
+      }
+    ],
     "log_id": "g",
     "metadata": {
-      "endpointUrl": "https://router.huggingface.co/featherless-ai/v1/completions",
-      "max_tokens": 4,
-      "model": "arcee-ai/Trinity-Large-Thinking",
-      "provider": "huggingface"
+      "endpointUrl": "https://router.huggingface.co",
+      "max_tokens": 64,
+      "model": "meta-llama/Llama-3.1-8B-Instruct",
+      "provider": "featherless-ai",
+      "temperature": 0,
+      "tool_choice": "required",
+      "tools": [
+        {
+          "function": {
+            "description": "Get the current weather for a location.",
+            "name": "get_current_weather",
+            "parameters": {
+              "properties": {
+                "location": {
+                  "description": "City and state or city and country.",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "location"
+              ],
+              "type": "object"
+            }
+          },
+          "type": "function"
+        }
+      ]
     },
     "metrics": {
       "start": "<timestamp>"
@@ -368,7 +394,7 @@
     "root_span_id": "<span:2>",
     "span_attributes": {
       "exec_counter": 6,
-      "name": "huggingface.text_generation_stream",
+      "name": "huggingface.chat_completion_stream",
       "type": "llm"
     },
     "span_id": "<span:17>",
@@ -381,6 +407,9 @@
     "id": "<span:16>",
     "log_id": "g",
     "metrics": {
+      "completion_accepted_prediction_tokens": 0,
+      "completion_reasoning_tokens": 0,
+      "completion_rejected_prediction_tokens": 0,
       "completion_tokens": "<number>",
       "prompt_tokens": "<number>",
       "time_to_first_token": "<number>",
@@ -398,11 +427,20 @@
     "id": "<span:16>",
     "log_id": "g",
     "metadata": {
-      "finish_reason": "length"
+      "created": 0,
+      "id": "<span:18>",
+      "model": "llama3.1-8b",
+      "object": "chat.completion.chunk"
     },
     "output": {
-      "finish_reason": "length",
-      "generated_text": "<string>"
+      "choices": [
+        {
+          "content": "<string>",
+          "finish_reason": "<string>",
+          "index": 0,
+          "role": "assistant"
+        }
+      ]
     },
     "project_id": "<project_id>",
     "root_span_id": "<span:2>",
@@ -433,7 +471,125 @@
       "caller_lineno": 0
     },
     "created": "<timestamp>",
-    "id": "<span:18>",
+    "id": "<span:19>",
+    "log_id": "g",
+    "metadata": {
+      "operation": "text-generation-stream",
+      "testRunId": "<run:1>"
+    },
+    "metrics": {
+      "start": "<timestamp>"
+    },
+    "project_id": "<project_id>",
+    "root_span_id": "<span:2>",
+    "span_attributes": {
+      "exec_counter": 7,
+      "name": "huggingface-text-generation-stream-operation"
+    },
+    "span_id": "<span:20>",
+    "span_parents": [
+      "<span:2>"
+    ]
+  },
+  {
+    "_is_merge": true,
+    "id": "<span:19>",
+    "log_id": "g",
+    "metrics": {
+      "end": "<timestamp>"
+    },
+    "project_id": "<project_id>",
+    "root_span_id": "<span:2>",
+    "span_id": "<span:20>",
+    "span_parents": [
+      "<span:2>"
+    ]
+  },
+  {
+    "context": {},
+    "created": "<timestamp>",
+    "id": "<span:21>",
+    "input": "The capital of France is",
+    "log_id": "g",
+    "metadata": {
+      "endpointUrl": "https://router.huggingface.co/featherless-ai/v1/completions",
+      "max_tokens": 4,
+      "model": "arcee-ai/Trinity-Large-Thinking",
+      "provider": "huggingface"
+    },
+    "metrics": {
+      "start": "<timestamp>"
+    },
+    "project_id": "<project_id>",
+    "root_span_id": "<span:2>",
+    "span_attributes": {
+      "exec_counter": 8,
+      "name": "huggingface.text_generation_stream",
+      "type": "llm"
+    },
+    "span_id": "<span:22>",
+    "span_parents": [
+      "<span:20>"
+    ]
+  },
+  {
+    "_is_merge": true,
+    "id": "<span:21>",
+    "log_id": "g",
+    "metrics": {
+      "completion_tokens": "<number>",
+      "prompt_tokens": "<number>",
+      "time_to_first_token": "<number>",
+      "tokens": "<number>"
+    },
+    "project_id": "<project_id>",
+    "root_span_id": "<span:2>",
+    "span_id": "<span:22>",
+    "span_parents": [
+      "<span:20>"
+    ]
+  },
+  {
+    "_is_merge": true,
+    "id": "<span:21>",
+    "log_id": "g",
+    "metadata": {
+      "finish_reason": "length"
+    },
+    "output": {
+      "finish_reason": "length",
+      "generated_text": "<string>"
+    },
+    "project_id": "<project_id>",
+    "root_span_id": "<span:2>",
+    "span_id": "<span:22>",
+    "span_parents": [
+      "<span:20>"
+    ]
+  },
+  {
+    "_is_merge": true,
+    "id": "<span:21>",
+    "log_id": "g",
+    "metrics": {
+      "end": "<timestamp>"
+    },
+    "project_id": "<project_id>",
+    "root_span_id": "<span:2>",
+    "span_id": "<span:22>",
+    "span_parents": [
+      "<span:20>"
+    ]
+  },
+  {
+    "_is_merge": false,
+    "context": {
+      "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+      "caller_functionname": "runOperation",
+      "caller_lineno": 0
+    },
+    "created": "<timestamp>",
+    "id": "<span:23>",
     "log_id": "g",
     "metadata": {
       "operation": "feature-extraction",
@@ -445,24 +601,24 @@
     "project_id": "<project_id>",
     "root_span_id": "<span:2>",
     "span_attributes": {
-      "exec_counter": 7,
+      "exec_counter": 9,
       "name": "huggingface-feature-extraction-operation"
     },
-    "span_id": "<span:19>",
+    "span_id": "<span:24>",
     "span_parents": [
       "<span:2>"
     ]
   },
   {
     "_is_merge": true,
-    "id": "<span:18>",
+    "id": "<span:23>",
     "log_id": "g",
     "metrics": {
       "end": "<timestamp>"
     },
     "project_id": "<project_id>",
     "root_span_id": "<span:2>",
-    "span_id": "<span:19>",
+    "span_id": "<span:24>",
     "span_parents": [
       "<span:2>"
     ]
@@ -470,7 +626,7 @@
   {
     "context": {},
     "created": "<timestamp>",
-    "id": "<span:20>",
+    "id": "<span:25>",
     "input": "Paris France",
     "log_id": "g",
     "metadata": {
@@ -484,18 +640,18 @@
     "project_id": "<project_id>",
     "root_span_id": "<span:2>",
     "span_attributes": {
-      "exec_counter": 8,
+      "exec_counter": 10,
       "name": "huggingface.feature_extraction",
       "type": "llm"
     },
-    "span_id": "<span:21>",
+    "span_id": "<span:26>",
     "span_parents": [
-      "<span:19>"
+      "<span:24>"
     ]
   },
   {
     "_is_merge": true,
-    "id": "<span:20>",
+    "id": "<span:25>",
     "log_id": "g",
     "metrics": {},
     "output": {
@@ -503,23 +659,23 @@
     },
     "project_id": "<project_id>",
     "root_span_id": "<span:2>",
-    "span_id": "<span:21>",
+    "span_id": "<span:26>",
     "span_parents": [
-      "<span:19>"
+      "<span:24>"
     ]
   },
   {
     "_is_merge": true,
-    "id": "<span:20>",
+    "id": "<span:25>",
     "log_id": "g",
     "metrics": {
       "end": "<timestamp>"
     },
     "project_id": "<project_id>",
     "root_span_id": "<span:2>",
-    "span_id": "<span:21>",
+    "span_id": "<span:26>",
     "span_parents": [
-      "<span:19>"
+      "<span:24>"
     ]
   }
 ]
