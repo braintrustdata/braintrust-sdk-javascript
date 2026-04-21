@@ -99,14 +99,14 @@
       "stop_sequence": null
     },
     "metrics": {
-      "completion_tokens": 26,
+      "completion_tokens": "<number>",
       "end": 0,
       "prompt_cache_creation_tokens": 0,
       "prompt_cached_tokens": 0,
       "prompt_tokens": 1389,
       "start": 0,
       "time_to_first_token": 0,
-      "tokens": 1415
+      "tokens": "<number>"
     },
     "name": "anthropic.messages.create",
     "output": {
