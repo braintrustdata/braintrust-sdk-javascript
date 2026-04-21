@@ -3,6 +3,10 @@ export type CohereTokenUsage = {
   input_tokens?: number;
   outputTokens?: number;
   output_tokens?: number;
+  reasoningTokens?: number;
+  reasoning_tokens?: number;
+  thinkingTokens?: number;
+  thinking_tokens?: number;
   totalTokens?: number;
   total_tokens?: number;
   [key: string]: unknown;
@@ -68,6 +72,8 @@ export type CohereChatResponse = {
   message?: {
     role?: string;
     content?: unknown;
+    toolPlan?: string;
+    tool_plan?: string;
     toolCalls?: CohereToolCall[];
     tool_calls?: CohereToolCall[];
     [key: string]: unknown;
@@ -96,9 +102,13 @@ export type CohereChatStreamEvent = {
     usage?: CohereUsageLike;
     message?: {
       role?: string;
+      toolPlan?: string;
+      tool_plan?: string;
       content?:
         | string
         | {
+            type?: "text" | "thinking";
+            thinking?: string;
             text?: string;
             [key: string]: unknown;
           }

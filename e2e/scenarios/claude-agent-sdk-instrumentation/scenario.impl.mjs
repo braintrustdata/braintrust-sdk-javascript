@@ -6,7 +6,7 @@ import {
 } from "../../helpers/provider-runtime.mjs";
 import { z } from "zod";
 
-const CLAUDE_AGENT_MODEL = "claude-haiku-4-5-20251001";
+const CLAUDE_AGENT_MODEL = "claude-haiku-4-5";
 
 export const ROOT_NAME = "claude-agent-sdk-root";
 export const SCENARIO_NAME = "claude-agent-sdk-traces";

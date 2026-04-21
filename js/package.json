@@ -79,13 +79,13 @@
       "types": "./dist/auto-instrumentations/bundler/vite.d.ts",
       "import": "./dist/auto-instrumentations/bundler/vite.mjs",
       "module": "./dist/auto-instrumentations/bundler/vite.mjs",
-      "require": "./dist/auto-instrumentations/bundler/vite.js"
+      "require": "./dist/auto-instrumentations/bundler/vite.cjs"
     },
     "./webpack": {
       "types": "./dist/auto-instrumentations/bundler/webpack.d.ts",
       "import": "./dist/auto-instrumentations/bundler/webpack.mjs",
       "module": "./dist/auto-instrumentations/bundler/webpack.mjs",
-      "require": "./dist/auto-instrumentations/bundler/webpack.js"
+      "require": "./dist/auto-instrumentations/bundler/webpack.cjs"
     },
     "./webpack-loader": {
       "types": "./dist/auto-instrumentations/bundler/webpack-loader.d.ts",
@@ -95,13 +95,13 @@
       "types": "./dist/auto-instrumentations/bundler/esbuild.d.ts",
       "import": "./dist/auto-instrumentations/bundler/esbuild.mjs",
       "module": "./dist/auto-instrumentations/bundler/esbuild.mjs",
-      "require": "./dist/auto-instrumentations/bundler/esbuild.js"
+      "require": "./dist/auto-instrumentations/bundler/esbuild.cjs"
     },
     "./rollup": {
       "types": "./dist/auto-instrumentations/bundler/rollup.d.ts",
       "import": "./dist/auto-instrumentations/bundler/rollup.mjs",
       "module": "./dist/auto-instrumentations/bundler/rollup.mjs",
-      "require": "./dist/auto-instrumentations/bundler/rollup.js"
+      "require": "./dist/auto-instrumentations/bundler/rollup.cjs"
     }
   },
   "files": [
@@ -232,6 +232,7 @@
   },
   "publishConfig": {
     "access": "public",
-    "registry": "https://registry.npmjs.org/"
+    "registry": "https://registry.npmjs.org/",
+    "provenance": true
   }
 }
