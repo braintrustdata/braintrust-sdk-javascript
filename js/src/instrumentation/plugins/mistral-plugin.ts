@@ -415,10 +415,6 @@ function normalizeMistralThinkingContentPart(
         )
     : [];
 
-  if (thinking.length === 0) {
-    return undefined;
-  }
-
   return {
     type: "thinking",
     thinking,
@@ -444,7 +440,7 @@ function mergeMistralTextSegments(
   left: MistralTextContentPart[],
   right: MistralTextContentPart[],
 ): MistralTextContentPart[] {
-  const merged = [...left.map((part) => ({ ...part }))];
+  const merged = left.map((part) => ({ ...part }));
 
   for (const part of right) {
     const lastPart = merged[merged.length - 1];
