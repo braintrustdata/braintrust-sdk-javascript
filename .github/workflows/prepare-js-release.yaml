@@ -1,0 +1,74 @@
+name: Prepare Release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: prepare-js-release-${{ github.ref_name }}
+  cancel-in-progress: false
+
+env:
+  HUSKY: "0"
+
+jobs:
+  prepare-release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Require main branch
+        run: |
+          if [ "${{ github.ref_name }}" != "main" ]; then
+            {
+              echo "## Prepare JS release"
+              echo
+              echo "This workflow must be run from \`main\`. Selected ref: \`${{ github.ref_name }}\`."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: .tool-versions
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Validate publishable package metadata
+        run: node scripts/release/validate-publishable-packages.mjs
+      - name: Record source commit and release branch
+        id: source
+        run: |
+          main_sha="$(git rev-parse HEAD)"
+          short_main_sha="$(git rev-parse --short=12 HEAD)"
+          release_branch="prepare-release/${short_main_sha}"
+
+          {
+            echo "main_sha=$main_sha"
+            echo "short_main_sha=$short_main_sha"
+            echo "release_branch=$release_branch"
+          } >> "$GITHUB_OUTPUT"
+      - name: Run changeset version
+        run: pnpm exec changeset version
+      - name: Create release commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "${{ steps.source.outputs.release_branch }}"
+          git add -A
+          git commit -m "chore: Prepare changelog"
+          git push origin HEAD:refs/heads/${{ steps.source.outputs.release_branch }}
+      - name: Create release PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh pr create \
+            --base release \
+            --head "${{ steps.source.outputs.release_branch }}" \
+            --title "chore: Prepare for release (${{ steps.source.outputs.short_main_sha }})" \
+            --body "Prepares a release by updating changelogs and package versions, and synchronizing everything to the release branch."

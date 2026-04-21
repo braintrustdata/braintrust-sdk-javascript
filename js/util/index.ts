@@ -94,6 +94,7 @@ export {
   isNumber,
   isObject,
   isObjectOrArray,
+  isPromiseLike,
   notEmpty,
 } from "./type_util";
 

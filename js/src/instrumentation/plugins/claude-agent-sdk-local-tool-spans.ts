@@ -1,5 +1,5 @@
 import { startSpan, withCurrent } from "../../logger";
-import { SpanTypeAttribute } from "../../../util/index";
+import { SpanTypeAttribute, isPromiseLike } from "../../../util/index";
 import { getClaudeLocalToolParentResolver } from "./claude-agent-sdk-local-tool-context";
 
 export type LocalToolSpanMetadata = {
@@ -15,15 +15,6 @@ const LOCAL_TOOL_HANDLER_WRAPPED = Symbol.for(
 
 function toErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
-}
-
-function isPromiseLike(value: unknown): value is Promise<unknown> {
-  return (
-    value !== null &&
-    typeof value === "object" &&
-    "then" in value &&
-    typeof value.then === "function"
-  );
 }
 
 function getToolUseIdFromExtra(extra: unknown): string | undefined {

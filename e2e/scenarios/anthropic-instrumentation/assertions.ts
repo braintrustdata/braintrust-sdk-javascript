@@ -42,6 +42,20 @@ function findAnthropicSpan(
   return undefined;
 }
 
+function findAnthropicSpans(
+  events: CapturedLogEvent[],
+  parentId: string | undefined,
+  names: string[],
+): CapturedLogEvent[] {
+  const spans: CapturedLogEvent[] = [];
+
+  for (const name of names) {
+    spans.push(...findChildSpans(events, name, parentId));
+  }
+
+  return spans;
+}
+
 function pickMetadata(
   metadata: Record<string, unknown> | undefined,
   keys: string[],
@@ -59,7 +73,57 @@ function pickMetadata(
   return Object.keys(picked).length > 0 ? (picked as Json) : null;
 }
 
+function normalizeMetricValues(
+  metrics: Json,
+  keys: string[],
+  replacement: Json,
+): void {
+  if (!metrics || typeof metrics !== "object" || Array.isArray(metrics)) {
+    return;
+  }
+
+  const metricsRecord = metrics as Record<string, Json>;
+  for (const key of keys) {
+    if (typeof metricsRecord[key] === "number") {
+      metricsRecord[key] = replacement;
+    }
+  }
+}
+
 function summarizeAnthropicPayload(event: CapturedLogEvent): Json {
+  const normalizeToolResultIds = (
+    messages:
+      | Array<{
+          content?:
+            | string
+            | Array<{
+                content?: string;
+                tool_use_id?: string;
+                type?: string;
+              }>;
+        }>
+      | undefined,
+  ): void => {
+    if (!messages) {
+      return;
+    }
+
+    for (const message of messages) {
+      if (!Array.isArray(message.content)) {
+        continue;
+      }
+
+      for (const block of message.content) {
+        if (
+          block.type === "tool_result" &&
+          typeof block.tool_use_id === "string"
+        ) {
+          block.tool_use_id = "<tool-use-id>";
+        }
+      }
+    }
+  };
+
   const summary = {
     input: event.input as Json,
     metadata: pickMetadata(
@@ -71,6 +135,7 @@ function summarizeAnthropicPayload(event: CapturedLogEvent): Json {
         "scenario",
         "stop_reason",
         "stop_sequence",
+        "anthropic_tool_runner_iterations",
       ],
     ),
     metrics: event.metrics as Json,
@@ -118,12 +183,11 @@ function summarizeAnthropicPayload(event: CapturedLogEvent): Json {
     // Thinking token counts vary per run (temperature=1, variable thinking depth).
     // Zero them out so the payload snapshot is stable.
     if (summary.metrics && typeof summary.metrics === "object") {
-      const metrics = summary.metrics as Record<string, Json>;
-      for (const key of ["completion_tokens", "tokens"]) {
-        if (key in metrics) {
-          metrics[key] = 0;
-        }
-      }
+      normalizeMetricValues(
+        summary.metrics,
+        ["completion_tokens", "tokens"],
+        0,
+      );
     }
     return summary;
   }
@@ -156,6 +220,7 @@ function summarizeAnthropicPayload(event: CapturedLogEvent): Json {
             }>;
       }>
     | undefined;
+  normalizeToolResultIds(input);
   const hasAttachmentInput = input?.some(
     (message) =>
       Array.isArray(message.content) &&
@@ -167,6 +232,45 @@ function summarizeAnthropicPayload(event: CapturedLogEvent): Json {
   if (hasAttachmentInput && textBlock) {
     textBlock.text = "<anthropic-attachment-description>";
     summary.output = output as Json;
+    normalizeMetricValues(
+      summary.metrics,
+      ["completion_tokens", "tokens"],
+      "<number>",
+    );
+  }
+
+  const hasToolResultInput = input?.some(
+    (message) =>
+      Array.isArray(message.content) &&
+      message.content.some(
+        (block) => (block as { type?: string }).type === "tool_result",
+      ),
+  );
+
+  if (hasToolResultInput && textBlock) {
+    textBlock.text = "<tool-runner-answer>";
+    summary.output = output as Json;
+  }
+
+  if (
+    summary.name === "anthropic.beta.messages.toolRunner" &&
+    Array.isArray((summary.output as { content?: unknown[] } | null)?.content)
+  ) {
+    const toolRunnerOutput = structuredClone(
+      summary.output as {
+        content: Array<{
+          text?: string;
+          type?: string;
+        }>;
+      },
+    );
+    const toolRunnerTextBlock = toolRunnerOutput.content.find(
+      (block) => block.type === "text" && typeof block.text === "string",
+    );
+    if (toolRunnerTextBlock) {
+      toolRunnerTextBlock.text = "<tool-runner-answer>";
+      summary.output = toolRunnerOutput as Json;
+    }
   }
 
   return summary;
@@ -175,6 +279,7 @@ function summarizeAnthropicPayload(event: CapturedLogEvent): Json {
 function buildSpanSummary(
   events: CapturedLogEvent[],
   supportsBetaMessages: boolean,
+  supportsBetaToolRunner: boolean,
   supportsThinking: boolean,
 ): Json {
   const createOperation = findLatestSpan(events, "anthropic-create-operation");
@@ -203,6 +308,30 @@ function buildSpanSummary(
   const betaStreamOperation = findLatestSpan(
     events,
     "anthropic-beta-stream-operation",
+  );
+  const betaToolRunnerOperation = findLatestSpan(
+    events,
+    "anthropic-beta-tool-runner-operation",
+  );
+  const betaToolRunnerSpan = findAnthropicSpan(
+    events,
+    betaToolRunnerOperation?.span.id,
+    ["anthropic.beta.messages.toolRunner"],
+  );
+  const betaToolRunnerChildSpans = findAnthropicSpans(
+    events,
+    betaToolRunnerSpan?.span.id,
+    ["anthropic.messages.create", "anthropic.beta.messages.create"],
+  );
+  const betaToolRunnerToolSpans = findAnthropicSpans(
+    events,
+    betaToolRunnerSpan?.span.id,
+    ["tool: get_weather"],
+  );
+  const betaToolRunnerToolChildSpans = findAnthropicSpans(
+    events,
+    betaToolRunnerToolSpans[0]?.span.id,
+    ["get_weather.lookup"],
   );
 
   return normalizeForSnapshot(
@@ -252,6 +381,15 @@ function buildSpanSummary(
               "anthropic.messages.create",
               "anthropic.beta.messages.create",
             ]),
+            ...(supportsBetaToolRunner
+              ? [
+                  betaToolRunnerOperation,
+                  betaToolRunnerSpan,
+                  ...betaToolRunnerToolSpans,
+                  ...betaToolRunnerToolChildSpans,
+                  ...betaToolRunnerChildSpans,
+                ]
+              : []),
           ]
         : []),
     ].map((event) =>
@@ -260,6 +398,7 @@ function buildSpanSummary(
         "model",
         "operation",
         "scenario",
+        "anthropic_tool_runner_iterations",
       ]),
     ) as Json,
   );
@@ -268,6 +407,7 @@ function buildSpanSummary(
 function buildPayloadSummary(
   events: CapturedLogEvent[],
   supportsBetaMessages: boolean,
+  supportsBetaToolRunner: boolean,
   supportsThinking: boolean,
 ): Json {
   const createOperation = findLatestSpan(events, "anthropic-create-operation");
@@ -296,6 +436,30 @@ function buildPayloadSummary(
   const betaStreamOperation = findLatestSpan(
     events,
     "anthropic-beta-stream-operation",
+  );
+  const betaToolRunnerOperation = findLatestSpan(
+    events,
+    "anthropic-beta-tool-runner-operation",
+  );
+  const betaToolRunnerSpan = findAnthropicSpan(
+    events,
+    betaToolRunnerOperation?.span.id,
+    ["anthropic.beta.messages.toolRunner"],
+  );
+  const betaToolRunnerChildSpans = findAnthropicSpans(
+    events,
+    betaToolRunnerSpan?.span.id,
+    ["anthropic.messages.create", "anthropic.beta.messages.create"],
+  );
+  const betaToolRunnerToolSpans = findAnthropicSpans(
+    events,
+    betaToolRunnerSpan?.span.id,
+    ["tool: get_weather"],
+  );
+  const betaToolRunnerToolChildSpans = findAnthropicSpans(
+    events,
+    betaToolRunnerToolSpans[0]?.span.id,
+    ["get_weather.lookup"],
   );
 
   return normalizeForSnapshot(
@@ -345,6 +509,15 @@ function buildPayloadSummary(
               "anthropic.messages.create",
               "anthropic.beta.messages.create",
             ]),
+            ...(supportsBetaToolRunner
+              ? [
+                  betaToolRunnerOperation,
+                  betaToolRunnerSpan,
+                  ...betaToolRunnerToolSpans,
+                  ...betaToolRunnerToolChildSpans,
+                  ...betaToolRunnerChildSpans,
+                ]
+              : []),
           ]
         : []),
     ].map((event) => summarizeAnthropicPayload(event!)) as Json,
@@ -355,6 +528,7 @@ export function defineAnthropicInstrumentationAssertions(options: {
   name: string;
   snapshotName: string;
   supportsBetaMessages: boolean;
+  supportsBetaToolRunner: boolean;
   supportsServerToolUse: boolean;
   supportsThinking: boolean;
   testFileUrl: string;
@@ -686,6 +860,70 @@ export function defineAnthropicInstrumentationAssertions(options: {
           });
         },
       );
+
+      if (options.supportsBetaToolRunner) {
+        test(
+          "captures trace for client.beta.messages.toolRunner()",
+          testConfig,
+          () => {
+            const root = findLatestSpan(events, ROOT_NAME);
+            const operation = findLatestSpan(
+              events,
+              "anthropic-beta-tool-runner-operation",
+            );
+            const span = findAnthropicSpan(events, operation?.span.id, [
+              "anthropic.beta.messages.toolRunner",
+            ]);
+            const toolSpans = findAnthropicSpans(events, span?.span.id, [
+              "tool: get_weather",
+            ]);
+            const childSpans = findAnthropicSpans(events, span?.span.id, [
+              "anthropic.messages.create",
+              "anthropic.beta.messages.create",
+            ]);
+            const toolSpan = toolSpans[0];
+            const toolChildSpans = findAnthropicSpans(
+              events,
+              toolSpan?.span.id,
+              ["get_weather.lookup"],
+            );
+            const toolChildSpan = toolChildSpans[0];
+
+            expect(operation).toBeDefined();
+            expect(span).toBeDefined();
+            expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
+            expect(span?.span.parentIds).toEqual([operation?.span.id ?? ""]);
+            expect(span?.row.metadata).toMatchObject({
+              anthropic_tool_runner_iterations: expect.any(Number),
+              operation: "toolRunner",
+              provider: "anthropic",
+            });
+            expect(span?.metrics).toMatchObject({
+              prompt_tokens: expect.any(Number),
+              completion_tokens: expect.any(Number),
+            });
+            expect(toolSpan).toBeDefined();
+            expect(toolSpan?.span.parentIds).toEqual([span?.span.id ?? ""]);
+            expect(toolSpan?.span.type).toBe("tool");
+            expect(toolSpan?.input).toEqual({
+              location: "Paris, France",
+            });
+            expect(toolSpan?.output).toBe(
+              "The weather in Paris, France is 18C and sunny.",
+            );
+            expect(toolChildSpan).toBeDefined();
+            expect(toolChildSpan?.span.parentIds).toEqual([
+              toolSpan?.span.id ?? "",
+            ]);
+            expect(childSpans.length).toBeGreaterThanOrEqual(2);
+            expect(
+              childSpans.every(
+                (childSpan) => childSpan.span.parentIds?.[0] === span?.span.id,
+              ),
+            ).toBe(true);
+          },
+        );
+      }
     }
 
     test("matches the shared span snapshot", testConfig, async () => {
@@ -694,6 +932,7 @@ export function defineAnthropicInstrumentationAssertions(options: {
           buildSpanSummary(
             events,
             options.supportsBetaMessages,
+            options.supportsBetaToolRunner,
             options.supportsThinking,
           ),
         ),
@@ -706,6 +945,7 @@ export function defineAnthropicInstrumentationAssertions(options: {
           buildPayloadSummary(
             events,
             options.supportsBetaMessages,
+            options.supportsBetaToolRunner,
             options.supportsThinking,
           ),
         ),

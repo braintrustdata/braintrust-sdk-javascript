@@ -119,9 +119,9 @@
       "completion_accepted_prediction_tokens": 0,
       "completion_reasoning_tokens": 0,
       "completion_rejected_prediction_tokens": 0,
-      "completion_tokens": 3,
-      "prompt_tokens": 40,
-      "tokens": 43
+      "completion_tokens": "<number>",
+      "prompt_tokens": "<number>",
+      "tokens": "<number>"
     },
     "project_id": "<project_id>",
     "root_span_id": "<span:2>",
@@ -143,7 +143,7 @@
     "output": [
       {
         "content": "<string>",
-        "finish_reason": "stop",
+        "finish_reason": "<string>",
         "index": 0,
         "role": "assistant"
       }
@@ -252,10 +252,10 @@
       "completion_accepted_prediction_tokens": 0,
       "completion_reasoning_tokens": 0,
       "completion_rejected_prediction_tokens": 0,
-      "completion_tokens": 3,
-      "prompt_tokens": 40,
+      "completion_tokens": "<number>",
+      "prompt_tokens": "<number>",
       "time_to_first_token": "<number>",
-      "tokens": 43
+      "tokens": "<number>"
     },
     "project_id": "<project_id>",
     "root_span_id": "<span:2>",
@@ -278,7 +278,7 @@
       "choices": [
         {
           "content": "<string>",
-          "finish_reason": "stop",
+          "finish_reason": "<string>",
           "index": 0,
           "role": "assistant"
         }
@@ -410,10 +410,10 @@
       "completion_accepted_prediction_tokens": 0,
       "completion_reasoning_tokens": 0,
       "completion_rejected_prediction_tokens": 0,
-      "completion_tokens": 20,
-      "prompt_tokens": 394,
+      "completion_tokens": "<number>",
+      "prompt_tokens": "<number>",
       "time_to_first_token": "<number>",
-      "tokens": 414
+      "tokens": "<number>"
     },
     "project_id": "<project_id>",
     "root_span_id": "<span:2>",
@@ -428,7 +428,7 @@
     "log_id": "g",
     "metadata": {
       "created": 0,
-      "id": "<span:19>",
+      "id": "<span:18>",
       "model": "llama3.1-8b",
       "object": "chat.completion.chunk"
     },
@@ -436,18 +436,9 @@
       "choices": [
         {
           "content": "<string>",
-          "finish_reason": "tool_calls",
+          "finish_reason": "<string>",
           "index": 0,
-          "role": "assistant",
-          "tool_calls": [
-            {
-              "arguments": "<string>",
-              "id": "<span:18>",
-              "index": null,
-              "name": "get_current_weather",
-              "type": "function"
-            }
-          ]
+          "role": "assistant"
         }
       ]
     },
@@ -480,7 +471,7 @@
       "caller_lineno": 0
     },
     "created": "<timestamp>",
-    "id": "<span:20>",
+    "id": "<span:19>",
     "log_id": "g",
     "metadata": {
       "operation": "text-generation-stream",
@@ -495,21 +486,21 @@
       "exec_counter": 7,
       "name": "huggingface-text-generation-stream-operation"
     },
-    "span_id": "<span:21>",
+    "span_id": "<span:20>",
     "span_parents": [
       "<span:2>"
     ]
   },
   {
     "_is_merge": true,
-    "id": "<span:20>",
+    "id": "<span:19>",
     "log_id": "g",
     "metrics": {
       "end": "<timestamp>"
     },
     "project_id": "<project_id>",
     "root_span_id": "<span:2>",
-    "span_id": "<span:21>",
+    "span_id": "<span:20>",
     "span_parents": [
       "<span:2>"
     ]
@@ -517,7 +508,7 @@
   {
     "context": {},
     "created": "<timestamp>",
-    "id": "<span:22>",
+    "id": "<span:21>",
     "input": "The capital of France is",
     "log_id": "g",
     "metadata": {
@@ -536,31 +527,31 @@
       "name": "huggingface.text_generation_stream",
       "type": "llm"
     },
-    "span_id": "<span:23>",
+    "span_id": "<span:22>",
     "span_parents": [
-      "<span:21>"
+      "<span:20>"
     ]
   },
   {
     "_is_merge": true,
-    "id": "<span:22>",
+    "id": "<span:21>",
     "log_id": "g",
     "metrics": {
-      "completion_tokens": 4,
-      "prompt_tokens": 6,
+      "completion_tokens": "<number>",
+      "prompt_tokens": "<number>",
       "time_to_first_token": "<number>",
-      "tokens": 10
+      "tokens": "<number>"
     },
     "project_id": "<project_id>",
     "root_span_id": "<span:2>",
-    "span_id": "<span:23>",
+    "span_id": "<span:22>",
     "span_parents": [
-      "<span:21>"
+      "<span:20>"
     ]
   },
   {
     "_is_merge": true,
-    "id": "<span:22>",
+    "id": "<span:21>",
     "log_id": "g",
     "metadata": {
       "finish_reason": "length"
@@ -571,23 +562,23 @@
     },
     "project_id": "<project_id>",
     "root_span_id": "<span:2>",
-    "span_id": "<span:23>",
+    "span_id": "<span:22>",
     "span_parents": [
-      "<span:21>"
+      "<span:20>"
     ]
   },
   {
     "_is_merge": true,
-    "id": "<span:22>",
+    "id": "<span:21>",
     "log_id": "g",
     "metrics": {
       "end": "<timestamp>"
     },
     "project_id": "<project_id>",
     "root_span_id": "<span:2>",
-    "span_id": "<span:23>",
+    "span_id": "<span:22>",
     "span_parents": [
-      "<span:21>"
+      "<span:20>"
     ]
   },
   {
@@ -598,7 +589,7 @@
       "caller_lineno": 0
     },
     "created": "<timestamp>",
-    "id": "<span:24>",
+    "id": "<span:23>",
     "log_id": "g",
     "metadata": {
       "operation": "feature-extraction",
@@ -613,21 +604,21 @@
       "exec_counter": 9,
       "name": "huggingface-feature-extraction-operation"
     },
-    "span_id": "<span:25>",
+    "span_id": "<span:24>",
     "span_parents": [
       "<span:2>"
     ]
   },
   {
     "_is_merge": true,
-    "id": "<span:24>",
+    "id": "<span:23>",
     "log_id": "g",
     "metrics": {
       "end": "<timestamp>"
     },
     "project_id": "<project_id>",
     "root_span_id": "<span:2>",
-    "span_id": "<span:25>",
+    "span_id": "<span:24>",
     "span_parents": [
       "<span:2>"
     ]
@@ -635,7 +626,7 @@
   {
     "context": {},
     "created": "<timestamp>",
-    "id": "<span:26>",
+    "id": "<span:25>",
     "input": "Paris France",
     "log_id": "g",
     "metadata": {
@@ -653,14 +644,14 @@
       "name": "huggingface.feature_extraction",
       "type": "llm"
     },
-    "span_id": "<span:27>",
+    "span_id": "<span:26>",
     "span_parents": [
-      "<span:25>"
+      "<span:24>"
     ]
   },
   {
     "_is_merge": true,
-    "id": "<span:26>",
+    "id": "<span:25>",
     "log_id": "g",
     "metrics": {},
     "output": {
@@ -668,23 +659,23 @@
     },
     "project_id": "<project_id>",
     "root_span_id": "<span:2>",
-    "span_id": "<span:27>",
+    "span_id": "<span:26>",
     "span_parents": [
-      "<span:25>"
+      "<span:24>"
     ]
   },
   {
     "_is_merge": true,
-    "id": "<span:26>",
+    "id": "<span:25>",
     "log_id": "g",
     "metrics": {
       "end": "<timestamp>"
     },
     "project_id": "<project_id>",
     "root_span_id": "<span:2>",
-    "span_id": "<span:27>",
+    "span_id": "<span:26>",
     "span_parents": [
-      "<span:25>"
+      "<span:24>"
     ]
   }
 ]

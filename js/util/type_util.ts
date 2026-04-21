@@ -31,3 +31,12 @@ export function notEmpty<T>(a: T | null | undefined): T {
 export function isNumber(a: unknown): a is number | bigint {
   return typeof a === "number" || typeof a === "bigint";
 }
+
+export function isPromiseLike(value: unknown): value is PromiseLike<unknown> {
+  return (
+    value != null &&
+    (typeof value === "object" || typeof value === "function") &&
+    "then" in value &&
+    typeof value.then === "function"
+  );
+}
