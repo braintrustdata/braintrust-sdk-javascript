@@ -6,7 +6,7 @@ import {
   runTracedScenario,
 } from "../../helpers/provider-runtime.mjs";
 
-const ANTHROPIC_MODEL = "claude-3-haiku-20240307";
+const ANTHROPIC_MODEL = "claude-haiku-4-5";
 const ROOT_NAME = "anthropic-instrumentation-root";
 const SCENARIO_NAME = "anthropic-instrumentation";
 const WEATHER_TOOL = {

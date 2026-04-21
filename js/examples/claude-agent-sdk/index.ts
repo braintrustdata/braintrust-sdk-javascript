@@ -117,7 +117,7 @@ Report all results.`;
               description: "Math specialist for calculations and explanations",
               prompt:
                 "You are a math expert. Perform calculations step by step.",
-              model: "haiku",
+              model: "claude-haiku-4-5",
             },
           },
           mcpServers: {

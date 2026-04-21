@@ -119,10 +119,10 @@
       "completion_accepted_prediction_tokens": 0,
       "completion_reasoning_tokens": 0,
       "completion_rejected_prediction_tokens": 0,
-      "completion_tokens": 3,
+      "completion_tokens": "<number>",
       "prompt_cached_tokens": 0,
-      "prompt_tokens": 40,
-      "tokens": 43
+      "prompt_tokens": "<number>",
+      "tokens": "<number>"
     },
     "project_id": "<project_id>",
     "root_span_id": "<span:2>",
@@ -253,11 +253,11 @@
       "completion_accepted_prediction_tokens": 0,
       "completion_reasoning_tokens": 0,
       "completion_rejected_prediction_tokens": 0,
-      "completion_tokens": 3,
+      "completion_tokens": "<number>",
       "prompt_cached_tokens": 0,
-      "prompt_tokens": 40,
+      "prompt_tokens": "<number>",
       "time_to_first_token": "<number>",
-      "tokens": 43
+      "tokens": "<number>"
     },
     "project_id": "<project_id>",
     "root_span_id": "<span:2>",
@@ -381,10 +381,10 @@
     "id": "<span:16>",
     "log_id": "g",
     "metrics": {
-      "completion_tokens": 4,
-      "prompt_tokens": 6,
+      "completion_tokens": "<number>",
+      "prompt_tokens": "<number>",
       "time_to_first_token": "<number>",
-      "tokens": 10
+      "tokens": "<number>"
     },
     "project_id": "<project_id>",
     "root_span_id": "<span:2>",

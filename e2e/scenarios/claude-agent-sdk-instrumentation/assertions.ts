@@ -101,6 +101,12 @@ function summarizeSpan(
   }
   if (summary.metadata && typeof summary.metadata === "object") {
     const metadata = summary.metadata as Record<string, Json>;
+    if (
+      typeof metadata.model === "string" &&
+      metadata.model.startsWith("claude-haiku-4-5-")
+    ) {
+      metadata.model = "claude-haiku-4-5";
+    }
     if (typeof metadata["claude_agent_sdk.description"] === "string") {
       metadata["claude_agent_sdk.description"] = "<description>";
     }
