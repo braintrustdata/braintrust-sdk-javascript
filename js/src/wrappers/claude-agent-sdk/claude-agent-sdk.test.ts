@@ -631,7 +631,7 @@ try {
   // Initialize Braintrust state once per process
 }
 
-const TEST_MODEL = "claude-haiku-4-5-20251001";
+const TEST_MODEL = "claude-haiku-4-5";
 
 describe.skipIf(!claudeSDK)("claude-agent-sdk integration tests", () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -919,7 +919,7 @@ describe.skipIf(!claudeSDK)("claude-agent-sdk integration tests", () => {
               "Math specialist. Use the calculator tool for calculations.",
             prompt:
               "You are a math expert. Use the calculator tool to perform the requested calculation. Be concise.",
-            model: "haiku",
+            model: TEST_MODEL,
           },
         },
         mcpServers: {

@@ -5,7 +5,7 @@ import {
   traceSyncStreamChannel,
   unsubscribeAll,
 } from "../core/channel-tracing";
-import { SpanTypeAttribute } from "../../../util/index";
+import { SpanTypeAttribute, isPromiseLike } from "../../../util/index";
 import { getCurrentUnixTimestamp } from "../../util";
 import { Attachment, type Span, withCurrent } from "../../logger";
 import {
@@ -1866,6 +1866,66 @@ function extractTokenMetrics(result: AISDKResult): Record<string, number> {
     metrics.tokens = totalTokens;
   }
 
+  const promptCachedTokens = firstNumber(
+    usage.inputTokens?.cacheRead,
+    usage.inputTokenDetails?.cacheReadTokens,
+    usage.cachedInputTokens,
+    usage.promptCachedTokens,
+    usage.prompt_cached_tokens,
+  );
+  if (promptCachedTokens !== undefined) {
+    metrics.prompt_cached_tokens = promptCachedTokens;
+  }
+
+  const promptCacheCreationTokens = firstNumber(
+    usage.inputTokens?.cacheWrite,
+    usage.inputTokenDetails?.cacheWriteTokens,
+    usage.promptCacheCreationTokens,
+    usage.prompt_cache_creation_tokens,
+    extractAnthropicCacheCreationTokens(result),
+  );
+  if (promptCacheCreationTokens !== undefined) {
+    metrics.prompt_cache_creation_tokens = promptCacheCreationTokens;
+  }
+
+  const promptReasoningTokens = firstNumber(
+    usage.promptReasoningTokens,
+    usage.prompt_reasoning_tokens,
+  );
+  if (promptReasoningTokens !== undefined) {
+    metrics.prompt_reasoning_tokens = promptReasoningTokens;
+  }
+
+  const completionCachedTokens = firstNumber(
+    usage.completionCachedTokens,
+    usage.completion_cached_tokens,
+  );
+  if (completionCachedTokens !== undefined) {
+    metrics.completion_cached_tokens = completionCachedTokens;
+  }
+
+  const reasoningTokenCount = firstNumber(
+    usage.outputTokens?.reasoning,
+    usage.reasoningTokens,
+    usage.completionReasoningTokens,
+    usage.completion_reasoning_tokens,
+    usage.reasoning_tokens,
+    usage.thinkingTokens,
+    usage.thinking_tokens,
+  );
+  if (reasoningTokenCount !== undefined) {
+    metrics.completion_reasoning_tokens = reasoningTokenCount;
+    metrics.reasoning_tokens = reasoningTokenCount;
+  }
+
+  const completionAudioTokens = firstNumber(
+    usage.completionAudioTokens,
+    usage.completion_audio_tokens,
+  );
+  if (completionAudioTokens !== undefined) {
+    metrics.completion_audio_tokens = completionAudioTokens;
+  }
+
   // Extract cost from gateway routing if available
   const cost = extractCostFromResult(result);
   if (cost !== undefined) {
@@ -1873,6 +1933,27 @@ function extractTokenMetrics(result: AISDKResult): Record<string, number> {
   }
 
   return metrics;
+}
+
+function extractAnthropicCacheCreationTokens(
+  result: AISDKResult,
+): number | undefined {
+  const providerMetadata = safeSerializableFieldRead(
+    result,
+    "providerMetadata",
+  ) as Record<string, unknown> | undefined;
+  const anthropicMetadata = providerMetadata?.anthropic as
+    | Record<string, unknown>
+    | undefined;
+  if (!anthropicMetadata) {
+    return undefined;
+  }
+
+  return firstNumber(
+    anthropicMetadata.cacheCreationInputTokens,
+    (anthropicMetadata.usage as Record<string, unknown> | undefined)
+      ?.cache_creation_input_tokens,
+  );
 }
 
 function safeResultFieldRead(
@@ -2039,24 +2120,12 @@ function extractSerializableOutputFields(
   };
 }
 
-function isPromiseLike(value: unknown): value is PromiseLike<unknown> {
-  return (
-    value != null &&
-    typeof value === "object" &&
-    typeof (value as { then?: unknown }).then === "function"
-  );
-}
-
 function isSerializableOutputValue(value: unknown): boolean {
   if (typeof value === "function") {
     return false;
   }
 
-  if (
-    value &&
-    typeof value === "object" &&
-    typeof (value as { then?: unknown }).then === "function"
-  ) {
+  if (isPromiseLike(value)) {
     return false;
   }
 

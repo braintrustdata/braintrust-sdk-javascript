@@ -1,9 +1,6 @@
 name: Release Packages
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
     inputs:
       release_mode:
@@ -11,111 +8,25 @@ on:
         required: true
         type: choice
         options:
+          - stable
           - prerelease
-          - canary
-          - dry-run-stable
-          - dry-run-prerelease
-          - dry-run-canary
-      branch:
-        description: Branch to use for prerelease modes
-        required: false
-        type: string
       ref:
-        description: Ref to use for stable/canary dry runs
-        required: false
-        default: main
+        description: Ref to release
+        required: true
+        default: release
         type: string
 
 concurrency:
-  group: >-
-    release-${{ github.event_name == 'push' && format('stable-{0}', github.ref_name) || format('{0}-{1}', inputs.release_mode, inputs.branch || inputs.ref || github.ref_name) }}
+  group: release-js-packages-${{ inputs.release_mode }}-${{ inputs.ref }}
   cancel-in-progress: false
 
 env:
   HUSKY: "0"
+  NPM_CONFIG_PROVENANCE: "true"
 
 jobs:
-  stable-release-pr:
-    if: github.event_name == 'push' && github.ref_name == 'main'
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    permissions:
-      contents: write
-      pull-requests: write
-    steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
-        with:
-          fetch-depth: 0
-      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
-        with:
-          node-version-file: .tool-versions
-          cache: pnpm
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-      - name: Validate publishable package metadata
-        run: node scripts/release/validate-publishable-packages.mjs
-      - name: Create or update release PR
-        id: changesets
-        uses: changesets/action@6a0a831ff30acef54f2c6aa1cbbc1096b066edaf # v1.7.0
-        with:
-          version: pnpm exec changeset version && pnpm install --lockfile-only
-          commit: "[ci] release"
-          title: "[ci] release"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Summarize stable release PR state
-        if: always()
-        run: |
-          if [ "${{ steps.changesets.outputs.hasChangesets }}" = "true" ]; then
-            {
-              echo "## Stable release PR"
-              echo
-              echo "Pending changesets were found and the release PR was refreshed."
-            } >> "$GITHUB_STEP_SUMMARY"
-          else
-            {
-              echo "## Stable release PR"
-              echo
-              echo "No pending changesets to release from main."
-            } >> "$GITHUB_STEP_SUMMARY"
-          fi
-
-  stable-detect-publish:
-    if: github.event_name == 'push' && github.ref_name == 'main'
-    needs: stable-release-pr
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    permissions:
-      contents: read
-    outputs:
-      has_work: ${{ steps.detect.outputs.has_work }}
-      needs_publish: ${{ steps.detect.outputs.needs_publish }}
-      needs_tags: ${{ steps.detect.outputs.needs_tags }}
-      needs_github_releases: ${{ steps.detect.outputs.needs_github_releases }}
-      manifest_path: ${{ steps.detect.outputs.manifest_path }}
-    steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
-        with:
-          fetch-depth: 0
-      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
-        with:
-          node-version-file: .tool-versions
-          cache: pnpm
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-      - name: Validate publishable package metadata
-        run: node scripts/release/validate-publishable-packages.mjs
-      - name: Detect stable publish work
-        id: detect
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: node scripts/release/should-publish-stable.mjs --output .release-manifest.json
-
-  stable-publish:
-    if: github.event_name == 'push' && github.ref_name == 'main' && needs.stable-detect-publish.outputs.has_work == 'true'
-    needs: stable-detect-publish
+  stable-release:
+    if: inputs.release_mode == 'stable'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -126,6 +37,7 @@ jobs:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           fetch-depth: 0
+          ref: ${{ inputs.ref }}
       - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
@@ -134,37 +46,75 @@ jobs:
           registry-url: https://registry.npmjs.org
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      - name: Validate publishable package metadata
+      - name: Validate package metadata
         run: node scripts/release/validate-publishable-packages.mjs
       - name: Detect stable publish work
         id: detect
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: node scripts/release/should-publish-stable.mjs --output .release-manifest.json
-      - name: Configure git user
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-      - name: Build publishable packages
+        run: node scripts/release/release-manifest.mjs --mode stable --output .release-manifest.json
+      - name: Build packages
         if: steps.detect.outputs.needs_publish == 'true'
-        run: bash scripts/release/build-publishable-packages.sh .release-manifest.json
+        run: pnpm run build
       - name: Publish stable packages to npm
         if: steps.detect.outputs.needs_publish == 'true'
-        run: pnpm exec changeset publish
         env:
+          NODE_AUTH_TOKEN: ""
           NPM_TOKEN: ""
+        run: node scripts/release/publish-release-manifest.mjs --manifest .release-manifest.json
       - name: Push Changesets release tags
         if: steps.detect.outputs.has_work == 'true'
-        run: node scripts/release/push-release-tags.mjs --manifest .release-manifest.json
+        run: |
+          set -euo pipefail
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          target_commit="$(jq -r '.commit // empty' .release-manifest.json)"
+          mapfile -t tags < <(
+            jq -r '.packages[]? | .tag // "\(.name)@\(.version)"' .release-manifest.json
+          )
+
+          if [ "${#tags[@]}" -eq 0 ]; then
+            echo "No release tags to push."
+            exit 0
+          fi
+
+          if [ -z "$target_commit" ]; then
+            echo "Release manifest is missing commit." >&2
+            exit 1
+          fi
+
+          to_push=()
+          for tag in "${tags[@]}"; do
+            if git ls-remote --exit-code --tags origin "refs/tags/$tag" >/dev/null 2>&1; then
+              continue
+            fi
+
+            if git rev-parse -q --verify "refs/tags/$tag" >/dev/null 2>&1; then
+              local_target="$(git rev-list -n 1 "$tag")"
+              if [ "$local_target" != "$target_commit" ]; then
+                echo "Local tag $tag already exists on $local_target, expected $target_commit." >&2
+                exit 1
+              fi
+            else
+              git tag "$tag" "$target_commit"
+            fi
+
+            to_push+=("refs/tags/$tag")
+          done
+
+          if [ "${#to_push[@]}" -eq 0 ]; then
+            echo "All release tags already exist on origin."
+            exit 0
+          fi
+
+          git push origin "${to_push[@]}"
       - name: Create GitHub Releases
         if: steps.detect.outputs.has_work == 'true'
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
         run: node scripts/release/create-github-releases.mjs --manifest .release-manifest.json
-      - name: Summarize stable release
-        id: summary
-        run: node scripts/release/summarize-release.mjs --mode stable --manifest .release-manifest.json
       - name: Post stable release to Slack
+        if: steps.detect.outputs.has_work == 'true'
         uses: slackapi/slack-github-action@af78098f536edbc4de71162a307590698245be95 # v3.0.1
         with:
           method: chat.postMessage
@@ -180,117 +130,75 @@ jobs:
               - type: "section"
                 text:
                   type: "mrkdwn"
-                  text: "*Packages:*\n${{ steps.summary.outputs.markdown }}\n\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>"
+                  text: "*Packages:*\n${{ steps.detect.outputs.markdown }}\n\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>"
 
   prerelease-snapshot:
-    if: github.event_name == 'workflow_dispatch' && inputs.release_mode == 'prerelease'
-    uses: ./.github/workflows/_run-js-release-mode.yaml
+    if: inputs.release_mode == 'prerelease'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
-      actions: read
       contents: read
       id-token: write
-    secrets: inherit
-    with:
-      mode: prerelease
-      checkout_ref: ${{ inputs.branch || github.ref_name }}
-      version_command: pnpm exec changeset version --snapshot rc
-      publish_enabled: true
-      publish_command: pnpm exec changeset publish --tag rc --no-git-tag
-      slack_text: "🧪 JavaScript prerelease snapshots published"
-      slack_header: "🧪 JavaScript prerelease snapshots published"
-      slack_details: |
-        *Branch:* `${{ inputs.branch || github.ref_name }}`
-        *Tag:* `rc`
-
-  canary-snapshot:
-    if: github.event_name == 'workflow_dispatch' && inputs.release_mode == 'canary'
-    uses: ./.github/workflows/_run-js-release-mode.yaml
-    permissions:
-      actions: read
-      contents: read
-      id-token: write
-    secrets: inherit
-    with:
-      mode: canary
-      checkout_ref: ${{ github.ref_name }}
-      version_command: pnpm exec changeset version --snapshot canary
-      publish_enabled: true
-      publish_command: pnpm exec changeset publish --tag canary --no-git-tag
-      run_canary_check: true
-      slack_text: "🐤 JavaScript canary snapshots published"
-      slack_header: "🐤 JavaScript canary snapshots published"
-      slack_details: |
-        *Tag:* `canary`
-        *Commit:* `${{ github.sha }}`
-
-  dry-run-canary:
-    if: github.event_name == 'workflow_dispatch' && inputs.release_mode == 'dry-run-canary'
-    uses: ./.github/workflows/_run-js-release-mode.yaml
-    permissions:
-      actions: read
-      contents: read
-      id-token: write
-    secrets: inherit
-    with:
-      mode: dry-run-canary
-      checkout_ref: ${{ inputs.ref || 'main' }}
-      version_command: pnpm exec changeset version --snapshot canary
-      artifact_dir: artifacts/dry-run-canary
-      artifact_name: canary-dry-run-${{ github.run_id }}
-
-  dry-run-stable:
-    if: github.event_name == 'workflow_dispatch' && inputs.release_mode == 'dry-run-stable'
-    uses: ./.github/workflows/_run-js-release-mode.yaml
-    permissions:
-      actions: read
-      contents: read
-      id-token: write
-    secrets: inherit
-    with:
-      mode: dry-run-stable
-      checkout_ref: ${{ inputs.ref || 'main' }}
-      version_command: pnpm exec changeset version && pnpm install --lockfile-only
-      artifact_dir: artifacts/dry-run-stable
-      artifact_name: stable-dry-run-${{ github.run_id }}
-
-  dry-run-prerelease:
-    if: github.event_name == 'workflow_dispatch' && inputs.release_mode == 'dry-run-prerelease'
-    uses: ./.github/workflows/_run-js-release-mode.yaml
-    permissions:
-      actions: read
-      contents: read
-      id-token: write
-    secrets: inherit
-    with:
-      mode: dry-run-prerelease
-      checkout_ref: ${{ inputs.branch || github.ref_name }}
-      version_command: pnpm exec changeset version --snapshot rc
-      artifact_dir: artifacts/dry-run-prerelease
-      artifact_name: prerelease-dry-run-${{ github.run_id }}
+    environment: npm-publish
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.ref }}
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: .tool-versions
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Validate publishable package metadata
+        run: node scripts/release/validate-publishable-packages.mjs
+      - name: Compute changeset status
+        run: pnpm exec changeset status --output=.changeset-status.json
+      - name: Version packages
+        run: pnpm exec changeset version --snapshot rc
+      - name: Prepare release manifest
+        id: manifest
+        run: node scripts/release/release-manifest.mjs --mode prerelease --status-file .changeset-status.json --output .release-manifest.json
+      - name: Build publishable packages
+        if: steps.manifest.outputs.has_packages == 'true'
+        run: pnpm run build
+      - name: Publish prerelease packages to npm
+        if: steps.manifest.outputs.has_packages == 'true'
+        env:
+          NODE_AUTH_TOKEN: ""
+          NPM_TOKEN: ""
+        run: node scripts/release/publish-release-manifest.mjs --manifest .release-manifest.json --tag rc
+      - name: Post prerelease to Slack
+        if: steps.manifest.outputs.has_packages == 'true'
+        uses: slackapi/slack-github-action@af78098f536edbc4de71162a307590698245be95 # v3.0.1
+        with:
+          method: chat.postMessage
+          token: ${{ secrets.SLACK_BOT_TOKEN }}
+          payload: |
+            channel: C0ABHT0SWA2
+            text: "🧪 JavaScript prerelease snapshots published"
+            blocks:
+              - type: "header"
+                text:
+                  type: "plain_text"
+                  text: "🧪 JavaScript prerelease snapshots published"
+              - type: "section"
+                text:
+                  type: "mrkdwn"
+                  text: "*Ref:* `${{ inputs.ref }}`\n*Tag:* `rc`\n\n*Packages:*\n${{ steps.manifest.outputs.markdown }}\n\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>"
 
   notify-failure:
     needs:
-      [
-        stable-release-pr,
-        stable-detect-publish,
-        stable-publish,
-        prerelease-snapshot,
-        canary-snapshot,
-        dry-run-stable,
-        dry-run-prerelease,
-        dry-run-canary,
-      ]
+      - stable-release
+      - prerelease-snapshot
     if: |
       always() &&
       (
-        needs.stable-release-pr.result == 'failure' ||
-        needs.stable-detect-publish.result == 'failure' ||
-        needs.stable-publish.result == 'failure' ||
-        needs.prerelease-snapshot.result == 'failure' ||
-        needs.canary-snapshot.result == 'failure' ||
-        needs.dry-run-stable.result == 'failure' ||
-        needs.dry-run-prerelease.result == 'failure' ||
-        needs.dry-run-canary.result == 'failure'
+        needs.stable-release.result == 'failure' ||
+        needs.prerelease-snapshot.result == 'failure'
       )
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -311,4 +219,4 @@ jobs:
               - type: "section"
                 text:
                   type: "mrkdwn"
-                  text: "*Event:* `${{ github.event_name }}`\n*Ref:* `${{ github.ref_name }}`\n*Mode:* `${{ github.event_name == 'push' && 'stable-main' || inputs.release_mode }}`\n\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>"
+                  text: "*Workflow:* `Release JS Packages`\n*Ref:* `${{ inputs.ref }}`\n*Mode:* `${{ inputs.release_mode }}`\n\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>"

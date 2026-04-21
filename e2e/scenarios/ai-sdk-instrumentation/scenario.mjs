@@ -1,3 +1,4 @@
+import { anthropic } from "ai-sdk-anthropic-v6";
 import { openai } from "ai-sdk-openai-v6";
 import { cohere } from "ai-sdk-cohere-v6";
 import * as ai from "ai-sdk-v6";
@@ -12,6 +13,7 @@ runMain(async () =>
     agentClassExport: "ToolLoopAgent",
     agentSpanName: "ToolLoopAgent",
     ai,
+    anthropic,
     cohere,
     maxTokensKey: "maxOutputTokens",
     openai,
