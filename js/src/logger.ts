@@ -7118,11 +7118,11 @@ export class Dataset<
   IsLegacyDataset extends boolean = typeof DEFAULT_IS_LEGACY_DATASET,
 > extends ObjectFetcher<DatasetRecord<IsLegacyDataset>> {
   private readonly lazyMetadata: LazyValue<ProjectDatasetMetadata>;
+  private readonly __braintrust_dataset_marker = true;
+  private newRecords = 0;
   private lazyPinnedVersion?: LazyValue<string | undefined>;
   private pinnedEnvironment?: string;
   private pinnedSnapshotName?: string;
-  private readonly __braintrust_dataset_marker = true;
-  private newRecords = 0;
 
   constructor(
     private state: BraintrustState,
