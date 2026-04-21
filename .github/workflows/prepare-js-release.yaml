@@ -46,7 +46,7 @@ jobs:
         run: |
           main_sha="$(git rev-parse HEAD)"
           short_main_sha="$(git rev-parse --short=12 HEAD)"
-          release_branch="release/${short_main_sha}"
+          release_branch="prepare-release/${short_main_sha}"
 
           {
             echo "main_sha=$main_sha"
