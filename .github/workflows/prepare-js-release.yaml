@@ -54,6 +54,8 @@ jobs:
             echo "release_branch=$release_branch"
           } >> "$GITHUB_OUTPUT"
       - name: Run changeset version
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: pnpm exec changeset version
       - name: Create release commit
         run: |
