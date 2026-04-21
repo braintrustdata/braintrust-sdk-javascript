@@ -1492,52 +1492,13 @@ function areZodSchemaSignaturesCompatible(
 }
 
 /**
- * Compares class signatures by extracting and comparing individual methods
- * This handles cases where methods gain optional parameters or optional fields
+ * Compares class signatures using a cheap heuristic first and a parsed
+ * TypeScript AST fallback when the heuristic rejects the change.
  */
 function areClassSignaturesCompatible(
   oldClass: string,
   newClass: string,
 ): boolean {
-  const oldParsed = parseClassSignature(oldClass);
-  const newParsed = parseClassSignature(newClass);
-
-  if (oldParsed && newParsed) {
-    if (
-      oldParsed.name !== newParsed.name ||
-      oldParsed.typeParameters !== newParsed.typeParameters ||
-      oldParsed.heritage !== newParsed.heritage ||
-      oldParsed.isAbstract !== newParsed.isAbstract
-    ) {
-      return false;
-    }
-
-    for (const [key, oldMembers] of oldParsed.members) {
-      const newMembers = newParsed.members.get(key);
-      if (!newMembers) {
-        return false;
-      }
-
-      const matchedNewMembers = new Set<number>();
-      for (const oldMember of oldMembers) {
-        const matchIndex = newMembers.findIndex((newMember, index) => {
-          return (
-            !matchedNewMembers.has(index) &&
-            areParsedClassMembersCompatible(oldMember, newMember)
-          );
-        });
-
-        if (matchIndex === -1) {
-          return false;
-        }
-
-        matchedNewMembers.add(matchIndex);
-      }
-    }
-
-    return true;
-  }
-
   // Extract class name to ensure we're comparing the same class
   const oldClassNameMatch = oldClass.match(/class\s+(\w+)/);
   const newClassNameMatch = newClass.match(/class\s+(\w+)/);
@@ -1572,21 +1533,8 @@ function areClassSignaturesCompatible(
 
   // Also check normalized versions (removing optional markers and defaults)
   // If normalized versions are similar, the changes are likely just optionality
-  const normalizeClass = (classText: string): string => {
-    let normalized = classText;
-    // Remove optional markers: field?: Type -> field: Type
-    normalized = normalized.replace(
-      /([a-zA-Z_$][a-zA-Z0-9_$]*)\?:\s*/g,
-      "$1: ",
-    );
-    // Remove default values
-    normalized = normalized.replace(/=\s*\{[^}]*\}/g, "= {}");
-    normalized = normalized.replace(/=\s*[^,)}]+/g, "");
-    return normalized;
-  };
-
-  const oldNormalized = normalizeClass(oldClass);
-  const newNormalized = normalizeClass(newClass);
+  const oldNormalized = normalizeClassForFastPath(oldClass);
+  const newNormalized = normalizeClassForFastPath(newClass);
 
   // Check if normalized versions are similar (one contains significant portion of the other)
   const similarityThreshold = Math.min(500, oldNormalized.length * 0.5);
@@ -1594,7 +1542,13 @@ function areClassSignaturesCompatible(
     return true;
   }
 
-  return false;
+  const oldParsed = parseClassSignature(oldClass);
+  const newParsed = parseClassSignature(newClass);
+  if (!oldParsed || !newParsed) {
+    return false;
+  }
+
+  return areParsedClassSignaturesCompatible(oldParsed, newParsed);
 }
 
 interface ParsedClassSignature {
@@ -1628,6 +1582,14 @@ interface ParsedClassPropertyMember {
 }
 
 type ParsedClassMember = ParsedClassCallableMember | ParsedClassPropertyMember;
+
+function normalizeClassForFastPath(classText: string): string {
+  let normalized = classText;
+  normalized = normalized.replace(/([a-zA-Z_$][a-zA-Z0-9_$]*)\?:\s*/g, "$1: ");
+  normalized = normalized.replace(/=\s*\{[^}]*\}/g, "= {}");
+  normalized = normalized.replace(/=\s*[^,)}]+/g, "");
+  return normalized;
+}
 
 function normalizeClassFragment(fragment: string): string {
   return normalizeTypeReference(fragment.replace(/\s+/g, " ").trim());
@@ -1906,6 +1868,45 @@ function parseClassSignature(classText: string): ParsedClassSignature | null {
     isAbstract: hasModifier(declaration, ts.SyntaxKind.AbstractKeyword),
     members,
   };
+}
+
+function areParsedClassSignaturesCompatible(
+  oldParsed: ParsedClassSignature,
+  newParsed: ParsedClassSignature,
+): boolean {
+  if (
+    oldParsed.name !== newParsed.name ||
+    oldParsed.typeParameters !== newParsed.typeParameters ||
+    oldParsed.heritage !== newParsed.heritage ||
+    oldParsed.isAbstract !== newParsed.isAbstract
+  ) {
+    return false;
+  }
+
+  for (const [key, oldMembers] of oldParsed.members) {
+    const newMembers = newParsed.members.get(key);
+    if (!newMembers) {
+      return false;
+    }
+
+    const matchedNewMembers = new Set<number>();
+    for (const oldMember of oldMembers) {
+      const matchIndex = newMembers.findIndex((newMember, index) => {
+        return (
+          !matchedNewMembers.has(index) &&
+          areParsedClassMembersCompatible(oldMember, newMember)
+        );
+      });
+
+      if (matchIndex === -1) {
+        return false;
+      }
+
+      matchedNewMembers.add(matchIndex);
+    }
+  }
+
+  return true;
 }
 
 function areParsedClassMembersCompatible(
@@ -2285,6 +2286,22 @@ describe("areClassSignaturesCompatible", () => {
     expect(areClassSignaturesCompatible(oldClass, newClass)).toBe(true);
   });
 
+  test("should use parsed fallback when private members shift public member positions", () => {
+    const oldClass = `export declare class Example {
+      alpha(first: string, second: number): Promise<{ ok: true }>;
+      beta(value?: boolean): void;
+    }`;
+    const newClass = `export declare class Example {
+      private cacheOne?: string;
+      private cacheTwo?: string;
+      private cacheThree?: string;
+      alpha(first: string, second: number): Promise<{ ok: true }>;
+      beta(value?: boolean): void;
+    }`;
+
+    expect(areClassSignaturesCompatible(oldClass, newClass)).toBe(true);
+  });
+
   test("should ignore class member ordering", () => {
     const oldClass = `export declare class Example {
       alpha(): void;
@@ -2298,12 +2315,17 @@ describe("areClassSignaturesCompatible", () => {
     expect(areClassSignaturesCompatible(oldClass, newClass)).toBe(true);
   });
 
-  test("should reject adding a required constructor parameter", () => {
+  test("should reject adding a required constructor parameter when fallback runs", () => {
     const oldClass = `export declare class Example {
       constructor(value: string);
+      run(input: string): void;
     }`;
     const newClass = `export declare class Example {
+      private cacheOne?: string;
+      private cacheTwo?: string;
+      private cacheThree?: string;
       constructor(value: string, version: number);
+      run(input: string): void;
     }`;
 
     expect(areClassSignaturesCompatible(oldClass, newClass)).toBe(false);
