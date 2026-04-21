@@ -107,7 +107,7 @@ export function parseGroqMetrics(
   };
 }
 
-export function aggregateGroqChatCompletionChunks(
+function aggregateGroqChatCompletionChunks(
   chunks: GroqChatCompletionChunk[],
   streamResult?: unknown,
   endEvent?: unknown,
