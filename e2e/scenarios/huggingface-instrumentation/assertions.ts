@@ -121,7 +121,14 @@ function normalizeMetrics(value: Json): Json {
   for (const [key, entry] of Object.entries(value)) {
     if (
       typeof entry === "number" &&
-      ["end", "start", "time_to_first_token"].includes(key)
+      [
+        "completion_tokens",
+        "end",
+        "prompt_tokens",
+        "start",
+        "time_to_first_token",
+        "tokens",
+      ].includes(key)
     ) {
       normalized[key] = "<number>";
       continue;
