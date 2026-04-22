@@ -77,7 +77,7 @@ export const googleADKConfigs: InstrumentationConfig[] = [
     functionQuery: {
       methodName: "runAsync",
       kind: "Sync",
-      index: 11,
+      index: 12,
     },
   },
   {
@@ -90,7 +90,7 @@ export const googleADKConfigs: InstrumentationConfig[] = [
     functionQuery: {
       methodName: "runAsync",
       kind: "Sync",
-      index: 11,
+      index: 12,
     },
   },
 
