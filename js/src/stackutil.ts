@@ -22,7 +22,7 @@ function getStackTrace(): StackTraceEntry[] {
     const entry: StackTraceEntry = {
       functionName: matches[1]?.trim() ?? "",
       fileName: matches[2],
-      lineNo: parseInt(matches[3], 10),
+      lineNo: parseInt(matches[3]),
     };
     if (!isNaN(entry.lineNo)) {
       out.push(entry);
