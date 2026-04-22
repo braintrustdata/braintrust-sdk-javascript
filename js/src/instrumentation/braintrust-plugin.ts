@@ -17,6 +17,7 @@ import { GroqPlugin } from "./plugins/groq-plugin";
 import { GenkitPlugin } from "./plugins/genkit-plugin";
 import { GitHubCopilotPlugin } from "./plugins/github-copilot-plugin";
 import { FluePlugin } from "./plugins/flue-plugin";
+import { LangChainPlugin } from "./plugins/langchain-plugin";
 import type { InstrumentationIntegrationsConfig } from "./config";
 
 export interface BraintrustPluginConfig {
@@ -40,6 +41,7 @@ function getIntegrationConfig(
  * - Vercel AI SDK (generateText, streamText, etc.)
  * - Google GenAI SDK
  * - HuggingFace Inference SDK
+ * - LangChain.js and LangGraph
  * - Mistral SDK
  * - Cohere SDK
  *
@@ -66,6 +68,7 @@ export class BraintrustPlugin extends BasePlugin {
   private genkitPlugin: GenkitPlugin | null = null;
   private gitHubCopilotPlugin: GitHubCopilotPlugin | null = null;
   private fluePlugin: FluePlugin | null = null;
+  private langChainPlugin: LangChainPlugin | null = null;
 
   constructor(config: BraintrustPluginConfig = {}) {
     super();
@@ -173,6 +176,11 @@ export class BraintrustPlugin extends BasePlugin {
       this.fluePlugin = new FluePlugin();
       this.fluePlugin.enable();
     }
+
+    if (integrations.langchain !== false && integrations.langgraph !== false) {
+      this.langChainPlugin = new LangChainPlugin();
+      this.langChainPlugin.enable();
+    }
   }
 
   protected onDisable(): void {
@@ -264,6 +272,11 @@ export class BraintrustPlugin extends BasePlugin {
     if (this.fluePlugin) {
       this.fluePlugin.disable();
       this.fluePlugin = null;
+    }
+
+    if (this.langChainPlugin) {
+      this.langChainPlugin.disable();
+      this.langChainPlugin = null;
     }
   }
 }

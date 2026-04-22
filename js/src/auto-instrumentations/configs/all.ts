@@ -16,6 +16,7 @@ import { googleADKConfigs } from "./google-adk";
 import { googleGenAIConfigs } from "./google-genai";
 import { groqConfigs } from "./groq";
 import { huggingFaceConfigs } from "./huggingface";
+import { langchainConfigs } from "./langchain";
 import { mistralConfigs } from "./mistral";
 import { openAIAgentsCoreConfigs } from "./openai-agents";
 import { openaiConfigs } from "./openai";
@@ -55,6 +56,10 @@ const defaultInstrumentationConfigGroups: readonly InstrumentationConfigGroup[] 
       configs: googleGenAIConfigs,
     },
     { integrations: ["huggingface"], configs: huggingFaceConfigs },
+    {
+      integrations: ["langchain", "langgraph"],
+      configs: langchainConfigs,
+    },
     { integrations: ["openrouter"], configs: openRouterConfigs },
     {
       integrations: ["openrouterAgent"],

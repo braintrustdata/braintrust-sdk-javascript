@@ -20,6 +20,8 @@ export interface InstrumentationIntegrationsConfig {
   genkit?: boolean;
   gitHubCopilot?: boolean;
   openaiCodexSDK?: boolean;
+  langchain?: boolean;
+  langgraph?: boolean;
 }
 
 export interface InstrumentationConfig {
@@ -74,6 +76,10 @@ const envIntegrationAliases: Record<
   githubcopilot: "gitHubCopilot",
   "github-copilot": "gitHubCopilot",
   "copilot-sdk": "gitHubCopilot",
+  langchain: "langchain",
+  "langchain-js": "langchain",
+  "@langchain": "langchain",
+  langgraph: "langgraph",
 };
 
 export function getDefaultInstrumentationIntegrations(): Record<
@@ -102,6 +108,8 @@ export function getDefaultInstrumentationIntegrations(): Record<
     groq: true,
     genkit: true,
     gitHubCopilot: true,
+    langchain: true,
+    langgraph: true,
   };
 }
 
