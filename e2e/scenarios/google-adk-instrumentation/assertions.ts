@@ -160,21 +160,19 @@ function summarizeADKPayload(event: CapturedLogEvent): Json {
 
 export function defineGoogleADKInstrumentationAssertions(options: {
   expectLLMSpan: boolean;
-  mode: "auto" | "wrapped";
   name: string;
   runScenario: RunGoogleADKScenario;
   snapshotName: string;
   testFileUrl: string;
   timeoutMs: number;
 }): void {
-  const snapshotBaseName = `${options.snapshotName}-${options.mode}`;
   const spanSnapshotPath = resolveFileSnapshotPath(
     options.testFileUrl,
-    `${snapshotBaseName}.span-events.json`,
+    `${options.snapshotName}.span-events.json`,
   );
   const payloadSnapshotPath = resolveFileSnapshotPath(
     options.testFileUrl,
-    `${snapshotBaseName}.log-payloads.json`,
+    `${options.snapshotName}.log-payloads.json`,
   );
   const testConfig = {
     timeout: options.timeoutMs,
@@ -260,7 +258,12 @@ export function defineGoogleADKInstrumentationAssertions(options: {
 
     test("matches the shared span snapshot", testConfig, async () => {
       const relevantEvents = events.filter(
-        (e) => e.span.name !== undefined && e.span.type !== "llm",
+        (e) =>
+          e.span.name !== undefined &&
+          e.span.type !== "llm" &&
+          // Wrapped mode logs an extra start-only tool row. Normalize to the
+          // terminal tool record so wrapped and auto-hook snapshots stay aligned.
+          (e.span.type !== "tool" || e.output !== undefined),
       );
       const spanSummary = normalizeForSnapshot(
         dedupeSnapshotItems(
@@ -289,7 +292,10 @@ export function defineGoogleADKInstrumentationAssertions(options: {
 
     test("matches the shared payload snapshot", testConfig, async () => {
       const relevantEvents = events.filter(
-        (e) => e.span.name !== undefined && e.span.type !== "llm",
+        (e) =>
+          e.span.name !== undefined &&
+          e.span.type !== "llm" &&
+          (e.span.type !== "tool" || e.output !== undefined),
       );
       const payloadSummary = normalizeForSnapshot(
         dedupeSnapshotItems(

@@ -37,7 +37,6 @@ for (const scenario of googleADKScenarios) {
   describe(`google adk sdk ${scenario.version}`, () => {
     defineGoogleADKInstrumentationAssertions({
       name: "wrapped instrumentation",
-      mode: "wrapped",
       runScenario: async ({ runScenarioDir }) => {
         await runScenarioDir({
           entry: scenario.wrapperEntry,
@@ -54,7 +53,6 @@ for (const scenario of googleADKScenarios) {
 
     defineGoogleADKInstrumentationAssertions({
       name: "auto-hook instrumentation",
-      mode: "auto",
       runScenario: async ({ runNodeScenarioDir }) => {
         await runNodeScenarioDir({
           entry: scenario.autoEntry,
