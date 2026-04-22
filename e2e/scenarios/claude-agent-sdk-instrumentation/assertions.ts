@@ -243,6 +243,23 @@ function findSubAgentHandoffTool(
   return hasSubAgentHandoffToolName(parentSpan) ? parentSpan : undefined;
 }
 
+function findLatestTaskLlmBeforeSpan(
+  events: CapturedLogEvent[],
+  taskId: string | undefined,
+  childStartTime: number | undefined,
+): CapturedLogEvent | undefined {
+  return findChildSpans(events, "anthropic.messages.create", taskId)
+    .filter((event) => {
+      if (childStartTime === undefined) {
+        return true;
+      }
+      return (
+        Number(event.metrics?.start ?? Number.NaN) <= Number(childStartTime)
+      );
+    })
+    .at(-1);
+}
+
 function findOperationTaskRoot(
   events: CapturedLogEvent[],
   operationName: string,
@@ -507,11 +524,19 @@ export function defineClaudeAgentSDKInstrumentationAssertions(options: {
         events,
         "claude-agent-subagent-operation",
       );
-      const llm = findAllSpans(events, "anthropic.messages.create").find(
-        (event) => event.span.parentIds.includes(taskRoot?.span.id ?? ""),
-      );
       const nestedTask = findSubAgentTaskSpan(events, taskRoot?.span.id);
       const handoffTool = findSubAgentHandoffTool(events, nestedTask);
+      const llm = findLatestTaskLlmBeforeSpan(
+        events,
+        taskRoot?.span.id,
+        typeof handoffTool?.metrics?.start === "number"
+          ? handoffTool.metrics.start
+          : undefined,
+      );
+      const handoffToolParent = findSpanById(
+        events,
+        handoffTool?.span.parentIds[0],
+      );
       const nestedTaskLlm = findChildSpans(
         events,
         "anthropic.messages.create",
@@ -539,6 +564,10 @@ export function defineClaudeAgentSDKInstrumentationAssertions(options: {
       }
       expect(handoffTool).toBeDefined();
       expect(hasSubAgentHandoffToolName(handoffTool)).toBe(true);
+      expect(handoffToolParent?.span.id).toBe(taskRoot?.span.id);
+      expect(Number(llm?.metrics?.start ?? Number.NaN)).toBeLessThanOrEqual(
+        Number(handoffTool?.metrics?.start ?? Number.NaN),
+      );
       expect(nestedTask?.span.parentIds).toEqual([handoffTool?.span.id ?? ""]);
       expect(nestedTaskLlm).toBeDefined();
       expect(nestedTaskLlm?.span.parentIds).toContain(
@@ -559,7 +588,7 @@ export function defineClaudeAgentSDKInstrumentationAssertions(options: {
 
     if (options.expectTaskLifecycleDetails) {
       test(
-        "nests built-in subagent Bash under the subagent llm",
+        "orders built-in Agent and Bash after their llm siblings",
         testConfig,
         () => {
           const operation = findLatestSpan(
@@ -570,21 +599,28 @@ export function defineClaudeAgentSDKInstrumentationAssertions(options: {
             events,
             "claude-agent-subagent-built-in-tool-operation",
           );
-          const taskRootLlm = findAllSpans(
-            events,
-            "anthropic.messages.create",
-          ).find((event) =>
-            event.span.parentIds.includes(taskRoot?.span.id ?? ""),
-          );
           const nestedTask = findSubAgentTaskSpan(events, taskRoot?.span.id);
           const handoffTool = findSubAgentHandoffTool(events, nestedTask);
-          const nestedTaskLlm = findChildSpans(
+          const taskRootLlm = findLatestTaskLlmBeforeSpan(
             events,
-            "anthropic.messages.create",
-            nestedTask?.span.id,
-          ).at(-1);
+            taskRoot?.span.id,
+            typeof handoffTool?.metrics?.start === "number"
+              ? handoffTool.metrics.start
+              : undefined,
+          );
+          const handoffToolParent = findSpanById(
+            events,
+            handoffTool?.span.parentIds[0],
+          );
           const bashTool = findAllSpans(events, "tool: Bash").find((event) =>
             isDescendantOf(events, event, taskRoot?.span.id),
+          );
+          const nestedTaskLlm = findLatestTaskLlmBeforeSpan(
+            events,
+            nestedTask?.span.id,
+            typeof bashTool?.metrics?.start === "number"
+              ? bashTool.metrics.start
+              : undefined,
           );
           const bashToolParent = findSpanById(
             events,
@@ -595,6 +631,12 @@ export function defineClaudeAgentSDKInstrumentationAssertions(options: {
           expect(taskRoot).toBeDefined();
           expect(nestedTask).toBeDefined();
           expect(handoffTool).toBeDefined();
+          expect(handoffToolParent?.span.id).toBe(taskRoot?.span.id);
+          expect(
+            Number(taskRootLlm?.metrics?.start ?? Number.NaN),
+          ).toBeLessThanOrEqual(
+            Number(handoffTool?.metrics?.start ?? Number.NaN),
+          );
           expect(nestedTaskLlm).toBeDefined();
           expect(bashTool).toBeDefined();
           expect(isDescendantOf(events, bashTool, nestedTask?.span.id)).toBe(

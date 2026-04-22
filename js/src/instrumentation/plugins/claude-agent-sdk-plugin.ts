@@ -40,7 +40,7 @@ type ParsedToolName = {
 };
 type ParentSpanResolver = (
   toolUseID: string,
-  context?: { agentId?: string },
+  context?: { agentId?: string; preferTaskSiblingParent?: boolean },
 ) => Promise<string>;
 type LLMSpanResult = {
   finalMessage: ClaudeConversationMessage | undefined;
@@ -63,6 +63,10 @@ function llmParentKey(parentToolUseId: string | null): string {
 
 function isSubAgentDelegationToolName(toolName: string): boolean {
   return toolName === "Agent" || toolName === "Task";
+}
+
+function shouldParentToolAsTaskSibling(toolName: string): boolean {
+  return toolName === "Agent" || toolName === "Task" || toolName === "Bash";
 }
 
 function filterSerializableOptions(
@@ -496,6 +500,7 @@ function createToolTracingHooks(
       name: parsed.displayName,
       parent: await resolveParentSpan(toolUseID, {
         agentId: input.agent_id,
+        preferTaskSiblingParent: shouldParentToolAsTaskSibling(parsed.toolName),
       }),
       spanAttributes: { type: SpanTypeAttribute.TOOL },
     });
@@ -1364,12 +1369,12 @@ export class ClaudeAgentSDKPlugin extends BasePlugin {
               : null);
           const parentKey = llmParentKey(parentToolUseId);
           const activeLlmSpan = activeLlmSpansByParentToolUse.get(parentKey);
-          if (activeLlmSpan) {
-            return activeLlmSpan.export();
-          }
 
-          if (parentToolUseId) {
-            if (trackedParentToolUseId === undefined && context?.agentId) {
+          if (context?.preferTaskSiblingParent) {
+            // Built-in Claude tools should be siblings of the driving LLM turn,
+            // but we still materialize that LLM span first so trace ordering
+            // reflects that the tool call was produced by the model.
+            if (!activeLlmSpan) {
               await ensureActiveLlmSpanForParentToolUse(
                 span,
                 activeLlmSpansByParentToolUse,
@@ -1379,6 +1384,9 @@ export class ClaudeAgentSDKPlugin extends BasePlugin {
                 parentToolUseId,
                 getCurrentUnixTimestamp(),
               );
+            }
+
+            if (parentToolUseId) {
               const subAgentSpan = await ensureSubAgentSpan(
                 subAgentDetailsByToolUseId,
                 span,
@@ -1389,6 +1397,14 @@ export class ClaudeAgentSDKPlugin extends BasePlugin {
               return subAgentSpan.export();
             }
 
+            return span.export();
+          }
+
+          if (activeLlmSpan) {
+            return activeLlmSpan.export();
+          }
+
+          if (parentToolUseId) {
             const parentLlm =
               latestLlmParentBySubAgentToolUse.get(parentToolUseId);
             if (parentLlm) {
