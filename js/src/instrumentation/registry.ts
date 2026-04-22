@@ -19,6 +19,7 @@ export interface InstrumentationConfig {
     vercel?: boolean;
     aisdk?: boolean;
     google?: boolean;
+    googleADK?: boolean;
     huggingface?: boolean;
     claudeAgentSDK?: boolean;
     cursor?: boolean;
@@ -27,6 +28,10 @@ export interface InstrumentationConfig {
     openrouterAgent?: boolean;
     mistral?: boolean;
     cohere?: boolean;
+    gitHubCopilot?: boolean;
+    langchain?: boolean;
+    langchainJS?: boolean;
+    langgraph?: boolean;
   };
 }
 
@@ -118,8 +123,12 @@ class PluginRegistry {
       openrouter: true,
       openrouterAgent: true,
       mistral: true,
+      googleADK: true,
       cohere: true,
       gitHubCopilot: true,
+      langchain: true,
+      langchainJS: true,
+      langgraph: true,
     };
   }
 
@@ -138,10 +147,12 @@ class PluginRegistry {
         .filter((s) => s.length > 0);
 
       for (const sdk of disabled) {
+        integrations[sdk] = false;
         if (sdk === "cursor-sdk") {
           integrations.cursorSDK = false;
-        } else {
-          integrations[sdk] = false;
+        }
+        if (sdk === "langchain-js") {
+          integrations.langchainJS = false;
         }
       }
     }
