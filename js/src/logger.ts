@@ -3422,6 +3422,37 @@ type DatasetSelection = {
   snapshotName?: string;
 };
 
+type DatasetSnapshotNameLookup = {
+  snapshotName: string;
+  xactId?: never;
+};
+
+type DatasetSnapshotXactLookup = {
+  snapshotName?: never;
+  xactId: string;
+};
+
+type DatasetSnapshotLookup =
+  | DatasetSnapshotNameLookup
+  | DatasetSnapshotXactLookup;
+
+function isDatasetSnapshotNameLookup(
+  lookup: DatasetSnapshotLookup,
+): lookup is DatasetSnapshotNameLookup {
+  return "snapshotName" in lookup;
+}
+
+function assertDatasetSnapshotLookup(lookup: {
+  snapshotName?: string;
+  xactId?: string;
+}): asserts lookup is DatasetSnapshotLookup {
+  const hasSnapshotName = lookup.snapshotName !== undefined;
+  const hasXactId = lookup.xactId !== undefined;
+  if (hasSnapshotName === hasXactId) {
+    throw new Error("Exactly one of snapshotName or xactId must be provided");
+  }
+}
+
 type DatasetPinState = {
   lazyPinnedVersion?: LazyValue<string | undefined>;
   pinnedEnvironment?: string;
@@ -3833,18 +3864,43 @@ export type FullInitDatasetOptions<IsLegacyDataset extends boolean> = {
   project?: string;
 } & InitDatasetOptions<IsLegacyDataset>;
 
-async function getDatasetSnapshots({
-  state,
-  datasetId,
-}: {
-  state: BraintrustState;
-  datasetId: string;
-}): Promise<DatasetSnapshot[]> {
+async function getDatasetSnapshots(
+  params:
+    | {
+        state: BraintrustState;
+        datasetId: string;
+      }
+    | ({
+        state: BraintrustState;
+        datasetId: string;
+      } & DatasetSnapshotLookup),
+): Promise<DatasetSnapshot[]> {
+  const { state, datasetId } = params;
   return datasetSnapshotSchema.array().parse(
     await state.appConn().post_json("api/dataset_snapshot/get", {
       dataset_id: datasetId,
+      ...("snapshotName" in params ? { name: params.snapshotName } : {}),
+      ...("xactId" in params ? { xact_id: params.xactId } : {}),
     }),
   );
+}
+
+async function getDatasetSnapshot(
+  params: {
+    state: BraintrustState;
+    datasetId: string;
+  } & DatasetSnapshotLookup,
+): Promise<DatasetSnapshot | undefined> {
+  assertDatasetSnapshotLookup(params);
+  const snapshots = await getDatasetSnapshots(params);
+  if (snapshots.length > 1) {
+    throw new Error(
+      isDatasetSnapshotNameLookup(params)
+        ? `Expected a unique dataset snapshot named "${params.snapshotName}" for ${params.datasetId}`
+        : `Expected a unique dataset snapshot for xact_id "${params.xactId}" in ${params.datasetId}`,
+    );
+  }
+  return snapshots[0];
 }
 
 function normalizeDatasetSelection({
@@ -3876,8 +3932,11 @@ async function resolveDatasetSnapshotName({
   datasetId: string;
   snapshotName: string;
 }): Promise<string> {
-  const snapshots = await getDatasetSnapshots({ state, datasetId });
-  const match = snapshots.find((snapshot) => snapshot.name === snapshotName);
+  const match = await getDatasetSnapshot({
+    state,
+    datasetId,
+    snapshotName,
+  });
   if (match === undefined) {
     throw new Error(
       `Dataset snapshot "${snapshotName}" not found for ${datasetId}`,
@@ -3912,14 +3971,13 @@ async function resolveDatasetEnvironment({
   datasetId: string;
   environment: string;
 }): Promise<string> {
-  const response = await state
-    .apiConn()
-    .get_json(
-      `environment-object/dataset/${datasetId}/${encodeURIComponent(environment)}`,
-      {
-        org_name: state.orgName ?? undefined,
-      },
-    );
+  const environmentObjectPath = `environment-object/dataset/${datasetId}/${encodeURIComponent(environment)}`;
+  const response =
+    state.orgName == null
+      ? await state.apiConn().get_json(environmentObjectPath)
+      : await state.apiConn().get_json(environmentObjectPath, {
+          org_name: state.orgName,
+        });
   return z.object({ object_version: z.string() }).parse(response)
     .object_version;
 }
@@ -3999,13 +4057,11 @@ async function serializeDatasetForExperiment({
     };
   }
 
-  if (
-    selection.environment !== undefined ||
-    selection.snapshotName !== undefined
-  ) {
+  const datasetVersion = await dataset.version();
+  if (datasetVersion !== undefined) {
     return {
       datasetId: evalData.dataset_id,
-      datasetVersion: await dataset.version(),
+      datasetVersion,
     };
   }
 
@@ -7230,6 +7286,10 @@ export class Dataset<
   }
 
   public override async version(options?: { batchSize?: number }) {
+    const pinnedVersion = this.getPinnedVersion();
+    if (pinnedVersion !== undefined) {
+      return pinnedVersion;
+    }
     await this.getState();
     return await super.version(options);
   }
@@ -7444,6 +7504,18 @@ export class Dataset<
     return await getDatasetSnapshots({
       state,
       datasetId: await this.id,
+    });
+  }
+
+  public async getSnapshot(
+    lookup: DatasetSnapshotLookup,
+  ): Promise<DatasetSnapshot | undefined> {
+    const state = await this.getState();
+    const datasetId = await this.id;
+    return await getDatasetSnapshot({
+      state,
+      datasetId,
+      ...lookup,
     });
   }
 
