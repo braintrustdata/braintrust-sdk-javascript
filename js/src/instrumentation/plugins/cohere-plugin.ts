@@ -124,6 +124,11 @@ const CHAT_REQUEST_METADATA_ALLOWLIST = new Set([
   "strictTools",
   "strict_tools",
   "temperature",
+  "thinking",
+  "thinkingTokenBudget",
+  "thinkingType",
+  "thinking_token_budget",
+  "thinking_type",
   "toolChoice",
   "tool_choice",
 ]);
@@ -428,6 +433,14 @@ function mergeUsageMetrics(
       "tokens",
       tokenContainer.totalTokens ?? tokenContainer.total_tokens,
     );
+    setMetricIfNumber(
+      metrics,
+      "reasoning_tokens",
+      tokenContainer.reasoningTokens ??
+        tokenContainer.reasoning_tokens ??
+        tokenContainer.thinkingTokens ??
+        tokenContainer.thinking_tokens,
+    );
   }
 
   const billedUnits =
@@ -551,6 +564,129 @@ function extractV8DeltaText(chunk: CohereChatStreamEvent): string | undefined {
   return undefined;
 }
 
+type CohereContentBlockType = "text" | "thinking";
+
+type AggregatedCohereContentBlock = {
+  text: string;
+  thinking: string;
+  type?: CohereContentBlockType;
+};
+
+type SerializedCohereContentBlock =
+  | {
+      text: string;
+      type: "text";
+    }
+  | {
+      thinking: string;
+      type: "thinking";
+    };
+
+function getV8ContentIndex(chunk: CohereChatStreamEvent): number {
+  return typeof chunk.index === "number" ? chunk.index : 0;
+}
+
+function toContentBlockType(
+  value: unknown,
+): CohereContentBlockType | undefined {
+  return value === "text" || value === "thinking" ? value : undefined;
+}
+
+function getOrCreateContentBlock(
+  contentBlocksByIndex: Record<number, AggregatedCohereContentBlock>,
+  contentBlockOrder: number[],
+  index: number,
+): AggregatedCohereContentBlock {
+  if (!contentBlockOrder.includes(index)) {
+    contentBlockOrder.push(index);
+  }
+
+  if (!(index in contentBlocksByIndex)) {
+    contentBlocksByIndex[index] = {
+      text: "",
+      thinking: "",
+    };
+  }
+
+  return contentBlocksByIndex[index];
+}
+
+function appendV8ContentBlock(
+  contentBlocksByIndex: Record<number, AggregatedCohereContentBlock>,
+  contentBlockOrder: number[],
+  index: number,
+  content: unknown,
+): void {
+  if (typeof content === "string") {
+    const block = getOrCreateContentBlock(
+      contentBlocksByIndex,
+      contentBlockOrder,
+      index,
+    );
+    block.type ??= "text";
+    block.text += content;
+    return;
+  }
+
+  if (!isObject(content)) {
+    return;
+  }
+
+  const block = getOrCreateContentBlock(
+    contentBlocksByIndex,
+    contentBlockOrder,
+    index,
+  );
+  const contentType = toContentBlockType(content.type);
+  if (contentType) {
+    block.type = contentType;
+  }
+
+  if (typeof content.text === "string") {
+    block.type ??= "text";
+    block.text += content.text;
+  }
+
+  if (typeof content.thinking === "string") {
+    block.type ??= "thinking";
+    block.thinking += content.thinking;
+  }
+}
+
+function serializeAggregatedContentBlocks(
+  contentBlocksByIndex: Record<number, AggregatedCohereContentBlock>,
+  contentBlockOrder: number[],
+): SerializedCohereContentBlock[] {
+  return contentBlockOrder
+    .sort((left, right) => left - right)
+    .flatMap<SerializedCohereContentBlock>((index) => {
+      const block = contentBlocksByIndex[index];
+      if (!block) {
+        return [];
+      }
+
+      if (block.type === "thinking" && block.thinking.length > 0) {
+        return [{ type: "thinking", thinking: block.thinking }];
+      }
+
+      if (block.text.length > 0) {
+        return [{ type: "text", text: block.text }];
+      }
+
+      if (block.thinking.length > 0) {
+        return [{ type: "thinking", thinking: block.thinking }];
+      }
+
+      return [];
+    });
+}
+
+function hasThinkingContent(
+  contentBlocks: Array<{ type: "text" | "thinking" }>,
+): boolean {
+  return contentBlocks.some((block) => block.type === "thinking");
+}
+
 export function aggregateCohereChatStreamChunks(
   chunks: CohereChatStreamEvent[],
 ): {
@@ -559,11 +695,14 @@ export function aggregateCohereChatStreamChunks(
   metadata: Record<string, unknown>;
 } {
   const textDeltas: string[] = [];
+  const contentBlocksByIndex: Record<number, AggregatedCohereContentBlock> = {};
+  const contentBlockOrder: number[] = [];
   const toolCallsByIndex: Record<number, CohereToolCall> = {};
   const toolCallOrder: number[] = [];
   let terminalResponse: CohereChatResponse | undefined;
   let role: string | undefined;
   let finishReason: string | undefined;
+  let toolPlan = "";
   let metadata: Record<string, unknown> = {};
   let metrics: Record<string, number> = {};
 
@@ -642,9 +781,45 @@ export function aggregateCohereChatStreamChunks(
     }
 
     if (eventType === "content-delta") {
+      appendV8ContentBlock(
+        contentBlocksByIndex,
+        contentBlockOrder,
+        getV8ContentIndex(chunk),
+        isObject(chunk.delta) && isObject(chunk.delta.message)
+          ? chunk.delta.message.content
+          : undefined,
+      );
       const text = extractV8DeltaText(chunk);
       if (text) {
         textDeltas.push(text);
+      }
+      continue;
+    }
+
+    if (eventType === "content-start") {
+      appendV8ContentBlock(
+        contentBlocksByIndex,
+        contentBlockOrder,
+        getV8ContentIndex(chunk),
+        isObject(chunk.delta) && isObject(chunk.delta.message)
+          ? chunk.delta.message.content
+          : undefined,
+      );
+      continue;
+    }
+
+    if (eventType === "tool-plan-delta") {
+      if (isObject(chunk.delta) && isObject(chunk.delta.message)) {
+        const deltaToolPlan =
+          typeof chunk.delta.message.toolPlan === "string"
+            ? chunk.delta.message.toolPlan
+            : typeof chunk.delta.message.tool_plan === "string"
+              ? chunk.delta.message.tool_plan
+              : undefined;
+
+        if (deltaToolPlan) {
+          toolPlan += deltaToolPlan;
+        }
       }
       continue;
     }
@@ -721,14 +896,41 @@ export function aggregateCohereChatStreamChunks(
     .sort((left, right) => left - right)
     .map((index) => toolCallsByIndex[index])
     .filter((toolCall): toolCall is CohereToolCall => isObject(toolCall));
+  const aggregatedContentBlocks = serializeAggregatedContentBlocks(
+    contentBlocksByIndex,
+    contentBlockOrder,
+  );
 
   let output: unknown = extractCohereChatOutput(terminalResponse);
   if (output === undefined) {
     const mergedText = textDeltas.join("");
-    if (mergedToolCalls.length > 0 || role || mergedText.length > 0) {
+    const shouldUseStructuredContent =
+      hasThinkingContent(aggregatedContentBlocks) || toolPlan.length > 0;
+
+    if (shouldUseStructuredContent) {
       output = {
         ...(role ? { role } : {}),
-        ...(mergedText.length > 0 ? { content: mergedText } : {}),
+        ...(aggregatedContentBlocks.length > 0
+          ? { content: aggregatedContentBlocks }
+          : {}),
+        ...(toolPlan.length > 0 ? { toolPlan } : {}),
+        ...(mergedToolCalls.length > 0 ? { toolCalls: mergedToolCalls } : {}),
+      };
+    } else if (
+      mergedToolCalls.length > 0 ||
+      role ||
+      mergedText.length > 0 ||
+      aggregatedContentBlocks.length > 0
+    ) {
+      const textContent =
+        mergedText.length > 0
+          ? mergedText
+          : aggregatedContentBlocks[0]?.type === "text"
+            ? aggregatedContentBlocks[0].text
+            : undefined;
+      output = {
+        ...(role ? { role } : {}),
+        ...(textContent ? { content: textContent } : {}),
         ...(mergedToolCalls.length > 0 ? { toolCalls: mergedToolCalls } : {}),
       };
     }
