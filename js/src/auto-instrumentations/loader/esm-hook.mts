@@ -5,7 +5,7 @@
 
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
-import { sep } from "node:path";
+import { extname, sep } from "node:path";
 import {
   create,
   type InstrumentationConfig,
@@ -16,6 +16,26 @@ import { getPackageName, getPackageVersion } from "./get-package-version.js";
 let instrumentator: any;
 let packages: Set<string>;
 let transformers: Map<string, any> = new Map();
+
+function getModuleType(url: string, format: string | undefined) {
+  if (format === "module") {
+    return "esm";
+  }
+  if (format === "commonjs") {
+    return "cjs";
+  }
+
+  const pathname = url.startsWith("file:") ? fileURLToPath(url) : url;
+  const ext = extname(pathname);
+  if (ext === ".mjs") {
+    return "esm";
+  }
+  if (ext === ".cjs") {
+    return "cjs";
+  }
+
+  return "unknown";
+}
 
 export async function initialize(
   data: { instrumentations?: InstrumentationConfig[] } = {},
@@ -86,12 +106,7 @@ export async function load(url: string, context: any, nextLoad: Function) {
   if (code) {
     const transformer = transformers.get(url);
     try {
-      const moduleType =
-        result.format === "module"
-          ? "esm"
-          : result.format === "commonjs"
-            ? "cjs"
-            : "unknown";
+      const moduleType = getModuleType(url, result.format);
       const transformedCode = transformer.transform(
         code.toString("utf8"),
         moduleType,

@@ -23,6 +23,7 @@ export interface InstrumentationConfig {
     claudeAgentSDK?: boolean;
     cursor?: boolean;
     cursorSDK?: boolean;
+    openAIAgents?: boolean;
     openrouter?: boolean;
     openrouterAgent?: boolean;
     mistral?: boolean;
@@ -115,6 +116,7 @@ class PluginRegistry {
       claudeAgentSDK: true,
       cursor: true,
       cursorSDK: true,
+      openAIAgents: true,
       openrouter: true,
       openrouterAgent: true,
       mistral: true,

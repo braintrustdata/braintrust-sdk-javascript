@@ -1,9 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { BraintrustPlugin } from "./braintrust-plugin";
+import {
+  BraintrustPlugin,
+  type BraintrustPluginConfig,
+} from "./braintrust-plugin";
 import { OpenAIPlugin } from "./plugins/openai-plugin";
 import { AnthropicPlugin } from "./plugins/anthropic-plugin";
 import { AISDKPlugin } from "./plugins/ai-sdk-plugin";
 import { ClaudeAgentSDKPlugin } from "./plugins/claude-agent-sdk-plugin";
+import { OpenAIAgentsPlugin } from "./plugins/openai-agents-plugin";
 import { GoogleGenAIPlugin } from "./plugins/google-genai-plugin";
 import { HuggingFacePlugin } from "./plugins/huggingface-plugin";
 import { OpenRouterAgentPlugin } from "./plugins/openrouter-agent-plugin";
@@ -21,6 +25,12 @@ function createPluginClassMock() {
     this.enable = vi.fn();
     this.disable = vi.fn();
   });
+}
+
+function pluginConfigWithIntegrations(
+  integrations: Record<string, boolean>,
+): BraintrustPluginConfig {
+  return { integrations };
 }
 
 // Mock all sub-plugins but preserve the utility functions
@@ -44,6 +54,10 @@ vi.mock("./plugins/ai-sdk-plugin", () => ({
 
 vi.mock("./plugins/claude-agent-sdk-plugin", () => ({
   ClaudeAgentSDKPlugin: createPluginClassMock(),
+}));
+
+vi.mock("./plugins/openai-agents-plugin", () => ({
+  OpenAIAgentsPlugin: createPluginClassMock(),
 }));
 
 vi.mock("./plugins/google-genai-plugin", () => ({
@@ -118,6 +132,15 @@ describe("BraintrustPlugin", () => {
       expect(ClaudeAgentSDKPlugin).toHaveBeenCalledTimes(1);
       const mockInstance =
         vi.mocked(ClaudeAgentSDKPlugin).mock.results[0].value;
+      expect(mockInstance.enable).toHaveBeenCalledTimes(1);
+    });
+
+    it("should create and enable OpenAI Agents plugin by default", () => {
+      const plugin = new BraintrustPlugin();
+      plugin.enable();
+
+      expect(OpenAIAgentsPlugin).toHaveBeenCalledTimes(1);
+      const mockInstance = vi.mocked(OpenAIAgentsPlugin).mock.results[0].value;
       expect(mockInstance.enable).toHaveBeenCalledTimes(1);
     });
 
@@ -203,6 +226,7 @@ describe("BraintrustPlugin", () => {
       expect(AnthropicPlugin).toHaveBeenCalledTimes(1);
       expect(AISDKPlugin).toHaveBeenCalledTimes(1);
       expect(ClaudeAgentSDKPlugin).toHaveBeenCalledTimes(1);
+      expect(OpenAIAgentsPlugin).toHaveBeenCalledTimes(1);
       expect(GoogleGenAIPlugin).toHaveBeenCalledTimes(1);
       expect(HuggingFacePlugin).toHaveBeenCalledTimes(1);
       expect(OpenRouterPlugin).toHaveBeenCalledTimes(1);
@@ -221,6 +245,7 @@ describe("BraintrustPlugin", () => {
       expect(AnthropicPlugin).toHaveBeenCalledTimes(1);
       expect(AISDKPlugin).toHaveBeenCalledTimes(1);
       expect(ClaudeAgentSDKPlugin).toHaveBeenCalledTimes(1);
+      expect(OpenAIAgentsPlugin).toHaveBeenCalledTimes(1);
       expect(GoogleGenAIPlugin).toHaveBeenCalledTimes(1);
       expect(HuggingFacePlugin).toHaveBeenCalledTimes(1);
       expect(OpenRouterPlugin).toHaveBeenCalledTimes(1);
@@ -239,6 +264,7 @@ describe("BraintrustPlugin", () => {
       expect(AnthropicPlugin).toHaveBeenCalledTimes(1);
       expect(AISDKPlugin).toHaveBeenCalledTimes(1);
       expect(ClaudeAgentSDKPlugin).toHaveBeenCalledTimes(1);
+      expect(OpenAIAgentsPlugin).toHaveBeenCalledTimes(1);
       expect(GoogleGenAIPlugin).toHaveBeenCalledTimes(1);
       expect(HuggingFacePlugin).toHaveBeenCalledTimes(1);
       expect(OpenRouterPlugin).toHaveBeenCalledTimes(1);
@@ -261,6 +287,7 @@ describe("BraintrustPlugin", () => {
       expect(AnthropicPlugin).toHaveBeenCalledTimes(1);
       expect(AISDKPlugin).toHaveBeenCalledTimes(1);
       expect(ClaudeAgentSDKPlugin).toHaveBeenCalledTimes(1);
+      expect(OpenAIAgentsPlugin).toHaveBeenCalledTimes(1);
       expect(GoogleGenAIPlugin).toHaveBeenCalledTimes(1);
       expect(HuggingFacePlugin).toHaveBeenCalledTimes(1);
       expect(OpenRouterPlugin).toHaveBeenCalledTimes(1);
@@ -278,6 +305,7 @@ describe("BraintrustPlugin", () => {
       expect(OpenAIPlugin).toHaveBeenCalledTimes(1);
       expect(AISDKPlugin).toHaveBeenCalledTimes(1);
       expect(ClaudeAgentSDKPlugin).toHaveBeenCalledTimes(1);
+      expect(OpenAIAgentsPlugin).toHaveBeenCalledTimes(1);
       expect(GoogleGenAIPlugin).toHaveBeenCalledTimes(1);
       expect(HuggingFacePlugin).toHaveBeenCalledTimes(1);
       expect(OpenRouterPlugin).toHaveBeenCalledTimes(1);
@@ -313,6 +341,25 @@ describe("BraintrustPlugin", () => {
       expect(OpenAIPlugin).toHaveBeenCalledTimes(1);
       expect(AnthropicPlugin).toHaveBeenCalledTimes(1);
       expect(AISDKPlugin).toHaveBeenCalledTimes(1);
+      expect(GoogleGenAIPlugin).toHaveBeenCalledTimes(1);
+      expect(OpenAIAgentsPlugin).toHaveBeenCalledTimes(1);
+      expect(HuggingFacePlugin).toHaveBeenCalledTimes(1);
+      expect(OpenRouterPlugin).toHaveBeenCalledTimes(1);
+      expect(OpenRouterAgentPlugin).toHaveBeenCalledTimes(1);
+      expect(MistralPlugin).toHaveBeenCalledTimes(1);
+    });
+
+    it("should not create OpenAI Agents plugin when openAIAgents: false", () => {
+      const plugin = new BraintrustPlugin(
+        pluginConfigWithIntegrations({ openAIAgents: false }),
+      );
+      plugin.enable();
+
+      expect(OpenAIAgentsPlugin).not.toHaveBeenCalled();
+      expect(OpenAIPlugin).toHaveBeenCalledTimes(1);
+      expect(AnthropicPlugin).toHaveBeenCalledTimes(1);
+      expect(AISDKPlugin).toHaveBeenCalledTimes(1);
+      expect(ClaudeAgentSDKPlugin).toHaveBeenCalledTimes(1);
       expect(GoogleGenAIPlugin).toHaveBeenCalledTimes(1);
       expect(HuggingFacePlugin).toHaveBeenCalledTimes(1);
       expect(OpenRouterPlugin).toHaveBeenCalledTimes(1);
@@ -441,12 +488,13 @@ describe("BraintrustPlugin", () => {
     });
 
     it("should not create any plugins when all are disabled", () => {
-      const plugin = new BraintrustPlugin({
-        integrations: {
+      const plugin = new BraintrustPlugin(
+        pluginConfigWithIntegrations({
           openai: false,
           anthropic: false,
           aisdk: false,
           claudeAgentSDK: false,
+          openAIAgents: false,
           googleGenAI: false,
           huggingface: false,
           openrouter: false,
@@ -455,14 +503,15 @@ describe("BraintrustPlugin", () => {
           cohere: false,
           groq: false,
           gitHubCopilot: false,
-        },
-      });
+        }),
+      );
       plugin.enable();
 
       expect(OpenAIPlugin).not.toHaveBeenCalled();
       expect(AnthropicPlugin).not.toHaveBeenCalled();
       expect(AISDKPlugin).not.toHaveBeenCalled();
       expect(ClaudeAgentSDKPlugin).not.toHaveBeenCalled();
+      expect(OpenAIAgentsPlugin).not.toHaveBeenCalled();
       expect(GoogleGenAIPlugin).not.toHaveBeenCalled();
       expect(HuggingFacePlugin).not.toHaveBeenCalled();
       expect(OpenRouterPlugin).not.toHaveBeenCalled();
@@ -474,22 +523,24 @@ describe("BraintrustPlugin", () => {
     });
 
     it("should allow selective enabling of plugins", () => {
-      const plugin = new BraintrustPlugin({
-        integrations: {
+      const plugin = new BraintrustPlugin(
+        pluginConfigWithIntegrations({
           openai: true,
           anthropic: false,
           aisdk: false,
           claudeAgentSDK: true,
+          openAIAgents: true,
           googleGenAI: false,
           huggingface: true,
           openrouter: true,
           mistral: false,
-        },
-      });
+        }),
+      );
       plugin.enable();
 
       expect(OpenAIPlugin).toHaveBeenCalledTimes(1);
       expect(ClaudeAgentSDKPlugin).toHaveBeenCalledTimes(1);
+      expect(OpenAIAgentsPlugin).toHaveBeenCalledTimes(1);
       expect(HuggingFacePlugin).toHaveBeenCalledTimes(1);
       expect(OpenRouterPlugin).toHaveBeenCalledTimes(1);
       expect(OpenRouterAgentPlugin).toHaveBeenCalledTimes(1);
@@ -512,6 +563,7 @@ describe("BraintrustPlugin", () => {
       expect(OpenAIPlugin).toHaveBeenCalledTimes(1);
       expect(AnthropicPlugin).toHaveBeenCalledTimes(1);
       expect(ClaudeAgentSDKPlugin).toHaveBeenCalledTimes(1);
+      expect(OpenAIAgentsPlugin).toHaveBeenCalledTimes(1);
       expect(GoogleGenAIPlugin).toHaveBeenCalledTimes(1);
       expect(HuggingFacePlugin).toHaveBeenCalledTimes(1);
       expect(OpenRouterPlugin).toHaveBeenCalledTimes(1);
@@ -600,6 +652,8 @@ describe("BraintrustPlugin", () => {
       const aiSDKMock = vi.mocked(AISDKPlugin).mock.results[0].value;
       const claudeAgentSDKMock =
         vi.mocked(ClaudeAgentSDKPlugin).mock.results[0].value;
+      const openAIAgentsMock =
+        vi.mocked(OpenAIAgentsPlugin).mock.results[0].value;
       const googleGenAIMock =
         vi.mocked(GoogleGenAIPlugin).mock.results[0].value;
       const huggingFaceMock =
@@ -615,6 +669,7 @@ describe("BraintrustPlugin", () => {
       expect(anthropicMock.enable).toHaveBeenCalledTimes(1);
       expect(aiSDKMock.enable).toHaveBeenCalledTimes(1);
       expect(claudeAgentSDKMock.enable).toHaveBeenCalledTimes(1);
+      expect(openAIAgentsMock.enable).toHaveBeenCalledTimes(1);
       expect(googleGenAIMock.enable).toHaveBeenCalledTimes(1);
       expect(huggingFaceMock.enable).toHaveBeenCalledTimes(1);
       expect(openRouterMock.enable).toHaveBeenCalledTimes(1);
@@ -633,6 +688,8 @@ describe("BraintrustPlugin", () => {
       const aiSDKMock = vi.mocked(AISDKPlugin).mock.results[0].value;
       const claudeAgentSDKMock =
         vi.mocked(ClaudeAgentSDKPlugin).mock.results[0].value;
+      const openAIAgentsMock =
+        vi.mocked(OpenAIAgentsPlugin).mock.results[0].value;
       const googleGenAIMock =
         vi.mocked(GoogleGenAIPlugin).mock.results[0].value;
       const huggingFaceMock =
@@ -650,6 +707,7 @@ describe("BraintrustPlugin", () => {
       expect(anthropicMock.disable).toHaveBeenCalledTimes(1);
       expect(aiSDKMock.disable).toHaveBeenCalledTimes(1);
       expect(claudeAgentSDKMock.disable).toHaveBeenCalledTimes(1);
+      expect(openAIAgentsMock.disable).toHaveBeenCalledTimes(1);
       expect(googleGenAIMock.disable).toHaveBeenCalledTimes(1);
       expect(huggingFaceMock.disable).toHaveBeenCalledTimes(1);
       expect(openRouterMock.disable).toHaveBeenCalledTimes(1);
@@ -694,6 +752,7 @@ describe("BraintrustPlugin", () => {
       expect(AnthropicPlugin).not.toHaveBeenCalled();
       expect(AISDKPlugin).not.toHaveBeenCalled();
       expect(ClaudeAgentSDKPlugin).not.toHaveBeenCalled();
+      expect(OpenAIAgentsPlugin).not.toHaveBeenCalled();
       expect(GoogleGenAIPlugin).not.toHaveBeenCalled();
       expect(HuggingFacePlugin).not.toHaveBeenCalled();
       expect(OpenRouterPlugin).not.toHaveBeenCalled();
@@ -716,6 +775,7 @@ describe("BraintrustPlugin", () => {
       expect(AnthropicPlugin).toHaveBeenCalledTimes(1);
       expect(AISDKPlugin).toHaveBeenCalledTimes(1);
       expect(ClaudeAgentSDKPlugin).toHaveBeenCalledTimes(1);
+      expect(OpenAIAgentsPlugin).toHaveBeenCalledTimes(1);
       expect(GoogleGenAIPlugin).toHaveBeenCalledTimes(1);
       expect(HuggingFacePlugin).toHaveBeenCalledTimes(1);
       expect(OpenRouterPlugin).toHaveBeenCalledTimes(1);
@@ -726,12 +786,13 @@ describe("BraintrustPlugin", () => {
     });
 
     it("should only disable plugins that were enabled", () => {
-      const plugin = new BraintrustPlugin({
-        integrations: {
+      const plugin = new BraintrustPlugin(
+        pluginConfigWithIntegrations({
           openai: true,
           anthropic: false,
           aisdk: true,
           claudeAgentSDK: false,
+          openAIAgents: true,
           googleGenAI: true,
           huggingface: true,
           openrouter: true,
@@ -739,12 +800,14 @@ describe("BraintrustPlugin", () => {
           mistral: false,
           cohere: false,
           groq: true,
-        },
-      });
+        }),
+      );
       plugin.enable();
 
       const openaiMock = vi.mocked(OpenAIPlugin).mock.results[0].value;
       const aiSDKMock = vi.mocked(AISDKPlugin).mock.results[0].value;
+      const openAIAgentsMock =
+        vi.mocked(OpenAIAgentsPlugin).mock.results[0].value;
       const googleGenAIMock =
         vi.mocked(GoogleGenAIPlugin).mock.results[0].value;
       const huggingFaceMock =
@@ -758,6 +821,7 @@ describe("BraintrustPlugin", () => {
 
       expect(openaiMock.disable).toHaveBeenCalledTimes(1);
       expect(aiSDKMock.disable).toHaveBeenCalledTimes(1);
+      expect(openAIAgentsMock.disable).toHaveBeenCalledTimes(1);
       expect(googleGenAIMock.disable).toHaveBeenCalledTimes(1);
       expect(huggingFaceMock.disable).toHaveBeenCalledTimes(1);
       expect(openRouterMock.disable).toHaveBeenCalledTimes(1);
