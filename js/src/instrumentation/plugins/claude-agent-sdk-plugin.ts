@@ -1370,7 +1370,7 @@ export class ClaudeAgentSDKPlugin extends BasePlugin {
 
           if (parentToolUseId) {
             if (trackedParentToolUseId === undefined && context?.agentId) {
-              const eagerLlmSpan = await ensureActiveLlmSpanForParentToolUse(
+              await ensureActiveLlmSpanForParentToolUse(
                 span,
                 activeLlmSpansByParentToolUse,
                 subAgentDetailsByToolUseId,
@@ -1379,7 +1379,14 @@ export class ClaudeAgentSDKPlugin extends BasePlugin {
                 parentToolUseId,
                 getCurrentUnixTimestamp(),
               );
-              return eagerLlmSpan.export();
+              const subAgentSpan = await ensureSubAgentSpan(
+                subAgentDetailsByToolUseId,
+                span,
+                activeToolSpans,
+                subAgentSpans,
+                parentToolUseId,
+              );
+              return subAgentSpan.export();
             }
 
             const parentLlm =

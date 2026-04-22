@@ -603,11 +603,11 @@ export function defineClaudeAgentSDKInstrumentationAssertions(options: {
           expect(bashTool?.span.parentIds).not.toContain(
             taskRootLlm?.span.id ?? "",
           );
-          expect(bashToolParent?.span.type).toBe("llm");
-          expect(bashToolParent?.span.id).toBe(nestedTaskLlm?.span.id);
-          expect(bashToolParent?.span.parentIds).toContain(
-            nestedTask?.span.id ?? "",
-          );
+          expect(bashToolParent?.span.type).toBe("task");
+          expect(bashToolParent?.span.id).toBe(nestedTask?.span.id);
+          expect(
+            Number(nestedTaskLlm?.metrics?.start ?? Number.NaN),
+          ).toBeLessThanOrEqual(Number(bashTool?.metrics?.start ?? Number.NaN));
         },
       );
     }
