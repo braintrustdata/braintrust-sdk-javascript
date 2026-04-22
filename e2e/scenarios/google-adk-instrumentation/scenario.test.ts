@@ -37,33 +37,35 @@ for (const scenario of googleADKScenarios) {
   describe(`google adk sdk ${scenario.version}`, () => {
     defineGoogleADKInstrumentationAssertions({
       name: "wrapped instrumentation",
+      mode: "wrapped",
       runScenario: async ({ runScenarioDir }) => {
         await runScenarioDir({
           entry: scenario.wrapperEntry,
-          runContext: { variantKey: `${scenario.snapshotName}-wrapped` },
+          runContext: { variantKey: scenario.snapshotName },
           scenarioDir,
           timeoutMs: TIMEOUT_MS,
         });
       },
       expectLLMSpan: false,
-      snapshotName: `${scenario.snapshotName}-wrapped`,
+      snapshotName: scenario.snapshotName,
       testFileUrl: import.meta.url,
       timeoutMs: TIMEOUT_MS,
     });
 
     defineGoogleADKInstrumentationAssertions({
       name: "auto-hook instrumentation",
+      mode: "auto",
       runScenario: async ({ runNodeScenarioDir }) => {
         await runNodeScenarioDir({
           entry: scenario.autoEntry,
           nodeArgs: ["--import", "braintrust/hook.mjs"],
-          runContext: { variantKey: `${scenario.snapshotName}-auto` },
+          runContext: { variantKey: scenario.snapshotName },
           scenarioDir,
           timeoutMs: TIMEOUT_MS,
         });
       },
       expectLLMSpan: true,
-      snapshotName: `${scenario.snapshotName}-auto`,
+      snapshotName: scenario.snapshotName,
       testFileUrl: import.meta.url,
       timeoutMs: TIMEOUT_MS,
     });

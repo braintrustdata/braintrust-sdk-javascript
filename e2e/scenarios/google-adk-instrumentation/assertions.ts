@@ -160,19 +160,21 @@ function summarizeADKPayload(event: CapturedLogEvent): Json {
 
 export function defineGoogleADKInstrumentationAssertions(options: {
   expectLLMSpan: boolean;
+  mode: "auto" | "wrapped";
   name: string;
   runScenario: RunGoogleADKScenario;
   snapshotName: string;
   testFileUrl: string;
   timeoutMs: number;
 }): void {
+  const snapshotBaseName = `${options.snapshotName}-${options.mode}`;
   const spanSnapshotPath = resolveFileSnapshotPath(
     options.testFileUrl,
-    `${options.snapshotName}.span-events.json`,
+    `${snapshotBaseName}.span-events.json`,
   );
   const payloadSnapshotPath = resolveFileSnapshotPath(
     options.testFileUrl,
-    `${options.snapshotName}.log-payloads.json`,
+    `${snapshotBaseName}.log-payloads.json`,
   );
   const testConfig = {
     timeout: options.timeoutMs,
