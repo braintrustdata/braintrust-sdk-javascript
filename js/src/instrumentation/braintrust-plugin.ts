@@ -3,6 +3,7 @@ import { OpenAIPlugin } from "./plugins/openai-plugin";
 import { AnthropicPlugin } from "./plugins/anthropic-plugin";
 import { AISDKPlugin } from "./plugins/ai-sdk-plugin";
 import { ClaudeAgentSDKPlugin } from "./plugins/claude-agent-sdk-plugin";
+import { OpenAIAgentsPlugin } from "./plugins/openai-agents-plugin";
 import { GoogleGenAIPlugin } from "./plugins/google-genai-plugin";
 import { HuggingFacePlugin } from "./plugins/huggingface-plugin";
 import { OpenRouterAgentPlugin } from "./plugins/openrouter-agent-plugin";
@@ -31,6 +32,13 @@ export interface BraintrustPluginConfig {
   };
 }
 
+function getIntegrationConfig(
+  integrations: NonNullable<BraintrustPluginConfig["integrations"]>,
+  key: string,
+): boolean | undefined {
+  return (integrations as Record<string, boolean | undefined>)[key];
+}
+
 /**
  * Default Braintrust plugin that manages all AI provider instrumentation plugins.
  *
@@ -53,6 +61,7 @@ export class BraintrustPlugin extends BasePlugin {
   private anthropicPlugin: AnthropicPlugin | null = null;
   private aiSDKPlugin: AISDKPlugin | null = null;
   private claudeAgentSDKPlugin: ClaudeAgentSDKPlugin | null = null;
+  private openAIAgentsPlugin: OpenAIAgentsPlugin | null = null;
   private googleGenAIPlugin: GoogleGenAIPlugin | null = null;
   private huggingFacePlugin: HuggingFacePlugin | null = null;
   private openRouterPlugin: OpenRouterPlugin | null = null;
@@ -93,6 +102,12 @@ export class BraintrustPlugin extends BasePlugin {
     if (integrations.claudeAgentSDK !== false) {
       this.claudeAgentSDKPlugin = new ClaudeAgentSDKPlugin();
       this.claudeAgentSDKPlugin.enable();
+    }
+
+    // Enable OpenAI Agents SDK integration (default: true)
+    if (getIntegrationConfig(integrations, "openAIAgents") !== false) {
+      this.openAIAgentsPlugin = new OpenAIAgentsPlugin();
+      this.openAIAgentsPlugin.enable();
     }
 
     // Enable Google GenAI integration (default: true)
@@ -158,6 +173,11 @@ export class BraintrustPlugin extends BasePlugin {
     if (this.claudeAgentSDKPlugin) {
       this.claudeAgentSDKPlugin.disable();
       this.claudeAgentSDKPlugin = null;
+    }
+
+    if (this.openAIAgentsPlugin) {
+      this.openAIAgentsPlugin.disable();
+      this.openAIAgentsPlugin = null;
     }
 
     if (this.googleGenAIPlugin) {
