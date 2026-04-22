@@ -181,6 +181,7 @@ export { wrapOpenRouterAgent } from "./wrappers/openrouter-agent";
 export { wrapOpenRouter } from "./wrappers/openrouter";
 export { wrapMistral } from "./wrappers/mistral";
 export { wrapCohere } from "./wrappers/cohere";
+export { wrapGroq } from "./wrappers/groq";
 export { wrapVitest } from "./wrappers/vitest";
 export { initNodeTestSuite } from "./wrappers/node-test";
 

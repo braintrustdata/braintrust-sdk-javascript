@@ -43,6 +43,15 @@
     ]
   },
   {
+    "scenarioDirName": "groq-instrumentation",
+    "label": "Groq Instrumentation",
+    "metadataScenario": "groq-instrumentation",
+    "variants": [
+      { "variantKey": "groq-v1-wrapped", "label": "Wrapped" },
+      { "variantKey": "groq-v1-auto", "label": "Auto-hook" }
+    ]
+  },
+  {
     "scenarioDirName": "huggingface-instrumentation",
     "label": "HuggingFace Instrumentation",
     "metadataScenario": "huggingface-instrumentation",
