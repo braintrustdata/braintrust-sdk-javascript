@@ -1337,6 +1337,16 @@ function areInterfaceSignaturesCompatible(
     const newTypeNorm = normalizeType(newField.type);
 
     if (oldTypeNorm !== newTypeNorm) {
+      // Nested object types can gain optional fields without breaking callers.
+      // This covers config shapes such as { integrations?: { newKey?: boolean } }.
+      if (
+        oldField.type.trim().startsWith("{") &&
+        newField.type.trim().startsWith("{") &&
+        areObjectTypeDefinitionsCompatible(oldField.type, newField.type)
+      ) {
+        continue;
+      }
+
       // Check if it's a union type widening (backwards compatible)
       if (!isUnionTypeWidening(oldTypeNorm, newTypeNorm)) {
         // Field type changed in an incompatible way - breaking change
@@ -1737,6 +1747,14 @@ describe("areInterfaceSignaturesCompatible", () => {
   test("should allow adding optional fields to interface", () => {
     const oldInterface = `export interface LogOptions<IsAsyncFlush> { asyncFlush?: IsAsyncFlush; computeMetadataArgs?: Record<string, any>; }`;
     const newInterface = `export interface LogOptions<IsAsyncFlush> { asyncFlush?: IsAsyncFlush; computeMetadataArgs?: Record<string, any>; linkArgs?: LinkArgs; }`;
+
+    const result = areInterfaceSignaturesCompatible(oldInterface, newInterface);
+    expect(result).toBe(true);
+  });
+
+  test("should allow adding optional fields to nested object interface fields", () => {
+    const oldInterface = `export interface InstrumentationConfig { integrations?: { openai?: boolean; cohere?: boolean; }; }`;
+    const newInterface = `export interface InstrumentationConfig { integrations?: { openai?: boolean; cohere?: boolean; langchain?: boolean; }; }`;
 
     const result = areInterfaceSignaturesCompatible(oldInterface, newInterface);
     expect(result).toBe(true);

@@ -19,12 +19,16 @@ export interface InstrumentationConfig {
     vercel?: boolean;
     aisdk?: boolean;
     google?: boolean;
+    googleADK?: boolean;
     huggingface?: boolean;
     claudeAgentSDK?: boolean;
     openrouter?: boolean;
     openrouterAgent?: boolean;
     mistral?: boolean;
     cohere?: boolean;
+    langchain?: boolean;
+    langchainJS?: boolean;
+    langgraph?: boolean;
   };
 }
 
@@ -114,7 +118,11 @@ class PluginRegistry {
       openrouter: true,
       openrouterAgent: true,
       mistral: true,
+      googleADK: true,
       cohere: true,
+      langchain: true,
+      langchainJS: true,
+      langgraph: true,
     };
   }
 
@@ -134,6 +142,9 @@ class PluginRegistry {
 
       for (const sdk of disabled) {
         integrations[sdk] = false;
+        if (sdk === "langchain-js") {
+          integrations.langchainJS = false;
+        }
       }
     }
 
