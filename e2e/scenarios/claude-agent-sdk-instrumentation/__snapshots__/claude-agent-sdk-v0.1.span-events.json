@@ -291,7 +291,7 @@
       "metric_keys": [],
       "name": "Claude Agent",
       "root_span_id": "<span:1>",
-      "span_id": "<span:20>",
+      "span_id": "<span:16>",
       "span_parents": [
         "<span:19>"
       ],
@@ -307,7 +307,7 @@
       "metric_keys": [],
       "name": "tool: calculator/calculator",
       "root_span_id": "<span:1>",
-      "span_id": "<span:21>",
+      "span_id": "<span:20>",
       "span_parents": [
         "<span:17>"
       ],
