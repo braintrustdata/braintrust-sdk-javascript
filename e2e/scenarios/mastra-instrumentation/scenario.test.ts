@@ -6,6 +6,7 @@ import {
 import { normalizeForSnapshot, type Json } from "../../helpers/normalize";
 import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
 import {
+  prepareScenarioDir,
   readInstalledPackageVersion,
   resolveScenarioDir,
   withScenarioHarness,
@@ -13,7 +14,9 @@ import {
 import { findLatestSpan } from "../../helpers/trace-selectors";
 import { summarizeWrapperContract } from "../../helpers/wrapper-contract";
 
-const scenarioDir = resolveScenarioDir(import.meta.url);
+const scenarioDir = await prepareScenarioDir({
+  scenarioDir: resolveScenarioDir(import.meta.url),
+});
 const mastraVersion = await readInstalledPackageVersion(
   scenarioDir,
   "@mastra/core",
