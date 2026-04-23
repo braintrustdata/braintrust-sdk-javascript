@@ -7,6 +7,7 @@ import {
 import { z } from "zod";
 
 const CLAUDE_AGENT_MODEL = "claude-haiku-4-5";
+const CLAUDE_AGENT_TOP_LEVEL_MODEL = "claude-sonnet-4-5";
 
 export const ROOT_NAME = "claude-agent-sdk-root";
 export const SCENARIO_NAME = "claude-agent-sdk-traces";
@@ -132,6 +133,33 @@ async function runClaudeAgentSDKScenario({ decorateSDK, sdk }) {
                   calculator: calculatorServer,
                 },
                 model: CLAUDE_AGENT_MODEL,
+                permissionMode: "bypassPermissions",
+              },
+            }),
+          );
+        },
+      );
+
+      await runOperation(
+        "claude-agent-subagent-built-in-tool-operation",
+        "subagent-built-in-tool",
+        async () => {
+          await collectAsync(
+            query({
+              prompt:
+                'You MUST call the Agent tool now with subagent_type="echo" and description "echo greeting". Do not call Bash yourself. Do not answer with text yourself; delegate to the echo sub-agent.',
+              options: {
+                agents: {
+                  echo: {
+                    description: "Runs one bash echo and reports back.",
+                    model: CLAUDE_AGENT_MODEL,
+                    prompt:
+                      "Run `echo hello` via Bash exactly once, then reply with only the word done.",
+                    tools: ["Bash"],
+                  },
+                },
+                allowedTools: ["Agent", "Bash"],
+                model: CLAUDE_AGENT_TOP_LEVEL_MODEL,
                 permissionMode: "bypassPermissions",
               },
             }),

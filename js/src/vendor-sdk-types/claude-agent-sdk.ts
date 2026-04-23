@@ -23,6 +23,7 @@ interface BaseHookInput {
   session_id: string;
   transcript_path: string;
   cwd: string;
+  agent_id?: string;
   permission_mode?: string;
 }
 

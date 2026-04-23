@@ -30,6 +30,7 @@ import { openRouterAgentConfigs } from "../configs/openrouter-agent";
 import { openRouterConfigs } from "../configs/openrouter";
 import { mistralConfigs } from "../configs/mistral";
 import { cohereConfigs } from "../configs/cohere";
+import { groqConfigs } from "../configs/groq";
 
 export interface BundlerPluginOptions {
   /**
@@ -81,6 +82,7 @@ export const unplugin = createUnplugin<BundlerPluginOptions>((options = {}) => {
     ...openRouterAgentConfigs,
     ...mistralConfigs,
     ...cohereConfigs,
+    ...groqConfigs,
     ...(options.instrumentations || []),
   ];
 
@@ -94,6 +96,11 @@ export const unplugin = createUnplugin<BundlerPluginOptions>((options = {}) => {
     name: "code-transformer",
     enforce: "pre",
     transform(code: string, id: string) {
+      if (!id) {
+        // Some modules apparently don't have an id?
+        return null;
+      }
+
       // Convert file:// URLs to regular paths at entry point
       // Node.js ESM loader hooks provide file:// URLs, but downstream code expects paths
       const filePath = id.startsWith("file:") ? fileURLToPath(id) : id;
