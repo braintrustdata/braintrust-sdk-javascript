@@ -1492,8 +1492,8 @@ function areZodSchemaSignaturesCompatible(
 }
 
 /**
- * Compares class signatures by extracting and comparing individual methods
- * This handles cases where methods gain optional parameters or optional fields
+ * Compares class signatures using a cheap heuristic first and a parsed
+ * TypeScript AST fallback when the heuristic rejects the change.
  */
 function areClassSignaturesCompatible(
   oldClass: string,
@@ -1533,25 +1533,438 @@ function areClassSignaturesCompatible(
 
   // Also check normalized versions (removing optional markers and defaults)
   // If normalized versions are similar, the changes are likely just optionality
-  const normalizeClass = (classText: string): string => {
-    let normalized = classText;
-    // Remove optional markers: field?: Type -> field: Type
-    normalized = normalized.replace(
-      /([a-zA-Z_$][a-zA-Z0-9_$]*)\?:\s*/g,
-      "$1: ",
-    );
-    // Remove default values
-    normalized = normalized.replace(/=\s*\{[^}]*\}/g, "= {}");
-    normalized = normalized.replace(/=\s*[^,)}]+/g, "");
-    return normalized;
-  };
-
-  const oldNormalized = normalizeClass(oldClass);
-  const newNormalized = normalizeClass(newClass);
+  const oldNormalized = normalizeClassForFastPath(oldClass);
+  const newNormalized = normalizeClassForFastPath(newClass);
 
   // Check if normalized versions are similar (one contains significant portion of the other)
   const similarityThreshold = Math.min(500, oldNormalized.length * 0.5);
   if (newNormalized.includes(oldNormalized.substring(0, similarityThreshold))) {
+    return true;
+  }
+
+  const oldParsed = parseClassSignature(oldClass);
+  const newParsed = parseClassSignature(newClass);
+  if (!oldParsed || !newParsed) {
+    return false;
+  }
+
+  return areParsedClassSignaturesCompatible(oldParsed, newParsed);
+}
+
+interface ParsedClassSignature {
+  readonly name: string;
+  readonly typeParameters: string;
+  readonly heritage: string;
+  readonly isAbstract: boolean;
+  readonly members: Map<string, ParsedClassMember[]>;
+}
+
+interface ParsedClassParameter {
+  readonly type: string;
+  readonly optional: boolean;
+  readonly rest: boolean;
+}
+
+interface ParsedClassCallableMember {
+  readonly kind: "callable";
+  readonly key: string;
+  readonly typeParameters: string;
+  readonly params: ParsedClassParameter[];
+  readonly returnType: string;
+}
+
+interface ParsedClassPropertyMember {
+  readonly kind: "property";
+  readonly key: string;
+  readonly type: string;
+  readonly optional: boolean;
+  readonly isReadonly: boolean;
+}
+
+type ParsedClassMember = ParsedClassCallableMember | ParsedClassPropertyMember;
+
+function normalizeClassForFastPath(classText: string): string {
+  let normalized = classText;
+  normalized = normalized.replace(/([a-zA-Z_$][a-zA-Z0-9_$]*)\?:\s*/g, "$1: ");
+  normalized = normalized.replace(/=\s*\{[^}]*\}/g, "= {}");
+  normalized = normalized.replace(/=\s*[^,)}]+/g, "");
+  return normalized;
+}
+
+function normalizeClassFragment(fragment: string): string {
+  return normalizeTypeReference(fragment.replace(/\s+/g, " ").trim());
+}
+
+function hasModifier(node: ts.Node, kind: ts.SyntaxKind): boolean {
+  if (!ts.canHaveModifiers(node)) {
+    return false;
+  }
+
+  return !!ts.getModifiers(node)?.some((modifier) => modifier.kind === kind);
+}
+
+function getClassMemberVisibility(
+  node: ts.Node,
+): "public" | "protected" | "private" {
+  if (hasModifier(node, ts.SyntaxKind.PrivateKeyword)) {
+    return "private";
+  }
+
+  if (hasModifier(node, ts.SyntaxKind.ProtectedKeyword)) {
+    return "protected";
+  }
+
+  return "public";
+}
+
+function isPrivateClassMember(member: ts.ClassElement): boolean {
+  if (ts.isConstructorDeclaration(member)) {
+    return false;
+  }
+
+  if (
+    (ts.isPropertyDeclaration(member) ||
+      ts.isMethodDeclaration(member) ||
+      ts.isGetAccessorDeclaration(member) ||
+      ts.isSetAccessorDeclaration(member)) &&
+    member.name &&
+    ts.isPrivateIdentifier(member.name)
+  ) {
+    return true;
+  }
+
+  return getClassMemberVisibility(member) === "private";
+}
+
+function isParameterProperty(parameter: ts.ParameterDeclaration): boolean {
+  if (!ts.canHaveModifiers(parameter)) {
+    return false;
+  }
+
+  return !!ts.getModifiers(parameter)?.some((modifier) => {
+    return (
+      modifier.kind === ts.SyntaxKind.PublicKeyword ||
+      modifier.kind === ts.SyntaxKind.ProtectedKeyword ||
+      modifier.kind === ts.SyntaxKind.PrivateKeyword ||
+      modifier.kind === ts.SyntaxKind.ReadonlyKeyword
+    );
+  });
+}
+
+function addParsedClassMember(
+  members: Map<string, ParsedClassMember[]>,
+  member: ParsedClassMember,
+): void {
+  const existing = members.get(member.key);
+  if (existing) {
+    existing.push(member);
+    return;
+  }
+
+  members.set(member.key, [member]);
+}
+
+function parseClassParameters(
+  parameters: readonly ts.ParameterDeclaration[],
+  sourceFile: ts.SourceFile,
+): ParsedClassParameter[] {
+  return parameters.map((parameter) => ({
+    type: normalizeClassFragment(parameter.type?.getText(sourceFile) ?? ""),
+    optional: !!parameter.questionToken || parameter.initializer !== undefined,
+    rest: parameter.dotDotDotToken !== undefined,
+  }));
+}
+
+function parseClassCallableMember(
+  key: string,
+  declaration: ts.SignatureDeclarationBase,
+  sourceFile: ts.SourceFile,
+  returnType: string,
+): ParsedClassCallableMember {
+  return {
+    kind: "callable",
+    key,
+    typeParameters: normalizeClassFragment(
+      declaration.typeParameters
+        ?.map((typeParameter) => typeParameter.getText(sourceFile))
+        .join(", ") ?? "",
+    ),
+    params: parseClassParameters(declaration.parameters, sourceFile),
+    returnType: normalizeClassFragment(returnType),
+  };
+}
+
+function parseClassPropertyMember(
+  key: string,
+  type: string,
+  optional: boolean,
+  isReadonly: boolean,
+): ParsedClassPropertyMember {
+  return {
+    kind: "property",
+    key,
+    type: normalizeClassFragment(type),
+    optional,
+    isReadonly,
+  };
+}
+
+function parseConstructorParameterProperties(
+  constructor: ts.ConstructorDeclaration,
+  sourceFile: ts.SourceFile,
+): ParsedClassPropertyMember[] {
+  const properties: ParsedClassPropertyMember[] = [];
+
+  for (const parameter of constructor.parameters) {
+    if (!isParameterProperty(parameter)) {
+      continue;
+    }
+
+    const visibility = getClassMemberVisibility(parameter);
+    if (visibility === "private") {
+      continue;
+    }
+
+    properties.push(
+      parseClassPropertyMember(
+        `property:false:${visibility}:false:${parameter.name.getText(sourceFile)}`,
+        parameter.type?.getText(sourceFile) ?? "",
+        !!parameter.questionToken || parameter.initializer !== undefined,
+        hasModifier(parameter, ts.SyntaxKind.ReadonlyKeyword),
+      ),
+    );
+  }
+
+  return properties;
+}
+
+function parseClassSignature(classText: string): ParsedClassSignature | null {
+  const sourceFile = ts.createSourceFile(
+    "class.ts",
+    classText,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TS,
+  );
+
+  let declaration: ts.ClassDeclaration | undefined;
+  ts.forEachChild(sourceFile, (node) => {
+    if (ts.isClassDeclaration(node) && !declaration) {
+      declaration = node;
+    }
+  });
+
+  if (!declaration || !declaration.name) {
+    return null;
+  }
+
+  const members = new Map<string, ParsedClassMember[]>();
+
+  for (const member of declaration.members) {
+    if (ts.isConstructorDeclaration(member)) {
+      addParsedClassMember(
+        members,
+        parseClassCallableMember(
+          `constructor:${getClassMemberVisibility(member)}`,
+          member,
+          sourceFile,
+          "",
+        ),
+      );
+      for (const property of parseConstructorParameterProperties(
+        member,
+        sourceFile,
+      )) {
+        addParsedClassMember(members, property);
+      }
+      continue;
+    }
+
+    if (isPrivateClassMember(member)) {
+      continue;
+    }
+
+    const isStatic = hasModifier(member, ts.SyntaxKind.StaticKeyword);
+    const visibility = getClassMemberVisibility(member);
+    const isAbstract = hasModifier(member, ts.SyntaxKind.AbstractKeyword);
+
+    if (ts.isPropertyDeclaration(member) && member.name) {
+      addParsedClassMember(
+        members,
+        parseClassPropertyMember(
+          `property:${isStatic}:${visibility}:${isAbstract}:${member.name.getText(sourceFile)}`,
+          member.type?.getText(sourceFile) ?? "",
+          !!member.questionToken,
+          hasModifier(member, ts.SyntaxKind.ReadonlyKeyword),
+        ),
+      );
+      continue;
+    }
+
+    if (ts.isMethodDeclaration(member)) {
+      addParsedClassMember(
+        members,
+        parseClassCallableMember(
+          `method:${isStatic}:${visibility}:${isAbstract}:${member.name.getText(sourceFile)}`,
+          member,
+          sourceFile,
+          member.type?.getText(sourceFile) ?? "",
+        ),
+      );
+      continue;
+    }
+
+    if (ts.isGetAccessorDeclaration(member)) {
+      addParsedClassMember(
+        members,
+        parseClassCallableMember(
+          `get:${isStatic}:${visibility}:${isAbstract}:${member.name.getText(sourceFile)}`,
+          member,
+          sourceFile,
+          member.type?.getText(sourceFile) ?? "",
+        ),
+      );
+      continue;
+    }
+
+    if (ts.isSetAccessorDeclaration(member)) {
+      addParsedClassMember(
+        members,
+        parseClassCallableMember(
+          `set:${isStatic}:${visibility}:${isAbstract}:${member.name.getText(sourceFile)}`,
+          member,
+          sourceFile,
+          "",
+        ),
+      );
+      continue;
+    }
+
+    if (ts.isIndexSignatureDeclaration(member)) {
+      addParsedClassMember(
+        members,
+        parseClassCallableMember(
+          `index:${visibility}:${isAbstract}`,
+          member,
+          sourceFile,
+          member.type?.getText(sourceFile) ?? "",
+        ),
+      );
+    }
+  }
+
+  return {
+    name: declaration.name.text,
+    typeParameters: normalizeClassFragment(
+      declaration.typeParameters
+        ?.map((typeParameter) => typeParameter.getText(sourceFile))
+        .join(", ") ?? "",
+    ),
+    heritage: normalizeClassFragment(
+      declaration.heritageClauses
+        ?.map((heritageClause) => heritageClause.getText(sourceFile))
+        .join(" ") ?? "",
+    ),
+    isAbstract: hasModifier(declaration, ts.SyntaxKind.AbstractKeyword),
+    members,
+  };
+}
+
+function areParsedClassSignaturesCompatible(
+  oldParsed: ParsedClassSignature,
+  newParsed: ParsedClassSignature,
+): boolean {
+  if (
+    oldParsed.name !== newParsed.name ||
+    oldParsed.typeParameters !== newParsed.typeParameters ||
+    oldParsed.heritage !== newParsed.heritage ||
+    oldParsed.isAbstract !== newParsed.isAbstract
+  ) {
+    return false;
+  }
+
+  for (const [key, oldMembers] of oldParsed.members) {
+    const newMembers = newParsed.members.get(key);
+    if (!newMembers) {
+      return false;
+    }
+
+    const matchedNewMembers = new Set<number>();
+    for (const oldMember of oldMembers) {
+      const matchIndex = newMembers.findIndex((newMember, index) => {
+        return (
+          !matchedNewMembers.has(index) &&
+          areParsedClassMembersCompatible(oldMember, newMember)
+        );
+      });
+
+      if (matchIndex === -1) {
+        return false;
+      }
+
+      matchedNewMembers.add(matchIndex);
+    }
+  }
+
+  return true;
+}
+
+function areParsedClassMembersCompatible(
+  oldMember: ParsedClassMember,
+  newMember: ParsedClassMember,
+): boolean {
+  if (oldMember.kind !== newMember.kind) {
+    return false;
+  }
+
+  if (oldMember.kind === "property" && newMember.kind === "property") {
+    if (oldMember.isReadonly !== newMember.isReadonly) {
+      return false;
+    }
+
+    if (oldMember.optional !== newMember.optional) {
+      return false;
+    }
+
+    if (oldMember.type === newMember.type) {
+      return true;
+    }
+
+    return isUnionTypeWidening(oldMember.type, newMember.type);
+  }
+
+  if (oldMember.kind === "callable" && newMember.kind === "callable") {
+    if (
+      oldMember.typeParameters !== newMember.typeParameters ||
+      oldMember.returnType !== newMember.returnType
+    ) {
+      return false;
+    }
+
+    for (let i = 0; i < oldMember.params.length; i++) {
+      const oldParam = oldMember.params[i];
+      const newParam = newMember.params[i];
+
+      if (!newParam) {
+        return false;
+      }
+
+      if (oldParam.type !== newParam.type || oldParam.rest !== newParam.rest) {
+        return false;
+      }
+
+      if (oldParam.optional && !newParam.optional) {
+        return false;
+      }
+    }
+
+    for (let i = oldMember.params.length; i < newMember.params.length; i++) {
+      const newParam = newMember.params[i];
+      if (!newParam.optional && !newParam.rest) {
+        return false;
+      }
+    }
+
     return true;
   }
 
@@ -1829,6 +2242,93 @@ describe("areInterfaceSignaturesCompatible", () => {
 
     const result = areInterfaceSignaturesCompatible(oldInterface, newInterface);
     expect(result).toBe(false);
+  });
+});
+
+describe("areClassSignaturesCompatible", () => {
+  test("should allow adding private members and an optional constructor parameter", () => {
+    const oldClass = `export declare class Dataset {
+      private readonly lazyMetadata;
+      private readonly __braintrust_dataset_marker;
+      constructor(
+        private state: BraintrustState,
+        lazyMetadata: LazyValue<ProjectDatasetMetadata>,
+        pinnedVersion?: string,
+      );
+      version(options?: { batchSize?: number }): Promise<string | undefined>;
+    }`;
+    const newClass = `export declare class Dataset {
+      private readonly lazyMetadata;
+      private lazyPinnedVersion?: LazyValue<string | undefined>;
+      private pinnedEnvironment?: string;
+      private pinnedSnapshotName?: string;
+      private readonly __braintrust_dataset_marker;
+      constructor(
+        private state: BraintrustState,
+        lazyMetadata: LazyValue<ProjectDatasetMetadata>,
+        pinnedVersion?: string,
+        pinState?: DatasetPinState,
+      );
+      version(options?: { batchSize?: number }): Promise<string | undefined>;
+    }`;
+
+    expect(areClassSignaturesCompatible(oldClass, newClass)).toBe(true);
+  });
+
+  test("should allow adding an optional method parameter", () => {
+    const oldClass = `export declare class Example {
+      run(input: string): Promise<void>;
+    }`;
+    const newClass = `export declare class Example {
+      run(input: string, options?: { retries?: number }): Promise<void>;
+    }`;
+
+    expect(areClassSignaturesCompatible(oldClass, newClass)).toBe(true);
+  });
+
+  test("should use parsed fallback when private members shift public member positions", () => {
+    const oldClass = `export declare class Example {
+      alpha(first: string, second: number): Promise<{ ok: true }>;
+      beta(value?: boolean): void;
+    }`;
+    const newClass = `export declare class Example {
+      private cacheOne?: string;
+      private cacheTwo?: string;
+      private cacheThree?: string;
+      alpha(first: string, second: number): Promise<{ ok: true }>;
+      beta(value?: boolean): void;
+    }`;
+
+    expect(areClassSignaturesCompatible(oldClass, newClass)).toBe(true);
+  });
+
+  test("should ignore class member ordering", () => {
+    const oldClass = `export declare class Example {
+      alpha(): void;
+      protected beta(value: string): number;
+    }`;
+    const newClass = `export declare class Example {
+      protected beta(value: string): number;
+      alpha(): void;
+    }`;
+
+    expect(areClassSignaturesCompatible(oldClass, newClass)).toBe(true);
+  });
+
+  test("should reject adding a required constructor parameter when fallback runs", () => {
+    const oldClass = `export declare class Example {
+      constructor(value: string);
+      run(input: string): void;
+    }`;
+    const newClass = `export declare class Example {
+      private cacheOne?: string;
+      private cacheTwo?: string;
+      private cacheThree?: string;
+      constructor(value: string, version: number);
+      run(input: string): void;
+    }`;
+
+    expect(areClassSignaturesCompatible(oldClass, newClass)).toBe(false);
   });
 });
 
