@@ -25,6 +25,8 @@ export interface InstrumentationConfig {
     openrouterAgent?: boolean;
     mistral?: boolean;
     cohere?: boolean;
+    groq?: boolean;
+    mastra?: boolean;
   };
 }
 
@@ -115,6 +117,8 @@ class PluginRegistry {
       openrouterAgent: true,
       mistral: true,
       cohere: true,
+      groq: true,
+      mastra: true,
     };
   }
 
@@ -133,11 +137,21 @@ class PluginRegistry {
         .filter((s) => s.length > 0);
 
       for (const sdk of disabled) {
-        integrations[sdk] = false;
+        integrations[normalizeIntegrationName(sdk)] = false;
       }
     }
 
     return { integrations };
+  }
+}
+
+function normalizeIntegrationName(name: string): string {
+  switch (name) {
+    case "@mastra/core":
+    case "mastra-core":
+      return "mastra";
+    default:
+      return name;
   }
 }
 

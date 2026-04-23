@@ -26,6 +26,7 @@ import { mistralConfigs } from "./configs/mistral.js";
 import { googleADKConfigs } from "./configs/google-adk.js";
 import { cohereConfigs } from "./configs/cohere.js";
 import { groqConfigs } from "./configs/groq.js";
+import { mastraConfigs } from "./configs/mastra.js";
 import { ModulePatch } from "./loader/cjs-patch.js";
 import { patchTracingChannel } from "./patch-tracing-channel.js";
 
@@ -84,6 +85,9 @@ const allConfigs = [
     : googleADKConfigs),
   ...(isDisabled(disabledIntegrations, "cohere") ? [] : cohereConfigs),
   ...(isDisabled(disabledIntegrations, "groq", "groq-sdk") ? [] : groqConfigs),
+  ...(isDisabled(disabledIntegrations, "mastra", "mastra-core", "@mastra/core")
+    ? []
+    : mastraConfigs),
 ];
 
 // 1. Register ESM loader for ESM modules
