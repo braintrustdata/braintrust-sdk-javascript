@@ -43,6 +43,9 @@ type SpanState = {
   span: Span;
 };
 
+type MastraChannelEvent<TChannel extends AnyAsyncChannel> =
+  ChannelMessage<TChannel>;
+
 type MastraSpanConfig<TChannel extends AnyAsyncChannel> = {
   createSpan: (event: StartOf<TChannel>) => {
     input: unknown;
@@ -125,9 +128,10 @@ export class MastraPlugin extends BasePlugin {
     channel: TChannel,
     config: MastraSpanConfig<TChannel>,
   ): void {
-    const tracingChannel = channel.tracingChannel() as IsoTracingChannel<
-      ChannelMessage<TChannel>
-    >;
+    const tracingChannel =
+      channel.tracingChannel() as unknown as IsoTracingChannel<
+        MastraChannelEvent<TChannel>
+      >;
     const states = new WeakMap<object, SpanState>();
     const pendingStates: SpanState[] = [];
     const unbindCurrentSpanStore = bindCurrentSpanStoreToStart(
@@ -136,26 +140,26 @@ export class MastraPlugin extends BasePlugin {
       config,
     );
 
-    const handlers: IsoChannelHandlers<ChannelMessage<TChannel>> = {
+    const handlers: IsoChannelHandlers<MastraChannelEvent<TChannel>> = {
       start: (event) => {
-        const key = event as object;
+        const key = event;
         const existing = states.get(key);
         if (existing) {
           return;
         }
-        const created = startSpanForEvent(config, event as StartOf<TChannel>);
+        const created = startSpanForEvent(config, event);
         states.set(key, created);
         pendingStates.push(created);
       },
       asyncEnd: (event) => {
-        const state = states.get(event as object) ?? pendingStates.shift();
+        const state = states.get(event) ?? pendingStates.shift();
         if (!state) {
           return;
         }
 
         try {
           const { output, metadata = {} } = config.extractOutput(
-            (event as AsyncEndOf<TChannel>).result,
+            event.result as AsyncEndOf<TChannel>["result"],
             event as AsyncEndOf<TChannel>,
           );
           state.span.log({
@@ -165,7 +169,7 @@ export class MastraPlugin extends BasePlugin {
           });
         } finally {
           state.span.end();
-          states.delete(event as object);
+          states.delete(event);
           const pendingIndex = pendingStates.indexOf(state);
           if (pendingIndex >= 0) {
             pendingStates.splice(pendingIndex, 1);
@@ -173,13 +177,13 @@ export class MastraPlugin extends BasePlugin {
         }
       },
       error: (event) => {
-        const state = states.get(event as object) ?? pendingStates.shift();
+        const state = states.get(event) ?? pendingStates.shift();
         if (!state || !event.error) {
           return;
         }
         state.span.log({ error: event.error.message });
         state.span.end();
-        states.delete(event as object);
+        states.delete(event);
         const pendingIndex = pendingStates.indexOf(state);
         if (pendingIndex >= 0) {
           pendingStates.splice(pendingIndex, 1);
@@ -231,7 +235,7 @@ function startSpanForEvent<TChannel extends AnyAsyncChannel>(
 }
 
 function bindCurrentSpanStoreToStart<TChannel extends AnyAsyncChannel>(
-  tracingChannel: IsoTracingChannel<ChannelMessage<TChannel>>,
+  tracingChannel: IsoTracingChannel<MastraChannelEvent<TChannel>>,
   states: WeakMap<object, SpanState>,
   config: MastraSpanConfig<TChannel>,
 ): (() => void) | undefined {
@@ -241,7 +245,7 @@ function bindCurrentSpanStoreToStart<TChannel extends AnyAsyncChannel>(
     | ({
         bindStore?: (
           store: CurrentSpanStore,
-          callback: (event: ChannelMessage<TChannel>) => unknown,
+          callback: (event: MastraChannelEvent<TChannel>) => unknown,
         ) => void;
         unbindStore?: (store: CurrentSpanStore) => void;
       } & object)
@@ -259,8 +263,8 @@ function bindCurrentSpanStoreToStart<TChannel extends AnyAsyncChannel>(
   }
 
   startChannel.bindStore(currentSpanStore, (event) => {
-    const span = ensureState(states, event as object, () =>
-      startSpanForEvent(config, event as StartOf<TChannel>),
+    const span = ensureState(states, event, () =>
+      startSpanForEvent(config, event),
     ).span;
     return contextManager.wrapSpanForStore(span);
   });
@@ -319,7 +323,7 @@ function createToolSpan(
   MastraSpanConfig<typeof mastraChannels.toolExecute>["createSpan"]
 > {
   const self = event.self as MastraToolLike | undefined;
-  const context = event.arguments[1];
+  const context = event.arguments[1] as MastraToolContext | undefined;
   const toolId = toolDisplayName(self);
 
   return {
@@ -373,7 +377,7 @@ function createWorkflowStepSpan(
   MastraSpanConfig<typeof mastraChannels.workflowStepExecute>["createSpan"]
 > {
   const stepId = event.arguments[0];
-  const params = event.arguments[2];
+  const params = event.arguments[2] as MastraWorkflowStepParams | undefined;
 
   return {
     name: `Mastra Workflow Step ${stepId}`,
@@ -397,12 +401,14 @@ function agentMetadata(
   options: MastraAgentExecuteOptions | MastraAgentNetworkOptions,
   method: string,
 ): Record<string, unknown> {
+  const memory = readAgentMemory(options);
+
   return cleanMetadata({
     agent_id: agent?.id,
     agent_name: agent?.name,
     method,
     run_id: options.runId,
-    resource_id: options.resourceId ?? options.memory?.resource,
+    resource_id: options.resourceId ?? memory?.resource,
     thread_id: options.threadId ?? extractThreadId(options),
   });
 }
@@ -419,11 +425,21 @@ function toolDisplayName(tool: MastraToolLike | undefined): string {
 function extractThreadId(
   options: MastraAgentExecuteOptions | MastraAgentNetworkOptions,
 ): string | undefined {
-  const memoryThread = options.memory?.thread;
+  const memoryThread = readAgentMemory(options)?.thread;
   if (typeof memoryThread === "string") {
     return memoryThread;
   }
   return stringValue(memoryThread?.id);
+}
+
+function readAgentMemory(
+  options: MastraAgentExecuteOptions | MastraAgentNetworkOptions,
+): MastraAgentNetworkOptions["memory"] | undefined {
+  if (!("memory" in options) || !isObject(options.memory)) {
+    return undefined;
+  }
+
+  return options.memory;
 }
 
 function extractAgentOutput(result: unknown): unknown {

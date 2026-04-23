@@ -42,7 +42,7 @@ if (!tracePromiseTransform) {
  * arrow into a function expression before delegating to the standard async
  * wrapper so channel events capture the real call arguments.
  */
-export const traceMastraAssignedAsync: CustomTransform = (
+const traceMastraAssignedAsync: CustomTransform = (
   state,
   node,
   parent,
