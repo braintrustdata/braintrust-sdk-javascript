@@ -456,7 +456,7 @@ test("init accepts dataset with id and version", () => {
 
 test("init forwards dataset _internal_btql to experiment register", async () => {
   const datasetFilter = {
-    filters: [
+    filter: [
       {
         op: "isnotnull",
         expr: {
@@ -563,9 +563,9 @@ test("init forwards dataset _internal_btql to experiment register", async () => 
   _exportsForTestingOnly.clearTestBackgroundLogger();
 });
 
-test("dataset fetch normalizes _internal_btql filters before querying btql", async () => {
+test("dataset fetch normalizes _internal_btql filter arrays before querying btql", async () => {
   const datasetFilter = {
-    filters: [
+    filter: [
       {
         op: "isnotnull",
         expr: {
@@ -656,15 +656,8 @@ test("dataset fetch normalizes _internal_btql filters before querying btql", asy
         limit: 5,
         filter: {
           op: "and",
-          children: datasetFilter.filters,
+          children: datasetFilter.filter,
         },
-      }),
-    }),
-  );
-  expect(btqlBody).not.toEqual(
-    expect.objectContaining({
-      query: expect.objectContaining({
-        filters: expect.anything(),
       }),
     }),
   );

@@ -3405,9 +3405,10 @@ export interface ParametersRef {
 /**
  * Internal BTQL payload used to subset dataset-backed evals.
  *
- * The standard BTQL shape uses `filter`. A `filters` array may also be
- * provided to preserve separate clause boundaries; the SDK will normalize it
- * into `filter` before resolving the dataset query.
+ * The standard BTQL shape uses `filter`. To preserve separate clause
+ * boundaries, `filter` may also be provided as an array; the SDK will
+ * normalize that array into a single `filter` expression before resolving the
+ * dataset query.
  */
 export type InternalBtqlQuery = Record<string, unknown>;
 type InternalBtqlFilterClause = Record<string, unknown> & { op: string };
@@ -3467,40 +3468,30 @@ function normalizeInternalBtql(
     return undefined;
   }
 
-  const filters = internalBtql["filters"];
-  if (filters === undefined) {
+  const filter = internalBtql["filter"];
+  if (!Array.isArray(filter)) {
     return internalBtql;
   }
 
-  const normalizedInternalBtql = Object.fromEntries(
-    Object.entries(internalBtql).filter(([key]) => key !== "filters"),
-  );
-  if ("filter" in normalizedInternalBtql) {
+  if (!filter.every(isInternalBtqlFilterClause)) {
+    return internalBtql;
+  }
+
+  if (filter.length === 0) {
+    const { filter: _filter, ...normalizedInternalBtql } = internalBtql;
     return normalizedInternalBtql;
   }
 
-  if (!Array.isArray(filters) || !filters.every(isInternalBtqlFilterClause)) {
-    return internalBtql;
-  }
-
-  if (filters.length === 1) {
-    return {
-      ...normalizedInternalBtql,
-      filter: filters[0],
-    };
-  }
-
-  if (filters.length > 1) {
-    return {
-      ...normalizedInternalBtql,
-      filter: {
-        op: "and",
-        children: filters,
-      },
-    };
-  }
-
-  return normalizedInternalBtql;
+  return {
+    ...internalBtql,
+    filter:
+      filter.length === 1
+        ? filter[0]
+        : {
+            op: "and",
+            children: filter,
+          },
+  };
 }
 
 function getInternalBtqlLimit(
