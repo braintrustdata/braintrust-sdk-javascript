@@ -9,6 +9,7 @@ runAutoAISDKInstrumentationOrExit({
   openai,
   sdkVersion: await getInstalledPackageVersion(import.meta.url, "ai-sdk-v4"),
   supportsGenerateObject: true,
+  supportsRerank: false,
   supportsStreamObject: true,
   supportsToolExecution: false,
   toolSchemaKey: "parameters",

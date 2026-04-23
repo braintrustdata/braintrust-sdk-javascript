@@ -63,23 +63,6 @@
   },
   {
     "has_input": true,
-    "has_output": false,
-    "metadata": {
-      "google_adk.tool_call_id": "adk-<uuid:5>",
-      "google_adk.tool_name": "get_weather",
-      "provider": "google-adk"
-    },
-    "metric_keys": [],
-    "name": "tool: get_weather",
-    "root_span_id": "<span:1>",
-    "span_id": "<span:5>",
-    "span_parents": [
-      "<span:4>"
-    ],
-    "type": "tool"
-  },
-  {
-    "has_input": true,
     "has_output": true,
     "metadata": {
       "google_adk.tool_call_id": "adk-<uuid:5>",

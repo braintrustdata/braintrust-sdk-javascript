@@ -9,40 +9,65 @@ import { defineOpenRouterTraceAssertions } from "./assertions";
 const scenarioDir = await prepareScenarioDir({
   scenarioDir: resolveScenarioDir(import.meta.url),
 });
-const openrouterSdkVersion = await readInstalledPackageVersion(
-  scenarioDir,
-  "@openrouter/sdk",
-);
-const OPENROUTER_VARIANT_KEY = "openrouter-current";
 const TIMEOUT_MS = 90_000;
-
-describe(`openrouter sdk ${openrouterSdkVersion}`, () => {
-  defineOpenRouterTraceAssertions({
-    name: "wrapped instrumentation",
-    runScenario: async ({ runScenarioDir }) => {
-      await runScenarioDir({
-        entry: "scenario.ts",
-        runContext: { variantKey: OPENROUTER_VARIANT_KEY },
-        scenarioDir,
-        timeoutMs: TIMEOUT_MS,
-      });
+const openRouterScenarios = await Promise.all(
+  [
+    {
+      autoEntry: "scenario.openrouter-v0911.mjs",
+      dependencyName: "openrouter-sdk-v0911",
+      snapshotName: "openrouter-v0911",
+      supportsRerank: false,
+      wrapperEntry: "scenario.openrouter-v0911.ts",
     },
-    testFileUrl: import.meta.url,
-    timeoutMs: TIMEOUT_MS,
-  });
-
-  defineOpenRouterTraceAssertions({
-    name: "auto-hook instrumentation",
-    runScenario: async ({ runNodeScenarioDir }) => {
-      await runNodeScenarioDir({
-        entry: "scenario.mjs",
-        nodeArgs: ["--import", "braintrust/hook.mjs"],
-        runContext: { variantKey: OPENROUTER_VARIANT_KEY },
-        scenarioDir,
-        timeoutMs: TIMEOUT_MS,
-      });
+    {
+      autoEntry: "scenario.mjs",
+      dependencyName: "@openrouter/sdk",
+      snapshotName: "openrouter-v0123",
+      supportsRerank: true,
+      wrapperEntry: "scenario.ts",
     },
-    testFileUrl: import.meta.url,
-    timeoutMs: TIMEOUT_MS,
+  ].map(async (scenario) => ({
+    ...scenario,
+    version: await readInstalledPackageVersion(
+      scenarioDir,
+      scenario.dependencyName,
+    ),
+  })),
+);
+
+for (const scenario of openRouterScenarios) {
+  describe(`openrouter sdk ${scenario.version}`, () => {
+    defineOpenRouterTraceAssertions({
+      name: "wrapped instrumentation",
+      runScenario: async ({ runScenarioDir }) => {
+        await runScenarioDir({
+          entry: scenario.wrapperEntry,
+          runContext: { variantKey: scenario.snapshotName },
+          scenarioDir,
+          timeoutMs: TIMEOUT_MS,
+        });
+      },
+      snapshotName: scenario.snapshotName,
+      supportsRerank: scenario.supportsRerank,
+      testFileUrl: import.meta.url,
+      timeoutMs: TIMEOUT_MS,
+    });
+
+    defineOpenRouterTraceAssertions({
+      name: "auto-hook instrumentation",
+      runScenario: async ({ runNodeScenarioDir }) => {
+        await runNodeScenarioDir({
+          entry: scenario.autoEntry,
+          nodeArgs: ["--import", "braintrust/hook.mjs"],
+          runContext: { variantKey: scenario.snapshotName },
+          scenarioDir,
+          timeoutMs: TIMEOUT_MS,
+        });
+      },
+      snapshotName: scenario.snapshotName,
+      supportsRerank: scenario.supportsRerank,
+      testFileUrl: import.meta.url,
+      timeoutMs: TIMEOUT_MS,
+    });
   });
-});
+}

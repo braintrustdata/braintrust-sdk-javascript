@@ -79,6 +79,42 @@ export type OpenRouterEmbeddingResponse =
       [key: string]: unknown;
     };
 
+export type OpenRouterRerankCreateParams = {
+  httpReferer?: string;
+  xTitle?: string;
+  appTitle?: string;
+  appCategories?: string;
+  requestBody?: {
+    documents?: string[];
+    model?: string;
+    provider?: unknown;
+    query?: string;
+    topN?: number;
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+};
+
+export type OpenRouterRerankResult =
+  | string
+  | {
+      id?: string;
+      model?: string;
+      provider?: string;
+      results?: Array<{
+        document?: {
+          text?: string;
+          [key: string]: unknown;
+        };
+        index?: number;
+        relevanceScore?: number;
+        relevance_score?: number;
+        [key: string]: unknown;
+      }>;
+      usage?: unknown;
+      [key: string]: unknown;
+    };
+
 export type OpenRouterResponsesCreateParams = {
   httpReferer?: string;
   xTitle?: string;
@@ -120,6 +156,13 @@ export type OpenRouterEmbeddings = {
   ) => Promise<OpenRouterEmbeddingResponse>;
 };
 
+export type OpenRouterRerank = {
+  rerank: (
+    request: OpenRouterRerankCreateParams,
+    options?: unknown,
+  ) => Promise<OpenRouterRerankResult>;
+};
+
 export type OpenRouterResponses = {
   send: (
     request: OpenRouterResponsesCreateParams,
@@ -157,6 +200,7 @@ export type OpenRouterCallModelRequest = {
 export type OpenRouterClient = {
   chat?: OpenRouterChat;
   embeddings?: OpenRouterEmbeddings;
+  rerank?: OpenRouterRerank;
   beta?: OpenRouterBeta;
   callModel?: (
     request: OpenRouterCallModelRequest,

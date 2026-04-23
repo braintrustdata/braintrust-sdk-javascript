@@ -1,12 +1,12 @@
 import { readFile } from "node:fs/promises";
-import { wrapAnthropic } from "braintrust";
+import { startSpan, wrapAnthropic } from "braintrust";
 import {
   collectAsync,
   runOperation,
   runTracedScenario,
 } from "../../helpers/provider-runtime.mjs";
 
-const ANTHROPIC_MODEL = "claude-3-haiku-20240307";
+const ANTHROPIC_MODEL = "claude-haiku-4-5";
 const ROOT_NAME = "anthropic-instrumentation-root";
 const SCENARIO_NAME = "anthropic-instrumentation";
 const WEATHER_TOOL = {
@@ -34,6 +34,7 @@ async function runAnthropicInstrumentationScenario(
   {
     decorateClient,
     useBetaMessages = true,
+    supportsBetaToolRunner = true,
     supportsThinking = false,
     supportsServerToolUse = true,
   } = {},
@@ -271,6 +272,44 @@ async function runAnthropicInstrumentationScenario(
             await collectAsync(stream);
           },
         );
+
+        if (supportsBetaToolRunner) {
+          await runOperation(
+            "anthropic-beta-tool-runner-operation",
+            "beta-tool-runner",
+            async () => {
+              const finalMessage = await client.beta.messages.toolRunner({
+                model: ANTHROPIC_MODEL,
+                max_tokens: 128,
+                max_iterations: 3,
+                temperature: 0,
+                tools: [
+                  {
+                    ...WEATHER_TOOL,
+                    parse(input) {
+                      return input;
+                    },
+                    run(input) {
+                      const lookupSpan = startSpan({
+                        name: "get_weather.lookup",
+                      });
+                      lookupSpan.end();
+                      return `The weather in ${input.location} is 18C and sunny.`;
+                    },
+                  },
+                ],
+                messages: [
+                  {
+                    role: "user",
+                    content:
+                      "Use the get_weather tool exactly once for Paris, France. After you receive the tool result, reply with exactly that tool result text and do not call any tools again.",
+                  },
+                ],
+              });
+              void finalMessage.content;
+            },
+          );
+        }
       }
     },
     metadata: {

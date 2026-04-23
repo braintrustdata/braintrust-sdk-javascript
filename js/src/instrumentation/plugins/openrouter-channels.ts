@@ -6,6 +6,8 @@ import type {
   OpenRouterChatCreateParams,
   OpenRouterEmbeddingCreateParams,
   OpenRouterEmbeddingResponse,
+  OpenRouterRerankCreateParams,
+  OpenRouterRerankResult,
   OpenRouterResponse,
   OpenRouterResponseStreamEvent,
   OpenRouterResponsesCreateParams,
@@ -37,6 +39,13 @@ export const openRouterChannels = defineChannels("@openrouter/sdk", {
     channelName: "embeddings.generate",
     kind: "async",
   }),
+
+  rerankRerank: channel<[OpenRouterRerankCreateParams], OpenRouterRerankResult>(
+    {
+      channelName: "rerank.rerank",
+      kind: "async",
+    },
+  ),
 
   betaResponsesSend: channel<
     [OpenRouterResponsesCreateParams],

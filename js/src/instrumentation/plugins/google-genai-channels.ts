@@ -1,5 +1,7 @@
 import { channel, defineChannels } from "../core/channel-definitions";
 import type {
+  GoogleGenAIEmbedContentParams,
+  GoogleGenAIEmbedContentResponse,
   GoogleGenAIGenerateContentParams,
   GoogleGenAIGenerateContentResponse,
 } from "../../vendor-sdk-types/google-genai";
@@ -23,6 +25,13 @@ export const googleGenAIChannels = defineChannels("@google/genai", {
     GoogleGenAIGenerateContentResponse
   >({
     channelName: "models.generateContentStream",
+    kind: "async",
+  }),
+  embedContent: channel<
+    [GoogleGenAIEmbedContentParams],
+    GoogleGenAIEmbedContentResponse
+  >({
+    channelName: "models.embedContent",
     kind: "async",
   }),
 });

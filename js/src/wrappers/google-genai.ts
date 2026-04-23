@@ -2,6 +2,7 @@ import { googleGenAIChannels } from "../instrumentation/plugins/google-genai-cha
 import type {
   GoogleGenAIClient,
   GoogleGenAIConstructor,
+  GoogleGenAIEmbedContentParams,
   GoogleGenAIGenerateContentParams,
   GoogleGenAIModels,
 } from "../vendor-sdk-types/google-genai";
@@ -88,6 +89,8 @@ function wrapModels(models: GoogleGenAIModels): GoogleGenAIModels {
         return wrapGenerateContentStream(
           target.generateContentStream.bind(target),
         );
+      } else if (prop === "embedContent") {
+        return wrapEmbedContent(target.embedContent.bind(target));
       }
       return Reflect.get(target, prop, receiver);
     },
@@ -114,6 +117,19 @@ function wrapGenerateContentStream(
     return googleGenAIChannels.generateContentStream.tracePromise(
       () => original(params),
       { arguments: [params] },
+    );
+  };
+}
+
+function wrapEmbedContent(
+  original: GoogleGenAIModels["embedContent"],
+): GoogleGenAIModels["embedContent"] {
+  return function (params: GoogleGenAIEmbedContentParams) {
+    return googleGenAIChannels.embedContent.tracePromise(
+      () => original(params),
+      { arguments: [params] } as Parameters<
+        typeof googleGenAIChannels.embedContent.tracePromise
+      >[1],
     );
   };
 }

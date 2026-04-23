@@ -5,7 +5,7 @@ import {
   traceSyncStreamChannel,
   unsubscribeAll,
 } from "../core/channel-tracing";
-import { SpanTypeAttribute } from "../../../util/index";
+import { SpanTypeAttribute, isPromiseLike } from "../../../util/index";
 import { getCurrentUnixTimestamp } from "../../util";
 import { Attachment, type Span, withCurrent } from "../../logger";
 import {
@@ -26,6 +26,8 @@ import type {
   AISDKModelStreamChunk,
   AISDKOutputObject,
   AISDKOutputResponseFormat,
+  AISDKRerankParams,
+  AISDKRerankResult,
   AISDKResult,
   AISDKTool,
   AISDKTools,
@@ -76,6 +78,7 @@ const RUNTIME_DENY_OUTPUT_PATHS = Symbol.for(
  * - streamObject (function returning stream)
  * - embed (async function)
  * - embedMany (async function)
+ * - rerank (async function)
  * - Agent.generate (async method)
  * - Agent.stream (async method returning stream)
  * - ToolLoopAgent.generate (async method)
@@ -261,6 +264,23 @@ export class AISDKPlugin extends BasePlugin {
           prepareAISDKEmbedInput(params, event.self),
         extractOutput: (result, endEvent) =>
           processAISDKEmbeddingOutput(
+            result,
+            resolveDenyOutputPaths(endEvent, denyOutputPaths),
+          ),
+        extractMetrics: (result, _startTime, endEvent) =>
+          extractTopLevelAISDKMetrics(result, endEvent),
+      }),
+    );
+
+    // rerank - async reranking function
+    this.unsubscribers.push(
+      traceAsyncChannel(aiSDKChannels.rerank, {
+        name: "rerank",
+        type: SpanTypeAttribute.FUNCTION,
+        extractInput: ([params], event) =>
+          prepareAISDKRerankInput(params, event.self),
+        extractOutput: (result, endEvent) =>
+          processAISDKRerankOutput(
             result,
             resolveDenyOutputPaths(endEvent, denyOutputPaths),
           ),
@@ -881,6 +901,24 @@ function prepareAISDKEmbedInput(
   };
 }
 
+function prepareAISDKRerankInput(
+  params: AISDKRerankParams,
+  self?: unknown,
+): {
+  input: unknown;
+  metadata: Record<string, unknown>;
+} {
+  const { documents, query } = params;
+
+  return {
+    input: {
+      documents,
+      query,
+    },
+    metadata: extractMetadataFromRerankParams(params, self),
+  };
+}
+
 function extractTopLevelAISDKMetrics(
   result: AISDKResult,
   event?: { [key: string]: unknown },
@@ -961,6 +999,22 @@ function extractMetadataFromEmbedParams(
   self?: unknown,
 ): Record<string, unknown> {
   return extractBaseMetadata(params.model, self);
+}
+
+function extractMetadataFromRerankParams(
+  params: AISDKRerankParams,
+  self?: unknown,
+): Record<string, unknown> {
+  const metadata = extractBaseMetadata(params.model, self);
+
+  if (typeof params.topN === "number") {
+    metadata.topN = params.topN;
+  }
+  if (Array.isArray(params.documents)) {
+    metadata.document_count = params.documents.length;
+  }
+
+  return metadata;
 }
 
 function prepareAISDKChildTracing(
@@ -1730,6 +1784,35 @@ function processAISDKEmbeddingOutput(
   return normalizeAISDKLoggedOutput(omit(summarized, denyOutputPaths));
 }
 
+function processAISDKRerankOutput(
+  output: AISDKRerankResult,
+  _denyOutputPaths: string[],
+): unknown {
+  if (!output || typeof output !== "object") {
+    return output;
+  }
+
+  const ranking = safeSerializableFieldRead(output, "ranking");
+  if (Array.isArray(ranking)) {
+    return ranking.slice(0, 100).map((item) => {
+      const entry =
+        item && typeof item === "object"
+          ? (item as Record<string, unknown>)
+          : undefined;
+      return {
+        index:
+          typeof entry?.originalIndex === "number"
+            ? entry.originalIndex
+            : undefined,
+        relevance_score:
+          typeof entry?.score === "number" ? entry.score : undefined,
+      };
+    });
+  }
+
+  return undefined;
+}
+
 /**
  * Extract token metrics from AI SDK result.
  */
@@ -1783,6 +1866,66 @@ function extractTokenMetrics(result: AISDKResult): Record<string, number> {
     metrics.tokens = totalTokens;
   }
 
+  const promptCachedTokens = firstNumber(
+    usage.inputTokens?.cacheRead,
+    usage.inputTokenDetails?.cacheReadTokens,
+    usage.cachedInputTokens,
+    usage.promptCachedTokens,
+    usage.prompt_cached_tokens,
+  );
+  if (promptCachedTokens !== undefined) {
+    metrics.prompt_cached_tokens = promptCachedTokens;
+  }
+
+  const promptCacheCreationTokens = firstNumber(
+    usage.inputTokens?.cacheWrite,
+    usage.inputTokenDetails?.cacheWriteTokens,
+    usage.promptCacheCreationTokens,
+    usage.prompt_cache_creation_tokens,
+    extractAnthropicCacheCreationTokens(result),
+  );
+  if (promptCacheCreationTokens !== undefined) {
+    metrics.prompt_cache_creation_tokens = promptCacheCreationTokens;
+  }
+
+  const promptReasoningTokens = firstNumber(
+    usage.promptReasoningTokens,
+    usage.prompt_reasoning_tokens,
+  );
+  if (promptReasoningTokens !== undefined) {
+    metrics.prompt_reasoning_tokens = promptReasoningTokens;
+  }
+
+  const completionCachedTokens = firstNumber(
+    usage.completionCachedTokens,
+    usage.completion_cached_tokens,
+  );
+  if (completionCachedTokens !== undefined) {
+    metrics.completion_cached_tokens = completionCachedTokens;
+  }
+
+  const reasoningTokenCount = firstNumber(
+    usage.outputTokens?.reasoning,
+    usage.reasoningTokens,
+    usage.completionReasoningTokens,
+    usage.completion_reasoning_tokens,
+    usage.reasoning_tokens,
+    usage.thinkingTokens,
+    usage.thinking_tokens,
+  );
+  if (reasoningTokenCount !== undefined) {
+    metrics.completion_reasoning_tokens = reasoningTokenCount;
+    metrics.reasoning_tokens = reasoningTokenCount;
+  }
+
+  const completionAudioTokens = firstNumber(
+    usage.completionAudioTokens,
+    usage.completion_audio_tokens,
+  );
+  if (completionAudioTokens !== undefined) {
+    metrics.completion_audio_tokens = completionAudioTokens;
+  }
+
   // Extract cost from gateway routing if available
   const cost = extractCostFromResult(result);
   if (cost !== undefined) {
@@ -1790,6 +1933,27 @@ function extractTokenMetrics(result: AISDKResult): Record<string, number> {
   }
 
   return metrics;
+}
+
+function extractAnthropicCacheCreationTokens(
+  result: AISDKResult,
+): number | undefined {
+  const providerMetadata = safeSerializableFieldRead(
+    result,
+    "providerMetadata",
+  ) as Record<string, unknown> | undefined;
+  const anthropicMetadata = providerMetadata?.anthropic as
+    | Record<string, unknown>
+    | undefined;
+  if (!anthropicMetadata) {
+    return undefined;
+  }
+
+  return firstNumber(
+    anthropicMetadata.cacheCreationInputTokens,
+    (anthropicMetadata.usage as Record<string, unknown> | undefined)
+      ?.cache_creation_input_tokens,
+  );
 }
 
 function safeResultFieldRead(
@@ -1956,24 +2120,12 @@ function extractSerializableOutputFields(
   };
 }
 
-function isPromiseLike(value: unknown): value is PromiseLike<unknown> {
-  return (
-    value != null &&
-    typeof value === "object" &&
-    typeof (value as { then?: unknown }).then === "function"
-  );
-}
-
 function isSerializableOutputValue(value: unknown): boolean {
   if (typeof value === "function") {
     return false;
   }
 
-  if (
-    value &&
-    typeof value === "object" &&
-    typeof (value as { then?: unknown }).then === "function"
-  ) {
+  if (isPromiseLike(value)) {
     return false;
   }
 

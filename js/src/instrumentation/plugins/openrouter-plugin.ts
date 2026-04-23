@@ -6,7 +6,11 @@ import {
   unsubscribeAll,
 } from "../core/channel-tracing";
 import type { ChannelMessage } from "../core/channel-definitions";
-import { SpanTypeAttribute, isObject } from "../../../util/index";
+import {
+  SpanTypeAttribute,
+  isObject,
+  isPromiseLike,
+} from "../../../util/index";
 import { withCurrent } from "../../logger";
 import type { Span } from "../../logger";
 import { getCurrentUnixTimestamp } from "../../util";
@@ -17,6 +21,7 @@ import type {
   OpenRouterChatCompletionChunk,
   OpenRouterCallModelRequest,
   OpenRouterEmbeddingResponse,
+  OpenRouterRerankResult,
   OpenRouterResponse,
   OpenRouterResponseStreamEvent,
   OpenRouterTool,
@@ -107,6 +112,38 @@ export class OpenRouterPlugin extends BasePlugin {
             ? parseOpenRouterMetricsFromUsage(result.usage)
             : {};
         },
+      }),
+    );
+
+    this.unsubscribers.push(
+      traceAsyncChannel(openRouterChannels.rerankRerank, {
+        name: "openrouter.rerank.rerank",
+        type: SpanTypeAttribute.LLM,
+        extractInput: (args) => {
+          const request = getOpenRouterRequestArg(args);
+          const requestBody = isObject(request?.requestBody)
+            ? request.requestBody
+            : {};
+          const httpReferer = request?.httpReferer;
+          const xTitle = request?.xTitle ?? request?.appTitle;
+          const { documents, query, ...metadata } = requestBody;
+          return {
+            input: {
+              documents,
+              query,
+            },
+            metadata: buildOpenRouterRerankMetadata(
+              metadata,
+              documents,
+              httpReferer,
+              xTitle,
+            ),
+          };
+        },
+        extractOutput: (result) => extractOpenRouterRerankOutput(result),
+        extractMetadata: (result) => extractOpenRouterResponseMetadata(result),
+        extractMetrics: (result) =>
+          isObject(result) ? parseOpenRouterMetricsFromUsage(result.usage) : {},
       }),
     );
 
@@ -535,6 +572,19 @@ function buildOpenRouterEmbeddingMetadata(
     : normalized;
 }
 
+function buildOpenRouterRerankMetadata(
+  metadata: Record<string, unknown>,
+  documents: unknown,
+  httpReferer: unknown,
+  xTitle: unknown,
+): Record<string, unknown> {
+  const normalized = buildOpenRouterMetadata(metadata, httpReferer, xTitle);
+  return {
+    ...normalized,
+    ...(Array.isArray(documents) ? { document_count: documents.length } : {}),
+  };
+}
+
 function extractOpenRouterCallModelInput(
   request: OpenRouterCallModelRequest,
 ): unknown {
@@ -567,7 +617,7 @@ function extractOpenRouterResponseMetadata(
   const { model, provider, ...rest } = metadataRecord;
   const normalizedModel = parseOpenRouterModelString(model);
   const normalizedProvider =
-    (typeof provider === "string" ? provider : undefined) ||
+    (typeof provider === "string" ? provider.toLowerCase() : undefined) ||
     normalizedModel.provider;
   const usageMetadata = extractOpenRouterUsageMetadata(usage);
   const combined = {
@@ -601,6 +651,25 @@ function extractOpenRouterResponseOutput(
   }
 
   return undefined;
+}
+
+function extractOpenRouterRerankOutput(
+  result: OpenRouterRerankResult | undefined,
+): unknown {
+  if (!isObject(result) || !Array.isArray(result.results)) {
+    return undefined;
+  }
+
+  return result.results.slice(0, 100).map((item) => ({
+    index:
+      isObject(item) && typeof item.index === "number" ? item.index : undefined,
+    relevance_score:
+      isObject(item) && typeof item.relevanceScore === "number"
+        ? item.relevanceScore
+        : isObject(item) && typeof item.relevance_score === "number"
+          ? item.relevance_score
+          : undefined,
+  }));
 }
 
 const OPENROUTER_WRAPPED_TOOL = Symbol("braintrust.openrouter.wrappedTool");
@@ -736,15 +805,6 @@ function getToolCallId(context: unknown): string | undefined {
   return typeof toolContext?.toolCall?.id === "string"
     ? toolContext.toolCall.id
     : undefined;
-}
-
-function isPromiseLike(value: unknown): value is PromiseLike<unknown> {
-  return (
-    !!value &&
-    (typeof value === "object" || typeof value === "function") &&
-    "then" in value &&
-    typeof value.then === "function"
-  );
 }
 
 export function aggregateOpenRouterChatChunks(

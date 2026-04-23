@@ -8,6 +8,7 @@ import {
 import {
   CHAT_MODEL,
   EMBEDDING_MODEL,
+  RERANK_MODEL,
   ROOT_NAME,
   SCENARIO_NAME,
 } from "./constants.mjs";
@@ -47,7 +48,7 @@ function withCompatibleResponsesRequest(openResponsesRequest) {
 
 async function runOpenRouterInstrumentationScenario(
   OpenRouter,
-  { decorateClient } = {},
+  { decorateClient, supportsRerank = true } = {},
 ) {
   const baseClient = new OpenRouter({
     apiKey: process.env.OPENROUTER_API_KEY,
@@ -135,6 +136,27 @@ async function runOpenRouterInstrumentationScenario(
         },
       );
 
+      if (supportsRerank) {
+        await runOperation(
+          "openrouter-rerank-operation",
+          "rerank",
+          async () => {
+            await client.rerank.rerank({
+              requestBody: {
+                documents: [
+                  "Athens is in Greece.",
+                  "Paris is in France.",
+                  "Lima is in Peru.",
+                ],
+                model: RERANK_MODEL,
+                query: "Which document is about France?",
+                topN: 2,
+              },
+            });
+          },
+        );
+      }
+
       await runOperation(
         "openrouter-call-model-operation",
         "call-model",
@@ -162,12 +184,19 @@ async function runOpenRouterInstrumentationScenario(
   });
 }
 
-export async function runWrappedOpenRouterInstrumentation(OpenRouter) {
+export async function runWrappedOpenRouterInstrumentation(
+  OpenRouter,
+  options = {},
+) {
   await runOpenRouterInstrumentationScenario(OpenRouter, {
+    ...options,
     decorateClient: wrapOpenRouter,
   });
 }
 
-export async function runAutoOpenRouterInstrumentation(OpenRouter) {
-  await runOpenRouterInstrumentationScenario(OpenRouter);
+export async function runAutoOpenRouterInstrumentation(
+  OpenRouter,
+  options = {},
+) {
+  await runOpenRouterInstrumentationScenario(OpenRouter, options);
 }

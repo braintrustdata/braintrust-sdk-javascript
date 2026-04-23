@@ -7,6 +7,7 @@
 export interface AISDKTokenBucket {
   total?: number;
   cacheRead?: number;
+  cacheWrite?: number;
   reasoning?: number;
   [key: string]: unknown;
 }
@@ -15,7 +16,14 @@ type AISDKTokenCount = number & AISDKTokenBucket;
 
 export interface AISDKUsage {
   inputTokens?: AISDKTokenCount;
+  inputTokenDetails?: {
+    noCacheTokens?: number;
+    cacheReadTokens?: number;
+    cacheWriteTokens?: number;
+    [key: string]: unknown;
+  };
   outputTokens?: AISDKTokenCount;
+  outputTokenDetails?: Record<string, unknown>;
   totalTokens?: number;
   tokens?: number;
   total_tokens?: number;
@@ -156,6 +164,18 @@ export interface AISDKEmbedParams {
   [key: string]: unknown;
 }
 
+export interface AISDKRerankParams {
+  model?: AISDKModel;
+  documents?: unknown[];
+  query?: string;
+  topN?: number;
+  maxRetries?: number;
+  abortSignal?: AbortSignal;
+  headers?: Record<string, string>;
+  providerOptions?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
 export interface AISDKCallParams {
   model?: AISDKModel;
   prompt?: AISDKMessage[] | Record<string, unknown>;
@@ -201,9 +221,42 @@ export interface AISDKEmbeddingResult extends AISDKResult {
   responses?: unknown[];
 }
 
+export interface AISDKRerankEntry {
+  originalIndex?: number;
+  score?: number;
+  document?: unknown;
+  [key: string]: unknown;
+}
+
+export interface AISDKRerankResponse {
+  id?: string;
+  timestamp?: Date;
+  modelId?: string;
+  headers?: Record<string, string>;
+  body?: unknown;
+  [key: string]: unknown;
+}
+
+export interface AISDKRerankResult {
+  originalDocuments?: unknown[];
+  rerankedDocuments?: unknown[];
+  ranking?: AISDKRerankEntry[];
+  providerMetadata?: AISDKProviderMetadata;
+  experimental_providerMetadata?: AISDKProviderMetadata;
+  response?: AISDKRerankResponse;
+  usage?: AISDKUsage;
+  totalUsage?: AISDKUsage;
+  warnings?: unknown[];
+  [key: string]: unknown;
+}
+
 export type AISDKEmbedFunction = (
   params: AISDKEmbedParams,
 ) => Promise<AISDKEmbeddingResult>;
+
+export type AISDKRerankFunction = (
+  params: AISDKRerankParams,
+) => Promise<AISDKRerankResult>;
 
 export type AISDKGenerateFunction = (
   params: AISDKCallParams,
@@ -237,6 +290,7 @@ export interface AISDKNamespaceBase {
   streamObject: AISDKStreamFunction;
   embed: AISDKEmbedFunction;
   embedMany: AISDKEmbedFunction;
+  rerank?: AISDKRerankFunction;
   gateway?: AISDKProviderResolver;
   [key: string]: unknown;
 }

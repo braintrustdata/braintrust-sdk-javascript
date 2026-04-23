@@ -1,236 +1,88 @@
 # Publishing JavaScript SDK Packages
 
-This guide explains how to release packages from this repository.
+All JavaScript package publishing happens in GitHub Actions. Do not publish from your local machine.
 
-**Important:** all publishing happens in **GitHub Actions**. Do **not** publish from your local machine.
+## Short Version
 
-## TL;DR
+- If your PR changes a publishable package, run `pnpm changeset` and commit the generated `.changeset/*.md` file.
+- Merge the PR into `main`.
+- For a stable release:
+  - Run **Prepare Release** on `main`.
+  - Merge the generated PR into `release`.
+  - Run **Release Packages** with `release_mode=stable` and `ref=release`.
+  - Approve the `npm-publish` environment.
+  - The backsync workflow enables auto-merge on the backsync PR; approve it only after the publish succeeds.
+- For a prerelease from a branch:
+  - Run **Release Packages** with `release_mode=prerelease` and `ref=<branch>`.
+  - Install from the `rc` tag, for example `npm install braintrust@rc`.
 
-- Run `pnpm changeset` in any PR that contains changes that may in any way be user facing
-- Commit the generated `.changeset/*.md` file
-- Merging your PR will update or create a "Release PR"
-- Merging the "Release PR" will trigger a release
-- Release runs need to be approved on GitHub via Deployment Approvals
+## Changesets
 
-## Start here
+If your PR changes a publishable package, CI expects a changeset unless you explicitly skip it.
 
-| I want to...                                           | What to do                                                                                |
-| ------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
-| Make my PR release something                           | Run `pnpm changeset` and commit the generated `.changeset/*.md` file                      |
-| Ship a normal stable release to npm `latest`           | Merge the auto-created release PR on `main`, then approve the `npm-publish` environment   |
-| Publish a branch build for testing                     | Run the **Release Packages** workflow with `release_mode=prerelease` and your branch name |
-| Manually trigger a canary publish                      | Run the **Release Packages** workflow with `release_mode=canary`                          |
-| Preview what would publish without actually publishing | Run the workflow with a `dry-run-*` mode                                                  |
-
-## Creating a Changeset
-
-If your PR changes a publishable package, it usually needs a changeset.
+Create one with:
 
 ```bash
 pnpm changeset
 ```
 
-That command will ask:
+That creates a `.changeset/*.md` file. Commit it with your PR.
 
-1. which package(s) changed
-2. whether the bump is `patch`, `minor`, or `major`
-3. what should appear in the changelog
+Use:
 
-Commit the generated `.changeset/*.md` file with your PR.
+- `patch` for fixes and non-breaking maintenance changes
+- `minor` for new backwards-compatible features
+- `major` for breaking changes
 
-### How to choose the bump type
+If no release is intended, bypass the check with either:
 
-| Bump    | Use it for                                                                                         | Examples                                                                                      |
-| ------- | -------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| `patch` | Bug fixes, internal refactors, performance work, dependency updates, docs-only API-neutral changes | Fix a crash, improve retry logic, bump a dependency                                           |
-| `minor` | New backwards-compatible functionality                                                             | Add a new method, export a new helper, add an optional parameter                              |
-| `major` | Breaking changes                                                                                   | Remove or rename public API, change behavior in a way that may break users, drop Node support |
+- the `skip-changeset` PR label
+- `#skip-changeset` in the PR title or body
 
-### Example changeset
-
-```markdown
----
-"braintrust": patch
----
-
-Fix span export when using custom headers
-```
-
-You can edit the generated file by hand before committing it.
-
-### When you do not need a changeset
-
-You usually do **not** need one for docs-only, test-only, or CI-only changes.
-
-If your PR touches a publishable package but does not contain any potentially user-facing or user-impacting changes, bypass the check by using one of these:
-
-- add the `skip-changeset` label to the PR
-- include `#skip-changeset` in the PR title or body
-
----
-
-## Stable release (`latest`)
+## Stable Release (`latest`)
 
 This is the normal production release flow.
 
-### The important mental model
+1. Merge the feature PR into `main`.
+2. Run **Prepare Release** from `main`.
+3. That workflow:
+   - runs `changeset version`
+   - creates a branch named `release/{short-main-sha}`
+   - opens a PR from that branch into `release`
+4. Review and merge that PR into `release`.
+5. Run **Release Packages** with:
+   - `release_mode=stable`
+   - `ref=release`
+6. Approve the `npm-publish` environment when GitHub asks.
+7. The backsync workflow opens a PR from `backsync/{short-release-sha}` to `main` and enables auto-merge on it.
+8. After the publish succeeds, approve that backsync PR so it can merge into `main`.
 
-A stable release is a **two-step process**:
+Stable releases publish to the npm `latest` dist-tag, push release tags, and create GitHub Releases.
 
-```text
-feature PR with changeset
-→ merge to main
-→ automation opens or updates a release PR
-→ merge the release PR
-→ approve npm-publish
-→ packages publish to npm
-```
+## Prerelease (`rc`)
 
-**Merging your feature PR does not publish anything by itself.**
-It only feeds changes into the next release PR.
+Use this to publish a test build from a branch before merging to `main`.
 
-### What to do
-
-1. Merge your PR with its changeset into `main`.
-2. Wait for GitHub Actions to create or update the release PR.
-3. Review the release PR:
-   - are the package bumps correct?
-   - do the changelog entries read well?
-4. Merge the release PR.
-5. Open the workflow run and approve the `npm-publish` environment when prompted.
-6. The workflow publishes to npm, pushes release tags, and creates GitHub Releases.
-
-### What stable release creates
-
-- npm publishes on the `latest` dist-tag
-- Changesets package tags such as `braintrust@3.8.0`
-- GitHub Releases
-
-## Canary release (`canary`)
-
-Canaries are nightly snapshots from `main`.
-
-Use them when someone wants the newest merged JS SDK code without waiting for the next stable release.
-
-### How it works
-
-```text
-nightly scheduler workflow dispatches canary publish on main
-→ check for pending changesets
-→ check whether HEAD already has a canary
-→ check whether latest CI passed
-→ publish @canary if needed
-```
-
-### Behavior
-
-- runs automatically every night at **04:00 UTC**
-- can also be triggered manually with `release_mode=canary`
-- skips if there are no pending changesets
-- skips if the current `main` commit already has a canary
-- skips if the latest required CI run on `main` did not succeed
-
-### Install a canary
-
-```bash
-npm install braintrust@canary
-npm install @braintrust/otel@canary
-```
-
-### Canary version format
-
-```text
-1.2.3-canary.20260404040000.abc1234
-```
-
-That includes:
-
-- the base version
-- a timestamp
-- the short commit hash
-
-### What canaries do not do
-
-- do not create git tags
-- do not create GitHub Releases
-- do not commit version changes back to the repo
-- do not need manual environment approval
-
-## Prerelease from a branch (`rc`)
-
-Use a prerelease when you want to publish a test build from a branch before merging to `main`.
-
-### What to do
-
-1. Open **Actions** in GitHub.
-2. Open the **Release Packages** workflow.
-3. Click **Run workflow**.
-4. Set:
+1. Run **Release Packages**.
+2. Set:
    - `release_mode=prerelease`
-   - `branch=<your branch>`
-5. Run the workflow.
-6. After it finishes, install from the `rc` dist-tag:
+   - `ref=<branch, tag, or SHA>`
+3. Wait for the workflow to finish.
+4. Install from `rc`, for example:
 
 ```bash
 npm install braintrust@rc
 ```
 
-### Prerelease version format
+Prereleases:
 
-```text
-1.2.3-rc.20260414104840.abcdef1234567890abcdef1234567890abcdef12
-```
-
-That includes:
-
-- the next base version
-- a timestamp
-- the commit SHA
-
-### What prereleases do not do
-
+- publish only packages with releasable changesets on that ref
 - do not create git tags
 - do not create GitHub Releases
 - do not commit version changes back to the repo
-- do not publish packages that have no releasable changesets on that branch
 
-## Dry run
+## Notes
 
-Use a dry run when you want to answer: **what would publish if I ran this for real?**
-
-Available modes:
-
-| Mode                 | Simulates                 |
-| -------------------- | ------------------------- |
-| `dry-run-stable`     | stable release from a ref |
-| `dry-run-prerelease` | prerelease from a branch  |
-| `dry-run-canary`     | canary publish from a ref |
-
-Dry runs will:
-
-- compute versions
-- build the publishable packages
-- create tarball artifacts
-- show a summary in the workflow output
-
-Dry runs will **not**:
-
-- publish to npm
-- create tags
-- create GitHub Releases
-- commit anything back to the repo
-
-## FAQ
-
-### Can I manually trigger a stable release from the workflow dispatch UI?
-
-No. Stable release publishing happens from the push-to-`main` flow around the release PR.
-
-### Can I publish a test build from a feature branch?
-
-Yes. Use `release_mode=prerelease` and a specific branch ref.
-
-### What is the difference between canary and prerelease?
-
-- **canary**: automated or manual snapshot from `main`, published to `canary`
-- **prerelease**: manual snapshot from any branch, published to `rc`
+- **Prepare Release** must be run from `main`.
+- `release` is the branch used for stable publishing.
+- The backsync PR is opened when `release` gets the release commit, not after publish, and the workflow enables auto-merge on it. Because `main` requires an approving review, do not approve that PR until the stable publish succeeds.

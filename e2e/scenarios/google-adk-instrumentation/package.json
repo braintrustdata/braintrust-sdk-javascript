@@ -9,6 +9,7 @@
     }
   },
   "dependencies": {
-    "@google/adk": "0.6.1"
+    "@google/adk": "1.0.0",
+    "google-adk-sdk-v061": "npm:@google/adk@0.6.1"
   }
 }

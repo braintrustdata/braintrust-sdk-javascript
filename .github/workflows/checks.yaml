@@ -81,22 +81,6 @@ jobs:
       - name: Ensure SHA pinned actions
         uses: zgosalvez/github-actions-ensure-sha-pinned-actions@ca46236c6ce584ae24bc6283ba8dcf4b3ec8a066 # v5.0.4
 
-  changeset-required:
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
-        with:
-          fetch-depth: 0
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
-        with:
-          node-version-file: .tool-versions
-      - name: Fetch pull request base ref
-        run: git fetch origin "${{ github.base_ref }}:refs/remotes/origin/${{ github.base_ref }}"
-      - name: Enforce changeset requirement for publishable package changes
-        run: node scripts/release/enforce-changeset.mjs
-
   js-test:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
@@ -153,7 +137,7 @@ jobs:
         shell: bash
         run: ls -la js/artifacts/
       - name: Upload build artifacts
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ${{ steps.artifact.outputs.name }}-dist
           path: js/artifacts/*.tgz
@@ -202,7 +186,7 @@ jobs:
           echo "version=$PUBLISHED_VERSION" >> "$GITHUB_OUTPUT"
           echo "Published version: $PUBLISHED_VERSION"
       - name: Cache API compatibility test tarball
-        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: ~/.npm/_cacache
           key: braintrust-tarball-${{ steps.published-version.outputs.version }}-${{ runner.os }}
@@ -472,7 +456,6 @@ jobs:
       - check-typings
       - dead-code
       - ensure-pinned-actions
-      - changeset-required
       - js-test
       - js-build
       - e2e-hermetic
@@ -506,7 +489,6 @@ jobs:
           check_result "check-typings" "${{ needs.check-typings.result }}"
           check_result "dead-code" "${{ needs.dead-code.result }}"
           check_result "ensure-pinned-actions" "${{ needs.ensure-pinned-actions.result }}"
-          check_result "changeset-required" "${{ needs.changeset-required.result }}"
           check_result "js-test" "${{ needs.js-test.result }}"
           check_result "js-build" "${{ needs.js-build.result }}"
           check_result "e2e-hermetic" "${{ needs.e2e-hermetic.result }}"
