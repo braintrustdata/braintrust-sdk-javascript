@@ -456,9 +456,15 @@ test("init accepts dataset with id and version", () => {
 
 test("init forwards dataset _internal_btql to experiment register", async () => {
   const datasetFilter = {
-    filter: {
-      btql: "expected IS NOT NULL",
-    },
+    filters: [
+      {
+        op: "isnotnull",
+        expr: {
+          op: "ident",
+          name: ["expected"],
+        },
+      },
+    ],
   };
 
   let experimentRegisterBody: unknown;
@@ -551,6 +557,115 @@ test("init forwards dataset _internal_btql to experiment register", async () => 
       internal_metadata: {
         dataset_filter: datasetFilter,
       },
+    }),
+  );
+
+  _exportsForTestingOnly.clearTestBackgroundLogger();
+});
+
+test("dataset fetch normalizes _internal_btql filters before querying btql", async () => {
+  const datasetFilter = {
+    filters: [
+      {
+        op: "isnotnull",
+        expr: {
+          op: "ident",
+          name: ["expected"],
+        },
+      },
+      {
+        op: "eq",
+        left: {
+          op: "ident",
+          name: ["metadata", "model"],
+        },
+        right: {
+          op: "literal",
+          value: "gpt-5-mini",
+        },
+      },
+    ],
+    limit: 5,
+  };
+
+  let btqlBody: unknown;
+  const state = BraintrustState.deserialize(
+    {
+      appUrl: "https://example.com",
+      appPublicUrl: "https://example.com",
+      loginToken: "test-token",
+      orgId: "11111111-1111-4111-8111-111111111111",
+      orgName: "test-org",
+      apiUrl: "https://example.com",
+      proxyUrl: "https://example.com",
+    },
+    {
+      fetch: vi.fn(async (input, init) => {
+        const url = typeof input === "string" ? input : input.toString();
+        if (url.endsWith("/api/dataset/register")) {
+          return new Response(
+            JSON.stringify({
+              project: {
+                id: "11111111-1111-4111-8111-111111111111",
+                name: "test-project",
+              },
+              dataset: {
+                id: "22222222-2222-4222-8222-222222222222",
+                name: "test-dataset",
+              },
+            }),
+            { status: 200, headers: { "Content-Type": "application/json" } },
+          );
+        }
+
+        if (url.endsWith("/btql")) {
+          btqlBody =
+            typeof init?.body === "string" ? JSON.parse(init.body) : undefined;
+
+          return new Response(
+            JSON.stringify({
+              data: [],
+            }),
+            { status: 200, headers: { "Content-Type": "application/json" } },
+          );
+        }
+
+        throw new Error(`Unexpected url: ${url}`);
+      }),
+    },
+  );
+
+  _exportsForTestingOnly.useTestBackgroundLogger();
+
+  const dataset = initDataset({
+    project: "test-project",
+    dataset: "test-dataset",
+    state,
+    _internal_btql: datasetFilter,
+  });
+
+  const rows: unknown[] = [];
+  for await (const row of dataset) {
+    rows.push(row);
+  }
+
+  expect(rows).toEqual([]);
+  expect(btqlBody).toEqual(
+    expect.objectContaining({
+      query: expect.objectContaining({
+        limit: 5,
+        filter: {
+          op: "and",
+          children: datasetFilter.filters,
+        },
+      }),
+    }),
+  );
+  expect(btqlBody).not.toEqual(
+    expect.objectContaining({
+      query: expect.objectContaining({
+        filters: expect.anything(),
+      }),
     }),
   );
 

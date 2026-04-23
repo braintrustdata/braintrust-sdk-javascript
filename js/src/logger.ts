@@ -3402,11 +3402,23 @@ export interface ParametersRef {
   version?: string;
 }
 
+/**
+ * Internal BTQL payload used to subset dataset-backed evals.
+ *
+ * The standard BTQL shape uses `filter`. A `filters` array may also be
+ * provided to preserve separate clause boundaries; the SDK will normalize it
+ * into `filter` before resolving the dataset query.
+ */
+export type InternalBtqlQuery = Record<string, unknown> & {
+  filter?: Record<string, unknown>;
+  filters?: Record<string, unknown>[];
+};
+
 export type InitOptions<IsOpen extends boolean> = FullLoginOptions & {
   experiment?: string;
   description?: string;
   dataset?: AnyDataset | DatasetRef;
-  _internal_btql?: Record<string, unknown>;
+  _internal_btql?: InternalBtqlQuery;
   parameters?: ParametersRef | RemoteEvalParameters<boolean, boolean>;
   update?: boolean;
   baseExperiment?: string;
@@ -3430,8 +3442,8 @@ function getExperimentDatasetFilter({
   _internal_btql,
 }: {
   dataset?: AnyDataset | DatasetRef;
-  _internal_btql?: Record<string, unknown>;
-}): Record<string, unknown> | undefined {
+  _internal_btql?: InternalBtqlQuery;
+}): InternalBtqlQuery | undefined {
   if (_internal_btql !== undefined) {
     return _internal_btql;
   }
@@ -3442,6 +3454,62 @@ function getExperimentDatasetFilter({
 
   const datasetFilter = Reflect.get(dataset, "_internal_btql");
   return isObject(datasetFilter) ? datasetFilter : undefined;
+}
+
+function isInternalBtqlFilterClause(
+  value: unknown,
+): value is NonNullable<InternalBtqlQuery["filters"]>[number] {
+  return isObject(value) && typeof value["op"] === "string";
+}
+
+function normalizeInternalBtql(
+  internalBtql?: InternalBtqlQuery,
+): InternalBtqlQuery | undefined {
+  if (internalBtql === undefined) {
+    return undefined;
+  }
+
+  const filters = internalBtql["filters"];
+  if (filters === undefined) {
+    return internalBtql;
+  }
+
+  const normalizedInternalBtql = Object.fromEntries(
+    Object.entries(internalBtql).filter(([key]) => key !== "filters"),
+  );
+  if ("filter" in normalizedInternalBtql) {
+    return normalizedInternalBtql;
+  }
+
+  if (!Array.isArray(filters) || !filters.every(isInternalBtqlFilterClause)) {
+    return internalBtql;
+  }
+
+  if (filters.length === 1) {
+    return {
+      ...normalizedInternalBtql,
+      filter: filters[0],
+    };
+  }
+
+  if (filters.length > 1) {
+    return {
+      ...normalizedInternalBtql,
+      filter: {
+        op: "and",
+        children: filters,
+      },
+    };
+  }
+
+  return normalizedInternalBtql;
+}
+
+function getInternalBtqlLimit(
+  internalBtql?: InternalBtqlQuery,
+): number | undefined {
+  const limit = internalBtql?.["limit"];
+  return typeof limit === "number" ? limit : undefined;
 }
 
 type InitializedExperiment<IsOpen extends boolean | undefined> =
@@ -3829,7 +3897,7 @@ export type InitDatasetOptions<IsLegacyDataset extends boolean> =
     projectId?: string;
     metadata?: Record<string, unknown>;
     state?: BraintrustState;
-    _internal_btql?: Record<string, unknown>;
+    _internal_btql?: InternalBtqlQuery;
   } & UseOutputOption<IsLegacyDataset>;
 
 export type FullInitDatasetOptions<IsLegacyDataset extends boolean> = {
@@ -5726,7 +5794,7 @@ export class ObjectFetcher<RecordType> implements AsyncIterable<
     private pinnedVersion: string | undefined,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private mutateRecord?: (r: any) => WithTransactionId<RecordType>,
-    private _internal_btql?: Record<string, unknown>,
+    private _internal_btql?: InternalBtqlQuery,
   ) {}
 
   public get id(): Promise<string> {
@@ -5743,13 +5811,12 @@ export class ObjectFetcher<RecordType> implements AsyncIterable<
     const state = await this.getState();
     const objectId = await this.id;
     const batchLimit = batchSize ?? DEFAULT_FETCH_BATCH_SIZE;
-    const internalLimit = (
-      this._internal_btql as { limit?: number } | undefined
-    )?.limit;
+    const normalizedInternalBtql = normalizeInternalBtql(this._internal_btql);
+    const internalLimit = getInternalBtqlLimit(normalizedInternalBtql);
     const limit =
       batchSize !== undefined ? batchSize : (internalLimit ?? batchLimit);
     const internalBtqlWithoutReservedQueryKeys = Object.fromEntries(
-      Object.entries(this._internal_btql ?? {}).filter(
+      Object.entries(normalizedInternalBtql ?? {}).filter(
         ([key]) =>
           key !== "cursor" &&
           key !== "limit" &&
@@ -6877,7 +6944,7 @@ export class Dataset<
     lazyMetadata: LazyValue<ProjectDatasetMetadata>,
     pinnedVersion?: string,
     legacy?: IsLegacyDataset,
-    _internal_btql?: Record<string, unknown>,
+    _internal_btql?: InternalBtqlQuery,
   ) {
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     const isLegacyDataset = (legacy ??
