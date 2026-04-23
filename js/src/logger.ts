@@ -3432,7 +3432,7 @@ type DatasetSnapshotXactLookup = {
   xactId: string;
 };
 
-type DatasetSnapshotLookup =
+export type DatasetSnapshotLookup =
   | DatasetSnapshotNameLookup
   | DatasetSnapshotXactLookup;
 
