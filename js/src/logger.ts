@@ -3409,10 +3409,7 @@ export interface ParametersRef {
  * provided to preserve separate clause boundaries; the SDK will normalize it
  * into `filter` before resolving the dataset query.
  */
-export type InternalBtqlQuery = Record<string, unknown> & {
-  filter?: Record<string, unknown>;
-  filters?: Record<string, unknown>[];
-};
+export type InternalBtqlQuery = Record<string, unknown>;
 
 export type InitOptions<IsOpen extends boolean> = FullLoginOptions & {
   experiment?: string;
