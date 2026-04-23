@@ -3402,21 +3402,11 @@ export interface ParametersRef {
   version?: string;
 }
 
-/**
- * Internal BTQL payload used to subset dataset-backed evals.
- *
- * The standard BTQL shape uses `filter`. To preserve separate clause
- * boundaries, `filter` may also be provided as an array. The BTQL API will
- * normalize that array into a single `filter` expression before resolving the
- * dataset query.
- */
-export type InternalBtqlQuery = Record<string, unknown>;
-
 export type InitOptions<IsOpen extends boolean> = FullLoginOptions & {
   experiment?: string;
   description?: string;
   dataset?: AnyDataset | DatasetRef;
-  _internal_btql?: InternalBtqlQuery;
+  _internal_btql?: Record<string, unknown>;
   parameters?: ParametersRef | RemoteEvalParameters<boolean, boolean>;
   update?: boolean;
   baseExperiment?: string;
@@ -3440,8 +3430,8 @@ function getExperimentDatasetFilter({
   _internal_btql,
 }: {
   dataset?: AnyDataset | DatasetRef;
-  _internal_btql?: InternalBtqlQuery;
-}): InternalBtqlQuery | undefined {
+  _internal_btql?: Record<string, unknown>;
+}): Record<string, unknown> | undefined {
   if (_internal_btql !== undefined) {
     return _internal_btql;
   }
@@ -3455,7 +3445,7 @@ function getExperimentDatasetFilter({
 }
 
 function getInternalBtqlLimit(
-  internalBtql?: InternalBtqlQuery,
+  internalBtql?: Record<string, unknown>,
 ): number | undefined {
   const limit = internalBtql?.["limit"];
   return typeof limit === "number" ? limit : undefined;
@@ -3846,7 +3836,7 @@ export type InitDatasetOptions<IsLegacyDataset extends boolean> =
     projectId?: string;
     metadata?: Record<string, unknown>;
     state?: BraintrustState;
-    _internal_btql?: InternalBtqlQuery;
+    _internal_btql?: Record<string, unknown>;
   } & UseOutputOption<IsLegacyDataset>;
 
 export type FullInitDatasetOptions<IsLegacyDataset extends boolean> = {
@@ -5743,7 +5733,7 @@ export class ObjectFetcher<RecordType> implements AsyncIterable<
     private pinnedVersion: string | undefined,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private mutateRecord?: (r: any) => WithTransactionId<RecordType>,
-    private _internal_btql?: InternalBtqlQuery,
+    private _internal_btql?: Record<string, unknown>,
   ) {}
 
   public get id(): Promise<string> {
@@ -6894,7 +6884,7 @@ export class Dataset<
     lazyMetadata: LazyValue<ProjectDatasetMetadata>,
     pinnedVersion?: string,
     legacy?: IsLegacyDataset,
-    _internal_btql?: InternalBtqlQuery,
+    _internal_btql?: Record<string, unknown>,
   ) {
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     const isLegacyDataset = (legacy ??
