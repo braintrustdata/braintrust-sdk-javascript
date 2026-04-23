@@ -3,13 +3,11 @@
  * Patches Module.prototype._compile to transform CommonJS modules at load time.
  */
 
-import {
-  create,
-  type InstrumentationConfig,
-} from "@apm-js-collab/code-transformer";
+import { type InstrumentationConfig } from "@apm-js-collab/code-transformer";
 import * as NodeModule from "node:module";
 import { sep } from "node:path";
 import moduleDetailsFromPath from "module-details-from-path";
+import { createInstrumentationMatcher } from "../custom-transforms";
 import { getPackageName, getPackageVersion } from "./get-package-version.js";
 
 export class ModulePatch {
@@ -24,7 +22,7 @@ export class ModulePatch {
     const modulePrototype = resolveModulePrototype() as any;
 
     this.packages = new Set(instrumentations.map((i) => i.module.name));
-    this.instrumentator = create(instrumentations);
+    this.instrumentator = createInstrumentationMatcher(instrumentations);
     this.modulePrototype = modulePrototype;
     this.originalCompile = modulePrototype._compile;
   }

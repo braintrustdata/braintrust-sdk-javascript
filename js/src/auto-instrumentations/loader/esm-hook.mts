@@ -6,11 +6,9 @@
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { sep } from "node:path";
-import {
-  create,
-  type InstrumentationConfig,
-} from "@apm-js-collab/code-transformer";
+import { type InstrumentationConfig } from "@apm-js-collab/code-transformer";
 import moduleDetailsFromPath from "module-details-from-path";
+import { createInstrumentationMatcher } from "../custom-transforms.js";
 import { getPackageName, getPackageVersion } from "./get-package-version.js";
 
 let instrumentator: any;
@@ -22,7 +20,7 @@ export async function initialize(
 ) {
   // Use the instrumentations passed from the parent via register()
   const configs = data.instrumentations || [];
-  instrumentator = create(configs);
+  instrumentator = createInstrumentationMatcher(configs);
   packages = new Set(configs.map((i) => i.module.name));
 }
 

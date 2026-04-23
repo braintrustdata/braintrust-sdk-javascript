@@ -28,6 +28,7 @@ import { googleADKConfigs } from "./configs/google-adk.js";
 import { cohereConfigs } from "./configs/cohere.js";
 import { groqConfigs } from "./configs/groq.js";
 import { gitHubCopilotConfigs } from "./configs/github-copilot.js";
+import { mastraConfigs } from "./configs/mastra.js";
 import { ModulePatch } from "./loader/cjs-patch.js";
 import { patchTracingChannel } from "./patch-tracing-channel.js";
 
@@ -97,6 +98,9 @@ const allConfigs = [
   )
     ? []
     : gitHubCopilotConfigs),
+  ...(isDisabled(disabledIntegrations, "mastra", "mastra-core", "@mastra/core")
+    ? []
+    : mastraConfigs),
 ];
 
 // 1. Register ESM loader for ESM modules
