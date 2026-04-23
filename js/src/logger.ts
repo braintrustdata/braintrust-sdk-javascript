@@ -3410,6 +3410,7 @@ export interface ParametersRef {
  * into `filter` before resolving the dataset query.
  */
 export type InternalBtqlQuery = Record<string, unknown>;
+type InternalBtqlFilterClause = Record<string, unknown> & { op: string };
 
 export type InitOptions<IsOpen extends boolean> = FullLoginOptions & {
   experiment?: string;
@@ -3455,7 +3456,7 @@ function getExperimentDatasetFilter({
 
 function isInternalBtqlFilterClause(
   value: unknown,
-): value is NonNullable<InternalBtqlQuery["filters"]>[number] {
+): value is InternalBtqlFilterClause {
   return isObject(value) && typeof value["op"] === "string";
 }
 
