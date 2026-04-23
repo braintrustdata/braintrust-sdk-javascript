@@ -3406,6 +3406,7 @@ export type InitOptions<IsOpen extends boolean> = FullLoginOptions & {
   experiment?: string;
   description?: string;
   dataset?: AnyDataset | DatasetRef;
+  _internal_btql?: Record<string, unknown>;
   parameters?: ParametersRef | RemoteEvalParameters<boolean, boolean>;
   update?: boolean;
   baseExperiment?: string;
@@ -3423,6 +3424,25 @@ export type InitOptions<IsOpen extends boolean> = FullLoginOptions & {
 export type FullInitOptions<IsOpen extends boolean> = {
   project?: string;
 } & InitOptions<IsOpen>;
+
+function getExperimentDatasetFilter({
+  dataset,
+  _internal_btql,
+}: {
+  dataset?: AnyDataset | DatasetRef;
+  _internal_btql?: Record<string, unknown>;
+}): Record<string, unknown> | undefined {
+  if (_internal_btql !== undefined) {
+    return _internal_btql;
+  }
+
+  if (!(dataset instanceof Dataset)) {
+    return undefined;
+  }
+
+  const datasetFilter = Reflect.get(dataset, "_internal_btql");
+  return isObject(datasetFilter) ? datasetFilter : undefined;
+}
 
 type InitializedExperiment<IsOpen extends boolean | undefined> =
   IsOpen extends true ? ReadonlyExperiment : Experiment;
@@ -3490,6 +3510,7 @@ export function init<IsOpen extends boolean = false>(
     experiment,
     description,
     dataset,
+    _internal_btql,
     parameters,
     baseExperiment,
     isPublic,
@@ -3636,6 +3657,16 @@ export function init<IsOpen extends boolean = false>(
           args["dataset_id"] = await (dataset as AnyDataset).id;
           args["dataset_version"] = await (dataset as AnyDataset).version();
         }
+      }
+
+      const datasetFilter = getExperimentDatasetFilter({
+        dataset,
+        _internal_btql,
+      });
+      if (datasetFilter !== undefined) {
+        args["internal_metadata"] = {
+          dataset_filter: datasetFilter,
+        };
       }
 
       if (parameters !== undefined) {

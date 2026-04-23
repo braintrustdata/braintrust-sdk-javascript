@@ -4,6 +4,7 @@ import { vi, expect, test, describe, beforeEach, afterEach } from "vitest";
 import {
   _exportsForTestingOnly,
   init,
+  initDataset,
   initLogger,
   Prompt,
   BraintrustState,
@@ -451,6 +452,109 @@ test("init accepts dataset with id and version", () => {
   // This should compile without type errors
   expect(datasetWithVersion.id).toBe("dataset-id-123");
   expect(datasetWithVersion.version).toBe("v2");
+});
+
+test("init forwards dataset _internal_btql to experiment register", async () => {
+  const datasetFilter = {
+    filter: {
+      btql: "expected IS NOT NULL",
+    },
+  };
+
+  let experimentRegisterBody: unknown;
+  const state = BraintrustState.deserialize(
+    {
+      appUrl: "https://example.com",
+      appPublicUrl: "https://example.com",
+      loginToken: "test-token",
+      orgId: "11111111-1111-4111-8111-111111111111",
+      orgName: "test-org",
+      apiUrl: "https://example.com",
+      proxyUrl: "https://example.com",
+    },
+    {
+      fetch: vi.fn(async (input, init) => {
+        const url = typeof input === "string" ? input : input.toString();
+        if (url.endsWith("/api/dataset/register")) {
+          return new Response(
+            JSON.stringify({
+              project: {
+                id: "11111111-1111-4111-8111-111111111111",
+                name: "test-project",
+              },
+              dataset: {
+                id: "22222222-2222-4222-8222-222222222222",
+                name: "test-dataset",
+              },
+            }),
+            { status: 200, headers: { "Content-Type": "application/json" } },
+          );
+        }
+
+        if (url.endsWith("/api/experiment/register")) {
+          experimentRegisterBody =
+            typeof init?.body === "string" ? JSON.parse(init.body) : undefined;
+
+          return new Response(
+            JSON.stringify({
+              project: {
+                id: "11111111-1111-4111-8111-111111111111",
+                name: "test-project",
+              },
+              experiment: {
+                id: "33333333-3333-4333-8333-333333333333",
+                name: "test-experiment",
+                created: "2026-01-01T00:00:00.000Z",
+              },
+            }),
+            { status: 200, headers: { "Content-Type": "application/json" } },
+          );
+        }
+
+        if (url.endsWith("/btql")) {
+          return new Response(
+            JSON.stringify({
+              data: [
+                {
+                  _xact_id: "v1",
+                },
+              ],
+            }),
+            { status: 200, headers: { "Content-Type": "application/json" } },
+          );
+        }
+
+        throw new Error(`Unexpected url: ${url}`);
+      }),
+    },
+  );
+
+  _exportsForTestingOnly.useTestBackgroundLogger();
+
+  const dataset = initDataset({
+    project: "test-project",
+    dataset: "test-dataset",
+    state,
+    _internal_btql: datasetFilter,
+  });
+  const experiment = init({
+    project: "test-project",
+    experiment: "test-experiment",
+    dataset,
+    state,
+  });
+
+  await experiment.id;
+
+  expect(experimentRegisterBody).toEqual(
+    expect.objectContaining({
+      internal_metadata: {
+        dataset_filter: datasetFilter,
+      },
+    }),
+  );
+
+  _exportsForTestingOnly.clearTestBackgroundLogger();
 });
 
 describe("loader version precedence", () => {
