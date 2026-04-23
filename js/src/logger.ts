@@ -3406,12 +3406,11 @@ export interface ParametersRef {
  * Internal BTQL payload used to subset dataset-backed evals.
  *
  * The standard BTQL shape uses `filter`. To preserve separate clause
- * boundaries, `filter` may also be provided as an array; the SDK will
+ * boundaries, `filter` may also be provided as an array. The BTQL API will
  * normalize that array into a single `filter` expression before resolving the
  * dataset query.
  */
 export type InternalBtqlQuery = Record<string, unknown>;
-type InternalBtqlFilterClause = Record<string, unknown> & { op: string };
 
 export type InitOptions<IsOpen extends boolean> = FullLoginOptions & {
   experiment?: string;
@@ -3453,45 +3452,6 @@ function getExperimentDatasetFilter({
 
   const datasetFilter = Reflect.get(dataset, "_internal_btql");
   return isObject(datasetFilter) ? datasetFilter : undefined;
-}
-
-function isInternalBtqlFilterClause(
-  value: unknown,
-): value is InternalBtqlFilterClause {
-  return isObject(value) && typeof value["op"] === "string";
-}
-
-function normalizeInternalBtql(
-  internalBtql?: InternalBtqlQuery,
-): InternalBtqlQuery | undefined {
-  if (internalBtql === undefined) {
-    return undefined;
-  }
-
-  const filter = internalBtql["filter"];
-  if (!Array.isArray(filter)) {
-    return internalBtql;
-  }
-
-  if (!filter.every(isInternalBtqlFilterClause)) {
-    return internalBtql;
-  }
-
-  if (filter.length === 0) {
-    const { filter: _filter, ...normalizedInternalBtql } = internalBtql;
-    return normalizedInternalBtql;
-  }
-
-  return {
-    ...internalBtql,
-    filter:
-      filter.length === 1
-        ? filter[0]
-        : {
-            op: "and",
-            children: filter,
-          },
-  };
 }
 
 function getInternalBtqlLimit(
@@ -5800,12 +5760,11 @@ export class ObjectFetcher<RecordType> implements AsyncIterable<
     const state = await this.getState();
     const objectId = await this.id;
     const batchLimit = batchSize ?? DEFAULT_FETCH_BATCH_SIZE;
-    const normalizedInternalBtql = normalizeInternalBtql(this._internal_btql);
-    const internalLimit = getInternalBtqlLimit(normalizedInternalBtql);
+    const internalLimit = getInternalBtqlLimit(this._internal_btql);
     const limit =
       batchSize !== undefined ? batchSize : (internalLimit ?? batchLimit);
     const internalBtqlWithoutReservedQueryKeys = Object.fromEntries(
-      Object.entries(normalizedInternalBtql ?? {}).filter(
+      Object.entries(this._internal_btql ?? {}).filter(
         ([key]) =>
           key !== "cursor" &&
           key !== "limit" &&

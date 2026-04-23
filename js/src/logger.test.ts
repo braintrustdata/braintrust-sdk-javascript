@@ -563,7 +563,7 @@ test("init forwards dataset _internal_btql to experiment register", async () => 
   _exportsForTestingOnly.clearTestBackgroundLogger();
 });
 
-test("dataset fetch normalizes _internal_btql filter arrays before querying btql", async () => {
+test("dataset fetch forwards _internal_btql filter arrays to btql", async () => {
   const datasetFilter = {
     filter: [
       {
@@ -654,10 +654,7 @@ test("dataset fetch normalizes _internal_btql filter arrays before querying btql
     expect.objectContaining({
       query: expect.objectContaining({
         limit: 5,
-        filter: {
-          op: "and",
-          children: datasetFilter.filter,
-        },
+        filter: datasetFilter.filter,
       }),
     }),
   );
