@@ -122,9 +122,14 @@ describe("configureInstrumentation API", () => {
         openrouter: false,
         mistral: false,
         cohere: false,
-        mastra: false,
       },
     });
+
+    configureInstrumentation({
+      integrations: {
+        mastra: false,
+      },
+    } as any);
   });
 });
 

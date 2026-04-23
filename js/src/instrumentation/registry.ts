@@ -25,14 +25,24 @@ export interface InstrumentationConfig {
     openrouterAgent?: boolean;
     mistral?: boolean;
     cohere?: boolean;
-    groq?: boolean;
-    mastra?: boolean;
   };
 }
 
+type RuntimeInstrumentationConfig = InstrumentationConfig & {
+  integrations?: NonNullable<InstrumentationConfig["integrations"]> & {
+    groq?: boolean;
+    mastra?: boolean;
+  };
+};
+
+type RuntimeIntegrationName = keyof NonNullable<
+  RuntimeInstrumentationConfig["integrations"]
+>;
+type RuntimeIntegrationMap = Partial<Record<RuntimeIntegrationName, boolean>>;
+
 class PluginRegistry {
   private braintrustPlugin: BraintrustPlugin | null = null;
-  private config: InstrumentationConfig = {};
+  private config: RuntimeInstrumentationConfig = {};
   private enabled = false;
 
   /**
@@ -104,7 +114,7 @@ class PluginRegistry {
   /**
    * Get default configuration (all integrations enabled).
    */
-  private getDefaultConfig(): Record<string, boolean> {
+  private getDefaultConfig(): RuntimeIntegrationMap {
     return {
       openai: true,
       anthropic: true,
@@ -126,8 +136,8 @@ class PluginRegistry {
    * Read configuration from environment variables.
    * Supports: BRAINTRUST_DISABLE_INSTRUMENTATION=openai,anthropic,...
    */
-  private readEnvConfig(): InstrumentationConfig {
-    const integrations: Record<string, boolean> = {};
+  private readEnvConfig(): RuntimeInstrumentationConfig {
+    const integrations: RuntimeIntegrationMap = {};
 
     const disabledList = iso.getEnv("BRAINTRUST_DISABLE_INSTRUMENTATION");
     if (disabledList) {
@@ -145,13 +155,13 @@ class PluginRegistry {
   }
 }
 
-function normalizeIntegrationName(name: string): string {
+function normalizeIntegrationName(name: string): RuntimeIntegrationName {
   switch (name) {
     case "@mastra/core":
     case "mastra-core":
       return "mastra";
     default:
-      return name;
+      return name as RuntimeIntegrationName;
   }
 }
 

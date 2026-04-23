@@ -390,7 +390,7 @@ describe("BraintrustPlugin", () => {
     it("should not create Groq plugin when groq: false", () => {
       const plugin = new BraintrustPlugin({
         integrations: { groq: false },
-      });
+      } as any);
       plugin.enable();
 
       expect(GroqPlugin).not.toHaveBeenCalled();
@@ -428,7 +428,7 @@ describe("BraintrustPlugin", () => {
           cohere: false,
           groq: false,
         },
-      });
+      } as any);
       plugin.enable();
 
       expect(OpenAIPlugin).not.toHaveBeenCalled();
