@@ -10,35 +10,37 @@ describe("openAIAgentsCoreConfigs", () => {
       ["onSpanStart", openAIAgentsCoreChannels.onSpanStart.channelName],
       ["onSpanEnd", openAIAgentsCoreChannels.onSpanEnd.channelName],
     ] as const;
+    const expectedConfigs = [
+      "dist/tracing/processor.mjs",
+      "dist/tracing/processor.js",
+    ]
+      .flatMap((filePath) =>
+        lifecycleMethods.map(([methodName, channelName]) => ({
+          channelName,
+          module: {
+            name: "@openai/agents-core",
+            versionRange: ">=0.0.14",
+            filePath,
+          },
+          functionQuery: {
+            className: "MultiTracingProcessor",
+            methodName,
+            kind: "Async",
+          },
+        })),
+      )
+      .sort((left, right) =>
+        `${left.module.filePath}:${left.functionQuery.methodName}`.localeCompare(
+          `${right.module.filePath}:${right.functionQuery.methodName}`,
+        ),
+      );
 
-    for (const [methodName, channelName] of lifecycleMethods) {
-      expect(openAIAgentsCoreConfigs).toContainEqual({
-        channelName,
-        module: {
-          name: "@openai/agents-core",
-          versionRange: ">=0.0.14",
-          filePath: "dist/tracing/processor.mjs",
-        },
-        functionQuery: {
-          className: "MultiTracingProcessor",
-          methodName,
-          kind: "Async",
-        },
-      });
-
-      expect(openAIAgentsCoreConfigs).toContainEqual({
-        channelName,
-        module: {
-          name: "@openai/agents-core",
-          versionRange: ">=0.0.14",
-          filePath: "dist/tracing/processor.js",
-        },
-        functionQuery: {
-          className: "MultiTracingProcessor",
-          methodName,
-          kind: "Async",
-        },
-      });
-    }
+    expect(
+      [...openAIAgentsCoreConfigs].sort((left, right) =>
+        `${left.module.filePath}:${left.functionQuery.methodName}`.localeCompare(
+          `${right.module.filePath}:${right.functionQuery.methodName}`,
+        ),
+      ),
+    ).toEqual(expectedConfigs);
   });
 });
