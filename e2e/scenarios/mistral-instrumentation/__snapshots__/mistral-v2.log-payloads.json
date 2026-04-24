@@ -100,7 +100,7 @@
     "has_output": false,
     "input": null,
     "metadata": {
-      "operation": "chat-tool-call"
+      "operation": "chat-stream-reasoning"
     },
     "metric_keys": [],
     "output": null,
@@ -117,7 +117,50 @@
       "type": "messages"
     },
     "metadata": {
-      "model": "mistral-small-2506",
+      "model": "mistral-small-latest",
+      "provider": "mistral",
+      "reasoning_effort": "high"
+    },
+    "metric_keys": [
+      "completion_tokens",
+      "prompt_cached_tokens",
+      "prompt_tokens",
+      "time_to_first_token",
+      "tokens"
+    ],
+    "output": {
+      "choice_count": 1,
+      "finish_reason": null,
+      "has_content": true,
+      "role": "assistant",
+      "tool_call_count": 0,
+      "type": "choices"
+    },
+    "span_id": "<span:7>"
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "input": null,
+    "metadata": {
+      "operation": "chat-stream-thinking"
+    },
+    "metric_keys": [],
+    "output": null,
+    "span_id": "<span:8>"
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "input": {
+      "item_count": 1,
+      "roles": [
+        "user"
+      ],
+      "type": "messages"
+    },
+    "metadata": {
+      "model": "magistral-small-latest",
       "provider": "mistral"
     },
     "metric_keys": [
@@ -129,13 +172,30 @@
     ],
     "output": {
       "choice_count": 1,
-      "finish_reason": "tool_calls",
-      "has_content": false,
+      "content_part_types": [
+        "thinking",
+        "text"
+      ],
+      "finish_reason": null,
+      "has_content": true,
       "role": "assistant",
-      "tool_call_count": 1,
+      "text_block_count": 1,
+      "thinking_block_count": 1,
+      "tool_call_count": 0,
       "type": "choices"
     },
-    "span_id": "<span:7>"
+    "span_id": "<span:9>"
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "input": null,
+    "metadata": {
+      "operation": "chat-tool-call"
+    },
+    "metric_keys": [],
+    "output": null,
+    "span_id": "<span:10>"
   },
   {
     "has_input": true,
@@ -166,7 +226,38 @@
       "tool_call_count": 1,
       "type": "choices"
     },
-    "span_id": "<span:8>"
+    "span_id": "<span:11>"
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "input": {
+      "item_count": 1,
+      "roles": [
+        "user"
+      ],
+      "type": "messages"
+    },
+    "metadata": {
+      "model": "mistral-small-2506",
+      "provider": "mistral"
+    },
+    "metric_keys": [
+      "completion_tokens",
+      "prompt_cached_tokens",
+      "prompt_tokens",
+      "time_to_first_token",
+      "tokens"
+    ],
+    "output": {
+      "choice_count": 1,
+      "finish_reason": "tool_calls",
+      "has_content": false,
+      "role": "assistant",
+      "tool_call_count": 1,
+      "type": "choices"
+    },
+    "span_id": "<span:12>"
   },
   {
     "has_input": true,
@@ -198,7 +289,7 @@
       "tool_call_count": 2,
       "type": "choices"
     },
-    "span_id": "<span:9>"
+    "span_id": "<span:13>"
   },
   {
     "has_input": false,
@@ -209,92 +300,14 @@
     },
     "metric_keys": [],
     "output": null,
-    "span_id": "<span:10>"
-  },
-  {
-    "has_input": true,
-    "has_output": true,
-    "input": "<string>",
-    "metadata": {
-      "model": "codestral-2508",
-      "provider": "mistral"
-    },
-    "metric_keys": [
-      "completion_tokens",
-      "prompt_cached_tokens",
-      "prompt_tokens",
-      "time_to_first_token",
-      "tokens"
-    ],
-    "output": {
-      "choice_count": 1,
-      "finish_reason": "stop",
-      "has_content": true,
-      "role": "assistant",
-      "tool_call_count": 0,
-      "type": "choices"
-    },
-    "span_id": "<span:11>"
-  },
-  {
-    "has_input": false,
-    "has_output": false,
-    "input": null,
-    "metadata": {
-      "operation": "fim-stream"
-    },
-    "metric_keys": [],
-    "output": null,
-    "span_id": "<span:12>"
-  },
-  {
-    "has_input": true,
-    "has_output": true,
-    "input": "<string>",
-    "metadata": {
-      "model": "codestral-2508",
-      "provider": "mistral"
-    },
-    "metric_keys": [
-      "completion_tokens",
-      "prompt_cached_tokens",
-      "prompt_tokens",
-      "time_to_first_token",
-      "tokens"
-    ],
-    "output": {
-      "choice_count": 1,
-      "finish_reason": "length",
-      "has_content": true,
-      "role": "assistant",
-      "tool_call_count": 0,
-      "type": "choices"
-    },
-    "span_id": "<span:13>"
-  },
-  {
-    "has_input": false,
-    "has_output": false,
-    "input": null,
-    "metadata": {
-      "operation": "agents-complete"
-    },
-    "metric_keys": [],
-    "output": null,
     "span_id": "<span:14>"
   },
   {
     "has_input": true,
     "has_output": true,
-    "input": {
-      "item_count": 1,
-      "roles": [
-        "user"
-      ],
-      "type": "messages"
-    },
+    "input": "<string>",
     "metadata": {
-      "model": "mistral-small-2506",
+      "model": "codestral-2508",
       "provider": "mistral"
     },
     "metric_keys": [
@@ -319,7 +332,7 @@
     "has_output": false,
     "input": null,
     "metadata": {
-      "operation": "agents-tool-call"
+      "operation": "fim-stream"
     },
     "metric_keys": [],
     "output": null,
@@ -328,15 +341,9 @@
   {
     "has_input": true,
     "has_output": true,
-    "input": {
-      "item_count": 1,
-      "roles": [
-        "user"
-      ],
-      "type": "messages"
-    },
+    "input": "<string>",
     "metadata": {
-      "model": "mistral-small-2506",
+      "model": "codestral-2508",
       "provider": "mistral"
     },
     "metric_keys": [
@@ -348,10 +355,10 @@
     ],
     "output": {
       "choice_count": 1,
-      "finish_reason": "tool_calls",
-      "has_content": false,
+      "finish_reason": "length",
+      "has_content": true,
       "role": "assistant",
-      "tool_call_count": 1,
+      "tool_call_count": 0,
       "type": "choices"
     },
     "span_id": "<span:17>"
@@ -361,7 +368,7 @@
     "has_output": false,
     "input": null,
     "metadata": {
-      "operation": "agents-stream"
+      "operation": "agents-complete"
     },
     "metric_keys": [],
     "output": null,
@@ -403,11 +410,95 @@
     "has_output": false,
     "input": null,
     "metadata": {
-      "operation": "embeddings-create"
+      "operation": "agents-tool-call"
     },
     "metric_keys": [],
     "output": null,
     "span_id": "<span:20>"
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "input": {
+      "item_count": 1,
+      "roles": [
+        "user"
+      ],
+      "type": "messages"
+    },
+    "metadata": {
+      "model": "mistral-small-2506",
+      "provider": "mistral"
+    },
+    "metric_keys": [
+      "completion_tokens",
+      "prompt_cached_tokens",
+      "prompt_tokens",
+      "time_to_first_token",
+      "tokens"
+    ],
+    "output": {
+      "choice_count": 1,
+      "finish_reason": "tool_calls",
+      "has_content": false,
+      "role": "assistant",
+      "tool_call_count": 1,
+      "type": "choices"
+    },
+    "span_id": "<span:21>"
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "input": null,
+    "metadata": {
+      "operation": "agents-stream"
+    },
+    "metric_keys": [],
+    "output": null,
+    "span_id": "<span:22>"
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "input": {
+      "item_count": 1,
+      "roles": [
+        "user"
+      ],
+      "type": "messages"
+    },
+    "metadata": {
+      "model": "mistral-small-2506",
+      "provider": "mistral"
+    },
+    "metric_keys": [
+      "completion_tokens",
+      "prompt_cached_tokens",
+      "prompt_tokens",
+      "time_to_first_token",
+      "tokens"
+    ],
+    "output": {
+      "choice_count": 1,
+      "finish_reason": "stop",
+      "has_content": true,
+      "role": "assistant",
+      "tool_call_count": 0,
+      "type": "choices"
+    },
+    "span_id": "<span:23>"
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "input": null,
+    "metadata": {
+      "operation": "embeddings-create"
+    },
+    "metric_keys": [],
+    "output": null,
+    "span_id": "<span:24>"
   },
   {
     "has_input": true,
@@ -426,6 +517,6 @@
       "embedding_length": "<number>",
       "type": "embedding"
     },
-    "span_id": "<span:21>"
+    "span_id": "<span:25>"
   }
 ]

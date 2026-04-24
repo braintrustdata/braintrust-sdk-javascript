@@ -5,10 +5,12 @@ import {
   runTracedScenario,
 } from "../../helpers/provider-runtime.mjs";
 import {
+  ADJUSTABLE_REASONING_MODEL,
   AGENT_MODEL,
   CHAT_MODEL,
   EMBEDDING_MODEL,
   FIM_MODEL,
+  NATIVE_REASONING_MODEL,
   ROOT_NAME,
   SCENARIO_NAME,
 } from "./constants.mjs";
@@ -20,43 +22,55 @@ const MISTRAL_REQUEST_RETRY_OPTIONS = {
   delayMs: 2_000,
   maxDelayMs: 10_000,
 };
+
+const MISTRAL_THINKING_STREAM_OPTOUTS = new Set(["mistral-sdk-v1-3-4"]);
+
+function createMistralScenarioSpec(spec) {
+  return {
+    ...spec,
+    ...(MISTRAL_THINKING_STREAM_OPTOUTS.has(spec.dependencyName)
+      ? { supportsThinkingStream: false }
+      : {}),
+  };
+}
+
 export const MISTRAL_SCENARIO_SPECS = [
-  {
+  createMistralScenarioSpec({
     autoEntry: "scenario.mistral-v1-3-4.mjs",
     dependencyName: "mistral-sdk-v1-3-4",
     snapshotName: "mistral-v1-3-4",
     wrapperEntry: "scenario.mistral-v1-3-4.ts",
-  },
-  {
+  }),
+  createMistralScenarioSpec({
     autoEntry: "scenario.mistral-v1-10-0.mjs",
     dependencyName: "mistral-sdk-v1-10-0",
     snapshotName: "mistral-v1-10-0",
     wrapperEntry: "scenario.mistral-v1-10-0.ts",
-  },
-  {
+  }),
+  createMistralScenarioSpec({
     autoEntry: "scenario.mistral-v1-14-1.mjs",
     dependencyName: "mistral-sdk-v1-14-1",
     snapshotName: "mistral-v1-14-1",
     wrapperEntry: "scenario.mistral-v1-14-1.ts",
-  },
-  {
+  }),
+  createMistralScenarioSpec({
     autoEntry: "scenario.mistral-v1-15-1.mjs",
     dependencyName: "mistral-sdk-v1-15-1",
     snapshotName: "mistral-v1-15-1",
     wrapperEntry: "scenario.mistral-v1-15-1.ts",
-  },
-  {
+  }),
+  createMistralScenarioSpec({
     autoEntry: "scenario.mistral-v1.mjs",
     dependencyName: "mistral-sdk-v1",
     snapshotName: "mistral-v1",
     wrapperEntry: "scenario.mistral-v1.ts",
-  },
-  {
+  }),
+  createMistralScenarioSpec({
     autoEntry: "scenario.mjs",
     dependencyName: "mistral-sdk-v2",
     snapshotName: "mistral-v2",
     wrapperEntry: "scenario.ts",
-  },
+  }),
 ];
 
 function nonEmptyString(value) {
@@ -340,7 +354,7 @@ async function resolveAgentRuntime(client) {
 
 async function runMistralInstrumentationScenario(
   Mistral,
-  { decorateClient } = {},
+  { decorateClient, supportsThinkingStream = true } = {},
 ) {
   const baseClient = new Mistral({
     apiKey: process.env.MISTRAL_API_KEY,
@@ -399,6 +413,54 @@ async function runMistralInstrumentationScenario(
             }, MISTRAL_REQUEST_RETRY_OPTIONS);
           },
         );
+
+        await runOperation(
+          "mistral-chat-reasoning-stream-operation",
+          "chat-stream-reasoning",
+          async () => {
+            await withRetry(async () => {
+              const stream = await client.chat.stream({
+                model: ADJUSTABLE_REASONING_MODEL,
+                messages: [
+                  {
+                    role: "user",
+                    content:
+                      "John is one of 4 children. The first sister is 4 years old. Next year, the second sister will be twice as old as the first sister. The third sister is two years older than the second sister. The third sister is half the age of her older brother. How old is John? Reply with just the number.",
+                  },
+                ],
+                maxTokens: 256,
+                reasoning_effort: "high",
+                stream: true,
+                temperature: 0,
+              });
+              await collectAsync(stream);
+            }, MISTRAL_REQUEST_RETRY_OPTIONS);
+          },
+        );
+
+        if (supportsThinkingStream) {
+          await runOperation(
+            "mistral-chat-thinking-stream-operation",
+            "chat-stream-thinking",
+            async () => {
+              await withRetry(async () => {
+                const stream = await client.chat.stream({
+                  model: NATIVE_REASONING_MODEL,
+                  messages: [
+                    {
+                      role: "user",
+                      content: "What is 2+2? Reply with just the number.",
+                    },
+                  ],
+                  maxTokens: 1024,
+                  stream: true,
+                  temperature: 0,
+                });
+                await collectAsync(stream);
+              }, MISTRAL_REQUEST_RETRY_OPTIONS);
+            },
+          );
+        }
 
         await runOperation(
           "mistral-chat-tool-call-operation",
@@ -670,12 +732,13 @@ async function runMistralInstrumentationScenario(
   }
 }
 
-export async function runWrappedMistralInstrumentation(Mistral) {
+export async function runWrappedMistralInstrumentation(Mistral, options) {
   await runMistralInstrumentationScenario(Mistral, {
+    ...options,
     decorateClient: wrapMistral,
   });
 }
 
-export async function runAutoMistralInstrumentation(Mistral) {
-  await runMistralInstrumentationScenario(Mistral);
+export async function runAutoMistralInstrumentation(Mistral, options) {
+  await runMistralInstrumentationScenario(Mistral, options);
 }

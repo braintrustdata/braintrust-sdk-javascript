@@ -2,4 +2,8 @@ import { Mistral } from "mistral-sdk-v1-3-4";
 import { runMain } from "../../helpers/scenario-runtime";
 import { runWrappedMistralInstrumentation } from "./scenario.impl.mjs";
 
-runMain(async () => runWrappedMistralInstrumentation(Mistral));
+runMain(async () =>
+  runWrappedMistralInstrumentation(Mistral, {
+    supportsThinkingStream: false,
+  }),
+);
