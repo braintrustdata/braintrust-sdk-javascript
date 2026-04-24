@@ -21,6 +21,7 @@ const mastraVersion = await readInstalledPackageVersion(
   scenarioDir,
   "@mastra/core",
 );
+const snapshotName = resolveSnapshotName(mastraVersion);
 const TIMEOUT_MS = 90_000;
 const ROOT_NAME = "mastra-instrumentation-root";
 const SCENARIO_NAME = "mastra-instrumentation";
@@ -67,6 +68,19 @@ function summarizeMastraPayload(event: CapturedLogEvent): Json {
   } satisfies Json;
 }
 
+function resolveSnapshotName(version: string): string {
+  switch (version) {
+    case "1.26.0":
+      return "mastra-v1260";
+    case "1.26.1-alpha.0":
+      return "mastra-v1261-alpha0";
+    default:
+      throw new Error(
+        `Unsupported @mastra/core version for e2e snapshots: ${version}`,
+      );
+  }
+}
+
 describe(`mastra sdk ${mastraVersion} auto-hook instrumentation`, () => {
   let events: CapturedLogEvent[] = [];
 
@@ -75,7 +89,7 @@ describe(`mastra sdk ${mastraVersion} auto-hook instrumentation`, () => {
       await harness.runNodeScenarioDir({
         entry: "scenario.mjs",
         nodeArgs: ["--import", "braintrust/hook.mjs"],
-        runContext: { variantKey: "mastra-v1260" },
+        runContext: { variantKey: snapshotName },
         scenarioDir,
         timeoutMs: TIMEOUT_MS,
       });
@@ -169,7 +183,10 @@ describe(`mastra sdk ${mastraVersion} auto-hook instrumentation`, () => {
     );
 
     await expect(formatJsonFileSnapshot(spanSummary)).toMatchFileSnapshot(
-      resolveFileSnapshotPath(import.meta.url, "mastra-v1260.span-events.json"),
+      resolveFileSnapshotPath(
+        import.meta.url,
+        `${snapshotName}.span-events.json`,
+      ),
     );
   });
 
@@ -183,7 +200,7 @@ describe(`mastra sdk ${mastraVersion} auto-hook instrumentation`, () => {
     await expect(formatJsonFileSnapshot(payloadSummary)).toMatchFileSnapshot(
       resolveFileSnapshotPath(
         import.meta.url,
-        "mastra-v1260.log-payloads.json",
+        `${snapshotName}.log-payloads.json`,
       ),
     );
   });
