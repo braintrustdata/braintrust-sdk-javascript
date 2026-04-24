@@ -4,7 +4,7 @@
   "braintrustScenario": {
     "canary": {
       "dependencies": {
-        "@mastra/core": "latest"
+        "@mastra/core": "@mastra/core@1.26.1-alpha.0"
       }
     }
   },
