@@ -4,6 +4,7 @@ import { vi, expect, test, describe, beforeEach, afterEach } from "vitest";
 import {
   _exportsForTestingOnly,
   init,
+  initDataset,
   initLogger,
   Prompt,
   BraintrustState,
@@ -451,6 +452,804 @@ test("init accepts dataset with id and version", () => {
   // This should compile without type errors
   expect(datasetWithVersion.id).toBe("dataset-id-123");
   expect(datasetWithVersion.version).toBe("v2");
+});
+
+test("init accepts dataset with id and environment", () => {
+  const datasetWithEnvironment = {
+    id: "dataset-id-123",
+    environment: "production",
+  };
+
+  expect(datasetWithEnvironment.id).toBe("dataset-id-123");
+  expect(datasetWithEnvironment.environment).toBe("production");
+});
+
+test("init accepts dataset with id and snapshotName", () => {
+  const datasetWithSnapshot = {
+    id: "dataset-id-123",
+    snapshotName: "123",
+  };
+
+  expect(datasetWithSnapshot.id).toBe("dataset-id-123");
+  expect(datasetWithSnapshot.snapshotName).toBe("123");
+});
+
+function mockInitGitMetadata() {
+  vi.spyOn(_exportsForTestingOnly.isomorph, "getRepoInfo").mockResolvedValue(
+    undefined,
+  );
+  vi.spyOn(
+    _exportsForTestingOnly.isomorph,
+    "getPastNAncestors",
+  ).mockResolvedValue([]);
+}
+
+test("initDataset prefers version over environment in eval data", async () => {
+  const state = await _exportsForTestingOnly.simulateLoginForTests();
+  vi.spyOn(state, "login").mockResolvedValue(state);
+  vi.spyOn(state.appConn(), "post_json").mockResolvedValue({
+    project: {
+      id: "00000000-0000-0000-0000-000000000001",
+      name: "test-project",
+    },
+    dataset: {
+      id: "00000000-0000-0000-0000-000000000002",
+      name: "test-dataset",
+    },
+  });
+
+  const dataset = initDataset({
+    project: "test-project",
+    dataset: "test-dataset",
+    version: "123",
+    environment: "production",
+    state,
+  });
+
+  await expect(dataset.toEvalData()).resolves.toEqual({
+    dataset_id: "00000000-0000-0000-0000-000000000002",
+    dataset_version: "123",
+  });
+
+  _exportsForTestingOnly.simulateLogoutForTests();
+  vi.restoreAllMocks();
+});
+
+test("dataset.toEvalData preserves dataset_environment", async () => {
+  const state = await _exportsForTestingOnly.simulateLoginForTests();
+  vi.spyOn(state, "login").mockResolvedValue(state);
+  vi.spyOn(state.apiConn(), "get_json").mockResolvedValue({
+    object_version: "123",
+  });
+  vi.spyOn(state.appConn(), "post_json").mockResolvedValue({
+    project: {
+      id: "00000000-0000-0000-0000-000000000001",
+      name: "test-project",
+    },
+    dataset: {
+      id: "00000000-0000-0000-0000-000000000002",
+      name: "test-dataset",
+    },
+  });
+
+  const dataset = initDataset({
+    project: "test-project",
+    dataset: "test-dataset",
+    environment: "production",
+    state,
+  });
+
+  await expect(dataset.toEvalData()).resolves.toEqual({
+    dataset_id: "00000000-0000-0000-0000-000000000002",
+    dataset_environment: "production",
+  });
+
+  _exportsForTestingOnly.simulateLogoutForTests();
+  vi.restoreAllMocks();
+});
+
+test("dataset.toEvalData preserves dataset_snapshot_name", async () => {
+  const state = await _exportsForTestingOnly.simulateLoginForTests();
+  vi.spyOn(state, "login").mockResolvedValue(state);
+  const postJson = vi
+    .spyOn(state.appConn(), "post_json")
+    .mockResolvedValueOnce({
+      project: {
+        id: "00000000-0000-0000-0000-000000000001",
+        name: "test-project",
+      },
+      dataset: {
+        id: "00000000-0000-0000-0000-000000000002",
+        name: "test-dataset",
+      },
+    })
+    .mockResolvedValueOnce([
+      {
+        id: "00000000-0000-0000-0000-000000000004",
+        dataset_id: "00000000-0000-0000-0000-000000000002",
+        name: "123",
+        description: null,
+        xact_id: "456",
+        created: "2026-03-31T00:00:00.000Z",
+      },
+    ]);
+
+  const dataset = initDataset({
+    project: "test-project",
+    dataset: "test-dataset",
+    snapshotName: "123",
+    state,
+  });
+
+  await expect(dataset.toEvalData()).resolves.toEqual({
+    dataset_id: "00000000-0000-0000-0000-000000000002",
+    dataset_snapshot_name: "123",
+  });
+  expect(postJson).toHaveBeenNthCalledWith(2, "api/dataset_snapshot/get", {
+    dataset_id: "00000000-0000-0000-0000-000000000002",
+    name: "123",
+  });
+
+  _exportsForTestingOnly.simulateLogoutForTests();
+  vi.restoreAllMocks();
+});
+
+test("dataset.version preserves pinned-version fast path", async () => {
+  const state = await _exportsForTestingOnly.simulateLoginForTests();
+  const login = vi.spyOn(state, "login").mockResolvedValue(state);
+  const postJson = vi.spyOn(state.appConn(), "post_json");
+
+  const dataset = initDataset({
+    project: "test-project",
+    dataset: "test-dataset",
+    version: "123",
+    state,
+  });
+
+  await expect(dataset.version()).resolves.toBe("123");
+  expect(login).not.toHaveBeenCalled();
+  expect(postJson).not.toHaveBeenCalled();
+
+  _exportsForTestingOnly.simulateLogoutForTests();
+  vi.restoreAllMocks();
+});
+
+test("dataset.createSnapshot forwards update when requested", async () => {
+  const state = await _exportsForTestingOnly.simulateLoginForTests();
+  vi.spyOn(state, "login").mockResolvedValue(state);
+  const postJson = vi
+    .spyOn(state.appConn(), "post_json")
+    .mockResolvedValueOnce({
+      project: {
+        id: "00000000-0000-0000-0000-000000000001",
+        name: "test-project",
+      },
+      dataset: {
+        id: "00000000-0000-0000-0000-000000000002",
+        name: "test-dataset",
+      },
+    })
+    .mockResolvedValueOnce({
+      dataset_snapshot: {
+        id: "00000000-0000-0000-0000-000000000004",
+        dataset_id: "00000000-0000-0000-0000-000000000002",
+        name: "snapshot",
+        description: "updated description",
+        xact_id: "123",
+        created: "2026-03-31T00:00:00.000Z",
+      },
+      found_existing: true,
+    });
+
+  const dataset = initDataset({
+    project: "test-project",
+    dataset: "test-dataset",
+    version: "123",
+    state,
+  });
+
+  await expect(
+    dataset.createSnapshot({
+      name: "snapshot",
+      description: "updated description",
+      update: true,
+    }),
+  ).resolves.toMatchObject({
+    id: "00000000-0000-0000-0000-000000000004",
+    xact_id: "123",
+  });
+
+  expect(postJson).toHaveBeenNthCalledWith(2, "api/dataset_snapshot/register", {
+    dataset_id: "00000000-0000-0000-0000-000000000002",
+    dataset_snapshot_name: "snapshot",
+    description: "updated description",
+    xact_id: "123",
+    update: true,
+  });
+
+  _exportsForTestingOnly.simulateLogoutForTests();
+  vi.restoreAllMocks();
+});
+
+test("dataset.getSnapshot looks up snapshots by name", async () => {
+  const state = await _exportsForTestingOnly.simulateLoginForTests();
+  vi.spyOn(state, "login").mockResolvedValue(state);
+  const postJson = vi
+    .spyOn(state.appConn(), "post_json")
+    .mockResolvedValueOnce({
+      project: {
+        id: "00000000-0000-0000-0000-000000000001",
+        name: "test-project",
+      },
+      dataset: {
+        id: "00000000-0000-0000-0000-000000000002",
+        name: "test-dataset",
+      },
+    })
+    .mockResolvedValueOnce([
+      {
+        id: "00000000-0000-0000-0000-000000000004",
+        dataset_id: "00000000-0000-0000-0000-000000000002",
+        name: "snapshot",
+        description: null,
+        xact_id: "123",
+        created: "2026-03-31T00:00:00.000Z",
+      },
+    ]);
+
+  const dataset = initDataset({
+    project: "test-project",
+    dataset: "test-dataset",
+    state,
+  });
+
+  await expect(
+    dataset.getSnapshot({
+      snapshotName: "snapshot",
+    }),
+  ).resolves.toMatchObject({
+    id: "00000000-0000-0000-0000-000000000004",
+    name: "snapshot",
+    xact_id: "123",
+  });
+
+  expect(postJson).toHaveBeenNthCalledWith(2, "api/dataset_snapshot/get", {
+    dataset_id: "00000000-0000-0000-0000-000000000002",
+    name: "snapshot",
+  });
+
+  _exportsForTestingOnly.simulateLogoutForTests();
+  vi.restoreAllMocks();
+});
+
+test("dataset.getSnapshot looks up snapshots by xact id", async () => {
+  const state = await _exportsForTestingOnly.simulateLoginForTests();
+  vi.spyOn(state, "login").mockResolvedValue(state);
+  const postJson = vi
+    .spyOn(state.appConn(), "post_json")
+    .mockResolvedValueOnce({
+      project: {
+        id: "00000000-0000-0000-0000-000000000001",
+        name: "test-project",
+      },
+      dataset: {
+        id: "00000000-0000-0000-0000-000000000002",
+        name: "test-dataset",
+      },
+    })
+    .mockResolvedValueOnce([
+      {
+        id: "00000000-0000-0000-0000-000000000004",
+        dataset_id: "00000000-0000-0000-0000-000000000002",
+        name: "snapshot",
+        description: null,
+        xact_id: "123",
+        created: "2026-03-31T00:00:00.000Z",
+      },
+    ]);
+
+  const dataset = initDataset({
+    project: "test-project",
+    dataset: "test-dataset",
+    state,
+  });
+
+  await expect(
+    dataset.getSnapshot({
+      xactId: "123",
+    }),
+  ).resolves.toMatchObject({
+    id: "00000000-0000-0000-0000-000000000004",
+    name: "snapshot",
+    xact_id: "123",
+  });
+
+  expect(postJson).toHaveBeenNthCalledWith(2, "api/dataset_snapshot/get", {
+    dataset_id: "00000000-0000-0000-0000-000000000002",
+    xact_id: "123",
+  });
+
+  _exportsForTestingOnly.simulateLogoutForTests();
+  vi.restoreAllMocks();
+});
+
+test("dataset.updateSnapshot patches snapshot metadata by id", async () => {
+  const state = await _exportsForTestingOnly.simulateLoginForTests();
+  vi.spyOn(state, "login").mockResolvedValue(state);
+  const postJson = vi
+    .spyOn(state.appConn(), "post_json")
+    .mockResolvedValueOnce({
+      project: {
+        id: "00000000-0000-0000-0000-000000000001",
+        name: "test-project",
+      },
+      dataset: {
+        id: "00000000-0000-0000-0000-000000000002",
+        name: "test-dataset",
+      },
+    })
+    .mockResolvedValueOnce({
+      id: "00000000-0000-0000-0000-000000000004",
+      dataset_id: "00000000-0000-0000-0000-000000000002",
+      name: "renamed snapshot",
+      description: null,
+      xact_id: "123",
+      created: "2026-03-31T00:00:00.000Z",
+    });
+
+  const dataset = initDataset({
+    project: "test-project",
+    dataset: "test-dataset",
+    state,
+  });
+
+  await expect(
+    dataset.updateSnapshot("00000000-0000-0000-0000-000000000004", {
+      name: "renamed snapshot",
+      description: null,
+    }),
+  ).resolves.toMatchObject({
+    id: "00000000-0000-0000-0000-000000000004",
+    name: "renamed snapshot",
+    description: null,
+  });
+
+  expect(postJson).toHaveBeenNthCalledWith(2, "api/dataset_snapshot/patch_id", {
+    id: "00000000-0000-0000-0000-000000000004",
+    name: "renamed snapshot",
+    description: null,
+  });
+
+  _exportsForTestingOnly.simulateLogoutForTests();
+  vi.restoreAllMocks();
+});
+
+test("dataset.restorePreview posts restore preview request", async () => {
+  const state = await _exportsForTestingOnly.simulateLoginForTests();
+  vi.spyOn(state, "login").mockResolvedValue(state);
+  vi.spyOn(state.appConn(), "post_json").mockResolvedValueOnce({
+    project: {
+      id: "00000000-0000-0000-0000-000000000001",
+      name: "test-project",
+    },
+    dataset: {
+      id: "00000000-0000-0000-0000-000000000002",
+      name: "test-dataset",
+    },
+  });
+  const postJson = vi
+    .spyOn(state.apiConn(), "post_json")
+    .mockResolvedValueOnce({
+      rows_to_restore: 3,
+      rows_to_delete: 1,
+    });
+
+  const dataset = initDataset({
+    project: "test-project",
+    dataset: "test-dataset",
+    state,
+  });
+
+  await expect(
+    dataset.restorePreview({
+      version: "123",
+    }),
+  ).resolves.toEqual({
+    rows_to_restore: 3,
+    rows_to_delete: 1,
+  });
+
+  expect(postJson).toHaveBeenNthCalledWith(
+    1,
+    "v1/dataset/00000000-0000-0000-0000-000000000002/restore/preview",
+    {
+      version: "123",
+    },
+  );
+
+  _exportsForTestingOnly.simulateLogoutForTests();
+  vi.restoreAllMocks();
+});
+
+test("dataset.restore posts restore request", async () => {
+  const state = await _exportsForTestingOnly.simulateLoginForTests();
+  vi.spyOn(state, "login").mockResolvedValue(state);
+  vi.spyOn(state.appConn(), "post_json").mockResolvedValueOnce({
+    project: {
+      id: "00000000-0000-0000-0000-000000000001",
+      name: "test-project",
+    },
+    dataset: {
+      id: "00000000-0000-0000-0000-000000000002",
+      name: "test-dataset",
+    },
+  });
+  const postJson = vi
+    .spyOn(state.apiConn(), "post_json")
+    .mockResolvedValueOnce({
+      xact_id: "456",
+      rows_restored: 3,
+      rows_deleted: 1,
+    });
+
+  const dataset = initDataset({
+    project: "test-project",
+    dataset: "test-dataset",
+    state,
+  });
+
+  await expect(
+    dataset.restore({
+      version: "123",
+    }),
+  ).resolves.toEqual({
+    xact_id: "456",
+    rows_restored: 3,
+    rows_deleted: 1,
+  });
+
+  expect(postJson).toHaveBeenNthCalledWith(
+    1,
+    "v1/dataset/00000000-0000-0000-0000-000000000002/restore",
+    {
+      version: "123",
+    },
+  );
+
+  _exportsForTestingOnly.simulateLogoutForTests();
+  vi.restoreAllMocks();
+});
+
+test("init keeps plain dataset refs attached to the experiment", async () => {
+  const state = await _exportsForTestingOnly.simulateLoginForTests();
+  vi.spyOn(state, "login").mockResolvedValue(state);
+  mockInitGitMetadata();
+  vi.spyOn(state.appConn(), "post_json").mockResolvedValue({
+    project: {
+      id: "00000000-0000-0000-0000-000000000001",
+      name: "test-project",
+    },
+    experiment: {
+      id: "00000000-0000-0000-0000-000000000003",
+      project_id: "00000000-0000-0000-0000-000000000001",
+      name: "test-experiment",
+      public: false,
+    },
+  });
+
+  const experiment = init({
+    project: "test-project",
+    experiment: "test-experiment",
+    dataset: {
+      id: "00000000-0000-0000-0000-000000000002",
+    },
+    setCurrent: false,
+    state,
+  });
+
+  await experiment.id;
+
+  expect(experiment.dataset).toMatchObject({
+    id: "00000000-0000-0000-0000-000000000002",
+  });
+
+  _exportsForTestingOnly.simulateLogoutForTests();
+  vi.restoreAllMocks();
+});
+
+test("init resolves dataset version from Dataset instances before experiment registration", async () => {
+  const state = await _exportsForTestingOnly.simulateLoginForTests();
+  vi.spyOn(state, "login").mockResolvedValue(state);
+  mockInitGitMetadata();
+  const postJson = vi
+    .spyOn(state.appConn(), "post_json")
+    .mockResolvedValueOnce({
+      project: {
+        id: "00000000-0000-0000-0000-000000000001",
+        name: "test-project",
+      },
+      dataset: {
+        id: "00000000-0000-0000-0000-000000000002",
+        name: "test-dataset",
+      },
+    })
+    .mockResolvedValueOnce({
+      project: {
+        id: "00000000-0000-0000-0000-000000000001",
+        name: "test-project",
+      },
+      experiment: {
+        id: "00000000-0000-0000-0000-000000000003",
+        project_id: "00000000-0000-0000-0000-000000000001",
+        name: "test-experiment",
+        public: false,
+      },
+    });
+
+  const dataset = initDataset({
+    project: "test-project",
+    dataset: "test-dataset",
+    state,
+  });
+  const version = vi.spyOn(dataset, "version").mockResolvedValue("123");
+
+  const experiment = init({
+    project: "test-project",
+    experiment: "test-experiment",
+    dataset,
+    setCurrent: false,
+    state,
+  });
+
+  await experiment.id;
+
+  expect(version).toHaveBeenCalled();
+  expect(postJson).toHaveBeenNthCalledWith(
+    2,
+    "api/experiment/register",
+    expect.objectContaining({
+      dataset_id: "00000000-0000-0000-0000-000000000002",
+      dataset_version: "123",
+    }),
+  );
+
+  _exportsForTestingOnly.simulateLogoutForTests();
+  vi.restoreAllMocks();
+});
+
+test("init resolves dataset environment before experiment registration", async () => {
+  const state = await _exportsForTestingOnly.simulateLoginForTests();
+  vi.spyOn(state, "login").mockResolvedValue(state);
+  mockInitGitMetadata();
+  const getJson = vi.spyOn(state.apiConn(), "get_json").mockResolvedValue({
+    object_version: "123",
+  });
+  const postJson = vi.spyOn(state.appConn(), "post_json").mockResolvedValue({
+    project: {
+      id: "00000000-0000-0000-0000-000000000001",
+      name: "test-project",
+    },
+    experiment: {
+      id: "00000000-0000-0000-0000-000000000003",
+      project_id: "00000000-0000-0000-0000-000000000001",
+      name: "test-experiment",
+      public: false,
+    },
+  });
+
+  const experiment = init({
+    project: "test-project",
+    experiment: "test-experiment",
+    dataset: {
+      id: "00000000-0000-0000-0000-000000000002",
+      environment: "production",
+    },
+    setCurrent: false,
+    state,
+  });
+
+  await experiment.id;
+
+  expect(getJson).toHaveBeenCalledWith(
+    "environment-object/dataset/00000000-0000-0000-0000-000000000002/production",
+    {
+      org_name: "test-org-name",
+    },
+  );
+  expect(experiment.dataset).toMatchObject({
+    id: "00000000-0000-0000-0000-000000000002",
+    environment: "production",
+  });
+  expect(postJson).toHaveBeenCalledWith(
+    "api/experiment/register",
+    expect.objectContaining({
+      dataset_id: "00000000-0000-0000-0000-000000000002",
+      dataset_version: "123",
+    }),
+  );
+
+  _exportsForTestingOnly.simulateLogoutForTests();
+  vi.restoreAllMocks();
+});
+
+test("init resolves dataset environment without org_name when orgName is unset", async () => {
+  const state = await _exportsForTestingOnly.simulateLoginForTests();
+  state.orgName = null;
+  vi.spyOn(state, "login").mockResolvedValue(state);
+  mockInitGitMetadata();
+  const getJson = vi.spyOn(state.apiConn(), "get_json").mockResolvedValue({
+    object_version: "123",
+  });
+  const postJson = vi.spyOn(state.appConn(), "post_json").mockResolvedValue({
+    project: {
+      id: "00000000-0000-0000-0000-000000000001",
+      name: "test-project",
+    },
+    experiment: {
+      id: "00000000-0000-0000-0000-000000000003",
+      project_id: "00000000-0000-0000-0000-000000000001",
+      name: "test-experiment",
+      public: false,
+    },
+  });
+
+  const experiment = init({
+    project: "test-project",
+    experiment: "test-experiment",
+    dataset: {
+      id: "00000000-0000-0000-0000-000000000002",
+      environment: "production",
+    },
+    setCurrent: false,
+    state,
+  });
+
+  await experiment.id;
+
+  expect(getJson).toHaveBeenCalledWith(
+    "environment-object/dataset/00000000-0000-0000-0000-000000000002/production",
+  );
+  expect(postJson).toHaveBeenCalledWith(
+    "api/experiment/register",
+    expect.objectContaining({
+      dataset_id: "00000000-0000-0000-0000-000000000002",
+      dataset_version: "123",
+    }),
+  );
+
+  _exportsForTestingOnly.simulateLogoutForTests();
+  vi.restoreAllMocks();
+});
+
+test("init prefers dataset version over environment before experiment registration", async () => {
+  const state = await _exportsForTestingOnly.simulateLoginForTests();
+  vi.spyOn(state, "login").mockResolvedValue(state);
+  mockInitGitMetadata();
+  const getJson = vi.spyOn(state.apiConn(), "get_json");
+  const postJson = vi.spyOn(state.appConn(), "post_json").mockResolvedValue({
+    project: {
+      id: "00000000-0000-0000-0000-000000000001",
+      name: "test-project",
+    },
+    experiment: {
+      id: "00000000-0000-0000-0000-000000000003",
+      project_id: "00000000-0000-0000-0000-000000000001",
+      name: "test-experiment",
+      public: false,
+    },
+  });
+
+  const experiment = init({
+    project: "test-project",
+    experiment: "test-experiment",
+    dataset: {
+      id: "00000000-0000-0000-0000-000000000002",
+      version: "123",
+      environment: "production",
+    },
+    setCurrent: false,
+    state,
+  });
+
+  await experiment.id;
+
+  expect(getJson).not.toHaveBeenCalled();
+  expect(postJson).toHaveBeenCalledWith(
+    "api/experiment/register",
+    expect.objectContaining({
+      dataset_id: "00000000-0000-0000-0000-000000000002",
+      dataset_version: "123",
+    }),
+  );
+
+  _exportsForTestingOnly.simulateLogoutForTests();
+  vi.restoreAllMocks();
+});
+
+test("init resolves dataset snapshots before experiment registration", async () => {
+  const state = await _exportsForTestingOnly.simulateLoginForTests();
+  vi.spyOn(state, "login").mockResolvedValue(state);
+  mockInitGitMetadata();
+  const postJson = vi
+    .spyOn(state.appConn(), "post_json")
+    .mockResolvedValueOnce([
+      {
+        id: "00000000-0000-0000-0000-000000000004",
+        dataset_id: "00000000-0000-0000-0000-000000000002",
+        name: "123",
+        description: null,
+        xact_id: "456",
+        created: "2026-03-31T00:00:00.000Z",
+      },
+    ])
+    .mockResolvedValueOnce({
+      project: {
+        id: "00000000-0000-0000-0000-000000000001",
+        name: "test-project",
+      },
+      experiment: {
+        id: "00000000-0000-0000-0000-000000000003",
+        project_id: "00000000-0000-0000-0000-000000000001",
+        name: "test-experiment",
+        public: false,
+      },
+    });
+
+  const experiment = init({
+    project: "test-project",
+    experiment: "test-experiment",
+    dataset: {
+      id: "00000000-0000-0000-0000-000000000002",
+      snapshotName: "123",
+    },
+    setCurrent: false,
+    state,
+  });
+
+  await experiment.id;
+
+  expect(postJson).toHaveBeenNthCalledWith(1, "api/dataset_snapshot/get", {
+    dataset_id: "00000000-0000-0000-0000-000000000002",
+    name: "123",
+  });
+  expect(postJson).toHaveBeenNthCalledWith(
+    2,
+    "api/experiment/register",
+    expect.objectContaining({
+      dataset_id: "00000000-0000-0000-0000-000000000002",
+      dataset_version: "456",
+    }),
+  );
+
+  _exportsForTestingOnly.simulateLogoutForTests();
+  vi.restoreAllMocks();
+});
+
+test("init surfaces dataset environment lookup errors instead of falling back to latest", async () => {
+  const state = await _exportsForTestingOnly.simulateLoginForTests();
+  vi.spyOn(state, "login").mockResolvedValue(state);
+  mockInitGitMetadata();
+  vi.spyOn(state.apiConn(), "get_json").mockRejectedValue(
+    new Error("environment lookup failed"),
+  );
+  const postJson = vi.spyOn(state.appConn(), "post_json");
+
+  const experiment = init({
+    project: "test-project",
+    experiment: "test-experiment",
+    dataset: {
+      id: "00000000-0000-0000-0000-000000000002",
+      environment: "production",
+    },
+    setCurrent: false,
+    state,
+  });
+
+  await expect(experiment.id).rejects.toThrow("environment lookup failed");
+  expect(postJson).not.toHaveBeenCalled();
+
+  _exportsForTestingOnly.simulateLogoutForTests();
+  vi.restoreAllMocks();
 });
 
 describe("loader version precedence", () => {

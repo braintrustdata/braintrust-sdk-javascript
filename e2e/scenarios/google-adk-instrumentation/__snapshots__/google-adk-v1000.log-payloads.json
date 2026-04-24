@@ -61,21 +61,6 @@
       "provider": "google-adk"
     },
     "metrics": {
-      "start": 0
-    },
-    "name": "tool: get_weather",
-    "type": "tool"
-  },
-  {
-    "input": {
-      "location": "Paris, France"
-    },
-    "metadata": {
-      "google_adk.tool_call_id": "adk-<uuid:1>",
-      "google_adk.tool_name": "get_weather",
-      "provider": "google-adk"
-    },
-    "metrics": {
       "duration": 0,
       "end": 0,
       "start": 0

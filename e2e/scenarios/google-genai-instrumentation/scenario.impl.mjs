@@ -8,7 +8,7 @@ import {
 
 const GOOGLE_MODEL = "gemini-2.5-flash-lite";
 const GOOGLE_EMBEDDING_MODEL = "gemini-embedding-001";
-const GOOGLE_GROUNDING_MODEL = "gemini-2.0-flash";
+const GOOGLE_GROUNDING_MODEL = "gemini-2.5-flash";
 const ROOT_NAME = "google-genai-instrumentation-root";
 const SCENARIO_NAME = "google-genai-instrumentation";
 const GOOGLE_GENAI_RETRY_OPTIONS = {
