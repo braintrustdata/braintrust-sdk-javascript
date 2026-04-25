@@ -3472,6 +3472,7 @@ export type InitOptions<IsOpen extends boolean> = FullLoginOptions & {
   experiment?: string;
   description?: string;
   dataset?: AnyDataset | DatasetRef;
+  _internal_btql?: Record<string, unknown>;
   parameters?: ParametersRef | RemoteEvalParameters<boolean, boolean>;
   update?: boolean;
   baseExperiment?: string;
@@ -3489,6 +3490,32 @@ export type InitOptions<IsOpen extends boolean> = FullLoginOptions & {
 export type FullInitOptions<IsOpen extends boolean> = {
   project?: string;
 } & InitOptions<IsOpen>;
+
+function getExperimentDatasetFilter({
+  dataset,
+  _internal_btql,
+}: {
+  dataset?: AnyDataset | DatasetRef;
+  _internal_btql?: Record<string, unknown>;
+}): Record<string, unknown> | undefined {
+  if (_internal_btql !== undefined) {
+    return _internal_btql;
+  }
+
+  if (!(dataset instanceof Dataset)) {
+    return undefined;
+  }
+
+  const datasetFilter = Reflect.get(dataset, "_internal_btql");
+  return isObject(datasetFilter) ? datasetFilter : undefined;
+}
+
+function getInternalBtqlLimit(
+  internalBtql?: Record<string, unknown>,
+): number | undefined {
+  const limit = internalBtql?.["limit"];
+  return typeof limit === "number" ? limit : undefined;
+}
 
 type InitializedExperiment<IsOpen extends boolean | undefined> =
   IsOpen extends true ? ReadonlyExperiment : Experiment;
@@ -3556,6 +3583,7 @@ export function init<IsOpen extends boolean = false>(
     experiment,
     description,
     dataset,
+    _internal_btql,
     parameters,
     baseExperiment,
     isPublic,
@@ -3695,6 +3723,16 @@ export function init<IsOpen extends boolean = false>(
         if (datasetSelection.datasetVersion !== undefined) {
           args["dataset_version"] = datasetSelection.datasetVersion;
         }
+      }
+
+      const datasetFilter = getExperimentDatasetFilter({
+        dataset,
+        _internal_btql,
+      });
+      if (datasetFilter !== undefined) {
+        args["internal_metadata"] = {
+          dataset_filter: datasetFilter,
+        };
       }
 
       if (parameters !== undefined) {
@@ -6046,9 +6084,7 @@ export class ObjectFetcher<RecordType> implements AsyncIterable<
     const state = await this.getState();
     const objectId = await this.id;
     const batchLimit = batchSize ?? DEFAULT_FETCH_BATCH_SIZE;
-    const internalLimit = (
-      this._internal_btql as { limit?: number } | undefined
-    )?.limit;
+    const internalLimit = getInternalBtqlLimit(this._internal_btql);
     const limit =
       batchSize !== undefined ? batchSize : (internalLimit ?? batchLimit);
     const internalBtqlWithoutReservedQueryKeys = Object.fromEntries(
