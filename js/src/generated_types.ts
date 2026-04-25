@@ -1,4 +1,4 @@
-// Auto-generated file (content hash 0f1f3f6a1bd64d86) -- do not modify
+// Auto-generated file (content hash 87cf242c359a07f8) -- do not modify
 
 import { z } from "zod/v3";
 
@@ -522,6 +522,10 @@ export const CodeBundle = z.object({
       position: z.union([
         z.object({ type: z.literal("task") }),
         z.object({ type: z.literal("scorer"), index: z.number().int().gte(0) }),
+        z.object({
+          type: z.literal("classifier"),
+          index: z.number().int().gte(0),
+        }),
       ]),
     }),
     z.object({ type: z.literal("function"), index: z.number().int().gte(0) }),

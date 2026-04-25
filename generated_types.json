@@ -1432,6 +1432,21 @@
                         },
                         "required": ["type", "index"],
                         "title": "scorer"
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "enum": ["classifier"]
+                          },
+                          "index": {
+                            "type": "integer",
+                            "minimum": 0
+                          }
+                        },
+                        "required": ["type", "index"],
+                        "title": "classifier"
                       }
                     ]
                   }
