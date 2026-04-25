@@ -1841,102 +1841,6 @@
         },
         "required": ["id", "object_type", "object_id", "name"]
       },
-      "EvalStatusPage": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Unique identifier for the eval status page"
-          },
-          "project_id": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Unique identifier for the project that the eval status page belongs under"
-          },
-          "user_id": {
-            "type": ["string", "null"],
-            "format": "uuid",
-            "description": "Identifies the user who created the eval status page"
-          },
-          "created": {
-            "type": ["string", "null"],
-            "format": "date-time",
-            "description": "Date of eval status page creation"
-          },
-          "deleted_at": {
-            "type": ["string", "null"],
-            "format": "date-time",
-            "description": "Date of eval status page deletion, or null if the eval status page is still active"
-          },
-          "name": {
-            "type": "string",
-            "description": "Name of the eval status page"
-          },
-          "description": {
-            "type": ["string", "null"],
-            "description": "Textual description of the eval status page"
-          },
-          "logo_url": {
-            "type": ["string", "null"],
-            "description": "URL of the logo to display on the page"
-          },
-          "theme": {
-            "$ref": "#/components/schemas/EvalStatusPageTheme"
-          },
-          "config": {
-            "$ref": "#/components/schemas/EvalStatusPageConfig"
-          }
-        },
-        "required": ["id", "project_id", "name", "theme", "config"],
-        "description": "A public eval status page that displays aggregate experiment results"
-      },
-      "EvalStatusPageConfig": {
-        "type": "object",
-        "properties": {
-          "score_columns": {
-            "type": ["array", "null"],
-            "items": {
-              "type": "string"
-            },
-            "description": "The score columns to display on the page"
-          },
-          "metric_columns": {
-            "type": ["array", "null"],
-            "items": {
-              "type": "string"
-            },
-            "description": "The metric columns to display on the page"
-          },
-          "grouping_field": {
-            "type": ["string", "null"],
-            "description": "The metadata field to use for grouping experiments (model)"
-          },
-          "filter": {
-            "type": ["string", "null"],
-            "description": "BTQL filter to apply to experiment data"
-          },
-          "sort_by": {
-            "type": ["string", "null"],
-            "description": "Field to sort results by (format: 'score:<name>' or 'metric:<name>')"
-          },
-          "sort_order": {
-            "type": ["string", "null"],
-            "enum": ["asc", "desc"],
-            "description": "Sort order (ascending or descending)"
-          },
-          "api_key": {
-            "type": ["string", "null"],
-            "description": "The API key used for fetching experiment data"
-          }
-        },
-        "description": "Configuration for what data to display"
-      },
-      "EvalStatusPageTheme": {
-        "type": "string",
-        "enum": ["light", "dark"],
-        "description": "The theme for the page"
-      },
       "Experiment": {
         "type": "object",
         "properties": {
@@ -1988,6 +1892,18 @@
           "dataset_version": {
             "type": ["string", "null"],
             "description": "Version number of the linked dataset the experiment was run against. This can be used to reproduce the experiment after the dataset has been modified."
+          },
+          "internal_metadata": {
+            "type": ["object", "null"],
+            "properties": {
+              "dataset_filter": {
+                "type": ["object", "null"],
+                "additionalProperties": {},
+                "description": "BTQL filter payload used to evaluate a subset of a linked dataset."
+              }
+            },
+            "additionalProperties": {},
+            "description": "Braintrust-controlled metadata about the experiment."
           },
           "parameters_id": {
             "type": ["string", "null"],
@@ -4159,6 +4075,23 @@
                     ],
                     "description": "The definition of what to export"
                   },
+                  "scope": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/components/schemas/SpanScope"
+                      },
+                      {
+                        "$ref": "#/components/schemas/TraceScope"
+                      },
+                      {
+                        "$ref": "#/components/schemas/GroupScope"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Execution scope for export automation. Defaults to span-level execution."
+                  },
                   "export_path": {
                     "type": "string",
                     "description": "The path to export the results to. It should include the storage protocol and prefix, e.g. s3://bucket-name/path/to/export"
@@ -4193,6 +4126,20 @@
                           }
                         },
                         "required": ["type", "role_arn", "external_id"]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "enum": ["gcp_service_account"]
+                          },
+                          "service_account_email": {
+                            "type": "string",
+                            "description": "The GCP service account email to impersonate"
+                          }
+                        },
+                        "required": ["type", "service_account_email"]
                       }
                     ]
                   },
@@ -6615,7 +6562,7 @@
               },
               "queryShape": {
                 "type": ["string", "null"],
-                "enum": ["traces", "spans"]
+                "enum": ["traces", "spans", "topics"]
               },
               "cluster": {
                 "type": ["string", "null"]

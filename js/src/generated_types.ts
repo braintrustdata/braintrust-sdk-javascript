@@ -1,4 +1,4 @@
-// Auto-generated file (content hash 0a2373633d8deec4) -- do not modify
+// Auto-generated file (content hash 0f1f3f6a1bd64d86) -- do not modify
 
 import { z } from "zod/v3";
 
@@ -522,10 +522,6 @@ export const CodeBundle = z.object({
       position: z.union([
         z.object({ type: z.literal("task") }),
         z.object({ type: z.literal("scorer"), index: z.number().int().gte(0) }),
-        z.object({
-          type: z.literal("classifier"),
-          index: z.number().int().gte(0),
-        }),
       ]),
     }),
     z.object({ type: z.literal("function"), index: z.number().int().gte(0) }),
@@ -677,33 +673,6 @@ export const EnvVar = z.object({
     .default("env_var"),
 });
 export type EnvVarType = z.infer<typeof EnvVar>;
-export const EvalStatusPageTheme = z.enum(["light", "dark"]);
-export type EvalStatusPageThemeType = z.infer<typeof EvalStatusPageTheme>;
-export const EvalStatusPageConfig = z
-  .object({
-    score_columns: z.union([z.array(z.string()), z.null()]),
-    metric_columns: z.union([z.array(z.string()), z.null()]),
-    grouping_field: z.union([z.string(), z.null()]),
-    filter: z.union([z.string(), z.null()]),
-    sort_by: z.union([z.string(), z.null()]),
-    sort_order: z.union([z.enum(["asc", "desc"]), z.null()]),
-    api_key: z.union([z.string(), z.null()]),
-  })
-  .partial();
-export type EvalStatusPageConfigType = z.infer<typeof EvalStatusPageConfig>;
-export const EvalStatusPage = z.object({
-  id: z.string().uuid(),
-  project_id: z.string().uuid(),
-  user_id: z.union([z.string(), z.null()]).optional(),
-  created: z.union([z.string(), z.null()]).optional(),
-  deleted_at: z.union([z.string(), z.null()]).optional(),
-  name: z.string(),
-  description: z.union([z.string(), z.null()]).optional(),
-  logo_url: z.union([z.string(), z.null()]).optional(),
-  theme: EvalStatusPageTheme,
-  config: EvalStatusPageConfig,
-});
-export type EvalStatusPageType = z.infer<typeof EvalStatusPage>;
 export const RepoInfo = z.union([
   z
     .object({
@@ -733,6 +702,20 @@ export const Experiment = z.object({
   deleted_at: z.union([z.string(), z.null()]).optional(),
   dataset_id: z.union([z.string(), z.null()]).optional(),
   dataset_version: z.union([z.string(), z.null()]).optional(),
+  internal_metadata: z
+    .union([
+      z
+        .object({
+          dataset_filter: z.union([
+            z.object({}).partial().passthrough(),
+            z.null(),
+          ]),
+        })
+        .partial()
+        .passthrough(),
+      z.null(),
+    ])
+    .optional(),
   parameters_id: z.union([z.string(), z.null()]).optional(),
   parameters_version: z.union([z.string(), z.null()]).optional(),
   public: z.boolean(),
@@ -1609,14 +1592,21 @@ export const ProjectAutomation = z.object({
         z.object({ type: z.literal("log_spans") }),
         z.object({ type: z.literal("btql_query"), btql_query: z.string() }),
       ]),
+      scope: z.union([SpanScope, TraceScope, GroupScope, z.null()]).optional(),
       export_path: z.string(),
       format: z.enum(["jsonl", "parquet"]),
       interval_seconds: z.number().gte(1).lte(2592000),
-      credentials: z.object({
-        type: z.literal("aws_iam"),
-        role_arn: z.string(),
-        external_id: z.string(),
-      }),
+      credentials: z.union([
+        z.object({
+          type: z.literal("aws_iam"),
+          role_arn: z.string(),
+          external_id: z.string(),
+        }),
+        z.object({
+          type: z.literal("gcp_service_account"),
+          service_account_email: z.string(),
+        }),
+      ]),
       batch_size: z.union([z.number(), z.null()]).optional(),
     }),
     z.object({
@@ -2053,7 +2043,7 @@ export const ViewOptions = z.union([
         z.object({ from: z.string(), to: z.string() }),
         z.null(),
       ]),
-      queryShape: z.union([z.enum(["traces", "spans"]), z.null()]),
+      queryShape: z.union([z.enum(["traces", "spans", "topics"]), z.null()]),
       cluster: z.union([z.string(), z.null()]),
       freezeColumns: z.union([z.boolean(), z.null()]),
     })
