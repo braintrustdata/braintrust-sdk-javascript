@@ -1,4 +1,4 @@
-// Auto-generated file (content hash 87cf242c359a07f8) -- do not modify
+// Auto-generated file (content hash 6a3eaf06ccb50b7d) -- do not modify
 
 import { z } from "zod/v3";
 
@@ -271,6 +271,7 @@ export const TopicMapData = z.object({
   report_key: z.string().optional(),
   topic_names: z.record(z.string()).optional(),
   generation_settings: TopicMapGenerationSettings.optional(),
+  disable_reconciliation: z.boolean().optional(),
   distance_threshold: z.number().optional(),
 });
 export type TopicMapDataType = z.infer<typeof TopicMapData>;
