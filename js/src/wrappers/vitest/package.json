@@ -9,7 +9,7 @@
   "devDependencies": {
     "@ai-sdk/openai": "2.0.53",
     "@types/node": "^20.10.5",
-    "ai": "5.0.76",
+    "ai": "3.4.33",
     "typescript": "5.4.4",
     "vite-tsconfig-paths": "^4.3.2",
     "vitest": "^4.1.2"
