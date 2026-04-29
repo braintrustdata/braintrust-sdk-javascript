@@ -13,14 +13,14 @@ function getStackTrace(): StackTraceEntry[] {
   }
   const traceLines = trace.split("\n");
   const out: StackTraceEntry[] = [];
-  const stackFrameRegex = /at(.*)\((.*):(\d+):(\d+)\)/;
+  const stackFrameRegex = /^\s*at\s+(?:(.+?)\s+\()?(.*):(\d+):(\d+)\)?\s*$/;
   for (const traceLine of traceLines.slice(1)) {
     const matches = traceLine.match(stackFrameRegex);
     if (matches === null || matches.length !== 5) {
       continue;
     }
     const entry: StackTraceEntry = {
-      functionName: matches[1].trim(),
+      functionName: matches[1]?.trim() ?? "",
       fileName: matches[2],
       lineNo: parseInt(matches[3]),
     };
