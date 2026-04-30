@@ -79,6 +79,7 @@ import {
   type RepoInfoType as RepoInfo,
   type PromptBlockDataType as PromptBlockData,
   type ResponseFormatJsonSchemaType as ResponseFormatJsonSchema,
+  type ObjectReferenceType as ObjectReference,
 } from "./generated_types";
 
 const BRAINTRUST_ATTACHMENT =
@@ -4263,8 +4264,8 @@ export function initDataset<
     legacy,
     _internal_btql,
     resolvedVersion instanceof LazyValue ||
-      normalizedEnvironment !== undefined ||
-      normalizedSnapshotName !== undefined
+    normalizedEnvironment !== undefined ||
+    normalizedSnapshotName !== undefined
       ? {
           ...(resolvedVersion instanceof LazyValue
             ? {
@@ -6041,9 +6042,9 @@ export type WithTransactionId<R> = R & {
 export const DEFAULT_FETCH_BATCH_SIZE = 1000;
 export const MAX_BTQL_ITERATIONS = 10000;
 
-export class ObjectFetcher<RecordType> implements AsyncIterable<
-  WithTransactionId<RecordType>
-> {
+export class ObjectFetcher<RecordType>
+  implements AsyncIterable<WithTransactionId<RecordType>>
+{
   private _fetchedData: WithTransactionId<RecordType>[] | undefined = undefined;
 
   constructor(
@@ -7367,6 +7368,7 @@ export class Dataset<
     metadata,
     tags,
     output,
+    origin,
     isMerge,
   }: {
     id: string;
@@ -7375,6 +7377,7 @@ export class Dataset<
     metadata?: Record<string, unknown>;
     tags?: string[];
     output?: unknown;
+    origin?: ObjectReference;
     isMerge?: boolean;
   }): LazyValue<BackgroundLogEvent> {
     return new LazyValue(async () => {
@@ -7389,6 +7392,7 @@ export class Dataset<
         dataset_id,
         created: !isMerge ? new Date().toISOString() : undefined, //if we're merging/updating an event we will not add this ts
         metadata,
+        origin,
         ...(!!isMerge
           ? {
               [IS_MERGE_FIELD]: true,
@@ -7412,6 +7416,7 @@ export class Dataset<
    * about anything else that's relevant, that you can use to help find and analyze examples later. For example, you could log the
    * `prompt`, example's `id`, or anything else that would be useful to slice/dice later. The values in `metadata` can be any
    * JSON-serializable type, but its keys must be strings.
+   * @param event.origin (Optional) a reference to the source object this dataset record was derived from.
    * @param event.id (Optional) a unique identifier for the event. If you don't provide one, Braintrust will generate one for you.
    * @param event.output: (Deprecated) The output of your application. Use `expected` instead.
    * @returns The `id` of the logged record.
@@ -7423,6 +7428,7 @@ export class Dataset<
     tags,
     id,
     output,
+    origin,
   }: {
     readonly input?: unknown;
     readonly expected?: unknown;
@@ -7430,6 +7436,7 @@ export class Dataset<
     readonly metadata?: Record<string, unknown>;
     readonly id?: string;
     readonly output?: unknown;
+    readonly origin?: ObjectReference;
   }): string {
     this.validateEvent({ metadata, expected, output, tags });
 
@@ -7442,6 +7449,7 @@ export class Dataset<
         metadata,
         tags,
         output,
+        origin,
         isMerge: false,
       }),
     );
