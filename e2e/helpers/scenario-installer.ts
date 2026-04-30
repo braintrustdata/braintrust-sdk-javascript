@@ -22,6 +22,7 @@ const INSTALL_SECRET_ENV_VARS = [
   "ANTHROPIC_API_KEY",
   "BRAINTRUST_API_KEY",
   "COHERE_API_KEY",
+  "CURSOR_API_KEY",
   "GEMINI_API_KEY",
   "GITHUB_TOKEN",
   "GH_TOKEN",
@@ -37,10 +38,9 @@ let cleanupRegistered = false;
 
 type CanaryDependencyRule = {
   packageName: string;
-  query: string;
+  version: string;
 };
 
-const canaryVersionCache = new Map<string, string>();
 const HELPERS_DIR = path.dirname(fileURLToPath(import.meta.url));
 const E2E_ROOT = path.resolve(HELPERS_DIR, "..");
 
@@ -155,32 +155,6 @@ function packageSpecifier(
     : `npm:${packageName}@${version}`;
 }
 
-async function resolveCanaryVersion(
-  rule: CanaryDependencyRule,
-): Promise<string> {
-  const cacheKey = rule.query;
-  const cached = canaryVersionCache.get(cacheKey);
-  if (cached) {
-    return cached;
-  }
-
-  const output = await spawnOrThrow(
-    PNPM_COMMAND,
-    ["view", rule.query, "version", "--json"],
-    process.cwd(),
-    installEnv(),
-  );
-  const parsed = JSON.parse(output) as string | string[];
-  const version = Array.isArray(parsed) ? parsed.at(-1) : parsed;
-
-  if (typeof version !== "string") {
-    throw new Error(`Could not resolve canary version for ${rule.query}`);
-  }
-
-  canaryVersionCache.set(cacheKey, version);
-  return version;
-}
-
 function parseCanaryDependencyRule(
   dependencyName: string,
   rawRule: string,
@@ -195,7 +169,7 @@ function parseCanaryDependencyRule(
   if (rawRule === "latest") {
     return {
       packageName: dependencyName,
-      query: dependencyName,
+      version: "latest",
     };
   }
 
@@ -208,7 +182,7 @@ function parseCanaryDependencyRule(
 
   return {
     packageName: rawRule.slice(0, versionSeparator),
-    query: rawRule,
+    version: rawRule.slice(versionSeparator + 1),
   };
 }
 
@@ -230,11 +204,10 @@ async function rewriteManifestForCanary(scenarioDir: string): Promise<void> {
       rawRule,
       scenarioDir,
     );
-    const version = await resolveCanaryVersion(rule);
     dependencies[dependencyName] = packageSpecifier(
       dependencyName,
       rule.packageName,
-      version,
+      rule.version,
     );
     updated = true;
   }

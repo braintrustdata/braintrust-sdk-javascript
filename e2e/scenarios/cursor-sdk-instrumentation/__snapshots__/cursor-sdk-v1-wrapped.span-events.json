@@ -1,0 +1,203 @@
+{
+  "conversation": {
+    "operation": {
+      "has_input": false,
+      "has_output": false,
+      "metadata": {
+        "operation": "resume-conversation"
+      },
+      "metric_keys": [],
+      "name": "cursor-sdk-resume-conversation-operation",
+      "root_span_id": "<span:1>",
+      "span_id": "<span:2>",
+      "span_parents": [
+        "<span:1>"
+      ],
+      "type": null
+    },
+    "task": {
+      "has_input": true,
+      "has_output": true,
+      "metadata": {
+        "cursor_sdk.agent_id": "<agent-id>",
+        "cursor_sdk.model": "composer-2",
+        "cursor_sdk.operation": "agent.send",
+        "cursor_sdk.run_id": "<run-id>",
+        "cursor_sdk.status": "finished",
+        "model": "composer-2",
+        "provider": "cursor"
+      },
+      "metric_keys": [
+        "duration"
+      ],
+      "name": "Cursor Agent",
+      "root_span_id": "<span:1>",
+      "span_id": "<span:3>",
+      "span_parents": [
+        "<span:2>"
+      ],
+      "type": "task"
+    }
+  },
+  "prompt": {
+    "operation": {
+      "has_input": false,
+      "has_output": false,
+      "metadata": {
+        "operation": "prompt"
+      },
+      "metric_keys": [],
+      "name": "cursor-sdk-prompt-operation",
+      "root_span_id": "<span:1>",
+      "span_id": "<span:4>",
+      "span_parents": [
+        "<span:1>"
+      ],
+      "type": null
+    },
+    "task": {
+      "has_input": true,
+      "has_output": true,
+      "metadata": {
+        "cursor_sdk.model": "composer-2",
+        "cursor_sdk.operation": "Agent.prompt",
+        "cursor_sdk.run_id": "<run-id>",
+        "cursor_sdk.runtime": "local",
+        "cursor_sdk.status": "finished",
+        "model": "composer-2",
+        "provider": "cursor"
+      },
+      "metric_keys": [
+        "duration"
+      ],
+      "name": "Cursor Agent",
+      "root_span_id": "<span:1>",
+      "span_id": "<span:5>",
+      "span_parents": [
+        "<span:4>"
+      ],
+      "type": "task"
+    }
+  },
+  "root": {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "scenario": "cursor-sdk-instrumentation"
+    },
+    "metric_keys": [],
+    "name": "cursor-sdk-root",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:1>",
+    "span_parents": [],
+    "type": "task"
+  },
+  "stream": {
+    "operation": {
+      "has_input": false,
+      "has_output": false,
+      "metadata": {
+        "operation": "stream"
+      },
+      "metric_keys": [],
+      "name": "cursor-sdk-stream-operation",
+      "root_span_id": "<span:1>",
+      "span_id": "<span:6>",
+      "span_parents": [
+        "<span:1>"
+      ],
+      "type": null
+    },
+    "subagent_task": null,
+    "task": {
+      "has_input": true,
+      "has_output": true,
+      "metadata": {
+        "cursor_sdk.agent_id": "<agent-id>",
+        "cursor_sdk.model": "composer-2",
+        "cursor_sdk.operation": "agent.send",
+        "cursor_sdk.run_id": "<run-id>",
+        "cursor_sdk.status": "finished",
+        "model": "composer-2",
+        "provider": "cursor"
+      },
+      "metric_keys": [
+        "duration"
+      ],
+      "name": "Cursor Agent",
+      "root_span_id": "<span:1>",
+      "span_id": "<span:7>",
+      "span_parents": [
+        "<span:6>"
+      ],
+      "type": "task"
+    },
+    "tool": {
+      "has_input": true,
+      "has_output": true,
+      "metadata": {
+        "cursor_sdk.tool.status": "completed",
+        "gen_ai.tool.name": "shell"
+      },
+      "metric_keys": [],
+      "name": "tool: shell",
+      "root_span_id": "<span:1>",
+      "span_id": "<span:8>",
+      "span_parents": [
+        "<span:7>"
+      ],
+      "type": "tool"
+    }
+  },
+  "wait": {
+    "operation": {
+      "has_input": false,
+      "has_output": false,
+      "metadata": {
+        "operation": "wait"
+      },
+      "metric_keys": [],
+      "name": "cursor-sdk-wait-operation",
+      "root_span_id": "<span:1>",
+      "span_id": "<span:9>",
+      "span_parents": [
+        "<span:1>"
+      ],
+      "type": null
+    },
+    "task": {
+      "has_input": true,
+      "has_output": true,
+      "metadata": {
+        "cursor_sdk.agent_id": "<agent-id>",
+        "cursor_sdk.model": "composer-2",
+        "cursor_sdk.operation": "agent.send",
+        "cursor_sdk.run_id": "<run-id>",
+        "cursor_sdk.status": "finished",
+        "cursor_sdk.step_types": [
+          "assistantMessage"
+        ],
+        "model": "composer-2",
+        "provider": "cursor"
+      },
+      "metric_keys": [
+        "completion_tokens",
+        "cursor_sdk.delta_tokens",
+        "cursor_sdk.step_duration_ms",
+        "cursor_sdk.steps",
+        "duration",
+        "prompt_cache_creation_tokens",
+        "prompt_cached_tokens",
+        "prompt_tokens",
+        "tokens"
+      ],
+      "name": "Cursor Agent",
+      "root_span_id": "<span:1>",
+      "span_id": "<span:10>",
+      "span_parents": [
+        "<span:9>"
+      ],
+      "type": "task"
+    }
+  }
+}

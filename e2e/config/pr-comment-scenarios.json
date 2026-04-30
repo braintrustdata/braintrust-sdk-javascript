@@ -133,5 +133,11 @@
         "label": "v0.2.81"
       }
     ]
+  },
+  {
+    "scenarioDirName": "cursor-sdk-instrumentation",
+    "label": "Cursor SDK Instrumentation",
+    "metadataScenario": "cursor-sdk-instrumentation",
+    "variants": [{ "variantKey": "cursor-sdk-v1", "label": "v1" }]
   }
 ]

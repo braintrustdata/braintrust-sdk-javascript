@@ -115,6 +115,7 @@ Non-hermetic scenarios require provider credentials in addition to the mock Brai
 - `OPENAI_API_KEY`
 - `ANTHROPIC_API_KEY`
 - `GEMINI_API_KEY` or `GOOGLE_API_KEY`
+- `CURSOR_API_KEY`
 - `OPENROUTER_API_KEY`
 - `MISTRAL_API_KEY`
 - `HUGGINGFACE_API_KEY`
