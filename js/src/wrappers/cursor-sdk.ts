@@ -133,7 +133,7 @@ function wrapCursorAgentClass(Agent: CursorSDKAgentClass): CursorSDKAgentClass {
   }) as CursorSDKAgentClass;
 }
 
-export function wrapCursorAgent(agent: CursorSDKAgent): CursorSDKAgent {
+function wrapCursorAgent(agent: CursorSDKAgent): CursorSDKAgent {
   if (!agent || typeof agent !== "object") {
     return agent;
   }
