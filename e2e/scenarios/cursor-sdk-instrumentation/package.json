@@ -1,0 +1,20 @@
+{
+  "name": "@braintrust/e2e-cursor-sdk-instrumentation",
+  "private": true,
+  "braintrustScenario": {
+    "canary": {
+      "dependencies": {
+        "cursor-sdk-v1": "@cursor/sdk@latest"
+      }
+    }
+  },
+  "dependencies": {
+    "cursor-sdk-v1": "npm:@cursor/sdk@1.0.10",
+    "dotenv": "^17.2.3"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "sqlite3"
+    ]
+  }
+}
