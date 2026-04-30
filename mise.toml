@@ -11,6 +11,7 @@ _.file = ".env"
 nodejs = "24.15.0"
 npm = "11.12.1"
 pnpm = "10.33.0"
+deno = "2.7.6"
 
 [hooks]
 postinstall = "pnpm install --frozen-lockfile"
