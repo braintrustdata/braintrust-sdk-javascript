@@ -3510,6 +3510,35 @@ function getExperimentDatasetFilter({
   return isObject(datasetFilter) ? datasetFilter : undefined;
 }
 
+function normalizeInternalBtqlFilter(
+  internalBtql?: Record<string, unknown>,
+): Record<string, unknown> | undefined {
+  if (internalBtql === undefined) {
+    return undefined;
+  }
+
+  const filter = internalBtql["filter"];
+  if (!Array.isArray(filter)) {
+    return internalBtql;
+  }
+
+  const { filter: _filter, ...internalBtqlWithoutFilter } = internalBtql;
+  if (filter.length === 0) {
+    return internalBtqlWithoutFilter;
+  }
+
+  return {
+    ...internalBtqlWithoutFilter,
+    filter:
+      filter.length === 1
+        ? filter[0]
+        : {
+            op: "and",
+            children: filter,
+          },
+  };
+}
+
 function getInternalBtqlLimit(
   internalBtql?: Record<string, unknown>,
 ): number | undefined {
@@ -6087,8 +6116,11 @@ export class ObjectFetcher<RecordType> implements AsyncIterable<
     const internalLimit = getInternalBtqlLimit(this._internal_btql);
     const limit =
       batchSize !== undefined ? batchSize : (internalLimit ?? batchLimit);
+    const normalizedInternalBtql = normalizeInternalBtqlFilter(
+      this._internal_btql,
+    );
     const internalBtqlWithoutReservedQueryKeys = Object.fromEntries(
-      Object.entries(this._internal_btql ?? {}).filter(
+      Object.entries(normalizedInternalBtql ?? {}).filter(
         ([key]) =>
           key !== "cursor" &&
           key !== "limit" &&
