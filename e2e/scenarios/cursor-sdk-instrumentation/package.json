@@ -9,8 +9,7 @@
     }
   },
   "dependencies": {
-    "cursor-sdk-v1": "npm:@cursor/sdk@1.0.10",
-    "dotenv": "^17.2.3"
+    "cursor-sdk-v1": "npm:@cursor/sdk@1.0.10"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

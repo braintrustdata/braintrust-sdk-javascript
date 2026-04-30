@@ -1,16 +1,9 @@
-import { config as loadDotEnv } from "dotenv";
-import { resolve } from "node:path";
 import { traced, wrapCursorSDK } from "braintrust";
 import {
   collectAsync,
   runOperation,
   runTracedScenario,
 } from "../../helpers/provider-runtime.mjs";
-
-loadDotEnv({
-  path: resolve(process.env.BRAINTRUST_E2E_REPO_ROOT ?? process.cwd(), ".env"),
-  quiet: true,
-});
 
 const CURSOR_MODEL = "composer-2";
 
