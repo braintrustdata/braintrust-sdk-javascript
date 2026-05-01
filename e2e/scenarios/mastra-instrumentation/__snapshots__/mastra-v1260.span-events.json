@@ -1,0 +1,667 @@
+[
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "scenario": "mastra-instrumentation"
+    },
+    "metric_keys": [],
+    "name": "mastra-instrumentation-root",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:1>",
+    "span_parents": [],
+    "type": "task"
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "operation": "generate"
+    },
+    "metric_keys": [],
+    "name": "mastra-agent-generate-operation",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:2>",
+    "span_parents": [
+      "<span:1>"
+    ],
+    "type": null
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "agent_id": "weather-agent",
+      "agent_name": "Weather Agent",
+      "method": "generate"
+    },
+    "metric_keys": [],
+    "name": "Mastra Agent Weather Agent generate",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:3>",
+    "span_parents": [
+      "<span:2>"
+    ],
+    "type": "task"
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "method": "start",
+      "workflow_id": "execution-workflow"
+    },
+    "metric_keys": [],
+    "name": "Mastra Workflow execution-workflow start",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:4>",
+    "span_parents": [
+      "<span:3>"
+    ],
+    "type": "task"
+  },
+  {
+    "has_input": false,
+    "has_output": true,
+    "metadata": {
+      "workflow_id": "execution-workflow",
+      "workflow_run_id": "<uuid:5>"
+    },
+    "metric_keys": [],
+    "name": "Mastra Workflow Step workflow.execution-workflow.step.prepare-tools-step",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:5>",
+    "span_parents": [
+      "<span:4>"
+    ],
+    "type": "function"
+  },
+  {
+    "has_input": false,
+    "has_output": true,
+    "metadata": {
+      "workflow_id": "execution-workflow",
+      "workflow_run_id": "<uuid:5>"
+    },
+    "metric_keys": [],
+    "name": "Mastra Workflow Step workflow.execution-workflow.step.prepare-memory-step",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:6>",
+    "span_parents": [
+      "<span:4>"
+    ],
+    "type": "function"
+  },
+  {
+    "has_input": false,
+    "has_output": true,
+    "metadata": {
+      "workflow_id": "execution-workflow",
+      "workflow_run_id": "<uuid:5>"
+    },
+    "metric_keys": [],
+    "name": "Mastra Workflow Step workflow.execution-workflow.step.mapping_<uuid:8>",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:7>",
+    "span_parents": [
+      "<span:4>"
+    ],
+    "type": "function"
+  },
+  {
+    "has_input": false,
+    "has_output": true,
+    "metadata": {
+      "workflow_id": "execution-workflow",
+      "workflow_run_id": "<uuid:5>"
+    },
+    "metric_keys": [],
+    "name": "Mastra Workflow Step workflow.execution-workflow.step.stream-text-step",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:8>",
+    "span_parents": [
+      "<span:4>"
+    ],
+    "type": "function"
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "method": "start",
+      "workflow_id": "agentic-loop"
+    },
+    "metric_keys": [],
+    "name": "Mastra Workflow agentic-loop start",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:9>",
+    "span_parents": [
+      "<span:8>"
+    ],
+    "type": "task"
+  },
+  {
+    "has_input": false,
+    "has_output": true,
+    "metadata": {
+      "workflow_id": "agentic-loop",
+      "workflow_run_id": "agent-generate-run"
+    },
+    "metric_keys": [],
+    "name": "Mastra Workflow Step workflow.agentic-loop.step.executionWorkflow",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:10>",
+    "span_parents": [
+      "<span:9>"
+    ],
+    "type": "function"
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "method": "start",
+      "workflow_id": "executionWorkflow"
+    },
+    "metric_keys": [],
+    "name": "Mastra Workflow executionWorkflow start",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:11>",
+    "span_parents": [
+      "<span:10>"
+    ],
+    "type": "task"
+  },
+  {
+    "has_input": false,
+    "has_output": true,
+    "metadata": {
+      "workflow_id": "executionWorkflow",
+      "workflow_run_id": "agent-generate-run"
+    },
+    "metric_keys": [],
+    "name": "Mastra Workflow Step workflow.executionWorkflow.step.capture-response-count",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:12>",
+    "span_parents": [
+      "<span:11>"
+    ],
+    "type": "function"
+  },
+  {
+    "has_input": false,
+    "has_output": true,
+    "metadata": {
+      "workflow_id": "executionWorkflow",
+      "workflow_run_id": "agent-generate-run"
+    },
+    "metric_keys": [],
+    "name": "Mastra Workflow Step workflow.executionWorkflow.step.llm-execution",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:13>",
+    "span_parents": [
+      "<span:11>"
+    ],
+    "type": "function"
+  },
+  {
+    "has_input": false,
+    "has_output": true,
+    "metadata": {
+      "workflow_id": "executionWorkflow",
+      "workflow_run_id": "agent-generate-run"
+    },
+    "metric_keys": [],
+    "name": "Mastra Workflow Step workflow.executionWorkflow.step.add-response-to-messagelist",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:14>",
+    "span_parents": [
+      "<span:11>"
+    ],
+    "type": "function"
+  },
+  {
+    "has_input": false,
+    "has_output": true,
+    "metadata": {
+      "workflow_id": "executionWorkflow",
+      "workflow_run_id": "agent-generate-run"
+    },
+    "metric_keys": [],
+    "name": "Mastra Workflow Step workflow.executionWorkflow.step.map-tool-calls",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:15>",
+    "span_parents": [
+      "<span:11>"
+    ],
+    "type": "function"
+  },
+  {
+    "has_input": false,
+    "has_output": true,
+    "metadata": {
+      "workflow_id": "executionWorkflow",
+      "workflow_run_id": "agent-generate-run"
+    },
+    "metric_keys": [],
+    "name": "Mastra Workflow Step workflow.executionWorkflow.step.llmExecutionMappingStep",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:16>",
+    "span_parents": [
+      "<span:11>"
+    ],
+    "type": "function"
+  },
+  {
+    "has_input": false,
+    "has_output": true,
+    "metadata": {
+      "workflow_id": "executionWorkflow",
+      "workflow_run_id": "agent-generate-run"
+    },
+    "metric_keys": [],
+    "name": "Mastra Workflow Step workflow.executionWorkflow.step.backgroundTaskCheckStep",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:17>",
+    "span_parents": [
+      "<span:11>"
+    ],
+    "type": "function"
+  },
+  {
+    "has_input": false,
+    "has_output": true,
+    "metadata": {
+      "workflow_id": "executionWorkflow",
+      "workflow_run_id": "agent-generate-run"
+    },
+    "metric_keys": [],
+    "name": "Mastra Workflow Step workflow.executionWorkflow.step.isTaskCompleteStep",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:18>",
+    "span_parents": [
+      "<span:11>"
+    ],
+    "type": "function"
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "operation": "stream"
+    },
+    "metric_keys": [],
+    "name": "mastra-agent-stream-operation",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:19>",
+    "span_parents": [
+      "<span:1>"
+    ],
+    "type": null
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "agent_id": "weather-agent",
+      "agent_name": "Weather Agent",
+      "method": "stream"
+    },
+    "metric_keys": [],
+    "name": "Mastra Agent Weather Agent stream",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:20>",
+    "span_parents": [
+      "<span:19>"
+    ],
+    "type": "task"
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "method": "start",
+      "workflow_id": "execution-workflow"
+    },
+    "metric_keys": [],
+    "name": "Mastra Workflow execution-workflow start",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:21>",
+    "span_parents": [
+      "<span:20>"
+    ],
+    "type": "task"
+  },
+  {
+    "has_input": false,
+    "has_output": true,
+    "metadata": {
+      "workflow_id": "execution-workflow",
+      "workflow_run_id": "<uuid:24>"
+    },
+    "metric_keys": [],
+    "name": "Mastra Workflow Step workflow.execution-workflow.step.prepare-tools-step",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:22>",
+    "span_parents": [
+      "<span:21>"
+    ],
+    "type": "function"
+  },
+  {
+    "has_input": false,
+    "has_output": true,
+    "metadata": {
+      "workflow_id": "execution-workflow",
+      "workflow_run_id": "<uuid:24>"
+    },
+    "metric_keys": [],
+    "name": "Mastra Workflow Step workflow.execution-workflow.step.prepare-memory-step",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:23>",
+    "span_parents": [
+      "<span:21>"
+    ],
+    "type": "function"
+  },
+  {
+    "has_input": false,
+    "has_output": true,
+    "metadata": {
+      "workflow_id": "execution-workflow",
+      "workflow_run_id": "<uuid:24>"
+    },
+    "metric_keys": [],
+    "name": "Mastra Workflow Step workflow.execution-workflow.step.mapping_<uuid:27>",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:24>",
+    "span_parents": [
+      "<span:21>"
+    ],
+    "type": "function"
+  },
+  {
+    "has_input": false,
+    "has_output": true,
+    "metadata": {
+      "workflow_id": "execution-workflow",
+      "workflow_run_id": "<uuid:24>"
+    },
+    "metric_keys": [],
+    "name": "Mastra Workflow Step workflow.execution-workflow.step.stream-text-step",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:25>",
+    "span_parents": [
+      "<span:21>"
+    ],
+    "type": "function"
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "method": "start",
+      "workflow_id": "agentic-loop"
+    },
+    "metric_keys": [],
+    "name": "Mastra Workflow agentic-loop start",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:26>",
+    "span_parents": [
+      "<span:25>"
+    ],
+    "type": "task"
+  },
+  {
+    "has_input": false,
+    "has_output": true,
+    "metadata": {
+      "workflow_id": "agentic-loop",
+      "workflow_run_id": "agent-stream-run"
+    },
+    "metric_keys": [],
+    "name": "Mastra Workflow Step workflow.agentic-loop.step.executionWorkflow",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:27>",
+    "span_parents": [
+      "<span:26>"
+    ],
+    "type": "function"
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "method": "start",
+      "workflow_id": "executionWorkflow"
+    },
+    "metric_keys": [],
+    "name": "Mastra Workflow executionWorkflow start",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:28>",
+    "span_parents": [
+      "<span:27>"
+    ],
+    "type": "task"
+  },
+  {
+    "has_input": false,
+    "has_output": true,
+    "metadata": {
+      "workflow_id": "executionWorkflow",
+      "workflow_run_id": "agent-stream-run"
+    },
+    "metric_keys": [],
+    "name": "Mastra Workflow Step workflow.executionWorkflow.step.capture-response-count",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:29>",
+    "span_parents": [
+      "<span:28>"
+    ],
+    "type": "function"
+  },
+  {
+    "has_input": false,
+    "has_output": true,
+    "metadata": {
+      "workflow_id": "executionWorkflow",
+      "workflow_run_id": "agent-stream-run"
+    },
+    "metric_keys": [],
+    "name": "Mastra Workflow Step workflow.executionWorkflow.step.llm-execution",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:30>",
+    "span_parents": [
+      "<span:28>"
+    ],
+    "type": "function"
+  },
+  {
+    "has_input": false,
+    "has_output": true,
+    "metadata": {
+      "workflow_id": "executionWorkflow",
+      "workflow_run_id": "agent-stream-run"
+    },
+    "metric_keys": [],
+    "name": "Mastra Workflow Step workflow.executionWorkflow.step.add-response-to-messagelist",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:31>",
+    "span_parents": [
+      "<span:28>"
+    ],
+    "type": "function"
+  },
+  {
+    "has_input": false,
+    "has_output": true,
+    "metadata": {
+      "workflow_id": "executionWorkflow",
+      "workflow_run_id": "agent-stream-run"
+    },
+    "metric_keys": [],
+    "name": "Mastra Workflow Step workflow.executionWorkflow.step.map-tool-calls",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:32>",
+    "span_parents": [
+      "<span:28>"
+    ],
+    "type": "function"
+  },
+  {
+    "has_input": false,
+    "has_output": true,
+    "metadata": {
+      "workflow_id": "executionWorkflow",
+      "workflow_run_id": "agent-stream-run"
+    },
+    "metric_keys": [],
+    "name": "Mastra Workflow Step workflow.executionWorkflow.step.llmExecutionMappingStep",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:33>",
+    "span_parents": [
+      "<span:28>"
+    ],
+    "type": "function"
+  },
+  {
+    "has_input": false,
+    "has_output": true,
+    "metadata": {
+      "workflow_id": "executionWorkflow",
+      "workflow_run_id": "agent-stream-run"
+    },
+    "metric_keys": [],
+    "name": "Mastra Workflow Step workflow.executionWorkflow.step.backgroundTaskCheckStep",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:34>",
+    "span_parents": [
+      "<span:28>"
+    ],
+    "type": "function"
+  },
+  {
+    "has_input": false,
+    "has_output": true,
+    "metadata": {
+      "workflow_id": "executionWorkflow",
+      "workflow_run_id": "agent-stream-run"
+    },
+    "metric_keys": [],
+    "name": "Mastra Workflow Step workflow.executionWorkflow.step.isTaskCompleteStep",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:35>",
+    "span_parents": [
+      "<span:28>"
+    ],
+    "type": "function"
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "operation": "tool"
+    },
+    "metric_keys": [],
+    "name": "mastra-tool-operation",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:36>",
+    "span_parents": [
+      "<span:1>"
+    ],
+    "type": null
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "agent_id": "weather-agent",
+      "tool_id": "lookup_weather"
+    },
+    "metric_keys": [],
+    "name": "Mastra Tool lookup_weather",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:37>",
+    "span_parents": [
+      "<span:36>"
+    ],
+    "type": "tool"
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "operation": "workflow"
+    },
+    "metric_keys": [],
+    "name": "mastra-workflow-operation",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:38>",
+    "span_parents": [
+      "<span:1>"
+    ],
+    "type": null
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "method": "start",
+      "workflow_id": "travel-flow"
+    },
+    "metric_keys": [],
+    "name": "Mastra Workflow travel-flow start",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:39>",
+    "span_parents": [
+      "<span:38>"
+    ],
+    "type": "task"
+  },
+  {
+    "has_input": false,
+    "has_output": true,
+    "metadata": {
+      "workflow_id": "travel-flow",
+      "workflow_run_id": "workflow-run"
+    },
+    "metric_keys": [],
+    "name": "Mastra Workflow Step workflow.travel-flow.step.lookup-step",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:40>",
+    "span_parents": [
+      "<span:39>"
+    ],
+    "type": "function"
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "tool_id": "lookup_weather",
+      "workflow_id": "travel-flow",
+      "workflow_run_id": "workflow-run-context"
+    },
+    "metric_keys": [],
+    "name": "Mastra Tool lookup_weather",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:41>",
+    "span_parents": [
+      "<span:40>"
+    ],
+    "type": "tool"
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "scenario": "mastra-instrumentation"
+    },
+    "metric_keys": [],
+    "name": "mastra-instrumentation-root",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:1>",
+    "span_parents": [],
+    "type": "task"
+  }
+]

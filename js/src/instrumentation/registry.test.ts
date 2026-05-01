@@ -124,6 +124,12 @@ describe("configureInstrumentation API", () => {
         cohere: false,
       },
     });
+
+    configureInstrumentation({
+      integrations: {
+        mastra: false,
+      },
+    } as any);
   });
 });
 
@@ -221,6 +227,26 @@ describe("Environment Variable Configuration", () => {
     testRegistry.enable();
 
     expect(testRegistry.isEnabled()).toBe(true);
+    testRegistry.disable();
+  });
+
+  it("should treat Mastra aliases as mastra instrumentation", async () => {
+    const iso = (await import("../isomorph")).default;
+    mockNewTracingChannel.mockClear();
+    iso.getEnv = (name: string) => {
+      if (name === "BRAINTRUST_DISABLE_INSTRUMENTATION") {
+        return "mastra-core,@mastra/core";
+      }
+      return originalGetEnv(name);
+    };
+
+    const testRegistry = new (registry.constructor as any)();
+    testRegistry.enable();
+
+    expect(testRegistry.isEnabled()).toBe(true);
+    expect(mockNewTracingChannel).not.toHaveBeenCalledWith(
+      "orchestrion:@mastra/core:agent.execute",
+    );
     testRegistry.disable();
   });
 });

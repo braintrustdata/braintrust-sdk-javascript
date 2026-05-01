@@ -11,6 +11,7 @@ import { MistralPlugin } from "./plugins/mistral-plugin";
 import { GoogleADKPlugin } from "./plugins/google-adk-plugin";
 import { CoherePlugin } from "./plugins/cohere-plugin";
 import { GroqPlugin } from "./plugins/groq-plugin";
+import { MastraPlugin } from "./plugins/mastra-plugin";
 
 export interface BraintrustPluginConfig {
   integrations?: {
@@ -27,9 +28,15 @@ export interface BraintrustPluginConfig {
     mistral?: boolean;
     googleADK?: boolean;
     cohere?: boolean;
-    groq?: boolean;
   };
 }
+
+type RuntimeBraintrustPluginConfig = BraintrustPluginConfig & {
+  integrations?: NonNullable<BraintrustPluginConfig["integrations"]> & {
+    groq?: boolean;
+    mastra?: boolean;
+  };
+};
 
 /**
  * Default Braintrust plugin that manages all AI provider instrumentation plugins.
@@ -48,7 +55,7 @@ export interface BraintrustPluginConfig {
  * Individual integrations can be disabled via configuration.
  */
 export class BraintrustPlugin extends BasePlugin {
-  private config: BraintrustPluginConfig;
+  private config: RuntimeBraintrustPluginConfig;
   private openaiPlugin: OpenAIPlugin | null = null;
   private anthropicPlugin: AnthropicPlugin | null = null;
   private aiSDKPlugin: AISDKPlugin | null = null;
@@ -61,14 +68,17 @@ export class BraintrustPlugin extends BasePlugin {
   private googleADKPlugin: GoogleADKPlugin | null = null;
   private coherePlugin: CoherePlugin | null = null;
   private groqPlugin: GroqPlugin | null = null;
+  private mastraPlugin: MastraPlugin | null = null;
 
   constructor(config: BraintrustPluginConfig = {}) {
     super();
-    this.config = config;
+    this.config = config as RuntimeBraintrustPluginConfig;
   }
 
   protected onEnable(): void {
-    const integrations = this.config.integrations || {};
+    const integrations = (this.config.integrations || {}) as NonNullable<
+      RuntimeBraintrustPluginConfig["integrations"]
+    >;
 
     // Enable OpenAI integration (default: true)
     if (integrations.openai !== false) {
@@ -137,6 +147,11 @@ export class BraintrustPlugin extends BasePlugin {
       this.groqPlugin = new GroqPlugin();
       this.groqPlugin.enable();
     }
+
+    if (integrations.mastra !== false) {
+      this.mastraPlugin = new MastraPlugin();
+      this.mastraPlugin.enable();
+    }
   }
 
   protected onDisable(): void {
@@ -198,6 +213,11 @@ export class BraintrustPlugin extends BasePlugin {
     if (this.groqPlugin) {
       this.groqPlugin.disable();
       this.groqPlugin = null;
+    }
+
+    if (this.mastraPlugin) {
+      this.mastraPlugin.disable();
+      this.mastraPlugin = null;
     }
   }
 }

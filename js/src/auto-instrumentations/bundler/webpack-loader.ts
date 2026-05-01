@@ -22,13 +22,13 @@
  */
 
 import {
-  create,
   type InstrumentationMatcher,
   type ModuleType,
 } from "@apm-js-collab/code-transformer";
 import { extname, join, sep } from "path";
 import { readFileSync } from "fs";
 import moduleDetailsFromPath from "module-details-from-path";
+import { createInstrumentationMatcher } from "../custom-transforms";
 import { openaiConfigs } from "../configs/openai";
 import { anthropicConfigs } from "../configs/anthropic";
 import { aiSDKConfigs } from "../configs/ai-sdk";
@@ -40,6 +40,7 @@ import { openRouterConfigs } from "../configs/openrouter";
 import { mistralConfigs } from "../configs/mistral";
 import { cohereConfigs } from "../configs/cohere";
 import { groqConfigs } from "../configs/groq";
+import { mastraConfigs } from "../configs/mastra";
 import { type BundlerPluginOptions } from "./plugin";
 
 /**
@@ -78,6 +79,7 @@ function getMatcher(options: BundlerPluginOptions): InstrumentationMatcher {
     ...mistralConfigs,
     ...cohereConfigs,
     ...groqConfigs,
+    ...mastraConfigs,
     ...(options.instrumentations ?? []),
   ];
   const dcModule = options.browser ? "dc-browser" : undefined;
@@ -95,7 +97,7 @@ function getMatcher(options: BundlerPluginOptions): InstrumentationMatcher {
     }
   }
 
-  const matcher = create(allInstrumentations, dcModule ?? null);
+  const matcher = createInstrumentationMatcher(allInstrumentations, dcModule);
   matcherCache.set(configHash, matcher);
   return matcher;
 }

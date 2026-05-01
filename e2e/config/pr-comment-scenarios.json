@@ -43,6 +43,12 @@
     ]
   },
   {
+    "scenarioDirName": "mastra-instrumentation",
+    "label": "Mastra Instrumentation",
+    "metadataScenario": "mastra-instrumentation",
+    "variants": [{ "variantKey": "mastra-v1260", "label": "v1.26.0" }]
+  },
+  {
     "scenarioDirName": "groq-instrumentation",
     "label": "Groq Instrumentation",
     "metadataScenario": "groq-instrumentation",
