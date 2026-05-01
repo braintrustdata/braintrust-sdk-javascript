@@ -15,7 +15,11 @@ import {
   SCENARIO_NAME,
 } from "./constants.mjs";
 
-export const COHERE_SCENARIO_TIMEOUT_MS = 240_000;
+// Generous budget so cassette-record runs survive Cohere free-tier rate
+// limits (the cassette layer transparently retries 429s with backoff).
+// In replay mode the scenario typically completes in <5s, so the larger
+// number here does not slow down hermetic CI.
+export const COHERE_SCENARIO_TIMEOUT_MS = 600_000;
 
 export const COHERE_SCENARIO_SPECS = [
   {
@@ -24,7 +28,6 @@ export const COHERE_SCENARIO_SPECS = [
     dependencyName: "cohere-sdk-v7-14-0",
     snapshotName: "cohere-v7-14-0",
     supportsThinking: false,
-    useV2Namespace: true,
     wrapperEntry: "scenario.cohere-v7.ts",
   },
   {
@@ -32,7 +35,6 @@ export const COHERE_SCENARIO_SPECS = [
     autoEntry: "scenario.cohere-v7.mjs",
     dependencyName: "cohere-sdk-v7-20-0",
     snapshotName: "cohere-v7-20-0",
-    useV2Namespace: true,
     wrapperEntry: "scenario.cohere-v7.ts",
   },
   {
@@ -40,7 +42,6 @@ export const COHERE_SCENARIO_SPECS = [
     autoEntry: "scenario.cohere-v7.mjs",
     dependencyName: "cohere-sdk-v7-21-0",
     snapshotName: "cohere-v7-21-0",
-    useV2Namespace: true,
     wrapperEntry: "scenario.cohere-v7.ts",
   },
   {
@@ -48,7 +49,6 @@ export const COHERE_SCENARIO_SPECS = [
     autoEntry: "scenario.cohere-v7.mjs",
     dependencyName: "cohere-sdk-v7",
     snapshotName: "cohere-v7",
-    useV2Namespace: true,
     wrapperEntry: "scenario.cohere-v7.ts",
   },
   {
@@ -64,8 +64,8 @@ function getApiKey() {
   return process.env.COHERE_API_KEY || process.env.CO_API_KEY;
 }
 
-function getChatRequest(apiVersion, { stream = false, useV2Api = false } = {}) {
-  if (apiVersion === "v8" || useV2Api) {
+function getChatRequest(apiVersion, { stream = false } = {}) {
+  if (apiVersion === "v8") {
     return {
       model: CHAT_MODEL_V8,
       messages: [
@@ -161,27 +161,35 @@ function getRerankRequest(apiVersion) {
   };
 }
 
-function getOperationName(baseName, { useV2Namespace = false } = {}) {
-  return useV2Namespace
-    ? `cohere-v2-${baseName}-operation`
-    : `cohere-${baseName}-operation`;
+// Cohere's trial-tier rate-limits the chat endpoints aggressively —
+// in practice the per-key budget appears to be on the order of a few
+// requests per minute, with a sliding window long enough that bursting
+// 4-5 calls back-to-back trips it even with short pauses. Wait a full
+// minute between the calls in this scenario when we are actively
+// recording, so each call lands in a fresh budget window and we don't
+// need to rely on the cassette layer's retry-on-429 (which can't
+// keep up with this provider's window).
+//
+// Replay mode (the CI default) is unaffected: the whole scenario
+// completes in seconds because every fetch is intercepted from disk
+// before this sleep ever runs.
+const COHERE_RECORD_THROTTLE_MS = 60_000;
+
+function shouldThrottleForRecording() {
+  const mode = process.env.BRAINTRUST_E2E_CASSETTE_MODE;
+  return mode === "record" || mode === "record-missing";
 }
 
-function getOperationClient(client, { useV2Namespace = false } = {}) {
-  if (!useV2Namespace) {
-    return client;
-  }
-
-  if (!client.v2) {
-    throw new Error("Expected Cohere client to expose a v2 namespace");
-  }
-
-  return client.v2;
+async function throttleForCohere() {
+  if (!shouldThrottleForRecording()) return;
+  await new Promise((resolve) =>
+    setTimeout(resolve, COHERE_RECORD_THROTTLE_MS),
+  );
 }
 
 async function runCohereInstrumentationScenario(
   CohereClient,
-  { apiVersion, decorateClient, ThinkingCohereClient, useV2Namespace } = {},
+  { apiVersion, decorateClient, ThinkingCohereClient } = {},
 ) {
   const apiKey = getApiKey();
   if (!apiKey) {
@@ -192,7 +200,6 @@ async function runCohereInstrumentationScenario(
     token: apiKey,
   });
   const client = decorateClient ? decorateClient(baseClient) : baseClient;
-  const operationClient = getOperationClient(client, { useV2Namespace });
   const thinkingClientClass = ThinkingCohereClient ?? CohereClient;
   const thinkingBaseClient =
     thinkingClientClass === CohereClient
@@ -203,42 +210,32 @@ async function runCohereInstrumentationScenario(
   const thinkingClient = decorateClient
     ? decorateClient(thinkingBaseClient)
     : thinkingBaseClient;
-  const thinkingOperationClient = getOperationClient(thinkingClient, {
-    useV2Namespace: useV2Namespace && thinkingClientClass === CohereClient,
-  });
 
   await runTracedScenario({
     callback: async () => {
-      await runOperation(
-        getOperationName("chat", { useV2Namespace }),
-        "chat",
-        async () => {
-          await operationClient.chat(
-            getChatRequest(apiVersion, { useV2Api: useV2Namespace }),
-          );
-        },
-      );
+      await runOperation("cohere-chat-operation", "chat", async () => {
+        await client.chat(getChatRequest(apiVersion));
+      });
 
+      await throttleForCohere();
       await runOperation(
-        getOperationName("chat-stream", { useV2Namespace }),
+        "cohere-chat-stream-operation",
         "chat-stream",
         async () => {
-          const stream = await operationClient.chatStream(
-            getChatRequest(apiVersion, {
-              stream: true,
-              useV2Api: useV2Namespace,
-            }),
+          const stream = await client.chatStream(
+            getChatRequest(apiVersion, { stream: true }),
           );
           await collectAsync(stream);
         },
       );
 
       if (shouldRunThinkingScenario(apiVersion)) {
+        await throttleForCohere();
         await runOperation(
-          getOperationName("chat-stream-thinking", { useV2Namespace }),
+          "cohere-chat-stream-thinking-operation",
           "chat-stream-thinking",
           async () => {
-            const stream = await thinkingOperationClient.chatStream(
+            const stream = await thinkingClient.chatStream(
               getThinkingChatRequest(),
             );
             await collectAsync(stream);
@@ -246,21 +243,15 @@ async function runCohereInstrumentationScenario(
         );
       }
 
-      await runOperation(
-        getOperationName("embed", { useV2Namespace }),
-        "embed",
-        async () => {
-          await operationClient.embed(getEmbedRequest(apiVersion));
-        },
-      );
+      await throttleForCohere();
+      await runOperation("cohere-embed-operation", "embed", async () => {
+        await client.embed(getEmbedRequest(apiVersion));
+      });
 
-      await runOperation(
-        getOperationName("rerank", { useV2Namespace }),
-        "rerank",
-        async () => {
-          await operationClient.rerank(getRerankRequest(apiVersion));
-        },
-      );
+      await throttleForCohere();
+      await runOperation("cohere-rerank-operation", "rerank", async () => {
+        await client.rerank(getRerankRequest(apiVersion));
+      });
     },
     metadata: {
       scenario: SCENARIO_NAME,

@@ -33,9 +33,26 @@ Run workspace scripts from the repo root when you want the standard e2e entrypoi
 pnpm run test:e2e
 pnpm run test:e2e:hermetic # only run tests that don't rely on external services or llm providers
 pnpm run test:e2e:update # updates snapshots
+pnpm run test:e2e:record # re-record provider cassettes (overwrites existing cassettes)
 ```
 
 Try not to use specific test narrowing commands unless hunting down a very nasty and specific bug.
+
+## Cassettes
+
+Cassettes mock provider HTTP responses (OpenAI, Anthropic, ...) so scenarios that opt in run hermetically in CI without provider keys.
+
+- A scenario opts in by passing `runContext: { cassette: true, variantKey: "...", originalScenarioDir }` to `runScenarioDir`/`runNodeScenarioDir`. Cassettes live at `e2e/scenarios/<name>/__cassettes__/<variantKey>.json` (parallel to `__snapshots__/`).
+- To re-record after changing a scenario:
+
+  ```bash
+  ANTHROPIC_API_KEY=... OPENAI_API_KEY=... \
+    pnpm --filter=@braintrust/js-e2e-tests run test:e2e:record scenarios/<name>/scenario.test.ts
+  ```
+
+  Then run again in `BRAINTRUST_E2E_CASSETTE_MODE=replay` with no provider keys to confirm the cassette is sufficient.
+
+- Volatile fields in request bodies (e.g. AI-SDK `experimental_generateMessageId`) need a per-scenario filter. Add the scenario name and a `FilterSpec` to `e2e/helpers/cassette-filters.mjs`. The cassette layer is backed by `@braintrust/seinfeld` (`dev-packages/seinfeld`); the preload entry point is `e2e/helpers/cassette-preload.mjs`.
 
 ## Preferred Patterns
 

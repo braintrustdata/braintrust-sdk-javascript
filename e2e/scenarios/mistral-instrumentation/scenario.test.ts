@@ -4,14 +4,16 @@ import {
   readInstalledPackageVersion,
   resolveScenarioDir,
 } from "../../helpers/scenario-harness";
+import { cassetteTagsFor } from "../../helpers/tags";
 import { defineMistralInstrumentationAssertions } from "./assertions";
 import {
   MISTRAL_SCENARIO_SPECS,
   MISTRAL_SCENARIO_TIMEOUT_MS,
 } from "./scenario.impl.mjs";
 
+const originalScenarioDir = resolveScenarioDir(import.meta.url);
 const scenarioDir = await prepareScenarioDir({
-  scenarioDir: resolveScenarioDir(import.meta.url),
+  scenarioDir: originalScenarioDir,
 });
 
 const mistralScenarios = await Promise.all(
@@ -25,13 +27,18 @@ const mistralScenarios = await Promise.all(
 );
 
 for (const scenario of mistralScenarios) {
-  describe(`mistral sdk ${scenario.version}`, () => {
+  const tags = cassetteTagsFor(import.meta.url, scenario.snapshotName);
+
+  describe(`mistral sdk ${scenario.version}`, { tags }, () => {
     defineMistralInstrumentationAssertions({
       name: "wrapped instrumentation",
       runScenario: async ({ runScenarioDir }) => {
         await runScenarioDir({
           entry: scenario.wrapperEntry,
-          runContext: { variantKey: scenario.snapshotName },
+          runContext: {
+            variantKey: scenario.snapshotName,
+            originalScenarioDir,
+          },
           scenarioDir,
           timeoutMs: MISTRAL_SCENARIO_TIMEOUT_MS,
         });
@@ -50,7 +57,10 @@ for (const scenario of mistralScenarios) {
         await runNodeScenarioDir({
           entry: scenario.autoEntry,
           nodeArgs: ["--import", "braintrust/hook.mjs"],
-          runContext: { variantKey: scenario.snapshotName },
+          runContext: {
+            variantKey: scenario.snapshotName,
+            originalScenarioDir,
+          },
           scenarioDir,
           timeoutMs: MISTRAL_SCENARIO_TIMEOUT_MS,
         });

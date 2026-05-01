@@ -1,0 +1,605 @@
+{
+  "version": 1,
+  "meta": {
+    "createdAt": "2026-04-27T22:52:25.873Z",
+    "seinfeldVersion": "0.0.0"
+  },
+  "entries": [
+    {
+      "id": "4ade6cf873e61609",
+      "matchKey": "POST api.openai.com/v1/chat/completions",
+      "callIndex": 0,
+      "recordedAt": "2026-04-27T22:52:25.873Z",
+      "request": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "headers": {
+          "accept": "application/json",
+          "content-type": "application/json"
+        },
+        "body": {
+          "kind": "json",
+          "value": {
+            "max_tokens": 24,
+            "messages": [
+              {
+                "content": "Reply with exactly OK.",
+                "role": "user"
+              }
+            ],
+            "model": "gpt-4o-mini-2024-07-18",
+            "stream": false,
+            "temperature": 0
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "statusText": "OK",
+        "headers": {
+          "access-control-expose-headers": "X-Request-ID",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "content-type": "application/json",
+          "openai-organization": "braintrust-data",
+          "openai-version": "2020-10-01",
+          "x-content-type-options": "nosniff",
+          "x-openai-proxy-wasm": "v0.1"
+        },
+        "body": {
+          "kind": "json",
+          "value": {
+            "choices": [
+              {
+                "finish_reason": "stop",
+                "index": 0,
+                "logprobs": null,
+                "message": {
+                  "annotations": [],
+                  "content": "OK.",
+                  "refusal": null,
+                  "role": "assistant"
+                }
+              }
+            ],
+            "created": 1777330341,
+            "id": "chatcmpl-DZP6LxQOM1A2NwNuKdhrKZxUTNfU5",
+            "model": "gpt-4o-mini-2024-07-18",
+            "object": "chat.completion",
+            "service_tier": "default",
+            "system_fingerprint": "fp_1ca3ce0d51",
+            "usage": {
+              "completion_tokens": 2,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 0,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens": 12,
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 0
+              },
+              "total_tokens": 14
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "718701b4b8f854fd",
+      "matchKey": "POST api.openai.com/v1/chat/completions",
+      "callIndex": 1,
+      "recordedAt": "2026-04-27T22:52:25.873Z",
+      "request": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "headers": {
+          "accept": "application/json",
+          "content-type": "application/json"
+        },
+        "body": {
+          "kind": "json",
+          "value": {
+            "max_tokens": 32,
+            "messages": [
+              {
+                "content": "Reply with the single word PARIS and nothing else.",
+                "role": "user"
+              }
+            ],
+            "model": "gpt-4o-mini-2024-07-18",
+            "stream": false,
+            "temperature": 0
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "statusText": "OK",
+        "headers": {
+          "access-control-expose-headers": "X-Request-ID",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "content-type": "application/json",
+          "openai-organization": "braintrust-data",
+          "openai-version": "2020-10-01",
+          "x-content-type-options": "nosniff",
+          "x-openai-proxy-wasm": "v0.1"
+        },
+        "body": {
+          "kind": "json",
+          "value": {
+            "choices": [
+              {
+                "finish_reason": "stop",
+                "index": 0,
+                "logprobs": null,
+                "message": {
+                  "annotations": [],
+                  "content": "PARIS",
+                  "refusal": null,
+                  "role": "assistant"
+                }
+              }
+            ],
+            "created": 1777330341,
+            "id": "chatcmpl-DZP6LgJNoOXAeOCShbkm17W8ZTets",
+            "model": "gpt-4o-mini-2024-07-18",
+            "object": "chat.completion",
+            "service_tier": "default",
+            "system_fingerprint": "fp_9490d6845c",
+            "usage": {
+              "completion_tokens": 2,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 0,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens": 18,
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 0
+              },
+              "total_tokens": 20
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "5693602c184a903e",
+      "matchKey": "POST api.openai.com/v1/chat/completions",
+      "callIndex": 2,
+      "recordedAt": "2026-04-27T22:52:25.873Z",
+      "request": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "headers": {
+          "accept": "application/json",
+          "content-type": "application/json"
+        },
+        "body": {
+          "kind": "json",
+          "value": {
+            "max_tokens": 32,
+            "messages": [
+              {
+                "content": "Count from 1 to 3 and include the words one two three.",
+                "role": "user"
+              }
+            ],
+            "model": "gpt-4o-mini-2024-07-18",
+            "stream": true,
+            "stream_options": {
+              "include_usage": true
+            },
+            "temperature": 0
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "statusText": "OK",
+        "headers": {
+          "access-control-expose-headers": "X-Request-ID",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "content-type": "text/event-stream; charset=utf-8",
+          "openai-organization": "braintrust-data",
+          "openai-version": "2020-10-01",
+          "x-content-type-options": "nosniff",
+          "x-openai-proxy-wasm": "v0.1"
+        },
+        "body": {
+          "kind": "sse",
+          "chunks": [
+            "data: {\"id\":\"chatcmpl-DZP6MJcDct7RPxXlAi8L8npr6FhTo\",\"object\":\"chat.completion.chunk\",\"created\":1777330342,\"model\":\"gpt-4o-mini-2024-07-18\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_b9ca58c2f4\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\",\"refusal\":null},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"GR2VjPdgd\"}\n\n",
+            "data: {\"id\":\"chatcmpl-DZP6M",
+            "JcDct7RPxXlAi8L8npr6FhTo\",\"object\":\"chat.completion.chunk\",\"created\":1777330342,\"model\":\"gpt-4o-mini-2024-07-18\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_b9ca58c2f4\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"One\"},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"uSGGFPhl\"}\n\ndata: {\"id\":\"chatcmpl-DZP6MJcDct7RPxXlAi8L8npr6FhTo\",\"object\":\"chat.completion.chunk\",\"created\":1777330342,\"model\":\"gpt-4o-mini-2024-07-18\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_b9ca58c2f4\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\",\"},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"7Orbxm8ge1\"}\n\n",
+            "data: {\"id\":\"chatcmpl-DZP6MJcDct7RPxXlAi8L8npr6FhTo\",\"object\":\"chat.completion.chunk\",\"created\":1777330342,\"model\":\"gpt-4o-mini-2024-07-18\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_b9ca58c2f4\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" two\"},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"gWcV1tG\"}\n\ndata: {\"id\":\"chatcmpl-DZP6MJcDct7RPxXlAi8L8npr6FhTo\",\"object\":\"chat.completion.chunk\",\"created\":1777330342,\"model\":\"gpt-4o-mini-2024-07-18\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_b9ca58c2f4\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\",\"},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"rD0t84v7eu\"}\n\n",
+            "data: {\"id\":\"chatcmpl-DZP6MJcDct7RPxXlAi8L8npr6FhTo\",\"object\":\"chat.completion.chunk\",\"created\":1777330342,\"model\":\"gpt-4o-mini-2024-07-18\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_b9ca58c2f4\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" three\"},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"1yztK\"}\n\ndata: {\"id\":\"chatcmpl-DZP6MJcDct7RPxXlAi8L8npr6FhTo\",\"object\":\"chat.completion.chunk\",\"created\":1777330342,\"model\":\"gpt-4o-mini-2024-07-18\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_b9ca58c2f4\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\".\"},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"23Wsz7znzU\"}\n\n",
+            "data: {\"id\":\"chatcmpl-DZP6MJcDct7RPxXlAi8L8npr6FhTo\",\"object\":\"chat.completion.chunk\",\"created\":1777330342,\"model\":\"gpt-4o-mini-2024-07-18\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_b9ca58c2f4\",\"choices\":[{\"index\":0,\"delta\":{},\"logprobs\":null,\"finish_reason\":\"stop\"}],\"usage\":null,\"obfuscation\":\"huibw\"}\n\ndata: {\"id\":\"chatcmpl-DZP6MJcDct7RPxXlAi8L8npr6FhTo\",\"object\":\"chat.completion.chunk\",\"created\":1777330342,\"model\":\"gpt-4o-mini-2024-07-18\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_b9ca58c2f4\",\"choices\":[],\"usage\":{\"prompt_tokens\":22,\"completion_tokens\":6,\"total_tokens\":28,\"prompt_tokens_details\":{\"cached_tokens\":0,\"audio_tokens\":0},\"completion_tokens_details\":{\"reasoning_tokens\":0,\"audio_tokens\":0,\"accepted_prediction_tokens\":0,\"rejected_prediction_tokens\":0}},\"obfuscation\":\"RILxoam9hhB\"}\n\n",
+            "data: [DONE]\n\n"
+          ]
+        }
+      }
+    },
+    {
+      "id": "2aec1890b17d042a",
+      "matchKey": "POST api.openai.com/v1/chat/completions",
+      "callIndex": 3,
+      "recordedAt": "2026-04-27T22:52:25.873Z",
+      "request": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "headers": {
+          "accept": "application/json",
+          "content-type": "application/json"
+        },
+        "body": {
+          "kind": "json",
+          "value": {
+            "max_tokens": 128,
+            "messages": [
+              {
+                "content": "Use the get_weather tool for Paris, France. Do not answer from memory.",
+                "role": "user"
+              }
+            ],
+            "model": "gpt-4o-mini-2024-07-18",
+            "stream": false,
+            "temperature": 0,
+            "tools": [
+              {
+                "function": {
+                  "description": "Get the current weather in a given location",
+                  "name": "get_weather",
+                  "parameters": {
+                    "$schema": "http://json-schema.org/draft-07/schema#",
+                    "additionalProperties": false,
+                    "properties": {
+                      "location": {
+                        "description": "The city and state or city and country",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "location"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "type": "function"
+              }
+            ]
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "statusText": "OK",
+        "headers": {
+          "access-control-expose-headers": "X-Request-ID",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "content-type": "application/json",
+          "openai-organization": "braintrust-data",
+          "openai-version": "2020-10-01",
+          "x-content-type-options": "nosniff",
+          "x-openai-proxy-wasm": "v0.1"
+        },
+        "body": {
+          "kind": "json",
+          "value": {
+            "choices": [
+              {
+                "finish_reason": "tool_calls",
+                "index": 0,
+                "logprobs": null,
+                "message": {
+                  "annotations": [],
+                  "content": null,
+                  "refusal": null,
+                  "role": "assistant",
+                  "tool_calls": [
+                    {
+                      "function": {
+                        "arguments": "{\"location\":\"Paris, France\"}",
+                        "name": "get_weather"
+                      },
+                      "id": "call_awOnJq5apmlLeUbSbaRKskxm",
+                      "type": "function"
+                    }
+                  ]
+                }
+              }
+            ],
+            "created": 1777330343,
+            "id": "chatcmpl-DZP6NxvLWwEcOBfcVhnevwUBfN3ly",
+            "model": "gpt-4o-mini-2024-07-18",
+            "object": "chat.completion",
+            "service_tier": "default",
+            "system_fingerprint": "fp_9490d6845c",
+            "usage": {
+              "completion_tokens": 16,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 0,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens": 72,
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 0
+              },
+              "total_tokens": 88
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "94f5195bfece0d17",
+      "matchKey": "POST api.openai.com/v1/chat/completions",
+      "callIndex": 4,
+      "recordedAt": "2026-04-27T22:52:25.873Z",
+      "request": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "headers": {
+          "accept": "application/json",
+          "content-type": "application/json"
+        },
+        "body": {
+          "kind": "json",
+          "value": {
+            "max_tokens": 128,
+            "messages": [
+              {
+                "content": "What is 127 multiplied by 49? Use the calculate tool.",
+                "role": "user"
+              }
+            ],
+            "model": "gpt-4o-mini-2024-07-18",
+            "stream": false,
+            "temperature": 0,
+            "tools": [
+              {
+                "function": {
+                  "description": "Perform a mathematical calculation",
+                  "name": "calculate",
+                  "parameters": {
+                    "$schema": "http://json-schema.org/draft-07/schema#",
+                    "additionalProperties": false,
+                    "properties": {
+                      "a": {
+                        "type": "number"
+                      },
+                      "b": {
+                        "type": "number"
+                      },
+                      "operation": {
+                        "enum": [
+                          "add",
+                          "subtract",
+                          "multiply",
+                          "divide"
+                        ],
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "operation",
+                      "a",
+                      "b"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "type": "function"
+              }
+            ]
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "statusText": "OK",
+        "headers": {
+          "access-control-expose-headers": "X-Request-ID",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "content-type": "application/json",
+          "openai-organization": "braintrust-data",
+          "openai-version": "2020-10-01",
+          "x-content-type-options": "nosniff",
+          "x-openai-proxy-wasm": "v0.1"
+        },
+        "body": {
+          "kind": "json",
+          "value": {
+            "choices": [
+              {
+                "finish_reason": "tool_calls",
+                "index": 0,
+                "logprobs": null,
+                "message": {
+                  "annotations": [],
+                  "content": null,
+                  "refusal": null,
+                  "role": "assistant",
+                  "tool_calls": [
+                    {
+                      "function": {
+                        "arguments": "{\"operation\":\"multiply\",\"a\":127,\"b\":49}",
+                        "name": "calculate"
+                      },
+                      "id": "call_O1ek8URn4YUPPRnWdYYQm6kr",
+                      "type": "function"
+                    }
+                  ]
+                }
+              }
+            ],
+            "created": 1777330344,
+            "id": "chatcmpl-DZP6OFZF3YnlbyOMnIXrVUG60p2X4",
+            "model": "gpt-4o-mini-2024-07-18",
+            "object": "chat.completion",
+            "service_tier": "default",
+            "system_fingerprint": "fp_e61ea1dda4",
+            "usage": {
+              "completion_tokens": 21,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 0,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens": 76,
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 0
+              },
+              "total_tokens": 97
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "79b152b6ac091531",
+      "matchKey": "POST api.openai.com/v1/chat/completions",
+      "callIndex": 5,
+      "recordedAt": "2026-04-27T22:52:25.873Z",
+      "request": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "headers": {
+          "accept": "application/json",
+          "content-type": "application/json"
+        },
+        "body": {
+          "kind": "json",
+          "value": {
+            "max_tokens": 128,
+            "messages": [
+              {
+                "content": "What is 127 multiplied by 49? Use the calculate tool.",
+                "role": "user"
+              },
+              {
+                "content": "",
+                "role": "assistant",
+                "tool_calls": [
+                  {
+                    "function": {
+                      "arguments": "{\"operation\":\"multiply\",\"a\":127,\"b\":49}",
+                      "name": "calculate"
+                    },
+                    "id": "call_O1ek8URn4YUPPRnWdYYQm6kr",
+                    "type": "function"
+                  }
+                ]
+              },
+              {
+                "content": "6223",
+                "role": "tool",
+                "tool_call_id": "call_O1ek8URn4YUPPRnWdYYQm6kr"
+              }
+            ],
+            "model": "gpt-4o-mini-2024-07-18",
+            "stream": false,
+            "temperature": 0,
+            "tools": [
+              {
+                "function": {
+                  "description": "Perform a mathematical calculation",
+                  "name": "calculate",
+                  "parameters": {
+                    "$schema": "http://json-schema.org/draft-07/schema#",
+                    "additionalProperties": false,
+                    "properties": {
+                      "a": {
+                        "type": "number"
+                      },
+                      "b": {
+                        "type": "number"
+                      },
+                      "operation": {
+                        "enum": [
+                          "add",
+                          "subtract",
+                          "multiply",
+                          "divide"
+                        ],
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "operation",
+                      "a",
+                      "b"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "type": "function"
+              }
+            ]
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "statusText": "OK",
+        "headers": {
+          "access-control-expose-headers": "X-Request-ID",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "content-type": "application/json",
+          "openai-organization": "braintrust-data",
+          "openai-version": "2020-10-01",
+          "x-content-type-options": "nosniff",
+          "x-openai-proxy-wasm": "v0.1"
+        },
+        "body": {
+          "kind": "json",
+          "value": {
+            "choices": [
+              {
+                "finish_reason": "stop",
+                "index": 0,
+                "logprobs": null,
+                "message": {
+                  "annotations": [],
+                  "content": "127 multiplied by 49 is 6223.",
+                  "refusal": null,
+                  "role": "assistant"
+                }
+              }
+            ],
+            "created": 1777330345,
+            "id": "chatcmpl-DZP6PXLwmpvLrsde2LnVptrPS1gUk",
+            "model": "gpt-4o-mini-2024-07-18",
+            "object": "chat.completion",
+            "service_tier": "default",
+            "system_fingerprint": "fp_e61ea1dda4",
+            "usage": {
+              "completion_tokens": 11,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 0,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens": 106,
+              "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 0
+              },
+              "total_tokens": 117
+            }
+          }
+        }
+      }
+    }
+  ]
+}
