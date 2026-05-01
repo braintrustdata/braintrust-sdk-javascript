@@ -111,6 +111,7 @@ class PluginRegistry {
       google: true,
       huggingface: true,
       claudeAgentSDK: true,
+      openAIAgents: true,
       openrouter: true,
       openrouterAgent: true,
       mistral: true,

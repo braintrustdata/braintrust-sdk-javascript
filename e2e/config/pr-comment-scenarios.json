@@ -10,6 +10,14 @@
     ]
   },
   {
+    "scenarioDirName": "openai-agents-instrumentation",
+    "label": "OpenAI Agents Instrumentation",
+    "metadataScenario": "openai-agents-instrumentation",
+    "variants": [
+      { "variantKey": "openai-agents-auto-hook", "label": "Auto-hook" }
+    ]
+  },
+  {
     "scenarioDirName": "anthropic-instrumentation",
     "label": "Anthropic Instrumentation",
     "metadataScenario": "anthropic-instrumentation",

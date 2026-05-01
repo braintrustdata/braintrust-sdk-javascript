@@ -32,6 +32,7 @@ export { openaiConfigs } from "./configs/openai";
 export { anthropicConfigs } from "./configs/anthropic";
 export { aiSDKConfigs } from "./configs/ai-sdk";
 export { claudeAgentSDKConfigs } from "./configs/claude-agent-sdk";
+export { openAIAgentsCoreConfigs } from "./configs/openai-agents";
 export { googleGenAIConfigs } from "./configs/google-genai";
 export { huggingFaceConfigs } from "./configs/huggingface";
 export { openRouterAgentConfigs } from "./configs/openrouter-agent";
