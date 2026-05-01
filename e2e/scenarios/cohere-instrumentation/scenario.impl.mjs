@@ -15,7 +15,11 @@ import {
   SCENARIO_NAME,
 } from "./constants.mjs";
 
-export const COHERE_SCENARIO_TIMEOUT_MS = 240_000;
+// Generous budget so cassette-record runs survive Cohere free-tier rate
+// limits (the cassette layer transparently retries 429s with backoff).
+// In replay mode the scenario typically completes in <5s, so the larger
+// number here does not slow down hermetic CI.
+export const COHERE_SCENARIO_TIMEOUT_MS = 600_000;
 
 export const COHERE_SCENARIO_SPECS = [
   {
@@ -157,6 +161,32 @@ function getRerankRequest(apiVersion) {
   };
 }
 
+// Cohere's trial-tier rate-limits the chat endpoints aggressively —
+// in practice the per-key budget appears to be on the order of a few
+// requests per minute, with a sliding window long enough that bursting
+// 4-5 calls back-to-back trips it even with short pauses. Wait a full
+// minute between the calls in this scenario when we are actively
+// recording, so each call lands in a fresh budget window and we don't
+// need to rely on the cassette layer's retry-on-429 (which can't
+// keep up with this provider's window).
+//
+// Replay mode (the CI default) is unaffected: the whole scenario
+// completes in seconds because every fetch is intercepted from disk
+// before this sleep ever runs.
+const COHERE_RECORD_THROTTLE_MS = 60_000;
+
+function shouldThrottleForRecording() {
+  const mode = process.env.BRAINTRUST_E2E_CASSETTE_MODE;
+  return mode === "record" || mode === "record-missing";
+}
+
+async function throttleForCohere() {
+  if (!shouldThrottleForRecording()) return;
+  await new Promise((resolve) =>
+    setTimeout(resolve, COHERE_RECORD_THROTTLE_MS),
+  );
+}
+
 async function runCohereInstrumentationScenario(
   CohereClient,
   { apiVersion, decorateClient, ThinkingCohereClient } = {},
@@ -187,6 +217,7 @@ async function runCohereInstrumentationScenario(
         await client.chat(getChatRequest(apiVersion));
       });
 
+      await throttleForCohere();
       await runOperation(
         "cohere-chat-stream-operation",
         "chat-stream",
@@ -199,6 +230,7 @@ async function runCohereInstrumentationScenario(
       );
 
       if (shouldRunThinkingScenario(apiVersion)) {
+        await throttleForCohere();
         await runOperation(
           "cohere-chat-stream-thinking-operation",
           "chat-stream-thinking",
@@ -211,10 +243,12 @@ async function runCohereInstrumentationScenario(
         );
       }
 
+      await throttleForCohere();
       await runOperation("cohere-embed-operation", "embed", async () => {
         await client.embed(getEmbedRequest(apiVersion));
       });
 
+      await throttleForCohere();
       await runOperation("cohere-rerank-operation", "rerank", async () => {
         await client.rerank(getRerankRequest(apiVersion));
       });

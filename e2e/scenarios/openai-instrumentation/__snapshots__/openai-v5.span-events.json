@@ -351,7 +351,7 @@
   },
   {
     "has_input": true,
-    "has_output": false,
+    "has_output": true,
     "metadata": {
       "model": "gpt-4o-mini-2024-07-18",
       "provider": "openai"

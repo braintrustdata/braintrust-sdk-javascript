@@ -138,4 +138,53 @@ pnpm run test:e2e # Run all e2e tests
 pnpm run test:e2e:hermetic # Run hermetic-only e2e tests
 pnpm run test:e2e:canary # Run canary e2e tests
 pnpm run test:e2e:update # Run tests and update snapshots (won't update canary snapshots)
+pnpm run test:e2e:record # Re-record provider cassettes for migrated scenarios
 ```
+
+## Cassettes (provider HTTP record/replay)
+
+The mock Braintrust server captures **outbound** SDK→Braintrust traffic and snapshots it under `__snapshots__/`. Cassettes capture the opposite direction: provider HTTP responses (OpenAI, Anthropic, ...) so e2e tests don't have to hit real provider APIs in CI.
+
+The cassette layer is backed by [`@braintrust/seinfeld`](../dev-packages/seinfeld), a VCR library built on MSW.
+
+- **Layer:** `e2e/helpers/cassette-preload.mjs` calls `createCassette()` from `@braintrust/seinfeld` inside each scenario subprocess via `node --import=...`. It replays cassette entries from `e2e/scenarios/<name>/__cassettes__/<variantKey>.json` for any non-Braintrust HTTP request.
+- **Auto-engage:** the harness automatically engages the cassette layer when (a) a cassette JSON exists for the scenario+variant on disk, OR (b) `BRAINTRUST_E2E_CASSETTE_MODE` is `record`. Scenarios just need to thread `runContext: { variantKey, originalScenarioDir }` into their runner calls — no other code change required.
+- **Hermetic tagging** is automatic too: scenarios use `cassetteTagsFor(import.meta.url, variantKey)` (or `cassetteTagsForAll(...)` when one describe covers multiple variants) on their `describe` block. The tag becomes `E2E_TAGS.hermetic` once the cassette file exists, so `test:e2e:hermetic` picks the scenario up without further changes.
+- **Mode** is set by `BRAINTRUST_E2E_CASSETTE_MODE`:
+  - `replay` (default; what CI uses): match the cassette or fail loudly.
+  - `record`: overwrite the cassette with a fresh recording from the live API.
+  - `passthrough`: bypass the cassette layer entirely. Local debugging only.
+
+### Re-recording cassettes (one-time setup per provider)
+
+Cassettes for a scenario can be recorded by anyone with the relevant provider keys; the resulting JSON is committed to git and the scenario then runs hermetically in CI for everyone. The e2e suite auto-loads `.env` and `.env.local` from the repo root via `vitest.setup.ts`, so you can either set keys in your shell or drop them in `.env`.
+
+```bash
+# With .env populated:
+pnpm --filter=@braintrust/js-e2e-tests run test:e2e:record
+
+# Or via shell env:
+ANTHROPIC_API_KEY=... OPENAI_API_KEY=... GEMINI_API_KEY=... \
+COHERE_API_KEY=... GROQ_API_KEY=... HUGGINGFACE_API_KEY=... \
+MISTRAL_API_KEY=... OPENROUTER_API_KEY=... \
+  pnpm --filter=@braintrust/js-e2e-tests run test:e2e:record
+```
+
+After recording, run again **without any provider keys** to confirm the cassette is sufficient:
+
+```bash
+unset ANTHROPIC_API_KEY OPENAI_API_KEY GEMINI_API_KEY COHERE_API_KEY GROQ_API_KEY HUGGINGFACE_API_KEY MISTRAL_API_KEY OPENROUTER_API_KEY
+pnpm --filter=@braintrust/js-e2e-tests run test:e2e:hermetic
+```
+
+If a scenario records but later replay fails because of volatile fields in the request body (e.g. AI-SDK's generated message ids), add or update the filter for that scenario in `e2e/helpers/cassette-filters.mjs`, then re-record.
+
+### In-scope scenarios
+
+These scenarios have cassette wiring in place and will use cassettes once they're recorded:
+
+`anthropic-instrumentation`, `openai-instrumentation`, `ai-sdk-instrumentation`, `ai-sdk-otel-export`, `claude-agent-sdk-instrumentation`, `cohere-instrumentation`, `google-adk-instrumentation`, `google-genai-instrumentation`, `groq-instrumentation`, `huggingface-instrumentation`, `mistral-instrumentation`, `openrouter-agent-instrumentation`, `openrouter-instrumentation`, `wrap-langchain-js-traces`.
+
+### Cassette format
+
+Cassettes use the `@braintrust/seinfeld` JSON format (see `dev-packages/seinfeld/README.md`). Bodies are stored as `{ kind: 'json', value }`, `{ kind: 'sse', chunks }`, `{ kind: 'text', value }`, or `{ kind: 'base64', value }`. Volatile headers (auth, request ids, rate limits, transport encodings) are stripped during recording by the `'paranoid'` redaction preset.

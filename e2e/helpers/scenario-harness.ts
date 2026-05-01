@@ -1,5 +1,6 @@
 import { spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
+import { existsSync } from "node:fs";
 import { appendFile, mkdir } from "node:fs/promises";
 import { createRequire } from "node:module";
 import * as path from "node:path";
@@ -36,11 +37,42 @@ const DEFAULT_SCENARIO_TIMEOUT_MS = 15_000;
 const HELPERS_DIR = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(HELPERS_DIR, "../..");
 const RUN_CONTEXT_DIR_ENV = "BRAINTRUST_E2E_RUN_CONTEXT_DIR";
+const CASSETTE_MODE_ENV = "BRAINTRUST_E2E_CASSETTE_MODE";
+const CASSETTE_PRELOAD_PATH = path.resolve(HELPERS_DIR, "cassette-preload.mjs");
 
 type ScenarioRunner = "deno" | "node" | "tsx";
 
-interface ScenarioRunContext {
+export interface ScenarioCassetteConfig {
+  /**
+   * Identifier for the cassette filename (without .json extension).
+   * Defaults to `runContext.variantKey ?? "default"`.
+   */
   variantKey?: string;
+  /**
+   * Name of the request-body normalizer registered in
+   * `e2e/helpers/cassette/normalizers/index.mjs`. Falls back to a
+   * scenario-name based lookup if omitted.
+   */
+  normalizerName?: string;
+}
+
+export interface ScenarioRunContext {
+  variantKey?: string;
+  /**
+   * Opt the scenario into the cassette layer. Pass `true` to enable with
+   * default settings, or an object to override. The harness writes
+   * cassettes back to the original (committed) scenario folder, even
+   * when scenarios run from a temp `prepareScenarioDir` copy.
+   */
+  cassette?: boolean | ScenarioCassetteConfig;
+  /**
+   * Original (committed) scenario folder that owns the `__cassettes__/`
+   * directory. Required when `cassette` is set and scenarios run from a
+   * `prepareScenarioDir` temp copy. If the test is calling the harness
+   * directly without `prepareScenarioDir`, this can usually be left
+   * undefined and the scenario folder defaults to the temp dir.
+   */
+  originalScenarioDir?: string;
 }
 
 interface ScenarioRunContextRecord {
@@ -234,6 +266,108 @@ function getTestServerEnv(
   };
 }
 
+interface CassetteWiring {
+  cassettePath: string;
+  variantKey: string;
+  mockHost: string;
+  normalizerName?: string;
+}
+
+function getCassetteEnv(wiring: CassetteWiring): Record<string, string> {
+  const env: Record<string, string> = {
+    BRAINTRUST_E2E_CASSETTE_PATH: wiring.cassettePath,
+    BRAINTRUST_E2E_CASSETTE_MODE: process.env[CASSETTE_MODE_ENV] ?? "replay",
+    BRAINTRUST_E2E_CASSETTE_VARIANT: wiring.variantKey,
+    BRAINTRUST_E2E_MOCK_HOST: wiring.mockHost,
+  };
+  if (wiring.normalizerName) {
+    env.BRAINTRUST_E2E_CASSETTE_NORMALIZER = wiring.normalizerName;
+  }
+  return env;
+}
+
+/**
+ * Many provider SDKs (Anthropic, Cohere, OpenAI, Google ...) validate the
+ * presence of an API key at client-construction time, before any HTTP
+ * request is made. When the cassette layer replays from disk, no real key
+ * is needed — but the SDK still throws if the env var is unset. Inject
+ * placeholder values so SDK construction succeeds; the cassette layer
+ * intercepts the outgoing fetch and replays from disk.
+ *
+ * Real keys (when set) take precedence so recording and live debugging
+ * still hit the real APIs.
+ *
+ * Some SDKs honor multiple env vars for the same provider (e.g. the
+ * Google GenAI SDK reads `GOOGLE_API_KEY` first and falls back to
+ * `GEMINI_API_KEY`). When the developer has set the *fallback* var to a
+ * real key, we must NOT inject a placeholder for the preferred var —
+ * doing so silently overrides the real key with a fake one and the API
+ * rejects the request as `API_KEY_INVALID`. Group such vars so the
+ * placeholder injection skips the whole group when any member has a
+ * real value.
+ */
+const CASSETTE_PROVIDER_KEYS: Array<{
+  envVars: string[];
+  placeholder: string;
+}> = [
+  {
+    envVars: ["ANTHROPIC_API_KEY"],
+    placeholder: "sk-ant-cassette-placeholder",
+  },
+  {
+    envVars: ["COHERE_API_KEY", "CO_API_KEY"],
+    placeholder: "cassette-placeholder",
+  },
+  {
+    envVars: ["GOOGLE_API_KEY", "GEMINI_API_KEY"],
+    placeholder: "cassette-placeholder",
+  },
+  { envVars: ["GROQ_API_KEY"], placeholder: "gsk_cassette-placeholder" },
+  { envVars: ["HUGGINGFACE_API_KEY"], placeholder: "hf_cassette-placeholder" },
+  { envVars: ["MISTRAL_API_KEY"], placeholder: "cassette-placeholder" },
+  { envVars: ["OPENAI_API_KEY"], placeholder: "sk-cassette-placeholder" },
+  {
+    envVars: ["OPENROUTER_API_KEY"],
+    placeholder: "sk-or-cassette-placeholder",
+  },
+];
+
+function getProviderKeyPlaceholders(): Record<string, string> {
+  const env: Record<string, string> = {};
+  for (const { envVars, placeholder } of CASSETTE_PROVIDER_KEYS) {
+    const anyRealValueSet = envVars.some((key) => Boolean(process.env[key]));
+    if (anyRealValueSet) continue;
+    // Inject the placeholder for every var in the group so SDKs that
+    // pick the first non-empty one all see a value.
+    for (const key of envVars) {
+      env[key] = placeholder;
+    }
+  }
+  return env;
+}
+
+function composeNodeOptions(
+  existing: string | undefined,
+  imports: string[],
+): string {
+  const parts: string[] = [];
+  if (existing && existing.length > 0) {
+    parts.push(existing);
+  }
+  for (const importPath of imports) {
+    parts.push(`--import ${JSON.stringify(importPath)}`);
+  }
+  return parts.join(" ");
+}
+
+function urlToHostHeader(rawUrl: string): string {
+  try {
+    return new URL(rawUrl).host;
+  } catch {
+    return "";
+  }
+}
+
 async function runProcess(
   command: string,
   args: string[],
@@ -289,6 +423,19 @@ function resolveEntryPath(scenarioDir: string, entry: string): string {
   return path.join(scenarioDir, entry);
 }
 
+function effectiveTimeoutMs(timeoutMs: number | undefined): number {
+  const base = timeoutMs ?? DEFAULT_SCENARIO_TIMEOUT_MS;
+  // In record / record-missing mode the cassette layer retries with
+  // exponential backoff against transient provider failures (429/5xx),
+  // which can multiply scenario wall time. Triple the timeout so the
+  // recording has headroom — replay mode still uses the original budget.
+  const mode = process.env[CASSETTE_MODE_ENV];
+  if (mode === "record" || mode === "record-missing") {
+    return base * 3;
+  }
+  return base;
+}
+
 async function runScenarioDirOrThrow(
   scenarioDir: string,
   env: Record<string, string>,
@@ -302,16 +449,39 @@ async function runScenarioDirOrThrow(
   },
 ): Promise<ScenarioResult> {
   const scenarioPath = resolveEntryPath(scenarioDir, options.entry);
-  const args =
-    options.useTsx === false
-      ? [...(options.nodeArgs ?? []), scenarioPath]
-      : [tsxCliPath, scenarioPath];
+  const cassetteEnabled = Boolean(env.BRAINTRUST_E2E_CASSETTE_PATH);
+
+  let args: string[];
+  let envWithOptions = { ...env };
+  if (options.useTsx === false) {
+    // Plain node: inject --import as a positional arg, BEFORE the
+    // scenario's own nodeArgs (e.g. --import braintrust/hook.mjs) so the
+    // cassette layer is outermost.
+    const cassetteImports = cassetteEnabled
+      ? ["--import", CASSETTE_PRELOAD_PATH]
+      : [];
+    args = [...cassetteImports, ...(options.nodeArgs ?? []), scenarioPath];
+  } else {
+    // tsx-driven: inject the preload via NODE_OPTIONS, which tsx forwards
+    // to the subprocess.
+    args = [tsxCliPath, scenarioPath];
+    if (cassetteEnabled) {
+      envWithOptions = {
+        ...envWithOptions,
+        NODE_OPTIONS: composeNodeOptions(
+          envWithOptions.NODE_OPTIONS ?? process.env.NODE_OPTIONS,
+          [CASSETTE_PRELOAD_PATH],
+        ),
+      };
+    }
+  }
+
   const result = await runProcess(
     process.execPath,
     args,
     scenarioDir,
-    env,
-    options.timeoutMs ?? DEFAULT_SCENARIO_TIMEOUT_MS,
+    envWithOptions,
+    effectiveTimeoutMs(options.timeoutMs),
   );
 
   if (result.exitCode !== 0) {
@@ -440,6 +610,57 @@ export async function withScenarioHarness(
     server,
     prodForwarding?.projectName ?? "",
   );
+
+  const cassetteModeRaw = process.env[CASSETTE_MODE_ENV];
+  const isRecordingMode =
+    cassetteModeRaw === "record" || cassetteModeRaw === "record-missing";
+
+  const cassetteEnvFor = (options: {
+    runContext?: ScenarioRunContext;
+    scenarioDir: string;
+  }): Record<string, string> => {
+    const cassetteOpt = options.runContext?.cassette;
+    if (cassetteOpt === false) {
+      return {};
+    }
+    const config: ScenarioCassetteConfig =
+      typeof cassetteOpt === "object" ? cassetteOpt : {};
+    const variantKey =
+      config.variantKey ?? options.runContext?.variantKey ?? "default";
+    const originalScenarioDir =
+      options.runContext?.originalScenarioDir ?? options.scenarioDir;
+    const scenarioName = path.basename(originalScenarioDir);
+    const cassettePath = path.join(
+      originalScenarioDir,
+      "__cassettes__",
+      `${variantKey}.json`,
+    );
+
+    // Auto-engage the cassette layer when:
+    // - the test explicitly opted in via `runContext.cassette === true`, OR
+    // - a cassette file already exists for this variant (so replay just
+    //   works without each scenario opting in by hand), OR
+    // - we're in record mode (the developer is actively recording new fixtures).
+    const explicitOptIn =
+      cassetteOpt === true || typeof cassetteOpt === "object";
+    const fileExists = existsSync(cassettePath);
+    if (!explicitOptIn && !fileExists && !isRecordingMode) {
+      return {};
+    }
+
+    const normalizerName = config.normalizerName ?? scenarioName;
+
+    return {
+      ...getProviderKeyPlaceholders(),
+      ...getCassetteEnv({
+        cassettePath,
+        variantKey,
+        mockHost: urlToHostHeader(server.url),
+        normalizerName,
+      }),
+    };
+  };
+
   const runWithContext = async (
     options: {
       entry?: string;
@@ -487,6 +708,7 @@ export async function withScenarioHarness(
             ...options,
             env: {
               ...testEnv,
+              ...cassetteEnvFor(options),
               ...(options.env ?? {}),
             },
           }),
@@ -497,6 +719,7 @@ export async function withScenarioHarness(
             ...options,
             env: {
               ...testEnv,
+              ...cassetteEnvFor(options),
               ...(options.env ?? {}),
             },
           }),

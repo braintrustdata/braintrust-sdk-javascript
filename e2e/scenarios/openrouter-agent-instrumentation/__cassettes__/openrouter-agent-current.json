@@ -1,0 +1,736 @@
+{
+  "version": 1,
+  "meta": {
+    "createdAt": "2026-04-28T23:46:28.223Z",
+    "seinfeldVersion": "0.0.0"
+  },
+  "entries": [
+    {
+      "id": "4d858273541c82d7",
+      "matchKey": "POST openrouter.ai/api/v1/responses",
+      "callIndex": 0,
+      "recordedAt": "2026-04-28T23:46:28.223Z",
+      "request": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/responses",
+        "headers": {
+          "accept": "text/event-stream",
+          "content-type": "application/json",
+          "x-openrouter-callmodel": "true"
+        },
+        "body": {
+          "kind": "json",
+          "value": {
+            "input": "Use the lookup_weather tool for Vienna exactly once, then answer with only the forecast.",
+            "max_output_tokens": 16,
+            "max_tool_calls": 1,
+            "model": "openai/gpt-4o-mini",
+            "service_tier": "auto",
+            "store": false,
+            "stream": true,
+            "temperature": 0,
+            "tool_choice": "required",
+            "tools": [
+              {
+                "description": "Look up the weather forecast for a city.",
+                "name": "lookup_weather",
+                "parameters": {
+                  "$schema": "http://json-schema.org/draft-07/schema#",
+                  "additionalProperties": false,
+                  "properties": {
+                    "city": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "city"
+                  ],
+                  "type": "object"
+                },
+                "strict": null,
+                "type": "function"
+              }
+            ]
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "statusText": "OK",
+        "headers": {
+          "access-control-allow-origin": "*",
+          "access-control-expose-headers": "X-Generation-Id,cf-ray",
+          "cache-control": "no-cache",
+          "content-type": "text/event-stream",
+          "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
+          "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
+          "x-content-type-options": "nosniff",
+          "x-generation-id": "gen-1777419983-k0DPZdZ2ELPMFCWOGO1N"
+        },
+        "body": {
+          "kind": "sse",
+          "chunks": [
+            ": OPENROUTER PROCESSING\n\n",
+            "data: {\"type\":\"response.created\",\"response\":{\"id\":\"gen-1777419983-k0DPZdZ2ELPMFCWOGO1N\",\"object\":\"response\",\"created_at\":1777419983,\"model\":\"openai/gpt-4o-mini\",\"status\":\"in_progress\",\"completed_at\":null,\"output\":[],\"error\":null,\"incomplete_details\":null,\"tools\":[{\"type\":\"function\",\"name\":\"lookup_weather\",\"description\":\"Look up the weather forecast for a city.\",\"strict\":null,\"parameters\":{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"additionalProperties\":false}}],\"tool_choice\":\"required\",\"parallel_tool_calls\":true,\"max_output_tokens\":16,\"temperature\":0,\"top_p\":1,\"presence_penalty\":0,\"frequency_penalty\":0,\"top_logprobs\":0,\"max_tool_calls\":1,\"metadata\":{},\"background\":false,\"previous_response_id\":null,\"service_tier\":\"auto\",\"truncation\":\"disabled\",\"store\":false,\"instructions\":null,\"text\":{\"format\":{\"type\":\"text\"}},\"reasoning\":null,\"safety_identifier\":null,\"prompt_cache_key\":null,\"usage\":null},\"sequence_number\":0}\n\n",
+            "data: {\"type\":\"response.in_progress\",\"response\":{\"id\":\"gen-1777419983-k0DPZdZ2ELPMFCWOGO1N\",\"object\":\"response\",\"created_at\":1777419983,\"model\":\"openai/gpt-4o-mini\",\"status\":\"in_progress\",\"completed_at\":null,\"output\":[],\"error\":null,\"incomplete_details\":null,\"tools\":[{\"type\":\"function\",\"name\":\"lookup_weather\",\"description\":\"Look up the weather forecast for a city.\",\"strict\":null,\"parameters\":{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"additionalProperties\":false}}],\"tool_choice\":\"required\",\"parallel_tool_calls\":true,\"max_output_tokens\":16,\"temperature\":0,\"top_p\":1,\"presence_penalty\":0,\"frequency_penalty\":0,\"top_logprobs\":0,\"max_tool_calls\":1,\"metadata\":{},\"background\":false,\"previous_response_id\":null,\"service_tier\":\"auto\",\"truncation\":\"disabled\",\"store\":false,\"instructions\":null,\"text\":{\"format\":{\"type\":\"text\"}},\"reasoning\":null,\"safety_identifier\":null,\"prompt_cache_key\":null,\"usage\":null},\"sequence_number\":1}\n\n",
+            "data: {\"type\":\"response.output_item.added\",\"output_index\":0,\"item\":{\"id\":\"fc_tmp_h3sowa79kli\",\"type\":\"function_call\",\"status\":\"in_progress\",\"call_id\":\"call_Df2h7Lz4rcoXlRHQcr3ixIMD\",\"name\":\"lookup_weather\",\"arguments\":\"\"},\"sequence_number\":2}\n\n",
+            "data: {\"type\":\"response.function_call_arguments.delta\",\"output_index\":0,\"item_id\":\"fc_tmp_h3sowa79kli\",\"delta\":\"{\\\"\",\"sequence_number\":3}\n\n",
+            "data: {\"type\":\"response.function_call_arguments.delta\",\"output_index\":0,\"item_id\":\"fc_tmp_h3sowa79kli\",\"delta\":\"city\",\"sequence_number\":4}\n\n",
+            "data: {\"type\":\"response.function_call_arguments.delta\",\"output_index\":0,\"item_id\":\"fc_tmp_h3sowa79kli\",\"delta\":\"\\\":\\\"\",\"sequence_number\":5}\n\n",
+            "data: {\"type\":\"response.function_call_arguments.delta\",\"output_index\":0,\"item_id\":\"fc_tmp_h3sowa79kli\",\"delta\":\"Vien\",\"sequence_number\":6}\n\n",
+            "data: {\"type\":\"response.function_call_arguments.delta\",\"output_index\":0,\"item_id\":\"fc_tmp_h3sowa79kli\",\"delta\":\"na\",\"sequence_number\":7}\n\n",
+            "data: {\"type\":\"response.function_call_arguments.delta\",\"output_index\":0,\"item_id\":\"fc_tmp_h3sowa79kli\",\"delta\":\"\\\"}\",\"sequence_number\":8}\n\n",
+            "data: {\"type\":\"response.function_call_arguments.done\",\"output_index\":0,\"item_id\":\"fc_tmp_h3sowa79kli\",\"name\":\"lookup_weather\",\"arguments\":\"{\\\"city\\\":\\\"Vienna\\\"}\",\"sequence_number\":9}\n\n",
+            "data: {\"type\":\"response.output_item.done\",\"output_index\":0,\"item\":{\"id\":\"fc_tmp_h3sowa79kli\",\"type\":\"function_call\",\"status\":\"completed\",\"call_id\":\"call_Df2h7Lz4rcoXlRHQcr3ixIMD\",\"name\":\"lookup_weather\",\"arguments\":\"{\\\"city\\\":\\\"Vienna\\\"}\"},\"sequence_number\":10}\n\n",
+            "data: {\"type\":\"response.completed\",\"response\":{\"id\":\"gen-1777419983-k0DPZdZ2ELPMFCWOGO1N\",\"object\":\"response\",\"created_at\":1777419983,\"model\":\"openai/gpt-4o-mini\",\"status\":\"completed\",\"completed_at\":1777419984,\"output\":[{\"id\":\"fc_tmp_h3sowa79kli\",\"type\":\"function_call\",\"status\":\"completed\",\"call_id\":\"call_Df2h7Lz4rcoXlRHQcr3ixIMD\",\"name\":\"lookup_weather\",\"arguments\":\"{\\\"city\\\":\\\"Vienna\\\"}\"}],\"error\":null,\"incomplete_details\":null,\"tools\":[{\"type\":\"function\",\"name\":\"lookup_weather\",\"description\":\"Look up the weather forecast for a city.\",\"strict\":null,\"parameters\":{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"additionalProperties\":false}}],\"tool_choice\":\"required\",\"parallel_tool_calls\":true,\"max_output_tokens\":16,\"temperature\":0,\"top_p\":1,\"presence_penalty\":0,\"frequency_penalty\":0,\"top_logprobs\":0,\"max_tool_calls\":1,\"metadata\":{},\"background\":false,\"previous_response_id\":null,\"service_tier\":\"auto\",\"truncation\":\"disabled\",\"store\":false,\"instructions\":null,\"text\":{\"format\":{\"type\":\"text\"}},\"reasoning\":null,\"safety_identifier\":null,\"prompt_cache_key\":null,\"usage\":{\"input_tokens\":63,\"input_tokens_details\":{\"cached_tokens\":0},\"output_tokens\":15,\"output_tokens_details\":{\"reasoning_tokens\":0},\"total_tokens\":78,\"cost\":0.00001845,\"is_byok\":false,\"cost_details\":{\"upstrea",
+            "m_inference_cost\":0.00001845,\"upstream_inference_input_cost\":0.00000945,\"upstream_inference_output_cost\":0.000009}}},\"sequence_number\":11}\n\n",
+            "data: [DONE]\n\n"
+          ]
+        }
+      }
+    },
+    {
+      "id": "8267434b99e975e0",
+      "matchKey": "POST openrouter.ai/api/v1/responses",
+      "callIndex": 1,
+      "recordedAt": "2026-04-28T23:46:28.223Z",
+      "request": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/responses",
+        "headers": {
+          "accept": "text/event-stream",
+          "content-type": "application/json",
+          "x-openrouter-callmodel": "true"
+        },
+        "body": {
+          "kind": "json",
+          "value": {
+            "input": [
+              {
+                "content": "Use the lookup_weather tool for Vienna exactly once, then answer with only the forecast.",
+                "role": "user"
+              },
+              {
+                "arguments": "{\"city\":\"Vienna\"}",
+                "call_id": "call_Df2h7Lz4rcoXlRHQcr3ixIMD",
+                "id": "fc_tmp_h3sowa79kli",
+                "name": "lookup_weather",
+                "status": "completed",
+                "type": "function_call"
+              },
+              {
+                "call_id": "call_Df2h7Lz4rcoXlRHQcr3ixIMD",
+                "id": "output_call_Df2h7Lz4rcoXlRHQcr3ixIMD",
+                "output": "{\"forecast\":\"Sunny in Vienna\"}",
+                "type": "function_call_output"
+              }
+            ],
+            "max_output_tokens": 16,
+            "max_tool_calls": 1,
+            "model": "openai/gpt-4o-mini",
+            "service_tier": "auto",
+            "store": false,
+            "stream": true,
+            "temperature": 0,
+            "tool_choice": "required",
+            "tools": [
+              {
+                "description": "Look up the weather forecast for a city.",
+                "name": "lookup_weather",
+                "parameters": {
+                  "$schema": "http://json-schema.org/draft-07/schema#",
+                  "additionalProperties": false,
+                  "properties": {
+                    "city": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "city"
+                  ],
+                  "type": "object"
+                },
+                "strict": null,
+                "type": "function"
+              }
+            ]
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "statusText": "OK",
+        "headers": {
+          "access-control-allow-origin": "*",
+          "access-control-expose-headers": "X-Generation-Id,cf-ray",
+          "cache-control": "no-cache",
+          "content-type": "text/event-stream",
+          "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
+          "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
+          "x-content-type-options": "nosniff",
+          "x-generation-id": "gen-1777419984-XwR4ZqyT08VqdhovzcgC"
+        },
+        "body": {
+          "kind": "sse",
+          "chunks": [
+            ": OPENROUTER PROCESSING\n\n",
+            "data: {\"type\":\"response.created\",\"response\":{\"id\":\"gen-1777419984-XwR4ZqyT08VqdhovzcgC\",\"object\":\"response\",\"created_at\":1777419984,\"model\":\"openai/gpt-4o-mini\",\"status\":\"in_progress\",\"completed_at\":null,\"output\":[],\"error\":null,\"incomplete_details\":null,\"tools\":[{\"type\":\"function\",\"name\":\"lookup_weather\",\"description\":\"Look up the weather forecast for a city.\",\"strict\":null,\"parameters\":{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"additionalProperties\":false}}],\"tool_choice\":\"required\",\"parallel_tool_calls\":true,\"max_output_tokens\":16,\"temperature\":0,\"top_p\":1,\"presence_penalty\":0,\"frequency_penalty\":0,\"top_logprobs\":0,\"max_tool_calls\":1,\"metadata\":{},\"background\":false,\"previous_response_id\":null,\"service_tier\":\"auto\",\"truncation\":\"disabled\",\"store\":false,\"instructions\":null,\"text\":{\"format\":{\"type\":\"text\"}},\"reasoning\":null,\"safety_identifier\":null,\"prompt_cache_key\":null,\"usage\":null},\"sequence_number\":0}\n\n",
+            "data: {\"type\":\"response.in_progress\",\"response\":{\"id\":\"gen-1777419984-XwR4ZqyT08VqdhovzcgC\",\"object\":\"response\",\"created_at\":1777419984,\"model\":\"openai/gpt-4o-mini\",\"status\":\"in_progress\",\"completed_at\":null,\"output\":[],\"error\":null,\"incomplete_details\":null,\"tools\":[{\"type\":\"function\",\"name\":\"lookup_weather\",\"description\":\"Look up the weather forecast for a city.\",\"strict\":null,\"parameters\":{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"additionalProperties\":false}}],\"tool_choice\":\"required\",\"parallel_tool_calls\":true,\"max_output_tokens\":16,\"temperature\":0,\"top_p\":1,\"presence_penalty\":0,\"frequency_penalty\":0,\"top_logprobs\":0,\"max_tool_calls\":1,\"metadata\":{},\"background\":false,\"previous_response_id\":null,\"service_tier\":\"auto\",\"truncation\":\"disabled\",\"store\":false,\"instructions\":null,\"text\":{\"format\":{\"type\":\"text\"}},\"reasoning\":null,\"safety_identifier\":null,\"prompt_cache_key\":null,\"usage\":null},\"sequence_number\":1}\n\n",
+            "data: {\"type\":\"response.output_item.added\",\"output_index\":0,\"item\":{\"id\":\"fc_tmp_0pz0lip1v7qe\",\"type\":\"function_call\",\"status\":\"in_progress\",\"call_id\":\"call_rI30GwQ3CheX3LKkVdVgIfUJ\",\"name\":\"lookup_weather\",\"arguments\":\"\"},\"sequence_number\":2}\n\n",
+            "data: {\"type\":\"response.function_call_arguments.delta\",\"output_index\":0,\"item_id\":\"fc_tmp_0pz0lip1v7qe\",\"delta\":\"{\\\"\",\"sequence_number\":3}\n\n",
+            "data: {\"type\":\"response.function_call_arguments.delta\",\"output_index\":0,\"item_id\":\"fc_tmp_0pz0lip1v7qe\",\"delta\":\"city\",\"sequence_number\":4}\n\n",
+            "data: {\"type\":\"response.function_call_arguments.delta\",\"output_index\":0,\"item_id\":\"fc_tmp_0pz0lip1v7qe\",\"delta\":\"\\\":\\\"\",\"sequence_number\":5}\n\n",
+            "data: {\"type\":\"response.function_call_arguments.delta\",\"output_index\":0,\"item_id\":\"fc_tmp_0pz0lip1v7qe\",\"delta\":\"Vien\",\"sequence_number\":6}\n\n",
+            "data: {\"type\":\"response.function_call_arguments.delta\",\"output_index\":0,\"item_id\":\"fc_tmp_0pz0lip1v7qe\",\"delta\":\"na\",\"sequence_number\":7}\n\n",
+            "data: {\"type\":\"response.function_call_arguments.delta\",\"output_index\":0,\"item_id\":\"fc_tmp_0pz0lip1v7qe\",\"delta\":\"\\\"}\",\"sequence_number\":8}\n\n",
+            "data: {\"type\":\"response.function_call_arguments.done\",\"output_index\":0,\"item_id\":\"fc_tmp_0pz0lip1v7qe\",\"name\":\"lookup_weather\",\"arguments\":\"{\\\"city\\\":\\\"Vienna\\\"}\",\"sequence_number\":9}\n\n",
+            "data: {\"type\":\"response.output_item.done\",\"output_index\":0,\"item\":{\"id\":\"fc_tmp_0pz0lip1v7qe\",\"type\":\"function_call\",\"status\":\"completed\",\"call_id\":\"call_rI30GwQ3CheX3LKkVdVgIfUJ\",\"name\":\"lookup_weather\",\"arguments\":\"{\\\"city\\\":\\\"Vienna\\\"}\"},\"sequence_number\":10}\n\n",
+            "data: {\"type\":\"response.completed\",\"response\":{\"id\":\"gen-1777419984-XwR4ZqyT08VqdhovzcgC\",\"object\":\"response\",\"created_at\":1777419984,\"model\":\"openai/gpt-4o-mini\",\"status\":\"completed\",\"completed_at\":1777419985,\"output\":[{\"id\":\"fc_tmp_0pz0lip1v7qe\",\"type\":\"function_call\",\"status\":\"completed\",\"call_id\":\"call_rI30GwQ3CheX3LKkVdVgIfUJ\",\"name\":\"lookup_weather\",\"arguments\":\"{\\\"city\\\":\\\"Vienna\\\"}\"}],\"error\":null,\"incomplete_details\":null,\"tools\":[{\"type\":\"function\",\"name\":\"lookup_weather\",\"description\":\"Look up the weather forecast for a city.\",\"strict\":null,\"parameters\":{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"additionalProperties\":false}}],\"tool_choice\":\"required\",\"parallel_tool_calls\":true,\"max_output_tokens\":16,\"temperature\":0,\"top_p\":1,\"presence_penalty\":0,\"frequency_penalty\":0,\"top_logprobs\":0,\"max_tool_calls\":1,\"metadata\":{},\"background\":false,\"previous_response_id\":null,\"service_tier\":\"auto\",\"truncation\":\"disabled\",\"store\":false,\"instructions\":null,\"text\":{\"format\":{\"type\":\"text\"}},\"reasoning\":null,\"safety_identifier\":null,\"prompt_cache_key\":null,\"usage\":{\"input_tokens\":93,\"input_tokens_details\":{\"cached_tokens\":0},\"output_tokens\":15,\"output_tokens_details\":{\"reasoning_tokens\":0},\"total_tokens\":108,\"cost\":0.00002295,\"is_byok\":false,\"cost_details\":{\"upstr",
+            "eam_inference_cost\":0.00002295,\"upstream_inference_input_cost\":0.00001395,\"upstream_inference_output_cost\":0.000009}}},\"sequence_number\":11}\n\n",
+            "data: [DONE]\n\n"
+          ]
+        }
+      }
+    },
+    {
+      "id": "1001c5ab39d09e15",
+      "matchKey": "POST openrouter.ai/api/v1/responses",
+      "callIndex": 2,
+      "recordedAt": "2026-04-28T23:46:28.223Z",
+      "request": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/responses",
+        "headers": {
+          "accept": "text/event-stream",
+          "content-type": "application/json",
+          "x-openrouter-callmodel": "true"
+        },
+        "body": {
+          "kind": "json",
+          "value": {
+            "input": [
+              {
+                "content": "Use the lookup_weather tool for Vienna exactly once, then answer with only the forecast.",
+                "role": "user"
+              },
+              {
+                "arguments": "{\"city\":\"Vienna\"}",
+                "call_id": "call_Df2h7Lz4rcoXlRHQcr3ixIMD",
+                "id": "fc_tmp_h3sowa79kli",
+                "name": "lookup_weather",
+                "status": "completed",
+                "type": "function_call"
+              },
+              {
+                "call_id": "call_Df2h7Lz4rcoXlRHQcr3ixIMD",
+                "id": "output_call_Df2h7Lz4rcoXlRHQcr3ixIMD",
+                "output": "{\"forecast\":\"Sunny in Vienna\"}",
+                "type": "function_call_output"
+              },
+              {
+                "arguments": "{\"city\":\"Vienna\"}",
+                "call_id": "call_rI30GwQ3CheX3LKkVdVgIfUJ",
+                "id": "fc_tmp_0pz0lip1v7qe",
+                "name": "lookup_weather",
+                "status": "completed",
+                "type": "function_call"
+              },
+              {
+                "call_id": "call_rI30GwQ3CheX3LKkVdVgIfUJ",
+                "id": "output_call_rI30GwQ3CheX3LKkVdVgIfUJ",
+                "output": "{\"forecast\":\"Sunny in Vienna\"}",
+                "type": "function_call_output"
+              }
+            ],
+            "max_output_tokens": 16,
+            "max_tool_calls": 1,
+            "model": "openai/gpt-4o-mini",
+            "service_tier": "auto",
+            "store": false,
+            "stream": true,
+            "temperature": 0,
+            "tool_choice": "required",
+            "tools": [
+              {
+                "description": "Look up the weather forecast for a city.",
+                "name": "lookup_weather",
+                "parameters": {
+                  "$schema": "http://json-schema.org/draft-07/schema#",
+                  "additionalProperties": false,
+                  "properties": {
+                    "city": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "city"
+                  ],
+                  "type": "object"
+                },
+                "strict": null,
+                "type": "function"
+              }
+            ]
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "statusText": "OK",
+        "headers": {
+          "access-control-allow-origin": "*",
+          "access-control-expose-headers": "X-Generation-Id,cf-ray",
+          "cache-control": "no-cache",
+          "content-type": "text/event-stream",
+          "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
+          "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
+          "x-content-type-options": "nosniff",
+          "x-generation-id": "gen-1777419985-LWv5Jf52ZGGgZfd8uCPM"
+        },
+        "body": {
+          "kind": "sse",
+          "chunks": [
+            ": OPENROUTER PROCESSING\n\n",
+            "data: {\"type\":\"response.created\",\"response\":{\"id\":\"gen-1777419985-LWv5Jf52ZGGgZfd8uCPM\",\"object\":\"response\",\"created_at\":1777419985,\"model\":\"openai/gpt-4o-mini\",\"status\":\"in_progress\",\"completed_at\":null,\"output\":[],\"error\":null,\"incomplete_details\":null,\"tools\":[{\"type\":\"function\",\"name\":\"lookup_weather\",\"description\":\"Look up the weather forecast for a city.\",\"strict\":null,\"parameters\":{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"additionalProperties\":false}}],\"tool_choice\":\"required\",\"parallel_tool_calls\":true,\"max_output_tokens\":16,\"temperature\":0,\"top_p\":1,\"presence_penalty\":0,\"frequency_penalty\":0,\"top_logprobs\":0,\"max_tool_calls\":1,\"metadata\":{},\"background\":false,\"previous_response_id\":null,\"service_tier\":\"auto\",\"truncation\":\"disabled\",\"store\":false,\"instructions\":null,\"text\":{\"format\":{\"type\":\"text\"}},\"reasoning\":null,\"safety_identifier\":null,\"prompt_cache_key\":null,\"usage\":null},\"sequence_number\":0}\n\ndata: {\"type\":\"response.in_progress\",\"response\":{\"id\":\"gen-1777419985-LWv5Jf52ZGGgZfd8uCPM\",\"object\":\"response\",\"created_at\":1777419985,\"model\":\"openai/gpt-4o-mini\",\"status\":\"in_progress\",\"completed_at\":null,\"output\":[],\"error\":null,\"incomplete_details\":null,\"tools\":[{\"type\":\"function\",\"name\":\"lookup_weather\",\"description\":\"Look up the weather forecast ",
+            "for a city.\",\"strict\":null,\"parameters\":{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"additionalProperties\":false}}],\"tool_choice\":\"required\",\"parallel_tool_calls\":true,\"max_output_tokens\":16,\"temperature\":0,\"top_p\":1,\"presence_penalty\":0,\"frequency_penalty\":0,\"top_logprobs\":0,\"max_tool_calls\":1,\"metadata\":{},\"background\":false,\"previous_response_id\":null,\"service_tier\":\"auto\",\"truncation\":\"disabled\",\"store\":false,\"instructions\":null,\"text\":{\"format\":{\"type\":\"text\"}},\"reasoning\":null,\"safety_identifier\":null,\"prompt_cache_key\":null,\"usage\":null},\"sequence_number\":1}\n\n",
+            "data: {\"type\":\"response.output_item.added\",\"output_index\":0,\"item\":{\"id\":\"fc_tmp_9l7dscsh6a\",\"type\":\"function_call\",\"status\":\"in_progress\",\"call_id\":\"call_zGpXnKjvKeYfGJmxOVcicZTX\",\"name\":\"lookup_weather\",\"arguments\":\"\"},\"sequence_number\":2}\n\n",
+            "data: {\"type\":\"response.function_call_arguments.delta\",\"output_index\":0,\"item_id\":\"fc_tmp_9l7dscsh6a\",\"delta\":\"{\\\"\",\"sequence_number\":3}\n\n",
+            "data: {\"type\":\"response.function_call_arguments.delta\",\"output_index\":0,\"item_id\":\"fc_tmp_9l7dscsh6a\",\"delta\":\"city\",\"sequence_number\":4}\n\n",
+            "data: {\"type\":\"response.function_call_arguments.delta\",\"output_index\":0,\"item_id\":\"fc_tmp_9l7dscsh6a\",\"delta\":\"\\\":\\\"\",\"sequence_number\":5}\n\n",
+            "data: {\"type\":\"response.function_call_arguments.delta\",\"output_index\":0,\"item_id\":\"fc_tmp_9l7dscsh6a\",\"delta\":\"Vien\",\"sequence_number\":6}\n\n",
+            "data: {\"type\":\"response.function_call_arguments.delta\",\"output_index\":0,\"item_id\":\"fc_tmp_9l7dscsh6a\",\"delta\":\"na\",\"sequence_number\":7}\n\n",
+            "data: {\"type\":\"response.function_call_arguments.delta\",\"output_index\":0,\"item_id\":\"fc_tmp_9l7dscsh6a\",\"delta\":\"\\\"}\",\"sequence_number\":8}\n\n",
+            "data: {\"type\":\"response.function_call_arguments.done\",\"output_index\":0,\"item_id\":\"fc_tmp_9l7dscsh6a\",\"name\":\"lookup_weather\",\"arguments\":\"{\\\"city\\\":\\\"Vienna\\\"}\",\"sequence_number\":9}\n\n",
+            "data: {\"type\":\"response.output_item.done\",\"output_index\":0,\"item\":{\"id\":\"fc_tmp_9l7dscsh6a\",\"type\":\"function_call\",\"status\":\"completed\",\"call_id\":\"call_zGpXnKjvKeYfGJmxOVcicZTX\",\"name\":\"lookup_weather\",\"arguments\":\"{\\\"city\\\":\\\"Vienna\\\"}\"},\"sequence_number\":10}\n\n",
+            "data: {\"type\":\"response.completed\",\"response\":{\"id\":\"gen-1777419985-LWv5Jf52ZGGgZfd8uCPM\",\"object\":\"response\",\"created_at\":1777419985,\"model\":\"openai/gpt-4o-mini\",\"status\":\"completed\",\"completed_at\":1777419985,\"output\":[{\"id\":\"fc_tmp_9l7dscsh6a\",\"type\":\"function_call\",\"status\":\"completed\",\"call_id\":\"call_zGpXnKjvKeYfGJmxOVcicZTX\",\"name\":\"lookup_weather\",\"arguments\":\"{\\\"city\\\":\\\"Vienna\\\"}\"}],\"error\":null,\"incomplete_details\":null,\"tools\":[{\"type\":\"function\",\"name\":\"lookup_weather\",\"description\":\"Look up the weather forecast for a city.\",\"strict\":null,\"parameters\":{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"additionalProperties\":false}}],\"tool_choice\":\"required\",\"parallel_tool_calls\":true,\"max_output_tokens\":16,\"temperature\":0,\"top_p\":1,\"presence_penalty\":0,\"frequency_penalty\":0,\"top_logprobs\":0,\"max_tool_calls\":1,\"metadata\":{},\"background\":false,\"previous_response_id\":null,\"service_tier\":\"auto\",\"truncation\":\"disabled\",\"store\":false,\"instructions\":null,\"text\":{\"format\":{\"type\":\"text\"}},\"reasoning\":null,\"safety_identifier\":null,\"prompt_cache_key\":null,\"usage\":{\"input_tokens\":123,\"input_tokens_details\":{\"cached_tokens\":0},\"output_tokens\":15,\"output_tokens_details\":{\"reasoning_tokens\":0},\"total_tokens\":138,\"cost\":0.00002745,\"is_byok\":false,\"cost_details\":{\"upstream_inference_cost\":0.00002745,\"upstream_inference_input_cost\":0.00001845,\"upstream_inference_output_cost\":0.000009}}},\"sequence_number\":11}\n\n",
+            "data: [DONE]\n\n"
+          ]
+        }
+      }
+    },
+    {
+      "id": "3d9b235806f670ae",
+      "matchKey": "POST openrouter.ai/api/v1/responses",
+      "callIndex": 3,
+      "recordedAt": "2026-04-28T23:46:28.223Z",
+      "request": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/responses",
+        "headers": {
+          "accept": "text/event-stream",
+          "content-type": "application/json",
+          "x-openrouter-callmodel": "true"
+        },
+        "body": {
+          "kind": "json",
+          "value": {
+            "input": [
+              {
+                "content": "Use the lookup_weather tool for Vienna exactly once, then answer with only the forecast.",
+                "role": "user"
+              },
+              {
+                "arguments": "{\"city\":\"Vienna\"}",
+                "call_id": "call_Df2h7Lz4rcoXlRHQcr3ixIMD",
+                "id": "fc_tmp_h3sowa79kli",
+                "name": "lookup_weather",
+                "status": "completed",
+                "type": "function_call"
+              },
+              {
+                "call_id": "call_Df2h7Lz4rcoXlRHQcr3ixIMD",
+                "id": "output_call_Df2h7Lz4rcoXlRHQcr3ixIMD",
+                "output": "{\"forecast\":\"Sunny in Vienna\"}",
+                "type": "function_call_output"
+              },
+              {
+                "arguments": "{\"city\":\"Vienna\"}",
+                "call_id": "call_rI30GwQ3CheX3LKkVdVgIfUJ",
+                "id": "fc_tmp_0pz0lip1v7qe",
+                "name": "lookup_weather",
+                "status": "completed",
+                "type": "function_call"
+              },
+              {
+                "call_id": "call_rI30GwQ3CheX3LKkVdVgIfUJ",
+                "id": "output_call_rI30GwQ3CheX3LKkVdVgIfUJ",
+                "output": "{\"forecast\":\"Sunny in Vienna\"}",
+                "type": "function_call_output"
+              },
+              {
+                "arguments": "{\"city\":\"Vienna\"}",
+                "call_id": "call_zGpXnKjvKeYfGJmxOVcicZTX",
+                "id": "fc_tmp_9l7dscsh6a",
+                "name": "lookup_weather",
+                "status": "completed",
+                "type": "function_call"
+              },
+              {
+                "call_id": "call_zGpXnKjvKeYfGJmxOVcicZTX",
+                "id": "output_call_zGpXnKjvKeYfGJmxOVcicZTX",
+                "output": "{\"forecast\":\"Sunny in Vienna\"}",
+                "type": "function_call_output"
+              }
+            ],
+            "max_output_tokens": 16,
+            "max_tool_calls": 1,
+            "model": "openai/gpt-4o-mini",
+            "service_tier": "auto",
+            "store": false,
+            "stream": true,
+            "temperature": 0,
+            "tool_choice": "required",
+            "tools": [
+              {
+                "description": "Look up the weather forecast for a city.",
+                "name": "lookup_weather",
+                "parameters": {
+                  "$schema": "http://json-schema.org/draft-07/schema#",
+                  "additionalProperties": false,
+                  "properties": {
+                    "city": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "city"
+                  ],
+                  "type": "object"
+                },
+                "strict": null,
+                "type": "function"
+              }
+            ]
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "statusText": "OK",
+        "headers": {
+          "access-control-allow-origin": "*",
+          "access-control-expose-headers": "X-Generation-Id,cf-ray",
+          "cache-control": "no-cache",
+          "content-type": "text/event-stream",
+          "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
+          "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
+          "x-content-type-options": "nosniff",
+          "x-generation-id": "gen-1777419986-Tu7EWkT3yY5uOOcPmklh"
+        },
+        "body": {
+          "kind": "sse",
+          "chunks": [
+            ": OPENROUTER PROCESSING\n\n",
+            "data: {\"type\":\"response.created\",\"response\":{\"id\":\"gen-1777419986-Tu7EWkT3yY5uOOcPmklh\",\"object\":\"response\",\"created_at\":1777419986,\"model\":\"openai/gpt-4o-mini\",\"status\":\"in_progress\",\"completed_at\":null,\"output\":[],\"error\":null,\"incomplete_details\":null,\"tools\":[{\"type\":\"function\",\"name\":\"lookup_weather\",\"description\":\"Look up the weather forecast for a city.\",\"strict\":null,\"parameters\":{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"additionalProperties\":false}}],\"tool_choice\":\"required\",\"parallel_tool_calls\":true,\"max_output_tokens\":16,\"temperature\":0,\"top_p\":1,\"presence_penalty\":0,\"frequency_penalty\":0,\"top_logprobs\":0,\"max_tool_calls\":1,\"metadata\":{},\"background\":false,\"previous_response_id\":null,\"service_tier\":\"auto\",\"truncation\":\"disabled\",\"store\":false,\"instructions\":null,\"text\":{\"format\":{\"type\":\"text\"}},\"reasoning\":null,\"safety_identifier\":null,\"prompt_cache_key\":null,\"usage\":null},\"sequence_number\":0}\n\n",
+            "data: {\"type\":\"response.in_progress\",\"response\":{\"id\":\"gen-1777419986-Tu7EWkT3yY5uOOcPmklh\",\"object\":\"response\",\"created_at\":1777419986,\"model\":\"openai/gpt-4o-mini\",\"status\":\"in_progress\",\"completed_at\":null,\"output\":[],\"error\":null,\"incomplete_details\":null,\"tools\":[{\"type\":\"function\",\"name\":\"lookup_weather\",\"description\":\"Look up the weather forecast for a city.\",\"strict\":null,\"parameters\":{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"additionalProperties\":false}}],\"tool_choice\":\"required\",\"parallel_tool_calls\":true,\"max_output_tokens\":16,\"temperature\":0,\"top_p\":1,\"presence_penalty\":0,\"frequency_penalty\":0,\"top_logprobs\":0,\"max_tool_calls\":1,\"metadata\":{},\"background\":false,\"previous_response_id\":null,\"service_tier\":\"auto\",\"truncation\":\"disabled\",\"store\":false,\"instructions\":null,\"text\":{\"format\":{\"type\":\"text\"}},\"reasoning\":null,\"safety_identifier\":null,\"prompt_cache_key\":null,\"usage\":null},\"sequence_number\":1}\n\ndata: {\"type\":\"response.output_item.added\",\"output_index\":0,\"item\":{\"id\":\"fc_tmp_xnhuod4svs\",\"type\":\"function_call\",\"status\":\"in_progress\",\"call_id\":\"call_q6UhqrdF3CSGSxFeqWOI5QT3\",\"name\":\"lookup_weather\",\"arguments\":\"\"},\"sequence_number\":2}\n\n",
+            "data: {\"type\":\"response.function_call_arguments.delta\",\"output_index\":0,\"item_id\":\"fc_tmp_xnhuod4svs\",\"delta\":\"{\\\"\",\"sequence_number\":3}\n\n",
+            "data: {\"type\":\"response.function_call_arguments.delta\",\"output_index\":0,\"item_id\":\"fc_tmp_xnhuod4svs\",\"delta\":\"city\",\"sequence_number\":4}\n\n",
+            "data: {\"type\":\"response.function_call_arguments.delta\",\"output_index\":0,\"item_id\":\"fc_tmp_xnhuod4svs\",\"delta\":\"\\\":\\\"\",\"sequence_number\":5}\n\ndata: {\"type\":\"response.function_call_arguments.delta\",\"output_index\":0,\"item_id\":\"fc_tmp_xnhuod4svs\",\"delta\":\"Vien\",\"sequence_number\":6}\n\n",
+            "data: {\"type\":\"response.function_call_arguments.delta\",\"output_index\":0,\"item_id\":\"fc_tmp_xnhuod4svs\",\"delta\":\"na\",\"sequence_number\":7}\n\ndata: {\"type\":\"response.function_call_arguments.delta\",\"output_index\":0,\"item_id\":\"fc_tmp_xnhuod4svs\",\"delta\":\"\\\"}\",\"sequence_number\":8}\n\n",
+            "data: {\"type\":\"response.function_call_arguments.done\",\"output_index\":0,\"item_id\":\"fc_tmp_xnhuod4svs\",\"name\":\"lookup_weather\",\"arguments\":\"{\\\"city\\\":\\\"Vienna\\\"}\",\"sequence_number\":9}\n\n",
+            "data: {\"type\":\"response.output_item.done\",\"output_index\":0,\"item\":{\"id\":\"fc_tmp_xnhuod4svs\",\"type\":\"function_call\",\"status\":\"completed\",\"call_id\":\"call_q6UhqrdF3CSGSxFeqWOI5QT3\",\"name\":\"lookup_weather\",\"arguments\":\"{\\\"city\\\":\\\"Vienna\\\"}\"},\"sequence_number\":10}\n\n",
+            "data: {\"type\":\"response.completed\",\"response\":{\"id\":\"gen-1777419986-Tu7EWkT3yY5uOOcPmklh\",\"object\":\"response\",\"created_at\":1777419986,\"model\":\"openai/gpt-4o-mini\",\"status\":\"completed\",\"completed_at\":1777419986,\"output\":[{\"id\":\"fc_tmp_xnhuod4svs\",\"type\":\"function_call\",\"status\":\"completed\",\"call_id\":\"call_q6UhqrdF3CSGSxFeqWOI5QT3\",\"name\":\"lookup_weather\",\"arguments\":\"{\\\"city\\\":\\\"Vienna\\\"}\"}],\"error\":null,\"incomplete_details\":null,\"tools\":[{\"type\":\"function\",\"name\":\"lookup_weather\",\"description\":\"Look up the weather forecast for a city.\",\"strict\":null,\"parameters\":{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"additionalProperties\":false}}],\"tool_choice\":\"required\",\"parallel_tool_calls\":true,\"max_output_tokens\":16,\"temperature\":0,\"top_p\":1,\"presence_penalty\":0,\"frequency_penalty\":0,\"top_logprobs\":0,\"max_tool_calls\":1,\"metadata\":{},\"background\":false,\"previous_response_id\":null,\"service_tier\":\"auto\",\"truncation\":\"disabled\",\"store\":false,\"instructions\":null,\"text\":{\"format\":{\"type\":\"text\"}},\"reasoning\":null,\"safety_identifier\":null,\"prompt_cache_key\":null,\"usage\":{\"input_tokens\":153,\"input_tokens_details\":{\"cached_tokens\":0},\"output_tokens\":15,\"output_tokens_details\":{\"reasoning_tokens\":0},\"total_tokens\":168,\"cost\":0.00003195,\"is_byok\":false,\"cost_details\":{\"upstream_inference_cost\":0.00003195,\"upstream_inference_input_cost\":0.00002295,\"upstream_inference_output_cost\":0.000009}}},\"sequence_number\":11}\n\n",
+            "data: [DONE]\n\n"
+          ]
+        }
+      }
+    },
+    {
+      "id": "fc854f9ac745cadc",
+      "matchKey": "POST openrouter.ai/api/v1/responses",
+      "callIndex": 4,
+      "recordedAt": "2026-04-28T23:46:28.223Z",
+      "request": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/responses",
+        "headers": {
+          "accept": "text/event-stream",
+          "content-type": "application/json",
+          "x-openrouter-callmodel": "true"
+        },
+        "body": {
+          "kind": "json",
+          "value": {
+            "input": [
+              {
+                "content": "Use the lookup_weather tool for Vienna exactly once, then answer with only the forecast.",
+                "role": "user"
+              },
+              {
+                "arguments": "{\"city\":\"Vienna\"}",
+                "call_id": "call_Df2h7Lz4rcoXlRHQcr3ixIMD",
+                "id": "fc_tmp_h3sowa79kli",
+                "name": "lookup_weather",
+                "status": "completed",
+                "type": "function_call"
+              },
+              {
+                "call_id": "call_Df2h7Lz4rcoXlRHQcr3ixIMD",
+                "id": "output_call_Df2h7Lz4rcoXlRHQcr3ixIMD",
+                "output": "{\"forecast\":\"Sunny in Vienna\"}",
+                "type": "function_call_output"
+              },
+              {
+                "arguments": "{\"city\":\"Vienna\"}",
+                "call_id": "call_rI30GwQ3CheX3LKkVdVgIfUJ",
+                "id": "fc_tmp_0pz0lip1v7qe",
+                "name": "lookup_weather",
+                "status": "completed",
+                "type": "function_call"
+              },
+              {
+                "call_id": "call_rI30GwQ3CheX3LKkVdVgIfUJ",
+                "id": "output_call_rI30GwQ3CheX3LKkVdVgIfUJ",
+                "output": "{\"forecast\":\"Sunny in Vienna\"}",
+                "type": "function_call_output"
+              },
+              {
+                "arguments": "{\"city\":\"Vienna\"}",
+                "call_id": "call_zGpXnKjvKeYfGJmxOVcicZTX",
+                "id": "fc_tmp_9l7dscsh6a",
+                "name": "lookup_weather",
+                "status": "completed",
+                "type": "function_call"
+              },
+              {
+                "call_id": "call_zGpXnKjvKeYfGJmxOVcicZTX",
+                "id": "output_call_zGpXnKjvKeYfGJmxOVcicZTX",
+                "output": "{\"forecast\":\"Sunny in Vienna\"}",
+                "type": "function_call_output"
+              },
+              {
+                "arguments": "{\"city\":\"Vienna\"}",
+                "call_id": "call_q6UhqrdF3CSGSxFeqWOI5QT3",
+                "id": "fc_tmp_xnhuod4svs",
+                "name": "lookup_weather",
+                "status": "completed",
+                "type": "function_call"
+              },
+              {
+                "call_id": "call_q6UhqrdF3CSGSxFeqWOI5QT3",
+                "id": "output_call_q6UhqrdF3CSGSxFeqWOI5QT3",
+                "output": "{\"forecast\":\"Sunny in Vienna\"}",
+                "type": "function_call_output"
+              }
+            ],
+            "max_output_tokens": 16,
+            "max_tool_calls": 1,
+            "model": "openai/gpt-4o-mini",
+            "service_tier": "auto",
+            "store": false,
+            "stream": true,
+            "temperature": 0,
+            "tool_choice": "required",
+            "tools": [
+              {
+                "description": "Look up the weather forecast for a city.",
+                "name": "lookup_weather",
+                "parameters": {
+                  "$schema": "http://json-schema.org/draft-07/schema#",
+                  "additionalProperties": false,
+                  "properties": {
+                    "city": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "city"
+                  ],
+                  "type": "object"
+                },
+                "strict": null,
+                "type": "function"
+              }
+            ]
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "statusText": "OK",
+        "headers": {
+          "access-control-allow-origin": "*",
+          "access-control-expose-headers": "X-Generation-Id,cf-ray",
+          "cache-control": "no-cache",
+          "content-type": "text/event-stream",
+          "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
+          "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
+          "x-content-type-options": "nosniff",
+          "x-generation-id": "gen-1777419986-qtPS8juiIkR5cIaQndfU"
+        },
+        "body": {
+          "kind": "sse",
+          "chunks": [
+            ": OPENROUTER PROCESSING\n\n",
+            "data: {\"type\":\"response.created\",\"response\":{\"id\":\"gen-1777419986-qtPS8juiIkR5cIaQndfU\",\"object\":\"response\",\"created_at\":1777419986,\"model\":\"openai/gpt-4o-mini\",\"status\":\"in_progress\",\"completed_at\":null,\"output\":[],\"error\":null,\"incomplete_details\":null,\"tools\":[{\"type\":\"function\",\"name\":\"lookup_weather\",\"description\":\"Look up the weather forecast for a city.\",\"strict\":null,\"parameters\":{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"additionalProperties\":false}}],\"tool_choice\":\"required\",\"parallel_tool_calls\":true,\"max_output_tokens\":16,\"temperature\":0,\"top_p\":1,\"presence_penalty\":0,\"frequency_penalty\":0,\"top_logprobs\":0,\"max_tool_calls\":1,\"metadata\":{},\"background\":false,\"previous_response_id\":null,\"service_tier\":\"auto\",\"truncation\":\"disabled\",\"store\":false,\"instructions\":null,\"text\":{\"format\":{\"type\":\"text\"}},\"reasoning\":null,\"safety_identifier\":null,\"prompt_cache_key\":null,\"usage\":null},\"sequence_number\":0}\n\n",
+            "data: {\"type\":\"response.in_progress\",\"response\":{\"id\":\"gen-1777419986-qtPS8juiIkR5cIaQndfU\",\"object\":\"response\",\"created_at\":1777419986,\"model\":\"openai/gpt-4o-mini\",\"status\":\"in_progress\",\"completed_at\":null,\"output\":[],\"error\":null,\"incomplete_details\":null,\"tools\":[{\"type\":\"function\",\"name\":\"lookup_weather\",\"description\":\"Look up the weather forecast for a city.\",\"strict\":null,\"parameters\":{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"additionalProperties\":false}}],\"tool_choice\":\"required\",\"parallel_tool_calls\":true,\"max_output_tokens\":16,\"temperature\":0,\"top_p\":1,\"presence_penalty\":0,\"frequency_penalty\":0,\"top_logprobs\":0,\"max_tool_calls\":1,\"metadata\":{},\"background\":false,\"previous_response_id\":null,\"service_tier\":\"auto\",\"truncation\":\"disabled\",\"store\":false,\"instructions\":null,\"text\":{\"format\":{\"type\":\"text\"}},\"reasoning\":null,\"safety_identifier\":null,\"prompt_cache_key\":null,\"usage\":null},\"sequence_number\":1}\n\n",
+            "data: {\"type\":\"response.output_item.added\",\"output_index\":0,\"item\":{\"id\":\"fc_tmp_rh3agzrz9t\",\"type\":\"function_call\",\"status\":\"in_progress\",\"call_id\":\"call_bY98Mu2HINZLoFxCPd1eGCte\",\"name\":\"lookup_weather\",\"arguments\":\"\"},\"sequence_number\":2}\n\ndata: {\"type\":\"response.function_call_arguments.delta\",\"output_index\":0,\"item_id\":\"fc_tmp_rh3agzrz9t\",\"delta\":\"{\\\"\",\"sequence_number\":3}\n\n",
+            "data: {\"type\":\"response.function_call_arguments.delta\",\"output_index\":0,\"item_id\":\"fc_tmp_rh3agzrz9t\",\"delta\":\"city\",\"sequence_number\":4}\n\n",
+            "data: {\"type\":\"response.function_call_arguments.delta\",\"output_index\":0,\"item_id\":\"fc_tmp_rh3agzrz9t\",\"delta\":\"\\\":\\\"\",\"sequence_number\":5}\n\n",
+            "data: {\"type\":\"response.function_call_arguments.delta\",\"output_index\":0,\"item_id\":\"fc_tmp_rh3agzrz9t\",\"delta\":\"Vien\",\"sequence_number\":6}\n\n",
+            "data: {\"type\":\"response.function_call_arguments.delta\",\"output_index\":0,\"item_id\":\"fc_tmp_rh3agzrz9t\",\"delta\":\"na\",\"sequence_number\":7}\n\n",
+            "data: {\"type\":\"response.function_call_arguments.delta\",\"output_index\":0,\"item_id\":\"fc_tmp_rh3agzrz9t\",\"delta\":\"\\\"}\",\"sequence_number\":8}\n\n",
+            "data: {\"type\":\"response.function_call_arguments.done\",\"output_index\":0,\"item_id\":\"fc_tmp_rh3agzrz9t\",\"name\":\"lookup_weather\",\"arguments\":\"{\\\"city\\\":\\\"Vienna\\\"}\",\"sequence_number\":9}\n\n",
+            "data: {\"type\":\"response.output_item.done\",\"output_index\":0,\"item\":{\"id\":\"fc_tmp_rh3agzrz9t\",\"type\":\"function_call\",\"status\":\"completed\",\"call_id\":\"call_bY98Mu2HINZLoFxCPd1eGCte\",\"name\":\"lookup_weather\",\"arguments\":\"{\\\"city\\\":\\\"Vienna\\\"}\"},\"sequence_number\":10}\n\n",
+            "data: {\"type\":\"response.completed\",\"response\":{\"id\":\"gen-1777419986-qtPS8juiIkR5cIaQndfU\",\"object\":\"response\",\"created_at\":1777419986,\"model\":\"openai/gpt-4o-mini\",\"status\":\"completed\",\"completed_at\":1777419987,\"output\":[{\"id\":\"fc_tmp_rh3agzrz9t\",\"type\":\"function_call\",\"status\":\"completed\",\"call_id\":\"call_bY98Mu2HINZLoFxCPd1eGCte\",\"name\":\"lookup_weather\",\"arguments\":\"{\\\"city\\\":\\\"Vienna\\\"}\"}],\"error\":null,\"incomplete_details\":null,\"tools\":[{\"type\":\"function\",\"name\":\"lookup_weather\",\"description\":\"Look up the weather forecast for a city.\",\"strict\":null,\"parameters\":{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"additionalProperties\":false}}],\"tool_choice\":\"required\",\"parallel_tool_calls\":true,\"max_output_tokens\":16,\"temperature\":0,\"top_p\":1,\"presence_penalty\":0,\"frequency_penalty\":0,\"top_logprobs\":0,\"max_tool_calls\":1,\"metadata\":{},\"background\":false,\"previous_response_id\":null,\"service_tier\":\"auto\",\"truncation\":\"disabled\",\"store\":false,\"instructions\":null,\"text\":{\"format\":{\"type\":\"text\"}},\"reasoning\":null,\"safety_identifier\":null,\"prompt_cache_key\":null,\"usage\":{\"input_tokens\":183,\"input_tokens_details\":{\"cached_tokens\":0},\"output_tokens\":15,\"output_tokens_details\":{\"reasoning_tokens\":0},\"total_tokens\":198,\"cost\":0.00003645,\"is_byok\":false,\"cost_details\":{\"upstream_inference_cost\":0.00003645,\"upstream_inference_input_cost\":0.00002745,\"upstream_inference_output_cost\":0.000009}}},\"sequence_number\":11}\n\ndata: [DONE]\n\n"
+          ]
+        }
+      }
+    },
+    {
+      "id": "8be099aed1c110f1",
+      "matchKey": "POST openrouter.ai/api/v1/responses",
+      "callIndex": 5,
+      "recordedAt": "2026-04-28T23:46:28.223Z",
+      "request": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/responses",
+        "headers": {
+          "accept": "text/event-stream",
+          "content-type": "application/json",
+          "x-openrouter-callmodel": "true"
+        },
+        "body": {
+          "kind": "json",
+          "value": {
+            "input": [
+              {
+                "content": "Use the lookup_weather tool for Vienna exactly once, then answer with only the forecast.",
+                "role": "user"
+              },
+              {
+                "arguments": "{\"city\":\"Vienna\"}",
+                "call_id": "call_Df2h7Lz4rcoXlRHQcr3ixIMD",
+                "id": "fc_tmp_h3sowa79kli",
+                "name": "lookup_weather",
+                "status": "completed",
+                "type": "function_call"
+              },
+              {
+                "call_id": "call_Df2h7Lz4rcoXlRHQcr3ixIMD",
+                "id": "output_call_Df2h7Lz4rcoXlRHQcr3ixIMD",
+                "output": "{\"forecast\":\"Sunny in Vienna\"}",
+                "type": "function_call_output"
+              },
+              {
+                "arguments": "{\"city\":\"Vienna\"}",
+                "call_id": "call_rI30GwQ3CheX3LKkVdVgIfUJ",
+                "id": "fc_tmp_0pz0lip1v7qe",
+                "name": "lookup_weather",
+                "status": "completed",
+                "type": "function_call"
+              },
+              {
+                "call_id": "call_rI30GwQ3CheX3LKkVdVgIfUJ",
+                "id": "output_call_rI30GwQ3CheX3LKkVdVgIfUJ",
+                "output": "{\"forecast\":\"Sunny in Vienna\"}",
+                "type": "function_call_output"
+              },
+              {
+                "arguments": "{\"city\":\"Vienna\"}",
+                "call_id": "call_zGpXnKjvKeYfGJmxOVcicZTX",
+                "id": "fc_tmp_9l7dscsh6a",
+                "name": "lookup_weather",
+                "status": "completed",
+                "type": "function_call"
+              },
+              {
+                "call_id": "call_zGpXnKjvKeYfGJmxOVcicZTX",
+                "id": "output_call_zGpXnKjvKeYfGJmxOVcicZTX",
+                "output": "{\"forecast\":\"Sunny in Vienna\"}",
+                "type": "function_call_output"
+              },
+              {
+                "arguments": "{\"city\":\"Vienna\"}",
+                "call_id": "call_q6UhqrdF3CSGSxFeqWOI5QT3",
+                "id": "fc_tmp_xnhuod4svs",
+                "name": "lookup_weather",
+                "status": "completed",
+                "type": "function_call"
+              },
+              {
+                "call_id": "call_q6UhqrdF3CSGSxFeqWOI5QT3",
+                "id": "output_call_q6UhqrdF3CSGSxFeqWOI5QT3",
+                "output": "{\"forecast\":\"Sunny in Vienna\"}",
+                "type": "function_call_output"
+              },
+              {
+                "arguments": "{\"city\":\"Vienna\"}",
+                "call_id": "call_bY98Mu2HINZLoFxCPd1eGCte",
+                "id": "fc_tmp_rh3agzrz9t",
+                "name": "lookup_weather",
+                "status": "completed",
+                "type": "function_call"
+              },
+              {
+                "call_id": "call_bY98Mu2HINZLoFxCPd1eGCte",
+                "id": "output_call_bY98Mu2HINZLoFxCPd1eGCte",
+                "output": "{\"forecast\":\"Sunny in Vienna\"}",
+                "type": "function_call_output"
+              }
+            ],
+            "max_output_tokens": 16,
+            "max_tool_calls": 1,
+            "model": "openai/gpt-4o-mini",
+            "service_tier": "auto",
+            "store": false,
+            "stream": true,
+            "temperature": 0,
+            "tool_choice": "required",
+            "tools": [
+              {
+                "description": "Look up the weather forecast for a city.",
+                "name": "lookup_weather",
+                "parameters": {
+                  "$schema": "http://json-schema.org/draft-07/schema#",
+                  "additionalProperties": false,
+                  "properties": {
+                    "city": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "city"
+                  ],
+                  "type": "object"
+                },
+                "strict": null,
+                "type": "function"
+              }
+            ]
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "statusText": "OK",
+        "headers": {
+          "access-control-allow-origin": "*",
+          "access-control-expose-headers": "X-Generation-Id,cf-ray",
+          "cache-control": "no-cache",
+          "content-type": "text/event-stream",
+          "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
+          "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
+          "x-content-type-options": "nosniff",
+          "x-generation-id": "gen-1777419987-jdjsVmU8aZ4G5yt6EUpi"
+        },
+        "body": {
+          "kind": "sse",
+          "chunks": [
+            ": OPENROUTER PROCESSING\n\n",
+            "data: {\"type\":\"response.created\",\"response\":{\"id\":\"gen-1777419987-jdjsVmU8aZ4G5yt6EUpi\",\"object\":\"response\",\"created_at\":1777419987,\"model\":\"openai/gpt-4o-mini\",\"status\":\"in_progress\",\"completed_at\":null,\"output\":[],\"error\":null,\"incomplete_details\":null,\"tools\":[{\"type\":\"function\",\"name\":\"lookup_weather\",\"description\":\"Look up the weather forecast for a city.\",\"strict\":null,\"parameters\":{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"additionalProperties\":false}}],\"tool_choice\":\"required\",\"parallel_tool_calls\":true,\"max_output_tokens\":16,\"temperature\":0,\"top_p\":1,\"presence_penalty\":0,\"frequency_penalty\":0,\"top_logprobs\":0,\"max_tool_calls\":1,\"metadata\":{},\"background\":false,\"previous_response_id\":null,\"service_tier\":\"auto\",\"truncation\":\"disabled\",\"store\":false,\"instructions\":null,\"text\":{\"format\":{\"type\":\"text\"}},\"reasoning\":null,\"safety_identifier\":null,\"prompt_cache_key\":null,\"usage\":null},\"sequence_number\":0}\n\ndata: {\"type\":\"response.in_progress\",\"response\":{\"id\":\"gen-1777419987-jdjsVmU8aZ4G5yt6EUpi\",\"object\":\"response\",\"created_at\":1777419987,\"model\":\"openai/gpt-4o-mini\",\"status\":\"in_progress\",\"completed_at\":null,\"output\":[],\"error\":null,\"incomplete_details\":null,\"tools\":[{\"type\":\"function\",\"name\":\"lookup_weather\",\"description\":\"Look up the weather forecast for a city.\",\"strict\":null,\"parameters\":{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"additionalProperties\":false}}],\"tool_choice\":\"required\",\"parallel_tool_calls\":true,\"max_output_tokens\":16,\"temperature\":0,\"top_p\":1,\"presence_penalty\":0,\"frequency_penalty\":0,\"top_logprobs\":0,\"max_tool_calls\":1,\"metadata\":{},\"background\":false,\"previous_response_id\":null,\"service_tier\":\"auto\",\"truncation\":\"disabled\",\"store\":false,\"instructions\":null,\"text\":{\"format\":{\"type\":\"text\"}},\"reasoning\":null,\"safety_identifier\":null,\"prompt_cache_key\":null,\"usage\":null},\"sequence_number\":1}\n\n",
+            "data: {\"type\":\"response.output_item.added\",\"output_index\":0,\"item\":{\"id\":\"fc_tmp_iz3hvbzm8md\",\"type\":\"function_call\",\"status\":\"in_progress\",\"call_id\":\"call_vc2PxRW2wuEr0q91TAEDkLNF\",\"name\":\"lookup_weather\",\"arguments\":\"\"},\"sequence_number\":2}\n\n",
+            "data: {\"type\":\"response.function_call_arguments.delta\",\"output_index\":0,\"item_id\":\"fc_tmp_iz3hvbzm8md\",\"delta\":\"{\\\"\",\"sequence_number\":3}\n\ndata: {\"type\":\"response.function_call_arguments.delta\",\"output_index\":0,\"item_id\":\"fc_tmp_iz3hvbzm8md\",\"delta\":\"city\",\"sequence_number\":4}\n\n",
+            "data: {\"type\":\"response.function_call_arguments.delta\",\"output_index\":0,\"item_id\":\"fc_tmp_iz3hvbzm8md\",\"delta\":\"\\\":\\\"\",\"sequence_number\":5}\n\n",
+            "data: {\"type\":\"response.function_call_arguments.delta\",\"output_index\":0,\"item_id\":\"fc_tmp_iz3hvbzm8md\",\"delta\":\"Vien\",\"sequence_number\":6}\n\n",
+            "data: {\"type\":\"response.function_call_arguments.delta\",\"output_index\":0,\"item_id\":\"fc_tmp_iz3hvbzm8md\",\"delta\":\"na\",\"sequence_number\":7}\n\n",
+            "data: {\"type\":\"response.function_call_arguments.delta\",\"output_index\":0,\"item_id\":\"fc_tmp_iz3hvbzm8md\",\"delta\":\"\\\"}\",\"sequence_number\":8}\n\n",
+            "data: {\"type\":\"response.function_call_arguments.done\",\"output_index\":0,\"item_id\":\"fc_tmp_iz3hvbzm8md\",\"name\":\"lookup_weather\",\"arguments\":\"{\\\"city\\\":\\\"Vienna\\\"}\",\"sequence_number\":9}\n\n",
+            "data: {\"type\":\"response.output_item.done\",\"output_index\":0,\"item\":{\"id\":\"fc_tmp_iz3hvbzm8md\",\"type\":\"function_call\",\"status\":\"completed\",\"call_id\":\"call_vc2PxRW2wuEr0q91TAEDkLNF\",\"name\":\"lookup_weather\",\"arguments\":\"{\\\"city\\\":\\\"Vienna\\\"}\"},\"sequence_number\":10}\n\n",
+            "data: {\"type\":\"response.completed\",\"response\":{\"id\":\"gen-1777419987-jdjsVmU8aZ4G5yt6EUpi\",\"object\":\"response\",\"created_at\":1777419987,\"model\":\"openai/gpt-4o-mini\",\"status\":\"completed\",\"completed_at\":1777419988,\"output\":[{\"id\":\"fc_tmp_iz3hvbzm8md\",\"type\":\"function_call\",\"status\":\"completed\",\"call_id\":\"call_vc2PxRW2wuEr0q91TAEDkLNF\",\"name\":\"lookup_weather\",\"arguments\":\"{\\\"city\\\":\\\"Vienna\\\"}\"}],\"error\":null,\"incomplete_details\":null,\"tools\":[{\"type\":\"function\",\"name\":\"lookup_weather\",\"description\":\"Look up the weather forecast for a city.\",\"strict\":null,\"parameters\":{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"additionalProperties\":false}}],\"tool_choice\":\"required\",\"parallel_tool_calls\":true,\"max_output_tokens\":16,\"temperature\":0,\"top_p\":1,\"presence_penalty\":0,\"frequency_penalty\":0,\"top_logprobs\":0,\"max_tool_calls\":1,\"metadata\":{},\"background\":false,\"previous_response_id\":null,\"service_tier\":\"auto\",\"truncation\":\"disabled\",\"store\":false,\"instructions\":null,\"text\":{\"format\":{\"type\":\"text\"}},\"reasoning\":null,\"safety_identifier\":null,\"prompt_cache_key\":null,\"usage\":{\"input_tokens\":213,\"input_tokens_details\":{\"cached_tokens\":0},\"output_tokens\":15,\"output_tokens_details\":{\"reasoning_tokens\":0},\"total_tokens\":228,\"cost\":0.00004095,\"is_byok\":false,\"cost_details\":{\"upstream_inference_cost\":0.00004095,\"upstream_inference_input_cost\":0.00003195,\"upstream_inference_output_cost\":0.000009}}},\"sequence_number\":11}\n\ndata: [DONE]\n\n"
+          ]
+        }
+      }
+    }
+  ]
+}

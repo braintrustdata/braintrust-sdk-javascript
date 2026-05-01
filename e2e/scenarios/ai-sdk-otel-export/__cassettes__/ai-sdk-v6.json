@@ -1,0 +1,869 @@
+{
+  "version": 1,
+  "meta": {
+    "createdAt": "2026-04-27T22:53:01.327Z",
+    "seinfeldVersion": "0.0.0"
+  },
+  "entries": [
+    {
+      "id": "7233dc0e813c46f6",
+      "matchKey": "POST api.openai.com/v1/responses",
+      "callIndex": 0,
+      "recordedAt": "2026-04-27T22:53:01.327Z",
+      "request": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/responses",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "kind": "json",
+          "value": {
+            "input": [
+              {
+                "content": [
+                  {
+                    "text": "Reply with the single token PARIS and no punctuation.",
+                    "type": "input_text"
+                  }
+                ],
+                "role": "user"
+              }
+            ],
+            "max_output_tokens": 24,
+            "model": "gpt-4o-mini-2024-07-18",
+            "temperature": 0
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "statusText": "OK",
+        "headers": {
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "content-type": "application/json",
+          "openai-organization": "braintrust-data",
+          "openai-version": "2020-10-01",
+          "x-content-type-options": "nosniff"
+        },
+        "body": {
+          "kind": "json",
+          "value": {
+            "background": false,
+            "billing": {
+              "payer": "developer"
+            },
+            "completed_at": 1777330373,
+            "created_at": 1777330372,
+            "error": null,
+            "frequency_penalty": 0,
+            "id": "resp_008217efc05fbd410069efe8c4c2008190b1c4481d6029c09e",
+            "incomplete_details": null,
+            "instructions": null,
+            "max_output_tokens": 24,
+            "max_tool_calls": null,
+            "metadata": {},
+            "model": "gpt-4o-mini-2024-07-18",
+            "moderation": null,
+            "object": "response",
+            "output": [
+              {
+                "content": [
+                  {
+                    "annotations": [],
+                    "logprobs": [],
+                    "text": "PARIS",
+                    "type": "output_text"
+                  }
+                ],
+                "id": "msg_008217efc05fbd410069efe8c52430819087771d87891a76f0",
+                "role": "assistant",
+                "status": "completed",
+                "type": "message"
+              }
+            ],
+            "parallel_tool_calls": true,
+            "presence_penalty": 0,
+            "previous_response_id": null,
+            "prompt_cache_key": null,
+            "prompt_cache_retention": "in_memory",
+            "reasoning": {
+              "effort": null,
+              "summary": null
+            },
+            "safety_identifier": null,
+            "service_tier": "default",
+            "status": "completed",
+            "store": true,
+            "temperature": 0,
+            "text": {
+              "format": {
+                "type": "text"
+              },
+              "verbosity": "medium"
+            },
+            "tool_choice": "auto",
+            "tools": [],
+            "top_logprobs": 0,
+            "top_p": 1,
+            "truncation": "disabled",
+            "usage": {
+              "input_tokens": 18,
+              "input_tokens_details": {
+                "cached_tokens": 0
+              },
+              "output_tokens": 3,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "total_tokens": 21
+            },
+            "user": null
+          }
+        }
+      }
+    },
+    {
+      "id": "8317e7e21b94baab",
+      "matchKey": "POST api.openai.com/v1/responses",
+      "callIndex": 1,
+      "recordedAt": "2026-04-27T22:53:01.327Z",
+      "request": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/responses",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "kind": "json",
+          "value": {
+            "input": [
+              {
+                "content": [
+                  {
+                    "text": "Count from 1 to 3 and include the words one two three.",
+                    "type": "input_text"
+                  }
+                ],
+                "role": "user"
+              }
+            ],
+            "max_output_tokens": 32,
+            "model": "gpt-4o-mini-2024-07-18",
+            "stream": true,
+            "temperature": 0
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "statusText": "OK",
+        "headers": {
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "content-type": "text/event-stream; charset=utf-8",
+          "openai-organization": "braintrust-data",
+          "openai-version": "2020-10-01",
+          "x-content-type-options": "nosniff"
+        },
+        "body": {
+          "kind": "sse",
+          "chunks": [
+            "event: response.created\ndata: {\"type\":\"response.created\",\"response\":{\"id\":\"resp_0e5817a3911feccf0069efe8c58914819680c0100e1c69757d\",\"object\":\"response\",\"created_at\":1777330373,\"status\":\"in_progress\",\"background\":false,\"completed_at\":null,\"error\":null,\"frequency_penalty\":0.0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":32,\"max_tool_calls\":null,\"model\":\"gpt-4o-mini-2024-07-18\",\"moderation\":null,\"output\":[],\"parallel_tool_calls\":true,\"presence_penalty\":0.0,\"previous_response_id\":null,\"prompt_cache_key\":null,\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"effort\":null,\"summary\":null},\"safety_identifier\":null,\"service_tier\":\"auto\",\"store\":true,\"temperature\":0.0,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tools\":[],\"top_logprobs\":0,\"top_p\":1.0,\"truncation\":\"disabled\",\"usage\":null,\"user\":null,\"metadata\":{}},\"sequence_number\":0}\n\n",
+            "event: response.in_progress\ndata: {\"type\":\"response.in_progress\",\"response\":{\"id\":\"resp_0e5817a3911feccf0069efe8c58914819680c0100e1c69757d\",\"object\":\"response\",\"created_at\":1777330373,\"status\":\"in_progress\",\"background\":false,\"completed_at\":null,\"error\":null,\"frequency_penalty\":0.0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":32,\"max_tool_calls\":null,\"model\":\"gpt-4o-mini-2024-07-18\",\"moderation\":null,\"output\":[],\"parallel_tool_calls\":true,\"presence_penalty\":0.0,\"previous_response_id\":null,\"prompt_cache_key\":null,\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"effort\":null,\"summary\":null},\"safety_identifier\":null,\"service_tier\":\"auto\",\"store\":true,\"temperature\":0.0,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tools\":[],\"top_logprobs\":0,\"top_p\":1.0,\"truncation\":\"disabled\",\"usage\":null,\"user\":null,\"metadata\":{}},\"sequence_number\":1}\n\n",
+            "event: response.output_item.added\ndata: {\"type\":\"response.output_item.added\",\"item\":{\"id\":\"msg_0e5817a3911feccf0069efe8c656988196a8fe72667e8254a7\",\"type\":\"message\",\"status\":\"in_progress\",\"content\":[],\"role\":\"assistant\"},\"output_index\":0,\"sequence_number\":2}\n\nevent: response.content_part.added\ndata: {\"type\":\"response.content_part.added\",\"content_index\":0,\"item_id\":\"msg_0e5817a3911feccf0069efe8c656988196a8fe72667e8254a7\",\"output_index\":0,\"part\":{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"\"},\"sequence_number\":3}\n\n",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"One\",\"item_id\":\"msg_0e5817a3911feccf0069efe8c656988196a8fe72667e8254a7\",\"logprobs\":[],\"obfuscation\":\"1yHAAGPOc2K8U\",\"output_index\":0,\"sequence_number\":4}\n\n",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\",\",\"item_id\":\"msg_0e5817a3911feccf0069efe8c656988196a8fe72667e8254a7\",\"logprobs\":[],\"obfuscation\":\"5KiwE2kk1rM673S\",\"output_index\":0,\"sequence_number\":5}\n\n",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\" two\",\"item_id\":\"msg_0e5817a3911feccf0069efe8c656988196a8fe72667e8254a7\",\"logprobs\":[],\"obfuscation\":\"xONLcgup03Ih\",\"output_index\":0,\"sequence_number\":6}\n\n",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\",\",\"item_id\":\"msg_0e5817a3911feccf0069efe8c656988196a8fe72667e8254a7\",\"logprobs\":[],\"obfuscation\":\"Nfy8s2my5HZyBN9\",\"output_index\":0,\"sequence_number\":7}\n\n",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\" three\",\"item_id\":\"msg_0e5817a3911feccf0069efe8c656988196a8fe72667e8254a7\",\"logprobs\":[],\"obfuscation\":\"xmRscxoyyN\",\"output_index\":0,\"sequence_number\":8}\n\n",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\".\",\"item_id\":\"msg_0e5817a3911feccf0069efe8c656988196a8fe72667e8254a7\",\"logprobs\":[],\"obfuscation\":\"Md5mejs7YFriSqB\",\"output_index\":0,\"sequence_number\":9}\n\n",
+            "event: response.output_text.done\ndata: {\"type\":\"response.output_text.done\",\"content_index\":0,\"item_id\":\"msg_0e5817a3911feccf0069efe8c656988196a8fe72667e8254a7\",\"logprobs\":[],\"output_index\":0,\"sequence_number\":10,\"text\":\"One, two, three.\"}\n\n",
+            "event: response.content_part.done\ndata: {\"type\":\"response.content_part.done\",\"content_index\":0,\"item_id\":\"msg_0e5817a3911feccf0069efe8c656988196a8fe72667e8254a7\",\"output_index\":0,\"part\":{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"One, two, three.\"},\"sequence_number\":11}\n\n",
+            "event: response.output_item.done\ndata: {\"type\":\"response.output_item.done\",\"item\":{\"id\":\"msg_0e5817a3911feccf0069efe8c656988196a8fe72667e8254a7\",\"type\":\"message\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"One, two, three.\"}],\"role\":\"assistant\"},\"output_index\":0,\"sequence_number\":12}\n\n",
+            "event: response.completed\ndata: {\"type\":\"response.completed\",\"response\":{\"id\":\"resp_0e5817a3911feccf0069efe8c58914819680c0100e1c69757d\",\"object\":\"response\",\"created_at\":1777330373,\"status\":\"completed\",\"background\":false,\"completed_at\":1777330374,\"error\":null,\"frequency_penalty\":0.0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":32,\"max_tool_calls\":null,\"model\":\"gpt-4o-mini-2024-07-18\",\"moderation\":null,\"output\":[{\"id\":\"msg_0e5817a3911feccf0069efe8c656988196a8fe72667e8254a7\",\"type\":\"message\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"One, two, three.\"}],\"role\":\"assistant\"}],\"parallel_tool_calls\":true,\"presence_penalty\":0.0,\"previous_response_id\":null,\"prompt_cache_key\":null,\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"effort\":null,\"summary\":null},\"safety_identifier\":null,\"service_tier\":\"default\",\"store\":true,\"temperature\":0.0,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tools\":[],\"top_logprobs\":0,\"top_p\":1.0,\"truncation\":\"disabled\",\"usage\":{\"input_tokens\":22,\"input_tokens_details\":{\"cached_tokens\":0},\"output_tokens\":7,\"output_tokens_details\":{\"reasoning_tokens\":0},\"total_tokens\":29},\"user\":null,\"metadata\":{}},\"sequence_number\":13}\n\n"
+          ]
+        }
+      }
+    },
+    {
+      "id": "521ede462fd0fdf0",
+      "matchKey": "POST api.openai.com/v1/responses",
+      "callIndex": 2,
+      "recordedAt": "2026-04-27T22:53:01.327Z",
+      "request": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/responses",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "kind": "json",
+          "value": {
+            "input": [
+              {
+                "content": "You must inspect live weather via the provided get_weather tool before responding.",
+                "role": "system"
+              },
+              {
+                "content": [
+                  {
+                    "text": "Use the get_weather tool for Paris, France. If you do not call the tool, the answer is invalid.",
+                    "type": "input_text"
+                  }
+                ],
+                "role": "user"
+              }
+            ],
+            "max_output_tokens": 128,
+            "model": "gpt-4o-mini-2024-07-18",
+            "temperature": 0,
+            "tool_choice": "required",
+            "tools": [
+              {
+                "description": "Get the weather for a location",
+                "name": "get_weather",
+                "parameters": {
+                  "$schema": "http://json-schema.org/draft-07/schema#",
+                  "additionalProperties": false,
+                  "properties": {
+                    "location": {
+                      "description": "The city and country",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "location"
+                  ],
+                  "type": "object"
+                },
+                "type": "function"
+              }
+            ]
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "statusText": "OK",
+        "headers": {
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "content-type": "application/json",
+          "openai-organization": "braintrust-data",
+          "openai-version": "2020-10-01",
+          "x-content-type-options": "nosniff"
+        },
+        "body": {
+          "kind": "json",
+          "value": {
+            "background": false,
+            "billing": {
+              "payer": "developer"
+            },
+            "completed_at": 1777330375,
+            "created_at": 1777330374,
+            "error": null,
+            "frequency_penalty": 0,
+            "id": "resp_0938cee941587e970069efe8c6b22881969d0d8ac036c33e3a",
+            "incomplete_details": null,
+            "instructions": null,
+            "max_output_tokens": 128,
+            "max_tool_calls": null,
+            "metadata": {},
+            "model": "gpt-4o-mini-2024-07-18",
+            "moderation": null,
+            "object": "response",
+            "output": [
+              {
+                "arguments": "{\"location\":\"Paris, France\"}",
+                "call_id": "call_fW6SVyscl0yzTS5WqggULcBq",
+                "id": "fc_0938cee941587e970069efe8c73df481968ed38e4fe280f70b",
+                "name": "get_weather",
+                "status": "completed",
+                "type": "function_call"
+              }
+            ],
+            "parallel_tool_calls": true,
+            "presence_penalty": 0,
+            "previous_response_id": null,
+            "prompt_cache_key": null,
+            "prompt_cache_retention": "in_memory",
+            "reasoning": {
+              "effort": null,
+              "summary": null
+            },
+            "safety_identifier": null,
+            "service_tier": "default",
+            "status": "completed",
+            "store": true,
+            "temperature": 0,
+            "text": {
+              "format": {
+                "type": "text"
+              },
+              "verbosity": "medium"
+            },
+            "tool_choice": "required",
+            "tools": [
+              {
+                "description": "Get the weather for a location",
+                "name": "get_weather",
+                "parameters": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "location": {
+                      "description": "The city and country",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "location"
+                  ],
+                  "type": "object"
+                },
+                "strict": true,
+                "type": "function"
+              }
+            ],
+            "top_logprobs": 0,
+            "top_p": 1,
+            "truncation": "disabled",
+            "usage": {
+              "input_tokens": 94,
+              "input_tokens_details": {
+                "cached_tokens": 0
+              },
+              "output_tokens": 8,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "total_tokens": 102
+            },
+            "user": null
+          }
+        }
+      }
+    },
+    {
+      "id": "2679b4829a582714",
+      "matchKey": "POST api.openai.com/v1/responses",
+      "callIndex": 3,
+      "recordedAt": "2026-04-27T22:53:01.327Z",
+      "request": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/responses",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "kind": "json",
+          "value": {
+            "input": [
+              {
+                "content": "You must inspect live weather via the provided get_weather tool before responding.",
+                "role": "system"
+              },
+              {
+                "content": [
+                  {
+                    "text": "Use the get_weather tool for Paris, France. If you do not call the tool, the answer is invalid.",
+                    "type": "input_text"
+                  }
+                ],
+                "role": "user"
+              },
+              {
+                "type": "item_reference"
+              },
+              {
+                "call_id": "call_fW6SVyscl0yzTS5WqggULcBq",
+                "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
+                "type": "function_call_output"
+              }
+            ],
+            "max_output_tokens": 128,
+            "model": "gpt-4o-mini-2024-07-18",
+            "temperature": 0,
+            "tool_choice": "required",
+            "tools": [
+              {
+                "description": "Get the weather for a location",
+                "name": "get_weather",
+                "parameters": {
+                  "$schema": "http://json-schema.org/draft-07/schema#",
+                  "additionalProperties": false,
+                  "properties": {
+                    "location": {
+                      "description": "The city and country",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "location"
+                  ],
+                  "type": "object"
+                },
+                "type": "function"
+              }
+            ]
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "statusText": "OK",
+        "headers": {
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "content-type": "application/json",
+          "openai-organization": "braintrust-data",
+          "openai-version": "2020-10-01",
+          "x-content-type-options": "nosniff"
+        },
+        "body": {
+          "kind": "json",
+          "value": {
+            "background": false,
+            "billing": {
+              "payer": "developer"
+            },
+            "completed_at": 1777330377,
+            "created_at": 1777330377,
+            "error": null,
+            "frequency_penalty": 0,
+            "id": "resp_0938cee941587e970069efe8c946fc8196b721759fda8587dc",
+            "incomplete_details": null,
+            "instructions": null,
+            "max_output_tokens": 128,
+            "max_tool_calls": null,
+            "metadata": {},
+            "model": "gpt-4o-mini-2024-07-18",
+            "moderation": null,
+            "object": "response",
+            "output": [
+              {
+                "arguments": "{\"location\":\"Paris, France\"}",
+                "call_id": "call_trAeAkOzYO68AhDzcpgVqDg8",
+                "id": "fc_0938cee941587e970069efe8c9d424819684ac9ba3e0bde4bb",
+                "name": "get_weather",
+                "status": "completed",
+                "type": "function_call"
+              }
+            ],
+            "parallel_tool_calls": true,
+            "presence_penalty": 0,
+            "previous_response_id": null,
+            "prompt_cache_key": null,
+            "prompt_cache_retention": "in_memory",
+            "reasoning": {
+              "effort": null,
+              "summary": null
+            },
+            "safety_identifier": null,
+            "service_tier": "default",
+            "status": "completed",
+            "store": true,
+            "temperature": 0,
+            "text": {
+              "format": {
+                "type": "text"
+              },
+              "verbosity": "medium"
+            },
+            "tool_choice": "required",
+            "tools": [
+              {
+                "description": "Get the weather for a location",
+                "name": "get_weather",
+                "parameters": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "location": {
+                      "description": "The city and country",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "location"
+                  ],
+                  "type": "object"
+                },
+                "strict": true,
+                "type": "function"
+              }
+            ],
+            "top_logprobs": 0,
+            "top_p": 1,
+            "truncation": "disabled",
+            "usage": {
+              "input_tokens": 133,
+              "input_tokens_details": {
+                "cached_tokens": 0
+              },
+              "output_tokens": 8,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "total_tokens": 141
+            },
+            "user": null
+          }
+        }
+      }
+    },
+    {
+      "id": "d3dcb10944ef4066",
+      "matchKey": "POST api.openai.com/v1/responses",
+      "callIndex": 4,
+      "recordedAt": "2026-04-27T22:53:01.327Z",
+      "request": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/responses",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "kind": "json",
+          "value": {
+            "input": [
+              {
+                "content": "You must inspect live weather via the provided get_weather tool before responding.",
+                "role": "system"
+              },
+              {
+                "content": [
+                  {
+                    "text": "Use the get_weather tool for Paris, France. If you do not call the tool, the answer is invalid.",
+                    "type": "input_text"
+                  }
+                ],
+                "role": "user"
+              },
+              {
+                "type": "item_reference"
+              },
+              {
+                "call_id": "call_fW6SVyscl0yzTS5WqggULcBq",
+                "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
+                "type": "function_call_output"
+              },
+              {
+                "type": "item_reference"
+              },
+              {
+                "call_id": "call_trAeAkOzYO68AhDzcpgVqDg8",
+                "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
+                "type": "function_call_output"
+              }
+            ],
+            "max_output_tokens": 128,
+            "model": "gpt-4o-mini-2024-07-18",
+            "temperature": 0,
+            "tool_choice": "required",
+            "tools": [
+              {
+                "description": "Get the weather for a location",
+                "name": "get_weather",
+                "parameters": {
+                  "$schema": "http://json-schema.org/draft-07/schema#",
+                  "additionalProperties": false,
+                  "properties": {
+                    "location": {
+                      "description": "The city and country",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "location"
+                  ],
+                  "type": "object"
+                },
+                "type": "function"
+              }
+            ]
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "statusText": "OK",
+        "headers": {
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "content-type": "application/json",
+          "openai-organization": "braintrust-data",
+          "openai-version": "2020-10-01",
+          "x-content-type-options": "nosniff"
+        },
+        "body": {
+          "kind": "json",
+          "value": {
+            "background": false,
+            "billing": {
+              "payer": "developer"
+            },
+            "completed_at": 1777330379,
+            "created_at": 1777330378,
+            "error": null,
+            "frequency_penalty": 0,
+            "id": "resp_0938cee941587e970069efe8ca404c8196ba5b54a674d5a935",
+            "incomplete_details": null,
+            "instructions": null,
+            "max_output_tokens": 128,
+            "max_tool_calls": null,
+            "metadata": {},
+            "model": "gpt-4o-mini-2024-07-18",
+            "moderation": null,
+            "object": "response",
+            "output": [
+              {
+                "arguments": "{\"location\":\"Paris, France\"}",
+                "call_id": "call_xqfsueqmskJfkaGmajE9Az2p",
+                "id": "fc_0938cee941587e970069efe8cb141c8196b10d8754402b52c8",
+                "name": "get_weather",
+                "status": "completed",
+                "type": "function_call"
+              }
+            ],
+            "parallel_tool_calls": true,
+            "presence_penalty": 0,
+            "previous_response_id": null,
+            "prompt_cache_key": null,
+            "prompt_cache_retention": "in_memory",
+            "reasoning": {
+              "effort": null,
+              "summary": null
+            },
+            "safety_identifier": null,
+            "service_tier": "default",
+            "status": "completed",
+            "store": true,
+            "temperature": 0,
+            "text": {
+              "format": {
+                "type": "text"
+              },
+              "verbosity": "medium"
+            },
+            "tool_choice": "required",
+            "tools": [
+              {
+                "description": "Get the weather for a location",
+                "name": "get_weather",
+                "parameters": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "location": {
+                      "description": "The city and country",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "location"
+                  ],
+                  "type": "object"
+                },
+                "strict": true,
+                "type": "function"
+              }
+            ],
+            "top_logprobs": 0,
+            "top_p": 1,
+            "truncation": "disabled",
+            "usage": {
+              "input_tokens": 172,
+              "input_tokens_details": {
+                "cached_tokens": 0
+              },
+              "output_tokens": 8,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "total_tokens": 180
+            },
+            "user": null
+          }
+        }
+      }
+    },
+    {
+      "id": "64b3ec51c84fc886",
+      "matchKey": "POST api.openai.com/v1/responses",
+      "callIndex": 5,
+      "recordedAt": "2026-04-27T22:53:01.327Z",
+      "request": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/responses",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "kind": "json",
+          "value": {
+            "input": [
+              {
+                "content": "You must inspect live weather via the provided get_weather tool before responding.",
+                "role": "system"
+              },
+              {
+                "content": [
+                  {
+                    "text": "Use the get_weather tool for Paris, France. If you do not call the tool, the answer is invalid.",
+                    "type": "input_text"
+                  }
+                ],
+                "role": "user"
+              },
+              {
+                "type": "item_reference"
+              },
+              {
+                "call_id": "call_fW6SVyscl0yzTS5WqggULcBq",
+                "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
+                "type": "function_call_output"
+              },
+              {
+                "type": "item_reference"
+              },
+              {
+                "call_id": "call_trAeAkOzYO68AhDzcpgVqDg8",
+                "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
+                "type": "function_call_output"
+              },
+              {
+                "type": "item_reference"
+              },
+              {
+                "call_id": "call_xqfsueqmskJfkaGmajE9Az2p",
+                "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
+                "type": "function_call_output"
+              }
+            ],
+            "max_output_tokens": 128,
+            "model": "gpt-4o-mini-2024-07-18",
+            "temperature": 0,
+            "tool_choice": "required",
+            "tools": [
+              {
+                "description": "Get the weather for a location",
+                "name": "get_weather",
+                "parameters": {
+                  "$schema": "http://json-schema.org/draft-07/schema#",
+                  "additionalProperties": false,
+                  "properties": {
+                    "location": {
+                      "description": "The city and country",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "location"
+                  ],
+                  "type": "object"
+                },
+                "type": "function"
+              }
+            ]
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "statusText": "OK",
+        "headers": {
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "content-type": "application/json",
+          "openai-organization": "braintrust-data",
+          "openai-version": "2020-10-01",
+          "x-content-type-options": "nosniff"
+        },
+        "body": {
+          "kind": "json",
+          "value": {
+            "background": false,
+            "billing": {
+              "payer": "developer"
+            },
+            "completed_at": 1777330380,
+            "created_at": 1777330379,
+            "error": null,
+            "frequency_penalty": 0,
+            "id": "resp_0938cee941587e970069efe8cb7cf4819699278b96057ac3cd",
+            "incomplete_details": null,
+            "instructions": null,
+            "max_output_tokens": 128,
+            "max_tool_calls": null,
+            "metadata": {},
+            "model": "gpt-4o-mini-2024-07-18",
+            "moderation": null,
+            "object": "response",
+            "output": [
+              {
+                "arguments": "{\"location\":\"Paris, France\"}",
+                "call_id": "call_9KL1DN3o7Xj769BWa1eDlEdH",
+                "id": "fc_0938cee941587e970069efe8cc58348196a1375ab560518670",
+                "name": "get_weather",
+                "status": "completed",
+                "type": "function_call"
+              }
+            ],
+            "parallel_tool_calls": true,
+            "presence_penalty": 0,
+            "previous_response_id": null,
+            "prompt_cache_key": null,
+            "prompt_cache_retention": "in_memory",
+            "reasoning": {
+              "effort": null,
+              "summary": null
+            },
+            "safety_identifier": null,
+            "service_tier": "default",
+            "status": "completed",
+            "store": true,
+            "temperature": 0,
+            "text": {
+              "format": {
+                "type": "text"
+              },
+              "verbosity": "medium"
+            },
+            "tool_choice": "required",
+            "tools": [
+              {
+                "description": "Get the weather for a location",
+                "name": "get_weather",
+                "parameters": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "location": {
+                      "description": "The city and country",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "location"
+                  ],
+                  "type": "object"
+                },
+                "strict": true,
+                "type": "function"
+              }
+            ],
+            "top_logprobs": 0,
+            "top_p": 1,
+            "truncation": "disabled",
+            "usage": {
+              "input_tokens": 211,
+              "input_tokens_details": {
+                "cached_tokens": 0
+              },
+              "output_tokens": 8,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "total_tokens": 219
+            },
+            "user": null
+          }
+        }
+      }
+    }
+  ]
+}

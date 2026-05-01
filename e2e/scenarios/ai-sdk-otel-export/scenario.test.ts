@@ -9,13 +9,15 @@ import {
   resolveScenarioDir,
   withScenarioHarness,
 } from "../../helpers/scenario-harness";
+import { cassetteTagsFor } from "../../helpers/tags";
 import {
   extractOtelSpans,
   summarizeRequest,
 } from "../../helpers/trace-summary";
 
+const originalScenarioDir = resolveScenarioDir(import.meta.url);
 const scenarioDir = await prepareScenarioDir({
-  scenarioDir: resolveScenarioDir(import.meta.url),
+  scenarioDir: originalScenarioDir,
 });
 
 const TIMEOUT_MS = 120_000;
@@ -40,10 +42,12 @@ const scenarios: OtelExportScenario[] = await Promise.all(
 );
 
 for (const scenario of scenarios) {
+  const variantKey = scenario.dependencyName;
   test(
     `ai-sdk-otel-export sends AI SDK telemetry spans to Braintrust via BraintrustExporter (ai ${scenario.version})`,
     {
       timeout: TIMEOUT_MS,
+      tags: cassetteTagsFor(import.meta.url, variantKey),
     },
     async () => {
       await withScenarioHarness(
@@ -52,6 +56,10 @@ for (const scenario of scenarios) {
             entry: scenario.entry,
             scenarioDir,
             timeoutMs: TIMEOUT_MS,
+            runContext: {
+              variantKey,
+              originalScenarioDir,
+            },
           });
 
           const otelRequests = requestsAfter(

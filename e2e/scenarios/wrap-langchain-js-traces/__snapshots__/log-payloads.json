@@ -37,7 +37,6 @@
     "span_id": "<span:2>"
   },
   {
-    "_is_merge": false,
     "context": {
       "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
       "caller_functionname": "runOperation",
@@ -51,6 +50,7 @@
       "testRunId": "<run:1>"
     },
     "metrics": {
+      "end": 0,
       "start": 0
     },
     "project_id": "<project_id>",
@@ -65,21 +65,6 @@
     ]
   },
   {
-    "_is_merge": true,
-    "id": "<span:3>",
-    "log_id": "g",
-    "metrics": {
-      "end": 0
-    },
-    "project_id": "<project_id>",
-    "root_span_id": "<span:2>",
-    "span_id": "<span:4>",
-    "span_parents": [
-      "<span:2>"
-    ]
-  },
-  {
-    "_is_merge": false,
     "context": {
       "caller_filename": "<repo>/integrations/langchain-js/dist/index.js",
       "caller_functionname": "BraintrustCallbackHandler.startSpan",
@@ -131,8 +116,9 @@
           "@langchain/openai": "<langchain-version>"
         }
       },
+      "model": "gpt-4o-mini-2024-07-18",
       "options": {},
-      "run_id": "<uuid:8>",
+      "run_id": "<uuid:7>",
       "serialized": {
         "id": [
           "langchain",
@@ -158,44 +144,12 @@
       "tags": []
     },
     "metrics": {
-      "start": 0
-    },
-    "project_id": "<project_id>",
-    "root_span_id": "<span:2>",
-    "span_attributes": {
-      "exec_counter": 2,
-      "name": "ChatOpenAI",
-      "type": "llm"
-    },
-    "span_id": "<span:6>",
-    "span_parents": [
-      "<span:4>"
-    ]
-  },
-  {
-    "_is_merge": true,
-    "id": "<span:5>",
-    "log_id": "g",
-    "metrics": {
       "completion_tokens": "<number>",
+      "end": 0,
       "prompt_cached_tokens": "<number>",
       "prompt_tokens": "<number>",
+      "start": 0,
       "total_tokens": "<number>"
-    },
-    "project_id": "<project_id>",
-    "root_span_id": "<span:2>",
-    "span_id": "<span:6>",
-    "span_parents": [
-      "<span:4>"
-    ]
-  },
-  {
-    "_is_merge": true,
-    "id": "<span:5>",
-    "log_id": "g",
-    "metadata": {
-      "model": "gpt-4o-mini-2024-07-18",
-      "tags": []
     },
     "output": {
       "generations": [
@@ -213,7 +167,7 @@
               "kwargs": {
                 "additional_kwargs": {},
                 "content": "<llm-response>",
-                "id": "<span:7>",
+                "id": "<span:6>",
                 "invalid_tool_calls": [],
                 "response_metadata": {
                   "finish_reason": "stop",
@@ -274,27 +228,17 @@
     },
     "project_id": "<project_id>",
     "root_span_id": "<span:2>",
-    "span_id": "<span:6>",
-    "span_parents": [
-      "<span:4>"
-    ]
-  },
-  {
-    "_is_merge": true,
-    "id": "<span:5>",
-    "log_id": "g",
-    "metrics": {
-      "end": 0
+    "span_attributes": {
+      "exec_counter": 2,
+      "name": "ChatOpenAI",
+      "type": "llm"
     },
-    "project_id": "<project_id>",
-    "root_span_id": "<span:2>",
-    "span_id": "<span:6>",
+    "span_id": "<span:7>",
     "span_parents": [
       "<span:4>"
     ]
   },
   {
-    "_is_merge": false,
     "context": {
       "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
       "caller_functionname": "runOperation",
@@ -308,6 +252,7 @@
       "testRunId": "<run:1>"
     },
     "metrics": {
+      "end": 0,
       "start": 0
     },
     "project_id": "<project_id>",
@@ -322,21 +267,6 @@
     ]
   },
   {
-    "_is_merge": true,
-    "id": "<span:8>",
-    "log_id": "g",
-    "metrics": {
-      "end": 0
-    },
-    "project_id": "<project_id>",
-    "root_span_id": "<span:2>",
-    "span_id": "<span:9>",
-    "span_parents": [
-      "<span:2>"
-    ]
-  },
-  {
-    "_is_merge": false,
     "context": {
       "caller_filename": "<repo>/integrations/langchain-js/dist/index.js",
       "caller_functionname": "BraintrustCallbackHandler.startSpan",
@@ -355,7 +285,7 @@
         "sdk_language": "javascript"
       },
       "metadata": {},
-      "run_id": "<uuid:14>",
+      "run_id": "<uuid:13>",
       "serialized": {
         "id": [
           "langchain_core",
@@ -438,26 +368,8 @@
       "tags": []
     },
     "metrics": {
+      "end": 0,
       "start": 0
-    },
-    "project_id": "<project_id>",
-    "root_span_id": "<span:2>",
-    "span_attributes": {
-      "exec_counter": 4,
-      "name": "RunnableSequence",
-      "type": "task"
-    },
-    "span_id": "<span:11>",
-    "span_parents": [
-      "<span:9>"
-    ]
-  },
-  {
-    "_is_merge": true,
-    "id": "<span:10>",
-    "log_id": "g",
-    "metadata": {
-      "tags": []
     },
     "output": {
       "id": [
@@ -468,7 +380,7 @@
       "kwargs": {
         "additional_kwargs": {},
         "content": "PARIS",
-        "id": "<span:12>",
+        "id": "<span:11>",
         "invalid_tool_calls": [],
         "response_metadata": {
           "finish_reason": "stop",
@@ -517,21 +429,12 @@
     },
     "project_id": "<project_id>",
     "root_span_id": "<span:2>",
-    "span_id": "<span:11>",
-    "span_parents": [
-      "<span:9>"
-    ]
-  },
-  {
-    "_is_merge": true,
-    "id": "<span:10>",
-    "log_id": "g",
-    "metrics": {
-      "end": 0
+    "span_attributes": {
+      "exec_counter": 4,
+      "name": "RunnableSequence",
+      "type": "task"
     },
-    "project_id": "<project_id>",
-    "root_span_id": "<span:2>",
-    "span_id": "<span:11>",
+    "span_id": "<span:12>",
     "span_parents": [
       "<span:9>"
     ]
@@ -556,7 +459,7 @@
       },
       "metadata": {},
       "name": "ChatPromptTemplate",
-      "parent_run_id": "<uuid:14>",
+      "parent_run_id": "<uuid:13>",
       "run_id": "<uuid:17>",
       "run_type": "prompt",
       "serialized": {
@@ -649,11 +552,10 @@
     },
     "span_id": "<span:14>",
     "span_parents": [
-      "<span:11>"
+      "<span:12>"
     ]
   },
   {
-    "_is_merge": false,
     "context": {
       "caller_filename": "<repo>/integrations/langchain-js/dist/index.js",
       "caller_functionname": "BraintrustCallbackHandler.startSpan",
@@ -705,9 +607,10 @@
           "@langchain/openai": "<langchain-version>"
         }
       },
+      "model": "gpt-4o-mini-2024-07-18",
       "options": {},
-      "parent_run_id": "<uuid:14>",
-      "run_id": "<uuid:21>",
+      "parent_run_id": "<uuid:13>",
+      "run_id": "<uuid:20>",
       "serialized": {
         "id": [
           "langchain",
@@ -735,46 +638,12 @@
       ]
     },
     "metrics": {
-      "start": 0
-    },
-    "project_id": "<project_id>",
-    "root_span_id": "<span:2>",
-    "span_attributes": {
-      "exec_counter": 6,
-      "name": "ChatOpenAI",
-      "type": "llm"
-    },
-    "span_id": "<span:16>",
-    "span_parents": [
-      "<span:11>"
-    ]
-  },
-  {
-    "_is_merge": true,
-    "id": "<span:15>",
-    "log_id": "g",
-    "metrics": {
       "completion_tokens": "<number>",
+      "end": 0,
       "prompt_cached_tokens": "<number>",
       "prompt_tokens": "<number>",
+      "start": 0,
       "total_tokens": "<number>"
-    },
-    "project_id": "<project_id>",
-    "root_span_id": "<span:2>",
-    "span_id": "<span:16>",
-    "span_parents": [
-      "<span:11>"
-    ]
-  },
-  {
-    "_is_merge": true,
-    "id": "<span:15>",
-    "log_id": "g",
-    "metadata": {
-      "model": "gpt-4o-mini-2024-07-18",
-      "tags": [
-        "seq:step:2"
-      ]
     },
     "output": {
       "generations": [
@@ -792,7 +661,7 @@
               "kwargs": {
                 "additional_kwargs": {},
                 "content": "<llm-response>",
-                "id": "<span:12>",
+                "id": "<span:11>",
                 "invalid_tool_calls": [],
                 "response_metadata": {
                   "finish_reason": "stop",
@@ -853,27 +722,17 @@
     },
     "project_id": "<project_id>",
     "root_span_id": "<span:2>",
-    "span_id": "<span:16>",
-    "span_parents": [
-      "<span:11>"
-    ]
-  },
-  {
-    "_is_merge": true,
-    "id": "<span:15>",
-    "log_id": "g",
-    "metrics": {
-      "end": 0
+    "span_attributes": {
+      "exec_counter": 6,
+      "name": "ChatOpenAI",
+      "type": "llm"
     },
-    "project_id": "<project_id>",
-    "root_span_id": "<span:2>",
     "span_id": "<span:16>",
     "span_parents": [
-      "<span:11>"
+      "<span:12>"
     ]
   },
   {
-    "_is_merge": false,
     "context": {
       "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
       "caller_functionname": "runOperation",
@@ -887,6 +746,7 @@
       "testRunId": "<run:1>"
     },
     "metrics": {
+      "end": 0,
       "start": 0
     },
     "project_id": "<project_id>",
@@ -901,21 +761,6 @@
     ]
   },
   {
-    "_is_merge": true,
-    "id": "<span:17>",
-    "log_id": "g",
-    "metrics": {
-      "end": 0
-    },
-    "project_id": "<project_id>",
-    "root_span_id": "<span:2>",
-    "span_id": "<span:18>",
-    "span_parents": [
-      "<span:2>"
-    ]
-  },
-  {
-    "_is_merge": false,
     "context": {
       "caller_filename": "<repo>/integrations/langchain-js/dist/index.js",
       "caller_functionname": "BraintrustCallbackHandler.startSpan",
@@ -970,8 +815,9 @@
           "@langchain/openai": "<langchain-version>"
         }
       },
+      "model": "gpt-4o-mini-2024-07-18",
       "options": {},
-      "run_id": "<uuid:26>",
+      "run_id": "<uuid:25>",
       "serialized": {
         "id": [
           "langchain",
@@ -998,45 +844,13 @@
       "tags": []
     },
     "metrics": {
-      "start": 0
-    },
-    "project_id": "<project_id>",
-    "root_span_id": "<span:2>",
-    "span_attributes": {
-      "exec_counter": 8,
-      "name": "ChatOpenAI",
-      "type": "llm"
-    },
-    "span_id": "<span:20>",
-    "span_parents": [
-      "<span:18>"
-    ]
-  },
-  {
-    "_is_merge": true,
-    "id": "<span:19>",
-    "log_id": "g",
-    "metrics": {
       "completion_tokens": "<number>",
+      "end": 0,
       "prompt_cached_tokens": "<number>",
       "prompt_tokens": "<number>",
+      "start": 0,
       "time_to_first_token": 0,
       "total_tokens": "<number>"
-    },
-    "project_id": "<project_id>",
-    "root_span_id": "<span:2>",
-    "span_id": "<span:20>",
-    "span_parents": [
-      "<span:18>"
-    ]
-  },
-  {
-    "_is_merge": true,
-    "id": "<span:19>",
-    "log_id": "g",
-    "metadata": {
-      "model": "gpt-4o-mini-2024-07-18",
-      "tags": []
     },
     "output": {
       "generations": [
@@ -1059,7 +873,7 @@
               "kwargs": {
                 "additional_kwargs": {},
                 "content": "<llm-response>",
-                "id": "<span:21>",
+                "id": "<span:20>",
                 "invalid_tool_calls": [],
                 "response_metadata": {
                   "completion": 0,
@@ -1118,27 +932,17 @@
     },
     "project_id": "<project_id>",
     "root_span_id": "<span:2>",
-    "span_id": "<span:20>",
-    "span_parents": [
-      "<span:18>"
-    ]
-  },
-  {
-    "_is_merge": true,
-    "id": "<span:19>",
-    "log_id": "g",
-    "metrics": {
-      "end": 0
+    "span_attributes": {
+      "exec_counter": 8,
+      "name": "ChatOpenAI",
+      "type": "llm"
     },
-    "project_id": "<project_id>",
-    "root_span_id": "<span:2>",
-    "span_id": "<span:20>",
+    "span_id": "<span:21>",
     "span_parents": [
       "<span:18>"
     ]
   },
   {
-    "_is_merge": false,
     "context": {
       "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
       "caller_functionname": "runOperation",
@@ -1152,6 +956,7 @@
       "testRunId": "<run:1>"
     },
     "metrics": {
+      "end": 0,
       "start": 0
     },
     "project_id": "<project_id>",
@@ -1166,21 +971,6 @@
     ]
   },
   {
-    "_is_merge": true,
-    "id": "<span:22>",
-    "log_id": "g",
-    "metrics": {
-      "end": 0
-    },
-    "project_id": "<project_id>",
-    "root_span_id": "<span:2>",
-    "span_id": "<span:23>",
-    "span_parents": [
-      "<span:2>"
-    ]
-  },
-  {
-    "_is_merge": false,
     "context": {
       "caller_filename": "<repo>/integrations/langchain-js/dist/index.js",
       "caller_functionname": "BraintrustCallbackHandler.startSpan",
@@ -1255,6 +1045,7 @@
           "@langchain/openai": "<langchain-version>"
         }
       },
+      "model": "gpt-4o-mini-2024-07-18",
       "options": {
         "tools": [
           {
@@ -1280,7 +1071,7 @@
           }
         ]
       },
-      "run_id": "<uuid:32>",
+      "run_id": "<uuid:31>",
       "serialized": {
         "id": [
           "langchain",
@@ -1306,44 +1097,12 @@
       "tags": []
     },
     "metrics": {
-      "start": 0
-    },
-    "project_id": "<project_id>",
-    "root_span_id": "<span:2>",
-    "span_attributes": {
-      "exec_counter": 10,
-      "name": "ChatOpenAI",
-      "type": "llm"
-    },
-    "span_id": "<span:25>",
-    "span_parents": [
-      "<span:23>"
-    ]
-  },
-  {
-    "_is_merge": true,
-    "id": "<span:24>",
-    "log_id": "g",
-    "metrics": {
       "completion_tokens": "<number>",
+      "end": 0,
       "prompt_cached_tokens": "<number>",
       "prompt_tokens": "<number>",
+      "start": 0,
       "total_tokens": "<number>"
-    },
-    "project_id": "<project_id>",
-    "root_span_id": "<span:2>",
-    "span_id": "<span:25>",
-    "span_parents": [
-      "<span:23>"
-    ]
-  },
-  {
-    "_is_merge": true,
-    "id": "<span:24>",
-    "log_id": "g",
-    "metadata": {
-      "model": "gpt-4o-mini-2024-07-18",
-      "tags": []
     },
     "output": {
       "generations": [
@@ -1366,13 +1125,13 @@
                         "arguments": "{\"location\":\"Paris, France\"}",
                         "name": "get_weather"
                       },
-                      "id": "<span:27>",
+                      "id": "<span:26>",
                       "type": "function"
                     }
                   ]
                 },
                 "content": "",
-                "id": "<span:26>",
+                "id": "<span:25>",
                 "invalid_tool_calls": [],
                 "response_metadata": {
                   "finish_reason": "tool_calls",
@@ -1405,7 +1164,7 @@
                     "args": {
                       "location": "Paris, France"
                     },
-                    "id": "<span:27>",
+                    "id": "<span:26>",
                     "name": "get_weather",
                     "type": "tool_call"
                   }
@@ -1442,27 +1201,17 @@
     },
     "project_id": "<project_id>",
     "root_span_id": "<span:2>",
-    "span_id": "<span:25>",
-    "span_parents": [
-      "<span:23>"
-    ]
-  },
-  {
-    "_is_merge": true,
-    "id": "<span:24>",
-    "log_id": "g",
-    "metrics": {
-      "end": 0
+    "span_attributes": {
+      "exec_counter": 10,
+      "name": "ChatOpenAI",
+      "type": "llm"
     },
-    "project_id": "<project_id>",
-    "root_span_id": "<span:2>",
-    "span_id": "<span:25>",
+    "span_id": "<span:27>",
     "span_parents": [
       "<span:23>"
     ]
   },
   {
-    "_is_merge": false,
     "context": {
       "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
       "caller_functionname": "runOperation",
@@ -1476,6 +1225,7 @@
       "testRunId": "<run:1>"
     },
     "metrics": {
+      "end": 0,
       "start": 0
     },
     "project_id": "<project_id>",
@@ -1490,21 +1240,6 @@
     ]
   },
   {
-    "_is_merge": true,
-    "id": "<span:28>",
-    "log_id": "g",
-    "metrics": {
-      "end": 0
-    },
-    "project_id": "<project_id>",
-    "root_span_id": "<span:2>",
-    "span_id": "<span:29>",
-    "span_parents": [
-      "<span:2>"
-    ]
-  },
-  {
-    "_is_merge": false,
     "context": {
       "caller_filename": "<repo>/integrations/langchain-js/dist/index.js",
       "caller_functionname": "BraintrustCallbackHandler.startSpan",
@@ -1592,6 +1327,7 @@
           "@langchain/openai": "<langchain-version>"
         }
       },
+      "model": "gpt-4o-mini-2024-07-18",
       "options": {
         "tools": [
           {
@@ -1630,7 +1366,7 @@
           }
         ]
       },
-      "run_id": "<uuid:39>",
+      "run_id": "<uuid:38>",
       "serialized": {
         "id": [
           "langchain",
@@ -1656,44 +1392,12 @@
       "tags": []
     },
     "metrics": {
-      "start": 0
-    },
-    "project_id": "<project_id>",
-    "root_span_id": "<span:2>",
-    "span_attributes": {
-      "exec_counter": 12,
-      "name": "ChatOpenAI",
-      "type": "llm"
-    },
-    "span_id": "<span:31>",
-    "span_parents": [
-      "<span:29>"
-    ]
-  },
-  {
-    "_is_merge": true,
-    "id": "<span:30>",
-    "log_id": "g",
-    "metrics": {
       "completion_tokens": "<number>",
+      "end": 0,
       "prompt_cached_tokens": "<number>",
       "prompt_tokens": "<number>",
+      "start": 0,
       "total_tokens": "<number>"
-    },
-    "project_id": "<project_id>",
-    "root_span_id": "<span:2>",
-    "span_id": "<span:31>",
-    "span_parents": [
-      "<span:29>"
-    ]
-  },
-  {
-    "_is_merge": true,
-    "id": "<span:30>",
-    "log_id": "g",
-    "metadata": {
-      "model": "gpt-4o-mini-2024-07-18",
-      "tags": []
     },
     "output": {
       "generations": [
@@ -1716,13 +1420,13 @@
                         "arguments": "{\"operation\":\"multiply\",\"a\":127,\"b\":49}",
                         "name": "calculate"
                       },
-                      "id": "<span:27>",
+                      "id": "<span:26>",
                       "type": "function"
                     }
                   ]
                 },
                 "content": "",
-                "id": "<span:32>",
+                "id": "<span:31>",
                 "invalid_tool_calls": [],
                 "response_metadata": {
                   "finish_reason": "tool_calls",
@@ -1757,7 +1461,7 @@
                       "b": 49,
                       "operation": "multiply"
                     },
-                    "id": "<span:27>",
+                    "id": "<span:26>",
                     "name": "calculate",
                     "type": "tool_call"
                   }
@@ -1794,27 +1498,17 @@
     },
     "project_id": "<project_id>",
     "root_span_id": "<span:2>",
-    "span_id": "<span:31>",
-    "span_parents": [
-      "<span:29>"
-    ]
-  },
-  {
-    "_is_merge": true,
-    "id": "<span:30>",
-    "log_id": "g",
-    "metrics": {
-      "end": 0
+    "span_attributes": {
+      "exec_counter": 12,
+      "name": "ChatOpenAI",
+      "type": "llm"
     },
-    "project_id": "<project_id>",
-    "root_span_id": "<span:2>",
-    "span_id": "<span:31>",
+    "span_id": "<span:32>",
     "span_parents": [
       "<span:29>"
     ]
   },
   {
-    "_is_merge": false,
     "context": {
       "caller_filename": "<repo>/integrations/langchain-js/dist/index.js",
       "caller_functionname": "BraintrustCallbackHandler.startSpan",
@@ -1856,7 +1550,7 @@
                   "b": 49,
                   "operation": "multiply"
                 },
-                "id": "<span:27>",
+                "id": "<span:26>",
                 "name": "calculate",
                 "type": "tool_call"
               }
@@ -1944,6 +1638,7 @@
           "@langchain/openai": "<langchain-version>"
         }
       },
+      "model": "gpt-4o-mini-2024-07-18",
       "options": {
         "tools": [
           {
@@ -1982,7 +1677,7 @@
           }
         ]
       },
-      "run_id": "<uuid:43>",
+      "run_id": "<uuid:42>",
       "serialized": {
         "id": [
           "langchain",
@@ -2008,44 +1703,12 @@
       "tags": []
     },
     "metrics": {
-      "start": 0
-    },
-    "project_id": "<project_id>",
-    "root_span_id": "<span:2>",
-    "span_attributes": {
-      "exec_counter": 13,
-      "name": "ChatOpenAI",
-      "type": "llm"
-    },
-    "span_id": "<span:34>",
-    "span_parents": [
-      "<span:29>"
-    ]
-  },
-  {
-    "_is_merge": true,
-    "id": "<span:33>",
-    "log_id": "g",
-    "metrics": {
       "completion_tokens": "<number>",
+      "end": 0,
       "prompt_cached_tokens": "<number>",
       "prompt_tokens": "<number>",
+      "start": 0,
       "total_tokens": "<number>"
-    },
-    "project_id": "<project_id>",
-    "root_span_id": "<span:2>",
-    "span_id": "<span:34>",
-    "span_parents": [
-      "<span:29>"
-    ]
-  },
-  {
-    "_is_merge": true,
-    "id": "<span:33>",
-    "log_id": "g",
-    "metadata": {
-      "model": "gpt-4o-mini-2024-07-18",
-      "tags": []
     },
     "output": {
       "generations": [
@@ -2063,7 +1726,7 @@
               "kwargs": {
                 "additional_kwargs": {},
                 "content": "<llm-response>",
-                "id": "<span:35>",
+                "id": "<span:34>",
                 "invalid_tool_calls": [],
                 "response_metadata": {
                   "finish_reason": "stop",
@@ -2124,21 +1787,12 @@
     },
     "project_id": "<project_id>",
     "root_span_id": "<span:2>",
-    "span_id": "<span:34>",
-    "span_parents": [
-      "<span:29>"
-    ]
-  },
-  {
-    "_is_merge": true,
-    "id": "<span:33>",
-    "log_id": "g",
-    "metrics": {
-      "end": 0
+    "span_attributes": {
+      "exec_counter": 13,
+      "name": "ChatOpenAI",
+      "type": "llm"
     },
-    "project_id": "<project_id>",
-    "root_span_id": "<span:2>",
-    "span_id": "<span:34>",
+    "span_id": "<span:35>",
     "span_parents": [
       "<span:29>"
     ]

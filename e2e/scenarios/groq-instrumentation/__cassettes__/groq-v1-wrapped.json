@@ -1,0 +1,241 @@
+{
+  "version": 1,
+  "meta": {
+    "createdAt": "2026-04-28T23:26:09.116Z",
+    "seinfeldVersion": "0.0.0"
+  },
+  "entries": [
+    {
+      "id": "3dffad7c90a4c3b7",
+      "matchKey": "POST api.groq.com/openai/v1/chat/completions",
+      "callIndex": 0,
+      "recordedAt": "2026-04-28T23:26:09.116Z",
+      "request": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "headers": {
+          "accept": "application/json",
+          "content-type": "application/json"
+        },
+        "body": {
+          "kind": "json",
+          "value": {
+            "max_completion_tokens": 12,
+            "messages": [
+              {
+                "content": "Reply with exactly OK.",
+                "role": "user"
+              }
+            ],
+            "model": "llama-3.3-70b-versatile",
+            "temperature": 0
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "statusText": "OK",
+        "headers": {
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "cache-control": "private, max-age=0, no-store, no-cache, must-revalidate",
+          "content-type": "application/json",
+          "vary": "Origin",
+          "x-groq-region": "yka"
+        },
+        "body": {
+          "kind": "json",
+          "value": {
+            "choices": [
+              {
+                "finish_reason": "stop",
+                "index": 0,
+                "logprobs": null,
+                "message": {
+                  "content": "OK",
+                  "role": "assistant"
+                }
+              }
+            ],
+            "created": 1777418768,
+            "id": "chatcmpl-8caf8bb9-d0f4-4b3a-8afe-11328fff20e2",
+            "model": "llama-3.3-70b-versatile",
+            "object": "chat.completion",
+            "service_tier": "on_demand",
+            "system_fingerprint": "fp_0761e44d7b",
+            "usage": {
+              "completion_time": 0.007386694,
+              "completion_tokens": 2,
+              "prompt_time": 0.002172434,
+              "prompt_tokens": 40,
+              "queue_time": 0.008493811,
+              "total_time": 0.009559128,
+              "total_tokens": 42
+            },
+            "usage_breakdown": null,
+            "x_groq": {
+              "id": "req_01kqb6m4gdenstqe3me6ryse4k",
+              "seed": 429181514
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "cfcb31431404c5e9",
+      "matchKey": "POST api.groq.com/openai/v1/chat/completions",
+      "callIndex": 1,
+      "recordedAt": "2026-04-28T23:26:09.116Z",
+      "request": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "headers": {
+          "accept": "application/json",
+          "content-type": "application/json"
+        },
+        "body": {
+          "kind": "json",
+          "value": {
+            "messages": [
+              {
+                "content": "Reply with exactly STREAM.",
+                "role": "user"
+              }
+            ],
+            "model": "llama-3.3-70b-versatile",
+            "stream": true,
+            "temperature": 0
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "statusText": "OK",
+        "headers": {
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "cache-control": "no-cache",
+          "content-type": "text/event-stream",
+          "vary": "Origin",
+          "x-groq-region": "yka"
+        },
+        "body": {
+          "kind": "sse",
+          "chunks": [
+            "data: {\"id\":\"chatcmpl-77d01bcd-fe2c-4141-8e37-9c2c8ec23199\",\"object\":\"chat.completion.chunk\",\"created\":1777418768,\"model\":\"llama-3.3-70b-versatile\",\"system_fingerprint\":\"fp_0761e44d7b\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\"},\"logprobs\":null,\"finish_reason\":null}],\"x_groq\":{\"id\":\"req_01kqb6m4jpensr91r221fbrnsf\",\"seed\":1706490734}}\n\n",
+            "data: {\"id\":\"chatcmpl-77d01bcd-fe2c-4141-8e37-9c2c8ec23199\",\"object\":\"chat.completion.chunk\",\"created\":1777418768,\"model\":\"llama-3.3-70b-versatile\",\"system_fingerprint\":\"fp_0761e44d7b\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"STREAM\"},\"logprobs\":null,\"finish_reason\":null}]}\n\n",
+            "data: {\"id\":\"chatcmpl-77d01bcd-fe2c-4141-8e37-9c2c8ec23199\",\"object\":\"chat.completion.chunk\",\"created\":1777418769,\"model\":\"llama-3.3-70b-versatile\",\"system_fingerprint\":\"fp_0761e44d7b\",\"choices\":[{\"index\":0,\"delta\":{},\"logprobs\":null,\"finish_reason\":\"stop\"}],\"x_groq\":{\"id\":\"req_01kqb6m4jpensr91r221fbrnsf\",\"usage\":{\"queue_time\":0.008318354,\"prompt_tokens\":40,\"prompt_time\":0.001964169,\"completion_tokens\":2,\"completion_time\":0.015516481,\"total_tokens\":42,\"total_time\":0.01748065}},\"usage\":{\"queue_time\":0.008318354,\"prompt_tokens\":40,\"prompt_time\":0.001964169,\"completion_tokens\":2,\"completion_time\":0.015516481,\"total_tokens\":42,\"total_time\":0.01748065}}\n\ndata: [DONE]\n\n"
+          ]
+        }
+      }
+    },
+    {
+      "id": "0ffae2350a0663da",
+      "matchKey": "POST api.groq.com/openai/v1/chat/completions",
+      "callIndex": 2,
+      "recordedAt": "2026-04-28T23:26:09.116Z",
+      "request": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "headers": {
+          "accept": "application/json",
+          "content-type": "application/json"
+        },
+        "body": {
+          "kind": "json",
+          "value": {
+            "messages": [
+              {
+                "content": "Check the weather in Vienna and use the weather tool.",
+                "role": "user"
+              }
+            ],
+            "model": "llama-3.3-70b-versatile",
+            "temperature": 0,
+            "tool_choice": {
+              "function": {
+                "name": "get_weather"
+              },
+              "type": "function"
+            },
+            "tools": [
+              {
+                "function": {
+                  "description": "Get the weather for a city.",
+                  "name": "get_weather",
+                  "parameters": {
+                    "properties": {
+                      "location": {
+                        "description": "City name.",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "location"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "type": "function"
+              }
+            ]
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "statusText": "OK",
+        "headers": {
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "cache-control": "private, max-age=0, no-store, no-cache, must-revalidate",
+          "content-type": "application/json",
+          "vary": "Origin",
+          "x-groq-region": "yka"
+        },
+        "body": {
+          "kind": "json",
+          "value": {
+            "choices": [
+              {
+                "finish_reason": "tool_calls",
+                "index": 0,
+                "logprobs": null,
+                "message": {
+                  "role": "assistant",
+                  "tool_calls": [
+                    {
+                      "function": {
+                        "arguments": "{\"location\":\"Vienna\"}",
+                        "name": "get_weather"
+                      },
+                      "id": "tygvbfpw8",
+                      "type": "function"
+                    }
+                  ]
+                }
+              }
+            ],
+            "created": 1777418769,
+            "id": "chatcmpl-98e840dd-444d-4ea8-bb85-02a9639f0a03",
+            "model": "llama-3.3-70b-versatile",
+            "object": "chat.completion",
+            "service_tier": "on_demand",
+            "system_fingerprint": "fp_0761e44d7b",
+            "usage": {
+              "completion_time": 0.030336539,
+              "completion_tokens": 11,
+              "prompt_time": 0.032528641,
+              "prompt_tokens": 246,
+              "queue_time": 0.008668936,
+              "total_time": 0.06286518,
+              "total_tokens": 257
+            },
+            "usage_breakdown": null,
+            "x_groq": {
+              "id": "req_01kqb6m4n1eczryd5r85cbta2j",
+              "seed": 140613182
+            }
+          }
+        }
+      }
+    }
+  ]
+}
