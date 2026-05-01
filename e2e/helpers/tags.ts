@@ -19,7 +19,7 @@ function dirFromImportMetaUrl(importMetaUrl: string): string {
 
 function cassetteExists(scenarioDir: string, variantKey: string): boolean {
   return existsSync(
-    path.join(scenarioDir, "__cassettes__", `${variantKey}.json`),
+    path.join(scenarioDir, "__cassettes__", `${variantKey}.cassette.json`),
   );
 }
 

@@ -268,7 +268,7 @@ function getTestServerEnv(
 }
 
 interface CassetteWiring {
-  cassettePath: string;
+  cassetteDir: string;
   variantKey: string;
   mockHost: string;
   normalizerName?: string;
@@ -276,7 +276,7 @@ interface CassetteWiring {
 
 function getCassetteEnv(wiring: CassetteWiring): Record<string, string> {
   const env: Record<string, string> = {
-    BRAINTRUST_E2E_CASSETTE_PATH: wiring.cassettePath,
+    BRAINTRUST_E2E_CASSETTE_PATH: wiring.cassetteDir,
     BRAINTRUST_E2E_CASSETTE_MODE: process.env[CASSETTE_MODE_ENV] ?? "replay",
     BRAINTRUST_E2E_CASSETTE_VARIANT: wiring.variantKey,
     BRAINTRUST_E2E_MOCK_HOST: wiring.mockHost,
@@ -664,7 +664,7 @@ export async function withScenarioHarness(
     const cassettePath = path.join(
       originalScenarioDir,
       "__cassettes__",
-      `${variantKey}.json`,
+      `${variantKey}.cassette.json`,
     );
 
     // Auto-engage the cassette layer when:
@@ -684,7 +684,7 @@ export async function withScenarioHarness(
     return {
       ...getProviderKeyPlaceholders(),
       ...getCassetteEnv({
-        cassettePath,
+        cassetteDir: path.dirname(cassettePath),
         variantKey,
         mockHost: urlToHostHeader(server.url),
         normalizerName,
