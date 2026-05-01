@@ -40,6 +40,7 @@ export { mistralConfigs } from "./configs/mistral";
 export { googleADKConfigs } from "./configs/google-adk";
 export { cohereConfigs } from "./configs/cohere";
 export { groqConfigs } from "./configs/groq";
+export { langchainConfigs } from "./configs/langchain";
 
 // Re-export orchestrion configuration types
 // Note: ModuleMetadata and FunctionQuery are properties of InstrumentationConfig,

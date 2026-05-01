@@ -37,6 +37,19 @@ function isRecord(value: Json | undefined): value is Record<string, Json> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+function mergeJsonValue(base: Json | undefined, incoming: Json): Json {
+  if (isRecord(base) && isRecord(incoming)) {
+    const merged: Record<string, Json> = { ...base };
+    for (const [key, value] of Object.entries(incoming)) {
+      merged[key] =
+        key in merged ? mergeJsonValue(merged[key], value as Json) : value;
+    }
+    return merged;
+  }
+
+  return incoming;
+}
+
 function summarizeChatOutput(
   output: Json | undefined,
   options?: {
@@ -197,6 +210,134 @@ function normalizePayloadOutput(row: Json): Json {
     : row;
 }
 
+function normalizeResponseMetadata(metadata: Json): Json {
+  if (!isRecord(metadata)) {
+    return metadata;
+  }
+
+  const normalized: Record<string, Json> = {};
+  for (const [key, value] of Object.entries(metadata)) {
+    if (
+      key === "model" &&
+      typeof value === "string" &&
+      ("created" in metadata || "id" in metadata || "object" in metadata)
+    ) {
+      normalized[key] = "<string>";
+      continue;
+    }
+
+    normalized[key] = normalizeResponseMetadata(value as Json);
+  }
+
+  return normalized;
+}
+
+function pickPayloadMetadata(metadata: Json): Json {
+  if (!isRecord(metadata)) {
+    return null;
+  }
+
+  const picked: Record<string, Json> = {};
+  for (const key of [
+    "dimensions",
+    "endpointUrl",
+    "finish_reason",
+    "model",
+    "object",
+    "operation",
+    "provider",
+    "scenario",
+    "tool_choice",
+  ]) {
+    if (key in metadata) {
+      picked[key] = metadata[key];
+    }
+  }
+
+  if (Array.isArray(metadata.tools)) {
+    picked.tools = metadata.tools.map((tool) => {
+      if (!isRecord(tool)) {
+        return tool;
+      }
+
+      const toolFunction = isRecord(tool.function) ? tool.function : undefined;
+      return {
+        type: tool.type ?? null,
+        name: toolFunction?.name ?? null,
+      } satisfies Json;
+    });
+  }
+
+  return Object.keys(picked).length > 0 ? (picked satisfies Json) : null;
+}
+
+function summarizePayloadRow(row: Json): Json {
+  if (!isRecord(row)) {
+    return row;
+  }
+
+  const spanAttributes = isRecord(row.span_attributes)
+    ? row.span_attributes
+    : undefined;
+  const metrics = isRecord(row.metrics) ? row.metrics : undefined;
+
+  return {
+    has_input: row.input !== undefined && row.input !== null,
+    has_output: row.output !== undefined && row.output !== null,
+    metadata: pickPayloadMetadata(row.metadata),
+    metric_keys: Object.keys(metrics ?? {})
+      .filter((key) => key !== "start" && key !== "end")
+      .sort(),
+    name: spanAttributes?.name ?? null,
+    output:
+      row.output !== undefined
+        ? normalizeLoggedOutput(row.output, {
+            normalizeFinishReason: true,
+            omitToolCalls: true,
+          })
+        : null,
+    type: spanAttributes?.type ?? null,
+  } satisfies Json;
+}
+
+function canonicalizePayloadRows(rows: Json[]): Json[] {
+  const mergedRows = new Map<string, Json>();
+  const rowOrder: string[] = [];
+
+  for (const row of rows) {
+    if (!isRecord(row)) {
+      continue;
+    }
+
+    const spanId =
+      typeof row.span_id === "string"
+        ? row.span_id
+        : `row-${rowOrder.length.toString()}`;
+    if (!mergedRows.has(spanId)) {
+      rowOrder.push(spanId);
+    }
+    mergedRows.set(spanId, mergeJsonValue(mergedRows.get(spanId), row));
+  }
+
+  return rowOrder
+    .map((spanId) => mergedRows.get(spanId))
+    .filter((row): row is Json => row !== undefined)
+    .map((row) => {
+      if (!isRecord(row)) {
+        return row;
+      }
+
+      const normalized = { ...row };
+      delete normalized._is_merge;
+
+      if (isRecord(normalized.metadata)) {
+        normalized.metadata = normalizeResponseMetadata(normalized.metadata);
+      }
+
+      return normalized satisfies Json;
+    });
+}
+
 function normalizeLoggedOutput(
   output: Json,
   options?: {
@@ -353,9 +494,11 @@ export function defineHuggingFaceInstrumentationAssertions(options: {
         events = harness.events();
 
         const root = findLatestSpan(events, ROOT_NAME);
-        payloadRows = payloadRowsForRootSpan(harness.payloads(), root?.span.id)
-          .map((row) => normalizePayloadOutput(normalizeMetrics(row as Json)))
-          .filter((row) => row !== null);
+        payloadRows = canonicalizePayloadRows(
+          payloadRowsForRootSpan(harness.payloads(), root?.span.id)
+            .map((row) => normalizePayloadOutput(normalizeMetrics(row as Json)))
+            .filter((row) => row !== null),
+        ).map((row) => summarizePayloadRow(row));
       });
     }, options.timeoutMs);
 
