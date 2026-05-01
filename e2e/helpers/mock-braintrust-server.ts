@@ -72,6 +72,13 @@ interface StartMockBraintrustServerOptions {
 }
 
 const DEFAULT_API_KEY = "mock-braintrust-api-key";
+const DEFAULT_ORG_ID = "00000000-0000-4000-8000-000000000000";
+
+interface MockProject {
+  id: string;
+  name: string;
+  org_id: string;
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -254,6 +261,26 @@ function capturedRequestFrom(
   };
 }
 
+async function respondForwardedResponse(
+  response: ServerResponse,
+  forwardedResponse: Response,
+): Promise<void> {
+  const contentType = forwardedResponse.headers.get("content-type") ?? "";
+  if (contentType.includes("application/json")) {
+    respondJson(
+      response,
+      forwardedResponse.status,
+      await forwardedResponse.json(),
+    );
+    return;
+  }
+
+  response.writeHead(forwardedResponse.status, {
+    "Content-Type": contentType || "text/plain",
+  });
+  response.end(await forwardedResponse.text());
+}
+
 export async function startMockBraintrustServer(
   options: StartMockBraintrustServerOptions = {},
 ): Promise<MockBraintrustServer> {
@@ -264,7 +291,7 @@ export async function startMockBraintrustServer(
   const payloads: CapturedLogPayload[] = [];
   const events: CapturedLogEvent[] = [];
   const mergedRows = new Map<string, CapturedLogRow>();
-  const projectsByName = new Map<string, { id: string; name: string }>();
+  const projectsByName = new Map<string, MockProject>();
   const experimentsByProjectAndName = new Map<
     string,
     {
@@ -282,6 +309,7 @@ export async function startMockBraintrustServer(
     projectsByName.set(prodForwarding.projectName, {
       id: prodForwarding.projectId,
       name: prodForwarding.projectName,
+      org_id: DEFAULT_ORG_ID,
     });
   }
 
@@ -308,7 +336,7 @@ export async function startMockBraintrustServer(
     }
   }
 
-  function projectForName(name: string): { id: string; name: string } {
+  function projectForName(name: string): MockProject {
     const existing = projectsByName.get(name);
     if (existing) {
       return existing;
@@ -320,25 +348,28 @@ export async function startMockBraintrustServer(
           ? prodForwarding.projectId
           : randomUUID(),
       name,
+      org_id: DEFAULT_ORG_ID,
     };
     projectsByName.set(name, created);
     return created;
   }
 
-  function upsertProject(project: { id: string; name: string }): {
+  function upsertProject(project: {
     id: string;
     name: string;
-  } {
+    org_id?: string;
+  }): MockProject {
     const created = {
       id: project.id,
       name: project.name,
+      org_id: project.org_id ?? DEFAULT_ORG_ID,
     };
     projectsByName.set(project.name, created);
     return created;
   }
 
   function experimentForProject(
-    project: { id: string; name: string },
+    project: MockProject,
     name: string,
   ): {
     created: string;
@@ -363,7 +394,7 @@ export async function startMockBraintrustServer(
   }
 
   function upsertExperiment(
-    project: { id: string; name: string },
+    project: MockProject,
     experiment: { created: string; id: string; name: string },
   ): {
     created: string;
@@ -429,8 +460,9 @@ export async function startMockBraintrustServer(
     });
 
     if (!response.ok) {
+      const responseBody = await response.text();
       throw new Error(
-        `prodForwarding failed for ${capturedRequest.method} ${capturedRequest.path}: ${response.status} ${response.statusText}`,
+        `prodForwarding failed for ${capturedRequest.method} ${capturedRequest.path}: ${response.status} ${response.statusText}${responseBody ? ` (${responseBody})` : ""}`,
       );
     }
 
@@ -509,6 +541,10 @@ export async function startMockBraintrustServer(
                   project: upsertProject({
                     id: forwardedBody.project.id,
                     name: forwardedBody.project.name,
+                    org_id:
+                      typeof forwardedBody.project.org_id === "string"
+                        ? forwardedBody.project.org_id
+                        : undefined,
                   }),
                 });
                 return;
@@ -560,6 +596,10 @@ export async function startMockBraintrustServer(
                 const forwardedProject = upsertProject({
                   id: forwardedBody.project.id,
                   name: forwardedBody.project.name,
+                  org_id:
+                    typeof forwardedBody.project.org_id === "string"
+                      ? forwardedBody.project.org_id
+                      : undefined,
                 });
                 const forwardedExperiment = upsertExperiment(forwardedProject, {
                   created: forwardedBody.experiment.created,
@@ -584,6 +624,31 @@ export async function startMockBraintrustServer(
             experiment,
             project,
           });
+          return;
+        }
+
+        if (
+          prodForwarding &&
+          capturedRequest.method === "POST" &&
+          capturedRequest.path === "/insert-functions"
+        ) {
+          await respondForwardedResponse(
+            res,
+            await forwardProdRequest(capturedRequest),
+          );
+          return;
+        }
+
+        if (
+          prodForwarding &&
+          capturedRequest.method === "GET" &&
+          (capturedRequest.path === "/v1/prompt" ||
+            capturedRequest.path.startsWith("/v1/prompt/"))
+        ) {
+          await respondForwardedResponse(
+            res,
+            await forwardProdRequest(capturedRequest),
+          );
           return;
         }
 

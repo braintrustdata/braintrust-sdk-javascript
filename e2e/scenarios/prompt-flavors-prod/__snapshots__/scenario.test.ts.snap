@@ -1,0 +1,327 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`prompt-flavors-prod loads production prompts and builds each flavor > prompt-builds 1`] = `
+{
+  "chatPrompt": {
+    "build": {
+      "max_tokens": 42,
+      "messages": [
+        {
+          "content": "What is the weather in Paris?",
+          "role": "user",
+        },
+      ],
+      "model": "gpt-4o-mini",
+      "response_format": {
+        "json_schema": {
+          "name": "weather_summary",
+          "schema": {
+            "additionalProperties": false,
+            "properties": {
+              "forecast": {
+                "type": "string",
+              },
+            },
+            "required": [
+              "forecast",
+            ],
+            "type": "object",
+          },
+          "strict": true,
+        },
+        "type": "json_schema",
+      },
+      "verbosity": "medium",
+    },
+    "id": "<span:1>",
+    "projectId": "<project_id>",
+    "slug": "e2e-prompt-flavors-chat-e2e-<uuid:3>",
+    "version": "<xact:1>",
+  },
+  "completionPrompt": {
+    "build": {
+      "model": "gpt-4o-mini",
+      "prompt": "Summarize prompt flavors in one line.",
+    },
+    "id": "<span:4>",
+    "slug": "e2e-prompt-flavors-completion-e2e-<uuid:3>",
+    "version": "<xact:1>",
+  },
+  "responsesPrompt": {
+    "build": {
+      "input": [
+        {
+          "content": "What is the weather in Paris?",
+          "role": "user",
+          "type": "message",
+        },
+      ],
+      "max_output_tokens": 42,
+      "model": "gpt-4o-mini",
+      "text": {
+        "format": {
+          "name": "weather_summary",
+          "schema": {
+            "additionalProperties": false,
+            "properties": {
+              "forecast": {
+                "type": "string",
+              },
+            },
+            "required": [
+              "forecast",
+            ],
+            "type": "object",
+          },
+          "strict": true,
+          "type": "json_schema",
+        },
+        "verbosity": "medium",
+      },
+    },
+    "buildWithAttachments": {
+      "input": [
+        {
+          "content": "What is the weather in Paris?",
+          "role": "user",
+          "type": "message",
+        },
+      ],
+      "max_output_tokens": 42,
+      "model": "gpt-4o-mini",
+      "text": {
+        "format": {
+          "name": "weather_summary",
+          "schema": {
+            "additionalProperties": false,
+            "properties": {
+              "forecast": {
+                "type": "string",
+              },
+            },
+            "required": [
+              "forecast",
+            ],
+            "type": "object",
+          },
+          "strict": true,
+          "type": "json_schema",
+        },
+        "verbosity": "medium",
+      },
+    },
+    "id": "<span:1>",
+    "slug": "e2e-prompt-flavors-chat-e2e-<uuid:3>",
+    "version": "<xact:1>",
+  },
+}
+`;
+
+exports[`prompt-flavors-prod loads production prompts and builds each flavor > request-flow 1`] = `
+[
+  {
+    "headers": null,
+    "jsonBody": null,
+    "method": "POST",
+    "path": "/api/apikey/login",
+    "query": null,
+    "rawBody": null,
+  },
+  {
+    "headers": null,
+    "jsonBody": {
+      "project_name": "<project_name>",
+    },
+    "method": "POST",
+    "path": "/api/project/register",
+    "query": null,
+    "rawBody": {
+      "project_name": "<project_name>",
+    },
+  },
+  {
+    "headers": null,
+    "jsonBody": {
+      "functions": [
+        {
+          "description": "",
+          "function_data": {
+            "type": "prompt",
+          },
+          "name": "E2E prompt flavors chat e2e-<uuid:3>",
+          "project_id": "<project_id>",
+          "prompt_data": {
+            "options": {
+              "model": "gpt-4o-mini",
+              "params": {
+                "max_tokens": 42,
+                "response_format": {
+                  "json_schema": {
+                    "name": "weather_summary",
+                    "schema": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "forecast": {
+                          "type": "string",
+                        },
+                      },
+                      "required": [
+                        "forecast",
+                      ],
+                      "type": "object",
+                    },
+                    "strict": true,
+                  },
+                  "type": "json_schema",
+                },
+                "verbosity": "medium",
+              },
+            },
+            "prompt": {
+              "messages": [
+                {
+                  "content": "What is the weather in {{city}}?",
+                  "role": "user",
+                },
+              ],
+              "type": "chat",
+            },
+          },
+          "slug": "e2e-prompt-flavors-chat-e2e-<uuid:3>",
+        },
+        {
+          "description": "",
+          "function_data": {
+            "type": "prompt",
+          },
+          "name": "E2E prompt flavors completion e2e-<uuid:3>",
+          "project_id": "<project_id>",
+          "prompt_data": {
+            "options": {
+              "model": "gpt-4o-mini",
+            },
+            "prompt": {
+              "content": "Summarize {{topic}} in one line.",
+              "type": "completion",
+            },
+          },
+          "slug": "e2e-prompt-flavors-completion-e2e-<uuid:3>",
+        },
+      ],
+    },
+    "method": "POST",
+    "path": "/insert-functions",
+    "query": null,
+    "rawBody": {
+      "functions": [
+        {
+          "description": "",
+          "function_data": {
+            "type": "prompt",
+          },
+          "name": "E2E prompt flavors chat e2e-<uuid:3>",
+          "project_id": "<project_id>",
+          "prompt_data": {
+            "options": {
+              "model": "gpt-4o-mini",
+              "params": {
+                "max_tokens": 42,
+                "response_format": {
+                  "json_schema": {
+                    "name": "weather_summary",
+                    "schema": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "forecast": {
+                          "type": "string",
+                        },
+                      },
+                      "required": [
+                        "forecast",
+                      ],
+                      "type": "object",
+                    },
+                    "strict": true,
+                  },
+                  "type": "json_schema",
+                },
+                "verbosity": "medium",
+              },
+            },
+            "prompt": {
+              "messages": [
+                {
+                  "content": "What is the weather in {{city}}?",
+                  "role": "user",
+                },
+              ],
+              "type": "chat",
+            },
+          },
+          "slug": "e2e-prompt-flavors-chat-e2e-<uuid:3>",
+        },
+        {
+          "description": "",
+          "function_data": {
+            "type": "prompt",
+          },
+          "name": "E2E prompt flavors completion e2e-<uuid:3>",
+          "project_id": "<project_id>",
+          "prompt_data": {
+            "options": {
+              "model": "gpt-4o-mini",
+            },
+            "prompt": {
+              "content": "Summarize {{topic}} in one line.",
+              "type": "completion",
+            },
+          },
+          "slug": "e2e-prompt-flavors-completion-e2e-<uuid:3>",
+        },
+      ],
+    },
+  },
+  {
+    "headers": null,
+    "jsonBody": null,
+    "method": "GET",
+    "path": "/v1/prompt",
+    "query": {
+      "project_name": "<project_name>",
+      "slug": "e2e-prompt-flavors-chat-e2e-<uuid:3>",
+    },
+    "rawBody": null,
+  },
+  {
+    "headers": null,
+    "jsonBody": null,
+    "method": "GET",
+    "path": "/v1/prompt/<uuid:4>",
+    "query": null,
+    "rawBody": null,
+  },
+  {
+    "headers": null,
+    "jsonBody": null,
+    "method": "GET",
+    "path": "/v1/prompt",
+    "query": {
+      "project_name": "<project_name>",
+      "slug": "e2e-prompt-flavors-completion-e2e-<uuid:3>",
+    },
+    "rawBody": null,
+  },
+  {
+    "headers": null,
+    "jsonBody": null,
+    "method": "GET",
+    "path": "/v1/prompt",
+    "query": {
+      "project_name": "<project_name>",
+      "slug": "e2e-prompt-flavors-completion-e2e-<uuid:3>",
+      "version": "<xact:1>",
+    },
+    "rawBody": null,
+  },
+]
+`;
