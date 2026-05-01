@@ -9,7 +9,7 @@ import { z } from "zod";
 
 export const CURRENT_FORMAT_VERSION = 1 as const;
 
-export const bodyPayloadSchema = z.discriminatedUnion("kind", [
+const bodyPayloadSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("empty") }),
   z.object({ kind: z.literal("json"), value: z.unknown() }),
   z.object({ kind: z.literal("text"), value: z.string() }),
@@ -30,21 +30,21 @@ export const bodyPayloadSchema = z.discriminatedUnion("kind", [
   }),
 ]);
 
-export const recordedRequestSchema = z.object({
+const recordedRequestSchema = z.object({
   method: z.string().min(1),
   url: z.string().url(),
   headers: z.record(z.string()),
   body: bodyPayloadSchema,
 });
 
-export const recordedResponseSchema = z.object({
+const recordedResponseSchema = z.object({
   status: z.number().int().min(100).max(599),
   statusText: z.string().optional(),
   headers: z.record(z.string()),
   body: bodyPayloadSchema,
 });
 
-export const cassetteEntrySchema = z
+const cassetteEntrySchema = z
   .object({
     id: z.string().min(1),
     matchKey: z.string().min(1),
@@ -55,7 +55,7 @@ export const cassetteEntrySchema = z
   })
   .passthrough();
 
-export const cassetteMetaSchema = z
+const cassetteMetaSchema = z
   .object({
     createdAt: z.string(),
     seinfeldVersion: z.string(),

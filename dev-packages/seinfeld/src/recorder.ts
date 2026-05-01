@@ -488,6 +488,3 @@ export function createCassette(options: CassetteOptions): Cassette {
     },
   };
 }
-
-// Re-export the supporting helpers users will reach for.
-export { computeMatchKey } from "./matcher";
