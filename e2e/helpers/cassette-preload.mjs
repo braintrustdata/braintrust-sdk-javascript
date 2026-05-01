@@ -4,9 +4,9 @@
  * provider HTTP traffic and replays or records it from/to a cassette JSON file.
  *
  * Env vars (set by the harness):
- *   BRAINTRUST_E2E_CASSETTE_PATH    — absolute path to the cassette JSON
+ *   BRAINTRUST_E2E_CASSETTE_PATH    — absolute path to the cassette directory
  *   BRAINTRUST_E2E_CASSETTE_MODE    — replay | record | passthrough
- *   BRAINTRUST_E2E_CASSETTE_VARIANT — variant key (cassette filename without .json)
+ *   BRAINTRUST_E2E_CASSETTE_VARIANT — variant key (cassette name, no extension)
  *   BRAINTRUST_E2E_MOCK_HOST        — host:port of the Braintrust mock server (always passthrough)
  *   BRAINTRUST_E2E_CASSETTE_NORMALIZER — name of the request-body filter to use
  *
@@ -14,40 +14,32 @@
  * it's safe to install for scenarios that haven't migrated yet (the
  * harness only sets the env vars for opted-in scenarios).
  */
-import { dirname } from "node:path";
 import { createCassette, createJsonFileStore } from "@braintrust/seinfeld";
 import { CASSETTE_FILTERS } from "./cassette-filters.mjs";
 
-const CASSETTE_PATH = process.env.BRAINTRUST_E2E_CASSETTE_PATH;
+const CASSETTE_DIR = process.env.BRAINTRUST_E2E_CASSETTE_PATH;
 const MODE_RAW = process.env.BRAINTRUST_E2E_CASSETTE_MODE ?? "replay";
 const VARIANT_KEY = process.env.BRAINTRUST_E2E_CASSETTE_VARIANT ?? "default";
 const MOCK_HOST = process.env.BRAINTRUST_E2E_MOCK_HOST;
 const NORMALIZER_NAME = process.env.BRAINTRUST_E2E_CASSETTE_NORMALIZER;
 
-if (!CASSETTE_PATH) {
-  // Not opted in — proceed without interception.
-  process.exit !== undefined; // no-op to satisfy linter (module loaded, not started)
-} else {
-  await bootCassettePreload(CASSETTE_PATH);
+if (CASSETTE_DIR) {
+  await bootCassettePreload(CASSETTE_DIR);
 }
 
 /**
- * @param {string} cassettePath
+ * @param {string} cassetteDir  Absolute path to the __cassettes__ directory.
  */
-async function bootCassettePreload(cassettePath) {
-  /** @type {import('@braintrust/seinfeld').CassetteMode} */
+async function bootCassettePreload(cassetteDir) {
   const mode = resolveMode(MODE_RAW);
-  const rootDir = dirname(cassettePath);
   const filters =
     CASSETTE_FILTERS[NORMALIZER_NAME ?? ""] ?? CASSETTE_FILTERS["default"];
-
-  /** @type {string[]} */
   const passthroughHosts = MOCK_HOST ? [MOCK_HOST] : [];
 
   const cassette = createCassette({
     name: VARIANT_KEY,
     mode,
-    store: createJsonFileStore({ rootDir }),
+    store: createJsonFileStore({ rootDir: cassetteDir }),
     filters,
     redact: "paranoid",
     passthroughHosts,
