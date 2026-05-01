@@ -85,9 +85,7 @@ export async function recordRequestDraft(
 }
 
 /** Convert a Fetch `Response` to a `RecordedResponse`. */
-export async function recordResponse(
-  response: Response,
-): Promise<RecordedResponse> {
+async function recordResponse(response: Response): Promise<RecordedResponse> {
   const headers = headersToRecord(response.headers);
   const contentType = response.headers.get("content-type") ?? undefined;
   const bodyBytes = new Uint8Array(await response.clone().arrayBuffer());

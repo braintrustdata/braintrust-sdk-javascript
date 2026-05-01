@@ -5,7 +5,7 @@ import { AUTH_HEADERS } from "../internal/well-known-headers";
  * Common credential header names. Re-exported from the shared internal list so
  * users can reference them when composing custom redaction configs.
  */
-export const CREDENTIAL_HEADERS = AUTH_HEADERS;
+const CREDENTIAL_HEADERS = AUTH_HEADERS;
 
 /**
  * The "aggressive" redaction preset.
@@ -16,7 +16,7 @@ export const CREDENTIAL_HEADERS = AUTH_HEADERS;
  *
  * @see `'paranoid'` for a preset that also covers body-field and text patterns.
  */
-export const AGGRESSIVE_REDACTION: RedactionConfig = {
+const AGGRESSIVE_REDACTION: RedactionConfig = {
   redactHeaders: CREDENTIAL_HEADERS,
 };
 
@@ -31,7 +31,7 @@ export const AGGRESSIVE_REDACTION: RedactionConfig = {
  * Use this for cassettes committed to version control where the underlying
  * APIs use per-request credentials that could appear in response bodies.
  */
-export const PARANOID_REDACTION: RedactionConfig = {
+const PARANOID_REDACTION: RedactionConfig = {
   redactHeaders: CREDENTIAL_HEADERS,
   redactBodyFields: [/^(api_?key|token|secret|password|authorization)$/i],
   redactBodyText: [

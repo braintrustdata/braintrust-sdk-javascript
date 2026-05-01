@@ -444,9 +444,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "location"
-                  ],
+                  "required": ["location"],
                   "type": "object"
                 },
                 "name": "get_weather"
@@ -528,9 +526,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "location"
-                  ],
+                  "required": ["location"],
                   "type": "object"
                 },
                 "name": "get_weather"
@@ -1059,9 +1055,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "location"
-                  ],
+                  "required": ["location"],
                   "type": "object"
                 },
                 "name": "get_weather"
@@ -1195,9 +1189,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "location"
-                  ],
+                  "required": ["location"],
                   "type": "object"
                 },
                 "name": "get_weather"
