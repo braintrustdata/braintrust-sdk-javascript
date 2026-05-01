@@ -92,6 +92,12 @@ interface CassetteContext {
 // ---- Shared MSW server (refcounted) --------------------------------------
 
 const als = new AsyncLocalStorage<CassetteContext>();
+
+// Fallback for start()/stop() callers where als.enterWith() may not propagate
+// through MSW interceptor async boundaries (e.g. subprocess --import preloads).
+// als.getStore() takes precedence so concurrent use() calls still work correctly.
+let processLevelCtx: CassetteContext | null = null;
+
 let sharedServer: SetupServer | undefined;
 let serverRefcount = 0;
 
@@ -111,11 +117,11 @@ function releaseServer(): void {
   }
 }
 
-// ---- Static catch-all handler reads from ALS ----------------------------
+// ---- Static catch-all handler reads from ALS (or process-level fallback) ---
 
 function buildHandler() {
   return http.all("*", async ({ request }) => {
-    const ctx = als.getStore();
+    const ctx = als.getStore() ?? processLevelCtx;
     if (!ctx) return passthrough();
     if (!shouldIntercept(request.url, ctx.hosts)) return passthrough();
     if (isPassthroughHost(request.url, ctx.passthroughHosts))
@@ -433,6 +439,7 @@ export function createCassette(options: CassetteOptions): Cassette {
         );
       prevStore = als.getStore();
       als.enterWith(ctx);
+      processLevelCtx = ctx;
       acquireServer();
       started = true;
       try {
@@ -441,6 +448,7 @@ export function createCassette(options: CassetteOptions): Cassette {
       } catch (err) {
         // Roll back: release the server we just acquired so refcount stays balanced.
         started = false;
+        processLevelCtx = null;
         releaseServer();
         if (prevStore !== undefined) als.enterWith(prevStore);
         throw err;
@@ -455,6 +463,7 @@ export function createCassette(options: CassetteOptions): Cassette {
         await persistIfRecord(ctx);
         throwFirstMiss(ctx);
       } finally {
+        if (processLevelCtx === ctx) processLevelCtx = null;
         releaseServer();
         // Restore the previous ALS context so code running after stop() in
         // the same async chain sees the outer cassette (or none).
