@@ -1,5 +1,4 @@
 import { BasePlugin } from "../core";
-import type { ChannelMessage } from "../core/channel-definitions";
 import type { IsoChannelHandlers } from "../../isomorph";
 import { startSpan } from "../../logger";
 import type { Span } from "../../logger";

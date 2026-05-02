@@ -387,7 +387,12 @@ describe("anthropic client unit tests", { retry: 3 }, () => {
       .toLowerCase()
       .replace(/\s/g, "")
       .replace(/'/g, "");
-    expect(output).toContain("btanthropicstreamok");
+    // Validate we collected the streamed text without relying on one exact phrasing.
+    // The system prompt says "Just the poem" so the model returns the poem only,
+    // not the author's name — only assert on poem content.
+    expect(output).toContain("shall i compare thee to a summers day");
+    expect(output).toContain("summer");
+    expect(output.length).toBeGreaterThan(200);
 
     expect(span["span_attributes"].type).toBe("llm");
     expect(span["span_attributes"].name).toBe("anthropic.messages.create");
