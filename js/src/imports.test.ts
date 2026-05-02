@@ -19,11 +19,17 @@ describe("CLI import restrictions", () => {
           continue;
         }
 
+        if (entry.isDirectory() && entry.name === "node_modules") {
+          continue;
+        }
+
         if (entry.isDirectory()) {
           walkDirectory(fullPath);
         } else if (
           entry.isFile() &&
-          (entry.name.endsWith(".ts") || entry.name.endsWith(".tsx"))
+          (entry.name.endsWith(".ts") || entry.name.endsWith(".tsx")) &&
+          !entry.name.endsWith(".d.ts") &&
+          !entry.name.endsWith(".d.tsx")
         ) {
           checkFileForCliImports(fullPath, relativePath);
         }
@@ -94,11 +100,17 @@ describe("CLI import restrictions", () => {
           continue;
         }
 
+        if (entry.isDirectory() && entry.name === "node_modules") {
+          continue;
+        }
+
         if (entry.isDirectory()) {
           walkDirectory(fullPath);
         } else if (
           entry.isFile() &&
           (entry.name.endsWith(".ts") || entry.name.endsWith(".tsx")) &&
+          !entry.name.endsWith(".d.ts") &&
+          !entry.name.endsWith(".d.tsx") &&
           !entry.name.endsWith(".test.ts") &&
           !entry.name.endsWith(".test.tsx")
         ) {
@@ -165,11 +177,18 @@ describe("CLI import restrictions", () => {
           continue;
         }
 
+        // Skip node_modules directories (test fixture deps, not SDK source)
+        if (entry.isDirectory() && entry.name === "node_modules") {
+          continue;
+        }
+
         if (entry.isDirectory()) {
           walkDirectory(fullPath);
         } else if (
           entry.isFile() &&
           (entry.name.endsWith(".ts") || entry.name.endsWith(".tsx")) &&
+          !entry.name.endsWith(".d.ts") &&
+          !entry.name.endsWith(".d.tsx") &&
           !entry.name.endsWith(".test.ts") &&
           !entry.name.endsWith(".test.tsx")
         ) {

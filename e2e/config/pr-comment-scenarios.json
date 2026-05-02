@@ -133,5 +133,14 @@
         "label": "v0.2.81"
       }
     ]
+  },
+  {
+    "scenarioDirName": "github-copilot-instrumentation",
+    "label": "GitHub Copilot SDK Instrumentation",
+    "metadataScenario": "github-copilot-instrumentation",
+    "variants": [
+      { "variantKey": "github-copilot-v0-wrapped", "label": "Wrapped" },
+      { "variantKey": "github-copilot-v0-auto", "label": "Auto-hook" }
+    ]
   }
 ]

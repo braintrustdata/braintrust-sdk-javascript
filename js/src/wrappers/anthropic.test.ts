@@ -388,8 +388,9 @@ describe("anthropic client unit tests", { retry: 3 }, () => {
       .replace(/\n/g, " ")
       .replace(/'/g, "");
     // Validate we collected the streamed text without relying on one exact phrasing.
+    // The system prompt says "Just the poem" so the model returns the poem only,
+    // not the author's name — only assert on poem content.
     expect(output).toContain("shall i compare thee to a summers day");
-    expect(output).toContain("shakespeare");
     expect(output).toContain("summer");
     expect(output.length).toBeGreaterThan(200);
 
