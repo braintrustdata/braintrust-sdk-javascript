@@ -1,0 +1,14 @@
+{
+  "name": "@braintrust/e2e-github-copilot-instrumentation",
+  "private": true,
+  "braintrustScenario": {
+    "canary": {
+      "dependencies": {
+        "@github/copilot-sdk": "latest"
+      }
+    }
+  },
+  "dependencies": {
+    "@github/copilot-sdk": "0.3.0"
+  }
+}
