@@ -37,7 +37,6 @@
     "span_id": "<span:2>"
   },
   {
-    "_is_merge": false,
     "context": {
       "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
       "caller_functionname": "runOperation",
@@ -51,6 +50,7 @@
       "testRunId": "<run:1>"
     },
     "metrics": {
+      "end": "<timestamp>",
       "start": "<timestamp>"
     },
     "project_id": "<project_id>",
@@ -65,20 +65,6 @@
     ]
   },
   {
-    "_is_merge": true,
-    "id": "<span:4>",
-    "log_id": "g",
-    "metrics": {
-      "end": "<timestamp>"
-    },
-    "project_id": "<project_id>",
-    "root_span_id": "<span:2>",
-    "span_id": "<span:5>",
-    "span_parents": [
-      "<span:2>"
-    ]
-  },
-  {
     "context": {},
     "created": "<timestamp>",
     "id": "<span:6>",
@@ -90,55 +76,24 @@
     ],
     "log_id": "g",
     "metadata": {
+      "created": 0,
       "endpointUrl": "https://router.huggingface.co",
+      "id": "<span:7>",
       "max_tokens": 16,
-      "model": "meta-llama/Llama-3.1-8B-Instruct",
+      "model": "llama3.1-8b",
+      "object": "chat.completion",
       "provider": "huggingface",
       "temperature": 0
     },
-    "metrics": {
-      "start": "<timestamp>"
-    },
-    "project_id": "<project_id>",
-    "root_span_id": "<span:2>",
-    "span_attributes": {
-      "exec_counter": 2,
-      "name": "huggingface.chat_completion",
-      "type": "llm"
-    },
-    "span_id": "<span:7>",
-    "span_parents": [
-      "<span:5>"
-    ]
-  },
-  {
-    "_is_merge": true,
-    "id": "<span:6>",
-    "log_id": "g",
     "metrics": {
       "completion_accepted_prediction_tokens": 0,
       "completion_reasoning_tokens": 0,
       "completion_rejected_prediction_tokens": 0,
       "completion_tokens": "<number>",
+      "end": "<timestamp>",
       "prompt_tokens": "<number>",
+      "start": "<timestamp>",
       "tokens": "<number>"
-    },
-    "project_id": "<project_id>",
-    "root_span_id": "<span:2>",
-    "span_id": "<span:7>",
-    "span_parents": [
-      "<span:5>"
-    ]
-  },
-  {
-    "_is_merge": true,
-    "id": "<span:6>",
-    "log_id": "g",
-    "metadata": {
-      "created": 0,
-      "id": "<span:8>",
-      "model": "llama3.1-8b",
-      "object": "chat.completion"
     },
     "output": [
       {
@@ -150,27 +105,17 @@
     ],
     "project_id": "<project_id>",
     "root_span_id": "<span:2>",
-    "span_id": "<span:7>",
-    "span_parents": [
-      "<span:5>"
-    ]
-  },
-  {
-    "_is_merge": true,
-    "id": "<span:6>",
-    "log_id": "g",
-    "metrics": {
-      "end": "<timestamp>"
+    "span_attributes": {
+      "exec_counter": 2,
+      "name": "huggingface.chat_completion",
+      "type": "llm"
     },
-    "project_id": "<project_id>",
-    "root_span_id": "<span:2>",
-    "span_id": "<span:7>",
+    "span_id": "<span:8>",
     "span_parents": [
       "<span:5>"
     ]
   },
   {
-    "_is_merge": false,
     "context": {
       "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
       "caller_functionname": "runOperation",
@@ -184,6 +129,7 @@
       "testRunId": "<run:1>"
     },
     "metrics": {
+      "end": "<timestamp>",
       "start": "<timestamp>"
     },
     "project_id": "<project_id>",
@@ -198,20 +144,6 @@
     ]
   },
   {
-    "_is_merge": true,
-    "id": "<span:9>",
-    "log_id": "g",
-    "metrics": {
-      "end": "<timestamp>"
-    },
-    "project_id": "<project_id>",
-    "root_span_id": "<span:2>",
-    "span_id": "<span:10>",
-    "span_parents": [
-      "<span:2>"
-    ]
-  },
-  {
     "context": {},
     "created": "<timestamp>",
     "id": "<span:11>",
@@ -223,56 +155,25 @@
     ],
     "log_id": "g",
     "metadata": {
+      "created": 0,
       "endpointUrl": "https://router.huggingface.co",
+      "id": "<span:12>",
       "max_tokens": 16,
-      "model": "meta-llama/Llama-3.1-8B-Instruct",
+      "model": "llama3.1-8b",
+      "object": "chat.completion.chunk",
       "provider": "huggingface",
       "temperature": 0
     },
-    "metrics": {
-      "start": "<timestamp>"
-    },
-    "project_id": "<project_id>",
-    "root_span_id": "<span:2>",
-    "span_attributes": {
-      "exec_counter": 4,
-      "name": "huggingface.chat_completion_stream",
-      "type": "llm"
-    },
-    "span_id": "<span:12>",
-    "span_parents": [
-      "<span:10>"
-    ]
-  },
-  {
-    "_is_merge": true,
-    "id": "<span:11>",
-    "log_id": "g",
     "metrics": {
       "completion_accepted_prediction_tokens": 0,
       "completion_reasoning_tokens": 0,
       "completion_rejected_prediction_tokens": 0,
       "completion_tokens": "<number>",
+      "end": "<timestamp>",
       "prompt_tokens": "<number>",
+      "start": "<timestamp>",
       "time_to_first_token": "<number>",
       "tokens": "<number>"
-    },
-    "project_id": "<project_id>",
-    "root_span_id": "<span:2>",
-    "span_id": "<span:12>",
-    "span_parents": [
-      "<span:10>"
-    ]
-  },
-  {
-    "_is_merge": true,
-    "id": "<span:11>",
-    "log_id": "g",
-    "metadata": {
-      "created": 0,
-      "id": "<span:13>",
-      "model": "llama3.1-8b",
-      "object": "chat.completion.chunk"
     },
     "output": {
       "choices": [
@@ -286,27 +187,17 @@
     },
     "project_id": "<project_id>",
     "root_span_id": "<span:2>",
-    "span_id": "<span:12>",
-    "span_parents": [
-      "<span:10>"
-    ]
-  },
-  {
-    "_is_merge": true,
-    "id": "<span:11>",
-    "log_id": "g",
-    "metrics": {
-      "end": "<timestamp>"
+    "span_attributes": {
+      "exec_counter": 4,
+      "name": "huggingface.chat_completion_stream",
+      "type": "llm"
     },
-    "project_id": "<project_id>",
-    "root_span_id": "<span:2>",
-    "span_id": "<span:12>",
+    "span_id": "<span:13>",
     "span_parents": [
       "<span:10>"
     ]
   },
   {
-    "_is_merge": false,
     "context": {
       "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
       "caller_functionname": "runOperation",
@@ -320,6 +211,7 @@
       "testRunId": "<run:1>"
     },
     "metrics": {
+      "end": "<timestamp>",
       "start": "<timestamp>"
     },
     "project_id": "<project_id>",
@@ -328,20 +220,6 @@
       "exec_counter": 5,
       "name": "huggingface-chat-stream-tool-call-operation"
     },
-    "span_id": "<span:15>",
-    "span_parents": [
-      "<span:2>"
-    ]
-  },
-  {
-    "_is_merge": true,
-    "id": "<span:14>",
-    "log_id": "g",
-    "metrics": {
-      "end": "<timestamp>"
-    },
-    "project_id": "<project_id>",
-    "root_span_id": "<span:2>",
     "span_id": "<span:15>",
     "span_parents": [
       "<span:2>"
@@ -359,9 +237,12 @@
     ],
     "log_id": "g",
     "metadata": {
+      "created": 0,
       "endpointUrl": "https://router.huggingface.co",
+      "id": "<span:17>",
       "max_tokens": 64,
-      "model": "meta-llama/Llama-3.1-8B-Instruct",
+      "model": "llama3.1-8b",
+      "object": "chat.completion.chunk",
       "provider": "featherless-ai",
       "temperature": 0,
       "tool_choice": "required",
@@ -388,49 +269,15 @@
       ]
     },
     "metrics": {
-      "start": "<timestamp>"
-    },
-    "project_id": "<project_id>",
-    "root_span_id": "<span:2>",
-    "span_attributes": {
-      "exec_counter": 6,
-      "name": "huggingface.chat_completion_stream",
-      "type": "llm"
-    },
-    "span_id": "<span:17>",
-    "span_parents": [
-      "<span:15>"
-    ]
-  },
-  {
-    "_is_merge": true,
-    "id": "<span:16>",
-    "log_id": "g",
-    "metrics": {
       "completion_accepted_prediction_tokens": 0,
       "completion_reasoning_tokens": 0,
       "completion_rejected_prediction_tokens": 0,
       "completion_tokens": "<number>",
+      "end": "<timestamp>",
       "prompt_tokens": "<number>",
+      "start": "<timestamp>",
       "time_to_first_token": "<number>",
       "tokens": "<number>"
-    },
-    "project_id": "<project_id>",
-    "root_span_id": "<span:2>",
-    "span_id": "<span:17>",
-    "span_parents": [
-      "<span:15>"
-    ]
-  },
-  {
-    "_is_merge": true,
-    "id": "<span:16>",
-    "log_id": "g",
-    "metadata": {
-      "created": 0,
-      "id": "<span:18>",
-      "model": "llama3.1-8b",
-      "object": "chat.completion.chunk"
     },
     "output": {
       "choices": [
@@ -444,27 +291,17 @@
     },
     "project_id": "<project_id>",
     "root_span_id": "<span:2>",
-    "span_id": "<span:17>",
-    "span_parents": [
-      "<span:15>"
-    ]
-  },
-  {
-    "_is_merge": true,
-    "id": "<span:16>",
-    "log_id": "g",
-    "metrics": {
-      "end": "<timestamp>"
+    "span_attributes": {
+      "exec_counter": 6,
+      "name": "huggingface.chat_completion_stream",
+      "type": "llm"
     },
-    "project_id": "<project_id>",
-    "root_span_id": "<span:2>",
-    "span_id": "<span:17>",
+    "span_id": "<span:18>",
     "span_parents": [
       "<span:15>"
     ]
   },
   {
-    "_is_merge": false,
     "context": {
       "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
       "caller_functionname": "runOperation",
@@ -478,6 +315,7 @@
       "testRunId": "<run:1>"
     },
     "metrics": {
+      "end": "<timestamp>",
       "start": "<timestamp>"
     },
     "project_id": "<project_id>",
@@ -492,20 +330,6 @@
     ]
   },
   {
-    "_is_merge": true,
-    "id": "<span:19>",
-    "log_id": "g",
-    "metrics": {
-      "end": "<timestamp>"
-    },
-    "project_id": "<project_id>",
-    "root_span_id": "<span:2>",
-    "span_id": "<span:20>",
-    "span_parents": [
-      "<span:2>"
-    ]
-  },
-  {
     "context": {},
     "created": "<timestamp>",
     "id": "<span:21>",
@@ -513,12 +337,22 @@
     "log_id": "g",
     "metadata": {
       "endpointUrl": "https://router.huggingface.co/featherless-ai/v1/completions",
+      "finish_reason": "length",
       "max_tokens": 4,
       "model": "arcee-ai/Trinity-Large-Thinking",
       "provider": "huggingface"
     },
     "metrics": {
-      "start": "<timestamp>"
+      "completion_tokens": "<number>",
+      "end": "<timestamp>",
+      "prompt_tokens": "<number>",
+      "start": "<timestamp>",
+      "time_to_first_token": "<number>",
+      "tokens": "<number>"
+    },
+    "output": {
+      "finish_reason": "length",
+      "generated_text": "<string>"
     },
     "project_id": "<project_id>",
     "root_span_id": "<span:2>",
@@ -533,56 +367,6 @@
     ]
   },
   {
-    "_is_merge": true,
-    "id": "<span:21>",
-    "log_id": "g",
-    "metrics": {
-      "completion_tokens": "<number>",
-      "prompt_tokens": "<number>",
-      "time_to_first_token": "<number>",
-      "tokens": "<number>"
-    },
-    "project_id": "<project_id>",
-    "root_span_id": "<span:2>",
-    "span_id": "<span:22>",
-    "span_parents": [
-      "<span:20>"
-    ]
-  },
-  {
-    "_is_merge": true,
-    "id": "<span:21>",
-    "log_id": "g",
-    "metadata": {
-      "finish_reason": "length"
-    },
-    "output": {
-      "finish_reason": "length",
-      "generated_text": "<string>"
-    },
-    "project_id": "<project_id>",
-    "root_span_id": "<span:2>",
-    "span_id": "<span:22>",
-    "span_parents": [
-      "<span:20>"
-    ]
-  },
-  {
-    "_is_merge": true,
-    "id": "<span:21>",
-    "log_id": "g",
-    "metrics": {
-      "end": "<timestamp>"
-    },
-    "project_id": "<project_id>",
-    "root_span_id": "<span:2>",
-    "span_id": "<span:22>",
-    "span_parents": [
-      "<span:20>"
-    ]
-  },
-  {
-    "_is_merge": false,
     "context": {
       "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
       "caller_functionname": "runOperation",
@@ -596,6 +380,7 @@
       "testRunId": "<run:1>"
     },
     "metrics": {
+      "end": "<timestamp>",
       "start": "<timestamp>"
     },
     "project_id": "<project_id>",
@@ -604,20 +389,6 @@
       "exec_counter": 9,
       "name": "huggingface-feature-extraction-operation"
     },
-    "span_id": "<span:24>",
-    "span_parents": [
-      "<span:2>"
-    ]
-  },
-  {
-    "_is_merge": true,
-    "id": "<span:23>",
-    "log_id": "g",
-    "metrics": {
-      "end": "<timestamp>"
-    },
-    "project_id": "<project_id>",
-    "root_span_id": "<span:2>",
     "span_id": "<span:24>",
     "span_parents": [
       "<span:2>"
@@ -635,7 +406,11 @@
       "provider": "huggingface"
     },
     "metrics": {
+      "end": "<timestamp>",
       "start": "<timestamp>"
+    },
+    "output": {
+      "embedding_length": 1024
     },
     "project_id": "<project_id>",
     "root_span_id": "<span:2>",
@@ -644,35 +419,6 @@
       "name": "huggingface.feature_extraction",
       "type": "llm"
     },
-    "span_id": "<span:26>",
-    "span_parents": [
-      "<span:24>"
-    ]
-  },
-  {
-    "_is_merge": true,
-    "id": "<span:25>",
-    "log_id": "g",
-    "metrics": {},
-    "output": {
-      "embedding_length": 1024
-    },
-    "project_id": "<project_id>",
-    "root_span_id": "<span:2>",
-    "span_id": "<span:26>",
-    "span_parents": [
-      "<span:24>"
-    ]
-  },
-  {
-    "_is_merge": true,
-    "id": "<span:25>",
-    "log_id": "g",
-    "metrics": {
-      "end": "<timestamp>"
-    },
-    "project_id": "<project_id>",
-    "root_span_id": "<span:2>",
     "span_id": "<span:26>",
     "span_parents": [
       "<span:24>"

@@ -7,16 +7,20 @@
     "test:e2e": "vitest run --run",
     "test:e2e:hermetic": "vitest run --tags-filter=hermetic",
     "test:e2e:canary": "node ./scripts/run-canary-tests-docker.mjs",
-    "test:e2e:update": "vitest run --update"
+    "test:e2e:update": "vitest run --update",
+    "test:e2e:record": "node ./scripts/record-cassettes.mjs"
   },
   "devDependencies": {
     "@braintrust/langchain-js": "workspace:^",
     "@braintrust/otel": "workspace:^",
+    "@braintrust/seinfeld": "workspace:^",
     "@opentelemetry/api": ">=1.9.0",
     "@opentelemetry/context-async-hooks": ">=1.9.0",
     "@opentelemetry/sdk-trace-base": ">=1.9.0",
     "@types/node": "^20.10.5",
     "braintrust": "workspace:^",
+    "dotenv": "^17.2.3",
+    "msw": "^2.6.6",
     "tsx": "^4.21.0",
     "typescript": "5.4.4",
     "vitest": "^4.1.2",

@@ -31,7 +31,7 @@
     "has_input": true,
     "has_output": true,
     "metadata": {
-      "model": "meta-llama/Meta-Llama-3.1-8B-Instruct",
+      "model": "meta-llama/Llama-3.1-8B-Instruct",
       "provider": "featherless-ai"
     },
     "metric_keys": [
@@ -74,7 +74,7 @@
     "has_input": true,
     "has_output": true,
     "metadata": {
-      "model": "meta-llama/Meta-Llama-3.1-8B-Instruct",
+      "model": "meta-llama/Llama-3.1-8B-Instruct",
       "provider": "featherless-ai"
     },
     "metric_keys": [
@@ -111,7 +111,7 @@
     "has_input": true,
     "has_output": true,
     "metadata": {
-      "model": "meta-llama/Meta-Llama-3.1-8B-Instruct",
+      "model": "meta-llama/Llama-3.1-8B-Instruct",
       "provider": "featherless-ai"
     },
     "metric_keys": [

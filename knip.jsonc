@@ -11,6 +11,15 @@
     "**/generated_types.ts": ["exports", "types"],
   },
   "workspaces": {
+    "dev-packages/seinfeld": {
+      "entry": [
+        "src/index.ts",
+        "src/vitest.ts",
+        "scripts/**/*.mjs",
+        "test/**/*.ts",
+      ],
+      "project": ["src/**/*.ts", "test/**/*.ts", "scripts/**/*.mjs"],
+    },
     "e2e": {
       "entry": [
         "package.json",

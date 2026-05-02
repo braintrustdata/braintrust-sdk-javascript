@@ -3,7 +3,7 @@ import { E2E_TAGS } from "./helpers/tags";
 
 export default defineConfig({
   test: {
-    include: ["scenarios/**/*.test.ts"],
+    include: ["scenarios/**/*.test.ts", "helpers/**/*.test.ts"],
     // We run the scenarios in the hooks.
     hookTimeout: 120_000,
     testTimeout: 20_000,

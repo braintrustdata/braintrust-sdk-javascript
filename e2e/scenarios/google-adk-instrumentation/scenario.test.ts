@@ -4,10 +4,12 @@ import {
   readInstalledPackageVersion,
   resolveScenarioDir,
 } from "../../helpers/scenario-harness";
+import { cassetteTagsFor } from "../../helpers/tags";
 import { defineGoogleADKInstrumentationAssertions } from "./assertions";
 
+const originalScenarioDir = resolveScenarioDir(import.meta.url);
 const scenarioDir = await prepareScenarioDir({
-  scenarioDir: resolveScenarioDir(import.meta.url),
+  scenarioDir: originalScenarioDir,
 });
 const TIMEOUT_MS = 90_000;
 const googleADKScenarios = await Promise.all(
@@ -34,13 +36,18 @@ const googleADKScenarios = await Promise.all(
 );
 
 for (const scenario of googleADKScenarios) {
-  describe(`google adk sdk ${scenario.version}`, () => {
+  const tags = cassetteTagsFor(import.meta.url, scenario.snapshotName);
+
+  describe(`google adk sdk ${scenario.version}`, { tags }, () => {
     defineGoogleADKInstrumentationAssertions({
       name: "wrapped instrumentation",
       runScenario: async ({ runScenarioDir }) => {
         await runScenarioDir({
           entry: scenario.wrapperEntry,
-          runContext: { variantKey: scenario.snapshotName },
+          runContext: {
+            variantKey: scenario.snapshotName,
+            originalScenarioDir,
+          },
           scenarioDir,
           timeoutMs: TIMEOUT_MS,
         });
@@ -57,7 +64,10 @@ for (const scenario of googleADKScenarios) {
         await runNodeScenarioDir({
           entry: scenario.autoEntry,
           nodeArgs: ["--import", "braintrust/hook.mjs"],
-          runContext: { variantKey: scenario.snapshotName },
+          runContext: {
+            variantKey: scenario.snapshotName,
+            originalScenarioDir,
+          },
           scenarioDir,
           timeoutMs: TIMEOUT_MS,
         });

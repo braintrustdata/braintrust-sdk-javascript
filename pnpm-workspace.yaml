@@ -1,6 +1,7 @@
 packages:
   - e2e
   - js
+  - dev-packages/*
   - integrations/*
   - js/src/wrappers/*
   - "!js/vendor/**"

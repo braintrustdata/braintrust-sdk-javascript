@@ -64,19 +64,6 @@
   },
   {
     "has_input": true,
-    "has_output": false,
-    "metadata": null,
-    "metric_keys": [],
-    "name": "RunnableSequence",
-    "root_span_id": "<span:1>",
-    "span_id": "<span:5>",
-    "span_parents": [
-      "<span:4>"
-    ],
-    "type": "task"
-  },
-  {
-    "has_input": true,
     "has_output": true,
     "metadata": null,
     "metric_keys": [],
@@ -176,19 +163,6 @@
   },
   {
     "has_input": true,
-    "has_output": false,
-    "metadata": null,
-    "metric_keys": [],
-    "name": "ChatOpenAI",
-    "root_span_id": "<span:1>",
-    "span_id": "<span:11>",
-    "span_parents": [
-      "<span:10>"
-    ],
-    "type": "llm"
-  },
-  {
-    "has_input": true,
     "has_output": true,
     "metadata": {
       "model": "gpt-4o-mini-2024-07-18"
@@ -202,59 +176,6 @@
     "name": "ChatOpenAI",
     "root_span_id": "<span:1>",
     "span_id": "<span:11>",
-    "span_parents": [
-      "<span:10>"
-    ],
-    "type": "llm"
-  },
-  {
-    "has_input": true,
-    "has_output": true,
-    "metadata": {
-      "model": "gpt-4o-mini-2024-07-18"
-    },
-    "metric_keys": [
-      "completion_tokens",
-      "prompt_cached_tokens",
-      "prompt_tokens",
-      "total_tokens"
-    ],
-    "name": "ChatOpenAI",
-    "root_span_id": "<span:1>",
-    "span_id": "<span:11>",
-    "span_parents": [
-      "<span:10>"
-    ],
-    "type": "llm"
-  },
-  {
-    "has_input": true,
-    "has_output": false,
-    "metadata": null,
-    "metric_keys": [],
-    "name": "ChatOpenAI",
-    "root_span_id": "<span:1>",
-    "span_id": "<span:12>",
-    "span_parents": [
-      "<span:10>"
-    ],
-    "type": "llm"
-  },
-  {
-    "has_input": true,
-    "has_output": true,
-    "metadata": {
-      "model": "gpt-4o-mini-2024-07-18"
-    },
-    "metric_keys": [
-      "completion_tokens",
-      "prompt_cached_tokens",
-      "prompt_tokens",
-      "total_tokens"
-    ],
-    "name": "ChatOpenAI",
-    "root_span_id": "<span:1>",
-    "span_id": "<span:12>",
     "span_parents": [
       "<span:10>"
     ],
