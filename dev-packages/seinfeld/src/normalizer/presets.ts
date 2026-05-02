@@ -21,6 +21,15 @@ const DEFAULT_FILTER: FilterConfig = {
     ...RATE_LIMIT_HEADERS,
     ...FINGERPRINT_HEADERS,
   ],
+  // Normalize the URL through the WHATWG URL parser so that percent-encoding
+  // differences (e.g. `%5B%5D` vs `[]`) don't produce spurious misses.
+  normalizeRequest: (req) => {
+    try {
+      return { ...req, url: new URL(req.url).href };
+    } catch {
+      return req;
+    }
+  },
 };
 
 /**
