@@ -131,14 +131,36 @@ export async function buildResponse(
   recorded: RecordedResponse,
   ctx?: { store: CassetteStore; name: string },
 ): Promise<Response> {
-  const bytes = await decodeBody(recorded.body, ctx);
   // Expand \n-joined set-cookie back into multiple header entries.
   const headers = expandSetCookieHeader(recorded.headers);
   const init: ResponseInit = { status: recorded.status, headers };
   if (recorded.statusText) init.statusText = recorded.statusText;
   // 1xx/204/304 responses must not have a body, per Fetch spec.
-  const noBody = bytes.length === 0 || isNullBodyStatus(recorded.status);
-  if (noBody) return new Response(null, init);
+  if (isNullBodyStatus(recorded.status)) return new Response(null, init);
+
+  // For SSE bodies, return a ReadableStream that yields each event as a
+  // separate chunk. This preserves the chunk-by-chunk delivery that live
+  // streaming responses produce and that consumers rely on to measure
+  // time_to_first_token and process events incrementally.
+  if (recorded.body.kind === "sse") {
+    const encoder = new TextEncoder();
+    const chunks = recorded.body.chunks;
+    let cursor = 0;
+    const stream = new ReadableStream({
+      pull(controller) {
+        if (cursor >= chunks.length) {
+          controller.close();
+          return;
+        }
+        const chunk = chunks[cursor++];
+        controller.enqueue(encoder.encode(`${chunk}\n\n`));
+      },
+    });
+    return new Response(stream, init);
+  }
+
+  const bytes = await decodeBody(recorded.body, ctx);
+  if (bytes.length === 0) return new Response(null, init);
   // Copy into a fresh ArrayBuffer. (TS 5.7 typed Uint8Array as
   // Uint8Array<ArrayBufferLike>, and `.buffer` may be `SharedArrayBuffer` —
   // neither satisfies the DOM lib's strict ArrayBuffer-only BodyInit.)
