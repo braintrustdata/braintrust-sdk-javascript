@@ -324,12 +324,13 @@
         "body": {
           "kind": "sse",
           "chunks": [
-            "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-haiku-4-5-20251001\",\"id\":\"msg_01T9E7REf2b5bQKAak7qmUk8\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":24,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":1,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"}} }\n\n",
-            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}     }\n\n",
-            "event: ping\ndata: {\"type\": \"ping\"}\n\n",
-            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"1 one\\n2 two\\n3 three\"}             }\n\n",
-            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0   }\n\n",
-            "event: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null},\"usage\":{\"input_tokens\":24,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":15} }\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"   }\n\n"
+            "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-haiku-4-5-20251001\",\"id\":\"msg_01T9E7REf2b5bQKAak7qmUk8\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":24,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":1,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"}} }",
+            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}     }",
+            "event: ping\ndata: {\"type\": \"ping\"}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"1 one\\n2 two\\n3 three\"}             }",
+            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0   }",
+            "event: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null},\"usage\":{\"input_tokens\":24,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":15} }",
+            "event: message_stop\ndata: {\"type\":\"message_stop\"   }"
           ]
         }
       }
@@ -392,13 +393,13 @@
         "body": {
           "kind": "sse",
           "chunks": [
-            "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-haiku-4-5-20251001\",\"id\":\"msg_01FfP5CkfZpEYYezuGiU9P9B\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":24,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":1,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"}}         }\n\n",
-            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}}\n\n",
-            "event: ping\ndata: {\"type\": \"ping\"}\n\n",
-            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"1 one\\n2 two\\n3 three\"}    }\n\n",
-            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0  }\n\n",
-            "event: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null},\"usage\":{\"input_tokens\":24,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":15}           }\n\n",
-            "event: message_stop\ndata: {\"type\":\"message_stop\"              }\n\n"
+            "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-haiku-4-5-20251001\",\"id\":\"msg_01FfP5CkfZpEYYezuGiU9P9B\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":24,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":1,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"}}         }",
+            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}}",
+            "event: ping\ndata: {\"type\": \"ping\"}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"1 one\\n2 two\\n3 three\"}    }",
+            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0  }",
+            "event: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null},\"usage\":{\"input_tokens\":24,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":15}           }",
+            "event: message_stop\ndata: {\"type\":\"message_stop\"              }"
           ]
         }
       }
@@ -444,7 +445,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["location"],
+                  "required": [
+                    "location"
+                  ],
                   "type": "object"
                 },
                 "name": "get_weather"
@@ -481,16 +484,18 @@
         "body": {
           "kind": "sse",
           "chunks": [
-            "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-haiku-4-5-20251001\",\"id\":\"msg_01BjNyd2NpQzfnbfo3pBqeZP\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":687,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":13,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"}}    }\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"tool_use\",\"id\":\"toolu_012Vr4H9VazHeEnvCt44zY68\",\"name\":\"get_weather\",\"input\":{},\"caller\":{\"type\":\"direct\"}}            }\n\nevent: ping\ndata: {\"type\": \"ping\"}\n\n",
-            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"\"}         }\n\n",
-            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"{\\\"\"}      }\n\n",
-            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"locat\"}              }\n\n",
-            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"ion\\\": \\\"Paris\"}}\n\n",
-            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\", \"}     }\n\n",
-            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"France\\\"}\"}              }\n\n",
-            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0     }\n\n",
-            "event: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"tool_use\",\"stop_sequence\":null,\"stop_details\":null},\"usage\":{\"input_tokens\":687,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":26}  }\n\n",
-            "event: message_stop\ndata: {\"type\":\"message_stop\"    }\n\n"
+            "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-haiku-4-5-20251001\",\"id\":\"msg_01BjNyd2NpQzfnbfo3pBqeZP\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":687,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":13,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"}}    }",
+            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"tool_use\",\"id\":\"toolu_012Vr4H9VazHeEnvCt44zY68\",\"name\":\"get_weather\",\"input\":{},\"caller\":{\"type\":\"direct\"}}            }",
+            "event: ping\ndata: {\"type\": \"ping\"}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"\"}         }",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"{\\\"\"}      }",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"locat\"}              }",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"ion\\\": \\\"Paris\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\", \"}     }",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"France\\\"}\"}              }",
+            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0     }",
+            "event: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"tool_use\",\"stop_sequence\":null,\"stop_details\":null},\"usage\":{\"input_tokens\":687,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":26}  }",
+            "event: message_stop\ndata: {\"type\":\"message_stop\"    }"
           ]
         }
       }
@@ -530,7 +535,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["location"],
+                  "required": [
+                    "location"
+                  ],
                   "type": "object"
                 },
                 "name": "get_weather"
@@ -857,19 +864,19 @@
         "body": {
           "kind": "sse",
           "chunks": [
-            "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-sonnet-4-5-20250929\",\"id\":\"msg_01MaQqYLdRAMtUXKjFeY1mid\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":49,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":5,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"}}}\n\n",
-            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"thinking\",\"thinking\":\"\",\"signature\":\"\"}               }\n\n",
-            "event: ping\ndata: {\"type\": \"ping\"}\n\n",
-            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"The user is asking for\"}           }\n\n",
-            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" a simple arithmetic calculation: 2+2.\\n\\n2+2 = 4\\n\\nThey want me to reply with the number only, so I should just say\"}               }\n\n",
-            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" \\\"4\\\".\"}   }\n\n",
-            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"signature_delta\",\"signature\":\"EtMCCmQIDRgCKkAaZAxgfeQpVtL6Qt1I7nDkXgpJ4KrcjJtnTh/285F/a+1bqJMtQ3MrO83GpU3n8YucF2pDS+2CTpb9+iFP0lqtMhpjbGF1ZGUtc29ubmV0LTQtNS0yMDI1MDkyOTgAEgwUA4mNEJMSKeRves0aDHe+dTLWpaFIieI80iIwcs0ZHmkYjxTsURLBHBLqgJyazDFBy5eSSj8luTMYLMaXGPLb2qOJmXGJCJFCuO2+KpwBIoamg8TJtv+bdvcj740Ls2HuiVBclQXlue9M0FG68d/2oV7WgCoeWTjO6SekfyfBDFbgUziXUGBu4EblmGtqdQfeIUM1N0bUhekZJwuit5eP6nnNptZKBa74JVRptJi/Mz+aMATN80FiBuyveJ2cgxMtJahWVEx3+ap0WqsvIGtnyxZK1be2C6mzwrvT0qM286RW+uV7Zd3HmcI+GAE=\"}     }\n\n",
-            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0             }\n\n",
-            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":1,\"content_block\":{\"type\":\"text\",\"text\":\"\"}        }\n\n",
-            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"4\"}        }\n\n",
-            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":1      }\n\n",
-            "event: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null},\"usage\":{\"input_tokens\":49,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":54}           }\n\n",
-            "event: message_stop\ndata: {\"type\":\"message_stop\"            }\n\n"
+            "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-sonnet-4-5-20250929\",\"id\":\"msg_01MaQqYLdRAMtUXKjFeY1mid\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":49,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":5,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"}}}",
+            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"thinking\",\"thinking\":\"\",\"signature\":\"\"}               }",
+            "event: ping\ndata: {\"type\": \"ping\"}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"The user is asking for\"}           }",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" a simple arithmetic calculation: 2+2.\\n\\n2+2 = 4\\n\\nThey want me to reply with the number only, so I should just say\"}               }",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" \\\"4\\\".\"}   }",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"signature_delta\",\"signature\":\"EtMCCmQIDRgCKkAaZAxgfeQpVtL6Qt1I7nDkXgpJ4KrcjJtnTh/285F/a+1bqJMtQ3MrO83GpU3n8YucF2pDS+2CTpb9+iFP0lqtMhpjbGF1ZGUtc29ubmV0LTQtNS0yMDI1MDkyOTgAEgwUA4mNEJMSKeRves0aDHe+dTLWpaFIieI80iIwcs0ZHmkYjxTsURLBHBLqgJyazDFBy5eSSj8luTMYLMaXGPLb2qOJmXGJCJFCuO2+KpwBIoamg8TJtv+bdvcj740Ls2HuiVBclQXlue9M0FG68d/2oV7WgCoeWTjO6SekfyfBDFbgUziXUGBu4EblmGtqdQfeIUM1N0bUhekZJwuit5eP6nnNptZKBa74JVRptJi/Mz+aMATN80FiBuyveJ2cgxMtJahWVEx3+ap0WqsvIGtnyxZK1be2C6mzwrvT0qM286RW+uV7Zd3HmcI+GAE=\"}     }",
+            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0             }",
+            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":1,\"content_block\":{\"type\":\"text\",\"text\":\"\"}        }",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"4\"}        }",
+            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":1      }",
+            "event: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null},\"usage\":{\"input_tokens\":49,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":54}           }",
+            "event: message_stop\ndata: {\"type\":\"message_stop\"            }"
           ]
         }
       }
@@ -1015,13 +1022,13 @@
         "body": {
           "kind": "sse",
           "chunks": [
-            "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-haiku-4-5-20251001\",\"id\":\"msg_016m8noRzV6fCeFqenNbd4k7\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":24,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":1,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"}}               }\n\n",
-            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}             }\n\n",
-            "event: ping\ndata: {\"type\": \"ping\"}\n\n",
-            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"1 one\\n2 two\\n3 three\"}  }\n\n",
-            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0         }\n\n",
-            "event: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null},\"usage\":{\"input_tokens\":24,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":15}}\n\n",
-            "event: message_stop\ndata: {\"type\":\"message_stop\"   }\n\n"
+            "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-haiku-4-5-20251001\",\"id\":\"msg_016m8noRzV6fCeFqenNbd4k7\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":24,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":1,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"}}               }",
+            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}             }",
+            "event: ping\ndata: {\"type\": \"ping\"}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"1 one\\n2 two\\n3 three\"}  }",
+            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0         }",
+            "event: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null},\"usage\":{\"input_tokens\":24,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":15}}",
+            "event: message_stop\ndata: {\"type\":\"message_stop\"   }"
           ]
         }
       }
@@ -1063,7 +1070,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["location"],
+                  "required": [
+                    "location"
+                  ],
                   "type": "object"
                 },
                 "name": "get_weather"
@@ -1197,7 +1206,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["location"],
+                  "required": [
+                    "location"
+                  ],
                   "type": "object"
                 },
                 "name": "get_weather"

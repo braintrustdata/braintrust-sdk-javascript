@@ -205,24 +205,30 @@ function convertBody(encoding, body, chunks) {
       return { kind: "base64", value: String(body ?? "") };
     }
     case "sse-chunks": {
-      // Legacy SSE: chunks is an array of { data: base64, encoding: 'base64' }.
-      // Seinfeld SSE: chunks is an array of raw UTF-8 strings.
+      // Legacy SSE: arbitrary byte-stream fragments, each base64-encoded.
+      // The fragments may NOT align with SSE event boundaries — a single SSE
+      // event can span multiple chunks. Seinfeld's chunk array must contain
+      // complete SSE events (one entry per \n\n-terminated event).
+      // Fix: concatenate all decoded fragment bytes first, then split on \n\n.
       const rawChunks = Array.isArray(chunks)
         ? chunks
         : Array.isArray(body)
           ? body
           : [];
-      return {
-        kind: "sse",
-        chunks: rawChunks.map((c) => {
+      const fullText = rawChunks
+        .map((c) => {
           if (typeof c === "string") return c;
           const obj = /** @type {Record<string, unknown>} */ (c);
           if (obj["encoding"] === "base64" && typeof obj["data"] === "string") {
             return Buffer.from(String(obj["data"]), "base64").toString("utf8");
           }
           return String(obj["data"] ?? c);
-        }),
-      };
+        })
+        .join("");
+      // Split on \n\n (SSE event separator) and drop trailing empty entry.
+      const parts = fullText.replace(/\r\n/g, "\n").split("\n\n");
+      if (parts.length > 0 && parts[parts.length - 1] === "") parts.pop();
+      return { kind: "sse", chunks: parts };
     }
     default:
       // Unknown encoding — fall back to empty

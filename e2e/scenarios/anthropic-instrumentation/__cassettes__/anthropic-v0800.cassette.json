@@ -326,13 +326,13 @@
         "body": {
           "kind": "sse",
           "chunks": [
-            "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-haiku-4-5-20251001\",\"id\":\"msg_01HEWgaDYqEUsWhPFvp6LwNR\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":24,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":1,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"}}  }\n\n",
-            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}           }\n\n",
-            "event: ping\ndata: {\"type\": \"ping\"}\n\n",
-            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"1 one\\n2 two\\n3 three\"}     }\n\n",
-            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0            }\n\n",
-            "event: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null},\"usage\":{\"input_tokens\":24,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":15}    }\n\n",
-            "event: message_stop\ndata: {\"type\":\"message_stop\"   }\n\n"
+            "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-haiku-4-5-20251001\",\"id\":\"msg_01HEWgaDYqEUsWhPFvp6LwNR\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":24,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":1,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"}}  }",
+            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}           }",
+            "event: ping\ndata: {\"type\": \"ping\"}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"1 one\\n2 two\\n3 three\"}     }",
+            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0            }",
+            "event: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null},\"usage\":{\"input_tokens\":24,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":15}    }",
+            "event: message_stop\ndata: {\"type\":\"message_stop\"   }"
           ]
         }
       }
@@ -394,13 +394,13 @@
         "body": {
           "kind": "sse",
           "chunks": [
-            "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-haiku-4-5-20251001\",\"id\":\"msg_01S3XupdKMg2Dsw2FVysMpaP\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":24,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":1,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"}}            }\n\n",
-            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}          }\n\n",
-            "event: ping\ndata: {\"type\": \"ping\"}\n\n",
-            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"1 one\\n2 two\\n3 three\"}      }\n\n",
-            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0              }\n\n",
-            "event: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null},\"usage\":{\"input_tokens\":24,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":15}  }\n\n",
-            "event: message_stop\ndata: {\"type\":\"message_stop\"              }\n\n"
+            "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-haiku-4-5-20251001\",\"id\":\"msg_01S3XupdKMg2Dsw2FVysMpaP\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":24,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":1,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"}}            }",
+            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}          }",
+            "event: ping\ndata: {\"type\": \"ping\"}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"1 one\\n2 two\\n3 three\"}      }",
+            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0              }",
+            "event: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null},\"usage\":{\"input_tokens\":24,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":15}  }",
+            "event: message_stop\ndata: {\"type\":\"message_stop\"              }"
           ]
         }
       }
@@ -446,7 +446,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["location"],
+                  "required": [
+                    "location"
+                  ],
                   "type": "object"
                 },
                 "name": "get_weather"
@@ -482,17 +484,17 @@
         "body": {
           "kind": "sse",
           "chunks": [
-            "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-haiku-4-5-20251001\",\"id\":\"msg_01HvAdnSiSXsNt4YGwpSKesM\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":687,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":13,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"}}               }\n\n",
-            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"tool_use\",\"id\":\"toolu_01VbMG3GqQPbJjiHnhMpQ7sq\",\"name\":\"get_weather\",\"input\":{},\"caller\":{\"type\":\"direct\"}}            }\n\n",
-            "event: ping\ndata: {\"type\": \"ping\"}\n\n",
-            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"\"}              }\n\n",
-            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"{\\\"locati\"}   }\n\n",
-            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"on\\\": \\\"Par\"}  }\n\n",
-            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"is,\"}}\n\n",
-            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\" France\\\"}\"}}\n\n",
-            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0          }\n\n",
-            "event: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"tool_use\",\"stop_sequence\":null,\"stop_details\":null},\"usage\":{\"input_tokens\":687,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":26}      }\n\n",
-            "event: message_stop\ndata: {\"type\":\"message_stop\"      }\n\n"
+            "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-haiku-4-5-20251001\",\"id\":\"msg_01HvAdnSiSXsNt4YGwpSKesM\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":687,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":13,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"}}               }",
+            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"tool_use\",\"id\":\"toolu_01VbMG3GqQPbJjiHnhMpQ7sq\",\"name\":\"get_weather\",\"input\":{},\"caller\":{\"type\":\"direct\"}}            }",
+            "event: ping\ndata: {\"type\": \"ping\"}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"\"}              }",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"{\\\"locati\"}   }",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"on\\\": \\\"Par\"}  }",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"is,\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\" France\\\"}\"}}",
+            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0          }",
+            "event: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"tool_use\",\"stop_sequence\":null,\"stop_details\":null},\"usage\":{\"input_tokens\":687,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":26}      }",
+            "event: message_stop\ndata: {\"type\":\"message_stop\"      }"
           ]
         }
       }
@@ -532,7 +534,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["location"],
+                  "required": [
+                    "location"
+                  ],
                   "type": "object"
                 },
                 "name": "get_weather"
@@ -859,19 +863,19 @@
         "body": {
           "kind": "sse",
           "chunks": [
-            "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-sonnet-4-5-20250929\",\"id\":\"msg_01X6weSwbJsXkTUZF7ArZP7U\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":49,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":5,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"}} }\n\n",
-            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"thinking\",\"thinking\":\"\",\"signature\":\"\"}    }\n\n",
-            "event: ping\ndata: {\"type\": \"ping\"}\n\n",
-            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"The user is asking for\"}}\n\n",
-            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" 2+2 and wants only the number as a reply.\\n\\n2+2 = 4\\n\\nI should\"}    }\n\n",
-            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" reply with just \\\"4\\\".\"}      }\n\n",
-            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"signature_delta\",\"signature\":\"Eq4CCmQIDRgCKkDfiGe6EySM423emkmLCfM0+eMxURyg9Vg+xzStDhgb8Nl8KlxBfvQqPqzuqIId/ugpEaRjMrhlUDo+2UaM/FCaMhpjbGF1ZGUtc29ubmV0LTQtNS0yMDI1MDkyOTgAEgxtTTMLGVDlqszkM/4aDGzepnYM7Z/vQXr53yIwMQBGAIO8SJ9Jf8zbG622nlCzjufBq5tC7O8x2RyaGdgGdV0W+Nj/ZFXzVxjtKBjrKnh5V8b7d60Us2wbufXJISOCRZIsA/VRpi/lcOfJYT3RTdu6KX7SKrI49vT1AGZx9meAsnmieiyg0k2Y9y6NoZfwcG0fbVQlPN+r/g8UYCPiWYzdlKfXiPs5JWSS23nzKTWKDgXV2VcX6x2/P1idhbNo1jOUCAPtG2sYAQ==\"}              }\n\n",
-            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0   }\n\n",
-            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":1,\"content_block\":{\"type\":\"text\",\"text\":\"\"}         }\n\n",
-            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"4\"}     }\n\n",
-            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":1               }\n\n",
-            "event: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null},\"usage\":{\"input_tokens\":49,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":48}    }\n\n",
-            "event: message_stop\ndata: {\"type\":\"message_stop\"             }\n\n"
+            "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-sonnet-4-5-20250929\",\"id\":\"msg_01X6weSwbJsXkTUZF7ArZP7U\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":49,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":5,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"}} }",
+            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"thinking\",\"thinking\":\"\",\"signature\":\"\"}    }",
+            "event: ping\ndata: {\"type\": \"ping\"}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"The user is asking for\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" 2+2 and wants only the number as a reply.\\n\\n2+2 = 4\\n\\nI should\"}    }",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" reply with just \\\"4\\\".\"}      }",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"signature_delta\",\"signature\":\"Eq4CCmQIDRgCKkDfiGe6EySM423emkmLCfM0+eMxURyg9Vg+xzStDhgb8Nl8KlxBfvQqPqzuqIId/ugpEaRjMrhlUDo+2UaM/FCaMhpjbGF1ZGUtc29ubmV0LTQtNS0yMDI1MDkyOTgAEgxtTTMLGVDlqszkM/4aDGzepnYM7Z/vQXr53yIwMQBGAIO8SJ9Jf8zbG622nlCzjufBq5tC7O8x2RyaGdgGdV0W+Nj/ZFXzVxjtKBjrKnh5V8b7d60Us2wbufXJISOCRZIsA/VRpi/lcOfJYT3RTdu6KX7SKrI49vT1AGZx9meAsnmieiyg0k2Y9y6NoZfwcG0fbVQlPN+r/g8UYCPiWYzdlKfXiPs5JWSS23nzKTWKDgXV2VcX6x2/P1idhbNo1jOUCAPtG2sYAQ==\"}              }",
+            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0   }",
+            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":1,\"content_block\":{\"type\":\"text\",\"text\":\"\"}         }",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"4\"}     }",
+            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":1               }",
+            "event: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null},\"usage\":{\"input_tokens\":49,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":48}    }",
+            "event: message_stop\ndata: {\"type\":\"message_stop\"             }"
           ]
         }
       }
@@ -1016,12 +1020,13 @@
         "body": {
           "kind": "sse",
           "chunks": [
-            "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-haiku-4-5-20251001\",\"id\":\"msg_01E4ebEyVW8nUJs2v1TNijWh\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":24,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":1,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"}}         }\n\n",
-            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}         }\n\n",
-            "event: ping\ndata: {\"type\": \"ping\"}\n\n",
-            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"1 one\\n2 two\\n3 three\"}      }\n\n",
-            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0             }\n\n",
-            "event: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null},\"usage\":{\"input_tokens\":24,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":15}           }\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"           }\n\n"
+            "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-haiku-4-5-20251001\",\"id\":\"msg_01E4ebEyVW8nUJs2v1TNijWh\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":24,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":1,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"}}         }",
+            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}         }",
+            "event: ping\ndata: {\"type\": \"ping\"}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"1 one\\n2 two\\n3 three\"}      }",
+            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0             }",
+            "event: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null},\"usage\":{\"input_tokens\":24,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":15}           }",
+            "event: message_stop\ndata: {\"type\":\"message_stop\"           }"
           ]
         }
       }
@@ -1063,7 +1068,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["location"],
+                  "required": [
+                    "location"
+                  ],
                   "type": "object"
                 },
                 "name": "get_weather"
@@ -1198,7 +1205,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["location"],
+                  "required": [
+                    "location"
+                  ],
                   "type": "object"
                 },
                 "name": "get_weather"
