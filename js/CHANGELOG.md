@@ -1,5 +1,25 @@
 # braintrust
 
+## 3.10.0
+
+### Minor Changes
+
+- feat: Add auto and wrapper instrumentation for `@github/copilot-sdk`
+- Add dataset versioning support to `init()`, `initDataset()`, and dataset objects. You can now pin dataset reads and experiment registration by explicit version, snapshot name, or environment tag: `ts import { init, initDataset } from "braintrust"; const datasetByVersion = initDataset({ project: "support-bot", dataset: "production-cases", version: "1234567890123456", }); const datasetBySnapshot = initDataset({ project: "support-bot", dataset: "production-cases", snapshotName: "baseline", }); const datasetByEnvironment = initDataset({ project: "support-bot", dataset: "production-cases", environment: "production", }); init({ project: "support-bot", experiment: "baseline-eval", dataset: { id: "00000000-0000-0000-0000-000000000123", snapshotName: "baseline", }, }); ` Dataset objects now expose snapshot CRUD helpers, plus lookup by snapshot name or xact id: `ts const dataset = initDataset({ project: "support-bot", dataset: "production-cases", }); const snapshot = await dataset.createSnapshot({ name: "baseline", description: "Before the prompt rollout", }); await dataset.updateSnapshot(snapshot.id, { name: "baseline-v2", description: null, }); const snapshots = await dataset.listSnapshots(); const byName = await dataset.getSnapshot({ snapshotName: "baseline-v2", }); const byXactId = await dataset.getSnapshot({ xactId: snapshot.xact_id, }); await dataset.deleteSnapshot(snapshot.id); ` `braintrust/dev` now also respects `dataset_version` and `dataset_environment` when resolving datasets for evals, so local eval runs match the pinned dataset selection used by the main SDK.
+- (feat) Add experiment dataset filters to experiment metadata
+
+### Patch Changes
+
+- fix(auto-instrumentation): Skip over file transforms in bundler plugins when id is undefined
+- fix: Fix export map for bundler plugins
+- feat: Bump google ADK patching range to include new major `1.0.0`
+- feat: Add instrumentation for groq-sdk
+- fix: Correct the eval file extension shown in CLI directory warnings
+- feat: Capture thinking with cohere
+- fix: Capture reasoning in mistral
+- fix(huggingface): Capture streamed tool calls
+- fix(claude-agent-sdk): Nest built-in tools under sub-agents
+
 ## 3.9.0
 
 ### Notable Changes
