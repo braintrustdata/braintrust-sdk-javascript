@@ -42,9 +42,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "city"
-                  ],
+                  "required": ["city"],
                   "type": "object"
                 },
                 "strict": null,
@@ -144,9 +142,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "city"
-                  ],
+                  "required": ["city"],
                   "type": "object"
                 },
                 "strict": null,
@@ -260,9 +256,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "city"
-                  ],
+                  "required": ["city"],
                   "type": "object"
                 },
                 "strict": null,
@@ -390,9 +384,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "city"
-                  ],
+                  "required": ["city"],
                   "type": "object"
                 },
                 "strict": null,
@@ -534,9 +526,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "city"
-                  ],
+                  "required": ["city"],
                   "type": "object"
                 },
                 "strict": null,
@@ -692,9 +682,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "city"
-                  ],
+                  "required": ["city"],
                   "type": "object"
                 },
                 "strict": null,
