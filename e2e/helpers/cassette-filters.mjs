@@ -7,6 +7,15 @@
 
 const AI_SDK_VOLATILE_FIELDS = {
   ignoreBodyFields: [
+    // Strip ALL body fields so matching falls back to URL + method + callIndex.
+    // The AI SDK scenarios make requests in a deterministic order; the cassette
+    // entries are distinguished by position (callIndex), not by body content.
+    // This avoids spurious misses caused by the SDK adding new default fields
+    // between minor versions (e.g. Responses API drift: store, truncation, etc.)
+    // or by schema format changes in tool definitions.
+    "**",
+    // (The specific field list below is kept for documentation purposes but
+    // is superseded by the ** wildcard above.)
     // AI SDK volatile fields (change per-run)
     "experimental_generateMessageId",
     "messageId",

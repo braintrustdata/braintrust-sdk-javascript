@@ -21,11 +21,20 @@ const DEFAULT_FILTER: FilterConfig = {
     ...RATE_LIMIT_HEADERS,
     ...FINGERPRINT_HEADERS,
   ],
-  // Normalize the URL through the WHATWG URL parser so that percent-encoding
-  // differences (e.g. `%5B%5D` vs `[]`) don't produce spurious misses.
+  // Canonicalize URL percent-encoding using URLSearchParams so that encoding
+  // differences in the query string (e.g. `%5B%5D` vs `[]`) don't produce
+  // spurious misses. Node.js v20 does NOT re-encode `[]/]` in href, but
+  // URLSearchParams.toString() always encodes them consistently.
   normalizeRequest: (req) => {
     try {
-      return { ...req, url: new URL(req.url).href };
+      const parsed = new URL(req.url);
+      const qs = parsed.searchParams.toString();
+      const normalized =
+        parsed.origin +
+        parsed.pathname +
+        (qs ? "?" + qs : "") +
+        (parsed.hash || "");
+      return { ...req, url: normalized };
     } catch {
       return req;
     }
