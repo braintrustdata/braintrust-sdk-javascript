@@ -615,7 +615,11 @@ export function defineOpenAIInstrumentationAssertions(options: {
 
     const scenarioDir = path.dirname(fileURLToPath(options.testFileUrl));
     const cassetteEngaged = existsSync(
-      path.join(scenarioDir, "__cassettes__", `${options.snapshotName}.json`),
+      path.join(
+        scenarioDir,
+        "__cassettes__",
+        `${options.snapshotName}.cassette.json`,
+      ),
     );
 
     for (const spec of operationSpecs) {

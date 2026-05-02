@@ -169,9 +169,7 @@
                         "type": "string"
                       }
                     },
-                    "required": [
-                      "location"
-                    ],
+                    "required": ["location"],
                     "type": "object"
                   }
                 },

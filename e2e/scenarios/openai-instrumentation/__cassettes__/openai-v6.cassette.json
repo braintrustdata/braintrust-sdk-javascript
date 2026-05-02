@@ -312,9 +312,7 @@
                       "type": "number"
                     }
                   },
-                  "required": [
-                    "answer"
-                  ],
+                  "required": ["answer"],
                   "type": "object"
                 }
               },
@@ -536,45 +534,19 @@
                   "violence/graphic": false
                 },
                 "category_applied_input_types": {
-                  "harassment": [
-                    "text"
-                  ],
-                  "harassment/threatening": [
-                    "text"
-                  ],
-                  "hate": [
-                    "text"
-                  ],
-                  "hate/threatening": [
-                    "text"
-                  ],
-                  "illicit": [
-                    "text"
-                  ],
-                  "illicit/violent": [
-                    "text"
-                  ],
-                  "self-harm": [
-                    "text"
-                  ],
-                  "self-harm/instructions": [
-                    "text"
-                  ],
-                  "self-harm/intent": [
-                    "text"
-                  ],
-                  "sexual": [
-                    "text"
-                  ],
-                  "sexual/minors": [
-                    "text"
-                  ],
-                  "violence": [
-                    "text"
-                  ],
-                  "violence/graphic": [
-                    "text"
-                  ]
+                  "harassment": ["text"],
+                  "harassment/threatening": ["text"],
+                  "hate": ["text"],
+                  "hate/threatening": ["text"],
+                  "illicit": ["text"],
+                  "illicit/violent": ["text"],
+                  "self-harm": ["text"],
+                  "self-harm/instructions": ["text"],
+                  "self-harm/intent": ["text"],
+                  "sexual": ["text"],
+                  "sexual/minors": ["text"],
+                  "violence": ["text"],
+                  "violence/graphic": ["text"]
                 },
                 "category_scores": {
                   "harassment": 0.00001141223854434603,
@@ -993,10 +965,7 @@
                       "type": "integer"
                     }
                   },
-                  "required": [
-                    "value",
-                    "reasoning"
-                  ],
+                  "required": ["value", "reasoning"],
                   "type": "object"
                 },
                 "type": "json_schema"
@@ -1079,10 +1048,7 @@
                       "type": "integer"
                     }
                   },
-                  "required": [
-                    "value",
-                    "reasoning"
-                  ],
+                  "required": ["value", "reasoning"],
                   "type": "object"
                 },
                 "strict": true,

@@ -199,7 +199,9 @@ function convertBody(encoding, body, chunks) {
     }
     case "utf8":
     case "text": {
-      return { kind: "text", value: String(body ?? "") };
+      const val = String(body ?? "");
+      if (val === "") return { kind: "empty" };
+      return { kind: "text", value: val };
     }
     case "base64": {
       return { kind: "base64", value: String(body ?? "") };

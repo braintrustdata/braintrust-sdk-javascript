@@ -30,8 +30,21 @@ export function createDefaultMatcher(): Matcher {
   };
 }
 
+// Normalize empty-text bodies to empty. Legacy cassette converters may store
+// zero-length GET request bodies as { kind: 'text', value: '' } while live
+// requests produce { kind: 'empty' }. Treat them as equivalent.
+function normalizeEmpty(body: BodyPayload): BodyPayload {
+  if (body.kind === "text" && body.value === "") return { kind: "empty" };
+  return body;
+}
+
 function bodyEqual(a: BodyPayload, b: BodyPayload): boolean {
-  if (a.kind !== b.kind) return false;
+  const na = normalizeEmpty(a);
+  const nb = normalizeEmpty(b);
+  if (na.kind !== nb.kind) return false;
+  // Reassign to narrowed types for the switch.
+  a = na;
+  b = nb;
   switch (a.kind) {
     case "empty":
       return true;
