@@ -1,6 +1,6 @@
 {
   "name": "@braintrust/browser",
-  "version": "0.0.2-rc.4",
+  "version": "0.0.3",
   "description": "Braintrust SDK for browser environments with AsyncLocalStorage polyfill",
   "type": "module",
   "module": "./dist/index.js",
