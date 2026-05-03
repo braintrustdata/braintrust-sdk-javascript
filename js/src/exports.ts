@@ -216,6 +216,24 @@ export {
 } from "./framework";
 
 export type {
+  DatasetPipelineDefinition,
+  DatasetPipelineOrigin,
+  DatasetPipelineRow,
+  DatasetPipelineScope,
+  DatasetPipelineSource,
+  DatasetPipelineTarget,
+  DatasetPipelineTransform,
+  DatasetPipelineTransformArgs,
+  DatasetPipelineTransformResult,
+} from "./dataset-pipeline";
+
+export {
+  DatasetPipeline,
+  getRegisteredDatasetPipelines,
+  isDatasetPipelineDefinition,
+} from "./dataset-pipeline";
+
+export type {
   CodeOpts,
   CreateProjectOpts,
   FunctionEvent,
@@ -246,7 +264,7 @@ export {
 } from "./prompt-schemas";
 
 export type { Trace, SpanData, GetThreadOptions } from "./trace";
-export { SpanFetcher, CachedSpanFetcher } from "./trace";
+export { LocalTrace, SpanFetcher, CachedSpanFetcher } from "./trace";
 
 export type {
   ParentExperimentIds,
