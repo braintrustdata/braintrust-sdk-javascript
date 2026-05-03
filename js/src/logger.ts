@@ -6901,6 +6901,7 @@ export class SpanImpl implements Span {
       const cachedSpan: CachedSpan = {
         input: partialRecord.input,
         output: partialRecord.output,
+        expected: partialRecord.expected,
         metadata: partialRecord.metadata,
         span_id: this._spanId,
         span_parents: this._spanParents,

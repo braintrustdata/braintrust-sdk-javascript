@@ -216,7 +216,6 @@ export {
 } from "./framework";
 
 export type {
-  DatasetPipelineCandidate,
   DatasetPipelineDefinition,
   DatasetPipelineOrigin,
   DatasetPipelineRow,
@@ -224,7 +223,7 @@ export type {
   DatasetPipelineSource,
   DatasetPipelineTarget,
   DatasetPipelineTransform,
-  DatasetPipelineTransformContext,
+  DatasetPipelineTransformArgs,
   DatasetPipelineTransformResult,
 } from "./dataset-pipeline";
 

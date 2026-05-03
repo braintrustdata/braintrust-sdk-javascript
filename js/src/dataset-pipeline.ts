@@ -1,5 +1,10 @@
 import type { ObjectReferenceType as ObjectReference } from "./generated_types";
-import type { Dataset, FullInitDatasetOptions } from "./logger";
+import type {
+  BaseMetadata,
+  Dataset,
+  DefaultMetadataType,
+  FullInitDatasetOptions,
+} from "./logger";
 import type { Trace } from "./trace";
 
 export type DatasetPipelineScope = "span" | "trace";
@@ -10,7 +15,6 @@ export type DatasetPipelineSource = {
   orgName?: string;
   filter?: string;
   scope?: DatasetPipelineScope;
-  limit?: number;
 };
 
 type DatasetPipelineInitDatasetOptions = FullInitDatasetOptions<false>;
@@ -28,21 +32,17 @@ export type DatasetPipelineTarget = {
 
 export type DatasetPipelineRow = Parameters<Dataset["insert"]>[0];
 
-export type DatasetPipelineCandidate = {
-  trace: Trace;
-  /**
-   * The matching source span row id when the source scope is "span".
-   */
-  id?: string;
-  /**
-   * Default provenance for rows returned by transform. In span scope this
-   * points at the matching source span row.
-   */
-  origin?: ObjectReference;
-};
-
-export type DatasetPipelineTransformContext = {
-  pipeline: DatasetPipelineDefinition;
+export type DatasetPipelineTransformArgs<
+  Input = unknown,
+  Output = unknown,
+  Expected = unknown,
+  Metadata extends BaseMetadata = DefaultMetadataType,
+> = {
+  input?: Input;
+  output?: Output;
+  expected?: Expected;
+  metadata?: Metadata extends void ? Record<string, unknown> : Metadata;
+  trace?: Trace;
 };
 
 export type DatasetPipelineTransformResult =
@@ -52,8 +52,7 @@ export type DatasetPipelineTransformResult =
   | undefined;
 
 export type DatasetPipelineTransform = (
-  candidate: DatasetPipelineCandidate,
-  context: DatasetPipelineTransformContext,
+  args: DatasetPipelineTransformArgs,
 ) => DatasetPipelineTransformResult | Promise<DatasetPipelineTransformResult>;
 
 export type DatasetPipelineDefinition = {
