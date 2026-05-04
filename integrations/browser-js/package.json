@@ -24,7 +24,7 @@
   },
   "dependencies": {
     "als-browser": "^1.0.1",
-    "braintrust": ">=3.0.0-rc.29"
+    "braintrust": ">=3.9.0"
   },
   "devDependencies": {
     "@types/node": "^20.10.5",
