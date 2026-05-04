@@ -70,6 +70,9 @@ function summarizeSpan(event: CapturedLogEvent | undefined): Json {
   if (typeof event.row.error === "string") {
     summary.error = event.row.error;
   }
+  if (typeof summary.name === "string" && summary.name.startsWith("Agent:")) {
+    summary.name = "Agent: <subagent>";
+  }
   return summary;
 }
 
@@ -80,6 +83,42 @@ function findOperation(events: CapturedLogEvent[], name: string) {
 function findCursorTask(events: CapturedLogEvent[], operationName: string) {
   const operation = findOperation(events, operationName);
   return findChildSpans(events, "Cursor Agent", operation?.span.id).at(-1);
+}
+
+function findSubagentTool(
+  events: CapturedLogEvent[],
+  parentId: string | undefined,
+) {
+  if (!parentId) {
+    return undefined;
+  }
+  return [...events]
+    .reverse()
+    .find(
+      (event) =>
+        event.span.type === "tool" &&
+        event.span.parentIds.includes(parentId) &&
+        ["tool: Agent", "tool: Task", "tool: task"].includes(
+          event.span.name ?? "",
+        ),
+    );
+}
+
+function findSubagentTask(
+  events: CapturedLogEvent[],
+  parentId: string | undefined,
+) {
+  if (!parentId) {
+    return undefined;
+  }
+  return [...events]
+    .reverse()
+    .find(
+      (event) =>
+        event.span.type === "task" &&
+        event.span.parentIds.includes(parentId) &&
+        event.span.name?.startsWith("Agent:"),
+    );
 }
 
 function outputText(event: CapturedLogEvent | undefined): string {
@@ -95,10 +134,8 @@ function summarize(events: CapturedLogEvent[]): Json {
     "cursor-sdk-resume-conversation-operation",
   );
   const tool = findAllSpans(events, "tool: shell").at(-1);
-  const subagentTask = events.find(
-    (event) =>
-      event.span.type === "task" && event.span.name?.startsWith("Agent:"),
-  );
+  const subagentTool = findSubagentTool(events, streamTask?.span.id);
+  const subagentTask = findSubagentTask(events, subagentTool?.span.id);
 
   return normalizeForSnapshot({
     conversation: {
@@ -119,6 +156,7 @@ function summarize(events: CapturedLogEvent[]): Json {
         findOperation(events, "cursor-sdk-stream-operation"),
       ),
       subagent_task: summarizeSpan(subagentTask),
+      subagent_tool: summarizeSpan(subagentTool),
       task: summarizeSpan(streamTask),
       tool: summarizeSpan(tool),
     },
@@ -212,6 +250,23 @@ export function defineCursorSDKInstrumentationAssertions(options: {
         ).toContain("cursor_tool_ok");
       },
     );
+
+    test("captures subagent spans when Cursor uses agents", testConfig, () => {
+      const streamTask = findCursorTask(events, "cursor-sdk-stream-operation");
+      const subagentTool = findSubagentTool(events, streamTask?.span.id);
+      const subagentTask = findSubagentTask(events, subagentTool?.span.id);
+
+      expect(subagentTool).toBeDefined();
+      expect(subagentTool?.metadata).toMatchObject({
+        "cursor_sdk.tool.status": "completed",
+      });
+      expect(subagentTask).toBeDefined();
+      expect(subagentTask?.span.rootId).toBe(streamTask?.span.rootId);
+      expect(subagentTask?.metadata).toMatchObject({
+        "cursor_sdk.tool.status": "completed",
+      });
+      expect(subagentTask?.output).toBeDefined();
+    });
 
     test("preserves user onDelta/onStep callbacks", testConfig, () => {
       expect(findLatestSpan(events, "cursor-sdk-user-on-delta")).toBeDefined();

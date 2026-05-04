@@ -61,7 +61,7 @@ async function runCursorSDKScenario({ decorateSDK, sdk }) {
           },
         });
         const run = await reusableAgent.send(
-          "Run the shell command `printf cursor_tool_ok` and report the output. Do not edit files.",
+          "First use the reviewer subagent to confirm exactly CURSOR_SUBAGENT_OK. Then run the shell command `printf cursor_tool_ok` and report the output. Do not edit files.",
         );
         await collectAsync(run.stream());
       });
