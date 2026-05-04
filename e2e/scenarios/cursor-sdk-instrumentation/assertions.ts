@@ -42,7 +42,6 @@ const METADATA_KEYS = [
   "cursor_sdk.run_id",
   "cursor_sdk.runtime",
   "cursor_sdk.status",
-  "cursor_sdk.duration_ms",
   "cursor_sdk.step_types",
   "cursor_sdk.tool.status",
 ] as const;
@@ -62,9 +61,6 @@ function summarizeSpan(event: CapturedLogEvent | undefined): Json {
     }
     if (typeof metadata["cursor_sdk.run_id"] === "string") {
       metadata["cursor_sdk.run_id"] = "<run-id>";
-    }
-    if (typeof metadata["cursor_sdk.duration_ms"] === "number") {
-      metadata["cursor_sdk.duration_ms"] = 1;
     }
   }
   if (typeof event.row.error === "string") {

@@ -168,15 +168,9 @@
     ],
     "output": {
       "choice_count": 1,
-      "content_part_types": [
-        "thinking",
-        "text"
-      ],
-      "finish_reason": null,
+      "finish_reason": "stop",
       "has_content": true,
       "role": "assistant",
-      "text_block_count": 1,
-      "thinking_block_count": 1,
       "tool_call_count": 0,
       "type": "choices"
     },
