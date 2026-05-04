@@ -106,7 +106,7 @@ function wrapChatStream(
     options?: unknown,
   ) => Promise<CohereChatStreamResult>,
 ): NonNullable<CohereClient["chatStream"]> {
-  return async (request, options) =>
+  return (request, options) =>
     cohereChannels.chatStream.tracePromise(() => chatStream(request, options), {
       arguments: [request],
     } as Parameters<typeof cohereChannels.chatStream.tracePromise>[1]);

@@ -143,6 +143,56 @@ describe("cohere wrapper", () => {
     });
   });
 
+  test("preserves chatStream promise subclass helpers", async () => {
+    class MockResponsePromise<T> extends Promise<T> {
+      withRawResponse() {
+        return "raw";
+      }
+    }
+
+    async function* stream() {
+      yield {
+        eventType: "stream-end",
+        response: {
+          finishReason: "COMPLETE",
+          id: "resp_stream",
+          meta: {
+            tokens: {
+              inputTokens: 1,
+              outputTokens: 1,
+            },
+          },
+          text: "OK",
+        },
+      };
+    }
+
+    const rawPromise = new MockResponsePromise<AsyncIterable<unknown>>(
+      (resolve) => {
+        resolve(stream());
+      },
+    );
+    const client = wrapCohere({
+      chatStream: vi.fn(() => rawPromise),
+    });
+
+    const resultPromise = client.chatStream({
+      message: "Say OK",
+      model: "command-r",
+    });
+
+    expect((resultPromise as any).withRawResponse()).toBe("raw");
+    const result = await resultPromise;
+    const chunks: unknown[] = [];
+    for await (const chunk of result) {
+      chunks.push(chunk);
+    }
+    expect(chunks).toHaveLength(1);
+
+    const spans = await backgroundLogger.drain();
+    expect(spans).toHaveLength(1);
+  });
+
   test("wraps embed and rerank", async () => {
     const client = wrapCohere({
       embed: vi.fn(async () => ({
