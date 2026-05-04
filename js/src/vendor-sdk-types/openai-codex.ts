@@ -133,8 +133,7 @@ export type OpenAICodexThreadEvent =
   | { type: "item.started"; item: OpenAICodexThreadItem }
   | { type: "item.updated"; item: OpenAICodexThreadItem }
   | { type: "item.completed"; item: OpenAICodexThreadItem }
-  | { type: "error"; message: string }
-  | { type?: string; [key: string]: unknown };
+  | { type: "error"; message: string };
 
 export interface OpenAICodexThreadError {
   message?: string;
@@ -149,8 +148,7 @@ export type OpenAICodexThreadItem =
   | OpenAICodexMcpToolCallItem
   | OpenAICodexWebSearchItem
   | OpenAICodexTodoListItem
-  | OpenAICodexErrorItem
-  | { id?: string; type?: string; [key: string]: unknown };
+  | OpenAICodexErrorItem;
 
 export interface OpenAICodexAgentMessageItem {
   id?: string;
