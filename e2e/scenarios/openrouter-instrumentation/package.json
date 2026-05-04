@@ -9,7 +9,7 @@
     }
   },
   "dependencies": {
-    "@openrouter/sdk": "0.12.3",
+    "@openrouter/sdk": "0.12.22",
     "openrouter-sdk-v0911": "npm:@openrouter/sdk@0.9.11",
     "zod": "4.1.11"
   }
