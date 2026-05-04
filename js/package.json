@@ -113,7 +113,7 @@
     "build": "cross-env NODE_OPTIONS=\"--max-old-space-size=8192\" tsup",
     "check:typings": "tsc --noEmit",
     "watch": "tsup --watch",
-    "clean": "rm -r dist/* && rm -r dev/dist/*",
+    "clean": "rm -r dist/* && rm -r dev/dist/* && rm -r util/dist/*",
     "docs": "typedoc --options typedoc.json src/node/index.ts",
     "test": "vitest run --exclude \"src/wrappers/**/*.test.ts\" --exclude \"src/otel/**/*.test.ts\" --exclude \"smoke/**/*.test.ts\" --exclude \"src/zod/**/*.test.ts\" --exclude \"tests/api-compatibility/**\"",
     "test:core": "pnpm prune && pnpm test",

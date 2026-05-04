@@ -33,6 +33,7 @@ import { openaiConfigs } from "../configs/openai";
 import { anthropicConfigs } from "../configs/anthropic";
 import { aiSDKConfigs } from "../configs/ai-sdk";
 import { claudeAgentSDKConfigs } from "../configs/claude-agent-sdk";
+import { cursorSDKConfigs } from "../configs/cursor-sdk";
 import { googleGenAIConfigs } from "../configs/google-genai";
 import { huggingFaceConfigs } from "../configs/huggingface";
 import { openRouterAgentConfigs } from "../configs/openrouter-agent";
@@ -71,6 +72,7 @@ function getMatcher(options: BundlerPluginOptions): InstrumentationMatcher {
     ...anthropicConfigs,
     ...aiSDKConfigs,
     ...claudeAgentSDKConfigs,
+    ...cursorSDKConfigs,
     ...googleGenAIConfigs,
     ...huggingFaceConfigs,
     ...openRouterConfigs,

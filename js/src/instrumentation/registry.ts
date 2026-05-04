@@ -21,6 +21,8 @@ export interface InstrumentationConfig {
     google?: boolean;
     huggingface?: boolean;
     claudeAgentSDK?: boolean;
+    cursor?: boolean;
+    cursorSDK?: boolean;
     openrouter?: boolean;
     openrouterAgent?: boolean;
     mistral?: boolean;
@@ -111,6 +113,8 @@ class PluginRegistry {
       google: true,
       huggingface: true,
       claudeAgentSDK: true,
+      cursor: true,
+      cursorSDK: true,
       openrouter: true,
       openrouterAgent: true,
       mistral: true,
@@ -133,7 +137,11 @@ class PluginRegistry {
         .filter((s) => s.length > 0);
 
       for (const sdk of disabled) {
-        integrations[sdk] = false;
+        if (sdk === "cursor-sdk") {
+          integrations.cursorSDK = false;
+        } else {
+          integrations[sdk] = false;
+        }
       }
     }
 

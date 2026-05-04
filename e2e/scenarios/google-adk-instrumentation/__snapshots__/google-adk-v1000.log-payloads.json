@@ -85,11 +85,6 @@
       "start": 0
     },
     "name": "Agent: weather_agent",
-    "output": {
-      "author": "weather_agent",
-      "content": "<text>",
-      "role": "model"
-    },
     "type": "task"
   },
   {
@@ -115,11 +110,6 @@
       "tokens": "<number>"
     },
     "name": "Google ADK Runner",
-    "output": {
-      "author": "weather_agent",
-      "content": "<text>",
-      "role": "model"
-    },
     "type": "task"
   },
   {

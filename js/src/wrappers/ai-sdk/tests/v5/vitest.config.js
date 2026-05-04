@@ -14,6 +14,7 @@ const config = {
     },
   },
   test: {
+    reporters: ["default"],
     include: ["../../ai-sdk.test.ts", "./ai-sdk.v5.test.ts"],
     exclude: ["**/node_modules/**", "**/dist/**"],
   },

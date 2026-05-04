@@ -484,6 +484,156 @@ function mockInitGitMetadata() {
   ).mockResolvedValue([]);
 }
 
+test("init forwards dataset _internal_btql to experiment register", async () => {
+  const state = await _exportsForTestingOnly.simulateLoginForTests();
+
+  try {
+    vi.spyOn(state, "login").mockResolvedValue(state);
+    mockInitGitMetadata();
+
+    const datasetFilter = {
+      filter: [
+        {
+          op: "eq",
+          left: { op: "ident", name: ["metadata", "model"] },
+          right: { op: "literal", value: "gpt-5-mini" },
+        },
+        {
+          op: "isnotnull",
+          expr: { op: "ident", name: ["expected"] },
+        },
+      ],
+    };
+
+    let experimentRegisterBody: unknown;
+    vi.spyOn(state.appConn(), "post_json")
+      .mockResolvedValueOnce({
+        project: {
+          id: "00000000-0000-0000-0000-000000000001",
+          name: "test-project",
+        },
+        dataset: {
+          id: "00000000-0000-0000-0000-000000000002",
+          name: "test-dataset",
+        },
+      })
+      .mockImplementationOnce(async (_path, body) => {
+        experimentRegisterBody = body;
+        return {
+          project: {
+            id: "00000000-0000-0000-0000-000000000001",
+            name: "test-project",
+          },
+          experiment: {
+            id: "00000000-0000-0000-0000-000000000003",
+            project_id: "00000000-0000-0000-0000-000000000001",
+            name: "test-experiment",
+            public: false,
+          },
+        };
+      });
+
+    const dataset = initDataset({
+      project: "test-project",
+      dataset: "test-dataset",
+      version: "123",
+      _internal_btql: datasetFilter,
+      state,
+    });
+
+    const experiment = init({
+      project: "test-project",
+      experiment: "test-experiment",
+      dataset,
+      setCurrent: false,
+      state,
+    });
+
+    await experiment.id;
+
+    expect(experimentRegisterBody).toEqual(
+      expect.objectContaining({
+        internal_metadata: {
+          dataset_filter: datasetFilter,
+        },
+      }),
+    );
+  } finally {
+    _exportsForTestingOnly.simulateLogoutForTests();
+    vi.restoreAllMocks();
+  }
+});
+
+test("dataset fetch forwards _internal_btql filter arrays to btql", async () => {
+  const state = await _exportsForTestingOnly.simulateLoginForTests();
+
+  try {
+    vi.spyOn(state, "login").mockResolvedValue(state);
+
+    const datasetFilter = {
+      filter: [
+        {
+          op: "eq",
+          left: { op: "ident", name: ["metadata", "model"] },
+          right: { op: "literal", value: "gpt-5-mini" },
+        },
+        {
+          op: "isnotnull",
+          expr: { op: "ident", name: ["expected"] },
+        },
+      ],
+      limit: 5,
+    };
+
+    vi.spyOn(state.appConn(), "post_json").mockResolvedValue({
+      project: {
+        id: "00000000-0000-0000-0000-000000000001",
+        name: "test-project",
+      },
+      dataset: {
+        id: "00000000-0000-0000-0000-000000000002",
+        name: "test-dataset",
+      },
+    });
+
+    let btqlBody: unknown;
+    vi.spyOn(state.apiConn(), "post").mockImplementation(
+      async (_path, body) => {
+        btqlBody = body;
+        return new Response(JSON.stringify({ data: [] }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      },
+    );
+
+    const dataset = initDataset({
+      project: "test-project",
+      dataset: "test-dataset",
+      _internal_btql: datasetFilter,
+      state,
+    });
+
+    const rows: unknown[] = [];
+    for await (const row of dataset) {
+      rows.push(row);
+    }
+
+    expect(rows).toEqual([]);
+    expect(btqlBody).toEqual(
+      expect.objectContaining({
+        query: expect.objectContaining({
+          filter: datasetFilter.filter,
+          limit: 5,
+        }),
+      }),
+    );
+  } finally {
+    _exportsForTestingOnly.simulateLogoutForTests();
+    vi.restoreAllMocks();
+  }
+});
+
 test("initDataset prefers version over environment in eval data", async () => {
   const state = await _exportsForTestingOnly.simulateLoginForTests();
   vi.spyOn(state, "login").mockResolvedValue(state);
@@ -948,7 +1098,6 @@ test("init keeps plain dataset refs attached to the experiment", async () => {
   });
 
   await experiment.id;
-
   expect(experiment.dataset).toMatchObject({
     id: "00000000-0000-0000-0000-000000000002",
   });
