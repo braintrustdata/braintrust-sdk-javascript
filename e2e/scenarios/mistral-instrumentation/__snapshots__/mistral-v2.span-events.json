@@ -461,5 +461,129 @@
       "<span:24>"
     ],
     "type": "llm"
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "operation": "classifiers-moderate"
+    },
+    "metric_keys": [],
+    "name": "mistral-classifiers-moderate-operation",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:26>",
+    "span_parents": [
+      "<span:1>"
+    ],
+    "type": null
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "model": "mistral-moderation-2603",
+      "provider": "mistral"
+    },
+    "metric_keys": [],
+    "name": "mistral.classifiers.moderate",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:27>",
+    "span_parents": [
+      "<span:26>"
+    ],
+    "type": "llm"
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "operation": "classifiers-moderate-chat"
+    },
+    "metric_keys": [],
+    "name": "mistral-classifiers-moderate-chat-operation",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:28>",
+    "span_parents": [
+      "<span:1>"
+    ],
+    "type": null
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "model": "mistral-moderation-2603",
+      "provider": "mistral"
+    },
+    "metric_keys": [],
+    "name": "mistral.classifiers.moderateChat",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:29>",
+    "span_parents": [
+      "<span:28>"
+    ],
+    "type": "llm"
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "operation": "classifiers-classify"
+    },
+    "metric_keys": [],
+    "name": "mistral-classifiers-classify-operation",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:30>",
+    "span_parents": [
+      "<span:1>"
+    ],
+    "type": null
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "model": "mistral-moderation-2603",
+      "provider": "mistral"
+    },
+    "metric_keys": [],
+    "name": "mistral.classifiers.classify",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:31>",
+    "span_parents": [
+      "<span:30>"
+    ],
+    "type": "llm"
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "operation": "classifiers-classify-chat"
+    },
+    "metric_keys": [],
+    "name": "mistral-classifiers-classify-chat-operation",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:32>",
+    "span_parents": [
+      "<span:1>"
+    ],
+    "type": null
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "model": "mistral-moderation-2603",
+      "provider": "mistral"
+    },
+    "metric_keys": [],
+    "name": "mistral.classifiers.classifyChat",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:33>",
+    "span_parents": [
+      "<span:32>"
+    ],
+    "type": "llm"
   }
 ]
