@@ -133,7 +133,7 @@
     "metadata": {
       "created": 0,
       "id": "<span:8>",
-      "model": "meta-llama/Meta-Llama-3.1-8B-Instruct",
+      "model": "meta-llama/Llama-3.1-8B-Instruct",
       "object": "chat.completion"
     },
     "output": [
@@ -263,7 +263,7 @@
     "metadata": {
       "created": 0,
       "id": "<span:13>",
-      "model": "meta-llama/Meta-Llama-3.1-8B-Instruct",
+      "model": "meta-llama/Llama-3.1-8B-Instruct",
       "object": "chat.completion.chunk"
     },
     "output": {
@@ -417,7 +417,7 @@
     "metadata": {
       "created": 0,
       "id": "<span:18>",
-      "model": "meta-llama/Meta-Llama-3.1-8B-Instruct",
+      "model": "meta-llama/Llama-3.1-8B-Instruct",
       "object": "chat.completion.chunk"
     },
     "output": {
