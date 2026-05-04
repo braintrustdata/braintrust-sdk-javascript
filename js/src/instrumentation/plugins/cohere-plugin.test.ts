@@ -13,6 +13,7 @@ describe("parseCohereMetricsFromUsage", () => {
           tokens: {
             inputTokens: 10,
             outputTokens: 4,
+            reasoning_tokens: 6,
           },
           cachedTokens: 3,
         },
@@ -25,6 +26,7 @@ describe("parseCohereMetricsFromUsage", () => {
     ).toEqual({
       prompt_tokens: 10,
       completion_tokens: 4,
+      reasoning_tokens: 6,
       tokens: 14,
       prompt_cached_tokens: 3,
       search_units: 1,
@@ -189,6 +191,123 @@ describe("aggregateCohereChatStreamChunks", () => {
             name: "lookup_weather",
             arguments: '{"city":"Vienna"}',
           },
+        },
+      ],
+    });
+  });
+
+  it("aggregates v8 thinking blocks and reasoning token metrics", () => {
+    const aggregated = aggregateCohereChatStreamChunks([
+      {
+        type: "message-start",
+        id: "resp_reasoning",
+        delta: {
+          message: {
+            role: "assistant",
+          },
+        },
+      },
+      {
+        type: "content-start",
+        index: 0,
+        delta: {
+          message: {
+            content: {
+              type: "thinking",
+              thinking: "",
+            },
+          },
+        },
+      },
+      {
+        type: "content-delta",
+        index: 0,
+        delta: {
+          message: {
+            content: {
+              thinking: "Let me think. ",
+            },
+          },
+        },
+      },
+      {
+        type: "content-delta",
+        index: 0,
+        delta: {
+          message: {
+            content: {
+              thinking: "2 + 2 = 4.",
+            },
+          },
+        },
+      },
+      {
+        type: "content-start",
+        index: 1,
+        delta: {
+          message: {
+            content: {
+              type: "text",
+              text: "",
+            },
+          },
+        },
+      },
+      {
+        type: "content-delta",
+        index: 1,
+        delta: {
+          message: {
+            content: {
+              text: "4",
+            },
+          },
+        },
+      },
+      {
+        type: "tool-plan-delta",
+        delta: {
+          message: {
+            toolPlan: "Answer directly",
+          },
+        },
+      },
+      {
+        type: "message-end",
+        delta: {
+          finishReason: "COMPLETE",
+          usage: {
+            tokens: {
+              inputTokens: 7,
+              outputTokens: 3,
+              reasoning_tokens: 11,
+            },
+          },
+        },
+      },
+    ]);
+
+    expect(aggregated.metadata).toEqual({
+      id: "resp_reasoning",
+      finish_reason: "COMPLETE",
+    });
+    expect(aggregated.metrics).toEqual({
+      prompt_tokens: 7,
+      completion_tokens: 3,
+      reasoning_tokens: 11,
+      tokens: 10,
+    });
+    expect(aggregated.output).toEqual({
+      role: "assistant",
+      toolPlan: "Answer directly",
+      content: [
+        {
+          type: "thinking",
+          thinking: "Let me think. 2 + 2 = 4.",
+        },
+        {
+          type: "text",
+          text: "4",
         },
       ],
     });

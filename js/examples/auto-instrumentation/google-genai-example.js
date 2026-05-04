@@ -33,7 +33,7 @@ async function main() {
 
   // This call will be automatically traced to Braintrust
   const response = await ai.models.generateContent({
-    model: "gemini-2.0-flash-001",
+    model: "gemini-2.5-flash-lite",
     contents: "Explain what Gemini models are in one sentence.",
   });
 

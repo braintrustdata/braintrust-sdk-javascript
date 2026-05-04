@@ -3,6 +3,7 @@ import { E2E_TAGS } from "./helpers/tags";
 
 export default defineConfig({
   test: {
+    reporters: ["default"],
     include: ["scenarios/**/*.test.ts"],
     // We run the scenarios in the hooks.
     hookTimeout: 120_000,

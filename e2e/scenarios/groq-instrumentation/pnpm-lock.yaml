@@ -1,0 +1,23 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .:
+    dependencies:
+      groq-sdk:
+        specifier: 1.1.2
+        version: 1.1.2
+
+packages:
+
+  groq-sdk@1.1.2:
+    resolution: {integrity: sha512-CZO0XUQQDhn43ri1+lZHxZKpb+bGutgTvFmCJtooexiitGmPqhm1hntOT3nCoaq07e+OpeokVnfUs0i/oQuUaQ==}
+    hasBin: true
+
+snapshots:
+
+  groq-sdk@1.1.2: {}

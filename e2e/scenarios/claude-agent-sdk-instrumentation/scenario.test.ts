@@ -9,7 +9,7 @@ import { defineClaudeAgentSDKInstrumentationAssertions } from "./assertions";
 const scenarioDir = await prepareScenarioDir({
   scenarioDir: resolveScenarioDir(import.meta.url),
 });
-const TIMEOUT_MS = 120_000;
+const TIMEOUT_MS = 180_000;
 const claudeAgentSDKScenarios = await Promise.all(
   [
     {

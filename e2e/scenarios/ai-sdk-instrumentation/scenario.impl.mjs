@@ -143,7 +143,7 @@ async function runAISDKInstrumentationScenario(
 ) {
   const instrumentedAI = decorateAI ? decorateAI(options.ai) : options.ai;
   const openaiModel = options.openai("gpt-4o-mini-2024-07-18");
-  const anthropicModel = options.anthropic?.("claude-3-haiku-20240307");
+  const anthropicModel = options.anthropic?.("claude-haiku-4-5");
   const openaiEmbeddingModel = options.openai.textEmbeddingModel(
     "text-embedding-3-small",
   );

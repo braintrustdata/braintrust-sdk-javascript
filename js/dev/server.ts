@@ -318,6 +318,8 @@ async function getDataset(
       state,
       project: data.project_name,
       dataset: data.dataset_name,
+      version: data.dataset_version ?? undefined,
+      environment: data.dataset_environment ?? undefined,
       _internal_btql: data._internal_btql ?? undefined,
     });
   } else if ("dataset_id" in data) {
@@ -329,6 +331,8 @@ async function getDataset(
       state,
       projectId: datasetInfo.projectId,
       dataset: datasetInfo.dataset,
+      version: data.dataset_version ?? undefined,
+      environment: data.dataset_environment ?? undefined,
       _internal_btql: data._internal_btql ?? undefined,
     });
   } else {

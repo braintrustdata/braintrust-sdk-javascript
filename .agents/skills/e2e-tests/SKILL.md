@@ -45,6 +45,7 @@ Try not to use specific test narrowing commands unless hunting down a very nasty
 - Keep reusable logic in `e2e/helpers/`. Keep one-off fixtures and scenario-specific files inside the scenario directory.
 - Snapshot stable contracts, not raw noise. Use `normalizeForSnapshot(...)` before inline snapshots and `formatJsonFileSnapshot(...)` plus file snapshots for larger payloads or version matrices.
 - When a scenario family already has `assertions.ts`, keep version- or provider-specific test setup in `scenario.test.ts` and reuse the shared assertions file.
+- Keep the CI e2e summary up to date. If a scenario version matrix or `variantKey` changes, update `e2e/config/pr-comment-scenarios.json` in the same change and follow the established pattern used by other versioned scenarios: one summary row per version, not separate wrapped/auto rows unless that pattern already exists for the scenario family.
 - Run new or updated scenarios three times in a row before considering snapshots stable.
 
 ## Scenario Patterns

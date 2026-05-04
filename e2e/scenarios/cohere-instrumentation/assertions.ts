@@ -13,6 +13,7 @@ import { ROOT_NAME, SCENARIO_NAME } from "./constants.mjs";
 type RunCohereScenario = (harness: {
   runNodeScenarioDir: (options: {
     entry: string;
+    env?: Record<string, string>;
     nodeArgs: string[];
     runContext?: { variantKey: string };
     scenarioDir: string;
@@ -20,6 +21,7 @@ type RunCohereScenario = (harness: {
   }) => Promise<unknown>;
   runScenarioDir: (options: {
     entry: string;
+    env?: Record<string, string>;
     runContext?: { variantKey: string };
     scenarioDir: string;
     timeoutMs: number;
@@ -35,16 +37,23 @@ function findCohereSpan(
   return spans.find((candidate) => candidate.output !== undefined) ?? spans[0];
 }
 
-function buildSpanSummary(events: CapturedLogEvent[]): Json {
+function buildSpanSummary(
+  events: CapturedLogEvent[],
+  supportsThinking: boolean,
+): Json {
   const chatOperation = findLatestSpan(events, "cohere-chat-operation");
   const chatStreamOperation = findLatestSpan(
     events,
     "cohere-chat-stream-operation",
   );
+  const chatStreamThinkingOperation = findLatestSpan(
+    events,
+    "cohere-chat-stream-thinking-operation",
+  );
   const embedOperation = findLatestSpan(events, "cohere-embed-operation");
   const rerankOperation = findLatestSpan(events, "cohere-rerank-operation");
 
-  return [
+  const summaryEvents = [
     findLatestSpan(events, ROOT_NAME),
     chatOperation,
     findCohereSpan(events, chatOperation?.span.id, "cohere.chat"),
@@ -54,7 +63,22 @@ function buildSpanSummary(events: CapturedLogEvent[]): Json {
     findCohereSpan(events, embedOperation?.span.id, "cohere.embed"),
     rerankOperation,
     findCohereSpan(events, rerankOperation?.span.id, "cohere.rerank"),
-  ].map((event) =>
+  ];
+
+  if (supportsThinking) {
+    summaryEvents.splice(
+      5,
+      0,
+      chatStreamThinkingOperation,
+      findCohereSpan(
+        events,
+        chatStreamThinkingOperation?.span.id,
+        "cohere.chatStream",
+      ),
+    );
+  }
+
+  return summaryEvents.map((event) =>
     summarizeWrapperContract(event!, [
       "document_count",
       "inputType",
@@ -62,6 +86,7 @@ function buildSpanSummary(events: CapturedLogEvent[]): Json {
       "operation",
       "provider",
       "scenario",
+      "thinking",
       "topN",
     ]),
   ) as Json;
@@ -71,6 +96,7 @@ export function defineCohereInstrumentationAssertions(options: {
   name: string;
   runScenario: RunCohereScenario;
   snapshotName: string;
+  supportsThinking: boolean;
   testFileUrl: string;
   timeoutMs: number;
 }): void {
@@ -132,6 +158,60 @@ export function defineCohereInstrumentationAssertions(options: {
       expect(chatStreamSpan?.output).toBeDefined();
     });
 
+    if (options.supportsThinking) {
+      test("captures reasoning content for chatStream", testConfig, () => {
+        const root = findLatestSpan(events, ROOT_NAME);
+        const operation = findLatestSpan(
+          events,
+          "cohere-chat-stream-thinking-operation",
+        );
+        const span = findCohereSpan(
+          events,
+          operation?.span.id,
+          "cohere.chatStream",
+        );
+        const output = span?.output as
+          | {
+              content?: Array<{
+                text?: string;
+                thinking?: string;
+                type?: string;
+              }>;
+            }
+          | undefined;
+        const metrics = (span?.metrics ?? {}) as Record<string, unknown>;
+
+        expect(operation).toBeDefined();
+        expect(span).toBeDefined();
+        expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
+        expect(span?.row.metadata).toMatchObject({
+          model: "command-a-reasoning-08-2025",
+          provider: "cohere",
+          thinking: {
+            tokenBudget: 128,
+            type: "enabled",
+          },
+        });
+        expect(metrics).toMatchObject({
+          completion_tokens: expect.any(Number),
+          prompt_tokens: expect.any(Number),
+          reasoning_tokens: expect.any(Number),
+          time_to_first_token: expect.any(Number),
+        });
+        expect(
+          output?.content?.some(
+            (block) =>
+              block.type === "thinking" && typeof block.thinking === "string",
+          ),
+        ).toBe(true);
+        expect(
+          output?.content?.some(
+            (block) => block.type === "text" && typeof block.text === "string",
+          ),
+        ).toBe(true);
+      });
+    }
+
     test("captures embed span", testConfig, () => {
       const operation = findLatestSpan(events, "cohere-embed-operation");
       const span = findCohereSpan(events, operation?.span.id, "cohere.embed");
@@ -164,7 +244,9 @@ export function defineCohereInstrumentationAssertions(options: {
 
     test("matches span snapshot", testConfig, async () => {
       await expect(
-        formatJsonFileSnapshot(buildSpanSummary(events)),
+        formatJsonFileSnapshot(
+          buildSpanSummary(events, options.supportsThinking),
+        ),
       ).toMatchFileSnapshot(spanSnapshotPath);
     });
   });

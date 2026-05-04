@@ -12,6 +12,7 @@ describe("extractMistralRequestMetadata", () => {
       extractMistralRequestMetadata({
         model: "mistral-large-latest",
         maxTokens: 128,
+        reasoning_effort: "high",
         temperature: 0.4,
         n: 2,
         safe_prompt: true,
@@ -24,6 +25,7 @@ describe("extractMistralRequestMetadata", () => {
     ).toEqual({
       model: "mistral-large-latest",
       maxTokens: 128,
+      reasoning_effort: "high",
       temperature: 0.4,
       n: 2,
       safe_prompt: true,
@@ -364,6 +366,74 @@ describe("aggregateMistralStreamChunks", () => {
           content: "b",
         },
         finishReason: "length",
+      },
+    ]);
+  });
+
+  it("preserves thinking content blocks from reasoning streams", () => {
+    const aggregated = aggregateMistralStreamChunks([
+      {
+        data: {
+          choices: [
+            {
+              delta: {
+                role: "assistant",
+                content: [
+                  {
+                    type: "thinking",
+                    thinking: [{ type: "text", text: "Let me" }],
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      },
+      {
+        data: {
+          choices: [
+            {
+              delta: {
+                content: [
+                  {
+                    type: "thinking",
+                    thinking: [{ type: "text", text: " think this through." }],
+                  },
+                  {
+                    type: "text",
+                    text: "4",
+                  },
+                ],
+              },
+              finishReason: "stop",
+            },
+          ],
+        },
+      },
+    ]);
+
+    expect(aggregated.output).toEqual([
+      {
+        index: 0,
+        message: {
+          role: "assistant",
+          content: [
+            {
+              type: "thinking",
+              thinking: [
+                {
+                  type: "text",
+                  text: "Let me think this through.",
+                },
+              ],
+            },
+            {
+              type: "text",
+              text: "4",
+            },
+          ],
+        },
+        finishReason: "stop",
       },
     ]);
   });

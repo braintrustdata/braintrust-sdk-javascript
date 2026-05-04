@@ -15,7 +15,7 @@ import {
   SCENARIO_NAME,
 } from "./constants.mjs";
 
-export const COHERE_SCENARIO_TIMEOUT_MS = 120_000;
+export const COHERE_SCENARIO_TIMEOUT_MS = 240_000;
 
 export const COHERE_SCENARIO_SPECS = [
   {
@@ -23,6 +23,7 @@ export const COHERE_SCENARIO_SPECS = [
     autoEntry: "scenario.cohere-v7.mjs",
     dependencyName: "cohere-sdk-v7-14-0",
     snapshotName: "cohere-v7-14-0",
+    supportsThinking: false,
     wrapperEntry: "scenario.cohere-v7.ts",
   },
   {
@@ -84,6 +85,36 @@ function getChatRequest(apiVersion, { stream = false } = {}) {
   };
 }
 
+function getThinkingChatRequest() {
+  return {
+    model: "command-a-reasoning-08-2025",
+    messages: [
+      {
+        role: "user",
+        content: "What is 2+2? Reply with the number only.",
+      },
+    ],
+    maxTokens: 256,
+    temperature: 0,
+    thinking: {
+      type: "enabled",
+      tokenBudget: 128,
+    },
+  };
+}
+
+function shouldRunThinkingScenario(apiVersion) {
+  if (process.env.COHERE_SUPPORTS_THINKING === "1") {
+    return true;
+  }
+
+  if (process.env.COHERE_SUPPORTS_THINKING === "0") {
+    return false;
+  }
+
+  return apiVersion === "v8";
+}
+
 function getEmbedRequest(apiVersion) {
   if (apiVersion === "v8") {
     return {
@@ -128,7 +159,7 @@ function getRerankRequest(apiVersion) {
 
 async function runCohereInstrumentationScenario(
   CohereClient,
-  { apiVersion, decorateClient } = {},
+  { apiVersion, decorateClient, ThinkingCohereClient } = {},
 ) {
   const apiKey = getApiKey();
   if (!apiKey) {
@@ -139,6 +170,16 @@ async function runCohereInstrumentationScenario(
     token: apiKey,
   });
   const client = decorateClient ? decorateClient(baseClient) : baseClient;
+  const thinkingClientClass = ThinkingCohereClient ?? CohereClient;
+  const thinkingBaseClient =
+    thinkingClientClass === CohereClient
+      ? baseClient
+      : new thinkingClientClass({
+          token: apiKey,
+        });
+  const thinkingClient = decorateClient
+    ? decorateClient(thinkingBaseClient)
+    : thinkingBaseClient;
 
   await runTracedScenario({
     callback: async () => {
@@ -156,6 +197,19 @@ async function runCohereInstrumentationScenario(
           await collectAsync(stream);
         },
       );
+
+      if (shouldRunThinkingScenario(apiVersion)) {
+        await runOperation(
+          "cohere-chat-stream-thinking-operation",
+          "chat-stream-thinking",
+          async () => {
+            const stream = await thinkingClient.chatStream(
+              getThinkingChatRequest(),
+            );
+            await collectAsync(stream);
+          },
+        );
+      }
 
       await runOperation("cohere-embed-operation", "embed", async () => {
         await client.embed(getEmbedRequest(apiVersion));

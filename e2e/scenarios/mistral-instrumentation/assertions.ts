@@ -17,10 +17,12 @@ import {
   summarizeWrapperContract,
 } from "../../helpers/wrapper-contract";
 import {
+  ADJUSTABLE_REASONING_MODEL,
   FIM_MODEL,
   CHAT_MODEL,
   AGENT_MODEL,
   EMBEDDING_MODEL,
+  NATIVE_REASONING_MODEL,
   ROOT_NAME,
   SCENARIO_NAME,
 } from "./constants.mjs";
@@ -145,18 +147,43 @@ function summarizeOutput(output: unknown): Json {
       (Array.isArray(message.tool_calls) && message.tool_calls) ||
       (Array.isArray(message.toolCalls) && message.toolCalls) ||
       [];
-
-    return {
+    const contentParts = Array.isArray(message.content) ? message.content : [];
+    const contentPartTypes = contentParts
+      .map((part) =>
+        isRecord(part) && typeof part.type === "string" ? part.type : null,
+      )
+      .filter((part): part is string => part !== null);
+    const summary = {
       choice_count: output.length,
       finish_reason: finishReason,
       has_content:
         typeof message.content === "string"
           ? message.content.length > 0
-          : false,
+          : contentPartTypes.includes("text")
+            ? true
+            : false,
       role: typeof message.role === "string" ? message.role : null,
       tool_call_count: toolCalls.length,
       type: "choices",
     };
+
+    if (Array.isArray(message.content)) {
+      const hasThinkingContent = contentPartTypes.includes("thinking");
+
+      return {
+        ...summary,
+        content_part_types: contentPartTypes,
+        finish_reason: hasThinkingContent ? null : finishReason,
+        thinking_block_count: contentPartTypes.filter(
+          (partType) => partType === "thinking",
+        ).length,
+        text_block_count: contentPartTypes.filter(
+          (partType) => partType === "text",
+        ).length,
+      };
+    }
+
+    return summary;
   }
 
   if (!isRecord(output as Json)) {
@@ -189,7 +216,7 @@ function summarizePayloadRow(row: CapturedLogRow): Json {
     input: summarizeInput(row.input),
     metadata: pickMetadata(
       row.metadata as Record<string, unknown> | undefined,
-      ["model", "operation", "provider", "scenario"],
+      ["model", "operation", "provider", "reasoning_effort", "scenario"],
     ),
     metric_keys: Object.keys(metrics)
       .filter((key) => key !== "start" && key !== "end")
@@ -236,29 +263,52 @@ function normalizeLegacyV134PayloadSummaryRow(
     "mistral.chat.stream",
     "mistral.fim.stream",
   ]);
+  let normalizedSummaryRow = summaryRow;
+
   if (
-    snapshotName !== "mistral-v1-3-4" ||
-    !spanName ||
-    !unstableLegacyV134SpanNames.has(spanName) ||
-    !isRecord(summaryRow)
+    snapshotName === "mistral-v1-3-4" &&
+    spanName &&
+    unstableLegacyV134SpanNames.has(spanName) &&
+    isRecord(summaryRow)
   ) {
-    return summaryRow;
+    const output = isRecord(summaryRow.output) ? summaryRow.output : null;
+
+    normalizedSummaryRow = {
+      ...summaryRow,
+      metric_keys: normalizeLegacyV134MetricKeys(summaryRow.metric_keys),
+      ...(output
+        ? {
+            output: {
+              ...output,
+              finish_reason: null,
+            },
+          }
+        : {}),
+    };
   }
 
-  const output = isRecord(summaryRow.output) ? summaryRow.output : null;
+  if (!isRecord(normalizedSummaryRow)) {
+    return normalizedSummaryRow;
+  }
 
-  return {
-    ...summaryRow,
-    metric_keys: normalizeLegacyV134MetricKeys(summaryRow.metric_keys),
-    ...(output
-      ? {
-          output: {
-            ...output,
-            finish_reason: null,
-          },
-        }
-      : {}),
-  };
+  const output = isRecord(normalizedSummaryRow.output)
+    ? normalizedSummaryRow.output
+    : null;
+  const metadata = isRecord(normalizedSummaryRow.metadata)
+    ? normalizedSummaryRow.metadata
+    : null;
+
+  if (output && metadata?.reasoning_effort === "high") {
+    return {
+      ...normalizedSummaryRow,
+      output: {
+        ...output,
+        finish_reason: null,
+      },
+    };
+  }
+
+  return normalizedSummaryRow;
 }
 
 function mergeRecordValues(
@@ -341,6 +391,14 @@ function buildSpanSummary(
     events,
     "mistral-chat-stream-operation",
   );
+  const chatReasoningStreamOperation = findLatestSpan(
+    events,
+    "mistral-chat-reasoning-stream-operation",
+  );
+  const chatThinkingStreamOperation = findLatestSpan(
+    events,
+    "mistral-chat-thinking-stream-operation",
+  );
   const chatToolCallOperation = findLatestSpan(
     events,
     "mistral-chat-tool-call-operation",
@@ -393,6 +451,14 @@ function buildSpanSummary(
       findMistralSpan(events, chatStreamOperation?.span.id, [
         "mistral.chat.stream",
       ]),
+      chatReasoningStreamOperation,
+      findMistralSpan(events, chatReasoningStreamOperation?.span.id, [
+        "mistral.chat.stream",
+      ]),
+      chatThinkingStreamOperation,
+      findMistralSpan(events, chatThinkingStreamOperation?.span.id, [
+        "mistral.chat.stream",
+      ]),
       chatToolCallOperation,
       ...selectedChatToolCallSpans,
       fimCompleteOperation,
@@ -417,17 +483,20 @@ function buildSpanSummary(
       findMistralSpan(events, embeddingsOperation?.span.id, [
         "mistral.embeddings.create",
       ]),
-    ].map((event) =>
-      normalizeLegacyV134SpanSummaryRow(
-        summarizeWrapperContract(event!, [
-          "model",
-          "operation",
-          "provider",
-          "scenario",
-        ]),
-        snapshotName,
-      ),
-    ) as Json,
+    ]
+      .filter((event): event is CapturedLogEvent => event !== undefined)
+      .map((event) =>
+        normalizeLegacyV134SpanSummaryRow(
+          summarizeWrapperContract(event, [
+            "model",
+            "operation",
+            "provider",
+            "reasoning_effort",
+            "scenario",
+          ]),
+          snapshotName,
+        ),
+      ) as Json,
   );
 }
 
@@ -521,6 +590,7 @@ export function defineMistralInstrumentationAssertions(options: {
   name: string;
   runScenario: RunMistralScenario;
   snapshotName: string;
+  supportsThinkingStream?: boolean;
   testFileUrl: string;
   timeoutMs: number;
 }): void {
@@ -532,6 +602,7 @@ export function defineMistralInstrumentationAssertions(options: {
     options.testFileUrl,
     `${options.snapshotName}.log-payloads.json`,
   );
+  const supportsThinkingStream = options.supportsThinkingStream ?? true;
   const testConfig = {
     timeout: options.timeoutMs,
   };
@@ -596,6 +667,93 @@ export function defineMistralInstrumentationAssertions(options: {
       expect(span?.metrics?.time_to_first_token).toEqual(expect.any(Number));
       expect(span?.output).toBeDefined();
     });
+
+    test(
+      "captures trace for chat.stream() reasoning metadata",
+      testConfig,
+      () => {
+        const root = findLatestSpan(events, ROOT_NAME);
+        const operation = findLatestSpan(
+          events,
+          "mistral-chat-reasoning-stream-operation",
+        );
+        const span = findMistralSpan(events, operation?.span.id, [
+          "mistral.chat.stream",
+        ]);
+        const metadata = span?.row.metadata as
+          | Record<string, unknown>
+          | undefined;
+
+        expect(operation).toBeDefined();
+        expect(span).toBeDefined();
+        expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
+        expect(span?.span.type).toBe("llm");
+        expect(metadata).toMatchObject({
+          model: ADJUSTABLE_REASONING_MODEL,
+          provider: "mistral",
+          reasoning_effort: "high",
+        });
+        expect(span?.metrics).toMatchObject({
+          time_to_first_token: expect.any(Number),
+          prompt_tokens: expect.any(Number),
+          completion_tokens: expect.any(Number),
+        });
+        expect(span?.output).toBeDefined();
+      },
+    );
+
+    if (supportsThinkingStream) {
+      test(
+        "captures trace for chat.stream() thinking content",
+        testConfig,
+        () => {
+          const root = findLatestSpan(events, ROOT_NAME);
+          const operation = findLatestSpan(
+            events,
+            "mistral-chat-thinking-stream-operation",
+          );
+          const span = findMistralSpan(events, operation?.span.id, [
+            "mistral.chat.stream",
+          ]);
+          const metadata = span?.row.metadata as
+            | Record<string, unknown>
+            | undefined;
+          const output = span?.output as
+            | Array<{
+                message?: {
+                  content?:
+                    | Array<{
+                        thinking?: Array<{ text?: string; type?: string }>;
+                        text?: string;
+                        type?: string;
+                      }>
+                    | string
+                    | null;
+                };
+              }>
+            | undefined;
+          const content = Array.isArray(output?.[0]?.message?.content)
+            ? output[0].message.content
+            : [];
+
+          expect(operation).toBeDefined();
+          expect(span).toBeDefined();
+          expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
+          expect(span?.span.type).toBe("llm");
+          expect(metadata).toMatchObject({
+            model: NATIVE_REASONING_MODEL,
+            provider: "mistral",
+          });
+          expect(span?.metrics).toMatchObject({
+            time_to_first_token: expect.any(Number),
+            prompt_tokens: expect.any(Number),
+            completion_tokens: expect.any(Number),
+          });
+          expect(content.some((part) => part.type === "thinking")).toBe(true);
+          expect(content.some((part) => part.type === "text")).toBe(true);
+        },
+      );
+    }
 
     test("captures trace for chat.complete() tool calling", testConfig, () => {
       const root = findLatestSpan(events, ROOT_NAME);

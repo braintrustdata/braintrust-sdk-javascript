@@ -73,6 +73,23 @@ function pickMetadata(
   return Object.keys(picked).length > 0 ? (picked as Json) : null;
 }
 
+function normalizeMetricValues(
+  metrics: Json,
+  keys: string[],
+  replacement: Json,
+): void {
+  if (!metrics || typeof metrics !== "object" || Array.isArray(metrics)) {
+    return;
+  }
+
+  const metricsRecord = metrics as Record<string, Json>;
+  for (const key of keys) {
+    if (typeof metricsRecord[key] === "number") {
+      metricsRecord[key] = replacement;
+    }
+  }
+}
+
 function summarizeAnthropicPayload(event: CapturedLogEvent): Json {
   const normalizeToolResultIds = (
     messages:
@@ -166,12 +183,11 @@ function summarizeAnthropicPayload(event: CapturedLogEvent): Json {
     // Thinking token counts vary per run (temperature=1, variable thinking depth).
     // Zero them out so the payload snapshot is stable.
     if (summary.metrics && typeof summary.metrics === "object") {
-      const metrics = summary.metrics as Record<string, Json>;
-      for (const key of ["completion_tokens", "tokens"]) {
-        if (key in metrics) {
-          metrics[key] = 0;
-        }
-      }
+      normalizeMetricValues(
+        summary.metrics,
+        ["completion_tokens", "tokens"],
+        0,
+      );
     }
     return summary;
   }
@@ -216,6 +232,11 @@ function summarizeAnthropicPayload(event: CapturedLogEvent): Json {
   if (hasAttachmentInput && textBlock) {
     textBlock.text = "<anthropic-attachment-description>";
     summary.output = output as Json;
+    normalizeMetricValues(
+      summary.metrics,
+      ["completion_tokens", "tokens"],
+      "<number>",
+    );
   }
 
   const hasToolResultInput = input?.some(

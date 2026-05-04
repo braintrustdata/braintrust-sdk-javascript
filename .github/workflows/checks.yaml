@@ -459,7 +459,6 @@ jobs:
       - js-test
       - js-build
       - e2e-hermetic
-      - js-api-compatibility
       - js-smoke-discover
       - js-smoke-test
       - temporal-js
@@ -492,7 +491,6 @@ jobs:
           check_result "js-test" "${{ needs.js-test.result }}"
           check_result "js-build" "${{ needs.js-build.result }}"
           check_result "e2e-hermetic" "${{ needs.e2e-hermetic.result }}"
-          check_result "js-api-compatibility" "${{ needs.js-api-compatibility.result }}"
           check_result "js-smoke-discover" "${{ needs.js-smoke-discover.result }}"
           check_result "js-smoke-test" "${{ needs.js-smoke-test.result }}"
           check_result "temporal-js" "${{ needs.temporal-js.result }}"

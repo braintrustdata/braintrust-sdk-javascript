@@ -8,9 +8,25 @@ export type MistralToolCallDelta = {
   [key: string]: unknown;
 };
 
+export type MistralTextContentPart = {
+  type: "text";
+  text?: string;
+  [key: string]: unknown;
+};
+
+export type MistralThinkingContentPart = {
+  type: "thinking";
+  thinking?: MistralTextContentPart[] | null;
+  [key: string]: unknown;
+};
+
+export type MistralContentPart =
+  | MistralTextContentPart
+  | MistralThinkingContentPart;
+
 export type MistralChatMessageDelta = {
   role?: string;
-  content?: string | null;
+  content?: string | MistralContentPart[] | null;
   toolCalls?: MistralToolCallDelta[] | null;
   tool_calls?: MistralToolCallDelta[] | null;
   [key: string]: unknown;
@@ -20,7 +36,7 @@ export type MistralChatCompletionChoice = {
   index?: number;
   message?: {
     role?: string;
-    content?: string | null;
+    content?: string | MistralContentPart[] | null;
     toolCalls?: unknown;
     tool_calls?: unknown;
   };

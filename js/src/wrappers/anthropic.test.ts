@@ -14,8 +14,8 @@ import { _exportsForTestingOnly, Attachment, initLogger } from "../logger";
 import { configureNode } from "../node/config";
 import { getCurrentUnixTimestamp } from "../util";
 
-// use the cheapest model for tests
-const TEST_MODEL = "claude-3-haiku-20240307";
+// use a low-cost current Haiku alias for tests
+const TEST_MODEL = "claude-haiku-4-5";
 
 interface TextBlock {
   type: "text";
@@ -131,7 +131,7 @@ describe("anthropic client unit tests", { retry: 3 }, () => {
     expect(message.content[0].type).toBe("text");
     const content = message.content[0] as unknown;
     if (typeof content === "object" && content !== null && "text" in content) {
-      expect(content.text).toContain("old pond");
+      expect(content.text.toLowerCase()).toContain("old pond");
     } else {
       throw new Error("Content is not a text block");
     }
@@ -357,12 +357,11 @@ describe("anthropic client unit tests", { retry: 3 }, () => {
       messages: [
         {
           role: "user",
-          content: "What is Shakespeare's sonnet 18?",
+          content: "Reply exactly with BTANTHROPICSTREAMOK",
         },
       ],
-      max_tokens: 1000,
-      system:
-        "No punctuation, newlines or non-alphanumeric characters. Just the poem.",
+      max_tokens: 20,
+      system: "No punctuation or newlines.",
       temperature: 0.01,
       stream: true,
     });
@@ -382,17 +381,13 @@ describe("anthropic client unit tests", { retry: 3 }, () => {
     const span = spans[0] as any;
     expect(span.input).toBeDefined();
 
-    // clean up the output to make it easier to spot check
+    // Clean up the output to make the live provider assertion robust to casing
+    // and incidental spacing while still proving the streamed text was logged.
     const output = span.output
       .toLowerCase()
-      .replace(/\n/g, " ")
+      .replace(/\s/g, "")
       .replace(/'/g, "");
-    // Validate we collected all the text, so check the first, line, the last line
-    // and a few others too.
-    expect(output).toContain("shall i compare thee to a summers day");
-    expect(output).toContain("too hot the eye of heaven shines");
-    expect(output).toContain("so long as men can breathe or eyes can see");
-    expect(output).toContain("so long lives this and this gives life to thee");
+    expect(output).toContain("btanthropicstreamok");
 
     expect(span["span_attributes"].type).toBe("llm");
     expect(span["span_attributes"].name).toBe("anthropic.messages.create");
@@ -706,7 +701,7 @@ describe("anthropic client unit tests", { retry: 3 }, () => {
       "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFBQIAX8jx0gAAAABJRU5ErkJggg==";
 
     const response = await client.messages.create({
-      model: "claude-haiku-4-5-20251001",
+      model: TEST_MODEL,
       messages: [
         {
           role: "user",

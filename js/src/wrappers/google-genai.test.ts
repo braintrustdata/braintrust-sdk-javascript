@@ -18,7 +18,7 @@ import {
 import { wrapGoogleGenAI } from "./google-genai";
 import { getCurrentUnixTimestamp } from "../util";
 
-const TEST_MODEL = "gemini-2.0-flash-001";
+const TEST_MODEL = "gemini-2.5-flash-lite";
 const TEST_SUITE_OPTIONS = { timeout: 10000, retry: 3 };
 
 async function drainRawEvents(backgroundLogger: TestBackgroundLogger) {

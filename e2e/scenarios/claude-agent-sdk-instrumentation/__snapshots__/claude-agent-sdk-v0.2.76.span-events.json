@@ -8,7 +8,7 @@
         "Part 2"
       ],
       "metadata": {
-        "model": "claude-haiku-4-5-20251001"
+        "model": "claude-haiku-4-5"
       },
       "metric_keys": [
         "completion_tokens",
@@ -46,7 +46,7 @@
         "Part 2"
       ],
       "metadata": {
-        "model": "claude-haiku-4-5-20251001"
+        "model": "claude-haiku-4-5"
       },
       "metric_keys": [],
       "name": "Claude Agent",
@@ -66,7 +66,7 @@
         "Use the calculator tool to multiply 15 by 7. Do not answer from memory."
       ],
       "metadata": {
-        "model": "claude-haiku-4-5-20251001"
+        "model": "claude-haiku-4-5"
       },
       "metric_keys": [
         "completion_tokens",
@@ -100,7 +100,7 @@
       "has_input": true,
       "has_output": true,
       "metadata": {
-        "model": "claude-haiku-4-5-20251001"
+        "model": "claude-haiku-4-5"
       },
       "metric_keys": [],
       "name": "Claude Agent",
@@ -136,7 +136,7 @@
         "Use the calculator tool to divide 2 by 0. Do not recover from the error."
       ],
       "metadata": {
-        "model": "claude-haiku-4-5-20251001"
+        "model": "claude-haiku-4-5"
       },
       "metric_keys": [
         "completion_tokens",
@@ -170,7 +170,7 @@
       "has_input": true,
       "has_output": true,
       "metadata": {
-        "model": "claude-haiku-4-5-20251001"
+        "model": "claude-haiku-4-5"
       },
       "metric_keys": [],
       "name": "Claude Agent",
@@ -235,7 +235,7 @@
         "Spawn a math-expert subagent to add 15 and 27 using the calculator tool. Report the result. Do not solve it yourself."
       ],
       "metadata": {
-        "model": "claude-haiku-4-5-20251001"
+        "model": "claude-haiku-4-5"
       },
       "metric_keys": [
         "completion_tokens",
@@ -288,12 +288,12 @@
       "has_input": true,
       "has_output": true,
       "metadata": {
-        "model": "claude-haiku-4-5-20251001"
+        "model": "claude-haiku-4-5"
       },
       "metric_keys": [],
       "name": "Claude Agent",
       "root_span_id": "<span:1>",
-      "span_id": "<span:20>",
+      "span_id": "<span:16>",
       "span_parents": [
         "<span:19>"
       ],
@@ -309,7 +309,7 @@
       "metric_keys": [],
       "name": "tool: calculator/calculator",
       "root_span_id": "<span:1>",
-      "span_id": "<span:21>",
+      "span_id": "<span:20>",
       "span_parents": [
         "<span:17>"
       ],

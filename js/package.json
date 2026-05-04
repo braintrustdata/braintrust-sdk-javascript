@@ -1,6 +1,6 @@
 {
   "name": "braintrust",
-  "version": "3.9.0",
+  "version": "3.10.0",
   "description": "SDK for integrating Braintrust",
   "repository": {
     "type": "git",
@@ -79,13 +79,13 @@
       "types": "./dist/auto-instrumentations/bundler/vite.d.ts",
       "import": "./dist/auto-instrumentations/bundler/vite.mjs",
       "module": "./dist/auto-instrumentations/bundler/vite.mjs",
-      "require": "./dist/auto-instrumentations/bundler/vite.js"
+      "require": "./dist/auto-instrumentations/bundler/vite.cjs"
     },
     "./webpack": {
       "types": "./dist/auto-instrumentations/bundler/webpack.d.ts",
       "import": "./dist/auto-instrumentations/bundler/webpack.mjs",
       "module": "./dist/auto-instrumentations/bundler/webpack.mjs",
-      "require": "./dist/auto-instrumentations/bundler/webpack.js"
+      "require": "./dist/auto-instrumentations/bundler/webpack.cjs"
     },
     "./webpack-loader": {
       "types": "./dist/auto-instrumentations/bundler/webpack-loader.d.ts",
@@ -95,13 +95,13 @@
       "types": "./dist/auto-instrumentations/bundler/esbuild.d.ts",
       "import": "./dist/auto-instrumentations/bundler/esbuild.mjs",
       "module": "./dist/auto-instrumentations/bundler/esbuild.mjs",
-      "require": "./dist/auto-instrumentations/bundler/esbuild.js"
+      "require": "./dist/auto-instrumentations/bundler/esbuild.cjs"
     },
     "./rollup": {
       "types": "./dist/auto-instrumentations/bundler/rollup.d.ts",
       "import": "./dist/auto-instrumentations/bundler/rollup.mjs",
       "module": "./dist/auto-instrumentations/bundler/rollup.mjs",
-      "require": "./dist/auto-instrumentations/bundler/rollup.js"
+      "require": "./dist/auto-instrumentations/bundler/rollup.cjs"
     }
   },
   "files": [
@@ -113,7 +113,7 @@
     "build": "cross-env NODE_OPTIONS=\"--max-old-space-size=8192\" tsup",
     "check:typings": "tsc --noEmit",
     "watch": "tsup --watch",
-    "clean": "rm -r dist/* && rm -r dev/dist/*",
+    "clean": "rm -r dist/* && rm -r dev/dist/* && rm -r util/dist/*",
     "docs": "typedoc --options typedoc.json src/node/index.ts",
     "test": "vitest run --exclude \"src/wrappers/**/*.test.ts\" --exclude \"src/otel/**/*.test.ts\" --exclude \"smoke/**/*.test.ts\" --exclude \"src/zod/**/*.test.ts\" --exclude \"tests/api-compatibility/**\"",
     "test:core": "pnpm prune && pnpm test",

@@ -258,7 +258,12 @@ export function defineGoogleADKInstrumentationAssertions(options: {
 
     test("matches the shared span snapshot", testConfig, async () => {
       const relevantEvents = events.filter(
-        (e) => e.span.name !== undefined && e.span.type !== "llm",
+        (e) =>
+          e.span.name !== undefined &&
+          e.span.type !== "llm" &&
+          // Wrapped mode logs an extra start-only tool row. Normalize to the
+          // terminal tool record so wrapped and auto-hook snapshots stay aligned.
+          (e.span.type !== "tool" || e.output !== undefined),
       );
       const spanSummary = normalizeForSnapshot(
         dedupeSnapshotItems(
@@ -287,7 +292,10 @@ export function defineGoogleADKInstrumentationAssertions(options: {
 
     test("matches the shared payload snapshot", testConfig, async () => {
       const relevantEvents = events.filter(
-        (e) => e.span.name !== undefined && e.span.type !== "llm",
+        (e) =>
+          e.span.name !== undefined &&
+          e.span.type !== "llm" &&
+          (e.span.type !== "tool" || e.output !== undefined),
       );
       const payloadSummary = normalizeForSnapshot(
         dedupeSnapshotItems(
