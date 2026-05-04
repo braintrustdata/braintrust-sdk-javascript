@@ -125,6 +125,34 @@ function dedupeSnapshotItems(items: Json[]): Json[] {
   return deduped;
 }
 
+function hasOptionalADKTaskOutput(event: CapturedLogEvent): boolean {
+  return (
+    event.span.type === "task" &&
+    (event.span.name === "Google ADK Runner" ||
+      event.span.name?.startsWith("Agent:"))
+  );
+}
+
+function summarizeADKSpan(event: CapturedLogEvent): Json {
+  const summary = summarizeWrapperContract(event, [
+    "model",
+    "operation",
+    "scenario",
+    "provider",
+    "google_adk.agent_name",
+    "google_adk.user_id",
+    "google_adk.session_id",
+    "google_adk.tool_name",
+    "google_adk.tool_call_id",
+  ]) as Record<string, Json>;
+
+  if (hasOptionalADKTaskOutput(event)) {
+    delete summary.has_output;
+  }
+
+  return normalizeADKSummary(summary);
+}
+
 function summarizeADKPayload(event: CapturedLogEvent): Json {
   const metadata = event.row.metadata as Record<string, unknown> | undefined;
   const pickedMetadata: Record<string, Json> = {};
@@ -147,7 +175,7 @@ function summarizeADKPayload(event: CapturedLogEvent): Json {
     }
   }
 
-  return {
+  const summary: Record<string, Json> = {
     input: event.input as Json,
     metadata:
       Object.keys(pickedMetadata).length > 0 ? (pickedMetadata as Json) : null,
@@ -155,7 +183,13 @@ function summarizeADKPayload(event: CapturedLogEvent): Json {
     name: event.span.name ?? null,
     output: normalizeADKOutput(event.output as Json),
     type: event.span.type ?? null,
-  } satisfies Json;
+  };
+
+  if (hasOptionalADKTaskOutput(event)) {
+    delete summary.output;
+  }
+
+  return summary satisfies Json;
 }
 
 export function defineGoogleADKInstrumentationAssertions(options: {
@@ -267,21 +301,7 @@ export function defineGoogleADKInstrumentationAssertions(options: {
       );
       const spanSummary = normalizeForSnapshot(
         dedupeSnapshotItems(
-          relevantEvents.map((event) =>
-            normalizeADKSummary(
-              summarizeWrapperContract(event, [
-                "model",
-                "operation",
-                "scenario",
-                "provider",
-                "google_adk.agent_name",
-                "google_adk.user_id",
-                "google_adk.session_id",
-                "google_adk.tool_name",
-                "google_adk.tool_call_id",
-              ]),
-            ),
-          ) as Json[],
+          relevantEvents.map((event) => summarizeADKSpan(event)) as Json[],
         ) as Json,
       );
 

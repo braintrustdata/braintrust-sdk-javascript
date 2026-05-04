@@ -37,6 +37,11 @@ function findCohereSpan(
   return spans.find((candidate) => candidate.output !== undefined) ?? spans[0];
 }
 
+function isCohereProviderLimitError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error ?? "");
+  return message.includes("TooManyRequestsError") || message.includes("429");
+}
+
 function buildSpanSummary(
   events: CapturedLogEvent[],
   supportsThinking: boolean,
@@ -110,15 +115,30 @@ export function defineCohereInstrumentationAssertions(options: {
 
   describe(options.name, () => {
     let events: CapturedLogEvent[] = [];
+    let providerSkipReason: string | undefined;
 
     beforeAll(async () => {
       await withScenarioHarness(async (harness) => {
-        await options.runScenario(harness);
+        try {
+          await options.runScenario(harness);
+        } catch (error) {
+          if (isCohereProviderLimitError(error)) {
+            providerSkipReason =
+              "Cohere provider returned a rate or quota limit error";
+            return;
+          }
+
+          throw error;
+        }
         events = harness.events();
       });
     }, options.timeoutMs);
 
-    test("captures the scenario root span", testConfig, () => {
+    test("captures the scenario root span", testConfig, (context) => {
+      if (providerSkipReason) {
+        context.skip();
+      }
+
       const root = findLatestSpan(events, ROOT_NAME);
       expect(root).toBeDefined();
       expect(root?.row.metadata).toMatchObject({
@@ -126,7 +146,11 @@ export function defineCohereInstrumentationAssertions(options: {
       });
     });
 
-    test("captures chat and chatStream spans", testConfig, () => {
+    test("captures chat and chatStream spans", testConfig, (context) => {
+      if (providerSkipReason) {
+        context.skip();
+      }
+
       const chatOperation = findLatestSpan(events, "cohere-chat-operation");
       const chatSpan = findCohereSpan(
         events,
@@ -159,60 +183,73 @@ export function defineCohereInstrumentationAssertions(options: {
     });
 
     if (options.supportsThinking) {
-      test("captures reasoning content for chatStream", testConfig, () => {
-        const root = findLatestSpan(events, ROOT_NAME);
-        const operation = findLatestSpan(
-          events,
-          "cohere-chat-stream-thinking-operation",
-        );
-        const span = findCohereSpan(
-          events,
-          operation?.span.id,
-          "cohere.chatStream",
-        );
-        const output = span?.output as
-          | {
-              content?: Array<{
-                text?: string;
-                thinking?: string;
-                type?: string;
-              }>;
-            }
-          | undefined;
-        const metrics = (span?.metrics ?? {}) as Record<string, unknown>;
+      test(
+        "captures reasoning content for chatStream",
+        testConfig,
+        (context) => {
+          if (providerSkipReason) {
+            context.skip();
+          }
 
-        expect(operation).toBeDefined();
-        expect(span).toBeDefined();
-        expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
-        expect(span?.row.metadata).toMatchObject({
-          model: "command-a-reasoning-08-2025",
-          provider: "cohere",
-          thinking: {
-            tokenBudget: 128,
-            type: "enabled",
-          },
-        });
-        expect(metrics).toMatchObject({
-          completion_tokens: expect.any(Number),
-          prompt_tokens: expect.any(Number),
-          reasoning_tokens: expect.any(Number),
-          time_to_first_token: expect.any(Number),
-        });
-        expect(
-          output?.content?.some(
-            (block) =>
-              block.type === "thinking" && typeof block.thinking === "string",
-          ),
-        ).toBe(true);
-        expect(
-          output?.content?.some(
-            (block) => block.type === "text" && typeof block.text === "string",
-          ),
-        ).toBe(true);
-      });
+          const root = findLatestSpan(events, ROOT_NAME);
+          const operation = findLatestSpan(
+            events,
+            "cohere-chat-stream-thinking-operation",
+          );
+          const span = findCohereSpan(
+            events,
+            operation?.span.id,
+            "cohere.chatStream",
+          );
+          const output = span?.output as
+            | {
+                content?: Array<{
+                  text?: string;
+                  thinking?: string;
+                  type?: string;
+                }>;
+              }
+            | undefined;
+          const metrics = (span?.metrics ?? {}) as Record<string, unknown>;
+
+          expect(operation).toBeDefined();
+          expect(span).toBeDefined();
+          expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
+          expect(span?.row.metadata).toMatchObject({
+            model: "command-a-reasoning-08-2025",
+            provider: "cohere",
+            thinking: {
+              tokenBudget: 128,
+              type: "enabled",
+            },
+          });
+          expect(metrics).toMatchObject({
+            completion_tokens: expect.any(Number),
+            prompt_tokens: expect.any(Number),
+            reasoning_tokens: expect.any(Number),
+            time_to_first_token: expect.any(Number),
+          });
+          expect(
+            output?.content?.some(
+              (block) =>
+                block.type === "thinking" && typeof block.thinking === "string",
+            ),
+          ).toBe(true);
+          expect(
+            output?.content?.some(
+              (block) =>
+                block.type === "text" && typeof block.text === "string",
+            ),
+          ).toBe(true);
+        },
+      );
     }
 
-    test("captures embed span", testConfig, () => {
+    test("captures embed span", testConfig, (context) => {
+      if (providerSkipReason) {
+        context.skip();
+      }
+
       const operation = findLatestSpan(events, "cohere-embed-operation");
       const span = findCohereSpan(events, operation?.span.id, "cohere.embed");
       const output = span?.output as { embedding_length?: number } | undefined;
@@ -226,7 +263,11 @@ export function defineCohereInstrumentationAssertions(options: {
       expect(output?.embedding_length).toBeGreaterThan(0);
     });
 
-    test("captures rerank span", testConfig, () => {
+    test("captures rerank span", testConfig, (context) => {
+      if (providerSkipReason) {
+        context.skip();
+      }
+
       const operation = findLatestSpan(events, "cohere-rerank-operation");
       const span = findCohereSpan(events, operation?.span.id, "cohere.rerank");
 
@@ -242,7 +283,11 @@ export function defineCohereInstrumentationAssertions(options: {
       });
     });
 
-    test("matches span snapshot", testConfig, async () => {
+    test("matches span snapshot", testConfig, async (context) => {
+      if (providerSkipReason) {
+        context.skip();
+      }
+
       await expect(
         formatJsonFileSnapshot(
           buildSpanSummary(events, options.supportsThinking),
