@@ -6,7 +6,6 @@ import {
   resolveFileSnapshotPath,
 } from "../../helpers/file-snapshot";
 import { withScenarioHarness } from "../../helpers/scenario-harness";
-import { E2E_TAGS } from "../../helpers/tags";
 import { findChildSpans, findLatestSpan } from "../../helpers/trace-selectors";
 import { summarizeWrapperContract } from "../../helpers/wrapper-contract";
 import { ROOT_NAME, SCENARIO_NAME } from "./constants.mjs";
@@ -95,7 +94,6 @@ export function defineGenkitInstrumentationAssertions(options: {
     `${options.snapshotName}.span-events.json`,
   );
   const testConfig = {
-    tags: [E2E_TAGS.hermetic],
     timeout: options.timeoutMs,
   };
 
