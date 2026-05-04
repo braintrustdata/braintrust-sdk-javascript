@@ -719,7 +719,7 @@ async function collectFiles(
       console.warn(
         warning(
           `Reading ${inputPath} because it was specified directly. Rename it to end in ${prefix}.ts or ` +
-            `.${prefix}.js to include it automatically when you specify a directory.`,
+            `${prefix}.js to include it automatically when you specify a directory.`,
         ),
       );
     }
