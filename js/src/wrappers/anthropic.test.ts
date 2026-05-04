@@ -357,12 +357,11 @@ describe("anthropic client unit tests", { retry: 3 }, () => {
       messages: [
         {
           role: "user",
-          content: "What is Shakespeare's sonnet 18?",
+          content: "Reply exactly with BTANTHROPICSTREAMOK",
         },
       ],
-      max_tokens: 1000,
-      system:
-        "No punctuation, newlines or non-alphanumeric characters. Just the poem.",
+      max_tokens: 20,
+      system: "No punctuation or newlines.",
       temperature: 0.01,
       stream: true,
     });
@@ -382,16 +381,13 @@ describe("anthropic client unit tests", { retry: 3 }, () => {
     const span = spans[0] as any;
     expect(span.input).toBeDefined();
 
-    // clean up the output to make it easier to spot check
+    // Clean up the output to make the live provider assertion robust to casing
+    // and incidental spacing while still proving the streamed text was logged.
     const output = span.output
       .toLowerCase()
-      .replace(/\n/g, " ")
+      .replace(/\s/g, "")
       .replace(/'/g, "");
-    // Validate we collected the streamed text without relying on one exact phrasing.
-    expect(output).toContain("shall i compare thee to a summers day");
-    expect(output).toContain("shakespeare");
-    expect(output).toContain("summer");
-    expect(output.length).toBeGreaterThan(200);
+    expect(output).toContain("btanthropicstreamok");
 
     expect(span["span_attributes"].type).toBe("llm");
     expect(span["span_attributes"].name).toBe("anthropic.messages.create");
