@@ -67,6 +67,12 @@ function isRecord(value: Json | undefined): value is Record<string, Json> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+function nonEmptyString(value: string | undefined): string | null {
+  return typeof value === "string" && value.trim().length > 0
+    ? value.trim()
+    : null;
+}
+
 function pickMetadata(
   metadata: Record<string, unknown> | undefined,
   keys: string[],
@@ -643,7 +649,9 @@ export function defineMistralInstrumentationAssertions(options: {
   );
   const supportsThinkingStream = options.supportsThinkingStream ?? true;
   const supportsClassifiers = options.supportsClassifiers ?? true;
-  const supportsClassify = options.supportsClassify ?? true;
+  const classifyModel = nonEmptyString(process.env.MISTRAL_CLASSIFIER_MODEL);
+  const supportsClassify =
+    (options.supportsClassify ?? true) && !!classifyModel;
   const testConfig = {
     timeout: options.timeoutMs,
   };
@@ -1150,7 +1158,7 @@ export function defineMistralInstrumentationAssertions(options: {
         expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
         expect(span?.span.type).toBe("llm");
         expect(span?.row.metadata).toMatchObject({
-          model: CLASSIFIER_MODEL,
+          model: classifyModel,
           provider: "mistral",
         });
         expect(span?.input).toEqual(expect.any(String));
@@ -1173,7 +1181,7 @@ export function defineMistralInstrumentationAssertions(options: {
         expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
         expect(span?.span.type).toBe("llm");
         expect(span?.row.metadata).toMatchObject({
-          model: CLASSIFIER_MODEL,
+          model: classifyModel,
           provider: "mistral",
         });
         expect(span?.input).toEqual(expect.any(Object));
