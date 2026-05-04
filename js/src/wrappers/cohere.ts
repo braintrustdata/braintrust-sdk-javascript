@@ -24,6 +24,8 @@ export function wrapCohere<T>(cohere: T): T {
   return cohere;
 }
 
+const cohereProxyCache = new WeakMap<CohereClient, CohereClient>();
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
@@ -50,7 +52,12 @@ function isSupportedCohereClient(value: unknown): value is CohereClient {
 }
 
 function cohereProxy(cohere: CohereClient): CohereClient {
-  return new Proxy(cohere, {
+  const cached = cohereProxyCache.get(cohere);
+  if (cached) {
+    return cached;
+  }
+
+  const proxy = new Proxy(cohere, {
     get(target, prop, receiver) {
       switch (prop) {
         case "chat":
@@ -69,11 +76,16 @@ function cohereProxy(cohere: CohereClient): CohereClient {
           return typeof target.rerank === "function"
             ? wrapRerank(target.rerank.bind(target))
             : target.rerank;
-        default:
-          return Reflect.get(target, prop, receiver);
+        default: {
+          const value = Reflect.get(target, prop, receiver);
+          return isSupportedCohereClient(value) ? cohereProxy(value) : value;
+        }
       }
     },
   });
+
+  cohereProxyCache.set(cohere, proxy);
+  return proxy;
 }
 
 function wrapChat(
@@ -94,7 +106,7 @@ function wrapChatStream(
     options?: unknown,
   ) => Promise<CohereChatStreamResult>,
 ): NonNullable<CohereClient["chatStream"]> {
-  return (request, options) =>
+  return async (request, options) =>
     cohereChannels.chatStream.tracePromise(() => chatStream(request, options), {
       arguments: [request],
     } as Parameters<typeof cohereChannels.chatStream.tracePromise>[1]);

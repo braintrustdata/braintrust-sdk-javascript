@@ -219,4 +219,50 @@ describe("cohere wrapper", () => {
       },
     ]);
   });
+
+  test("wraps methods on v2 namespace clients", async () => {
+    const rawV2Client = {
+      chat: vi.fn(async () => ({
+        finishReason: "COMPLETE",
+        id: "resp_v2_chat",
+        meta: {
+          tokens: {
+            inputTokens: 6,
+            outputTokens: 2,
+          },
+        },
+        message: {
+          content: "OK",
+          role: "assistant",
+        },
+      })),
+    };
+    const client = wrapCohere({
+      chat: vi.fn(),
+      v2: rawV2Client,
+    });
+
+    expect(client.v2).toBe(client.v2);
+
+    await client.v2.chat({
+      messages: [{ content: "Reply with exactly OK.", role: "user" }],
+      model: "command-a-03-2025",
+      temperature: 0,
+    });
+
+    expect(rawV2Client.chat).toHaveBeenCalledTimes(1);
+
+    const spans = await backgroundLogger.drain();
+    expect(spans).toHaveLength(1);
+    const span = spans[0] as Record<string, any>;
+    expect(span.span_attributes).toMatchObject({
+      name: "cohere.chat",
+      type: "llm",
+    });
+    expect(span.metadata).toMatchObject({
+      provider: "cohere",
+      model: "command-a-03-2025",
+      temperature: 0,
+    });
+  });
 });

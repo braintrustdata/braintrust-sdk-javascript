@@ -34,6 +34,7 @@ for (const scenario of cohereScenarios) {
         await runScenarioDir({
           entry: scenario.wrapperEntry,
           env: {
+            COHERE_PACKAGE_NAME: scenario.dependencyName,
             COHERE_SUPPORTS_THINKING: supportsThinking ? "1" : "0",
           },
           runContext: { variantKey: scenario.snapshotName },
@@ -41,10 +42,15 @@ for (const scenario of cohereScenarios) {
           timeoutMs: COHERE_SCENARIO_TIMEOUT_MS,
         });
       },
-      snapshotName: scenario.snapshotName,
+      requireChatStreamOutput: scenario.snapshotName !== "cohere-v7-14-0",
+      snapshotName:
+        scenario.snapshotName === "cohere-v7-14-0"
+          ? "cohere-v7-14-0-wrapped"
+          : scenario.snapshotName,
       supportsThinking,
       testFileUrl: import.meta.url,
       timeoutMs: COHERE_SCENARIO_TIMEOUT_MS,
+      useV2Namespace: scenario.useV2Namespace ?? false,
     });
 
     defineCohereInstrumentationAssertions({
@@ -53,6 +59,7 @@ for (const scenario of cohereScenarios) {
         await runNodeScenarioDir({
           entry: scenario.autoEntry,
           env: {
+            COHERE_PACKAGE_NAME: scenario.dependencyName,
             COHERE_SUPPORTS_THINKING: supportsThinking ? "1" : "0",
           },
           nodeArgs: ["--import", "braintrust/hook.mjs"],
@@ -65,6 +72,7 @@ for (const scenario of cohereScenarios) {
       supportsThinking,
       testFileUrl: import.meta.url,
       timeoutMs: COHERE_SCENARIO_TIMEOUT_MS,
+      useV2Namespace: scenario.useV2Namespace ?? false,
     });
   });
 }
