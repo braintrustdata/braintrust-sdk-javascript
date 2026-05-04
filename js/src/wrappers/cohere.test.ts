@@ -143,6 +143,56 @@ describe("cohere wrapper", () => {
     });
   });
 
+  test("preserves chatStream promise subclass helpers", async () => {
+    class MockResponsePromise<T> extends Promise<T> {
+      withRawResponse() {
+        return "raw";
+      }
+    }
+
+    async function* stream() {
+      yield {
+        eventType: "stream-end",
+        response: {
+          finishReason: "COMPLETE",
+          id: "resp_stream",
+          meta: {
+            tokens: {
+              inputTokens: 1,
+              outputTokens: 1,
+            },
+          },
+          text: "OK",
+        },
+      };
+    }
+
+    const rawPromise = new MockResponsePromise<AsyncIterable<unknown>>(
+      (resolve) => {
+        resolve(stream());
+      },
+    );
+    const client = wrapCohere({
+      chatStream: vi.fn(() => rawPromise),
+    });
+
+    const resultPromise = client.chatStream({
+      message: "Say OK",
+      model: "command-r",
+    });
+
+    expect((resultPromise as any).withRawResponse()).toBe("raw");
+    const result = await resultPromise;
+    const chunks: unknown[] = [];
+    for await (const chunk of result) {
+      chunks.push(chunk);
+    }
+    expect(chunks).toHaveLength(1);
+
+    const spans = await backgroundLogger.drain();
+    expect(spans).toHaveLength(1);
+  });
+
   test("wraps embed and rerank", async () => {
     const client = wrapCohere({
       embed: vi.fn(async () => ({
@@ -218,5 +268,51 @@ describe("cohere wrapper", () => {
         relevance_score: 0.99,
       },
     ]);
+  });
+
+  test("wraps methods on v2 namespace clients", async () => {
+    const rawV2Client = {
+      chat: vi.fn(async () => ({
+        finishReason: "COMPLETE",
+        id: "resp_v2_chat",
+        meta: {
+          tokens: {
+            inputTokens: 6,
+            outputTokens: 2,
+          },
+        },
+        message: {
+          content: "OK",
+          role: "assistant",
+        },
+      })),
+    };
+    const client = wrapCohere({
+      chat: vi.fn(),
+      v2: rawV2Client,
+    });
+
+    expect(client.v2).toBe(client.v2);
+
+    await client.v2.chat({
+      messages: [{ content: "Reply with exactly OK.", role: "user" }],
+      model: "command-a-03-2025",
+      temperature: 0,
+    });
+
+    expect(rawV2Client.chat).toHaveBeenCalledTimes(1);
+
+    const spans = await backgroundLogger.drain();
+    expect(spans).toHaveLength(1);
+    const span = spans[0] as Record<string, any>;
+    expect(span.span_attributes).toMatchObject({
+      name: "cohere.chat",
+      type: "llm",
+    });
+    expect(span.metadata).toMatchObject({
+      provider: "cohere",
+      model: "command-a-03-2025",
+      temperature: 0,
+    });
   });
 });
