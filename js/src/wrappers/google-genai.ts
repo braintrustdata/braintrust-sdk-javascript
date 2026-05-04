@@ -1,4 +1,5 @@
 import { googleGenAIChannels } from "../instrumentation/plugins/google-genai-channels";
+import { isObject } from "../util";
 import type {
   GoogleGenAIClient,
   GoogleGenAIConstructor,
@@ -70,14 +71,28 @@ function wrapGoogleGenAIClass(
 function wrapGoogleGenAIInstance(
   instance: GoogleGenAIClient,
 ): GoogleGenAIClient {
+  const wrappedModels = wrapModels(instance.models);
+  patchGoogleGenAIChats(instance, wrappedModels);
+
   return new Proxy(instance, {
     get(target, prop, receiver) {
       if (prop === "models") {
-        return wrapModels(target.models);
+        return wrappedModels;
       }
       return Reflect.get(target, prop, receiver);
     },
   });
+}
+
+function patchGoogleGenAIChats(
+  instance: GoogleGenAIClient,
+  wrappedModels: GoogleGenAIModels,
+): void {
+  if (!isObject(instance.chats) || !("modelsModule" in instance.chats)) {
+    return;
+  }
+
+  Reflect.set(instance.chats, "modelsModule", wrappedModels);
 }
 
 function wrapModels(models: GoogleGenAIModels): GoogleGenAIModels {
