@@ -15,7 +15,7 @@
     "@temporalio/worker": "^1.11.0",
     "@temporalio/workflow": "^1.11.0",
     "braintrust": "^2.0.0",
-    "uuid": "^9.0.0"
+    "uuid": "^14.0.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
