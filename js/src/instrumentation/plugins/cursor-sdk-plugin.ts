@@ -1,6 +1,7 @@
 import { BasePlugin } from "../core";
 import type { ChannelMessage } from "../core/channel-definitions";
 import type { IsoChannelHandlers } from "../../isomorph";
+import { debugLogger } from "../../debug-logger";
 import { startSpan } from "../../logger";
 import type { Span } from "../../logger";
 import { getCurrentUnixTimestamp } from "../../util";
@@ -1164,8 +1165,7 @@ function safeLog(span: Span, event: Parameters<Span["log"]>[0]): void {
 }
 
 function logInstrumentationError(context: string, error: unknown): void {
-  // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-  console.error(`Error processing ${context}:`, error);
+  debugLogger.error(`Error processing ${context}:`, error);
 }
 
 function cleanMetrics(metrics: Record<string, number>): Record<string, number> {
