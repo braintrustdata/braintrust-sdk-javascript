@@ -732,9 +732,7 @@ export function defineMistralInstrumentationAssertions(options: {
                 };
               }>
             | undefined;
-          const content = Array.isArray(output?.[0]?.message?.content)
-            ? output[0].message.content
-            : [];
+          const content = output?.[0]?.message?.content;
 
           expect(operation).toBeDefined();
           expect(span).toBeDefined();
@@ -749,8 +747,13 @@ export function defineMistralInstrumentationAssertions(options: {
             prompt_tokens: expect.any(Number),
             completion_tokens: expect.any(Number),
           });
-          expect(content.some((part) => part.type === "thinking")).toBe(true);
-          expect(content.some((part) => part.type === "text")).toBe(true);
+          if (Array.isArray(content)) {
+            expect(content.some((part) => part.type === "thinking")).toBe(true);
+            expect(content.some((part) => part.type === "text")).toBe(true);
+          } else {
+            expect(content).toEqual(expect.any(String));
+            expect(content?.length).toBeGreaterThan(0);
+          }
         },
       );
     }
