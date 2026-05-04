@@ -18,6 +18,7 @@ import { openaiConfigs } from "./configs/openai.js";
 import { anthropicConfigs } from "./configs/anthropic.js";
 import { aiSDKConfigs } from "./configs/ai-sdk.js";
 import { claudeAgentSDKConfigs } from "./configs/claude-agent-sdk.js";
+import { cursorSDKConfigs } from "./configs/cursor-sdk.js";
 import { googleGenAIConfigs } from "./configs/google-genai.js";
 import { huggingFaceConfigs } from "./configs/huggingface.js";
 import { openRouterAgentConfigs } from "./configs/openrouter-agent.js";
@@ -68,6 +69,9 @@ const allConfigs = [
   ...(isDisabled(disabledIntegrations, "claudeagentsdk", "claude-agent-sdk")
     ? []
     : claudeAgentSDKConfigs),
+  ...(isDisabled(disabledIntegrations, "cursor", "cursor-sdk")
+    ? []
+    : cursorSDKConfigs),
   ...(isDisabled(disabledIntegrations, "google", "google-genai")
     ? []
     : googleGenAIConfigs),
