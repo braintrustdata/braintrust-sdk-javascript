@@ -16,6 +16,7 @@ export interface GoogleGenAIConstructor {
 
 export interface GoogleGenAIClient {
   models: GoogleGenAIModels;
+  chats: GoogleGenAIChats;
 }
 
 export interface GoogleGenAIModels {
@@ -28,6 +29,10 @@ export interface GoogleGenAIModels {
   embedContent: (
     params: GoogleGenAIEmbedContentParams,
   ) => Promise<GoogleGenAIEmbedContentResponse>;
+}
+
+export interface GoogleGenAIChats {
+  modelsModule?: GoogleGenAIModels;
 }
 
 // Requests
