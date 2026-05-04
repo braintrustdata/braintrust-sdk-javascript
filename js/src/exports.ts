@@ -180,6 +180,7 @@ export { wrapClaudeAgentSDK } from "./wrappers/claude-agent-sdk/claude-agent-sdk
 export { wrapCursorSDK } from "./wrappers/cursor-sdk";
 export { wrapGoogleGenAI } from "./wrappers/google-genai";
 export { wrapGoogleADK } from "./wrappers/google-adk";
+export { wrapGenkit } from "./wrappers/genkit";
 export { wrapHuggingFace } from "./wrappers/huggingface";
 export { wrapOpenRouterAgent } from "./wrappers/openrouter-agent";
 export { wrapOpenRouter } from "./wrappers/openrouter";

@@ -19,6 +19,8 @@ export interface InstrumentationConfig {
     vercel?: boolean;
     aisdk?: boolean;
     google?: boolean;
+    googleGenAI?: boolean;
+    googleADK?: boolean;
     huggingface?: boolean;
     claudeAgentSDK?: boolean;
     cursor?: boolean;
@@ -27,6 +29,8 @@ export interface InstrumentationConfig {
     openrouterAgent?: boolean;
     mistral?: boolean;
     cohere?: boolean;
+    groq?: boolean;
+    genkit?: boolean;
   };
 }
 
@@ -111,6 +115,8 @@ class PluginRegistry {
       vercel: true,
       aisdk: true,
       google: true,
+      googleGenAI: true,
+      googleADK: true,
       huggingface: true,
       claudeAgentSDK: true,
       cursor: true,
@@ -119,6 +125,8 @@ class PluginRegistry {
       openrouterAgent: true,
       mistral: true,
       cohere: true,
+      groq: true,
+      genkit: true,
     };
   }
 
