@@ -9,6 +9,7 @@ import {
   CHAT_MODEL,
   EMBEDDING_MODEL,
   RERANK_MODEL,
+  REASONING_MODEL,
   ROOT_NAME,
   SCENARIO_NAME,
 } from "./constants.mjs";
@@ -79,6 +80,36 @@ async function runOpenRouterInstrumentationScenario(
                 { role: "user", content: "Reply with exactly STREAM." },
               ],
               maxTokens: 24,
+              stream: true,
+              streamOptions: {
+                includeUsage: true,
+              },
+              temperature: 0,
+            }),
+          );
+          await collectAsync(stream);
+        },
+      );
+
+      await runOperation(
+        "openrouter-chat-reasoning-stream-operation",
+        "chat-reasoning-stream",
+        async () => {
+          const stream = await client.chat.send(
+            withCompatibleChatRequest({
+              model: REASONING_MODEL,
+              messages: [
+                {
+                  role: "user",
+                  content:
+                    "Think briefly, then answer with exactly the number 4.",
+                },
+              ],
+              maxTokens: 256,
+              reasoning: {
+                enabled: true,
+                exclude: false,
+              },
               stream: true,
               streamOptions: {
                 includeUsage: true,
