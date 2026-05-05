@@ -32,7 +32,7 @@
     "has_output": true,
     "metadata": {
       "endpointUrl": "https://router.huggingface.co",
-      "model": "llama3.1-8b",
+      "model": "<model>",
       "provider": "huggingface"
     },
     "metric_keys": [
@@ -80,7 +80,7 @@
     "has_output": true,
     "metadata": {
       "endpointUrl": "https://router.huggingface.co",
-      "model": "llama3.1-8b",
+      "model": "<model>",
       "provider": "huggingface"
     },
     "metric_keys": [
@@ -122,7 +122,7 @@
     "has_output": true,
     "metadata": {
       "endpointUrl": "https://router.huggingface.co",
-      "model": "llama3.1-8b",
+      "model": "<model>",
       "provider": "featherless-ai"
     },
     "metric_keys": [
@@ -167,7 +167,7 @@
     "metadata": {
       "endpointUrl": "https://router.huggingface.co/featherless-ai/v1/completions",
       "finish_reason": "length",
-      "model": "arcee-ai/Trinity-Large-Thinking",
+      "model": "<model>",
       "provider": "huggingface"
     },
     "metric_keys": [
@@ -208,7 +208,7 @@
     "has_output": true,
     "metadata": {
       "endpointUrl": "https://router.huggingface.co/hf-inference/models/thenlper/gte-large/pipeline/feature-extraction",
-      "model": "thenlper/gte-large",
+      "model": "<model>",
       "provider": "huggingface"
     },
     "metric_keys": [],
