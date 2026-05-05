@@ -170,7 +170,8 @@
           "kind": "sse",
           "chunks": [
             "data: {\"id\":\"chatcmpl-synth-reasoning\",\"object\":\"chat.completion.chunk\",\"created\":1746432000,\"model\":\"qwen/qwen3-32b\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\",\"reasoning\":\"3 boxes x 4 marbles = 12 total. Remove 5: 12 - 5 = 7. Double: 7 x 2 = 14.\"},\"finish_reason\":null}],\"x_groq\":{\"id\":\"req_synth_reasoning\",\"usage\":null}}",
-            "data: {\"id\":\"chatcmpl-synth-reasoning\",\"object\":\"chat.completion.chunk\",\"created\":1746432001,\"model\":\"qwen/qwen3-32b\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"14\",\"reasoning\":null},\"finish_reason\":\"stop\"}],\"x_groq\":{\"id\":\"req_synth_reasoning\",\"usage\":{\"queue_time\":0.001,\"prompt_tokens\":45,\"prompt_time\":0.002,\"completion_tokens\":3,\"completion_reasoning_tokens\":12,\"completion_time\":0.001,\"total_tokens\":48,\"total_time\":0.003}}}",
+            "data: {\"id\":\"chatcmpl-synth-reasoning\",\"object\":\"chat.completion.chunk\",\"created\":1746432001,\"model\":\"qwen/qwen3-32b\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"14\",\"reasoning\":null},\"finish_reason\":null}],\"x_groq\":{\"id\":\"req_synth_reasoning\",\"usage\":null}}",
+            "data: {\"id\":\"chatcmpl-synth-reasoning\",\"object\":\"chat.completion.chunk\",\"created\":1746432002,\"model\":\"qwen/qwen3-32b\",\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"stop\"}],\"x_groq\":{\"id\":\"req_synth_reasoning\",\"usage\":{\"queue_time\":0.001,\"prompt_tokens\":45,\"prompt_time\":0.002,\"completion_tokens\":3,\"completion_reasoning_tokens\":12,\"completion_time\":0.001,\"total_tokens\":48,\"total_time\":0.003}}}",
             "data: [DONE]"
           ]
         }
@@ -179,7 +180,7 @@
     {
       "id": "0ffae2350a0663da",
       "matchKey": "POST api.groq.com/openai/v1/chat/completions",
-      "callIndex": 2,
+      "callIndex": 3,
       "recordedAt": "2026-04-28T23:26:10.191Z",
       "request": {
         "method": "POST",
