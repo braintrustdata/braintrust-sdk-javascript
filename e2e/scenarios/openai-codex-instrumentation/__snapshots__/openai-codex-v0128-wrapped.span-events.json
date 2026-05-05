@@ -1,4 +1,188 @@
 {
+  "llms": [
+    {
+      "has_input": true,
+      "has_output": true,
+      "metadata": {
+        "model": "gpt-5-codex",
+        "openai_codex.llm_sequence": 1,
+        "openai_codex.model": "gpt-5-codex",
+        "openai_codex.operation": "Thread.run",
+        "provider": "openai"
+      },
+      "metric_keys": [],
+      "name": "OpenAI Codex LLM",
+      "output": {
+        "reasoning": "reasoning before command RUN_OK"
+      },
+      "root_span_id": "<span:1>",
+      "span_id": "<span:6>",
+      "span_parents": [
+        "<span:3>"
+      ],
+      "type": "llm"
+    },
+    {
+      "has_input": false,
+      "has_output": true,
+      "metadata": {
+        "model": "gpt-5-codex",
+        "openai_codex.llm_sequence": 2,
+        "openai_codex.model": "gpt-5-codex",
+        "openai_codex.operation": "Thread.run",
+        "provider": "openai"
+      },
+      "metric_keys": [],
+      "name": "OpenAI Codex LLM",
+      "output": {
+        "reasoning": "reasoning after command RUN_OK"
+      },
+      "root_span_id": "<span:1>",
+      "span_id": "<span:7>",
+      "span_parents": [
+        "<span:3>"
+      ],
+      "type": "llm"
+    },
+    {
+      "has_input": false,
+      "has_output": true,
+      "metadata": {
+        "model": "gpt-5-codex",
+        "openai_codex.llm_sequence": 3,
+        "openai_codex.model": "gpt-5-codex",
+        "openai_codex.operation": "Thread.run",
+        "provider": "openai"
+      },
+      "metric_keys": [],
+      "name": "OpenAI Codex LLM",
+      "output": {
+        "reasoning": "reasoning after mcp RUN_OK"
+      },
+      "root_span_id": "<span:1>",
+      "span_id": "<span:8>",
+      "span_parents": [
+        "<span:3>"
+      ],
+      "type": "llm"
+    },
+    {
+      "has_input": false,
+      "has_output": true,
+      "metadata": {
+        "model": "gpt-5-codex",
+        "openai_codex.llm_sequence": 4,
+        "openai_codex.model": "gpt-5-codex",
+        "openai_codex.operation": "Thread.run",
+        "provider": "openai"
+      },
+      "metric_keys": [],
+      "name": "OpenAI Codex LLM",
+      "output": {
+        "message": "Codex RUN_OK",
+        "reasoning": "final reasoning RUN_OK"
+      },
+      "root_span_id": "<span:1>",
+      "span_id": "<span:9>",
+      "span_parents": [
+        "<span:3>"
+      ],
+      "type": "llm"
+    },
+    {
+      "has_input": true,
+      "has_output": true,
+      "metadata": {
+        "model": "gpt-5-codex",
+        "openai_codex.llm_sequence": 1,
+        "openai_codex.model": "gpt-5-codex",
+        "openai_codex.operation": "Thread.runStreamed",
+        "openai_codex.thread_id": "<thread-id>",
+        "provider": "openai"
+      },
+      "metric_keys": [],
+      "name": "OpenAI Codex LLM",
+      "output": {
+        "reasoning": "reasoning before command STREAM_OK"
+      },
+      "root_span_id": "<span:1>",
+      "span_id": "<span:10>",
+      "span_parents": [
+        "<span:5>"
+      ],
+      "type": "llm"
+    },
+    {
+      "has_input": false,
+      "has_output": true,
+      "metadata": {
+        "model": "gpt-5-codex",
+        "openai_codex.llm_sequence": 2,
+        "openai_codex.model": "gpt-5-codex",
+        "openai_codex.operation": "Thread.runStreamed",
+        "openai_codex.thread_id": "<thread-id>",
+        "provider": "openai"
+      },
+      "metric_keys": [],
+      "name": "OpenAI Codex LLM",
+      "output": {
+        "reasoning": "reasoning after command STREAM_OK"
+      },
+      "root_span_id": "<span:1>",
+      "span_id": "<span:11>",
+      "span_parents": [
+        "<span:5>"
+      ],
+      "type": "llm"
+    },
+    {
+      "has_input": false,
+      "has_output": true,
+      "metadata": {
+        "model": "gpt-5-codex",
+        "openai_codex.llm_sequence": 3,
+        "openai_codex.model": "gpt-5-codex",
+        "openai_codex.operation": "Thread.runStreamed",
+        "openai_codex.thread_id": "<thread-id>",
+        "provider": "openai"
+      },
+      "metric_keys": [],
+      "name": "OpenAI Codex LLM",
+      "output": {
+        "reasoning": "reasoning after mcp STREAM_OK"
+      },
+      "root_span_id": "<span:1>",
+      "span_id": "<span:12>",
+      "span_parents": [
+        "<span:5>"
+      ],
+      "type": "llm"
+    },
+    {
+      "has_input": false,
+      "has_output": true,
+      "metadata": {
+        "model": "gpt-5-codex",
+        "openai_codex.llm_sequence": 4,
+        "openai_codex.model": "gpt-5-codex",
+        "openai_codex.operation": "Thread.runStreamed",
+        "openai_codex.thread_id": "<thread-id>",
+        "provider": "openai"
+      },
+      "metric_keys": [],
+      "name": "OpenAI Codex LLM",
+      "output": {
+        "message": "Codex STREAM_OK",
+        "reasoning": "final reasoning STREAM_OK"
+      },
+      "root_span_id": "<span:1>",
+      "span_id": "<span:13>",
+      "span_parents": [
+        "<span:5>"
+      ],
+      "type": "llm"
+    }
+  ],
   "root": {
     "has_input": false,
     "has_output": false,
@@ -109,7 +293,7 @@
       "metric_keys": [],
       "name": "tool: command_execution",
       "root_span_id": "<span:1>",
-      "span_id": "<span:6>",
+      "span_id": "<span:14>",
       "span_parents": [
         "<span:3>"
       ],
@@ -127,7 +311,7 @@
       "metric_keys": [],
       "name": "tool: read_file",
       "root_span_id": "<span:1>",
-      "span_id": "<span:7>",
+      "span_id": "<span:15>",
       "span_parents": [
         "<span:3>"
       ],
@@ -143,7 +327,7 @@
       "metric_keys": [],
       "name": "tool: web_search",
       "root_span_id": "<span:1>",
-      "span_id": "<span:8>",
+      "span_id": "<span:16>",
       "span_parents": [
         "<span:3>"
       ],
@@ -160,7 +344,7 @@
       "metric_keys": [],
       "name": "tool: command_execution",
       "root_span_id": "<span:1>",
-      "span_id": "<span:9>",
+      "span_id": "<span:17>",
       "span_parents": [
         "<span:5>"
       ],
@@ -178,7 +362,7 @@
       "metric_keys": [],
       "name": "tool: read_file",
       "root_span_id": "<span:1>",
-      "span_id": "<span:10>",
+      "span_id": "<span:18>",
       "span_parents": [
         "<span:5>"
       ],
@@ -194,7 +378,7 @@
       "metric_keys": [],
       "name": "tool: web_search",
       "root_span_id": "<span:1>",
-      "span_id": "<span:11>",
+      "span_id": "<span:19>",
       "span_parents": [
         "<span:5>"
       ],

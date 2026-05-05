@@ -14,6 +14,14 @@ process.stdin.on("end", () => {
     { type: "thread.started", thread_id: threadId },
     { type: "turn.started" },
     {
+      type: "item.completed",
+      item: {
+        id: `${threadId}_reasoning_before_command`,
+        type: "reasoning",
+        text: `reasoning before command ${suffix}`,
+      },
+    },
+    {
       type: "item.started",
       item: {
         id: `${threadId}_command`,
@@ -32,6 +40,14 @@ process.stdin.on("end", () => {
         aggregated_output: "codex_tool_ok",
         exit_code: 0,
         status: "completed",
+      },
+    },
+    {
+      type: "item.completed",
+      item: {
+        id: `${threadId}_reasoning_after_command`,
+        type: "reasoning",
+        text: `reasoning after command ${suffix}`,
       },
     },
     {
@@ -63,6 +79,14 @@ process.stdin.on("end", () => {
     {
       type: "item.completed",
       item: {
+        id: `${threadId}_reasoning_after_mcp`,
+        type: "reasoning",
+        text: `reasoning after mcp ${suffix}`,
+      },
+    },
+    {
+      type: "item.completed",
+      item: {
         id: `${threadId}_web`,
         type: "web_search",
         query: "braintrust codex instrumentation",
@@ -73,7 +97,7 @@ process.stdin.on("end", () => {
       item: {
         id: `${threadId}_reasoning`,
         type: "reasoning",
-        text: `reasoning ${suffix}`,
+        text: `final reasoning ${suffix}`,
       },
     },
     {

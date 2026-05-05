@@ -33,6 +33,7 @@ const METADATA_KEYS = [
   "operation",
   "scenario",
   "gen_ai.tool.name",
+  "openai_codex.llm_sequence",
   "openai_codex.operation",
   "openai_codex.model",
   "openai_codex.thread_id",
@@ -57,6 +58,29 @@ function summarizeSpan(event: CapturedLogEvent | undefined): Json {
     }
   }
   return summary;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function summarizeLlmOutput(output: unknown): Json {
+  if (!isRecord(output)) {
+    return null;
+  }
+
+  return {
+    ...(typeof output.reasoning === "string"
+      ? { reasoning: output.reasoning }
+      : {}),
+    ...(typeof output.message === "string" ? { message: output.message } : {}),
+  } as Json;
+}
+
+function summarizeLlmSpan(event: CapturedLogEvent | undefined): Json {
+  const summary = summarizeSpan(event) as Record<string, Json>;
+  summary.output = summarizeLlmOutput(event?.output);
+  return summary as Json;
 }
 
 function findCodexTask(events: CapturedLogEvent[], operationName: string) {
@@ -93,12 +117,44 @@ function latestSpansByType(
   });
 }
 
+function latestSpansForParent(
+  events: CapturedLogEvent[],
+  parentSpanId: string | undefined,
+): CapturedLogEvent[] {
+  if (!parentSpanId) {
+    return [];
+  }
+
+  const order: string[] = [];
+  const latest = new Map<string, CapturedLogEvent>();
+
+  for (const event of events) {
+    if (!event.span.id || !event.span.parentIds.includes(parentSpanId)) {
+      continue;
+    }
+    if (!latest.has(event.span.id)) {
+      order.push(event.span.id);
+    }
+    latest.set(event.span.id, event);
+  }
+
+  return order.flatMap((spanId) => {
+    const event = latest.get(spanId);
+    return event ? [event] : [];
+  });
+}
+
+function childSpanLabel(event: CapturedLogEvent): string {
+  return event.span.type === "llm" ? "llm" : (event.span.name ?? "");
+}
+
 function summarize(events: CapturedLogEvent[]): Json {
   const runTask = findCodexTask(events, "openai-codex-run-operation");
   const streamedTask = findCodexTask(
     events,
     "openai-codex-run-streamed-operation",
   );
+  const llmSpans = latestSpansByType(events, "llm");
   const toolSpans = latestSpansByType(events, "tool");
 
   return normalizeForSnapshot({
@@ -115,6 +171,7 @@ function summarize(events: CapturedLogEvent[]): Json {
       ),
       task: summarizeSpan(streamedTask),
     },
+    llms: llmSpans.map(summarizeLlmSpan),
     tools: toolSpans.map(summarizeSpan),
   } as Json);
 }
@@ -166,6 +223,52 @@ export function defineOpenAICodexInstrumentationAssertions(options: {
         expect(task?.row.metadata).toMatchObject({
           provider: "openai",
         });
+      }
+    });
+
+    test("captures LLM spans around tool calls", testConfig, () => {
+      const llmSpans = latestSpansByType(events, "llm");
+
+      expect(llmSpans).toHaveLength(8);
+      expect(
+        llmSpans.every((event) => event.span.name === "OpenAI Codex LLM"),
+      ).toBe(true);
+      expect(
+        llmSpans.some((event) => {
+          const output = event.output as
+            | { message?: string; reasoning?: string }
+            | undefined;
+          return (
+            output?.reasoning === "final reasoning RUN_OK" &&
+            output.message === "Codex RUN_OK"
+          );
+        }),
+      ).toBe(true);
+      expect(
+        llmSpans.some((event) => {
+          const output = event.output as
+            | { message?: string; reasoning?: string }
+            | undefined;
+          return output?.reasoning === "reasoning after command STREAM_OK";
+        }),
+      ).toBe(true);
+
+      for (const operationName of [
+        "openai-codex-run-operation",
+        "openai-codex-run-streamed-operation",
+      ]) {
+        const task = findCodexTask(events, operationName);
+        expect(
+          latestSpansForParent(events, task?.span.id).map(childSpanLabel),
+        ).toEqual([
+          "llm",
+          "tool: command_execution",
+          "llm",
+          "tool: read_file",
+          "llm",
+          "tool: web_search",
+          "llm",
+        ]);
       }
     });
 

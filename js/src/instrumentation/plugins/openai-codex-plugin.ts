@@ -24,15 +24,27 @@ import type {
 } from "../../vendor-sdk-types/openai-codex";
 
 type CodexRunState = {
+  activeLlmSpan?: CodexLlmSpanState;
   activeItemSpans: Map<string, Span>;
   completedItems: OpenAICodexThreadItem[];
   finalResponse?: string;
   finalized: boolean;
+  input: unknown;
+  llmSequence: number;
   metadata: Record<string, unknown>;
   metrics: Record<string, number>;
   outputText: string[];
   span: Span;
   startTime: number;
+};
+
+type CodexLlmSpanState = {
+  anonymousMessages: string[];
+  anonymousReasoning: string[];
+  messagesById: Map<string, string>;
+  metadata: Record<string, unknown>;
+  reasoningById: Map<string, string>;
+  span: Span;
 };
 
 const PATCHED_STREAMED_TURN = Symbol.for(
@@ -130,6 +142,7 @@ function startCodexRun(
   const input = event.arguments[0];
   const turnOptions = event.arguments[1];
   const thread = event.thread ?? extractThreadFromEvent(event);
+  const sanitizedInput = sanitizeInput(input);
   const metadata = {
     ...extractThreadMetadata(thread),
     ...extractTurnOptionsMetadata(turnOptions),
@@ -145,7 +158,7 @@ function startCodexRun(
   });
   const startTime = getCurrentUnixTimestamp();
   safeLog(span, {
-    input: sanitizeInput(input),
+    input: sanitizedInput,
     metadata,
   });
 
@@ -153,6 +166,8 @@ function startCodexRun(
     activeItemSpans: new Map(),
     completedItems: [],
     finalized: false,
+    input: sanitizedInput,
+    llmSequence: 0,
     metadata,
     metrics: {},
     outputText: [],
@@ -228,15 +243,13 @@ async function handleCodexEvent(
       });
       return;
     case "item.started":
-      await startCodexItemSpan(state, event.item);
+      await handleCodexItemStarted(state, event.item);
       return;
     case "item.updated":
-      updateCodexItem(state, event.item);
+      await handleCodexItemUpdated(state, event.item);
       return;
     case "item.completed":
-      state.completedItems.push(event.item);
-      collectOutputText(state, event.item);
-      await finishCodexItemSpan(state, event.item);
+      await handleCodexItemCompleted(state, event.item);
       return;
     case "error":
       await finalizeCodexRun(state, { error: event.message });
@@ -259,9 +272,7 @@ async function finalizeCompletedRun(
   state.finalResponse = turn.finalResponse;
 
   for (const item of turn.items ?? []) {
-    state.completedItems.push(item);
-    collectOutputText(state, item);
-    await createCompletedItemSpan(state, item);
+    await handleCodexItemCompleted(state, item);
   }
 
   await finalizeCodexRun(state, { output: turn.finalResponse });
@@ -288,6 +299,8 @@ async function finalizeCodexRun(
     ...buildDurationMetrics(state.startTime),
   };
 
+  await finishActiveLlmSpan(state, params.error);
+
   try {
     const error = params.error;
     safeLog(state.span, {
@@ -304,6 +317,43 @@ async function finalizeCodexRun(
   }
 }
 
+async function handleCodexItemStarted(
+  state: CodexRunState,
+  item: OpenAICodexThreadItem,
+): Promise<void> {
+  if (isCodexToolItem(item)) {
+    await finishActiveLlmSpan(state);
+    await startCodexItemSpan(state, item);
+    return;
+  }
+
+  await recordCodexLlmItem(state, item, { allowAnonymousText: false });
+}
+
+async function handleCodexItemUpdated(
+  state: CodexRunState,
+  item: OpenAICodexThreadItem,
+): Promise<void> {
+  updateCodexItem(state, item);
+  await recordCodexLlmItem(state, item, { allowAnonymousText: false });
+}
+
+async function handleCodexItemCompleted(
+  state: CodexRunState,
+  item: OpenAICodexThreadItem,
+): Promise<void> {
+  state.completedItems.push(item);
+  collectOutputText(state, item);
+
+  if (isCodexToolItem(item)) {
+    await finishActiveLlmSpan(state);
+    await finishCodexItemSpan(state, item);
+    return;
+  }
+
+  await recordCodexLlmItem(state, item, { allowAnonymousText: true });
+}
+
 async function createCompletedItemSpan(
   state: CodexRunState,
   item: OpenAICodexThreadItem,
@@ -316,6 +366,126 @@ async function createCompletedItemSpan(
   const span = startSpan(spanArgs.start);
   safeLog(span, spanArgs.end);
   span.end();
+}
+
+async function recordCodexLlmItem(
+  state: CodexRunState,
+  item: OpenAICodexThreadItem,
+  options: { allowAnonymousText: boolean },
+): Promise<void> {
+  if (item.type !== "agent_message" && item.type !== "reasoning") {
+    return;
+  }
+
+  const text = typeof item.text === "string" ? item.text : undefined;
+  const active = await ensureActiveLlmSpan(state);
+  if (!text) {
+    return;
+  }
+
+  if (item.type === "agent_message") {
+    if (item.id) {
+      active.messagesById.set(item.id, text);
+    } else if (options.allowAnonymousText) {
+      active.anonymousMessages.push(text);
+    }
+  } else if (item.id) {
+    active.reasoningById.set(item.id, text);
+  } else if (options.allowAnonymousText) {
+    active.anonymousReasoning.push(text);
+  }
+}
+
+async function ensureActiveLlmSpan(
+  state: CodexRunState,
+): Promise<CodexLlmSpanState> {
+  if (state.activeLlmSpan) {
+    return state.activeLlmSpan;
+  }
+
+  const sequence = state.llmSequence + 1;
+  state.llmSequence = sequence;
+  const metadata = {
+    ...(state.metadata.provider ? { provider: state.metadata.provider } : {}),
+    ...(state.metadata.model ? { model: state.metadata.model } : {}),
+    ...(state.metadata["openai_codex.model"]
+      ? { "openai_codex.model": state.metadata["openai_codex.model"] }
+      : {}),
+    ...(state.metadata["openai_codex.model_reasoning_effort"]
+      ? {
+          "openai_codex.model_reasoning_effort":
+            state.metadata["openai_codex.model_reasoning_effort"],
+        }
+      : {}),
+    ...(state.metadata["openai_codex.operation"]
+      ? { "openai_codex.operation": state.metadata["openai_codex.operation"] }
+      : {}),
+    ...(state.metadata["openai_codex.thread_id"]
+      ? { "openai_codex.thread_id": state.metadata["openai_codex.thread_id"] }
+      : {}),
+    "openai_codex.llm_sequence": sequence,
+  };
+
+  const span = startSpan({
+    event: {
+      ...(sequence === 1 ? { input: state.input } : {}),
+      metadata,
+    },
+    name: "OpenAI Codex LLM",
+    parent: await state.span.export(),
+    spanAttributes: { type: SpanTypeAttribute.LLM },
+  });
+
+  state.activeLlmSpan = {
+    anonymousMessages: [],
+    anonymousReasoning: [],
+    messagesById: new Map(),
+    metadata,
+    reasoningById: new Map(),
+    span,
+  };
+  return state.activeLlmSpan;
+}
+
+async function finishActiveLlmSpan(
+  state: CodexRunState,
+  error?: unknown,
+): Promise<void> {
+  const active = state.activeLlmSpan;
+  if (!active) {
+    return;
+  }
+
+  state.activeLlmSpan = undefined;
+  const output = buildLlmOutput(active);
+  safeLog(active.span, {
+    ...(error
+      ? { error: error instanceof Error ? error.message : String(error) }
+      : {}),
+    metadata: active.metadata,
+    ...(output ? { output } : {}),
+  });
+  active.span.end();
+}
+
+function buildLlmOutput(
+  active: CodexLlmSpanState,
+): Record<string, string> | undefined {
+  const reasoning = [
+    ...active.reasoningById.values(),
+    ...active.anonymousReasoning,
+  ]
+    .filter((text) => text.length > 0)
+    .join("\n");
+  const message = [...active.messagesById.values(), ...active.anonymousMessages]
+    .filter((text) => text.length > 0)
+    .join("\n");
+  const output = {
+    ...(reasoning ? { reasoning } : {}),
+    ...(message ? { message } : {}),
+  };
+
+  return Object.keys(output).length > 0 ? output : undefined;
 }
 
 async function startCodexItemSpan(
@@ -364,6 +534,15 @@ async function finishCodexItemSpan(
     safeLog(span, spanArgs.end);
   }
   span.end();
+}
+
+function isCodexToolItem(item: OpenAICodexThreadItem): boolean {
+  return (
+    item.type === "command_execution" ||
+    item.type === "file_change" ||
+    item.type === "mcp_tool_call" ||
+    item.type === "web_search"
+  );
 }
 
 async function itemSpanArgs(
