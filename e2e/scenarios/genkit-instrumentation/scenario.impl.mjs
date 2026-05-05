@@ -1,10 +1,10 @@
-import { wrapGenkit } from "braintrust";
+import { currentSpan, wrapGenkit } from "braintrust";
 import {
   collectAsync,
   runOperation,
   runTracedScenario,
 } from "../../helpers/provider-runtime.mjs";
-import { ROOT_NAME, SCENARIO_NAME } from "./constants.mjs";
+import { MODEL_TOOL_MARKER, ROOT_NAME, SCENARIO_NAME } from "./constants.mjs";
 
 export const GENKIT_SCENARIO_TIMEOUT_MS = 90_000;
 
@@ -129,38 +129,36 @@ export async function runGenkitInstrumentationScenario(options = {}) {
     }),
   );
 
-  const recipeFlow = ai.defineFlow(
+  let modelToolCallCount = 0;
+  const modelTool = ai.defineTool(
     {
-      name: "recipeFlow",
-      inputSchema: z.string(),
+      name: "cityMarkerTool",
+      description:
+        "Returns the canonical marker for a city. Always use this tool when asked for a city marker.",
+      inputSchema: z.object({
+        city: z.string(),
+      }),
       outputSchema: z.object({
-        recipe: z.string(),
+        marker: z.string(),
       }),
     },
-    async (topic) => {
-      const normalized = await ai.run("normalize-topic", topic, async (input) =>
-        String(input).trim().toLowerCase(),
-      );
-      const response = await withRetry(
-        () =>
-          ai.generate({
-            model,
-            prompt: `Write a recipe about ${normalized}.`,
-            config: {
-              temperature: 0,
-              maxOutputTokens: 32,
-            },
-          }),
-        GOOGLE_GENAI_RETRY_OPTIONS,
-      );
+    async ({ city }) => {
+      modelToolCallCount += 1;
       return {
-        recipe: response.text,
+        marker: city === "Vienna" ? MODEL_TOOL_MARKER : `marker-${city}`,
       };
     },
   );
 
-  await runTracedScenario({
-    callback: async () => {
+  const instrumentationFlow = ai.defineFlow(
+    {
+      name: "instrumentationFlow",
+      inputSchema: z.string(),
+      outputSchema: z.object({
+        completed: z.boolean(),
+      }),
+    },
+    async () => {
       await runOperation("genkit-generate-operation", "generate", async () => {
         await withRetry(
           () =>
@@ -208,8 +206,49 @@ export async function runGenkitInstrumentationScenario(options = {}) {
         });
       });
 
+      await runOperation(
+        "genkit-model-tool-operation",
+        "model-tool",
+        async () => {
+          const previousToolCallCount = modelToolCallCount;
+          await withRetry(
+            () =>
+              ai.generate({
+                model,
+                prompt:
+                  "Use the cityMarkerTool tool with city Vienna before answering.",
+                tools: [modelTool],
+                maxTurns: 3,
+                config: {
+                  temperature: 0,
+                  maxOutputTokens: 64,
+                },
+              }),
+            GOOGLE_GENAI_RETRY_OPTIONS,
+          );
+
+          if (modelToolCallCount === previousToolCallCount) {
+            throw new Error("Expected model generation to call cityMarkerTool");
+          }
+          currentSpan().log({
+            output: {
+              marker: MODEL_TOOL_MARKER,
+              toolCalled: true,
+            },
+          });
+        },
+      );
+
+      return {
+        completed: true,
+      };
+    },
+  );
+
+  await runTracedScenario({
+    callback: async () => {
       await runOperation("genkit-flow-operation", "flow", async () => {
-        await recipeFlow("Cake");
+        await instrumentationFlow("run");
       });
     },
     flushCount: 2,

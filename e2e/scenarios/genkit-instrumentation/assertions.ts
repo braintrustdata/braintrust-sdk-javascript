@@ -8,7 +8,7 @@ import {
 import { withScenarioHarness } from "../../helpers/scenario-harness";
 import { findChildSpans, findLatestSpan } from "../../helpers/trace-selectors";
 import { summarizeWrapperContract } from "../../helpers/wrapper-contract";
-import { ROOT_NAME, SCENARIO_NAME } from "./constants.mjs";
+import { MODEL_TOOL_MARKER, ROOT_NAME, SCENARIO_NAME } from "./constants.mjs";
 
 type RunGenkitScenario = (harness: {
   runNodeScenarioDir: (options: {
@@ -35,27 +35,49 @@ function findGenkitSpan(
   return spans.find((candidate) => candidate.output !== undefined) ?? spans[0];
 }
 
+function expectChildOf(
+  child: CapturedLogEvent | undefined,
+  parent: CapturedLogEvent | undefined,
+) {
+  expect(child?.span.parentIds).toContain(parent?.span.id);
+}
+
 function buildSpanSummary(
   events: CapturedLogEvent[],
   supportsActionSpans: boolean,
 ): Json {
+  const flowOperation = findLatestSpan(events, "genkit-flow-operation");
+  const flowSpan = supportsActionSpans
+    ? findGenkitSpan(
+        events,
+        flowOperation?.span.id,
+        "genkit.flow: instrumentationFlow",
+      )
+    : undefined;
   const generateOperation = findLatestSpan(events, "genkit-generate-operation");
   const streamOperation = findLatestSpan(events, "genkit-stream-operation");
   const embedOperation = findLatestSpan(events, "genkit-embed-operation");
+  const modelToolOperation = findLatestSpan(
+    events,
+    "genkit-model-tool-operation",
+  );
 
   const summary = [
     findLatestSpan(events, ROOT_NAME),
+    flowOperation,
+    ...(supportsActionSpans ? [flowSpan] : []),
     generateOperation,
     findGenkitSpan(events, generateOperation?.span.id, "genkit.generate"),
     streamOperation,
     findGenkitSpan(events, streamOperation?.span.id, "genkit.generateStream"),
     embedOperation,
     findGenkitSpan(events, embedOperation?.span.id, "genkit.embed"),
+    modelToolOperation,
+    findGenkitSpan(events, modelToolOperation?.span.id, "genkit.generate"),
   ];
 
   if (supportsActionSpans) {
     const toolOperation = findLatestSpan(events, "genkit-tool-operation");
-    const flowOperation = findLatestSpan(events, "genkit-flow-operation");
     summary.push(
       toolOperation,
       findGenkitSpan(
@@ -63,8 +85,6 @@ function buildSpanSummary(
         toolOperation?.span.id,
         "genkit.tool: summarizeCity",
       ),
-      flowOperation,
-      findGenkitSpan(events, flowOperation?.span.id, "genkit.flow: recipeFlow"),
     );
   }
 
@@ -114,6 +134,34 @@ export function defineGenkitInstrumentationAssertions(options: {
         scenario: SCENARIO_NAME,
       });
     });
+
+    test(
+      "nests scenario operations under the flow operation",
+      testConfig,
+      () => {
+        const flowOperation = findLatestSpan(events, "genkit-flow-operation");
+        expect(flowOperation).toBeDefined();
+
+        if (options.supportsActionSpans) {
+          const flowSpan = findGenkitSpan(
+            events,
+            flowOperation?.span.id,
+            "genkit.flow: instrumentationFlow",
+          );
+          expectChildOf(flowSpan, flowOperation);
+        }
+
+        for (const operationName of [
+          "genkit-generate-operation",
+          "genkit-stream-operation",
+          "genkit-embed-operation",
+          "genkit-tool-operation",
+          "genkit-model-tool-operation",
+        ]) {
+          expectChildOf(findLatestSpan(events, operationName), flowOperation);
+        }
+      },
+    );
 
     test("captures generate, stream, and embed spans", testConfig, () => {
       const generateOperation = findLatestSpan(
@@ -170,6 +218,27 @@ export function defineGenkitInstrumentationAssertions(options: {
       });
     });
 
+    test("captures a model-triggered tool call", testConfig, () => {
+      const modelToolOperation = findLatestSpan(
+        events,
+        "genkit-model-tool-operation",
+      );
+      const generateSpan = findGenkitSpan(
+        events,
+        modelToolOperation?.span.id,
+        "genkit.generate",
+      );
+
+      expect(generateSpan?.row.metadata).toMatchObject({
+        provider: "genkit",
+      });
+      expect(generateSpan?.output).toBeDefined();
+      expect(modelToolOperation?.output).toMatchObject({
+        marker: MODEL_TOOL_MARKER,
+        toolCalled: true,
+      });
+    });
+
     test.runIf(options.supportsActionSpans)(
       "captures tool and flow action spans",
       testConfig,
@@ -184,7 +253,7 @@ export function defineGenkitInstrumentationAssertions(options: {
         const flowSpan = findGenkitSpan(
           events,
           flowOperation?.span.id,
-          "genkit.flow: recipeFlow",
+          "genkit.flow: instrumentationFlow",
         );
 
         expect(toolSpan?.row.metadata).toMatchObject({
@@ -197,12 +266,12 @@ export function defineGenkitInstrumentationAssertions(options: {
         });
 
         expect(flowSpan?.row.metadata).toMatchObject({
-          "genkit.action_name": "recipeFlow",
+          "genkit.action_name": "instrumentationFlow",
           "genkit.action_type": "flow",
           provider: "genkit",
         });
         expect(flowSpan?.output).toMatchObject({
-          recipe: expect.any(String),
+          completed: true,
         });
       },
     );
