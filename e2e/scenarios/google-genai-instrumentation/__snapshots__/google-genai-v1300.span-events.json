@@ -83,10 +83,10 @@
     "has_input": false,
     "has_output": false,
     "metadata": {
-      "operation": "attachment"
+      "operation": "chat"
     },
     "metric_keys": [],
-    "name": "google-attachment-operation",
+    "name": "google-chat-operation",
     "root_span_id": "<span:1>",
     "span_id": "<span:6>",
     "span_parents": [
@@ -118,10 +118,10 @@
     "has_input": false,
     "has_output": false,
     "metadata": {
-      "operation": "stream"
+      "operation": "chat-stream"
     },
     "metric_keys": [],
-    "name": "google-stream-operation",
+    "name": "google-chat-stream-operation",
     "root_span_id": "<span:1>",
     "span_id": "<span:8>",
     "span_parents": [
@@ -154,12 +154,47 @@
     "has_input": false,
     "has_output": false,
     "metadata": {
-      "operation": "stream-return"
+      "operation": "attachment"
     },
     "metric_keys": [],
-    "name": "google-stream-return-operation",
+    "name": "google-attachment-operation",
     "root_span_id": "<span:1>",
     "span_id": "<span:10>",
+    "span_parents": [
+      "<span:1>"
+    ],
+    "type": null
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "model": "gemini-2.5-flash-lite"
+    },
+    "metric_keys": [
+      "completion_tokens",
+      "duration",
+      "prompt_tokens",
+      "tokens"
+    ],
+    "name": "generate_content",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:11>",
+    "span_parents": [
+      "<span:10>"
+    ],
+    "type": "llm"
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "operation": "stream"
+    },
+    "metric_keys": [],
+    "name": "google-stream-operation",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:12>",
     "span_parents": [
       "<span:1>"
     ],
@@ -180,9 +215,45 @@
     ],
     "name": "generate_content_stream",
     "root_span_id": "<span:1>",
-    "span_id": "<span:11>",
+    "span_id": "<span:13>",
     "span_parents": [
-      "<span:10>"
+      "<span:12>"
+    ],
+    "type": "llm"
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "operation": "stream-return"
+    },
+    "metric_keys": [],
+    "name": "google-stream-return-operation",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:14>",
+    "span_parents": [
+      "<span:1>"
+    ],
+    "type": null
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "model": "gemini-2.5-flash-lite"
+    },
+    "metric_keys": [
+      "completion_tokens",
+      "duration",
+      "prompt_tokens",
+      "time_to_first_token",
+      "tokens"
+    ],
+    "name": "generate_content_stream",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:15>",
+    "span_parents": [
+      "<span:14>"
     ],
     "type": "llm"
   },
@@ -195,7 +266,7 @@
     "metric_keys": [],
     "name": "google-tool-operation",
     "root_span_id": "<span:1>",
-    "span_id": "<span:12>",
+    "span_id": "<span:16>",
     "span_parents": [
       "<span:1>"
     ],
@@ -215,9 +286,9 @@
     ],
     "name": "generate_content",
     "root_span_id": "<span:1>",
-    "span_id": "<span:13>",
+    "span_id": "<span:17>",
     "span_parents": [
-      "<span:12>"
+      "<span:16>"
     ],
     "type": "llm"
   }

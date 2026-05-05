@@ -297,6 +297,7 @@ export async function installScenarioDependencies({
     scenarioDir,
     "--ignore-workspace",
     "--frozen-lockfile",
+    "--ignore-scripts=false",
     "--strict-peer-dependencies=false",
   ];
   if (preferOffline) {

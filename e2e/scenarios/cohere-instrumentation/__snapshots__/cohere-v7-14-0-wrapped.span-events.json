@@ -66,18 +66,12 @@
   },
   {
     "has_input": true,
-    "has_output": true,
+    "has_output": false,
     "metadata": {
       "model": "command-a-03-2025",
       "provider": "cohere"
     },
-    "metric_keys": [
-      "completion_tokens",
-      "prompt_cached_tokens",
-      "prompt_tokens",
-      "time_to_first_token",
-      "tokens"
-    ],
+    "metric_keys": [],
     "name": "cohere.chatStream",
     "root_span_id": "<span:1>",
     "span_id": "<span:5>",
