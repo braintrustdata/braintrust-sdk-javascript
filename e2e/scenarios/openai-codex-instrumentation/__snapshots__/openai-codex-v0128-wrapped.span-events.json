@@ -13,7 +13,7 @@
       "metric_keys": [],
       "name": "OpenAI Codex LLM",
       "output": {
-        "reasoning": "reasoning before command RUN_OK"
+        "reasoning": "reasoning before command OPENAI_CODEX_RUN_OK"
       },
       "root_span_id": "<span:1>",
       "span_id": "<span:6>",
@@ -35,7 +35,7 @@
       "metric_keys": [],
       "name": "OpenAI Codex LLM",
       "output": {
-        "reasoning": "reasoning after command RUN_OK"
+        "reasoning": "reasoning after command OPENAI_CODEX_RUN_OK"
       },
       "root_span_id": "<span:1>",
       "span_id": "<span:7>",
@@ -57,7 +57,7 @@
       "metric_keys": [],
       "name": "OpenAI Codex LLM",
       "output": {
-        "reasoning": "reasoning after mcp RUN_OK"
+        "reasoning": "reasoning after mcp OPENAI_CODEX_RUN_OK"
       },
       "root_span_id": "<span:1>",
       "span_id": "<span:8>",
@@ -79,8 +79,8 @@
       "metric_keys": [],
       "name": "OpenAI Codex LLM",
       "output": {
-        "message": "Codex RUN_OK",
-        "reasoning": "final reasoning RUN_OK"
+        "message": "Codex OPENAI_CODEX_RUN_OK",
+        "reasoning": "final reasoning OPENAI_CODEX_RUN_OK"
       },
       "root_span_id": "<span:1>",
       "span_id": "<span:9>",
@@ -103,7 +103,7 @@
       "metric_keys": [],
       "name": "OpenAI Codex LLM",
       "output": {
-        "reasoning": "reasoning before command STREAM_OK"
+        "reasoning": "reasoning before command OPENAI_CODEX_STREAM_OK"
       },
       "root_span_id": "<span:1>",
       "span_id": "<span:10>",
@@ -126,7 +126,7 @@
       "metric_keys": [],
       "name": "OpenAI Codex LLM",
       "output": {
-        "reasoning": "reasoning after command STREAM_OK"
+        "reasoning": "reasoning after command OPENAI_CODEX_STREAM_OK"
       },
       "root_span_id": "<span:1>",
       "span_id": "<span:11>",
@@ -149,7 +149,7 @@
       "metric_keys": [],
       "name": "OpenAI Codex LLM",
       "output": {
-        "reasoning": "reasoning after mcp STREAM_OK"
+        "reasoning": "reasoning after mcp OPENAI_CODEX_STREAM_OK"
       },
       "root_span_id": "<span:1>",
       "span_id": "<span:12>",
@@ -172,8 +172,8 @@
       "metric_keys": [],
       "name": "OpenAI Codex LLM",
       "output": {
-        "message": "Codex STREAM_OK",
-        "reasoning": "final reasoning STREAM_OK"
+        "message": "Codex OPENAI_CODEX_STREAM_OK",
+        "reasoning": "final reasoning OPENAI_CODEX_STREAM_OK"
       },
       "root_span_id": "<span:1>",
       "span_id": "<span:13>",

@@ -7,8 +7,9 @@ process.stdin.on("data", (chunk) => {
   input += chunk;
 });
 process.stdin.on("end", () => {
-  const isStream = input.includes("stream");
-  const suffix = isStream ? "STREAM_OK" : "RUN_OK";
+  const isStream =
+    input.includes("OPENAI_CODEX_STREAM_OK") || input.includes("stream");
+  const marker = isStream ? "OPENAI_CODEX_STREAM_OK" : "OPENAI_CODEX_RUN_OK";
   const threadId = isStream ? "thread_stream" : "thread_run";
   const events = [
     { type: "thread.started", thread_id: threadId },
@@ -18,7 +19,7 @@ process.stdin.on("end", () => {
       item: {
         id: `${threadId}_reasoning_before_command`,
         type: "reasoning",
-        text: `reasoning before command ${suffix}`,
+        text: `reasoning before command ${marker}`,
       },
     },
     {
@@ -47,7 +48,7 @@ process.stdin.on("end", () => {
       item: {
         id: `${threadId}_reasoning_after_command`,
         type: "reasoning",
-        text: `reasoning after command ${suffix}`,
+        text: `reasoning after command ${marker}`,
       },
     },
     {
@@ -81,7 +82,7 @@ process.stdin.on("end", () => {
       item: {
         id: `${threadId}_reasoning_after_mcp`,
         type: "reasoning",
-        text: `reasoning after mcp ${suffix}`,
+        text: `reasoning after mcp ${marker}`,
       },
     },
     {
@@ -97,7 +98,7 @@ process.stdin.on("end", () => {
       item: {
         id: `${threadId}_reasoning`,
         type: "reasoning",
-        text: `final reasoning ${suffix}`,
+        text: `final reasoning ${marker}`,
       },
     },
     {
@@ -105,7 +106,7 @@ process.stdin.on("end", () => {
       item: {
         id: `${threadId}_message`,
         type: "agent_message",
-        text: `Codex ${suffix}`,
+        text: `Codex ${marker}`,
       },
     },
     {

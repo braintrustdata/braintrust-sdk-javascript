@@ -9,7 +9,8 @@ import { defineOpenAICodexInstrumentationAssertions } from "./assertions";
 const scenarioDir = await prepareScenarioDir({
   scenarioDir: resolveScenarioDir(import.meta.url),
 });
-const TIMEOUT_MS = 120_000;
+const TIMEOUT_MS = 240_000;
+const CODEX_SCENARIO_MODES = ["mock", "real"] as const;
 const openAICodexScenario = {
   autoEntry: "scenario.openai-codex-v0128.mjs",
   autoSnapshotName: "openai-codex-v0128-auto-hook",
@@ -24,36 +25,44 @@ const openAICodexScenario = {
 };
 
 describe("wrapped instrumentation", () => {
-  defineOpenAICodexInstrumentationAssertions({
-    name: `openai codex sdk ${openAICodexScenario.version}`,
-    runScenario: async ({ runScenarioDir }) => {
-      await runScenarioDir({
-        entry: openAICodexScenario.wrapperEntry,
-        runContext: { variantKey: openAICodexScenario.variantKey },
-        scenarioDir,
-        timeoutMs: TIMEOUT_MS,
-      });
-    },
-    snapshotName: openAICodexScenario.wrapperSnapshotName,
-    testFileUrl: import.meta.url,
-    timeoutMs: TIMEOUT_MS,
-  });
+  for (const mode of CODEX_SCENARIO_MODES) {
+    defineOpenAICodexInstrumentationAssertions({
+      mode,
+      name: `openai codex sdk ${openAICodexScenario.version} (${mode})`,
+      runScenario: async ({ runScenarioDir }) => {
+        await runScenarioDir({
+          entry: openAICodexScenario.wrapperEntry,
+          env: { OPENAI_CODEX_E2E_MODE: mode },
+          runContext: { variantKey: openAICodexScenario.variantKey },
+          scenarioDir,
+          timeoutMs: TIMEOUT_MS,
+        });
+      },
+      snapshotName: openAICodexScenario.wrapperSnapshotName,
+      testFileUrl: import.meta.url,
+      timeoutMs: TIMEOUT_MS,
+    });
+  }
 });
 
 describe("auto-hook instrumentation", () => {
-  defineOpenAICodexInstrumentationAssertions({
-    name: `openai codex sdk ${openAICodexScenario.version}`,
-    runScenario: async ({ runNodeScenarioDir }) => {
-      await runNodeScenarioDir({
-        entry: openAICodexScenario.autoEntry,
-        nodeArgs: ["--import", "braintrust/hook.mjs"],
-        runContext: { variantKey: openAICodexScenario.variantKey },
-        scenarioDir,
-        timeoutMs: TIMEOUT_MS,
-      });
-    },
-    snapshotName: openAICodexScenario.autoSnapshotName,
-    testFileUrl: import.meta.url,
-    timeoutMs: TIMEOUT_MS,
-  });
+  for (const mode of CODEX_SCENARIO_MODES) {
+    defineOpenAICodexInstrumentationAssertions({
+      mode,
+      name: `openai codex sdk ${openAICodexScenario.version} (${mode})`,
+      runScenario: async ({ runNodeScenarioDir }) => {
+        await runNodeScenarioDir({
+          entry: openAICodexScenario.autoEntry,
+          env: { OPENAI_CODEX_E2E_MODE: mode },
+          nodeArgs: ["--import", "braintrust/hook.mjs"],
+          runContext: { variantKey: openAICodexScenario.variantKey },
+          scenarioDir,
+          timeoutMs: TIMEOUT_MS,
+        });
+      },
+      snapshotName: openAICodexScenario.autoSnapshotName,
+      testFileUrl: import.meta.url,
+      timeoutMs: TIMEOUT_MS,
+    });
+  }
 });
