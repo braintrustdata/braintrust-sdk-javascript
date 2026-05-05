@@ -92,7 +92,7 @@
     "metadata": {
       "endpointUrl": "https://router.huggingface.co",
       "max_tokens": 16,
-      "model": "meta-llama/Llama-3.1-8B-Instruct",
+      "model": "<model>",
       "provider": "huggingface",
       "temperature": 0
     },
@@ -137,7 +137,7 @@
     "metadata": {
       "created": 0,
       "id": "<span:8>",
-      "model": "llama3.1-8b",
+      "model": "<model>",
       "object": "chat.completion"
     },
     "output": [
@@ -225,7 +225,7 @@
     "metadata": {
       "endpointUrl": "https://router.huggingface.co",
       "max_tokens": 16,
-      "model": "meta-llama/Llama-3.1-8B-Instruct",
+      "model": "<model>",
       "provider": "huggingface",
       "temperature": 0
     },
@@ -271,7 +271,7 @@
     "metadata": {
       "created": 0,
       "id": "<span:13>",
-      "model": "llama3.1-8b",
+      "model": "<model>",
       "object": "chat.completion.chunk"
     },
     "output": {
@@ -361,7 +361,7 @@
     "metadata": {
       "endpointUrl": "https://router.huggingface.co",
       "max_tokens": 64,
-      "model": "meta-llama/Llama-3.1-8B-Instruct",
+      "model": "<model>",
       "provider": "featherless-ai",
       "temperature": 0,
       "tool_choice": "required",
@@ -429,7 +429,7 @@
     "metadata": {
       "created": 0,
       "id": "<span:18>",
-      "model": "llama3.1-8b",
+      "model": "<model>",
       "object": "chat.completion.chunk"
     },
     "output": {
@@ -514,7 +514,7 @@
     "metadata": {
       "endpointUrl": "https://router.huggingface.co/featherless-ai/v1/completions",
       "max_tokens": 4,
-      "model": "arcee-ai/Trinity-Large-Thinking",
+      "model": "<model>",
       "provider": "huggingface"
     },
     "metrics": {
@@ -631,7 +631,7 @@
     "log_id": "g",
     "metadata": {
       "endpointUrl": "https://router.huggingface.co/hf-inference/models/thenlper/gte-large/pipeline/feature-extraction",
-      "model": "thenlper/gte-large",
+      "model": "<model>",
       "provider": "huggingface"
     },
     "metrics": {

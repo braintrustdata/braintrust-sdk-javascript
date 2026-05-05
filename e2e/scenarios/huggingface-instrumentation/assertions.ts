@@ -181,20 +181,39 @@ function normalizeMetrics(value: Json): Json {
   return normalized;
 }
 
+function normalizeModelNames(value: Json): Json {
+  if (Array.isArray(value)) {
+    return value.map((entry) => normalizeModelNames(entry as Json));
+  }
+
+  if (!isRecord(value)) {
+    return value;
+  }
+
+  const normalized: Record<string, Json> = {};
+  for (const [key, entry] of Object.entries(value)) {
+    normalized[key] =
+      key === "model" ? "<model>" : normalizeModelNames(entry as Json);
+  }
+  return normalized;
+}
+
 function normalizePayloadOutput(row: Json): Json {
   if (!isRecord(row)) {
     return row;
   }
 
-  return "output" in row
-    ? {
-        ...row,
-        output: normalizeLoggedOutput(row.output, {
-          normalizeFinishReason: true,
-          omitToolCalls: true,
-        }),
-      }
-    : row;
+  const normalized =
+    "output" in row
+      ? {
+          ...row,
+          output: normalizeLoggedOutput(row.output, {
+            normalizeFinishReason: true,
+            omitToolCalls: true,
+          }),
+        }
+      : row;
+  return normalizeModelNames(normalized);
 }
 
 function normalizeLoggedOutput(
@@ -250,7 +269,7 @@ function buildSpanSummary(events: CapturedLogEvent[]): Json {
     "huggingface-feature-extraction-operation",
   );
 
-  return [
+  return normalizeModelNames([
     root ? summarizeWrapperContract(root, ["scenario"]) : null,
     chatOperation
       ? summarizeWrapperContract(chatOperation, ["operation"])
@@ -324,7 +343,7 @@ function buildSpanSummary(events: CapturedLogEvent[]): Json {
           )!,
         )
       : null,
-  ] satisfies Json;
+  ] satisfies Json);
 }
 
 export function defineHuggingFaceInstrumentationAssertions(options: {
