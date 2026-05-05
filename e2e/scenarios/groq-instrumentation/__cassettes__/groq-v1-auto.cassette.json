@@ -129,6 +129,54 @@
       }
     },
     {
+      "id": "4ad34400d0e920e9",
+      "matchKey": "POST api.groq.com/openai/v1/chat/completions",
+      "callIndex": 2,
+      "recordedAt": "2026-04-28T23:26:31.789Z",
+      "request": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "kind": "json",
+          "value": {
+            "max_completion_tokens": 512,
+            "messages": [
+              {
+                "role": "user",
+                "content": "Solve this step by step: Elena has 3 boxes with 4 marbles each, gives away 5 marbles, then doubles what remains. Reply with just the final number."
+              }
+            ],
+            "model": "qwen/qwen3-32b",
+            "reasoning_format": "parsed",
+            "stream": true,
+            "temperature": 0.6
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "statusText": "OK",
+        "headers": {
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "cache-control": "no-cache",
+          "content-type": "text/event-stream",
+          "vary": "origin, access-control-request-method, access-control-request-headers",
+          "x-groq-region": "us-east-1"
+        },
+        "body": {
+          "kind": "sse",
+          "chunks": [
+            "data: {\"id\":\"chatcmpl-synth-reasoning\",\"object\":\"chat.completion.chunk\",\"created\":1746432000,\"model\":\"qwen/qwen3-32b\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\",\"reasoning\":\"3 boxes x 4 marbles = 12 total. Remove 5: 12 - 5 = 7. Double: 7 x 2 = 14.\"},\"finish_reason\":null}],\"x_groq\":{\"id\":\"req_synth_reasoning\",\"usage\":null}}",
+            "data: {\"id\":\"chatcmpl-synth-reasoning\",\"object\":\"chat.completion.chunk\",\"created\":1746432001,\"model\":\"qwen/qwen3-32b\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"14\",\"reasoning\":null},\"finish_reason\":\"stop\"}],\"x_groq\":{\"id\":\"req_synth_reasoning\",\"usage\":{\"queue_time\":0.001,\"prompt_tokens\":45,\"prompt_time\":0.002,\"completion_tokens\":3,\"completion_reasoning_tokens\":12,\"completion_time\":0.001,\"total_tokens\":48,\"total_time\":0.003}}}",
+            "data: [DONE]"
+          ]
+        }
+      }
+    },
+    {
       "id": "0ffae2350a0663da",
       "matchKey": "POST api.groq.com/openai/v1/chat/completions",
       "callIndex": 2,
