@@ -28,6 +28,25 @@
     "type": null
   },
   {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "genkit.action_name": "instrumentationFlow",
+      "genkit.action_type": "flow",
+      "provider": "genkit"
+    },
+    "metric_keys": [
+      "duration"
+    ],
+    "name": "genkit.flow: instrumentationFlow",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:3>",
+    "span_parents": [
+      "<span:2>"
+    ],
+    "type": "task"
+  },
+  {
     "has_input": false,
     "has_output": false,
     "metadata": {
@@ -36,9 +55,9 @@
     "metric_keys": [],
     "name": "genkit-generate-operation",
     "root_span_id": "<span:1>",
-    "span_id": "<span:3>",
+    "span_id": "<span:4>",
     "span_parents": [
-      "<span:2>"
+      "<span:3>"
     ],
     "type": null
   },
@@ -56,9 +75,9 @@
     ],
     "name": "genkit.generate",
     "root_span_id": "<span:1>",
-    "span_id": "<span:4>",
+    "span_id": "<span:5>",
     "span_parents": [
-      "<span:3>"
+      "<span:4>"
     ],
     "type": "function"
   },
@@ -71,9 +90,9 @@
     "metric_keys": [],
     "name": "genkit-stream-operation",
     "root_span_id": "<span:1>",
-    "span_id": "<span:5>",
+    "span_id": "<span:6>",
     "span_parents": [
-      "<span:2>"
+      "<span:3>"
     ],
     "type": null
   },
@@ -92,9 +111,9 @@
     ],
     "name": "genkit.generateStream",
     "root_span_id": "<span:1>",
-    "span_id": "<span:6>",
+    "span_id": "<span:7>",
     "span_parents": [
-      "<span:5>"
+      "<span:6>"
     ],
     "type": "function"
   },
@@ -107,9 +126,9 @@
     "metric_keys": [],
     "name": "genkit-embed-operation",
     "root_span_id": "<span:1>",
-    "span_id": "<span:7>",
+    "span_id": "<span:8>",
     "span_parents": [
-      "<span:2>"
+      "<span:3>"
     ],
     "type": null
   },
@@ -123,9 +142,9 @@
     "metric_keys": [],
     "name": "genkit.embed",
     "root_span_id": "<span:1>",
-    "span_id": "<span:8>",
+    "span_id": "<span:9>",
     "span_parents": [
-      "<span:7>"
+      "<span:8>"
     ],
     "type": "function"
   },
@@ -138,9 +157,9 @@
     "metric_keys": [],
     "name": "genkit-model-tool-operation",
     "root_span_id": "<span:1>",
-    "span_id": "<span:9>",
+    "span_id": "<span:10>",
     "span_parents": [
-      "<span:2>"
+      "<span:3>"
     ],
     "type": null
   },
@@ -158,10 +177,44 @@
     ],
     "name": "genkit.generate",
     "root_span_id": "<span:1>",
-    "span_id": "<span:10>",
+    "span_id": "<span:11>",
     "span_parents": [
-      "<span:9>"
+      "<span:10>"
     ],
     "type": "function"
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "operation": "tool"
+    },
+    "metric_keys": [],
+    "name": "genkit-tool-operation",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:12>",
+    "span_parents": [
+      "<span:3>"
+    ],
+    "type": null
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "metadata": {
+      "genkit.action_name": "summarizeCity",
+      "genkit.action_type": "tool",
+      "provider": "genkit"
+    },
+    "metric_keys": [
+      "duration"
+    ],
+    "name": "genkit.tool: summarizeCity",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:13>",
+    "span_parents": [
+      "<span:12>"
+    ],
+    "type": "tool"
   }
 ]

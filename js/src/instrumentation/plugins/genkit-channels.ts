@@ -51,3 +51,10 @@ export const genkitChannels = defineChannels("@genkit-ai/ai", {
     kind: "sync-stream",
   }),
 });
+
+export const genkitCoreChannels = defineChannels("@genkit-ai/core", {
+  actionSpan: channel<[unknown, unknown, unknown?], unknown>({
+    channelName: "action.span",
+    kind: "async",
+  }),
+});

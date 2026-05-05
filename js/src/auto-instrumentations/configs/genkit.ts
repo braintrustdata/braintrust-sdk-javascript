@@ -1,5 +1,8 @@
 import type { InstrumentationConfig } from "@apm-js-collab/code-transformer";
-import { genkitChannels } from "../../instrumentation/plugins/genkit-channels";
+import {
+  genkitChannels,
+  genkitCoreChannels,
+} from "../../instrumentation/plugins/genkit-channels";
 
 const genkitVersionRange = ">=1.0.0 <2.0.0";
 
@@ -138,6 +141,30 @@ export const genkitConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "GenkitAI",
       methodName: "run",
+      kind: "Async",
+    },
+  },
+  {
+    channelName: genkitCoreChannels.actionSpan.channelName,
+    module: {
+      name: "@genkit-ai/core",
+      versionRange: genkitVersionRange,
+      filePath: "lib/tracing/instrumentation.mjs",
+    },
+    functionQuery: {
+      functionName: "runInNewSpan",
+      kind: "Async",
+    },
+  },
+  {
+    channelName: genkitCoreChannels.actionSpan.channelName,
+    module: {
+      name: "@genkit-ai/core",
+      versionRange: genkitVersionRange,
+      filePath: "lib/tracing/instrumentation.js",
+    },
+    functionQuery: {
+      functionName: "runInNewSpan",
       kind: "Async",
     },
   },

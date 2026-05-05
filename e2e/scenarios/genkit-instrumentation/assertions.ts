@@ -135,33 +135,27 @@ export function defineGenkitInstrumentationAssertions(options: {
       });
     });
 
-    test(
-      "nests scenario operations under the flow operation",
-      testConfig,
-      () => {
-        const flowOperation = findLatestSpan(events, "genkit-flow-operation");
-        expect(flowOperation).toBeDefined();
+    test("nests scenario operations under the flow span", testConfig, () => {
+      const flowOperation = findLatestSpan(events, "genkit-flow-operation");
+      expect(flowOperation).toBeDefined();
 
-        if (options.supportsActionSpans) {
-          const flowSpan = findGenkitSpan(
-            events,
-            flowOperation?.span.id,
-            "genkit.flow: instrumentationFlow",
-          );
-          expectChildOf(flowSpan, flowOperation);
-        }
+      const flowSpan = findGenkitSpan(
+        events,
+        flowOperation?.span.id,
+        "genkit.flow: instrumentationFlow",
+      );
+      expectChildOf(flowSpan, flowOperation);
 
-        for (const operationName of [
-          "genkit-generate-operation",
-          "genkit-stream-operation",
-          "genkit-embed-operation",
-          "genkit-tool-operation",
-          "genkit-model-tool-operation",
-        ]) {
-          expectChildOf(findLatestSpan(events, operationName), flowOperation);
-        }
-      },
-    );
+      for (const operationName of [
+        "genkit-generate-operation",
+        "genkit-stream-operation",
+        "genkit-embed-operation",
+        "genkit-tool-operation",
+        "genkit-model-tool-operation",
+      ]) {
+        expectChildOf(findLatestSpan(events, operationName), flowSpan);
+      }
+    });
 
     test("captures generate, stream, and embed spans", testConfig, () => {
       const generateOperation = findLatestSpan(

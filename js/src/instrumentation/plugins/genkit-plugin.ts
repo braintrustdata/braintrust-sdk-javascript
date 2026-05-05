@@ -6,12 +6,16 @@ import {
 } from "../core/channel-tracing";
 import type { ChannelMessage } from "../core/channel-definitions";
 import type { IsoChannelHandlers, IsoTracingChannel } from "../../isomorph";
-import { startSpan } from "../../logger";
-import type { Span } from "../../logger";
+import {
+  _internalGetGlobalState,
+  BRAINTRUST_CURRENT_SPAN_STORE,
+  startSpan,
+} from "../../logger";
+import type { CurrentSpanStore, Span } from "../../logger";
 import { getCurrentUnixTimestamp, isObject } from "../../util";
 import { SpanTypeAttribute } from "../../../util/index";
 import { processInputAttachments } from "../../wrappers/attachment-utils";
-import { genkitChannels } from "./genkit-channels";
+import { genkitChannels, genkitCoreChannels } from "./genkit-channels";
 import type {
   GenkitAction,
   GenkitActionMetadata,
@@ -86,6 +90,7 @@ export class GenkitPlugin extends BasePlugin {
     );
 
     this.subscribeToActionRun();
+    this.subscribeToActionSpan();
     this.subscribeToActionStream();
   }
 
@@ -95,29 +100,19 @@ export class GenkitPlugin extends BasePlugin {
         ChannelMessage<typeof genkitChannels.actionRun>
       >;
     const states = new WeakMap<object, SpanState>();
+    const unbindCurrentSpanStore = bindActionCurrentSpanStoreToStart(
+      tracingChannel,
+      states,
+      (event) => startActionRunSpan(event),
+    );
 
     const handlers: IsoChannelHandlers<
       ChannelMessage<typeof genkitChannels.actionRun>
     > = {
       start: (event) => {
-        const metadata = extractActionMetadata(event.self);
-        const runStepName =
-          !metadata && typeof event.arguments[0] === "string"
-            ? event.arguments[0]
-            : undefined;
-        const span = startSpan({
-          name: actionSpanName(metadata, runStepName),
-          spanAttributes: {
-            type: actionSpanType(metadata),
-          },
-        });
-        const startTime = getCurrentUnixTimestamp();
-
-        span.log({
-          input: runStepName ? event.arguments[1] : event.arguments[0],
-          metadata: actionMetadataForLog(metadata, runStepName),
-        });
-        states.set(event, { span, startTime });
+        ensureActionSpanState(states, event as object, () =>
+          startActionRunSpan(event),
+        );
       },
       asyncEnd: (event) => {
         const state = states.get(event);
@@ -147,7 +142,65 @@ export class GenkitPlugin extends BasePlugin {
     };
 
     tracingChannel.subscribe(handlers);
-    this.unsubscribers.push(() => tracingChannel.unsubscribe(handlers));
+    this.unsubscribers.push(() => {
+      unbindCurrentSpanStore?.();
+      tracingChannel.unsubscribe(handlers);
+    });
+  }
+
+  private subscribeToActionSpan(): void {
+    const tracingChannel =
+      genkitCoreChannels.actionSpan.tracingChannel() as IsoTracingChannel<
+        ChannelMessage<typeof genkitCoreChannels.actionSpan>
+      >;
+    const states = new WeakMap<object, SpanState>();
+    const unbindCurrentSpanStore = bindActionCurrentSpanStoreToStart(
+      tracingChannel,
+      states,
+      (event) => startActionSpan(event),
+    );
+
+    const handlers: IsoChannelHandlers<
+      ChannelMessage<typeof genkitCoreChannels.actionSpan>
+    > = {
+      start: (event) => {
+        ensureActionSpanState(states, event as object, () =>
+          startActionSpan(event),
+        );
+      },
+      asyncEnd: (event) => {
+        const state = states.get(event as object);
+        if (!state) {
+          return;
+        }
+
+        try {
+          state.span.log({
+            input: extractActionSpanInput(event.arguments),
+            output: extractActionOutput(event.result),
+            metrics: durationMetrics(state.startTime),
+          });
+        } finally {
+          state.span.end();
+          states.delete(event as object);
+        }
+      },
+      error: (event) => {
+        const state = states.get(event as object);
+        if (!state || !event.error) {
+          return;
+        }
+        state.span.log({ error: event.error.message });
+        state.span.end();
+        states.delete(event as object);
+      },
+    };
+
+    tracingChannel.subscribe(handlers);
+    this.unsubscribers.push(() => {
+      unbindCurrentSpanStore?.();
+      tracingChannel.unsubscribe(handlers);
+    });
   }
 
   private subscribeToActionStream(): void {
@@ -164,6 +217,122 @@ export class GenkitPlugin extends BasePlugin {
       }),
     );
   }
+}
+
+function startActionRunSpan(
+  event: ChannelMessage<typeof genkitChannels.actionRun>,
+): SpanState | undefined {
+  const metadata = extractActionMetadata(event.self);
+  const runStepName =
+    !metadata && typeof event.arguments[0] === "string"
+      ? event.arguments[0]
+      : undefined;
+  return startActionSpanState({
+    input: runStepName ? event.arguments[1] : event.arguments[0],
+    metadata,
+    runStepName,
+  });
+}
+
+function startActionSpan(
+  event: ChannelMessage<typeof genkitCoreChannels.actionSpan>,
+): SpanState | undefined {
+  const metadata = extractActionSpanMetadata(event.arguments);
+  if (!metadata) {
+    return undefined;
+  }
+
+  return startActionSpanState({
+    input: extractActionSpanInput(event.arguments),
+    metadata,
+  });
+}
+
+function startActionSpanState(args: {
+  input?: unknown;
+  metadata?: GenkitActionMetadata;
+  runStepName?: string;
+}): SpanState | undefined {
+  if (!shouldTraceAction(args.metadata, args.runStepName)) {
+    return undefined;
+  }
+
+  const span = startSpan({
+    name: actionSpanName(args.metadata, args.runStepName),
+    spanAttributes: {
+      type: actionSpanType(args.metadata),
+    },
+  });
+  const startTime = getCurrentUnixTimestamp();
+
+  span.log({
+    input: args.input,
+    metadata: actionMetadataForLog(args.metadata, args.runStepName),
+  });
+  return { span, startTime };
+}
+
+function ensureActionSpanState(
+  states: WeakMap<object, SpanState>,
+  event: object,
+  create: () => SpanState | undefined,
+): SpanState | undefined {
+  const existing = states.get(event);
+  if (existing) {
+    return existing;
+  }
+
+  const created = create();
+  if (created) {
+    states.set(event, created);
+  }
+  return created;
+}
+
+function bindActionCurrentSpanStoreToStart<
+  TChannel extends
+    | typeof genkitChannels.actionRun
+    | typeof genkitCoreChannels.actionSpan,
+>(
+  tracingChannel: IsoTracingChannel<ChannelMessage<TChannel>>,
+  states: WeakMap<object, SpanState>,
+  create: (event: ChannelMessage<TChannel>) => SpanState | undefined,
+): (() => void) | undefined {
+  const state = _internalGetGlobalState();
+  const contextManager = state?.contextManager;
+  const startChannel = tracingChannel.start as
+    | ({
+        bindStore?: (
+          store: CurrentSpanStore,
+          callback: (event: ChannelMessage<TChannel>) => unknown,
+        ) => void;
+        unbindStore?: (store: CurrentSpanStore) => void;
+      } & object)
+    | undefined;
+  const currentSpanStore = contextManager
+    ? (
+        contextManager as {
+          [BRAINTRUST_CURRENT_SPAN_STORE]?: CurrentSpanStore;
+        }
+      )[BRAINTRUST_CURRENT_SPAN_STORE]
+    : undefined;
+
+  if (!startChannel?.bindStore || !currentSpanStore) {
+    return undefined;
+  }
+
+  startChannel.bindStore(currentSpanStore, (event) => {
+    const state = ensureActionSpanState(states, event as object, () =>
+      create(event),
+    );
+    return state
+      ? contextManager!.wrapSpanForStore(state.span)
+      : currentSpanStore.getStore();
+  });
+
+  return () => {
+    startChannel.unbindStore?.(currentSpanStore);
+  };
 }
 
 function normalizeInput(input: GenkitGenerateInput): GenkitGenerateInput {
@@ -402,6 +571,63 @@ function extractActionMetadata(
   return self.__action as GenkitActionMetadata;
 }
 
+function extractActionSpanMetadata(
+  args: unknown[],
+): GenkitActionMetadata | undefined {
+  const options = extractRunInNewSpanOptions(args);
+  const labels = isObject(options?.labels)
+    ? (options.labels as Record<string, unknown>)
+    : undefined;
+  const metadata = isObject(options?.metadata)
+    ? (options.metadata as Record<string, unknown>)
+    : undefined;
+  const actionType = stringValue(labels?.["genkit:metadata:subtype"]);
+  const name = stringValue(metadata?.name);
+
+  if (!actionType || !name) {
+    return undefined;
+  }
+
+  return {
+    actionType,
+    key: stringValue(labels?.["genkit:key"]),
+    name,
+  };
+}
+
+function extractActionSpanInput(args: unknown[]): unknown {
+  const options = extractRunInNewSpanOptions(args);
+  if (!isObject(options?.metadata)) {
+    return undefined;
+  }
+  return options.metadata.input;
+}
+
+function extractRunInNewSpanOptions(
+  args: unknown[],
+): Record<string, unknown> | undefined {
+  const options = args.length === 3 ? args[1] : args[0];
+  return isObject(options) ? (options as Record<string, unknown>) : undefined;
+}
+
+function shouldTraceAction(
+  metadata: GenkitActionMetadata | undefined,
+  runStepName?: string,
+): boolean {
+  if (runStepName) {
+    return true;
+  }
+
+  switch (metadata?.actionType) {
+    case "model":
+    case "background-model":
+    case "embedder":
+      return false;
+    default:
+      return Boolean(metadata);
+  }
+}
+
 function actionSpanName(
   metadata: GenkitActionMetadata | undefined,
   runStepName?: string,
@@ -513,4 +739,8 @@ function isAsyncIterableLike(value: unknown): value is AsyncIterable<unknown> {
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
+}
+
+function stringValue(value: unknown): string | undefined {
+  return typeof value === "string" ? value : undefined;
 }

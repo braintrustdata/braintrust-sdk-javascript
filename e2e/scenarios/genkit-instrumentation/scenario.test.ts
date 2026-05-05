@@ -43,7 +43,7 @@ describe(`genkit ${genkitVersion}`, () => {
       });
     },
     snapshotName: `${snapshotName}-auto`,
-    supportsActionSpans: false,
+    supportsActionSpans: true,
     testFileUrl: import.meta.url,
     timeoutMs: GENKIT_SCENARIO_TIMEOUT_MS,
   });
