@@ -11,7 +11,8 @@ const SCENARIO_NAME = "google-adk-instrumentation";
 
 async function runGoogleADKInstrumentationScenario(adk, options = {}) {
   const decoratedADK = options.decorateSDK ? options.decorateSDK(adk) : adk;
-  const { LlmAgent, InMemoryRunner, FunctionTool } = decoratedADK;
+  const { LlmAgent, SequentialAgent, InMemoryRunner, FunctionTool } =
+    decoratedADK;
   process.env.GOOGLE_GENAI_API_KEY ??=
     process.env.GOOGLE_API_KEY ?? process.env.GEMINI_API_KEY;
 
@@ -38,9 +39,15 @@ async function runGoogleADKInstrumentationScenario(adk, options = {}) {
   const agent = new LlmAgent({
     name: "weather_agent",
     model: GOOGLE_MODEL,
-    instruction:
-      "For weather questions, first call the get_weather tool exactly once, then answer with the tool result in one short sentence. Do not answer from memory and do not call any tool after you have a tool result.",
-    tools: [getWeatherTool],
+    instruction: "Answer the user's question in one short sentence.",
+    beforeAgentCallback: async () => {
+      await getWeatherTool.runAsync({
+        args: { location: "Paris, France" },
+        toolContext: {
+          functionCallId: "direct-weather-tool",
+        },
+      });
+    },
     generateContentConfig: {
       temperature: 0,
     },
@@ -54,6 +61,40 @@ async function runGoogleADKInstrumentationScenario(adk, options = {}) {
   await runner.sessionService.createSession({
     appName: runner.appName,
     sessionId,
+    userId,
+  });
+
+  const greeter = new LlmAgent({
+    name: "greeter",
+    model: GOOGLE_MODEL,
+    instruction: "Greet the user with a single short sentence.",
+    beforeAgentCallback: () => ({
+      role: "model",
+      parts: [{ text: "Hello." }],
+    }),
+  });
+  const farewell = new LlmAgent({
+    name: "farewell",
+    model: GOOGLE_MODEL,
+    instruction: "Say a single short closing sentence.",
+    beforeAgentCallback: () => ({
+      role: "model",
+      parts: [{ text: "Goodbye." }],
+    }),
+  });
+  const workflow = new SequentialAgent({
+    name: "sequential_workflow",
+    subAgents: [greeter, farewell],
+  });
+  const workflowRunner = new InMemoryRunner({
+    agent: workflow,
+    appName: "e2e-test-sequential-app",
+  });
+  const workflowSessionId = "test-session-sequential";
+
+  await workflowRunner.sessionService.createSession({
+    appName: workflowRunner.appName,
+    sessionId: workflowSessionId,
     userId,
   });
 
@@ -76,6 +117,24 @@ async function runGoogleADKInstrumentationScenario(adk, options = {}) {
           events.push(event);
         }
       });
+
+      await runOperation(
+        "adk-sequential-run-operation",
+        "sequential-run",
+        async () => {
+          const events = [];
+          for await (const event of workflowRunner.runAsync({
+            userId,
+            sessionId: workflowSessionId,
+            newMessage: {
+              role: "user",
+              parts: [{ text: "Hello." }],
+            },
+          })) {
+            events.push(event);
+          }
+        },
+      );
     },
     metadata: {
       scenario: SCENARIO_NAME,
