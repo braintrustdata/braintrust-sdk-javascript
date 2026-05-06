@@ -13,7 +13,7 @@ import {
 export { GITHUB_COPILOT_SCENARIO_TIMEOUT_MS };
 
 function getGitHubToken() {
-  return process.env.GITHUB_TOKEN ?? process.env.GH_TOKEN;
+  return process.env.COPILOT_API_KEY;
 }
 
 function getMockBaseUrl() {
@@ -41,7 +41,7 @@ async function runCopilotSession(options, decorateClient) {
   const githubToken = getGitHubToken();
   if (!githubToken && !getMockBaseUrl()) {
     throw new Error(
-      "Either GITHUB_TOKEN or BRAINTRUST_E2E_MODEL_BASE_URL must be set for the GitHub Copilot SDK e2e test",
+      "Either COPILOT_API_KEY or BRAINTRUST_E2E_MODEL_BASE_URL must be set for the GitHub Copilot SDK e2e test",
     );
   }
 
