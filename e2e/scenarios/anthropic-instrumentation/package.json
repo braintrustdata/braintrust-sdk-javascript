@@ -9,7 +9,7 @@
     }
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "0.80.0",
+    "@anthropic-ai/sdk": "0.91.1",
     "anthropic-sdk-v0273": "npm:@anthropic-ai/sdk@0.27.3",
     "anthropic-sdk-v0390": "npm:@anthropic-ai/sdk@0.39.0",
     "anthropic-sdk-v0712": "npm:@anthropic-ai/sdk@0.71.2",
