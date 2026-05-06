@@ -19,7 +19,6 @@ export interface InstrumentationConfig {
     vercel?: boolean;
     aisdk?: boolean;
     google?: boolean;
-    googleGenAI?: boolean;
     huggingface?: boolean;
     claudeAgentSDK?: boolean;
     cursor?: boolean;
@@ -27,10 +26,7 @@ export interface InstrumentationConfig {
     openrouter?: boolean;
     openrouterAgent?: boolean;
     mistral?: boolean;
-    googleADK?: boolean;
     cohere?: boolean;
-    groq?: boolean;
-    mastra?: boolean;
   };
 }
 
@@ -111,7 +107,7 @@ class PluginRegistry {
   /**
    * Get default configuration (all integrations enabled).
    */
-  private getDefaultConfig(): IntegrationMap {
+  private getDefaultConfig(): Record<string, boolean> {
     return {
       openai: true,
       anthropic: true,
@@ -136,8 +132,8 @@ class PluginRegistry {
    * Read configuration from environment variables.
    * Supports: BRAINTRUST_DISABLE_INSTRUMENTATION=openai,anthropic,...
    */
-  private readEnvConfig(): InstrumentationConfig {
-    const integrations: IntegrationMap = {};
+  private readEnvConfig(): { integrations: Record<string, boolean> } {
+    const integrations: Record<string, boolean> = {};
 
     const disabledList = iso.getEnv("BRAINTRUST_DISABLE_INSTRUMENTATION");
     if (disabledList) {
@@ -155,7 +151,7 @@ class PluginRegistry {
   }
 }
 
-function normalizeIntegrationName(name: string): IntegrationName {
+function normalizeIntegrationName(name: string): string {
   switch (name) {
     case "cursor-sdk":
       return "cursorSDK";
@@ -163,7 +159,7 @@ function normalizeIntegrationName(name: string): IntegrationName {
     case "mastra-core":
       return "mastra";
     default:
-      return name as RuntimeIntegrationName;
+      return name;
   }
 }
 
