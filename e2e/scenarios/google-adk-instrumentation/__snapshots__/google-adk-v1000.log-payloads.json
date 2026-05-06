@@ -20,14 +20,6 @@
     "type": null
   },
   {
-    "input": {
-      "messages": [
-        {
-          "content": "What is the weather in Paris, France?",
-          "role": "user"
-        }
-      ]
-    },
     "metadata": {
       "google_adk.session_id": "test-session-1",
       "google_adk.user_id": "test-user",
@@ -52,6 +44,28 @@
     "type": "task"
   },
   {
+    "input": {
+      "location": "Paris, France"
+    },
+    "metadata": {
+      "google_adk.tool_call_id": "adk-<uuid:1>",
+      "google_adk.tool_name": "get_weather",
+      "provider": "google-adk"
+    },
+    "metrics": {
+      "duration": 0,
+      "end": 0,
+      "start": 0
+    },
+    "name": "tool: get_weather",
+    "output": {
+      "condition": "sunny",
+      "location": "Paris, France",
+      "temperature": 72
+    },
+    "type": "tool"
+  },
+  {
     "metadata": {
       "google_adk.agent_name": "weather_agent",
       "model": "gemini-2.5-flash-lite",
@@ -80,9 +94,12 @@
       "provider": "google-adk"
     },
     "metrics": {
+      "completion_tokens": "<number>",
       "duration": 0,
       "end": 0,
-      "start": 0
+      "prompt_tokens": "<number>",
+      "start": 0,
+      "tokens": "<number>"
     },
     "name": "Google ADK Runner",
     "type": "task"
