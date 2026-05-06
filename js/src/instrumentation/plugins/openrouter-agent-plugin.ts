@@ -633,6 +633,11 @@ export function aggregateOpenRouterChatChunks(
 } {
   let role: string | undefined;
   let content = "";
+  let reasoning = "";
+  let hasReasoning = false;
+  let reasoningContent = "";
+  let hasReasoningContent = false;
+  let reasoningDetails: unknown[] | undefined;
   let toolCalls:
     | Array<{
         index?: number;
@@ -668,6 +673,24 @@ export function aggregateOpenRouterChatChunks(
 
     if (typeof delta.content === "string") {
       content += delta.content;
+    }
+
+    if (typeof delta.reasoning === "string") {
+      reasoning += delta.reasoning;
+      hasReasoning = true;
+    }
+
+    if (typeof delta.reasoning_content === "string") {
+      reasoning += delta.reasoning_content;
+      reasoningContent += delta.reasoning_content;
+      hasReasoningContent = true;
+    }
+
+    if (Array.isArray(delta.reasoning_details)) {
+      reasoningDetails = [
+        ...(reasoningDetails || []),
+        ...delta.reasoning_details,
+      ];
     }
 
     const choiceFinishReason =
@@ -740,6 +763,11 @@ export function aggregateOpenRouterChatChunks(
         message: {
           role,
           content: content || undefined,
+          ...(hasReasoning || hasReasoningContent ? { reasoning } : {}),
+          ...(hasReasoningContent
+            ? { reasoning_content: reasoningContent }
+            : {}),
+          ...(reasoningDetails ? { reasoning_details: reasoningDetails } : {}),
           ...(toolCalls ? { tool_calls: toolCalls } : {}),
         },
         logprobs: null,
