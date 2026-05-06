@@ -13,6 +13,7 @@ import {
   CHAT_MODEL,
   EMBEDDING_MODEL,
   RERANK_MODEL,
+  REASONING_MODEL,
   ROOT_NAME,
   SCENARIO_NAME,
 } from "./constants.mjs";
@@ -21,7 +22,10 @@ const CHAT_MODEL_NAME = CHAT_MODEL.split("/").at(-1) ?? CHAT_MODEL;
 const EMBEDDING_MODEL_NAME =
   EMBEDDING_MODEL.split("/").at(-1) ?? EMBEDDING_MODEL;
 const RERANK_MODEL_NAME = RERANK_MODEL.split("/").at(-1) ?? RERANK_MODEL;
+const REASONING_MODEL_NAME =
+  REASONING_MODEL.split("/").at(-1) ?? REASONING_MODEL;
 const OPENROUTER_MODEL_PROVIDER = "openai";
+const OPENROUTER_REASONING_PROVIDER = "deepseek";
 const OPENROUTER_RERANK_PROVIDER = "cohere";
 
 type RunOpenRouterScenario = (harness: {
@@ -213,6 +217,50 @@ export function defineOpenRouterTraceAssertions(options: {
         expect(span?.row.metadata?.model).toBe(CHAT_MODEL_NAME);
         expect(span?.metrics?.time_to_first_token).toEqual(expect.any(Number));
         expect(span?.output).toBeDefined();
+      },
+    );
+
+    test(
+      "captures reasoning fields for a streamed reasoning chat completion",
+      testConfig,
+      () => {
+        const root = findLatestSpan(events, ROOT_NAME);
+        const operation = findLatestSpan(
+          events,
+          "openrouter-chat-reasoning-stream-operation",
+        );
+        const span = findOpenRouterSpan(events, operation?.span.id, [
+          "openrouter.chat.send",
+        ]);
+        const output = span?.output as
+          | Array<{
+              message?: {
+                reasoning?: string;
+                reasoning_content?: string;
+                reasoning_details?: unknown[];
+              };
+            }>
+          | undefined;
+        const message = output?.[0]?.message;
+        const reasoning = message?.reasoning ?? message?.reasoning_content;
+        const hasReasoningText =
+          typeof reasoning === "string" && reasoning.length > 0;
+        const hasReasoningDetails =
+          Array.isArray(message?.reasoning_details) &&
+          message.reasoning_details.length > 0;
+
+        expect(operation).toBeDefined();
+        expect(span).toBeDefined();
+        expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
+        expect(span?.row.metadata).toMatchObject({
+          provider: OPENROUTER_REASONING_PROVIDER,
+        });
+        expect(span?.row.metadata?.model).toBe(REASONING_MODEL_NAME);
+        expect(span?.metrics?.time_to_first_token).toEqual(expect.any(Number));
+        expect(span?.metrics?.completion_reasoning_tokens).toEqual(
+          expect.any(Number),
+        );
+        expect(hasReasoningText || hasReasoningDetails).toBe(true);
       },
     );
 
