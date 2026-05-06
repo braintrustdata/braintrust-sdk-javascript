@@ -27,7 +27,6 @@ export interface InstrumentationConfig {
     openrouterAgent?: boolean;
     mistral?: boolean;
     cohere?: boolean;
-    gitHubCopilot?: boolean;
   };
 }
 

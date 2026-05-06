@@ -20,6 +20,7 @@
 - fix: Capture reasoning in mistral (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/1863)
 - fix(huggingface): Capture streamed tool calls (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/1848)
 - fix(claude-agent-sdk): Nest built-in tools under sub-agents (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/1881)
+
 ## 3.9.0
 
 ### Notable Changes

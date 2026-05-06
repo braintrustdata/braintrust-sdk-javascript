@@ -32,8 +32,14 @@ export interface BraintrustPluginConfig {
     googleADK?: boolean;
     cohere?: boolean;
     groq?: boolean;
-    gitHubCopilot?: boolean;
   };
+}
+
+function getIntegrationConfig(
+  integrations: NonNullable<BraintrustPluginConfig["integrations"]>,
+  key: string,
+): boolean | undefined {
+  return (integrations as Record<string, boolean | undefined>)[key];
 }
 
 /**
@@ -150,7 +156,7 @@ export class BraintrustPlugin extends BasePlugin {
       this.groqPlugin.enable();
     }
 
-    if (integrations.gitHubCopilot !== false) {
+    if (getIntegrationConfig(integrations, "gitHubCopilot") !== false) {
       this.gitHubCopilotPlugin = new GitHubCopilotPlugin();
       this.gitHubCopilotPlugin.enable();
     }
