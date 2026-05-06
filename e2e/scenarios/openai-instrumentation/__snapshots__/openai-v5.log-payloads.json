@@ -520,7 +520,17 @@
       "has_time_to_first_token": true
     },
     "name": "openai.responses.create",
-    "output": null,
+    "output": [
+      {
+        "content_types": [
+          "output_text"
+        ],
+        "json_keys": [],
+        "role": "assistant",
+        "status": "completed",
+        "type": "message"
+      }
+    ],
     "type": "llm"
   },
   {
