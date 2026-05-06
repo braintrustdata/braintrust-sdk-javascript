@@ -107,7 +107,7 @@
             "data: {\"type\":\"content-start\",\"index\":0,\"delta\":{\"message\":{\"content\":{\"type\":\"text\",\"text\":\"\"}}}}",
             "data: {\"type\":\"content-delta\",\"index\":0,\"delta\":{\"message\":{\"content\":{\"text\":\"STREAM.\"}}}}",
             "data: {\"type\":\"content-end\",\"index\":0}",
-            "data: {\"type\":\"message-end\",\"id\":\"msg-stream-abc\",\"delta\":{\"finish_reason\":\"COMPLETE\",\"usage\":{\"billed_units\":{\"input_tokens\":6,\"output_tokens\":1},\"tokens\":{\"input_tokens\":887,\"output_tokens\":1}}}}",
+            "data: {\"type\":\"message-end\",\"id\":\"msg-stream-abc\",\"delta\":{\"finish_reason\":\"COMPLETE\",\"usage\":{\"cached_tokens\":0,\"billed_units\":{\"input_tokens\":6,\"output_tokens\":1},\"tokens\":{\"input_tokens\":887,\"output_tokens\":1}}}}",
             "data: [DONE]"
           ]
         }
