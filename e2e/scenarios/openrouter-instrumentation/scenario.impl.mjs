@@ -6,6 +6,7 @@ import {
   runTracedScenario,
 } from "../../helpers/provider-runtime.mjs";
 import {
+  CALL_MODEL,
   CHAT_MODEL,
   EMBEDDING_MODEL,
   RERANK_MODEL,
@@ -197,7 +198,7 @@ async function runOpenRouterInstrumentationScenario(
               "Use the lookup_weather tool for Vienna exactly once, then answer with only the forecast.",
             maxOutputTokens: 24,
             maxToolCalls: 1,
-            model: CHAT_MODEL,
+            model: CALL_MODEL,
             temperature: 0,
             toolChoice: "required",
             tools: [createWeatherTool()],
