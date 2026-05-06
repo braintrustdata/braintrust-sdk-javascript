@@ -68,6 +68,12 @@ async function runVitest(testFiles) {
   const env = {
     ...process.env,
     BRAINTRUST_E2E_MODE: "canary",
+    // Canary tests use live provider APIs with real keys; bypass any cassette
+    // replay that would activate because a pinned cassette file exists for the
+    // same variant key. Without this, the latest SDK may send slightly
+    // different request bodies, causing cassette misses → HttpResponse.error()
+    // → SDK retries → subprocess timeout.
+    BRAINTRUST_E2E_CASSETTE_MODE: "passthrough",
   };
 
   const exitCode = await new Promise((resolve, reject) => {
