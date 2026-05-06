@@ -206,7 +206,6 @@
         "cursor_sdk.run_id": "<run-id>",
         "cursor_sdk.status": "finished",
         "cursor_sdk.step_types": [
-          "thinkingMessage",
           "assistantMessage"
         ],
         "model": "composer-2",
