@@ -20,6 +20,14 @@
     "type": null
   },
   {
+    "input": {
+      "messages": [
+        {
+          "content": "What is the weather in Paris, France?",
+          "role": "user"
+        }
+      ]
+    },
     "metadata": {
       "google_adk.session_id": "test-session-1",
       "google_adk.user_id": "test-user",
