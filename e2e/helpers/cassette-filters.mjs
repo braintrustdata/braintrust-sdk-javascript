@@ -75,10 +75,20 @@ const MISTRAL_VOLATILE_FIELDS = {
   },
 };
 
+const OPENROUTER_VOLATILE_FIELDS = {
+  ignoreBodyFields: [
+    // Ignore all body fields — deterministic call order makes callIndex
+    // the sole discriminator, which is stable across SDK releases.
+    "**",
+  ],
+};
+
 export const CASSETTE_FILTERS = {
   default: "default",
   "ai-sdk": ["default", AI_SDK_VOLATILE_FIELDS],
   "ai-sdk-instrumentation": ["default", AI_SDK_VOLATILE_FIELDS],
   "ai-sdk-otel-export": ["default", AI_SDK_VOLATILE_FIELDS],
   "mistral-instrumentation": ["default", MISTRAL_VOLATILE_FIELDS],
+  "openrouter-agent-instrumentation": ["default", OPENROUTER_VOLATILE_FIELDS],
+  "openrouter-instrumentation": ["default", OPENROUTER_VOLATILE_FIELDS],
 };

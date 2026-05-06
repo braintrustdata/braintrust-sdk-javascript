@@ -76,11 +76,11 @@
                 "image_tokens": 0,
                 "reasoning_tokens": 0
               },
-              "cost": 0.000003,
+              "cost": 3e-6,
               "cost_details": {
-                "upstream_inference_completions_cost": 0.0000012,
-                "upstream_inference_cost": 0.000003,
-                "upstream_inference_prompt_cost": 0.0000018
+                "upstream_inference_completions_cost": 1.2e-6,
+                "upstream_inference_cost": 3e-6,
+                "upstream_inference_prompt_cost": 1.8e-6
               },
               "is_byok": false,
               "prompt_tokens": 12,
@@ -464,7 +464,7 @@
                   0.03961181640625, 0.04638671875, -0.0085601806640625,
                   -0.0004723072052001953, 0.0146331787109375,
                   0.0001633167266845703, 0.00475311279296875,
-                  -0.0265350341796875, 0.00007784366607666016,
+                  -0.0265350341796875, 7.784366607666016e-5,
                   -0.0025691986083984375, -0.014007568359375,
                   -0.008026123046875, 0.0045166015625, 0.033447265625,
                   -0.016845703125, 0.03466796875, 0.01285552978515625,
@@ -748,8 +748,8 @@
                   -0.002567291259765625, -0.0030918121337890625,
                   -0.030975341796875, -0.00679779052734375,
                   0.004627227783203125, -0.0011625289916992188, -0.064453125,
-                  0.00008463859558105469, 0.008026123046875,
-                  -0.0252532958984375, 0.005733489990234375, -0.0390625
+                  8.463859558105469e-5, 0.008026123046875, -0.0252532958984375,
+                  0.005733489990234375, -0.0390625
                 ],
                 "index": 0,
                 "object": "embedding"
@@ -858,11 +858,11 @@
             "top_p": 1,
             "truncation": "disabled",
             "usage": {
-              "cost": 0.0000039,
+              "cost": 3.9e-6,
               "cost_details": {
-                "upstream_inference_cost": 0.0000039,
-                "upstream_inference_input_cost": 0.0000021,
-                "upstream_inference_output_cost": 0.0000018
+                "upstream_inference_cost": 3.9e-6,
+                "upstream_inference_input_cost": 2.1e-6,
+                "upstream_inference_output_cost": 1.8e-6
               },
               "input_tokens": 14,
               "input_tokens_details": {
@@ -999,8 +999,8 @@
           "kind": "sse",
           "chunks": [
             ": OPENROUTER PROCESSING",
-            "data: {\"type\":\"response.created\",\"response\":{\"id\":\"gen-1777419465-amBOf2Pg5Sxn4i0TsrtP\",\"object\":\"response\",\"created_at\":1777419465,\"model\":\"openai/gpt-4o-mini-2024-07-18\",\"status\":\"in_progress\",\"completed_at\":null,\"output\":[],\"error\":null,\"incomplete_details\":null,\"tools\":[{\"type\":\"function\",\"name\":\"lookup_weather\",\"description\":\"Look up the weather forecast for a city.\",\"strict\":null,\"parameters\":{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"additionalProperties\":false}}],\"tool_choice\":\"required\",\"parallel_tool_calls\":true,\"max_output_tokens\":24,\"temperature\":0,\"top_p\":1,\"presence_penalty\":0,\"frequency_penalty\":0,\"top_logprobs\":0,\"max_tool_calls\":1,\"metadata\":{},\"background\":false,\"previous_response_id\":null,\"service_tier\":\"auto\",\"truncation\":\"disabled\",\"store\":false,\"instructions\":null,\"text\":{\"format\":{\"type\":\"text\"}},\"reasoning\":null,\"safety_identifier\":null,\"prompt_cache_key\":null,\"usage\":null},\"sequence_number\":0}",
-            "data: {\"type\":\"response.in_progress\",\"response\":{\"id\":\"gen-1777419465-amBOf2Pg5Sxn4i0TsrtP\",\"object\":\"response\",\"created_at\":1777419465,\"model\":\"openai/gpt-4o-mini-2024-07-18\",\"status\":\"in_progress\",\"completed_at\":null,\"output\":[],\"error\":null,\"incomplete_details\":null,\"tools\":[{\"type\":\"function\",\"name\":\"lookup_weather\",\"description\":\"Look up the weather forecast for a city.\",\"strict\":null,\"parameters\":{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"additionalProperties\":false}}],\"tool_choice\":\"required\",\"parallel_tool_calls\":true,\"max_output_tokens\":24,\"temperature\":0,\"top_p\":1,\"presence_penalty\":0,\"frequency_penalty\":0,\"top_logprobs\":0,\"max_tool_calls\":1,\"metadata\":{},\"background\":false,\"previous_response_id\":null,\"service_tier\":\"auto\",\"truncation\":\"disabled\",\"store\":false,\"instructions\":null,\"text\":{\"format\":{\"type\":\"text\"}},\"reasoning\":null,\"safety_identifier\":null,\"prompt_cache_key\":null,\"usage\":null},\"sequence_number\":1}",
+            "data: {\"type\":\"response.created\",\"response\":{\"id\":\"gen-1777419465-amBOf2Pg5Sxn4i0TsrtP\",\"object\":\"response\",\"created_at\":1777419465,\"model\":\"google/gemini-2.5-flash-lite\",\"status\":\"in_progress\",\"completed_at\":null,\"output\":[],\"error\":null,\"incomplete_details\":null,\"tools\":[{\"type\":\"function\",\"name\":\"lookup_weather\",\"description\":\"Look up the weather forecast for a city.\",\"strict\":null,\"parameters\":{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"additionalProperties\":false}}],\"tool_choice\":\"required\",\"parallel_tool_calls\":true,\"max_output_tokens\":24,\"temperature\":0,\"top_p\":1,\"presence_penalty\":0,\"frequency_penalty\":0,\"top_logprobs\":0,\"max_tool_calls\":1,\"metadata\":{},\"background\":false,\"previous_response_id\":null,\"service_tier\":\"auto\",\"truncation\":\"disabled\",\"store\":false,\"instructions\":null,\"text\":{\"format\":{\"type\":\"text\"}},\"reasoning\":null,\"safety_identifier\":null,\"prompt_cache_key\":null,\"usage\":null},\"sequence_number\":0}",
+            "data: {\"type\":\"response.in_progress\",\"response\":{\"id\":\"gen-1777419465-amBOf2Pg5Sxn4i0TsrtP\",\"object\":\"response\",\"created_at\":1777419465,\"model\":\"google/gemini-2.5-flash-lite\",\"status\":\"in_progress\",\"completed_at\":null,\"output\":[],\"error\":null,\"incomplete_details\":null,\"tools\":[{\"type\":\"function\",\"name\":\"lookup_weather\",\"description\":\"Look up the weather forecast for a city.\",\"strict\":null,\"parameters\":{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"additionalProperties\":false}}],\"tool_choice\":\"required\",\"parallel_tool_calls\":true,\"max_output_tokens\":24,\"temperature\":0,\"top_p\":1,\"presence_penalty\":0,\"frequency_penalty\":0,\"top_logprobs\":0,\"max_tool_calls\":1,\"metadata\":{},\"background\":false,\"previous_response_id\":null,\"service_tier\":\"auto\",\"truncation\":\"disabled\",\"store\":false,\"instructions\":null,\"text\":{\"format\":{\"type\":\"text\"}},\"reasoning\":null,\"safety_identifier\":null,\"prompt_cache_key\":null,\"usage\":null},\"sequence_number\":1}",
             "data: {\"type\":\"response.output_item.added\",\"output_index\":0,\"item\":{\"id\":\"fc_tmp_anbsg4ua2lj\",\"type\":\"function_call\",\"status\":\"in_progress\",\"call_id\":\"call_Uq99l3Q3o2CZbCE09qr9wzEG\",\"name\":\"lookup_weather\",\"arguments\":\"\"},\"sequence_number\":2}",
             "data: {\"type\":\"response.function_call_arguments.delta\",\"output_index\":0,\"item_id\":\"fc_tmp_anbsg4ua2lj\",\"delta\":\"{\\\"\",\"sequence_number\":3}",
             "data: {\"type\":\"response.function_call_arguments.delta\",\"output_index\":0,\"item_id\":\"fc_tmp_anbsg4ua2lj\",\"delta\":\"city\",\"sequence_number\":4}",
@@ -1010,7 +1010,7 @@
             "data: {\"type\":\"response.function_call_arguments.delta\",\"output_index\":0,\"item_id\":\"fc_tmp_anbsg4ua2lj\",\"delta\":\"\\\"}\",\"sequence_number\":8}",
             "data: {\"type\":\"response.function_call_arguments.done\",\"output_index\":0,\"item_id\":\"fc_tmp_anbsg4ua2lj\",\"name\":\"lookup_weather\",\"arguments\":\"{\\\"city\\\":\\\"Vienna\\\"}\",\"sequence_number\":9}",
             "data: {\"type\":\"response.output_item.done\",\"output_index\":0,\"item\":{\"id\":\"fc_tmp_anbsg4ua2lj\",\"type\":\"function_call\",\"status\":\"completed\",\"call_id\":\"call_Uq99l3Q3o2CZbCE09qr9wzEG\",\"name\":\"lookup_weather\",\"arguments\":\"{\\\"city\\\":\\\"Vienna\\\"}\"},\"sequence_number\":10}",
-            "data: {\"type\":\"response.completed\",\"response\":{\"id\":\"gen-1777419465-amBOf2Pg5Sxn4i0TsrtP\",\"object\":\"response\",\"created_at\":1777419465,\"model\":\"openai/gpt-4o-mini-2024-07-18\",\"status\":\"completed\",\"completed_at\":1777419466,\"output\":[{\"id\":\"fc_tmp_anbsg4ua2lj\",\"type\":\"function_call\",\"status\":\"completed\",\"call_id\":\"call_Uq99l3Q3o2CZbCE09qr9wzEG\",\"name\":\"lookup_weather\",\"arguments\":\"{\\\"city\\\":\\\"Vienna\\\"}\"}],\"error\":null,\"incomplete_details\":null,\"tools\":[{\"type\":\"function\",\"name\":\"lookup_weather\",\"description\":\"Look up the weather forecast for a city.\",\"strict\":null,\"parameters\":{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"additionalProperties\":false}}],\"tool_choice\":\"required\",\"parallel_tool_calls\":true,\"max_output_tokens\":24,\"temperature\":0,\"top_p\":1,\"presence_penalty\":0,\"frequency_penalty\":0,\"top_logprobs\":0,\"max_tool_calls\":1,\"metadata\":{},\"background\":false,\"previous_response_id\":null,\"service_tier\":\"auto\",\"truncation\":\"disabled\",\"store\":false,\"instructions\":null,\"text\":{\"format\":{\"type\":\"text\"}},\"reasoning\":null,\"safety_identifier\":null,\"prompt_cache_key\":null,\"usage\":{\"input_tokens\":63,\"input_tokens_details\":{\"cached_tokens\":0},\"output_tokens\":15,\"output_tokens_details\":{\"reasoning_tokens\":0},\"total_tokens\":78,\"cost\":0.00001845,\"is_byok\":false,\"cost_details\":{\"upstream_inference_cost\":0.00001845,\"upstream_inference_input_cost\":0.00000945,\"upstream_inference_output_cost\":0.000009}}},\"sequence_number\":11}",
+            "data: {\"type\":\"response.completed\",\"response\":{\"id\":\"gen-1777419465-amBOf2Pg5Sxn4i0TsrtP\",\"object\":\"response\",\"created_at\":1777419465,\"model\":\"google/gemini-2.5-flash-lite\",\"status\":\"completed\",\"completed_at\":1777419466,\"output\":[{\"id\":\"fc_tmp_anbsg4ua2lj\",\"type\":\"function_call\",\"status\":\"completed\",\"call_id\":\"call_Uq99l3Q3o2CZbCE09qr9wzEG\",\"name\":\"lookup_weather\",\"arguments\":\"{\\\"city\\\":\\\"Vienna\\\"}\"}],\"error\":null,\"incomplete_details\":null,\"tools\":[{\"type\":\"function\",\"name\":\"lookup_weather\",\"description\":\"Look up the weather forecast for a city.\",\"strict\":null,\"parameters\":{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"additionalProperties\":false}}],\"tool_choice\":\"required\",\"parallel_tool_calls\":true,\"max_output_tokens\":24,\"temperature\":0,\"top_p\":1,\"presence_penalty\":0,\"frequency_penalty\":0,\"top_logprobs\":0,\"max_tool_calls\":1,\"metadata\":{},\"background\":false,\"previous_response_id\":null,\"service_tier\":\"auto\",\"truncation\":\"disabled\",\"store\":false,\"instructions\":null,\"text\":{\"format\":{\"type\":\"text\"}},\"reasoning\":null,\"safety_identifier\":null,\"prompt_cache_key\":null,\"usage\":{\"input_tokens\":63,\"input_tokens_details\":{\"cached_tokens\":0},\"output_tokens\":15,\"output_tokens_details\":{\"reasoning_tokens\":0},\"total_tokens\":78,\"cost\":0.00001845,\"is_byok\":false,\"cost_details\":{\"upstream_inference_cost\":0.00001845,\"upstream_inference_input_cost\":0.00000945,\"upstream_inference_output_cost\":0.000009}}},\"sequence_number\":11}",
             "data: [DONE]"
           ]
         }
@@ -1107,7 +1107,7 @@
             "max_output_tokens": 24,
             "max_tool_calls": 1,
             "metadata": {},
-            "model": "openai/gpt-4o-mini-2024-07-18",
+            "model": "google/gemini-2.5-flash-lite",
             "object": "response",
             "output": [
               {
@@ -1158,11 +1158,11 @@
             "top_p": 1,
             "truncation": "disabled",
             "usage": {
-              "cost": 0.00002295,
+              "cost": 2.295e-5,
               "cost_details": {
-                "upstream_inference_cost": 0.00002295,
-                "upstream_inference_input_cost": 0.00001395,
-                "upstream_inference_output_cost": 0.000009
+                "upstream_inference_cost": 2.295e-5,
+                "upstream_inference_input_cost": 1.395e-5,
+                "upstream_inference_output_cost": 9e-6
               },
               "input_tokens": 93,
               "input_tokens_details": {
@@ -1284,7 +1284,7 @@
             "max_output_tokens": 24,
             "max_tool_calls": 1,
             "metadata": {},
-            "model": "openai/gpt-4o-mini-2024-07-18",
+            "model": "google/gemini-2.5-flash-lite",
             "object": "response",
             "output": [
               {
@@ -1335,11 +1335,11 @@
             "top_p": 1,
             "truncation": "disabled",
             "usage": {
-              "cost": 0.00002745,
+              "cost": 2.745e-5,
               "cost_details": {
-                "upstream_inference_cost": 0.00002745,
-                "upstream_inference_input_cost": 0.00001845,
-                "upstream_inference_output_cost": 0.000009
+                "upstream_inference_cost": 2.745e-5,
+                "upstream_inference_input_cost": 1.845e-5,
+                "upstream_inference_output_cost": 9e-6
               },
               "input_tokens": 123,
               "input_tokens_details": {
@@ -1475,7 +1475,7 @@
             "max_output_tokens": 24,
             "max_tool_calls": 1,
             "metadata": {},
-            "model": "openai/gpt-4o-mini-2024-07-18",
+            "model": "google/gemini-2.5-flash-lite",
             "object": "response",
             "output": [
               {
@@ -1526,11 +1526,11 @@
             "top_p": 1,
             "truncation": "disabled",
             "usage": {
-              "cost": 0.00003195,
+              "cost": 3.195e-5,
               "cost_details": {
-                "upstream_inference_cost": 0.00003195,
-                "upstream_inference_input_cost": 0.00002295,
-                "upstream_inference_output_cost": 0.000009
+                "upstream_inference_cost": 3.195e-5,
+                "upstream_inference_input_cost": 2.295e-5,
+                "upstream_inference_output_cost": 9e-6
               },
               "input_tokens": 153,
               "input_tokens_details": {
@@ -1681,7 +1681,7 @@
             "max_output_tokens": 24,
             "max_tool_calls": 1,
             "metadata": {},
-            "model": "openai/gpt-4o-mini-2024-07-18",
+            "model": "google/gemini-2.5-flash-lite",
             "object": "response",
             "output": [
               {
@@ -1732,11 +1732,11 @@
             "top_p": 1,
             "truncation": "disabled",
             "usage": {
-              "cost": 0.00003645,
+              "cost": 3.645e-5,
               "cost_details": {
-                "upstream_inference_cost": 0.00003645,
-                "upstream_inference_input_cost": 0.00002745,
-                "upstream_inference_output_cost": 0.000009
+                "upstream_inference_cost": 3.645e-5,
+                "upstream_inference_input_cost": 2.745e-5,
+                "upstream_inference_output_cost": 9e-6
               },
               "input_tokens": 183,
               "input_tokens_details": {
@@ -1900,7 +1900,7 @@
             "max_output_tokens": 24,
             "max_tool_calls": 1,
             "metadata": {},
-            "model": "openai/gpt-4o-mini-2024-07-18",
+            "model": "google/gemini-2.5-flash-lite",
             "object": "response",
             "output": [
               {
@@ -1951,11 +1951,11 @@
             "top_p": 1,
             "truncation": "disabled",
             "usage": {
-              "cost": 0.00004095,
+              "cost": 4.095e-5,
               "cost_details": {
-                "upstream_inference_cost": 0.00004095,
-                "upstream_inference_input_cost": 0.00003195,
-                "upstream_inference_output_cost": 0.000009
+                "upstream_inference_cost": 4.095e-5,
+                "upstream_inference_input_cost": 3.195e-5,
+                "upstream_inference_output_cost": 9e-6
               },
               "input_tokens": 213,
               "input_tokens_details": {
