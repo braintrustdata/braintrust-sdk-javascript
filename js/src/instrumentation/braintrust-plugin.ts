@@ -32,15 +32,10 @@ export interface BraintrustPluginConfig {
     mistral?: boolean;
     googleADK?: boolean;
     cohere?: boolean;
-  };
-}
-
-type RuntimeBraintrustPluginConfig = BraintrustPluginConfig & {
-  integrations?: NonNullable<BraintrustPluginConfig["integrations"]> & {
     groq?: boolean;
     mastra?: boolean;
   };
-};
+}
 
 function getIntegrationConfig(
   integrations: NonNullable<BraintrustPluginConfig["integrations"]>,
@@ -66,7 +61,7 @@ function getIntegrationConfig(
  * Individual integrations can be disabled via configuration.
  */
 export class BraintrustPlugin extends BasePlugin {
-  private config: RuntimeBraintrustPluginConfig;
+  private config: BraintrustPluginConfig;
   private openaiPlugin: OpenAIPlugin | null = null;
   private anthropicPlugin: AnthropicPlugin | null = null;
   private aiSDKPlugin: AISDKPlugin | null = null;
@@ -85,13 +80,11 @@ export class BraintrustPlugin extends BasePlugin {
 
   constructor(config: BraintrustPluginConfig = {}) {
     super();
-    this.config = config as RuntimeBraintrustPluginConfig;
+    this.config = config;
   }
 
   protected onEnable(): void {
-    const integrations = (this.config.integrations || {}) as NonNullable<
-      RuntimeBraintrustPluginConfig["integrations"]
-    >;
+    const integrations = this.config.integrations || {};
 
     // Enable OpenAI integration (default: true)
     if (integrations.openai !== false) {

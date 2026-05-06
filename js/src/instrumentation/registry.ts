@@ -19,6 +19,7 @@ export interface InstrumentationConfig {
     vercel?: boolean;
     aisdk?: boolean;
     google?: boolean;
+    googleGenAI?: boolean;
     huggingface?: boolean;
     claudeAgentSDK?: boolean;
     cursor?: boolean;
@@ -26,25 +27,19 @@ export interface InstrumentationConfig {
     openrouter?: boolean;
     openrouterAgent?: boolean;
     mistral?: boolean;
+    googleADK?: boolean;
     cohere?: boolean;
-  };
-}
-
-type RuntimeInstrumentationConfig = InstrumentationConfig & {
-  integrations?: NonNullable<InstrumentationConfig["integrations"]> & {
     groq?: boolean;
     mastra?: boolean;
   };
-};
+}
 
-type RuntimeIntegrationName = keyof NonNullable<
-  RuntimeInstrumentationConfig["integrations"]
->;
-type RuntimeIntegrationMap = Partial<Record<RuntimeIntegrationName, boolean>>;
+type IntegrationName = keyof NonNullable<InstrumentationConfig["integrations"]>;
+type IntegrationMap = Partial<Record<IntegrationName, boolean>>;
 
 class PluginRegistry {
   private braintrustPlugin: BraintrustPlugin | null = null;
-  private config: RuntimeInstrumentationConfig = {};
+  private config: InstrumentationConfig = {};
   private enabled = false;
 
   /**
@@ -116,7 +111,7 @@ class PluginRegistry {
   /**
    * Get default configuration (all integrations enabled).
    */
-  private getDefaultConfig(): RuntimeIntegrationMap {
+  private getDefaultConfig(): IntegrationMap {
     return {
       openai: true,
       anthropic: true,
@@ -141,8 +136,8 @@ class PluginRegistry {
    * Read configuration from environment variables.
    * Supports: BRAINTRUST_DISABLE_INSTRUMENTATION=openai,anthropic,...
    */
-  private readEnvConfig(): RuntimeInstrumentationConfig {
-    const integrations: RuntimeIntegrationMap = {};
+  private readEnvConfig(): InstrumentationConfig {
+    const integrations: IntegrationMap = {};
 
     const disabledList = iso.getEnv("BRAINTRUST_DISABLE_INSTRUMENTATION");
     if (disabledList) {
@@ -160,7 +155,7 @@ class PluginRegistry {
   }
 }
 
-function normalizeIntegrationName(name: string): RuntimeIntegrationName {
+function normalizeIntegrationName(name: string): IntegrationName {
   switch (name) {
     case "cursor-sdk":
       return "cursorSDK";
