@@ -187,6 +187,7 @@ function normalizeGoogleOutput(event: CapturedLogEvent): Json {
   if (isRecord(usageMetadata)) {
     delete usageMetadata.cachedContentTokenCount;
     delete usageMetadata.cacheTokensDetails;
+    delete usageMetadata.serviceTier;
 
     const promptTokensDetails = usageMetadata.promptTokensDetails;
     if (Array.isArray(promptTokensDetails)) {

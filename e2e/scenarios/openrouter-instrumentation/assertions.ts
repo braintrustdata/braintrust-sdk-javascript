@@ -14,6 +14,7 @@ import {
   CHAT_MODEL,
   EMBEDDING_MODEL,
   RERANK_MODEL,
+  REASONING_MODEL,
   ROOT_NAME,
   SCENARIO_NAME,
 } from "./constants.mjs";
@@ -24,7 +25,10 @@ const EMBEDDING_MODEL_NAME =
   EMBEDDING_MODEL.split("/").at(-1) ?? EMBEDDING_MODEL;
 const RERANK_MODEL_NAME = RERANK_MODEL.split("/").at(-1) ?? RERANK_MODEL;
 const OPENROUTER_CALL_MODEL_PROVIDER = "google";
+const REASONING_MODEL_NAME =
+  REASONING_MODEL.split("/").at(-1) ?? REASONING_MODEL;
 const OPENROUTER_MODEL_PROVIDER = "openai";
+const OPENROUTER_REASONING_PROVIDER = "deepseek";
 const OPENROUTER_RERANK_PROVIDER = "cohere";
 
 type RunOpenRouterScenario = (harness: {
@@ -216,6 +220,37 @@ export function defineOpenRouterTraceAssertions(options: {
         expect(span?.row.metadata?.model).toBe(CHAT_MODEL_NAME);
         expect(span?.metrics?.time_to_first_token).toEqual(expect.any(Number));
         expect(span?.output).toBeDefined();
+      },
+    );
+
+    test(
+      "captures reasoning fields for a streamed reasoning chat completion",
+      testConfig,
+      () => {
+        const root = findLatestSpan(events, ROOT_NAME);
+        const operation = findLatestSpan(
+          events,
+          "openrouter-chat-reasoning-stream-operation",
+        );
+        const span = findOpenRouterSpan(events, operation?.span.id, [
+          "openrouter.chat.send",
+        ]);
+
+        expect(operation).toBeDefined();
+        expect(span).toBeDefined();
+        expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
+        expect(span?.row.metadata).toMatchObject({
+          provider: OPENROUTER_REASONING_PROVIDER,
+          reasoning: {
+            enabled: true,
+            exclude: false,
+          },
+        });
+        expect(span?.row.metadata?.model).toBe(REASONING_MODEL_NAME);
+        expect(span?.metrics?.time_to_first_token).toEqual(expect.any(Number));
+        expect(span?.metrics?.completion_reasoning_tokens).toEqual(
+          expect.any(Number),
+        );
       },
     );
 
