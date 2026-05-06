@@ -1,4 +1,4 @@
-// Auto-generated file (content hash 87cf242c359a07f8) -- do not modify
+// Auto-generated file (content hash 75ec0d2b66921cdd) -- do not modify
 
 import { z } from "zod/v3";
 
@@ -47,6 +47,7 @@ export const AISecret = z.object({
   id: z.string().uuid(),
   created: z.union([z.string(), z.null()]).optional(),
   updated_at: z.union([z.string(), z.null()]).optional(),
+  secret_updated_at: z.union([z.string(), z.null()]).optional(),
   org_id: z.string().uuid(),
   name: z.string(),
   type: z.union([z.string(), z.null()]).optional(),
@@ -271,6 +272,7 @@ export const TopicMapData = z.object({
   report_key: z.string().optional(),
   topic_names: z.record(z.string()).optional(),
   generation_settings: TopicMapGenerationSettings.optional(),
+  disable_reconciliation: z.boolean().optional(),
   distance_threshold: z.number().optional(),
 });
 export type TopicMapDataType = z.infer<typeof TopicMapData>;
@@ -666,10 +668,12 @@ export const EnvVar = z.object({
   object_id: z.string().uuid(),
   name: z.string(),
   created: z.union([z.string(), z.null()]).optional(),
+  secret_updated_at: z.union([z.string(), z.null()]).optional(),
   used: z.union([z.string(), z.null()]).optional(),
   metadata: z
     .union([z.object({}).partial().passthrough(), z.null()])
     .optional(),
+  preview_secret: z.union([z.string(), z.null()]).optional(),
   secret_type: z.union([z.string(), z.null()]).optional(),
   secret_category: z
     .enum(["env_var", "ai_provider", "sandbox_provider"])
@@ -743,6 +747,7 @@ export const SpanType = z.union([
     "preprocessor",
     "classifier",
     "review",
+    "replay",
   ]),
   z.null(),
 ]);

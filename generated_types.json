@@ -109,6 +109,11 @@
             "format": "date-time",
             "description": "Date of last AI secret update"
           },
+          "secret_updated_at": {
+            "type": ["string", "null"],
+            "format": "date-time",
+            "description": "Date of last update to the encrypted secret value itself"
+          },
           "org_id": {
             "type": "string",
             "format": "uuid",
@@ -1833,6 +1838,11 @@
             "format": "date-time",
             "description": "Date of environment variable creation"
           },
+          "secret_updated_at": {
+            "type": ["string", "null"],
+            "format": "date-time",
+            "description": "Date of last update to the encrypted secret value itself"
+          },
           "used": {
             "type": ["string", "null"],
             "format": "date-time",
@@ -1842,6 +1852,10 @@
             "type": ["object", "null"],
             "additionalProperties": {},
             "description": "Optional metadata associated with the environment variable when managed via the function secrets API"
+          },
+          "preview_secret": {
+            "type": ["string", "null"],
+            "description": "Redacted preview of the stored secret value"
           },
           "secret_type": {
             "type": ["string", "null"],
@@ -5823,7 +5837,8 @@
           "facet",
           "preprocessor",
           "classifier",
-          "review"
+          "review",
+          "replay"
         ],
         "description": "Type of the span, for display purposes only"
       },
@@ -6096,6 +6111,10 @@
           },
           "generation_settings": {
             "$ref": "#/components/schemas/TopicMapGenerationSettings"
+          },
+          "disable_reconciliation": {
+            "type": "boolean",
+            "description": "Whether new topic generation should ignore the previously saved report during reconciliation. Defaults to false when omitted."
           },
           "distance_threshold": {
             "type": "number",
