@@ -4,16 +4,20 @@ import type {
   MistralAgentsCompletionResponse,
   MistralAgentsCreateParams,
   MistralAgentsResult,
+  MistralChatClassificationCreateParams,
   MistralChatCompletionEvent,
   MistralChatCompletionResponse,
   MistralChatCreateParams,
   MistralChatResult,
+  MistralClassificationCreateParams,
+  MistralClassificationResponse,
   MistralEmbeddingCreateParams,
   MistralEmbeddingResponse,
   MistralFimCompletionEvent,
   MistralFimCompletionResponse,
   MistralFimCreateParams,
   MistralFimResult,
+  MistralModerationResponse,
 } from "../../vendor-sdk-types/mistral";
 
 export const mistralChannels = defineChannels("@mistralai/mistralai", {
@@ -40,6 +44,38 @@ export const mistralChannels = defineChannels("@mistralai/mistralai", {
     MistralEmbeddingResponse
   >({
     channelName: "embeddings.create",
+    kind: "async",
+  }),
+
+  classifiersModerate: channel<
+    [MistralClassificationCreateParams],
+    MistralModerationResponse
+  >({
+    channelName: "classifiers.moderate",
+    kind: "async",
+  }),
+
+  classifiersModerateChat: channel<
+    [MistralChatClassificationCreateParams],
+    MistralModerationResponse
+  >({
+    channelName: "classifiers.moderateChat",
+    kind: "async",
+  }),
+
+  classifiersClassify: channel<
+    [MistralClassificationCreateParams],
+    MistralClassificationResponse
+  >({
+    channelName: "classifiers.classify",
+    kind: "async",
+  }),
+
+  classifiersClassifyChat: channel<
+    [MistralChatClassificationCreateParams],
+    MistralClassificationResponse
+  >({
+    channelName: "classifiers.classifyChat",
     kind: "async",
   }),
 

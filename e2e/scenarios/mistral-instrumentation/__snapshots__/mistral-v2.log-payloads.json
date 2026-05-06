@@ -512,5 +512,65 @@
       "type": "embedding"
     },
     "span_id": "<span:25>"
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "input": null,
+    "metadata": {
+      "operation": "classifiers-moderate"
+    },
+    "metric_keys": [],
+    "output": null,
+    "span_id": "<span:26>"
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "input": "<string>",
+    "metadata": {
+      "model": "mistral-moderation-2603",
+      "provider": "mistral"
+    },
+    "metric_keys": [],
+    "output": {
+      "choice_count": 1,
+      "finish_reason": null,
+      "type": "array"
+    },
+    "span_id": "<span:27>"
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "input": null,
+    "metadata": {
+      "operation": "classifiers-moderate-chat"
+    },
+    "metric_keys": [],
+    "output": null,
+    "span_id": "<span:28>"
+  },
+  {
+    "has_input": true,
+    "has_output": true,
+    "input": {
+      "item_count": 1,
+      "roles": [
+        "user"
+      ],
+      "type": "messages"
+    },
+    "metadata": {
+      "model": "mistral-moderation-2603",
+      "provider": "mistral"
+    },
+    "metric_keys": [],
+    "output": {
+      "choice_count": 1,
+      "finish_reason": null,
+      "type": "array"
+    },
+    "span_id": "<span:29>"
   }
 ]
