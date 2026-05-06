@@ -35,47 +35,49 @@ const googleADKScenarios = await Promise.all(
   })),
 );
 
-for (const scenario of googleADKScenarios) {
-  const tags = cassetteTagsFor(import.meta.url, scenario.snapshotName);
+describe.concurrent("variants", () => {
+  for (const scenario of googleADKScenarios) {
+    const tags = cassetteTagsFor(import.meta.url, scenario.snapshotName);
 
-  describe(`google adk sdk ${scenario.version}`, { tags }, () => {
-    defineGoogleADKInstrumentationAssertions({
-      name: "wrapped instrumentation",
-      runScenario: async ({ runScenarioDir }) => {
-        await runScenarioDir({
-          entry: scenario.wrapperEntry,
-          runContext: {
-            variantKey: scenario.snapshotName,
-            originalScenarioDir,
-          },
-          scenarioDir,
-          timeoutMs: TIMEOUT_MS,
-        });
-      },
-      expectLLMSpan: false,
-      snapshotName: scenario.snapshotName,
-      testFileUrl: import.meta.url,
-      timeoutMs: TIMEOUT_MS,
-    });
+    describe.sequential(`google adk sdk ${scenario.version}`, { tags }, () => {
+      defineGoogleADKInstrumentationAssertions({
+        name: "wrapped instrumentation",
+        runScenario: async ({ runScenarioDir }) => {
+          await runScenarioDir({
+            entry: scenario.wrapperEntry,
+            runContext: {
+              variantKey: scenario.snapshotName,
+              originalScenarioDir,
+            },
+            scenarioDir,
+            timeoutMs: TIMEOUT_MS,
+          });
+        },
+        expectLLMSpan: false,
+        snapshotName: scenario.snapshotName,
+        testFileUrl: import.meta.url,
+        timeoutMs: TIMEOUT_MS,
+      });
 
-    defineGoogleADKInstrumentationAssertions({
-      name: "auto-hook instrumentation",
-      runScenario: async ({ runNodeScenarioDir }) => {
-        await runNodeScenarioDir({
-          entry: scenario.autoEntry,
-          nodeArgs: ["--import", "braintrust/hook.mjs"],
-          runContext: {
-            variantKey: scenario.snapshotName,
-            originalScenarioDir,
-          },
-          scenarioDir,
-          timeoutMs: TIMEOUT_MS,
-        });
-      },
-      expectLLMSpan: true,
-      snapshotName: scenario.snapshotName,
-      testFileUrl: import.meta.url,
-      timeoutMs: TIMEOUT_MS,
+      defineGoogleADKInstrumentationAssertions({
+        name: "auto-hook instrumentation",
+        runScenario: async ({ runNodeScenarioDir }) => {
+          await runNodeScenarioDir({
+            entry: scenario.autoEntry,
+            nodeArgs: ["--import", "braintrust/hook.mjs"],
+            runContext: {
+              variantKey: scenario.snapshotName,
+              originalScenarioDir,
+            },
+            scenarioDir,
+            timeoutMs: TIMEOUT_MS,
+          });
+        },
+        expectLLMSpan: true,
+        snapshotName: scenario.snapshotName,
+        testFileUrl: import.meta.url,
+        timeoutMs: TIMEOUT_MS,
+      });
     });
-  });
-}
+  }
+});

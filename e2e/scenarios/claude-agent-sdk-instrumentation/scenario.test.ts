@@ -53,7 +53,7 @@ const claudeAgentSDKScenarios = await Promise.all(
   }),
 );
 
-describe("wrapped instrumentation", () => {
+describe.concurrent("wrapped instrumentation", () => {
   for (const scenario of claudeAgentSDKScenarios) {
     const tags = cassetteTagsFor(import.meta.url, scenario.snapshotName);
     describe(`claude agent sdk ${scenario.version}`, { tags }, () => {
@@ -80,7 +80,7 @@ describe("wrapped instrumentation", () => {
   }
 });
 
-describe("auto-hook instrumentation", () => {
+describe.concurrent("auto-hook instrumentation", () => {
   for (const scenario of claudeAgentSDKScenarios) {
     const tags = cassetteTagsFor(import.meta.url, scenario.snapshotName);
     describe(`claude agent sdk ${scenario.version}`, { tags }, () => {
