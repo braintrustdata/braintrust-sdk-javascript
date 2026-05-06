@@ -29,7 +29,6 @@ export interface BraintrustPluginConfig {
     claudeAgentSDK?: boolean;
     cursor?: boolean;
     cursorSDK?: boolean;
-    openAIAgents?: boolean;
     openrouter?: boolean;
     openrouterAgent?: boolean;
     mistral?: boolean;
