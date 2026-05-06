@@ -47,7 +47,7 @@ const claudeAgentSDKScenarios = await Promise.all(
 
 describe.concurrent("wrapped instrumentation", () => {
   for (const scenario of claudeAgentSDKScenarios) {
-    describe(`claude agent sdk ${scenario.version}`, () => {
+    describe.sequential(`claude agent sdk ${scenario.version}`, () => {
       defineClaudeAgentSDKInstrumentationAssertions({
         assertLocalToolHandlerParenting: true,
         expectTaskLifecycleDetails: scenario.expectTaskLifecycleDetails,
@@ -73,7 +73,7 @@ describe.concurrent("wrapped instrumentation", () => {
 
 describe.concurrent("auto-hook instrumentation", () => {
   for (const scenario of claudeAgentSDKScenarios) {
-    describe(`claude agent sdk ${scenario.version}`, () => {
+    describe.sequential(`claude agent sdk ${scenario.version}`, () => {
       defineClaudeAgentSDKInstrumentationAssertions({
         assertLocalToolHandlerParenting: true,
         expectTaskLifecycleDetails: scenario.expectTaskLifecycleDetails,

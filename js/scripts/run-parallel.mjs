@@ -13,17 +13,16 @@ if (!scripts.length) {
   process.exit(1);
 }
 
-const pnpm = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
 const pkgDir = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 const results = await Promise.allSettled(
   scripts.map(
     (script) =>
       new Promise((resolve, reject) => {
-        const child = spawn(pnpm, ["run", script], {
+        const child = spawn("pnpm", ["run", script], {
           cwd: pkgDir,
           stdio: "inherit",
-          shell: false,
+          shell: true,
         });
         child.on("error", reject);
         child.on("close", (code) => {
