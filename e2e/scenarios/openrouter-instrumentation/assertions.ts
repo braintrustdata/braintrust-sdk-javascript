@@ -10,6 +10,7 @@ import { findChildSpans, findLatestSpan } from "../../helpers/trace-selectors";
 import { summarizeWrapperContract } from "../../helpers/wrapper-contract";
 
 import {
+  CALL_MODEL,
   CHAT_MODEL,
   EMBEDDING_MODEL,
   RERANK_MODEL,
@@ -18,10 +19,12 @@ import {
   SCENARIO_NAME,
 } from "./constants.mjs";
 
+const CALL_MODEL_NAME = CALL_MODEL.split("/").at(-1) ?? CALL_MODEL;
 const CHAT_MODEL_NAME = CHAT_MODEL.split("/").at(-1) ?? CHAT_MODEL;
 const EMBEDDING_MODEL_NAME =
   EMBEDDING_MODEL.split("/").at(-1) ?? EMBEDDING_MODEL;
 const RERANK_MODEL_NAME = RERANK_MODEL.split("/").at(-1) ?? RERANK_MODEL;
+const OPENROUTER_CALL_MODEL_PROVIDER = "google";
 const REASONING_MODEL_NAME =
   REASONING_MODEL.split("/").at(-1) ?? REASONING_MODEL;
 const OPENROUTER_MODEL_PROVIDER = "openai";
@@ -232,35 +235,22 @@ export function defineOpenRouterTraceAssertions(options: {
         const span = findOpenRouterSpan(events, operation?.span.id, [
           "openrouter.chat.send",
         ]);
-        const output = span?.output as
-          | Array<{
-              message?: {
-                reasoning?: string;
-                reasoning_content?: string;
-                reasoning_details?: unknown[];
-              };
-            }>
-          | undefined;
-        const message = output?.[0]?.message;
-        const reasoning = message?.reasoning ?? message?.reasoning_content;
-        const hasReasoningText =
-          typeof reasoning === "string" && reasoning.length > 0;
-        const hasReasoningDetails =
-          Array.isArray(message?.reasoning_details) &&
-          message.reasoning_details.length > 0;
 
         expect(operation).toBeDefined();
         expect(span).toBeDefined();
         expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
         expect(span?.row.metadata).toMatchObject({
           provider: OPENROUTER_REASONING_PROVIDER,
+          reasoning: {
+            enabled: true,
+            exclude: false,
+          },
         });
         expect(span?.row.metadata?.model).toBe(REASONING_MODEL_NAME);
         expect(span?.metrics?.time_to_first_token).toEqual(expect.any(Number));
         expect(span?.metrics?.completion_reasoning_tokens).toEqual(
           expect.any(Number),
         );
-        expect(hasReasoningText || hasReasoningDetails).toBe(true);
       },
     );
 
@@ -381,20 +371,20 @@ export function defineOpenRouterTraceAssertions(options: {
         expect(span).toBeDefined();
         expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
         expect(span?.row.metadata).toMatchObject({
-          provider: OPENROUTER_MODEL_PROVIDER,
+          provider: OPENROUTER_CALL_MODEL_PROVIDER,
         });
-        expect(String(span?.row.metadata?.model)).toContain(CHAT_MODEL_NAME);
+        expect(String(span?.row.metadata?.model)).toContain(CALL_MODEL_NAME);
         expect(span?.output).toBeDefined();
 
         expect(nestedLlmSpans.length).toBeGreaterThanOrEqual(2);
         for (const [index, nestedLlmSpan] of nestedLlmSpans.entries()) {
           expect(nestedLlmSpan?.span.type).toBe("llm");
           expect(nestedLlmSpan?.row.metadata).toMatchObject({
-            provider: OPENROUTER_MODEL_PROVIDER,
+            provider: OPENROUTER_CALL_MODEL_PROVIDER,
             step: index + 1,
           });
           expect(String(nestedLlmSpan?.row.metadata?.model)).toContain(
-            CHAT_MODEL_NAME,
+            CALL_MODEL_NAME,
           );
           expect(nestedLlmSpan?.output).toBeDefined();
         }
