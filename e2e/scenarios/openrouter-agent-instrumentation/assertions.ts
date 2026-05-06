@@ -5,7 +5,7 @@ import { findChildSpans, findLatestSpan } from "../../helpers/trace-selectors";
 import { CHAT_MODEL, ROOT_NAME, SCENARIO_NAME } from "./constants.mjs";
 
 const CHAT_MODEL_NAME = CHAT_MODEL.split("/").at(-1) ?? CHAT_MODEL;
-const OPENROUTER_MODEL_PROVIDER = "openai";
+const OPENROUTER_MODEL_PROVIDER = "google";
 
 type RunOpenRouterAgentScenario = (harness: {
   runNodeScenarioDir: (options: {

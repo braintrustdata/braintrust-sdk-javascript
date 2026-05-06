@@ -10,6 +10,7 @@ import { findChildSpans, findLatestSpan } from "../../helpers/trace-selectors";
 import { summarizeWrapperContract } from "../../helpers/wrapper-contract";
 
 import {
+  CALL_MODEL,
   CHAT_MODEL,
   EMBEDDING_MODEL,
   RERANK_MODEL,
@@ -17,10 +18,12 @@ import {
   SCENARIO_NAME,
 } from "./constants.mjs";
 
+const CALL_MODEL_NAME = CALL_MODEL.split("/").at(-1) ?? CALL_MODEL;
 const CHAT_MODEL_NAME = CHAT_MODEL.split("/").at(-1) ?? CHAT_MODEL;
 const EMBEDDING_MODEL_NAME =
   EMBEDDING_MODEL.split("/").at(-1) ?? EMBEDDING_MODEL;
 const RERANK_MODEL_NAME = RERANK_MODEL.split("/").at(-1) ?? RERANK_MODEL;
+const OPENROUTER_CALL_MODEL_PROVIDER = "google";
 const OPENROUTER_MODEL_PROVIDER = "openai";
 const OPENROUTER_RERANK_PROVIDER = "cohere";
 
@@ -333,20 +336,20 @@ export function defineOpenRouterTraceAssertions(options: {
         expect(span).toBeDefined();
         expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
         expect(span?.row.metadata).toMatchObject({
-          provider: OPENROUTER_MODEL_PROVIDER,
+          provider: OPENROUTER_CALL_MODEL_PROVIDER,
         });
-        expect(String(span?.row.metadata?.model)).toContain(CHAT_MODEL_NAME);
+        expect(String(span?.row.metadata?.model)).toContain(CALL_MODEL_NAME);
         expect(span?.output).toBeDefined();
 
         expect(nestedLlmSpans.length).toBeGreaterThanOrEqual(2);
         for (const [index, nestedLlmSpan] of nestedLlmSpans.entries()) {
           expect(nestedLlmSpan?.span.type).toBe("llm");
           expect(nestedLlmSpan?.row.metadata).toMatchObject({
-            provider: OPENROUTER_MODEL_PROVIDER,
+            provider: OPENROUTER_CALL_MODEL_PROVIDER,
             step: index + 1,
           });
           expect(String(nestedLlmSpan?.row.metadata?.model)).toContain(
-            CHAT_MODEL_NAME,
+            CALL_MODEL_NAME,
           );
           expect(nestedLlmSpan?.output).toBeDefined();
         }
