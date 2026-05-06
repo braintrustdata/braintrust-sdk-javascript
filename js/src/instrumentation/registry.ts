@@ -31,6 +31,7 @@ export interface InstrumentationConfig {
     cohere?: boolean;
     groq?: boolean;
     genkit?: boolean;
+    gitHubCopilot?: boolean;
   };
 }
 
@@ -127,6 +128,7 @@ class PluginRegistry {
       cohere: true,
       groq: true,
       genkit: true,
+      gitHubCopilot: true,
     };
   }
 
@@ -147,6 +149,12 @@ class PluginRegistry {
       for (const sdk of disabled) {
         if (sdk === "cursor-sdk") {
           integrations.cursorSDK = false;
+        } else if (
+          sdk === "githubcopilot" ||
+          sdk === "github-copilot" ||
+          sdk === "copilot-sdk"
+        ) {
+          integrations.gitHubCopilot = false;
         } else {
           integrations[sdk] = false;
         }

@@ -4,7 +4,12 @@ import {
   runOperation,
   runTracedScenario,
 } from "../../helpers/provider-runtime.mjs";
-import { CHAT_MODEL, ROOT_NAME, SCENARIO_NAME } from "./constants.mjs";
+import {
+  CHAT_MODEL,
+  REASONING_MODEL,
+  ROOT_NAME,
+  SCENARIO_NAME,
+} from "./constants.mjs";
 
 export const GROQ_SCENARIO_TIMEOUT_MS = 120_000;
 
@@ -65,6 +70,28 @@ export async function runGroqInstrumentationScenario(options) {
         });
         await collectAsync(stream);
       });
+
+      await runOperation(
+        "groq-reasoning-stream-operation",
+        "reasoning-stream",
+        async () => {
+          const stream = await client.chat.completions.create({
+            max_completion_tokens: 512,
+            messages: [
+              {
+                role: "user",
+                content:
+                  "Solve this step by step: Elena has 3 boxes with 4 marbles each, gives away 5 marbles, then doubles what remains. Reply with just the final number.",
+              },
+            ],
+            model: REASONING_MODEL,
+            reasoning_format: "parsed",
+            stream: true,
+            temperature: 0.6,
+          });
+          await collectAsync(stream);
+        },
+      );
 
       await runOperation("groq-tool-operation", "tool", async () => {
         await client.chat.completions.create({

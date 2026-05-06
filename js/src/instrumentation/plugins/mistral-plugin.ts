@@ -73,6 +73,50 @@ export class MistralPlugin extends BasePlugin {
     );
 
     this.unsubscribers.push(
+      traceAsyncChannel(mistralChannels.classifiersModerate, {
+        name: "mistral.classifiers.moderate",
+        type: SpanTypeAttribute.LLM,
+        extractInput: extractClassifierInputWithMetadata,
+        extractOutput: extractClassifierOutput,
+        extractMetadata: (result) => extractMistralResponseMetadata(result),
+        extractMetrics: (result) => parseMistralMetricsFromUsage(result?.usage),
+      }),
+    );
+
+    this.unsubscribers.push(
+      traceAsyncChannel(mistralChannels.classifiersModerateChat, {
+        name: "mistral.classifiers.moderateChat",
+        type: SpanTypeAttribute.LLM,
+        extractInput: extractClassifierInputWithMetadata,
+        extractOutput: extractClassifierOutput,
+        extractMetadata: (result) => extractMistralResponseMetadata(result),
+        extractMetrics: (result) => parseMistralMetricsFromUsage(result?.usage),
+      }),
+    );
+
+    this.unsubscribers.push(
+      traceAsyncChannel(mistralChannels.classifiersClassify, {
+        name: "mistral.classifiers.classify",
+        type: SpanTypeAttribute.LLM,
+        extractInput: extractClassifierInputWithMetadata,
+        extractOutput: extractClassifierOutput,
+        extractMetadata: (result) => extractMistralResponseMetadata(result),
+        extractMetrics: (result) => parseMistralMetricsFromUsage(result?.usage),
+      }),
+    );
+
+    this.unsubscribers.push(
+      traceAsyncChannel(mistralChannels.classifiersClassifyChat, {
+        name: "mistral.classifiers.classifyChat",
+        type: SpanTypeAttribute.LLM,
+        extractInput: extractClassifierInputWithMetadata,
+        extractOutput: extractClassifierOutput,
+        extractMetadata: (result) => extractMistralResponseMetadata(result),
+        extractMetrics: (result) => parseMistralMetricsFromUsage(result?.usage),
+      }),
+    );
+
+    this.unsubscribers.push(
       traceStreamingChannel(mistralChannels.fimComplete, {
         name: "mistral.fim.complete",
         type: SpanTypeAttribute.LLM,
@@ -301,6 +345,21 @@ function extractEmbeddingInputWithMetadata(args: unknown[] | unknown): {
   };
 }
 
+function extractClassifierInputWithMetadata(args: unknown[] | unknown): {
+  input: unknown;
+  metadata: Record<string, unknown>;
+} {
+  const params = getMistralRequestArg(args);
+  const { input, inputs, ...rawMetadata } = params || {};
+
+  return {
+    input: processInputAttachments(inputs ?? input),
+    metadata: addMistralProviderMetadata(
+      extractMistralRequestMetadata(rawMetadata),
+    ),
+  };
+}
+
 function extractPromptInputWithMetadata(args: unknown[] | unknown): {
   input: unknown;
   metadata: Record<string, unknown>;
@@ -345,6 +404,10 @@ function extractMistralMetrics(
 
 function extractMistralStreamOutput(result: unknown): unknown {
   return isObject(result) ? result.choices : undefined;
+}
+
+function extractClassifierOutput(result: unknown): unknown {
+  return isObject(result) ? result.results : undefined;
 }
 
 function extractMistralStreamingMetrics(

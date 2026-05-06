@@ -1,18 +1,15 @@
 import { wrapCohere } from "braintrust";
-import {
-  CohereClient as CohereClientV7,
-  CohereClientV2 as CohereClientV7V2,
-} from "cohere-sdk-v7";
 import { runMain } from "../../helpers/scenario-runtime";
 import { runWrappedCohereInstrumentation } from "./scenario.impl.mjs";
 
-runMain(async () =>
-  runWrappedCohereInstrumentation(CohereClientV7, {
+runMain(async () => {
+  const cohere = await import(
+    process.env.COHERE_PACKAGE_NAME ?? "cohere-sdk-v7"
+  );
+
+  await runWrappedCohereInstrumentation(cohere.CohereClient, {
     apiVersion: "v7",
     decorateClient: wrapCohere,
-    ThinkingCohereClient:
-      process.env.COHERE_SUPPORTS_THINKING === "1"
-        ? CohereClientV7V2
-        : undefined,
-  }),
-);
+    useV2Namespace: true,
+  });
+});

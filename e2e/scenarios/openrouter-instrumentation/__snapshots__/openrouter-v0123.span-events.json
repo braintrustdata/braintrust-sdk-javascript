@@ -279,8 +279,8 @@
     "has_input": true,
     "has_output": true,
     "metadata": {
-      "model": "gpt-4o-mini-2024-07-18",
-      "provider": "openai"
+      "model": "gemini-2.5-flash-lite",
+      "provider": "google"
     },
     "metric_keys": [
       "completion_reasoning_tokens",

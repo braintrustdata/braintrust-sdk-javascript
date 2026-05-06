@@ -187,6 +187,7 @@ function normalizeGoogleOutput(event: CapturedLogEvent): Json {
   if (isRecord(usageMetadata)) {
     delete usageMetadata.cachedContentTokenCount;
     delete usageMetadata.cacheTokensDetails;
+    delete usageMetadata.serviceTier;
 
     const promptTokensDetails = usageMetadata.promptTokensDetails;
     if (Array.isArray(promptTokensDetails)) {
@@ -280,6 +281,11 @@ function summarizeGooglePayload(event: CapturedLogEvent): Json {
 function buildRelevantEvents(events: CapturedLogEvent[]): CapturedLogEvent[] {
   const generateOperation = findLatestSpan(events, "google-generate-operation");
   const embedOperation = findLatestSpan(events, "google-embed-operation");
+  const chatOperation = findLatestSpan(events, "google-chat-operation");
+  const chatStreamOperation = findLatestSpan(
+    events,
+    "google-chat-stream-operation",
+  );
   const attachmentOperation = findLatestSpan(
     events,
     "google-attachment-operation",
@@ -302,6 +308,16 @@ function buildRelevantEvents(events: CapturedLogEvent[]): CapturedLogEvent[] {
     findGoogleSpan(events, embedOperation?.span.id, [
       "embed_content",
       "google-genai.embedContent",
+    ]),
+    chatOperation,
+    findGoogleSpan(events, chatOperation?.span.id, [
+      "generate_content",
+      "google-genai.generateContent",
+    ]),
+    chatStreamOperation,
+    findGoogleSpan(events, chatStreamOperation?.span.id, [
+      "generate_content_stream",
+      "google-genai.generateContentStream",
     ]),
     attachmentOperation,
     findGoogleSpan(events, attachmentOperation?.span.id, [
@@ -424,6 +440,48 @@ export function defineGoogleGenAIInstrumentationAssertions(options: {
         duration: expect.any(Number),
         end: expect.any(Number),
         start: expect.any(Number),
+      });
+    });
+
+    test("captures trace for chat.sendMessage()", testConfig, () => {
+      const root = findLatestSpan(events, ROOT_NAME);
+      const operation = findLatestSpan(events, "google-chat-operation");
+      const span = findGoogleSpan(events, operation?.span.id, [
+        "generate_content",
+        "google-genai.generateContent",
+      ]);
+
+      expect(operation).toBeDefined();
+      expect(span).toBeDefined();
+      expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
+      expect(span?.row.metadata).toMatchObject({
+        model: GOOGLE_MODEL,
+      });
+      expect(span?.metrics).toMatchObject({
+        duration: expect.any(Number),
+        end: expect.any(Number),
+        start: expect.any(Number),
+      });
+    });
+
+    test("captures trace for chat.sendMessageStream()", testConfig, () => {
+      const root = findLatestSpan(events, ROOT_NAME);
+      const operation = findLatestSpan(events, "google-chat-stream-operation");
+      const span = findGoogleSpan(events, operation?.span.id, [
+        "generate_content_stream",
+        "google-genai.generateContentStream",
+      ]);
+
+      expect(operation).toBeDefined();
+      expect(span).toBeDefined();
+      expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
+      expect(span?.row.metadata).toMatchObject({
+        model: GOOGLE_MODEL,
+      });
+      expect(span?.metrics).toMatchObject({
+        time_to_first_token: expect.any(Number),
+        prompt_tokens: expect.any(Number),
+        completion_tokens: expect.any(Number),
       });
     });
 

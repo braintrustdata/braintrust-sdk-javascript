@@ -40,6 +40,12 @@ for (const scenario of mistralScenarios) {
       ...(scenario.supportsThinkingStream === false
         ? { supportsThinkingStream: false }
         : {}),
+      ...(scenario.supportsClassifiers === false
+        ? { supportsClassifiers: false }
+        : {}),
+      ...(scenario.supportsClassify === false
+        ? { supportsClassify: false }
+        : {}),
       testFileUrl: import.meta.url,
       timeoutMs: MISTRAL_SCENARIO_TIMEOUT_MS,
     });
@@ -58,6 +64,12 @@ for (const scenario of mistralScenarios) {
       snapshotName: scenario.snapshotName,
       ...(scenario.supportsThinkingStream === false
         ? { supportsThinkingStream: false }
+        : {}),
+      ...(scenario.supportsClassifiers === false
+        ? { supportsClassifiers: false }
+        : {}),
+      ...(scenario.supportsClassify === false
+        ? { supportsClassify: false }
         : {}),
       testFileUrl: import.meta.url,
       timeoutMs: MISTRAL_SCENARIO_TIMEOUT_MS,

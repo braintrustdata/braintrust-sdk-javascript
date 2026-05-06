@@ -335,6 +335,71 @@ describe("OpenRouter Agent Plugin", () => {
         metrics: {},
       });
     });
+
+    it("should aggregate reasoning fields from streaming deltas", () => {
+      expect(
+        aggregateOpenRouterChatChunks([
+          {
+            choices: [
+              {
+                delta: {
+                  role: "assistant",
+                  reasoning: "First, ",
+                  reasoning_details: [
+                    {
+                      type: "reasoning.text",
+                      text: "First, ",
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+          {
+            choices: [
+              {
+                delta: {
+                  reasoning_content: "check the answer.",
+                  content: "OK",
+                  reasoning_details: [
+                    {
+                      type: "reasoning.summary",
+                      summary: "Checked the answer.",
+                    },
+                  ],
+                },
+                finish_reason: "stop",
+              },
+            ],
+          },
+        ]),
+      ).toEqual({
+        output: [
+          {
+            index: 0,
+            message: {
+              role: "assistant",
+              content: "OK",
+              reasoning: "First, check the answer.",
+              reasoning_content: "check the answer.",
+              reasoning_details: [
+                {
+                  type: "reasoning.text",
+                  text: "First, ",
+                },
+                {
+                  type: "reasoning.summary",
+                  summary: "Checked the answer.",
+                },
+              ],
+            },
+            logprobs: null,
+            finish_reason: "stop",
+          },
+        ],
+        metrics: {},
+      });
+    });
   });
 
   describe("callModel tool patching", () => {

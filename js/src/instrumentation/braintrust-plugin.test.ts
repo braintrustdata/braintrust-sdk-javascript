@@ -11,6 +11,7 @@ import { OpenRouterPlugin } from "./plugins/openrouter-plugin";
 import { MistralPlugin } from "./plugins/mistral-plugin";
 import { CoherePlugin } from "./plugins/cohere-plugin";
 import { GroqPlugin } from "./plugins/groq-plugin";
+import { GitHubCopilotPlugin } from "./plugins/github-copilot-plugin";
 
 function createPluginClassMock() {
   return vi.fn(function MockPlugin(this: {
@@ -71,6 +72,10 @@ vi.mock("./plugins/cohere-plugin", () => ({
 
 vi.mock("./plugins/groq-plugin", () => ({
   GroqPlugin: createPluginClassMock(),
+}));
+
+vi.mock("./plugins/github-copilot-plugin", () => ({
+  GitHubCopilotPlugin: createPluginClassMock(),
 }));
 
 describe("BraintrustPlugin", () => {
@@ -181,6 +186,15 @@ describe("BraintrustPlugin", () => {
       expect(mockInstance.enable).toHaveBeenCalledTimes(1);
     });
 
+    it("should create and enable GitHubCopilot plugin by default", () => {
+      const plugin = new BraintrustPlugin();
+      plugin.enable();
+
+      expect(GitHubCopilotPlugin).toHaveBeenCalledTimes(1);
+      const mockInstance = vi.mocked(GitHubCopilotPlugin).mock.results[0].value;
+      expect(mockInstance.enable).toHaveBeenCalledTimes(1);
+    });
+
     it("should create all plugins when enabled with no config", () => {
       const plugin = new BraintrustPlugin();
       plugin.enable();
@@ -196,6 +210,7 @@ describe("BraintrustPlugin", () => {
       expect(MistralPlugin).toHaveBeenCalledTimes(1);
       expect(CoherePlugin).toHaveBeenCalledTimes(1);
       expect(GroqPlugin).toHaveBeenCalledTimes(1);
+      expect(GitHubCopilotPlugin).toHaveBeenCalledTimes(1);
     });
 
     it("should create all plugins when enabled with empty config", () => {
@@ -213,6 +228,7 @@ describe("BraintrustPlugin", () => {
       expect(MistralPlugin).toHaveBeenCalledTimes(1);
       expect(CoherePlugin).toHaveBeenCalledTimes(1);
       expect(GroqPlugin).toHaveBeenCalledTimes(1);
+      expect(GitHubCopilotPlugin).toHaveBeenCalledTimes(1);
     });
 
     it("should create all plugins when enabled with empty integrations config", () => {
@@ -403,6 +419,17 @@ describe("BraintrustPlugin", () => {
       expect(MistralPlugin).toHaveBeenCalledTimes(1);
     });
 
+    it("should not create GitHubCopilot plugin when gitHubCopilot: false", () => {
+      const plugin = new BraintrustPlugin({
+        integrations: { gitHubCopilot: false },
+      });
+      plugin.enable();
+
+      expect(GitHubCopilotPlugin).not.toHaveBeenCalled();
+      expect(OpenAIPlugin).toHaveBeenCalledTimes(1);
+      expect(GroqPlugin).toHaveBeenCalledTimes(1);
+    });
+
     it("should not create OpenRouter Agent plugin when openrouterAgent: false", () => {
       const plugin = new BraintrustPlugin({
         integrations: { openrouterAgent: false },
@@ -427,6 +454,7 @@ describe("BraintrustPlugin", () => {
           mistral: false,
           cohere: false,
           groq: false,
+          gitHubCopilot: false,
         },
       });
       plugin.enable();
@@ -442,6 +470,7 @@ describe("BraintrustPlugin", () => {
       expect(MistralPlugin).not.toHaveBeenCalled();
       expect(CoherePlugin).not.toHaveBeenCalled();
       expect(GroqPlugin).not.toHaveBeenCalled();
+      expect(GitHubCopilotPlugin).not.toHaveBeenCalled();
     });
 
     it("should allow selective enabling of plugins", () => {

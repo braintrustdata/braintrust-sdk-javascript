@@ -32,6 +32,7 @@ interface ScenarioResult {
 
 const tsxCliPath = createRequire(import.meta.url).resolve("tsx/cli");
 const DENO_COMMAND = process.platform === "win32" ? "deno.exe" : "deno";
+const MISE_COMMAND = process.platform === "win32" ? "mise.exe" : "mise";
 const DEFAULT_SCENARIO_TIMEOUT_MS = 15_000;
 const HELPERS_DIR = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(HELPERS_DIR, "../..");
@@ -285,6 +286,37 @@ async function runProcess(
   });
 }
 
+function isSpawnEnoent(error: unknown): boolean {
+  return (
+    error instanceof Error &&
+    "code" in error &&
+    (error as NodeJS.ErrnoException).code === "ENOENT"
+  );
+}
+
+async function runDenoProcess(
+  args: string[],
+  cwd: string,
+  env: Record<string, string>,
+  timeoutMs: number,
+): Promise<ScenarioResult> {
+  try {
+    return await runProcess(DENO_COMMAND, args, cwd, env, timeoutMs);
+  } catch (error) {
+    if (!isSpawnEnoent(error)) {
+      throw error;
+    }
+
+    return await runProcess(
+      MISE_COMMAND,
+      ["exec", "--", "deno", ...args],
+      cwd,
+      env,
+      timeoutMs,
+    );
+  }
+}
+
 function resolveEntryPath(scenarioDir: string, entry: string): string {
   return path.join(scenarioDir, entry);
 }
@@ -365,8 +397,7 @@ export async function runDenoScenarioDir(options: {
   timeoutMs?: number;
 }): Promise<ScenarioResult> {
   const entry = options.entry ?? "runner.case.ts";
-  const result = await runProcess(
-    DENO_COMMAND,
+  const result = await runDenoProcess(
     [
       "test",
       "--no-check",
