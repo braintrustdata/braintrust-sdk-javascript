@@ -30,9 +30,6 @@ export interface InstrumentationConfig {
   };
 }
 
-type IntegrationName = keyof NonNullable<InstrumentationConfig["integrations"]>;
-type IntegrationMap = Partial<Record<IntegrationName, boolean>>;
-
 class PluginRegistry {
   private braintrustPlugin: BraintrustPlugin | null = null;
   private config: InstrumentationConfig = {};

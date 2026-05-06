@@ -33,7 +33,6 @@ export interface BraintrustPluginConfig {
     googleADK?: boolean;
     cohere?: boolean;
     groq?: boolean;
-    mastra?: boolean;
   };
 }
 
@@ -164,7 +163,7 @@ export class BraintrustPlugin extends BasePlugin {
       this.gitHubCopilotPlugin.enable();
     }
 
-    if (integrations.mastra !== false) {
+    if (getIntegrationConfig(integrations, "mastra") !== false) {
       this.mastraPlugin = new MastraPlugin();
       this.mastraPlugin.enable();
     }
