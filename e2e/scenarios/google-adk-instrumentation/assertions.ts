@@ -125,6 +125,31 @@ function dedupeSnapshotItems(items: Json[]): Json[] {
   return deduped;
 }
 
+function sortBySpanDepth(events: CapturedLogEvent[]): CapturedLogEvent[] {
+  const lastById = new Map<string, CapturedLogEvent>();
+  for (const event of events) {
+    if (event.span.id) {
+      lastById.set(event.span.id, event);
+    }
+  }
+
+  const depthCache = new Map<string, number>();
+  function getDepth(spanId: string | undefined): number {
+    if (!spanId) return 0;
+    if (depthCache.has(spanId)) return depthCache.get(spanId)!;
+    const event = lastById.get(spanId);
+    if (!event || event.span.parentIds.length === 0) {
+      depthCache.set(spanId, 0);
+      return 0;
+    }
+    const depth = 1 + getDepth(event.span.parentIds[0]);
+    depthCache.set(spanId, depth);
+    return depth;
+  }
+
+  return [...events].sort((a, b) => getDepth(a.span.id) - getDepth(b.span.id));
+}
+
 function hasOptionalADKTaskOutput(event: CapturedLogEvent): boolean {
   return (
     event.span.type === "task" &&
@@ -291,13 +316,11 @@ export function defineGoogleADKInstrumentationAssertions(options: {
     });
 
     test("matches the shared span snapshot", testConfig, async () => {
-      const relevantEvents = events.filter(
-        (e) =>
-          e.span.name !== undefined &&
-          e.span.type !== "llm" &&
-          // Wrapped mode logs an extra start-only tool row. Normalize to the
-          // terminal tool record so wrapped and auto-hook snapshots stay aligned.
-          (e.span.type !== "tool" || e.output !== undefined),
+      const relevantEvents = sortBySpanDepth(
+        events.filter(
+          (e) =>
+            e.span.name !== undefined && e.span.type !== "llm" && e.span.ended,
+        ),
       );
       const spanSummary = normalizeForSnapshot(
         dedupeSnapshotItems(
@@ -311,11 +334,11 @@ export function defineGoogleADKInstrumentationAssertions(options: {
     });
 
     test("matches the shared payload snapshot", testConfig, async () => {
-      const relevantEvents = events.filter(
-        (e) =>
-          e.span.name !== undefined &&
-          e.span.type !== "llm" &&
-          (e.span.type !== "tool" || e.output !== undefined),
+      const relevantEvents = sortBySpanDepth(
+        events.filter(
+          (e) =>
+            e.span.name !== undefined && e.span.type !== "llm" && e.span.ended,
+        ),
       );
       const payloadSummary = normalizeForSnapshot(
         dedupeSnapshotItems(
