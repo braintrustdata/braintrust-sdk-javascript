@@ -55,7 +55,8 @@ describe.concurrent("variants", () => {
         },
         snapshotName: scenario.snapshotName,
         supportsAttachmentScenario,
-        supportsProviderCacheAssertions: scenario.supportsProviderCacheAssertions,
+        supportsProviderCacheAssertions:
+          scenario.supportsProviderCacheAssertions,
         supportsDenyOutputOverrideScenario: supportsRichInputScenarios,
         supportsGenerateObject: scenario.supportsGenerateObject,
         supportsOutputObjectScenario,
