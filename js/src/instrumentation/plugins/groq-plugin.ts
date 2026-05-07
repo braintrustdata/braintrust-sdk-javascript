@@ -107,7 +107,7 @@ export function parseGroqMetrics(
   };
 }
 
-function aggregateGroqChatCompletionChunks(
+export function aggregateGroqChatCompletionChunks(
   chunks: GroqChatCompletionChunk[],
   streamResult?: unknown,
   endEvent?: unknown,
@@ -120,8 +120,31 @@ function aggregateGroqChatCompletionChunks(
     streamResult,
     endEvent,
   );
+  const reasoning = aggregateGroqReasoning(chunks);
+  if (reasoning !== undefined) {
+    const message = aggregated.output[0]?.message;
+    if (message) {
+      message.reasoning = reasoning;
+    }
+  }
   return {
     metrics: aggregated.metrics,
     output: aggregated.output,
   };
+}
+
+function aggregateGroqReasoning(
+  chunks: GroqChatCompletionChunk[],
+): string | undefined {
+  let reasoning = "";
+
+  for (const chunk of chunks) {
+    const delta = chunk.choices?.[0]?.delta;
+    const deltaReasoning = delta?.reasoning;
+    if (typeof deltaReasoning === "string") {
+      reasoning += deltaReasoning;
+    }
+  }
+
+  return reasoning.length > 0 ? reasoning : undefined;
 }

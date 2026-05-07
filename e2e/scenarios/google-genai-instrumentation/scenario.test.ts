@@ -4,10 +4,12 @@ import {
   readInstalledPackageVersion,
   resolveScenarioDir,
 } from "../../helpers/scenario-harness";
+import { cassetteTagsFor } from "../../helpers/tags";
 import { defineGoogleGenAIInstrumentationAssertions } from "./assertions";
 
+const originalScenarioDir = resolveScenarioDir(import.meta.url);
 const scenarioDir = await prepareScenarioDir({
-  scenarioDir: resolveScenarioDir(import.meta.url),
+  scenarioDir: originalScenarioDir,
 });
 const TIMEOUT_MS = 90_000;
 const googleGenAIScenarios = await Promise.all(
@@ -46,13 +48,18 @@ const googleGenAIScenarios = await Promise.all(
 );
 
 for (const scenario of googleGenAIScenarios) {
-  describe(`google genai sdk ${scenario.version}`, () => {
+  const tags = cassetteTagsFor(import.meta.url, scenario.snapshotName);
+
+  describe(`google genai sdk ${scenario.version}`, { tags }, () => {
     defineGoogleGenAIInstrumentationAssertions({
       name: "wrapped instrumentation",
       runScenario: async ({ runScenarioDir }) => {
         await runScenarioDir({
           entry: scenario.wrapperEntry,
-          runContext: { variantKey: scenario.snapshotName },
+          runContext: {
+            variantKey: scenario.snapshotName,
+            originalScenarioDir,
+          },
           scenarioDir,
           timeoutMs: TIMEOUT_MS,
         });
@@ -68,7 +75,10 @@ for (const scenario of googleGenAIScenarios) {
         await runNodeScenarioDir({
           entry: scenario.autoEntry,
           nodeArgs: ["--import", "braintrust/hook.mjs"],
-          runContext: { variantKey: scenario.snapshotName },
+          runContext: {
+            variantKey: scenario.snapshotName,
+            originalScenarioDir,
+          },
           scenarioDir,
           timeoutMs: TIMEOUT_MS,
         });

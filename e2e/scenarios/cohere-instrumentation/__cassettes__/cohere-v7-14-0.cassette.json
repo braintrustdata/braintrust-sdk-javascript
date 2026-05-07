@@ -1,0 +1,232 @@
+{
+  "version": 1,
+  "meta": {
+    "createdAt": "2026-05-05T00:00:00.000Z",
+    "seinfeldVersion": "0.0.0"
+  },
+  "entries": [
+    {
+      "id": "cohere-v2-chat-sync-01",
+      "matchKey": "POST api.cohere.com/v2/chat",
+      "callIndex": 0,
+      "recordedAt": "2026-05-05T00:00:00.000Z",
+      "request": {
+        "method": "POST",
+        "url": "https://api.cohere.com/v2/chat",
+        "headers": {
+          "accept": "application/json",
+          "content-type": "application/json"
+        },
+        "body": {
+          "kind": "json",
+          "value": {
+            "model": "command-a-03-2025",
+            "messages": [
+              {
+                "role": "user",
+                "content": "Reply with exactly OK."
+              }
+            ],
+            "max_tokens": 32,
+            "temperature": 0,
+            "stream": false
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "kind": "json",
+          "value": {
+            "id": "c8f4de69-bf3d-490e-97a1-40052615873c",
+            "finish_reason": "COMPLETE",
+            "message": {
+              "role": "assistant",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "OK."
+                }
+              ]
+            },
+            "usage": {
+              "billed_units": {
+                "input_tokens": 5,
+                "output_tokens": 2
+              },
+              "tokens": {
+                "input_tokens": 886,
+                "output_tokens": 2
+              },
+              "cached_tokens": 877
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "cohere-v2-chat-stream-01",
+      "matchKey": "POST api.cohere.com/v2/chat",
+      "callIndex": 1,
+      "recordedAt": "2026-05-05T00:00:00.000Z",
+      "request": {
+        "method": "POST",
+        "url": "https://api.cohere.com/v2/chat",
+        "headers": {
+          "accept": "application/json",
+          "content-type": "application/json"
+        },
+        "body": {
+          "kind": "json",
+          "value": {
+            "model": "command-a-03-2025",
+            "messages": [
+              {
+                "role": "user",
+                "content": "Reply with exactly STREAM."
+              }
+            ],
+            "max_tokens": 32,
+            "temperature": 0,
+            "stream": true
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "text/event-stream"
+        },
+        "body": {
+          "kind": "sse",
+          "chunks": [
+            "data: {\"type\":\"message-start\",\"id\":\"msg-stream-abc\",\"delta\":{\"message\":{\"role\":\"assistant\"}}}",
+            "data: {\"type\":\"content-start\",\"index\":0,\"delta\":{\"message\":{\"content\":{\"type\":\"text\",\"text\":\"\"}}}}",
+            "data: {\"type\":\"content-delta\",\"index\":0,\"delta\":{\"message\":{\"content\":{\"text\":\"STREAM.\"}}}}",
+            "data: {\"type\":\"content-end\",\"index\":0}",
+            "data: {\"type\":\"message-end\",\"id\":\"msg-stream-abc\",\"delta\":{\"finish_reason\":\"COMPLETE\",\"usage\":{\"cached_tokens\":0,\"billed_units\":{\"input_tokens\":6,\"output_tokens\":1},\"tokens\":{\"input_tokens\":887,\"output_tokens\":1}}}}",
+            "data: [DONE]"
+          ]
+        }
+      }
+    },
+    {
+      "id": "cohere-v2-embed-01",
+      "matchKey": "POST api.cohere.com/v2/embed",
+      "callIndex": 0,
+      "recordedAt": "2026-05-05T00:00:00.000Z",
+      "request": {
+        "method": "POST",
+        "url": "https://api.cohere.com/v2/embed",
+        "headers": {
+          "accept": "application/json",
+          "content-type": "application/json"
+        },
+        "body": {
+          "kind": "json",
+          "value": {
+            "texts": ["braintrust tracing"],
+            "model": "embed-english-v3.0",
+            "input_type": "search_document",
+            "embedding_types": ["float"]
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "kind": "json",
+          "value": {
+            "id": "embed-abc-123",
+            "embeddings": {
+              "float": [
+                [
+                  0.017898559, -0.020599365, 0.050750732, -0.009429932,
+                  0.008674622
+                ]
+              ]
+            },
+            "texts": ["braintrust tracing"],
+            "meta": {
+              "api_version": {
+                "version": "2"
+              },
+              "billed_units": {
+                "input_tokens": 2
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "cohere-v2-rerank-01",
+      "matchKey": "POST api.cohere.com/v2/rerank",
+      "callIndex": 0,
+      "recordedAt": "2026-05-05T00:00:00.000Z",
+      "request": {
+        "method": "POST",
+        "url": "https://api.cohere.com/v2/rerank",
+        "headers": {
+          "accept": "application/json",
+          "content-type": "application/json"
+        },
+        "body": {
+          "kind": "json",
+          "value": {
+            "model": "rerank-english-v3.0",
+            "query": "What is the capital of France?",
+            "documents": [
+              "Paris is the capital city of France.",
+              "Vienna is the capital city of Austria.",
+              "Canberra is the capital city of Australia."
+            ],
+            "top_n": 2
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "kind": "json",
+          "value": {
+            "id": "rerank-abc-456",
+            "results": [
+              {
+                "document": {
+                  "text": "Paris is the capital city of France."
+                },
+                "index": 0,
+                "relevance_score": 0.99987
+              },
+              {
+                "document": {
+                  "text": "Vienna is the capital city of Austria."
+                },
+                "index": 1,
+                "relevance_score": 0.00013
+              }
+            ],
+            "meta": {
+              "api_version": {
+                "version": "2"
+              },
+              "billed_units": {
+                "search_units": 1
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

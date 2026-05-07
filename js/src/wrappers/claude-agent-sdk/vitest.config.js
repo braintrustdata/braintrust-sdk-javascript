@@ -28,6 +28,7 @@ const config = {
     exclude: ["vendor/**", "**/vendor/**"],
   },
   test: {
+    reporters: ["default"],
     exclude: [
       // Default vitest exclusions
       "**/node_modules/**",

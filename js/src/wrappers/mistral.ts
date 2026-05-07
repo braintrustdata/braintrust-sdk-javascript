@@ -5,9 +5,13 @@ import type {
   MistralAgentsCreateParams,
   MistralAgentsStreamingResult,
   MistralChat,
+  MistralChatClassificationCreateParams,
   MistralChatCompletionResponse,
   MistralChatCreateParams,
   MistralChatStreamingResult,
+  MistralClassificationCreateParams,
+  MistralClassificationResponse,
+  MistralClassifiers,
   MistralClient,
   MistralEmbeddingCreateParams,
   MistralEmbeddingResponse,
@@ -16,6 +20,7 @@ import type {
   MistralFimCompletionResponse,
   MistralFimCreateParams,
   MistralFimStreamingResult,
+  MistralModerationResponse,
 } from "../vendor-sdk-types/mistral";
 
 /**
@@ -52,7 +57,8 @@ function isSupportedMistralClient(value: unknown): value is MistralClient {
     (value.chat !== undefined && hasChat(value.chat)) ||
     (value.embeddings !== undefined && hasEmbeddings(value.embeddings)) ||
     (value.fim !== undefined && hasFim(value.fim)) ||
-    (value.agents !== undefined && hasAgents(value.agents))
+    (value.agents !== undefined && hasAgents(value.agents)) ||
+    (value.classifiers !== undefined && hasClassifiers(value.classifiers))
   );
 }
 
@@ -72,6 +78,10 @@ function hasAgents(value: unknown): value is MistralAgents {
   return hasFunction(value, "complete") && hasFunction(value, "stream");
 }
 
+function hasClassifiers(value: unknown): value is MistralClassifiers {
+  return hasFunction(value, "moderate") && hasFunction(value, "moderateChat");
+}
+
 function mistralProxy(mistral: MistralClient): MistralClient {
   return new Proxy(mistral, {
     get(target, prop, receiver) {
@@ -86,6 +96,10 @@ function mistralProxy(mistral: MistralClient): MistralClient {
           return target.embeddings
             ? embeddingsProxy(target.embeddings)
             : target.embeddings;
+        case "classifiers":
+          return target.classifiers
+            ? classifiersProxy(target.classifiers)
+            : target.classifiers;
         default:
           return Reflect.get(target, prop, receiver);
       }
@@ -153,6 +167,30 @@ function agentsProxy(agents: MistralAgents): MistralAgents {
   });
 }
 
+function classifiersProxy(classifiers: MistralClassifiers): MistralClassifiers {
+  return new Proxy(classifiers, {
+    get(target, prop, receiver) {
+      if (prop === "moderate") {
+        return wrapClassifiersModerate(target.moderate.bind(target));
+      }
+
+      if (prop === "moderateChat") {
+        return wrapClassifiersModerateChat(target.moderateChat.bind(target));
+      }
+
+      if (prop === "classify" && target.classify) {
+        return wrapClassifiersClassify(target.classify.bind(target));
+      }
+
+      if (prop === "classifyChat" && target.classifyChat) {
+        return wrapClassifiersClassifyChat(target.classifyChat.bind(target));
+      }
+
+      return Reflect.get(target, prop, receiver);
+    },
+  });
+}
+
 function wrapChatComplete(
   complete: (
     request: MistralChatCreateParams,
@@ -189,6 +227,58 @@ function wrapEmbeddingsCreate(
   return (request, options) =>
     mistralChannels.embeddingsCreate.tracePromise(
       () => create(request, options),
+      { arguments: [request] },
+    );
+}
+
+function wrapClassifiersModerate(
+  moderate: (
+    request: MistralClassificationCreateParams,
+    options?: unknown,
+  ) => Promise<MistralModerationResponse>,
+): MistralClassifiers["moderate"] {
+  return (request, options) =>
+    mistralChannels.classifiersModerate.tracePromise(
+      () => moderate(request, options),
+      { arguments: [request] },
+    );
+}
+
+function wrapClassifiersModerateChat(
+  moderateChat: (
+    request: MistralChatClassificationCreateParams,
+    options?: unknown,
+  ) => Promise<MistralModerationResponse>,
+): MistralClassifiers["moderateChat"] {
+  return (request, options) =>
+    mistralChannels.classifiersModerateChat.tracePromise(
+      () => moderateChat(request, options),
+      { arguments: [request] },
+    );
+}
+
+function wrapClassifiersClassify(
+  classify: (
+    request: MistralClassificationCreateParams,
+    options?: unknown,
+  ) => Promise<MistralClassificationResponse>,
+): NonNullable<MistralClassifiers["classify"]> {
+  return (request, options) =>
+    mistralChannels.classifiersClassify.tracePromise(
+      () => classify(request, options),
+      { arguments: [request] },
+    );
+}
+
+function wrapClassifiersClassifyChat(
+  classifyChat: (
+    request: MistralChatClassificationCreateParams,
+    options?: unknown,
+  ) => Promise<MistralClassificationResponse>,
+): NonNullable<MistralClassifiers["classifyChat"]> {
+  return (request, options) =>
+    mistralChannels.classifiersClassifyChat.tracePromise(
+      () => classifyChat(request, options),
       { arguments: [request] },
     );
 }

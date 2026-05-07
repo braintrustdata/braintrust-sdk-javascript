@@ -188,5 +188,6 @@ export type CohereClient = {
     request: CohereRerankRequest,
     options?: unknown,
   ) => Promise<CohereRerankResponse>;
+  v2?: CohereClient;
   [key: string]: unknown;
 };

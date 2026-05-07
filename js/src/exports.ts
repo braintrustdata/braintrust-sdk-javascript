@@ -177,6 +177,7 @@ export {
 export { wrapAnthropic } from "./wrappers/anthropic";
 export { wrapMastraAgent } from "./wrappers/mastra";
 export { wrapClaudeAgentSDK } from "./wrappers/claude-agent-sdk/claude-agent-sdk";
+export { wrapCursorSDK } from "./wrappers/cursor-sdk";
 export { wrapGoogleGenAI } from "./wrappers/google-genai";
 export { wrapGoogleADK } from "./wrappers/google-adk";
 export { wrapHuggingFace } from "./wrappers/huggingface";
@@ -185,6 +186,7 @@ export { wrapOpenRouter } from "./wrappers/openrouter";
 export { wrapMistral } from "./wrappers/mistral";
 export { wrapCohere } from "./wrappers/cohere";
 export { wrapGroq } from "./wrappers/groq";
+export { wrapCopilotClient } from "./wrappers/github-copilot";
 export { wrapVitest } from "./wrappers/vitest";
 export { initNodeTestSuite } from "./wrappers/node-test";
 

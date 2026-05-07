@@ -308,9 +308,6 @@
       "name": "tool: calculator/calculator",
       "root_span_id": "<span:1>",
       "span_id": "<span:20>",
-      "span_parents": [
-        "<span:17>"
-      ],
       "type": "tool"
     }
   }

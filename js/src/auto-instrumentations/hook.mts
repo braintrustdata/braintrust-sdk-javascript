@@ -18,6 +18,7 @@ import { openaiConfigs } from "./configs/openai.js";
 import { anthropicConfigs } from "./configs/anthropic.js";
 import { aiSDKConfigs } from "./configs/ai-sdk.js";
 import { claudeAgentSDKConfigs } from "./configs/claude-agent-sdk.js";
+import { cursorSDKConfigs } from "./configs/cursor-sdk.js";
 import { googleGenAIConfigs } from "./configs/google-genai.js";
 import { huggingFaceConfigs } from "./configs/huggingface.js";
 import { openRouterAgentConfigs } from "./configs/openrouter-agent.js";
@@ -26,6 +27,7 @@ import { mistralConfigs } from "./configs/mistral.js";
 import { googleADKConfigs } from "./configs/google-adk.js";
 import { cohereConfigs } from "./configs/cohere.js";
 import { groqConfigs } from "./configs/groq.js";
+import { gitHubCopilotConfigs } from "./configs/github-copilot.js";
 import { ModulePatch } from "./loader/cjs-patch.js";
 import { patchTracingChannel } from "./patch-tracing-channel.js";
 
@@ -68,6 +70,9 @@ const allConfigs = [
   ...(isDisabled(disabledIntegrations, "claudeagentsdk", "claude-agent-sdk")
     ? []
     : claudeAgentSDKConfigs),
+  ...(isDisabled(disabledIntegrations, "cursor", "cursor-sdk")
+    ? []
+    : cursorSDKConfigs),
   ...(isDisabled(disabledIntegrations, "google", "google-genai")
     ? []
     : googleGenAIConfigs),
@@ -84,6 +89,14 @@ const allConfigs = [
     : googleADKConfigs),
   ...(isDisabled(disabledIntegrations, "cohere") ? [] : cohereConfigs),
   ...(isDisabled(disabledIntegrations, "groq", "groq-sdk") ? [] : groqConfigs),
+  ...(isDisabled(
+    disabledIntegrations,
+    "githubcopilot",
+    "github-copilot",
+    "copilot-sdk",
+  )
+    ? []
+    : gitHubCopilotConfigs),
 ];
 
 // 1. Register ESM loader for ESM modules

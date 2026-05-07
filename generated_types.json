@@ -6097,6 +6097,10 @@
           "generation_settings": {
             "$ref": "#/components/schemas/TopicMapGenerationSettings"
           },
+          "disable_reconciliation": {
+            "type": "boolean",
+            "description": "Whether new topic generation should ignore the previously saved report during reconciliation. Defaults to false when omitted."
+          },
           "distance_threshold": {
             "type": "number",
             "description": "Maximum distance to nearest centroid. If exceeded, returns no_match."
