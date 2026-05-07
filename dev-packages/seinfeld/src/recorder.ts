@@ -348,7 +348,7 @@ export interface CassetteOptions {
   store?: CassetteStore;
   /** Filter spec (matching-only normalization). */
   filters?: FilterSpec;
-  /** Redaction spec (applied to persisted bytes). Defaults to none. */
+  /** Redaction spec (applied to persisted bytes). Defaults to `'paranoid'`. Pass `[]` to disable. */
   redact?: RedactionSpec;
   /** Hosts to intercept. Other hosts pass through. Defaults to all hosts. */
   hosts?: Array<string | RegExp>;
@@ -403,7 +403,7 @@ export function createCassette(options: CassetteOptions): Cassette {
       options.store ?? createJsonFileStore({ rootDir: DEFAULT_CASSETTE_DIR }),
     matcher: options.matcher ?? createDefaultMatcher(),
     filters: options.filters,
-    redact: options.redact,
+    redact: options.redact ?? "paranoid",
     hosts: options.hosts,
     passthroughHosts: options.passthroughHosts,
     threshold: resolveThreshold(options.externalBlobThreshold),

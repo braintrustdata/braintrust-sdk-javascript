@@ -5,23 +5,15 @@ Generic VCR/cassette library for Node.js, built on [MSW](https://mswjs.io). Reco
 ## Features
 
 - **Normalizers** (always-on, lossy) transform requests before matching. They strip volatile fields like `Authorization` headers, dynamic IDs (`experimental_generateMessageId`), or query nonces so two structurally-identical requests still match across runs. Their output is internal — never serialized.
-- **Redactors** (opt-in) transform what gets persisted to disk. They mask credentials before the cassette hits version control. Disabled by default; cassettes contain the real on-the-wire bytes unless you opt in.
+- **Redactors** transform what gets persisted to disk. They mask credentials before the cassette hits version control. The `'paranoid'` preset is applied by default; pass `redact: []` to disable.
 
 ## Security note
 
-> **Cassettes contain real request and response bytes by default, including `Authorization` headers.** This is the safer default for fidelity (downstream consumers see real responses) but it means you must either (a) enable redaction, (b) write a custom `RedactionConfig`, or (c) add cassette files to `.gitignore` if they may contain credentials.
-
-Three body-redaction gaps are worth knowing:
+Three body-redaction gaps are worth knowing even with the default `'paranoid'` preset:
 
 1. **Non-canonical content-type** — some servers return JSON with `Content-Type: text/plain`. `redactBodyFields` covers this because seinfeld attempts to parse `text` bodies as JSON before masking.
 2. **SSE event data** — streaming endpoints (OpenAI, Anthropic) emit JSON in `data:` lines. `redactBodyFields` applies to parseable `data:` lines; `redactBodyText` handles non-JSON SSE content.
 3. **Plain-text credentials** — form-encoded bodies, XML, or log-like text are opaque to field-path rules. Use `redactBodyText` with a regex.
-
-For cassettes committed to version control, use the `'paranoid'` preset, which covers all three paths:
-
-```ts
-createCassette({ name: "demo", redact: "paranoid" });
-```
 
 `'paranoid'` redacts credential headers, common credential field names at any JSON depth (`apiKey`, `token`, `secret`, `password`, `authorization`), and Bearer / `sk-` style tokens in text bodies.
 
