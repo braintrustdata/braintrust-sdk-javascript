@@ -5,7 +5,10 @@ import {
   formatJsonFileSnapshot,
   resolveFileSnapshotPath,
 } from "../../helpers/file-snapshot";
-import { withScenarioHarness } from "../../helpers/scenario-harness";
+import {
+  isCanaryMode,
+  withScenarioHarness,
+} from "../../helpers/scenario-harness";
 import {
   findLatestChildSpan,
   findLatestSpan,
@@ -401,7 +404,7 @@ export function defineHuggingFaceInstrumentationAssertions(options: {
       },
     );
 
-    test(
+    test.skipIf(isCanaryMode())(
       "matches the log payload snapshot",
       { timeout: options.timeoutMs },
       async ({ expect }) => {

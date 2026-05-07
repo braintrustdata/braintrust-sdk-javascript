@@ -8,7 +8,10 @@ import {
   formatJsonFileSnapshot,
   resolveFileSnapshotPath,
 } from "../../helpers/file-snapshot";
-import { withScenarioHarness } from "../../helpers/scenario-harness";
+import {
+  isCanaryMode,
+  withScenarioHarness,
+} from "../../helpers/scenario-harness";
 import { findChildSpans, findLatestSpan } from "../../helpers/trace-selectors";
 
 import { ROOT_NAME, SCENARIO_NAME } from "./scenario.impl.mjs";
@@ -665,16 +668,24 @@ export function defineOpenAIInstrumentationAssertions(options: {
       });
     }
 
-    test("matches the shared span snapshot", testConfig, async () => {
-      await expect(
-        formatJsonFileSnapshot(buildSpanSummary(events, operationSpecs)),
-      ).toMatchFileSnapshot(spanSnapshotPath);
-    });
+    test.skipIf(isCanaryMode())(
+      "matches the shared span snapshot",
+      testConfig,
+      async () => {
+        await expect(
+          formatJsonFileSnapshot(buildSpanSummary(events, operationSpecs)),
+        ).toMatchFileSnapshot(spanSnapshotPath);
+      },
+    );
 
-    test("matches the shared payload snapshot", testConfig, async () => {
-      await expect(
-        formatJsonFileSnapshot(buildPayloadSummary(events, operationSpecs)),
-      ).toMatchFileSnapshot(payloadSnapshotPath);
-    });
+    test.skipIf(isCanaryMode())(
+      "matches the shared payload snapshot",
+      testConfig,
+      async () => {
+        await expect(
+          formatJsonFileSnapshot(buildPayloadSummary(events, operationSpecs)),
+        ).toMatchFileSnapshot(payloadSnapshotPath);
+      },
+    );
   });
 }

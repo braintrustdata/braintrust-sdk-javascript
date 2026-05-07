@@ -4,6 +4,7 @@ import {
   resolveFileSnapshotPath,
 } from "../../helpers/file-snapshot";
 import {
+  isCanaryMode,
   prepareScenarioDir,
   resolveScenarioDir,
   withScenarioHarness,
@@ -43,16 +44,18 @@ test(
         scenarioName: "wrap-langchain-js-traces",
       });
 
-      await expect(
-        formatJsonFileSnapshot(summaries.spanSummary),
-      ).toMatchFileSnapshot(
-        resolveFileSnapshotPath(import.meta.url, "span-events.json"),
-      );
-      await expect(
-        formatJsonFileSnapshot(summaries.payloadSummary),
-      ).toMatchFileSnapshot(
-        resolveFileSnapshotPath(import.meta.url, "log-payloads.json"),
-      );
+      if (!isCanaryMode()) {
+        await expect(
+          formatJsonFileSnapshot(summaries.spanSummary),
+        ).toMatchFileSnapshot(
+          resolveFileSnapshotPath(import.meta.url, "span-events.json"),
+        );
+        await expect(
+          formatJsonFileSnapshot(summaries.payloadSummary),
+        ).toMatchFileSnapshot(
+          resolveFileSnapshotPath(import.meta.url, "log-payloads.json"),
+        );
+      }
     });
   },
 );
