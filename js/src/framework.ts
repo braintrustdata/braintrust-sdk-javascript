@@ -547,6 +547,11 @@ export interface EvalOptions<EvalReport, Parameters extends EvalParameters> {
    */
   onStart?: (metadata: Omit<ExperimentSummary, "scores" | "metrics">) => void;
   /**
+   * A callback function that is called once after the eval has completed and spans are flushed.
+   * @param summary
+   */
+  onComplete?: (summary: ExperimentSummary) => void | Promise<void>;
+  /**
    * A function that will be called with progress events, which can be used to
    * display intermediate progress.
    *
@@ -683,6 +688,8 @@ export async function Eval<
   }
 
   const resolvedReporter = options.reporter || defaultReporter;
+  let result: EvalResultWithSummary<Input, Output, Expected, Metadata> | null =
+    null;
   try {
     const { data, baseExperiment: defaultBaseExperiment } = callEvaluatorData(
       evaluator.data,
@@ -770,7 +777,7 @@ export async function Eval<
         verbose: true,
         jsonl: false,
       });
-      return ret;
+      result = ret;
     } finally {
       if (experiment) {
         await experiment.flush().catch(console.error);
@@ -778,6 +785,14 @@ export async function Eval<
         await flush({ state: evaluator.state }).catch(console.error);
       }
     }
+
+    if (!result) {
+      throw new Error("Eval completed without a result");
+    }
+    if (options.onComplete) {
+      await options.onComplete(result.summary);
+    }
+    return result;
   } finally {
     progressReporter.stop();
   }

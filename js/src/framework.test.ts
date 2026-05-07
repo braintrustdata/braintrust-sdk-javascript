@@ -676,6 +676,87 @@ test("Eval with returnResults: true collects all results", async () => {
   expect(result.summary.scores.exact_match.score).toBe(1);
 });
 
+test("Eval onComplete is called exactly once on success", async () => {
+  const onComplete = vi.fn();
+  const result = await Eval(
+    "test-on-complete",
+    {
+      data: [{ input: "hello", expected: "hello world" }],
+      task: (input) => input + " world",
+      scores: [
+        (args) => ({
+          name: "exact_match",
+          score: args.output === args.expected ? 1 : 0,
+        }),
+      ],
+    },
+    { noSendLogs: true, onComplete },
+  );
+
+  expect(onComplete).toHaveBeenCalledTimes(1);
+  expect(onComplete).toHaveBeenCalledWith(result.summary);
+});
+
+test("Eval onComplete runs after flush", async () => {
+  await _exportsForTestingOnly.simulateLoginForTests();
+
+  _exportsForTestingOnly.useTestBackgroundLogger();
+
+  const evaluatorState = new BraintrustState({
+    apiKey: "test-api-key",
+    appUrl: "https://example.com",
+  });
+  const evaluatorMemoryLogger = new TestBackgroundLogger();
+  evaluatorState.setOverrideBgLogger(evaluatorMemoryLogger);
+
+  const logger = initLogger({ projectName: "test", projectId: "pid" });
+  const span = logger.startSpan({ name: "parent-span" });
+  const parentStr = await span.export();
+  span.end();
+
+  const evaluatorFlushSpy = vi.spyOn(evaluatorMemoryLogger, "flush");
+  const onComplete = vi.fn(() => {
+    expect(evaluatorFlushSpy).toHaveBeenCalled();
+  });
+
+  await Eval(
+    "test-parent-flush-on-complete",
+    {
+      data: [{ input: 1, expected: 2 }],
+      task: (input) => input * 2,
+      scores: [],
+      state: evaluatorState,
+    },
+    { parent: parentStr, onComplete },
+  );
+
+  expect(onComplete).toHaveBeenCalledTimes(1);
+
+  _exportsForTestingOnly.clearTestBackgroundLogger();
+  _exportsForTestingOnly.simulateLogoutForTests();
+});
+
+test("Eval behavior is unchanged when onComplete is omitted", async () => {
+  const result = await Eval(
+    "test-no-on-complete",
+    {
+      data: [{ input: "foo", expected: "foo bar" }],
+      task: (input) => input + " bar",
+      scores: [
+        (args) => ({
+          name: "exact_match",
+          score: args.output === args.expected ? 1 : 0,
+        }),
+      ],
+    },
+    { noSendLogs: true },
+  );
+
+  expect(result.results).toHaveLength(1);
+  expect(result.summary.projectName).toBe("test-no-on-complete");
+  expect(result.summary.scores.exact_match.score).toBe(1);
+});
+
 test("tags can be appended and logged to root span", async () => {
   await _exportsForTestingOnly.simulateLoginForTests();
   const memoryLogger = _exportsForTestingOnly.useTestBackgroundLogger();

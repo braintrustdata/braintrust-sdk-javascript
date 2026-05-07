@@ -53,6 +53,141 @@ export interface DevServerOpts {
   orgName?: string;
 }
 
+const WEBHOOK_ATTEMPTS = 3;
+const WEBHOOK_BACKOFF_MS = [1000, 2000, 4000];
+const WEBHOOK_TIMEOUT_MS = 10000;
+
+type CompletionWebhookPayload = {
+  event: "experiment.completed";
+  summary: Record<string, unknown>;
+  experiment: {
+    projectId?: string;
+    projectName?: string;
+    projectUrl?: string;
+    experimentId?: string;
+    experimentName?: string;
+    experimentUrl?: string;
+  };
+  timestamp: string;
+};
+
+type SerializableSummary = ExperimentSummary | Record<string, unknown>;
+
+type DispatchCompletionWebhookOptions = {
+  attempts?: number;
+  backoffMs?: number[];
+  timeoutMs?: number;
+  fetchImpl?: typeof fetch;
+  sleep?: (ms: number) => Promise<void>;
+};
+
+function pickString(record: Record<string, unknown>, keys: string[]) {
+  for (const key of keys) {
+    const value = record[key];
+    if (typeof value === "string" && value.length > 0) {
+      return value;
+    }
+  }
+  return undefined;
+}
+
+function sleep(ms: number) {
+  return new Promise<void>((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function serializeSummary(summary: SerializableSummary): Record<string, unknown> {
+  const serializedSummary = JSON.parse(JSON.stringify(summary));
+  if (isRecord(serializedSummary)) {
+    return serializedSummary;
+  }
+  return {};
+}
+
+export function buildCompletionWebhookPayload(summary: SerializableSummary) {
+  const summaryObject = serializeSummary(summary);
+  return {
+    event: "experiment.completed",
+    summary: summaryObject,
+    experiment: {
+      projectId: pickString(summaryObject, ["projectId", "project_id"]),
+      projectName: pickString(summaryObject, ["projectName", "project_name"]),
+      projectUrl: pickString(summaryObject, ["projectUrl", "project_url"]),
+      experimentId: pickString(summaryObject, [
+        "experimentId",
+        "experiment_id",
+      ]),
+      experimentName: pickString(summaryObject, [
+        "experimentName",
+        "experiment_name",
+      ]),
+      experimentUrl: pickString(summaryObject, [
+        "experimentUrl",
+        "experiment_url",
+      ]),
+    },
+    timestamp: new Date().toISOString(),
+  } satisfies CompletionWebhookPayload;
+}
+
+export async function dispatchCompletionWebhook(
+  webhookUrl: string,
+  summary: SerializableSummary,
+  options: DispatchCompletionWebhookOptions = {},
+) {
+  const attempts = options.attempts ?? WEBHOOK_ATTEMPTS;
+  const backoffMs = options.backoffMs ?? WEBHOOK_BACKOFF_MS;
+  const timeoutMs = options.timeoutMs ?? WEBHOOK_TIMEOUT_MS;
+  const fetchImpl = options.fetchImpl ?? fetch;
+  const sleepFn = options.sleep ?? sleep;
+  const payload = buildCompletionWebhookPayload(summary);
+  let lastError: Error | null = null;
+
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const response = await fetchImpl(webhookUrl, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+      });
+
+      if (response.ok) {
+        return;
+      }
+
+      lastError = new Error(
+        `Webhook request failed with status ${response.status}`,
+      );
+    } catch (error) {
+      lastError =
+        error instanceof Error ? error : new Error(`Webhook failed: ${error}`);
+    } finally {
+      clearTimeout(timeoutId);
+    }
+
+    if (attempt < attempts) {
+      const delayMs = backoffMs[Math.min(attempt - 1, backoffMs.length - 1)];
+      if (delayMs > 0) {
+        await sleepFn(delayMs);
+      }
+    }
+  }
+
+  if (lastError) {
+    throw lastError;
+  }
+}
+
 export function runDevServer(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   evaluators: EvaluatorDef<any, any, any, any, any>[],
@@ -137,6 +272,7 @@ export function runDevServer(
         parent,
         experiment_name,
         project_id,
+        on_complete_webhook,
         data,
         scores,
         stream,
@@ -250,6 +386,22 @@ export function runDevServer(
                     event: "start",
                     data: JSON.stringify(metadata),
                   }),
+                );
+              }
+            },
+            onComplete: async (completionSummary) => {
+              if (!on_complete_webhook) {
+                return;
+              }
+              try {
+                await dispatchCompletionWebhook(
+                  on_complete_webhook,
+                  completionSummary,
+                );
+              } catch (error) {
+                console.error(
+                  `Failed to deliver completion webhook to ${on_complete_webhook}`,
+                  error,
                 );
               }
             },
