@@ -53,7 +53,8 @@ describe.concurrent("variants", () => {
         },
         snapshotName: scenario.snapshotName,
         supportsAttachmentScenario,
-        supportsProviderCacheAssertions: scenario.supportsProviderCacheAssertions,
+        supportsProviderCacheAssertions:
+          scenario.supportsProviderCacheAssertions,
         supportsDenyOutputOverrideScenario: supportsRichInputScenarios,
         supportsEmbedMany: scenario.supportsEmbedMany !== false,
         supportsGenerateObject: scenario.supportsGenerateObject,
@@ -83,7 +84,8 @@ describe.concurrent("variants", () => {
         },
         snapshotName: scenario.snapshotName,
         supportsAttachmentScenario,
-        supportsProviderCacheAssertions: scenario.supportsProviderCacheAssertions,
+        supportsProviderCacheAssertions:
+          scenario.supportsProviderCacheAssertions,
         supportsDenyOutputOverrideScenario: supportsRichInputScenarios,
         supportsEmbedMany: scenario.supportsEmbedMany !== false,
         supportsGenerateObject: scenario.supportsGenerateObject,
