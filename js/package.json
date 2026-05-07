@@ -216,7 +216,7 @@
     "express": "^4.21.2",
     "graceful-fs": "^4.2.11",
     "http-errors": "^2.0.0",
-    "minimatch": "^9.0.3",
+    "minimatch": "^9.0.7",
     "module-details-from-path": "^1.0.4",
     "mustache": "^4.2.0",
     "pluralize": "^8.0.0",
