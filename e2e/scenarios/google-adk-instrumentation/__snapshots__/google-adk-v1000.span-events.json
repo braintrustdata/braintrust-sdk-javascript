@@ -34,7 +34,12 @@
       "google_adk.user_id": "test-user",
       "provider": "google-adk"
     },
-    "metric_keys": [],
+    "metric_keys": [
+      "completion_tokens",
+      "duration",
+      "prompt_tokens",
+      "tokens"
+    ],
     "name": "Google ADK Runner",
     "root_span_id": "<span:1>",
     "span_id": "<span:3>",
@@ -50,7 +55,9 @@
       "model": "gemini-2.5-flash-lite",
       "provider": "google-adk"
     },
-    "metric_keys": [],
+    "metric_keys": [
+      "duration"
+    ],
     "name": "Agent: weather_agent",
     "root_span_id": "<span:1>",
     "span_id": "<span:4>",
@@ -72,49 +79,10 @@
     ],
     "name": "tool: get_weather",
     "root_span_id": "<span:1>",
-    "span_id": "<span:5>",
+    "span_id": "<span:6>",
     "span_parents": [
       "<span:4>"
     ],
     "type": "tool"
-  },
-  {
-    "has_input": false,
-    "metadata": {
-      "google_adk.agent_name": "weather_agent",
-      "model": "gemini-2.5-flash-lite",
-      "provider": "google-adk"
-    },
-    "metric_keys": [
-      "duration"
-    ],
-    "name": "Agent: weather_agent",
-    "root_span_id": "<span:1>",
-    "span_id": "<span:4>",
-    "span_parents": [
-      "<span:3>"
-    ],
-    "type": "task"
-  },
-  {
-    "has_input": true,
-    "metadata": {
-      "google_adk.session_id": "test-session-1",
-      "google_adk.user_id": "test-user",
-      "provider": "google-adk"
-    },
-    "metric_keys": [
-      "completion_tokens",
-      "duration",
-      "prompt_tokens",
-      "tokens"
-    ],
-    "name": "Google ADK Runner",
-    "root_span_id": "<span:1>",
-    "span_id": "<span:3>",
-    "span_parents": [
-      "<span:2>"
-    ],
-    "type": "task"
   }
 ]

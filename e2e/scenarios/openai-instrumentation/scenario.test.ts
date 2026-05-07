@@ -43,50 +43,52 @@ const openaiScenarios = await Promise.all(
   })),
 );
 
-for (const scenario of openaiScenarios) {
-  const assertPrivateFieldMethodsOperation =
-    !scenario.disablePrivateFieldMethodsAssertion;
-  const tags = cassetteTagsFor(import.meta.url, scenario.snapshotName);
+describe.concurrent("variants", () => {
+  for (const scenario of openaiScenarios) {
+    const assertPrivateFieldMethodsOperation =
+      !scenario.disablePrivateFieldMethodsAssertion;
+    const tags = cassetteTagsFor(import.meta.url, scenario.snapshotName);
 
-  describe(`openai sdk ${scenario.version}`, { tags }, () => {
-    defineOpenAIInstrumentationAssertions({
-      assertPrivateFieldMethodsOperation,
-      name: "wrapped instrumentation",
-      runScenario: async ({ runScenarioDir }) => {
-        await runScenarioDir({
-          entry: scenario.wrapperEntry,
-          runContext: {
-            variantKey: scenario.snapshotName,
-            originalScenarioDir,
-          },
-          scenarioDir,
-          timeoutMs: TIMEOUT_MS,
-        });
-      },
-      snapshotName: scenario.snapshotName,
-      testFileUrl: import.meta.url,
-      timeoutMs: TIMEOUT_MS,
-      version: scenario.version,
-    });
+    describe.sequential(`openai sdk ${scenario.version}`, { tags }, () => {
+      defineOpenAIInstrumentationAssertions({
+        assertPrivateFieldMethodsOperation,
+        name: "wrapped instrumentation",
+        runScenario: async ({ runScenarioDir }) => {
+          await runScenarioDir({
+            entry: scenario.wrapperEntry,
+            runContext: {
+              variantKey: scenario.snapshotName,
+              originalScenarioDir,
+            },
+            scenarioDir,
+            timeoutMs: TIMEOUT_MS,
+          });
+        },
+        snapshotName: scenario.snapshotName,
+        testFileUrl: import.meta.url,
+        timeoutMs: TIMEOUT_MS,
+        version: scenario.version,
+      });
 
-    defineOpenAIInstrumentationAssertions({
-      name: "auto-hook instrumentation",
-      runScenario: async ({ runNodeScenarioDir }) => {
-        await runNodeScenarioDir({
-          entry: scenario.autoEntry,
-          nodeArgs: ["--import", "braintrust/hook.mjs"],
-          runContext: {
-            variantKey: scenario.snapshotName,
-            originalScenarioDir,
-          },
-          scenarioDir,
-          timeoutMs: TIMEOUT_MS,
-        });
-      },
-      snapshotName: scenario.snapshotName,
-      testFileUrl: import.meta.url,
-      timeoutMs: TIMEOUT_MS,
-      version: scenario.version,
+      defineOpenAIInstrumentationAssertions({
+        name: "auto-hook instrumentation",
+        runScenario: async ({ runNodeScenarioDir }) => {
+          await runNodeScenarioDir({
+            entry: scenario.autoEntry,
+            nodeArgs: ["--import", "braintrust/hook.mjs"],
+            runContext: {
+              variantKey: scenario.snapshotName,
+              originalScenarioDir,
+            },
+            scenarioDir,
+            timeoutMs: TIMEOUT_MS,
+          });
+        },
+        snapshotName: scenario.snapshotName,
+        testFileUrl: import.meta.url,
+        timeoutMs: TIMEOUT_MS,
+        version: scenario.version,
+      });
     });
-  });
-}
+  }
+});

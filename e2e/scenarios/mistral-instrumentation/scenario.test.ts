@@ -26,63 +26,65 @@ const mistralScenarios = await Promise.all(
   })),
 );
 
-for (const scenario of mistralScenarios) {
-  const tags = cassetteTagsFor(import.meta.url, scenario.snapshotName);
+describe.concurrent("variants", () => {
+  for (const scenario of mistralScenarios) {
+    const tags = cassetteTagsFor(import.meta.url, scenario.snapshotName);
 
-  describe(`mistral sdk ${scenario.version}`, { tags }, () => {
-    defineMistralInstrumentationAssertions({
-      name: "wrapped instrumentation",
-      runScenario: async ({ runScenarioDir }) => {
-        await runScenarioDir({
-          entry: scenario.wrapperEntry,
-          runContext: {
-            variantKey: scenario.snapshotName,
-            originalScenarioDir,
-          },
-          scenarioDir,
-          timeoutMs: MISTRAL_SCENARIO_TIMEOUT_MS,
-        });
-      },
-      snapshotName: scenario.snapshotName,
-      ...(scenario.supportsThinkingStream === false
-        ? { supportsThinkingStream: false }
-        : {}),
-      ...(scenario.supportsClassifiers === false
-        ? { supportsClassifiers: false }
-        : {}),
-      ...(scenario.supportsClassify === false
-        ? { supportsClassify: false }
-        : {}),
-      testFileUrl: import.meta.url,
-      timeoutMs: MISTRAL_SCENARIO_TIMEOUT_MS,
-    });
+    describe.sequential(`mistral sdk ${scenario.version}`, { tags }, () => {
+      defineMistralInstrumentationAssertions({
+        name: "wrapped instrumentation",
+        runScenario: async ({ runScenarioDir }) => {
+          await runScenarioDir({
+            entry: scenario.wrapperEntry,
+            runContext: {
+              variantKey: scenario.snapshotName,
+              originalScenarioDir,
+            },
+            scenarioDir,
+            timeoutMs: MISTRAL_SCENARIO_TIMEOUT_MS,
+          });
+        },
+        snapshotName: scenario.snapshotName,
+        ...(scenario.supportsThinkingStream === false
+          ? { supportsThinkingStream: false }
+          : {}),
+        ...(scenario.supportsClassifiers === false
+          ? { supportsClassifiers: false }
+          : {}),
+        ...(scenario.supportsClassify === false
+          ? { supportsClassify: false }
+          : {}),
+        testFileUrl: import.meta.url,
+        timeoutMs: MISTRAL_SCENARIO_TIMEOUT_MS,
+      });
 
-    defineMistralInstrumentationAssertions({
-      name: "auto-hook instrumentation",
-      runScenario: async ({ runNodeScenarioDir }) => {
-        await runNodeScenarioDir({
-          entry: scenario.autoEntry,
-          nodeArgs: ["--import", "braintrust/hook.mjs"],
-          runContext: {
-            variantKey: scenario.snapshotName,
-            originalScenarioDir,
-          },
-          scenarioDir,
-          timeoutMs: MISTRAL_SCENARIO_TIMEOUT_MS,
-        });
-      },
-      snapshotName: scenario.snapshotName,
-      ...(scenario.supportsThinkingStream === false
-        ? { supportsThinkingStream: false }
-        : {}),
-      ...(scenario.supportsClassifiers === false
-        ? { supportsClassifiers: false }
-        : {}),
-      ...(scenario.supportsClassify === false
-        ? { supportsClassify: false }
-        : {}),
-      testFileUrl: import.meta.url,
-      timeoutMs: MISTRAL_SCENARIO_TIMEOUT_MS,
+      defineMistralInstrumentationAssertions({
+        name: "auto-hook instrumentation",
+        runScenario: async ({ runNodeScenarioDir }) => {
+          await runNodeScenarioDir({
+            entry: scenario.autoEntry,
+            nodeArgs: ["--import", "braintrust/hook.mjs"],
+            runContext: {
+              variantKey: scenario.snapshotName,
+              originalScenarioDir,
+            },
+            scenarioDir,
+            timeoutMs: MISTRAL_SCENARIO_TIMEOUT_MS,
+          });
+        },
+        snapshotName: scenario.snapshotName,
+        ...(scenario.supportsThinkingStream === false
+          ? { supportsThinkingStream: false }
+          : {}),
+        ...(scenario.supportsClassifiers === false
+          ? { supportsClassifiers: false }
+          : {}),
+        ...(scenario.supportsClassify === false
+          ? { supportsClassify: false }
+          : {}),
+        testFileUrl: import.meta.url,
+        timeoutMs: MISTRAL_SCENARIO_TIMEOUT_MS,
+      });
     });
-  });
-}
+  }
+});

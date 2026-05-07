@@ -26,45 +26,51 @@ const huggingFaceScenarios = await Promise.all(
   })),
 );
 
-for (const scenario of huggingFaceScenarios) {
-  const tags = cassetteTagsFor(import.meta.url, scenario.snapshotName);
+describe.concurrent("variants", () => {
+  for (const scenario of huggingFaceScenarios) {
+    const tags = cassetteTagsFor(import.meta.url, scenario.snapshotName);
 
-  describe(`huggingface inference sdk ${scenario.version}`, { tags }, () => {
-    defineHuggingFaceInstrumentationAssertions({
-      name: "wrapped instrumentation",
-      runScenario: async ({ runScenarioDir }) => {
-        await runScenarioDir({
-          entry: scenario.wrapperEntry,
-          runContext: {
-            variantKey: scenario.snapshotName,
-            originalScenarioDir,
+    describe.sequential(
+      `huggingface inference sdk ${scenario.version}`,
+      { tags },
+      () => {
+        defineHuggingFaceInstrumentationAssertions({
+          name: "wrapped instrumentation",
+          runScenario: async ({ runScenarioDir }) => {
+            await runScenarioDir({
+              entry: scenario.wrapperEntry,
+              runContext: {
+                variantKey: scenario.snapshotName,
+                originalScenarioDir,
+              },
+              scenarioDir,
+              timeoutMs: HUGGINGFACE_SCENARIO_TIMEOUT_MS,
+            });
           },
-          scenarioDir,
+          snapshotName: scenario.snapshotName,
+          testFileUrl: import.meta.url,
+          timeoutMs: HUGGINGFACE_SCENARIO_TIMEOUT_MS,
+        });
+
+        defineHuggingFaceInstrumentationAssertions({
+          name: "auto-hook instrumentation",
+          runScenario: async ({ runNodeScenarioDir }) => {
+            await runNodeScenarioDir({
+              entry: scenario.autoEntry,
+              nodeArgs: ["--import", "braintrust/hook.mjs"],
+              runContext: {
+                variantKey: scenario.snapshotName,
+                originalScenarioDir,
+              },
+              scenarioDir,
+              timeoutMs: HUGGINGFACE_SCENARIO_TIMEOUT_MS,
+            });
+          },
+          snapshotName: scenario.snapshotName,
+          testFileUrl: import.meta.url,
           timeoutMs: HUGGINGFACE_SCENARIO_TIMEOUT_MS,
         });
       },
-      snapshotName: scenario.snapshotName,
-      testFileUrl: import.meta.url,
-      timeoutMs: HUGGINGFACE_SCENARIO_TIMEOUT_MS,
-    });
-
-    defineHuggingFaceInstrumentationAssertions({
-      name: "auto-hook instrumentation",
-      runScenario: async ({ runNodeScenarioDir }) => {
-        await runNodeScenarioDir({
-          entry: scenario.autoEntry,
-          nodeArgs: ["--import", "braintrust/hook.mjs"],
-          runContext: {
-            variantKey: scenario.snapshotName,
-            originalScenarioDir,
-          },
-          scenarioDir,
-          timeoutMs: HUGGINGFACE_SCENARIO_TIMEOUT_MS,
-        });
-      },
-      snapshotName: scenario.snapshotName,
-      testFileUrl: import.meta.url,
-      timeoutMs: HUGGINGFACE_SCENARIO_TIMEOUT_MS,
-    });
-  });
-}
+    );
+  }
+});
