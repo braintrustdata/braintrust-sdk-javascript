@@ -6,6 +6,7 @@
 
 - feat: Add dataset versioning support (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/1837)
 - feat: Add `@cursor/sdk` instrumentation (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/1923)
+- feat: Add auto and wrapper instrumentation for `@github/copilot-sdk`
 - feat: Add experiment dataset filters to experiment metadata (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/1898)
 
 ### Patch Changes

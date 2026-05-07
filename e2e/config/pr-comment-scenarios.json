@@ -145,5 +145,14 @@
     "label": "Cursor SDK Instrumentation",
     "metadataScenario": "cursor-sdk-instrumentation",
     "variants": [{ "variantKey": "cursor-sdk-v1", "label": "v1" }]
+  },
+  {
+    "scenarioDirName": "github-copilot-instrumentation",
+    "label": "GitHub Copilot SDK Instrumentation",
+    "metadataScenario": "github-copilot-instrumentation",
+    "variants": [
+      { "variantKey": "github-copilot-v0-wrapped", "label": "Wrapped" },
+      { "variantKey": "github-copilot-v0-auto", "label": "Auto-hook" }
+    ]
   }
 ]

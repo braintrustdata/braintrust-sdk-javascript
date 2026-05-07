@@ -123,6 +123,7 @@ class PluginRegistry {
       openrouterAgent: true,
       mistral: true,
       cohere: true,
+      gitHubCopilot: true,
     };
   }
 
