@@ -8,6 +8,7 @@ import type { Json } from "../../helpers/normalize";
 import { normalizeForSnapshot } from "../../helpers/normalize";
 import {
   formatJsonFileSnapshot,
+  matchFileSnapshot,
   resolveFileSnapshotPath,
 } from "../../helpers/file-snapshot";
 import { withScenarioHarness } from "../../helpers/scenario-harness";
@@ -1191,17 +1192,19 @@ export function defineMistralInstrumentationAssertions(options: {
     }
 
     test("matches the shared span snapshot", testConfig, async () => {
-      await expect(
+      await matchFileSnapshot(
         formatJsonFileSnapshot(buildSpanSummary(events, options.snapshotName)),
-      ).toMatchFileSnapshot(spanSnapshotPath);
+        spanSnapshotPath,
+      );
     });
 
     test("matches the shared payload snapshot", testConfig, async () => {
-      await expect(
+      await matchFileSnapshot(
         formatJsonFileSnapshot(
           buildPayloadSummary(events, payloads, options.snapshotName),
         ),
-      ).toMatchFileSnapshot(payloadSnapshotPath);
+        payloadSnapshotPath,
+      );
     });
   });
 }

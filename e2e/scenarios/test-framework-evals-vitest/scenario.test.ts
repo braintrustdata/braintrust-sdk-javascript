@@ -1,6 +1,7 @@
 import { expect, test } from "vitest";
 import {
   formatJsonFileSnapshot,
+  matchFileSnapshot,
   resolveFileSnapshotPath,
 } from "../../helpers/file-snapshot";
 import type { Json } from "../../helpers/normalize";
@@ -111,7 +112,7 @@ for (const scenario of scenarios) {
             pass: 0,
           });
 
-          await expect(
+          await matchFileSnapshot(
             formatJsonFileSnapshot(
               [
                 simplePass,
@@ -127,18 +128,16 @@ for (const scenario of scenarios) {
                 ]),
               ) as Json,
             ),
-          ).toMatchFileSnapshot(
             resolveFileSnapshotPath(
               import.meta.url,
               `${scenario.label}.span-events.json`,
             ),
           );
 
-          await expect(
+          await matchFileSnapshot(
             formatJsonFileSnapshot(
               payloadRowsForTestRunId(payloads(), testRunId) as Json,
             ),
-          ).toMatchFileSnapshot(
             resolveFileSnapshotPath(
               import.meta.url,
               `${scenario.label}.log-payloads.json`,

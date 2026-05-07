@@ -3,6 +3,7 @@ import { type Json } from "../../helpers/normalize";
 import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
 import {
   formatJsonFileSnapshot,
+  matchFileSnapshot,
   resolveFileSnapshotPath,
 } from "../../helpers/file-snapshot";
 import { withScenarioHarness } from "../../helpers/scenario-harness";
@@ -395,9 +396,7 @@ export function defineHuggingFaceInstrumentationAssertions(options: {
       "matches the span contract snapshot",
       { timeout: options.timeoutMs },
       async ({ expect }) => {
-        await expect(
-          formatJsonFileSnapshot(buildSpanSummary(events)),
-        ).toMatchFileSnapshot(spanSnapshotPath);
+        await matchFileSnapshot(formatJsonFileSnapshot(buildSpanSummary(events)), spanSnapshotPath);
       },
     );
 
@@ -405,9 +404,7 @@ export function defineHuggingFaceInstrumentationAssertions(options: {
       "matches the log payload snapshot",
       { timeout: options.timeoutMs },
       async ({ expect }) => {
-        await expect(formatJsonFileSnapshot(payloadRows)).toMatchFileSnapshot(
-          payloadSnapshotPath,
-        );
+        await matchFileSnapshot(formatJsonFileSnapshot(payloadRows), payloadSnapshotPath);
       },
     );
 

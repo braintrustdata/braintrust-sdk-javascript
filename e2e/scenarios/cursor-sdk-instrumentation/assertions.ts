@@ -3,6 +3,7 @@ import { normalizeForSnapshot, type Json } from "../../helpers/normalize";
 import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
 import {
   formatJsonFileSnapshot,
+  matchFileSnapshot,
   resolveFileSnapshotPath,
 } from "../../helpers/file-snapshot";
 import { withScenarioHarness } from "../../helpers/scenario-harness";
@@ -289,9 +290,7 @@ export function defineCursorSDKInstrumentationAssertions(options: {
     });
 
     test("matches the shared span snapshot", testConfig, async () => {
-      await expect(
-        formatJsonFileSnapshot(summarize(events)),
-      ).toMatchFileSnapshot(snapshotPath);
+      await matchFileSnapshot(formatJsonFileSnapshot(summarize(events)), snapshotPath);
     });
   });
 }
