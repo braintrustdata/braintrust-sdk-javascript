@@ -1,1 +1,8 @@
+# Check for secrets in staged files before committing
+if command -v gitleaks &> /dev/null; then
+  gitleaks protect --staged --redact --no-banner
+else
+  echo "WARNING: gitleaks not installed — skipping secret scan. Install via: brew install gitleaks"
+fi
+
 pnpm exec lint-staged
