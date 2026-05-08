@@ -8,6 +8,11 @@
 import { BraintrustPlugin } from "./braintrust-plugin";
 import iso from "../isomorph";
 
+// Process-global deduplication key: prevents multiple SDK instances loaded
+// from different module paths from each subscribing to the same
+// diagnostics_channel, which would create duplicate spans per API call.
+const GLOBAL_REGISTRY_ENABLED_KEY = Symbol.for("braintrust.registry.enabled");
+
 export interface InstrumentationConfig {
   /**
    * Configuration for individual SDK integrations.
@@ -60,7 +65,14 @@ class PluginRegistry {
       return;
     }
 
+    // If another SDK instance in the same process already registered plugins,
+    // skip to avoid duplicate diagnostics_channel subscriptions.
+    if ((globalThis as Record<symbol, unknown>)[GLOBAL_REGISTRY_ENABLED_KEY]) {
+      return;
+    }
+
     this.enabled = true;
+    (globalThis as Record<symbol, unknown>)[GLOBAL_REGISTRY_ENABLED_KEY] = true;
 
     // Read config from environment variables
     const envConfig = this.readEnvConfig();
@@ -87,6 +99,7 @@ class PluginRegistry {
     }
 
     this.enabled = false;
+    delete (globalThis as Record<symbol, unknown>)[GLOBAL_REGISTRY_ENABLED_KEY];
 
     if (this.braintrustPlugin) {
       this.braintrustPlugin.disable();

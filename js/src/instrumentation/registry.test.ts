@@ -50,6 +50,28 @@ describe("Plugin Registry", () => {
     testRegistry.disable();
   });
 
+  it("should block a second instance from subscribing when another is already enabled", () => {
+    // Regression test for BT-5139: when the SDK is loaded from two different
+    // module paths in the same process, each gets its own PluginRegistry
+    // instance. Without cross-instance deduplication, both would subscribe to
+    // the same diagnostics_channel, causing every OpenAI call to produce two
+    // LLM spans.
+    const instanceA = new (registry.constructor as any)();
+    const instanceB = new (registry.constructor as any)();
+
+    try {
+      instanceA.enable();
+      expect(instanceA.isEnabled()).toBe(true);
+
+      // instanceB should be blocked — the channel is already subscribed
+      instanceB.enable();
+      expect(instanceB.isEnabled()).toBe(false);
+    } finally {
+      instanceA.disable();
+      instanceB.disable();
+    }
+  });
+
   it("should warn if configureInstrumentation is called after enable", () => {
     const testRegistry = new (registry.constructor as any)();
     const warnSpy = [] as string[];
