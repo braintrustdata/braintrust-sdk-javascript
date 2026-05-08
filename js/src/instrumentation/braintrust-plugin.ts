@@ -18,8 +18,6 @@ import { GitHubCopilotPlugin } from "./plugins/github-copilot-plugin";
 export interface BraintrustPluginConfig {
   integrations?: {
     openai?: boolean;
-    openaiCodex?: boolean;
-    codex?: boolean;
     anthropic?: boolean;
     vercel?: boolean;
     aisdk?: boolean;
@@ -35,6 +33,8 @@ export interface BraintrustPluginConfig {
     googleADK?: boolean;
     cohere?: boolean;
     groq?: boolean;
+    openaiCodex?: boolean;
+    codex?: boolean;
   };
 }
 

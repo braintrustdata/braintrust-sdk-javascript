@@ -15,8 +15,6 @@ export interface InstrumentationConfig {
    */
   integrations?: {
     openai?: boolean;
-    openaiCodex?: boolean;
-    codex?: boolean;
     anthropic?: boolean;
     vercel?: boolean;
     aisdk?: boolean;
@@ -29,6 +27,8 @@ export interface InstrumentationConfig {
     openrouterAgent?: boolean;
     mistral?: boolean;
     cohere?: boolean;
+    openaiCodex?: boolean;
+    codex?: boolean;
   };
 }
 
