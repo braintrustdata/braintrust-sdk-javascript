@@ -12,6 +12,7 @@ import { MistralPlugin } from "./plugins/mistral-plugin";
 import { GoogleADKPlugin } from "./plugins/google-adk-plugin";
 import { CoherePlugin } from "./plugins/cohere-plugin";
 import { GroqPlugin } from "./plugins/groq-plugin";
+import { GitHubCopilotPlugin } from "./plugins/github-copilot-plugin";
 
 export interface BraintrustPluginConfig {
   integrations?: {
@@ -32,6 +33,13 @@ export interface BraintrustPluginConfig {
     cohere?: boolean;
     groq?: boolean;
   };
+}
+
+function getIntegrationConfig(
+  integrations: NonNullable<BraintrustPluginConfig["integrations"]>,
+  key: string,
+): boolean | undefined {
+  return (integrations as Record<string, boolean | undefined>)[key];
 }
 
 /**
@@ -65,6 +73,7 @@ export class BraintrustPlugin extends BasePlugin {
   private googleADKPlugin: GoogleADKPlugin | null = null;
   private coherePlugin: CoherePlugin | null = null;
   private groqPlugin: GroqPlugin | null = null;
+  private gitHubCopilotPlugin: GitHubCopilotPlugin | null = null;
 
   constructor(config: BraintrustPluginConfig = {}) {
     super();
@@ -146,6 +155,11 @@ export class BraintrustPlugin extends BasePlugin {
       this.groqPlugin = new GroqPlugin();
       this.groqPlugin.enable();
     }
+
+    if (getIntegrationConfig(integrations, "gitHubCopilot") !== false) {
+      this.gitHubCopilotPlugin = new GitHubCopilotPlugin();
+      this.gitHubCopilotPlugin.enable();
+    }
   }
 
   protected onDisable(): void {
@@ -212,6 +226,11 @@ export class BraintrustPlugin extends BasePlugin {
     if (this.groqPlugin) {
       this.groqPlugin.disable();
       this.groqPlugin = null;
+    }
+
+    if (this.gitHubCopilotPlugin) {
+      this.gitHubCopilotPlugin.disable();
+      this.gitHubCopilotPlugin = null;
     }
   }
 }

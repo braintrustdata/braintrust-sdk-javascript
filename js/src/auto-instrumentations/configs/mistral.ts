@@ -87,6 +87,118 @@ export const mistralConfigs: InstrumentationConfig[] = [
   },
 
   {
+    channelName: mistralChannels.classifiersModerate.channelName,
+    module: {
+      name: "@mistralai/mistralai",
+      versionRange: ">=1.0.0 <2.0.0",
+      filePath: "sdk/classifiers.js",
+    },
+    functionQuery: {
+      className: "Classifiers",
+      methodName: "moderate",
+      kind: "Async",
+    },
+  },
+
+  {
+    channelName: mistralChannels.classifiersModerate.channelName,
+    module: {
+      name: "@mistralai/mistralai",
+      versionRange: ">=2.0.0 <3.0.0",
+      filePath: "esm/sdk/classifiers.js",
+    },
+    functionQuery: {
+      className: "Classifiers",
+      methodName: "moderate",
+      kind: "Async",
+    },
+  },
+
+  {
+    channelName: mistralChannels.classifiersModerateChat.channelName,
+    module: {
+      name: "@mistralai/mistralai",
+      versionRange: ">=1.0.0 <2.0.0",
+      filePath: "sdk/classifiers.js",
+    },
+    functionQuery: {
+      className: "Classifiers",
+      methodName: "moderateChat",
+      kind: "Async",
+    },
+  },
+
+  {
+    channelName: mistralChannels.classifiersModerateChat.channelName,
+    module: {
+      name: "@mistralai/mistralai",
+      versionRange: ">=2.0.0 <3.0.0",
+      filePath: "esm/sdk/classifiers.js",
+    },
+    functionQuery: {
+      className: "Classifiers",
+      methodName: "moderateChat",
+      kind: "Async",
+    },
+  },
+
+  {
+    channelName: mistralChannels.classifiersClassify.channelName,
+    module: {
+      name: "@mistralai/mistralai",
+      versionRange: ">=1.10.0 <2.0.0",
+      filePath: "sdk/classifiers.js",
+    },
+    functionQuery: {
+      className: "Classifiers",
+      methodName: "classify",
+      kind: "Async",
+    },
+  },
+
+  {
+    channelName: mistralChannels.classifiersClassify.channelName,
+    module: {
+      name: "@mistralai/mistralai",
+      versionRange: ">=2.0.0 <3.0.0",
+      filePath: "esm/sdk/classifiers.js",
+    },
+    functionQuery: {
+      className: "Classifiers",
+      methodName: "classify",
+      kind: "Async",
+    },
+  },
+
+  {
+    channelName: mistralChannels.classifiersClassifyChat.channelName,
+    module: {
+      name: "@mistralai/mistralai",
+      versionRange: ">=1.10.0 <2.0.0",
+      filePath: "sdk/classifiers.js",
+    },
+    functionQuery: {
+      className: "Classifiers",
+      methodName: "classifyChat",
+      kind: "Async",
+    },
+  },
+
+  {
+    channelName: mistralChannels.classifiersClassifyChat.channelName,
+    module: {
+      name: "@mistralai/mistralai",
+      versionRange: ">=2.0.0 <3.0.0",
+      filePath: "esm/sdk/classifiers.js",
+    },
+    functionQuery: {
+      className: "Classifiers",
+      methodName: "classifyChat",
+      kind: "Async",
+    },
+  },
+
+  {
     channelName: mistralChannels.fimComplete.channelName,
     module: {
       name: "@mistralai/mistralai",
