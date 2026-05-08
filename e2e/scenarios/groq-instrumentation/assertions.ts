@@ -198,7 +198,10 @@ export function defineGroqInstrumentationAssertions(options: {
     });
 
     test("matches span snapshot", testConfig, async () => {
-      await matchFileSnapshot(formatJsonFileSnapshot(buildSpanSummary(events)), spanSnapshotPath);
+      await matchFileSnapshot(
+        formatJsonFileSnapshot(buildSpanSummary(events)),
+        spanSnapshotPath,
+      );
     });
   });
 }

@@ -648,11 +648,17 @@ export function defineGoogleGenAIInstrumentationAssertions(options: {
     });
 
     test("matches the shared span snapshot", testConfig, async () => {
-      await matchFileSnapshot(formatJsonFileSnapshot(buildSpanSummary(events)), spanSnapshotPath);
+      await matchFileSnapshot(
+        formatJsonFileSnapshot(buildSpanSummary(events)),
+        spanSnapshotPath,
+      );
     });
 
     test("matches the shared payload snapshot", testConfig, async () => {
-      await matchFileSnapshot(formatJsonFileSnapshot(buildPayloadSummary(events)), payloadSnapshotPath);
+      await matchFileSnapshot(
+        formatJsonFileSnapshot(buildPayloadSummary(events)),
+        payloadSnapshotPath,
+      );
     });
   });
 }

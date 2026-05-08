@@ -136,9 +136,7 @@ export async function buildResponse(
   // layer (undici decompresses gzip/deflate before handing the body to MSW
   // handlers). Preserving content-encoding would cause callers to attempt a
   // second decode of already-plain bytes, which throws a zlib error.
-  const headers = expandSetCookieHeader(
-    stripEncodingHeaders(recorded.headers),
-  );
+  const headers = expandSetCookieHeader(stripEncodingHeaders(recorded.headers));
   const init: ResponseInit = { status: recorded.status, headers };
   if (recorded.statusText) init.statusText = recorded.statusText;
   // 1xx/204/304 responses must not have a body, per Fetch spec.

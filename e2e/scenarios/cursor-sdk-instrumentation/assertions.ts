@@ -290,7 +290,10 @@ export function defineCursorSDKInstrumentationAssertions(options: {
     });
 
     test("matches the shared span snapshot", testConfig, async () => {
-      await matchFileSnapshot(formatJsonFileSnapshot(summarize(events)), snapshotPath);
+      await matchFileSnapshot(
+        formatJsonFileSnapshot(summarize(events)),
+        snapshotPath,
+      );
     });
   });
 }

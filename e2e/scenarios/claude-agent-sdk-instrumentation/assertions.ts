@@ -687,7 +687,10 @@ export function defineClaudeAgentSDKInstrumentationAssertions(options: {
     });
 
     test("matches the shared span snapshot", testConfig, async () => {
-      await matchFileSnapshot(formatJsonFileSnapshot(buildSpanSummary(events)), snapshotPath);
+      await matchFileSnapshot(
+        formatJsonFileSnapshot(buildSpanSummary(events)),
+        snapshotPath,
+      );
     });
   });
 }

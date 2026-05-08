@@ -236,7 +236,10 @@ export function defineGitHubCopilotInstrumentationAssertions(options: {
     });
 
     test("matches the span snapshot", testConfig, async () => {
-      await matchFileSnapshot(formatJsonFileSnapshot(buildSpanSummary(events)), snapshotPath);
+      await matchFileSnapshot(
+        formatJsonFileSnapshot(buildSpanSummary(events)),
+        snapshotPath,
+      );
     });
   });
 }

@@ -306,7 +306,10 @@ export function defineGoogleADKInstrumentationAssertions(options: {
         ) as Json,
       );
 
-      await matchFileSnapshot(formatJsonFileSnapshot(spanSummary), spanSnapshotPath);
+      await matchFileSnapshot(
+        formatJsonFileSnapshot(spanSummary),
+        spanSnapshotPath,
+      );
     });
 
     test("matches the shared payload snapshot", testConfig, async () => {
@@ -322,7 +325,10 @@ export function defineGoogleADKInstrumentationAssertions(options: {
         ) as Json,
       );
 
-      await matchFileSnapshot(formatJsonFileSnapshot(payloadSummary), payloadSnapshotPath);
+      await matchFileSnapshot(
+        formatJsonFileSnapshot(payloadSummary),
+        payloadSnapshotPath,
+      );
     });
   });
 }

@@ -396,7 +396,10 @@ export function defineHuggingFaceInstrumentationAssertions(options: {
       "matches the span contract snapshot",
       { timeout: options.timeoutMs },
       async ({ expect }) => {
-        await matchFileSnapshot(formatJsonFileSnapshot(buildSpanSummary(events)), spanSnapshotPath);
+        await matchFileSnapshot(
+          formatJsonFileSnapshot(buildSpanSummary(events)),
+          spanSnapshotPath,
+        );
       },
     );
 
@@ -404,7 +407,10 @@ export function defineHuggingFaceInstrumentationAssertions(options: {
       "matches the log payload snapshot",
       { timeout: options.timeoutMs },
       async ({ expect }) => {
-        await matchFileSnapshot(formatJsonFileSnapshot(payloadRows), payloadSnapshotPath);
+        await matchFileSnapshot(
+          formatJsonFileSnapshot(payloadRows),
+          payloadSnapshotPath,
+        );
       },
     );
 
