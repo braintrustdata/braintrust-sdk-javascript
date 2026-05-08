@@ -1,6 +1,8 @@
 import { type GitMetadataSettingsType as GitMetadataSettings } from "./generated_types";
 
-export const DEFAULT_GIT_METADATA_FIELDS = [
+export const DEFAULT_GIT_METADATA_FIELDS: NonNullable<
+  GitMetadataSettings["fields"]
+> = [
   "commit",
   "branch",
   "tag",
