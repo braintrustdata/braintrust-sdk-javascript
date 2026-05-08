@@ -1,21 +1,11 @@
 {
-  "version": 1,
-  "meta": {
-    "createdAt": "2026-04-28T23:26:31.789Z",
-    "seinfeldVersion": "0.0.0"
-  },
   "entries": [
     {
+      "callIndex": 0,
       "id": "0c8ac8ab9b5a4b7b",
       "matchKey": "POST router.huggingface.co/v1/chat/completions",
-      "callIndex": 0,
       "recordedAt": "2026-04-28T23:26:31.789Z",
       "request": {
-        "method": "POST",
-        "url": "https://router.huggingface.co/v1/chat/completions",
-        "headers": {
-          "content-type": "application/json"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -29,40 +19,12 @@
             "model": "meta-llama/Llama-3.1-8B-Instruct",
             "temperature": 0
           }
-        }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://router.huggingface.co/v1/chat/completions"
       },
       "response": {
-        "status": 200,
-        "statusText": "OK",
-        "headers": {
-          "access-control-allow-origin": "*",
-          "access-control-expose-headers": "X-Repo-Commit,X-Request-Id,X-Error-Code,X-Error-Message,X-Total-Count,ETag,Link,Accept-Ranges,Content-Range,X-Linked-Size,X-Linked-ETag,X-Xet-Hash",
-          "content-type": "application/json",
-          "cross-origin-opener-policy": "same-origin",
-          "inference-id": "chatcmpl-7509cd26-39fe-4d81-99f8-cada665429a6",
-          "referrer-policy": "strict-origin-when-cross-origin",
-          "vary": "Origin",
-          "via": "1.1 09701f8b2a1866d72a24a6230bb8aac8.cloudfront.net (CloudFront)",
-          "x-amz-cf-id": "FYz5kyt43qFq8HPOCIZCf8c9AXbgPEpRVTMz2Ejm3IPg6ypu76UhgA==",
-          "x-amz-cf-pop": "YVR52-P2",
-          "x-cache": "Miss from cloudfront",
-          "x-content-type-options": "nosniff",
-          "x-inference-provider": "cerebras",
-          "x-powered-by": "huggingface-moon",
-          "x-ratelimit-limit-requests-day": "2880000",
-          "x-ratelimit-limit-requests-hour": "120000",
-          "x-ratelimit-limit-requests-minute": "2000",
-          "x-ratelimit-limit-tokens-day": "9223372036854775807",
-          "x-ratelimit-limit-tokens-hour": "9223372036854775807",
-          "x-ratelimit-limit-tokens-minute": "9223372036854775807",
-          "x-ratelimit-remaining-requests-day": "2879998",
-          "x-ratelimit-remaining-requests-hour": "119998",
-          "x-ratelimit-remaining-requests-minute": "1998",
-          "x-ratelimit-remaining-tokens-day": "9223372036854767616",
-          "x-ratelimit-remaining-tokens-hour": "9223372036854767616",
-          "x-ratelimit-remaining-tokens-minute": "9223372036854767616",
-          "x-robots-tag": "none"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -102,20 +64,46 @@
               "total_tokens": 43
             }
           }
-        }
+        },
+        "headers": {
+          "access-control-allow-origin": "*",
+          "access-control-expose-headers": "X-Repo-Commit,X-Request-Id,X-Error-Code,X-Error-Message,X-Total-Count,ETag,Link,Accept-Ranges,Content-Range,X-Linked-Size,X-Linked-ETag,X-Xet-Hash",
+          "content-type": "application/json",
+          "cross-origin-opener-policy": "same-origin",
+          "inference-id": "chatcmpl-7509cd26-39fe-4d81-99f8-cada665429a6",
+          "referrer-policy": "strict-origin-when-cross-origin",
+          "vary": "Origin",
+          "via": "1.1 09701f8b2a1866d72a24a6230bb8aac8.cloudfront.net (CloudFront)",
+          "x-amz-cf-id": "FYz5kyt43qFq8HPOCIZCf8c9AXbgPEpRVTMz2Ejm3IPg6ypu76UhgA==",
+          "x-amz-cf-pop": "YVR52-P2",
+          "x-cache": "Miss from cloudfront",
+          "x-content-type-options": "nosniff",
+          "x-inference-provider": "cerebras",
+          "x-powered-by": "huggingface-moon",
+          "x-ratelimit-limit-requests-day": "2880000",
+          "x-ratelimit-limit-requests-hour": "120000",
+          "x-ratelimit-limit-requests-minute": "2000",
+          "x-ratelimit-limit-tokens-day": "9223372036854775807",
+          "x-ratelimit-limit-tokens-hour": "9223372036854775807",
+          "x-ratelimit-limit-tokens-minute": "9223372036854775807",
+          "x-ratelimit-remaining-requests-day": "2879998",
+          "x-ratelimit-remaining-requests-hour": "119998",
+          "x-ratelimit-remaining-requests-minute": "1998",
+          "x-ratelimit-remaining-tokens-day": "9223372036854767616",
+          "x-ratelimit-remaining-tokens-hour": "9223372036854767616",
+          "x-ratelimit-remaining-tokens-minute": "9223372036854767616",
+          "x-robots-tag": "none"
+        },
+        "status": 200,
+        "statusText": "OK"
       }
     },
     {
+      "callIndex": 1,
       "id": "fc34799b16885e8f",
       "matchKey": "POST router.huggingface.co/v1/chat/completions",
-      "callIndex": 1,
       "recordedAt": "2026-04-28T23:26:31.789Z",
       "request": {
-        "method": "POST",
-        "url": "https://router.huggingface.co/v1/chat/completions",
-        "headers": {
-          "content-type": "application/json"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -130,11 +118,22 @@
             "stream": true,
             "temperature": 0
           }
-        }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://router.huggingface.co/v1/chat/completions"
       },
       "response": {
-        "status": 200,
-        "statusText": "OK",
+        "body": {
+          "chunks": [
+            "data: {\"id\":\"chatcmpl-1d5e227c-0969-44ce-b4ee-eec47ad65366\",\"choices\":[{\"delta\":{\"role\":\"assistant\"},\"index\":0}],\"created\":1777418782,\"model\":\"llama3.1-8b\",\"system_fingerprint\":\"fp_96e7e4453bc38316a23a\",\"object\":\"chat.completion.chunk\"}",
+            "data: {\"id\":\"chatcmpl-1d5e227c-0969-44ce-b4ee-eec47ad65366\",\"choices\":[{\"delta\":{\"content\":\"OK\"},\"index\":0}],\"created\":1777418782,\"model\":\"llama3.1-8b\",\"system_fingerprint\":\"fp_96e7e4453bc38316a23a\",\"object\":\"chat.completion.chunk\"}",
+            "data: {\"id\":\"chatcmpl-1d5e227c-0969-44ce-b4ee-eec47ad65366\",\"choices\":[{\"delta\":{\"content\":\".\"},\"index\":0}],\"created\":1777418782,\"model\":\"llama3.1-8b\",\"system_fingerprint\":\"fp_96e7e4453bc38316a23a\",\"object\":\"chat.completion.chunk\"}",
+            "data: {\"id\":\"chatcmpl-1d5e227c-0969-44ce-b4ee-eec47ad65366\",\"choices\":[{\"delta\":{},\"finish_reason\":\"stop\",\"index\":0}],\"created\":1777418782,\"model\":\"llama3.1-8b\",\"system_fingerprint\":\"fp_96e7e4453bc38316a23a\",\"object\":\"chat.completion.chunk\",\"usage\":{\"total_tokens\":43,\"completion_tokens\":3,\"completion_tokens_details\":{\"accepted_prediction_tokens\":0,\"rejected_prediction_tokens\":0,\"reasoning_tokens\":0},\"prompt_tokens\":40,\"prompt_tokens_details\":{\"cached_tokens\":0}},\"time_info\":{\"queue_time\":0.00007562,\"prompt_time\":0.001808968,\"completion_time\":0.001196566,\"total_time\":0.0053615570068359375,\"created\":1777418782.8657675}}",
+            "data: [DONE]"
+          ],
+          "kind": "sse"
+        },
         "headers": {
           "access-control-allow-origin": "*",
           "access-control-expose-headers": "X-Repo-Commit,X-Request-Id,X-Error-Code,X-Error-Message,X-Total-Count,ETag,Link,Accept-Ranges,Content-Range,X-Linked-Size,X-Linked-ETag,X-Xet-Hash",
@@ -164,29 +163,16 @@
           "x-ratelimit-remaining-tokens-minute": "9223372036854767616",
           "x-robots-tag": "none"
         },
-        "body": {
-          "kind": "sse",
-          "chunks": [
-            "data: {\"id\":\"chatcmpl-1d5e227c-0969-44ce-b4ee-eec47ad65366\",\"choices\":[{\"delta\":{\"role\":\"assistant\"},\"index\":0}],\"created\":1777418782,\"model\":\"llama3.1-8b\",\"system_fingerprint\":\"fp_96e7e4453bc38316a23a\",\"object\":\"chat.completion.chunk\"}",
-            "data: {\"id\":\"chatcmpl-1d5e227c-0969-44ce-b4ee-eec47ad65366\",\"choices\":[{\"delta\":{\"content\":\"OK\"},\"index\":0}],\"created\":1777418782,\"model\":\"llama3.1-8b\",\"system_fingerprint\":\"fp_96e7e4453bc38316a23a\",\"object\":\"chat.completion.chunk\"}",
-            "data: {\"id\":\"chatcmpl-1d5e227c-0969-44ce-b4ee-eec47ad65366\",\"choices\":[{\"delta\":{\"content\":\".\"},\"index\":0}],\"created\":1777418782,\"model\":\"llama3.1-8b\",\"system_fingerprint\":\"fp_96e7e4453bc38316a23a\",\"object\":\"chat.completion.chunk\"}",
-            "data: {\"id\":\"chatcmpl-1d5e227c-0969-44ce-b4ee-eec47ad65366\",\"choices\":[{\"delta\":{},\"finish_reason\":\"stop\",\"index\":0}],\"created\":1777418782,\"model\":\"llama3.1-8b\",\"system_fingerprint\":\"fp_96e7e4453bc38316a23a\",\"object\":\"chat.completion.chunk\",\"usage\":{\"total_tokens\":43,\"completion_tokens\":3,\"completion_tokens_details\":{\"accepted_prediction_tokens\":0,\"rejected_prediction_tokens\":0,\"reasoning_tokens\":0},\"prompt_tokens\":40,\"prompt_tokens_details\":{\"cached_tokens\":0}},\"time_info\":{\"queue_time\":0.00007562,\"prompt_time\":0.001808968,\"completion_time\":0.001196566,\"total_time\":0.0053615570068359375,\"created\":1777418782.8657675}}",
-            "data: [DONE]"
-          ]
-        }
+        "status": 200,
+        "statusText": "OK"
       }
     },
     {
+      "callIndex": 2,
       "id": "3b65b128c60765b5",
       "matchKey": "POST router.huggingface.co/v1/chat/completions",
-      "callIndex": 2,
       "recordedAt": "2026-04-28T23:26:31.789Z",
       "request": {
-        "method": "POST",
-        "url": "https://router.huggingface.co/v1/chat/completions",
-        "headers": {
-          "content-type": "application/json"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -222,11 +208,21 @@
               }
             ]
           }
-        }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://router.huggingface.co/v1/chat/completions"
       },
       "response": {
-        "status": 200,
-        "statusText": "OK",
+        "body": {
+          "chunks": [
+            "data: {\"id\":\"chatcmpl-da090f57-c015-46b0-a383-2816eab29130\",\"choices\":[{\"delta\":{\"role\":\"assistant\"},\"index\":0}],\"created\":1777418783,\"model\":\"llama3.1-8b\",\"system_fingerprint\":\"fp_96e7e4453bc38316a23a\",\"object\":\"chat.completion.chunk\"}",
+            "data: {\"id\":\"chatcmpl-da090f57-c015-46b0-a383-2816eab29130\",\"choices\":[{\"delta\":{\"tool_calls\":[{\"function\":{\"name\":\"get_current_weather\",\"arguments\":\"{\\\"location\\\": \\\"San Francisco\\\"}\"},\"type\":\"function\",\"id\":\"a377190e9\",\"index\":0}]},\"index\":0}],\"created\":1777418783,\"model\":\"llama3.1-8b\",\"system_fingerprint\":\"fp_96e7e4453bc38316a23a\",\"object\":\"chat.completion.chunk\"}",
+            "data: {\"id\":\"chatcmpl-da090f57-c015-46b0-a383-2816eab29130\",\"choices\":[{\"delta\":{},\"finish_reason\":\"tool_calls\",\"index\":0}],\"created\":1777418783,\"model\":\"llama3.1-8b\",\"system_fingerprint\":\"fp_96e7e4453bc38316a23a\",\"object\":\"chat.completion.chunk\",\"usage\":{\"total_tokens\":414,\"completion_tokens\":20,\"completion_tokens_details\":{\"accepted_prediction_tokens\":0,\"rejected_prediction_tokens\":0,\"reasoning_tokens\":0},\"prompt_tokens\":394,\"prompt_tokens_details\":{\"cached_tokens\":0}},\"time_info\":{\"queue_time\":0.003320794,\"prompt_time\":0.018529026,\"completion_time\":0.008036854,\"total_time\":0.0320587158203125,\"created\":1777418783.1274838}}",
+            "data: [DONE]"
+          ],
+          "kind": "sse"
+        },
         "headers": {
           "access-control-allow-origin": "*",
           "access-control-expose-headers": "X-Repo-Commit,X-Request-Id,X-Error-Code,X-Error-Message,X-Total-Count,ETag,Link,Accept-Ranges,Content-Range,X-Linked-Size,X-Linked-ETag,X-Xet-Hash",
@@ -256,28 +252,16 @@
           "x-ratelimit-remaining-tokens-minute": "9223372036854769664",
           "x-robots-tag": "none"
         },
-        "body": {
-          "kind": "sse",
-          "chunks": [
-            "data: {\"id\":\"chatcmpl-da090f57-c015-46b0-a383-2816eab29130\",\"choices\":[{\"delta\":{\"role\":\"assistant\"},\"index\":0}],\"created\":1777418783,\"model\":\"llama3.1-8b\",\"system_fingerprint\":\"fp_96e7e4453bc38316a23a\",\"object\":\"chat.completion.chunk\"}",
-            "data: {\"id\":\"chatcmpl-da090f57-c015-46b0-a383-2816eab29130\",\"choices\":[{\"delta\":{\"tool_calls\":[{\"function\":{\"name\":\"get_current_weather\",\"arguments\":\"{\\\"location\\\": \\\"San Francisco\\\"}\"},\"type\":\"function\",\"id\":\"a377190e9\",\"index\":0}]},\"index\":0}],\"created\":1777418783,\"model\":\"llama3.1-8b\",\"system_fingerprint\":\"fp_96e7e4453bc38316a23a\",\"object\":\"chat.completion.chunk\"}",
-            "data: {\"id\":\"chatcmpl-da090f57-c015-46b0-a383-2816eab29130\",\"choices\":[{\"delta\":{},\"finish_reason\":\"tool_calls\",\"index\":0}],\"created\":1777418783,\"model\":\"llama3.1-8b\",\"system_fingerprint\":\"fp_96e7e4453bc38316a23a\",\"object\":\"chat.completion.chunk\",\"usage\":{\"total_tokens\":414,\"completion_tokens\":20,\"completion_tokens_details\":{\"accepted_prediction_tokens\":0,\"rejected_prediction_tokens\":0,\"reasoning_tokens\":0},\"prompt_tokens\":394,\"prompt_tokens_details\":{\"cached_tokens\":0}},\"time_info\":{\"queue_time\":0.003320794,\"prompt_time\":0.018529026,\"completion_time\":0.008036854,\"total_time\":0.0320587158203125,\"created\":1777418783.1274838}}",
-            "data: [DONE]"
-          ]
-        }
+        "status": 200,
+        "statusText": "OK"
       }
     },
     {
+      "callIndex": 0,
       "id": "ddb680b3e06dedc6",
       "matchKey": "POST router.huggingface.co/featherless-ai/v1/completions",
-      "callIndex": 0,
       "recordedAt": "2026-04-28T23:26:31.789Z",
       "request": {
-        "method": "POST",
-        "url": "https://router.huggingface.co/featherless-ai/v1/completions",
-        "headers": {
-          "content-type": "application/json"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -287,11 +271,24 @@
             "prompt": "The capital of France is",
             "stream": true
           }
-        }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://router.huggingface.co/featherless-ai/v1/completions"
       },
       "response": {
-        "status": 200,
-        "statusText": "OK",
+        "body": {
+          "chunks": [
+            "data: {\"id\":\"b77280bd-35f3-4914-becc-5aa70de3e63e\",\"object\":\"text_completion\",\"created\":1777418783,\"model\":\"arcee-ai/Trinity-Large-Thinking\",\"choices\":[{\"index\":0,\"text\":\" Paris\",\"finish_reason\":null}]}",
+            "data: {\"id\":\"b77280bd-35f3-4914-becc-5aa70de3e63e\",\"object\":\"text_completion\",\"created\":1777418783,\"model\":\"arcee-ai/Trinity-Large-Thinking\",\"choices\":[{\"index\":0,\"text\":\".\\n\",\"finish_reason\":null}]}",
+            "data: {\"id\":\"b77280bd-35f3-4914-becc-5aa70de3e63e\",\"object\":\"text_completion\",\"created\":1777418783,\"model\":\"arcee-ai/Trinity-Large-Thinking\",\"choices\":[{\"index\":0,\"text\":\"The\",\"finish_reason\":null}]}",
+            "data: {\"id\":\"b77280bd-35f3-4914-becc-5aa70de3e63e\",\"object\":\"text_completion\",\"created\":1777418783,\"model\":\"arcee-ai/Trinity-Large-Thinking\",\"choices\":[{\"index\":0,\"text\":\" capital\",\"finish_reason\":null}]}",
+            "data: {\"id\":\"b77280bd-35f3-4914-becc-5aa70de3e63e\",\"object\":\"text_completion\",\"created\":1777418783,\"model\":\"arcee-ai/Trinity-Large-Thinking\",\"choices\":[{\"index\":0,\"text\":\"\",\"finish_reason\":\"length\"}],\"system_fingerprint\":\"fp1-nst-nes\"}",
+            "data: {\"id\":\"b77280bd-35f3-4914-becc-5aa70de3e63e\",\"object\":\"text_completion\",\"created\":1777418783,\"model\":\"arcee-ai/Trinity-Large-Thinking\",\"choices\":[],\"usage\":{\"prompt_tokens\":6,\"total_tokens\":10,\"completion_tokens\":4}}",
+            "data: [DONE]"
+          ],
+          "kind": "sse"
+        },
         "headers": {
           "access-control-allow-credentials": "true",
           "access-control-allow-origin": "*",
@@ -312,36 +309,32 @@
           "x-powered-by": "huggingface-moon",
           "x-robots-tag": "none"
         },
-        "body": {
-          "kind": "sse",
-          "chunks": [
-            "data: {\"id\":\"b77280bd-35f3-4914-becc-5aa70de3e63e\",\"object\":\"text_completion\",\"created\":1777418783,\"model\":\"arcee-ai/Trinity-Large-Thinking\",\"choices\":[{\"index\":0,\"text\":\" Paris\",\"finish_reason\":null}]}",
-            "data: {\"id\":\"b77280bd-35f3-4914-becc-5aa70de3e63e\",\"object\":\"text_completion\",\"created\":1777418783,\"model\":\"arcee-ai/Trinity-Large-Thinking\",\"choices\":[{\"index\":0,\"text\":\".\\n\",\"finish_reason\":null}]}",
-            "data: {\"id\":\"b77280bd-35f3-4914-becc-5aa70de3e63e\",\"object\":\"text_completion\",\"created\":1777418783,\"model\":\"arcee-ai/Trinity-Large-Thinking\",\"choices\":[{\"index\":0,\"text\":\"The\",\"finish_reason\":null}]}",
-            "data: {\"id\":\"b77280bd-35f3-4914-becc-5aa70de3e63e\",\"object\":\"text_completion\",\"created\":1777418783,\"model\":\"arcee-ai/Trinity-Large-Thinking\",\"choices\":[{\"index\":0,\"text\":\" capital\",\"finish_reason\":null}]}",
-            "data: {\"id\":\"b77280bd-35f3-4914-becc-5aa70de3e63e\",\"object\":\"text_completion\",\"created\":1777418783,\"model\":\"arcee-ai/Trinity-Large-Thinking\",\"choices\":[{\"index\":0,\"text\":\"\",\"finish_reason\":\"length\"}],\"system_fingerprint\":\"fp1-nst-nes\"}",
-            "data: {\"id\":\"b77280bd-35f3-4914-becc-5aa70de3e63e\",\"object\":\"text_completion\",\"created\":1777418783,\"model\":\"arcee-ai/Trinity-Large-Thinking\",\"choices\":[],\"usage\":{\"prompt_tokens\":6,\"total_tokens\":10,\"completion_tokens\":4}}",
-            "data: [DONE]"
-          ]
-        }
+        "status": 200,
+        "statusText": "OK"
       }
     },
     {
+      "callIndex": 0,
       "id": "daf98736c72b7239",
       "matchKey": "GET huggingface.co/api/models/thenlper/gte-large",
-      "callIndex": 0,
       "recordedAt": "2026-04-28T23:26:31.789Z",
       "request": {
-        "method": "GET",
-        "url": "https://huggingface.co/api/models/thenlper/gte-large?expand%5B%5D=pipeline_tag",
-        "headers": {},
         "body": {
           "kind": "empty"
-        }
+        },
+        "headers": {},
+        "method": "GET",
+        "url": "https://huggingface.co/api/models/thenlper/gte-large?expand%5B%5D=pipeline_tag"
       },
       "response": {
-        "status": 200,
-        "statusText": "OK",
+        "body": {
+          "kind": "json",
+          "value": {
+            "_id": "64c23f1bd872858a39ed8154",
+            "id": "thenlper/gte-large",
+            "pipeline_tag": "sentence-similarity"
+          }
+        },
         "headers": {
           "access-control-allow-origin": "https://huggingface.co",
           "access-control-expose-headers": "X-Repo-Commit,X-Request-Id,X-Error-Code,X-Error-Message,X-Total-Count,ETag,Link,Accept-Ranges,Content-Range,X-Linked-Size,X-Linked-ETag,X-Xet-Hash",
@@ -359,58 +352,28 @@
           "x-cache": "Miss from cloudfront",
           "x-powered-by": "huggingface-moon"
         },
-        "body": {
-          "kind": "json",
-          "value": {
-            "_id": "64c23f1bd872858a39ed8154",
-            "id": "thenlper/gte-large",
-            "pipeline_tag": "sentence-similarity"
-          }
-        }
+        "status": 200,
+        "statusText": "OK"
       }
     },
     {
+      "callIndex": 0,
       "id": "21f3b15f09a07391",
       "matchKey": "POST router.huggingface.co/hf-inference/models/thenlper/gte-large/pipeline/feature-extraction",
-      "callIndex": 0,
       "recordedAt": "2026-04-28T23:26:31.789Z",
       "request": {
-        "method": "POST",
-        "url": "https://router.huggingface.co/hf-inference/models/thenlper/gte-large/pipeline/feature-extraction",
-        "headers": {
-          "content-type": "application/json"
-        },
         "body": {
           "kind": "json",
           "value": {
             "inputs": "Paris France",
             "model": "thenlper/gte-large"
           }
-        }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://router.huggingface.co/hf-inference/models/thenlper/gte-large/pipeline/feature-extraction"
       },
       "response": {
-        "status": 200,
-        "statusText": "OK",
-        "headers": {
-          "access-control-allow-credentials": "true",
-          "access-control-allow-origin": "*",
-          "access-control-expose-headers": "X-Repo-Commit,X-Request-Id,X-Error-Code,X-Error-Message,X-Total-Count,ETag,Link,Accept-Ranges,Content-Range,X-Linked-Size,X-Linked-ETag,X-Xet-Hash",
-          "content-type": "application/json",
-          "cross-origin-opener-policy": "same-origin",
-          "referrer-policy": "strict-origin-when-cross-origin",
-          "vary": "origin, access-control-request-method, access-control-request-headers, origin, access-control-request-method, access-control-request-headers",
-          "via": "1.1 09701f8b2a1866d72a24a6230bb8aac8.cloudfront.net (CloudFront)",
-          "x-amz-cf-id": "OGJ-gCLMCCUUlreog-psvEey3wbCNJ5ZIhFQme6xbKcAKH4OlUkGuQ==",
-          "x-amz-cf-pop": "YVR52-P2",
-          "x-cache": "Miss from cloudfront",
-          "x-inference-id": "86367d40-5a54-40cb-bf36-db229211f816",
-          "x-inference-provider": "hf-inference",
-          "x-powered-by": "huggingface-moon",
-          "x-proxied-host": "http://10.109.142.216",
-          "x-proxied-path": "/pipeline/feature-extraction",
-          "x-proxied-replica": "44vf5qav-2f4nm",
-          "x-robots-tag": "none"
-        },
         "body": {
           "kind": "json",
           "value": [
@@ -585,7 +548,7 @@
             0.022626269608736038, -0.016688846051692963, 0.005771295633167028,
             -0.009044435806572437, -0.05040424317121506, 0.001176387770101428,
             -0.00016678613610565662, -0.03416217118501663, -0.05471804365515709,
-            0.000009947750186256599, -0.0496915839612484, 0.021129319444298744,
+            9.947750186256599e-6, -0.0496915839612484, 0.021129319444298744,
             -0.01737176440656185, 0.0017752795247361064, -0.011021317914128304,
             -0.009284257888793945, 0.02842290885746479, 0.007452960591763258,
             0.005624083802103996, 0.0070625245571136475, -0.009976426139473915,
@@ -754,14 +717,41 @@
             -0.03245778754353523, 0.011912294663488865, 0.014013410545885563,
             -0.014327369630336761, 0.03169045224785805, -0.025917669758200645,
             -0.02307189628481865, -0.0029002863448113203, -0.021191135048866272,
-            -0.00008240768511313945, -0.035654909908771515, 0.01273074746131897,
+            -8.240768511313945e-5, -0.035654909908771515, 0.01273074746131897,
             0.04374304041266441, -0.039644595235586166, -0.05033861845731735,
             -0.01814350299537182, 0.04090336337685585, 0.0329778827726841,
             0.02721802331507206, -0.03109864704310894, 0.006142554339021444,
             0.01078912615776062
           ]
-        }
+        },
+        "headers": {
+          "access-control-allow-credentials": "true",
+          "access-control-allow-origin": "*",
+          "access-control-expose-headers": "X-Repo-Commit,X-Request-Id,X-Error-Code,X-Error-Message,X-Total-Count,ETag,Link,Accept-Ranges,Content-Range,X-Linked-Size,X-Linked-ETag,X-Xet-Hash",
+          "content-type": "application/json",
+          "cross-origin-opener-policy": "same-origin",
+          "referrer-policy": "strict-origin-when-cross-origin",
+          "vary": "origin, access-control-request-method, access-control-request-headers, origin, access-control-request-method, access-control-request-headers",
+          "via": "1.1 09701f8b2a1866d72a24a6230bb8aac8.cloudfront.net (CloudFront)",
+          "x-amz-cf-id": "OGJ-gCLMCCUUlreog-psvEey3wbCNJ5ZIhFQme6xbKcAKH4OlUkGuQ==",
+          "x-amz-cf-pop": "YVR52-P2",
+          "x-cache": "Miss from cloudfront",
+          "x-inference-id": "86367d40-5a54-40cb-bf36-db229211f816",
+          "x-inference-provider": "hf-inference",
+          "x-powered-by": "huggingface-moon",
+          "x-proxied-host": "http://10.109.142.216",
+          "x-proxied-path": "/pipeline/feature-extraction",
+          "x-proxied-replica": "44vf5qav-2f4nm",
+          "x-robots-tag": "none"
+        },
+        "status": 200,
+        "statusText": "OK"
       }
     }
-  ]
+  ],
+  "meta": {
+    "createdAt": "2026-04-28T23:26:31.789Z",
+    "seinfeldVersion": "0.0.0"
+  },
+  "version": 1
 }

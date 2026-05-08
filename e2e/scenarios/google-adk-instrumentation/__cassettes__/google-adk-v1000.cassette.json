@@ -43,9 +43,7 @@
                           "type": "STRING"
                         }
                       },
-                      "required": [
-                        "location"
-                      ],
+                      "required": ["location"],
                       "type": "OBJECT"
                     }
                   }
@@ -54,12 +52,7 @@
             ]
           }
         },
-        "headers": {
-          "content-type": "application/json",
-          "user-agent": "google-genai-sdk/1.49.0 gl-node/v26.0.0, google-adk/1.0.0 gl-typescript/v26.0.0",
-          "x-goog-api-client": "google-adk/1.0.0 gl-typescript/v26.0.0",
-          "x-goog-api-key": "AIzaSyBCjg4EuVfsiMRo8RXfAwz8eG3h7Pmpe14"
-        },
+        "headers": {},
         "method": "POST",
         "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent"
       },
@@ -191,9 +184,7 @@
                           "type": "STRING"
                         }
                       },
-                      "required": [
-                        "location"
-                      ],
+                      "required": ["location"],
                       "type": "OBJECT"
                     }
                   }
@@ -202,12 +193,7 @@
             ]
           }
         },
-        "headers": {
-          "content-type": "application/json",
-          "user-agent": "google-genai-sdk/1.49.0 gl-node/v26.0.0, google-adk/1.0.0 gl-typescript/v26.0.0",
-          "x-goog-api-client": "google-adk/1.0.0 gl-typescript/v26.0.0",
-          "x-goog-api-key": "AIzaSyBCjg4EuVfsiMRo8RXfAwz8eG3h7Pmpe14"
-        },
+        "headers": {},
         "method": "POST",
         "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent"
       },

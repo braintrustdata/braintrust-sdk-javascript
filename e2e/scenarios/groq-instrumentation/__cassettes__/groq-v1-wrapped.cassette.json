@@ -1,22 +1,11 @@
 {
-  "version": 1,
-  "meta": {
-    "createdAt": "2026-04-28T23:26:09.116Z",
-    "seinfeldVersion": "0.0.0"
-  },
   "entries": [
     {
+      "callIndex": 0,
       "id": "3dffad7c90a4c3b7",
       "matchKey": "POST api.groq.com/openai/v1/chat/completions",
-      "callIndex": 0,
       "recordedAt": "2026-04-28T23:26:09.116Z",
       "request": {
-        "method": "POST",
-        "url": "https://api.groq.com/openai/v1/chat/completions",
-        "headers": {
-          "accept": "application/json",
-          "content-type": "application/json"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -30,18 +19,12 @@
             "model": "llama-3.3-70b-versatile",
             "temperature": 0
           }
-        }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions"
       },
       "response": {
-        "status": 200,
-        "statusText": "OK",
-        "headers": {
-          "alt-svc": "h3=\":443\"; ma=86400",
-          "cache-control": "private, max-age=0, no-store, no-cache, must-revalidate",
-          "content-type": "application/json",
-          "vary": "Origin",
-          "x-groq-region": "yka"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -77,21 +60,24 @@
               "seed": 429181514
             }
           }
-        }
+        },
+        "headers": {
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "cache-control": "private, max-age=0, no-store, no-cache, must-revalidate",
+          "content-type": "application/json",
+          "vary": "Origin",
+          "x-groq-region": "yka"
+        },
+        "status": 200,
+        "statusText": "OK"
       }
     },
     {
+      "callIndex": 1,
       "id": "cfcb31431404c5e9",
       "matchKey": "POST api.groq.com/openai/v1/chat/completions",
-      "callIndex": 1,
       "recordedAt": "2026-04-28T23:26:09.116Z",
       "request": {
-        "method": "POST",
-        "url": "https://api.groq.com/openai/v1/chat/completions",
-        "headers": {
-          "accept": "application/json",
-          "content-type": "application/json"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -105,11 +91,21 @@
             "stream": true,
             "temperature": 0
           }
-        }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions"
       },
       "response": {
-        "status": 200,
-        "statusText": "OK",
+        "body": {
+          "chunks": [
+            "data: {\"id\":\"chatcmpl-77d01bcd-fe2c-4141-8e37-9c2c8ec23199\",\"object\":\"chat.completion.chunk\",\"created\":1777418768,\"model\":\"llama-3.3-70b-versatile\",\"system_fingerprint\":\"fp_0761e44d7b\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\"},\"logprobs\":null,\"finish_reason\":null}],\"x_groq\":{\"id\":\"req_01kqb6m4jpensr91r221fbrnsf\",\"seed\":1706490734}}",
+            "data: {\"id\":\"chatcmpl-77d01bcd-fe2c-4141-8e37-9c2c8ec23199\",\"object\":\"chat.completion.chunk\",\"created\":1777418768,\"model\":\"llama-3.3-70b-versatile\",\"system_fingerprint\":\"fp_0761e44d7b\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"STREAM\"},\"logprobs\":null,\"finish_reason\":null}]}",
+            "data: {\"id\":\"chatcmpl-77d01bcd-fe2c-4141-8e37-9c2c8ec23199\",\"object\":\"chat.completion.chunk\",\"created\":1777418769,\"model\":\"llama-3.3-70b-versatile\",\"system_fingerprint\":\"fp_0761e44d7b\",\"choices\":[{\"index\":0,\"delta\":{},\"logprobs\":null,\"finish_reason\":\"stop\"}],\"x_groq\":{\"id\":\"req_01kqb6m4jpensr91r221fbrnsf\",\"usage\":{\"queue_time\":0.008318354,\"prompt_tokens\":40,\"prompt_time\":0.001964169,\"completion_tokens\":2,\"completion_time\":0.015516481,\"total_tokens\":42,\"total_time\":0.01748065}},\"usage\":{\"queue_time\":0.008318354,\"prompt_tokens\":40,\"prompt_time\":0.001964169,\"completion_tokens\":2,\"completion_time\":0.015516481,\"total_tokens\":42,\"total_time\":0.01748065}}",
+            "data: [DONE]"
+          ],
+          "kind": "sse"
+        },
         "headers": {
           "alt-svc": "h3=\":443\"; ma=86400",
           "cache-control": "no-cache",
@@ -117,36 +113,24 @@
           "vary": "Origin",
           "x-groq-region": "yka"
         },
-        "body": {
-          "kind": "sse",
-          "chunks": [
-            "data: {\"id\":\"chatcmpl-77d01bcd-fe2c-4141-8e37-9c2c8ec23199\",\"object\":\"chat.completion.chunk\",\"created\":1777418768,\"model\":\"llama-3.3-70b-versatile\",\"system_fingerprint\":\"fp_0761e44d7b\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\"},\"logprobs\":null,\"finish_reason\":null}],\"x_groq\":{\"id\":\"req_01kqb6m4jpensr91r221fbrnsf\",\"seed\":1706490734}}",
-            "data: {\"id\":\"chatcmpl-77d01bcd-fe2c-4141-8e37-9c2c8ec23199\",\"object\":\"chat.completion.chunk\",\"created\":1777418768,\"model\":\"llama-3.3-70b-versatile\",\"system_fingerprint\":\"fp_0761e44d7b\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"STREAM\"},\"logprobs\":null,\"finish_reason\":null}]}",
-            "data: {\"id\":\"chatcmpl-77d01bcd-fe2c-4141-8e37-9c2c8ec23199\",\"object\":\"chat.completion.chunk\",\"created\":1777418769,\"model\":\"llama-3.3-70b-versatile\",\"system_fingerprint\":\"fp_0761e44d7b\",\"choices\":[{\"index\":0,\"delta\":{},\"logprobs\":null,\"finish_reason\":\"stop\"}],\"x_groq\":{\"id\":\"req_01kqb6m4jpensr91r221fbrnsf\",\"usage\":{\"queue_time\":0.008318354,\"prompt_tokens\":40,\"prompt_time\":0.001964169,\"completion_tokens\":2,\"completion_time\":0.015516481,\"total_tokens\":42,\"total_time\":0.01748065}},\"usage\":{\"queue_time\":0.008318354,\"prompt_tokens\":40,\"prompt_time\":0.001964169,\"completion_tokens\":2,\"completion_time\":0.015516481,\"total_tokens\":42,\"total_time\":0.01748065}}",
-            "data: [DONE]"
-          ]
-        }
+        "status": 200,
+        "statusText": "OK"
       }
     },
     {
+      "callIndex": 2,
       "id": "4ad34400d0e920e9",
       "matchKey": "POST api.groq.com/openai/v1/chat/completions",
-      "callIndex": 2,
       "recordedAt": "2026-04-28T23:26:31.789Z",
       "request": {
-        "method": "POST",
-        "url": "https://api.groq.com/openai/v1/chat/completions",
-        "headers": {
-          "content-type": "application/json"
-        },
         "body": {
           "kind": "json",
           "value": {
             "max_completion_tokens": 512,
             "messages": [
               {
-                "role": "user",
-                "content": "Solve this step by step: Elena has 3 boxes with 4 marbles each, gives away 5 marbles, then doubles what remains. Reply with just the final number."
+                "content": "Solve this step by step: Elena has 3 boxes with 4 marbles each, gives away 5 marbles, then doubles what remains. Reply with just the final number.",
+                "role": "user"
               }
             ],
             "model": "qwen/qwen3-32b",
@@ -154,11 +138,21 @@
             "stream": true,
             "temperature": 0.6
           }
-        }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions"
       },
       "response": {
-        "status": 200,
-        "statusText": "OK",
+        "body": {
+          "chunks": [
+            "data: {\"id\":\"chatcmpl-synth-reasoning\",\"object\":\"chat.completion.chunk\",\"created\":1746432000,\"model\":\"qwen/qwen3-32b\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\",\"reasoning\":\"3 boxes x 4 marbles = 12 total. Remove 5: 12 - 5 = 7. Double: 7 x 2 = 14.\"},\"finish_reason\":null}],\"x_groq\":{\"id\":\"req_synth_reasoning\",\"usage\":null}}",
+            "data: {\"id\":\"chatcmpl-synth-reasoning\",\"object\":\"chat.completion.chunk\",\"created\":1746432001,\"model\":\"qwen/qwen3-32b\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"14\",\"reasoning\":null},\"finish_reason\":null}],\"x_groq\":{\"id\":\"req_synth_reasoning\",\"usage\":null}}",
+            "data: {\"id\":\"chatcmpl-synth-reasoning\",\"object\":\"chat.completion.chunk\",\"created\":1746432002,\"model\":\"qwen/qwen3-32b\",\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"stop\"}],\"x_groq\":{\"id\":\"req_synth_reasoning\",\"usage\":{\"queue_time\":0.001,\"prompt_tokens\":45,\"prompt_time\":0.002,\"completion_tokens\":3,\"completion_reasoning_tokens\":12,\"completion_time\":0.001,\"total_tokens\":48,\"total_time\":0.003}},\"usage\":{\"queue_time\":0.001,\"prompt_tokens\":45,\"prompt_time\":0.002,\"completion_tokens\":3,\"completion_reasoning_tokens\":12,\"completion_time\":0.001,\"total_tokens\":48,\"total_time\":0.003}}",
+            "data: [DONE]"
+          ],
+          "kind": "sse"
+        },
         "headers": {
           "alt-svc": "h3=\":443\"; ma=86400",
           "cache-control": "no-cache",
@@ -166,29 +160,16 @@
           "vary": "origin, access-control-request-method, access-control-request-headers",
           "x-groq-region": "us-east-1"
         },
-        "body": {
-          "kind": "sse",
-          "chunks": [
-            "data: {\"id\":\"chatcmpl-synth-reasoning\",\"object\":\"chat.completion.chunk\",\"created\":1746432000,\"model\":\"qwen/qwen3-32b\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\",\"reasoning\":\"3 boxes x 4 marbles = 12 total. Remove 5: 12 - 5 = 7. Double: 7 x 2 = 14.\"},\"finish_reason\":null}],\"x_groq\":{\"id\":\"req_synth_reasoning\",\"usage\":null}}",
-            "data: {\"id\":\"chatcmpl-synth-reasoning\",\"object\":\"chat.completion.chunk\",\"created\":1746432001,\"model\":\"qwen/qwen3-32b\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"14\",\"reasoning\":null},\"finish_reason\":null}],\"x_groq\":{\"id\":\"req_synth_reasoning\",\"usage\":null}}",
-            "data: {\"id\":\"chatcmpl-synth-reasoning\",\"object\":\"chat.completion.chunk\",\"created\":1746432002,\"model\":\"qwen/qwen3-32b\",\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"stop\"}],\"x_groq\":{\"id\":\"req_synth_reasoning\",\"usage\":{\"queue_time\":0.001,\"prompt_tokens\":45,\"prompt_time\":0.002,\"completion_tokens\":3,\"completion_reasoning_tokens\":12,\"completion_time\":0.001,\"total_tokens\":48,\"total_time\":0.003}},\"usage\":{\"queue_time\":0.001,\"prompt_tokens\":45,\"prompt_time\":0.002,\"completion_tokens\":3,\"completion_reasoning_tokens\":12,\"completion_time\":0.001,\"total_tokens\":48,\"total_time\":0.003}}",
-            "data: [DONE]"
-          ]
-        }
+        "status": 200,
+        "statusText": "OK"
       }
     },
     {
+      "callIndex": 3,
       "id": "0ffae2350a0663da",
       "matchKey": "POST api.groq.com/openai/v1/chat/completions",
-      "callIndex": 3,
       "recordedAt": "2026-04-28T23:26:09.116Z",
       "request": {
-        "method": "POST",
-        "url": "https://api.groq.com/openai/v1/chat/completions",
-        "headers": {
-          "accept": "application/json",
-          "content-type": "application/json"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -226,18 +207,12 @@
               }
             ]
           }
-        }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions"
       },
       "response": {
-        "status": 200,
-        "statusText": "OK",
-        "headers": {
-          "alt-svc": "h3=\":443\"; ma=86400",
-          "cache-control": "private, max-age=0, no-store, no-cache, must-revalidate",
-          "content-type": "application/json",
-          "vary": "Origin",
-          "x-groq-region": "yka"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -282,8 +257,22 @@
               "seed": 140613182
             }
           }
-        }
+        },
+        "headers": {
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "cache-control": "private, max-age=0, no-store, no-cache, must-revalidate",
+          "content-type": "application/json",
+          "vary": "Origin",
+          "x-groq-region": "yka"
+        },
+        "status": 200,
+        "statusText": "OK"
       }
     }
-  ]
+  ],
+  "meta": {
+    "createdAt": "2026-04-28T23:26:09.116Z",
+    "seinfeldVersion": "0.0.0"
+  },
+  "version": 1
 }
