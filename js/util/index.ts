@@ -136,7 +136,10 @@ export {
   spanTypeAttributeValues,
 } from "./span_types";
 
-export { mergeGitMetadataSettings } from "./git_fields";
+export {
+  defaultGitMetadataSettings,
+  mergeGitMetadataSettings,
+} from "./git_fields";
 
 export { loadPrettyXact, prettifyXact } from "./xact-ids";
 
