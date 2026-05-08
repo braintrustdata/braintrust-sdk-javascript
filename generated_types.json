@@ -109,6 +109,11 @@
             "format": "date-time",
             "description": "Date of last AI secret update"
           },
+          "secret_updated_at": {
+            "type": ["string", "null"],
+            "format": "date-time",
+            "description": "Date of last update to the encrypted secret value itself"
+          },
           "org_id": {
             "type": "string",
             "format": "uuid",
@@ -124,6 +129,11 @@
           "metadata": {
             "type": ["object", "null"],
             "additionalProperties": {}
+          },
+          "secret_updated_by_user_id": {
+            "type": ["string", "null"],
+            "format": "uuid",
+            "description": "User id of the last update to the encrypted secret value"
           },
           "preview_secret": {
             "type": ["string", "null"]
@@ -1020,6 +1030,9 @@
                 "items": {
                   "$ref": "#/components/schemas/ChatCompletionMessageReasoning"
                 }
+              },
+              "reasoning_signature": {
+                "type": "string"
               }
             },
             "required": ["role"],
@@ -1267,6 +1280,9 @@
                 "items": {
                   "$ref": "#/components/schemas/ChatCompletionMessageReasoning"
                 }
+              },
+              "reasoning_signature": {
+                "type": "string"
               }
             },
             "required": ["role"],
@@ -1833,6 +1849,16 @@
             "format": "date-time",
             "description": "Date of environment variable creation"
           },
+          "secret_updated_at": {
+            "type": ["string", "null"],
+            "format": "date-time",
+            "description": "Date of last update to the encrypted secret value itself"
+          },
+          "secret_updated_by_user_id": {
+            "type": ["string", "null"],
+            "format": "uuid",
+            "description": "User id of the last update to the encrypted secret value"
+          },
           "used": {
             "type": ["string", "null"],
             "format": "date-time",
@@ -1842,6 +1868,10 @@
             "type": ["object", "null"],
             "additionalProperties": {},
             "description": "Optional metadata associated with the environment variable when managed via the function secrets API"
+          },
+          "preview_secret": {
+            "type": ["string", "null"],
+            "description": "Redacted preview of the stored secret value"
           },
           "secret_type": {
             "type": ["string", "null"],

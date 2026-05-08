@@ -1,4 +1,4 @@
-// Auto-generated file (content hash 6a3eaf06ccb50b7d) -- do not modify
+// Auto-generated file (content hash 2046371fcb54d28e) -- do not modify
 
 import { z } from "zod/v3";
 
@@ -47,12 +47,14 @@ export const AISecret = z.object({
   id: z.string().uuid(),
   created: z.union([z.string(), z.null()]).optional(),
   updated_at: z.union([z.string(), z.null()]).optional(),
+  secret_updated_at: z.union([z.string(), z.null()]).optional(),
   org_id: z.string().uuid(),
   name: z.string(),
   type: z.union([z.string(), z.null()]).optional(),
   metadata: z
     .union([z.object({}).partial().passthrough(), z.null()])
     .optional(),
+  secret_updated_by_user_id: z.union([z.string(), z.null()]).optional(),
   preview_secret: z.union([z.string(), z.null()]).optional(),
 });
 export type AISecretType = z.infer<typeof AISecret>;
@@ -436,6 +438,7 @@ export const ChatCompletionMessageParam = z.union([
     name: z.string().optional(),
     tool_calls: z.array(ChatCompletionMessageToolCall).optional(),
     reasoning: z.array(ChatCompletionMessageReasoning).optional(),
+    reasoning_signature: z.string().optional(),
   }),
   z.object({
     content: z.union([z.string(), z.array(ChatCompletionContentPartText)]),
@@ -482,6 +485,7 @@ export const ChatCompletionOpenAIMessageParam = z.union([
     name: z.string().optional(),
     tool_calls: z.array(ChatCompletionMessageToolCall).optional(),
     reasoning: z.array(ChatCompletionMessageReasoning).optional(),
+    reasoning_signature: z.string().optional(),
   }),
   z.object({
     content: z.union([z.string(), z.array(ChatCompletionContentPartText)]),
@@ -667,10 +671,13 @@ export const EnvVar = z.object({
   object_id: z.string().uuid(),
   name: z.string(),
   created: z.union([z.string(), z.null()]).optional(),
+  secret_updated_at: z.union([z.string(), z.null()]).optional(),
+  secret_updated_by_user_id: z.union([z.string(), z.null()]).optional(),
   used: z.union([z.string(), z.null()]).optional(),
   metadata: z
     .union([z.object({}).partial().passthrough(), z.null()])
     .optional(),
+  preview_secret: z.union([z.string(), z.null()]).optional(),
   secret_type: z.union([z.string(), z.null()]).optional(),
   secret_category: z
     .enum(["env_var", "ai_provider", "sandbox_provider"])
