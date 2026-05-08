@@ -55,7 +55,10 @@ export class ModulePatch {
 
         // Patch OpenAI's APIPromise to prevent double-read of HTTP response bodies.
         const normalizedModulePath = resolvedModule.path.replace(/\\/g, "/");
-        if (packageName === "openai" && normalizedModulePath.includes("api-promise")) {
+        if (
+          packageName === "openai" &&
+          normalizedModulePath.includes("api-promise")
+        ) {
           args[0] = content + OPENAI_API_PROMISE_PATCH;
           return self.originalCompile.apply(this, args);
         }
