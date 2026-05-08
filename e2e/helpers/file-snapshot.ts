@@ -24,15 +24,10 @@ export function formatJsonFileSnapshot(value: Json): string {
   return `${JSON.stringify(sortJsonKeys(normalizeForSnapshot(value)), null, 2)}\n`;
 }
 
-/**
- * In canary mode (latest packages + live API) snapshots are not consulted —
- * canary verifies behaviour, not exact output shape.
- */
 export async function matchFileSnapshot(
   value: string,
   path: string,
 ): Promise<void> {
-  if (isCanaryMode()) return;
   await expect(value).toMatchFileSnapshot(path);
 }
 
@@ -40,5 +35,14 @@ export function resolveFileSnapshotPath(
   testModuleUrl: string,
   filename: string,
 ): string {
-  return join(dirname(fileURLToPath(testModuleUrl)), "__snapshots__", filename);
+  // Canary tests use the latest provider versions, which may produce different
+  // span shapes. Keep their snapshots separate so pinned and canary baselines
+  // can diverge independently.
+  const subdir = isCanaryMode() ? "canary" : "";
+  return join(
+    dirname(fileURLToPath(testModuleUrl)),
+    "__snapshots__",
+    subdir,
+    filename,
+  );
 }
