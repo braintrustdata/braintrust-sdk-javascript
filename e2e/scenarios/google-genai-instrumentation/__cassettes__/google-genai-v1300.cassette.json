@@ -1,0 +1,140 @@
+{
+  "entries": [
+    {
+      "callIndex": 0,
+      "id": "1659f7241cd3616d",
+      "matchKey": "POST generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent",
+      "recordedAt": "2026-05-07T21:22:16.331Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "contents": [
+              {
+                "parts": [
+                  {
+                    "text": "Reply with exactly PARIS."
+                  }
+                ],
+                "role": "user"
+              }
+            ],
+            "generationConfig": {
+              "maxOutputTokens": 24,
+              "temperature": 0
+            }
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "candidates": [
+              {
+                "content": {
+                  "parts": [
+                    {
+                      "text": "PARIS"
+                    }
+                  ],
+                  "role": "model"
+                },
+                "finishReason": "STOP",
+                "index": 0
+              }
+            ],
+            "modelVersion": "gemini-2.5-flash-lite",
+            "responseId": "iAL9ac-mBeWm1MkP57OHKA",
+            "usageMetadata": {
+              "candidatesTokenCount": 2,
+              "promptTokenCount": 6,
+              "promptTokensDetails": [
+                {
+                  "modality": "TEXT",
+                  "tokenCount": 6
+                }
+              ],
+              "serviceTier": "standard",
+              "totalTokenCount": 8
+            }
+          }
+        },
+        "headers": {
+          "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
+          "content-encoding": "gzip",
+          "content-length": "302",
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Thu, 07 May 2026 21:22:16 GMT",
+          "server": "scaffolding on HTTPServer2",
+          "server-timing": "gfet4t7; dur=568",
+          "vary": "Origin, X-Origin, Referer",
+          "x-content-type-options": "nosniff",
+          "x-frame-options": "SAMEORIGIN",
+          "x-gemini-service-tier": "standard",
+          "x-xss-protection": "0"
+        },
+        "status": 200
+      }
+    },
+    {
+      "callIndex": 0,
+      "id": "12df4c602bba7e02",
+      "matchKey": "POST generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:batchEmbedContents",
+      "recordedAt": "2026-05-07T21:22:16.749Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "requests": [
+              {
+                "content": {
+                  "parts": [
+                    {
+                      "text": "Paris is the capital of France."
+                    }
+                  ],
+                  "role": "user"
+                },
+                "model": "models/gemini-embedding-001"
+              }
+            ]
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:batchEmbedContents"
+      },
+      "response": {
+        "body": {
+          "contentType": "application/json; charset=UTF-8",
+          "kind": "binary",
+          "path": "google-genai-v1300.cassette.blobs/f752a173720235fbf2f963c9be0779dbc62fdb779b5dad731f03d38e4ed5448d.bin",
+          "sha256": "f752a173720235fbf2f963c9be0779dbc62fdb779b5dad731f03d38e4ed5448d"
+        },
+        "headers": {
+          "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
+          "content-encoding": "gzip",
+          "content-length": "16500",
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Thu, 07 May 2026 21:22:16 GMT",
+          "server": "scaffolding on HTTPServer2",
+          "server-timing": "gfet4t7; dur=181",
+          "vary": "Origin, X-Origin, Referer",
+          "x-content-type-options": "nosniff",
+          "x-frame-options": "SAMEORIGIN",
+          "x-xss-protection": "0"
+        },
+        "status": 200
+      }
+    }
+  ],
+  "meta": {
+    "createdAt": "2026-05-07T00:37:51.539Z",
+    "seinfeldVersion": "0.0.0"
+  },
+  "version": 1
+}
