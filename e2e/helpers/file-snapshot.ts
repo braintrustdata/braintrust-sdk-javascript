@@ -1,3 +1,4 @@
+import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect } from "vitest";
@@ -28,6 +29,13 @@ export async function matchFileSnapshot(
   value: string,
   path: string,
 ): Promise<void> {
+  // Bootstrap: write the canary snapshot and pass on first run so the initial
+  // CI run doesn't fail waiting for the update-canary-snapshots workflow.
+  if (isCanaryMode() && !existsSync(path)) {
+    mkdirSync(dirname(path), { recursive: true });
+    writeFileSync(path, value, "utf8");
+    return;
+  }
   await expect(value).toMatchFileSnapshot(path);
 }
 
