@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect } from "vitest";
@@ -29,9 +29,10 @@ export async function matchFileSnapshot(
   value: string,
   path: string,
 ): Promise<void> {
-  // Bootstrap: write the canary snapshot and pass on first run so the initial
-  // CI run doesn't fail waiting for the update-canary-snapshots workflow.
-  if (isCanaryMode() && !existsSync(path)) {
+  // In canary mode always write the snapshot and pass — never fail on content
+  // differences. The e2e-canary job catches live API failures; snapshot drift
+  // is surfaced separately by the update-canary-snapshots PR workflow.
+  if (isCanaryMode()) {
     mkdirSync(dirname(path), { recursive: true });
     writeFileSync(path, value, "utf8");
     return;
