@@ -155,6 +155,7 @@ class PluginRegistry {
       claudeAgentSDK: true,
       cursor: true,
       cursorSDK: true,
+      openAIAgents: true,
       openrouter: true,
       openrouterAgent: true,
       mistral: true,
