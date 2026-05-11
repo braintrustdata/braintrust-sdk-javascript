@@ -1,5 +1,6 @@
 import { BasePlugin } from "./core";
 import { OpenAIPlugin } from "./plugins/openai-plugin";
+import { OpenAICodexPlugin } from "./plugins/openai-codex-plugin";
 import { AnthropicPlugin } from "./plugins/anthropic-plugin";
 import { AISDKPlugin } from "./plugins/ai-sdk-plugin";
 import { ClaudeAgentSDKPlugin } from "./plugins/claude-agent-sdk-plugin";
@@ -35,6 +36,7 @@ export interface BraintrustPluginConfig {
     groq?: boolean;
     genkit?: boolean;
     gitHubCopilot?: boolean;
+    openaiCodexSDK?: boolean;
   };
 }
 
@@ -64,6 +66,7 @@ function getIntegrationConfig(
 export class BraintrustPlugin extends BasePlugin {
   private config: BraintrustPluginConfig;
   private openaiPlugin: OpenAIPlugin | null = null;
+  private openAICodexPlugin: OpenAICodexPlugin | null = null;
   private anthropicPlugin: AnthropicPlugin | null = null;
   private aiSDKPlugin: AISDKPlugin | null = null;
   private claudeAgentSDKPlugin: ClaudeAgentSDKPlugin | null = null;
@@ -91,6 +94,11 @@ export class BraintrustPlugin extends BasePlugin {
     if (integrations.openai !== false) {
       this.openaiPlugin = new OpenAIPlugin();
       this.openaiPlugin.enable();
+    }
+
+    if (integrations.openaiCodexSDK !== false) {
+      this.openAICodexPlugin = new OpenAICodexPlugin();
+      this.openAICodexPlugin.enable();
     }
 
     // Enable Anthropic integration (default: true)
@@ -175,6 +183,11 @@ export class BraintrustPlugin extends BasePlugin {
     if (this.openaiPlugin) {
       this.openaiPlugin.disable();
       this.openaiPlugin = null;
+    }
+
+    if (this.openAICodexPlugin) {
+      this.openAICodexPlugin.disable();
+      this.openAICodexPlugin = null;
     }
 
     if (this.anthropicPlugin) {

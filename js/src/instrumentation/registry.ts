@@ -57,6 +57,7 @@ export interface InstrumentationConfig {
     groq?: boolean;
     genkit?: boolean;
     gitHubCopilot?: boolean;
+    openaiCodexSDK?: boolean;
   };
 }
 
@@ -152,6 +153,7 @@ class PluginRegistry {
   private getDefaultConfig(): Record<string, boolean> {
     return {
       openai: true,
+      openaiCodexSDK: true,
       anthropic: true,
       vercel: true,
       aisdk: true,
@@ -195,6 +197,8 @@ class PluginRegistry {
           sdk === "copilot-sdk"
         ) {
           integrations.gitHubCopilot = false;
+        } else if (sdk === "openai-codex-sdk") {
+          integrations.openaiCodexSDK = false;
         } else {
           integrations[sdk] = false;
         }

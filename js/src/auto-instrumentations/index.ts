@@ -29,6 +29,7 @@
  */
 
 export { openaiConfigs } from "./configs/openai";
+export { openAICodexConfigs } from "./configs/openai-codex";
 export { anthropicConfigs } from "./configs/anthropic";
 export { aiSDKConfigs } from "./configs/ai-sdk";
 export { claudeAgentSDKConfigs } from "./configs/claude-agent-sdk";

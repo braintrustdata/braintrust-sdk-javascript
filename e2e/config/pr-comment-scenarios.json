@@ -10,6 +10,12 @@
     ]
   },
   {
+    "scenarioDirName": "openai-codex-instrumentation",
+    "label": "OpenAI Codex Instrumentation",
+    "metadataScenario": "openai-codex-instrumentation",
+    "variants": [{ "variantKey": "openai-codex-v0128", "label": "v0.128" }]
+  },
+  {
     "scenarioDirName": "anthropic-instrumentation",
     "label": "Anthropic Instrumentation",
     "metadataScenario": "anthropic-instrumentation",
