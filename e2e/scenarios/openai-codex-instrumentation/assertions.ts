@@ -411,9 +411,11 @@ export function defineOpenAICodexInstrumentationAssertions(options: {
         const runTask = findCodexTask(events, "openai-codex-run-operation");
 
         expect(runTask?.metrics).toMatchObject({
+          completion_reasoning_tokens: 5,
           completion_tokens: 7,
           prompt_cached_tokens: 3,
           prompt_tokens: 11,
+          tokens: 18,
         });
       });
 

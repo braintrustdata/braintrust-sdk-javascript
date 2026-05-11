@@ -822,22 +822,54 @@ function extractUsageMetrics(
   }
 
   const metrics: Record<string, number> = {};
-  if (usage.input_tokens !== undefined) {
-    metrics.prompt_tokens = usage.input_tokens;
-  }
-  if (usage.cached_input_tokens !== undefined) {
-    metrics.prompt_cached_tokens = usage.cached_input_tokens;
-  }
-  if (usage.output_tokens !== undefined) {
-    metrics.completion_tokens = usage.output_tokens;
-  }
-  if (usage.reasoning_output_tokens !== undefined) {
-    metrics.completion_reasoning_tokens = usage.reasoning_output_tokens;
+  const promptTokens = firstNumber(usage.prompt_tokens, usage.input_tokens);
+  if (promptTokens !== undefined) {
+    metrics.prompt_tokens = promptTokens;
   }
 
-  metrics.tokens =
-    (metrics.prompt_tokens ?? 0) + (metrics.completion_tokens ?? 0);
+  const promptCachedTokens = firstNumber(
+    usage.prompt_cached_tokens,
+    usage.cached_input_tokens,
+  );
+  if (promptCachedTokens !== undefined) {
+    metrics.prompt_cached_tokens = promptCachedTokens;
+  }
+
+  const completionTokens = firstNumber(
+    usage.completion_tokens,
+    usage.output_tokens,
+  );
+  if (completionTokens !== undefined) {
+    metrics.completion_tokens = completionTokens;
+  }
+
+  const completionReasoningTokens = firstNumber(
+    usage.completion_reasoning_tokens,
+    usage.reasoning_output_tokens,
+  );
+  if (completionReasoningTokens !== undefined) {
+    metrics.completion_reasoning_tokens = completionReasoningTokens;
+  }
+
+  const totalTokens = firstNumber(
+    usage.totalTokens,
+    usage.tokens,
+    usage.total_tokens,
+  );
+  if (totalTokens !== undefined) {
+    metrics.tokens = totalTokens;
+  }
+
   return metrics;
+}
+
+function firstNumber(...values: unknown[]): number | undefined {
+  for (const value of values) {
+    if (typeof value === "number") {
+      return value;
+    }
+  }
+  return undefined;
 }
 
 function buildDurationMetrics(startTime: number): Record<string, number> {

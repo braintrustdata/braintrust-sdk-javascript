@@ -116,6 +116,7 @@ process.stdin.on("end", () => {
         cached_input_tokens: 3,
         output_tokens: 7,
         reasoning_output_tokens: 5,
+        total_tokens: 18,
       },
     },
   ];

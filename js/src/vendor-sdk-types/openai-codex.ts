@@ -109,10 +109,17 @@ export type OpenAICodexInput =
     >;
 
 export interface OpenAICodexUsage {
+  prompt_tokens?: number;
   input_tokens?: number;
+  prompt_cached_tokens?: number;
   cached_input_tokens?: number;
+  completion_tokens?: number;
   output_tokens?: number;
+  completion_reasoning_tokens?: number;
   reasoning_output_tokens?: number;
+  totalTokens?: number;
+  tokens?: number;
+  total_tokens?: number;
 }
 
 export interface OpenAICodexTurn {
