@@ -64,6 +64,18 @@ function buildSpanSummary(
     events,
     "genkit-model-tool-operation",
   );
+  const modelToolGenerateSpan = findGenkitSpan(
+    events,
+    modelToolOperation?.span.id,
+    "genkit.generate",
+  );
+  const modelTriggeredToolSpan = supportsActionSpans
+    ? findGenkitSpan(
+        events,
+        modelToolGenerateSpan?.span.id,
+        "genkit.tool: cityMarkerTool",
+      )
+    : undefined;
 
   const summary = [
     findLatestSpan(events, ROOT_NAME),
@@ -76,7 +88,8 @@ function buildSpanSummary(
     embedOperation,
     findGenkitSpan(events, embedOperation?.span.id, "genkit.embed"),
     modelToolOperation,
-    findGenkitSpan(events, modelToolOperation?.span.id, "genkit.generate"),
+    modelToolGenerateSpan,
+    ...(supportsActionSpans ? [modelTriggeredToolSpan] : []),
   ];
 
   if (supportsActionSpans) {
@@ -225,11 +238,24 @@ export function defineGenkitInstrumentationAssertions(options: {
         modelToolOperation?.span.id,
         "genkit.generate",
       );
+      const toolSpan = findGenkitSpan(
+        events,
+        generateSpan?.span.id,
+        "genkit.tool: cityMarkerTool",
+      );
 
       expect(generateSpan?.row.metadata).toMatchObject({
         provider: "genkit",
       });
       expect(generateSpan?.output).toBeDefined();
+      expect(toolSpan?.row.metadata).toMatchObject({
+        "genkit.action_name": "cityMarkerTool",
+        "genkit.action_type": "tool",
+        provider: "genkit",
+      });
+      expect(toolSpan?.output).toMatchObject({
+        marker: MODEL_TOOL_MARKER,
+      });
       expect(modelToolOperation?.output).toMatchObject({
         marker: MODEL_TOOL_MARKER,
         toolCalled: true,

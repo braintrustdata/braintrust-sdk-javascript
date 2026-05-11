@@ -4,6 +4,7 @@ import {
   traceSyncStreamChannel,
   unsubscribeAll,
 } from "../core/channel-tracing";
+import { isAsyncIterable, patchStreamIfNeeded } from "../core/stream-patcher";
 import type { ChannelMessage } from "../core/channel-definitions";
 import type { IsoChannelHandlers, IsoTracingChannel } from "../../isomorph";
 import {
@@ -465,42 +466,48 @@ function patchGenerateStreamResult(
   span: Span,
   startTime: number,
 ): boolean {
-  if (!isObject(result) || !isAsyncIterableLike(result.stream)) {
+  if (!isObject(result) || !isAsyncIterable(result.stream)) {
     return false;
   }
 
   let firstChunkTime: number | undefined;
-  const chunks: GenkitGenerateResponseChunk[] = [];
+  const finishSpan = createDeferredSpanFinalizer(span);
 
-  void (async () => {
-    try {
-      for await (const chunk of result.stream) {
-        if (firstChunkTime === undefined) {
-          firstChunkTime = getCurrentUnixTimestamp();
+  patchStreamIfNeeded<GenkitGenerateResponseChunk>(result.stream, {
+    onChunk: () => {
+      if (firstChunkTime === undefined) {
+        firstChunkTime = getCurrentUnixTimestamp();
+      }
+    },
+    onComplete: (chunks) => {
+      // Do not await response processing from iterator.next(); Genkit streams
+      // are single-queue async iterables and user consumption should stay in control.
+      finishSpan(async () => {
+        const streamedText = chunks
+          .map((chunk) => safeGet(chunk, "text"))
+          .join("");
+        const response = await result.response;
+        const metrics = parseGenkitUsageMetrics(response?.usage);
+        if (firstChunkTime !== undefined) {
+          metrics.time_to_first_token = firstChunkTime - startTime;
         }
-        chunks.push(chunk);
-      }
 
-      const response = await result.response;
-      const metrics = parseGenkitUsageMetrics(response?.usage);
-      if (firstChunkTime !== undefined) {
-        metrics.time_to_first_token = firstChunkTime - startTime;
-      }
-
-      span.log({
-        output: {
-          ...extractGenerateOutput(response),
-          streamedText: chunks.map((chunk) => safeGet(chunk, "text")).join(""),
-        },
-        metadata: extractGenerateResponseMetadata(response, undefined),
-        metrics,
+        span.log({
+          output: {
+            ...extractGenerateOutput(response),
+            streamedText,
+          },
+          metadata: extractGenerateResponseMetadata(response, undefined),
+          metrics,
+        });
       });
-    } catch (error) {
-      span.log({ error: errorMessage(error) });
-    } finally {
-      span.end();
-    }
-  })();
+    },
+    onError: (error) => {
+      finishSpan(() => {
+        span.log({ error: error.message });
+      });
+    },
+  });
 
   return true;
 }
@@ -510,31 +517,55 @@ function patchActionStreamResult(
   span: Span,
   startTime: number,
 ): boolean {
-  if (!isObject(result) || !isAsyncIterableLike(result.stream)) {
+  if (!isObject(result) || !isAsyncIterable(result.stream)) {
     return false;
   }
 
-  void (async () => {
-    const chunks: unknown[] = [];
-    try {
-      for await (const chunk of result.stream) {
-        chunks.push(chunk);
-      }
-      span.log({
-        output: {
-          chunks,
-          result: await result.output,
-        },
-        metrics: durationMetrics(startTime),
+  const finishSpan = createDeferredSpanFinalizer(span);
+
+  patchStreamIfNeeded(result.stream, {
+    onComplete: (chunks) => {
+      // Do not await output processing from iterator.next(); Genkit streams
+      // are single-queue async iterables and user consumption should stay in control.
+      finishSpan(async () => {
+        span.log({
+          output: {
+            chunks,
+            result: await result.output,
+          },
+          metrics: durationMetrics(startTime),
+        });
       });
-    } catch (error) {
-      span.log({ error: errorMessage(error) });
-    } finally {
-      span.end();
-    }
-  })();
+    },
+    onError: (error) => {
+      finishSpan(() => {
+        span.log({ error: error.message });
+      });
+    },
+  });
 
   return true;
+}
+
+function createDeferredSpanFinalizer(
+  span: Span,
+): (callback: () => void | Promise<void>) => void {
+  let finished = false;
+  return (callback) => {
+    if (finished) {
+      return;
+    }
+    finished = true;
+    void (async () => {
+      try {
+        await callback();
+      } catch (error) {
+        span.log({ error: errorMessage(error) });
+      } finally {
+        span.end();
+      }
+    })();
+  };
 }
 
 function parseGenkitUsageMetrics(
@@ -725,15 +756,6 @@ function pickNumberMetrics(
       const value = entry[1];
       return typeof value === "number" && Number.isFinite(value);
     }),
-  );
-}
-
-function isAsyncIterableLike(value: unknown): value is AsyncIterable<unknown> {
-  return (
-    isObject(value) &&
-    typeof (value as { [Symbol.asyncIterator]?: unknown })[
-      Symbol.asyncIterator
-    ] === "function"
   );
 }
 

@@ -5,6 +5,7 @@ import {
   traceSyncStreamChannel,
   unsubscribeAll,
 } from "../core/channel-tracing";
+import { isAsyncIterable } from "../core/stream-patcher";
 import { SpanTypeAttribute, isPromiseLike } from "../../../util/index";
 import { getCurrentUnixTimestamp } from "../../util";
 import { Attachment, type Span, withCurrent } from "../../logger";
@@ -1530,16 +1531,6 @@ function isReadableStreamLike(value: unknown): value is {
   );
 }
 
-function isAsyncIterableLike(value: unknown): value is AsyncIterable<unknown> {
-  return (
-    value != null &&
-    typeof value === "object" &&
-    typeof (value as { [Symbol.asyncIterator]?: unknown })[
-      Symbol.asyncIterator
-    ] === "function"
-  );
-}
-
 function findAsyncIterableField(
   result: Record<string, unknown>,
   candidateFields: string[],
@@ -1547,7 +1538,7 @@ function findAsyncIterableField(
   for (const field of candidateFields) {
     try {
       const stream = result[field];
-      if (isAsyncIterableLike(stream)) {
+      if (isAsyncIterable(stream)) {
         return { field, stream };
       }
     } catch {

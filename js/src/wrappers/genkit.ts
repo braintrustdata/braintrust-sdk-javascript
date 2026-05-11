@@ -11,6 +11,13 @@ import type {
 } from "../vendor-sdk-types/genkit";
 
 const WRAPPED_GENKIT = Symbol.for("braintrust.genkit.wrapped");
+const PATCHED_GENKIT_REGISTRY = Symbol.for(
+  "braintrust.genkit.registry.patched",
+);
+const PATCHED_GENKIT_REGISTRY_CONSTRUCTOR = Symbol.for(
+  "braintrust.genkit.registry.constructor.patched",
+);
+const wrappedGenkitActions = new WeakMap<GenkitAction, GenkitAction>();
 
 /**
  * Wrap a Genkit instance or module so Genkit calls emit diagnostics-channel
@@ -38,9 +45,13 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
 
+function isPropertyBag(value: unknown): value is Record<PropertyKey, unknown> {
+  return isRecord(value) || typeof value === "function";
+}
+
 function hasFunction(value: unknown, methodName: string): boolean {
   return (
-    isRecord(value) &&
+    isPropertyBag(value) &&
     methodName in value &&
     typeof value[methodName] === "function"
   );
@@ -79,6 +90,8 @@ function wrapGenkitInstance(instance: GenkitInstance): GenkitInstance {
   if (hasWrappedFlag(instance)) {
     return instance;
   }
+
+  patchGenkitRegistry(instance);
 
   const proxy = new Proxy(instance, {
     get(target, prop, receiver) {
@@ -122,6 +135,88 @@ function wrapGenkitInstance(instance: GenkitInstance): GenkitInstance {
   });
 
   return proxy;
+}
+
+function patchGenkitRegistry(instance: GenkitInstance): void {
+  const registry = instance.registry;
+  patchGenkitRegistryLookup(registry);
+  patchGenkitRegistryConstructor(registry);
+}
+
+function patchGenkitRegistryLookup(registry: unknown): void {
+  if (
+    !isRecord(registry) ||
+    hasRegistryPatchedFlag(registry) ||
+    !hasFunction(registry, "lookupAction")
+  ) {
+    return;
+  }
+
+  const originalLookupAction = registry.lookupAction;
+  if (typeof originalLookupAction !== "function") {
+    return;
+  }
+
+  try {
+    Object.defineProperty(registry, "lookupAction", {
+      configurable: true,
+      value: (...args: unknown[]) => {
+        const result = originalLookupAction.apply(registry, args);
+        if (isPromiseLike(result)) {
+          return result.then((action) => wrapGenkitAction(action));
+        }
+        return wrapGenkitAction(result);
+      },
+      writable: true,
+    });
+    Object.defineProperty(registry, PATCHED_GENKIT_REGISTRY, {
+      value: true,
+    });
+  } catch {
+    // If Genkit makes the registry immutable, keep the returned action wrapper
+    // path working and leave name-based resolution unmodified.
+  }
+}
+
+function patchGenkitRegistryConstructor(registry: unknown): void {
+  if (!isRecord(registry)) {
+    return;
+  }
+
+  const constructor = registry.constructor;
+  if (
+    !isPropertyBag(constructor) ||
+    hasRegistryConstructorPatchedFlag(constructor) ||
+    !hasFunction(constructor, "withParent")
+  ) {
+    return;
+  }
+
+  const originalWithParent = constructor.withParent;
+  if (typeof originalWithParent !== "function") {
+    return;
+  }
+
+  try {
+    Object.defineProperty(constructor, "withParent", {
+      configurable: true,
+      value: (...args: unknown[]) => {
+        const childRegistry = originalWithParent.apply(constructor, args);
+        if (args.some((arg) => isRecord(arg) && hasRegistryPatchedFlag(arg))) {
+          patchGenkitRegistryLookup(childRegistry);
+          patchGenkitRegistryConstructor(childRegistry);
+        }
+        return childRegistry;
+      },
+      writable: true,
+    });
+    Object.defineProperty(constructor, PATCHED_GENKIT_REGISTRY_CONSTRUCTOR, {
+      value: true,
+    });
+  } catch {
+    // Genkit may freeze constructors in future versions; direct registry
+    // lookup patching still covers actions resolved from the wrapped instance.
+  }
 }
 
 function wrapGenerate(
@@ -171,12 +266,19 @@ function wrapRun(
     >[1]) as Promise<unknown>;
 }
 
-function wrapGenkitAction(action: GenkitAction): GenkitAction {
+function wrapGenkitAction(action: GenkitAction): GenkitAction;
+function wrapGenkitAction(action: unknown): unknown;
+function wrapGenkitAction(action: unknown): unknown {
   if (!isGenkitAction(action) || hasWrappedFlag(action)) {
     return action;
   }
 
-  return new Proxy(action, {
+  const existing = wrappedGenkitActions.get(action);
+  if (existing) {
+    return existing;
+  }
+
+  const proxy = new Proxy(action, {
     apply(target, thisArg, argArray) {
       return traceActionRun(target, () =>
         Reflect.apply(target, thisArg, argArray),
@@ -199,6 +301,9 @@ function wrapGenkitAction(action: GenkitAction): GenkitAction {
       }
     },
   });
+
+  wrappedGenkitActions.set(action, proxy);
+  return proxy;
 }
 
 function isGenkitAction(value: unknown): value is GenkitAction {
@@ -234,4 +339,22 @@ function traceActionStream(
 
 function hasWrappedFlag(value: object): boolean {
   return Boolean((value as Record<PropertyKey, unknown>)[WRAPPED_GENKIT]);
+}
+
+function hasRegistryPatchedFlag(value: object): boolean {
+  return Boolean(
+    (value as Record<PropertyKey, unknown>)[PATCHED_GENKIT_REGISTRY],
+  );
+}
+
+function hasRegistryConstructorPatchedFlag(value: object): boolean {
+  return Boolean(
+    (value as Record<PropertyKey, unknown>)[
+      PATCHED_GENKIT_REGISTRY_CONSTRUCTOR
+    ],
+  );
+}
+
+function isPromiseLike(value: unknown): value is PromiseLike<unknown> {
+  return isRecord(value) && "then" in value && typeof value.then === "function";
 }

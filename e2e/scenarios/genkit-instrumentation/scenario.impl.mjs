@@ -130,7 +130,7 @@ export async function runGenkitInstrumentationScenario(options = {}) {
   );
 
   let modelToolCallCount = 0;
-  const modelTool = ai.defineTool(
+  ai.defineTool(
     {
       name: "cityMarkerTool",
       description:
@@ -184,7 +184,10 @@ export async function runGenkitInstrumentationScenario(options = {}) {
               maxOutputTokens: 32,
             },
           });
-          await collectAsync(stream);
+          const chunks = await collectAsync(stream);
+          if (chunks.length === 0) {
+            throw new Error("Expected Genkit stream to yield chunks");
+          }
           await response;
         }, GOOGLE_GENAI_RETRY_OPTIONS);
       });
@@ -217,7 +220,7 @@ export async function runGenkitInstrumentationScenario(options = {}) {
                 model,
                 prompt:
                   "Use the cityMarkerTool tool with city Vienna before answering.",
-                tools: [modelTool],
+                tools: ["cityMarkerTool"],
                 maxTurns: 3,
                 config: {
                   temperature: 0,

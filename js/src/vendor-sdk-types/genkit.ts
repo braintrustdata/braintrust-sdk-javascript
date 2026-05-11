@@ -135,6 +135,10 @@ export type GenkitAction = {
 };
 
 export type GenkitInstance = {
+  registry?: {
+    lookupAction?: (...args: unknown[]) => unknown;
+    [key: string]: unknown;
+  };
   generate?: (input: GenkitGenerateInput) => Promise<GenkitGenerateResponse>;
   generateStream?: (input: GenkitGenerateInput) => GenkitGenerateStreamResponse;
   embed?: (params: GenkitEmbedParams) => Promise<GenkitEmbedding[]>;
