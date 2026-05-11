@@ -3,6 +3,7 @@ import { normalizeForSnapshot, type Json } from "../../helpers/normalize";
 import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
 import {
   formatJsonFileSnapshot,
+  matchFileSnapshot,
   resolveFileSnapshotPath,
 } from "../../helpers/file-snapshot";
 import { withScenarioHarness } from "../../helpers/scenario-harness";
@@ -927,7 +928,7 @@ export function defineAnthropicInstrumentationAssertions(options: {
     }
 
     test("matches the shared span snapshot", testConfig, async () => {
-      await expect(
+      await matchFileSnapshot(
         formatJsonFileSnapshot(
           buildSpanSummary(
             events,
@@ -936,11 +937,12 @@ export function defineAnthropicInstrumentationAssertions(options: {
             options.supportsThinking,
           ),
         ),
-      ).toMatchFileSnapshot(spanSnapshotPath);
+        spanSnapshotPath,
+      );
     });
 
     test("matches the shared payload snapshot", testConfig, async () => {
-      await expect(
+      await matchFileSnapshot(
         formatJsonFileSnapshot(
           buildPayloadSummary(
             events,
@@ -949,7 +951,8 @@ export function defineAnthropicInstrumentationAssertions(options: {
             options.supportsThinking,
           ),
         ),
-      ).toMatchFileSnapshot(payloadSnapshotPath);
+        payloadSnapshotPath,
+      );
     });
   });
 }

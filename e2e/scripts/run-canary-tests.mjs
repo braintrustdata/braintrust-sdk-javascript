@@ -64,14 +64,24 @@ async function getCanaryTestFiles() {
   return [...testFiles].sort();
 }
 
-async function runVitest(testFiles) {
+async function runVitest(testFiles, { update = false } = {}) {
   const env = {
     ...process.env,
     BRAINTRUST_E2E_MODE: "canary",
+    // Canary tests use live provider APIs with real keys; bypass any cassette
+    // replay that would activate because a pinned cassette file exists for the
+    // same variant key. Without this, the latest SDK may send slightly
+    // different request bodies, causing cassette misses → HttpResponse.error()
+    // → SDK retries → subprocess timeout.
+    BRAINTRUST_E2E_CASSETTE_MODE: "passthrough",
   };
 
+  const vitestArgs = ["exec", "vitest", "run"];
+  if (update) vitestArgs.push("--update");
+  vitestArgs.push(...testFiles);
+
   const exitCode = await new Promise((resolve, reject) => {
-    const child = spawn(PNPM_COMMAND, ["exec", "vitest", "run", ...testFiles], {
+    const child = spawn(PNPM_COMMAND, vitestArgs, {
       cwd: E2E_ROOT,
       env,
       stdio: "inherit",
@@ -89,4 +99,5 @@ if (testFiles.length === 0) {
   throw new Error("No canary e2e scenarios are configured.");
 }
 
-await runVitest(testFiles);
+const update = process.argv.includes("--update");
+await runVitest(testFiles, { update });

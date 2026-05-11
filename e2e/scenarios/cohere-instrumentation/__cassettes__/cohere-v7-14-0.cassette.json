@@ -1,0 +1,220 @@
+{
+  "entries": [
+    {
+      "callIndex": 0,
+      "id": "cohere-v2-chat-sync-01",
+      "matchKey": "POST api.cohere.com/v2/chat",
+      "recordedAt": "2026-05-05T00:00:00.000Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "max_tokens": 32,
+            "messages": [
+              {
+                "content": "Reply with exactly OK.",
+                "role": "user"
+              }
+            ],
+            "model": "command-a-03-2025",
+            "stream": false,
+            "temperature": 0
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.cohere.com/v2/chat"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "finish_reason": "COMPLETE",
+            "id": "c8f4de69-bf3d-490e-97a1-40052615873c",
+            "message": {
+              "content": [
+                {
+                  "text": "OK.",
+                  "type": "text"
+                }
+              ],
+              "role": "assistant"
+            },
+            "usage": {
+              "billed_units": {
+                "input_tokens": 5,
+                "output_tokens": 2
+              },
+              "cached_tokens": 877,
+              "tokens": {
+                "input_tokens": 886,
+                "output_tokens": 2
+              }
+            }
+          }
+        },
+        "headers": {
+          "content-type": "application/json"
+        },
+        "status": 200
+      }
+    },
+    {
+      "callIndex": 1,
+      "id": "cohere-v2-chat-stream-01",
+      "matchKey": "POST api.cohere.com/v2/chat",
+      "recordedAt": "2026-05-05T00:00:00.000Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "max_tokens": 32,
+            "messages": [
+              {
+                "content": "Reply with exactly STREAM.",
+                "role": "user"
+              }
+            ],
+            "model": "command-a-03-2025",
+            "stream": true,
+            "temperature": 0
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.cohere.com/v2/chat"
+      },
+      "response": {
+        "body": {
+          "chunks": [
+            "data: {\"type\":\"message-start\",\"id\":\"msg-stream-abc\",\"delta\":{\"message\":{\"role\":\"assistant\"}}}",
+            "data: {\"type\":\"content-start\",\"index\":0,\"delta\":{\"message\":{\"content\":{\"type\":\"text\",\"text\":\"\"}}}}",
+            "data: {\"type\":\"content-delta\",\"index\":0,\"delta\":{\"message\":{\"content\":{\"text\":\"STREAM.\"}}}}",
+            "data: {\"type\":\"content-end\",\"index\":0}",
+            "data: {\"type\":\"message-end\",\"id\":\"msg-stream-abc\",\"delta\":{\"finish_reason\":\"COMPLETE\",\"usage\":{\"cached_tokens\":0,\"billed_units\":{\"input_tokens\":6,\"output_tokens\":1},\"tokens\":{\"input_tokens\":887,\"output_tokens\":1}}}}",
+            "data: [DONE]"
+          ],
+          "kind": "sse"
+        },
+        "headers": {
+          "content-type": "text/event-stream"
+        },
+        "status": 200
+      }
+    },
+    {
+      "callIndex": 0,
+      "id": "cohere-v2-embed-01",
+      "matchKey": "POST api.cohere.com/v2/embed",
+      "recordedAt": "2026-05-05T00:00:00.000Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "embedding_types": ["float"],
+            "input_type": "search_document",
+            "model": "embed-english-v3.0",
+            "texts": ["braintrust tracing"]
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.cohere.com/v2/embed"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "embeddings": {
+              "float": [
+                [
+                  0.017898559, -0.020599365, 0.050750732, -0.009429932,
+                  0.008674622
+                ]
+              ]
+            },
+            "id": "embed-abc-123",
+            "meta": {
+              "api_version": {
+                "version": "2"
+              },
+              "billed_units": {
+                "input_tokens": 2
+              }
+            },
+            "texts": ["braintrust tracing"]
+          }
+        },
+        "headers": {
+          "content-type": "application/json"
+        },
+        "status": 200
+      }
+    },
+    {
+      "callIndex": 0,
+      "id": "cohere-v2-rerank-01",
+      "matchKey": "POST api.cohere.com/v2/rerank",
+      "recordedAt": "2026-05-05T00:00:00.000Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "documents": [
+              "Paris is the capital city of France.",
+              "Vienna is the capital city of Austria.",
+              "Canberra is the capital city of Australia."
+            ],
+            "model": "rerank-english-v3.0",
+            "query": "What is the capital of France?",
+            "top_n": 2
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.cohere.com/v2/rerank"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "id": "rerank-abc-456",
+            "meta": {
+              "api_version": {
+                "version": "2"
+              },
+              "billed_units": {
+                "search_units": 1
+              }
+            },
+            "results": [
+              {
+                "document": {
+                  "text": "Paris is the capital city of France."
+                },
+                "index": 0,
+                "relevance_score": 0.99987
+              },
+              {
+                "document": {
+                  "text": "Vienna is the capital city of Austria."
+                },
+                "index": 1,
+                "relevance_score": 0.00013
+              }
+            ]
+          }
+        },
+        "headers": {
+          "content-type": "application/json"
+        },
+        "status": 200
+      }
+    }
+  ],
+  "meta": {
+    "createdAt": "2026-05-05T00:00:00.000Z",
+    "seinfeldVersion": "0.0.0"
+  },
+  "version": 1
+}

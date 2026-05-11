@@ -3,6 +3,7 @@ import { normalizeForSnapshot, type Json } from "../../helpers/normalize";
 import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
 import {
   formatJsonFileSnapshot,
+  matchFileSnapshot,
   resolveFileSnapshotPath,
 } from "../../helpers/file-snapshot";
 import { withScenarioHarness } from "../../helpers/scenario-harness";
@@ -686,9 +687,10 @@ export function defineClaudeAgentSDKInstrumentationAssertions(options: {
     });
 
     test("matches the shared span snapshot", testConfig, async () => {
-      await expect(
+      await matchFileSnapshot(
         formatJsonFileSnapshot(buildSpanSummary(events)),
-      ).toMatchFileSnapshot(snapshotPath);
+        snapshotPath,
+      );
     });
   });
 }

@@ -4,14 +4,16 @@ import {
   readInstalledPackageVersion,
   resolveScenarioDir,
 } from "../../helpers/scenario-harness";
+import { cassetteTagsFor } from "../../helpers/tags";
 import { defineHuggingFaceInstrumentationAssertions } from "./assertions";
 import {
   HUGGINGFACE_SCENARIO_SPECS,
   HUGGINGFACE_SCENARIO_TIMEOUT_MS,
 } from "./scenario.impl.mjs";
 
+const originalScenarioDir = resolveScenarioDir(import.meta.url);
 const scenarioDir = await prepareScenarioDir({
-  scenarioDir: resolveScenarioDir(import.meta.url),
+  scenarioDir: originalScenarioDir,
 });
 
 const huggingFaceScenarios = await Promise.all(
@@ -25,13 +27,18 @@ const huggingFaceScenarios = await Promise.all(
 );
 
 for (const scenario of huggingFaceScenarios) {
-  describe(`huggingface inference sdk ${scenario.version}`, () => {
+  const tags = cassetteTagsFor(import.meta.url, scenario.snapshotName);
+
+  describe(`huggingface inference sdk ${scenario.version}`, { tags }, () => {
     defineHuggingFaceInstrumentationAssertions({
       name: "wrapped instrumentation",
       runScenario: async ({ runScenarioDir }) => {
         await runScenarioDir({
           entry: scenario.wrapperEntry,
-          runContext: { variantKey: scenario.snapshotName },
+          runContext: {
+            variantKey: scenario.snapshotName,
+            originalScenarioDir,
+          },
           scenarioDir,
           timeoutMs: HUGGINGFACE_SCENARIO_TIMEOUT_MS,
         });
@@ -47,7 +54,10 @@ for (const scenario of huggingFaceScenarios) {
         await runNodeScenarioDir({
           entry: scenario.autoEntry,
           nodeArgs: ["--import", "braintrust/hook.mjs"],
-          runContext: { variantKey: scenario.snapshotName },
+          runContext: {
+            variantKey: scenario.snapshotName,
+            originalScenarioDir,
+          },
           scenarioDir,
           timeoutMs: HUGGINGFACE_SCENARIO_TIMEOUT_MS,
         });
