@@ -47,7 +47,7 @@ export class GenkitPlugin extends BasePlugin {
     this.unsubscribers.push(
       traceAsyncChannel(genkitChannels.generate, {
         name: "genkit.generate",
-        type: SpanTypeAttribute.FUNCTION,
+        type: SpanTypeAttribute.LLM,
         extractInput: ([input]) => extractGenerateInput(input),
         extractOutput: extractGenerateOutput,
         extractMetadata: (result, event) =>
@@ -59,7 +59,7 @@ export class GenkitPlugin extends BasePlugin {
     this.unsubscribers.push(
       traceSyncStreamChannel(genkitChannels.generateStream, {
         name: "genkit.generateStream",
-        type: SpanTypeAttribute.FUNCTION,
+        type: SpanTypeAttribute.LLM,
         extractInput: ([input]) => extractGenerateInput(input),
         patchResult: ({ result, span, startTime }) =>
           patchGenerateStreamResult(result, span, startTime),

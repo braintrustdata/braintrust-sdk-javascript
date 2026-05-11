@@ -79,7 +79,7 @@
     "span_parents": [
       "<span:4>"
     ],
-    "type": "function"
+    "type": "llm"
   },
   {
     "has_input": false,
@@ -115,7 +115,7 @@
     "span_parents": [
       "<span:6>"
     ],
-    "type": "function"
+    "type": "llm"
   },
   {
     "has_input": false,
@@ -181,7 +181,7 @@
     "span_parents": [
       "<span:10>"
     ],
-    "type": "function"
+    "type": "llm"
   },
   {
     "has_input": true,

@@ -199,6 +199,7 @@ export function defineGenkitInstrumentationAssertions(options: {
       expect(generateSpan?.row.metadata).toMatchObject({
         provider: "genkit",
       });
+      expect(generateSpan?.span.type).toBe("llm");
       expect(generateSpan?.metadata?.model).toEqual(
         expect.stringContaining("gemini-2.5-flash-lite"),
       );
@@ -212,6 +213,7 @@ export function defineGenkitInstrumentationAssertions(options: {
       expect(streamSpan?.row.metadata).toMatchObject({
         provider: "genkit",
       });
+      expect(streamSpan?.span.type).toBe("llm");
       expect(streamSpan?.output).toBeDefined();
       expect(streamSpan?.metrics?.time_to_first_token).toEqual(
         expect.any(Number),
@@ -247,6 +249,7 @@ export function defineGenkitInstrumentationAssertions(options: {
       expect(generateSpan?.row.metadata).toMatchObject({
         provider: "genkit",
       });
+      expect(generateSpan?.span.type).toBe("llm");
       expect(generateSpan?.output).toBeDefined();
       expect(toolSpan?.row.metadata).toMatchObject({
         "genkit.action_name": "cityMarkerTool",
