@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, test } from "vitest";
 import {
   formatJsonFileSnapshot,
+  matchFileSnapshot,
   resolveFileSnapshotPath,
 } from "../../helpers/file-snapshot";
 import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
@@ -420,9 +421,10 @@ export function defineOpenAICodexInstrumentationAssertions(options: {
       });
 
       test("matches the mock span snapshot", testConfig, async () => {
-        await expect(
+        await matchFileSnapshot(
           formatJsonFileSnapshot(summarize(events)),
-        ).toMatchFileSnapshot(mockSnapshotPath(options));
+          mockSnapshotPath(options),
+        );
       });
     }
   });
