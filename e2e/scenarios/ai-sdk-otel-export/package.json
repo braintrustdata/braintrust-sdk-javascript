@@ -12,7 +12,7 @@
     }
   },
   "dependencies": {
-    "@opentelemetry/sdk-node": "0.201.1",
+    "@opentelemetry/sdk-node": "0.217.0",
     "ai-sdk-openai-v5": "npm:@ai-sdk/openai@2.0.57",
     "ai-sdk-openai-v6": "npm:@ai-sdk/openai@3.0.7",
     "ai-sdk-v5": "npm:ai@5.0.82",
