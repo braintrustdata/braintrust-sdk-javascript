@@ -152,7 +152,7 @@ function wrapCodexThread(thread: OpenAICodexThread): OpenAICodexThread {
               arguments: args,
               operation: "run",
               thread: target,
-            } as never,
+            },
           );
         };
       }
@@ -171,7 +171,7 @@ function wrapCodexThread(thread: OpenAICodexThread): OpenAICodexThread {
               arguments: args,
               operation: "runStreamed",
               thread: target,
-            } as never,
+            },
           );
         };
       }

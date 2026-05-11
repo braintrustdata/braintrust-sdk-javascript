@@ -302,21 +302,9 @@ describe("BraintrustPlugin", () => {
       expect(OpenRouterAgentPlugin).toHaveBeenCalledTimes(1);
     });
 
-    it("should not create OpenAI Codex plugin when openaiCodex: false", () => {
+    it("should not create OpenAI Codex plugin when openaiCodexSDK: false", () => {
       const plugin = new BraintrustPlugin({
-        integrations: { openaiCodex: false },
-      });
-      plugin.enable();
-
-      expect(OpenAICodexPlugin).not.toHaveBeenCalled();
-      expect(OpenAIPlugin).toHaveBeenCalledTimes(1);
-      expect(AnthropicPlugin).toHaveBeenCalledTimes(1);
-      expect(AISDKPlugin).toHaveBeenCalledTimes(1);
-    });
-
-    it("should not create OpenAI Codex plugin when codex: false", () => {
-      const plugin = new BraintrustPlugin({
-        integrations: { codex: false },
+        integrations: { openaiCodexSDK: false },
       });
       plugin.enable();
 
@@ -486,8 +474,7 @@ describe("BraintrustPlugin", () => {
       const plugin = new BraintrustPlugin({
         integrations: {
           openai: false,
-          openaiCodex: false,
-          codex: false,
+          openaiCodexSDK: false,
           anthropic: false,
           aisdk: false,
           claudeAgentSDK: false,

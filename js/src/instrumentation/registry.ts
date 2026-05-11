@@ -27,8 +27,7 @@ export interface InstrumentationConfig {
     openrouterAgent?: boolean;
     mistral?: boolean;
     cohere?: boolean;
-    openaiCodex?: boolean;
-    codex?: boolean;
+    openaiCodexSDK?: boolean;
   };
 }
 
@@ -109,8 +108,7 @@ class PluginRegistry {
   private getDefaultConfig(): Record<string, boolean> {
     return {
       openai: true,
-      openaiCodex: true,
-      codex: true,
+      openaiCodexSDK: true,
       anthropic: true,
       vercel: true,
       aisdk: true,
@@ -144,14 +142,8 @@ class PluginRegistry {
       for (const sdk of disabled) {
         if (sdk === "cursor-sdk") {
           integrations.cursorSDK = false;
-        } else if (
-          sdk === "openai-codex" ||
-          sdk === "openai-codex-sdk" ||
-          sdk === "codex-sdk"
-        ) {
-          integrations.openaiCodex = false;
-        } else if (sdk === "codex") {
-          integrations.codex = false;
+        } else if (sdk === "openai-codex-sdk") {
+          integrations.openaiCodexSDK = false;
         } else {
           integrations[sdk] = false;
         }

@@ -33,8 +33,7 @@ export interface BraintrustPluginConfig {
     googleADK?: boolean;
     cohere?: boolean;
     groq?: boolean;
-    openaiCodex?: boolean;
-    codex?: boolean;
+    openaiCodexSDK?: boolean;
   };
 }
 
@@ -93,7 +92,7 @@ export class BraintrustPlugin extends BasePlugin {
       this.openaiPlugin.enable();
     }
 
-    if (integrations.openaiCodex !== false && integrations.codex !== false) {
+    if (integrations.openaiCodexSDK !== false) {
       this.openAICodexPlugin = new OpenAICodexPlugin();
       this.openAICodexPlugin.enable();
     }

@@ -74,21 +74,21 @@ export class OpenAICodexPlugin extends BasePlugin {
       start: (event) => {
         states.set(event, startCodexRun(event, "Thread.run"));
       },
-      asyncEnd: (event) => {
+      asyncEnd: async (event) => {
         const state = states.get(event);
         if (!state) {
           return;
         }
         states.delete(event);
-        void finalizeCompletedRun(state, event.result);
+        await finalizeCompletedRun(state, event.result);
       },
-      error: (event) => {
+      error: async (event) => {
         const state = states.get(event);
         if (!state) {
           return;
         }
         states.delete(event);
-        void finalizeCodexRun(state, { error: event.error });
+        await finalizeCodexRun(state, { error: event.error });
       },
     };
 
@@ -108,21 +108,21 @@ export class OpenAICodexPlugin extends BasePlugin {
       start: (event) => {
         states.set(event, startCodexRun(event, "Thread.runStreamed"));
       },
-      asyncEnd: (event) => {
+      asyncEnd: async (event) => {
         const state = states.get(event);
         if (!state) {
           return;
         }
         states.delete(event);
-        patchStreamedTurn(event.result, state);
+        await patchStreamedTurn(event.result, state);
       },
-      error: (event) => {
+      error: async (event) => {
         const state = states.get(event);
         if (!state) {
           return;
         }
         states.delete(event);
-        void finalizeCodexRun(state, { error: event.error });
+        await finalizeCodexRun(state, { error: event.error });
       },
     };
 
@@ -176,12 +176,12 @@ function startCodexRun(
   };
 }
 
-function patchStreamedTurn(
+async function patchStreamedTurn(
   streamedTurn: OpenAICodexStreamedTurn | undefined,
   state: CodexRunState,
-): void {
+): Promise<void> {
   if (!streamedTurn || typeof streamedTurn !== "object") {
-    void finalizeCodexRun(state, { output: streamedTurn });
+    await finalizeCodexRun(state, { output: streamedTurn });
     return;
   }
 
@@ -202,7 +202,7 @@ function patchStreamedTurn(
     });
     turnRecord.events = patchCodexEventStream(turnRecord.events, state);
   } catch {
-    void finalizeCodexRun(state, { output: streamedTurn });
+    await finalizeCodexRun(state, { output: streamedTurn });
   }
 }
 
@@ -836,10 +836,7 @@ function extractUsageMetrics(
   }
 
   metrics.tokens =
-    (metrics.prompt_tokens ?? 0) +
-    (metrics.completion_tokens ?? 0) +
-    (metrics.prompt_cached_tokens ?? 0) +
-    (metrics.completion_reasoning_tokens ?? 0);
+    (metrics.prompt_tokens ?? 0) + (metrics.completion_tokens ?? 0);
   return metrics;
 }
 
