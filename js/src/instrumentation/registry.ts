@@ -159,7 +159,9 @@ class PluginRegistry {
       openrouterAgent: true,
       mistral: true,
       cohere: true,
+      groq: true,
       gitHubCopilot: true,
+      mastra: true,
     };
   }
 
@@ -167,7 +169,7 @@ class PluginRegistry {
    * Read configuration from environment variables.
    * Supports: BRAINTRUST_DISABLE_INSTRUMENTATION=openai,anthropic,...
    */
-  private readEnvConfig(): InstrumentationConfig {
+  private readEnvConfig(): { integrations: Record<string, boolean> } {
     const integrations: Record<string, boolean> = {};
 
     const disabledList = iso.getEnv("BRAINTRUST_DISABLE_INSTRUMENTATION");
@@ -178,15 +180,23 @@ class PluginRegistry {
         .filter((s) => s.length > 0);
 
       for (const sdk of disabled) {
-        if (sdk === "cursor-sdk") {
-          integrations.cursorSDK = false;
-        } else {
-          integrations[sdk] = false;
-        }
+        integrations[normalizeIntegrationName(sdk)] = false;
       }
     }
 
     return { integrations };
+  }
+}
+
+function normalizeIntegrationName(name: string): string {
+  switch (name) {
+    case "cursor-sdk":
+      return "cursorSDK";
+    case "@mastra/core":
+    case "mastra-core":
+      return "mastra";
+    default:
+      return name;
   }
 }
 

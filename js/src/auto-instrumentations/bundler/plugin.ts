@@ -12,14 +12,12 @@
  */
 
 import { createUnplugin } from "unplugin";
-import {
-  create,
-  type InstrumentationConfig,
-} from "@apm-js-collab/code-transformer";
+import { type InstrumentationConfig } from "@apm-js-collab/code-transformer";
 import { extname, join, sep } from "path";
 import { readFileSync } from "fs";
 import { fileURLToPath } from "url";
 import moduleDetailsFromPath from "module-details-from-path";
+import { createInstrumentationMatcher } from "../custom-transforms";
 import { openaiConfigs } from "../configs/openai";
 import { anthropicConfigs } from "../configs/anthropic";
 import { aiSDKConfigs } from "../configs/ai-sdk";
@@ -33,6 +31,7 @@ import { mistralConfigs } from "../configs/mistral";
 import { cohereConfigs } from "../configs/cohere";
 import { groqConfigs } from "../configs/groq";
 import { gitHubCopilotConfigs } from "../configs/github-copilot";
+import { mastraConfigs } from "../configs/mastra";
 
 export interface BundlerPluginOptions {
   /**
@@ -87,6 +86,7 @@ export const unplugin = createUnplugin<BundlerPluginOptions>((options = {}) => {
     ...cohereConfigs,
     ...groqConfigs,
     ...gitHubCopilotConfigs,
+    ...mastraConfigs,
     ...(options.instrumentations || []),
   ];
 
@@ -94,7 +94,10 @@ export const unplugin = createUnplugin<BundlerPluginOptions>((options = {}) => {
   const dcModule = options.browser === false ? undefined : "dc-browser";
 
   // Create the code transformer instrumentor
-  const instrumentationMatcher = create(allInstrumentations, dcModule);
+  const instrumentationMatcher = createInstrumentationMatcher(
+    allInstrumentations,
+    dcModule,
+  );
 
   return {
     name: "code-transformer",

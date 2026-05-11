@@ -42,6 +42,7 @@ export { googleADKConfigs } from "./configs/google-adk";
 export { cohereConfigs } from "./configs/cohere";
 export { groqConfigs } from "./configs/groq";
 export { gitHubCopilotConfigs } from "./configs/github-copilot";
+export { mastraConfigs } from "./configs/mastra";
 
 // Re-export orchestrion configuration types
 // Note: ModuleMetadata and FunctionQuery are properties of InstrumentationConfig,
