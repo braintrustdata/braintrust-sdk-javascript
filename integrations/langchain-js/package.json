@@ -30,13 +30,13 @@
     "@langchain/openai": "^1.2.0",
     "@types/node": "^20.10.5",
     "braintrust": "workspace:*",
-    "msw": "^2.6.6",
+    "msw": "^2.14.5",
     "tsup": "^8.3.5",
     "typedoc": "^0.25.13",
     "typescript": "^5.3.3",
     "vitest": "^4.1.2",
     "zod": "^3.25.34",
-    "zod-to-json-schema": "^3.22.5"
+    "zod-to-json-schema": "^3.25.2"
   },
   "peerDependencies": {
     "@langchain/core": ">=0.3.42",

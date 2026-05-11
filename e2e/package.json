@@ -19,10 +19,10 @@
     "@opentelemetry/sdk-trace-base": ">=1.9.0",
     "@types/node": "^20.10.5",
     "braintrust": "workspace:^",
-    "msw": "^2.6.6",
+    "msw": "^2.14.5",
     "tsx": "^4.21.0",
     "typescript": "5.4.4",
     "vitest": "^4.1.2",
-    "zod": "4.3.6"
+    "zod": "4.4.3"
   }
 }

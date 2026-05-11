@@ -37,7 +37,7 @@
     "format:check": "prettier --check src test"
   },
   "dependencies": {
-    "msw": "^2.7.0",
+    "msw": "^2.14.5",
     "zod": "^3.23.8"
   },
   "peerDependencies": {

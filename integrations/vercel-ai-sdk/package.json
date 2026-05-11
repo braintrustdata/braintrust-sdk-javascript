@@ -30,8 +30,8 @@
     "vitest": "^4.1.2"
   },
   "dependencies": {
-    "@ai-sdk/provider": "^0.0.11",
-    "ai": "^3.2.16",
+    "@ai-sdk/provider": "^0.0.26",
+    "ai": "^3.4.33",
     "braintrust": "workspace:*"
   },
   "peerDependencies": {
