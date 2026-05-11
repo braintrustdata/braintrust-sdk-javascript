@@ -8,7 +8,7 @@
     "test:e2e:hermetic": "vitest run --tags-filter=hermetic",
     "test:e2e:canary": "node ./scripts/run-canary-tests-docker.mjs",
     "test:e2e:update": "vitest run --update",
-    "test:e2e:record": "node ./scripts/record-cassettes.mjs"
+    "test:e2e:record": "BRAINTRUST_E2E_CASSETTE_MODE=record vitest run"
   },
   "devDependencies": {
     "@braintrust/langchain-js": "workspace:^",
@@ -19,7 +19,6 @@
     "@opentelemetry/sdk-trace-base": ">=1.9.0",
     "@types/node": "^20.10.5",
     "braintrust": "workspace:^",
-    "dotenv": "^17.2.3",
     "msw": "^2.6.6",
     "tsx": "^4.21.0",
     "typescript": "5.4.4",

@@ -3,6 +3,7 @@ import { normalizeForSnapshot, type Json } from "../../helpers/normalize";
 import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
 import {
   formatJsonFileSnapshot,
+  matchFileSnapshot,
   resolveFileSnapshotPath,
 } from "../../helpers/file-snapshot";
 import { withScenarioHarness } from "../../helpers/scenario-harness";
@@ -1299,7 +1300,7 @@ export function defineAISDKInstrumentationAssertions(options: {
     }
 
     test("matches the shared span snapshot", testConfig, async () => {
-      await expect(
+      await matchFileSnapshot(
         formatJsonFileSnapshot(
           buildSpanSummary(events, {
             agentSpanName: options.agentSpanName,
@@ -1311,11 +1312,12 @@ export function defineAISDKInstrumentationAssertions(options: {
             supportsStreamObject: options.supportsStreamObject,
           }),
         ),
-      ).toMatchFileSnapshot(spanSnapshotPath);
+        spanSnapshotPath,
+      );
     });
 
     test("matches the shared payload snapshot", testConfig, async () => {
-      await expect(
+      await matchFileSnapshot(
         formatJsonFileSnapshot(
           buildPayloadSummary(events, {
             agentSpanName: options.agentSpanName,
@@ -1327,7 +1329,8 @@ export function defineAISDKInstrumentationAssertions(options: {
             supportsStreamObject: options.supportsStreamObject,
           }),
         ),
-      ).toMatchFileSnapshot(payloadSnapshotPath);
+        payloadSnapshotPath,
+      );
     });
   });
 }

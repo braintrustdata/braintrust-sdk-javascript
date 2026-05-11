@@ -3,8 +3,11 @@ import { z } from "zod";
 /**
  * Zod schema for cassette format version 1.
  *
- * Validates cassettes at load time so corrupt files fail loudly rather than
- * mysteriously silent at match time.
+ * Cassette files carry a `version` field so that: (a) load-time validation
+ * fails loudly on corrupt files rather than silently at match time, and
+ * (b) a future breaking change can introduce v2 while the library still reads
+ * older cassettes without ambiguity. See `format/index.ts` for the dispatch
+ * logic and the rule for when to bump the version.
  */
 
 export const CURRENT_FORMAT_VERSION = 1 as const;

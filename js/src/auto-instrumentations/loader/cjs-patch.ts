@@ -9,6 +9,7 @@ import { sep } from "node:path";
 import moduleDetailsFromPath from "module-details-from-path";
 import { createInstrumentationMatcher } from "../custom-transforms";
 import { getPackageName, getPackageVersion } from "./get-package-version.js";
+import { OPENAI_API_PROMISE_PATCH } from "./openai-api-promise-patch.js";
 
 export class ModulePatch {
   private packages: Set<string>;
@@ -50,10 +51,17 @@ export class ModulePatch {
           return self.originalCompile.apply(this, args);
         }
 
-        const version = getPackageVersion(resolvedModule.basedir);
-
-        // Normalize module path for WASM transformer (expects forward slashes)
+        // Patch OpenAI's APIPromise to prevent double-read of HTTP response bodies.
         const normalizedModulePath = resolvedModule.path.replace(/\\/g, "/");
+        if (
+          packageName === "openai" &&
+          normalizedModulePath.includes("api-promise")
+        ) {
+          args[0] = content + OPENAI_API_PROMISE_PATCH;
+          return self.originalCompile.apply(this, args);
+        }
+
+        const version = getPackageVersion(resolvedModule.basedir);
 
         const transformer = self.instrumentator.getTransformer(
           packageName,

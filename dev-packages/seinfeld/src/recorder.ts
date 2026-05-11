@@ -8,6 +8,7 @@ import type {
   CassetteEntry,
   CassetteMode,
   RecordedRequest,
+  RecordedResponse,
 } from "./cassette";
 import { AggregateCassetteMissError, CassetteMissError } from "./errors";
 import { CURRENT_FORMAT_VERSION } from "./format";
@@ -221,8 +222,22 @@ async function handleRecord(
     response: redactedResponse,
   });
 
-  // Return the real response to the caller. recordResponseDraft only used
-  // .clone() internally, so realResponse body is still available to clone.
+  // Return the response to the caller.
+  //
+  // For non-draft bodies (JSON, text, empty, SSE), build a fresh Response
+  // from the already-captured bytes. This avoids a Node.js/undici issue
+  // where realResponse.clone() after recordResponseDraft() (which already
+  // teed the body stream) can return an empty body, causing callers to
+  // misparse the response.
+  //
+  // For binary-draft bodies (large responses above the threshold), the
+  // bytes haven't been materialised yet, so fall back to realResponse.clone().
+  if (captured.body.kind !== "binary-draft") {
+    return buildResponse(captured as unknown as RecordedResponse, {
+      store: ctx.store,
+      name: ctx.name,
+    });
+  }
   return realResponse.clone();
 }
 
@@ -348,7 +363,7 @@ export interface CassetteOptions {
   store?: CassetteStore;
   /** Filter spec (matching-only normalization). */
   filters?: FilterSpec;
-  /** Redaction spec (applied to persisted bytes). Defaults to none. */
+  /** Redaction spec (applied to persisted bytes). Defaults to `'paranoid'`. Pass `[]` to disable. */
   redact?: RedactionSpec;
   /** Hosts to intercept. Other hosts pass through. Defaults to all hosts. */
   hosts?: Array<string | RegExp>;
@@ -403,7 +418,7 @@ export function createCassette(options: CassetteOptions): Cassette {
       options.store ?? createJsonFileStore({ rootDir: DEFAULT_CASSETTE_DIR }),
     matcher: options.matcher ?? createDefaultMatcher(),
     filters: options.filters,
-    redact: options.redact,
+    redact: options.redact ?? "paranoid",
     hosts: options.hosts,
     passthroughHosts: options.passthroughHosts,
     threshold: resolveThreshold(options.externalBlobThreshold),

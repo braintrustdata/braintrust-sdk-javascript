@@ -178,7 +178,7 @@ unset ANTHROPIC_API_KEY OPENAI_API_KEY GEMINI_API_KEY COHERE_API_KEY GROQ_API_KE
 pnpm --filter=@braintrust/js-e2e-tests run test:e2e:hermetic
 ```
 
-If a scenario records but later replay fails because of volatile fields in the request body (e.g. AI-SDK's generated message ids), add or update the filter for that scenario in `e2e/helpers/cassette-filters.mjs`, then re-record.
+If a scenario records but later replay fails because of volatile fields in the request body (e.g. AI-SDK's generated message ids), add or update `<scenario-dir>/cassette-filter.mjs` for that scenario, then re-record.
 
 ### In-scope scenarios
 

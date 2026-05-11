@@ -1,6 +1,7 @@
 import { expect, test } from "vitest";
 import {
   formatJsonFileSnapshot,
+  matchFileSnapshot,
   resolveFileSnapshotPath,
 } from "../../helpers/file-snapshot";
 import {
@@ -43,14 +44,12 @@ test(
         scenarioName: "wrap-langchain-js-traces",
       });
 
-      await expect(
+      await matchFileSnapshot(
         formatJsonFileSnapshot(summaries.spanSummary),
-      ).toMatchFileSnapshot(
         resolveFileSnapshotPath(import.meta.url, "span-events.json"),
       );
-      await expect(
+      await matchFileSnapshot(
         formatJsonFileSnapshot(summaries.payloadSummary),
-      ).toMatchFileSnapshot(
         resolveFileSnapshotPath(import.meta.url, "log-payloads.json"),
       );
     });

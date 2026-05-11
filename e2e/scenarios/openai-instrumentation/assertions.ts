@@ -6,6 +6,7 @@ import { normalizeForSnapshot, type Json } from "../../helpers/normalize";
 import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
 import {
   formatJsonFileSnapshot,
+  matchFileSnapshot,
   resolveFileSnapshotPath,
 } from "../../helpers/file-snapshot";
 import { withScenarioHarness } from "../../helpers/scenario-harness";
@@ -666,15 +667,17 @@ export function defineOpenAIInstrumentationAssertions(options: {
     }
 
     test("matches the shared span snapshot", testConfig, async () => {
-      await expect(
+      await matchFileSnapshot(
         formatJsonFileSnapshot(buildSpanSummary(events, operationSpecs)),
-      ).toMatchFileSnapshot(spanSnapshotPath);
+        spanSnapshotPath,
+      );
     });
 
     test("matches the shared payload snapshot", testConfig, async () => {
-      await expect(
+      await matchFileSnapshot(
         formatJsonFileSnapshot(buildPayloadSummary(events, operationSpecs)),
-      ).toMatchFileSnapshot(payloadSnapshotPath);
+        payloadSnapshotPath,
+      );
     });
   });
 }

@@ -10,6 +10,7 @@ import { type InstrumentationConfig } from "@apm-js-collab/code-transformer";
 import moduleDetailsFromPath from "module-details-from-path";
 import { createInstrumentationMatcher } from "../custom-transforms.js";
 import { getPackageName, getPackageVersion } from "./get-package-version.js";
+import { OPENAI_API_PROMISE_PATCH } from "./openai-api-promise-patch.js";
 
 let instrumentator: any;
 let packages: Set<string>;
@@ -67,8 +68,25 @@ export async function resolve(
   return url;
 }
 
+function isOpenAIApiPromise(url: string): boolean {
+  return url.includes("/openai") && url.includes("api-promise");
+}
+
 export async function load(url: string, context: any, nextLoad: Function) {
   const result = await nextLoad(url, context);
+
+  // Patch OpenAI's APIPromise to prevent double-read of HTTP response bodies.
+  if (isOpenAIApiPromise(url)) {
+    if (result.format === "commonjs") {
+      const parsedUrl = new URL(result.responseURL ?? url);
+      result.source ??= await readFile(parsedUrl);
+    }
+    if (result.source) {
+      result.source = result.source.toString("utf8") + OPENAI_API_PROMISE_PATCH;
+      result.shortCircuit = true;
+    }
+    return result;
+  }
 
   if (!transformers.has(url)) {
     // No transformation needed for this module

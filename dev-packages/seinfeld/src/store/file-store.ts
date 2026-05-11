@@ -98,9 +98,10 @@ export function createJsonFileStore(
     async save(name, cassette) {
       const path = pathFor(name);
       await mkdir(dirname(path), { recursive: true });
+      const sorted = sortKeys(cassette);
       const json = pretty
-        ? JSON.stringify(cassette, null, 2)
-        : JSON.stringify(cassette);
+        ? JSON.stringify(sorted, null, 2)
+        : JSON.stringify(sorted);
       const content = pretty ? json + "\n" : json;
       // Write atomically: temp file + rename so partial writes are never visible.
       const tmp = `${path}.tmp-${process.pid}-${randomBytes(4).toString("hex")}`;
@@ -161,6 +162,19 @@ export function createJsonFileStore(
       await rm(blobsDir, { recursive: true, force: true });
     },
   };
+}
+
+/** Recursively sort object keys so cassette files are deterministic across recording runs. */
+function sortKeys(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(sortKeys);
+  if (value !== null && typeof value === "object") {
+    return Object.fromEntries(
+      Object.keys(value as Record<string, unknown>)
+        .sort()
+        .map((k) => [k, sortKeys((value as Record<string, unknown>)[k])]),
+    );
+  }
+  return value;
 }
 
 /**
