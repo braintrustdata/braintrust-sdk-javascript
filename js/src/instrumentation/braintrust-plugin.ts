@@ -13,6 +13,7 @@ import { GoogleADKPlugin } from "./plugins/google-adk-plugin";
 import { CoherePlugin } from "./plugins/cohere-plugin";
 import { GroqPlugin } from "./plugins/groq-plugin";
 import { GitHubCopilotPlugin } from "./plugins/github-copilot-plugin";
+import { LangChainPlugin } from "./plugins/langchain-plugin";
 
 export interface BraintrustPluginConfig {
   integrations?: {
@@ -32,6 +33,10 @@ export interface BraintrustPluginConfig {
     googleADK?: boolean;
     cohere?: boolean;
     groq?: boolean;
+    gitHubCopilot?: boolean;
+    langchain?: boolean;
+    langchainJS?: boolean;
+    langgraph?: boolean;
   };
 }
 
@@ -52,6 +57,7 @@ function getIntegrationConfig(
  * - Vercel AI SDK (generateText, streamText, etc.)
  * - Google GenAI SDK
  * - HuggingFace Inference SDK
+ * - LangChain.js and LangGraph
  * - Mistral SDK
  * - Cohere SDK
  *
@@ -74,6 +80,7 @@ export class BraintrustPlugin extends BasePlugin {
   private coherePlugin: CoherePlugin | null = null;
   private groqPlugin: GroqPlugin | null = null;
   private gitHubCopilotPlugin: GitHubCopilotPlugin | null = null;
+  private langChainPlugin: LangChainPlugin | null = null;
 
   constructor(config: BraintrustPluginConfig = {}) {
     super();
@@ -160,6 +167,15 @@ export class BraintrustPlugin extends BasePlugin {
       this.gitHubCopilotPlugin = new GitHubCopilotPlugin();
       this.gitHubCopilotPlugin.enable();
     }
+
+    if (
+      integrations.langchain !== false &&
+      integrations.langchainJS !== false &&
+      integrations.langgraph !== false
+    ) {
+      this.langChainPlugin = new LangChainPlugin();
+      this.langChainPlugin.enable();
+    }
   }
 
   protected onDisable(): void {
@@ -231,6 +247,11 @@ export class BraintrustPlugin extends BasePlugin {
     if (this.gitHubCopilotPlugin) {
       this.gitHubCopilotPlugin.disable();
       this.gitHubCopilotPlugin = null;
+    }
+
+    if (this.langChainPlugin) {
+      this.langChainPlugin.disable();
+      this.langChainPlugin = null;
     }
   }
 }
