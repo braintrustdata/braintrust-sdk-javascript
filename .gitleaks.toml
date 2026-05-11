@@ -1,0 +1,11 @@
+title = "Braintrust SDK gitleaks config"
+
+[extend]
+# Use the default gitleaks ruleset as the base
+useDefault = true
+
+[[rules]]
+id = "braintrust-api-key"
+description = "Braintrust API key"
+regex = '''\bsk-[a-zA-Z0-9]{40,}\b'''
+tags = ["key", "braintrust"]

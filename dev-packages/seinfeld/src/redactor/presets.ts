@@ -32,6 +32,7 @@ const AGGRESSIVE_REDACTION: RedactionConfig = {
  * APIs use per-request credentials that could appear in response bodies.
  */
 const PARANOID_REDACTION: RedactionConfig = {
+  omitRequestHeaders: true,
   redactHeaders: CREDENTIAL_HEADERS,
   redactBodyFields: [/^(api_?key|token|secret|password|authorization)$/i],
   redactBodyText: [
