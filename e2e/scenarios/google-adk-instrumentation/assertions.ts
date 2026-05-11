@@ -3,6 +3,7 @@ import { normalizeForSnapshot, type Json } from "../../helpers/normalize";
 import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
 import {
   formatJsonFileSnapshot,
+  matchFileSnapshot,
   resolveFileSnapshotPath,
 } from "../../helpers/file-snapshot";
 import { withScenarioHarness } from "../../helpers/scenario-harness";
@@ -346,7 +347,8 @@ export function defineGoogleADKInstrumentationAssertions(options: {
         ) as Json,
       );
 
-      await expect(formatJsonFileSnapshot(spanSummary)).toMatchFileSnapshot(
+      await matchFileSnapshot(
+        formatJsonFileSnapshot(spanSummary),
         spanSnapshotPath,
       );
     });
@@ -364,7 +366,8 @@ export function defineGoogleADKInstrumentationAssertions(options: {
         ) as Json,
       );
 
-      await expect(formatJsonFileSnapshot(payloadSummary)).toMatchFileSnapshot(
+      await matchFileSnapshot(
+        formatJsonFileSnapshot(payloadSummary),
         payloadSnapshotPath,
       );
     });

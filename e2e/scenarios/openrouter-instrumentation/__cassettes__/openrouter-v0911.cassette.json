@@ -1,22 +1,11 @@
 {
-  "version": 1,
-  "meta": {
-    "createdAt": "2026-04-28T23:37:50.101Z",
-    "seinfeldVersion": "0.0.0"
-  },
   "entries": [
     {
+      "callIndex": 0,
       "id": "03d357144c1fda5d",
       "matchKey": "POST openrouter.ai/api/v1/chat/completions",
-      "callIndex": 0,
       "recordedAt": "2026-04-28T23:37:50.101Z",
       "request": {
-        "method": "POST",
-        "url": "https://openrouter.ai/api/v1/chat/completions",
-        "headers": {
-          "accept": "application/json",
-          "content-type": "application/json"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -32,20 +21,12 @@
             "temperature": 0,
             "top_p": 1
           }
-        }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions"
       },
       "response": {
-        "status": 200,
-        "statusText": "OK",
-        "headers": {
-          "access-control-allow-origin": "*",
-          "access-control-expose-headers": "X-Generation-Id,cf-ray",
-          "content-type": "application/json",
-          "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
-          "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
-          "x-content-type-options": "nosniff",
-          "x-generation-id": "gen-1777419451-R50zv7WcT3Sguj0lRCY1"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -93,21 +74,26 @@
               "total_tokens": 14
             }
           }
-        }
+        },
+        "headers": {
+          "access-control-allow-origin": "*",
+          "access-control-expose-headers": "X-Generation-Id,cf-ray",
+          "content-type": "application/json",
+          "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
+          "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
+          "x-content-type-options": "nosniff",
+          "x-generation-id": "gen-1777419451-R50zv7WcT3Sguj0lRCY1"
+        },
+        "status": 200,
+        "statusText": "OK"
       }
     },
     {
+      "callIndex": 1,
       "id": "d45d212c70e62ec8",
       "matchKey": "POST openrouter.ai/api/v1/chat/completions",
-      "callIndex": 1,
       "recordedAt": "2026-04-28T23:37:50.101Z",
       "request": {
-        "method": "POST",
-        "url": "https://openrouter.ai/api/v1/chat/completions",
-        "headers": {
-          "accept": "text/event-stream",
-          "content-type": "application/json"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -126,11 +112,22 @@
             "temperature": 0,
             "top_p": 1
           }
-        }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions"
       },
       "response": {
-        "status": 200,
-        "statusText": "OK",
+        "body": {
+          "chunks": [
+            ": OPENROUTER PROCESSING",
+            "data: {\"id\":\"gen-1777419452-4TLpKqmp0qKVpUBG9lPS\",\"object\":\"chat.completion.chunk\",\"created\":1777419452,\"model\":\"openai/gpt-4o-mini-2024-07-18\",\"provider\":\"OpenAI\",\"system_fingerprint\":\"fp_8a57a0807f\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"STREAM\",\"role\":\"assistant\"},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1777419452-4TLpKqmp0qKVpUBG9lPS\",\"object\":\"chat.completion.chunk\",\"created\":1777419452,\"model\":\"openai/gpt-4o-mini-2024-07-18\",\"provider\":\"OpenAI\",\"system_fingerprint\":\"fp_8a57a0807f\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\"},\"finish_reason\":\"stop\",\"native_finish_reason\":\"stop\"}]}",
+            "data: {\"id\":\"gen-1777419452-4TLpKqmp0qKVpUBG9lPS\",\"object\":\"chat.completion.chunk\",\"created\":1777419452,\"model\":\"openai/gpt-4o-mini-2024-07-18\",\"provider\":\"OpenAI\",\"system_fingerprint\":\"fp_8a57a0807f\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\"},\"finish_reason\":\"stop\",\"native_finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":12,\"completion_tokens\":1,\"total_tokens\":13,\"cost\":0.0000024,\"is_byok\":false,\"prompt_tokens_details\":{\"cached_tokens\":0,\"cache_write_tokens\":0,\"audio_tokens\":0,\"video_tokens\":0},\"cost_details\":{\"upstream_inference_cost\":0.0000024,\"upstream_inference_prompt_cost\":0.0000018,\"upstream_inference_completions_cost\":6e-7},\"completion_tokens_details\":{\"reasoning_tokens\":0,\"image_tokens\":0,\"audio_tokens\":0}}}",
+            "data: [DONE]"
+          ],
+          "kind": "sse"
+        },
         "headers": {
           "access-control-allow-origin": "*",
           "access-control-expose-headers": "X-Generation-Id,cf-ray",
@@ -141,30 +138,16 @@
           "x-content-type-options": "nosniff",
           "x-generation-id": "gen-1777419452-4TLpKqmp0qKVpUBG9lPS"
         },
-        "body": {
-          "kind": "sse",
-          "chunks": [
-            ": OPENROUTER PROCESSING",
-            "data: {\"id\":\"gen-1777419452-4TLpKqmp0qKVpUBG9lPS\",\"object\":\"chat.completion.chunk\",\"created\":1777419452,\"model\":\"openai/gpt-4o-mini-2024-07-18\",\"provider\":\"OpenAI\",\"system_fingerprint\":\"fp_8a57a0807f\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"STREAM\",\"role\":\"assistant\"},\"finish_reason\":null,\"native_finish_reason\":null}]}",
-            "data: {\"id\":\"gen-1777419452-4TLpKqmp0qKVpUBG9lPS\",\"object\":\"chat.completion.chunk\",\"created\":1777419452,\"model\":\"openai/gpt-4o-mini-2024-07-18\",\"provider\":\"OpenAI\",\"system_fingerprint\":\"fp_8a57a0807f\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\"},\"finish_reason\":\"stop\",\"native_finish_reason\":\"stop\"}]}",
-            "data: {\"id\":\"gen-1777419452-4TLpKqmp0qKVpUBG9lPS\",\"object\":\"chat.completion.chunk\",\"created\":1777419452,\"model\":\"openai/gpt-4o-mini-2024-07-18\",\"provider\":\"OpenAI\",\"system_fingerprint\":\"fp_8a57a0807f\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\"},\"finish_reason\":\"stop\",\"native_finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":12,\"completion_tokens\":1,\"total_tokens\":13,\"cost\":0.0000024,\"is_byok\":false,\"prompt_tokens_details\":{\"cached_tokens\":0,\"cache_write_tokens\":0,\"audio_tokens\":0,\"video_tokens\":0},\"cost_details\":{\"upstream_inference_cost\":0.0000024,\"upstream_inference_prompt_cost\":0.0000018,\"upstream_inference_completions_cost\":6e-7},\"completion_tokens_details\":{\"reasoning_tokens\":0,\"image_tokens\":0,\"audio_tokens\":0}}}",
-            "data: [DONE]"
-          ]
-        }
+        "status": 200,
+        "statusText": "OK"
       }
     },
     {
+      "callIndex": 0,
       "id": "507711dff446210e",
       "matchKey": "POST openrouter.ai/api/v1/embeddings",
-      "callIndex": 0,
       "recordedAt": "2026-04-28T23:37:50.101Z",
       "request": {
-        "method": "POST",
-        "url": "https://openrouter.ai/api/v1/embeddings",
-        "headers": {
-          "accept": "application/json;q=1, text/event-stream;q=0",
-          "content-type": "application/json"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -172,20 +155,12 @@
             "input_type": "query",
             "model": "openai/text-embedding-3-small"
           }
-        }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/embeddings"
       },
       "response": {
-        "status": 200,
-        "statusText": "OK",
-        "headers": {
-          "access-control-allow-origin": "*",
-          "access-control-expose-headers": "X-Generation-Id,cf-ray",
-          "content-type": "application/json",
-          "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
-          "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
-          "vary": "Accept-Encoding",
-          "x-content-type-options": "nosniff"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -765,21 +740,26 @@
               "total_tokens": 3
             }
           }
-        }
+        },
+        "headers": {
+          "access-control-allow-origin": "*",
+          "access-control-expose-headers": "X-Generation-Id,cf-ray",
+          "content-type": "application/json",
+          "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
+          "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
+          "vary": "Accept-Encoding",
+          "x-content-type-options": "nosniff"
+        },
+        "status": 200,
+        "statusText": "OK"
       }
     },
     {
+      "callIndex": 0,
       "id": "56e2cb7b080ae856",
       "matchKey": "POST openrouter.ai/api/v1/responses",
-      "callIndex": 0,
       "recordedAt": "2026-04-28T23:37:50.101Z",
       "request": {
-        "method": "POST",
-        "url": "https://openrouter.ai/api/v1/responses",
-        "headers": {
-          "accept": "application/json",
-          "content-type": "application/json"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -791,20 +771,12 @@
             "stream": false,
             "temperature": 0
           }
-        }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/responses"
       },
       "response": {
-        "status": 200,
-        "statusText": "OK",
-        "headers": {
-          "access-control-allow-origin": "*",
-          "access-control-expose-headers": "X-Generation-Id,cf-ray",
-          "content-type": "application/json",
-          "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
-          "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
-          "x-content-type-options": "nosniff",
-          "x-generation-id": "gen-1777419453-zNw1udZBvrpNOYYSYoor"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -876,21 +848,26 @@
               "total_tokens": 17
             }
           }
-        }
+        },
+        "headers": {
+          "access-control-allow-origin": "*",
+          "access-control-expose-headers": "X-Generation-Id,cf-ray",
+          "content-type": "application/json",
+          "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
+          "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
+          "x-content-type-options": "nosniff",
+          "x-generation-id": "gen-1777419453-zNw1udZBvrpNOYYSYoor"
+        },
+        "status": 200,
+        "statusText": "OK"
       }
     },
     {
+      "callIndex": 1,
       "id": "b50e872b26a5b42b",
       "matchKey": "POST openrouter.ai/api/v1/responses",
-      "callIndex": 1,
       "recordedAt": "2026-04-28T23:37:50.101Z",
       "request": {
-        "method": "POST",
-        "url": "https://openrouter.ai/api/v1/responses",
-        "headers": {
-          "accept": "text/event-stream",
-          "content-type": "application/json"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -902,23 +879,13 @@
             "stream": true,
             "temperature": 0
           }
-        }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/responses"
       },
       "response": {
-        "status": 200,
-        "statusText": "OK",
-        "headers": {
-          "access-control-allow-origin": "*",
-          "access-control-expose-headers": "X-Generation-Id,cf-ray",
-          "cache-control": "no-cache",
-          "content-type": "text/event-stream",
-          "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
-          "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
-          "x-content-type-options": "nosniff",
-          "x-generation-id": "gen-1777419454-cQGfkgssZ3hczv0M8bEK"
-        },
         "body": {
-          "kind": "sse",
           "chunks": [
             "data: {\"type\":\"response.created\",\"response\":{\"id\":\"gen-1777419454-cQGfkgssZ3hczv0M8bEK\",\"object\":\"response\",\"created_at\":1777419454,\"model\":\"openai/gpt-4o-mini-2024-07-18\",\"status\":\"in_progress\",\"completed_at\":null,\"output\":[],\"error\":null,\"incomplete_details\":null,\"tools\":[],\"tool_choice\":\"auto\",\"parallel_tool_calls\":true,\"max_output_tokens\":24,\"temperature\":0,\"top_p\":1,\"presence_penalty\":0,\"frequency_penalty\":0,\"top_logprobs\":0,\"max_tool_calls\":null,\"metadata\":{},\"background\":false,\"previous_response_id\":null,\"service_tier\":\"auto\",\"truncation\":\"disabled\",\"store\":false,\"instructions\":null,\"text\":{\"format\":{\"type\":\"text\"}},\"reasoning\":null,\"safety_identifier\":null,\"prompt_cache_key\":null,\"usage\":null},\"sequence_number\":0}",
             "data: {\"type\":\"response.in_progress\",\"response\":{\"id\":\"gen-1777419454-cQGfkgssZ3hczv0M8bEK\",\"object\":\"response\",\"created_at\":1777419454,\"model\":\"openai/gpt-4o-mini-2024-07-18\",\"status\":\"in_progress\",\"completed_at\":null,\"output\":[],\"error\":null,\"incomplete_details\":null,\"tools\":[],\"tool_choice\":\"auto\",\"parallel_tool_calls\":true,\"max_output_tokens\":24,\"temperature\":0,\"top_p\":1,\"presence_penalty\":0,\"frequency_penalty\":0,\"top_logprobs\":0,\"max_tool_calls\":null,\"metadata\":{},\"background\":false,\"previous_response_id\":null,\"service_tier\":\"auto\",\"truncation\":\"disabled\",\"store\":false,\"instructions\":null,\"text\":{\"format\":{\"type\":\"text\"}},\"reasoning\":null,\"safety_identifier\":null,\"prompt_cache_key\":null,\"usage\":null},\"sequence_number\":1}",
@@ -932,22 +899,29 @@
             "data: {\"type\":\"response.output_item.done\",\"output_index\":0,\"item\":{\"id\":\"msg_tmp_at9mvlze0p\",\"type\":\"message\",\"status\":\"completed\",\"role\":\"assistant\",\"content\":[{\"type\":\"output_text\",\"text\":\"STREAMED RESPONSE\",\"annotations\":[],\"logprobs\":[]}]},\"sequence_number\":9}",
             "data: {\"type\":\"response.completed\",\"response\":{\"id\":\"gen-1777419454-cQGfkgssZ3hczv0M8bEK\",\"object\":\"response\",\"created_at\":1777419454,\"model\":\"openai/gpt-4o-mini-2024-07-18\",\"status\":\"completed\",\"completed_at\":1777419454,\"output\":[{\"id\":\"msg_tmp_at9mvlze0p\",\"type\":\"message\",\"role\":\"assistant\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"text\":\"STREAMED RESPONSE\",\"annotations\":[],\"logprobs\":[]}]}],\"error\":null,\"incomplete_details\":null,\"tools\":[],\"tool_choice\":\"auto\",\"parallel_tool_calls\":true,\"max_output_tokens\":24,\"temperature\":0,\"top_p\":1,\"presence_penalty\":0,\"frequency_penalty\":0,\"top_logprobs\":0,\"max_tool_calls\":null,\"metadata\":{},\"background\":false,\"previous_response_id\":null,\"service_tier\":\"auto\",\"truncation\":\"disabled\",\"store\":false,\"instructions\":null,\"text\":{\"format\":{\"type\":\"text\"}},\"reasoning\":null,\"safety_identifier\":null,\"prompt_cache_key\":null,\"usage\":{\"input_tokens\":14,\"input_tokens_details\":{\"cached_tokens\":0},\"output_tokens\":3,\"output_tokens_details\":{\"reasoning_tokens\":0},\"total_tokens\":17,\"cost\":0.0000039,\"is_byok\":false,\"cost_details\":{\"upstream_inference_cost\":0.0000039,\"upstream_inference_input_cost\":0.0000021,\"upstream_inference_output_cost\":0.0000018}}},\"sequence_number\":10}",
             "data: [DONE]"
-          ]
-        }
+          ],
+          "kind": "sse"
+        },
+        "headers": {
+          "access-control-allow-origin": "*",
+          "access-control-expose-headers": "X-Generation-Id,cf-ray",
+          "cache-control": "no-cache",
+          "content-type": "text/event-stream",
+          "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
+          "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
+          "x-content-type-options": "nosniff",
+          "x-generation-id": "gen-1777419454-cQGfkgssZ3hczv0M8bEK"
+        },
+        "status": 200,
+        "statusText": "OK"
       }
     },
     {
+      "callIndex": 2,
       "id": "14e3479ec0d10f83",
       "matchKey": "POST openrouter.ai/api/v1/responses",
-      "callIndex": 2,
       "recordedAt": "2026-04-28T23:37:50.101Z",
       "request": {
-        "method": "POST",
-        "url": "https://openrouter.ai/api/v1/responses",
-        "headers": {
-          "accept": "text/event-stream",
-          "content-type": "application/json"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -980,23 +954,13 @@
               }
             ]
           }
-        }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/responses"
       },
       "response": {
-        "status": 200,
-        "statusText": "OK",
-        "headers": {
-          "access-control-allow-origin": "*",
-          "access-control-expose-headers": "X-Generation-Id,cf-ray",
-          "cache-control": "no-cache",
-          "content-type": "text/event-stream",
-          "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
-          "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
-          "x-content-type-options": "nosniff",
-          "x-generation-id": "gen-1777419465-amBOf2Pg5Sxn4i0TsrtP"
-        },
         "body": {
-          "kind": "sse",
           "chunks": [
             ": OPENROUTER PROCESSING",
             "data: {\"type\":\"response.created\",\"response\":{\"id\":\"gen-1777419465-amBOf2Pg5Sxn4i0TsrtP\",\"object\":\"response\",\"created_at\":1777419465,\"model\":\"google/gemini-2.5-flash-lite\",\"status\":\"in_progress\",\"completed_at\":null,\"output\":[],\"error\":null,\"incomplete_details\":null,\"tools\":[{\"type\":\"function\",\"name\":\"lookup_weather\",\"description\":\"Look up the weather forecast for a city.\",\"strict\":null,\"parameters\":{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"additionalProperties\":false}}],\"tool_choice\":\"required\",\"parallel_tool_calls\":true,\"max_output_tokens\":24,\"temperature\":0,\"top_p\":1,\"presence_penalty\":0,\"frequency_penalty\":0,\"top_logprobs\":0,\"max_tool_calls\":1,\"metadata\":{},\"background\":false,\"previous_response_id\":null,\"service_tier\":\"auto\",\"truncation\":\"disabled\",\"store\":false,\"instructions\":null,\"text\":{\"format\":{\"type\":\"text\"}},\"reasoning\":null,\"safety_identifier\":null,\"prompt_cache_key\":null,\"usage\":null},\"sequence_number\":0}",
@@ -1012,22 +976,29 @@
             "data: {\"type\":\"response.output_item.done\",\"output_index\":0,\"item\":{\"id\":\"fc_tmp_anbsg4ua2lj\",\"type\":\"function_call\",\"status\":\"completed\",\"call_id\":\"call_Uq99l3Q3o2CZbCE09qr9wzEG\",\"name\":\"lookup_weather\",\"arguments\":\"{\\\"city\\\":\\\"Vienna\\\"}\"},\"sequence_number\":10}",
             "data: {\"type\":\"response.completed\",\"response\":{\"id\":\"gen-1777419465-amBOf2Pg5Sxn4i0TsrtP\",\"object\":\"response\",\"created_at\":1777419465,\"model\":\"google/gemini-2.5-flash-lite\",\"status\":\"completed\",\"completed_at\":1777419466,\"output\":[{\"id\":\"fc_tmp_anbsg4ua2lj\",\"type\":\"function_call\",\"status\":\"completed\",\"call_id\":\"call_Uq99l3Q3o2CZbCE09qr9wzEG\",\"name\":\"lookup_weather\",\"arguments\":\"{\\\"city\\\":\\\"Vienna\\\"}\"}],\"error\":null,\"incomplete_details\":null,\"tools\":[{\"type\":\"function\",\"name\":\"lookup_weather\",\"description\":\"Look up the weather forecast for a city.\",\"strict\":null,\"parameters\":{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"additionalProperties\":false}}],\"tool_choice\":\"required\",\"parallel_tool_calls\":true,\"max_output_tokens\":24,\"temperature\":0,\"top_p\":1,\"presence_penalty\":0,\"frequency_penalty\":0,\"top_logprobs\":0,\"max_tool_calls\":1,\"metadata\":{},\"background\":false,\"previous_response_id\":null,\"service_tier\":\"auto\",\"truncation\":\"disabled\",\"store\":false,\"instructions\":null,\"text\":{\"format\":{\"type\":\"text\"}},\"reasoning\":null,\"safety_identifier\":null,\"prompt_cache_key\":null,\"usage\":{\"input_tokens\":63,\"input_tokens_details\":{\"cached_tokens\":0},\"output_tokens\":15,\"output_tokens_details\":{\"reasoning_tokens\":0},\"total_tokens\":78,\"cost\":0.00001845,\"is_byok\":false,\"cost_details\":{\"upstream_inference_cost\":0.00001845,\"upstream_inference_input_cost\":0.00000945,\"upstream_inference_output_cost\":0.000009}}},\"sequence_number\":11}",
             "data: [DONE]"
-          ]
-        }
+          ],
+          "kind": "sse"
+        },
+        "headers": {
+          "access-control-allow-origin": "*",
+          "access-control-expose-headers": "X-Generation-Id,cf-ray",
+          "cache-control": "no-cache",
+          "content-type": "text/event-stream",
+          "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
+          "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
+          "x-content-type-options": "nosniff",
+          "x-generation-id": "gen-1777419465-amBOf2Pg5Sxn4i0TsrtP"
+        },
+        "status": 200,
+        "statusText": "OK"
       }
     },
     {
+      "callIndex": 3,
       "id": "727887b4f94f9e94",
       "matchKey": "POST openrouter.ai/api/v1/responses",
-      "callIndex": 3,
       "recordedAt": "2026-04-28T23:37:50.101Z",
       "request": {
-        "method": "POST",
-        "url": "https://openrouter.ai/api/v1/responses",
-        "headers": {
-          "accept": "application/json",
-          "content-type": "application/json"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -1079,20 +1050,12 @@
               }
             ]
           }
-        }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/responses"
       },
       "response": {
-        "status": 200,
-        "statusText": "OK",
-        "headers": {
-          "access-control-allow-origin": "*",
-          "access-control-expose-headers": "X-Generation-Id,cf-ray",
-          "content-type": "application/json",
-          "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
-          "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
-          "x-content-type-options": "nosniff",
-          "x-generation-id": "gen-1777419466-P5lP5M3E7qdToepMinyj"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -1176,21 +1139,26 @@
               "total_tokens": 108
             }
           }
-        }
+        },
+        "headers": {
+          "access-control-allow-origin": "*",
+          "access-control-expose-headers": "X-Generation-Id,cf-ray",
+          "content-type": "application/json",
+          "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
+          "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
+          "x-content-type-options": "nosniff",
+          "x-generation-id": "gen-1777419466-P5lP5M3E7qdToepMinyj"
+        },
+        "status": 200,
+        "statusText": "OK"
       }
     },
     {
+      "callIndex": 4,
       "id": "babe1d3e1734c936",
       "matchKey": "POST openrouter.ai/api/v1/responses",
-      "callIndex": 4,
       "recordedAt": "2026-04-28T23:37:50.101Z",
       "request": {
-        "method": "POST",
-        "url": "https://openrouter.ai/api/v1/responses",
-        "headers": {
-          "accept": "application/json",
-          "content-type": "application/json"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -1256,20 +1224,12 @@
               }
             ]
           }
-        }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/responses"
       },
       "response": {
-        "status": 200,
-        "statusText": "OK",
-        "headers": {
-          "access-control-allow-origin": "*",
-          "access-control-expose-headers": "X-Generation-Id,cf-ray",
-          "content-type": "application/json",
-          "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
-          "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
-          "x-content-type-options": "nosniff",
-          "x-generation-id": "gen-1777419467-H45AcGE5aRkODRIyJBt5"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -1353,21 +1313,26 @@
               "total_tokens": 138
             }
           }
-        }
+        },
+        "headers": {
+          "access-control-allow-origin": "*",
+          "access-control-expose-headers": "X-Generation-Id,cf-ray",
+          "content-type": "application/json",
+          "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
+          "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
+          "x-content-type-options": "nosniff",
+          "x-generation-id": "gen-1777419467-H45AcGE5aRkODRIyJBt5"
+        },
+        "status": 200,
+        "statusText": "OK"
       }
     },
     {
+      "callIndex": 5,
       "id": "75806239f4a12113",
       "matchKey": "POST openrouter.ai/api/v1/responses",
-      "callIndex": 5,
       "recordedAt": "2026-04-28T23:37:50.101Z",
       "request": {
-        "method": "POST",
-        "url": "https://openrouter.ai/api/v1/responses",
-        "headers": {
-          "accept": "application/json",
-          "content-type": "application/json"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -1447,20 +1412,12 @@
               }
             ]
           }
-        }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/responses"
       },
       "response": {
-        "status": 200,
-        "statusText": "OK",
-        "headers": {
-          "access-control-allow-origin": "*",
-          "access-control-expose-headers": "X-Generation-Id,cf-ray",
-          "content-type": "application/json",
-          "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
-          "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
-          "x-content-type-options": "nosniff",
-          "x-generation-id": "gen-1777419467-tQEowAsJk757bxy79Kfi"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -1544,21 +1501,26 @@
               "total_tokens": 168
             }
           }
-        }
+        },
+        "headers": {
+          "access-control-allow-origin": "*",
+          "access-control-expose-headers": "X-Generation-Id,cf-ray",
+          "content-type": "application/json",
+          "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
+          "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
+          "x-content-type-options": "nosniff",
+          "x-generation-id": "gen-1777419467-tQEowAsJk757bxy79Kfi"
+        },
+        "status": 200,
+        "statusText": "OK"
       }
     },
     {
+      "callIndex": 6,
       "id": "a39579681f424289",
       "matchKey": "POST openrouter.ai/api/v1/responses",
-      "callIndex": 6,
       "recordedAt": "2026-04-28T23:37:50.101Z",
       "request": {
-        "method": "POST",
-        "url": "https://openrouter.ai/api/v1/responses",
-        "headers": {
-          "accept": "application/json",
-          "content-type": "application/json"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -1652,21 +1614,12 @@
               }
             ]
           }
-        }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/responses"
       },
       "response": {
-        "status": 200,
-        "statusText": "OK",
-        "headers": {
-          "access-control-allow-origin": "*",
-          "access-control-expose-headers": "X-Generation-Id,cf-ray",
-          "content-type": "application/json",
-          "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
-          "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
-          "vary": "Accept-Encoding",
-          "x-content-type-options": "nosniff",
-          "x-generation-id": "gen-1777419468-NWK4fNRdaigc5RUwnuKI"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -1750,21 +1703,27 @@
               "total_tokens": 198
             }
           }
-        }
+        },
+        "headers": {
+          "access-control-allow-origin": "*",
+          "access-control-expose-headers": "X-Generation-Id,cf-ray",
+          "content-type": "application/json",
+          "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
+          "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
+          "vary": "Accept-Encoding",
+          "x-content-type-options": "nosniff",
+          "x-generation-id": "gen-1777419468-NWK4fNRdaigc5RUwnuKI"
+        },
+        "status": 200,
+        "statusText": "OK"
       }
     },
     {
+      "callIndex": 7,
       "id": "8598fe445a5ecf9e",
       "matchKey": "POST openrouter.ai/api/v1/responses",
-      "callIndex": 7,
       "recordedAt": "2026-04-28T23:37:50.101Z",
       "request": {
-        "method": "POST",
-        "url": "https://openrouter.ai/api/v1/responses",
-        "headers": {
-          "accept": "application/json",
-          "content-type": "application/json"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -1872,20 +1831,12 @@
               }
             ]
           }
-        }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/responses"
       },
       "response": {
-        "status": 200,
-        "statusText": "OK",
-        "headers": {
-          "access-control-allow-origin": "*",
-          "access-control-expose-headers": "X-Generation-Id,cf-ray",
-          "content-type": "application/json",
-          "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
-          "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
-          "x-content-type-options": "nosniff",
-          "x-generation-id": "gen-1777419469-qagrmFqKmZIhN0B8Kc2c"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -1969,8 +1920,24 @@
               "total_tokens": 228
             }
           }
-        }
+        },
+        "headers": {
+          "access-control-allow-origin": "*",
+          "access-control-expose-headers": "X-Generation-Id,cf-ray",
+          "content-type": "application/json",
+          "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
+          "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
+          "x-content-type-options": "nosniff",
+          "x-generation-id": "gen-1777419469-qagrmFqKmZIhN0B8Kc2c"
+        },
+        "status": 200,
+        "statusText": "OK"
       }
     }
-  ]
+  ],
+  "meta": {
+    "createdAt": "2026-04-28T23:37:50.101Z",
+    "seinfeldVersion": "0.0.0"
+  },
+  "version": 1
 }

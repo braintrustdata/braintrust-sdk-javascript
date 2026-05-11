@@ -49,6 +49,13 @@ export interface RedactionConfig {
    * forms, or in SSE event lines that are not JSON.
    */
   redactBodyText?: Array<RegExp | { pattern: RegExp; replacement?: string }>;
+  /**
+   * When `true`, all request headers are omitted from the persisted cassette.
+   * Request headers are never used for replay matching (only method, URL, and
+   * body are compared), so dropping them entirely is a safe way to prevent
+   * credentials from leaking into cassette files committed to version control.
+   */
+  omitRequestHeaders?: boolean;
   /** Custom request transform run after declarative redaction. */
   redactRequest?: (req: RecordedRequest) => RecordedRequest;
   /** Custom response transform run after declarative redaction. */
@@ -172,7 +179,9 @@ function applyRequestRedactionConfig(
 ): RecordedRequest {
   let result: RecordedRequest = req;
 
-  if (config.redactHeaders && config.redactHeaders.length > 0) {
+  if (config.omitRequestHeaders) {
+    result = { ...result, headers: {} };
+  } else if (config.redactHeaders && config.redactHeaders.length > 0) {
     result = {
       ...result,
       headers: maskHeaders(result.headers, config.redactHeaders),
