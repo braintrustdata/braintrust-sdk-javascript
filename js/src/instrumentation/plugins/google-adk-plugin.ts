@@ -199,8 +199,9 @@ export class GoogleADKPlugin extends BasePlugin {
       const parentContext = event.arguments[0] as
         | Record<string, unknown>
         | undefined;
+      const agent = event.self as GoogleADKBaseAgent | undefined;
 
-      const agentName = extractAgentName(parentContext);
+      const agentName = extractAgentName(agent, parentContext);
       const runnerParentSpan = findRunnerParentSpan(
         parentContext,
         this.activeRunnerSpans,
@@ -230,7 +231,7 @@ export class GoogleADKPlugin extends BasePlugin {
         if (agentName) {
           metadata["google_adk.agent_name"] = agentName;
         }
-        const modelName = extractModelName(parentContext);
+        const modelName = extractModelName(agent, parentContext);
         if (modelName) {
           metadata.model = modelName;
         }
@@ -688,34 +689,39 @@ function extractRunnerMetadata(
 }
 
 function extractAgentName(
+  agent: GoogleADKBaseAgent | undefined,
   parentContext: Record<string, unknown> | undefined,
 ): string | undefined {
+  if (typeof agent?.name === "string" && agent.name.length > 0) {
+    return agent.name;
+  }
+
   if (!parentContext) {
     return undefined;
   }
 
-  const agent = parentContext.agent as GoogleADKBaseAgent | undefined;
-  return agent?.name;
+  const contextAgent = parentContext.agent as GoogleADKBaseAgent | undefined;
+  return typeof contextAgent?.name === "string" && contextAgent.name.length > 0
+    ? contextAgent.name
+    : undefined;
 }
 
 function extractModelName(
+  agent: GoogleADKLlmAgent | undefined,
   parentContext: Record<string, unknown> | undefined,
 ): string | undefined {
-  if (!parentContext) {
-    return undefined;
+  const modelAgent =
+    agent ?? (parentContext?.agent as GoogleADKLlmAgent | undefined);
+  if (!modelAgent?.model) {
+    return;
   }
 
-  const agent = parentContext.agent as GoogleADKLlmAgent | undefined;
-  if (!agent?.model) {
-    return undefined;
+  if (typeof modelAgent.model === "string") {
+    return modelAgent.model;
   }
 
-  if (typeof agent.model === "string") {
-    return agent.model;
-  }
-
-  if (typeof agent.model === "object" && "model" in agent.model) {
-    return agent.model.model;
+  if (typeof modelAgent.model === "object" && "model" in modelAgent.model) {
+    return modelAgent.model.model;
   }
 
   return undefined;
@@ -759,7 +765,7 @@ function extractToolAgentName(
   const invocationContext = toolContext?.invocationContext as
     | Record<string, unknown>
     | undefined;
-  return extractAgentName(invocationContext);
+  return extractAgentName(undefined, invocationContext);
 }
 
 function findToolParentSpan(

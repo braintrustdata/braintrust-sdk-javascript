@@ -35,10 +35,7 @@
       "provider": "google-adk"
     },
     "metric_keys": [
-      "completion_tokens",
-      "duration",
-      "prompt_tokens",
-      "tokens"
+      "duration"
     ],
     "name": "Google ADK Runner",
     "root_span_id": "<span:1>",
@@ -70,7 +67,7 @@
     "has_input": true,
     "has_output": true,
     "metadata": {
-      "google_adk.tool_call_id": "adk-<uuid:5>",
+      "google_adk.tool_call_id": "direct-weather-tool",
       "google_adk.tool_name": "get_weather",
       "provider": "google-adk"
     },
@@ -84,5 +81,91 @@
       "<span:4>"
     ],
     "type": "tool"
+  },
+  {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "operation": "sequential-run"
+    },
+    "metric_keys": [],
+    "name": "adk-sequential-run-operation",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:6>",
+    "span_parents": [
+      "<span:1>"
+    ],
+    "type": null
+  },
+  {
+    "has_input": true,
+    "metadata": {
+      "google_adk.session_id": "test-session-sequential",
+      "google_adk.user_id": "test-user",
+      "provider": "google-adk"
+    },
+    "metric_keys": [
+      "duration"
+    ],
+    "name": "Google ADK Runner",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:7>",
+    "span_parents": [
+      "<span:6>"
+    ],
+    "type": "task"
+  },
+  {
+    "has_input": false,
+    "metadata": {
+      "google_adk.agent_name": "sequential_workflow",
+      "provider": "google-adk"
+    },
+    "metric_keys": [
+      "duration"
+    ],
+    "name": "Agent: sequential_workflow",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:8>",
+    "span_parents": [
+      "<span:7>"
+    ],
+    "type": "task"
+  },
+  {
+    "has_input": false,
+    "metadata": {
+      "google_adk.agent_name": "greeter",
+      "model": "gemini-2.5-flash-lite",
+      "provider": "google-adk"
+    },
+    "metric_keys": [
+      "duration"
+    ],
+    "name": "Agent: greeter",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:9>",
+    "span_parents": [
+      "<span:8>"
+    ],
+    "type": "task"
+  },
+  {
+    "has_input": false,
+    "metadata": {
+      "google_adk.agent_name": "farewell",
+      "model": "gemini-2.5-flash-lite",
+      "provider": "google-adk"
+    },
+    "metric_keys": [
+      "duration"
+    ],
+    "name": "Agent: farewell",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:10>",
+    "span_parents": [
+      "<span:8>"
+    ],
+    "type": "task"
   }
 ]

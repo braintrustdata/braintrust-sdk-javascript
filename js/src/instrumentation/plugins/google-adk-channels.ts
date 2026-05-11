@@ -5,6 +5,10 @@ import type {
   GoogleADKToolRunRequest,
 } from "../../vendor-sdk-types/google-adk";
 
+type GoogleADKChannelContext = {
+  self?: unknown;
+};
+
 /**
  * Channels for Google ADK instrumentation.
  *
@@ -19,7 +23,7 @@ export const googleADKChannels = defineChannels("@google/adk", {
   runnerRunAsync: channel<
     [GoogleADKRunAsyncParams],
     AsyncGenerator<GoogleADKEvent>,
-    Record<string, unknown>,
+    GoogleADKChannelContext,
     GoogleADKEvent
   >({
     channelName: "runner.runAsync",
@@ -29,14 +33,18 @@ export const googleADKChannels = defineChannels("@google/adk", {
   agentRunAsync: channel<
     [unknown],
     AsyncGenerator<GoogleADKEvent>,
-    Record<string, unknown>,
+    GoogleADKChannelContext,
     GoogleADKEvent
   >({
     channelName: "agent.runAsync",
     kind: "sync-stream",
   }),
 
-  toolRunAsync: channel<[GoogleADKToolRunRequest], unknown>({
+  toolRunAsync: channel<
+    [GoogleADKToolRunRequest],
+    unknown,
+    GoogleADKChannelContext
+  >({
     channelName: "tool.runAsync",
     kind: "async",
   }),
