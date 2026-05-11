@@ -39,5 +39,10 @@
     "tsup": "^8.5.0",
     "typescript": "5.5.4",
     "vitest": "^4.1.2"
+  },
+  "pnpm": {
+    "overrides": {
+      "protobufjs": "7.5.7"
+    }
   }
 }
