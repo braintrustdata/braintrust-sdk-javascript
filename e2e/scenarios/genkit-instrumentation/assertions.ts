@@ -5,7 +5,10 @@ import {
   formatJsonFileSnapshot,
   resolveFileSnapshotPath,
 } from "../../helpers/file-snapshot";
-import { withScenarioHarness } from "../../helpers/scenario-harness";
+import {
+  withScenarioHarness,
+  type ScenarioRunContext,
+} from "../../helpers/scenario-harness";
 import { findChildSpans, findLatestSpan } from "../../helpers/trace-selectors";
 import { summarizeWrapperContract } from "../../helpers/wrapper-contract";
 import { MODEL_TOOL_MARKER, ROOT_NAME, SCENARIO_NAME } from "./constants.mjs";
@@ -14,13 +17,13 @@ type RunGenkitScenario = (harness: {
   runNodeScenarioDir: (options: {
     entry: string;
     nodeArgs: string[];
-    runContext?: { variantKey: string };
+    runContext?: ScenarioRunContext;
     scenarioDir: string;
     timeoutMs: number;
   }) => Promise<unknown>;
   runScenarioDir: (options: {
     entry: string;
-    runContext?: { variantKey: string };
+    runContext?: ScenarioRunContext;
     scenarioDir: string;
     timeoutMs: number;
   }) => Promise<unknown>;
@@ -183,7 +186,7 @@ export function defineGenkitInstrumentationAssertions(options: {
       expect(generateSpan?.row.metadata).toMatchObject({
         provider: "genkit",
       });
-      expect(generateSpan?.row.metadata?.model).toEqual(
+      expect(generateSpan?.metadata?.model).toEqual(
         expect.stringContaining("gemini-2.5-flash-lite"),
       );
       expect(generateSpan?.output).toBeDefined();
@@ -204,7 +207,7 @@ export function defineGenkitInstrumentationAssertions(options: {
       expect(embedSpan?.row.metadata).toMatchObject({
         provider: "genkit",
       });
-      expect(embedSpan?.row.metadata?.model).toEqual(
+      expect(embedSpan?.metadata?.model).toEqual(
         expect.stringContaining("gemini-embedding-001"),
       );
       expect(embedSpan?.output).toMatchObject({
