@@ -1,6 +1,7 @@
 import { expect, test } from "vitest";
 import {
   formatJsonFileSnapshot,
+  matchFileSnapshot,
   resolveFileSnapshotPath,
 } from "../../helpers/file-snapshot";
 import {
@@ -138,7 +139,8 @@ for (const scenario of scenarios) {
                 ? a.name.localeCompare(b.name)
                 : Number(a.hasParent) - Number(b.hasParent),
             );
-          await expect(formatJsonFileSnapshot(spanSummary)).toMatchFileSnapshot(
+          await matchFileSnapshot(
+            formatJsonFileSnapshot(spanSummary),
             resolveFileSnapshotPath(
               import.meta.url,
               `${scenario.dependencyName}.otel-spans.json`,
@@ -146,7 +148,7 @@ for (const scenario of scenarios) {
           );
 
           // Snapshot request metadata.
-          await expect(
+          await matchFileSnapshot(
             formatJsonFileSnapshot(
               otelRequests
                 .map((request) =>
@@ -169,7 +171,6 @@ for (const scenario of scenarios) {
                   rawBody: "<omitted>",
                 })),
             ),
-          ).toMatchFileSnapshot(
             resolveFileSnapshotPath(
               import.meta.url,
               `${scenario.dependencyName}.otel-requests.json`,

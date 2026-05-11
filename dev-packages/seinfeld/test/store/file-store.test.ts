@@ -62,7 +62,7 @@ describe("createJsonFileStore", () => {
     const store = createJsonFileStore({ rootDir: dir });
     await store.save("demo", makeCassette());
     const raw = await readFile(join(dir, "demo.cassette.json"), "utf8");
-    expect(raw).toMatch(/^\{\n {2}"version": 1/);
+    expect(raw).toMatch(/^\{\n {2}"entries":/);
     expect(raw.endsWith("\n")).toBe(true);
   });
 
@@ -70,7 +70,7 @@ describe("createJsonFileStore", () => {
     const store = createJsonFileStore({ rootDir: dir, pretty: false });
     await store.save("demo", makeCassette());
     const raw = await readFile(join(dir, "demo.cassette.json"), "utf8");
-    expect(raw.startsWith('{"version":1')).toBe(true);
+    expect(raw.startsWith('{"entries":')).toBe(true);
     expect(raw.endsWith("\n")).toBe(false);
   });
 

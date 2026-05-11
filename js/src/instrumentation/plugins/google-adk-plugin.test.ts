@@ -289,6 +289,43 @@ describe("GoogleADKPlugin", () => {
       );
     });
 
+    it("uses the invoked agent instance for names when parent context still points at a parent agent", () => {
+      plugin.enable();
+
+      const handlers = subscribeSpy.mock.calls[1][0];
+      const event = {
+        arguments: [
+          {
+            agent: {
+              name: "sequential_workflow",
+              model: "outer-model",
+            },
+          },
+        ],
+        self: {
+          name: "greeter",
+          model: "gemini-2.5-flash-lite",
+        },
+      };
+
+      handlers.start(event);
+
+      const span = mockStartSpan.mock.results[0].value;
+      expect(mockStartSpan).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: "Agent: greeter",
+          spanAttributes: { type: "task" },
+        }),
+      );
+      expect(span.log).toHaveBeenCalledWith({
+        metadata: {
+          provider: "google-adk",
+          "google_adk.agent_name": "greeter",
+          model: "gemini-2.5-flash-lite",
+        },
+      });
+    });
+
     it("should handle agent without a name gracefully", () => {
       plugin.enable();
       const handlers = subscribeSpy.mock.calls[1][0];

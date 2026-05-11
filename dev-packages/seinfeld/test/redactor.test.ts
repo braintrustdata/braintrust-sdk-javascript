@@ -355,9 +355,9 @@ describe("resolveRedactors", () => {
 });
 
 describe("'paranoid' preset", () => {
-  it("masks credential headers", () => {
+  it("drops all request headers", () => {
     const out = applyRequestRedaction(baseReq, "paranoid");
-    expect(out.headers.Authorization).toBe(REDACTED_SENTINEL);
+    expect(out.headers).toEqual({});
   });
 
   it("masks common credential field names in JSON bodies", () => {

@@ -15,6 +15,7 @@
 
 import { register } from "node:module";
 import { openaiConfigs } from "./configs/openai.js";
+import { openAICodexConfigs } from "./configs/openai-codex.js";
 import { anthropicConfigs } from "./configs/anthropic.js";
 import { aiSDKConfigs } from "./configs/ai-sdk.js";
 import { claudeAgentSDKConfigs } from "./configs/claude-agent-sdk.js";
@@ -63,6 +64,15 @@ const disabledIntegrations = readDisabledIntegrations();
 // transformation and runtime plugins stay aligned.
 const allConfigs = [
   ...(isDisabled(disabledIntegrations, "openai") ? [] : openaiConfigs),
+  ...(isDisabled(
+    disabledIntegrations,
+    "openai-codex",
+    "openai-codex-sdk",
+    "codex",
+    "codex-sdk",
+  )
+    ? []
+    : openAICodexConfigs),
   ...(isDisabled(disabledIntegrations, "anthropic") ? [] : anthropicConfigs),
   ...(isDisabled(disabledIntegrations, "aisdk", "ai-sdk", "vercel-ai")
     ? []

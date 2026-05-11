@@ -1,8 +1,9 @@
-import { describe } from "vitest";
+import { describe, it } from "vitest";
 import {
   prepareScenarioDir,
   readInstalledPackageVersion,
   resolveScenarioDir,
+  runNodeScenarioDir,
 } from "../../helpers/scenario-harness";
 import { cassetteTagsFor } from "../../helpers/tags";
 import { defineOpenAIInstrumentationAssertions } from "./assertions";
@@ -42,6 +43,23 @@ const openaiScenarios = await Promise.all(
     ),
   })),
 );
+
+// Regression test: verify hook.mjs doesn't cause "Body already read" with real undici responses.
+// The cassette layer returns in-process Response mocks that mask this bug; this test bypasses it.
+describe("real HTTP server (undici responses)", () => {
+  it(
+    "hook.mjs does not cause 'Body already read' on non-streaming create()",
+    async () => {
+      await runNodeScenarioDir({
+        entry: "scenario.real-http.mjs",
+        nodeArgs: ["--import", "braintrust/hook.mjs"],
+        scenarioDir,
+        timeoutMs: TIMEOUT_MS,
+      });
+    },
+    TIMEOUT_MS,
+  );
+});
 
 for (const scenario of openaiScenarios) {
   const assertPrivateFieldMethodsOperation =

@@ -16,6 +16,7 @@ export const AUTH_HEADERS = [
   "api-key",
   "x-api-key",
   "x-anthropic-api-key",
+  "x-goog-api-key",
   "cookie",
   "set-cookie",
   "proxy-authorization",

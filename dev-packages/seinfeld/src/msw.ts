@@ -132,7 +132,11 @@ export async function buildResponse(
   ctx?: { store: CassetteStore; name: string },
 ): Promise<Response> {
   // Expand \n-joined set-cookie back into multiple header entries.
-  const headers = expandSetCookieHeader(recorded.headers);
+  // Strip encoding headers: stored bytes are already decoded by the fetch
+  // layer (undici decompresses gzip/deflate before handing the body to MSW
+  // handlers). Preserving content-encoding would cause callers to attempt a
+  // second decode of already-plain bytes, which throws a zlib error.
+  const headers = expandSetCookieHeader(stripEncodingHeaders(recorded.headers));
   const init: ResponseInit = { status: recorded.status, headers };
   if (recorded.statusText) init.statusText = recorded.statusText;
   // 1xx/204/304 responses must not have a body, per Fetch spec.
@@ -167,6 +171,22 @@ export async function buildResponse(
   const buffer = new ArrayBuffer(bytes.byteLength);
   new Uint8Array(buffer).set(bytes);
   return new Response(buffer, init);
+}
+
+const ENCODING_HEADERS = new Set([
+  "content-encoding",
+  "transfer-encoding",
+  "content-length",
+]);
+
+function stripEncodingHeaders(
+  headers: Record<string, string>,
+): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(headers).filter(
+      ([key]) => !ENCODING_HEADERS.has(key.toLowerCase()),
+    ),
+  );
 }
 
 /**

@@ -50,6 +50,37 @@ describe("Plugin Registry", () => {
     testRegistry.disable();
   });
 
+  it("should block a second instance from subscribing when another is already enabled", () => {
+    // Regression test for BT-5139: when the SDK is loaded from two different
+    // module paths in the same process, each gets its own PluginRegistry
+    // instance. Without cross-instance deduplication, both would subscribe to
+    // the same diagnostics_channel, causing every OpenAI call to produce two
+    // LLM spans.
+    //
+    // The dedup mechanism checks globalThis[Symbol.for("braintrust-state")],
+    // which is the shared state object that all SDK instances reuse (see
+    // _internalSetInitialState in logger.ts). We simulate that here.
+    const sharedState = {};
+    const stateKey = Symbol.for("braintrust-state");
+    (globalThis as any)[stateKey] = sharedState;
+
+    const instanceA = new (registry.constructor as any)();
+    const instanceB = new (registry.constructor as any)();
+
+    try {
+      instanceA.enable();
+      expect(instanceA.isEnabled()).toBe(true);
+
+      // instanceB should be blocked — the channel is already subscribed
+      instanceB.enable();
+      expect(instanceB.isEnabled()).toBe(false);
+    } finally {
+      instanceA.disable();
+      instanceB.disable();
+      delete (globalThis as any)[stateKey];
+    }
+  });
+
   it("should warn if configureInstrumentation is called after enable", () => {
     const testRegistry = new (registry.constructor as any)();
     const warnSpy = [] as string[];
@@ -117,6 +148,7 @@ describe("configureInstrumentation API", () => {
     configureInstrumentation({
       integrations: {
         openai: false,
+        openaiCodexSDK: false,
         anthropic: true,
         huggingface: true,
         openrouter: false,

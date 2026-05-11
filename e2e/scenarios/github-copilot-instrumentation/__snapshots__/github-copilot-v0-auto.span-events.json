@@ -1,0 +1,147 @@
+{
+  "basic": {
+    "llm": {
+      "has_input": false,
+      "has_output": false,
+      "metadata": {
+        "model": "gpt-4.1"
+      },
+      "metric_keys": [
+        "completion_reasoning_tokens",
+        "completion_tokens",
+        "prompt_tokens",
+        "reasoning_tokens",
+        "tokens"
+      ],
+      "name": "github.copilot.llm",
+      "root_span_id": "<span:1>",
+      "span_id": "<span:5>",
+      "span_parents": [
+        "<span:4>"
+      ],
+      "type": "llm"
+    },
+    "operation": {
+      "has_input": false,
+      "has_output": false,
+      "metadata": null,
+      "metric_keys": [],
+      "name": "github-copilot-basic-operation",
+      "root_span_id": "<span:1>",
+      "span_id": "<span:2>",
+      "span_parents": [
+        "<span:1>"
+      ],
+      "type": null
+    },
+    "session": {
+      "has_input": false,
+      "has_output": false,
+      "metadata": {
+        "github_copilot.end_reason": "complete",
+        "github_copilot.model": "gpt-4.1"
+      },
+      "metric_keys": [],
+      "name": "Copilot Session",
+      "root_span_id": "<span:1>",
+      "span_id": "<span:3>",
+      "span_parents": [
+        "<span:2>"
+      ],
+      "type": "task"
+    },
+    "turn": {
+      "has_input": true,
+      "has_output": true,
+      "metadata": null,
+      "metric_keys": [],
+      "name": "Copilot Turn",
+      "root_span_id": "<span:1>",
+      "span_id": "<span:4>",
+      "span_parents": [
+        "<span:3>"
+      ],
+      "type": "task"
+    }
+  },
+  "root": {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "scenario": "github-copilot-instrumentation"
+    },
+    "metric_keys": [],
+    "name": "github-copilot-instrumentation-root",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:1>",
+    "span_parents": [],
+    "type": "task"
+  },
+  "tool": {
+    "llm": {
+      "has_input": false,
+      "has_output": false,
+      "metadata": {
+        "model": "gpt-4.1"
+      },
+      "metric_keys": [
+        "completion_reasoning_tokens",
+        "completion_tokens",
+        "prompt_cached_tokens",
+        "prompt_tokens",
+        "reasoning_tokens",
+        "tokens"
+      ],
+      "name": "github.copilot.llm",
+      "root_span_id": "<span:1>",
+      "span_id": "<span:9>",
+      "span_parents": [
+        "<span:8>"
+      ],
+      "type": "llm"
+    },
+    "operation": {
+      "has_input": false,
+      "has_output": false,
+      "metadata": null,
+      "metric_keys": [],
+      "name": "github-copilot-tool-operation",
+      "root_span_id": "<span:1>",
+      "span_id": "<span:6>",
+      "span_parents": [
+        "<span:1>"
+      ],
+      "type": null
+    },
+    "session": {
+      "has_input": false,
+      "has_output": false,
+      "metadata": {
+        "github_copilot.end_reason": "complete",
+        "github_copilot.model": "gpt-4.1"
+      },
+      "metric_keys": [],
+      "name": "Copilot Session",
+      "root_span_id": "<span:1>",
+      "span_id": "<span:7>",
+      "span_parents": [
+        "<span:6>"
+      ],
+      "type": "task"
+    },
+    "tool": null,
+    "turn": {
+      "has_input": false,
+      "has_output": true,
+      "metadata": null,
+      "metric_keys": [],
+      "name": "Copilot Turn",
+      "root_span_id": "<span:1>",
+      "span_id": "<span:8>",
+      "span_parents": [
+        "<span:7>"
+      ],
+      "type": "task"
+    }
+  }
+}
