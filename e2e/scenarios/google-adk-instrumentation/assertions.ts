@@ -27,6 +27,14 @@ type RunGoogleADKScenario = (harness: {
   }) => Promise<unknown>;
 }) => Promise<void>;
 
+const VOLATILE_ADK_METRIC_KEYS = new Set([
+  "completion_reasoning_tokens",
+  "completion_tokens",
+  "prompt_cached_tokens",
+  "prompt_tokens",
+  "tokens",
+]);
+
 function isRecord(value: Json | undefined): value is Record<string, Json> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -71,7 +79,9 @@ function normalizeADKMetrics(metrics: Json): Json {
   }
 
   const normalized = structuredClone(metrics);
-  delete normalized.prompt_cached_tokens;
+  for (const key of VOLATILE_ADK_METRIC_KEYS) {
+    delete normalized[key];
+  }
   return normalizeADKVariableTokenCounts(normalized);
 }
 
@@ -84,8 +94,7 @@ function normalizeADKSummary(summary: Json): Json {
     ...summary,
     metric_keys: summary.metric_keys.filter(
       (metric): metric is string =>
-        metric !== "prompt_cached_tokens" &&
-        metric !== "completion_reasoning_tokens",
+        typeof metric === "string" && !VOLATILE_ADK_METRIC_KEYS.has(metric),
     ),
   } satisfies Json;
 }
@@ -249,6 +258,34 @@ export function defineGoogleADKInstrumentationAssertions(options: {
       expect(agentSpan).toBeDefined();
     });
 
+    test("captures nested SequentialAgent sub-agent names", testConfig, () => {
+      const agentSpans = events.filter(
+        (e) => e.span.name?.startsWith("Agent:") && e.span.type === "task",
+      );
+      const agentSpanNames = agentSpans.map((e) => e.span.name);
+
+      expect(agentSpanNames).toEqual(
+        expect.arrayContaining([
+          "Agent: sequential_workflow",
+          "Agent: greeter",
+          "Agent: farewell",
+        ]),
+      );
+
+      const workflowSpan = agentSpans.find(
+        (e) => e.span.name === "Agent: sequential_workflow",
+      );
+      const greeterSpan = agentSpans.find(
+        (e) => e.span.name === "Agent: greeter",
+      );
+      const farewellSpan = agentSpans.find(
+        (e) => e.span.name === "Agent: farewell",
+      );
+
+      expect(greeterSpan?.span.parentIds).toContain(workflowSpan?.span.id);
+      expect(farewellSpan?.span.parentIds).toContain(workflowSpan?.span.id);
+    });
+
     test("captures tool span for Tool.runAsync()", testConfig, () => {
       const toolSpan = [...events]
         .reverse()
@@ -267,9 +304,13 @@ export function defineGoogleADKInstrumentationAssertions(options: {
     });
 
     test("nests the agent span under the runner span", testConfig, () => {
-      const runnerSpan = findLatestSpan(events, "Google ADK Runner");
+      const runnerSpan = events.find(
+        (e) =>
+          e.span.name === "Google ADK Runner" &&
+          e.row.metadata?.["google_adk.session_id"] === "test-session-1",
+      );
       const agentSpan = events.find(
-        (e) => e.span.name?.startsWith("Agent:") && e.span.type === "task",
+        (e) => e.span.name === "Agent: weather_agent" && e.span.type === "task",
       );
 
       expect(runnerSpan).toBeDefined();
