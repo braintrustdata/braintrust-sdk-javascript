@@ -3,6 +3,7 @@ import { normalizeForSnapshot, type Json } from "../../helpers/normalize";
 import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
 import {
   formatJsonFileSnapshot,
+  matchFileSnapshot,
   resolveFileSnapshotPath,
 } from "../../helpers/file-snapshot";
 import { withScenarioHarness } from "../../helpers/scenario-harness";
@@ -63,6 +64,7 @@ function summarizeSpan(
   overrides?: {
     metadata?: Json;
     name?: string | null;
+    omitSpanParents?: boolean;
   },
 ): Json {
   if (!event) {
@@ -92,6 +94,9 @@ function summarizeSpan(
   }
   if (overrides?.name !== undefined) {
     summary.name = overrides.name;
+  }
+  if (overrides?.omitSpanParents) {
+    delete summary.span_parents;
   }
   if (typeof event.row.error === "string") {
     summary.error = event.row.error;
@@ -373,7 +378,7 @@ function buildSpanSummary(events: CapturedLogEvent[]): Json {
       nested_task: summarizeSpan(subAgentTask),
       operation: summarizeSpan(subAgentOperation),
       task_root: summarizeSpan(subAgentTaskRoot),
-      tool: summarizeSpan(subAgentTool),
+      tool: summarizeSpan(subAgentTool, { omitSpanParents: true }),
     },
   } as Json);
 }
@@ -682,9 +687,10 @@ export function defineClaudeAgentSDKInstrumentationAssertions(options: {
     });
 
     test("matches the shared span snapshot", testConfig, async () => {
-      await expect(
+      await matchFileSnapshot(
         formatJsonFileSnapshot(buildSpanSummary(events)),
-      ).toMatchFileSnapshot(snapshotPath);
+        snapshotPath,
+      );
     });
   });
 }

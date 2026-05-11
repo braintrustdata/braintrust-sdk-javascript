@@ -21,9 +21,11 @@ import { readFileSync } from "fs";
 import { fileURLToPath } from "url";
 import moduleDetailsFromPath from "module-details-from-path";
 import { openaiConfigs } from "../configs/openai";
+import { openAICodexConfigs } from "../configs/openai-codex";
 import { anthropicConfigs } from "../configs/anthropic";
 import { aiSDKConfigs } from "../configs/ai-sdk";
 import { claudeAgentSDKConfigs } from "../configs/claude-agent-sdk";
+import { cursorSDKConfigs } from "../configs/cursor-sdk";
 import { googleGenAIConfigs } from "../configs/google-genai";
 import { huggingFaceConfigs } from "../configs/huggingface";
 import { openRouterAgentConfigs } from "../configs/openrouter-agent";
@@ -31,6 +33,7 @@ import { openRouterConfigs } from "../configs/openrouter";
 import { mistralConfigs } from "../configs/mistral";
 import { cohereConfigs } from "../configs/cohere";
 import { groqConfigs } from "../configs/groq";
+import { gitHubCopilotConfigs } from "../configs/github-copilot";
 
 export interface BundlerPluginOptions {
   /**
@@ -73,9 +76,11 @@ function getModuleVersion(basedir: string): string | undefined {
 export const unplugin = createUnplugin<BundlerPluginOptions>((options = {}) => {
   const allInstrumentations = [
     ...openaiConfigs,
+    ...openAICodexConfigs,
     ...anthropicConfigs,
     ...aiSDKConfigs,
     ...claudeAgentSDKConfigs,
+    ...cursorSDKConfigs,
     ...googleGenAIConfigs,
     ...huggingFaceConfigs,
     ...openRouterConfigs,
@@ -83,6 +88,7 @@ export const unplugin = createUnplugin<BundlerPluginOptions>((options = {}) => {
     ...mistralConfigs,
     ...cohereConfigs,
     ...groqConfigs,
+    ...gitHubCopilotConfigs,
     ...(options.instrumentations || []),
   ];
 

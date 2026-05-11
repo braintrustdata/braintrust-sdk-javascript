@@ -18,6 +18,7 @@
     "test:e2e:hermetic": "turbo run test:e2e:hermetic",
     "test:e2e:canary": "turbo run test:e2e:canary",
     "test:e2e:update": "turbo run test:e2e:update",
+    "test:e2e:record": "turbo run test:e2e:record",
     "changeset": "changeset",
     "playground": "turbo run playground --filter=\"braintrust\"",
     "playground:cli:push": "turbo run playground:cli:push --filter=\"braintrust\"",

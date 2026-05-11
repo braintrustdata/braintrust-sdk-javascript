@@ -1,5 +1,26 @@
 # braintrust
 
+## 3.10.0
+
+### Minor Changes
+
+- feat: Add dataset versioning support (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/1837)
+- feat: Add `@cursor/sdk` instrumentation (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/1923)
+- feat: Add auto and wrapper instrumentation for `@github/copilot-sdk`
+- feat: Add experiment dataset filters to experiment metadata (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/1898)
+
+### Patch Changes
+
+- fix(auto-instrumentation): Skip over file transforms in bundler plugins when id is undefined (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/1886)
+- fix: Fix export map for bundler plugins (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/1870)
+- feat: Bump google ADK patching range to include new major `1.0.0` (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/1885)
+- feat: Add instrumentation for groq-sdk (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/1866)
+- fix: Correct the eval file extension shown in CLI directory warnings (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/1928)
+- feat: Capture thinking with cohere (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/1861)
+- fix: Capture reasoning in mistral (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/1863)
+- fix(huggingface): Capture streamed tool calls (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/1848)
+- fix(claude-agent-sdk): Nest built-in tools under sub-agents (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/1881)
+
 ## 3.9.0
 
 ### Notable Changes

@@ -33,6 +33,7 @@ import { openaiConfigs } from "../configs/openai";
 import { anthropicConfigs } from "../configs/anthropic";
 import { aiSDKConfigs } from "../configs/ai-sdk";
 import { claudeAgentSDKConfigs } from "../configs/claude-agent-sdk";
+import { cursorSDKConfigs } from "../configs/cursor-sdk";
 import { googleGenAIConfigs } from "../configs/google-genai";
 import { huggingFaceConfigs } from "../configs/huggingface";
 import { openRouterAgentConfigs } from "../configs/openrouter-agent";
@@ -40,6 +41,7 @@ import { openRouterConfigs } from "../configs/openrouter";
 import { mistralConfigs } from "../configs/mistral";
 import { cohereConfigs } from "../configs/cohere";
 import { groqConfigs } from "../configs/groq";
+import { gitHubCopilotConfigs } from "../configs/github-copilot";
 import { type BundlerPluginOptions } from "./plugin";
 
 /**
@@ -71,6 +73,7 @@ function getMatcher(options: BundlerPluginOptions): InstrumentationMatcher {
     ...anthropicConfigs,
     ...aiSDKConfigs,
     ...claudeAgentSDKConfigs,
+    ...cursorSDKConfigs,
     ...googleGenAIConfigs,
     ...huggingFaceConfigs,
     ...openRouterConfigs,
@@ -78,6 +81,7 @@ function getMatcher(options: BundlerPluginOptions): InstrumentationMatcher {
     ...mistralConfigs,
     ...cohereConfigs,
     ...groqConfigs,
+    ...gitHubCopilotConfigs,
     ...(options.instrumentations ?? []),
   ];
   const dcModule = options.browser ? "dc-browser" : undefined;

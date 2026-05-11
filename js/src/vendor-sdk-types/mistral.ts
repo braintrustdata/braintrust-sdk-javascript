@@ -98,6 +98,18 @@ export type MistralAgentsCreateParams = {
   [key: string]: unknown;
 };
 
+export type MistralClassificationCreateParams = {
+  input?: unknown;
+  inputs?: unknown;
+  [key: string]: unknown;
+};
+
+export type MistralChatClassificationCreateParams = {
+  input?: unknown;
+  inputs?: unknown;
+  [key: string]: unknown;
+};
+
 export type MistralEmbeddingResponse = {
   id?: string;
   object?: string;
@@ -127,6 +139,16 @@ export type MistralFimCompletionResponse = MistralChatCompletionResponse;
 export type MistralAgentsCompletionResponse = MistralChatCompletionResponse;
 export type MistralFimCompletionEvent = MistralChatCompletionEvent;
 export type MistralAgentsCompletionEvent = MistralChatCompletionEvent;
+
+export type MistralClassificationResponse = {
+  id?: string;
+  model?: string;
+  results?: unknown;
+  usage?: unknown;
+  [key: string]: unknown;
+};
+
+export type MistralModerationResponse = MistralClassificationResponse;
 
 export type MistralChatResult =
   | MistralChatCompletionResponse
@@ -178,10 +200,30 @@ export type MistralAgents = {
   ) => Promise<MistralAgentsStreamingResult>;
 };
 
+export type MistralClassifiers = {
+  moderate: (
+    request: MistralClassificationCreateParams,
+    options?: unknown,
+  ) => Promise<MistralModerationResponse>;
+  moderateChat: (
+    request: MistralChatClassificationCreateParams,
+    options?: unknown,
+  ) => Promise<MistralModerationResponse>;
+  classify?: (
+    request: MistralClassificationCreateParams,
+    options?: unknown,
+  ) => Promise<MistralClassificationResponse>;
+  classifyChat?: (
+    request: MistralChatClassificationCreateParams,
+    options?: unknown,
+  ) => Promise<MistralClassificationResponse>;
+};
+
 export type MistralClient = {
   chat?: MistralChat;
   fim?: MistralFim;
   agents?: MistralAgents;
   embeddings?: MistralEmbeddings;
+  classifiers?: MistralClassifiers;
   [key: string]: unknown;
 };

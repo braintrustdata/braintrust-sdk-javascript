@@ -1,8 +1,10 @@
 import { BasePlugin } from "./core";
 import { OpenAIPlugin } from "./plugins/openai-plugin";
+import { OpenAICodexPlugin } from "./plugins/openai-codex-plugin";
 import { AnthropicPlugin } from "./plugins/anthropic-plugin";
 import { AISDKPlugin } from "./plugins/ai-sdk-plugin";
 import { ClaudeAgentSDKPlugin } from "./plugins/claude-agent-sdk-plugin";
+import { CursorSDKPlugin } from "./plugins/cursor-sdk-plugin";
 import { GoogleGenAIPlugin } from "./plugins/google-genai-plugin";
 import { HuggingFacePlugin } from "./plugins/huggingface-plugin";
 import { OpenRouterAgentPlugin } from "./plugins/openrouter-agent-plugin";
@@ -11,6 +13,7 @@ import { MistralPlugin } from "./plugins/mistral-plugin";
 import { GoogleADKPlugin } from "./plugins/google-adk-plugin";
 import { CoherePlugin } from "./plugins/cohere-plugin";
 import { GroqPlugin } from "./plugins/groq-plugin";
+import { GitHubCopilotPlugin } from "./plugins/github-copilot-plugin";
 
 export interface BraintrustPluginConfig {
   integrations?: {
@@ -22,13 +25,23 @@ export interface BraintrustPluginConfig {
     googleGenAI?: boolean;
     huggingface?: boolean;
     claudeAgentSDK?: boolean;
+    cursor?: boolean;
+    cursorSDK?: boolean;
     openrouter?: boolean;
     openrouterAgent?: boolean;
     mistral?: boolean;
     googleADK?: boolean;
     cohere?: boolean;
     groq?: boolean;
+    openaiCodexSDK?: boolean;
   };
+}
+
+function getIntegrationConfig(
+  integrations: NonNullable<BraintrustPluginConfig["integrations"]>,
+  key: string,
+): boolean | undefined {
+  return (integrations as Record<string, boolean | undefined>)[key];
 }
 
 /**
@@ -50,9 +63,11 @@ export interface BraintrustPluginConfig {
 export class BraintrustPlugin extends BasePlugin {
   private config: BraintrustPluginConfig;
   private openaiPlugin: OpenAIPlugin | null = null;
+  private openAICodexPlugin: OpenAICodexPlugin | null = null;
   private anthropicPlugin: AnthropicPlugin | null = null;
   private aiSDKPlugin: AISDKPlugin | null = null;
   private claudeAgentSDKPlugin: ClaudeAgentSDKPlugin | null = null;
+  private cursorSDKPlugin: CursorSDKPlugin | null = null;
   private googleGenAIPlugin: GoogleGenAIPlugin | null = null;
   private huggingFacePlugin: HuggingFacePlugin | null = null;
   private openRouterPlugin: OpenRouterPlugin | null = null;
@@ -61,6 +76,7 @@ export class BraintrustPlugin extends BasePlugin {
   private googleADKPlugin: GoogleADKPlugin | null = null;
   private coherePlugin: CoherePlugin | null = null;
   private groqPlugin: GroqPlugin | null = null;
+  private gitHubCopilotPlugin: GitHubCopilotPlugin | null = null;
 
   constructor(config: BraintrustPluginConfig = {}) {
     super();
@@ -74,6 +90,11 @@ export class BraintrustPlugin extends BasePlugin {
     if (integrations.openai !== false) {
       this.openaiPlugin = new OpenAIPlugin();
       this.openaiPlugin.enable();
+    }
+
+    if (integrations.openaiCodexSDK !== false) {
+      this.openAICodexPlugin = new OpenAICodexPlugin();
+      this.openAICodexPlugin.enable();
     }
 
     // Enable Anthropic integration (default: true)
@@ -93,6 +114,11 @@ export class BraintrustPlugin extends BasePlugin {
     if (integrations.claudeAgentSDK !== false) {
       this.claudeAgentSDKPlugin = new ClaudeAgentSDKPlugin();
       this.claudeAgentSDKPlugin.enable();
+    }
+
+    if (integrations.cursorSDK !== false && integrations.cursor !== false) {
+      this.cursorSDKPlugin = new CursorSDKPlugin();
+      this.cursorSDKPlugin.enable();
     }
 
     // Enable Google GenAI integration (default: true)
@@ -137,12 +163,22 @@ export class BraintrustPlugin extends BasePlugin {
       this.groqPlugin = new GroqPlugin();
       this.groqPlugin.enable();
     }
+
+    if (getIntegrationConfig(integrations, "gitHubCopilot") !== false) {
+      this.gitHubCopilotPlugin = new GitHubCopilotPlugin();
+      this.gitHubCopilotPlugin.enable();
+    }
   }
 
   protected onDisable(): void {
     if (this.openaiPlugin) {
       this.openaiPlugin.disable();
       this.openaiPlugin = null;
+    }
+
+    if (this.openAICodexPlugin) {
+      this.openAICodexPlugin.disable();
+      this.openAICodexPlugin = null;
     }
 
     if (this.anthropicPlugin) {
@@ -158,6 +194,11 @@ export class BraintrustPlugin extends BasePlugin {
     if (this.claudeAgentSDKPlugin) {
       this.claudeAgentSDKPlugin.disable();
       this.claudeAgentSDKPlugin = null;
+    }
+
+    if (this.cursorSDKPlugin) {
+      this.cursorSDKPlugin.disable();
+      this.cursorSDKPlugin = null;
     }
 
     if (this.googleGenAIPlugin) {
@@ -198,6 +239,11 @@ export class BraintrustPlugin extends BasePlugin {
     if (this.groqPlugin) {
       this.groqPlugin.disable();
       this.groqPlugin = null;
+    }
+
+    if (this.gitHubCopilotPlugin) {
+      this.gitHubCopilotPlugin.disable();
+      this.gitHubCopilotPlugin = null;
     }
   }
 }
