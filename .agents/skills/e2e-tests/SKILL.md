@@ -53,6 +53,7 @@ Cassettes mock provider HTTP responses (OpenAI, Anthropic, ...) so scenarios tha
   Then run again in `BRAINTRUST_E2E_CASSETTE_MODE=replay` with no provider keys to confirm the cassette is sufficient.
 
 - Volatile fields in request bodies (e.g. AI-SDK `experimental_generateMessageId`) need a per-scenario filter. Add the scenario name and a `FilterSpec` to `e2e/helpers/cassette-filters.mjs`. The cassette layer is backed by `@braintrust/seinfeld` (`dev-packages/seinfeld`); the preload entry point is `e2e/helpers/cassette-preload.mjs`.
+- **After recording, always inspect the cassette for leaked API keys before committing.** The recorder redacts common patterns (`paranoid` preset), but confirm that no real keys appear in request headers, response bodies, or any URL query parameters. If a key slips through, remove the cassette, add a custom `redact` rule, and re-record.
 
 ## Preferred Patterns
 

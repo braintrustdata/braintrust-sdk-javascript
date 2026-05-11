@@ -1,22 +1,11 @@
 {
-  "version": 1,
-  "meta": {
-    "createdAt": "2026-04-28T23:37:58.567Z",
-    "seinfeldVersion": "0.0.0"
-  },
   "entries": [
     {
+      "callIndex": 0,
       "id": "804e392431313e6d",
       "matchKey": "POST openrouter.ai/api/v1/chat/completions",
-      "callIndex": 0,
       "recordedAt": "2026-04-28T23:37:58.567Z",
       "request": {
-        "method": "POST",
-        "url": "https://openrouter.ai/api/v1/chat/completions",
-        "headers": {
-          "accept": "application/json",
-          "content-type": "application/json"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -31,20 +20,12 @@
             "stream": false,
             "temperature": 0
           }
-        }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions"
       },
       "response": {
-        "status": 200,
-        "statusText": "OK",
-        "headers": {
-          "access-control-allow-origin": "*",
-          "access-control-expose-headers": "X-Generation-Id,cf-ray",
-          "content-type": "application/json",
-          "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
-          "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
-          "x-content-type-options": "nosniff",
-          "x-generation-id": "gen-1777419455-tiLupNjgrxq77R4pvWG7"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -92,21 +73,26 @@
               "total_tokens": 14
             }
           }
-        }
+        },
+        "headers": {
+          "access-control-allow-origin": "*",
+          "access-control-expose-headers": "X-Generation-Id,cf-ray",
+          "content-type": "application/json",
+          "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
+          "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
+          "x-content-type-options": "nosniff",
+          "x-generation-id": "gen-1777419455-tiLupNjgrxq77R4pvWG7"
+        },
+        "status": 200,
+        "statusText": "OK"
       }
     },
     {
+      "callIndex": 1,
       "id": "db4d3e790b53f9ee",
       "matchKey": "POST openrouter.ai/api/v1/chat/completions",
-      "callIndex": 1,
       "recordedAt": "2026-04-28T23:37:58.567Z",
       "request": {
-        "method": "POST",
-        "url": "https://openrouter.ai/api/v1/chat/completions",
-        "headers": {
-          "accept": "text/event-stream",
-          "content-type": "application/json"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -124,11 +110,21 @@
             },
             "temperature": 0
           }
-        }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions"
       },
       "response": {
-        "status": 200,
-        "statusText": "OK",
+        "body": {
+          "chunks": [
+            "data: {\"id\":\"gen-1777419456-8A1cDh1rnxspPXK9hc6Y\",\"object\":\"chat.completion.chunk\",\"created\":1777419456,\"model\":\"openai/gpt-4o-mini-2024-07-18\",\"provider\":\"OpenAI\",\"system_fingerprint\":\"fp_9987326bf5\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"STREAM\",\"role\":\"assistant\"},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1777419456-8A1cDh1rnxspPXK9hc6Y\",\"object\":\"chat.completion.chunk\",\"created\":1777419456,\"model\":\"openai/gpt-4o-mini-2024-07-18\",\"provider\":\"OpenAI\",\"system_fingerprint\":\"fp_9987326bf5\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\"},\"finish_reason\":\"stop\",\"native_finish_reason\":\"stop\"}]}",
+            "data: {\"id\":\"gen-1777419456-8A1cDh1rnxspPXK9hc6Y\",\"object\":\"chat.completion.chunk\",\"created\":1777419456,\"model\":\"openai/gpt-4o-mini-2024-07-18\",\"provider\":\"OpenAI\",\"system_fingerprint\":\"fp_9987326bf5\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\"},\"finish_reason\":\"stop\",\"native_finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":12,\"completion_tokens\":1,\"total_tokens\":13,\"cost\":0.0000024,\"is_byok\":false,\"prompt_tokens_details\":{\"cached_tokens\":0,\"cache_write_tokens\":0,\"audio_tokens\":0,\"video_tokens\":0},\"cost_details\":{\"upstream_inference_cost\":0.0000024,\"upstream_inference_prompt_cost\":0.0000018,\"upstream_inference_completions_cost\":6e-7},\"completion_tokens_details\":{\"reasoning_tokens\":0,\"image_tokens\":0,\"audio_tokens\":0}}}",
+            "data: [DONE]"
+          ],
+          "kind": "sse"
+        },
         "headers": {
           "access-control-allow-origin": "*",
           "access-control-expose-headers": "X-Generation-Id,cf-ray",
@@ -139,29 +135,16 @@
           "x-content-type-options": "nosniff",
           "x-generation-id": "gen-1777419456-8A1cDh1rnxspPXK9hc6Y"
         },
-        "body": {
-          "kind": "sse",
-          "chunks": [
-            "data: {\"id\":\"gen-1777419456-8A1cDh1rnxspPXK9hc6Y\",\"object\":\"chat.completion.chunk\",\"created\":1777419456,\"model\":\"openai/gpt-4o-mini-2024-07-18\",\"provider\":\"OpenAI\",\"system_fingerprint\":\"fp_9987326bf5\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"STREAM\",\"role\":\"assistant\"},\"finish_reason\":null,\"native_finish_reason\":null}]}",
-            "data: {\"id\":\"gen-1777419456-8A1cDh1rnxspPXK9hc6Y\",\"object\":\"chat.completion.chunk\",\"created\":1777419456,\"model\":\"openai/gpt-4o-mini-2024-07-18\",\"provider\":\"OpenAI\",\"system_fingerprint\":\"fp_9987326bf5\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\"},\"finish_reason\":\"stop\",\"native_finish_reason\":\"stop\"}]}",
-            "data: {\"id\":\"gen-1777419456-8A1cDh1rnxspPXK9hc6Y\",\"object\":\"chat.completion.chunk\",\"created\":1777419456,\"model\":\"openai/gpt-4o-mini-2024-07-18\",\"provider\":\"OpenAI\",\"system_fingerprint\":\"fp_9987326bf5\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\"},\"finish_reason\":\"stop\",\"native_finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":12,\"completion_tokens\":1,\"total_tokens\":13,\"cost\":0.0000024,\"is_byok\":false,\"prompt_tokens_details\":{\"cached_tokens\":0,\"cache_write_tokens\":0,\"audio_tokens\":0,\"video_tokens\":0},\"cost_details\":{\"upstream_inference_cost\":0.0000024,\"upstream_inference_prompt_cost\":0.0000018,\"upstream_inference_completions_cost\":6e-7},\"completion_tokens_details\":{\"reasoning_tokens\":0,\"image_tokens\":0,\"audio_tokens\":0}}}",
-            "data: [DONE]"
-          ]
-        }
+        "status": 200,
+        "statusText": "OK"
       }
     },
     {
+      "callIndex": 0,
       "id": "507711dff446210e",
       "matchKey": "POST openrouter.ai/api/v1/embeddings",
-      "callIndex": 0,
       "recordedAt": "2026-04-28T23:37:58.567Z",
       "request": {
-        "method": "POST",
-        "url": "https://openrouter.ai/api/v1/embeddings",
-        "headers": {
-          "accept": "application/json;q=1, text/event-stream;q=0",
-          "content-type": "application/json"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -169,19 +152,12 @@
             "input_type": "query",
             "model": "openai/text-embedding-3-small"
           }
-        }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/embeddings"
       },
       "response": {
-        "status": 200,
-        "statusText": "OK",
-        "headers": {
-          "access-control-allow-origin": "*",
-          "access-control-expose-headers": "X-Generation-Id,cf-ray",
-          "content-type": "application/json",
-          "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
-          "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
-          "x-content-type-options": "nosniff"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -761,21 +737,25 @@
               "total_tokens": 3
             }
           }
-        }
+        },
+        "headers": {
+          "access-control-allow-origin": "*",
+          "access-control-expose-headers": "X-Generation-Id,cf-ray",
+          "content-type": "application/json",
+          "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
+          "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
+          "x-content-type-options": "nosniff"
+        },
+        "status": 200,
+        "statusText": "OK"
       }
     },
     {
+      "callIndex": 0,
       "id": "56e2cb7b080ae856",
       "matchKey": "POST openrouter.ai/api/v1/responses",
-      "callIndex": 0,
       "recordedAt": "2026-04-28T23:37:58.567Z",
       "request": {
-        "method": "POST",
-        "url": "https://openrouter.ai/api/v1/responses",
-        "headers": {
-          "accept": "application/json",
-          "content-type": "application/json"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -787,20 +767,12 @@
             "stream": false,
             "temperature": 0
           }
-        }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/responses"
       },
       "response": {
-        "status": 200,
-        "statusText": "OK",
-        "headers": {
-          "access-control-allow-origin": "*",
-          "access-control-expose-headers": "X-Generation-Id,cf-ray",
-          "content-type": "application/json",
-          "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
-          "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
-          "x-content-type-options": "nosniff",
-          "x-generation-id": "gen-1777419457-0xDOPITwEiDQaKDN0kfF"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -872,21 +844,26 @@
               "total_tokens": 17
             }
           }
-        }
+        },
+        "headers": {
+          "access-control-allow-origin": "*",
+          "access-control-expose-headers": "X-Generation-Id,cf-ray",
+          "content-type": "application/json",
+          "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
+          "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
+          "x-content-type-options": "nosniff",
+          "x-generation-id": "gen-1777419457-0xDOPITwEiDQaKDN0kfF"
+        },
+        "status": 200,
+        "statusText": "OK"
       }
     },
     {
+      "callIndex": 1,
       "id": "b50e872b26a5b42b",
       "matchKey": "POST openrouter.ai/api/v1/responses",
-      "callIndex": 1,
       "recordedAt": "2026-04-28T23:37:58.567Z",
       "request": {
-        "method": "POST",
-        "url": "https://openrouter.ai/api/v1/responses",
-        "headers": {
-          "accept": "text/event-stream",
-          "content-type": "application/json"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -898,23 +875,13 @@
             "stream": true,
             "temperature": 0
           }
-        }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/responses"
       },
       "response": {
-        "status": 200,
-        "statusText": "OK",
-        "headers": {
-          "access-control-allow-origin": "*",
-          "access-control-expose-headers": "X-Generation-Id,cf-ray",
-          "cache-control": "no-cache",
-          "content-type": "text/event-stream",
-          "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
-          "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
-          "x-content-type-options": "nosniff",
-          "x-generation-id": "gen-1777419457-sm2JPEP3Ql21R8caZmUt"
-        },
         "body": {
-          "kind": "sse",
           "chunks": [
             "data: {\"type\":\"response.created\",\"response\":{\"id\":\"gen-1777419457-sm2JPEP3Ql21R8caZmUt\",\"object\":\"response\",\"created_at\":1777419457,\"model\":\"openai/gpt-4o-mini-2024-07-18\",\"status\":\"in_progress\",\"completed_at\":null,\"output\":[],\"error\":null,\"incomplete_details\":null,\"tools\":[],\"tool_choice\":\"auto\",\"parallel_tool_calls\":true,\"max_output_tokens\":24,\"temperature\":0,\"top_p\":1,\"presence_penalty\":0,\"frequency_penalty\":0,\"top_logprobs\":0,\"max_tool_calls\":null,\"metadata\":{},\"background\":false,\"previous_response_id\":null,\"service_tier\":\"auto\",\"truncation\":\"disabled\",\"store\":false,\"instructions\":null,\"text\":{\"format\":{\"type\":\"text\"}},\"reasoning\":null,\"safety_identifier\":null,\"prompt_cache_key\":null,\"usage\":null},\"sequence_number\":0}",
             "data: {\"type\":\"response.in_progress\",\"response\":{\"id\":\"gen-1777419457-sm2JPEP3Ql21R8caZmUt\",\"object\":\"response\",\"created_at\":1777419457,\"model\":\"openai/gpt-4o-mini-2024-07-18\",\"status\":\"in_progress\",\"completed_at\":null,\"output\":[],\"error\":null,\"incomplete_details\":null,\"tools\":[],\"tool_choice\":\"auto\",\"parallel_tool_calls\":true,\"max_output_tokens\":24,\"temperature\":0,\"top_p\":1,\"presence_penalty\":0,\"frequency_penalty\":0,\"top_logprobs\":0,\"max_tool_calls\":null,\"metadata\":{},\"background\":false,\"previous_response_id\":null,\"service_tier\":\"auto\",\"truncation\":\"disabled\",\"store\":false,\"instructions\":null,\"text\":{\"format\":{\"type\":\"text\"}},\"reasoning\":null,\"safety_identifier\":null,\"prompt_cache_key\":null,\"usage\":null},\"sequence_number\":1}",
@@ -928,22 +895,29 @@
             "data: {\"type\":\"response.output_item.done\",\"output_index\":0,\"item\":{\"id\":\"msg_tmp_xjpsmgq8zko\",\"type\":\"message\",\"status\":\"completed\",\"role\":\"assistant\",\"content\":[{\"type\":\"output_text\",\"text\":\"STREAMED RESPONSE\",\"annotations\":[],\"logprobs\":[]}]},\"sequence_number\":9}",
             "data: {\"type\":\"response.completed\",\"response\":{\"id\":\"gen-1777419457-sm2JPEP3Ql21R8caZmUt\",\"object\":\"response\",\"created_at\":1777419457,\"model\":\"openai/gpt-4o-mini-2024-07-18\",\"status\":\"completed\",\"completed_at\":1777419458,\"output\":[{\"id\":\"msg_tmp_xjpsmgq8zko\",\"type\":\"message\",\"role\":\"assistant\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"text\":\"STREAMED RESPONSE\",\"annotations\":[],\"logprobs\":[]}]}],\"error\":null,\"incomplete_details\":null,\"tools\":[],\"tool_choice\":\"auto\",\"parallel_tool_calls\":true,\"max_output_tokens\":24,\"temperature\":0,\"top_p\":1,\"presence_penalty\":0,\"frequency_penalty\":0,\"top_logprobs\":0,\"max_tool_calls\":null,\"metadata\":{},\"background\":false,\"previous_response_id\":null,\"service_tier\":\"auto\",\"truncation\":\"disabled\",\"store\":false,\"instructions\":null,\"text\":{\"format\":{\"type\":\"text\"}},\"reasoning\":null,\"safety_identifier\":null,\"prompt_cache_key\":null,\"usage\":{\"input_tokens\":14,\"input_tokens_details\":{\"cached_tokens\":0},\"output_tokens\":3,\"output_tokens_details\":{\"reasoning_tokens\":0},\"total_tokens\":17,\"cost\":0.0000039,\"is_byok\":false,\"cost_details\":{\"upstream_inference_cost\":0.0000039,\"upstream_inference_input_cost\":0.0000021,\"upstream_inference_output_cost\":0.0000018}}},\"sequence_number\":10}",
             "data: [DONE]"
-          ]
-        }
+          ],
+          "kind": "sse"
+        },
+        "headers": {
+          "access-control-allow-origin": "*",
+          "access-control-expose-headers": "X-Generation-Id,cf-ray",
+          "cache-control": "no-cache",
+          "content-type": "text/event-stream",
+          "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
+          "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
+          "x-content-type-options": "nosniff",
+          "x-generation-id": "gen-1777419457-sm2JPEP3Ql21R8caZmUt"
+        },
+        "status": 200,
+        "statusText": "OK"
       }
     },
     {
+      "callIndex": 0,
       "id": "9916fb141acf9e9e",
       "matchKey": "POST openrouter.ai/api/v1/rerank",
-      "callIndex": 0,
       "recordedAt": "2026-04-28T23:37:58.567Z",
       "request": {
-        "method": "POST",
-        "url": "https://openrouter.ai/api/v1/rerank",
-        "headers": {
-          "accept": "application/json;q=1, text/event-stream;q=0",
-          "content-type": "application/json"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -956,19 +930,12 @@
             "query": "Which document is about France?",
             "top_n": 2
           }
-        }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/rerank"
       },
       "response": {
-        "status": 200,
-        "statusText": "OK",
-        "headers": {
-          "access-control-allow-origin": "*",
-          "access-control-expose-headers": "X-Generation-Id,cf-ray",
-          "content-type": "application/json",
-          "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
-          "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
-          "x-content-type-options": "nosniff"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -996,22 +963,25 @@
               "search_units": 1
             }
           }
-        }
+        },
+        "headers": {
+          "access-control-allow-origin": "*",
+          "access-control-expose-headers": "X-Generation-Id,cf-ray",
+          "content-type": "application/json",
+          "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
+          "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
+          "x-content-type-options": "nosniff"
+        },
+        "status": 200,
+        "statusText": "OK"
       }
     },
     {
+      "callIndex": 2,
       "id": "14e3479ec0d10f83",
       "matchKey": "POST openrouter.ai/api/v1/responses",
-      "callIndex": 2,
       "recordedAt": "2026-04-28T23:37:58.567Z",
       "request": {
-        "method": "POST",
-        "url": "https://openrouter.ai/api/v1/responses",
-        "headers": {
-          "accept": "text/event-stream",
-          "content-type": "application/json",
-          "x-openrouter-callmodel": "true"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -1044,23 +1014,13 @@
               }
             ]
           }
-        }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/responses"
       },
       "response": {
-        "status": 200,
-        "statusText": "OK",
-        "headers": {
-          "access-control-allow-origin": "*",
-          "access-control-expose-headers": "X-Generation-Id,cf-ray",
-          "cache-control": "no-cache",
-          "content-type": "text/event-stream",
-          "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
-          "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
-          "x-content-type-options": "nosniff",
-          "x-generation-id": "gen-1777419473-j5xl2ImKaoD7SBvuXGlq"
-        },
         "body": {
-          "kind": "sse",
           "chunks": [
             ": OPENROUTER PROCESSING",
             "data: {\"type\":\"response.created\",\"response\":{\"id\":\"gen-1777419473-j5xl2ImKaoD7SBvuXGlq\",\"object\":\"response\",\"created_at\":1777419473,\"model\":\"google/gemini-2.5-flash-lite\",\"status\":\"in_progress\",\"completed_at\":null,\"output\":[],\"error\":null,\"incomplete_details\":null,\"tools\":[{\"type\":\"function\",\"name\":\"lookup_weather\",\"description\":\"Look up the weather forecast for a city.\",\"strict\":null,\"parameters\":{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"additionalProperties\":false}}],\"tool_choice\":\"required\",\"parallel_tool_calls\":true,\"max_output_tokens\":24,\"temperature\":0,\"top_p\":1,\"presence_penalty\":0,\"frequency_penalty\":0,\"top_logprobs\":0,\"max_tool_calls\":1,\"metadata\":{},\"background\":false,\"previous_response_id\":null,\"service_tier\":\"auto\",\"truncation\":\"disabled\",\"store\":false,\"instructions\":null,\"text\":{\"format\":{\"type\":\"text\"}},\"reasoning\":null,\"safety_identifier\":null,\"prompt_cache_key\":null,\"usage\":null},\"sequence_number\":0}",
@@ -1076,23 +1036,29 @@
             "data: {\"type\":\"response.output_item.done\",\"output_index\":0,\"item\":{\"id\":\"fc_tmp_g7dvc2xx9wb\",\"type\":\"function_call\",\"status\":\"completed\",\"call_id\":\"call_3xkEkPdsojalfm7auhko7Bwi\",\"name\":\"lookup_weather\",\"arguments\":\"{\\\"city\\\":\\\"Vienna\\\"}\"},\"sequence_number\":10}",
             "data: {\"type\":\"response.completed\",\"response\":{\"id\":\"gen-1777419473-j5xl2ImKaoD7SBvuXGlq\",\"object\":\"response\",\"created_at\":1777419473,\"model\":\"google/gemini-2.5-flash-lite\",\"status\":\"completed\",\"completed_at\":1777419474,\"output\":[{\"id\":\"fc_tmp_g7dvc2xx9wb\",\"type\":\"function_call\",\"status\":\"completed\",\"call_id\":\"call_3xkEkPdsojalfm7auhko7Bwi\",\"name\":\"lookup_weather\",\"arguments\":\"{\\\"city\\\":\\\"Vienna\\\"}\"}],\"error\":null,\"incomplete_details\":null,\"tools\":[{\"type\":\"function\",\"name\":\"lookup_weather\",\"description\":\"Look up the weather forecast for a city.\",\"strict\":null,\"parameters\":{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"additionalProperties\":false}}],\"tool_choice\":\"required\",\"parallel_tool_calls\":true,\"max_output_tokens\":24,\"temperature\":0,\"top_p\":1,\"presence_penalty\":0,\"frequency_penalty\":0,\"top_logprobs\":0,\"max_tool_calls\":1,\"metadata\":{},\"background\":false,\"previous_response_id\":null,\"service_tier\":\"auto\",\"truncation\":\"disabled\",\"store\":false,\"instructions\":null,\"text\":{\"format\":{\"type\":\"text\"}},\"reasoning\":null,\"safety_identifier\":null,\"prompt_cache_key\":null,\"usage\":{\"input_tokens\":63,\"input_tokens_details\":{\"cached_tokens\":0},\"output_tokens\":15,\"output_tokens_details\":{\"reasoning_tokens\":0},\"total_tokens\":78,\"cost\":0.00001845,\"is_byok\":false,\"cost_details\":{\"upstream_inference_cost\":0.00001845,\"upstream_inference_input_cost\":0.00000945,\"upstream_inference_output_cost\":0.000009}}},\"sequence_number\":11}",
             "data: [DONE]"
-          ]
-        }
+          ],
+          "kind": "sse"
+        },
+        "headers": {
+          "access-control-allow-origin": "*",
+          "access-control-expose-headers": "X-Generation-Id,cf-ray",
+          "cache-control": "no-cache",
+          "content-type": "text/event-stream",
+          "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
+          "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
+          "x-content-type-options": "nosniff",
+          "x-generation-id": "gen-1777419473-j5xl2ImKaoD7SBvuXGlq"
+        },
+        "status": 200,
+        "statusText": "OK"
       }
     },
     {
+      "callIndex": 3,
       "id": "f78798d68a5bc5f0",
       "matchKey": "POST openrouter.ai/api/v1/responses",
-      "callIndex": 3,
       "recordedAt": "2026-04-28T23:37:58.567Z",
       "request": {
-        "method": "POST",
-        "url": "https://openrouter.ai/api/v1/responses",
-        "headers": {
-          "accept": "text/event-stream",
-          "content-type": "application/json",
-          "x-openrouter-callmodel": "true"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -1144,23 +1110,13 @@
               }
             ]
           }
-        }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/responses"
       },
       "response": {
-        "status": 200,
-        "statusText": "OK",
-        "headers": {
-          "access-control-allow-origin": "*",
-          "access-control-expose-headers": "X-Generation-Id,cf-ray",
-          "cache-control": "no-cache",
-          "content-type": "text/event-stream",
-          "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
-          "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
-          "x-content-type-options": "nosniff",
-          "x-generation-id": "gen-1777419474-4EHAtLMeVQQBnP2hOFgF"
-        },
         "body": {
-          "kind": "sse",
           "chunks": [
             ": OPENROUTER PROCESSING",
             ": OPENROUTER PROCESSING",
@@ -1177,23 +1133,29 @@
             "data: {\"type\":\"response.output_item.done\",\"output_index\":0,\"item\":{\"id\":\"fc_tmp_vecv0tcru8m\",\"type\":\"function_call\",\"status\":\"completed\",\"call_id\":\"call_D8Am9EsAqRquXcj1ENSmjpTH\",\"name\":\"lookup_weather\",\"arguments\":\"{\\\"city\\\":\\\"Vienna\\\"}\"},\"sequence_number\":10}",
             "data: {\"type\":\"response.completed\",\"response\":{\"id\":\"gen-1777419474-4EHAtLMeVQQBnP2hOFgF\",\"object\":\"response\",\"created_at\":1777419474,\"model\":\"google/gemini-2.5-flash-lite\",\"status\":\"completed\",\"completed_at\":1777419475,\"output\":[{\"id\":\"fc_tmp_vecv0tcru8m\",\"type\":\"function_call\",\"status\":\"completed\",\"call_id\":\"call_D8Am9EsAqRquXcj1ENSmjpTH\",\"name\":\"lookup_weather\",\"arguments\":\"{\\\"city\\\":\\\"Vienna\\\"}\"}],\"error\":null,\"incomplete_details\":null,\"tools\":[{\"type\":\"function\",\"name\":\"lookup_weather\",\"description\":\"Look up the weather forecast for a city.\",\"strict\":null,\"parameters\":{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"additionalProperties\":false}}],\"tool_choice\":\"required\",\"parallel_tool_calls\":true,\"max_output_tokens\":24,\"temperature\":0,\"top_p\":1,\"presence_penalty\":0,\"frequency_penalty\":0,\"top_logprobs\":0,\"max_tool_calls\":1,\"metadata\":{},\"background\":false,\"previous_response_id\":null,\"service_tier\":\"auto\",\"truncation\":\"disabled\",\"store\":false,\"instructions\":null,\"text\":{\"format\":{\"type\":\"text\"}},\"reasoning\":null,\"safety_identifier\":null,\"prompt_cache_key\":null,\"usage\":{\"input_tokens\":93,\"input_tokens_details\":{\"cached_tokens\":0},\"output_tokens\":15,\"output_tokens_details\":{\"reasoning_tokens\":0},\"total_tokens\":108,\"cost\":0.00002295,\"is_byok\":false,\"cost_details\":{\"upstream_inference_cost\":0.00002295,\"upstream_inference_input_cost\":0.00001395,\"upstream_inference_output_cost\":0.000009}}},\"sequence_number\":11}",
             "data: [DONE]"
-          ]
-        }
+          ],
+          "kind": "sse"
+        },
+        "headers": {
+          "access-control-allow-origin": "*",
+          "access-control-expose-headers": "X-Generation-Id,cf-ray",
+          "cache-control": "no-cache",
+          "content-type": "text/event-stream",
+          "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
+          "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
+          "x-content-type-options": "nosniff",
+          "x-generation-id": "gen-1777419474-4EHAtLMeVQQBnP2hOFgF"
+        },
+        "status": 200,
+        "statusText": "OK"
       }
     },
     {
+      "callIndex": 4,
       "id": "9c8b5f9195d81ec5",
       "matchKey": "POST openrouter.ai/api/v1/responses",
-      "callIndex": 4,
       "recordedAt": "2026-04-28T23:37:58.567Z",
       "request": {
-        "method": "POST",
-        "url": "https://openrouter.ai/api/v1/responses",
-        "headers": {
-          "accept": "text/event-stream",
-          "content-type": "application/json",
-          "x-openrouter-callmodel": "true"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -1259,23 +1221,13 @@
               }
             ]
           }
-        }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/responses"
       },
       "response": {
-        "status": 200,
-        "statusText": "OK",
-        "headers": {
-          "access-control-allow-origin": "*",
-          "access-control-expose-headers": "X-Generation-Id,cf-ray",
-          "cache-control": "no-cache",
-          "content-type": "text/event-stream",
-          "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
-          "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
-          "x-content-type-options": "nosniff",
-          "x-generation-id": "gen-1777419475-2ZDF1upArvBPKdPJ40Ju"
-        },
         "body": {
-          "kind": "sse",
           "chunks": [
             ": OPENROUTER PROCESSING",
             "data: {\"type\":\"response.created\",\"response\":{\"id\":\"gen-1777419475-2ZDF1upArvBPKdPJ40Ju\",\"object\":\"response\",\"created_at\":1777419475,\"model\":\"google/gemini-2.5-flash-lite\",\"status\":\"in_progress\",\"completed_at\":null,\"output\":[],\"error\":null,\"incomplete_details\":null,\"tools\":[{\"type\":\"function\",\"name\":\"lookup_weather\",\"description\":\"Look up the weather forecast for a city.\",\"strict\":null,\"parameters\":{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"additionalProperties\":false}}],\"tool_choice\":\"required\",\"parallel_tool_calls\":true,\"max_output_tokens\":24,\"temperature\":0,\"top_p\":1,\"presence_penalty\":0,\"frequency_penalty\":0,\"top_logprobs\":0,\"max_tool_calls\":1,\"metadata\":{},\"background\":false,\"previous_response_id\":null,\"service_tier\":\"auto\",\"truncation\":\"disabled\",\"store\":false,\"instructions\":null,\"text\":{\"format\":{\"type\":\"text\"}},\"reasoning\":null,\"safety_identifier\":null,\"prompt_cache_key\":null,\"usage\":null},\"sequence_number\":0}",
@@ -1291,23 +1243,29 @@
             "data: {\"type\":\"response.output_item.done\",\"output_index\":0,\"item\":{\"id\":\"fc_tmp_66ikfaxda16\",\"type\":\"function_call\",\"status\":\"completed\",\"call_id\":\"call_hmP68E1dBlH54JyhL7tiVUOg\",\"name\":\"lookup_weather\",\"arguments\":\"{\\\"city\\\":\\\"Vienna\\\"}\"},\"sequence_number\":10}",
             "data: {\"type\":\"response.completed\",\"response\":{\"id\":\"gen-1777419475-2ZDF1upArvBPKdPJ40Ju\",\"object\":\"response\",\"created_at\":1777419475,\"model\":\"google/gemini-2.5-flash-lite\",\"status\":\"completed\",\"completed_at\":1777419476,\"output\":[{\"id\":\"fc_tmp_66ikfaxda16\",\"type\":\"function_call\",\"status\":\"completed\",\"call_id\":\"call_hmP68E1dBlH54JyhL7tiVUOg\",\"name\":\"lookup_weather\",\"arguments\":\"{\\\"city\\\":\\\"Vienna\\\"}\"}],\"error\":null,\"incomplete_details\":null,\"tools\":[{\"type\":\"function\",\"name\":\"lookup_weather\",\"description\":\"Look up the weather forecast for a city.\",\"strict\":null,\"parameters\":{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"additionalProperties\":false}}],\"tool_choice\":\"required\",\"parallel_tool_calls\":true,\"max_output_tokens\":24,\"temperature\":0,\"top_p\":1,\"presence_penalty\":0,\"frequency_penalty\":0,\"top_logprobs\":0,\"max_tool_calls\":1,\"metadata\":{},\"background\":false,\"previous_response_id\":null,\"service_tier\":\"auto\",\"truncation\":\"disabled\",\"store\":false,\"instructions\":null,\"text\":{\"format\":{\"type\":\"text\"}},\"reasoning\":null,\"safety_identifier\":null,\"prompt_cache_key\":null,\"usage\":{\"input_tokens\":123,\"input_tokens_details\":{\"cached_tokens\":0},\"output_tokens\":15,\"output_tokens_details\":{\"reasoning_tokens\":0},\"total_tokens\":138,\"cost\":0.00002745,\"is_byok\":false,\"cost_details\":{\"upstream_inference_cost\":0.00002745,\"upstream_inference_input_cost\":0.00001845,\"upstream_inference_output_cost\":0.000009}}},\"sequence_number\":11}",
             "data: [DONE]"
-          ]
-        }
+          ],
+          "kind": "sse"
+        },
+        "headers": {
+          "access-control-allow-origin": "*",
+          "access-control-expose-headers": "X-Generation-Id,cf-ray",
+          "cache-control": "no-cache",
+          "content-type": "text/event-stream",
+          "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
+          "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
+          "x-content-type-options": "nosniff",
+          "x-generation-id": "gen-1777419475-2ZDF1upArvBPKdPJ40Ju"
+        },
+        "status": 200,
+        "statusText": "OK"
       }
     },
     {
+      "callIndex": 5,
       "id": "1f29e6ed12bc1286",
       "matchKey": "POST openrouter.ai/api/v1/responses",
-      "callIndex": 5,
       "recordedAt": "2026-04-28T23:37:58.567Z",
       "request": {
-        "method": "POST",
-        "url": "https://openrouter.ai/api/v1/responses",
-        "headers": {
-          "accept": "text/event-stream",
-          "content-type": "application/json",
-          "x-openrouter-callmodel": "true"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -1387,23 +1345,13 @@
               }
             ]
           }
-        }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/responses"
       },
       "response": {
-        "status": 200,
-        "statusText": "OK",
-        "headers": {
-          "access-control-allow-origin": "*",
-          "access-control-expose-headers": "X-Generation-Id,cf-ray",
-          "cache-control": "no-cache",
-          "content-type": "text/event-stream",
-          "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
-          "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
-          "x-content-type-options": "nosniff",
-          "x-generation-id": "gen-1777419476-K7aD6AmpDOiiJa1HLp2Z"
-        },
         "body": {
-          "kind": "sse",
           "chunks": [
             ": OPENROUTER PROCESSING",
             "data: {\"type\":\"response.created\",\"response\":{\"id\":\"gen-1777419476-K7aD6AmpDOiiJa1HLp2Z\",\"object\":\"response\",\"created_at\":1777419476,\"model\":\"google/gemini-2.5-flash-lite\",\"status\":\"in_progress\",\"completed_at\":null,\"output\":[],\"error\":null,\"incomplete_details\":null,\"tools\":[{\"type\":\"function\",\"name\":\"lookup_weather\",\"description\":\"Look up the weather forecast for a city.\",\"strict\":null,\"parameters\":{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"additionalProperties\":false}}],\"tool_choice\":\"required\",\"parallel_tool_calls\":true,\"max_output_tokens\":24,\"temperature\":0,\"top_p\":1,\"presence_penalty\":0,\"frequency_penalty\":0,\"top_logprobs\":0,\"max_tool_calls\":1,\"metadata\":{},\"background\":false,\"previous_response_id\":null,\"service_tier\":\"auto\",\"truncation\":\"disabled\",\"store\":false,\"instructions\":null,\"text\":{\"format\":{\"type\":\"text\"}},\"reasoning\":null,\"safety_identifier\":null,\"prompt_cache_key\":null,\"usage\":null},\"sequence_number\":0}",
@@ -1419,23 +1367,29 @@
             "data: {\"type\":\"response.output_item.done\",\"output_index\":0,\"item\":{\"id\":\"fc_tmp_9xm2jyh75m\",\"type\":\"function_call\",\"status\":\"completed\",\"call_id\":\"call_tqOUauicKWi3RISEweIESd4G\",\"name\":\"lookup_weather\",\"arguments\":\"{\\\"city\\\":\\\"Vienna\\\"}\"},\"sequence_number\":10}",
             "data: {\"type\":\"response.completed\",\"response\":{\"id\":\"gen-1777419476-K7aD6AmpDOiiJa1HLp2Z\",\"object\":\"response\",\"created_at\":1777419476,\"model\":\"google/gemini-2.5-flash-lite\",\"status\":\"completed\",\"completed_at\":1777419477,\"output\":[{\"id\":\"fc_tmp_9xm2jyh75m\",\"type\":\"function_call\",\"status\":\"completed\",\"call_id\":\"call_tqOUauicKWi3RISEweIESd4G\",\"name\":\"lookup_weather\",\"arguments\":\"{\\\"city\\\":\\\"Vienna\\\"}\"}],\"error\":null,\"incomplete_details\":null,\"tools\":[{\"type\":\"function\",\"name\":\"lookup_weather\",\"description\":\"Look up the weather forecast for a city.\",\"strict\":null,\"parameters\":{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"additionalProperties\":false}}],\"tool_choice\":\"required\",\"parallel_tool_calls\":true,\"max_output_tokens\":24,\"temperature\":0,\"top_p\":1,\"presence_penalty\":0,\"frequency_penalty\":0,\"top_logprobs\":0,\"max_tool_calls\":1,\"metadata\":{},\"background\":false,\"previous_response_id\":null,\"service_tier\":\"auto\",\"truncation\":\"disabled\",\"store\":false,\"instructions\":null,\"text\":{\"format\":{\"type\":\"text\"}},\"reasoning\":null,\"safety_identifier\":null,\"prompt_cache_key\":null,\"usage\":{\"input_tokens\":153,\"input_tokens_details\":{\"cached_tokens\":0},\"output_tokens\":15,\"output_tokens_details\":{\"reasoning_tokens\":0},\"total_tokens\":168,\"cost\":0.00003195,\"is_byok\":false,\"cost_details\":{\"upstream_inference_cost\":0.00003195,\"upstream_inference_input_cost\":0.00002295,\"upstream_inference_output_cost\":0.000009}}},\"sequence_number\":11}",
             "data: [DONE]"
-          ]
-        }
+          ],
+          "kind": "sse"
+        },
+        "headers": {
+          "access-control-allow-origin": "*",
+          "access-control-expose-headers": "X-Generation-Id,cf-ray",
+          "cache-control": "no-cache",
+          "content-type": "text/event-stream",
+          "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
+          "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
+          "x-content-type-options": "nosniff",
+          "x-generation-id": "gen-1777419476-K7aD6AmpDOiiJa1HLp2Z"
+        },
+        "status": 200,
+        "statusText": "OK"
       }
     },
     {
+      "callIndex": 6,
       "id": "2f4a3f38729b9d5b",
       "matchKey": "POST openrouter.ai/api/v1/responses",
-      "callIndex": 6,
       "recordedAt": "2026-04-28T23:37:58.567Z",
       "request": {
-        "method": "POST",
-        "url": "https://openrouter.ai/api/v1/responses",
-        "headers": {
-          "accept": "text/event-stream",
-          "content-type": "application/json",
-          "x-openrouter-callmodel": "true"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -1529,23 +1483,13 @@
               }
             ]
           }
-        }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/responses"
       },
       "response": {
-        "status": 200,
-        "statusText": "OK",
-        "headers": {
-          "access-control-allow-origin": "*",
-          "access-control-expose-headers": "X-Generation-Id,cf-ray",
-          "cache-control": "no-cache",
-          "content-type": "text/event-stream",
-          "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
-          "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
-          "x-content-type-options": "nosniff",
-          "x-generation-id": "gen-1777419477-uqNTmGBZj6sC9cF4og16"
-        },
         "body": {
-          "kind": "sse",
           "chunks": [
             ": OPENROUTER PROCESSING",
             "data: {\"type\":\"response.created\",\"response\":{\"id\":\"gen-1777419477-uqNTmGBZj6sC9cF4og16\",\"object\":\"response\",\"created_at\":1777419477,\"model\":\"google/gemini-2.5-flash-lite\",\"status\":\"in_progress\",\"completed_at\":null,\"output\":[],\"error\":null,\"incomplete_details\":null,\"tools\":[{\"type\":\"function\",\"name\":\"lookup_weather\",\"description\":\"Look up the weather forecast for a city.\",\"strict\":null,\"parameters\":{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"additionalProperties\":false}}],\"tool_choice\":\"required\",\"parallel_tool_calls\":true,\"max_output_tokens\":24,\"temperature\":0,\"top_p\":1,\"presence_penalty\":0,\"frequency_penalty\":0,\"top_logprobs\":0,\"max_tool_calls\":1,\"metadata\":{},\"background\":false,\"previous_response_id\":null,\"service_tier\":\"auto\",\"truncation\":\"disabled\",\"store\":false,\"instructions\":null,\"text\":{\"format\":{\"type\":\"text\"}},\"reasoning\":null,\"safety_identifier\":null,\"prompt_cache_key\":null,\"usage\":null},\"sequence_number\":0}",
@@ -1561,23 +1505,29 @@
             "data: {\"type\":\"response.output_item.done\",\"output_index\":0,\"item\":{\"id\":\"fc_tmp_22wo0whjf7i\",\"type\":\"function_call\",\"status\":\"completed\",\"call_id\":\"call_hT0SLwttwZACpeKFQyEN9jGj\",\"name\":\"lookup_weather\",\"arguments\":\"{\\\"city\\\":\\\"Vienna\\\"}\"},\"sequence_number\":10}",
             "data: {\"type\":\"response.completed\",\"response\":{\"id\":\"gen-1777419477-uqNTmGBZj6sC9cF4og16\",\"object\":\"response\",\"created_at\":1777419477,\"model\":\"google/gemini-2.5-flash-lite\",\"status\":\"completed\",\"completed_at\":1777419477,\"output\":[{\"id\":\"fc_tmp_22wo0whjf7i\",\"type\":\"function_call\",\"status\":\"completed\",\"call_id\":\"call_hT0SLwttwZACpeKFQyEN9jGj\",\"name\":\"lookup_weather\",\"arguments\":\"{\\\"city\\\":\\\"Vienna\\\"}\"}],\"error\":null,\"incomplete_details\":null,\"tools\":[{\"type\":\"function\",\"name\":\"lookup_weather\",\"description\":\"Look up the weather forecast for a city.\",\"strict\":null,\"parameters\":{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"additionalProperties\":false}}],\"tool_choice\":\"required\",\"parallel_tool_calls\":true,\"max_output_tokens\":24,\"temperature\":0,\"top_p\":1,\"presence_penalty\":0,\"frequency_penalty\":0,\"top_logprobs\":0,\"max_tool_calls\":1,\"metadata\":{},\"background\":false,\"previous_response_id\":null,\"service_tier\":\"auto\",\"truncation\":\"disabled\",\"store\":false,\"instructions\":null,\"text\":{\"format\":{\"type\":\"text\"}},\"reasoning\":null,\"safety_identifier\":null,\"prompt_cache_key\":null,\"usage\":{\"input_tokens\":183,\"input_tokens_details\":{\"cached_tokens\":0},\"output_tokens\":15,\"output_tokens_details\":{\"reasoning_tokens\":0},\"total_tokens\":198,\"cost\":0.00003645,\"is_byok\":false,\"cost_details\":{\"upstream_inference_cost\":0.00003645,\"upstream_inference_input_cost\":0.00002745,\"upstream_inference_output_cost\":0.000009}}},\"sequence_number\":11}",
             "data: [DONE]"
-          ]
-        }
+          ],
+          "kind": "sse"
+        },
+        "headers": {
+          "access-control-allow-origin": "*",
+          "access-control-expose-headers": "X-Generation-Id,cf-ray",
+          "cache-control": "no-cache",
+          "content-type": "text/event-stream",
+          "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
+          "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
+          "x-content-type-options": "nosniff",
+          "x-generation-id": "gen-1777419477-uqNTmGBZj6sC9cF4og16"
+        },
+        "status": 200,
+        "statusText": "OK"
       }
     },
     {
+      "callIndex": 7,
       "id": "cde533e121b6a198",
       "matchKey": "POST openrouter.ai/api/v1/responses",
-      "callIndex": 7,
       "recordedAt": "2026-04-28T23:37:58.567Z",
       "request": {
-        "method": "POST",
-        "url": "https://openrouter.ai/api/v1/responses",
-        "headers": {
-          "accept": "text/event-stream",
-          "content-type": "application/json",
-          "x-openrouter-callmodel": "true"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -1685,23 +1635,13 @@
               }
             ]
           }
-        }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/responses"
       },
       "response": {
-        "status": 200,
-        "statusText": "OK",
-        "headers": {
-          "access-control-allow-origin": "*",
-          "access-control-expose-headers": "X-Generation-Id,cf-ray",
-          "cache-control": "no-cache",
-          "content-type": "text/event-stream",
-          "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
-          "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
-          "x-content-type-options": "nosniff",
-          "x-generation-id": "gen-1777419477-0IWRWVCKtoWkcDhQVheb"
-        },
         "body": {
-          "kind": "sse",
           "chunks": [
             ": OPENROUTER PROCESSING",
             "data: {\"type\":\"response.created\",\"response\":{\"id\":\"gen-1777419477-0IWRWVCKtoWkcDhQVheb\",\"object\":\"response\",\"created_at\":1777419477,\"model\":\"google/gemini-2.5-flash-lite\",\"status\":\"in_progress\",\"completed_at\":null,\"output\":[],\"error\":null,\"incomplete_details\":null,\"tools\":[{\"type\":\"function\",\"name\":\"lookup_weather\",\"description\":\"Look up the weather forecast for a city.\",\"strict\":null,\"parameters\":{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"additionalProperties\":false}}],\"tool_choice\":\"required\",\"parallel_tool_calls\":true,\"max_output_tokens\":24,\"temperature\":0,\"top_p\":1,\"presence_penalty\":0,\"frequency_penalty\":0,\"top_logprobs\":0,\"max_tool_calls\":1,\"metadata\":{},\"background\":false,\"previous_response_id\":null,\"service_tier\":\"auto\",\"truncation\":\"disabled\",\"store\":false,\"instructions\":null,\"text\":{\"format\":{\"type\":\"text\"}},\"reasoning\":null,\"safety_identifier\":null,\"prompt_cache_key\":null,\"usage\":null},\"sequence_number\":0}",
@@ -1717,9 +1657,27 @@
             "data: {\"type\":\"response.output_item.done\",\"output_index\":0,\"item\":{\"id\":\"fc_tmp_ez0fweoduhd\",\"type\":\"function_call\",\"status\":\"completed\",\"call_id\":\"call_ooHbPI2x7R42jOapK9wGzVvq\",\"name\":\"lookup_weather\",\"arguments\":\"{\\\"city\\\":\\\"Vienna\\\"}\"},\"sequence_number\":10}",
             "data: {\"type\":\"response.completed\",\"response\":{\"id\":\"gen-1777419477-0IWRWVCKtoWkcDhQVheb\",\"object\":\"response\",\"created_at\":1777419477,\"model\":\"google/gemini-2.5-flash-lite\",\"status\":\"completed\",\"completed_at\":1777419478,\"output\":[{\"id\":\"fc_tmp_ez0fweoduhd\",\"type\":\"function_call\",\"status\":\"completed\",\"call_id\":\"call_ooHbPI2x7R42jOapK9wGzVvq\",\"name\":\"lookup_weather\",\"arguments\":\"{\\\"city\\\":\\\"Vienna\\\"}\"}],\"error\":null,\"incomplete_details\":null,\"tools\":[{\"type\":\"function\",\"name\":\"lookup_weather\",\"description\":\"Look up the weather forecast for a city.\",\"strict\":null,\"parameters\":{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"additionalProperties\":false}}],\"tool_choice\":\"required\",\"parallel_tool_calls\":true,\"max_output_tokens\":24,\"temperature\":0,\"top_p\":1,\"presence_penalty\":0,\"frequency_penalty\":0,\"top_logprobs\":0,\"max_tool_calls\":1,\"metadata\":{},\"background\":false,\"previous_response_id\":null,\"service_tier\":\"auto\",\"truncation\":\"disabled\",\"store\":false,\"instructions\":null,\"text\":{\"format\":{\"type\":\"text\"}},\"reasoning\":null,\"safety_identifier\":null,\"prompt_cache_key\":null,\"usage\":{\"input_tokens\":213,\"input_tokens_details\":{\"cached_tokens\":0},\"output_tokens\":15,\"output_tokens_details\":{\"reasoning_tokens\":0},\"total_tokens\":228,\"cost\":0.00004095,\"is_byok\":false,\"cost_details\":{\"upstream_inference_cost\":0.00004095,\"upstream_inference_input_cost\":0.00003195,\"upstream_inference_output_cost\":0.000009}}},\"sequence_number\":11}",
             "data: [DONE]"
-          ]
-        }
+          ],
+          "kind": "sse"
+        },
+        "headers": {
+          "access-control-allow-origin": "*",
+          "access-control-expose-headers": "X-Generation-Id,cf-ray",
+          "cache-control": "no-cache",
+          "content-type": "text/event-stream",
+          "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
+          "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
+          "x-content-type-options": "nosniff",
+          "x-generation-id": "gen-1777419477-0IWRWVCKtoWkcDhQVheb"
+        },
+        "status": 200,
+        "statusText": "OK"
       }
     }
-  ]
+  ],
+  "meta": {
+    "createdAt": "2026-04-28T23:37:58.567Z",
+    "seinfeldVersion": "0.0.0"
+  },
+  "version": 1
 }

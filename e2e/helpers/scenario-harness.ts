@@ -49,12 +49,6 @@ export interface ScenarioCassetteConfig {
    * Defaults to `runContext.variantKey ?? "default"`.
    */
   variantKey?: string;
-  /**
-   * Name of the request-body normalizer registered in
-   * `e2e/helpers/cassette/normalizers/index.mjs`. Falls back to a
-   * scenario-name based lookup if omitted.
-   */
-  normalizerName?: string;
 }
 
 export interface ScenarioRunContext {
@@ -271,20 +265,15 @@ interface CassetteWiring {
   cassetteDir: string;
   variantKey: string;
   mockHost: string;
-  normalizerName?: string;
 }
 
 function getCassetteEnv(wiring: CassetteWiring): Record<string, string> {
-  const env: Record<string, string> = {
+  return {
     BRAINTRUST_E2E_CASSETTE_PATH: wiring.cassetteDir,
     BRAINTRUST_E2E_CASSETTE_MODE: process.env[CASSETTE_MODE_ENV] ?? "replay",
     BRAINTRUST_E2E_CASSETTE_VARIANT: wiring.variantKey,
     BRAINTRUST_E2E_MOCK_HOST: wiring.mockHost,
   };
-  if (wiring.normalizerName) {
-    env.BRAINTRUST_E2E_CASSETTE_NORMALIZER = wiring.normalizerName;
-  }
-  return env;
 }
 
 /**
@@ -679,15 +668,18 @@ export async function withScenarioHarness(
       return {};
     }
 
-    const normalizerName = config.normalizerName ?? scenarioName;
+    const isReplayMode = !isRecordingMode && cassetteModeRaw !== "passthrough";
 
     return {
-      ...getProviderKeyPlaceholders(),
+      // Only inject placeholder keys in replay mode. In record mode the
+      // subprocess needs the real provider keys to make live API calls;
+      // injecting a fake key causes a confusing "invalid key" error instead
+      // of the clear "missing key" error the SDK would otherwise produce.
+      ...(isReplayMode ? getProviderKeyPlaceholders() : {}),
       ...getCassetteEnv({
         cassetteDir: path.dirname(cassettePath),
         variantKey,
         mockHost: urlToHostHeader(server.url),
-        normalizerName,
       }),
     };
   };

@@ -3,6 +3,7 @@ import type { Json } from "../../helpers/normalize";
 import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
 import {
   formatJsonFileSnapshot,
+  matchFileSnapshot,
   resolveFileSnapshotPath,
 } from "../../helpers/file-snapshot";
 import { withScenarioHarness } from "../../helpers/scenario-harness";
@@ -197,9 +198,10 @@ export function defineGroqInstrumentationAssertions(options: {
     });
 
     test("matches span snapshot", testConfig, async () => {
-      await expect(
+      await matchFileSnapshot(
         formatJsonFileSnapshot(buildSpanSummary(events)),
-      ).toMatchFileSnapshot(spanSnapshotPath);
+        spanSnapshotPath,
+      );
     });
   });
 }

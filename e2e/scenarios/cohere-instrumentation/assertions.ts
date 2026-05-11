@@ -3,6 +3,7 @@ import type { Json } from "../../helpers/normalize";
 import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
 import {
   formatJsonFileSnapshot,
+  matchFileSnapshot,
   resolveFileSnapshotPath,
 } from "../../helpers/file-snapshot";
 import { withScenarioHarness } from "../../helpers/scenario-harness";
@@ -329,7 +330,7 @@ export function defineCohereInstrumentationAssertions(options: {
         context.skip();
       }
 
-      await expect(
+      await matchFileSnapshot(
         formatJsonFileSnapshot(
           buildSpanSummary(
             events,
@@ -337,7 +338,8 @@ export function defineCohereInstrumentationAssertions(options: {
             options.useV2Namespace ?? false,
           ),
         ),
-      ).toMatchFileSnapshot(spanSnapshotPath);
+        spanSnapshotPath,
+      );
     });
   });
 }

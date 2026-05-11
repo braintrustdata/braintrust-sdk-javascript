@@ -1,21 +1,11 @@
 {
-  "version": 1,
-  "meta": {
-    "createdAt": "2026-04-27T22:53:01.327Z",
-    "seinfeldVersion": "0.0.0"
-  },
   "entries": [
     {
+      "callIndex": 0,
       "id": "7233dc0e813c46f6",
       "matchKey": "POST api.openai.com/v1/responses",
-      "callIndex": 0,
       "recordedAt": "2026-04-27T22:53:01.327Z",
       "request": {
-        "method": "POST",
-        "url": "https://api.openai.com/v1/responses",
-        "headers": {
-          "content-type": "application/json"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -34,18 +24,12 @@
             "model": "gpt-4o-mini-2024-07-18",
             "temperature": 0
           }
-        }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.openai.com/v1/responses"
       },
       "response": {
-        "status": 200,
-        "statusText": "OK",
-        "headers": {
-          "alt-svc": "h3=\":443\"; ma=86400",
-          "content-type": "application/json",
-          "openai-organization": "braintrust-data",
-          "openai-version": "2020-10-01",
-          "x-content-type-options": "nosniff"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -120,20 +104,24 @@
             },
             "user": null
           }
-        }
+        },
+        "headers": {
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "content-type": "application/json",
+          "openai-organization": "braintrust-data",
+          "openai-version": "2020-10-01",
+          "x-content-type-options": "nosniff"
+        },
+        "status": 200,
+        "statusText": "OK"
       }
     },
     {
+      "callIndex": 1,
       "id": "b2c3d4e5f6071891",
       "matchKey": "POST api.openai.com/v1/responses",
-      "callIndex": 1,
       "recordedAt": "2026-04-27T22:53:01.327Z",
       "request": {
-        "method": "POST",
-        "url": "https://api.openai.com/v1/responses",
-        "headers": {
-          "content-type": "application/json"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -153,34 +141,28 @@
             "temperature": 0,
             "text": {
               "format": {
-                "type": "json_schema",
-                "strict": true,
                 "name": "response",
                 "schema": {
-                  "type": "object",
+                  "additionalProperties": false,
                   "properties": {
                     "answer": {
                       "type": "string"
                     }
                   },
                   "required": ["answer"],
-                  "additionalProperties": false
-                }
+                  "type": "object"
+                },
+                "strict": true,
+                "type": "json_schema"
               }
             }
           }
-        }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.openai.com/v1/responses"
       },
       "response": {
-        "status": 200,
-        "statusText": "OK",
-        "headers": {
-          "alt-svc": "h3=\":443\"; ma=86400",
-          "content-type": "application/json",
-          "openai-organization": "braintrust-data",
-          "openai-version": "2020-10-01",
-          "x-content-type-options": "nosniff"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -233,19 +215,19 @@
             "temperature": 0,
             "text": {
               "format": {
-                "type": "json_schema",
-                "strict": true,
                 "name": "response",
                 "schema": {
-                  "type": "object",
+                  "additionalProperties": false,
                   "properties": {
                     "answer": {
                       "type": "string"
                     }
                   },
                   "required": ["answer"],
-                  "additionalProperties": false
-                }
+                  "type": "object"
+                },
+                "strict": true,
+                "type": "json_schema"
               },
               "verbosity": "medium"
             },
@@ -267,20 +249,24 @@
             },
             "user": null
           }
-        }
+        },
+        "headers": {
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "content-type": "application/json",
+          "openai-organization": "braintrust-data",
+          "openai-version": "2020-10-01",
+          "x-content-type-options": "nosniff"
+        },
+        "status": 200,
+        "statusText": "OK"
       }
     },
     {
+      "callIndex": 2,
       "id": "8317e7e21b94baab",
       "matchKey": "POST api.openai.com/v1/responses",
-      "callIndex": 2,
       "recordedAt": "2026-04-27T22:53:01.327Z",
       "request": {
-        "method": "POST",
-        "url": "https://api.openai.com/v1/responses",
-        "headers": {
-          "content-type": "application/json"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -300,20 +286,13 @@
             "stream": true,
             "temperature": 0
           }
-        }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.openai.com/v1/responses"
       },
       "response": {
-        "status": 200,
-        "statusText": "OK",
-        "headers": {
-          "alt-svc": "h3=\":443\"; ma=86400",
-          "content-type": "text/event-stream; charset=utf-8",
-          "openai-organization": "braintrust-data",
-          "openai-version": "2020-10-01",
-          "x-content-type-options": "nosniff"
-        },
         "body": {
-          "kind": "sse",
           "chunks": [
             "event: response.created\ndata: {\"type\":\"response.created\",\"response\":{\"id\":\"resp_0e5817a3911feccf0069efe8c58914819680c0100e1c69757d\",\"object\":\"response\",\"created_at\":1777330373,\"status\":\"in_progress\",\"background\":false,\"completed_at\":null,\"error\":null,\"frequency_penalty\":0.0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":32,\"max_tool_calls\":null,\"model\":\"gpt-4o-mini-2024-07-18\",\"moderation\":null,\"output\":[],\"parallel_tool_calls\":true,\"presence_penalty\":0.0,\"previous_response_id\":null,\"prompt_cache_key\":null,\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"effort\":null,\"summary\":null},\"safety_identifier\":null,\"service_tier\":\"auto\",\"store\":true,\"temperature\":0.0,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tools\":[],\"top_logprobs\":0,\"top_p\":1.0,\"truncation\":\"disabled\",\"usage\":null,\"user\":null,\"metadata\":{}},\"sequence_number\":0}",
             "event: response.in_progress\ndata: {\"type\":\"response.in_progress\",\"response\":{\"id\":\"resp_0e5817a3911feccf0069efe8c58914819680c0100e1c69757d\",\"object\":\"response\",\"created_at\":1777330373,\"status\":\"in_progress\",\"background\":false,\"completed_at\":null,\"error\":null,\"frequency_penalty\":0.0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":32,\"max_tool_calls\":null,\"model\":\"gpt-4o-mini-2024-07-18\",\"moderation\":null,\"output\":[],\"parallel_tool_calls\":true,\"presence_penalty\":0.0,\"previous_response_id\":null,\"prompt_cache_key\":null,\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"effort\":null,\"summary\":null},\"safety_identifier\":null,\"service_tier\":\"auto\",\"store\":true,\"temperature\":0.0,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tools\":[],\"top_logprobs\":0,\"top_p\":1.0,\"truncation\":\"disabled\",\"usage\":null,\"user\":null,\"metadata\":{}},\"sequence_number\":1}",
@@ -329,21 +308,26 @@
             "event: response.content_part.done\ndata: {\"type\":\"response.content_part.done\",\"content_index\":0,\"item_id\":\"msg_0e5817a3911feccf0069efe8c656988196a8fe72667e8254a7\",\"output_index\":0,\"part\":{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"One, two, three.\"},\"sequence_number\":11}",
             "event: response.output_item.done\ndata: {\"type\":\"response.output_item.done\",\"item\":{\"id\":\"msg_0e5817a3911feccf0069efe8c656988196a8fe72667e8254a7\",\"type\":\"message\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"One, two, three.\"}],\"role\":\"assistant\"},\"output_index\":0,\"sequence_number\":12}",
             "event: response.completed\ndata: {\"type\":\"response.completed\",\"response\":{\"id\":\"resp_0e5817a3911feccf0069efe8c58914819680c0100e1c69757d\",\"object\":\"response\",\"created_at\":1777330373,\"status\":\"completed\",\"background\":false,\"completed_at\":1777330374,\"error\":null,\"frequency_penalty\":0.0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":32,\"max_tool_calls\":null,\"model\":\"gpt-4o-mini-2024-07-18\",\"moderation\":null,\"output\":[{\"id\":\"msg_0e5817a3911feccf0069efe8c656988196a8fe72667e8254a7\",\"type\":\"message\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"One, two, three.\"}],\"role\":\"assistant\"}],\"parallel_tool_calls\":true,\"presence_penalty\":0.0,\"previous_response_id\":null,\"prompt_cache_key\":null,\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"effort\":null,\"summary\":null},\"safety_identifier\":null,\"service_tier\":\"default\",\"store\":true,\"temperature\":0.0,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tools\":[],\"top_logprobs\":0,\"top_p\":1.0,\"truncation\":\"disabled\",\"usage\":{\"input_tokens\":22,\"input_tokens_details\":{\"cached_tokens\":0},\"output_tokens\":7,\"output_tokens_details\":{\"reasoning_tokens\":0},\"total_tokens\":29},\"user\":null,\"metadata\":{}},\"sequence_number\":13}"
-          ]
-        }
+          ],
+          "kind": "sse"
+        },
+        "headers": {
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "content-type": "text/event-stream; charset=utf-8",
+          "openai-organization": "braintrust-data",
+          "openai-version": "2020-10-01",
+          "x-content-type-options": "nosniff"
+        },
+        "status": 200,
+        "statusText": "OK"
       }
     },
     {
+      "callIndex": 3,
       "id": "521ede462fd0fdf0",
       "matchKey": "POST api.openai.com/v1/responses",
-      "callIndex": 3,
       "recordedAt": "2026-04-27T22:53:01.327Z",
       "request": {
-        "method": "POST",
-        "url": "https://api.openai.com/v1/responses",
-        "headers": {
-          "content-type": "application/json"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -386,18 +370,12 @@
               }
             ]
           }
-        }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.openai.com/v1/responses"
       },
       "response": {
-        "status": 200,
-        "statusText": "OK",
-        "headers": {
-          "alt-svc": "h3=\":443\"; ma=86400",
-          "content-type": "application/json",
-          "openai-organization": "braintrust-data",
-          "openai-version": "2020-10-01",
-          "x-content-type-options": "nosniff"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -484,20 +462,24 @@
             },
             "user": null
           }
-        }
+        },
+        "headers": {
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "content-type": "application/json",
+          "openai-organization": "braintrust-data",
+          "openai-version": "2020-10-01",
+          "x-content-type-options": "nosniff"
+        },
+        "status": 200,
+        "statusText": "OK"
       }
     },
     {
+      "callIndex": 4,
       "id": "2679b4829a582714",
       "matchKey": "POST api.openai.com/v1/responses",
-      "callIndex": 4,
       "recordedAt": "2026-04-27T22:53:01.327Z",
       "request": {
-        "method": "POST",
-        "url": "https://api.openai.com/v1/responses",
-        "headers": {
-          "content-type": "application/json"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -548,18 +530,12 @@
               }
             ]
           }
-        }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.openai.com/v1/responses"
       },
       "response": {
-        "status": 200,
-        "statusText": "OK",
-        "headers": {
-          "alt-svc": "h3=\":443\"; ma=86400",
-          "content-type": "application/json",
-          "openai-organization": "braintrust-data",
-          "openai-version": "2020-10-01",
-          "x-content-type-options": "nosniff"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -646,20 +622,24 @@
             },
             "user": null
           }
-        }
+        },
+        "headers": {
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "content-type": "application/json",
+          "openai-organization": "braintrust-data",
+          "openai-version": "2020-10-01",
+          "x-content-type-options": "nosniff"
+        },
+        "status": 200,
+        "statusText": "OK"
       }
     },
     {
+      "callIndex": 5,
       "id": "d3dcb10944ef4066",
       "matchKey": "POST api.openai.com/v1/responses",
-      "callIndex": 5,
       "recordedAt": "2026-04-27T22:53:01.327Z",
       "request": {
-        "method": "POST",
-        "url": "https://api.openai.com/v1/responses",
-        "headers": {
-          "content-type": "application/json"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -718,18 +698,12 @@
               }
             ]
           }
-        }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.openai.com/v1/responses"
       },
       "response": {
-        "status": 200,
-        "statusText": "OK",
-        "headers": {
-          "alt-svc": "h3=\":443\"; ma=86400",
-          "content-type": "application/json",
-          "openai-organization": "braintrust-data",
-          "openai-version": "2020-10-01",
-          "x-content-type-options": "nosniff"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -816,20 +790,24 @@
             },
             "user": null
           }
-        }
+        },
+        "headers": {
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "content-type": "application/json",
+          "openai-organization": "braintrust-data",
+          "openai-version": "2020-10-01",
+          "x-content-type-options": "nosniff"
+        },
+        "status": 200,
+        "statusText": "OK"
       }
     },
     {
+      "callIndex": 6,
       "id": "64b3ec51c84fc886",
       "matchKey": "POST api.openai.com/v1/responses",
-      "callIndex": 6,
       "recordedAt": "2026-04-27T22:53:01.327Z",
       "request": {
-        "method": "POST",
-        "url": "https://api.openai.com/v1/responses",
-        "headers": {
-          "content-type": "application/json"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -896,18 +874,12 @@
               }
             ]
           }
-        }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.openai.com/v1/responses"
       },
       "response": {
-        "status": 200,
-        "statusText": "OK",
-        "headers": {
-          "alt-svc": "h3=\":443\"; ma=86400",
-          "content-type": "application/json",
-          "openai-organization": "braintrust-data",
-          "openai-version": "2020-10-01",
-          "x-content-type-options": "nosniff"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -994,20 +966,24 @@
             },
             "user": null
           }
-        }
+        },
+        "headers": {
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "content-type": "application/json",
+          "openai-organization": "braintrust-data",
+          "openai-version": "2020-10-01",
+          "x-content-type-options": "nosniff"
+        },
+        "status": 200,
+        "statusText": "OK"
       }
     },
     {
+      "callIndex": 7,
       "id": "b93791299b4c859a",
       "matchKey": "POST api.openai.com/v1/responses",
-      "callIndex": 7,
       "recordedAt": "2026-04-27T22:52:52.069Z",
       "request": {
-        "method": "POST",
-        "url": "https://api.openai.com/v1/responses",
-        "headers": {
-          "content-type": "application/json"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -1026,16 +1002,12 @@
             "model": "gpt-4o-mini-2024-07-18",
             "temperature": 0
           }
-        }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.openai.com/v1/responses"
       },
       "response": {
-        "status": 200,
-        "statusText": "OK",
-        "headers": {
-          "content-type": "application/json",
-          "openai-organization": "braintrust-data",
-          "openai-version": "2020-10-01"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -1110,20 +1082,22 @@
             },
             "user": null
           }
-        }
+        },
+        "headers": {
+          "content-type": "application/json",
+          "openai-organization": "braintrust-data",
+          "openai-version": "2020-10-01"
+        },
+        "status": 200,
+        "statusText": "OK"
       }
     },
     {
+      "callIndex": 8,
       "id": "70d1463b2e7d9202",
       "matchKey": "POST api.openai.com/v1/responses",
-      "callIndex": 8,
       "recordedAt": "2026-04-27T22:52:52.069Z",
       "request": {
-        "method": "POST",
-        "url": "https://api.openai.com/v1/responses",
-        "headers": {
-          "content-type": "application/json"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -1142,16 +1116,12 @@
             "model": "gpt-4o-mini-2024-07-18",
             "temperature": 0
           }
-        }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.openai.com/v1/responses"
       },
       "response": {
-        "status": 200,
-        "statusText": "OK",
-        "headers": {
-          "content-type": "application/json",
-          "openai-organization": "braintrust-data",
-          "openai-version": "2020-10-01"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -1226,20 +1196,22 @@
             },
             "user": null
           }
-        }
+        },
+        "headers": {
+          "content-type": "application/json",
+          "openai-organization": "braintrust-data",
+          "openai-version": "2020-10-01"
+        },
+        "status": 200,
+        "statusText": "OK"
       }
     },
     {
+      "callIndex": 9,
       "id": "16e8b935098a24b8",
       "matchKey": "POST api.openai.com/v1/responses",
-      "callIndex": 9,
       "recordedAt": "2026-04-27T22:52:52.069Z",
       "request": {
-        "method": "POST",
-        "url": "https://api.openai.com/v1/responses",
-        "headers": {
-          "content-type": "application/json"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -1258,16 +1230,12 @@
             "model": "gpt-4o-mini-2024-07-18",
             "temperature": 0
           }
-        }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.openai.com/v1/responses"
       },
       "response": {
-        "status": 200,
-        "statusText": "OK",
-        "headers": {
-          "content-type": "application/json",
-          "openai-organization": "braintrust-data",
-          "openai-version": "2020-10-01"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -1342,20 +1310,22 @@
             },
             "user": null
           }
-        }
+        },
+        "headers": {
+          "content-type": "application/json",
+          "openai-organization": "braintrust-data",
+          "openai-version": "2020-10-01"
+        },
+        "status": 200,
+        "statusText": "OK"
       }
     },
     {
+      "callIndex": 10,
       "id": "429f6eda6e37bf2f",
       "matchKey": "POST api.openai.com/v1/responses",
-      "callIndex": 10,
       "recordedAt": "2026-04-27T22:52:52.069Z",
       "request": {
-        "method": "POST",
-        "url": "https://api.openai.com/v1/responses",
-        "headers": {
-          "content-type": "application/json"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -1374,16 +1344,12 @@
             "model": "gpt-4o-mini-2024-07-18",
             "temperature": 0
           }
-        }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.openai.com/v1/responses"
       },
       "response": {
-        "status": 200,
-        "statusText": "OK",
-        "headers": {
-          "content-type": "application/json",
-          "openai-organization": "braintrust-data",
-          "openai-version": "2020-10-01"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -1458,20 +1424,22 @@
             },
             "user": null
           }
-        }
+        },
+        "headers": {
+          "content-type": "application/json",
+          "openai-organization": "braintrust-data",
+          "openai-version": "2020-10-01"
+        },
+        "status": 200,
+        "statusText": "OK"
       }
     },
     {
+      "callIndex": 11,
       "id": "f9288dd736a41bd0",
       "matchKey": "POST api.openai.com/v1/responses",
-      "callIndex": 11,
       "recordedAt": "2026-04-27T22:52:52.069Z",
       "request": {
-        "method": "POST",
-        "url": "https://api.openai.com/v1/responses",
-        "headers": {
-          "content-type": "application/json"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -1490,16 +1458,12 @@
             "model": "gpt-4o-mini-2024-07-18",
             "temperature": 0
           }
-        }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.openai.com/v1/responses"
       },
       "response": {
-        "status": 200,
-        "statusText": "OK",
-        "headers": {
-          "content-type": "application/json",
-          "openai-organization": "braintrust-data",
-          "openai-version": "2020-10-01"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -1552,19 +1516,19 @@
             "temperature": 0,
             "text": {
               "format": {
-                "type": "json_schema",
-                "strict": false,
                 "name": "response",
                 "schema": {
-                  "type": "object",
+                  "additionalProperties": false,
                   "properties": {
                     "city": {
                       "type": "string"
                     }
                   },
                   "required": ["city"],
-                  "additionalProperties": false
-                }
+                  "type": "object"
+                },
+                "strict": false,
+                "type": "json_schema"
               },
               "verbosity": "medium"
             },
@@ -1586,20 +1550,22 @@
             },
             "user": null
           }
-        }
+        },
+        "headers": {
+          "content-type": "application/json",
+          "openai-organization": "braintrust-data",
+          "openai-version": "2020-10-01"
+        },
+        "status": 200,
+        "statusText": "OK"
       }
     },
     {
+      "callIndex": 12,
       "id": "146ecbf0486b1873",
       "matchKey": "POST api.openai.com/v1/responses",
-      "callIndex": 12,
       "recordedAt": "2026-04-27T22:52:52.069Z",
       "request": {
-        "method": "POST",
-        "url": "https://api.openai.com/v1/responses",
-        "headers": {
-          "content-type": "application/json"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -1618,18 +1584,13 @@
             "model": "gpt-4o-mini-2024-07-18",
             "temperature": 0
           }
-        }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.openai.com/v1/responses"
       },
       "response": {
-        "status": 200,
-        "statusText": "OK",
-        "headers": {
-          "content-type": "text/event-stream; charset=utf-8",
-          "openai-organization": "braintrust-data",
-          "openai-version": "2020-10-01"
-        },
         "body": {
-          "kind": "sse",
           "chunks": [
             "event: response.created\ndata: {\"id\": \"resp_810dd773515d75fb2692a9fed45e0206\", \"object\": \"response\", \"created_at\": 1777330402, \"status\": \"in_progress\", \"background\": false, \"completed_at\": null, \"error\": null, \"frequency_penalty\": 0.0, \"incomplete_details\": null, \"instructions\": null, \"max_output_tokens\": 32, \"max_tool_calls\": null, \"model\": \"gpt-4o-mini-2024-07-18\", \"moderation\": null, \"output\": [], \"parallel_tool_calls\": true, \"presence_penalty\": 0.0, \"previous_response_id\": null, \"prompt_cache_key\": null, \"prompt_cache_retention\": \"in_memory\", \"reasoning\": {\"effort\": null, \"summary\": null}, \"safety_identifier\": null, \"service_tier\": \"auto\", \"store\": true, \"temperature\": 0.0, \"text\": {\"format\": {\"type\": \"json_schema\", \"strict\": false, \"name\": \"response\", \"schema\": {\"type\": \"object\", \"properties\": {\"city\": {\"type\": \"string\"}}, \"required\": [\"city\"], \"additionalProperties\": false}}, \"verbosity\": \"medium\"}, \"tool_choice\": \"auto\", \"tools\": [], \"top_logprobs\": 0, \"top_p\": 1.0, \"truncation\": \"disabled\", \"usage\": null, \"user\": null, \"metadata\": {}, \"sequence_number\": 0, \"type\": \"response.created\", \"response\": {\"id\": \"resp_810dd773515d75fb2692a9fed45e0206\", \"object\": \"response\", \"created_at\": 1777330402, \"status\": \"in_progress\", \"background\": false, \"completed_at\": null, \"error\": null, \"frequency_penalty\": 0.0, \"incomplete_details\": null, \"instructions\": null, \"max_output_tokens\": 32, \"max_tool_calls\": null, \"model\": \"gpt-4o-mini-2024-07-18\", \"moderation\": null, \"output\": [], \"parallel_tool_calls\": true, \"presence_penalty\": 0.0, \"previous_response_id\": null, \"prompt_cache_key\": null, \"prompt_cache_retention\": \"in_memory\", \"reasoning\": {\"effort\": null, \"summary\": null}, \"safety_identifier\": null, \"service_tier\": \"auto\", \"store\": true, \"temperature\": 0.0, \"text\": {\"format\": {\"type\": \"json_schema\", \"strict\": false, \"name\": \"response\", \"schema\": {\"type\": \"object\", \"properties\": {\"city\": {\"type\": \"string\"}}, \"required\": [\"city\"], \"additionalProperties\": false}}, \"verbosity\": \"medium\"}, \"tool_choice\": \"auto\", \"tools\": [], \"top_logprobs\": 0, \"top_p\": 1.0, \"truncation\": \"disabled\", \"usage\": null, \"user\": null, \"metadata\": {}, \"sequence_number\": 0}}",
             "event: response.in_progress\ndata: {\"type\": \"response.in_progress\", \"sequence_number\": 1, \"response\": {\"id\": \"resp_810dd773515d75fb2692a9fed45e0206\", \"object\": \"response\", \"created_at\": 1777330402, \"status\": \"in_progress\", \"background\": false, \"completed_at\": null, \"error\": null, \"frequency_penalty\": 0.0, \"incomplete_details\": null, \"instructions\": null, \"max_output_tokens\": 32, \"max_tool_calls\": null, \"model\": \"gpt-4o-mini-2024-07-18\", \"moderation\": null, \"output\": [], \"parallel_tool_calls\": true, \"presence_penalty\": 0.0, \"previous_response_id\": null, \"prompt_cache_key\": null, \"prompt_cache_retention\": \"in_memory\", \"reasoning\": {\"effort\": null, \"summary\": null}, \"safety_identifier\": null, \"service_tier\": \"auto\", \"store\": true, \"temperature\": 0.0, \"text\": {\"format\": {\"type\": \"json_schema\", \"strict\": false, \"name\": \"response\", \"schema\": {\"type\": \"object\", \"properties\": {\"city\": {\"type\": \"string\"}}, \"required\": [\"city\"], \"additionalProperties\": false}}, \"verbosity\": \"medium\"}, \"tool_choice\": \"auto\", \"tools\": [], \"top_logprobs\": 0, \"top_p\": 1.0, \"truncation\": \"disabled\", \"usage\": null, \"user\": null, \"metadata\": {}, \"sequence_number\": 1}}",
@@ -1643,21 +1604,24 @@
             "event: response.content_part.done\ndata: {\"type\": \"response.content_part.done\", \"content_index\": 0, \"item_id\": \"msg_146c652b1629452ebdd9bca9532b8cec\", \"output_index\": 0, \"part\": {\"type\": \"output_text\", \"annotations\": [], \"logprobs\": [], \"text\": \"{\\\"city\\\":\\\"Paris\\\"}\"}, \"sequence_number\": 9}",
             "event: response.output_item.done\ndata: {\"type\": \"response.output_item.done\", \"item\": {\"id\": \"msg_146c652b1629452ebdd9bca9532b8cec\", \"type\": \"message\", \"status\": \"completed\", \"content\": [{\"type\": \"output_text\", \"annotations\": [], \"logprobs\": [], \"text\": \"{\\\"city\\\":\\\"Paris\\\"}\"}], \"role\": \"assistant\"}, \"output_index\": 0, \"sequence_number\": 10}",
             "event: response.completed\ndata: {\"type\": \"response.completed\", \"response\": {\"id\": \"resp_810dd773515d75fb2692a9fed45e0206\", \"object\": \"response\", \"created_at\": 1777330402, \"status\": \"completed\", \"background\": false, \"completed_at\": 1777330403, \"error\": null, \"frequency_penalty\": 0.0, \"incomplete_details\": null, \"instructions\": null, \"max_output_tokens\": 32, \"max_tool_calls\": null, \"model\": \"gpt-4o-mini-2024-07-18\", \"moderation\": null, \"output\": [{\"id\": \"msg_146c652b1629452ebdd9bca9532b8cec\", \"type\": \"message\", \"status\": \"completed\", \"content\": [{\"type\": \"output_text\", \"annotations\": [], \"logprobs\": [], \"text\": \"{\\\"city\\\":\\\"Paris\\\"}\"}], \"role\": \"assistant\"}], \"parallel_tool_calls\": true, \"presence_penalty\": 0.0, \"previous_response_id\": null, \"prompt_cache_key\": null, \"prompt_cache_retention\": \"in_memory\", \"reasoning\": {\"effort\": null, \"summary\": null}, \"safety_identifier\": null, \"service_tier\": \"default\", \"store\": true, \"temperature\": 0.0, \"text\": {\"format\": {\"type\": \"json_schema\", \"strict\": false, \"name\": \"response\", \"schema\": {\"type\": \"object\", \"properties\": {\"city\": {\"type\": \"string\"}}, \"required\": [\"city\"], \"additionalProperties\": false}}, \"verbosity\": \"medium\"}, \"tool_choice\": \"auto\", \"tools\": [], \"top_logprobs\": 0, \"top_p\": 1.0, \"truncation\": \"disabled\", \"usage\": {\"input_tokens\": 20, \"input_tokens_details\": {\"cached_tokens\": 0}, \"output_tokens\": 1, \"output_tokens_details\": {\"reasoning_tokens\": 0}, \"total_tokens\": 21}, \"user\": null, \"metadata\": {}}, \"sequence_number\": 11}"
-          ]
-        }
+          ],
+          "kind": "sse"
+        },
+        "headers": {
+          "content-type": "text/event-stream; charset=utf-8",
+          "openai-organization": "braintrust-data",
+          "openai-version": "2020-10-01"
+        },
+        "status": 200,
+        "statusText": "OK"
       }
     },
     {
+      "callIndex": 13,
       "id": "0e87c8187fe1cd96",
       "matchKey": "POST api.openai.com/v1/responses",
-      "callIndex": 13,
       "recordedAt": "2026-04-27T22:52:52.069Z",
       "request": {
-        "method": "POST",
-        "url": "https://api.openai.com/v1/responses",
-        "headers": {
-          "content-type": "application/json"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -1676,16 +1640,12 @@
             "model": "gpt-4o-mini-2024-07-18",
             "temperature": 0
           }
-        }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.openai.com/v1/responses"
       },
       "response": {
-        "status": 200,
-        "statusText": "OK",
-        "headers": {
-          "content-type": "application/json",
-          "openai-organization": "braintrust-data",
-          "openai-version": "2020-10-01"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -1760,20 +1720,22 @@
             },
             "user": null
           }
-        }
+        },
+        "headers": {
+          "content-type": "application/json",
+          "openai-organization": "braintrust-data",
+          "openai-version": "2020-10-01"
+        },
+        "status": 200,
+        "statusText": "OK"
       }
     },
     {
+      "callIndex": 14,
       "id": "10c4cfc1402794dc",
       "matchKey": "POST api.openai.com/v1/responses",
-      "callIndex": 14,
       "recordedAt": "2026-04-27T22:52:52.069Z",
       "request": {
-        "method": "POST",
-        "url": "https://api.openai.com/v1/responses",
-        "headers": {
-          "content-type": "application/json"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -1792,18 +1754,13 @@
             "model": "gpt-4o-mini-2024-07-18",
             "temperature": 0
           }
-        }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.openai.com/v1/responses"
       },
       "response": {
-        "status": 200,
-        "statusText": "OK",
-        "headers": {
-          "content-type": "text/event-stream; charset=utf-8",
-          "openai-organization": "braintrust-data",
-          "openai-version": "2020-10-01"
-        },
         "body": {
-          "kind": "sse",
           "chunks": [
             "event: response.created\ndata: {\"id\": \"resp_9059463ef40d1fa09b5b5033a6f06af2\", \"object\": \"response\", \"created_at\": 1777330404, \"status\": \"in_progress\", \"background\": false, \"completed_at\": null, \"error\": null, \"frequency_penalty\": 0.0, \"incomplete_details\": null, \"instructions\": null, \"max_output_tokens\": 32, \"max_tool_calls\": null, \"model\": \"gpt-4o-mini-2024-07-18\", \"moderation\": null, \"output\": [], \"parallel_tool_calls\": true, \"presence_penalty\": 0.0, \"previous_response_id\": null, \"prompt_cache_key\": null, \"prompt_cache_retention\": \"in_memory\", \"reasoning\": {\"effort\": null, \"summary\": null}, \"safety_identifier\": null, \"service_tier\": \"auto\", \"store\": true, \"temperature\": 0.0, \"text\": {\"format\": {\"type\": \"text\"}, \"verbosity\": \"medium\"}, \"tool_choice\": \"auto\", \"tools\": [], \"top_logprobs\": 0, \"top_p\": 1.0, \"truncation\": \"disabled\", \"usage\": null, \"user\": null, \"metadata\": {}, \"sequence_number\": 0, \"type\": \"response.created\", \"response\": {\"id\": \"resp_9059463ef40d1fa09b5b5033a6f06af2\", \"object\": \"response\", \"created_at\": 1777330404, \"status\": \"in_progress\", \"background\": false, \"completed_at\": null, \"error\": null, \"frequency_penalty\": 0.0, \"incomplete_details\": null, \"instructions\": null, \"max_output_tokens\": 32, \"max_tool_calls\": null, \"model\": \"gpt-4o-mini-2024-07-18\", \"moderation\": null, \"output\": [], \"parallel_tool_calls\": true, \"presence_penalty\": 0.0, \"previous_response_id\": null, \"prompt_cache_key\": null, \"prompt_cache_retention\": \"in_memory\", \"reasoning\": {\"effort\": null, \"summary\": null}, \"safety_identifier\": null, \"service_tier\": \"auto\", \"store\": true, \"temperature\": 0.0, \"text\": {\"format\": {\"type\": \"text\"}, \"verbosity\": \"medium\"}, \"tool_choice\": \"auto\", \"tools\": [], \"top_logprobs\": 0, \"top_p\": 1.0, \"truncation\": \"disabled\", \"usage\": null, \"user\": null, \"metadata\": {}, \"sequence_number\": 0}}",
             "event: response.in_progress\ndata: {\"type\": \"response.in_progress\", \"sequence_number\": 1, \"response\": {\"id\": \"resp_9059463ef40d1fa09b5b5033a6f06af2\", \"object\": \"response\", \"created_at\": 1777330404, \"status\": \"in_progress\", \"background\": false, \"completed_at\": null, \"error\": null, \"frequency_penalty\": 0.0, \"incomplete_details\": null, \"instructions\": null, \"max_output_tokens\": 32, \"max_tool_calls\": null, \"model\": \"gpt-4o-mini-2024-07-18\", \"moderation\": null, \"output\": [], \"parallel_tool_calls\": true, \"presence_penalty\": 0.0, \"previous_response_id\": null, \"prompt_cache_key\": null, \"prompt_cache_retention\": \"in_memory\", \"reasoning\": {\"effort\": null, \"summary\": null}, \"safety_identifier\": null, \"service_tier\": \"auto\", \"store\": true, \"temperature\": 0.0, \"text\": {\"format\": {\"type\": \"text\"}, \"verbosity\": \"medium\"}, \"tool_choice\": \"auto\", \"tools\": [], \"top_logprobs\": 0, \"top_p\": 1.0, \"truncation\": \"disabled\", \"usage\": null, \"user\": null, \"metadata\": {}, \"sequence_number\": 1}}",
@@ -1816,21 +1773,24 @@
             "event: response.content_part.done\ndata: {\"type\": \"response.content_part.done\", \"content_index\": 0, \"item_id\": \"msg_9074cbeba8658e9da876d06205edad52\", \"output_index\": 0, \"part\": {\"type\": \"output_text\", \"annotations\": [], \"logprobs\": [], \"text\": \"STREAM HELLO\"}, \"sequence_number\": 8}",
             "event: response.output_item.done\ndata: {\"type\": \"response.output_item.done\", \"item\": {\"id\": \"msg_9074cbeba8658e9da876d06205edad52\", \"type\": \"message\", \"status\": \"completed\", \"content\": [{\"type\": \"output_text\", \"annotations\": [], \"logprobs\": [], \"text\": \"STREAM HELLO\"}], \"role\": \"assistant\"}, \"output_index\": 0, \"sequence_number\": 9}",
             "event: response.completed\ndata: {\"type\": \"response.completed\", \"response\": {\"id\": \"resp_9059463ef40d1fa09b5b5033a6f06af2\", \"object\": \"response\", \"created_at\": 1777330404, \"status\": \"completed\", \"background\": false, \"completed_at\": 1777330405, \"error\": null, \"frequency_penalty\": 0.0, \"incomplete_details\": null, \"instructions\": null, \"max_output_tokens\": 32, \"max_tool_calls\": null, \"model\": \"gpt-4o-mini-2024-07-18\", \"moderation\": null, \"output\": [{\"id\": \"msg_9074cbeba8658e9da876d06205edad52\", \"type\": \"message\", \"status\": \"completed\", \"content\": [{\"type\": \"output_text\", \"annotations\": [], \"logprobs\": [], \"text\": \"STREAM HELLO\"}], \"role\": \"assistant\"}], \"parallel_tool_calls\": true, \"presence_penalty\": 0.0, \"previous_response_id\": null, \"prompt_cache_key\": null, \"prompt_cache_retention\": \"in_memory\", \"reasoning\": {\"effort\": null, \"summary\": null}, \"safety_identifier\": null, \"service_tier\": \"default\", \"store\": true, \"temperature\": 0.0, \"text\": {\"format\": {\"type\": \"text\"}, \"verbosity\": \"medium\"}, \"tool_choice\": \"auto\", \"tools\": [], \"top_logprobs\": 0, \"top_p\": 1.0, \"truncation\": \"disabled\", \"usage\": {\"input_tokens\": 20, \"input_tokens_details\": {\"cached_tokens\": 0}, \"output_tokens\": 2, \"output_tokens_details\": {\"reasoning_tokens\": 0}, \"total_tokens\": 22}, \"user\": null, \"metadata\": {}}, \"sequence_number\": 10}"
-          ]
-        }
+          ],
+          "kind": "sse"
+        },
+        "headers": {
+          "content-type": "text/event-stream; charset=utf-8",
+          "openai-organization": "braintrust-data",
+          "openai-version": "2020-10-01"
+        },
+        "status": 200,
+        "statusText": "OK"
       }
     },
     {
+      "callIndex": 15,
       "id": "d55b2b2323a80add",
       "matchKey": "POST api.openai.com/v1/responses",
-      "callIndex": 15,
       "recordedAt": "2026-04-27T22:52:52.069Z",
       "request": {
-        "method": "POST",
-        "url": "https://api.openai.com/v1/responses",
-        "headers": {
-          "content-type": "application/json"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -1849,16 +1809,12 @@
             "model": "gpt-4o-mini-2024-07-18",
             "temperature": 0
           }
-        }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.openai.com/v1/responses"
       },
       "response": {
-        "status": 200,
-        "statusText": "OK",
-        "headers": {
-          "content-type": "application/json",
-          "openai-organization": "braintrust-data",
-          "openai-version": "2020-10-01"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -1933,20 +1889,22 @@
             },
             "user": null
           }
-        }
+        },
+        "headers": {
+          "content-type": "application/json",
+          "openai-organization": "braintrust-data",
+          "openai-version": "2020-10-01"
+        },
+        "status": 200,
+        "statusText": "OK"
       }
     },
     {
+      "callIndex": 0,
       "id": "f15f56a896602309",
       "matchKey": "POST api.openai.com/v1/embeddings",
-      "callIndex": 0,
       "recordedAt": "2026-04-28T23:46:54.779Z",
       "request": {
-        "method": "POST",
-        "url": "https://api.openai.com/v1/embeddings",
-        "headers": {
-          "content-type": "application/json"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -1954,20 +1912,12 @@
             "input": ["Paris is the capital of France."],
             "model": "text-embedding-3-small"
           }
-        }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.openai.com/v1/embeddings"
       },
       "response": {
-        "status": 200,
-        "statusText": "OK",
-        "headers": {
-          "access-control-expose-headers": "X-Request-ID",
-          "alt-svc": "h3=\":443\"; ma=86400",
-          "content-type": "application/json",
-          "openai-organization": "braintrust-data",
-          "openai-version": "2020-10-01",
-          "x-content-type-options": "nosniff",
-          "x-openai-proxy-wasm": "v0.1"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -2536,20 +2486,26 @@
               "total_tokens": 7
             }
           }
-        }
+        },
+        "headers": {
+          "access-control-expose-headers": "X-Request-ID",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "content-type": "application/json",
+          "openai-organization": "braintrust-data",
+          "openai-version": "2020-10-01",
+          "x-content-type-options": "nosniff",
+          "x-openai-proxy-wasm": "v0.1"
+        },
+        "status": 200,
+        "statusText": "OK"
       }
     },
     {
+      "callIndex": 1,
       "id": "e534fd943eb3c71c",
       "matchKey": "POST api.openai.com/v1/embeddings",
-      "callIndex": 1,
       "recordedAt": "2026-04-28T23:46:54.779Z",
       "request": {
-        "method": "POST",
-        "url": "https://api.openai.com/v1/embeddings",
-        "headers": {
-          "content-type": "application/json"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -2561,20 +2517,12 @@
             ],
             "model": "text-embedding-3-small"
           }
-        }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.openai.com/v1/embeddings"
       },
       "response": {
-        "status": 200,
-        "statusText": "OK",
-        "headers": {
-          "access-control-expose-headers": "X-Request-ID",
-          "alt-svc": "h3=\":443\"; ma=86400",
-          "content-type": "application/json",
-          "openai-organization": "braintrust-data",
-          "openai-version": "2020-10-01",
-          "x-content-type-options": "nosniff",
-          "x-openai-proxy-wasm": "v0.1"
-        },
         "body": {
           "kind": "json",
           "value": {
@@ -4261,57 +4209,60 @@
               "total_tokens": 16
             }
           }
-        }
+        },
+        "headers": {
+          "access-control-expose-headers": "X-Request-ID",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "content-type": "application/json",
+          "openai-organization": "braintrust-data",
+          "openai-version": "2020-10-01",
+          "x-content-type-options": "nosniff",
+          "x-openai-proxy-wasm": "v0.1"
+        },
+        "status": 200,
+        "statusText": "OK"
       }
     },
     {
+      "callIndex": 0,
       "id": "7682bac2e3324e9b",
       "matchKey": "POST api.anthropic.com/v1/messages",
-      "callIndex": 0,
       "recordedAt": "2026-04-27T22:52:52.069Z",
       "request": {
-        "method": "POST",
-        "url": "https://api.anthropic.com/v1/messages",
-        "headers": {
-          "content-type": "application/json",
-          "anthropic-version": "2023-06-01"
-        },
         "body": {
           "kind": "json",
           "value": {
-            "model": "claude-haiku-4-5-20251001",
             "max_tokens": 24,
             "messages": [
               {
-                "role": "user",
-                "content": "placeholder"
+                "content": "placeholder",
+                "role": "user"
               }
             ],
+            "model": "claude-haiku-4-5-20251001",
             "temperature": 0
           }
-        }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages"
       },
       "response": {
-        "status": 200,
-        "statusText": "OK",
-        "headers": {
-          "content-type": "application/json"
-        },
         "body": {
           "kind": "json",
           "value": {
-            "id": "msg_e8d4b7077032e1020155251bbfd4c447",
-            "type": "message",
-            "role": "assistant",
-            "model": "claude-haiku-4-5-20251001",
             "content": [
               {
-                "type": "text",
-                "text": "CACHE_OK"
+                "text": "CACHE_OK",
+                "type": "text"
               }
             ],
+            "id": "msg_e8d4b7077032e1020155251bbfd4c447",
+            "model": "claude-haiku-4-5-20251001",
+            "role": "assistant",
             "stop_reason": "end_turn",
             "stop_sequence": null,
+            "type": "message",
             "usage": {
               "cache_creation": {
                 "ephemeral_1h_input_tokens": 0,
@@ -4325,57 +4276,54 @@
               "service_tier": "standard"
             }
           }
-        }
-      }
-    },
-    {
-      "id": "e5788878513bb84c",
-      "matchKey": "POST api.anthropic.com/v1/messages",
-      "callIndex": 1,
-      "recordedAt": "2026-04-27T22:52:52.069Z",
-      "request": {
-        "method": "POST",
-        "url": "https://api.anthropic.com/v1/messages",
-        "headers": {
-          "content-type": "application/json",
-          "anthropic-version": "2023-06-01"
         },
-        "body": {
-          "kind": "json",
-          "value": {
-            "model": "claude-haiku-4-5-20251001",
-            "max_tokens": 24,
-            "messages": [
-              {
-                "role": "user",
-                "content": "placeholder"
-              }
-            ],
-            "temperature": 0
-          }
-        }
-      },
-      "response": {
-        "status": 200,
-        "statusText": "OK",
         "headers": {
           "content-type": "application/json"
         },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 1,
+      "id": "e5788878513bb84c",
+      "matchKey": "POST api.anthropic.com/v1/messages",
+      "recordedAt": "2026-04-27T22:52:52.069Z",
+      "request": {
         "body": {
           "kind": "json",
           "value": {
-            "id": "msg_a01859a5f0014615c8716221e6bf4e26",
-            "type": "message",
-            "role": "assistant",
-            "model": "claude-haiku-4-5-20251001",
-            "content": [
+            "max_tokens": 24,
+            "messages": [
               {
-                "type": "text",
-                "text": "CACHE_OK"
+                "content": "placeholder",
+                "role": "user"
               }
             ],
+            "model": "claude-haiku-4-5-20251001",
+            "temperature": 0
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "content": [
+              {
+                "text": "CACHE_OK",
+                "type": "text"
+              }
+            ],
+            "id": "msg_a01859a5f0014615c8716221e6bf4e26",
+            "model": "claude-haiku-4-5-20251001",
+            "role": "assistant",
             "stop_reason": "end_turn",
             "stop_sequence": null,
+            "type": "message",
             "usage": {
               "cache_creation": {
                 "ephemeral_1h_input_tokens": 0,
@@ -4389,57 +4337,54 @@
               "service_tier": "standard"
             }
           }
-        }
-      }
-    },
-    {
-      "id": "4840019345a20466",
-      "matchKey": "POST api.anthropic.com/v1/messages",
-      "callIndex": 2,
-      "recordedAt": "2026-04-27T22:52:52.069Z",
-      "request": {
-        "method": "POST",
-        "url": "https://api.anthropic.com/v1/messages",
-        "headers": {
-          "content-type": "application/json",
-          "anthropic-version": "2023-06-01"
         },
-        "body": {
-          "kind": "json",
-          "value": {
-            "model": "claude-haiku-4-5-20251001",
-            "max_tokens": 24,
-            "messages": [
-              {
-                "role": "user",
-                "content": "placeholder"
-              }
-            ],
-            "temperature": 0
-          }
-        }
-      },
-      "response": {
-        "status": 200,
-        "statusText": "OK",
         "headers": {
           "content-type": "application/json"
         },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 2,
+      "id": "4840019345a20466",
+      "matchKey": "POST api.anthropic.com/v1/messages",
+      "recordedAt": "2026-04-27T22:52:52.069Z",
+      "request": {
         "body": {
           "kind": "json",
           "value": {
-            "id": "msg_cc3f30e39ba442c11ea54b8be93073ab",
-            "type": "message",
-            "role": "assistant",
-            "model": "claude-haiku-4-5-20251001",
-            "content": [
+            "max_tokens": 24,
+            "messages": [
               {
-                "type": "text",
-                "text": "CACHE_OK"
+                "content": "placeholder",
+                "role": "user"
               }
             ],
+            "model": "claude-haiku-4-5-20251001",
+            "temperature": 0
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "content": [
+              {
+                "text": "CACHE_OK",
+                "type": "text"
+              }
+            ],
+            "id": "msg_cc3f30e39ba442c11ea54b8be93073ab",
+            "model": "claude-haiku-4-5-20251001",
+            "role": "assistant",
             "stop_reason": "end_turn",
             "stop_sequence": null,
+            "type": "message",
             "usage": {
               "cache_creation": {
                 "ephemeral_1h_input_tokens": 0,
@@ -4453,44 +4398,50 @@
               "service_tier": "standard"
             }
           }
-        }
-      }
-    },
-    {
-      "id": "0a446726c242300c",
-      "matchKey": "POST api.cohere.com/v2/rerank",
-      "callIndex": 0,
-      "recordedAt": "2026-04-27T22:53:01.327Z",
-      "request": {
-        "method": "POST",
-        "url": "https://api.cohere.com/v2/rerank",
+        },
         "headers": {
           "content-type": "application/json"
         },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 0,
+      "id": "0a446726c242300c",
+      "matchKey": "POST api.cohere.com/v2/rerank",
+      "recordedAt": "2026-04-27T22:53:01.327Z",
+      "request": {
         "body": {
           "kind": "json",
           "value": {
-            "model": "rerank-v3.5",
-            "query": "Which document is about France?",
             "documents": [
               "Athens is in Greece.",
               "Paris is in France.",
               "Lima is in Peru."
             ],
+            "model": "rerank-v3.5",
+            "query": "Which document is about France?",
             "top_n": 2
           }
-        }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.cohere.com/v2/rerank"
       },
       "response": {
-        "status": 200,
-        "statusText": "OK",
-        "headers": {
-          "content-type": "application/json"
-        },
         "body": {
           "kind": "json",
           "value": {
             "id": "rerank-67c987130d583954",
+            "meta": {
+              "api_version": {
+                "version": "2"
+              },
+              "billed_units": {
+                "search_units": 1
+              }
+            },
             "results": [
               {
                 "document": {
@@ -4506,18 +4457,20 @@
                 "index": 2,
                 "relevance_score": 0.00013
               }
-            ],
-            "meta": {
-              "api_version": {
-                "version": "2"
-              },
-              "billed_units": {
-                "search_units": 1
-              }
-            }
+            ]
           }
-        }
+        },
+        "headers": {
+          "content-type": "application/json"
+        },
+        "status": 200,
+        "statusText": "OK"
       }
     }
-  ]
+  ],
+  "meta": {
+    "createdAt": "2026-04-27T22:53:01.327Z",
+    "seinfeldVersion": "0.0.0"
+  },
+  "version": 1
 }

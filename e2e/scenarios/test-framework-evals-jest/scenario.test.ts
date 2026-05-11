@@ -1,6 +1,7 @@
 import { expect, test } from "vitest";
 import {
   formatJsonFileSnapshot,
+  matchFileSnapshot,
   resolveFileSnapshotPath,
 } from "../../helpers/file-snapshot";
 import type { Json } from "../../helpers/normalize";
@@ -147,7 +148,7 @@ test(
           ]),
         );
 
-        await expect(
+        await matchFileSnapshot(
           formatJsonFileSnapshot(
             [
               basicSpan,
@@ -160,19 +161,17 @@ test(
               currentSpan,
             ].map((event) => summarizeEvent(event!)) as Json,
           ),
-        ).toMatchFileSnapshot(
           resolveFileSnapshotPath(import.meta.url, "span-events.json"),
         );
 
-        await expect(
+        await matchFileSnapshot(
           formatJsonFileSnapshot(
             payloadRowsForTestRunId(payloads(), testRunId) as Json,
           ),
-        ).toMatchFileSnapshot(
           resolveFileSnapshotPath(import.meta.url, "log-payloads.json"),
         );
 
-        await expect(
+        await matchFileSnapshot(
           formatJsonFileSnapshot(
             requests.map((request) =>
               summarizeRequest(request, {
@@ -180,7 +179,6 @@ test(
               }),
             ) as Json,
           ),
-        ).toMatchFileSnapshot(
           resolveFileSnapshotPath(import.meta.url, "request-flow.json"),
         );
       },
