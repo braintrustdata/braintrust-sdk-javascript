@@ -33,6 +33,7 @@ import { openRouterConfigs } from "../configs/openrouter";
 import { mistralConfigs } from "../configs/mistral";
 import { cohereConfigs } from "../configs/cohere";
 import { groqConfigs } from "../configs/groq";
+import { genkitConfigs } from "../configs/genkit";
 import { gitHubCopilotConfigs } from "../configs/github-copilot";
 
 export interface BundlerPluginOptions {
@@ -88,6 +89,7 @@ export const unplugin = createUnplugin<BundlerPluginOptions>((options = {}) => {
     ...mistralConfigs,
     ...cohereConfigs,
     ...groqConfigs,
+    ...genkitConfigs,
     ...gitHubCopilotConfigs,
     ...(options.instrumentations || []),
   ];
