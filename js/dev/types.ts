@@ -22,6 +22,7 @@ export const evalBodySchema = z.object({
     .nullish(),
   experiment_name: z.string().nullish(),
   project_id: z.string().nullish(),
+  on_complete_webhook: z.string().nullish(),
   parent: invokeParentSchema.optional(),
   stream: z.boolean().optional(),
 });
