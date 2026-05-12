@@ -165,9 +165,13 @@ export const unplugin = createUnplugin<BundlerPluginOptions>((options = {}) => {
         // Transform the code
         const moduleType = isModule ? "esm" : "cjs";
         const result = transformer.transform(code, moduleType);
+        const transformedCode = result.code.replace(
+          /const \{tracingChannel: ([A-Za-z_$][\w$]*)\} = ([A-Za-z_$][\w$]*);/g,
+          "const $1 = $2.tracingChannel;",
+        );
 
         return {
-          code: result.code,
+          code: transformedCode,
           map: result.map,
         };
       } catch (error) {
