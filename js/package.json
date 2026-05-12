@@ -182,7 +182,7 @@
     "jiti": "^2.6.1",
     "openai": "6.25.0",
     "openapi-zod-client": "^1.18.3",
-    "rollup": "^4.28.1",
+    "rollup": "^4.60.3",
     "tar": "^7.5.2",
     "tinybench": "^4.0.1",
     "ts-jest": "^29.1.4",
