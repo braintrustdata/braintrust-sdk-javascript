@@ -1,0 +1,16 @@
+{
+  "name": "@braintrust/e2e-genkit-instrumentation",
+  "private": true,
+  "braintrustScenario": {
+    "canary": {
+      "dependencies": {
+        "@genkit-ai/google-genai": "latest",
+        "genkit": "latest"
+      }
+    }
+  },
+  "dependencies": {
+    "@genkit-ai/google-genai": "1.33.0",
+    "genkit": "1.33.0"
+  }
+}

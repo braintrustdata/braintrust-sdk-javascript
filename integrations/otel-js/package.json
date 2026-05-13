@@ -21,7 +21,8 @@
     "clean": "rm -r dist/*",
     "test": "pnpm test:v1 && pnpm test:v2",
     "test:v1": "cd otel-v1 && pnpm test",
-    "test:v2": "cd otel-v2 && pnpm test"
+    "test:v2": "cd otel-v2 && pnpm test",
+    "yalc:publish": "yalc publish"
   },
   "author": "Braintrust Data Inc.",
   "license": "MIT",

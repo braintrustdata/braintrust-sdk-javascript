@@ -154,6 +154,11 @@ export interface BraintrustVitest<
 export interface WrapperConfig {
   projectName?: string;
   /**
+   * The id of the project to create experiments in. Takes precedence over
+   * `projectName` if both are set.
+   */
+  projectId?: string;
+  /**
    * If true, displays a formatted experiment summary with scores and URL after the test suite completes.
    * Defaults to true. Set to false to suppress the summary output.
    */

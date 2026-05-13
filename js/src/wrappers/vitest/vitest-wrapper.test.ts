@@ -9,6 +9,7 @@ import {
   vi,
   expectTypeOf,
 } from "vitest";
+import { configureNode } from "../../node/config";
 import { wrapVitest } from "./index";
 import { wrapExpect } from "./expect-wrapper";
 import {
@@ -24,6 +25,8 @@ import {
 } from "./context-manager";
 import { flushExperimentWithSync } from "./flush-manager";
 
+configureNode();
+
 // ✅ Set up test state and background logger at module level for unit tests
 _exportsForTestingOnly.setInitialTestState();
 await _exportsForTestingOnly.simulateLoginForTests();
@@ -34,14 +37,23 @@ vi.spyOn(logger, "initDataset").mockReturnValue({
   insert: vi.fn(() => "test-example-id"),
 } as any);
 
-vi.spyOn(logger, "initExperiment").mockImplementation(
-  (projectName: string, options?: any) => {
+const initExperimentSpy = vi
+  .spyOn(logger, "initExperiment")
+  .mockImplementation((projectOrOptions: string | any, options?: any) => {
+    const experimentOptions =
+      typeof projectOrOptions === "string" ? options : projectOrOptions;
+    const projectName =
+      typeof projectOrOptions === "string"
+        ? projectOrOptions
+        : (projectOrOptions.project ??
+          projectOrOptions.projectId ??
+          "test-project");
+
     return _exportsForTestingOnly.initTestExperiment(
-      options?.experiment || "test-experiment",
+      experimentOptions?.experiment || "test-experiment",
       projectName,
     );
-  },
-);
+  });
 
 describe("Braintrust Vitest Wrapper", () => {
   // Test logger already set up at module level
@@ -406,6 +418,116 @@ describe("Configuration Options", () => {
     );
     expect(bt).toBeDefined();
     // Progress events will be emitted if onProgress is provided
+  });
+});
+
+describe("Project selection", () => {
+  function makeFakeVitestMethods() {
+    const fakeTest: any = vi.fn(
+      (_name: string, maybeOptions: any, maybeFn?: any) => {
+        const fn = typeof maybeOptions === "function" ? maybeOptions : maybeFn;
+        return fn ? fn({}) : undefined;
+      },
+    );
+    fakeTest.skip = fakeTest;
+    fakeTest.only = fakeTest;
+    fakeTest.concurrent = fakeTest;
+    fakeTest.todo = vi.fn();
+
+    const fakeDescribe: any = vi.fn((_name: string, factory: () => void) =>
+      factory(),
+    );
+    fakeDescribe.skip = fakeDescribe;
+    fakeDescribe.only = fakeDescribe;
+    fakeDescribe.concurrent = fakeDescribe;
+    fakeDescribe.todo = vi.fn();
+
+    return {
+      test: fakeTest,
+      expect,
+      describe: fakeDescribe,
+      afterAll: vi.fn(),
+    };
+  }
+
+  beforeEach(() => {
+    initExperimentSpy.mockClear();
+    _resetContextManager();
+  });
+
+  test("wrapVitest passes projectId to initExperiment", async () => {
+    const bt = wrapVitest(makeFakeVitestMethods(), {
+      projectId: "project-id-123",
+      displaySummary: false,
+    });
+
+    await bt.describe("project id suite", () => {
+      bt.test("uses project id", async () => undefined);
+    });
+
+    expect(initExperimentSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        projectId: "project-id-123",
+        experiment: expect.stringMatching(/^project id suite-/),
+      }),
+    );
+  });
+
+  test("wrapVitest uses projectId instead of projectName when both are set", async () => {
+    const bt = wrapVitest(makeFakeVitestMethods(), {
+      projectName: "project-name",
+      projectId: "project-id-123",
+      displaySummary: false,
+    });
+
+    await bt.describe("precedence suite", () => {
+      bt.test("uses project id", async () => undefined);
+    });
+
+    expect(initExperimentSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        projectId: "project-id-123",
+      }),
+    );
+    expect(initExperimentSpy).not.toHaveBeenCalledWith(
+      "project-name",
+      expect.anything(),
+    );
+  });
+
+  test("wrapVitest preserves projectName behavior when projectId is absent", async () => {
+    const bt = wrapVitest(makeFakeVitestMethods(), {
+      projectName: "project-name",
+      displaySummary: false,
+    });
+
+    await bt.describe("project name suite", () => {
+      bt.test("uses project name", async () => undefined);
+    });
+
+    expect(initExperimentSpy).toHaveBeenCalledWith(
+      "project-name",
+      expect.objectContaining({
+        experiment: expect.stringMatching(/^project name suite-/),
+      }),
+    );
+  });
+
+  test("wrapVitest preserves suite-name fallback", async () => {
+    const bt = wrapVitest(makeFakeVitestMethods(), {
+      displaySummary: false,
+    });
+
+    await bt.describe("fallback suite", () => {
+      bt.test("uses suite name", async () => undefined);
+    });
+
+    expect(initExperimentSpy).toHaveBeenCalledWith(
+      "fallback suite",
+      expect.objectContaining({
+        experiment: expect.stringMatching(/^fallback suite-/),
+      }),
+    );
   });
 });
 

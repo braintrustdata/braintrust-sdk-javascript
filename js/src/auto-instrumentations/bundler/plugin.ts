@@ -33,6 +33,7 @@ import { openRouterConfigs } from "../configs/openrouter";
 import { mistralConfigs } from "../configs/mistral";
 import { cohereConfigs } from "../configs/cohere";
 import { groqConfigs } from "../configs/groq";
+import { genkitConfigs } from "../configs/genkit";
 import { gitHubCopilotConfigs } from "../configs/github-copilot";
 
 export interface BundlerPluginOptions {
@@ -88,6 +89,7 @@ export const unplugin = createUnplugin<BundlerPluginOptions>((options = {}) => {
     ...mistralConfigs,
     ...cohereConfigs,
     ...groqConfigs,
+    ...genkitConfigs,
     ...gitHubCopilotConfigs,
     ...(options.instrumentations || []),
   ];
@@ -163,9 +165,13 @@ export const unplugin = createUnplugin<BundlerPluginOptions>((options = {}) => {
         // Transform the code
         const moduleType = isModule ? "esm" : "cjs";
         const result = transformer.transform(code, moduleType);
+        const transformedCode = result.code.replace(
+          /const \{tracingChannel: ([A-Za-z_$][\w$]*)\} = ([A-Za-z_$][\w$]*);/g,
+          "const $1 = $2.tracingChannel;",
+        );
 
         return {
-          code: result.code,
+          code: transformedCode,
           map: result.map,
         };
       } catch (error) {
