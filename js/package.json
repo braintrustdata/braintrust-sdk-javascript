@@ -50,6 +50,13 @@
       "require": "./dist/browser.js",
       "default": "./dist/browser.mjs"
     },
+    "./prompt": {
+      "types": "./dist/prompt/index.d.ts",
+      "browser": "./dist/prompt/index.mjs",
+      "import": "./dist/prompt/index.mjs",
+      "require": "./dist/prompt/index.js",
+      "default": "./dist/prompt/index.mjs"
+    },
     "./node": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs",

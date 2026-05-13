@@ -46,46 +46,38 @@ import {
   TRANSACTION_ID_FIELD,
   TransactionId,
   VALID_SOURCES,
-  isArray,
   isObject,
-  getObjValueByPath,
 } from "./util";
 import {
-  type AnyModelParamsType as AnyModelParam,
   AttachmentReference as attachmentReferenceSchema,
   type AttachmentReferenceType as AttachmentReference,
   BraintrustAttachmentReference as BraintrustAttachmentReferenceSchema,
   type BraintrustAttachmentReferenceType as BraintrustAttachmentReference,
-  BraintrustModelParams as braintrustModelParamsSchema,
-  ChatCompletionTool as chatCompletionToolSchema,
-  type ChatCompletionToolType as ChatCompletionTool,
   ExternalAttachmentReference as ExternalAttachmentReferenceSchema,
   type ExternalAttachmentReferenceType as ExternalAttachmentReference,
-  type ModelParamsType as ModelParams,
-  ResponseFormatJsonSchema as responseFormatJsonSchemaSchema,
   AttachmentStatus as attachmentStatusSchema,
   type AttachmentStatusType as AttachmentStatus,
   GitMetadataSettings as gitMetadataSettingsSchema,
   type GitMetadataSettingsType as GitMetadataSettings,
   type ChatCompletionMessageParamType as Message,
-  type ChatCompletionOpenAIMessageParamType as OpenAIMessage,
   DatasetSnapshot as datasetSnapshotSchema,
   type DatasetSnapshotType as DatasetSnapshot,
-  PromptData as promptDataSchema,
   type PromptDataType as PromptData,
   Prompt as promptSchema,
   type PromptType as PromptRow,
   type PromptSessionEventType as PromptSessionEvent,
   type RepoInfoType as RepoInfo,
-  type PromptBlockDataType as PromptBlockData,
-  type ResponseFormatJsonSchemaType as ResponseFormatJsonSchema,
 } from "./generated_types";
+import {
+  Prompt as PromptCore,
+  type CompiledPrompt,
+  type DefaultPromptArgs,
+} from "./prompt";
 
 const BRAINTRUST_ATTACHMENT =
   BraintrustAttachmentReferenceSchema.shape.type.value;
 const EXTERNAL_ATTACHMENT = ExternalAttachmentReferenceSchema.shape.type.value;
 export const LOGS3_OVERFLOW_REFERENCE_TYPE = "logs3_overflow";
-const BRAINTRUST_PARAMS = Object.keys(braintrustModelParamsSchema.shape);
 const RESET_CONTEXT_MANAGER_STATE = Symbol.for(
   "braintrust.resetContextManagerState",
 );
@@ -134,10 +126,6 @@ const parametersRowSchema = z.object({
 type ParametersRow = z.infer<typeof parametersRowSchema>;
 
 import { waitUntil } from "@vercel/functions";
-import {
-  parseTemplateFormat,
-  renderTemplateContent,
-} from "./template/renderer";
 import type { TemplateFormat } from "./template/registry";
 
 import { z, ZodError } from "zod/v3";
@@ -7694,234 +7682,6 @@ export class Dataset<
   }
 }
 
-type CompiledPromptResponseFormat =
-  Exclude<AnyModelParam["response_format"], null> extends infer ResponseFormat
-    ? ResponseFormat extends {
-        type: "json_schema";
-        json_schema: infer JsonSchema;
-      }
-      ? Omit<ResponseFormat, "json_schema"> & {
-          json_schema: Omit<
-            Extract<JsonSchema, ResponseFormatJsonSchema>,
-            "schema"
-          > & {
-            schema?: Record<string, unknown>;
-          };
-        }
-      : ResponseFormat
-    : never;
-
-// "none" is not assignable to older openai clients so we gotta exclude it
-type CompiledPromptReasoningEffort = Exclude<
-  AnyModelParam["reasoning_effort"],
-  "none"
->;
-
-export type CompiledPromptParams = Omit<
-  NonNullable<PromptData["options"]>["params"],
-  "use_cache" | "response_format" | "reasoning_effort"
-> &
-  Omit<AnyModelParam, "use_cache" | "response_format" | "reasoning_effort"> & {
-    reasoning_effort?: CompiledPromptReasoningEffort;
-    response_format?: CompiledPromptResponseFormat;
-    model: NonNullable<NonNullable<PromptData["options"]>["model"]>;
-  };
-
-export type ChatPrompt = {
-  messages: OpenAIMessage[];
-  tools?: ChatCompletionTool[];
-};
-export type CompletionPrompt = {
-  prompt: string;
-};
-
-export type CompiledPrompt<Flavor extends "chat" | "completion"> =
-  CompiledPromptParams & {
-    span_info?: {
-      name?: string;
-      spanAttributes?: Record<any, any>;
-      metadata: {
-        prompt: {
-          variables: Record<string, unknown>;
-          id: string;
-          project_id: string;
-          version: string;
-        };
-      };
-    };
-  } & (Flavor extends "chat"
-      ? ChatPrompt
-      : Flavor extends "completion"
-        ? CompletionPrompt
-        : // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-          {});
-
-export type DefaultPromptArgs = Partial<
-  CompiledPromptParams & AnyModelParam & ChatPrompt & CompletionPrompt
->;
-
-function isAttachmentObject(value: unknown): boolean {
-  return (
-    BraintrustAttachmentReferenceSchema.safeParse(value).success ||
-    InlineAttachmentReferenceSchema.safeParse(value).success ||
-    ExternalAttachmentReferenceSchema.safeParse(value).success
-  );
-}
-
-// Simple URL validation all braintrust attachment urls or generic links
-function isURL(url: string): boolean {
-  try {
-    const parsedUrl = new URL(url.trim());
-    return parsedUrl.protocol === "http:" || parsedUrl.protocol === "https:";
-  } catch {
-    return false;
-  }
-}
-
-/**
- * Detect and expand attachment array variables before template rendering.
- * Supports both simple variables ({{images}}) and nested paths ({{data.images}}).
- * @param content The message content (should be a template variable like "{{images}}" or "{{data.images}}")
- * @param variables The variables object with array values
- * @returns Array of image_url parts if expansion occurred, null otherwise
- */
-function expandAttachmentArrayPreTemplate(
-  content: unknown,
-  variables: Record<string, unknown>,
-): unknown[] | null {
-  if (typeof content !== "string") return null;
-
-  // Detect {{varName}} or {{nested.path}} pattern (exact match only - no mixed content)
-  // Supports: {{images}}, {{data.images}}, {{user.profile.images}}, etc.
-  const match = content.match(/^\{\{\s*([\w.]+)\s*\}\}$/);
-  if (!match) return null;
-
-  const varPath = match[1];
-
-  const value = varPath.includes(".")
-    ? getObjValueByPath(variables, varPath.split("."))
-    : variables[varPath];
-
-  if (!Array.isArray(value)) return null;
-
-  // Check if array contains attachments or image URLs
-  const allValid = value.every(
-    (v) => isAttachmentObject(v) || (typeof v === "string" && isURL(v)),
-  );
-
-  if (!allValid) return null;
-
-  // Expand directly to image_url parts
-  return value.map((item) => ({
-    type: "image_url" as const,
-    image_url: { url: item },
-  }));
-}
-
-export function renderMessage<T extends Message>(
-  render: (template: string) => string,
-  message: T,
-): T;
-
-export function renderMessage<T extends Message>(
-  render: (template: string) => string,
-  message: T,
-): T {
-  return renderMessageImpl(render, message, {});
-}
-
-export function renderMessageImpl<T extends Message>(
-  render: (template: string) => string,
-  message: T,
-  variables?: Record<string, unknown>,
-): T {
-  return {
-    ...message,
-    ...("content" in message
-      ? {
-          content: isEmpty(message.content)
-            ? undefined
-            : typeof message.content === "string"
-              ? render(message.content)
-              : message.content.flatMap((c) => {
-                  switch (c.type) {
-                    case "text":
-                      return [{ ...c, text: render(c.text) }];
-                    case "image_url":
-                      if (isObject(c.image_url.url)) {
-                        throw new Error(
-                          "Attachments must be replaced with URLs before calling `build()`",
-                        );
-                      }
-
-                      if (variables) {
-                        const expanded = expandAttachmentArrayPreTemplate(
-                          c.image_url.url,
-                          variables,
-                        );
-                        if (expanded) {
-                          return expanded;
-                        }
-                      }
-
-                      // Otherwise render the URL template normally
-                      return [
-                        {
-                          ...c,
-                          image_url: {
-                            ...c.image_url,
-                            url: render(c.image_url.url),
-                          },
-                        },
-                      ];
-                    case "file":
-                      return [
-                        {
-                          ...c,
-                          file: {
-                            ...(c.file.file_data && {
-                              file_data: render(c.file.file_data),
-                            }),
-                            ...(c.file.file_id && {
-                              file_id: render(c.file.file_id),
-                            }),
-                            ...(c.file.filename && {
-                              filename: render(c.file.filename),
-                            }),
-                          },
-                        },
-                      ];
-                    default:
-                      const _exhaustiveCheck: never = c;
-                      return _exhaustiveCheck;
-                  }
-                }),
-        }
-      : {}),
-    ...("tool_calls" in message
-      ? {
-          tool_calls: isEmpty(message.tool_calls)
-            ? undefined
-            : message.tool_calls.map((t) => {
-                return {
-                  type: t.type,
-                  id: render(t.id),
-                  function: {
-                    name: render(t.function.name),
-                    arguments: render(t.function.arguments),
-                  },
-                };
-              }),
-        }
-      : {}),
-    ...("tool_call_id" in message
-      ? {
-          tool_call_id: render(message.tool_call_id),
-        }
-      : {}),
-  };
-}
-
 export type PromptRowWithId<
   HasId extends boolean = true,
   HasVersion extends boolean = true,
@@ -7934,431 +7694,131 @@ export type PromptRowWithId<
     ? Pick<PromptRow, "_xact_id">
     : Partial<Pick<PromptRow, "_xact_id">>);
 
-export function deserializePlainStringAsJSON(s: string) {
-  if (s.trim() === "") {
-    return { value: null, error: undefined };
+export {
+  deserializePlainStringAsJSON,
+  renderMessage,
+  renderPromptParams,
+} from "./prompt";
+export type {
+  ChatPrompt,
+  CompiledPrompt,
+  CompiledPromptParams,
+  CompletionPrompt,
+  DefaultPromptArgs,
+} from "./prompt";
+
+function normalizePromptCoreMetadata(
+  metadata: PromptRowWithId<boolean, boolean> | PromptSessionEvent,
+) {
+  if ("name" in metadata && "slug" in metadata) {
+    return metadata;
   }
 
-  try {
-    return { value: JSON.parse(s), error: undefined };
-  } catch (e) {
-    return { value: s, error: e };
-  }
-}
-
-function renderTemplatedObject(
-  obj: unknown,
-  args: Record<string, unknown>,
-  options: { strict?: boolean; templateFormat: TemplateFormat },
-): unknown {
-  if (typeof obj === "string") {
-    return renderTemplateContent(
-      obj,
-      args,
-      (value) => (typeof value === "string" ? value : JSON.stringify(value)),
-      {
-        strict: options.strict,
-        templateFormat: options.templateFormat,
-      },
-    );
-  } else if (isArray(obj)) {
-    return obj.map((item) => renderTemplatedObject(item, args, options));
-  } else if (isObject(obj)) {
-    return Object.fromEntries(
-      Object.entries(obj).map(([key, value]) => [
-        key,
-        renderTemplatedObject(value, args, options),
-      ]),
-    );
-  }
-  return obj;
-}
-
-export function renderPromptParams(
-  params: ModelParams | undefined,
-  args: Record<string, unknown>,
-  options: { strict?: boolean; templateFormat?: TemplateFormat } = {},
-): ModelParams | undefined {
-  const templateFormat = parseTemplateFormat(options.templateFormat);
-  const strict = !!options.strict;
-
-  const schemaParsed = z
-    .object({
-      response_format: z.object({
-        type: z.literal("json_schema"),
-        json_schema: responseFormatJsonSchemaSchema
-          .omit({ schema: true })
-          .extend({
-            schema: z.unknown(),
-          }),
-      }),
-    })
-    .safeParse(params);
-  if (schemaParsed.success) {
-    const rawSchema = schemaParsed.data.response_format.json_schema.schema;
-    const templatedSchema = renderTemplatedObject(rawSchema, args, {
-      strict,
-      templateFormat,
-    });
-    const parsedSchema =
-      typeof templatedSchema === "string"
-        ? deserializePlainStringAsJSON(templatedSchema).value
-        : templatedSchema;
-
-    return {
-      ...params,
-      response_format: {
-        ...schemaParsed.data.response_format,
-        json_schema: {
-          ...schemaParsed.data.response_format.json_schema,
-          schema: parsedSchema,
-        },
-      },
-    };
-  }
-  return params;
+  const fallbackId = metadata.id ?? "prompt";
+  return {
+    ...metadata,
+    name: `Playground function ${fallbackId}`,
+    slug: fallbackId,
+  };
 }
 
 export class Prompt<
   HasId extends boolean = true,
   HasVersion extends boolean = true,
-> {
-  private parsedPromptData: PromptData | undefined;
-  private hasParsedPromptData = false;
-  private readonly __braintrust_prompt_marker = true;
-
+> extends PromptCore {
   constructor(
-    private metadata: PromptRowWithId<HasId, HasVersion> | PromptSessionEvent,
-    private defaults: DefaultPromptArgs,
-    private noTrace: boolean,
-  ) {}
+    private readonly promptMetadata:
+      | PromptRowWithId<HasId, HasVersion>
+      | PromptSessionEvent,
+    defaults: DefaultPromptArgs,
+    noTrace: boolean,
+  ) {
+    super(normalizePromptCoreMetadata(promptMetadata), defaults, noTrace);
+  }
 
   public get id(): HasId extends true ? string : string | undefined {
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    return this.metadata.id as HasId extends true ? string : string | undefined;
+    return this.promptMetadata.id as HasId extends true
+      ? string
+      : string | undefined;
   }
 
   public get projectId(): string | undefined {
-    return this.metadata.project_id;
-  }
-
-  public get name(): string {
-    return "name" in this.metadata
-      ? this.metadata.name
-      : `Playground function ${this.metadata.id}`;
-  }
-
-  public get slug(): string {
-    return "slug" in this.metadata ? this.metadata.slug : this.metadata.id;
-  }
-
-  public get prompt(): PromptData["prompt"] {
-    return this.getParsedPromptData()?.prompt;
+    return this.promptMetadata.project_id;
   }
 
   public get version(): HasId extends true
     ? TransactionId
     : TransactionId | undefined {
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    return this.metadata[TRANSACTION_ID_FIELD] as HasId extends true
+    return this.promptMetadata[TRANSACTION_ID_FIELD] as HasId extends true
       ? TransactionId
       : TransactionId | undefined;
   }
 
-  public get options(): NonNullable<PromptData["options"]> {
-    return this.getParsedPromptData()?.options || {};
-  }
-
-  public get templateFormat(): string | null | undefined {
-    return this.getParsedPromptData()?.template_format;
-  }
-
-  public get promptData(): PromptData {
-    return this.getParsedPromptData()!;
-  }
-
-  /**
-   * Build the prompt with the given formatting options. The args you pass in will
-   * be forwarded to the mustache template that defines the prompt and rendered with
-   * the `mustache-js` library.
-   *
-   * @param buildArgs Args to forward along to the prompt template.
-   */
-  public build<Flavor extends "chat" | "completion" = "chat">(
+  public async buildWithAttachments(
     buildArgs: unknown,
     options: {
-      flavor?: Flavor;
+      flavor?: "chat";
       messages?: Message[];
       strict?: boolean;
+      state?: BraintrustState;
       templateFormat?: TemplateFormat;
-    } = {},
-  ): CompiledPrompt<Flavor> {
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    return this.runBuild(buildArgs, {
-      flavor: options.flavor ?? "chat",
-      messages: options.messages,
-      strict: options.strict,
-      templateFormat: options.templateFormat,
-    }) as CompiledPrompt<Flavor>;
-  }
-
-  /**
-   * This is a special build method that first resolves attachment references, and then
-   * calls the regular build method. You should use this if you are building prompts from
-   * dataset rows that contain attachments.
-   *
-   * @param buildArgs Args to forward along to the prompt template.
-   */
-  public async buildWithAttachments<
-    Flavor extends "chat" | "completion" = "chat",
-  >(
+    },
+  ): Promise<CompiledPrompt<"chat">>;
+  public async buildWithAttachments(
     buildArgs: unknown,
     options: {
-      flavor?: Flavor;
+      flavor: "completion";
+      messages?: Message[];
+      strict?: boolean;
+      state?: BraintrustState;
+      templateFormat?: TemplateFormat;
+    },
+  ): Promise<CompiledPrompt<"completion">>;
+  public async buildWithAttachments(
+    buildArgs: unknown,
+    options: {
+      flavor?: "chat" | "completion";
       messages?: Message[];
       strict?: boolean;
       state?: BraintrustState;
       templateFormat?: TemplateFormat;
     } = {},
-  ): Promise<CompiledPrompt<Flavor>> {
+  ): Promise<CompiledPrompt<"chat"> | CompiledPrompt<"completion">> {
     const hydrated =
       buildArgs instanceof Object
         ? await resolveAttachmentsToBase64(buildArgs, options.state)
         : buildArgs;
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    return this.runBuild(hydrated, {
-      flavor: options.flavor ?? "chat",
+
+    if (options.flavor === "completion") {
+      return this.build(hydrated, {
+        flavor: "completion",
+        messages: options.messages,
+        strict: options.strict,
+        templateFormat: options.templateFormat,
+      });
+    }
+
+    return this.build(hydrated, {
+      flavor: "chat",
       messages: options.messages,
       strict: options.strict,
       templateFormat: options.templateFormat,
-    }) as CompiledPrompt<Flavor>;
-  }
-
-  private runBuild<Flavor extends "chat" | "completion">(
-    buildArgs: unknown,
-    options: {
-      flavor: Flavor;
-      messages?: Message[];
-      strict?: boolean;
-      templateFormat?: TemplateFormat;
-    },
-  ): CompiledPrompt<Flavor> {
-    const { flavor } = options;
-
-    const params = Object.fromEntries(
-      Object.entries({
-        ...this.defaults,
-        ...Object.fromEntries(
-          Object.entries(this.options.params || {}).filter(
-            ([k, _v]) => !BRAINTRUST_PARAMS.includes(k),
-          ),
-        ),
-        ...(!isEmpty(this.options.model)
-          ? {
-              model: this.options.model,
-            }
-          : {}),
-      }).filter(([key, value]) => key !== "response_format" || value !== null),
-    );
-
-    if (!("model" in params) || isEmpty(params.model)) {
-      throw new Error(
-        "No model specified. Either specify it in the prompt or as a default",
-      );
-    }
-
-    const spanInfo = this.noTrace
-      ? {}
-      : {
-          span_info: {
-            metadata: {
-              prompt: this.id
-                ? {
-                    variables: buildArgs,
-                    id: this.id,
-                    project_id: this.projectId,
-                    version: this.version,
-                    ...("prompt_session_id" in this.metadata
-                      ? { prompt_session_id: this.metadata.prompt_session_id }
-                      : {}),
-                  }
-                : undefined,
-            },
-          },
-        };
-
-    const prompt = this.prompt;
-
-    if (!prompt) {
-      throw new Error("Empty prompt");
-    }
-
-    const dictArgParsed = z.record(z.unknown()).safeParse(buildArgs);
-    const variables: Record<string, unknown> = {
-      input: buildArgs,
-      ...(dictArgParsed.success ? dictArgParsed.data : {}),
-    };
-
-    // Use template_format from prompt data if available, otherwise fall back to the option or default to mustache
-    const promptDataTemplateFormat = this.templateFormat;
-    const resolvedTemplateFormat = parseTemplateFormat(
-      options.templateFormat ?? promptDataTemplateFormat,
-    );
-
-    const renderedPrompt = Prompt.renderPrompt({
-      prompt,
-      buildArgs,
-      options: { ...options, templateFormat: resolvedTemplateFormat },
     });
-
-    if (flavor === "chat") {
-      if (renderedPrompt.type !== "chat") {
-        throw new Error(
-          "Prompt is a completion prompt. Use buildCompletion() instead",
-        );
-      }
-
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      return {
-        ...renderPromptParams(params, variables, {
-          strict: options.strict,
-          templateFormat: resolvedTemplateFormat,
-        }),
-        ...spanInfo,
-        messages: renderedPrompt.messages,
-        ...(renderedPrompt.tools
-          ? {
-              tools: chatCompletionToolSchema
-                .array()
-                .parse(JSON.parse(renderedPrompt.tools)),
-            }
-          : undefined),
-      } as CompiledPrompt<Flavor>;
-    } else if (flavor === "completion") {
-      if (renderedPrompt.type !== "completion") {
-        throw new Error(`Prompt is a chat prompt. Use flavor: 'chat' instead`);
-      }
-
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      return {
-        ...renderPromptParams(params, variables, {
-          strict: options.strict,
-          templateFormat: resolvedTemplateFormat,
-        }),
-        ...spanInfo,
-        prompt: renderedPrompt.content,
-      } as CompiledPrompt<Flavor>;
-    } else {
-      throw new Error("never!");
-    }
-  }
-
-  static renderPrompt({
-    prompt,
-    buildArgs,
-    options,
-  }: {
-    prompt: PromptBlockData;
-    buildArgs: unknown;
-    options: {
-      strict?: boolean;
-      messages?: Message[];
-      templateFormat?: TemplateFormat;
-    };
-  }): PromptBlockData {
-    const escape = (v: unknown) => {
-      if (v === undefined) {
-        throw new Error("Missing!");
-      } else if (typeof v === "string") {
-        return v;
-      } else if (v instanceof ReadonlyAttachment) {
-        throw new Error(
-          "Use buildWithAttachments() to build prompts with attachments",
-        );
-      } else {
-        return JSON.stringify(v);
-      }
-    };
-
-    const dictArgParsed = z.record(z.unknown()).safeParse(buildArgs);
-    const variables: Record<string, unknown> = {
-      input: buildArgs,
-      ...(dictArgParsed.success ? dictArgParsed.data : {}),
-    };
-
-    const templateFormat = parseTemplateFormat(options.templateFormat);
-
-    if (prompt.type === "chat") {
-      const render = (template: string) =>
-        renderTemplateContent(template, variables, escape, {
-          strict: options.strict,
-          templateFormat: templateFormat,
-        });
-
-      const baseMessages = (prompt.messages || []).map((m) =>
-        renderMessageImpl(render, m, variables),
-      );
-      const hasSystemPrompt = baseMessages.some((m) => m.role === "system");
-
-      const messages: Message[] = [
-        ...baseMessages,
-        ...(options.messages ?? []).filter(
-          (m) => !(hasSystemPrompt && m.role === "system"),
-        ),
-      ];
-
-      return {
-        type: "chat",
-        messages: messages,
-        ...(prompt.tools?.trim()
-          ? {
-              tools: render(prompt.tools),
-            }
-          : undefined),
-      };
-    } else if (prompt.type === "completion") {
-      if (options.messages) {
-        throw new Error(
-          "extra messages are not supported for completion prompts",
-        );
-      }
-
-      const content = renderTemplateContent(prompt.content, variables, escape, {
-        strict: options.strict,
-        templateFormat: templateFormat,
-      });
-      return {
-        type: "completion",
-        content,
-      };
-    } else {
-      const _: never = prompt;
-      throw new Error(`Invalid prompt type: ${_}`);
-    }
-  }
-
-  private getParsedPromptData(): PromptData | undefined {
-    if (!this.hasParsedPromptData) {
-      this.parsedPromptData = promptDataSchema.parse(this.metadata.prompt_data);
-      this.hasParsedPromptData = true;
-    }
-    return this.parsedPromptData!;
   }
 
   public static isPrompt(data: unknown): data is Prompt<boolean, boolean> {
-    return (
-      typeof data === "object" &&
-      data !== null &&
-      "__braintrust_prompt_marker" in data
-    );
+    return PromptCore.isPrompt(data);
   }
+
   public static fromPromptData(
     name: string,
     promptData: PromptData,
   ): Prompt<false, false> {
     return new Prompt(
       {
-        name: name,
+        name,
         slug: name,
         prompt_data: promptData,
       },

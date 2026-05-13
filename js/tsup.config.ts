@@ -74,6 +74,17 @@ export default defineConfig([
     clean: false,
   },
   {
+    entry: ["src/prompt/index.ts"],
+    format: ["cjs", "esm"],
+    outDir: "dist/prompt",
+    external: ["zod"],
+    removeNodeProtocol: false,
+    platform: "browser",
+    splitting: false,
+    dts: true,
+    clean: false,
+  },
+  {
     entry: ["src/instrumentation/index.ts"],
     format: ["cjs", "esm"],
     outDir: "dist/instrumentation",
