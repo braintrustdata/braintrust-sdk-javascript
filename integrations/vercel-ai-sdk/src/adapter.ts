@@ -26,7 +26,9 @@ export function toAIStream(
   callbacks?: AIStreamCallbacksAndOptions,
 ): ReadableStream<Uint8Array> {
   const btStream =
-    stream instanceof BraintrustStream ? stream : new BraintrustStream(stream);
+    stream instanceof BraintrustStream
+      ? stream
+      : new BraintrustStream(stream as ReadableStream<BraintrustStreamChunk>);
 
   return btStream
     .toReadableStream()
