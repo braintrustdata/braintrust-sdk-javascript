@@ -1,5 +1,18 @@
-import { AIStreamCallbacksAndOptions, formatStreamPart } from "ai";
 import { BraintrustStream, BraintrustStreamChunk } from "braintrust";
+
+export interface AIStreamCallbacksAndOptions {
+  onStart?: () => void | Promise<void>;
+  onCompletion?: (completion: string) => void | Promise<void>;
+  onFinal?: (completion: string) => void | Promise<void>;
+  onToken?: (token: string) => void | Promise<void>;
+  onText?: (text: string) => void | Promise<void>;
+}
+
+function formatStreamPart(type: "text" | "data", value: unknown): string {
+  const code = type === "text" ? "0" : "2";
+  return `${code}:${JSON.stringify(value)}\n`;
+}
+
 import { ReadableStream, TransformStream } from "stream/web";
 
 export type BraintrustStreamOrReadable =
