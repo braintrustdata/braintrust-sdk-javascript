@@ -49,6 +49,12 @@
     ]
   },
   {
+    "scenarioDirName": "genkit-instrumentation",
+    "label": "Genkit Instrumentation",
+    "metadataScenario": "genkit-instrumentation",
+    "variants": [{ "variantKey": "genkit-v1-33-0", "label": "v1.33.0" }]
+  },
+  {
     "scenarioDirName": "groq-instrumentation",
     "label": "Groq Instrumentation",
     "metadataScenario": "groq-instrumentation",
