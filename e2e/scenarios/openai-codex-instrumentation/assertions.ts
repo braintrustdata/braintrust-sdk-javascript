@@ -6,8 +6,10 @@ import {
 } from "../../helpers/file-snapshot";
 import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
 import { normalizeForSnapshot, type Json } from "../../helpers/normalize";
-import { withScenarioHarness } from "../../helpers/scenario-harness";
-import { E2E_TAGS } from "../../helpers/tags";
+import {
+  withScenarioHarness,
+  type ScenarioRunContext,
+} from "../../helpers/scenario-harness";
 import { findLatestSpan } from "../../helpers/trace-selectors";
 import { summarizeWrapperContract } from "../../helpers/wrapper-contract";
 import { ROOT_NAME, SCENARIO_NAME } from "./scenario.impl.mjs";
@@ -15,22 +17,18 @@ import { ROOT_NAME, SCENARIO_NAME } from "./scenario.impl.mjs";
 type RunOpenAICodexScenario = (harness: {
   runNodeScenarioDir: (options: {
     entry: string;
-    env?: Record<string, string>;
     nodeArgs: string[];
-    runContext?: { variantKey: string };
+    runContext?: ScenarioRunContext;
     scenarioDir: string;
     timeoutMs: number;
   }) => Promise<unknown>;
   runScenarioDir: (options: {
     entry: string;
-    env?: Record<string, string>;
-    runContext?: { variantKey: string };
+    runContext?: ScenarioRunContext;
     scenarioDir: string;
     timeoutMs: number;
   }) => Promise<unknown>;
 }) => Promise<void>;
-
-type CodexScenarioMode = "mock" | "real";
 
 const OPERATION_NAMES = [
   "openai-codex-run-operation",
@@ -83,7 +81,9 @@ function latestSpansByType(
     if (!latest.has(event.span.id)) {
       order.push(event.span.id);
     }
-    latest.set(event.span.id, event);
+    if (shouldPreferSpanUpdate(latest.get(event.span.id), event)) {
+      latest.set(event.span.id, event);
+    }
   }
 
   return order.flatMap((spanId) => {
@@ -110,13 +110,31 @@ function latestSpansForParent(
     if (!latest.has(event.span.id)) {
       order.push(event.span.id);
     }
-    latest.set(event.span.id, event);
+    if (shouldPreferSpanUpdate(latest.get(event.span.id), event)) {
+      latest.set(event.span.id, event);
+    }
   }
 
   return order.flatMap((spanId) => {
     const event = latest.get(spanId);
     return event ? [event] : [];
   });
+}
+
+function shouldPreferSpanUpdate(
+  previous: CapturedLogEvent | undefined,
+  next: CapturedLogEvent,
+): boolean {
+  if (!previous) {
+    return true;
+  }
+  if (next.span.ended && !previous.span.ended) {
+    return true;
+  }
+  if (previous.span.ended && !next.span.ended) {
+    return false;
+  }
+  return true;
 }
 
 function expectPositiveMetric(
@@ -140,21 +158,6 @@ function outputText(event: CapturedLogEvent | undefined): string {
 function sequenceNumber(event: CapturedLogEvent): number | undefined {
   const value = event.metadata?.["openai_codex.llm_sequence"];
   return typeof value === "number" ? value : undefined;
-}
-
-function childSpanLabel(event: CapturedLogEvent): string {
-  return event.span.type === "llm" ? "llm" : (event.span.name ?? "");
-}
-
-function llmOutput(event: CapturedLogEvent): {
-  message?: string;
-  reasoning?: string;
-} {
-  return event.output &&
-    typeof event.output === "object" &&
-    !Array.isArray(event.output)
-    ? (event.output as { message?: string; reasoning?: string })
-    : {};
 }
 
 function summarizeSpan(event: CapturedLogEvent | undefined): Json {
@@ -196,6 +199,12 @@ function summarizeLlmSpan(event: CapturedLogEvent | undefined): Json {
   return summary as Json;
 }
 
+function summarizeToolNames(events: CapturedLogEvent[]): Json {
+  return [...new Set(events.map((event) => event.span.name))]
+    .filter((name): name is string => typeof name === "string")
+    .sort();
+}
+
 function summarize(events: CapturedLogEvent[]): Json {
   const runTask = findCodexTask(events, "openai-codex-run-operation");
   const streamedTask = findCodexTask(
@@ -220,19 +229,14 @@ function summarize(events: CapturedLogEvent[]): Json {
       task: summarizeSpan(streamedTask),
     },
     llms: llmSpans.map(summarizeLlmSpan),
-    tools: toolSpans.map(summarizeSpan),
+    tools: summarizeToolNames(toolSpans),
   } as Json);
 }
 
-function mockSnapshotPath(options: {
-  snapshotName?: string;
-  testFileUrl?: string;
+function spanSnapshotPath(options: {
+  snapshotName: string;
+  testFileUrl: string;
 }): string {
-  if (!options.snapshotName || !options.testFileUrl) {
-    throw new Error(
-      "Mock OpenAI Codex instrumentation assertions require snapshotName and testFileUrl",
-    );
-  }
   return resolveFileSnapshotPath(
     options.testFileUrl,
     `${options.snapshotName}.span-events.json`,
@@ -240,15 +244,13 @@ function mockSnapshotPath(options: {
 }
 
 export function defineOpenAICodexInstrumentationAssertions(options: {
-  mode: CodexScenarioMode;
   name: string;
   runScenario: RunOpenAICodexScenario;
-  snapshotName?: string;
-  testFileUrl?: string;
+  snapshotName: string;
+  testFileUrl: string;
   timeoutMs: number;
 }): void {
   const testConfig = {
-    ...(options.mode === "mock" ? { tags: [E2E_TAGS.hermetic] } : {}),
     timeout: options.timeoutMs,
   };
 
@@ -296,8 +298,7 @@ export function defineOpenAICodexInstrumentationAssertions(options: {
 
       for (const operationName of OPERATION_NAMES) {
         const task = findCodexTask(events, operationName);
-        const childSpans = latestSpansForParent(events, task?.span.id);
-        const taskLlmSpans = childSpans.filter(
+        const taskLlmSpans = latestSpansForParent(events, task?.span.id).filter(
           (event) => event.span.type === "llm",
         );
         const sequences = taskLlmSpans
@@ -307,33 +308,26 @@ export function defineOpenAICodexInstrumentationAssertions(options: {
         expect(taskLlmSpans.length).toBeGreaterThanOrEqual(1);
         expect(sequences[0]).toBe(1);
         expect(sequences).toEqual([...sequences].sort((a, b) => a - b));
-        expect(taskLlmSpans.some((event) => outputText(event).length > 2)).toBe(
-          true,
-        );
       }
     });
 
     test("captures Codex tool spans emitted by the agent", testConfig, () => {
       const toolSpans = latestSpansByType(events, "tool");
 
-      if (options.mode === "mock") {
-        expect(toolSpans.length).toBeGreaterThanOrEqual(OPERATION_NAMES.length);
-        expect(
-          toolSpans.some(
-            (event) => event.span.name === "tool: command_execution",
-          ),
-        ).toBe(true);
-      }
+      expect(toolSpans.length).toBeGreaterThanOrEqual(1);
+      expect(
+        toolSpans.some(
+          (event) => event.span.name === "tool: command_execution",
+        ),
+      ).toBe(true);
 
       for (const operationName of OPERATION_NAMES) {
         const task = findCodexTask(events, operationName);
-        const childSpans = latestSpansForParent(events, task?.span.id);
-        const childTypes = childSpans.map((event) => event.span.type);
+        const childTypes = latestSpansForParent(events, task?.span.id).map(
+          (event) => event.span.type,
+        );
 
         expect(childTypes).toContain("llm");
-        if (options.mode === "mock" || childTypes.includes("tool")) {
-          expect(childTypes).toContain("tool");
-        }
       }
     });
 
@@ -350,82 +344,11 @@ export function defineOpenAICodexInstrumentationAssertions(options: {
       }
     });
 
-    if (options.mode === "mock") {
-      test(
-        "captures deterministic mock LLM and tool details",
-        testConfig,
-        () => {
-          const llmSpans = latestSpansByType(events, "llm");
-          const toolSpans = latestSpansByType(events, "tool");
-
-          expect(llmSpans).toHaveLength(8);
-          expect(
-            llmSpans.some((event) => {
-              const output = llmOutput(event);
-              return (
-                output.reasoning === "final reasoning OPENAI_CODEX_RUN_OK" &&
-                output.message === "Codex OPENAI_CODEX_RUN_OK"
-              );
-            }),
-          ).toBe(true);
-          expect(
-            llmSpans.some(
-              (event) =>
-                llmOutput(event).reasoning ===
-                "reasoning after command OPENAI_CODEX_STREAM_OK",
-            ),
-          ).toBe(true);
-
-          for (const operationName of OPERATION_NAMES) {
-            const task = findCodexTask(events, operationName);
-            expect(
-              latestSpansForParent(events, task?.span.id).map(childSpanLabel),
-            ).toEqual([
-              "llm",
-              "tool: command_execution",
-              "llm",
-              "tool: read_file",
-              "llm",
-              "tool: web_search",
-              "llm",
-            ]);
-          }
-
-          expect(
-            toolSpans.some(
-              (event) =>
-                event.span.name === "tool: command_execution" &&
-                event.output === "codex_tool_ok",
-            ),
-          ).toBe(true);
-          expect(
-            toolSpans.some(
-              (event) =>
-                event.span.name === "tool: read_file" &&
-                event.metadata?.["openai_codex.mcp.server"] === "filesystem",
-            ),
-          ).toBe(true);
-        },
+    test("matches the span snapshot", testConfig, async () => {
+      await matchFileSnapshot(
+        formatJsonFileSnapshot(summarize(events)),
+        spanSnapshotPath(options),
       );
-
-      test("captures deterministic mock usage metrics", testConfig, () => {
-        const runTask = findCodexTask(events, "openai-codex-run-operation");
-
-        expect(runTask?.metrics).toMatchObject({
-          completion_reasoning_tokens: 5,
-          completion_tokens: 7,
-          prompt_cached_tokens: 3,
-          prompt_tokens: 11,
-          tokens: 18,
-        });
-      });
-
-      test("matches the mock span snapshot", testConfig, async () => {
-        await matchFileSnapshot(
-          formatJsonFileSnapshot(summarize(events)),
-          mockSnapshotPath(options),
-        );
-      });
-    }
+    });
   });
 }

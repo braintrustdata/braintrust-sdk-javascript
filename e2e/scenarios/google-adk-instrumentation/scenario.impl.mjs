@@ -11,10 +11,21 @@ const SCENARIO_NAME = "google-adk-instrumentation";
 
 async function runGoogleADKInstrumentationScenario(adk, options = {}) {
   const decoratedADK = options.decorateSDK ? options.decorateSDK(adk) : adk;
-  const { LlmAgent, SequentialAgent, InMemoryRunner, FunctionTool } =
+  const { LlmAgent, SequentialAgent, InMemoryRunner, FunctionTool, Gemini } =
     decoratedADK;
   process.env.GOOGLE_GENAI_API_KEY ??=
     process.env.GOOGLE_API_KEY ?? process.env.GEMINI_API_KEY;
+  const googleGenAIBaseUrl = process.env.GOOGLE_GENAI_BASE_URL;
+  const agentModel = googleGenAIBaseUrl
+    ? new (class extends Gemini {
+        getHttpOptions() {
+          return {
+            ...super.getHttpOptions(),
+            baseUrl: googleGenAIBaseUrl,
+          };
+        }
+      })({ model: GOOGLE_MODEL })
+    : GOOGLE_MODEL;
 
   // Create a simple tool
   const getWeatherTool = new FunctionTool({
@@ -38,7 +49,7 @@ async function runGoogleADKInstrumentationScenario(adk, options = {}) {
   // Create a simple agent
   const agent = new LlmAgent({
     name: "weather_agent",
-    model: GOOGLE_MODEL,
+    model: agentModel,
     instruction: "Answer the user's question in one short sentence.",
     beforeAgentCallback: async () => {
       await getWeatherTool.runAsync({
@@ -66,7 +77,7 @@ async function runGoogleADKInstrumentationScenario(adk, options = {}) {
 
   const greeter = new LlmAgent({
     name: "greeter",
-    model: GOOGLE_MODEL,
+    model: agentModel,
     instruction: "Greet the user with a single short sentence.",
     beforeAgentCallback: () => ({
       role: "model",
@@ -75,7 +86,7 @@ async function runGoogleADKInstrumentationScenario(adk, options = {}) {
   });
   const farewell = new LlmAgent({
     name: "farewell",
-    model: GOOGLE_MODEL,
+    model: agentModel,
     instruction: "Say a single short closing sentence.",
     beforeAgentCallback: () => ({
       role: "model",

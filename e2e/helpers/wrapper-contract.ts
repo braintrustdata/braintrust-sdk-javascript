@@ -228,10 +228,25 @@ export function payloadRowsForRootSpan(
     return [];
   }
 
-  const rows = payloads
-    .flatMap((payload) => payload.rows)
-    .filter((row) => row.root_span_id === rootSpanId)
-    .flatMap((row) => splitTerminalMergeRow(row));
+  const rootRows: CapturedLogRow[] = [];
+  const mergedRows = new Map<string, CapturedLogRow>();
+
+  for (const row of payloads.flatMap((payload) => payload.rows)) {
+    if (row.root_span_id !== rootSpanId) continue;
+
+    if (row.span_id === rootSpanId) {
+      rootRows.push(...splitTerminalMergeRow(row));
+      continue;
+    }
+
+    const key = payloadRowIdentity(row);
+    mergedRows.set(key, mergePayloadRow(mergedRows.get(key), row));
+  }
+
+  const rows = [
+    ...rootRows,
+    ...[...mergedRows.values()].flatMap((row) => splitTerminalMergeRow(row)),
+  ];
 
   return sortPayloadRows(rows);
 }

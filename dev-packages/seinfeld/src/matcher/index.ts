@@ -46,5 +46,3 @@ export function asNormalized<T extends { method: string; url: string }>(
 ): T & { matchKey: string } {
   return { ...req, matchKey: computeMatchKey(req.method, req.url) };
 }
-
-export { createDefaultMatcher } from "./default";

@@ -4,7 +4,7 @@
       "callIndex": 0,
       "id": "ecdbd469610aca8b",
       "matchKey": "POST generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent",
-      "recordedAt": "2026-05-07T21:22:52.090Z",
+      "recordedAt": "2026-05-13T16:26:23.143Z",
       "request": {
         "body": {
           "kind": "json",
@@ -25,31 +25,11 @@
             "systemInstruction": {
               "parts": [
                 {
-                  "text": "You are an agent. Your internal name is \"weather_agent\".\n\nFor weather questions, first call the get_weather tool exactly once, then answer with the tool result in one short sentence. Do not answer from memory and do not call any tool after you have a tool result."
+                  "text": "You are an agent. Your internal name is \"weather_agent\".\n\nAnswer the user's question in one short sentence."
                 }
               ],
               "role": "user"
-            },
-            "tools": [
-              {
-                "functionDeclarations": [
-                  {
-                    "description": "Get the current weather in a given location",
-                    "name": "get_weather",
-                    "parameters": {
-                      "properties": {
-                        "location": {
-                          "description": "The city and country to look up",
-                          "type": "STRING"
-                        }
-                      },
-                      "required": ["location"],
-                      "type": "OBJECT"
-                    }
-                  }
-                ]
-              }
-            ]
+            }
           }
         },
         "headers": {},
@@ -65,148 +45,7 @@
                 "content": {
                   "parts": [
                     {
-                      "functionCall": {
-                        "args": {
-                          "location": "Paris, France"
-                        },
-                        "name": "get_weather"
-                      }
-                    }
-                  ],
-                  "role": "model"
-                },
-                "finishMessage": "Model generated function call(s).",
-                "finishReason": "STOP",
-                "index": 0
-              }
-            ],
-            "modelVersion": "gemini-2.5-flash-lite",
-            "responseId": "qwL9aee0NPTM-sAP8qfteQ",
-            "usageMetadata": {
-              "candidatesTokenCount": 17,
-              "promptTokenCount": 115,
-              "promptTokensDetails": [
-                {
-                  "modality": "TEXT",
-                  "tokenCount": 115
-                }
-              ],
-              "serviceTier": "standard",
-              "totalTokenCount": 132
-            }
-          }
-        },
-        "headers": {
-          "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
-          "content-encoding": "gzip",
-          "content-length": "377",
-          "content-type": "application/json; charset=UTF-8",
-          "date": "Thu, 07 May 2026 21:22:52 GMT",
-          "server": "scaffolding on HTTPServer2",
-          "server-timing": "gfet4t7; dur=603",
-          "vary": "Origin, X-Origin, Referer",
-          "x-content-type-options": "nosniff",
-          "x-frame-options": "SAMEORIGIN",
-          "x-gemini-service-tier": "standard",
-          "x-xss-protection": "0"
-        },
-        "status": 200
-      }
-    },
-    {
-      "callIndex": 1,
-      "id": "57c53193f8eaebc1",
-      "matchKey": "POST generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent",
-      "recordedAt": "2026-05-07T21:22:52.949Z",
-      "request": {
-        "body": {
-          "kind": "json",
-          "value": {
-            "contents": [
-              {
-                "parts": [
-                  {
-                    "text": "What is the weather in Paris, France?"
-                  }
-                ],
-                "role": "user"
-              },
-              {
-                "parts": [
-                  {
-                    "functionCall": {
-                      "args": {
-                        "location": "Paris, France"
-                      },
-                      "name": "get_weather"
-                    }
-                  }
-                ],
-                "role": "model"
-              },
-              {
-                "parts": [
-                  {
-                    "functionResponse": {
-                      "name": "get_weather",
-                      "response": {
-                        "condition": "sunny",
-                        "location": "Paris, France",
-                        "temperature": 72
-                      }
-                    }
-                  }
-                ],
-                "role": "user"
-              }
-            ],
-            "generationConfig": {
-              "temperature": 0
-            },
-            "systemInstruction": {
-              "parts": [
-                {
-                  "text": "You are an agent. Your internal name is \"weather_agent\".\n\nFor weather questions, first call the get_weather tool exactly once, then answer with the tool result in one short sentence. Do not answer from memory and do not call any tool after you have a tool result."
-                }
-              ],
-              "role": "user"
-            },
-            "tools": [
-              {
-                "functionDeclarations": [
-                  {
-                    "description": "Get the current weather in a given location",
-                    "name": "get_weather",
-                    "parameters": {
-                      "properties": {
-                        "location": {
-                          "description": "The city and country to look up",
-                          "type": "STRING"
-                        }
-                      },
-                      "required": ["location"],
-                      "type": "OBJECT"
-                    }
-                  }
-                ]
-              }
-            ]
-          }
-        },
-        "headers": {},
-        "method": "POST",
-        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent"
-      },
-      "response": {
-        "body": {
-          "kind": "json",
-          "value": {
-            "candidates": [
-              {
-                "content": {
-                  "parts": [
-                    {
-                      "text": "The weather in Paris, France is sunny with a temperature of 72 degrees."
+                      "text": "The weather in Paris, France is currently 15°C and cloudy."
                     }
                   ],
                   "role": "model"
@@ -216,36 +55,37 @@
               }
             ],
             "modelVersion": "gemini-2.5-flash-lite",
-            "responseId": "rAL9acrtKsCZ_uMP74Xy6Ac",
+            "responseId": "L6YEaorfAcGM28oPx_-4sAc",
             "usageMetadata": {
-              "candidatesTokenCount": 17,
-              "promptTokenCount": 162,
+              "candidatesTokenCount": 16,
+              "promptTokenCount": 37,
               "promptTokensDetails": [
                 {
                   "modality": "TEXT",
-                  "tokenCount": 162
+                  "tokenCount": 37
                 }
               ],
               "serviceTier": "standard",
-              "totalTokenCount": 179
+              "totalTokenCount": 53
             }
           }
         },
         "headers": {
           "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
           "content-encoding": "gzip",
-          "content-length": "346",
           "content-type": "application/json; charset=UTF-8",
-          "date": "Thu, 07 May 2026 21:22:52 GMT",
+          "date": "Wed, 13 May 2026 16:26:23 GMT",
           "server": "scaffolding on HTTPServer2",
-          "server-timing": "gfet4t7; dur=747",
+          "server-timing": "gfet4t7; dur=5523",
+          "transfer-encoding": "chunked",
           "vary": "Origin, X-Origin, Referer",
           "x-content-type-options": "nosniff",
           "x-frame-options": "SAMEORIGIN",
           "x-gemini-service-tier": "standard",
           "x-xss-protection": "0"
         },
-        "status": 200
+        "status": 200,
+        "statusText": "OK"
       }
     }
   ],

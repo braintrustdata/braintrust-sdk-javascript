@@ -10,7 +10,6 @@ import {
   resolveScenarioDir,
   withScenarioHarness,
 } from "../../helpers/scenario-harness";
-import { E2E_TAGS } from "../../helpers/tags";
 import {
   extractOtelSpans,
   summarizeEvent,
@@ -104,7 +103,6 @@ function dedupeProjectRegisterRequestSummaries(
 test(
   "nextjs-instrumentation builds a Next.js app and captures Node and Edge runtime traces",
   {
-    tags: [E2E_TAGS.hermetic],
     timeout: TIMEOUT_MS,
   },
   async () => {

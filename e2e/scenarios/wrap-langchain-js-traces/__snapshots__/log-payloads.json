@@ -118,7 +118,7 @@
       },
       "model": "gpt-4o-mini-2024-07-18",
       "options": {},
-      "run_id": "<uuid:7>",
+      "run_id": "<langchain-run_id>",
       "serialized": {
         "id": [
           "langchain",
@@ -167,7 +167,7 @@
               "kwargs": {
                 "additional_kwargs": {},
                 "content": "<llm-response>",
-                "id": "<span:6>",
+                "id": null,
                 "invalid_tool_calls": [],
                 "response_metadata": {
                   "finish_reason": "stop",
@@ -233,7 +233,7 @@
       "name": "ChatOpenAI",
       "type": "llm"
     },
-    "span_id": "<span:7>",
+    "span_id": "<span:6>",
     "span_parents": [
       "<span:4>"
     ]
@@ -245,7 +245,7 @@
       "caller_lineno": 0
     },
     "created": "<timestamp>",
-    "id": "<span:8>",
+    "id": "<span:7>",
     "log_id": "g",
     "metadata": {
       "operation": "chain",
@@ -261,7 +261,7 @@
       "exec_counter": 3,
       "name": "langchain-chain-operation"
     },
-    "span_id": "<span:9>",
+    "span_id": "<span:8>",
     "span_parents": [
       "<span:2>"
     ]
@@ -273,7 +273,7 @@
       "caller_lineno": 0
     },
     "created": "<timestamp>",
-    "id": "<span:10>",
+    "id": "<span:9>",
     "input": {
       "word": "PARIS"
     },
@@ -285,7 +285,7 @@
         "sdk_language": "javascript"
       },
       "metadata": {},
-      "run_id": "<uuid:13>",
+      "run_id": "<langchain-run_id>",
       "serialized": {
         "id": [
           "langchain_core",
@@ -380,7 +380,7 @@
       "kwargs": {
         "additional_kwargs": {},
         "content": "PARIS",
-        "id": "<span:11>",
+        "id": null,
         "invalid_tool_calls": [],
         "response_metadata": {
           "finish_reason": "stop",
@@ -434,9 +434,9 @@
       "name": "RunnableSequence",
       "type": "task"
     },
-    "span_id": "<span:12>",
+    "span_id": "<span:10>",
     "span_parents": [
-      "<span:9>"
+      "<span:8>"
     ]
   },
   {
@@ -446,7 +446,7 @@
       "caller_lineno": 0
     },
     "created": "<timestamp>",
-    "id": "<span:13>",
+    "id": "<span:11>",
     "input": {
       "word": "PARIS"
     },
@@ -459,8 +459,8 @@
       },
       "metadata": {},
       "name": "ChatPromptTemplate",
-      "parent_run_id": "<uuid:13>",
-      "run_id": "<uuid:17>",
+      "parent_run_id": "<langchain-parent_run_id>",
+      "run_id": "<langchain-run_id>",
       "run_type": "prompt",
       "serialized": {
         "id": [
@@ -550,9 +550,9 @@
       "name": "ChatPromptTemplate",
       "type": "task"
     },
-    "span_id": "<span:14>",
+    "span_id": "<span:12>",
     "span_parents": [
-      "<span:12>"
+      "<span:10>"
     ]
   },
   {
@@ -562,7 +562,7 @@
       "caller_lineno": 0
     },
     "created": "<timestamp>",
-    "id": "<span:15>",
+    "id": "<span:13>",
     "input": [
       [
         {
@@ -609,8 +609,8 @@
       },
       "model": "gpt-4o-mini-2024-07-18",
       "options": {},
-      "parent_run_id": "<uuid:13>",
-      "run_id": "<uuid:20>",
+      "parent_run_id": "<langchain-parent_run_id>",
+      "run_id": "<langchain-run_id>",
       "serialized": {
         "id": [
           "langchain",
@@ -661,7 +661,7 @@
               "kwargs": {
                 "additional_kwargs": {},
                 "content": "<llm-response>",
-                "id": "<span:11>",
+                "id": null,
                 "invalid_tool_calls": [],
                 "response_metadata": {
                   "finish_reason": "stop",
@@ -727,9 +727,9 @@
       "name": "ChatOpenAI",
       "type": "llm"
     },
-    "span_id": "<span:16>",
+    "span_id": "<span:14>",
     "span_parents": [
-      "<span:12>"
+      "<span:10>"
     ]
   },
   {
@@ -739,7 +739,7 @@
       "caller_lineno": 0
     },
     "created": "<timestamp>",
-    "id": "<span:17>",
+    "id": "<span:15>",
     "log_id": "g",
     "metadata": {
       "operation": "stream",
@@ -755,7 +755,7 @@
       "exec_counter": 7,
       "name": "langchain-stream-operation"
     },
-    "span_id": "<span:18>",
+    "span_id": "<span:16>",
     "span_parents": [
       "<span:2>"
     ]
@@ -767,7 +767,7 @@
       "caller_lineno": 0
     },
     "created": "<timestamp>",
-    "id": "<span:19>",
+    "id": "<span:17>",
     "input": [
       [
         {
@@ -817,7 +817,7 @@
       },
       "model": "gpt-4o-mini-2024-07-18",
       "options": {},
-      "run_id": "<uuid:25>",
+      "run_id": "<langchain-run_id>",
       "serialized": {
         "id": [
           "langchain",
@@ -873,7 +873,7 @@
               "kwargs": {
                 "additional_kwargs": {},
                 "content": "<llm-response>",
-                "id": "<span:20>",
+                "id": null,
                 "invalid_tool_calls": [],
                 "response_metadata": {
                   "completion": 0,
@@ -937,9 +937,9 @@
       "name": "ChatOpenAI",
       "type": "llm"
     },
-    "span_id": "<span:21>",
+    "span_id": "<span:18>",
     "span_parents": [
-      "<span:18>"
+      "<span:16>"
     ]
   },
   {
@@ -949,7 +949,7 @@
       "caller_lineno": 0
     },
     "created": "<timestamp>",
-    "id": "<span:22>",
+    "id": "<span:19>",
     "log_id": "g",
     "metadata": {
       "operation": "tool",
@@ -965,7 +965,7 @@
       "exec_counter": 9,
       "name": "langchain-tool-operation"
     },
-    "span_id": "<span:23>",
+    "span_id": "<span:20>",
     "span_parents": [
       "<span:2>"
     ]
@@ -977,7 +977,7 @@
       "caller_lineno": 0
     },
     "created": "<timestamp>",
-    "id": "<span:24>",
+    "id": "<span:21>",
     "input": [
       [
         {
@@ -1071,7 +1071,7 @@
           }
         ]
       },
-      "run_id": "<uuid:31>",
+      "run_id": "<langchain-run_id>",
       "serialized": {
         "id": [
           "langchain",
@@ -1125,13 +1125,13 @@
                         "arguments": "{\"location\":\"Paris, France\"}",
                         "name": "get_weather"
                       },
-                      "id": "<span:26>",
+                      "id": null,
                       "type": "function"
                     }
                   ]
                 },
                 "content": "",
-                "id": "<span:25>",
+                "id": null,
                 "invalid_tool_calls": [],
                 "response_metadata": {
                   "finish_reason": "tool_calls",
@@ -1164,7 +1164,7 @@
                     "args": {
                       "location": "Paris, France"
                     },
-                    "id": "<span:26>",
+                    "id": null,
                     "name": "get_weather",
                     "type": "tool_call"
                   }
@@ -1206,9 +1206,9 @@
       "name": "ChatOpenAI",
       "type": "llm"
     },
-    "span_id": "<span:27>",
+    "span_id": "<span:22>",
     "span_parents": [
-      "<span:23>"
+      "<span:20>"
     ]
   },
   {
@@ -1218,7 +1218,7 @@
       "caller_lineno": 0
     },
     "created": "<timestamp>",
-    "id": "<span:28>",
+    "id": "<span:23>",
     "log_id": "g",
     "metadata": {
       "operation": "tool-result",
@@ -1234,7 +1234,7 @@
       "exec_counter": 11,
       "name": "langchain-tool-result-operation"
     },
-    "span_id": "<span:29>",
+    "span_id": "<span:24>",
     "span_parents": [
       "<span:2>"
     ]
@@ -1246,7 +1246,7 @@
       "caller_lineno": 0
     },
     "created": "<timestamp>",
-    "id": "<span:30>",
+    "id": "<span:25>",
     "input": [
       [
         {
@@ -1366,7 +1366,7 @@
           }
         ]
       },
-      "run_id": "<uuid:38>",
+      "run_id": "<langchain-run_id>",
       "serialized": {
         "id": [
           "langchain",
@@ -1420,13 +1420,13 @@
                         "arguments": "{\"operation\":\"multiply\",\"a\":127,\"b\":49}",
                         "name": "calculate"
                       },
-                      "id": "<span:26>",
+                      "id": null,
                       "type": "function"
                     }
                   ]
                 },
                 "content": "",
-                "id": "<span:31>",
+                "id": null,
                 "invalid_tool_calls": [],
                 "response_metadata": {
                   "finish_reason": "tool_calls",
@@ -1461,7 +1461,7 @@
                       "b": 49,
                       "operation": "multiply"
                     },
-                    "id": "<span:26>",
+                    "id": null,
                     "name": "calculate",
                     "type": "tool_call"
                   }
@@ -1503,9 +1503,9 @@
       "name": "ChatOpenAI",
       "type": "llm"
     },
-    "span_id": "<span:32>",
+    "span_id": "<span:26>",
     "span_parents": [
-      "<span:29>"
+      "<span:24>"
     ]
   },
   {
@@ -1515,7 +1515,7 @@
       "caller_lineno": 0
     },
     "created": "<timestamp>",
-    "id": "<span:33>",
+    "id": "<span:27>",
     "input": [
       [
         {
@@ -1550,7 +1550,7 @@
                   "b": 49,
                   "operation": "multiply"
                 },
-                "id": "<span:26>",
+                "id": null,
                 "name": "calculate",
                 "type": "tool_call"
               }
@@ -1677,7 +1677,7 @@
           }
         ]
       },
-      "run_id": "<uuid:42>",
+      "run_id": "<langchain-run_id>",
       "serialized": {
         "id": [
           "langchain",
@@ -1726,7 +1726,7 @@
               "kwargs": {
                 "additional_kwargs": {},
                 "content": "<llm-response>",
-                "id": "<span:34>",
+                "id": null,
                 "invalid_tool_calls": [],
                 "response_metadata": {
                   "finish_reason": "stop",
@@ -1792,9 +1792,9 @@
       "name": "ChatOpenAI",
       "type": "llm"
     },
-    "span_id": "<span:35>",
+    "span_id": "<span:28>",
     "span_parents": [
-      "<span:29>"
+      "<span:24>"
     ]
   }
 ]

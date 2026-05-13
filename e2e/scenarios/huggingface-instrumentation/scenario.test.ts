@@ -4,7 +4,6 @@ import {
   readInstalledPackageVersion,
   resolveScenarioDir,
 } from "../../helpers/scenario-harness";
-import { cassetteTagsFor } from "../../helpers/tags";
 import { defineHuggingFaceInstrumentationAssertions } from "./assertions";
 import {
   HUGGINGFACE_SCENARIO_SPECS,
@@ -27,9 +26,7 @@ const huggingFaceScenarios = await Promise.all(
 );
 
 for (const scenario of huggingFaceScenarios) {
-  const tags = cassetteTagsFor(import.meta.url, scenario.snapshotName);
-
-  describe(`huggingface inference sdk ${scenario.version}`, { tags }, () => {
+  describe(`huggingface inference sdk ${scenario.version}`, () => {
     defineHuggingFaceInstrumentationAssertions({
       name: "wrapped instrumentation",
       runScenario: async ({ runScenarioDir }) => {

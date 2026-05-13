@@ -252,7 +252,12 @@ async function handleCodexEvent(
       await handleCodexItemCompleted(state, event.item);
       return;
     case "error":
-      await finalizeCodexRun(state, { error: event.message });
+      // Codex may emit transient reconnect notices as `error` events before
+      // the turn later completes successfully. Fatal turn failures are
+      // represented by `turn.failed` or by the event stream throwing.
+      if (event.message) {
+        debugLogger.debug("OpenAI Codex stream event:", event.message);
+      }
       return;
     default:
       return;

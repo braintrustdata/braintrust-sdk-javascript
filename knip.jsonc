@@ -12,13 +12,8 @@
   },
   "workspaces": {
     "dev-packages/seinfeld": {
-      "entry": [
-        "src/index.ts",
-        "src/vitest.ts",
-        "scripts/**/*.mjs",
-        "test/**/*.ts",
-      ],
-      "project": ["src/**/*.ts", "test/**/*.ts", "scripts/**/*.mjs"],
+      "entry": ["src/index.ts"],
+      "project": ["src/**/*.ts"],
     },
     "e2e": {
       "entry": [

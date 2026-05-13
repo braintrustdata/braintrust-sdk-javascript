@@ -1,62 +1,50 @@
 import { createHash } from "node:crypto";
-import { AsyncLocalStorage } from "node:async_hooks";
-import type { SetupServer } from "msw/node";
-import { setupServer } from "msw/node";
+import {
+  createServer,
+  type IncomingHttpHeaders,
+  type IncomingMessage,
+  type Server,
+  type ServerResponse,
+} from "node:http";
+import type { AddressInfo } from "node:net";
 import type {
   BodyPayload,
   CassetteFile,
   CassetteEntry,
   CassetteMode,
   RecordedRequest,
-  RecordedResponse,
 } from "./cassette";
 import { AggregateCassetteMissError, CassetteMissError } from "./errors";
 import { CURRENT_FORMAT_VERSION } from "./format";
 import { applyFilters } from "./normalizer";
 import type { FilterSpec } from "./normalizer";
-import { asNormalized, createDefaultMatcher } from "./matcher";
+import { asNormalized } from "./matcher";
 import type { MatchCandidate, Matcher } from "./matcher";
-import {
-  applyRequestRedaction,
-  applyResponseRedaction,
-  checkStrictRedaction,
-  resolveRedactors,
-} from "./redactor";
+import { createDefaultMatcher } from "./matcher/default";
+import { applyRequestRedaction, applyResponseRedaction } from "./redactor";
 import type { RedactionSpec } from "./redactor";
 import type {
   BodyOrDraft,
   RecordedRequestOrDraft,
   RecordedResponseOrDraft,
-} from "./msw";
+} from "./http";
 import {
-  HttpResponse,
   buildResponse,
-  bypass,
-  http,
-  passthrough,
   recordRequest,
   recordRequestDraft,
   recordResponseDraft,
-} from "./msw";
+} from "./http";
 import type { CassetteStore } from "./store";
-import { createJsonFileStore } from "./store";
 
 // Injected at build time by tsup define. Falls back to 'dev' when running
-// directly via ts-node / vitest without a build step.
+// directly without a build step.
 declare const __SEINFELD_VERSION__: string;
 const SEINFELD_VERSION: string =
   typeof __SEINFELD_VERSION__ !== "undefined" ? __SEINFELD_VERSION__ : "dev";
 
-const DEFAULT_CASSETTE_DIR = "./__cassettes__";
 const DEFAULT_EXTERNAL_BLOB_THRESHOLD = 65536;
 
-function resolveThreshold(
-  opt: number | "always-inline" | false | undefined,
-): number | false {
-  if (opt === undefined) return DEFAULT_EXTERNAL_BLOB_THRESHOLD;
-  if (opt === "always-inline" || opt === false) return false;
-  return opt;
-}
+export type IgnoredRequestMatcher = string | RegExp;
 
 // ---- Internal draft types ------------------------------------------------
 
@@ -65,23 +53,19 @@ type CassetteEntryDraft = Omit<CassetteEntry, "request" | "response"> & {
   response: RecordedResponseOrDraft;
 };
 
-// ---- Per-cassette context stored in ALS ----------------------------------
+// ---- Per-cassette server context -----------------------------------------
 
 interface CassetteContext {
-  // Static config (set at createCassette time, never mutated)
+  // Static config (set at server creation time, never mutated)
   name: string;
   mode: CassetteMode;
   store: CassetteStore;
   matcher: Matcher;
   filters: FilterSpec | undefined;
-  redact: RedactionSpec | undefined;
-  hosts: Array<string | RegExp> | undefined;
-  passthroughHosts: Array<string | RegExp> | undefined;
+  redact: RedactionSpec;
+  ignoredRequests: IgnoredRequestMatcher[] | undefined;
   threshold: number | false;
   onMiss: ((req: RecordedRequest) => void) | undefined;
-  onMatch: ((entry: CassetteEntry, req: RecordedRequest) => void) | undefined;
-  onRecord: ((entry: CassetteEntry) => void) | undefined;
-  onPersist: ((cassette: CassetteFile) => void) | undefined;
 
   // Per-run mutable state (reset on each start)
   candidates: MatchCandidate[];
@@ -90,82 +74,40 @@ interface CassetteContext {
   misses: CassetteMissError[];
 }
 
-// ---- Shared MSW server (refcounted) --------------------------------------
-
-const als = new AsyncLocalStorage<CassetteContext>();
-
-// Fallback for start()/stop() callers where als.enterWith() may not propagate
-// through MSW interceptor async boundaries (e.g. subprocess --import preloads).
-// als.getStore() takes precedence so concurrent use() calls still work correctly.
-let processLevelCtx: CassetteContext | null = null;
-
-let sharedServer: SetupServer | undefined;
-let serverRefcount = 0;
-
-function acquireServer(): void {
-  if (serverRefcount === 0) {
-    sharedServer = setupServer(buildHandler());
-    sharedServer.listen({ onUnhandledRequest: "bypass" });
-  }
-  serverRefcount++;
+function isIgnoredRequest(
+  url: string,
+  ignoredRequests: IgnoredRequestMatcher[] | undefined,
+): boolean {
+  if (!ignoredRequests || ignoredRequests.length === 0) return false;
+  return ignoredRequests.some((matcher) =>
+    typeof matcher === "string" ? url === matcher : matcher.test(url),
+  );
 }
 
-function releaseServer(): void {
-  serverRefcount--;
-  if (serverRefcount === 0 && sharedServer) {
-    sharedServer.close();
-    sharedServer = undefined;
+// ---- Per-request handlers -------------------------------------------------
+
+async function handleCassetteRequest(
+  ctx: CassetteContext,
+  request: Request,
+  getRealResponse: () => Promise<Response>,
+): Promise<Response> {
+  if (isIgnoredRequest(request.url, ctx.ignoredRequests)) {
+    return new Response(null, { status: 204 });
   }
-}
 
-// ---- Static catch-all handler reads from ALS (or process-level fallback) ---
-
-function buildHandler() {
-  return http.all("*", async ({ request }) => {
-    const ctx = als.getStore() ?? processLevelCtx;
-    if (!ctx) return passthrough();
-    if (!shouldIntercept(request.url, ctx.hosts)) return passthrough();
-    if (isPassthroughHost(request.url, ctx.passthroughHosts))
-      return passthrough();
-
-    switch (ctx.mode) {
-      case "replay": {
-        const recorded = await recordRequest(request, ctx.threshold);
-        return handleReplay(ctx, recorded);
-      }
-      case "record": {
-        const draft = await recordRequestDraft(request, ctx.threshold);
-        return handleRecord(ctx, request, draft);
-      }
-      case "passthrough":
-        return passthrough();
+  switch (ctx.mode) {
+    case "replay": {
+      const recorded = await recordRequest(request, ctx.threshold);
+      return handleReplay(ctx, recorded);
     }
-  });
+    case "record": {
+      const draft = await recordRequestDraft(request, ctx.threshold);
+      return handleRecord(ctx, getRealResponse, draft);
+    }
+    case "passthrough":
+      return getRealResponse();
+  }
 }
-
-function shouldIntercept(
-  url: string,
-  hosts: Array<string | RegExp> | undefined,
-): boolean {
-  if (!hosts || hosts.length === 0) return true;
-  const parsed = new URL(url);
-  return hosts.some((h) =>
-    typeof h === "string" ? parsed.host === h : h.test(parsed.host),
-  );
-}
-
-function isPassthroughHost(
-  url: string,
-  passthroughHosts: Array<string | RegExp> | undefined,
-): boolean {
-  if (!passthroughHosts || passthroughHosts.length === 0) return false;
-  const parsed = new URL(url);
-  return passthroughHosts.some((h) =>
-    typeof h === "string" ? parsed.host === h : h.test(parsed.host),
-  );
-}
-
-// ---- Per-request handlers (free functions, take ctx) --------------------
 
 function handleReplay(
   ctx: CassetteContext,
@@ -188,19 +130,23 @@ function handleReplay(
       matchKey,
     });
     ctx.misses.push(error);
-    return Promise.resolve(HttpResponse.error());
+    return Promise.resolve(
+      new Response(JSON.stringify({ error: error.message }), {
+        status: 599,
+        headers: { "content-type": "application/json" },
+      }),
+    );
   }
 
-  ctx.onMatch?.(match, recorded);
   return buildResponse(match.response, { store: ctx.store, name: ctx.name });
 }
 
 async function handleRecord(
   ctx: CassetteContext,
-  request: Request,
+  getRealResponse: () => Promise<Response>,
   recorded: RecordedRequestOrDraft,
 ): Promise<Response> {
-  const realResponse = await fetch(bypass(request));
+  const realResponse = await getRealResponse();
   const captured: RecordedResponseOrDraft = await recordResponseDraft(
     realResponse,
     ctx.threshold,
@@ -230,15 +176,10 @@ async function handleRecord(
   // teed the body stream) can return an empty body, causing callers to
   // misparse the response.
   //
-  // For binary-draft bodies (large responses above the threshold), the
-  // bytes haven't been materialised yet, so fall back to realResponse.clone().
-  if (captured.body.kind !== "binary-draft") {
-    return buildResponse(captured as unknown as RecordedResponse, {
-      store: ctx.store,
-      name: ctx.name,
-    });
-  }
-  return realResponse.clone();
+  return buildResponse(captured, {
+    store: ctx.store,
+    name: ctx.name,
+  });
 }
 
 // ---- Per-run state helpers -----------------------------------------------
@@ -267,14 +208,6 @@ async function persistIfRecord(ctx: CassetteContext): Promise<void> {
   const flushedEntries = await Promise.all(
     ctx.newEntries.map((e) => flushEntry(e, ctx.store, ctx.name)),
   );
-  const configs = resolveRedactors(ctx.redact);
-  const strictConfigs = configs.filter((c) => c.strict);
-  if (strictConfigs.length > 0) {
-    checkStrictRedaction(ctx.name, flushedEntries, strictConfigs);
-  }
-  if (ctx.onRecord) {
-    for (const entry of flushedEntries) ctx.onRecord(entry);
-  }
   // Preserve the original createdAt when re-recording an existing cassette.
   let createdAt = new Date().toISOString();
   try {
@@ -289,7 +222,6 @@ async function persistIfRecord(ctx: CassetteContext): Promise<void> {
     entries: flushedEntries,
   };
   await ctx.store.save(ctx.name, cassette);
-  ctx.onPersist?.(cassette);
 }
 
 function throwFirstMiss(ctx: CassetteContext): void {
@@ -317,7 +249,7 @@ async function flushBody(
   if (!store.saveBlob) {
     throw new Error(
       "Cannot record external binary blobs: the store does not implement saveBlob. " +
-        "Use createJsonFileStore or createMemoryStore, or set externalBlobThreshold: false.",
+        "Use createJsonFileStore.",
     );
   }
   const path = await store.saveBlob(name, body.bytes);
@@ -351,92 +283,117 @@ function makeEntryId(
   return createHash("sha256").update(raw).digest("hex").slice(0, 16);
 }
 
-// ---- Public API ----------------------------------------------------------
+// ---- Public API -----------------------------------------------------------
 
-/** Options for `createCassette`. See README for full semantics. */
-export interface CassetteOptions {
+export interface CassetteServerRoute {
+  /**
+   * Local path prefix that maps to `upstreamOrigin`.
+   * Example: `{ prefix: "/openai", upstreamOrigin: "https://api.openai.com" }`
+   * maps `/openai/v1/chat/completions` to
+   * `https://api.openai.com/v1/chat/completions` for matching and recording.
+   */
+  prefix: string;
+  /** Original provider origin to record in the cassette and proxy to in record mode. */
+  upstreamOrigin: string;
+}
+
+export interface CassetteServerOptions {
   /** Logical cassette name. Maps to a path under the store's root directory. */
   name: string;
   /** Execution mode. Defaults to `'replay'`. */
   mode?: CassetteMode;
-  /** Storage backend. Defaults to a JSON file store at `./__cassettes__`. */
-  store?: CassetteStore;
+  /** Storage backend for cassette JSON and binary sidecars. */
+  store: CassetteStore;
   /** Filter spec (matching-only normalization). */
   filters?: FilterSpec;
-  /** Redaction spec (applied to persisted bytes). Defaults to `'paranoid'`. Pass `[]` to disable. */
-  redact?: RedactionSpec;
-  /** Hosts to intercept. Other hosts pass through. Defaults to all hosts. */
-  hosts?: Array<string | RegExp>;
   /**
-   * Hosts to always pass through, regardless of `hosts`. Useful for a local
-   * mock server that should never be intercepted (e.g. the Braintrust mock
-   * server in e2e tests).
+   * Full request URLs to answer with an empty 204 and exclude from recording
+   * and replay matching. This is intended for background telemetry endpoints
+   * that are nondeterministic and irrelevant to the scenario under test.
    */
-  passthroughHosts?: Array<string | RegExp>;
-  /** Custom request matcher. Defaults to method+url+body equality. */
-  matcher?: Matcher;
+  ignoredRequests?: IgnoredRequestMatcher[];
   /** Hook fired when `replay` mode encounters a miss. Called before the error throws. */
   onMiss?: (req: RecordedRequest) => void;
-  /** Hook fired on every successful replay match. */
-  onMatch?: (entry: CassetteEntry, req: RecordedRequest) => void;
-  /** Hook fired when a new entry is captured in `record` mode. */
-  onRecord?: (entry: CassetteEntry) => void;
-  /** Hook fired after the cassette is persisted in `record` mode. */
-  onPersist?: (cassette: CassetteFile) => void;
-  /**
-   * Byte threshold above which binary bodies are stored as external sidecar
-   * files rather than inlined as base64 in the cassette JSON.
-   *
-   * Defaults to `65536` (64 KiB). Pass `'always-inline'` (or the deprecated
-   * `false`) to always inline binary bodies as base64.
-   * Only applies in `record` mode.
-   */
-  externalBlobThreshold?: number | "always-inline" | false;
+  /** Routes served by the local cassette server. */
+  routes: CassetteServerRoute[];
+  /** Host for the local server. Defaults to 127.0.0.1. */
+  host?: string;
+  /** Port for the local server. Defaults to an ephemeral port. */
+  port?: number;
 }
 
-/** The lifecycle handle returned by `createCassette`. */
-export interface Cassette {
+export interface CassetteServer {
   readonly name: string;
   readonly mode: CassetteMode;
-  /** Activate interception. In `passthrough` mode this is a no-op. */
+  /** Local server URL after `start()` has completed. */
+  readonly url: string;
   start(): Promise<void>;
-  /** Tear down interception. In `record` mode this also persists the cassette. */
   stop(): Promise<void>;
-  /** Convenience wrapper: `start()`, run `fn`, `stop()` (even on error). */
-  use<T>(fn: () => Promise<T>): Promise<T>;
 }
 
-/**
- * Create a cassette controller. Call `start()` (or `use()`) to activate
- * interception. See README for full configuration reference.
- */
-export function createCassette(options: CassetteOptions): Cassette {
-  const ctx: CassetteContext = {
+function createContext(options: CassetteServerOptions): CassetteContext {
+  return {
     name: options.name,
     mode: options.mode ?? "replay",
-    store:
-      options.store ?? createJsonFileStore({ rootDir: DEFAULT_CASSETTE_DIR }),
-    matcher: options.matcher ?? createDefaultMatcher(),
+    store: options.store,
+    matcher: createDefaultMatcher(),
     filters: options.filters,
-    redact: options.redact ?? "paranoid",
-    hosts: options.hosts,
-    passthroughHosts: options.passthroughHosts,
-    threshold: resolveThreshold(options.externalBlobThreshold),
+    redact: "paranoid",
+    ignoredRequests: options.ignoredRequests,
+    threshold: DEFAULT_EXTERNAL_BLOB_THRESHOLD,
     onMiss: options.onMiss,
-    onMatch: options.onMatch,
-    onRecord: options.onRecord,
-    onPersist: options.onPersist,
     candidates: [],
     callCounts: new Map(),
     newEntries: [],
     misses: [],
   };
+}
 
-  // Track the previous ALS store so start()/stop() can restore it (stack
-  // semantics for manual lifecycle callers). Also track started state to guard
-  // against double-start and stop-without-start.
-  let prevStore: CassetteContext | undefined;
+/**
+ * Create a local HTTP cassette server. Callers point SDK/provider base URLs at
+ * route prefixes on `server.url`; requests are matched and persisted using the
+ * original provider URL reconstructed from the configured route.
+ */
+export function createCassetteServer(
+  options: CassetteServerOptions,
+): CassetteServer {
+  const ctx = createContext(options);
+  const routes = normalizeRoutes(options.routes);
+  const host = options.host ?? "127.0.0.1";
+  const port = options.port ?? 0;
+
+  let server: Server | undefined;
+  let serverUrl: string | undefined;
   let started = false;
+  const pendingRequests = new Set<Promise<void>>();
+
+  async function handleIncoming(
+    req: IncomingMessage,
+    res: ServerResponse,
+  ): Promise<void> {
+    const upstreamUrl = resolveUpstreamUrl(req, routes);
+    if (!upstreamUrl) {
+      res.writeHead(404, { "content-type": "application/json" });
+      res.end(JSON.stringify({ error: "No cassette route matched request" }));
+      return;
+    }
+
+    const request = await incomingMessageToRequest(req, upstreamUrl);
+    const response = await handleCassetteRequest(ctx, request, () => {
+      return globalThis.fetch(request);
+    });
+    await writeFetchResponse(res, response);
+  }
+
+  async function closeServer(): Promise<void> {
+    const activeServer = server;
+    if (!activeServer) return;
+    await new Promise<void>((resolve, reject) => {
+      activeServer.close((err) => (err ? reject(err) : resolve()));
+    });
+    server = undefined;
+    serverUrl = undefined;
+  }
 
   return {
     get name() {
@@ -445,70 +402,184 @@ export function createCassette(options: CassetteOptions): Cassette {
     get mode() {
       return ctx.mode;
     },
+    get url() {
+      if (!serverUrl) {
+        throw new Error(
+          `Cassette server "${ctx.name}" has not been started yet.`,
+        );
+      }
+      return serverUrl;
+    },
 
     async start() {
-      if (ctx.mode === "passthrough") return;
-      if (started)
+      if (started) {
         throw new Error(
-          `Cassette "${ctx.name}" is already started. Call stop() before starting again.`,
+          `Cassette server "${ctx.name}" is already started. Call stop() before starting again.`,
         );
-      prevStore = als.getStore();
-      als.enterWith(ctx);
-      processLevelCtx = ctx;
-      acquireServer();
-      started = true;
-      try {
-        resetContext(ctx);
-        await loadCandidates(ctx);
-      } catch (err) {
-        // Roll back: release the server we just acquired so refcount stays balanced.
-        started = false;
-        processLevelCtx = null;
-        releaseServer();
-        if (prevStore !== undefined) als.enterWith(prevStore);
-        throw err;
       }
+
+      resetContext(ctx);
+      await loadCandidates(ctx);
+
+      server = createServer((req, res) => {
+        const work = handleIncoming(req, res).catch((err: unknown) => {
+          if (!res.headersSent) {
+            res.writeHead(500, { "content-type": "application/json" });
+          }
+          res.end(
+            JSON.stringify({
+              error: err instanceof Error ? err.message : String(err),
+            }),
+          );
+        });
+        pendingRequests.add(work);
+        work.finally(() => pendingRequests.delete(work));
+      });
+
+      await new Promise<void>((resolve, reject) => {
+        server!.once("error", reject);
+        server!.listen(port, host, () => {
+          server!.off("error", reject);
+          resolve();
+        });
+      });
+
+      const address = server.address() as AddressInfo;
+      serverUrl = `http://${host}:${address.port}`;
+      started = true;
     },
 
     async stop() {
-      if (ctx.mode === "passthrough") return;
       if (!started) return;
       started = false;
       try {
+        await closeServer();
+        await Promise.all([...pendingRequests]);
         await persistIfRecord(ctx);
         throwFirstMiss(ctx);
       } finally {
-        if (processLevelCtx === ctx) processLevelCtx = null;
-        releaseServer();
-        // Restore the previous ALS context so code running after stop() in
-        // the same async chain sees the outer cassette (or none).
-        if (prevStore !== undefined) {
-          als.enterWith(prevStore);
-        }
+        await closeServer();
       }
     },
-
-    use<T>(fn: () => Promise<T>): Promise<T> {
-      if (ctx.mode === "passthrough") return fn();
-
-      return als.run(ctx, async () => {
-        acquireServer();
-        resetContext(ctx);
-        await loadCandidates(ctx);
-        try {
-          const result = await fn();
-          await persistIfRecord(ctx);
-          throwFirstMiss(ctx);
-          return result;
-        } catch (err) {
-          // Prefer a structured CassetteMissError over the network-level
-          // TypeError that HttpResponse.error() produces in the caller.
-          throwFirstMiss(ctx);
-          throw err;
-        } finally {
-          releaseServer();
-        }
-      });
-    },
   };
+}
+
+function normalizeRoutes(
+  routes: CassetteServerRoute[],
+): Array<{ prefix: string; upstreamOrigin: string }> {
+  return routes
+    .map((route) => ({
+      prefix: normalizePrefix(route.prefix),
+      upstreamOrigin: route.upstreamOrigin.replace(/\/+$/, ""),
+    }))
+    .sort((a, b) => b.prefix.length - a.prefix.length);
+}
+
+function normalizePrefix(prefix: string): string {
+  const normalized = `/${prefix.replace(/^\/+/, "").replace(/\/+$/, "")}`;
+  return normalized === "/" ? "" : normalized;
+}
+
+function resolveUpstreamUrl(
+  req: IncomingMessage,
+  routes: Array<{ prefix: string; upstreamOrigin: string }>,
+): string | null {
+  const localUrl = new URL(
+    req.url ?? "/",
+    `http://${req.headers.host ?? "127.0.0.1"}`,
+  );
+
+  for (const route of routes) {
+    if (
+      localUrl.pathname === route.prefix ||
+      localUrl.pathname.startsWith(`${route.prefix}/`)
+    ) {
+      const suffix = localUrl.pathname.slice(route.prefix.length) || "/";
+      return `${route.upstreamOrigin}${suffix}${localUrl.search}`;
+    }
+  }
+
+  return null;
+}
+
+async function incomingMessageToRequest(
+  req: IncomingMessage,
+  upstreamUrl: string,
+): Promise<Request> {
+  const method = req.method ?? "GET";
+  const init: RequestInit = {
+    method,
+    headers: sanitizeIncomingHeaders(req.headers),
+  };
+  if (method !== "GET" && method !== "HEAD") {
+    const chunks: Buffer[] = [];
+    for await (const chunk of req) {
+      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+    }
+    init.body = Buffer.concat(chunks);
+  }
+  return new Request(upstreamUrl, init);
+}
+
+function sanitizeIncomingHeaders(headers: IncomingHttpHeaders): Headers {
+  const result = new Headers();
+  const skipped = new Set([
+    "connection",
+    "content-length",
+    "host",
+    "keep-alive",
+    "proxy-authenticate",
+    "proxy-authorization",
+    "te",
+    "trailer",
+    "transfer-encoding",
+    "upgrade",
+  ]);
+
+  for (const [key, value] of Object.entries(headers)) {
+    if (value === undefined || skipped.has(key.toLowerCase())) continue;
+    if (Array.isArray(value)) {
+      for (const item of value) result.append(key, item);
+    } else {
+      result.set(key, value);
+    }
+  }
+  return result;
+}
+
+async function writeFetchResponse(
+  res: ServerResponse,
+  response: Response,
+): Promise<void> {
+  res.statusCode = response.status;
+  if (response.statusText) res.statusMessage = response.statusText;
+
+  response.headers.forEach((value, key) => {
+    res.setHeader(key, value);
+  });
+  const setCookies = (
+    response.headers as Headers & { getSetCookie?(): string[] }
+  ).getSetCookie?.();
+  if (setCookies && setCookies.length > 0) {
+    res.setHeader("set-cookie", setCookies);
+  }
+
+  if (!response.body) {
+    res.end();
+    return;
+  }
+
+  const reader = response.body.getReader();
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (!res.write(Buffer.from(value))) {
+        await new Promise<void>((resolve) => res.once("drain", resolve));
+      }
+    }
+  } finally {
+    res.end();
+    reader.releaseLock();
+  }
 }

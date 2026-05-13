@@ -5,7 +5,6 @@ import {
   resolveScenarioDir,
   withScenarioHarness,
 } from "../../helpers/scenario-harness";
-import { E2E_TAGS } from "../../helpers/tags";
 import { findLatestSpan } from "../../helpers/trace-selectors";
 import {
   payloadRowsForTestRunId,
@@ -20,7 +19,6 @@ const TIMEOUT_MS = 90_000;
 test(
   "test-framework-evals-node captures node:test task spans",
   {
-    tags: [E2E_TAGS.hermetic],
     timeout: TIMEOUT_MS,
   },
   async () => {

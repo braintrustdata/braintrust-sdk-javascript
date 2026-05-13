@@ -5,7 +5,6 @@ import {
   resolveScenarioDir,
   runNodeScenarioDir,
 } from "../../helpers/scenario-harness";
-import { cassetteTagsFor } from "../../helpers/tags";
 import { defineOpenAIInstrumentationAssertions } from "./assertions";
 
 const originalScenarioDir = resolveScenarioDir(import.meta.url);
@@ -64,9 +63,8 @@ describe("real HTTP server (undici responses)", () => {
 for (const scenario of openaiScenarios) {
   const assertPrivateFieldMethodsOperation =
     !scenario.disablePrivateFieldMethodsAssertion;
-  const tags = cassetteTagsFor(import.meta.url, scenario.snapshotName);
 
-  describe(`openai sdk ${scenario.version}`, { tags }, () => {
+  describe(`openai sdk ${scenario.version}`, () => {
     defineOpenAIInstrumentationAssertions({
       assertPrivateFieldMethodsOperation,
       name: "wrapped instrumentation",
