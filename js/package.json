@@ -209,7 +209,7 @@
     "dotenv": "^16.4.5",
     "esbuild": "0.28.0",
     "eventsource-parser": "^1.1.2",
-    "express": "^4.21.2",
+    "express": "^5.2.1",
     "graceful-fs": "^4.2.11",
     "http-errors": "^2.0.0",
     "minimatch": "^10.2.5",
