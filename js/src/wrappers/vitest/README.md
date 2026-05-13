@@ -314,6 +314,7 @@ wrapVitest(
   },
   config?: {
     projectName?: string;        // Project name (defaults to suite name)
+    projectId?: string;          // Stable project ID; takes precedence over projectName
     displaySummary?: boolean;    // Show summary after tests (default: true)
     onProgress?: (event: ProgressEvent) => void;  // Progress callback
   }
