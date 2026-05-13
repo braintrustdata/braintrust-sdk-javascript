@@ -22,7 +22,8 @@
     "check:typings": "tsc --noEmit",
     "watch": "tsup --watch",
     "clean": "rm -r dist/*",
-    "test": "vitest run --exclude 'smoke/scenarios/**'"
+    "test": "vitest run --exclude 'smoke/scenarios/**'",
+    "yalc:publish": "yalc publish"
   },
   "author": "Braintrust Data Inc.",
   "license": "Apache-2.0",

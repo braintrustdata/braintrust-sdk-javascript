@@ -20,7 +20,8 @@
     "build": "tsup",
     "check:typings": "tsc --noEmit",
     "watch": "tsup --watch",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "yalc:publish": "yalc publish"
   },
   "dependencies": {
     "als-browser": "^1.0.1",
