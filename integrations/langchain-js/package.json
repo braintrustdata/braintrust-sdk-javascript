@@ -19,7 +19,8 @@
     "check:typings": "tsc --noEmit",
     "watch": "tsup --watch",
     "clean": "rm -r dist/*",
-    "test": "vitest run"
+    "test": "vitest run",
+    "yalc:publish": "yalc publish"
   },
   "author": "Braintrust Data Inc.",
   "license": "MIT",

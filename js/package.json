@@ -148,7 +148,8 @@
     "playground": "tsx playground.ts",
     "playground:auto": "mkdir -p .context && pnpm exec esbuild playground.ts --platform=node --format=esm --outfile=.context/playground.auto.mjs && node --import ./dist/auto-instrumentations/hook.mjs ./.context/playground.auto.mjs",
     "playground:cli:push": "node dist/cli.js push playground.ts",
-    "playground:cli:eval": "node dist/cli.js eval playground.ts"
+    "playground:cli:eval": "node dist/cli.js eval playground.ts",
+    "yalc:publish": "yalc publish"
   },
   "author": "",
   "license": "MIT",

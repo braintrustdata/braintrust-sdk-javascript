@@ -18,6 +18,11 @@
       "outputs": [".next/**", "!.next/cache/**", "dist/**"],
       "env": []
     },
+    "yalc:publish": {
+      "cache": false,
+      "dependsOn": ["build"],
+      "outputs": []
+    },
     "check:typings": {
       "dependsOn": ["^build"],
       "outputs": []
