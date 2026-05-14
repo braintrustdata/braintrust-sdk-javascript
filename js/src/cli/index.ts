@@ -5,7 +5,7 @@ import * as dotenv from "dotenv";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import util from "node:util";
+import util, { styleText } from "node:util";
 import * as fsWalk from "@nodelib/fs.walk";
 import { minimatch } from "minimatch";
 import { ArgumentParser } from "argparse";
@@ -25,7 +25,6 @@ import {
   BarProgressReporter,
   SimpleProgressReporter,
 } from "./reporters/progress";
-import chalk from "chalk";
 import { terminalLink } from "termi-link";
 
 // Re-use the module resolution logic from Jest
@@ -129,8 +128,8 @@ async function initExperiment(
     : "locally";
   // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
   console.error(
-    chalk.cyan("▶") +
-      ` Experiment ${chalk.bold(info.experimentName)} is running at ${linkText}`,
+    styleText("cyan", "▶") +
+      ` Experiment ${styleText("bold", info.experimentName)} is running at ${linkText}`,
   );
   return logger;
 }
@@ -596,8 +595,9 @@ async function runOnce(
 
   // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
   console.error(
-    chalk.dim(
-      `Processing ${chalk.bold(resultPromises.length)} evaluator${resultPromises.length === 1 ? "" : "s"}...`,
+    styleText(
+      "dim",
+      `Processing ${styleText("bold", String(resultPromises.length))} evaluator${resultPromises.length === 1 ? "" : "s"}...`,
     ),
   );
   const allEvalsResults = await Promise.all(resultPromises);
