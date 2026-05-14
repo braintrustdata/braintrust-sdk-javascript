@@ -361,8 +361,8 @@ importers:
         specifier: ^1.1.2
         version: 1.1.2
       express:
-        specifier: ^4.21.2
-        version: 4.22.1
+        specifier: ^5.2.1
+        version: 5.2.1
       graceful-fs:
         specifier: ^4.2.11
         version: 4.2.11
