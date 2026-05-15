@@ -61,13 +61,6 @@ async function loadRootEnv() {
   }
 }
 
-function scenarioVariant() {
-  return (process.env.BRAINTRUST_E2E_CASSETTE_VARIANT ?? "local").replace(
-    /[^a-zA-Z0-9_.-]/g,
-    "_",
-  );
-}
-
 function codexEnv(codexHome) {
   const env = {
     CODEX_HOME: codexHome,
@@ -143,18 +136,6 @@ async function createWorkspace(root, marker) {
   return workingDirectory;
 }
 
-async function createScenarioRoot() {
-  return mkdtemp(
-    path.join(tmpdir(), `${SCENARIO_TMP_PREFIX}-${scenarioVariant()}-`),
-  );
-}
-
-async function createCodexHome(root) {
-  const codexHome = path.join(root, "codex-home");
-  await mkdir(codexHome, { recursive: true });
-  return codexHome;
-}
-
 function realPrompt(marker) {
   return [
     "You are running inside an SDK instrumentation test.",
@@ -168,8 +149,11 @@ function realPrompt(marker) {
 async function runOpenAICodexScenario({ decorateSDK, sdk }) {
   await loadRootEnv();
   const instrumentedSDK = decorateSDK ? decorateSDK(sdk) : sdk;
-  const scenarioRoot = await createScenarioRoot();
-  const codexHome = await createCodexHome(scenarioRoot);
+  const scenarioRoot = await mkdtemp(
+    path.join(tmpdir(), `${SCENARIO_TMP_PREFIX}-`),
+  );
+  const codexHome = path.join(scenarioRoot, "codex-home");
+  await mkdir(codexHome, { recursive: true });
   const client = createClient(instrumentedSDK, codexHome);
   const runWorkingDirectory = await createWorkspace(scenarioRoot, RUN_MARKER);
   const streamedWorkingDirectory = await createWorkspace(
