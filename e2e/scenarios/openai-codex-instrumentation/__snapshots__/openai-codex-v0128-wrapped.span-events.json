@@ -4,9 +4,9 @@
       "has_input": true,
       "has_output": true,
       "metadata": {
-        "model": "gpt-5-codex",
+        "model": "gpt-5.1-codex-mini",
         "openai_codex.llm_sequence": 1,
-        "openai_codex.model": "gpt-5-codex",
+        "openai_codex.model": "gpt-5.1-codex-mini",
         "openai_codex.operation": "Thread.run",
         "provider": "openai"
       },
@@ -26,9 +26,9 @@
       "has_input": true,
       "has_output": true,
       "metadata": {
-        "model": "gpt-5-codex",
+        "model": "gpt-5.1-codex-mini",
         "openai_codex.llm_sequence": 1,
-        "openai_codex.model": "gpt-5-codex",
+        "openai_codex.model": "gpt-5.1-codex-mini",
         "openai_codex.operation": "Thread.runStreamed",
         "openai_codex.thread_id": "<thread-id>",
         "provider": "openai"
@@ -79,8 +79,8 @@
       "has_input": true,
       "has_output": true,
       "metadata": {
-        "model": "gpt-5-codex",
-        "openai_codex.model": "gpt-5-codex",
+        "model": "gpt-5.1-codex-mini",
+        "openai_codex.model": "gpt-5.1-codex-mini",
         "openai_codex.operation": "Thread.run",
         "provider": "openai"
       },
@@ -120,8 +120,8 @@
       "has_input": true,
       "has_output": true,
       "metadata": {
-        "model": "gpt-5-codex",
-        "openai_codex.model": "gpt-5-codex",
+        "model": "gpt-5.1-codex-mini",
+        "openai_codex.model": "gpt-5.1-codex-mini",
         "openai_codex.operation": "Thread.runStreamed",
         "openai_codex.thread_id": "<thread-id>",
         "provider": "openai"
@@ -143,6 +143,6 @@
     }
   },
   "tools": [
-    "tool: command_execution"
+    "tool: web_search"
   ]
 }

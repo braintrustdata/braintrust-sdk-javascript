@@ -311,14 +311,12 @@ export function defineOpenAICodexInstrumentationAssertions(options: {
       }
     });
 
-    test("captures Codex tool spans emitted by the agent", testConfig, () => {
+    test("captures Codex web search tool spans", testConfig, () => {
       const toolSpans = latestSpansByType(events, "tool");
 
       expect(toolSpans.length).toBeGreaterThanOrEqual(1);
       expect(
-        toolSpans.some(
-          (event) => event.span.name === "tool: command_execution",
-        ),
+        toolSpans.some((event) => event.span.name === "tool: web_search"),
       ).toBe(true);
 
       for (const operationName of OPERATION_NAMES) {

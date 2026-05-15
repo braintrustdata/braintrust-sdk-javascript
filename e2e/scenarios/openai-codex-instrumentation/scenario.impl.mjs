@@ -11,7 +11,6 @@ import {
   mkdtemp,
   readFile,
   rm,
-  writeFile,
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -123,8 +122,8 @@ async function isolateCodexExecutable(client, root) {
     return;
   }
 
-  // Codex 0.128 suppresses command_execution JSON events on Linux when its
-  // executable is launched from GitHub's checkout path.
+  // Codex 0.128 suppresses tool JSON events on Linux when it is launched from
+  // GitHub's checkout path.
   const isolatedPath = path.join(
     root,
     process.platform === "win32" ? "codex.exe" : "codex",
@@ -137,12 +136,12 @@ async function isolateCodexExecutable(client, root) {
 function startThread(client, workingDirectory) {
   return client.startThread({
     approvalPolicy: "never",
-    model: process.env.OPENAI_CODEX_E2E_MODEL ?? "gpt-5-codex",
+    model: process.env.OPENAI_CODEX_E2E_MODEL ?? "gpt-5.1-codex-mini",
     modelReasoningEffort: "low",
     networkAccessEnabled: false,
-    sandboxMode: "workspace-write",
+    sandboxMode: "read-only",
     skipGitRepoCheck: true,
-    webSearchMode: "disabled",
+    webSearchMode: "live",
     workingDirectory,
   });
 }
@@ -153,20 +152,15 @@ async function createWorkspace(root, marker) {
     marker === RUN_MARKER ? "run" : "stream",
   );
   await mkdir(workingDirectory, { recursive: true });
-  await writeFile(
-    path.join(workingDirectory, "codex-input.txt"),
-    `The final answer marker is ${marker}.\n`,
-    "utf8",
-  );
   return workingDirectory;
 }
 
 function realPrompt(marker) {
   return [
     "You are running inside an SDK instrumentation test.",
-    "First run exactly this shell command: cat codex-input.txt",
-    "Do not prefix it with cd or any other command.",
-    "After the command completes, reply with exactly this marker and no extra text:",
+    'Use web search once for the exact query "Braintrust SDK JavaScript".',
+    "Do not run shell commands or inspect local files.",
+    "After the web search completes, reply with exactly this marker and no extra text:",
     marker,
   ].join(" ");
 }
@@ -186,8 +180,12 @@ async function runOpenAICodexScenario({ decorateSDK, sdk }) {
     scenarioRoot,
     STREAM_MARKER,
   );
+  const originalCwd = process.cwd();
 
   try {
+    // The Codex SDK spawn inherits process.cwd(), so keep that out of the
+    // checkout too.
+    process.chdir(scenarioRoot);
     await runTracedScenario({
       callback: async () => {
         await runOperation("openai-codex-run-operation", "run", async () => {
@@ -216,6 +214,7 @@ async function runOpenAICodexScenario({ decorateSDK, sdk }) {
       rootName: ROOT_NAME,
     });
   } finally {
+    process.chdir(originalCwd);
     await Promise.allSettled([
       rm(scenarioRoot, {
         force: true,
