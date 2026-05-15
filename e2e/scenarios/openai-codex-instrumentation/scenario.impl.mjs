@@ -97,6 +97,9 @@ function createClient(SDK, codexHome) {
   return new Codex({
     apiKey: requireOpenAIKey(),
     config: {
+      features: {
+        unified_exec: true,
+      },
       model_provider: "openai-codex-e2e",
       model_providers: {
         "openai-codex-e2e": {
