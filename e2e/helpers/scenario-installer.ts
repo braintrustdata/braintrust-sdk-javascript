@@ -492,6 +492,7 @@ export function isCanaryMode(): boolean {
 }
 
 export async function prepareScenarioDir(options: {
+  linkDependencies?: boolean;
   mode?: ScenarioDependencyMode;
   preferOffline?: boolean;
   scenarioDir: string;
@@ -527,12 +528,20 @@ export async function prepareScenarioDir(options: {
   cleanupDirs.add(runRoot);
   registerCleanupHandlers();
 
-  await linkCachedScenarioDependencies({
-    mode: options.mode,
-    preparedDir,
-    preferOffline: options.preferOffline,
-    scenarioDir: options.scenarioDir,
-  });
+  if (options.linkDependencies === false) {
+    await installScenarioDependencies({
+      mode: options.mode,
+      preferOffline: options.preferOffline,
+      scenarioDir: preparedDir,
+    });
+  } else {
+    await linkCachedScenarioDependencies({
+      mode: options.mode,
+      preparedDir,
+      preferOffline: options.preferOffline,
+      scenarioDir: options.scenarioDir,
+    });
+  }
 
   return preparedDir;
 }

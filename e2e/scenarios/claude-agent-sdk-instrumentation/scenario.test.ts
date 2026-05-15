@@ -14,13 +14,6 @@ const TIMEOUT_MS = 300_000;
 const claudeAgentSDKScenarios = await Promise.all(
   [
     {
-      autoEntry: "scenario.claude-agent-sdk-v0.1.mjs",
-      dependencyName: "claude-agent-sdk-v0.1",
-      expectTaskLifecycleDetails: false,
-      snapshotName: "claude-agent-sdk-v0.1",
-      wrapperEntry: "scenario.claude-agent-sdk-v0.1.ts",
-    },
-    {
       autoEntry: "scenario.claude-agent-sdk-v0.2.76.mjs",
       dependencyName: "claude-agent-sdk-v0.2.76",
       snapshotName: "claude-agent-sdk-v0.2.76",
@@ -52,8 +45,7 @@ const claudeAgentSDKScenarios = await Promise.all(
   }),
 );
 
-// Note(lforst): Currently taking forever, need to investigate why
-describe.skip("wrapped instrumentation", () => {
+describe("wrapped instrumentation", () => {
   for (const scenario of claudeAgentSDKScenarios) {
     describe(`claude agent sdk ${scenario.version}`, () => {
       defineClaudeAgentSDKInstrumentationAssertions({
@@ -79,8 +71,7 @@ describe.skip("wrapped instrumentation", () => {
   }
 });
 
-// Note(lforst): Currently taking forever, need to investigate why
-describe.skip("auto-hook instrumentation", () => {
+describe("auto-hook instrumentation", () => {
   for (const scenario of claudeAgentSDKScenarios) {
     describe(`claude agent sdk ${scenario.version}`, () => {
       defineClaudeAgentSDKInstrumentationAssertions({

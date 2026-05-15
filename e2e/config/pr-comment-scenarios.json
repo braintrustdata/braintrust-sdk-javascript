@@ -135,10 +135,6 @@
     "metadataScenario": "claude-agent-sdk-traces",
     "variants": [
       {
-        "variantKey": "claude-agent-sdk-v0.1",
-        "label": "v0.1"
-      },
-      {
         "variantKey": "claude-agent-sdk-v0.2.76",
         "label": "v0.2.76"
       },

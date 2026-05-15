@@ -6,6 +6,7 @@ import {
 } from "../../helpers/scenario-harness";
 
 const scenarioDir = await prepareScenarioDir({
+  linkDependencies: false,
   scenarioDir: resolveScenarioDir(import.meta.url),
 });
 const TIMEOUT_MS = 180_000;

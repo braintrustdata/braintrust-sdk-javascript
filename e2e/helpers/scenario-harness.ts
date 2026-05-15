@@ -10,6 +10,8 @@ import {
   createJsonFileStore,
   type CassetteServerRoute,
   type FilterSpec,
+  type RedactionSpec,
+  type StreamingRequestMatcher,
 } from "@braintrust/seinfeld";
 import {
   startMockBraintrustServer,
@@ -401,15 +403,29 @@ function resolveCassetteMode(
   return "replay";
 }
 
-async function loadScenarioFilter(
-  scenarioDir: string,
-): Promise<FilterSpec | undefined> {
+async function loadScenarioCassetteOptions(scenarioDir: string): Promise<{
+  filter: FilterSpec | undefined;
+  redact: RedactionSpec | undefined;
+  streamingRequests: StreamingRequestMatcher[] | undefined;
+}> {
   const filterPath = path.join(scenarioDir, "cassette-filter.mjs");
-  if (!existsSync(filterPath)) return "default";
+  if (!existsSync(filterPath)) {
+    return {
+      filter: "default",
+      redact: undefined,
+      streamingRequests: undefined,
+    };
+  }
   const mod = (await import(pathToFileURL(filterPath).href)) as {
     filter?: FilterSpec;
+    redact?: RedactionSpec;
+    streamingRequests?: StreamingRequestMatcher[];
   };
-  return mod.filter ?? "default";
+  return {
+    filter: mod.filter ?? "default",
+    redact: mod.redact,
+    streamingRequests: mod.streamingRequests,
+  };
 }
 
 async function runProcess(
@@ -733,11 +749,16 @@ export async function withScenarioHarness(
       return await run({});
     }
 
+    const cassetteOptions = await loadScenarioCassetteOptions(
+      wiring.originalScenarioDir,
+    );
     const cassetteServer = createCassetteServer({
       name: wiring.variantKey,
       mode: wiring.mode,
       store: createJsonFileStore({ rootDir: wiring.cassetteDir }),
-      filters: await loadScenarioFilter(wiring.originalScenarioDir),
+      filters: cassetteOptions.filter,
+      redact: cassetteOptions.redact,
+      streamingRequests: cassetteOptions.streamingRequests,
       ignoredRequests: CASSETTE_IGNORED_REQUESTS,
       routes: CASSETTE_SERVER_ROUTES,
       onMiss: (req) => {

@@ -3,9 +3,11 @@ import {
   createServer,
   type IncomingHttpHeaders,
   type IncomingMessage,
+  request as httpRequest,
   type Server,
   type ServerResponse,
 } from "node:http";
+import { request as httpsRequest } from "node:https";
 import type { AddressInfo } from "node:net";
 import type {
   BodyPayload,
@@ -34,6 +36,7 @@ import {
   recordRequestDraft,
   recordResponseDraft,
 } from "./http";
+import { encodeBinaryDraft, encodeBody } from "./serializer";
 import type { CassetteStore } from "./store";
 
 // Injected at build time by tsup define. Falls back to 'dev' when running
@@ -44,7 +47,9 @@ const SEINFELD_VERSION: string =
 
 const DEFAULT_EXTERNAL_BLOB_THRESHOLD = 65536;
 
-export type IgnoredRequestMatcher = string | RegExp;
+export type RequestUrlMatcher = string | RegExp;
+export type IgnoredRequestMatcher = RequestUrlMatcher;
+export type StreamingRequestMatcher = RequestUrlMatcher;
 
 // ---- Internal draft types ------------------------------------------------
 
@@ -64,6 +69,7 @@ interface CassetteContext {
   filters: FilterSpec | undefined;
   redact: RedactionSpec;
   ignoredRequests: IgnoredRequestMatcher[] | undefined;
+  streamingRequests: StreamingRequestMatcher[] | undefined;
   threshold: number | false;
   onMiss: ((req: RecordedRequest) => void) | undefined;
 
@@ -74,14 +80,24 @@ interface CassetteContext {
   misses: CassetteMissError[];
 }
 
+function matchesUrlMatcher(url: string, matcher: RequestUrlMatcher): boolean {
+  return typeof matcher === "string" ? url === matcher : matcher.test(url);
+}
+
 function isIgnoredRequest(
   url: string,
   ignoredRequests: IgnoredRequestMatcher[] | undefined,
 ): boolean {
   if (!ignoredRequests || ignoredRequests.length === 0) return false;
-  return ignoredRequests.some((matcher) =>
-    typeof matcher === "string" ? url === matcher : matcher.test(url),
-  );
+  return ignoredRequests.some((matcher) => matchesUrlMatcher(url, matcher));
+}
+
+function isStreamingRequest(
+  url: string,
+  streamingRequests: StreamingRequestMatcher[] | undefined,
+): boolean {
+  if (!streamingRequests || streamingRequests.length === 0) return false;
+  return streamingRequests.some((matcher) => matchesUrlMatcher(url, matcher));
 }
 
 // ---- Per-request handlers -------------------------------------------------
@@ -107,6 +123,137 @@ async function handleCassetteRequest(
     case "passthrough":
       return getRealResponse();
   }
+}
+
+async function handleReplayWithoutRequestBody(
+  ctx: CassetteContext,
+  req: IncomingMessage,
+  res: ServerResponse,
+  upstreamUrl: string,
+): Promise<void> {
+  // Some duplex APIs keep the request body open while waiting for response
+  // messages. For opted-in URLs, replay can respond immediately because the
+  // cassette match is configured to ignore the request body.
+  req.resume();
+  const response = await handleReplay(ctx, {
+    method: req.method ?? "GET",
+    url: upstreamUrl,
+    headers: headersToRecord(req.headers),
+    body: { kind: "empty" },
+  });
+  await writeFetchResponse(res, response);
+}
+
+async function handleStreamingRecord(
+  ctx: CassetteContext,
+  req: IncomingMessage,
+  res: ServerResponse,
+  upstreamUrl: string,
+): Promise<void> {
+  const upstream = new URL(upstreamUrl);
+  const responseChunks: Buffer[] = [];
+  let responseHeaders: IncomingHttpHeaders = {};
+  let responseStatus = 502;
+  let responseStatusText: string | undefined;
+
+  await new Promise<void>((resolve, reject) => {
+    const upstreamReq = (
+      upstream.protocol === "https:" ? httpsRequest : httpRequest
+    )(upstream, {
+      method: req.method,
+      headers: headersForProxy(req.headers),
+    });
+
+    let settled = false;
+    const settle = (err?: unknown) => {
+      if (settled) return;
+      settled = true;
+      if (err) reject(err);
+      else resolve();
+    };
+
+    req.on("aborted", () => {
+      upstreamReq.destroy();
+    });
+    req.on("error", (err) => {
+      upstreamReq.destroy(err);
+    });
+
+    upstreamReq.on("error", (err) => {
+      if (!res.headersSent) {
+        res.writeHead(502, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: err.message }));
+      }
+      settle(err);
+    });
+
+    upstreamReq.on("response", (upstreamRes) => {
+      responseHeaders = upstreamRes.headers;
+      responseStatus = upstreamRes.statusCode ?? 502;
+      responseStatusText = upstreamRes.statusMessage;
+
+      upstreamRes.on("data", (chunk) => {
+        const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+        responseChunks.push(buffer);
+      });
+      upstreamRes.on("end", () => {
+        settle();
+      });
+      upstreamRes.on("error", (err) => {
+        settle(err);
+      });
+    });
+
+    req.pipe(upstreamReq);
+  });
+
+  const capturedResponse = pushStreamingEntry(ctx, {
+    requestHeaders: req.headers,
+    requestMethod: req.method ?? "GET",
+    responseBody: Buffer.concat(responseChunks),
+    responseHeaders,
+    responseStatus,
+    responseStatusText,
+    upstreamUrl,
+  });
+  const response = await buildResponse(capturedResponse, {
+    store: ctx.store,
+    name: ctx.name,
+  });
+  await writeFetchResponse(res, response);
+}
+
+function pushStreamingEntry(
+  ctx: CassetteContext,
+  args: {
+    requestHeaders: Record<string, number | string | string[] | undefined>;
+    requestMethod: string;
+    responseBody: Uint8Array;
+    responseHeaders: Record<string, number | string | string[] | undefined>;
+    responseStatus: number;
+    responseStatusText?: string;
+    upstreamUrl: string;
+  },
+): RecordedResponseOrDraft {
+  const recorded: RecordedRequestOrDraft = {
+    method: args.requestMethod,
+    url: args.upstreamUrl,
+    headers: headersToRecord(args.requestHeaders),
+    body: { kind: "empty" },
+  };
+  const captured: RecordedResponseOrDraft = {
+    status: args.responseStatus,
+    ...(args.responseStatusText ? { statusText: args.responseStatusText } : {}),
+    headers: headersToRecord(args.responseHeaders),
+    body: bodyFromBytes(
+      args.responseBody,
+      headerValue(args.responseHeaders["content-type"]),
+      ctx.threshold,
+    ),
+  };
+
+  pushRecordEntry(ctx, recorded, captured);
+  return captured;
 }
 
 function handleReplay(
@@ -152,12 +299,27 @@ async function handleRecord(
     ctx.threshold,
   );
 
+  pushRecordEntry(ctx, recorded, captured);
+  return buildResponse(captured, {
+    store: ctx.store,
+    name: ctx.name,
+  });
+}
+
+function pushRecordEntry(
+  ctx: CassetteContext,
+  recorded: RecordedRequestOrDraft,
+  captured: RecordedResponseOrDraft,
+): RecordedResponseOrDraft {
   const filtered = asNormalized(applyFilters(recorded, ctx.filters));
   const matchKey = filtered.matchKey;
   const callIndex = bumpCallCount(ctx, matchKey);
 
   const redactedRequest = applyRequestRedaction(recorded, ctx.redact);
-  const redactedResponse = applyResponseRedaction(captured, ctx.redact);
+  const redactedResponse = applyResponseRedaction(
+    captured,
+    ctx.redact,
+  ) as RecordedResponseOrDraft;
 
   ctx.newEntries.push({
     id: makeEntryId(filtered.matchKey, callIndex, filtered.body),
@@ -168,18 +330,7 @@ async function handleRecord(
     response: redactedResponse,
   });
 
-  // Return the response to the caller.
-  //
-  // For non-draft bodies (JSON, text, empty, SSE), build a fresh Response
-  // from the already-captured bytes. This avoids a Node.js/undici issue
-  // where realResponse.clone() after recordResponseDraft() (which already
-  // teed the body stream) can return an empty body, causing callers to
-  // misparse the response.
-  //
-  return buildResponse(captured, {
-    store: ctx.store,
-    name: ctx.name,
-  });
+  return redactedResponse;
 }
 
 // ---- Per-run state helpers -----------------------------------------------
@@ -306,6 +457,17 @@ export interface CassetteServerOptions {
   store: CassetteStore;
   /** Filter spec (matching-only normalization). */
   filters?: FilterSpec;
+  /** Redaction spec for what gets persisted to disk. Defaults to paranoid. */
+  redact?: RedactionSpec;
+  /**
+   * Full request URLs or URL regexes whose request body should not be consumed
+   * before recording/replay. This is intended for duplex streaming APIs where
+   * the request body can stay open while the client waits for a response.
+   *
+   * Matching requests are recorded with an empty request body. Pair this with
+   * a filter that normalizes the same request body to `{ kind: "empty" }`.
+   */
+  streamingRequests?: StreamingRequestMatcher[];
   /**
    * Full request URLs to answer with an empty 204 and exclude from recording
    * and replay matching. This is intended for background telemetry endpoints
@@ -338,8 +500,9 @@ function createContext(options: CassetteServerOptions): CassetteContext {
     store: options.store,
     matcher: createDefaultMatcher(),
     filters: options.filters,
-    redact: "paranoid",
+    redact: options.redact ?? "paranoid",
     ignoredRequests: options.ignoredRequests,
+    streamingRequests: options.streamingRequests,
     threshold: DEFAULT_EXTERNAL_BLOB_THRESHOLD,
     onMiss: options.onMiss,
     candidates: [],
@@ -376,6 +539,17 @@ export function createCassetteServer(
       res.writeHead(404, { "content-type": "application/json" });
       res.end(JSON.stringify({ error: "No cassette route matched request" }));
       return;
+    }
+
+    if (isStreamingRequest(upstreamUrl, ctx.streamingRequests)) {
+      if (ctx.mode === "replay") {
+        await handleReplayWithoutRequestBody(ctx, req, res, upstreamUrl);
+        return;
+      }
+      if (ctx.mode === "record") {
+        await handleStreamingRecord(ctx, req, res, upstreamUrl);
+        return;
+      }
     }
 
     const request = await incomingMessageToRequest(req, upstreamUrl);
@@ -545,6 +719,66 @@ function sanitizeIncomingHeaders(headers: IncomingHttpHeaders): Headers {
     }
   }
   return result;
+}
+
+function headersForProxy(
+  headers: IncomingHttpHeaders,
+): Record<string, string | string[]> {
+  const result: Record<string, string | string[]> = {};
+  const skipped = new Set([
+    "accept-encoding",
+    "connection",
+    "content-length",
+    "host",
+    "keep-alive",
+    "proxy-authenticate",
+    "proxy-authorization",
+    "te",
+    "trailer",
+    "transfer-encoding",
+    "upgrade",
+  ]);
+
+  for (const [key, value] of Object.entries(headers)) {
+    if (value === undefined || skipped.has(key.toLowerCase())) continue;
+    result[key] = value;
+  }
+  return result;
+}
+
+function headersToRecord(
+  headers: Record<string, number | string | string[] | undefined>,
+): Record<string, string> {
+  const result: Record<string, string> = {};
+  for (const [key, value] of Object.entries(headers)) {
+    if (value === undefined || key.startsWith(":")) continue;
+    if (Array.isArray(value)) {
+      result[key] =
+        key.toLowerCase() === "set-cookie"
+          ? value.join("\n")
+          : value.join(", ");
+    } else {
+      result[key] = String(value);
+    }
+  }
+  return result;
+}
+
+function headerValue(
+  value: number | string | string[] | undefined,
+): string | undefined {
+  if (value === undefined) return undefined;
+  return Array.isArray(value) ? value[0] : String(value);
+}
+
+function bodyFromBytes(
+  bytes: Uint8Array,
+  contentType: string | undefined,
+  threshold: number | false,
+): BodyOrDraft {
+  return threshold !== false && bytes.length >= threshold
+    ? encodeBinaryDraft(bytes, contentType)
+    : encodeBody(bytes, contentType);
 }
 
 async function writeFetchResponse(
