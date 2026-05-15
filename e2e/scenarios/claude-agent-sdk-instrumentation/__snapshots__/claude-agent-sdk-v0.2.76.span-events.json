@@ -251,7 +251,7 @@
       "type": "llm"
     },
     "nested_task": {
-      "has_input": true,
+      "has_input": false,
       "has_output": false,
       "metadata": {
         "claude_agent_sdk.agent_type": "math-expert",
