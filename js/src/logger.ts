@@ -31,6 +31,7 @@ import {
   IdField,
   IS_MERGE_FIELD,
   LogFeedbackFullArgs,
+  defaultGitMetadataSettings,
   mergeDicts,
   mergeGitMetadataSettings,
   mergeRowBatch,
@@ -3537,7 +3538,7 @@ type InitializedExperiment<IsOpen extends boolean | undefined> =
  * @param options.apiKey The API key to use. If the parameter is not specified, will try to use the `BRAINTRUST_API_KEY` environment variable. If no API key is specified, will prompt the user to login.
  * @param options.orgName (Optional) The name of a specific organization to connect to. This is useful if you belong to multiple.
  * @param options.metadata (Optional) A dictionary with additional data about the test example, model outputs, or just about anything else that's relevant, that you can use to help find and analyze examples later. For example, you could log the `prompt`, example's `id`, or anything else that would be useful to slice/dice later. The values in `metadata` can be any JSON-serializable type, but its keys must be strings.
- * @param options.gitMetadataSettings (Optional) Settings for collecting git metadata. By default, will collect all git metadata fields allowed in org-level settings.
+ * @param options.gitMetadataSettings (Optional) Settings for collecting git metadata. By default, will collect git metadata fields allowed in org-level settings, excluding diff content unless the org opts in.
  * @param setCurrent If true (the default), set the global current-experiment to the newly-created one.
  * @param options.open If the experiment already exists, open it in read-only mode. Throws an error if the experiment does not already exist.
  * @param options.projectId The id of the project to create the experiment in. This takes precedence over `project` if specified.
@@ -3691,9 +3692,7 @@ export function init<IsOpen extends boolean = false>(
           return repoInfo;
         }
         let mergedGitMetadataSettings = {
-          ...(state.gitMetadataSettings || {
-            collect: "all",
-          }),
+          ...(state.gitMetadataSettings || defaultGitMetadataSettings()),
         };
         if (gitMetadataSettings) {
           mergedGitMetadataSettings = mergeGitMetadataSettings(
@@ -4265,8 +4264,8 @@ export function initDataset<
     legacy,
     _internal_btql,
     resolvedVersion instanceof LazyValue ||
-      normalizedEnvironment !== undefined ||
-      normalizedSnapshotName !== undefined
+    normalizedEnvironment !== undefined ||
+    normalizedSnapshotName !== undefined
       ? {
           ...(resolvedVersion instanceof LazyValue
             ? {
@@ -5701,7 +5700,8 @@ function _saveOrgInfo(
       state.orgName = org.name;
       state.apiUrl = iso.getEnv("BRAINTRUST_API_URL") ?? org.api_url;
       state.proxyUrl = iso.getEnv("BRAINTRUST_PROXY_URL") ?? org.proxy_url;
-      state.gitMetadataSettings = org.git_metadata || undefined;
+      state.gitMetadataSettings =
+        org.git_metadata || defaultGitMetadataSettings();
       break;
     }
   }
@@ -6043,9 +6043,9 @@ export type WithTransactionId<R> = R & {
 export const DEFAULT_FETCH_BATCH_SIZE = 1000;
 export const MAX_BTQL_ITERATIONS = 10000;
 
-export class ObjectFetcher<RecordType> implements AsyncIterable<
-  WithTransactionId<RecordType>
-> {
+export class ObjectFetcher<RecordType>
+  implements AsyncIterable<WithTransactionId<RecordType>>
+{
   private _fetchedData: WithTransactionId<RecordType>[] | undefined = undefined;
 
   constructor(
