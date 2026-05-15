@@ -20,12 +20,6 @@
     "rootDir": "./",
     "types": ["node"]
   },
-  "include": [
-    "src/**/*",
-    "test/**/*",
-    "tsup.config.ts",
-    "vitest.config.ts",
-    "eslint.config.js"
-  ],
+  "include": ["src/**/*", "tsup.config.ts", "eslint.config.js"],
   "exclude": ["node_modules", "dist", "examples"]
 }

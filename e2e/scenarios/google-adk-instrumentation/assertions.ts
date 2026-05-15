@@ -6,7 +6,10 @@ import {
   matchFileSnapshot,
   resolveFileSnapshotPath,
 } from "../../helpers/file-snapshot";
-import { withScenarioHarness } from "../../helpers/scenario-harness";
+import {
+  withScenarioHarness,
+  type ScenarioRunContext,
+} from "../../helpers/scenario-harness";
 import { findLatestSpan } from "../../helpers/trace-selectors";
 import { summarizeWrapperContract } from "../../helpers/wrapper-contract";
 
@@ -16,13 +19,13 @@ type RunGoogleADKScenario = (harness: {
   runNodeScenarioDir: (options: {
     entry: string;
     nodeArgs: string[];
-    runContext?: { variantKey: string };
+    runContext?: ScenarioRunContext;
     scenarioDir: string;
     timeoutMs: number;
   }) => Promise<unknown>;
   runScenarioDir: (options: {
     entry: string;
-    runContext?: { variantKey: string };
+    runContext?: ScenarioRunContext;
     scenarioDir: string;
     timeoutMs: number;
   }) => Promise<unknown>;
@@ -35,6 +38,15 @@ const VOLATILE_ADK_METRIC_KEYS = new Set([
   "prompt_tokens",
   "tokens",
 ]);
+const SNAPSHOT_ROW_IDENTITY_FIELDS = [
+  "org_id",
+  "project_id",
+  "experiment_id",
+  "dataset_id",
+  "prompt_session_id",
+  "log_id",
+  "id",
+];
 
 function isRecord(value: Json | undefined): value is Record<string, Json> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -117,6 +129,19 @@ function normalizeADKOutput(value: Json): Json {
   }
 
   return cloned;
+}
+
+function latestSnapshotEvents(events: CapturedLogEvent[]): CapturedLogEvent[] {
+  const eventsByRow = new Map<string, CapturedLogEvent>();
+
+  for (const event of events) {
+    const key = JSON.stringify(
+      SNAPSHOT_ROW_IDENTITY_FIELDS.map((field) => event.row[field]),
+    );
+    eventsByRow.set(key, event);
+  }
+
+  return [...eventsByRow.values()];
 }
 
 function dedupeSnapshotItems(items: Json[]): Json[] {
@@ -333,7 +358,7 @@ export function defineGoogleADKInstrumentationAssertions(options: {
     });
 
     test("matches the shared span snapshot", testConfig, async () => {
-      const relevantEvents = events.filter(
+      const relevantEvents = latestSnapshotEvents(events).filter(
         (e) =>
           e.span.name !== undefined &&
           e.span.type !== "llm" &&
@@ -354,7 +379,7 @@ export function defineGoogleADKInstrumentationAssertions(options: {
     });
 
     test("matches the shared payload snapshot", testConfig, async () => {
-      const relevantEvents = events.filter(
+      const relevantEvents = latestSnapshotEvents(events).filter(
         (e) =>
           e.span.name !== undefined &&
           e.span.type !== "llm" &&

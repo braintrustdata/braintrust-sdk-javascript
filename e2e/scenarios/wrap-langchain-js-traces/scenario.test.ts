@@ -9,7 +9,6 @@ import {
   resolveScenarioDir,
   withScenarioHarness,
 } from "../../helpers/scenario-harness";
-import { cassetteTagsFor } from "../../helpers/tags";
 
 import { assertLangchainTraces } from "./assertions";
 
@@ -24,7 +23,6 @@ test(
   "wrap-langchain-js-traces captures invoke, chain, stream, and tool spans via BraintrustCallbackHandler",
   {
     timeout: TIMEOUT_MS,
-    tags: cassetteTagsFor(import.meta.url, VARIANT_KEY),
   },
   async () => {
     await withScenarioHarness(async ({ events, payloads, runScenarioDir }) => {

@@ -19,7 +19,7 @@
       "operation": "chat"
     },
     "metric_keys": [],
-    "name": "cohere-chat-operation",
+    "name": "cohere-v2-chat-operation",
     "root_span_id": "<span:1>",
     "span_id": "<span:2>",
     "span_parents": [
@@ -56,7 +56,7 @@
       "operation": "chat-stream"
     },
     "metric_keys": [],
-    "name": "cohere-chat-stream-operation",
+    "name": "cohere-v2-chat-stream-operation",
     "root_span_id": "<span:1>",
     "span_id": "<span:4>",
     "span_parents": [
@@ -90,54 +90,12 @@
     "has_input": false,
     "has_output": false,
     "metadata": {
-      "operation": "chat-stream-thinking"
-    },
-    "metric_keys": [],
-    "name": "cohere-chat-stream-thinking-operation",
-    "root_span_id": "<span:1>",
-    "span_id": "<span:6>",
-    "span_parents": [
-      "<span:1>"
-    ],
-    "type": null
-  },
-  {
-    "has_input": true,
-    "has_output": true,
-    "metadata": {
-      "model": "command-a-reasoning-08-2025",
-      "provider": "cohere",
-      "thinking": {
-        "tokenBudget": 128,
-        "type": "enabled"
-      }
-    },
-    "metric_keys": [
-      "completion_tokens",
-      "prompt_cached_tokens",
-      "prompt_tokens",
-      "reasoning_tokens",
-      "time_to_first_token",
-      "tokens"
-    ],
-    "name": "cohere.chatStream",
-    "root_span_id": "<span:1>",
-    "span_id": "<span:7>",
-    "span_parents": [
-      "<span:6>"
-    ],
-    "type": "llm"
-  },
-  {
-    "has_input": false,
-    "has_output": false,
-    "metadata": {
       "operation": "embed"
     },
     "metric_keys": [],
-    "name": "cohere-embed-operation",
+    "name": "cohere-v2-embed-operation",
     "root_span_id": "<span:1>",
-    "span_id": "<span:8>",
+    "span_id": "<span:6>",
     "span_parents": [
       "<span:1>"
     ],
@@ -156,9 +114,9 @@
     ],
     "name": "cohere.embed",
     "root_span_id": "<span:1>",
-    "span_id": "<span:9>",
+    "span_id": "<span:7>",
     "span_parents": [
-      "<span:8>"
+      "<span:6>"
     ],
     "type": "llm"
   },
@@ -169,9 +127,9 @@
       "operation": "rerank"
     },
     "metric_keys": [],
-    "name": "cohere-rerank-operation",
+    "name": "cohere-v2-rerank-operation",
     "root_span_id": "<span:1>",
-    "span_id": "<span:10>",
+    "span_id": "<span:8>",
     "span_parents": [
       "<span:1>"
     ],
@@ -191,9 +149,9 @@
     ],
     "name": "cohere.rerank",
     "root_span_id": "<span:1>",
-    "span_id": "<span:11>",
+    "span_id": "<span:9>",
     "span_parents": [
-      "<span:10>"
+      "<span:8>"
     ],
     "type": "llm"
   }

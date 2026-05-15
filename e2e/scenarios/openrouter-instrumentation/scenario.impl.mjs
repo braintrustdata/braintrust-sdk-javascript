@@ -52,8 +52,10 @@ async function runOpenRouterInstrumentationScenario(
   OpenRouter,
   { decorateClient, supportsRerank = true } = {},
 ) {
+  const openRouterBaseUrl = process.env.OPENROUTER_BASE_URL;
   const baseClient = new OpenRouter({
     apiKey: process.env.OPENROUTER_API_KEY,
+    ...(openRouterBaseUrl ? { serverURL: openRouterBaseUrl } : {}),
   });
   const client = decorateClient ? decorateClient(baseClient) : baseClient;
 

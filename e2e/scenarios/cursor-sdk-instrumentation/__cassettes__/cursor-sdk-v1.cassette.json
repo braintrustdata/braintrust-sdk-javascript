@@ -1,0 +1,4879 @@
+{
+  "entries": [
+    {
+      "callIndex": 0,
+      "id": "3056d63956e85565",
+      "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
+      "recordedAt": "2026-05-15T11:36:09.163Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {}
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api2.cursor.sh/auth/exchange_user_api_key"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "accessToken": "[REDACTED]",
+            "refreshToken": "[REDACTED]"
+          }
+        },
+        "headers": {
+          "access-control-allow-credentials": "true",
+          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
+          "connection": "keep-alive",
+          "content-length": "932",
+          "content-type": "application/json; charset=utf-8",
+          "date": "Fri, 15 May 2026 11:36:09 GMT",
+          "vary": "Origin"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 0,
+      "id": "30973cd9bcce6459",
+      "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetUserPrivacyMode",
+      "recordedAt": "2026-05-15T11:36:09.321Z",
+      "request": {
+        "body": {
+          "contentType": "application/proto",
+          "kind": "base64",
+          "value": "CAE="
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api2.cursor.sh/aiserver.v1.DashboardService/GetUserPrivacyMode"
+      },
+      "response": {
+        "body": {
+          "contentType": "application/proto",
+          "kind": "base64",
+          "value": "CAIYAQ=="
+        },
+        "headers": {
+          "access-control-allow-credentials": "true",
+          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
+          "connection": "keep-alive",
+          "content-length": "4",
+          "content-type": "application/proto",
+          "date": "Fri, 15 May 2026 11:36:09 GMT",
+          "vary": "Origin"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 0,
+      "id": "61bed072048628da",
+      "matchKey": "GET api.cursor.com/v1/models",
+      "recordedAt": "2026-05-15T11:36:09.994Z",
+      "request": {
+        "body": {
+          "kind": "empty"
+        },
+        "headers": {},
+        "method": "GET",
+        "url": "https://api.cursor.com/v1/models"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "items": [
+              {
+                "displayName": "Auto",
+                "id": "default",
+                "variants": [
+                  {
+                    "displayName": "Auto",
+                    "isDefault": true,
+                    "params": []
+                  }
+                ]
+              },
+              {
+                "aliases": ["composer-latest", "composer"],
+                "displayName": "Composer 2",
+                "id": "composer-2",
+                "parameters": [
+                  {
+                    "displayName": "Fast",
+                    "id": "fast",
+                    "values": [
+                      {
+                        "value": "false"
+                      },
+                      {
+                        "displayName": "Fast",
+                        "value": "true"
+                      }
+                    ]
+                  }
+                ],
+                "variants": [
+                  {
+                    "displayName": "Composer 2",
+                    "isDefault": true,
+                    "params": [
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Composer 2",
+                    "params": [
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "aliases": ["gpt-latest", "gpt", "gpt-5-5"],
+                "displayName": "GPT-5.5",
+                "id": "gpt-5.5",
+                "parameters": [
+                  {
+                    "displayName": "Context",
+                    "id": "context",
+                    "values": [
+                      {
+                        "displayName": "272K",
+                        "value": "272k"
+                      },
+                      {
+                        "displayName": "1M",
+                        "value": "1m"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Reasoning",
+                    "id": "reasoning",
+                    "values": [
+                      {
+                        "displayName": "None",
+                        "value": "none"
+                      },
+                      {
+                        "displayName": "Low",
+                        "value": "low"
+                      },
+                      {
+                        "displayName": "Medium",
+                        "value": "medium"
+                      },
+                      {
+                        "displayName": "High",
+                        "value": "high"
+                      },
+                      {
+                        "displayName": "Extra High",
+                        "value": "extra-high"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Fast",
+                    "id": "fast",
+                    "values": [
+                      {
+                        "value": "false"
+                      },
+                      {
+                        "displayName": "Fast",
+                        "value": "true"
+                      }
+                    ]
+                  }
+                ],
+                "variants": [
+                  {
+                    "displayName": "GPT-5.5",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "272k"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "none"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.5",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "272k"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "none"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.5",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "272k"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "low"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.5",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "272k"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "low"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.5",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "272k"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "medium"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.5",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "272k"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "medium"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.5",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "272k"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "high"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.5",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "272k"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "high"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.5",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "272k"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "extra-high"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.5",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "272k"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "extra-high"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.5",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "none"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.5",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "low"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.5",
+                    "isDefault": true,
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "medium"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.5",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "high"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.5",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "extra-high"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "aliases": ["codex-latest", "codex", "codex-5.3"],
+                "displayName": "Codex 5.3",
+                "id": "gpt-5.3-codex",
+                "parameters": [
+                  {
+                    "displayName": "Reasoning",
+                    "id": "reasoning",
+                    "values": [
+                      {
+                        "displayName": "Low",
+                        "value": "low"
+                      },
+                      {
+                        "displayName": "Medium",
+                        "value": "medium"
+                      },
+                      {
+                        "displayName": "High",
+                        "value": "high"
+                      },
+                      {
+                        "displayName": "Extra High",
+                        "value": "extra-high"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Fast",
+                    "id": "fast",
+                    "values": [
+                      {
+                        "value": "false"
+                      },
+                      {
+                        "displayName": "Fast",
+                        "value": "true"
+                      }
+                    ]
+                  }
+                ],
+                "variants": [
+                  {
+                    "displayName": "Codex 5.3",
+                    "params": [
+                      {
+                        "id": "reasoning",
+                        "value": "low"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Codex 5.3",
+                    "params": [
+                      {
+                        "id": "reasoning",
+                        "value": "low"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Codex 5.3",
+                    "params": [
+                      {
+                        "id": "reasoning",
+                        "value": "medium"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Codex 5.3",
+                    "params": [
+                      {
+                        "id": "reasoning",
+                        "value": "medium"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Codex 5.3",
+                    "params": [
+                      {
+                        "id": "reasoning",
+                        "value": "high"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Codex 5.3",
+                    "isDefault": true,
+                    "params": [
+                      {
+                        "id": "reasoning",
+                        "value": "high"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Codex 5.3",
+                    "params": [
+                      {
+                        "id": "reasoning",
+                        "value": "extra-high"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Codex 5.3",
+                    "params": [
+                      {
+                        "id": "reasoning",
+                        "value": "extra-high"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "aliases": [
+                  "sonnet-latest",
+                  "sonnet",
+                  "sonnet-4.6",
+                  "sonnet-4-6"
+                ],
+                "displayName": "Sonnet 4.6",
+                "id": "claude-sonnet-4-6",
+                "parameters": [
+                  {
+                    "displayName": "Thinking",
+                    "id": "thinking",
+                    "values": [
+                      {
+                        "value": "false"
+                      },
+                      {
+                        "displayName": ":icon-brain:",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Context",
+                    "id": "context",
+                    "values": [
+                      {
+                        "displayName": "200K",
+                        "value": "200k"
+                      },
+                      {
+                        "displayName": "1M",
+                        "value": "1m"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Effort",
+                    "id": "effort",
+                    "values": [
+                      {
+                        "displayName": "Low",
+                        "value": "low"
+                      },
+                      {
+                        "displayName": "Medium",
+                        "value": "medium"
+                      },
+                      {
+                        "displayName": "High",
+                        "value": "high"
+                      },
+                      {
+                        "displayName": "Max",
+                        "value": "max"
+                      }
+                    ]
+                  }
+                ],
+                "variants": [
+                  {
+                    "displayName": "Sonnet 4.6",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "200k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "low"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Sonnet 4.6",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "200k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "medium"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Sonnet 4.6",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "200k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "high"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Sonnet 4.6",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "200k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "max"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Sonnet 4.6",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "low"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Sonnet 4.6",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "medium"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Sonnet 4.6",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "high"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Sonnet 4.6",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "max"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Sonnet 4.6",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "200k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "low"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Sonnet 4.6",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "200k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "medium"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Sonnet 4.6",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "200k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "high"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Sonnet 4.6",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "200k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "max"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Sonnet 4.6",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "low"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Sonnet 4.6",
+                    "isDefault": true,
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "medium"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Sonnet 4.6",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "high"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Sonnet 4.6",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "max"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "aliases": ["opus-latest", "opus", "opus-4.7", "opus-4-7"],
+                "displayName": "Opus 4.7",
+                "id": "claude-opus-4-7",
+                "parameters": [
+                  {
+                    "displayName": "Thinking",
+                    "id": "thinking",
+                    "values": [
+                      {
+                        "value": "false"
+                      },
+                      {
+                        "displayName": ":icon-brain:",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Context",
+                    "id": "context",
+                    "values": [
+                      {
+                        "displayName": "300K",
+                        "value": "300k"
+                      },
+                      {
+                        "displayName": "1M",
+                        "value": "1m"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Effort",
+                    "id": "effort",
+                    "values": [
+                      {
+                        "displayName": "Low",
+                        "value": "low"
+                      },
+                      {
+                        "displayName": "Medium",
+                        "value": "medium"
+                      },
+                      {
+                        "displayName": "High",
+                        "value": "high"
+                      },
+                      {
+                        "displayName": "Extra High",
+                        "value": "xhigh"
+                      },
+                      {
+                        "displayName": "Max",
+                        "value": "max"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Fast",
+                    "id": "fast",
+                    "values": [
+                      {
+                        "value": "false"
+                      },
+                      {
+                        "displayName": "Fast",
+                        "value": "true"
+                      }
+                    ]
+                  }
+                ],
+                "variants": [
+                  {
+                    "displayName": "Opus 4.7",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "300k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "low"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.7",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "300k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "low"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.7",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "300k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "medium"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.7",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "300k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "medium"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.7",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "300k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "high"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.7",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "300k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "high"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.7",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "300k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "xhigh"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.7",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "300k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "xhigh"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.7",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "300k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "max"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.7",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "300k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "max"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.7",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "low"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.7",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "low"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.7",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "medium"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.7",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "medium"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.7",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "high"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.7",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "high"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.7",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "xhigh"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.7",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "xhigh"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.7",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "max"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.7",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "max"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.7",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "300k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "low"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.7",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "300k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "low"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.7",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "300k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "medium"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.7",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "300k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "medium"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.7",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "300k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "high"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.7",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "300k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "high"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.7",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "300k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "xhigh"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.7",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "300k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "xhigh"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.7",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "300k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "max"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.7",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "300k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "max"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.7",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "low"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.7",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "low"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.7",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "medium"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.7",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "medium"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.7",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "high"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.7",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "high"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.7",
+                    "isDefault": true,
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "xhigh"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.7",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "xhigh"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.7",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "max"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.7",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "max"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "aliases": ["grok-latest", "grok"],
+                "displayName": "Grok 4.3",
+                "id": "grok-4.3",
+                "parameters": [
+                  {
+                    "displayName": "Context",
+                    "id": "context",
+                    "values": [
+                      {
+                        "displayName": "200K",
+                        "value": "200k"
+                      },
+                      {
+                        "displayName": "1M",
+                        "value": "1m"
+                      }
+                    ]
+                  }
+                ],
+                "variants": [
+                  {
+                    "displayName": "Grok 4.3",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "200k"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Grok 4.3",
+                    "isDefault": true,
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "aliases": ["gpt"],
+                "displayName": "GPT-5.4",
+                "id": "gpt-5.4",
+                "parameters": [
+                  {
+                    "displayName": "Context",
+                    "id": "context",
+                    "values": [
+                      {
+                        "displayName": "272K",
+                        "value": "272k"
+                      },
+                      {
+                        "displayName": "1M",
+                        "value": "1m"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Reasoning",
+                    "id": "reasoning",
+                    "values": [
+                      {
+                        "displayName": "None",
+                        "value": "none"
+                      },
+                      {
+                        "displayName": "Low",
+                        "value": "low"
+                      },
+                      {
+                        "displayName": "Medium",
+                        "value": "medium"
+                      },
+                      {
+                        "displayName": "High",
+                        "value": "high"
+                      },
+                      {
+                        "displayName": "Extra High",
+                        "value": "extra-high"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Fast",
+                    "id": "fast",
+                    "values": [
+                      {
+                        "value": "false"
+                      },
+                      {
+                        "displayName": "Fast",
+                        "value": "true"
+                      }
+                    ]
+                  }
+                ],
+                "variants": [
+                  {
+                    "displayName": "GPT-5.4",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "272k"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "none"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.4",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "272k"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "none"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.4",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "272k"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "low"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.4",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "272k"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "low"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.4",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "272k"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "medium"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.4",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "272k"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "medium"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.4",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "272k"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "high"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.4",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "272k"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "high"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.4",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "272k"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "extra-high"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.4",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "272k"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "extra-high"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.4",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "none"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.4",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "low"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.4",
+                    "isDefault": true,
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "medium"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.4",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "high"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.4",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "extra-high"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "aliases": ["opus", "opus-4.6", "opus-4-6"],
+                "displayName": "Opus 4.6",
+                "id": "claude-opus-4-6",
+                "parameters": [
+                  {
+                    "displayName": "Thinking",
+                    "id": "thinking",
+                    "values": [
+                      {
+                        "value": "false"
+                      },
+                      {
+                        "displayName": ":icon-brain:",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Context",
+                    "id": "context",
+                    "values": [
+                      {
+                        "displayName": "200K",
+                        "value": "200k"
+                      },
+                      {
+                        "displayName": "1M",
+                        "value": "1m"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Effort",
+                    "id": "effort",
+                    "values": [
+                      {
+                        "displayName": "Low",
+                        "value": "low"
+                      },
+                      {
+                        "displayName": "Medium",
+                        "value": "medium"
+                      },
+                      {
+                        "displayName": "High",
+                        "value": "high"
+                      },
+                      {
+                        "displayName": "Max",
+                        "value": "max"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Fast",
+                    "id": "fast",
+                    "values": [
+                      {
+                        "value": "false"
+                      },
+                      {
+                        "displayName": "Fast",
+                        "value": "true"
+                      }
+                    ]
+                  }
+                ],
+                "variants": [
+                  {
+                    "displayName": "Opus 4.6",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "200k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "low"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.6",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "200k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "low"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.6",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "200k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "medium"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.6",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "200k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "medium"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.6",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "200k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "high"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.6",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "200k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "high"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.6",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "200k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "max"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.6",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "200k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "max"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.6",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "low"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.6",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "low"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.6",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "medium"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.6",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "medium"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.6",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "high"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.6",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "high"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.6",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "max"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.6",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "max"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.6",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "200k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "low"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.6",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "200k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "low"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.6",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "200k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "medium"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.6",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "200k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "medium"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.6",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "200k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "high"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.6",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "200k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "high"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.6",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "200k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "max"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.6",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "200k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "max"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.6",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "low"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.6",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "low"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.6",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "medium"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.6",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "medium"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.6",
+                    "isDefault": true,
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "high"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.6",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "high"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.6",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "max"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.6",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "max"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "aliases": ["opus", "opus-4.5", "opus-4-5"],
+                "displayName": "Opus 4.5",
+                "id": "claude-opus-4-5",
+                "parameters": [
+                  {
+                    "displayName": "Thinking",
+                    "id": "thinking",
+                    "values": [
+                      {
+                        "value": "false"
+                      },
+                      {
+                        "displayName": ":icon-brain:",
+                        "value": "true"
+                      }
+                    ]
+                  }
+                ],
+                "variants": [
+                  {
+                    "displayName": "Opus 4.5",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.5",
+                    "isDefault": true,
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "aliases": ["gpt"],
+                "displayName": "GPT-5.2",
+                "id": "gpt-5.2",
+                "parameters": [
+                  {
+                    "displayName": "Reasoning",
+                    "id": "reasoning",
+                    "values": [
+                      {
+                        "displayName": "Low",
+                        "value": "low"
+                      },
+                      {
+                        "displayName": "Medium",
+                        "value": "medium"
+                      },
+                      {
+                        "displayName": "High",
+                        "value": "high"
+                      },
+                      {
+                        "displayName": "Extra High",
+                        "value": "extra-high"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Fast",
+                    "id": "fast",
+                    "values": [
+                      {
+                        "value": "false"
+                      },
+                      {
+                        "displayName": "Fast",
+                        "value": "true"
+                      }
+                    ]
+                  }
+                ],
+                "variants": [
+                  {
+                    "displayName": "GPT-5.2",
+                    "params": [
+                      {
+                        "id": "reasoning",
+                        "value": "low"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.2",
+                    "params": [
+                      {
+                        "id": "reasoning",
+                        "value": "low"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.2",
+                    "params": [
+                      {
+                        "id": "reasoning",
+                        "value": "medium"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.2",
+                    "params": [
+                      {
+                        "id": "reasoning",
+                        "value": "medium"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.2",
+                    "params": [
+                      {
+                        "id": "reasoning",
+                        "value": "high"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.2",
+                    "isDefault": true,
+                    "params": [
+                      {
+                        "id": "reasoning",
+                        "value": "high"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.2",
+                    "params": [
+                      {
+                        "id": "reasoning",
+                        "value": "extra-high"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.2",
+                    "params": [
+                      {
+                        "id": "reasoning",
+                        "value": "extra-high"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "aliases": [
+                  "gemini-latest",
+                  "gemini-pro-latest",
+                  "gemini",
+                  "gemini-pro"
+                ],
+                "displayName": "Gemini 3.1 Pro",
+                "id": "gemini-3.1-pro",
+                "variants": [
+                  {
+                    "displayName": "Gemini 3.1 Pro",
+                    "isDefault": true,
+                    "params": []
+                  }
+                ]
+              },
+              {
+                "aliases": ["gpt-mini-latest", "gpt-mini"],
+                "displayName": "GPT-5.4 Mini",
+                "id": "gpt-5.4-mini",
+                "parameters": [
+                  {
+                    "displayName": "Reasoning",
+                    "id": "reasoning",
+                    "values": [
+                      {
+                        "displayName": "None",
+                        "value": "none"
+                      },
+                      {
+                        "displayName": "Low",
+                        "value": "low"
+                      },
+                      {
+                        "displayName": "Medium",
+                        "value": "medium"
+                      },
+                      {
+                        "displayName": "High",
+                        "value": "high"
+                      },
+                      {
+                        "displayName": "Extra High",
+                        "value": "xhigh"
+                      }
+                    ]
+                  }
+                ],
+                "variants": [
+                  {
+                    "displayName": "GPT-5.4 Mini",
+                    "params": [
+                      {
+                        "id": "reasoning",
+                        "value": "none"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.4 Mini",
+                    "params": [
+                      {
+                        "id": "reasoning",
+                        "value": "low"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.4 Mini",
+                    "isDefault": true,
+                    "params": [
+                      {
+                        "id": "reasoning",
+                        "value": "medium"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.4 Mini",
+                    "params": [
+                      {
+                        "id": "reasoning",
+                        "value": "high"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.4 Mini",
+                    "params": [
+                      {
+                        "id": "reasoning",
+                        "value": "xhigh"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "aliases": ["gpt-nano-latest", "gpt-nano"],
+                "displayName": "GPT-5.4 Nano",
+                "id": "gpt-5.4-nano",
+                "parameters": [
+                  {
+                    "displayName": "Reasoning",
+                    "id": "reasoning",
+                    "values": [
+                      {
+                        "displayName": "None",
+                        "value": "none"
+                      },
+                      {
+                        "displayName": "Low",
+                        "value": "low"
+                      },
+                      {
+                        "displayName": "Medium",
+                        "value": "medium"
+                      },
+                      {
+                        "displayName": "High",
+                        "value": "high"
+                      },
+                      {
+                        "displayName": "Extra High",
+                        "value": "xhigh"
+                      }
+                    ]
+                  }
+                ],
+                "variants": [
+                  {
+                    "displayName": "GPT-5.4 Nano",
+                    "params": [
+                      {
+                        "id": "reasoning",
+                        "value": "none"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.4 Nano",
+                    "params": [
+                      {
+                        "id": "reasoning",
+                        "value": "low"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.4 Nano",
+                    "isDefault": true,
+                    "params": [
+                      {
+                        "id": "reasoning",
+                        "value": "medium"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.4 Nano",
+                    "params": [
+                      {
+                        "id": "reasoning",
+                        "value": "high"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.4 Nano",
+                    "params": [
+                      {
+                        "id": "reasoning",
+                        "value": "xhigh"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "aliases": ["haiku-latest", "haiku", "haiku-4.5", "haiku-4-5"],
+                "displayName": "Haiku 4.5",
+                "id": "claude-haiku-4-5",
+                "parameters": [
+                  {
+                    "displayName": "Thinking",
+                    "id": "thinking",
+                    "values": [
+                      {
+                        "value": "false"
+                      },
+                      {
+                        "displayName": ":icon-brain:",
+                        "value": "true"
+                      }
+                    ]
+                  }
+                ],
+                "variants": [
+                  {
+                    "displayName": "Haiku 4.5",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Haiku 4.5",
+                    "isDefault": true,
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "aliases": ["sonnet", "sonnet-4.5", "sonnet-4-5"],
+                "displayName": "Sonnet 4.5",
+                "id": "claude-sonnet-4-5",
+                "parameters": [
+                  {
+                    "displayName": "Thinking",
+                    "id": "thinking",
+                    "values": [
+                      {
+                        "value": "false"
+                      },
+                      {
+                        "displayName": ":icon-brain:",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Context",
+                    "id": "context",
+                    "values": [
+                      {
+                        "displayName": "200K",
+                        "value": "200k"
+                      }
+                    ]
+                  }
+                ],
+                "variants": [
+                  {
+                    "displayName": "Sonnet 4.5",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "200k"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Sonnet 4.5",
+                    "isDefault": true,
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "200k"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "aliases": ["codex", "codex-5.2"],
+                "displayName": "Codex 5.2",
+                "id": "gpt-5.2-codex",
+                "parameters": [
+                  {
+                    "displayName": "Reasoning",
+                    "id": "reasoning",
+                    "values": [
+                      {
+                        "displayName": "Low",
+                        "value": "low"
+                      },
+                      {
+                        "displayName": "Medium",
+                        "value": "medium"
+                      },
+                      {
+                        "displayName": "High",
+                        "value": "high"
+                      },
+                      {
+                        "displayName": "Extra High",
+                        "value": "extra-high"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Fast",
+                    "id": "fast",
+                    "values": [
+                      {
+                        "value": "false"
+                      },
+                      {
+                        "displayName": "Fast",
+                        "value": "true"
+                      }
+                    ]
+                  }
+                ],
+                "variants": [
+                  {
+                    "displayName": "Codex 5.2",
+                    "params": [
+                      {
+                        "id": "reasoning",
+                        "value": "low"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Codex 5.2",
+                    "params": [
+                      {
+                        "id": "reasoning",
+                        "value": "low"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Codex 5.2",
+                    "params": [
+                      {
+                        "id": "reasoning",
+                        "value": "medium"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Codex 5.2",
+                    "params": [
+                      {
+                        "id": "reasoning",
+                        "value": "medium"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Codex 5.2",
+                    "params": [
+                      {
+                        "id": "reasoning",
+                        "value": "high"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Codex 5.2",
+                    "isDefault": true,
+                    "params": [
+                      {
+                        "id": "reasoning",
+                        "value": "high"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Codex 5.2",
+                    "params": [
+                      {
+                        "id": "reasoning",
+                        "value": "extra-high"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Codex 5.2",
+                    "params": [
+                      {
+                        "id": "reasoning",
+                        "value": "extra-high"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "aliases": ["codex", "codex-5.1-max"],
+                "displayName": "Codex 5.1 Max",
+                "id": "gpt-5.1-codex-max",
+                "parameters": [
+                  {
+                    "displayName": "Reasoning",
+                    "id": "reasoning",
+                    "values": [
+                      {
+                        "displayName": "Low",
+                        "value": "low"
+                      },
+                      {
+                        "displayName": "Medium",
+                        "value": "medium"
+                      },
+                      {
+                        "displayName": "High",
+                        "value": "high"
+                      },
+                      {
+                        "displayName": "Extra High",
+                        "value": "extra-high"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Fast",
+                    "id": "fast",
+                    "values": [
+                      {
+                        "value": "false"
+                      },
+                      {
+                        "displayName": "Fast",
+                        "value": "true"
+                      }
+                    ]
+                  }
+                ],
+                "variants": [
+                  {
+                    "displayName": "Codex 5.1 Max",
+                    "params": [
+                      {
+                        "id": "reasoning",
+                        "value": "low"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Codex 5.1 Max",
+                    "params": [
+                      {
+                        "id": "reasoning",
+                        "value": "low"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Codex 5.1 Max",
+                    "params": [
+                      {
+                        "id": "reasoning",
+                        "value": "medium"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Codex 5.1 Max",
+                    "params": [
+                      {
+                        "id": "reasoning",
+                        "value": "medium"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Codex 5.1 Max",
+                    "params": [
+                      {
+                        "id": "reasoning",
+                        "value": "high"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Codex 5.1 Max",
+                    "isDefault": true,
+                    "params": [
+                      {
+                        "id": "reasoning",
+                        "value": "high"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Codex 5.1 Max",
+                    "params": [
+                      {
+                        "id": "reasoning",
+                        "value": "extra-high"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Codex 5.1 Max",
+                    "params": [
+                      {
+                        "id": "reasoning",
+                        "value": "extra-high"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "aliases": ["gpt"],
+                "displayName": "GPT-5.1",
+                "id": "gpt-5.1",
+                "parameters": [
+                  {
+                    "displayName": "Reasoning",
+                    "id": "reasoning",
+                    "values": [
+                      {
+                        "displayName": "Low",
+                        "value": "low"
+                      },
+                      {
+                        "displayName": "Medium",
+                        "value": "medium"
+                      },
+                      {
+                        "displayName": "High",
+                        "value": "high"
+                      }
+                    ]
+                  }
+                ],
+                "variants": [
+                  {
+                    "displayName": "GPT-5.1",
+                    "params": [
+                      {
+                        "id": "reasoning",
+                        "value": "low"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.1",
+                    "isDefault": true,
+                    "params": [
+                      {
+                        "id": "reasoning",
+                        "value": "medium"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.1",
+                    "params": [
+                      {
+                        "id": "reasoning",
+                        "value": "high"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "aliases": ["gemini-flash-latest", "gemini-flash"],
+                "displayName": "Gemini 3 Flash",
+                "id": "gemini-3-flash",
+                "variants": [
+                  {
+                    "displayName": "Gemini 3 Flash",
+                    "isDefault": true,
+                    "params": []
+                  }
+                ]
+              },
+              {
+                "aliases": ["codex-mini-latest", "codex-mini"],
+                "displayName": "Codex 5.1 Mini",
+                "id": "gpt-5.1-codex-mini",
+                "parameters": [
+                  {
+                    "displayName": "Reasoning",
+                    "id": "reasoning",
+                    "values": [
+                      {
+                        "displayName": "Low",
+                        "value": "low"
+                      },
+                      {
+                        "displayName": "Medium",
+                        "value": "medium"
+                      },
+                      {
+                        "displayName": "High",
+                        "value": "high"
+                      }
+                    ]
+                  }
+                ],
+                "variants": [
+                  {
+                    "displayName": "Codex 5.1 Mini",
+                    "params": [
+                      {
+                        "id": "reasoning",
+                        "value": "low"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Codex 5.1 Mini",
+                    "isDefault": true,
+                    "params": [
+                      {
+                        "id": "reasoning",
+                        "value": "medium"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Codex 5.1 Mini",
+                    "params": [
+                      {
+                        "id": "reasoning",
+                        "value": "high"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "aliases": ["sonnet", "sonnet-4"],
+                "displayName": "Sonnet 4",
+                "id": "claude-sonnet-4",
+                "parameters": [
+                  {
+                    "displayName": "Thinking",
+                    "id": "thinking",
+                    "values": [
+                      {
+                        "value": "false"
+                      },
+                      {
+                        "displayName": ":icon-brain:",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Context",
+                    "id": "context",
+                    "values": [
+                      {
+                        "displayName": "200K",
+                        "value": "200k"
+                      }
+                    ]
+                  }
+                ],
+                "variants": [
+                  {
+                    "displayName": "Sonnet 4",
+                    "isDefault": true,
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "200k"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Sonnet 4",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "200k"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "aliases": ["gpt-mini"],
+                "displayName": "GPT-5 Mini",
+                "id": "gpt-5-mini",
+                "variants": [
+                  {
+                    "displayName": "GPT-5 Mini",
+                    "isDefault": true,
+                    "params": []
+                  }
+                ]
+              },
+              {
+                "aliases": ["gemini-flash"],
+                "displayName": "Gemini 2.5 Flash",
+                "id": "gemini-2.5-flash",
+                "variants": [
+                  {
+                    "displayName": "Gemini 2.5 Flash",
+                    "isDefault": true,
+                    "params": []
+                  }
+                ]
+              },
+              {
+                "aliases": ["kimi-latest", "kimi"],
+                "displayName": "Kimi K2.5",
+                "id": "kimi-k2.5",
+                "variants": [
+                  {
+                    "displayName": "Kimi K2.5",
+                    "isDefault": true,
+                    "params": []
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "headers": {
+          "access-control-allow-credentials": "true",
+          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
+          "connection": "keep-alive",
+          "content-length": "32522",
+          "content-type": "application/json; charset=utf-8",
+          "date": "Fri, 15 May 2026 11:36:09 GMT",
+          "vary": "Origin"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 1,
+      "id": "0a485ba15b4341f4",
+      "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
+      "recordedAt": "2026-05-15T11:36:10.700Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {}
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api2.cursor.sh/auth/exchange_user_api_key"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "accessToken": "[REDACTED]",
+            "refreshToken": "[REDACTED]"
+          }
+        },
+        "headers": {
+          "access-control-allow-credentials": "true",
+          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
+          "connection": "keep-alive",
+          "content-length": "932",
+          "content-type": "application/json; charset=utf-8",
+          "date": "Fri, 15 May 2026 11:36:10 GMT",
+          "vary": "Origin"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 0,
+      "id": "d1f7ceb3bf90cdd7",
+      "matchKey": "POST api2.cursor.sh/aiserver.v1.AnalyticsService/BootstrapStatsig",
+      "recordedAt": "2026-05-15T11:36:11.180Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {}
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api2.cursor.sh/aiserver.v1.AnalyticsService/BootstrapStatsig"
+      },
+      "response": {
+        "body": {
+          "contentType": "application/json",
+          "kind": "binary",
+          "path": "cursor-sdk-v1.cassette.blobs/b027eca4ea158d665aa633a08123111e849897784d631461a8d709a985ab042f.bin",
+          "sha256": "b027eca4ea158d665aa633a08123111e849897784d631461a8d709a985ab042f"
+        },
+        "headers": {
+          "access-control-allow-credentials": "true",
+          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
+          "connection": "keep-alive",
+          "content-encoding": "gzip",
+          "content-length": "62531",
+          "content-type": "application/json",
+          "date": "Fri, 15 May 2026 11:36:10 GMT",
+          "vary": "Origin"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 2,
+      "id": "597e06e6bda9541c",
+      "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
+      "recordedAt": "2026-05-15T11:36:11.370Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {}
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api2.cursor.sh/auth/exchange_user_api_key"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "accessToken": "[REDACTED]",
+            "refreshToken": "[REDACTED]"
+          }
+        },
+        "headers": {
+          "access-control-allow-credentials": "true",
+          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
+          "connection": "keep-alive",
+          "content-length": "932",
+          "content-type": "application/json; charset=utf-8",
+          "date": "Fri, 15 May 2026 11:36:11 GMT",
+          "vary": "Origin"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 0,
+      "id": "d53dfb862e5ae5f7",
+      "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetTeamAdminSettingsOrEmptyIfNotInTeam",
+      "recordedAt": "2026-05-15T11:36:11.565Z",
+      "request": {
+        "body": {
+          "kind": "empty"
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api2.cursor.sh/aiserver.v1.DashboardService/GetTeamAdminSettingsOrEmptyIfNotInTeam"
+      },
+      "response": {
+        "body": {
+          "contentType": "application/proto",
+          "kind": "base64",
+          "value": "GghCBggBEAEYASIAMgQIABgAOhIgAjAAQAJIAFgBcAGAAQCIAQBCAEoAggEAkAEAmAEAoAEAqgEHCAESAQIYAMABAMoBAOIBAOgBAfIBAggB+gEAgAIAigICEACqAgCyAgIKAMACAeACAA=="
+        },
+        "headers": {
+          "access-control-allow-credentials": "true",
+          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
+          "connection": "keep-alive",
+          "content-length": "106",
+          "content-type": "application/proto",
+          "date": "Fri, 15 May 2026 11:36:11 GMT",
+          "vary": "Origin"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 1,
+      "id": "4d511cf3b47c2629",
+      "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetUserPrivacyMode",
+      "recordedAt": "2026-05-15T11:36:11.861Z",
+      "request": {
+        "body": {
+          "contentType": "application/proto",
+          "kind": "base64",
+          "value": "CAE="
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api2.cursor.sh/aiserver.v1.DashboardService/GetUserPrivacyMode"
+      },
+      "response": {
+        "body": {
+          "contentType": "application/proto",
+          "kind": "base64",
+          "value": "CAIYAQ=="
+        },
+        "headers": {
+          "access-control-allow-credentials": "true",
+          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
+          "connection": "keep-alive",
+          "content-length": "4",
+          "content-type": "application/proto",
+          "date": "Fri, 15 May 2026 11:36:11 GMT",
+          "vary": "Origin"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 3,
+      "id": "6533d1db768ada38",
+      "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
+      "recordedAt": "2026-05-15T11:36:12.566Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {}
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api2.cursor.sh/auth/exchange_user_api_key"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "accessToken": "[REDACTED]",
+            "refreshToken": "[REDACTED]"
+          }
+        },
+        "headers": {
+          "access-control-allow-credentials": "true",
+          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
+          "connection": "keep-alive",
+          "content-length": "932",
+          "content-type": "application/json; charset=utf-8",
+          "date": "Fri, 15 May 2026 11:36:12 GMT",
+          "vary": "Origin"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 0,
+      "id": "f6841d25c577100e",
+      "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetTeamReposOrEmptyIfNotInTeam",
+      "recordedAt": "2026-05-15T11:36:12.602Z",
+      "request": {
+        "body": {
+          "kind": "empty"
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api2.cursor.sh/aiserver.v1.DashboardService/GetTeamReposOrEmptyIfNotInTeam"
+      },
+      "response": {
+        "body": {
+          "kind": "empty"
+        },
+        "headers": {
+          "access-control-allow-credentials": "true",
+          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
+          "connection": "keep-alive",
+          "content-length": "0",
+          "content-type": "application/proto",
+          "date": "Fri, 15 May 2026 11:36:12 GMT",
+          "vary": "Origin"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 0,
+      "id": "a340d783dfbb6997",
+      "matchKey": "POST api2.cursor.sh/agent.v1.AgentService/Run",
+      "recordedAt": "2026-05-15T11:36:13.017Z",
+      "request": {
+        "body": {
+          "kind": "empty"
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api2.cursor.sh/agent.v1.AgentService/Run"
+      },
+      "response": {
+        "body": {
+          "kind": "empty"
+        },
+        "headers": {
+          "connection": "keep-alive",
+          "content-length": "0",
+          "date": "Fri, 15 May 2026 11:36:13 GMT",
+          "server": "awselb/2.0"
+        },
+        "status": 464
+      }
+    },
+    {
+      "callIndex": 4,
+      "id": "713ac62a8481085f",
+      "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
+      "recordedAt": "2026-05-15T11:36:13.197Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {}
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api2.cursor.sh/auth/exchange_user_api_key"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "accessToken": "[REDACTED]",
+            "refreshToken": "[REDACTED]"
+          }
+        },
+        "headers": {
+          "access-control-allow-credentials": "true",
+          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
+          "connection": "keep-alive",
+          "content-length": "932",
+          "content-type": "application/json; charset=utf-8",
+          "date": "Fri, 15 May 2026 11:36:13 GMT",
+          "vary": "Origin"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 5,
+      "id": "159b9254fd967a4f",
+      "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
+      "recordedAt": "2026-05-15T11:36:13.375Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {}
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api2.cursor.sh/auth/exchange_user_api_key"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "accessToken": "[REDACTED]",
+            "refreshToken": "[REDACTED]"
+          }
+        },
+        "headers": {
+          "access-control-allow-credentials": "true",
+          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
+          "connection": "keep-alive",
+          "content-length": "932",
+          "content-type": "application/json; charset=utf-8",
+          "date": "Fri, 15 May 2026 11:36:13 GMT",
+          "vary": "Origin"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 6,
+      "id": "83ee8051122ed115",
+      "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
+      "recordedAt": "2026-05-15T11:36:13.728Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {}
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api2.cursor.sh/auth/exchange_user_api_key"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "accessToken": "[REDACTED]",
+            "refreshToken": "[REDACTED]"
+          }
+        },
+        "headers": {
+          "access-control-allow-credentials": "true",
+          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
+          "connection": "keep-alive",
+          "content-length": "932",
+          "content-type": "application/json; charset=utf-8",
+          "date": "Fri, 15 May 2026 11:36:13 GMT",
+          "vary": "Origin"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 1,
+      "id": "d2ea7953262b608d",
+      "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetTeamAdminSettingsOrEmptyIfNotInTeam",
+      "recordedAt": "2026-05-15T11:36:13.911Z",
+      "request": {
+        "body": {
+          "kind": "empty"
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api2.cursor.sh/aiserver.v1.DashboardService/GetTeamAdminSettingsOrEmptyIfNotInTeam"
+      },
+      "response": {
+        "body": {
+          "contentType": "application/proto",
+          "kind": "base64",
+          "value": "GghCBggBEAEYASIAMgQIABgAOhIgAjAAQAJIAFgBcAGAAQCIAQBCAEoAggEAkAEAmAEAoAEAqgEHCAESAQIYAMABAMoBAOIBAOgBAfIBAggB+gEAgAIAigICEACqAgCyAgIKAMACAeACAA=="
+        },
+        "headers": {
+          "access-control-allow-credentials": "true",
+          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
+          "connection": "keep-alive",
+          "content-length": "106",
+          "content-type": "application/proto",
+          "date": "Fri, 15 May 2026 11:36:13 GMT",
+          "vary": "Origin"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 2,
+      "id": "00f0c09b48c1898a",
+      "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetUserPrivacyMode",
+      "recordedAt": "2026-05-15T11:36:13.913Z",
+      "request": {
+        "body": {
+          "contentType": "application/proto",
+          "kind": "base64",
+          "value": "CAE="
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api2.cursor.sh/aiserver.v1.DashboardService/GetUserPrivacyMode"
+      },
+      "response": {
+        "body": {
+          "contentType": "application/proto",
+          "kind": "base64",
+          "value": "CAIYAQ=="
+        },
+        "headers": {
+          "access-control-allow-credentials": "true",
+          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
+          "connection": "keep-alive",
+          "content-length": "4",
+          "content-type": "application/proto",
+          "date": "Fri, 15 May 2026 11:36:13 GMT",
+          "vary": "Origin"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 7,
+      "id": "215c1c7456d5ac18",
+      "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
+      "recordedAt": "2026-05-15T11:36:14.745Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {}
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api2.cursor.sh/auth/exchange_user_api_key"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "accessToken": "[REDACTED]",
+            "refreshToken": "[REDACTED]"
+          }
+        },
+        "headers": {
+          "access-control-allow-credentials": "true",
+          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
+          "connection": "keep-alive",
+          "content-length": "932",
+          "content-type": "application/json; charset=utf-8",
+          "date": "Fri, 15 May 2026 11:36:14 GMT",
+          "vary": "Origin"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 1,
+      "id": "0fe2bdc8216b7c85",
+      "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetTeamReposOrEmptyIfNotInTeam",
+      "recordedAt": "2026-05-15T11:36:14.835Z",
+      "request": {
+        "body": {
+          "kind": "empty"
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api2.cursor.sh/aiserver.v1.DashboardService/GetTeamReposOrEmptyIfNotInTeam"
+      },
+      "response": {
+        "body": {
+          "kind": "empty"
+        },
+        "headers": {
+          "access-control-allow-credentials": "true",
+          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
+          "connection": "keep-alive",
+          "content-length": "0",
+          "content-type": "application/proto",
+          "date": "Fri, 15 May 2026 11:36:14 GMT",
+          "vary": "Origin"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 1,
+      "id": "f76197c334b438d4",
+      "matchKey": "POST api2.cursor.sh/agent.v1.AgentService/Run",
+      "recordedAt": "2026-05-15T11:36:15.168Z",
+      "request": {
+        "body": {
+          "kind": "empty"
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api2.cursor.sh/agent.v1.AgentService/Run"
+      },
+      "response": {
+        "body": {
+          "kind": "empty"
+        },
+        "headers": {
+          "connection": "keep-alive",
+          "content-length": "0",
+          "date": "Fri, 15 May 2026 11:36:15 GMT",
+          "server": "awselb/2.0"
+        },
+        "status": 464
+      }
+    },
+    {
+      "callIndex": 8,
+      "id": "b5a62fe3d5fdca42",
+      "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
+      "recordedAt": "2026-05-15T11:36:15.348Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {}
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api2.cursor.sh/auth/exchange_user_api_key"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "accessToken": "[REDACTED]",
+            "refreshToken": "[REDACTED]"
+          }
+        },
+        "headers": {
+          "access-control-allow-credentials": "true",
+          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
+          "connection": "keep-alive",
+          "content-length": "932",
+          "content-type": "application/json; charset=utf-8",
+          "date": "Fri, 15 May 2026 11:36:15 GMT",
+          "vary": "Origin"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 3,
+      "id": "ca48e39a4afe13dd",
+      "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetUserPrivacyMode",
+      "recordedAt": "2026-05-15T11:36:15.512Z",
+      "request": {
+        "body": {
+          "contentType": "application/proto",
+          "kind": "base64",
+          "value": "CAE="
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api2.cursor.sh/aiserver.v1.DashboardService/GetUserPrivacyMode"
+      },
+      "response": {
+        "body": {
+          "contentType": "application/proto",
+          "kind": "base64",
+          "value": "CAIYAQ=="
+        },
+        "headers": {
+          "access-control-allow-credentials": "true",
+          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
+          "connection": "keep-alive",
+          "content-length": "4",
+          "content-type": "application/proto",
+          "date": "Fri, 15 May 2026 11:36:15 GMT",
+          "vary": "Origin"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 2,
+      "id": "70d3bcff6501f80d",
+      "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetTeamAdminSettingsOrEmptyIfNotInTeam",
+      "recordedAt": "2026-05-15T11:36:15.517Z",
+      "request": {
+        "body": {
+          "kind": "empty"
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api2.cursor.sh/aiserver.v1.DashboardService/GetTeamAdminSettingsOrEmptyIfNotInTeam"
+      },
+      "response": {
+        "body": {
+          "contentType": "application/proto",
+          "kind": "base64",
+          "value": "GghCBggBEAEYASIAMgQIABgAOhIgAjAAQAJIAFgBcAGAAQCIAQBCAEoAggEAkAEAmAEAoAEAqgEHCAESAQIYAMABAMoBAOIBAOgBAfIBAggB+gEAgAIAigICEACqAgCyAgIKAMACAeACAA=="
+        },
+        "headers": {
+          "access-control-allow-credentials": "true",
+          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
+          "connection": "keep-alive",
+          "content-length": "106",
+          "content-type": "application/proto",
+          "date": "Fri, 15 May 2026 11:36:15 GMT",
+          "vary": "Origin"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 9,
+      "id": "89cbc244285e665c",
+      "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
+      "recordedAt": "2026-05-15T11:36:16.123Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {}
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api2.cursor.sh/auth/exchange_user_api_key"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "accessToken": "[REDACTED]",
+            "refreshToken": "[REDACTED]"
+          }
+        },
+        "headers": {
+          "access-control-allow-credentials": "true",
+          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
+          "connection": "keep-alive",
+          "content-length": "932",
+          "content-type": "application/json; charset=utf-8",
+          "date": "Fri, 15 May 2026 11:36:16 GMT",
+          "vary": "Origin"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 2,
+      "id": "d73f41eeedbf5def",
+      "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetTeamReposOrEmptyIfNotInTeam",
+      "recordedAt": "2026-05-15T11:36:16.140Z",
+      "request": {
+        "body": {
+          "kind": "empty"
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api2.cursor.sh/aiserver.v1.DashboardService/GetTeamReposOrEmptyIfNotInTeam"
+      },
+      "response": {
+        "body": {
+          "kind": "empty"
+        },
+        "headers": {
+          "access-control-allow-credentials": "true",
+          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
+          "connection": "keep-alive",
+          "content-length": "0",
+          "content-type": "application/proto",
+          "date": "Fri, 15 May 2026 11:36:16 GMT",
+          "vary": "Origin"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 2,
+      "id": "3298fd0cf5accbd1",
+      "matchKey": "POST api2.cursor.sh/agent.v1.AgentService/Run",
+      "recordedAt": "2026-05-15T11:36:16.586Z",
+      "request": {
+        "body": {
+          "kind": "empty"
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api2.cursor.sh/agent.v1.AgentService/Run"
+      },
+      "response": {
+        "body": {
+          "kind": "empty"
+        },
+        "headers": {
+          "connection": "keep-alive",
+          "content-length": "0",
+          "date": "Fri, 15 May 2026 11:36:16 GMT",
+          "server": "awselb/2.0"
+        },
+        "status": 464
+      }
+    },
+    {
+      "callIndex": 10,
+      "id": "3fa8e8ca5dbfda3f",
+      "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
+      "recordedAt": "2026-05-15T11:36:16.798Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {}
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api2.cursor.sh/auth/exchange_user_api_key"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "accessToken": "[REDACTED]",
+            "refreshToken": "[REDACTED]"
+          }
+        },
+        "headers": {
+          "access-control-allow-credentials": "true",
+          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
+          "connection": "keep-alive",
+          "content-length": "932",
+          "content-type": "application/json; charset=utf-8",
+          "date": "Fri, 15 May 2026 11:36:16 GMT",
+          "vary": "Origin"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 4,
+      "id": "233bbcc27fbdca7f",
+      "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetUserPrivacyMode",
+      "recordedAt": "2026-05-15T11:36:16.963Z",
+      "request": {
+        "body": {
+          "contentType": "application/proto",
+          "kind": "base64",
+          "value": "CAE="
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api2.cursor.sh/aiserver.v1.DashboardService/GetUserPrivacyMode"
+      },
+      "response": {
+        "body": {
+          "contentType": "application/proto",
+          "kind": "base64",
+          "value": "CAIYAQ=="
+        },
+        "headers": {
+          "access-control-allow-credentials": "true",
+          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
+          "connection": "keep-alive",
+          "content-length": "4",
+          "content-type": "application/proto",
+          "date": "Fri, 15 May 2026 11:36:16 GMT",
+          "vary": "Origin"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 3,
+      "id": "88f9130fc6561ba9",
+      "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetTeamAdminSettingsOrEmptyIfNotInTeam",
+      "recordedAt": "2026-05-15T11:36:16.966Z",
+      "request": {
+        "body": {
+          "kind": "empty"
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api2.cursor.sh/aiserver.v1.DashboardService/GetTeamAdminSettingsOrEmptyIfNotInTeam"
+      },
+      "response": {
+        "body": {
+          "contentType": "application/proto",
+          "kind": "base64",
+          "value": "GghCBggBEAEYASIAMgQIABgAOhIgAjAAQAJIAFgBcAGAAQCIAQBCAEoAggEAkAEAmAEAoAEAqgEHCAESAQIYAMABAMoBAOIBAOgBAfIBAggB+gEAgAIAigICEACqAgCyAgIKAMACAeACAA=="
+        },
+        "headers": {
+          "access-control-allow-credentials": "true",
+          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
+          "connection": "keep-alive",
+          "content-length": "106",
+          "content-type": "application/proto",
+          "date": "Fri, 15 May 2026 11:36:16 GMT",
+          "vary": "Origin"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 11,
+      "id": "f2a00b03d6c1de3c",
+      "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
+      "recordedAt": "2026-05-15T11:36:17.532Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {}
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api2.cursor.sh/auth/exchange_user_api_key"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "accessToken": "[REDACTED]",
+            "refreshToken": "[REDACTED]"
+          }
+        },
+        "headers": {
+          "access-control-allow-credentials": "true",
+          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
+          "connection": "keep-alive",
+          "content-length": "932",
+          "content-type": "application/json; charset=utf-8",
+          "date": "Fri, 15 May 2026 11:36:17 GMT",
+          "vary": "Origin"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 3,
+      "id": "4b1a9ef52c437a05",
+      "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetTeamReposOrEmptyIfNotInTeam",
+      "recordedAt": "2026-05-15T11:36:17.583Z",
+      "request": {
+        "body": {
+          "kind": "empty"
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api2.cursor.sh/aiserver.v1.DashboardService/GetTeamReposOrEmptyIfNotInTeam"
+      },
+      "response": {
+        "body": {
+          "kind": "empty"
+        },
+        "headers": {
+          "access-control-allow-credentials": "true",
+          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
+          "connection": "keep-alive",
+          "content-length": "0",
+          "content-type": "application/proto",
+          "date": "Fri, 15 May 2026 11:36:17 GMT",
+          "vary": "Origin"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 3,
+      "id": "a471eaadb3f011d8",
+      "matchKey": "POST api2.cursor.sh/agent.v1.AgentService/Run",
+      "recordedAt": "2026-05-15T11:36:17.945Z",
+      "request": {
+        "body": {
+          "kind": "empty"
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api2.cursor.sh/agent.v1.AgentService/Run"
+      },
+      "response": {
+        "body": {
+          "kind": "empty"
+        },
+        "headers": {
+          "connection": "keep-alive",
+          "content-length": "0",
+          "date": "Fri, 15 May 2026 11:36:17 GMT",
+          "server": "awselb/2.0"
+        },
+        "status": 464
+      }
+    }
+  ],
+  "meta": {
+    "createdAt": "2026-05-13T11:16:11.700Z",
+    "seinfeldVersion": "0.0.0"
+  },
+  "version": 1
+}

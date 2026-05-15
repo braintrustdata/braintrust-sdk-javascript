@@ -1,0 +1,1271 @@
+{
+  "entries": [
+    {
+      "callIndex": 0,
+      "id": "5625e915bcb72d05",
+      "matchKey": "POST api.anthropic.com/v1/messages",
+      "recordedAt": "2026-05-15T11:38:41.138Z",
+      "request": {
+        "body": {
+          "contentType": "application/json",
+          "kind": "binary",
+          "path": "claude-agent-sdk-v0.2.76.cassette.blobs/6c26b8bbe4e6491871f8b2a03e0e16643b9edddfe8f266a70eb6b9d675186286.bin",
+          "sha256": "6c26b8bbe4e6491871f8b2a03e0e16643b9edddfe8f266a70eb6b9d675186286"
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages?beta=true"
+      },
+      "response": {
+        "body": {
+          "chunks": [
+            "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-haiku-4-5-20251001\",\"id\":\"msg_01BKCaqZjK96xznBythKQJ6c\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":10,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":18783,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":1,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"}}}",
+            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"thinking\",\"thinking\":\"\",\"signature\":\"\"}}",
+            "event: ping\ndata: {\"type\":\"ping\"}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"The\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" user wants me to multiply 15 by 7 using the calculator tool. They explicitly say \\\"Do not answer from memory,\\\" so I need to use the m\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"cp__calculator__calculator tool to perform this calculation.\\n\\nLooking at the calculator tool parameters\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\":\\n- operation: \\\"multiply\\\" (required)\\n- a: 15 (required)\\n- b: 7 (required)\\n\\nI'll call the calculator with these parameters.\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"signature_delta\",\"signature\":\"Eq8ECmMIDRgCKkDadtLAudj92ZxoHFr02fRRfLdtYHObOcDiQF6ul57eNMrz7rjJRJ3QrzBGk1NXMBH0GFaqLSi+RlFFxxOIZdVHMhljbGF1ZGUtaGFpa3UtNC01LTIwMjUxMDAxOAASDN3AKEriP43sm8rrBRoMQ0btkN0jvb2epKkNIjC7ldUV03HnOSw24KLaHqqU9qwXp/dctQorajSK1JEtAsSaJbi/Vb1CLtVDnYNW9sUq+QJRBOiGixZwhLwkui9WqHYS3vhipPf45xZ/sCcQrEvSC1PTuLt6kOpXnyOxqSAKk/kGlvdzNyrkKJxzUG8y7MlCLVTs3u+JE8pnjUc1PRksWAGYjWpjnTaaVfiozn+OmVC0s9U3SKpk6RMlayil9ZfitdcU1/H6SIE6FMVvCo8YRA5y/G12NMhpkUlqxcnaKZ18dDJNyjoaEVuMF0NZdt93rDhYu6hFl/8RyMbrKTl7GQlniytPbVDlQiirQClhc904iff8vNS6XH7q9NoebDZS76d+OcftyI4PBVjZqZNn203YOMatyfzTgroY34m9HjYVrFoN1vovKeH33T91p3PwxI8mQ65PGHKWd3vPUZ84Hl/Yh9zTtcyIvwBhqOPWoC2/4OA7B65vLt5qPAQKHvWCZQL0m21Xb9A2O0KcW89GJzHm1XpF1YXpWU4DO2K6/yuEYBwU6r3F8P3dTZrv6yfItQWPFOMjD5Bap780cDeDJ12FaLG6mMJdCBgB\"}}",
+            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0}",
+            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":1,\"content_block\":{\"type\":\"tool_use\",\"id\":\"toolu_01VxxkUqbM8wfd3hj1SmgRLd\",\"name\":\"mcp__calculator__calculator\",\"input\":{},\"caller\":{\"type\":\"direct\"}}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"{\\\"\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"operat\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"ion\\\": \\\"\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"multip\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"ly\\\"\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\", \\\"a\\\": 15\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\", \\\"b\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"\\\": 7}\"}}",
+            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":1}",
+            "event: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"tool_use\",\"stop_sequence\":null,\"stop_details\":null},\"usage\":{\"input_tokens\":10,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":18783,\"output_tokens\":192},\"context_management\":{\"applied_edits\":[]}}",
+            "event: message_stop\ndata: {\"type\":\"message_stop\"}"
+          ],
+          "kind": "sse"
+        },
+        "headers": {
+          "anthropic-organization-id": "27796668-7351-40ac-acc4-024aee8995a5",
+          "anthropic-ratelimit-input-tokens-limit": "4000000",
+          "anthropic-ratelimit-input-tokens-remaining": "3989000",
+          "anthropic-ratelimit-input-tokens-reset": "2026-05-15T11:38:39Z",
+          "anthropic-ratelimit-output-tokens-limit": "800000",
+          "anthropic-ratelimit-output-tokens-remaining": "800000",
+          "anthropic-ratelimit-output-tokens-reset": "2026-05-15T11:38:39Z",
+          "anthropic-ratelimit-requests-limit": "20000",
+          "anthropic-ratelimit-requests-remaining": "19999",
+          "anthropic-ratelimit-requests-reset": "2026-05-15T11:38:39Z",
+          "anthropic-ratelimit-tokens-limit": "4800000",
+          "anthropic-ratelimit-tokens-remaining": "4789000",
+          "anthropic-ratelimit-tokens-reset": "2026-05-15T11:38:39Z",
+          "cache-control": "no-cache",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "9fc1db8ce8e5c2a5-VIE",
+          "connection": "keep-alive",
+          "content-encoding": "gzip",
+          "content-security-policy": "default-src 'none'; frame-ancestors 'none'",
+          "content-type": "text/event-stream; charset=utf-8",
+          "date": "Fri, 15 May 2026 11:38:40 GMT",
+          "request-id": "req_011Cb4HivRCnsUvivfrkRcye",
+          "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+          "traceresponse": "00-927690c07dda649e93c53e5534900f9e-14acb2fc76c50a30-01",
+          "transfer-encoding": "chunked",
+          "vary": "Accept-Encoding",
+          "x-envoy-upstream-service-time": "485",
+          "x-robots-tag": "none"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 1,
+      "id": "0c74acf5b76aad36",
+      "matchKey": "POST api.anthropic.com/v1/messages",
+      "recordedAt": "2026-05-15T11:38:42.391Z",
+      "request": {
+        "body": {
+          "contentType": "application/json",
+          "kind": "binary",
+          "path": "claude-agent-sdk-v0.2.76.cassette.blobs/60eff69b7a76bce34b537bd90cd9a409aa3805642548cec22871a44fe015585f.bin",
+          "sha256": "60eff69b7a76bce34b537bd90cd9a409aa3805642548cec22871a44fe015585f"
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages?beta=true"
+      },
+      "response": {
+        "body": {
+          "chunks": [
+            "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-haiku-4-5-20251001\",\"id\":\"msg_016jh4iQwnTn5yxz6bPVEPKF\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":8,\"cache_creation_input_tokens\":223,\"cache_read_input_tokens\":18783,\"cache_creation\":{\"ephemeral_5m_input_tokens\":223,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":1,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"}}}",
+            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"thinking\",\"thinking\":\"\",\"signature\":\"\"}}",
+            "event: ping\ndata: {\"type\":\"ping\"}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"Great\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"! The calculator tool returned the result: 15 × 7 = 105\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"signature_delta\",\"signature\":\"EoICCmMIDRgCKkBuOEGYvbAI/nasJ5uoeL24yzLiIeRdwQTt4HJBellK8Aa4yBGKOZWZspHlpdQtB/+d1zkLOcwJby3W7zyAuW/DMhljbGF1ZGUtaGFpa3UtNC01LTIwMjUxMDAxOAASDCkjTiBiVcs0ZAyYJxoM2JHhZM0wwqkYqmDJIjDR2hf6Tcli+V5NKQaKTlXgE2bdYv/e7PnaemvhIqr8AZ03MCLepewbbvPf6coBZqYqTah0DGLlwMgTGOox+vt8Vp3zXO4bt6BXVTQsWLCAYMVYXMGEEG4u6QhnAt48KBoIMeN3Jh7TpWh/tbmmN14JjUFbkq3cf6+8hWiDXhkEGAE=\"}}",
+            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0}",
+            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":1,\"content_block\":{\"type\":\"text\",\"text\":\"\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"The result of multipl\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"ying 15 by 7 is **105**.\"}}",
+            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":1}",
+            "event: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null},\"usage\":{\"input_tokens\":8,\"cache_creation_input_tokens\":223,\"cache_read_input_tokens\":18783,\"output_tokens\":46},\"context_management\":{\"applied_edits\":[]}}",
+            "event: message_stop\ndata: {\"type\":\"message_stop\"}"
+          ],
+          "kind": "sse"
+        },
+        "headers": {
+          "anthropic-organization-id": "27796668-7351-40ac-acc4-024aee8995a5",
+          "anthropic-ratelimit-input-tokens-limit": "4000000",
+          "anthropic-ratelimit-input-tokens-remaining": "3989000",
+          "anthropic-ratelimit-input-tokens-reset": "2026-05-15T11:38:41Z",
+          "anthropic-ratelimit-output-tokens-limit": "800000",
+          "anthropic-ratelimit-output-tokens-remaining": "800000",
+          "anthropic-ratelimit-output-tokens-reset": "2026-05-15T11:38:41Z",
+          "anthropic-ratelimit-requests-limit": "20000",
+          "anthropic-ratelimit-requests-remaining": "19999",
+          "anthropic-ratelimit-requests-reset": "2026-05-15T11:38:41Z",
+          "anthropic-ratelimit-tokens-limit": "4800000",
+          "anthropic-ratelimit-tokens-remaining": "4789000",
+          "anthropic-ratelimit-tokens-reset": "2026-05-15T11:38:41Z",
+          "cache-control": "no-cache",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "9fc1db97df8ac2a5-VIE",
+          "connection": "keep-alive",
+          "content-encoding": "gzip",
+          "content-security-policy": "default-src 'none'; frame-ancestors 'none'",
+          "content-type": "text/event-stream; charset=utf-8",
+          "date": "Fri, 15 May 2026 11:38:42 GMT",
+          "request-id": "req_011Cb4Hj4HjFwgjasVzS1EPq",
+          "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+          "traceresponse": "00-a06ff1c62a384f1d87f6f1ecf6cfba01-2113c70a6eb0f4ce-01",
+          "transfer-encoding": "chunked",
+          "vary": "Accept-Encoding",
+          "x-envoy-upstream-service-time": "539",
+          "x-robots-tag": "none"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 2,
+      "id": "300ca10f15c3de33",
+      "matchKey": "POST api.anthropic.com/v1/messages",
+      "recordedAt": "2026-05-15T11:38:46.466Z",
+      "request": {
+        "body": {
+          "contentType": "application/json",
+          "kind": "binary",
+          "path": "claude-agent-sdk-v0.2.76.cassette.blobs/1b6df786296de018e4350e192b44f4453dc0ee8809e0d42a88820cfcb984d8e6.bin",
+          "sha256": "1b6df786296de018e4350e192b44f4453dc0ee8809e0d42a88820cfcb984d8e6"
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages?beta=true"
+      },
+      "response": {
+        "body": {
+          "chunks": [
+            "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-haiku-4-5-20251001\",\"id\":\"msg_014vihiq7b4jrsQddXzSe124\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":10,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":18650,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":4,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"}}}",
+            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"thinking\",\"thinking\":\"\",\"signature\":\"\"}}",
+            "event: ping\ndata: {\"type\":\"ping\"}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"The user has sent\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" me just \\\"Part 1\\\" without any specific task or question. This seems incomplete. I should ask\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" them what they'd like me to help them with.\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"signature_delta\",\"signature\":\"Et8CCmMIDRgCKkC4KFlIDcPjqXKV8EX7ZYp0Oq5ZG2Fl4ESHlmncD4Np+A7nnLohlO8SyZdbcTLy6hhx5h3ZlJp4Q0MXFATUSyTLMhljbGF1ZGUtaGFpa3UtNC01LTIwMjUxMDAxOAASDPeXK8/xbZe/mkPmjhoMf/e6FqGNR5+7fYxMIjC8uQkLsE0n0oUNbgnntg//2PV0shjx6lPJ6Kuj5cmUGh06uBaxmHm7IKFgVgFeGZMqqQF6rsHMOKjv7zs0qV1CPLS8rA++ZXCD4QtB58rNrFN1MIscrsGTVRdHanQzC5mhoaKhuMPJQ+YwO5qBrhcTYJw/LE0tsZrkLLRFVu+bn4zbaGQ/mFd3v7joOSXjcNlGse6dORxO1JFWcGIHrqxsi39mwdrJtsS/n1/IlrhABWCgovtZf0nBWAIKSj/CWfZFC7SBG0Tblv7fMeDAsnhEQbiAo8wusLXnT1SxGAE=\"}}",
+            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0}",
+            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":1,\"content_block\":{\"type\":\"text\",\"text\":\"\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"I see you've written \\\"Part 1\\\" but I don't have\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" the details of what you'd like me to help with. Could you please provide:\\n\\n1. **What is the task or question?\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"** - What would you like me to do?\\n2. **Any relevant context?** - Are you working\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" on a specific project, codebase, or problem?\\n3. **What are the expected\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" outcomes?** - What should the result look like?\\n\\nFeel free to share the full request\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\", and I'll be happy to help!\"}}",
+            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":1}",
+            "event: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null},\"usage\":{\"input_tokens\":10,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":18650,\"output_tokens\":161},\"context_management\":{\"applied_edits\":[]}}",
+            "event: message_stop\ndata: {\"type\":\"message_stop\"}"
+          ],
+          "kind": "sse"
+        },
+        "headers": {
+          "anthropic-organization-id": "27796668-7351-40ac-acc4-024aee8995a5",
+          "anthropic-ratelimit-input-tokens-limit": "4000000",
+          "anthropic-ratelimit-input-tokens-remaining": "3989000",
+          "anthropic-ratelimit-input-tokens-reset": "2026-05-15T11:38:44Z",
+          "anthropic-ratelimit-output-tokens-limit": "800000",
+          "anthropic-ratelimit-output-tokens-remaining": "800000",
+          "anthropic-ratelimit-output-tokens-reset": "2026-05-15T11:38:44Z",
+          "anthropic-ratelimit-requests-limit": "20000",
+          "anthropic-ratelimit-requests-remaining": "19999",
+          "anthropic-ratelimit-requests-reset": "2026-05-15T11:38:44Z",
+          "anthropic-ratelimit-tokens-limit": "4800000",
+          "anthropic-ratelimit-tokens-remaining": "4789000",
+          "anthropic-ratelimit-tokens-reset": "2026-05-15T11:38:44Z",
+          "cache-control": "no-cache",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "9fc1dbaa2d25c2a5-VIE",
+          "connection": "keep-alive",
+          "content-encoding": "gzip",
+          "content-security-policy": "default-src 'none'; frame-ancestors 'none'",
+          "content-type": "text/event-stream; charset=utf-8",
+          "date": "Fri, 15 May 2026 11:38:45 GMT",
+          "request-id": "req_011Cb4HjGpHrxnVrCwYPdmuF",
+          "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+          "traceresponse": "00-9548dc0e0158d9d1b0e27097e95a723e-c0cd4d667662e7b3-01",
+          "transfer-encoding": "chunked",
+          "vary": "Accept-Encoding",
+          "x-envoy-upstream-service-time": "565",
+          "x-robots-tag": "none"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 3,
+      "id": "4ee8df7fd846c600",
+      "matchKey": "POST api.anthropic.com/v1/messages",
+      "recordedAt": "2026-05-15T11:38:48.953Z",
+      "request": {
+        "body": {
+          "contentType": "application/json",
+          "kind": "binary",
+          "path": "claude-agent-sdk-v0.2.76.cassette.blobs/ffeb1115c91c4b2f98cc24db311f24ba7761829c3349920041aac4538ccfc45a.bin",
+          "sha256": "ffeb1115c91c4b2f98cc24db311f24ba7761829c3349920041aac4538ccfc45a"
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages?beta=true"
+      },
+      "response": {
+        "body": {
+          "chunks": [
+            "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-haiku-4-5-20251001\",\"id\":\"msg_01TfqsMao1n5eQuPsRV8UwWw\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":10,\"cache_creation_input_tokens\":174,\"cache_read_input_tokens\":18650,\"cache_creation\":{\"ephemeral_5m_input_tokens\":174,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":4,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"}}}",
+            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"thinking\",\"thinking\":\"\",\"signature\":\"\"}}",
+            "event: ping\ndata: {\"type\":\"ping\"}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"The user has now\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" sent \\\"Part 2\\\", which still doesn't give me any actual task or question. They seem to be\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" sending numbered messages without context. I should ask them to provide the complete information about what they need\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" help with.\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"signature_delta\",\"signature\":\"Eq8DCmMIDRgCKkAsX1krZGggNLkav1y8f1xlySOEtQFt7PJaDzTNcDHCLiNbJHmg1H9X8j8b4dNEema3PvtJvp9QfQXFFX5MvsV/MhljbGF1ZGUtaGFpa3UtNC01LTIwMjUxMDAxOAASDHdvoxYPsTAAfYpbgxoMNt2Ae+wHogoCxKxrIjCKTZQ3bl//cEeNG261osG00Jb8/m33Bf+IyKJiTeWn7Am2JtmYlb/pnmki76ayAo0q+QFRk3lTz65m+rnRwVhErO3IbQz7wMC+yV7FXUcrjlijlkcnGTElHar43PwAsTtQJIm1W80eUnoMA4oKslBYknpD5Cwc9dm//MYw5Qtva3jbAj+q+NTDVLla347ok5PBG8XKqaMUkjao/8u7cNkWOfpstBzF8vqOaveFv4msP+tlu1mb3zF1v/2UKXc8pNdojJ/NLbwjNtTHIq/tjvzlaqu77UGkhdcUpmbZK5612upPREcSc79EUcVZFkoxHdt3BPAtccCKENwSlx/OPZ+sedE+0KELr9t/e5jqOZYVxP7pYz7xMAxv2n1D9zO+JwSq4MR0FfAjW4e5PG8YAQ==\"}}",
+            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0}",
+            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":1,\"content_block\":{\"type\":\"text\",\"text\":\"\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"I'm still not seeing the actual task or question! It looks like you're\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" sending numbered parts, but I need the complete request to help you.\\n\\nCould you please share:\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\n- **The full task or problem** you'd like help with\\n- **Any\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" code, files, or context** related to what you're working on\\n- **What you'd\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" like me to do** (e.g., fix a bug, implement a feature, review code, etc.)\\n\\nFeel free to paste the complete request all\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" at once, and I'll get started! 😊\"}}",
+            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":1}",
+            "event: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null},\"usage\":{\"input_tokens\":10,\"cache_creation_input_tokens\":174,\"cache_read_input_tokens\":18650,\"output_tokens\":177},\"context_management\":{\"applied_edits\":[]}}",
+            "event: message_stop\ndata: {\"type\":\"message_stop\"}"
+          ],
+          "kind": "sse"
+        },
+        "headers": {
+          "anthropic-organization-id": "27796668-7351-40ac-acc4-024aee8995a5",
+          "anthropic-ratelimit-input-tokens-limit": "4000000",
+          "anthropic-ratelimit-input-tokens-remaining": "3989000",
+          "anthropic-ratelimit-input-tokens-reset": "2026-05-15T11:38:47Z",
+          "anthropic-ratelimit-output-tokens-limit": "800000",
+          "anthropic-ratelimit-output-tokens-remaining": "800000",
+          "anthropic-ratelimit-output-tokens-reset": "2026-05-15T11:38:46Z",
+          "anthropic-ratelimit-requests-limit": "20000",
+          "anthropic-ratelimit-requests-remaining": "19999",
+          "anthropic-ratelimit-requests-reset": "2026-05-15T11:38:46Z",
+          "anthropic-ratelimit-tokens-limit": "4800000",
+          "anthropic-ratelimit-tokens-remaining": "4789000",
+          "anthropic-ratelimit-tokens-reset": "2026-05-15T11:38:46Z",
+          "cache-control": "no-cache",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "9fc1dbb92ef1c2a5-VIE",
+          "connection": "keep-alive",
+          "content-encoding": "gzip",
+          "content-security-policy": "default-src 'none'; frame-ancestors 'none'",
+          "content-type": "text/event-stream; charset=utf-8",
+          "date": "Fri, 15 May 2026 11:38:47 GMT",
+          "request-id": "req_011Cb4HjTJpxWF8s982pdQoK",
+          "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+          "traceresponse": "00-bf894dece1207ba578c1fd3155b7eaa7-3d83f5b6b74f7ea0-01",
+          "transfer-encoding": "chunked",
+          "vary": "Accept-Encoding",
+          "x-envoy-upstream-service-time": "521",
+          "x-robots-tag": "none"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 4,
+      "id": "46f0d308866244e5",
+      "matchKey": "POST api.anthropic.com/v1/messages",
+      "recordedAt": "2026-05-15T11:38:53.756Z",
+      "request": {
+        "body": {
+          "contentType": "application/json",
+          "kind": "binary",
+          "path": "claude-agent-sdk-v0.2.76.cassette.blobs/c42429b46c18f15dcb9f320b613a7fc3d5ae90233d8824b64642ecb6da2ed5ab.bin",
+          "sha256": "c42429b46c18f15dcb9f320b613a7fc3d5ae90233d8824b64642ecb6da2ed5ab"
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages?beta=true"
+      },
+      "response": {
+        "body": {
+          "chunks": [
+            "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-haiku-4-5-20251001\",\"id\":\"msg_01PmTaG2bB1wBbHHb8eCFGQm\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":10,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":18811,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":3,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"}}}",
+            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"thinking\",\"thinking\":\"\",\"signature\":\"\"}}",
+            "event: ping\ndata: {\"type\":\"ping\"}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"The user wants\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" me to spawn a math-expert subagent to add 15 and 27 using the calculator tool. They explicitly say not to solve it myself,\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" so I need to use the Agent tool with subagent_type \\\"math-expert\\\"\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" and have that agent use the calculator tool to add 15 and 27.\\n\\nLet me create\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" a task that asks the math-expert agent to add 15 and 27 using the calculator tool.\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"signature_delta\",\"signature\":\"ErAECmMIDRgCKkB+s9pCYuRUueJD29vz1evjL5O/fb/4HPxVeQ4GE9uV4spyVVS2MnyioFyJr/nMHesx702uruFoVYv4+zNVFrGtMhljbGF1ZGUtaGFpa3UtNC01LTIwMjUxMDAxOAASDOdEIAziK8tIRorTtxoMRci5Re6Cj1+d5RE4IjAPnkmSWVsmJxYeBKm/BEjyJq0IakmSbUJ3U2IrGO5FWv/4z1iTdCweDLgGuZnvHjUq+gLAuEQltv8fB8YqpTPMBIAS237ScFwpTCfhnz/ie7VjEOk2G68I6v3FKi2RYkjtsP4sUDkOAGsaDnek3GP7edOvodB+jdkYhJeSvGGke0Lbli9ZJdWORgNf7aZCZD41enJw3cIgjFOwxlWJHxtmFX+ZEmTkzTXFjlGJWbJwwLwpCiHVMFQEexeuDF5VcEz1TdpTSrdr8rH0OM4Uf/VdMRE4a5SovaJA6TFnLEceyTXpIoG7ct6LyMst2Nt2JvCLPBaYLN46HbuKXZvjF5QU0PSJAeeAJIm2NMmVytew87gR6dR9fjmUhbBKVk4ZStmfILvKqeL9vpDlVKknXFqp5crkbeN9W6aBpZGVhIWKePUs3V7rezhLBrtGzxF+ewxBtoo5xAHVq69llFz+q4R9A4SCBGrJbtHS0SAxM003TCtvt5TaS0rK2zotf4YMAZalWhZm71W1ERVotLdtqhA+4ii6gvKihKHG+hW23xqWQzqvEYEVJzU+jP0HAPcYAQ==\"}}",
+            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0}",
+            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":1,\"content_block\":{\"type\":\"tool_use\",\"id\":\"toolu_01F7fpreMTSnWawFUTXi7RgG\",\"name\":\"Agent\",\"input\":{},\"caller\":{\"type\":\"direct\"}}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"{\\\"s\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"ubagent_t\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"ype\\\": \\\"\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"math-ex\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"pert\\\"\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\", \\\"d\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"escription\\\"\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\": \\\"Add 1\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"5 a\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"nd 27 usin\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"g calculato\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"r\\\"\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\", \\\"pr\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"om\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"pt\\\"\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\": \\\"Please ad\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"d \"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"15 an\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"d 27 to\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"gethe\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"r us\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"ing t\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"he cal\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"culator \"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"tool. \"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"Report t\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"he r\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"esult to me.\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"\\\"}\"}}",
+            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":1}",
+            "event: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"tool_use\",\"stop_sequence\":null,\"stop_details\":null},\"usage\":{\"input_tokens\":10,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":18811,\"output_tokens\":226},\"context_management\":{\"applied_edits\":[]}}",
+            "event: message_stop\ndata: {\"type\":\"message_stop\"}"
+          ],
+          "kind": "sse"
+        },
+        "headers": {
+          "anthropic-organization-id": "27796668-7351-40ac-acc4-024aee8995a5",
+          "anthropic-ratelimit-input-tokens-limit": "4000000",
+          "anthropic-ratelimit-input-tokens-remaining": "3989000",
+          "anthropic-ratelimit-input-tokens-reset": "2026-05-15T11:38:51Z",
+          "anthropic-ratelimit-output-tokens-limit": "800000",
+          "anthropic-ratelimit-output-tokens-remaining": "800000",
+          "anthropic-ratelimit-output-tokens-reset": "2026-05-15T11:38:51Z",
+          "anthropic-ratelimit-requests-limit": "20000",
+          "anthropic-ratelimit-requests-remaining": "19999",
+          "anthropic-ratelimit-requests-reset": "2026-05-15T11:38:51Z",
+          "anthropic-ratelimit-tokens-limit": "4800000",
+          "anthropic-ratelimit-tokens-remaining": "4789000",
+          "anthropic-ratelimit-tokens-reset": "2026-05-15T11:38:51Z",
+          "cache-control": "no-cache",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "9fc1dbd34dacc2a5-VIE",
+          "connection": "keep-alive",
+          "content-encoding": "gzip",
+          "content-security-policy": "default-src 'none'; frame-ancestors 'none'",
+          "content-type": "text/event-stream; charset=utf-8",
+          "date": "Fri, 15 May 2026 11:38:51 GMT",
+          "request-id": "req_011Cb4HjkwUKd8M3CGYAbrKg",
+          "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+          "traceresponse": "00-f02515823cb8645f84d7c34b336fcdf8-e5637028a5787407-01",
+          "transfer-encoding": "chunked",
+          "vary": "Accept-Encoding",
+          "x-envoy-upstream-service-time": "752",
+          "x-robots-tag": "none"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 5,
+      "id": "cdb463ec1c7a9cea",
+      "matchKey": "POST api.anthropic.com/v1/messages",
+      "recordedAt": "2026-05-15T11:38:55.611Z",
+      "request": {
+        "body": {
+          "contentType": "application/json",
+          "kind": "binary",
+          "path": "claude-agent-sdk-v0.2.76.cassette.blobs/28be5898462d6bd62b5e76285364cfaf9d803bec739161c304c257ececbc6812.bin",
+          "sha256": "28be5898462d6bd62b5e76285364cfaf9d803bec739161c304c257ececbc6812"
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages?beta=true"
+      },
+      "response": {
+        "body": {
+          "chunks": [
+            "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-haiku-4-5-20251001\",\"id\":\"msg_01GwCzxG4ZKWz8R2R7uF1B4f\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":3,\"cache_creation_input_tokens\":9148,\"cache_read_input_tokens\":12880,\"cache_creation\":{\"ephemeral_5m_input_tokens\":9148,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":3,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"}}}",
+            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}}",
+            "event: ping\ndata: {\"type\":\"ping\"}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"I'll use\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the calculator tool to add 15 and 27 together.\"}}",
+            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0}",
+            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":1,\"content_block\":{\"type\":\"tool_use\",\"id\":\"toolu_01BUZHbp64XJFUZRU2vuUrJ9\",\"name\":\"mcp__calculator__calculator\",\"input\":{},\"caller\":{\"type\":\"direct\"}}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"{\\\"operation\\\"\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\": \\\"\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"add\\\"\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\", \\\"a\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"\\\": 15\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\", \\\"\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"b\\\": \"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"27}\"}}",
+            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":1}",
+            "event: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"tool_use\",\"stop_sequence\":null,\"stop_details\":null},\"usage\":{\"input_tokens\":3,\"cache_creation_input_tokens\":9148,\"cache_read_input_tokens\":12880,\"output_tokens\":108},\"context_management\":{\"applied_edits\":[]}}",
+            "event: message_stop\ndata: {\"type\":\"message_stop\"}"
+          ],
+          "kind": "sse"
+        },
+        "headers": {
+          "anthropic-organization-id": "27796668-7351-40ac-acc4-024aee8995a5",
+          "anthropic-ratelimit-input-tokens-limit": "4000000",
+          "anthropic-ratelimit-input-tokens-remaining": "3989000",
+          "anthropic-ratelimit-input-tokens-reset": "2026-05-15T11:38:54Z",
+          "anthropic-ratelimit-output-tokens-limit": "800000",
+          "anthropic-ratelimit-output-tokens-remaining": "800000",
+          "anthropic-ratelimit-output-tokens-reset": "2026-05-15T11:38:54Z",
+          "anthropic-ratelimit-requests-limit": "20000",
+          "anthropic-ratelimit-requests-remaining": "19999",
+          "anthropic-ratelimit-requests-reset": "2026-05-15T11:38:54Z",
+          "anthropic-ratelimit-tokens-limit": "4800000",
+          "anthropic-ratelimit-tokens-remaining": "4789000",
+          "anthropic-ratelimit-tokens-reset": "2026-05-15T11:38:54Z",
+          "cache-control": "no-cache",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "9fc1dbe6aebcc2a5-VIE",
+          "connection": "keep-alive",
+          "content-encoding": "gzip",
+          "content-security-policy": "default-src 'none'; frame-ancestors 'none'",
+          "content-type": "text/event-stream; charset=utf-8",
+          "date": "Fri, 15 May 2026 11:38:55 GMT",
+          "request-id": "req_011Cb4HjzBheEuE9SwVXcGkX",
+          "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+          "traceresponse": "00-6e87d78cbdd00930357d57656a7b2321-ccdcaa6d55c0dc23-01",
+          "transfer-encoding": "chunked",
+          "vary": "Accept-Encoding",
+          "x-envoy-upstream-service-time": "1000",
+          "x-robots-tag": "none"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 6,
+      "id": "de371d0477951f91",
+      "matchKey": "POST api.anthropic.com/v1/messages",
+      "recordedAt": "2026-05-15T11:38:56.948Z",
+      "request": {
+        "body": {
+          "contentType": "application/json",
+          "kind": "binary",
+          "path": "claude-agent-sdk-v0.2.76.cassette.blobs/eb6105080eb01273a1ee0992ec25700ea56380b3d1fe0fa88e67e670809d5b91.bin",
+          "sha256": "eb6105080eb01273a1ee0992ec25700ea56380b3d1fe0fa88e67e670809d5b91"
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages?beta=true"
+      },
+      "response": {
+        "body": {
+          "chunks": [
+            "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-haiku-4-5-20251001\",\"id\":\"msg_01EBZM4xAzrxnYE9BW8efbEq\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":6,\"cache_creation_input_tokens\":127,\"cache_read_input_tokens\":22028,\"cache_creation\":{\"ephemeral_5m_input_tokens\":127,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":2,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"}}}",
+            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}}",
+            "event: ping\ndata: {\"type\":\"ping\"}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"The result\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" of adding 15 and 27 is 42.\"}}",
+            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0}",
+            "event: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null},\"usage\":{\"input_tokens\":6,\"cache_creation_input_tokens\":127,\"cache_read_input_tokens\":22028,\"output_tokens\":18},\"context_management\":{\"applied_edits\":[]}}",
+            "event: message_stop\ndata: {\"type\":\"message_stop\"}"
+          ],
+          "kind": "sse"
+        },
+        "headers": {
+          "anthropic-organization-id": "27796668-7351-40ac-acc4-024aee8995a5",
+          "anthropic-ratelimit-input-tokens-limit": "4000000",
+          "anthropic-ratelimit-input-tokens-remaining": "3989000",
+          "anthropic-ratelimit-input-tokens-reset": "2026-05-15T11:38:56Z",
+          "anthropic-ratelimit-output-tokens-limit": "800000",
+          "anthropic-ratelimit-output-tokens-remaining": "800000",
+          "anthropic-ratelimit-output-tokens-reset": "2026-05-15T11:38:56Z",
+          "anthropic-ratelimit-requests-limit": "20000",
+          "anthropic-ratelimit-requests-remaining": "19999",
+          "anthropic-ratelimit-requests-reset": "2026-05-15T11:38:56Z",
+          "anthropic-ratelimit-tokens-limit": "4800000",
+          "anthropic-ratelimit-tokens-remaining": "4789000",
+          "anthropic-ratelimit-tokens-reset": "2026-05-15T11:38:56Z",
+          "cache-control": "no-cache",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "9fc1dbf24b1dc2a5-VIE",
+          "connection": "keep-alive",
+          "content-encoding": "gzip",
+          "content-security-policy": "default-src 'none'; frame-ancestors 'none'",
+          "content-type": "text/event-stream; charset=utf-8",
+          "date": "Fri, 15 May 2026 11:38:56 GMT",
+          "request-id": "req_011Cb4Hk88SHCm4edjobhdwy",
+          "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+          "traceresponse": "00-5ec87e5203633623abafbf57c204a493-3b518580c75cad52-01",
+          "transfer-encoding": "chunked",
+          "vary": "Accept-Encoding",
+          "x-envoy-upstream-service-time": "847",
+          "x-robots-tag": "none"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 7,
+      "id": "4cf09af96d7756bb",
+      "matchKey": "POST api.anthropic.com/v1/messages",
+      "recordedAt": "2026-05-15T11:38:58.714Z",
+      "request": {
+        "body": {
+          "contentType": "application/json",
+          "kind": "binary",
+          "path": "claude-agent-sdk-v0.2.76.cassette.blobs/322ed2d4c99bba04f3f709e911d92cf61777084d17d1033b51ca5e83cdfba5c4.bin",
+          "sha256": "322ed2d4c99bba04f3f709e911d92cf61777084d17d1033b51ca5e83cdfba5c4"
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages?beta=true"
+      },
+      "response": {
+        "body": {
+          "chunks": [
+            "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-haiku-4-5-20251001\",\"id\":\"msg_01Mi84TwcAZdkznmuCiYUSJt\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":8,\"cache_creation_input_tokens\":318,\"cache_read_input_tokens\":18811,\"cache_creation\":{\"ephemeral_5m_input_tokens\":318,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":1,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"}}}",
+            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"thinking\",\"thinking\":\"\",\"signature\":\"\"}}",
+            "event: ping\ndata: {\"type\":\"ping\"}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"Great\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"! The math-expert agent successfully used the calculator tool to add 15 and 27. The result is 42, which is correct. I\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"'ll report this to the user.\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"signature_delta\",\"signature\":\"EtwCCmMIDRgCKkCbSWnZ5mk49Ij0H4p1KEDanAwnJP8zG2I8b2HMlpnmrnccGoiO6zt3Kq911LYtcgCeBn5NOIjt+RFZFDKU0UoxMhljbGF1ZGUtaGFpa3UtNC01LTIwMjUxMDAxOAASDLuHT/DzOWhhV+Br3RoMoj29xhlCaRtfJM19IjCC7sceqFG4VYeOEiM3vY9FZ+PFe+y+SQbUzf53DefX4SimPWyUgQSQj3X4ovy/NZUqpgGEYmlevBUvBscb6jCJiLOBrz6sHEPCIaS0JlvlEadMNO3E5Y/crefLeaxfF1GRad4rbGWIcbbuhsbk4rQmpA5m1nw2zd2raSfwYqchoPnY2Q2ZNjPAizHngVmMyvt1UowJxsC0LTzGHUpk+uHRdmGMVtTJgJRizi7NhvwmM4q/PYzDttnJSJ69rU5fVb8/CIpgRC3M4+kVcldwC0vA+7vkJxSUgRyBGAE=\"}}",
+            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0}",
+            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":1,\"content_block\":{\"type\":\"text\",\"text\":\"\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"Perfect! The math-expert subagent has completed the calculation.\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\n\\n**Result: 15 + 27 = 42**\\n\\nThe agent used the calculator tool to perform the addition operation as requested.\"}}",
+            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":1}",
+            "event: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null},\"usage\":{\"input_tokens\":8,\"cache_creation_input_tokens\":318,\"cache_read_input_tokens\":18811,\"output_tokens\":95},\"context_management\":{\"applied_edits\":[]}}",
+            "event: message_stop\ndata: {\"type\":\"message_stop\"}"
+          ],
+          "kind": "sse"
+        },
+        "headers": {
+          "anthropic-organization-id": "27796668-7351-40ac-acc4-024aee8995a5",
+          "anthropic-ratelimit-input-tokens-limit": "4000000",
+          "anthropic-ratelimit-input-tokens-remaining": "3989000",
+          "anthropic-ratelimit-input-tokens-reset": "2026-05-15T11:38:57Z",
+          "anthropic-ratelimit-output-tokens-limit": "800000",
+          "anthropic-ratelimit-output-tokens-remaining": "800000",
+          "anthropic-ratelimit-output-tokens-reset": "2026-05-15T11:38:57Z",
+          "anthropic-ratelimit-requests-limit": "20000",
+          "anthropic-ratelimit-requests-remaining": "19999",
+          "anthropic-ratelimit-requests-reset": "2026-05-15T11:38:57Z",
+          "anthropic-ratelimit-tokens-limit": "4800000",
+          "anthropic-ratelimit-tokens-remaining": "4789000",
+          "anthropic-ratelimit-tokens-reset": "2026-05-15T11:38:57Z",
+          "cache-control": "no-cache",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "9fc1dbfa9d48c2a5-VIE",
+          "connection": "keep-alive",
+          "content-encoding": "gzip",
+          "content-security-policy": "default-src 'none'; frame-ancestors 'none'",
+          "content-type": "text/event-stream; charset=utf-8",
+          "date": "Fri, 15 May 2026 11:38:58 GMT",
+          "request-id": "req_011Cb4HkDokMLoaU29wn1t6p",
+          "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+          "traceresponse": "00-9ea039390a526f20aa3ceff0589fc8fb-b263fd9cbe2b6a0f-01",
+          "transfer-encoding": "chunked",
+          "vary": "Accept-Encoding",
+          "x-envoy-upstream-service-time": "753",
+          "x-robots-tag": "none"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 8,
+      "id": "428ed9344ff43cca",
+      "matchKey": "POST api.anthropic.com/v1/messages",
+      "recordedAt": "2026-05-15T11:39:05.739Z",
+      "request": {
+        "body": {
+          "contentType": "application/json",
+          "kind": "binary",
+          "path": "claude-agent-sdk-v0.2.76.cassette.blobs/d114c75eba6230fbac62489471618ea5974220cf4d10a30979f0f85a5f3f26ab.bin",
+          "sha256": "d114c75eba6230fbac62489471618ea5974220cf4d10a30979f0f85a5f3f26ab"
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages?beta=true"
+      },
+      "response": {
+        "body": {
+          "chunks": [
+            "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-sonnet-4-5-20250929\",\"id\":\"msg_011MYisFGsUpKG44pCX3fEys\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":10,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":18711,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":4,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"}}}",
+            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"thinking\",\"thinking\":\"\",\"signature\":\"\"}}",
+            "event: ping\ndata: {\"type\":\"ping\"}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"The user is instruct\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"ing me to call the Agent tool with subagent_type=\\\"echo\\\" and description \\\"echo greeting\\\". They're being very explicit that I should not call\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" Bash myself and should not answer with text myself - I must delegate to the echo sub-agent.\\n\\nLet me follow these instructions exactly.\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"signature_delta\",\"signature\":\"Eu0DCmQIDRgCKkCOpbxDq3fHTCBNR/vFiVrgZg35kTKAwFMsKMpfSRipC241ois8Tank+XxPuWaOSap9mIzdpETFLgexwY4UIStnMhpjbGF1ZGUtc29ubmV0LTQtNS0yMDI1MDkyOTgAEgxfoBC8hOxqJzMxeZ8aDOuq83KbtOpng4JqzSIw5+c/dGSrxJsP+a/KIj1hkErEnabsaq72PkvK3qwgYXi2lsDxs+hX4ANhJvFbg94tKrYCCTBXTZqqvUvNnWrEgTPwHhBe09AutUv7sMMOHuc9MXAj/Q7OY7xd0Y5Dni+8R0vdBUV7ykR9S6sYrbidoGsrOIN4/sBX3Z0FsrxT15oZj6K6D3d1yaesCDwFGyNpboLIIkqEav/H7qasuN1RRx4mUrEOJsVMuXY6upMWGzJKSzFTQ/rDnXktl5gmbHy0H0sHwVVUw/1J9S2jRh4g7XAvFEOZp/Zt322xya27TC1cAO31PemCickN/n1F4C+Cvd2UFVNn1PvgvzU0g3fK4WouO9yCf3Vocp/uYrBf0lq9LGrVGhW/vGYUe57n8joHzWyQV4vyVyLsnXJtmy71QENuNP2lCzct3n4mXddRRqJQxdpKRhqA29SzrlWrp/Y5SOWBmbZ0W24Hd5gfi9Zw+2eGgYlJmMFuuRgB\"}}",
+            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0}",
+            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":1,\"content_block\":{\"type\":\"tool_use\",\"id\":\"toolu_01GLbf4vFdo9UPmjc9BLacvr\",\"name\":\"Agent\",\"input\":{},\"caller\":{\"type\":\"direct\"}}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"{\\\"su\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"bagen\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"t_type\\\"\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\": \\\"echo\\\"\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\", \\\"descript\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"io\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"n\\\"\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\": \\\"echo gree\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"ting\\\"\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\", \\\"p\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"rompt\\\": \\\"Ple\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"as\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"e echo a gre\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"eting mess\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"age\\\"}\"}}",
+            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":1}",
+            "event: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"tool_use\",\"stop_sequence\":null,\"stop_details\":null},\"usage\":{\"input_tokens\":10,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":18711,\"output_tokens\":167},\"context_management\":{\"applied_edits\":[]}}",
+            "event: message_stop\ndata: {\"type\":\"message_stop\"}"
+          ],
+          "kind": "sse"
+        },
+        "headers": {
+          "anthropic-organization-id": "27796668-7351-40ac-acc4-024aee8995a5",
+          "anthropic-ratelimit-input-tokens-limit": "3000000",
+          "anthropic-ratelimit-input-tokens-remaining": "2989000",
+          "anthropic-ratelimit-input-tokens-reset": "2026-05-15T11:39:03Z",
+          "anthropic-ratelimit-output-tokens-limit": "600000",
+          "anthropic-ratelimit-output-tokens-remaining": "600000",
+          "anthropic-ratelimit-output-tokens-reset": "2026-05-15T11:39:02Z",
+          "anthropic-ratelimit-requests-limit": "20000",
+          "anthropic-ratelimit-requests-remaining": "19999",
+          "anthropic-ratelimit-requests-reset": "2026-05-15T11:39:02Z",
+          "anthropic-ratelimit-tokens-limit": "3600000",
+          "anthropic-ratelimit-tokens-remaining": "3589000",
+          "anthropic-ratelimit-tokens-reset": "2026-05-15T11:39:02Z",
+          "cache-control": "no-cache",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "9fc1dc1cee59c2a5-VIE",
+          "connection": "keep-alive",
+          "content-encoding": "gzip",
+          "content-security-policy": "default-src 'none'; frame-ancestors 'none'",
+          "content-type": "text/event-stream; charset=utf-8",
+          "date": "Fri, 15 May 2026 11:39:03 GMT",
+          "request-id": "req_011Cb4Hkdz3TEBobs5m6nvkW",
+          "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+          "traceresponse": "00-654d8e5254dae39496ce0ab0e0c2b019-34aaa589417481b5-01",
+          "transfer-encoding": "chunked",
+          "vary": "Accept-Encoding",
+          "x-envoy-upstream-service-time": "804",
+          "x-robots-tag": "none"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 9,
+      "id": "f7475d503f3debb5",
+      "matchKey": "POST api.anthropic.com/v1/messages",
+      "recordedAt": "2026-05-15T11:39:06.938Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "max_tokens": 32000,
+            "messages": [
+              {
+                "content": [
+                  {
+                    "text": "<system-reminder>\nAs you answer the user's questions, you can use the following context:\n# currentDate\nToday's date is 2026-05-15.\n\n      IMPORTANT: this context may or may not be relevant to your tasks. You should not respond to this context unless it is highly relevant to your task.\n</system-reminder>\n",
+                    "type": "text"
+                  },
+                  {
+                    "cache_control": {
+                      "type": "ephemeral"
+                    },
+                    "text": "Please echo a greeting message",
+                    "type": "text"
+                  }
+                ],
+                "role": "user"
+              }
+            ],
+            "metadata": {
+              "user_id": "user_3727d955d07d2160bfdf6a3f83e128e3106b0ac4bcf1d622eda611c967c8b9c2_account__session_1b2fef88-3580-4dc6-9b20-9b5a777d3d5d"
+            },
+            "model": "claude-haiku-4-5",
+            "stream": true,
+            "system": [
+              {
+                "text": "x-anthropic-billing-header: cc_version=2.1.76.6ac; cc_entrypoint=sdk-ts; cch=00000;",
+                "type": "text"
+              },
+              {
+                "cache_control": {
+                  "type": "ephemeral"
+                },
+                "text": "You are a Claude agent, built on Anthropic's Claude Agent SDK.",
+                "type": "text"
+              },
+              {
+                "cache_control": {
+                  "type": "ephemeral"
+                },
+                "text": "Run `echo hello` via Bash exactly once, then reply with only the word done.\n\nNotes:\n- Agent threads always have their cwd reset between bash calls, as a result please only use absolute file paths.\n- In your final response, share file paths (always absolute, never relative) that are relevant to the task. Include code snippets only when the exact text is load-bearing (e.g., a bug you found, a function signature the caller asked for) — do not recap code you merely read.\n- For clear communication with the user the assistant MUST avoid using emojis.\n- Do not use a colon before tool calls. Text like \"Let me read the file:\" followed by a read tool call should just be \"Let me read the file.\" with a period.\n\nHere is useful information about the environment you are running in:\n<env>\nWorking directory: /Users/lucaforstner/conductor/workspaces/braintrust-sdk-javascript/taipei/e2e/.bt-tmp/run-AgrsSa/scenarios/claude-agent-sdk-instrumentation\nIs directory a git repo: Yes\nPlatform: darwin\nShell: zsh\nOS Version: Darwin 25.4.0\n</env>\nYou are powered by the model named Haiku 4.5. The exact model ID is claude-haiku-4-5.\n\nAssistant knowledge cutoff is February 2025.\n\ngitStatus: This is the git status at the start of the conversation. Note that this status is a snapshot in time, and will not update during the conversation.\nCurrent branch: lforst/cassette-server-e2e\n\nMain branch (you will usually use this for PRs): main\n\nStatus:\nM ../../../../scenarios/ai-sdk-instrumentation/__cassettes__/ai-sdk-v3.cassette.json\n M ../../../../scenarios/ai-sdk-instrumentation/__cassettes__/ai-sdk-v4.cassette.json\n M ../../../../scenarios/ai-sdk-instrumentation/__cassettes__/ai-sdk-v5.cassette.json\n M ../../../../scenarios/ai-sdk-instrumentation/__cassettes__/ai-sdk-v6.cassette.json\n M ../../../../scenarios/ai-sdk-otel-export/__cassettes__/ai-sdk-v5.cassette.json\n M ../../../../scenarios/ai-sdk-otel-export/__cassettes__/ai-sdk-v6.cassette.json\n M ../../../../scenarios/anthropic-instrumentation/__cassettes__/anthropic-v0273.cassette.json\n M ../../../../scenarios/anthropic-instrumentation/__cassettes__/anthropic-v0390.cassette.json\n M ../../../../scenarios/anthropic-instrumentation/__cassettes__/anthropic-v0712.cassette.json\n M ../../../../scenarios/anthropic-instrumentation/__cassettes__/anthropic-v0730.cassette.json\n M ../../../../scenarios/anthropic-instrumentation/__cassettes__/anthropic-v0780.cassette.json\n M ../../../../scenarios/anthropic-instrumentation/__cassettes__/anthropic-v0800.cassette.json\n D ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.76.cassette.blobs/13b966e662e27d300b7af8d918150336df106967468b8acf5205776aee48bf4f.bin\n D ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.76.cassette.blobs/2b5c5c5ed64e8c4fa3d2cecfb5dfa528d1a063ed8056c28c49a6c72fb83417c9.bin\n D ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.76.cassette.blobs/529c9f1b49430924b32c922a6a7eaddad0f5b5b291b365db7fa5afd17c4a01fa.bin\n D ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.76.cassette.blobs/52c8802ada5095a3c0e30f24a410b2ce3a1a3c0df52c411d53bf2c344cf1f386.bin\n D ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.76.cassette.blobs/609066852727d55943baf538e00f97b2e7173c2e0215b37026aa47427d2f489d.bin\n D ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.76.cassette.blobs/a07e11934d41d85cb141e96a4c8aadb0565b523f131b71fb7ea3aefaa59c3dd9.bin\n D ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.76.cassette.blobs/a66d319bc3d7aee122a9e54d8e9a5e6d58cb1785bf28bda7c3f74e5a545f9ce3.bin\n D ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.76.cassette.blobs/bc3be5338f6725f0123e9f8dc0a094e40f677aa9228508d8f9c702597bbd13dc.bin\n D ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.76.cassette.blobs/d49148abd365be2c143504b85158997d7b99e95ec75b36b32b889fc04e943e3a.bin\n D ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.76.cassette.blobs/f4872abd03c3927066fa8998207ba95f3a12054e5f8a3157bb31418f923fa6c5.bin\n M ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.76.cassette.json\n D ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.79.cassette.blobs/01049d299ea26a54fe5204615a71d737dbb2b71016315ecc7d3c73a583bf19fa.bin\n D ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.79.cassette.blobs/1ae33b3a3ee29cc7bfa44add5e9596c17977c2830d891394e974180040f5bb18.bin\n D ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.79.cassette.blobs/1cced6b9f3d3c586f7b5a97a2d28ebde3d98272e0c4b3e4003b674f9716ba839.bin\n D ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.79.cassette.blobs/2200ce7a63f9272ef43dc2aa73a2b20f095c106b8a57fc4c99e4fea2cfb4a47a.bin\n D ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.79.cassette.blobs/4b96e5891a452105a1d552f190a9dbeab3aacba5fbe0861c589acf16196482a4.bin\n D ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.79.cassette.blobs/becdda3b0a902dce1d06a42ac3c6e1a0642ea7df33c20d0965683dead4cbf226.bin\n D ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.79.cassette.blobs/d8603d519cc16cbba6e87697fe7b86e9ef8df7fc048f692de7e71b9327838330.bin\n D ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.79.cassette.blobs/e155c888dc2c01b0080e9583a5e7f1ed7f1ba1896d8200cd85eb37b6f45ab66e.bin\n D ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.79.cassette.blobs/e661b3cc779d7feb820c8967864986d6df7d8db2be57896a048094bfede3c9d0.bin\n D ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.79.cassette.blobs/efced744145191710adc97b95a96845bb402af8279d828d407d3df733832fa4d.bin\n M ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.79.cassette.json\n D ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.81.cassette.blobs/05473c321879acd789974d51910a94bed9e50bc204c245128581254e1bc533ba.bin\n D ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.81.cassette.blobs/18c29c3e7c76bc6cd667d852ad408dab80504c6b49af660a5f1344afb6b4f51f.bin\n D ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.81.cassette.blobs/30d7da527b1debecede869f25d0e2bfe240f85e33e0f119cd745731eb89402fe.bin\n D ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.81.cassette.blobs/34f45989a86ee116c40695fd0f7b5bbebefe81ca708ad06b73f8f16fe73a8970.bin\n D ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.81.cassette.blobs/581b68faf04077834b59254ffec1ae7859525f9347a0691c0ea2b37312fbf727.bin\n D ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.81.cassette.blobs/7dbc5c238126457937dec4a668ec33794364b3ad5a4d9b735c3af7fa99b04f46.bin\n D ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.81.cassette.blobs/b488aebbe5bfbb0225d305465efce87812faaabebb36d9ba329c8e8fbf54d452.bin\n D ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.81.cassette.blobs/c08ef085c7454271e3144006f4b83aa84ba0664783072dbb5eea24f6d40fdcbc.bin\n D ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.81.cassette.blobs/cf5e89ae8ab350a9fb2005c64a8e0533dd206e06dbf6d0dfc6d5c04e1f93ef22.bin\n D ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.81.cassette.blobs/d262bb8d77f1fab856efd7331d64945222a0cd39a64b17721deea4a465cfa15b.bin\n D ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.81.cassette.blobs/f42d22c2a4bc0a556ee921e0f7bf0a42c52d5f8e3fdc8962bead8c973f29c304.bin\n D ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.81.cassette.blobs/f7e573d11bdc5341d84e27f2d73b45f3720baa6c5810b981e8b26cc184e09a38.bin\n M ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.81.cassette.json\n M ../../../../scenarios/cohere-instrumentation/__cassettes__/cohere-v7-14-0.cassette.json\n M ../../../../scenarios/cohere-instrumentation/__cassettes__/cohere-v7-20-0.cassette.json\n M ../../../../scenarios/cohere-instrumentation/__cassettes__/cohere-v7-21-0.cassette.json\n M ../../../../scenarios/cohere-instrumentation/__cassettes__/cohere-v7.cassette.json\n M ../../../../scenarios/cohere-instrumentation/__cassettes__/cohere-v8.cassette.json\n D ../../../../scenarios/cursor-sdk-instrumentation/__cassettes__/cursor-sdk-v1.cassette.blobs/03cdb6911d292e5da2e31c24759cd3a08110c77ea1243ae2c6241dfca095613d.bin\n M ../../../../scenarios/cursor-sdk-instrumentation/__cassettes__/cursor-sdk-v1.cassette.json\n M ../../../../scenarios/genkit-instrumentation/__cassettes__/genkit-v1-33-0.cassette.json\n M ../../../../scenarios/github-copilot-instrumentation/__cassettes__/github-copilot-v0-auto.cassette.json\n M ../../../../scenarios/github-copilot-instrumentation/__cassettes__/github-copilot-v0-wrapped.cassette.json\n M ../../../../scenarios/google-adk-instrumentation/__cassettes__/google-adk-v061.cassette.json\n M ../../../../scenarios/google-adk-instrumentation/__cassettes__/google-adk-v1000.cassette.json\n M ../../../../scenarios/google-genai-instrumentation/__cassettes__/google-genai-v1300.cassette.json\n M ../../../../scenarios/google-genai-instrumentation/__cassettes__/google-genai-v1440.cassette.json\n M ../../../../scenarios/google-genai-instrumentation/__cassettes__/google-genai-v1450.cassette.json\n M ../../../../scenarios/google-genai-instrumentation/__cassettes__/google-genai-v1460.cassette.json\n D ../../../../scenarios/groq-instrumentation/__cassettes__/groq-v1-auto.cassette.blobs/1a50a507eeb01f2aa77e387b4bec9e34a719062bd28fa1186daa58eea37f7468.bin\n M ../../../../scenarios/groq-instrumentation/__cassettes__/groq-v1-auto.cassette.json\n D ../../../../scenarios/groq-instrumentation/__cassettes__/groq-v1-wrapped.cassette.blobs/21f33204c730be0532861427c2a77722f42fc7bc3ce79f4c84c818a614ee686d.bin\n M ../../../../scenarios/groq-instrumentation/__cassettes__/groq-v1-wrapped.cassette.json\n M ../../../../scenarios/huggingface-instrumentation/__cassettes__/huggingface-v281.cassette.json\n M ../../../../scenarios/huggingface-instrumentation/__cassettes__/huggingface-v3150.cassette.json\n M ../../../../scenarios/huggingface-instrumentation/__cassettes__/huggingface-v41315.cassette.json\n M ../../../../scenarios/mistral-instrumentation/__cassettes__/mistral-v1-10-0.cassette.json\n M ../../../../scenarios/mistral-instrumentation/__cassettes__/mistral-v1-14-1.cassette.json\n M ../../../../scenarios/mistral-instrumentation/__cassettes__/mistral-v1-15-1.cassette.json\n M ../../../../scenarios/mistral-instrumentation/__cassettes__/mistral-v1-3-4.cassette.json\n M ../../../../scenarios/mistral-instrumentation/__cassettes__/mistral-v1.cassette.json\n M ../../../../scenarios/mistral-instrumentation/__cassettes__/mistral-v2.cassette.json\n M ../../../../scenarios/mistral-instrumentation/__snapshots__/mistral-v1-3-4.log-payloads.json\n M ../../../../scenarios/mistral-instrumentation/__snapshots__/mistral-v1-3-4.span-events.json\n D ../../../../scenarios/openai-codex-instrumentation/__cassettes__/openai-codex-v0128-auto-hook.cassette.blobs/04277246487b5c2a559adf90dbec691de5139aba61265004e2267c7fe7a6a5b7.bin\n D ../../../../scenarios/openai-codex-instrumentation/__cassettes__/openai-codex-v0128-auto-hook.cassette.blobs/0f15b9f4ec73f8631c9e00c587d1fe39880520f19966f909494876a0d72bc066.bin\n D ../../../../scenarios/openai-codex-instrumentation/__cassettes__/openai-codex-v0128-auto-hook.cassette.blobs/1859681524e4f37a5ce2fab6d1de57a464bbc6c80b1cb7d730333113c4689271.bin\n D ../../../../scenarios/openai-codex-instrumentation/__cassettes__/openai-codex-v0128-auto-hook.cassette.blobs/7a3504443e6ca5da296c2a5456198bca98fcb3fb56cbe393ebc077d53916481d.bin\n M ../../../../scenarios/openai-codex-instrumentation/__cassettes__/openai-codex-v0128-auto-hook.cassette.json\n D ../../../../scenarios/openai-codex-instrumentation/__cassettes__/openai-codex-v0128-wrapped.cassette.blobs/36c7ca062dba17c14f42215bd637632741779390f8436ed02f3297b2e9b81f10.bin\n D ../../../../scenarios/openai-codex-instrumentation/__cassettes__/openai-codex-v0128-wrapped.cassette.blobs/65205a63207d709be16655aa3cd36a5ed19f83c502dd03beabb8f8b0bbbbc81f.bin\n D ../../../../scenarios/openai-codex-instrumentation/__cassettes__/openai-codex-v0128-wrapped.cassette.blobs/78e68d8defd5da51cd222f677e22383e2549a1f0bbb223373a72deaf0db92050.bin\n D ../../../../scenarios/openai-codex-instrumentation/__cassettes__/openai-codex-v0128-wrapped.cassette.blobs/b98172d7bc34b73c0a391962df3062ac4fa4d4dd053d864ebd1b5405d028a8e3.bin\n M ../../../../scenarios/openai-codex-instrumentation/__cassettes__/openai-codex-v0128-wrapped.cassette.json\n M ../../../../scenarios/openai-instrumentation/__cassettes__/openai-v4.cassette.json\n M ../../../../scenarios/openai-instrumentation/__cassettes__/openai-v5.cassette.json\n M ../../../../scenarios/openai-instrumentation/__cassettes__/openai-v6.cassette.json\n M ../../../../scenarios/openrouter-agent-instrumentation/__cassettes__/openrouter-agent-current.cassette.json\n M ../../../../scenarios/openrouter-instrumentation/__cassettes__/openrouter-v0123.cassette.json\n M ../../../../scenarios/openrouter-instrumentation/__cassettes__/openrouter-v0911.cassette.json\n M ../../../../scenarios/wrap-langchain-js-traces/__cassettes__/wrap-langchain-js-traces.cassette.json\n?? ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.76.cassette.blobs/11428b2666633b380d3cf3bd83aa5d1d225e13b26d4b424fa277fb3e816f1f1c.bin\n?? ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.76.cassette.blobs/18bc57c08b93db9803e17da75ad7c7396603b24ba38b77663e4fc4184dbf0c48.bin\n?? ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.76.cassette.blobs/24dcd90db544a4264701c7fbbef93107851ef2fd9ad63fa20ae225438c75589c.bin\n?? ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.76.cassette.blobs/3024422694c4435d3a74d0143b7c78e5d4446e9a8897350fd7b1170b401a897f.bin\n?? ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.76.cassette.blobs/491bc712da513c232d849c2204c5f96bbd6778682bad2530612168930c72560d.bin\n?? ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.76.cassette.blobs/639adf6673a9e5f15d2de5dee4060283499af65c4d49b141713019dea4a77c94.bin\n?? ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.76.cassette.blobs/943c9c3b805f2eb70990468224715cf5d0c5813436907d30d06ea488c2fc71bf.bin\n?? ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.76.cassette.blobs/a7197435ce2477c86ba95b85daf7d25879aeb6d207c777624721cc8d9fc0bad2.bin\n?? ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.76.cassette.blobs/c10dc9cf9df09a66f0008b8025c073dd548dae8837b483d69213a4f74cdb8b63.bin\n?? ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.76.cassette.blobs/e584726b8abd518886384c37f77bc39b75e269131006580c5b26c9ce911aef7f.bin\n?? ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.79.cassette.blobs/03732965560f1bab959b048f0f2a6fa245dbc9addda1857c472ab81fbfa223ea.bin\n?? ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.79.cassette.blobs/2f461e6d5634923f4ceb305ed69cbb66530816f0a7ed47328e6812ae0bd4f1cc.bin\n?? ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.79.cassette.blobs/60cd8678091c215f780aefe533167edab59fb39008c9c0ac0e7fdd7ec7ad4f21.bin\n?? ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.79.cassette.blobs/629fb59804e376749bf6668b0639c239a3e8ba5283df9b2df91cbadee05f9621.bin\n?? ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.79.cassette.blobs/76b41447b8eee9bcc5da73779747fbd51730282b26f7ee106989729f47874186.bin\n?? ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.79.cassette.blobs/883a6b762afe3d1c146ba1614f3419bbd6b263cb7797e0b3d3cd580101376f04.bin\n?? ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.79.cassette.blobs/a7fd1075b2ff9c58a8587721690caf00bedbc68cb04ebb1f96bfc4abb2a28ee3.bin\n?? ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.79.cassette.blobs/be97ce04016f5e49c9f189fbb3ff31c7e6def326f7205fbdeb42618527a5a839.bin\n?? ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.79.cassette.blobs/dd561c81df17f0ad9ce909356a6e69573117057e7ecfe69fd8d50af226e94f92.bin\n?? ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.79.cassette.blobs/ec954d89d4bb6b727e3f7dc9c8dcf0f285d1d4b2d506e4fe80f0ed9c2448aec0.bin\n?? ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.81.cassette.blobs/0f324a2a465f2ccd816335ee77640bded9a8c06ee178f647d559379c8b3e8878.bin\n?? ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.81.cassette.blobs/1de4d64ad16cfa15658e5c522eaa8053888161a7363669d66ea9592cb1e68229.bin\n?? ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.81.cassette.blobs/472288c08344e2cf5d8d86a20ef6bdc119e01d377766f371580cee39acd2ad4c.bin\n?? ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.81.cassette.blobs/4d0dbd0c19dd52a961a37cfb48da63fc9b1b38ff8cf69918a37f2ffd22f459ae.bin\n?? ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.81.cassette.blobs/4dcb702adbd510ef71357dcb45cfaabf9e97c611eb4cdd4f37ca5f432f4df469.bin\n?? ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.81.cassette.blobs/883e8df61f16d0efe5fae37877df37e9268069e3fc96711262b89e6914a319ff.bin\n?? ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.81.cassette.blobs/90dcbfe3730e935dcbac92dd13d6fbaaa6b84889e00f96077220b0d05a090424.bin\n?? ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.81.cassette.blobs/9c53d9c710d251e8c7462aaebe57072e9bfb10d5121d52181cf923af91f2c892.bin\n?? ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.81.cassette.blobs/9e14ce0852aca3b388d58d93a4305d29265b147645fce8ac1d1f9ae26305a66f.bin\n?? ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.81.cassette.blobs/cb27d346be8cb2ac4997cbec32625e3e850b384c45e5054a5439738556a3b05a.bin\n?? ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.81.cassette.blobs/cee82148f268aa52c231b545bda8f4a9ce78501502c707ba876c47e620149a69.bin\n?? ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.81.cassette.blobs/d33b1234de571a8845eb7c3035e67614fa881fc0827b2f614b2b342ecf72c4f1.bin\n?? ../../../../scenarios/cursor-sdk-instrumentation/__cassettes__/cursor-sdk-v1.cassette.blobs/b027eca4ea158d665aa633a08123111e849897784d631461a8d709a985ab042f.bin\n?? ../../../../scenarios/groq-instrumentation/__cassettes__/groq-v1-auto.cassette.blobs/e4eac406883a068801445a5632d3e0a7cbad985f9c171baeebf411d7c672fb3f.bin\n?? ../../../../scenarios/groq-instrumentation/__cassettes__/groq-v1-wrapped.cassette.blobs/97b50b93fae50eaedcd33d30eaea08c0bff13694dca5d947bbdf92590151f341.bin\n?? ../../../../scenarios/openai-codex-instrumentation/__cassettes__/openai-codex-v0128-auto-hook.cassette.blobs/4f3e8b1a17e9dcf5b1c04d4ac444c2e8ebde0ab663913a8b2d253ce7e2a850ea.bin\n?? ../../../../scenarios/openai-codex-instrumentation/__cassettes__/openai-codex-v0128-auto-hook.cassette.blobs/76058051b0687b63f21336d7a97b089c0eca8d522c5721019e0fe3e3f01e8f37.bin\n?? ../../../../scenarios/openai-codex-instrumentation/__cassettes__/openai-codex-v0128-auto-hook.cassette.blobs/d452ddc992ca3a2eb95fa931090debd7acf872d092327b71e4f142c73deb217c.bin\n?? ../../../../scenarios/openai-codex-instrumentation/__cassettes__/openai-codex-v0128-auto-hook.cassette.blobs/df6630170e0027696754ff5023cf6c93ce551b580c205182898cf5fd201916f0.bin\n?? ../../../../scenarios/openai-codex-instrumentation/__cassettes__/openai-codex-v0128-wrapped.cassette.blobs/33b8fb5f4958b135e7f799397526bed0476d6c8cc7dafebe2a77df575296877d.bin\n?? ../../../../scenarios/openai-codex-instrumentation/__cassettes__/openai-codex-v0128-wrapped.cassette.blobs/40bab86c31f29b2e0ed8c03953b215928169ae8ada3ae6a4e7007ec6327e8c29.bin\n?? ../../../../scenarios/openai-codex-instrumentation/__cassettes__/openai-codex-v0128-wrapped.cassette.blobs/a56397b8fb3e8580c1fd3cc46979e93968d4b9367c3200b50541bc84a9b2a479.bin\n?? ../../../../scenarios/openai-codex-instrumentation/__cassettes__/openai-codex-v0128-wrapped.cassette.blobs/daa2ef945e3e1cfb847f526e54a28b23c2e12b5437a49435ab5d2b552f5750aa.bin\n?? ../../../../scenarios/openrouter-instrumentation/__cassettes__/openrouter-v0123.cassette.blobs/\n\nRecent commits:\n9b2ae36a Handle attachment endpoints\nb288b95a format\n316f9671 Merge remote-tracking branch 'origin/main' into lforst/cassette-server-e2e\n4fb1935e dead code\n24f75b3a remaining instrumentation",
+                "type": "text"
+              }
+            ],
+            "temperature": 1,
+            "tools": [
+              {
+                "description": "Executes a given bash command and returns its output.\n\nThe working directory persists between commands, but shell state does not. The shell environment is initialized from the user's profile (bash or zsh).\n\nIMPORTANT: Avoid using this tool to run `find`, `grep`, `cat`, `head`, `tail`, `sed`, `awk`, or `echo` commands, unless explicitly instructed or after you have verified that a dedicated tool cannot accomplish your task. Instead, use the appropriate dedicated tool as this will provide a much better experience for the user:\n\n - File search: Use Glob (NOT find or ls)\n - Content search: Use Grep (NOT grep or rg)\n - Read files: Use Read (NOT cat/head/tail)\n - Edit files: Use Edit (NOT sed/awk)\n - Write files: Use Write (NOT echo >/cat <<EOF)\n - Communication: Output text directly (NOT echo/printf)\nWhile the Bash tool can do similar things, it’s better to use the built-in tools as they provide a better user experience and make it easier to review tool calls and give permission.\n\n# Instructions\n - If your command will create new directories or files, first use this tool to run `ls` to verify the parent directory exists and is the correct location.\n - Always quote file paths that contain spaces with double quotes in your command (e.g., cd \"path with spaces/file.txt\")\n - Try to maintain your current working directory throughout the session by using absolute paths and avoiding usage of `cd`. You may use `cd` if the User explicitly requests it.\n - You may specify an optional timeout in milliseconds (up to 600000ms / 10 minutes). By default, your command will timeout after 120000ms (2 minutes).\n - You can use the `run_in_background` parameter to run the command in the background. Only use this if you don't need the result immediately and are OK being notified when the command completes later. You do not need to check the output right away - you'll be notified when it finishes. You do not need to use '&' at the end of the command when using this parameter.\n - Write a clear, concise description of what your command does. For simple commands, keep it brief (5-10 words). For complex commands (piped commands, obscure flags, or anything hard to understand at a glance), include enough context so that the user can understand what your command will do.\n - When issuing multiple commands:\n  - If the commands are independent and can run in parallel, make multiple Bash tool calls in a single message. Example: if you need to run \"git status\" and \"git diff\", send a single message with two Bash tool calls in parallel.\n  - If the commands depend on each other and must run sequentially, use a single Bash call with '&&' to chain them together.\n  - Use ';' only when you need to run commands sequentially but don't care if earlier commands fail.\n  - DO NOT use newlines to separate commands (newlines are ok in quoted strings).\n - For git commands:\n  - Prefer to create a new commit rather than amending an existing commit.\n  - Before running destructive operations (e.g., git reset --hard, git push --force, git checkout --), consider whether there is a safer alternative that achieves the same goal. Only use destructive operations when they are truly the best approach.\n  - Never skip hooks (--no-verify) or bypass signing (--no-gpg-sign, -c commit.gpgsign=false) unless the user has explicitly asked for it. If a hook fails, investigate and fix the underlying issue.\n - Avoid unnecessary `sleep` commands:\n  - Do not sleep between commands that can run immediately — just run them.\n  - If your command is long running and you would like to be notified when it finishes — use `run_in_background`. No sleep needed.\n  - Do not retry failing commands in a sleep loop — diagnose the root cause.\n  - If waiting for a background task you started with `run_in_background`, you will be notified when it completes — do not poll.\n  - If you must poll an external process, use a check command (e.g. `gh run view`) rather than sleeping first.\n  - If you must sleep, keep the duration short (1-5 seconds) to avoid blocking the user.\n\n\n# Committing changes with git\n\nOnly create commits when requested by the user. If unclear, ask first. When the user asks you to create a new git commit, follow these steps carefully:\n\nGit Safety Protocol:\n- NEVER update the git config\n- NEVER run destructive git commands (push --force, reset --hard, checkout ., restore ., clean -f, branch -D) unless the user explicitly requests these actions. Taking unauthorized destructive actions is unhelpful and can result in lost work, so it's best to ONLY run these commands when given direct instructions \n- NEVER skip hooks (--no-verify, --no-gpg-sign, etc) unless the user explicitly requests it\n- NEVER run force push to main/master, warn the user if they request it\n- CRITICAL: Always create NEW commits rather than amending, unless the user explicitly requests a git amend. When a pre-commit hook fails, the commit did NOT happen — so --amend would modify the PREVIOUS commit, which may result in destroying work or losing previous changes. Instead, after hook failure, fix the issue, re-stage, and create a NEW commit\n- When staging files, prefer adding specific files by name rather than using \"git add -A\" or \"git add .\", which can accidentally include sensitive files (.env, credentials) or large binaries\n- NEVER commit changes unless the user explicitly asks you to. It is VERY IMPORTANT to only commit when explicitly asked, otherwise the user will feel that you are being too proactive\n\n1. You can call multiple tools in a single response. When multiple independent pieces of information are requested and all commands are likely to succeed, run multiple tool calls in parallel for optimal performance. run the following bash commands in parallel, each using the Bash tool:\n  - Run a git status command to see all untracked files. IMPORTANT: Never use the -uall flag as it can cause memory issues on large repos.\n  - Run a git diff command to see both staged and unstaged changes that will be committed.\n  - Run a git log command to see recent commit messages, so that you can follow this repository's commit message style.\n2. Analyze all staged changes (both previously staged and newly added) and draft a commit message:\n  - Summarize the nature of the changes (eg. new feature, enhancement to an existing feature, bug fix, refactoring, test, docs, etc.). Ensure the message accurately reflects the changes and their purpose (i.e. \"add\" means a wholly new feature, \"update\" means an enhancement to an existing feature, \"fix\" means a bug fix, etc.).\n  - Do not commit files that likely contain secrets (.env, credentials.json, etc). Warn the user if they specifically request to commit those files\n  - Draft a concise (1-2 sentences) commit message that focuses on the \"why\" rather than the \"what\"\n  - Ensure it accurately reflects the changes and their purpose\n3. You can call multiple tools in a single response. When multiple independent pieces of information are requested and all commands are likely to succeed, run multiple tool calls in parallel for optimal performance. run the following commands:\n   - Add relevant untracked files to the staging area.\n   - Create the commit with a message ending with:\n   Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\n   - Run git status after the commit completes to verify success.\n   Note: git status depends on the commit completing, so run it sequentially after the commit.\n4. If the commit fails due to pre-commit hook: fix the issue and create a NEW commit\n\nImportant notes:\n- NEVER run additional commands to read or explore code, besides git bash commands\n- NEVER use the TodoWrite or Agent tools\n- DO NOT push to the remote repository unless the user explicitly asks you to do so\n- IMPORTANT: Never use git commands with the -i flag (like git rebase -i or git add -i) since they require interactive input which is not supported.\n- IMPORTANT: Do not use --no-edit with git rebase commands, as the --no-edit flag is not a valid option for git rebase.\n- If there are no changes to commit (i.e., no untracked files and no modifications), do not create an empty commit\n- In order to ensure good formatting, ALWAYS pass the commit message via a HEREDOC, a la this example:\n<example>\ngit commit -m \"$(cat <<'EOF'\n   Commit message here.\n\n   Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\n   EOF\n   )\"\n</example>\n\n# Creating pull requests\nUse the gh command via the Bash tool for ALL GitHub-related tasks including working with issues, pull requests, checks, and releases. If given a Github URL use the gh command to get the information needed.\n\nIMPORTANT: When the user asks you to create a pull request, follow these steps carefully:\n\n1. You can call multiple tools in a single response. When multiple independent pieces of information are requested and all commands are likely to succeed, run multiple tool calls in parallel for optimal performance. run the following bash commands in parallel using the Bash tool, in order to understand the current state of the branch since it diverged from the main branch:\n   - Run a git status command to see all untracked files (never use -uall flag)\n   - Run a git diff command to see both staged and unstaged changes that will be committed\n   - Check if the current branch tracks a remote branch and is up to date with the remote, so you know if you need to push to the remote\n   - Run a git log command and `git diff [base-branch]...HEAD` to understand the full commit history for the current branch (from the time it diverged from the base branch)\n2. Analyze all changes that will be included in the pull request, making sure to look at all relevant commits (NOT just the latest commit, but ALL commits that will be included in the pull request!!!), and draft a pull request title and summary:\n   - Keep the PR title short (under 70 characters)\n   - Use the description/body for details, not the title\n3. You can call multiple tools in a single response. When multiple independent pieces of information are requested and all commands are likely to succeed, run multiple tool calls in parallel for optimal performance. run the following commands in parallel:\n   - Create new branch if needed\n   - Push to remote with -u flag if needed\n   - Create PR using gh pr create with the format below. Use a HEREDOC to pass the body to ensure correct formatting.\n<example>\ngh pr create --title \"the pr title\" --body \"$(cat <<'EOF'\n## Summary\n<1-3 bullet points>\n\n## Test plan\n[Bulleted markdown checklist of TODOs for testing the pull request...]\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\nEOF\n)\"\n</example>\n\nImportant:\n- DO NOT use the TodoWrite or Agent tools\n- Return the PR URL when you're done, so the user can see it\n\n# Other common operations\n- View comments on a Github PR: gh api repos/foo/bar/pulls/123/comments",
+                "input_schema": {
+                  "$schema": "https://json-schema.org/draft/2020-12/schema",
+                  "additionalProperties": false,
+                  "properties": {
+                    "command": {
+                      "description": "The command to execute",
+                      "type": "string"
+                    },
+                    "dangerouslyDisableSandbox": {
+                      "description": "Set this to true to dangerously override sandbox mode and run commands without sandboxing.",
+                      "type": "boolean"
+                    },
+                    "description": {
+                      "description": "Clear, concise description of what this command does in active voice. Never use words like \"complex\" or \"risk\" in the description - just describe what it does.\n\nFor simple commands (git, npm, standard CLI tools), keep it brief (5-10 words):\n- ls → \"List files in current directory\"\n- git status → \"Show working tree status\"\n- npm install → \"Install package dependencies\"\n\nFor commands that are harder to parse at a glance (piped commands, obscure flags, etc.), add enough context to clarify what it does:\n- find . -name \"*.tmp\" -exec rm {} \\; → \"Find and delete all .tmp files recursively\"\n- git reset --hard origin/main → \"Discard all local changes and match remote main\"\n- curl -s url | jq '.data[]' → \"Fetch JSON from URL and extract data array elements\"",
+                      "type": "string"
+                    },
+                    "run_in_background": {
+                      "description": "Set to true to run this command in the background. Use TaskOutput to read the output later.",
+                      "type": "boolean"
+                    },
+                    "timeout": {
+                      "description": "Optional timeout in milliseconds (max 600000)",
+                      "type": "number"
+                    }
+                  },
+                  "required": ["command"],
+                  "type": "object"
+                },
+                "name": "Bash"
+              }
+            ]
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages?beta=true"
+      },
+      "response": {
+        "body": {
+          "chunks": [
+            "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-haiku-4-5-20251001\",\"id\":\"msg_01Qvu5q1nbg5mr1cw4ZGnLJv\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":3,\"cache_creation_input_tokens\":12519,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":12519,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":49,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"}}}",
+            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"tool_use\",\"id\":\"toolu_01UePBWB4V5dqHqpS2KiqqXH\",\"name\":\"Bash\",\"input\":{},\"caller\":{\"type\":\"direct\"}}}",
+            "event: ping\ndata: {\"type\":\"ping\"}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"{\\\"comman\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"d\\\"\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\": \\\"\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"ech\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"o hello\\\"\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\", \"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"\\\"descr\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"iptio\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"n\\\"\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\": \\\"Echo h\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"el\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"lo message\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"\\\"}\"}}",
+            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0}",
+            "event: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"tool_use\",\"stop_sequence\":null,\"stop_details\":null},\"usage\":{\"input_tokens\":3,\"cache_creation_input_tokens\":12519,\"cache_read_input_tokens\":0,\"output_tokens\":73},\"context_management\":{\"applied_edits\":[]}}",
+            "event: message_stop\ndata: {\"type\":\"message_stop\"}"
+          ],
+          "kind": "sse"
+        },
+        "headers": {
+          "anthropic-organization-id": "27796668-7351-40ac-acc4-024aee8995a5",
+          "anthropic-ratelimit-input-tokens-limit": "4000000",
+          "anthropic-ratelimit-input-tokens-remaining": "3994000",
+          "anthropic-ratelimit-input-tokens-reset": "2026-05-15T11:39:06Z",
+          "anthropic-ratelimit-output-tokens-limit": "800000",
+          "anthropic-ratelimit-output-tokens-remaining": "800000",
+          "anthropic-ratelimit-output-tokens-reset": "2026-05-15T11:39:06Z",
+          "anthropic-ratelimit-requests-limit": "20000",
+          "anthropic-ratelimit-requests-remaining": "19999",
+          "anthropic-ratelimit-requests-reset": "2026-05-15T11:39:06Z",
+          "anthropic-ratelimit-tokens-limit": "4800000",
+          "anthropic-ratelimit-tokens-remaining": "4794000",
+          "anthropic-ratelimit-tokens-reset": "2026-05-15T11:39:06Z",
+          "cache-control": "no-cache",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "9fc1dc319daac2a5-VIE",
+          "connection": "keep-alive",
+          "content-encoding": "gzip",
+          "content-security-policy": "default-src 'none'; frame-ancestors 'none'",
+          "content-type": "text/event-stream; charset=utf-8",
+          "date": "Fri, 15 May 2026 11:39:06 GMT",
+          "request-id": "req_011Cb4Hks56cMnzmjz9Q8Lff",
+          "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+          "traceresponse": "00-82f233e51512061a7e85b33cd75f6cee-491f5e171c395563-01",
+          "transfer-encoding": "chunked",
+          "vary": "Accept-Encoding",
+          "x-envoy-upstream-service-time": "800",
+          "x-robots-tag": "none"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 10,
+      "id": "b26aaf8f27973a31",
+      "matchKey": "POST api.anthropic.com/v1/messages",
+      "recordedAt": "2026-05-15T11:39:08.367Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "max_tokens": 32000,
+            "messages": [
+              {
+                "content": [
+                  {
+                    "text": "<system-reminder>\nAs you answer the user's questions, you can use the following context:\n# currentDate\nToday's date is 2026-05-15.\n\n      IMPORTANT: this context may or may not be relevant to your tasks. You should not respond to this context unless it is highly relevant to your task.\n</system-reminder>\n",
+                    "type": "text"
+                  },
+                  {
+                    "text": "Please echo a greeting message",
+                    "type": "text"
+                  }
+                ],
+                "role": "user"
+              },
+              {
+                "content": [
+                  {
+                    "id": "toolu_01UePBWB4V5dqHqpS2KiqqXH",
+                    "input": {
+                      "command": "echo hello",
+                      "description": "Echo hello message"
+                    },
+                    "name": "Bash",
+                    "type": "tool_use"
+                  }
+                ],
+                "role": "assistant"
+              },
+              {
+                "content": [
+                  {
+                    "cache_control": {
+                      "type": "ephemeral"
+                    },
+                    "content": "hello",
+                    "is_error": false,
+                    "tool_use_id": "toolu_01UePBWB4V5dqHqpS2KiqqXH",
+                    "type": "tool_result"
+                  }
+                ],
+                "role": "user"
+              }
+            ],
+            "metadata": {
+              "user_id": "user_3727d955d07d2160bfdf6a3f83e128e3106b0ac4bcf1d622eda611c967c8b9c2_account__session_1b2fef88-3580-4dc6-9b20-9b5a777d3d5d"
+            },
+            "model": "claude-haiku-4-5",
+            "stream": true,
+            "system": [
+              {
+                "text": "x-anthropic-billing-header: cc_version=2.1.76.6ac; cc_entrypoint=sdk-ts; cch=00000;",
+                "type": "text"
+              },
+              {
+                "cache_control": {
+                  "type": "ephemeral"
+                },
+                "text": "You are a Claude agent, built on Anthropic's Claude Agent SDK.",
+                "type": "text"
+              },
+              {
+                "cache_control": {
+                  "type": "ephemeral"
+                },
+                "text": "Run `echo hello` via Bash exactly once, then reply with only the word done.\n\nNotes:\n- Agent threads always have their cwd reset between bash calls, as a result please only use absolute file paths.\n- In your final response, share file paths (always absolute, never relative) that are relevant to the task. Include code snippets only when the exact text is load-bearing (e.g., a bug you found, a function signature the caller asked for) — do not recap code you merely read.\n- For clear communication with the user the assistant MUST avoid using emojis.\n- Do not use a colon before tool calls. Text like \"Let me read the file:\" followed by a read tool call should just be \"Let me read the file.\" with a period.\n\nHere is useful information about the environment you are running in:\n<env>\nWorking directory: /Users/lucaforstner/conductor/workspaces/braintrust-sdk-javascript/taipei/e2e/.bt-tmp/run-AgrsSa/scenarios/claude-agent-sdk-instrumentation\nIs directory a git repo: Yes\nPlatform: darwin\nShell: zsh\nOS Version: Darwin 25.4.0\n</env>\nYou are powered by the model named Haiku 4.5. The exact model ID is claude-haiku-4-5.\n\nAssistant knowledge cutoff is February 2025.\n\ngitStatus: This is the git status at the start of the conversation. Note that this status is a snapshot in time, and will not update during the conversation.\nCurrent branch: lforst/cassette-server-e2e\n\nMain branch (you will usually use this for PRs): main\n\nStatus:\nM ../../../../scenarios/ai-sdk-instrumentation/__cassettes__/ai-sdk-v3.cassette.json\n M ../../../../scenarios/ai-sdk-instrumentation/__cassettes__/ai-sdk-v4.cassette.json\n M ../../../../scenarios/ai-sdk-instrumentation/__cassettes__/ai-sdk-v5.cassette.json\n M ../../../../scenarios/ai-sdk-instrumentation/__cassettes__/ai-sdk-v6.cassette.json\n M ../../../../scenarios/ai-sdk-otel-export/__cassettes__/ai-sdk-v5.cassette.json\n M ../../../../scenarios/ai-sdk-otel-export/__cassettes__/ai-sdk-v6.cassette.json\n M ../../../../scenarios/anthropic-instrumentation/__cassettes__/anthropic-v0273.cassette.json\n M ../../../../scenarios/anthropic-instrumentation/__cassettes__/anthropic-v0390.cassette.json\n M ../../../../scenarios/anthropic-instrumentation/__cassettes__/anthropic-v0712.cassette.json\n M ../../../../scenarios/anthropic-instrumentation/__cassettes__/anthropic-v0730.cassette.json\n M ../../../../scenarios/anthropic-instrumentation/__cassettes__/anthropic-v0780.cassette.json\n M ../../../../scenarios/anthropic-instrumentation/__cassettes__/anthropic-v0800.cassette.json\n D ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.76.cassette.blobs/13b966e662e27d300b7af8d918150336df106967468b8acf5205776aee48bf4f.bin\n D ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.76.cassette.blobs/2b5c5c5ed64e8c4fa3d2cecfb5dfa528d1a063ed8056c28c49a6c72fb83417c9.bin\n D ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.76.cassette.blobs/529c9f1b49430924b32c922a6a7eaddad0f5b5b291b365db7fa5afd17c4a01fa.bin\n D ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.76.cassette.blobs/52c8802ada5095a3c0e30f24a410b2ce3a1a3c0df52c411d53bf2c344cf1f386.bin\n D ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.76.cassette.blobs/609066852727d55943baf538e00f97b2e7173c2e0215b37026aa47427d2f489d.bin\n D ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.76.cassette.blobs/a07e11934d41d85cb141e96a4c8aadb0565b523f131b71fb7ea3aefaa59c3dd9.bin\n D ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.76.cassette.blobs/a66d319bc3d7aee122a9e54d8e9a5e6d58cb1785bf28bda7c3f74e5a545f9ce3.bin\n D ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.76.cassette.blobs/bc3be5338f6725f0123e9f8dc0a094e40f677aa9228508d8f9c702597bbd13dc.bin\n D ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.76.cassette.blobs/d49148abd365be2c143504b85158997d7b99e95ec75b36b32b889fc04e943e3a.bin\n D ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.76.cassette.blobs/f4872abd03c3927066fa8998207ba95f3a12054e5f8a3157bb31418f923fa6c5.bin\n M ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.76.cassette.json\n D ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.79.cassette.blobs/01049d299ea26a54fe5204615a71d737dbb2b71016315ecc7d3c73a583bf19fa.bin\n D ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.79.cassette.blobs/1ae33b3a3ee29cc7bfa44add5e9596c17977c2830d891394e974180040f5bb18.bin\n D ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.79.cassette.blobs/1cced6b9f3d3c586f7b5a97a2d28ebde3d98272e0c4b3e4003b674f9716ba839.bin\n D ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.79.cassette.blobs/2200ce7a63f9272ef43dc2aa73a2b20f095c106b8a57fc4c99e4fea2cfb4a47a.bin\n D ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.79.cassette.blobs/4b96e5891a452105a1d552f190a9dbeab3aacba5fbe0861c589acf16196482a4.bin\n D ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.79.cassette.blobs/becdda3b0a902dce1d06a42ac3c6e1a0642ea7df33c20d0965683dead4cbf226.bin\n D ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.79.cassette.blobs/d8603d519cc16cbba6e87697fe7b86e9ef8df7fc048f692de7e71b9327838330.bin\n D ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.79.cassette.blobs/e155c888dc2c01b0080e9583a5e7f1ed7f1ba1896d8200cd85eb37b6f45ab66e.bin\n D ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.79.cassette.blobs/e661b3cc779d7feb820c8967864986d6df7d8db2be57896a048094bfede3c9d0.bin\n D ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.79.cassette.blobs/efced744145191710adc97b95a96845bb402af8279d828d407d3df733832fa4d.bin\n M ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.79.cassette.json\n D ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.81.cassette.blobs/05473c321879acd789974d51910a94bed9e50bc204c245128581254e1bc533ba.bin\n D ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.81.cassette.blobs/18c29c3e7c76bc6cd667d852ad408dab80504c6b49af660a5f1344afb6b4f51f.bin\n D ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.81.cassette.blobs/30d7da527b1debecede869f25d0e2bfe240f85e33e0f119cd745731eb89402fe.bin\n D ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.81.cassette.blobs/34f45989a86ee116c40695fd0f7b5bbebefe81ca708ad06b73f8f16fe73a8970.bin\n D ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.81.cassette.blobs/581b68faf04077834b59254ffec1ae7859525f9347a0691c0ea2b37312fbf727.bin\n D ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.81.cassette.blobs/7dbc5c238126457937dec4a668ec33794364b3ad5a4d9b735c3af7fa99b04f46.bin\n D ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.81.cassette.blobs/b488aebbe5bfbb0225d305465efce87812faaabebb36d9ba329c8e8fbf54d452.bin\n D ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.81.cassette.blobs/c08ef085c7454271e3144006f4b83aa84ba0664783072dbb5eea24f6d40fdcbc.bin\n D ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.81.cassette.blobs/cf5e89ae8ab350a9fb2005c64a8e0533dd206e06dbf6d0dfc6d5c04e1f93ef22.bin\n D ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.81.cassette.blobs/d262bb8d77f1fab856efd7331d64945222a0cd39a64b17721deea4a465cfa15b.bin\n D ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.81.cassette.blobs/f42d22c2a4bc0a556ee921e0f7bf0a42c52d5f8e3fdc8962bead8c973f29c304.bin\n D ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.81.cassette.blobs/f7e573d11bdc5341d84e27f2d73b45f3720baa6c5810b981e8b26cc184e09a38.bin\n M ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.81.cassette.json\n M ../../../../scenarios/cohere-instrumentation/__cassettes__/cohere-v7-14-0.cassette.json\n M ../../../../scenarios/cohere-instrumentation/__cassettes__/cohere-v7-20-0.cassette.json\n M ../../../../scenarios/cohere-instrumentation/__cassettes__/cohere-v7-21-0.cassette.json\n M ../../../../scenarios/cohere-instrumentation/__cassettes__/cohere-v7.cassette.json\n M ../../../../scenarios/cohere-instrumentation/__cassettes__/cohere-v8.cassette.json\n D ../../../../scenarios/cursor-sdk-instrumentation/__cassettes__/cursor-sdk-v1.cassette.blobs/03cdb6911d292e5da2e31c24759cd3a08110c77ea1243ae2c6241dfca095613d.bin\n M ../../../../scenarios/cursor-sdk-instrumentation/__cassettes__/cursor-sdk-v1.cassette.json\n M ../../../../scenarios/genkit-instrumentation/__cassettes__/genkit-v1-33-0.cassette.json\n M ../../../../scenarios/github-copilot-instrumentation/__cassettes__/github-copilot-v0-auto.cassette.json\n M ../../../../scenarios/github-copilot-instrumentation/__cassettes__/github-copilot-v0-wrapped.cassette.json\n M ../../../../scenarios/google-adk-instrumentation/__cassettes__/google-adk-v061.cassette.json\n M ../../../../scenarios/google-adk-instrumentation/__cassettes__/google-adk-v1000.cassette.json\n M ../../../../scenarios/google-genai-instrumentation/__cassettes__/google-genai-v1300.cassette.json\n M ../../../../scenarios/google-genai-instrumentation/__cassettes__/google-genai-v1440.cassette.json\n M ../../../../scenarios/google-genai-instrumentation/__cassettes__/google-genai-v1450.cassette.json\n M ../../../../scenarios/google-genai-instrumentation/__cassettes__/google-genai-v1460.cassette.json\n D ../../../../scenarios/groq-instrumentation/__cassettes__/groq-v1-auto.cassette.blobs/1a50a507eeb01f2aa77e387b4bec9e34a719062bd28fa1186daa58eea37f7468.bin\n M ../../../../scenarios/groq-instrumentation/__cassettes__/groq-v1-auto.cassette.json\n D ../../../../scenarios/groq-instrumentation/__cassettes__/groq-v1-wrapped.cassette.blobs/21f33204c730be0532861427c2a77722f42fc7bc3ce79f4c84c818a614ee686d.bin\n M ../../../../scenarios/groq-instrumentation/__cassettes__/groq-v1-wrapped.cassette.json\n M ../../../../scenarios/huggingface-instrumentation/__cassettes__/huggingface-v281.cassette.json\n M ../../../../scenarios/huggingface-instrumentation/__cassettes__/huggingface-v3150.cassette.json\n M ../../../../scenarios/huggingface-instrumentation/__cassettes__/huggingface-v41315.cassette.json\n M ../../../../scenarios/mistral-instrumentation/__cassettes__/mistral-v1-10-0.cassette.json\n M ../../../../scenarios/mistral-instrumentation/__cassettes__/mistral-v1-14-1.cassette.json\n M ../../../../scenarios/mistral-instrumentation/__cassettes__/mistral-v1-15-1.cassette.json\n M ../../../../scenarios/mistral-instrumentation/__cassettes__/mistral-v1-3-4.cassette.json\n M ../../../../scenarios/mistral-instrumentation/__cassettes__/mistral-v1.cassette.json\n M ../../../../scenarios/mistral-instrumentation/__cassettes__/mistral-v2.cassette.json\n M ../../../../scenarios/mistral-instrumentation/__snapshots__/mistral-v1-3-4.log-payloads.json\n M ../../../../scenarios/mistral-instrumentation/__snapshots__/mistral-v1-3-4.span-events.json\n D ../../../../scenarios/openai-codex-instrumentation/__cassettes__/openai-codex-v0128-auto-hook.cassette.blobs/04277246487b5c2a559adf90dbec691de5139aba61265004e2267c7fe7a6a5b7.bin\n D ../../../../scenarios/openai-codex-instrumentation/__cassettes__/openai-codex-v0128-auto-hook.cassette.blobs/0f15b9f4ec73f8631c9e00c587d1fe39880520f19966f909494876a0d72bc066.bin\n D ../../../../scenarios/openai-codex-instrumentation/__cassettes__/openai-codex-v0128-auto-hook.cassette.blobs/1859681524e4f37a5ce2fab6d1de57a464bbc6c80b1cb7d730333113c4689271.bin\n D ../../../../scenarios/openai-codex-instrumentation/__cassettes__/openai-codex-v0128-auto-hook.cassette.blobs/7a3504443e6ca5da296c2a5456198bca98fcb3fb56cbe393ebc077d53916481d.bin\n M ../../../../scenarios/openai-codex-instrumentation/__cassettes__/openai-codex-v0128-auto-hook.cassette.json\n D ../../../../scenarios/openai-codex-instrumentation/__cassettes__/openai-codex-v0128-wrapped.cassette.blobs/36c7ca062dba17c14f42215bd637632741779390f8436ed02f3297b2e9b81f10.bin\n D ../../../../scenarios/openai-codex-instrumentation/__cassettes__/openai-codex-v0128-wrapped.cassette.blobs/65205a63207d709be16655aa3cd36a5ed19f83c502dd03beabb8f8b0bbbbc81f.bin\n D ../../../../scenarios/openai-codex-instrumentation/__cassettes__/openai-codex-v0128-wrapped.cassette.blobs/78e68d8defd5da51cd222f677e22383e2549a1f0bbb223373a72deaf0db92050.bin\n D ../../../../scenarios/openai-codex-instrumentation/__cassettes__/openai-codex-v0128-wrapped.cassette.blobs/b98172d7bc34b73c0a391962df3062ac4fa4d4dd053d864ebd1b5405d028a8e3.bin\n M ../../../../scenarios/openai-codex-instrumentation/__cassettes__/openai-codex-v0128-wrapped.cassette.json\n M ../../../../scenarios/openai-instrumentation/__cassettes__/openai-v4.cassette.json\n M ../../../../scenarios/openai-instrumentation/__cassettes__/openai-v5.cassette.json\n M ../../../../scenarios/openai-instrumentation/__cassettes__/openai-v6.cassette.json\n M ../../../../scenarios/openrouter-agent-instrumentation/__cassettes__/openrouter-agent-current.cassette.json\n M ../../../../scenarios/openrouter-instrumentation/__cassettes__/openrouter-v0123.cassette.json\n M ../../../../scenarios/openrouter-instrumentation/__cassettes__/openrouter-v0911.cassette.json\n M ../../../../scenarios/wrap-langchain-js-traces/__cassettes__/wrap-langchain-js-traces.cassette.json\n?? ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.76.cassette.blobs/11428b2666633b380d3cf3bd83aa5d1d225e13b26d4b424fa277fb3e816f1f1c.bin\n?? ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.76.cassette.blobs/18bc57c08b93db9803e17da75ad7c7396603b24ba38b77663e4fc4184dbf0c48.bin\n?? ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.76.cassette.blobs/24dcd90db544a4264701c7fbbef93107851ef2fd9ad63fa20ae225438c75589c.bin\n?? ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.76.cassette.blobs/3024422694c4435d3a74d0143b7c78e5d4446e9a8897350fd7b1170b401a897f.bin\n?? ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.76.cassette.blobs/491bc712da513c232d849c2204c5f96bbd6778682bad2530612168930c72560d.bin\n?? ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.76.cassette.blobs/639adf6673a9e5f15d2de5dee4060283499af65c4d49b141713019dea4a77c94.bin\n?? ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.76.cassette.blobs/943c9c3b805f2eb70990468224715cf5d0c5813436907d30d06ea488c2fc71bf.bin\n?? ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.76.cassette.blobs/a7197435ce2477c86ba95b85daf7d25879aeb6d207c777624721cc8d9fc0bad2.bin\n?? ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.76.cassette.blobs/c10dc9cf9df09a66f0008b8025c073dd548dae8837b483d69213a4f74cdb8b63.bin\n?? ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.76.cassette.blobs/e584726b8abd518886384c37f77bc39b75e269131006580c5b26c9ce911aef7f.bin\n?? ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.79.cassette.blobs/03732965560f1bab959b048f0f2a6fa245dbc9addda1857c472ab81fbfa223ea.bin\n?? ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.79.cassette.blobs/2f461e6d5634923f4ceb305ed69cbb66530816f0a7ed47328e6812ae0bd4f1cc.bin\n?? ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.79.cassette.blobs/60cd8678091c215f780aefe533167edab59fb39008c9c0ac0e7fdd7ec7ad4f21.bin\n?? ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.79.cassette.blobs/629fb59804e376749bf6668b0639c239a3e8ba5283df9b2df91cbadee05f9621.bin\n?? ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.79.cassette.blobs/76b41447b8eee9bcc5da73779747fbd51730282b26f7ee106989729f47874186.bin\n?? ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.79.cassette.blobs/883a6b762afe3d1c146ba1614f3419bbd6b263cb7797e0b3d3cd580101376f04.bin\n?? ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.79.cassette.blobs/a7fd1075b2ff9c58a8587721690caf00bedbc68cb04ebb1f96bfc4abb2a28ee3.bin\n?? ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.79.cassette.blobs/be97ce04016f5e49c9f189fbb3ff31c7e6def326f7205fbdeb42618527a5a839.bin\n?? ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.79.cassette.blobs/dd561c81df17f0ad9ce909356a6e69573117057e7ecfe69fd8d50af226e94f92.bin\n?? ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.79.cassette.blobs/ec954d89d4bb6b727e3f7dc9c8dcf0f285d1d4b2d506e4fe80f0ed9c2448aec0.bin\n?? ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.81.cassette.blobs/0f324a2a465f2ccd816335ee77640bded9a8c06ee178f647d559379c8b3e8878.bin\n?? ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.81.cassette.blobs/1de4d64ad16cfa15658e5c522eaa8053888161a7363669d66ea9592cb1e68229.bin\n?? ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.81.cassette.blobs/472288c08344e2cf5d8d86a20ef6bdc119e01d377766f371580cee39acd2ad4c.bin\n?? ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.81.cassette.blobs/4d0dbd0c19dd52a961a37cfb48da63fc9b1b38ff8cf69918a37f2ffd22f459ae.bin\n?? ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.81.cassette.blobs/4dcb702adbd510ef71357dcb45cfaabf9e97c611eb4cdd4f37ca5f432f4df469.bin\n?? ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.81.cassette.blobs/883e8df61f16d0efe5fae37877df37e9268069e3fc96711262b89e6914a319ff.bin\n?? ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.81.cassette.blobs/90dcbfe3730e935dcbac92dd13d6fbaaa6b84889e00f96077220b0d05a090424.bin\n?? ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.81.cassette.blobs/9c53d9c710d251e8c7462aaebe57072e9bfb10d5121d52181cf923af91f2c892.bin\n?? ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.81.cassette.blobs/9e14ce0852aca3b388d58d93a4305d29265b147645fce8ac1d1f9ae26305a66f.bin\n?? ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.81.cassette.blobs/cb27d346be8cb2ac4997cbec32625e3e850b384c45e5054a5439738556a3b05a.bin\n?? ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.81.cassette.blobs/cee82148f268aa52c231b545bda8f4a9ce78501502c707ba876c47e620149a69.bin\n?? ../../../../scenarios/claude-agent-sdk-instrumentation/__cassettes__/claude-agent-sdk-v0.2.81.cassette.blobs/d33b1234de571a8845eb7c3035e67614fa881fc0827b2f614b2b342ecf72c4f1.bin\n?? ../../../../scenarios/cursor-sdk-instrumentation/__cassettes__/cursor-sdk-v1.cassette.blobs/b027eca4ea158d665aa633a08123111e849897784d631461a8d709a985ab042f.bin\n?? ../../../../scenarios/groq-instrumentation/__cassettes__/groq-v1-auto.cassette.blobs/e4eac406883a068801445a5632d3e0a7cbad985f9c171baeebf411d7c672fb3f.bin\n?? ../../../../scenarios/groq-instrumentation/__cassettes__/groq-v1-wrapped.cassette.blobs/97b50b93fae50eaedcd33d30eaea08c0bff13694dca5d947bbdf92590151f341.bin\n?? ../../../../scenarios/openai-codex-instrumentation/__cassettes__/openai-codex-v0128-auto-hook.cassette.blobs/4f3e8b1a17e9dcf5b1c04d4ac444c2e8ebde0ab663913a8b2d253ce7e2a850ea.bin\n?? ../../../../scenarios/openai-codex-instrumentation/__cassettes__/openai-codex-v0128-auto-hook.cassette.blobs/76058051b0687b63f21336d7a97b089c0eca8d522c5721019e0fe3e3f01e8f37.bin\n?? ../../../../scenarios/openai-codex-instrumentation/__cassettes__/openai-codex-v0128-auto-hook.cassette.blobs/d452ddc992ca3a2eb95fa931090debd7acf872d092327b71e4f142c73deb217c.bin\n?? ../../../../scenarios/openai-codex-instrumentation/__cassettes__/openai-codex-v0128-auto-hook.cassette.blobs/df6630170e0027696754ff5023cf6c93ce551b580c205182898cf5fd201916f0.bin\n?? ../../../../scenarios/openai-codex-instrumentation/__cassettes__/openai-codex-v0128-wrapped.cassette.blobs/33b8fb5f4958b135e7f799397526bed0476d6c8cc7dafebe2a77df575296877d.bin\n?? ../../../../scenarios/openai-codex-instrumentation/__cassettes__/openai-codex-v0128-wrapped.cassette.blobs/40bab86c31f29b2e0ed8c03953b215928169ae8ada3ae6a4e7007ec6327e8c29.bin\n?? ../../../../scenarios/openai-codex-instrumentation/__cassettes__/openai-codex-v0128-wrapped.cassette.blobs/a56397b8fb3e8580c1fd3cc46979e93968d4b9367c3200b50541bc84a9b2a479.bin\n?? ../../../../scenarios/openai-codex-instrumentation/__cassettes__/openai-codex-v0128-wrapped.cassette.blobs/daa2ef945e3e1cfb847f526e54a28b23c2e12b5437a49435ab5d2b552f5750aa.bin\n?? ../../../../scenarios/openrouter-instrumentation/__cassettes__/openrouter-v0123.cassette.blobs/\n\nRecent commits:\n9b2ae36a Handle attachment endpoints\nb288b95a format\n316f9671 Merge remote-tracking branch 'origin/main' into lforst/cassette-server-e2e\n4fb1935e dead code\n24f75b3a remaining instrumentation",
+                "type": "text"
+              }
+            ],
+            "temperature": 1,
+            "tools": [
+              {
+                "description": "Executes a given bash command and returns its output.\n\nThe working directory persists between commands, but shell state does not. The shell environment is initialized from the user's profile (bash or zsh).\n\nIMPORTANT: Avoid using this tool to run `find`, `grep`, `cat`, `head`, `tail`, `sed`, `awk`, or `echo` commands, unless explicitly instructed or after you have verified that a dedicated tool cannot accomplish your task. Instead, use the appropriate dedicated tool as this will provide a much better experience for the user:\n\n - File search: Use Glob (NOT find or ls)\n - Content search: Use Grep (NOT grep or rg)\n - Read files: Use Read (NOT cat/head/tail)\n - Edit files: Use Edit (NOT sed/awk)\n - Write files: Use Write (NOT echo >/cat <<EOF)\n - Communication: Output text directly (NOT echo/printf)\nWhile the Bash tool can do similar things, it’s better to use the built-in tools as they provide a better user experience and make it easier to review tool calls and give permission.\n\n# Instructions\n - If your command will create new directories or files, first use this tool to run `ls` to verify the parent directory exists and is the correct location.\n - Always quote file paths that contain spaces with double quotes in your command (e.g., cd \"path with spaces/file.txt\")\n - Try to maintain your current working directory throughout the session by using absolute paths and avoiding usage of `cd`. You may use `cd` if the User explicitly requests it.\n - You may specify an optional timeout in milliseconds (up to 600000ms / 10 minutes). By default, your command will timeout after 120000ms (2 minutes).\n - You can use the `run_in_background` parameter to run the command in the background. Only use this if you don't need the result immediately and are OK being notified when the command completes later. You do not need to check the output right away - you'll be notified when it finishes. You do not need to use '&' at the end of the command when using this parameter.\n - Write a clear, concise description of what your command does. For simple commands, keep it brief (5-10 words). For complex commands (piped commands, obscure flags, or anything hard to understand at a glance), include enough context so that the user can understand what your command will do.\n - When issuing multiple commands:\n  - If the commands are independent and can run in parallel, make multiple Bash tool calls in a single message. Example: if you need to run \"git status\" and \"git diff\", send a single message with two Bash tool calls in parallel.\n  - If the commands depend on each other and must run sequentially, use a single Bash call with '&&' to chain them together.\n  - Use ';' only when you need to run commands sequentially but don't care if earlier commands fail.\n  - DO NOT use newlines to separate commands (newlines are ok in quoted strings).\n - For git commands:\n  - Prefer to create a new commit rather than amending an existing commit.\n  - Before running destructive operations (e.g., git reset --hard, git push --force, git checkout --), consider whether there is a safer alternative that achieves the same goal. Only use destructive operations when they are truly the best approach.\n  - Never skip hooks (--no-verify) or bypass signing (--no-gpg-sign, -c commit.gpgsign=false) unless the user has explicitly asked for it. If a hook fails, investigate and fix the underlying issue.\n - Avoid unnecessary `sleep` commands:\n  - Do not sleep between commands that can run immediately — just run them.\n  - If your command is long running and you would like to be notified when it finishes — use `run_in_background`. No sleep needed.\n  - Do not retry failing commands in a sleep loop — diagnose the root cause.\n  - If waiting for a background task you started with `run_in_background`, you will be notified when it completes — do not poll.\n  - If you must poll an external process, use a check command (e.g. `gh run view`) rather than sleeping first.\n  - If you must sleep, keep the duration short (1-5 seconds) to avoid blocking the user.\n\n\n# Committing changes with git\n\nOnly create commits when requested by the user. If unclear, ask first. When the user asks you to create a new git commit, follow these steps carefully:\n\nGit Safety Protocol:\n- NEVER update the git config\n- NEVER run destructive git commands (push --force, reset --hard, checkout ., restore ., clean -f, branch -D) unless the user explicitly requests these actions. Taking unauthorized destructive actions is unhelpful and can result in lost work, so it's best to ONLY run these commands when given direct instructions \n- NEVER skip hooks (--no-verify, --no-gpg-sign, etc) unless the user explicitly requests it\n- NEVER run force push to main/master, warn the user if they request it\n- CRITICAL: Always create NEW commits rather than amending, unless the user explicitly requests a git amend. When a pre-commit hook fails, the commit did NOT happen — so --amend would modify the PREVIOUS commit, which may result in destroying work or losing previous changes. Instead, after hook failure, fix the issue, re-stage, and create a NEW commit\n- When staging files, prefer adding specific files by name rather than using \"git add -A\" or \"git add .\", which can accidentally include sensitive files (.env, credentials) or large binaries\n- NEVER commit changes unless the user explicitly asks you to. It is VERY IMPORTANT to only commit when explicitly asked, otherwise the user will feel that you are being too proactive\n\n1. You can call multiple tools in a single response. When multiple independent pieces of information are requested and all commands are likely to succeed, run multiple tool calls in parallel for optimal performance. run the following bash commands in parallel, each using the Bash tool:\n  - Run a git status command to see all untracked files. IMPORTANT: Never use the -uall flag as it can cause memory issues on large repos.\n  - Run a git diff command to see both staged and unstaged changes that will be committed.\n  - Run a git log command to see recent commit messages, so that you can follow this repository's commit message style.\n2. Analyze all staged changes (both previously staged and newly added) and draft a commit message:\n  - Summarize the nature of the changes (eg. new feature, enhancement to an existing feature, bug fix, refactoring, test, docs, etc.). Ensure the message accurately reflects the changes and their purpose (i.e. \"add\" means a wholly new feature, \"update\" means an enhancement to an existing feature, \"fix\" means a bug fix, etc.).\n  - Do not commit files that likely contain secrets (.env, credentials.json, etc). Warn the user if they specifically request to commit those files\n  - Draft a concise (1-2 sentences) commit message that focuses on the \"why\" rather than the \"what\"\n  - Ensure it accurately reflects the changes and their purpose\n3. You can call multiple tools in a single response. When multiple independent pieces of information are requested and all commands are likely to succeed, run multiple tool calls in parallel for optimal performance. run the following commands:\n   - Add relevant untracked files to the staging area.\n   - Create the commit with a message ending with:\n   Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\n   - Run git status after the commit completes to verify success.\n   Note: git status depends on the commit completing, so run it sequentially after the commit.\n4. If the commit fails due to pre-commit hook: fix the issue and create a NEW commit\n\nImportant notes:\n- NEVER run additional commands to read or explore code, besides git bash commands\n- NEVER use the TodoWrite or Agent tools\n- DO NOT push to the remote repository unless the user explicitly asks you to do so\n- IMPORTANT: Never use git commands with the -i flag (like git rebase -i or git add -i) since they require interactive input which is not supported.\n- IMPORTANT: Do not use --no-edit with git rebase commands, as the --no-edit flag is not a valid option for git rebase.\n- If there are no changes to commit (i.e., no untracked files and no modifications), do not create an empty commit\n- In order to ensure good formatting, ALWAYS pass the commit message via a HEREDOC, a la this example:\n<example>\ngit commit -m \"$(cat <<'EOF'\n   Commit message here.\n\n   Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\n   EOF\n   )\"\n</example>\n\n# Creating pull requests\nUse the gh command via the Bash tool for ALL GitHub-related tasks including working with issues, pull requests, checks, and releases. If given a Github URL use the gh command to get the information needed.\n\nIMPORTANT: When the user asks you to create a pull request, follow these steps carefully:\n\n1. You can call multiple tools in a single response. When multiple independent pieces of information are requested and all commands are likely to succeed, run multiple tool calls in parallel for optimal performance. run the following bash commands in parallel using the Bash tool, in order to understand the current state of the branch since it diverged from the main branch:\n   - Run a git status command to see all untracked files (never use -uall flag)\n   - Run a git diff command to see both staged and unstaged changes that will be committed\n   - Check if the current branch tracks a remote branch and is up to date with the remote, so you know if you need to push to the remote\n   - Run a git log command and `git diff [base-branch]...HEAD` to understand the full commit history for the current branch (from the time it diverged from the base branch)\n2. Analyze all changes that will be included in the pull request, making sure to look at all relevant commits (NOT just the latest commit, but ALL commits that will be included in the pull request!!!), and draft a pull request title and summary:\n   - Keep the PR title short (under 70 characters)\n   - Use the description/body for details, not the title\n3. You can call multiple tools in a single response. When multiple independent pieces of information are requested and all commands are likely to succeed, run multiple tool calls in parallel for optimal performance. run the following commands in parallel:\n   - Create new branch if needed\n   - Push to remote with -u flag if needed\n   - Create PR using gh pr create with the format below. Use a HEREDOC to pass the body to ensure correct formatting.\n<example>\ngh pr create --title \"the pr title\" --body \"$(cat <<'EOF'\n## Summary\n<1-3 bullet points>\n\n## Test plan\n[Bulleted markdown checklist of TODOs for testing the pull request...]\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\nEOF\n)\"\n</example>\n\nImportant:\n- DO NOT use the TodoWrite or Agent tools\n- Return the PR URL when you're done, so the user can see it\n\n# Other common operations\n- View comments on a Github PR: gh api repos/foo/bar/pulls/123/comments",
+                "input_schema": {
+                  "$schema": "https://json-schema.org/draft/2020-12/schema",
+                  "additionalProperties": false,
+                  "properties": {
+                    "command": {
+                      "description": "The command to execute",
+                      "type": "string"
+                    },
+                    "dangerouslyDisableSandbox": {
+                      "description": "Set this to true to dangerously override sandbox mode and run commands without sandboxing.",
+                      "type": "boolean"
+                    },
+                    "description": {
+                      "description": "Clear, concise description of what this command does in active voice. Never use words like \"complex\" or \"risk\" in the description - just describe what it does.\n\nFor simple commands (git, npm, standard CLI tools), keep it brief (5-10 words):\n- ls → \"List files in current directory\"\n- git status → \"Show working tree status\"\n- npm install → \"Install package dependencies\"\n\nFor commands that are harder to parse at a glance (piped commands, obscure flags, etc.), add enough context to clarify what it does:\n- find . -name \"*.tmp\" -exec rm {} \\; → \"Find and delete all .tmp files recursively\"\n- git reset --hard origin/main → \"Discard all local changes and match remote main\"\n- curl -s url | jq '.data[]' → \"Fetch JSON from URL and extract data array elements\"",
+                      "type": "string"
+                    },
+                    "run_in_background": {
+                      "description": "Set to true to run this command in the background. Use TaskOutput to read the output later.",
+                      "type": "boolean"
+                    },
+                    "timeout": {
+                      "description": "Optional timeout in milliseconds (max 600000)",
+                      "type": "number"
+                    }
+                  },
+                  "required": ["command"],
+                  "type": "object"
+                },
+                "name": "Bash"
+              }
+            ]
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages?beta=true"
+      },
+      "response": {
+        "body": {
+          "chunks": [
+            "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-haiku-4-5-20251001\",\"id\":\"msg_01WCnRcsJbCppWJHUd54XBN6\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":6,\"cache_creation_input_tokens\":83,\"cache_read_input_tokens\":12519,\"cache_creation\":{\"ephemeral_5m_input_tokens\":83,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":1,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"}}}",
+            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}}",
+            "event: ping\ndata: {\"type\":\"ping\"}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"done\"}}",
+            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0}",
+            "event: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null},\"usage\":{\"input_tokens\":6,\"cache_creation_input_tokens\":83,\"cache_read_input_tokens\":12519,\"output_tokens\":4},\"context_management\":{\"applied_edits\":[]}}",
+            "event: message_stop\ndata: {\"type\":\"message_stop\"}"
+          ],
+          "kind": "sse"
+        },
+        "headers": {
+          "anthropic-organization-id": "27796668-7351-40ac-acc4-024aee8995a5",
+          "anthropic-ratelimit-input-tokens-limit": "4000000",
+          "anthropic-ratelimit-input-tokens-remaining": "3994000",
+          "anthropic-ratelimit-input-tokens-reset": "2026-05-15T11:39:07Z",
+          "anthropic-ratelimit-output-tokens-limit": "800000",
+          "anthropic-ratelimit-output-tokens-remaining": "800000",
+          "anthropic-ratelimit-output-tokens-reset": "2026-05-15T11:39:07Z",
+          "anthropic-ratelimit-requests-limit": "20000",
+          "anthropic-ratelimit-requests-remaining": "19999",
+          "anthropic-ratelimit-requests-reset": "2026-05-15T11:39:07Z",
+          "anthropic-ratelimit-tokens-limit": "4800000",
+          "anthropic-ratelimit-tokens-remaining": "4794000",
+          "anthropic-ratelimit-tokens-reset": "2026-05-15T11:39:07Z",
+          "cache-control": "no-cache",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "9fc1dc3d0acfc2a5-VIE",
+          "connection": "keep-alive",
+          "content-encoding": "gzip",
+          "content-security-policy": "default-src 'none'; frame-ancestors 'none'",
+          "content-type": "text/event-stream; charset=utf-8",
+          "date": "Fri, 15 May 2026 11:39:08 GMT",
+          "request-id": "req_011Cb4HkzruhboA7Dfnuszu4",
+          "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+          "traceresponse": "00-706e5910aed93b23c9c6e1646c019b42-189eac8ee6649026-01",
+          "transfer-encoding": "chunked",
+          "vary": "Accept-Encoding",
+          "x-envoy-upstream-service-time": "516",
+          "x-robots-tag": "none"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 11,
+      "id": "9bd31fcb40951e2e",
+      "matchKey": "POST api.anthropic.com/v1/messages",
+      "recordedAt": "2026-05-15T11:39:13.264Z",
+      "request": {
+        "body": {
+          "contentType": "application/json",
+          "kind": "binary",
+          "path": "claude-agent-sdk-v0.2.76.cassette.blobs/8600808c7b447def49d00c7230cadd1876f82285d8764cab95b46bc5d16174a7.bin",
+          "sha256": "8600808c7b447def49d00c7230cadd1876f82285d8764cab95b46bc5d16174a7"
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages?beta=true"
+      },
+      "response": {
+        "body": {
+          "chunks": [
+            "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-sonnet-4-5-20250929\",\"id\":\"msg_01E6zKVeQgaJp7HwDGFRMVNd\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":8,\"cache_creation_input_tokens\":246,\"cache_read_input_tokens\":18711,\"cache_creation\":{\"ephemeral_5m_input_tokens\":246,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":1,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"}}}",
+            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"thinking\",\"thinking\":\"\",\"signature\":\"\"}}",
+            "event: ping\ndata: {\"type\":\"ping\"}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"The\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" echo agent has completed. According to the instructions, I was supposed to delegate\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" to the echo sub-agent and not answer with text myself. The agent has completed its task. The system says the result\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" is \\\"done\\\" with agent ID ab0746ef3684d1f80.\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"\\n\\nSince the user instructed me not to answer with text myself and to delegate to the echo sub-agent, and that's\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" what I did, I should probably just confirm that the task was completed or pass\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" along the result. However, the function result doesn't show\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" what the agent actually echoed. Let me just confirm the task was delegated and\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" completed as requested.\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"signature_delta\",\"signature\":\"EpwGCmQIDRgCKkCksSUYYvmFw41lDV38zAUKG+83X7TBU/YzYmHYMyq5Aq6UbGazCBQbDfQrnvVcmKlQteKdmGESruKJlpZq92vnMhpjbGF1ZGUtc29ubmV0LTQtNS0yMDI1MDkyOTgAEgyjH44y9M2K401hdesaDFhA68JEWyW1UKlUQiIwhRlvfLb30g9/+XtIC7a396RgfQAi6xmU6EKoKoUGvG8cdmhcc4Asn+TwW2wr3KXiKuUEmrgQAkBCoDpv9XKMBx+BxuvQ5eqJM1AVBrduqFZzBLhBbs9SAYdSAjXpiI1DP9dVV33FbtLZETurq3rQX90esLk+r+sTEiDxPtzl2EmTUjnHfCYjNbjM/CJRY5mr4hIuinrhqwkG01enWcF/HqReLb6ay4yiqoItBFThpMhthCshRoi1bcp558knW10lHkYvhKG5SsrKbvcKTzklbgKAaqvACyDigdvJ0Me3bt5Q0YI0rKHLWMXZXmLpDOUG/RY8IWg55HBZbsVtWlR1TVQ//o/s1N91Un6oJa5XLGQdzyDiO1iqkPhf5XSejZos69m8tbs0Ee+8mx2l3yOx+hWY3tk5g4MUk9z7Cd95Zt0TAfk8R+hMrX5GPzsoh9bGx+l6SllVptbGIypey4Yt66Cw6wkdNYg2oc4udyrCd27vjjW91MZ63JIxHp75hIfiBBDDrDvuSq7Z3r/K3EDhotwXkOMM0rN78DNsA2jbgeoZmgOOyAE+aRKMVRquHw7IfOMB4TSLFBaY+EaBMf+FjCgWn7SNGo/rJavhHjcU1NrVHxnLnqqxW7eO/A/iT96lGWQ1OpDHZc5FgggBJLQ6ylddjibH58hNXdzTA/2pK7pFgqz1mzKNjBMbJiAZ6jvPDdHZ3d/bSg+QxDeA9V/wLW/75JuVZpD6Tt6qZq9urHXJgqCkN+/kMBw1bui3cJqGSnMvP6LRAqVItnhTvClEEAgYRCyHt93BSIeUPHuIeEJSVk/xKzGGHgYHtlHhKEQylN5bciwwz2pTbzxPmaOQ34Rq8Po2qHkO1L2ZwmE/qaRjRgMpUYHmIRgB\"}}",
+            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0}",
+            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":1,\"content_block\":{\"type\":\"text\",\"text\":\"\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"The echo agent has completed the greeting task.\"}}",
+            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":1}",
+            "event: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null},\"usage\":{\"input_tokens\":8,\"cache_creation_input_tokens\":246,\"cache_read_input_tokens\":18711,\"output_tokens\":154},\"context_management\":{\"applied_edits\":[]}}",
+            "event: message_stop\ndata: {\"type\":\"message_stop\"}"
+          ],
+          "kind": "sse"
+        },
+        "headers": {
+          "anthropic-organization-id": "27796668-7351-40ac-acc4-024aee8995a5",
+          "anthropic-ratelimit-input-tokens-limit": "3000000",
+          "anthropic-ratelimit-input-tokens-remaining": "2989000",
+          "anthropic-ratelimit-input-tokens-reset": "2026-05-15T11:39:08Z",
+          "anthropic-ratelimit-output-tokens-limit": "600000",
+          "anthropic-ratelimit-output-tokens-remaining": "600000",
+          "anthropic-ratelimit-output-tokens-reset": "2026-05-15T11:39:08Z",
+          "anthropic-ratelimit-requests-limit": "20000",
+          "anthropic-ratelimit-requests-remaining": "19999",
+          "anthropic-ratelimit-requests-reset": "2026-05-15T11:39:08Z",
+          "anthropic-ratelimit-tokens-limit": "3600000",
+          "anthropic-ratelimit-tokens-remaining": "3589000",
+          "anthropic-ratelimit-tokens-reset": "2026-05-15T11:39:08Z",
+          "cache-control": "no-cache",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "9fc1dc41e8adc2a5-VIE",
+          "connection": "keep-alive",
+          "content-encoding": "gzip",
+          "content-security-policy": "default-src 'none'; frame-ancestors 'none'",
+          "content-type": "text/event-stream; charset=utf-8",
+          "date": "Fri, 15 May 2026 11:39:09 GMT",
+          "request-id": "req_011Cb4Hm4BLGU4gzNUKDnb3p",
+          "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+          "traceresponse": "00-75f3d2e70257487a4162925b82c8f59d-70abe26c66ea8a1a-01",
+          "transfer-encoding": "chunked",
+          "vary": "Accept-Encoding",
+          "x-envoy-upstream-service-time": "792",
+          "x-robots-tag": "none"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 12,
+      "id": "594723c8ea00a536",
+      "matchKey": "POST api.anthropic.com/v1/messages",
+      "recordedAt": "2026-05-15T11:39:18.163Z",
+      "request": {
+        "body": {
+          "contentType": "application/json",
+          "kind": "binary",
+          "path": "claude-agent-sdk-v0.2.76.cassette.blobs/024599fcceb5d498ee8895005fcfb105e0202e0544b147f14959e64ad59e60c8.bin",
+          "sha256": "024599fcceb5d498ee8895005fcfb105e0202e0544b147f14959e64ad59e60c8"
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages?beta=true"
+      },
+      "response": {
+        "body": {
+          "chunks": [
+            "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-haiku-4-5-20251001\",\"id\":\"msg_01KghmLhPEVPpNqDh2qFjMi3\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":10,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":18784,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":8,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"}}}",
+            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"thinking\",\"thinking\":\"\",\"signature\":\"\"}}",
+            "event: ping\ndata: {\"type\":\"ping\"}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"The user is asking me to use the\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" calculator tool to divide 2 by 0. They explicitly state \\\"Do not recover from the error.\\\" This is asking me to attempt a\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" mathematically invalid operation (division by zero).\\n\\nI should follow the user's instruction and attempt this\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" operation. Let me call the calculator tool with operation \\\"divide\\\", a=2, b=0.\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"signature_delta\",\"signature\":\"EpoECmMIDRgCKkC9QeL6AxsMeyrD5cHHu1Tm5rpsHLRj52XKstohEXH8dyOHFIoE5T6D3NMcDG94eGws7KXEmWT30YNQWMP14ks0MhljbGF1ZGUtaGFpa3UtNC01LTIwMjUxMDAxOAASDPC5dWnk783Es6mOxhoMEfYMZtnipe97ysV3IjDXPoM0YpVchmgiN64yfoZeaxtvxsJhWRiaSveKSrVLamuhLo1mKHrnl90F72S62c8q5AJWq/fwBQgUjbsuUmjXmhHUORkCgLjzztmhN4YjIiHrt8/p4bIl4f1Ml/C7Fe1gE8s27x1+PJlySQoCgCa9rbhJHJo22S/UAfwMpRFqCV7+kPRwv9JZdMXVGPsAQXihEaiKyt2hp4UDoHpYDDsWxskcKtxcfHc4KS4VPIPTZH6ARIrrrRcpgn/hc6gFf44xiU65+CAX13Iu5hF7yzL24ZOAzjiGiRLhizHMnic2tECaPRoBb6Yi8Noie9Tutv+A3Vlee9R9LbfMhBFunbYYF3S+eCKCrg+SapNkZG7WFD6c+ZnZhyYSJc3yudt1D4syr8kwDaOZ8JIVuC2JA+wKhyujuBvooS3gNNaOdBvgtc4c8sYlLvIGkfUmBAlCTUfcruPuG5lDh9NRRheIDgN5XJUSRNUkiM+RUCrguyMPR6GY+xv+bpszZrbBZxFkIH3T4YTrfi0MIgX7zXQl0X26GvVn6cCwZBgB\"}}",
+            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0}",
+            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":1,\"content_block\":{\"type\":\"tool_use\",\"id\":\"toolu_01CMsRz4pP2m3xfVrPNDKi3r\",\"name\":\"mcp__calculator__calculator\",\"input\":{},\"caller\":{\"type\":\"direct\"}}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"{\\\"operation\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"\\\": \\\"div\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"ide\\\"\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\", \\\"a\\\": 2\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\", \\\"b\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"\\\": 0}\"}}",
+            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":1}",
+            "event: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"tool_use\",\"stop_sequence\":null,\"stop_details\":null},\"usage\":{\"input_tokens\":10,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":18784,\"output_tokens\":176},\"context_management\":{\"applied_edits\":[]}}",
+            "event: message_stop\ndata: {\"type\":\"message_stop\"}"
+          ],
+          "kind": "sse"
+        },
+        "headers": {
+          "anthropic-organization-id": "27796668-7351-40ac-acc4-024aee8995a5",
+          "anthropic-ratelimit-input-tokens-limit": "4000000",
+          "anthropic-ratelimit-input-tokens-remaining": "3989000",
+          "anthropic-ratelimit-input-tokens-reset": "2026-05-15T11:39:16Z",
+          "anthropic-ratelimit-output-tokens-limit": "800000",
+          "anthropic-ratelimit-output-tokens-remaining": "800000",
+          "anthropic-ratelimit-output-tokens-reset": "2026-05-15T11:39:16Z",
+          "anthropic-ratelimit-requests-limit": "20000",
+          "anthropic-ratelimit-requests-remaining": "19999",
+          "anthropic-ratelimit-requests-reset": "2026-05-15T11:39:16Z",
+          "anthropic-ratelimit-tokens-limit": "4800000",
+          "anthropic-ratelimit-tokens-remaining": "4789000",
+          "anthropic-ratelimit-tokens-reset": "2026-05-15T11:39:16Z",
+          "cache-control": "no-cache",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "9fc1dc73bb41c2a5-VIE",
+          "connection": "keep-alive",
+          "content-encoding": "gzip",
+          "content-security-policy": "default-src 'none'; frame-ancestors 'none'",
+          "content-type": "text/event-stream; charset=utf-8",
+          "date": "Fri, 15 May 2026 11:39:17 GMT",
+          "request-id": "req_011Cb4HmefFUeuZVVNKK1Yst",
+          "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+          "traceresponse": "00-a93c8ff50a23ccd2c7c27882ff4d8e8b-653d1bb802ae662b-01",
+          "transfer-encoding": "chunked",
+          "vary": "Accept-Encoding",
+          "x-envoy-upstream-service-time": "459",
+          "x-robots-tag": "none"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 13,
+      "id": "a0cf6dc5adba967f",
+      "matchKey": "POST api.anthropic.com/v1/messages",
+      "recordedAt": "2026-05-15T11:39:19.539Z",
+      "request": {
+        "body": {
+          "contentType": "application/json",
+          "kind": "binary",
+          "path": "claude-agent-sdk-v0.2.76.cassette.blobs/ca870221cf5649b058b3ee7c1a4c94659707b4fe3330a483e7e0aedd5a76fe85.bin",
+          "sha256": "ca870221cf5649b058b3ee7c1a4c94659707b4fe3330a483e7e0aedd5a76fe85"
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages?beta=true"
+      },
+      "response": {
+        "body": {
+          "chunks": [
+            "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-haiku-4-5-20251001\",\"id\":\"msg_01GuWwwmYTHa9qm4JQHQXYKS\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":8,\"cache_creation_input_tokens\":208,\"cache_read_input_tokens\":18784,\"cache_creation\":{\"ephemeral_5m_input_tokens\":208,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":7,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"}}}",
+            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"thinking\",\"thinking\":\"\",\"signature\":\"\"}}",
+            "event: ping\ndata: {\"type\":\"ping\"}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"The calculator tool returned an error:\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" \\\"division by zero\\\". The user explicitly asked me not to recover from the error, so I should just report this error without attempting to fix\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" it or provide a workaround.\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"signature_delta\",\"signature\":\"EpUDCmMIDRgCKkDR46Ny2JTznygtWJRCCliED4QbRa7fBafCWMqq3Y49sOAvTDXA6T8Lt4iK2G/gn7VDicKOj9yc99O5wtwoG0j7MhljbGF1ZGUtaGFpa3UtNC01LTIwMjUxMDAxOAASDOzXlcCXhIuTuTpoZRoM8g8rJArlcfyzlG32IjBPIqicvTdNi18FzFWs8Jq51Tk/AtdOp09pFj8R46e35TtK8kzGGojN6qU3A4Nz8Ikq3wEnAiWddUgsGA9Ku/TeYxPhtL+6ZHW0Dg/S3E9jaKp0LsuoMl+5BvurRRy4FQj46d8h7IrL6pCK6icO8hBH7hPSMwF9vTV9+gHW/06y5vw/qSdsrcbnCiKlQj4nWEU/RFjI6XeFmdhJnSt83O73DsYioFuY49ilOmdzFl5InTqC8gpGsqc6Ml4Fm2sxa8WD+KQq3oVyRdSaI3iNZ02w2IBrkrK5SqvmbuQMF0iFG727fiksW84Mz+RjBBYEEL4FTEf/2P3McWJHVoKiooZdJWBtIu73m7yidEe44nW6E3suGAE=\"}}",
+            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0}",
+            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":1,\"content_block\":{\"type\":\"text\",\"text\":\"\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"The calculator tool returned a division by zero error, as expected for\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" this invalid mathematical operation.\"}}",
+            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":1}",
+            "event: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null},\"usage\":{\"input_tokens\":8,\"cache_creation_input_tokens\":208,\"cache_read_input_tokens\":18784,\"output_tokens\":72},\"context_management\":{\"applied_edits\":[]}}",
+            "event: message_stop\ndata: {\"type\":\"message_stop\"}"
+          ],
+          "kind": "sse"
+        },
+        "headers": {
+          "anthropic-organization-id": "27796668-7351-40ac-acc4-024aee8995a5",
+          "anthropic-ratelimit-input-tokens-limit": "4000000",
+          "anthropic-ratelimit-input-tokens-remaining": "3989000",
+          "anthropic-ratelimit-input-tokens-reset": "2026-05-15T11:39:18Z",
+          "anthropic-ratelimit-output-tokens-limit": "800000",
+          "anthropic-ratelimit-output-tokens-remaining": "800000",
+          "anthropic-ratelimit-output-tokens-reset": "2026-05-15T11:39:18Z",
+          "anthropic-ratelimit-requests-limit": "20000",
+          "anthropic-ratelimit-requests-remaining": "19999",
+          "anthropic-ratelimit-requests-reset": "2026-05-15T11:39:18Z",
+          "anthropic-ratelimit-tokens-limit": "4800000",
+          "anthropic-ratelimit-tokens-remaining": "4789000",
+          "anthropic-ratelimit-tokens-reset": "2026-05-15T11:39:18Z",
+          "cache-control": "no-cache",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "9fc1dc7f48e4c2a5-VIE",
+          "connection": "keep-alive",
+          "content-encoding": "gzip",
+          "content-security-policy": "default-src 'none'; frame-ancestors 'none'",
+          "content-type": "text/event-stream; charset=utf-8",
+          "date": "Fri, 15 May 2026 11:39:18 GMT",
+          "request-id": "req_011Cb4HmnZGJdfR4ALQQHPap",
+          "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+          "traceresponse": "00-7735fa38cb2bd0b9218141d9affe6a87-25ddb3bb4d70c597-01",
+          "transfer-encoding": "chunked",
+          "vary": "Accept-Encoding",
+          "x-envoy-upstream-service-time": "460",
+          "x-robots-tag": "none"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    }
+  ],
+  "meta": {
+    "createdAt": "2026-05-12T17:03:32.398Z",
+    "seinfeldVersion": "0.0.0"
+  },
+  "version": 1
+}

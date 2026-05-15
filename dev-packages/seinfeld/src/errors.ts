@@ -88,24 +88,3 @@ export class AggregateCassetteMissError extends Error {
     this.misses = misses;
   }
 }
-
-/**
- * Thrown in `record` mode when `strict: true` is set in the redaction config
- * and one or more configured redaction rules matched zero occurrences across
- * the cassette's entries. Almost always indicates a typo in a path or pattern.
- */
-export class CassetteRedactionError extends Error {
-  readonly cassetteName: string;
-  readonly unmatchedPatterns: string[];
-
-  constructor(args: { cassetteName: string; unmatchedPatterns: string[] }) {
-    const list = args.unmatchedPatterns.join(", ");
-    super(
-      `Strict redaction check failed for cassette "${args.cassetteName}": ` +
-        `the following configured rules matched nothing — likely a typo: ${list}`,
-    );
-    this.name = "CassetteRedactionError";
-    this.cassetteName = args.cassetteName;
-    this.unmatchedPatterns = args.unmatchedPatterns;
-  }
-}

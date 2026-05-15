@@ -4,6 +4,7 @@
       "scenario": "google-adk-instrumentation"
     },
     "metrics": {
+      "end": 0,
       "start": 0
     },
     "name": "google-adk-instrumentation-root",
@@ -150,17 +151,6 @@
       "start": 0
     },
     "name": "Agent: farewell",
-    "type": "task"
-  },
-  {
-    "metadata": {
-      "scenario": "google-adk-instrumentation"
-    },
-    "metrics": {
-      "end": 0,
-      "start": 0
-    },
-    "name": "google-adk-instrumentation-root",
     "type": "task"
   }
 ]

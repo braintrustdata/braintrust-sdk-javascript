@@ -11,7 +11,6 @@ import {
   resolveScenarioDir,
   withScenarioHarness,
 } from "../../helpers/scenario-harness";
-import { E2E_TAGS } from "../../helpers/tags";
 import { findLatestSpan } from "../../helpers/trace-selectors";
 import {
   payloadRowsForTestRunId,
@@ -38,7 +37,6 @@ for (const scenario of scenarios) {
   test(
     `test-framework-evals-vitest captures wrapped Vitest task spans (${scenario.label})`,
     {
-      tags: [E2E_TAGS.hermetic],
       timeout: TIMEOUT_MS,
     },
     async () => {

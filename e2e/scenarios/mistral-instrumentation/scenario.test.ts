@@ -4,7 +4,6 @@ import {
   readInstalledPackageVersion,
   resolveScenarioDir,
 } from "../../helpers/scenario-harness";
-import { cassetteTagsFor } from "../../helpers/tags";
 import { defineMistralInstrumentationAssertions } from "./assertions";
 import {
   MISTRAL_SCENARIO_SPECS,
@@ -27,9 +26,7 @@ const mistralScenarios = await Promise.all(
 );
 
 for (const scenario of mistralScenarios) {
-  const tags = cassetteTagsFor(import.meta.url, scenario.snapshotName);
-
-  describe(`mistral sdk ${scenario.version}`, { tags }, () => {
+  describe(`mistral sdk ${scenario.version}`, () => {
     defineMistralInstrumentationAssertions({
       name: "wrapped instrumentation",
       runScenario: async ({ runScenarioDir }) => {

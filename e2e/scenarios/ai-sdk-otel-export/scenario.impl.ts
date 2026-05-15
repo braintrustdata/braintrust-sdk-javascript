@@ -14,6 +14,7 @@ interface AISDKOtelScenarioOptions {
     tool: Function;
     stepCountIs?: Function;
   };
+  createOpenAI?: (options?: { baseURL?: string }) => (model: string) => unknown;
   maxTokensKey: string;
   openai: (model: string) => unknown;
   sdkVersion: string;
@@ -43,7 +44,11 @@ export async function runAISDKOtelExport(options: AISDKOtelScenarioOptions) {
   const { trace } = await import("@opentelemetry/api");
   trace.setGlobalTracerProvider(provider);
 
-  const model = options.openai("gpt-4o-mini-2024-07-18") as any;
+  const openai =
+    process.env.OPENAI_BASE_URL && options.createOpenAI
+      ? options.createOpenAI({ baseURL: process.env.OPENAI_BASE_URL })
+      : options.openai;
+  const model = openai("gpt-4o-mini-2024-07-18") as any;
   const telemetryBase = {
     isEnabled: true,
     metadata: {

@@ -1,10 +1,6 @@
 import type { RedactionConfig, RedactionPreset, RedactionSpec } from "./index";
 import { AUTH_HEADERS } from "../internal/well-known-headers";
 
-/**
- * Common credential header names. Re-exported from the shared internal list so
- * users can reference them when composing custom redaction configs.
- */
 const CREDENTIAL_HEADERS = AUTH_HEADERS;
 
 /**
@@ -34,7 +30,9 @@ const AGGRESSIVE_REDACTION: RedactionConfig = {
 const PARANOID_REDACTION: RedactionConfig = {
   omitRequestHeaders: true,
   redactHeaders: CREDENTIAL_HEADERS,
-  redactBodyFields: [/^(api_?key|token|secret|password|authorization)$/i],
+  redactBodyFields: [
+    /^(api_?key|access_?token|refresh_?token|prompt_?cache_?key|token|secret|password|authorization)$/i,
+  ],
   redactBodyText: [
     { pattern: /Bearer\s+[A-Za-z0-9\-_.~+/]+=*/g },
     { pattern: /sk-[A-Za-z0-9]{20,}/g },
@@ -65,21 +63,4 @@ export function resolveRedactors(
     );
   }
   return [spec];
-}
-
-/** Common helper redactors users can compose into their own configs. */
-
-/** Mask `Authorization: Bearer ...` headers. */
-export function bearerToken(): RedactionConfig {
-  return { redactHeaders: ["authorization"] };
-}
-
-/** Mask the `x-api-key` header (used by Anthropic, AWS, others). */
-export function apiKeyHeader(): RedactionConfig {
-  return { redactHeaders: ["x-api-key", "api-key"] };
-}
-
-/** Mask cookies on both request and response. */
-export function cookies(): RedactionConfig {
-  return { redactHeaders: ["cookie", "set-cookie"] };
 }

@@ -8,7 +8,8 @@ import {
   stat,
   writeFile,
 } from "node:fs/promises";
-import { dirname, extname, join, relative, resolve, sep } from "node:path";
+import { dirname, extname, join, relative, resolve } from "node:path";
+import type { CassetteFile } from "../cassette";
 import { CassetteFormatError } from "../errors";
 import { parseCassette } from "../format";
 import type { CassetteStore } from "./index";
@@ -107,6 +108,7 @@ export function createJsonFileStore(
       const tmp = `${path}.tmp-${process.pid}-${randomBytes(4).toString("hex")}`;
       await writeFile(tmp, content, "utf8");
       await rename(tmp, path);
+      await cleanupBlobSidecars(name, cassette);
     },
 
     async saveBlob(name, bytes) {
@@ -136,25 +138,6 @@ export function createJsonFileStore(
       return new Uint8Array(await readFile(fullPath));
     },
 
-    async list() {
-      let entries: string[];
-      try {
-        // readdir with recursive returns forward-slash paths on all platforms.
-        entries = await readdir(rootDir, { recursive: true });
-      } catch (err) {
-        if ((err as NodeJS.ErrnoException).code === "ENOENT") return [];
-        throw err;
-      }
-      const names: string[] = [];
-      for (const entry of entries) {
-        if (entry.endsWith(extension)) {
-          // Strip the extension and normalize separators to produce a logical name.
-          names.push(entry.slice(0, -extension.length).split(sep).join("/"));
-        }
-      }
-      return names.sort();
-    },
-
     async delete(name) {
       const cassettePath = pathFor(name);
       const blobsDir = blobsDirFor(name);
@@ -162,6 +145,52 @@ export function createJsonFileStore(
       await rm(blobsDir, { recursive: true, force: true });
     },
   };
+
+  async function cleanupBlobSidecars(
+    name: string,
+    cassette: CassetteFile,
+  ): Promise<void> {
+    const blobsDir = blobsDirFor(name);
+    const referenced = new Set<string>();
+    for (const blobPath of referencedBlobPaths(cassette)) {
+      referenced.add(validateBlobPath(name, blobPath));
+    }
+
+    if (referenced.size === 0) {
+      await rm(blobsDir, { recursive: true, force: true });
+      return;
+    }
+
+    let entries: string[];
+    try {
+      entries = await readdir(blobsDir, { recursive: true });
+    } catch (err) {
+      if ((err as NodeJS.ErrnoException).code === "ENOENT") return;
+      throw err;
+    }
+
+    for (const entry of entries) {
+      const fullPath = resolve(blobsDir, entry);
+      validateContainedPath(blobsDir, fullPath, `blob sidecar "${entry}"`);
+      const stats = await stat(fullPath);
+      if (stats.isFile() && !referenced.has(fullPath)) {
+        await rm(fullPath, { force: true });
+      }
+    }
+  }
+}
+
+function referencedBlobPaths(cassette: CassetteFile): string[] {
+  const paths: string[] = [];
+  for (const entry of cassette.entries) {
+    if (entry.request.body.kind === "binary") {
+      paths.push(entry.request.body.path);
+    }
+    if (entry.response.body.kind === "binary") {
+      paths.push(entry.response.body.path);
+    }
+  }
+  return paths;
 }
 
 /** Recursively sort object keys so cassette files are deterministic across recording runs. */

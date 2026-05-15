@@ -618,6 +618,38 @@ export async function startMockBraintrustServer(
 
         if (
           capturedRequest.method === "POST" &&
+          capturedRequest.path === "/attachment"
+        ) {
+          const key =
+            isRecord(capturedRequest.jsonBody) &&
+            typeof capturedRequest.jsonBody.key === "string"
+              ? capturedRequest.jsonBody.key
+              : randomUUID();
+          respondJson(res, 200, {
+            headers: {},
+            signedUrl: `${serverUrl}/attachment/blob/${encodeURIComponent(key)}`,
+          });
+          return;
+        }
+
+        if (
+          capturedRequest.method === "PUT" &&
+          capturedRequest.path.startsWith("/attachment/blob/")
+        ) {
+          respondJson(res, 200, { ok: true });
+          return;
+        }
+
+        if (
+          capturedRequest.method === "POST" &&
+          capturedRequest.path === "/attachment/status"
+        ) {
+          respondJson(res, 200, { ok: true });
+          return;
+        }
+
+        if (
+          capturedRequest.method === "POST" &&
           capturedRequest.path === "/logs3"
         ) {
           const payload = parsePayload(capturedRequest);

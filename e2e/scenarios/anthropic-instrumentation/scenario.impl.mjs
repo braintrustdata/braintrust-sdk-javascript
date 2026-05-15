@@ -44,6 +44,7 @@ async function runAnthropicInstrumentationScenario(
   ).toString("base64");
   const baseClient = new Anthropic({
     apiKey: process.env.ANTHROPIC_API_KEY,
+    baseURL: process.env.ANTHROPIC_BASE_URL,
   });
   const client = decorateClient ? decorateClient(baseClient) : baseClient;
 

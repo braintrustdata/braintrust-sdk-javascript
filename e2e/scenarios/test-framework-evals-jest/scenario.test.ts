@@ -11,7 +11,6 @@ import {
   withScenarioHarness,
 } from "../../helpers/scenario-harness";
 import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
-import { E2E_TAGS } from "../../helpers/tags";
 import { findLatestSpan } from "../../helpers/trace-selectors";
 import { summarizeEvent, summarizeRequest } from "../../helpers/trace-summary";
 import { payloadRowsForTestRunId } from "../../helpers/wrapper-contract";
@@ -31,7 +30,6 @@ function findEventByCase(events: CapturedLogEvent[], testCase: string) {
 test(
   "test-framework-evals-jest captures real HTTP traces from a nested Jest runner",
   {
-    tags: [E2E_TAGS.hermetic],
     timeout: TIMEOUT_MS,
   },
   async () => {
