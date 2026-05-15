@@ -16,7 +16,7 @@ import { resolveRedactors } from "./presets";
  * parameters listed in `redactQueryParams` are deleted entirely from the URL
  * (since `?key=[REDACTED]` would change URL semantics for downstream parsers).
  */
-export const REDACTED_SENTINEL = "[REDACTED]";
+const REDACTED_SENTINEL = "[REDACTED]";
 
 /**
  * Declarative redaction configuration. Unlike `FilterConfig` (used for
@@ -324,5 +324,3 @@ function maskBodyFields(
   }
   return result;
 }
-
-export { resolveRedactors } from "./presets";

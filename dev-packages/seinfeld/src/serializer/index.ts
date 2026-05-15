@@ -45,7 +45,7 @@ function extractCharset(contentType: string): string | undefined {
 }
 
 /** SHA-256 hex digest of `bytes`. */
-export function sha256Hex(bytes: Uint8Array): string {
+function sha256Hex(bytes: Uint8Array): string {
   return createHash("sha256").update(bytes).digest("hex");
 }
 
@@ -165,13 +165,13 @@ export async function decodeBody(
 }
 
 /** True if the content-type indicates a JSON body. */
-export function isJsonContentType(ct: string): boolean {
+function isJsonContentType(ct: string): boolean {
   const lower = ct.toLowerCase();
   return lower.startsWith("application/json") || /\+json(\s|;|$)/.test(lower);
 }
 
 /** True if the content-type indicates a text-encodable body. */
-export function isTextContentType(ct: string): boolean {
+function isTextContentType(ct: string): boolean {
   const lower = ct.toLowerCase();
   if (lower.startsWith("text/")) return true;
   if (lower.startsWith("application/xml")) return true;
@@ -189,7 +189,7 @@ export function isTextContentType(ct: string): boolean {
  * Events are separated by blank lines (`\n\n`). Each returned chunk is one
  * event without its terminating blank line.
  */
-export function splitSseChunks(text: string): string[] {
+function splitSseChunks(text: string): string[] {
   // Normalize CRLF separators to LF for splitting; SSE spec allows both.
   const normalized = text.replace(/\r\n/g, "\n");
   const parts = normalized.split("\n\n");
@@ -199,7 +199,7 @@ export function splitSseChunks(text: string): string[] {
 }
 
 /** Join SSE chunks back into a single byte stream, with a terminator after each. */
-export function joinSseChunks(chunks: string[]): string {
+function joinSseChunks(chunks: string[]): string {
   return chunks.map((c) => `${c}\n\n`).join("");
 }
 

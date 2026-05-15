@@ -32,7 +32,7 @@ export interface Matcher {
  * Compute the canonical match key for a request: `METHOD host/path` (without
  * query string). Used to group cassette entries for efficient lookup.
  */
-export function computeMatchKey(method: string, url: string): string {
+function computeMatchKey(method: string, url: string): string {
   const parsed = new URL(url);
   return `${method.toUpperCase()} ${parsed.host}${parsed.pathname}`;
 }
