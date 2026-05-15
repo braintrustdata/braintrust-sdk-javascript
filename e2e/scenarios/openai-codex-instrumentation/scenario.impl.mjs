@@ -4,7 +4,15 @@ import {
   runOperation,
   runTracedScenario,
 } from "../../helpers/provider-runtime.mjs";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import {
+  chmod,
+  copyFile,
+  mkdir,
+  mkdtemp,
+  readFile,
+  rm,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
@@ -109,6 +117,23 @@ function createClient(SDK, codexHome) {
   });
 }
 
+async function isolateCodexExecutable(client, root) {
+  const executablePath = client?.exec?.executablePath;
+  if (typeof executablePath !== "string") {
+    return;
+  }
+
+  // Codex 0.128 suppresses command_execution JSON events on Linux when its
+  // executable is launched from GitHub's checkout path.
+  const isolatedPath = path.join(
+    root,
+    process.platform === "win32" ? "codex.exe" : "codex",
+  );
+  await copyFile(executablePath, isolatedPath);
+  await chmod(isolatedPath, 0o755);
+  client.exec.executablePath = isolatedPath;
+}
+
 function startThread(client, workingDirectory) {
   return client.startThread({
     approvalPolicy: "never",
@@ -155,6 +180,7 @@ async function runOpenAICodexScenario({ decorateSDK, sdk }) {
   const codexHome = path.join(scenarioRoot, "codex-home");
   await mkdir(codexHome, { recursive: true });
   const client = createClient(instrumentedSDK, codexHome);
+  await isolateCodexExecutable(client, scenarioRoot);
   const runWorkingDirectory = await createWorkspace(scenarioRoot, RUN_MARKER);
   const streamedWorkingDirectory = await createWorkspace(
     scenarioRoot,

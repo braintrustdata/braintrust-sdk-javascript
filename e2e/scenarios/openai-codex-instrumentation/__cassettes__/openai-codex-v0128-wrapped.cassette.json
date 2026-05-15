@@ -4,24 +4,24 @@
       "callIndex": 0,
       "id": "025aa3e7d17dd99b",
       "matchKey": "POST api.openai.com/v1/responses",
-      "recordedAt": "2026-05-15T13:53:09.949Z",
+      "recordedAt": "2026-05-15T14:29:18.066Z",
       "request": {
         "body": {
           "kind": "json",
           "value": {
             "client_metadata": {
-              "x-codex-installation-id": "0ac29a0c-1679-41ee-91e2-73509074ee16"
+              "x-codex-installation-id": "a979a8eb-e893-48ba-9a0e-a3df85597146"
             },
             "include": [],
             "input": [
               {
                 "content": [
                   {
-                    "text": "<permissions instructions>\nFilesystem sandboxing defines which files can be read or written. `sandbox_mode` is `workspace-write`: The sandbox permits reading files, and editing files in `cwd` and `writable_roots`. Editing files in other directories requires approval. Network access is restricted.\nApproval policy is currently never. Do not provide the `sandbox_permissions` for any reason, commands will be rejected.\n The writable roots are `/private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-o6Vlr7/run`, `/private/tmp`, `/private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T`, `/private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-o6Vlr7/codex-home/memories`.\n</permissions instructions>",
+                    "text": "<permissions instructions>\nFilesystem sandboxing defines which files can be read or written. `sandbox_mode` is `workspace-write`: The sandbox permits reading files, and editing files in `cwd` and `writable_roots`. Editing files in other directories requires approval. Network access is restricted.\nApproval policy is currently never. Do not provide the `sandbox_permissions` for any reason, commands will be rejected.\n The writable roots are `/private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-SVM18b/run`, `/private/tmp`, `/private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T`, `/private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-SVM18b/codex-home/memories`.\n</permissions instructions>",
                     "type": "input_text"
                   },
                   {
-                    "text": "<skills_instructions>\n## Skills\nA skill is a set of local instructions to follow that is stored in a `SKILL.md` file. Below is the list of skills that can be used. Each entry includes a name, description, and file path so you can open the source for full instructions when using a specific skill.\n### Available skills\n- imagegen: Generate or edit raster images when the task benefits from AI-created bitmap visuals such as photos, illustrations, textures, sprites, mockups, or transparent-background cutouts. Use when Codex should create a brand-new image, transform an existing image, or derive visual variants from references, and the output should be a bitmap asset rather than repo-native code or vector. Do not use when the task is better handled by editing existing SVG/vector/code-native assets, extending an established icon or logo system, or building the visual directly in HTML/CSS/canvas. (file: /private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-o6Vlr7/codex-home/skills/.system/imagegen/SKILL.md)\n- openai-docs: Use when the user asks how to build with OpenAI products or APIs and needs up-to-date official documentation with citations, help choosing the latest model for a use case, or model upgrade and prompt-upgrade guidance; prioritize OpenAI docs MCP tools, use bundled references only as helper context, and restrict any fallback browsing to official OpenAI domains. (file: /private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-o6Vlr7/codex-home/skills/.system/openai-docs/SKILL.md)\n- plugin-creator: Create and scaffold plugin directories for Codex with a required `.codex-plugin/plugin.json`, optional plugin folders/files, and baseline placeholders you can edit before publishing or testing. Use when Codex needs to create a new local plugin, add optional plugin structure, or generate or update repo-root `.agents/plugins/marketplace.json` entries for plugin ordering and availability metadata. (file: /private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-o6Vlr7/codex-home/skills/.system/plugin-creator/SKILL.md)\n- skill-creator: Guide for creating effective skills. This skill should be used when users want to create a new skill (or update an existing skill) that extends Codex's capabilities with specialized knowledge, workflows, or tool integrations. (file: /private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-o6Vlr7/codex-home/skills/.system/skill-creator/SKILL.md)\n- skill-installer: Install Codex skills into $CODEX_HOME/skills from a curated list or a GitHub repo path. Use when a user asks to list installable skills, install a curated skill, or install a skill from another repo (including private repos). (file: /private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-o6Vlr7/codex-home/skills/.system/skill-installer/SKILL.md)\n- braintrust: Use the Braintrust `bt` CLI for projects, traces, prompts, and key Braintrust workflows. (file: /Users/lucaforstner/.agents/skills/braintrust/SKILL.md)\n### How to use skills\n- Discovery: The list above is the skills available in this session (name + description + file path). Skill bodies live on disk at the listed paths.\n- Trigger rules: If the user names a skill (with `$SkillName` or plain text) OR the task clearly matches a skill's description shown above, you must use that skill for that turn. Multiple mentions mean use them all. Do not carry skills across turns unless re-mentioned.\n- Missing/blocked: If a named skill isn't in the list or the path can't be read, say so briefly and continue with the best fallback.\n- How to use a skill (progressive disclosure):\n  1) After deciding to use a skill, open its `SKILL.md`. Read only enough to follow the workflow.\n  2) When `SKILL.md` references relative paths (e.g., `scripts/foo.py`), resolve them relative to the skill directory listed above first, and only consider other paths if needed.\n  3) If `SKILL.md` points to extra folders such as `references/`, load only the specific files needed for the request; don't bulk-load everything.\n  4) If `scripts/` exist, prefer running or patching them instead of retyping large code blocks.\n  5) If `assets/` or templates exist, reuse them instead of recreating from scratch.\n- Coordination and sequencing:\n  - If multiple skills apply, choose the minimal set that covers the request and state the order you'll use them.\n  - Announce which skill(s) you're using and why (one short line). If you skip an obvious skill, say why.\n- Context hygiene:\n  - Keep context small: summarize long sections instead of pasting them; only load extra files when needed.\n  - Avoid deep reference-chasing: prefer opening only files directly linked from `SKILL.md` unless you're blocked.\n  - When variants exist (frameworks, providers, domains), pick only the relevant reference file(s) and note that choice.\n- Safety and fallback: If a skill can't be applied cleanly (missing files, unclear instructions), state the issue, pick the next-best approach, and continue.\n</skills_instructions>",
+                    "text": "<skills_instructions>\n## Skills\nA skill is a set of local instructions to follow that is stored in a `SKILL.md` file. Below is the list of skills that can be used. Each entry includes a name, description, and file path so you can open the source for full instructions when using a specific skill.\n### Available skills\n- imagegen: Generate or edit raster images when the task benefits from AI-created bitmap visuals such as photos, illustrations, textures, sprites, mockups, or transparent-background cutouts. Use when Codex should create a brand-new image, transform an existing image, or derive visual variants from references, and the output should be a bitmap asset rather than repo-native code or vector. Do not use when the task is better handled by editing existing SVG/vector/code-native assets, extending an established icon or logo system, or building the visual directly in HTML/CSS/canvas. (file: /private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-SVM18b/codex-home/skills/.system/imagegen/SKILL.md)\n- openai-docs: Use when the user asks how to build with OpenAI products or APIs and needs up-to-date official documentation with citations, help choosing the latest model for a use case, or model upgrade and prompt-upgrade guidance; prioritize OpenAI docs MCP tools, use bundled references only as helper context, and restrict any fallback browsing to official OpenAI domains. (file: /private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-SVM18b/codex-home/skills/.system/openai-docs/SKILL.md)\n- plugin-creator: Create and scaffold plugin directories for Codex with a required `.codex-plugin/plugin.json`, optional plugin folders/files, and baseline placeholders you can edit before publishing or testing. Use when Codex needs to create a new local plugin, add optional plugin structure, or generate or update repo-root `.agents/plugins/marketplace.json` entries for plugin ordering and availability metadata. (file: /private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-SVM18b/codex-home/skills/.system/plugin-creator/SKILL.md)\n- skill-creator: Guide for creating effective skills. This skill should be used when users want to create a new skill (or update an existing skill) that extends Codex's capabilities with specialized knowledge, workflows, or tool integrations. (file: /private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-SVM18b/codex-home/skills/.system/skill-creator/SKILL.md)\n- skill-installer: Install Codex skills into $CODEX_HOME/skills from a curated list or a GitHub repo path. Use when a user asks to list installable skills, install a curated skill, or install a skill from another repo (including private repos). (file: /private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-SVM18b/codex-home/skills/.system/skill-installer/SKILL.md)\n- braintrust: Use the Braintrust `bt` CLI for projects, traces, prompts, and key Braintrust workflows. (file: /Users/lucaforstner/.agents/skills/braintrust/SKILL.md)\n### How to use skills\n- Discovery: The list above is the skills available in this session (name + description + file path). Skill bodies live on disk at the listed paths.\n- Trigger rules: If the user names a skill (with `$SkillName` or plain text) OR the task clearly matches a skill's description shown above, you must use that skill for that turn. Multiple mentions mean use them all. Do not carry skills across turns unless re-mentioned.\n- Missing/blocked: If a named skill isn't in the list or the path can't be read, say so briefly and continue with the best fallback.\n- How to use a skill (progressive disclosure):\n  1) After deciding to use a skill, open its `SKILL.md`. Read only enough to follow the workflow.\n  2) When `SKILL.md` references relative paths (e.g., `scripts/foo.py`), resolve them relative to the skill directory listed above first, and only consider other paths if needed.\n  3) If `SKILL.md` points to extra folders such as `references/`, load only the specific files needed for the request; don't bulk-load everything.\n  4) If `scripts/` exist, prefer running or patching them instead of retyping large code blocks.\n  5) If `assets/` or templates exist, reuse them instead of recreating from scratch.\n- Coordination and sequencing:\n  - If multiple skills apply, choose the minimal set that covers the request and state the order you'll use them.\n  - Announce which skill(s) you're using and why (one short line). If you skip an obvious skill, say why.\n- Context hygiene:\n  - Keep context small: summarize long sections instead of pasting them; only load extra files when needed.\n  - Avoid deep reference-chasing: prefer opening only files directly linked from `SKILL.md` unless you're blocked.\n  - When variants exist (frameworks, providers, domains), pick only the relevant reference file(s) and note that choice.\n- Safety and fallback: If a skill can't be applied cleanly (missing files, unclear instructions), state the issue, pick the next-best approach, and continue.\n</skills_instructions>",
                     "type": "input_text"
                   }
                 ],
@@ -31,7 +31,7 @@
               {
                 "content": [
                   {
-                    "text": "<environment_context>\n  <cwd>/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-o6Vlr7/run</cwd>\n  <shell>zsh</shell>\n  <current_date>2026-05-15</current_date>\n  <timezone>Europe/Vienna</timezone>\n</environment_context>",
+                    "text": "<environment_context>\n  <cwd>/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-SVM18b/run</cwd>\n  <shell>zsh</shell>\n  <current_date>2026-05-15</current_date>\n  <timezone>Europe/Vienna</timezone>\n</environment_context>",
                     "type": "input_text"
                   }
                 ],
@@ -435,19 +435,19 @@
         "body": {
           "contentType": "text/event-stream; charset=utf-8",
           "kind": "binary",
-          "path": "openai-codex-v0128-wrapped.cassette.blobs/83ccb8f6bf452ed7d5b36b5f39323985ecd40d91b58fcb755fe9f08b81a9ba16.bin",
-          "sha256": "83ccb8f6bf452ed7d5b36b5f39323985ecd40d91b58fcb755fe9f08b81a9ba16"
+          "path": "openai-codex-v0128-wrapped.cassette.blobs/8ab1034fff0c7ef5418e3d8f96fbe1603761bfe9130aff59fee042793a17eb13.bin",
+          "sha256": "8ab1034fff0c7ef5418e3d8f96fbe1603761bfe9130aff59fee042793a17eb13"
         },
         "headers": {
           "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "9fc2a08c39e7c2b4-VIE",
+          "cf-ray": "9fc2d571cb3c324b-VIE",
           "connection": "keep-alive",
           "content-type": "text/event-stream; charset=utf-8",
-          "date": "Fri, 15 May 2026 13:53:08 GMT",
+          "date": "Fri, 15 May 2026 14:29:16 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "166",
+          "openai-processing-ms": "218",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
@@ -458,10 +458,10 @@
           "x-ratelimit-limit-requests": "15000",
           "x-ratelimit-limit-tokens": "10000000",
           "x-ratelimit-remaining-requests": "14999",
-          "x-ratelimit-remaining-tokens": "9990634",
+          "x-ratelimit-remaining-tokens": "9990642",
           "x-ratelimit-reset-requests": "4ms",
           "x-ratelimit-reset-tokens": "56ms",
-          "x-request-id": "req_9b99ecec2403432c988c1626d12e6dca"
+          "x-request-id": "req_de14c205ff20487caf8baee79f556d0a"
         },
         "status": 200,
         "statusText": "OK"
@@ -471,24 +471,24 @@
       "callIndex": 1,
       "id": "f36bf5e38be3f619",
       "matchKey": "POST api.openai.com/v1/responses",
-      "recordedAt": "2026-05-15T13:53:11.568Z",
+      "recordedAt": "2026-05-15T14:29:19.460Z",
       "request": {
         "body": {
           "kind": "json",
           "value": {
             "client_metadata": {
-              "x-codex-installation-id": "0ac29a0c-1679-41ee-91e2-73509074ee16"
+              "x-codex-installation-id": "a979a8eb-e893-48ba-9a0e-a3df85597146"
             },
             "include": [],
             "input": [
               {
                 "content": [
                   {
-                    "text": "<permissions instructions>\nFilesystem sandboxing defines which files can be read or written. `sandbox_mode` is `workspace-write`: The sandbox permits reading files, and editing files in `cwd` and `writable_roots`. Editing files in other directories requires approval. Network access is restricted.\nApproval policy is currently never. Do not provide the `sandbox_permissions` for any reason, commands will be rejected.\n The writable roots are `/private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-o6Vlr7/run`, `/private/tmp`, `/private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T`, `/private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-o6Vlr7/codex-home/memories`.\n</permissions instructions>",
+                    "text": "<permissions instructions>\nFilesystem sandboxing defines which files can be read or written. `sandbox_mode` is `workspace-write`: The sandbox permits reading files, and editing files in `cwd` and `writable_roots`. Editing files in other directories requires approval. Network access is restricted.\nApproval policy is currently never. Do not provide the `sandbox_permissions` for any reason, commands will be rejected.\n The writable roots are `/private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-SVM18b/run`, `/private/tmp`, `/private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T`, `/private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-SVM18b/codex-home/memories`.\n</permissions instructions>",
                     "type": "input_text"
                   },
                   {
-                    "text": "<skills_instructions>\n## Skills\nA skill is a set of local instructions to follow that is stored in a `SKILL.md` file. Below is the list of skills that can be used. Each entry includes a name, description, and file path so you can open the source for full instructions when using a specific skill.\n### Available skills\n- imagegen: Generate or edit raster images when the task benefits from AI-created bitmap visuals such as photos, illustrations, textures, sprites, mockups, or transparent-background cutouts. Use when Codex should create a brand-new image, transform an existing image, or derive visual variants from references, and the output should be a bitmap asset rather than repo-native code or vector. Do not use when the task is better handled by editing existing SVG/vector/code-native assets, extending an established icon or logo system, or building the visual directly in HTML/CSS/canvas. (file: /private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-o6Vlr7/codex-home/skills/.system/imagegen/SKILL.md)\n- openai-docs: Use when the user asks how to build with OpenAI products or APIs and needs up-to-date official documentation with citations, help choosing the latest model for a use case, or model upgrade and prompt-upgrade guidance; prioritize OpenAI docs MCP tools, use bundled references only as helper context, and restrict any fallback browsing to official OpenAI domains. (file: /private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-o6Vlr7/codex-home/skills/.system/openai-docs/SKILL.md)\n- plugin-creator: Create and scaffold plugin directories for Codex with a required `.codex-plugin/plugin.json`, optional plugin folders/files, and baseline placeholders you can edit before publishing or testing. Use when Codex needs to create a new local plugin, add optional plugin structure, or generate or update repo-root `.agents/plugins/marketplace.json` entries for plugin ordering and availability metadata. (file: /private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-o6Vlr7/codex-home/skills/.system/plugin-creator/SKILL.md)\n- skill-creator: Guide for creating effective skills. This skill should be used when users want to create a new skill (or update an existing skill) that extends Codex's capabilities with specialized knowledge, workflows, or tool integrations. (file: /private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-o6Vlr7/codex-home/skills/.system/skill-creator/SKILL.md)\n- skill-installer: Install Codex skills into $CODEX_HOME/skills from a curated list or a GitHub repo path. Use when a user asks to list installable skills, install a curated skill, or install a skill from another repo (including private repos). (file: /private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-o6Vlr7/codex-home/skills/.system/skill-installer/SKILL.md)\n- braintrust: Use the Braintrust `bt` CLI for projects, traces, prompts, and key Braintrust workflows. (file: /Users/lucaforstner/.agents/skills/braintrust/SKILL.md)\n### How to use skills\n- Discovery: The list above is the skills available in this session (name + description + file path). Skill bodies live on disk at the listed paths.\n- Trigger rules: If the user names a skill (with `$SkillName` or plain text) OR the task clearly matches a skill's description shown above, you must use that skill for that turn. Multiple mentions mean use them all. Do not carry skills across turns unless re-mentioned.\n- Missing/blocked: If a named skill isn't in the list or the path can't be read, say so briefly and continue with the best fallback.\n- How to use a skill (progressive disclosure):\n  1) After deciding to use a skill, open its `SKILL.md`. Read only enough to follow the workflow.\n  2) When `SKILL.md` references relative paths (e.g., `scripts/foo.py`), resolve them relative to the skill directory listed above first, and only consider other paths if needed.\n  3) If `SKILL.md` points to extra folders such as `references/`, load only the specific files needed for the request; don't bulk-load everything.\n  4) If `scripts/` exist, prefer running or patching them instead of retyping large code blocks.\n  5) If `assets/` or templates exist, reuse them instead of recreating from scratch.\n- Coordination and sequencing:\n  - If multiple skills apply, choose the minimal set that covers the request and state the order you'll use them.\n  - Announce which skill(s) you're using and why (one short line). If you skip an obvious skill, say why.\n- Context hygiene:\n  - Keep context small: summarize long sections instead of pasting them; only load extra files when needed.\n  - Avoid deep reference-chasing: prefer opening only files directly linked from `SKILL.md` unless you're blocked.\n  - When variants exist (frameworks, providers, domains), pick only the relevant reference file(s) and note that choice.\n- Safety and fallback: If a skill can't be applied cleanly (missing files, unclear instructions), state the issue, pick the next-best approach, and continue.\n</skills_instructions>",
+                    "text": "<skills_instructions>\n## Skills\nA skill is a set of local instructions to follow that is stored in a `SKILL.md` file. Below is the list of skills that can be used. Each entry includes a name, description, and file path so you can open the source for full instructions when using a specific skill.\n### Available skills\n- imagegen: Generate or edit raster images when the task benefits from AI-created bitmap visuals such as photos, illustrations, textures, sprites, mockups, or transparent-background cutouts. Use when Codex should create a brand-new image, transform an existing image, or derive visual variants from references, and the output should be a bitmap asset rather than repo-native code or vector. Do not use when the task is better handled by editing existing SVG/vector/code-native assets, extending an established icon or logo system, or building the visual directly in HTML/CSS/canvas. (file: /private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-SVM18b/codex-home/skills/.system/imagegen/SKILL.md)\n- openai-docs: Use when the user asks how to build with OpenAI products or APIs and needs up-to-date official documentation with citations, help choosing the latest model for a use case, or model upgrade and prompt-upgrade guidance; prioritize OpenAI docs MCP tools, use bundled references only as helper context, and restrict any fallback browsing to official OpenAI domains. (file: /private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-SVM18b/codex-home/skills/.system/openai-docs/SKILL.md)\n- plugin-creator: Create and scaffold plugin directories for Codex with a required `.codex-plugin/plugin.json`, optional plugin folders/files, and baseline placeholders you can edit before publishing or testing. Use when Codex needs to create a new local plugin, add optional plugin structure, or generate or update repo-root `.agents/plugins/marketplace.json` entries for plugin ordering and availability metadata. (file: /private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-SVM18b/codex-home/skills/.system/plugin-creator/SKILL.md)\n- skill-creator: Guide for creating effective skills. This skill should be used when users want to create a new skill (or update an existing skill) that extends Codex's capabilities with specialized knowledge, workflows, or tool integrations. (file: /private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-SVM18b/codex-home/skills/.system/skill-creator/SKILL.md)\n- skill-installer: Install Codex skills into $CODEX_HOME/skills from a curated list or a GitHub repo path. Use when a user asks to list installable skills, install a curated skill, or install a skill from another repo (including private repos). (file: /private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-SVM18b/codex-home/skills/.system/skill-installer/SKILL.md)\n- braintrust: Use the Braintrust `bt` CLI for projects, traces, prompts, and key Braintrust workflows. (file: /Users/lucaforstner/.agents/skills/braintrust/SKILL.md)\n### How to use skills\n- Discovery: The list above is the skills available in this session (name + description + file path). Skill bodies live on disk at the listed paths.\n- Trigger rules: If the user names a skill (with `$SkillName` or plain text) OR the task clearly matches a skill's description shown above, you must use that skill for that turn. Multiple mentions mean use them all. Do not carry skills across turns unless re-mentioned.\n- Missing/blocked: If a named skill isn't in the list or the path can't be read, say so briefly and continue with the best fallback.\n- How to use a skill (progressive disclosure):\n  1) After deciding to use a skill, open its `SKILL.md`. Read only enough to follow the workflow.\n  2) When `SKILL.md` references relative paths (e.g., `scripts/foo.py`), resolve them relative to the skill directory listed above first, and only consider other paths if needed.\n  3) If `SKILL.md` points to extra folders such as `references/`, load only the specific files needed for the request; don't bulk-load everything.\n  4) If `scripts/` exist, prefer running or patching them instead of retyping large code blocks.\n  5) If `assets/` or templates exist, reuse them instead of recreating from scratch.\n- Coordination and sequencing:\n  - If multiple skills apply, choose the minimal set that covers the request and state the order you'll use them.\n  - Announce which skill(s) you're using and why (one short line). If you skip an obvious skill, say why.\n- Context hygiene:\n  - Keep context small: summarize long sections instead of pasting them; only load extra files when needed.\n  - Avoid deep reference-chasing: prefer opening only files directly linked from `SKILL.md` unless you're blocked.\n  - When variants exist (frameworks, providers, domains), pick only the relevant reference file(s) and note that choice.\n- Safety and fallback: If a skill can't be applied cleanly (missing files, unclear instructions), state the issue, pick the next-best approach, and continue.\n</skills_instructions>",
                     "type": "input_text"
                   }
                 ],
@@ -498,7 +498,7 @@
               {
                 "content": [
                   {
-                    "text": "<environment_context>\n  <cwd>/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-o6Vlr7/run</cwd>\n  <shell>zsh</shell>\n  <current_date>2026-05-15</current_date>\n  <timezone>Europe/Vienna</timezone>\n</environment_context>",
+                    "text": "<environment_context>\n  <cwd>/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-SVM18b/run</cwd>\n  <shell>zsh</shell>\n  <current_date>2026-05-15</current_date>\n  <timezone>Europe/Vienna</timezone>\n</environment_context>",
                     "type": "input_text"
                   }
                 ],
@@ -523,13 +523,13 @@
               },
               {
                 "arguments": "{\"cmd\":\"cat codex-input.txt\"}",
-                "call_id": "call_jgR5AX7l3kpBP3pRLYPNusWO",
+                "call_id": "call_vp9EJpEDz3wnjz5sqzI2sHsj",
                 "name": "exec_command",
                 "type": "function_call"
               },
               {
-                "call_id": "call_jgR5AX7l3kpBP3pRLYPNusWO",
-                "output": "Chunk ID: 1b2290\nWall time: 0.0000 seconds\nProcess exited with code 0\nOriginal token count: 12\nOutput:\nThe final answer marker is OPENAI_CODEX_RUN_OK.\n",
+                "call_id": "call_vp9EJpEDz3wnjz5sqzI2sHsj",
+                "output": "Chunk ID: d54f36\nWall time: 0.0000 seconds\nProcess exited with code 0\nOriginal token count: 12\nOutput:\nThe final answer marker is OPENAI_CODEX_RUN_OK.\n",
                 "type": "function_call_output"
               }
             ],
@@ -919,19 +919,19 @@
         "body": {
           "contentType": "text/event-stream; charset=utf-8",
           "kind": "binary",
-          "path": "openai-codex-v0128-wrapped.cassette.blobs/89566693ce615a42b658d1cd1e7dd0c9c98fa3c1bd449881c9018b8b2293fa23.bin",
-          "sha256": "89566693ce615a42b658d1cd1e7dd0c9c98fa3c1bd449881c9018b8b2293fa23"
+          "path": "openai-codex-v0128-wrapped.cassette.blobs/d79ae3496799eb405673698abcaf3d128611331628a810ad9c18b3f9bd1b4964.bin",
+          "sha256": "d79ae3496799eb405673698abcaf3d128611331628a810ad9c18b3f9bd1b4964"
         },
         "headers": {
           "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "9fc2a09659c0c2b4-VIE",
+          "cf-ray": "9fc2d584bcb4324b-VIE",
           "connection": "keep-alive",
           "content-type": "text/event-stream; charset=utf-8",
-          "date": "Fri, 15 May 2026 13:53:11 GMT",
+          "date": "Fri, 15 May 2026 14:29:19 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "226",
+          "openai-processing-ms": "183",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
@@ -942,10 +942,10 @@
           "x-ratelimit-limit-requests": "15000",
           "x-ratelimit-limit-tokens": "10000000",
           "x-ratelimit-remaining-requests": "14999",
-          "x-ratelimit-remaining-tokens": "9990557",
+          "x-ratelimit-remaining-tokens": "9990566",
           "x-ratelimit-reset-requests": "4ms",
           "x-ratelimit-reset-tokens": "56ms",
-          "x-request-id": "req_b2ffde2ed7dd4f1f81c500790edefce3"
+          "x-request-id": "req_e47bd87f4a5b4d70ba6ca6ff31c84751"
         },
         "status": 200,
         "statusText": "OK"
@@ -955,24 +955,24 @@
       "callIndex": 2,
       "id": "a7ea3e663ae5e34d",
       "matchKey": "POST api.openai.com/v1/responses",
-      "recordedAt": "2026-05-15T13:53:14.575Z",
+      "recordedAt": "2026-05-15T14:29:23.103Z",
       "request": {
         "body": {
           "kind": "json",
           "value": {
             "client_metadata": {
-              "x-codex-installation-id": "0ac29a0c-1679-41ee-91e2-73509074ee16"
+              "x-codex-installation-id": "a979a8eb-e893-48ba-9a0e-a3df85597146"
             },
             "include": [],
             "input": [
               {
                 "content": [
                   {
-                    "text": "<permissions instructions>\nFilesystem sandboxing defines which files can be read or written. `sandbox_mode` is `workspace-write`: The sandbox permits reading files, and editing files in `cwd` and `writable_roots`. Editing files in other directories requires approval. Network access is restricted.\nApproval policy is currently never. Do not provide the `sandbox_permissions` for any reason, commands will be rejected.\n The writable roots are `/private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-o6Vlr7/stream`, `/private/tmp`, `/private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T`, `/private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-o6Vlr7/codex-home/memories`.\n</permissions instructions>",
+                    "text": "<permissions instructions>\nFilesystem sandboxing defines which files can be read or written. `sandbox_mode` is `workspace-write`: The sandbox permits reading files, and editing files in `cwd` and `writable_roots`. Editing files in other directories requires approval. Network access is restricted.\nApproval policy is currently never. Do not provide the `sandbox_permissions` for any reason, commands will be rejected.\n The writable roots are `/private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-SVM18b/stream`, `/private/tmp`, `/private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T`, `/private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-SVM18b/codex-home/memories`.\n</permissions instructions>",
                     "type": "input_text"
                   },
                   {
-                    "text": "<skills_instructions>\n## Skills\nA skill is a set of local instructions to follow that is stored in a `SKILL.md` file. Below is the list of skills that can be used. Each entry includes a name, description, and file path so you can open the source for full instructions when using a specific skill.\n### Available skills\n- imagegen: Generate or edit raster images when the task benefits from AI-created bitmap visuals such as photos, illustrations, textures, sprites, mockups, or transparent-background cutouts. Use when Codex should create a brand-new image, transform an existing image, or derive visual variants from references, and the output should be a bitmap asset rather than repo-native code or vector. Do not use when the task is better handled by editing existing SVG/vector/code-native assets, extending an established icon or logo system, or building the visual directly in HTML/CSS/canvas. (file: /private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-o6Vlr7/codex-home/skills/.system/imagegen/SKILL.md)\n- openai-docs: Use when the user asks how to build with OpenAI products or APIs and needs up-to-date official documentation with citations, help choosing the latest model for a use case, or model upgrade and prompt-upgrade guidance; prioritize OpenAI docs MCP tools, use bundled references only as helper context, and restrict any fallback browsing to official OpenAI domains. (file: /private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-o6Vlr7/codex-home/skills/.system/openai-docs/SKILL.md)\n- plugin-creator: Create and scaffold plugin directories for Codex with a required `.codex-plugin/plugin.json`, optional plugin folders/files, and baseline placeholders you can edit before publishing or testing. Use when Codex needs to create a new local plugin, add optional plugin structure, or generate or update repo-root `.agents/plugins/marketplace.json` entries for plugin ordering and availability metadata. (file: /private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-o6Vlr7/codex-home/skills/.system/plugin-creator/SKILL.md)\n- skill-creator: Guide for creating effective skills. This skill should be used when users want to create a new skill (or update an existing skill) that extends Codex's capabilities with specialized knowledge, workflows, or tool integrations. (file: /private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-o6Vlr7/codex-home/skills/.system/skill-creator/SKILL.md)\n- skill-installer: Install Codex skills into $CODEX_HOME/skills from a curated list or a GitHub repo path. Use when a user asks to list installable skills, install a curated skill, or install a skill from another repo (including private repos). (file: /private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-o6Vlr7/codex-home/skills/.system/skill-installer/SKILL.md)\n- braintrust: Use the Braintrust `bt` CLI for projects, traces, prompts, and key Braintrust workflows. (file: /Users/lucaforstner/.agents/skills/braintrust/SKILL.md)\n### How to use skills\n- Discovery: The list above is the skills available in this session (name + description + file path). Skill bodies live on disk at the listed paths.\n- Trigger rules: If the user names a skill (with `$SkillName` or plain text) OR the task clearly matches a skill's description shown above, you must use that skill for that turn. Multiple mentions mean use them all. Do not carry skills across turns unless re-mentioned.\n- Missing/blocked: If a named skill isn't in the list or the path can't be read, say so briefly and continue with the best fallback.\n- How to use a skill (progressive disclosure):\n  1) After deciding to use a skill, open its `SKILL.md`. Read only enough to follow the workflow.\n  2) When `SKILL.md` references relative paths (e.g., `scripts/foo.py`), resolve them relative to the skill directory listed above first, and only consider other paths if needed.\n  3) If `SKILL.md` points to extra folders such as `references/`, load only the specific files needed for the request; don't bulk-load everything.\n  4) If `scripts/` exist, prefer running or patching them instead of retyping large code blocks.\n  5) If `assets/` or templates exist, reuse them instead of recreating from scratch.\n- Coordination and sequencing:\n  - If multiple skills apply, choose the minimal set that covers the request and state the order you'll use them.\n  - Announce which skill(s) you're using and why (one short line). If you skip an obvious skill, say why.\n- Context hygiene:\n  - Keep context small: summarize long sections instead of pasting them; only load extra files when needed.\n  - Avoid deep reference-chasing: prefer opening only files directly linked from `SKILL.md` unless you're blocked.\n  - When variants exist (frameworks, providers, domains), pick only the relevant reference file(s) and note that choice.\n- Safety and fallback: If a skill can't be applied cleanly (missing files, unclear instructions), state the issue, pick the next-best approach, and continue.\n</skills_instructions>",
+                    "text": "<skills_instructions>\n## Skills\nA skill is a set of local instructions to follow that is stored in a `SKILL.md` file. Below is the list of skills that can be used. Each entry includes a name, description, and file path so you can open the source for full instructions when using a specific skill.\n### Available skills\n- imagegen: Generate or edit raster images when the task benefits from AI-created bitmap visuals such as photos, illustrations, textures, sprites, mockups, or transparent-background cutouts. Use when Codex should create a brand-new image, transform an existing image, or derive visual variants from references, and the output should be a bitmap asset rather than repo-native code or vector. Do not use when the task is better handled by editing existing SVG/vector/code-native assets, extending an established icon or logo system, or building the visual directly in HTML/CSS/canvas. (file: /private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-SVM18b/codex-home/skills/.system/imagegen/SKILL.md)\n- openai-docs: Use when the user asks how to build with OpenAI products or APIs and needs up-to-date official documentation with citations, help choosing the latest model for a use case, or model upgrade and prompt-upgrade guidance; prioritize OpenAI docs MCP tools, use bundled references only as helper context, and restrict any fallback browsing to official OpenAI domains. (file: /private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-SVM18b/codex-home/skills/.system/openai-docs/SKILL.md)\n- plugin-creator: Create and scaffold plugin directories for Codex with a required `.codex-plugin/plugin.json`, optional plugin folders/files, and baseline placeholders you can edit before publishing or testing. Use when Codex needs to create a new local plugin, add optional plugin structure, or generate or update repo-root `.agents/plugins/marketplace.json` entries for plugin ordering and availability metadata. (file: /private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-SVM18b/codex-home/skills/.system/plugin-creator/SKILL.md)\n- skill-creator: Guide for creating effective skills. This skill should be used when users want to create a new skill (or update an existing skill) that extends Codex's capabilities with specialized knowledge, workflows, or tool integrations. (file: /private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-SVM18b/codex-home/skills/.system/skill-creator/SKILL.md)\n- skill-installer: Install Codex skills into $CODEX_HOME/skills from a curated list or a GitHub repo path. Use when a user asks to list installable skills, install a curated skill, or install a skill from another repo (including private repos). (file: /private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-SVM18b/codex-home/skills/.system/skill-installer/SKILL.md)\n- braintrust: Use the Braintrust `bt` CLI for projects, traces, prompts, and key Braintrust workflows. (file: /Users/lucaforstner/.agents/skills/braintrust/SKILL.md)\n### How to use skills\n- Discovery: The list above is the skills available in this session (name + description + file path). Skill bodies live on disk at the listed paths.\n- Trigger rules: If the user names a skill (with `$SkillName` or plain text) OR the task clearly matches a skill's description shown above, you must use that skill for that turn. Multiple mentions mean use them all. Do not carry skills across turns unless re-mentioned.\n- Missing/blocked: If a named skill isn't in the list or the path can't be read, say so briefly and continue with the best fallback.\n- How to use a skill (progressive disclosure):\n  1) After deciding to use a skill, open its `SKILL.md`. Read only enough to follow the workflow.\n  2) When `SKILL.md` references relative paths (e.g., `scripts/foo.py`), resolve them relative to the skill directory listed above first, and only consider other paths if needed.\n  3) If `SKILL.md` points to extra folders such as `references/`, load only the specific files needed for the request; don't bulk-load everything.\n  4) If `scripts/` exist, prefer running or patching them instead of retyping large code blocks.\n  5) If `assets/` or templates exist, reuse them instead of recreating from scratch.\n- Coordination and sequencing:\n  - If multiple skills apply, choose the minimal set that covers the request and state the order you'll use them.\n  - Announce which skill(s) you're using and why (one short line). If you skip an obvious skill, say why.\n- Context hygiene:\n  - Keep context small: summarize long sections instead of pasting them; only load extra files when needed.\n  - Avoid deep reference-chasing: prefer opening only files directly linked from `SKILL.md` unless you're blocked.\n  - When variants exist (frameworks, providers, domains), pick only the relevant reference file(s) and note that choice.\n- Safety and fallback: If a skill can't be applied cleanly (missing files, unclear instructions), state the issue, pick the next-best approach, and continue.\n</skills_instructions>",
                     "type": "input_text"
                   }
                 ],
@@ -982,7 +982,7 @@
               {
                 "content": [
                   {
-                    "text": "<environment_context>\n  <cwd>/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-o6Vlr7/stream</cwd>\n  <shell>zsh</shell>\n  <current_date>2026-05-15</current_date>\n  <timezone>Europe/Vienna</timezone>\n</environment_context>",
+                    "text": "<environment_context>\n  <cwd>/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-SVM18b/stream</cwd>\n  <shell>zsh</shell>\n  <current_date>2026-05-15</current_date>\n  <timezone>Europe/Vienna</timezone>\n</environment_context>",
                     "type": "input_text"
                   }
                 ],
@@ -1386,19 +1386,19 @@
         "body": {
           "contentType": "text/event-stream; charset=utf-8",
           "kind": "binary",
-          "path": "openai-codex-v0128-wrapped.cassette.blobs/e89bbc78f067304735addd29e240a7cfebd3f0f90d5dc5482e9647554b6bedea.bin",
-          "sha256": "e89bbc78f067304735addd29e240a7cfebd3f0f90d5dc5482e9647554b6bedea"
+          "path": "openai-codex-v0128-wrapped.cassette.blobs/4e5a9f4f300d273dcb22e2a23f384c818b9ac81fe9ac3680614a6e87de759c35.bin",
+          "sha256": "4e5a9f4f300d273dcb22e2a23f384c818b9ac81fe9ac3680614a6e87de759c35"
         },
         "headers": {
           "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "9fc2a0a17b5fc2b4-VIE",
+          "cf-ray": "9fc2d58e9fa9324b-VIE",
           "connection": "keep-alive",
           "content-type": "text/event-stream; charset=utf-8",
-          "date": "Fri, 15 May 2026 13:53:12 GMT",
+          "date": "Fri, 15 May 2026 14:29:20 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "359",
+          "openai-processing-ms": "200",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
@@ -1409,10 +1409,10 @@
           "x-ratelimit-limit-requests": "15000",
           "x-ratelimit-limit-tokens": "10000000",
           "x-ratelimit-remaining-requests": "14999",
-          "x-ratelimit-remaining-tokens": "9990632",
+          "x-ratelimit-remaining-tokens": "9990640",
           "x-ratelimit-reset-requests": "4ms",
           "x-ratelimit-reset-tokens": "56ms",
-          "x-request-id": "req_e143a5059fe24edb92cd3373866bbc87"
+          "x-request-id": "req_25380179dea545a59f059fbccc12bb17"
         },
         "status": 200,
         "statusText": "OK"
@@ -1422,24 +1422,24 @@
       "callIndex": 3,
       "id": "190085f7f12c58e6",
       "matchKey": "POST api.openai.com/v1/responses",
-      "recordedAt": "2026-05-15T13:53:15.636Z",
+      "recordedAt": "2026-05-15T14:29:24.141Z",
       "request": {
         "body": {
           "kind": "json",
           "value": {
             "client_metadata": {
-              "x-codex-installation-id": "0ac29a0c-1679-41ee-91e2-73509074ee16"
+              "x-codex-installation-id": "a979a8eb-e893-48ba-9a0e-a3df85597146"
             },
             "include": [],
             "input": [
               {
                 "content": [
                   {
-                    "text": "<permissions instructions>\nFilesystem sandboxing defines which files can be read or written. `sandbox_mode` is `workspace-write`: The sandbox permits reading files, and editing files in `cwd` and `writable_roots`. Editing files in other directories requires approval. Network access is restricted.\nApproval policy is currently never. Do not provide the `sandbox_permissions` for any reason, commands will be rejected.\n The writable roots are `/private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-o6Vlr7/stream`, `/private/tmp`, `/private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T`, `/private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-o6Vlr7/codex-home/memories`.\n</permissions instructions>",
+                    "text": "<permissions instructions>\nFilesystem sandboxing defines which files can be read or written. `sandbox_mode` is `workspace-write`: The sandbox permits reading files, and editing files in `cwd` and `writable_roots`. Editing files in other directories requires approval. Network access is restricted.\nApproval policy is currently never. Do not provide the `sandbox_permissions` for any reason, commands will be rejected.\n The writable roots are `/private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-SVM18b/stream`, `/private/tmp`, `/private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T`, `/private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-SVM18b/codex-home/memories`.\n</permissions instructions>",
                     "type": "input_text"
                   },
                   {
-                    "text": "<skills_instructions>\n## Skills\nA skill is a set of local instructions to follow that is stored in a `SKILL.md` file. Below is the list of skills that can be used. Each entry includes a name, description, and file path so you can open the source for full instructions when using a specific skill.\n### Available skills\n- imagegen: Generate or edit raster images when the task benefits from AI-created bitmap visuals such as photos, illustrations, textures, sprites, mockups, or transparent-background cutouts. Use when Codex should create a brand-new image, transform an existing image, or derive visual variants from references, and the output should be a bitmap asset rather than repo-native code or vector. Do not use when the task is better handled by editing existing SVG/vector/code-native assets, extending an established icon or logo system, or building the visual directly in HTML/CSS/canvas. (file: /private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-o6Vlr7/codex-home/skills/.system/imagegen/SKILL.md)\n- openai-docs: Use when the user asks how to build with OpenAI products or APIs and needs up-to-date official documentation with citations, help choosing the latest model for a use case, or model upgrade and prompt-upgrade guidance; prioritize OpenAI docs MCP tools, use bundled references only as helper context, and restrict any fallback browsing to official OpenAI domains. (file: /private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-o6Vlr7/codex-home/skills/.system/openai-docs/SKILL.md)\n- plugin-creator: Create and scaffold plugin directories for Codex with a required `.codex-plugin/plugin.json`, optional plugin folders/files, and baseline placeholders you can edit before publishing or testing. Use when Codex needs to create a new local plugin, add optional plugin structure, or generate or update repo-root `.agents/plugins/marketplace.json` entries for plugin ordering and availability metadata. (file: /private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-o6Vlr7/codex-home/skills/.system/plugin-creator/SKILL.md)\n- skill-creator: Guide for creating effective skills. This skill should be used when users want to create a new skill (or update an existing skill) that extends Codex's capabilities with specialized knowledge, workflows, or tool integrations. (file: /private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-o6Vlr7/codex-home/skills/.system/skill-creator/SKILL.md)\n- skill-installer: Install Codex skills into $CODEX_HOME/skills from a curated list or a GitHub repo path. Use when a user asks to list installable skills, install a curated skill, or install a skill from another repo (including private repos). (file: /private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-o6Vlr7/codex-home/skills/.system/skill-installer/SKILL.md)\n- braintrust: Use the Braintrust `bt` CLI for projects, traces, prompts, and key Braintrust workflows. (file: /Users/lucaforstner/.agents/skills/braintrust/SKILL.md)\n### How to use skills\n- Discovery: The list above is the skills available in this session (name + description + file path). Skill bodies live on disk at the listed paths.\n- Trigger rules: If the user names a skill (with `$SkillName` or plain text) OR the task clearly matches a skill's description shown above, you must use that skill for that turn. Multiple mentions mean use them all. Do not carry skills across turns unless re-mentioned.\n- Missing/blocked: If a named skill isn't in the list or the path can't be read, say so briefly and continue with the best fallback.\n- How to use a skill (progressive disclosure):\n  1) After deciding to use a skill, open its `SKILL.md`. Read only enough to follow the workflow.\n  2) When `SKILL.md` references relative paths (e.g., `scripts/foo.py`), resolve them relative to the skill directory listed above first, and only consider other paths if needed.\n  3) If `SKILL.md` points to extra folders such as `references/`, load only the specific files needed for the request; don't bulk-load everything.\n  4) If `scripts/` exist, prefer running or patching them instead of retyping large code blocks.\n  5) If `assets/` or templates exist, reuse them instead of recreating from scratch.\n- Coordination and sequencing:\n  - If multiple skills apply, choose the minimal set that covers the request and state the order you'll use them.\n  - Announce which skill(s) you're using and why (one short line). If you skip an obvious skill, say why.\n- Context hygiene:\n  - Keep context small: summarize long sections instead of pasting them; only load extra files when needed.\n  - Avoid deep reference-chasing: prefer opening only files directly linked from `SKILL.md` unless you're blocked.\n  - When variants exist (frameworks, providers, domains), pick only the relevant reference file(s) and note that choice.\n- Safety and fallback: If a skill can't be applied cleanly (missing files, unclear instructions), state the issue, pick the next-best approach, and continue.\n</skills_instructions>",
+                    "text": "<skills_instructions>\n## Skills\nA skill is a set of local instructions to follow that is stored in a `SKILL.md` file. Below is the list of skills that can be used. Each entry includes a name, description, and file path so you can open the source for full instructions when using a specific skill.\n### Available skills\n- imagegen: Generate or edit raster images when the task benefits from AI-created bitmap visuals such as photos, illustrations, textures, sprites, mockups, or transparent-background cutouts. Use when Codex should create a brand-new image, transform an existing image, or derive visual variants from references, and the output should be a bitmap asset rather than repo-native code or vector. Do not use when the task is better handled by editing existing SVG/vector/code-native assets, extending an established icon or logo system, or building the visual directly in HTML/CSS/canvas. (file: /private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-SVM18b/codex-home/skills/.system/imagegen/SKILL.md)\n- openai-docs: Use when the user asks how to build with OpenAI products or APIs and needs up-to-date official documentation with citations, help choosing the latest model for a use case, or model upgrade and prompt-upgrade guidance; prioritize OpenAI docs MCP tools, use bundled references only as helper context, and restrict any fallback browsing to official OpenAI domains. (file: /private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-SVM18b/codex-home/skills/.system/openai-docs/SKILL.md)\n- plugin-creator: Create and scaffold plugin directories for Codex with a required `.codex-plugin/plugin.json`, optional plugin folders/files, and baseline placeholders you can edit before publishing or testing. Use when Codex needs to create a new local plugin, add optional plugin structure, or generate or update repo-root `.agents/plugins/marketplace.json` entries for plugin ordering and availability metadata. (file: /private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-SVM18b/codex-home/skills/.system/plugin-creator/SKILL.md)\n- skill-creator: Guide for creating effective skills. This skill should be used when users want to create a new skill (or update an existing skill) that extends Codex's capabilities with specialized knowledge, workflows, or tool integrations. (file: /private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-SVM18b/codex-home/skills/.system/skill-creator/SKILL.md)\n- skill-installer: Install Codex skills into $CODEX_HOME/skills from a curated list or a GitHub repo path. Use when a user asks to list installable skills, install a curated skill, or install a skill from another repo (including private repos). (file: /private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-SVM18b/codex-home/skills/.system/skill-installer/SKILL.md)\n- braintrust: Use the Braintrust `bt` CLI for projects, traces, prompts, and key Braintrust workflows. (file: /Users/lucaforstner/.agents/skills/braintrust/SKILL.md)\n### How to use skills\n- Discovery: The list above is the skills available in this session (name + description + file path). Skill bodies live on disk at the listed paths.\n- Trigger rules: If the user names a skill (with `$SkillName` or plain text) OR the task clearly matches a skill's description shown above, you must use that skill for that turn. Multiple mentions mean use them all. Do not carry skills across turns unless re-mentioned.\n- Missing/blocked: If a named skill isn't in the list or the path can't be read, say so briefly and continue with the best fallback.\n- How to use a skill (progressive disclosure):\n  1) After deciding to use a skill, open its `SKILL.md`. Read only enough to follow the workflow.\n  2) When `SKILL.md` references relative paths (e.g., `scripts/foo.py`), resolve them relative to the skill directory listed above first, and only consider other paths if needed.\n  3) If `SKILL.md` points to extra folders such as `references/`, load only the specific files needed for the request; don't bulk-load everything.\n  4) If `scripts/` exist, prefer running or patching them instead of retyping large code blocks.\n  5) If `assets/` or templates exist, reuse them instead of recreating from scratch.\n- Coordination and sequencing:\n  - If multiple skills apply, choose the minimal set that covers the request and state the order you'll use them.\n  - Announce which skill(s) you're using and why (one short line). If you skip an obvious skill, say why.\n- Context hygiene:\n  - Keep context small: summarize long sections instead of pasting them; only load extra files when needed.\n  - Avoid deep reference-chasing: prefer opening only files directly linked from `SKILL.md` unless you're blocked.\n  - When variants exist (frameworks, providers, domains), pick only the relevant reference file(s) and note that choice.\n- Safety and fallback: If a skill can't be applied cleanly (missing files, unclear instructions), state the issue, pick the next-best approach, and continue.\n</skills_instructions>",
                     "type": "input_text"
                   }
                 ],
@@ -1449,7 +1449,7 @@
               {
                 "content": [
                   {
-                    "text": "<environment_context>\n  <cwd>/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-o6Vlr7/stream</cwd>\n  <shell>zsh</shell>\n  <current_date>2026-05-15</current_date>\n  <timezone>Europe/Vienna</timezone>\n</environment_context>",
+                    "text": "<environment_context>\n  <cwd>/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-SVM18b/stream</cwd>\n  <shell>zsh</shell>\n  <current_date>2026-05-15</current_date>\n  <timezone>Europe/Vienna</timezone>\n</environment_context>",
                     "type": "input_text"
                   }
                 ],
@@ -1474,13 +1474,13 @@
               },
               {
                 "arguments": "{\"cmd\":\"cat codex-input.txt\"}",
-                "call_id": "call_3BWWRY6k5ehJDDYppjo13Ihx",
+                "call_id": "call_72PUJkxn2XtZg4VNVo6Veaud",
                 "name": "exec_command",
                 "type": "function_call"
               },
               {
-                "call_id": "call_3BWWRY6k5ehJDDYppjo13Ihx",
-                "output": "Chunk ID: 59ca65\nWall time: 0.0000 seconds\nProcess exited with code 0\nOriginal token count: 13\nOutput:\nThe final answer marker is OPENAI_CODEX_STREAM_OK.\n",
+                "call_id": "call_72PUJkxn2XtZg4VNVo6Veaud",
+                "output": "Chunk ID: 4f0241\nWall time: 0.0000 seconds\nProcess exited with code 0\nOriginal token count: 13\nOutput:\nThe final answer marker is OPENAI_CODEX_STREAM_OK.\n",
                 "type": "function_call_output"
               }
             ],
@@ -1870,19 +1870,19 @@
         "body": {
           "contentType": "text/event-stream; charset=utf-8",
           "kind": "binary",
-          "path": "openai-codex-v0128-wrapped.cassette.blobs/dd16f5a1066f0b9bb7db7645ba38cbd0a491d65ac6105df0cdecdbf463f2f2a2.bin",
-          "sha256": "dd16f5a1066f0b9bb7db7645ba38cbd0a491d65ac6105df0cdecdbf463f2f2a2"
+          "path": "openai-codex-v0128-wrapped.cassette.blobs/52557edc2f668128b2012dcf2e0aacaaabf85379b50de38863d40c1966f7d456.bin",
+          "sha256": "52557edc2f668128b2012dcf2e0aacaaabf85379b50de38863d40c1966f7d456"
         },
         "headers": {
           "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "9fc2a0b32918c2b4-VIE",
+          "cf-ray": "9fc2d5a43ccb324b-VIE",
           "connection": "keep-alive",
           "content-type": "text/event-stream; charset=utf-8",
-          "date": "Fri, 15 May 2026 13:53:15 GMT",
+          "date": "Fri, 15 May 2026 14:29:23 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "244",
+          "openai-processing-ms": "199",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
@@ -1893,10 +1893,10 @@
           "x-ratelimit-limit-requests": "15000",
           "x-ratelimit-limit-tokens": "10000000",
           "x-ratelimit-remaining-requests": "14999",
-          "x-ratelimit-remaining-tokens": "9990556",
+          "x-ratelimit-remaining-tokens": "9990563",
           "x-ratelimit-reset-requests": "4ms",
           "x-ratelimit-reset-tokens": "56ms",
-          "x-request-id": "req_019b0e7cac7342ceb207bfb4c89de466"
+          "x-request-id": "req_dd97d30bbbd14a758ed94bf69bbf62b3"
         },
         "status": 200,
         "statusText": "OK"
