@@ -4,65 +4,7 @@
       "callIndex": 0,
       "id": "1659f7241cd3616d",
       "matchKey": "POST generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent",
-      "recordedAt": "2026-05-13T15:41:24.682Z",
-      "request": {
-        "body": {
-          "kind": "json",
-          "value": {
-            "contents": [
-              {
-                "parts": [
-                  {
-                    "text": "Reply with exactly PARIS."
-                  }
-                ],
-                "role": "user"
-              }
-            ],
-            "generationConfig": {
-              "maxOutputTokens": 24,
-              "temperature": 0
-            }
-          }
-        },
-        "headers": {},
-        "method": "POST",
-        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent"
-      },
-      "response": {
-        "body": {
-          "kind": "json",
-          "value": {
-            "error": {
-              "code": 503,
-              "message": "This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.",
-              "status": "UNAVAILABLE"
-            }
-          }
-        },
-        "headers": {
-          "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
-          "content-encoding": "gzip",
-          "content-type": "application/json; charset=UTF-8",
-          "date": "Wed, 13 May 2026 15:41:24 GMT",
-          "server": "scaffolding on HTTPServer2",
-          "server-timing": "gfet4t7; dur=2257",
-          "transfer-encoding": "chunked",
-          "vary": "Origin, X-Origin, Referer",
-          "x-content-type-options": "nosniff",
-          "x-frame-options": "SAMEORIGIN",
-          "x-gemini-service-tier": "standard",
-          "x-xss-protection": "0"
-        },
-        "status": 503,
-        "statusText": "Service Unavailable"
-      }
-    },
-    {
-      "callIndex": 1,
-      "id": "253b998df6d7829d",
-      "matchKey": "POST generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent",
-      "recordedAt": "2026-05-13T15:41:27.336Z",
+      "recordedAt": "2026-05-15T11:43:11.050Z",
       "request": {
         "body": {
           "kind": "json",
@@ -106,7 +48,7 @@
               }
             ],
             "modelVersion": "gemini-2.5-flash-lite",
-            "responseId": "p5sEaqT5DcGM28oPx_-4sAc",
+            "responseId": "zwYHaqqMAqTNvdIPgtmqoAU",
             "usageMetadata": {
               "candidatesTokenCount": 2,
               "promptTokenCount": 6,
@@ -125,9 +67,9 @@
           "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
           "content-encoding": "gzip",
           "content-type": "application/json; charset=UTF-8",
-          "date": "Wed, 13 May 2026 15:41:27 GMT",
+          "date": "Fri, 15 May 2026 11:43:11 GMT",
           "server": "scaffolding on HTTPServer2",
-          "server-timing": "gfet4t7; dur=1626",
+          "server-timing": "gfet4t7; dur=412",
           "transfer-encoding": "chunked",
           "vary": "Origin, X-Origin, Referer",
           "x-content-type-options": "nosniff",
@@ -143,7 +85,7 @@
       "callIndex": 0,
       "id": "12df4c602bba7e02",
       "matchKey": "POST generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:batchEmbedContents",
-      "recordedAt": "2026-05-13T15:41:27.643Z",
+      "recordedAt": "2026-05-15T11:43:11.342Z",
       "request": {
         "body": {
           "kind": "json",
@@ -178,9 +120,9 @@
           "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
           "content-encoding": "gzip",
           "content-type": "application/json; charset=UTF-8",
-          "date": "Wed, 13 May 2026 15:41:27 GMT",
+          "date": "Fri, 15 May 2026 11:43:11 GMT",
           "server": "scaffolding on HTTPServer2",
-          "server-timing": "gfet4t7; dur=269",
+          "server-timing": "gfet4t7; dur=257",
           "transfer-encoding": "chunked",
           "vary": "Origin, X-Origin, Referer",
           "x-content-type-options": "nosniff",
@@ -192,10 +134,10 @@
       }
     },
     {
-      "callIndex": 2,
-      "id": "356e36e13bd06855",
+      "callIndex": 1,
+      "id": "c3de992117767e69",
       "matchKey": "POST generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent",
-      "recordedAt": "2026-05-13T15:41:44.231Z",
+      "recordedAt": "2026-05-15T11:43:13.709Z",
       "request": {
         "body": {
           "contentType": "application/json",
@@ -226,7 +168,7 @@
               }
             ],
             "modelVersion": "gemini-2.5-flash-lite",
-            "responseId": "t5sEas_TOsi6xN8PwKPZGQ",
+            "responseId": "0QYHaqmHHoWVvdIPi9-q-Qg",
             "usageMetadata": {
               "candidatesTokenCount": 14,
               "promptTokenCount": 268,
@@ -249,9 +191,9 @@
           "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
           "content-encoding": "gzip",
           "content-type": "application/json; charset=UTF-8",
-          "date": "Wed, 13 May 2026 15:41:44 GMT",
+          "date": "Fri, 15 May 2026 11:43:13 GMT",
           "server": "scaffolding on HTTPServer2",
-          "server-timing": "gfet4t7; dur=16387",
+          "server-timing": "gfet4t7; dur=2134",
           "transfer-encoding": "chunked",
           "vary": "Origin, X-Origin, Referer",
           "x-content-type-options": "nosniff",
@@ -267,7 +209,7 @@
       "callIndex": 0,
       "id": "ca544736baca034d",
       "matchKey": "POST generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:streamGenerateContent",
-      "recordedAt": "2026-05-13T15:41:49.538Z",
+      "recordedAt": "2026-05-15T11:43:14.362Z",
       "request": {
         "body": {
           "kind": "json",
@@ -295,9 +237,9 @@
       "response": {
         "body": {
           "chunks": [
-            "data: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"Here'\"}],\"role\":\"model\"},\"index\":0}],\"usageMetadata\":{\"promptTokenCount\":16,\"candidatesTokenCount\":2,\"totalTokenCount\":18,\"promptTokensDetails\":[{\"modality\":\"TEXT\",\"tokenCount\":16}],\"serviceTier\":\"standard\"},\"modelVersion\":\"gemini-2.5-flash-lite\",\"responseId\":\"vZsEasSKGv2svdIPqJXxqQg\"}",
-            "data: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"s the count from 1 to 3, including the words:\\n\\n1\"}],\"role\":\"model\"},\"index\":0}],\"usageMetadata\":{\"promptTokenCount\":16,\"candidatesTokenCount\":18,\"totalTokenCount\":34,\"promptTokensDetails\":[{\"modality\":\"TEXT\",\"tokenCount\":16}],\"serviceTier\":\"standard\"},\"modelVersion\":\"gemini-2.5-flash-lite\",\"responseId\":\"vZsEasSKGv2svdIPqJXxqQg\"}",
-            "data: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\". One\\n2. Two\\n3. Three\"}],\"role\":\"model\"},\"finishReason\":\"STOP\",\"index\":0}],\"usageMetadata\":{\"promptTokenCount\":16,\"candidatesTokenCount\":28,\"totalTokenCount\":44,\"promptTokensDetails\":[{\"modality\":\"TEXT\",\"tokenCount\":16}],\"serviceTier\":\"standard\"},\"modelVersion\":\"gemini-2.5-flash-lite\",\"responseId\":\"vZsEasSKGv2svdIPqJXxqQg\"}"
+            "data: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"Here'\"}],\"role\":\"model\"},\"index\":0}],\"usageMetadata\":{\"promptTokenCount\":16,\"candidatesTokenCount\":2,\"totalTokenCount\":18,\"promptTokensDetails\":[{\"modality\":\"TEXT\",\"tokenCount\":16}],\"serviceTier\":\"standard\"},\"modelVersion\":\"gemini-2.5-flash-lite\",\"responseId\":\"0gYHareeE5-KvdIPiJC62AU\"}",
+            "data: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"s the count from 1 to 3, including the words:\\n\\n1\"}],\"role\":\"model\"},\"index\":0}],\"usageMetadata\":{\"promptTokenCount\":16,\"candidatesTokenCount\":18,\"totalTokenCount\":34,\"promptTokensDetails\":[{\"modality\":\"TEXT\",\"tokenCount\":16}],\"serviceTier\":\"standard\"},\"modelVersion\":\"gemini-2.5-flash-lite\",\"responseId\":\"0gYHareeE5-KvdIPiJC62AU\"}",
+            "data: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\". One\\n2. Two\\n3. Three\"}],\"role\":\"model\"},\"finishReason\":\"STOP\",\"index\":0}],\"usageMetadata\":{\"promptTokenCount\":16,\"candidatesTokenCount\":28,\"totalTokenCount\":44,\"promptTokensDetails\":[{\"modality\":\"TEXT\",\"tokenCount\":16}],\"serviceTier\":\"standard\"},\"modelVersion\":\"gemini-2.5-flash-lite\",\"responseId\":\"0gYHareeE5-KvdIPiJC62AU\"}"
           ],
           "kind": "sse"
         },
@@ -305,9 +247,9 @@
           "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
           "content-disposition": "attachment",
           "content-type": "text/event-stream",
-          "date": "Wed, 13 May 2026 15:41:49 GMT",
+          "date": "Fri, 15 May 2026 11:43:14 GMT",
           "server": "scaffolding on HTTPServer2",
-          "server-timing": "gfet4t7; dur=5278",
+          "server-timing": "gfet4t7; dur=613",
           "transfer-encoding": "chunked",
           "vary": "Origin, X-Origin, Referer",
           "x-content-type-options": "nosniff",
@@ -322,7 +264,7 @@
       "callIndex": 1,
       "id": "128baf1531499aae",
       "matchKey": "POST generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:streamGenerateContent",
-      "recordedAt": "2026-05-13T15:41:57.430Z",
+      "recordedAt": "2026-05-15T11:43:14.826Z",
       "request": {
         "body": {
           "kind": "json",
@@ -350,7 +292,7 @@
       "response": {
         "body": {
           "chunks": [
-            "data: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"BONJOUR\"}],\"role\":\"model\"},\"finishReason\":\"STOP\",\"index\":0}],\"usageMetadata\":{\"promptTokenCount\":7,\"candidatesTokenCount\":2,\"totalTokenCount\":9,\"promptTokensDetails\":[{\"modality\":\"TEXT\",\"tokenCount\":7}],\"serviceTier\":\"standard\"},\"modelVersion\":\"gemini-2.5-flash-lite\",\"responseId\":\"xZsEavOyE5ekvdIPpr_EuAk\"}"
+            "data: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"BONJOUR\"}],\"role\":\"model\"},\"finishReason\":\"STOP\",\"index\":0}],\"usageMetadata\":{\"promptTokenCount\":7,\"candidatesTokenCount\":2,\"totalTokenCount\":9,\"promptTokensDetails\":[{\"modality\":\"TEXT\",\"tokenCount\":7}],\"serviceTier\":\"standard\"},\"modelVersion\":\"gemini-2.5-flash-lite\",\"responseId\":\"0gYHaoiCL73Yxs0Pu4yNoQg\"}"
           ],
           "kind": "sse"
         },
@@ -358,9 +300,9 @@
           "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
           "content-disposition": "attachment",
           "content-type": "text/event-stream",
-          "date": "Wed, 13 May 2026 15:41:57 GMT",
+          "date": "Fri, 15 May 2026 11:43:14 GMT",
           "server": "scaffolding on HTTPServer2",
-          "server-timing": "gfet4t7; dur=7867",
+          "server-timing": "gfet4t7; dur=399",
           "transfer-encoding": "chunked",
           "vary": "Origin, X-Origin, Referer",
           "x-content-type-options": "nosniff",
@@ -375,7 +317,7 @@
       "callIndex": 0,
       "id": "6c1d8dea065802d2",
       "matchKey": "POST generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
-      "recordedAt": "2026-05-13T15:42:00.796Z",
+      "recordedAt": "2026-05-15T11:43:18.088Z",
       "request": {
         "body": {
           "kind": "json",
@@ -414,7 +356,7 @@
                 "content": {
                   "parts": [
                     {
-                      "text": "The current estimated population of the city of Paris, France"
+                      "text": "The current estimated population of the city of"
                     }
                   ],
                   "role": "model"
@@ -422,7 +364,7 @@
                 "finishReason": "MAX_TOKENS",
                 "groundingMetadata": {
                   "searchEntryPoint": {
-                    "renderedContent": "<style>\n.container {\n  align-items: center;\n  border-radius: 8px;\n  display: flex;\n  font-family: Google Sans, Roboto, sans-serif;\n  font-size: 14px;\n  line-height: 20px;\n  padding: 8px 12px;\n}\n.chip {\n  display: inline-block;\n  border: solid 1px;\n  border-radius: 16px;\n  min-width: 14px;\n  padding: 5px 16px;\n  text-align: center;\n  user-select: none;\n  margin: 0 8px;\n  -webkit-tap-highlight-color: transparent;\n}\n.carousel {\n  overflow: auto;\n  scrollbar-width: none;\n  white-space: nowrap;\n  margin-right: -12px;\n}\n.headline {\n  display: flex;\n  margin-right: 4px;\n}\n.gradient-container {\n  position: relative;\n}\n.gradient {\n  position: absolute;\n  transform: translate(3px, -9px);\n  height: 36px;\n  width: 9px;\n}\n@media (prefers-color-scheme: light) {\n  .container {\n    background-color: #fafafa;\n    box-shadow: 0 0 0 1px #0000000f;\n  }\n  .headline-label {\n    color: #1f1f1f;\n  }\n  .chip {\n    background-color: #ffffff;\n    border-color: #d2d2d2;\n    color: #5e5e5e;\n    text-decoration: none;\n  }\n  .chip:hover {\n    background-color: #f2f2f2;\n  }\n  .chip:focus {\n    background-color: #f2f2f2;\n  }\n  .chip:active {\n    background-color: #d8d8d8;\n    border-color: #b6b6b6;\n  }\n  .logo-dark {\n    display: none;\n  }\n  .gradient {\n    background: linear-gradient(90deg, #fafafa 15%, #fafafa00 100%);\n  }\n}\n@media (prefers-color-scheme: dark) {\n  .container {\n    background-color: #1f1f1f;\n    box-shadow: 0 0 0 1px #ffffff26;\n  }\n  .headline-label {\n    color: #fff;\n  }\n  .chip {\n    background-color: #2c2c2c;\n    border-color: #3c4043;\n    color: #fff;\n    text-decoration: none;\n  }\n  .chip:hover {\n    background-color: #353536;\n  }\n  .chip:focus {\n    background-color: #353536;\n  }\n  .chip:active {\n    background-color: #464849;\n    border-color: #53575b;\n  }\n  .logo-light {\n    display: none;\n  }\n  .gradient {\n    background: linear-gradient(90deg, #1f1f1f 15%, #1f1f1f00 100%);\n  }\n}\n</style>\n<div class=\"container\">\n  <div class=\"headline\">\n    <svg class=\"logo-light\" width=\"18\" height=\"18\" viewBox=\"9 9 35 35\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n      <path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M42.8622 27.0064C42.8622 25.7839 42.7525 24.6084 42.5487 23.4799H26.3109V30.1568H35.5897C35.1821 32.3041 33.9596 34.1222 32.1258 35.3448V39.6864H37.7213C40.9814 36.677 42.8622 32.2571 42.8622 27.0064V27.0064Z\" fill=\"#4285F4\"/>\n      <path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M26.3109 43.8555C30.9659 43.8555 34.8687 42.3195 37.7213 39.6863L32.1258 35.3447C30.5898 36.3792 28.6306 37.0061 26.3109 37.0061C21.8282 37.0061 18.0195 33.9811 16.6559 29.906H10.9194V34.3573C13.7563 39.9841 19.5712 43.8555 26.3109 43.8555V43.8555Z\" fill=\"#34A853\"/>\n      <path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M16.6559 29.8904C16.3111 28.8559 16.1074 27.7588 16.1074 26.6146C16.1074 25.4704 16.3111 24.3733 16.6559 23.3388V18.8875H10.9194C9.74388 21.2072 9.06992 23.8247 9.06992 26.6146C9.06992 29.4045 9.74388 32.022 10.9194 34.3417L15.3864 30.8621L16.6559 29.8904V29.8904Z\" fill=\"#FBBC05\"/>\n      <path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M26.3109 16.2386C28.85 16.2386 31.107 17.1164 32.9095 18.8091L37.8466 13.8719C34.853 11.082 30.9659 9.3736 26.3109 9.3736C19.5712 9.3736 13.7563 13.245 10.9194 18.8875L16.6559 23.3388C18.0195 19.2636 21.8282 16.2386 26.3109 16.2386V16.2386Z\" fill=\"#EA4335\"/>\n    </svg>\n    <svg class=\"logo-dark\" width=\"18\" height=\"18\" viewBox=\"0 0 48 48\" xmlns=\"http://www.w3.org/2000/svg\">\n      <circle cx=\"24\" cy=\"23\" fill=\"#FFF\" r=\"22\"/>\n      <path d=\"M33.76 34.26c2.75-2.56 4.49-6.37 4.49-11.26 0-.89-.08-1.84-.29-3H24.01v5.99h8.03c-.4 2.02-1.5 3.56-3.07 4.56v.75l3.91 2.97h.88z\" fill=\"#4285F4\"/>\n      <path d=\"M15.58 25.77A8.845 8.845 0 0 0 24 31.86c1.92 0 3.62-.46 4.97-1.31l4.79 3.71C31.14 36.7 27.65 38 24 38c-5.93 0-11.01-3.4-13.45-8.36l.17-1.01 4.06-2.85h.8z\" fill=\"#34A853\"/>\n      <path d=\"M15.59 20.21a8.864 8.864 0 0 0 0 5.58l-5.03 3.86c-.98-2-1.53-4.25-1.53-6.64 0-2.39.55-4.64 1.53-6.64l1-.22 3.81 2.98.22 1.08z\" fill=\"#FBBC05\"/>\n      <path d=\"M24 14.14c2.11 0 4.02.75 5.52 1.98l4.36-4.36C31.22 9.43 27.81 8 24 8c-5.93 0-11.01 3.4-13.45 8.36l5.03 3.85A8.86 8.86 0 0 1 24 14.14z\" fill=\"#EA4335\"/>\n    </svg>\n    <div class=\"gradient-container\"><div class=\"gradient\"></div></div>\n  </div>\n  <div class=\"carousel\">\n    <a class=\"chip\" href=\"https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH1PWj5bEUesCGzJLO_pz-Du_2MhKWHAGjbGDJJ70GqaXf-OwGBOtgcGmxDcmUx5d2vvdmJjF3QQVCEnnGDAnQNSQ7IHXCazVEa9U1kMeKFlxJ7_xjfz8XcY39ijXJjJRTzzTMSjo9hr18R7TOJYAOoNx7U0WaMdzx2eIcacuLfU3pRXipb-LWPagxURTcGUhMYlXLqFpKE\">Paris population 2026</a>\n    <a class=\"chip\" href=\"https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG_rTti8PZDFWc5OwEXdqfw7qwx23byFL4GcFUq59XdTgmFf-u0lNhay7mN5hSjz_bNucEnZus5U1Wv4G5YvbpLF5TrtCqHnsTgfRGucHcrRisJrfsgk_OiUERtXkLQ6a4bHzolhZCCSBlBsH9glp1Jgk-aLQCqpLbfwjbMQRjFC8FM0utd1-RXU0QZJW1vcO-ubM3hDkXM7ZrDK_MJxBMfCWxnI3k=\">current population of Paris, France</a>\n    <a class=\"chip\" href=\"https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQErREDm90Yyr9yK8NI51YalpFW35BzjsMogmdZy5TPnn5xfdiilCBRaJeampHI5nnP9aRvYwBs4U2_XOdspv_9fsQTTCjRRG680jfdAOGhDAVUoG8F5kUFPmzScW9qA7le22DqBI9pumv7PKEVm2K4XWXSIChjaDAp9HZq-U0sXxUTo04bphVeK4jn-Z2r6eFiT4HK-gVWj\">Paris population 2025</a>\n  </div>\n</div>\n"
+                    "renderedContent": "<style>\n.container {\n  align-items: center;\n  border-radius: 8px;\n  display: flex;\n  font-family: Google Sans, Roboto, sans-serif;\n  font-size: 14px;\n  line-height: 20px;\n  padding: 8px 12px;\n}\n.chip {\n  display: inline-block;\n  border: solid 1px;\n  border-radius: 16px;\n  min-width: 14px;\n  padding: 5px 16px;\n  text-align: center;\n  user-select: none;\n  margin: 0 8px;\n  -webkit-tap-highlight-color: transparent;\n}\n.carousel {\n  overflow: auto;\n  scrollbar-width: none;\n  white-space: nowrap;\n  margin-right: -12px;\n}\n.headline {\n  display: flex;\n  margin-right: 4px;\n}\n.gradient-container {\n  position: relative;\n}\n.gradient {\n  position: absolute;\n  transform: translate(3px, -9px);\n  height: 36px;\n  width: 9px;\n}\n@media (prefers-color-scheme: light) {\n  .container {\n    background-color: #fafafa;\n    box-shadow: 0 0 0 1px #0000000f;\n  }\n  .headline-label {\n    color: #1f1f1f;\n  }\n  .chip {\n    background-color: #ffffff;\n    border-color: #d2d2d2;\n    color: #5e5e5e;\n    text-decoration: none;\n  }\n  .chip:hover {\n    background-color: #f2f2f2;\n  }\n  .chip:focus {\n    background-color: #f2f2f2;\n  }\n  .chip:active {\n    background-color: #d8d8d8;\n    border-color: #b6b6b6;\n  }\n  .logo-dark {\n    display: none;\n  }\n  .gradient {\n    background: linear-gradient(90deg, #fafafa 15%, #fafafa00 100%);\n  }\n}\n@media (prefers-color-scheme: dark) {\n  .container {\n    background-color: #1f1f1f;\n    box-shadow: 0 0 0 1px #ffffff26;\n  }\n  .headline-label {\n    color: #fff;\n  }\n  .chip {\n    background-color: #2c2c2c;\n    border-color: #3c4043;\n    color: #fff;\n    text-decoration: none;\n  }\n  .chip:hover {\n    background-color: #353536;\n  }\n  .chip:focus {\n    background-color: #353536;\n  }\n  .chip:active {\n    background-color: #464849;\n    border-color: #53575b;\n  }\n  .logo-light {\n    display: none;\n  }\n  .gradient {\n    background: linear-gradient(90deg, #1f1f1f 15%, #1f1f1f00 100%);\n  }\n}\n</style>\n<div class=\"container\">\n  <div class=\"headline\">\n    <svg class=\"logo-light\" width=\"18\" height=\"18\" viewBox=\"9 9 35 35\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n      <path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M42.8622 27.0064C42.8622 25.7839 42.7525 24.6084 42.5487 23.4799H26.3109V30.1568H35.5897C35.1821 32.3041 33.9596 34.1222 32.1258 35.3448V39.6864H37.7213C40.9814 36.677 42.8622 32.2571 42.8622 27.0064V27.0064Z\" fill=\"#4285F4\"/>\n      <path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M26.3109 43.8555C30.9659 43.8555 34.8687 42.3195 37.7213 39.6863L32.1258 35.3447C30.5898 36.3792 28.6306 37.0061 26.3109 37.0061C21.8282 37.0061 18.0195 33.9811 16.6559 29.906H10.9194V34.3573C13.7563 39.9841 19.5712 43.8555 26.3109 43.8555V43.8555Z\" fill=\"#34A853\"/>\n      <path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M16.6559 29.8904C16.3111 28.8559 16.1074 27.7588 16.1074 26.6146C16.1074 25.4704 16.3111 24.3733 16.6559 23.3388V18.8875H10.9194C9.74388 21.2072 9.06992 23.8247 9.06992 26.6146C9.06992 29.4045 9.74388 32.022 10.9194 34.3417L15.3864 30.8621L16.6559 29.8904V29.8904Z\" fill=\"#FBBC05\"/>\n      <path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M26.3109 16.2386C28.85 16.2386 31.107 17.1164 32.9095 18.8091L37.8466 13.8719C34.853 11.082 30.9659 9.3736 26.3109 9.3736C19.5712 9.3736 13.7563 13.245 10.9194 18.8875L16.6559 23.3388C18.0195 19.2636 21.8282 16.2386 26.3109 16.2386V16.2386Z\" fill=\"#EA4335\"/>\n    </svg>\n    <svg class=\"logo-dark\" width=\"18\" height=\"18\" viewBox=\"0 0 48 48\" xmlns=\"http://www.w3.org/2000/svg\">\n      <circle cx=\"24\" cy=\"23\" fill=\"#FFF\" r=\"22\"/>\n      <path d=\"M33.76 34.26c2.75-2.56 4.49-6.37 4.49-11.26 0-.89-.08-1.84-.29-3H24.01v5.99h8.03c-.4 2.02-1.5 3.56-3.07 4.56v.75l3.91 2.97h.88z\" fill=\"#4285F4\"/>\n      <path d=\"M15.58 25.77A8.845 8.845 0 0 0 24 31.86c1.92 0 3.62-.46 4.97-1.31l4.79 3.71C31.14 36.7 27.65 38 24 38c-5.93 0-11.01-3.4-13.45-8.36l.17-1.01 4.06-2.85h.8z\" fill=\"#34A853\"/>\n      <path d=\"M15.59 20.21a8.864 8.864 0 0 0 0 5.58l-5.03 3.86c-.98-2-1.53-4.25-1.53-6.64 0-2.39.55-4.64 1.53-6.64l1-.22 3.81 2.98.22 1.08z\" fill=\"#FBBC05\"/>\n      <path d=\"M24 14.14c2.11 0 4.02.75 5.52 1.98l4.36-4.36C31.22 9.43 27.81 8 24 8c-5.93 0-11.01 3.4-13.45 8.36l5.03 3.85A8.86 8.86 0 0 1 24 14.14z\" fill=\"#EA4335\"/>\n    </svg>\n    <div class=\"gradient-container\"><div class=\"gradient\"></div></div>\n  </div>\n  <div class=\"carousel\">\n    <a class=\"chip\" href=\"https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFSg5zEszhLxU2GgaXvuH6f0WyqYcQazhPFr2S3_VJ4PV0OahYvNdvkvpw6oAiKnZ_KvObMZXkY9EpMKbEP7W1zyDcvSLNPIPIyE4eS-8AIBh1Y7HDkXDreNdj1w4xKNn7lvKdlrmixQkVhgdnRFtnzmzdWVRo8XThct8_NtIk0IZE8vpMFppe1mLJs6VjaFwR5OuzDMvAM\">Paris population 2026</a>\n    <a class=\"chip\" href=\"https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHJfXrRT6LKZSG0oODs4i2upfFzUcmv-0C_ypA9BM81jDCIHu-CT6n1kMlDUfnRMmY9019SHzm-01SACgR1R_YBdUX2Pq49BFsQ0Q7WqiJ6NSIkldmA99x0w9KHnK_3ERP38cBmvzNKVezH6eghbUu_zsUGs9eZ-OGVtXs5vPu5cLITWJTUDf2f6hak8hzkJo3KqNe2TddualMIR67vWc1E6hTpovg=\">current population of Paris, France</a>\n    <a class=\"chip\" href=\"https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHgzWl1Ti0KgRdrEFFZ5olTkRTJ2sTXNyaC7vUlSkfGo8VxTA8O7B9CbbCM36Ea0jUNw6HbOvYKVtRZVNtXpAi2C9em4Zr53RbYSAkwv4BRx2josiULjBx3JxXqO9CzqjB09Q2AnTDgasnbomt84skK0oXW6z22OvxG2MIfWS87xgp2sFwY1Wb8oZqJLR1ISatQO3B_OPjC\">Paris population 2025</a>\n  </div>\n</div>\n"
                   },
                   "webSearchQueries": [
                     "current population of Paris, France",
@@ -434,9 +376,16 @@
               }
             ],
             "modelVersion": "gemini-2.5-flash",
-            "responseId": "xZsEao-eIMTZvdIP_vC7oQY",
+            "responseId": "0gYHauWmO-XQ28oPhbTG8Ac",
             "usageMetadata": {
-              "candidatesTokenCount": 46,
+              "cacheTokensDetails": [
+                {
+                  "modality": "TEXT",
+                  "tokenCount": 2
+                }
+              ],
+              "cachedContentTokenCount": 2,
+              "candidatesTokenCount": 43,
               "promptTokenCount": 21,
               "promptTokensDetails": [
                 {
@@ -445,7 +394,7 @@
                 }
               ],
               "serviceTier": "standard",
-              "thoughtsTokenCount": 304,
+              "thoughtsTokenCount": 307,
               "toolUsePromptTokenCount": 119,
               "toolUsePromptTokensDetails": [
                 {
@@ -461,9 +410,9 @@
           "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
           "content-encoding": "gzip",
           "content-type": "application/json; charset=UTF-8",
-          "date": "Wed, 13 May 2026 15:42:00 GMT",
+          "date": "Fri, 15 May 2026 11:43:18 GMT",
           "server": "scaffolding on HTTPServer2",
-          "server-timing": "gfet4t7; dur=3321",
+          "server-timing": "gfet4t7; dur=3227",
           "transfer-encoding": "chunked",
           "vary": "Origin, X-Origin, Referer",
           "x-content-type-options": "nosniff",
@@ -479,7 +428,7 @@
       "callIndex": 0,
       "id": "996c7999a4690d8d",
       "matchKey": "POST generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent",
-      "recordedAt": "2026-05-13T15:42:03.305Z",
+      "recordedAt": "2026-05-15T11:43:21.400Z",
       "request": {
         "body": {
           "kind": "json",
@@ -512,8 +461,7 @@
       "response": {
         "body": {
           "chunks": [
-            "data: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"The current weather in Paris is light rain with a temperature of 54\"}],\"role\":\"model\"},\"index\":0,\"groundingMetadata\":{}}],\"usageMetadata\":{\"promptTokenCount\":19,\"candidatesTokenCount\":30,\"totalTokenCount\":262,\"promptTokensDetails\":[{\"modality\":\"TEXT\",\"tokenCount\":19}],\"toolUsePromptTokenCount\":73,\"toolUsePromptTokensDetails\":[{\"modality\":\"TEXT\",\"tokenCount\":73}],\"thoughtsTokenCount\":140,\"serviceTier\":\"standard\"},\"modelVersion\":\"gemini-2.5-flash\",\"responseId\":\"yJsEaqDUNrqwxN8Po7XkiAY\"}",
-            "data: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"°F (12°C), feeling like 50°F (10°C), and a humidity of around 71%.\"}],\"role\":\"model\"},\"finishReason\":\"STOP\",\"index\":0,\"groundingMetadata\":{\"searchEntryPoint\":{\"renderedContent\":\"<style>\\n.container {\\n  align-items: center;\\n  border-radius: 8px;\\n  display: flex;\\n  font-family: Google Sans, Roboto, sans-serif;\\n  font-size: 14px;\\n  line-height: 20px;\\n  padding: 8px 12px;\\n}\\n.chip {\\n  display: inline-block;\\n  border: solid 1px;\\n  border-radius: 16px;\\n  min-width: 14px;\\n  padding: 5px 16px;\\n  text-align: center;\\n  user-select: none;\\n  margin: 0 8px;\\n  -webkit-tap-highlight-color: transparent;\\n}\\n.carousel {\\n  overflow: auto;\\n  scrollbar-width: none;\\n  white-space: nowrap;\\n  margin-right: -12px;\\n}\\n.headline {\\n  display: flex;\\n  margin-right: 4px;\\n}\\n.gradient-container {\\n  position: relative;\\n}\\n.gradient {\\n  position: absolute;\\n  transform: translate(3px, -9px);\\n  height: 36px;\\n  width: 9px;\\n}\\n@media (prefers-color-scheme: light) {\\n  .container {\\n    background-color: #fafafa;\\n    box-shadow: 0 0 0 1px #0000000f;\\n  }\\n  .headline-label {\\n    color: #1f1f1f;\\n  }\\n  .chip {\\n    background-color: #ffffff;\\n    border-color: #d2d2d2;\\n    color: #5e5e5e;\\n    text-decoration: none;\\n  }\\n  .chip:hover {\\n    background-color: #f2f2f2;\\n  }\\n  .chip:focus {\\n    background-color: #f2f2f2;\\n  }\\n  .chip:active {\\n    background-color: #d8d8d8;\\n    border-color: #b6b6b6;\\n  }\\n  .logo-dark {\\n    display: none;\\n  }\\n  .gradient {\\n    background: linear-gradient(90deg, #fafafa 15%, #fafafa00 100%);\\n  }\\n}\\n@media (prefers-color-scheme: dark) {\\n  .container {\\n    background-color: #1f1f1f;\\n    box-shadow: 0 0 0 1px #ffffff26;\\n  }\\n  .headline-label {\\n    color: #fff;\\n  }\\n  .chip {\\n    background-color: #2c2c2c;\\n    border-color: #3c4043;\\n    color: #fff;\\n    text-decoration: none;\\n  }\\n  .chip:hover {\\n    background-color: #353536;\\n  }\\n  .chip:focus {\\n    background-color: #353536;\\n  }\\n  .chip:active {\\n    background-color: #464849;\\n    border-color: #53575b;\\n  }\\n  .logo-light {\\n    display: none;\\n  }\\n  .gradient {\\n    background: linear-gradient(90deg, #1f1f1f 15%, #1f1f1f00 100%);\\n  }\\n}\\n</style>\\n<div class=\\\"container\\\">\\n  <div class=\\\"headline\\\">\\n    <svg class=\\\"logo-light\\\" width=\\\"18\\\" height=\\\"18\\\" viewBox=\\\"9 9 35 35\\\" fill=\\\"none\\\" xmlns=\\\"http://www.w3.org/2000/svg\\\">\\n      <path fill-rule=\\\"evenodd\\\" clip-rule=\\\"evenodd\\\" d=\\\"M42.8622 27.0064C42.8622 25.7839 42.7525 24.6084 42.5487 23.4799H26.3109V30.1568H35.5897C35.1821 32.3041 33.9596 34.1222 32.1258 35.3448V39.6864H37.7213C40.9814 36.677 42.8622 32.2571 42.8622 27.0064V27.0064Z\\\" fill=\\\"#4285F4\\\"/>\\n      <path fill-rule=\\\"evenodd\\\" clip-rule=\\\"evenodd\\\" d=\\\"M26.3109 43.8555C30.9659 43.8555 34.8687 42.3195 37.7213 39.6863L32.1258 35.3447C30.5898 36.3792 28.6306 37.0061 26.3109 37.0061C21.8282 37.0061 18.0195 33.9811 16.6559 29.906H10.9194V34.3573C13.7563 39.9841 19.5712 43.8555 26.3109 43.8555V43.8555Z\\\" fill=\\\"#34A853\\\"/>\\n      <path fill-rule=\\\"evenodd\\\" clip-rule=\\\"evenodd\\\" d=\\\"M16.6559 29.8904C16.3111 28.8559 16.1074 27.7588 16.1074 26.6146C16.1074 25.4704 16.3111 24.3733 16.6559 23.3388V18.8875H10.9194C9.74388 21.2072 9.06992 23.8247 9.06992 26.6146C9.06992 29.4045 9.74388 32.022 10.9194 34.3417L15.3864 30.8621L16.6559 29.8904V29.8904Z\\\" fill=\\\"#FBBC05\\\"/>\\n      <path fill-rule=\\\"evenodd\\\" clip-rule=\\\"evenodd\\\" d=\\\"M26.3109 16.2386C28.85 16.2386 31.107 17.1164 32.9095 18.8091L37.8466 13.8719C34.853 11.082 30.9659 9.3736 26.3109 9.3736C19.5712 9.3736 13.7563 13.245 10.9194 18.8875L16.6559 23.3388C18.0195 19.2636 21.8282 16.2386 26.3109 16.2386V16.2386Z\\\" fill=\\\"#EA4335\\\"/>\\n    </svg>\\n    <svg class=\\\"logo-dark\\\" width=\\\"18\\\" height=\\\"18\\\" viewBox=\\\"0 0 48 48\\\" xmlns=\\\"http://www.w3.org/2000/svg\\\">\\n      <circle cx=\\\"24\\\" cy=\\\"23\\\" fill=\\\"#FFF\\\" r=\\\"22\\\"/>\\n      <path d=\\\"M33.76 34.26c2.75-2.56 4.49-6.37 4.49-11.26 0-.89-.08-1.84-.29-3H24.01v5.99h8.03c-.4 2.02-1.5 3.56-3.07 4.56v.75l3.91 2.97h.88z\\\" fill=\\\"#4285F4\\\"/>\\n      <path d=\\\"M15.58 25.77A8.845 8.845 0 0 0 24 31.86c1.92 0 3.62-.46 4.97-1.31l4.79 3.71C31.14 36.7 27.65 38 24 38c-5.93 0-11.01-3.4-13.45-8.36l.17-1.01 4.06-2.85h.8z\\\" fill=\\\"#34A853\\\"/>\\n      <path d=\\\"M15.59 20.21a8.864 8.864 0 0 0 0 5.58l-5.03 3.86c-.98-2-1.53-4.25-1.53-6.64 0-2.39.55-4.64 1.53-6.64l1-.22 3.81 2.98.22 1.08z\\\" fill=\\\"#FBBC05\\\"/>\\n      <path d=\\\"M24 14.14c2.11 0 4.02.75 5.52 1.98l4.36-4.36C31.22 9.43 27.81 8 24 8c-5.93 0-11.01 3.4-13.45 8.36l5.03 3.85A8.86 8.86 0 0 1 24 14.14z\\\" fill=\\\"#EA4335\\\"/>\\n    </svg>\\n    <div class=\\\"gradient-container\\\"><div class=\\\"gradient\\\"></div></div>\\n  </div>\\n  <div class=\\\"carousel\\\">\\n    <a class=\\\"chip\\\" href=\\\"https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHwOoc-qHN6l0ZJ1ct5fOuHx_vcctz3JG5rCZrTVXYXrDyR5smOA_24HU85FtJhSl7alM3_MNqNU6HaJmzaMnwAl-jljXlerNnH5rCT8e5N3IS91CH4aIKJyXAXBEiUlXjJEJff5FfAx8ibQ6g4H7apfblabmc4wk1pLvIfjM4BLl9p72Ui-Lydlj-ejjLhCxfoR4oYgw1fWFBVNQ==\\\">current weather in Paris</a>\\n  </div>\\n</div>\\n\"},\"groundingChunks\":[{\"web\":{\"uri\":\"https://www.google.com/search?q=weather+in+Paris,+FR\",\"title\":\"Weather information for Paris, FR\"}}],\"groundingSupports\":[{\"segment\":{\"endIndex\":137,\"text\":\"The current weather in Paris is light rain with a temperature of 54°F (12°C), feeling like 50°F (10°C), and a humidity of around 71%.\"},\"groundingChunkIndices\":[0]}],\"webSearchQueries\":[\"current weather in Paris\"]}}],\"usageMetadata\":{\"promptTokenCount\":19,\"candidatesTokenCount\":60,\"totalTokenCount\":292,\"promptTokensDetails\":[{\"modality\":\"TEXT\",\"tokenCount\":19}],\"toolUsePromptTokenCount\":73,\"toolUsePromptTokensDetails\":[{\"modality\":\"TEXT\",\"tokenCount\":73}],\"thoughtsTokenCount\":140,\"serviceTier\":\"standard\"},\"modelVersion\":\"gemini-2.5-flash\",\"responseId\":\"yJsEaqDUNrqwxN8Po7XkiAY\"}"
+            "data: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"The current weather in Paris, France is cloudy with a temperature of 56°F (13°C) and a 43% chance of rain.\"}],\"role\":\"model\"},\"finishReason\":\"STOP\",\"index\":0,\"groundingMetadata\":{\"searchEntryPoint\":{\"renderedContent\":\"<style>\\n.container {\\n  align-items: center;\\n  border-radius: 8px;\\n  display: flex;\\n  font-family: Google Sans, Roboto, sans-serif;\\n  font-size: 14px;\\n  line-height: 20px;\\n  padding: 8px 12px;\\n}\\n.chip {\\n  display: inline-block;\\n  border: solid 1px;\\n  border-radius: 16px;\\n  min-width: 14px;\\n  padding: 5px 16px;\\n  text-align: center;\\n  user-select: none;\\n  margin: 0 8px;\\n  -webkit-tap-highlight-color: transparent;\\n}\\n.carousel {\\n  overflow: auto;\\n  scrollbar-width: none;\\n  white-space: nowrap;\\n  margin-right: -12px;\\n}\\n.headline {\\n  display: flex;\\n  margin-right: 4px;\\n}\\n.gradient-container {\\n  position: relative;\\n}\\n.gradient {\\n  position: absolute;\\n  transform: translate(3px, -9px);\\n  height: 36px;\\n  width: 9px;\\n}\\n@media (prefers-color-scheme: light) {\\n  .container {\\n    background-color: #fafafa;\\n    box-shadow: 0 0 0 1px #0000000f;\\n  }\\n  .headline-label {\\n    color: #1f1f1f;\\n  }\\n  .chip {\\n    background-color: #ffffff;\\n    border-color: #d2d2d2;\\n    color: #5e5e5e;\\n    text-decoration: none;\\n  }\\n  .chip:hover {\\n    background-color: #f2f2f2;\\n  }\\n  .chip:focus {\\n    background-color: #f2f2f2;\\n  }\\n  .chip:active {\\n    background-color: #d8d8d8;\\n    border-color: #b6b6b6;\\n  }\\n  .logo-dark {\\n    display: none;\\n  }\\n  .gradient {\\n    background: linear-gradient(90deg, #fafafa 15%, #fafafa00 100%);\\n  }\\n}\\n@media (prefers-color-scheme: dark) {\\n  .container {\\n    background-color: #1f1f1f;\\n    box-shadow: 0 0 0 1px #ffffff26;\\n  }\\n  .headline-label {\\n    color: #fff;\\n  }\\n  .chip {\\n    background-color: #2c2c2c;\\n    border-color: #3c4043;\\n    color: #fff;\\n    text-decoration: none;\\n  }\\n  .chip:hover {\\n    background-color: #353536;\\n  }\\n  .chip:focus {\\n    background-color: #353536;\\n  }\\n  .chip:active {\\n    background-color: #464849;\\n    border-color: #53575b;\\n  }\\n  .logo-light {\\n    display: none;\\n  }\\n  .gradient {\\n    background: linear-gradient(90deg, #1f1f1f 15%, #1f1f1f00 100%);\\n  }\\n}\\n</style>\\n<div class=\\\"container\\\">\\n  <div class=\\\"headline\\\">\\n    <svg class=\\\"logo-light\\\" width=\\\"18\\\" height=\\\"18\\\" viewBox=\\\"9 9 35 35\\\" fill=\\\"none\\\" xmlns=\\\"http://www.w3.org/2000/svg\\\">\\n      <path fill-rule=\\\"evenodd\\\" clip-rule=\\\"evenodd\\\" d=\\\"M42.8622 27.0064C42.8622 25.7839 42.7525 24.6084 42.5487 23.4799H26.3109V30.1568H35.5897C35.1821 32.3041 33.9596 34.1222 32.1258 35.3448V39.6864H37.7213C40.9814 36.677 42.8622 32.2571 42.8622 27.0064V27.0064Z\\\" fill=\\\"#4285F4\\\"/>\\n      <path fill-rule=\\\"evenodd\\\" clip-rule=\\\"evenodd\\\" d=\\\"M26.3109 43.8555C30.9659 43.8555 34.8687 42.3195 37.7213 39.6863L32.1258 35.3447C30.5898 36.3792 28.6306 37.0061 26.3109 37.0061C21.8282 37.0061 18.0195 33.9811 16.6559 29.906H10.9194V34.3573C13.7563 39.9841 19.5712 43.8555 26.3109 43.8555V43.8555Z\\\" fill=\\\"#34A853\\\"/>\\n      <path fill-rule=\\\"evenodd\\\" clip-rule=\\\"evenodd\\\" d=\\\"M16.6559 29.8904C16.3111 28.8559 16.1074 27.7588 16.1074 26.6146C16.1074 25.4704 16.3111 24.3733 16.6559 23.3388V18.8875H10.9194C9.74388 21.2072 9.06992 23.8247 9.06992 26.6146C9.06992 29.4045 9.74388 32.022 10.9194 34.3417L15.3864 30.8621L16.6559 29.8904V29.8904Z\\\" fill=\\\"#FBBC05\\\"/>\\n      <path fill-rule=\\\"evenodd\\\" clip-rule=\\\"evenodd\\\" d=\\\"M26.3109 16.2386C28.85 16.2386 31.107 17.1164 32.9095 18.8091L37.8466 13.8719C34.853 11.082 30.9659 9.3736 26.3109 9.3736C19.5712 9.3736 13.7563 13.245 10.9194 18.8875L16.6559 23.3388C18.0195 19.2636 21.8282 16.2386 26.3109 16.2386V16.2386Z\\\" fill=\\\"#EA4335\\\"/>\\n    </svg>\\n    <svg class=\\\"logo-dark\\\" width=\\\"18\\\" height=\\\"18\\\" viewBox=\\\"0 0 48 48\\\" xmlns=\\\"http://www.w3.org/2000/svg\\\">\\n      <circle cx=\\\"24\\\" cy=\\\"23\\\" fill=\\\"#FFF\\\" r=\\\"22\\\"/>\\n      <path d=\\\"M33.76 34.26c2.75-2.56 4.49-6.37 4.49-11.26 0-.89-.08-1.84-.29-3H24.01v5.99h8.03c-.4 2.02-1.5 3.56-3.07 4.56v.75l3.91 2.97h.88z\\\" fill=\\\"#4285F4\\\"/>\\n      <path d=\\\"M15.58 25.77A8.845 8.845 0 0 0 24 31.86c1.92 0 3.62-.46 4.97-1.31l4.79 3.71C31.14 36.7 27.65 38 24 38c-5.93 0-11.01-3.4-13.45-8.36l.17-1.01 4.06-2.85h.8z\\\" fill=\\\"#34A853\\\"/>\\n      <path d=\\\"M15.59 20.21a8.864 8.864 0 0 0 0 5.58l-5.03 3.86c-.98-2-1.53-4.25-1.53-6.64 0-2.39.55-4.64 1.53-6.64l1-.22 3.81 2.98.22 1.08z\\\" fill=\\\"#FBBC05\\\"/>\\n      <path d=\\\"M24 14.14c2.11 0 4.02.75 5.52 1.98l4.36-4.36C31.22 9.43 27.81 8 24 8c-5.93 0-11.01 3.4-13.45 8.36l5.03 3.85A8.86 8.86 0 0 1 24 14.14z\\\" fill=\\\"#EA4335\\\"/>\\n    </svg>\\n    <div class=\\\"gradient-container\\\"><div class=\\\"gradient\\\"></div></div>\\n  </div>\\n  <div class=\\\"carousel\\\">\\n    <a class=\\\"chip\\\" href=\\\"https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGBb7gkoB2sn2pZSg2E8ERyThwIXaZi6RzZdd0D_fVDD8feAbpq7uCUXwwLLBBsFUeFhh_5mlFzRHlkZ7la0QAP3LhNRIpwKBInlPvtG9ZMQdepgY1VFhk54kScJ_rDzR-up0yF_G_pHT7wK8rZ9ESvj9Yr4dawQOjnj18SJufLBhirN0CrO_mxZ1C2dWKHznRwJ3mN_h-d6wbIDg==\\\">current weather in Paris</a>\\n  </div>\\n</div>\\n\"},\"groundingChunks\":[{\"web\":{\"uri\":\"https://www.google.com/search?q=weather+in+Paris,+FR\",\"title\":\"Weather information for Paris, FR\"}}],\"groundingSupports\":[{\"segment\":{\"endIndex\":108,\"text\":\"The current weather in Paris, France is cloudy with a temperature of 56°F (13°C) and a 43% chance of rain.\"},\"groundingChunkIndices\":[0]}],\"webSearchQueries\":[\"current weather in Paris\"]}}],\"usageMetadata\":{\"promptTokenCount\":19,\"candidatesTokenCount\":49,\"totalTokenCount\":206,\"promptTokensDetails\":[{\"modality\":\"TEXT\",\"tokenCount\":19}],\"toolUsePromptTokenCount\":73,\"toolUsePromptTokensDetails\":[{\"modality\":\"TEXT\",\"tokenCount\":73}],\"thoughtsTokenCount\":65,\"serviceTier\":\"standard\"},\"modelVersion\":\"gemini-2.5-flash\",\"responseId\":\"1gYHaqebDbiAvdIPwpq4qQU\"}"
           ],
           "kind": "sse"
         },
@@ -521,9 +469,9 @@
           "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
           "content-disposition": "attachment",
           "content-type": "text/event-stream",
-          "date": "Wed, 13 May 2026 15:42:03 GMT",
+          "date": "Fri, 15 May 2026 11:43:21 GMT",
           "server": "scaffolding on HTTPServer2",
-          "server-timing": "gfet4t7; dur=2403",
+          "server-timing": "gfet4t7; dur=3281",
           "transfer-encoding": "chunked",
           "vary": "Origin, X-Origin, Referer",
           "x-content-type-options": "nosniff",
@@ -535,10 +483,10 @@
       }
     },
     {
-      "callIndex": 3,
-      "id": "bc4a3ae27b643ecf",
+      "callIndex": 2,
+      "id": "74810f19642160d2",
       "matchKey": "POST generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent",
-      "recordedAt": "2026-05-13T15:42:15.261Z",
+      "recordedAt": "2026-05-15T11:43:23.125Z",
       "request": {
         "body": {
           "kind": "json",
@@ -614,7 +562,7 @@
               }
             ],
             "modelVersion": "gemini-2.5-flash-lite",
-            "responseId": "15sEapL3Co6ovdIPzpDY0Ac",
+            "responseId": "2wYHaqXABbrQvdIPw-SJ2Qk",
             "usageMetadata": {
               "candidatesTokenCount": 17,
               "promptTokenCount": 65,
@@ -633,9 +581,9 @@
           "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
           "content-encoding": "gzip",
           "content-type": "application/json; charset=UTF-8",
-          "date": "Wed, 13 May 2026 15:42:15 GMT",
+          "date": "Fri, 15 May 2026 11:43:23 GMT",
           "server": "scaffolding on HTTPServer2",
-          "server-timing": "gfet4t7; dur=11934",
+          "server-timing": "gfet4t7; dur=1695",
           "transfer-encoding": "chunked",
           "vary": "Origin, X-Origin, Referer",
           "x-content-type-options": "nosniff",

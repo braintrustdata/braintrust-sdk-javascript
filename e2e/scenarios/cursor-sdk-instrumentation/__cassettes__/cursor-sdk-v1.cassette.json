@@ -4,7 +4,7 @@
       "callIndex": 0,
       "id": "3056d63956e85565",
       "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
-      "recordedAt": "2026-05-15T10:28:27.120Z",
+      "recordedAt": "2026-05-15T11:36:09.163Z",
       "request": {
         "body": {
           "kind": "json",
@@ -28,7 +28,7 @@
           "connection": "keep-alive",
           "content-length": "932",
           "content-type": "application/json; charset=utf-8",
-          "date": "Fri, 15 May 2026 10:28:27 GMT",
+          "date": "Fri, 15 May 2026 11:36:09 GMT",
           "vary": "Origin"
         },
         "status": 200,
@@ -39,7 +39,7 @@
       "callIndex": 0,
       "id": "30973cd9bcce6459",
       "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetUserPrivacyMode",
-      "recordedAt": "2026-05-15T10:28:27.299Z",
+      "recordedAt": "2026-05-15T11:36:09.321Z",
       "request": {
         "body": {
           "contentType": "application/proto",
@@ -62,7 +62,7 @@
           "connection": "keep-alive",
           "content-length": "4",
           "content-type": "application/proto",
-          "date": "Fri, 15 May 2026 10:28:27 GMT",
+          "date": "Fri, 15 May 2026 11:36:09 GMT",
           "vary": "Origin"
         },
         "status": 200,
@@ -73,7 +73,7 @@
       "callIndex": 0,
       "id": "61bed072048628da",
       "matchKey": "GET api.cursor.com/v1/models",
-      "recordedAt": "2026-05-15T10:28:27.925Z",
+      "recordedAt": "2026-05-15T11:36:09.994Z",
       "request": {
         "body": {
           "kind": "empty"
@@ -3955,7 +3955,7 @@
           "connection": "keep-alive",
           "content-length": "32522",
           "content-type": "application/json; charset=utf-8",
-          "date": "Fri, 15 May 2026 10:28:27 GMT",
+          "date": "Fri, 15 May 2026 11:36:09 GMT",
           "vary": "Origin"
         },
         "status": 200,
@@ -3966,7 +3966,7 @@
       "callIndex": 1,
       "id": "0a485ba15b4341f4",
       "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
-      "recordedAt": "2026-05-15T10:28:28.097Z",
+      "recordedAt": "2026-05-15T11:36:10.700Z",
       "request": {
         "body": {
           "kind": "json",
@@ -3990,7 +3990,7 @@
           "connection": "keep-alive",
           "content-length": "932",
           "content-type": "application/json; charset=utf-8",
-          "date": "Fri, 15 May 2026 10:28:28 GMT",
+          "date": "Fri, 15 May 2026 11:36:10 GMT",
           "vary": "Origin"
         },
         "status": 200,
@@ -4001,7 +4001,7 @@
       "callIndex": 0,
       "id": "d1f7ceb3bf90cdd7",
       "matchKey": "POST api2.cursor.sh/aiserver.v1.AnalyticsService/BootstrapStatsig",
-      "recordedAt": "2026-05-15T10:28:28.292Z",
+      "recordedAt": "2026-05-15T11:36:11.180Z",
       "request": {
         "body": {
           "kind": "json",
@@ -4015,8 +4015,8 @@
         "body": {
           "contentType": "application/json",
           "kind": "binary",
-          "path": "cursor-sdk-v1.cassette.blobs/03cdb6911d292e5da2e31c24759cd3a08110c77ea1243ae2c6241dfca095613d.bin",
-          "sha256": "03cdb6911d292e5da2e31c24759cd3a08110c77ea1243ae2c6241dfca095613d"
+          "path": "cursor-sdk-v1.cassette.blobs/b027eca4ea158d665aa633a08123111e849897784d631461a8d709a985ab042f.bin",
+          "sha256": "b027eca4ea158d665aa633a08123111e849897784d631461a8d709a985ab042f"
         },
         "headers": {
           "access-control-allow-credentials": "true",
@@ -4025,7 +4025,7 @@
           "content-encoding": "gzip",
           "content-length": "62531",
           "content-type": "application/json",
-          "date": "Fri, 15 May 2026 10:28:28 GMT",
+          "date": "Fri, 15 May 2026 11:36:10 GMT",
           "vary": "Origin"
         },
         "status": 200,
@@ -4036,7 +4036,7 @@
       "callIndex": 2,
       "id": "597e06e6bda9541c",
       "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
-      "recordedAt": "2026-05-15T10:28:28.462Z",
+      "recordedAt": "2026-05-15T11:36:11.370Z",
       "request": {
         "body": {
           "kind": "json",
@@ -4060,7 +4060,7 @@
           "connection": "keep-alive",
           "content-length": "932",
           "content-type": "application/json; charset=utf-8",
-          "date": "Fri, 15 May 2026 10:28:28 GMT",
+          "date": "Fri, 15 May 2026 11:36:11 GMT",
           "vary": "Origin"
         },
         "status": 200,
@@ -4071,7 +4071,7 @@
       "callIndex": 0,
       "id": "d53dfb862e5ae5f7",
       "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetTeamAdminSettingsOrEmptyIfNotInTeam",
-      "recordedAt": "2026-05-15T10:28:28.638Z",
+      "recordedAt": "2026-05-15T11:36:11.565Z",
       "request": {
         "body": {
           "kind": "empty"
@@ -4092,7 +4092,7 @@
           "connection": "keep-alive",
           "content-length": "106",
           "content-type": "application/proto",
-          "date": "Fri, 15 May 2026 10:28:28 GMT",
+          "date": "Fri, 15 May 2026 11:36:11 GMT",
           "vary": "Origin"
         },
         "status": 200,
@@ -4103,7 +4103,7 @@
       "callIndex": 1,
       "id": "4d511cf3b47c2629",
       "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetUserPrivacyMode",
-      "recordedAt": "2026-05-15T10:28:29.017Z",
+      "recordedAt": "2026-05-15T11:36:11.861Z",
       "request": {
         "body": {
           "contentType": "application/proto",
@@ -4126,7 +4126,7 @@
           "connection": "keep-alive",
           "content-length": "4",
           "content-type": "application/proto",
-          "date": "Fri, 15 May 2026 10:28:29 GMT",
+          "date": "Fri, 15 May 2026 11:36:11 GMT",
           "vary": "Origin"
         },
         "status": 200,
@@ -4137,7 +4137,7 @@
       "callIndex": 3,
       "id": "6533d1db768ada38",
       "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
-      "recordedAt": "2026-05-15T10:28:29.329Z",
+      "recordedAt": "2026-05-15T11:36:12.566Z",
       "request": {
         "body": {
           "kind": "json",
@@ -4161,7 +4161,7 @@
           "connection": "keep-alive",
           "content-length": "932",
           "content-type": "application/json; charset=utf-8",
-          "date": "Fri, 15 May 2026 10:28:29 GMT",
+          "date": "Fri, 15 May 2026 11:36:12 GMT",
           "vary": "Origin"
         },
         "status": 200,
@@ -4172,7 +4172,7 @@
       "callIndex": 0,
       "id": "f6841d25c577100e",
       "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetTeamReposOrEmptyIfNotInTeam",
-      "recordedAt": "2026-05-15T10:28:29.337Z",
+      "recordedAt": "2026-05-15T11:36:12.602Z",
       "request": {
         "body": {
           "kind": "empty"
@@ -4191,7 +4191,7 @@
           "connection": "keep-alive",
           "content-length": "0",
           "content-type": "application/proto",
-          "date": "Fri, 15 May 2026 10:28:29 GMT",
+          "date": "Fri, 15 May 2026 11:36:12 GMT",
           "vary": "Origin"
         },
         "status": 200,
@@ -4202,7 +4202,7 @@
       "callIndex": 0,
       "id": "a340d783dfbb6997",
       "matchKey": "POST api2.cursor.sh/agent.v1.AgentService/Run",
-      "recordedAt": "2026-05-15T10:28:29.765Z",
+      "recordedAt": "2026-05-15T11:36:13.017Z",
       "request": {
         "body": {
           "kind": "empty"
@@ -4218,7 +4218,7 @@
         "headers": {
           "connection": "keep-alive",
           "content-length": "0",
-          "date": "Fri, 15 May 2026 10:28:29 GMT",
+          "date": "Fri, 15 May 2026 11:36:13 GMT",
           "server": "awselb/2.0"
         },
         "status": 464
@@ -4228,7 +4228,7 @@
       "callIndex": 4,
       "id": "713ac62a8481085f",
       "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
-      "recordedAt": "2026-05-15T10:28:29.926Z",
+      "recordedAt": "2026-05-15T11:36:13.197Z",
       "request": {
         "body": {
           "kind": "json",
@@ -4252,7 +4252,7 @@
           "connection": "keep-alive",
           "content-length": "932",
           "content-type": "application/json; charset=utf-8",
-          "date": "Fri, 15 May 2026 10:28:29 GMT",
+          "date": "Fri, 15 May 2026 11:36:13 GMT",
           "vary": "Origin"
         },
         "status": 200,
@@ -4263,7 +4263,7 @@
       "callIndex": 5,
       "id": "159b9254fd967a4f",
       "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
-      "recordedAt": "2026-05-15T10:28:30.090Z",
+      "recordedAt": "2026-05-15T11:36:13.375Z",
       "request": {
         "body": {
           "kind": "json",
@@ -4287,7 +4287,7 @@
           "connection": "keep-alive",
           "content-length": "932",
           "content-type": "application/json; charset=utf-8",
-          "date": "Fri, 15 May 2026 10:28:30 GMT",
+          "date": "Fri, 15 May 2026 11:36:13 GMT",
           "vary": "Origin"
         },
         "status": 200,
@@ -4298,7 +4298,7 @@
       "callIndex": 6,
       "id": "83ee8051122ed115",
       "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
-      "recordedAt": "2026-05-15T10:28:30.263Z",
+      "recordedAt": "2026-05-15T11:36:13.728Z",
       "request": {
         "body": {
           "kind": "json",
@@ -4322,41 +4322,7 @@
           "connection": "keep-alive",
           "content-length": "932",
           "content-type": "application/json; charset=utf-8",
-          "date": "Fri, 15 May 2026 10:28:30 GMT",
-          "vary": "Origin"
-        },
-        "status": 200,
-        "statusText": "OK"
-      }
-    },
-    {
-      "callIndex": 2,
-      "id": "00f0c09b48c1898a",
-      "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetUserPrivacyMode",
-      "recordedAt": "2026-05-15T10:28:30.421Z",
-      "request": {
-        "body": {
-          "contentType": "application/proto",
-          "kind": "base64",
-          "value": "CAE="
-        },
-        "headers": {},
-        "method": "POST",
-        "url": "https://api2.cursor.sh/aiserver.v1.DashboardService/GetUserPrivacyMode"
-      },
-      "response": {
-        "body": {
-          "contentType": "application/proto",
-          "kind": "base64",
-          "value": "CAIYAQ=="
-        },
-        "headers": {
-          "access-control-allow-credentials": "true",
-          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
-          "connection": "keep-alive",
-          "content-length": "4",
-          "content-type": "application/proto",
-          "date": "Fri, 15 May 2026 10:28:30 GMT",
+          "date": "Fri, 15 May 2026 11:36:13 GMT",
           "vary": "Origin"
         },
         "status": 200,
@@ -4367,7 +4333,7 @@
       "callIndex": 1,
       "id": "d2ea7953262b608d",
       "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetTeamAdminSettingsOrEmptyIfNotInTeam",
-      "recordedAt": "2026-05-15T10:28:30.444Z",
+      "recordedAt": "2026-05-15T11:36:13.911Z",
       "request": {
         "body": {
           "kind": "empty"
@@ -4388,7 +4354,7 @@
           "connection": "keep-alive",
           "content-length": "106",
           "content-type": "application/proto",
-          "date": "Fri, 15 May 2026 10:28:30 GMT",
+          "date": "Fri, 15 May 2026 11:36:13 GMT",
           "vary": "Origin"
         },
         "status": 200,
@@ -4396,29 +4362,33 @@
       }
     },
     {
-      "callIndex": 1,
-      "id": "0fe2bdc8216b7c85",
-      "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetTeamReposOrEmptyIfNotInTeam",
-      "recordedAt": "2026-05-15T10:28:30.785Z",
+      "callIndex": 2,
+      "id": "00f0c09b48c1898a",
+      "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetUserPrivacyMode",
+      "recordedAt": "2026-05-15T11:36:13.913Z",
       "request": {
         "body": {
-          "kind": "empty"
+          "contentType": "application/proto",
+          "kind": "base64",
+          "value": "CAE="
         },
         "headers": {},
         "method": "POST",
-        "url": "https://api2.cursor.sh/aiserver.v1.DashboardService/GetTeamReposOrEmptyIfNotInTeam"
+        "url": "https://api2.cursor.sh/aiserver.v1.DashboardService/GetUserPrivacyMode"
       },
       "response": {
         "body": {
-          "kind": "empty"
+          "contentType": "application/proto",
+          "kind": "base64",
+          "value": "CAIYAQ=="
         },
         "headers": {
           "access-control-allow-credentials": "true",
           "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
           "connection": "keep-alive",
-          "content-length": "0",
+          "content-length": "4",
           "content-type": "application/proto",
-          "date": "Fri, 15 May 2026 10:28:30 GMT",
+          "date": "Fri, 15 May 2026 11:36:13 GMT",
           "vary": "Origin"
         },
         "status": 200,
@@ -4429,7 +4399,7 @@
       "callIndex": 7,
       "id": "215c1c7456d5ac18",
       "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
-      "recordedAt": "2026-05-15T10:28:30.798Z",
+      "recordedAt": "2026-05-15T11:36:14.745Z",
       "request": {
         "body": {
           "kind": "json",
@@ -4453,7 +4423,37 @@
           "connection": "keep-alive",
           "content-length": "932",
           "content-type": "application/json; charset=utf-8",
-          "date": "Fri, 15 May 2026 10:28:30 GMT",
+          "date": "Fri, 15 May 2026 11:36:14 GMT",
+          "vary": "Origin"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 1,
+      "id": "0fe2bdc8216b7c85",
+      "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetTeamReposOrEmptyIfNotInTeam",
+      "recordedAt": "2026-05-15T11:36:14.835Z",
+      "request": {
+        "body": {
+          "kind": "empty"
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api2.cursor.sh/aiserver.v1.DashboardService/GetTeamReposOrEmptyIfNotInTeam"
+      },
+      "response": {
+        "body": {
+          "kind": "empty"
+        },
+        "headers": {
+          "access-control-allow-credentials": "true",
+          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
+          "connection": "keep-alive",
+          "content-length": "0",
+          "content-type": "application/proto",
+          "date": "Fri, 15 May 2026 11:36:14 GMT",
           "vary": "Origin"
         },
         "status": 200,
@@ -4464,7 +4464,7 @@
       "callIndex": 1,
       "id": "f76197c334b438d4",
       "matchKey": "POST api2.cursor.sh/agent.v1.AgentService/Run",
-      "recordedAt": "2026-05-15T10:28:31.231Z",
+      "recordedAt": "2026-05-15T11:36:15.168Z",
       "request": {
         "body": {
           "kind": "empty"
@@ -4480,7 +4480,7 @@
         "headers": {
           "connection": "keep-alive",
           "content-length": "0",
-          "date": "Fri, 15 May 2026 10:28:31 GMT",
+          "date": "Fri, 15 May 2026 11:36:15 GMT",
           "server": "awselb/2.0"
         },
         "status": 464
@@ -4490,7 +4490,7 @@
       "callIndex": 8,
       "id": "b5a62fe3d5fdca42",
       "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
-      "recordedAt": "2026-05-15T10:28:31.400Z",
+      "recordedAt": "2026-05-15T11:36:15.348Z",
       "request": {
         "body": {
           "kind": "json",
@@ -4514,39 +4514,7 @@
           "connection": "keep-alive",
           "content-length": "932",
           "content-type": "application/json; charset=utf-8",
-          "date": "Fri, 15 May 2026 10:28:31 GMT",
-          "vary": "Origin"
-        },
-        "status": 200,
-        "statusText": "OK"
-      }
-    },
-    {
-      "callIndex": 2,
-      "id": "70d3bcff6501f80d",
-      "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetTeamAdminSettingsOrEmptyIfNotInTeam",
-      "recordedAt": "2026-05-15T10:28:31.567Z",
-      "request": {
-        "body": {
-          "kind": "empty"
-        },
-        "headers": {},
-        "method": "POST",
-        "url": "https://api2.cursor.sh/aiserver.v1.DashboardService/GetTeamAdminSettingsOrEmptyIfNotInTeam"
-      },
-      "response": {
-        "body": {
-          "contentType": "application/proto",
-          "kind": "base64",
-          "value": "GghCBggBEAEYASIAMgQIABgAOhIgAjAAQAJIAFgBcAGAAQCIAQBCAEoAggEAkAEAmAEAoAEAqgEHCAESAQIYAMABAMoBAOIBAOgBAfIBAggB+gEAgAIAigICEACqAgCyAgIKAMACAeACAA=="
-        },
-        "headers": {
-          "access-control-allow-credentials": "true",
-          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
-          "connection": "keep-alive",
-          "content-length": "106",
-          "content-type": "application/proto",
-          "date": "Fri, 15 May 2026 10:28:31 GMT",
+          "date": "Fri, 15 May 2026 11:36:15 GMT",
           "vary": "Origin"
         },
         "status": 200,
@@ -4557,7 +4525,7 @@
       "callIndex": 3,
       "id": "ca48e39a4afe13dd",
       "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetUserPrivacyMode",
-      "recordedAt": "2026-05-15T10:28:31.568Z",
+      "recordedAt": "2026-05-15T11:36:15.512Z",
       "request": {
         "body": {
           "contentType": "application/proto",
@@ -4580,42 +4548,7 @@
           "connection": "keep-alive",
           "content-length": "4",
           "content-type": "application/proto",
-          "date": "Fri, 15 May 2026 10:28:31 GMT",
-          "vary": "Origin"
-        },
-        "status": 200,
-        "statusText": "OK"
-      }
-    },
-    {
-      "callIndex": 9,
-      "id": "89cbc244285e665c",
-      "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
-      "recordedAt": "2026-05-15T10:28:31.933Z",
-      "request": {
-        "body": {
-          "kind": "json",
-          "value": {}
-        },
-        "headers": {},
-        "method": "POST",
-        "url": "https://api2.cursor.sh/auth/exchange_user_api_key"
-      },
-      "response": {
-        "body": {
-          "kind": "json",
-          "value": {
-            "accessToken": "[REDACTED]",
-            "refreshToken": "[REDACTED]"
-          }
-        },
-        "headers": {
-          "access-control-allow-credentials": "true",
-          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
-          "connection": "keep-alive",
-          "content-length": "932",
-          "content-type": "application/json; charset=utf-8",
-          "date": "Fri, 15 May 2026 10:28:31 GMT",
+          "date": "Fri, 15 May 2026 11:36:15 GMT",
           "vary": "Origin"
         },
         "status": 200,
@@ -4624,134 +4557,9 @@
     },
     {
       "callIndex": 2,
-      "id": "d73f41eeedbf5def",
-      "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetTeamReposOrEmptyIfNotInTeam",
-      "recordedAt": "2026-05-15T10:28:31.935Z",
-      "request": {
-        "body": {
-          "kind": "empty"
-        },
-        "headers": {},
-        "method": "POST",
-        "url": "https://api2.cursor.sh/aiserver.v1.DashboardService/GetTeamReposOrEmptyIfNotInTeam"
-      },
-      "response": {
-        "body": {
-          "kind": "empty"
-        },
-        "headers": {
-          "access-control-allow-credentials": "true",
-          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
-          "connection": "keep-alive",
-          "content-length": "0",
-          "content-type": "application/proto",
-          "date": "Fri, 15 May 2026 10:28:31 GMT",
-          "vary": "Origin"
-        },
-        "status": 200,
-        "statusText": "OK"
-      }
-    },
-    {
-      "callIndex": 2,
-      "id": "3298fd0cf5accbd1",
-      "matchKey": "POST api2.cursor.sh/agent.v1.AgentService/Run",
-      "recordedAt": "2026-05-15T10:28:32.354Z",
-      "request": {
-        "body": {
-          "kind": "empty"
-        },
-        "headers": {},
-        "method": "POST",
-        "url": "https://api2.cursor.sh/agent.v1.AgentService/Run"
-      },
-      "response": {
-        "body": {
-          "kind": "empty"
-        },
-        "headers": {
-          "connection": "keep-alive",
-          "content-length": "0",
-          "date": "Fri, 15 May 2026 10:28:32 GMT",
-          "server": "awselb/2.0"
-        },
-        "status": 464
-      }
-    },
-    {
-      "callIndex": 10,
-      "id": "3fa8e8ca5dbfda3f",
-      "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
-      "recordedAt": "2026-05-15T10:28:32.524Z",
-      "request": {
-        "body": {
-          "kind": "json",
-          "value": {}
-        },
-        "headers": {},
-        "method": "POST",
-        "url": "https://api2.cursor.sh/auth/exchange_user_api_key"
-      },
-      "response": {
-        "body": {
-          "kind": "json",
-          "value": {
-            "accessToken": "[REDACTED]",
-            "refreshToken": "[REDACTED]"
-          }
-        },
-        "headers": {
-          "access-control-allow-credentials": "true",
-          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
-          "connection": "keep-alive",
-          "content-length": "932",
-          "content-type": "application/json; charset=utf-8",
-          "date": "Fri, 15 May 2026 10:28:32 GMT",
-          "vary": "Origin"
-        },
-        "status": 200,
-        "statusText": "OK"
-      }
-    },
-    {
-      "callIndex": 4,
-      "id": "233bbcc27fbdca7f",
-      "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetUserPrivacyMode",
-      "recordedAt": "2026-05-15T10:28:32.682Z",
-      "request": {
-        "body": {
-          "contentType": "application/proto",
-          "kind": "base64",
-          "value": "CAE="
-        },
-        "headers": {},
-        "method": "POST",
-        "url": "https://api2.cursor.sh/aiserver.v1.DashboardService/GetUserPrivacyMode"
-      },
-      "response": {
-        "body": {
-          "contentType": "application/proto",
-          "kind": "base64",
-          "value": "CAIYAQ=="
-        },
-        "headers": {
-          "access-control-allow-credentials": "true",
-          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
-          "connection": "keep-alive",
-          "content-length": "4",
-          "content-type": "application/proto",
-          "date": "Fri, 15 May 2026 10:28:32 GMT",
-          "vary": "Origin"
-        },
-        "status": 200,
-        "statusText": "OK"
-      }
-    },
-    {
-      "callIndex": 3,
-      "id": "88f9130fc6561ba9",
+      "id": "70d3bcff6501f80d",
       "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetTeamAdminSettingsOrEmptyIfNotInTeam",
-      "recordedAt": "2026-05-15T10:28:32.706Z",
+      "recordedAt": "2026-05-15T11:36:15.517Z",
       "request": {
         "body": {
           "kind": "empty"
@@ -4772,7 +4580,7 @@
           "connection": "keep-alive",
           "content-length": "106",
           "content-type": "application/proto",
-          "date": "Fri, 15 May 2026 10:28:32 GMT",
+          "date": "Fri, 15 May 2026 11:36:15 GMT",
           "vary": "Origin"
         },
         "status": 200,
@@ -4780,10 +4588,10 @@
       }
     },
     {
-      "callIndex": 11,
-      "id": "f2a00b03d6c1de3c",
+      "callIndex": 9,
+      "id": "89cbc244285e665c",
       "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
-      "recordedAt": "2026-05-15T10:28:33.045Z",
+      "recordedAt": "2026-05-15T11:36:16.123Z",
       "request": {
         "body": {
           "kind": "json",
@@ -4807,7 +4615,7 @@
           "connection": "keep-alive",
           "content-length": "932",
           "content-type": "application/json; charset=utf-8",
-          "date": "Fri, 15 May 2026 10:28:33 GMT",
+          "date": "Fri, 15 May 2026 11:36:16 GMT",
           "vary": "Origin"
         },
         "status": 200,
@@ -4815,10 +4623,10 @@
       }
     },
     {
-      "callIndex": 3,
-      "id": "4b1a9ef52c437a05",
+      "callIndex": 2,
+      "id": "d73f41eeedbf5def",
       "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetTeamReposOrEmptyIfNotInTeam",
-      "recordedAt": "2026-05-15T10:28:33.112Z",
+      "recordedAt": "2026-05-15T11:36:16.140Z",
       "request": {
         "body": {
           "kind": "empty"
@@ -4837,7 +4645,7 @@
           "connection": "keep-alive",
           "content-length": "0",
           "content-type": "application/proto",
-          "date": "Fri, 15 May 2026 10:28:33 GMT",
+          "date": "Fri, 15 May 2026 11:36:16 GMT",
           "vary": "Origin"
         },
         "status": 200,
@@ -4845,10 +4653,10 @@
       }
     },
     {
-      "callIndex": 3,
-      "id": "a471eaadb3f011d8",
+      "callIndex": 2,
+      "id": "3298fd0cf5accbd1",
       "matchKey": "POST api2.cursor.sh/agent.v1.AgentService/Run",
-      "recordedAt": "2026-05-15T10:28:33.472Z",
+      "recordedAt": "2026-05-15T11:36:16.586Z",
       "request": {
         "body": {
           "kind": "empty"
@@ -4864,7 +4672,199 @@
         "headers": {
           "connection": "keep-alive",
           "content-length": "0",
-          "date": "Fri, 15 May 2026 10:28:33 GMT",
+          "date": "Fri, 15 May 2026 11:36:16 GMT",
+          "server": "awselb/2.0"
+        },
+        "status": 464
+      }
+    },
+    {
+      "callIndex": 10,
+      "id": "3fa8e8ca5dbfda3f",
+      "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
+      "recordedAt": "2026-05-15T11:36:16.798Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {}
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api2.cursor.sh/auth/exchange_user_api_key"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "accessToken": "[REDACTED]",
+            "refreshToken": "[REDACTED]"
+          }
+        },
+        "headers": {
+          "access-control-allow-credentials": "true",
+          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
+          "connection": "keep-alive",
+          "content-length": "932",
+          "content-type": "application/json; charset=utf-8",
+          "date": "Fri, 15 May 2026 11:36:16 GMT",
+          "vary": "Origin"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 4,
+      "id": "233bbcc27fbdca7f",
+      "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetUserPrivacyMode",
+      "recordedAt": "2026-05-15T11:36:16.963Z",
+      "request": {
+        "body": {
+          "contentType": "application/proto",
+          "kind": "base64",
+          "value": "CAE="
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api2.cursor.sh/aiserver.v1.DashboardService/GetUserPrivacyMode"
+      },
+      "response": {
+        "body": {
+          "contentType": "application/proto",
+          "kind": "base64",
+          "value": "CAIYAQ=="
+        },
+        "headers": {
+          "access-control-allow-credentials": "true",
+          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
+          "connection": "keep-alive",
+          "content-length": "4",
+          "content-type": "application/proto",
+          "date": "Fri, 15 May 2026 11:36:16 GMT",
+          "vary": "Origin"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 3,
+      "id": "88f9130fc6561ba9",
+      "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetTeamAdminSettingsOrEmptyIfNotInTeam",
+      "recordedAt": "2026-05-15T11:36:16.966Z",
+      "request": {
+        "body": {
+          "kind": "empty"
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api2.cursor.sh/aiserver.v1.DashboardService/GetTeamAdminSettingsOrEmptyIfNotInTeam"
+      },
+      "response": {
+        "body": {
+          "contentType": "application/proto",
+          "kind": "base64",
+          "value": "GghCBggBEAEYASIAMgQIABgAOhIgAjAAQAJIAFgBcAGAAQCIAQBCAEoAggEAkAEAmAEAoAEAqgEHCAESAQIYAMABAMoBAOIBAOgBAfIBAggB+gEAgAIAigICEACqAgCyAgIKAMACAeACAA=="
+        },
+        "headers": {
+          "access-control-allow-credentials": "true",
+          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
+          "connection": "keep-alive",
+          "content-length": "106",
+          "content-type": "application/proto",
+          "date": "Fri, 15 May 2026 11:36:16 GMT",
+          "vary": "Origin"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 11,
+      "id": "f2a00b03d6c1de3c",
+      "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
+      "recordedAt": "2026-05-15T11:36:17.532Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {}
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api2.cursor.sh/auth/exchange_user_api_key"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "accessToken": "[REDACTED]",
+            "refreshToken": "[REDACTED]"
+          }
+        },
+        "headers": {
+          "access-control-allow-credentials": "true",
+          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
+          "connection": "keep-alive",
+          "content-length": "932",
+          "content-type": "application/json; charset=utf-8",
+          "date": "Fri, 15 May 2026 11:36:17 GMT",
+          "vary": "Origin"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 3,
+      "id": "4b1a9ef52c437a05",
+      "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetTeamReposOrEmptyIfNotInTeam",
+      "recordedAt": "2026-05-15T11:36:17.583Z",
+      "request": {
+        "body": {
+          "kind": "empty"
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api2.cursor.sh/aiserver.v1.DashboardService/GetTeamReposOrEmptyIfNotInTeam"
+      },
+      "response": {
+        "body": {
+          "kind": "empty"
+        },
+        "headers": {
+          "access-control-allow-credentials": "true",
+          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
+          "connection": "keep-alive",
+          "content-length": "0",
+          "content-type": "application/proto",
+          "date": "Fri, 15 May 2026 11:36:17 GMT",
+          "vary": "Origin"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 3,
+      "id": "a471eaadb3f011d8",
+      "matchKey": "POST api2.cursor.sh/agent.v1.AgentService/Run",
+      "recordedAt": "2026-05-15T11:36:17.945Z",
+      "request": {
+        "body": {
+          "kind": "empty"
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api2.cursor.sh/agent.v1.AgentService/Run"
+      },
+      "response": {
+        "body": {
+          "kind": "empty"
+        },
+        "headers": {
+          "connection": "keep-alive",
+          "content-length": "0",
+          "date": "Fri, 15 May 2026 11:36:17 GMT",
           "server": "awselb/2.0"
         },
         "status": 464

@@ -4,7 +4,7 @@
       "callIndex": 0,
       "id": "5c650117cb5e8aad",
       "matchKey": "GET api.openai.com/v1/responses",
-      "recordedAt": "2026-05-13T18:34:33.122Z",
+      "recordedAt": "2026-05-15T11:36:16.223Z",
       "request": {
         "body": {
           "kind": "empty"
@@ -26,23 +26,23 @@
           }
         },
         "headers": {
-          "access-control-expose-headers": "X-Request-ID, CF-Ray",
+          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "9fb3c203e87c23b5-VIE",
+          "cf-ray": "9fc1d80c9e41f832-VIE",
           "connection": "keep-alive",
           "content-length": "280",
           "content-type": "application/json",
-          "date": "Wed, 13 May 2026 18:34:33 GMT",
+          "date": "Fri, 15 May 2026 11:36:16 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "48",
+          "openai-processing-ms": "4",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
           "set-cookie": "[REDACTED]",
           "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
           "x-content-type-options": "nosniff",
-          "x-request-id": "req_7ef039fb6be945d38c029153af265369"
+          "x-request-id": "req_0ea25a3cfebf4a829015ea53562eb157"
         },
         "status": 401,
         "statusText": "Unauthorized"
@@ -52,7 +52,7 @@
       "callIndex": 1,
       "id": "1006b098128dbda6",
       "matchKey": "GET api.openai.com/v1/responses",
-      "recordedAt": "2026-05-13T18:34:33.323Z",
+      "recordedAt": "2026-05-15T11:36:16.661Z",
       "request": {
         "body": {
           "kind": "empty"
@@ -74,23 +74,23 @@
           }
         },
         "headers": {
-          "access-control-expose-headers": "X-Request-ID, CF-Ray",
+          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "9fb3c2059e7923b5-VIE",
+          "cf-ray": "9fc1d80f8e45f832-VIE",
           "connection": "keep-alive",
           "content-length": "280",
           "content-type": "application/json",
-          "date": "Wed, 13 May 2026 18:34:33 GMT",
+          "date": "Fri, 15 May 2026 11:36:16 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "8",
+          "openai-processing-ms": "3",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
           "set-cookie": "[REDACTED]",
           "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
           "x-content-type-options": "nosniff",
-          "x-request-id": "req_5792d85818544e7a8f322b6d076f7616"
+          "x-request-id": "req_456762b3624045ad9a059102457fa069"
         },
         "status": 401,
         "statusText": "Unauthorized"
@@ -100,7 +100,7 @@
       "callIndex": 2,
       "id": "a8fae7e3841380c0",
       "matchKey": "GET api.openai.com/v1/responses",
-      "recordedAt": "2026-05-13T18:34:34.030Z",
+      "recordedAt": "2026-05-15T11:36:17.359Z",
       "request": {
         "body": {
           "kind": "empty"
@@ -122,23 +122,23 @@
           }
         },
         "headers": {
-          "access-control-expose-headers": "X-Request-ID, CF-Ray",
+          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "9fb3c207ff7123b5-VIE",
+          "cf-ray": "9fc1d811fd64f832-VIE",
           "connection": "keep-alive",
           "content-length": "280",
           "content-type": "application/json",
-          "date": "Wed, 13 May 2026 18:34:34 GMT",
+          "date": "Fri, 15 May 2026 11:36:17 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "7",
+          "openai-processing-ms": "5",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
           "set-cookie": "[REDACTED]",
           "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
           "x-content-type-options": "nosniff",
-          "x-request-id": "req_04e105807bef4c7896744f77c1c67023"
+          "x-request-id": "req_fbb22da41f9d4c2b867ff93e92999718"
         },
         "status": 401,
         "statusText": "Unauthorized"
@@ -148,7 +148,7 @@
       "callIndex": 3,
       "id": "80cfd57e6a7ef8d9",
       "matchKey": "GET api.openai.com/v1/responses",
-      "recordedAt": "2026-05-13T18:34:34.567Z",
+      "recordedAt": "2026-05-15T11:36:17.943Z",
       "request": {
         "body": {
           "kind": "empty"
@@ -170,14 +170,14 @@
           }
         },
         "headers": {
-          "access-control-expose-headers": "X-Request-ID, CF-Ray",
+          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "9fb3c20d7a1c23b5-VIE",
+          "cf-ray": "9fc1d8177c4ef832-VIE",
           "connection": "keep-alive",
           "content-length": "280",
           "content-type": "application/json",
-          "date": "Wed, 13 May 2026 18:34:34 GMT",
+          "date": "Fri, 15 May 2026 11:36:18 GMT",
           "openai-organization": "braintrust-data",
           "openai-processing-ms": "5",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
@@ -186,7 +186,7 @@
           "set-cookie": "[REDACTED]",
           "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
           "x-content-type-options": "nosniff",
-          "x-request-id": "req_5208373ca6cb4cd4934abfd58d154db8"
+          "x-request-id": "req_b0f7050ed34147b1a9a69c65cb56f7ca"
         },
         "status": 401,
         "statusText": "Unauthorized"
@@ -196,7 +196,7 @@
       "callIndex": 4,
       "id": "587b4cf3bdddb025",
       "matchKey": "GET api.openai.com/v1/responses",
-      "recordedAt": "2026-05-13T18:34:35.597Z",
+      "recordedAt": "2026-05-15T11:36:18.934Z",
       "request": {
         "body": {
           "kind": "empty"
@@ -218,23 +218,23 @@
           }
         },
         "headers": {
-          "access-control-expose-headers": "X-Request-ID, CF-Ray",
+          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "9fb3c213cf0b23b5-VIE",
+          "cf-ray": "9fc1d81d8dc8f832-VIE",
           "connection": "keep-alive",
           "content-length": "280",
           "content-type": "application/json",
-          "date": "Wed, 13 May 2026 18:34:35 GMT",
+          "date": "Fri, 15 May 2026 11:36:18 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "4",
+          "openai-processing-ms": "7",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
           "set-cookie": "[REDACTED]",
           "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
           "x-content-type-options": "nosniff",
-          "x-request-id": "req_9912b10c060e42778490df7a46f62bcd"
+          "x-request-id": "req_247d6da57df8405b8fda5cab2e543552"
         },
         "status": 401,
         "statusText": "Unauthorized"
@@ -244,7 +244,7 @@
       "callIndex": 5,
       "id": "1900b58552455539",
       "matchKey": "GET api.openai.com/v1/responses",
-      "recordedAt": "2026-05-13T18:34:37.544Z",
+      "recordedAt": "2026-05-15T11:36:21.128Z",
       "request": {
         "body": {
           "kind": "empty"
@@ -266,23 +266,23 @@
           }
         },
         "headers": {
-          "access-control-expose-headers": "X-Request-ID, CF-Ray",
+          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "9fb3c21fef2823b5-VIE",
+          "cf-ray": "9fc1d8292d88f832-VIE",
           "connection": "keep-alive",
           "content-length": "280",
           "content-type": "application/json",
-          "date": "Wed, 13 May 2026 18:34:37 GMT",
+          "date": "Fri, 15 May 2026 11:36:21 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "5",
+          "openai-processing-ms": "15",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
           "set-cookie": "[REDACTED]",
           "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
           "x-content-type-options": "nosniff",
-          "x-request-id": "req_4239a90a773544fd995cd73b280129b7"
+          "x-request-id": "req_651e3cb4492d47da8eedd7b52b7d0dc9"
         },
         "status": 401,
         "statusText": "Unauthorized"
@@ -292,7 +292,7 @@
       "callIndex": 6,
       "id": "c0d449bd5bef3b10",
       "matchKey": "GET api.openai.com/v1/responses",
-      "recordedAt": "2026-05-13T18:34:41.244Z",
+      "recordedAt": "2026-05-15T11:36:24.633Z",
       "request": {
         "body": {
           "kind": "empty"
@@ -314,23 +314,23 @@
           }
         },
         "headers": {
-          "access-control-expose-headers": "X-Request-ID, CF-Ray",
+          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "9fb3c236ff1d23b5-VIE",
+          "cf-ray": "9fc1d8414d74f832-VIE",
           "connection": "keep-alive",
           "content-length": "280",
           "content-type": "application/json",
-          "date": "Wed, 13 May 2026 18:34:41 GMT",
+          "date": "Fri, 15 May 2026 11:36:24 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "19",
+          "openai-processing-ms": "5",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
           "set-cookie": "[REDACTED]",
           "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
           "x-content-type-options": "nosniff",
-          "x-request-id": "req_6cb4d88de1064715851360e347211f84"
+          "x-request-id": "req_a8e5c9f3219f454ab081685c9f1d1e27"
         },
         "status": 401,
         "statusText": "Unauthorized"
@@ -340,7 +340,7 @@
       "callIndex": 0,
       "id": "2734b7343de982bf",
       "matchKey": "POST api.openai.com/v1/responses",
-      "recordedAt": "2026-05-13T18:34:44.405Z",
+      "recordedAt": "2026-05-15T11:36:28.153Z",
       "request": {
         "body": {
           "kind": "json",
@@ -357,7 +357,7 @@
                     "type": "input_text"
                   },
                   {
-                    "text": "<skills_instructions>\n## Skills\nA skill is a set of local instructions to follow that is stored in a `SKILL.md` file. Below is the list of skills that can be used. Each entry includes a name, description, and file path so you can open the source for full instructions when using a specific skill.\n### Available skills\n- imagegen: Generate or edit raster images when the task benefits from AI-created bitmap visuals such as photos, illustrations, textures, sprites, mockups, or transparent-background cutouts. Use when Codex should create a brand-new image, transform an existing image, or derive visual variants from references, and the output should be a bitmap asset rather than repo-native code or vector. Do not use when the task is better handled by editing existing SVG/vector/code-native assets, extending an established icon or logo system, or building the visual directly in HTML/CSS/canvas. (file: /Users/lucaforstner/.codex/skills/.system/imagegen/SKILL.md)\n- openai-docs: Use when the user asks how to build with OpenAI products or APIs and needs up-to-date official documentation with citations, help choosing the latest model for a use case, or model upgrade and prompt-upgrade guidance; prioritize OpenAI docs MCP tools, use bundled references only as helper context, and restrict any fallback browsing to official OpenAI domains. (file: /Users/lucaforstner/.codex/skills/.system/openai-docs/SKILL.md)\n- plugin-creator: Create and scaffold plugin directories for Codex with a required `.codex-plugin/plugin.json`, optional plugin folders/files, and baseline placeholders you can edit before publishing or testing. Use when Codex needs to create a new local plugin, add optional plugin structure, or generate or update repo-root `.agents/plugins/marketplace.json` entries for plugin ordering and availability metadata. (file: /Users/lucaforstner/.codex/skills/.system/plugin-creator/SKILL.md)\n- skill-creator: Guide for creating effective skills. This skill should be used when users want to create a new skill (or update an existing skill) that extends Codex's capabilities with specialized knowledge, workflows, or tool integrations. (file: /Users/lucaforstner/.codex/skills/.system/skill-creator/SKILL.md)\n- skill-installer: Install Codex skills into $CODEX_HOME/skills from a curated list or a GitHub repo path. Use when a user asks to list installable skills, install a curated skill, or install a skill from another repo (including private repos). (file: /Users/lucaforstner/.codex/skills/.system/skill-installer/SKILL.md)\n- braintrust: Use the Braintrust `bt` CLI for projects, traces, prompts, and key Braintrust workflows. (file: /Users/lucaforstner/.agents/skills/braintrust/SKILL.md)\n- github:gh-address-comments: Address actionable GitHub pull request review feedback. Use when the user wants to inspect unresolved review threads, requested changes, or inline review comments on a PR, then implement selected fixes. Use the GitHub app for PR metadata and flat comment reads, and use the bundled GraphQL script via `gh` whenever thread-level state, resolution status, or inline review context matters. (file: /Users/lucaforstner/.codex/plugins/cache/openai-curated/github/1b89ff49/skills/gh-address-comments/SKILL.md)\n- github:gh-fix-ci: Use when a user asks to debug or fix failing GitHub PR checks that run in GitHub Actions. Use the GitHub app from this plugin for PR metadata and patch context, and use `gh` for Actions check and log inspection before implementing any approved fix. (file: /Users/lucaforstner/.codex/plugins/cache/openai-curated/github/1b89ff49/skills/gh-fix-ci/SKILL.md)\n- github:github: Triage and orient GitHub repository, pull request, and issue work through the connected GitHub app. Use when the user asks for general GitHub help, wants PR or issue summaries, or needs repository context before choosing a more specific GitHub workflow. (file: /Users/lucaforstner/.codex/plugins/cache/openai-curated/github/1b89ff49/skills/github/SKILL.md)\n- github:yeet: Publish local changes to GitHub by confirming scope, committing intentionally, pushing the branch, and opening a draft PR through the GitHub app from this plugin, with `gh` used only as a fallback where connector coverage is insufficient. (file: /Users/lucaforstner/.codex/plugins/cache/openai-curated/github/1b89ff49/skills/yeet/SKILL.md)\n### How to use skills\n- Discovery: The list above is the skills available in this session (name + description + file path). Skill bodies live on disk at the listed paths.\n- Trigger rules: If the user names a skill (with `$SkillName` or plain text) OR the task clearly matches a skill's description shown above, you must use that skill for that turn. Multiple mentions mean use them all. Do not carry skills across turns unless re-mentioned.\n- Missing/blocked: If a named skill isn't in the list or the path can't be read, say so briefly and continue with the best fallback.\n- How to use a skill (progressive disclosure):\n  1) After deciding to use a skill, open its `SKILL.md`. Read only enough to follow the workflow.\n  2) When `SKILL.md` references relative paths (e.g., `scripts/foo.py`), resolve them relative to the skill directory listed above first, and only consider other paths if needed.\n  3) If `SKILL.md` points to extra folders such as `references/`, load only the specific files needed for the request; don't bulk-load everything.\n  4) If `scripts/` exist, prefer running or patching them instead of retyping large code blocks.\n  5) If `assets/` or templates exist, reuse them instead of recreating from scratch.\n- Coordination and sequencing:\n  - If multiple skills apply, choose the minimal set that covers the request and state the order you'll use them.\n  - Announce which skill(s) you're using and why (one short line). If you skip an obvious skill, say why.\n- Context hygiene:\n  - Keep context small: summarize long sections instead of pasting them; only load extra files when needed.\n  - Avoid deep reference-chasing: prefer opening only files directly linked from `SKILL.md` unless you're blocked.\n  - When variants exist (frameworks, providers, domains), pick only the relevant reference file(s) and note that choice.\n- Safety and fallback: If a skill can't be applied cleanly (missing files, unclear instructions), state the issue, pick the next-best approach, and continue.\n</skills_instructions>",
+                    "text": "<skills_instructions>\n## Skills\nA skill is a set of local instructions to follow that is stored in a `SKILL.md` file. Below is the list of skills that can be used. Each entry includes a name, description, and file path so you can open the source for full instructions when using a specific skill.\n### Available skills\n- imagegen: Generate or edit raster images when the task benefits from AI-created bitmap visuals such as photos, illustrations, textures, sprites, mockups, or transparent-background cutouts. Use when Codex should create a brand-new image, transform an existing image, or derive visual variants from references, and the output should be a bitmap asset rather than repo-native code or vector. Do not use when the task is better handled by editing existing SVG/vector/code-native assets, extending an established icon or logo system, or building the visual directly in HTML/CSS/canvas. (file: /Users/lucaforstner/.codex/skills/.system/imagegen/SKILL.md)\n- openai-docs: Use when the user asks how to build with OpenAI products or APIs and needs up-to-date official documentation with citations, help choosing the latest model for a use case, or model upgrade and prompt-upgrade guidance; prioritize OpenAI docs MCP tools, use bundled references only as helper context, and restrict any fallback browsing to official OpenAI domains. (file: /Users/lucaforstner/.codex/skills/.system/openai-docs/SKILL.md)\n- plugin-creator: Create and scaffold plugin directories for Codex with a required `.codex-plugin/plugin.json`, optional plugin folders/files, and baseline placeholders you can edit before publishing or testing. Use when Codex needs to create a new local plugin, add optional plugin structure, or generate or update repo-root `.agents/plugins/marketplace.json` entries for plugin ordering and availability metadata. (file: /Users/lucaforstner/.codex/skills/.system/plugin-creator/SKILL.md)\n- skill-creator: Guide for creating effective skills. This skill should be used when users want to create a new skill (or update an existing skill) that extends Codex's capabilities with specialized knowledge, workflows, or tool integrations. (file: /Users/lucaforstner/.codex/skills/.system/skill-creator/SKILL.md)\n- skill-installer: Install Codex skills into $CODEX_HOME/skills from a curated list or a GitHub repo path. Use when a user asks to list installable skills, install a curated skill, or install a skill from another repo (including private repos). (file: /Users/lucaforstner/.codex/skills/.system/skill-installer/SKILL.md)\n- braintrust: Use the Braintrust `bt` CLI for projects, traces, prompts, and key Braintrust workflows. (file: /Users/lucaforstner/.agents/skills/braintrust/SKILL.md)\n- github:gh-address-comments: Address actionable GitHub pull request review feedback. Use when the user wants to inspect unresolved review threads, requested changes, or inline review comments on a PR, then implement selected fixes. Use the GitHub app for PR metadata and flat comment reads, and use the bundled GraphQL script via `gh` whenever thread-level state, resolution status, or inline review context matters. (file: /Users/lucaforstner/.codex/plugins/cache/openai-curated/github/b8edb371/skills/gh-address-comments/SKILL.md)\n- github:gh-fix-ci: Use when a user asks to debug or fix failing GitHub PR checks that run in GitHub Actions. Use the GitHub app from this plugin for PR metadata and patch context, and use `gh` for Actions check and log inspection before implementing any approved fix. (file: /Users/lucaforstner/.codex/plugins/cache/openai-curated/github/b8edb371/skills/gh-fix-ci/SKILL.md)\n- github:github: Triage and orient GitHub repository, pull request, and issue work through the connected GitHub app. Use when the user asks for general GitHub help, wants PR or issue summaries, or needs repository context before choosing a more specific GitHub workflow. (file: /Users/lucaforstner/.codex/plugins/cache/openai-curated/github/b8edb371/skills/github/SKILL.md)\n- github:yeet: Publish local changes to GitHub by confirming scope, committing intentionally, pushing the branch, and opening a draft PR through the GitHub app from this plugin, with `gh` used only as a fallback where connector coverage is insufficient. (file: /Users/lucaforstner/.codex/plugins/cache/openai-curated/github/b8edb371/skills/yeet/SKILL.md)\n### How to use skills\n- Discovery: The list above is the skills available in this session (name + description + file path). Skill bodies live on disk at the listed paths.\n- Trigger rules: If the user names a skill (with `$SkillName` or plain text) OR the task clearly matches a skill's description shown above, you must use that skill for that turn. Multiple mentions mean use them all. Do not carry skills across turns unless re-mentioned.\n- Missing/blocked: If a named skill isn't in the list or the path can't be read, say so briefly and continue with the best fallback.\n- How to use a skill (progressive disclosure):\n  1) After deciding to use a skill, open its `SKILL.md`. Read only enough to follow the workflow.\n  2) When `SKILL.md` references relative paths (e.g., `scripts/foo.py`), resolve them relative to the skill directory listed above first, and only consider other paths if needed.\n  3) If `SKILL.md` points to extra folders such as `references/`, load only the specific files needed for the request; don't bulk-load everything.\n  4) If `scripts/` exist, prefer running or patching them instead of retyping large code blocks.\n  5) If `assets/` or templates exist, reuse them instead of recreating from scratch.\n- Coordination and sequencing:\n  - If multiple skills apply, choose the minimal set that covers the request and state the order you'll use them.\n  - Announce which skill(s) you're using and why (one short line). If you skip an obvious skill, say why.\n- Context hygiene:\n  - Keep context small: summarize long sections instead of pasting them; only load extra files when needed.\n  - Avoid deep reference-chasing: prefer opening only files directly linked from `SKILL.md` unless you're blocked.\n  - When variants exist (frameworks, providers, domains), pick only the relevant reference file(s) and note that choice.\n- Safety and fallback: If a skill can't be applied cleanly (missing files, unclear instructions), state the issue, pick the next-best approach, and continue.\n</skills_instructions>",
                     "type": "input_text"
                   },
                   {
@@ -375,7 +375,7 @@
                     "type": "input_text"
                   },
                   {
-                    "text": "<environment_context>\n  <cwd>/tmp/braintrust-codex-e2e-openai-codex-instrumentation/openai-codex-v0128-auto-hook/run</cwd>\n  <shell>zsh</shell>\n  <current_date>2026-05-13</current_date>\n  <timezone>Europe/Vienna</timezone>\n</environment_context>",
+                    "text": "<environment_context>\n  <cwd>/tmp/braintrust-codex-e2e-openai-codex-instrumentation/openai-codex-v0128-auto-hook/run</cwd>\n  <shell>zsh</shell>\n  <current_date>2026-05-15</current_date>\n  <timezone>Europe/Vienna</timezone>\n</environment_context>",
                     "type": "input_text"
                   }
                 ],
@@ -841,19 +841,19 @@
         "body": {
           "contentType": "text/event-stream; charset=utf-8",
           "kind": "binary",
-          "path": "openai-codex-v0128-auto-hook.cassette.blobs/0f15b9f4ec73f8631c9e00c587d1fe39880520f19966f909494876a0d72bc066.bin",
-          "sha256": "0f15b9f4ec73f8631c9e00c587d1fe39880520f19966f909494876a0d72bc066"
+          "path": "openai-codex-v0128-auto-hook.cassette.blobs/4f3e8b1a17e9dcf5b1c04d4ac444c2e8ebde0ab663913a8b2d253ce7e2a850ea.bin",
+          "sha256": "4f3e8b1a17e9dcf5b1c04d4ac444c2e8ebde0ab663913a8b2d253ce7e2a850ea"
         },
         "headers": {
-          "access-control-expose-headers": "X-Request-ID, CF-Ray",
+          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "9fb3c2384b6923b5-VIE",
+          "cf-ray": "9fc1d8428903f832-VIE",
           "connection": "keep-alive",
           "content-type": "text/event-stream; charset=utf-8",
-          "date": "Wed, 13 May 2026 18:34:41 GMT",
+          "date": "Fri, 15 May 2026 11:36:25 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "297",
+          "openai-processing-ms": "195",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
@@ -864,10 +864,10 @@
           "x-ratelimit-limit-requests": "15000",
           "x-ratelimit-limit-tokens": "10000000",
           "x-ratelimit-remaining-requests": "14999",
-          "x-ratelimit-remaining-tokens": "9989900",
+          "x-ratelimit-remaining-tokens": "9989904",
           "x-ratelimit-reset-requests": "4ms",
           "x-ratelimit-reset-tokens": "60ms",
-          "x-request-id": "req_879fb8ed6aa14ccf85ca9c61d95715dd"
+          "x-request-id": "req_d2c2c80324ec484192cdc1b0a343c4ea"
         },
         "status": 200,
         "statusText": "OK"
@@ -877,7 +877,7 @@
       "callIndex": 1,
       "id": "f34d9a404602d1e0",
       "matchKey": "POST api.openai.com/v1/responses",
-      "recordedAt": "2026-05-13T18:34:45.528Z",
+      "recordedAt": "2026-05-15T11:36:31.682Z",
       "request": {
         "body": {
           "kind": "json",
@@ -894,7 +894,7 @@
                     "type": "input_text"
                   },
                   {
-                    "text": "<skills_instructions>\n## Skills\nA skill is a set of local instructions to follow that is stored in a `SKILL.md` file. Below is the list of skills that can be used. Each entry includes a name, description, and file path so you can open the source for full instructions when using a specific skill.\n### Available skills\n- imagegen: Generate or edit raster images when the task benefits from AI-created bitmap visuals such as photos, illustrations, textures, sprites, mockups, or transparent-background cutouts. Use when Codex should create a brand-new image, transform an existing image, or derive visual variants from references, and the output should be a bitmap asset rather than repo-native code or vector. Do not use when the task is better handled by editing existing SVG/vector/code-native assets, extending an established icon or logo system, or building the visual directly in HTML/CSS/canvas. (file: /Users/lucaforstner/.codex/skills/.system/imagegen/SKILL.md)\n- openai-docs: Use when the user asks how to build with OpenAI products or APIs and needs up-to-date official documentation with citations, help choosing the latest model for a use case, or model upgrade and prompt-upgrade guidance; prioritize OpenAI docs MCP tools, use bundled references only as helper context, and restrict any fallback browsing to official OpenAI domains. (file: /Users/lucaforstner/.codex/skills/.system/openai-docs/SKILL.md)\n- plugin-creator: Create and scaffold plugin directories for Codex with a required `.codex-plugin/plugin.json`, optional plugin folders/files, and baseline placeholders you can edit before publishing or testing. Use when Codex needs to create a new local plugin, add optional plugin structure, or generate or update repo-root `.agents/plugins/marketplace.json` entries for plugin ordering and availability metadata. (file: /Users/lucaforstner/.codex/skills/.system/plugin-creator/SKILL.md)\n- skill-creator: Guide for creating effective skills. This skill should be used when users want to create a new skill (or update an existing skill) that extends Codex's capabilities with specialized knowledge, workflows, or tool integrations. (file: /Users/lucaforstner/.codex/skills/.system/skill-creator/SKILL.md)\n- skill-installer: Install Codex skills into $CODEX_HOME/skills from a curated list or a GitHub repo path. Use when a user asks to list installable skills, install a curated skill, or install a skill from another repo (including private repos). (file: /Users/lucaforstner/.codex/skills/.system/skill-installer/SKILL.md)\n- braintrust: Use the Braintrust `bt` CLI for projects, traces, prompts, and key Braintrust workflows. (file: /Users/lucaforstner/.agents/skills/braintrust/SKILL.md)\n- github:gh-address-comments: Address actionable GitHub pull request review feedback. Use when the user wants to inspect unresolved review threads, requested changes, or inline review comments on a PR, then implement selected fixes. Use the GitHub app for PR metadata and flat comment reads, and use the bundled GraphQL script via `gh` whenever thread-level state, resolution status, or inline review context matters. (file: /Users/lucaforstner/.codex/plugins/cache/openai-curated/github/1b89ff49/skills/gh-address-comments/SKILL.md)\n- github:gh-fix-ci: Use when a user asks to debug or fix failing GitHub PR checks that run in GitHub Actions. Use the GitHub app from this plugin for PR metadata and patch context, and use `gh` for Actions check and log inspection before implementing any approved fix. (file: /Users/lucaforstner/.codex/plugins/cache/openai-curated/github/1b89ff49/skills/gh-fix-ci/SKILL.md)\n- github:github: Triage and orient GitHub repository, pull request, and issue work through the connected GitHub app. Use when the user asks for general GitHub help, wants PR or issue summaries, or needs repository context before choosing a more specific GitHub workflow. (file: /Users/lucaforstner/.codex/plugins/cache/openai-curated/github/1b89ff49/skills/github/SKILL.md)\n- github:yeet: Publish local changes to GitHub by confirming scope, committing intentionally, pushing the branch, and opening a draft PR through the GitHub app from this plugin, with `gh` used only as a fallback where connector coverage is insufficient. (file: /Users/lucaforstner/.codex/plugins/cache/openai-curated/github/1b89ff49/skills/yeet/SKILL.md)\n### How to use skills\n- Discovery: The list above is the skills available in this session (name + description + file path). Skill bodies live on disk at the listed paths.\n- Trigger rules: If the user names a skill (with `$SkillName` or plain text) OR the task clearly matches a skill's description shown above, you must use that skill for that turn. Multiple mentions mean use them all. Do not carry skills across turns unless re-mentioned.\n- Missing/blocked: If a named skill isn't in the list or the path can't be read, say so briefly and continue with the best fallback.\n- How to use a skill (progressive disclosure):\n  1) After deciding to use a skill, open its `SKILL.md`. Read only enough to follow the workflow.\n  2) When `SKILL.md` references relative paths (e.g., `scripts/foo.py`), resolve them relative to the skill directory listed above first, and only consider other paths if needed.\n  3) If `SKILL.md` points to extra folders such as `references/`, load only the specific files needed for the request; don't bulk-load everything.\n  4) If `scripts/` exist, prefer running or patching them instead of retyping large code blocks.\n  5) If `assets/` or templates exist, reuse them instead of recreating from scratch.\n- Coordination and sequencing:\n  - If multiple skills apply, choose the minimal set that covers the request and state the order you'll use them.\n  - Announce which skill(s) you're using and why (one short line). If you skip an obvious skill, say why.\n- Context hygiene:\n  - Keep context small: summarize long sections instead of pasting them; only load extra files when needed.\n  - Avoid deep reference-chasing: prefer opening only files directly linked from `SKILL.md` unless you're blocked.\n  - When variants exist (frameworks, providers, domains), pick only the relevant reference file(s) and note that choice.\n- Safety and fallback: If a skill can't be applied cleanly (missing files, unclear instructions), state the issue, pick the next-best approach, and continue.\n</skills_instructions>",
+                    "text": "<skills_instructions>\n## Skills\nA skill is a set of local instructions to follow that is stored in a `SKILL.md` file. Below is the list of skills that can be used. Each entry includes a name, description, and file path so you can open the source for full instructions when using a specific skill.\n### Available skills\n- imagegen: Generate or edit raster images when the task benefits from AI-created bitmap visuals such as photos, illustrations, textures, sprites, mockups, or transparent-background cutouts. Use when Codex should create a brand-new image, transform an existing image, or derive visual variants from references, and the output should be a bitmap asset rather than repo-native code or vector. Do not use when the task is better handled by editing existing SVG/vector/code-native assets, extending an established icon or logo system, or building the visual directly in HTML/CSS/canvas. (file: /Users/lucaforstner/.codex/skills/.system/imagegen/SKILL.md)\n- openai-docs: Use when the user asks how to build with OpenAI products or APIs and needs up-to-date official documentation with citations, help choosing the latest model for a use case, or model upgrade and prompt-upgrade guidance; prioritize OpenAI docs MCP tools, use bundled references only as helper context, and restrict any fallback browsing to official OpenAI domains. (file: /Users/lucaforstner/.codex/skills/.system/openai-docs/SKILL.md)\n- plugin-creator: Create and scaffold plugin directories for Codex with a required `.codex-plugin/plugin.json`, optional plugin folders/files, and baseline placeholders you can edit before publishing or testing. Use when Codex needs to create a new local plugin, add optional plugin structure, or generate or update repo-root `.agents/plugins/marketplace.json` entries for plugin ordering and availability metadata. (file: /Users/lucaforstner/.codex/skills/.system/plugin-creator/SKILL.md)\n- skill-creator: Guide for creating effective skills. This skill should be used when users want to create a new skill (or update an existing skill) that extends Codex's capabilities with specialized knowledge, workflows, or tool integrations. (file: /Users/lucaforstner/.codex/skills/.system/skill-creator/SKILL.md)\n- skill-installer: Install Codex skills into $CODEX_HOME/skills from a curated list or a GitHub repo path. Use when a user asks to list installable skills, install a curated skill, or install a skill from another repo (including private repos). (file: /Users/lucaforstner/.codex/skills/.system/skill-installer/SKILL.md)\n- braintrust: Use the Braintrust `bt` CLI for projects, traces, prompts, and key Braintrust workflows. (file: /Users/lucaforstner/.agents/skills/braintrust/SKILL.md)\n- github:gh-address-comments: Address actionable GitHub pull request review feedback. Use when the user wants to inspect unresolved review threads, requested changes, or inline review comments on a PR, then implement selected fixes. Use the GitHub app for PR metadata and flat comment reads, and use the bundled GraphQL script via `gh` whenever thread-level state, resolution status, or inline review context matters. (file: /Users/lucaforstner/.codex/plugins/cache/openai-curated/github/b8edb371/skills/gh-address-comments/SKILL.md)\n- github:gh-fix-ci: Use when a user asks to debug or fix failing GitHub PR checks that run in GitHub Actions. Use the GitHub app from this plugin for PR metadata and patch context, and use `gh` for Actions check and log inspection before implementing any approved fix. (file: /Users/lucaforstner/.codex/plugins/cache/openai-curated/github/b8edb371/skills/gh-fix-ci/SKILL.md)\n- github:github: Triage and orient GitHub repository, pull request, and issue work through the connected GitHub app. Use when the user asks for general GitHub help, wants PR or issue summaries, or needs repository context before choosing a more specific GitHub workflow. (file: /Users/lucaforstner/.codex/plugins/cache/openai-curated/github/b8edb371/skills/github/SKILL.md)\n- github:yeet: Publish local changes to GitHub by confirming scope, committing intentionally, pushing the branch, and opening a draft PR through the GitHub app from this plugin, with `gh` used only as a fallback where connector coverage is insufficient. (file: /Users/lucaforstner/.codex/plugins/cache/openai-curated/github/b8edb371/skills/yeet/SKILL.md)\n### How to use skills\n- Discovery: The list above is the skills available in this session (name + description + file path). Skill bodies live on disk at the listed paths.\n- Trigger rules: If the user names a skill (with `$SkillName` or plain text) OR the task clearly matches a skill's description shown above, you must use that skill for that turn. Multiple mentions mean use them all. Do not carry skills across turns unless re-mentioned.\n- Missing/blocked: If a named skill isn't in the list or the path can't be read, say so briefly and continue with the best fallback.\n- How to use a skill (progressive disclosure):\n  1) After deciding to use a skill, open its `SKILL.md`. Read only enough to follow the workflow.\n  2) When `SKILL.md` references relative paths (e.g., `scripts/foo.py`), resolve them relative to the skill directory listed above first, and only consider other paths if needed.\n  3) If `SKILL.md` points to extra folders such as `references/`, load only the specific files needed for the request; don't bulk-load everything.\n  4) If `scripts/` exist, prefer running or patching them instead of retyping large code blocks.\n  5) If `assets/` or templates exist, reuse them instead of recreating from scratch.\n- Coordination and sequencing:\n  - If multiple skills apply, choose the minimal set that covers the request and state the order you'll use them.\n  - Announce which skill(s) you're using and why (one short line). If you skip an obvious skill, say why.\n- Context hygiene:\n  - Keep context small: summarize long sections instead of pasting them; only load extra files when needed.\n  - Avoid deep reference-chasing: prefer opening only files directly linked from `SKILL.md` unless you're blocked.\n  - When variants exist (frameworks, providers, domains), pick only the relevant reference file(s) and note that choice.\n- Safety and fallback: If a skill can't be applied cleanly (missing files, unclear instructions), state the issue, pick the next-best approach, and continue.\n</skills_instructions>",
                     "type": "input_text"
                   },
                   {
@@ -912,7 +912,7 @@
                     "type": "input_text"
                   },
                   {
-                    "text": "<environment_context>\n  <cwd>/tmp/braintrust-codex-e2e-openai-codex-instrumentation/openai-codex-v0128-auto-hook/run</cwd>\n  <shell>zsh</shell>\n  <current_date>2026-05-13</current_date>\n  <timezone>Europe/Vienna</timezone>\n</environment_context>",
+                    "text": "<environment_context>\n  <cwd>/tmp/braintrust-codex-e2e-openai-codex-instrumentation/openai-codex-v0128-auto-hook/run</cwd>\n  <shell>zsh</shell>\n  <current_date>2026-05-15</current_date>\n  <timezone>Europe/Vienna</timezone>\n</environment_context>",
                     "type": "input_text"
                   }
                 ],
@@ -937,13 +937,13 @@
               },
               {
                 "arguments": "{\"cmd\":\"cat codex-input.txt\"}",
-                "call_id": "call_nnOZFeYClcRP1LAprdeDaKTF",
+                "call_id": "call_LrRWJjfw4wpyoMT9luLlDBOW",
                 "name": "exec_command",
                 "type": "function_call"
               },
               {
-                "call_id": "call_nnOZFeYClcRP1LAprdeDaKTF",
-                "output": "Chunk ID: ea70c5\nWall time: 0.0000 seconds\nProcess exited with code 0\nOriginal token count: 12\nOutput:\nThe final answer marker is OPENAI_CODEX_RUN_OK.\n",
+                "call_id": "call_LrRWJjfw4wpyoMT9luLlDBOW",
+                "output": "Chunk ID: 7ce02c\nWall time: 0.3228 seconds\nProcess exited with code 0\nOriginal token count: 12\nOutput:\nThe final answer marker is OPENAI_CODEX_RUN_OK.\n",
                 "type": "function_call_output"
               }
             ],
@@ -1395,19 +1395,19 @@
         "body": {
           "contentType": "text/event-stream; charset=utf-8",
           "kind": "binary",
-          "path": "openai-codex-v0128-auto-hook.cassette.blobs/04277246487b5c2a559adf90dbec691de5139aba61265004e2267c7fe7a6a5b7.bin",
-          "sha256": "04277246487b5c2a559adf90dbec691de5139aba61265004e2267c7fe7a6a5b7"
+          "path": "openai-codex-v0128-auto-hook.cassette.blobs/76058051b0687b63f21336d7a97b089c0eca8d522c5721019e0fe3e3f01e8f37.bin",
+          "sha256": "76058051b0687b63f21336d7a97b089c0eca8d522c5721019e0fe3e3f01e8f37"
         },
         "headers": {
-          "access-control-expose-headers": "X-Request-ID, CF-Ray",
+          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "9fb3c24d28f123b5-VIE",
+          "cf-ray": "9fc1d85c0b08f832-VIE",
           "connection": "keep-alive",
           "content-type": "text/event-stream; charset=utf-8",
-          "date": "Wed, 13 May 2026 18:34:45 GMT",
+          "date": "Fri, 15 May 2026 11:36:29 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "286",
+          "openai-processing-ms": "222",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
@@ -1418,10 +1418,10 @@
           "x-ratelimit-limit-requests": "15000",
           "x-ratelimit-limit-tokens": "10000000",
           "x-ratelimit-remaining-requests": "14999",
-          "x-ratelimit-remaining-tokens": "9989824",
+          "x-ratelimit-remaining-tokens": "9989827",
           "x-ratelimit-reset-requests": "4ms",
           "x-ratelimit-reset-tokens": "61ms",
-          "x-request-id": "req_ab87d1f46d6a478499bea15a3eccfc39"
+          "x-request-id": "req_6afeab01ec204d34b36129a086d5c2a9"
         },
         "status": 200,
         "statusText": "OK"
@@ -1431,7 +1431,7 @@
       "callIndex": 7,
       "id": "3b10322bf82066f3",
       "matchKey": "GET api.openai.com/v1/responses",
-      "recordedAt": "2026-05-13T18:34:46.189Z",
+      "recordedAt": "2026-05-15T11:36:33.492Z",
       "request": {
         "body": {
           "kind": "empty"
@@ -1453,23 +1453,23 @@
           }
         },
         "headers": {
-          "access-control-expose-headers": "X-Request-ID, CF-Ray",
+          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "9fb3c255fd3723b5-VIE",
+          "cf-ray": "9fc1d8787a6df832-VIE",
           "connection": "keep-alive",
           "content-length": "280",
           "content-type": "application/json",
-          "date": "Wed, 13 May 2026 18:34:46 GMT",
+          "date": "Fri, 15 May 2026 11:36:33 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "7",
+          "openai-processing-ms": "5",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
           "set-cookie": "[REDACTED]",
           "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
           "x-content-type-options": "nosniff",
-          "x-request-id": "req_67e367383a514eb99c2646e73d9878fc"
+          "x-request-id": "req_384af7f27e954bacb9803bfbb772a039"
         },
         "status": 401,
         "statusText": "Unauthorized"
@@ -1479,7 +1479,7 @@
       "callIndex": 8,
       "id": "69e7f13f10739945",
       "matchKey": "GET api.openai.com/v1/responses",
-      "recordedAt": "2026-05-13T18:34:46.411Z",
+      "recordedAt": "2026-05-15T11:36:34.176Z",
       "request": {
         "body": {
           "kind": "empty"
@@ -1501,23 +1501,23 @@
           }
         },
         "headers": {
-          "access-control-expose-headers": "X-Request-ID, CF-Ray",
+          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "9fb3c2574a9d23b5-VIE",
+          "cf-ray": "9fc1d87ccde9f832-VIE",
           "connection": "keep-alive",
           "content-length": "280",
           "content-type": "application/json",
-          "date": "Wed, 13 May 2026 18:34:46 GMT",
+          "date": "Fri, 15 May 2026 11:36:34 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "10",
+          "openai-processing-ms": "4",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
           "set-cookie": "[REDACTED]",
           "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
           "x-content-type-options": "nosniff",
-          "x-request-id": "req_7bbadcbe34c94e1bb9d88a46b605006c"
+          "x-request-id": "req_7714f3ebb821460b8973f62d9b5ab33d"
         },
         "status": 401,
         "statusText": "Unauthorized"
@@ -1527,7 +1527,7 @@
       "callIndex": 9,
       "id": "ebbcf6e259ae2693",
       "matchKey": "GET api.openai.com/v1/responses",
-      "recordedAt": "2026-05-13T18:34:47.067Z",
+      "recordedAt": "2026-05-15T11:36:34.901Z",
       "request": {
         "body": {
           "kind": "empty"
@@ -1549,23 +1549,23 @@
           }
         },
         "headers": {
-          "access-control-expose-headers": "X-Request-ID, CF-Ray",
+          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "9fb3c259ccb023b5-VIE",
+          "cf-ray": "9fc1d87f7d90f832-VIE",
           "connection": "keep-alive",
           "content-length": "280",
           "content-type": "application/json",
-          "date": "Wed, 13 May 2026 18:34:47 GMT",
+          "date": "Fri, 15 May 2026 11:36:34 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "7",
+          "openai-processing-ms": "8",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
           "set-cookie": "[REDACTED]",
           "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
           "x-content-type-options": "nosniff",
-          "x-request-id": "req_8c433ec533a04a7dbb83e00d72c45861"
+          "x-request-id": "req_c0efcc120d534fb7b6f04506f1546c21"
         },
         "status": 401,
         "statusText": "Unauthorized"
@@ -1575,7 +1575,7 @@
       "callIndex": 10,
       "id": "2869cd8621bf6449",
       "matchKey": "GET api.openai.com/v1/responses",
-      "recordedAt": "2026-05-13T18:34:47.677Z",
+      "recordedAt": "2026-05-15T11:36:35.542Z",
       "request": {
         "body": {
           "kind": "empty"
@@ -1597,23 +1597,23 @@
           }
         },
         "headers": {
-          "access-control-expose-headers": "X-Request-ID, CF-Ray",
+          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "9fb3c25f4d5b23b5-VIE",
+          "cf-ray": "9fc1d8855c96f832-VIE",
           "connection": "keep-alive",
           "content-length": "280",
           "content-type": "application/json",
-          "date": "Wed, 13 May 2026 18:34:47 GMT",
+          "date": "Fri, 15 May 2026 11:36:35 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "5",
+          "openai-processing-ms": "7",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
           "set-cookie": "[REDACTED]",
           "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
           "x-content-type-options": "nosniff",
-          "x-request-id": "req_5427a27bd58546f6821d4284a8aae264"
+          "x-request-id": "req_b68dc034c6034d6b9da820d8047559e6"
         },
         "status": 401,
         "statusText": "Unauthorized"
@@ -1623,7 +1623,7 @@
       "callIndex": 11,
       "id": "ee8de2a1fdd6f745",
       "matchKey": "GET api.openai.com/v1/responses",
-      "recordedAt": "2026-05-13T18:34:48.660Z",
+      "recordedAt": "2026-05-15T11:36:36.586Z",
       "request": {
         "body": {
           "kind": "empty"
@@ -1645,23 +1645,23 @@
           }
         },
         "headers": {
-          "access-control-expose-headers": "X-Request-ID, CF-Ray",
+          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "9fb3c265788c23b5-VIE",
+          "cf-ray": "9fc1d88c0f82f832-VIE",
           "connection": "keep-alive",
           "content-length": "280",
           "content-type": "application/json",
-          "date": "Wed, 13 May 2026 18:34:48 GMT",
+          "date": "Fri, 15 May 2026 11:36:36 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "4",
+          "openai-processing-ms": "6",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
           "set-cookie": "[REDACTED]",
           "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
           "x-content-type-options": "nosniff",
-          "x-request-id": "req_cc897561a2904f6fb6e7ee22c141a57f"
+          "x-request-id": "req_ade314e268444e4dab6c81c97638f43f"
         },
         "status": 401,
         "statusText": "Unauthorized"
@@ -1671,7 +1671,7 @@
       "callIndex": 12,
       "id": "224f122b4b96e81a",
       "matchKey": "GET api.openai.com/v1/responses",
-      "recordedAt": "2026-05-13T18:34:50.676Z",
+      "recordedAt": "2026-05-15T11:36:38.264Z",
       "request": {
         "body": {
           "kind": "empty"
@@ -1693,14 +1693,14 @@
           }
         },
         "headers": {
-          "access-control-expose-headers": "X-Request-ID, CF-Ray",
+          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "9fb3c2717ba723b5-VIE",
+          "cf-ray": "9fc1d8967b03f832-VIE",
           "connection": "keep-alive",
           "content-length": "280",
           "content-type": "application/json",
-          "date": "Wed, 13 May 2026 18:34:50 GMT",
+          "date": "Fri, 15 May 2026 11:36:38 GMT",
           "openai-organization": "braintrust-data",
           "openai-processing-ms": "5",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
@@ -1709,7 +1709,7 @@
           "set-cookie": "[REDACTED]",
           "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
           "x-content-type-options": "nosniff",
-          "x-request-id": "req_dd02a790661446deb333d0e51f3d657a"
+          "x-request-id": "req_25bd5b2db3be49f6baa186417a9ace2c"
         },
         "status": 401,
         "statusText": "Unauthorized"
@@ -1719,7 +1719,7 @@
       "callIndex": 13,
       "id": "495f0011eeb34ec2",
       "matchKey": "GET api.openai.com/v1/responses",
-      "recordedAt": "2026-05-13T18:34:54.284Z",
+      "recordedAt": "2026-05-15T11:36:41.730Z",
       "request": {
         "body": {
           "kind": "empty"
@@ -1741,23 +1741,23 @@
           }
         },
         "headers": {
-          "access-control-expose-headers": "X-Request-ID, CF-Ray",
+          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "9fb3c28899e223b5-VIE",
+          "cf-ray": "9fc1d8abdc74f832-VIE",
           "connection": "keep-alive",
           "content-length": "280",
           "content-type": "application/json",
-          "date": "Wed, 13 May 2026 18:34:54 GMT",
+          "date": "Fri, 15 May 2026 11:36:41 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "5",
+          "openai-processing-ms": "14",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
           "set-cookie": "[REDACTED]",
           "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
           "x-content-type-options": "nosniff",
-          "x-request-id": "req_eea643e985064969acdfbbce4986055e"
+          "x-request-id": "req_6cb12e167a08413bab827c74f251a7a8"
         },
         "status": 401,
         "statusText": "Unauthorized"
@@ -1767,7 +1767,7 @@
       "callIndex": 2,
       "id": "8e54c0818866d113",
       "matchKey": "POST api.openai.com/v1/responses",
-      "recordedAt": "2026-05-13T18:34:59.011Z",
+      "recordedAt": "2026-05-15T11:36:43.316Z",
       "request": {
         "body": {
           "kind": "json",
@@ -1784,7 +1784,7 @@
                     "type": "input_text"
                   },
                   {
-                    "text": "<skills_instructions>\n## Skills\nA skill is a set of local instructions to follow that is stored in a `SKILL.md` file. Below is the list of skills that can be used. Each entry includes a name, description, and file path so you can open the source for full instructions when using a specific skill.\n### Available skills\n- imagegen: Generate or edit raster images when the task benefits from AI-created bitmap visuals such as photos, illustrations, textures, sprites, mockups, or transparent-background cutouts. Use when Codex should create a brand-new image, transform an existing image, or derive visual variants from references, and the output should be a bitmap asset rather than repo-native code or vector. Do not use when the task is better handled by editing existing SVG/vector/code-native assets, extending an established icon or logo system, or building the visual directly in HTML/CSS/canvas. (file: /Users/lucaforstner/.codex/skills/.system/imagegen/SKILL.md)\n- openai-docs: Use when the user asks how to build with OpenAI products or APIs and needs up-to-date official documentation with citations, help choosing the latest model for a use case, or model upgrade and prompt-upgrade guidance; prioritize OpenAI docs MCP tools, use bundled references only as helper context, and restrict any fallback browsing to official OpenAI domains. (file: /Users/lucaforstner/.codex/skills/.system/openai-docs/SKILL.md)\n- plugin-creator: Create and scaffold plugin directories for Codex with a required `.codex-plugin/plugin.json`, optional plugin folders/files, and baseline placeholders you can edit before publishing or testing. Use when Codex needs to create a new local plugin, add optional plugin structure, or generate or update repo-root `.agents/plugins/marketplace.json` entries for plugin ordering and availability metadata. (file: /Users/lucaforstner/.codex/skills/.system/plugin-creator/SKILL.md)\n- skill-creator: Guide for creating effective skills. This skill should be used when users want to create a new skill (or update an existing skill) that extends Codex's capabilities with specialized knowledge, workflows, or tool integrations. (file: /Users/lucaforstner/.codex/skills/.system/skill-creator/SKILL.md)\n- skill-installer: Install Codex skills into $CODEX_HOME/skills from a curated list or a GitHub repo path. Use when a user asks to list installable skills, install a curated skill, or install a skill from another repo (including private repos). (file: /Users/lucaforstner/.codex/skills/.system/skill-installer/SKILL.md)\n- braintrust: Use the Braintrust `bt` CLI for projects, traces, prompts, and key Braintrust workflows. (file: /Users/lucaforstner/.agents/skills/braintrust/SKILL.md)\n- github:gh-address-comments: Address actionable GitHub pull request review feedback. Use when the user wants to inspect unresolved review threads, requested changes, or inline review comments on a PR, then implement selected fixes. Use the GitHub app for PR metadata and flat comment reads, and use the bundled GraphQL script via `gh` whenever thread-level state, resolution status, or inline review context matters. (file: /Users/lucaforstner/.codex/plugins/cache/openai-curated/github/1b89ff49/skills/gh-address-comments/SKILL.md)\n- github:gh-fix-ci: Use when a user asks to debug or fix failing GitHub PR checks that run in GitHub Actions. Use the GitHub app from this plugin for PR metadata and patch context, and use `gh` for Actions check and log inspection before implementing any approved fix. (file: /Users/lucaforstner/.codex/plugins/cache/openai-curated/github/1b89ff49/skills/gh-fix-ci/SKILL.md)\n- github:github: Triage and orient GitHub repository, pull request, and issue work through the connected GitHub app. Use when the user asks for general GitHub help, wants PR or issue summaries, or needs repository context before choosing a more specific GitHub workflow. (file: /Users/lucaforstner/.codex/plugins/cache/openai-curated/github/1b89ff49/skills/github/SKILL.md)\n- github:yeet: Publish local changes to GitHub by confirming scope, committing intentionally, pushing the branch, and opening a draft PR through the GitHub app from this plugin, with `gh` used only as a fallback where connector coverage is insufficient. (file: /Users/lucaforstner/.codex/plugins/cache/openai-curated/github/1b89ff49/skills/yeet/SKILL.md)\n### How to use skills\n- Discovery: The list above is the skills available in this session (name + description + file path). Skill bodies live on disk at the listed paths.\n- Trigger rules: If the user names a skill (with `$SkillName` or plain text) OR the task clearly matches a skill's description shown above, you must use that skill for that turn. Multiple mentions mean use them all. Do not carry skills across turns unless re-mentioned.\n- Missing/blocked: If a named skill isn't in the list or the path can't be read, say so briefly and continue with the best fallback.\n- How to use a skill (progressive disclosure):\n  1) After deciding to use a skill, open its `SKILL.md`. Read only enough to follow the workflow.\n  2) When `SKILL.md` references relative paths (e.g., `scripts/foo.py`), resolve them relative to the skill directory listed above first, and only consider other paths if needed.\n  3) If `SKILL.md` points to extra folders such as `references/`, load only the specific files needed for the request; don't bulk-load everything.\n  4) If `scripts/` exist, prefer running or patching them instead of retyping large code blocks.\n  5) If `assets/` or templates exist, reuse them instead of recreating from scratch.\n- Coordination and sequencing:\n  - If multiple skills apply, choose the minimal set that covers the request and state the order you'll use them.\n  - Announce which skill(s) you're using and why (one short line). If you skip an obvious skill, say why.\n- Context hygiene:\n  - Keep context small: summarize long sections instead of pasting them; only load extra files when needed.\n  - Avoid deep reference-chasing: prefer opening only files directly linked from `SKILL.md` unless you're blocked.\n  - When variants exist (frameworks, providers, domains), pick only the relevant reference file(s) and note that choice.\n- Safety and fallback: If a skill can't be applied cleanly (missing files, unclear instructions), state the issue, pick the next-best approach, and continue.\n</skills_instructions>",
+                    "text": "<skills_instructions>\n## Skills\nA skill is a set of local instructions to follow that is stored in a `SKILL.md` file. Below is the list of skills that can be used. Each entry includes a name, description, and file path so you can open the source for full instructions when using a specific skill.\n### Available skills\n- imagegen: Generate or edit raster images when the task benefits from AI-created bitmap visuals such as photos, illustrations, textures, sprites, mockups, or transparent-background cutouts. Use when Codex should create a brand-new image, transform an existing image, or derive visual variants from references, and the output should be a bitmap asset rather than repo-native code or vector. Do not use when the task is better handled by editing existing SVG/vector/code-native assets, extending an established icon or logo system, or building the visual directly in HTML/CSS/canvas. (file: /Users/lucaforstner/.codex/skills/.system/imagegen/SKILL.md)\n- openai-docs: Use when the user asks how to build with OpenAI products or APIs and needs up-to-date official documentation with citations, help choosing the latest model for a use case, or model upgrade and prompt-upgrade guidance; prioritize OpenAI docs MCP tools, use bundled references only as helper context, and restrict any fallback browsing to official OpenAI domains. (file: /Users/lucaforstner/.codex/skills/.system/openai-docs/SKILL.md)\n- plugin-creator: Create and scaffold plugin directories for Codex with a required `.codex-plugin/plugin.json`, optional plugin folders/files, and baseline placeholders you can edit before publishing or testing. Use when Codex needs to create a new local plugin, add optional plugin structure, or generate or update repo-root `.agents/plugins/marketplace.json` entries for plugin ordering and availability metadata. (file: /Users/lucaforstner/.codex/skills/.system/plugin-creator/SKILL.md)\n- skill-creator: Guide for creating effective skills. This skill should be used when users want to create a new skill (or update an existing skill) that extends Codex's capabilities with specialized knowledge, workflows, or tool integrations. (file: /Users/lucaforstner/.codex/skills/.system/skill-creator/SKILL.md)\n- skill-installer: Install Codex skills into $CODEX_HOME/skills from a curated list or a GitHub repo path. Use when a user asks to list installable skills, install a curated skill, or install a skill from another repo (including private repos). (file: /Users/lucaforstner/.codex/skills/.system/skill-installer/SKILL.md)\n- braintrust: Use the Braintrust `bt` CLI for projects, traces, prompts, and key Braintrust workflows. (file: /Users/lucaforstner/.agents/skills/braintrust/SKILL.md)\n- github:gh-address-comments: Address actionable GitHub pull request review feedback. Use when the user wants to inspect unresolved review threads, requested changes, or inline review comments on a PR, then implement selected fixes. Use the GitHub app for PR metadata and flat comment reads, and use the bundled GraphQL script via `gh` whenever thread-level state, resolution status, or inline review context matters. (file: /Users/lucaforstner/.codex/plugins/cache/openai-curated/github/b8edb371/skills/gh-address-comments/SKILL.md)\n- github:gh-fix-ci: Use when a user asks to debug or fix failing GitHub PR checks that run in GitHub Actions. Use the GitHub app from this plugin for PR metadata and patch context, and use `gh` for Actions check and log inspection before implementing any approved fix. (file: /Users/lucaforstner/.codex/plugins/cache/openai-curated/github/b8edb371/skills/gh-fix-ci/SKILL.md)\n- github:github: Triage and orient GitHub repository, pull request, and issue work through the connected GitHub app. Use when the user asks for general GitHub help, wants PR or issue summaries, or needs repository context before choosing a more specific GitHub workflow. (file: /Users/lucaforstner/.codex/plugins/cache/openai-curated/github/b8edb371/skills/github/SKILL.md)\n- github:yeet: Publish local changes to GitHub by confirming scope, committing intentionally, pushing the branch, and opening a draft PR through the GitHub app from this plugin, with `gh` used only as a fallback where connector coverage is insufficient. (file: /Users/lucaforstner/.codex/plugins/cache/openai-curated/github/b8edb371/skills/yeet/SKILL.md)\n### How to use skills\n- Discovery: The list above is the skills available in this session (name + description + file path). Skill bodies live on disk at the listed paths.\n- Trigger rules: If the user names a skill (with `$SkillName` or plain text) OR the task clearly matches a skill's description shown above, you must use that skill for that turn. Multiple mentions mean use them all. Do not carry skills across turns unless re-mentioned.\n- Missing/blocked: If a named skill isn't in the list or the path can't be read, say so briefly and continue with the best fallback.\n- How to use a skill (progressive disclosure):\n  1) After deciding to use a skill, open its `SKILL.md`. Read only enough to follow the workflow.\n  2) When `SKILL.md` references relative paths (e.g., `scripts/foo.py`), resolve them relative to the skill directory listed above first, and only consider other paths if needed.\n  3) If `SKILL.md` points to extra folders such as `references/`, load only the specific files needed for the request; don't bulk-load everything.\n  4) If `scripts/` exist, prefer running or patching them instead of retyping large code blocks.\n  5) If `assets/` or templates exist, reuse them instead of recreating from scratch.\n- Coordination and sequencing:\n  - If multiple skills apply, choose the minimal set that covers the request and state the order you'll use them.\n  - Announce which skill(s) you're using and why (one short line). If you skip an obvious skill, say why.\n- Context hygiene:\n  - Keep context small: summarize long sections instead of pasting them; only load extra files when needed.\n  - Avoid deep reference-chasing: prefer opening only files directly linked from `SKILL.md` unless you're blocked.\n  - When variants exist (frameworks, providers, domains), pick only the relevant reference file(s) and note that choice.\n- Safety and fallback: If a skill can't be applied cleanly (missing files, unclear instructions), state the issue, pick the next-best approach, and continue.\n</skills_instructions>",
                     "type": "input_text"
                   },
                   {
@@ -1802,7 +1802,7 @@
                     "type": "input_text"
                   },
                   {
-                    "text": "<environment_context>\n  <cwd>/tmp/braintrust-codex-e2e-openai-codex-instrumentation/openai-codex-v0128-auto-hook/stream</cwd>\n  <shell>zsh</shell>\n  <current_date>2026-05-13</current_date>\n  <timezone>Europe/Vienna</timezone>\n</environment_context>",
+                    "text": "<environment_context>\n  <cwd>/tmp/braintrust-codex-e2e-openai-codex-instrumentation/openai-codex-v0128-auto-hook/stream</cwd>\n  <shell>zsh</shell>\n  <current_date>2026-05-15</current_date>\n  <timezone>Europe/Vienna</timezone>\n</environment_context>",
                     "type": "input_text"
                   }
                 ],
@@ -2268,19 +2268,19 @@
         "body": {
           "contentType": "text/event-stream; charset=utf-8",
           "kind": "binary",
-          "path": "openai-codex-v0128-auto-hook.cassette.blobs/1859681524e4f37a5ce2fab6d1de57a464bbc6c80b1cb7d730333113c4689271.bin",
-          "sha256": "1859681524e4f37a5ce2fab6d1de57a464bbc6c80b1cb7d730333113c4689271"
+          "path": "openai-codex-v0128-auto-hook.cassette.blobs/d452ddc992ca3a2eb95fa931090debd7acf872d092327b71e4f142c73deb217c.bin",
+          "sha256": "d452ddc992ca3a2eb95fa931090debd7acf872d092327b71e4f142c73deb217c"
         },
         "headers": {
-          "access-control-expose-headers": "X-Request-ID, CF-Ray",
+          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "9fb3c289de6f23b5-VIE",
+          "cf-ray": "9fc1d8ad98fcf832-VIE",
           "connection": "keep-alive",
           "content-type": "text/event-stream; charset=utf-8",
-          "date": "Wed, 13 May 2026 18:34:55 GMT",
+          "date": "Fri, 15 May 2026 11:36:42 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "348",
+          "openai-processing-ms": "167",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
@@ -2291,10 +2291,10 @@
           "x-ratelimit-limit-requests": "15000",
           "x-ratelimit-limit-tokens": "10000000",
           "x-ratelimit-remaining-requests": "14999",
-          "x-ratelimit-remaining-tokens": "9989897",
+          "x-ratelimit-remaining-tokens": "9989901",
           "x-ratelimit-reset-requests": "4ms",
           "x-ratelimit-reset-tokens": "60ms",
-          "x-request-id": "req_7889fc494f7a4c74b0e831804d6e499f"
+          "x-request-id": "req_25aa84b0db11450f899b0e384e2a66c0"
         },
         "status": 200,
         "statusText": "OK"
@@ -2304,7 +2304,7 @@
       "callIndex": 3,
       "id": "2b2a1f592e6899ea",
       "matchKey": "POST api.openai.com/v1/responses",
-      "recordedAt": "2026-05-13T18:35:00.267Z",
+      "recordedAt": "2026-05-15T11:36:44.483Z",
       "request": {
         "body": {
           "kind": "json",
@@ -2321,7 +2321,7 @@
                     "type": "input_text"
                   },
                   {
-                    "text": "<skills_instructions>\n## Skills\nA skill is a set of local instructions to follow that is stored in a `SKILL.md` file. Below is the list of skills that can be used. Each entry includes a name, description, and file path so you can open the source for full instructions when using a specific skill.\n### Available skills\n- imagegen: Generate or edit raster images when the task benefits from AI-created bitmap visuals such as photos, illustrations, textures, sprites, mockups, or transparent-background cutouts. Use when Codex should create a brand-new image, transform an existing image, or derive visual variants from references, and the output should be a bitmap asset rather than repo-native code or vector. Do not use when the task is better handled by editing existing SVG/vector/code-native assets, extending an established icon or logo system, or building the visual directly in HTML/CSS/canvas. (file: /Users/lucaforstner/.codex/skills/.system/imagegen/SKILL.md)\n- openai-docs: Use when the user asks how to build with OpenAI products or APIs and needs up-to-date official documentation with citations, help choosing the latest model for a use case, or model upgrade and prompt-upgrade guidance; prioritize OpenAI docs MCP tools, use bundled references only as helper context, and restrict any fallback browsing to official OpenAI domains. (file: /Users/lucaforstner/.codex/skills/.system/openai-docs/SKILL.md)\n- plugin-creator: Create and scaffold plugin directories for Codex with a required `.codex-plugin/plugin.json`, optional plugin folders/files, and baseline placeholders you can edit before publishing or testing. Use when Codex needs to create a new local plugin, add optional plugin structure, or generate or update repo-root `.agents/plugins/marketplace.json` entries for plugin ordering and availability metadata. (file: /Users/lucaforstner/.codex/skills/.system/plugin-creator/SKILL.md)\n- skill-creator: Guide for creating effective skills. This skill should be used when users want to create a new skill (or update an existing skill) that extends Codex's capabilities with specialized knowledge, workflows, or tool integrations. (file: /Users/lucaforstner/.codex/skills/.system/skill-creator/SKILL.md)\n- skill-installer: Install Codex skills into $CODEX_HOME/skills from a curated list or a GitHub repo path. Use when a user asks to list installable skills, install a curated skill, or install a skill from another repo (including private repos). (file: /Users/lucaforstner/.codex/skills/.system/skill-installer/SKILL.md)\n- braintrust: Use the Braintrust `bt` CLI for projects, traces, prompts, and key Braintrust workflows. (file: /Users/lucaforstner/.agents/skills/braintrust/SKILL.md)\n- github:gh-address-comments: Address actionable GitHub pull request review feedback. Use when the user wants to inspect unresolved review threads, requested changes, or inline review comments on a PR, then implement selected fixes. Use the GitHub app for PR metadata and flat comment reads, and use the bundled GraphQL script via `gh` whenever thread-level state, resolution status, or inline review context matters. (file: /Users/lucaforstner/.codex/plugins/cache/openai-curated/github/1b89ff49/skills/gh-address-comments/SKILL.md)\n- github:gh-fix-ci: Use when a user asks to debug or fix failing GitHub PR checks that run in GitHub Actions. Use the GitHub app from this plugin for PR metadata and patch context, and use `gh` for Actions check and log inspection before implementing any approved fix. (file: /Users/lucaforstner/.codex/plugins/cache/openai-curated/github/1b89ff49/skills/gh-fix-ci/SKILL.md)\n- github:github: Triage and orient GitHub repository, pull request, and issue work through the connected GitHub app. Use when the user asks for general GitHub help, wants PR or issue summaries, or needs repository context before choosing a more specific GitHub workflow. (file: /Users/lucaforstner/.codex/plugins/cache/openai-curated/github/1b89ff49/skills/github/SKILL.md)\n- github:yeet: Publish local changes to GitHub by confirming scope, committing intentionally, pushing the branch, and opening a draft PR through the GitHub app from this plugin, with `gh` used only as a fallback where connector coverage is insufficient. (file: /Users/lucaforstner/.codex/plugins/cache/openai-curated/github/1b89ff49/skills/yeet/SKILL.md)\n### How to use skills\n- Discovery: The list above is the skills available in this session (name + description + file path). Skill bodies live on disk at the listed paths.\n- Trigger rules: If the user names a skill (with `$SkillName` or plain text) OR the task clearly matches a skill's description shown above, you must use that skill for that turn. Multiple mentions mean use them all. Do not carry skills across turns unless re-mentioned.\n- Missing/blocked: If a named skill isn't in the list or the path can't be read, say so briefly and continue with the best fallback.\n- How to use a skill (progressive disclosure):\n  1) After deciding to use a skill, open its `SKILL.md`. Read only enough to follow the workflow.\n  2) When `SKILL.md` references relative paths (e.g., `scripts/foo.py`), resolve them relative to the skill directory listed above first, and only consider other paths if needed.\n  3) If `SKILL.md` points to extra folders such as `references/`, load only the specific files needed for the request; don't bulk-load everything.\n  4) If `scripts/` exist, prefer running or patching them instead of retyping large code blocks.\n  5) If `assets/` or templates exist, reuse them instead of recreating from scratch.\n- Coordination and sequencing:\n  - If multiple skills apply, choose the minimal set that covers the request and state the order you'll use them.\n  - Announce which skill(s) you're using and why (one short line). If you skip an obvious skill, say why.\n- Context hygiene:\n  - Keep context small: summarize long sections instead of pasting them; only load extra files when needed.\n  - Avoid deep reference-chasing: prefer opening only files directly linked from `SKILL.md` unless you're blocked.\n  - When variants exist (frameworks, providers, domains), pick only the relevant reference file(s) and note that choice.\n- Safety and fallback: If a skill can't be applied cleanly (missing files, unclear instructions), state the issue, pick the next-best approach, and continue.\n</skills_instructions>",
+                    "text": "<skills_instructions>\n## Skills\nA skill is a set of local instructions to follow that is stored in a `SKILL.md` file. Below is the list of skills that can be used. Each entry includes a name, description, and file path so you can open the source for full instructions when using a specific skill.\n### Available skills\n- imagegen: Generate or edit raster images when the task benefits from AI-created bitmap visuals such as photos, illustrations, textures, sprites, mockups, or transparent-background cutouts. Use when Codex should create a brand-new image, transform an existing image, or derive visual variants from references, and the output should be a bitmap asset rather than repo-native code or vector. Do not use when the task is better handled by editing existing SVG/vector/code-native assets, extending an established icon or logo system, or building the visual directly in HTML/CSS/canvas. (file: /Users/lucaforstner/.codex/skills/.system/imagegen/SKILL.md)\n- openai-docs: Use when the user asks how to build with OpenAI products or APIs and needs up-to-date official documentation with citations, help choosing the latest model for a use case, or model upgrade and prompt-upgrade guidance; prioritize OpenAI docs MCP tools, use bundled references only as helper context, and restrict any fallback browsing to official OpenAI domains. (file: /Users/lucaforstner/.codex/skills/.system/openai-docs/SKILL.md)\n- plugin-creator: Create and scaffold plugin directories for Codex with a required `.codex-plugin/plugin.json`, optional plugin folders/files, and baseline placeholders you can edit before publishing or testing. Use when Codex needs to create a new local plugin, add optional plugin structure, or generate or update repo-root `.agents/plugins/marketplace.json` entries for plugin ordering and availability metadata. (file: /Users/lucaforstner/.codex/skills/.system/plugin-creator/SKILL.md)\n- skill-creator: Guide for creating effective skills. This skill should be used when users want to create a new skill (or update an existing skill) that extends Codex's capabilities with specialized knowledge, workflows, or tool integrations. (file: /Users/lucaforstner/.codex/skills/.system/skill-creator/SKILL.md)\n- skill-installer: Install Codex skills into $CODEX_HOME/skills from a curated list or a GitHub repo path. Use when a user asks to list installable skills, install a curated skill, or install a skill from another repo (including private repos). (file: /Users/lucaforstner/.codex/skills/.system/skill-installer/SKILL.md)\n- braintrust: Use the Braintrust `bt` CLI for projects, traces, prompts, and key Braintrust workflows. (file: /Users/lucaforstner/.agents/skills/braintrust/SKILL.md)\n- github:gh-address-comments: Address actionable GitHub pull request review feedback. Use when the user wants to inspect unresolved review threads, requested changes, or inline review comments on a PR, then implement selected fixes. Use the GitHub app for PR metadata and flat comment reads, and use the bundled GraphQL script via `gh` whenever thread-level state, resolution status, or inline review context matters. (file: /Users/lucaforstner/.codex/plugins/cache/openai-curated/github/b8edb371/skills/gh-address-comments/SKILL.md)\n- github:gh-fix-ci: Use when a user asks to debug or fix failing GitHub PR checks that run in GitHub Actions. Use the GitHub app from this plugin for PR metadata and patch context, and use `gh` for Actions check and log inspection before implementing any approved fix. (file: /Users/lucaforstner/.codex/plugins/cache/openai-curated/github/b8edb371/skills/gh-fix-ci/SKILL.md)\n- github:github: Triage and orient GitHub repository, pull request, and issue work through the connected GitHub app. Use when the user asks for general GitHub help, wants PR or issue summaries, or needs repository context before choosing a more specific GitHub workflow. (file: /Users/lucaforstner/.codex/plugins/cache/openai-curated/github/b8edb371/skills/github/SKILL.md)\n- github:yeet: Publish local changes to GitHub by confirming scope, committing intentionally, pushing the branch, and opening a draft PR through the GitHub app from this plugin, with `gh` used only as a fallback where connector coverage is insufficient. (file: /Users/lucaforstner/.codex/plugins/cache/openai-curated/github/b8edb371/skills/yeet/SKILL.md)\n### How to use skills\n- Discovery: The list above is the skills available in this session (name + description + file path). Skill bodies live on disk at the listed paths.\n- Trigger rules: If the user names a skill (with `$SkillName` or plain text) OR the task clearly matches a skill's description shown above, you must use that skill for that turn. Multiple mentions mean use them all. Do not carry skills across turns unless re-mentioned.\n- Missing/blocked: If a named skill isn't in the list or the path can't be read, say so briefly and continue with the best fallback.\n- How to use a skill (progressive disclosure):\n  1) After deciding to use a skill, open its `SKILL.md`. Read only enough to follow the workflow.\n  2) When `SKILL.md` references relative paths (e.g., `scripts/foo.py`), resolve them relative to the skill directory listed above first, and only consider other paths if needed.\n  3) If `SKILL.md` points to extra folders such as `references/`, load only the specific files needed for the request; don't bulk-load everything.\n  4) If `scripts/` exist, prefer running or patching them instead of retyping large code blocks.\n  5) If `assets/` or templates exist, reuse them instead of recreating from scratch.\n- Coordination and sequencing:\n  - If multiple skills apply, choose the minimal set that covers the request and state the order you'll use them.\n  - Announce which skill(s) you're using and why (one short line). If you skip an obvious skill, say why.\n- Context hygiene:\n  - Keep context small: summarize long sections instead of pasting them; only load extra files when needed.\n  - Avoid deep reference-chasing: prefer opening only files directly linked from `SKILL.md` unless you're blocked.\n  - When variants exist (frameworks, providers, domains), pick only the relevant reference file(s) and note that choice.\n- Safety and fallback: If a skill can't be applied cleanly (missing files, unclear instructions), state the issue, pick the next-best approach, and continue.\n</skills_instructions>",
                     "type": "input_text"
                   },
                   {
@@ -2339,7 +2339,7 @@
                     "type": "input_text"
                   },
                   {
-                    "text": "<environment_context>\n  <cwd>/tmp/braintrust-codex-e2e-openai-codex-instrumentation/openai-codex-v0128-auto-hook/stream</cwd>\n  <shell>zsh</shell>\n  <current_date>2026-05-13</current_date>\n  <timezone>Europe/Vienna</timezone>\n</environment_context>",
+                    "text": "<environment_context>\n  <cwd>/tmp/braintrust-codex-e2e-openai-codex-instrumentation/openai-codex-v0128-auto-hook/stream</cwd>\n  <shell>zsh</shell>\n  <current_date>2026-05-15</current_date>\n  <timezone>Europe/Vienna</timezone>\n</environment_context>",
                     "type": "input_text"
                   }
                 ],
@@ -2364,13 +2364,13 @@
               },
               {
                 "arguments": "{\"cmd\":\"cat codex-input.txt\"}",
-                "call_id": "call_JJOniNMnUqdijxrD0pWSlffU",
+                "call_id": "call_sTmCkS350vKpmey4K0Gf7kyc",
                 "name": "exec_command",
                 "type": "function_call"
               },
               {
-                "call_id": "call_JJOniNMnUqdijxrD0pWSlffU",
-                "output": "Chunk ID: 4991c7\nWall time: 0.0000 seconds\nProcess exited with code 0\nOriginal token count: 13\nOutput:\nThe final answer marker is OPENAI_CODEX_STREAM_OK.\n",
+                "call_id": "call_sTmCkS350vKpmey4K0Gf7kyc",
+                "output": "Chunk ID: 79e547\nWall time: 0.0219 seconds\nProcess exited with code 0\nOriginal token count: 13\nOutput:\nThe final answer marker is OPENAI_CODEX_STREAM_OK.\n",
                 "type": "function_call_output"
               }
             ],
@@ -2822,19 +2822,19 @@
         "body": {
           "contentType": "text/event-stream; charset=utf-8",
           "kind": "binary",
-          "path": "openai-codex-v0128-auto-hook.cassette.blobs/7a3504443e6ca5da296c2a5456198bca98fcb3fb56cbe393ebc077d53916481d.bin",
-          "sha256": "7a3504443e6ca5da296c2a5456198bca98fcb3fb56cbe393ebc077d53916481d"
+          "path": "openai-codex-v0128-auto-hook.cassette.blobs/df6630170e0027696754ff5023cf6c93ce551b580c205182898cf5fd201916f0.bin",
+          "sha256": "df6630170e0027696754ff5023cf6c93ce551b580c205182898cf5fd201916f0"
         },
         "headers": {
-          "access-control-expose-headers": "X-Request-ID, CF-Ray",
+          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "9fb3c2a82a4c23b5-VIE",
+          "cf-ray": "9fc1d8b93923f832-VIE",
           "connection": "keep-alive",
           "content-type": "text/event-stream; charset=utf-8",
-          "date": "Wed, 13 May 2026 18:34:59 GMT",
+          "date": "Fri, 15 May 2026 11:36:44 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "340",
+          "openai-processing-ms": "205",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
@@ -2845,10 +2845,10 @@
           "x-ratelimit-limit-requests": "15000",
           "x-ratelimit-limit-tokens": "10000000",
           "x-ratelimit-remaining-requests": "14999",
-          "x-ratelimit-remaining-tokens": "9989820",
+          "x-ratelimit-remaining-tokens": "9989825",
           "x-ratelimit-reset-requests": "4ms",
           "x-ratelimit-reset-tokens": "61ms",
-          "x-request-id": "req_4d30c4d644024a9ab2916b55b99cd08c"
+          "x-request-id": "req_472a0517b5084f869a5b1fd7a595eb93"
         },
         "status": 200,
         "statusText": "OK"
