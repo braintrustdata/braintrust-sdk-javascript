@@ -453,9 +453,7 @@
                       "type": "number"
                     }
                   },
-                  "required": [
-                    "cmd"
-                  ],
+                  "required": ["cmd"],
                   "type": "object"
                 },
                 "strict": false,
@@ -484,9 +482,7 @@
                       "type": "number"
                     }
                   },
-                  "required": [
-                    "session_id"
-                  ],
+                  "required": ["session_id"],
                   "type": "object"
                 },
                 "strict": false,
@@ -547,10 +543,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "server",
-                    "uri"
-                  ],
+                  "required": ["server", "uri"],
                   "type": "object"
                 },
                 "strict": false,
@@ -578,18 +571,13 @@
                             "type": "string"
                           }
                         },
-                        "required": [
-                          "step",
-                          "status"
-                        ],
+                        "required": ["step", "status"],
                         "type": "object"
                       },
                       "type": "array"
                     }
                   },
-                  "required": [
-                    "plan"
-                  ],
+                  "required": ["plan"],
                   "type": "object"
                 },
                 "strict": false,
@@ -628,10 +616,7 @@
                                   "type": "string"
                                 }
                               },
-                              "required": [
-                                "label",
-                                "description"
-                              ],
+                              "required": ["label", "description"],
                               "type": "object"
                             },
                             "type": "array"
@@ -641,20 +626,13 @@
                             "type": "string"
                           }
                         },
-                        "required": [
-                          "id",
-                          "header",
-                          "question",
-                          "options"
-                        ],
+                        "required": ["id", "header", "question", "options"],
                         "type": "object"
                       },
                       "type": "array"
                     }
                   },
-                  "required": [
-                    "questions"
-                  ],
+                  "required": ["questions"],
                   "type": "object"
                 },
                 "strict": false,
@@ -671,9 +649,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "path"
-                  ],
+                  "required": ["path"],
                   "type": "object"
                 },
                 "strict": false,
@@ -790,9 +766,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "target"
-                  ],
+                  "required": ["target"],
                   "type": "object"
                 },
                 "strict": false,
@@ -809,9 +783,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "id"
-                  ],
+                  "required": ["id"],
                   "type": "object"
                 },
                 "strict": false,
@@ -835,9 +807,7 @@
                       "type": "number"
                     }
                   },
-                  "required": [
-                    "targets"
-                  ],
+                  "required": ["targets"],
                   "type": "object"
                 },
                 "strict": false,
@@ -854,9 +824,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "target"
-                  ],
+                  "required": ["target"],
                   "type": "object"
                 },
                 "strict": false,
@@ -1039,9 +1007,7 @@
                       "type": "number"
                     }
                   },
-                  "required": [
-                    "cmd"
-                  ],
+                  "required": ["cmd"],
                   "type": "object"
                 },
                 "strict": false,
@@ -1070,9 +1036,7 @@
                       "type": "number"
                     }
                   },
-                  "required": [
-                    "session_id"
-                  ],
+                  "required": ["session_id"],
                   "type": "object"
                 },
                 "strict": false,
@@ -1133,10 +1097,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "server",
-                    "uri"
-                  ],
+                  "required": ["server", "uri"],
                   "type": "object"
                 },
                 "strict": false,
@@ -1164,18 +1125,13 @@
                             "type": "string"
                           }
                         },
-                        "required": [
-                          "step",
-                          "status"
-                        ],
+                        "required": ["step", "status"],
                         "type": "object"
                       },
                       "type": "array"
                     }
                   },
-                  "required": [
-                    "plan"
-                  ],
+                  "required": ["plan"],
                   "type": "object"
                 },
                 "strict": false,
@@ -1214,10 +1170,7 @@
                                   "type": "string"
                                 }
                               },
-                              "required": [
-                                "label",
-                                "description"
-                              ],
+                              "required": ["label", "description"],
                               "type": "object"
                             },
                             "type": "array"
@@ -1227,20 +1180,13 @@
                             "type": "string"
                           }
                         },
-                        "required": [
-                          "id",
-                          "header",
-                          "question",
-                          "options"
-                        ],
+                        "required": ["id", "header", "question", "options"],
                         "type": "object"
                       },
                       "type": "array"
                     }
                   },
-                  "required": [
-                    "questions"
-                  ],
+                  "required": ["questions"],
                   "type": "object"
                 },
                 "strict": false,
@@ -1257,9 +1203,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "path"
-                  ],
+                  "required": ["path"],
                   "type": "object"
                 },
                 "strict": false,
@@ -1376,9 +1320,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "target"
-                  ],
+                  "required": ["target"],
                   "type": "object"
                 },
                 "strict": false,
@@ -1395,9 +1337,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "id"
-                  ],
+                  "required": ["id"],
                   "type": "object"
                 },
                 "strict": false,
@@ -1421,9 +1361,7 @@
                       "type": "number"
                     }
                   },
-                  "required": [
-                    "targets"
-                  ],
+                  "required": ["targets"],
                   "type": "object"
                 },
                 "strict": false,
@@ -1440,9 +1378,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "target"
-                  ],
+                  "required": ["target"],
                   "type": "object"
                 },
                 "strict": false,
@@ -1944,9 +1880,7 @@
                       "type": "number"
                     }
                   },
-                  "required": [
-                    "cmd"
-                  ],
+                  "required": ["cmd"],
                   "type": "object"
                 },
                 "strict": false,
@@ -1975,9 +1909,7 @@
                       "type": "number"
                     }
                   },
-                  "required": [
-                    "session_id"
-                  ],
+                  "required": ["session_id"],
                   "type": "object"
                 },
                 "strict": false,
@@ -2038,10 +1970,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "server",
-                    "uri"
-                  ],
+                  "required": ["server", "uri"],
                   "type": "object"
                 },
                 "strict": false,
@@ -2069,18 +1998,13 @@
                             "type": "string"
                           }
                         },
-                        "required": [
-                          "step",
-                          "status"
-                        ],
+                        "required": ["step", "status"],
                         "type": "object"
                       },
                       "type": "array"
                     }
                   },
-                  "required": [
-                    "plan"
-                  ],
+                  "required": ["plan"],
                   "type": "object"
                 },
                 "strict": false,
@@ -2119,10 +2043,7 @@
                                   "type": "string"
                                 }
                               },
-                              "required": [
-                                "label",
-                                "description"
-                              ],
+                              "required": ["label", "description"],
                               "type": "object"
                             },
                             "type": "array"
@@ -2132,20 +2053,13 @@
                             "type": "string"
                           }
                         },
-                        "required": [
-                          "id",
-                          "header",
-                          "question",
-                          "options"
-                        ],
+                        "required": ["id", "header", "question", "options"],
                         "type": "object"
                       },
                       "type": "array"
                     }
                   },
-                  "required": [
-                    "questions"
-                  ],
+                  "required": ["questions"],
                   "type": "object"
                 },
                 "strict": false,
@@ -2162,9 +2076,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "path"
-                  ],
+                  "required": ["path"],
                   "type": "object"
                 },
                 "strict": false,
@@ -2281,9 +2193,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "target"
-                  ],
+                  "required": ["target"],
                   "type": "object"
                 },
                 "strict": false,
@@ -2300,9 +2210,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "id"
-                  ],
+                  "required": ["id"],
                   "type": "object"
                 },
                 "strict": false,
@@ -2326,9 +2234,7 @@
                       "type": "number"
                     }
                   },
-                  "required": [
-                    "targets"
-                  ],
+                  "required": ["targets"],
                   "type": "object"
                 },
                 "strict": false,
@@ -2345,9 +2251,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "target"
-                  ],
+                  "required": ["target"],
                   "type": "object"
                 },
                 "strict": false,
@@ -2530,9 +2434,7 @@
                       "type": "number"
                     }
                   },
-                  "required": [
-                    "cmd"
-                  ],
+                  "required": ["cmd"],
                   "type": "object"
                 },
                 "strict": false,
@@ -2561,9 +2463,7 @@
                       "type": "number"
                     }
                   },
-                  "required": [
-                    "session_id"
-                  ],
+                  "required": ["session_id"],
                   "type": "object"
                 },
                 "strict": false,
@@ -2624,10 +2524,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "server",
-                    "uri"
-                  ],
+                  "required": ["server", "uri"],
                   "type": "object"
                 },
                 "strict": false,
@@ -2655,18 +2552,13 @@
                             "type": "string"
                           }
                         },
-                        "required": [
-                          "step",
-                          "status"
-                        ],
+                        "required": ["step", "status"],
                         "type": "object"
                       },
                       "type": "array"
                     }
                   },
-                  "required": [
-                    "plan"
-                  ],
+                  "required": ["plan"],
                   "type": "object"
                 },
                 "strict": false,
@@ -2705,10 +2597,7 @@
                                   "type": "string"
                                 }
                               },
-                              "required": [
-                                "label",
-                                "description"
-                              ],
+                              "required": ["label", "description"],
                               "type": "object"
                             },
                             "type": "array"
@@ -2718,20 +2607,13 @@
                             "type": "string"
                           }
                         },
-                        "required": [
-                          "id",
-                          "header",
-                          "question",
-                          "options"
-                        ],
+                        "required": ["id", "header", "question", "options"],
                         "type": "object"
                       },
                       "type": "array"
                     }
                   },
-                  "required": [
-                    "questions"
-                  ],
+                  "required": ["questions"],
                   "type": "object"
                 },
                 "strict": false,
@@ -2748,9 +2630,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "path"
-                  ],
+                  "required": ["path"],
                   "type": "object"
                 },
                 "strict": false,
@@ -2867,9 +2747,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "target"
-                  ],
+                  "required": ["target"],
                   "type": "object"
                 },
                 "strict": false,
@@ -2886,9 +2764,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "id"
-                  ],
+                  "required": ["id"],
                   "type": "object"
                 },
                 "strict": false,
@@ -2912,9 +2788,7 @@
                       "type": "number"
                     }
                   },
-                  "required": [
-                    "targets"
-                  ],
+                  "required": ["targets"],
                   "type": "object"
                 },
                 "strict": false,
@@ -2931,9 +2805,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "target"
-                  ],
+                  "required": ["target"],
                   "type": "object"
                 },
                 "strict": false,

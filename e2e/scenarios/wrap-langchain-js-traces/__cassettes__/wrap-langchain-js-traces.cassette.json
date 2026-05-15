@@ -299,9 +299,7 @@
                         "type": "string"
                       }
                     },
-                    "required": [
-                      "location"
-                    ],
+                    "required": ["location"],
                     "type": "object"
                   }
                 },
@@ -430,20 +428,11 @@
                         "type": "number"
                       },
                       "operation": {
-                        "enum": [
-                          "add",
-                          "subtract",
-                          "multiply",
-                          "divide"
-                        ],
+                        "enum": ["add", "subtract", "multiply", "divide"],
                         "type": "string"
                       }
                     },
-                    "required": [
-                      "operation",
-                      "a",
-                      "b"
-                    ],
+                    "required": ["operation", "a", "b"],
                     "type": "object"
                   }
                 },
@@ -591,20 +580,11 @@
                         "type": "number"
                       },
                       "operation": {
-                        "enum": [
-                          "add",
-                          "subtract",
-                          "multiply",
-                          "divide"
-                        ],
+                        "enum": ["add", "subtract", "multiply", "divide"],
                         "type": "string"
                       }
                     },
-                    "required": [
-                      "operation",
-                      "a",
-                      "b"
-                    ],
+                    "required": ["operation", "a", "b"],
                     "type": "object"
                   }
                 },

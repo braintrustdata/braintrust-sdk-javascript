@@ -249,9 +249,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "location"
-                  ],
+                  "required": ["location"],
                   "type": "object"
                 },
                 "strict": false,
@@ -328,9 +326,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "location"
-                  ],
+                  "required": ["location"],
                   "type": "object"
                 },
                 "strict": false,
@@ -434,9 +430,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "location"
-                  ],
+                  "required": ["location"],
                   "type": "object"
                 },
                 "strict": false,
@@ -513,9 +507,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "location"
-                  ],
+                  "required": ["location"],
                   "type": "object"
                 },
                 "strict": false,
@@ -628,9 +620,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "location"
-                  ],
+                  "required": ["location"],
                   "type": "object"
                 },
                 "strict": false,
@@ -707,9 +697,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "location"
-                  ],
+                  "required": ["location"],
                   "type": "object"
                 },
                 "strict": false,
@@ -831,9 +819,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "location"
-                  ],
+                  "required": ["location"],
                   "type": "object"
                 },
                 "strict": false,
@@ -910,9 +896,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "location"
-                  ],
+                  "required": ["location"],
                   "type": "object"
                 },
                 "strict": false,

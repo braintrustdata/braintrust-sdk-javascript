@@ -49,10 +49,7 @@
                       },
                       "mode": {
                         "description": "Execution mode: \"sync\" runs synchronously and waits for completion (default), \"async\" runs in the background. You can send input to \"async\" commands using the `write_bash` tool and read output using the `read_bash` tool.",
-                        "enum": [
-                          "sync",
-                          "async"
-                        ],
+                        "enum": ["sync", "async"],
                         "type": "string"
                       },
                       "shellId": {
@@ -60,10 +57,7 @@
                         "type": "string"
                       }
                     },
-                    "required": [
-                      "command",
-                      "description"
-                    ],
+                    "required": ["command", "description"],
                     "type": "object"
                   }
                 },
@@ -88,10 +82,7 @@
                         "type": "string"
                       }
                     },
-                    "required": [
-                      "shellId",
-                      "delay"
-                    ],
+                    "required": ["shellId", "delay"],
                     "type": "object"
                   }
                 },
@@ -112,10 +103,7 @@
                         "type": "string"
                       }
                     },
-                    "required": [
-                      "shellId",
-                      "delay"
-                    ],
+                    "required": ["shellId", "delay"],
                     "type": "object"
                   }
                 },
@@ -132,9 +120,7 @@
                         "type": "string"
                       }
                     },
-                    "required": [
-                      "shellId"
-                    ],
+                    "required": ["shellId"],
                     "type": "object"
                   }
                 },
@@ -174,9 +160,7 @@
                         "type": "array"
                       }
                     },
-                    "required": [
-                      "path"
-                    ],
+                    "required": ["path"],
                     "type": "object"
                   }
                 },
@@ -197,10 +181,7 @@
                         "type": "string"
                       }
                     },
-                    "required": [
-                      "path",
-                      "file_text"
-                    ],
+                    "required": ["path", "file_text"],
                     "type": "object"
                   }
                 },
@@ -225,9 +206,7 @@
                         "type": "string"
                       }
                     },
-                    "required": [
-                      "path"
-                    ],
+                    "required": ["path"],
                     "type": "object"
                   }
                 },
@@ -256,9 +235,7 @@
                         "type": "string"
                       }
                     },
-                    "required": [
-                      "url"
-                    ],
+                    "required": ["url"],
                     "type": "object"
                   }
                 },
@@ -275,9 +252,7 @@
                         "type": "string"
                       }
                     },
-                    "required": [
-                      "intent"
-                    ],
+                    "required": ["intent"],
                     "type": "object"
                   }
                 },
@@ -294,9 +269,7 @@
                         "type": "string"
                       }
                     },
-                    "required": [
-                      "skill"
-                    ],
+                    "required": ["skill"],
                     "type": "object"
                   }
                 },
@@ -311,10 +284,7 @@
                       "database": {
                         "default": "session",
                         "description": "Which database to query. \"session\" (default) is the per-session database for task tracking. \"session_store\" is the global read-only database containing cross-session history, files, refs, and FTS5 search.",
-                        "enum": [
-                          "session",
-                          "session_store"
-                        ],
+                        "enum": ["session", "session_store"],
                         "type": "string"
                       },
                       "description": {
@@ -326,10 +296,7 @@
                         "type": "string"
                       }
                     },
-                    "required": [
-                      "description",
-                      "query"
-                    ],
+                    "required": ["description", "query"],
                     "type": "object"
                   }
                 },
@@ -358,9 +325,7 @@
                         "type": "boolean"
                       }
                     },
-                    "required": [
-                      "agent_id"
-                    ],
+                    "required": ["agent_id"],
                     "type": "object"
                   }
                 },
@@ -422,11 +387,7 @@
                       },
                       "output_mode": {
                         "description": "Output format. Defaults to \"files_with_matches\". \"content\": Shows matching lines (supports context flags and line numbers). \"files_with_matches\": Shows only file paths. \"count\": Shows match counts per file",
-                        "enum": [
-                          "content",
-                          "files_with_matches",
-                          "count"
-                        ],
+                        "enum": ["content", "files_with_matches", "count"],
                         "type": "string"
                       },
                       "paths": {
@@ -452,9 +413,7 @@
                         "type": "string"
                       }
                     },
-                    "required": [
-                      "pattern"
-                    ],
+                    "required": ["pattern"],
                     "type": "object"
                   }
                 },
@@ -485,9 +444,7 @@
                         "type": "string"
                       }
                     },
-                    "required": [
-                      "pattern"
-                    ],
+                    "required": ["pattern"],
                     "type": "object"
                   }
                 },
@@ -516,10 +473,7 @@
                       },
                       "mode": {
                         "description": "Use \"background\" for most agents — you will be automatically notified when they complete. Use \"sync\" for quick, simple tasks when blocking is preferable. Wait for background agent results before acting on their delegated work.",
-                        "enum": [
-                          "sync",
-                          "background"
-                        ],
+                        "enum": ["sync", "background"],
                         "type": "string"
                       },
                       "model": {
@@ -535,12 +489,7 @@
                         "type": "string"
                       }
                     },
-                    "required": [
-                      "name",
-                      "prompt",
-                      "agent_type",
-                      "description"
-                    ],
+                    "required": ["name", "prompt", "agent_type", "description"],
                     "type": "object"
                   }
                 },
@@ -674,10 +623,7 @@
                       },
                       "mode": {
                         "description": "Execution mode: \"sync\" runs synchronously and waits for completion (default), \"async\" runs in the background. You can send input to \"async\" commands using the `write_bash` tool and read output using the `read_bash` tool.",
-                        "enum": [
-                          "sync",
-                          "async"
-                        ],
+                        "enum": ["sync", "async"],
                         "type": "string"
                       },
                       "shellId": {
@@ -685,10 +631,7 @@
                         "type": "string"
                       }
                     },
-                    "required": [
-                      "command",
-                      "description"
-                    ],
+                    "required": ["command", "description"],
                     "type": "object"
                   }
                 },
@@ -713,10 +656,7 @@
                         "type": "string"
                       }
                     },
-                    "required": [
-                      "shellId",
-                      "delay"
-                    ],
+                    "required": ["shellId", "delay"],
                     "type": "object"
                   }
                 },
@@ -737,10 +677,7 @@
                         "type": "string"
                       }
                     },
-                    "required": [
-                      "shellId",
-                      "delay"
-                    ],
+                    "required": ["shellId", "delay"],
                     "type": "object"
                   }
                 },
@@ -757,9 +694,7 @@
                         "type": "string"
                       }
                     },
-                    "required": [
-                      "shellId"
-                    ],
+                    "required": ["shellId"],
                     "type": "object"
                   }
                 },
@@ -799,9 +734,7 @@
                         "type": "array"
                       }
                     },
-                    "required": [
-                      "path"
-                    ],
+                    "required": ["path"],
                     "type": "object"
                   }
                 },
@@ -822,10 +755,7 @@
                         "type": "string"
                       }
                     },
-                    "required": [
-                      "path",
-                      "file_text"
-                    ],
+                    "required": ["path", "file_text"],
                     "type": "object"
                   }
                 },
@@ -850,9 +780,7 @@
                         "type": "string"
                       }
                     },
-                    "required": [
-                      "path"
-                    ],
+                    "required": ["path"],
                     "type": "object"
                   }
                 },
@@ -881,9 +809,7 @@
                         "type": "string"
                       }
                     },
-                    "required": [
-                      "url"
-                    ],
+                    "required": ["url"],
                     "type": "object"
                   }
                 },
@@ -900,9 +826,7 @@
                         "type": "string"
                       }
                     },
-                    "required": [
-                      "intent"
-                    ],
+                    "required": ["intent"],
                     "type": "object"
                   }
                 },
@@ -919,9 +843,7 @@
                         "type": "string"
                       }
                     },
-                    "required": [
-                      "skill"
-                    ],
+                    "required": ["skill"],
                     "type": "object"
                   }
                 },
@@ -936,10 +858,7 @@
                       "database": {
                         "default": "session",
                         "description": "Which database to query. \"session\" (default) is the per-session database for task tracking. \"session_store\" is the global read-only database containing cross-session history, files, refs, and FTS5 search.",
-                        "enum": [
-                          "session",
-                          "session_store"
-                        ],
+                        "enum": ["session", "session_store"],
                         "type": "string"
                       },
                       "description": {
@@ -951,10 +870,7 @@
                         "type": "string"
                       }
                     },
-                    "required": [
-                      "description",
-                      "query"
-                    ],
+                    "required": ["description", "query"],
                     "type": "object"
                   }
                 },
@@ -983,9 +899,7 @@
                         "type": "boolean"
                       }
                     },
-                    "required": [
-                      "agent_id"
-                    ],
+                    "required": ["agent_id"],
                     "type": "object"
                   }
                 },
@@ -1047,11 +961,7 @@
                       },
                       "output_mode": {
                         "description": "Output format. Defaults to \"files_with_matches\". \"content\": Shows matching lines (supports context flags and line numbers). \"files_with_matches\": Shows only file paths. \"count\": Shows match counts per file",
-                        "enum": [
-                          "content",
-                          "files_with_matches",
-                          "count"
-                        ],
+                        "enum": ["content", "files_with_matches", "count"],
                         "type": "string"
                       },
                       "paths": {
@@ -1077,9 +987,7 @@
                         "type": "string"
                       }
                     },
-                    "required": [
-                      "pattern"
-                    ],
+                    "required": ["pattern"],
                     "type": "object"
                   }
                 },
@@ -1110,9 +1018,7 @@
                         "type": "string"
                       }
                     },
-                    "required": [
-                      "pattern"
-                    ],
+                    "required": ["pattern"],
                     "type": "object"
                   }
                 },
@@ -1141,10 +1047,7 @@
                       },
                       "mode": {
                         "description": "Use \"background\" for most agents — you will be automatically notified when they complete. Use \"sync\" for quick, simple tasks when blocking is preferable. Wait for background agent results before acting on their delegated work.",
-                        "enum": [
-                          "sync",
-                          "background"
-                        ],
+                        "enum": ["sync", "background"],
                         "type": "string"
                       },
                       "model": {
@@ -1160,12 +1063,7 @@
                         "type": "string"
                       }
                     },
-                    "required": [
-                      "name",
-                      "prompt",
-                      "agent_type",
-                      "description"
-                    ],
+                    "required": ["name", "prompt", "agent_type", "description"],
                     "type": "object"
                   }
                 },
@@ -1182,9 +1080,7 @@
                         "type": "string"
                       }
                     },
-                    "required": [
-                      "city"
-                    ],
+                    "required": ["city"],
                     "type": "object"
                   }
                 },
@@ -1349,10 +1245,7 @@
                       },
                       "mode": {
                         "description": "Execution mode: \"sync\" runs synchronously and waits for completion (default), \"async\" runs in the background. You can send input to \"async\" commands using the `write_bash` tool and read output using the `read_bash` tool.",
-                        "enum": [
-                          "sync",
-                          "async"
-                        ],
+                        "enum": ["sync", "async"],
                         "type": "string"
                       },
                       "shellId": {
@@ -1360,10 +1253,7 @@
                         "type": "string"
                       }
                     },
-                    "required": [
-                      "command",
-                      "description"
-                    ],
+                    "required": ["command", "description"],
                     "type": "object"
                   }
                 },
@@ -1388,10 +1278,7 @@
                         "type": "string"
                       }
                     },
-                    "required": [
-                      "shellId",
-                      "delay"
-                    ],
+                    "required": ["shellId", "delay"],
                     "type": "object"
                   }
                 },
@@ -1412,10 +1299,7 @@
                         "type": "string"
                       }
                     },
-                    "required": [
-                      "shellId",
-                      "delay"
-                    ],
+                    "required": ["shellId", "delay"],
                     "type": "object"
                   }
                 },
@@ -1432,9 +1316,7 @@
                         "type": "string"
                       }
                     },
-                    "required": [
-                      "shellId"
-                    ],
+                    "required": ["shellId"],
                     "type": "object"
                   }
                 },
@@ -1474,9 +1356,7 @@
                         "type": "array"
                       }
                     },
-                    "required": [
-                      "path"
-                    ],
+                    "required": ["path"],
                     "type": "object"
                   }
                 },
@@ -1497,10 +1377,7 @@
                         "type": "string"
                       }
                     },
-                    "required": [
-                      "path",
-                      "file_text"
-                    ],
+                    "required": ["path", "file_text"],
                     "type": "object"
                   }
                 },
@@ -1525,9 +1402,7 @@
                         "type": "string"
                       }
                     },
-                    "required": [
-                      "path"
-                    ],
+                    "required": ["path"],
                     "type": "object"
                   }
                 },
@@ -1556,9 +1431,7 @@
                         "type": "string"
                       }
                     },
-                    "required": [
-                      "url"
-                    ],
+                    "required": ["url"],
                     "type": "object"
                   }
                 },
@@ -1575,9 +1448,7 @@
                         "type": "string"
                       }
                     },
-                    "required": [
-                      "intent"
-                    ],
+                    "required": ["intent"],
                     "type": "object"
                   }
                 },
@@ -1594,9 +1465,7 @@
                         "type": "string"
                       }
                     },
-                    "required": [
-                      "skill"
-                    ],
+                    "required": ["skill"],
                     "type": "object"
                   }
                 },
@@ -1611,10 +1480,7 @@
                       "database": {
                         "default": "session",
                         "description": "Which database to query. \"session\" (default) is the per-session database for task tracking. \"session_store\" is the global read-only database containing cross-session history, files, refs, and FTS5 search.",
-                        "enum": [
-                          "session",
-                          "session_store"
-                        ],
+                        "enum": ["session", "session_store"],
                         "type": "string"
                       },
                       "description": {
@@ -1626,10 +1492,7 @@
                         "type": "string"
                       }
                     },
-                    "required": [
-                      "description",
-                      "query"
-                    ],
+                    "required": ["description", "query"],
                     "type": "object"
                   }
                 },
@@ -1658,9 +1521,7 @@
                         "type": "boolean"
                       }
                     },
-                    "required": [
-                      "agent_id"
-                    ],
+                    "required": ["agent_id"],
                     "type": "object"
                   }
                 },
@@ -1722,11 +1583,7 @@
                       },
                       "output_mode": {
                         "description": "Output format. Defaults to \"files_with_matches\". \"content\": Shows matching lines (supports context flags and line numbers). \"files_with_matches\": Shows only file paths. \"count\": Shows match counts per file",
-                        "enum": [
-                          "content",
-                          "files_with_matches",
-                          "count"
-                        ],
+                        "enum": ["content", "files_with_matches", "count"],
                         "type": "string"
                       },
                       "paths": {
@@ -1752,9 +1609,7 @@
                         "type": "string"
                       }
                     },
-                    "required": [
-                      "pattern"
-                    ],
+                    "required": ["pattern"],
                     "type": "object"
                   }
                 },
@@ -1785,9 +1640,7 @@
                         "type": "string"
                       }
                     },
-                    "required": [
-                      "pattern"
-                    ],
+                    "required": ["pattern"],
                     "type": "object"
                   }
                 },
@@ -1816,10 +1669,7 @@
                       },
                       "mode": {
                         "description": "Use \"background\" for most agents — you will be automatically notified when they complete. Use \"sync\" for quick, simple tasks when blocking is preferable. Wait for background agent results before acting on their delegated work.",
-                        "enum": [
-                          "sync",
-                          "background"
-                        ],
+                        "enum": ["sync", "background"],
                         "type": "string"
                       },
                       "model": {
@@ -1835,12 +1685,7 @@
                         "type": "string"
                       }
                     },
-                    "required": [
-                      "name",
-                      "prompt",
-                      "agent_type",
-                      "description"
-                    ],
+                    "required": ["name", "prompt", "agent_type", "description"],
                     "type": "object"
                   }
                 },
@@ -1857,9 +1702,7 @@
                         "type": "string"
                       }
                     },
-                    "required": [
-                      "city"
-                    ],
+                    "required": ["city"],
                     "type": "object"
                   }
                 },

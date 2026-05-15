@@ -486,9 +486,7 @@
                       "type": "number"
                     }
                   },
-                  "required": [
-                    "command"
-                  ],
+                  "required": ["command"],
                   "type": "object"
                 },
                 "name": "Bash"
@@ -508,9 +506,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "pattern"
-                  ],
+                  "required": ["pattern"],
                   "type": "object"
                 },
                 "name": "Glob"
@@ -563,11 +559,7 @@
                     },
                     "output_mode": {
                       "description": "Output mode: \"content\" shows matching lines (supports -A/-B/-C context, -n line numbers, head_limit), \"files_with_matches\" shows file paths (supports head_limit), \"count\" shows match counts (supports head_limit). Defaults to \"files_with_matches\".",
-                      "enum": [
-                        "content",
-                        "files_with_matches",
-                        "count"
-                      ],
+                      "enum": ["content", "files_with_matches", "count"],
                       "type": "string"
                     },
                     "path": {
@@ -583,9 +575,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "pattern"
-                  ],
+                  "required": ["pattern"],
                   "type": "object"
                 },
                 "name": "Grep"
@@ -613,9 +603,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "file_path"
-                  ],
+                  "required": ["file_path"],
                   "type": "object"
                 },
                 "name": "Read"
@@ -644,11 +632,7 @@
                       "type": "boolean"
                     }
                   },
-                  "required": [
-                    "file_path",
-                    "old_string",
-                    "new_string"
-                  ],
+                  "required": ["file_path", "old_string", "new_string"],
                   "type": "object"
                 },
                 "name": "Edit"
@@ -668,10 +652,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "file_path",
-                    "content"
-                  ],
+                  "required": ["file_path", "content"],
                   "type": "object"
                 },
                 "name": "Write"
@@ -688,19 +669,12 @@
                     },
                     "cell_type": {
                       "description": "The type of the cell (code or markdown). If not specified, it defaults to the current cell type. If using edit_mode=insert, this is required.",
-                      "enum": [
-                        "code",
-                        "markdown"
-                      ],
+                      "enum": ["code", "markdown"],
                       "type": "string"
                     },
                     "edit_mode": {
                       "description": "The type of edit to make (replace, insert, delete). Defaults to replace.",
-                      "enum": [
-                        "replace",
-                        "insert",
-                        "delete"
-                      ],
+                      "enum": ["replace", "insert", "delete"],
                       "type": "string"
                     },
                     "new_source": {
@@ -712,10 +686,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "notebook_path",
-                    "new_source"
-                  ],
+                  "required": ["notebook_path", "new_source"],
                   "type": "object"
                 },
                 "name": "NotebookEdit"
@@ -736,10 +707,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "url",
-                    "prompt"
-                  ],
+                  "required": ["url", "prompt"],
                   "type": "object"
                 },
                 "name": "WebFetch"
@@ -764,27 +732,17 @@
                             "type": "string"
                           },
                           "status": {
-                            "enum": [
-                              "pending",
-                              "in_progress",
-                              "completed"
-                            ],
+                            "enum": ["pending", "in_progress", "completed"],
                             "type": "string"
                           }
                         },
-                        "required": [
-                          "content",
-                          "status",
-                          "activeForm"
-                        ],
+                        "required": ["content", "status", "activeForm"],
                         "type": "object"
                       },
                       "type": "array"
                     }
                   },
-                  "required": [
-                    "todos"
-                  ],
+                  "required": ["todos"],
                   "type": "object"
                 },
                 "name": "TodoWrite"
@@ -815,9 +773,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "query"
-                  ],
+                  "required": ["query"],
                   "type": "object"
                 },
                 "name": "WebSearch"
@@ -837,9 +793,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "skill"
-                  ],
+                  "required": ["skill"],
                   "type": "object"
                 },
                 "name": "Skill"
@@ -867,10 +821,7 @@
                   "properties": {
                     "action": {
                       "description": "\"keep\" leaves the worktree and branch on disk; \"remove\" deletes both.",
-                      "enum": [
-                        "keep",
-                        "remove"
-                      ],
+                      "enum": ["keep", "remove"],
                       "type": "string"
                     },
                     "discard_changes": {
@@ -878,9 +829,7 @@
                       "type": "boolean"
                     }
                   },
-                  "required": [
-                    "action"
-                  ],
+                  "required": ["action"],
                   "type": "object"
                 },
                 "name": "ExitWorktree"
@@ -904,10 +853,7 @@
                       "type": "boolean"
                     }
                   },
-                  "required": [
-                    "cron",
-                    "prompt"
-                  ],
+                  "required": ["cron", "prompt"],
                   "type": "object"
                 },
                 "name": "CronCreate"
@@ -923,9 +869,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "id"
-                  ],
+                  "required": ["id"],
                   "type": "object"
                 },
                 "name": "CronDelete"
@@ -952,20 +896,11 @@
                       "type": "number"
                     },
                     "operation": {
-                      "enum": [
-                        "add",
-                        "divide",
-                        "multiply",
-                        "subtract"
-                      ],
+                      "enum": ["add", "divide", "multiply", "subtract"],
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "operation",
-                    "a",
-                    "b"
-                  ],
+                  "required": ["operation", "a", "b"],
                   "type": "object"
                 },
                 "name": "mcp__calculator__calculator"
@@ -1153,9 +1088,7 @@
                       "type": "number"
                     }
                   },
-                  "required": [
-                    "command"
-                  ],
+                  "required": ["command"],
                   "type": "object"
                 },
                 "name": "Bash"
@@ -1175,9 +1108,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "pattern"
-                  ],
+                  "required": ["pattern"],
                   "type": "object"
                 },
                 "name": "Glob"
@@ -1230,11 +1161,7 @@
                     },
                     "output_mode": {
                       "description": "Output mode: \"content\" shows matching lines (supports -A/-B/-C context, -n line numbers, head_limit), \"files_with_matches\" shows file paths (supports head_limit), \"count\" shows match counts (supports head_limit). Defaults to \"files_with_matches\".",
-                      "enum": [
-                        "content",
-                        "files_with_matches",
-                        "count"
-                      ],
+                      "enum": ["content", "files_with_matches", "count"],
                       "type": "string"
                     },
                     "path": {
@@ -1250,9 +1177,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "pattern"
-                  ],
+                  "required": ["pattern"],
                   "type": "object"
                 },
                 "name": "Grep"
@@ -1280,9 +1205,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "file_path"
-                  ],
+                  "required": ["file_path"],
                   "type": "object"
                 },
                 "name": "Read"
@@ -1311,11 +1234,7 @@
                       "type": "boolean"
                     }
                   },
-                  "required": [
-                    "file_path",
-                    "old_string",
-                    "new_string"
-                  ],
+                  "required": ["file_path", "old_string", "new_string"],
                   "type": "object"
                 },
                 "name": "Edit"
@@ -1335,10 +1254,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "file_path",
-                    "content"
-                  ],
+                  "required": ["file_path", "content"],
                   "type": "object"
                 },
                 "name": "Write"
@@ -1355,19 +1271,12 @@
                     },
                     "cell_type": {
                       "description": "The type of the cell (code or markdown). If not specified, it defaults to the current cell type. If using edit_mode=insert, this is required.",
-                      "enum": [
-                        "code",
-                        "markdown"
-                      ],
+                      "enum": ["code", "markdown"],
                       "type": "string"
                     },
                     "edit_mode": {
                       "description": "The type of edit to make (replace, insert, delete). Defaults to replace.",
-                      "enum": [
-                        "replace",
-                        "insert",
-                        "delete"
-                      ],
+                      "enum": ["replace", "insert", "delete"],
                       "type": "string"
                     },
                     "new_source": {
@@ -1379,10 +1288,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "notebook_path",
-                    "new_source"
-                  ],
+                  "required": ["notebook_path", "new_source"],
                   "type": "object"
                 },
                 "name": "NotebookEdit"
@@ -1403,10 +1309,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "url",
-                    "prompt"
-                  ],
+                  "required": ["url", "prompt"],
                   "type": "object"
                 },
                 "name": "WebFetch"
@@ -1431,27 +1334,17 @@
                             "type": "string"
                           },
                           "status": {
-                            "enum": [
-                              "pending",
-                              "in_progress",
-                              "completed"
-                            ],
+                            "enum": ["pending", "in_progress", "completed"],
                             "type": "string"
                           }
                         },
-                        "required": [
-                          "content",
-                          "status",
-                          "activeForm"
-                        ],
+                        "required": ["content", "status", "activeForm"],
                         "type": "object"
                       },
                       "type": "array"
                     }
                   },
-                  "required": [
-                    "todos"
-                  ],
+                  "required": ["todos"],
                   "type": "object"
                 },
                 "name": "TodoWrite"
@@ -1482,9 +1375,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "query"
-                  ],
+                  "required": ["query"],
                   "type": "object"
                 },
                 "name": "WebSearch"
@@ -1504,9 +1395,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "skill"
-                  ],
+                  "required": ["skill"],
                   "type": "object"
                 },
                 "name": "Skill"
@@ -1534,10 +1423,7 @@
                   "properties": {
                     "action": {
                       "description": "\"keep\" leaves the worktree and branch on disk; \"remove\" deletes both.",
-                      "enum": [
-                        "keep",
-                        "remove"
-                      ],
+                      "enum": ["keep", "remove"],
                       "type": "string"
                     },
                     "discard_changes": {
@@ -1545,9 +1431,7 @@
                       "type": "boolean"
                     }
                   },
-                  "required": [
-                    "action"
-                  ],
+                  "required": ["action"],
                   "type": "object"
                 },
                 "name": "ExitWorktree"
@@ -1571,10 +1455,7 @@
                       "type": "boolean"
                     }
                   },
-                  "required": [
-                    "cron",
-                    "prompt"
-                  ],
+                  "required": ["cron", "prompt"],
                   "type": "object"
                 },
                 "name": "CronCreate"
@@ -1590,9 +1471,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "id"
-                  ],
+                  "required": ["id"],
                   "type": "object"
                 },
                 "name": "CronDelete"
@@ -1619,20 +1498,11 @@
                       "type": "number"
                     },
                     "operation": {
-                      "enum": [
-                        "add",
-                        "divide",
-                        "multiply",
-                        "subtract"
-                      ],
+                      "enum": ["add", "divide", "multiply", "subtract"],
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "operation",
-                    "a",
-                    "b"
-                  ],
+                  "required": ["operation", "a", "b"],
                   "type": "object"
                 },
                 "name": "mcp__calculator__calculator"
@@ -1934,9 +1804,7 @@
                       "type": "number"
                     }
                   },
-                  "required": [
-                    "command"
-                  ],
+                  "required": ["command"],
                   "type": "object"
                 },
                 "name": "Bash"
@@ -2114,9 +1982,7 @@
                       "type": "number"
                     }
                   },
-                  "required": [
-                    "command"
-                  ],
+                  "required": ["command"],
                   "type": "object"
                 },
                 "name": "Bash"

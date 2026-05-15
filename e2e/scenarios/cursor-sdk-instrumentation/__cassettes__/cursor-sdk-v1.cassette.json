@@ -99,10 +99,7 @@
                 ]
               },
               {
-                "aliases": [
-                  "composer-latest",
-                  "composer"
-                ],
+                "aliases": ["composer-latest", "composer"],
                 "displayName": "Composer 2",
                 "id": "composer-2",
                 "parameters": [
@@ -143,11 +140,7 @@
                 ]
               },
               {
-                "aliases": [
-                  "gpt-latest",
-                  "gpt",
-                  "gpt-5-5"
-                ],
+                "aliases": ["gpt-latest", "gpt", "gpt-5-5"],
                 "displayName": "GPT-5.5",
                 "id": "gpt-5.5",
                 "parameters": [
@@ -465,11 +458,7 @@
                 ]
               },
               {
-                "aliases": [
-                  "codex-latest",
-                  "codex",
-                  "codex-5.3"
-                ],
+                "aliases": ["codex-latest", "codex", "codex-5.3"],
                 "displayName": "Codex 5.3",
                 "id": "gpt-5.3-codex",
                 "parameters": [
@@ -954,12 +943,7 @@
                 ]
               },
               {
-                "aliases": [
-                  "opus-latest",
-                  "opus",
-                  "opus-4.7",
-                  "opus-4-7"
-                ],
+                "aliases": ["opus-latest", "opus", "opus-4.7", "opus-4-7"],
                 "displayName": "Opus 4.7",
                 "id": "claude-opus-4-7",
                 "parameters": [
@@ -1875,10 +1859,7 @@
                 ]
               },
               {
-                "aliases": [
-                  "grok-latest",
-                  "grok"
-                ],
+                "aliases": ["grok-latest", "grok"],
                 "displayName": "Grok 4.3",
                 "id": "grok-4.3",
                 "parameters": [
@@ -1920,9 +1901,7 @@
                 ]
               },
               {
-                "aliases": [
-                  "gpt"
-                ],
+                "aliases": ["gpt"],
                 "displayName": "GPT-5.4",
                 "id": "gpt-5.4",
                 "parameters": [
@@ -2240,11 +2219,7 @@
                 ]
               },
               {
-                "aliases": [
-                  "opus",
-                  "opus-4.6",
-                  "opus-4-6"
-                ],
+                "aliases": ["opus", "opus-4.6", "opus-4-6"],
                 "displayName": "Opus 4.6",
                 "id": "claude-opus-4-6",
                 "parameters": [
@@ -2988,11 +2963,7 @@
                 ]
               },
               {
-                "aliases": [
-                  "opus",
-                  "opus-4.5",
-                  "opus-4-5"
-                ],
+                "aliases": ["opus", "opus-4.5", "opus-4-5"],
                 "displayName": "Opus 4.5",
                 "id": "claude-opus-4-5",
                 "parameters": [
@@ -3033,9 +3004,7 @@
                 ]
               },
               {
-                "aliases": [
-                  "gpt"
-                ],
+                "aliases": ["gpt"],
                 "displayName": "GPT-5.2",
                 "id": "gpt-5.2",
                 "parameters": [
@@ -3201,10 +3170,7 @@
                 ]
               },
               {
-                "aliases": [
-                  "gpt-mini-latest",
-                  "gpt-mini"
-                ],
+                "aliases": ["gpt-mini-latest", "gpt-mini"],
                 "displayName": "GPT-5.4 Mini",
                 "id": "gpt-5.4-mini",
                 "parameters": [
@@ -3285,10 +3251,7 @@
                 ]
               },
               {
-                "aliases": [
-                  "gpt-nano-latest",
-                  "gpt-nano"
-                ],
+                "aliases": ["gpt-nano-latest", "gpt-nano"],
                 "displayName": "GPT-5.4 Nano",
                 "id": "gpt-5.4-nano",
                 "parameters": [
@@ -3369,12 +3332,7 @@
                 ]
               },
               {
-                "aliases": [
-                  "haiku-latest",
-                  "haiku",
-                  "haiku-4.5",
-                  "haiku-4-5"
-                ],
+                "aliases": ["haiku-latest", "haiku", "haiku-4.5", "haiku-4-5"],
                 "displayName": "Haiku 4.5",
                 "id": "claude-haiku-4-5",
                 "parameters": [
@@ -3415,11 +3373,7 @@
                 ]
               },
               {
-                "aliases": [
-                  "sonnet",
-                  "sonnet-4.5",
-                  "sonnet-4-5"
-                ],
+                "aliases": ["sonnet", "sonnet-4.5", "sonnet-4-5"],
                 "displayName": "Sonnet 4.5",
                 "id": "claude-sonnet-4-5",
                 "parameters": [
@@ -3478,10 +3432,7 @@
                 ]
               },
               {
-                "aliases": [
-                  "codex",
-                  "codex-5.2"
-                ],
+                "aliases": ["codex", "codex-5.2"],
                 "displayName": "Codex 5.2",
                 "id": "gpt-5.2-codex",
                 "parameters": [
@@ -3630,10 +3581,7 @@
                 ]
               },
               {
-                "aliases": [
-                  "codex",
-                  "codex-5.1-max"
-                ],
+                "aliases": ["codex", "codex-5.1-max"],
                 "displayName": "Codex 5.1 Max",
                 "id": "gpt-5.1-codex-max",
                 "parameters": [
@@ -3782,9 +3730,7 @@
                 ]
               },
               {
-                "aliases": [
-                  "gpt"
-                ],
+                "aliases": ["gpt"],
                 "displayName": "GPT-5.1",
                 "id": "gpt-5.1",
                 "parameters": [
@@ -3839,10 +3785,7 @@
                 ]
               },
               {
-                "aliases": [
-                  "gemini-flash-latest",
-                  "gemini-flash"
-                ],
+                "aliases": ["gemini-flash-latest", "gemini-flash"],
                 "displayName": "Gemini 3 Flash",
                 "id": "gemini-3-flash",
                 "variants": [
@@ -3854,10 +3797,7 @@
                 ]
               },
               {
-                "aliases": [
-                  "codex-mini-latest",
-                  "codex-mini"
-                ],
+                "aliases": ["codex-mini-latest", "codex-mini"],
                 "displayName": "Codex 5.1 Mini",
                 "id": "gpt-5.1-codex-mini",
                 "parameters": [
@@ -3912,10 +3852,7 @@
                 ]
               },
               {
-                "aliases": [
-                  "sonnet",
-                  "sonnet-4"
-                ],
+                "aliases": ["sonnet", "sonnet-4"],
                 "displayName": "Sonnet 4",
                 "id": "claude-sonnet-4",
                 "parameters": [
@@ -3974,9 +3911,7 @@
                 ]
               },
               {
-                "aliases": [
-                  "gpt-mini"
-                ],
+                "aliases": ["gpt-mini"],
                 "displayName": "GPT-5 Mini",
                 "id": "gpt-5-mini",
                 "variants": [
@@ -3988,9 +3923,7 @@
                 ]
               },
               {
-                "aliases": [
-                  "gemini-flash"
-                ],
+                "aliases": ["gemini-flash"],
                 "displayName": "Gemini 2.5 Flash",
                 "id": "gemini-2.5-flash",
                 "variants": [
@@ -4002,10 +3935,7 @@
                 ]
               },
               {
-                "aliases": [
-                  "kimi-latest",
-                  "kimi"
-                ],
+                "aliases": ["kimi-latest", "kimi"],
                 "displayName": "Kimi K2.5",
                 "id": "kimi-k2.5",
                 "variants": [

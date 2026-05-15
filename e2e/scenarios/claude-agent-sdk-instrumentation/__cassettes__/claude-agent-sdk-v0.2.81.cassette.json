@@ -787,9 +787,7 @@
                       "type": "number"
                     }
                   },
-                  "required": [
-                    "command"
-                  ],
+                  "required": ["command"],
                   "type": "object"
                 },
                 "name": "Bash"
@@ -966,9 +964,7 @@
                       "type": "number"
                     }
                   },
-                  "required": [
-                    "command"
-                  ],
+                  "required": ["command"],
                   "type": "object"
                 },
                 "name": "Bash"

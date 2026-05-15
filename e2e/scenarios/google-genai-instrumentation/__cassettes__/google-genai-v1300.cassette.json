@@ -501,9 +501,7 @@
             },
             "toolConfig": {
               "functionCallingConfig": {
-                "allowedFunctionNames": [
-                  "get_weather"
-                ],
+                "allowedFunctionNames": ["get_weather"],
                 "mode": "ANY"
               }
             },
@@ -520,9 +518,7 @@
                           "type": "string"
                         }
                       },
-                      "required": [
-                        "location"
-                      ],
+                      "required": ["location"],
                       "type": "object"
                     }
                   }
