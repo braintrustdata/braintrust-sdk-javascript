@@ -484,7 +484,7 @@ function mockInitGitMetadata() {
   ).mockResolvedValue([]);
 }
 
-test("init forwards dataset _internal_btql to experiment register", async () => {
+test("init preserves dataset _internal_btql before experiment register", async () => {
   const state = await _exportsForTestingOnly.simulateLoginForTests();
 
   try {
@@ -504,7 +504,6 @@ test("init forwards dataset _internal_btql to experiment register", async () => 
         },
       ],
     };
-
     let experimentRegisterBody: unknown;
     vi.spyOn(state.appConn(), "post_json")
       .mockResolvedValueOnce({
@@ -564,7 +563,7 @@ test("init forwards dataset _internal_btql to experiment register", async () => 
   }
 });
 
-test("dataset fetch forwards _internal_btql filter arrays to btql", async () => {
+test("dataset fetch normalizes _internal_btql filter arrays before btql", async () => {
   const state = await _exportsForTestingOnly.simulateLoginForTests();
 
   try {
@@ -582,6 +581,13 @@ test("dataset fetch forwards _internal_btql filter arrays to btql", async () => 
           expr: { op: "ident", name: ["expected"] },
         },
       ],
+      limit: 5,
+    };
+    const normalizedDatasetFilter = {
+      filter: {
+        op: "and",
+        children: datasetFilter.filter,
+      },
       limit: 5,
     };
 
@@ -623,7 +629,7 @@ test("dataset fetch forwards _internal_btql filter arrays to btql", async () => 
     expect(btqlBody).toEqual(
       expect.objectContaining({
         query: expect.objectContaining({
-          filter: datasetFilter.filter,
+          filter: normalizedDatasetFilter.filter,
           limit: 5,
         }),
       }),
