@@ -2,366 +2,26 @@
   "entries": [
     {
       "callIndex": 0,
-      "id": "5c650117cb5e8aad",
-      "matchKey": "GET api.openai.com/v1/responses",
-      "recordedAt": "2026-05-15T11:35:43.024Z",
-      "request": {
-        "body": {
-          "kind": "empty"
-        },
-        "headers": {},
-        "method": "GET",
-        "url": "https://api.openai.com/v1/responses"
-      },
-      "response": {
-        "body": {
-          "kind": "json",
-          "value": {
-            "error": {
-              "code": "missing_scope",
-              "message": "Your request to GET /v1/responses must be made with a session key (that is, it can only be made from the browser). You made it with the following key type: .",
-              "param": null,
-              "type": "invalid_request_error"
-            }
-          }
-        },
-        "headers": {
-          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
-          "alt-svc": "h3=\":443\"; ma=86400",
-          "cf-cache-status": "DYNAMIC",
-          "cf-ray": "9fc1d73b49a05af4-VIE",
-          "connection": "keep-alive",
-          "content-length": "280",
-          "content-type": "application/json",
-          "date": "Fri, 15 May 2026 11:35:43 GMT",
-          "openai-organization": "braintrust-data",
-          "openai-processing-ms": "4",
-          "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
-          "openai-version": "2020-10-01",
-          "server": "cloudflare",
-          "set-cookie": "[REDACTED]",
-          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
-          "x-content-type-options": "nosniff",
-          "x-request-id": "req_a86f085e8ba24863bc4e2c00801d8e5d"
-        },
-        "status": 401,
-        "statusText": "Unauthorized"
-      }
-    },
-    {
-      "callIndex": 1,
-      "id": "1006b098128dbda6",
-      "matchKey": "GET api.openai.com/v1/responses",
-      "recordedAt": "2026-05-15T11:35:43.574Z",
-      "request": {
-        "body": {
-          "kind": "empty"
-        },
-        "headers": {},
-        "method": "GET",
-        "url": "https://api.openai.com/v1/responses"
-      },
-      "response": {
-        "body": {
-          "kind": "json",
-          "value": {
-            "error": {
-              "code": "missing_scope",
-              "message": "Your request to GET /v1/responses must be made with a session key (that is, it can only be made from the browser). You made it with the following key type: .",
-              "param": null,
-              "type": "invalid_request_error"
-            }
-          }
-        },
-        "headers": {
-          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
-          "alt-svc": "h3=\":443\"; ma=86400",
-          "cf-cache-status": "DYNAMIC",
-          "cf-ray": "9fc1d73ece1e5af4-VIE",
-          "connection": "keep-alive",
-          "content-length": "280",
-          "content-type": "application/json",
-          "date": "Fri, 15 May 2026 11:35:43 GMT",
-          "openai-organization": "braintrust-data",
-          "openai-processing-ms": "4",
-          "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
-          "openai-version": "2020-10-01",
-          "server": "cloudflare",
-          "set-cookie": "[REDACTED]",
-          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
-          "x-content-type-options": "nosniff",
-          "x-request-id": "req_9bd49940e3c44a128c9f6aeec5665f21"
-        },
-        "status": 401,
-        "statusText": "Unauthorized"
-      }
-    },
-    {
-      "callIndex": 2,
-      "id": "a8fae7e3841380c0",
-      "matchKey": "GET api.openai.com/v1/responses",
-      "recordedAt": "2026-05-15T11:35:44.335Z",
-      "request": {
-        "body": {
-          "kind": "empty"
-        },
-        "headers": {},
-        "method": "GET",
-        "url": "https://api.openai.com/v1/responses"
-      },
-      "response": {
-        "body": {
-          "kind": "json",
-          "value": {
-            "error": {
-              "code": "missing_scope",
-              "message": "Your request to GET /v1/responses must be made with a session key (that is, it can only be made from the browser). You made it with the following key type: .",
-              "param": null,
-              "type": "invalid_request_error"
-            }
-          }
-        },
-        "headers": {
-          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
-          "alt-svc": "h3=\":443\"; ma=86400",
-          "cf-cache-status": "DYNAMIC",
-          "cf-ray": "9fc1d7432a3b5af4-VIE",
-          "connection": "keep-alive",
-          "content-length": "280",
-          "content-type": "application/json",
-          "date": "Fri, 15 May 2026 11:35:44 GMT",
-          "openai-organization": "braintrust-data",
-          "openai-processing-ms": "5",
-          "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
-          "openai-version": "2020-10-01",
-          "server": "cloudflare",
-          "set-cookie": "[REDACTED]",
-          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
-          "x-content-type-options": "nosniff",
-          "x-request-id": "req_f36c65f6073f4f9db53680f9413c4990"
-        },
-        "status": 401,
-        "statusText": "Unauthorized"
-      }
-    },
-    {
-      "callIndex": 3,
-      "id": "80cfd57e6a7ef8d9",
-      "matchKey": "GET api.openai.com/v1/responses",
-      "recordedAt": "2026-05-15T11:35:45.295Z",
-      "request": {
-        "body": {
-          "kind": "empty"
-        },
-        "headers": {},
-        "method": "GET",
-        "url": "https://api.openai.com/v1/responses"
-      },
-      "response": {
-        "body": {
-          "kind": "json",
-          "value": {
-            "error": {
-              "code": "missing_scope",
-              "message": "Your request to GET /v1/responses must be made with a session key (that is, it can only be made from the browser). You made it with the following key type: .",
-              "param": null,
-              "type": "invalid_request_error"
-            }
-          }
-        },
-        "headers": {
-          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
-          "alt-svc": "h3=\":443\"; ma=86400",
-          "cf-cache-status": "DYNAMIC",
-          "cf-ray": "9fc1d749688e5af4-VIE",
-          "connection": "keep-alive",
-          "content-length": "280",
-          "content-type": "application/json",
-          "date": "Fri, 15 May 2026 11:35:45 GMT",
-          "openai-organization": "braintrust-data",
-          "openai-processing-ms": "5",
-          "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
-          "openai-version": "2020-10-01",
-          "server": "cloudflare",
-          "set-cookie": "[REDACTED]",
-          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
-          "x-content-type-options": "nosniff",
-          "x-request-id": "req_3b902a1356b04d34ab999fd4baf7c7aa"
-        },
-        "status": 401,
-        "statusText": "Unauthorized"
-      }
-    },
-    {
-      "callIndex": 4,
-      "id": "587b4cf3bdddb025",
-      "matchKey": "GET api.openai.com/v1/responses",
-      "recordedAt": "2026-05-15T11:35:46.749Z",
-      "request": {
-        "body": {
-          "kind": "empty"
-        },
-        "headers": {},
-        "method": "GET",
-        "url": "https://api.openai.com/v1/responses"
-      },
-      "response": {
-        "body": {
-          "kind": "json",
-          "value": {
-            "error": {
-              "code": "missing_scope",
-              "message": "Your request to GET /v1/responses must be made with a session key (that is, it can only be made from the browser). You made it with the following key type: .",
-              "param": null,
-              "type": "invalid_request_error"
-            }
-          }
-        },
-        "headers": {
-          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
-          "alt-svc": "h3=\":443\"; ma=86400",
-          "cf-cache-status": "DYNAMIC",
-          "cf-ray": "9fc1d752b9705af4-VIE",
-          "connection": "keep-alive",
-          "content-length": "280",
-          "content-type": "application/json",
-          "date": "Fri, 15 May 2026 11:35:46 GMT",
-          "openai-organization": "braintrust-data",
-          "openai-processing-ms": "8",
-          "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
-          "openai-version": "2020-10-01",
-          "server": "cloudflare",
-          "set-cookie": "[REDACTED]",
-          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
-          "x-content-type-options": "nosniff",
-          "x-request-id": "req_902635831b5b40ad9b7b321668473a48"
-        },
-        "status": 401,
-        "statusText": "Unauthorized"
-      }
-    },
-    {
-      "callIndex": 5,
-      "id": "1900b58552455539",
-      "matchKey": "GET api.openai.com/v1/responses",
-      "recordedAt": "2026-05-15T11:35:48.543Z",
-      "request": {
-        "body": {
-          "kind": "empty"
-        },
-        "headers": {},
-        "method": "GET",
-        "url": "https://api.openai.com/v1/responses"
-      },
-      "response": {
-        "body": {
-          "kind": "json",
-          "value": {
-            "error": {
-              "code": "missing_scope",
-              "message": "Your request to GET /v1/responses must be made with a session key (that is, it can only be made from the browser). You made it with the following key type: .",
-              "param": null,
-              "type": "invalid_request_error"
-            }
-          }
-        },
-        "headers": {
-          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
-          "alt-svc": "h3=\":443\"; ma=86400",
-          "cf-cache-status": "DYNAMIC",
-          "cf-ray": "9fc1d75f5ee95af4-VIE",
-          "connection": "keep-alive",
-          "content-length": "280",
-          "content-type": "application/json",
-          "date": "Fri, 15 May 2026 11:35:48 GMT",
-          "openai-organization": "braintrust-data",
-          "openai-processing-ms": "6",
-          "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
-          "openai-version": "2020-10-01",
-          "server": "cloudflare",
-          "set-cookie": "[REDACTED]",
-          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
-          "x-content-type-options": "nosniff",
-          "x-request-id": "req_ee2367228f2a4b55ba311206badc0551"
-        },
-        "status": 401,
-        "statusText": "Unauthorized"
-      }
-    },
-    {
-      "callIndex": 6,
-      "id": "c0d449bd5bef3b10",
-      "matchKey": "GET api.openai.com/v1/responses",
-      "recordedAt": "2026-05-15T11:35:52.327Z",
-      "request": {
-        "body": {
-          "kind": "empty"
-        },
-        "headers": {},
-        "method": "GET",
-        "url": "https://api.openai.com/v1/responses"
-      },
-      "response": {
-        "body": {
-          "kind": "json",
-          "value": {
-            "error": {
-              "code": "missing_scope",
-              "message": "Your request to GET /v1/responses must be made with a session key (that is, it can only be made from the browser). You made it with the following key type: .",
-              "param": null,
-              "type": "invalid_request_error"
-            }
-          }
-        },
-        "headers": {
-          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
-          "alt-svc": "h3=\":443\"; ma=86400",
-          "cf-cache-status": "DYNAMIC",
-          "cf-ray": "9fc1d7757a185af4-VIE",
-          "connection": "keep-alive",
-          "content-length": "280",
-          "content-type": "application/json",
-          "date": "Fri, 15 May 2026 11:35:52 GMT",
-          "openai-organization": "braintrust-data",
-          "openai-processing-ms": "24",
-          "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
-          "openai-version": "2020-10-01",
-          "server": "cloudflare",
-          "set-cookie": "[REDACTED]",
-          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
-          "x-content-type-options": "nosniff",
-          "x-request-id": "req_27a428ff87824111ab6b0af6ad4223e6"
-        },
-        "status": 401,
-        "statusText": "Unauthorized"
-      }
-    },
-    {
-      "callIndex": 0,
-      "id": "2734b7343de982bf",
+      "id": "025aa3e7d17dd99b",
       "matchKey": "POST api.openai.com/v1/responses",
-      "recordedAt": "2026-05-15T11:35:54.558Z",
+      "recordedAt": "2026-05-15T13:23:42.659Z",
       "request": {
         "body": {
           "kind": "json",
           "value": {
             "client_metadata": {
-              "x-codex-installation-id": "b32accb4-04ce-409a-a6b8-d53b231799e1"
+              "x-codex-installation-id": "b33472c2-82e4-4e05-9485-606bf89d78cd"
             },
             "include": [],
             "input": [
               {
                 "content": [
                   {
-                    "text": "<permissions instructions>\nFilesystem sandboxing defines which files can be read or written. `sandbox_mode` is `workspace-write`: The sandbox permits reading files, and editing files in `cwd` and `writable_roots`. Editing files in other directories requires approval. Network access is restricted.\nApproval policy is currently never. Do not provide the `sandbox_permissions` for any reason, commands will be rejected.\n The writable roots are `/private/tmp/braintrust-codex-e2e-openai-codex-instrumentation/openai-codex-v0128-wrapped/run`, `/private/tmp`, `/private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T`, `/Users/lucaforstner/.codex/memories`.\n</permissions instructions>",
+                    "text": "<permissions instructions>\nFilesystem sandboxing defines which files can be read or written. `sandbox_mode` is `workspace-write`: The sandbox permits reading files, and editing files in `cwd` and `writable_roots`. Editing files in other directories requires approval. Network access is restricted.\nApproval policy is currently never. Do not provide the `sandbox_permissions` for any reason, commands will be rejected.\n The writable roots are `/private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-openai-codex-v0128-wrapped-ChcjII/run`, `/private/tmp`, `/private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T`, `/private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-openai-codex-v0128-wrapped-ChcjII/codex-home/memories`.\n</permissions instructions>",
                     "type": "input_text"
                   },
                   {
-                    "text": "<skills_instructions>\n## Skills\nA skill is a set of local instructions to follow that is stored in a `SKILL.md` file. Below is the list of skills that can be used. Each entry includes a name, description, and file path so you can open the source for full instructions when using a specific skill.\n### Available skills\n- imagegen: Generate or edit raster images when the task benefits from AI-created bitmap visuals such as photos, illustrations, textures, sprites, mockups, or transparent-background cutouts. Use when Codex should create a brand-new image, transform an existing image, or derive visual variants from references, and the output should be a bitmap asset rather than repo-native code or vector. Do not use when the task is better handled by editing existing SVG/vector/code-native assets, extending an established icon or logo system, or building the visual directly in HTML/CSS/canvas. (file: /Users/lucaforstner/.codex/skills/.system/imagegen/SKILL.md)\n- openai-docs: Use when the user asks how to build with OpenAI products or APIs and needs up-to-date official documentation with citations, help choosing the latest model for a use case, or model upgrade and prompt-upgrade guidance; prioritize OpenAI docs MCP tools, use bundled references only as helper context, and restrict any fallback browsing to official OpenAI domains. (file: /Users/lucaforstner/.codex/skills/.system/openai-docs/SKILL.md)\n- plugin-creator: Create and scaffold plugin directories for Codex with a required `.codex-plugin/plugin.json`, optional plugin folders/files, and baseline placeholders you can edit before publishing or testing. Use when Codex needs to create a new local plugin, add optional plugin structure, or generate or update repo-root `.agents/plugins/marketplace.json` entries for plugin ordering and availability metadata. (file: /Users/lucaforstner/.codex/skills/.system/plugin-creator/SKILL.md)\n- skill-creator: Guide for creating effective skills. This skill should be used when users want to create a new skill (or update an existing skill) that extends Codex's capabilities with specialized knowledge, workflows, or tool integrations. (file: /Users/lucaforstner/.codex/skills/.system/skill-creator/SKILL.md)\n- skill-installer: Install Codex skills into $CODEX_HOME/skills from a curated list or a GitHub repo path. Use when a user asks to list installable skills, install a curated skill, or install a skill from another repo (including private repos). (file: /Users/lucaforstner/.codex/skills/.system/skill-installer/SKILL.md)\n- braintrust: Use the Braintrust `bt` CLI for projects, traces, prompts, and key Braintrust workflows. (file: /Users/lucaforstner/.agents/skills/braintrust/SKILL.md)\n- github:gh-address-comments: Address actionable GitHub pull request review feedback. Use when the user wants to inspect unresolved review threads, requested changes, or inline review comments on a PR, then implement selected fixes. Use the GitHub app for PR metadata and flat comment reads, and use the bundled GraphQL script via `gh` whenever thread-level state, resolution status, or inline review context matters. (file: /Users/lucaforstner/.codex/plugins/cache/openai-curated/github/b8edb371/skills/gh-address-comments/SKILL.md)\n- github:gh-fix-ci: Use when a user asks to debug or fix failing GitHub PR checks that run in GitHub Actions. Use the GitHub app from this plugin for PR metadata and patch context, and use `gh` for Actions check and log inspection before implementing any approved fix. (file: /Users/lucaforstner/.codex/plugins/cache/openai-curated/github/b8edb371/skills/gh-fix-ci/SKILL.md)\n- github:github: Triage and orient GitHub repository, pull request, and issue work through the connected GitHub app. Use when the user asks for general GitHub help, wants PR or issue summaries, or needs repository context before choosing a more specific GitHub workflow. (file: /Users/lucaforstner/.codex/plugins/cache/openai-curated/github/b8edb371/skills/github/SKILL.md)\n- github:yeet: Publish local changes to GitHub by confirming scope, committing intentionally, pushing the branch, and opening a draft PR through the GitHub app from this plugin, with `gh` used only as a fallback where connector coverage is insufficient. (file: /Users/lucaforstner/.codex/plugins/cache/openai-curated/github/b8edb371/skills/yeet/SKILL.md)\n### How to use skills\n- Discovery: The list above is the skills available in this session (name + description + file path). Skill bodies live on disk at the listed paths.\n- Trigger rules: If the user names a skill (with `$SkillName` or plain text) OR the task clearly matches a skill's description shown above, you must use that skill for that turn. Multiple mentions mean use them all. Do not carry skills across turns unless re-mentioned.\n- Missing/blocked: If a named skill isn't in the list or the path can't be read, say so briefly and continue with the best fallback.\n- How to use a skill (progressive disclosure):\n  1) After deciding to use a skill, open its `SKILL.md`. Read only enough to follow the workflow.\n  2) When `SKILL.md` references relative paths (e.g., `scripts/foo.py`), resolve them relative to the skill directory listed above first, and only consider other paths if needed.\n  3) If `SKILL.md` points to extra folders such as `references/`, load only the specific files needed for the request; don't bulk-load everything.\n  4) If `scripts/` exist, prefer running or patching them instead of retyping large code blocks.\n  5) If `assets/` or templates exist, reuse them instead of recreating from scratch.\n- Coordination and sequencing:\n  - If multiple skills apply, choose the minimal set that covers the request and state the order you'll use them.\n  - Announce which skill(s) you're using and why (one short line). If you skip an obvious skill, say why.\n- Context hygiene:\n  - Keep context small: summarize long sections instead of pasting them; only load extra files when needed.\n  - Avoid deep reference-chasing: prefer opening only files directly linked from `SKILL.md` unless you're blocked.\n  - When variants exist (frameworks, providers, domains), pick only the relevant reference file(s) and note that choice.\n- Safety and fallback: If a skill can't be applied cleanly (missing files, unclear instructions), state the issue, pick the next-best approach, and continue.\n</skills_instructions>",
-                    "type": "input_text"
-                  },
-                  {
-                    "text": "<plugins_instructions>\n## Plugins\nA plugin is a local bundle of skills, MCP servers, and apps. Below is the list of plugins that are enabled and available in this session.\n### Available plugins\n- `GitHub`: Inspect repositories, triage pull requests and issues, debug CI, and publish changes through a hybrid GitHub connector and CLI workflow.\n### How to use plugins\n- Discovery: The list above is the plugins available in this session.\n- Skill naming: If a plugin contributes skills, those skill entries are prefixed with `plugin_name:` in the Skills list.\n- Trigger rules: If the user explicitly names a plugin, prefer capabilities associated with that plugin for that turn.\n- Relationship to capabilities: Plugins are not invoked directly. Use their underlying skills, MCP tools, and app tools to help solve the task.\n- Preference: When a relevant plugin is available, prefer using capabilities associated with that plugin over standalone capabilities that provide similar functionality.\n- Missing/blocked: If the user requests a plugin that is not listed above, or the plugin does not have relevant callable capabilities for the task, say so briefly and continue with the best fallback.\n</plugins_instructions>",
+                    "text": "<skills_instructions>\n## Skills\nA skill is a set of local instructions to follow that is stored in a `SKILL.md` file. Below is the list of skills that can be used. Each entry includes a name, description, and file path so you can open the source for full instructions when using a specific skill.\n### Available skills\n- imagegen: Generate or edit raster images when the task benefits from AI-created bitmap visuals such as photos, illustrations, textures, sprites, mockups, or transparent-background cutouts. Use when Codex should create a brand-new image, transform an existing image, or derive visual variants from references, and the output should be a bitmap asset rather than repo-native code or vector. Do not use when the task is better handled by editing existing SVG/vector/code-native assets, extending an established icon or logo system, or building the visual directly in HTML/CSS/canvas. (file: /private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-openai-codex-v0128-wrapped-ChcjII/codex-home/skills/.system/imagegen/SKILL.md)\n- openai-docs: Use when the user asks how to build with OpenAI products or APIs and needs up-to-date official documentation with citations, help choosing the latest model for a use case, or model upgrade and prompt-upgrade guidance; prioritize OpenAI docs MCP tools, use bundled references only as helper context, and restrict any fallback browsing to official OpenAI domains. (file: /private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-openai-codex-v0128-wrapped-ChcjII/codex-home/skills/.system/openai-docs/SKILL.md)\n- plugin-creator: Create and scaffold plugin directories for Codex with a required `.codex-plugin/plugin.json`, optional plugin folders/files, and baseline placeholders you can edit before publishing or testing. Use when Codex needs to create a new local plugin, add optional plugin structure, or generate or update repo-root `.agents/plugins/marketplace.json` entries for plugin ordering and availability metadata. (file: /private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-openai-codex-v0128-wrapped-ChcjII/codex-home/skills/.system/plugin-creator/SKILL.md)\n- skill-creator: Guide for creating effective skills. This skill should be used when users want to create a new skill (or update an existing skill) that extends Codex's capabilities with specialized knowledge, workflows, or tool integrations. (file: /private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-openai-codex-v0128-wrapped-ChcjII/codex-home/skills/.system/skill-creator/SKILL.md)\n- skill-installer: Install Codex skills into $CODEX_HOME/skills from a curated list or a GitHub repo path. Use when a user asks to list installable skills, install a curated skill, or install a skill from another repo (including private repos). (file: /private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-openai-codex-v0128-wrapped-ChcjII/codex-home/skills/.system/skill-installer/SKILL.md)\n- braintrust: Use the Braintrust `bt` CLI for projects, traces, prompts, and key Braintrust workflows. (file: /Users/lucaforstner/.agents/skills/braintrust/SKILL.md)\n### How to use skills\n- Discovery: The list above is the skills available in this session (name + description + file path). Skill bodies live on disk at the listed paths.\n- Trigger rules: If the user names a skill (with `$SkillName` or plain text) OR the task clearly matches a skill's description shown above, you must use that skill for that turn. Multiple mentions mean use them all. Do not carry skills across turns unless re-mentioned.\n- Missing/blocked: If a named skill isn't in the list or the path can't be read, say so briefly and continue with the best fallback.\n- How to use a skill (progressive disclosure):\n  1) After deciding to use a skill, open its `SKILL.md`. Read only enough to follow the workflow.\n  2) When `SKILL.md` references relative paths (e.g., `scripts/foo.py`), resolve them relative to the skill directory listed above first, and only consider other paths if needed.\n  3) If `SKILL.md` points to extra folders such as `references/`, load only the specific files needed for the request; don't bulk-load everything.\n  4) If `scripts/` exist, prefer running or patching them instead of retyping large code blocks.\n  5) If `assets/` or templates exist, reuse them instead of recreating from scratch.\n- Coordination and sequencing:\n  - If multiple skills apply, choose the minimal set that covers the request and state the order you'll use them.\n  - Announce which skill(s) you're using and why (one short line). If you skip an obvious skill, say why.\n- Context hygiene:\n  - Keep context small: summarize long sections instead of pasting them; only load extra files when needed.\n  - Avoid deep reference-chasing: prefer opening only files directly linked from `SKILL.md` unless you're blocked.\n  - When variants exist (frameworks, providers, domains), pick only the relevant reference file(s) and note that choice.\n- Safety and fallback: If a skill can't be applied cleanly (missing files, unclear instructions), state the issue, pick the next-best approach, and continue.\n</skills_instructions>",
                     "type": "input_text"
                   }
                 ],
@@ -371,11 +31,7 @@
               {
                 "content": [
                   {
-                    "text": "# AGENTS.md instructions for /tmp/braintrust-codex-e2e-openai-codex-instrumentation/openai-codex-v0128-wrapped/run\n\n<INSTRUCTIONS>\n## General Coding Instructions\n\n- Don't create helper functions for literally everything. Stick to inlining things as much as possible as long as the code is still readable. Only extract into helper functions if the code is called from at least two places.\n- You can add comments in places where your added code may not immediately be obvious to the reading user.\n- Never do any remote destructive actions like pushing commits, pushing branches, pushing tags, doing releases or commenting anywhere and such.\n</INSTRUCTIONS>",
-                    "type": "input_text"
-                  },
-                  {
-                    "text": "<environment_context>\n  <cwd>/tmp/braintrust-codex-e2e-openai-codex-instrumentation/openai-codex-v0128-wrapped/run</cwd>\n  <shell>zsh</shell>\n  <current_date>2026-05-15</current_date>\n  <timezone>Europe/Vienna</timezone>\n</environment_context>",
+                    "text": "<environment_context>\n  <cwd>/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-openai-codex-v0128-wrapped-ChcjII/run</cwd>\n  <shell>zsh</shell>\n  <current_date>2026-05-15</current_date>\n  <timezone>Europe/Vienna</timezone>\n</environment_context>",
                     "type": "input_text"
                   }
                 ],
@@ -398,7 +54,6 @@
             "parallel_tool_calls": false,
             "prompt_cache_key": "[REDACTED]",
             "reasoning": null,
-            "service_tier": "priority",
             "store": false,
             "stream": true,
             "tool_choice": "auto",
@@ -483,67 +138,6 @@
                     }
                   },
                   "required": ["session_id"],
-                  "type": "object"
-                },
-                "strict": false,
-                "type": "function"
-              },
-              {
-                "description": "Lists resources provided by MCP servers. Resources allow servers to share data that provides context to language models, such as files, database schemas, or application-specific information. Prefer resources over web search when possible.",
-                "name": "list_mcp_resources",
-                "parameters": {
-                  "additionalProperties": false,
-                  "properties": {
-                    "cursor": {
-                      "description": "Opaque cursor returned by a previous list_mcp_resources call for the same server.",
-                      "type": "string"
-                    },
-                    "server": {
-                      "description": "Optional MCP server name. When omitted, lists resources from every configured server.",
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                },
-                "strict": false,
-                "type": "function"
-              },
-              {
-                "description": "Lists resource templates provided by MCP servers. Parameterized resource templates allow servers to share data that takes parameters and provides context to language models, such as files, database schemas, or application-specific information. Prefer resource templates over web search when possible.",
-                "name": "list_mcp_resource_templates",
-                "parameters": {
-                  "additionalProperties": false,
-                  "properties": {
-                    "cursor": {
-                      "description": "Opaque cursor returned by a previous list_mcp_resource_templates call for the same server.",
-                      "type": "string"
-                    },
-                    "server": {
-                      "description": "Optional MCP server name. When omitted, lists resource templates from all configured servers.",
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                },
-                "strict": false,
-                "type": "function"
-              },
-              {
-                "description": "Read a specific resource from an MCP server given the server name and resource URI.",
-                "name": "read_mcp_resource",
-                "parameters": {
-                  "additionalProperties": false,
-                  "properties": {
-                    "server": {
-                      "description": "MCP server name exactly as configured. Must match the 'server' field returned by list_mcp_resources.",
-                      "type": "string"
-                    },
-                    "uri": {
-                      "description": "Resource URI to read. Must be one of the URIs returned by list_mcp_resources.",
-                      "type": "string"
-                    }
-                  },
-                  "required": ["server", "uri"],
                   "type": "object"
                 },
                 "strict": false,
@@ -656,7 +250,7 @@
                 "type": "function"
               },
               {
-                "description": "\n        \n        Available model overrides (optional; inherited parent model is preferred):\n- GPT-5.5 (`gpt-5.5`): Frontier model for complex coding, research, and real-world work. Default reasoning effort: xhigh. Supported reasoning efforts: low (Fast responses with lighter reasoning), medium (Balances speed and reasoning depth for everyday tasks), high (Greater reasoning depth for complex problems), xhigh (Extra high reasoning depth for complex problems).\n- gpt-5.4 (`gpt-5.4`): Strong model for everyday coding. Default reasoning effort: medium. Supported reasoning efforts: low (Fast responses with lighter reasoning), medium (Balances speed and reasoning depth for everyday tasks), high (Greater reasoning depth for complex problems), xhigh (Extra high reasoning depth for complex problems).\n- GPT-5.4-Mini (`gpt-5.4-mini`): Small, fast, and cost-efficient model for simpler coding tasks. Default reasoning effort: medium. Supported reasoning efforts: low (Fast responses with lighter reasoning), medium (Balances speed and reasoning depth for everyday tasks), high (Greater reasoning depth for complex problems), xhigh (Extra high reasoning depth for complex problems).\n- gpt-5.3-codex (`gpt-5.3-codex`): Coding-optimized model. Default reasoning effort: medium. Supported reasoning efforts: low (Fast responses with lighter reasoning), medium (Balances speed and reasoning depth for everyday tasks), high (Greater reasoning depth for complex problems), xhigh (Extra high reasoning depth for complex problems).\n- gpt-5.2 (`gpt-5.2`): Optimized for professional work and long-running agents. Default reasoning effort: medium. Supported reasoning efforts: low (Balances speed with some reasoning; useful for straightforward queries and short explanations), medium (Provides a solid balance of reasoning depth and latency for general-purpose tasks), high (Maximizes reasoning depth for complex or ambiguous problems), xhigh (Extra high reasoning for complex problems).\n        Spawn a sub-agent for a well-scoped task. Returns the spawned agent id plus the user-facing nickname when available. Spawned agents inherit your current model by default. Omit `model` to use that preferred default; set `model` only when an explicit override is needed.\nThis spawn_agent tool provides you access to sub-agents that inherit your current model by default. Do not set the `model` field unless the user explicitly asks for a different model or there is a clear task-specific reason. You should follow the rules and guidelines below to use this tool.\n\nOnly use `spawn_agent` if and only if the user explicitly asks for sub-agents, delegation, or parallel agent work.\nRequests for depth, thoroughness, research, investigation, or detailed codebase analysis do not count as permission to spawn.\nAgent-role guidance below only helps choose which agent to use after spawning is already authorized; it never authorizes spawning by itself.\n\n### When to delegate vs. do the subtask yourself\n- First, quickly analyze the overall user task and form a succinct high-level plan. Identify which tasks are immediate blockers on the critical path, and which tasks are sidecar tasks that are needed but can run in parallel without blocking the next local step. As part of that plan, explicitly decide what immediate task you should do locally right now. Do this planning step before delegating to agents so you do not hand off the immediate blocking task to a submodel and then waste time waiting on it.\n- Use a subagent when a subtask is easy enough for it to handle and can run in parallel with your local work. Prefer delegating concrete, bounded sidecar tasks that materially advance the main task without blocking your immediate next local step.\n- Do not delegate urgent blocking work when your immediate next step depends on that result. If the very next action is blocked on that task, the main rollout should usually do it locally to keep the critical path moving.\n- Keep work local when the subtask is too difficult to delegate well and when it is tightly coupled, urgent, or likely to block your immediate next step.\n\n### Designing delegated subtasks\n- Subtasks must be concrete, well-defined, and self-contained.\n- Delegated subtasks must materially advance the main task.\n- Do not duplicate work between the main rollout and delegated subtasks.\n- Avoid issuing multiple delegate calls on the same unresolved thread unless the new delegated task is genuinely different and necessary.\n- Narrow the delegated ask to the concrete output you need next.\n- For coding tasks, prefer delegating concrete code-change worker subtasks over read-only explorer analysis when the subagent can make a bounded patch in a clear write scope.\n- When delegating coding work, instruct the submodel to edit files directly in its forked workspace and list the file paths it changed in the final answer.\n- For code-edit subtasks, decompose work so each delegated task has a disjoint write set.\n\n### After you delegate\n- Call wait_agent very sparingly. Only call wait_agent when you need the result immediately for the next critical-path step and you are blocked until it returns.\n- Do not redo delegated subagent tasks yourself; focus on integrating results or tackling non-overlapping work.\n- While the subagent is running in the background, do meaningful non-overlapping work immediately.\n- Do not repeatedly wait by reflex.\n- When a delegated coding task returns, quickly review the uploaded changes, then integrate or refine them.\n\n### Parallel delegation patterns\n- Run multiple independent information-seeking subtasks in parallel when you have distinct questions that can be answered independently.\n- Split implementation into disjoint codebase slices and spawn multiple agents for them in parallel when the write scopes do not overlap.\n- Delegate verification only when it can run in parallel with ongoing implementation and is likely to catch a concrete risk before final integration.\n- The key is to find opportunities to spawn multiple independent subtasks in parallel within the same round, while ensuring each subtask is well-defined, self-contained, and materially advances the main task.",
+                "description": "\n        \n        Available model overrides (optional; inherited parent model is preferred):\n- GPT-5.5 (`gpt-5.5`): Frontier model for complex coding, research, and real-world work. Default reasoning effort: medium. Supported reasoning efforts: low (Fast responses with lighter reasoning), medium (Balances speed and reasoning depth for everyday tasks), high (Greater reasoning depth for complex problems), xhigh (Extra high reasoning depth for complex problems).\n- gpt-5.4 (`gpt-5.4`): Strong model for everyday coding. Default reasoning effort: xhigh. Supported reasoning efforts: low (Fast responses with lighter reasoning), medium (Balances speed and reasoning depth for everyday tasks), high (Greater reasoning depth for complex problems), xhigh (Extra high reasoning depth for complex problems).\n- GPT-5.4-Mini (`gpt-5.4-mini`): Small, fast, and cost-efficient model for simpler coding tasks. Default reasoning effort: medium. Supported reasoning efforts: low (Fast responses with lighter reasoning), medium (Balances speed and reasoning depth for everyday tasks), high (Greater reasoning depth for complex problems), xhigh (Extra high reasoning depth for complex problems).\n- gpt-5.3-codex (`gpt-5.3-codex`): Coding-optimized model. Default reasoning effort: medium. Supported reasoning efforts: low (Fast responses with lighter reasoning), medium (Balances speed and reasoning depth for everyday tasks), high (Greater reasoning depth for complex problems), xhigh (Extra high reasoning depth for complex problems).\n- gpt-5.2 (`gpt-5.2`): Optimized for professional work and long-running agents. Default reasoning effort: medium. Supported reasoning efforts: low (Balances speed with some reasoning; useful for straightforward queries and short explanations), medium (Provides a solid balance of reasoning depth and latency for general-purpose tasks), high (Maximizes reasoning depth for complex or ambiguous problems), xhigh (Extra high reasoning for complex problems).\n        Spawn a sub-agent for a well-scoped task. Returns the spawned agent id plus the user-facing nickname when available. Spawned agents inherit your current model by default. Omit `model` to use that preferred default; set `model` only when an explicit override is needed.\nThis spawn_agent tool provides you access to sub-agents that inherit your current model by default. Do not set the `model` field unless the user explicitly asks for a different model or there is a clear task-specific reason. You should follow the rules and guidelines below to use this tool.\n\nOnly use `spawn_agent` if and only if the user explicitly asks for sub-agents, delegation, or parallel agent work.\nRequests for depth, thoroughness, research, investigation, or detailed codebase analysis do not count as permission to spawn.\nAgent-role guidance below only helps choose which agent to use after spawning is already authorized; it never authorizes spawning by itself.\n\n### When to delegate vs. do the subtask yourself\n- First, quickly analyze the overall user task and form a succinct high-level plan. Identify which tasks are immediate blockers on the critical path, and which tasks are sidecar tasks that are needed but can run in parallel without blocking the next local step. As part of that plan, explicitly decide what immediate task you should do locally right now. Do this planning step before delegating to agents so you do not hand off the immediate blocking task to a submodel and then waste time waiting on it.\n- Use a subagent when a subtask is easy enough for it to handle and can run in parallel with your local work. Prefer delegating concrete, bounded sidecar tasks that materially advance the main task without blocking your immediate next local step.\n- Do not delegate urgent blocking work when your immediate next step depends on that result. If the very next action is blocked on that task, the main rollout should usually do it locally to keep the critical path moving.\n- Keep work local when the subtask is too difficult to delegate well and when it is tightly coupled, urgent, or likely to block your immediate next step.\n\n### Designing delegated subtasks\n- Subtasks must be concrete, well-defined, and self-contained.\n- Delegated subtasks must materially advance the main task.\n- Do not duplicate work between the main rollout and delegated subtasks.\n- Avoid issuing multiple delegate calls on the same unresolved thread unless the new delegated task is genuinely different and necessary.\n- Narrow the delegated ask to the concrete output you need next.\n- For coding tasks, prefer delegating concrete code-change worker subtasks over read-only explorer analysis when the subagent can make a bounded patch in a clear write scope.\n- When delegating coding work, instruct the submodel to edit files directly in its forked workspace and list the file paths it changed in the final answer.\n- For code-edit subtasks, decompose work so each delegated task has a disjoint write set.\n\n### After you delegate\n- Call wait_agent very sparingly. Only call wait_agent when you need the result immediately for the next critical-path step and you are blocked until it returns.\n- Do not redo delegated subagent tasks yourself; focus on integrating results or tackling non-overlapping work.\n- While the subagent is running in the background, do meaningful non-overlapping work immediately.\n- Do not repeatedly wait by reflex.\n- When a delegated coding task returns, quickly review the uploaded changes, then integrate or refine them.\n\n### Parallel delegation patterns\n- Run multiple independent information-seeking subtasks in parallel when you have distinct questions that can be answered independently.\n- Split implementation into disjoint codebase slices and spawn multiple agents for them in parallel when the write scopes do not overlap.\n- Delegate verification only when it can run in parallel with ongoing implementation and is likely to catch a concrete risk before final integration.\n- The key is to find opportunities to spawn multiple independent subtasks in parallel within the same round, while ensuring each subtask is well-defined, self-contained, and materially advances the main task.",
                 "name": "spawn_agent",
                 "parameters": {
                   "additionalProperties": false,
@@ -841,19 +435,19 @@
         "body": {
           "contentType": "text/event-stream; charset=utf-8",
           "kind": "binary",
-          "path": "openai-codex-v0128-wrapped.cassette.blobs/daa2ef945e3e1cfb847f526e54a28b23c2e12b5437a49435ab5d2b552f5750aa.bin",
-          "sha256": "daa2ef945e3e1cfb847f526e54a28b23c2e12b5437a49435ab5d2b552f5750aa"
+          "path": "openai-codex-v0128-wrapped.cassette.blobs/32553724333c1ed4dac0eed3239168c737dfcc6b5848c5f04e5e15fa2f093775.bin",
+          "sha256": "32553724333c1ed4dac0eed3239168c737dfcc6b5848c5f04e5e15fa2f093775"
         },
         "headers": {
           "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "9fc1d778ecf95af4-VIE",
+          "cf-ray": "9fc2755b9ded3260-VIE",
           "connection": "keep-alive",
           "content-type": "text/event-stream; charset=utf-8",
-          "date": "Fri, 15 May 2026 11:35:52 GMT",
+          "date": "Fri, 15 May 2026 13:23:40 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "197",
+          "openai-processing-ms": "441",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
@@ -864,10 +458,10 @@
           "x-ratelimit-limit-requests": "15000",
           "x-ratelimit-limit-tokens": "10000000",
           "x-ratelimit-remaining-requests": "14999",
-          "x-ratelimit-remaining-tokens": "9989904",
+          "x-ratelimit-remaining-tokens": "9990570",
           "x-ratelimit-reset-requests": "4ms",
-          "x-ratelimit-reset-tokens": "60ms",
-          "x-request-id": "req_25a1b3239ec64f6492bce1ae3c27e55b"
+          "x-ratelimit-reset-tokens": "56ms",
+          "x-request-id": "req_dabc6c19dc1a4428813f9b6d385e24c6"
         },
         "status": 200,
         "statusText": "OK"
@@ -875,30 +469,26 @@
     },
     {
       "callIndex": 1,
-      "id": "f34d9a404602d1e0",
+      "id": "f36bf5e38be3f619",
       "matchKey": "POST api.openai.com/v1/responses",
-      "recordedAt": "2026-05-15T11:35:56.029Z",
+      "recordedAt": "2026-05-15T13:23:44.574Z",
       "request": {
         "body": {
           "kind": "json",
           "value": {
             "client_metadata": {
-              "x-codex-installation-id": "b32accb4-04ce-409a-a6b8-d53b231799e1"
+              "x-codex-installation-id": "b33472c2-82e4-4e05-9485-606bf89d78cd"
             },
             "include": [],
             "input": [
               {
                 "content": [
                   {
-                    "text": "<permissions instructions>\nFilesystem sandboxing defines which files can be read or written. `sandbox_mode` is `workspace-write`: The sandbox permits reading files, and editing files in `cwd` and `writable_roots`. Editing files in other directories requires approval. Network access is restricted.\nApproval policy is currently never. Do not provide the `sandbox_permissions` for any reason, commands will be rejected.\n The writable roots are `/private/tmp/braintrust-codex-e2e-openai-codex-instrumentation/openai-codex-v0128-wrapped/run`, `/private/tmp`, `/private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T`, `/Users/lucaforstner/.codex/memories`.\n</permissions instructions>",
+                    "text": "<permissions instructions>\nFilesystem sandboxing defines which files can be read or written. `sandbox_mode` is `workspace-write`: The sandbox permits reading files, and editing files in `cwd` and `writable_roots`. Editing files in other directories requires approval. Network access is restricted.\nApproval policy is currently never. Do not provide the `sandbox_permissions` for any reason, commands will be rejected.\n The writable roots are `/private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-openai-codex-v0128-wrapped-ChcjII/run`, `/private/tmp`, `/private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T`, `/private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-openai-codex-v0128-wrapped-ChcjII/codex-home/memories`.\n</permissions instructions>",
                     "type": "input_text"
                   },
                   {
-                    "text": "<skills_instructions>\n## Skills\nA skill is a set of local instructions to follow that is stored in a `SKILL.md` file. Below is the list of skills that can be used. Each entry includes a name, description, and file path so you can open the source for full instructions when using a specific skill.\n### Available skills\n- imagegen: Generate or edit raster images when the task benefits from AI-created bitmap visuals such as photos, illustrations, textures, sprites, mockups, or transparent-background cutouts. Use when Codex should create a brand-new image, transform an existing image, or derive visual variants from references, and the output should be a bitmap asset rather than repo-native code or vector. Do not use when the task is better handled by editing existing SVG/vector/code-native assets, extending an established icon or logo system, or building the visual directly in HTML/CSS/canvas. (file: /Users/lucaforstner/.codex/skills/.system/imagegen/SKILL.md)\n- openai-docs: Use when the user asks how to build with OpenAI products or APIs and needs up-to-date official documentation with citations, help choosing the latest model for a use case, or model upgrade and prompt-upgrade guidance; prioritize OpenAI docs MCP tools, use bundled references only as helper context, and restrict any fallback browsing to official OpenAI domains. (file: /Users/lucaforstner/.codex/skills/.system/openai-docs/SKILL.md)\n- plugin-creator: Create and scaffold plugin directories for Codex with a required `.codex-plugin/plugin.json`, optional plugin folders/files, and baseline placeholders you can edit before publishing or testing. Use when Codex needs to create a new local plugin, add optional plugin structure, or generate or update repo-root `.agents/plugins/marketplace.json` entries for plugin ordering and availability metadata. (file: /Users/lucaforstner/.codex/skills/.system/plugin-creator/SKILL.md)\n- skill-creator: Guide for creating effective skills. This skill should be used when users want to create a new skill (or update an existing skill) that extends Codex's capabilities with specialized knowledge, workflows, or tool integrations. (file: /Users/lucaforstner/.codex/skills/.system/skill-creator/SKILL.md)\n- skill-installer: Install Codex skills into $CODEX_HOME/skills from a curated list or a GitHub repo path. Use when a user asks to list installable skills, install a curated skill, or install a skill from another repo (including private repos). (file: /Users/lucaforstner/.codex/skills/.system/skill-installer/SKILL.md)\n- braintrust: Use the Braintrust `bt` CLI for projects, traces, prompts, and key Braintrust workflows. (file: /Users/lucaforstner/.agents/skills/braintrust/SKILL.md)\n- github:gh-address-comments: Address actionable GitHub pull request review feedback. Use when the user wants to inspect unresolved review threads, requested changes, or inline review comments on a PR, then implement selected fixes. Use the GitHub app for PR metadata and flat comment reads, and use the bundled GraphQL script via `gh` whenever thread-level state, resolution status, or inline review context matters. (file: /Users/lucaforstner/.codex/plugins/cache/openai-curated/github/b8edb371/skills/gh-address-comments/SKILL.md)\n- github:gh-fix-ci: Use when a user asks to debug or fix failing GitHub PR checks that run in GitHub Actions. Use the GitHub app from this plugin for PR metadata and patch context, and use `gh` for Actions check and log inspection before implementing any approved fix. (file: /Users/lucaforstner/.codex/plugins/cache/openai-curated/github/b8edb371/skills/gh-fix-ci/SKILL.md)\n- github:github: Triage and orient GitHub repository, pull request, and issue work through the connected GitHub app. Use when the user asks for general GitHub help, wants PR or issue summaries, or needs repository context before choosing a more specific GitHub workflow. (file: /Users/lucaforstner/.codex/plugins/cache/openai-curated/github/b8edb371/skills/github/SKILL.md)\n- github:yeet: Publish local changes to GitHub by confirming scope, committing intentionally, pushing the branch, and opening a draft PR through the GitHub app from this plugin, with `gh` used only as a fallback where connector coverage is insufficient. (file: /Users/lucaforstner/.codex/plugins/cache/openai-curated/github/b8edb371/skills/yeet/SKILL.md)\n### How to use skills\n- Discovery: The list above is the skills available in this session (name + description + file path). Skill bodies live on disk at the listed paths.\n- Trigger rules: If the user names a skill (with `$SkillName` or plain text) OR the task clearly matches a skill's description shown above, you must use that skill for that turn. Multiple mentions mean use them all. Do not carry skills across turns unless re-mentioned.\n- Missing/blocked: If a named skill isn't in the list or the path can't be read, say so briefly and continue with the best fallback.\n- How to use a skill (progressive disclosure):\n  1) After deciding to use a skill, open its `SKILL.md`. Read only enough to follow the workflow.\n  2) When `SKILL.md` references relative paths (e.g., `scripts/foo.py`), resolve them relative to the skill directory listed above first, and only consider other paths if needed.\n  3) If `SKILL.md` points to extra folders such as `references/`, load only the specific files needed for the request; don't bulk-load everything.\n  4) If `scripts/` exist, prefer running or patching them instead of retyping large code blocks.\n  5) If `assets/` or templates exist, reuse them instead of recreating from scratch.\n- Coordination and sequencing:\n  - If multiple skills apply, choose the minimal set that covers the request and state the order you'll use them.\n  - Announce which skill(s) you're using and why (one short line). If you skip an obvious skill, say why.\n- Context hygiene:\n  - Keep context small: summarize long sections instead of pasting them; only load extra files when needed.\n  - Avoid deep reference-chasing: prefer opening only files directly linked from `SKILL.md` unless you're blocked.\n  - When variants exist (frameworks, providers, domains), pick only the relevant reference file(s) and note that choice.\n- Safety and fallback: If a skill can't be applied cleanly (missing files, unclear instructions), state the issue, pick the next-best approach, and continue.\n</skills_instructions>",
-                    "type": "input_text"
-                  },
-                  {
-                    "text": "<plugins_instructions>\n## Plugins\nA plugin is a local bundle of skills, MCP servers, and apps. Below is the list of plugins that are enabled and available in this session.\n### Available plugins\n- `GitHub`: Inspect repositories, triage pull requests and issues, debug CI, and publish changes through a hybrid GitHub connector and CLI workflow.\n### How to use plugins\n- Discovery: The list above is the plugins available in this session.\n- Skill naming: If a plugin contributes skills, those skill entries are prefixed with `plugin_name:` in the Skills list.\n- Trigger rules: If the user explicitly names a plugin, prefer capabilities associated with that plugin for that turn.\n- Relationship to capabilities: Plugins are not invoked directly. Use their underlying skills, MCP tools, and app tools to help solve the task.\n- Preference: When a relevant plugin is available, prefer using capabilities associated with that plugin over standalone capabilities that provide similar functionality.\n- Missing/blocked: If the user requests a plugin that is not listed above, or the plugin does not have relevant callable capabilities for the task, say so briefly and continue with the best fallback.\n</plugins_instructions>",
+                    "text": "<skills_instructions>\n## Skills\nA skill is a set of local instructions to follow that is stored in a `SKILL.md` file. Below is the list of skills that can be used. Each entry includes a name, description, and file path so you can open the source for full instructions when using a specific skill.\n### Available skills\n- imagegen: Generate or edit raster images when the task benefits from AI-created bitmap visuals such as photos, illustrations, textures, sprites, mockups, or transparent-background cutouts. Use when Codex should create a brand-new image, transform an existing image, or derive visual variants from references, and the output should be a bitmap asset rather than repo-native code or vector. Do not use when the task is better handled by editing existing SVG/vector/code-native assets, extending an established icon or logo system, or building the visual directly in HTML/CSS/canvas. (file: /private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-openai-codex-v0128-wrapped-ChcjII/codex-home/skills/.system/imagegen/SKILL.md)\n- openai-docs: Use when the user asks how to build with OpenAI products or APIs and needs up-to-date official documentation with citations, help choosing the latest model for a use case, or model upgrade and prompt-upgrade guidance; prioritize OpenAI docs MCP tools, use bundled references only as helper context, and restrict any fallback browsing to official OpenAI domains. (file: /private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-openai-codex-v0128-wrapped-ChcjII/codex-home/skills/.system/openai-docs/SKILL.md)\n- plugin-creator: Create and scaffold plugin directories for Codex with a required `.codex-plugin/plugin.json`, optional plugin folders/files, and baseline placeholders you can edit before publishing or testing. Use when Codex needs to create a new local plugin, add optional plugin structure, or generate or update repo-root `.agents/plugins/marketplace.json` entries for plugin ordering and availability metadata. (file: /private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-openai-codex-v0128-wrapped-ChcjII/codex-home/skills/.system/plugin-creator/SKILL.md)\n- skill-creator: Guide for creating effective skills. This skill should be used when users want to create a new skill (or update an existing skill) that extends Codex's capabilities with specialized knowledge, workflows, or tool integrations. (file: /private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-openai-codex-v0128-wrapped-ChcjII/codex-home/skills/.system/skill-creator/SKILL.md)\n- skill-installer: Install Codex skills into $CODEX_HOME/skills from a curated list or a GitHub repo path. Use when a user asks to list installable skills, install a curated skill, or install a skill from another repo (including private repos). (file: /private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-openai-codex-v0128-wrapped-ChcjII/codex-home/skills/.system/skill-installer/SKILL.md)\n- braintrust: Use the Braintrust `bt` CLI for projects, traces, prompts, and key Braintrust workflows. (file: /Users/lucaforstner/.agents/skills/braintrust/SKILL.md)\n### How to use skills\n- Discovery: The list above is the skills available in this session (name + description + file path). Skill bodies live on disk at the listed paths.\n- Trigger rules: If the user names a skill (with `$SkillName` or plain text) OR the task clearly matches a skill's description shown above, you must use that skill for that turn. Multiple mentions mean use them all. Do not carry skills across turns unless re-mentioned.\n- Missing/blocked: If a named skill isn't in the list or the path can't be read, say so briefly and continue with the best fallback.\n- How to use a skill (progressive disclosure):\n  1) After deciding to use a skill, open its `SKILL.md`. Read only enough to follow the workflow.\n  2) When `SKILL.md` references relative paths (e.g., `scripts/foo.py`), resolve them relative to the skill directory listed above first, and only consider other paths if needed.\n  3) If `SKILL.md` points to extra folders such as `references/`, load only the specific files needed for the request; don't bulk-load everything.\n  4) If `scripts/` exist, prefer running or patching them instead of retyping large code blocks.\n  5) If `assets/` or templates exist, reuse them instead of recreating from scratch.\n- Coordination and sequencing:\n  - If multiple skills apply, choose the minimal set that covers the request and state the order you'll use them.\n  - Announce which skill(s) you're using and why (one short line). If you skip an obvious skill, say why.\n- Context hygiene:\n  - Keep context small: summarize long sections instead of pasting them; only load extra files when needed.\n  - Avoid deep reference-chasing: prefer opening only files directly linked from `SKILL.md` unless you're blocked.\n  - When variants exist (frameworks, providers, domains), pick only the relevant reference file(s) and note that choice.\n- Safety and fallback: If a skill can't be applied cleanly (missing files, unclear instructions), state the issue, pick the next-best approach, and continue.\n</skills_instructions>",
                     "type": "input_text"
                   }
                 ],
@@ -908,11 +498,7 @@
               {
                 "content": [
                   {
-                    "text": "# AGENTS.md instructions for /tmp/braintrust-codex-e2e-openai-codex-instrumentation/openai-codex-v0128-wrapped/run\n\n<INSTRUCTIONS>\n## General Coding Instructions\n\n- Don't create helper functions for literally everything. Stick to inlining things as much as possible as long as the code is still readable. Only extract into helper functions if the code is called from at least two places.\n- You can add comments in places where your added code may not immediately be obvious to the reading user.\n- Never do any remote destructive actions like pushing commits, pushing branches, pushing tags, doing releases or commenting anywhere and such.\n</INSTRUCTIONS>",
-                    "type": "input_text"
-                  },
-                  {
-                    "text": "<environment_context>\n  <cwd>/tmp/braintrust-codex-e2e-openai-codex-instrumentation/openai-codex-v0128-wrapped/run</cwd>\n  <shell>zsh</shell>\n  <current_date>2026-05-15</current_date>\n  <timezone>Europe/Vienna</timezone>\n</environment_context>",
+                    "text": "<environment_context>\n  <cwd>/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-openai-codex-v0128-wrapped-ChcjII/run</cwd>\n  <shell>zsh</shell>\n  <current_date>2026-05-15</current_date>\n  <timezone>Europe/Vienna</timezone>\n</environment_context>",
                     "type": "input_text"
                   }
                 ],
@@ -937,13 +523,13 @@
               },
               {
                 "arguments": "{\"cmd\":\"cat codex-input.txt\"}",
-                "call_id": "call_u7qK2jt6C0Jh0xj4vDVNou4J",
+                "call_id": "call_SUGaXAjBbPHGcXCm31YrcbiD",
                 "name": "exec_command",
                 "type": "function_call"
               },
               {
-                "call_id": "call_u7qK2jt6C0Jh0xj4vDVNou4J",
-                "output": "Chunk ID: a6dbae\nWall time: 0.1720 seconds\nProcess exited with code 0\nOriginal token count: 12\nOutput:\nThe final answer marker is OPENAI_CODEX_RUN_OK.\n",
+                "call_id": "call_SUGaXAjBbPHGcXCm31YrcbiD",
+                "output": "Chunk ID: e0b08c\nWall time: 0.0000 seconds\nProcess exited with code 0\nOriginal token count: 12\nOutput:\nThe final answer marker is OPENAI_CODEX_RUN_OK.\n",
                 "type": "function_call_output"
               }
             ],
@@ -952,7 +538,6 @@
             "parallel_tool_calls": false,
             "prompt_cache_key": "[REDACTED]",
             "reasoning": null,
-            "service_tier": "priority",
             "store": false,
             "stream": true,
             "tool_choice": "auto",
@@ -1037,67 +622,6 @@
                     }
                   },
                   "required": ["session_id"],
-                  "type": "object"
-                },
-                "strict": false,
-                "type": "function"
-              },
-              {
-                "description": "Lists resources provided by MCP servers. Resources allow servers to share data that provides context to language models, such as files, database schemas, or application-specific information. Prefer resources over web search when possible.",
-                "name": "list_mcp_resources",
-                "parameters": {
-                  "additionalProperties": false,
-                  "properties": {
-                    "cursor": {
-                      "description": "Opaque cursor returned by a previous list_mcp_resources call for the same server.",
-                      "type": "string"
-                    },
-                    "server": {
-                      "description": "Optional MCP server name. When omitted, lists resources from every configured server.",
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                },
-                "strict": false,
-                "type": "function"
-              },
-              {
-                "description": "Lists resource templates provided by MCP servers. Parameterized resource templates allow servers to share data that takes parameters and provides context to language models, such as files, database schemas, or application-specific information. Prefer resource templates over web search when possible.",
-                "name": "list_mcp_resource_templates",
-                "parameters": {
-                  "additionalProperties": false,
-                  "properties": {
-                    "cursor": {
-                      "description": "Opaque cursor returned by a previous list_mcp_resource_templates call for the same server.",
-                      "type": "string"
-                    },
-                    "server": {
-                      "description": "Optional MCP server name. When omitted, lists resource templates from all configured servers.",
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                },
-                "strict": false,
-                "type": "function"
-              },
-              {
-                "description": "Read a specific resource from an MCP server given the server name and resource URI.",
-                "name": "read_mcp_resource",
-                "parameters": {
-                  "additionalProperties": false,
-                  "properties": {
-                    "server": {
-                      "description": "MCP server name exactly as configured. Must match the 'server' field returned by list_mcp_resources.",
-                      "type": "string"
-                    },
-                    "uri": {
-                      "description": "Resource URI to read. Must be one of the URIs returned by list_mcp_resources.",
-                      "type": "string"
-                    }
-                  },
-                  "required": ["server", "uri"],
                   "type": "object"
                 },
                 "strict": false,
@@ -1210,7 +734,7 @@
                 "type": "function"
               },
               {
-                "description": "\n        \n        Available model overrides (optional; inherited parent model is preferred):\n- GPT-5.5 (`gpt-5.5`): Frontier model for complex coding, research, and real-world work. Default reasoning effort: xhigh. Supported reasoning efforts: low (Fast responses with lighter reasoning), medium (Balances speed and reasoning depth for everyday tasks), high (Greater reasoning depth for complex problems), xhigh (Extra high reasoning depth for complex problems).\n- gpt-5.4 (`gpt-5.4`): Strong model for everyday coding. Default reasoning effort: medium. Supported reasoning efforts: low (Fast responses with lighter reasoning), medium (Balances speed and reasoning depth for everyday tasks), high (Greater reasoning depth for complex problems), xhigh (Extra high reasoning depth for complex problems).\n- GPT-5.4-Mini (`gpt-5.4-mini`): Small, fast, and cost-efficient model for simpler coding tasks. Default reasoning effort: medium. Supported reasoning efforts: low (Fast responses with lighter reasoning), medium (Balances speed and reasoning depth for everyday tasks), high (Greater reasoning depth for complex problems), xhigh (Extra high reasoning depth for complex problems).\n- gpt-5.3-codex (`gpt-5.3-codex`): Coding-optimized model. Default reasoning effort: medium. Supported reasoning efforts: low (Fast responses with lighter reasoning), medium (Balances speed and reasoning depth for everyday tasks), high (Greater reasoning depth for complex problems), xhigh (Extra high reasoning depth for complex problems).\n- gpt-5.2 (`gpt-5.2`): Optimized for professional work and long-running agents. Default reasoning effort: medium. Supported reasoning efforts: low (Balances speed with some reasoning; useful for straightforward queries and short explanations), medium (Provides a solid balance of reasoning depth and latency for general-purpose tasks), high (Maximizes reasoning depth for complex or ambiguous problems), xhigh (Extra high reasoning for complex problems).\n        Spawn a sub-agent for a well-scoped task. Returns the spawned agent id plus the user-facing nickname when available. Spawned agents inherit your current model by default. Omit `model` to use that preferred default; set `model` only when an explicit override is needed.\nThis spawn_agent tool provides you access to sub-agents that inherit your current model by default. Do not set the `model` field unless the user explicitly asks for a different model or there is a clear task-specific reason. You should follow the rules and guidelines below to use this tool.\n\nOnly use `spawn_agent` if and only if the user explicitly asks for sub-agents, delegation, or parallel agent work.\nRequests for depth, thoroughness, research, investigation, or detailed codebase analysis do not count as permission to spawn.\nAgent-role guidance below only helps choose which agent to use after spawning is already authorized; it never authorizes spawning by itself.\n\n### When to delegate vs. do the subtask yourself\n- First, quickly analyze the overall user task and form a succinct high-level plan. Identify which tasks are immediate blockers on the critical path, and which tasks are sidecar tasks that are needed but can run in parallel without blocking the next local step. As part of that plan, explicitly decide what immediate task you should do locally right now. Do this planning step before delegating to agents so you do not hand off the immediate blocking task to a submodel and then waste time waiting on it.\n- Use a subagent when a subtask is easy enough for it to handle and can run in parallel with your local work. Prefer delegating concrete, bounded sidecar tasks that materially advance the main task without blocking your immediate next local step.\n- Do not delegate urgent blocking work when your immediate next step depends on that result. If the very next action is blocked on that task, the main rollout should usually do it locally to keep the critical path moving.\n- Keep work local when the subtask is too difficult to delegate well and when it is tightly coupled, urgent, or likely to block your immediate next step.\n\n### Designing delegated subtasks\n- Subtasks must be concrete, well-defined, and self-contained.\n- Delegated subtasks must materially advance the main task.\n- Do not duplicate work between the main rollout and delegated subtasks.\n- Avoid issuing multiple delegate calls on the same unresolved thread unless the new delegated task is genuinely different and necessary.\n- Narrow the delegated ask to the concrete output you need next.\n- For coding tasks, prefer delegating concrete code-change worker subtasks over read-only explorer analysis when the subagent can make a bounded patch in a clear write scope.\n- When delegating coding work, instruct the submodel to edit files directly in its forked workspace and list the file paths it changed in the final answer.\n- For code-edit subtasks, decompose work so each delegated task has a disjoint write set.\n\n### After you delegate\n- Call wait_agent very sparingly. Only call wait_agent when you need the result immediately for the next critical-path step and you are blocked until it returns.\n- Do not redo delegated subagent tasks yourself; focus on integrating results or tackling non-overlapping work.\n- While the subagent is running in the background, do meaningful non-overlapping work immediately.\n- Do not repeatedly wait by reflex.\n- When a delegated coding task returns, quickly review the uploaded changes, then integrate or refine them.\n\n### Parallel delegation patterns\n- Run multiple independent information-seeking subtasks in parallel when you have distinct questions that can be answered independently.\n- Split implementation into disjoint codebase slices and spawn multiple agents for them in parallel when the write scopes do not overlap.\n- Delegate verification only when it can run in parallel with ongoing implementation and is likely to catch a concrete risk before final integration.\n- The key is to find opportunities to spawn multiple independent subtasks in parallel within the same round, while ensuring each subtask is well-defined, self-contained, and materially advances the main task.",
+                "description": "\n        \n        Available model overrides (optional; inherited parent model is preferred):\n- GPT-5.5 (`gpt-5.5`): Frontier model for complex coding, research, and real-world work. Default reasoning effort: medium. Supported reasoning efforts: low (Fast responses with lighter reasoning), medium (Balances speed and reasoning depth for everyday tasks), high (Greater reasoning depth for complex problems), xhigh (Extra high reasoning depth for complex problems).\n- gpt-5.4 (`gpt-5.4`): Strong model for everyday coding. Default reasoning effort: xhigh. Supported reasoning efforts: low (Fast responses with lighter reasoning), medium (Balances speed and reasoning depth for everyday tasks), high (Greater reasoning depth for complex problems), xhigh (Extra high reasoning depth for complex problems).\n- GPT-5.4-Mini (`gpt-5.4-mini`): Small, fast, and cost-efficient model for simpler coding tasks. Default reasoning effort: medium. Supported reasoning efforts: low (Fast responses with lighter reasoning), medium (Balances speed and reasoning depth for everyday tasks), high (Greater reasoning depth for complex problems), xhigh (Extra high reasoning depth for complex problems).\n- gpt-5.3-codex (`gpt-5.3-codex`): Coding-optimized model. Default reasoning effort: medium. Supported reasoning efforts: low (Fast responses with lighter reasoning), medium (Balances speed and reasoning depth for everyday tasks), high (Greater reasoning depth for complex problems), xhigh (Extra high reasoning depth for complex problems).\n- gpt-5.2 (`gpt-5.2`): Optimized for professional work and long-running agents. Default reasoning effort: medium. Supported reasoning efforts: low (Balances speed with some reasoning; useful for straightforward queries and short explanations), medium (Provides a solid balance of reasoning depth and latency for general-purpose tasks), high (Maximizes reasoning depth for complex or ambiguous problems), xhigh (Extra high reasoning for complex problems).\n        Spawn a sub-agent for a well-scoped task. Returns the spawned agent id plus the user-facing nickname when available. Spawned agents inherit your current model by default. Omit `model` to use that preferred default; set `model` only when an explicit override is needed.\nThis spawn_agent tool provides you access to sub-agents that inherit your current model by default. Do not set the `model` field unless the user explicitly asks for a different model or there is a clear task-specific reason. You should follow the rules and guidelines below to use this tool.\n\nOnly use `spawn_agent` if and only if the user explicitly asks for sub-agents, delegation, or parallel agent work.\nRequests for depth, thoroughness, research, investigation, or detailed codebase analysis do not count as permission to spawn.\nAgent-role guidance below only helps choose which agent to use after spawning is already authorized; it never authorizes spawning by itself.\n\n### When to delegate vs. do the subtask yourself\n- First, quickly analyze the overall user task and form a succinct high-level plan. Identify which tasks are immediate blockers on the critical path, and which tasks are sidecar tasks that are needed but can run in parallel without blocking the next local step. As part of that plan, explicitly decide what immediate task you should do locally right now. Do this planning step before delegating to agents so you do not hand off the immediate blocking task to a submodel and then waste time waiting on it.\n- Use a subagent when a subtask is easy enough for it to handle and can run in parallel with your local work. Prefer delegating concrete, bounded sidecar tasks that materially advance the main task without blocking your immediate next local step.\n- Do not delegate urgent blocking work when your immediate next step depends on that result. If the very next action is blocked on that task, the main rollout should usually do it locally to keep the critical path moving.\n- Keep work local when the subtask is too difficult to delegate well and when it is tightly coupled, urgent, or likely to block your immediate next step.\n\n### Designing delegated subtasks\n- Subtasks must be concrete, well-defined, and self-contained.\n- Delegated subtasks must materially advance the main task.\n- Do not duplicate work between the main rollout and delegated subtasks.\n- Avoid issuing multiple delegate calls on the same unresolved thread unless the new delegated task is genuinely different and necessary.\n- Narrow the delegated ask to the concrete output you need next.\n- For coding tasks, prefer delegating concrete code-change worker subtasks over read-only explorer analysis when the subagent can make a bounded patch in a clear write scope.\n- When delegating coding work, instruct the submodel to edit files directly in its forked workspace and list the file paths it changed in the final answer.\n- For code-edit subtasks, decompose work so each delegated task has a disjoint write set.\n\n### After you delegate\n- Call wait_agent very sparingly. Only call wait_agent when you need the result immediately for the next critical-path step and you are blocked until it returns.\n- Do not redo delegated subagent tasks yourself; focus on integrating results or tackling non-overlapping work.\n- While the subagent is running in the background, do meaningful non-overlapping work immediately.\n- Do not repeatedly wait by reflex.\n- When a delegated coding task returns, quickly review the uploaded changes, then integrate or refine them.\n\n### Parallel delegation patterns\n- Run multiple independent information-seeking subtasks in parallel when you have distinct questions that can be answered independently.\n- Split implementation into disjoint codebase slices and spawn multiple agents for them in parallel when the write scopes do not overlap.\n- Delegate verification only when it can run in parallel with ongoing implementation and is likely to catch a concrete risk before final integration.\n- The key is to find opportunities to spawn multiple independent subtasks in parallel within the same round, while ensuring each subtask is well-defined, self-contained, and materially advances the main task.",
                 "name": "spawn_agent",
                 "parameters": {
                   "additionalProperties": false,
@@ -1395,19 +919,19 @@
         "body": {
           "contentType": "text/event-stream; charset=utf-8",
           "kind": "binary",
-          "path": "openai-codex-v0128-wrapped.cassette.blobs/40bab86c31f29b2e0ed8c03953b215928169ae8ada3ae6a4e7007ec6327e8c29.bin",
-          "sha256": "40bab86c31f29b2e0ed8c03953b215928169ae8ada3ae6a4e7007ec6327e8c29"
+          "path": "openai-codex-v0128-wrapped.cassette.blobs/53eaaafb64180b2ddc51d6dbed29df5cf7686c5ff54ffbbb1f3158fe4e79cb30.bin",
+          "sha256": "53eaaafb64180b2ddc51d6dbed29df5cf7686c5ff54ffbbb1f3158fe4e79cb30"
         },
         "headers": {
           "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "9fc1d78a1d685af4-VIE",
+          "cf-ray": "9fc27570a9503260-VIE",
           "connection": "keep-alive",
           "content-type": "text/event-stream; charset=utf-8",
-          "date": "Fri, 15 May 2026 11:35:55 GMT",
+          "date": "Fri, 15 May 2026 13:23:44 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "241",
+          "openai-processing-ms": "482",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
@@ -1418,377 +942,37 @@
           "x-ratelimit-limit-requests": "15000",
           "x-ratelimit-limit-tokens": "10000000",
           "x-ratelimit-remaining-requests": "14999",
-          "x-ratelimit-remaining-tokens": "9989828",
+          "x-ratelimit-remaining-tokens": "9990493",
           "x-ratelimit-reset-requests": "4ms",
-          "x-ratelimit-reset-tokens": "61ms",
-          "x-request-id": "req_c0eb2ffc17234a26b4217417496e2c58"
+          "x-ratelimit-reset-tokens": "57ms",
+          "x-request-id": "req_aeec0e2fdf1d4b2e960024eaafdf2373"
         },
         "status": 200,
         "statusText": "OK"
       }
     },
     {
-      "callIndex": 7,
-      "id": "3b10322bf82066f3",
-      "matchKey": "GET api.openai.com/v1/responses",
-      "recordedAt": "2026-05-15T11:35:58.462Z",
-      "request": {
-        "body": {
-          "kind": "empty"
-        },
-        "headers": {},
-        "method": "GET",
-        "url": "https://api.openai.com/v1/responses"
-      },
-      "response": {
-        "body": {
-          "kind": "json",
-          "value": {
-            "error": {
-              "code": "missing_scope",
-              "message": "Your request to GET /v1/responses must be made with a session key (that is, it can only be made from the browser). You made it with the following key type: .",
-              "param": null,
-              "type": "invalid_request_error"
-            }
-          }
-        },
-        "headers": {
-          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
-          "alt-svc": "h3=\":443\"; ma=86400",
-          "cf-cache-status": "DYNAMIC",
-          "cf-ray": "9fc1d79da8d65af4-VIE",
-          "connection": "keep-alive",
-          "content-length": "280",
-          "content-type": "application/json",
-          "date": "Fri, 15 May 2026 11:35:58 GMT",
-          "openai-organization": "braintrust-data",
-          "openai-processing-ms": "6",
-          "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
-          "openai-version": "2020-10-01",
-          "server": "cloudflare",
-          "set-cookie": "[REDACTED]",
-          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
-          "x-content-type-options": "nosniff",
-          "x-request-id": "req_19c2c996deda4f6aada201bf21be682b"
-        },
-        "status": 401,
-        "statusText": "Unauthorized"
-      }
-    },
-    {
-      "callIndex": 8,
-      "id": "69e7f13f10739945",
-      "matchKey": "GET api.openai.com/v1/responses",
-      "recordedAt": "2026-05-15T11:35:58.735Z",
-      "request": {
-        "body": {
-          "kind": "empty"
-        },
-        "headers": {},
-        "method": "GET",
-        "url": "https://api.openai.com/v1/responses"
-      },
-      "response": {
-        "body": {
-          "kind": "json",
-          "value": {
-            "error": {
-              "code": "missing_scope",
-              "message": "Your request to GET /v1/responses must be made with a session key (that is, it can only be made from the browser). You made it with the following key type: .",
-              "param": null,
-              "type": "invalid_request_error"
-            }
-          }
-        },
-        "headers": {
-          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
-          "alt-svc": "h3=\":443\"; ma=86400",
-          "cf-cache-status": "DYNAMIC",
-          "cf-ray": "9fc1d79f5aab5af4-VIE",
-          "connection": "keep-alive",
-          "content-length": "280",
-          "content-type": "application/json",
-          "date": "Fri, 15 May 2026 11:35:58 GMT",
-          "openai-organization": "braintrust-data",
-          "openai-processing-ms": "9",
-          "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
-          "openai-version": "2020-10-01",
-          "server": "cloudflare",
-          "set-cookie": "[REDACTED]",
-          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
-          "x-content-type-options": "nosniff",
-          "x-request-id": "req_02717545ac9591ce9afafab4a4fd5eb3"
-        },
-        "status": 401,
-        "statusText": "Unauthorized"
-      }
-    },
-    {
-      "callIndex": 9,
-      "id": "ebbcf6e259ae2693",
-      "matchKey": "GET api.openai.com/v1/responses",
-      "recordedAt": "2026-05-15T11:35:59.132Z",
-      "request": {
-        "body": {
-          "kind": "empty"
-        },
-        "headers": {},
-        "method": "GET",
-        "url": "https://api.openai.com/v1/responses"
-      },
-      "response": {
-        "body": {
-          "kind": "json",
-          "value": {
-            "error": {
-              "code": "missing_scope",
-              "message": "Your request to GET /v1/responses must be made with a session key (that is, it can only be made from the browser). You made it with the following key type: .",
-              "param": null,
-              "type": "invalid_request_error"
-            }
-          }
-        },
-        "headers": {
-          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
-          "alt-svc": "h3=\":443\"; ma=86400",
-          "cf-cache-status": "DYNAMIC",
-          "cf-ray": "9fc1d7a1ed745af4-VIE",
-          "connection": "keep-alive",
-          "content-length": "280",
-          "content-type": "application/json",
-          "date": "Fri, 15 May 2026 11:35:59 GMT",
-          "openai-organization": "braintrust-data",
-          "openai-processing-ms": "4",
-          "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
-          "openai-version": "2020-10-01",
-          "server": "cloudflare",
-          "set-cookie": "[REDACTED]",
-          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
-          "x-content-type-options": "nosniff",
-          "x-request-id": "req_b53740ceb18c4e1b90a1ec5657ef5dd0"
-        },
-        "status": 401,
-        "statusText": "Unauthorized"
-      }
-    },
-    {
-      "callIndex": 10,
-      "id": "2869cd8621bf6449",
-      "matchKey": "GET api.openai.com/v1/responses",
-      "recordedAt": "2026-05-15T11:35:59.680Z",
-      "request": {
-        "body": {
-          "kind": "empty"
-        },
-        "headers": {},
-        "method": "GET",
-        "url": "https://api.openai.com/v1/responses"
-      },
-      "response": {
-        "body": {
-          "kind": "json",
-          "value": {
-            "error": {
-              "code": "missing_scope",
-              "message": "Your request to GET /v1/responses must be made with a session key (that is, it can only be made from the browser). You made it with the following key type: .",
-              "param": null,
-              "type": "invalid_request_error"
-            }
-          }
-        },
-        "headers": {
-          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
-          "alt-svc": "h3=\":443\"; ma=86400",
-          "cf-cache-status": "DYNAMIC",
-          "cf-ray": "9fc1d7a558da5af4-VIE",
-          "connection": "keep-alive",
-          "content-length": "280",
-          "content-type": "application/json",
-          "date": "Fri, 15 May 2026 11:35:59 GMT",
-          "openai-organization": "braintrust-data",
-          "openai-processing-ms": "4",
-          "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
-          "openai-version": "2020-10-01",
-          "server": "cloudflare",
-          "set-cookie": "[REDACTED]",
-          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
-          "x-content-type-options": "nosniff",
-          "x-request-id": "req_458bc07e68424e00acc7507bee660cb0"
-        },
-        "status": 401,
-        "statusText": "Unauthorized"
-      }
-    },
-    {
-      "callIndex": 11,
-      "id": "ee8de2a1fdd6f745",
-      "matchKey": "GET api.openai.com/v1/responses",
-      "recordedAt": "2026-05-15T11:36:00.715Z",
-      "request": {
-        "body": {
-          "kind": "empty"
-        },
-        "headers": {},
-        "method": "GET",
-        "url": "https://api.openai.com/v1/responses"
-      },
-      "response": {
-        "body": {
-          "kind": "json",
-          "value": {
-            "error": {
-              "code": "missing_scope",
-              "message": "Your request to GET /v1/responses must be made with a session key (that is, it can only be made from the browser). You made it with the following key type: .",
-              "param": null,
-              "type": "invalid_request_error"
-            }
-          }
-        },
-        "headers": {
-          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
-          "alt-svc": "h3=\":443\"; ma=86400",
-          "cf-cache-status": "DYNAMIC",
-          "cf-ray": "9fc1d7abbe7a5af4-VIE",
-          "connection": "keep-alive",
-          "content-length": "280",
-          "content-type": "application/json",
-          "date": "Fri, 15 May 2026 11:36:00 GMT",
-          "openai-organization": "braintrust-data",
-          "openai-processing-ms": "5",
-          "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
-          "openai-version": "2020-10-01",
-          "server": "cloudflare",
-          "set-cookie": "[REDACTED]",
-          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
-          "x-content-type-options": "nosniff",
-          "x-request-id": "req_4aaddb6463ae49eeaa8f26a165e90cea"
-        },
-        "status": 401,
-        "statusText": "Unauthorized"
-      }
-    },
-    {
-      "callIndex": 12,
-      "id": "224f122b4b96e81a",
-      "matchKey": "GET api.openai.com/v1/responses",
-      "recordedAt": "2026-05-15T11:36:02.748Z",
-      "request": {
-        "body": {
-          "kind": "empty"
-        },
-        "headers": {},
-        "method": "GET",
-        "url": "https://api.openai.com/v1/responses"
-      },
-      "response": {
-        "body": {
-          "kind": "json",
-          "value": {
-            "error": {
-              "code": "missing_scope",
-              "message": "Your request to GET /v1/responses must be made with a session key (that is, it can only be made from the browser). You made it with the following key type: .",
-              "param": null,
-              "type": "invalid_request_error"
-            }
-          }
-        },
-        "headers": {
-          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
-          "alt-svc": "h3=\":443\"; ma=86400",
-          "cf-cache-status": "DYNAMIC",
-          "cf-ray": "9fc1d7b83a135af4-VIE",
-          "connection": "keep-alive",
-          "content-length": "280",
-          "content-type": "application/json",
-          "date": "Fri, 15 May 2026 11:36:02 GMT",
-          "openai-organization": "braintrust-data",
-          "openai-processing-ms": "6",
-          "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
-          "openai-version": "2020-10-01",
-          "server": "cloudflare",
-          "set-cookie": "[REDACTED]",
-          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
-          "x-content-type-options": "nosniff",
-          "x-request-id": "req_02852cada5914b128c1251b9ad10cf3c"
-        },
-        "status": 401,
-        "statusText": "Unauthorized"
-      }
-    },
-    {
-      "callIndex": 13,
-      "id": "495f0011eeb34ec2",
-      "matchKey": "GET api.openai.com/v1/responses",
-      "recordedAt": "2026-05-15T11:36:06.843Z",
-      "request": {
-        "body": {
-          "kind": "empty"
-        },
-        "headers": {},
-        "method": "GET",
-        "url": "https://api.openai.com/v1/responses"
-      },
-      "response": {
-        "body": {
-          "kind": "json",
-          "value": {
-            "error": {
-              "code": "missing_scope",
-              "message": "Your request to GET /v1/responses must be made with a session key (that is, it can only be made from the browser). You made it with the following key type: .",
-              "param": null,
-              "type": "invalid_request_error"
-            }
-          }
-        },
-        "headers": {
-          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
-          "alt-svc": "h3=\":443\"; ma=86400",
-          "cf-cache-status": "DYNAMIC",
-          "cf-ray": "9fc1d7cfeb4e5af4-VIE",
-          "connection": "keep-alive",
-          "content-length": "280",
-          "content-type": "application/json",
-          "date": "Fri, 15 May 2026 11:36:06 GMT",
-          "openai-organization": "braintrust-data",
-          "openai-processing-ms": "7",
-          "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
-          "openai-version": "2020-10-01",
-          "server": "cloudflare",
-          "set-cookie": "[REDACTED]",
-          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
-          "x-content-type-options": "nosniff",
-          "x-request-id": "req_06cb78b232714267b4f0d193108c3ba0"
-        },
-        "status": 401,
-        "statusText": "Unauthorized"
-      }
-    },
-    {
       "callIndex": 2,
-      "id": "8e54c0818866d113",
+      "id": "a7ea3e663ae5e34d",
       "matchKey": "POST api.openai.com/v1/responses",
-      "recordedAt": "2026-05-15T11:36:08.861Z",
+      "recordedAt": "2026-05-15T13:23:47.245Z",
       "request": {
         "body": {
           "kind": "json",
           "value": {
             "client_metadata": {
-              "x-codex-installation-id": "b32accb4-04ce-409a-a6b8-d53b231799e1"
+              "x-codex-installation-id": "b33472c2-82e4-4e05-9485-606bf89d78cd"
             },
             "include": [],
             "input": [
               {
                 "content": [
                   {
-                    "text": "<permissions instructions>\nFilesystem sandboxing defines which files can be read or written. `sandbox_mode` is `workspace-write`: The sandbox permits reading files, and editing files in `cwd` and `writable_roots`. Editing files in other directories requires approval. Network access is restricted.\nApproval policy is currently never. Do not provide the `sandbox_permissions` for any reason, commands will be rejected.\n The writable roots are `/private/tmp/braintrust-codex-e2e-openai-codex-instrumentation/openai-codex-v0128-wrapped/stream`, `/private/tmp`, `/private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T`, `/Users/lucaforstner/.codex/memories`.\n</permissions instructions>",
+                    "text": "<permissions instructions>\nFilesystem sandboxing defines which files can be read or written. `sandbox_mode` is `workspace-write`: The sandbox permits reading files, and editing files in `cwd` and `writable_roots`. Editing files in other directories requires approval. Network access is restricted.\nApproval policy is currently never. Do not provide the `sandbox_permissions` for any reason, commands will be rejected.\n The writable roots are `/private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-openai-codex-v0128-wrapped-ChcjII/stream`, `/private/tmp`, `/private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T`, `/private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-openai-codex-v0128-wrapped-ChcjII/codex-home/memories`.\n</permissions instructions>",
                     "type": "input_text"
                   },
                   {
-                    "text": "<skills_instructions>\n## Skills\nA skill is a set of local instructions to follow that is stored in a `SKILL.md` file. Below is the list of skills that can be used. Each entry includes a name, description, and file path so you can open the source for full instructions when using a specific skill.\n### Available skills\n- imagegen: Generate or edit raster images when the task benefits from AI-created bitmap visuals such as photos, illustrations, textures, sprites, mockups, or transparent-background cutouts. Use when Codex should create a brand-new image, transform an existing image, or derive visual variants from references, and the output should be a bitmap asset rather than repo-native code or vector. Do not use when the task is better handled by editing existing SVG/vector/code-native assets, extending an established icon or logo system, or building the visual directly in HTML/CSS/canvas. (file: /Users/lucaforstner/.codex/skills/.system/imagegen/SKILL.md)\n- openai-docs: Use when the user asks how to build with OpenAI products or APIs and needs up-to-date official documentation with citations, help choosing the latest model for a use case, or model upgrade and prompt-upgrade guidance; prioritize OpenAI docs MCP tools, use bundled references only as helper context, and restrict any fallback browsing to official OpenAI domains. (file: /Users/lucaforstner/.codex/skills/.system/openai-docs/SKILL.md)\n- plugin-creator: Create and scaffold plugin directories for Codex with a required `.codex-plugin/plugin.json`, optional plugin folders/files, and baseline placeholders you can edit before publishing or testing. Use when Codex needs to create a new local plugin, add optional plugin structure, or generate or update repo-root `.agents/plugins/marketplace.json` entries for plugin ordering and availability metadata. (file: /Users/lucaforstner/.codex/skills/.system/plugin-creator/SKILL.md)\n- skill-creator: Guide for creating effective skills. This skill should be used when users want to create a new skill (or update an existing skill) that extends Codex's capabilities with specialized knowledge, workflows, or tool integrations. (file: /Users/lucaforstner/.codex/skills/.system/skill-creator/SKILL.md)\n- skill-installer: Install Codex skills into $CODEX_HOME/skills from a curated list or a GitHub repo path. Use when a user asks to list installable skills, install a curated skill, or install a skill from another repo (including private repos). (file: /Users/lucaforstner/.codex/skills/.system/skill-installer/SKILL.md)\n- braintrust: Use the Braintrust `bt` CLI for projects, traces, prompts, and key Braintrust workflows. (file: /Users/lucaforstner/.agents/skills/braintrust/SKILL.md)\n- github:gh-address-comments: Address actionable GitHub pull request review feedback. Use when the user wants to inspect unresolved review threads, requested changes, or inline review comments on a PR, then implement selected fixes. Use the GitHub app for PR metadata and flat comment reads, and use the bundled GraphQL script via `gh` whenever thread-level state, resolution status, or inline review context matters. (file: /Users/lucaforstner/.codex/plugins/cache/openai-curated/github/b8edb371/skills/gh-address-comments/SKILL.md)\n- github:gh-fix-ci: Use when a user asks to debug or fix failing GitHub PR checks that run in GitHub Actions. Use the GitHub app from this plugin for PR metadata and patch context, and use `gh` for Actions check and log inspection before implementing any approved fix. (file: /Users/lucaforstner/.codex/plugins/cache/openai-curated/github/b8edb371/skills/gh-fix-ci/SKILL.md)\n- github:github: Triage and orient GitHub repository, pull request, and issue work through the connected GitHub app. Use when the user asks for general GitHub help, wants PR or issue summaries, or needs repository context before choosing a more specific GitHub workflow. (file: /Users/lucaforstner/.codex/plugins/cache/openai-curated/github/b8edb371/skills/github/SKILL.md)\n- github:yeet: Publish local changes to GitHub by confirming scope, committing intentionally, pushing the branch, and opening a draft PR through the GitHub app from this plugin, with `gh` used only as a fallback where connector coverage is insufficient. (file: /Users/lucaforstner/.codex/plugins/cache/openai-curated/github/b8edb371/skills/yeet/SKILL.md)\n### How to use skills\n- Discovery: The list above is the skills available in this session (name + description + file path). Skill bodies live on disk at the listed paths.\n- Trigger rules: If the user names a skill (with `$SkillName` or plain text) OR the task clearly matches a skill's description shown above, you must use that skill for that turn. Multiple mentions mean use them all. Do not carry skills across turns unless re-mentioned.\n- Missing/blocked: If a named skill isn't in the list or the path can't be read, say so briefly and continue with the best fallback.\n- How to use a skill (progressive disclosure):\n  1) After deciding to use a skill, open its `SKILL.md`. Read only enough to follow the workflow.\n  2) When `SKILL.md` references relative paths (e.g., `scripts/foo.py`), resolve them relative to the skill directory listed above first, and only consider other paths if needed.\n  3) If `SKILL.md` points to extra folders such as `references/`, load only the specific files needed for the request; don't bulk-load everything.\n  4) If `scripts/` exist, prefer running or patching them instead of retyping large code blocks.\n  5) If `assets/` or templates exist, reuse them instead of recreating from scratch.\n- Coordination and sequencing:\n  - If multiple skills apply, choose the minimal set that covers the request and state the order you'll use them.\n  - Announce which skill(s) you're using and why (one short line). If you skip an obvious skill, say why.\n- Context hygiene:\n  - Keep context small: summarize long sections instead of pasting them; only load extra files when needed.\n  - Avoid deep reference-chasing: prefer opening only files directly linked from `SKILL.md` unless you're blocked.\n  - When variants exist (frameworks, providers, domains), pick only the relevant reference file(s) and note that choice.\n- Safety and fallback: If a skill can't be applied cleanly (missing files, unclear instructions), state the issue, pick the next-best approach, and continue.\n</skills_instructions>",
-                    "type": "input_text"
-                  },
-                  {
-                    "text": "<plugins_instructions>\n## Plugins\nA plugin is a local bundle of skills, MCP servers, and apps. Below is the list of plugins that are enabled and available in this session.\n### Available plugins\n- `GitHub`: Inspect repositories, triage pull requests and issues, debug CI, and publish changes through a hybrid GitHub connector and CLI workflow.\n### How to use plugins\n- Discovery: The list above is the plugins available in this session.\n- Skill naming: If a plugin contributes skills, those skill entries are prefixed with `plugin_name:` in the Skills list.\n- Trigger rules: If the user explicitly names a plugin, prefer capabilities associated with that plugin for that turn.\n- Relationship to capabilities: Plugins are not invoked directly. Use their underlying skills, MCP tools, and app tools to help solve the task.\n- Preference: When a relevant plugin is available, prefer using capabilities associated with that plugin over standalone capabilities that provide similar functionality.\n- Missing/blocked: If the user requests a plugin that is not listed above, or the plugin does not have relevant callable capabilities for the task, say so briefly and continue with the best fallback.\n</plugins_instructions>",
+                    "text": "<skills_instructions>\n## Skills\nA skill is a set of local instructions to follow that is stored in a `SKILL.md` file. Below is the list of skills that can be used. Each entry includes a name, description, and file path so you can open the source for full instructions when using a specific skill.\n### Available skills\n- imagegen: Generate or edit raster images when the task benefits from AI-created bitmap visuals such as photos, illustrations, textures, sprites, mockups, or transparent-background cutouts. Use when Codex should create a brand-new image, transform an existing image, or derive visual variants from references, and the output should be a bitmap asset rather than repo-native code or vector. Do not use when the task is better handled by editing existing SVG/vector/code-native assets, extending an established icon or logo system, or building the visual directly in HTML/CSS/canvas. (file: /private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-openai-codex-v0128-wrapped-ChcjII/codex-home/skills/.system/imagegen/SKILL.md)\n- openai-docs: Use when the user asks how to build with OpenAI products or APIs and needs up-to-date official documentation with citations, help choosing the latest model for a use case, or model upgrade and prompt-upgrade guidance; prioritize OpenAI docs MCP tools, use bundled references only as helper context, and restrict any fallback browsing to official OpenAI domains. (file: /private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-openai-codex-v0128-wrapped-ChcjII/codex-home/skills/.system/openai-docs/SKILL.md)\n- plugin-creator: Create and scaffold plugin directories for Codex with a required `.codex-plugin/plugin.json`, optional plugin folders/files, and baseline placeholders you can edit before publishing or testing. Use when Codex needs to create a new local plugin, add optional plugin structure, or generate or update repo-root `.agents/plugins/marketplace.json` entries for plugin ordering and availability metadata. (file: /private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-openai-codex-v0128-wrapped-ChcjII/codex-home/skills/.system/plugin-creator/SKILL.md)\n- skill-creator: Guide for creating effective skills. This skill should be used when users want to create a new skill (or update an existing skill) that extends Codex's capabilities with specialized knowledge, workflows, or tool integrations. (file: /private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-openai-codex-v0128-wrapped-ChcjII/codex-home/skills/.system/skill-creator/SKILL.md)\n- skill-installer: Install Codex skills into $CODEX_HOME/skills from a curated list or a GitHub repo path. Use when a user asks to list installable skills, install a curated skill, or install a skill from another repo (including private repos). (file: /private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-openai-codex-v0128-wrapped-ChcjII/codex-home/skills/.system/skill-installer/SKILL.md)\n- braintrust: Use the Braintrust `bt` CLI for projects, traces, prompts, and key Braintrust workflows. (file: /Users/lucaforstner/.agents/skills/braintrust/SKILL.md)\n### How to use skills\n- Discovery: The list above is the skills available in this session (name + description + file path). Skill bodies live on disk at the listed paths.\n- Trigger rules: If the user names a skill (with `$SkillName` or plain text) OR the task clearly matches a skill's description shown above, you must use that skill for that turn. Multiple mentions mean use them all. Do not carry skills across turns unless re-mentioned.\n- Missing/blocked: If a named skill isn't in the list or the path can't be read, say so briefly and continue with the best fallback.\n- How to use a skill (progressive disclosure):\n  1) After deciding to use a skill, open its `SKILL.md`. Read only enough to follow the workflow.\n  2) When `SKILL.md` references relative paths (e.g., `scripts/foo.py`), resolve them relative to the skill directory listed above first, and only consider other paths if needed.\n  3) If `SKILL.md` points to extra folders such as `references/`, load only the specific files needed for the request; don't bulk-load everything.\n  4) If `scripts/` exist, prefer running or patching them instead of retyping large code blocks.\n  5) If `assets/` or templates exist, reuse them instead of recreating from scratch.\n- Coordination and sequencing:\n  - If multiple skills apply, choose the minimal set that covers the request and state the order you'll use them.\n  - Announce which skill(s) you're using and why (one short line). If you skip an obvious skill, say why.\n- Context hygiene:\n  - Keep context small: summarize long sections instead of pasting them; only load extra files when needed.\n  - Avoid deep reference-chasing: prefer opening only files directly linked from `SKILL.md` unless you're blocked.\n  - When variants exist (frameworks, providers, domains), pick only the relevant reference file(s) and note that choice.\n- Safety and fallback: If a skill can't be applied cleanly (missing files, unclear instructions), state the issue, pick the next-best approach, and continue.\n</skills_instructions>",
                     "type": "input_text"
                   }
                 ],
@@ -1798,11 +982,7 @@
               {
                 "content": [
                   {
-                    "text": "# AGENTS.md instructions for /tmp/braintrust-codex-e2e-openai-codex-instrumentation/openai-codex-v0128-wrapped/stream\n\n<INSTRUCTIONS>\n## General Coding Instructions\n\n- Don't create helper functions for literally everything. Stick to inlining things as much as possible as long as the code is still readable. Only extract into helper functions if the code is called from at least two places.\n- You can add comments in places where your added code may not immediately be obvious to the reading user.\n- Never do any remote destructive actions like pushing commits, pushing branches, pushing tags, doing releases or commenting anywhere and such.\n</INSTRUCTIONS>",
-                    "type": "input_text"
-                  },
-                  {
-                    "text": "<environment_context>\n  <cwd>/tmp/braintrust-codex-e2e-openai-codex-instrumentation/openai-codex-v0128-wrapped/stream</cwd>\n  <shell>zsh</shell>\n  <current_date>2026-05-15</current_date>\n  <timezone>Europe/Vienna</timezone>\n</environment_context>",
+                    "text": "<environment_context>\n  <cwd>/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-openai-codex-v0128-wrapped-ChcjII/stream</cwd>\n  <shell>zsh</shell>\n  <current_date>2026-05-15</current_date>\n  <timezone>Europe/Vienna</timezone>\n</environment_context>",
                     "type": "input_text"
                   }
                 ],
@@ -1825,7 +1005,6 @@
             "parallel_tool_calls": false,
             "prompt_cache_key": "[REDACTED]",
             "reasoning": null,
-            "service_tier": "priority",
             "store": false,
             "stream": true,
             "tool_choice": "auto",
@@ -1910,67 +1089,6 @@
                     }
                   },
                   "required": ["session_id"],
-                  "type": "object"
-                },
-                "strict": false,
-                "type": "function"
-              },
-              {
-                "description": "Lists resources provided by MCP servers. Resources allow servers to share data that provides context to language models, such as files, database schemas, or application-specific information. Prefer resources over web search when possible.",
-                "name": "list_mcp_resources",
-                "parameters": {
-                  "additionalProperties": false,
-                  "properties": {
-                    "cursor": {
-                      "description": "Opaque cursor returned by a previous list_mcp_resources call for the same server.",
-                      "type": "string"
-                    },
-                    "server": {
-                      "description": "Optional MCP server name. When omitted, lists resources from every configured server.",
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                },
-                "strict": false,
-                "type": "function"
-              },
-              {
-                "description": "Lists resource templates provided by MCP servers. Parameterized resource templates allow servers to share data that takes parameters and provides context to language models, such as files, database schemas, or application-specific information. Prefer resource templates over web search when possible.",
-                "name": "list_mcp_resource_templates",
-                "parameters": {
-                  "additionalProperties": false,
-                  "properties": {
-                    "cursor": {
-                      "description": "Opaque cursor returned by a previous list_mcp_resource_templates call for the same server.",
-                      "type": "string"
-                    },
-                    "server": {
-                      "description": "Optional MCP server name. When omitted, lists resource templates from all configured servers.",
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                },
-                "strict": false,
-                "type": "function"
-              },
-              {
-                "description": "Read a specific resource from an MCP server given the server name and resource URI.",
-                "name": "read_mcp_resource",
-                "parameters": {
-                  "additionalProperties": false,
-                  "properties": {
-                    "server": {
-                      "description": "MCP server name exactly as configured. Must match the 'server' field returned by list_mcp_resources.",
-                      "type": "string"
-                    },
-                    "uri": {
-                      "description": "Resource URI to read. Must be one of the URIs returned by list_mcp_resources.",
-                      "type": "string"
-                    }
-                  },
-                  "required": ["server", "uri"],
                   "type": "object"
                 },
                 "strict": false,
@@ -2083,7 +1201,7 @@
                 "type": "function"
               },
               {
-                "description": "\n        \n        Available model overrides (optional; inherited parent model is preferred):\n- GPT-5.5 (`gpt-5.5`): Frontier model for complex coding, research, and real-world work. Default reasoning effort: xhigh. Supported reasoning efforts: low (Fast responses with lighter reasoning), medium (Balances speed and reasoning depth for everyday tasks), high (Greater reasoning depth for complex problems), xhigh (Extra high reasoning depth for complex problems).\n- gpt-5.4 (`gpt-5.4`): Strong model for everyday coding. Default reasoning effort: medium. Supported reasoning efforts: low (Fast responses with lighter reasoning), medium (Balances speed and reasoning depth for everyday tasks), high (Greater reasoning depth for complex problems), xhigh (Extra high reasoning depth for complex problems).\n- GPT-5.4-Mini (`gpt-5.4-mini`): Small, fast, and cost-efficient model for simpler coding tasks. Default reasoning effort: medium. Supported reasoning efforts: low (Fast responses with lighter reasoning), medium (Balances speed and reasoning depth for everyday tasks), high (Greater reasoning depth for complex problems), xhigh (Extra high reasoning depth for complex problems).\n- gpt-5.3-codex (`gpt-5.3-codex`): Coding-optimized model. Default reasoning effort: medium. Supported reasoning efforts: low (Fast responses with lighter reasoning), medium (Balances speed and reasoning depth for everyday tasks), high (Greater reasoning depth for complex problems), xhigh (Extra high reasoning depth for complex problems).\n- gpt-5.2 (`gpt-5.2`): Optimized for professional work and long-running agents. Default reasoning effort: medium. Supported reasoning efforts: low (Balances speed with some reasoning; useful for straightforward queries and short explanations), medium (Provides a solid balance of reasoning depth and latency for general-purpose tasks), high (Maximizes reasoning depth for complex or ambiguous problems), xhigh (Extra high reasoning for complex problems).\n        Spawn a sub-agent for a well-scoped task. Returns the spawned agent id plus the user-facing nickname when available. Spawned agents inherit your current model by default. Omit `model` to use that preferred default; set `model` only when an explicit override is needed.\nThis spawn_agent tool provides you access to sub-agents that inherit your current model by default. Do not set the `model` field unless the user explicitly asks for a different model or there is a clear task-specific reason. You should follow the rules and guidelines below to use this tool.\n\nOnly use `spawn_agent` if and only if the user explicitly asks for sub-agents, delegation, or parallel agent work.\nRequests for depth, thoroughness, research, investigation, or detailed codebase analysis do not count as permission to spawn.\nAgent-role guidance below only helps choose which agent to use after spawning is already authorized; it never authorizes spawning by itself.\n\n### When to delegate vs. do the subtask yourself\n- First, quickly analyze the overall user task and form a succinct high-level plan. Identify which tasks are immediate blockers on the critical path, and which tasks are sidecar tasks that are needed but can run in parallel without blocking the next local step. As part of that plan, explicitly decide what immediate task you should do locally right now. Do this planning step before delegating to agents so you do not hand off the immediate blocking task to a submodel and then waste time waiting on it.\n- Use a subagent when a subtask is easy enough for it to handle and can run in parallel with your local work. Prefer delegating concrete, bounded sidecar tasks that materially advance the main task without blocking your immediate next local step.\n- Do not delegate urgent blocking work when your immediate next step depends on that result. If the very next action is blocked on that task, the main rollout should usually do it locally to keep the critical path moving.\n- Keep work local when the subtask is too difficult to delegate well and when it is tightly coupled, urgent, or likely to block your immediate next step.\n\n### Designing delegated subtasks\n- Subtasks must be concrete, well-defined, and self-contained.\n- Delegated subtasks must materially advance the main task.\n- Do not duplicate work between the main rollout and delegated subtasks.\n- Avoid issuing multiple delegate calls on the same unresolved thread unless the new delegated task is genuinely different and necessary.\n- Narrow the delegated ask to the concrete output you need next.\n- For coding tasks, prefer delegating concrete code-change worker subtasks over read-only explorer analysis when the subagent can make a bounded patch in a clear write scope.\n- When delegating coding work, instruct the submodel to edit files directly in its forked workspace and list the file paths it changed in the final answer.\n- For code-edit subtasks, decompose work so each delegated task has a disjoint write set.\n\n### After you delegate\n- Call wait_agent very sparingly. Only call wait_agent when you need the result immediately for the next critical-path step and you are blocked until it returns.\n- Do not redo delegated subagent tasks yourself; focus on integrating results or tackling non-overlapping work.\n- While the subagent is running in the background, do meaningful non-overlapping work immediately.\n- Do not repeatedly wait by reflex.\n- When a delegated coding task returns, quickly review the uploaded changes, then integrate or refine them.\n\n### Parallel delegation patterns\n- Run multiple independent information-seeking subtasks in parallel when you have distinct questions that can be answered independently.\n- Split implementation into disjoint codebase slices and spawn multiple agents for them in parallel when the write scopes do not overlap.\n- Delegate verification only when it can run in parallel with ongoing implementation and is likely to catch a concrete risk before final integration.\n- The key is to find opportunities to spawn multiple independent subtasks in parallel within the same round, while ensuring each subtask is well-defined, self-contained, and materially advances the main task.",
+                "description": "\n        \n        Available model overrides (optional; inherited parent model is preferred):\n- GPT-5.5 (`gpt-5.5`): Frontier model for complex coding, research, and real-world work. Default reasoning effort: medium. Supported reasoning efforts: low (Fast responses with lighter reasoning), medium (Balances speed and reasoning depth for everyday tasks), high (Greater reasoning depth for complex problems), xhigh (Extra high reasoning depth for complex problems).\n- gpt-5.4 (`gpt-5.4`): Strong model for everyday coding. Default reasoning effort: xhigh. Supported reasoning efforts: low (Fast responses with lighter reasoning), medium (Balances speed and reasoning depth for everyday tasks), high (Greater reasoning depth for complex problems), xhigh (Extra high reasoning depth for complex problems).\n- GPT-5.4-Mini (`gpt-5.4-mini`): Small, fast, and cost-efficient model for simpler coding tasks. Default reasoning effort: medium. Supported reasoning efforts: low (Fast responses with lighter reasoning), medium (Balances speed and reasoning depth for everyday tasks), high (Greater reasoning depth for complex problems), xhigh (Extra high reasoning depth for complex problems).\n- gpt-5.3-codex (`gpt-5.3-codex`): Coding-optimized model. Default reasoning effort: medium. Supported reasoning efforts: low (Fast responses with lighter reasoning), medium (Balances speed and reasoning depth for everyday tasks), high (Greater reasoning depth for complex problems), xhigh (Extra high reasoning depth for complex problems).\n- gpt-5.2 (`gpt-5.2`): Optimized for professional work and long-running agents. Default reasoning effort: medium. Supported reasoning efforts: low (Balances speed with some reasoning; useful for straightforward queries and short explanations), medium (Provides a solid balance of reasoning depth and latency for general-purpose tasks), high (Maximizes reasoning depth for complex or ambiguous problems), xhigh (Extra high reasoning for complex problems).\n        Spawn a sub-agent for a well-scoped task. Returns the spawned agent id plus the user-facing nickname when available. Spawned agents inherit your current model by default. Omit `model` to use that preferred default; set `model` only when an explicit override is needed.\nThis spawn_agent tool provides you access to sub-agents that inherit your current model by default. Do not set the `model` field unless the user explicitly asks for a different model or there is a clear task-specific reason. You should follow the rules and guidelines below to use this tool.\n\nOnly use `spawn_agent` if and only if the user explicitly asks for sub-agents, delegation, or parallel agent work.\nRequests for depth, thoroughness, research, investigation, or detailed codebase analysis do not count as permission to spawn.\nAgent-role guidance below only helps choose which agent to use after spawning is already authorized; it never authorizes spawning by itself.\n\n### When to delegate vs. do the subtask yourself\n- First, quickly analyze the overall user task and form a succinct high-level plan. Identify which tasks are immediate blockers on the critical path, and which tasks are sidecar tasks that are needed but can run in parallel without blocking the next local step. As part of that plan, explicitly decide what immediate task you should do locally right now. Do this planning step before delegating to agents so you do not hand off the immediate blocking task to a submodel and then waste time waiting on it.\n- Use a subagent when a subtask is easy enough for it to handle and can run in parallel with your local work. Prefer delegating concrete, bounded sidecar tasks that materially advance the main task without blocking your immediate next local step.\n- Do not delegate urgent blocking work when your immediate next step depends on that result. If the very next action is blocked on that task, the main rollout should usually do it locally to keep the critical path moving.\n- Keep work local when the subtask is too difficult to delegate well and when it is tightly coupled, urgent, or likely to block your immediate next step.\n\n### Designing delegated subtasks\n- Subtasks must be concrete, well-defined, and self-contained.\n- Delegated subtasks must materially advance the main task.\n- Do not duplicate work between the main rollout and delegated subtasks.\n- Avoid issuing multiple delegate calls on the same unresolved thread unless the new delegated task is genuinely different and necessary.\n- Narrow the delegated ask to the concrete output you need next.\n- For coding tasks, prefer delegating concrete code-change worker subtasks over read-only explorer analysis when the subagent can make a bounded patch in a clear write scope.\n- When delegating coding work, instruct the submodel to edit files directly in its forked workspace and list the file paths it changed in the final answer.\n- For code-edit subtasks, decompose work so each delegated task has a disjoint write set.\n\n### After you delegate\n- Call wait_agent very sparingly. Only call wait_agent when you need the result immediately for the next critical-path step and you are blocked until it returns.\n- Do not redo delegated subagent tasks yourself; focus on integrating results or tackling non-overlapping work.\n- While the subagent is running in the background, do meaningful non-overlapping work immediately.\n- Do not repeatedly wait by reflex.\n- When a delegated coding task returns, quickly review the uploaded changes, then integrate or refine them.\n\n### Parallel delegation patterns\n- Run multiple independent information-seeking subtasks in parallel when you have distinct questions that can be answered independently.\n- Split implementation into disjoint codebase slices and spawn multiple agents for them in parallel when the write scopes do not overlap.\n- Delegate verification only when it can run in parallel with ongoing implementation and is likely to catch a concrete risk before final integration.\n- The key is to find opportunities to spawn multiple independent subtasks in parallel within the same round, while ensuring each subtask is well-defined, self-contained, and materially advances the main task.",
                 "name": "spawn_agent",
                 "parameters": {
                   "additionalProperties": false,
@@ -2268,19 +1386,19 @@
         "body": {
           "contentType": "text/event-stream; charset=utf-8",
           "kind": "binary",
-          "path": "openai-codex-v0128-wrapped.cassette.blobs/a56397b8fb3e8580c1fd3cc46979e93968d4b9367c3200b50541bc84a9b2a479.bin",
-          "sha256": "a56397b8fb3e8580c1fd3cc46979e93968d4b9367c3200b50541bc84a9b2a479"
+          "path": "openai-codex-v0128-wrapped.cassette.blobs/ef448f59c7786fd3f5e17964054f632b9baf86e7bca5d4f444085e06c451225a.bin",
+          "sha256": "ef448f59c7786fd3f5e17964054f632b9baf86e7bca5d4f444085e06c451225a"
         },
         "headers": {
           "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "9fc1d7d37ea25af4-VIE",
+          "cf-ray": "9fc2757db9913260-VIE",
           "connection": "keep-alive",
           "content-type": "text/event-stream; charset=utf-8",
-          "date": "Fri, 15 May 2026 11:36:07 GMT",
+          "date": "Fri, 15 May 2026 13:23:45 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "370",
+          "openai-processing-ms": "346",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
@@ -2291,10 +1409,10 @@
           "x-ratelimit-limit-requests": "15000",
           "x-ratelimit-limit-tokens": "10000000",
           "x-ratelimit-remaining-requests": "14999",
-          "x-ratelimit-remaining-tokens": "9989901",
+          "x-ratelimit-remaining-tokens": "9990568",
           "x-ratelimit-reset-requests": "4ms",
-          "x-ratelimit-reset-tokens": "60ms",
-          "x-request-id": "req_12802c622a8e4b8d800853d557d5be18"
+          "x-ratelimit-reset-tokens": "56ms",
+          "x-request-id": "req_ef0100a02439495a957156c18e18325c"
         },
         "status": 200,
         "statusText": "OK"
@@ -2302,30 +1420,26 @@
     },
     {
       "callIndex": 3,
-      "id": "2b2a1f592e6899ea",
+      "id": "190085f7f12c58e6",
       "matchKey": "POST api.openai.com/v1/responses",
-      "recordedAt": "2026-05-15T11:36:10.173Z",
+      "recordedAt": "2026-05-15T13:23:48.463Z",
       "request": {
         "body": {
           "kind": "json",
           "value": {
             "client_metadata": {
-              "x-codex-installation-id": "b32accb4-04ce-409a-a6b8-d53b231799e1"
+              "x-codex-installation-id": "b33472c2-82e4-4e05-9485-606bf89d78cd"
             },
             "include": [],
             "input": [
               {
                 "content": [
                   {
-                    "text": "<permissions instructions>\nFilesystem sandboxing defines which files can be read or written. `sandbox_mode` is `workspace-write`: The sandbox permits reading files, and editing files in `cwd` and `writable_roots`. Editing files in other directories requires approval. Network access is restricted.\nApproval policy is currently never. Do not provide the `sandbox_permissions` for any reason, commands will be rejected.\n The writable roots are `/private/tmp/braintrust-codex-e2e-openai-codex-instrumentation/openai-codex-v0128-wrapped/stream`, `/private/tmp`, `/private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T`, `/Users/lucaforstner/.codex/memories`.\n</permissions instructions>",
+                    "text": "<permissions instructions>\nFilesystem sandboxing defines which files can be read or written. `sandbox_mode` is `workspace-write`: The sandbox permits reading files, and editing files in `cwd` and `writable_roots`. Editing files in other directories requires approval. Network access is restricted.\nApproval policy is currently never. Do not provide the `sandbox_permissions` for any reason, commands will be rejected.\n The writable roots are `/private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-openai-codex-v0128-wrapped-ChcjII/stream`, `/private/tmp`, `/private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T`, `/private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-openai-codex-v0128-wrapped-ChcjII/codex-home/memories`.\n</permissions instructions>",
                     "type": "input_text"
                   },
                   {
-                    "text": "<skills_instructions>\n## Skills\nA skill is a set of local instructions to follow that is stored in a `SKILL.md` file. Below is the list of skills that can be used. Each entry includes a name, description, and file path so you can open the source for full instructions when using a specific skill.\n### Available skills\n- imagegen: Generate or edit raster images when the task benefits from AI-created bitmap visuals such as photos, illustrations, textures, sprites, mockups, or transparent-background cutouts. Use when Codex should create a brand-new image, transform an existing image, or derive visual variants from references, and the output should be a bitmap asset rather than repo-native code or vector. Do not use when the task is better handled by editing existing SVG/vector/code-native assets, extending an established icon or logo system, or building the visual directly in HTML/CSS/canvas. (file: /Users/lucaforstner/.codex/skills/.system/imagegen/SKILL.md)\n- openai-docs: Use when the user asks how to build with OpenAI products or APIs and needs up-to-date official documentation with citations, help choosing the latest model for a use case, or model upgrade and prompt-upgrade guidance; prioritize OpenAI docs MCP tools, use bundled references only as helper context, and restrict any fallback browsing to official OpenAI domains. (file: /Users/lucaforstner/.codex/skills/.system/openai-docs/SKILL.md)\n- plugin-creator: Create and scaffold plugin directories for Codex with a required `.codex-plugin/plugin.json`, optional plugin folders/files, and baseline placeholders you can edit before publishing or testing. Use when Codex needs to create a new local plugin, add optional plugin structure, or generate or update repo-root `.agents/plugins/marketplace.json` entries for plugin ordering and availability metadata. (file: /Users/lucaforstner/.codex/skills/.system/plugin-creator/SKILL.md)\n- skill-creator: Guide for creating effective skills. This skill should be used when users want to create a new skill (or update an existing skill) that extends Codex's capabilities with specialized knowledge, workflows, or tool integrations. (file: /Users/lucaforstner/.codex/skills/.system/skill-creator/SKILL.md)\n- skill-installer: Install Codex skills into $CODEX_HOME/skills from a curated list or a GitHub repo path. Use when a user asks to list installable skills, install a curated skill, or install a skill from another repo (including private repos). (file: /Users/lucaforstner/.codex/skills/.system/skill-installer/SKILL.md)\n- braintrust: Use the Braintrust `bt` CLI for projects, traces, prompts, and key Braintrust workflows. (file: /Users/lucaforstner/.agents/skills/braintrust/SKILL.md)\n- github:gh-address-comments: Address actionable GitHub pull request review feedback. Use when the user wants to inspect unresolved review threads, requested changes, or inline review comments on a PR, then implement selected fixes. Use the GitHub app for PR metadata and flat comment reads, and use the bundled GraphQL script via `gh` whenever thread-level state, resolution status, or inline review context matters. (file: /Users/lucaforstner/.codex/plugins/cache/openai-curated/github/b8edb371/skills/gh-address-comments/SKILL.md)\n- github:gh-fix-ci: Use when a user asks to debug or fix failing GitHub PR checks that run in GitHub Actions. Use the GitHub app from this plugin for PR metadata and patch context, and use `gh` for Actions check and log inspection before implementing any approved fix. (file: /Users/lucaforstner/.codex/plugins/cache/openai-curated/github/b8edb371/skills/gh-fix-ci/SKILL.md)\n- github:github: Triage and orient GitHub repository, pull request, and issue work through the connected GitHub app. Use when the user asks for general GitHub help, wants PR or issue summaries, or needs repository context before choosing a more specific GitHub workflow. (file: /Users/lucaforstner/.codex/plugins/cache/openai-curated/github/b8edb371/skills/github/SKILL.md)\n- github:yeet: Publish local changes to GitHub by confirming scope, committing intentionally, pushing the branch, and opening a draft PR through the GitHub app from this plugin, with `gh` used only as a fallback where connector coverage is insufficient. (file: /Users/lucaforstner/.codex/plugins/cache/openai-curated/github/b8edb371/skills/yeet/SKILL.md)\n### How to use skills\n- Discovery: The list above is the skills available in this session (name + description + file path). Skill bodies live on disk at the listed paths.\n- Trigger rules: If the user names a skill (with `$SkillName` or plain text) OR the task clearly matches a skill's description shown above, you must use that skill for that turn. Multiple mentions mean use them all. Do not carry skills across turns unless re-mentioned.\n- Missing/blocked: If a named skill isn't in the list or the path can't be read, say so briefly and continue with the best fallback.\n- How to use a skill (progressive disclosure):\n  1) After deciding to use a skill, open its `SKILL.md`. Read only enough to follow the workflow.\n  2) When `SKILL.md` references relative paths (e.g., `scripts/foo.py`), resolve them relative to the skill directory listed above first, and only consider other paths if needed.\n  3) If `SKILL.md` points to extra folders such as `references/`, load only the specific files needed for the request; don't bulk-load everything.\n  4) If `scripts/` exist, prefer running or patching them instead of retyping large code blocks.\n  5) If `assets/` or templates exist, reuse them instead of recreating from scratch.\n- Coordination and sequencing:\n  - If multiple skills apply, choose the minimal set that covers the request and state the order you'll use them.\n  - Announce which skill(s) you're using and why (one short line). If you skip an obvious skill, say why.\n- Context hygiene:\n  - Keep context small: summarize long sections instead of pasting them; only load extra files when needed.\n  - Avoid deep reference-chasing: prefer opening only files directly linked from `SKILL.md` unless you're blocked.\n  - When variants exist (frameworks, providers, domains), pick only the relevant reference file(s) and note that choice.\n- Safety and fallback: If a skill can't be applied cleanly (missing files, unclear instructions), state the issue, pick the next-best approach, and continue.\n</skills_instructions>",
-                    "type": "input_text"
-                  },
-                  {
-                    "text": "<plugins_instructions>\n## Plugins\nA plugin is a local bundle of skills, MCP servers, and apps. Below is the list of plugins that are enabled and available in this session.\n### Available plugins\n- `GitHub`: Inspect repositories, triage pull requests and issues, debug CI, and publish changes through a hybrid GitHub connector and CLI workflow.\n### How to use plugins\n- Discovery: The list above is the plugins available in this session.\n- Skill naming: If a plugin contributes skills, those skill entries are prefixed with `plugin_name:` in the Skills list.\n- Trigger rules: If the user explicitly names a plugin, prefer capabilities associated with that plugin for that turn.\n- Relationship to capabilities: Plugins are not invoked directly. Use their underlying skills, MCP tools, and app tools to help solve the task.\n- Preference: When a relevant plugin is available, prefer using capabilities associated with that plugin over standalone capabilities that provide similar functionality.\n- Missing/blocked: If the user requests a plugin that is not listed above, or the plugin does not have relevant callable capabilities for the task, say so briefly and continue with the best fallback.\n</plugins_instructions>",
+                    "text": "<skills_instructions>\n## Skills\nA skill is a set of local instructions to follow that is stored in a `SKILL.md` file. Below is the list of skills that can be used. Each entry includes a name, description, and file path so you can open the source for full instructions when using a specific skill.\n### Available skills\n- imagegen: Generate or edit raster images when the task benefits from AI-created bitmap visuals such as photos, illustrations, textures, sprites, mockups, or transparent-background cutouts. Use when Codex should create a brand-new image, transform an existing image, or derive visual variants from references, and the output should be a bitmap asset rather than repo-native code or vector. Do not use when the task is better handled by editing existing SVG/vector/code-native assets, extending an established icon or logo system, or building the visual directly in HTML/CSS/canvas. (file: /private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-openai-codex-v0128-wrapped-ChcjII/codex-home/skills/.system/imagegen/SKILL.md)\n- openai-docs: Use when the user asks how to build with OpenAI products or APIs and needs up-to-date official documentation with citations, help choosing the latest model for a use case, or model upgrade and prompt-upgrade guidance; prioritize OpenAI docs MCP tools, use bundled references only as helper context, and restrict any fallback browsing to official OpenAI domains. (file: /private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-openai-codex-v0128-wrapped-ChcjII/codex-home/skills/.system/openai-docs/SKILL.md)\n- plugin-creator: Create and scaffold plugin directories for Codex with a required `.codex-plugin/plugin.json`, optional plugin folders/files, and baseline placeholders you can edit before publishing or testing. Use when Codex needs to create a new local plugin, add optional plugin structure, or generate or update repo-root `.agents/plugins/marketplace.json` entries for plugin ordering and availability metadata. (file: /private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-openai-codex-v0128-wrapped-ChcjII/codex-home/skills/.system/plugin-creator/SKILL.md)\n- skill-creator: Guide for creating effective skills. This skill should be used when users want to create a new skill (or update an existing skill) that extends Codex's capabilities with specialized knowledge, workflows, or tool integrations. (file: /private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-openai-codex-v0128-wrapped-ChcjII/codex-home/skills/.system/skill-creator/SKILL.md)\n- skill-installer: Install Codex skills into $CODEX_HOME/skills from a curated list or a GitHub repo path. Use when a user asks to list installable skills, install a curated skill, or install a skill from another repo (including private repos). (file: /private/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-openai-codex-v0128-wrapped-ChcjII/codex-home/skills/.system/skill-installer/SKILL.md)\n- braintrust: Use the Braintrust `bt` CLI for projects, traces, prompts, and key Braintrust workflows. (file: /Users/lucaforstner/.agents/skills/braintrust/SKILL.md)\n### How to use skills\n- Discovery: The list above is the skills available in this session (name + description + file path). Skill bodies live on disk at the listed paths.\n- Trigger rules: If the user names a skill (with `$SkillName` or plain text) OR the task clearly matches a skill's description shown above, you must use that skill for that turn. Multiple mentions mean use them all. Do not carry skills across turns unless re-mentioned.\n- Missing/blocked: If a named skill isn't in the list or the path can't be read, say so briefly and continue with the best fallback.\n- How to use a skill (progressive disclosure):\n  1) After deciding to use a skill, open its `SKILL.md`. Read only enough to follow the workflow.\n  2) When `SKILL.md` references relative paths (e.g., `scripts/foo.py`), resolve them relative to the skill directory listed above first, and only consider other paths if needed.\n  3) If `SKILL.md` points to extra folders such as `references/`, load only the specific files needed for the request; don't bulk-load everything.\n  4) If `scripts/` exist, prefer running or patching them instead of retyping large code blocks.\n  5) If `assets/` or templates exist, reuse them instead of recreating from scratch.\n- Coordination and sequencing:\n  - If multiple skills apply, choose the minimal set that covers the request and state the order you'll use them.\n  - Announce which skill(s) you're using and why (one short line). If you skip an obvious skill, say why.\n- Context hygiene:\n  - Keep context small: summarize long sections instead of pasting them; only load extra files when needed.\n  - Avoid deep reference-chasing: prefer opening only files directly linked from `SKILL.md` unless you're blocked.\n  - When variants exist (frameworks, providers, domains), pick only the relevant reference file(s) and note that choice.\n- Safety and fallback: If a skill can't be applied cleanly (missing files, unclear instructions), state the issue, pick the next-best approach, and continue.\n</skills_instructions>",
                     "type": "input_text"
                   }
                 ],
@@ -2335,11 +1449,7 @@
               {
                 "content": [
                   {
-                    "text": "# AGENTS.md instructions for /tmp/braintrust-codex-e2e-openai-codex-instrumentation/openai-codex-v0128-wrapped/stream\n\n<INSTRUCTIONS>\n## General Coding Instructions\n\n- Don't create helper functions for literally everything. Stick to inlining things as much as possible as long as the code is still readable. Only extract into helper functions if the code is called from at least two places.\n- You can add comments in places where your added code may not immediately be obvious to the reading user.\n- Never do any remote destructive actions like pushing commits, pushing branches, pushing tags, doing releases or commenting anywhere and such.\n</INSTRUCTIONS>",
-                    "type": "input_text"
-                  },
-                  {
-                    "text": "<environment_context>\n  <cwd>/tmp/braintrust-codex-e2e-openai-codex-instrumentation/openai-codex-v0128-wrapped/stream</cwd>\n  <shell>zsh</shell>\n  <current_date>2026-05-15</current_date>\n  <timezone>Europe/Vienna</timezone>\n</environment_context>",
+                    "text": "<environment_context>\n  <cwd>/var/folders/hy/wb3j_nh16p7f6svnl1fbhx_c0000gn/T/braintrust-codex-e2e-openai-codex-instrumentation-openai-codex-v0128-wrapped-ChcjII/stream</cwd>\n  <shell>zsh</shell>\n  <current_date>2026-05-15</current_date>\n  <timezone>Europe/Vienna</timezone>\n</environment_context>",
                     "type": "input_text"
                   }
                 ],
@@ -2364,13 +1474,13 @@
               },
               {
                 "arguments": "{\"cmd\":\"cat codex-input.txt\"}",
-                "call_id": "call_ygtE7qcAjNeMFUfE4FxLA2Ge",
+                "call_id": "call_tOSlBrl1vqgcDU3oWws48q7i",
                 "name": "exec_command",
                 "type": "function_call"
               },
               {
-                "call_id": "call_ygtE7qcAjNeMFUfE4FxLA2Ge",
-                "output": "Chunk ID: da3b18\nWall time: 0.1608 seconds\nProcess exited with code 0\nOriginal token count: 13\nOutput:\nThe final answer marker is OPENAI_CODEX_STREAM_OK.\n",
+                "call_id": "call_tOSlBrl1vqgcDU3oWws48q7i",
+                "output": "Chunk ID: d3280d\nWall time: 0.0000 seconds\nProcess exited with code 0\nOriginal token count: 13\nOutput:\nThe final answer marker is OPENAI_CODEX_STREAM_OK.\n",
                 "type": "function_call_output"
               }
             ],
@@ -2379,7 +1489,6 @@
             "parallel_tool_calls": false,
             "prompt_cache_key": "[REDACTED]",
             "reasoning": null,
-            "service_tier": "priority",
             "store": false,
             "stream": true,
             "tool_choice": "auto",
@@ -2464,67 +1573,6 @@
                     }
                   },
                   "required": ["session_id"],
-                  "type": "object"
-                },
-                "strict": false,
-                "type": "function"
-              },
-              {
-                "description": "Lists resources provided by MCP servers. Resources allow servers to share data that provides context to language models, such as files, database schemas, or application-specific information. Prefer resources over web search when possible.",
-                "name": "list_mcp_resources",
-                "parameters": {
-                  "additionalProperties": false,
-                  "properties": {
-                    "cursor": {
-                      "description": "Opaque cursor returned by a previous list_mcp_resources call for the same server.",
-                      "type": "string"
-                    },
-                    "server": {
-                      "description": "Optional MCP server name. When omitted, lists resources from every configured server.",
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                },
-                "strict": false,
-                "type": "function"
-              },
-              {
-                "description": "Lists resource templates provided by MCP servers. Parameterized resource templates allow servers to share data that takes parameters and provides context to language models, such as files, database schemas, or application-specific information. Prefer resource templates over web search when possible.",
-                "name": "list_mcp_resource_templates",
-                "parameters": {
-                  "additionalProperties": false,
-                  "properties": {
-                    "cursor": {
-                      "description": "Opaque cursor returned by a previous list_mcp_resource_templates call for the same server.",
-                      "type": "string"
-                    },
-                    "server": {
-                      "description": "Optional MCP server name. When omitted, lists resource templates from all configured servers.",
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                },
-                "strict": false,
-                "type": "function"
-              },
-              {
-                "description": "Read a specific resource from an MCP server given the server name and resource URI.",
-                "name": "read_mcp_resource",
-                "parameters": {
-                  "additionalProperties": false,
-                  "properties": {
-                    "server": {
-                      "description": "MCP server name exactly as configured. Must match the 'server' field returned by list_mcp_resources.",
-                      "type": "string"
-                    },
-                    "uri": {
-                      "description": "Resource URI to read. Must be one of the URIs returned by list_mcp_resources.",
-                      "type": "string"
-                    }
-                  },
-                  "required": ["server", "uri"],
                   "type": "object"
                 },
                 "strict": false,
@@ -2637,7 +1685,7 @@
                 "type": "function"
               },
               {
-                "description": "\n        \n        Available model overrides (optional; inherited parent model is preferred):\n- GPT-5.5 (`gpt-5.5`): Frontier model for complex coding, research, and real-world work. Default reasoning effort: xhigh. Supported reasoning efforts: low (Fast responses with lighter reasoning), medium (Balances speed and reasoning depth for everyday tasks), high (Greater reasoning depth for complex problems), xhigh (Extra high reasoning depth for complex problems).\n- gpt-5.4 (`gpt-5.4`): Strong model for everyday coding. Default reasoning effort: medium. Supported reasoning efforts: low (Fast responses with lighter reasoning), medium (Balances speed and reasoning depth for everyday tasks), high (Greater reasoning depth for complex problems), xhigh (Extra high reasoning depth for complex problems).\n- GPT-5.4-Mini (`gpt-5.4-mini`): Small, fast, and cost-efficient model for simpler coding tasks. Default reasoning effort: medium. Supported reasoning efforts: low (Fast responses with lighter reasoning), medium (Balances speed and reasoning depth for everyday tasks), high (Greater reasoning depth for complex problems), xhigh (Extra high reasoning depth for complex problems).\n- gpt-5.3-codex (`gpt-5.3-codex`): Coding-optimized model. Default reasoning effort: medium. Supported reasoning efforts: low (Fast responses with lighter reasoning), medium (Balances speed and reasoning depth for everyday tasks), high (Greater reasoning depth for complex problems), xhigh (Extra high reasoning depth for complex problems).\n- gpt-5.2 (`gpt-5.2`): Optimized for professional work and long-running agents. Default reasoning effort: medium. Supported reasoning efforts: low (Balances speed with some reasoning; useful for straightforward queries and short explanations), medium (Provides a solid balance of reasoning depth and latency for general-purpose tasks), high (Maximizes reasoning depth for complex or ambiguous problems), xhigh (Extra high reasoning for complex problems).\n        Spawn a sub-agent for a well-scoped task. Returns the spawned agent id plus the user-facing nickname when available. Spawned agents inherit your current model by default. Omit `model` to use that preferred default; set `model` only when an explicit override is needed.\nThis spawn_agent tool provides you access to sub-agents that inherit your current model by default. Do not set the `model` field unless the user explicitly asks for a different model or there is a clear task-specific reason. You should follow the rules and guidelines below to use this tool.\n\nOnly use `spawn_agent` if and only if the user explicitly asks for sub-agents, delegation, or parallel agent work.\nRequests for depth, thoroughness, research, investigation, or detailed codebase analysis do not count as permission to spawn.\nAgent-role guidance below only helps choose which agent to use after spawning is already authorized; it never authorizes spawning by itself.\n\n### When to delegate vs. do the subtask yourself\n- First, quickly analyze the overall user task and form a succinct high-level plan. Identify which tasks are immediate blockers on the critical path, and which tasks are sidecar tasks that are needed but can run in parallel without blocking the next local step. As part of that plan, explicitly decide what immediate task you should do locally right now. Do this planning step before delegating to agents so you do not hand off the immediate blocking task to a submodel and then waste time waiting on it.\n- Use a subagent when a subtask is easy enough for it to handle and can run in parallel with your local work. Prefer delegating concrete, bounded sidecar tasks that materially advance the main task without blocking your immediate next local step.\n- Do not delegate urgent blocking work when your immediate next step depends on that result. If the very next action is blocked on that task, the main rollout should usually do it locally to keep the critical path moving.\n- Keep work local when the subtask is too difficult to delegate well and when it is tightly coupled, urgent, or likely to block your immediate next step.\n\n### Designing delegated subtasks\n- Subtasks must be concrete, well-defined, and self-contained.\n- Delegated subtasks must materially advance the main task.\n- Do not duplicate work between the main rollout and delegated subtasks.\n- Avoid issuing multiple delegate calls on the same unresolved thread unless the new delegated task is genuinely different and necessary.\n- Narrow the delegated ask to the concrete output you need next.\n- For coding tasks, prefer delegating concrete code-change worker subtasks over read-only explorer analysis when the subagent can make a bounded patch in a clear write scope.\n- When delegating coding work, instruct the submodel to edit files directly in its forked workspace and list the file paths it changed in the final answer.\n- For code-edit subtasks, decompose work so each delegated task has a disjoint write set.\n\n### After you delegate\n- Call wait_agent very sparingly. Only call wait_agent when you need the result immediately for the next critical-path step and you are blocked until it returns.\n- Do not redo delegated subagent tasks yourself; focus on integrating results or tackling non-overlapping work.\n- While the subagent is running in the background, do meaningful non-overlapping work immediately.\n- Do not repeatedly wait by reflex.\n- When a delegated coding task returns, quickly review the uploaded changes, then integrate or refine them.\n\n### Parallel delegation patterns\n- Run multiple independent information-seeking subtasks in parallel when you have distinct questions that can be answered independently.\n- Split implementation into disjoint codebase slices and spawn multiple agents for them in parallel when the write scopes do not overlap.\n- Delegate verification only when it can run in parallel with ongoing implementation and is likely to catch a concrete risk before final integration.\n- The key is to find opportunities to spawn multiple independent subtasks in parallel within the same round, while ensuring each subtask is well-defined, self-contained, and materially advances the main task.",
+                "description": "\n        \n        Available model overrides (optional; inherited parent model is preferred):\n- GPT-5.5 (`gpt-5.5`): Frontier model for complex coding, research, and real-world work. Default reasoning effort: medium. Supported reasoning efforts: low (Fast responses with lighter reasoning), medium (Balances speed and reasoning depth for everyday tasks), high (Greater reasoning depth for complex problems), xhigh (Extra high reasoning depth for complex problems).\n- gpt-5.4 (`gpt-5.4`): Strong model for everyday coding. Default reasoning effort: xhigh. Supported reasoning efforts: low (Fast responses with lighter reasoning), medium (Balances speed and reasoning depth for everyday tasks), high (Greater reasoning depth for complex problems), xhigh (Extra high reasoning depth for complex problems).\n- GPT-5.4-Mini (`gpt-5.4-mini`): Small, fast, and cost-efficient model for simpler coding tasks. Default reasoning effort: medium. Supported reasoning efforts: low (Fast responses with lighter reasoning), medium (Balances speed and reasoning depth for everyday tasks), high (Greater reasoning depth for complex problems), xhigh (Extra high reasoning depth for complex problems).\n- gpt-5.3-codex (`gpt-5.3-codex`): Coding-optimized model. Default reasoning effort: medium. Supported reasoning efforts: low (Fast responses with lighter reasoning), medium (Balances speed and reasoning depth for everyday tasks), high (Greater reasoning depth for complex problems), xhigh (Extra high reasoning depth for complex problems).\n- gpt-5.2 (`gpt-5.2`): Optimized for professional work and long-running agents. Default reasoning effort: medium. Supported reasoning efforts: low (Balances speed with some reasoning; useful for straightforward queries and short explanations), medium (Provides a solid balance of reasoning depth and latency for general-purpose tasks), high (Maximizes reasoning depth for complex or ambiguous problems), xhigh (Extra high reasoning for complex problems).\n        Spawn a sub-agent for a well-scoped task. Returns the spawned agent id plus the user-facing nickname when available. Spawned agents inherit your current model by default. Omit `model` to use that preferred default; set `model` only when an explicit override is needed.\nThis spawn_agent tool provides you access to sub-agents that inherit your current model by default. Do not set the `model` field unless the user explicitly asks for a different model or there is a clear task-specific reason. You should follow the rules and guidelines below to use this tool.\n\nOnly use `spawn_agent` if and only if the user explicitly asks for sub-agents, delegation, or parallel agent work.\nRequests for depth, thoroughness, research, investigation, or detailed codebase analysis do not count as permission to spawn.\nAgent-role guidance below only helps choose which agent to use after spawning is already authorized; it never authorizes spawning by itself.\n\n### When to delegate vs. do the subtask yourself\n- First, quickly analyze the overall user task and form a succinct high-level plan. Identify which tasks are immediate blockers on the critical path, and which tasks are sidecar tasks that are needed but can run in parallel without blocking the next local step. As part of that plan, explicitly decide what immediate task you should do locally right now. Do this planning step before delegating to agents so you do not hand off the immediate blocking task to a submodel and then waste time waiting on it.\n- Use a subagent when a subtask is easy enough for it to handle and can run in parallel with your local work. Prefer delegating concrete, bounded sidecar tasks that materially advance the main task without blocking your immediate next local step.\n- Do not delegate urgent blocking work when your immediate next step depends on that result. If the very next action is blocked on that task, the main rollout should usually do it locally to keep the critical path moving.\n- Keep work local when the subtask is too difficult to delegate well and when it is tightly coupled, urgent, or likely to block your immediate next step.\n\n### Designing delegated subtasks\n- Subtasks must be concrete, well-defined, and self-contained.\n- Delegated subtasks must materially advance the main task.\n- Do not duplicate work between the main rollout and delegated subtasks.\n- Avoid issuing multiple delegate calls on the same unresolved thread unless the new delegated task is genuinely different and necessary.\n- Narrow the delegated ask to the concrete output you need next.\n- For coding tasks, prefer delegating concrete code-change worker subtasks over read-only explorer analysis when the subagent can make a bounded patch in a clear write scope.\n- When delegating coding work, instruct the submodel to edit files directly in its forked workspace and list the file paths it changed in the final answer.\n- For code-edit subtasks, decompose work so each delegated task has a disjoint write set.\n\n### After you delegate\n- Call wait_agent very sparingly. Only call wait_agent when you need the result immediately for the next critical-path step and you are blocked until it returns.\n- Do not redo delegated subagent tasks yourself; focus on integrating results or tackling non-overlapping work.\n- While the subagent is running in the background, do meaningful non-overlapping work immediately.\n- Do not repeatedly wait by reflex.\n- When a delegated coding task returns, quickly review the uploaded changes, then integrate or refine them.\n\n### Parallel delegation patterns\n- Run multiple independent information-seeking subtasks in parallel when you have distinct questions that can be answered independently.\n- Split implementation into disjoint codebase slices and spawn multiple agents for them in parallel when the write scopes do not overlap.\n- Delegate verification only when it can run in parallel with ongoing implementation and is likely to catch a concrete risk before final integration.\n- The key is to find opportunities to spawn multiple independent subtasks in parallel within the same round, while ensuring each subtask is well-defined, self-contained, and materially advances the main task.",
                 "name": "spawn_agent",
                 "parameters": {
                   "additionalProperties": false,
@@ -2822,19 +1870,19 @@
         "body": {
           "contentType": "text/event-stream; charset=utf-8",
           "kind": "binary",
-          "path": "openai-codex-v0128-wrapped.cassette.blobs/33b8fb5f4958b135e7f799397526bed0476d6c8cc7dafebe2a77df575296877d.bin",
-          "sha256": "33b8fb5f4958b135e7f799397526bed0476d6c8cc7dafebe2a77df575296877d"
+          "path": "openai-codex-v0128-wrapped.cassette.blobs/c534b40b26d413bc96d5c759d49f4db140f6440998cc7531e764221d516dbfb9.bin",
+          "sha256": "c534b40b26d413bc96d5c759d49f4db140f6440998cc7531e764221d516dbfb9"
         },
         "headers": {
           "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "9fc1d7e2bc695af4-VIE",
+          "cf-ray": "9fc2758d2ed63260-VIE",
           "connection": "keep-alive",
           "content-type": "text/event-stream; charset=utf-8",
-          "date": "Fri, 15 May 2026 11:36:09 GMT",
+          "date": "Fri, 15 May 2026 13:23:47 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "167",
+          "openai-processing-ms": "321",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
@@ -2845,10 +1893,10 @@
           "x-ratelimit-limit-requests": "15000",
           "x-ratelimit-limit-tokens": "10000000",
           "x-ratelimit-remaining-requests": "14999",
-          "x-ratelimit-remaining-tokens": "9989825",
+          "x-ratelimit-remaining-tokens": "9990492",
           "x-ratelimit-reset-requests": "4ms",
-          "x-ratelimit-reset-tokens": "61ms",
-          "x-request-id": "req_13004015561948be901283319a158a22"
+          "x-ratelimit-reset-tokens": "57ms",
+          "x-request-id": "req_5398d4af5ee84183bb66b7b0a31e2190"
         },
         "status": 200,
         "statusText": "OK"
