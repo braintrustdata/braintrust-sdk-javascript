@@ -430,6 +430,7 @@ describe("OpenRouter Agent Plugin", () => {
           inputTokens: 10,
           outputTokens: 4,
           totalTokens: 14,
+          cost: 0.01,
         },
       };
       const finalResponse = {
@@ -447,6 +448,7 @@ describe("OpenRouter Agent Plugin", () => {
           inputTokens: 12,
           outputTokens: 3,
           totalTokens: 15,
+          cost: 0.02,
         },
       };
       const request = {
@@ -535,7 +537,7 @@ describe("OpenRouter Agent Plugin", () => {
 
       expect(callModelSpan?.span_attributes).toMatchObject({
         name: "openrouter.callModel",
-        type: "llm",
+        type: "task",
       });
       expect(callModelSpan?.metadata).toMatchObject({
         provider: TEST_PROVIDER,
@@ -544,11 +546,10 @@ describe("OpenRouter Agent Plugin", () => {
         turn_count: 2,
       });
       expect(callModelSpan?.output).toMatchObject(finalResponse.output);
-      expect(callModelSpan?.metrics).toMatchObject({
-        prompt_tokens: 22,
-        completion_tokens: 7,
-        tokens: 29,
-      });
+      expect(callModelSpan?.metrics?.prompt_tokens).toBeUndefined();
+      expect(callModelSpan?.metrics?.completion_tokens).toBeUndefined();
+      expect(callModelSpan?.metrics?.tokens).toBeUndefined();
+      expect(callModelSpan?.metrics?.cost).toBeUndefined();
 
       expect(turnSpans).toHaveLength(2);
       expect(turnSpans[0]?.metadata).toMatchObject({
@@ -559,6 +560,12 @@ describe("OpenRouter Agent Plugin", () => {
         step: 1,
         step_type: "initial",
       });
+      expect(turnSpans[0]?.metrics).toMatchObject({
+        prompt_tokens: 10,
+        completion_tokens: 4,
+        tokens: 14,
+        cost: 0.01,
+      });
       expect(turnSpans[1]?.metadata).toMatchObject({
         provider: TEST_PROVIDER,
         model: TEST_MODEL,
@@ -567,6 +574,24 @@ describe("OpenRouter Agent Plugin", () => {
         step: 2,
         step_type: "continue",
       });
+      expect(turnSpans[1]?.metrics).toMatchObject({
+        prompt_tokens: 12,
+        completion_tokens: 3,
+        tokens: 15,
+        cost: 0.02,
+      });
+      expect(
+        spans.reduce(
+          (sum: number, span: any) => sum + (span.metrics?.prompt_tokens ?? 0),
+          0,
+        ),
+      ).toBe(22);
+      expect(
+        spans.reduce(
+          (sum: number, span: any) => sum + (span.metrics?.cost ?? 0),
+          0,
+        ),
+      ).toBeCloseTo(0.03);
 
       expect(toolSpan?.span_attributes).toMatchObject({
         name: "lookup_weather",
@@ -630,6 +655,10 @@ describe("OpenRouter Agent Plugin", () => {
       ) as Record<string, any> | undefined;
 
       expect(callModelSpan).toBeDefined();
+      expect(callModelSpan?.span_attributes).toMatchObject({
+        name: "openrouter.callModel",
+        type: "task",
+      });
       expect(callModelSpan?.metadata).toMatchObject({
         provider: TEST_PROVIDER,
         model: TEST_MODEL,

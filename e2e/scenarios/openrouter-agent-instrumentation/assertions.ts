@@ -101,7 +101,7 @@ export function defineOpenRouterAgentTraceAssertions(options: {
         expect(operation).toBeDefined();
         expect(span).toBeDefined();
         expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
-        expect(span?.span.type).toBe("llm");
+        expect(span?.span.type).toBe("task");
         expect(span?.row.metadata).toMatchObject({
           provider: OPENROUTER_MODEL_PROVIDER,
         });

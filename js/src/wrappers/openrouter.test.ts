@@ -529,7 +529,7 @@ describe("openrouter wrapper", () => {
 
     expect(callModelSpan?.span_attributes).toMatchObject({
       name: "openrouter.callModel",
-      type: "llm",
+      type: "task",
     });
     expect(callModelSpan?.metadata).toMatchObject({
       provider: TEST_PROVIDER,
@@ -549,13 +549,22 @@ describe("openrouter wrapper", () => {
       callModelSpan?.metadata?.tools?.[0]?.function?.execute,
     ).toBeUndefined();
     expect(callModelSpan?.output).toMatchObject(finalResponse.output);
-    expect(callModelSpan?.metrics).toMatchObject({
-      prompt_tokens: 22,
-      completion_tokens: 7,
-      tokens: 29,
-    });
+    expect(callModelSpan?.metrics?.prompt_tokens).toBeUndefined();
+    expect(callModelSpan?.metrics?.completion_tokens).toBeUndefined();
+    expect(callModelSpan?.metrics?.tokens).toBeUndefined();
 
     expect(turnSpans).toHaveLength(2);
+    expect(turnSpans[0]?.metrics).toMatchObject({
+      prompt_tokens: 10,
+      completion_tokens: 4,
+      tokens: 14,
+    });
+    expect(turnSpans[1]?.metrics).toMatchObject({
+      prompt_tokens: 12,
+      completion_tokens: 3,
+      tokens: 15,
+    });
+
     expect(turnSpans[0]?.input).toBe(
       "Use the lookup_weather tool for Vienna exactly once, then answer with only the forecast.",
     );
@@ -658,7 +667,7 @@ describe("openrouter wrapper", () => {
 
     expect(callModelSpan?.span_attributes).toMatchObject({
       name: "openrouter.callModel",
-      type: "llm",
+      type: "task",
     });
     expect(callModelSpan?.metadata).toMatchObject({
       provider: TEST_PROVIDER,
