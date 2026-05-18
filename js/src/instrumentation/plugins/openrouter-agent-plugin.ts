@@ -39,7 +39,7 @@ export class OpenRouterAgentPlugin extends BasePlugin {
     this.unsubscribers.push(
       traceSyncStreamChannel(openRouterAgentChannels.callModel, {
         name: "openrouter.callModel",
-        type: SpanTypeAttribute.LLM,
+        type: SpanTypeAttribute.TASK,
         extractInput: (args) => {
           const request = getOpenRouterCallModelRequestArg(args);
           return {

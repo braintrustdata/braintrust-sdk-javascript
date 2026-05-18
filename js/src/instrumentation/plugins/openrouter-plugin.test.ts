@@ -536,7 +536,7 @@ describe("OpenRouter Plugin", () => {
 
       expect(callModelSpan?.span_attributes).toMatchObject({
         name: "openrouter.callModel",
-        type: "llm",
+        type: "task",
       });
       expect(callModelSpan?.metadata).toMatchObject({
         provider: TEST_PROVIDER,

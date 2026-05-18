@@ -537,7 +537,7 @@ describe("OpenRouter Agent Plugin", () => {
 
       expect(callModelSpan?.span_attributes).toMatchObject({
         name: "openrouter.callModel",
-        type: "llm",
+        type: "task",
       });
       expect(callModelSpan?.metadata).toMatchObject({
         provider: TEST_PROVIDER,
@@ -655,6 +655,10 @@ describe("OpenRouter Agent Plugin", () => {
       ) as Record<string, any> | undefined;
 
       expect(callModelSpan).toBeDefined();
+      expect(callModelSpan?.span_attributes).toMatchObject({
+        name: "openrouter.callModel",
+        type: "task",
+      });
       expect(callModelSpan?.metadata).toMatchObject({
         provider: TEST_PROVIDER,
         model: TEST_MODEL,

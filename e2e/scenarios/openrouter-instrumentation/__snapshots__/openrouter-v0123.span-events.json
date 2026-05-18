@@ -289,6 +289,6 @@
     "span_parents": [
       "<span:14>"
     ],
-    "type": "llm"
+    "type": "task"
   }
 ]
