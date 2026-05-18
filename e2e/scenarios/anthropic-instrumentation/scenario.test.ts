@@ -4,7 +4,6 @@ import {
   readInstalledPackageVersion,
   resolveScenarioDir,
 } from "../../helpers/scenario-harness";
-import { cassetteTagsFor } from "../../helpers/tags";
 import { defineAnthropicInstrumentationAssertions } from "./assertions";
 
 const originalScenarioDir = resolveScenarioDir(import.meta.url);
@@ -75,8 +74,7 @@ const anthropicScenarios = await Promise.all(
 );
 
 for (const scenario of anthropicScenarios) {
-  const tags = cassetteTagsFor(import.meta.url, scenario.snapshotName);
-  describe(`anthropic sdk ${scenario.version}`, { tags }, () => {
+  describe(`anthropic sdk ${scenario.version}`, () => {
     defineAnthropicInstrumentationAssertions({
       name: "wrapped instrumentation",
       runScenario: async ({ runScenarioDir }) => {

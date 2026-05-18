@@ -1,4 +1,4 @@
-import { openai } from "ai-sdk-openai-v5";
+import { createOpenAI, openai } from "ai-sdk-openai-v5";
 import * as ai from "ai-sdk-v5";
 import * as z from "zod";
 import {
@@ -10,6 +10,7 @@ import { runAISDKOtelExport } from "./scenario.impl";
 runMain(async () =>
   runAISDKOtelExport({
     ai,
+    createOpenAI,
     maxTokensKey: "maxOutputTokens",
     openai,
     sdkVersion: await getInstalledPackageVersion(import.meta.url, "ai-sdk-v5"),

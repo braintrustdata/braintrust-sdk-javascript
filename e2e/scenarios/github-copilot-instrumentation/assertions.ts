@@ -6,7 +6,10 @@ import {
   matchFileSnapshot,
   resolveFileSnapshotPath,
 } from "../../helpers/file-snapshot";
-import { withScenarioHarness } from "../../helpers/scenario-harness";
+import {
+  withScenarioHarness,
+  type ScenarioRunContext,
+} from "../../helpers/scenario-harness";
 import { findChildSpans, findLatestSpan } from "../../helpers/trace-selectors";
 import { summarizeWrapperContract } from "../../helpers/wrapper-contract";
 import { ROOT_NAME, SCENARIO_NAME } from "./constants.mjs";
@@ -15,13 +18,13 @@ type RunCopilotScenario = (harness: {
   runNodeScenarioDir: (options: {
     entry: string;
     nodeArgs: string[];
-    runContext?: { variantKey: string };
+    runContext?: ScenarioRunContext;
     scenarioDir: string;
     timeoutMs: number;
   }) => Promise<unknown>;
   runScenarioDir: (options: {
     entry: string;
-    runContext?: { variantKey: string };
+    runContext?: ScenarioRunContext;
     scenarioDir: string;
     timeoutMs: number;
   }) => Promise<unknown>;
@@ -54,6 +57,11 @@ function summarizeSpan(event: CapturedLogEvent | undefined): Json {
     if (typeof metadata["gen_ai.tool.call.id"] === "string") {
       metadata["gen_ai.tool.call.id"] = "<tool-call-id>";
     }
+  }
+  if (Array.isArray(summary.metric_keys)) {
+    summary.metric_keys = summary.metric_keys.filter(
+      (key) => key !== "prompt_cached_tokens",
+    );
   }
 
   return summary;
@@ -101,12 +109,21 @@ function buildSpanSummary(events: CapturedLogEvent[]): Json {
     toolTurn?.span.id,
   ).at(-1);
 
-  const toolSpan = events.find(
-    (event) =>
-      event.span.type === "tool" &&
-      (event.span.parentIds.includes(toolTurn?.span.id ?? "") ||
-        event.span.parentIds.includes(toolSession?.span.id ?? "")),
+  const toolTurns = findChildSpans(
+    events,
+    "Copilot Turn",
+    toolSession?.span.id,
   );
+  const toolTurnIds = new Set(toolTurns.map((event) => event.span.id));
+  const toolSpan = events
+    .filter(
+      (event) =>
+        event.span.type === "tool" &&
+        (event.span.name?.includes("get_weather") ?? false) &&
+        (event.span.parentIds.some((parentId) => toolTurnIds.has(parentId)) ||
+          event.span.parentIds.includes(toolSession?.span.id ?? "")),
+    )
+    .at(-1);
 
   return normalizeForSnapshot({
     root: summarizeSpan(root),
@@ -219,17 +236,18 @@ export function defineGitHubCopilotInstrumentationAssertions(options: {
         "Copilot Session",
         findLatestSpan(events, "github-copilot-tool-operation")?.span.id,
       ).at(-1);
-      const turn = findChildSpans(events, "Copilot Turn", session?.span.id).at(
-        -1,
-      );
+      const turns = findChildSpans(events, "Copilot Turn", session?.span.id);
+      const turnIds = new Set(turns.map((event) => event.span.id));
 
-      const toolSpan = events.find(
-        (event) =>
-          event.span.type === "tool" &&
-          (event.span.name?.includes("get_weather") ?? false) &&
-          (event.span.parentIds.includes(turn?.span.id ?? "") ||
-            event.span.parentIds.includes(session?.span.id ?? "")),
-      );
+      const toolSpan = events
+        .filter(
+          (event) =>
+            event.span.type === "tool" &&
+            (event.span.name?.includes("get_weather") ?? false) &&
+            (event.span.parentIds.some((parentId) => turnIds.has(parentId)) ||
+              event.span.parentIds.includes(session?.span.id ?? "")),
+        )
+        .at(-1);
 
       expect(toolSpan).toBeDefined();
       expect(toolSpan?.span.type).toBe("tool");

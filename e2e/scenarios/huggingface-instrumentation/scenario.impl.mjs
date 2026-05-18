@@ -33,11 +33,13 @@ const CHAT_TOOL = {
   },
 };
 const HUGGINGFACE_SCENARIO_TIMEOUT_MS = 150_000;
-const V2_CHAT_ENDPOINT_URL = "https://router.huggingface.co";
-const V2_FEATURE_EXTRACTION_ENDPOINT_URL =
-  "https://router.huggingface.co/hf-inference/models/thenlper/gte-large/pipeline/feature-extraction";
-const V2_TEXT_GENERATION_ENDPOINT_URL =
-  "https://router.huggingface.co/featherless-ai/v1/completions";
+const HUGGINGFACE_BASE_URL =
+  process.env.HUGGINGFACE_BASE_URL ?? "https://huggingface.co";
+const HUGGINGFACE_ROUTER_BASE_URL =
+  process.env.HUGGINGFACE_ROUTER_BASE_URL ?? "https://router.huggingface.co";
+const V2_CHAT_ENDPOINT_URL = HUGGINGFACE_ROUTER_BASE_URL;
+const V2_FEATURE_EXTRACTION_ENDPOINT_URL = `${HUGGINGFACE_ROUTER_BASE_URL}/hf-inference/models/thenlper/gte-large/pipeline/feature-extraction`;
+const V2_TEXT_GENERATION_ENDPOINT_URL = `${HUGGINGFACE_ROUTER_BASE_URL}/featherless-ai/v1/completions`;
 const HUGGINGFACE_SCENARIO_SPECS = [
   {
     autoEntry: "scenario.huggingface-v281.mjs",
@@ -78,8 +80,42 @@ function getScenarioCapabilities(options) {
   };
 }
 
+function rewriteHuggingFaceUrl(value) {
+  const url = new URL(value);
+  if (url.origin === "https://huggingface.co") {
+    return `${HUGGINGFACE_BASE_URL}${url.pathname}${url.search}${url.hash}`;
+  }
+  if (url.origin === "https://router.huggingface.co") {
+    return `${HUGGINGFACE_ROUTER_BASE_URL}${url.pathname}${url.search}${url.hash}`;
+  }
+  return value;
+}
+
+function createHuggingFaceFetch() {
+  if (!process.env.BRAINTRUST_E2E_CASSETTE_SERVER_URL) {
+    return undefined;
+  }
+
+  return (input, init) => {
+    if (input instanceof Request) {
+      return fetch(new Request(rewriteHuggingFaceUrl(input.url), input), init);
+    }
+    return fetch(rewriteHuggingFaceUrl(String(input)), init);
+  };
+}
+
+const HUGGINGFACE_FETCH = createHuggingFaceFetch();
+const HUGGINGFACE_REQUEST_OPTIONS = HUGGINGFACE_FETCH
+  ? { fetch: HUGGINGFACE_FETCH }
+  : undefined;
+
 function createClient(Client, apiKey, options) {
-  const client = new Client(apiKey);
+  const client = new Client(
+    apiKey,
+    options.supportsLiveTextGeneration === false
+      ? undefined
+      : HUGGINGFACE_REQUEST_OPTIONS,
+  );
 
   if (options.supportsLiveTextGeneration === false) {
     if (typeof client.endpoint !== "function") {
@@ -172,17 +208,20 @@ async function runHuggingFaceInstrumentationScenario(sdk, options = {}) {
           "huggingface-text-generation-operation",
           "text-generation",
           async () => {
-            await decoratedSDK.textGeneration({
-              accessToken: apiKey,
-              inputs: "The capital of France is",
-              model: TEXT_GENERATION_MODEL,
-              parameters: {
-                do_sample: false,
-                max_new_tokens: 4,
-                return_full_text: false,
+            await decoratedSDK.textGeneration(
+              {
+                accessToken: apiKey,
+                inputs: "The capital of France is",
+                model: TEXT_GENERATION_MODEL,
+                parameters: {
+                  do_sample: false,
+                  max_new_tokens: 4,
+                  return_full_text: false,
+                },
+                provider: TEXT_GENERATION_PROVIDER,
               },
-              provider: TEXT_GENERATION_PROVIDER,
-            });
+              HUGGINGFACE_REQUEST_OPTIONS,
+            );
           },
         );
       }
@@ -191,28 +230,31 @@ async function runHuggingFaceInstrumentationScenario(sdk, options = {}) {
         "huggingface-text-generation-stream-operation",
         "text-generation-stream",
         async () => {
-          const stream = decoratedSDK.textGenerationStream({
-            ...(capabilities.supportsLiveTextGeneration
-              ? {
-                  accessToken: apiKey,
-                  inputs: "The capital of France is",
-                  model: TEXT_GENERATION_MODEL,
-                  parameters: {
-                    do_sample: false,
-                    max_new_tokens: 4,
-                    return_full_text: false,
-                  },
-                  provider: TEXT_GENERATION_PROVIDER,
-                }
-              : {
-                  accessToken: apiKey,
-                  endpointUrl: V2_TEXT_GENERATION_ENDPOINT_URL,
-                  inputs: "The capital of France is",
-                  max_tokens: 4,
-                  model: V2_TEXT_GENERATION_MODEL,
-                  prompt: "The capital of France is",
-                }),
-          });
+          const stream = decoratedSDK.textGenerationStream(
+            {
+              ...(capabilities.supportsLiveTextGeneration
+                ? {
+                    accessToken: apiKey,
+                    inputs: "The capital of France is",
+                    model: TEXT_GENERATION_MODEL,
+                    parameters: {
+                      do_sample: false,
+                      max_new_tokens: 4,
+                      return_full_text: false,
+                    },
+                    provider: TEXT_GENERATION_PROVIDER,
+                  }
+                : {
+                    accessToken: apiKey,
+                    endpointUrl: V2_TEXT_GENERATION_ENDPOINT_URL,
+                    inputs: "The capital of France is",
+                    max_tokens: 4,
+                    model: V2_TEXT_GENERATION_MODEL,
+                    prompt: "The capital of France is",
+                  }),
+            },
+            HUGGINGFACE_REQUEST_OPTIONS,
+          );
           await collectAsync(stream);
         },
       );
@@ -221,14 +263,17 @@ async function runHuggingFaceInstrumentationScenario(sdk, options = {}) {
         "huggingface-feature-extraction-operation",
         "feature-extraction",
         async () => {
-          await decoratedSDK.featureExtraction({
-            accessToken: apiKey,
-            inputs: "Paris France",
-            model: EMBEDDING_MODEL,
-            ...(capabilities.supportsLiveTextGeneration
-              ? { provider: EMBEDDING_PROVIDER }
-              : { endpointUrl: V2_FEATURE_EXTRACTION_ENDPOINT_URL }),
-          });
+          await decoratedSDK.featureExtraction(
+            {
+              accessToken: apiKey,
+              inputs: "Paris France",
+              model: EMBEDDING_MODEL,
+              ...(capabilities.supportsLiveTextGeneration
+                ? { provider: EMBEDDING_PROVIDER }
+                : { endpointUrl: V2_FEATURE_EXTRACTION_ENDPOINT_URL }),
+            },
+            HUGGINGFACE_REQUEST_OPTIONS,
+          );
         },
       );
     },

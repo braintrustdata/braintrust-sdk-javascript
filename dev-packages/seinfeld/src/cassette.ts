@@ -95,5 +95,5 @@ export interface CassetteFile {
 /** @deprecated Use `CassetteFile` instead. */
 export type Cassette = CassetteFile;
 
-/** The three execution modes. See README for full semantics. */
+/** The three execution modes used by the cassette server. */
 export type CassetteMode = "replay" | "record" | "passthrough";

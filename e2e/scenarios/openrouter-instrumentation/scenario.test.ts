@@ -4,7 +4,6 @@ import {
   readInstalledPackageVersion,
   resolveScenarioDir,
 } from "../../helpers/scenario-harness";
-import { cassetteTagsFor } from "../../helpers/tags";
 import { defineOpenRouterTraceAssertions } from "./assertions";
 
 const originalScenarioDir = resolveScenarioDir(import.meta.url);
@@ -38,9 +37,7 @@ const openRouterScenarios = await Promise.all(
 );
 
 for (const scenario of openRouterScenarios) {
-  const tags = cassetteTagsFor(import.meta.url, scenario.snapshotName);
-
-  describe(`openrouter sdk ${scenario.version}`, { tags }, () => {
+  describe(`openrouter sdk ${scenario.version}`, () => {
     defineOpenRouterTraceAssertions({
       name: "wrapped instrumentation",
       runScenario: async ({ runScenarioDir }) => {

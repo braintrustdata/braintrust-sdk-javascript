@@ -4,7 +4,6 @@ import {
   readInstalledPackageVersion,
   resolveScenarioDir,
 } from "../../helpers/scenario-harness";
-import { cassetteTagsFor } from "../../helpers/tags";
 import { defineAISDKInstrumentationAssertions } from "./assertions";
 import {
   AI_SDK_SCENARIO_SPECS,
@@ -36,8 +35,7 @@ for (const scenario of aiSDKScenarios) {
   const supportsOutputObjectScenario = supportsRichInputScenarios;
   const supportsAttachmentScenario = supportsRichInputScenarios;
 
-  const tags = cassetteTagsFor(import.meta.url, scenario.snapshotName);
-  describe(`ai sdk ${scenario.version}`, { tags }, () => {
+  describe(`ai sdk ${scenario.version}`, () => {
     defineAISDKInstrumentationAssertions({
       agentSpanName: scenario.agentSpanName,
       name: "wrapped instrumentation",
@@ -56,6 +54,7 @@ for (const scenario of aiSDKScenarios) {
       supportsAttachmentScenario,
       supportsProviderCacheAssertions: scenario.supportsProviderCacheAssertions,
       supportsDenyOutputOverrideScenario: supportsRichInputScenarios,
+      supportsEmbedMany: scenario.supportsEmbedMany !== false,
       supportsGenerateObject: scenario.supportsGenerateObject,
       supportsOutputObjectScenario,
       supportsRerank: scenario.supportsRerank !== false,
@@ -85,6 +84,7 @@ for (const scenario of aiSDKScenarios) {
       supportsAttachmentScenario,
       supportsProviderCacheAssertions: scenario.supportsProviderCacheAssertions,
       supportsDenyOutputOverrideScenario: supportsRichInputScenarios,
+      supportsEmbedMany: scenario.supportsEmbedMany !== false,
       supportsGenerateObject: scenario.supportsGenerateObject,
       supportsOutputObjectScenario,
       supportsRerank: scenario.supportsRerank !== false,

@@ -6,7 +6,11 @@ import {
   matchFileSnapshot,
   resolveFileSnapshotPath,
 } from "../../helpers/file-snapshot";
-import { withScenarioHarness } from "../../helpers/scenario-harness";
+import {
+  effectiveScenarioTimeoutMs,
+  withScenarioHarness,
+  type ScenarioRunContext,
+} from "../../helpers/scenario-harness";
 import {
   findAllSpans,
   findChildSpans,
@@ -20,13 +24,13 @@ type RunClaudeAgentSDKScenario = (harness: {
   runNodeScenarioDir: (options: {
     entry: string;
     nodeArgs: string[];
-    runContext?: { variantKey: string };
+    runContext?: ScenarioRunContext;
     scenarioDir: string;
     timeoutMs: number;
   }) => Promise<unknown>;
   runScenarioDir: (options: {
     entry: string;
-    runContext?: { variantKey: string };
+    runContext?: ScenarioRunContext;
     scenarioDir: string;
     timeoutMs: number;
   }) => Promise<unknown>;
@@ -396,8 +400,9 @@ export function defineClaudeAgentSDKInstrumentationAssertions(options: {
     options.testFileUrl,
     `${options.snapshotName}.span-events.json`,
   );
+  const timeoutMs = effectiveScenarioTimeoutMs(options.timeoutMs);
   const testConfig = {
-    timeout: options.timeoutMs,
+    timeout: timeoutMs,
   };
 
   describe(options.name, () => {
@@ -408,7 +413,7 @@ export function defineClaudeAgentSDKInstrumentationAssertions(options: {
         await options.runScenario(harness);
         events = harness.events();
       });
-    }, options.timeoutMs);
+    }, timeoutMs);
 
     test("captures the root trace for the scenario", testConfig, () => {
       const root = findLatestSpan(events, ROOT_NAME);

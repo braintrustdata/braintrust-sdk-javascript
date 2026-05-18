@@ -373,6 +373,7 @@ async function runMistralInstrumentationScenario(
 ) {
   const baseClient = new Mistral({
     apiKey: process.env.MISTRAL_API_KEY,
+    serverURL: process.env.MISTRAL_BASE_URL || process.env.MISTRAL_API_URL,
   });
   const client = decorateClient ? decorateClient(baseClient) : baseClient;
   const classifyModel = nonEmptyString(process.env.MISTRAL_CLASSIFIER_MODEL);

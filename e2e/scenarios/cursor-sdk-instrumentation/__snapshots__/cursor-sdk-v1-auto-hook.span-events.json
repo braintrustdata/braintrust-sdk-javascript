@@ -23,7 +23,7 @@
         "cursor_sdk.model": "composer-2",
         "cursor_sdk.operation": "agent.send",
         "cursor_sdk.run_id": "<run-id>",
-        "cursor_sdk.status": "finished",
+        "cursor_sdk.status": "error",
         "model": "composer-2",
         "provider": "cursor"
       },
@@ -63,7 +63,7 @@
         "cursor_sdk.operation": "Agent.prompt",
         "cursor_sdk.run_id": "<run-id>",
         "cursor_sdk.runtime": "local",
-        "cursor_sdk.status": "finished",
+        "cursor_sdk.status": "error",
         "model": "composer-2",
         "provider": "cursor"
       },
@@ -108,47 +108,17 @@
       ],
       "type": null
     },
-    "subagent_task": {
-      "has_input": true,
-      "has_output": true,
-      "metadata": {
-        "cursor_sdk.tool.status": "completed",
-        "gen_ai.tool.name": "task"
-      },
-      "metric_keys": [],
-      "name": "Agent: <subagent>",
-      "root_span_id": "<span:1>",
-      "span_id": "<span:7>",
-      "span_parents": [
-        "<span:8>"
-      ],
-      "type": "task"
-    },
-    "subagent_tool": {
-      "has_input": true,
-      "has_output": true,
-      "metadata": {
-        "cursor_sdk.tool.status": "completed",
-        "gen_ai.tool.name": "task"
-      },
-      "metric_keys": [],
-      "name": "tool: task",
-      "root_span_id": "<span:1>",
-      "span_id": "<span:8>",
-      "span_parents": [
-        "<span:9>"
-      ],
-      "type": "tool"
-    },
+    "subagent_task": null,
+    "subagent_tool": null,
     "task": {
       "has_input": true,
-      "has_output": true,
+      "has_output": false,
       "metadata": {
         "cursor_sdk.agent_id": "<agent-id>",
         "cursor_sdk.model": "composer-2",
         "cursor_sdk.operation": "agent.send",
         "cursor_sdk.run_id": "<run-id>",
-        "cursor_sdk.status": "finished",
+        "cursor_sdk.status": "error",
         "model": "composer-2",
         "provider": "cursor"
       },
@@ -157,28 +127,13 @@
       ],
       "name": "Cursor Agent",
       "root_span_id": "<span:1>",
-      "span_id": "<span:9>",
+      "span_id": "<span:7>",
       "span_parents": [
         "<span:6>"
       ],
       "type": "task"
     },
-    "tool": {
-      "has_input": true,
-      "has_output": true,
-      "metadata": {
-        "cursor_sdk.tool.status": "completed",
-        "gen_ai.tool.name": "shell"
-      },
-      "metric_keys": [],
-      "name": "tool: shell",
-      "root_span_id": "<span:1>",
-      "span_id": "<span:10>",
-      "span_parents": [
-        "<span:9>"
-      ],
-      "type": "tool"
-    }
+    "tool": null
   },
   "wait": {
     "operation": {
@@ -190,7 +145,7 @@
       "metric_keys": [],
       "name": "cursor-sdk-wait-operation",
       "root_span_id": "<span:1>",
-      "span_id": "<span:11>",
+      "span_id": "<span:8>",
       "span_parents": [
         "<span:1>"
       ],
@@ -198,35 +153,24 @@
     },
     "task": {
       "has_input": true,
-      "has_output": true,
+      "has_output": false,
       "metadata": {
         "cursor_sdk.agent_id": "<agent-id>",
         "cursor_sdk.model": "composer-2",
         "cursor_sdk.operation": "agent.send",
         "cursor_sdk.run_id": "<run-id>",
-        "cursor_sdk.status": "finished",
-        "cursor_sdk.step_types": [
-          "assistantMessage"
-        ],
+        "cursor_sdk.status": "error",
         "model": "composer-2",
         "provider": "cursor"
       },
       "metric_keys": [
-        "completion_tokens",
-        "cursor_sdk.delta_tokens",
-        "cursor_sdk.step_duration_ms",
-        "cursor_sdk.steps",
-        "duration",
-        "prompt_cache_creation_tokens",
-        "prompt_cached_tokens",
-        "prompt_tokens",
-        "tokens"
+        "duration"
       ],
       "name": "Cursor Agent",
       "root_span_id": "<span:1>",
-      "span_id": "<span:12>",
+      "span_id": "<span:9>",
       "span_parents": [
-        "<span:11>"
+        "<span:8>"
       ],
       "type": "task"
     }

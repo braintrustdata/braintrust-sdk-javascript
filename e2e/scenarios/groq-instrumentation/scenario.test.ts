@@ -4,7 +4,6 @@ import {
   readInstalledPackageVersion,
   resolveScenarioDir,
 } from "../../helpers/scenario-harness";
-import { cassetteTagsForAll } from "../../helpers/tags";
 import { defineGroqInstrumentationAssertions } from "./assertions";
 import { GROQ_SCENARIO_TIMEOUT_MS } from "./scenario.impl.mjs";
 
@@ -17,12 +16,7 @@ const groqSdkVersion = await readInstalledPackageVersion(
   "groq-sdk",
 );
 
-const tags = cassetteTagsForAll(import.meta.url, [
-  "groq-v1-wrapped",
-  "groq-v1-auto",
-]);
-
-describe(`groq sdk ${groqSdkVersion}`, { tags }, () => {
+describe(`groq sdk ${groqSdkVersion}`, () => {
   defineGroqInstrumentationAssertions({
     name: "wrapped instrumentation",
     runScenario: async ({ runScenarioDir }) => {

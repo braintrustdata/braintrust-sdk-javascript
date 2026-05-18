@@ -40,6 +40,7 @@ function normalizeLangchainPayloads(payloadRows: unknown[]): unknown[] {
     }
 
     normalizeToolCallIds(row);
+    normalizeLangchainGeneratedIds(row);
     normalizeLangchainVersions(row);
 
     return row;
@@ -83,6 +84,10 @@ function normalizeMessageObject(message: Record<string, unknown>): void {
   const kwargs = message.kwargs as Record<string, unknown> | undefined;
   if (!kwargs) return;
 
+  if (typeof kwargs.id === "string") {
+    kwargs.id = "<langchain-message-id>";
+  }
+
   if (typeof kwargs.content === "string" && kwargs.content !== "") {
     kwargs.content = "<llm-response>";
   }
@@ -98,6 +103,40 @@ function normalizeMessageObject(message: Record<string, unknown>): void {
     >;
     normalizeTokenCounts(responseMetadata.tokenUsage);
     normalizeTokenCounts(responseMetadata.usage);
+  }
+}
+
+function normalizeLangchainGeneratedIds(
+  obj: unknown,
+  path: string[] = [],
+): void {
+  if (!obj || typeof obj !== "object") return;
+
+  if (Array.isArray(obj)) {
+    for (const item of obj) {
+      normalizeLangchainGeneratedIds(item, path);
+    }
+    return;
+  }
+
+  const record = obj as Record<string, unknown>;
+  for (const [key, value] of Object.entries(record)) {
+    if (
+      (key === "run_id" || key === "parent_run_id") &&
+      typeof value === "string"
+    ) {
+      record[key] = `<langchain-${key}>`;
+      continue;
+    }
+
+    if (key === "id" && typeof value === "string" && path.length > 0) {
+      record[key] = null;
+      continue;
+    }
+
+    if (typeof value === "object" && value !== null) {
+      normalizeLangchainGeneratedIds(value, [...path, key]);
+    }
   }
 }
 
@@ -260,10 +299,10 @@ export function assertLangchainTraces(options: {
   expect(invokeSpan).toBeDefined();
   expect(invokeSpan?.span.type).toBe("llm");
 
-  const chainChildren = options.capturedEvents.filter(
-    (event) =>
-      event.span.parentIds.includes(chainOperation?.span.id ?? "") &&
-      event.span.id !== chainOperation?.span.id,
+  const chainChildren = findChildSpans(
+    options.capturedEvents,
+    "RunnableSequence",
+    chainOperation?.span.id,
   );
   expect(chainChildren.length).toBeGreaterThanOrEqual(1);
 
@@ -288,10 +327,10 @@ export function assertLangchainTraces(options: {
   const toolOutputStr = JSON.stringify(toolSpan?.output ?? {});
   expect(toolOutputStr).toContain("get_weather");
 
-  const toolResultSpans = options.capturedEvents.filter(
-    (event) =>
-      event.span.name === "ChatOpenAI" &&
-      event.span.parentIds.includes(toolResultOperation?.span.id ?? ""),
+  const toolResultSpans = findChildSpans(
+    options.capturedEvents,
+    "ChatOpenAI",
+    toolResultOperation?.span.id,
   );
   expect(toolResultSpans.length).toBeGreaterThanOrEqual(2);
 

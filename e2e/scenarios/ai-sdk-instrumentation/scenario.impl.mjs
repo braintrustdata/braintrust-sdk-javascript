@@ -20,6 +20,7 @@ export const AI_SDK_SCENARIO_SPECS = [
     openaiModuleName: "ai-sdk-openai-v3",
     packageName: "ai-sdk-v3",
     snapshotName: "ai-sdk-v3",
+    supportsEmbedMany: false,
     supportsProviderCacheAssertions: false,
     supportsGenerateObject: true,
     supportsRerank: false,
@@ -35,6 +36,7 @@ export const AI_SDK_SCENARIO_SPECS = [
     openaiModuleName: "ai-sdk-openai-v4",
     packageName: "ai-sdk-v4",
     snapshotName: "ai-sdk-v4",
+    supportsEmbedMany: false,
     supportsProviderCacheAssertions: false,
     supportsGenerateObject: true,
     supportsRerank: false,
@@ -53,6 +55,7 @@ export const AI_SDK_SCENARIO_SPECS = [
     openaiModuleName: "ai-sdk-openai-v5",
     packageName: "ai-sdk-v5",
     snapshotName: "ai-sdk-v5",
+    supportsEmbedMany: false,
     supportsProviderCacheAssertions: true,
     supportsGenerateObject: true,
     supportsRerank: false,
@@ -71,6 +74,7 @@ export const AI_SDK_SCENARIO_SPECS = [
     openaiModuleName: "ai-sdk-openai-v6",
     packageName: "ai-sdk-v6",
     snapshotName: "ai-sdk-v6",
+    supportsEmbedMany: false,
     supportsProviderCacheAssertions: true,
     supportsGenerateObject: true,
     supportsStreamObject: true,
@@ -142,14 +146,32 @@ async function runAISDKInstrumentationScenario(
   { decorateAI, flushCount, flushDelayMs } = {},
 ) {
   const instrumentedAI = decorateAI ? decorateAI(options.ai) : options.ai;
-  const openaiModel = options.openai("gpt-4o-mini-2024-07-18");
-  const anthropicModel = options.anthropic?.("claude-haiku-4-5");
-  const openaiEmbeddingModel = options.openai.textEmbeddingModel(
+  const openai =
+    process.env.OPENAI_BASE_URL && options.createOpenAI
+      ? options.createOpenAI({ baseURL: process.env.OPENAI_BASE_URL })
+      : options.openai;
+  const anthropicBaseURL = process.env.ANTHROPIC_BASE_URL
+    ? `${process.env.ANTHROPIC_BASE_URL.replace(/\/+$/, "")}/v1`
+    : undefined;
+  const anthropic =
+    anthropicBaseURL && options.createAnthropic
+      ? options.createAnthropic({ baseURL: anthropicBaseURL })
+      : options.anthropic;
+  const cohereBaseURL = process.env.COHERE_BASE_URL
+    ? `${process.env.COHERE_BASE_URL.replace(/\/+$/, "")}/v2`
+    : undefined;
+  const cohere =
+    cohereBaseURL && options.createCohere
+      ? options.createCohere({ baseURL: cohereBaseURL })
+      : options.cohere;
+  const openaiModel = openai("gpt-4o-mini-2024-07-18");
+  const anthropicModel = anthropic?.("claude-haiku-4-5");
+  const openaiEmbeddingModel = openai.textEmbeddingModel(
     "text-embedding-3-small",
   );
   const cohereRerankModel =
-    options.cohere && typeof options.cohere.reranking === "function"
-      ? options.cohere.reranking("rerank-v3.5")
+    cohere && typeof cohere.reranking === "function"
+      ? cohere.reranking("rerank-v3.5")
       : undefined;
   const sdkMajorVersion = parseMajorVersion(options.sdkVersion);
   const supportsRichInputScenarios = sdkMajorVersion >= 5;
@@ -202,20 +224,22 @@ async function runAISDKInstrumentationScenario(
         });
       });
 
-      await runOperation(
-        "ai-sdk-embed-many-operation",
-        "embed-many",
-        async () => {
-          await instrumentedAI.embedMany({
-            model: openaiEmbeddingModel,
-            values: [
-              "Paris is in France.",
-              "Berlin is in Germany.",
-              "Vienna is in Austria.",
-            ],
-          });
-        },
-      );
+      if (options.supportsEmbedMany !== false) {
+        await runOperation(
+          "ai-sdk-embed-many-operation",
+          "embed-many",
+          async () => {
+            await instrumentedAI.embedMany({
+              model: openaiEmbeddingModel,
+              values: [
+                "Paris is in France.",
+                "Berlin is in Germany.",
+                "Vienna is in Austria.",
+              ],
+            });
+          },
+        );
+      }
 
       if (
         options.supportsRerank !== false &&

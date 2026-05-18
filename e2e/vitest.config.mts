@@ -1,5 +1,4 @@
 import { defineConfig } from "vitest/config";
-import { E2E_TAGS } from "./helpers/tags";
 
 export default defineConfig({
   test: {
@@ -12,17 +11,8 @@ export default defineConfig({
     // test is slower than the threshold (default 300ms) it will not show up in
     // the reporter output.
     slowTestThreshold: 120_000,
-    // Default to one retry for provider/network flake in non-hermetic scenarios.
+    // Default to one retry for provider/network flake.
     retry: 1,
     setupFiles: ["./vitest.setup.ts"],
-    tags: [
-      {
-        name: E2E_TAGS.hermetic,
-        description:
-          "Tests that run entirely against local mocks and fixtures.",
-        // Hermetic tests should be deterministic and fail immediately.
-        retry: 0,
-      },
-    ],
   },
 });

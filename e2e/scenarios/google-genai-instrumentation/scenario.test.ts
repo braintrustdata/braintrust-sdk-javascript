@@ -4,7 +4,6 @@ import {
   readInstalledPackageVersion,
   resolveScenarioDir,
 } from "../../helpers/scenario-harness";
-import { cassetteTagsFor } from "../../helpers/tags";
 import { defineGoogleGenAIInstrumentationAssertions } from "./assertions";
 
 const originalScenarioDir = resolveScenarioDir(import.meta.url);
@@ -48,9 +47,7 @@ const googleGenAIScenarios = await Promise.all(
 );
 
 for (const scenario of googleGenAIScenarios) {
-  const tags = cassetteTagsFor(import.meta.url, scenario.snapshotName);
-
-  describe(`google genai sdk ${scenario.version}`, { tags }, () => {
+  describe(`google genai sdk ${scenario.version}`, () => {
     defineGoogleGenAIInstrumentationAssertions({
       name: "wrapped instrumentation",
       runScenario: async ({ runScenarioDir }) => {

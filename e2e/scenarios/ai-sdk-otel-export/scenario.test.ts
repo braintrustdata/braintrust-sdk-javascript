@@ -10,7 +10,6 @@ import {
   resolveScenarioDir,
   withScenarioHarness,
 } from "../../helpers/scenario-harness";
-import { cassetteTagsFor } from "../../helpers/tags";
 import {
   extractOtelSpans,
   summarizeRequest,
@@ -48,7 +47,6 @@ for (const scenario of scenarios) {
     `ai-sdk-otel-export sends AI SDK telemetry spans to Braintrust via BraintrustExporter (ai ${scenario.version})`,
     {
       timeout: TIMEOUT_MS,
-      tags: cassetteTagsFor(import.meta.url, variantKey),
     },
     async () => {
       await withScenarioHarness(

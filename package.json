@@ -15,10 +15,8 @@
     "knip": "knip --config knip.jsonc --no-config-hints",
     "test": "turbo run test --filter=\"!@braintrust/otel\"",
     "test:e2e": "turbo run test:e2e",
-    "test:e2e:hermetic": "turbo run test:e2e:hermetic",
+    "test:e2e:record": "node e2e/scripts/run-record-tests.mjs --braintrust-build-deps",
     "test:e2e:canary": "turbo run test:e2e:canary",
-    "test:e2e:update": "turbo run test:e2e:update",
-    "test:e2e:record": "turbo run test:e2e:record",
     "changeset": "changeset",
     "playground": "turbo run playground --filter=\"braintrust\"",
     "playground:cli:push": "turbo run playground:cli:push --filter=\"braintrust\"",
@@ -27,7 +25,8 @@
     "formatting": "prettier --check .",
     "lint": "turbo run lint",
     "fix:formatting": "prettier --write .",
-    "fix:lint": "turbo run fix:lint"
+    "fix:lint": "turbo run fix:lint",
+    "yalc:publish": "turbo run yalc:publish"
   },
   "engines": {
     "pnpm": ">=10.27.0",
@@ -44,20 +43,22 @@
     "knip": "^5.85.0",
     "lint-staged": "^16.2.7",
     "prettier": "^3.8.1",
-    "turbo": "^2.8.21"
+    "turbo": "^2.8.21",
+    "yalc": "1.0.0-pre.53"
   },
   "overrides": {
     "zod": "3.25.34",
     "tsup": "8.4.0"
   },
   "lint-staged": {
-    "*.{js,jsx,ts,tsx,mjs,cjs,css,md,mdx,html,yaml,yml}": "prettier --write"
+    "**/*.{js,jsx,ts,tsx,mjs,cjs,css,md,mdx,html,yaml,yml,json}": "prettier --write"
   },
   "packageManager": "pnpm@10.33.0",
   "pnpm": {
     "overrides": {
       "handlebars": "^4.7.9",
-      "protobufjs": "^7.5.5"
+      "protobufjs": "^7.5.5",
+      "esbuild": "0.27.4"
     },
     "ignoredBuiltDependencies": [
       "@swc/core",

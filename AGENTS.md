@@ -55,11 +55,11 @@ export ANTHROPIC_API_KEY="sk-ant-..."
 
 **E2E tests (`e2e/`):**
 
-Each scenario runs the SDK in a subprocess against a mock Braintrust server and snapshots the results. No API keys required.
+Each scenario runs the SDK in a subprocess against a mock Braintrust server and snapshots the results. No API keys required for replay; recording needs provider keys.
 
 ```bash
 pnpm run test:e2e                 # Run all e2e scenarios (from repo root)
-pnpm run test:e2e:update          # Run and update snapshots
+pnpm run test:e2e:record          # Re-record provider cassettes and update snapshots
 ```
 
 **From repo root:**

@@ -31,7 +31,7 @@ Any extra files needed only by one scenario stay in that scenario folder. Anythi
 ## Helpers (`helpers/`)
 
 - `scenario-harness.ts` - Starts the mock server, creates a unique test run id, resolves scenario directories, and runs scenario folders.
-- `scenario-installer.ts` - Installs optional scenario-local dependencies from a colocated `package.json`.
+- `scenario-installer.ts` - Installs optional scenario-local dependencies from a colocated `package.json` into a shared cache and links them into prepared scenario copies.
 - `mock-braintrust-server.ts` - Captures requests, merged log payloads, and parsed span-like events.
 - `normalize.ts` - Makes snapshots deterministic by normalizing ids, timestamps, paths, and mock-server URLs.
 - `trace-selectors.ts` / `trace-summary.ts` - Helpers for finding spans and snapshotting only the relevant shape.
@@ -44,21 +44,21 @@ Any extra files needed only by one scenario stay in that scenario folder. Anythi
 Most tests use this pattern:
 
 ```ts
-const scenarioDir = resolveScenarioDir(import.meta.url);
-
-beforeAll(async () => {
-  await installScenarioDependencies({ scenarioDir });
+const originalScenarioDir = resolveScenarioDir(import.meta.url);
+const scenarioDir = await prepareScenarioDir({
+  scenarioDir: originalScenarioDir,
 });
 ```
 
-`installScenarioDependencies(...)` is optional and only needed when the scenario folder has its own `package.json`.
+`prepareScenarioDir(...)` copies the scenario into an isolated temp directory and installs optional scenario-local dependencies once per source scenario directory. Reused dependency installs are linked into each prepared copy.
 
 `withScenarioHarness(async (harness) => { ... })` gives each test a fresh server plus helpers for running scenarios and reading what the server captured.
 
 The main utilities you'll use in test files:
 
 - `resolveScenarioDir(import.meta.url)` - Resolves the folder that contains the current test.
-- `installScenarioDependencies({ scenarioDir })` - Installs optional scenario-local dependencies.
+- `prepareScenarioDir({ scenarioDir })` - Copies a scenario into a temp directory and links optional scenario-local dependencies.
+- `installScenarioDependencies({ scenarioDir })` - Installs optional scenario-local dependencies directly. This is usually only needed when testing installer behavior.
 - `runScenarioDir({ scenarioDir, entry?, timeoutMs? })` - Runs a TypeScript scenario with `tsx`.
 - `runDenoScenarioDir({ scenarioDir, entry?, args?, timeoutMs? })` - Runs nested Deno scenarios with `deno test`.
 - `runNodeScenarioDir({ scenarioDir, entry?, nodeArgs?, timeoutMs? })` - Runs plain Node scenarios, used for `--import braintrust/hook.mjs`.
@@ -68,23 +68,9 @@ The main utilities you'll use in test files:
 
 Use `normalizeForSnapshot(...)` before snapshotting. It replaces timestamps and ids with stable tokens and strips machine-specific paths and localhost ports.
 
-### Test tags
+### Provider scenario cassettes
 
-Hermetic tests (those that use only the mock Braintrust server and local fixtures) must be tagged with `E2E_TAGS.hermetic` from `e2e/helpers/tags.ts`. This allows CI to run hermetic tests separately without provider credentials.
-
-Tests that call real provider APIs do not need a tag.
-
-```ts
-import { E2E_TAGS } from "../../helpers/tags";
-
-test(
-  "trace-primitives-basic collects a minimal manual trace tree",
-  { tags: [E2E_TAGS.hermetic] },
-  async () => {
-    // ...
-  },
-);
-```
+External-provider tests pass `runContext: { variantKey, originalScenarioDir }` to the scenario runner. In the default replay lane, missing cassette entries fail loudly instead of skipping or falling back to live provider APIs.
 
 ### Wrapper scenario pattern
 
@@ -110,7 +96,7 @@ The Deno scenarios follow the same pattern, except the harness invokes `deno tes
 
 ### Environment variables
 
-Non-hermetic scenarios require provider credentials in addition to the mock Braintrust server config supplied by the harness:
+Provider credentials are only required when recording or explicitly running live-provider debugging. Normal e2e replay uses committed cassettes and fails on provider variants that have not been recorded yet. Recording may need:
 
 - `OPENAI_API_KEY`
 - `ANTHROPIC_API_KEY`
@@ -136,56 +122,64 @@ Scenario-local manifests are optional and should stay slim. They are only for sc
 
 ```bash
 pnpm run test:e2e # Run all e2e tests
-pnpm run test:e2e:hermetic # Run hermetic-only e2e tests
+pnpm run test:e2e:record # Re-record provider cassettes and update snapshots
+pnpm run test:e2e:record -- <name> # Re-record one scenario from the repo root
 pnpm run test:e2e:canary # Run canary e2e tests
-pnpm run test:e2e:update # Run tests and update snapshots (won't update canary snapshots)
-pnpm run test:e2e:record # Re-record provider cassettes for migrated scenarios
 ```
 
 ## Cassettes (provider HTTP record/replay)
 
 The mock Braintrust server captures **outbound** SDK→Braintrust traffic and snapshots it under `__snapshots__/`. Cassettes capture the opposite direction: provider HTTP responses (OpenAI, Anthropic, ...) so e2e tests don't have to hit real provider APIs in CI.
 
-The cassette layer is backed by [`@braintrust/seinfeld`](../dev-packages/seinfeld), a VCR library built on MSW.
+The cassette layer is backed by the internal `@braintrust/seinfeld` workspace package. For e2e tests, the harness starts a local cassette HTTP server and points provider SDK base URLs at that server.
 
-- **Layer:** `e2e/helpers/cassette-preload.mjs` calls `createCassette()` from `@braintrust/seinfeld` inside each scenario subprocess via `node --import=...`. It replays cassette entries from `e2e/scenarios/<name>/__cassettes__/<variantKey>.json` for any non-Braintrust HTTP request.
-- **Auto-engage:** the harness automatically engages the cassette layer when (a) a cassette JSON exists for the scenario+variant on disk, OR (b) `BRAINTRUST_E2E_CASSETTE_MODE` is `record`. Scenarios just need to thread `runContext: { variantKey, originalScenarioDir }` into their runner calls — no other code change required.
-- **Hermetic tagging** is automatic too: scenarios use `cassetteTagsFor(import.meta.url, variantKey)` (or `cassetteTagsForAll(...)` when one describe covers multiple variants) on their `describe` block. The tag becomes `E2E_TAGS.hermetic` once the cassette file exists, so `test:e2e:hermetic` picks the scenario up without further changes.
+- **Layer:** `withScenarioHarness(...)` starts a `createCassetteServer()` instance for cassette-enabled scenario runs. Provider base URL env vars (for OpenAI, Anthropic, Google, Cohere, Cursor, Groq, HuggingFace, Mistral, OpenRouter, and the GitHub Copilot SDK's OpenAI provider mode) point at route prefixes on that server, so subprocesses and SDK-launched binaries can be captured too.
+- **Auto-engage:** the harness automatically engages the cassette layer when (a) a scenario run has `runContext.variantKey`, (b) a cassette JSON exists for the scenario+variant on disk, OR (c) `BRAINTRUST_E2E_CASSETTE_MODE` is `record` / `record-missing`. Scenarios just need to thread `runContext: { variantKey, originalScenarioDir }` into their runner calls — no other code change required.
+- **Provider replay failures:** provider scenarios are not skipped when a cassette is missing. In replay mode, the cassette server still starts from `runContext.variantKey`, injects placeholder provider keys, and fails on cassette misses instead of silently calling a live provider.
 - **Mode** is set by `BRAINTRUST_E2E_CASSETTE_MODE`:
   - `replay` (default; what CI uses): match the cassette or fail loudly.
   - `record`: overwrite the cassette with a fresh recording from the live API.
-  - `passthrough`: bypass the cassette layer entirely. Local debugging only.
+  - `passthrough`: keep provider base URLs pointed at the local server, but proxy requests to the live provider without recording. Local debugging only.
 
 ### Re-recording cassettes (one-time setup per provider)
 
-Cassettes for a scenario can be recorded by anyone with the relevant provider keys; the resulting JSON is committed to git and the scenario then runs hermetically in CI for everyone. The e2e suite auto-loads `.env` and `.env.local` from the repo root via `vitest.setup.ts`, so you can either set keys in your shell or drop them in `.env`.
+Cassettes for a scenario can be recorded by anyone with the relevant provider keys; the resulting JSON is committed to git and the scenario then replays in CI without provider credentials. The e2e suite auto-loads `.env` and `.env.local` from the repo root via `vitest.setup.ts`, so you can either set keys in your shell or drop them in `.env`. The record command also updates Vitest snapshots.
 
 ```bash
 # With .env populated:
 pnpm --filter=@braintrust/js-e2e-tests run test:e2e:record
 
+# One scenario only, from the repo root:
+pnpm run test:e2e:record -- <name>
+
+# One scenario only, through the e2e workspace package:
+pnpm --filter=@braintrust/js-e2e-tests run test:e2e:record -- <name>
+
 # Or via shell env:
 ANTHROPIC_API_KEY=... OPENAI_API_KEY=... GEMINI_API_KEY=... \
 COHERE_API_KEY=... GROQ_API_KEY=... HUGGINGFACE_API_KEY=... \
 MISTRAL_API_KEY=... OPENROUTER_API_KEY=... \
+CURSOR_API_KEY=... \
   pnpm --filter=@braintrust/js-e2e-tests run test:e2e:record
 ```
 
 After recording, run again **without any provider keys** to confirm the cassette is sufficient:
 
 ```bash
-unset ANTHROPIC_API_KEY OPENAI_API_KEY GEMINI_API_KEY COHERE_API_KEY GROQ_API_KEY HUGGINGFACE_API_KEY MISTRAL_API_KEY OPENROUTER_API_KEY
-pnpm --filter=@braintrust/js-e2e-tests run test:e2e:hermetic
+unset ANTHROPIC_API_KEY OPENAI_API_KEY GEMINI_API_KEY GOOGLE_API_KEY GOOGLE_GENAI_API_KEY COHERE_API_KEY GROQ_API_KEY HUGGINGFACE_API_KEY MISTRAL_API_KEY OPENROUTER_API_KEY CURSOR_API_KEY
+pnpm --filter=@braintrust/js-e2e-tests run test:e2e
 ```
 
 If a scenario records but later replay fails because of volatile fields in the request body (e.g. AI-SDK's generated message ids), add or update `<scenario-dir>/cassette-filter.mjs` for that scenario, then re-record.
+
+After any successful record run, stale cassette variants are cleaned only inside scenarios that emitted cassette run-context records during that run. With explicit scenario names, cleanup is limited to those scenarios; with a full record run, cleanup applies to every observed cassette-backed scenario. Per-cassette blob sidecar cleanup still happens in the cassette file store when each cassette is saved.
 
 ### In-scope scenarios
 
 These scenarios have cassette wiring in place and will use cassettes once they're recorded:
 
-`anthropic-instrumentation`, `openai-instrumentation`, `ai-sdk-instrumentation`, `ai-sdk-otel-export`, `claude-agent-sdk-instrumentation`, `cohere-instrumentation`, `google-adk-instrumentation`, `google-genai-instrumentation`, `groq-instrumentation`, `huggingface-instrumentation`, `mistral-instrumentation`, `openrouter-agent-instrumentation`, `openrouter-instrumentation`, `wrap-langchain-js-traces`.
+`anthropic-instrumentation`, `openai-instrumentation`, `openai-codex-instrumentation`, `ai-sdk-instrumentation`, `ai-sdk-otel-export`, `claude-agent-sdk-instrumentation`, `cohere-instrumentation`, `cursor-sdk-instrumentation`, `github-copilot-instrumentation`, `google-adk-instrumentation`, `google-genai-instrumentation`, `groq-instrumentation`, `huggingface-instrumentation`, `mistral-instrumentation`, `openrouter-agent-instrumentation`, `openrouter-instrumentation`, `wrap-langchain-js-traces`.
 
 ### Cassette format
 
-Cassettes use the `@braintrust/seinfeld` JSON format (see `dev-packages/seinfeld/README.md`). Bodies are stored as `{ kind: 'json', value }`, `{ kind: 'sse', chunks }`, `{ kind: 'text', value }`, or `{ kind: 'base64', value }`. Volatile headers (auth, request ids, rate limits, transport encodings) are stripped during recording by the `'paranoid'` redaction preset.
+Cassettes use the `@braintrust/seinfeld` JSON format. Bodies are stored as `{ kind: 'json', value }`, `{ kind: 'sse', chunks }`, `{ kind: 'text', value }`, or `{ kind: 'binary', path, sha256 }`. Large binary bodies live in `.cassette.blobs/` sidecar directories. Volatile headers (auth, request ids, rate limits, transport encodings) are stripped during recording by the `'paranoid'` redaction preset.
