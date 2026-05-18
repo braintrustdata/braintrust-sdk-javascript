@@ -1,5 +1,29 @@
 # braintrust
 
+## 3.11.0
+
+### Minor Changes
+
+- feat: Add auto and wrapper instrumentation for `@github/copilot-sdk` (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/1932)
+- feat(vitest): Support projectId in wrapVitest config Thanks @evanmkeith! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/1993)
+- feat: Add Firebase genkit instrumentation (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/1948)
+- feat(mistral): Instrument classification and moderation APIs (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/1947)
+- feat: Add @openai/codex-sdk instrumentation (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/1945)
+
+### Patch Changes
+
+- fix(openrouter): Capture reasoning (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/1944)
+- OpenAI's `chat.completions.parse()` calls `create()._thenUnwrap(...)`, which produces two `APIPromise` instances sharing the same responsePromise. Our SDK called `.then()` on each of them, triggered a `parseResponse`, which calls `response.json()` on the HTTP response body. However a `Response` body can only be read once. Might fix a customer issue https://braintrustdata.slack.com/archives/C0B27UX9UDR/p1778223683547239 Thanks @viadezo1er! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/1969)
+- fix(cohere): Wrap v2 subclient (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/1943)
+- fix: prevent duplicate LLM spans when multiple SDK instances are loaded in the same process (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/1973)
+- fix(openrouter): mark callModel parent spans as tasks and avoid double-counting metrics Thanks @ronaldkohhh! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2005)
+- Upgrade minimatch from v9 to v10. (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2000)
+- fix(groq): Capture reasoning for groq reasoning models (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/1942)
+- fix(google-adk): Fix google adk agent naming (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/1950)
+- fix: Cancel body consumption immediately for object store upload (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2001)
+- fix(deps): Upgrade Express to remove vulnerable transitive dependencies (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2002)
+- fix(google-genai): Capture multi-turn message APIs with wrapper (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/1946)
+
 ## 3.10.0
 
 ### Minor Changes
