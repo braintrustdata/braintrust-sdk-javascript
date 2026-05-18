@@ -1,16 +1,30 @@
 import { expect, test } from "vitest";
-import { normalizeForSnapshot, type Json } from "../../helpers/normalize";
+import {
+  formatJsonFileSnapshot,
+  matchFileSnapshot,
+  resolveFileSnapshotPath,
+} from "../../helpers/file-snapshot";
+import type { Json } from "../../helpers/normalize";
 import {
   prepareScenarioDir,
   resolveScenarioDir,
   withScenarioHarness,
 } from "../../helpers/scenario-harness";
+import { formatSpanTreeSnapshot } from "../../helpers/span-tree";
 import { findLatestSpan } from "../../helpers/trace-selectors";
-import { summarizeEvent, summarizeRequest } from "../../helpers/trace-summary";
+import { summarizeRequest } from "../../helpers/trace-summary";
 
 const scenarioDir = await prepareScenarioDir({
   scenarioDir: resolveScenarioDir(import.meta.url),
 });
+const spanTreeSnapshotPath = resolveFileSnapshotPath(
+  import.meta.url,
+  "span-tree.txt",
+);
+const requestFlowSnapshotPath = resolveFileSnapshotPath(
+  import.meta.url,
+  "request-flow.json",
+);
 
 test("trace-primitives-basic collects a minimal manual trace tree", async () => {
   await withScenarioHarness(
@@ -32,13 +46,10 @@ test("trace-primitives-basic collects a minimal manual trace tree", async () => 
       expect(error?.span.parentIds).toEqual([root?.span.id ?? ""]);
       expect(root?.span.rootId).toBe(root?.span.id);
 
-      expect(
-        normalizeForSnapshot(
-          ["trace-primitives-root", "basic-child", "basic-error"].map((name) =>
-            summarizeEvent(findLatestSpan(capturedEvents, name)!),
-          ) as Json,
-        ),
-      ).toMatchSnapshot("span-events");
+      await matchFileSnapshot(
+        formatSpanTreeSnapshot(capturedEvents),
+        spanTreeSnapshotPath,
+      );
 
       const requests = requestsAfter(
         cursor,
@@ -49,15 +60,16 @@ test("trace-primitives-basic collects a minimal manual trace tree", async () => 
           request.path === "/logs3",
       );
 
-      expect(
-        normalizeForSnapshot(
+      await matchFileSnapshot(
+        formatJsonFileSnapshot(
           requests.map((request) =>
             summarizeRequest(request, {
               normalizeJsonRawBody: true,
             }),
           ) as Json,
         ),
-      ).toMatchSnapshot("request-flow");
+        requestFlowSnapshotPath,
+      );
     },
   );
 });

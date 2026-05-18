@@ -1,16 +1,29 @@
 import { expect, test } from "vitest";
-import { normalizeForSnapshot, type Json } from "../../helpers/normalize";
+import {
+  formatJsonFileSnapshot,
+  matchFileSnapshot,
+  resolveFileSnapshotPath,
+} from "../../helpers/file-snapshot";
+import type { Json } from "../../helpers/normalize";
 import {
   prepareScenarioDir,
   resolveScenarioDir,
   withScenarioHarness,
 } from "../../helpers/scenario-harness";
+import { formatSpanTreeSnapshot } from "../../helpers/span-tree";
 import { findLatestSpan } from "../../helpers/trace-selectors";
-import { summarizeEvent } from "../../helpers/trace-summary";
 
 const scenarioDir = await prepareScenarioDir({
   scenarioDir: resolveScenarioDir(import.meta.url),
 });
+const spanTreeSnapshotPath = resolveFileSnapshotPath(
+  import.meta.url,
+  "span-tree.txt",
+);
+const lateUpdatePayloadsSnapshotPath = resolveFileSnapshotPath(
+  import.meta.url,
+  "late-update-payloads.json",
+);
 
 test("trace-context-and-continuation supports reattachment and late span updates", async () => {
   await withScenarioHarness(
@@ -42,18 +55,10 @@ test("trace-context-and-continuation supports reattachment and late span updates
         state: "updated",
       });
 
-      expect(
-        normalizeForSnapshot(
-          [
-            "context-root",
-            "current-child",
-            "reattached-child",
-            "late-update",
-          ].map((name) =>
-            summarizeEvent(findLatestSpan(capturedEvents, name)!),
-          ) as Json,
-        ),
-      ).toMatchSnapshot("span-events");
+      await matchFileSnapshot(
+        formatSpanTreeSnapshot(capturedEvents),
+        spanTreeSnapshotPath,
+      );
 
       const mutationRows = payloads()
         .flatMap((payload) => payload.rows)
@@ -70,8 +75,9 @@ test("trace-context-and-continuation supports reattachment and late span updates
           );
         });
 
-      expect(normalizeForSnapshot(mutationRows as Json)).toMatchSnapshot(
-        "late-update-payloads",
+      await matchFileSnapshot(
+        formatJsonFileSnapshot(mutationRows as Json),
+        lateUpdatePayloadsSnapshotPath,
       );
     },
   );

@@ -1,16 +1,24 @@
 import { expect, test } from "vitest";
-import { normalizeForSnapshot, type Json } from "../../helpers/normalize";
+import {
+  matchFileSnapshot,
+  resolveFileSnapshotPath,
+} from "../../helpers/file-snapshot";
 import {
   prepareScenarioDir,
   resolveScenarioDir,
   withScenarioHarness,
 } from "../../helpers/scenario-harness";
+import { formatSpanTreeSnapshot } from "../../helpers/span-tree";
 import { findLatestSpan } from "../../helpers/trace-selectors";
-import { extractOtelSpans, summarizeEvent } from "../../helpers/trace-summary";
+import { extractOtelSpans } from "../../helpers/trace-summary";
 
 const scenarioDir = await prepareScenarioDir({
   scenarioDir: resolveScenarioDir(import.meta.url),
 });
+const spanTreeSnapshotPath = resolveFileSnapshotPath(
+  import.meta.url,
+  "braintrust-span-tree.txt",
+);
 
 test("otel-compat-mixed-tracing unifies Braintrust and OTEL spans into one trace", async () => {
   await withScenarioHarness(
@@ -39,11 +47,10 @@ test("otel-compat-mixed-tracing unifies Braintrust and OTEL spans into one trace
       expect(btChild?.span.rootId).toBe(btRoot?.span.rootId);
       expect(btChild?.span.parentIds).toContain(otelMiddle?.spanId ?? "");
 
-      expect(
-        normalizeForSnapshot(
-          [btRoot, btChild].map((event) => summarizeEvent(event!)) as Json,
-        ),
-      ).toMatchSnapshot("braintrust-span-events");
+      await matchFileSnapshot(
+        formatSpanTreeSnapshot(btEvents),
+        spanTreeSnapshotPath,
+      );
     },
   );
 });

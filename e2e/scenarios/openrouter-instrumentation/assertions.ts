@@ -1,8 +1,6 @@
 import { beforeAll, describe, expect, test } from "vitest";
-import type { Json } from "../../helpers/normalize";
 import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
 import {
-  formatJsonFileSnapshot,
   matchFileSnapshot,
   resolveFileSnapshotPath,
 } from "../../helpers/file-snapshot";
@@ -10,8 +8,8 @@ import {
   withScenarioHarness,
   type ScenarioRunContext,
 } from "../../helpers/scenario-harness";
+import { formatSpanTreeSnapshot } from "../../helpers/span-tree";
 import { findChildSpans, findLatestSpan } from "../../helpers/trace-selectors";
-import { summarizeWrapperContract } from "../../helpers/wrapper-contract";
 
 import {
   CALL_MODEL,
@@ -78,7 +76,7 @@ function findOpenRouterSpan(
 function buildSpanSummary(
   events: CapturedLogEvent[],
   options: { supportsRerank: boolean },
-): Json {
+): CapturedLogEvent[] {
   const chatOperation = findLatestSpan(events, "openrouter-chat-operation");
   const chatStreamOperation = findLatestSpan(
     events,
@@ -136,17 +134,7 @@ function buildSpanSummary(
     findOpenRouterSpan(events, callModelOperation?.span.id, [
       "openrouter.callModel",
     ]),
-  ].map((event) =>
-    summarizeWrapperContract(event!, [
-      "document_count",
-      "embedding_model",
-      "model",
-      "operation",
-      "provider",
-      "scenario",
-      "topN",
-    ]),
-  ) as Json;
+  ].map((event) => event!);
 }
 
 export function defineOpenRouterTraceAssertions(options: {
@@ -159,7 +147,7 @@ export function defineOpenRouterTraceAssertions(options: {
 }): void {
   const spanSnapshotPath = resolveFileSnapshotPath(
     options.testFileUrl,
-    `${options.snapshotName}.span-events.json`,
+    `${options.snapshotName}.span-tree.txt`,
   );
   const testConfig = {
     timeout: options.timeoutMs,
@@ -409,15 +397,8 @@ export function defineOpenRouterTraceAssertions(options: {
       },
     );
 
-    test("matches the shared span snapshot", testConfig, async () => {
-      await matchFileSnapshot(
-        formatJsonFileSnapshot(
-          buildSpanSummary(events, {
-            supportsRerank: options.supportsRerank,
-          }),
-        ),
-        spanSnapshotPath,
-      );
+    test("matches the shared span tree snapshot", testConfig, async () => {
+      await matchFileSnapshot(formatSpanTreeSnapshot(events), spanSnapshotPath);
     });
   });
 }

@@ -1,8 +1,7 @@
 import { beforeAll, describe, expect, test } from "vitest";
-import { normalizeForSnapshot, type Json } from "../../helpers/normalize";
+import type { Json } from "../../helpers/normalize";
 import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
 import {
-  formatJsonFileSnapshot,
   matchFileSnapshot,
   resolveFileSnapshotPath,
 } from "../../helpers/file-snapshot";
@@ -10,8 +9,12 @@ import {
   withScenarioHarness,
   type ScenarioRunContext,
 } from "../../helpers/scenario-harness";
+import {
+  formatSpanTreeSnapshot,
+  spanTreeFields,
+  type SpanTreeEntry,
+} from "../../helpers/span-tree";
 import { findChildSpans, findLatestSpan } from "../../helpers/trace-selectors";
-import { summarizeWrapperContract } from "../../helpers/wrapper-contract";
 
 import { ROOT_NAME, SCENARIO_NAME } from "./scenario.impl.mjs";
 
@@ -280,12 +283,12 @@ function summarizeAnthropicPayload(event: CapturedLogEvent): Json {
   return summary;
 }
 
-function buildSpanSummary(
+function snapshotEvents(
   events: CapturedLogEvent[],
   supportsBetaMessages: boolean,
   supportsBetaToolRunner: boolean,
   supportsThinking: boolean,
-): Json {
+): CapturedLogEvent[] {
   const createOperation = findLatestSpan(events, "anthropic-create-operation");
   const attachmentOperation = findLatestSpan(
     events,
@@ -338,194 +341,90 @@ function buildSpanSummary(
     ["get_weather.lookup"],
   );
 
-  return normalizeForSnapshot(
-    [
-      findLatestSpan(events, ROOT_NAME),
-      createOperation,
-      findAnthropicSpan(events, createOperation?.span.id, [
-        "anthropic.messages.create",
-      ]),
-      attachmentOperation,
-      findAnthropicSpan(events, attachmentOperation?.span.id, [
-        "anthropic.messages.create",
-      ]),
-      streamOperation,
-      findAnthropicSpan(events, streamOperation?.span.id, [
-        "anthropic.messages.create",
-      ]),
-      withResponseOperation,
-      findAnthropicSpan(events, withResponseOperation?.span.id, [
-        "anthropic.messages.create",
-      ]),
-      toolStreamOperation,
-      findAnthropicSpan(events, toolStreamOperation?.span.id, [
-        "anthropic.messages.create",
-      ]),
-      toolOperation,
-      findAnthropicSpan(events, toolOperation?.span.id, [
-        "anthropic.messages.create",
-      ]),
-      ...(supportsThinking
-        ? [
-            thinkingStreamOperation,
-            findAnthropicSpan(events, thinkingStreamOperation?.span.id, [
-              "anthropic.messages.create",
-            ]),
-          ]
-        : []),
-      ...(supportsBetaMessages
-        ? [
-            betaCreateOperation,
-            findAnthropicSpan(events, betaCreateOperation?.span.id, [
-              "anthropic.messages.create",
-              "anthropic.beta.messages.create",
-            ]),
-            betaStreamOperation,
-            findAnthropicSpan(events, betaStreamOperation?.span.id, [
-              "anthropic.messages.create",
-              "anthropic.beta.messages.create",
-            ]),
-            ...(supportsBetaToolRunner
-              ? [
-                  betaToolRunnerOperation,
-                  betaToolRunnerSpan,
-                  ...betaToolRunnerToolSpans,
-                  ...betaToolRunnerToolChildSpans,
-                  ...betaToolRunnerChildSpans,
-                ]
-              : []),
-          ]
-        : []),
-    ].map((event) =>
-      summarizeWrapperContract(event!, [
-        "provider",
-        "model",
-        "operation",
-        "scenario",
-        "anthropic_tool_runner_iterations",
-      ]),
-    ) as Json,
-  );
+  return [
+    findLatestSpan(events, ROOT_NAME),
+    createOperation,
+    findAnthropicSpan(events, createOperation?.span.id, [
+      "anthropic.messages.create",
+    ]),
+    attachmentOperation,
+    findAnthropicSpan(events, attachmentOperation?.span.id, [
+      "anthropic.messages.create",
+    ]),
+    streamOperation,
+    findAnthropicSpan(events, streamOperation?.span.id, [
+      "anthropic.messages.create",
+    ]),
+    withResponseOperation,
+    findAnthropicSpan(events, withResponseOperation?.span.id, [
+      "anthropic.messages.create",
+    ]),
+    toolStreamOperation,
+    findAnthropicSpan(events, toolStreamOperation?.span.id, [
+      "anthropic.messages.create",
+    ]),
+    toolOperation,
+    findAnthropicSpan(events, toolOperation?.span.id, [
+      "anthropic.messages.create",
+    ]),
+    ...(supportsThinking
+      ? [
+          thinkingStreamOperation,
+          findAnthropicSpan(events, thinkingStreamOperation?.span.id, [
+            "anthropic.messages.create",
+          ]),
+        ]
+      : []),
+    ...(supportsBetaMessages
+      ? [
+          betaCreateOperation,
+          findAnthropicSpan(events, betaCreateOperation?.span.id, [
+            "anthropic.messages.create",
+            "anthropic.beta.messages.create",
+          ]),
+          betaStreamOperation,
+          findAnthropicSpan(events, betaStreamOperation?.span.id, [
+            "anthropic.messages.create",
+            "anthropic.beta.messages.create",
+          ]),
+          ...(supportsBetaToolRunner
+            ? [
+                betaToolRunnerOperation,
+                betaToolRunnerSpan,
+                ...betaToolRunnerToolSpans,
+                ...betaToolRunnerToolChildSpans,
+                ...betaToolRunnerChildSpans,
+              ]
+            : []),
+        ]
+      : []),
+  ].map((event) => event!);
 }
 
-function buildPayloadSummary(
+function buildSpanTree(
   events: CapturedLogEvent[],
   supportsBetaMessages: boolean,
   supportsBetaToolRunner: boolean,
   supportsThinking: boolean,
-): Json {
-  const createOperation = findLatestSpan(events, "anthropic-create-operation");
-  const attachmentOperation = findLatestSpan(
+): SpanTreeEntry[] {
+  return snapshotEvents(
     events,
-    "anthropic-attachment-operation",
-  );
-  const streamOperation = findLatestSpan(events, "anthropic-stream-operation");
-  const withResponseOperation = findLatestSpan(
-    events,
-    "anthropic-stream-with-response-operation",
-  );
-  const toolStreamOperation = findLatestSpan(
-    events,
-    "anthropic-stream-tool-operation",
-  );
-  const toolOperation = findLatestSpan(events, "anthropic-tool-operation");
-  const thinkingStreamOperation = findLatestSpan(
-    events,
-    "anthropic-stream-thinking-operation",
-  );
-  const betaCreateOperation = findLatestSpan(
-    events,
-    "anthropic-beta-create-operation",
-  );
-  const betaStreamOperation = findLatestSpan(
-    events,
-    "anthropic-beta-stream-operation",
-  );
-  const betaToolRunnerOperation = findLatestSpan(
-    events,
-    "anthropic-beta-tool-runner-operation",
-  );
-  const betaToolRunnerSpan = findAnthropicSpan(
-    events,
-    betaToolRunnerOperation?.span.id,
-    ["anthropic.beta.messages.toolRunner"],
-  );
-  const betaToolRunnerChildSpans = findAnthropicSpans(
-    events,
-    betaToolRunnerSpan?.span.id,
-    ["anthropic.messages.create", "anthropic.beta.messages.create"],
-  );
-  const betaToolRunnerToolSpans = findAnthropicSpans(
-    events,
-    betaToolRunnerSpan?.span.id,
-    ["tool: get_weather"],
-  );
-  const betaToolRunnerToolChildSpans = findAnthropicSpans(
-    events,
-    betaToolRunnerToolSpans[0]?.span.id,
-    ["get_weather.lookup"],
-  );
+    supportsBetaMessages,
+    supportsBetaToolRunner,
+    supportsThinking,
+  ).map((event) => {
+    const summary = summarizeAnthropicPayload(event) as Record<string, Json>;
+    const { name: _name, type: _type, ...fields } = summary;
 
-  return normalizeForSnapshot(
-    [
-      findLatestSpan(events, ROOT_NAME),
-      createOperation,
-      findAnthropicSpan(events, createOperation?.span.id, [
-        "anthropic.messages.create",
-      ]),
-      attachmentOperation,
-      findAnthropicSpan(events, attachmentOperation?.span.id, [
-        "anthropic.messages.create",
-      ]),
-      streamOperation,
-      findAnthropicSpan(events, streamOperation?.span.id, [
-        "anthropic.messages.create",
-      ]),
-      withResponseOperation,
-      findAnthropicSpan(events, withResponseOperation?.span.id, [
-        "anthropic.messages.create",
-      ]),
-      toolStreamOperation,
-      findAnthropicSpan(events, toolStreamOperation?.span.id, [
-        "anthropic.messages.create",
-      ]),
-      toolOperation,
-      findAnthropicSpan(events, toolOperation?.span.id, [
-        "anthropic.messages.create",
-      ]),
-      ...(supportsThinking
-        ? [
-            thinkingStreamOperation,
-            findAnthropicSpan(events, thinkingStreamOperation?.span.id, [
-              "anthropic.messages.create",
-            ]),
-          ]
-        : []),
-      ...(supportsBetaMessages
-        ? [
-            betaCreateOperation,
-            findAnthropicSpan(events, betaCreateOperation?.span.id, [
-              "anthropic.messages.create",
-              "anthropic.beta.messages.create",
-            ]),
-            betaStreamOperation,
-            findAnthropicSpan(events, betaStreamOperation?.span.id, [
-              "anthropic.messages.create",
-              "anthropic.beta.messages.create",
-            ]),
-            ...(supportsBetaToolRunner
-              ? [
-                  betaToolRunnerOperation,
-                  betaToolRunnerSpan,
-                  ...betaToolRunnerToolSpans,
-                  ...betaToolRunnerToolChildSpans,
-                  ...betaToolRunnerChildSpans,
-                ]
-              : []),
-          ]
-        : []),
-    ].map((event) => summarizeAnthropicPayload(event!)) as Json,
-  );
+    return {
+      event,
+      fields: {
+        span_attributes: spanTreeFields(event).span_attributes,
+        ...fields,
+      },
+      name: typeof summary.name === "string" ? summary.name : event.span.name,
+    };
+  });
 }
 
 export function defineAnthropicInstrumentationAssertions(options: {
@@ -541,11 +440,7 @@ export function defineAnthropicInstrumentationAssertions(options: {
 }): void {
   const spanSnapshotPath = resolveFileSnapshotPath(
     options.testFileUrl,
-    `${options.snapshotName}.span-events.json`,
-  );
-  const payloadSnapshotPath = resolveFileSnapshotPath(
-    options.testFileUrl,
-    `${options.snapshotName}.log-payloads.json`,
+    `${options.snapshotName}.span-tree.txt`,
   );
   const testConfig = {
     timeout: options.timeoutMs,
@@ -930,32 +825,8 @@ export function defineAnthropicInstrumentationAssertions(options: {
       }
     }
 
-    test("matches the shared span snapshot", testConfig, async () => {
-      await matchFileSnapshot(
-        formatJsonFileSnapshot(
-          buildSpanSummary(
-            events,
-            options.supportsBetaMessages,
-            options.supportsBetaToolRunner,
-            options.supportsThinking,
-          ),
-        ),
-        spanSnapshotPath,
-      );
-    });
-
-    test("matches the shared payload snapshot", testConfig, async () => {
-      await matchFileSnapshot(
-        formatJsonFileSnapshot(
-          buildPayloadSummary(
-            events,
-            options.supportsBetaMessages,
-            options.supportsBetaToolRunner,
-            options.supportsThinking,
-          ),
-        ),
-        payloadSnapshotPath,
-      );
+    test("matches the shared span tree snapshot", testConfig, async () => {
+      await matchFileSnapshot(formatSpanTreeSnapshot(events), spanSnapshotPath);
     });
   });
 }

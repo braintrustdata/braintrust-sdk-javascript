@@ -10,9 +10,9 @@ import {
   resolveScenarioDir,
   withScenarioHarness,
 } from "../../helpers/scenario-harness";
+import { formatSpanTreeSnapshot } from "../../helpers/span-tree";
 import {
   extractOtelSpans,
-  summarizeEvent,
   summarizeRequest,
 } from "../../helpers/trace-summary";
 import { findLatestSpan } from "../../helpers/trace-selectors";
@@ -203,10 +203,8 @@ test(
         );
 
         await matchFileSnapshot(
-          formatJsonFileSnapshot(
-            [edgeSpan, nodeSpan].map((event) => summarizeEvent(event!)) as Json,
-          ),
-          resolveFileSnapshotPath(import.meta.url, "span-events.json"),
+          formatSpanTreeSnapshot(events),
+          resolveFileSnapshotPath(import.meta.url, "span-tree.txt"),
         );
 
         await matchFileSnapshot(

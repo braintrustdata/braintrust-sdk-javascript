@@ -1,21 +1,15 @@
 import { expect, test } from "vitest";
 import {
-  formatJsonFileSnapshot,
   matchFileSnapshot,
   resolveFileSnapshotPath,
 } from "../../helpers/file-snapshot";
-import type { Json } from "../../helpers/normalize";
 import {
   prepareScenarioDir,
-  readInstalledPackageVersion,
   resolveScenarioDir,
   withScenarioHarness,
 } from "../../helpers/scenario-harness";
+import { formatSpanTreeSnapshot } from "../../helpers/span-tree";
 import { findLatestSpan } from "../../helpers/trace-selectors";
-import {
-  payloadRowsForTestRunId,
-  summarizeWrapperContract,
-} from "../../helpers/wrapper-contract";
 
 const scenarioDir = await prepareScenarioDir({
   scenarioDir: resolveScenarioDir(import.meta.url),
@@ -41,7 +35,7 @@ for (const scenario of scenarios) {
     },
     async () => {
       await withScenarioHarness(
-        async ({ payloads, runScenarioDir, testRunEvents, testRunId }) => {
+        async ({ runScenarioDir, testRunEvents, testRunId }) => {
           await runScenarioDir({
             entry: scenario.entry,
             scenarioDir,
@@ -111,34 +105,10 @@ for (const scenario of scenarios) {
           });
 
           await matchFileSnapshot(
-            formatJsonFileSnapshot(
-              [
-                simplePass,
-                configured,
-                concurrentAlpha,
-                concurrentBeta,
-                expectedFailure,
-              ].map((event) =>
-                summarizeWrapperContract(event!, [
-                  "case",
-                  "scenario",
-                  "testRunId",
-                ]),
-              ) as Json,
-            ),
+            formatSpanTreeSnapshot(capturedEvents),
             resolveFileSnapshotPath(
               import.meta.url,
-              `${scenario.label}.span-events.json`,
-            ),
-          );
-
-          await matchFileSnapshot(
-            formatJsonFileSnapshot(
-              payloadRowsForTestRunId(payloads(), testRunId) as Json,
-            ),
-            resolveFileSnapshotPath(
-              import.meta.url,
-              `${scenario.label}.log-payloads.json`,
+              `${scenario.label}.span-tree.txt`,
             ),
           );
         },

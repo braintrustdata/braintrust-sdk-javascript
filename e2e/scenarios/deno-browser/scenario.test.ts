@@ -11,9 +11,9 @@ import {
   resolveScenarioDir,
   withScenarioHarness,
 } from "../../helpers/scenario-harness";
+import { formatSpanTreeSnapshot } from "../../helpers/span-tree";
 import { findLatestSpan } from "../../helpers/trace-selectors";
-import { summarizeEvent, summarizeRequest } from "../../helpers/trace-summary";
-import { payloadRowsForTestRunId } from "../../helpers/wrapper-contract";
+import { summarizeRequest } from "../../helpers/trace-summary";
 
 const scenarioDir = await prepareScenarioDir({
   scenarioDir: resolveScenarioDir(import.meta.url),
@@ -35,7 +35,6 @@ test(
   async () => {
     await withScenarioHarness(
       async ({
-        payloads,
         requestCursor,
         requestsAfter,
         runDenoScenarioDir,
@@ -149,26 +148,8 @@ test(
         );
 
         await matchFileSnapshot(
-          formatJsonFileSnapshot(
-            [
-              basicSpan,
-              jsonAttachment,
-              parentSpan,
-              childSpan,
-              nestedParent,
-              nestedChild,
-              nestedGrandchild,
-              currentSpan,
-            ].map((event) => summarizeEvent(event!)) as Json,
-          ),
-          resolveFileSnapshotPath(import.meta.url, "span-events.json"),
-        );
-
-        await matchFileSnapshot(
-          formatJsonFileSnapshot(
-            payloadRowsForTestRunId(payloads(), testRunId) as Json,
-          ),
-          resolveFileSnapshotPath(import.meta.url, "log-payloads.json"),
+          formatSpanTreeSnapshot(capturedEvents),
+          resolveFileSnapshotPath(import.meta.url, "span-tree.txt"),
         );
 
         await matchFileSnapshot(

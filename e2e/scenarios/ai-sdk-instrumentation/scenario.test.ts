@@ -33,7 +33,6 @@ for (const scenario of aiSDKScenarios) {
   const sdkMajorVersion = parseMajorVersion(scenario.version);
   const supportsRichInputScenarios = sdkMajorVersion >= 5;
   const supportsOutputObjectScenario = supportsRichInputScenarios;
-  const supportsAttachmentScenario = supportsRichInputScenarios;
 
   describe(`ai sdk ${scenario.version}`, () => {
     defineAISDKInstrumentationAssertions({
@@ -50,8 +49,7 @@ for (const scenario of aiSDKScenarios) {
           timeoutMs: AI_SDK_SCENARIO_TIMEOUT_MS,
         });
       },
-      snapshotName: scenario.snapshotName,
-      supportsAttachmentScenario,
+      snapshotName: `${scenario.snapshotName}-wrapped`,
       supportsProviderCacheAssertions: scenario.supportsProviderCacheAssertions,
       supportsDenyOutputOverrideScenario: supportsRichInputScenarios,
       supportsEmbedMany: scenario.supportsEmbedMany !== false,
@@ -80,8 +78,7 @@ for (const scenario of aiSDKScenarios) {
           timeoutMs: AI_SDK_SCENARIO_TIMEOUT_MS,
         });
       },
-      snapshotName: scenario.snapshotName,
-      supportsAttachmentScenario,
+      snapshotName: `${scenario.snapshotName}-auto-hook`,
       supportsProviderCacheAssertions: scenario.supportsProviderCacheAssertions,
       supportsDenyOutputOverrideScenario: supportsRichInputScenarios,
       supportsEmbedMany: scenario.supportsEmbedMany !== false,

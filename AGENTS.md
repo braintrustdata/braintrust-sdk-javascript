@@ -59,8 +59,11 @@ Each scenario runs the SDK in a subprocess against a mock Braintrust server and 
 
 ```bash
 pnpm run test:e2e                 # Run all e2e scenarios (from repo root)
+pnpm run test:e2e:update          # Update e2e snapshots without re-recording cassettes
 pnpm run test:e2e:record          # Re-record provider cassettes and update snapshots
 ```
+
+When adding or modifying e2e tests, run the relevant e2e verification twice before stopping so flakes are caught proactively. After running `pnpm run test:e2e:update` or `pnpm run test:e2e:record`, always run the normal e2e tests afterward to verify there is no snapshot drift or unstable output.
 
 **From repo root:**
 

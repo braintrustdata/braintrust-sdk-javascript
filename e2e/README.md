@@ -34,7 +34,7 @@ Any extra files needed only by one scenario stay in that scenario folder. Anythi
 - `scenario-installer.ts` - Installs optional scenario-local dependencies from a colocated `package.json` into a shared cache and links them into prepared scenario copies.
 - `mock-braintrust-server.ts` - Captures requests, merged log payloads, and parsed span-like events.
 - `normalize.ts` - Makes snapshots deterministic by normalizing ids, timestamps, paths, and mock-server URLs.
-- `trace-selectors.ts` / `trace-summary.ts` - Helpers for finding spans and snapshotting only the relevant shape.
+- `trace-selectors.ts` / `span-tree.ts` / `trace-summary.ts` - Helpers for finding spans and snapshotting stable, human-readable trace trees.
 - `scenario-runtime.ts` - Shared runtime utilities used by scenario entrypoints.
 - `openai.ts` - Shared scenario lists and assertions for OpenAI wrapper and hook coverage across v4/v5/v6.
 - `wrapper-contract.ts` - Helpers for snapshotting wrapper span contracts and filtering payload rows by root span id.
@@ -66,7 +66,7 @@ The main utilities you'll use in test files:
 - `events()`, `payloads()`, `requestCursor()`, `requestsAfter()` - Lower-level access for ingestion payloads and HTTP request flow assertions.
 - `testRunId` - Useful when a scenario or assertion needs the exact run marker.
 
-Use `normalizeForSnapshot(...)` before snapshotting. It replaces timestamps and ids with stable tokens and strips machine-specific paths and localhost ports.
+Prefer `formatSpanTreeSnapshot(...)` for span snapshots. It compiles captured span rows into an ASCII tree and includes stable span attributes, input, output, expected values, scores, tags, metadata, metrics, and errors. Use `normalizeForSnapshot(...)` for non-span JSON snapshots; it replaces timestamps and ids with stable tokens and strips machine-specific paths and localhost ports.
 
 ### Provider scenario cassettes
 
@@ -79,7 +79,7 @@ Wrapper scenarios often create a root span with `testRunId` metadata and then le
 - Use `events()` rather than `testRunEvents()` to inspect the full trace tree.
 - Find the scenario root span first.
 - Scope raw payload snapshots by `root_span_id` using `payloadRowsForRootSpan(...)`.
-- Pair a normalized `span-events` snapshot with a normalized `log-payloads` snapshot.
+- Prefer a normalized ASCII span-tree snapshot from `formatSpanTreeSnapshot(...)`.
 - If the wrapper has an explicit support matrix, reuse one shared test across version-specific scenario entries instead of duplicating the assertions. The AI SDK wrapper scenario uses this for supported v3-v6 package combinations.
 
 ### Runner-wrapper scenario pattern
@@ -122,6 +122,7 @@ Scenario-local manifests are optional and should stay slim. They are only for sc
 
 ```bash
 pnpm run test:e2e # Run all e2e tests
+pnpm run test:e2e:update # Update snapshots in cassette replay mode
 pnpm run test:e2e:record # Re-record provider cassettes and update snapshots
 pnpm run test:e2e:record -- <name> # Re-record one scenario from the repo root
 pnpm run test:e2e:canary # Run canary e2e tests

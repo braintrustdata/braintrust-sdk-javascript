@@ -1,8 +1,7 @@
 import { beforeAll, describe, expect, test } from "vitest";
-import { normalizeForSnapshot, type Json } from "../../helpers/normalize";
+import type { Json } from "../../helpers/normalize";
 import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
 import {
-  formatJsonFileSnapshot,
   matchFileSnapshot,
   resolveFileSnapshotPath,
 } from "../../helpers/file-snapshot";
@@ -12,11 +11,15 @@ import {
   type ScenarioRunContext,
 } from "../../helpers/scenario-harness";
 import {
+  formatSpanTreeSnapshot,
+  spanTreeFields,
+  type SpanTreeEntry,
+} from "../../helpers/span-tree";
+import {
   findChildSpans,
   findLatestChildSpan,
   findLatestSpan,
 } from "../../helpers/trace-selectors";
-import { summarizeWrapperContract } from "../../helpers/wrapper-contract";
 
 import {
   GOOGLE_EMBEDDING_MODEL,
@@ -256,19 +259,6 @@ function normalizeGoogleOutput(event: CapturedLogEvent): Json {
   );
 }
 
-function normalizeGoogleSummary(summary: Json): Json {
-  if (!isRecord(summary) || !Array.isArray(summary.metric_keys)) {
-    return summary;
-  }
-
-  return {
-    ...summary,
-    metric_keys: summary.metric_keys.filter(
-      (metric): metric is string => metric !== "prompt_cached_tokens",
-    ),
-  } satisfies Json;
-}
-
 function summarizeGooglePayload(event: CapturedLogEvent): Json {
   return {
     input: event.input as Json,
@@ -332,22 +322,20 @@ function buildRelevantEvents(events: CapturedLogEvent[]): CapturedLogEvent[] {
   ].map((event) => event!);
 }
 
-function buildSpanSummary(events: CapturedLogEvent[]): Json {
-  return normalizeForSnapshot(
-    buildRelevantEvents(events).map((event) =>
-      normalizeGoogleSummary(
-        summarizeWrapperContract(event, ["model", "operation", "scenario"]),
-      ),
-    ) as Json,
-  );
-}
+function buildSpanTree(events: CapturedLogEvent[]): SpanTreeEntry[] {
+  return buildRelevantEvents(events).map((event) => {
+    const summary = summarizeGooglePayload(event) as Record<string, Json>;
+    const { name: _name, type: _type, ...fields } = summary;
 
-function buildPayloadSummary(events: CapturedLogEvent[]): Json {
-  return normalizeForSnapshot(
-    buildRelevantEvents(events).map((event) =>
-      summarizeGooglePayload(event),
-    ) as Json,
-  );
+    return {
+      event,
+      fields: {
+        span_attributes: spanTreeFields(event).span_attributes,
+        ...fields,
+      },
+      name: typeof summary.name === "string" ? summary.name : event.span.name,
+    };
+  });
 }
 
 export function defineGoogleGenAIInstrumentationAssertions(options: {
@@ -359,11 +347,7 @@ export function defineGoogleGenAIInstrumentationAssertions(options: {
 }): void {
   const spanSnapshotPath = resolveFileSnapshotPath(
     options.testFileUrl,
-    `${options.snapshotName}.span-events.json`,
-  );
-  const payloadSnapshotPath = resolveFileSnapshotPath(
-    options.testFileUrl,
-    `${options.snapshotName}.log-payloads.json`,
+    `${options.snapshotName}.span-tree.txt`,
   );
   const timeoutMs = effectiveScenarioTimeoutMs(options.timeoutMs);
   const testConfig = {
@@ -639,18 +623,8 @@ export function defineGoogleGenAIInstrumentationAssertions(options: {
       ).toBe(true);
     });
 
-    test("matches the shared span snapshot", testConfig, async () => {
-      await matchFileSnapshot(
-        formatJsonFileSnapshot(buildSpanSummary(events)),
-        spanSnapshotPath,
-      );
-    });
-
-    test("matches the shared payload snapshot", testConfig, async () => {
-      await matchFileSnapshot(
-        formatJsonFileSnapshot(buildPayloadSummary(events)),
-        payloadSnapshotPath,
-      );
+    test("matches the shared span tree snapshot", testConfig, async () => {
+      await matchFileSnapshot(formatSpanTreeSnapshot(events), spanSnapshotPath);
     });
   });
 }

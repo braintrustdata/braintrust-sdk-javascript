@@ -1,8 +1,6 @@
 import { beforeAll, describe, expect, test } from "vitest";
-import type { Json } from "../../helpers/normalize";
 import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
 import {
-  formatJsonFileSnapshot,
   matchFileSnapshot,
   resolveFileSnapshotPath,
 } from "../../helpers/file-snapshot";
@@ -10,8 +8,8 @@ import {
   withScenarioHarness,
   type ScenarioRunContext,
 } from "../../helpers/scenario-harness";
+import { formatSpanTreeSnapshot } from "../../helpers/span-tree";
 import { findChildSpans, findLatestSpan } from "../../helpers/trace-selectors";
-import { summarizeWrapperContract } from "../../helpers/wrapper-contract";
 import { ROOT_NAME, SCENARIO_NAME } from "./constants.mjs";
 
 type RunCohereScenario = (harness: {
@@ -54,7 +52,7 @@ function buildSpanSummary(
   events: CapturedLogEvent[],
   supportsThinking: boolean,
   useV2Namespace: boolean,
-): Json {
+): CapturedLogEvent[] {
   const chatOperation = findLatestSpan(
     events,
     getOperationName("chat", { useV2Namespace }),
@@ -101,18 +99,7 @@ function buildSpanSummary(
     );
   }
 
-  return summaryEvents.map((event) =>
-    summarizeWrapperContract(event!, [
-      "document_count",
-      "inputType",
-      "model",
-      "operation",
-      "provider",
-      "scenario",
-      "thinking",
-      "topN",
-    ]),
-  ) as Json;
+  return summaryEvents.map((event) => event!);
 }
 
 export function defineCohereInstrumentationAssertions(options: {
@@ -127,7 +114,7 @@ export function defineCohereInstrumentationAssertions(options: {
 }): void {
   const spanSnapshotPath = resolveFileSnapshotPath(
     options.testFileUrl,
-    `${options.snapshotName}.span-events.json`,
+    `${options.snapshotName}.span-tree.txt`,
   );
   const testConfig = {
     timeout: options.timeoutMs,
@@ -287,17 +274,8 @@ export function defineCohereInstrumentationAssertions(options: {
       });
     });
 
-    test("matches span snapshot", testConfig, async () => {
-      await matchFileSnapshot(
-        formatJsonFileSnapshot(
-          buildSpanSummary(
-            events,
-            options.supportsThinking,
-            options.useV2Namespace ?? false,
-          ),
-        ),
-        spanSnapshotPath,
-      );
+    test("matches span tree snapshot", testConfig, async () => {
+      await matchFileSnapshot(formatSpanTreeSnapshot(events), spanSnapshotPath);
     });
   });
 }
