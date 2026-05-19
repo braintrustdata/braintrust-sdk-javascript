@@ -1386,6 +1386,20 @@ export abstract class BaseAttachment {
   abstract debugInfo(): Record<string, unknown>;
 }
 
+type DatasetPipelineDeferredJSONAttachmentHook = (
+  data: unknown,
+  options?: { filename?: string; pretty?: boolean },
+) => object;
+
+declare global {
+  // Set by the bt dataset pipeline runner so JSONAttachment can be represented
+  // as a destination-uploaded marker during transform.
+  // eslint-disable-next-line no-var
+  var __BT_DATASET_PIPELINE_DEFER_JSON_ATTACHMENT__:
+    | DatasetPipelineDeferredJSONAttachmentHook
+    | undefined;
+}
+
 /**
  * Represents an attachment to be uploaded and the associated metadata.
  * `Attachment` objects can be inserted anywhere in an event, allowing you to
@@ -1851,6 +1865,20 @@ export class JSONAttachment extends Attachment {
     },
   ) {
     const { filename = "data.json", pretty = false, state } = options ?? {};
+    const deferredJsonAttachment =
+      globalThis.__BT_DATASET_PIPELINE_DEFER_JSON_ATTACHMENT__;
+    if (deferredJsonAttachment) {
+      super({
+        data: new Blob([]),
+        filename,
+        contentType: "application/json",
+        state,
+      });
+      return deferredJsonAttachment(data, {
+        filename,
+        pretty,
+      }) as unknown as JSONAttachment;
+    }
 
     // Serialize the JSON data
     const jsonString = pretty

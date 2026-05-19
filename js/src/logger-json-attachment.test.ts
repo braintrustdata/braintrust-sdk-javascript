@@ -40,6 +40,48 @@ describe("JSONAttachment", () => {
     expect(attachment.reference.filename).toBe("custom.json");
   });
 
+  it("should defer to the dataset pipeline hook when installed", () => {
+    const globalWithHook = globalThis as typeof globalThis & {
+      __BT_DATASET_PIPELINE_DEFER_JSON_ATTACHMENT__?: (
+        data: unknown,
+        options?: { filename?: string; pretty?: boolean },
+      ) => object;
+    };
+    const previous = globalWithHook.__BT_DATASET_PIPELINE_DEFER_JSON_ATTACHMENT__;
+    try {
+      globalWithHook.__BT_DATASET_PIPELINE_DEFER_JSON_ATTACHMENT__ = (
+        data,
+        options,
+      ) => {
+        const reference = {
+          type: "braintrust_deferred_attachment",
+          kind: "json",
+          filename: options?.filename,
+          content_type: "application/json",
+          pretty: options?.pretty,
+          data,
+        };
+        return { reference };
+      };
+
+      const attachment = new JSONAttachment(
+        { test: "data" },
+        { filename: "trace.json", pretty: true },
+      );
+
+      expect(attachment.reference).toEqual({
+        type: "braintrust_deferred_attachment",
+        kind: "json",
+        filename: "trace.json",
+        content_type: "application/json",
+        pretty: true,
+        data: { test: "data" },
+      });
+    } finally {
+      globalWithHook.__BT_DATASET_PIPELINE_DEFER_JSON_ATTACHMENT__ = previous;
+    }
+  });
+
   it("should pretty print when requested", async () => {
     const testData = { a: 1, b: 2 };
     const attachment = new JSONAttachment(testData, { pretty: true });
