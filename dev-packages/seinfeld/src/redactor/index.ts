@@ -1,16 +1,14 @@
 import type {
   BodyPayload,
-  CassetteEntry,
   RecordedRequest,
   RecordedResponse,
 } from "../cassette";
-import { CassetteRedactionError } from "../errors";
 import {
   headerNameMatches,
   pathMatches,
   stripQueryParams,
 } from "../internal/match-helpers";
-import type { RecordedRequestOrDraft, RecordedResponseOrDraft } from "../msw";
+import type { RecordedRequestOrDraft, RecordedResponseOrDraft } from "../http";
 import { resolveRedactors } from "./presets";
 
 /**
@@ -18,15 +16,14 @@ import { resolveRedactors } from "./presets";
  * parameters listed in `redactQueryParams` are deleted entirely from the URL
  * (since `?key=[REDACTED]` would change URL semantics for downstream parsers).
  */
-export const REDACTED_SENTINEL = "[REDACTED]";
+const REDACTED_SENTINEL = "[REDACTED]";
 
 /**
  * Declarative redaction configuration. Unlike `FilterConfig` (used for
  * matching), `RedactionConfig` transforms what gets persisted to disk.
  *
  * All fields are optional. Default behavior (no spec, or `false`) is to
- * persist real bytes — see README's redaction section for the security
- * implications.
+ * persist real bytes.
  */
 export interface RedactionConfig {
   /** Headers whose values get masked with the sentinel. Case-insensitive on names. */
@@ -60,16 +57,6 @@ export interface RedactionConfig {
   redactRequest?: (req: RecordedRequest) => RecordedRequest;
   /** Custom response transform run after declarative redaction. */
   redactResponse?: (res: RecordedResponse) => RecordedResponse;
-  /**
-   * When `true`, every declarative rule in `redactHeaders` and
-   * `redactBodyFields` must match at least one occurrence across the cassette's
-   * entries, or `persistIfRecord` throws `CassetteRedactionError`. Unmatched
-   * rules almost always indicate a typo in a path or header name.
-   *
-   * Off by default for backward compatibility. Recommended for any config that
-   * redacts known-sensitive fields.
-   */
-  strict?: boolean;
 }
 
 /** Built-in preset names. See `presets.ts` for definitions. */
@@ -121,54 +108,6 @@ export function applyResponseRedaction(
     current = applyResponseRedactionConfig(current, config);
   }
   return current;
-}
-
-/**
- * Strict-mode check: verify that every declarative rule in the given configs
- * (those with `strict: true`) matched at least one field in the provided
- * entries. Call this after all entries have been flushed in `record` mode.
- *
- * Throws `CassetteRedactionError` listing any patterns that matched nothing.
- *
- * Note: `redactQueryParams` is excluded because deleted params are
- * undetectable after the fact; `redactBodyText` is excluded because text
- * replacements may use non-sentinel replacement strings.
- */
-export function checkStrictRedaction(
-  cassetteName: string,
-  entries: CassetteEntry[],
-  configs: RedactionConfig[],
-): void {
-  const unmatched: string[] = [];
-
-  for (const config of configs) {
-    if (!config.strict) continue;
-
-    for (const pattern of config.redactHeaders ?? []) {
-      const matched = entries.some(
-        (e) =>
-          headerWasRedacted(e.request.headers, pattern) ||
-          headerWasRedacted(e.response.headers, pattern),
-      );
-      if (!matched) unmatched.push(`redactHeaders: ${String(pattern)}`);
-    }
-
-    for (const pattern of config.redactBodyFields ?? []) {
-      const matched = entries.some(
-        (e) =>
-          bodyFieldWasRedacted(e.request.body, pattern) ||
-          bodyFieldWasRedacted(e.response.body, pattern),
-      );
-      if (!matched) unmatched.push(`redactBodyFields: ${String(pattern)}`);
-    }
-  }
-
-  if (unmatched.length > 0) {
-    throw new CassetteRedactionError({
-      cassetteName,
-      unmatchedPatterns: unmatched,
-    });
-  }
 }
 
 // ---- Per-config apply helpers -----------------------------------------------
@@ -347,74 +286,6 @@ function applyTextPatterns(
   return result;
 }
 
-// ---- Strict-mode helpers ---------------------------------------------------
-
-function headerWasRedacted(
-  headers: Record<string, string>,
-  pattern: string | RegExp,
-): boolean {
-  for (const [name, value] of Object.entries(headers)) {
-    if (value === REDACTED_SENTINEL && headerNameMatches(name, [pattern]))
-      return true;
-  }
-  return false;
-}
-
-function bodyFieldWasRedacted(
-  body: BodyPayload,
-  pattern: string | RegExp,
-): boolean {
-  if (body.kind === "json") {
-    return bodyFieldHasSentinel(body.value, pattern);
-  }
-  if (body.kind === "text") {
-    try {
-      return bodyFieldHasSentinel(JSON.parse(body.value), pattern);
-    } catch {
-      return false;
-    }
-  }
-  if (body.kind === "sse") {
-    return body.chunks.some((chunk) =>
-      chunk.split("\n").some((line) => {
-        if (!line.startsWith("data:")) return false;
-        const data = line.slice(line.indexOf(":") + 1).trim();
-        try {
-          return bodyFieldHasSentinel(JSON.parse(data), pattern);
-        } catch {
-          return false;
-        }
-      }),
-    );
-  }
-  return false;
-}
-
-function bodyFieldHasSentinel(
-  value: unknown,
-  pattern: string | RegExp,
-  pathSegs: string[] = [],
-): boolean {
-  if (value === REDACTED_SENTINEL) {
-    return pathSegs.length > 0 && pathMatches(pathSegs.join("."), [pattern]);
-  }
-  if (value === null || typeof value !== "object") return false;
-  if (Array.isArray(value)) {
-    return value.some((v, i) => {
-      pathSegs.push(String(i));
-      const found = bodyFieldHasSentinel(v, pattern, pathSegs);
-      pathSegs.pop();
-      return found;
-    });
-  }
-  return Object.entries(value as Record<string, unknown>).some(([k, v]) => {
-    pathSegs.push(k);
-    const found = bodyFieldHasSentinel(v, pattern, pathSegs);
-    pathSegs.pop();
-    return found;
-  });
-}
-
 // ---- Low-level body helpers ------------------------------------------------
 
 function maskHeaders(
@@ -453,5 +324,3 @@ function maskBodyFields(
   }
   return result;
 }
-
-export { resolveRedactors } from "./presets";

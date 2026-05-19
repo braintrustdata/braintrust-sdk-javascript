@@ -3,9 +3,8 @@ import type { CassetteFile } from "../cassette";
 /**
  * Persistence interface for cassettes.
  *
- * The default implementation is `createJsonFileStore`. Pluggable so users can
- * back cassettes by S3, in-memory maps (for testing the library itself), or
- * any other storage they prefer.
+ * The default implementation is `createJsonFileStore`. Pluggable so tests can
+ * manage cassette JSON and binary sidecars through a small storage interface.
  *
  * Implementations should:
  * - Treat `name` as a logical identifier; converting it to filesystem paths
@@ -16,8 +15,6 @@ import type { CassetteFile } from "../cassette";
 export interface CassetteStore {
   load(name: string): Promise<CassetteFile | null>;
   save(name: string, cassette: CassetteFile): Promise<void>;
-  /** Optional. List all cassette names known to the store. */
-  list?(): Promise<string[]>;
   /**
    * Optional. Persist a binary blob alongside a cassette and return a path
    * string (relative to the cassette file's directory) to embed in the
@@ -45,4 +42,3 @@ export interface CassetteStore {
 
 export { createJsonFileStore } from "./file-store";
 export type { JsonFileStoreOptions } from "./file-store";
-export { createMemoryStore } from "./memory-store";

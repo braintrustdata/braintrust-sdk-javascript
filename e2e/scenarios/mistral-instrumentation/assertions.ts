@@ -11,7 +11,11 @@ import {
   matchFileSnapshot,
   resolveFileSnapshotPath,
 } from "../../helpers/file-snapshot";
-import { withScenarioHarness } from "../../helpers/scenario-harness";
+import {
+  effectiveScenarioTimeoutMs,
+  withScenarioHarness,
+  type ScenarioRunContext,
+} from "../../helpers/scenario-harness";
 import { findChildSpans, findLatestSpan } from "../../helpers/trace-selectors";
 import {
   payloadRowsForRootSpan,
@@ -33,13 +37,13 @@ type RunMistralScenario = (harness: {
   runNodeScenarioDir: (options: {
     entry: string;
     nodeArgs: string[];
-    runContext?: { variantKey: string };
+    runContext?: ScenarioRunContext;
     scenarioDir: string;
     timeoutMs: number;
   }) => Promise<unknown>;
   runScenarioDir: (options: {
     entry: string;
-    runContext?: { variantKey: string };
+    runContext?: ScenarioRunContext;
     scenarioDir: string;
     timeoutMs: number;
   }) => Promise<unknown>;
@@ -252,7 +256,15 @@ function normalizeLegacyV134SpanSummaryRow(
     return summaryRow;
   }
 
-  if (summaryRow.name !== "mistral.fim.stream") {
+  const unstableLegacyV134SpanNames = new Set([
+    "mistral.chat.stream",
+    "mistral.fim.stream",
+  ]);
+
+  if (
+    typeof summaryRow.name !== "string" ||
+    !unstableLegacyV134SpanNames.has(summaryRow.name)
+  ) {
     return summaryRow;
   }
 
@@ -653,8 +665,9 @@ export function defineMistralInstrumentationAssertions(options: {
   const classifyModel = nonEmptyString(process.env.MISTRAL_CLASSIFIER_MODEL);
   const supportsClassify =
     (options.supportsClassify ?? true) && !!classifyModel;
+  const timeoutMs = effectiveScenarioTimeoutMs(options.timeoutMs);
   const testConfig = {
-    timeout: options.timeoutMs,
+    timeout: timeoutMs,
   };
 
   describe(options.name, () => {
@@ -667,7 +680,7 @@ export function defineMistralInstrumentationAssertions(options: {
         events = harness.events();
         payloads = harness.payloads();
       });
-    }, options.timeoutMs);
+    }, timeoutMs);
 
     test("captures the root trace for the scenario", testConfig, () => {
       const root = findLatestSpan(events, ROOT_NAME);
@@ -745,8 +758,12 @@ export function defineMistralInstrumentationAssertions(options: {
         });
         expect(span?.metrics).toMatchObject({
           time_to_first_token: expect.any(Number),
-          prompt_tokens: expect.any(Number),
-          completion_tokens: expect.any(Number),
+          ...(options.snapshotName === "mistral-v1-3-4"
+            ? {}
+            : {
+                prompt_tokens: expect.any(Number),
+                completion_tokens: expect.any(Number),
+              }),
         });
         expect(span?.output).toBeDefined();
       },

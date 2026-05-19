@@ -212,11 +212,16 @@ export function wrapDescribe(
 
         const getOrCreateContext = (): VitestExperimentContext => {
           if (!context) {
-            const projectName = config.projectName || suiteName;
+            const experimentName = `${suiteName}-${new Date().toISOString()}`;
 
-            const experiment = initExperiment(projectName, {
-              experiment: `${suiteName}-${new Date().toISOString()}`,
-            });
+            const experiment = config.projectId
+              ? initExperiment({
+                  projectId: config.projectId,
+                  experiment: experimentName,
+                })
+              : initExperiment(config.projectName || suiteName, {
+                  experiment: experimentName,
+                });
 
             context = contextManager.createChildContext(undefined, experiment);
           }

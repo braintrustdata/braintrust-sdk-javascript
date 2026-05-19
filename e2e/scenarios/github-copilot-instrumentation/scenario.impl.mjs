@@ -12,42 +12,33 @@ import {
 
 export { GITHUB_COPILOT_SCENARIO_TIMEOUT_MS };
 
-function getGitHubToken() {
-  return process.env.COPILOT_API_KEY;
-}
-
-function getMockBaseUrl() {
-  return process.env.BRAINTRUST_E2E_MODEL_BASE_URL;
+function getOpenAIBaseUrl() {
+  return (
+    process.env.BRAINTRUST_E2E_MODEL_BASE_URL ??
+    process.env.OPENAI_BASE_URL ??
+    "https://api.openai.com/v1"
+  );
 }
 
 function buildProvider() {
-  const mockBaseUrl = getMockBaseUrl();
-  if (mockBaseUrl) {
-    // BYOK mode: point the Copilot CLI at a mock/local OpenAI-compatible server
-    return {
-      type: "openai",
-      baseUrl: mockBaseUrl,
-      apiKey: "test-key",
-    };
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    throw new Error(
+      "OPENAI_API_KEY must be set for the GitHub Copilot SDK e2e test",
+    );
   }
 
-  // No provider override — use default GitHub Copilot auth
-  return undefined;
+  return {
+    type: "openai",
+    baseUrl: getOpenAIBaseUrl(),
+    apiKey,
+  };
 }
 
 async function runCopilotSession(options, decorateClient) {
   const { CopilotClient, approveAll, defineTool } = options;
 
-  const githubToken = getGitHubToken();
-  if (!githubToken && !getMockBaseUrl()) {
-    throw new Error(
-      "Either COPILOT_API_KEY or BRAINTRUST_E2E_MODEL_BASE_URL must be set for the GitHub Copilot SDK e2e test",
-    );
-  }
-
-  const baseClient = new CopilotClient(
-    githubToken ? { gitHubToken: githubToken } : {},
-  );
+  const baseClient = new CopilotClient();
   const client = decorateClient ? decorateClient(baseClient) : baseClient;
 
   const provider = buildProvider();

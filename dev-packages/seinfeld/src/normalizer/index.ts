@@ -1,5 +1,5 @@
 import type { RecordedRequest } from "../cassette";
-import type { RecordedRequestOrDraft } from "../msw";
+import type { RecordedRequestOrDraft } from "../http";
 import {
   headerNameMatches,
   pathMatches,
@@ -11,9 +11,8 @@ import { resolveFilters } from "./presets";
  * Declarative filter configuration. All fields are optional. Multiple configs
  * can be composed via `FilterSpec`.
  *
- * Filters apply ONLY to the request used for matching — the persisted cassette
- * entry retains the original, unfiltered request bytes. See README's
- * "two-pipeline" section for why this distinction matters.
+ * Filters apply only to the request used for matching; the persisted cassette
+ * entry retains the original, unfiltered request bytes.
  */
 export interface FilterConfig {
   /**
@@ -153,5 +152,3 @@ function stripBodyFields(
   }
   return result;
 }
-
-export { resolveFilters } from "./presets";

@@ -4,7 +4,6 @@ import {
   readInstalledPackageVersion,
   resolveScenarioDir,
 } from "../../helpers/scenario-harness";
-import { cassetteTagsFor } from "../../helpers/tags";
 import { defineCohereInstrumentationAssertions } from "./assertions";
 import {
   COHERE_SCENARIO_SPECS,
@@ -28,9 +27,8 @@ const cohereScenarios = await Promise.all(
 
 for (const scenario of cohereScenarios) {
   const supportsThinking = scenario.supportsThinking ?? true;
-  const tags = cassetteTagsFor(import.meta.url, scenario.snapshotName);
 
-  describe(`cohere sdk ${scenario.version}`, { tags }, () => {
+  describe(`cohere sdk ${scenario.version}`, () => {
     defineCohereInstrumentationAssertions({
       name: "wrapped instrumentation",
       runScenario: async ({ runScenarioDir }) => {
@@ -48,11 +46,8 @@ for (const scenario of cohereScenarios) {
           timeoutMs: COHERE_SCENARIO_TIMEOUT_MS,
         });
       },
-      requireChatStreamOutput: scenario.snapshotName !== "cohere-v7-14-0",
-      snapshotName:
-        scenario.snapshotName === "cohere-v7-14-0"
-          ? "cohere-v7-14-0-wrapped"
-          : scenario.snapshotName,
+      requireChatStreamOutput: !(scenario.useV2Namespace ?? false),
+      snapshotName: `${scenario.snapshotName}-wrapped`,
       supportsThinking,
       testFileUrl: import.meta.url,
       timeoutMs: COHERE_SCENARIO_TIMEOUT_MS,

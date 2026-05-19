@@ -7,7 +7,7 @@
  * - `text/event-stream`   → `{ kind: 'sse', chunks: [...] }`  (split on `\n\n`)
  * - `application/json`    → `{ kind: 'json', value: <parsed> }`  (JSON.parse, falls back to text on parse failure)
  * - any `text/*` or XML/JS → `{ kind: 'text', value: <utf-8> }`
- * - large binary (≥ threshold) → `{ kind: 'binary', ... }` via `encodeBinaryDraft` or inline sha256
+ * - large bodies (≥ threshold) → `{ kind: 'binary', ... }` via `encodeBinaryDraft` or inline sha256
  * - everything else        → `{ kind: 'base64', value: <b64>, contentType }`
  *
  * Decoding produces wire bytes ready to send. JSON is re-stringified with
@@ -45,15 +45,15 @@ function extractCharset(contentType: string): string | undefined {
 }
 
 /** SHA-256 hex digest of `bytes`. */
-export function sha256Hex(bytes: Uint8Array): string {
+function sha256Hex(bytes: Uint8Array): string {
   return createHash("sha256").update(bytes).digest("hex");
 }
 
 /**
  * Encode raw bytes into a `BodyPayload`.
  *
- * When `threshold` is provided (and not `false`), binary bodies whose byte
- * length meets or exceeds the threshold are encoded as
+ * When `threshold` is provided (and not `false`), bodies whose byte length
+ * meets or exceeds the threshold are encoded as
  * `{ kind: 'binary', path: '', sha256 }` — a sentinel-path form used for
  * matching during replay. The empty `path` is never persisted to disk.
  */
@@ -63,6 +63,20 @@ export function encodeBody(
   threshold?: number | false,
 ): BodyPayload {
   if (bytes.length === 0) return { kind: "empty" };
+
+  if (
+    threshold !== undefined &&
+    threshold !== false &&
+    bytes.length >= threshold
+  ) {
+    const body: BodyPayload = {
+      kind: "binary",
+      path: "",
+      sha256: sha256Hex(bytes),
+    };
+    if (contentType) body.contentType = contentType;
+    return body;
+  }
 
   const ct = (contentType ?? "").toLowerCase();
 
@@ -86,21 +100,6 @@ export function encodeBody(
 
   if (isTextContentType(ct)) {
     return { kind: "text", value: decodeBytesAsText(bytes, contentType ?? "") };
-  }
-
-  // Binary — check threshold before falling back to inline base64.
-  if (
-    threshold !== undefined &&
-    threshold !== false &&
-    bytes.length >= threshold
-  ) {
-    const body: BodyPayload = {
-      kind: "binary",
-      path: "",
-      sha256: sha256Hex(bytes),
-    };
-    if (contentType) body.contentType = contentType;
-    return body;
   }
 
   const base64Body: BodyPayload = {
@@ -157,7 +156,7 @@ export async function decodeBody(
       if (!ctx?.store.loadBlob) {
         throw new Error(
           "Cannot decode a binary body: the store does not implement loadBlob. " +
-            "Use a store that supports external blobs (e.g. createJsonFileStore or createMemoryStore).",
+            "Use createJsonFileStore.",
         );
       }
       return ctx.store.loadBlob(ctx.name, body.path);
@@ -166,13 +165,13 @@ export async function decodeBody(
 }
 
 /** True if the content-type indicates a JSON body. */
-export function isJsonContentType(ct: string): boolean {
+function isJsonContentType(ct: string): boolean {
   const lower = ct.toLowerCase();
   return lower.startsWith("application/json") || /\+json(\s|;|$)/.test(lower);
 }
 
 /** True if the content-type indicates a text-encodable body. */
-export function isTextContentType(ct: string): boolean {
+function isTextContentType(ct: string): boolean {
   const lower = ct.toLowerCase();
   if (lower.startsWith("text/")) return true;
   if (lower.startsWith("application/xml")) return true;
@@ -190,7 +189,7 @@ export function isTextContentType(ct: string): boolean {
  * Events are separated by blank lines (`\n\n`). Each returned chunk is one
  * event without its terminating blank line.
  */
-export function splitSseChunks(text: string): string[] {
+function splitSseChunks(text: string): string[] {
   // Normalize CRLF separators to LF for splitting; SSE spec allows both.
   const normalized = text.replace(/\r\n/g, "\n");
   const parts = normalized.split("\n\n");
@@ -200,7 +199,7 @@ export function splitSseChunks(text: string): string[] {
 }
 
 /** Join SSE chunks back into a single byte stream, with a terminator after each. */
-export function joinSseChunks(chunks: string[]): string {
+function joinSseChunks(chunks: string[]): string {
   return chunks.map((c) => `${c}\n\n`).join("");
 }
 

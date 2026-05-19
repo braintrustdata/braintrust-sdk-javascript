@@ -4,7 +4,6 @@ import {
   readInstalledPackageVersion,
   resolveScenarioDir,
 } from "../../helpers/scenario-harness";
-import { cassetteTagsForAll } from "../../helpers/tags";
 import { defineGenkitInstrumentationAssertions } from "./assertions";
 import { GENKIT_SCENARIO_TIMEOUT_MS } from "./scenario.impl.mjs";
 
@@ -17,12 +16,8 @@ const genkitVersion = await readInstalledPackageVersion(scenarioDir, "genkit");
 const snapshotName = `genkit-v${genkitVersion.replace(/\./g, "-")}`;
 const wrappedSnapshotName = `${snapshotName}-wrapped`;
 const autoSnapshotName = `${snapshotName}-auto`;
-const tags = cassetteTagsForAll(import.meta.url, [
-  wrappedSnapshotName,
-  autoSnapshotName,
-]);
 
-describe(`genkit ${genkitVersion}`, { tags }, () => {
+describe(`genkit ${genkitVersion}`, () => {
   defineGenkitInstrumentationAssertions({
     name: "wrapped instrumentation",
     runScenario: async ({ runScenarioDir }) => {
@@ -30,7 +25,6 @@ describe(`genkit ${genkitVersion}`, { tags }, () => {
         entry: "scenario.ts",
         runContext: {
           variantKey: snapshotName,
-          cassette: { variantKey: wrappedSnapshotName },
           originalScenarioDir,
         },
         scenarioDir,
@@ -51,7 +45,6 @@ describe(`genkit ${genkitVersion}`, { tags }, () => {
         nodeArgs: ["--import", "braintrust/hook.mjs"],
         runContext: {
           variantKey: snapshotName,
-          cassette: { variantKey: autoSnapshotName },
           originalScenarioDir,
         },
         scenarioDir,

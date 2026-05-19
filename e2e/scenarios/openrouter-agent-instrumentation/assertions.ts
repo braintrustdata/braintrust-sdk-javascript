@@ -1,6 +1,9 @@
 import { beforeAll, describe, expect, test } from "vitest";
 import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
-import { withScenarioHarness } from "../../helpers/scenario-harness";
+import {
+  withScenarioHarness,
+  type ScenarioRunContext,
+} from "../../helpers/scenario-harness";
 import { findChildSpans, findLatestSpan } from "../../helpers/trace-selectors";
 import { CHAT_MODEL, ROOT_NAME, SCENARIO_NAME } from "./constants.mjs";
 
@@ -11,13 +14,13 @@ type RunOpenRouterAgentScenario = (harness: {
   runNodeScenarioDir: (options: {
     entry: string;
     nodeArgs: string[];
-    runContext?: { variantKey: string };
+    runContext?: ScenarioRunContext;
     scenarioDir: string;
     timeoutMs: number;
   }) => Promise<unknown>;
   runScenarioDir: (options: {
     entry: string;
-    runContext?: { variantKey: string };
+    runContext?: ScenarioRunContext;
     scenarioDir: string;
     timeoutMs: number;
   }) => Promise<unknown>;
@@ -98,7 +101,7 @@ export function defineOpenRouterAgentTraceAssertions(options: {
         expect(operation).toBeDefined();
         expect(span).toBeDefined();
         expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
-        expect(span?.span.type).toBe("llm");
+        expect(span?.span.type).toBe("task");
         expect(span?.row.metadata).toMatchObject({
           provider: OPENROUTER_MODEL_PROVIDER,
         });

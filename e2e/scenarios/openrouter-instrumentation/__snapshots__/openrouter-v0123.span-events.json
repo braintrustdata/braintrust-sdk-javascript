@@ -282,23 +282,13 @@
       "model": "gemini-2.5-flash-lite",
       "provider": "google"
     },
-    "metric_keys": [
-      "completion_reasoning_tokens",
-      "completion_tokens",
-      "cost",
-      "cost_upstream_inference_cost",
-      "cost_upstream_inference_input_cost",
-      "cost_upstream_inference_output_cost",
-      "prompt_cached_tokens",
-      "prompt_tokens",
-      "tokens"
-    ],
+    "metric_keys": [],
     "name": "openrouter.callModel",
     "root_span_id": "<span:1>",
     "span_id": "<span:15>",
     "span_parents": [
       "<span:14>"
     ],
-    "type": "llm"
+    "type": "task"
   }
 ]

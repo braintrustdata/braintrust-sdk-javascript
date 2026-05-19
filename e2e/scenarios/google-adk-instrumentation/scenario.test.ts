@@ -4,7 +4,6 @@ import {
   readInstalledPackageVersion,
   resolveScenarioDir,
 } from "../../helpers/scenario-harness";
-import { cassetteTagsFor } from "../../helpers/tags";
 import { defineGoogleADKInstrumentationAssertions } from "./assertions";
 
 const originalScenarioDir = resolveScenarioDir(import.meta.url);
@@ -36,9 +35,7 @@ const googleADKScenarios = await Promise.all(
 );
 
 for (const scenario of googleADKScenarios) {
-  const tags = cassetteTagsFor(import.meta.url, scenario.snapshotName);
-
-  describe(`google adk sdk ${scenario.version}`, { tags }, () => {
+  describe(`google adk sdk ${scenario.version}`, () => {
     defineGoogleADKInstrumentationAssertions({
       name: "wrapped instrumentation",
       runScenario: async ({ runScenarioDir }) => {

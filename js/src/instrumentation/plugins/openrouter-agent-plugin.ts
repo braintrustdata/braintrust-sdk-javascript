@@ -39,7 +39,7 @@ export class OpenRouterAgentPlugin extends BasePlugin {
     this.unsubscribers.push(
       traceSyncStreamChannel(openRouterAgentChannels.callModel, {
         name: "openrouter.callModel",
-        type: SpanTypeAttribute.LLM,
+        type: SpanTypeAttribute.TASK,
         extractInput: (args) => {
           const request = getOpenRouterCallModelRequestArg(args);
           return {
@@ -920,10 +920,16 @@ function patchOpenRouterCallModelResult(args: {
         finalResponse,
         rounds.length + 1,
       );
+      const metrics =
+        tracedTurnCount === 0
+          ? aggregateOpenRouterCallModelMetrics(rounds, finalResponse)
+          : undefined;
       span.log({
         output: extractOpenRouterResponseOutput(finalResponse, fallbackOutput),
         ...(metadata ? { metadata } : {}),
-        metrics: aggregateOpenRouterCallModelMetrics(rounds, finalResponse),
+        // Child turn spans already carry per-response usage. Duplicating those
+        // metrics on the parent makes trace-level token/cost totals double count.
+        ...(metrics && Object.keys(metrics).length > 0 ? { metrics } : {}),
       });
       span.end();
       return;
