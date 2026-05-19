@@ -37,7 +37,11 @@ export interface CachedSpan {
   input?: unknown;
   output?: unknown;
   expected?: unknown;
+  error?: unknown;
+  scores?: Record<string, unknown>;
+  metrics?: Record<string, unknown>;
   metadata?: Record<string, unknown>;
+  tags?: string[];
   span_id: string;
   span_parents?: string[];
   span_attributes?: {

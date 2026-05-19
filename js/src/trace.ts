@@ -101,6 +101,9 @@ export interface SpanData {
   input?: unknown;
   output?: unknown;
   expected?: unknown;
+  error?: unknown;
+  scores?: Record<string, unknown>;
+  metrics?: Record<string, unknown>;
   metadata?: Record<string, unknown>;
   span_id?: string;
   span_parents?: string[];
@@ -109,6 +112,7 @@ export interface SpanData {
     name?: string;
     [key: string]: unknown;
   };
+  tags?: string[];
   [key: string]: unknown;
 }
 
@@ -173,6 +177,9 @@ export class CachedSpanFetcher {
           input: row.input,
           output: row.output,
           expected: row.expected,
+          error: row.error,
+          scores: row.scores,
+          metrics: row.metrics,
           metadata: row.metadata,
           span_id: row.span_id,
           span_parents: row.span_parents,
@@ -378,10 +385,14 @@ export class LocalTrace implements Trace {
         input: span.input,
         output: span.output,
         expected: span.expected,
+        error: span.error,
+        scores: span.scores,
+        metrics: span.metrics,
         metadata: span.metadata,
         span_id: span.span_id,
         span_parents: span.span_parents,
         span_attributes: span.span_attributes,
+        tags: span.tags,
       }));
     }
 
