@@ -29,6 +29,7 @@
  */
 
 export { openaiConfigs } from "./configs/openai";
+export { openAICodexConfigs } from "./configs/openai-codex";
 export { anthropicConfigs } from "./configs/anthropic";
 export { aiSDKConfigs } from "./configs/ai-sdk";
 export { claudeAgentSDKConfigs } from "./configs/claude-agent-sdk";
@@ -41,6 +42,8 @@ export { mistralConfigs } from "./configs/mistral";
 export { googleADKConfigs } from "./configs/google-adk";
 export { cohereConfigs } from "./configs/cohere";
 export { groqConfigs } from "./configs/groq";
+export { genkitConfigs } from "./configs/genkit";
+export { gitHubCopilotConfigs } from "./configs/github-copilot";
 
 // Re-export orchestrion configuration types
 // Note: ModuleMetadata and FunctionQuery are properties of InstrumentationConfig,

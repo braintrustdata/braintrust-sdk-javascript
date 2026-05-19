@@ -1,6 +1,5 @@
-import chalk from "chalk";
+import { stripVTControlCharacters, styleText } from "node:util";
 import { terminalLink } from "termi-link";
-import boxen from "boxen";
 import Table from "cli-table3";
 import pluralize from "pluralize";
 
@@ -9,10 +8,45 @@ import type { ReporterDef } from "../../reporters/types";
 import { EvaluatorDef, EvalResultWithSummary } from "../../framework";
 import { isEmpty } from "../../util";
 
+function visibleLength(text: string) {
+  return stripVTControlCharacters(text).length;
+}
+
+function padEndVisible(text: string, targetLength: number) {
+  return text + " ".repeat(Math.max(0, targetLength - visibleLength(text)));
+}
+
+function formatSummaryBox(content: string) {
+  const title = styleText("gray", " Experiment summary ");
+  const lines = content.split("\n");
+  const contentWidth = Math.max(
+    visibleLength(title),
+    ...lines.map((line) => visibleLength(line) + 2),
+  );
+
+  const horizontal = "─";
+  const top =
+    styleText("gray", "╭") +
+    title +
+    styleText(
+      "gray",
+      horizontal.repeat(contentWidth - visibleLength(title)) + "╮",
+    );
+  const body = lines
+    .map(
+      (line) =>
+        `${styleText("gray", "│")} ${padEndVisible(line, contentWidth - 2)} ${styleText("gray", "│")}`,
+    )
+    .join("\n");
+  const bottom = styleText("gray", "╰" + horizontal.repeat(contentWidth) + "╯");
+
+  return top + "\n" + body + "\n" + bottom;
+}
+
 function formatExperimentSummaryFancy(summary: ExperimentSummary) {
   let comparisonLine = "";
   if (summary.comparisonExperimentName) {
-    comparisonLine = `${summary.comparisonExperimentName} ${chalk.gray("(baseline)")} ← ${summary.experimentName} ${chalk.gray("(comparison)")}\n\n`;
+    comparisonLine = `${summary.comparisonExperimentName} ${styleText("gray", "(baseline)")} ← ${summary.experimentName} ${styleText("gray", "(comparison)")}\n\n`;
   }
 
   const tableParts: string[] = [];
@@ -22,13 +56,13 @@ function formatExperimentSummaryFancy(summary: ExperimentSummary) {
   const hasComparison = !!summary.comparisonExperimentName;
 
   if (hasScores || hasMetrics) {
-    const headers = [chalk.gray("Name"), chalk.gray("Value")];
+    const headers = [styleText("gray", "Name"), styleText("gray", "Value")];
 
     if (hasComparison) {
       headers.push(
-        chalk.gray("Change"),
-        chalk.gray("Improvements"),
-        chalk.gray("Regressions"),
+        styleText("gray", "Change"),
+        styleText("gray", "Improvements"),
+        styleText("gray", "Regressions"),
       );
     }
 
@@ -62,28 +96,28 @@ function formatExperimentSummaryFancy(summary: ExperimentSummary) {
     const scoreValues: ScoreSummary[] = Object.values(summary.scores);
     for (const score of scoreValues) {
       const scorePercent = (score.score * 100).toFixed(2);
-      const scoreValue = chalk.white(`${scorePercent}%`);
+      const scoreValue = styleText("white", `${scorePercent}%`);
 
       let diffString = "";
       if (!isEmpty(score.diff)) {
         const diffPercent = (score.diff! * 100).toFixed(2);
         const diffSign = score.diff! > 0 ? "+" : "";
-        const diffColor = score.diff! > 0 ? chalk.green : chalk.red;
-        diffString = diffColor(`${diffSign}${diffPercent}%`);
+        const diffColor = score.diff! > 0 ? "green" : "red";
+        diffString = styleText(diffColor, `${diffSign}${diffPercent}%`);
       } else {
-        diffString = chalk.gray("-");
+        diffString = styleText("gray", "-");
       }
 
       const improvements =
         score.improvements > 0
-          ? chalk.dim.green(score.improvements)
-          : chalk.gray("-");
+          ? styleText(["dim", "green"], String(score.improvements))
+          : styleText("gray", "-");
       const regressions =
         score.regressions > 0
-          ? chalk.dim.red(score.regressions)
-          : chalk.gray("-");
+          ? styleText(["dim", "red"], String(score.regressions))
+          : styleText("gray", "-");
 
-      const row = [`${chalk.blue("◯")} ${score.name}`, scoreValue];
+      const row = [`${styleText("blue", "◯")} ${score.name}`, scoreValue];
       if (hasComparison) {
         row.push(diffString, improvements, regressions);
       }
@@ -94,7 +128,8 @@ function formatExperimentSummaryFancy(summary: ExperimentSummary) {
     for (const metric of metricValues) {
       const fractionDigits = Number.isInteger(metric.metric) ? 0 : 2;
       const formattedValue = metric.metric.toFixed(fractionDigits);
-      const metricValue = chalk.white(
+      const metricValue = styleText(
+        "white",
         metric.unit === "$"
           ? `${metric.unit}${formattedValue}`
           : `${formattedValue}${metric.unit}`,
@@ -104,22 +139,22 @@ function formatExperimentSummaryFancy(summary: ExperimentSummary) {
       if (!isEmpty(metric.diff)) {
         const diffPercent = (metric.diff! * 100).toFixed(2);
         const diffSign = metric.diff! > 0 ? "+" : "";
-        const diffColor = metric.diff! > 0 ? chalk.green : chalk.red;
-        diffString = diffColor(`${diffSign}${diffPercent}%`);
+        const diffColor = metric.diff! > 0 ? "green" : "red";
+        diffString = styleText(diffColor, `${diffSign}${diffPercent}%`);
       } else {
-        diffString = chalk.gray("-");
+        diffString = styleText("gray", "-");
       }
 
       const improvements =
         metric.improvements > 0
-          ? chalk.dim.green(metric.improvements)
-          : chalk.gray("-");
+          ? styleText(["dim", "green"], String(metric.improvements))
+          : styleText("gray", "-");
       const regressions =
         metric.regressions > 0
-          ? chalk.dim.red(metric.regressions)
-          : chalk.gray("-");
+          ? styleText(["dim", "red"], String(metric.regressions))
+          : styleText("gray", "-");
 
-      const row = [`${chalk.magenta("◯")} ${metric.name}`, metricValue];
+      const row = [`${styleText("magenta", "◯")} ${metric.name}`, metricValue];
       if (hasComparison) {
         row.push(diffString, improvements, regressions);
       }
@@ -141,23 +176,10 @@ function formatExperimentSummaryFancy(summary: ExperimentSummary) {
 
   const boxContent = [content, footer].filter(Boolean).join("\n\n");
 
-  try {
-    return (
-      "\n" +
-      boxen(boxContent, {
-        title: chalk.gray("Experiment summary"),
-        titleAlignment: "left",
-        padding: 0.5,
-        borderColor: "gray",
-        borderStyle: "round",
-      })
-    );
-  } catch {
-    return "\n" + chalk.gray("Experiment summary") + "\n" + boxContent + "\n";
-  }
+  return "\n" + formatSummaryBox(boxContent);
 }
 
-export const warning = chalk.yellow;
+export const warning = (text: string) => styleText("yellow", text);
 
 export const fancyReporter: ReporterDef<boolean> = {
   name: "Braintrust fancy reporter",

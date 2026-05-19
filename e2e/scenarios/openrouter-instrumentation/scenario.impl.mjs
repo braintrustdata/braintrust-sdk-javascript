@@ -6,9 +6,11 @@ import {
   runTracedScenario,
 } from "../../helpers/provider-runtime.mjs";
 import {
+  CALL_MODEL,
   CHAT_MODEL,
   EMBEDDING_MODEL,
   RERANK_MODEL,
+  REASONING_MODEL,
   ROOT_NAME,
   SCENARIO_NAME,
 } from "./constants.mjs";
@@ -50,8 +52,10 @@ async function runOpenRouterInstrumentationScenario(
   OpenRouter,
   { decorateClient, supportsRerank = true } = {},
 ) {
+  const openRouterBaseUrl = process.env.OPENROUTER_BASE_URL;
   const baseClient = new OpenRouter({
     apiKey: process.env.OPENROUTER_API_KEY,
+    ...(openRouterBaseUrl ? { serverURL: openRouterBaseUrl } : {}),
   });
   const client = decorateClient ? decorateClient(baseClient) : baseClient;
 
@@ -79,6 +83,36 @@ async function runOpenRouterInstrumentationScenario(
                 { role: "user", content: "Reply with exactly STREAM." },
               ],
               maxTokens: 24,
+              stream: true,
+              streamOptions: {
+                includeUsage: true,
+              },
+              temperature: 0,
+            }),
+          );
+          await collectAsync(stream);
+        },
+      );
+
+      await runOperation(
+        "openrouter-chat-reasoning-stream-operation",
+        "chat-reasoning-stream",
+        async () => {
+          const stream = await client.chat.send(
+            withCompatibleChatRequest({
+              model: REASONING_MODEL,
+              messages: [
+                {
+                  role: "user",
+                  content:
+                    "Think briefly, then answer with exactly the number 4.",
+                },
+              ],
+              maxTokens: 256,
+              reasoning: {
+                enabled: true,
+                exclude: false,
+              },
               stream: true,
               streamOptions: {
                 includeUsage: true,
@@ -166,7 +200,7 @@ async function runOpenRouterInstrumentationScenario(
               "Use the lookup_weather tool for Vienna exactly once, then answer with only the forecast.",
             maxOutputTokens: 24,
             maxToolCalls: 1,
-            model: CHAT_MODEL,
+            model: CALL_MODEL,
             temperature: 0,
             toolChoice: "required",
             tools: [createWeatherTool()],

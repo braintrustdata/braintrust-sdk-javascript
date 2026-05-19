@@ -7,8 +7,9 @@ import {
 import { defineGroqInstrumentationAssertions } from "./assertions";
 import { GROQ_SCENARIO_TIMEOUT_MS } from "./scenario.impl.mjs";
 
+const originalScenarioDir = resolveScenarioDir(import.meta.url);
 const scenarioDir = await prepareScenarioDir({
-  scenarioDir: resolveScenarioDir(import.meta.url),
+  scenarioDir: originalScenarioDir,
 });
 const groqSdkVersion = await readInstalledPackageVersion(
   scenarioDir,
@@ -21,7 +22,10 @@ describe(`groq sdk ${groqSdkVersion}`, () => {
     runScenario: async ({ runScenarioDir }) => {
       await runScenarioDir({
         entry: "scenario.ts",
-        runContext: { variantKey: "groq-v1-wrapped" },
+        runContext: {
+          variantKey: "groq-v1-wrapped",
+          originalScenarioDir,
+        },
         scenarioDir,
         timeoutMs: GROQ_SCENARIO_TIMEOUT_MS,
       });
@@ -37,7 +41,10 @@ describe(`groq sdk ${groqSdkVersion}`, () => {
       await runNodeScenarioDir({
         entry: "scenario.mjs",
         nodeArgs: ["--import", "braintrust/hook.mjs"],
-        runContext: { variantKey: "groq-v1-auto" },
+        runContext: {
+          variantKey: "groq-v1-auto",
+          originalScenarioDir,
+        },
         scenarioDir,
         timeoutMs: GROQ_SCENARIO_TIMEOUT_MS,
       });

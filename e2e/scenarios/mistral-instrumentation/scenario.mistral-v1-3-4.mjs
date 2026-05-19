@@ -4,6 +4,8 @@ import { runAutoMistralInstrumentation } from "./scenario.impl.mjs";
 
 runMain(async () =>
   runAutoMistralInstrumentation(Mistral, {
+    supportsClassifiers: false,
+    supportsClassify: false,
     supportsThinkingStream: false,
   }),
 );

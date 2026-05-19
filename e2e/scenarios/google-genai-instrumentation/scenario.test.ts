@@ -6,8 +6,9 @@ import {
 } from "../../helpers/scenario-harness";
 import { defineGoogleGenAIInstrumentationAssertions } from "./assertions";
 
+const originalScenarioDir = resolveScenarioDir(import.meta.url);
 const scenarioDir = await prepareScenarioDir({
-  scenarioDir: resolveScenarioDir(import.meta.url),
+  scenarioDir: originalScenarioDir,
 });
 const TIMEOUT_MS = 90_000;
 const googleGenAIScenarios = await Promise.all(
@@ -52,7 +53,10 @@ for (const scenario of googleGenAIScenarios) {
       runScenario: async ({ runScenarioDir }) => {
         await runScenarioDir({
           entry: scenario.wrapperEntry,
-          runContext: { variantKey: scenario.snapshotName },
+          runContext: {
+            variantKey: scenario.snapshotName,
+            originalScenarioDir,
+          },
           scenarioDir,
           timeoutMs: TIMEOUT_MS,
         });
@@ -68,7 +72,10 @@ for (const scenario of googleGenAIScenarios) {
         await runNodeScenarioDir({
           entry: scenario.autoEntry,
           nodeArgs: ["--import", "braintrust/hook.mjs"],
-          runContext: { variantKey: scenario.snapshotName },
+          runContext: {
+            variantKey: scenario.snapshotName,
+            originalScenarioDir,
+          },
           scenarioDir,
           timeoutMs: TIMEOUT_MS,
         });

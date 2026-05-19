@@ -15,6 +15,7 @@
 
 import { register } from "node:module";
 import { openaiConfigs } from "./configs/openai.js";
+import { openAICodexConfigs } from "./configs/openai-codex.js";
 import { anthropicConfigs } from "./configs/anthropic.js";
 import { aiSDKConfigs } from "./configs/ai-sdk.js";
 import { claudeAgentSDKConfigs } from "./configs/claude-agent-sdk.js";
@@ -27,6 +28,8 @@ import { mistralConfigs } from "./configs/mistral.js";
 import { googleADKConfigs } from "./configs/google-adk.js";
 import { cohereConfigs } from "./configs/cohere.js";
 import { groqConfigs } from "./configs/groq.js";
+import { genkitConfigs } from "./configs/genkit.js";
+import { gitHubCopilotConfigs } from "./configs/github-copilot.js";
 import { ModulePatch } from "./loader/cjs-patch.js";
 import { patchTracingChannel } from "./patch-tracing-channel.js";
 
@@ -62,6 +65,15 @@ const disabledIntegrations = readDisabledIntegrations();
 // transformation and runtime plugins stay aligned.
 const allConfigs = [
   ...(isDisabled(disabledIntegrations, "openai") ? [] : openaiConfigs),
+  ...(isDisabled(
+    disabledIntegrations,
+    "openai-codex",
+    "openai-codex-sdk",
+    "codex",
+    "codex-sdk",
+  )
+    ? []
+    : openAICodexConfigs),
   ...(isDisabled(disabledIntegrations, "anthropic") ? [] : anthropicConfigs),
   ...(isDisabled(disabledIntegrations, "aisdk", "ai-sdk", "vercel-ai")
     ? []
@@ -88,6 +100,17 @@ const allConfigs = [
     : googleADKConfigs),
   ...(isDisabled(disabledIntegrations, "cohere") ? [] : cohereConfigs),
   ...(isDisabled(disabledIntegrations, "groq", "groq-sdk") ? [] : groqConfigs),
+  ...(isDisabled(disabledIntegrations, "genkit", "firebase-genkit")
+    ? []
+    : genkitConfigs),
+  ...(isDisabled(
+    disabledIntegrations,
+    "githubcopilot",
+    "github-copilot",
+    "copilot-sdk",
+  )
+    ? []
+    : gitHubCopilotConfigs),
 ];
 
 // 1. Register ESM loader for ESM modules

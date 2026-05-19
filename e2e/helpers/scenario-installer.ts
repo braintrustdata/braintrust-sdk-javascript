@@ -1,5 +1,6 @@
 import { promises as fs } from "node:fs";
 import { spawn } from "node:child_process";
+import { createHash } from "node:crypto";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -17,14 +18,18 @@ export interface InstallScenarioDependenciesOptions {
 
 const PNPM_COMMAND = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
 const TEMP_DIR_NAME = ".bt-tmp";
+const DEPENDENCY_CACHE_DIR_NAME = "scenario-deps";
 const CANARY_MODE_ENV = "BRAINTRUST_E2E_MODE";
 const INSTALL_SECRET_ENV_VARS = [
   "ANTHROPIC_API_KEY",
   "BRAINTRUST_API_KEY",
+  "CO_API_KEY",
   "COHERE_API_KEY",
   "CURSOR_API_KEY",
   "GEMINI_API_KEY",
   "GITHUB_TOKEN",
+  "GOOGLE_API_KEY",
+  "GOOGLE_GENAI_API_KEY",
   "GH_TOKEN",
   "GROQ_API_KEY",
   "HUGGINGFACE_API_KEY",
@@ -35,6 +40,12 @@ const INSTALL_SECRET_ENV_VARS = [
 
 const cleanupDirs = new Set<string>();
 let cleanupRegistered = false;
+const dependencyCacheInstalls = new Map<
+  string,
+  Promise<CachedScenarioDependenciesResult>
+>();
+// Canary mode can resolve "latest"; keep that cache scoped to this test process.
+const processCacheId = `${process.pid}-${Date.now()}`;
 
 type CanaryDependencyRule = {
   packageName: string;
@@ -52,6 +63,15 @@ interface ScenarioManifest {
   };
   dependencies?: Record<string, string>;
 }
+
+type ScenarioInstallInputs = {
+  lockfileRaw: string;
+  manifestRaw: string;
+};
+
+type CachedScenarioDependenciesResult =
+  | { status: "no-manifest" }
+  | { nodeModulesDir: string; status: "installed" };
 
 async function fileExists(filePath: string): Promise<boolean> {
   try {
@@ -259,14 +279,12 @@ function findWorkspaceSpecs(
   });
 }
 
-export async function installScenarioDependencies({
-  mode = getScenarioDependencyMode(),
-  preferOffline = true,
-  scenarioDir,
-}: InstallScenarioDependenciesOptions): Promise<InstallScenarioDependenciesResult> {
+async function readScenarioInstallInputs(
+  scenarioDir: string,
+): Promise<ScenarioInstallInputs | null> {
   const manifestPath = path.join(scenarioDir, "package.json");
   if (!(await fileExists(manifestPath))) {
-    return { status: "no-manifest" };
+    return null;
   }
   const lockfilePath = path.join(scenarioDir, "pnpm-lock.yaml");
   if (!(await fileExists(lockfilePath))) {
@@ -287,6 +305,163 @@ export async function installScenarioDependencies({
     );
   }
 
+  return {
+    lockfileRaw: await fs.readFile(lockfilePath, "utf8"),
+    manifestRaw,
+  };
+}
+
+function scenarioDependencyCacheKey(
+  scenarioDir: string,
+  mode: ScenarioDependencyMode,
+  inputs: ScenarioInstallInputs,
+): string {
+  const hash = createHash("sha256");
+  hash.update(path.resolve(scenarioDir));
+  hash.update("\0");
+  hash.update(mode === "canary" ? `${mode}:${processCacheId}` : mode);
+  hash.update("\0");
+  hash.update(process.platform);
+  hash.update("\0");
+  hash.update(process.arch);
+  hash.update("\0");
+  hash.update(process.versions.modules);
+  hash.update("\0");
+  hash.update(inputs.manifestRaw);
+  hash.update("\0");
+  hash.update(inputs.lockfileRaw);
+
+  return `${scenarioNameForPath(scenarioDir)}-${mode}-${hash.digest("hex").slice(0, 16)}`;
+}
+
+async function installCachedScenarioDependencies({
+  mode = getScenarioDependencyMode(),
+  preferOffline = true,
+  scenarioDir,
+}: InstallScenarioDependenciesOptions): Promise<CachedScenarioDependenciesResult> {
+  const inputs = await readScenarioInstallInputs(scenarioDir);
+  if (!inputs) {
+    return { status: "no-manifest" };
+  }
+
+  const cacheKey = scenarioDependencyCacheKey(scenarioDir, mode, inputs);
+  const cachedInstall = dependencyCacheInstalls.get(cacheKey);
+  if (cachedInstall) {
+    return await cachedInstall;
+  }
+
+  const installPromise = (async () => {
+    const dependencyCacheRoot = path.join(
+      E2E_ROOT,
+      TEMP_DIR_NAME,
+      DEPENDENCY_CACHE_DIR_NAME,
+    );
+    const cacheDir = path.join(dependencyCacheRoot, cacheKey);
+    const nodeModulesDir = path.join(cacheDir, "node_modules");
+    if (await fileExists(nodeModulesDir)) {
+      return { nodeModulesDir, status: "installed" as const };
+    }
+
+    await fs.mkdir(dependencyCacheRoot, { recursive: true });
+    const stagingDir = await fs.mkdtemp(
+      path.join(dependencyCacheRoot, `${cacheKey}-`),
+    );
+    cleanupDirs.add(stagingDir);
+    registerCleanupHandlers();
+
+    await fs.writeFile(
+      path.join(stagingDir, "package.json"),
+      inputs.manifestRaw,
+    );
+    await fs.writeFile(
+      path.join(stagingDir, "pnpm-lock.yaml"),
+      inputs.lockfileRaw,
+    );
+    await installScenarioDependencies({
+      mode,
+      preferOffline,
+      scenarioDir: stagingDir,
+    });
+
+    try {
+      await fs.rename(stagingDir, cacheDir);
+    } catch (err) {
+      const code = (err as NodeJS.ErrnoException).code;
+      if (code !== "EEXIST" && code !== "ENOTEMPTY") {
+        throw err;
+      }
+      await fs.rm(stagingDir, { force: true, recursive: true });
+      if (!(await fileExists(nodeModulesDir))) {
+        throw err;
+      }
+    }
+
+    if (mode === "canary") {
+      cleanupDirs.add(cacheDir);
+      registerCleanupHandlers();
+    }
+
+    return { nodeModulesDir, status: "installed" as const };
+  })();
+
+  dependencyCacheInstalls.set(cacheKey, installPromise);
+  try {
+    return await installPromise;
+  } catch (err) {
+    dependencyCacheInstalls.delete(cacheKey);
+    throw err;
+  }
+}
+
+async function linkCachedScenarioDependencies(options: {
+  mode?: ScenarioDependencyMode;
+  preferOffline?: boolean;
+  preparedDir: string;
+  scenarioDir: string;
+}): Promise<void> {
+  const result = await installCachedScenarioDependencies({
+    mode: options.mode,
+    preferOffline: options.preferOffline,
+    scenarioDir: options.scenarioDir,
+  });
+  if (result.status === "no-manifest") {
+    return;
+  }
+
+  const nodeModulesPath = path.join(options.preparedDir, "node_modules");
+  await fs.rm(nodeModulesPath, { force: true, recursive: true });
+  await fs.mkdir(nodeModulesPath, { recursive: true });
+
+  const entries = await fs.readdir(result.nodeModulesDir, {
+    withFileTypes: true,
+  });
+  await Promise.all(
+    entries.map(async (entry) => {
+      const sourcePath = path.join(result.nodeModulesDir, entry.name);
+      const sourceStat = await fs.stat(sourcePath);
+      await fs.symlink(
+        sourcePath,
+        path.join(nodeModulesPath, entry.name),
+        sourceStat.isDirectory()
+          ? process.platform === "win32"
+            ? "junction"
+            : "dir"
+          : "file",
+      );
+    }),
+  );
+}
+
+export async function installScenarioDependencies({
+  mode = getScenarioDependencyMode(),
+  preferOffline = true,
+  scenarioDir,
+}: InstallScenarioDependenciesOptions): Promise<InstallScenarioDependenciesResult> {
+  const inputs = await readScenarioInstallInputs(scenarioDir);
+  if (!inputs) {
+    return { status: "no-manifest" };
+  }
+
   if (mode === "canary") {
     await rewriteManifestForCanary(scenarioDir);
   }
@@ -297,6 +472,7 @@ export async function installScenarioDependencies({
     scenarioDir,
     "--ignore-workspace",
     "--frozen-lockfile",
+    "--ignore-scripts=false",
     "--strict-peer-dependencies=false",
   ];
   if (preferOffline) {
@@ -316,6 +492,7 @@ export function isCanaryMode(): boolean {
 }
 
 export async function prepareScenarioDir(options: {
+  linkDependencies?: boolean;
   mode?: ScenarioDependencyMode;
   preferOffline?: boolean;
   scenarioDir: string;
@@ -351,11 +528,20 @@ export async function prepareScenarioDir(options: {
   cleanupDirs.add(runRoot);
   registerCleanupHandlers();
 
-  await installScenarioDependencies({
-    mode: options.mode,
-    preferOffline: options.preferOffline,
-    scenarioDir: preparedDir,
-  });
+  if (options.linkDependencies === false) {
+    await installScenarioDependencies({
+      mode: options.mode,
+      preferOffline: options.preferOffline,
+      scenarioDir: preparedDir,
+    });
+  } else {
+    await linkCachedScenarioDependencies({
+      mode: options.mode,
+      preparedDir,
+      preferOffline: options.preferOffline,
+      scenarioDir: options.scenarioDir,
+    });
+  }
 
   return preparedDir;
 }

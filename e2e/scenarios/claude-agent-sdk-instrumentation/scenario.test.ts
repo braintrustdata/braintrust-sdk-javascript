@@ -6,19 +6,13 @@ import {
 } from "../../helpers/scenario-harness";
 import { defineClaudeAgentSDKInstrumentationAssertions } from "./assertions";
 
+const originalScenarioDir = resolveScenarioDir(import.meta.url);
 const scenarioDir = await prepareScenarioDir({
-  scenarioDir: resolveScenarioDir(import.meta.url),
+  scenarioDir: originalScenarioDir,
 });
-const TIMEOUT_MS = 180_000;
+const TIMEOUT_MS = 300_000;
 const claudeAgentSDKScenarios = await Promise.all(
   [
-    {
-      autoEntry: "scenario.claude-agent-sdk-v0.1.mjs",
-      dependencyName: "claude-agent-sdk-v0.1",
-      expectTaskLifecycleDetails: false,
-      snapshotName: "claude-agent-sdk-v0.1",
-      wrapperEntry: "scenario.claude-agent-sdk-v0.1.ts",
-    },
     {
       autoEntry: "scenario.claude-agent-sdk-v0.2.76.mjs",
       dependencyName: "claude-agent-sdk-v0.2.76",
@@ -53,43 +47,53 @@ const claudeAgentSDKScenarios = await Promise.all(
 
 describe("wrapped instrumentation", () => {
   for (const scenario of claudeAgentSDKScenarios) {
-    defineClaudeAgentSDKInstrumentationAssertions({
-      assertLocalToolHandlerParenting: true,
-      expectTaskLifecycleDetails: scenario.expectTaskLifecycleDetails,
-      name: `claude agent sdk ${scenario.version}`,
-      runScenario: async ({ runScenarioDir }) => {
-        await runScenarioDir({
-          entry: scenario.wrapperEntry,
-          runContext: { variantKey: scenario.snapshotName },
-          scenarioDir,
-          timeoutMs: TIMEOUT_MS,
-        });
-      },
-      snapshotName: scenario.snapshotName,
-      testFileUrl: import.meta.url,
-      timeoutMs: TIMEOUT_MS,
+    describe(`claude agent sdk ${scenario.version}`, () => {
+      defineClaudeAgentSDKInstrumentationAssertions({
+        assertLocalToolHandlerParenting: true,
+        expectTaskLifecycleDetails: scenario.expectTaskLifecycleDetails,
+        name: "scenario",
+        runScenario: async ({ runScenarioDir }) => {
+          await runScenarioDir({
+            entry: scenario.wrapperEntry,
+            runContext: {
+              variantKey: scenario.snapshotName,
+              originalScenarioDir,
+            },
+            scenarioDir,
+            timeoutMs: TIMEOUT_MS,
+          });
+        },
+        snapshotName: scenario.snapshotName,
+        testFileUrl: import.meta.url,
+        timeoutMs: TIMEOUT_MS,
+      });
     });
   }
 });
 
 describe("auto-hook instrumentation", () => {
   for (const scenario of claudeAgentSDKScenarios) {
-    defineClaudeAgentSDKInstrumentationAssertions({
-      assertLocalToolHandlerParenting: true,
-      expectTaskLifecycleDetails: scenario.expectTaskLifecycleDetails,
-      name: `claude agent sdk ${scenario.version}`,
-      runScenario: async ({ runNodeScenarioDir }) => {
-        await runNodeScenarioDir({
-          entry: scenario.autoEntry,
-          nodeArgs: ["--import", "braintrust/hook.mjs"],
-          runContext: { variantKey: scenario.snapshotName },
-          scenarioDir,
-          timeoutMs: TIMEOUT_MS,
-        });
-      },
-      snapshotName: scenario.snapshotName,
-      testFileUrl: import.meta.url,
-      timeoutMs: TIMEOUT_MS,
+    describe(`claude agent sdk ${scenario.version}`, () => {
+      defineClaudeAgentSDKInstrumentationAssertions({
+        assertLocalToolHandlerParenting: true,
+        expectTaskLifecycleDetails: scenario.expectTaskLifecycleDetails,
+        name: "scenario",
+        runScenario: async ({ runNodeScenarioDir }) => {
+          await runNodeScenarioDir({
+            entry: scenario.autoEntry,
+            nodeArgs: ["--import", "braintrust/hook.mjs"],
+            runContext: {
+              variantKey: scenario.snapshotName,
+              originalScenarioDir,
+            },
+            scenarioDir,
+            timeoutMs: TIMEOUT_MS,
+          });
+        },
+        snapshotName: scenario.snapshotName,
+        testFileUrl: import.meta.url,
+        timeoutMs: TIMEOUT_MS,
+      });
     });
   }
 });

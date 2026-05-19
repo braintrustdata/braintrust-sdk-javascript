@@ -10,8 +10,9 @@ import {
   AI_SDK_SCENARIO_TIMEOUT_MS,
 } from "./scenario.impl.mjs";
 
+const originalScenarioDir = resolveScenarioDir(import.meta.url);
 const scenarioDir = await prepareScenarioDir({
-  scenarioDir: resolveScenarioDir(import.meta.url),
+  scenarioDir: originalScenarioDir,
 });
 const aiSDKScenarios = await Promise.all(
   AI_SDK_SCENARIO_SPECS.map(async (scenario) => ({
@@ -41,7 +42,10 @@ for (const scenario of aiSDKScenarios) {
       runScenario: async ({ runScenarioDir }) => {
         await runScenarioDir({
           entry: scenario.wrapperEntry,
-          runContext: { variantKey: scenario.snapshotName },
+          runContext: {
+            variantKey: scenario.snapshotName,
+            originalScenarioDir,
+          },
           scenarioDir,
           timeoutMs: AI_SDK_SCENARIO_TIMEOUT_MS,
         });
@@ -50,6 +54,7 @@ for (const scenario of aiSDKScenarios) {
       supportsAttachmentScenario,
       supportsProviderCacheAssertions: scenario.supportsProviderCacheAssertions,
       supportsDenyOutputOverrideScenario: supportsRichInputScenarios,
+      supportsEmbedMany: scenario.supportsEmbedMany !== false,
       supportsGenerateObject: scenario.supportsGenerateObject,
       supportsOutputObjectScenario,
       supportsRerank: scenario.supportsRerank !== false,
@@ -67,7 +72,10 @@ for (const scenario of aiSDKScenarios) {
         await runNodeScenarioDir({
           entry: scenario.autoEntry,
           nodeArgs: ["--import", "braintrust/hook.mjs"],
-          runContext: { variantKey: scenario.snapshotName },
+          runContext: {
+            variantKey: scenario.snapshotName,
+            originalScenarioDir,
+          },
           scenarioDir,
           timeoutMs: AI_SDK_SCENARIO_TIMEOUT_MS,
         });
@@ -76,6 +84,7 @@ for (const scenario of aiSDKScenarios) {
       supportsAttachmentScenario,
       supportsProviderCacheAssertions: scenario.supportsProviderCacheAssertions,
       supportsDenyOutputOverrideScenario: supportsRichInputScenarios,
+      supportsEmbedMany: scenario.supportsEmbedMany !== false,
       supportsGenerateObject: scenario.supportsGenerateObject,
       supportsOutputObjectScenario,
       supportsRerank: scenario.supportsRerank !== false,

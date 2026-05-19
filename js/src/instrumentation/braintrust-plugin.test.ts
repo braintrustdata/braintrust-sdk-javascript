@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { BraintrustPlugin } from "./braintrust-plugin";
 import { OpenAIPlugin } from "./plugins/openai-plugin";
+import { OpenAICodexPlugin } from "./plugins/openai-codex-plugin";
 import { AnthropicPlugin } from "./plugins/anthropic-plugin";
 import { AISDKPlugin } from "./plugins/ai-sdk-plugin";
 import { ClaudeAgentSDKPlugin } from "./plugins/claude-agent-sdk-plugin";
@@ -11,6 +12,7 @@ import { OpenRouterPlugin } from "./plugins/openrouter-plugin";
 import { MistralPlugin } from "./plugins/mistral-plugin";
 import { CoherePlugin } from "./plugins/cohere-plugin";
 import { GroqPlugin } from "./plugins/groq-plugin";
+import { GitHubCopilotPlugin } from "./plugins/github-copilot-plugin";
 
 function createPluginClassMock() {
   return vi.fn(function MockPlugin(this: {
@@ -35,6 +37,10 @@ vi.mock("./plugins/openai-plugin", async () => {
 
 vi.mock("./plugins/anthropic-plugin", () => ({
   AnthropicPlugin: createPluginClassMock(),
+}));
+
+vi.mock("./plugins/openai-codex-plugin", () => ({
+  OpenAICodexPlugin: createPluginClassMock(),
 }));
 
 vi.mock("./plugins/ai-sdk-plugin", () => ({
@@ -73,6 +79,10 @@ vi.mock("./plugins/groq-plugin", () => ({
   GroqPlugin: createPluginClassMock(),
 }));
 
+vi.mock("./plugins/github-copilot-plugin", () => ({
+  GitHubCopilotPlugin: createPluginClassMock(),
+}));
+
 describe("BraintrustPlugin", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -94,6 +104,15 @@ describe("BraintrustPlugin", () => {
 
       expect(AnthropicPlugin).toHaveBeenCalledTimes(1);
       const mockInstance = vi.mocked(AnthropicPlugin).mock.results[0].value;
+      expect(mockInstance.enable).toHaveBeenCalledTimes(1);
+    });
+
+    it("should create and enable OpenAI Codex plugin by default", () => {
+      const plugin = new BraintrustPlugin();
+      plugin.enable();
+
+      expect(OpenAICodexPlugin).toHaveBeenCalledTimes(1);
+      const mockInstance = vi.mocked(OpenAICodexPlugin).mock.results[0].value;
       expect(mockInstance.enable).toHaveBeenCalledTimes(1);
     });
 
@@ -181,11 +200,21 @@ describe("BraintrustPlugin", () => {
       expect(mockInstance.enable).toHaveBeenCalledTimes(1);
     });
 
+    it("should create and enable GitHubCopilot plugin by default", () => {
+      const plugin = new BraintrustPlugin();
+      plugin.enable();
+
+      expect(GitHubCopilotPlugin).toHaveBeenCalledTimes(1);
+      const mockInstance = vi.mocked(GitHubCopilotPlugin).mock.results[0].value;
+      expect(mockInstance.enable).toHaveBeenCalledTimes(1);
+    });
+
     it("should create all plugins when enabled with no config", () => {
       const plugin = new BraintrustPlugin();
       plugin.enable();
 
       expect(OpenAIPlugin).toHaveBeenCalledTimes(1);
+      expect(OpenAICodexPlugin).toHaveBeenCalledTimes(1);
       expect(AnthropicPlugin).toHaveBeenCalledTimes(1);
       expect(AISDKPlugin).toHaveBeenCalledTimes(1);
       expect(ClaudeAgentSDKPlugin).toHaveBeenCalledTimes(1);
@@ -196,6 +225,7 @@ describe("BraintrustPlugin", () => {
       expect(MistralPlugin).toHaveBeenCalledTimes(1);
       expect(CoherePlugin).toHaveBeenCalledTimes(1);
       expect(GroqPlugin).toHaveBeenCalledTimes(1);
+      expect(GitHubCopilotPlugin).toHaveBeenCalledTimes(1);
     });
 
     it("should create all plugins when enabled with empty config", () => {
@@ -203,6 +233,7 @@ describe("BraintrustPlugin", () => {
       plugin.enable();
 
       expect(OpenAIPlugin).toHaveBeenCalledTimes(1);
+      expect(OpenAICodexPlugin).toHaveBeenCalledTimes(1);
       expect(AnthropicPlugin).toHaveBeenCalledTimes(1);
       expect(AISDKPlugin).toHaveBeenCalledTimes(1);
       expect(ClaudeAgentSDKPlugin).toHaveBeenCalledTimes(1);
@@ -213,6 +244,7 @@ describe("BraintrustPlugin", () => {
       expect(MistralPlugin).toHaveBeenCalledTimes(1);
       expect(CoherePlugin).toHaveBeenCalledTimes(1);
       expect(GroqPlugin).toHaveBeenCalledTimes(1);
+      expect(GitHubCopilotPlugin).toHaveBeenCalledTimes(1);
     });
 
     it("should create all plugins when enabled with empty integrations config", () => {
@@ -220,6 +252,7 @@ describe("BraintrustPlugin", () => {
       plugin.enable();
 
       expect(OpenAIPlugin).toHaveBeenCalledTimes(1);
+      expect(OpenAICodexPlugin).toHaveBeenCalledTimes(1);
       expect(AnthropicPlugin).toHaveBeenCalledTimes(1);
       expect(AISDKPlugin).toHaveBeenCalledTimes(1);
       expect(ClaudeAgentSDKPlugin).toHaveBeenCalledTimes(1);
@@ -260,12 +293,25 @@ describe("BraintrustPlugin", () => {
       expect(AnthropicPlugin).not.toHaveBeenCalled();
       // Other plugins should still be created
       expect(OpenAIPlugin).toHaveBeenCalledTimes(1);
+      expect(OpenAICodexPlugin).toHaveBeenCalledTimes(1);
       expect(AISDKPlugin).toHaveBeenCalledTimes(1);
       expect(ClaudeAgentSDKPlugin).toHaveBeenCalledTimes(1);
       expect(GoogleGenAIPlugin).toHaveBeenCalledTimes(1);
       expect(HuggingFacePlugin).toHaveBeenCalledTimes(1);
       expect(OpenRouterPlugin).toHaveBeenCalledTimes(1);
       expect(OpenRouterAgentPlugin).toHaveBeenCalledTimes(1);
+    });
+
+    it("should not create OpenAI Codex plugin when openaiCodexSDK: false", () => {
+      const plugin = new BraintrustPlugin({
+        integrations: { openaiCodexSDK: false },
+      });
+      plugin.enable();
+
+      expect(OpenAICodexPlugin).not.toHaveBeenCalled();
+      expect(OpenAIPlugin).toHaveBeenCalledTimes(1);
+      expect(AnthropicPlugin).toHaveBeenCalledTimes(1);
+      expect(AISDKPlugin).toHaveBeenCalledTimes(1);
     });
 
     it("should not create AI SDK plugin when aisdk: false", () => {
@@ -403,6 +449,17 @@ describe("BraintrustPlugin", () => {
       expect(MistralPlugin).toHaveBeenCalledTimes(1);
     });
 
+    it("should not create GitHubCopilot plugin when gitHubCopilot: false", () => {
+      const plugin = new BraintrustPlugin({
+        integrations: { gitHubCopilot: false },
+      });
+      plugin.enable();
+
+      expect(GitHubCopilotPlugin).not.toHaveBeenCalled();
+      expect(OpenAIPlugin).toHaveBeenCalledTimes(1);
+      expect(GroqPlugin).toHaveBeenCalledTimes(1);
+    });
+
     it("should not create OpenRouter Agent plugin when openrouterAgent: false", () => {
       const plugin = new BraintrustPlugin({
         integrations: { openrouterAgent: false },
@@ -417,6 +474,7 @@ describe("BraintrustPlugin", () => {
       const plugin = new BraintrustPlugin({
         integrations: {
           openai: false,
+          openaiCodexSDK: false,
           anthropic: false,
           aisdk: false,
           claudeAgentSDK: false,
@@ -427,11 +485,13 @@ describe("BraintrustPlugin", () => {
           mistral: false,
           cohere: false,
           groq: false,
+          gitHubCopilot: false,
         },
       });
       plugin.enable();
 
       expect(OpenAIPlugin).not.toHaveBeenCalled();
+      expect(OpenAICodexPlugin).not.toHaveBeenCalled();
       expect(AnthropicPlugin).not.toHaveBeenCalled();
       expect(AISDKPlugin).not.toHaveBeenCalled();
       expect(ClaudeAgentSDKPlugin).not.toHaveBeenCalled();
@@ -442,6 +502,7 @@ describe("BraintrustPlugin", () => {
       expect(MistralPlugin).not.toHaveBeenCalled();
       expect(CoherePlugin).not.toHaveBeenCalled();
       expect(GroqPlugin).not.toHaveBeenCalled();
+      expect(GitHubCopilotPlugin).not.toHaveBeenCalled();
     });
 
     it("should allow selective enabling of plugins", () => {
@@ -567,6 +628,8 @@ describe("BraintrustPlugin", () => {
       plugin.enable();
 
       const openaiMock = vi.mocked(OpenAIPlugin).mock.results[0].value;
+      const openAICodexMock =
+        vi.mocked(OpenAICodexPlugin).mock.results[0].value;
       const anthropicMock = vi.mocked(AnthropicPlugin).mock.results[0].value;
       const aiSDKMock = vi.mocked(AISDKPlugin).mock.results[0].value;
       const claudeAgentSDKMock =
@@ -583,6 +646,7 @@ describe("BraintrustPlugin", () => {
       const groqMock = vi.mocked(GroqPlugin).mock.results[0].value;
 
       expect(openaiMock.enable).toHaveBeenCalledTimes(1);
+      expect(openAICodexMock.enable).toHaveBeenCalledTimes(1);
       expect(anthropicMock.enable).toHaveBeenCalledTimes(1);
       expect(aiSDKMock.enable).toHaveBeenCalledTimes(1);
       expect(claudeAgentSDKMock.enable).toHaveBeenCalledTimes(1);
@@ -600,6 +664,8 @@ describe("BraintrustPlugin", () => {
       plugin.enable();
 
       const openaiMock = vi.mocked(OpenAIPlugin).mock.results[0].value;
+      const openAICodexMock =
+        vi.mocked(OpenAICodexPlugin).mock.results[0].value;
       const anthropicMock = vi.mocked(AnthropicPlugin).mock.results[0].value;
       const aiSDKMock = vi.mocked(AISDKPlugin).mock.results[0].value;
       const claudeAgentSDKMock =
@@ -618,6 +684,7 @@ describe("BraintrustPlugin", () => {
       plugin.disable();
 
       expect(openaiMock.disable).toHaveBeenCalledTimes(1);
+      expect(openAICodexMock.disable).toHaveBeenCalledTimes(1);
       expect(anthropicMock.disable).toHaveBeenCalledTimes(1);
       expect(aiSDKMock.disable).toHaveBeenCalledTimes(1);
       expect(claudeAgentSDKMock.disable).toHaveBeenCalledTimes(1);
@@ -662,6 +729,7 @@ describe("BraintrustPlugin", () => {
 
       // Should not create any plugins
       expect(OpenAIPlugin).not.toHaveBeenCalled();
+      expect(OpenAICodexPlugin).not.toHaveBeenCalled();
       expect(AnthropicPlugin).not.toHaveBeenCalled();
       expect(AISDKPlugin).not.toHaveBeenCalled();
       expect(ClaudeAgentSDKPlugin).not.toHaveBeenCalled();
@@ -684,6 +752,7 @@ describe("BraintrustPlugin", () => {
       plugin.enable();
 
       expect(OpenAIPlugin).toHaveBeenCalledTimes(1);
+      expect(OpenAICodexPlugin).toHaveBeenCalledTimes(1);
       expect(AnthropicPlugin).toHaveBeenCalledTimes(1);
       expect(AISDKPlugin).toHaveBeenCalledTimes(1);
       expect(ClaudeAgentSDKPlugin).toHaveBeenCalledTimes(1);

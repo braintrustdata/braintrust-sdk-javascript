@@ -3,38 +3,49 @@ import type { Json } from "../../helpers/normalize";
 import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
 import {
   formatJsonFileSnapshot,
+  matchFileSnapshot,
   resolveFileSnapshotPath,
 } from "../../helpers/file-snapshot";
-import { withScenarioHarness } from "../../helpers/scenario-harness";
+import {
+  withScenarioHarness,
+  type ScenarioRunContext,
+} from "../../helpers/scenario-harness";
 import { findChildSpans, findLatestSpan } from "../../helpers/trace-selectors";
 import { summarizeWrapperContract } from "../../helpers/wrapper-contract";
 
 import {
+  CALL_MODEL,
   CHAT_MODEL,
   EMBEDDING_MODEL,
   RERANK_MODEL,
+  REASONING_MODEL,
   ROOT_NAME,
   SCENARIO_NAME,
 } from "./constants.mjs";
 
+const CALL_MODEL_NAME = CALL_MODEL.split("/").at(-1) ?? CALL_MODEL;
 const CHAT_MODEL_NAME = CHAT_MODEL.split("/").at(-1) ?? CHAT_MODEL;
 const EMBEDDING_MODEL_NAME =
   EMBEDDING_MODEL.split("/").at(-1) ?? EMBEDDING_MODEL;
 const RERANK_MODEL_NAME = RERANK_MODEL.split("/").at(-1) ?? RERANK_MODEL;
+const OPENROUTER_CALL_MODEL_PROVIDER = "google";
+const REASONING_MODEL_NAME =
+  REASONING_MODEL.split("/").at(-1) ?? REASONING_MODEL;
 const OPENROUTER_MODEL_PROVIDER = "openai";
+const OPENROUTER_REASONING_PROVIDER = "deepseek";
 const OPENROUTER_RERANK_PROVIDER = "cohere";
 
 type RunOpenRouterScenario = (harness: {
   runNodeScenarioDir: (options: {
     entry: string;
     nodeArgs: string[];
-    runContext?: { variantKey: string };
+    runContext?: ScenarioRunContext;
     scenarioDir: string;
     timeoutMs: number;
   }) => Promise<unknown>;
   runScenarioDir: (options: {
     entry: string;
-    runContext?: { variantKey: string };
+    runContext?: ScenarioRunContext;
     scenarioDir: string;
     timeoutMs: number;
   }) => Promise<unknown>;
@@ -216,6 +227,37 @@ export function defineOpenRouterTraceAssertions(options: {
       },
     );
 
+    test(
+      "captures reasoning fields for a streamed reasoning chat completion",
+      testConfig,
+      () => {
+        const root = findLatestSpan(events, ROOT_NAME);
+        const operation = findLatestSpan(
+          events,
+          "openrouter-chat-reasoning-stream-operation",
+        );
+        const span = findOpenRouterSpan(events, operation?.span.id, [
+          "openrouter.chat.send",
+        ]);
+
+        expect(operation).toBeDefined();
+        expect(span).toBeDefined();
+        expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
+        expect(span?.row.metadata).toMatchObject({
+          provider: OPENROUTER_REASONING_PROVIDER,
+          reasoning: {
+            enabled: true,
+            exclude: false,
+          },
+        });
+        expect(span?.row.metadata?.model).toBe(REASONING_MODEL_NAME);
+        expect(span?.metrics?.time_to_first_token).toEqual(expect.any(Number));
+        expect(span?.metrics?.completion_reasoning_tokens).toEqual(
+          expect.any(Number),
+        );
+      },
+    );
+
     test("captures trace for client.embeddings.generate()", testConfig, () => {
       const root = findLatestSpan(events, ROOT_NAME);
       const operation = findLatestSpan(
@@ -332,21 +374,22 @@ export function defineOpenRouterTraceAssertions(options: {
         expect(operation).toBeDefined();
         expect(span).toBeDefined();
         expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
+        expect(span?.span.type).toBe("task");
         expect(span?.row.metadata).toMatchObject({
-          provider: OPENROUTER_MODEL_PROVIDER,
+          provider: OPENROUTER_CALL_MODEL_PROVIDER,
         });
-        expect(String(span?.row.metadata?.model)).toContain(CHAT_MODEL_NAME);
+        expect(String(span?.row.metadata?.model)).toContain(CALL_MODEL_NAME);
         expect(span?.output).toBeDefined();
 
         expect(nestedLlmSpans.length).toBeGreaterThanOrEqual(2);
         for (const [index, nestedLlmSpan] of nestedLlmSpans.entries()) {
           expect(nestedLlmSpan?.span.type).toBe("llm");
           expect(nestedLlmSpan?.row.metadata).toMatchObject({
-            provider: OPENROUTER_MODEL_PROVIDER,
+            provider: OPENROUTER_CALL_MODEL_PROVIDER,
             step: index + 1,
           });
           expect(String(nestedLlmSpan?.row.metadata?.model)).toContain(
-            CHAT_MODEL_NAME,
+            CALL_MODEL_NAME,
           );
           expect(nestedLlmSpan?.output).toBeDefined();
         }
@@ -367,13 +410,14 @@ export function defineOpenRouterTraceAssertions(options: {
     );
 
     test("matches the shared span snapshot", testConfig, async () => {
-      await expect(
+      await matchFileSnapshot(
         formatJsonFileSnapshot(
           buildSpanSummary(events, {
             supportsRerank: options.supportsRerank,
           }),
         ),
-      ).toMatchFileSnapshot(spanSnapshotPath);
+        spanSnapshotPath,
+      );
     });
   });
 }

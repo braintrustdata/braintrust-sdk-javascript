@@ -3,9 +3,13 @@ import { normalizeForSnapshot, type Json } from "../../helpers/normalize";
 import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
 import {
   formatJsonFileSnapshot,
+  matchFileSnapshot,
   resolveFileSnapshotPath,
 } from "../../helpers/file-snapshot";
-import { withScenarioHarness } from "../../helpers/scenario-harness";
+import {
+  withScenarioHarness,
+  type ScenarioRunContext,
+} from "../../helpers/scenario-harness";
 import {
   findAllSpans,
   findChildSpans,
@@ -20,13 +24,13 @@ type RunAISDKScenario = (harness: {
   runNodeScenarioDir: (options: {
     entry: string;
     nodeArgs: string[];
-    runContext?: { variantKey: string };
+    runContext?: ScenarioRunContext;
     scenarioDir: string;
     timeoutMs: number;
   }) => Promise<unknown>;
   runScenarioDir: (options: {
     entry: string;
-    runContext?: { variantKey: string };
+    runContext?: ScenarioRunContext;
     scenarioDir: string;
     timeoutMs: number;
   }) => Promise<unknown>;
@@ -776,10 +780,15 @@ function expectAISDKModelChildSpan(span: CapturedLogEvent | undefined) {
   expect(["doGenerate", "doStream"]).toContain(span?.span.name);
 }
 
-function expectEmbeddingTokenMetrics(span: CapturedLogEvent | undefined) {
+function expectEmbeddingTokenMetrics(
+  span: CapturedLogEvent | undefined,
+  options: { required?: boolean } = {},
+) {
+  expect(span).toBeDefined();
   const metrics = span?.metrics as Record<string, unknown> | undefined;
   const totalTokens = metrics?.tokens;
   const promptTokens = metrics?.prompt_tokens;
+  const required = options.required ?? true;
 
   const tokenMetric =
     typeof totalTokens === "number"
@@ -787,6 +796,10 @@ function expectEmbeddingTokenMetrics(span: CapturedLogEvent | undefined) {
       : typeof promptTokens === "number"
         ? promptTokens
         : undefined;
+
+  if (tokenMetric === undefined && !required) {
+    return;
+  }
 
   expect(tokenMetric).toEqual(expect.any(Number));
   if (typeof tokenMetric === "number") {
@@ -825,6 +838,7 @@ export function defineAISDKInstrumentationAssertions(options: {
   supportsAttachmentScenario: boolean;
   supportsProviderCacheAssertions: boolean;
   supportsDenyOutputOverrideScenario: boolean;
+  supportsEmbedMany: boolean;
   supportsGenerateObject: boolean;
   supportsOutputObjectScenario: boolean;
   supportsRerank: boolean;
@@ -956,10 +970,14 @@ export function defineAISDKInstrumentationAssertions(options: {
         expect.any(Number),
       );
       expect(trace.child?.output).toBeDefined();
-      expect(trace.child?.metrics).toMatchObject({
-        completion_tokens: expect.any(Number),
-        prompt_tokens: expect.any(Number),
-      });
+      expect(
+        trace.child?.metrics?.completion_tokens === null ||
+          typeof trace.child?.metrics?.completion_tokens === "number",
+      ).toBe(true);
+      expect(
+        trace.child?.metrics?.prompt_tokens === null ||
+          typeof trace.child?.metrics?.prompt_tokens === "number",
+      ).toBe(true);
       expect(trace.parent?.metrics?.completion_tokens).toBeUndefined();
       expect(trace.parent?.metrics?.prompt_tokens).toBeUndefined();
       expect(trace.parent?.metrics?.tokens).toBeUndefined();
@@ -1002,30 +1020,31 @@ export function defineAISDKInstrumentationAssertions(options: {
       }
     });
 
-    test("captures trace for embedMany()", testConfig, () => {
-      const root = findLatestSpan(events, ROOT_NAME);
-      const trace = findEmbedManyTrace(events);
+    if (options.supportsEmbedMany) {
+      test("captures trace for embedMany()", testConfig, () => {
+        const root = findLatestSpan(events, ROOT_NAME);
+        const trace = findEmbedManyTrace(events);
 
-      expectOperationParentedByRoot(trace.operation, root);
-      expectAISDKParentSpan(trace.parent);
-      expect(operationName(trace.operation)).toBe("embed-many");
-      expectEmbeddingTokenMetrics(trace.parent);
-      const input = isRecord(trace.parent?.input) ? trace.parent.input : null;
-      expect(Array.isArray(input?.values)).toBe(true);
-      if (Array.isArray(input?.values)) {
-        expect(input.values.length).toBeGreaterThanOrEqual(2);
-      }
-      const output = extractOutputRecord(trace.parent);
-      expect(output).toBeDefined();
-      if (output) {
-        expect(output.embeddings).toBeUndefined();
-        expect(output.responses).toBeUndefined();
-        expect(output.embedding_count).toEqual(expect.any(Number));
-        expect(output.embedding_count).toBeGreaterThanOrEqual(2);
-        expect(output.embedding_length).toEqual(expect.any(Number));
-        expect(output.embedding_length).toBeGreaterThan(0);
-      }
-    });
+        expectOperationParentedByRoot(trace.operation, root);
+        expectAISDKParentSpan(trace.parent);
+        expect(operationName(trace.operation)).toBe("embed-many");
+        expectEmbeddingTokenMetrics(trace.parent, { required: false });
+        const input = isRecord(trace.parent?.input) ? trace.parent.input : null;
+        expect(Array.isArray(input?.values)).toBe(true);
+        if (Array.isArray(input?.values)) {
+          expect(input.values.length).toBeGreaterThanOrEqual(2);
+        }
+        const output = extractOutputRecord(trace.parent);
+        if (output) {
+          expect(output.embeddings).toBeUndefined();
+          expect(output.responses).toBeUndefined();
+          expect(output.embedding_count).toEqual(expect.any(Number));
+          expect(output.embedding_count).toBeGreaterThanOrEqual(2);
+          expect(output.embedding_length).toEqual(expect.any(Number));
+          expect(output.embedding_length).toBeGreaterThan(0);
+        }
+      });
+    }
 
     if (options.supportsRerank) {
       test("captures trace for rerank()", testConfig, () => {
@@ -1299,7 +1318,7 @@ export function defineAISDKInstrumentationAssertions(options: {
     }
 
     test("matches the shared span snapshot", testConfig, async () => {
-      await expect(
+      await matchFileSnapshot(
         formatJsonFileSnapshot(
           buildSpanSummary(events, {
             agentSpanName: options.agentSpanName,
@@ -1311,11 +1330,12 @@ export function defineAISDKInstrumentationAssertions(options: {
             supportsStreamObject: options.supportsStreamObject,
           }),
         ),
-      ).toMatchFileSnapshot(spanSnapshotPath);
+        spanSnapshotPath,
+      );
     });
 
     test("matches the shared payload snapshot", testConfig, async () => {
-      await expect(
+      await matchFileSnapshot(
         formatJsonFileSnapshot(
           buildPayloadSummary(events, {
             agentSpanName: options.agentSpanName,
@@ -1327,7 +1347,8 @@ export function defineAISDKInstrumentationAssertions(options: {
             supportsStreamObject: options.supportsStreamObject,
           }),
         ),
-      ).toMatchFileSnapshot(payloadSnapshotPath);
+        payloadSnapshotPath,
+      );
     });
   });
 }

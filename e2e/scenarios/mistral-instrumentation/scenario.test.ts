@@ -10,8 +10,9 @@ import {
   MISTRAL_SCENARIO_TIMEOUT_MS,
 } from "./scenario.impl.mjs";
 
+const originalScenarioDir = resolveScenarioDir(import.meta.url);
 const scenarioDir = await prepareScenarioDir({
-  scenarioDir: resolveScenarioDir(import.meta.url),
+  scenarioDir: originalScenarioDir,
 });
 
 const mistralScenarios = await Promise.all(
@@ -31,7 +32,10 @@ for (const scenario of mistralScenarios) {
       runScenario: async ({ runScenarioDir }) => {
         await runScenarioDir({
           entry: scenario.wrapperEntry,
-          runContext: { variantKey: scenario.snapshotName },
+          runContext: {
+            variantKey: scenario.snapshotName,
+            originalScenarioDir,
+          },
           scenarioDir,
           timeoutMs: MISTRAL_SCENARIO_TIMEOUT_MS,
         });
@@ -39,6 +43,12 @@ for (const scenario of mistralScenarios) {
       snapshotName: scenario.snapshotName,
       ...(scenario.supportsThinkingStream === false
         ? { supportsThinkingStream: false }
+        : {}),
+      ...(scenario.supportsClassifiers === false
+        ? { supportsClassifiers: false }
+        : {}),
+      ...(scenario.supportsClassify === false
+        ? { supportsClassify: false }
         : {}),
       testFileUrl: import.meta.url,
       timeoutMs: MISTRAL_SCENARIO_TIMEOUT_MS,
@@ -50,7 +60,10 @@ for (const scenario of mistralScenarios) {
         await runNodeScenarioDir({
           entry: scenario.autoEntry,
           nodeArgs: ["--import", "braintrust/hook.mjs"],
-          runContext: { variantKey: scenario.snapshotName },
+          runContext: {
+            variantKey: scenario.snapshotName,
+            originalScenarioDir,
+          },
           scenarioDir,
           timeoutMs: MISTRAL_SCENARIO_TIMEOUT_MS,
         });
@@ -58,6 +71,12 @@ for (const scenario of mistralScenarios) {
       snapshotName: scenario.snapshotName,
       ...(scenario.supportsThinkingStream === false
         ? { supportsThinkingStream: false }
+        : {}),
+      ...(scenario.supportsClassifiers === false
+        ? { supportsClassifiers: false }
+        : {}),
+      ...(scenario.supportsClassify === false
+        ? { supportsClassify: false }
         : {}),
       testFileUrl: import.meta.url,
       timeoutMs: MISTRAL_SCENARIO_TIMEOUT_MS,

@@ -1,13 +1,15 @@
-import { describe } from "vitest";
+import { describe, it } from "vitest";
 import {
   prepareScenarioDir,
   readInstalledPackageVersion,
   resolveScenarioDir,
+  runNodeScenarioDir,
 } from "../../helpers/scenario-harness";
 import { defineOpenAIInstrumentationAssertions } from "./assertions";
 
+const originalScenarioDir = resolveScenarioDir(import.meta.url);
 const scenarioDir = await prepareScenarioDir({
-  scenarioDir: resolveScenarioDir(import.meta.url),
+  scenarioDir: originalScenarioDir,
 });
 const TIMEOUT_MS = 120_000;
 const openaiScenarios = await Promise.all(
@@ -41,6 +43,23 @@ const openaiScenarios = await Promise.all(
   })),
 );
 
+// Regression test: verify hook.mjs doesn't cause "Body already read" with real undici responses.
+// The cassette layer returns in-process Response mocks that mask this bug; this test bypasses it.
+describe("real HTTP server (undici responses)", () => {
+  it(
+    "hook.mjs does not cause 'Body already read' on non-streaming create()",
+    async () => {
+      await runNodeScenarioDir({
+        entry: "scenario.real-http.mjs",
+        nodeArgs: ["--import", "braintrust/hook.mjs"],
+        scenarioDir,
+        timeoutMs: TIMEOUT_MS,
+      });
+    },
+    TIMEOUT_MS,
+  );
+});
+
 for (const scenario of openaiScenarios) {
   const assertPrivateFieldMethodsOperation =
     !scenario.disablePrivateFieldMethodsAssertion;
@@ -52,7 +71,10 @@ for (const scenario of openaiScenarios) {
       runScenario: async ({ runScenarioDir }) => {
         await runScenarioDir({
           entry: scenario.wrapperEntry,
-          runContext: { variantKey: scenario.snapshotName },
+          runContext: {
+            variantKey: scenario.snapshotName,
+            originalScenarioDir,
+          },
           scenarioDir,
           timeoutMs: TIMEOUT_MS,
         });
@@ -69,7 +91,10 @@ for (const scenario of openaiScenarios) {
         await runNodeScenarioDir({
           entry: scenario.autoEntry,
           nodeArgs: ["--import", "braintrust/hook.mjs"],
-          runContext: { variantKey: scenario.snapshotName },
+          runContext: {
+            variantKey: scenario.snapshotName,
+            originalScenarioDir,
+          },
           scenarioDir,
           timeoutMs: TIMEOUT_MS,
         });

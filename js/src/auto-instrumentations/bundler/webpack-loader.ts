@@ -41,6 +41,8 @@ import { openRouterConfigs } from "../configs/openrouter";
 import { mistralConfigs } from "../configs/mistral";
 import { cohereConfigs } from "../configs/cohere";
 import { groqConfigs } from "../configs/groq";
+import { genkitConfigs } from "../configs/genkit";
+import { gitHubCopilotConfigs } from "../configs/github-copilot";
 import { type BundlerPluginOptions } from "./plugin";
 
 /**
@@ -80,6 +82,8 @@ function getMatcher(options: BundlerPluginOptions): InstrumentationMatcher {
     ...mistralConfigs,
     ...cohereConfigs,
     ...groqConfigs,
+    ...genkitConfigs,
+    ...gitHubCopilotConfigs,
     ...(options.instrumentations ?? []),
   ];
   const dcModule = options.browser ? "dc-browser" : undefined;

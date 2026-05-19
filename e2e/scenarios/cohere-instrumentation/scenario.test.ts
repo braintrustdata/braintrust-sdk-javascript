@@ -10,8 +10,9 @@ import {
   COHERE_SCENARIO_TIMEOUT_MS,
 } from "./scenario.impl.mjs";
 
+const originalScenarioDir = resolveScenarioDir(import.meta.url);
 const scenarioDir = await prepareScenarioDir({
-  scenarioDir: resolveScenarioDir(import.meta.url),
+  scenarioDir: originalScenarioDir,
 });
 
 const cohereScenarios = await Promise.all(
@@ -34,17 +35,23 @@ for (const scenario of cohereScenarios) {
         await runScenarioDir({
           entry: scenario.wrapperEntry,
           env: {
+            COHERE_PACKAGE_NAME: scenario.dependencyName,
             COHERE_SUPPORTS_THINKING: supportsThinking ? "1" : "0",
           },
-          runContext: { variantKey: scenario.snapshotName },
+          runContext: {
+            variantKey: scenario.snapshotName,
+            originalScenarioDir,
+          },
           scenarioDir,
           timeoutMs: COHERE_SCENARIO_TIMEOUT_MS,
         });
       },
-      snapshotName: scenario.snapshotName,
+      requireChatStreamOutput: !(scenario.useV2Namespace ?? false),
+      snapshotName: `${scenario.snapshotName}-wrapped`,
       supportsThinking,
       testFileUrl: import.meta.url,
       timeoutMs: COHERE_SCENARIO_TIMEOUT_MS,
+      useV2Namespace: scenario.useV2Namespace ?? false,
     });
 
     defineCohereInstrumentationAssertions({
@@ -53,10 +60,14 @@ for (const scenario of cohereScenarios) {
         await runNodeScenarioDir({
           entry: scenario.autoEntry,
           env: {
+            COHERE_PACKAGE_NAME: scenario.dependencyName,
             COHERE_SUPPORTS_THINKING: supportsThinking ? "1" : "0",
           },
           nodeArgs: ["--import", "braintrust/hook.mjs"],
-          runContext: { variantKey: scenario.snapshotName },
+          runContext: {
+            variantKey: scenario.snapshotName,
+            originalScenarioDir,
+          },
           scenarioDir,
           timeoutMs: COHERE_SCENARIO_TIMEOUT_MS,
         });
@@ -65,6 +76,7 @@ for (const scenario of cohereScenarios) {
       supportsThinking,
       testFileUrl: import.meta.url,
       timeoutMs: COHERE_SCENARIO_TIMEOUT_MS,
+      useV2Namespace: scenario.useV2Namespace ?? false,
     });
   });
 }

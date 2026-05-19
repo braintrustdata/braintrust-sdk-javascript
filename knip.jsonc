@@ -2,6 +2,7 @@
   "$schema": "node_modules/knip/schema-jsonc.json",
   "include": ["files", "exports"],
   "ignoreFiles": [
+    ".context/**",
     ".changeset/changelog.cjs",
     "integrations/otel-js/otel-v1/**",
     "integrations/otel-js/otel-v2/**",
@@ -11,6 +12,10 @@
     "**/generated_types.ts": ["exports", "types"],
   },
   "workspaces": {
+    "dev-packages/seinfeld": {
+      "entry": ["src/index.ts"],
+      "project": ["src/**/*.ts"],
+    },
     "e2e": {
       "entry": [
         "package.json",

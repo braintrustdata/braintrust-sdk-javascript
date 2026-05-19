@@ -119,7 +119,6 @@
       "api_version": 2,
       "rows": [
         {
-          "_is_merge": false,
           "context": {
             "caller_filename": "<repo>/e2e/scenarios/test-framework-evals-jest/runner.case.cjs",
             "caller_functionname": "Object.<anonymous>",
@@ -143,6 +142,7 @@
             "testRunId": "<run:1>"
           },
           "metrics": {
+            "end": 0,
             "start": 0
           },
           "output": {
@@ -166,7 +166,6 @@
       "api_version": 2,
       "rows": [
         {
-          "_is_merge": false,
           "context": {
             "caller_filename": "<repo>/e2e/scenarios/test-framework-evals-jest/runner.case.cjs",
             "caller_functionname": "Object.<anonymous>",
@@ -190,6 +189,7 @@
             "testRunId": "<run:1>"
           },
           "metrics": {
+            "end": 0,
             "start": 0
           },
           "output": {
@@ -226,17 +226,6 @@
     "jsonBody": {
       "api_version": 2,
       "rows": [
-        {
-          "_is_merge": true,
-          "id": "<span:5>",
-          "log_id": "g",
-          "metrics": {
-            "end": 0
-          },
-          "project_id": "<project_id>",
-          "root_span_id": "<span:6>",
-          "span_id": "<span:6>"
-        },
         {
           "context": {
             "caller_filename": "<repo>/e2e/scenarios/test-framework-evals-jest/runner.case.cjs",
@@ -317,17 +306,6 @@
     "rawBody": {
       "api_version": 2,
       "rows": [
-        {
-          "_is_merge": true,
-          "id": "<span:5>",
-          "log_id": "g",
-          "metrics": {
-            "end": 0
-          },
-          "project_id": "<project_id>",
-          "root_span_id": "<span:6>",
-          "span_id": "<span:6>"
-        },
         {
           "context": {
             "caller_filename": "<repo>/e2e/scenarios/test-framework-evals-jest/runner.case.cjs",

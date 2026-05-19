@@ -8,6 +8,7 @@ import {
   ADJUSTABLE_REASONING_MODEL,
   AGENT_MODEL,
   CHAT_MODEL,
+  CLASSIFIER_MODEL,
   EMBEDDING_MODEL,
   FIM_MODEL,
   NATIVE_REASONING_MODEL,
@@ -24,12 +25,20 @@ const MISTRAL_REQUEST_RETRY_OPTIONS = {
 };
 
 const MISTRAL_THINKING_STREAM_OPTOUTS = new Set(["mistral-sdk-v1-3-4"]);
+const MISTRAL_CLASSIFIER_OPTOUTS = new Set(["mistral-sdk-v1-3-4"]);
+const MISTRAL_CLASSIFY_OPTOUTS = new Set(["mistral-sdk-v1-3-4"]);
 
 function createMistralScenarioSpec(spec) {
   return {
     ...spec,
     ...(MISTRAL_THINKING_STREAM_OPTOUTS.has(spec.dependencyName)
       ? { supportsThinkingStream: false }
+      : {}),
+    ...(MISTRAL_CLASSIFIER_OPTOUTS.has(spec.dependencyName)
+      ? { supportsClassifiers: false }
+      : {}),
+    ...(MISTRAL_CLASSIFY_OPTOUTS.has(spec.dependencyName)
+      ? { supportsClassify: false }
       : {}),
   };
 }
@@ -354,12 +363,20 @@ async function resolveAgentRuntime(client) {
 
 async function runMistralInstrumentationScenario(
   Mistral,
-  { decorateClient, supportsThinkingStream = true } = {},
+  {
+    classifyChatRequestInputKey = "inputs",
+    decorateClient,
+    supportsClassifiers = true,
+    supportsClassify = true,
+    supportsThinkingStream = true,
+  } = {},
 ) {
   const baseClient = new Mistral({
     apiKey: process.env.MISTRAL_API_KEY,
+    serverURL: process.env.MISTRAL_BASE_URL || process.env.MISTRAL_API_URL,
   });
   const client = decorateClient ? decorateClient(baseClient) : baseClient;
+  const classifyModel = nonEmptyString(process.env.MISTRAL_CLASSIFIER_MODEL);
   const { agentId, cleanup } = await resolveAgentRuntime(baseClient);
 
   try {
@@ -720,6 +737,66 @@ async function runMistralInstrumentationScenario(
             );
           },
         );
+
+        if (supportsClassifiers) {
+          await runOperation(
+            "mistral-classifiers-moderate-operation",
+            "classifiers-moderate",
+            async () => {
+              await client.classifiers.moderate({
+                model: CLASSIFIER_MODEL,
+                inputs: "A short and harmless moderation fixture.",
+              });
+            },
+          );
+
+          await runOperation(
+            "mistral-classifiers-moderate-chat-operation",
+            "classifiers-moderate-chat",
+            async () => {
+              await client.classifiers.moderateChat({
+                model: CLASSIFIER_MODEL,
+                inputs: [
+                  {
+                    role: "user",
+                    content: "Please classify this harmless chat message.",
+                  },
+                ],
+              });
+            },
+          );
+        }
+
+        if (supportsClassifiers && supportsClassify && classifyModel) {
+          await runOperation(
+            "mistral-classifiers-classify-operation",
+            "classifiers-classify",
+            async () => {
+              await client.classifiers.classify({
+                model: classifyModel,
+                inputs: "A positive product review.",
+              });
+            },
+          );
+
+          await runOperation(
+            "mistral-classifiers-classify-chat-operation",
+            "classifiers-classify-chat",
+            async () => {
+              await client.classifiers.classifyChat({
+                model: classifyModel,
+                [classifyChatRequestInputKey]: {
+                  messages: [
+                    {
+                      role: "user",
+                      content: "I need help with my account.",
+                    },
+                  ],
+                },
+              });
+            },
+          );
+        }
       },
       metadata: {
         scenario: SCENARIO_NAME,

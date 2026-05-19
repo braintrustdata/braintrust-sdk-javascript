@@ -24,6 +24,7 @@ export const COHERE_SCENARIO_SPECS = [
     dependencyName: "cohere-sdk-v7-14-0",
     snapshotName: "cohere-v7-14-0",
     supportsThinking: false,
+    useV2Namespace: true,
     wrapperEntry: "scenario.cohere-v7.ts",
   },
   {
@@ -31,6 +32,8 @@ export const COHERE_SCENARIO_SPECS = [
     autoEntry: "scenario.cohere-v7.mjs",
     dependencyName: "cohere-sdk-v7-20-0",
     snapshotName: "cohere-v7-20-0",
+    supportsThinking: false,
+    useV2Namespace: true,
     wrapperEntry: "scenario.cohere-v7.ts",
   },
   {
@@ -38,6 +41,8 @@ export const COHERE_SCENARIO_SPECS = [
     autoEntry: "scenario.cohere-v7.mjs",
     dependencyName: "cohere-sdk-v7-21-0",
     snapshotName: "cohere-v7-21-0",
+    supportsThinking: false,
+    useV2Namespace: true,
     wrapperEntry: "scenario.cohere-v7.ts",
   },
   {
@@ -45,6 +50,8 @@ export const COHERE_SCENARIO_SPECS = [
     autoEntry: "scenario.cohere-v7.mjs",
     dependencyName: "cohere-sdk-v7",
     snapshotName: "cohere-v7",
+    supportsThinking: false,
+    useV2Namespace: true,
     wrapperEntry: "scenario.cohere-v7.ts",
   },
   {
@@ -52,6 +59,7 @@ export const COHERE_SCENARIO_SPECS = [
     autoEntry: "scenario.mjs",
     dependencyName: "cohere-sdk-v8",
     snapshotName: "cohere-v8",
+    supportsThinking: false,
     wrapperEntry: "scenario.ts",
   },
 ];
@@ -60,8 +68,8 @@ function getApiKey() {
   return process.env.COHERE_API_KEY || process.env.CO_API_KEY;
 }
 
-function getChatRequest(apiVersion, { stream = false } = {}) {
-  if (apiVersion === "v8") {
+function getChatRequest(apiVersion, { stream = false, useV2Api = false } = {}) {
+  if (apiVersion === "v8" || useV2Api) {
     return {
       model: CHAT_MODEL_V8,
       messages: [
@@ -157,9 +165,27 @@ function getRerankRequest(apiVersion) {
   };
 }
 
+function getOperationName(baseName, { useV2Namespace = false } = {}) {
+  return useV2Namespace
+    ? `cohere-v2-${baseName}-operation`
+    : `cohere-${baseName}-operation`;
+}
+
+function getOperationClient(client, { useV2Namespace = false } = {}) {
+  if (!useV2Namespace) {
+    return client;
+  }
+
+  if (!client.v2) {
+    throw new Error("Expected Cohere client to expose a v2 namespace");
+  }
+
+  return client.v2;
+}
+
 async function runCohereInstrumentationScenario(
   CohereClient,
-  { apiVersion, decorateClient, ThinkingCohereClient } = {},
+  { apiVersion, decorateClient, ThinkingCohereClient, useV2Namespace } = {},
 ) {
   const apiKey = getApiKey();
   if (!apiKey) {
@@ -167,32 +193,47 @@ async function runCohereInstrumentationScenario(
   }
 
   const baseClient = new CohereClient({
+    environment: process.env.COHERE_BASE_URL,
     token: apiKey,
   });
   const client = decorateClient ? decorateClient(baseClient) : baseClient;
+  const operationClient = getOperationClient(client, { useV2Namespace });
   const thinkingClientClass = ThinkingCohereClient ?? CohereClient;
   const thinkingBaseClient =
     thinkingClientClass === CohereClient
       ? baseClient
       : new thinkingClientClass({
+          environment: process.env.COHERE_BASE_URL,
           token: apiKey,
         });
   const thinkingClient = decorateClient
     ? decorateClient(thinkingBaseClient)
     : thinkingBaseClient;
+  const thinkingOperationClient = getOperationClient(thinkingClient, {
+    useV2Namespace: useV2Namespace && thinkingClientClass === CohereClient,
+  });
 
   await runTracedScenario({
     callback: async () => {
-      await runOperation("cohere-chat-operation", "chat", async () => {
-        await client.chat(getChatRequest(apiVersion));
-      });
+      await runOperation(
+        getOperationName("chat", { useV2Namespace }),
+        "chat",
+        async () => {
+          await operationClient.chat(
+            getChatRequest(apiVersion, { useV2Api: useV2Namespace }),
+          );
+        },
+      );
 
       await runOperation(
-        "cohere-chat-stream-operation",
+        getOperationName("chat-stream", { useV2Namespace }),
         "chat-stream",
         async () => {
-          const stream = await client.chatStream(
-            getChatRequest(apiVersion, { stream: true }),
+          const stream = await operationClient.chatStream(
+            getChatRequest(apiVersion, {
+              stream: true,
+              useV2Api: useV2Namespace,
+            }),
           );
           await collectAsync(stream);
         },
@@ -200,10 +241,10 @@ async function runCohereInstrumentationScenario(
 
       if (shouldRunThinkingScenario(apiVersion)) {
         await runOperation(
-          "cohere-chat-stream-thinking-operation",
+          getOperationName("chat-stream-thinking", { useV2Namespace }),
           "chat-stream-thinking",
           async () => {
-            const stream = await thinkingClient.chatStream(
+            const stream = await thinkingOperationClient.chatStream(
               getThinkingChatRequest(),
             );
             await collectAsync(stream);
@@ -211,13 +252,21 @@ async function runCohereInstrumentationScenario(
         );
       }
 
-      await runOperation("cohere-embed-operation", "embed", async () => {
-        await client.embed(getEmbedRequest(apiVersion));
-      });
+      await runOperation(
+        getOperationName("embed", { useV2Namespace }),
+        "embed",
+        async () => {
+          await operationClient.embed(getEmbedRequest(apiVersion));
+        },
+      );
 
-      await runOperation("cohere-rerank-operation", "rerank", async () => {
-        await client.rerank(getRerankRequest(apiVersion));
-      });
+      await runOperation(
+        getOperationName("rerank", { useV2Namespace }),
+        "rerank",
+        async () => {
+          await operationClient.rerank(getRerankRequest(apiVersion));
+        },
+      );
     },
     metadata: {
       scenario: SCENARIO_NAME,

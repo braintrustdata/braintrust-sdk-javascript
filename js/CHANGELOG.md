@@ -1,11 +1,36 @@
 # braintrust
 
+## 3.11.0
+
+### Minor Changes
+
+- feat: Add instrumentation for `@github/copilot-sdk` (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/1932)
+- feat(vitest): Support `projectId` in `wrapVitest` (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/1993)
+- feat: Add Firebase genkit instrumentation (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/1948)
+- feat(mistral): Instrument classification and moderation APIs (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/1947)
+- feat: Add `@openai/codex-sdk` instrumentation (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/1945)
+
+### Patch Changes
+
+- fix(openrouter): Capture reasoning (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/1944)
+- fix(openai): Prevent reading body more than once (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/1969)
+- fix(cohere): Wrap v2 subclient (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/1943)
+- fix: Prevent duplicate LLM spans when multiple SDK instances are loaded in the same process (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/1973)
+- fix(openrouter): Mark callModel parent spans as tasks and avoid double-counting metrics Thanks @ronaldkohhh! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2005)
+- deps: Upgrade minimatch from v9 to v10. (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2000)
+- fix(groq): Capture reasoning for groq reasoning models (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/1942)
+- fix(google-adk): Fix google adk agent naming (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/1950)
+- fix: Cancel body consumption immediately for object store upload (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2001)
+- fix(deps): Upgrade Express to remove vulnerable transitive dependencies (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2002)
+- fix(google-genai): Capture multi-turn message APIs with wrapper (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/1946)
+
 ## 3.10.0
 
 ### Minor Changes
 
 - feat: Add dataset versioning support (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/1837)
 - feat: Add `@cursor/sdk` instrumentation (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/1923)
+- feat: Add auto and wrapper instrumentation for `@github/copilot-sdk`
 - feat: Add experiment dataset filters to experiment metadata (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/1898)
 
 ### Patch Changes
