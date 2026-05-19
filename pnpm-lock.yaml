@@ -18,7 +18,7 @@ importers:
         version: 0.6.0(encoding@0.1.13)
       '@changesets/cli':
         specifier: ^2.30.0
-        version: 2.30.0(@types/node@24.12.3)
+        version: 2.30.0(@types/node@24.12.4)
       '@changesets/get-github-info':
         specifier: ^0.8.0
         version: 0.8.0(encoding@0.1.13)
@@ -33,7 +33,7 @@ importers:
         version: 9.1.7
       knip:
         specifier: ^5.85.0
-        version: 5.85.0(@types/node@24.12.3)(typescript@5.9.3)
+        version: 5.85.0(@types/node@24.12.4)(typescript@5.9.3)
       lint-staged:
         specifier: ^16.2.7
         version: 16.2.7
@@ -2281,9 +2281,6 @@ packages:
 
   '@types/node@22.19.1':
     resolution: {integrity: sha512-LCCV0HdSZZZb34qifBsyWlUmok6W7ouER+oQIGBScS8EsZsQbrtFTUrDX4hOl+CS6p7cnNC4td+qrSVGSCTUfQ==}
-
-  '@types/node@24.12.3':
-    resolution: {integrity: sha512-8oljBDGun9cIsZRJR6fkihn0TSXJI0UDOOhncYaERq6M0JMDoPLxyscwruJcb4GKS6dvK/d8xebYBg27h/duaQ==}
 
   '@types/node@24.12.4':
     resolution: {integrity: sha512-GUUEShf+PBCGW2KaXwcIt3Yk+e3pkKwWKb9GSyM9WQVE+ep2jzmHdGsHzu4wgcZy5fN9FBdVzjpBQsYlpfpgLA==}
@@ -6379,7 +6376,7 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
-  '@changesets/cli@2.30.0(@types/node@24.12.3)':
+  '@changesets/cli@2.30.0(@types/node@24.12.4)':
     dependencies:
       '@changesets/apply-release-plan': 7.1.0
       '@changesets/assemble-release-plan': 6.0.9
@@ -6395,7 +6392,7 @@ snapshots:
       '@changesets/should-skip-package': 0.1.2
       '@changesets/types': 6.1.0
       '@changesets/write': 0.4.0
-      '@inquirer/external-editor': 1.0.3(@types/node@24.12.3)
+      '@inquirer/external-editor': 1.0.3(@types/node@24.12.4)
       '@manypkg/get-packages': 1.1.3
       ansi-colors: 4.1.3
       enquirer: 2.4.1
@@ -6902,12 +6899,12 @@ snapshots:
       '@types/node': 22.19.1
     optional: true
 
-  '@inquirer/external-editor@1.0.3(@types/node@24.12.3)':
+  '@inquirer/external-editor@1.0.3(@types/node@24.12.4)':
     dependencies:
       chardet: 2.1.1
       iconv-lite: 0.7.2
     optionalDependencies:
-      '@types/node': 24.12.3
+      '@types/node': 24.12.4
 
   '@inquirer/figures@2.0.5': {}
 
@@ -8075,10 +8072,6 @@ snapshots:
   '@types/node@22.19.1':
     dependencies:
       undici-types: 6.21.0
-
-  '@types/node@24.12.3':
-    dependencies:
-      undici-types: 7.16.0
 
   '@types/node@24.12.4':
     dependencies:
@@ -10064,10 +10057,10 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  knip@5.85.0(@types/node@24.12.3)(typescript@5.9.3):
+  knip@5.85.0(@types/node@24.12.4)(typescript@5.9.3):
     dependencies:
       '@nodelib/fs.walk': 1.2.8
-      '@types/node': 24.12.3
+      '@types/node': 24.12.4
       fast-glob: 3.3.3
       formatly: 0.3.0
       jiti: 2.6.1
