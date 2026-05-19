@@ -179,7 +179,6 @@
     "cross-env": "^7.0.3",
     "eslint-plugin-node-import": "^1.0.5",
     "openai": "6.25.0",
-    "openapi-zod-client": "^1.18.3",
     "rollup": "^4.60.3",
     "tar": "^7.5.2",
     "tinybench": "^4.0.1",
