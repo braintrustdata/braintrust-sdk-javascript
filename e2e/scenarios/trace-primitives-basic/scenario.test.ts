@@ -10,7 +10,7 @@ import {
   resolveScenarioDir,
   withScenarioHarness,
 } from "../../helpers/scenario-harness";
-import { formatSpanTreeSnapshot } from "../../helpers/span-tree";
+import { matchSpanTreeSnapshot } from "../../helpers/span-tree";
 import { findLatestSpan } from "../../helpers/trace-selectors";
 import { summarizeRequest } from "../../helpers/trace-summary";
 
@@ -19,7 +19,7 @@ const scenarioDir = await prepareScenarioDir({
 });
 const spanTreeSnapshotPath = resolveFileSnapshotPath(
   import.meta.url,
-  "span-tree.txt",
+  "span-tree.json",
 );
 const requestFlowSnapshotPath = resolveFileSnapshotPath(
   import.meta.url,
@@ -46,10 +46,7 @@ test("trace-primitives-basic collects a minimal manual trace tree", async () => 
       expect(error?.span.parentIds).toEqual([root?.span.id ?? ""]);
       expect(root?.span.rootId).toBe(root?.span.id);
 
-      await matchFileSnapshot(
-        formatSpanTreeSnapshot(capturedEvents),
-        spanTreeSnapshotPath,
-      );
+      await matchSpanTreeSnapshot(capturedEvents, spanTreeSnapshotPath);
 
       const requests = requestsAfter(
         cursor,

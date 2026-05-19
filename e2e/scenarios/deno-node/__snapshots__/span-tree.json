@@ -1,0 +1,122 @@
+{
+  "span_tree": [
+    {
+      "name": "deno node basic span",
+      "type": "task",
+      "children": [],
+      "input": "What is the capital of France?",
+      "output": "Paris",
+      "expected": "Paris",
+      "metadata": {
+        "case": "basic-span",
+        "scenario": "deno-node",
+        "testRunId": "<run:1>",
+        "transport": "http"
+      }
+    },
+    {
+      "name": "deno node json attachment span",
+      "type": "task",
+      "children": [],
+      "input": {
+        "transcript": {
+          "content_type": "application/json",
+          "filename": "conversation_transcript.json",
+          "key": "<uuid:1>",
+          "type": "braintrust_attachment"
+        },
+        "type": "chat_completion"
+      },
+      "output": {
+        "attachment": true
+      },
+      "metadata": {
+        "case": "json-attachment",
+        "scenario": "deno-node",
+        "testRunId": "<run:1>"
+      }
+    },
+    {
+      "name": "deno node parent span",
+      "type": "task",
+      "children": [
+        {
+          "name": "deno node child span",
+          "children": [],
+          "input": {
+            "step": "child",
+            "testRunId": "<run:1>"
+          },
+          "output": {
+            "ok": true,
+            "phase": "child"
+          },
+          "metadata": {
+            "case": "child-span",
+            "scenario": "deno-node",
+            "testRunId": "<run:1>"
+          }
+        }
+      ],
+      "input": {
+        "phase": "parent",
+        "testRunId": "<run:1>"
+      },
+      "output": {
+        "ok": true,
+        "phase": "parent"
+      },
+      "metadata": {
+        "case": "parent-span",
+        "scenario": "deno-node",
+        "testRunId": "<run:1>"
+      }
+    },
+    {
+      "name": "deno node nested parent span",
+      "type": "task",
+      "children": [
+        {
+          "name": "deno node nested child span",
+          "children": [
+            {
+              "name": "deno node nested grandchild span",
+              "children": [],
+              "output": {
+                "depth": 3
+              },
+              "metadata": {
+                "case": "nested-grandchild",
+                "scenario": "deno-node",
+                "testRunId": "<run:1>"
+              }
+            }
+          ],
+          "metadata": {
+            "case": "nested-child",
+            "scenario": "deno-node",
+            "testRunId": "<run:1>"
+          }
+        }
+      ],
+      "metadata": {
+        "case": "nested-parent",
+        "scenario": "deno-node",
+        "testRunId": "<run:1>"
+      }
+    },
+    {
+      "name": "deno node current span",
+      "type": "task",
+      "children": [],
+      "output": {
+        "observedSpanId": "<uuid:1>"
+      },
+      "metadata": {
+        "case": "current-span",
+        "scenario": "deno-node",
+        "testRunId": "<run:1>"
+      }
+    }
+  ]
+}

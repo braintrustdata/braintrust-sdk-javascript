@@ -10,7 +10,7 @@ import {
   resolveScenarioDir,
   withScenarioHarness,
 } from "../../helpers/scenario-harness";
-import { formatSpanTreeSnapshot } from "../../helpers/span-tree";
+import { matchSpanTreeSnapshot } from "../../helpers/span-tree";
 import {
   extractOtelSpans,
   summarizeRequest,
@@ -202,9 +202,9 @@ test(
           resolveFileSnapshotPath(import.meta.url, "route-responses.json"),
         );
 
-        await matchFileSnapshot(
-          formatSpanTreeSnapshot(events),
-          resolveFileSnapshotPath(import.meta.url, "span-tree.txt"),
+        await matchSpanTreeSnapshot(
+          events,
+          resolveFileSnapshotPath(import.meta.url, "span-tree.json"),
         );
 
         await matchFileSnapshot(

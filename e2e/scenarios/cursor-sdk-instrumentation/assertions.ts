@@ -1,9 +1,6 @@
 import { beforeAll, describe, expect, test } from "vitest";
 import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
-import {
-  matchFileSnapshot,
-  resolveFileSnapshotPath,
-} from "../../helpers/file-snapshot";
+import { resolveFileSnapshotPath } from "../../helpers/file-snapshot";
 import {
   effectiveScenarioTimeoutMs,
   withScenarioHarness,
@@ -15,7 +12,7 @@ import {
   findLatestSpan,
 } from "../../helpers/trace-selectors";
 import {
-  formatSpanTreeSnapshot,
+  matchSpanTreeSnapshot,
   spanTreeFields,
   type SpanTreeEntry,
   type SpanTreeFields,
@@ -178,7 +175,7 @@ export function defineCursorSDKInstrumentationAssertions(options: {
 }): void {
   const snapshotPath = resolveFileSnapshotPath(
     options.testFileUrl,
-    `${options.snapshotName}.span-tree.txt`,
+    `${options.snapshotName}.span-tree.json`,
   );
   const timeoutMs = effectiveScenarioTimeoutMs(options.timeoutMs);
   const testConfig = { timeout: timeoutMs };
@@ -311,7 +308,7 @@ export function defineCursorSDKInstrumentationAssertions(options: {
     });
 
     test("matches the shared span tree snapshot", testConfig, async () => {
-      await matchFileSnapshot(formatSpanTreeSnapshot(events), snapshotPath);
+      await matchSpanTreeSnapshot(events, snapshotPath);
     });
   });
 }

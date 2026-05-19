@@ -1,0 +1,241 @@
+{
+  "span_tree": [
+    {
+      "name": "groq-instrumentation-root",
+      "type": "task",
+      "children": [
+        {
+          "name": "groq-chat-operation",
+          "children": [
+            {
+              "name": "groq.chat.completions.create",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "Reply with exactly OK.",
+                  "role": "user"
+                }
+              ],
+              "output": [
+                {
+                  "finish_reason": "stop",
+                  "index": 0,
+                  "logprobs": null,
+                  "message": {
+                    "content": "OK",
+                    "role": "assistant"
+                  }
+                }
+              ],
+              "metadata": {
+                "max_completion_tokens": 12,
+                "model": "llama-3.3-70b-versatile",
+                "provider": "groq",
+                "temperature": 0
+              },
+              "metrics": {
+                "completion_time": 0.00745245,
+                "completion_tokens": 2,
+                "prompt_time": 0.001977594,
+                "prompt_tokens": 40,
+                "queue_time": 0.095205932,
+                "time_to_first_token": 0,
+                "tokens": 42,
+                "total_time": 0.009430044
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "chat",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "groq-stream-operation",
+          "children": [
+            {
+              "name": "groq.chat.completions.create",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "Reply with exactly STREAM.",
+                  "role": "user"
+                }
+              ],
+              "output": [
+                {
+                  "finish_reason": "stop",
+                  "index": 0,
+                  "logprobs": null,
+                  "message": {
+                    "content": "STREAM",
+                    "role": "assistant"
+                  }
+                }
+              ],
+              "metadata": {
+                "model": "llama-3.3-70b-versatile",
+                "provider": "groq",
+                "stream": true,
+                "temperature": 0
+              },
+              "metrics": {
+                "completion_time": 0.006624354,
+                "completion_tokens": 2,
+                "prompt_time": 0.017750957,
+                "prompt_tokens": 40,
+                "queue_time": 0.183890233,
+                "time_to_first_token": 0,
+                "tokens": 42,
+                "total_time": 0.024375311
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "stream",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "groq-reasoning-stream-operation",
+          "children": [
+            {
+              "name": "groq.chat.completions.create",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "Solve this step by step: Elena has 3 boxes with 4 marbles each, gives away 5 marbles, then doubles what remains. Reply with just the final number.",
+                  "role": "user"
+                }
+              ],
+              "output": [
+                {
+                  "finish_reason": "stop",
+                  "index": 0,
+                  "logprobs": null,
+                  "message": {
+                    "content": "14",
+                    "reasoning": "Okay, let's see. Elena has 3 boxes, each with 4 marbles. So first, I need to figure out how many marbles she has in total. If each box has 4 marbles and there are 3 boxes, then I multiply 3 by 4. 3 times 4 is 12. So she starts with 12 marbles.\n\nThen she gives away 5 marbles. So I need to subtract 5 from 12. Let me do that: 12 minus 5 equals 7. So after giving away 5 marbles, she has 7 left.\n\nNext, she doubles what remains. Doubling means multiplying by 2. So 7 times 2 is 14. Let me check that again. 7 marbles doubled would be 14. \n\nWait, let me go through each step once more to make sure I didn't make a mistake. Starting with 3 boxes times 4 marbles each: 3*4=12. Then subtracting 5: 12-5=7. Then doubling that: 7*2=14. Yeah, that seems right. I don't think I messed up any numbers here. So the final number should be 14.\n",
+                    "role": "assistant"
+                  }
+                }
+              ],
+              "metadata": {
+                "max_completion_tokens": 512,
+                "model": "qwen/qwen3-32b",
+                "provider": "groq",
+                "reasoning_format": "parsed",
+                "stream": true,
+                "temperature": 0.6
+              },
+              "metrics": {
+                "completion_reasoning_tokens": 268,
+                "completion_time": 0.454665574,
+                "completion_tokens": 275,
+                "prompt_time": 0.004045298,
+                "prompt_tokens": 46,
+                "queue_time": 0.046866887,
+                "time_to_first_token": 0,
+                "tokens": 321,
+                "total_time": 0.458710872
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "reasoning-stream",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "groq-tool-operation",
+          "children": [
+            {
+              "name": "groq.chat.completions.create",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "Check the weather in Vienna and use the weather tool.",
+                  "role": "user"
+                }
+              ],
+              "output": [
+                {
+                  "finish_reason": "tool_calls",
+                  "index": 0,
+                  "logprobs": null,
+                  "message": {
+                    "role": "assistant",
+                    "tool_calls": [
+                      {
+                        "function": {
+                          "arguments": "{\"location\":\"Vienna\"}",
+                          "name": "get_weather"
+                        },
+                        "id": "<span:1>",
+                        "type": "function"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "metadata": {
+                "model": "llama-3.3-70b-versatile",
+                "provider": "groq",
+                "temperature": 0,
+                "tool_choice": {
+                  "function": {
+                    "name": "get_weather"
+                  },
+                  "type": "function"
+                },
+                "tools": [
+                  {
+                    "function": {
+                      "description": "Get the weather for a city.",
+                      "name": "get_weather",
+                      "parameters": {
+                        "properties": {
+                          "location": {
+                            "description": "City name.",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "location"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "type": "function"
+                  }
+                ]
+              },
+              "metrics": {
+                "completion_time": 0.036719131,
+                "completion_tokens": 11,
+                "prompt_time": 0.09047757,
+                "prompt_tokens": 246,
+                "queue_time": 0.327464415,
+                "time_to_first_token": 0,
+                "tokens": 257,
+                "total_time": 0.127196701
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "tool",
+            "testRunId": "<run:1>"
+          }
+        }
+      ],
+      "metadata": {
+        "scenario": "groq-instrumentation",
+        "testRunId": "<run:1>"
+      }
+    }
+  ]
+}

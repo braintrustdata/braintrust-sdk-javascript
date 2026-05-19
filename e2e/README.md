@@ -66,7 +66,7 @@ The main utilities you'll use in test files:
 - `events()`, `payloads()`, `requestCursor()`, `requestsAfter()` - Lower-level access for ingestion payloads and HTTP request flow assertions.
 - `testRunId` - Useful when a scenario or assertion needs the exact run marker.
 
-Prefer `formatSpanTreeSnapshot(...)` for span snapshots. It compiles captured span rows into an ASCII tree and includes stable span attributes, input, output, expected values, scores, tags, metadata, metrics, and errors. Use `normalizeForSnapshot(...)` for non-span JSON snapshots; it replaces timestamps and ids with stable tokens and strips machine-specific paths and localhost ports.
+Prefer `matchSpanTreeSnapshot(...)` for span snapshots. It asserts both a structural `.span-tree.json` snapshot and a human-readable `.span-tree.txt` tree beside it. Both files are generated from the same normalized span tree and include stable span attributes, input, output, expected values, scores, tags, metadata, metrics, and errors. Use `normalizeForSnapshot(...)` for non-span JSON snapshots; it replaces timestamps and ids with stable tokens and strips machine-specific paths and localhost ports.
 
 ### Provider scenario cassettes
 
@@ -79,7 +79,7 @@ Wrapper scenarios often create a root span with `testRunId` metadata and then le
 - Use `events()` rather than `testRunEvents()` to inspect the full trace tree.
 - Find the scenario root span first.
 - Scope raw payload snapshots by `root_span_id` using `payloadRowsForRootSpan(...)`.
-- Prefer a normalized ASCII span-tree snapshot from `formatSpanTreeSnapshot(...)`.
+- Prefer normalized span-tree snapshots from `matchSpanTreeSnapshot(...)`. The `.json` sibling is the structural contract, and the `.txt` sibling is the ASCII tree for review; both are asserted and should be updated together.
 - If the wrapper has an explicit support matrix, reuse one shared test across version-specific scenario entries instead of duplicating the assertions. The AI SDK wrapper scenario uses this for supported v3-v6 package combinations.
 
 ### Runner-wrapper scenario pattern

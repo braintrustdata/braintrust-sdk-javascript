@@ -1,14 +1,11 @@
 import { expect, test } from "vitest";
-import {
-  matchFileSnapshot,
-  resolveFileSnapshotPath,
-} from "../../helpers/file-snapshot";
+import { resolveFileSnapshotPath } from "../../helpers/file-snapshot";
 import {
   prepareScenarioDir,
   resolveScenarioDir,
   withScenarioHarness,
 } from "../../helpers/scenario-harness";
-import { formatSpanTreeSnapshot } from "../../helpers/span-tree";
+import { matchSpanTreeSnapshot } from "../../helpers/span-tree";
 import { findLatestSpan } from "../../helpers/trace-selectors";
 
 const scenarioDir = await prepareScenarioDir({
@@ -104,11 +101,11 @@ for (const scenario of scenarios) {
             pass: 0,
           });
 
-          await matchFileSnapshot(
-            formatSpanTreeSnapshot(capturedEvents),
+          await matchSpanTreeSnapshot(
+            capturedEvents,
             resolveFileSnapshotPath(
               import.meta.url,
-              `${scenario.label}.span-tree.txt`,
+              `${scenario.label}.span-tree.json`,
             ),
           );
         },

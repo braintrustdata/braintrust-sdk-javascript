@@ -12,7 +12,7 @@ import {
   withScenarioHarness,
 } from "../../helpers/scenario-harness";
 import {
-  formatSpanTreeSnapshot,
+  matchSpanTreeSnapshot,
   type SpanTreeEntry,
 } from "../../helpers/span-tree";
 import {
@@ -183,11 +183,11 @@ for (const scenario of scenarios) {
             );
           });
 
-          await matchFileSnapshot(
-            formatSpanTreeSnapshot(spanTreeEntries),
+          await matchSpanTreeSnapshot(
+            spanTreeEntries,
             resolveFileSnapshotPath(
               import.meta.url,
-              `${scenario.dependencyName}.span-tree.txt`,
+              `${scenario.dependencyName}.span-tree.json`,
             ),
           );
 

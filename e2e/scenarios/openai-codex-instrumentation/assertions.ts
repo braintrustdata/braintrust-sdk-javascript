@@ -1,15 +1,12 @@
 import { beforeAll, describe, expect, test } from "vitest";
-import {
-  matchFileSnapshot,
-  resolveFileSnapshotPath,
-} from "../../helpers/file-snapshot";
+import { resolveFileSnapshotPath } from "../../helpers/file-snapshot";
 import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
 import {
   withScenarioHarness,
   type ScenarioRunContext,
 } from "../../helpers/scenario-harness";
 import {
-  formatSpanTreeSnapshot,
+  matchSpanTreeSnapshot,
   spanTreeFields,
   type SpanTreeEntry,
   type SpanTreeFields,
@@ -233,7 +230,7 @@ function spanSnapshotPath(options: {
 }): string {
   return resolveFileSnapshotPath(
     options.testFileUrl,
-    `${options.snapshotName}.span-tree.txt`,
+    `${options.snapshotName}.span-tree.json`,
   );
 }
 
@@ -337,10 +334,7 @@ export function defineOpenAICodexInstrumentationAssertions(options: {
     });
 
     test("matches the span tree snapshot", testConfig, async () => {
-      await matchFileSnapshot(
-        formatSpanTreeSnapshot(events),
-        spanSnapshotPath(options),
-      );
+      await matchSpanTreeSnapshot(events, spanSnapshotPath(options));
     });
   });
 }

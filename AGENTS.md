@@ -65,6 +65,8 @@ pnpm run test:e2e:record          # Re-record provider cassettes and update snap
 
 When adding or modifying e2e tests, run the relevant e2e verification twice before stopping so flakes are caught proactively. After running `pnpm run test:e2e:update` or `pnpm run test:e2e:record`, always run the normal e2e tests afterward to verify there is no snapshot drift or unstable output.
 
+Span-tree snapshots are paired: `*.span-tree.json` is the structural contract, and `*.span-tree.txt` is the human-readable ASCII tree generated from the same normalized spans. Both files are asserted and should be updated together through `pnpm run test:e2e:update` or `pnpm run test:e2e:record`; do not hand-edit only one side of the pair.
+
 **From repo root:**
 
 ```bash

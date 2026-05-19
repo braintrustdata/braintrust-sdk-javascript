@@ -1,13 +1,11 @@
 import { expect, test } from "vitest";
-import {
-  matchFileSnapshot,
-  resolveFileSnapshotPath,
-} from "../../helpers/file-snapshot";
+import { resolveFileSnapshotPath } from "../../helpers/file-snapshot";
 import {
   prepareScenarioDir,
   resolveScenarioDir,
   withScenarioHarness,
 } from "../../helpers/scenario-harness";
+import { matchSpanTreeSnapshot } from "../../helpers/span-tree";
 
 import { assertLangchainTraces } from "./assertions";
 
@@ -40,9 +38,9 @@ test(
         scenarioName: "wrap-langchain-js-traces",
       });
 
-      await matchFileSnapshot(
+      await matchSpanTreeSnapshot(
         spanTree,
-        resolveFileSnapshotPath(import.meta.url, "span-tree.txt"),
+        resolveFileSnapshotPath(import.meta.url, "span-tree.json"),
       );
     });
   },

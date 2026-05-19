@@ -1,16 +1,13 @@
 import { beforeAll, describe, expect, test } from "vitest";
 import type { Json } from "../../helpers/normalize";
 import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
-import {
-  matchFileSnapshot,
-  resolveFileSnapshotPath,
-} from "../../helpers/file-snapshot";
+import { resolveFileSnapshotPath } from "../../helpers/file-snapshot";
 import {
   withScenarioHarness,
   type ScenarioRunContext,
 } from "../../helpers/scenario-harness";
 import {
-  formatSpanTreeSnapshot,
+  matchSpanTreeSnapshot,
   spanTreeFields,
   type SpanTreeEntry,
 } from "../../helpers/span-tree";
@@ -819,7 +816,7 @@ export function defineAISDKInstrumentationAssertions(options: {
 }): void {
   const spanSnapshotPath = resolveFileSnapshotPath(
     options.testFileUrl,
-    `${options.snapshotName}.span-tree.txt`,
+    `${options.snapshotName}.span-tree.json`,
   );
   const testConfig = {
     timeout: options.timeoutMs,
@@ -1260,7 +1257,7 @@ export function defineAISDKInstrumentationAssertions(options: {
     }
 
     test("matches the shared span tree snapshot", testConfig, async () => {
-      await matchFileSnapshot(formatSpanTreeSnapshot(events), spanSnapshotPath);
+      await matchSpanTreeSnapshot(events, spanSnapshotPath);
     });
   });
 }

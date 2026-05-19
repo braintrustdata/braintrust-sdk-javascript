@@ -1,14 +1,11 @@
 import { expect, test } from "vitest";
-import {
-  matchFileSnapshot,
-  resolveFileSnapshotPath,
-} from "../../helpers/file-snapshot";
+import { resolveFileSnapshotPath } from "../../helpers/file-snapshot";
 import {
   prepareScenarioDir,
   resolveScenarioDir,
   withScenarioHarness,
 } from "../../helpers/scenario-harness";
-import { formatSpanTreeSnapshot } from "../../helpers/span-tree";
+import { matchSpanTreeSnapshot } from "../../helpers/span-tree";
 import { findLatestSpan } from "../../helpers/trace-selectors";
 import { extractOtelSpans } from "../../helpers/trace-summary";
 
@@ -17,7 +14,7 @@ const scenarioDir = await prepareScenarioDir({
 });
 const spanTreeSnapshotPath = resolveFileSnapshotPath(
   import.meta.url,
-  "braintrust-span-tree.txt",
+  "braintrust-span-tree.json",
 );
 
 test("otel-compat-mixed-tracing unifies Braintrust and OTEL spans into one trace", async () => {
@@ -47,10 +44,7 @@ test("otel-compat-mixed-tracing unifies Braintrust and OTEL spans into one trace
       expect(btChild?.span.rootId).toBe(btRoot?.span.rootId);
       expect(btChild?.span.parentIds).toContain(otelMiddle?.spanId ?? "");
 
-      await matchFileSnapshot(
-        formatSpanTreeSnapshot(btEvents),
-        spanTreeSnapshotPath,
-      );
+      await matchSpanTreeSnapshot(btEvents, spanTreeSnapshotPath);
     },
   );
 });

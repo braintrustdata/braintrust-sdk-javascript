@@ -11,7 +11,7 @@ import {
   resolveScenarioDir,
   withScenarioHarness,
 } from "../../helpers/scenario-harness";
-import { formatSpanTreeSnapshot } from "../../helpers/span-tree";
+import { matchSpanTreeSnapshot } from "../../helpers/span-tree";
 import { findLatestSpan } from "../../helpers/trace-selectors";
 import { summarizeRequest } from "../../helpers/trace-summary";
 
@@ -147,9 +147,9 @@ test(
           ]),
         );
 
-        await matchFileSnapshot(
-          formatSpanTreeSnapshot(capturedEvents),
-          resolveFileSnapshotPath(import.meta.url, "span-tree.txt"),
+        await matchSpanTreeSnapshot(
+          capturedEvents,
+          resolveFileSnapshotPath(import.meta.url, "span-tree.json"),
         );
 
         await matchFileSnapshot(

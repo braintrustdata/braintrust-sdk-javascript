@@ -1,10 +1,7 @@
 import { beforeAll, describe, expect, test } from "vitest";
 import type { Json } from "../../helpers/normalize";
 import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
-import {
-  matchFileSnapshot,
-  resolveFileSnapshotPath,
-} from "../../helpers/file-snapshot";
+import { resolveFileSnapshotPath } from "../../helpers/file-snapshot";
 import {
   effectiveScenarioTimeoutMs,
   withScenarioHarness,
@@ -16,7 +13,7 @@ import {
   findLatestSpan,
 } from "../../helpers/trace-selectors";
 import {
-  formatSpanTreeSnapshot,
+  matchSpanTreeSnapshot,
   spanTreeFields,
   type SpanTreeEntry,
 } from "../../helpers/span-tree";
@@ -431,7 +428,7 @@ export function defineClaudeAgentSDKInstrumentationAssertions(options: {
 }): void {
   const snapshotPath = resolveFileSnapshotPath(
     options.testFileUrl,
-    `${options.snapshotName}.span-tree.txt`,
+    `${options.snapshotName}.span-tree.json`,
   );
   const timeoutMs = effectiveScenarioTimeoutMs(options.timeoutMs);
   const testConfig = {
@@ -725,7 +722,7 @@ export function defineClaudeAgentSDKInstrumentationAssertions(options: {
     });
 
     test("matches the shared span tree snapshot", testConfig, async () => {
-      await matchFileSnapshot(formatSpanTreeSnapshot(events), snapshotPath);
+      await matchSpanTreeSnapshot(events, snapshotPath);
     });
   });
 }

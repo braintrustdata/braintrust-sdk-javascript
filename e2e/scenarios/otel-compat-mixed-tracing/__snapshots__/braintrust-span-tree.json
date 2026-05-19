@@ -1,0 +1,25 @@
+{
+  "span_tree": [
+    {
+      "name": "bt-root",
+      "type": "task",
+      "children": [],
+      "metadata": {
+        "scenario": "otel-compat-mixed-tracing",
+        "testRunId": "<run:1>"
+      }
+    },
+    {
+      "name": "bt-child-under-otel",
+      "type": "task",
+      "children": [],
+      "output": {
+        "source": "otel-child-context"
+      },
+      "metadata": {
+        "kind": "bt-child-under-otel",
+        "testRunId": "<run:1>"
+      }
+    }
+  ]
+}

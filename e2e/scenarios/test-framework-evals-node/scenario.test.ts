@@ -1,14 +1,11 @@
 import { expect, test } from "vitest";
-import {
-  matchFileSnapshot,
-  resolveFileSnapshotPath,
-} from "../../helpers/file-snapshot";
+import { resolveFileSnapshotPath } from "../../helpers/file-snapshot";
 import {
   prepareScenarioDir,
   resolveScenarioDir,
   withScenarioHarness,
 } from "../../helpers/scenario-harness";
-import { formatSpanTreeSnapshot } from "../../helpers/span-tree";
+import { matchSpanTreeSnapshot } from "../../helpers/span-tree";
 import { findLatestSpan } from "../../helpers/trace-selectors";
 
 const scenarioDir = await prepareScenarioDir({
@@ -17,7 +14,7 @@ const scenarioDir = await prepareScenarioDir({
 const TIMEOUT_MS = 90_000;
 const spanTreeSnapshotPath = resolveFileSnapshotPath(
   import.meta.url,
-  "span-tree.txt",
+  "span-tree.json",
 );
 
 test(
@@ -83,10 +80,7 @@ test(
 
         expect(nameOverride?.span.name).toBe("node-test overridden name");
 
-        await matchFileSnapshot(
-          formatSpanTreeSnapshot(capturedEvents),
-          spanTreeSnapshotPath,
-        );
+        await matchSpanTreeSnapshot(capturedEvents, spanTreeSnapshotPath);
       },
     );
   },

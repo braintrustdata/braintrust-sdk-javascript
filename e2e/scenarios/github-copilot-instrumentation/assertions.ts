@@ -1,15 +1,12 @@
 import { beforeAll, describe, expect, test } from "vitest";
 import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
-import {
-  matchFileSnapshot,
-  resolveFileSnapshotPath,
-} from "../../helpers/file-snapshot";
+import { resolveFileSnapshotPath } from "../../helpers/file-snapshot";
 import {
   withScenarioHarness,
   type ScenarioRunContext,
 } from "../../helpers/scenario-harness";
 import {
-  formatSpanTreeSnapshot,
+  matchSpanTreeSnapshot,
   spanTreeFields,
   type SpanTreeEntry,
   type SpanTreeFields,
@@ -165,7 +162,7 @@ export function defineGitHubCopilotInstrumentationAssertions(options: {
 }): void {
   const snapshotPath = resolveFileSnapshotPath(
     options.testFileUrl,
-    `${options.snapshotName}.span-tree.txt`,
+    `${options.snapshotName}.span-tree.json`,
   );
   const testConfig = { timeout: options.timeoutMs };
 
@@ -267,7 +264,7 @@ export function defineGitHubCopilotInstrumentationAssertions(options: {
     });
 
     test("matches the span tree snapshot", testConfig, async () => {
-      await matchFileSnapshot(formatSpanTreeSnapshot(events), snapshotPath);
+      await matchSpanTreeSnapshot(events, snapshotPath);
     });
   });
 }

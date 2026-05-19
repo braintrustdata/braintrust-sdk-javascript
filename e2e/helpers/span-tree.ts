@@ -1,3 +1,4 @@
+import { matchFileSnapshot } from "./file-snapshot";
 import type { CapturedLogEvent } from "./mock-braintrust-server";
 import { normalizeForSnapshot, type Json } from "./normalize";
 
@@ -17,6 +18,12 @@ type NormalizedEntry = {
   id: string;
   name: string;
 };
+
+type SpanTreeJsonNode = {
+  children: SpanTreeJsonNode[];
+  name: string;
+  type?: string;
+} & Record<string, Json | SpanTreeJsonNode[] | string | undefined>;
 
 const FIELD_ORDER = [
   "span_attributes",
@@ -324,4 +331,53 @@ export function formatSpanTreeSnapshot(
     ),
     "",
   ].join("\n");
+}
+
+function jsonEntry(entry: NormalizedEntry): SpanTreeJsonNode {
+  const node: SpanTreeJsonNode = {
+    name: entry.name,
+    ...(entry.event.span.type ? { type: entry.event.span.type } : {}),
+    children: [],
+  };
+  const fields = normalizeFields(entry.fields);
+
+  for (const key of sortedFieldKeys(fields)) {
+    node[fieldLabel(key)] = fields[key] as Json;
+  }
+
+  node.children = entry.children.map((child) => jsonEntry(child));
+  return node;
+}
+
+export function formatSpanTreeJsonSnapshot(
+  entries: readonly (CapturedLogEvent | SpanTreeEntry)[],
+): string {
+  const roots = buildEntries(entries);
+  return `${JSON.stringify(
+    {
+      span_tree: roots.map((entry) => jsonEntry(entry)),
+    },
+    null,
+    2,
+  )}\n`;
+}
+
+function txtSnapshotPath(jsonSnapshotPath: string): string {
+  return jsonSnapshotPath.endsWith(".json")
+    ? `${jsonSnapshotPath.slice(0, -".json".length)}.txt`
+    : `${jsonSnapshotPath}.txt`;
+}
+
+export async function matchSpanTreeSnapshot(
+  entries: readonly (CapturedLogEvent | SpanTreeEntry)[],
+  jsonSnapshotPath: string,
+): Promise<void> {
+  await matchFileSnapshot(
+    formatSpanTreeSnapshot(entries),
+    txtSnapshotPath(jsonSnapshotPath),
+  );
+  await matchFileSnapshot(
+    formatSpanTreeJsonSnapshot(entries),
+    jsonSnapshotPath,
+  );
 }

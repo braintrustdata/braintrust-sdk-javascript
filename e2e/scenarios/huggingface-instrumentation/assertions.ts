@@ -1,10 +1,7 @@
 import { beforeAll, describe, expect, test } from "vitest";
 import { type Json } from "../../helpers/normalize";
 import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
-import {
-  matchFileSnapshot,
-  resolveFileSnapshotPath,
-} from "../../helpers/file-snapshot";
+import { resolveFileSnapshotPath } from "../../helpers/file-snapshot";
 import {
   withScenarioHarness,
   type ScenarioRunContext,
@@ -14,7 +11,7 @@ import {
   findLatestSpan,
 } from "../../helpers/trace-selectors";
 import {
-  formatSpanTreeSnapshot,
+  matchSpanTreeSnapshot,
   spanTreeFields,
   type SpanTreeEntry,
   type SpanTreeFields,
@@ -350,7 +347,7 @@ export function defineHuggingFaceInstrumentationAssertions(options: {
 }): void {
   const spanSnapshotPath = resolveFileSnapshotPath(
     options.testFileUrl,
-    `${options.snapshotName}.span-tree.txt`,
+    `${options.snapshotName}.span-tree.json`,
   );
 
   describe(options.name, () => {
@@ -380,10 +377,7 @@ export function defineHuggingFaceInstrumentationAssertions(options: {
       "matches the span contract snapshot",
       { timeout: options.timeoutMs },
       async ({ expect }) => {
-        await matchFileSnapshot(
-          formatSpanTreeSnapshot(events),
-          spanSnapshotPath,
-        );
+        await matchSpanTreeSnapshot(events, spanSnapshotPath);
       },
     );
 

@@ -4,17 +4,14 @@ import type {
   CapturedLogRow,
 } from "../../helpers/mock-braintrust-server";
 import type { Json } from "../../helpers/normalize";
-import {
-  matchFileSnapshot,
-  resolveFileSnapshotPath,
-} from "../../helpers/file-snapshot";
+import { resolveFileSnapshotPath } from "../../helpers/file-snapshot";
 import {
   effectiveScenarioTimeoutMs,
   withScenarioHarness,
   type ScenarioRunContext,
 } from "../../helpers/scenario-harness";
 import {
-  formatSpanTreeSnapshot,
+  matchSpanTreeSnapshot,
   spanTreeFields,
   type SpanTreeEntry,
 } from "../../helpers/span-tree";
@@ -488,7 +485,7 @@ export function defineMistralInstrumentationAssertions(options: {
 }): void {
   const spanSnapshotPath = resolveFileSnapshotPath(
     options.testFileUrl,
-    `${options.snapshotName}.span-tree.txt`,
+    `${options.snapshotName}.span-tree.json`,
   );
   const supportsThinkingStream = options.supportsThinkingStream ?? true;
   const supportsClassifiers = options.supportsClassifiers ?? true;
@@ -1037,7 +1034,7 @@ export function defineMistralInstrumentationAssertions(options: {
     }
 
     test("matches the shared span tree snapshot", testConfig, async () => {
-      await matchFileSnapshot(formatSpanTreeSnapshot(events), spanSnapshotPath);
+      await matchSpanTreeSnapshot(events, spanSnapshotPath);
     });
   });
 }

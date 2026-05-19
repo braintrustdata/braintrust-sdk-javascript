@@ -10,7 +10,7 @@ import {
   resolveScenarioDir,
   withScenarioHarness,
 } from "../../helpers/scenario-harness";
-import { formatSpanTreeSnapshot } from "../../helpers/span-tree";
+import { matchSpanTreeSnapshot } from "../../helpers/span-tree";
 import { findLatestSpan } from "../../helpers/trace-selectors";
 
 const scenarioDir = await prepareScenarioDir({
@@ -18,7 +18,7 @@ const scenarioDir = await prepareScenarioDir({
 });
 const spanTreeSnapshotPath = resolveFileSnapshotPath(
   import.meta.url,
-  "span-tree.txt",
+  "span-tree.json",
 );
 const lateUpdatePayloadsSnapshotPath = resolveFileSnapshotPath(
   import.meta.url,
@@ -55,10 +55,7 @@ test("trace-context-and-continuation supports reattachment and late span updates
         state: "updated",
       });
 
-      await matchFileSnapshot(
-        formatSpanTreeSnapshot(capturedEvents),
-        spanTreeSnapshotPath,
-      );
+      await matchSpanTreeSnapshot(capturedEvents, spanTreeSnapshotPath);
 
       const mutationRows = payloads()
         .flatMap((payload) => payload.rows)

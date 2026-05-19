@@ -1,6 +1,5 @@
 import { expect } from "vitest";
 import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
-import { formatSpanTreeSnapshot } from "../../helpers/span-tree";
 import { findChildSpans, findLatestSpan } from "../../helpers/trace-selectors";
 
 function findNamedChildSpan(
@@ -22,7 +21,7 @@ export function assertLangchainTraces(options: {
   capturedEvents: CapturedLogEvent[];
   rootName: string;
   scenarioName: string;
-}): string {
+}): CapturedLogEvent[] {
   const root = findLatestSpan(options.capturedEvents, options.rootName);
   const invokeOperation = findLatestSpan(
     options.capturedEvents,
@@ -109,5 +108,5 @@ export function assertLangchainTraces(options: {
   );
   expect(toolResultSpans.length).toBeGreaterThanOrEqual(2);
 
-  return formatSpanTreeSnapshot(options.capturedEvents);
+  return options.capturedEvents;
 }
