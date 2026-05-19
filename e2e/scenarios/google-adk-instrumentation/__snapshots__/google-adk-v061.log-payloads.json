@@ -22,6 +22,17 @@
     "type": null
   },
   {
+    "metadata": {
+      "operation": "sequential-run"
+    },
+    "metrics": {
+      "end": 0,
+      "start": 0
+    },
+    "name": "adk-sequential-run-operation",
+    "type": null
+  },
+  {
     "input": {
       "messages": [
         {
@@ -32,6 +43,28 @@
     },
     "metadata": {
       "google_adk.session_id": "test-session-1",
+      "google_adk.user_id": "test-user",
+      "provider": "google-adk"
+    },
+    "metrics": {
+      "duration": 0,
+      "end": 0,
+      "start": 0
+    },
+    "name": "Google ADK Runner",
+    "type": "task"
+  },
+  {
+    "input": {
+      "messages": [
+        {
+          "content": "Hello.",
+          "role": "user"
+        }
+      ]
+    },
+    "metadata": {
+      "google_adk.session_id": "test-session-sequential",
       "google_adk.user_id": "test-user",
       "provider": "google-adk"
     },
@@ -58,6 +91,19 @@
     "type": "task"
   },
   {
+    "metadata": {
+      "google_adk.agent_name": "sequential_workflow",
+      "provider": "google-adk"
+    },
+    "metrics": {
+      "duration": 0,
+      "end": 0,
+      "start": 0
+    },
+    "name": "Agent: sequential_workflow",
+    "type": "task"
+  },
+  {
     "input": {
       "location": "Paris, France"
     },
@@ -78,52 +124,6 @@
       "temperature": 72
     },
     "type": "tool"
-  },
-  {
-    "metadata": {
-      "operation": "sequential-run"
-    },
-    "metrics": {
-      "end": 0,
-      "start": 0
-    },
-    "name": "adk-sequential-run-operation",
-    "type": null
-  },
-  {
-    "input": {
-      "messages": [
-        {
-          "content": "Hello.",
-          "role": "user"
-        }
-      ]
-    },
-    "metadata": {
-      "google_adk.session_id": "test-session-sequential",
-      "google_adk.user_id": "test-user",
-      "provider": "google-adk"
-    },
-    "metrics": {
-      "duration": 0,
-      "end": 0,
-      "start": 0
-    },
-    "name": "Google ADK Runner",
-    "type": "task"
-  },
-  {
-    "metadata": {
-      "google_adk.agent_name": "sequential_workflow",
-      "provider": "google-adk"
-    },
-    "metrics": {
-      "duration": 0,
-      "end": 0,
-      "start": 0
-    },
-    "name": "Agent: sequential_workflow",
-    "type": "task"
   },
   {
     "metadata": {
