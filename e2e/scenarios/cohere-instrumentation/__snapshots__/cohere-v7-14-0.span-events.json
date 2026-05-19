@@ -19,7 +19,7 @@
       "operation": "chat"
     },
     "metric_keys": [],
-    "name": "cohere-chat-operation",
+    "name": "cohere-v2-chat-operation",
     "root_span_id": "<span:1>",
     "span_id": "<span:2>",
     "span_parents": [
@@ -56,7 +56,7 @@
       "operation": "chat-stream"
     },
     "metric_keys": [],
-    "name": "cohere-chat-stream-operation",
+    "name": "cohere-v2-chat-stream-operation",
     "root_span_id": "<span:1>",
     "span_id": "<span:4>",
     "span_parents": [
@@ -93,7 +93,7 @@
       "operation": "embed"
     },
     "metric_keys": [],
-    "name": "cohere-embed-operation",
+    "name": "cohere-v2-embed-operation",
     "root_span_id": "<span:1>",
     "span_id": "<span:6>",
     "span_parents": [
@@ -127,7 +127,7 @@
       "operation": "rerank"
     },
     "metric_keys": [],
-    "name": "cohere-rerank-operation",
+    "name": "cohere-v2-rerank-operation",
     "root_span_id": "<span:1>",
     "span_id": "<span:8>",
     "span_parents": [

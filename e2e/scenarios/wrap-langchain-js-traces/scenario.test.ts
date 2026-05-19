@@ -1,6 +1,7 @@
 import { expect, test } from "vitest";
 import {
   formatJsonFileSnapshot,
+  matchFileSnapshot,
   resolveFileSnapshotPath,
 } from "../../helpers/file-snapshot";
 import {
@@ -11,9 +12,11 @@ import {
 
 import { assertLangchainTraces } from "./assertions";
 
+const originalScenarioDir = resolveScenarioDir(import.meta.url);
 const scenarioDir = await prepareScenarioDir({
-  scenarioDir: resolveScenarioDir(import.meta.url),
+  scenarioDir: originalScenarioDir,
 });
+const VARIANT_KEY = "wrap-langchain-js-traces";
 const TIMEOUT_MS = 90_000;
 
 test(
@@ -23,7 +26,14 @@ test(
   },
   async () => {
     await withScenarioHarness(async ({ events, payloads, runScenarioDir }) => {
-      await runScenarioDir({ scenarioDir, timeoutMs: TIMEOUT_MS });
+      await runScenarioDir({
+        scenarioDir,
+        timeoutMs: TIMEOUT_MS,
+        runContext: {
+          variantKey: VARIANT_KEY,
+          originalScenarioDir,
+        },
+      });
 
       const summaries = assertLangchainTraces({
         capturedEvents: events(),
@@ -32,14 +42,12 @@ test(
         scenarioName: "wrap-langchain-js-traces",
       });
 
-      await expect(
+      await matchFileSnapshot(
         formatJsonFileSnapshot(summaries.spanSummary),
-      ).toMatchFileSnapshot(
         resolveFileSnapshotPath(import.meta.url, "span-events.json"),
       );
-      await expect(
+      await matchFileSnapshot(
         formatJsonFileSnapshot(summaries.payloadSummary),
-      ).toMatchFileSnapshot(
         resolveFileSnapshotPath(import.meta.url, "log-payloads.json"),
       );
     });

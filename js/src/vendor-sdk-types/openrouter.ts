@@ -26,6 +26,9 @@ export type OpenRouterChatChoice = {
   message?: {
     role?: string;
     content?: string | null;
+    reasoning?: string | null;
+    reasoning_content?: string | null;
+    reasoning_details?: unknown[];
     tool_calls?: unknown;
   };
   logprobs?: unknown;
@@ -47,6 +50,9 @@ export type OpenRouterChatCompletionChunk = {
     delta?: {
       role?: string;
       content?: string;
+      reasoning?: string;
+      reasoning_content?: string;
+      reasoning_details?: unknown[];
       tool_calls?: OpenRouterChatToolCallDelta[];
       toolCalls?: OpenRouterChatToolCallDelta[];
       finish_reason?: string | null;

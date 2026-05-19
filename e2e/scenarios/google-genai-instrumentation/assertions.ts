@@ -3,9 +3,14 @@ import { normalizeForSnapshot, type Json } from "../../helpers/normalize";
 import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
 import {
   formatJsonFileSnapshot,
+  matchFileSnapshot,
   resolveFileSnapshotPath,
 } from "../../helpers/file-snapshot";
-import { withScenarioHarness } from "../../helpers/scenario-harness";
+import {
+  effectiveScenarioTimeoutMs,
+  withScenarioHarness,
+  type ScenarioRunContext,
+} from "../../helpers/scenario-harness";
 import {
   findChildSpans,
   findLatestChildSpan,
@@ -24,13 +29,13 @@ type RunGoogleGenAIScenario = (harness: {
   runNodeScenarioDir: (options: {
     entry: string;
     nodeArgs: string[];
-    runContext?: { variantKey: string };
+    runContext?: ScenarioRunContext;
     scenarioDir: string;
     timeoutMs: number;
   }) => Promise<unknown>;
   runScenarioDir: (options: {
     entry: string;
-    runContext?: { variantKey: string };
+    runContext?: ScenarioRunContext;
     scenarioDir: string;
     timeoutMs: number;
   }) => Promise<unknown>;
@@ -187,6 +192,7 @@ function normalizeGoogleOutput(event: CapturedLogEvent): Json {
   if (isRecord(usageMetadata)) {
     delete usageMetadata.cachedContentTokenCount;
     delete usageMetadata.cacheTokensDetails;
+    delete usageMetadata.serviceTier;
 
     const promptTokensDetails = usageMetadata.promptTokensDetails;
     if (Array.isArray(promptTokensDetails)) {
@@ -359,8 +365,9 @@ export function defineGoogleGenAIInstrumentationAssertions(options: {
     options.testFileUrl,
     `${options.snapshotName}.log-payloads.json`,
   );
+  const timeoutMs = effectiveScenarioTimeoutMs(options.timeoutMs);
   const testConfig = {
-    timeout: options.timeoutMs,
+    timeout: timeoutMs,
   };
 
   describe(options.name, () => {
@@ -371,7 +378,7 @@ export function defineGoogleGenAIInstrumentationAssertions(options: {
         await options.runScenario(harness);
         events = harness.events();
       });
-    }, options.timeoutMs);
+    }, timeoutMs);
 
     test("captures the root trace for the scenario", testConfig, () => {
       const root = findLatestSpan(events, ROOT_NAME);
@@ -426,6 +433,50 @@ export function defineGoogleGenAIInstrumentationAssertions(options: {
         start: expect.any(Number),
       });
     });
+
+    // TODO(lforst): Gotta figure out why google rejects a normal ai studio api key for this call
+    // test("captures trace for chat.sendMessage()", testConfig, () => {
+    //   const root = findLatestSpan(events, ROOT_NAME);
+    //   const operation = findLatestSpan(events, "google-chat-operation");
+    //   const span = findGoogleSpan(events, operation?.span.id, [
+    //     "generate_content",
+    //     "google-genai.generateContent",
+    //   ]);
+
+    //   expect(operation).toBeDefined();
+    //   expect(span).toBeDefined();
+    //   expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
+    //   expect(span?.row.metadata).toMatchObject({
+    //     model: GOOGLE_MODEL,
+    //   });
+    //   expect(span?.metrics).toMatchObject({
+    //     duration: expect.any(Number),
+    //     end: expect.any(Number),
+    //     start: expect.any(Number),
+    //   });
+    // });
+
+    // TODO(lforst): Gotta figure out why google rejects a normal ai studio api key for this call
+    // test("captures trace for chat.sendMessageStream()", testConfig, () => {
+    //   const root = findLatestSpan(events, ROOT_NAME);
+    //   const operation = findLatestSpan(events, "google-chat-stream-operation");
+    //   const span = findGoogleSpan(events, operation?.span.id, [
+    //     "generate_content_stream",
+    //     "google-genai.generateContentStream",
+    //   ]);
+
+    //   expect(operation).toBeDefined();
+    //   expect(span).toBeDefined();
+    //   expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
+    //   expect(span?.row.metadata).toMatchObject({
+    //     model: GOOGLE_MODEL,
+    //   });
+    //   expect(span?.metrics).toMatchObject({
+    //     time_to_first_token: expect.any(Number),
+    //     prompt_tokens: expect.any(Number),
+    //     completion_tokens: expect.any(Number),
+    //   });
+    // });
 
     test("captures trace for sending an attachment", testConfig, () => {
       const root = findLatestSpan(events, ROOT_NAME);
@@ -589,15 +640,17 @@ export function defineGoogleGenAIInstrumentationAssertions(options: {
     });
 
     test("matches the shared span snapshot", testConfig, async () => {
-      await expect(
+      await matchFileSnapshot(
         formatJsonFileSnapshot(buildSpanSummary(events)),
-      ).toMatchFileSnapshot(spanSnapshotPath);
+        spanSnapshotPath,
+      );
     });
 
     test("matches the shared payload snapshot", testConfig, async () => {
-      await expect(
+      await matchFileSnapshot(
         formatJsonFileSnapshot(buildPayloadSummary(events)),
-      ).toMatchFileSnapshot(payloadSnapshotPath);
+        payloadSnapshotPath,
+      );
     });
   });
 }

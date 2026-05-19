@@ -3,24 +3,28 @@ import type { Json } from "../../helpers/normalize";
 import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
 import {
   formatJsonFileSnapshot,
+  matchFileSnapshot,
   resolveFileSnapshotPath,
 } from "../../helpers/file-snapshot";
-import { withScenarioHarness } from "../../helpers/scenario-harness";
+import {
+  withScenarioHarness,
+  type ScenarioRunContext,
+} from "../../helpers/scenario-harness";
 import { findChildSpans, findLatestSpan } from "../../helpers/trace-selectors";
 import { summarizeWrapperContract } from "../../helpers/wrapper-contract";
-import { ROOT_NAME, SCENARIO_NAME } from "./constants.mjs";
+import { REASONING_MODEL, ROOT_NAME, SCENARIO_NAME } from "./constants.mjs";
 
 type RunGroqScenario = (harness: {
   runNodeScenarioDir: (options: {
     entry: string;
     nodeArgs: string[];
-    runContext?: { variantKey: string };
+    runContext?: ScenarioRunContext;
     scenarioDir: string;
     timeoutMs: number;
   }) => Promise<unknown>;
   runScenarioDir: (options: {
     entry: string;
-    runContext?: { variantKey: string };
+    runContext?: ScenarioRunContext;
     scenarioDir: string;
     timeoutMs: number;
   }) => Promise<unknown>;
@@ -38,6 +42,10 @@ function findGroqSpan(
 function buildSpanSummary(events: CapturedLogEvent[]): Json {
   const chatOperation = findLatestSpan(events, "groq-chat-operation");
   const streamOperation = findLatestSpan(events, "groq-stream-operation");
+  const reasoningStreamOperation = findLatestSpan(
+    events,
+    "groq-reasoning-stream-operation",
+  );
   const toolOperation = findLatestSpan(events, "groq-tool-operation");
 
   return [
@@ -54,6 +62,12 @@ function buildSpanSummary(events: CapturedLogEvent[]): Json {
       streamOperation?.span.id,
       "groq.chat.completions.create",
     ),
+    reasoningStreamOperation,
+    findGroqSpan(
+      events,
+      reasoningStreamOperation?.span.id,
+      "groq.chat.completions.create",
+    ),
     toolOperation,
     findGroqSpan(
       events,
@@ -65,6 +79,7 @@ function buildSpanSummary(events: CapturedLogEvent[]): Json {
       "model",
       "operation",
       "provider",
+      "reasoning_format",
       "scenario",
       "temperature",
     ]),
@@ -134,6 +149,34 @@ export function defineGroqInstrumentationAssertions(options: {
       });
     });
 
+    test(
+      "captures reasoning content from parsed streaming chunks",
+      testConfig,
+      () => {
+        const operation = findLatestSpan(
+          events,
+          "groq-reasoning-stream-operation",
+        );
+        const span = findGroqSpan(
+          events,
+          operation?.span.id,
+          "groq.chat.completions.create",
+        );
+        const reasoning = span?.output?.[0]?.message?.reasoning;
+
+        expect(span?.row.metadata).toMatchObject({
+          model: REASONING_MODEL,
+          provider: "groq",
+          reasoning_format: "parsed",
+        });
+        expect(span?.metrics).toMatchObject({
+          time_to_first_token: expect.any(Number),
+        });
+        expect(reasoning).toEqual(expect.any(String));
+        expect(reasoning?.length).toBeGreaterThan(0);
+      },
+    );
+
     test("captures tool calling span", testConfig, () => {
       const operation = findLatestSpan(events, "groq-tool-operation");
       const span = findGroqSpan(
@@ -158,9 +201,10 @@ export function defineGroqInstrumentationAssertions(options: {
     });
 
     test("matches span snapshot", testConfig, async () => {
-      await expect(
+      await matchFileSnapshot(
         formatJsonFileSnapshot(buildSpanSummary(events)),
-      ).toMatchFileSnapshot(spanSnapshotPath);
+        spanSnapshotPath,
+      );
     });
   });
 }

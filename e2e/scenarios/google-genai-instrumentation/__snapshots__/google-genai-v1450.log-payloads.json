@@ -64,9 +64,10 @@
       "sdkHttpResponse": {
         "headers": {
           "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
-          "content-encoding": "gzip",
+          "connection": "keep-alive",
           "content-type": "application/json; charset=UTF-8",
           "date": "<timestamp>",
+          "keep-alive": "timeout=5",
           "server": "scaffolding on HTTPServer2",
           "server-timing": "<server-timing>",
           "transfer-encoding": "chunked",
@@ -195,9 +196,10 @@
       "sdkHttpResponse": {
         "headers": {
           "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
-          "content-encoding": "gzip",
+          "connection": "keep-alive",
           "content-type": "application/json; charset=UTF-8",
           "date": "<timestamp>",
+          "keep-alive": "timeout=5",
           "server": "scaffolding on HTTPServer2",
           "server-timing": "<server-timing>",
           "transfer-encoding": "chunked",
@@ -421,9 +423,10 @@
       "sdkHttpResponse": {
         "headers": {
           "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
-          "content-encoding": "gzip",
+          "connection": "keep-alive",
           "content-type": "application/json; charset=UTF-8",
           "date": "<timestamp>",
+          "keep-alive": "timeout=5",
           "server": "scaffolding on HTTPServer2",
           "server-timing": "<server-timing>",
           "transfer-encoding": "chunked",

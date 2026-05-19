@@ -3,9 +3,13 @@ import type { Json } from "../../helpers/normalize";
 import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
 import {
   formatJsonFileSnapshot,
+  matchFileSnapshot,
   resolveFileSnapshotPath,
 } from "../../helpers/file-snapshot";
-import { withScenarioHarness } from "../../helpers/scenario-harness";
+import {
+  withScenarioHarness,
+  type ScenarioRunContext,
+} from "../../helpers/scenario-harness";
 import { findChildSpans, findLatestSpan } from "../../helpers/trace-selectors";
 import { summarizeWrapperContract } from "../../helpers/wrapper-contract";
 import { ROOT_NAME, SCENARIO_NAME } from "./constants.mjs";
@@ -15,14 +19,14 @@ type RunCohereScenario = (harness: {
     entry: string;
     env?: Record<string, string>;
     nodeArgs: string[];
-    runContext?: { variantKey: string };
+    runContext?: ScenarioRunContext;
     scenarioDir: string;
     timeoutMs: number;
   }) => Promise<unknown>;
   runScenarioDir: (options: {
     entry: string;
     env?: Record<string, string>;
-    runContext?: { variantKey: string };
+    runContext?: ScenarioRunContext;
     scenarioDir: string;
     timeoutMs: number;
   }) => Promise<unknown>;
@@ -37,21 +41,40 @@ function findCohereSpan(
   return spans.find((candidate) => candidate.output !== undefined) ?? spans[0];
 }
 
+function getOperationName(
+  baseName: string,
+  { useV2Namespace }: { useV2Namespace: boolean },
+) {
+  return useV2Namespace
+    ? `cohere-v2-${baseName}-operation`
+    : `cohere-${baseName}-operation`;
+}
+
 function buildSpanSummary(
   events: CapturedLogEvent[],
   supportsThinking: boolean,
+  useV2Namespace: boolean,
 ): Json {
-  const chatOperation = findLatestSpan(events, "cohere-chat-operation");
+  const chatOperation = findLatestSpan(
+    events,
+    getOperationName("chat", { useV2Namespace }),
+  );
   const chatStreamOperation = findLatestSpan(
     events,
-    "cohere-chat-stream-operation",
+    getOperationName("chat-stream", { useV2Namespace }),
   );
   const chatStreamThinkingOperation = findLatestSpan(
     events,
-    "cohere-chat-stream-thinking-operation",
+    getOperationName("chat-stream-thinking", { useV2Namespace }),
   );
-  const embedOperation = findLatestSpan(events, "cohere-embed-operation");
-  const rerankOperation = findLatestSpan(events, "cohere-rerank-operation");
+  const embedOperation = findLatestSpan(
+    events,
+    getOperationName("embed", { useV2Namespace }),
+  );
+  const rerankOperation = findLatestSpan(
+    events,
+    getOperationName("rerank", { useV2Namespace }),
+  );
 
   const summaryEvents = [
     findLatestSpan(events, ROOT_NAME),
@@ -99,6 +122,8 @@ export function defineCohereInstrumentationAssertions(options: {
   supportsThinking: boolean;
   testFileUrl: string;
   timeoutMs: number;
+  requireChatStreamOutput?: boolean;
+  useV2Namespace?: boolean;
 }): void {
   const spanSnapshotPath = resolveFileSnapshotPath(
     options.testFileUrl,
@@ -127,7 +152,13 @@ export function defineCohereInstrumentationAssertions(options: {
     });
 
     test("captures chat and chatStream spans", testConfig, () => {
-      const chatOperation = findLatestSpan(events, "cohere-chat-operation");
+      const chatOperationName = getOperationName("chat", {
+        useV2Namespace: options.useV2Namespace ?? false,
+      });
+      const chatStreamOperationName = getOperationName("chat-stream", {
+        useV2Namespace: options.useV2Namespace ?? false,
+      });
+      const chatOperation = findLatestSpan(events, chatOperationName);
       const chatSpan = findCohereSpan(
         events,
         chatOperation?.span.id,
@@ -135,7 +166,7 @@ export function defineCohereInstrumentationAssertions(options: {
       );
       const chatStreamOperation = findLatestSpan(
         events,
-        "cohere-chat-stream-operation",
+        chatStreamOperationName,
       );
       const chatStreamSpan = findCohereSpan(
         events,
@@ -155,7 +186,9 @@ export function defineCohereInstrumentationAssertions(options: {
       expect(chatStreamSpan?.row.metadata).toMatchObject({
         provider: "cohere",
       });
-      expect(chatStreamSpan?.output).toBeDefined();
+      if (options.requireChatStreamOutput ?? true) {
+        expect(chatStreamSpan?.output).toBeDefined();
+      }
     });
 
     if (options.supportsThinking) {
@@ -163,7 +196,9 @@ export function defineCohereInstrumentationAssertions(options: {
         const root = findLatestSpan(events, ROOT_NAME);
         const operation = findLatestSpan(
           events,
-          "cohere-chat-stream-thinking-operation",
+          getOperationName("chat-stream-thinking", {
+            useV2Namespace: options.useV2Namespace ?? false,
+          }),
         );
         const span = findCohereSpan(
           events,
@@ -213,7 +248,12 @@ export function defineCohereInstrumentationAssertions(options: {
     }
 
     test("captures embed span", testConfig, () => {
-      const operation = findLatestSpan(events, "cohere-embed-operation");
+      const operation = findLatestSpan(
+        events,
+        getOperationName("embed", {
+          useV2Namespace: options.useV2Namespace ?? false,
+        }),
+      );
       const span = findCohereSpan(events, operation?.span.id, "cohere.embed");
       const output = span?.output as { embedding_length?: number } | undefined;
 
@@ -227,7 +267,12 @@ export function defineCohereInstrumentationAssertions(options: {
     });
 
     test("captures rerank span", testConfig, () => {
-      const operation = findLatestSpan(events, "cohere-rerank-operation");
+      const operation = findLatestSpan(
+        events,
+        getOperationName("rerank", {
+          useV2Namespace: options.useV2Namespace ?? false,
+        }),
+      );
       const span = findCohereSpan(events, operation?.span.id, "cohere.rerank");
 
       expect(operation).toBeDefined();
@@ -243,11 +288,16 @@ export function defineCohereInstrumentationAssertions(options: {
     });
 
     test("matches span snapshot", testConfig, async () => {
-      await expect(
+      await matchFileSnapshot(
         formatJsonFileSnapshot(
-          buildSpanSummary(events, options.supportsThinking),
+          buildSpanSummary(
+            events,
+            options.supportsThinking,
+            options.useV2Namespace ?? false,
+          ),
         ),
-      ).toMatchFileSnapshot(spanSnapshotPath);
+        spanSnapshotPath,
+      );
     });
   });
 }

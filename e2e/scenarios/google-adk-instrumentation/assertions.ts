@@ -3,9 +3,13 @@ import { normalizeForSnapshot, type Json } from "../../helpers/normalize";
 import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
 import {
   formatJsonFileSnapshot,
+  matchFileSnapshot,
   resolveFileSnapshotPath,
 } from "../../helpers/file-snapshot";
-import { withScenarioHarness } from "../../helpers/scenario-harness";
+import {
+  withScenarioHarness,
+  type ScenarioRunContext,
+} from "../../helpers/scenario-harness";
 import { findLatestSpan } from "../../helpers/trace-selectors";
 import { summarizeWrapperContract } from "../../helpers/wrapper-contract";
 
@@ -15,17 +19,34 @@ type RunGoogleADKScenario = (harness: {
   runNodeScenarioDir: (options: {
     entry: string;
     nodeArgs: string[];
-    runContext?: { variantKey: string };
+    runContext?: ScenarioRunContext;
     scenarioDir: string;
     timeoutMs: number;
   }) => Promise<unknown>;
   runScenarioDir: (options: {
     entry: string;
-    runContext?: { variantKey: string };
+    runContext?: ScenarioRunContext;
     scenarioDir: string;
     timeoutMs: number;
   }) => Promise<unknown>;
 }) => Promise<void>;
+
+const VOLATILE_ADK_METRIC_KEYS = new Set([
+  "completion_reasoning_tokens",
+  "completion_tokens",
+  "prompt_cached_tokens",
+  "prompt_tokens",
+  "tokens",
+]);
+const SNAPSHOT_ROW_IDENTITY_FIELDS = [
+  "org_id",
+  "project_id",
+  "experiment_id",
+  "dataset_id",
+  "prompt_session_id",
+  "log_id",
+  "id",
+];
 
 function isRecord(value: Json | undefined): value is Record<string, Json> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -71,7 +92,9 @@ function normalizeADKMetrics(metrics: Json): Json {
   }
 
   const normalized = structuredClone(metrics);
-  delete normalized.prompt_cached_tokens;
+  for (const key of VOLATILE_ADK_METRIC_KEYS) {
+    delete normalized[key];
+  }
   return normalizeADKVariableTokenCounts(normalized);
 }
 
@@ -84,8 +107,7 @@ function normalizeADKSummary(summary: Json): Json {
     ...summary,
     metric_keys: summary.metric_keys.filter(
       (metric): metric is string =>
-        metric !== "prompt_cached_tokens" &&
-        metric !== "completion_reasoning_tokens",
+        typeof metric === "string" && !VOLATILE_ADK_METRIC_KEYS.has(metric),
     ),
   } satisfies Json;
 }
@@ -109,6 +131,19 @@ function normalizeADKOutput(value: Json): Json {
   return cloned;
 }
 
+function latestSnapshotEvents(events: CapturedLogEvent[]): CapturedLogEvent[] {
+  const eventsByRow = new Map<string, CapturedLogEvent>();
+
+  for (const event of events) {
+    const key = JSON.stringify(
+      SNAPSHOT_ROW_IDENTITY_FIELDS.map((field) => event.row[field]),
+    );
+    eventsByRow.set(key, event);
+  }
+
+  return [...eventsByRow.values()];
+}
+
 function dedupeSnapshotItems(items: Json[]): Json[] {
   const deduped: Json[] = [];
   const seen = new Set<string>();
@@ -123,6 +158,34 @@ function dedupeSnapshotItems(items: Json[]): Json[] {
   }
 
   return deduped;
+}
+
+function hasOptionalADKTaskOutput(event: CapturedLogEvent): boolean {
+  return (
+    event.span.type === "task" &&
+    (event.span.name === "Google ADK Runner" ||
+      event.span.name?.startsWith("Agent:"))
+  );
+}
+
+function summarizeADKSpan(event: CapturedLogEvent): Json {
+  const summary = summarizeWrapperContract(event, [
+    "model",
+    "operation",
+    "scenario",
+    "provider",
+    "google_adk.agent_name",
+    "google_adk.user_id",
+    "google_adk.session_id",
+    "google_adk.tool_name",
+    "google_adk.tool_call_id",
+  ]) as Record<string, Json>;
+
+  if (hasOptionalADKTaskOutput(event)) {
+    delete summary.has_output;
+  }
+
+  return normalizeADKSummary(summary);
 }
 
 function summarizeADKPayload(event: CapturedLogEvent): Json {
@@ -147,7 +210,7 @@ function summarizeADKPayload(event: CapturedLogEvent): Json {
     }
   }
 
-  return {
+  const summary: Record<string, Json> = {
     input: event.input as Json,
     metadata:
       Object.keys(pickedMetadata).length > 0 ? (pickedMetadata as Json) : null,
@@ -155,7 +218,13 @@ function summarizeADKPayload(event: CapturedLogEvent): Json {
     name: event.span.name ?? null,
     output: normalizeADKOutput(event.output as Json),
     type: event.span.type ?? null,
-  } satisfies Json;
+  };
+
+  if (hasOptionalADKTaskOutput(event)) {
+    delete summary.output;
+  }
+
+  return summary satisfies Json;
 }
 
 export function defineGoogleADKInstrumentationAssertions(options: {
@@ -215,6 +284,34 @@ export function defineGoogleADKInstrumentationAssertions(options: {
       expect(agentSpan).toBeDefined();
     });
 
+    test("captures nested SequentialAgent sub-agent names", testConfig, () => {
+      const agentSpans = events.filter(
+        (e) => e.span.name?.startsWith("Agent:") && e.span.type === "task",
+      );
+      const agentSpanNames = agentSpans.map((e) => e.span.name);
+
+      expect(agentSpanNames).toEqual(
+        expect.arrayContaining([
+          "Agent: sequential_workflow",
+          "Agent: greeter",
+          "Agent: farewell",
+        ]),
+      );
+
+      const workflowSpan = agentSpans.find(
+        (e) => e.span.name === "Agent: sequential_workflow",
+      );
+      const greeterSpan = agentSpans.find(
+        (e) => e.span.name === "Agent: greeter",
+      );
+      const farewellSpan = agentSpans.find(
+        (e) => e.span.name === "Agent: farewell",
+      );
+
+      expect(greeterSpan?.span.parentIds).toContain(workflowSpan?.span.id);
+      expect(farewellSpan?.span.parentIds).toContain(workflowSpan?.span.id);
+    });
+
     test("captures tool span for Tool.runAsync()", testConfig, () => {
       const toolSpan = [...events]
         .reverse()
@@ -233,9 +330,13 @@ export function defineGoogleADKInstrumentationAssertions(options: {
     });
 
     test("nests the agent span under the runner span", testConfig, () => {
-      const runnerSpan = findLatestSpan(events, "Google ADK Runner");
+      const runnerSpan = events.find(
+        (e) =>
+          e.span.name === "Google ADK Runner" &&
+          e.row.metadata?.["google_adk.session_id"] === "test-session-1",
+      );
       const agentSpan = events.find(
-        (e) => e.span.name?.startsWith("Agent:") && e.span.type === "task",
+        (e) => e.span.name === "Agent: weather_agent" && e.span.type === "task",
       );
 
       expect(runnerSpan).toBeDefined();
@@ -257,7 +358,7 @@ export function defineGoogleADKInstrumentationAssertions(options: {
     });
 
     test("matches the shared span snapshot", testConfig, async () => {
-      const relevantEvents = events.filter(
+      const relevantEvents = latestSnapshotEvents(events).filter(
         (e) =>
           e.span.name !== undefined &&
           e.span.type !== "llm" &&
@@ -267,31 +368,18 @@ export function defineGoogleADKInstrumentationAssertions(options: {
       );
       const spanSummary = normalizeForSnapshot(
         dedupeSnapshotItems(
-          relevantEvents.map((event) =>
-            normalizeADKSummary(
-              summarizeWrapperContract(event, [
-                "model",
-                "operation",
-                "scenario",
-                "provider",
-                "google_adk.agent_name",
-                "google_adk.user_id",
-                "google_adk.session_id",
-                "google_adk.tool_name",
-                "google_adk.tool_call_id",
-              ]),
-            ),
-          ) as Json[],
+          relevantEvents.map((event) => summarizeADKSpan(event)) as Json[],
         ) as Json,
       );
 
-      await expect(formatJsonFileSnapshot(spanSummary)).toMatchFileSnapshot(
+      await matchFileSnapshot(
+        formatJsonFileSnapshot(spanSummary),
         spanSnapshotPath,
       );
     });
 
     test("matches the shared payload snapshot", testConfig, async () => {
-      const relevantEvents = events.filter(
+      const relevantEvents = latestSnapshotEvents(events).filter(
         (e) =>
           e.span.name !== undefined &&
           e.span.type !== "llm" &&
@@ -303,7 +391,8 @@ export function defineGoogleADKInstrumentationAssertions(options: {
         ) as Json,
       );
 
-      await expect(formatJsonFileSnapshot(payloadSummary)).toMatchFileSnapshot(
+      await matchFileSnapshot(
+        formatJsonFileSnapshot(payloadSummary),
         payloadSnapshotPath,
       );
     });

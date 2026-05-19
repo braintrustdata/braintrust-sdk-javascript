@@ -8,9 +8,14 @@ import type { Json } from "../../helpers/normalize";
 import { normalizeForSnapshot } from "../../helpers/normalize";
 import {
   formatJsonFileSnapshot,
+  matchFileSnapshot,
   resolveFileSnapshotPath,
 } from "../../helpers/file-snapshot";
-import { withScenarioHarness } from "../../helpers/scenario-harness";
+import {
+  effectiveScenarioTimeoutMs,
+  withScenarioHarness,
+  type ScenarioRunContext,
+} from "../../helpers/scenario-harness";
 import { findChildSpans, findLatestSpan } from "../../helpers/trace-selectors";
 import {
   payloadRowsForRootSpan,
@@ -20,6 +25,7 @@ import {
   ADJUSTABLE_REASONING_MODEL,
   FIM_MODEL,
   CHAT_MODEL,
+  CLASSIFIER_MODEL,
   AGENT_MODEL,
   EMBEDDING_MODEL,
   NATIVE_REASONING_MODEL,
@@ -31,13 +37,13 @@ type RunMistralScenario = (harness: {
   runNodeScenarioDir: (options: {
     entry: string;
     nodeArgs: string[];
-    runContext?: { variantKey: string };
+    runContext?: ScenarioRunContext;
     scenarioDir: string;
     timeoutMs: number;
   }) => Promise<unknown>;
   runScenarioDir: (options: {
     entry: string;
-    runContext?: { variantKey: string };
+    runContext?: ScenarioRunContext;
     scenarioDir: string;
     timeoutMs: number;
   }) => Promise<unknown>;
@@ -64,6 +70,12 @@ function findMistralSpan(
 
 function isRecord(value: Json | undefined): value is Record<string, Json> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function nonEmptyString(value: string | undefined): string | null {
+  return typeof value === "string" && value.trim().length > 0
+    ? value.trim()
+    : null;
 }
 
 function pickMetadata(
@@ -244,7 +256,15 @@ function normalizeLegacyV134SpanSummaryRow(
     return summaryRow;
   }
 
-  if (summaryRow.name !== "mistral.fim.stream") {
+  const unstableLegacyV134SpanNames = new Set([
+    "mistral.chat.stream",
+    "mistral.fim.stream",
+  ]);
+
+  if (
+    typeof summaryRow.name !== "string" ||
+    !unstableLegacyV134SpanNames.has(summaryRow.name)
+  ) {
     return summaryRow;
   }
 
@@ -439,6 +459,22 @@ function buildSpanSummary(
     events,
     "mistral-embeddings-operation",
   );
+  const classifiersModerateOperation = findLatestSpan(
+    events,
+    "mistral-classifiers-moderate-operation",
+  );
+  const classifiersModerateChatOperation = findLatestSpan(
+    events,
+    "mistral-classifiers-moderate-chat-operation",
+  );
+  const classifiersClassifyOperation = findLatestSpan(
+    events,
+    "mistral-classifiers-classify-operation",
+  );
+  const classifiersClassifyChatOperation = findLatestSpan(
+    events,
+    "mistral-classifiers-classify-chat-operation",
+  );
 
   return normalizeForSnapshot(
     [
@@ -482,6 +518,22 @@ function buildSpanSummary(
       embeddingsOperation,
       findMistralSpan(events, embeddingsOperation?.span.id, [
         "mistral.embeddings.create",
+      ]),
+      classifiersModerateOperation,
+      findMistralSpan(events, classifiersModerateOperation?.span.id, [
+        "mistral.classifiers.moderate",
+      ]),
+      classifiersModerateChatOperation,
+      findMistralSpan(events, classifiersModerateChatOperation?.span.id, [
+        "mistral.classifiers.moderateChat",
+      ]),
+      classifiersClassifyOperation,
+      findMistralSpan(events, classifiersClassifyOperation?.span.id, [
+        "mistral.classifiers.classify",
+      ]),
+      classifiersClassifyChatOperation,
+      findMistralSpan(events, classifiersClassifyChatOperation?.span.id, [
+        "mistral.classifiers.classifyChat",
       ]),
     ]
       .filter((event): event is CapturedLogEvent => event !== undefined)
@@ -533,6 +585,10 @@ function buildPayloadSummary(
     "mistral.agents.complete",
     "mistral.agents.stream",
     "mistral.embeddings.create",
+    "mistral.classifiers.moderate",
+    "mistral.classifiers.moderateChat",
+    "mistral.classifiers.classify",
+    "mistral.classifiers.classifyChat",
   ]);
   const parentAndNameWithOutput = new Set<string>();
 
@@ -590,6 +646,8 @@ export function defineMistralInstrumentationAssertions(options: {
   name: string;
   runScenario: RunMistralScenario;
   snapshotName: string;
+  supportsClassifiers?: boolean;
+  supportsClassify?: boolean;
   supportsThinkingStream?: boolean;
   testFileUrl: string;
   timeoutMs: number;
@@ -603,8 +661,13 @@ export function defineMistralInstrumentationAssertions(options: {
     `${options.snapshotName}.log-payloads.json`,
   );
   const supportsThinkingStream = options.supportsThinkingStream ?? true;
+  const supportsClassifiers = options.supportsClassifiers ?? true;
+  const classifyModel = nonEmptyString(process.env.MISTRAL_CLASSIFIER_MODEL);
+  const supportsClassify =
+    (options.supportsClassify ?? true) && !!classifyModel;
+  const timeoutMs = effectiveScenarioTimeoutMs(options.timeoutMs);
   const testConfig = {
-    timeout: options.timeoutMs,
+    timeout: timeoutMs,
   };
 
   describe(options.name, () => {
@@ -617,7 +680,7 @@ export function defineMistralInstrumentationAssertions(options: {
         events = harness.events();
         payloads = harness.payloads();
       });
-    }, options.timeoutMs);
+    }, timeoutMs);
 
     test("captures the root trace for the scenario", testConfig, () => {
       const root = findLatestSpan(events, ROOT_NAME);
@@ -695,8 +758,12 @@ export function defineMistralInstrumentationAssertions(options: {
         });
         expect(span?.metrics).toMatchObject({
           time_to_first_token: expect.any(Number),
-          prompt_tokens: expect.any(Number),
-          completion_tokens: expect.any(Number),
+          ...(options.snapshotName === "mistral-v1-3-4"
+            ? {}
+            : {
+                prompt_tokens: expect.any(Number),
+                completion_tokens: expect.any(Number),
+              }),
         });
         expect(span?.output).toBeDefined();
       },
@@ -732,9 +799,7 @@ export function defineMistralInstrumentationAssertions(options: {
                 };
               }>
             | undefined;
-          const content = Array.isArray(output?.[0]?.message?.content)
-            ? output[0].message.content
-            : [];
+          const content = output?.[0]?.message?.content;
 
           expect(operation).toBeDefined();
           expect(span).toBeDefined();
@@ -749,8 +814,13 @@ export function defineMistralInstrumentationAssertions(options: {
             prompt_tokens: expect.any(Number),
             completion_tokens: expect.any(Number),
           });
-          expect(content.some((part) => part.type === "thinking")).toBe(true);
-          expect(content.some((part) => part.type === "text")).toBe(true);
+          if (Array.isArray(content)) {
+            expect(content.some((part) => part.type === "thinking")).toBe(true);
+            expect(content.some((part) => part.type === "text")).toBe(true);
+          } else {
+            expect(content).toEqual(expect.any(String));
+            expect(content?.length).toBeGreaterThan(0);
+          }
         },
       );
     }
@@ -1040,18 +1110,118 @@ export function defineMistralInstrumentationAssertions(options: {
       expect(output?.embedding_length).toBeGreaterThan(0);
     });
 
+    if (supportsClassifiers) {
+      test("captures trace for classifiers.moderate()", testConfig, () => {
+        const root = findLatestSpan(events, ROOT_NAME);
+        const operation = findLatestSpan(
+          events,
+          "mistral-classifiers-moderate-operation",
+        );
+        const span = findMistralSpan(events, operation?.span.id, [
+          "mistral.classifiers.moderate",
+        ]);
+
+        expect(operation).toBeDefined();
+        expect(span).toBeDefined();
+        expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
+        expect(span?.span.type).toBe("llm");
+        expect(span?.row.metadata).toMatchObject({
+          model: CLASSIFIER_MODEL,
+          provider: "mistral",
+        });
+        expect(span?.input).toEqual(expect.any(String));
+        expect(span?.output).toEqual(expect.any(Array));
+        expect((span?.output as unknown[] | undefined)?.length).toBe(1);
+      });
+
+      test("captures trace for classifiers.moderateChat()", testConfig, () => {
+        const root = findLatestSpan(events, ROOT_NAME);
+        const operation = findLatestSpan(
+          events,
+          "mistral-classifiers-moderate-chat-operation",
+        );
+        const span = findMistralSpan(events, operation?.span.id, [
+          "mistral.classifiers.moderateChat",
+        ]);
+        const input = span?.input as Array<{ role?: string }> | undefined;
+
+        expect(operation).toBeDefined();
+        expect(span).toBeDefined();
+        expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
+        expect(span?.span.type).toBe("llm");
+        expect(span?.row.metadata).toMatchObject({
+          model: CLASSIFIER_MODEL,
+          provider: "mistral",
+        });
+        expect(input).toEqual(expect.any(Array));
+        expect(input?.[0]?.role).toBe("user");
+        expect(span?.output).toEqual(expect.any(Array));
+        expect((span?.output as unknown[] | undefined)?.length).toBe(1);
+      });
+    }
+
+    if (supportsClassifiers && supportsClassify) {
+      test("captures trace for classifiers.classify()", testConfig, () => {
+        const root = findLatestSpan(events, ROOT_NAME);
+        const operation = findLatestSpan(
+          events,
+          "mistral-classifiers-classify-operation",
+        );
+        const span = findMistralSpan(events, operation?.span.id, [
+          "mistral.classifiers.classify",
+        ]);
+
+        expect(operation).toBeDefined();
+        expect(span).toBeDefined();
+        expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
+        expect(span?.span.type).toBe("llm");
+        expect(span?.row.metadata).toMatchObject({
+          model: classifyModel,
+          provider: "mistral",
+        });
+        expect(span?.input).toEqual(expect.any(String));
+        expect(span?.output).toEqual(expect.any(Array));
+        expect((span?.output as unknown[] | undefined)?.length).toBe(1);
+      });
+
+      test("captures trace for classifiers.classifyChat()", testConfig, () => {
+        const root = findLatestSpan(events, ROOT_NAME);
+        const operation = findLatestSpan(
+          events,
+          "mistral-classifiers-classify-chat-operation",
+        );
+        const span = findMistralSpan(events, operation?.span.id, [
+          "mistral.classifiers.classifyChat",
+        ]);
+
+        expect(operation).toBeDefined();
+        expect(span).toBeDefined();
+        expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
+        expect(span?.span.type).toBe("llm");
+        expect(span?.row.metadata).toMatchObject({
+          model: classifyModel,
+          provider: "mistral",
+        });
+        expect(span?.input).toEqual(expect.any(Object));
+        expect(span?.output).toEqual(expect.any(Array));
+        expect((span?.output as unknown[] | undefined)?.length).toBe(1);
+      });
+    }
+
     test("matches the shared span snapshot", testConfig, async () => {
-      await expect(
+      await matchFileSnapshot(
         formatJsonFileSnapshot(buildSpanSummary(events, options.snapshotName)),
-      ).toMatchFileSnapshot(spanSnapshotPath);
+        spanSnapshotPath,
+      );
     });
 
     test("matches the shared payload snapshot", testConfig, async () => {
-      await expect(
+      await matchFileSnapshot(
         formatJsonFileSnapshot(
           buildPayloadSummary(events, payloads, options.snapshotName),
         ),
-      ).toMatchFileSnapshot(payloadSnapshotPath);
+        payloadSnapshotPath,
+      );
     });
   });
 }

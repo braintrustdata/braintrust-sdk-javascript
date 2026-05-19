@@ -3,9 +3,13 @@ import { type Json } from "../../helpers/normalize";
 import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
 import {
   formatJsonFileSnapshot,
+  matchFileSnapshot,
   resolveFileSnapshotPath,
 } from "../../helpers/file-snapshot";
-import { withScenarioHarness } from "../../helpers/scenario-harness";
+import {
+  withScenarioHarness,
+  type ScenarioRunContext,
+} from "../../helpers/scenario-harness";
 import {
   findLatestChildSpan,
   findLatestSpan,
@@ -21,13 +25,13 @@ type RunHuggingFaceScenario = (harness: {
   runNodeScenarioDir: (options: {
     entry: string;
     nodeArgs: string[];
-    runContext?: { variantKey: string };
+    runContext?: ScenarioRunContext;
     scenarioDir: string;
     timeoutMs: number;
   }) => Promise<unknown>;
   runScenarioDir: (options: {
     entry: string;
-    runContext?: { variantKey: string };
+    runContext?: ScenarioRunContext;
     scenarioDir: string;
     timeoutMs: number;
   }) => Promise<unknown>;
@@ -143,7 +147,46 @@ function summarizeProviderSpan(event: CapturedLogEvent): Json {
       break;
   }
 
-  return summary;
+  return normalizeEndpointUrls(summary);
+}
+
+function normalizeEndpointUrl(value: string): string {
+  try {
+    const url = new URL(value);
+    if (url.protocol !== "http:" || url.hostname !== "127.0.0.1") {
+      return value;
+    }
+
+    if (url.pathname.startsWith("/huggingface-router")) {
+      return `https://router.huggingface.co${url.pathname.slice("/huggingface-router".length)}${url.search}${url.hash}`;
+    }
+    if (url.pathname.startsWith("/huggingface")) {
+      return `https://huggingface.co${url.pathname.slice("/huggingface".length)}${url.search}${url.hash}`;
+    }
+  } catch {
+    return value;
+  }
+
+  return value;
+}
+
+function normalizeEndpointUrls(value: Json): Json {
+  if (Array.isArray(value)) {
+    return value.map((entry) => normalizeEndpointUrls(entry as Json));
+  }
+
+  if (!isRecord(value)) {
+    return value;
+  }
+
+  const normalized: Record<string, Json> = {};
+  for (const [key, entry] of Object.entries(value)) {
+    normalized[key] =
+      key === "endpointUrl" && typeof entry === "string"
+        ? normalizeEndpointUrl(entry)
+        : normalizeEndpointUrls(entry as Json);
+  }
+  return normalized;
 }
 
 function normalizeMetrics(value: Json): Json {
@@ -181,20 +224,39 @@ function normalizeMetrics(value: Json): Json {
   return normalized;
 }
 
+function normalizeModelNames(value: Json): Json {
+  if (Array.isArray(value)) {
+    return value.map((entry) => normalizeModelNames(entry as Json));
+  }
+
+  if (!isRecord(value)) {
+    return value;
+  }
+
+  const normalized: Record<string, Json> = {};
+  for (const [key, entry] of Object.entries(value)) {
+    normalized[key] =
+      key === "model" ? "<model>" : normalizeModelNames(entry as Json);
+  }
+  return normalized;
+}
+
 function normalizePayloadOutput(row: Json): Json {
   if (!isRecord(row)) {
     return row;
   }
 
-  return "output" in row
-    ? {
-        ...row,
-        output: normalizeLoggedOutput(row.output, {
-          normalizeFinishReason: true,
-          omitToolCalls: true,
-        }),
-      }
-    : row;
+  const normalized =
+    "output" in row
+      ? {
+          ...row,
+          output: normalizeLoggedOutput(row.output, {
+            normalizeFinishReason: true,
+            omitToolCalls: true,
+          }),
+        }
+      : row;
+  return normalizeEndpointUrls(normalizeModelNames(normalized));
 }
 
 function normalizeLoggedOutput(
@@ -250,7 +312,7 @@ function buildSpanSummary(events: CapturedLogEvent[]): Json {
     "huggingface-feature-extraction-operation",
   );
 
-  return [
+  return normalizeModelNames([
     root ? summarizeWrapperContract(root, ["scenario"]) : null,
     chatOperation
       ? summarizeWrapperContract(chatOperation, ["operation"])
@@ -324,7 +386,7 @@ function buildSpanSummary(events: CapturedLogEvent[]): Json {
           )!,
         )
       : null,
-  ] satisfies Json;
+  ] satisfies Json);
 }
 
 export function defineHuggingFaceInstrumentationAssertions(options: {
@@ -376,9 +438,10 @@ export function defineHuggingFaceInstrumentationAssertions(options: {
       "matches the span contract snapshot",
       { timeout: options.timeoutMs },
       async ({ expect }) => {
-        await expect(
+        await matchFileSnapshot(
           formatJsonFileSnapshot(buildSpanSummary(events)),
-        ).toMatchFileSnapshot(spanSnapshotPath);
+          spanSnapshotPath,
+        );
       },
     );
 
@@ -386,7 +449,8 @@ export function defineHuggingFaceInstrumentationAssertions(options: {
       "matches the log payload snapshot",
       { timeout: options.timeoutMs },
       async ({ expect }) => {
-        await expect(formatJsonFileSnapshot(payloadRows)).toMatchFileSnapshot(
+        await matchFileSnapshot(
+          formatJsonFileSnapshot(payloadRows),
           payloadSnapshotPath,
         );
       },

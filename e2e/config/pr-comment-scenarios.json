@@ -10,6 +10,18 @@
     ]
   },
   {
+    "scenarioDirName": "openai-codex-instrumentation",
+    "label": "OpenAI Codex Instrumentation",
+    "metadataScenario": "openai-codex-instrumentation",
+    "variants": [
+      { "variantKey": "openai-codex-v0128-wrapped", "label": "v0.128 wrapped" },
+      {
+        "variantKey": "openai-codex-v0128-auto-hook",
+        "label": "v0.128 auto-hook"
+      }
+    ]
+  },
+  {
     "scenarioDirName": "anthropic-instrumentation",
     "label": "Anthropic Instrumentation",
     "metadataScenario": "anthropic-instrumentation",
@@ -41,6 +53,12 @@
       { "variantKey": "google-genai-v1450", "label": "v1.45.0" },
       { "variantKey": "google-genai-v1460", "label": "v1.46.0" }
     ]
+  },
+  {
+    "scenarioDirName": "genkit-instrumentation",
+    "label": "Genkit Instrumentation",
+    "metadataScenario": "genkit-instrumentation",
+    "variants": [{ "variantKey": "genkit-v1-33-0", "label": "v1.33.0" }]
   },
   {
     "scenarioDirName": "groq-instrumentation",
@@ -117,10 +135,6 @@
     "metadataScenario": "claude-agent-sdk-traces",
     "variants": [
       {
-        "variantKey": "claude-agent-sdk-v0.1",
-        "label": "v0.1"
-      },
-      {
         "variantKey": "claude-agent-sdk-v0.2.76",
         "label": "v0.2.76"
       },
@@ -132,6 +146,21 @@
         "variantKey": "claude-agent-sdk-v0.2.81",
         "label": "v0.2.81"
       }
+    ]
+  },
+  {
+    "scenarioDirName": "cursor-sdk-instrumentation",
+    "label": "Cursor SDK Instrumentation",
+    "metadataScenario": "cursor-sdk-instrumentation",
+    "variants": [{ "variantKey": "cursor-sdk-v1", "label": "v1" }]
+  },
+  {
+    "scenarioDirName": "github-copilot-instrumentation",
+    "label": "GitHub Copilot SDK Instrumentation",
+    "metadataScenario": "github-copilot-instrumentation",
+    "variants": [
+      { "variantKey": "github-copilot-v0-wrapped", "label": "Wrapped" },
+      { "variantKey": "github-copilot-v0-auto", "label": "Auto-hook" }
     ]
   }
 ]

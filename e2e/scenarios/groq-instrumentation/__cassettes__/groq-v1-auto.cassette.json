@@ -1,0 +1,341 @@
+{
+  "entries": [
+    {
+      "callIndex": 0,
+      "id": "28e177edbf44f07c",
+      "matchKey": "POST api.groq.com/openai/v1/chat/completions",
+      "recordedAt": "2026-05-15T11:37:01.973Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "max_completion_tokens": 12,
+            "messages": [
+              {
+                "content": "Reply with exactly OK.",
+                "role": "user"
+              }
+            ],
+            "model": "llama-3.3-70b-versatile",
+            "temperature": 0
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "choices": [
+              {
+                "finish_reason": "stop",
+                "index": 0,
+                "logprobs": null,
+                "message": {
+                  "content": "OK",
+                  "role": "assistant"
+                }
+              }
+            ],
+            "created": 1778845022,
+            "id": "chatcmpl-ea2bb4e7-edca-4eec-9f0c-7138bc08ca2f",
+            "model": "llama-3.3-70b-versatile",
+            "object": "chat.completion",
+            "service_tier": "on_demand",
+            "system_fingerprint": "fp_dae98b5ecb",
+            "usage": {
+              "completion_time": 0.00745245,
+              "completion_tokens": 2,
+              "prompt_time": 0.001977594,
+              "prompt_tokens": 40,
+              "queue_time": 0.095205932,
+              "total_time": 0.009430044,
+              "total_tokens": 42
+            },
+            "usage_breakdown": null,
+            "x_groq": {
+              "id": "req_01krnpsxq5enyahtypy5866va2",
+              "seed": 1396572566
+            }
+          }
+        },
+        "headers": {
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "cache-control": "private, max-age=0, no-store, no-cache, must-revalidate",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "9fc1d92aeda55aa3-VIE",
+          "connection": "keep-alive",
+          "content-encoding": "gzip",
+          "content-type": "application/json",
+          "date": "Fri, 15 May 2026 11:37:02 GMT",
+          "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=15552000",
+          "transfer-encoding": "chunked",
+          "vary": "Origin",
+          "via": "1.1 google",
+          "x-groq-region": "fra",
+          "x-ratelimit-limit-requests": "1000",
+          "x-ratelimit-limit-tokens": "12000",
+          "x-ratelimit-remaining-requests": "996",
+          "x-ratelimit-remaining-tokens": "11958",
+          "x-ratelimit-reset-requests": "5m45.6s",
+          "x-ratelimit-reset-tokens": "210ms",
+          "x-request-id": "req_01krnpsxq5enyahtypy5866va2"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 1,
+      "id": "b4cc6840b5b1793d",
+      "matchKey": "POST api.groq.com/openai/v1/chat/completions",
+      "recordedAt": "2026-05-15T11:37:02.229Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "messages": [
+              {
+                "content": "Reply with exactly STREAM.",
+                "role": "user"
+              }
+            ],
+            "model": "llama-3.3-70b-versatile",
+            "stream": true,
+            "temperature": 0
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions"
+      },
+      "response": {
+        "body": {
+          "chunks": [
+            "data: {\"id\":\"chatcmpl-43bc13dc-ede4-49d7-be6f-2d968509a325\",\"object\":\"chat.completion.chunk\",\"created\":1778845022,\"model\":\"llama-3.3-70b-versatile\",\"system_fingerprint\":\"fp_d42c28f9ce\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\"},\"logprobs\":null,\"finish_reason\":null}],\"x_groq\":{\"id\":\"req_01krnpsxw0e88a10c2wvhv396s\",\"seed\":1298065010}}",
+            "data: {\"id\":\"chatcmpl-43bc13dc-ede4-49d7-be6f-2d968509a325\",\"object\":\"chat.completion.chunk\",\"created\":1778845022,\"model\":\"llama-3.3-70b-versatile\",\"system_fingerprint\":\"fp_d42c28f9ce\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"STREAM\"},\"logprobs\":null,\"finish_reason\":null}]}",
+            "data: {\"id\":\"chatcmpl-43bc13dc-ede4-49d7-be6f-2d968509a325\",\"object\":\"chat.completion.chunk\",\"created\":1778845022,\"model\":\"llama-3.3-70b-versatile\",\"system_fingerprint\":\"fp_d42c28f9ce\",\"choices\":[{\"index\":0,\"delta\":{},\"logprobs\":null,\"finish_reason\":\"stop\"}],\"x_groq\":{\"id\":\"req_01krnpsxw0e88a10c2wvhv396s\",\"usage\":{\"queue_time\":0.183890233,\"prompt_tokens\":40,\"prompt_time\":0.017750957,\"completion_tokens\":2,\"completion_time\":0.006624354,\"total_tokens\":42,\"total_time\":0.024375311}},\"usage\":{\"queue_time\":0.183890233,\"prompt_tokens\":40,\"prompt_time\":0.017750957,\"completion_tokens\":2,\"completion_time\":0.006624354,\"total_tokens\":42,\"total_time\":0.024375311}}",
+            "data: [DONE]"
+          ],
+          "kind": "sse"
+        },
+        "headers": {
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "cache-control": "no-cache",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "9fc1d92bee915aa3-VIE",
+          "connection": "keep-alive",
+          "content-type": "text/event-stream",
+          "date": "Fri, 15 May 2026 11:37:02 GMT",
+          "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=15552000",
+          "transfer-encoding": "chunked",
+          "vary": "Origin",
+          "via": "1.1 google",
+          "x-groq-region": "fra",
+          "x-ratelimit-limit-requests": "1000",
+          "x-ratelimit-limit-tokens": "12000",
+          "x-ratelimit-remaining-requests": "995",
+          "x-ratelimit-remaining-tokens": "11948",
+          "x-ratelimit-reset-requests": "7m12s",
+          "x-ratelimit-reset-tokens": "260ms",
+          "x-request-id": "req_01krnpsxw0e88a10c2wvhv396s"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 2,
+      "id": "4ad34400d0e920e9",
+      "matchKey": "POST api.groq.com/openai/v1/chat/completions",
+      "recordedAt": "2026-05-15T11:37:02.778Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "max_completion_tokens": 512,
+            "messages": [
+              {
+                "content": "Solve this step by step: Elena has 3 boxes with 4 marbles each, gives away 5 marbles, then doubles what remains. Reply with just the final number.",
+                "role": "user"
+              }
+            ],
+            "model": "qwen/qwen3-32b",
+            "reasoning_format": "parsed",
+            "stream": true,
+            "temperature": 0.6
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions"
+      },
+      "response": {
+        "body": {
+          "contentType": "text/event-stream",
+          "kind": "binary",
+          "path": "groq-v1-auto.cassette.blobs/e4eac406883a068801445a5632d3e0a7cbad985f9c171baeebf411d7c672fb3f.bin",
+          "sha256": "e4eac406883a068801445a5632d3e0a7cbad985f9c171baeebf411d7c672fb3f"
+        },
+        "headers": {
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "cache-control": "no-cache",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "9fc1d92d783b5aa3-VIE",
+          "connection": "keep-alive",
+          "content-type": "text/event-stream",
+          "date": "Fri, 15 May 2026 11:37:02 GMT",
+          "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=15552000",
+          "transfer-encoding": "chunked",
+          "vary": "Origin",
+          "via": "1.1 google",
+          "x-groq-region": "fra",
+          "x-ratelimit-limit-requests": "1000",
+          "x-ratelimit-limit-tokens": "6000",
+          "x-ratelimit-remaining-requests": "998",
+          "x-ratelimit-remaining-tokens": "4933",
+          "x-ratelimit-reset-requests": "2m52.8s",
+          "x-ratelimit-reset-tokens": "10.67s",
+          "x-request-id": "req_01krnpsy3veqb9djtth9ddwe4g"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 3,
+      "id": "fec9a601404950ed",
+      "matchKey": "POST api.groq.com/openai/v1/chat/completions",
+      "recordedAt": "2026-05-15T11:37:03.285Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "messages": [
+              {
+                "content": "Check the weather in Vienna and use the weather tool.",
+                "role": "user"
+              }
+            ],
+            "model": "llama-3.3-70b-versatile",
+            "temperature": 0,
+            "tool_choice": {
+              "function": {
+                "name": "get_weather"
+              },
+              "type": "function"
+            },
+            "tools": [
+              {
+                "function": {
+                  "description": "Get the weather for a city.",
+                  "name": "get_weather",
+                  "parameters": {
+                    "properties": {
+                      "location": {
+                        "description": "City name.",
+                        "type": "string"
+                      }
+                    },
+                    "required": ["location"],
+                    "type": "object"
+                  }
+                },
+                "type": "function"
+              }
+            ]
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "choices": [
+              {
+                "finish_reason": "tool_calls",
+                "index": 0,
+                "logprobs": null,
+                "message": {
+                  "role": "assistant",
+                  "tool_calls": [
+                    {
+                      "function": {
+                        "arguments": "{\"location\":\"Vienna\"}",
+                        "name": "get_weather"
+                      },
+                      "id": "4ynha9dpd",
+                      "type": "function"
+                    }
+                  ]
+                }
+              }
+            ],
+            "created": 1778845023,
+            "id": "chatcmpl-29c4f0c9-be4d-44b7-a1b1-f232d6c8e98e",
+            "model": "llama-3.3-70b-versatile",
+            "object": "chat.completion",
+            "service_tier": "on_demand",
+            "system_fingerprint": "fp_0761e44d7b",
+            "usage": {
+              "completion_time": 0.036719131,
+              "completion_tokens": 11,
+              "prompt_time": 0.09047757,
+              "prompt_tokens": 246,
+              "queue_time": 0.327464415,
+              "total_time": 0.127196701,
+              "total_tokens": 257
+            },
+            "usage_breakdown": null,
+            "x_groq": {
+              "id": "req_01krnpsyn7e89vj8cg6nmnyf7q",
+              "seed": 1414032385
+            }
+          }
+        },
+        "headers": {
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "cache-control": "private, max-age=0, no-store, no-cache, must-revalidate",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "9fc1d930fb535aa3-VIE",
+          "connection": "keep-alive",
+          "content-encoding": "gzip",
+          "content-type": "application/json",
+          "date": "Fri, 15 May 2026 11:37:03 GMT",
+          "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=15552000",
+          "transfer-encoding": "chunked",
+          "vary": "Origin",
+          "via": "1.1 google",
+          "x-groq-region": "fra",
+          "x-ratelimit-limit-requests": "1000",
+          "x-ratelimit-limit-tokens": "12000",
+          "x-ratelimit-remaining-requests": "994",
+          "x-ratelimit-remaining-tokens": "11748",
+          "x-ratelimit-reset-requests": "8m38.4s",
+          "x-ratelimit-reset-tokens": "1.26s",
+          "x-request-id": "req_01krnpsyn7e89vj8cg6nmnyf7q"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    }
+  ],
+  "meta": {
+    "createdAt": "2026-04-28T23:26:10.191Z",
+    "seinfeldVersion": "0.0.0"
+  },
+  "version": 1
+}

@@ -1524,6 +1524,7 @@ export class Attachment extends BaseAttachment {
             body: data,
           }),
         );
+        await objectStoreResponse.body?.cancel();
       } catch (error) {
         if (error instanceof FailedHTTPResponse) {
           throw new Error(
@@ -1563,6 +1564,7 @@ export class Attachment extends BaseAttachment {
         "/attachment/status",
         requestParams,
       );
+      await statusResponse.body?.cancel();
       if (!statusResponse.ok) {
         const errorStr = JSON.stringify(statusResponse);
         throw new Error(`Couldn't log attachment status: ${errorStr}`);

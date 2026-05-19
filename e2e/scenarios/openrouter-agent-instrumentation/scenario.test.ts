@@ -6,8 +6,9 @@ import {
 } from "../../helpers/scenario-harness";
 import { defineOpenRouterAgentTraceAssertions } from "./assertions";
 
+const originalScenarioDir = resolveScenarioDir(import.meta.url);
 const scenarioDir = await prepareScenarioDir({
-  scenarioDir: resolveScenarioDir(import.meta.url),
+  scenarioDir: originalScenarioDir,
 });
 const openrouterAgentVersion = await readInstalledPackageVersion(
   scenarioDir,
@@ -22,7 +23,10 @@ describe(`openrouter agent ${openrouterAgentVersion}`, () => {
     runScenario: async ({ runScenarioDir }) => {
       await runScenarioDir({
         entry: "scenario.ts",
-        runContext: { variantKey: OPENROUTER_AGENT_VARIANT_KEY },
+        runContext: {
+          variantKey: OPENROUTER_AGENT_VARIANT_KEY,
+          originalScenarioDir,
+        },
         scenarioDir,
         timeoutMs: TIMEOUT_MS,
       });
@@ -36,7 +40,10 @@ describe(`openrouter agent ${openrouterAgentVersion}`, () => {
       await runNodeScenarioDir({
         entry: "scenario.mjs",
         nodeArgs: ["--import", "braintrust/hook.mjs"],
-        runContext: { variantKey: OPENROUTER_AGENT_VARIANT_KEY },
+        runContext: {
+          variantKey: OPENROUTER_AGENT_VARIANT_KEY,
+          originalScenarioDir,
+        },
         scenarioDir,
         timeoutMs: TIMEOUT_MS,
       });

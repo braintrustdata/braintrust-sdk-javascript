@@ -273,6 +273,92 @@ describe("google genai client unit tests", TEST_SUITE_OPTIONS, () => {
     });
   });
 
+  test("google genai chat API uses the wrapped models module", async () => {
+    class FakeChats {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      public constructor(public modelsModule: any) {}
+
+      public create(params: {
+        model: string;
+        config?: Record<string, unknown>;
+      }) {
+        return {
+          sendMessage: (messageParams: { message: string }) =>
+            this.modelsModule.generateContent({
+              model: params.model,
+              contents: messageParams.message,
+              config: params.config,
+            }),
+        };
+      }
+    }
+
+    class FakeGoogleGenAI {
+      public models = {
+        generateContent: async () => ({
+          candidates: [
+            {
+              content: {
+                parts: [{ text: "Hello" }],
+                role: "model",
+              },
+              finishReason: "STOP",
+            },
+          ],
+          text: "Hello",
+          usageMetadata: {
+            promptTokenCount: 2,
+            candidatesTokenCount: 1,
+            totalTokenCount: 3,
+          },
+        }),
+      };
+
+      public chats = new FakeChats(this.models);
+
+      public constructor(_config: { apiKey?: string }) {}
+    }
+
+    initLogger({
+      projectName: "google-genai.test.ts",
+      projectId: "test-project-id",
+    });
+
+    const { GoogleGenAI } = wrapGoogleGenAI({
+      GoogleGenAI: FakeGoogleGenAI,
+    });
+    const fakeClient = new GoogleGenAI({ apiKey: "test-key" });
+    const chat = fakeClient.chats.create({
+      model: TEST_MODEL,
+      config: {
+        maxOutputTokens: 8,
+      },
+    });
+
+    const response = await chat.sendMessage({ message: "Say hello." });
+
+    expect(response.text).toBe("Hello");
+
+    const spans = await backgroundLogger.drain();
+    expect(spans).toHaveLength(1);
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any
+    const span = spans[0] as any;
+
+    expect(span).toMatchObject({
+      span_attributes: {
+        type: "llm",
+        name: "generate_content",
+      },
+      metadata: expect.objectContaining({
+        model: TEST_MODEL,
+      }),
+      input: expect.objectContaining({
+        model: TEST_MODEL,
+        contents: expect.anything(),
+      }),
+    });
+  });
+
   test("google genai tool calls", async () => {
     expect(await backgroundLogger.drain()).toHaveLength(0);
 

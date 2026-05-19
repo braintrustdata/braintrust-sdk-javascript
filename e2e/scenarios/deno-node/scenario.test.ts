@@ -1,6 +1,7 @@
 import { expect, test } from "vitest";
 import {
   formatJsonFileSnapshot,
+  matchFileSnapshot,
   resolveFileSnapshotPath,
 } from "../../helpers/file-snapshot";
 import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
@@ -10,7 +11,6 @@ import {
   resolveScenarioDir,
   withScenarioHarness,
 } from "../../helpers/scenario-harness";
-import { E2E_TAGS } from "../../helpers/tags";
 import { findLatestSpan } from "../../helpers/trace-selectors";
 import { summarizeEvent, summarizeRequest } from "../../helpers/trace-summary";
 import { payloadRowsForTestRunId } from "../../helpers/wrapper-contract";
@@ -30,7 +30,6 @@ function findEventByCase(events: CapturedLogEvent[], testCase: string) {
 test(
   "deno-node captures real HTTP traces from a nested Deno runner",
   {
-    tags: [E2E_TAGS.hermetic],
     timeout: TIMEOUT_MS,
   },
   async () => {
@@ -159,7 +158,7 @@ test(
           ]),
         );
 
-        await expect(
+        await matchFileSnapshot(
           formatJsonFileSnapshot(
             [
               basicSpan,
@@ -172,19 +171,17 @@ test(
               currentSpan,
             ].map((event) => summarizeEvent(event!)) as Json,
           ),
-        ).toMatchFileSnapshot(
           resolveFileSnapshotPath(import.meta.url, "span-events.json"),
         );
 
-        await expect(
+        await matchFileSnapshot(
           formatJsonFileSnapshot(
             payloadRowsForTestRunId(payloads(), testRunId) as Json,
           ),
-        ).toMatchFileSnapshot(
           resolveFileSnapshotPath(import.meta.url, "log-payloads.json"),
         );
 
-        await expect(
+        await matchFileSnapshot(
           formatJsonFileSnapshot(
             requests.map((request) =>
               summarizeRequest(request, {
@@ -192,7 +189,6 @@ test(
               }),
             ) as Json,
           ),
-        ).toMatchFileSnapshot(
           resolveFileSnapshotPath(import.meta.url, "request-flow.json"),
         );
       },

@@ -10,8 +10,9 @@ import {
   HUGGINGFACE_SCENARIO_TIMEOUT_MS,
 } from "./scenario.impl.mjs";
 
+const originalScenarioDir = resolveScenarioDir(import.meta.url);
 const scenarioDir = await prepareScenarioDir({
-  scenarioDir: resolveScenarioDir(import.meta.url),
+  scenarioDir: originalScenarioDir,
 });
 
 const huggingFaceScenarios = await Promise.all(
@@ -31,7 +32,10 @@ for (const scenario of huggingFaceScenarios) {
       runScenario: async ({ runScenarioDir }) => {
         await runScenarioDir({
           entry: scenario.wrapperEntry,
-          runContext: { variantKey: scenario.snapshotName },
+          runContext: {
+            variantKey: scenario.snapshotName,
+            originalScenarioDir,
+          },
           scenarioDir,
           timeoutMs: HUGGINGFACE_SCENARIO_TIMEOUT_MS,
         });
@@ -47,7 +51,10 @@ for (const scenario of huggingFaceScenarios) {
         await runNodeScenarioDir({
           entry: scenario.autoEntry,
           nodeArgs: ["--import", "braintrust/hook.mjs"],
-          runContext: { variantKey: scenario.snapshotName },
+          runContext: {
+            variantKey: scenario.snapshotName,
+            originalScenarioDir,
+          },
           scenarioDir,
           timeoutMs: HUGGINGFACE_SCENARIO_TIMEOUT_MS,
         });

@@ -1,6 +1,7 @@
 import { expect, test } from "vitest";
 import {
   formatJsonFileSnapshot,
+  matchFileSnapshot,
   resolveFileSnapshotPath,
 } from "../../helpers/file-snapshot";
 import type { Json } from "../../helpers/normalize";
@@ -9,7 +10,6 @@ import {
   resolveScenarioDir,
   withScenarioHarness,
 } from "../../helpers/scenario-harness";
-import { E2E_TAGS } from "../../helpers/tags";
 import {
   extractOtelSpans,
   summarizeEvent,
@@ -103,7 +103,6 @@ function dedupeProjectRegisterRequestSummaries(
 test(
   "nextjs-instrumentation builds a Next.js app and captures Node and Edge runtime traces",
   {
-    tags: [E2E_TAGS.hermetic],
     timeout: TIMEOUT_MS,
   },
   async () => {
@@ -192,7 +191,7 @@ test(
           );
         }
 
-        await expect(
+        await matchFileSnapshot(
           formatJsonFileSnapshot(
             responses.map((response) => ({
               body: response.body,
@@ -200,19 +199,17 @@ test(
               status: response.status,
             })) as Json,
           ),
-        ).toMatchFileSnapshot(
           resolveFileSnapshotPath(import.meta.url, "route-responses.json"),
         );
 
-        await expect(
+        await matchFileSnapshot(
           formatJsonFileSnapshot(
             [edgeSpan, nodeSpan].map((event) => summarizeEvent(event!)) as Json,
           ),
-        ).toMatchFileSnapshot(
           resolveFileSnapshotPath(import.meta.url, "span-events.json"),
         );
 
-        await expect(
+        await matchFileSnapshot(
           formatJsonFileSnapshot(
             otelSpans
               .filter(
@@ -230,11 +227,10 @@ test(
                 name: span.name,
               })) as Json,
           ),
-        ).toMatchFileSnapshot(
           resolveFileSnapshotPath(import.meta.url, "otel-spans.json"),
         );
 
-        await expect(
+        await matchFileSnapshot(
           formatJsonFileSnapshot(
             dedupeProjectRegisterRequestSummaries(
               requests.map((request) => {
@@ -262,7 +258,6 @@ test(
               }),
             ) as Json,
           ),
-        ).toMatchFileSnapshot(
           resolveFileSnapshotPath(import.meta.url, "request-flow.json"),
         );
       },
