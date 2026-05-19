@@ -1,6 +1,9 @@
 import { beforeAll, describe, expect, test } from "vitest";
 import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
-import { withScenarioHarness, type ScenarioRunContext } from "../../helpers/scenario-harness";
+import {
+  withScenarioHarness,
+  type ScenarioRunContext,
+} from "../../helpers/scenario-harness";
 import {
   findChildSpans,
   findLatestChildSpan,
