@@ -1,4 +1,4 @@
-import { Agent, run, tool } from "@openai/agents";
+import { Agent, run, tool, setTraceProcessors } from "@openai/agents";
 import {
   runMain,
   runOperation,
@@ -30,6 +30,11 @@ const lookupWeather = tool({
 });
 
 export async function runOpenAIAgentsAutoInstrumentationScenario() {
+  // Remove the built-in OpenAI trace exporter so it doesn't POST to
+  // api.openai.com/v1/traces/ingest with the cassette placeholder key.
+  // Braintrust captures trace events via diagnostics_channel independently.
+  setTraceProcessors([]);
+
   await runTracedScenario({
     callback: async () => {
       await runOperation(OPERATION_NAME, "openai-agents-run", async () => {

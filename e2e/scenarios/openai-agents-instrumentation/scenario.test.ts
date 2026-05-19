@@ -6,8 +6,9 @@ import {
 } from "../../helpers/scenario-harness";
 import { defineOpenAIAgentsAutoInstrumentationAssertions } from "./assertions";
 
+const originalScenarioDir = resolveScenarioDir(import.meta.url);
 const scenarioDir = await prepareScenarioDir({
-  scenarioDir: resolveScenarioDir(import.meta.url),
+  scenarioDir: originalScenarioDir,
 });
 const OPENAI_AGENTS_VARIANT_KEY = "openai-agents-auto-hook";
 const openAIAgentsVersion = await readInstalledPackageVersion(
@@ -26,7 +27,10 @@ describe(`openai agents sdk ${openAIAgentsVersion}`, () => {
           NODE_ENV: "development",
         },
         nodeArgs: ["--import", "braintrust/hook.mjs"],
-        runContext: { variantKey: OPENAI_AGENTS_VARIANT_KEY },
+        runContext: {
+          variantKey: OPENAI_AGENTS_VARIANT_KEY,
+          originalScenarioDir,
+        },
         scenarioDir,
         timeoutMs: TIMEOUT_MS,
       });
