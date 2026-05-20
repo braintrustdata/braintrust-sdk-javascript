@@ -1,11 +1,17 @@
 import { spawn } from "node:child_process";
 import http from "node:http";
+import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { runMain, runNodeSubprocess } from "../../helpers/scenario-runtime";
 
+const require = createRequire(import.meta.url);
 const scenarioDir = path.dirname(fileURLToPath(import.meta.url));
 const PORT = 3999;
+const bundler =
+  process.env.NEXTJS_E2E_BUNDLER === "turbopack" ? "turbopack" : "webpack";
+const nextVersion = require("next/package.json").version as string;
+const nextMajorVersion = Number.parseInt(nextVersion.split(".")[0] ?? "", 10);
 
 // Resolve next CLI relative to the scenario's own node_modules, since the
 // scenario runs in a copy of this directory without .bin symlinks.
@@ -15,10 +21,18 @@ const nextBin = new URL("./node_modules/next/dist/bin/next", import.meta.url)
 function withScenarioEnv(
   env: NodeJS.ProcessEnv = process.env,
 ): NodeJS.ProcessEnv {
-  return {
+  const nextEnv: NodeJS.ProcessEnv = {
     ...env,
     NEXT_TELEMETRY_DISABLED: "1",
   };
+
+  if (bundler === "turbopack") {
+    nextEnv.TURBOPACK = "1";
+  } else {
+    delete nextEnv.TURBOPACK;
+  }
+
+  return nextEnv;
 }
 
 function httpGet(url: string): Promise<{ status: number; body: string }> {
@@ -51,8 +65,15 @@ async function waitForServer(timeoutMs = 30_000): Promise<void> {
 // function and run it through the shared scenario wrapper.
 async function main() {
   const env = withScenarioEnv(process.env);
+  const buildArgs =
+    bundler === "turbopack"
+      ? [nextBin, "build", "--turbopack"]
+      : Number.isFinite(nextMajorVersion) && nextMajorVersion >= 16
+        ? [nextBin, "build", "--webpack"]
+        : [nextBin, "build"];
+
   await runNodeSubprocess({
-    args: [nextBin, "build"],
+    args: buildArgs,
     cwd: scenarioDir,
     env,
     timeoutMs: 180_000,
@@ -77,13 +98,31 @@ async function main() {
 
     if (!data.instrumented) {
       throw new Error(
-        "OpenAI tracing channel did not fire — Turbopack instrumentation is not working",
+        `OpenAI tracing channel did not fire; Next.js ${bundler} instrumentation is not working`,
       );
     }
 
     console.log(
-      "✓ OpenAI tracing channel fired at runtime — Turbopack instrumentation is active",
+      `OpenAI tracing channel fired at runtime; Next.js ${bundler} instrumentation is active`,
     );
+
+    const edgeResponse = await httpGet(`http://localhost:${PORT}/api/edge`);
+    const edgeData = JSON.parse(edgeResponse.body) as {
+      openaiCreate: boolean;
+      runtime: string;
+    };
+
+    if (edgeResponse.status !== 200 || edgeData.runtime !== "edge") {
+      throw new Error(
+        `Edge runtime route failed for Next.js ${bundler}: ${edgeResponse.status} ${edgeResponse.body}`,
+      );
+    }
+
+    if (!edgeData.openaiCreate) {
+      throw new Error(
+        `OpenAI client was not usable in the Next.js ${bundler} edge runtime route`,
+      );
+    }
   } finally {
     server.kill();
   }

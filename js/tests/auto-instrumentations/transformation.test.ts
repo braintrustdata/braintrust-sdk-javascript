@@ -274,7 +274,6 @@ describe("Orchestrion Transformation Tests", () => {
       __dirname,
       "../../dist/auto-instrumentations/bundler/webpack-loader.cjs",
     );
-
     async function runWebpackWithLoader(
       config: object,
     ): Promise<{ errors: string[]; output: string }> {

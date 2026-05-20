@@ -87,6 +87,12 @@
       "module": "./dist/auto-instrumentations/bundler/webpack.mjs",
       "require": "./dist/auto-instrumentations/bundler/webpack.cjs"
     },
+    "./next": {
+      "types": "./dist/auto-instrumentations/bundler/next.d.ts",
+      "import": "./dist/auto-instrumentations/bundler/next.mjs",
+      "module": "./dist/auto-instrumentations/bundler/next.mjs",
+      "require": "./dist/auto-instrumentations/bundler/next.cjs"
+    },
     "./webpack-loader": {
       "types": "./dist/auto-instrumentations/bundler/webpack-loader.d.ts",
       "require": "./dist/auto-instrumentations/bundler/webpack-loader.cjs"
