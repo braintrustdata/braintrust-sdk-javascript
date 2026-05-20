@@ -107,6 +107,7 @@ export interface SpanData {
   metadata?: Record<string, unknown>;
   span_id?: string;
   span_parents?: string[];
+  is_root?: boolean | null;
   span_attributes?: {
     type?: string;
     name?: string;
@@ -183,6 +184,7 @@ export class CachedSpanFetcher {
           metadata: row.metadata,
           span_id: row.span_id,
           span_parents: row.span_parents,
+          is_root: row.is_root,
           span_attributes: row.span_attributes,
           id: row.id,
           _xact_id: row._xact_id,
@@ -391,6 +393,7 @@ export class LocalTrace implements Trace {
         metadata: span.metadata,
         span_id: span.span_id,
         span_parents: span.span_parents,
+        is_root: span.is_root,
         span_attributes: span.span_attributes,
         tags: span.tags,
       }));
