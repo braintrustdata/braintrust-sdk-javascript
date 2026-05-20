@@ -10,8 +10,9 @@ import {
 } from "../../helpers/scenario-harness";
 import { assertLangGraphAutoInstrumentation } from "./assertions";
 
+const originalScenarioDir = resolveScenarioDir(import.meta.url);
 const scenarioDir = await prepareScenarioDir({
-  scenarioDir: resolveScenarioDir(import.meta.url),
+  scenarioDir: originalScenarioDir,
 });
 const TIMEOUT_MS = 120_000;
 
@@ -21,15 +22,15 @@ test(
     timeout: TIMEOUT_MS,
   },
   async () => {
-    if (!process.env.OPENAI_API_KEY) {
-      throw new Error("OPENAI_API_KEY is required for this e2e scenario");
-    }
-
     await withScenarioHarness(
       async ({ events, payloads, runNodeScenarioDir }) => {
         await runNodeScenarioDir({
           entry: "scenario.mjs",
           nodeArgs: ["--import", "braintrust/hook.mjs"],
+          runContext: {
+            variantKey: "langgraph-auto-hook",
+            originalScenarioDir,
+          },
           scenarioDir,
           timeoutMs: TIMEOUT_MS,
         });
