@@ -279,6 +279,26 @@ Setting `browser: true` ensures the code-transformer injects `dc-browser` import
 - Plugin code uses the iso pattern and adapts automatically
 - Only the transformed SDK code is affected by the `browser` option
 
+### Next.js Setup
+
+Wrap your Next.js config with `wrapNextjsConfigWithBraintrust` to let Braintrust choose the
+webpack plugin or Turbopack loader based on the active Next.js build:
+
+```javascript
+// next.config.mjs
+import { wrapNextjsConfigWithBraintrust } from "braintrust/next";
+
+const nextConfig = {};
+
+export default wrapNextjsConfigWithBraintrust(nextConfig);
+```
+
+For webpack builds, Braintrust uses Next.js' webpack build context to pass
+`browser: true` for client and edge bundles and `browser: false` for Node.js
+server bundles. For Turbopack builds, Braintrust inserts webpack loader
+rules with runtime conditions so client and edge bundles use `browser: true`
+and Node.js server bundles use `browser: false`.
+
 ## Advanced: Custom Plugins
 
 Third parties can create custom plugins by extending `BasePlugin`:

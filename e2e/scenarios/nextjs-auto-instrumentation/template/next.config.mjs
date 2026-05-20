@@ -2,7 +2,7 @@ import fs from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { withBraintrust } from "braintrust/next";
+import { wrapNextjsConfigWithBraintrust } from "braintrust/next";
 
 const require = createRequire(import.meta.url);
 const scenarioDir = path.dirname(fileURLToPath(import.meta.url));
@@ -50,4 +50,4 @@ const nextConfig =
         },
       };
 
-export default withBraintrust(nextConfig);
+export default wrapNextjsConfigWithBraintrust(nextConfig);

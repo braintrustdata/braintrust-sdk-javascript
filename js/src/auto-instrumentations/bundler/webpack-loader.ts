@@ -29,20 +29,7 @@ import {
 import { extname, join, sep } from "path";
 import { readFileSync } from "fs";
 import moduleDetailsFromPath from "module-details-from-path";
-import { openaiConfigs } from "../configs/openai";
-import { anthropicConfigs } from "../configs/anthropic";
-import { aiSDKConfigs } from "../configs/ai-sdk";
-import { claudeAgentSDKConfigs } from "../configs/claude-agent-sdk";
-import { cursorSDKConfigs } from "../configs/cursor-sdk";
-import { googleGenAIConfigs } from "../configs/google-genai";
-import { huggingFaceConfigs } from "../configs/huggingface";
-import { openRouterAgentConfigs } from "../configs/openrouter-agent";
-import { openRouterConfigs } from "../configs/openrouter";
-import { mistralConfigs } from "../configs/mistral";
-import { cohereConfigs } from "../configs/cohere";
-import { groqConfigs } from "../configs/groq";
-import { genkitConfigs } from "../configs/genkit";
-import { gitHubCopilotConfigs } from "../configs/github-copilot";
+import { getDefaultInstrumentationConfigs } from "../configs/all";
 import { type BundlerPluginOptions } from "./plugin";
 
 /**
@@ -69,23 +56,9 @@ const matcherCache = new Map<string, InstrumentationMatcher>();
  * Get or create a matcher instance, caching by config hash
  */
 function getMatcher(options: BundlerPluginOptions): InstrumentationMatcher {
-  const allInstrumentations = [
-    ...openaiConfigs,
-    ...anthropicConfigs,
-    ...aiSDKConfigs,
-    ...claudeAgentSDKConfigs,
-    ...cursorSDKConfigs,
-    ...googleGenAIConfigs,
-    ...huggingFaceConfigs,
-    ...openRouterConfigs,
-    ...openRouterAgentConfigs,
-    ...mistralConfigs,
-    ...cohereConfigs,
-    ...groqConfigs,
-    ...genkitConfigs,
-    ...gitHubCopilotConfigs,
-    ...(options.instrumentations ?? []),
-  ];
+  const allInstrumentations = getDefaultInstrumentationConfigs({
+    additionalInstrumentations: options.instrumentations,
+  });
   const dcModule = options.browser ? "dc-browser" : undefined;
   const configHash = JSON.stringify({ allInstrumentations, dcModule });
 
