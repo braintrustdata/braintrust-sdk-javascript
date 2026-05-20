@@ -456,6 +456,41 @@ async function runAISDKInstrumentationScenario(
           },
         );
       }
+
+      if (supportsRichInputScenarios) {
+        await runOperation(
+          "ai-sdk-attachment-operation",
+          "attachment",
+          async () => {
+            try {
+              await instrumentedAI.generateText({
+                model: openaiModel,
+                messages: [
+                  {
+                    role: "user",
+                    content: [
+                      {
+                        type: "file",
+                        data: Buffer.from("tiny test file", "utf8"),
+                        mediaType: "text/plain",
+                        filename: "tiny.txt",
+                      },
+                      {
+                        type: "text",
+                        text: "Read the file and summarize it in one short sentence.",
+                      },
+                    ],
+                  },
+                ],
+                temperature: 0,
+                ...tokenLimit(options.maxTokensKey, 48),
+              });
+            } catch {
+              // Input attachment processing is exercised before provider errors.
+            }
+          },
+        );
+      }
     },
     flushCount,
     flushDelayMs,

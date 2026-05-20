@@ -4510,6 +4510,117 @@
             "operation": "agent-stream",
             "testRunId": "<run:1>"
           }
+        },
+        {
+          "name": "ai-sdk-attachment-operation",
+          "children": [
+            {
+              "name": "generateText",
+              "type": "function",
+              "children": [
+                {
+                  "name": "doGenerate",
+                  "type": "llm",
+                  "children": [],
+                  "input": {
+                    "headers": {
+                      "user-agent": "ai/5.0.82"
+                    },
+                    "maxOutputTokens": 48,
+                    "prompt": [
+                      {
+                        "content": [
+                          {
+                            "data": {
+                              "content_type": "text/plain",
+                              "filename": "tiny.txt",
+                              "key": "<uuid:1>",
+                              "type": "braintrust_attachment"
+                            },
+                            "filename": "tiny.txt",
+                            "mediaType": "text/plain",
+                            "type": "file"
+                          },
+                          {
+                            "text": "Read the file and summarize it in one short sentence.",
+                            "type": "text"
+                          }
+                        ],
+                        "role": "user"
+                      }
+                    ],
+                    "temperature": 0
+                  },
+                  "metadata": {
+                    "braintrust": {
+                      "integration_name": "ai-sdk",
+                      "sdk_language": "typescript"
+                    },
+                    "model": "gpt-4o-mini-2024-07-18",
+                    "provider": "openai.responses"
+                  },
+                  "error": "'file part media type text/plain' functionality not supported.\n\nAI_UnsupportedFunctionalityError: 'file part media type text/plain' functionality not supported.\n    at <anonymous> (<repo>/e2e/.bt-tmp/scenario-deps/ai-sdk-instrumentation-locked-e712014295b4196e/node_modules/.pnpm/@ai-sdk+openai@2.0.57_zod@3.25.76/node_modules/@ai-sdk/openai/src/responses/convert-to-openai-responses-input.ts:0:0)\n    at Array.map (<anonymous>)\n    at convertToOpenAIResponsesInput (<repo>/e2e/.bt-tmp/scenario-deps/ai-sdk-instrumentation-locked-e712014295b4196e/node_modules/.pnpm/@ai-sdk+openai@2.0.57_zod@3.25.76/node_modules/@ai-sdk/openai/src/responses/convert-to-openai-responses-input.ts:0:0)\n    at OpenAIResponsesLanguageModel.getArgs (<repo>/e2e/.bt-tmp/scenario-deps/ai-sdk-instrumentation-locked-e712014295b4196e/node_modules/.pnpm/@ai-sdk+openai@2.0.57_zod@3.25.76/node_modules/@ai-sdk/openai/src/responses/openai-responses-language-model.ts:0:0)\n    at process.processTicksAndRejections (node:<internal>:0:0)\n    at async OpenAIResponsesLanguageModel.doGenerate (<repo>/e2e/.bt-tmp/scenario-deps/ai-sdk-instrumentation-locked-e712014295b4196e/node_modules/.pnpm/@ai-sdk+openai@2.0.57_zod@3.25.76/node_modules/@ai-sdk/openai/src/responses/openai-responses-language-model.ts:0:0)\n    at async parentSpan.traced.name (<repo>/js/dist/index.js:0:0)"
+                }
+              ],
+              "input": {
+                "maxOutputTokens": 48,
+                "messages": [
+                  {
+                    "content": [
+                      {
+                        "data": {
+                          "content_type": "text/plain",
+                          "filename": "tiny.txt",
+                          "key": "<uuid:1>",
+                          "type": "braintrust_attachment"
+                        },
+                        "filename": "tiny.txt",
+                        "mediaType": "text/plain",
+                        "type": "file"
+                      },
+                      {
+                        "text": "Read the file and summarize it in one short sentence.",
+                        "type": "text"
+                      }
+                    ],
+                    "role": "user"
+                  }
+                ],
+                "model": {
+                  "config": {
+                    "fileIdPrefixes": [
+                      "file-"
+                    ],
+                    "provider": "openai.responses"
+                  },
+                  "modelId": "gpt-4o-mini-2024-07-18",
+                  "specificationVersion": "v2",
+                  "supportedUrls": {
+                    "application/pdf": [
+                      {}
+                    ],
+                    "image/*": [
+                      {}
+                    ]
+                  }
+                },
+                "temperature": 0
+              },
+              "metadata": {
+                "braintrust": {
+                  "integration_name": "ai-sdk",
+                  "sdk_language": "typescript"
+                },
+                "model": "gpt-4o-mini-2024-07-18",
+                "provider": "openai.responses"
+              },
+              "error": "'file part media type text/plain' functionality not supported."
+            }
+          ],
+          "metadata": {
+            "operation": "attachment",
+            "testRunId": "<run:1>"
+          }
         }
       ],
       "metadata": {

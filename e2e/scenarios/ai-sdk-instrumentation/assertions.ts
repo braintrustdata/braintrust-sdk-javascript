@@ -803,6 +803,7 @@ export function defineAISDKInstrumentationAssertions(options: {
   runScenario: RunAISDKScenario;
   sdkMajorVersion: number;
   snapshotName: string;
+  supportsAttachmentScenario: boolean;
   supportsProviderCacheAssertions: boolean;
   supportsDenyOutputOverrideScenario: boolean;
   supportsEmbedMany: boolean;
@@ -1061,6 +1062,30 @@ export function defineAISDKInstrumentationAssertions(options: {
             expect(typeof outputInput.response_format.type).toBe("string");
             expect(outputInput.response_format.schema).toBeDefined();
           }
+        },
+      );
+    }
+
+    if (options.supportsAttachmentScenario) {
+      test(
+        "captures file attachment normalization in input",
+        testConfig,
+        () => {
+          const root = findLatestSpan(events, ROOT_NAME);
+          const trace = findAttachmentTrace(events);
+
+          expectOperationParentedByRoot(trace.operation, root);
+          expectAISDKParentSpan(trace.parent);
+          expect(operationName(trace.operation)).toBe("attachment");
+          const attachmentRef = extractFileAttachmentReference(
+            trace.parent?.input,
+          );
+          expect(attachmentRef).toBeDefined();
+          expect(attachmentRef).toMatchObject({
+            content_type: "text/plain",
+            key: expect.any(String),
+            type: "braintrust_attachment",
+          });
         },
       );
     }

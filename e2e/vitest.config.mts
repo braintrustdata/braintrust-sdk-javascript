@@ -13,6 +13,10 @@ export default defineConfig({
     slowTestThreshold: 120_000,
     // Default to one retry for provider/network flake.
     retry: 1,
+    // Allow up to 5 describe blocks to run their beforeAll hooks concurrently
+    // within a file. Bounded to avoid overwhelming CI with too many subprocesses
+    // at once. Tune down if CI shows memory pressure or flaky timeouts.
+    maxConcurrency: 5,
     setupFiles: ["./vitest.setup.ts"],
   },
 });
