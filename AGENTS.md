@@ -75,7 +75,7 @@ pnpm run test       # Run all workspace tests via turbo
 
 ## Linting & Formatting
 
-Run from the repo root. **Always run formatting before committing** — there is a pre-commit hook that will reject unformatted code.
+Run from the repo root. **Always run `fix:formatting` before committing** — there is a pre-commit hook that will reject unformatted code.
 
 ```bash
 pnpm run formatting      # Check formatting (prettier)

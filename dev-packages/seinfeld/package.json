@@ -1,6 +1,5 @@
 {
   "name": "@braintrust/seinfeld",
-  "version": "0.0.0",
   "private": true,
   "description": "Internal cassette server for e2e provider tests.",
   "type": "module",

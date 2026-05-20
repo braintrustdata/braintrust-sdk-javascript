@@ -1,24 +1,23 @@
+import type { RollupPlugin } from "unplugin";
+import {
+  BundlerPluginOptions,
+  unplugin,
+  type LegacyBundlerPluginOptions,
+} from "./plugin";
+
+export function braintrustRollupPlugin(
+  options: BundlerPluginOptions = {},
+): RollupPlugin | RollupPlugin[] {
+  const { useDiagnosticChannelCompatShim = false, ...pluginOptions } = options;
+  return unplugin.rollup({
+    ...pluginOptions,
+    browser: useDiagnosticChannelCompatShim,
+  });
+}
+
+export type RollupPluginOptions = LegacyBundlerPluginOptions;
+
 /**
- * Rollup plugin for auto-instrumentation.
- *
- * Usage:
- * ```typescript
- * import { rollupPlugin } from '@braintrust/auto-instrumentations/bundler/rollup';
- *
- * export default {
- *   plugins: [rollupPlugin()]
- * };
- * ```
- *
- * This plugin uses @apm-js-collab/code-transformer to perform AST transformation
- * at build-time, injecting TracingChannel calls into AI SDK functions.
- *
- * For browser builds, the plugin automatically uses 'dc-browser' for diagnostics_channel polyfill.
- * The als-browser polyfill for AsyncLocalStorage is automatically included as a dependency.
+ * @deprecated Use {@link braintrustRollupPlugin} instead.
  */
-
-import { unplugin, type BundlerPluginOptions } from "./plugin";
-
-export type RollupPluginOptions = BundlerPluginOptions;
-
 export const rollupPlugin = unplugin.rollup;
