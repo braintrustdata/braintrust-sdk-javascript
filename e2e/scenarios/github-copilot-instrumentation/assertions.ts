@@ -1,17 +1,17 @@
 import { beforeAll, describe, expect, test } from "vitest";
-import { normalizeForSnapshot, type Json } from "../../helpers/normalize";
 import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
-import {
-  formatJsonFileSnapshot,
-  matchFileSnapshot,
-  resolveFileSnapshotPath,
-} from "../../helpers/file-snapshot";
+import { resolveFileSnapshotPath } from "../../helpers/file-snapshot";
 import {
   withScenarioHarness,
   type ScenarioRunContext,
 } from "../../helpers/scenario-harness";
+import {
+  matchSpanTreeSnapshot,
+  spanTreeFields,
+  type SpanTreeEntry,
+  type SpanTreeFields,
+} from "../../helpers/span-tree";
 import { findChildSpans, findLatestSpan } from "../../helpers/trace-selectors";
-import { summarizeWrapperContract } from "../../helpers/wrapper-contract";
 import { ROOT_NAME, SCENARIO_NAME } from "./constants.mjs";
 
 type RunCopilotScenario = (harness: {
@@ -42,32 +42,43 @@ const SNAPSHOT_METADATA_KEYS = [
   "github_copilot.agent_name",
 ] as const;
 
-function summarizeSpan(event: CapturedLogEvent | undefined): Json {
-  if (!event) {
-    return null;
+function snapshotFields(event: CapturedLogEvent): SpanTreeFields {
+  const fields = spanTreeFields(event);
+  const metadata =
+    fields.metadata &&
+    typeof fields.metadata === "object" &&
+    !Array.isArray(fields.metadata)
+      ? Object.fromEntries(
+          Object.entries(fields.metadata).filter(([key]) =>
+            SNAPSHOT_METADATA_KEYS.includes(
+              key as (typeof SNAPSHOT_METADATA_KEYS)[number],
+            ),
+          ),
+        )
+      : undefined;
+
+  if (metadata && typeof metadata["gen_ai.tool.call.id"] === "string") {
+    metadata["gen_ai.tool.call.id"] = "<tool-call-id>";
   }
 
-  const summary = summarizeWrapperContract(event, [
-    ...SNAPSHOT_METADATA_KEYS,
-  ]) as Record<string, Json>;
-
-  // Normalize non-deterministic IDs in metadata
-  if (summary.metadata && typeof summary.metadata === "object") {
-    const metadata = summary.metadata as Record<string, Json>;
-    if (typeof metadata["gen_ai.tool.call.id"] === "string") {
-      metadata["gen_ai.tool.call.id"] = "<tool-call-id>";
-    }
-  }
-  if (Array.isArray(summary.metric_keys)) {
-    summary.metric_keys = summary.metric_keys.filter(
-      (key) => key !== "prompt_cached_tokens",
-    );
+  const metrics =
+    fields.metrics &&
+    typeof fields.metrics === "object" &&
+    !Array.isArray(fields.metrics)
+      ? ({ ...fields.metrics } as Record<string, unknown>)
+      : undefined;
+  if (metrics) {
+    delete metrics.prompt_cached_tokens;
   }
 
-  return summary;
+  return {
+    ...fields,
+    metadata,
+    metrics,
+  };
 }
 
-function buildSpanSummary(events: CapturedLogEvent[]): Json {
+function buildSpanTree(events: CapturedLogEvent[]): SpanTreeEntry[] {
   const root = findLatestSpan(events, ROOT_NAME);
   const basicOperation = findLatestSpan(
     events,
@@ -125,22 +136,21 @@ function buildSpanSummary(events: CapturedLogEvent[]): Json {
     )
     .at(-1);
 
-  return normalizeForSnapshot({
-    root: summarizeSpan(root),
-    basic: {
-      operation: summarizeSpan(basicOperation),
-      session: summarizeSpan(basicSession),
-      turn: summarizeSpan(basicTurn),
-      llm: summarizeSpan(basicLlm),
-    },
-    tool: {
-      operation: summarizeSpan(toolOperation),
-      session: summarizeSpan(toolSession),
-      turn: summarizeSpan(toolTurn),
-      llm: summarizeSpan(toolLlm),
-      tool: summarizeSpan(toolSpan),
-    },
-  } as Json);
+  return [
+    root,
+    basicOperation,
+    basicSession,
+    basicTurn,
+    basicLlm,
+    toolOperation,
+    toolSession,
+    toolTurn,
+    toolLlm,
+    toolSpan,
+  ].map((event) => ({
+    event: event!,
+    fields: snapshotFields(event!),
+  }));
 }
 
 export function defineGitHubCopilotInstrumentationAssertions(options: {
@@ -152,7 +162,7 @@ export function defineGitHubCopilotInstrumentationAssertions(options: {
 }): void {
   const snapshotPath = resolveFileSnapshotPath(
     options.testFileUrl,
-    `${options.snapshotName}.span-events.json`,
+    `${options.snapshotName}.span-tree.json`,
   );
   const testConfig = { timeout: options.timeoutMs };
 
@@ -253,11 +263,8 @@ export function defineGitHubCopilotInstrumentationAssertions(options: {
       expect(toolSpan?.span.type).toBe("tool");
     });
 
-    test("matches the span snapshot", testConfig, async () => {
-      await matchFileSnapshot(
-        formatJsonFileSnapshot(buildSpanSummary(events)),
-        snapshotPath,
-      );
+    test("matches the span tree snapshot", testConfig, async () => {
+      await matchSpanTreeSnapshot(events, snapshotPath);
     });
   });
 }

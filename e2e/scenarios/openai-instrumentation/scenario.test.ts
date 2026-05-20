@@ -80,7 +80,8 @@ describe.concurrent("variants", () => {
             timeoutMs: TIMEOUT_MS,
           });
         },
-        snapshotName: scenario.snapshotName,
+        snapshotName: `${scenario.snapshotName}-wrapped`,
+        cassetteName: scenario.snapshotName,
         testFileUrl: import.meta.url,
         timeoutMs: TIMEOUT_MS,
         version: scenario.version,
@@ -100,7 +101,8 @@ describe.concurrent("variants", () => {
             timeoutMs: TIMEOUT_MS,
           });
         },
-        snapshotName: scenario.snapshotName,
+        snapshotName: `${scenario.snapshotName}-auto-hook`,
+        cassetteName: scenario.snapshotName,
         testFileUrl: import.meta.url,
         timeoutMs: TIMEOUT_MS,
         version: scenario.version,

@@ -34,7 +34,6 @@ describe.concurrent("variants", () => {
     const sdkMajorVersion = parseMajorVersion(scenario.version);
     const supportsRichInputScenarios = sdkMajorVersion >= 5;
     const supportsOutputObjectScenario = supportsRichInputScenarios;
-    const supportsAttachmentScenario = supportsRichInputScenarios;
 
     describe.sequential(`ai sdk ${scenario.version}`, () => {
       defineAISDKInstrumentationAssertions({
@@ -51,8 +50,7 @@ describe.concurrent("variants", () => {
             timeoutMs: AI_SDK_SCENARIO_TIMEOUT_MS,
           });
         },
-        snapshotName: scenario.snapshotName,
-        supportsAttachmentScenario,
+        snapshotName: `${scenario.snapshotName}-wrapped`,
         supportsProviderCacheAssertions:
           scenario.supportsProviderCacheAssertions,
         supportsDenyOutputOverrideScenario: supportsRichInputScenarios,
@@ -82,8 +80,7 @@ describe.concurrent("variants", () => {
             timeoutMs: AI_SDK_SCENARIO_TIMEOUT_MS,
           });
         },
-        snapshotName: scenario.snapshotName,
-        supportsAttachmentScenario,
+        snapshotName: `${scenario.snapshotName}-auto-hook`,
         supportsProviderCacheAssertions:
           scenario.supportsProviderCacheAssertions,
         supportsDenyOutputOverrideScenario: supportsRichInputScenarios,

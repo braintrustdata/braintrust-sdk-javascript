@@ -1,0 +1,49 @@
+{
+  "span_tree": [
+    {
+      "name": "context-root",
+      "type": "task",
+      "children": [
+        {
+          "name": "current-child",
+          "children": [],
+          "output": {
+            "source": "withCurrent"
+          },
+          "metadata": {
+            "kind": "current-child",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "reattached-child",
+          "children": [],
+          "output": {
+            "resumed": true
+          },
+          "metadata": {
+            "kind": "reattached-child",
+            "testRunId": "<run:1>"
+          }
+        }
+      ],
+      "metadata": {
+        "scenario": "trace-context-and-continuation",
+        "testRunId": "<run:1>"
+      }
+    },
+    {
+      "name": "late-update",
+      "type": "task",
+      "children": [],
+      "output": {
+        "state": "updated"
+      },
+      "metadata": {
+        "kind": "late-update",
+        "patched": true,
+        "testRunId": "<run:1>"
+      }
+    }
+  ]
+}

@@ -1,26 +1,21 @@
 import { beforeAll, describe, expect, test } from "vitest";
 import type {
   CapturedLogEvent,
-  CapturedLogPayload,
   CapturedLogRow,
 } from "../../helpers/mock-braintrust-server";
 import type { Json } from "../../helpers/normalize";
-import { normalizeForSnapshot } from "../../helpers/normalize";
-import {
-  formatJsonFileSnapshot,
-  matchFileSnapshot,
-  resolveFileSnapshotPath,
-} from "../../helpers/file-snapshot";
+import { resolveFileSnapshotPath } from "../../helpers/file-snapshot";
 import {
   effectiveScenarioTimeoutMs,
   withScenarioHarness,
   type ScenarioRunContext,
 } from "../../helpers/scenario-harness";
-import { findChildSpans, findLatestSpan } from "../../helpers/trace-selectors";
 import {
-  payloadRowsForRootSpan,
-  summarizeWrapperContract,
-} from "../../helpers/wrapper-contract";
+  matchSpanTreeSnapshot,
+  spanTreeFields,
+  type SpanTreeEntry,
+} from "../../helpers/span-tree";
+import { findChildSpans, findLatestSpan } from "../../helpers/trace-selectors";
 import {
   ADJUSTABLE_REASONING_MODEL,
   FIM_MODEL,
@@ -248,32 +243,6 @@ function normalizeLegacyV134MetricKeys(metricKeys: Json): Json {
     : metricKeys;
 }
 
-function normalizeLegacyV134SpanSummaryRow(
-  summaryRow: Json,
-  snapshotName: string,
-): Json {
-  if (snapshotName !== "mistral-v1-3-4" || !isRecord(summaryRow)) {
-    return summaryRow;
-  }
-
-  const unstableLegacyV134SpanNames = new Set([
-    "mistral.chat.stream",
-    "mistral.fim.stream",
-  ]);
-
-  if (
-    typeof summaryRow.name !== "string" ||
-    !unstableLegacyV134SpanNames.has(summaryRow.name)
-  ) {
-    return summaryRow;
-  }
-
-  return {
-    ...summaryRow,
-    metric_keys: normalizeLegacyV134MetricKeys(summaryRow.metric_keys),
-  };
-}
-
 function normalizeLegacyV134PayloadSummaryRow(
   summaryRow: Json,
   snapshotName: string,
@@ -331,67 +300,6 @@ function normalizeLegacyV134PayloadSummaryRow(
   return normalizedSummaryRow;
 }
 
-function mergeRecordValues(
-  left: Record<string, unknown> | undefined,
-  right: unknown,
-): Record<string, unknown> | undefined {
-  if (!right || typeof right !== "object" || Array.isArray(right)) {
-    return left;
-  }
-
-  return {
-    ...(left || {}),
-    ...(right as Record<string, unknown>),
-  };
-}
-
-function mergePayloadRows(rows: CapturedLogRow[]): CapturedLogRow[] {
-  const mergedBySpan = new Map<string, CapturedLogRow>();
-  const spanOrder: string[] = [];
-
-  for (const row of rows) {
-    const spanId =
-      typeof row.span_id === "string"
-        ? row.span_id
-        : `unknown-${spanOrder.length}`;
-    const existing = mergedBySpan.get(spanId);
-
-    if (!existing) {
-      mergedBySpan.set(spanId, {
-        ...row,
-      });
-      spanOrder.push(spanId);
-      continue;
-    }
-
-    mergedBySpan.set(spanId, {
-      ...existing,
-      ...(row.input !== undefined && row.input !== null
-        ? {
-            input: row.input,
-          }
-        : {}),
-      ...(row.output !== undefined && row.output !== null
-        ? {
-            output: row.output,
-          }
-        : {}),
-      metadata: mergeRecordValues(
-        existing.metadata as Record<string, unknown> | undefined,
-        row.metadata,
-      ),
-      metrics: mergeRecordValues(
-        existing.metrics as Record<string, unknown> | undefined,
-        row.metrics,
-      ),
-    });
-  }
-
-  return spanOrder
-    .map((spanId) => mergedBySpan.get(spanId))
-    .filter((row): row is CapturedLogRow => row !== undefined);
-}
-
 function pickOutputSpans<T extends { output?: unknown }>(spans: T[]): T[] {
   const spansWithOutput = spans.filter(
     (span) => span.output !== undefined && span.output !== null,
@@ -399,10 +307,7 @@ function pickOutputSpans<T extends { output?: unknown }>(spans: T[]): T[] {
   return spansWithOutput.length > 0 ? spansWithOutput : spans;
 }
 
-function buildSpanSummary(
-  events: CapturedLogEvent[],
-  snapshotName: string,
-): Json {
+function snapshotEvents(events: CapturedLogEvent[]): CapturedLogEvent[] {
   const chatCompleteOperation = findLatestSpan(
     events,
     "mistral-chat-complete-operation",
@@ -476,170 +381,96 @@ function buildSpanSummary(
     "mistral-classifiers-classify-chat-operation",
   );
 
-  return normalizeForSnapshot(
-    [
-      findLatestSpan(events, ROOT_NAME),
-      chatCompleteOperation,
-      findMistralSpan(events, chatCompleteOperation?.span.id, [
-        "mistral.chat.complete",
-      ]),
-      chatStreamOperation,
-      findMistralSpan(events, chatStreamOperation?.span.id, [
-        "mistral.chat.stream",
-      ]),
-      chatReasoningStreamOperation,
-      findMistralSpan(events, chatReasoningStreamOperation?.span.id, [
-        "mistral.chat.stream",
-      ]),
-      chatThinkingStreamOperation,
-      findMistralSpan(events, chatThinkingStreamOperation?.span.id, [
-        "mistral.chat.stream",
-      ]),
-      chatToolCallOperation,
-      ...selectedChatToolCallSpans,
-      fimCompleteOperation,
-      findMistralSpan(events, fimCompleteOperation?.span.id, [
-        "mistral.fim.complete",
-      ]),
-      fimStreamOperation,
-      findMistralSpan(events, fimStreamOperation?.span.id, [
-        "mistral.fim.stream",
-      ]),
-      agentsCompleteOperation,
-      findMistralSpan(events, agentsCompleteOperation?.span.id, [
-        "mistral.agents.complete",
-      ]),
-      agentsToolCallOperation,
-      ...selectedAgentsToolCallSpans,
-      agentsStreamOperation,
-      findMistralSpan(events, agentsStreamOperation?.span.id, [
-        "mistral.agents.stream",
-      ]),
-      embeddingsOperation,
-      findMistralSpan(events, embeddingsOperation?.span.id, [
-        "mistral.embeddings.create",
-      ]),
-      classifiersModerateOperation,
-      findMistralSpan(events, classifiersModerateOperation?.span.id, [
-        "mistral.classifiers.moderate",
-      ]),
-      classifiersModerateChatOperation,
-      findMistralSpan(events, classifiersModerateChatOperation?.span.id, [
-        "mistral.classifiers.moderateChat",
-      ]),
-      classifiersClassifyOperation,
-      findMistralSpan(events, classifiersClassifyOperation?.span.id, [
-        "mistral.classifiers.classify",
-      ]),
-      classifiersClassifyChatOperation,
-      findMistralSpan(events, classifiersClassifyChatOperation?.span.id, [
-        "mistral.classifiers.classifyChat",
-      ]),
-    ]
-      .filter((event): event is CapturedLogEvent => event !== undefined)
-      .map((event) =>
-        normalizeLegacyV134SpanSummaryRow(
-          summarizeWrapperContract(event, [
-            "model",
-            "operation",
-            "provider",
-            "reasoning_effort",
-            "scenario",
-          ]),
-          snapshotName,
-        ),
-      ) as Json,
-  );
+  return [
+    findLatestSpan(events, ROOT_NAME),
+    chatCompleteOperation,
+    findMistralSpan(events, chatCompleteOperation?.span.id, [
+      "mistral.chat.complete",
+    ]),
+    chatStreamOperation,
+    findMistralSpan(events, chatStreamOperation?.span.id, [
+      "mistral.chat.stream",
+    ]),
+    chatReasoningStreamOperation,
+    findMistralSpan(events, chatReasoningStreamOperation?.span.id, [
+      "mistral.chat.stream",
+    ]),
+    chatThinkingStreamOperation,
+    findMistralSpan(events, chatThinkingStreamOperation?.span.id, [
+      "mistral.chat.stream",
+    ]),
+    chatToolCallOperation,
+    ...selectedChatToolCallSpans,
+    fimCompleteOperation,
+    findMistralSpan(events, fimCompleteOperation?.span.id, [
+      "mistral.fim.complete",
+    ]),
+    fimStreamOperation,
+    findMistralSpan(events, fimStreamOperation?.span.id, [
+      "mistral.fim.stream",
+    ]),
+    agentsCompleteOperation,
+    findMistralSpan(events, agentsCompleteOperation?.span.id, [
+      "mistral.agents.complete",
+    ]),
+    agentsToolCallOperation,
+    ...selectedAgentsToolCallSpans,
+    agentsStreamOperation,
+    findMistralSpan(events, agentsStreamOperation?.span.id, [
+      "mistral.agents.stream",
+    ]),
+    embeddingsOperation,
+    findMistralSpan(events, embeddingsOperation?.span.id, [
+      "mistral.embeddings.create",
+    ]),
+    classifiersModerateOperation,
+    findMistralSpan(events, classifiersModerateOperation?.span.id, [
+      "mistral.classifiers.moderate",
+    ]),
+    classifiersModerateChatOperation,
+    findMistralSpan(events, classifiersModerateChatOperation?.span.id, [
+      "mistral.classifiers.moderateChat",
+    ]),
+    classifiersClassifyOperation,
+    findMistralSpan(events, classifiersClassifyOperation?.span.id, [
+      "mistral.classifiers.classify",
+    ]),
+    classifiersClassifyChatOperation,
+    findMistralSpan(events, classifiersClassifyChatOperation?.span.id, [
+      "mistral.classifiers.classifyChat",
+    ]),
+  ].filter((event): event is CapturedLogEvent => event !== undefined);
 }
 
-function buildPayloadSummary(
+function buildSpanTree(
   events: CapturedLogEvent[],
-  payloads: CapturedLogPayload[],
   snapshotName: string,
-): Json {
-  const parentIdBySpanId = new Map<string, string>();
-  const spanNameById = new Map<string, string>();
-  for (const event of events) {
-    if (
-      typeof event?.span?.id === "string" &&
-      typeof event?.span?.name === "string"
-    ) {
-      const parentId =
-        Array.isArray(event.span.parentIds) &&
-        typeof event.span.parentIds[0] === "string"
-          ? event.span.parentIds[0]
-          : "";
-      parentIdBySpanId.set(event.span.id, parentId);
-      spanNameById.set(event.span.id, event.span.name);
-    }
-  }
+): SpanTreeEntry[] {
+  return snapshotEvents(events).map((event) => {
+    const summary = normalizeLegacyV134PayloadSummaryRow(
+      summarizePayloadRow(event.row),
+      snapshotName,
+      event.span.name,
+    ) as Record<string, Json>;
+    const {
+      span_id: _spanId,
+      has_input: _hasInput,
+      has_output: _hasOutput,
+      metric_keys: metricKeys,
+      ...fields
+    } = summary;
 
-  const root = findLatestSpan(events, ROOT_NAME);
-  const payloadRows = payloadRowsForRootSpan(payloads, root?.span.id);
-  const mergedRows = mergePayloadRows(payloadRows);
-  const llmSpanNames = new Set([
-    "mistral.chat.complete",
-    "mistral.chat.stream",
-    "mistral.fim.complete",
-    "mistral.fim.stream",
-    "mistral.agents.complete",
-    "mistral.agents.stream",
-    "mistral.embeddings.create",
-    "mistral.classifiers.moderate",
-    "mistral.classifiers.moderateChat",
-    "mistral.classifiers.classify",
-    "mistral.classifiers.classifyChat",
-  ]);
-  const parentAndNameWithOutput = new Set<string>();
-
-  for (const row of mergedRows) {
-    if (typeof row.span_id !== "string") {
-      continue;
-    }
-    const spanName = spanNameById.get(row.span_id);
-    if (!spanName || !llmSpanNames.has(spanName)) {
-      continue;
-    }
-    if (row.output === undefined || row.output === null) {
-      continue;
-    }
-
-    const parentId = parentIdBySpanId.get(row.span_id) || "";
-    parentAndNameWithOutput.add(`${parentId}:${spanName}`);
-  }
-
-  const stableRows = mergedRows.filter((row) => {
-    if (typeof row.span_id !== "string") {
-      return true;
-    }
-
-    const spanName = spanNameById.get(row.span_id);
-    if (!spanName || !llmSpanNames.has(spanName)) {
-      return true;
-    }
-
-    if (row.output !== undefined && row.output !== null) {
-      return true;
-    }
-
-    const parentId = parentIdBySpanId.get(row.span_id) || "";
-    return !parentAndNameWithOutput.has(`${parentId}:${spanName}`);
+    return {
+      event,
+      fields: {
+        span_attributes: spanTreeFields(event).span_attributes,
+        ...fields,
+        metrics: {
+          keys: metricKeys,
+        },
+      },
+    };
   });
-
-  return normalizeForSnapshot(
-    stableRows.map((row) => {
-      const spanName =
-        typeof row.span_id === "string"
-          ? spanNameById.get(row.span_id)
-          : undefined;
-
-      return normalizeLegacyV134PayloadSummaryRow(
-        summarizePayloadRow(row),
-        snapshotName,
-        spanName,
-      );
-    }),
-  );
 }
 
 export function defineMistralInstrumentationAssertions(options: {
@@ -654,11 +485,7 @@ export function defineMistralInstrumentationAssertions(options: {
 }): void {
   const spanSnapshotPath = resolveFileSnapshotPath(
     options.testFileUrl,
-    `${options.snapshotName}.span-events.json`,
-  );
-  const payloadSnapshotPath = resolveFileSnapshotPath(
-    options.testFileUrl,
-    `${options.snapshotName}.log-payloads.json`,
+    `${options.snapshotName}.span-tree.json`,
   );
   const supportsThinkingStream = options.supportsThinkingStream ?? true;
   const supportsClassifiers = options.supportsClassifiers ?? true;
@@ -672,13 +499,11 @@ export function defineMistralInstrumentationAssertions(options: {
 
   describe(options.name, () => {
     let events: CapturedLogEvent[] = [];
-    let payloads: CapturedLogPayload[] = [];
 
     beforeAll(async () => {
       await withScenarioHarness(async (harness) => {
         await options.runScenario(harness);
         events = harness.events();
-        payloads = harness.payloads();
       });
     }, timeoutMs);
 
@@ -1208,20 +1033,8 @@ export function defineMistralInstrumentationAssertions(options: {
       });
     }
 
-    test("matches the shared span snapshot", testConfig, async () => {
-      await matchFileSnapshot(
-        formatJsonFileSnapshot(buildSpanSummary(events, options.snapshotName)),
-        spanSnapshotPath,
-      );
-    });
-
-    test("matches the shared payload snapshot", testConfig, async () => {
-      await matchFileSnapshot(
-        formatJsonFileSnapshot(
-          buildPayloadSummary(events, payloads, options.snapshotName),
-        ),
-        payloadSnapshotPath,
-      );
+    test("matches the shared span tree snapshot", testConfig, async () => {
+      await matchSpanTreeSnapshot(events, spanSnapshotPath);
     });
   });
 }

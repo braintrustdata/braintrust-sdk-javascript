@@ -1,0 +1,108 @@
+span_tree:
+└── github-copilot-instrumentation-root [task]
+    metadata: {
+      "scenario": "github-copilot-instrumentation",
+      "testRunId": "<run:1>"
+    }
+    ├── github-copilot-basic-operation
+    │   metadata: {
+    │     "operation": "basic",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── Copilot Session [task]
+    │       metadata: {
+    │         "github_copilot.context_window.current": 0,
+    │         "github_copilot.context_window.limit": 128000,
+    │         "github_copilot.context_window.messages": 2,
+    │         "github_copilot.end_reason": "complete",
+    │         "github_copilot.model": "gpt-4.1",
+    │         "github_copilot.provider_type": "openai",
+    │         "github_copilot.total_input_tokens": 12438,
+    │         "github_copilot.total_output_tokens": 2
+    │       }
+    │       └── Copilot Turn [task]
+    │           input: "Reply with exactly: OK"
+    │           output: "OK"
+    │           └── github.copilot.llm [llm]
+    │               metadata: {
+    │                 "github_copilot.api_call_id": "chatcmpl-Dfl7WGPHDVLLpblipA24xvJneX5M3",
+    │                 "github_copilot.cost": 0,
+    │                 "github_copilot.duration_ms": 0,
+    │                 "github_copilot.initiator": "user",
+    │                 "github_copilot.quota_snapshots": {},
+    │                 "model": "gpt-4.1"
+    │               }
+    │               metrics: {
+    │                 "completion_reasoning_tokens": 0,
+    │                 "completion_tokens": 2,
+    │                 "prompt_tokens": 12438,
+    │                 "reasoning_tokens": 0,
+    │                 "tokens": 12440
+    │               }
+    └── github-copilot-tool-operation
+        metadata: {
+          "operation": "tool",
+          "testRunId": "<run:1>"
+        }
+        └── Copilot Session [task]
+            metadata: {
+              "github_copilot.context_window.current": 0,
+              "github_copilot.context_window.limit": 128000,
+              "github_copilot.context_window.messages": 4,
+              "github_copilot.end_reason": "complete",
+              "github_copilot.model": "gpt-4.1",
+              "github_copilot.provider_type": "openai",
+              "github_copilot.total_input_tokens": 24939,
+              "github_copilot.total_output_tokens": 27
+            }
+            ├── Copilot Turn [task]
+            │   input: "What is the weather in Tokyo? Use the get_weather tool and report the result."
+            │   output: ""
+            │   ├── github.copilot.llm [llm]
+            │   │   metadata: {
+            │   │     "github_copilot.api_call_id": "chatcmpl-Dfl7ZFqD3Hyt7vYsJ5lyihhLcfsHh",
+            │   │     "github_copilot.cost": 0,
+            │   │     "github_copilot.duration_ms": 0,
+            │   │     "github_copilot.initiator": "user",
+            │   │     "github_copilot.quota_snapshots": {},
+            │   │     "model": "gpt-4.1"
+            │   │   }
+            │   │   metrics: {
+            │   │     "completion_reasoning_tokens": 0,
+            │   │     "completion_tokens": 14,
+            │   │     "prompt_cached_tokens": 6144,
+            │   │     "prompt_tokens": 18597,
+            │   │     "reasoning_tokens": 0,
+            │   │     "tokens": 18611
+            │   │   }
+            │   └── tool: get_weather [tool]
+            │       input: {
+            │         "city": "Tokyo"
+            │       }
+            │       output: {
+            │         "content": "The weather in Tokyo is 72°F and sunny.",
+            │         "detailedContent": "The weather in Tokyo is 72°F and sunny."
+            │       }
+            │       metadata: {
+            │         "gen_ai.tool.call.id": "call_iCtypQVOy9ZxGGrQf3tQ76rH",
+            │         "gen_ai.tool.name": "get_weather"
+            │       }
+            └── Copilot Turn [task]
+                output: "The weather in Tokyo is currently 72°F and sunny."
+                └── github.copilot.llm [llm]
+                    metadata: {
+                      "github_copilot.api_call_id": "chatcmpl-Dfl7aHH1Xd1u3v2rFNY3Fy9OKYcIh",
+                      "github_copilot.cost": 0,
+                      "github_copilot.duration_ms": 0,
+                      "github_copilot.initiator": "agent",
+                      "github_copilot.quota_snapshots": {},
+                      "model": "gpt-4.1"
+                    }
+                    metrics: {
+                      "completion_reasoning_tokens": 0,
+                      "completion_tokens": 13,
+                      "prompt_cached_tokens": 12416,
+                      "prompt_tokens": 24902,
+                      "reasoning_tokens": 0,
+                      "tokens": 24915
+                    }

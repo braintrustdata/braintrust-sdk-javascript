@@ -51,7 +51,7 @@ describe.concurrent("variants", () => {
           });
         },
         expectLLMSpan: false,
-        snapshotName: scenario.snapshotName,
+        snapshotName: `${scenario.snapshotName}-wrapped`,
         testFileUrl: import.meta.url,
         timeoutMs: TIMEOUT_MS,
       });
@@ -71,7 +71,7 @@ describe.concurrent("variants", () => {
           });
         },
         expectLLMSpan: true,
-        snapshotName: scenario.snapshotName,
+        snapshotName: `${scenario.snapshotName}-auto-hook`,
         testFileUrl: import.meta.url,
         timeoutMs: TIMEOUT_MS,
       });

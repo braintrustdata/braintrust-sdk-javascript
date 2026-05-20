@@ -1,0 +1,31 @@
+span_tree:
+├── context-root [task]
+│   metadata: {
+│     "scenario": "trace-context-and-continuation",
+│     "testRunId": "<run:1>"
+│   }
+│   ├── current-child
+│   │   output: {
+│   │     "source": "withCurrent"
+│   │   }
+│   │   metadata: {
+│   │     "kind": "current-child",
+│   │     "testRunId": "<run:1>"
+│   │   }
+│   └── reattached-child
+│       output: {
+│         "resumed": true
+│       }
+│       metadata: {
+│         "kind": "reattached-child",
+│         "testRunId": "<run:1>"
+│       }
+└── late-update [task]
+    output: {
+      "state": "updated"
+    }
+    metadata: {
+      "kind": "late-update",
+      "patched": true,
+      "testRunId": "<run:1>"
+    }
