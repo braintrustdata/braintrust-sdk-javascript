@@ -43,7 +43,10 @@ import { cohereConfigs } from "../configs/cohere";
 import { groqConfigs } from "../configs/groq";
 import { genkitConfigs } from "../configs/genkit";
 import { gitHubCopilotConfigs } from "../configs/github-copilot";
-import { type BundlerPluginOptions } from "./plugin";
+import {
+  LegacyBundlerPluginOptions,
+  type BundlerPluginOptions,
+} from "./plugin";
 
 /**
  * Helper function to get module version from package.json
@@ -68,7 +71,9 @@ const matcherCache = new Map<string, InstrumentationMatcher>();
 /**
  * Get or create a matcher instance, caching by config hash
  */
-function getMatcher(options: BundlerPluginOptions): InstrumentationMatcher {
+function getMatcher(
+  options: LegacyBundlerPluginOptions,
+): InstrumentationMatcher {
   const allInstrumentations = [
     ...openaiConfigs,
     ...anthropicConfigs,
@@ -190,7 +195,7 @@ function codeTransformerLoader(
 
 // Attach Options type to the loader function
 namespace codeTransformerLoader {
-  export type Options = BundlerPluginOptions;
+  export type Options = LegacyBundlerPluginOptions;
 }
 
 export = codeTransformerLoader;
