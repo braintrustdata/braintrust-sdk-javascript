@@ -1,9 +1,4 @@
 {
-  "version": 1,
-  "meta": {
-    "createdAt": "2026-04-22T22:49:19.000Z",
-    "seinfeldVersion": "0.0.0"
-  },
   "entries": [
     {
       "callIndex": 0,
@@ -22,6 +17,7 @@
               }
             ],
             "model": "gpt-4o-mini-2024-07-18",
+            "stream": false,
             "temperature": 0
           }
         },
@@ -69,9 +65,18 @@
             }
           }
         },
-        "headers": {},
-        "status": 200
+        "headers": {
+          "content-type": "application/json",
+          "openai-version": "2020-10-01"
+        },
+        "status": 200,
+        "statusText": "OK"
       }
     }
-  ]
+  ],
+  "meta": {
+    "createdAt": "2026-04-22T22:49:19.000Z",
+    "seinfeldVersion": "0.0.0"
+  },
+  "version": 1
 }
