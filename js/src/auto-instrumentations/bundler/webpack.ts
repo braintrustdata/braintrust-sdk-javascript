@@ -18,9 +18,6 @@ export function braintrustWebpackPlugin(
 export type WebpackPluginOptions = LegacyBundlerPluginOptions;
 
 /**
- * @deprecated Use {@link braintrustWebpackPlugin} instead. This legacy export
- * defaults to browser-compatible diagnostics channel shimming when `browser`
- * is omitted; `braintrustWebpackPlugin` defaults to Node.js diagnostics_channel
- * unless `useDiagnosticChannelCompatShim` is set to `true`.
+ * @deprecated Use {@link braintrustWebpackPlugin} instead.
  */
 export const webpackPlugin = unplugin.webpack;

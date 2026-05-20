@@ -18,9 +18,6 @@ export function braintrustVitePlugin(
 export type VitePluginOptions = LegacyBundlerPluginOptions;
 
 /**
- * @deprecated Use {@link braintrustVitePlugin} instead. This legacy export
- * defaults to browser-compatible diagnostics channel shimming when `browser`
- * is omitted; `braintrustVitePlugin` defaults to Node.js diagnostics_channel
- * unless `useDiagnosticChannelCompatShim` is set to `true`.
+ * @deprecated Use {@link braintrustVitePlugin} instead.
  */
 export const vitePlugin = unplugin.vite;
