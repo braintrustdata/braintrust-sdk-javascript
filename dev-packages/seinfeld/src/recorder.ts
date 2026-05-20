@@ -17,7 +17,6 @@ import type {
   RecordedRequest,
 } from "./cassette";
 import { AggregateCassetteMissError, CassetteMissError } from "./errors";
-import { CURRENT_FORMAT_VERSION } from "./format";
 import { applyFilters } from "./normalizer";
 import type { FilterSpec } from "./normalizer";
 import { asNormalized } from "./matcher";
@@ -362,7 +361,6 @@ async function persistIfRecord(ctx: CassetteContext): Promise<void> {
     // Ignore load errors (corrupt file, version mismatch) — stamp fresh.
   }
   const cassette: CassetteFile = {
-    version: CURRENT_FORMAT_VERSION,
     meta: { createdAt },
     entries: flushedEntries,
   };
