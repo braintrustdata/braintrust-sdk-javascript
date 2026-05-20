@@ -37,7 +37,6 @@
     "span_id": "<span:2>"
   },
   {
-    "_is_merge": false,
     "context": {
       "caller_filename": "<node-internal>",
       "caller_functionname": "<node-internal>",
@@ -68,7 +67,11 @@
       "tags": []
     },
     "metrics": {
+      "end": 0,
       "start": 0
+    },
+    "output": {
+      "message": "hello from langgraph"
     },
     "project_id": "<project_id>",
     "root_span_id": "<span:2>",
@@ -83,38 +86,6 @@
     ]
   },
   {
-    "_is_merge": true,
-    "id": "<span:3>",
-    "log_id": "g",
-    "metadata": {
-      "tags": []
-    },
-    "output": {
-      "message": "hello from langgraph"
-    },
-    "project_id": "<project_id>",
-    "root_span_id": "<span:2>",
-    "span_id": "<span:4>",
-    "span_parents": [
-      "<span:2>"
-    ]
-  },
-  {
-    "_is_merge": true,
-    "id": "<span:3>",
-    "log_id": "g",
-    "metrics": {
-      "end": 0
-    },
-    "project_id": "<project_id>",
-    "root_span_id": "<span:2>",
-    "span_id": "<span:4>",
-    "span_parents": [
-      "<span:2>"
-    ]
-  },
-  {
-    "_is_merge": false,
     "context": {
       "caller_filename": "<node-internal>",
       "caller_functionname": "<node-internal>",
@@ -199,7 +170,11 @@
       ]
     },
     "metrics": {
+      "end": 0,
       "start": 0
+    },
+    "output": {
+      "message": "hello from langgraph"
     },
     "project_id": "<project_id>",
     "root_span_id": "<span:2>",
@@ -214,40 +189,6 @@
     ]
   },
   {
-    "_is_merge": true,
-    "id": "<span:5>",
-    "log_id": "g",
-    "metadata": {
-      "tags": [
-        "graph:step:1"
-      ]
-    },
-    "output": {
-      "message": "hello from langgraph"
-    },
-    "project_id": "<project_id>",
-    "root_span_id": "<span:2>",
-    "span_id": "<span:6>",
-    "span_parents": [
-      "<span:4>"
-    ]
-  },
-  {
-    "_is_merge": true,
-    "id": "<span:5>",
-    "log_id": "g",
-    "metrics": {
-      "end": 0
-    },
-    "project_id": "<project_id>",
-    "root_span_id": "<span:2>",
-    "span_id": "<span:6>",
-    "span_parents": [
-      "<span:4>"
-    ]
-  },
-  {
-    "_is_merge": false,
     "context": {
       "caller_filename": "<node-internal>",
       "caller_functionname": "<node-internal>",
@@ -309,6 +250,7 @@
           "@langchain/openai": "<langchain-version>"
         }
       },
+      "model": "gpt-4o-mini-2024-07-18",
       "options": {
         "signal": {}
       },
@@ -339,44 +281,12 @@
       "tags": []
     },
     "metrics": {
-      "start": 0
-    },
-    "project_id": "<project_id>",
-    "root_span_id": "<span:2>",
-    "span_attributes": {
-      "exec_counter": 3,
-      "name": "ChatOpenAI",
-      "type": "llm"
-    },
-    "span_id": "<span:8>",
-    "span_parents": [
-      "<span:6>"
-    ]
-  },
-  {
-    "_is_merge": true,
-    "id": "<span:7>",
-    "log_id": "g",
-    "metrics": {
       "completion_tokens": "<number>",
+      "end": 0,
       "prompt_cached_tokens": "<number>",
       "prompt_tokens": "<number>",
+      "start": 0,
       "total_tokens": "<number>"
-    },
-    "project_id": "<project_id>",
-    "root_span_id": "<span:2>",
-    "span_id": "<span:8>",
-    "span_parents": [
-      "<span:6>"
-    ]
-  },
-  {
-    "_is_merge": true,
-    "id": "<span:7>",
-    "log_id": "g",
-    "metadata": {
-      "model": "gpt-4o-mini-2024-07-18",
-      "tags": []
     },
     "output": {
       "generations": [
@@ -394,7 +304,7 @@
               "kwargs": {
                 "additional_kwargs": {},
                 "content": "<llm-response>",
-                "id": "<span:9>",
+                "id": "<span:8>",
                 "invalid_tool_calls": [],
                 "response_metadata": {
                   "finish_reason": "stop",
@@ -455,21 +365,12 @@
     },
     "project_id": "<project_id>",
     "root_span_id": "<span:2>",
-    "span_id": "<span:8>",
-    "span_parents": [
-      "<span:6>"
-    ]
-  },
-  {
-    "_is_merge": true,
-    "id": "<span:7>",
-    "log_id": "g",
-    "metrics": {
-      "end": 0
+    "span_attributes": {
+      "exec_counter": 3,
+      "name": "ChatOpenAI",
+      "type": "llm"
     },
-    "project_id": "<project_id>",
-    "root_span_id": "<span:2>",
-    "span_id": "<span:8>",
+    "span_id": "<span:9>",
     "span_parents": [
       "<span:6>"
     ]
@@ -493,47 +394,19 @@
       "temperature": 0
     },
     "metrics": {
-      "start": 0
-    },
-    "project_id": "<project_id>",
-    "root_span_id": "<span:2>",
-    "span_attributes": {
-      "exec_counter": 4,
-      "name": "Chat Completion",
-      "type": "llm"
-    },
-    "span_id": "<span:11>",
-    "span_parents": [
-      "<span:2>"
-    ]
-  },
-  {
-    "_is_merge": true,
-    "id": "<span:10>",
-    "log_id": "g",
-    "metrics": {
       "completion_accepted_prediction_tokens": "<number>",
       "completion_audio_tokens": "<number>",
       "completion_reasoning_tokens": "<number>",
       "completion_rejected_prediction_tokens": "<number>",
       "completion_tokens": "<number>",
+      "end": 0,
       "prompt_audio_tokens": "<number>",
       "prompt_cached_tokens": "<number>",
       "prompt_tokens": "<number>",
+      "start": 0,
       "time_to_first_token": "<number>",
       "tokens": "<number>"
     },
-    "project_id": "<project_id>",
-    "root_span_id": "<span:2>",
-    "span_id": "<span:11>",
-    "span_parents": [
-      "<span:2>"
-    ]
-  },
-  {
-    "_is_merge": true,
-    "id": "<span:10>",
-    "log_id": "g",
     "output": [
       {
         "finish_reason": "stop",
@@ -549,20 +422,11 @@
     ],
     "project_id": "<project_id>",
     "root_span_id": "<span:2>",
-    "span_id": "<span:11>",
-    "span_parents": [
-      "<span:2>"
-    ]
-  },
-  {
-    "_is_merge": true,
-    "id": "<span:10>",
-    "log_id": "g",
-    "metrics": {
-      "end": 0
+    "span_attributes": {
+      "exec_counter": 4,
+      "name": "Chat Completion",
+      "type": "llm"
     },
-    "project_id": "<project_id>",
-    "root_span_id": "<span:2>",
     "span_id": "<span:11>",
     "span_parents": [
       "<span:2>"
