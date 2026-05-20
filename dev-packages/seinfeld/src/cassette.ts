@@ -85,7 +85,6 @@ export interface CassetteMeta {
  * incompatibly.
  */
 export interface CassetteFile {
-  version: 1;
   meta?: CassetteMeta;
   entries: CassetteEntry[];
 }
