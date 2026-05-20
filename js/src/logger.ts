@@ -1298,7 +1298,9 @@ class HTTPConnection {
             } ${(e as any).text}`,
           );
           const sleepTimeS = HTTP_RETRY_BASE_SLEEP_TIME_S * 2 ** i;
-          debugLogger.info(`Sleeping for ${sleepTimeS}s`);
+          debugLogger.info(
+            `Sleeping for ${sleepTimeS}s before retrying API request`,
+          );
           await new Promise((resolve) =>
             setTimeout(resolve, sleepTimeS * 1000),
           );
