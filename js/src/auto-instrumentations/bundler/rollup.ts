@@ -3,10 +3,10 @@
  *
  * Usage:
  * ```typescript
- * import { rollupPlugin } from '@braintrust/auto-instrumentations/bundler/rollup';
+ * import { braintrustRollupPlugin } from 'braintrust/rollup';
  *
  * export default {
- *   plugins: [rollupPlugin()]
+ *   plugins: [braintrustRollupPlugin()]
  * };
  * ```
  *
@@ -21,4 +21,9 @@ import { unplugin, type BundlerPluginOptions } from "./plugin";
 
 export type RollupPluginOptions = BundlerPluginOptions;
 
-export const rollupPlugin = unplugin.rollup;
+export const braintrustRollupPlugin = unplugin.rollup;
+
+/**
+ * @deprecated Use {@link braintrustRollupPlugin} instead.
+ */
+export const rollupPlugin = braintrustRollupPlugin;

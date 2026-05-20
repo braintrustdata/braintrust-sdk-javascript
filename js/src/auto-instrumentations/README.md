@@ -245,11 +245,11 @@ When using bundler plugins (Vite, Webpack, etc.) in Node.js:
 
 ```javascript
 // vite.config.js
-import { vitePlugin } from "@braintrust/auto-instrumentations/bundler/vite";
+import { braintrustVitePlugin } from "braintrust/vite";
 
 export default {
   plugins: [
-    vitePlugin({ browser: false }), // IMPORTANT: Set browser: false for Node.js
+    braintrustVitePlugin({ browser: false }), // IMPORTANT: Set browser: false for Node.js
   ],
 };
 ```
@@ -262,11 +262,11 @@ Setting `browser: false` ensures the code-transformer injects `node:diagnostics_
 
 ```javascript
 // vite.config.js
-import { vitePlugin } from "@braintrust/auto-instrumentations/bundler/vite";
+import { braintrustVitePlugin } from "braintrust/vite";
 
 export default {
   plugins: [
-    vitePlugin({ browser: true }), // Use browser: true for browser builds
+    braintrustVitePlugin({ browser: true }), // Use browser: true for browser builds
   ],
 };
 ```
@@ -440,14 +440,10 @@ channel.subscribe({
 
 #### TypeScript Errors with Bundler Plugins
 
-Some bundlers may have TypeScript resolution issues with the plugin imports. Use `.js` extension in imports:
+If TypeScript has resolution issues with direct internal imports, use the public Braintrust bundler entrypoints:
 
 ```javascript
-// Instead of:
-import { vitePlugin } from "@braintrust/auto-instrumentations/bundler/vite";
-
-// Use:
-import { vitePlugin } from "@braintrust/auto-instrumentations/bundler/vite.js";
+import { braintrustVitePlugin } from "braintrust/vite";
 ```
 
 #### ESM vs CJS Mixing

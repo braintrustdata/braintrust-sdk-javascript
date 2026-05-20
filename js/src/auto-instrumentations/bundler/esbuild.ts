@@ -3,10 +3,10 @@
  *
  * Usage:
  * ```typescript
- * import { esbuildPlugin } from '@braintrust/auto-instrumentations/bundler/esbuild';
+ * import { braintrustEsbuildPlugin } from 'braintrust/esbuild';
  *
  * await esbuild.build({
- *   plugins: [esbuildPlugin()],
+ *   plugins: [braintrustEsbuildPlugin()],
  * });
  * ```
  *
@@ -21,4 +21,9 @@ import { unplugin, type BundlerPluginOptions } from "./plugin";
 
 export type EsbuildPluginOptions = BundlerPluginOptions;
 
-export const esbuildPlugin = unplugin.esbuild;
+export const braintrustEsbuildPlugin = unplugin.esbuild;
+
+/**
+ * @deprecated Use {@link braintrustEsbuildPlugin} instead.
+ */
+export const esbuildPlugin = braintrustEsbuildPlugin;

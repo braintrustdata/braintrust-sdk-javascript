@@ -3,10 +3,10 @@
  *
  * Usage:
  * ```javascript
- * import { webpackPlugin } from 'braintrust/auto-instrumentations/bundler/webpack';
+ * import { braintrustWebpackPlugin } from 'braintrust/webpack';
  *
  * export default {
- *   plugins: [webpackPlugin()],
+ *   plugins: [braintrustWebpackPlugin()],
  * };
  * ```
  *
@@ -21,4 +21,9 @@ import { unplugin, type BundlerPluginOptions } from "./plugin";
 
 export type WebpackPluginOptions = BundlerPluginOptions;
 
-export const webpackPlugin = unplugin.webpack;
+export const braintrustWebpackPlugin = unplugin.webpack;
+
+/**
+ * @deprecated Use {@link braintrustWebpackPlugin} instead.
+ */
+export const webpackPlugin = braintrustWebpackPlugin;

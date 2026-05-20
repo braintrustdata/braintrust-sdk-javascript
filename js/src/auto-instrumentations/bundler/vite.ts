@@ -3,10 +3,10 @@
  *
  * Usage:
  * ```typescript
- * import { vitePlugin } from '@braintrust/auto-instrumentations/bundler/vite';
+ * import { braintrustVitePlugin } from 'braintrust/vite';
  *
  * export default {
- *   plugins: [vitePlugin()],
+ *   plugins: [braintrustVitePlugin()],
  * };
  * ```
  *
@@ -21,4 +21,9 @@ import { unplugin, type BundlerPluginOptions } from "./plugin";
 
 export type VitePluginOptions = BundlerPluginOptions;
 
-export const vitePlugin = unplugin.vite;
+export const braintrustVitePlugin = unplugin.vite;
+
+/**
+ * @deprecated Use {@link braintrustVitePlugin} instead.
+ */
+export const vitePlugin = braintrustVitePlugin;

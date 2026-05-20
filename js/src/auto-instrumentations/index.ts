@@ -23,8 +23,8 @@
  *
  * **Bundler Plugin (Vite):**
  * ```typescript
- * import { vitePlugin } from '@braintrust/auto-instrumentations/bundler/vite';
- * export default { plugins: [vitePlugin()] };
+ * import { braintrustVitePlugin } from 'braintrust/vite';
+ * export default { plugins: [braintrustVitePlugin()] };
  * ```
  */
 
