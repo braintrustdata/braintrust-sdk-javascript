@@ -1,4 +1,9 @@
 {
+  "version": 1,
+  "meta": {
+    "createdAt": "2026-04-22T22:49:19.000Z",
+    "seinfeldVersion": "0.0.0"
+  },
   "entries": [
     {
       "callIndex": 0,
