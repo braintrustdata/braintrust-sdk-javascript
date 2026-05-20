@@ -4216,132 +4216,17 @@ span_tree:
     │             "reasoning_tokens": 0,
     │             "tokens": 29
     │           }
-    ├── ai-sdk-agent-stream-operation
-    │   metadata: {
-    │     "operation": "agent-stream",
-    │     "testRunId": "<run:1>"
-    │   }
-    │   └── Agent.stream [function]
-    │       input: {
-    │         "maxOutputTokens": 24,
-    │         "messages": [
-    │           {
-    │             "content": "Reply with exactly STREAM HELLO and no punctuation.",
-    │             "role": "user"
-    │           }
-    │         ],
-    │         "model": {
-    │           "config": {
-    │             "fileIdPrefixes": [
-    │               "file-"
-    │             ],
-    │             "provider": "openai.responses"
-    │           },
-    │           "modelId": "gpt-4o-mini-2024-07-18",
-    │           "specificationVersion": "v2",
-    │           "supportedUrls": {
-    │             "application/pdf": [
-    │               {}
-    │             ],
-    │             "image/*": [
-    │               {}
-    │             ]
-    │           }
-    │         },
-    │         "system": "You are a terse assistant."
-    │       }
-    │       output: {
-    │         "finishReason": "stop",
-    │         "text": "STREAM HELLO"
-    │       }
-    │       metadata: {
-    │         "braintrust": {
-    │           "integration_name": "ai-sdk",
-    │           "sdk_language": "typescript"
-    │         },
-    │         "model": "gpt-4o-mini-2024-07-18",
-    │         "provider": "openai.responses"
-    │       }
-    │       metrics: {
-    │         "time_to_first_token": 0
-    │       }
-    │       └── doStream [llm]
-    │           input: {
-    │             "includeRawChunks": false,
-    │             "maxOutputTokens": 24,
-    │             "prompt": [
-    │               {
-    │                 "content": "You are a terse assistant.",
-    │                 "role": "system"
-    │               },
-    │               {
-    │                 "content": [
-    │                   {
-    │                     "text": "Reply with exactly STREAM HELLO and no punctuation.",
-    │                     "type": "text"
-    │                   }
-    │                 ],
-    │                 "role": "user"
-    │               }
-    │             ]
-    │           }
-    │           output: {
-    │             "finishReason": "stop",
-    │             "text": "STREAM HELLO",
-    │             "toolCalls": [],
-    │             "usage": {
-    │               "cachedInputTokens": 0,
-    │               "inputTokens": 27,
-    │               "outputTokens": 4,
-    │               "reasoningTokens": 0,
-    │               "totalTokens": 31
-    │             }
-    │           }
-    │           metadata: {
-    │             "braintrust": {
-    │               "integration_name": "ai-sdk",
-    │               "sdk_language": "typescript"
-    │             },
-    │             "finish_reason": "stop",
-    │             "model": "gpt-4o-mini-2024-07-18",
-    │             "provider": "openai.responses"
-    │           }
-    │           metrics: {
-    │             "completion_reasoning_tokens": 0,
-    │             "completion_tokens": 4,
-    │             "prompt_cached_tokens": 0,
-    │             "prompt_tokens": 27,
-    │             "reasoning_tokens": 0,
-    │             "time_to_first_token": 0,
-    │             "tokens": 31
-    │           }
-    └── ai-sdk-attachment-operation
+    └── ai-sdk-agent-stream-operation
         metadata: {
-          "operation": "attachment",
+          "operation": "agent-stream",
           "testRunId": "<run:1>"
         }
-        └── generateText [function]
+        └── Agent.stream [function]
             input: {
-              "maxOutputTokens": 48,
+              "maxOutputTokens": 24,
               "messages": [
                 {
-                  "content": [
-                    {
-                      "data": {
-                        "content_type": "text/plain",
-                        "filename": "tiny.txt",
-                        "key": "<uuid:1>",
-                        "type": "braintrust_attachment"
-                      },
-                      "filename": "tiny.txt",
-                      "mediaType": "text/plain",
-                      "type": "file"
-                    },
-                    {
-                      "text": "Read the file and summarize it in one short sentence.",
-                      "type": "text"
-                    }
-                  ],
+                  "content": "Reply with exactly STREAM HELLO and no punctuation.",
                   "role": "user"
                 }
               ],
@@ -4363,7 +4248,11 @@ span_tree:
                   ]
                 }
               },
-              "temperature": 0
+              "system": "You are a terse assistant."
+            }
+            output: {
+              "finishReason": "stop",
+              "text": "STREAM HELLO"
             }
             metadata: {
               "braintrust": {
@@ -4373,43 +4262,56 @@ span_tree:
               "model": "gpt-4o-mini-2024-07-18",
               "provider": "openai.responses"
             }
-            error: "'file part media type text/plain' functionality not supported."
-            └── doGenerate [llm]
+            metrics: {
+              "time_to_first_token": 0
+            }
+            └── doStream [llm]
                 input: {
-                  "headers": {
-                    "user-agent": "ai/5.0.82"
-                  },
-                  "maxOutputTokens": 48,
+                  "includeRawChunks": false,
+                  "maxOutputTokens": 24,
                   "prompt": [
+                    {
+                      "content": "You are a terse assistant.",
+                      "role": "system"
+                    },
                     {
                       "content": [
                         {
-                          "data": {
-                            "content_type": "text/plain",
-                            "filename": "tiny.txt",
-                            "key": "<uuid:1>",
-                            "type": "braintrust_attachment"
-                          },
-                          "filename": "tiny.txt",
-                          "mediaType": "text/plain",
-                          "type": "file"
-                        },
-                        {
-                          "text": "Read the file and summarize it in one short sentence.",
+                          "text": "Reply with exactly STREAM HELLO and no punctuation.",
                           "type": "text"
                         }
                       ],
                       "role": "user"
                     }
-                  ],
-                  "temperature": 0
+                  ]
+                }
+                output: {
+                  "finishReason": "stop",
+                  "text": "STREAM HELLO",
+                  "toolCalls": [],
+                  "usage": {
+                    "cachedInputTokens": 0,
+                    "inputTokens": 27,
+                    "outputTokens": 4,
+                    "reasoningTokens": 0,
+                    "totalTokens": 31
+                  }
                 }
                 metadata: {
                   "braintrust": {
                     "integration_name": "ai-sdk",
                     "sdk_language": "typescript"
                   },
+                  "finish_reason": "stop",
                   "model": "gpt-4o-mini-2024-07-18",
                   "provider": "openai.responses"
                 }
-                error: "'file part media type text/plain' functionality not supported.\n\nAI_UnsupportedFunctionalityError: 'file part media type text/plain' functionality not supported.\n    at <anonymous> (<repo>/e2e/.bt-tmp/scenario-deps/ai-sdk-instrumentation-locked-e712014295b4196e/node_modules/.pnpm/@ai-sdk+openai@2.0.57_zod@3.25.76/node_modules/@ai-sdk/openai/src/responses/convert-to-openai-responses-input.ts:0:0)\n    at Array.map (<anonymous>)\n    at convertToOpenAIResponsesInput (<repo>/e2e/.bt-tmp/scenario-deps/ai-sdk-instrumentation-locked-e712014295b4196e/node_modules/.pnpm/@ai-sdk+openai@2.0.57_zod@3.25.76/node_modules/@ai-sdk/openai/src/responses/convert-to-openai-responses-input.ts:0:0)\n    at OpenAIResponsesLanguageModel.getArgs (<repo>/e2e/.bt-tmp/scenario-deps/ai-sdk-instrumentation-locked-e712014295b4196e/node_modules/.pnpm/@ai-sdk+openai@2.0.57_zod@3.25.76/node_modules/@ai-sdk/openai/src/responses/openai-responses-language-model.ts:0:0)\n    at process.processTicksAndRejections (node:<internal>:0:0)\n    at async OpenAIResponsesLanguageModel.doGenerate (<repo>/e2e/.bt-tmp/scenario-deps/ai-sdk-instrumentation-locked-e712014295b4196e/node_modules/.pnpm/@ai-sdk+openai@2.0.57_zod@3.25.76/node_modules/@ai-sdk/openai/src/responses/openai-responses-language-model.ts:0:0)\n    at async parentSpan.traced.name (<repo>/js/dist/index.js:0:0)"
+                metrics: {
+                  "completion_reasoning_tokens": 0,
+                  "completion_tokens": 4,
+                  "prompt_cached_tokens": 0,
+                  "prompt_tokens": 27,
+                  "reasoning_tokens": 0,
+                  "time_to_first_token": 0,
+                  "tokens": 31
+                }

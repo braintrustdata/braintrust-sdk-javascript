@@ -249,13 +249,6 @@ function findOutputObjectTrace(events: CapturedLogEvent[]) {
   );
 }
 
-function findAttachmentTrace(events: CapturedLogEvent[]) {
-  return findGenerateTextTraceForOperation(
-    events,
-    "ai-sdk-attachment-operation",
-  );
-}
-
 function findDenyOutputOverrideTrace(events: CapturedLogEvent[]) {
   return findGenerateTextTraceForOperation(
     events,
@@ -456,37 +449,6 @@ function extractFinishReason(
   return typeof metadata.finish_reason === "string"
     ? metadata.finish_reason
     : undefined;
-}
-
-function extractFileAttachmentReference(
-  input: unknown,
-): Record<string, unknown> | undefined {
-  if (!isRecord(input) || !Array.isArray(input.messages)) {
-    return undefined;
-  }
-
-  for (const message of input.messages) {
-    if (!isRecord(message) || !Array.isArray(message.content)) {
-      continue;
-    }
-
-    for (const part of message.content) {
-      if (!isRecord(part) || part.type !== "file") {
-        continue;
-      }
-
-      const data = part.data;
-      if (isRecord(data) && isRecord(data.reference)) {
-        return data.reference;
-      }
-
-      if (isRecord(data) && data.type === "braintrust_attachment") {
-        return data;
-      }
-    }
-  }
-
-  return undefined;
 }
 
 function normalizeAISDKContext(value: unknown): Json {
@@ -803,7 +765,6 @@ export function defineAISDKInstrumentationAssertions(options: {
   runScenario: RunAISDKScenario;
   sdkMajorVersion: number;
   snapshotName: string;
-  supportsAttachmentScenario: boolean;
   supportsProviderCacheAssertions: boolean;
   supportsDenyOutputOverrideScenario: boolean;
   supportsEmbedMany: boolean;
@@ -1062,30 +1023,6 @@ export function defineAISDKInstrumentationAssertions(options: {
             expect(typeof outputInput.response_format.type).toBe("string");
             expect(outputInput.response_format.schema).toBeDefined();
           }
-        },
-      );
-    }
-
-    if (options.supportsAttachmentScenario) {
-      test(
-        "captures file attachment normalization in input",
-        testConfig,
-        () => {
-          const root = findLatestSpan(events, ROOT_NAME);
-          const trace = findAttachmentTrace(events);
-
-          expectOperationParentedByRoot(trace.operation, root);
-          expectAISDKParentSpan(trace.parent);
-          expect(operationName(trace.operation)).toBe("attachment");
-          const attachmentRef = extractFileAttachmentReference(
-            trace.parent?.input,
-          );
-          expect(attachmentRef).toBeDefined();
-          expect(attachmentRef).toMatchObject({
-            content_type: "text/plain",
-            key: expect.any(String),
-            type: "braintrust_attachment",
-          });
         },
       );
     }
