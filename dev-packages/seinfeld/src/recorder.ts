@@ -39,12 +39,6 @@ import {
 import { encodeBinaryDraft, encodeBody } from "./serializer";
 import type { CassetteStore } from "./store";
 
-// Injected at build time by tsup define. Falls back to 'dev' when running
-// directly without a build step.
-declare const __SEINFELD_VERSION__: string;
-const SEINFELD_VERSION: string =
-  typeof __SEINFELD_VERSION__ !== "undefined" ? __SEINFELD_VERSION__ : "dev";
-
 const DEFAULT_EXTERNAL_BLOB_THRESHOLD = 65536;
 
 export type RequestUrlMatcher = string | RegExp;
@@ -369,7 +363,7 @@ async function persistIfRecord(ctx: CassetteContext): Promise<void> {
   }
   const cassette: CassetteFile = {
     version: CURRENT_FORMAT_VERSION,
-    meta: { createdAt, seinfeldVersion: SEINFELD_VERSION },
+    meta: { createdAt },
     entries: flushedEntries,
   };
   await ctx.store.save(ctx.name, cassette);
