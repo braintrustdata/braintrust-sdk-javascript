@@ -1,29 +1,26 @@
-/**
- * Vite plugin for auto-instrumentation.
- *
- * Usage:
- * ```typescript
- * import { braintrustVitePlugin } from 'braintrust/vite';
- *
- * export default {
- *   plugins: [braintrustVitePlugin()],
- * };
- * ```
- *
- * This plugin uses @apm-js-collab/code-transformer to perform AST transformation
- * at build-time, injecting TracingChannel calls into AI SDK functions.
- *
- * For browser builds, the plugin automatically uses 'dc-browser' for diagnostics_channel polyfill.
- * The als-browser polyfill for AsyncLocalStorage is automatically included as a dependency.
- */
+import type { VitePlugin } from "unplugin";
+import {
+  BundlerPluginOptions,
+  unplugin,
+  type LegacyBundlerPluginOptions,
+} from "./plugin";
 
-import { unplugin, type BundlerPluginOptions } from "./plugin";
+export function braintrustVitePlugin(
+  options: BundlerPluginOptions = {},
+): VitePlugin | VitePlugin[] {
+  const { useDiagnosticChannelCompatShim = false, ...pluginOptions } = options;
+  return unplugin.vite({
+    ...pluginOptions,
+    browser: useDiagnosticChannelCompatShim,
+  });
+}
 
-export type VitePluginOptions = BundlerPluginOptions;
-
-export const braintrustVitePlugin = unplugin.vite;
+export type VitePluginOptions = LegacyBundlerPluginOptions;
 
 /**
- * @deprecated Use {@link braintrustVitePlugin} instead.
+ * @deprecated Use {@link braintrustVitePlugin} instead. This legacy export
+ * defaults to browser-compatible diagnostics channel shimming when `browser`
+ * is omitted; `braintrustVitePlugin` defaults to Node.js diagnostics_channel
+ * unless `useDiagnosticChannelCompatShim` is set to `true`.
  */
-export const vitePlugin = braintrustVitePlugin;
+export const vitePlugin = unplugin.vite;

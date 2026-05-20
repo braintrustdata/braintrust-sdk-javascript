@@ -1,29 +1,26 @@
-/**
- * Rollup plugin for auto-instrumentation.
- *
- * Usage:
- * ```typescript
- * import { braintrustRollupPlugin } from 'braintrust/rollup';
- *
- * export default {
- *   plugins: [braintrustRollupPlugin()]
- * };
- * ```
- *
- * This plugin uses @apm-js-collab/code-transformer to perform AST transformation
- * at build-time, injecting TracingChannel calls into AI SDK functions.
- *
- * For browser builds, the plugin automatically uses 'dc-browser' for diagnostics_channel polyfill.
- * The als-browser polyfill for AsyncLocalStorage is automatically included as a dependency.
- */
+import type { RollupPlugin } from "unplugin";
+import {
+  BundlerPluginOptions,
+  unplugin,
+  type LegacyBundlerPluginOptions,
+} from "./plugin";
 
-import { unplugin, type BundlerPluginOptions } from "./plugin";
+export function braintrustRollupPlugin(
+  options: BundlerPluginOptions = {},
+): RollupPlugin | RollupPlugin[] {
+  const { useDiagnosticChannelCompatShim = false, ...pluginOptions } = options;
+  return unplugin.rollup({
+    ...pluginOptions,
+    browser: useDiagnosticChannelCompatShim,
+  });
+}
 
-export type RollupPluginOptions = BundlerPluginOptions;
-
-export const braintrustRollupPlugin = unplugin.rollup;
+export type RollupPluginOptions = LegacyBundlerPluginOptions;
 
 /**
- * @deprecated Use {@link braintrustRollupPlugin} instead.
+ * @deprecated Use {@link braintrustRollupPlugin} instead. This legacy export
+ * defaults to browser-compatible diagnostics channel shimming when `browser`
+ * is omitted; `braintrustRollupPlugin` defaults to Node.js diagnostics_channel
+ * unless `useDiagnosticChannelCompatShim` is set to `true`.
  */
-export const rollupPlugin = braintrustRollupPlugin;
+export const rollupPlugin = unplugin.rollup;

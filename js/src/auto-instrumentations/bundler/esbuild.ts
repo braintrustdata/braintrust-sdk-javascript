@@ -1,29 +1,26 @@
-/**
- * esbuild plugin for auto-instrumentation.
- *
- * Usage:
- * ```typescript
- * import { braintrustEsbuildPlugin } from 'braintrust/esbuild';
- *
- * await esbuild.build({
- *   plugins: [braintrustEsbuildPlugin()],
- * });
- * ```
- *
- * This plugin uses @apm-js-collab/code-transformer to perform AST transformation
- * at build-time, injecting TracingChannel calls into AI SDK functions.
- *
- * For browser builds, the plugin automatically uses 'dc-browser' for diagnostics_channel polyfill.
- * The als-browser polyfill for AsyncLocalStorage is automatically included as a dependency.
- */
+import type { EsbuildPlugin } from "unplugin";
+import {
+  BundlerPluginOptions,
+  unplugin,
+  type LegacyBundlerPluginOptions,
+} from "./plugin";
 
-import { unplugin, type BundlerPluginOptions } from "./plugin";
+export function braintrustEsbuildPlugin(
+  options: BundlerPluginOptions = {},
+): EsbuildPlugin {
+  const { useDiagnosticChannelCompatShim = false, ...pluginOptions } = options;
+  return unplugin.esbuild({
+    ...pluginOptions,
+    browser: useDiagnosticChannelCompatShim,
+  });
+}
 
-export type EsbuildPluginOptions = BundlerPluginOptions;
-
-export const braintrustEsbuildPlugin = unplugin.esbuild;
+export type EsbuildPluginOptions = LegacyBundlerPluginOptions;
 
 /**
- * @deprecated Use {@link braintrustEsbuildPlugin} instead.
+ * @deprecated Use {@link braintrustEsbuildPlugin} instead. This legacy export
+ * defaults to browser-compatible diagnostics channel shimming when `browser`
+ * is omitted; `braintrustEsbuildPlugin` defaults to Node.js diagnostics_channel
+ * unless `useDiagnosticChannelCompatShim` is set to `true`.
  */
-export const esbuildPlugin = braintrustEsbuildPlugin;
+export const esbuildPlugin = unplugin.esbuild;
