@@ -28,6 +28,21 @@
     "type": null
   },
   {
+    "has_input": false,
+    "has_output": false,
+    "metadata": {
+      "operation": "sequential-run"
+    },
+    "metric_keys": [],
+    "name": "adk-sequential-run-operation",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:3>",
+    "span_parents": [
+      "<span:1>"
+    ],
+    "type": null
+  },
+  {
     "has_input": true,
     "metadata": {
       "google_adk.session_id": "test-session-1",
@@ -39,9 +54,27 @@
     ],
     "name": "Google ADK Runner",
     "root_span_id": "<span:1>",
-    "span_id": "<span:3>",
+    "span_id": "<span:4>",
     "span_parents": [
       "<span:2>"
+    ],
+    "type": "task"
+  },
+  {
+    "has_input": true,
+    "metadata": {
+      "google_adk.session_id": "test-session-sequential",
+      "google_adk.user_id": "test-user",
+      "provider": "google-adk"
+    },
+    "metric_keys": [
+      "duration"
+    ],
+    "name": "Google ADK Runner",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:5>",
+    "span_parents": [
+      "<span:3>"
     ],
     "type": "task"
   },
@@ -57,9 +90,26 @@
     ],
     "name": "Agent: weather_agent",
     "root_span_id": "<span:1>",
-    "span_id": "<span:4>",
+    "span_id": "<span:6>",
     "span_parents": [
-      "<span:3>"
+      "<span:4>"
+    ],
+    "type": "task"
+  },
+  {
+    "has_input": false,
+    "metadata": {
+      "google_adk.agent_name": "sequential_workflow",
+      "provider": "google-adk"
+    },
+    "metric_keys": [
+      "duration"
+    ],
+    "name": "Agent: sequential_workflow",
+    "root_span_id": "<span:1>",
+    "span_id": "<span:7>",
+    "span_parents": [
+      "<span:5>"
     ],
     "type": "task"
   },
@@ -76,61 +126,11 @@
     ],
     "name": "tool: get_weather",
     "root_span_id": "<span:1>",
-    "span_id": "<span:5>",
-    "span_parents": [
-      "<span:4>"
-    ],
-    "type": "tool"
-  },
-  {
-    "has_input": false,
-    "has_output": false,
-    "metadata": {
-      "operation": "sequential-run"
-    },
-    "metric_keys": [],
-    "name": "adk-sequential-run-operation",
-    "root_span_id": "<span:1>",
-    "span_id": "<span:6>",
-    "span_parents": [
-      "<span:1>"
-    ],
-    "type": null
-  },
-  {
-    "has_input": true,
-    "metadata": {
-      "google_adk.session_id": "test-session-sequential",
-      "google_adk.user_id": "test-user",
-      "provider": "google-adk"
-    },
-    "metric_keys": [
-      "duration"
-    ],
-    "name": "Google ADK Runner",
-    "root_span_id": "<span:1>",
-    "span_id": "<span:7>",
+    "span_id": "<span:8>",
     "span_parents": [
       "<span:6>"
     ],
-    "type": "task"
-  },
-  {
-    "has_input": false,
-    "metadata": {
-      "google_adk.agent_name": "sequential_workflow",
-      "provider": "google-adk"
-    },
-    "metric_keys": [
-      "duration"
-    ],
-    "name": "Agent: sequential_workflow",
-    "root_span_id": "<span:1>",
-    "span_id": "<span:8>",
-    "span_parents": [
-      "<span:7>"
-    ],
-    "type": "task"
+    "type": "tool"
   },
   {
     "has_input": false,
@@ -146,7 +146,7 @@
     "root_span_id": "<span:1>",
     "span_id": "<span:9>",
     "span_parents": [
-      "<span:8>"
+      "<span:7>"
     ],
     "type": "task"
   },
@@ -164,7 +164,7 @@
     "root_span_id": "<span:1>",
     "span_id": "<span:10>",
     "span_parents": [
-      "<span:8>"
+      "<span:7>"
     ],
     "type": "task"
   }

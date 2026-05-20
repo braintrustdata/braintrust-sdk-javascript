@@ -1,24 +1,23 @@
+import type { VitePlugin } from "unplugin";
+import {
+  BundlerPluginOptions,
+  unplugin,
+  type LegacyBundlerPluginOptions,
+} from "./plugin";
+
+export function braintrustVitePlugin(
+  options: BundlerPluginOptions = {},
+): VitePlugin | VitePlugin[] {
+  const { useDiagnosticChannelCompatShim = false, ...pluginOptions } = options;
+  return unplugin.vite({
+    ...pluginOptions,
+    browser: useDiagnosticChannelCompatShim,
+  });
+}
+
+export type VitePluginOptions = LegacyBundlerPluginOptions;
+
 /**
- * Vite plugin for auto-instrumentation.
- *
- * Usage:
- * ```typescript
- * import { vitePlugin } from '@braintrust/auto-instrumentations/bundler/vite';
- *
- * export default {
- *   plugins: [vitePlugin()],
- * };
- * ```
- *
- * This plugin uses @apm-js-collab/code-transformer to perform AST transformation
- * at build-time, injecting TracingChannel calls into AI SDK functions.
- *
- * For browser builds, the plugin automatically uses 'dc-browser' for diagnostics_channel polyfill.
- * The als-browser polyfill for AsyncLocalStorage is automatically included as a dependency.
+ * @deprecated Use {@link braintrustVitePlugin} instead.
  */
-
-import { unplugin, type BundlerPluginOptions } from "./plugin";
-
-export type VitePluginOptions = BundlerPluginOptions;
-
 export const vitePlugin = unplugin.vite;

@@ -73,51 +73,53 @@ const anthropicScenarios = await Promise.all(
   })),
 );
 
-for (const scenario of anthropicScenarios) {
-  describe(`anthropic sdk ${scenario.version}`, () => {
-    defineAnthropicInstrumentationAssertions({
-      name: "wrapped instrumentation",
-      runScenario: async ({ runScenarioDir }) => {
-        await runScenarioDir({
-          entry: scenario.wrapperEntry,
-          runContext: {
-            variantKey: scenario.snapshotName,
-            originalScenarioDir,
-          },
-          scenarioDir,
-          timeoutMs: TIMEOUT_MS,
-        });
-      },
-      snapshotName: scenario.snapshotName,
-      supportsBetaMessages: scenario.supportsBetaMessages,
-      supportsBetaToolRunner: scenario.supportsBetaToolRunner ?? true,
-      supportsServerToolUse: scenario.supportsServerToolUse ?? true,
-      supportsThinking: scenario.supportsThinking,
-      testFileUrl: import.meta.url,
-      timeoutMs: TIMEOUT_MS,
-    });
+describe.concurrent("variants", () => {
+  for (const scenario of anthropicScenarios) {
+    describe.sequential(`anthropic sdk ${scenario.version}`, () => {
+      defineAnthropicInstrumentationAssertions({
+        name: "wrapped instrumentation",
+        runScenario: async ({ runScenarioDir }) => {
+          await runScenarioDir({
+            entry: scenario.wrapperEntry,
+            runContext: {
+              variantKey: scenario.snapshotName,
+              originalScenarioDir,
+            },
+            scenarioDir,
+            timeoutMs: TIMEOUT_MS,
+          });
+        },
+        snapshotName: scenario.snapshotName,
+        supportsBetaMessages: scenario.supportsBetaMessages,
+        supportsBetaToolRunner: scenario.supportsBetaToolRunner ?? true,
+        supportsServerToolUse: scenario.supportsServerToolUse ?? true,
+        supportsThinking: scenario.supportsThinking,
+        testFileUrl: import.meta.url,
+        timeoutMs: TIMEOUT_MS,
+      });
 
-    defineAnthropicInstrumentationAssertions({
-      name: "auto-hook instrumentation",
-      runScenario: async ({ runNodeScenarioDir }) => {
-        await runNodeScenarioDir({
-          entry: scenario.autoEntry,
-          nodeArgs: ["--import", "braintrust/hook.mjs"],
-          runContext: {
-            variantKey: scenario.snapshotName,
-            originalScenarioDir,
-          },
-          scenarioDir,
-          timeoutMs: TIMEOUT_MS,
-        });
-      },
-      snapshotName: scenario.snapshotName,
-      supportsBetaMessages: scenario.supportsBetaMessages,
-      supportsBetaToolRunner: scenario.supportsBetaToolRunner ?? true,
-      supportsServerToolUse: scenario.supportsServerToolUse ?? true,
-      supportsThinking: scenario.supportsThinking,
-      testFileUrl: import.meta.url,
-      timeoutMs: TIMEOUT_MS,
+      defineAnthropicInstrumentationAssertions({
+        name: "auto-hook instrumentation",
+        runScenario: async ({ runNodeScenarioDir }) => {
+          await runNodeScenarioDir({
+            entry: scenario.autoEntry,
+            nodeArgs: ["--import", "braintrust/hook.mjs"],
+            runContext: {
+              variantKey: scenario.snapshotName,
+              originalScenarioDir,
+            },
+            scenarioDir,
+            timeoutMs: TIMEOUT_MS,
+          });
+        },
+        snapshotName: scenario.snapshotName,
+        supportsBetaMessages: scenario.supportsBetaMessages,
+        supportsBetaToolRunner: scenario.supportsBetaToolRunner ?? true,
+        supportsServerToolUse: scenario.supportsServerToolUse ?? true,
+        supportsThinking: scenario.supportsThinking,
+        testFileUrl: import.meta.url,
+        timeoutMs: TIMEOUT_MS,
+      });
     });
-  });
-}
+  }
+});

@@ -75,8 +75,6 @@ export interface CassetteEntry {
 export interface CassetteMeta {
   /** ISO-8601 timestamp when the cassette was first created. */
   createdAt: string;
-  /** The seinfeld version that produced the cassette. */
-  seinfeldVersion: string;
 }
 
 /**
@@ -87,7 +85,6 @@ export interface CassetteMeta {
  * incompatibly.
  */
 export interface CassetteFile {
-  version: 1;
   meta?: CassetteMeta;
   entries: CassetteEntry[];
 }

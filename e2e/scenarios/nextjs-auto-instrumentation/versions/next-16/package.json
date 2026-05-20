@@ -1,5 +1,5 @@
 {
-  "name": "@braintrust/e2e-turbopack-auto-instrumentation",
+  "name": "@braintrust/e2e-nextjs-auto-instrumentation-next-16",
   "private": true,
   "dependencies": {
     "next": "16.2.1",
