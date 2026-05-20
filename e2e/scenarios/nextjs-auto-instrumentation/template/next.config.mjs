@@ -2,15 +2,19 @@ import fs from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import type { NextConfig } from "next";
+import { wrapNextjsConfigWithBraintrust } from "braintrust/next";
 
 const require = createRequire(import.meta.url);
 const scenarioDir = path.dirname(fileURLToPath(import.meta.url));
+const nextVersion = require("next/package.json").version;
 const packageDirs = [
   path.dirname(require.resolve("next/package.json")),
   path.dirname(require.resolve("braintrust/package.json")),
 ].map((packageDir) => fs.realpathSync(packageDir));
 
+// Turbopack refuses to compile files outside its root. In this e2e fixture,
+// Next and the local braintrust package can resolve through workspace/cache
+// symlinks, so widen the root until both package realpaths are included.
 let turbopackRoot = scenarioDir;
 for (const packageDir of packageDirs) {
   while (true) {
@@ -30,18 +34,20 @@ for (const packageDir of packageDirs) {
   }
 }
 
-const nextConfig: NextConfig = {
-  turbopack: {
-    root: turbopackRoot,
-    rules: {
-      // Apply the loader to all JS/MJS/CJS files from node_modules.
-      // condition: "foreign" restricts the rule to third-party packages only.
-      "*.{js,mjs,cjs}": {
-        condition: "foreign",
-        loaders: [{ loader: require.resolve("braintrust/webpack-loader") }],
-      },
-    },
-  },
-};
+const nextMajorVersion = Number.parseInt(nextVersion.split(".")[0] ?? "", 10);
+const nextConfig =
+  Number.isFinite(nextMajorVersion) && nextMajorVersion >= 15
+    ? {
+        turbopack: {
+          root: turbopackRoot,
+        },
+      }
+    : {
+        experimental: {
+          turbo: {
+            root: turbopackRoot,
+          },
+        },
+      };
 
-export default nextConfig;
+export default wrapNextjsConfigWithBraintrust(nextConfig);

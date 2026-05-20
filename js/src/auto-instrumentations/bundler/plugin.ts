@@ -7,21 +7,7 @@ import { extname, join, sep } from "path";
 import { readFileSync } from "fs";
 import { fileURLToPath } from "url";
 import moduleDetailsFromPath from "module-details-from-path";
-import { openaiConfigs } from "../configs/openai";
-import { openAICodexConfigs } from "../configs/openai-codex";
-import { anthropicConfigs } from "../configs/anthropic";
-import { aiSDKConfigs } from "../configs/ai-sdk";
-import { claudeAgentSDKConfigs } from "../configs/claude-agent-sdk";
-import { cursorSDKConfigs } from "../configs/cursor-sdk";
-import { googleGenAIConfigs } from "../configs/google-genai";
-import { huggingFaceConfigs } from "../configs/huggingface";
-import { openRouterAgentConfigs } from "../configs/openrouter-agent";
-import { openRouterConfigs } from "../configs/openrouter";
-import { mistralConfigs } from "../configs/mistral";
-import { cohereConfigs } from "../configs/cohere";
-import { groqConfigs } from "../configs/groq";
-import { genkitConfigs } from "../configs/genkit";
-import { gitHubCopilotConfigs } from "../configs/github-copilot";
+import { getDefaultInstrumentationConfigs } from "../configs/all";
 
 export interface LegacyBundlerPluginOptions {
   /**
@@ -49,6 +35,11 @@ export interface BundlerPluginOptions {
    * Enable debug logging
    */
   debug?: boolean;
+
+  /**
+   * Additional instrumentation configs to apply
+   */
+  instrumentations?: InstrumentationConfig[];
 
   /**
    * Use the `diagnostics_channel` compatibility shim in patched code instead
@@ -83,24 +74,9 @@ function getModuleVersion(basedir: string): string | undefined {
 
 export const unplugin = createUnplugin<LegacyBundlerPluginOptions>(
   (options = {}) => {
-    const allInstrumentations = [
-      ...openaiConfigs,
-      ...openAICodexConfigs,
-      ...anthropicConfigs,
-      ...aiSDKConfigs,
-      ...claudeAgentSDKConfigs,
-      ...cursorSDKConfigs,
-      ...googleGenAIConfigs,
-      ...huggingFaceConfigs,
-      ...openRouterConfigs,
-      ...openRouterAgentConfigs,
-      ...mistralConfigs,
-      ...cohereConfigs,
-      ...groqConfigs,
-      ...genkitConfigs,
-      ...gitHubCopilotConfigs,
-      ...(options.instrumentations || []),
-    ];
+    const allInstrumentations = getDefaultInstrumentationConfigs({
+      additionalInstrumentations: options.instrumentations,
+    });
 
     // Default to browser build, use polyfill unless explicitly disabled
     const dcModule = options.browser === false ? undefined : "dc-browser";

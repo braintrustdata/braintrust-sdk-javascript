@@ -1,4 +1,4 @@
-import { expect, test, describe } from "vitest";
+import { expect, test, describe, afterEach } from "vitest";
 import {
   mapAt,
   forEachMissingKey,
@@ -240,5 +240,54 @@ describe("tags set-union merge", () => {
     const b = { metadata: { tags: ["c", "d"] } };
     mergeDictsWithPaths({ mergeInto: a, mergeFrom: b, mergePaths: [] });
     expect(a.metadata.tags).toEqual(["c", "d"]);
+  });
+});
+
+describe("mergeDicts prototype pollution resistance", () => {
+  const POLLUTION_KEY = "polluted";
+
+  afterEach(() => {
+    Reflect.deleteProperty(Object.prototype, POLLUTION_KEY);
+  });
+
+  test.each([
+    {
+      name: "__proto__ at top level",
+      payload: '{"__proto__":{"polluted":"yes"}}',
+    },
+    {
+      name: "nested __proto__",
+      payload: '{"a":{"__proto__":{"polluted":"yes"}}}',
+    },
+    {
+      name: "constructor.prototype",
+      payload: '{"constructor":{"prototype":{"polluted":"yes"}}}',
+    },
+    {
+      name: "top-level prototype",
+      payload: '{"prototype":{"polluted":"yes"}}',
+    },
+  ])("mergeDicts ignores $name", ({ payload }) => {
+    const target: Record<string, unknown> = {};
+    mergeDicts(target, JSON.parse(payload));
+    expect(Object.prototype).not.toHaveProperty(POLLUTION_KEY);
+    expect(target).not.toHaveProperty(POLLUTION_KEY);
+  });
+
+  test("nested __proto__ leaves the legitimate subtree intact", () => {
+    const target: Record<string, unknown> = { a: { b: 1 } };
+    mergeDicts(target, JSON.parse('{"a":{"__proto__":{"polluted":"yes"}}}'));
+    expect(target).toEqual({ a: { b: 1 } });
+  });
+
+  test("forbidden key alongside safe key only drops the forbidden one", () => {
+    const target: Record<string, unknown> = {};
+    mergeDictsWithPaths({
+      mergeInto: target,
+      mergeFrom: JSON.parse('{"safe":1,"__proto__":{"polluted":"yes"}}'),
+      mergePaths: [],
+    });
+    expect(target).toEqual({ safe: 1 });
+    expect(Object.prototype).not.toHaveProperty(POLLUTION_KEY);
   });
 });
