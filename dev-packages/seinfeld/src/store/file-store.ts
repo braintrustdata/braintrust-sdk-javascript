@@ -37,8 +37,6 @@ export interface JsonFileStoreOptions {
  * directory, e.g. `outer.cassette.blobs/<sha256>.bin`.
  *
  * - `load` returns `null` when the file doesn't exist.
- * - `load` throws `CassetteVersionError` when the file's version is newer than
- *   the library supports, and `CassetteFormatError` on schema mismatches.
  * - `save` writes atomically via a temp file + rename. If two workers race on
  *   the same cassette, the last writer wins; no half-written files are left.
  */

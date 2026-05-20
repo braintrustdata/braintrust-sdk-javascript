@@ -245,16 +245,14 @@ When using bundler plugins (Vite, Webpack, etc.) in Node.js:
 
 ```javascript
 // vite.config.js
-import { vitePlugin } from "@braintrust/auto-instrumentations/bundler/vite";
+import { braintrustVitePlugin } from "braintrust/vite";
 
 export default {
-  plugins: [
-    vitePlugin({ browser: false }), // IMPORTANT: Set browser: false for Node.js
-  ],
+  plugins: [braintrustVitePlugin()],
 };
 ```
 
-Setting `browser: false` ensures the code-transformer injects `node:diagnostics_channel` imports, not `dc-browser`.
+Braintrust-prefixed bundler plugins use Node.js's native `node:diagnostics_channel` module by default.
 
 ### Browser Setup
 
@@ -262,22 +260,21 @@ Setting `browser: false` ensures the code-transformer injects `node:diagnostics_
 
 ```javascript
 // vite.config.js
-import { vitePlugin } from "@braintrust/auto-instrumentations/bundler/vite";
+import { braintrustVitePlugin } from "braintrust/vite";
 
 export default {
-  plugins: [
-    vitePlugin({ browser: true }), // Use browser: true for browser builds
-  ],
+  plugins: [braintrustVitePlugin({ useDiagnosticChannelCompatShim: true })],
 };
 ```
 
-Setting `browser: true` ensures the code-transformer injects `dc-browser` imports.
+Setting `useDiagnosticChannelCompatShim: true` ensures the code-transformer injects `dc-browser` imports for environments where Node.js's `diagnostics_channel` module is unavailable.
+The deprecated plugin exports are still available and preserve the old `browser` option, which defaults to `true` when omitted; the new Braintrust-prefixed option defaults to `false`.
 
-**Important:** The `browser` option must match your target environment:
+**Important:** The `useDiagnosticChannelCompatShim` option must match your target environment:
 
-- Mismatch (e.g., `browser: true` but running in Node.js) causes channel registry conflicts
+- Mismatch (e.g., enabling the compatibility shim but running in Node.js) causes channel registry conflicts
 - Plugin code uses the iso pattern and adapts automatically
-- Only the transformed SDK code is affected by the `browser` option
+- Only the transformed SDK code is affected by the compatibility shim option
 
 ### Next.js Setup
 
@@ -382,7 +379,7 @@ pnpm test -- tests/auto-instrumentations/integration.test.ts
 
 #### 2. Browser/Node.js Mismatch
 
-**Problem:** Bundler `browser` option doesn't match runtime environment.
+**Problem:** Bundler diagnostics channel compatibility setting doesn't match runtime environment.
 
 **Symptoms:**
 
@@ -391,8 +388,8 @@ pnpm test -- tests/auto-instrumentations/integration.test.ts
 
 **Solution:**
 
-- For Node.js apps: Use `browser: false` in bundler config
-- For browser apps: Use `browser: true` in bundler config
+- For Node.js apps: Use a Braintrust-prefixed bundler plugin with default options
+- For browser apps: Set `useDiagnosticChannelCompatShim: true`
 - For Node.js runtime apps: Use the loader hook instead of bundling
 
 #### 3. APIPromise Compatibility (Anthropic SDK)
@@ -460,14 +457,10 @@ channel.subscribe({
 
 #### TypeScript Errors with Bundler Plugins
 
-Some bundlers may have TypeScript resolution issues with the plugin imports. Use `.js` extension in imports:
+If TypeScript has resolution issues with direct internal imports, use the public Braintrust bundler entrypoints:
 
 ```javascript
-// Instead of:
-import { vitePlugin } from "@braintrust/auto-instrumentations/bundler/vite";
-
-// Use:
-import { vitePlugin } from "@braintrust/auto-instrumentations/bundler/vite.js";
+import { braintrustVitePlugin } from "braintrust/vite";
 ```
 
 #### ESM vs CJS Mixing

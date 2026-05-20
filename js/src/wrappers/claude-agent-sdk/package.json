@@ -1,6 +1,5 @@
 {
   "name": "@braintrust/claude-agent-sdk-tests",
-  "version": "0.0.1",
   "private": true,
   "description": "Test infrastructure for Claude Agent SDK wrapper",
   "scripts": {

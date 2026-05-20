@@ -17,7 +17,6 @@ import type {
   RecordedRequest,
 } from "./cassette";
 import { AggregateCassetteMissError, CassetteMissError } from "./errors";
-import { CURRENT_FORMAT_VERSION } from "./format";
 import { applyFilters } from "./normalizer";
 import type { FilterSpec } from "./normalizer";
 import { asNormalized } from "./matcher";
@@ -38,12 +37,6 @@ import {
 } from "./http";
 import { encodeBinaryDraft, encodeBody } from "./serializer";
 import type { CassetteStore } from "./store";
-
-// Injected at build time by tsup define. Falls back to 'dev' when running
-// directly without a build step.
-declare const __SEINFELD_VERSION__: string;
-const SEINFELD_VERSION: string =
-  typeof __SEINFELD_VERSION__ !== "undefined" ? __SEINFELD_VERSION__ : "dev";
 
 const DEFAULT_EXTERNAL_BLOB_THRESHOLD = 65536;
 
@@ -368,8 +361,7 @@ async function persistIfRecord(ctx: CassetteContext): Promise<void> {
     // Ignore load errors (corrupt file, version mismatch) — stamp fresh.
   }
   const cassette: CassetteFile = {
-    version: CURRENT_FORMAT_VERSION,
-    meta: { createdAt, seinfeldVersion: SEINFELD_VERSION },
+    meta: { createdAt },
     entries: flushedEntries,
   };
   await ctx.store.save(ctx.name, cassette);
