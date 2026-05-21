@@ -58,6 +58,7 @@ export interface InstrumentationConfig {
     genkit?: boolean;
     gitHubCopilot?: boolean;
     openaiCodexSDK?: boolean;
+    flue?: boolean;
   };
 }
 
@@ -171,6 +172,7 @@ class PluginRegistry {
       groq: true,
       genkit: true,
       gitHubCopilot: true,
+      flue: true,
     };
   }
 
@@ -199,6 +201,8 @@ class PluginRegistry {
           integrations.gitHubCopilot = false;
         } else if (sdk === "openai-codex-sdk") {
           integrations.openaiCodexSDK = false;
+        } else if (sdk === "flue-runtime") {
+          integrations.flue = false;
         } else {
           integrations[sdk] = false;
         }

@@ -1,0 +1,455 @@
+span_tree:
+└── flue-root [task]
+    metadata: {
+      "scenario": "flue-instrumentation"
+    }
+    ├── flue-prompt-operation
+    │   metadata: {
+    │     "operation": "prompt"
+    │   }
+    │   └── flue.session.prompt [task]
+    │       input: "Complete this instrumented research flow. Call exactly one tool per turn and wait for each tool result before choosing the next tool. Step 1: call lookup with query \"flue instrumentation\". Step 2: use the lookup result id as lookupId and call web_search with query \"Braintrust Flue reasoning stream instrumentation\". Step 3: use the first web_search result url and call summarize_source. After summarize_source returns, reply with exactly PROMPT_DONE and no other text."
+    │       output: "PROMPT_DONE"
+    │       metadata: {
+    │         "flue.model": "claude-sonnet-4-5-20250929",
+    │         "flue.operation": "prompt",
+    │         "flue.session": "main",
+    │         "flue.thinking_level": "medium",
+    │         "flue.tools_count": 3,
+    │         "model": "claude-sonnet-4-5-20250929",
+    │         "provider": "flue"
+    │       }
+    │       metrics: {
+    │         "completion_tokens": 534,
+    │         "duration_ms": 0,
+    │         "estimated_cost": 0.013451250000000001,
+    │         "prompt_cache_creation_tokens": 657,
+    │         "prompt_cached_tokens": 9435,
+    │         "prompt_tokens": 49,
+    │         "tokens": 10675
+    │       }
+    │       ├── flue.turn [llm]
+    │       │   output: [
+    │       │     {
+    │       │       "finish_reason": "toolUse",
+    │       │       "index": 0,
+    │       │       "message": {
+    │       │         "content": "I'll complete this instrumented research flow step by step. Starting with Step 1:",
+    │       │         "reasoning": "The user wants me to complete a specific instrumented research flow with three steps:\n1. Call lookup with query \"flue instrumentation\"\n2. Use the lookup result id to call web_search with query \"Braintrust Flue reasoning stream instrumentation\"\n3. Use the first web_search result url to call summarize_source\n4. Reply with exactly \"PROMPT_DONE\" after summarize_source returns\n\nThe user emphasizes calling exactly one tool per turn and waiting for each result. Let me start with step 1.",
+    │       │         "role": "assistant",
+    │       │         "tool_calls": [
+    │       │           {
+    │       │             "function": {
+    │       │               "arguments": "{\"query\":\"flue instrumentation\"}",
+    │       │               "name": "lookup"
+    │       │             },
+    │       │             "id": "<span:1>",
+    │       │             "type": "function"
+    │       │           }
+    │       │         ]
+    │       │       }
+    │       │     }
+    │       │   ]
+    │       │   metadata: {
+    │       │     "flue.model": "claude-sonnet-4-5-20250929",
+    │       │     "flue.session": "main",
+    │       │     "flue.thinking": true,
+    │       │     "model": "claude-sonnet-4-5-20250929",
+    │       │     "provider": "flue"
+    │       │   }
+    │       │   metrics: {
+    │       │     "completion_tokens": 199,
+    │       │     "duration_ms": 0,
+    │       │     "estimated_cost": 0.0036696000000000003,
+    │       │     "prompt_cache_creation_tokens": 0,
+    │       │     "prompt_cached_tokens": 2182,
+    │       │     "prompt_tokens": 10,
+    │       │     "tokens": 2391
+    │       │   }
+    │       ├── tool: lookup [tool]
+    │       │   input: {
+    │       │     "query": "flue instrumentation"
+    │       │   }
+    │       │   output: {
+    │       │     "content": [
+    │       │       {
+    │       │         "text": "{\"id\":\"flue-session-2026\",\"query\":\"flue instrumentation\",\"topic\":\"session instrumentation\"}",
+    │       │         "type": "text"
+    │       │       }
+    │       │     ],
+    │       │     "details": {
+    │       │       "customTool": "lookup"
+    │       │     }
+    │       │   }
+    │       │   metadata: {
+    │       │     "flue.session": "main",
+    │       │     "flue.tool_name": "lookup",
+    │       │     "provider": "flue"
+    │       │   }
+    │       │   metrics: {
+    │       │     "duration_ms": 0
+    │       │   }
+    │       ├── flue.turn [llm]
+    │       │   output: [
+    │       │     {
+    │       │       "finish_reason": "toolUse",
+    │       │       "index": 0,
+    │       │       "message": {
+    │       │         "content": "Now proceeding to Step 2:",
+    │       │         "reasoning": "Good, I got the lookup result with id \"flue-session-2026\". Now I'll proceed to step 2 and use this id as the lookupId parameter in the web_search call with the specified query.",
+    │       │         "role": "assistant",
+    │       │         "tool_calls": [
+    │       │           {
+    │       │             "function": {
+    │       │               "arguments": "{\"lookupId\":\"flue-session-2026\",\"query\":\"Braintrust Flue reasoning stream instrumentation\"}",
+    │       │               "name": "web_search"
+    │       │             },
+    │       │             "id": "<span:1>",
+    │       │             "type": "function"
+    │       │           }
+    │       │         ]
+    │       │       }
+    │       │     }
+    │       │   ]
+    │       │   metadata: {
+    │       │     "flue.model": "claude-sonnet-4-5-20250929",
+    │       │     "flue.session": "main",
+    │       │     "flue.thinking": true,
+    │       │     "model": "claude-sonnet-4-5-20250929",
+    │       │     "provider": "flue"
+    │       │   }
+    │       │   metrics: {
+    │       │     "completion_tokens": 153,
+    │       │     "duration_ms": 0,
+    │       │     "estimated_cost": 0.00388485,
+    │       │     "prompt_cache_creation_tokens": 239,
+    │       │     "prompt_cached_tokens": 2182,
+    │       │     "prompt_tokens": 13,
+    │       │     "tokens": 2587
+    │       │   }
+    │       ├── tool: web_search [tool]
+    │       │   input: {
+    │       │     "lookupId": "flue-session-2026",
+    │       │     "query": "Braintrust Flue reasoning stream instrumentation"
+    │       │   }
+    │       │   output: {
+    │       │     "content": [
+    │       │       {
+    │       │         "text": "{\"lookupId\":\"flue-session-2026\",\"query\":\"Braintrust Flue reasoning stream instrumentation\",\"results\":[{\"title\":\"Flue reasoning stream instrumentation\",\"url\":\"https://example.test/flue/reasoning-streams\"}]}",
+    │       │         "type": "text"
+    │       │       }
+    │       │     ],
+    │       │     "details": {
+    │       │       "customTool": "web_search"
+    │       │     }
+    │       │   }
+    │       │   metadata: {
+    │       │     "flue.session": "main",
+    │       │     "flue.tool_name": "web_search",
+    │       │     "provider": "flue"
+    │       │   }
+    │       │   metrics: {
+    │       │     "duration_ms": 0
+    │       │   }
+    │       ├── flue.turn [llm]
+    │       │   output: [
+    │       │     {
+    │       │       "finish_reason": "toolUse",
+    │       │       "index": 0,
+    │       │       "message": {
+    │       │         "content": "Now proceeding to Step 3:",
+    │       │         "reasoning": "Perfect! I got the web_search results. There's one result with the URL \"https://example.test/flue/reasoning-streams\". Now I need to proceed to step 3 and call summarize_source with this URL.",
+    │       │         "role": "assistant",
+    │       │         "tool_calls": [
+    │       │           {
+    │       │             "function": {
+    │       │               "arguments": "{\"url\":\"https://example.test/flue/reasoning-streams\"}",
+    │       │               "name": "summarize_source"
+    │       │             },
+    │       │             "id": "<span:1>",
+    │       │             "type": "function"
+    │       │           }
+    │       │         ]
+    │       │       }
+    │       │     }
+    │       │   ]
+    │       │   metadata: {
+    │       │     "flue.model": "claude-sonnet-4-5-20250929",
+    │       │     "flue.session": "main",
+    │       │     "flue.thinking": true,
+    │       │     "model": "claude-sonnet-4-5-20250929",
+    │       │     "provider": "flue"
+    │       │   }
+    │       │   metrics: {
+    │       │     "completion_tokens": 133,
+    │       │     "duration_ms": 0,
+    │       │     "estimated_cost": 0.0036190500000000004,
+    │       │     "prompt_cache_creation_tokens": 229,
+    │       │     "prompt_cached_tokens": 2421,
+    │       │     "prompt_tokens": 13,
+    │       │     "tokens": 2796
+    │       │   }
+    │       ├── tool: summarize_source [tool]
+    │       │   input: {
+    │       │     "url": "https://example.test/flue/reasoning-streams"
+    │       │   }
+    │       │   output: {
+    │       │     "content": [
+    │       │       {
+    │       │         "text": "{\"summary\":\"Flue emits reasoning, tool execution, and LLM turn events separately.\",\"url\":\"https://example.test/flue/reasoning-streams\"}",
+    │       │         "type": "text"
+    │       │       }
+    │       │     ],
+    │       │     "details": {
+    │       │       "customTool": "summarize_source"
+    │       │     }
+    │       │   }
+    │       │   metadata: {
+    │       │     "flue.session": "main",
+    │       │     "flue.tool_name": "summarize_source",
+    │       │     "provider": "flue"
+    │       │   }
+    │       │   metrics: {
+    │       │     "duration_ms": 0
+    │       │   }
+    │       └── flue.turn [llm]
+    │           output: [
+    │             {
+    │               "finish_reason": "stop",
+    │               "index": 0,
+    │               "message": {
+    │                 "content": "PROMPT_DONE",
+    │                 "reasoning": "Perfect! The summarize_source has returned. According to the instructions, I should now reply with exactly \"PROMPT_DONE\" and no other text.",
+    │                 "role": "assistant"
+    │               }
+    │             }
+    │           ]
+    │           metadata: {
+    │             "flue.model": "claude-sonnet-4-5-20250929",
+    │             "flue.session": "main",
+    │             "flue.thinking": true,
+    │             "model": "claude-sonnet-4-5-20250929",
+    │             "provider": "flue"
+    │           }
+    │           metrics: {
+    │             "completion_tokens": 49,
+    │             "duration_ms": 0,
+    │             "estimated_cost": 0.00227775,
+    │             "prompt_cache_creation_tokens": 189,
+    │             "prompt_cached_tokens": 2650,
+    │             "prompt_tokens": 13,
+    │             "tokens": 2901
+    │           }
+    ├── flue-skill-operation
+    │   metadata: {
+    │     "operation": "skill"
+    │   }
+    │   └── flue.session.skill [task]
+    │       input: {
+    │         "args": {
+    │           "marker": "SKILL_DONE"
+    │         },
+    │         "name": "e2e-flue-skill"
+    │       }
+    │       output: "SKILL_DONE"
+    │       metadata: {
+    │         "flue.model": "claude-sonnet-4-5-20250929",
+    │         "flue.operation": "skill",
+    │         "flue.role": "skillRunner",
+    │         "flue.session": "skill",
+    │         "flue.skill_name": "e2e-flue-skill",
+    │         "flue.thinking_level": "off",
+    │         "model": "claude-sonnet-4-5-20250929",
+    │         "provider": "flue"
+    │       }
+    │       metrics: {
+    │         "completion_tokens": 97,
+    │         "duration_ms": 0,
+    │         "estimated_cost": 0.0026133,
+    │         "prompt_cache_creation_tokens": 0,
+    │         "prompt_cached_tokens": 3771,
+    │         "prompt_tokens": 9,
+    │         "tokens": 3877
+    │       }
+    │       ├── flue.turn [llm]
+    │       │   output: [
+    │       │     {
+    │       │       "finish_reason": "toolUse",
+    │       │       "index": 0,
+    │       │       "message": {
+    │       │         "content": "I'll run the e2e-flue-skill by reading its instructions and following them.",
+    │       │         "role": "assistant",
+    │       │         "tool_calls": [
+    │       │           {
+    │       │             "function": {
+    │       │               "arguments": "{\"path\":\".agents/skills/e2e-flue-skill/SKILL.md\"}",
+    │       │               "name": "read"
+    │       │             },
+    │       │             "id": "<span:1>",
+    │       │             "type": "function"
+    │       │           }
+    │       │         ]
+    │       │       }
+    │       │     }
+    │       │   ]
+    │       │   metadata: {
+    │       │     "flue.model": "claude-sonnet-4-5-20250929",
+    │       │     "flue.session": "skill",
+    │       │     "model": "claude-sonnet-4-5-20250929",
+    │       │     "provider": "flue"
+    │       │   }
+    │       │   metrics: {
+    │       │     "completion_tokens": 89,
+    │       │     "duration_ms": 0,
+    │       │     "estimated_cost": 0.0018866999999999998,
+    │       │     "prompt_cache_creation_tokens": 0,
+    │       │     "prompt_cached_tokens": 1809,
+    │       │     "prompt_tokens": 3,
+    │       │     "tokens": 1901
+    │       │   }
+    │       ├── tool: read [tool]
+    │       │   input: {
+    │       │     "path": ".agents/skills/e2e-flue-skill/SKILL.md"
+    │       │   }
+    │       │   output: {
+    │       │     "content": [
+    │       │       {
+    │       │         "text": "---\nname: e2e-flue-skill\ndescription: Deterministic skill used by the Braintrust Flue instrumentation e2e test.\n---\n\nReturn the marker from the provided args exactly once. Output no other text.\n",
+    │       │         "type": "text"
+    │       │       }
+    │       │     ],
+    │       │     "details": {
+    │       │       "lines": 7,
+    │       │       "path": ".agents/skills/e2e-flue-skill/SKILL.md"
+    │       │     }
+    │       │   }
+    │       │   metadata: {
+    │       │     "flue.session": "skill",
+    │       │     "flue.tool_name": "read",
+    │       │     "provider": "flue"
+    │       │   }
+    │       │   metrics: {
+    │       │     "duration_ms": 0
+    │       │   }
+    │       └── flue.turn [llm]
+    │           output: [
+    │             {
+    │               "finish_reason": "stop",
+    │               "index": 0,
+    │               "message": {
+    │                 "content": "SKILL_DONE",
+    │                 "role": "assistant"
+    │               }
+    │             }
+    │           ]
+    │           metadata: {
+    │             "flue.model": "claude-sonnet-4-5-20250929",
+    │             "flue.session": "skill",
+    │             "model": "claude-sonnet-4-5-20250929",
+    │             "provider": "flue"
+    │           }
+    │           metrics: {
+    │             "completion_tokens": 8,
+    │             "duration_ms": 0,
+    │             "estimated_cost": 0.0007266,
+    │             "prompt_cache_creation_tokens": 0,
+    │             "prompt_cached_tokens": 1962,
+    │             "prompt_tokens": 6,
+    │             "tokens": 1976
+    │           }
+    ├── flue-task-operation
+    │   metadata: {
+    │     "operation": "task"
+    │   }
+    │   └── flue.session.task [task]
+    │       input: "Reply with exactly TASK_DONE and no other text."
+    │       output: "TASK_DONE"
+    │       metadata: {
+    │         "flue.model": "gpt-4o-mini",
+    │         "flue.operation": "task",
+    │         "flue.session": "task",
+    │         "flue.thinking_level": "off",
+    │         "model": "gpt-4o-mini",
+    │         "provider": "flue"
+    │       }
+    │       metrics: {
+    │         "completion_tokens": 4,
+    │         "duration_ms": 0,
+    │         "estimated_cost": 0.00011789999999999999,
+    │         "prompt_cache_creation_tokens": 0,
+    │         "prompt_cached_tokens": 0,
+    │         "prompt_tokens": 770,
+    │         "tokens": 774
+    │       }
+    │       └── flue.task [task]
+    │           input: "Reply with exactly TASK_DONE and no other text."
+    │           output: "TASK_DONE"
+    │           metadata: {
+    │             "flue.session": "task",
+    │             "provider": "flue"
+    │           }
+    │           metrics: {
+    │             "duration_ms": 0
+    │           }
+    │           └── flue.turn [llm]
+    │               output: [
+    │                 {
+    │                   "finish_reason": "stop",
+    │                   "index": 0,
+    │                   "message": {
+    │                     "content": "TASK_DONE",
+    │                     "role": "assistant"
+    │                   }
+    │                 }
+    │               ]
+    │               metadata: {
+    │                 "flue.model": "gpt-4o-mini",
+    │                 "flue.session": "task:task:<uuid:1>",
+    │                 "model": "gpt-4o-mini",
+    │                 "provider": "flue"
+    │               }
+    │               metrics: {
+    │                 "completion_tokens": 4,
+    │                 "duration_ms": 0,
+    │                 "estimated_cost": 0.00011789999999999999,
+    │                 "prompt_cache_creation_tokens": 0,
+    │                 "prompt_cached_tokens": 0,
+    │                 "prompt_tokens": 770,
+    │                 "tokens": 774
+    │               }
+    └── flue-compact-operation
+        metadata: {
+          "operation": "compact"
+        }
+        └── flue.session.compact [task]
+            metadata: {
+              "flue.operation": "compact",
+              "flue.session": "main",
+              "provider": "flue"
+            }
+            metrics: {
+              "duration_ms": 0
+            }
+            └── flue.compaction [task]
+                input: {
+                  "estimatedTokens": 2901,
+                  "reason": "manual"
+                }
+                output: {
+                  "messagesAfter": 2,
+                  "messagesBefore": 8
+                }
+                metadata: {
+                  "flue.compaction_reason": "manual",
+                  "flue.session": "main",
+                  "provider": "flue"
+                }
+                metrics: {
+                  "completion_tokens": 0,
+                  "duration_ms": 0,
+                  "estimated_cost": 0,
+                  "prompt_cache_creation_tokens": 0,
+                  "prompt_cached_tokens": 0,
+                  "prompt_tokens": 0,
+                  "tokens": 0
+                }

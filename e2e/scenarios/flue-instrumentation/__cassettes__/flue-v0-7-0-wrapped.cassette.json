@@ -1,0 +1,2345 @@
+{
+  "entries": [
+    {
+      "callIndex": 0,
+      "id": "fcd9d51c145fb90b",
+      "matchKey": "POST api.anthropic.com/v1/messages",
+      "recordedAt": "2026-05-21T06:48:36.059Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "max_tokens": 64000,
+            "messages": [
+              {
+                "content": [
+                  {
+                    "cache_control": {
+                      "type": "ephemeral"
+                    },
+                    "text": "Complete this instrumented research flow. Call exactly one tool per turn and wait for each tool result before choosing the next tool. Step 1: call lookup with query \"flue instrumentation\". Step 2: use the lookup result id as lookupId and call web_search with query \"Braintrust Flue reasoning stream instrumentation\". Step 3: use the first web_search result url and call summarize_source. After summarize_source returns, reply with exactly PROMPT_DONE and no other text.",
+                    "type": "text"
+                  }
+                ],
+                "role": "user"
+              }
+            ],
+            "model": "claude-sonnet-4-5-20250929",
+            "stream": true,
+            "system": [
+              {
+                "cache_control": {
+                  "type": "ephemeral"
+                },
+                "text": "You are running in headless mode with no human operator. Work autonomously — never ask questions, never wait for user input. Make your best judgment and proceed independently.\n\n## Available Skills\n\nEach skill below is documented in a markdown file under `.agents/skills/` (relative to your working directory). The default location is `.agents/skills/<name>/SKILL.md`. When asked to run a skill, read its file from disk and follow the instructions there literally — the skill body is not provided inline.\n\n- **e2e-flue-skill** — Deterministic skill used by the Braintrust Flue instrumentation e2e test.\n\nDate: Thu, May 21, 2026\nWorking directory: /Users/lucaforstner/conductor/workspaces/braintrust-sdk-javascript/tashkent/e2e/.bt-tmp/run-LqmoTW/scenarios/flue-instrumentation\n\nDirectory structure:\n.agents\n__cassettes__\n__snapshots__\nassertions.ts\ncassette-filter.mjs\nconstants.mjs\nnode_modules\npackage.json\npnpm-lock.yaml\nscenario.impl.mjs\nscenario.mjs\nscenario.test.ts\nscenario.ts",
+                "type": "text"
+              }
+            ],
+            "thinking": {
+              "budget_tokens": 8192,
+              "display": "summarized",
+              "type": "enabled"
+            },
+            "tools": [
+              {
+                "description": "Read a file or list a directory. For files, output is truncated to 2000 lines or 50KB — use offset/limit for large files. For directories, returns the list of entries.",
+                "eager_input_streaming": true,
+                "input_schema": {
+                  "properties": {
+                    "limit": {
+                      "description": "Maximum number of lines to read",
+                      "type": "number"
+                    },
+                    "offset": {
+                      "description": "Line number to start from (1-indexed)",
+                      "type": "number"
+                    },
+                    "path": {
+                      "description": "Path to the file to read",
+                      "type": "string"
+                    }
+                  },
+                  "required": ["path"],
+                  "type": "object"
+                },
+                "name": "read"
+              },
+              {
+                "description": "Write content to a file. Creates the file and parent directories if they do not exist.",
+                "eager_input_streaming": true,
+                "input_schema": {
+                  "properties": {
+                    "content": {
+                      "description": "Content to write to the file",
+                      "type": "string"
+                    },
+                    "path": {
+                      "description": "Path to the file to write",
+                      "type": "string"
+                    }
+                  },
+                  "required": ["path", "content"],
+                  "type": "object"
+                },
+                "name": "write"
+              },
+              {
+                "description": "Edit a file using exact text replacement. The oldText must match a unique region of the file. Use replaceAll to replace all occurrences.",
+                "eager_input_streaming": true,
+                "input_schema": {
+                  "properties": {
+                    "newText": {
+                      "description": "Replacement text",
+                      "type": "string"
+                    },
+                    "oldText": {
+                      "description": "Exact text to find (must be unique)",
+                      "type": "string"
+                    },
+                    "path": {
+                      "description": "Path to the file to edit",
+                      "type": "string"
+                    },
+                    "replaceAll": {
+                      "description": "Replace all occurrences",
+                      "type": "boolean"
+                    }
+                  },
+                  "required": ["path", "oldText", "newText"],
+                  "type": "object"
+                },
+                "name": "edit"
+              },
+              {
+                "description": "Execute a bash command. Returns stdout and stderr. Output is truncated to the last 2000 lines or 50KB.",
+                "eager_input_streaming": true,
+                "input_schema": {
+                  "properties": {
+                    "command": {
+                      "description": "Bash command to execute",
+                      "type": "string"
+                    },
+                    "timeout": {
+                      "description": "Timeout in seconds",
+                      "type": "number"
+                    }
+                  },
+                  "required": ["command"],
+                  "type": "object"
+                },
+                "name": "bash"
+              },
+              {
+                "description": "Search file contents for a regex pattern. Returns matching lines with file paths and line numbers.",
+                "eager_input_streaming": true,
+                "input_schema": {
+                  "properties": {
+                    "include": {
+                      "description": "Glob filter, e.g. \"*.ts\"",
+                      "type": "string"
+                    },
+                    "path": {
+                      "description": "Directory or file to search (default: .)",
+                      "type": "string"
+                    },
+                    "pattern": {
+                      "description": "Search pattern (regex)",
+                      "type": "string"
+                    }
+                  },
+                  "required": ["pattern"],
+                  "type": "object"
+                },
+                "name": "grep"
+              },
+              {
+                "description": "Find files by filename pattern using shell find -name semantics. Returns matching file paths.",
+                "eager_input_streaming": true,
+                "input_schema": {
+                  "properties": {
+                    "path": {
+                      "description": "Directory to search in (default: .)",
+                      "type": "string"
+                    },
+                    "pattern": {
+                      "description": "Filename pattern, e.g. \"*.ts\"",
+                      "type": "string"
+                    }
+                  },
+                  "required": ["pattern"],
+                  "type": "object"
+                },
+                "name": "glob"
+              },
+              {
+                "description": "Delegate a focused task to a detached child agent with its own context. Use this for independent research, file exploration, or parallel work. The task returns only its final answer to this conversation. Available roles: skillRunner.",
+                "eager_input_streaming": true,
+                "input_schema": {
+                  "properties": {
+                    "cwd": {
+                      "description": "Working directory for the child agent. AGENTS.md and skills are discovered from here.",
+                      "type": "string"
+                    },
+                    "description": {
+                      "description": "Short human-readable label for the delegated work",
+                      "type": "string"
+                    },
+                    "prompt": {
+                      "description": "Focused instructions for the child agent",
+                      "type": "string"
+                    },
+                    "role": {
+                      "description": "Role to use for the child agent",
+                      "type": "string"
+                    }
+                  },
+                  "required": ["prompt"],
+                  "type": "object"
+                },
+                "name": "task"
+              },
+              {
+                "description": "Return a deterministic lookup result with an id needed by web_search.",
+                "eager_input_streaming": true,
+                "input_schema": {
+                  "properties": {
+                    "query": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["query"],
+                  "type": "object"
+                },
+                "name": "lookup"
+              },
+              {
+                "description": "Search a deterministic local web index. Requires the id returned by lookup.",
+                "eager_input_streaming": true,
+                "input_schema": {
+                  "properties": {
+                    "lookupId": {
+                      "type": "string"
+                    },
+                    "query": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["lookupId", "query"],
+                  "type": "object"
+                },
+                "name": "web_search"
+              },
+              {
+                "cache_control": {
+                  "type": "ephemeral"
+                },
+                "description": "Summarize the selected deterministic source after web_search returns a URL.",
+                "eager_input_streaming": true,
+                "input_schema": {
+                  "properties": {
+                    "url": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["url"],
+                  "type": "object"
+                },
+                "name": "summarize_source"
+              }
+            ]
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages"
+      },
+      "response": {
+        "body": {
+          "chunks": [
+            "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-sonnet-4-5-20250929\",\"id\":\"msg_01SM4G3aUCHLPmaurSygvHCw\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":10,\"cache_creation_input_tokens\":885,\"cache_read_input_tokens\":1297,\"cache_creation\":{\"ephemeral_5m_input_tokens\":885,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":7,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"}}}",
+            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"thinking\",\"thinking\":\"\",\"signature\":\"\"}}",
+            "event: ping\ndata: {\"type\":\"ping\"}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"The user wants me to complete an\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" instrumented research flow with exactly three steps:\\n1. Call lookup with query \\\"flue instrumentation\\\"\\n2. Use the lookup result id to call\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" web_search with query \\\"Braintrust Flue reasoning stream instrumentation\\\"\\n3. Use the first web_search result url to call summarize_source\\n4. After that, reply with exactly \\\"PROMPT_DONE\\\"\\n\\nThe\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" user also emphasizes that I should call exactly one tool per turn and wait for each tool result before choosing the next tool.\\n\\nLet me start with Step 1: calling\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" lookup with query \\\"flue instrumentation\\\".\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"signature_delta\",\"signature\":\"EoUGCm4IDRgCKkBGG1EQWIA9O/tsHYduxoTUS/i0gICgUs3GdrJlpnNSzO7qWVpXyAV/QYunxiJ/pbuy1AxKmw6zIb/6D5H7ZGWfMhpjbGF1ZGUtc29ubmV0LTQtNS0yMDI1MDkyOTgAQgh0aGlua2luZxIMRXKds4wYcGMYouIkGgwZoj3tniSPvjyfUQ0iMJTYUR1cOzdSxBk9UN+23wtgAo9/8kEQNV+xOUHpUah0CvD2CK4e6+Mxn9U0PvwTTyrEBACjWEoJTpmbj0w1MNh5K+OwmDdBIpCbBeZgNfwk/5hZlooub3A2Da3jc6kIQPcSJAyzDcURqiosMVZblqqzxHM/aEXrQka5eZe/CELGEOZLcy2L0sRYjYzcKh+2/4hKScq3jltGM/MwmdE0y1P21raJdOxIpcXaIyQDncBiL9EQ3oPmRuhDHM9giLQaRdA8spWQs8P15X7ZcxxaVV4bI26aJoQa9/BoEBqDbNGNi0jPABVoEoUprtXqNJcl3lb4GUerTKVvEPlXluwJbN0ozQ3j9v8GGqqHlAe5J4WpjO3RA5CjKU6poKdB+CW2/MjTMA5noiDFJzqE5krdR/ll4UusUXFv+DYdLIXvm/RF/EGZa1FAmk+knqhbodSkL78m/AKpDOHNH9qymwstVSQP5IH8Xt6jE6olgXNLIHqmztPCsHYGoli+2FajT98T22xZJ/i9UPJyg+w800UtLCVzwa5Abx98Vodu7zyqZFAQ5HwWf9uY4f2T/tCjoPluiIZVb0nTUHziOnvsCpNQVWWi1eWMM6wUmfcki0TDlXaW2CNcBFSpmehGHwN3qjs2iDUG6w7MAo1hMjkKuUdalXTBqFbDa/EoEXIf4gpyNgXB0b5rzLGb8CisCONKT/PT788R7ZbjWrOqxtpIouGWqD0rvVgkGjBnuJ8EhIn1lkn1QXhqLZhcPsR7fal7rM2NRPVdD5fcI/NS9nIHo/Zx3i25gC0jd3hY+Eihl+f2C9K7f7kq78R2tUf62Sjc8XMy/QVWfsogYLIYAQ==\"}}",
+            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0}",
+            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":1,\"content_block\":{\"type\":\"text\",\"text\":\"\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"I'll complete this instrumented research flow step by step. Starting with Step 1:\"}}",
+            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":1}",
+            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":2,\"content_block\":{\"type\":\"tool_use\",\"id\":\"toolu_01GD2k3M7867B4B2MdjCqVrG\",\"name\":\"lookup\",\"input\":{},\"caller\":{\"type\":\"direct\"}}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":2,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":2,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"{\\\"query\\\": \\\"flue instrumentation\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":2,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"\\\"}\"}}",
+            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":2}",
+            "event: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"tool_use\",\"stop_sequence\":null,\"stop_details\":null},\"usage\":{\"input_tokens\":10,\"cache_creation_input_tokens\":885,\"cache_read_input_tokens\":1297,\"output_tokens\":217}}",
+            "event: message_stop\ndata: {\"type\":\"message_stop\"}"
+          ],
+          "kind": "sse"
+        },
+        "headers": {
+          "anthropic-organization-id": "27796668-7351-40ac-acc4-024aee8995a5",
+          "anthropic-ratelimit-input-tokens-limit": "3000000",
+          "anthropic-ratelimit-input-tokens-remaining": "2999000",
+          "anthropic-ratelimit-input-tokens-reset": "2026-05-21T06:48:32Z",
+          "anthropic-ratelimit-output-tokens-limit": "600000",
+          "anthropic-ratelimit-output-tokens-remaining": "600000",
+          "anthropic-ratelimit-output-tokens-reset": "2026-05-21T06:48:32Z",
+          "anthropic-ratelimit-requests-limit": "20000",
+          "anthropic-ratelimit-requests-remaining": "19999",
+          "anthropic-ratelimit-requests-reset": "2026-05-21T06:48:32Z",
+          "anthropic-ratelimit-tokens-limit": "3600000",
+          "anthropic-ratelimit-tokens-remaining": "3599000",
+          "anthropic-ratelimit-tokens-reset": "2026-05-21T06:48:32Z",
+          "cache-control": "no-cache",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "9ff1a2d24f775b94-VIE",
+          "connection": "keep-alive",
+          "content-encoding": "gzip",
+          "content-security-policy": "default-src 'none'; frame-ancestors 'none'",
+          "content-type": "text/event-stream; charset=utf-8",
+          "date": "Thu, 21 May 2026 06:48:33 GMT",
+          "request-id": "req_011CbFGTGEoBYWfGWrG8AWpG",
+          "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+          "traceresponse": "00-82368401eaf4c73a1631ded37323150e-994a044e3d1c5ec7-01",
+          "transfer-encoding": "chunked",
+          "vary": "Accept-Encoding",
+          "x-envoy-upstream-service-time": "1246",
+          "x-robots-tag": "none"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 1,
+      "id": "ff22a182ea5a9c06",
+      "matchKey": "POST api.anthropic.com/v1/messages",
+      "recordedAt": "2026-05-21T06:48:39.636Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "max_tokens": 64000,
+            "messages": [
+              {
+                "content": [
+                  {
+                    "text": "Complete this instrumented research flow. Call exactly one tool per turn and wait for each tool result before choosing the next tool. Step 1: call lookup with query \"flue instrumentation\". Step 2: use the lookup result id as lookupId and call web_search with query \"Braintrust Flue reasoning stream instrumentation\". Step 3: use the first web_search result url and call summarize_source. After summarize_source returns, reply with exactly PROMPT_DONE and no other text.",
+                    "type": "text"
+                  }
+                ],
+                "role": "user"
+              },
+              {
+                "content": [
+                  {
+                    "signature": "EoUGCm4IDRgCKkBGG1EQWIA9O/tsHYduxoTUS/i0gICgUs3GdrJlpnNSzO7qWVpXyAV/QYunxiJ/pbuy1AxKmw6zIb/6D5H7ZGWfMhpjbGF1ZGUtc29ubmV0LTQtNS0yMDI1MDkyOTgAQgh0aGlua2luZxIMRXKds4wYcGMYouIkGgwZoj3tniSPvjyfUQ0iMJTYUR1cOzdSxBk9UN+23wtgAo9/8kEQNV+xOUHpUah0CvD2CK4e6+Mxn9U0PvwTTyrEBACjWEoJTpmbj0w1MNh5K+OwmDdBIpCbBeZgNfwk/5hZlooub3A2Da3jc6kIQPcSJAyzDcURqiosMVZblqqzxHM/aEXrQka5eZe/CELGEOZLcy2L0sRYjYzcKh+2/4hKScq3jltGM/MwmdE0y1P21raJdOxIpcXaIyQDncBiL9EQ3oPmRuhDHM9giLQaRdA8spWQs8P15X7ZcxxaVV4bI26aJoQa9/BoEBqDbNGNi0jPABVoEoUprtXqNJcl3lb4GUerTKVvEPlXluwJbN0ozQ3j9v8GGqqHlAe5J4WpjO3RA5CjKU6poKdB+CW2/MjTMA5noiDFJzqE5krdR/ll4UusUXFv+DYdLIXvm/RF/EGZa1FAmk+knqhbodSkL78m/AKpDOHNH9qymwstVSQP5IH8Xt6jE6olgXNLIHqmztPCsHYGoli+2FajT98T22xZJ/i9UPJyg+w800UtLCVzwa5Abx98Vodu7zyqZFAQ5HwWf9uY4f2T/tCjoPluiIZVb0nTUHziOnvsCpNQVWWi1eWMM6wUmfcki0TDlXaW2CNcBFSpmehGHwN3qjs2iDUG6w7MAo1hMjkKuUdalXTBqFbDa/EoEXIf4gpyNgXB0b5rzLGb8CisCONKT/PT788R7ZbjWrOqxtpIouGWqD0rvVgkGjBnuJ8EhIn1lkn1QXhqLZhcPsR7fal7rM2NRPVdD5fcI/NS9nIHo/Zx3i25gC0jd3hY+Eihl+f2C9K7f7kq78R2tUf62Sjc8XMy/QVWfsogYLIYAQ==",
+                    "thinking": "The user wants me to complete an instrumented research flow with exactly three steps:\n1. Call lookup with query \"flue instrumentation\"\n2. Use the lookup result id to call web_search with query \"Braintrust Flue reasoning stream instrumentation\"\n3. Use the first web_search result url to call summarize_source\n4. After that, reply with exactly \"PROMPT_DONE\"\n\nThe user also emphasizes that I should call exactly one tool per turn and wait for each tool result before choosing the next tool.\n\nLet me start with Step 1: calling lookup with query \"flue instrumentation\".",
+                    "type": "thinking"
+                  },
+                  {
+                    "text": "I'll complete this instrumented research flow step by step. Starting with Step 1:",
+                    "type": "text"
+                  },
+                  {
+                    "id": "toolu_01GD2k3M7867B4B2MdjCqVrG",
+                    "input": {
+                      "query": "flue instrumentation"
+                    },
+                    "name": "lookup",
+                    "type": "tool_use"
+                  }
+                ],
+                "role": "assistant"
+              },
+              {
+                "content": [
+                  {
+                    "cache_control": {
+                      "type": "ephemeral"
+                    },
+                    "content": "{\"id\":\"flue-session-2026\",\"query\":\"flue instrumentation\",\"topic\":\"session instrumentation\"}",
+                    "is_error": false,
+                    "tool_use_id": "toolu_01GD2k3M7867B4B2MdjCqVrG",
+                    "type": "tool_result"
+                  }
+                ],
+                "role": "user"
+              }
+            ],
+            "model": "claude-sonnet-4-5-20250929",
+            "stream": true,
+            "system": [
+              {
+                "cache_control": {
+                  "type": "ephemeral"
+                },
+                "text": "You are running in headless mode with no human operator. Work autonomously — never ask questions, never wait for user input. Make your best judgment and proceed independently.\n\n## Available Skills\n\nEach skill below is documented in a markdown file under `.agents/skills/` (relative to your working directory). The default location is `.agents/skills/<name>/SKILL.md`. When asked to run a skill, read its file from disk and follow the instructions there literally — the skill body is not provided inline.\n\n- **e2e-flue-skill** — Deterministic skill used by the Braintrust Flue instrumentation e2e test.\n\nDate: Thu, May 21, 2026\nWorking directory: /Users/lucaforstner/conductor/workspaces/braintrust-sdk-javascript/tashkent/e2e/.bt-tmp/run-LqmoTW/scenarios/flue-instrumentation\n\nDirectory structure:\n.agents\n__cassettes__\n__snapshots__\nassertions.ts\ncassette-filter.mjs\nconstants.mjs\nnode_modules\npackage.json\npnpm-lock.yaml\nscenario.impl.mjs\nscenario.mjs\nscenario.test.ts\nscenario.ts",
+                "type": "text"
+              }
+            ],
+            "thinking": {
+              "budget_tokens": 8192,
+              "display": "summarized",
+              "type": "enabled"
+            },
+            "tools": [
+              {
+                "description": "Read a file or list a directory. For files, output is truncated to 2000 lines or 50KB — use offset/limit for large files. For directories, returns the list of entries.",
+                "eager_input_streaming": true,
+                "input_schema": {
+                  "properties": {
+                    "limit": {
+                      "description": "Maximum number of lines to read",
+                      "type": "number"
+                    },
+                    "offset": {
+                      "description": "Line number to start from (1-indexed)",
+                      "type": "number"
+                    },
+                    "path": {
+                      "description": "Path to the file to read",
+                      "type": "string"
+                    }
+                  },
+                  "required": ["path"],
+                  "type": "object"
+                },
+                "name": "read"
+              },
+              {
+                "description": "Write content to a file. Creates the file and parent directories if they do not exist.",
+                "eager_input_streaming": true,
+                "input_schema": {
+                  "properties": {
+                    "content": {
+                      "description": "Content to write to the file",
+                      "type": "string"
+                    },
+                    "path": {
+                      "description": "Path to the file to write",
+                      "type": "string"
+                    }
+                  },
+                  "required": ["path", "content"],
+                  "type": "object"
+                },
+                "name": "write"
+              },
+              {
+                "description": "Edit a file using exact text replacement. The oldText must match a unique region of the file. Use replaceAll to replace all occurrences.",
+                "eager_input_streaming": true,
+                "input_schema": {
+                  "properties": {
+                    "newText": {
+                      "description": "Replacement text",
+                      "type": "string"
+                    },
+                    "oldText": {
+                      "description": "Exact text to find (must be unique)",
+                      "type": "string"
+                    },
+                    "path": {
+                      "description": "Path to the file to edit",
+                      "type": "string"
+                    },
+                    "replaceAll": {
+                      "description": "Replace all occurrences",
+                      "type": "boolean"
+                    }
+                  },
+                  "required": ["path", "oldText", "newText"],
+                  "type": "object"
+                },
+                "name": "edit"
+              },
+              {
+                "description": "Execute a bash command. Returns stdout and stderr. Output is truncated to the last 2000 lines or 50KB.",
+                "eager_input_streaming": true,
+                "input_schema": {
+                  "properties": {
+                    "command": {
+                      "description": "Bash command to execute",
+                      "type": "string"
+                    },
+                    "timeout": {
+                      "description": "Timeout in seconds",
+                      "type": "number"
+                    }
+                  },
+                  "required": ["command"],
+                  "type": "object"
+                },
+                "name": "bash"
+              },
+              {
+                "description": "Search file contents for a regex pattern. Returns matching lines with file paths and line numbers.",
+                "eager_input_streaming": true,
+                "input_schema": {
+                  "properties": {
+                    "include": {
+                      "description": "Glob filter, e.g. \"*.ts\"",
+                      "type": "string"
+                    },
+                    "path": {
+                      "description": "Directory or file to search (default: .)",
+                      "type": "string"
+                    },
+                    "pattern": {
+                      "description": "Search pattern (regex)",
+                      "type": "string"
+                    }
+                  },
+                  "required": ["pattern"],
+                  "type": "object"
+                },
+                "name": "grep"
+              },
+              {
+                "description": "Find files by filename pattern using shell find -name semantics. Returns matching file paths.",
+                "eager_input_streaming": true,
+                "input_schema": {
+                  "properties": {
+                    "path": {
+                      "description": "Directory to search in (default: .)",
+                      "type": "string"
+                    },
+                    "pattern": {
+                      "description": "Filename pattern, e.g. \"*.ts\"",
+                      "type": "string"
+                    }
+                  },
+                  "required": ["pattern"],
+                  "type": "object"
+                },
+                "name": "glob"
+              },
+              {
+                "description": "Delegate a focused task to a detached child agent with its own context. Use this for independent research, file exploration, or parallel work. The task returns only its final answer to this conversation. Available roles: skillRunner.",
+                "eager_input_streaming": true,
+                "input_schema": {
+                  "properties": {
+                    "cwd": {
+                      "description": "Working directory for the child agent. AGENTS.md and skills are discovered from here.",
+                      "type": "string"
+                    },
+                    "description": {
+                      "description": "Short human-readable label for the delegated work",
+                      "type": "string"
+                    },
+                    "prompt": {
+                      "description": "Focused instructions for the child agent",
+                      "type": "string"
+                    },
+                    "role": {
+                      "description": "Role to use for the child agent",
+                      "type": "string"
+                    }
+                  },
+                  "required": ["prompt"],
+                  "type": "object"
+                },
+                "name": "task"
+              },
+              {
+                "description": "Return a deterministic lookup result with an id needed by web_search.",
+                "eager_input_streaming": true,
+                "input_schema": {
+                  "properties": {
+                    "query": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["query"],
+                  "type": "object"
+                },
+                "name": "lookup"
+              },
+              {
+                "description": "Search a deterministic local web index. Requires the id returned by lookup.",
+                "eager_input_streaming": true,
+                "input_schema": {
+                  "properties": {
+                    "lookupId": {
+                      "type": "string"
+                    },
+                    "query": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["lookupId", "query"],
+                  "type": "object"
+                },
+                "name": "web_search"
+              },
+              {
+                "cache_control": {
+                  "type": "ephemeral"
+                },
+                "description": "Summarize the selected deterministic source after web_search returns a URL.",
+                "eager_input_streaming": true,
+                "input_schema": {
+                  "properties": {
+                    "url": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["url"],
+                  "type": "object"
+                },
+                "name": "summarize_source"
+              }
+            ]
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages"
+      },
+      "response": {
+        "body": {
+          "chunks": [
+            "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-sonnet-4-5-20250929\",\"id\":\"msg_01CbdemsVyAkiFbARhovXpDk\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":13,\"cache_creation_input_tokens\":257,\"cache_read_input_tokens\":2182,\"cache_creation\":{\"ephemeral_5m_input_tokens\":257,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":1,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"}}}",
+            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"thinking\",\"thinking\":\"\",\"signature\":\"\"}}",
+            "event: ping\ndata: {\"type\":\"ping\"}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"Good\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\", I got the lookup result with id \\\"flue-session-2026\\\". Now I need to proceed to Step 2: call web_search using\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" this lookupId and the query \\\"Braintrust Flue reasoning stream instrumentation\\\".\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"signature_delta\",\"signature\":\"EpIDCm4IDRgCKkAGraaqPdHGE2HAbbEXcB/tBYIme5NcenLqHXnwfLjt8F2BUuO3FdH/1DhJ+cGEblVkRTDTtr6gwSbDyYOpIMTZMhpjbGF1ZGUtc29ubmV0LTQtNS0yMDI1MDkyOTgAQgh0aGlua2luZxIM0hkEt+QHz3frKV+dGgzBzyZSSik/kTiNJUIiMIXWT5AewGcoAk3E5CRsl/7bJoySRe2JV3p8Jv7ioYkJy08euGanth1HahprJhsG3irRAZ1GCOHuwJ6itCVds3y3W1r2Ksy1ShGPrOk0sXjC1RZXt3bTsQAQfi1AU0QaqlgI1RLzXRDhQEbTRQKa7UmMsbCBABlqQrh+90j6u3CqpkibXv5TwnyNlIl3aTBk+HQ+bPPdbQ/yagDMeMG4E4pEik7IFcKet39ynV6QCyTgcxrcgBJZ1uZb4mMxBPuPAwNqHCOdPDRMk8SVreU9PqR54j7fsuMnLBgV85AC8r1iI5cKo3MuhD6KcZG58ls3Yj3exA+XH2OauTFxaa0lDcEYmkAhGAE=\"}}",
+            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0}",
+            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":1,\"content_block\":{\"type\":\"text\",\"text\":\"\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"Now proceeding to Step 2:\"}}",
+            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":1}",
+            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":2,\"content_block\":{\"type\":\"tool_use\",\"id\":\"toolu_016VW8Z7PawkTryuu3wNMQZM\",\"name\":\"web_search\",\"input\":{},\"caller\":{\"type\":\"direct\"}}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":2,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":2,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"{\\\"lookupId\\\": \\\"flue-session-2026\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":2,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"\\\", \\\"query\\\": \\\"Braintrust Flue reasoning stream instru\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":2,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"mentation\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":2,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"\\\"}\"}}",
+            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":2}",
+            "event: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"tool_use\",\"stop_sequence\":null,\"stop_details\":null},\"usage\":{\"input_tokens\":13,\"cache_creation_input_tokens\":257,\"cache_read_input_tokens\":2182,\"output_tokens\":158}}",
+            "event: message_stop\ndata: {\"type\":\"message_stop\"}"
+          ],
+          "kind": "sse"
+        },
+        "headers": {
+          "anthropic-organization-id": "27796668-7351-40ac-acc4-024aee8995a5",
+          "anthropic-ratelimit-input-tokens-limit": "3000000",
+          "anthropic-ratelimit-input-tokens-remaining": "2999000",
+          "anthropic-ratelimit-input-tokens-reset": "2026-05-21T06:48:36Z",
+          "anthropic-ratelimit-output-tokens-limit": "600000",
+          "anthropic-ratelimit-output-tokens-remaining": "600000",
+          "anthropic-ratelimit-output-tokens-reset": "2026-05-21T06:48:36Z",
+          "anthropic-ratelimit-requests-limit": "20000",
+          "anthropic-ratelimit-requests-remaining": "19999",
+          "anthropic-ratelimit-requests-reset": "2026-05-21T06:48:36Z",
+          "anthropic-ratelimit-tokens-limit": "3600000",
+          "anthropic-ratelimit-tokens-remaining": "3599000",
+          "anthropic-ratelimit-tokens-reset": "2026-05-21T06:48:36Z",
+          "cache-control": "no-cache",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "9ff1a2e9dc315b94-VIE",
+          "connection": "keep-alive",
+          "content-encoding": "gzip",
+          "content-security-policy": "default-src 'none'; frame-ancestors 'none'",
+          "content-type": "text/event-stream; charset=utf-8",
+          "date": "Thu, 21 May 2026 06:48:38 GMT",
+          "request-id": "req_011CbFGTY7XYyU143kqeCPvJ",
+          "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+          "traceresponse": "00-70dfa42b365a8f6c7805eea761a41ed6-a282aba5d0474c79-01",
+          "transfer-encoding": "chunked",
+          "vary": "Accept-Encoding",
+          "x-envoy-upstream-service-time": "1764",
+          "x-robots-tag": "none"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 2,
+      "id": "f1d50a1e6c760d6c",
+      "matchKey": "POST api.anthropic.com/v1/messages",
+      "recordedAt": "2026-05-21T06:48:42.864Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "max_tokens": 64000,
+            "messages": [
+              {
+                "content": [
+                  {
+                    "text": "Complete this instrumented research flow. Call exactly one tool per turn and wait for each tool result before choosing the next tool. Step 1: call lookup with query \"flue instrumentation\". Step 2: use the lookup result id as lookupId and call web_search with query \"Braintrust Flue reasoning stream instrumentation\". Step 3: use the first web_search result url and call summarize_source. After summarize_source returns, reply with exactly PROMPT_DONE and no other text.",
+                    "type": "text"
+                  }
+                ],
+                "role": "user"
+              },
+              {
+                "content": [
+                  {
+                    "signature": "EoUGCm4IDRgCKkBGG1EQWIA9O/tsHYduxoTUS/i0gICgUs3GdrJlpnNSzO7qWVpXyAV/QYunxiJ/pbuy1AxKmw6zIb/6D5H7ZGWfMhpjbGF1ZGUtc29ubmV0LTQtNS0yMDI1MDkyOTgAQgh0aGlua2luZxIMRXKds4wYcGMYouIkGgwZoj3tniSPvjyfUQ0iMJTYUR1cOzdSxBk9UN+23wtgAo9/8kEQNV+xOUHpUah0CvD2CK4e6+Mxn9U0PvwTTyrEBACjWEoJTpmbj0w1MNh5K+OwmDdBIpCbBeZgNfwk/5hZlooub3A2Da3jc6kIQPcSJAyzDcURqiosMVZblqqzxHM/aEXrQka5eZe/CELGEOZLcy2L0sRYjYzcKh+2/4hKScq3jltGM/MwmdE0y1P21raJdOxIpcXaIyQDncBiL9EQ3oPmRuhDHM9giLQaRdA8spWQs8P15X7ZcxxaVV4bI26aJoQa9/BoEBqDbNGNi0jPABVoEoUprtXqNJcl3lb4GUerTKVvEPlXluwJbN0ozQ3j9v8GGqqHlAe5J4WpjO3RA5CjKU6poKdB+CW2/MjTMA5noiDFJzqE5krdR/ll4UusUXFv+DYdLIXvm/RF/EGZa1FAmk+knqhbodSkL78m/AKpDOHNH9qymwstVSQP5IH8Xt6jE6olgXNLIHqmztPCsHYGoli+2FajT98T22xZJ/i9UPJyg+w800UtLCVzwa5Abx98Vodu7zyqZFAQ5HwWf9uY4f2T/tCjoPluiIZVb0nTUHziOnvsCpNQVWWi1eWMM6wUmfcki0TDlXaW2CNcBFSpmehGHwN3qjs2iDUG6w7MAo1hMjkKuUdalXTBqFbDa/EoEXIf4gpyNgXB0b5rzLGb8CisCONKT/PT788R7ZbjWrOqxtpIouGWqD0rvVgkGjBnuJ8EhIn1lkn1QXhqLZhcPsR7fal7rM2NRPVdD5fcI/NS9nIHo/Zx3i25gC0jd3hY+Eihl+f2C9K7f7kq78R2tUf62Sjc8XMy/QVWfsogYLIYAQ==",
+                    "thinking": "The user wants me to complete an instrumented research flow with exactly three steps:\n1. Call lookup with query \"flue instrumentation\"\n2. Use the lookup result id to call web_search with query \"Braintrust Flue reasoning stream instrumentation\"\n3. Use the first web_search result url to call summarize_source\n4. After that, reply with exactly \"PROMPT_DONE\"\n\nThe user also emphasizes that I should call exactly one tool per turn and wait for each tool result before choosing the next tool.\n\nLet me start with Step 1: calling lookup with query \"flue instrumentation\".",
+                    "type": "thinking"
+                  },
+                  {
+                    "text": "I'll complete this instrumented research flow step by step. Starting with Step 1:",
+                    "type": "text"
+                  },
+                  {
+                    "id": "toolu_01GD2k3M7867B4B2MdjCqVrG",
+                    "input": {
+                      "query": "flue instrumentation"
+                    },
+                    "name": "lookup",
+                    "type": "tool_use"
+                  }
+                ],
+                "role": "assistant"
+              },
+              {
+                "content": [
+                  {
+                    "content": "{\"id\":\"flue-session-2026\",\"query\":\"flue instrumentation\",\"topic\":\"session instrumentation\"}",
+                    "is_error": false,
+                    "tool_use_id": "toolu_01GD2k3M7867B4B2MdjCqVrG",
+                    "type": "tool_result"
+                  }
+                ],
+                "role": "user"
+              },
+              {
+                "content": [
+                  {
+                    "signature": "EpIDCm4IDRgCKkAGraaqPdHGE2HAbbEXcB/tBYIme5NcenLqHXnwfLjt8F2BUuO3FdH/1DhJ+cGEblVkRTDTtr6gwSbDyYOpIMTZMhpjbGF1ZGUtc29ubmV0LTQtNS0yMDI1MDkyOTgAQgh0aGlua2luZxIM0hkEt+QHz3frKV+dGgzBzyZSSik/kTiNJUIiMIXWT5AewGcoAk3E5CRsl/7bJoySRe2JV3p8Jv7ioYkJy08euGanth1HahprJhsG3irRAZ1GCOHuwJ6itCVds3y3W1r2Ksy1ShGPrOk0sXjC1RZXt3bTsQAQfi1AU0QaqlgI1RLzXRDhQEbTRQKa7UmMsbCBABlqQrh+90j6u3CqpkibXv5TwnyNlIl3aTBk+HQ+bPPdbQ/yagDMeMG4E4pEik7IFcKet39ynV6QCyTgcxrcgBJZ1uZb4mMxBPuPAwNqHCOdPDRMk8SVreU9PqR54j7fsuMnLBgV85AC8r1iI5cKo3MuhD6KcZG58ls3Yj3exA+XH2OauTFxaa0lDcEYmkAhGAE=",
+                    "thinking": "Good, I got the lookup result with id \"flue-session-2026\". Now I need to proceed to Step 2: call web_search using this lookupId and the query \"Braintrust Flue reasoning stream instrumentation\".",
+                    "type": "thinking"
+                  },
+                  {
+                    "text": "Now proceeding to Step 2:",
+                    "type": "text"
+                  },
+                  {
+                    "id": "toolu_016VW8Z7PawkTryuu3wNMQZM",
+                    "input": {
+                      "lookupId": "flue-session-2026",
+                      "query": "Braintrust Flue reasoning stream instrumentation"
+                    },
+                    "name": "web_search",
+                    "type": "tool_use"
+                  }
+                ],
+                "role": "assistant"
+              },
+              {
+                "content": [
+                  {
+                    "cache_control": {
+                      "type": "ephemeral"
+                    },
+                    "content": "{\"lookupId\":\"flue-session-2026\",\"query\":\"Braintrust Flue reasoning stream instrumentation\",\"results\":[{\"title\":\"Flue reasoning stream instrumentation\",\"url\":\"https://example.test/flue/reasoning-streams\"}]}",
+                    "is_error": false,
+                    "tool_use_id": "toolu_016VW8Z7PawkTryuu3wNMQZM",
+                    "type": "tool_result"
+                  }
+                ],
+                "role": "user"
+              }
+            ],
+            "model": "claude-sonnet-4-5-20250929",
+            "stream": true,
+            "system": [
+              {
+                "cache_control": {
+                  "type": "ephemeral"
+                },
+                "text": "You are running in headless mode with no human operator. Work autonomously — never ask questions, never wait for user input. Make your best judgment and proceed independently.\n\n## Available Skills\n\nEach skill below is documented in a markdown file under `.agents/skills/` (relative to your working directory). The default location is `.agents/skills/<name>/SKILL.md`. When asked to run a skill, read its file from disk and follow the instructions there literally — the skill body is not provided inline.\n\n- **e2e-flue-skill** — Deterministic skill used by the Braintrust Flue instrumentation e2e test.\n\nDate: Thu, May 21, 2026\nWorking directory: /Users/lucaforstner/conductor/workspaces/braintrust-sdk-javascript/tashkent/e2e/.bt-tmp/run-LqmoTW/scenarios/flue-instrumentation\n\nDirectory structure:\n.agents\n__cassettes__\n__snapshots__\nassertions.ts\ncassette-filter.mjs\nconstants.mjs\nnode_modules\npackage.json\npnpm-lock.yaml\nscenario.impl.mjs\nscenario.mjs\nscenario.test.ts\nscenario.ts",
+                "type": "text"
+              }
+            ],
+            "thinking": {
+              "budget_tokens": 8192,
+              "display": "summarized",
+              "type": "enabled"
+            },
+            "tools": [
+              {
+                "description": "Read a file or list a directory. For files, output is truncated to 2000 lines or 50KB — use offset/limit for large files. For directories, returns the list of entries.",
+                "eager_input_streaming": true,
+                "input_schema": {
+                  "properties": {
+                    "limit": {
+                      "description": "Maximum number of lines to read",
+                      "type": "number"
+                    },
+                    "offset": {
+                      "description": "Line number to start from (1-indexed)",
+                      "type": "number"
+                    },
+                    "path": {
+                      "description": "Path to the file to read",
+                      "type": "string"
+                    }
+                  },
+                  "required": ["path"],
+                  "type": "object"
+                },
+                "name": "read"
+              },
+              {
+                "description": "Write content to a file. Creates the file and parent directories if they do not exist.",
+                "eager_input_streaming": true,
+                "input_schema": {
+                  "properties": {
+                    "content": {
+                      "description": "Content to write to the file",
+                      "type": "string"
+                    },
+                    "path": {
+                      "description": "Path to the file to write",
+                      "type": "string"
+                    }
+                  },
+                  "required": ["path", "content"],
+                  "type": "object"
+                },
+                "name": "write"
+              },
+              {
+                "description": "Edit a file using exact text replacement. The oldText must match a unique region of the file. Use replaceAll to replace all occurrences.",
+                "eager_input_streaming": true,
+                "input_schema": {
+                  "properties": {
+                    "newText": {
+                      "description": "Replacement text",
+                      "type": "string"
+                    },
+                    "oldText": {
+                      "description": "Exact text to find (must be unique)",
+                      "type": "string"
+                    },
+                    "path": {
+                      "description": "Path to the file to edit",
+                      "type": "string"
+                    },
+                    "replaceAll": {
+                      "description": "Replace all occurrences",
+                      "type": "boolean"
+                    }
+                  },
+                  "required": ["path", "oldText", "newText"],
+                  "type": "object"
+                },
+                "name": "edit"
+              },
+              {
+                "description": "Execute a bash command. Returns stdout and stderr. Output is truncated to the last 2000 lines or 50KB.",
+                "eager_input_streaming": true,
+                "input_schema": {
+                  "properties": {
+                    "command": {
+                      "description": "Bash command to execute",
+                      "type": "string"
+                    },
+                    "timeout": {
+                      "description": "Timeout in seconds",
+                      "type": "number"
+                    }
+                  },
+                  "required": ["command"],
+                  "type": "object"
+                },
+                "name": "bash"
+              },
+              {
+                "description": "Search file contents for a regex pattern. Returns matching lines with file paths and line numbers.",
+                "eager_input_streaming": true,
+                "input_schema": {
+                  "properties": {
+                    "include": {
+                      "description": "Glob filter, e.g. \"*.ts\"",
+                      "type": "string"
+                    },
+                    "path": {
+                      "description": "Directory or file to search (default: .)",
+                      "type": "string"
+                    },
+                    "pattern": {
+                      "description": "Search pattern (regex)",
+                      "type": "string"
+                    }
+                  },
+                  "required": ["pattern"],
+                  "type": "object"
+                },
+                "name": "grep"
+              },
+              {
+                "description": "Find files by filename pattern using shell find -name semantics. Returns matching file paths.",
+                "eager_input_streaming": true,
+                "input_schema": {
+                  "properties": {
+                    "path": {
+                      "description": "Directory to search in (default: .)",
+                      "type": "string"
+                    },
+                    "pattern": {
+                      "description": "Filename pattern, e.g. \"*.ts\"",
+                      "type": "string"
+                    }
+                  },
+                  "required": ["pattern"],
+                  "type": "object"
+                },
+                "name": "glob"
+              },
+              {
+                "description": "Delegate a focused task to a detached child agent with its own context. Use this for independent research, file exploration, or parallel work. The task returns only its final answer to this conversation. Available roles: skillRunner.",
+                "eager_input_streaming": true,
+                "input_schema": {
+                  "properties": {
+                    "cwd": {
+                      "description": "Working directory for the child agent. AGENTS.md and skills are discovered from here.",
+                      "type": "string"
+                    },
+                    "description": {
+                      "description": "Short human-readable label for the delegated work",
+                      "type": "string"
+                    },
+                    "prompt": {
+                      "description": "Focused instructions for the child agent",
+                      "type": "string"
+                    },
+                    "role": {
+                      "description": "Role to use for the child agent",
+                      "type": "string"
+                    }
+                  },
+                  "required": ["prompt"],
+                  "type": "object"
+                },
+                "name": "task"
+              },
+              {
+                "description": "Return a deterministic lookup result with an id needed by web_search.",
+                "eager_input_streaming": true,
+                "input_schema": {
+                  "properties": {
+                    "query": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["query"],
+                  "type": "object"
+                },
+                "name": "lookup"
+              },
+              {
+                "description": "Search a deterministic local web index. Requires the id returned by lookup.",
+                "eager_input_streaming": true,
+                "input_schema": {
+                  "properties": {
+                    "lookupId": {
+                      "type": "string"
+                    },
+                    "query": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["lookupId", "query"],
+                  "type": "object"
+                },
+                "name": "web_search"
+              },
+              {
+                "cache_control": {
+                  "type": "ephemeral"
+                },
+                "description": "Summarize the selected deterministic source after web_search returns a URL.",
+                "eager_input_streaming": true,
+                "input_schema": {
+                  "properties": {
+                    "url": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["url"],
+                  "type": "object"
+                },
+                "name": "summarize_source"
+              }
+            ]
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages"
+      },
+      "response": {
+        "body": {
+          "chunks": [
+            "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-sonnet-4-5-20250929\",\"id\":\"msg_0127ncLrvEhbdvmzcmsakH7k\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":13,\"cache_creation_input_tokens\":234,\"cache_read_input_tokens\":2439,\"cache_creation\":{\"ephemeral_5m_input_tokens\":234,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":1,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"}}}",
+            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"thinking\",\"thinking\":\"\",\"signature\":\"\"}}",
+            "event: ping\ndata: {\"type\":\"ping\"}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"Perfect\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"! I got the web_search results. There's one result with the URL\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" \\\"https://example.test/flue/reasoning-streams\\\". Now I need to proceed to Step 3: call summarize_source with this URL.\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"signature_delta\",\"signature\":\"EowDCm4IDRgCKkBAx8dB8EGMSxpAE1bkbv5IFMJcST9qVcl0KHwBXOCrtNNuK9rYk/fasBvKRf6NsyQU3hPl6KMhPmyo1RdgrlbyMhpjbGF1ZGUtc29ubmV0LTQtNS0yMDI1MDkyOTgAQgh0aGlua2luZxIMemkNtsvVXGxVJiFJGgz6AuNoagcBoR2BOdgiMFUYr/5iFJKYgrBdik3Xu8ppJPGcUDuB6f4EI2N39i9sNQHVR8XBCvZaXwJqEILnsSrLAQ1TaPrVNMVCJ5ly8rltFaB3uEBGoaXmduyD/0NFlU6zSySG1hnGrY/tgcH3erm3AOCRJugGoDuSUEn301OxHooiKXGMh/2CsQ1LqQu1nwyrmbK/7+U/UtbouGJQaLkmoAfSWPDKm08zU6filkzdihRiWMkJ9wO/sqbtu8US3zxrIEqE+IPWGBJIHoncA1mAM7pPjqTPZEu4z5f69C0//fQszysmRRO2QejYfGu6m216yFGNwJnirhMFzlXbj5kU1FO21VQ8Wb6dAv0PGAE=\"}}",
+            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0}",
+            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":1,\"content_block\":{\"type\":\"text\",\"text\":\"\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"Now proceeding to Step\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" 3:\"}}",
+            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":1}",
+            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":2,\"content_block\":{\"type\":\"tool_use\",\"id\":\"toolu_01JvdxTjoCLCdYkoec6bWgVv\",\"name\":\"summarize_source\",\"input\":{},\"caller\":{\"type\":\"direct\"}}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":2,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":2,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"{\\\"url\\\": \\\"https://example.test/flue/reasoning-streams\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":2,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"\\\"}\"}}",
+            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":2}",
+            "event: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"tool_use\",\"stop_sequence\":null,\"stop_details\":null},\"usage\":{\"input_tokens\":13,\"cache_creation_input_tokens\":234,\"cache_read_input_tokens\":2439,\"output_tokens\":132}}",
+            "event: message_stop\ndata: {\"type\":\"message_stop\"}"
+          ],
+          "kind": "sse"
+        },
+        "headers": {
+          "anthropic-organization-id": "27796668-7351-40ac-acc4-024aee8995a5",
+          "anthropic-ratelimit-input-tokens-limit": "3000000",
+          "anthropic-ratelimit-input-tokens-remaining": "2999000",
+          "anthropic-ratelimit-input-tokens-reset": "2026-05-21T06:48:39Z",
+          "anthropic-ratelimit-output-tokens-limit": "600000",
+          "anthropic-ratelimit-output-tokens-remaining": "600000",
+          "anthropic-ratelimit-output-tokens-reset": "2026-05-21T06:48:39Z",
+          "anthropic-ratelimit-requests-limit": "20000",
+          "anthropic-ratelimit-requests-remaining": "19999",
+          "anthropic-ratelimit-requests-reset": "2026-05-21T06:48:39Z",
+          "anthropic-ratelimit-tokens-limit": "3600000",
+          "anthropic-ratelimit-tokens-remaining": "3599000",
+          "anthropic-ratelimit-tokens-reset": "2026-05-21T06:48:39Z",
+          "cache-control": "no-cache",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "9ff1a30038c95b94-VIE",
+          "connection": "keep-alive",
+          "content-encoding": "gzip",
+          "content-security-policy": "default-src 'none'; frame-ancestors 'none'",
+          "content-type": "text/event-stream; charset=utf-8",
+          "date": "Thu, 21 May 2026 06:48:41 GMT",
+          "request-id": "req_011CbFGToRH9Dj7DccSdji4e",
+          "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+          "traceresponse": "00-5adb360c6209ec709b5896e9afca02b1-3e5b34b916b3f3b1-01",
+          "transfer-encoding": "chunked",
+          "vary": "Accept-Encoding",
+          "x-envoy-upstream-service-time": "1389",
+          "x-robots-tag": "none"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 3,
+      "id": "305957222aa1f6e9",
+      "matchKey": "POST api.anthropic.com/v1/messages",
+      "recordedAt": "2026-05-21T06:48:45.714Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "max_tokens": 64000,
+            "messages": [
+              {
+                "content": [
+                  {
+                    "text": "Complete this instrumented research flow. Call exactly one tool per turn and wait for each tool result before choosing the next tool. Step 1: call lookup with query \"flue instrumentation\". Step 2: use the lookup result id as lookupId and call web_search with query \"Braintrust Flue reasoning stream instrumentation\". Step 3: use the first web_search result url and call summarize_source. After summarize_source returns, reply with exactly PROMPT_DONE and no other text.",
+                    "type": "text"
+                  }
+                ],
+                "role": "user"
+              },
+              {
+                "content": [
+                  {
+                    "signature": "EoUGCm4IDRgCKkBGG1EQWIA9O/tsHYduxoTUS/i0gICgUs3GdrJlpnNSzO7qWVpXyAV/QYunxiJ/pbuy1AxKmw6zIb/6D5H7ZGWfMhpjbGF1ZGUtc29ubmV0LTQtNS0yMDI1MDkyOTgAQgh0aGlua2luZxIMRXKds4wYcGMYouIkGgwZoj3tniSPvjyfUQ0iMJTYUR1cOzdSxBk9UN+23wtgAo9/8kEQNV+xOUHpUah0CvD2CK4e6+Mxn9U0PvwTTyrEBACjWEoJTpmbj0w1MNh5K+OwmDdBIpCbBeZgNfwk/5hZlooub3A2Da3jc6kIQPcSJAyzDcURqiosMVZblqqzxHM/aEXrQka5eZe/CELGEOZLcy2L0sRYjYzcKh+2/4hKScq3jltGM/MwmdE0y1P21raJdOxIpcXaIyQDncBiL9EQ3oPmRuhDHM9giLQaRdA8spWQs8P15X7ZcxxaVV4bI26aJoQa9/BoEBqDbNGNi0jPABVoEoUprtXqNJcl3lb4GUerTKVvEPlXluwJbN0ozQ3j9v8GGqqHlAe5J4WpjO3RA5CjKU6poKdB+CW2/MjTMA5noiDFJzqE5krdR/ll4UusUXFv+DYdLIXvm/RF/EGZa1FAmk+knqhbodSkL78m/AKpDOHNH9qymwstVSQP5IH8Xt6jE6olgXNLIHqmztPCsHYGoli+2FajT98T22xZJ/i9UPJyg+w800UtLCVzwa5Abx98Vodu7zyqZFAQ5HwWf9uY4f2T/tCjoPluiIZVb0nTUHziOnvsCpNQVWWi1eWMM6wUmfcki0TDlXaW2CNcBFSpmehGHwN3qjs2iDUG6w7MAo1hMjkKuUdalXTBqFbDa/EoEXIf4gpyNgXB0b5rzLGb8CisCONKT/PT788R7ZbjWrOqxtpIouGWqD0rvVgkGjBnuJ8EhIn1lkn1QXhqLZhcPsR7fal7rM2NRPVdD5fcI/NS9nIHo/Zx3i25gC0jd3hY+Eihl+f2C9K7f7kq78R2tUf62Sjc8XMy/QVWfsogYLIYAQ==",
+                    "thinking": "The user wants me to complete an instrumented research flow with exactly three steps:\n1. Call lookup with query \"flue instrumentation\"\n2. Use the lookup result id to call web_search with query \"Braintrust Flue reasoning stream instrumentation\"\n3. Use the first web_search result url to call summarize_source\n4. After that, reply with exactly \"PROMPT_DONE\"\n\nThe user also emphasizes that I should call exactly one tool per turn and wait for each tool result before choosing the next tool.\n\nLet me start with Step 1: calling lookup with query \"flue instrumentation\".",
+                    "type": "thinking"
+                  },
+                  {
+                    "text": "I'll complete this instrumented research flow step by step. Starting with Step 1:",
+                    "type": "text"
+                  },
+                  {
+                    "id": "toolu_01GD2k3M7867B4B2MdjCqVrG",
+                    "input": {
+                      "query": "flue instrumentation"
+                    },
+                    "name": "lookup",
+                    "type": "tool_use"
+                  }
+                ],
+                "role": "assistant"
+              },
+              {
+                "content": [
+                  {
+                    "content": "{\"id\":\"flue-session-2026\",\"query\":\"flue instrumentation\",\"topic\":\"session instrumentation\"}",
+                    "is_error": false,
+                    "tool_use_id": "toolu_01GD2k3M7867B4B2MdjCqVrG",
+                    "type": "tool_result"
+                  }
+                ],
+                "role": "user"
+              },
+              {
+                "content": [
+                  {
+                    "signature": "EpIDCm4IDRgCKkAGraaqPdHGE2HAbbEXcB/tBYIme5NcenLqHXnwfLjt8F2BUuO3FdH/1DhJ+cGEblVkRTDTtr6gwSbDyYOpIMTZMhpjbGF1ZGUtc29ubmV0LTQtNS0yMDI1MDkyOTgAQgh0aGlua2luZxIM0hkEt+QHz3frKV+dGgzBzyZSSik/kTiNJUIiMIXWT5AewGcoAk3E5CRsl/7bJoySRe2JV3p8Jv7ioYkJy08euGanth1HahprJhsG3irRAZ1GCOHuwJ6itCVds3y3W1r2Ksy1ShGPrOk0sXjC1RZXt3bTsQAQfi1AU0QaqlgI1RLzXRDhQEbTRQKa7UmMsbCBABlqQrh+90j6u3CqpkibXv5TwnyNlIl3aTBk+HQ+bPPdbQ/yagDMeMG4E4pEik7IFcKet39ynV6QCyTgcxrcgBJZ1uZb4mMxBPuPAwNqHCOdPDRMk8SVreU9PqR54j7fsuMnLBgV85AC8r1iI5cKo3MuhD6KcZG58ls3Yj3exA+XH2OauTFxaa0lDcEYmkAhGAE=",
+                    "thinking": "Good, I got the lookup result with id \"flue-session-2026\". Now I need to proceed to Step 2: call web_search using this lookupId and the query \"Braintrust Flue reasoning stream instrumentation\".",
+                    "type": "thinking"
+                  },
+                  {
+                    "text": "Now proceeding to Step 2:",
+                    "type": "text"
+                  },
+                  {
+                    "id": "toolu_016VW8Z7PawkTryuu3wNMQZM",
+                    "input": {
+                      "lookupId": "flue-session-2026",
+                      "query": "Braintrust Flue reasoning stream instrumentation"
+                    },
+                    "name": "web_search",
+                    "type": "tool_use"
+                  }
+                ],
+                "role": "assistant"
+              },
+              {
+                "content": [
+                  {
+                    "content": "{\"lookupId\":\"flue-session-2026\",\"query\":\"Braintrust Flue reasoning stream instrumentation\",\"results\":[{\"title\":\"Flue reasoning stream instrumentation\",\"url\":\"https://example.test/flue/reasoning-streams\"}]}",
+                    "is_error": false,
+                    "tool_use_id": "toolu_016VW8Z7PawkTryuu3wNMQZM",
+                    "type": "tool_result"
+                  }
+                ],
+                "role": "user"
+              },
+              {
+                "content": [
+                  {
+                    "signature": "EowDCm4IDRgCKkBAx8dB8EGMSxpAE1bkbv5IFMJcST9qVcl0KHwBXOCrtNNuK9rYk/fasBvKRf6NsyQU3hPl6KMhPmyo1RdgrlbyMhpjbGF1ZGUtc29ubmV0LTQtNS0yMDI1MDkyOTgAQgh0aGlua2luZxIMemkNtsvVXGxVJiFJGgz6AuNoagcBoR2BOdgiMFUYr/5iFJKYgrBdik3Xu8ppJPGcUDuB6f4EI2N39i9sNQHVR8XBCvZaXwJqEILnsSrLAQ1TaPrVNMVCJ5ly8rltFaB3uEBGoaXmduyD/0NFlU6zSySG1hnGrY/tgcH3erm3AOCRJugGoDuSUEn301OxHooiKXGMh/2CsQ1LqQu1nwyrmbK/7+U/UtbouGJQaLkmoAfSWPDKm08zU6filkzdihRiWMkJ9wO/sqbtu8US3zxrIEqE+IPWGBJIHoncA1mAM7pPjqTPZEu4z5f69C0//fQszysmRRO2QejYfGu6m216yFGNwJnirhMFzlXbj5kU1FO21VQ8Wb6dAv0PGAE=",
+                    "thinking": "Perfect! I got the web_search results. There's one result with the URL \"https://example.test/flue/reasoning-streams\". Now I need to proceed to Step 3: call summarize_source with this URL.",
+                    "type": "thinking"
+                  },
+                  {
+                    "text": "Now proceeding to Step 3:",
+                    "type": "text"
+                  },
+                  {
+                    "id": "toolu_01JvdxTjoCLCdYkoec6bWgVv",
+                    "input": {
+                      "url": "https://example.test/flue/reasoning-streams"
+                    },
+                    "name": "summarize_source",
+                    "type": "tool_use"
+                  }
+                ],
+                "role": "assistant"
+              },
+              {
+                "content": [
+                  {
+                    "cache_control": {
+                      "type": "ephemeral"
+                    },
+                    "content": "{\"summary\":\"Flue emits reasoning, tool execution, and LLM turn events separately.\",\"url\":\"https://example.test/flue/reasoning-streams\"}",
+                    "is_error": false,
+                    "tool_use_id": "toolu_01JvdxTjoCLCdYkoec6bWgVv",
+                    "type": "tool_result"
+                  }
+                ],
+                "role": "user"
+              }
+            ],
+            "model": "claude-sonnet-4-5-20250929",
+            "stream": true,
+            "system": [
+              {
+                "cache_control": {
+                  "type": "ephemeral"
+                },
+                "text": "You are running in headless mode with no human operator. Work autonomously — never ask questions, never wait for user input. Make your best judgment and proceed independently.\n\n## Available Skills\n\nEach skill below is documented in a markdown file under `.agents/skills/` (relative to your working directory). The default location is `.agents/skills/<name>/SKILL.md`. When asked to run a skill, read its file from disk and follow the instructions there literally — the skill body is not provided inline.\n\n- **e2e-flue-skill** — Deterministic skill used by the Braintrust Flue instrumentation e2e test.\n\nDate: Thu, May 21, 2026\nWorking directory: /Users/lucaforstner/conductor/workspaces/braintrust-sdk-javascript/tashkent/e2e/.bt-tmp/run-LqmoTW/scenarios/flue-instrumentation\n\nDirectory structure:\n.agents\n__cassettes__\n__snapshots__\nassertions.ts\ncassette-filter.mjs\nconstants.mjs\nnode_modules\npackage.json\npnpm-lock.yaml\nscenario.impl.mjs\nscenario.mjs\nscenario.test.ts\nscenario.ts",
+                "type": "text"
+              }
+            ],
+            "thinking": {
+              "budget_tokens": 8192,
+              "display": "summarized",
+              "type": "enabled"
+            },
+            "tools": [
+              {
+                "description": "Read a file or list a directory. For files, output is truncated to 2000 lines or 50KB — use offset/limit for large files. For directories, returns the list of entries.",
+                "eager_input_streaming": true,
+                "input_schema": {
+                  "properties": {
+                    "limit": {
+                      "description": "Maximum number of lines to read",
+                      "type": "number"
+                    },
+                    "offset": {
+                      "description": "Line number to start from (1-indexed)",
+                      "type": "number"
+                    },
+                    "path": {
+                      "description": "Path to the file to read",
+                      "type": "string"
+                    }
+                  },
+                  "required": ["path"],
+                  "type": "object"
+                },
+                "name": "read"
+              },
+              {
+                "description": "Write content to a file. Creates the file and parent directories if they do not exist.",
+                "eager_input_streaming": true,
+                "input_schema": {
+                  "properties": {
+                    "content": {
+                      "description": "Content to write to the file",
+                      "type": "string"
+                    },
+                    "path": {
+                      "description": "Path to the file to write",
+                      "type": "string"
+                    }
+                  },
+                  "required": ["path", "content"],
+                  "type": "object"
+                },
+                "name": "write"
+              },
+              {
+                "description": "Edit a file using exact text replacement. The oldText must match a unique region of the file. Use replaceAll to replace all occurrences.",
+                "eager_input_streaming": true,
+                "input_schema": {
+                  "properties": {
+                    "newText": {
+                      "description": "Replacement text",
+                      "type": "string"
+                    },
+                    "oldText": {
+                      "description": "Exact text to find (must be unique)",
+                      "type": "string"
+                    },
+                    "path": {
+                      "description": "Path to the file to edit",
+                      "type": "string"
+                    },
+                    "replaceAll": {
+                      "description": "Replace all occurrences",
+                      "type": "boolean"
+                    }
+                  },
+                  "required": ["path", "oldText", "newText"],
+                  "type": "object"
+                },
+                "name": "edit"
+              },
+              {
+                "description": "Execute a bash command. Returns stdout and stderr. Output is truncated to the last 2000 lines or 50KB.",
+                "eager_input_streaming": true,
+                "input_schema": {
+                  "properties": {
+                    "command": {
+                      "description": "Bash command to execute",
+                      "type": "string"
+                    },
+                    "timeout": {
+                      "description": "Timeout in seconds",
+                      "type": "number"
+                    }
+                  },
+                  "required": ["command"],
+                  "type": "object"
+                },
+                "name": "bash"
+              },
+              {
+                "description": "Search file contents for a regex pattern. Returns matching lines with file paths and line numbers.",
+                "eager_input_streaming": true,
+                "input_schema": {
+                  "properties": {
+                    "include": {
+                      "description": "Glob filter, e.g. \"*.ts\"",
+                      "type": "string"
+                    },
+                    "path": {
+                      "description": "Directory or file to search (default: .)",
+                      "type": "string"
+                    },
+                    "pattern": {
+                      "description": "Search pattern (regex)",
+                      "type": "string"
+                    }
+                  },
+                  "required": ["pattern"],
+                  "type": "object"
+                },
+                "name": "grep"
+              },
+              {
+                "description": "Find files by filename pattern using shell find -name semantics. Returns matching file paths.",
+                "eager_input_streaming": true,
+                "input_schema": {
+                  "properties": {
+                    "path": {
+                      "description": "Directory to search in (default: .)",
+                      "type": "string"
+                    },
+                    "pattern": {
+                      "description": "Filename pattern, e.g. \"*.ts\"",
+                      "type": "string"
+                    }
+                  },
+                  "required": ["pattern"],
+                  "type": "object"
+                },
+                "name": "glob"
+              },
+              {
+                "description": "Delegate a focused task to a detached child agent with its own context. Use this for independent research, file exploration, or parallel work. The task returns only its final answer to this conversation. Available roles: skillRunner.",
+                "eager_input_streaming": true,
+                "input_schema": {
+                  "properties": {
+                    "cwd": {
+                      "description": "Working directory for the child agent. AGENTS.md and skills are discovered from here.",
+                      "type": "string"
+                    },
+                    "description": {
+                      "description": "Short human-readable label for the delegated work",
+                      "type": "string"
+                    },
+                    "prompt": {
+                      "description": "Focused instructions for the child agent",
+                      "type": "string"
+                    },
+                    "role": {
+                      "description": "Role to use for the child agent",
+                      "type": "string"
+                    }
+                  },
+                  "required": ["prompt"],
+                  "type": "object"
+                },
+                "name": "task"
+              },
+              {
+                "description": "Return a deterministic lookup result with an id needed by web_search.",
+                "eager_input_streaming": true,
+                "input_schema": {
+                  "properties": {
+                    "query": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["query"],
+                  "type": "object"
+                },
+                "name": "lookup"
+              },
+              {
+                "description": "Search a deterministic local web index. Requires the id returned by lookup.",
+                "eager_input_streaming": true,
+                "input_schema": {
+                  "properties": {
+                    "lookupId": {
+                      "type": "string"
+                    },
+                    "query": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["lookupId", "query"],
+                  "type": "object"
+                },
+                "name": "web_search"
+              },
+              {
+                "cache_control": {
+                  "type": "ephemeral"
+                },
+                "description": "Summarize the selected deterministic source after web_search returns a URL.",
+                "eager_input_streaming": true,
+                "input_schema": {
+                  "properties": {
+                    "url": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["url"],
+                  "type": "object"
+                },
+                "name": "summarize_source"
+              }
+            ]
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages"
+      },
+      "response": {
+        "body": {
+          "chunks": [
+            "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-sonnet-4-5-20250929\",\"id\":\"msg_01HwXz99DRaxy131BhTvg7aL\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":13,\"cache_creation_input_tokens\":188,\"cache_read_input_tokens\":2673,\"cache_creation\":{\"ephemeral_5m_input_tokens\":188,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":3,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"}}}",
+            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"thinking\",\"thinking\":\"\",\"signature\":\"\"}}",
+            "event: ping\ndata: {\"type\":\"ping\"}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"Great! The\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" summarize_source call has completed successfully. According to the instructions, I should now reply with exactly \\\"PROMPT_DONE\\\" and no other text.\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"signature_delta\",\"signature\":\"Eu0CCm4IDRgCKkCBUYqhsARXFm5YQdB8B4fq/pryhtdDMyve+qLrKjJqHD3e6i8qwtMvaYLPzEs5dagCGN78HUOXUIGRyxayFLsaMhpjbGF1ZGUtc29ubmV0LTQtNS0yMDI1MDkyOTgAQgh0aGlua2luZxIMSAGOY3KKONucZdv2GgwbIH0DASkcx2PNO3IiMPgbDWU64PZih2E9L5bJKlJG3YlBOkpzlkj0KsH27P2yeVtf6gEKV1ym8v01eo+22SqsAZjELp8qSjTomJDJAbv93WPF4OwY0KKNhLiGYj3CGUOcybr7g+02AkHtaxp1YyYNtX1cXsUoTCPPAtGgW+4Mj6V48xqSppxoF67gzfoLd3DbqN1ZpCjcGTaOlEQwRdKZU7eUS81aRksb5Vb5tiQCHPG8f55AmRy0kn4eZ0LhQLm/qUQwRznV0EsNSrHdkozFlf4rUQS+BdDYgf+eECSpMoo7TX2P9lBg4h5EsREYAQ==\"}}",
+            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0}",
+            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":1,\"content_block\":{\"type\":\"text\",\"text\":\"\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"PROMPT_DONE\"}}",
+            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":1}",
+            "event: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null},\"usage\":{\"input_tokens\":13,\"cache_creation_input_tokens\":188,\"cache_read_input_tokens\":2673,\"output_tokens\":51}}",
+            "event: message_stop\ndata: {\"type\":\"message_stop\"}"
+          ],
+          "kind": "sse"
+        },
+        "headers": {
+          "anthropic-organization-id": "27796668-7351-40ac-acc4-024aee8995a5",
+          "anthropic-ratelimit-input-tokens-limit": "3000000",
+          "anthropic-ratelimit-input-tokens-remaining": "2998000",
+          "anthropic-ratelimit-input-tokens-reset": "2026-05-21T06:48:43Z",
+          "anthropic-ratelimit-output-tokens-limit": "600000",
+          "anthropic-ratelimit-output-tokens-remaining": "600000",
+          "anthropic-ratelimit-output-tokens-reset": "2026-05-21T06:48:43Z",
+          "anthropic-ratelimit-requests-limit": "20000",
+          "anthropic-ratelimit-requests-remaining": "19999",
+          "anthropic-ratelimit-requests-reset": "2026-05-21T06:48:43Z",
+          "anthropic-ratelimit-tokens-limit": "3600000",
+          "anthropic-ratelimit-tokens-remaining": "3598000",
+          "anthropic-ratelimit-tokens-reset": "2026-05-21T06:48:43Z",
+          "cache-control": "no-cache",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "9ff1a3145cd25b94-VIE",
+          "connection": "keep-alive",
+          "content-encoding": "gzip",
+          "content-security-policy": "default-src 'none'; frame-ancestors 'none'",
+          "content-type": "text/event-stream; charset=utf-8",
+          "date": "Thu, 21 May 2026 06:48:45 GMT",
+          "request-id": "req_011CbFGU3Bkpmx8QxaBcUhtq",
+          "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+          "traceresponse": "00-408b026ccc4d384d0269512a66aa3826-2c341f620252cb31-01",
+          "transfer-encoding": "chunked",
+          "vary": "Accept-Encoding",
+          "x-envoy-upstream-service-time": "1997",
+          "x-robots-tag": "none"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 4,
+      "id": "3d93fe37f72a947f",
+      "matchKey": "POST api.anthropic.com/v1/messages",
+      "recordedAt": "2026-05-21T06:48:48.470Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "max_tokens": 64000,
+            "messages": [
+              {
+                "content": [
+                  {
+                    "cache_control": {
+                      "type": "ephemeral"
+                    },
+                    "text": "Run the skill named \"e2e-flue-skill\".\n\nArguments:\n{\n  \"marker\": \"SKILL_DONE\"\n}",
+                    "type": "text"
+                  }
+                ],
+                "role": "user"
+              }
+            ],
+            "model": "claude-sonnet-4-5-20250929",
+            "stream": true,
+            "system": [
+              {
+                "cache_control": {
+                  "type": "ephemeral"
+                },
+                "text": "You are running in headless mode with no human operator. Work autonomously — never ask questions, never wait for user input. Make your best judgment and proceed independently.\n\n## Available Skills\n\nEach skill below is documented in a markdown file under `.agents/skills/` (relative to your working directory). The default location is `.agents/skills/<name>/SKILL.md`. When asked to run a skill, read its file from disk and follow the instructions there literally — the skill body is not provided inline.\n\n- **e2e-flue-skill** — Deterministic skill used by the Braintrust Flue instrumentation e2e test.\n\nDate: Thu, May 21, 2026\nWorking directory: /Users/lucaforstner/conductor/workspaces/braintrust-sdk-javascript/tashkent/e2e/.bt-tmp/run-LqmoTW/scenarios/flue-instrumentation\n\nDirectory structure:\n.agents\n__cassettes__\n__snapshots__\nassertions.ts\ncassette-filter.mjs\nconstants.mjs\nnode_modules\npackage.json\npnpm-lock.yaml\nscenario.impl.mjs\nscenario.mjs\nscenario.test.ts\nscenario.ts\n\n<role name=\"skillRunner\">\nNever call the task tool. Do not delegate e2e-flue-skill to another session. If you need the skill body, read .agents/skills/e2e-flue-skill/SKILL.md yourself with the read tool. Return the marker from the Arguments object exactly, with no other text.\n</role>",
+                "type": "text"
+              }
+            ],
+            "thinking": {
+              "type": "disabled"
+            },
+            "tools": [
+              {
+                "description": "Read a file or list a directory. For files, output is truncated to 2000 lines or 50KB — use offset/limit for large files. For directories, returns the list of entries.",
+                "eager_input_streaming": true,
+                "input_schema": {
+                  "properties": {
+                    "limit": {
+                      "description": "Maximum number of lines to read",
+                      "type": "number"
+                    },
+                    "offset": {
+                      "description": "Line number to start from (1-indexed)",
+                      "type": "number"
+                    },
+                    "path": {
+                      "description": "Path to the file to read",
+                      "type": "string"
+                    }
+                  },
+                  "required": ["path"],
+                  "type": "object"
+                },
+                "name": "read"
+              },
+              {
+                "description": "Write content to a file. Creates the file and parent directories if they do not exist.",
+                "eager_input_streaming": true,
+                "input_schema": {
+                  "properties": {
+                    "content": {
+                      "description": "Content to write to the file",
+                      "type": "string"
+                    },
+                    "path": {
+                      "description": "Path to the file to write",
+                      "type": "string"
+                    }
+                  },
+                  "required": ["path", "content"],
+                  "type": "object"
+                },
+                "name": "write"
+              },
+              {
+                "description": "Edit a file using exact text replacement. The oldText must match a unique region of the file. Use replaceAll to replace all occurrences.",
+                "eager_input_streaming": true,
+                "input_schema": {
+                  "properties": {
+                    "newText": {
+                      "description": "Replacement text",
+                      "type": "string"
+                    },
+                    "oldText": {
+                      "description": "Exact text to find (must be unique)",
+                      "type": "string"
+                    },
+                    "path": {
+                      "description": "Path to the file to edit",
+                      "type": "string"
+                    },
+                    "replaceAll": {
+                      "description": "Replace all occurrences",
+                      "type": "boolean"
+                    }
+                  },
+                  "required": ["path", "oldText", "newText"],
+                  "type": "object"
+                },
+                "name": "edit"
+              },
+              {
+                "description": "Execute a bash command. Returns stdout and stderr. Output is truncated to the last 2000 lines or 50KB.",
+                "eager_input_streaming": true,
+                "input_schema": {
+                  "properties": {
+                    "command": {
+                      "description": "Bash command to execute",
+                      "type": "string"
+                    },
+                    "timeout": {
+                      "description": "Timeout in seconds",
+                      "type": "number"
+                    }
+                  },
+                  "required": ["command"],
+                  "type": "object"
+                },
+                "name": "bash"
+              },
+              {
+                "description": "Search file contents for a regex pattern. Returns matching lines with file paths and line numbers.",
+                "eager_input_streaming": true,
+                "input_schema": {
+                  "properties": {
+                    "include": {
+                      "description": "Glob filter, e.g. \"*.ts\"",
+                      "type": "string"
+                    },
+                    "path": {
+                      "description": "Directory or file to search (default: .)",
+                      "type": "string"
+                    },
+                    "pattern": {
+                      "description": "Search pattern (regex)",
+                      "type": "string"
+                    }
+                  },
+                  "required": ["pattern"],
+                  "type": "object"
+                },
+                "name": "grep"
+              },
+              {
+                "description": "Find files by filename pattern using shell find -name semantics. Returns matching file paths.",
+                "eager_input_streaming": true,
+                "input_schema": {
+                  "properties": {
+                    "path": {
+                      "description": "Directory to search in (default: .)",
+                      "type": "string"
+                    },
+                    "pattern": {
+                      "description": "Filename pattern, e.g. \"*.ts\"",
+                      "type": "string"
+                    }
+                  },
+                  "required": ["pattern"],
+                  "type": "object"
+                },
+                "name": "glob"
+              },
+              {
+                "cache_control": {
+                  "type": "ephemeral"
+                },
+                "description": "Delegate a focused task to a detached child agent with its own context. Use this for independent research, file exploration, or parallel work. The task returns only its final answer to this conversation. Available roles: skillRunner.",
+                "eager_input_streaming": true,
+                "input_schema": {
+                  "properties": {
+                    "cwd": {
+                      "description": "Working directory for the child agent. AGENTS.md and skills are discovered from here.",
+                      "type": "string"
+                    },
+                    "description": {
+                      "description": "Short human-readable label for the delegated work",
+                      "type": "string"
+                    },
+                    "prompt": {
+                      "description": "Focused instructions for the child agent",
+                      "type": "string"
+                    },
+                    "role": {
+                      "description": "Role to use for the child agent",
+                      "type": "string"
+                    }
+                  },
+                  "required": ["prompt"],
+                  "type": "object"
+                },
+                "name": "task"
+              }
+            ]
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages"
+      },
+      "response": {
+        "body": {
+          "chunks": [
+            "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-sonnet-4-5-20250929\",\"id\":\"msg_01JoaqaveV26zPPyn36eqMii\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":3,\"cache_creation_input_tokens\":716,\"cache_read_input_tokens\":1093,\"cache_creation\":{\"ephemeral_5m_input_tokens\":716,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":5,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"}}}",
+            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}}",
+            "event: ping\ndata: {\"type\":\"ping\"}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"I'll run the e\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"2e-flue-skill by reading its instructions and following them.\"}}",
+            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0}",
+            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":1,\"content_block\":{\"type\":\"tool_use\",\"id\":\"toolu_01PD5NfHENNe1rtoqGk42TWG\",\"name\":\"read\",\"input\":{},\"caller\":{\"type\":\"direct\"}}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"{\\\"path\\\": \\\".agents/skills/e2e-flue-skill/SKILL.md\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"\\\"}\"}}",
+            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":1}",
+            "event: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"tool_use\",\"stop_sequence\":null,\"stop_details\":null},\"usage\":{\"input_tokens\":3,\"cache_creation_input_tokens\":716,\"cache_read_input_tokens\":1093,\"output_tokens\":89}}",
+            "event: message_stop\ndata: {\"type\":\"message_stop\"}"
+          ],
+          "kind": "sse"
+        },
+        "headers": {
+          "anthropic-organization-id": "27796668-7351-40ac-acc4-024aee8995a5",
+          "anthropic-ratelimit-input-tokens-limit": "3000000",
+          "anthropic-ratelimit-input-tokens-remaining": "2999000",
+          "anthropic-ratelimit-input-tokens-reset": "2026-05-21T06:48:45Z",
+          "anthropic-ratelimit-output-tokens-limit": "600000",
+          "anthropic-ratelimit-output-tokens-remaining": "600000",
+          "anthropic-ratelimit-output-tokens-reset": "2026-05-21T06:48:45Z",
+          "anthropic-ratelimit-requests-limit": "20000",
+          "anthropic-ratelimit-requests-remaining": "19999",
+          "anthropic-ratelimit-requests-reset": "2026-05-21T06:48:45Z",
+          "anthropic-ratelimit-tokens-limit": "3600000",
+          "anthropic-ratelimit-tokens-remaining": "3599000",
+          "anthropic-ratelimit-tokens-reset": "2026-05-21T06:48:45Z",
+          "cache-control": "no-cache",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "9ff1a3261ce85b94-VIE",
+          "connection": "keep-alive",
+          "content-encoding": "gzip",
+          "content-security-policy": "default-src 'none'; frame-ancestors 'none'",
+          "content-type": "text/event-stream; charset=utf-8",
+          "date": "Thu, 21 May 2026 06:48:47 GMT",
+          "request-id": "req_011CbFGUFLzxnhHqjcYYgyca",
+          "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+          "traceresponse": "00-240fefcf6768b2ee326e503bca81b492-db5bae8e1a36da5d-01",
+          "transfer-encoding": "chunked",
+          "vary": "Accept-Encoding",
+          "x-envoy-upstream-service-time": "1635",
+          "x-robots-tag": "none"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 5,
+      "id": "fb4ed2bb1569d980",
+      "matchKey": "POST api.anthropic.com/v1/messages",
+      "recordedAt": "2026-05-21T06:48:50.434Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "max_tokens": 64000,
+            "messages": [
+              {
+                "content": [
+                  {
+                    "text": "Run the skill named \"e2e-flue-skill\".\n\nArguments:\n{\n  \"marker\": \"SKILL_DONE\"\n}",
+                    "type": "text"
+                  }
+                ],
+                "role": "user"
+              },
+              {
+                "content": [
+                  {
+                    "text": "I'll run the e2e-flue-skill by reading its instructions and following them.",
+                    "type": "text"
+                  },
+                  {
+                    "id": "toolu_01PD5NfHENNe1rtoqGk42TWG",
+                    "input": {
+                      "path": ".agents/skills/e2e-flue-skill/SKILL.md"
+                    },
+                    "name": "read",
+                    "type": "tool_use"
+                  }
+                ],
+                "role": "assistant"
+              },
+              {
+                "content": [
+                  {
+                    "cache_control": {
+                      "type": "ephemeral"
+                    },
+                    "content": "---\nname: e2e-flue-skill\ndescription: Deterministic skill used by the Braintrust Flue instrumentation e2e test.\n---\n\nReturn the marker from the provided args exactly once. Output no other text.\n",
+                    "is_error": false,
+                    "tool_use_id": "toolu_01PD5NfHENNe1rtoqGk42TWG",
+                    "type": "tool_result"
+                  }
+                ],
+                "role": "user"
+              }
+            ],
+            "model": "claude-sonnet-4-5-20250929",
+            "stream": true,
+            "system": [
+              {
+                "cache_control": {
+                  "type": "ephemeral"
+                },
+                "text": "You are running in headless mode with no human operator. Work autonomously — never ask questions, never wait for user input. Make your best judgment and proceed independently.\n\n## Available Skills\n\nEach skill below is documented in a markdown file under `.agents/skills/` (relative to your working directory). The default location is `.agents/skills/<name>/SKILL.md`. When asked to run a skill, read its file from disk and follow the instructions there literally — the skill body is not provided inline.\n\n- **e2e-flue-skill** — Deterministic skill used by the Braintrust Flue instrumentation e2e test.\n\nDate: Thu, May 21, 2026\nWorking directory: /Users/lucaforstner/conductor/workspaces/braintrust-sdk-javascript/tashkent/e2e/.bt-tmp/run-LqmoTW/scenarios/flue-instrumentation\n\nDirectory structure:\n.agents\n__cassettes__\n__snapshots__\nassertions.ts\ncassette-filter.mjs\nconstants.mjs\nnode_modules\npackage.json\npnpm-lock.yaml\nscenario.impl.mjs\nscenario.mjs\nscenario.test.ts\nscenario.ts\n\n<role name=\"skillRunner\">\nNever call the task tool. Do not delegate e2e-flue-skill to another session. If you need the skill body, read .agents/skills/e2e-flue-skill/SKILL.md yourself with the read tool. Return the marker from the Arguments object exactly, with no other text.\n</role>",
+                "type": "text"
+              }
+            ],
+            "thinking": {
+              "type": "disabled"
+            },
+            "tools": [
+              {
+                "description": "Read a file or list a directory. For files, output is truncated to 2000 lines or 50KB — use offset/limit for large files. For directories, returns the list of entries.",
+                "eager_input_streaming": true,
+                "input_schema": {
+                  "properties": {
+                    "limit": {
+                      "description": "Maximum number of lines to read",
+                      "type": "number"
+                    },
+                    "offset": {
+                      "description": "Line number to start from (1-indexed)",
+                      "type": "number"
+                    },
+                    "path": {
+                      "description": "Path to the file to read",
+                      "type": "string"
+                    }
+                  },
+                  "required": ["path"],
+                  "type": "object"
+                },
+                "name": "read"
+              },
+              {
+                "description": "Write content to a file. Creates the file and parent directories if they do not exist.",
+                "eager_input_streaming": true,
+                "input_schema": {
+                  "properties": {
+                    "content": {
+                      "description": "Content to write to the file",
+                      "type": "string"
+                    },
+                    "path": {
+                      "description": "Path to the file to write",
+                      "type": "string"
+                    }
+                  },
+                  "required": ["path", "content"],
+                  "type": "object"
+                },
+                "name": "write"
+              },
+              {
+                "description": "Edit a file using exact text replacement. The oldText must match a unique region of the file. Use replaceAll to replace all occurrences.",
+                "eager_input_streaming": true,
+                "input_schema": {
+                  "properties": {
+                    "newText": {
+                      "description": "Replacement text",
+                      "type": "string"
+                    },
+                    "oldText": {
+                      "description": "Exact text to find (must be unique)",
+                      "type": "string"
+                    },
+                    "path": {
+                      "description": "Path to the file to edit",
+                      "type": "string"
+                    },
+                    "replaceAll": {
+                      "description": "Replace all occurrences",
+                      "type": "boolean"
+                    }
+                  },
+                  "required": ["path", "oldText", "newText"],
+                  "type": "object"
+                },
+                "name": "edit"
+              },
+              {
+                "description": "Execute a bash command. Returns stdout and stderr. Output is truncated to the last 2000 lines or 50KB.",
+                "eager_input_streaming": true,
+                "input_schema": {
+                  "properties": {
+                    "command": {
+                      "description": "Bash command to execute",
+                      "type": "string"
+                    },
+                    "timeout": {
+                      "description": "Timeout in seconds",
+                      "type": "number"
+                    }
+                  },
+                  "required": ["command"],
+                  "type": "object"
+                },
+                "name": "bash"
+              },
+              {
+                "description": "Search file contents for a regex pattern. Returns matching lines with file paths and line numbers.",
+                "eager_input_streaming": true,
+                "input_schema": {
+                  "properties": {
+                    "include": {
+                      "description": "Glob filter, e.g. \"*.ts\"",
+                      "type": "string"
+                    },
+                    "path": {
+                      "description": "Directory or file to search (default: .)",
+                      "type": "string"
+                    },
+                    "pattern": {
+                      "description": "Search pattern (regex)",
+                      "type": "string"
+                    }
+                  },
+                  "required": ["pattern"],
+                  "type": "object"
+                },
+                "name": "grep"
+              },
+              {
+                "description": "Find files by filename pattern using shell find -name semantics. Returns matching file paths.",
+                "eager_input_streaming": true,
+                "input_schema": {
+                  "properties": {
+                    "path": {
+                      "description": "Directory to search in (default: .)",
+                      "type": "string"
+                    },
+                    "pattern": {
+                      "description": "Filename pattern, e.g. \"*.ts\"",
+                      "type": "string"
+                    }
+                  },
+                  "required": ["pattern"],
+                  "type": "object"
+                },
+                "name": "glob"
+              },
+              {
+                "cache_control": {
+                  "type": "ephemeral"
+                },
+                "description": "Delegate a focused task to a detached child agent with its own context. Use this for independent research, file exploration, or parallel work. The task returns only its final answer to this conversation. Available roles: skillRunner.",
+                "eager_input_streaming": true,
+                "input_schema": {
+                  "properties": {
+                    "cwd": {
+                      "description": "Working directory for the child agent. AGENTS.md and skills are discovered from here.",
+                      "type": "string"
+                    },
+                    "description": {
+                      "description": "Short human-readable label for the delegated work",
+                      "type": "string"
+                    },
+                    "prompt": {
+                      "description": "Focused instructions for the child agent",
+                      "type": "string"
+                    },
+                    "role": {
+                      "description": "Role to use for the child agent",
+                      "type": "string"
+                    }
+                  },
+                  "required": ["prompt"],
+                  "type": "object"
+                },
+                "name": "task"
+              }
+            ]
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages"
+      },
+      "response": {
+        "body": {
+          "chunks": [
+            "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-sonnet-4-5-20250929\",\"id\":\"msg_011AmwNdKn8z3XPfujJbRjA3\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":6,\"cache_creation_input_tokens\":153,\"cache_read_input_tokens\":1809,\"cache_creation\":{\"ephemeral_5m_input_tokens\":153,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":7,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"}}}",
+            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}}",
+            "event: ping\ndata: {\"type\":\"ping\"}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"SKILL_DONE\"}}",
+            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0}",
+            "event: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null},\"usage\":{\"input_tokens\":6,\"cache_creation_input_tokens\":153,\"cache_read_input_tokens\":1809,\"output_tokens\":8}}",
+            "event: message_stop\ndata: {\"type\":\"message_stop\"}"
+          ],
+          "kind": "sse"
+        },
+        "headers": {
+          "anthropic-organization-id": "27796668-7351-40ac-acc4-024aee8995a5",
+          "anthropic-ratelimit-input-tokens-limit": "3000000",
+          "anthropic-ratelimit-input-tokens-remaining": "2999000",
+          "anthropic-ratelimit-input-tokens-reset": "2026-05-21T06:48:48Z",
+          "anthropic-ratelimit-output-tokens-limit": "600000",
+          "anthropic-ratelimit-output-tokens-remaining": "600000",
+          "anthropic-ratelimit-output-tokens-reset": "2026-05-21T06:48:48Z",
+          "anthropic-ratelimit-requests-limit": "20000",
+          "anthropic-ratelimit-requests-remaining": "19999",
+          "anthropic-ratelimit-requests-reset": "2026-05-21T06:48:48Z",
+          "anthropic-ratelimit-tokens-limit": "3600000",
+          "anthropic-ratelimit-tokens-remaining": "3599000",
+          "anthropic-ratelimit-tokens-reset": "2026-05-21T06:48:48Z",
+          "cache-control": "no-cache",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "9ff1a3375ccc5b94-VIE",
+          "connection": "keep-alive",
+          "content-encoding": "gzip",
+          "content-security-policy": "default-src 'none'; frame-ancestors 'none'",
+          "content-type": "text/event-stream; charset=utf-8",
+          "date": "Thu, 21 May 2026 06:48:50 GMT",
+          "request-id": "req_011CbFGUT9etAvivisBwyd9k",
+          "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+          "traceresponse": "00-c3f1d31c1e9f55400e02f81a6b4dc844-2853195a6edda6de-01",
+          "transfer-encoding": "chunked",
+          "vary": "Accept-Encoding",
+          "x-envoy-upstream-service-time": "1692",
+          "x-robots-tag": "none"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 0,
+      "id": "7c0e162d6794cf5d",
+      "matchKey": "POST api.openai.com/v1/responses",
+      "recordedAt": "2026-05-21T06:48:53.133Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "input": [
+              {
+                "content": "You are running in headless mode with no human operator. Work autonomously — never ask questions, never wait for user input. Make your best judgment and proceed independently.\n\n## Available Skills\n\nEach skill below is documented in a markdown file under `.agents/skills/` (relative to your working directory). The default location is `.agents/skills/<name>/SKILL.md`. When asked to run a skill, read its file from disk and follow the instructions there literally — the skill body is not provided inline.\n\n- **e2e-flue-skill** — Deterministic skill used by the Braintrust Flue instrumentation e2e test.\n\nDate: Thu, May 21, 2026\nWorking directory: /Users/lucaforstner/conductor/workspaces/braintrust-sdk-javascript/tashkent/e2e/.bt-tmp/run-LqmoTW/scenarios/flue-instrumentation\n\nDirectory structure:\n.agents\n__cassettes__\n__snapshots__\nassertions.ts\ncassette-filter.mjs\nconstants.mjs\nnode_modules\npackage.json\npnpm-lock.yaml\nscenario.impl.mjs\nscenario.mjs\nscenario.test.ts\nscenario.ts",
+                "role": "system"
+              },
+              {
+                "content": [
+                  {
+                    "text": "Reply with exactly TASK_DONE and no other text.",
+                    "type": "input_text"
+                  }
+                ],
+                "role": "user"
+              }
+            ],
+            "model": "gpt-4o-mini",
+            "prompt_cache_key": "[REDACTED]",
+            "store": false,
+            "stream": true,
+            "tools": [
+              {
+                "description": "Read a file or list a directory. For files, output is truncated to 2000 lines or 50KB — use offset/limit for large files. For directories, returns the list of entries.",
+                "name": "read",
+                "parameters": {
+                  "properties": {
+                    "limit": {
+                      "description": "Maximum number of lines to read",
+                      "type": "number"
+                    },
+                    "offset": {
+                      "description": "Line number to start from (1-indexed)",
+                      "type": "number"
+                    },
+                    "path": {
+                      "description": "Path to the file to read",
+                      "type": "string"
+                    }
+                  },
+                  "required": ["path"],
+                  "type": "object"
+                },
+                "strict": false,
+                "type": "function"
+              },
+              {
+                "description": "Write content to a file. Creates the file and parent directories if they do not exist.",
+                "name": "write",
+                "parameters": {
+                  "properties": {
+                    "content": {
+                      "description": "Content to write to the file",
+                      "type": "string"
+                    },
+                    "path": {
+                      "description": "Path to the file to write",
+                      "type": "string"
+                    }
+                  },
+                  "required": ["path", "content"],
+                  "type": "object"
+                },
+                "strict": false,
+                "type": "function"
+              },
+              {
+                "description": "Edit a file using exact text replacement. The oldText must match a unique region of the file. Use replaceAll to replace all occurrences.",
+                "name": "edit",
+                "parameters": {
+                  "properties": {
+                    "newText": {
+                      "description": "Replacement text",
+                      "type": "string"
+                    },
+                    "oldText": {
+                      "description": "Exact text to find (must be unique)",
+                      "type": "string"
+                    },
+                    "path": {
+                      "description": "Path to the file to edit",
+                      "type": "string"
+                    },
+                    "replaceAll": {
+                      "description": "Replace all occurrences",
+                      "type": "boolean"
+                    }
+                  },
+                  "required": ["path", "oldText", "newText"],
+                  "type": "object"
+                },
+                "strict": false,
+                "type": "function"
+              },
+              {
+                "description": "Execute a bash command. Returns stdout and stderr. Output is truncated to the last 2000 lines or 50KB.",
+                "name": "bash",
+                "parameters": {
+                  "properties": {
+                    "command": {
+                      "description": "Bash command to execute",
+                      "type": "string"
+                    },
+                    "timeout": {
+                      "description": "Timeout in seconds",
+                      "type": "number"
+                    }
+                  },
+                  "required": ["command"],
+                  "type": "object"
+                },
+                "strict": false,
+                "type": "function"
+              },
+              {
+                "description": "Search file contents for a regex pattern. Returns matching lines with file paths and line numbers.",
+                "name": "grep",
+                "parameters": {
+                  "properties": {
+                    "include": {
+                      "description": "Glob filter, e.g. \"*.ts\"",
+                      "type": "string"
+                    },
+                    "path": {
+                      "description": "Directory or file to search (default: .)",
+                      "type": "string"
+                    },
+                    "pattern": {
+                      "description": "Search pattern (regex)",
+                      "type": "string"
+                    }
+                  },
+                  "required": ["pattern"],
+                  "type": "object"
+                },
+                "strict": false,
+                "type": "function"
+              },
+              {
+                "description": "Find files by filename pattern using shell find -name semantics. Returns matching file paths.",
+                "name": "glob",
+                "parameters": {
+                  "properties": {
+                    "path": {
+                      "description": "Directory to search in (default: .)",
+                      "type": "string"
+                    },
+                    "pattern": {
+                      "description": "Filename pattern, e.g. \"*.ts\"",
+                      "type": "string"
+                    }
+                  },
+                  "required": ["pattern"],
+                  "type": "object"
+                },
+                "strict": false,
+                "type": "function"
+              },
+              {
+                "description": "Delegate a focused task to a detached child agent with its own context. Use this for independent research, file exploration, or parallel work. The task returns only its final answer to this conversation. Available roles: skillRunner.",
+                "name": "task",
+                "parameters": {
+                  "properties": {
+                    "cwd": {
+                      "description": "Working directory for the child agent. AGENTS.md and skills are discovered from here.",
+                      "type": "string"
+                    },
+                    "description": {
+                      "description": "Short human-readable label for the delegated work",
+                      "type": "string"
+                    },
+                    "prompt": {
+                      "description": "Focused instructions for the child agent",
+                      "type": "string"
+                    },
+                    "role": {
+                      "description": "Role to use for the child agent",
+                      "type": "string"
+                    }
+                  },
+                  "required": ["prompt"],
+                  "type": "object"
+                },
+                "strict": false,
+                "type": "function"
+              }
+            ]
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.openai.com/v1/responses"
+      },
+      "response": {
+        "body": {
+          "chunks": [
+            "event: response.created\ndata: {\"type\":\"response.created\",\"response\":{\"id\":\"resp_096103382013eb85016a0eaad439ec81a285f2218da4217678\",\"object\":\"response\",\"created_at\":1779346132,\"status\":\"in_progress\",\"background\":false,\"completed_at\":null,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":null,\"max_tool_calls\":null,\"model\":\"gpt-4o-mini-2024-07-18\",\"moderation\":null,\"output\":[],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":\"flue-e2e-instance::default::task:task:3eb8d137-c6b5-45ef-968e-a7\",\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"effort\":null,\"summary\":null},\"safety_identifier\":null,\"service_tier\":\"auto\",\"store\":false,\"temperature\":1,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tools\":[{\"type\":\"function\",\"description\":\"Read a file or list a directory. For files, output is truncated to 2000 lines or 50KB — use offset/limit for large files. For directories, returns the list of entries.\",\"name\":\"read\",\"parameters\":{\"type\":\"object\",\"required\":[\"path\"],\"properties\":{\"path\":{\"type\":\"string\",\"description\":\"Path to the file to read\"},\"offset\":{\"type\":\"number\",\"description\":\"Line number to start from (1-indexed)\"},\"limit\":{\"type\":\"number\",\"description\":\"Maximum number of lines to read\"}}},\"strict\":false},{\"type\":\"function\",\"description\":\"Write content to a file. Creates the file and parent directories if they do not exist.\",\"name\":\"write\",\"parameters\":{\"type\":\"object\",\"required\":[\"path\",\"content\"],\"properties\":{\"path\":{\"type\":\"string\",\"description\":\"Path to the file to write\"},\"content\":{\"type\":\"string\",\"description\":\"Content to write to the file\"}}},\"strict\":false},{\"type\":\"function\",\"description\":\"Edit a file using exact text replacement. The oldText must match a unique region of the file. Use replaceAll to replace all occurrences.\",\"name\":\"edit\",\"parameters\":{\"type\":\"object\",\"required\":[\"path\",\"oldText\",\"newText\"],\"properties\":{\"path\":{\"type\":\"string\",\"description\":\"Path to the file to edit\"},\"oldText\":{\"type\":\"string\",\"description\":\"Exact text to find (must be unique)\"},\"newText\":{\"type\":\"string\",\"description\":\"Replacement text\"},\"replaceAll\":{\"type\":\"boolean\",\"description\":\"Replace all occurrences\"}}},\"strict\":false},{\"type\":\"function\",\"description\":\"Execute a bash command. Returns stdout and stderr. Output is truncated to the last 2000 lines or 50KB.\",\"name\":\"bash\",\"parameters\":{\"type\":\"object\",\"required\":[\"command\"],\"properties\":{\"command\":{\"type\":\"string\",\"description\":\"Bash command to execute\"},\"timeout\":{\"type\":\"number\",\"description\":\"Timeout in seconds\"}}},\"strict\":false},{\"type\":\"function\",\"description\":\"Search file contents for a regex pattern. Returns matching lines with file paths and line numbers.\",\"name\":\"grep\",\"parameters\":{\"type\":\"object\",\"required\":[\"pattern\"],\"properties\":{\"pattern\":{\"type\":\"string\",\"description\":\"Search pattern (regex)\"},\"path\":{\"type\":\"string\",\"description\":\"Directory or file to search (default: .)\"},\"include\":{\"type\":\"string\",\"description\":\"Glob filter, e.g. \\\"*.ts\\\"\"}}},\"strict\":false},{\"type\":\"function\",\"description\":\"Find files by filename pattern using shell find -name semantics. Returns matching file paths.\",\"name\":\"glob\",\"parameters\":{\"type\":\"object\",\"required\":[\"pattern\"],\"properties\":{\"pattern\":{\"type\":\"string\",\"description\":\"Filename pattern, e.g. \\\"*.ts\\\"\"},\"path\":{\"type\":\"string\",\"description\":\"Directory to search in (default: .)\"}}},\"strict\":false},{\"type\":\"function\",\"description\":\"Delegate a focused task to a detached child agent with its own context. Use this for independent research, file exploration, or parallel work. The task returns only its final answer to this conversation. Available roles: skillRunner.\",\"name\":\"task\",\"parameters\":{\"type\":\"object\",\"required\":[\"prompt\"],\"properties\":{\"description\":{\"type\":\"string\",\"description\":\"Short human-readable label for the delegated work\"},\"prompt\":{\"type\":\"string\",\"description\":\"Focused instructions for the child agent\"},\"role\":{\"type\":\"string\",\"description\":\"Role to use for the child agent\"},\"cwd\":{\"type\":\"string\",\"description\":\"Working directory for the child agent. AGENTS.md and skills are discovered from here.\"}}},\"strict\":false}],\"top_logprobs\":0,\"top_p\":1,\"truncation\":\"disabled\",\"usage\":null,\"user\":null,\"metadata\":{}},\"sequence_number\":0}",
+            "event: response.in_progress\ndata: {\"type\":\"response.in_progress\",\"response\":{\"id\":\"resp_096103382013eb85016a0eaad439ec81a285f2218da4217678\",\"object\":\"response\",\"created_at\":1779346132,\"status\":\"in_progress\",\"background\":false,\"completed_at\":null,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":null,\"max_tool_calls\":null,\"model\":\"gpt-4o-mini-2024-07-18\",\"moderation\":null,\"output\":[],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":\"flue-e2e-instance::default::task:task:3eb8d137-c6b5-45ef-968e-a7\",\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"effort\":null,\"summary\":null},\"safety_identifier\":null,\"service_tier\":\"auto\",\"store\":false,\"temperature\":1,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tools\":[{\"type\":\"function\",\"description\":\"Read a file or list a directory. For files, output is truncated to 2000 lines or 50KB — use offset/limit for large files. For directories, returns the list of entries.\",\"name\":\"read\",\"parameters\":{\"type\":\"object\",\"required\":[\"path\"],\"properties\":{\"path\":{\"type\":\"string\",\"description\":\"Path to the file to read\"},\"offset\":{\"type\":\"number\",\"description\":\"Line number to start from (1-indexed)\"},\"limit\":{\"type\":\"number\",\"description\":\"Maximum number of lines to read\"}}},\"strict\":false},{\"type\":\"function\",\"description\":\"Write content to a file. Creates the file and parent directories if they do not exist.\",\"name\":\"write\",\"parameters\":{\"type\":\"object\",\"required\":[\"path\",\"content\"],\"properties\":{\"path\":{\"type\":\"string\",\"description\":\"Path to the file to write\"},\"content\":{\"type\":\"string\",\"description\":\"Content to write to the file\"}}},\"strict\":false},{\"type\":\"function\",\"description\":\"Edit a file using exact text replacement. The oldText must match a unique region of the file. Use replaceAll to replace all occurrences.\",\"name\":\"edit\",\"parameters\":{\"type\":\"object\",\"required\":[\"path\",\"oldText\",\"newText\"],\"properties\":{\"path\":{\"type\":\"string\",\"description\":\"Path to the file to edit\"},\"oldText\":{\"type\":\"string\",\"description\":\"Exact text to find (must be unique)\"},\"newText\":{\"type\":\"string\",\"description\":\"Replacement text\"},\"replaceAll\":{\"type\":\"boolean\",\"description\":\"Replace all occurrences\"}}},\"strict\":false},{\"type\":\"function\",\"description\":\"Execute a bash command. Returns stdout and stderr. Output is truncated to the last 2000 lines or 50KB.\",\"name\":\"bash\",\"parameters\":{\"type\":\"object\",\"required\":[\"command\"],\"properties\":{\"command\":{\"type\":\"string\",\"description\":\"Bash command to execute\"},\"timeout\":{\"type\":\"number\",\"description\":\"Timeout in seconds\"}}},\"strict\":false},{\"type\":\"function\",\"description\":\"Search file contents for a regex pattern. Returns matching lines with file paths and line numbers.\",\"name\":\"grep\",\"parameters\":{\"type\":\"object\",\"required\":[\"pattern\"],\"properties\":{\"pattern\":{\"type\":\"string\",\"description\":\"Search pattern (regex)\"},\"path\":{\"type\":\"string\",\"description\":\"Directory or file to search (default: .)\"},\"include\":{\"type\":\"string\",\"description\":\"Glob filter, e.g. \\\"*.ts\\\"\"}}},\"strict\":false},{\"type\":\"function\",\"description\":\"Find files by filename pattern using shell find -name semantics. Returns matching file paths.\",\"name\":\"glob\",\"parameters\":{\"type\":\"object\",\"required\":[\"pattern\"],\"properties\":{\"pattern\":{\"type\":\"string\",\"description\":\"Filename pattern, e.g. \\\"*.ts\\\"\"},\"path\":{\"type\":\"string\",\"description\":\"Directory to search in (default: .)\"}}},\"strict\":false},{\"type\":\"function\",\"description\":\"Delegate a focused task to a detached child agent with its own context. Use this for independent research, file exploration, or parallel work. The task returns only its final answer to this conversation. Available roles: skillRunner.\",\"name\":\"task\",\"parameters\":{\"type\":\"object\",\"required\":[\"prompt\"],\"properties\":{\"description\":{\"type\":\"string\",\"description\":\"Short human-readable label for the delegated work\"},\"prompt\":{\"type\":\"string\",\"description\":\"Focused instructions for the child agent\"},\"role\":{\"type\":\"string\",\"description\":\"Role to use for the child agent\"},\"cwd\":{\"type\":\"string\",\"description\":\"Working directory for the child agent. AGENTS.md and skills are discovered from here.\"}}},\"strict\":false}],\"top_logprobs\":0,\"top_p\":1,\"truncation\":\"disabled\",\"usage\":null,\"user\":null,\"metadata\":{}},\"sequence_number\":1}",
+            "event: response.output_item.added\ndata: {\"type\":\"response.output_item.added\",\"item\":{\"id\":\"msg_096103382013eb85016a0eaad4da7081a2aff38723fc8bb352\",\"type\":\"message\",\"status\":\"in_progress\",\"content\":[],\"role\":\"assistant\"},\"output_index\":0,\"sequence_number\":2}",
+            "event: response.content_part.added\ndata: {\"type\":\"response.content_part.added\",\"content_index\":0,\"item_id\":\"msg_096103382013eb85016a0eaad4da7081a2aff38723fc8bb352\",\"output_index\":0,\"part\":{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"\"},\"sequence_number\":3}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"TASK\",\"item_id\":\"msg_096103382013eb85016a0eaad4da7081a2aff38723fc8bb352\",\"logprobs\":[],\"obfuscation\":\"fpYfkU75RFuY\",\"output_index\":0,\"sequence_number\":4}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"_DONE\",\"item_id\":\"msg_096103382013eb85016a0eaad4da7081a2aff38723fc8bb352\",\"logprobs\":[],\"obfuscation\":\"n7VXctSvkaB\",\"output_index\":0,\"sequence_number\":5}",
+            "event: response.output_text.done\ndata: {\"type\":\"response.output_text.done\",\"content_index\":0,\"item_id\":\"msg_096103382013eb85016a0eaad4da7081a2aff38723fc8bb352\",\"logprobs\":[],\"output_index\":0,\"sequence_number\":6,\"text\":\"TASK_DONE\"}",
+            "event: response.content_part.done\ndata: {\"type\":\"response.content_part.done\",\"content_index\":0,\"item_id\":\"msg_096103382013eb85016a0eaad4da7081a2aff38723fc8bb352\",\"output_index\":0,\"part\":{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"TASK_DONE\"},\"sequence_number\":7}",
+            "event: response.output_item.done\ndata: {\"type\":\"response.output_item.done\",\"item\":{\"id\":\"msg_096103382013eb85016a0eaad4da7081a2aff38723fc8bb352\",\"type\":\"message\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"TASK_DONE\"}],\"role\":\"assistant\"},\"output_index\":0,\"sequence_number\":8}",
+            "event: response.completed\ndata: {\"type\":\"response.completed\",\"response\":{\"id\":\"resp_096103382013eb85016a0eaad439ec81a285f2218da4217678\",\"object\":\"response\",\"created_at\":1779346132,\"status\":\"completed\",\"background\":false,\"completed_at\":1779346132,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":null,\"max_tool_calls\":null,\"model\":\"gpt-4o-mini-2024-07-18\",\"moderation\":null,\"output\":[{\"id\":\"msg_096103382013eb85016a0eaad4da7081a2aff38723fc8bb352\",\"type\":\"message\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"TASK_DONE\"}],\"role\":\"assistant\"}],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":\"flue-e2e-instance::default::task:task:3eb8d137-c6b5-45ef-968e-a7\",\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"effort\":null,\"summary\":null},\"safety_identifier\":null,\"service_tier\":\"default\",\"store\":false,\"temperature\":1,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tools\":[{\"type\":\"function\",\"description\":\"Read a file or list a directory. For files, output is truncated to 2000 lines or 50KB — use offset/limit for large files. For directories, returns the list of entries.\",\"name\":\"read\",\"parameters\":{\"type\":\"object\",\"required\":[\"path\"],\"properties\":{\"path\":{\"type\":\"string\",\"description\":\"Path to the file to read\"},\"offset\":{\"type\":\"number\",\"description\":\"Line number to start from (1-indexed)\"},\"limit\":{\"type\":\"number\",\"description\":\"Maximum number of lines to read\"}}},\"strict\":false},{\"type\":\"function\",\"description\":\"Write content to a file. Creates the file and parent directories if they do not exist.\",\"name\":\"write\",\"parameters\":{\"type\":\"object\",\"required\":[\"path\",\"content\"],\"properties\":{\"path\":{\"type\":\"string\",\"description\":\"Path to the file to write\"},\"content\":{\"type\":\"string\",\"description\":\"Content to write to the file\"}}},\"strict\":false},{\"type\":\"function\",\"description\":\"Edit a file using exact text replacement. The oldText must match a unique region of the file. Use replaceAll to replace all occurrences.\",\"name\":\"edit\",\"parameters\":{\"type\":\"object\",\"required\":[\"path\",\"oldText\",\"newText\"],\"properties\":{\"path\":{\"type\":\"string\",\"description\":\"Path to the file to edit\"},\"oldText\":{\"type\":\"string\",\"description\":\"Exact text to find (must be unique)\"},\"newText\":{\"type\":\"string\",\"description\":\"Replacement text\"},\"replaceAll\":{\"type\":\"boolean\",\"description\":\"Replace all occurrences\"}}},\"strict\":false},{\"type\":\"function\",\"description\":\"Execute a bash command. Returns stdout and stderr. Output is truncated to the last 2000 lines or 50KB.\",\"name\":\"bash\",\"parameters\":{\"type\":\"object\",\"required\":[\"command\"],\"properties\":{\"command\":{\"type\":\"string\",\"description\":\"Bash command to execute\"},\"timeout\":{\"type\":\"number\",\"description\":\"Timeout in seconds\"}}},\"strict\":false},{\"type\":\"function\",\"description\":\"Search file contents for a regex pattern. Returns matching lines with file paths and line numbers.\",\"name\":\"grep\",\"parameters\":{\"type\":\"object\",\"required\":[\"pattern\"],\"properties\":{\"pattern\":{\"type\":\"string\",\"description\":\"Search pattern (regex)\"},\"path\":{\"type\":\"string\",\"description\":\"Directory or file to search (default: .)\"},\"include\":{\"type\":\"string\",\"description\":\"Glob filter, e.g. \\\"*.ts\\\"\"}}},\"strict\":false},{\"type\":\"function\",\"description\":\"Find files by filename pattern using shell find -name semantics. Returns matching file paths.\",\"name\":\"glob\",\"parameters\":{\"type\":\"object\",\"required\":[\"pattern\"],\"properties\":{\"pattern\":{\"type\":\"string\",\"description\":\"Filename pattern, e.g. \\\"*.ts\\\"\"},\"path\":{\"type\":\"string\",\"description\":\"Directory to search in (default: .)\"}}},\"strict\":false},{\"type\":\"function\",\"description\":\"Delegate a focused task to a detached child agent with its own context. Use this for independent research, file exploration, or parallel work. The task returns only its final answer to this conversation. Available roles: skillRunner.\",\"name\":\"task\",\"parameters\":{\"type\":\"object\",\"required\":[\"prompt\"],\"properties\":{\"description\":{\"type\":\"string\",\"description\":\"Short human-readable label for the delegated work\"},\"prompt\":{\"type\":\"string\",\"description\":\"Focused instructions for the child agent\"},\"role\":{\"type\":\"string\",\"description\":\"Role to use for the child agent\"},\"cwd\":{\"type\":\"string\",\"description\":\"Working directory for the child agent. AGENTS.md and skills are discovered from here.\"}}},\"strict\":false}],\"top_logprobs\":0,\"top_p\":1,\"truncation\":\"disabled\",\"usage\":{\"input_tokens\":770,\"input_tokens_details\":{\"cached_tokens\":0},\"output_tokens\":4,\"output_tokens_details\":{\"reasoning_tokens\":0},\"total_tokens\":774},\"user\":null,\"metadata\":{}},\"sequence_number\":9}"
+          ],
+          "kind": "sse"
+        },
+        "headers": {
+          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "9ff1a34b8d2fc2e1-VIE",
+          "connection": "keep-alive",
+          "content-type": "text/event-stream; charset=utf-8",
+          "date": "Thu, 21 May 2026 06:48:52 GMT",
+          "openai-organization": "braintrust-data",
+          "openai-processing-ms": "275",
+          "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
+          "openai-version": "2020-10-01",
+          "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+          "transfer-encoding": "chunked",
+          "x-content-type-options": "nosniff",
+          "x-request-id": "req_be83807190d94355ac6fd63b2891b416"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 1,
+      "id": "f12aff3913439248",
+      "matchKey": "POST api.openai.com/v1/responses",
+      "recordedAt": "2026-05-21T06:48:54.176Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "input": [
+              {
+                "content": "You are a context summarization assistant. Your task is to read a conversation between a user and an AI coding assistant, then produce a structured summary following the exact format specified.\n\nDo NOT continue the conversation. Do NOT respond to any questions in the conversation. ONLY output the structured summary.",
+                "role": "system"
+              },
+              {
+                "content": [
+                  {
+                    "text": "<conversation>\n[User]: Complete this instrumented research flow. Call exactly one tool per turn and wait for each tool result before choosing the next tool. Step 1: call lookup with query \"flue instrumentation\". Step 2: use the lookup result id as lookupId and call web_search with query \"Braintrust Flue reasoning stream instrumentation\". Step 3: use the first web_search result url and call summarize_source. After summarize_source returns, reply with exactly PROMPT_DONE and no other text.\n\n[Assistant thinking]: The user wants me to complete an instrumented research flow with exactly three steps:\n1. Call lookup with query \"flue instrumentation\"\n2. Use the lookup result id to call web_search with query \"Braintrust Flue reasoning stream instrumentation\"\n3. Use the first web_search result url to call summarize_source\n4. After that, reply with exactly \"PROMPT_DONE\"\n\nThe user also emphasizes that I should call exactly one tool per turn and wait for each tool result before choosing the next tool.\n\nLet me start with Step 1: calling lookup with query \"flue instrumentation\".\n\n[Assistant]: I'll complete this instrumented research flow step by step. Starting with Step 1:\n\n[Assistant tool calls]: lookup(query=\"flue instrumentation\")\n\n[Tool result]: {\"id\":\"flue-session-2026\",\"query\":\"flue instrumentation\",\"topic\":\"session instrumentation\"}\n\n[Assistant thinking]: Good, I got the lookup result with id \"flue-session-2026\". Now I need to proceed to Step 2: call web_search using this lookupId and the query \"Braintrust Flue reasoning stream instrumentation\".\n\n[Assistant]: Now proceeding to Step 2:\n\n[Assistant tool calls]: web_search(lookupId=\"flue-session-2026\", query=\"Braintrust Flue reasoning stream instrumentation\")\n\n[Tool result]: {\"lookupId\":\"flue-session-2026\",\"query\":\"Braintrust Flue reasoning stream instrumentation\",\"results\":[{\"title\":\"Flue reasoning stream instrumentation\",\"url\":\"https://example.test/flue/reasoning-streams\"}]}\n\n[Assistant thinking]: Perfect! I got the web_search results. There's one result with the URL \"https://example.test/flue/reasoning-streams\". Now I need to proceed to Step 3: call summarize_source with this URL.\n\n[Assistant]: Now proceeding to Step 3:\n\n[Assistant tool calls]: summarize_source(url=\"https://example.test/flue/reasoning-streams\")\n\n[Tool result]: {\"summary\":\"Flue emits reasoning, tool execution, and LLM turn events separately.\",\"url\":\"https://example.test/flue/reasoning-streams\"}\n</conversation>\n\nThis is the PREFIX of a turn that was too large to keep. The SUFFIX (recent work) is retained.\n\nSummarize the prefix to provide context for the retained suffix:\n\n## Original Request\n[What did the user ask for in this turn?]\n\n## Early Progress\n- [Key decisions and work done in the prefix]\n\n## Context for Suffix\n- [Information needed to understand the retained recent work]\n\nBe concise. Focus on what's needed to understand the kept suffix.",
+                    "type": "input_text"
+                  }
+                ],
+                "role": "user"
+              }
+            ],
+            "max_output_tokens": 32,
+            "model": "gpt-4o-mini",
+            "store": false,
+            "stream": true
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.openai.com/v1/responses"
+      },
+      "response": {
+        "body": {
+          "chunks": [
+            "event: response.created\ndata: {\"type\":\"response.created\",\"response\":{\"id\":\"resp_0bad5a1de3e678f7016a0eaad5534c81959938a717dfba279b\",\"object\":\"response\",\"created_at\":1779346133,\"status\":\"in_progress\",\"background\":false,\"completed_at\":null,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":32,\"max_tool_calls\":null,\"model\":\"gpt-4o-mini-2024-07-18\",\"moderation\":null,\"output\":[],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":null,\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"effort\":null,\"summary\":null},\"safety_identifier\":null,\"service_tier\":\"auto\",\"store\":false,\"temperature\":1,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tools\":[],\"top_logprobs\":0,\"top_p\":1,\"truncation\":\"disabled\",\"usage\":null,\"user\":null,\"metadata\":{}},\"sequence_number\":0}",
+            "event: response.in_progress\ndata: {\"type\":\"response.in_progress\",\"response\":{\"id\":\"resp_0bad5a1de3e678f7016a0eaad5534c81959938a717dfba279b\",\"object\":\"response\",\"created_at\":1779346133,\"status\":\"in_progress\",\"background\":false,\"completed_at\":null,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":32,\"max_tool_calls\":null,\"model\":\"gpt-4o-mini-2024-07-18\",\"moderation\":null,\"output\":[],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":null,\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"effort\":null,\"summary\":null},\"safety_identifier\":null,\"service_tier\":\"auto\",\"store\":false,\"temperature\":1,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tools\":[],\"top_logprobs\":0,\"top_p\":1,\"truncation\":\"disabled\",\"usage\":null,\"user\":null,\"metadata\":{}},\"sequence_number\":1}",
+            "event: response.output_item.added\ndata: {\"type\":\"response.output_item.added\",\"item\":{\"id\":\"msg_0bad5a1de3e678f7016a0eaad5c4ec8195acb290892786c9cc\",\"type\":\"message\",\"status\":\"in_progress\",\"content\":[],\"role\":\"assistant\"},\"output_index\":0,\"sequence_number\":2}",
+            "event: response.content_part.added\ndata: {\"type\":\"response.content_part.added\",\"content_index\":0,\"item_id\":\"msg_0bad5a1de3e678f7016a0eaad5c4ec8195acb290892786c9cc\",\"output_index\":0,\"part\":{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"\"},\"sequence_number\":3}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"##\",\"item_id\":\"msg_0bad5a1de3e678f7016a0eaad5c4ec8195acb290892786c9cc\",\"logprobs\":[],\"obfuscation\":\"ZPu7BY4Of9RVt1\",\"output_index\":0,\"sequence_number\":4}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\" Original\",\"item_id\":\"msg_0bad5a1de3e678f7016a0eaad5c4ec8195acb290892786c9cc\",\"logprobs\":[],\"obfuscation\":\"NTCRLVI\",\"output_index\":0,\"sequence_number\":5}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\" Request\",\"item_id\":\"msg_0bad5a1de3e678f7016a0eaad5c4ec8195acb290892786c9cc\",\"logprobs\":[],\"obfuscation\":\"lvHw79ol\",\"output_index\":0,\"sequence_number\":6}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"\\n\",\"item_id\":\"msg_0bad5a1de3e678f7016a0eaad5c4ec8195acb290892786c9cc\",\"logprobs\":[],\"obfuscation\":\"qgDK72d0DqJzShe\",\"output_index\":0,\"sequence_number\":7}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"The\",\"item_id\":\"msg_0bad5a1de3e678f7016a0eaad5c4ec8195acb290892786c9cc\",\"logprobs\":[],\"obfuscation\":\"zxiLObn7xQuJc\",\"output_index\":0,\"sequence_number\":8}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\" user\",\"item_id\":\"msg_0bad5a1de3e678f7016a0eaad5c4ec8195acb290892786c9cc\",\"logprobs\":[],\"obfuscation\":\"ZmDPVxDahg1\",\"output_index\":0,\"sequence_number\":9}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\" asked\",\"item_id\":\"msg_0bad5a1de3e678f7016a0eaad5c4ec8195acb290892786c9cc\",\"logprobs\":[],\"obfuscation\":\"juGAL5bL8H\",\"output_index\":0,\"sequence_number\":10}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\" for\",\"item_id\":\"msg_0bad5a1de3e678f7016a0eaad5c4ec8195acb290892786c9cc\",\"logprobs\":[],\"obfuscation\":\"UqT8QyGWJ1Cs\",\"output_index\":0,\"sequence_number\":11}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\" a\",\"item_id\":\"msg_0bad5a1de3e678f7016a0eaad5c4ec8195acb290892786c9cc\",\"logprobs\":[],\"obfuscation\":\"ZFz9DG88CCg2d0\",\"output_index\":0,\"sequence_number\":12}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\" step\",\"item_id\":\"msg_0bad5a1de3e678f7016a0eaad5c4ec8195acb290892786c9cc\",\"logprobs\":[],\"obfuscation\":\"FtIRl6vb8rh\",\"output_index\":0,\"sequence_number\":13}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"-by\",\"item_id\":\"msg_0bad5a1de3e678f7016a0eaad5c4ec8195acb290892786c9cc\",\"logprobs\":[],\"obfuscation\":\"fVbs7xkoxEmPY\",\"output_index\":0,\"sequence_number\":14}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"-step\",\"item_id\":\"msg_0bad5a1de3e678f7016a0eaad5c4ec8195acb290892786c9cc\",\"logprobs\":[],\"obfuscation\":\"JRwkU4V2Oy5\",\"output_index\":0,\"sequence_number\":15}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\" completion\",\"item_id\":\"msg_0bad5a1de3e678f7016a0eaad5c4ec8195acb290892786c9cc\",\"logprobs\":[],\"obfuscation\":\"mSb47\",\"output_index\":0,\"sequence_number\":16}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\" of\",\"item_id\":\"msg_0bad5a1de3e678f7016a0eaad5c4ec8195acb290892786c9cc\",\"logprobs\":[],\"obfuscation\":\"cSzEvYcwXoDYU\",\"output_index\":0,\"sequence_number\":17}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\" an\",\"item_id\":\"msg_0bad5a1de3e678f7016a0eaad5c4ec8195acb290892786c9cc\",\"logprobs\":[],\"obfuscation\":\"v0eKIIYEcUvcM\",\"output_index\":0,\"sequence_number\":18}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\" instrument\",\"item_id\":\"msg_0bad5a1de3e678f7016a0eaad5c4ec8195acb290892786c9cc\",\"logprobs\":[],\"obfuscation\":\"Tjoqr\",\"output_index\":0,\"sequence_number\":19}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"ed\",\"item_id\":\"msg_0bad5a1de3e678f7016a0eaad5c4ec8195acb290892786c9cc\",\"logprobs\":[],\"obfuscation\":\"PjMtpfwUF0hHJt\",\"output_index\":0,\"sequence_number\":20}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\" research\",\"item_id\":\"msg_0bad5a1de3e678f7016a0eaad5c4ec8195acb290892786c9cc\",\"logprobs\":[],\"obfuscation\":\"dUx9fbZ\",\"output_index\":0,\"sequence_number\":21}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\" flow\",\"item_id\":\"msg_0bad5a1de3e678f7016a0eaad5c4ec8195acb290892786c9cc\",\"logprobs\":[],\"obfuscation\":\"QrmkD9iirTC\",\"output_index\":0,\"sequence_number\":22}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\" involving\",\"item_id\":\"msg_0bad5a1de3e678f7016a0eaad5c4ec8195acb290892786c9cc\",\"logprobs\":[],\"obfuscation\":\"GgVVoR\",\"output_index\":0,\"sequence_number\":23}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\" lookup\",\"item_id\":\"msg_0bad5a1de3e678f7016a0eaad5c4ec8195acb290892786c9cc\",\"logprobs\":[],\"obfuscation\":\"jbRyl42fm\",\"output_index\":0,\"sequence_number\":24}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\",\",\"item_id\":\"msg_0bad5a1de3e678f7016a0eaad5c4ec8195acb290892786c9cc\",\"logprobs\":[],\"obfuscation\":\"M1ztdjqKpVB87HF\",\"output_index\":0,\"sequence_number\":25}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\" web\",\"item_id\":\"msg_0bad5a1de3e678f7016a0eaad5c4ec8195acb290892786c9cc\",\"logprobs\":[],\"obfuscation\":\"mIXL607CP0CD\",\"output_index\":0,\"sequence_number\":26}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\" search\",\"item_id\":\"msg_0bad5a1de3e678f7016a0eaad5c4ec8195acb290892786c9cc\",\"logprobs\":[],\"obfuscation\":\"8dBYoFevC\",\"output_index\":0,\"sequence_number\":27}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\",\",\"item_id\":\"msg_0bad5a1de3e678f7016a0eaad5c4ec8195acb290892786c9cc\",\"logprobs\":[],\"obfuscation\":\"ESNpvnq3vrWxNgG\",\"output_index\":0,\"sequence_number\":28}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\" and\",\"item_id\":\"msg_0bad5a1de3e678f7016a0eaad5c4ec8195acb290892786c9cc\",\"logprobs\":[],\"obfuscation\":\"vxNZIlXgihwA\",\"output_index\":0,\"sequence_number\":29}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\" summar\",\"item_id\":\"msg_0bad5a1de3e678f7016a0eaad5c4ec8195acb290892786c9cc\",\"logprobs\":[],\"obfuscation\":\"LvmNVHkMr\",\"output_index\":0,\"sequence_number\":30}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"ization\",\"item_id\":\"msg_0bad5a1de3e678f7016a0eaad5c4ec8195acb290892786c9cc\",\"logprobs\":[],\"obfuscation\":\"vuIOLbmmg\",\"output_index\":0,\"sequence_number\":31}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\".\\n\\n\",\"item_id\":\"msg_0bad5a1de3e678f7016a0eaad5c4ec8195acb290892786c9cc\",\"logprobs\":[],\"obfuscation\":\"bSs8GprnEKUEZ\",\"output_index\":0,\"sequence_number\":32}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"##\",\"item_id\":\"msg_0bad5a1de3e678f7016a0eaad5c4ec8195acb290892786c9cc\",\"logprobs\":[],\"obfuscation\":\"o50Zp3Jj2IWoZb\",\"output_index\":0,\"sequence_number\":33}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\" Early\",\"item_id\":\"msg_0bad5a1de3e678f7016a0eaad5c4ec8195acb290892786c9cc\",\"logprobs\":[],\"obfuscation\":\"oJYzY8lvrF\",\"output_index\":0,\"sequence_number\":34}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\" Progress\",\"item_id\":\"msg_0bad5a1de3e678f7016a0eaad5c4ec8195acb290892786c9cc\",\"logprobs\":[],\"obfuscation\":\"JwRxUVU\",\"output_index\":0,\"sequence_number\":35}",
+            "event: response.output_text.done\ndata: {\"type\":\"response.output_text.done\",\"content_index\":0,\"item_id\":\"msg_0bad5a1de3e678f7016a0eaad5c4ec8195acb290892786c9cc\",\"logprobs\":[],\"output_index\":0,\"sequence_number\":36,\"text\":\"## Original Request\\nThe user asked for a step-by-step completion of an instrumented research flow involving lookup, web search, and summarization.\\n\\n## Early Progress\"}",
+            "event: response.content_part.done\ndata: {\"type\":\"response.content_part.done\",\"content_index\":0,\"item_id\":\"msg_0bad5a1de3e678f7016a0eaad5c4ec8195acb290892786c9cc\",\"output_index\":0,\"part\":{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"## Original Request\\nThe user asked for a step-by-step completion of an instrumented research flow involving lookup, web search, and summarization.\\n\\n## Early Progress\"},\"sequence_number\":37}",
+            "event: response.output_item.done\ndata: {\"type\":\"response.output_item.done\",\"item\":{\"id\":\"msg_0bad5a1de3e678f7016a0eaad5c4ec8195acb290892786c9cc\",\"type\":\"message\",\"status\":\"incomplete\",\"content\":[{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"## Original Request\\nThe user asked for a step-by-step completion of an instrumented research flow involving lookup, web search, and summarization.\\n\\n## Early Progress\"}],\"role\":\"assistant\"},\"output_index\":0,\"sequence_number\":38}",
+            "event: response.incomplete\ndata: {\"type\":\"response.incomplete\",\"response\":{\"id\":\"resp_0bad5a1de3e678f7016a0eaad5534c81959938a717dfba279b\",\"object\":\"response\",\"created_at\":1779346133,\"status\":\"incomplete\",\"background\":false,\"completed_at\":null,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":{\"reason\":\"max_output_tokens\"},\"instructions\":null,\"max_output_tokens\":32,\"max_tool_calls\":null,\"model\":\"gpt-4o-mini-2024-07-18\",\"moderation\":null,\"output\":[{\"id\":\"msg_0bad5a1de3e678f7016a0eaad5c4ec8195acb290892786c9cc\",\"type\":\"message\",\"status\":\"incomplete\",\"content\":[{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"## Original Request\\nThe user asked for a step-by-step completion of an instrumented research flow involving lookup, web search, and summarization.\\n\\n## Early Progress\"}],\"role\":\"assistant\"}],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":null,\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"effort\":null,\"summary\":null},\"safety_identifier\":null,\"service_tier\":\"default\",\"store\":false,\"temperature\":1,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tools\":[],\"top_logprobs\":0,\"top_p\":1,\"truncation\":\"disabled\",\"usage\":{\"input_tokens\":707,\"input_tokens_details\":{\"cached_tokens\":0},\"output_tokens\":32,\"output_tokens_details\":{\"reasoning_tokens\":0},\"total_tokens\":739},\"user\":null,\"metadata\":{}},\"sequence_number\":39}"
+          ],
+          "kind": "sse"
+        },
+        "headers": {
+          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "9ff1a3548f88c2e1-VIE",
+          "connection": "keep-alive",
+          "content-type": "text/event-stream; charset=utf-8",
+          "date": "Thu, 21 May 2026 06:48:53 GMT",
+          "openai-organization": "braintrust-data",
+          "openai-processing-ms": "184",
+          "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
+          "openai-version": "2020-10-01",
+          "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+          "transfer-encoding": "chunked",
+          "x-content-type-options": "nosniff",
+          "x-request-id": "req_32645668215e477d8c3d40610baa18b7"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    }
+  ],
+  "meta": {
+    "createdAt": "2026-05-20T19:14:48.342Z"
+  }
+}
