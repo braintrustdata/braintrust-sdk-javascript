@@ -4,11 +4,9 @@ import type {
   CapturedLogEvent,
   CapturedLogPayload,
 } from "../../helpers/mock-braintrust-server";
+import { spanTreeFields, type SpanTreeEntry } from "../../helpers/span-tree";
 import { findChildSpans, findLatestSpan } from "../../helpers/trace-selectors";
-import {
-  payloadRowsForRootSpan,
-  summarizeWrapperContract,
-} from "../../helpers/wrapper-contract";
+import { payloadRowsForRootSpan } from "../../helpers/wrapper-contract";
 import { ROOT_NAME, SCENARIO_NAME } from "./constants.mjs";
 
 function findDescendantSpan(
@@ -154,10 +152,26 @@ function normalizeLLMOutput(value: unknown): void {
   }
 }
 
+function snapshotIOValue(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.length > 0 ? value : "<empty-array>";
+  }
+
+  if (
+    value &&
+    typeof value === "object" &&
+    Object.keys(value as Record<string, unknown>).length === 0
+  ) {
+    return "<empty-object>";
+  }
+
+  return value;
+}
+
 export function assertLangGraphAutoInstrumentation(options: {
   capturedEvents: CapturedLogEvent[];
   payloads: CapturedLogPayload[];
-}): { payloadSummary: Json; spanSummary: Json } {
+}): { payloadSummary: Json; spanTree: SpanTreeEntry[] } {
   const root = findLatestSpan(options.capturedEvents, ROOT_NAME);
   expect(root).toBeDefined();
   expect(root?.row.metadata).toMatchObject({
@@ -205,12 +219,42 @@ export function assertLangGraphAutoInstrumentation(options: {
     total_tokens: expect.any(Number),
   });
 
+  const spanTree = [root, graphSpan, sayHelloSpan, llmSpan, sayByeSpan].map(
+    (event) => {
+      const fields = spanTreeFields(event!);
+      const metadata =
+        fields.metadata &&
+        typeof fields.metadata === "object" &&
+        !Array.isArray(fields.metadata)
+          ? Object.fromEntries(
+              Object.entries(fields.metadata).filter(([key]) =>
+                ["model", "scenario"].includes(key),
+              ),
+            )
+          : undefined;
+      const metricKeys =
+        fields.metrics &&
+        typeof fields.metrics === "object" &&
+        !Array.isArray(fields.metrics)
+          ? Object.keys(fields.metrics).sort()
+          : undefined;
+
+      return {
+        event: event!,
+        fields: {
+          span_attributes: fields.span_attributes,
+          input: snapshotIOValue(fields.input),
+          output: snapshotIOValue(fields.output),
+          metadata,
+          metric_keys:
+            metricKeys && metricKeys.length > 0 ? metricKeys : undefined,
+        },
+      };
+    },
+  );
+
   return {
-    spanSummary: normalizeForSnapshot(
-      [root, graphSpan, sayHelloSpan, llmSpan, sayByeSpan].map((event) =>
-        summarizeWrapperContract(event!, ["model", "scenario"]),
-      ) as Json,
-    ),
+    spanTree,
     payloadSummary: normalizeForSnapshot(
       normalizeLangGraphPayloadRows(
         payloadRowsForRootSpan(options.payloads, root?.span.id),

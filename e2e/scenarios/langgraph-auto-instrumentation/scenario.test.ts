@@ -8,6 +8,7 @@ import {
   resolveScenarioDir,
   withScenarioHarness,
 } from "../../helpers/scenario-harness";
+import { matchSpanTreeSnapshot } from "../../helpers/span-tree";
 import { assertLangGraphAutoInstrumentation } from "./assertions";
 
 const originalScenarioDir = resolveScenarioDir(import.meta.url);
@@ -40,10 +41,9 @@ test(
           payloads: payloads(),
         });
 
-        await expect(
-          formatJsonFileSnapshot(summaries.spanSummary),
-        ).toMatchFileSnapshot(
-          resolveFileSnapshotPath(import.meta.url, "span-events.json"),
+        await matchSpanTreeSnapshot(
+          summaries.spanTree,
+          resolveFileSnapshotPath(import.meta.url, "span-tree.json"),
         );
         await expect(
           formatJsonFileSnapshot(summaries.payloadSummary),
