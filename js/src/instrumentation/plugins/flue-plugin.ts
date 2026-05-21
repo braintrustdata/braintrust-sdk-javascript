@@ -525,6 +525,11 @@ export class FluePlugin extends BasePlugin {
     }
 
     const parent = this.parentSpanForEvent(event);
+    const scope = scopeKey(event);
+    let turnState = this.turnsByScope.get(scope);
+    if (!turnState && parent) {
+      turnState = this.ensureTurnState(event);
+    }
     const metadata = {
       ...extractEventMetadata(event),
       ...(event.toolName ? { "flue.tool_name": event.toolName } : {}),
@@ -535,7 +540,6 @@ export class FluePlugin extends BasePlugin {
       name: `tool: ${event.toolName ?? "unknown"}`,
       spanAttributes: { type: SpanTypeAttribute.TOOL },
     });
-    const turnState = this.turnsByScope.get(scopeKey(event));
     if (turnState) {
       turnState.toolCalls.push({
         args: event.args,

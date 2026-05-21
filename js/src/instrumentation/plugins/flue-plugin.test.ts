@@ -436,6 +436,104 @@ describe("FluePlugin", () => {
     expect(toolSpan?.spanParents).toEqual(turnSpan?.spanParents);
     expect(toolSpan?.spanParents).not.toContain(turnSpan?.spanId);
   });
+
+  it("records tool calls when tool_start is the first turn event", () => {
+    const plugin = new FluePlugin();
+    plugin.enable();
+
+    const contextHandlers = handlersByName.get(
+      "orchestrion:@flue/runtime:context.event",
+    );
+    const promptHandlers = handlersByName.get(
+      "orchestrion:@flue/runtime:session.prompt",
+    );
+    const promptEvent = {
+      arguments: ["Use a tool", { model: "pi/test" }],
+      operation: "prompt",
+      session: { name: "main" },
+    };
+
+    promptHandlers.start(promptEvent);
+    contextHandlers.start({
+      arguments: [
+        {
+          operationId: "op_1",
+          operationKind: "prompt",
+          session: "main",
+          type: "operation_start",
+        },
+      ],
+    });
+    contextHandlers.start({
+      arguments: [
+        {
+          args: { query: "braintrust" },
+          operationId: "op_1",
+          toolCallId: "tool_1",
+          toolName: "lookup",
+          type: "tool_start",
+        },
+      ],
+    });
+    contextHandlers.start({
+      arguments: [
+        {
+          durationMs: 2,
+          isError: false,
+          operationId: "op_1",
+          result: "lookup ok",
+          toolCallId: "tool_1",
+          toolName: "lookup",
+          type: "tool_call",
+        },
+      ],
+    });
+    contextHandlers.start({
+      arguments: [
+        {
+          durationMs: 10,
+          isError: false,
+          model: "pi/test",
+          operationId: "op_1",
+          stopReason: "toolUse",
+          type: "turn",
+          usage: usage(),
+        },
+      ],
+    });
+
+    const operationSpan = spans.find(
+      (span) => span.name === "flue.session.prompt",
+    );
+    const turnSpan = spans.find((span) => span.name === "flue.turn");
+    const toolSpan = spans.find((span) => span.name === "tool: lookup");
+
+    expect(turnSpan?.spanParents).toEqual([operationSpan?.spanId]);
+    expect(toolSpan?.spanParents).toEqual([operationSpan?.spanId]);
+    expect(toolSpan?.spanParents).not.toContain(turnSpan?.spanId);
+    expect(turnSpan?.log).toHaveBeenCalledWith(
+      expect.objectContaining({
+        output: [
+          expect.objectContaining({
+            message: expect.objectContaining({
+              content: "",
+              role: "assistant",
+              tool_calls: [
+                {
+                  function: {
+                    arguments: JSON.stringify({ query: "braintrust" }),
+                    name: "lookup",
+                  },
+                  id: "tool_1",
+                  type: "function",
+                },
+              ],
+            }),
+          }),
+        ],
+      }),
+    );
+  });
 });
 
 function makeSession() {
