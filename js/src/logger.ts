@@ -79,7 +79,7 @@ import {
   type RepoInfoType as RepoInfo,
   type PromptBlockDataType as PromptBlockData,
   type ResponseFormatJsonSchemaType as ResponseFormatJsonSchema,
-  type ObjectReferenceType as ObjectReference,
+  type ObjectReferenceType,
 } from "./generated_types";
 
 const BRAINTRUST_ATTACHMENT =
@@ -7413,7 +7413,7 @@ export class Dataset<
     metadata?: Record<string, unknown>;
     tags?: string[];
     output?: unknown;
-    origin?: ObjectReference;
+    origin?: ObjectReferenceType;
     isMerge?: boolean;
   }): LazyValue<BackgroundLogEvent> {
     return new LazyValue(async () => {
@@ -7472,7 +7472,7 @@ export class Dataset<
     readonly metadata?: Record<string, unknown>;
     readonly id?: string;
     readonly output?: unknown;
-    readonly origin?: ObjectReference;
+    readonly origin?: ObjectReferenceType;
   }): string {
     this.validateEvent({ metadata, expected, output, tags });
 

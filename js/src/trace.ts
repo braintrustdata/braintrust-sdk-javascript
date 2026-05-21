@@ -100,20 +100,14 @@ export class SpanFetcher extends ObjectFetcher<SpanRecord> {
 export interface SpanData {
   input?: unknown;
   output?: unknown;
-  expected?: unknown;
-  error?: unknown;
-  scores?: Record<string, unknown>;
-  metrics?: Record<string, unknown>;
   metadata?: Record<string, unknown>;
   span_id?: string;
   span_parents?: string[];
-  is_root?: boolean | null;
   span_attributes?: {
     type?: string;
     name?: string;
     [key: string]: unknown;
   };
-  tags?: string[];
   [key: string]: unknown;
 }
 
@@ -279,10 +273,7 @@ export interface Trace {
     object_id: string;
     root_span_id: string;
   };
-  getSpans(options?: {
-    spanType?: string[];
-    includeScorers?: boolean;
-  }): Promise<SpanData[]>;
+  getSpans(options?: { spanType?: string[] }): Promise<SpanData[]>;
   /**
    * Get the thread (preprocessed messages) for this trace.
    * Uses the project default preprocessor, falling back to the global "thread" preprocessor.
