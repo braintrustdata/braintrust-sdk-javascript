@@ -4272,8 +4272,8 @@ export function initDataset<
     legacy,
     _internal_btql,
     resolvedVersion instanceof LazyValue ||
-    normalizedEnvironment !== undefined ||
-    normalizedSnapshotName !== undefined
+      normalizedEnvironment !== undefined ||
+      normalizedSnapshotName !== undefined
       ? {
           ...(resolvedVersion instanceof LazyValue
             ? {
@@ -6051,9 +6051,9 @@ export type WithTransactionId<R> = R & {
 export const DEFAULT_FETCH_BATCH_SIZE = 1000;
 export const MAX_BTQL_ITERATIONS = 10000;
 
-export class ObjectFetcher<RecordType>
-  implements AsyncIterable<WithTransactionId<RecordType>>
-{
+export class ObjectFetcher<RecordType> implements AsyncIterable<
+  WithTransactionId<RecordType>
+> {
   private _fetchedData: WithTransactionId<RecordType>[] | undefined = undefined;
 
   constructor(

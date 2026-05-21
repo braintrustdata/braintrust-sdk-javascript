@@ -344,7 +344,7 @@ export interface Evaluator<
   baseExperimentId?: string;
 
   /**
-   * Optional settings for collecting git metadata. By default, will collect all git metadata fields allowed in org-level settings.
+   * Optional settings for collecting git metadata. By default, will collect git metadata fields allowed in org-level settings, excluding diff content unless the org opts in.
    */
   gitMetadataSettings?: GitMetadataSettings;
 
