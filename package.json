@@ -15,6 +15,7 @@
     "knip": "knip --config knip.jsonc --no-config-hints",
     "test": "turbo run test --filter=\"!@braintrust/otel\"",
     "test:e2e": "turbo run test:e2e",
+    "test:e2e:update": "turbo run test:e2e:update",
     "test:e2e:record": "node e2e/scripts/run-record-tests.mjs --braintrust-build-deps",
     "test:e2e:canary": "turbo run test:e2e:canary",
     "changeset": "changeset",

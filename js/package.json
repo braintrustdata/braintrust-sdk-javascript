@@ -1,6 +1,6 @@
 {
   "name": "braintrust",
-  "version": "3.10.0",
+  "version": "3.11.0",
   "description": "SDK for integrating Braintrust",
   "repository": {
     "type": "git",
@@ -87,6 +87,12 @@
       "module": "./dist/auto-instrumentations/bundler/webpack.mjs",
       "require": "./dist/auto-instrumentations/bundler/webpack.cjs"
     },
+    "./next": {
+      "types": "./dist/auto-instrumentations/bundler/next.d.ts",
+      "import": "./dist/auto-instrumentations/bundler/next.mjs",
+      "module": "./dist/auto-instrumentations/bundler/next.mjs",
+      "require": "./dist/auto-instrumentations/bundler/next.cjs"
+    },
     "./webpack-loader": {
       "types": "./dist/auto-instrumentations/bundler/webpack-loader.d.ts",
       "require": "./dist/auto-instrumentations/bundler/webpack-loader.cjs"
@@ -118,7 +124,8 @@
     "test": "vitest run --exclude \"src/wrappers/**/*.test.ts\" --exclude \"src/otel/**/*.test.ts\" --exclude \"smoke/**/*.test.ts\" --exclude \"src/zod/**/*.test.ts\" --exclude \"tests/api-compatibility/**\"",
     "test:core": "pnpm prune && pnpm test",
     "test:checks": "pnpm run test:core && pnpm run test:vitest",
-    "test:external": "pnpm run test:external:openai && pnpm run test:external:anthropic && pnpm run test:external:google-genai && pnpm run test:external:ai-sdk && pnpm run test:external:claude-agent-sdk",
+    "test:external": "pnpm run test:external:sequential && node scripts/run-parallel.mjs test:external:ai-sdk-v5 test:external:ai-sdk-v6 test:external:claude-agent-sdk",
+    "test:external:sequential": "pnpm run test:external:openai && pnpm run test:external:anthropic && pnpm run test:external:google-genai",
     "test:external:openai": "bash scripts/test-provider.sh test:openai openai",
     "test:external:anthropic": "bash scripts/test-provider.sh test:anthropic @anthropic-ai/sdk",
     "test:external:google-genai": "bash scripts/test-provider.sh test:google-genai @google/genai",
@@ -179,7 +186,6 @@
     "cross-env": "^7.0.3",
     "eslint-plugin-node-import": "^1.0.5",
     "openai": "6.25.0",
-    "openapi-zod-client": "^1.18.3",
     "rollup": "^4.60.3",
     "tar": "^7.5.2",
     "tinybench": "^4.0.1",

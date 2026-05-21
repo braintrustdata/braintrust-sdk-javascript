@@ -17,6 +17,8 @@
 export { BasePlugin } from "./core";
 export { BraintrustPlugin } from "./braintrust-plugin";
 export type { BraintrustPluginConfig } from "./braintrust-plugin";
+export { OpenAIAgentsTraceProcessor } from "./plugins/openai-agents-trace-processor";
+export type { OpenAIAgentsTraceProcessorOptions } from "./plugins/openai-agents-trace-processor";
 
 // Re-export core types for external instrumentation packages
 export type {

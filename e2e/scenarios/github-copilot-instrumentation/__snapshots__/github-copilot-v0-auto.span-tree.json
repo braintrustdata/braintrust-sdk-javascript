@@ -1,0 +1,166 @@
+{
+  "span_tree": [
+    {
+      "name": "github-copilot-instrumentation-root",
+      "type": "task",
+      "children": [
+        {
+          "name": "github-copilot-basic-operation",
+          "children": [
+            {
+              "name": "Copilot Session",
+              "type": "task",
+              "children": [
+                {
+                  "name": "Copilot Turn",
+                  "type": "task",
+                  "children": [
+                    {
+                      "name": "github.copilot.llm",
+                      "type": "llm",
+                      "children": [],
+                      "metadata": {
+                        "github_copilot.api_call_id": "chatcmpl-Dfl7nGaoedcSfrmf6rVMJ9F1bE71S",
+                        "github_copilot.cost": 0,
+                        "github_copilot.duration_ms": 0,
+                        "github_copilot.initiator": "user",
+                        "github_copilot.quota_snapshots": {},
+                        "model": "gpt-4.1"
+                      },
+                      "metrics": {
+                        "completion_reasoning_tokens": 0,
+                        "completion_tokens": 2,
+                        "prompt_cached_tokens": 6144,
+                        "prompt_tokens": 18585,
+                        "reasoning_tokens": 0,
+                        "tokens": 18587
+                      }
+                    }
+                  ],
+                  "input": "Reply with exactly: OK",
+                  "output": "OK"
+                }
+              ],
+              "metadata": {
+                "github_copilot.context_window.current": 0,
+                "github_copilot.context_window.limit": 128000,
+                "github_copilot.context_window.messages": 2,
+                "github_copilot.end_reason": "complete",
+                "github_copilot.model": "gpt-4.1",
+                "github_copilot.provider_type": "openai",
+                "github_copilot.total_input_tokens": 12441,
+                "github_copilot.total_output_tokens": 2
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "basic",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "github-copilot-tool-operation",
+          "children": [
+            {
+              "name": "Copilot Session",
+              "type": "task",
+              "children": [
+                {
+                  "name": "Copilot Turn",
+                  "type": "task",
+                  "children": [
+                    {
+                      "name": "github.copilot.llm",
+                      "type": "llm",
+                      "children": [],
+                      "metadata": {
+                        "github_copilot.api_call_id": "chatcmpl-Dfl7qQSE3SNFqkisyWCQwNUeQlzs4",
+                        "github_copilot.cost": 0,
+                        "github_copilot.duration_ms": 0,
+                        "github_copilot.initiator": "user",
+                        "github_copilot.quota_snapshots": {},
+                        "model": "gpt-4.1"
+                      },
+                      "metrics": {
+                        "completion_reasoning_tokens": 0,
+                        "completion_tokens": 14,
+                        "prompt_cached_tokens": 6144,
+                        "prompt_tokens": 18606,
+                        "reasoning_tokens": 0,
+                        "tokens": 18620
+                      }
+                    },
+                    {
+                      "name": "tool: get_weather",
+                      "type": "tool",
+                      "children": [],
+                      "input": {
+                        "city": "Tokyo"
+                      },
+                      "output": {
+                        "content": "The weather in Tokyo is 72°F and sunny.",
+                        "detailedContent": "The weather in Tokyo is 72°F and sunny."
+                      },
+                      "metadata": {
+                        "gen_ai.tool.call.id": "call_EtVZ0wzZObwD18ZoOOzxhR6U",
+                        "gen_ai.tool.name": "get_weather"
+                      }
+                    }
+                  ],
+                  "input": "What is the weather in Tokyo? Use the get_weather tool and report the result.",
+                  "output": ""
+                },
+                {
+                  "name": "Copilot Turn",
+                  "type": "task",
+                  "children": [
+                    {
+                      "name": "github.copilot.llm",
+                      "type": "llm",
+                      "children": [],
+                      "metadata": {
+                        "github_copilot.api_call_id": "chatcmpl-Dfl7rX2REjanlVkzA24AuyMy1zaQZ",
+                        "github_copilot.cost": 0,
+                        "github_copilot.duration_ms": 0,
+                        "github_copilot.initiator": "agent",
+                        "github_copilot.quota_snapshots": {},
+                        "model": "gpt-4.1"
+                      },
+                      "metrics": {
+                        "completion_reasoning_tokens": 0,
+                        "completion_tokens": 13,
+                        "prompt_cached_tokens": 12416,
+                        "prompt_tokens": 24911,
+                        "reasoning_tokens": 0,
+                        "tokens": 24924
+                      }
+                    }
+                  ],
+                  "output": "The weather in Tokyo is currently 72°F and sunny."
+                }
+              ],
+              "metadata": {
+                "github_copilot.context_window.current": 0,
+                "github_copilot.context_window.limit": 128000,
+                "github_copilot.context_window.messages": 4,
+                "github_copilot.end_reason": "complete",
+                "github_copilot.model": "gpt-4.1",
+                "github_copilot.provider_type": "openai",
+                "github_copilot.total_input_tokens": 24957,
+                "github_copilot.total_output_tokens": 27
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "tool",
+            "testRunId": "<run:1>"
+          }
+        }
+      ],
+      "metadata": {
+        "scenario": "github-copilot-instrumentation",
+        "testRunId": "<run:1>"
+      }
+    }
+  ]
+}

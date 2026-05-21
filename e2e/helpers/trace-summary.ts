@@ -74,8 +74,12 @@ function otlpAttributeValue(value: unknown): Json {
   if (typeof value.boolValue === "boolean") {
     return value.boolValue;
   }
-  if (typeof value.intValue === "string") {
+  if (typeof value.intValue === "number") {
     return value.intValue;
+  }
+  if (typeof value.intValue === "string") {
+    const numericValue = Number(value.intValue);
+    return Number.isSafeInteger(numericValue) ? numericValue : value.intValue;
   }
   if (typeof value.doubleValue === "number") {
     return value.doubleValue;

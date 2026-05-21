@@ -20,12 +20,23 @@ const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const UUID_SUBSTRING_REGEX =
   /[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/gi;
-const TIME_KEYS = new Set(["created", "date", "start", "end"]);
+const TIME_KEYS = new Set([
+  "completed_at",
+  "created",
+  "created_at",
+  "date",
+  "end",
+  "expires_at",
+  "start",
+  "started_at",
+  "updated_at",
+]);
 const SPAN_ID_KEYS = new Set(["id", "span_id", "root_span_id"]);
 const ZERO_NUMBER_KEYS = new Set([
   "avgLogprobs",
   "caller_lineno",
   "duration",
+  "github_copilot.context_window.current",
   "time_to_first_token",
 ]);
 const XACT_VERSION_KEYS = new Set([
@@ -46,7 +57,13 @@ const DYNAMIC_HEADER_KEYS = new Set([
   "x-ratelimit-reset-tokens",
   "x-request-id",
 ]);
-const PROVIDER_ID_KEYS = new Set(["itemId", "responseId", "toolCallId"]);
+const PROVIDER_ID_KEYS = new Set([
+  "agentId",
+  "claude_agent_sdk.task_id",
+  "itemId",
+  "responseId",
+  "toolCallId",
+]);
 const PROJECT_ID_KEYS = new Set(["project_id", "projectId"]);
 const PROJECT_NAME_KEYS = new Set(["project_name", "projectName"]);
 const HELPERS_DIR = path.dirname(fileURLToPath(import.meta.url));
@@ -219,7 +236,12 @@ function normalizeValue(
   }
 
   if (typeof value === "number") {
-    if (currentKey && ZERO_NUMBER_KEYS.has(currentKey)) {
+    if (
+      currentKey &&
+      (ZERO_NUMBER_KEYS.has(currentKey) ||
+        currentKey.endsWith("_ms") ||
+        currentKey.endsWith("Ms"))
+    ) {
       return 0;
     }
     if (currentKey && TIME_KEYS.has(currentKey)) {
@@ -238,6 +260,14 @@ function normalizeValue(
 
     if (currentKey === "caller_filename") {
       return normalizeCallerFilename(value);
+    }
+
+    if (currentKey === "openai_codex.working_directory") {
+      const normalizedPath = value.replace(/\\/g, "/");
+      const match = normalizedPath.match(
+        /\/braintrust-codex-e2e-[^/]+\/([^/]+)$/,
+      );
+      return match ? `<tmp>/braintrust-codex-e2e/${match[1]}` : "<tmp>";
     }
 
     if (currentKey === "_xact_id") {

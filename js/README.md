@@ -61,40 +61,40 @@ Use a bundler plugin:
 Vite:
 
 ```ts
-import { vitePlugin } from "braintrust/vite";
+import { braintrustVitePlugin } from "braintrust/vite";
 
 export default {
-  plugins: [vitePlugin()],
+  plugins: [braintrustVitePlugin()],
 };
 ```
 
 Webpack:
 
 ```js
-const { webpackPlugin } = require("braintrust/webpack");
+const { braintrustWebpackPlugin } = require("braintrust/webpack");
 
 module.exports = {
-  plugins: [webpackPlugin()],
+  plugins: [braintrustWebpackPlugin()],
 };
 ```
 
 esbuild:
 
 ```ts
-import { esbuildPlugin } from "braintrust/esbuild";
+import { braintrustEsbuildPlugin } from "braintrust/esbuild";
 
 await esbuild.build({
-  plugins: [esbuildPlugin()],
+  plugins: [braintrustEsbuildPlugin()],
 });
 ```
 
 Rollup:
 
 ```ts
-import { rollupPlugin } from "braintrust/rollup";
+import { braintrustRollupPlugin } from "braintrust/rollup";
 
 export default {
-  plugins: [rollupPlugin()],
+  plugins: [braintrustRollupPlugin()],
 };
 ```
 

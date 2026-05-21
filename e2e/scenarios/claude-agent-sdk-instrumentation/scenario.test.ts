@@ -45,9 +45,9 @@ const claudeAgentSDKScenarios = await Promise.all(
   }),
 );
 
-describe("wrapped instrumentation", () => {
+describe.concurrent("wrapped instrumentation", () => {
   for (const scenario of claudeAgentSDKScenarios) {
-    describe(`claude agent sdk ${scenario.version}`, () => {
+    describe.sequential(`claude agent sdk ${scenario.version}`, () => {
       defineClaudeAgentSDKInstrumentationAssertions({
         assertLocalToolHandlerParenting: true,
         expectTaskLifecycleDetails: scenario.expectTaskLifecycleDetails,
@@ -63,7 +63,7 @@ describe("wrapped instrumentation", () => {
             timeoutMs: TIMEOUT_MS,
           });
         },
-        snapshotName: scenario.snapshotName,
+        snapshotName: `${scenario.snapshotName}-wrapped`,
         testFileUrl: import.meta.url,
         timeoutMs: TIMEOUT_MS,
       });
@@ -71,9 +71,9 @@ describe("wrapped instrumentation", () => {
   }
 });
 
-describe("auto-hook instrumentation", () => {
+describe.concurrent("auto-hook instrumentation", () => {
   for (const scenario of claudeAgentSDKScenarios) {
-    describe(`claude agent sdk ${scenario.version}`, () => {
+    describe.sequential(`claude agent sdk ${scenario.version}`, () => {
       defineClaudeAgentSDKInstrumentationAssertions({
         assertLocalToolHandlerParenting: true,
         expectTaskLifecycleDetails: scenario.expectTaskLifecycleDetails,
@@ -90,7 +90,7 @@ describe("auto-hook instrumentation", () => {
             timeoutMs: TIMEOUT_MS,
           });
         },
-        snapshotName: scenario.snapshotName,
+        snapshotName: `${scenario.snapshotName}-auto-hook`,
         testFileUrl: import.meta.url,
         timeoutMs: TIMEOUT_MS,
       });

@@ -58,6 +58,7 @@ export interface InstrumentationConfig {
     genkit?: boolean;
     gitHubCopilot?: boolean;
     openaiCodexSDK?: boolean;
+    openAIAgents?: boolean;
   };
 }
 
@@ -164,6 +165,7 @@ class PluginRegistry {
       claudeAgentSDK: true,
       cursor: true,
       cursorSDK: true,
+      openAIAgents: true,
       openrouter: true,
       openrouterAgent: true,
       mistral: true,

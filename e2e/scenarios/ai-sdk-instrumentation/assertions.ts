@@ -1,15 +1,16 @@
 import { beforeAll, describe, expect, test } from "vitest";
-import { normalizeForSnapshot, type Json } from "../../helpers/normalize";
+import type { Json } from "../../helpers/normalize";
 import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
-import {
-  formatJsonFileSnapshot,
-  matchFileSnapshot,
-  resolveFileSnapshotPath,
-} from "../../helpers/file-snapshot";
+import { resolveFileSnapshotPath } from "../../helpers/file-snapshot";
 import {
   withScenarioHarness,
   type ScenarioRunContext,
 } from "../../helpers/scenario-harness";
+import {
+  matchSpanTreeSnapshot,
+  spanTreeFields,
+  type SpanTreeEntry,
+} from "../../helpers/span-tree";
 import {
   findAllSpans,
   findChildSpans,
@@ -248,13 +249,6 @@ function findOutputObjectTrace(events: CapturedLogEvent[]) {
   );
 }
 
-function findAttachmentTrace(events: CapturedLogEvent[]) {
-  return findGenerateTextTraceForOperation(
-    events,
-    "ai-sdk-attachment-operation",
-  );
-}
-
 function findDenyOutputOverrideTrace(events: CapturedLogEvent[]) {
   return findGenerateTextTraceForOperation(
     events,
@@ -457,37 +451,6 @@ function extractFinishReason(
     : undefined;
 }
 
-function extractFileAttachmentReference(
-  input: unknown,
-): Record<string, unknown> | undefined {
-  if (!isRecord(input) || !Array.isArray(input.messages)) {
-    return undefined;
-  }
-
-  for (const message of input.messages) {
-    if (!isRecord(message) || !Array.isArray(message.content)) {
-      continue;
-    }
-
-    for (const part of message.content) {
-      if (!isRecord(part) || part.type !== "file") {
-        continue;
-      }
-
-      const data = part.data;
-      if (isRecord(data) && isRecord(data.reference)) {
-        return data.reference;
-      }
-
-      if (isRecord(data) && data.type === "braintrust_attachment") {
-        return data;
-      }
-    }
-  }
-
-  return undefined;
-}
-
 function normalizeAISDKContext(value: unknown): Json {
   const context = isRecord(value) ? value : {};
   return {
@@ -583,29 +546,6 @@ function snapshotValue(value: unknown): Json {
   }
 
   return normalizeAISDKSnapshotValue(structuredClone(value)) as Json;
-}
-
-function summarizeAISDKSpan(event: CapturedLogEvent): Json {
-  return {
-    has_input: event.input !== undefined && event.input !== null,
-    has_output: event.output !== undefined && event.output !== null,
-    metadata: pickMetadata(
-      event.row.metadata as Record<string, unknown> | undefined,
-      ["aiSdkVersion", "provider", "model", "operation", "scenario"],
-    ),
-    metrics: pickMetrics(event.metrics, [
-      "completion_tokens",
-      "prompt_tokens",
-      "prompt_cached_tokens",
-      "prompt_cache_creation_tokens",
-      "time_to_first_token",
-      "tokens",
-    ]),
-    name: event.span.name ?? null,
-    root_span_id: event.span.rootId ?? null,
-    span_id: event.span.id ?? null,
-    span_parents: event.span.parentIds,
-  } satisfies Json;
 }
 
 function summarizeAISDKInput(value: unknown): Json {
@@ -707,7 +647,7 @@ function collectSummaryEvents(
   ].filter((event): event is CapturedLogEvent => event !== undefined);
 }
 
-function buildSpanSummary(
+function buildSpanTree(
   events: CapturedLogEvent[],
   options: {
     agentSpanName?: AgentSpanName;
@@ -717,30 +657,20 @@ function buildSpanSummary(
     supportsRerank: boolean;
     supportsStreamObject: boolean;
   },
-): Json {
-  return normalizeForSnapshot(
-    collectSummaryEvents(events, options).map((event) =>
-      summarizeAISDKSpan(event),
-    ),
-  );
-}
+): SpanTreeEntry[] {
+  return collectSummaryEvents(events, options).map((event) => {
+    const summary = summarizeAISDKPayload(event) as Record<string, Json>;
+    const { name: _name, ...fields } = summary;
 
-function buildPayloadSummary(
-  events: CapturedLogEvent[],
-  options: {
-    agentSpanName?: AgentSpanName;
-    sdkMajorVersion: number;
-    supportsProviderCacheAssertions: boolean;
-    supportsGenerateObject: boolean;
-    supportsRerank: boolean;
-    supportsStreamObject: boolean;
-  },
-): Json {
-  return normalizeForSnapshot(
-    collectSummaryEvents(events, options).map((event) =>
-      summarizeAISDKPayload(event),
-    ),
-  );
+    return {
+      event,
+      fields: {
+        span_attributes: spanTreeFields(event).span_attributes,
+        ...fields,
+      },
+      name: typeof summary.name === "string" ? summary.name : event.span.name,
+    };
+  });
 }
 
 function expectOperationParentedByRoot(
@@ -835,7 +765,6 @@ export function defineAISDKInstrumentationAssertions(options: {
   runScenario: RunAISDKScenario;
   sdkMajorVersion: number;
   snapshotName: string;
-  supportsAttachmentScenario: boolean;
   supportsProviderCacheAssertions: boolean;
   supportsDenyOutputOverrideScenario: boolean;
   supportsEmbedMany: boolean;
@@ -849,11 +778,7 @@ export function defineAISDKInstrumentationAssertions(options: {
 }): void {
   const spanSnapshotPath = resolveFileSnapshotPath(
     options.testFileUrl,
-    `${options.snapshotName}.span-events.json`,
-  );
-  const payloadSnapshotPath = resolveFileSnapshotPath(
-    options.testFileUrl,
-    `${options.snapshotName}.log-payloads.json`,
+    `${options.snapshotName}.span-tree.json`,
   );
   const testConfig = {
     timeout: options.timeoutMs,
@@ -1102,30 +1027,6 @@ export function defineAISDKInstrumentationAssertions(options: {
       );
     }
 
-    if (options.supportsAttachmentScenario) {
-      test(
-        "captures file attachment normalization in input",
-        testConfig,
-        () => {
-          const root = findLatestSpan(events, ROOT_NAME);
-          const trace = findAttachmentTrace(events);
-
-          expectOperationParentedByRoot(trace.operation, root);
-          expectAISDKParentSpan(trace.parent);
-          expect(operationName(trace.operation)).toBe("attachment");
-          const attachmentRef = extractFileAttachmentReference(
-            trace.parent?.input,
-          );
-          expect(attachmentRef).toBeDefined();
-          expect(attachmentRef).toMatchObject({
-            content_type: "text/plain",
-            key: expect.any(String),
-            type: "braintrust_attachment",
-          });
-        },
-      );
-    }
-
     test("captures trace for generateText() with tools", testConfig, () => {
       const root = findLatestSpan(events, ROOT_NAME);
       const trace = findToolTrace(events);
@@ -1317,38 +1218,8 @@ export function defineAISDKInstrumentationAssertions(options: {
       );
     }
 
-    test("matches the shared span snapshot", testConfig, async () => {
-      await matchFileSnapshot(
-        formatJsonFileSnapshot(
-          buildSpanSummary(events, {
-            agentSpanName: options.agentSpanName,
-            sdkMajorVersion: options.sdkMajorVersion,
-            supportsProviderCacheAssertions:
-              options.supportsProviderCacheAssertions,
-            supportsGenerateObject: options.supportsGenerateObject,
-            supportsRerank: options.supportsRerank,
-            supportsStreamObject: options.supportsStreamObject,
-          }),
-        ),
-        spanSnapshotPath,
-      );
-    });
-
-    test("matches the shared payload snapshot", testConfig, async () => {
-      await matchFileSnapshot(
-        formatJsonFileSnapshot(
-          buildPayloadSummary(events, {
-            agentSpanName: options.agentSpanName,
-            sdkMajorVersion: options.sdkMajorVersion,
-            supportsProviderCacheAssertions:
-              options.supportsProviderCacheAssertions,
-            supportsGenerateObject: options.supportsGenerateObject,
-            supportsRerank: options.supportsRerank,
-            supportsStreamObject: options.supportsStreamObject,
-          }),
-        ),
-        payloadSnapshotPath,
-      );
+    test("matches the shared span tree snapshot", testConfig, async () => {
+      await matchSpanTreeSnapshot(events, spanSnapshotPath);
     });
   });
 }

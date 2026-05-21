@@ -1,17 +1,17 @@
 import { beforeAll, describe, expect, test } from "vitest";
-import {
-  formatJsonFileSnapshot,
-  matchFileSnapshot,
-  resolveFileSnapshotPath,
-} from "../../helpers/file-snapshot";
+import { resolveFileSnapshotPath } from "../../helpers/file-snapshot";
 import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
-import { normalizeForSnapshot, type Json } from "../../helpers/normalize";
 import {
   withScenarioHarness,
   type ScenarioRunContext,
 } from "../../helpers/scenario-harness";
+import {
+  matchSpanTreeSnapshot,
+  spanTreeFields,
+  type SpanTreeEntry,
+  type SpanTreeFields,
+} from "../../helpers/span-tree";
 import { findLatestSpan } from "../../helpers/trace-selectors";
-import { summarizeWrapperContract } from "../../helpers/wrapper-contract";
 import { ROOT_NAME, SCENARIO_NAME } from "./scenario.impl.mjs";
 
 type RunOpenAICodexScenario = (harness: {
@@ -160,24 +160,33 @@ function sequenceNumber(event: CapturedLogEvent): number | undefined {
   return typeof value === "number" ? value : undefined;
 }
 
-function summarizeSpan(event: CapturedLogEvent | undefined): Json {
-  if (!event) {
-    return null;
+function snapshotFields(event: CapturedLogEvent): SpanTreeFields {
+  const fields = spanTreeFields(event);
+  const metadata =
+    fields.metadata &&
+    typeof fields.metadata === "object" &&
+    !Array.isArray(fields.metadata)
+      ? Object.fromEntries(
+          Object.entries(fields.metadata).filter(([key]) =>
+            METADATA_KEYS.includes(key as (typeof METADATA_KEYS)[number]),
+          ),
+        )
+      : undefined;
+
+  if (metadata && typeof metadata["openai_codex.thread_id"] === "string") {
+    metadata["openai_codex.thread_id"] = "<thread-id>";
   }
-  const summary = summarizeWrapperContract(event, [...METADATA_KEYS]) as Record<
-    string,
-    Json
-  >;
-  if (summary.metadata && typeof summary.metadata === "object") {
-    const metadata = summary.metadata as Record<string, Json>;
-    if (typeof metadata["openai_codex.thread_id"] === "string") {
-      metadata["openai_codex.thread_id"] = "<thread-id>";
-    }
-  }
-  return summary;
+
+  return {
+    ...fields,
+    metadata,
+    ...(event.span.type === "llm"
+      ? { output: summarizeLlmOutput(event.output) }
+      : {}),
+  };
 }
 
-function summarizeLlmOutput(output: unknown): Json {
+function summarizeLlmOutput(output: unknown): SpanTreeFields["output"] {
   if (typeof output !== "object" || output === null || Array.isArray(output)) {
     return null;
   }
@@ -190,22 +199,10 @@ function summarizeLlmOutput(output: unknown): Json {
     ...(typeof outputRecord.message === "string"
       ? { message: outputRecord.message }
       : {}),
-  } as Json;
+  };
 }
 
-function summarizeLlmSpan(event: CapturedLogEvent | undefined): Json {
-  const summary = summarizeSpan(event) as Record<string, Json>;
-  summary.output = summarizeLlmOutput(event?.output);
-  return summary as Json;
-}
-
-function summarizeToolNames(events: CapturedLogEvent[]): Json {
-  return [...new Set(events.map((event) => event.span.name))]
-    .filter((name): name is string => typeof name === "string")
-    .sort();
-}
-
-function summarize(events: CapturedLogEvent[]): Json {
+function summarize(events: CapturedLogEvent[]): SpanTreeEntry[] {
   const runTask = findCodexTask(events, "openai-codex-run-operation");
   const streamedTask = findCodexTask(
     events,
@@ -214,23 +211,17 @@ function summarize(events: CapturedLogEvent[]): Json {
   const llmSpans = latestSpansByType(events, "llm");
   const toolSpans = latestSpansByType(events, "tool");
 
-  return normalizeForSnapshot({
-    root: summarizeSpan(findLatestSpan(events, ROOT_NAME)),
-    run: {
-      operation: summarizeSpan(
-        findLatestSpan(events, "openai-codex-run-operation"),
-      ),
-      task: summarizeSpan(runTask),
-    },
-    streamed: {
-      operation: summarizeSpan(
-        findLatestSpan(events, "openai-codex-run-streamed-operation"),
-      ),
-      task: summarizeSpan(streamedTask),
-    },
-    llms: llmSpans.map(summarizeLlmSpan),
-    tools: summarizeToolNames(toolSpans),
-  } as Json);
+  return [
+    findLatestSpan(events, ROOT_NAME),
+    findLatestSpan(events, "openai-codex-run-operation"),
+    runTask,
+    findLatestSpan(events, "openai-codex-run-streamed-operation"),
+    streamedTask,
+    ...llmSpans,
+    ...toolSpans,
+  ].flatMap((event) =>
+    event ? [{ event, fields: snapshotFields(event) }] : [],
+  );
 }
 
 function spanSnapshotPath(options: {
@@ -239,7 +230,7 @@ function spanSnapshotPath(options: {
 }): string {
   return resolveFileSnapshotPath(
     options.testFileUrl,
-    `${options.snapshotName}.span-events.json`,
+    `${options.snapshotName}.span-tree.json`,
   );
 }
 
@@ -342,11 +333,8 @@ export function defineOpenAICodexInstrumentationAssertions(options: {
       }
     });
 
-    test("matches the span snapshot", testConfig, async () => {
-      await matchFileSnapshot(
-        formatJsonFileSnapshot(summarize(events)),
-        spanSnapshotPath(options),
-      );
+    test("matches the span tree snapshot", testConfig, async () => {
+      await matchSpanTreeSnapshot(events, spanSnapshotPath(options));
     });
   });
 }

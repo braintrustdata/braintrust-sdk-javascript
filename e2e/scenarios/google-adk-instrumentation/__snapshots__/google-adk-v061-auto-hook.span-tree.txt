@@ -1,0 +1,211 @@
+span_tree:
+└── google-adk-instrumentation-root [task]
+    metadata: {
+      "scenario": "google-adk-instrumentation",
+      "testRunId": "<run:1>"
+    }
+    ├── adk-simple-run-operation
+    │   metadata: {
+    │     "operation": "simple-run",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── Google ADK Runner [task]
+    │       input: {
+    │         "messages": [
+    │           {
+    │             "content": "What is the weather in Paris, France?",
+    │             "role": "user"
+    │           }
+    │         ]
+    │       }
+    │       output: {
+    │         "author": "weather_agent",
+    │         "content": "The weather in Paris, France is currently 15°C and cloudy.",
+    │         "role": "model"
+    │       }
+    │       metadata: {
+    │         "google_adk.session_id": "test-session-1",
+    │         "google_adk.user_id": "test-user",
+    │         "provider": "google-adk"
+    │       }
+    │       metrics: {
+    │         "completion_tokens": 16,
+    │         "duration": 0,
+    │         "prompt_tokens": 37,
+    │         "tokens": 53
+    │       }
+    │       └── Agent: weather_agent [task]
+    │           output: {
+    │             "author": "weather_agent",
+    │             "content": "The weather in Paris, France is currently 15°C and cloudy.",
+    │             "role": "model"
+    │           }
+    │           metadata: {
+    │             "google_adk.agent_name": "weather_agent",
+    │             "model": "gemini-2.5-flash-lite",
+    │             "provider": "google-adk"
+    │           }
+    │           metrics: {
+    │             "duration": 0
+    │           }
+    │           ├── tool: get_weather [tool]
+    │           │   input: {
+    │           │     "location": "Paris, France"
+    │           │   }
+    │           │   output: {
+    │           │     "condition": "sunny",
+    │           │     "location": "Paris, France",
+    │           │     "temperature": 72
+    │           │   }
+    │           │   metadata: {
+    │           │     "google_adk.tool_call_id": "direct-weather-tool",
+    │           │     "google_adk.tool_name": "get_weather",
+    │           │     "provider": "google-adk"
+    │           │   }
+    │           │   metrics: {
+    │           │     "duration": 0
+    │           │   }
+    │           └── generate_content [llm]
+    │               input: {
+    │                 "config": {
+    │                   "systemInstruction": "You are an agent. Your internal name is \"weather_agent\".\n\nAnswer the user's question in one short sentence.",
+    │                   "temperature": 0
+    │                 },
+    │                 "contents": [
+    │                   {
+    │                     "parts": [
+    │                       {
+    │                         "text": "What is the weather in Paris, France?"
+    │                       }
+    │                     ],
+    │                     "role": "user"
+    │                   }
+    │                 ],
+    │                 "model": "gemini-2.5-flash-lite"
+    │               }
+    │               output: {
+    │                 "candidates": [
+    │                   {
+    │                     "content": {
+    │                       "parts": [
+    │                         {
+    │                           "text": "The weather in Paris, France is currently 15°C and cloudy."
+    │                         }
+    │                       ],
+    │                       "role": "model"
+    │                     },
+    │                     "finishReason": "STOP",
+    │                     "index": 0
+    │                   }
+    │                 ],
+    │                 "modelVersion": "gemini-2.5-flash-lite",
+    │                 "responseId": "<responseId:1>",
+    │                 "sdkHttpResponse": {
+    │                   "headers": {
+    │                     "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
+    │                     "connection": "keep-alive",
+    │                     "content-type": "application/json; charset=UTF-8",
+    │                     "date": "<timestamp>",
+    │                     "keep-alive": "timeout=5",
+    │                     "server": "scaffolding on HTTPServer2",
+    │                     "server-timing": "<server-timing>",
+    │                     "transfer-encoding": "chunked",
+    │                     "vary": "Origin, X-Origin, Referer",
+    │                     "x-content-type-options": "nosniff",
+    │                     "x-frame-options": "SAMEORIGIN",
+    │                     "x-gemini-service-tier": "<x-gemini-service-tier>",
+    │                     "x-xss-protection": "0"
+    │                   }
+    │                 },
+    │                 "usageMetadata": {
+    │                   "candidatesTokenCount": 16,
+    │                   "promptTokenCount": 37,
+    │                   "promptTokensDetails": [
+    │                     {
+    │                       "modality": "TEXT",
+    │                       "tokenCount": 37
+    │                     }
+    │                   ],
+    │                   "serviceTier": "standard",
+    │                   "totalTokenCount": 53
+    │                 }
+    │               }
+    │               metadata: {
+    │                 "model": "gemini-2.5-flash-lite",
+    │                 "systemInstruction": "You are an agent. Your internal name is \"weather_agent\".\n\nAnswer the user's question in one short sentence.",
+    │                 "temperature": 0
+    │               }
+    │               metrics: {
+    │                 "completion_tokens": 16,
+    │                 "duration": 0,
+    │                 "prompt_tokens": 37,
+    │                 "tokens": 53
+    │               }
+    └── adk-sequential-run-operation
+        metadata: {
+          "operation": "sequential-run",
+          "testRunId": "<run:1>"
+        }
+        └── Google ADK Runner [task]
+            input: {
+              "messages": [
+                {
+                  "content": "Hello.",
+                  "role": "user"
+                }
+              ]
+            }
+            output: {
+              "author": "farewell",
+              "content": "Goodbye.",
+              "role": "model"
+            }
+            metadata: {
+              "google_adk.session_id": "test-session-sequential",
+              "google_adk.user_id": "test-user",
+              "provider": "google-adk"
+            }
+            metrics: {
+              "duration": 0
+            }
+            └── Agent: sequential_workflow [task]
+                output: {
+                  "author": "farewell",
+                  "content": "Goodbye.",
+                  "role": "model"
+                }
+                metadata: {
+                  "google_adk.agent_name": "sequential_workflow",
+                  "provider": "google-adk"
+                }
+                metrics: {
+                  "duration": 0
+                }
+                ├── Agent: greeter [task]
+                │   output: {
+                │     "author": "greeter",
+                │     "content": "Hello.",
+                │     "role": "model"
+                │   }
+                │   metadata: {
+                │     "google_adk.agent_name": "greeter",
+                │     "model": "gemini-2.5-flash-lite",
+                │     "provider": "google-adk"
+                │   }
+                │   metrics: {
+                │     "duration": 0
+                │   }
+                └── Agent: farewell [task]
+                    output: {
+                      "author": "farewell",
+                      "content": "Goodbye.",
+                      "role": "model"
+                    }
+                    metadata: {
+                      "google_adk.agent_name": "farewell",
+                      "model": "gemini-2.5-flash-lite",
+                      "provider": "google-adk"
+                    }
+                    metrics: {
+                      "duration": 0
+                    }

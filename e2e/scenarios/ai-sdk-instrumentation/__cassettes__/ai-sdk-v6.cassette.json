@@ -4,7 +4,7 @@
       "callIndex": 0,
       "id": "7c0e162d6794cf5d",
       "matchKey": "POST api.openai.com/v1/responses",
-      "recordedAt": "2026-05-15T11:38:45.976Z",
+      "recordedAt": "2026-05-18T13:07:07.304Z",
       "request": {
         "body": {
           "kind": "json",
@@ -37,11 +37,11 @@
             "billing": {
               "payer": "developer"
             },
-            "completed_at": 1778845125,
-            "created_at": 1778845125,
+            "completed_at": 1779109626,
+            "created_at": 1779109626,
             "error": null,
             "frequency_penalty": 0,
-            "id": "resp_0d2b3dded95f545e006a0705c541848190b55923d8743f5988",
+            "id": "resp_0b7bfff11d07a42b006a0b0efa133c8195a8b150f93b18b318",
             "incomplete_details": null,
             "instructions": null,
             "max_output_tokens": 24,
@@ -60,7 +60,7 @@
                     "type": "output_text"
                   }
                 ],
-                "id": "msg_0d2b3dded95f545e006a0705c5a9248190b89170479a9f94ba",
+                "id": "msg_0b7bfff11d07a42b006a0b0efabfb88195bf852fee8c787e06",
                 "role": "assistant",
                 "status": "completed",
                 "type": "message"
@@ -109,13 +109,13 @@
           "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "9fc1dbb039a15b7f-VIE",
+          "cf-ray": "9fdb153a3ce85a53-VIE",
           "connection": "keep-alive",
           "content-encoding": "gzip",
           "content-type": "application/json",
-          "date": "Fri, 15 May 2026 11:38:46 GMT",
+          "date": "Mon, 18 May 2026 13:07:07 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "714",
+          "openai-processing-ms": "1228",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
@@ -126,10 +126,10 @@
           "x-ratelimit-limit-requests": "30000",
           "x-ratelimit-limit-tokens": "150000000",
           "x-ratelimit-remaining-requests": "29999",
-          "x-ratelimit-remaining-tokens": "149999965",
+          "x-ratelimit-remaining-tokens": "149999962",
           "x-ratelimit-reset-requests": "2ms",
           "x-ratelimit-reset-tokens": "0s",
-          "x-request-id": "req_069f93a8841f4366acbe661b287a73f2"
+          "x-request-id": "req_fe9ddedd882044688b25ab77ac7c9b4d"
         },
         "status": 200,
         "statusText": "OK"
@@ -139,7 +139,7 @@
       "callIndex": 1,
       "id": "f12aff3913439248",
       "matchKey": "POST api.openai.com/v1/responses",
-      "recordedAt": "2026-05-15T11:38:46.833Z",
+      "recordedAt": "2026-05-18T13:07:08.402Z",
       "request": {
         "body": {
           "kind": "json",
@@ -190,11 +190,11 @@
             "billing": {
               "payer": "developer"
             },
-            "completed_at": 1778845126,
-            "created_at": 1778845126,
+            "completed_at": 1779109628,
+            "created_at": 1779109627,
             "error": null,
             "frequency_penalty": 0,
-            "id": "resp_0789f52b62d7de3c006a0705c62bbc8193a8873b7c45998026",
+            "id": "resp_07c830358a333e1d006a0b0efb7e40819089bde9f478007bff",
             "incomplete_details": null,
             "instructions": null,
             "max_output_tokens": 32,
@@ -213,7 +213,7 @@
                     "type": "output_text"
                   }
                 ],
-                "id": "msg_0789f52b62d7de3c006a0705c699248193bea3e1811565eeda",
+                "id": "msg_07c830358a333e1d006a0b0efc0dec8190be19fc3706b281d2",
                 "role": "assistant",
                 "status": "completed",
                 "type": "message"
@@ -275,13 +275,13 @@
           "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "9fc1dbb5fee05b7f-VIE",
+          "cf-ray": "9fdb15433be55a53-VIE",
           "connection": "keep-alive",
           "content-encoding": "gzip",
           "content-type": "application/json",
-          "date": "Fri, 15 May 2026 11:38:46 GMT",
+          "date": "Mon, 18 May 2026 13:07:08 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "662",
+          "openai-processing-ms": "905",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
@@ -295,7 +295,7 @@
           "x-ratelimit-remaining-tokens": "149999935",
           "x-ratelimit-reset-requests": "2ms",
           "x-ratelimit-reset-tokens": "0s",
-          "x-request-id": "req_52159e2375194fa0b5d8bd15fe6c1694"
+          "x-request-id": "req_8d3b3d65214746fcbdfda0e11648bcb7"
         },
         "status": 200,
         "statusText": "OK"
@@ -305,7 +305,7 @@
       "callIndex": 2,
       "id": "5d2312f425df9f2f",
       "matchKey": "POST api.openai.com/v1/responses",
-      "recordedAt": "2026-05-15T11:38:49.350Z",
+      "recordedAt": "2026-05-18T13:07:09.496Z",
       "request": {
         "body": {
           "kind": "json",
@@ -334,20 +334,20 @@
       "response": {
         "body": {
           "chunks": [
-            "event: response.created\ndata: {\"type\":\"response.created\",\"response\":{\"id\":\"resp_0060f6a1544b3f20006a0705c7095c81979020be31674f199b\",\"object\":\"response\",\"created_at\":1778845127,\"status\":\"in_progress\",\"background\":false,\"completed_at\":null,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":32,\"max_tool_calls\":null,\"model\":\"gpt-4o-mini-2024-07-18\",\"moderation\":null,\"output\":[],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":null,\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"effort\":null,\"summary\":null},\"safety_identifier\":null,\"service_tier\":\"auto\",\"store\":true,\"temperature\":0,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tools\":[],\"top_logprobs\":0,\"top_p\":1,\"truncation\":\"disabled\",\"usage\":null,\"user\":null,\"metadata\":{}},\"sequence_number\":0}",
-            "event: response.in_progress\ndata: {\"type\":\"response.in_progress\",\"response\":{\"id\":\"resp_0060f6a1544b3f20006a0705c7095c81979020be31674f199b\",\"object\":\"response\",\"created_at\":1778845127,\"status\":\"in_progress\",\"background\":false,\"completed_at\":null,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":32,\"max_tool_calls\":null,\"model\":\"gpt-4o-mini-2024-07-18\",\"moderation\":null,\"output\":[],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":null,\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"effort\":null,\"summary\":null},\"safety_identifier\":null,\"service_tier\":\"auto\",\"store\":true,\"temperature\":0,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tools\":[],\"top_logprobs\":0,\"top_p\":1,\"truncation\":\"disabled\",\"usage\":null,\"user\":null,\"metadata\":{}},\"sequence_number\":1}",
-            "event: response.output_item.added\ndata: {\"type\":\"response.output_item.added\",\"item\":{\"id\":\"msg_0060f6a1544b3f20006a0705c77c6c819797677454a0cab7aa\",\"type\":\"message\",\"status\":\"in_progress\",\"content\":[],\"role\":\"assistant\"},\"output_index\":0,\"sequence_number\":2}",
-            "event: response.content_part.added\ndata: {\"type\":\"response.content_part.added\",\"content_index\":0,\"item_id\":\"msg_0060f6a1544b3f20006a0705c77c6c819797677454a0cab7aa\",\"output_index\":0,\"part\":{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"\"},\"sequence_number\":3}",
-            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"One\",\"item_id\":\"msg_0060f6a1544b3f20006a0705c77c6c819797677454a0cab7aa\",\"logprobs\":[],\"obfuscation\":\"P5gZjcgGO413q\",\"output_index\":0,\"sequence_number\":4}",
-            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\",\",\"item_id\":\"msg_0060f6a1544b3f20006a0705c77c6c819797677454a0cab7aa\",\"logprobs\":[],\"obfuscation\":\"ANNClaCv9J7VKjB\",\"output_index\":0,\"sequence_number\":5}",
-            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\" two\",\"item_id\":\"msg_0060f6a1544b3f20006a0705c77c6c819797677454a0cab7aa\",\"logprobs\":[],\"obfuscation\":\"HF65n1XrATQD\",\"output_index\":0,\"sequence_number\":6}",
-            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\",\",\"item_id\":\"msg_0060f6a1544b3f20006a0705c77c6c819797677454a0cab7aa\",\"logprobs\":[],\"obfuscation\":\"PqJEElPafjVY8Ki\",\"output_index\":0,\"sequence_number\":7}",
-            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\" three\",\"item_id\":\"msg_0060f6a1544b3f20006a0705c77c6c819797677454a0cab7aa\",\"logprobs\":[],\"obfuscation\":\"G1QlAT0LYH\",\"output_index\":0,\"sequence_number\":8}",
-            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\".\",\"item_id\":\"msg_0060f6a1544b3f20006a0705c77c6c819797677454a0cab7aa\",\"logprobs\":[],\"obfuscation\":\"iUi8iOUgIl6GRQK\",\"output_index\":0,\"sequence_number\":9}",
-            "event: response.output_text.done\ndata: {\"type\":\"response.output_text.done\",\"content_index\":0,\"item_id\":\"msg_0060f6a1544b3f20006a0705c77c6c819797677454a0cab7aa\",\"logprobs\":[],\"output_index\":0,\"sequence_number\":10,\"text\":\"One, two, three.\"}",
-            "event: response.content_part.done\ndata: {\"type\":\"response.content_part.done\",\"content_index\":0,\"item_id\":\"msg_0060f6a1544b3f20006a0705c77c6c819797677454a0cab7aa\",\"output_index\":0,\"part\":{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"One, two, three.\"},\"sequence_number\":11}",
-            "event: response.output_item.done\ndata: {\"type\":\"response.output_item.done\",\"item\":{\"id\":\"msg_0060f6a1544b3f20006a0705c77c6c819797677454a0cab7aa\",\"type\":\"message\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"One, two, three.\"}],\"role\":\"assistant\"},\"output_index\":0,\"sequence_number\":12}",
-            "event: response.completed\ndata: {\"type\":\"response.completed\",\"response\":{\"id\":\"resp_0060f6a1544b3f20006a0705c7095c81979020be31674f199b\",\"object\":\"response\",\"created_at\":1778845127,\"status\":\"completed\",\"background\":false,\"completed_at\":1778845127,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":32,\"max_tool_calls\":null,\"model\":\"gpt-4o-mini-2024-07-18\",\"moderation\":null,\"output\":[{\"id\":\"msg_0060f6a1544b3f20006a0705c77c6c819797677454a0cab7aa\",\"type\":\"message\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"One, two, three.\"}],\"role\":\"assistant\"}],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":null,\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"effort\":null,\"summary\":null},\"safety_identifier\":null,\"service_tier\":\"default\",\"store\":true,\"temperature\":0,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tools\":[],\"top_logprobs\":0,\"top_p\":1,\"truncation\":\"disabled\",\"usage\":{\"input_tokens\":22,\"input_tokens_details\":{\"cached_tokens\":0},\"output_tokens\":7,\"output_tokens_details\":{\"reasoning_tokens\":0},\"total_tokens\":29},\"user\":null,\"metadata\":{}},\"sequence_number\":13}"
+            "event: response.created\ndata: {\"type\":\"response.created\",\"response\":{\"id\":\"resp_0046b53281f5e7cf006a0b0efc9720819396a98b98caea65b3\",\"object\":\"response\",\"created_at\":1779109628,\"status\":\"in_progress\",\"background\":false,\"completed_at\":null,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":32,\"max_tool_calls\":null,\"model\":\"gpt-4o-mini-2024-07-18\",\"moderation\":null,\"output\":[],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":null,\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"effort\":null,\"summary\":null},\"safety_identifier\":null,\"service_tier\":\"auto\",\"store\":true,\"temperature\":0,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tools\":[],\"top_logprobs\":0,\"top_p\":1,\"truncation\":\"disabled\",\"usage\":null,\"user\":null,\"metadata\":{}},\"sequence_number\":0}",
+            "event: response.in_progress\ndata: {\"type\":\"response.in_progress\",\"response\":{\"id\":\"resp_0046b53281f5e7cf006a0b0efc9720819396a98b98caea65b3\",\"object\":\"response\",\"created_at\":1779109628,\"status\":\"in_progress\",\"background\":false,\"completed_at\":null,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":32,\"max_tool_calls\":null,\"model\":\"gpt-4o-mini-2024-07-18\",\"moderation\":null,\"output\":[],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":null,\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"effort\":null,\"summary\":null},\"safety_identifier\":null,\"service_tier\":\"auto\",\"store\":true,\"temperature\":0,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tools\":[],\"top_logprobs\":0,\"top_p\":1,\"truncation\":\"disabled\",\"usage\":null,\"user\":null,\"metadata\":{}},\"sequence_number\":1}",
+            "event: response.output_item.added\ndata: {\"type\":\"response.output_item.added\",\"item\":{\"id\":\"msg_0046b53281f5e7cf006a0b0efd30d08193a3bb1dedf7090d1a\",\"type\":\"message\",\"status\":\"in_progress\",\"content\":[],\"role\":\"assistant\"},\"output_index\":0,\"sequence_number\":2}",
+            "event: response.content_part.added\ndata: {\"type\":\"response.content_part.added\",\"content_index\":0,\"item_id\":\"msg_0046b53281f5e7cf006a0b0efd30d08193a3bb1dedf7090d1a\",\"output_index\":0,\"part\":{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"\"},\"sequence_number\":3}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"One\",\"item_id\":\"msg_0046b53281f5e7cf006a0b0efd30d08193a3bb1dedf7090d1a\",\"logprobs\":[],\"obfuscation\":\"vLGNjpL2apkUB\",\"output_index\":0,\"sequence_number\":4}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\",\",\"item_id\":\"msg_0046b53281f5e7cf006a0b0efd30d08193a3bb1dedf7090d1a\",\"logprobs\":[],\"obfuscation\":\"DWD1aHDdcI0uEbn\",\"output_index\":0,\"sequence_number\":5}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\" two\",\"item_id\":\"msg_0046b53281f5e7cf006a0b0efd30d08193a3bb1dedf7090d1a\",\"logprobs\":[],\"obfuscation\":\"m98UXEMV8CWF\",\"output_index\":0,\"sequence_number\":6}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\",\",\"item_id\":\"msg_0046b53281f5e7cf006a0b0efd30d08193a3bb1dedf7090d1a\",\"logprobs\":[],\"obfuscation\":\"PPsHywALwfje50M\",\"output_index\":0,\"sequence_number\":7}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\" three\",\"item_id\":\"msg_0046b53281f5e7cf006a0b0efd30d08193a3bb1dedf7090d1a\",\"logprobs\":[],\"obfuscation\":\"LtsJrnV8Dx\",\"output_index\":0,\"sequence_number\":8}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\".\",\"item_id\":\"msg_0046b53281f5e7cf006a0b0efd30d08193a3bb1dedf7090d1a\",\"logprobs\":[],\"obfuscation\":\"08aQhjxpBOx8sDQ\",\"output_index\":0,\"sequence_number\":9}",
+            "event: response.output_text.done\ndata: {\"type\":\"response.output_text.done\",\"content_index\":0,\"item_id\":\"msg_0046b53281f5e7cf006a0b0efd30d08193a3bb1dedf7090d1a\",\"logprobs\":[],\"output_index\":0,\"sequence_number\":10,\"text\":\"One, two, three.\"}",
+            "event: response.content_part.done\ndata: {\"type\":\"response.content_part.done\",\"content_index\":0,\"item_id\":\"msg_0046b53281f5e7cf006a0b0efd30d08193a3bb1dedf7090d1a\",\"output_index\":0,\"part\":{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"One, two, three.\"},\"sequence_number\":11}",
+            "event: response.output_item.done\ndata: {\"type\":\"response.output_item.done\",\"item\":{\"id\":\"msg_0046b53281f5e7cf006a0b0efd30d08193a3bb1dedf7090d1a\",\"type\":\"message\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"One, two, three.\"}],\"role\":\"assistant\"},\"output_index\":0,\"sequence_number\":12}",
+            "event: response.completed\ndata: {\"type\":\"response.completed\",\"response\":{\"id\":\"resp_0046b53281f5e7cf006a0b0efc9720819396a98b98caea65b3\",\"object\":\"response\",\"created_at\":1779109628,\"status\":\"completed\",\"background\":false,\"completed_at\":1779109629,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":32,\"max_tool_calls\":null,\"model\":\"gpt-4o-mini-2024-07-18\",\"moderation\":null,\"output\":[{\"id\":\"msg_0046b53281f5e7cf006a0b0efd30d08193a3bb1dedf7090d1a\",\"type\":\"message\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"One, two, three.\"}],\"role\":\"assistant\"}],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":null,\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"effort\":null,\"summary\":null},\"safety_identifier\":null,\"service_tier\":\"default\",\"store\":true,\"temperature\":0,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tools\":[],\"top_logprobs\":0,\"top_p\":1,\"truncation\":\"disabled\",\"usage\":{\"input_tokens\":22,\"input_tokens_details\":{\"cached_tokens\":0},\"output_tokens\":7,\"output_tokens_details\":{\"reasoning_tokens\":0},\"total_tokens\":29},\"user\":null,\"metadata\":{}},\"sequence_number\":13}"
           ],
           "kind": "sse"
         },
@@ -355,12 +355,12 @@
           "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "9fc1dbbb4caf5b7f-VIE",
+          "cf-ray": "9fdb154a08345a53-VIE",
           "connection": "keep-alive",
           "content-type": "text/event-stream; charset=utf-8",
-          "date": "Fri, 15 May 2026 11:38:47 GMT",
+          "date": "Mon, 18 May 2026 13:07:08 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "225",
+          "openai-processing-ms": "179",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
@@ -368,7 +368,7 @@
           "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
           "transfer-encoding": "chunked",
           "x-content-type-options": "nosniff",
-          "x-request-id": "req_74e351abd37d478399510488d3021e08"
+          "x-request-id": "req_989ec12d404d462a84c577d62329bd7a"
         },
         "status": 200,
         "statusText": "OK"
@@ -378,7 +378,7 @@
       "callIndex": 0,
       "id": "7d3c0bb6426e6be4",
       "matchKey": "POST api.openai.com/v1/embeddings",
-      "recordedAt": "2026-05-15T11:38:49.504Z",
+      "recordedAt": "2026-05-18T13:07:09.770Z",
       "request": {
         "body": {
           "kind": "json",
@@ -966,13 +966,13 @@
           "access-control-expose-headers": "X-Request-ID, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "9fc1dbcb1d385b7f-VIE",
+          "cf-ray": "9fdb1550ed925a53-VIE",
           "connection": "keep-alive",
           "content-encoding": "gzip",
           "content-type": "application/json",
-          "date": "Fri, 15 May 2026 11:38:49 GMT",
+          "date": "Mon, 18 May 2026 13:07:09 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "59",
+          "openai-processing-ms": "186",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
@@ -987,7 +987,7 @@
           "x-ratelimit-remaining-tokens": "9999993",
           "x-ratelimit-reset-requests": "6ms",
           "x-ratelimit-reset-tokens": "0s",
-          "x-request-id": "req_d4f4ed4488844e83aad6be51d138995a"
+          "x-request-id": "req_41e260f5ea2d467cb90c43d49719b712"
         },
         "status": 200,
         "statusText": "OK"
@@ -997,7 +997,7 @@
       "callIndex": 0,
       "id": "98922b41de07d721",
       "matchKey": "POST api.cohere.com/v2/rerank",
-      "recordedAt": "2026-05-15T11:38:49.793Z",
+      "recordedAt": "2026-05-18T13:07:10.080Z",
       "request": {
         "body": {
           "kind": "json",
@@ -1020,7 +1020,7 @@
         "body": {
           "kind": "json",
           "value": {
-            "id": "92496624-9bfc-4ac0-bb26-a7027d13b7d7",
+            "id": "1a312981-2ef0-42f8-bbb6-956a281fd120",
             "meta": {
               "api_version": {
                 "version": "2"
@@ -1047,7 +1047,7 @@
           "cache-control": "no-cache, no-store, no-transform, must-revalidate, private, max-age=0",
           "content-encoding": "gzip",
           "content-type": "application/json",
-          "date": "Fri, 15 May 2026 11:38:49 GMT",
+          "date": "Mon, 18 May 2026 13:07:10 GMT",
           "expires": "Thu, 01 Jan 1970 00:00:00 GMT",
           "pragma": "no-cache",
           "server": "envoy",
@@ -1055,8 +1055,8 @@
           "vary": "Origin,Accept-Encoding",
           "via": "1.1 google",
           "x-accel-expires": "0",
-          "x-debug-trace-id": "df6198b518a963e1a5a8eb92139f169e",
-          "x-envoy-upstream-service-time": "53"
+          "x-debug-trace-id": "fb69e72d3d05e7d78b401f247fa407e4",
+          "x-envoy-upstream-service-time": "54"
         },
         "status": 200,
         "statusText": "OK"
@@ -1066,7 +1066,7 @@
       "callIndex": 3,
       "id": "83cbbf6da482c905",
       "matchKey": "POST api.openai.com/v1/responses",
-      "recordedAt": "2026-05-15T11:38:50.972Z",
+      "recordedAt": "2026-05-18T13:07:11.616Z",
       "request": {
         "body": {
           "kind": "json",
@@ -1123,11 +1123,11 @@
             "billing": {
               "payer": "developer"
             },
-            "completed_at": 1778845130,
-            "created_at": 1778845130,
+            "completed_at": 1779109631,
+            "created_at": 1779109630,
             "error": null,
             "frequency_penalty": 0,
-            "id": "resp_0404a219ec47b246006a0705ca01208196ad5824a698e7eb39",
+            "id": "resp_019b35a2e5b500be006a0b0efe45388195a325a20ec0381074",
             "incomplete_details": null,
             "instructions": null,
             "max_output_tokens": 128,
@@ -1139,8 +1139,8 @@
             "output": [
               {
                 "arguments": "{\"location\":\"Paris, France\"}",
-                "call_id": "call_FdCTcBCUxIxTWMhFhYDYGKA3",
-                "id": "fc_0404a219ec47b246006a0705ca8f648196a8dd8edd390cc8ee",
+                "call_id": "call_sXYAVqsiN19asQObBL0kyj6F",
+                "id": "fc_019b35a2e5b500be006a0b0eff387c8195b65e79940db9ffbe",
                 "name": "get_weather",
                 "status": "completed",
                 "type": "function_call"
@@ -1207,13 +1207,13 @@
           "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "9fc1dbcdc8235b7f-VIE",
+          "cf-ray": "9fdb1554886b5a53-VIE",
           "connection": "keep-alive",
           "content-encoding": "gzip",
           "content-type": "application/json",
-          "date": "Fri, 15 May 2026 11:38:51 GMT",
+          "date": "Mon, 18 May 2026 13:07:11 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "963",
+          "openai-processing-ms": "1342",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
@@ -1227,7 +1227,7 @@
           "x-ratelimit-remaining-tokens": "149999687",
           "x-ratelimit-reset-requests": "2ms",
           "x-ratelimit-reset-tokens": "0s",
-          "x-request-id": "req_d6b7300691e84e6d9cf256a366e6dbb8"
+          "x-request-id": "req_5621afd716e741918f8d0604cf369bac"
         },
         "status": 200,
         "statusText": "OK"
@@ -1237,7 +1237,7 @@
       "callIndex": 4,
       "id": "417e64addcf59da7",
       "matchKey": "POST api.openai.com/v1/responses",
-      "recordedAt": "2026-05-15T11:38:52.157Z",
+      "recordedAt": "2026-05-18T13:07:13.100Z",
       "request": {
         "body": {
           "kind": "json",
@@ -1257,11 +1257,11 @@
                 "role": "user"
               },
               {
-                "id": "fc_0404a219ec47b246006a0705ca8f648196a8dd8edd390cc8ee",
+                "id": "fc_019b35a2e5b500be006a0b0eff387c8195b65e79940db9ffbe",
                 "type": "item_reference"
               },
               {
-                "call_id": "call_FdCTcBCUxIxTWMhFhYDYGKA3",
+                "call_id": "call_sXYAVqsiN19asQObBL0kyj6F",
                 "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
                 "type": "function_call_output"
               }
@@ -1303,11 +1303,11 @@
             "billing": {
               "payer": "developer"
             },
-            "completed_at": 1778845131,
-            "created_at": 1778845131,
+            "completed_at": 1779109632,
+            "created_at": 1779109631,
             "error": null,
             "frequency_penalty": 0,
-            "id": "resp_0404a219ec47b246006a0705cb30148196b380469777b7abd8",
+            "id": "resp_019b35a2e5b500be006a0b0effced88195ab653960f656ab91",
             "incomplete_details": null,
             "instructions": null,
             "max_output_tokens": 128,
@@ -1319,8 +1319,8 @@
             "output": [
               {
                 "arguments": "{\"location\":\"Paris, France\"}",
-                "call_id": "call_ow94ONjPsMpZ0rMB2Ck9dkTK",
-                "id": "fc_0404a219ec47b246006a0705cbc6488196a891eaccf8b05976",
+                "call_id": "call_XglVqVVLI8Rkc1I28RiZyLca",
+                "id": "fc_019b35a2e5b500be006a0b0f00b87881959b35df50ec6a7625",
                 "name": "get_weather",
                 "status": "completed",
                 "type": "function_call"
@@ -1387,13 +1387,13 @@
           "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "9fc1dbd528ce5b7f-VIE",
+          "cf-ray": "9fdb155e1fa55a53-VIE",
           "connection": "keep-alive",
           "content-encoding": "gzip",
           "content-type": "application/json",
-          "date": "Fri, 15 May 2026 11:38:52 GMT",
+          "date": "Mon, 18 May 2026 13:07:13 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "953",
+          "openai-processing-ms": "1291",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
@@ -1407,7 +1407,7 @@
           "x-ratelimit-remaining-tokens": "149999650",
           "x-ratelimit-reset-requests": "2ms",
           "x-ratelimit-reset-tokens": "0s",
-          "x-request-id": "req_68a6cfa7aae542d189f21074aa7f6049"
+          "x-request-id": "req_790a4ff156054e818b9e1d3c8a186a33"
         },
         "status": 200,
         "statusText": "OK"
@@ -1417,7 +1417,7 @@
       "callIndex": 5,
       "id": "341675a0a1a88c63",
       "matchKey": "POST api.openai.com/v1/responses",
-      "recordedAt": "2026-05-15T11:38:53.263Z",
+      "recordedAt": "2026-05-18T13:07:14.386Z",
       "request": {
         "body": {
           "kind": "json",
@@ -1437,20 +1437,20 @@
                 "role": "user"
               },
               {
-                "id": "fc_0404a219ec47b246006a0705ca8f648196a8dd8edd390cc8ee",
+                "id": "fc_019b35a2e5b500be006a0b0eff387c8195b65e79940db9ffbe",
                 "type": "item_reference"
               },
               {
-                "call_id": "call_FdCTcBCUxIxTWMhFhYDYGKA3",
+                "call_id": "call_sXYAVqsiN19asQObBL0kyj6F",
                 "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
                 "type": "function_call_output"
               },
               {
-                "id": "fc_0404a219ec47b246006a0705cbc6488196a891eaccf8b05976",
+                "id": "fc_019b35a2e5b500be006a0b0f00b87881959b35df50ec6a7625",
                 "type": "item_reference"
               },
               {
-                "call_id": "call_ow94ONjPsMpZ0rMB2Ck9dkTK",
+                "call_id": "call_XglVqVVLI8Rkc1I28RiZyLca",
                 "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
                 "type": "function_call_output"
               }
@@ -1492,11 +1492,11 @@
             "billing": {
               "payer": "developer"
             },
-            "completed_at": 1778845133,
-            "created_at": 1778845132,
+            "completed_at": 1779109634,
+            "created_at": 1779109633,
             "error": null,
             "frequency_penalty": 0,
-            "id": "resp_0404a219ec47b246006a0705cc5c408196bb7377f340e86045",
+            "id": "resp_019b35a2e5b500be006a0b0f014d1c8195a2c27f2a50bfae99",
             "incomplete_details": null,
             "instructions": null,
             "max_output_tokens": 128,
@@ -1508,8 +1508,8 @@
             "output": [
               {
                 "arguments": "{\"location\":\"Paris, France\"}",
-                "call_id": "call_gCQdgCxiFSafXdWd8V8N1Ceg",
-                "id": "fc_0404a219ec47b246006a0705ccf8a0819689389802c82591f1",
+                "call_id": "call_9C5Hr12zyxc416vblymWOYyK",
+                "id": "fc_019b35a2e5b500be006a0b0f01f3888195a64a5ec83aa4be6d",
                 "name": "get_weather",
                 "status": "completed",
                 "type": "function_call"
@@ -1576,13 +1576,13 @@
           "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "9fc1dbdc98795b7f-VIE",
+          "cf-ray": "9fdb15676e485a53-VIE",
           "connection": "keep-alive",
           "content-encoding": "gzip",
           "content-type": "application/json",
-          "date": "Fri, 15 May 2026 11:38:53 GMT",
+          "date": "Mon, 18 May 2026 13:07:14 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "894",
+          "openai-processing-ms": "1085",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
@@ -1593,10 +1593,10 @@
           "x-ratelimit-limit-requests": "30000",
           "x-ratelimit-limit-tokens": "150000000",
           "x-ratelimit-remaining-requests": "29999",
-          "x-ratelimit-remaining-tokens": "149999610",
+          "x-ratelimit-remaining-tokens": "149999612",
           "x-ratelimit-reset-requests": "2ms",
           "x-ratelimit-reset-tokens": "0s",
-          "x-request-id": "req_d31b42b74def49f1b10b8437ff43f145"
+          "x-request-id": "req_659df726ec304d3db0ce5777f7cba898"
         },
         "status": 200,
         "statusText": "OK"
@@ -1606,7 +1606,7 @@
       "callIndex": 6,
       "id": "cbb9070d68f84d1b",
       "matchKey": "POST api.openai.com/v1/responses",
-      "recordedAt": "2026-05-15T11:38:54.705Z",
+      "recordedAt": "2026-05-18T13:07:15.391Z",
       "request": {
         "body": {
           "kind": "json",
@@ -1626,29 +1626,29 @@
                 "role": "user"
               },
               {
-                "id": "fc_0404a219ec47b246006a0705ca8f648196a8dd8edd390cc8ee",
+                "id": "fc_019b35a2e5b500be006a0b0eff387c8195b65e79940db9ffbe",
                 "type": "item_reference"
               },
               {
-                "call_id": "call_FdCTcBCUxIxTWMhFhYDYGKA3",
+                "call_id": "call_sXYAVqsiN19asQObBL0kyj6F",
                 "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
                 "type": "function_call_output"
               },
               {
-                "id": "fc_0404a219ec47b246006a0705cbc6488196a891eaccf8b05976",
+                "id": "fc_019b35a2e5b500be006a0b0f00b87881959b35df50ec6a7625",
                 "type": "item_reference"
               },
               {
-                "call_id": "call_ow94ONjPsMpZ0rMB2Ck9dkTK",
+                "call_id": "call_XglVqVVLI8Rkc1I28RiZyLca",
                 "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
                 "type": "function_call_output"
               },
               {
-                "id": "fc_0404a219ec47b246006a0705ccf8a0819689389802c82591f1",
+                "id": "fc_019b35a2e5b500be006a0b0f01f3888195a64a5ec83aa4be6d",
                 "type": "item_reference"
               },
               {
-                "call_id": "call_gCQdgCxiFSafXdWd8V8N1Ceg",
+                "call_id": "call_9C5Hr12zyxc416vblymWOYyK",
                 "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
                 "type": "function_call_output"
               }
@@ -1690,11 +1690,11 @@
             "billing": {
               "payer": "developer"
             },
-            "completed_at": 1778845134,
-            "created_at": 1778845133,
+            "completed_at": 1779109635,
+            "created_at": 1779109634,
             "error": null,
             "frequency_penalty": 0,
-            "id": "resp_0404a219ec47b246006a0705cd76b48196961b30173130d354",
+            "id": "resp_019b35a2e5b500be006a0b0f0293fc8195a0546fff1761e23e",
             "incomplete_details": null,
             "instructions": null,
             "max_output_tokens": 128,
@@ -1706,8 +1706,8 @@
             "output": [
               {
                 "arguments": "{\"location\":\"Paris, France\"}",
-                "call_id": "call_qGcDkXqvbKBOLP1gkHgwWtBk",
-                "id": "fc_0404a219ec47b246006a0705ce6dbc819692fa89a3c85f82b0",
+                "call_id": "call_zdHIoq2m6uggecWEeOfB4ElL",
+                "id": "fc_019b35a2e5b500be006a0b0f030030819588e1859ceca1fb59",
                 "name": "get_weather",
                 "status": "completed",
                 "type": "function_call"
@@ -1774,13 +1774,13 @@
           "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "9fc1dbe378225b7f-VIE",
+          "cf-ray": "9fdb156f7c2e5a53-VIE",
           "connection": "keep-alive",
           "content-encoding": "gzip",
           "content-type": "application/json",
-          "date": "Fri, 15 May 2026 11:38:54 GMT",
+          "date": "Mon, 18 May 2026 13:07:15 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "1243",
+          "openai-processing-ms": "812",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
@@ -1794,7 +1794,7 @@
           "x-ratelimit-remaining-tokens": "149999572",
           "x-ratelimit-reset-requests": "2ms",
           "x-ratelimit-reset-tokens": "0s",
-          "x-request-id": "req_8e1c85e31fb344d2bd593ffb692a1008"
+          "x-request-id": "req_32babc0c68ad4bd3ae9cdfc4f2beb018"
         },
         "status": 200,
         "statusText": "OK"
@@ -1804,7 +1804,7 @@
       "callIndex": 7,
       "id": "bccc54d212e2503d",
       "matchKey": "POST api.openai.com/v1/responses",
-      "recordedAt": "2026-05-15T11:38:55.618Z",
+      "recordedAt": "2026-05-18T13:07:16.873Z",
       "request": {
         "body": {
           "kind": "json",
@@ -1838,11 +1838,11 @@
             "billing": {
               "payer": "developer"
             },
-            "completed_at": 1778845135,
-            "created_at": 1778845134,
+            "completed_at": 1779109636,
+            "created_at": 1779109636,
             "error": null,
             "frequency_penalty": 0,
-            "id": "resp_0e038950ec20b2fe006a0705ceef748194865d806c806ff0a4",
+            "id": "resp_0cc727c931a9b376006a0b0f0396808193b25f3b09ab696d8f",
             "incomplete_details": null,
             "instructions": null,
             "max_output_tokens": 24,
@@ -1861,7 +1861,7 @@
                     "type": "output_text"
                   }
                 ],
-                "id": "msg_0e038950ec20b2fe006a0705cf56308194b19b6a92abcee970",
+                "id": "msg_0cc727c931a9b376006a0b0f048eac8193921f0000a04522d8",
                 "role": "assistant",
                 "status": "completed",
                 "type": "message"
@@ -1910,285 +1910,13 @@
           "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "9fc1dbec99e85b7f-VIE",
+          "cf-ray": "9fdb1575c8365a53-VIE",
           "connection": "keep-alive",
           "content-encoding": "gzip",
           "content-type": "application/json",
-          "date": "Fri, 15 May 2026 11:38:55 GMT",
+          "date": "Mon, 18 May 2026 13:07:16 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "684",
-          "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
-          "openai-version": "2020-10-01",
-          "server": "cloudflare",
-          "set-cookie": "[REDACTED]",
-          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
-          "transfer-encoding": "chunked",
-          "x-content-type-options": "nosniff",
-          "x-ratelimit-limit-requests": "30000",
-          "x-ratelimit-limit-tokens": "150000000",
-          "x-ratelimit-remaining-requests": "29999",
-          "x-ratelimit-remaining-tokens": "149996362",
-          "x-ratelimit-reset-requests": "2ms",
-          "x-ratelimit-reset-tokens": "1ms",
-          "x-request-id": "req_870d2894df384642b7383c4299aa4efb"
-        },
-        "status": 200,
-        "statusText": "OK"
-      }
-    },
-    {
-      "callIndex": 8,
-      "id": "8eec740c1be01c5c",
-      "matchKey": "POST api.openai.com/v1/responses",
-      "recordedAt": "2026-05-15T11:39:01.552Z",
-      "request": {
-        "body": {
-          "kind": "json",
-          "value": {
-            "input": [
-              {
-                "content": [
-                  {
-                    "text": "braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix\n\nReply with exactly CACHE_OK and nothing else.",
-                    "type": "input_text"
-                  }
-                ],
-                "role": "user"
-              }
-            ],
-            "max_output_tokens": 24,
-            "model": "gpt-4o-mini-2024-07-18",
-            "prompt_cache_key": "[REDACTED]",
-            "temperature": 0
-          }
-        },
-        "headers": {},
-        "method": "POST",
-        "url": "https://api.openai.com/v1/responses"
-      },
-      "response": {
-        "body": {
-          "kind": "json",
-          "value": {
-            "background": false,
-            "billing": {
-              "payer": "developer"
-            },
-            "completed_at": 1778845141,
-            "created_at": 1778845140,
-            "error": null,
-            "frequency_penalty": 0,
-            "id": "resp_002fcd7088a6e368006a0705d4f30881908495300d227e79c4",
-            "incomplete_details": null,
-            "instructions": null,
-            "max_output_tokens": 24,
-            "max_tool_calls": null,
-            "metadata": {},
-            "model": "gpt-4o-mini-2024-07-18",
-            "moderation": null,
-            "object": "response",
-            "output": [
-              {
-                "content": [
-                  {
-                    "annotations": [],
-                    "logprobs": [],
-                    "text": "CACHE_OK",
-                    "type": "output_text"
-                  }
-                ],
-                "id": "msg_002fcd7088a6e368006a0705d552ec8190882719e4e79e4c3f",
-                "role": "assistant",
-                "status": "completed",
-                "type": "message"
-              }
-            ],
-            "parallel_tool_calls": true,
-            "presence_penalty": 0,
-            "previous_response_id": null,
-            "prompt_cache_key": "[REDACTED]",
-            "prompt_cache_retention": "in_memory",
-            "reasoning": {
-              "effort": null,
-              "summary": null
-            },
-            "safety_identifier": null,
-            "service_tier": "default",
-            "status": "completed",
-            "store": true,
-            "temperature": 0,
-            "text": {
-              "format": {
-                "type": "text"
-              },
-              "verbosity": "medium"
-            },
-            "tool_choice": "auto",
-            "tools": [],
-            "top_logprobs": 0,
-            "top_p": 1,
-            "truncation": "disabled",
-            "usage": {
-              "input_tokens": 3617,
-              "input_tokens_details": {
-                "cached_tokens": 3456
-              },
-              "output_tokens": 3,
-              "output_tokens_details": {
-                "reasoning_tokens": 0
-              },
-              "total_tokens": 3620
-            },
-            "user": null
-          }
-        },
-        "headers": {
-          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
-          "alt-svc": "h3=\":443\"; ma=86400",
-          "cf-cache-status": "DYNAMIC",
-          "cf-ray": "9fc1dc122b9ac28c-VIE",
-          "connection": "keep-alive",
-          "content-encoding": "gzip",
-          "content-type": "application/json",
-          "date": "Fri, 15 May 2026 11:39:01 GMT",
-          "openai-organization": "braintrust-data",
-          "openai-processing-ms": "580",
-          "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
-          "openai-version": "2020-10-01",
-          "server": "cloudflare",
-          "set-cookie": "[REDACTED]",
-          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
-          "transfer-encoding": "chunked",
-          "x-content-type-options": "nosniff",
-          "x-ratelimit-limit-requests": "30000",
-          "x-ratelimit-limit-tokens": "150000000",
-          "x-ratelimit-remaining-requests": "29999",
-          "x-ratelimit-remaining-tokens": "149996362",
-          "x-ratelimit-reset-requests": "2ms",
-          "x-ratelimit-reset-tokens": "1ms",
-          "x-request-id": "req_41a30b5ba9c24fddbe8d2bda3a1f4a54"
-        },
-        "status": 200,
-        "statusText": "OK"
-      }
-    },
-    {
-      "callIndex": 9,
-      "id": "6945bf18d345ad4a",
-      "matchKey": "POST api.openai.com/v1/responses",
-      "recordedAt": "2026-05-15T11:39:07.512Z",
-      "request": {
-        "body": {
-          "kind": "json",
-          "value": {
-            "input": [
-              {
-                "content": [
-                  {
-                    "text": "braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix\n\nReply with exactly CACHE_OK and nothing else.",
-                    "type": "input_text"
-                  }
-                ],
-                "role": "user"
-              }
-            ],
-            "max_output_tokens": 24,
-            "model": "gpt-4o-mini-2024-07-18",
-            "prompt_cache_key": "[REDACTED]",
-            "temperature": 0
-          }
-        },
-        "headers": {},
-        "method": "POST",
-        "url": "https://api.openai.com/v1/responses"
-      },
-      "response": {
-        "body": {
-          "kind": "json",
-          "value": {
-            "background": false,
-            "billing": {
-              "payer": "developer"
-            },
-            "completed_at": 1778845147,
-            "created_at": 1778845146,
-            "error": null,
-            "frequency_penalty": 0,
-            "id": "resp_07e868210009fc30006a0705dad50881968582b3f630ef55ba",
-            "incomplete_details": null,
-            "instructions": null,
-            "max_output_tokens": 24,
-            "max_tool_calls": null,
-            "metadata": {},
-            "model": "gpt-4o-mini-2024-07-18",
-            "moderation": null,
-            "object": "response",
-            "output": [
-              {
-                "content": [
-                  {
-                    "annotations": [],
-                    "logprobs": [],
-                    "text": "CACHE_OK",
-                    "type": "output_text"
-                  }
-                ],
-                "id": "msg_07e868210009fc30006a0705db3d388196b0159232764ad89b",
-                "role": "assistant",
-                "status": "completed",
-                "type": "message"
-              }
-            ],
-            "parallel_tool_calls": true,
-            "presence_penalty": 0,
-            "previous_response_id": null,
-            "prompt_cache_key": "[REDACTED]",
-            "prompt_cache_retention": "in_memory",
-            "reasoning": {
-              "effort": null,
-              "summary": null
-            },
-            "safety_identifier": null,
-            "service_tier": "default",
-            "status": "completed",
-            "store": true,
-            "temperature": 0,
-            "text": {
-              "format": {
-                "type": "text"
-              },
-              "verbosity": "medium"
-            },
-            "tool_choice": "auto",
-            "tools": [],
-            "top_logprobs": 0,
-            "top_p": 1,
-            "truncation": "disabled",
-            "usage": {
-              "input_tokens": 3617,
-              "input_tokens_details": {
-                "cached_tokens": 3456
-              },
-              "output_tokens": 3,
-              "output_tokens_details": {
-                "reasoning_tokens": 0
-              },
-              "total_tokens": 3620
-            },
-            "user": null
-          }
-        },
-        "headers": {
-          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
-          "alt-svc": "h3=\":443\"; ma=86400",
-          "cf-cache-status": "DYNAMIC",
-          "cf-ray": "9fc1dc370f9fc28c-VIE",
-          "connection": "keep-alive",
-          "content-encoding": "gzip",
-          "content-type": "application/json",
-          "date": "Fri, 15 May 2026 11:39:07 GMT",
-          "openai-organization": "braintrust-data",
-          "openai-processing-ms": "661",
+          "openai-processing-ms": "1277",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
@@ -2202,7 +1930,279 @@
           "x-ratelimit-remaining-tokens": "149996365",
           "x-ratelimit-reset-requests": "2ms",
           "x-ratelimit-reset-tokens": "1ms",
-          "x-request-id": "req_2173f28e7f8e4d999e5edef1519d58c0"
+          "x-request-id": "req_c4726fdc41374ce4a0c7648835e6e228"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 8,
+      "id": "8eec740c1be01c5c",
+      "matchKey": "POST api.openai.com/v1/responses",
+      "recordedAt": "2026-05-18T13:07:22.932Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "input": [
+              {
+                "content": [
+                  {
+                    "text": "braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix\n\nReply with exactly CACHE_OK and nothing else.",
+                    "type": "input_text"
+                  }
+                ],
+                "role": "user"
+              }
+            ],
+            "max_output_tokens": 24,
+            "model": "gpt-4o-mini-2024-07-18",
+            "prompt_cache_key": "[REDACTED]",
+            "temperature": 0
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.openai.com/v1/responses"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "background": false,
+            "billing": {
+              "payer": "developer"
+            },
+            "completed_at": 1779109642,
+            "created_at": 1779109642,
+            "error": null,
+            "frequency_penalty": 0,
+            "id": "resp_06399320d0a09412006a0b0f0a257c81958a9edacf3828a6f6",
+            "incomplete_details": null,
+            "instructions": null,
+            "max_output_tokens": 24,
+            "max_tool_calls": null,
+            "metadata": {},
+            "model": "gpt-4o-mini-2024-07-18",
+            "moderation": null,
+            "object": "response",
+            "output": [
+              {
+                "content": [
+                  {
+                    "annotations": [],
+                    "logprobs": [],
+                    "text": "CACHE_OK",
+                    "type": "output_text"
+                  }
+                ],
+                "id": "msg_06399320d0a09412006a0b0f0a84f48195bf3af7ab4be8b2bc",
+                "role": "assistant",
+                "status": "completed",
+                "type": "message"
+              }
+            ],
+            "parallel_tool_calls": true,
+            "presence_penalty": 0,
+            "previous_response_id": null,
+            "prompt_cache_key": "[REDACTED]",
+            "prompt_cache_retention": "in_memory",
+            "reasoning": {
+              "effort": null,
+              "summary": null
+            },
+            "safety_identifier": null,
+            "service_tier": "default",
+            "status": "completed",
+            "store": true,
+            "temperature": 0,
+            "text": {
+              "format": {
+                "type": "text"
+              },
+              "verbosity": "medium"
+            },
+            "tool_choice": "auto",
+            "tools": [],
+            "top_logprobs": 0,
+            "top_p": 1,
+            "truncation": "disabled",
+            "usage": {
+              "input_tokens": 3617,
+              "input_tokens_details": {
+                "cached_tokens": 3456
+              },
+              "output_tokens": 3,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "total_tokens": 3620
+            },
+            "user": null
+          }
+        },
+        "headers": {
+          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "9fdb159eb8d325c0-VIE",
+          "connection": "keep-alive",
+          "content-encoding": "gzip",
+          "content-type": "application/json",
+          "date": "Mon, 18 May 2026 13:07:22 GMT",
+          "openai-organization": "braintrust-data",
+          "openai-processing-ms": "785",
+          "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
+          "openai-version": "2020-10-01",
+          "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+          "transfer-encoding": "chunked",
+          "x-content-type-options": "nosniff",
+          "x-ratelimit-limit-requests": "30000",
+          "x-ratelimit-limit-tokens": "150000000",
+          "x-ratelimit-remaining-requests": "29999",
+          "x-ratelimit-remaining-tokens": "149996365",
+          "x-ratelimit-reset-requests": "2ms",
+          "x-ratelimit-reset-tokens": "1ms",
+          "x-request-id": "req_d53e7b436df74ee6a2a8a0c26dec479b"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 9,
+      "id": "6945bf18d345ad4a",
+      "matchKey": "POST api.openai.com/v1/responses",
+      "recordedAt": "2026-05-18T13:07:29.329Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "input": [
+              {
+                "content": [
+                  {
+                    "text": "braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix\n\nReply with exactly CACHE_OK and nothing else.",
+                    "type": "input_text"
+                  }
+                ],
+                "role": "user"
+              }
+            ],
+            "max_output_tokens": 24,
+            "model": "gpt-4o-mini-2024-07-18",
+            "prompt_cache_key": "[REDACTED]",
+            "temperature": 0
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.openai.com/v1/responses"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "background": false,
+            "billing": {
+              "payer": "developer"
+            },
+            "completed_at": 1779109649,
+            "created_at": 1779109648,
+            "error": null,
+            "frequency_penalty": 0,
+            "id": "resp_0cbe689e44b6c604006a0b0f1038d8819694d8634b48810db7",
+            "incomplete_details": null,
+            "instructions": null,
+            "max_output_tokens": 24,
+            "max_tool_calls": null,
+            "metadata": {},
+            "model": "gpt-4o-mini-2024-07-18",
+            "moderation": null,
+            "object": "response",
+            "output": [
+              {
+                "content": [
+                  {
+                    "annotations": [],
+                    "logprobs": [],
+                    "text": "CACHE_OK",
+                    "type": "output_text"
+                  }
+                ],
+                "id": "msg_0cbe689e44b6c604006a0b0f10e93481968e88d27d49278b7c",
+                "role": "assistant",
+                "status": "completed",
+                "type": "message"
+              }
+            ],
+            "parallel_tool_calls": true,
+            "presence_penalty": 0,
+            "previous_response_id": null,
+            "prompt_cache_key": "[REDACTED]",
+            "prompt_cache_retention": "in_memory",
+            "reasoning": {
+              "effort": null,
+              "summary": null
+            },
+            "safety_identifier": null,
+            "service_tier": "default",
+            "status": "completed",
+            "store": true,
+            "temperature": 0,
+            "text": {
+              "format": {
+                "type": "text"
+              },
+              "verbosity": "medium"
+            },
+            "tool_choice": "auto",
+            "tools": [],
+            "top_logprobs": 0,
+            "top_p": 1,
+            "truncation": "disabled",
+            "usage": {
+              "input_tokens": 3617,
+              "input_tokens_details": {
+                "cached_tokens": 3456
+              },
+              "output_tokens": 3,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "total_tokens": 3620
+            },
+            "user": null
+          }
+        },
+        "headers": {
+          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "9fdb15c48d4170b0-VIE",
+          "connection": "keep-alive",
+          "content-encoding": "gzip",
+          "content-type": "application/json",
+          "date": "Mon, 18 May 2026 13:07:29 GMT",
+          "openai-organization": "braintrust-data",
+          "openai-processing-ms": "1120",
+          "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
+          "openai-version": "2020-10-01",
+          "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+          "transfer-encoding": "chunked",
+          "x-content-type-options": "nosniff",
+          "x-ratelimit-limit-requests": "30000",
+          "x-ratelimit-limit-tokens": "150000000",
+          "x-ratelimit-remaining-requests": "29999",
+          "x-ratelimit-remaining-tokens": "149996365",
+          "x-ratelimit-reset-requests": "2ms",
+          "x-ratelimit-reset-tokens": "1ms",
+          "x-request-id": "req_0750e0887301480faf51336a6f9393ec"
         },
         "status": 200,
         "statusText": "OK"
@@ -2212,7 +2212,7 @@
       "callIndex": 0,
       "id": "fcd9d51c145fb90b",
       "matchKey": "POST api.anthropic.com/v1/messages",
-      "recordedAt": "2026-05-15T11:39:08.241Z",
+      "recordedAt": "2026-05-18T13:07:30.222Z",
       "request": {
         "body": {
           "kind": "json",
@@ -2250,7 +2250,7 @@
                 "type": "text"
               }
             ],
-            "id": "msg_01SMnj8Kvm283yaiCWHJw6jH",
+            "id": "msg_01RwnKbK6MEukeBNtdLRZGyr",
             "model": "claude-haiku-4-5-20251001",
             "role": "assistant",
             "stop_details": null,
@@ -2275,31 +2275,31 @@
           "anthropic-organization-id": "27796668-7351-40ac-acc4-024aee8995a5",
           "anthropic-ratelimit-input-tokens-limit": "4000000",
           "anthropic-ratelimit-input-tokens-remaining": "4000000",
-          "anthropic-ratelimit-input-tokens-reset": "2026-05-15T11:39:08Z",
+          "anthropic-ratelimit-input-tokens-reset": "2026-05-18T13:07:30Z",
           "anthropic-ratelimit-output-tokens-limit": "800000",
           "anthropic-ratelimit-output-tokens-remaining": "800000",
-          "anthropic-ratelimit-output-tokens-reset": "2026-05-15T11:39:08Z",
+          "anthropic-ratelimit-output-tokens-reset": "2026-05-18T13:07:30Z",
           "anthropic-ratelimit-requests-limit": "20000",
           "anthropic-ratelimit-requests-remaining": "19999",
-          "anthropic-ratelimit-requests-reset": "2026-05-15T11:39:07Z",
+          "anthropic-ratelimit-requests-reset": "2026-05-18T13:07:29Z",
           "anthropic-ratelimit-tokens-limit": "4800000",
           "anthropic-ratelimit-tokens-remaining": "4800000",
-          "anthropic-ratelimit-tokens-reset": "2026-05-15T11:39:08Z",
+          "anthropic-ratelimit-tokens-reset": "2026-05-18T13:07:30Z",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "9fc1dc3cfa40a0c4-VIE",
+          "cf-ray": "9fdb15cd5a3b5b39-VIE",
           "connection": "keep-alive",
           "content-encoding": "gzip",
           "content-security-policy": "default-src 'none'; frame-ancestors 'none'",
           "content-type": "application/json",
-          "date": "Fri, 15 May 2026 11:39:08 GMT",
-          "request-id": "req_011Cb4HkzkDLxccs2NWFZU4r",
+          "date": "Mon, 18 May 2026 13:07:30 GMT",
+          "request-id": "req_011CbA5vZmhE2Z7TAhvLsTgD",
           "server": "cloudflare",
           "set-cookie": "[REDACTED]",
           "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
-          "traceresponse": "00-b6cce74f1d13c0e9f0607136864fcb51-7e3d88d4f1f362f7-01",
+          "traceresponse": "00-b72671940ca728e7ea27fe4660fdeb44-673e3c2e53738cf8-01",
           "transfer-encoding": "chunked",
           "vary": "Accept-Encoding",
-          "x-envoy-upstream-service-time": "479",
+          "x-envoy-upstream-service-time": "623",
           "x-robots-tag": "none"
         },
         "status": 200,
@@ -2310,7 +2310,7 @@
       "callIndex": 1,
       "id": "ff22a182ea5a9c06",
       "matchKey": "POST api.anthropic.com/v1/messages",
-      "recordedAt": "2026-05-15T11:39:14.071Z",
+      "recordedAt": "2026-05-18T13:07:36.182Z",
       "request": {
         "body": {
           "kind": "json",
@@ -2348,7 +2348,7 @@
                 "type": "text"
               }
             ],
-            "id": "msg_017vizi3WKZF8nXGFtMYwubY",
+            "id": "msg_018RwWwgFKDqoLhZSR91RkHN",
             "model": "claude-haiku-4-5-20251001",
             "role": "assistant",
             "stop_details": null,
@@ -2373,31 +2373,31 @@
           "anthropic-organization-id": "27796668-7351-40ac-acc4-024aee8995a5",
           "anthropic-ratelimit-input-tokens-limit": "4000000",
           "anthropic-ratelimit-input-tokens-remaining": "4000000",
-          "anthropic-ratelimit-input-tokens-reset": "2026-05-15T11:39:14Z",
+          "anthropic-ratelimit-input-tokens-reset": "2026-05-18T13:07:36Z",
           "anthropic-ratelimit-output-tokens-limit": "800000",
           "anthropic-ratelimit-output-tokens-remaining": "800000",
-          "anthropic-ratelimit-output-tokens-reset": "2026-05-15T11:39:14Z",
+          "anthropic-ratelimit-output-tokens-reset": "2026-05-18T13:07:36Z",
           "anthropic-ratelimit-requests-limit": "20000",
           "anthropic-ratelimit-requests-remaining": "19999",
-          "anthropic-ratelimit-requests-reset": "2026-05-15T11:39:13Z",
+          "anthropic-ratelimit-requests-reset": "2026-05-18T13:07:35Z",
           "anthropic-ratelimit-tokens-limit": "4800000",
           "anthropic-ratelimit-tokens-remaining": "4800000",
-          "anthropic-ratelimit-tokens-reset": "2026-05-15T11:39:14Z",
+          "anthropic-ratelimit-tokens-reset": "2026-05-18T13:07:36Z",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "9fc1dc60fc325ba0-VIE",
+          "cf-ray": "9fdb15f21bf7dfcc-VIE",
           "connection": "keep-alive",
           "content-encoding": "gzip",
           "content-security-policy": "default-src 'none'; frame-ancestors 'none'",
           "content-type": "application/json",
-          "date": "Fri, 15 May 2026 11:39:14 GMT",
-          "request-id": "req_011Cb4HmRR2NEQaYcNT6Ws58",
+          "date": "Mon, 18 May 2026 13:07:36 GMT",
+          "request-id": "req_011CbA5vzqKe1CK7mqLDXPWW",
           "server": "cloudflare",
           "set-cookie": "[REDACTED]",
           "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
-          "traceresponse": "00-260a2e468990d334dff735a7282d3d8c-5c53933420ef05c1-01",
+          "traceresponse": "00-3e648882edd4a95f13f00ff193a19e69-607206b02a2eb091-01",
           "transfer-encoding": "chunked",
           "vary": "Accept-Encoding",
-          "x-envoy-upstream-service-time": "539",
+          "x-envoy-upstream-service-time": "689",
           "x-robots-tag": "none"
         },
         "status": 200,
@@ -2408,7 +2408,7 @@
       "callIndex": 2,
       "id": "f1d50a1e6c760d6c",
       "matchKey": "POST api.anthropic.com/v1/messages",
-      "recordedAt": "2026-05-15T11:39:19.815Z",
+      "recordedAt": "2026-05-18T13:07:42.064Z",
       "request": {
         "body": {
           "kind": "json",
@@ -2446,7 +2446,7 @@
                 "type": "text"
               }
             ],
-            "id": "msg_01XrUtKEEPa4zGUoFQ7L5tUc",
+            "id": "msg_01AE6GVgDnaMYmu5rh5WP14U",
             "model": "claude-haiku-4-5-20251001",
             "role": "assistant",
             "stop_details": null,
@@ -2471,31 +2471,31 @@
           "anthropic-organization-id": "27796668-7351-40ac-acc4-024aee8995a5",
           "anthropic-ratelimit-input-tokens-limit": "4000000",
           "anthropic-ratelimit-input-tokens-remaining": "4000000",
-          "anthropic-ratelimit-input-tokens-reset": "2026-05-15T11:39:19Z",
+          "anthropic-ratelimit-input-tokens-reset": "2026-05-18T13:07:41Z",
           "anthropic-ratelimit-output-tokens-limit": "800000",
           "anthropic-ratelimit-output-tokens-remaining": "800000",
-          "anthropic-ratelimit-output-tokens-reset": "2026-05-15T11:39:19Z",
+          "anthropic-ratelimit-output-tokens-reset": "2026-05-18T13:07:42Z",
           "anthropic-ratelimit-requests-limit": "20000",
           "anthropic-ratelimit-requests-remaining": "19999",
-          "anthropic-ratelimit-requests-reset": "2026-05-15T11:39:19Z",
+          "anthropic-ratelimit-requests-reset": "2026-05-18T13:07:41Z",
           "anthropic-ratelimit-tokens-limit": "4800000",
           "anthropic-ratelimit-tokens-remaining": "4800000",
-          "anthropic-ratelimit-tokens-reset": "2026-05-15T11:39:19Z",
+          "anthropic-ratelimit-tokens-reset": "2026-05-18T13:07:41Z",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "9fc1dc855a5cf832-VIE",
+          "cf-ray": "9fdb16176d9d5b83-VIE",
           "connection": "keep-alive",
           "content-encoding": "gzip",
           "content-security-policy": "default-src 'none'; frame-ancestors 'none'",
           "content-type": "application/json",
-          "date": "Fri, 15 May 2026 11:39:19 GMT",
-          "request-id": "req_011Cb4HmrF1oG4g3fz9jTNju",
+          "date": "Mon, 18 May 2026 13:07:42 GMT",
+          "request-id": "req_011CbA5wSLFRBp1GBQ6HtqhW",
           "server": "cloudflare",
           "set-cookie": "[REDACTED]",
           "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
-          "traceresponse": "00-5d914c986326051b338e958943a35cad-66b12d5c21a81587-01",
+          "traceresponse": "00-13a789fed95c61b64c33a12858885f25-f3c29c89b582b38b-01",
           "transfer-encoding": "chunked",
           "vary": "Accept-Encoding",
-          "x-envoy-upstream-service-time": "477",
+          "x-envoy-upstream-service-time": "619",
           "x-robots-tag": "none"
         },
         "status": 200,
@@ -2506,7 +2506,7 @@
       "callIndex": 10,
       "id": "ab34eb26595033a1",
       "matchKey": "POST api.openai.com/v1/responses",
-      "recordedAt": "2026-05-15T11:39:20.924Z",
+      "recordedAt": "2026-05-18T13:07:43.080Z",
       "request": {
         "body": {
           "kind": "json",
@@ -2539,11 +2539,11 @@
             "billing": {
               "payer": "developer"
             },
-            "completed_at": 1778845160,
-            "created_at": 1778845160,
+            "completed_at": 1779109662,
+            "created_at": 1779109662,
             "error": null,
             "frequency_penalty": 0,
-            "id": "resp_00d991524dd65f70006a0705e81b1c81938f002fb667c418fc",
+            "id": "resp_039ea97737086498006a0b0f1e4d4881969bf84fc6b0041997",
             "incomplete_details": null,
             "instructions": null,
             "max_output_tokens": 24,
@@ -2562,7 +2562,7 @@
                     "type": "output_text"
                   }
                 ],
-                "id": "msg_00d991524dd65f70006a0705e8abd48193b73f34e5a64d76c1",
+                "id": "msg_039ea97737086498006a0b0f1ec9308196ad54dc9b9058011b",
                 "role": "assistant",
                 "status": "completed",
                 "type": "message"
@@ -2611,13 +2611,13 @@
           "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "9fc1dc89bf0fc2b6-VIE",
+          "cf-ray": "9fdb161cbdf6a0c4-VIE",
           "connection": "keep-alive",
           "content-encoding": "gzip",
           "content-type": "application/json",
-          "date": "Fri, 15 May 2026 11:39:20 GMT",
+          "date": "Mon, 18 May 2026 13:07:43 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "813",
+          "openai-processing-ms": "777",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
@@ -2631,7 +2631,7 @@
           "x-ratelimit-remaining-tokens": "149999965",
           "x-ratelimit-reset-requests": "2ms",
           "x-ratelimit-reset-tokens": "0s",
-          "x-request-id": "req_fdc0ca990d2144e39cbb441b4ebf4963"
+          "x-request-id": "req_30004eafed6648cc816cf104adad8263"
         },
         "status": 200,
         "statusText": "OK"
@@ -2641,7 +2641,7 @@
       "callIndex": 11,
       "id": "250e64f864c72337",
       "matchKey": "POST api.openai.com/v1/responses",
-      "recordedAt": "2026-05-15T11:39:21.876Z",
+      "recordedAt": "2026-05-18T13:07:43.884Z",
       "request": {
         "body": {
           "kind": "json",
@@ -2692,11 +2692,11 @@
             "billing": {
               "payer": "developer"
             },
-            "completed_at": 1778845161,
-            "created_at": 1778845161,
+            "completed_at": 1779109663,
+            "created_at": 1779109663,
             "error": null,
             "frequency_penalty": 0,
-            "id": "resp_0e0478cd0d3fb9bb006a0705e9253c8194b91b48a7091d76ff",
+            "id": "resp_03f93df3df146b93006a0b0f1f43f081939d0225ebb23e3910",
             "incomplete_details": null,
             "instructions": null,
             "max_output_tokens": 32,
@@ -2715,7 +2715,7 @@
                     "type": "output_text"
                   }
                 ],
-                "id": "msg_0e0478cd0d3fb9bb006a0705e982008194a3552e97d74cc26a",
+                "id": "msg_03f93df3df146b93006a0b0f1f9574819392c49dfdcd22546e",
                 "role": "assistant",
                 "status": "completed",
                 "type": "message"
@@ -2777,13 +2777,13 @@
           "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "9fc1dc906e66c2b6-VIE",
+          "cf-ray": "9fdb1622ca61a0c4-VIE",
           "connection": "keep-alive",
           "content-encoding": "gzip",
           "content-type": "application/json",
-          "date": "Fri, 15 May 2026 11:39:21 GMT",
+          "date": "Mon, 18 May 2026 13:07:43 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "721",
+          "openai-processing-ms": "627",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
@@ -2797,7 +2797,7 @@
           "x-ratelimit-remaining-tokens": "149999942",
           "x-ratelimit-reset-requests": "2ms",
           "x-ratelimit-reset-tokens": "0s",
-          "x-request-id": "req_0751a216548e415eb41b6b7e88bbfd20"
+          "x-request-id": "req_eeca664fb00341eab42d20bf201ead79"
         },
         "status": 200,
         "statusText": "OK"
@@ -2807,7 +2807,7 @@
       "callIndex": 12,
       "id": "fecb7c9f8d04e1bd",
       "matchKey": "POST api.openai.com/v1/responses",
-      "recordedAt": "2026-05-15T11:39:22.942Z",
+      "recordedAt": "2026-05-18T13:07:44.694Z",
       "request": {
         "body": {
           "kind": "json",
@@ -2854,19 +2854,19 @@
       "response": {
         "body": {
           "chunks": [
-            "event: response.created\ndata: {\"type\":\"response.created\",\"response\":{\"id\":\"resp_0689d25ecf2acaf7006a0705ea16ec819787c2c23c04d952a8\",\"object\":\"response\",\"created_at\":1778845162,\"status\":\"in_progress\",\"background\":false,\"completed_at\":null,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":32,\"max_tool_calls\":null,\"model\":\"gpt-4o-mini-2024-07-18\",\"moderation\":null,\"output\":[],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":null,\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"effort\":null,\"summary\":null},\"safety_identifier\":null,\"service_tier\":\"auto\",\"store\":true,\"temperature\":0,\"text\":{\"format\":{\"type\":\"json_schema\",\"description\":null,\"name\":\"response\",\"schema\":{\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"additionalProperties\":false},\"strict\":true},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tools\":[],\"top_logprobs\":0,\"top_p\":1,\"truncation\":\"disabled\",\"usage\":null,\"user\":null,\"metadata\":{}},\"sequence_number\":0}",
-            "event: response.in_progress\ndata: {\"type\":\"response.in_progress\",\"response\":{\"id\":\"resp_0689d25ecf2acaf7006a0705ea16ec819787c2c23c04d952a8\",\"object\":\"response\",\"created_at\":1778845162,\"status\":\"in_progress\",\"background\":false,\"completed_at\":null,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":32,\"max_tool_calls\":null,\"model\":\"gpt-4o-mini-2024-07-18\",\"moderation\":null,\"output\":[],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":null,\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"effort\":null,\"summary\":null},\"safety_identifier\":null,\"service_tier\":\"auto\",\"store\":true,\"temperature\":0,\"text\":{\"format\":{\"type\":\"json_schema\",\"description\":null,\"name\":\"response\",\"schema\":{\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"additionalProperties\":false},\"strict\":true},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tools\":[],\"top_logprobs\":0,\"top_p\":1,\"truncation\":\"disabled\",\"usage\":null,\"user\":null,\"metadata\":{}},\"sequence_number\":1}",
-            "event: response.output_item.added\ndata: {\"type\":\"response.output_item.added\",\"item\":{\"id\":\"msg_0689d25ecf2acaf7006a0705ea96d4819789ce14c4ebd1df5e\",\"type\":\"message\",\"status\":\"in_progress\",\"content\":[],\"role\":\"assistant\"},\"output_index\":0,\"sequence_number\":2}",
-            "event: response.content_part.added\ndata: {\"type\":\"response.content_part.added\",\"content_index\":0,\"item_id\":\"msg_0689d25ecf2acaf7006a0705ea96d4819789ce14c4ebd1df5e\",\"output_index\":0,\"part\":{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"\"},\"sequence_number\":3}",
-            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"{\\\"\",\"item_id\":\"msg_0689d25ecf2acaf7006a0705ea96d4819789ce14c4ebd1df5e\",\"logprobs\":[],\"obfuscation\":\"T0g8p4ghZQIBc1\",\"output_index\":0,\"sequence_number\":4}",
-            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"city\",\"item_id\":\"msg_0689d25ecf2acaf7006a0705ea96d4819789ce14c4ebd1df5e\",\"logprobs\":[],\"obfuscation\":\"G8TMkPPkSMjp\",\"output_index\":0,\"sequence_number\":5}",
-            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"\\\":\\\"\",\"item_id\":\"msg_0689d25ecf2acaf7006a0705ea96d4819789ce14c4ebd1df5e\",\"logprobs\":[],\"obfuscation\":\"jWppwhiXeCXGI\",\"output_index\":0,\"sequence_number\":6}",
-            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"Paris\",\"item_id\":\"msg_0689d25ecf2acaf7006a0705ea96d4819789ce14c4ebd1df5e\",\"logprobs\":[],\"obfuscation\":\"UD0cCODV5I9\",\"output_index\":0,\"sequence_number\":7}",
-            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"\\\"}\",\"item_id\":\"msg_0689d25ecf2acaf7006a0705ea96d4819789ce14c4ebd1df5e\",\"logprobs\":[],\"obfuscation\":\"IjJPwbP7Jybbui\",\"output_index\":0,\"sequence_number\":8}",
-            "event: response.output_text.done\ndata: {\"type\":\"response.output_text.done\",\"content_index\":0,\"item_id\":\"msg_0689d25ecf2acaf7006a0705ea96d4819789ce14c4ebd1df5e\",\"logprobs\":[],\"output_index\":0,\"sequence_number\":9,\"text\":\"{\\\"city\\\":\\\"Paris\\\"}\"}",
-            "event: response.content_part.done\ndata: {\"type\":\"response.content_part.done\",\"content_index\":0,\"item_id\":\"msg_0689d25ecf2acaf7006a0705ea96d4819789ce14c4ebd1df5e\",\"output_index\":0,\"part\":{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"{\\\"city\\\":\\\"Paris\\\"}\"},\"sequence_number\":10}",
-            "event: response.output_item.done\ndata: {\"type\":\"response.output_item.done\",\"item\":{\"id\":\"msg_0689d25ecf2acaf7006a0705ea96d4819789ce14c4ebd1df5e\",\"type\":\"message\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"{\\\"city\\\":\\\"Paris\\\"}\"}],\"role\":\"assistant\"},\"output_index\":0,\"sequence_number\":11}",
-            "event: response.completed\ndata: {\"type\":\"response.completed\",\"response\":{\"id\":\"resp_0689d25ecf2acaf7006a0705ea16ec819787c2c23c04d952a8\",\"object\":\"response\",\"created_at\":1778845162,\"status\":\"completed\",\"background\":false,\"completed_at\":1778845162,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":32,\"max_tool_calls\":null,\"model\":\"gpt-4o-mini-2024-07-18\",\"moderation\":null,\"output\":[{\"id\":\"msg_0689d25ecf2acaf7006a0705ea96d4819789ce14c4ebd1df5e\",\"type\":\"message\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"{\\\"city\\\":\\\"Paris\\\"}\"}],\"role\":\"assistant\"}],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":null,\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"effort\":null,\"summary\":null},\"safety_identifier\":null,\"service_tier\":\"default\",\"store\":true,\"temperature\":0,\"text\":{\"format\":{\"type\":\"json_schema\",\"description\":null,\"name\":\"response\",\"schema\":{\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"additionalProperties\":false},\"strict\":true},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tools\":[],\"top_logprobs\":0,\"top_p\":1,\"truncation\":\"disabled\",\"usage\":{\"input_tokens\":38,\"input_tokens_details\":{\"cached_tokens\":0},\"output_tokens\":6,\"output_tokens_details\":{\"reasoning_tokens\":0},\"total_tokens\":44},\"user\":null,\"metadata\":{}},\"sequence_number\":12}"
+            "event: response.created\ndata: {\"type\":\"response.created\",\"response\":{\"id\":\"resp_0ef2b9c5ebc1c507006a0b0f2014548194adab9aa95a8a826f\",\"object\":\"response\",\"created_at\":1779109664,\"status\":\"in_progress\",\"background\":false,\"completed_at\":null,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":32,\"max_tool_calls\":null,\"model\":\"gpt-4o-mini-2024-07-18\",\"moderation\":null,\"output\":[],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":null,\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"effort\":null,\"summary\":null},\"safety_identifier\":null,\"service_tier\":\"auto\",\"store\":true,\"temperature\":0,\"text\":{\"format\":{\"type\":\"json_schema\",\"description\":null,\"name\":\"response\",\"schema\":{\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"additionalProperties\":false},\"strict\":true},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tools\":[],\"top_logprobs\":0,\"top_p\":1,\"truncation\":\"disabled\",\"usage\":null,\"user\":null,\"metadata\":{}},\"sequence_number\":0}",
+            "event: response.in_progress\ndata: {\"type\":\"response.in_progress\",\"response\":{\"id\":\"resp_0ef2b9c5ebc1c507006a0b0f2014548194adab9aa95a8a826f\",\"object\":\"response\",\"created_at\":1779109664,\"status\":\"in_progress\",\"background\":false,\"completed_at\":null,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":32,\"max_tool_calls\":null,\"model\":\"gpt-4o-mini-2024-07-18\",\"moderation\":null,\"output\":[],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":null,\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"effort\":null,\"summary\":null},\"safety_identifier\":null,\"service_tier\":\"auto\",\"store\":true,\"temperature\":0,\"text\":{\"format\":{\"type\":\"json_schema\",\"description\":null,\"name\":\"response\",\"schema\":{\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"additionalProperties\":false},\"strict\":true},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tools\":[],\"top_logprobs\":0,\"top_p\":1,\"truncation\":\"disabled\",\"usage\":null,\"user\":null,\"metadata\":{}},\"sequence_number\":1}",
+            "event: response.output_item.added\ndata: {\"type\":\"response.output_item.added\",\"item\":{\"id\":\"msg_0ef2b9c5ebc1c507006a0b0f2072c4819482633bcde8618502\",\"type\":\"message\",\"status\":\"in_progress\",\"content\":[],\"role\":\"assistant\"},\"output_index\":0,\"sequence_number\":2}",
+            "event: response.content_part.added\ndata: {\"type\":\"response.content_part.added\",\"content_index\":0,\"item_id\":\"msg_0ef2b9c5ebc1c507006a0b0f2072c4819482633bcde8618502\",\"output_index\":0,\"part\":{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"\"},\"sequence_number\":3}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"{\\\"\",\"item_id\":\"msg_0ef2b9c5ebc1c507006a0b0f2072c4819482633bcde8618502\",\"logprobs\":[],\"obfuscation\":\"jd2dvIGAkFeNJM\",\"output_index\":0,\"sequence_number\":4}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"city\",\"item_id\":\"msg_0ef2b9c5ebc1c507006a0b0f2072c4819482633bcde8618502\",\"logprobs\":[],\"obfuscation\":\"FQTF3ZweHRyD\",\"output_index\":0,\"sequence_number\":5}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"\\\":\\\"\",\"item_id\":\"msg_0ef2b9c5ebc1c507006a0b0f2072c4819482633bcde8618502\",\"logprobs\":[],\"obfuscation\":\"VW98j4SpRMzyV\",\"output_index\":0,\"sequence_number\":6}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"Paris\",\"item_id\":\"msg_0ef2b9c5ebc1c507006a0b0f2072c4819482633bcde8618502\",\"logprobs\":[],\"obfuscation\":\"PGbDfrYuDOz\",\"output_index\":0,\"sequence_number\":7}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"\\\"}\",\"item_id\":\"msg_0ef2b9c5ebc1c507006a0b0f2072c4819482633bcde8618502\",\"logprobs\":[],\"obfuscation\":\"9ZjCBTh5DC9YbV\",\"output_index\":0,\"sequence_number\":8}",
+            "event: response.output_text.done\ndata: {\"type\":\"response.output_text.done\",\"content_index\":0,\"item_id\":\"msg_0ef2b9c5ebc1c507006a0b0f2072c4819482633bcde8618502\",\"logprobs\":[],\"output_index\":0,\"sequence_number\":9,\"text\":\"{\\\"city\\\":\\\"Paris\\\"}\"}",
+            "event: response.content_part.done\ndata: {\"type\":\"response.content_part.done\",\"content_index\":0,\"item_id\":\"msg_0ef2b9c5ebc1c507006a0b0f2072c4819482633bcde8618502\",\"output_index\":0,\"part\":{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"{\\\"city\\\":\\\"Paris\\\"}\"},\"sequence_number\":10}",
+            "event: response.output_item.done\ndata: {\"type\":\"response.output_item.done\",\"item\":{\"id\":\"msg_0ef2b9c5ebc1c507006a0b0f2072c4819482633bcde8618502\",\"type\":\"message\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"{\\\"city\\\":\\\"Paris\\\"}\"}],\"role\":\"assistant\"},\"output_index\":0,\"sequence_number\":11}",
+            "event: response.completed\ndata: {\"type\":\"response.completed\",\"response\":{\"id\":\"resp_0ef2b9c5ebc1c507006a0b0f2014548194adab9aa95a8a826f\",\"object\":\"response\",\"created_at\":1779109664,\"status\":\"completed\",\"background\":false,\"completed_at\":1779109664,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":32,\"max_tool_calls\":null,\"model\":\"gpt-4o-mini-2024-07-18\",\"moderation\":null,\"output\":[{\"id\":\"msg_0ef2b9c5ebc1c507006a0b0f2072c4819482633bcde8618502\",\"type\":\"message\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"{\\\"city\\\":\\\"Paris\\\"}\"}],\"role\":\"assistant\"}],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":null,\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"effort\":null,\"summary\":null},\"safety_identifier\":null,\"service_tier\":\"default\",\"store\":true,\"temperature\":0,\"text\":{\"format\":{\"type\":\"json_schema\",\"description\":null,\"name\":\"response\",\"schema\":{\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"additionalProperties\":false},\"strict\":true},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tools\":[],\"top_logprobs\":0,\"top_p\":1,\"truncation\":\"disabled\",\"usage\":{\"input_tokens\":38,\"input_tokens_details\":{\"cached_tokens\":0},\"output_tokens\":6,\"output_tokens_details\":{\"reasoning_tokens\":0},\"total_tokens\":44},\"user\":null,\"metadata\":{}},\"sequence_number\":12}"
           ],
           "kind": "sse"
         },
@@ -2874,12 +2874,12 @@
           "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "9fc1dc965d3ec2b6-VIE",
+          "cf-ray": "9fdb1627cc70a0c4-VIE",
           "connection": "keep-alive",
           "content-type": "text/event-stream; charset=utf-8",
-          "date": "Fri, 15 May 2026 11:39:22 GMT",
+          "date": "Mon, 18 May 2026 13:07:44 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "98",
+          "openai-processing-ms": "148",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
@@ -2887,7 +2887,7 @@
           "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
           "transfer-encoding": "chunked",
           "x-content-type-options": "nosniff",
-          "x-request-id": "req_940aa3b440584c3f9ca0986ddbd8be53"
+          "x-request-id": "req_89b403bc603e4583847de662c103ffbc"
         },
         "status": 200,
         "statusText": "OK"
@@ -2897,7 +2897,7 @@
       "callIndex": 13,
       "id": "eebc152ba05b8412",
       "matchKey": "POST api.openai.com/v1/responses",
-      "recordedAt": "2026-05-15T11:39:23.847Z",
+      "recordedAt": "2026-05-18T13:07:45.623Z",
       "request": {
         "body": {
           "kind": "json",
@@ -2929,11 +2929,11 @@
             "billing": {
               "payer": "developer"
             },
-            "completed_at": 1778845163,
-            "created_at": 1778845163,
+            "completed_at": 1779109665,
+            "created_at": 1779109664,
             "error": null,
             "frequency_penalty": 0,
-            "id": "resp_0d727e0edb39b22c006a0705eb244481979a804f4e5dbff9a1",
+            "id": "resp_06076d121997aaea006a0b0f20dfd481968d1ea0c85287fb38",
             "incomplete_details": null,
             "instructions": null,
             "max_output_tokens": 24,
@@ -2952,7 +2952,7 @@
                     "type": "output_text"
                   }
                 ],
-                "id": "msg_0d727e0edb39b22c006a0705eba16c8197a86455c2b5558219",
+                "id": "msg_06076d121997aaea006a0b0f2138a88196bcd03025c07b05ba",
                 "role": "assistant",
                 "status": "completed",
                 "type": "message"
@@ -3001,13 +3001,13 @@
           "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "9fc1dc9cfcfac2b6-VIE",
+          "cf-ray": "9fdb162cdeeba0c4-VIE",
           "connection": "keep-alive",
           "content-encoding": "gzip",
           "content-type": "application/json",
-          "date": "Fri, 15 May 2026 11:39:23 GMT",
+          "date": "Mon, 18 May 2026 13:07:45 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "705",
+          "openai-processing-ms": "752",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
@@ -3021,7 +3021,7 @@
           "x-ratelimit-remaining-tokens": "149999965",
           "x-ratelimit-reset-requests": "2ms",
           "x-ratelimit-reset-tokens": "0s",
-          "x-request-id": "req_e7a949966a984192be07b061c78f9e34"
+          "x-request-id": "req_a62cf56f3337428bab7ebbb48d49089e"
         },
         "status": 200,
         "statusText": "OK"
@@ -3031,7 +3031,7 @@
       "callIndex": 14,
       "id": "bc08e707f2920073",
       "matchKey": "POST api.openai.com/v1/responses",
-      "recordedAt": "2026-05-15T11:39:24.640Z",
+      "recordedAt": "2026-05-18T13:07:46.742Z",
       "request": {
         "body": {
           "kind": "json",
@@ -3059,17 +3059,17 @@
       "response": {
         "body": {
           "chunks": [
-            "event: response.created\ndata: {\"type\":\"response.created\",\"response\":{\"id\":\"resp_0612209c4b7d26aa006a0705ec0d6481978798db1fc6746893\",\"object\":\"response\",\"created_at\":1778845164,\"status\":\"in_progress\",\"background\":false,\"completed_at\":null,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":24,\"max_tool_calls\":null,\"model\":\"gpt-4o-mini-2024-07-18\",\"moderation\":null,\"output\":[],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":null,\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"effort\":null,\"summary\":null},\"safety_identifier\":null,\"service_tier\":\"auto\",\"store\":true,\"temperature\":1,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tools\":[],\"top_logprobs\":0,\"top_p\":1,\"truncation\":\"disabled\",\"usage\":null,\"user\":null,\"metadata\":{}},\"sequence_number\":0}",
-            "event: response.in_progress\ndata: {\"type\":\"response.in_progress\",\"response\":{\"id\":\"resp_0612209c4b7d26aa006a0705ec0d6481978798db1fc6746893\",\"object\":\"response\",\"created_at\":1778845164,\"status\":\"in_progress\",\"background\":false,\"completed_at\":null,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":24,\"max_tool_calls\":null,\"model\":\"gpt-4o-mini-2024-07-18\",\"moderation\":null,\"output\":[],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":null,\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"effort\":null,\"summary\":null},\"safety_identifier\":null,\"service_tier\":\"auto\",\"store\":true,\"temperature\":1,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tools\":[],\"top_logprobs\":0,\"top_p\":1,\"truncation\":\"disabled\",\"usage\":null,\"user\":null,\"metadata\":{}},\"sequence_number\":1}",
-            "event: response.output_item.added\ndata: {\"type\":\"response.output_item.added\",\"item\":{\"id\":\"msg_0612209c4b7d26aa006a0705ec6fa48197a09483c805100601\",\"type\":\"message\",\"status\":\"in_progress\",\"content\":[],\"role\":\"assistant\"},\"output_index\":0,\"sequence_number\":2}",
-            "event: response.content_part.added\ndata: {\"type\":\"response.content_part.added\",\"content_index\":0,\"item_id\":\"msg_0612209c4b7d26aa006a0705ec6fa48197a09483c805100601\",\"output_index\":0,\"part\":{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"\"},\"sequence_number\":3}",
-            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"STREAM\",\"item_id\":\"msg_0612209c4b7d26aa006a0705ec6fa48197a09483c805100601\",\"logprobs\":[],\"obfuscation\":\"OkK3SNpNlP\",\"output_index\":0,\"sequence_number\":4}",
-            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\" HEL\",\"item_id\":\"msg_0612209c4b7d26aa006a0705ec6fa48197a09483c805100601\",\"logprobs\":[],\"obfuscation\":\"wD3M8M0NgdEd\",\"output_index\":0,\"sequence_number\":5}",
-            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"LO\",\"item_id\":\"msg_0612209c4b7d26aa006a0705ec6fa48197a09483c805100601\",\"logprobs\":[],\"obfuscation\":\"R6FufpH6o2XjNv\",\"output_index\":0,\"sequence_number\":6}",
-            "event: response.output_text.done\ndata: {\"type\":\"response.output_text.done\",\"content_index\":0,\"item_id\":\"msg_0612209c4b7d26aa006a0705ec6fa48197a09483c805100601\",\"logprobs\":[],\"output_index\":0,\"sequence_number\":7,\"text\":\"STREAM HELLO\"}",
-            "event: response.content_part.done\ndata: {\"type\":\"response.content_part.done\",\"content_index\":0,\"item_id\":\"msg_0612209c4b7d26aa006a0705ec6fa48197a09483c805100601\",\"output_index\":0,\"part\":{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"STREAM HELLO\"},\"sequence_number\":8}",
-            "event: response.output_item.done\ndata: {\"type\":\"response.output_item.done\",\"item\":{\"id\":\"msg_0612209c4b7d26aa006a0705ec6fa48197a09483c805100601\",\"type\":\"message\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"STREAM HELLO\"}],\"role\":\"assistant\"},\"output_index\":0,\"sequence_number\":9}",
-            "event: response.completed\ndata: {\"type\":\"response.completed\",\"response\":{\"id\":\"resp_0612209c4b7d26aa006a0705ec0d6481978798db1fc6746893\",\"object\":\"response\",\"created_at\":1778845164,\"status\":\"completed\",\"background\":false,\"completed_at\":1778845164,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":24,\"max_tool_calls\":null,\"model\":\"gpt-4o-mini-2024-07-18\",\"moderation\":null,\"output\":[{\"id\":\"msg_0612209c4b7d26aa006a0705ec6fa48197a09483c805100601\",\"type\":\"message\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"STREAM HELLO\"}],\"role\":\"assistant\"}],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":null,\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"effort\":null,\"summary\":null},\"safety_identifier\":null,\"service_tier\":\"default\",\"store\":true,\"temperature\":1,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tools\":[],\"top_logprobs\":0,\"top_p\":1,\"truncation\":\"disabled\",\"usage\":{\"input_tokens\":17,\"input_tokens_details\":{\"cached_tokens\":0},\"output_tokens\":4,\"output_tokens_details\":{\"reasoning_tokens\":0},\"total_tokens\":21},\"user\":null,\"metadata\":{}},\"sequence_number\":10}"
+            "event: response.created\ndata: {\"type\":\"response.created\",\"response\":{\"id\":\"resp_0d44771906d507ad006a0b0f21ccb081909e644a5ec5d661c6\",\"object\":\"response\",\"created_at\":1779109665,\"status\":\"in_progress\",\"background\":false,\"completed_at\":null,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":24,\"max_tool_calls\":null,\"model\":\"gpt-4o-mini-2024-07-18\",\"moderation\":null,\"output\":[],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":null,\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"effort\":null,\"summary\":null},\"safety_identifier\":null,\"service_tier\":\"auto\",\"store\":true,\"temperature\":1,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tools\":[],\"top_logprobs\":0,\"top_p\":1,\"truncation\":\"disabled\",\"usage\":null,\"user\":null,\"metadata\":{}},\"sequence_number\":0}",
+            "event: response.in_progress\ndata: {\"type\":\"response.in_progress\",\"response\":{\"id\":\"resp_0d44771906d507ad006a0b0f21ccb081909e644a5ec5d661c6\",\"object\":\"response\",\"created_at\":1779109665,\"status\":\"in_progress\",\"background\":false,\"completed_at\":null,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":24,\"max_tool_calls\":null,\"model\":\"gpt-4o-mini-2024-07-18\",\"moderation\":null,\"output\":[],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":null,\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"effort\":null,\"summary\":null},\"safety_identifier\":null,\"service_tier\":\"auto\",\"store\":true,\"temperature\":1,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tools\":[],\"top_logprobs\":0,\"top_p\":1,\"truncation\":\"disabled\",\"usage\":null,\"user\":null,\"metadata\":{}},\"sequence_number\":1}",
+            "event: response.output_item.added\ndata: {\"type\":\"response.output_item.added\",\"item\":{\"id\":\"msg_0d44771906d507ad006a0b0f2275ac81908113e861b8ac0838\",\"type\":\"message\",\"status\":\"in_progress\",\"content\":[],\"role\":\"assistant\"},\"output_index\":0,\"sequence_number\":2}",
+            "event: response.content_part.added\ndata: {\"type\":\"response.content_part.added\",\"content_index\":0,\"item_id\":\"msg_0d44771906d507ad006a0b0f2275ac81908113e861b8ac0838\",\"output_index\":0,\"part\":{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"\"},\"sequence_number\":3}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"STREAM\",\"item_id\":\"msg_0d44771906d507ad006a0b0f2275ac81908113e861b8ac0838\",\"logprobs\":[],\"obfuscation\":\"ZuEEPDw1FZ\",\"output_index\":0,\"sequence_number\":4}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\" HEL\",\"item_id\":\"msg_0d44771906d507ad006a0b0f2275ac81908113e861b8ac0838\",\"logprobs\":[],\"obfuscation\":\"C80khomvIfEM\",\"output_index\":0,\"sequence_number\":5}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"LO\",\"item_id\":\"msg_0d44771906d507ad006a0b0f2275ac81908113e861b8ac0838\",\"logprobs\":[],\"obfuscation\":\"jhH9D3rIqFDDS2\",\"output_index\":0,\"sequence_number\":6}",
+            "event: response.output_text.done\ndata: {\"type\":\"response.output_text.done\",\"content_index\":0,\"item_id\":\"msg_0d44771906d507ad006a0b0f2275ac81908113e861b8ac0838\",\"logprobs\":[],\"output_index\":0,\"sequence_number\":7,\"text\":\"STREAM HELLO\"}",
+            "event: response.content_part.done\ndata: {\"type\":\"response.content_part.done\",\"content_index\":0,\"item_id\":\"msg_0d44771906d507ad006a0b0f2275ac81908113e861b8ac0838\",\"output_index\":0,\"part\":{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"STREAM HELLO\"},\"sequence_number\":8}",
+            "event: response.output_item.done\ndata: {\"type\":\"response.output_item.done\",\"item\":{\"id\":\"msg_0d44771906d507ad006a0b0f2275ac81908113e861b8ac0838\",\"type\":\"message\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"STREAM HELLO\"}],\"role\":\"assistant\"},\"output_index\":0,\"sequence_number\":9}",
+            "event: response.completed\ndata: {\"type\":\"response.completed\",\"response\":{\"id\":\"resp_0d44771906d507ad006a0b0f21ccb081909e644a5ec5d661c6\",\"object\":\"response\",\"created_at\":1779109665,\"status\":\"completed\",\"background\":false,\"completed_at\":1779109666,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":24,\"max_tool_calls\":null,\"model\":\"gpt-4o-mini-2024-07-18\",\"moderation\":null,\"output\":[{\"id\":\"msg_0d44771906d507ad006a0b0f2275ac81908113e861b8ac0838\",\"type\":\"message\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"STREAM HELLO\"}],\"role\":\"assistant\"}],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":null,\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"effort\":null,\"summary\":null},\"safety_identifier\":null,\"service_tier\":\"default\",\"store\":true,\"temperature\":1,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tools\":[],\"top_logprobs\":0,\"top_p\":1,\"truncation\":\"disabled\",\"usage\":{\"input_tokens\":17,\"input_tokens_details\":{\"cached_tokens\":0},\"output_tokens\":4,\"output_tokens_details\":{\"reasoning_tokens\":0},\"total_tokens\":21},\"user\":null,\"metadata\":{}},\"sequence_number\":10}"
           ],
           "kind": "sse"
         },
@@ -3077,12 +3077,12 @@
           "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "9fc1dca29b7fc2b6-VIE",
+          "cf-ray": "9fdb1632ab83a0c4-VIE",
           "connection": "keep-alive",
           "content-type": "text/event-stream; charset=utf-8",
-          "date": "Fri, 15 May 2026 11:39:24 GMT",
+          "date": "Mon, 18 May 2026 13:07:45 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "111",
+          "openai-processing-ms": "93",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
@@ -3090,7 +3090,7 @@
           "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
           "transfer-encoding": "chunked",
           "x-content-type-options": "nosniff",
-          "x-request-id": "req_4bf9950c934341bd86432167ea397589"
+          "x-request-id": "req_a273f7cd9d58413e97aacd0145cf9122"
         },
         "status": 200,
         "statusText": "OK"
