@@ -58,6 +58,7 @@ export interface InstrumentationConfig {
     genkit?: boolean;
     gitHubCopilot?: boolean;
     openaiCodexSDK?: boolean;
+    openAIAgents?: boolean;
   };
 }
 

@@ -1,8 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import {
-  BraintrustPlugin,
-  type BraintrustPluginConfig,
-} from "./braintrust-plugin";
+import { BraintrustPlugin } from "./braintrust-plugin";
 import { OpenAIPlugin } from "./plugins/openai-plugin";
 import { OpenAICodexPlugin } from "./plugins/openai-codex-plugin";
 import { AnthropicPlugin } from "./plugins/anthropic-plugin";
@@ -379,7 +376,7 @@ describe("BraintrustPlugin", () => {
     it("should not create OpenAI Agents plugin when openAIAgents: false", () => {
       const plugin = new BraintrustPlugin({
         integrations: { openAIAgents: false },
-      } as BraintrustPluginConfig);
+      });
       plugin.enable();
 
       expect(OpenAIAgentsPlugin).not.toHaveBeenCalled();
@@ -532,7 +529,7 @@ describe("BraintrustPlugin", () => {
           groq: false,
           gitHubCopilot: false,
         },
-      } as BraintrustPluginConfig);
+      });
       plugin.enable();
 
       expect(OpenAIPlugin).not.toHaveBeenCalled();
@@ -564,7 +561,7 @@ describe("BraintrustPlugin", () => {
           openrouter: true,
           mistral: false,
         },
-      } as BraintrustPluginConfig);
+      });
       plugin.enable();
 
       expect(OpenAIPlugin).toHaveBeenCalledTimes(1);
@@ -838,7 +835,7 @@ describe("BraintrustPlugin", () => {
           cohere: false,
           groq: true,
         },
-      } as BraintrustPluginConfig);
+      });
       plugin.enable();
 
       const openaiMock = vi.mocked(OpenAIPlugin).mock.results[0].value;

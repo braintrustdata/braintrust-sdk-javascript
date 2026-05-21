@@ -38,6 +38,7 @@ export interface BraintrustPluginConfig {
     genkit?: boolean;
     gitHubCopilot?: boolean;
     openaiCodexSDK?: boolean;
+    openAIAgents?: boolean;
   };
 }
 
@@ -128,7 +129,7 @@ export class BraintrustPlugin extends BasePlugin {
     }
 
     // Enable OpenAI Agents SDK integration (default: true)
-    if (getIntegrationConfig(integrations, "openAIAgents") !== false) {
+    if (integrations.openAIAgents !== false) {
       this.openAIAgentsPlugin = new OpenAIAgentsPlugin();
       this.openAIAgentsPlugin.enable();
     }
