@@ -59,6 +59,7 @@ export interface InstrumentationConfig {
     gitHubCopilot?: boolean;
     openaiCodexSDK?: boolean;
     flue?: boolean;
+    openAIAgents?: boolean;
   };
 }
 
@@ -165,6 +166,7 @@ class PluginRegistry {
       claudeAgentSDK: true,
       cursor: true,
       cursorSDK: true,
+      openAIAgents: true,
       openrouter: true,
       openrouterAgent: true,
       mistral: true,
