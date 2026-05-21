@@ -11,6 +11,7 @@ export interface InstrumentationIntegrationsConfig {
   cursor?: boolean;
   cursorSDK?: boolean;
   flue?: boolean;
+  mastra?: boolean;
   openAIAgents?: boolean;
   openrouter?: boolean;
   openrouterAgent?: boolean;
@@ -54,6 +55,7 @@ const envIntegrationAliases: Record<
   cursorsdk: "cursorSDK",
   flue: "flue",
   "flue-runtime": "flue",
+  mastra: "mastra",
   "openai-agents": "openAIAgents",
   openaiagents: "openAIAgents",
   "openai-agents-core": "openAIAgents",
@@ -100,6 +102,7 @@ export function getDefaultInstrumentationIntegrations(): Record<
     cursor: true,
     cursorSDK: true,
     flue: true,
+    mastra: true,
     openAIAgents: true,
     openrouter: true,
     openrouterAgent: true,

@@ -14,6 +14,12 @@
  */
 
 import { register } from "node:module";
+import {
+  isInstrumentationIntegrationDisabled,
+  readDisabledInstrumentationEnvConfig,
+} from "../instrumentation/config.js";
+import { BraintrustObservabilityExporter } from "../wrappers/mastra.js";
+import { installMastraExporterFactory } from "./loader/mastra-observability-patch.js";
 import { getDefaultAutoInstrumentationConfigs } from "./configs/all.js";
 import { ModulePatch } from "./loader/cjs-patch.js";
 import { patchTracingChannel } from "./patch-tracing-channel.js";
@@ -34,6 +40,17 @@ if (!alreadyApplied) {
 
 if (!alreadyApplied) {
   const allConfigs = getDefaultAutoInstrumentationConfigs();
+
+  // Expose the Mastra exporter factory on globalThis so the loader patches
+  // for `@mastra/core` / `@mastra/observability` can find it without having
+  // to resolve `braintrust` from the user's module graph. Skipped when the
+  // user opts out via `BRAINTRUST_DISABLE_INSTRUMENTATION=mastra`.
+  const disabled = readDisabledInstrumentationEnvConfig(
+    process.env.BRAINTRUST_DISABLE_INSTRUMENTATION,
+  ).integrations;
+  if (!isInstrumentationIntegrationDisabled(disabled, "mastra")) {
+    installMastraExporterFactory(() => new BraintrustObservabilityExporter());
+  }
 
   // 1. Register ESM loader for ESM modules
   register("./loader/esm-hook.mjs", {

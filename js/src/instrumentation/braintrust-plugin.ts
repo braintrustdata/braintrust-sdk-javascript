@@ -76,7 +76,7 @@ export class BraintrustPlugin extends BasePlugin {
   }
 
   protected onEnable(): void {
-    const integrations = this.config.integrations || {};
+    const integrations = this.config.integrations ?? {};
 
     // Enable OpenAI integration (default: true)
     if (integrations.openai !== false) {
@@ -167,11 +167,10 @@ export class BraintrustPlugin extends BasePlugin {
       this.genkitPlugin.enable();
     }
 
-    if (getIntegrationConfig(integrations, "gitHubCopilot") !== false) {
+    if (integrations.gitHubCopilot !== false) {
       this.gitHubCopilotPlugin = new GitHubCopilotPlugin();
       this.gitHubCopilotPlugin.enable();
     }
-
     if (getIntegrationConfig(integrations, "flue") !== false) {
       this.fluePlugin = new FluePlugin();
       this.fluePlugin.enable();
@@ -181,6 +180,12 @@ export class BraintrustPlugin extends BasePlugin {
       this.langChainPlugin = new LangChainPlugin();
       this.langChainPlugin.enable();
     }
+
+    // Mastra is intentionally not wired here: `@mastra/core` ships its own
+    // ObservabilityExporter contract, and `BraintrustObservabilityExporter`
+    // (wrappers/mastra.ts) is auto-installed by the loader patch in
+    // `auto-instrumentations/loader/mastra-observability-patch.ts` rather than
+    // by a BasePlugin / tracingChannel subscription.
   }
 
   protected onDisable(): void {
