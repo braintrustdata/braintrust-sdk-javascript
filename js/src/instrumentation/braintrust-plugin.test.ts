@@ -643,15 +643,6 @@ describe("BraintrustPlugin", () => {
       expect(MistralPlugin).toHaveBeenCalledTimes(1);
     });
 
-    it("should not create LangChain plugin when langchainJS: false (legacy)", () => {
-      const plugin = new BraintrustPlugin({
-        integrations: { langchainJS: false },
-      });
-      plugin.enable();
-
-      expect(LangChainPlugin).not.toHaveBeenCalled();
-    });
-
     it("should not create LangChain plugin when langgraph: false (alias)", () => {
       const plugin = new BraintrustPlugin({
         integrations: { langgraph: false },

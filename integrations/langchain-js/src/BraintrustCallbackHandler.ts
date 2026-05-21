@@ -127,8 +127,6 @@ export class BraintrustCallbackHandler<IsAsyncFlush extends boolean>
         ...args.event?.metadata,
         braintrust: {
           integration_name: "langchain-js",
-          integration_version: "0.2.0", // TODO: grab from package.json?
-          // TODO: sdk_version,
           sdk_language: "javascript",
         },
         run_id: runId,

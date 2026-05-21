@@ -5,7 +5,7 @@ import type { LangChainCallbackManager } from "../../vendor-sdk-types/langchain"
 import {
   BRAINTRUST_LANGCHAIN_CALLBACK_HANDLER_NAME,
   BraintrustLangChainCallbackHandler,
-} from "./langchain-callback-handler";
+} from "../../wrappers/langchain/callback-handler";
 import { langChainChannels } from "./langchain-channels";
 
 type LangChainConfigureChannel =
@@ -29,9 +29,9 @@ export class LangChainPlugin extends BasePlugin {
   }
 
   private subscribeToConfigure(channel: LangChainConfigureChannel): void {
-    const tracingChannel = channel.tracingChannel() as IsoTracingChannel<
+    const tracingChannel: IsoTracingChannel<
       ChannelMessage<LangChainConfigureChannel>
-    >;
+    > = channel.tracingChannel();
 
     const handlers: IsoChannelHandlers<
       ChannelMessage<LangChainConfigureChannel>

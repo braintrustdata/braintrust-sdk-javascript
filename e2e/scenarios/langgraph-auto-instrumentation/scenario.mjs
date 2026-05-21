@@ -7,10 +7,6 @@ import { ROOT_NAME, SCENARIO_NAME } from "./constants.mjs";
 const OPENAI_MODEL = "gpt-4o-mini-2024-07-18";
 
 runMain(async () => {
-  if (!process.env.OPENAI_API_KEY) {
-    throw new Error("OPENAI_API_KEY is required for this e2e scenario");
-  }
-
   await runTracedScenario({
     callback: async () => {
       const GraphState = Annotation.Root({

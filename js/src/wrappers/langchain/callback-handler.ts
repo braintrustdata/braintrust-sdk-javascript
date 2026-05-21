@@ -77,7 +77,6 @@ export class BraintrustLangChainCallbackHandler<
         ...args.event?.metadata,
         braintrust: {
           integration_name: "langchain-js",
-          integration_version: "0.2.0",
           sdk_language: "javascript",
         },
         run_id: runId,

@@ -17,6 +17,18 @@ export type LangChainCallbackManagerConfigureResult =
   | LangChainCallbackManager
   | undefined;
 
+// Arguments passed to CallbackManager.configure / CallbackManager._configureSync.
+// Order matches @langchain/core's signature.
+export type LangChainCallbackManagerConfigureArgs = [
+  inheritableHandlers?: unknown[],
+  localHandlers?: unknown[],
+  inheritableTags?: string[],
+  localTags?: string[],
+  inheritableMetadata?: Record<string, unknown>,
+  localMetadata?: Record<string, unknown>,
+  options?: unknown,
+];
+
 export type LangChainCallbackHandlerOptions<IsAsyncFlush extends boolean> = {
   debug: boolean;
   excludeMetadataProps: RegExp;
