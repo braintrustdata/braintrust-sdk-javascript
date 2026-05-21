@@ -15,29 +15,10 @@ import { CoherePlugin } from "./plugins/cohere-plugin";
 import { GroqPlugin } from "./plugins/groq-plugin";
 import { GenkitPlugin } from "./plugins/genkit-plugin";
 import { GitHubCopilotPlugin } from "./plugins/github-copilot-plugin";
+import type { InstrumentationIntegrationsConfig } from "./config";
 
 export interface BraintrustPluginConfig {
-  integrations?: {
-    openai?: boolean;
-    anthropic?: boolean;
-    vercel?: boolean;
-    aisdk?: boolean;
-    google?: boolean;
-    googleGenAI?: boolean;
-    huggingface?: boolean;
-    claudeAgentSDK?: boolean;
-    cursor?: boolean;
-    cursorSDK?: boolean;
-    openrouter?: boolean;
-    openrouterAgent?: boolean;
-    mistral?: boolean;
-    googleADK?: boolean;
-    cohere?: boolean;
-    groq?: boolean;
-    genkit?: boolean;
-    gitHubCopilot?: boolean;
-    openaiCodexSDK?: boolean;
-  };
+  integrations?: InstrumentationIntegrationsConfig;
 }
 
 function getIntegrationConfig(

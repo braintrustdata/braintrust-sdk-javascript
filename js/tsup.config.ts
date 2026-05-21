@@ -3,7 +3,10 @@ import { defineConfig } from "tsup";
 export default defineConfig([
   // Node.js entrypoint
   {
-    entry: ["src/node/index.ts"],
+    entry: {
+      index: "src/node/index.ts",
+      "apply-instrumentation": "src/node/apply-instrumentation-entry.ts",
+    },
     format: ["cjs", "esm"],
     outDir: "dist",
     external: ["zod"],
@@ -63,6 +66,8 @@ export default defineConfig([
       browser: "src/browser/index.ts",
       "edge-light": "src/edge-light/index.ts",
       workerd: "src/workerd/index.ts",
+      "apply-instrumentation.browser":
+        "src/non-node/apply-instrumentation-entry.ts",
     },
     format: ["cjs", "esm"],
     outDir: "dist",
