@@ -170,5 +170,13 @@
       { "variantKey": "github-copilot-v0-wrapped", "label": "Wrapped" },
       { "variantKey": "github-copilot-v0-auto", "label": "Auto-hook" }
     ]
+  },
+  {
+    "scenarioDirName": "openai-agents-instrumentation",
+    "label": "OpenAI Agents Instrumentation",
+    "metadataScenario": "openai-agents-instrumentation",
+    "variants": [
+      { "variantKey": "openai-agents-auto-hook", "label": "Auto-hook" }
+    ]
   }
 ]

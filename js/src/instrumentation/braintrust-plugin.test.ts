@@ -28,13 +28,10 @@ function createPluginClassMock() {
   });
 }
 
-function pluginConfigWithIntegrations(
-  integrations: Record<string, boolean>,
-): BraintrustPluginConfig {
-  return { integrations };
-}
-
-// Mock all sub-plugins but preserve the utility functions
+// Preserve the re-exported utility functions (parseMetricsFromUsage, etc.)
+// while mocking out the OpenAIPlugin class — those utilities are also
+// imported and tested at the bottom of this file via braintrust-plugin's
+// re-exports.
 vi.mock("./plugins/openai-plugin", async () => {
   const actual = await vi.importActual<
     typeof import("./plugins/openai-plugin")
@@ -380,9 +377,9 @@ describe("BraintrustPlugin", () => {
     });
 
     it("should not create OpenAI Agents plugin when openAIAgents: false", () => {
-      const plugin = new BraintrustPlugin(
-        pluginConfigWithIntegrations({ openAIAgents: false }),
-      );
+      const plugin = new BraintrustPlugin({
+        integrations: { openAIAgents: false },
+      } as BraintrustPluginConfig);
       plugin.enable();
 
       expect(OpenAIAgentsPlugin).not.toHaveBeenCalled();
@@ -518,8 +515,8 @@ describe("BraintrustPlugin", () => {
     });
 
     it("should not create any plugins when all are disabled", () => {
-      const plugin = new BraintrustPlugin(
-        pluginConfigWithIntegrations({
+      const plugin = new BraintrustPlugin({
+        integrations: {
           openai: false,
           openaiCodexSDK: false,
           anthropic: false,
@@ -534,8 +531,8 @@ describe("BraintrustPlugin", () => {
           cohere: false,
           groq: false,
           gitHubCopilot: false,
-        }),
-      );
+        },
+      } as BraintrustPluginConfig);
       plugin.enable();
 
       expect(OpenAIPlugin).not.toHaveBeenCalled();
@@ -555,8 +552,8 @@ describe("BraintrustPlugin", () => {
     });
 
     it("should allow selective enabling of plugins", () => {
-      const plugin = new BraintrustPlugin(
-        pluginConfigWithIntegrations({
+      const plugin = new BraintrustPlugin({
+        integrations: {
           openai: true,
           anthropic: false,
           aisdk: false,
@@ -566,8 +563,8 @@ describe("BraintrustPlugin", () => {
           huggingface: true,
           openrouter: true,
           mistral: false,
-        }),
-      );
+        },
+      } as BraintrustPluginConfig);
       plugin.enable();
 
       expect(OpenAIPlugin).toHaveBeenCalledTimes(1);
@@ -826,8 +823,8 @@ describe("BraintrustPlugin", () => {
     });
 
     it("should only disable plugins that were enabled", () => {
-      const plugin = new BraintrustPlugin(
-        pluginConfigWithIntegrations({
+      const plugin = new BraintrustPlugin({
+        integrations: {
           openai: true,
           anthropic: false,
           aisdk: true,
@@ -840,8 +837,8 @@ describe("BraintrustPlugin", () => {
           mistral: false,
           cohere: false,
           groq: true,
-        }),
-      );
+        },
+      } as BraintrustPluginConfig);
       plugin.enable();
 
       const openaiMock = vi.mocked(OpenAIPlugin).mock.results[0].value;
