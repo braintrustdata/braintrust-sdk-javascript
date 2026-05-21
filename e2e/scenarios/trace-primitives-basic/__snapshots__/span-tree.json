@@ -1,0 +1,45 @@
+{
+  "span_tree": [
+    {
+      "name": "trace-primitives-root",
+      "type": "task",
+      "children": [
+        {
+          "name": "basic-child",
+          "children": [],
+          "input": {
+            "step": "child",
+            "testRunId": "<run:1>"
+          },
+          "output": {
+            "ok": true
+          },
+          "metadata": {
+            "kind": "basic-child",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "basic-error",
+          "children": [],
+          "metadata": {
+            "kind": "basic-error",
+            "testRunId": "<run:1>"
+          },
+          "error": "basic boom\n\nError: basic boom\n    at logger.traced.name (<repo>/e2e/scenarios/trace-primitives-basic/scenario.ts:0:0)\n    at <repo>/js/dist/index.mjs:0:0\n    at AsyncLocalStorage.run (node:<internal>:0:0)\n    at BraintrustContextManager.runInContext (<repo>/js/dist/index.mjs:0:0)\n    at withCurrent (<repo>/js/dist/index.mjs:0:0)\n    at <repo>/js/dist/index.mjs:0:0\n    at runCatchFinally (<repo>/js/dist/index.mjs:0:0)\n    at Logger.traced (<repo>/js/dist/index.mjs:0:0)\n    at main (<repo>/e2e/scenarios/trace-primitives-basic/scenario.ts:0:0)\n    at runMain (<repo>/e2e/helpers/scenario-runtime.ts:0:0)"
+        }
+      ],
+      "input": {
+        "scenario": "trace-primitives-basic",
+        "testRunId": "<run:1>"
+      },
+      "output": {
+        "status": "ok"
+      },
+      "metadata": {
+        "scenario": "trace-primitives-basic",
+        "testRunId": "<run:1>"
+      }
+    }
+  ]
+}

@@ -1,24 +1,23 @@
+import type { WebpackPluginInstance } from "unplugin";
+import {
+  BundlerPluginOptions,
+  unplugin,
+  type LegacyBundlerPluginOptions,
+} from "./plugin";
+
+export function braintrustWebpackPlugin(
+  options: BundlerPluginOptions = {},
+): WebpackPluginInstance {
+  const { useDiagnosticChannelCompatShim = false, ...pluginOptions } = options;
+  return unplugin.webpack({
+    ...pluginOptions,
+    browser: useDiagnosticChannelCompatShim,
+  });
+}
+
+export type WebpackPluginOptions = LegacyBundlerPluginOptions;
+
 /**
- * Webpack plugin for auto-instrumentation.
- *
- * Usage:
- * ```javascript
- * import { webpackPlugin } from 'braintrust/auto-instrumentations/bundler/webpack';
- *
- * export default {
- *   plugins: [webpackPlugin()],
- * };
- * ```
- *
- * This plugin uses @apm-js-collab/code-transformer to perform AST transformation
- * at build-time, injecting TracingChannel calls into AI SDK functions.
- *
- * For browser builds, the plugin automatically uses 'dc-browser' for diagnostics_channel polyfill.
- * The als-browser polyfill for AsyncLocalStorage is automatically included as a dependency.
+ * @deprecated Use {@link braintrustWebpackPlugin} instead.
  */
-
-import { unplugin, type BundlerPluginOptions } from "./plugin";
-
-export type WebpackPluginOptions = BundlerPluginOptions;
-
 export const webpackPlugin = unplugin.webpack;

@@ -14,7 +14,7 @@
  */
 
 import { register } from "node:module";
-import { getDefaultAutoInstrumentationConfigs } from "./default-configs.js";
+import { getDefaultAutoInstrumentationConfigs } from "./configs/all.js";
 import { ModulePatch } from "./loader/cjs-patch.js";
 import { patchTracingChannel } from "./patch-tracing-channel.js";
 
@@ -32,9 +32,9 @@ if (!alreadyApplied) {
   patchTracingChannel(dc.tracingChannel);
 }
 
-const allConfigs = getDefaultAutoInstrumentationConfigs();
-
 if (!alreadyApplied) {
+  const allConfigs = getDefaultAutoInstrumentationConfigs();
+
   // 1. Register ESM loader for ESM modules
   register("./loader/esm-hook.mjs", {
     parentURL: import.meta.url,

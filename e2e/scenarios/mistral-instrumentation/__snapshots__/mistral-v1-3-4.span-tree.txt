@@ -1,0 +1,554 @@
+span_tree:
+└── mistral-root [task]
+    metadata: {
+      "scenario": "mistral-instrumentation",
+      "testRunId": "<run:1>"
+    }
+    ├── mistral-chat-complete-operation
+    │   metadata: {
+    │     "operation": "chat-complete",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── mistral.chat.complete [llm]
+    │       input: [
+    │         {
+    │           "content": "You are concise. Keep responses under five words.",
+    │           "role": "system"
+    │         },
+    │         {
+    │           "content": "Reply with exactly: observability",
+    │           "role": "user"
+    │         }
+    │       ]
+    │       output: [
+    │         {
+    │           "finishReason": "stop",
+    │           "index": 0,
+    │           "message": {
+    │             "content": "observability",
+    │             "prefix": false,
+    │             "role": "assistant",
+    │             "toolCalls": null
+    │           }
+    │         }
+    │       ]
+    │       metadata: {
+    │         "created": 0,
+    │         "id": "<span:1>",
+    │         "maxTokens": 24,
+    │         "model": "mistral-small-2506",
+    │         "object": "chat.completion",
+    │         "provider": "mistral",
+    │         "temperature": 0
+    │       }
+    │       metrics: {
+    │         "completion_tokens": 3,
+    │         "prompt_tokens": 21,
+    │         "time_to_first_token": 0,
+    │         "tokens": 24
+    │       }
+    ├── mistral-chat-stream-operation
+    │   metadata: {
+    │     "operation": "chat-stream",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── mistral.chat.stream [llm]
+    │       input: [
+    │         {
+    │           "content": "Reply with exactly: streamed output",
+    │           "role": "user"
+    │         }
+    │       ]
+    │       output: [
+    │         {
+    │           "finishReason": "stop",
+    │           "index": 0,
+    │           "message": {
+    │             "content": "streamed output",
+    │             "role": "assistant"
+    │           }
+    │         }
+    │       ]
+    │       metadata: {
+    │         "created": 0,
+    │         "id": "<span:1>",
+    │         "maxTokens": 24,
+    │         "model": "mistral-small-2506",
+    │         "object": "chat.completion.chunk",
+    │         "provider": "mistral",
+    │         "stream": true,
+    │         "temperature": 0
+    │       }
+    │       metrics: {
+    │         "completion_tokens": 4,
+    │         "prompt_tokens": 10,
+    │         "time_to_first_token": 0,
+    │         "tokens": 14
+    │       }
+    ├── mistral-chat-reasoning-stream-operation
+    │   metadata: {
+    │     "operation": "chat-stream-reasoning",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── mistral.chat.stream [llm]
+    │       input: [
+    │         {
+    │           "content": "John is one of 4 children. The first sister is 4 years old. Next year, the second sister will be twice as old as the first sister. The third sister is two years older than the second sister. The third sister is half the age of her older brother. How old is John? Reply with just the number.",
+    │           "role": "user"
+    │         }
+    │       ]
+    │       output: [
+    │         {
+    │           "finishReason": null,
+    │           "index": 0,
+    │           "message": {
+    │             "content": "Let's break down the problem step by step to find John's age.\n\n1. **First Sister's Age:**\n   - Given: The first sister is 4 years old.\n\n2. **Second Sister's Age Next Year:**\n   - Next year, the second sister will be twice as old as the first sister.\n   - First sister's age next year: 4 + 1 = 5 years.\n   - Therefore, second sister's age next year: 2 × 5 = 10 years.\n   - Current age of the second sister: 10 - 1 = 9 years.\n\n3. **Third Sister's Age:**\n   - The third sister is two years older than the second sister.\n   - Current age of the third sister: 9 + 2 = 11 years.\n\n4. **John's Age:**\n   - The third sister is half the age of her older brother (John).\n   - Therefore, John's age: 11 × 2",
+    │             "role": "assistant"
+    │           }
+    │         }
+    │       ]
+    │       metadata: {
+    │         "created": 0,
+    │         "id": "<span:1>",
+    │         "maxTokens": 256,
+    │         "model": "mistral-small-latest",
+    │         "object": "chat.completion.chunk",
+    │         "provider": "mistral",
+    │         "reasoning_effort": "high",
+    │         "stream": true,
+    │         "temperature": 0
+    │       }
+    │       metrics: {
+    │         "time_to_first_token": 0
+    │       }
+    ├── mistral-chat-tool-call-operation
+    │   metadata: {
+    │     "operation": "chat-tool-call",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   ├── mistral.chat.complete [llm]
+    │   │   input: [
+    │   │     {
+    │   │       "content": "Call the get_weather tool for Vienna. Do not answer with plain text.",
+    │   │       "role": "user"
+    │   │     }
+    │   │   ]
+    │   │   metadata: {
+    │   │     "maxTokens": 48,
+    │   │     "model": "mistral-small-2506",
+    │   │     "provider": "mistral",
+    │   │     "temperature": 0,
+    │   │     "toolChoice": "required"
+    │   │   }
+    │   │   error: "Input validation failed: TypeError: Cannot read properties of undefined (reading '_zod')"
+    │   ├── mistral.chat.complete [llm]
+    │   │   input: [
+    │   │     {
+    │   │       "content": "Call the get_weather tool for Vienna. Do not answer with plain text.",
+    │   │       "role": "user"
+    │   │     }
+    │   │   ]
+    │   │   output: [
+    │   │     {
+    │   │       "finishReason": "tool_calls",
+    │   │       "index": 0,
+    │   │       "message": {
+    │   │         "content": "",
+    │   │         "prefix": false,
+    │   │         "role": "assistant",
+    │   │         "toolCalls": [
+    │   │           {
+    │   │             "function": {
+    │   │               "arguments": "{\"city\": \"Vienna\"}",
+    │   │               "name": "get_weather"
+    │   │             },
+    │   │             "id": "<span:1>"
+    │   │           }
+    │   │         ]
+    │   │       }
+    │   │     }
+    │   │   ]
+    │   │   metadata: {
+    │   │     "created": 0,
+    │   │     "id": "<span:1>",
+    │   │     "maxTokens": 48,
+    │   │     "model": "mistral-small-2506",
+    │   │     "object": "chat.completion",
+    │   │     "provider": "mistral",
+    │   │     "temperature": 0,
+    │   │     "toolChoice": "required"
+    │   │   }
+    │   │   metrics: {
+    │   │     "completion_tokens": 13,
+    │   │     "prompt_tokens": 55,
+    │   │     "time_to_first_token": 0,
+    │   │     "tokens": 68
+    │   │   }
+    │   ├── mistral.chat.complete [llm]
+    │   │   input: [
+    │   │     {
+    │   │       "content": "Call the get_exchange_rate tool for USD to EUR. Do not answer with plain text.",
+    │   │       "role": "user"
+    │   │     }
+    │   │   ]
+    │   │   metadata: {
+    │   │     "maxTokens": 48,
+    │   │     "model": "mistral-small-2506",
+    │   │     "provider": "mistral",
+    │   │     "temperature": 0,
+    │   │     "toolChoice": "required"
+    │   │   }
+    │   │   error: "Input validation failed: TypeError: Cannot read properties of undefined (reading '_zod')"
+    │   ├── mistral.chat.complete [llm]
+    │   │   input: [
+    │   │     {
+    │   │       "content": "Call the get_exchange_rate tool for USD to EUR. Do not answer with plain text.",
+    │   │       "role": "user"
+    │   │     }
+    │   │   ]
+    │   │   output: [
+    │   │     {
+    │   │       "finishReason": "tool_calls",
+    │   │       "index": 0,
+    │   │       "message": {
+    │   │         "content": "",
+    │   │         "prefix": false,
+    │   │         "role": "assistant",
+    │   │         "toolCalls": [
+    │   │           {
+    │   │             "function": {
+    │   │               "arguments": "{\"from_currency\": \"USD\", \"to_currency\": \"EUR\"}",
+    │   │               "name": "get_exchange_rate"
+    │   │             },
+    │   │             "id": "<span:1>"
+    │   │           }
+    │   │         ]
+    │   │       }
+    │   │     }
+    │   │   ]
+    │   │   metadata: {
+    │   │     "created": 0,
+    │   │     "id": "<span:1>",
+    │   │     "maxTokens": 48,
+    │   │     "model": "mistral-small-2506",
+    │   │     "object": "chat.completion",
+    │   │     "provider": "mistral",
+    │   │     "temperature": 0,
+    │   │     "toolChoice": "required"
+    │   │   }
+    │   │   metrics: {
+    │   │     "completion_tokens": 22,
+    │   │     "prompt_tokens": 58,
+    │   │     "time_to_first_token": 0,
+    │   │     "tokens": 80
+    │   │   }
+    │   ├── mistral.chat.complete [llm]
+    │   │   input: [
+    │   │     {
+    │   │       "content": "You must return only tool calls and no plain text.",
+    │   │       "role": "system"
+    │   │     },
+    │   │     {
+    │   │       "content": "In a single assistant response, call exactly two tools: get_weather with location Vienna and get_exchange_rate with from_currency USD and to_currency EUR.",
+    │   │       "role": "user"
+    │   │     }
+    │   │   ]
+    │   │   metadata: {
+    │   │     "maxTokens": 96,
+    │   │     "model": "mistral-small-2506",
+    │   │     "provider": "mistral",
+    │   │     "temperature": 0,
+    │   │     "toolChoice": "required"
+    │   │   }
+    │   │   error: "Input validation failed: TypeError: Cannot read properties of undefined (reading '_zod')"
+    │   └── mistral.chat.complete [llm]
+    │       input: [
+    │         {
+    │           "content": "You must return only tool calls and no plain text.",
+    │           "role": "system"
+    │         },
+    │         {
+    │           "content": "In a single assistant response, call exactly two tools: get_weather with location Vienna and get_exchange_rate with from_currency USD and to_currency EUR.",
+    │           "role": "user"
+    │         }
+    │       ]
+    │       output: [
+    │         {
+    │           "finishReason": "tool_calls",
+    │           "index": 0,
+    │           "message": {
+    │             "content": "",
+    │             "prefix": false,
+    │             "role": "assistant",
+    │             "toolCalls": [
+    │               {
+    │                 "function": {
+    │                   "arguments": "{\"location\": \"Vienna\"}",
+    │                   "name": "get_weather"
+    │                 },
+    │                 "id": "<span:1>"
+    │               },
+    │               {
+    │                 "function": {
+    │                   "arguments": "{\"from_currency\": \"USD\", \"to_currency\": \"EUR\"}",
+    │                   "name": "get_exchange_rate"
+    │                 },
+    │                 "id": "<span:2>"
+    │               }
+    │             ]
+    │           }
+    │         }
+    │       ]
+    │       metadata: {
+    │         "created": 0,
+    │         "id": "<span:1>",
+    │         "maxTokens": 96,
+    │         "model": "mistral-small-2506",
+    │         "object": "chat.completion",
+    │         "provider": "mistral",
+    │         "temperature": 0,
+    │         "toolChoice": "required"
+    │       }
+    │       metrics: {
+    │         "completion_tokens": 34,
+    │         "prompt_tokens": 116,
+    │         "time_to_first_token": 0,
+    │         "tokens": 150
+    │       }
+    ├── mistral-fim-complete-operation
+    │   metadata: {
+    │     "operation": "fim-complete",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── mistral.fim.complete [llm]
+    │       input: "function add(a, b) {"
+    │       output: [
+    │         {
+    │           "finishReason": "stop",
+    │           "index": 0,
+    │           "message": {
+    │             "content": "\n    return a + b;\n",
+    │             "prefix": false,
+    │             "role": "assistant",
+    │             "toolCalls": null
+    │           }
+    │         }
+    │       ]
+    │       metadata: {
+    │         "created": 0,
+    │         "id": "<span:1>",
+    │         "maxTokens": 24,
+    │         "model": "codestral-2508",
+    │         "object": "chat.completion",
+    │         "provider": "mistral",
+    │         "temperature": 0
+    │       }
+    │       metrics: {
+    │         "completion_tokens": 8,
+    │         "prompt_tokens": 12,
+    │         "time_to_first_token": 0,
+    │         "tokens": 20
+    │       }
+    ├── mistral-fim-stream-operation
+    │   metadata: {
+    │     "operation": "fim-stream",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── mistral.fim.stream [llm]
+    │       input: "const project = "
+    │       output: [
+    │         {
+    │           "finishReason": null,
+    │           "index": 0,
+    │           "message": {
+    │             "content": "{\n  name: 'project',\n  title: 'Projects',\n ",
+    │             "role": "assistant"
+    │           }
+    │         }
+    │       ]
+    │       metadata: {
+    │         "created": 0,
+    │         "id": "<span:1>",
+    │         "maxTokens": 16,
+    │         "model": "codestral-2508",
+    │         "object": "chat.completion.chunk",
+    │         "provider": "mistral",
+    │         "stream": true,
+    │         "temperature": 0
+    │       }
+    │       metrics: {
+    │         "time_to_first_token": 0
+    │       }
+    ├── mistral-agents-complete-operation
+    │   metadata: {
+    │     "operation": "agents-complete",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── mistral.agents.complete [llm]
+    │       input: [
+    │         {
+    │           "content": "Reply with exactly: agent complete",
+    │           "role": "user"
+    │         }
+    │       ]
+    │       output: [
+    │         {
+    │           "finishReason": "stop",
+    │           "index": 0,
+    │           "message": {
+    │             "content": "Agent complete.",
+    │             "prefix": false,
+    │             "role": "assistant",
+    │             "toolCalls": null
+    │           }
+    │         }
+    │       ]
+    │       metadata: {
+    │         "agentId": "<agentId:1>",
+    │         "created": 0,
+    │         "id": "<span:2>",
+    │         "maxTokens": 16,
+    │         "model": "mistral-small-2506",
+    │         "object": "chat.completion",
+    │         "provider": "mistral",
+    │         "responseFormat": {
+    │           "type": "text"
+    │         },
+    │         "temperature": 0
+    │       }
+    │       metrics: {
+    │         "completion_tokens": 4,
+    │         "prompt_tokens": 21,
+    │         "time_to_first_token": 0,
+    │         "tokens": 25
+    │       }
+    ├── mistral-agents-tool-call-operation
+    │   metadata: {
+    │     "operation": "agents-tool-call",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   ├── mistral.agents.complete [llm]
+    │   │   input: [
+    │   │     {
+    │   │       "content": "Call the get_time_in_city tool for Vienna. Do not answer with plain text.",
+    │   │       "role": "user"
+    │   │     }
+    │   │   ]
+    │   │   metadata: {
+    │   │     "agentId": "<agentId:1>",
+    │   │     "maxTokens": 32,
+    │   │     "provider": "mistral",
+    │   │     "responseFormat": {
+    │   │       "type": "text"
+    │   │     },
+    │   │     "temperature": 0,
+    │   │     "toolChoice": "required"
+    │   │   }
+    │   │   error: "Input validation failed: TypeError: Cannot read properties of undefined (reading '_zod')"
+    │   └── mistral.agents.complete [llm]
+    │       input: [
+    │         {
+    │           "content": "Call the get_time_in_city tool for Vienna. Do not answer with plain text.",
+    │           "role": "user"
+    │         }
+    │       ]
+    │       output: [
+    │         {
+    │           "finishReason": "tool_calls",
+    │           "index": 0,
+    │           "message": {
+    │             "content": "",
+    │             "prefix": false,
+    │             "role": "assistant",
+    │             "toolCalls": [
+    │               {
+    │                 "function": {
+    │                   "arguments": "{}",
+    │                   "name": "get_time_in_city"
+    │                 },
+    │                 "id": "<span:1>"
+    │               }
+    │             ]
+    │           }
+    │         }
+    │       ]
+    │       metadata: {
+    │         "agentId": "<agentId:1>",
+    │         "created": 0,
+    │         "id": "<span:2>",
+    │         "maxTokens": 32,
+    │         "model": "mistral-small-2506",
+    │         "object": "chat.completion",
+    │         "provider": "mistral",
+    │         "responseFormat": {
+    │           "type": "text"
+    │         },
+    │         "temperature": 0,
+    │         "toolChoice": "required"
+    │       }
+    │       metrics: {
+    │         "completion_tokens": 8,
+    │         "prompt_tokens": 71,
+    │         "time_to_first_token": 0,
+    │         "tokens": 79
+    │       }
+    ├── mistral-agents-stream-operation
+    │   metadata: {
+    │     "operation": "agents-stream",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── mistral.agents.stream [llm]
+    │       input: [
+    │         {
+    │           "content": "Reply with exactly: agent stream",
+    │           "role": "user"
+    │         }
+    │       ]
+    │       output: [
+    │         {
+    │           "finishReason": null,
+    │           "index": 0,
+    │           "message": {
+    │             "content": "Understood.",
+    │             "role": "assistant"
+    │           }
+    │         }
+    │       ]
+    │       metadata: {
+    │         "agentId": "<agentId:1>",
+    │         "created": 0,
+    │         "id": "<span:2>",
+    │         "maxTokens": 16,
+    │         "model": "mistral-small-2506",
+    │         "object": "chat.completion.chunk",
+    │         "provider": "mistral",
+    │         "responseFormat": {
+    │           "type": "text"
+    │         },
+    │         "stream": true,
+    │         "temperature": 0
+    │       }
+    │       metrics: {
+    │         "time_to_first_token": 0
+    │       }
+    └── mistral-embeddings-operation
+        metadata: {
+          "operation": "embeddings-create",
+          "testRunId": "<run:1>"
+        }
+        └── mistral.embeddings.create [llm]
+            input: "braintrust mistral instrumentation"
+            output: {
+              "embedding_length": 1024
+            }
+            metadata: {
+              "id": "<span:1>",
+              "model": "mistral-embed",
+              "object": "list",
+              "provider": "mistral"
+            }
+            metrics: {
+              "completion_tokens": 0,
+              "prompt_tokens": 9,
+              "tokens": 9
+            }

@@ -2,17 +2,18 @@ import { existsSync } from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import { beforeAll, describe, expect, test } from "vitest";
-import { normalizeForSnapshot, type Json } from "../../helpers/normalize";
+import type { Json } from "../../helpers/normalize";
 import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
-import {
-  formatJsonFileSnapshot,
-  matchFileSnapshot,
-  resolveFileSnapshotPath,
-} from "../../helpers/file-snapshot";
+import { resolveFileSnapshotPath } from "../../helpers/file-snapshot";
 import {
   withScenarioHarness,
   type ScenarioRunContext,
 } from "../../helpers/scenario-harness";
+import {
+  matchSpanTreeSnapshot,
+  spanTreeFields,
+  type SpanTreeEntry,
+} from "../../helpers/span-tree";
 import { findChildSpans, findLatestSpan } from "../../helpers/trace-selectors";
 
 import { ROOT_NAME, SCENARIO_NAME } from "./scenario.impl.mjs";
@@ -462,23 +463,6 @@ function summarizeOutput(name: string, output: Json): Json {
     : ({ kind: typeof output } satisfies Json);
 }
 
-function summarizeOpenAISpan(
-  event: CapturedLogEvent,
-  summaryName: string | undefined,
-): Json {
-  return {
-    has_input: event.input !== undefined && event.input !== null,
-    has_output: event.output !== undefined && event.output !== null,
-    metadata: pickMetadata(
-      event.row.metadata as Record<string, unknown> | undefined,
-      ["model", "openaiSdkVersion", "operation", "provider", "scenario"],
-    ),
-    metrics: summarizeMetricPresence(event.metrics as Json),
-    name: summaryName ?? event.span.name ?? null,
-    type: event.span.type ?? null,
-  } satisfies Json;
-}
-
 function summarizeOpenAIPayload(
   event: CapturedLogEvent,
   summaryName: string | undefined,
@@ -533,30 +517,36 @@ function buildRelevantEvents(
   return relevantEvents;
 }
 
-function buildSpanSummary(
+function buildSpanTree(
   events: CapturedLogEvent[],
   operationSpecs: OperationSpec[],
-): Json {
-  return normalizeForSnapshot(
-    buildRelevantEvents(events, operationSpecs).map(({ event, summaryName }) =>
-      summarizeOpenAISpan(event, summaryName),
-    ) as Json,
-  );
-}
+): SpanTreeEntry[] {
+  return buildRelevantEvents(events, operationSpecs).map(
+    ({ event, summaryName }) => {
+      const summary = summarizeOpenAIPayload(event, summaryName) as Record<
+        string,
+        Json
+      >;
+      const { name: _name, type: _type, ...fields } = summary;
 
-function buildPayloadSummary(
-  events: CapturedLogEvent[],
-  operationSpecs: OperationSpec[],
-): Json {
-  return normalizeForSnapshot(
-    buildRelevantEvents(events, operationSpecs).map(({ event, summaryName }) =>
-      summarizeOpenAIPayload(event, summaryName),
-    ) as Json,
+      return {
+        event,
+        fields: {
+          span_attributes: spanTreeFields(event).span_attributes,
+          ...fields,
+        },
+        name:
+          typeof summary.name === "string"
+            ? summary.name
+            : (summaryName ?? event.span.name),
+      };
+    },
   );
 }
 
 export function defineOpenAIInstrumentationAssertions(options: {
   assertPrivateFieldMethodsOperation?: boolean;
+  cassetteName?: string;
   name: string;
   runScenario: RunOpenAIScenario;
   snapshotName: string;
@@ -567,11 +557,7 @@ export function defineOpenAIInstrumentationAssertions(options: {
   const operationSpecs = getOperationSpecs(options.version);
   const spanSnapshotPath = resolveFileSnapshotPath(
     options.testFileUrl,
-    `${options.snapshotName}.span-events.json`,
-  );
-  const payloadSnapshotPath = resolveFileSnapshotPath(
-    options.testFileUrl,
-    `${options.snapshotName}.log-payloads.json`,
+    `${options.snapshotName}.span-tree.json`,
   );
   const testConfig = {
     timeout: options.timeoutMs,
@@ -622,7 +608,7 @@ export function defineOpenAIInstrumentationAssertions(options: {
       path.join(
         scenarioDir,
         "__cassettes__",
-        `${options.snapshotName}.cassette.json`,
+        `${options.cassetteName ?? options.snapshotName}.cassette.json`,
       ),
     );
 
@@ -669,18 +655,8 @@ export function defineOpenAIInstrumentationAssertions(options: {
       });
     }
 
-    test("matches the shared span snapshot", testConfig, async () => {
-      await matchFileSnapshot(
-        formatJsonFileSnapshot(buildSpanSummary(events, operationSpecs)),
-        spanSnapshotPath,
-      );
-    });
-
-    test("matches the shared payload snapshot", testConfig, async () => {
-      await matchFileSnapshot(
-        formatJsonFileSnapshot(buildPayloadSummary(events, operationSpecs)),
-        payloadSnapshotPath,
-      );
+    test("matches the shared span tree snapshot", testConfig, async () => {
+      await matchSpanTreeSnapshot(events, spanSnapshotPath);
     });
   });
 }

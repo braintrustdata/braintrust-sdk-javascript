@@ -1,7 +1,7 @@
 import * as diagnostics_channel from "node:diagnostics_channel";
 import { register } from "node:module";
 import { pathToFileURL } from "node:url";
-import { getDefaultAutoInstrumentationConfigs } from "../auto-instrumentations/default-configs";
+import { getDefaultAutoInstrumentationConfigs } from "../auto-instrumentations/configs/all";
 import { ModulePatch } from "../auto-instrumentations/loader/cjs-patch";
 import { patchTracingChannel } from "../auto-instrumentations/patch-tracing-channel";
 

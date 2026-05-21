@@ -1,0 +1,59 @@
+span_tree:
+├── node-test basic eval [task]
+│   input: "hello"
+│   output: "echo:hello"
+│   scores: {
+│     "pass": 1
+│   }
+│   metadata: {
+│     "case": "basic-eval",
+│     "scenario": "test-framework-evals-node",
+│     "testRunId": "<run:1>"
+│   }
+├── node-test configured eval [task]
+│   input: {
+│     "value": 5
+│   }
+│   output: 10
+│   expected: 10
+│   scores: {
+│     "correctness": 1,
+│     "pass": 1
+│   }
+│   tags: [
+│     "math",
+│     "configured"
+│   ]
+│   metadata: {
+│     "case": "configured-eval",
+│     "scenario": "test-framework-evals-node",
+│     "testRunId": "<run:1>"
+│   }
+├── node-test extra output [task]
+│   input: {
+│     "mode": "extra"
+│   }
+│   output: {
+│     "done": true,
+│     "phase": "extra-output"
+│   }
+│   scores: {
+│     "pass": 1,
+│     "quality": 0.95
+│   }
+│   metadata: {
+│     "case": "extra-output",
+│     "scenario": "test-framework-evals-node",
+│     "testRunId": "<run:1>"
+│   }
+└── node-test overridden name [task]
+    input: "override"
+    output: "override"
+    scores: {
+      "pass": 1
+    }
+    metadata: {
+      "case": "name-override",
+      "scenario": "test-framework-evals-node",
+      "testRunId": "<run:1>"
+    }

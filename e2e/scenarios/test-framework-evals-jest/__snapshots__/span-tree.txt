@@ -1,0 +1,87 @@
+span_tree:
+├── jest basic span [task]
+│   input: "What is the capital of France?"
+│   output: "Paris"
+│   expected: "Paris"
+│   metadata: {
+│     "case": "basic-span",
+│     "scenario": "test-framework-evals-jest",
+│     "testRunId": "<run:1>",
+│     "transport": "http"
+│   }
+├── root [task]
+│   input: {
+│     "transcript": {
+│       "content_type": "application/json",
+│       "filename": "conversation_transcript.json",
+│       "key": "<uuid:1>",
+│       "type": "braintrust_attachment"
+│     },
+│     "type": "chat_completion"
+│   }
+│   output: {
+│     "attachment": true
+│   }
+│   metadata: {
+│     "case": "json-attachment",
+│     "scenario": "test-framework-evals-jest",
+│     "testRunId": "<run:1>"
+│   }
+├── jest parent span [task]
+│   input: {
+│     "phase": "parent",
+│     "testRunId": "<run:1>"
+│   }
+│   output: {
+│     "ok": true,
+│     "phase": "parent"
+│   }
+│   metadata: {
+│     "case": "parent-span",
+│     "scenario": "test-framework-evals-jest",
+│     "testRunId": "<run:1>"
+│   }
+│   └── jest child span
+│       input: {
+│         "step": "child",
+│         "testRunId": "<run:1>"
+│       }
+│       output: {
+│         "ok": true,
+│         "phase": "child"
+│       }
+│       metadata: {
+│         "case": "child-span",
+│         "scenario": "test-framework-evals-jest",
+│         "testRunId": "<run:1>"
+│       }
+├── jest nested parent span [task]
+│   metadata: {
+│     "case": "nested-parent",
+│     "scenario": "test-framework-evals-jest",
+│     "testRunId": "<run:1>"
+│   }
+│   └── jest nested child span
+│       metadata: {
+│         "case": "nested-child",
+│         "scenario": "test-framework-evals-jest",
+│         "testRunId": "<run:1>"
+│       }
+│       └── jest nested grandchild span
+│           output: {
+│             "depth": 3
+│           }
+│           metadata: {
+│             "case": "nested-grandchild",
+│             "scenario": "test-framework-evals-jest",
+│             "testRunId": "<run:1>"
+│           }
+└── jest current span [task]
+    output: {
+      "observedSpanId": "<uuid:1>"
+    }
+    metadata: {
+      "case": "current-span",
+      "scenario": "test-framework-evals-jest",
+      "testRunId": "<run:1>"
+    }

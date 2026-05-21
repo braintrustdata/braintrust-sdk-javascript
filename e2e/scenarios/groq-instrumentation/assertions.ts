@@ -1,17 +1,12 @@
 import { beforeAll, describe, expect, test } from "vitest";
-import type { Json } from "../../helpers/normalize";
 import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
-import {
-  formatJsonFileSnapshot,
-  matchFileSnapshot,
-  resolveFileSnapshotPath,
-} from "../../helpers/file-snapshot";
+import { resolveFileSnapshotPath } from "../../helpers/file-snapshot";
 import {
   withScenarioHarness,
   type ScenarioRunContext,
 } from "../../helpers/scenario-harness";
+import { matchSpanTreeSnapshot } from "../../helpers/span-tree";
 import { findChildSpans, findLatestSpan } from "../../helpers/trace-selectors";
-import { summarizeWrapperContract } from "../../helpers/wrapper-contract";
 import { REASONING_MODEL, ROOT_NAME, SCENARIO_NAME } from "./constants.mjs";
 
 type RunGroqScenario = (harness: {
@@ -39,7 +34,7 @@ function findGroqSpan(
   return spans.find((candidate) => candidate.output !== undefined) ?? spans[0];
 }
 
-function buildSpanSummary(events: CapturedLogEvent[]): Json {
+function spanTreeEvents(events: CapturedLogEvent[]): CapturedLogEvent[] {
   const chatOperation = findLatestSpan(events, "groq-chat-operation");
   const streamOperation = findLatestSpan(events, "groq-stream-operation");
   const reasoningStreamOperation = findLatestSpan(
@@ -74,16 +69,7 @@ function buildSpanSummary(events: CapturedLogEvent[]): Json {
       toolOperation?.span.id,
       "groq.chat.completions.create",
     ),
-  ].map((event) =>
-    summarizeWrapperContract(event!, [
-      "model",
-      "operation",
-      "provider",
-      "reasoning_format",
-      "scenario",
-      "temperature",
-    ]),
-  ) as Json;
+  ].map((event) => event!);
 }
 
 export function defineGroqInstrumentationAssertions(options: {
@@ -95,7 +81,7 @@ export function defineGroqInstrumentationAssertions(options: {
 }): void {
   const spanSnapshotPath = resolveFileSnapshotPath(
     options.testFileUrl,
-    `${options.snapshotName}.span-events.json`,
+    `${options.snapshotName}.span-tree.json`,
   );
   const testConfig = {
     timeout: options.timeoutMs,
@@ -200,11 +186,8 @@ export function defineGroqInstrumentationAssertions(options: {
       );
     });
 
-    test("matches span snapshot", testConfig, async () => {
-      await matchFileSnapshot(
-        formatJsonFileSnapshot(buildSpanSummary(events)),
-        spanSnapshotPath,
-      );
+    test("matches span tree snapshot", testConfig, async () => {
+      await matchSpanTreeSnapshot(events, spanSnapshotPath);
     });
   });
 }

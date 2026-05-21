@@ -1,0 +1,748 @@
+{
+  "span_tree": [
+    {
+      "name": "mistral-root",
+      "type": "task",
+      "children": [
+        {
+          "name": "mistral-chat-complete-operation",
+          "children": [
+            {
+              "name": "mistral.chat.complete",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "You are concise. Keep responses under five words.",
+                  "role": "system"
+                },
+                {
+                  "content": "Reply with exactly: observability",
+                  "role": "user"
+                }
+              ],
+              "output": [
+                {
+                  "finishReason": "stop",
+                  "index": 0,
+                  "message": {
+                    "content": "observability",
+                    "prefix": false,
+                    "role": "assistant",
+                    "toolCalls": null
+                  }
+                }
+              ],
+              "metadata": {
+                "created": 0,
+                "id": "<span:1>",
+                "maxTokens": 24,
+                "model": "mistral-small-2506",
+                "object": "chat.completion",
+                "provider": "mistral",
+                "temperature": 0
+              },
+              "metrics": {
+                "completion_tokens": 3,
+                "prompt_tokens": 21,
+                "time_to_first_token": 0,
+                "tokens": 24
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "chat-complete",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "mistral-chat-stream-operation",
+          "children": [
+            {
+              "name": "mistral.chat.stream",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "Reply with exactly: streamed output",
+                  "role": "user"
+                }
+              ],
+              "output": [
+                {
+                  "finishReason": "stop",
+                  "index": 0,
+                  "message": {
+                    "content": "streamed output",
+                    "role": "assistant"
+                  }
+                }
+              ],
+              "metadata": {
+                "created": 0,
+                "id": "<span:1>",
+                "maxTokens": 24,
+                "model": "mistral-small-2506",
+                "object": "chat.completion.chunk",
+                "provider": "mistral",
+                "stream": true,
+                "temperature": 0
+              },
+              "metrics": {
+                "completion_tokens": 4,
+                "prompt_tokens": 10,
+                "time_to_first_token": 0,
+                "tokens": 14
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "chat-stream",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "mistral-chat-reasoning-stream-operation",
+          "children": [
+            {
+              "name": "mistral.chat.stream",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "John is one of 4 children. The first sister is 4 years old. Next year, the second sister will be twice as old as the first sister. The third sister is two years older than the second sister. The third sister is half the age of her older brother. How old is John? Reply with just the number.",
+                  "role": "user"
+                }
+              ],
+              "output": [
+                {
+                  "finishReason": "stop",
+                  "index": 0,
+                  "message": {
+                    "content": "Let's break down the problem step by step to find John's age.\n\n1. **First Sister (Sister 1):**\n   - Current age: 4 years old.\n\n2. **Next Year (Sister 2):**\n   - Next year, Sister 2 will be twice as old as Sister 1.\n   - Sister 1's age next year: 4 + 1 = 5 years.\n   - Therefore, Sister 2's age next year: 2 × 5 = 10 years.\n   - **Current age of Sister 2:** 10 - 1 = 9 years.\n\n3. **Third Sister (Sister 3):**\n   - Sister 3 is two years older than Sister 2.\n   - **Current age of Sister 3:** 9 + 2 = 11 years.\n\n4. **Older Brother (John):**\n   - Sister 3 is half the age of her older brother.\n   - Therefore, John's age: 11 × 2 = 22 years.\n\n**Final Answer:**\n22",
+                    "role": "assistant"
+                  }
+                }
+              ],
+              "metadata": {
+                "created": 0,
+                "id": "<span:1>",
+                "maxTokens": 256,
+                "model": "mistral-small-latest",
+                "object": "chat.completion.chunk",
+                "provider": "mistral",
+                "reasoning_effort": "high",
+                "stream": true,
+                "temperature": 0
+              },
+              "metrics": {
+                "completion_tokens": 229,
+                "prompt_tokens": 83,
+                "time_to_first_token": 0,
+                "tokens": 312
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "chat-stream-reasoning",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "mistral-chat-thinking-stream-operation",
+          "children": [
+            {
+              "name": "mistral.chat.stream",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "What is 2+2? Reply with just the number.",
+                  "role": "user"
+                }
+              ],
+              "output": [
+                {
+                  "finishReason": "stop",
+                  "index": 0,
+                  "message": {
+                    "content": "4",
+                    "role": "assistant"
+                  }
+                }
+              ],
+              "metadata": {
+                "created": 0,
+                "id": "<span:1>",
+                "maxTokens": 1024,
+                "model": "magistral-small-latest",
+                "object": "chat.completion.chunk",
+                "provider": "mistral",
+                "stream": true,
+                "temperature": 0
+              },
+              "metrics": {
+                "completion_tokens": 2,
+                "prompt_tokens": 28,
+                "time_to_first_token": 0,
+                "tokens": 30
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "chat-stream-thinking",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "mistral-chat-tool-call-operation",
+          "children": [
+            {
+              "name": "mistral.chat.complete",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "Call the get_weather tool for Vienna. Do not answer with plain text.",
+                  "role": "user"
+                }
+              ],
+              "output": [
+                {
+                  "finishReason": "tool_calls",
+                  "index": 0,
+                  "message": {
+                    "content": "",
+                    "prefix": false,
+                    "role": "assistant",
+                    "toolCalls": [
+                      {
+                        "function": {
+                          "arguments": "{\"location\": \"Vienna\"}",
+                          "name": "get_weather"
+                        },
+                        "id": "<span:1>",
+                        "index": 0
+                      }
+                    ]
+                  }
+                }
+              ],
+              "metadata": {
+                "created": 0,
+                "id": "<span:1>",
+                "maxTokens": 48,
+                "model": "mistral-small-2506",
+                "object": "chat.completion",
+                "provider": "mistral",
+                "temperature": 0,
+                "toolChoice": "required"
+              },
+              "metrics": {
+                "completion_tokens": 13,
+                "prompt_tokens": 91,
+                "time_to_first_token": 0,
+                "tokens": 104
+              }
+            },
+            {
+              "name": "mistral.chat.complete",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "Call the get_exchange_rate tool for USD to EUR. Do not answer with plain text.",
+                  "role": "user"
+                }
+              ],
+              "output": [
+                {
+                  "finishReason": "tool_calls",
+                  "index": 0,
+                  "message": {
+                    "content": "",
+                    "prefix": false,
+                    "role": "assistant",
+                    "toolCalls": [
+                      {
+                        "function": {
+                          "arguments": "{\"from_currency\": \"USD\", \"to_currency\": \"EUR\"}",
+                          "name": "get_exchange_rate"
+                        },
+                        "id": "<span:1>",
+                        "index": 0
+                      }
+                    ]
+                  }
+                }
+              ],
+              "metadata": {
+                "created": 0,
+                "id": "<span:1>",
+                "maxTokens": 48,
+                "model": "mistral-small-2506",
+                "object": "chat.completion",
+                "provider": "mistral",
+                "temperature": 0,
+                "toolChoice": "required"
+              },
+              "metrics": {
+                "completion_tokens": 22,
+                "prompt_tokens": 125,
+                "time_to_first_token": 0,
+                "tokens": 147
+              }
+            },
+            {
+              "name": "mistral.chat.complete",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "You must return only tool calls and no plain text.",
+                  "role": "system"
+                },
+                {
+                  "content": "In a single assistant response, call exactly two tools: get_weather with location Vienna and get_exchange_rate with from_currency USD and to_currency EUR.",
+                  "role": "user"
+                }
+              ],
+              "output": [
+                {
+                  "finishReason": "tool_calls",
+                  "index": 0,
+                  "message": {
+                    "content": "",
+                    "prefix": false,
+                    "role": "assistant",
+                    "toolCalls": [
+                      {
+                        "function": {
+                          "arguments": "{\"location\": \"Vienna\"}",
+                          "name": "get_weather"
+                        },
+                        "id": "<span:1>",
+                        "index": 0
+                      },
+                      {
+                        "function": {
+                          "arguments": "{\"from_currency\": \"USD\", \"to_currency\": \"EUR\"}",
+                          "name": "get_exchange_rate"
+                        },
+                        "id": "<span:2>",
+                        "index": 1
+                      }
+                    ]
+                  }
+                }
+              ],
+              "metadata": {
+                "created": 0,
+                "id": "<span:1>",
+                "maxTokens": 96,
+                "model": "mistral-small-2506",
+                "object": "chat.completion",
+                "provider": "mistral",
+                "temperature": 0,
+                "toolChoice": "required"
+              },
+              "metrics": {
+                "completion_tokens": 34,
+                "prompt_tokens": 219,
+                "time_to_first_token": 0,
+                "tokens": 253
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "chat-tool-call",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "mistral-fim-complete-operation",
+          "children": [
+            {
+              "name": "mistral.fim.complete",
+              "type": "llm",
+              "children": [],
+              "input": "function add(a, b) {",
+              "output": [
+                {
+                  "finishReason": "stop",
+                  "index": 0,
+                  "message": {
+                    "content": "\n    return a + b;\n",
+                    "prefix": false,
+                    "role": "assistant",
+                    "toolCalls": null
+                  }
+                }
+              ],
+              "metadata": {
+                "created": 0,
+                "id": "<span:1>",
+                "maxTokens": 24,
+                "model": "codestral-2508",
+                "object": "chat.completion",
+                "provider": "mistral",
+                "temperature": 0
+              },
+              "metrics": {
+                "completion_tokens": 8,
+                "prompt_tokens": 12,
+                "time_to_first_token": 0,
+                "tokens": 20
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "fim-complete",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "mistral-fim-stream-operation",
+          "children": [
+            {
+              "name": "mistral.fim.stream",
+              "type": "llm",
+              "children": [],
+              "input": "const project = ",
+              "output": [
+                {
+                  "finishReason": "length",
+                  "index": 0,
+                  "message": {
+                    "content": "{\n  name: 'project',\n  title: 'Projects',\n  type:",
+                    "role": "assistant"
+                  }
+                }
+              ],
+              "metadata": {
+                "created": 0,
+                "id": "<span:1>",
+                "maxTokens": 16,
+                "model": "codestral-2508",
+                "object": "chat.completion.chunk",
+                "provider": "mistral",
+                "stream": true,
+                "temperature": 0
+              },
+              "metrics": {
+                "completion_tokens": 16,
+                "prompt_tokens": 9,
+                "time_to_first_token": 0,
+                "tokens": 25
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "fim-stream",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "mistral-agents-complete-operation",
+          "children": [
+            {
+              "name": "mistral.agents.complete",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "Reply with exactly: agent complete",
+                  "role": "user"
+                }
+              ],
+              "output": [
+                {
+                  "finishReason": "stop",
+                  "index": 0,
+                  "message": {
+                    "content": "Agent complete.",
+                    "prefix": false,
+                    "role": "assistant",
+                    "toolCalls": null
+                  }
+                }
+              ],
+              "metadata": {
+                "agentId": "<agentId:1>",
+                "created": 0,
+                "id": "<span:2>",
+                "maxTokens": 16,
+                "model": "mistral-small-2506",
+                "object": "chat.completion",
+                "provider": "mistral",
+                "responseFormat": {
+                  "type": "text"
+                },
+                "temperature": 0
+              },
+              "metrics": {
+                "completion_tokens": 4,
+                "prompt_tokens": 21,
+                "time_to_first_token": 0,
+                "tokens": 25
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "agents-complete",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "mistral-agents-tool-call-operation",
+          "children": [
+            {
+              "name": "mistral.agents.complete",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "Call the get_time_in_city tool for Vienna. Do not answer with plain text.",
+                  "role": "user"
+                }
+              ],
+              "output": [
+                {
+                  "finishReason": "tool_calls",
+                  "index": 0,
+                  "message": {
+                    "content": "",
+                    "prefix": false,
+                    "role": "assistant",
+                    "toolCalls": [
+                      {
+                        "function": {
+                          "arguments": "{\"city\": \"Vienna\"}",
+                          "name": "get_time_in_city"
+                        },
+                        "id": "<span:1>",
+                        "index": 0
+                      }
+                    ]
+                  }
+                }
+              ],
+              "metadata": {
+                "agentId": "<agentId:1>",
+                "created": 0,
+                "id": "<span:2>",
+                "maxTokens": 32,
+                "model": "mistral-small-2506",
+                "object": "chat.completion",
+                "provider": "mistral",
+                "responseFormat": {
+                  "type": "text"
+                },
+                "temperature": 0,
+                "toolChoice": "required"
+              },
+              "metrics": {
+                "completion_tokens": 14,
+                "prompt_tokens": 107,
+                "time_to_first_token": 0,
+                "tokens": 121
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "agents-tool-call",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "mistral-agents-stream-operation",
+          "children": [
+            {
+              "name": "mistral.agents.stream",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "Reply with exactly: agent stream",
+                  "role": "user"
+                }
+              ],
+              "output": [
+                {
+                  "finishReason": "stop",
+                  "index": 0,
+                  "message": {
+                    "content": "agent stream",
+                    "role": "assistant"
+                  }
+                }
+              ],
+              "metadata": {
+                "agentId": "<agentId:1>",
+                "created": 0,
+                "id": "<span:2>",
+                "maxTokens": 16,
+                "model": "mistral-small-2506",
+                "object": "chat.completion.chunk",
+                "provider": "mistral",
+                "responseFormat": {
+                  "type": "text"
+                },
+                "stream": true,
+                "temperature": 0
+              },
+              "metrics": {
+                "completion_tokens": 3,
+                "prompt_tokens": 21,
+                "time_to_first_token": 0,
+                "tokens": 24
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "agents-stream",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "mistral-embeddings-operation",
+          "children": [
+            {
+              "name": "mistral.embeddings.create",
+              "type": "llm",
+              "children": [],
+              "input": "braintrust mistral instrumentation",
+              "output": {
+                "embedding_length": 1024
+              },
+              "metadata": {
+                "id": "<span:1>",
+                "model": "mistral-embed",
+                "object": "list",
+                "provider": "mistral"
+              },
+              "metrics": {
+                "completion_tokens": 0,
+                "prompt_tokens": 9,
+                "tokens": 9
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "embeddings-create",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "mistral-classifiers-moderate-operation",
+          "children": [
+            {
+              "name": "mistral.classifiers.moderate",
+              "type": "llm",
+              "children": [],
+              "input": "A short and harmless moderation fixture.",
+              "output": [
+                {
+                  "categories": {
+                    "criminal": false,
+                    "dangerous": false,
+                    "financial": false,
+                    "hate_and_discrimination": false,
+                    "health": false,
+                    "jailbreaking": false,
+                    "law": false,
+                    "pii": false,
+                    "selfharm": false,
+                    "sexual": false,
+                    "violence_and_threats": false
+                  },
+                  "categoryScores": {
+                    "criminal": 0.00806199200451374,
+                    "dangerous": 0.005911068990826607,
+                    "financial": 0.00011591934162424877,
+                    "hate_and_discrimination": 0.0023231625091284513,
+                    "health": 0.0003799845289904624,
+                    "jailbreaking": 0.018689308315515518,
+                    "law": 0.00020342697098385543,
+                    "pii": 0.001098731067031622,
+                    "selfharm": 0.0006361911655403674,
+                    "sexual": 0.0031236486975103617,
+                    "violence_and_threats": 0.004609572701156139
+                  }
+                }
+              ],
+              "metadata": {
+                "id": "<span:1>",
+                "model": "mistral-moderation-2603",
+                "provider": "mistral"
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "classifiers-moderate",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "mistral-classifiers-moderate-chat-operation",
+          "children": [
+            {
+              "name": "mistral.classifiers.moderateChat",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "Please classify this harmless chat message.",
+                  "role": "user"
+                }
+              ],
+              "output": [
+                {
+                  "categories": {
+                    "criminal": false,
+                    "dangerous": false,
+                    "financial": false,
+                    "hate_and_discrimination": false,
+                    "health": false,
+                    "jailbreaking": false,
+                    "law": false,
+                    "pii": false,
+                    "selfharm": false,
+                    "sexual": false,
+                    "violence_and_threats": false
+                  },
+                  "categoryScores": {
+                    "criminal": 0.000755405577365309,
+                    "dangerous": 0.00022693384380545467,
+                    "financial": 0.00006402006692951545,
+                    "hate_and_discrimination": 0.0007096704212017357,
+                    "health": 0.00008481103577651083,
+                    "jailbreaking": 0.0030278353951871395,
+                    "law": 0.00011235327838221565,
+                    "pii": 0.000552778597921133,
+                    "selfharm": 0.00004133539550821297,
+                    "sexual": 0.0003799845289904624,
+                    "violence_and_threats": 0.00024923254386521876
+                  }
+                }
+              ],
+              "metadata": {
+                "id": "<span:1>",
+                "model": "mistral-moderation-2603",
+                "provider": "mistral"
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "classifiers-moderate-chat",
+            "testRunId": "<run:1>"
+          }
+        }
+      ],
+      "metadata": {
+        "scenario": "mistral-instrumentation",
+        "testRunId": "<run:1>"
+      }
+    }
+  ]
+}
