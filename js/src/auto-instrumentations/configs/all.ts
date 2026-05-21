@@ -11,6 +11,7 @@ import { googleGenAIConfigs } from "./google-genai";
 import { groqConfigs } from "./groq";
 import { huggingFaceConfigs } from "./huggingface";
 import { mistralConfigs } from "./mistral";
+import { openAIAgentsCoreConfigs } from "./openai-agents";
 import { openaiConfigs } from "./openai";
 import { openAICodexConfigs } from "./openai-codex";
 import { openRouterConfigs } from "./openrouter";
@@ -38,6 +39,10 @@ const defaultInstrumentationConfigGroups: readonly InstrumentationConfigGroup[] 
       configs: claudeAgentSDKConfigs,
     },
     { disabledNames: ["cursor", "cursor-sdk"], configs: cursorSDKConfigs },
+    {
+      disabledNames: ["openai-agents", "openaiagents", "openai-agents-core"],
+      configs: openAIAgentsCoreConfigs,
+    },
     {
       disabledNames: ["google", "google-genai"],
       configs: googleGenAIConfigs,
