@@ -35,6 +35,8 @@ describe(`openai agents sdk ${openAIAgentsVersion}`, () => {
         timeoutMs: TIMEOUT_MS,
       });
     },
+    snapshotName: OPENAI_AGENTS_VARIANT_KEY,
+    testFileUrl: import.meta.url,
     timeoutMs: TIMEOUT_MS,
   });
 });

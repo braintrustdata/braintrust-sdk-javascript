@@ -1,9 +1,11 @@
 import { beforeAll, describe, expect, test } from "vitest";
+import { resolveFileSnapshotPath } from "../../helpers/file-snapshot";
 import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
 import {
   withScenarioHarness,
   type ScenarioRunContext,
 } from "../../helpers/scenario-harness";
+import { matchSpanTreeSnapshot } from "../../helpers/span-tree";
 import {
   findChildSpans,
   findLatestChildSpan,
@@ -43,8 +45,16 @@ function findModelSpans(
 export function defineOpenAIAgentsAutoInstrumentationAssertions(options: {
   name: string;
   runScenario: RunOpenAIAgentsScenario;
+  snapshotName: string;
+  testFileUrl: string;
   timeoutMs: number;
 }): void {
+  const spanSnapshotPath = resolveFileSnapshotPath(
+    options.testFileUrl,
+    `${options.snapshotName}.span-tree.json`,
+  );
+  const testConfig = { timeout: options.timeoutMs };
+
   describe(options.name, () => {
     let events: CapturedLogEvent[] = [];
 
@@ -57,7 +67,7 @@ export function defineOpenAIAgentsAutoInstrumentationAssertions(options: {
 
     test(
       "captures OpenAI Agents spans through the auto-hook setup",
-      { timeout: options.timeoutMs },
+      testConfig,
       () => {
         const root = findLatestSpan(events, ROOT_NAME);
         const operation = findLatestSpan(events, OPERATION_NAME);
@@ -113,5 +123,9 @@ export function defineOpenAIAgentsAutoInstrumentationAssertions(options: {
         expect(toolSpan?.output).toBe(FINAL_OUTPUT);
       },
     );
+
+    test("matches the span tree snapshot", testConfig, async () => {
+      await matchSpanTreeSnapshot(events, spanSnapshotPath);
+    });
   });
 }
