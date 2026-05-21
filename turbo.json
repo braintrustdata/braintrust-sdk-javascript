@@ -34,6 +34,11 @@
     },
     "test:e2e": {
       "cache": false,
+      "env": [
+        "BRAINTRUST_API_KEY",
+        "BRAINTRUST_E2E_PROJECT_NAME",
+        "BRAINTRUST_E2E_RUN_CONTEXT_DIR"
+      ],
       "dependsOn": ["^build"],
       "outputs": []
     },
