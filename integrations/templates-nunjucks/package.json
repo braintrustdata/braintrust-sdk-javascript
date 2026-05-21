@@ -22,7 +22,8 @@
     "check:typings": "tsc --noEmit",
     "watch": "tsup --watch",
     "clean": "rm -r dist/*",
-    "test": "vitest run --exclude 'smoke/scenarios/**'"
+    "test": "vitest run --exclude 'smoke/scenarios/**'",
+    "yalc:publish": "yalc publish"
   },
   "author": "Braintrust Data Inc.",
   "license": "Apache-2.0",
@@ -38,7 +39,7 @@
     "braintrust": "workspace:*",
     "tsup": "^8.5.1",
     "typescript": "5.5.4",
-    "vitest": "^4.1.2"
+    "vitest": "4.1.5"
   },
   "repository": {
     "type": "git",

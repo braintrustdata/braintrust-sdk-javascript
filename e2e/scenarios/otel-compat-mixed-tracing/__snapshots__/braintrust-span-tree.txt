@@ -1,0 +1,14 @@
+span_tree:
+├── bt-root [task]
+│   metadata: {
+│     "scenario": "otel-compat-mixed-tracing",
+│     "testRunId": "<run:1>"
+│   }
+└── bt-child-under-otel [task]
+    output: {
+      "source": "otel-child-context"
+    }
+    metadata: {
+      "kind": "bt-child-under-otel",
+      "testRunId": "<run:1>"
+    }

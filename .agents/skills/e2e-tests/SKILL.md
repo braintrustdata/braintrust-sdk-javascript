@@ -31,37 +31,36 @@ Run workspace scripts from the repo root when you want the standard e2e entrypoi
 
 ```bash
 pnpm run test:e2e
-pnpm run test:e2e:hermetic # only run tests that don't rely on external services or llm providers
-pnpm run test:e2e:update # updates snapshots
-pnpm run test:e2e:record # re-record provider cassettes (overwrites existing cassettes)
+pnpm run test:e2e:record # re-record provider cassettes and update snapshots
 ```
 
 Try not to use specific test narrowing commands unless hunting down a very nasty and specific bug.
 
 ## Cassettes
 
-Cassettes mock provider HTTP responses (OpenAI, Anthropic, ...) so scenarios that opt in run hermetically in CI without provider keys.
+Cassettes mock provider HTTP responses (OpenAI, Anthropic, ...) so external-provider scenarios replay in CI without provider keys. The harness starts a local `@braintrust/seinfeld` cassette server and points provider SDK base URL env vars at that server, so subprocesses and SDK-launched binaries are covered too.
 
-- A scenario opts in by passing `runContext: { cassette: true, variantKey: "...", originalScenarioDir }` to `runScenarioDir`/`runNodeScenarioDir`. Cassettes live at `e2e/scenarios/<name>/__cassettes__/<variantKey>.json` (parallel to `__snapshots__/`).
+- External-provider tests should thread `runContext: { variantKey: "...", originalScenarioDir }` into the scenario runner. In normal replay mode, missing cassette entries fail loudly instead of skipping or falling back to live providers. In `record` / `record-missing` mode, they run so new cassettes can be authored.
+- Thread `runContext: { variantKey: "...", originalScenarioDir }` into `runScenarioDir`/`runNodeScenarioDir`. Cassettes live at `e2e/scenarios/<name>/__cassettes__/<variantKey>.cassette.json` (parallel to `__snapshots__/`). Only set `runContext.cassette` explicitly for unusual cases, such as `cassette: false` on a non-provider mode inside an otherwise provider-backed scenario.
 - To re-record after changing a scenario:
 
   ```bash
   ANTHROPIC_API_KEY=... OPENAI_API_KEY=... \
-    pnpm --filter=@braintrust/js-e2e-tests run test:e2e:record scenarios/<name>/scenario.test.ts
+    pnpm --filter=@braintrust/js-e2e-tests run test:e2e:record -- scenarios/<name>/scenario.test.ts
   ```
 
   Then run again in `BRAINTRUST_E2E_CASSETTE_MODE=replay` with no provider keys to confirm the cassette is sufficient.
 
-- Volatile fields in request bodies (e.g. AI-SDK `experimental_generateMessageId`) need a per-scenario filter. Add the scenario name and a `FilterSpec` to `e2e/helpers/cassette-filters.mjs`. The cassette layer is backed by `@braintrust/seinfeld` (`dev-packages/seinfeld`); the preload entry point is `e2e/helpers/cassette-preload.mjs`.
+- Volatile fields in request bodies (e.g. AI-SDK `experimental_generateMessageId`) need a per-scenario filter. Add or update `<scenario-dir>/cassette-filter.mjs` with a named `filter` export. The cassette server loads that filter through `withScenarioHarness(...)`.
 - **After recording, always inspect the cassette for leaked API keys before committing.** The recorder redacts common patterns (`paranoid` preset), but confirm that no real keys appear in request headers, response bodies, or any URL query parameters. If a key slips through, remove the cassette, add a custom `redact` rule, and re-record.
 
 ## Preferred Patterns
 
 - Keep the expensive setup at module scope with `prepareScenarioDir(...)`. Only call `installScenarioDependencies(...)` directly when you are testing installer behavior or need a nonstandard setup.
 - Run every scenario through `withScenarioHarness(...)`.
-- Tag every test with exactly one tag from `e2e/helpers/tags.ts`.
 - Keep reusable logic in `e2e/helpers/`. Keep one-off fixtures and scenario-specific files inside the scenario directory.
 - Snapshot stable contracts, not raw noise. Use `normalizeForSnapshot(...)` before inline snapshots and `formatJsonFileSnapshot(...)` plus file snapshots for larger payloads or version matrices.
+- For span-tree snapshots, use `matchSpanTreeSnapshot(...)`. It writes and asserts paired `.span-tree.json` and `.span-tree.txt` files from the same normalized span tree. The JSON file is the structural contract that is easiest to parse mechanically; the TXT file is the ASCII tree that is easiest to review by eye. Keep them in sync by updating both through the e2e update/record commands, and never hand-edit only one side of the pair.
 - When a scenario family already has `assertions.ts`, keep version- or provider-specific test setup in `scenario.test.ts` and reuse the shared assertions file.
 - Keep the CI e2e summary up to date. If a scenario version matrix or `variantKey` changes, update `e2e/config/pr-comment-scenarios.json` in the same change and follow the established pattern used by other versioned scenarios: one summary row per version, not separate wrapped/auto rows unless that pattern already exists for the scenario family.
 - Run new or updated scenarios three times in a row before considering snapshots stable.
@@ -91,5 +90,5 @@ pnpm install --dir e2e/scenarios/<name> --ignore-workspace --lockfile-only --str
 
 - Flaky snapshot: normalize the changing field instead of snapshotting around it.
 - Request-flow assertions: grab `requestCursor()` before running the scenario, then inspect `requestsAfter(...)`.
-- If the scenario is external-provider backed, confirm the required provider env var is set before debugging the assertions.
+- If the scenario is external-provider backed, first confirm it has a cassette or run in `BRAINTRUST_E2E_CASSETTE_MODE=record` with the required provider env var set.
 - Deno/browser scenarios may intentionally differ from Node. Assert the real runtime contract instead of copying Node expectations blindly.

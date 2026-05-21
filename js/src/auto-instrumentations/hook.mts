@@ -14,21 +14,7 @@
  */
 
 import { register } from "node:module";
-import { openaiConfigs } from "./configs/openai.js";
-import { openAICodexConfigs } from "./configs/openai-codex.js";
-import { anthropicConfigs } from "./configs/anthropic.js";
-import { aiSDKConfigs } from "./configs/ai-sdk.js";
-import { claudeAgentSDKConfigs } from "./configs/claude-agent-sdk.js";
-import { cursorSDKConfigs } from "./configs/cursor-sdk.js";
-import { googleGenAIConfigs } from "./configs/google-genai.js";
-import { huggingFaceConfigs } from "./configs/huggingface.js";
-import { openRouterAgentConfigs } from "./configs/openrouter-agent.js";
-import { openRouterConfigs } from "./configs/openrouter.js";
-import { mistralConfigs } from "./configs/mistral.js";
-import { googleADKConfigs } from "./configs/google-adk.js";
-import { cohereConfigs } from "./configs/cohere.js";
-import { groqConfigs } from "./configs/groq.js";
-import { gitHubCopilotConfigs } from "./configs/github-copilot.js";
+import { getDefaultInstrumentationConfigs } from "./configs/all.js";
 import { ModulePatch } from "./loader/cjs-patch.js";
 import { patchTracingChannel } from "./patch-tracing-channel.js";
 
@@ -53,61 +39,12 @@ function readDisabledIntegrations(): Set<string> {
   );
 }
 
-function isDisabled(disabled: Set<string>, ...names: string[]): boolean {
-  return names.some((name) => disabled.has(name));
-}
-
-const disabledIntegrations = readDisabledIntegrations();
-
 // Combine all instrumentation configs.
 // Respect BRAINTRUST_DISABLE_INSTRUMENTATION here too so load-time
 // transformation and runtime plugins stay aligned.
-const allConfigs = [
-  ...(isDisabled(disabledIntegrations, "openai") ? [] : openaiConfigs),
-  ...(isDisabled(
-    disabledIntegrations,
-    "openai-codex",
-    "openai-codex-sdk",
-    "codex",
-    "codex-sdk",
-  )
-    ? []
-    : openAICodexConfigs),
-  ...(isDisabled(disabledIntegrations, "anthropic") ? [] : anthropicConfigs),
-  ...(isDisabled(disabledIntegrations, "aisdk", "ai-sdk", "vercel-ai")
-    ? []
-    : aiSDKConfigs),
-  ...(isDisabled(disabledIntegrations, "claudeagentsdk", "claude-agent-sdk")
-    ? []
-    : claudeAgentSDKConfigs),
-  ...(isDisabled(disabledIntegrations, "cursor", "cursor-sdk")
-    ? []
-    : cursorSDKConfigs),
-  ...(isDisabled(disabledIntegrations, "google", "google-genai")
-    ? []
-    : googleGenAIConfigs),
-  ...(isDisabled(disabledIntegrations, "huggingface")
-    ? []
-    : huggingFaceConfigs),
-  ...(isDisabled(disabledIntegrations, "openrouter") ? [] : openRouterConfigs),
-  ...(isDisabled(disabledIntegrations, "openrouteragent", "openrouter-agent")
-    ? []
-    : openRouterAgentConfigs),
-  ...(isDisabled(disabledIntegrations, "mistral") ? [] : mistralConfigs),
-  ...(isDisabled(disabledIntegrations, "googleadk", "google-adk")
-    ? []
-    : googleADKConfigs),
-  ...(isDisabled(disabledIntegrations, "cohere") ? [] : cohereConfigs),
-  ...(isDisabled(disabledIntegrations, "groq", "groq-sdk") ? [] : groqConfigs),
-  ...(isDisabled(
-    disabledIntegrations,
-    "githubcopilot",
-    "github-copilot",
-    "copilot-sdk",
-  )
-    ? []
-    : gitHubCopilotConfigs),
-];
+const allConfigs = getDefaultInstrumentationConfigs({
+  disabledIntegrations: readDisabledIntegrations(),
+});
 
 // 1. Register ESM loader for ESM modules
 register("./loader/esm-hook.mjs", {

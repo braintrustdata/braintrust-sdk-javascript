@@ -20,18 +20,18 @@
     "build": "tsup",
     "check:typings": "tsc --noEmit",
     "watch": "tsup --watch",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "yalc:publish": "yalc publish"
   },
   "dependencies": {
     "als-browser": "^1.0.1",
-    "braintrust": ">=3.0.0-rc.29"
+    "braintrust": "workspace:^"
   },
   "devDependencies": {
     "@types/node": "^20.10.5",
-    "braintrust": "workspace:*",
-    "tsup": "^8.3.5",
+    "tsup": "^8.5.1",
     "typescript": "^5.3.3",
-    "vitest": "^4.1.2"
+    "vitest": "4.1.5"
   },
   "peerDependencies": {
     "zod": "^3.25.34 || ^4.0"

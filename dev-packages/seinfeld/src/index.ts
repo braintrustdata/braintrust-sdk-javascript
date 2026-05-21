@@ -1,50 +1,25 @@
 /**
- * seinfeld — Generic VCR/cassette library for Node.js, built on MSW.
- *
- * See README.md for an overview. The two-pipeline filtering model is the
- * key concept: normalizers transform requests for matching only, while
- * redactors transform what gets persisted to disk.
+ * Internal cassette server used by the e2e provider tests.
  */
 
-// Core data types
-export type {
-  BodyPayload,
-  CassetteEntry,
-  CassetteFile,
-  CassetteMode,
-  NormalizedRequest,
-  RecordedRequest,
-  RecordedResponse,
-} from "./cassette";
+export type { CassetteMode, RecordedRequest } from "./cassette";
 
-// Errors
-export {
-  AggregateCassetteMissError,
-  CassetteFormatError,
-  CassetteMissError,
-  CassetteRedactionError,
-  CassetteVersionError,
-} from "./errors";
-
-// Storage
 export type { CassetteStore, JsonFileStoreOptions } from "./store";
-export { createJsonFileStore, createMemoryStore } from "./store";
+export { createJsonFileStore } from "./store";
 
-// Filters / normalization (matching pipeline)
 export type { FilterConfig, FilterPreset, FilterSpec } from "./normalizer";
-
-// Redaction (persistence pipeline)
 export type {
   RedactionConfig,
   RedactionPreset,
   RedactionSpec,
 } from "./redactor";
-export { apiKeyHeader, bearerToken, cookies } from "./redactor/presets";
 
-// Matching
-export type { MatchCandidate, Matcher } from "./matcher";
-export { createDefaultMatcher } from "./matcher";
-
-// Recorder — the main entry point
-export type { Cassette, CassetteOptions } from "./recorder";
-export { createCassette } from "./recorder";
+export type {
+  CassetteServer,
+  CassetteServerOptions,
+  CassetteServerRoute,
+  IgnoredRequestMatcher,
+  RequestUrlMatcher,
+  StreamingRequestMatcher,
+} from "./recorder";
+export { createCassetteServer } from "./recorder";

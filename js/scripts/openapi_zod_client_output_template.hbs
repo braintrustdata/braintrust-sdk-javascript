@@ -1,6 +1,0 @@
-import { z } from "zod/v3";
-
-{{#each schemas}}
-export const {{@key}} = {{{this}}};
-export type {{@key}}Type = z.infer<typeof {{@key}}>;
-{{/each}}

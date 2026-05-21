@@ -1,4 +1,4 @@
-import chalk from "chalk";
+import { styleText } from "node:util";
 import * as cliProgress from "cli-progress";
 
 import type { ProgressReporter } from "../../reporters/types";
@@ -22,7 +22,7 @@ export class BarProgressReporter implements ProgressReporter {
   constructor() {
     this.multiBar = new cliProgress.MultiBar(
       {
-        format: `${chalk.blueBright("{bar}")} ${chalk.blue("{evaluator}")} {percentage}% ${chalk.gray("{value}/{total} {eta_formatted}")}`,
+        format: `${styleText("blueBright", "{bar}")} ${styleText("blue", "{evaluator}")} {percentage}% ${styleText("gray", "{value}/{total} {eta_formatted}")}`,
         hideCursor: true,
         barsize: 10,
       },

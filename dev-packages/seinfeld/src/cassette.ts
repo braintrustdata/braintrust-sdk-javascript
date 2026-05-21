@@ -75,8 +75,6 @@ export interface CassetteEntry {
 export interface CassetteMeta {
   /** ISO-8601 timestamp when the cassette was first created. */
   createdAt: string;
-  /** The seinfeld version that produced the cassette. */
-  seinfeldVersion: string;
 }
 
 /**
@@ -87,7 +85,6 @@ export interface CassetteMeta {
  * incompatibly.
  */
 export interface CassetteFile {
-  version: 1;
   meta?: CassetteMeta;
   entries: CassetteEntry[];
 }
@@ -95,5 +92,5 @@ export interface CassetteFile {
 /** @deprecated Use `CassetteFile` instead. */
 export type Cassette = CassetteFile;
 
-/** The three execution modes. See README for full semantics. */
+/** The three execution modes used by the cassette server. */
 export type CassetteMode = "replay" | "record" | "passthrough";

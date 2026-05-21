@@ -4,14 +4,13 @@ import {
   readInstalledPackageVersion,
   resolveScenarioDir,
 } from "../../helpers/scenario-harness";
-import { cassetteTagsFor } from "../../helpers/tags";
 import { defineOpenRouterTraceAssertions } from "./assertions";
 
 const originalScenarioDir = resolveScenarioDir(import.meta.url);
 const scenarioDir = await prepareScenarioDir({
   scenarioDir: originalScenarioDir,
 });
-const TIMEOUT_MS = 90_000;
+const TIMEOUT_MS = 300_000;
 const openRouterScenarios = await Promise.all(
   [
     {
@@ -37,47 +36,47 @@ const openRouterScenarios = await Promise.all(
   })),
 );
 
-for (const scenario of openRouterScenarios) {
-  const tags = cassetteTagsFor(import.meta.url, scenario.snapshotName);
+describe.concurrent("variants", () => {
+  for (const scenario of openRouterScenarios) {
+    describe.sequential(`openrouter sdk ${scenario.version}`, () => {
+      defineOpenRouterTraceAssertions({
+        name: "wrapped instrumentation",
+        runScenario: async ({ runScenarioDir }) => {
+          await runScenarioDir({
+            entry: scenario.wrapperEntry,
+            runContext: {
+              variantKey: scenario.snapshotName,
+              originalScenarioDir,
+            },
+            scenarioDir,
+            timeoutMs: TIMEOUT_MS,
+          });
+        },
+        snapshotName: scenario.snapshotName,
+        supportsRerank: scenario.supportsRerank,
+        testFileUrl: import.meta.url,
+        timeoutMs: TIMEOUT_MS,
+      });
 
-  describe(`openrouter sdk ${scenario.version}`, { tags }, () => {
-    defineOpenRouterTraceAssertions({
-      name: "wrapped instrumentation",
-      runScenario: async ({ runScenarioDir }) => {
-        await runScenarioDir({
-          entry: scenario.wrapperEntry,
-          runContext: {
-            variantKey: scenario.snapshotName,
-            originalScenarioDir,
-          },
-          scenarioDir,
-          timeoutMs: TIMEOUT_MS,
-        });
-      },
-      snapshotName: scenario.snapshotName,
-      supportsRerank: scenario.supportsRerank,
-      testFileUrl: import.meta.url,
-      timeoutMs: TIMEOUT_MS,
+      defineOpenRouterTraceAssertions({
+        name: "auto-hook instrumentation",
+        runScenario: async ({ runNodeScenarioDir }) => {
+          await runNodeScenarioDir({
+            entry: scenario.autoEntry,
+            nodeArgs: ["--import", "braintrust/hook.mjs"],
+            runContext: {
+              variantKey: scenario.snapshotName,
+              originalScenarioDir,
+            },
+            scenarioDir,
+            timeoutMs: TIMEOUT_MS,
+          });
+        },
+        snapshotName: scenario.snapshotName,
+        supportsRerank: scenario.supportsRerank,
+        testFileUrl: import.meta.url,
+        timeoutMs: TIMEOUT_MS,
+      });
     });
-
-    defineOpenRouterTraceAssertions({
-      name: "auto-hook instrumentation",
-      runScenario: async ({ runNodeScenarioDir }) => {
-        await runNodeScenarioDir({
-          entry: scenario.autoEntry,
-          nodeArgs: ["--import", "braintrust/hook.mjs"],
-          runContext: {
-            variantKey: scenario.snapshotName,
-            originalScenarioDir,
-          },
-          scenarioDir,
-          timeoutMs: TIMEOUT_MS,
-        });
-      },
-      snapshotName: scenario.snapshotName,
-      supportsRerank: scenario.supportsRerank,
-      testFileUrl: import.meta.url,
-      timeoutMs: TIMEOUT_MS,
-    });
-  });
-}
+  }
+});

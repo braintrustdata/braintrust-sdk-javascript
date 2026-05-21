@@ -1,17 +1,22 @@
 import { beforeAll, describe, expect, test } from "vitest";
-import { normalizeForSnapshot, type Json } from "../../helpers/normalize";
+import type { Json } from "../../helpers/normalize";
 import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
+import { resolveFileSnapshotPath } from "../../helpers/file-snapshot";
 import {
-  formatJsonFileSnapshot,
-  matchFileSnapshot,
-  resolveFileSnapshotPath,
-} from "../../helpers/file-snapshot";
-import { withScenarioHarness } from "../../helpers/scenario-harness";
+  effectiveScenarioTimeoutMs,
+  withScenarioHarness,
+  type ScenarioRunContext,
+} from "../../helpers/scenario-harness";
 import {
   findAllSpans,
   findChildSpans,
   findLatestSpan,
 } from "../../helpers/trace-selectors";
+import {
+  matchSpanTreeSnapshot,
+  spanTreeFields,
+  type SpanTreeEntry,
+} from "../../helpers/span-tree";
 
 import { summarizeWrapperContract } from "../../helpers/wrapper-contract";
 import { ROOT_NAME, SCENARIO_NAME } from "./scenario.impl.mjs";
@@ -20,13 +25,13 @@ type RunClaudeAgentSDKScenario = (harness: {
   runNodeScenarioDir: (options: {
     entry: string;
     nodeArgs: string[];
-    runContext?: { variantKey: string };
+    runContext?: ScenarioRunContext;
     scenarioDir: string;
     timeoutMs: number;
   }) => Promise<unknown>;
   runScenarioDir: (options: {
     entry: string;
-    runContext?: { variantKey: string };
+    runContext?: ScenarioRunContext;
     scenarioDir: string;
     timeoutMs: number;
   }) => Promise<unknown>;
@@ -273,7 +278,44 @@ function findOperationTaskRoot(
   return findChildSpans(events, "Claude Agent", operation?.span.id).at(-1);
 }
 
-function buildSpanSummary(events: CapturedLogEvent[]): Json {
+function spanTreeEntry(
+  event: CapturedLogEvent | undefined,
+  overrides?: {
+    metadata?: Json;
+    name?: string | null;
+    omitSpanParents?: boolean;
+  },
+): SpanTreeEntry | undefined {
+  if (!event) {
+    return undefined;
+  }
+
+  const summary = summarizeSpan(event, overrides) as Record<string, Json>;
+  const {
+    has_input: _hasInput,
+    has_output: _hasOutput,
+    input_contents: inputContents,
+    metric_keys: metricKeys,
+    name,
+    root_span_id: _rootSpanId,
+    span_id: _spanId,
+    span_parents: _spanParents,
+    ...summaryFields
+  } = summary;
+
+  return {
+    event,
+    fields: {
+      ...spanTreeFields(event),
+      ...summaryFields,
+      ...(inputContents === undefined ? {} : { input: inputContents }),
+      ...(metricKeys === undefined ? {} : { metrics: { keys: metricKeys } }),
+    },
+    name: typeof name === "string" ? name : undefined,
+  };
+}
+
+function buildSpanTree(events: CapturedLogEvent[]): SpanTreeEntry[] {
   const root = findLatestSpan(events, ROOT_NAME);
   const basicOperation = findLatestSpan(events, "claude-agent-basic-operation");
   const asyncPromptOperation = findLatestSpan(
@@ -353,34 +395,26 @@ function buildSpanSummary(events: CapturedLogEvent[]): Json {
     findToolSpanByLocalHandler(events, "calculator-local-handler-divide") ??
     findToolSpanByOperation(events, "divide");
 
-  return normalizeForSnapshot({
-    async_prompt: {
-      llm: summarizeSpan(asyncPromptLlm),
-      operation: summarizeSpan(asyncPromptOperation),
-      task: summarizeSpan(asyncPromptTask),
-    },
-    basic: {
-      llm: summarizeSpan(basicLlm),
-      operation: summarizeSpan(basicOperation),
-      task: summarizeSpan(basicTask),
-      tool: summarizeSpan(basicTool),
-    },
-    failure: {
-      llm: summarizeSpan(failureLlm),
-      operation: summarizeSpan(failureOperation),
-      task: summarizeSpan(failureTask),
-      tool: summarizeSpan(failureTool),
-    },
-    root: summarizeSpan(root),
-    subagent: {
-      handoff_tool: summarizeSpan(subAgentHandoffTool),
-      llm: summarizeSpan(subAgentLlm),
-      nested_task: summarizeSpan(subAgentTask),
-      operation: summarizeSpan(subAgentOperation),
-      task_root: summarizeSpan(subAgentTaskRoot),
-      tool: summarizeSpan(subAgentTool, { omitSpanParents: true }),
-    },
-  } as Json);
+  return [
+    spanTreeEntry(root),
+    spanTreeEntry(basicOperation),
+    spanTreeEntry(basicTask),
+    spanTreeEntry(basicLlm),
+    spanTreeEntry(basicTool),
+    spanTreeEntry(asyncPromptOperation),
+    spanTreeEntry(asyncPromptTask),
+    spanTreeEntry(asyncPromptLlm),
+    spanTreeEntry(subAgentOperation),
+    spanTreeEntry(subAgentTaskRoot),
+    spanTreeEntry(subAgentHandoffTool),
+    spanTreeEntry(subAgentTask),
+    spanTreeEntry(subAgentLlm),
+    spanTreeEntry(subAgentTool, { omitSpanParents: true }),
+    spanTreeEntry(failureOperation),
+    spanTreeEntry(failureTask),
+    spanTreeEntry(failureLlm),
+    spanTreeEntry(failureTool),
+  ].filter((entry): entry is SpanTreeEntry => entry !== undefined);
 }
 
 export function defineClaudeAgentSDKInstrumentationAssertions(options: {
@@ -394,10 +428,11 @@ export function defineClaudeAgentSDKInstrumentationAssertions(options: {
 }): void {
   const snapshotPath = resolveFileSnapshotPath(
     options.testFileUrl,
-    `${options.snapshotName}.span-events.json`,
+    `${options.snapshotName}.span-tree.json`,
   );
+  const timeoutMs = effectiveScenarioTimeoutMs(options.timeoutMs);
   const testConfig = {
-    timeout: options.timeoutMs,
+    timeout: timeoutMs,
   };
 
   describe(options.name, () => {
@@ -408,7 +443,7 @@ export function defineClaudeAgentSDKInstrumentationAssertions(options: {
         await options.runScenario(harness);
         events = harness.events();
       });
-    }, options.timeoutMs);
+    }, timeoutMs);
 
     test("captures the root trace for the scenario", testConfig, () => {
       const root = findLatestSpan(events, ROOT_NAME);
@@ -686,11 +721,8 @@ export function defineClaudeAgentSDKInstrumentationAssertions(options: {
       }
     });
 
-    test("matches the shared span snapshot", testConfig, async () => {
-      await matchFileSnapshot(
-        formatJsonFileSnapshot(buildSpanSummary(events)),
-        snapshotPath,
-      );
+    test("matches the shared span tree snapshot", testConfig, async () => {
+      await matchSpanTreeSnapshot(events, snapshotPath);
     });
   });
 }

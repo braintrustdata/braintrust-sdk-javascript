@@ -10,10 +10,9 @@ import {
   resolveScenarioDir,
   withScenarioHarness,
 } from "../../helpers/scenario-harness";
-import { E2E_TAGS } from "../../helpers/tags";
+import { matchSpanTreeSnapshot } from "../../helpers/span-tree";
 import {
   extractOtelSpans,
-  summarizeEvent,
   summarizeRequest,
 } from "../../helpers/trace-summary";
 import { findLatestSpan } from "../../helpers/trace-selectors";
@@ -104,7 +103,6 @@ function dedupeProjectRegisterRequestSummaries(
 test(
   "nextjs-instrumentation builds a Next.js app and captures Node and Edge runtime traces",
   {
-    tags: [E2E_TAGS.hermetic],
     timeout: TIMEOUT_MS,
   },
   async () => {
@@ -204,11 +202,9 @@ test(
           resolveFileSnapshotPath(import.meta.url, "route-responses.json"),
         );
 
-        await matchFileSnapshot(
-          formatJsonFileSnapshot(
-            [edgeSpan, nodeSpan].map((event) => summarizeEvent(event!)) as Json,
-          ),
-          resolveFileSnapshotPath(import.meta.url, "span-events.json"),
+        await matchSpanTreeSnapshot(
+          events,
+          resolveFileSnapshotPath(import.meta.url, "span-tree.json"),
         );
 
         await matchFileSnapshot(

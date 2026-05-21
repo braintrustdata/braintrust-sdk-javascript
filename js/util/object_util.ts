@@ -3,6 +3,13 @@ import { isArray, isObject, isObjectOrArray } from "./type_util";
 // Fields that automatically use set-union merge semantics (unless in mergePaths).
 const SET_UNION_FIELDS = new Set(["tags"]);
 
+// Block certain keys from being merged to prevent prototype pollution and other unsafe merges.
+const FORBIDDEN_MERGE_KEYS: ReadonlySet<string> = new Set([
+  "__proto__",
+  "constructor",
+  "prototype",
+]);
+
 // Mutably updates `mergeInto` with the contents of `mergeFrom`, merging objects
 // deeply. Does not merge any further than `merge_paths`.
 // For fields in SET_UNION_FIELDS (like "tags"), arrays are merged as sets (union)
@@ -39,6 +46,7 @@ function mergeDictsWithPathsHelper({
   mergePaths: Set<string>;
 }) {
   Object.entries(mergeFrom).forEach(([k, mergeFromV]) => {
+    if (FORBIDDEN_MERGE_KEYS.has(k)) return;
     const fullPath = path.concat([k]);
     const fullPathSerialized = JSON.stringify(fullPath);
     const mergeIntoV = recordFind(mergeInto, k);

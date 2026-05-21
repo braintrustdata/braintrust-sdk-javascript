@@ -56,7 +56,11 @@ export function patchTracingChannel(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ...args: any[]
     ) {
-      const { start, end, asyncStart, asyncEnd, error } = this;
+      const start = this.start;
+      const end = this.end;
+      const asyncStart = this.asyncStart;
+      const asyncEnd = this.asyncEnd;
+      const error = this.error;
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       function publishRejected(err: any) {

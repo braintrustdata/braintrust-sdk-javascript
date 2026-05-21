@@ -23,8 +23,8 @@
  *
  * **Bundler Plugin (Vite):**
  * ```typescript
- * import { vitePlugin } from '@braintrust/auto-instrumentations/bundler/vite';
- * export default { plugins: [vitePlugin()] };
+ * import { braintrustVitePlugin } from 'braintrust/vite';
+ * export default { plugins: [braintrustVitePlugin()] };
  * ```
  */
 
@@ -42,6 +42,7 @@ export { mistralConfigs } from "./configs/mistral";
 export { googleADKConfigs } from "./configs/google-adk";
 export { cohereConfigs } from "./configs/cohere";
 export { groqConfigs } from "./configs/groq";
+export { genkitConfigs } from "./configs/genkit";
 export { gitHubCopilotConfigs } from "./configs/github-copilot";
 
 // Re-export orchestrion configuration types

@@ -4,18 +4,23 @@ import {
   runOperation,
   runTracedScenario,
 } from "../../helpers/provider-runtime.mjs";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-import os from "node:os";
+import {
+  chmod,
+  copyFile,
+  mkdir,
+  mkdtemp,
+  readFile,
+  rm,
+} from "node:fs/promises";
+import { tmpdir } from "node:os";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 
 export const ROOT_NAME = "openai-codex-instrumentation-root";
 export const SCENARIO_NAME = "openai-codex-instrumentation";
 
-const SCENARIO_DIR = path.dirname(fileURLToPath(import.meta.url));
-const MOCK_CODEX_PATH = path.join(SCENARIO_DIR, "mock-codex-cli.mjs");
 const RUN_MARKER = "OPENAI_CODEX_RUN_OK";
 const STREAM_MARKER = "OPENAI_CODEX_STREAM_OK";
+const SCENARIO_TMP_PREFIX = "braintrust-codex-e2e-openai-codex-instrumentation";
 
 function parseEnvLine(line) {
   const trimmed = line.trim();
@@ -63,10 +68,16 @@ async function loadRootEnv() {
   }
 }
 
-function stringEnv() {
-  return Object.fromEntries(
-    Object.entries(process.env).filter((entry) => entry[1] !== undefined),
-  );
+function codexEnv(codexHome) {
+  const env = {
+    CODEX_HOME: codexHome,
+  };
+  for (const key of ["HOME", "LANG", "LC_ALL", "PATH", "SHELL", "TMPDIR"]) {
+    if (process.env[key] !== undefined) {
+      env[key] = process.env[key];
+    }
+  }
+  return env;
 }
 
 function requireOpenAIKey() {
@@ -79,118 +90,123 @@ function requireOpenAIKey() {
   return apiKey;
 }
 
-function scenarioMode() {
-  const mode = process.env.OPENAI_CODEX_E2E_MODE ?? "mock";
-  if (mode !== "mock" && mode !== "real") {
-    throw new Error(
-      `OPENAI_CODEX_E2E_MODE must be "mock" or "real", received ${JSON.stringify(mode)}`,
-    );
-  }
-  return mode;
-}
-
-function createMockClient(SDK) {
+function createClient(SDK, codexHome) {
   const { Codex } = SDK;
-  return new Codex({
-    apiKey: "test-key",
-    codexPathOverride: MOCK_CODEX_PATH,
-    env: {
-      PATH: process.env.PATH ?? "",
-    },
-  });
-}
-
-function createRealClient(SDK) {
-  const { Codex } = SDK;
+  const baseUrl =
+    process.env.BRAINTRUST_E2E_MODEL_BASE_URL || process.env.OPENAI_BASE_URL;
   return new Codex({
     apiKey: requireOpenAIKey(),
-    env: stringEnv(),
+    config: {
+      features: {
+        unified_exec: true,
+      },
+      model_provider: "openai-codex-e2e",
+      model_providers: {
+        "openai-codex-e2e": {
+          base_url: baseUrl ?? "https://api.openai.com/v1",
+          env_key: "CODEX_API_KEY",
+          name: "OpenAI Codex E2E",
+          requires_openai_auth: false,
+          supports_websockets: false,
+          wire_api: "responses",
+        },
+      },
+    },
+    env: codexEnv(codexHome),
   });
 }
 
-function createClient(SDK, mode) {
-  return mode === "real" ? createRealClient(SDK) : createMockClient(SDK);
+async function isolateCodexExecutable(client, root) {
+  const executablePath = client?.exec?.executablePath;
+  if (typeof executablePath !== "string") {
+    return;
+  }
+
+  // Codex 0.128 suppresses tool JSON events on Linux when it is launched from
+  // GitHub's checkout path.
+  const isolatedPath = path.join(
+    root,
+    process.platform === "win32" ? "codex.exe" : "codex",
+  );
+  await copyFile(executablePath, isolatedPath);
+  await chmod(isolatedPath, 0o755);
+  client.exec.executablePath = isolatedPath;
 }
 
-function startThread(client, mode, workingDirectory) {
+function startThread(client, workingDirectory) {
   return client.startThread({
     approvalPolicy: "never",
-    model: process.env.OPENAI_CODEX_E2E_MODEL ?? "gpt-5-codex",
+    model: process.env.OPENAI_CODEX_E2E_MODEL ?? "gpt-5.1-codex-mini",
     modelReasoningEffort: "low",
     networkAccessEnabled: false,
-    sandboxMode: mode === "real" ? "workspace-write" : "danger-full-access",
-    ...(mode === "real" ? { skipGitRepoCheck: true } : {}),
-    webSearchMode: "disabled",
+    sandboxMode: "read-only",
+    skipGitRepoCheck: true,
+    webSearchMode: "live",
     workingDirectory,
   });
 }
 
-async function createWorkspace(marker) {
-  const workingDirectory = await mkdtemp(
-    path.join(os.tmpdir(), "braintrust-codex-e2e-"),
+async function createWorkspace(root, marker) {
+  const workingDirectory = path.join(
+    root,
+    marker === RUN_MARKER ? "run" : "stream",
   );
-  await writeFile(
-    path.join(workingDirectory, "codex-input.txt"),
-    `The final answer marker is ${marker}.\n`,
-    "utf8",
-  );
+  await mkdir(workingDirectory, { recursive: true });
   return workingDirectory;
 }
 
 function realPrompt(marker) {
   return [
     "You are running inside an SDK instrumentation test.",
-    "Before answering, use the shell to run `cat codex-input.txt`.",
-    "Then answer in one short sentence.",
-    `The final response must include the exact marker ${marker}.`,
+    'Use web search once for the exact query "Braintrust SDK JavaScript".',
+    "Do not run shell commands or inspect local files.",
+    "After the web search completes, reply with exactly this marker and no extra text:",
+    marker,
   ].join(" ");
 }
 
-function mockPrompt(marker, operation) {
-  return `Return Codex ${marker} after using a command in ${operation} mode.`;
-}
-
 async function runOpenAICodexScenario({ decorateSDK, sdk }) {
-  const mode = scenarioMode();
-  if (mode === "real") {
-    await loadRootEnv();
-  }
+  await loadRootEnv();
   const instrumentedSDK = decorateSDK ? decorateSDK(sdk) : sdk;
-  const client = createClient(instrumentedSDK, mode);
-  let runWorkingDirectory = process.cwd();
-  let streamedWorkingDirectory = process.cwd();
-  const runPrompt =
-    mode === "real" ? realPrompt(RUN_MARKER) : mockPrompt(RUN_MARKER, "run");
-  const streamedPrompt =
-    mode === "real"
-      ? realPrompt(STREAM_MARKER)
-      : mockPrompt(STREAM_MARKER, "stream");
+  const scenarioRoot = await mkdtemp(
+    path.join(tmpdir(), `${SCENARIO_TMP_PREFIX}-`),
+  );
+  const codexHome = path.join(scenarioRoot, "codex-home");
+  await mkdir(codexHome, { recursive: true });
+  const client = createClient(instrumentedSDK, codexHome);
+  await isolateCodexExecutable(client, scenarioRoot);
+  const runWorkingDirectory = await createWorkspace(scenarioRoot, RUN_MARKER);
+  const streamedWorkingDirectory = await createWorkspace(
+    scenarioRoot,
+    STREAM_MARKER,
+  );
+  const originalCwd = process.cwd();
 
   try {
-    if (mode === "real") {
-      runWorkingDirectory = await createWorkspace(RUN_MARKER);
-      streamedWorkingDirectory = await createWorkspace(STREAM_MARKER);
-    }
-
+    // The Codex SDK spawn inherits process.cwd(), so keep that out of the
+    // checkout too.
+    process.chdir(scenarioRoot);
     await runTracedScenario({
       callback: async () => {
         await runOperation("openai-codex-run-operation", "run", async () => {
-          const thread = startThread(client, mode, runWorkingDirectory);
-          await thread.run(runPrompt);
+          const thread = startThread(client, runWorkingDirectory);
+          await thread.run(realPrompt(RUN_MARKER));
         });
 
         await runOperation(
           "openai-codex-run-streamed-operation",
           "runStreamed",
           async () => {
-            const thread = startThread(client, mode, streamedWorkingDirectory);
-            const streamedTurn = await thread.runStreamed(streamedPrompt);
+            const thread = startThread(client, streamedWorkingDirectory);
+            const streamedTurn = await thread.runStreamed(
+              realPrompt(STREAM_MARKER),
+            );
             await collectAsync(streamedTurn.events);
           },
         );
       },
-      flushCount: 2,
-      flushDelayMs: 100,
+      flushCount: 4,
+      flushDelayMs: 250,
       metadata: {
         scenario: SCENARIO_NAME,
       },
@@ -198,12 +214,15 @@ async function runOpenAICodexScenario({ decorateSDK, sdk }) {
       rootName: ROOT_NAME,
     });
   } finally {
-    if (mode === "real") {
-      await Promise.allSettled([
-        rm(runWorkingDirectory, { force: true, recursive: true }),
-        rm(streamedWorkingDirectory, { force: true, recursive: true }),
-      ]);
-    }
+    process.chdir(originalCwd);
+    await Promise.allSettled([
+      rm(scenarioRoot, {
+        force: true,
+        maxRetries: 5,
+        recursive: true,
+        retryDelay: 100,
+      }),
+    ]);
   }
 }
 

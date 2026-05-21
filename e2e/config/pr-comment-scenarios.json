@@ -13,7 +13,13 @@
     "scenarioDirName": "openai-codex-instrumentation",
     "label": "OpenAI Codex Instrumentation",
     "metadataScenario": "openai-codex-instrumentation",
-    "variants": [{ "variantKey": "openai-codex-v0128", "label": "v0.128" }]
+    "variants": [
+      { "variantKey": "openai-codex-v0128-wrapped", "label": "v0.128 wrapped" },
+      {
+        "variantKey": "openai-codex-v0128-auto-hook",
+        "label": "v0.128 auto-hook"
+      }
+    ]
   },
   {
     "scenarioDirName": "anthropic-instrumentation",
@@ -47,6 +53,12 @@
       { "variantKey": "google-genai-v1450", "label": "v1.45.0" },
       { "variantKey": "google-genai-v1460", "label": "v1.46.0" }
     ]
+  },
+  {
+    "scenarioDirName": "genkit-instrumentation",
+    "label": "Genkit Instrumentation",
+    "metadataScenario": "genkit-instrumentation",
+    "variants": [{ "variantKey": "genkit-v1-33-0", "label": "v1.33.0" }]
   },
   {
     "scenarioDirName": "groq-instrumentation",
@@ -122,10 +134,6 @@
     "label": "Claude Agent SDK Instrumentation",
     "metadataScenario": "claude-agent-sdk-traces",
     "variants": [
-      {
-        "variantKey": "claude-agent-sdk-v0.1",
-        "label": "v0.1"
-      },
       {
         "variantKey": "claude-agent-sdk-v0.2.76",
         "label": "v0.2.76"
