@@ -2,4 +2,4 @@
 "braintrust": patch
 ---
 
-Make the default git metadata settings exclude diff content unless the org opts in.
+Do not collect git metadata when org-level metadata settings are absent.

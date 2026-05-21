@@ -31,7 +31,6 @@ import {
   IdField,
   IS_MERGE_FIELD,
   LogFeedbackFullArgs,
-  defaultGitMetadataSettings,
   mergeDicts,
   mergeGitMetadataSettings,
   mergeRowBatch,
@@ -3546,7 +3545,7 @@ type InitializedExperiment<IsOpen extends boolean | undefined> =
  * @param options.apiKey The API key to use. If the parameter is not specified, will try to use the `BRAINTRUST_API_KEY` environment variable. If no API key is specified, will prompt the user to login.
  * @param options.orgName (Optional) The name of a specific organization to connect to. This is useful if you belong to multiple.
  * @param options.metadata (Optional) A dictionary with additional data about the test example, model outputs, or just about anything else that's relevant, that you can use to help find and analyze examples later. For example, you could log the `prompt`, example's `id`, or anything else that would be useful to slice/dice later. The values in `metadata` can be any JSON-serializable type, but its keys must be strings.
- * @param options.gitMetadataSettings (Optional) Settings for collecting git metadata. By default, will collect git metadata fields allowed in org-level settings, excluding diff content unless the org opts in.
+ * @param options.gitMetadataSettings (Optional) Settings for collecting git metadata. By default, will collect git metadata fields allowed in org-level settings. If org settings are absent, git metadata is not collected.
  * @param setCurrent If true (the default), set the global current-experiment to the newly-created one.
  * @param options.open If the experiment already exists, open it in read-only mode. Throws an error if the experiment does not already exist.
  * @param options.projectId The id of the project to create the experiment in. This takes precedence over `project` if specified.
@@ -3700,7 +3699,7 @@ export function init<IsOpen extends boolean = false>(
           return repoInfo;
         }
         let mergedGitMetadataSettings = {
-          ...(state.gitMetadataSettings || defaultGitMetadataSettings()),
+          ...(state.gitMetadataSettings || { collect: "none" as const }),
         };
         if (gitMetadataSettings) {
           mergedGitMetadataSettings = mergeGitMetadataSettings(
@@ -5708,8 +5707,7 @@ function _saveOrgInfo(
       state.orgName = org.name;
       state.apiUrl = iso.getEnv("BRAINTRUST_API_URL") ?? org.api_url;
       state.proxyUrl = iso.getEnv("BRAINTRUST_PROXY_URL") ?? org.proxy_url;
-      state.gitMetadataSettings =
-        org.git_metadata || defaultGitMetadataSettings();
+      state.gitMetadataSettings = org.git_metadata || { collect: "none" };
       break;
     }
   }

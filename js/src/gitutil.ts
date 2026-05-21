@@ -4,7 +4,6 @@ import {
 } from "./generated_types";
 import { debugLogger } from "./debug-logger";
 import { simpleGit } from "simple-git";
-import { defaultGitMetadataSettings } from "../util/git_fields";
 
 const COMMON_BASE_BRANCHES = ["main", "master", "develop"];
 
@@ -150,18 +149,17 @@ function truncateToByteLimit(s: string, byteLimit: number = 65536): string {
 }
 
 export async function getRepoInfo(settings?: GitMetadataSettings) {
-  const resolvedSettings = settings ?? defaultGitMetadataSettings();
-  if (resolvedSettings.collect === "none") {
+  if (!settings || settings.collect === "none") {
     return undefined;
   }
 
   const repo = await repoInfo();
-  if (!repo || resolvedSettings.collect === "all") {
+  if (!repo || settings.collect === "all") {
     return repo;
   }
 
   let sanitized: RepoInfo = {};
-  resolvedSettings.fields?.forEach((field) => {
+  settings.fields?.forEach((field) => {
     sanitized = { ...sanitized, [field]: repo[field] };
   });
 

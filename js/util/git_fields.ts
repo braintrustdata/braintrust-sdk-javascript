@@ -1,24 +1,4 @@
-import { type GitMetadataSettingsType as GitMetadataSettings } from "./generated_types";
-
-export const DEFAULT_GIT_METADATA_FIELDS: NonNullable<
-  GitMetadataSettings["fields"]
-> = [
-  "commit",
-  "branch",
-  "tag",
-  "dirty",
-  "author_name",
-  "author_email",
-  "commit_message",
-  "commit_time",
-];
-
-export function defaultGitMetadataSettings(): GitMetadataSettings {
-  return {
-    collect: "some",
-    fields: [...DEFAULT_GIT_METADATA_FIELDS],
-  };
-}
+import { GitMetadataSettingsType as GitMetadataSettings } from "./generated_types";
 
 export function mergeGitMetadataSettings(
   s1: GitMetadataSettings,
