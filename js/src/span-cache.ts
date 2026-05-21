@@ -44,6 +44,7 @@ export interface CachedSpan {
   tags?: string[];
   span_id: string;
   span_parents?: string[];
+  is_root?: boolean | null;
   span_attributes?: {
     name?: string;
     type?: string;

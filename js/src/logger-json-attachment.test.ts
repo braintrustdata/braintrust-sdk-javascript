@@ -47,7 +47,8 @@ describe("JSONAttachment", () => {
         options?: { filename?: string; pretty?: boolean },
       ) => object;
     };
-    const previous = globalWithHook.__BT_DATASET_PIPELINE_DEFER_JSON_ATTACHMENT__;
+    const previous =
+      globalWithHook.__BT_DATASET_PIPELINE_DEFER_JSON_ATTACHMENT__;
     try {
       globalWithHook.__BT_DATASET_PIPELINE_DEFER_JSON_ATTACHMENT__ = (
         data,

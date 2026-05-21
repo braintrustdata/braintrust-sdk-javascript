@@ -4294,8 +4294,8 @@ export function initDataset<
     legacy,
     _internal_btql,
     resolvedVersion instanceof LazyValue ||
-    normalizedEnvironment !== undefined ||
-    normalizedSnapshotName !== undefined
+      normalizedEnvironment !== undefined ||
+      normalizedSnapshotName !== undefined
       ? {
           ...(resolvedVersion instanceof LazyValue
             ? {
@@ -6072,9 +6072,9 @@ export type WithTransactionId<R> = R & {
 export const DEFAULT_FETCH_BATCH_SIZE = 1000;
 export const MAX_BTQL_ITERATIONS = 10000;
 
-export class ObjectFetcher<RecordType>
-  implements AsyncIterable<WithTransactionId<RecordType>>
-{
+export class ObjectFetcher<RecordType> implements AsyncIterable<
+  WithTransactionId<RecordType>
+> {
   private _fetchedData: WithTransactionId<RecordType>[] | undefined = undefined;
 
   constructor(
@@ -6939,6 +6939,7 @@ export class SpanImpl implements Span {
         tags: partialRecord.tags,
         span_id: this._spanId,
         span_parents: this._spanParents,
+        is_root: this._spanId === this._rootSpanId,
         span_attributes: partialRecord.span_attributes,
       };
       this._state.spanCache.queueWrite(

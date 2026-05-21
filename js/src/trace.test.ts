@@ -76,6 +76,7 @@ describe("CachedSpanFetcher", () => {
               metrics: { start: 1, end: 2 },
               metadata: { source: "test" },
               tags: ["debug"],
+              is_root: true,
               span_attributes: { type: "tool" },
             },
           ],
@@ -99,6 +100,7 @@ describe("CachedSpanFetcher", () => {
         scores: { quality: 0 },
         metrics: { start: 1, end: 2 },
         tags: ["debug"],
+        is_root: true,
       });
     });
 
@@ -309,6 +311,7 @@ describe("LocalTrace.getSpans", () => {
       scores: { quality: 0 },
       metrics: { start: 1, end: 2 },
       tags: ["debug"],
+      is_root: true,
       span_attributes: { type: "tool" },
     });
     const trace = new LocalTrace({
@@ -325,6 +328,7 @@ describe("LocalTrace.getSpans", () => {
       scores: { quality: 0 },
       metrics: { start: 1, end: 2 },
       tags: ["debug"],
+      is_root: true,
     });
   });
 });
