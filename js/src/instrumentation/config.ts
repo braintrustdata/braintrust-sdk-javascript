@@ -10,6 +10,7 @@ export interface InstrumentationIntegrationsConfig {
   claudeAgentSDK?: boolean;
   cursor?: boolean;
   cursorSDK?: boolean;
+  openAIAgents?: boolean;
   openrouter?: boolean;
   openrouterAgent?: boolean;
   mistral?: boolean;
@@ -48,6 +49,10 @@ const envIntegrationAliases: Record<
   cursor: "cursor",
   "cursor-sdk": "cursorSDK",
   cursorsdk: "cursorSDK",
+  "openai-agents": "openAIAgents",
+  openaiagents: "openAIAgents",
+  "openai-agents-core": "openAIAgents",
+  openaiagentscore: "openAIAgents",
   google: "google",
   "google-genai": "googleGenAI",
   googlegenai: "googleGenAI",
@@ -85,6 +90,7 @@ export function getDefaultInstrumentationIntegrations(): Record<
     claudeAgentSDK: true,
     cursor: true,
     cursorSDK: true,
+    openAIAgents: true,
     openrouter: true,
     openrouterAgent: true,
     mistral: true,

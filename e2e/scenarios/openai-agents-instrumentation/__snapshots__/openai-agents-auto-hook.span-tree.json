@@ -1,0 +1,332 @@
+{
+  "span_tree": [
+    {
+      "name": "openai-agents-auto-instrumentation-root",
+      "type": "task",
+      "children": [
+        {
+          "name": "openai-agents-run-operation",
+          "children": [
+            {
+              "name": "Agent workflow",
+              "type": "task",
+              "children": [
+                {
+                  "name": "Weather Agent",
+                  "type": "task",
+                  "children": [
+                    {
+                      "name": "Response",
+                      "type": "llm",
+                      "children": [],
+                      "input": [
+                        {
+                          "content": "What is the weather in Vienna? Answer only with the forecast.",
+                          "role": "user",
+                          "type": "message"
+                        }
+                      ],
+                      "output": [
+                        {
+                          "arguments": "{\"city\":\"Vienna\"}",
+                          "call_id": "call_a1b2c3d4e5f67890abcdef",
+                          "id": "<span:1>",
+                          "name": "lookup_weather",
+                          "status": "completed",
+                          "type": "function_call"
+                        }
+                      ],
+                      "metadata": {
+                        "completed_at": 0,
+                        "created_at": 0,
+                        "error": null,
+                        "id": "<span:1>",
+                        "incomplete_details": null,
+                        "model": "gpt-4o-mini-2024-07-18",
+                        "object": "response",
+                        "output_text": "",
+                        "status": "completed"
+                      },
+                      "metrics": {
+                        "completion_tokens": 16,
+                        "prompt_cached_tokens": 0,
+                        "prompt_tokens": 85,
+                        "time_to_first_token": 0,
+                        "tokens": 101
+                      },
+                      "error": null
+                    },
+                    {
+                      "name": "lookup_weather",
+                      "type": "tool",
+                      "children": [],
+                      "input": "{\"city\":\"Vienna\"}",
+                      "output": "Sunny in Vienna",
+                      "error": null
+                    },
+                    {
+                      "name": "Response",
+                      "type": "llm",
+                      "children": [],
+                      "input": [
+                        {
+                          "content": "What is the weather in Vienna? Answer only with the forecast.",
+                          "role": "user",
+                          "type": "message"
+                        },
+                        {
+                          "arguments": "{\"city\":\"Vienna\"}",
+                          "callId": "call_a1b2c3d4e5f67890abcdef",
+                          "id": "<span:1>",
+                          "name": "lookup_weather",
+                          "providerData": {
+                            "id": "<span:1>",
+                            "type": "function_call"
+                          },
+                          "status": "completed",
+                          "type": "function_call"
+                        },
+                        {
+                          "callId": "call_a1b2c3d4e5f67890abcdef",
+                          "name": "lookup_weather",
+                          "output": {
+                            "text": "Sunny in Vienna",
+                            "type": "text"
+                          },
+                          "status": "completed",
+                          "type": "function_call_result"
+                        }
+                      ],
+                      "output": [
+                        {
+                          "content": [
+                            {
+                              "text": "Sunny in Vienna",
+                              "type": "output_text"
+                            }
+                          ],
+                          "id": "<span:1>",
+                          "role": "assistant",
+                          "status": "completed",
+                          "type": "message"
+                        }
+                      ],
+                      "metadata": {
+                        "completed_at": 0,
+                        "created_at": 0,
+                        "error": null,
+                        "id": "<span:1>",
+                        "incomplete_details": null,
+                        "model": "gpt-4o-mini-2024-07-18",
+                        "object": "response",
+                        "output_text": "Sunny in Vienna",
+                        "status": "completed"
+                      },
+                      "metrics": {
+                        "completion_tokens": 4,
+                        "prompt_cached_tokens": 0,
+                        "prompt_tokens": 110,
+                        "time_to_first_token": 0,
+                        "tokens": 114
+                      },
+                      "error": null
+                    }
+                  ],
+                  "metadata": {
+                    "handoffs": [],
+                    "output_type": "text",
+                    "tools": [
+                      "lookup_weather"
+                    ]
+                  },
+                  "error": null
+                }
+              ],
+              "input": [
+                {
+                  "content": "What is the weather in Vienna? Answer only with the forecast.",
+                  "role": "user",
+                  "type": "message"
+                }
+              ],
+              "output": [
+                {
+                  "content": [
+                    {
+                      "text": "Sunny in Vienna",
+                      "type": "output_text"
+                    }
+                  ],
+                  "id": "<span:1>",
+                  "role": "assistant",
+                  "status": "completed",
+                  "type": "message"
+                }
+              ],
+              "metadata": {
+                "group_id": null
+              }
+            },
+            {
+              "name": "openai.responses.create",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "What is the weather in Vienna? Answer only with the forecast.",
+                  "role": "user"
+                }
+              ],
+              "output": [
+                {
+                  "arguments": "{\"city\":\"Vienna\"}",
+                  "call_id": "call_a1b2c3d4e5f67890abcdef",
+                  "id": "<span:1>",
+                  "name": "lookup_weather",
+                  "status": "completed",
+                  "type": "function_call"
+                }
+              ],
+              "metadata": {
+                "completed_at": 0,
+                "created_at": 0,
+                "error": null,
+                "id": "<span:1>",
+                "include": [],
+                "incomplete_details": null,
+                "instructions": "Use the lookup_weather tool exactly once, then answer only with the forecast.",
+                "model": "gpt-4o-mini-2024-07-18",
+                "object": "response",
+                "output_text": "",
+                "provider": "openai",
+                "status": "completed",
+                "stream": false,
+                "temperature": 0,
+                "tool_choice": "required",
+                "tools": [
+                  {
+                    "description": "Look up the weather forecast for a city.",
+                    "name": "lookup_weather",
+                    "parameters": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "city": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "city"
+                      ],
+                      "type": "object"
+                    },
+                    "strict": false,
+                    "type": "function"
+                  }
+                ]
+              },
+              "metrics": {
+                "completion_reasoning_tokens": 0,
+                "completion_tokens": 16,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 85,
+                "time_to_first_token": 0,
+                "tokens": 101
+              }
+            },
+            {
+              "name": "openai.responses.create",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "What is the weather in Vienna? Answer only with the forecast.",
+                  "role": "user"
+                },
+                {
+                  "arguments": "{\"city\":\"Vienna\"}",
+                  "call_id": "call_a1b2c3d4e5f67890abcdef",
+                  "id": "<span:1>",
+                  "name": "lookup_weather",
+                  "status": "completed",
+                  "type": "function_call"
+                },
+                {
+                  "call_id": "call_a1b2c3d4e5f67890abcdef",
+                  "output": "Sunny in Vienna",
+                  "status": "completed",
+                  "type": "function_call_output"
+                }
+              ],
+              "output": [
+                {
+                  "content": [
+                    {
+                      "text": "Sunny in Vienna",
+                      "type": "output_text"
+                    }
+                  ],
+                  "id": "<span:1>",
+                  "role": "assistant",
+                  "status": "completed",
+                  "type": "message"
+                }
+              ],
+              "metadata": {
+                "completed_at": 0,
+                "created_at": 0,
+                "error": null,
+                "id": "<span:1>",
+                "include": [],
+                "incomplete_details": null,
+                "instructions": "Use the lookup_weather tool exactly once, then answer only with the forecast.",
+                "model": "gpt-4o-mini-2024-07-18",
+                "object": "response",
+                "output_text": "Sunny in Vienna",
+                "provider": "openai",
+                "status": "completed",
+                "stream": false,
+                "temperature": 0,
+                "tools": [
+                  {
+                    "description": "Look up the weather forecast for a city.",
+                    "name": "lookup_weather",
+                    "parameters": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "city": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "city"
+                      ],
+                      "type": "object"
+                    },
+                    "strict": false,
+                    "type": "function"
+                  }
+                ]
+              },
+              "metrics": {
+                "completion_reasoning_tokens": 0,
+                "completion_tokens": 4,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 110,
+                "time_to_first_token": 0,
+                "tokens": 114
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "openai-agents-run",
+            "testRunId": "<run:1>"
+          }
+        }
+      ],
+      "metadata": {
+        "scenario": "openai-agents-instrumentation",
+        "testRunId": "<run:1>"
+      }
+    }
+  ]
+}
