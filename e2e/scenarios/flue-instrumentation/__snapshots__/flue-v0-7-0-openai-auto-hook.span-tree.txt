@@ -66,42 +66,6 @@ span_tree:
     │       │     "time_to_first_token": 0,
     │       │     "tokens": 962
     │       │   }
-    │       ├── flue.turn [llm]
-    │       │   output: [
-    │       │     {
-    │       │       "finish_reason": "toolUse",
-    │       │       "index": 0,
-    │       │       "message": {
-    │       │         "content": "",
-    │       │         "role": "assistant",
-    │       │         "tool_calls": [
-    │       │           {
-    │       │             "function": {
-    │       │               "arguments": "{\"query\":\"flue instrumentation\"}",
-    │       │               "name": "lookup"
-    │       │             },
-    │       │             "id": "<span:1>",
-    │       │             "type": "function"
-    │       │           }
-    │       │         ]
-    │       │       }
-    │       │     }
-    │       │   ]
-    │       │   metadata: {
-    │       │     "flue.model": "gpt-4o-mini",
-    │       │     "flue.session": "main",
-    │       │     "model": "gpt-4o-mini",
-    │       │     "provider": "flue"
-    │       │   }
-    │       │   metrics: {
-    │       │     "completion_tokens": 16,
-    │       │     "duration_ms": 0,
-    │       │     "estimated_cost": 0.0001515,
-    │       │     "prompt_cache_creation_tokens": 0,
-    │       │     "prompt_cached_tokens": 0,
-    │       │     "prompt_tokens": 946,
-    │       │     "tokens": 962
-    │       │   }
     │       ├── tool: lookup [tool]
     │       │   input: {
     │       │     "query": "flue instrumentation"
@@ -173,42 +137,6 @@ span_tree:
     │       │     "prompt_cached_tokens": 0,
     │       │     "prompt_tokens": 987,
     │       │     "time_to_first_token": 0,
-    │       │     "tokens": 1018
-    │       │   }
-    │       ├── flue.turn [llm]
-    │       │   output: [
-    │       │     {
-    │       │       "finish_reason": "toolUse",
-    │       │       "index": 0,
-    │       │       "message": {
-    │       │         "content": "",
-    │       │         "role": "assistant",
-    │       │         "tool_calls": [
-    │       │           {
-    │       │             "function": {
-    │       │               "arguments": "{\"lookupId\":\"flue-session-2026\",\"query\":\"Braintrust Flue reasoning stream instrumentation\"}",
-    │       │               "name": "web_search"
-    │       │             },
-    │       │             "id": "<span:1>",
-    │       │             "type": "function"
-    │       │           }
-    │       │         ]
-    │       │       }
-    │       │     }
-    │       │   ]
-    │       │   metadata: {
-    │       │     "flue.model": "gpt-4o-mini",
-    │       │     "flue.session": "main",
-    │       │     "model": "gpt-4o-mini",
-    │       │     "provider": "flue"
-    │       │   }
-    │       │   metrics: {
-    │       │     "completion_tokens": 31,
-    │       │     "duration_ms": 0,
-    │       │     "estimated_cost": 0.00016664999999999998,
-    │       │     "prompt_cache_creation_tokens": 0,
-    │       │     "prompt_cached_tokens": 0,
-    │       │     "prompt_tokens": 987,
     │       │     "tokens": 1018
     │       │   }
     │       ├── tool: web_search [tool]
@@ -297,42 +225,6 @@ span_tree:
     │       │     "time_to_first_token": 0,
     │       │     "tokens": 1097
     │       │   }
-    │       ├── flue.turn [llm]
-    │       │   output: [
-    │       │     {
-    │       │       "finish_reason": "toolUse",
-    │       │       "index": 0,
-    │       │       "message": {
-    │       │         "content": "",
-    │       │         "role": "assistant",
-    │       │         "tool_calls": [
-    │       │           {
-    │       │             "function": {
-    │       │               "arguments": "{\"url\":\"https://example.test/flue/reasoning-streams\"}",
-    │       │               "name": "summarize_source"
-    │       │             },
-    │       │             "id": "<span:1>",
-    │       │             "type": "function"
-    │       │           }
-    │       │         ]
-    │       │       }
-    │       │     }
-    │       │   ]
-    │       │   metadata: {
-    │       │     "flue.model": "gpt-4o-mini",
-    │       │     "flue.session": "main",
-    │       │     "model": "gpt-4o-mini",
-    │       │     "provider": "flue"
-    │       │   }
-    │       │   metrics: {
-    │       │     "completion_tokens": 27,
-    │       │     "duration_ms": 0,
-    │       │     "estimated_cost": 0.0001767,
-    │       │     "prompt_cache_creation_tokens": 0,
-    │       │     "prompt_cached_tokens": 0,
-    │       │     "prompt_tokens": 1070,
-    │       │     "tokens": 1097
-    │       │   }
     │       ├── tool: summarize_source [tool]
     │       │   input: {
     │       │     "url": "https://example.test/flue/reasoning-streams"
@@ -356,110 +248,84 @@ span_tree:
     │       │   metrics: {
     │       │     "duration_ms": 0
     │       │   }
-    │       ├── openai.responses.create [llm]
-    │       │   input: [
-    │       │     {
-    │       │       "content": "You are running in headless mode with no human operator. Work autonomously — never ask questions, never wait for user input. Make your best judgment and proceed independently.\n\n## Available Skills\n\nEach skill below is documented in a markdown file under `.agents/skills/` (relative to your working directory). The default location is `.agents/skills/<name>/SKILL.md`. When asked to run a skill, read its file from disk and follow the instructions there literally — the skill body is not provided inline.\n\n- **e2e-flue-skill** — Deterministic skill used by the Braintrust Flue instrumentation e2e test.\n\nDate: Fri, May 22, 2026\nWorking directory: <repo>/e2e/scenarios/flue-instrumentation/\n\nDirectory structure:\n.agents\n__cassettes__\n__snapshots__\nassertions.ts\ncassette-filter.mjs\nconstants.mjs\nnode_modules\npackage.json\npnpm-lock.yaml\nscenario.impl.mjs\nscenario.mjs\nscenario.test.ts\nscenario.ts",
-    │       │       "role": "system"
-    │       │     },
-    │       │     {
-    │       │       "content": [
-    │       │         {
-    │       │           "text": "Complete this instrumented research flow. Call exactly one tool per turn and wait for each tool result before choosing the next tool. Step 1: call lookup with query \"flue instrumentation\". Step 2: use the lookup result id as lookupId and call web_search with query \"Braintrust Flue reasoning stream instrumentation\". Step 3: use the first web_search result url and call summarize_source. After summarize_source returns, reply with exactly PROMPT_DONE and no other text.",
-    │       │           "type": "input_text"
-    │       │         }
-    │       │       ],
-    │       │       "role": "user"
-    │       │     },
-    │       │     {
-    │       │       "arguments": "{\"query\":\"flue instrumentation\"}",
-    │       │       "call_id": "call_xELft1kjhTSvPWAp3Z3i4zWk",
-    │       │       "id": "<span:1>",
-    │       │       "name": "lookup",
-    │       │       "type": "function_call"
-    │       │     },
-    │       │     {
-    │       │       "call_id": "call_xELft1kjhTSvPWAp3Z3i4zWk",
-    │       │       "output": "{\"id\":\"flue-session-2026\",\"query\":\"flue instrumentation\",\"topic\":\"session instrumentation\"}",
-    │       │       "type": "function_call_output"
-    │       │     },
-    │       │     {
-    │       │       "arguments": "{\"lookupId\":\"flue-session-2026\",\"query\":\"Braintrust Flue reasoning stream instrumentation\"}",
-    │       │       "call_id": "call_F7zI4fCOw4jk7rTwqbi8umo7",
-    │       │       "id": "<span:2>",
-    │       │       "name": "web_search",
-    │       │       "type": "function_call"
-    │       │     },
-    │       │     {
-    │       │       "call_id": "call_F7zI4fCOw4jk7rTwqbi8umo7",
-    │       │       "output": "{\"lookupId\":\"flue-session-2026\",\"query\":\"Braintrust Flue reasoning stream instrumentation\",\"results\":[{\"title\":\"Flue reasoning stream instrumentation\",\"url\":\"https://example.test/flue/reasoning-streams\"}]}",
-    │       │       "type": "function_call_output"
-    │       │     },
-    │       │     {
-    │       │       "arguments": "{\"url\":\"https://example.test/flue/reasoning-streams\"}",
-    │       │       "call_id": "call_0yinp9edeamv8mKgyhkpaCmG",
-    │       │       "id": "<span:3>",
-    │       │       "name": "summarize_source",
-    │       │       "type": "function_call"
-    │       │     },
-    │       │     {
-    │       │       "call_id": "call_0yinp9edeamv8mKgyhkpaCmG",
-    │       │       "output": "{\"summary\":\"Flue emits reasoning, tool execution, and LLM turn events separately.\",\"url\":\"https://example.test/flue/reasoning-streams\"}",
-    │       │       "type": "function_call_output"
-    │       │     }
-    │       │   ]
-    │       │   output: [
-    │       │     {
-    │       │       "content": [
-    │       │         {
-    │       │           "annotations": [],
-    │       │           "logprobs": [],
-    │       │           "text": "PROMPT_DONE",
-    │       │           "type": "output_text"
-    │       │         }
-    │       │       ],
-    │       │       "id": "<span:1>",
-    │       │       "role": "assistant",
-    │       │       "status": "completed",
-    │       │       "type": "message"
-    │       │     }
-    │       │   ]
-    │       │   metadata: {
-    │       │     "model": "gpt-4o-mini-2024-07-18",
-    │       │     "provider": "openai"
-    │       │   }
-    │       │   metrics: {
-    │       │     "completion_reasoning_tokens": 0,
-    │       │     "completion_tokens": 5,
-    │       │     "prompt_cached_tokens": 1024,
-    │       │     "prompt_tokens": 1136,
-    │       │     "time_to_first_token": 0,
-    │       │     "tokens": 1141
-    │       │   }
-    │       └── flue.turn [llm]
+    │       └── openai.responses.create [llm]
+    │           input: [
+    │             {
+    │               "content": "You are running in headless mode with no human operator. Work autonomously — never ask questions, never wait for user input. Make your best judgment and proceed independently.\n\n## Available Skills\n\nEach skill below is documented in a markdown file under `.agents/skills/` (relative to your working directory). The default location is `.agents/skills/<name>/SKILL.md`. When asked to run a skill, read its file from disk and follow the instructions there literally — the skill body is not provided inline.\n\n- **e2e-flue-skill** — Deterministic skill used by the Braintrust Flue instrumentation e2e test.\n\nDate: Fri, May 22, 2026\nWorking directory: <repo>/e2e/scenarios/flue-instrumentation/\n\nDirectory structure:\n.agents\n__cassettes__\n__snapshots__\nassertions.ts\ncassette-filter.mjs\nconstants.mjs\nnode_modules\npackage.json\npnpm-lock.yaml\nscenario.impl.mjs\nscenario.mjs\nscenario.test.ts\nscenario.ts",
+    │               "role": "system"
+    │             },
+    │             {
+    │               "content": [
+    │                 {
+    │                   "text": "Complete this instrumented research flow. Call exactly one tool per turn and wait for each tool result before choosing the next tool. Step 1: call lookup with query \"flue instrumentation\". Step 2: use the lookup result id as lookupId and call web_search with query \"Braintrust Flue reasoning stream instrumentation\". Step 3: use the first web_search result url and call summarize_source. After summarize_source returns, reply with exactly PROMPT_DONE and no other text.",
+    │                   "type": "input_text"
+    │                 }
+    │               ],
+    │               "role": "user"
+    │             },
+    │             {
+    │               "arguments": "{\"query\":\"flue instrumentation\"}",
+    │               "call_id": "call_xELft1kjhTSvPWAp3Z3i4zWk",
+    │               "id": "<span:1>",
+    │               "name": "lookup",
+    │               "type": "function_call"
+    │             },
+    │             {
+    │               "call_id": "call_xELft1kjhTSvPWAp3Z3i4zWk",
+    │               "output": "{\"id\":\"flue-session-2026\",\"query\":\"flue instrumentation\",\"topic\":\"session instrumentation\"}",
+    │               "type": "function_call_output"
+    │             },
+    │             {
+    │               "arguments": "{\"lookupId\":\"flue-session-2026\",\"query\":\"Braintrust Flue reasoning stream instrumentation\"}",
+    │               "call_id": "call_F7zI4fCOw4jk7rTwqbi8umo7",
+    │               "id": "<span:2>",
+    │               "name": "web_search",
+    │               "type": "function_call"
+    │             },
+    │             {
+    │               "call_id": "call_F7zI4fCOw4jk7rTwqbi8umo7",
+    │               "output": "{\"lookupId\":\"flue-session-2026\",\"query\":\"Braintrust Flue reasoning stream instrumentation\",\"results\":[{\"title\":\"Flue reasoning stream instrumentation\",\"url\":\"https://example.test/flue/reasoning-streams\"}]}",
+    │               "type": "function_call_output"
+    │             },
+    │             {
+    │               "arguments": "{\"url\":\"https://example.test/flue/reasoning-streams\"}",
+    │               "call_id": "call_0yinp9edeamv8mKgyhkpaCmG",
+    │               "id": "<span:3>",
+    │               "name": "summarize_source",
+    │               "type": "function_call"
+    │             },
+    │             {
+    │               "call_id": "call_0yinp9edeamv8mKgyhkpaCmG",
+    │               "output": "{\"summary\":\"Flue emits reasoning, tool execution, and LLM turn events separately.\",\"url\":\"https://example.test/flue/reasoning-streams\"}",
+    │               "type": "function_call_output"
+    │             }
+    │           ]
     │           output: [
     │             {
-    │               "finish_reason": "stop",
-    │               "index": 0,
-    │               "message": {
-    │                 "content": "PROMPT_DONE",
-    │                 "role": "assistant"
-    │               }
+    │               "content": [
+    │                 {
+    │                   "annotations": [],
+    │                   "logprobs": [],
+    │                   "text": "PROMPT_DONE",
+    │                   "type": "output_text"
+    │                 }
+    │               ],
+    │               "id": "<span:1>",
+    │               "role": "assistant",
+    │               "status": "completed",
+    │               "type": "message"
     │             }
     │           ]
     │           metadata: {
-    │             "flue.model": "gpt-4o-mini",
-    │             "flue.session": "main",
-    │             "model": "gpt-4o-mini",
-    │             "provider": "flue"
+    │             "model": "gpt-4o-mini-2024-07-18",
+    │             "provider": "openai"
     │           }
     │           metrics: {
+    │             "completion_reasoning_tokens": 0,
     │             "completion_tokens": 5,
-    │             "duration_ms": 0,
-    │             "estimated_cost": 0.00010172,
-    │             "prompt_cache_creation_tokens": 0,
     │             "prompt_cached_tokens": 1024,
-    │             "prompt_tokens": 112,
+    │             "prompt_tokens": 1136,
+    │             "time_to_first_token": 0,
     │             "tokens": 1141
     │           }
     ├── flue-skill-operation
@@ -524,42 +390,6 @@ span_tree:
     │       │     "model": "claude-sonnet-4-5-20250929",
     │       │     "provider": "anthropic"
     │       │   }
-    │       ├── flue.turn [llm]
-    │       │   output: [
-    │       │     {
-    │       │       "finish_reason": "toolUse",
-    │       │       "index": 0,
-    │       │       "message": {
-    │       │         "content": "I'll run the e2e-flue-skill by reading its instructions and following them.",
-    │       │         "role": "assistant",
-    │       │         "tool_calls": [
-    │       │           {
-    │       │             "function": {
-    │       │               "arguments": "{\"path\":\".agents/skills/e2e-flue-skill/SKILL.md\"}",
-    │       │               "name": "read"
-    │       │             },
-    │       │             "id": "<span:1>",
-    │       │             "type": "function"
-    │       │           }
-    │       │         ]
-    │       │       }
-    │       │     }
-    │       │   ]
-    │       │   metadata: {
-    │       │     "flue.model": "claude-sonnet-4-5-20250929",
-    │       │     "flue.session": "skill",
-    │       │     "model": "claude-sonnet-4-5-20250929",
-    │       │     "provider": "flue"
-    │       │   }
-    │       │   metrics: {
-    │       │     "completion_tokens": 89,
-    │       │     "duration_ms": 0,
-    │       │     "estimated_cost": 0.0018872999999999997,
-    │       │     "prompt_cache_creation_tokens": 0,
-    │       │     "prompt_cached_tokens": 1811,
-    │       │     "prompt_tokens": 3,
-    │       │     "tokens": 1903
-    │       │   }
     │       ├── tool: read [tool]
     │       │   input: {
     │       │     "path": ".agents/skills/e2e-flue-skill/SKILL.md"
@@ -584,90 +414,64 @@ span_tree:
     │       │   metrics: {
     │       │     "duration_ms": 0
     │       │   }
-    │       ├── anthropic.messages.create [llm]
-    │       │   input: [
-    │       │     {
-    │       │       "content": [
-    │       │         {
-    │       │           "text": "Run the skill named \"e2e-flue-skill\".\n\nArguments:\n{\n  \"marker\": \"SKILL_DONE\"\n}",
-    │       │           "type": "text"
-    │       │         }
-    │       │       ],
-    │       │       "role": "user"
-    │       │     },
-    │       │     {
-    │       │       "content": [
-    │       │         {
-    │       │           "text": "I'll run the e2e-flue-skill by reading its instructions and following them.",
-    │       │           "type": "text"
-    │       │         },
-    │       │         {
-    │       │           "id": "<span:1>",
-    │       │           "input": {
-    │       │             "path": ".agents/skills/e2e-flue-skill/SKILL.md"
-    │       │           },
-    │       │           "name": "read",
-    │       │           "type": "tool_use"
-    │       │         }
-    │       │       ],
-    │       │       "role": "assistant"
-    │       │     },
-    │       │     {
-    │       │       "content": [
-    │       │         {
-    │       │           "cache_control": {
-    │       │             "type": "ephemeral"
-    │       │           },
-    │       │           "content": "---\nname: e2e-flue-skill\ndescription: Deterministic skill used by the Braintrust Flue instrumentation e2e test.\n---\n\nReturn the marker from the provided args exactly once. Output no other text.\n",
-    │       │           "is_error": false,
-    │       │           "tool_use_id": "toolu_01M5rfFBDvwquiyfz2B1GNYz",
-    │       │           "type": "tool_result"
-    │       │         }
-    │       │       ],
-    │       │       "role": "user"
-    │       │     },
-    │       │     {
-    │       │       "content": [
-    │       │         {
-    │       │           "cache_control": {
-    │       │             "type": "ephemeral"
-    │       │           },
-    │       │           "text": "You are running in headless mode with no human operator. Work autonomously — never ask questions, never wait for user input. Make your best judgment and proceed independently.\n\n## Available Skills\n\nEach skill below is documented in a markdown file under `.agents/skills/` (relative to your working directory). The default location is `.agents/skills/<name>/SKILL.md`. When asked to run a skill, read its file from disk and follow the instructions there literally — the skill body is not provided inline.\n\n- **e2e-flue-skill** — Deterministic skill used by the Braintrust Flue instrumentation e2e test.\n\nDate: Fri, May 22, 2026\nWorking directory: <repo>/e2e/scenarios/flue-instrumentation/\n\nDirectory structure:\n.agents\n__cassettes__\n__snapshots__\nassertions.ts\ncassette-filter.mjs\nconstants.mjs\nnode_modules\npackage.json\npnpm-lock.yaml\nscenario.impl.mjs\nscenario.mjs\nscenario.test.ts\nscenario.ts\n\n<role name=\"skillRunner\">\nNever call the task tool. Do not delegate e2e-flue-skill to another session. If you need the skill body, read .agents/skills/e2e-flue-skill/SKILL.md yourself with the read tool. Return the marker from the Arguments object exactly, with no other text.\n</role>",
-    │       │           "type": "text"
-    │       │         }
-    │       │       ],
-    │       │       "role": "system"
-    │       │     }
-    │       │   ]
-    │       │   metadata: {
-    │       │     "model": "claude-sonnet-4-5-20250929",
-    │       │     "provider": "anthropic"
-    │       │   }
-    │       └── flue.turn [llm]
-    │           output: [
+    │       └── anthropic.messages.create [llm]
+    │           input: [
     │             {
-    │               "finish_reason": "stop",
-    │               "index": 0,
-    │               "message": {
-    │                 "content": "SKILL_DONE",
-    │                 "role": "assistant"
-    │               }
+    │               "content": [
+    │                 {
+    │                   "text": "Run the skill named \"e2e-flue-skill\".\n\nArguments:\n{\n  \"marker\": \"SKILL_DONE\"\n}",
+    │                   "type": "text"
+    │                 }
+    │               ],
+    │               "role": "user"
+    │             },
+    │             {
+    │               "content": [
+    │                 {
+    │                   "text": "I'll run the e2e-flue-skill by reading its instructions and following them.",
+    │                   "type": "text"
+    │                 },
+    │                 {
+    │                   "id": "<span:1>",
+    │                   "input": {
+    │                     "path": ".agents/skills/e2e-flue-skill/SKILL.md"
+    │                   },
+    │                   "name": "read",
+    │                   "type": "tool_use"
+    │                 }
+    │               ],
+    │               "role": "assistant"
+    │             },
+    │             {
+    │               "content": [
+    │                 {
+    │                   "cache_control": {
+    │                     "type": "ephemeral"
+    │                   },
+    │                   "content": "---\nname: e2e-flue-skill\ndescription: Deterministic skill used by the Braintrust Flue instrumentation e2e test.\n---\n\nReturn the marker from the provided args exactly once. Output no other text.\n",
+    │                   "is_error": false,
+    │                   "tool_use_id": "toolu_01M5rfFBDvwquiyfz2B1GNYz",
+    │                   "type": "tool_result"
+    │                 }
+    │               ],
+    │               "role": "user"
+    │             },
+    │             {
+    │               "content": [
+    │                 {
+    │                   "cache_control": {
+    │                     "type": "ephemeral"
+    │                   },
+    │                   "text": "You are running in headless mode with no human operator. Work autonomously — never ask questions, never wait for user input. Make your best judgment and proceed independently.\n\n## Available Skills\n\nEach skill below is documented in a markdown file under `.agents/skills/` (relative to your working directory). The default location is `.agents/skills/<name>/SKILL.md`. When asked to run a skill, read its file from disk and follow the instructions there literally — the skill body is not provided inline.\n\n- **e2e-flue-skill** — Deterministic skill used by the Braintrust Flue instrumentation e2e test.\n\nDate: Fri, May 22, 2026\nWorking directory: <repo>/e2e/scenarios/flue-instrumentation/\n\nDirectory structure:\n.agents\n__cassettes__\n__snapshots__\nassertions.ts\ncassette-filter.mjs\nconstants.mjs\nnode_modules\npackage.json\npnpm-lock.yaml\nscenario.impl.mjs\nscenario.mjs\nscenario.test.ts\nscenario.ts\n\n<role name=\"skillRunner\">\nNever call the task tool. Do not delegate e2e-flue-skill to another session. If you need the skill body, read .agents/skills/e2e-flue-skill/SKILL.md yourself with the read tool. Return the marker from the Arguments object exactly, with no other text.\n</role>",
+    │                   "type": "text"
+    │                 }
+    │               ],
+    │               "role": "system"
     │             }
     │           ]
     │           metadata: {
-    │             "flue.model": "claude-sonnet-4-5-20250929",
-    │             "flue.session": "skill",
     │             "model": "claude-sonnet-4-5-20250929",
-    │             "provider": "flue"
-    │           }
-    │           metrics: {
-    │             "completion_tokens": 8,
-    │             "duration_ms": 0,
-    │             "estimated_cost": 0.0007272,
-    │             "prompt_cache_creation_tokens": 0,
-    │             "prompt_cached_tokens": 1964,
-    │             "prompt_tokens": 6,
-    │             "tokens": 1978
+    │             "provider": "anthropic"
     │           }
     ├── flue-task-operation
     │   metadata: {
@@ -703,74 +507,48 @@ span_tree:
     │       │   metrics: {
     │       │     "duration_ms": 0
     │       │   }
-    │       ├── openai.responses.create [llm]
-    │       │   input: [
-    │       │     {
-    │       │       "content": "You are running in headless mode with no human operator. Work autonomously — never ask questions, never wait for user input. Make your best judgment and proceed independently.\n\n## Available Skills\n\nEach skill below is documented in a markdown file under `.agents/skills/` (relative to your working directory). The default location is `.agents/skills/<name>/SKILL.md`. When asked to run a skill, read its file from disk and follow the instructions there literally — the skill body is not provided inline.\n\n- **e2e-flue-skill** — Deterministic skill used by the Braintrust Flue instrumentation e2e test.\n\nDate: Fri, May 22, 2026\nWorking directory: <repo>/e2e/scenarios/flue-instrumentation/\n\nDirectory structure:\n.agents\n__cassettes__\n__snapshots__\nassertions.ts\ncassette-filter.mjs\nconstants.mjs\nnode_modules\npackage.json\npnpm-lock.yaml\nscenario.impl.mjs\nscenario.mjs\nscenario.test.ts\nscenario.ts",
-    │       │       "role": "system"
-    │       │     },
-    │       │     {
-    │       │       "content": [
-    │       │         {
-    │       │           "text": "Reply with exactly TASK_DONE and no other text.",
-    │       │           "type": "input_text"
-    │       │         }
-    │       │       ],
-    │       │       "role": "user"
-    │       │     }
-    │       │   ]
-    │       │   output: [
-    │       │     {
-    │       │       "content": [
-    │       │         {
-    │       │           "annotations": [],
-    │       │           "logprobs": [],
-    │       │           "text": "TASK_DONE",
-    │       │           "type": "output_text"
-    │       │         }
-    │       │       ],
-    │       │       "id": "<span:1>",
-    │       │       "role": "assistant",
-    │       │       "status": "completed",
-    │       │       "type": "message"
-    │       │     }
-    │       │   ]
-    │       │   metadata: {
-    │       │     "model": "gpt-4o-mini-2024-07-18",
-    │       │     "provider": "openai"
-    │       │   }
-    │       │   metrics: {
-    │       │     "completion_reasoning_tokens": 0,
-    │       │     "completion_tokens": 4,
-    │       │     "prompt_cached_tokens": 0,
-    │       │     "prompt_tokens": 772,
-    │       │     "time_to_first_token": 0,
-    │       │     "tokens": 776
-    │       │   }
-    │       └── flue.turn [llm]
+    │       └── openai.responses.create [llm]
+    │           input: [
+    │             {
+    │               "content": "You are running in headless mode with no human operator. Work autonomously — never ask questions, never wait for user input. Make your best judgment and proceed independently.\n\n## Available Skills\n\nEach skill below is documented in a markdown file under `.agents/skills/` (relative to your working directory). The default location is `.agents/skills/<name>/SKILL.md`. When asked to run a skill, read its file from disk and follow the instructions there literally — the skill body is not provided inline.\n\n- **e2e-flue-skill** — Deterministic skill used by the Braintrust Flue instrumentation e2e test.\n\nDate: Fri, May 22, 2026\nWorking directory: <repo>/e2e/scenarios/flue-instrumentation/\n\nDirectory structure:\n.agents\n__cassettes__\n__snapshots__\nassertions.ts\ncassette-filter.mjs\nconstants.mjs\nnode_modules\npackage.json\npnpm-lock.yaml\nscenario.impl.mjs\nscenario.mjs\nscenario.test.ts\nscenario.ts",
+    │               "role": "system"
+    │             },
+    │             {
+    │               "content": [
+    │                 {
+    │                   "text": "Reply with exactly TASK_DONE and no other text.",
+    │                   "type": "input_text"
+    │                 }
+    │               ],
+    │               "role": "user"
+    │             }
+    │           ]
     │           output: [
     │             {
-    │               "finish_reason": "stop",
-    │               "index": 0,
-    │               "message": {
-    │                 "content": "TASK_DONE",
-    │                 "role": "assistant"
-    │               }
+    │               "content": [
+    │                 {
+    │                   "annotations": [],
+    │                   "logprobs": [],
+    │                   "text": "TASK_DONE",
+    │                   "type": "output_text"
+    │                 }
+    │               ],
+    │               "id": "<span:1>",
+    │               "role": "assistant",
+    │               "status": "completed",
+    │               "type": "message"
     │             }
     │           ]
     │           metadata: {
-    │             "flue.model": "gpt-4o-mini",
-    │             "flue.session": "task:task:<uuid:1>",
-    │             "model": "gpt-4o-mini",
-    │             "provider": "flue"
+    │             "model": "gpt-4o-mini-2024-07-18",
+    │             "provider": "openai"
     │           }
     │           metrics: {
+    │             "completion_reasoning_tokens": 0,
     │             "completion_tokens": 4,
-    │             "duration_ms": 0,
-    │             "estimated_cost": 0.0001182,
-    │             "prompt_cache_creation_tokens": 0,
     │             "prompt_cached_tokens": 0,
     │             "prompt_tokens": 772,
+    │             "time_to_first_token": 0,
     │             "tokens": 776
     │           }
     └── flue-compact-operation

@@ -21,6 +21,13 @@ const SUBSCRIBED_FLUE_CONTEXT_EVENTS = Symbol.for(
 type FlueContextRecord = FlueContext & Record<PropertyKey, unknown>;
 type FlueHarnessRecord = FlueHarness & Record<PropertyKey, unknown>;
 type FlueSessionRecord = FlueSession & Record<PropertyKey, unknown>;
+type FlueContextEventSubscription = {
+  captureTurnSpans: boolean;
+  unsubscribe: () => void;
+};
+type FlueContextEventSubscriptionOptions = {
+  captureTurnSpans?: boolean;
+};
 type FlueOperationChannel =
   | typeof flueChannels.prompt
   | typeof flueChannels.skill
@@ -47,7 +54,12 @@ export function wrapFlueContext<T>(ctx: T): T {
   }
 
   const context = ctx as FlueContextRecord;
-  subscribeFlueContextEvents(context);
+  subscribeFlueContextEvents(context, { captureTurnSpans: true });
+  return patchFlueContextInPlace(context) as T;
+}
+
+export function patchFlueContextInPlace<T extends FlueContext>(ctx: T): T {
+  const context = ctx as FlueContextRecord;
   if (context[WRAPPED_FLUE_CONTEXT]) {
     return ctx;
   }
@@ -91,6 +103,7 @@ export function wrapFlueSession<T>(session: T): T {
 
 export function subscribeFlueContextEvents(
   ctx: FlueContext,
+  options: FlueContextEventSubscriptionOptions = {},
 ): (() => void) | undefined {
   if (
     !ctx ||
@@ -101,22 +114,42 @@ export function subscribeFlueContextEvents(
   }
 
   const context = ctx as FlueContextRecord;
-  if (context[SUBSCRIBED_FLUE_CONTEXT_EVENTS]) {
-    return undefined;
+  const captureTurnSpans = options.captureTurnSpans ?? true;
+  const existingSubscription = context[SUBSCRIBED_FLUE_CONTEXT_EVENTS] as
+    | FlueContextEventSubscription
+    | undefined;
+  if (existingSubscription) {
+    if (existingSubscription.captureTurnSpans || !captureTurnSpans) {
+      return undefined;
+    }
+    try {
+      existingSubscription.unsubscribe();
+    } catch {
+      // Ignore failed cleanup and attempt to replace the subscription below.
+    }
   }
 
   try {
     const unsubscribe = ctx.subscribeEvent((event: FlueEvent) => {
       flueChannels.contextEvent.traceSync(() => undefined, {
         arguments: [event],
+        captureTurnSpans,
         context: ctx,
       } as never);
     });
-    Object.defineProperty(context, SUBSCRIBED_FLUE_CONTEXT_EVENTS, {
-      configurable: false,
-      enumerable: false,
-      value: true,
-    });
+    if (existingSubscription) {
+      existingSubscription.captureTurnSpans = captureTurnSpans;
+      existingSubscription.unsubscribe = unsubscribe;
+    } else {
+      Object.defineProperty(context, SUBSCRIBED_FLUE_CONTEXT_EVENTS, {
+        configurable: false,
+        enumerable: false,
+        value: {
+          captureTurnSpans,
+          unsubscribe,
+        } satisfies FlueContextEventSubscription,
+      });
+    }
     return unsubscribe;
   } catch {
     return undefined;

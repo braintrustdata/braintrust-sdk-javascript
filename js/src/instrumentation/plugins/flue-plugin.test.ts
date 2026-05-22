@@ -190,6 +190,69 @@ describe("FluePlugin", () => {
     });
   });
 
+  it("does not create Flue turn spans when context events disable them", () => {
+    const plugin = new FluePlugin();
+    plugin.enable();
+
+    const contextHandlers = handlersByName.get(
+      "orchestrion:@flue/runtime:context.event",
+    );
+    const promptHandlers = handlersByName.get(
+      "orchestrion:@flue/runtime:session.prompt",
+    );
+    const promptEvent = {
+      arguments: ["Use a tool", { model: "pi/test" }],
+      operation: "prompt",
+      session: { name: "main" },
+    };
+
+    promptHandlers.start(promptEvent);
+    contextHandlers.start({
+      arguments: [
+        {
+          operationId: "op_1",
+          operationKind: "prompt",
+          session: "main",
+          type: "operation_start",
+        },
+      ],
+      captureTurnSpans: false,
+    });
+    contextHandlers.start({
+      arguments: [{ operationId: "op_1", text: "Looking", type: "text_delta" }],
+      captureTurnSpans: false,
+    });
+    contextHandlers.start({
+      arguments: [
+        {
+          args: { query: "braintrust" },
+          operationId: "op_1",
+          toolCallId: "tool_1",
+          toolName: "lookup",
+          type: "tool_start",
+        },
+      ],
+      captureTurnSpans: false,
+    });
+    contextHandlers.start({
+      arguments: [
+        {
+          durationMs: 10,
+          isError: false,
+          model: "pi/test",
+          operationId: "op_1",
+          stopReason: "stop",
+          type: "turn",
+          usage: usage(),
+        },
+      ],
+      captureTurnSpans: false,
+    });
+
+    expect(spans.filter((span) => span.name === "flue.turn")).toHaveLength(0);
+    expect(spans.find((span) => span.name === "tool: lookup")).toBeDefined();
+  });
+
   it("correlates operation, turn, tool, task, and compaction spans", () => {
     const plugin = new FluePlugin();
     plugin.enable();
@@ -594,28 +657,28 @@ describe("FluePlugin", () => {
     );
   });
 
-  it("ends compaction spans from compact operation completion when no final compaction event arrives", () => {
+  it("ends compaction spans from operation completion when no final compaction event arrives", () => {
     const plugin = new FluePlugin();
     plugin.enable();
 
     const contextHandlers = handlersByName.get(
       "orchestrion:@flue/runtime:context.event",
     );
-    const compactHandlers = handlersByName.get(
-      "orchestrion:@flue/runtime:session.compact",
+    const promptHandlers = handlersByName.get(
+      "orchestrion:@flue/runtime:session.prompt",
     );
-    const compactEvent = {
-      arguments: [],
-      operation: "compact",
+    const promptEvent = {
+      arguments: ["Trigger a compaction"],
+      operation: "prompt",
       session: { name: "main" },
     };
 
-    compactHandlers.start(compactEvent);
+    promptHandlers.start(promptEvent);
     contextHandlers.start({
       arguments: [
         {
           operationId: "op_1",
-          operationKind: "compact",
+          operationKind: "prompt",
           session: "main",
           type: "operation_start",
         },
@@ -632,10 +695,11 @@ describe("FluePlugin", () => {
         },
       ],
     });
-    compactHandlers.asyncEnd(compactEvent);
+    (promptEvent as any).result = { text: "done" };
+    promptHandlers.asyncEnd(promptEvent);
 
     const operationSpan = spans.find(
-      (span) => span.name === "flue.session.compact",
+      (span) => span.name === "flue.session.prompt",
     );
     const compactionSpan = spans.find(
       (span) => span.name === "flue.compaction",
@@ -645,9 +709,14 @@ describe("FluePlugin", () => {
     expect(operationSpan?.end).toHaveBeenCalledTimes(1);
     expect(compactionSpan?.log).toHaveBeenCalledWith(
       expect.objectContaining({
+        input: {
+          estimatedTokens: 100,
+          reason: "manual",
+        },
         metrics: expect.objectContaining({
           duration_ms: expect.any(Number),
         }),
+        output: { completed: true },
       }),
     );
   });

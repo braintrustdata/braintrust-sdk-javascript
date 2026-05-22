@@ -54,46 +54,6 @@
                   }
                 },
                 {
-                  "name": "flue.turn",
-                  "type": "llm",
-                  "children": [],
-                  "output": [
-                    {
-                      "finish_reason": "toolUse",
-                      "index": 0,
-                      "message": {
-                        "content": "",
-                        "role": "assistant",
-                        "tool_calls": [
-                          {
-                            "function": {
-                              "arguments": "{\"query\":\"flue instrumentation\"}",
-                              "name": "lookup"
-                            },
-                            "id": "<span:1>",
-                            "type": "function"
-                          }
-                        ]
-                      }
-                    }
-                  ],
-                  "metadata": {
-                    "flue.model": "gpt-4o-mini",
-                    "flue.session": "main",
-                    "model": "gpt-4o-mini",
-                    "provider": "flue"
-                  },
-                  "metrics": {
-                    "completion_tokens": 16,
-                    "duration_ms": 0,
-                    "estimated_cost": 0.0001515,
-                    "prompt_cache_creation_tokens": 0,
-                    "prompt_cached_tokens": 0,
-                    "prompt_tokens": 946,
-                    "tokens": 962
-                  }
-                },
-                {
                   "name": "tool: lookup",
                   "type": "tool",
                   "children": [],
@@ -171,46 +131,6 @@
                     "prompt_cached_tokens": 0,
                     "prompt_tokens": 987,
                     "time_to_first_token": 0,
-                    "tokens": 1018
-                  }
-                },
-                {
-                  "name": "flue.turn",
-                  "type": "llm",
-                  "children": [],
-                  "output": [
-                    {
-                      "finish_reason": "toolUse",
-                      "index": 0,
-                      "message": {
-                        "content": "",
-                        "role": "assistant",
-                        "tool_calls": [
-                          {
-                            "function": {
-                              "arguments": "{\"lookupId\":\"flue-session-2026\",\"query\":\"Braintrust Flue reasoning stream instrumentation\"}",
-                              "name": "web_search"
-                            },
-                            "id": "<span:1>",
-                            "type": "function"
-                          }
-                        ]
-                      }
-                    }
-                  ],
-                  "metadata": {
-                    "flue.model": "gpt-4o-mini",
-                    "flue.session": "main",
-                    "model": "gpt-4o-mini",
-                    "provider": "flue"
-                  },
-                  "metrics": {
-                    "completion_tokens": 31,
-                    "duration_ms": 0,
-                    "estimated_cost": 0.00016664999999999998,
-                    "prompt_cache_creation_tokens": 0,
-                    "prompt_cached_tokens": 0,
-                    "prompt_tokens": 987,
                     "tokens": 1018
                   }
                 },
@@ -305,46 +225,6 @@
                     "prompt_cached_tokens": 0,
                     "prompt_tokens": 1070,
                     "time_to_first_token": 0,
-                    "tokens": 1097
-                  }
-                },
-                {
-                  "name": "flue.turn",
-                  "type": "llm",
-                  "children": [],
-                  "output": [
-                    {
-                      "finish_reason": "toolUse",
-                      "index": 0,
-                      "message": {
-                        "content": "",
-                        "role": "assistant",
-                        "tool_calls": [
-                          {
-                            "function": {
-                              "arguments": "{\"url\":\"https://example.test/flue/reasoning-streams\"}",
-                              "name": "summarize_source"
-                            },
-                            "id": "<span:1>",
-                            "type": "function"
-                          }
-                        ]
-                      }
-                    }
-                  ],
-                  "metadata": {
-                    "flue.model": "gpt-4o-mini",
-                    "flue.session": "main",
-                    "model": "gpt-4o-mini",
-                    "provider": "flue"
-                  },
-                  "metrics": {
-                    "completion_tokens": 27,
-                    "duration_ms": 0,
-                    "estimated_cost": 0.0001767,
-                    "prompt_cache_creation_tokens": 0,
-                    "prompt_cached_tokens": 0,
-                    "prompt_tokens": 1070,
                     "tokens": 1097
                   }
                 },
@@ -458,36 +338,6 @@
                     "time_to_first_token": 0,
                     "tokens": 1141
                   }
-                },
-                {
-                  "name": "flue.turn",
-                  "type": "llm",
-                  "children": [],
-                  "output": [
-                    {
-                      "finish_reason": "stop",
-                      "index": 0,
-                      "message": {
-                        "content": "PROMPT_DONE",
-                        "role": "assistant"
-                      }
-                    }
-                  ],
-                  "metadata": {
-                    "flue.model": "gpt-4o-mini",
-                    "flue.session": "main",
-                    "model": "gpt-4o-mini",
-                    "provider": "flue"
-                  },
-                  "metrics": {
-                    "completion_tokens": 5,
-                    "duration_ms": 0,
-                    "estimated_cost": 0.00010172,
-                    "prompt_cache_creation_tokens": 0,
-                    "prompt_cached_tokens": 1024,
-                    "prompt_tokens": 112,
-                    "tokens": 1141
-                  }
                 }
               ],
               "input": "Complete this instrumented research flow. Call exactly one tool per turn and wait for each tool result before choosing the next tool. Step 1: call lookup with query \"flue instrumentation\". Step 2: use the lookup result id as lookupId and call web_search with query \"Braintrust Flue reasoning stream instrumentation\". Step 3: use the first web_search result url and call summarize_source. After summarize_source returns, reply with exactly PROMPT_DONE and no other text.",
@@ -556,46 +406,6 @@
                   "metadata": {
                     "model": "claude-sonnet-4-5-20250929",
                     "provider": "anthropic"
-                  }
-                },
-                {
-                  "name": "flue.turn",
-                  "type": "llm",
-                  "children": [],
-                  "output": [
-                    {
-                      "finish_reason": "toolUse",
-                      "index": 0,
-                      "message": {
-                        "content": "I'll run the e2e-flue-skill by reading its instructions and following them.",
-                        "role": "assistant",
-                        "tool_calls": [
-                          {
-                            "function": {
-                              "arguments": "{\"path\":\".agents/skills/e2e-flue-skill/SKILL.md\"}",
-                              "name": "read"
-                            },
-                            "id": "<span:1>",
-                            "type": "function"
-                          }
-                        ]
-                      }
-                    }
-                  ],
-                  "metadata": {
-                    "flue.model": "claude-sonnet-4-5-20250929",
-                    "flue.session": "skill",
-                    "model": "claude-sonnet-4-5-20250929",
-                    "provider": "flue"
-                  },
-                  "metrics": {
-                    "completion_tokens": 89,
-                    "duration_ms": 0,
-                    "estimated_cost": 0.0018872999999999997,
-                    "prompt_cache_creation_tokens": 0,
-                    "prompt_cached_tokens": 1811,
-                    "prompt_tokens": 3,
-                    "tokens": 1903
                   }
                 },
                 {
@@ -687,36 +497,6 @@
                   "metadata": {
                     "model": "claude-sonnet-4-5-20250929",
                     "provider": "anthropic"
-                  }
-                },
-                {
-                  "name": "flue.turn",
-                  "type": "llm",
-                  "children": [],
-                  "output": [
-                    {
-                      "finish_reason": "stop",
-                      "index": 0,
-                      "message": {
-                        "content": "SKILL_DONE",
-                        "role": "assistant"
-                      }
-                    }
-                  ],
-                  "metadata": {
-                    "flue.model": "claude-sonnet-4-5-20250929",
-                    "flue.session": "skill",
-                    "model": "claude-sonnet-4-5-20250929",
-                    "provider": "flue"
-                  },
-                  "metrics": {
-                    "completion_tokens": 8,
-                    "duration_ms": 0,
-                    "estimated_cost": 0.0007272,
-                    "prompt_cache_creation_tokens": 0,
-                    "prompt_cached_tokens": 1964,
-                    "prompt_tokens": 6,
-                    "tokens": 1978
                   }
                 }
               ],
@@ -818,36 +598,6 @@
                     "prompt_cached_tokens": 0,
                     "prompt_tokens": 772,
                     "time_to_first_token": 0,
-                    "tokens": 776
-                  }
-                },
-                {
-                  "name": "flue.turn",
-                  "type": "llm",
-                  "children": [],
-                  "output": [
-                    {
-                      "finish_reason": "stop",
-                      "index": 0,
-                      "message": {
-                        "content": "TASK_DONE",
-                        "role": "assistant"
-                      }
-                    }
-                  ],
-                  "metadata": {
-                    "flue.model": "gpt-4o-mini",
-                    "flue.session": "task:task:<uuid:1>",
-                    "model": "gpt-4o-mini",
-                    "provider": "flue"
-                  },
-                  "metrics": {
-                    "completion_tokens": 4,
-                    "duration_ms": 0,
-                    "estimated_cost": 0.0001182,
-                    "prompt_cache_creation_tokens": 0,
-                    "prompt_cached_tokens": 0,
-                    "prompt_tokens": 772,
                     "tokens": 776
                   }
                 }

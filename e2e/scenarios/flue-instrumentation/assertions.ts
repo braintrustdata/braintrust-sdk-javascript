@@ -287,6 +287,7 @@ function buildSpanTree(events: CapturedLogEvent[]): SpanTreeEntry[] {
 
 export function defineFlueInstrumentationAssertions(options: {
   expectedPromptProviderSpanName?: string;
+  expectFlueTurnSpans?: boolean;
   expectThinking?: boolean;
   name: string;
   runScenario: RunFlueScenario;
@@ -414,8 +415,8 @@ export function defineFlueInstrumentationAssertions(options: {
           compactOperation,
           (event) => event.span.name === "flue.compaction",
         )[0];
+        const expectFlueTurnSpans = options.expectFlueTurnSpans ?? true;
 
-        expect(promptTurns.length).toBeGreaterThanOrEqual(3);
         expect(promptTools.map((event) => event.span.name)).toEqual(
           expect.arrayContaining([
             "tool: lookup",
@@ -423,9 +424,33 @@ export function defineFlueInstrumentationAssertions(options: {
             "tool: summarize_source",
           ]),
         );
-        expectToolsAndTurnsShareParent(promptSpan, promptTurns, promptTools);
-        expectToolsAndTurnsShareParent(skillSpan, skillTurns, skillTools);
-        if (options.expectThinking !== false) {
+        if (expectFlueTurnSpans) {
+          expect(promptTurns.length).toBeGreaterThanOrEqual(3);
+          expectToolsAndTurnsShareParent(promptSpan, promptTurns, promptTools);
+          expectToolsAndTurnsShareParent(skillSpan, skillTurns, skillTools);
+        } else {
+          expect(promptTurns).toHaveLength(0);
+          expect(skillTurns).toHaveLength(0);
+          expect(promptSpan).toBeDefined();
+          expect(skillSpan).toBeDefined();
+          const promptSpanId = promptSpan?.span.id;
+          const skillSpanId = skillSpan?.span.id;
+          if (promptSpanId) {
+            expect(
+              promptTools.every((event) =>
+                event.span.parentIds.includes(promptSpanId),
+              ),
+            ).toBe(true);
+          }
+          if (skillSpanId) {
+            expect(
+              skillTools.every((event) =>
+                event.span.parentIds.includes(skillSpanId),
+              ),
+            ).toBe(true);
+          }
+        }
+        if (expectFlueTurnSpans && options.expectThinking !== false) {
           expect(reasoningTurn?.span.type).toBe("llm");
           expect(reasoningTurn?.output).toBeDefined();
           const reasoningOutput = JSON.stringify(reasoningTurn?.output);
@@ -436,11 +461,13 @@ export function defineFlueInstrumentationAssertions(options: {
             "flue.thinking": true,
           });
         }
-        expect(promptTurns[0]?.metrics).toMatchObject({
-          completion_tokens: expect.any(Number),
-          prompt_tokens: expect.any(Number),
-          tokens: expect.any(Number),
-        });
+        if (expectFlueTurnSpans) {
+          expect(promptTurns[0]?.metrics).toMatchObject({
+            completion_tokens: expect.any(Number),
+            prompt_tokens: expect.any(Number),
+            tokens: expect.any(Number),
+          });
+        }
         expect(lookupToolSpan?.span.type).toBe("tool");
         expect(lookupToolSpan?.input).toMatchObject({
           query: "flue instrumentation",

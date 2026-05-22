@@ -45,6 +45,7 @@ describe(`flue ${flueVersion}`, () => {
 
   defineFlueInstrumentationAssertions({
     expectedPromptProviderSpanName: "anthropic.messages.create",
+    expectFlueTurnSpans: false,
     name: "auto-hook instrumentation",
     runScenario: async ({ runNodeScenarioDir }) => {
       await runNodeScenarioDir({
@@ -65,6 +66,7 @@ describe(`flue ${flueVersion}`, () => {
 
   defineFlueInstrumentationAssertions({
     expectedPromptProviderSpanName: "openai.responses.create",
+    expectFlueTurnSpans: false,
     expectThinking: false,
     name: "auto-hook instrumentation with OpenAI prompt model",
     runScenario: async ({ runNodeScenarioDir }) => {

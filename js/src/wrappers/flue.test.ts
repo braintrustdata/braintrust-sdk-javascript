@@ -61,7 +61,11 @@ vi.mock("../isomorph", () => ({
   },
 }));
 
-import { wrapFlueContext, wrapFlueSession } from "./flue";
+import {
+  subscribeFlueContextEvents,
+  wrapFlueContext,
+  wrapFlueSession,
+} from "./flue";
 
 describe("wrapFlueSession", () => {
   afterEach(() => {
@@ -171,7 +175,63 @@ describe("wrapFlueContext", () => {
       expect.any(Function),
       expect.objectContaining({
         arguments: [{ operationId: "op_1", type: "operation_start" }],
+        captureTurnSpans: true,
         context: ctx,
+      }),
+    );
+  });
+
+  it("can subscribe to context events without Flue turn spans", () => {
+    let subscriber: ((event: unknown) => void) | undefined;
+    const ctx = {
+      init: vi.fn(),
+      subscribeEvent: vi.fn((callback) => {
+        subscriber = callback;
+        return vi.fn();
+      }),
+    };
+
+    subscribeFlueContextEvents(ctx, { captureTurnSpans: false });
+    subscriber?.({ operationId: "op_1", type: "turn" });
+
+    expect(traceSync).toHaveBeenCalledWith(
+      expect.any(Function),
+      expect.objectContaining({
+        arguments: [{ operationId: "op_1", type: "turn" }],
+        captureTurnSpans: false,
+        context: ctx,
+      }),
+    );
+  });
+
+  it("upgrades an existing context event subscription for manual wrapping", () => {
+    let subscriber: ((event: unknown) => void) | undefined;
+    const firstUnsubscribe = vi.fn();
+    const secondUnsubscribe = vi.fn();
+    const ctx = {
+      init: vi.fn(async () => ({ session: vi.fn() })),
+      subscribeEvent: vi
+        .fn()
+        .mockImplementationOnce((callback) => {
+          subscriber = callback;
+          return firstUnsubscribe;
+        })
+        .mockImplementationOnce((callback) => {
+          subscriber = callback;
+          return secondUnsubscribe;
+        }),
+    };
+
+    subscribeFlueContextEvents(ctx, { captureTurnSpans: false });
+    wrapFlueContext(ctx);
+    subscriber?.({ operationId: "op_1", type: "turn" });
+
+    expect(firstUnsubscribe).toHaveBeenCalledTimes(1);
+    expect(ctx.subscribeEvent).toHaveBeenCalledTimes(2);
+    expect(traceSync).toHaveBeenLastCalledWith(
+      expect.any(Function),
+      expect.objectContaining({
+        captureTurnSpans: true,
       }),
     );
   });

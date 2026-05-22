@@ -33,6 +33,7 @@ export const flueChannels = defineChannels("@flue/runtime", {
     [FlueEvent],
     void,
     {
+      captureTurnSpans?: boolean;
       context?: FlueContext;
     }
   >({

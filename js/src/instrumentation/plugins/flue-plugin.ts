@@ -11,9 +11,9 @@ import type { CurrentSpanStore, Span } from "../../logger";
 import { getCurrentUnixTimestamp, isObject } from "../../util";
 import { SpanTypeAttribute } from "../../../util/index";
 import {
+  patchFlueContextInPlace,
   patchFlueSessionInPlace,
   subscribeFlueContextEvents,
-  wrapFlueContext,
   wrapFlueHarness,
 } from "../../wrappers/flue";
 import { flueChannels } from "./flue-channels";
@@ -50,6 +50,7 @@ type OperationState = {
 };
 
 type SpanState = {
+  input?: unknown;
   metadata: Record<string, unknown>;
   operationState?: OperationState;
   span: Span;
@@ -108,8 +109,8 @@ export class FluePlugin extends BasePlugin {
         if (!ctx) {
           return;
         }
-        subscribeFlueContextEvents(ctx);
-        wrapFlueContext(ctx);
+        subscribeFlueContextEvents(ctx, { captureTurnSpans: false });
+        patchFlueContextInPlace(ctx);
       },
       error: () => {},
     };
@@ -272,7 +273,9 @@ export class FluePlugin extends BasePlugin {
         }
 
         try {
-          this.handleFlueEvent(flueEvent);
+          this.handleFlueEvent(flueEvent, {
+            captureTurnSpans: event.captureTurnSpans !== false,
+          });
         } catch (error) {
           logInstrumentationError("Flue event", error);
         }
@@ -388,9 +391,7 @@ export class FluePlugin extends BasePlugin {
       metrics,
       output: extractOperationOutput(result),
     });
-    if (state.operation === "compact") {
-      this.finishCompactionsForOperation(state);
-    }
+    this.finishCompactionsForOperation(state);
     this.finishOperationState(state);
   }
 
@@ -403,7 +404,10 @@ export class FluePlugin extends BasePlugin {
     state.span.end();
   }
 
-  private handleFlueEvent(event: FlueEvent): void {
+  private handleFlueEvent(
+    event: FlueEvent,
+    options: { captureTurnSpans: boolean },
+  ): void {
     switch (event.type) {
       case "operation_start":
         this.handleOperationStart(event as FlueOperationStartEvent);
@@ -412,24 +416,39 @@ export class FluePlugin extends BasePlugin {
         this.handleOperation(event as FlueOperationEvent);
         return;
       case "text_delta":
+        if (!options.captureTurnSpans) {
+          return;
+        }
         this.ensureTurnState(event).text.push(
           typeof event.text === "string" ? event.text : "",
         );
         return;
       case "thinking_start":
+        if (!options.captureTurnSpans) {
+          return;
+        }
         this.handleThinkingStart(event);
         return;
       case "thinking_delta":
+        if (!options.captureTurnSpans) {
+          return;
+        }
         this.handleThinkingDelta(event as FlueThinkingDeltaEvent);
         return;
       case "thinking_end":
+        if (!options.captureTurnSpans) {
+          return;
+        }
         this.handleThinkingEnd(event as FlueThinkingEndEvent);
         return;
       case "turn":
+        if (!options.captureTurnSpans) {
+          return;
+        }
         this.handleTurn(event as FlueTurnEvent);
         return;
       case "tool_start":
-        this.handleToolStart(event as FlueToolStartEvent);
+        this.handleToolStart(event as FlueToolStartEvent, options);
         return;
       case "tool_call":
         this.handleToolCall(event as FlueToolCallEvent);
@@ -594,7 +613,10 @@ export class FluePlugin extends BasePlugin {
     }
   }
 
-  private handleToolStart(event: FlueToolStartEvent): void {
+  private handleToolStart(
+    event: FlueToolStartEvent,
+    options: { captureTurnSpans: boolean },
+  ): void {
     const toolCallId = event.toolCallId;
     if (!toolCallId) {
       return;
@@ -603,7 +625,7 @@ export class FluePlugin extends BasePlugin {
     const parent = this.parentSpanForEvent(event);
     const scope = scopeKey(event);
     let turnState = this.turnsByScope.get(scope);
-    if (!turnState && parent) {
+    if (!turnState && parent && options.captureTurnSpans) {
       turnState = this.ensureTurnState(event);
     }
     const metadata = {
@@ -713,18 +735,22 @@ export class FluePlugin extends BasePlugin {
       ...(event.reason ? { "flue.compaction_reason": event.reason } : {}),
       provider: "flue",
     };
+    const input = {
+      ...(typeof event.estimatedTokens === "number"
+        ? { estimatedTokens: event.estimatedTokens }
+        : {}),
+      ...(event.reason ? { reason: event.reason } : {}),
+    };
     const span = startFlueSpan(parent, {
       name: "flue.compaction",
       spanAttributes: { type: SpanTypeAttribute.TASK },
     });
     safeLog(span, {
-      input: {
-        estimatedTokens: event.estimatedTokens,
-        reason: event.reason,
-      },
+      input,
       metadata,
     });
     this.compactionsByScope.set(scopeKey(event), {
+      input,
       metadata,
       operationState,
       span,
@@ -780,10 +806,12 @@ export class FluePlugin extends BasePlugin {
         continue;
       }
       safeLog(state.span, {
+        input: state.input,
         metadata: state.metadata,
         metrics: {
           ...buildDurationMetrics(state.startTime),
         },
+        output: { completed: true },
       });
       state.span.end();
       this.deleteCompactionState(state);
