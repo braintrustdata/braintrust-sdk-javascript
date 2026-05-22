@@ -19,7 +19,7 @@ import { ModulePatch } from "./loader/cjs-patch.js";
 import { patchTracingChannel } from "./patch-tracing-channel.js";
 
 const state = ((globalThis as any)[
-  Symbol.for("braintrust.applyInstrumentation")
+  Symbol.for("braintrust.applyAutoInstrumentation")
 ] ??= {}) as { applied?: boolean };
 const alreadyApplied = state.applied;
 

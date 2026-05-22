@@ -5,7 +5,8 @@ export default defineConfig([
   {
     entry: {
       index: "src/node/index.ts",
-      "apply-instrumentation": "src/node/apply-instrumentation-entry.ts",
+      "apply-auto-instrumentation":
+        "src/node/apply-auto-instrumentation-entry.ts",
     },
     format: ["cjs", "esm"],
     outDir: "dist",
@@ -66,8 +67,8 @@ export default defineConfig([
       browser: "src/browser/index.ts",
       "edge-light": "src/edge-light/index.ts",
       workerd: "src/workerd/index.ts",
-      "apply-instrumentation.browser":
-        "src/non-node/apply-instrumentation-entry.ts",
+      "apply-auto-instrumentation.browser":
+        "src/non-node/apply-auto-instrumentation-entry.ts",
     },
     format: ["cjs", "esm"],
     outDir: "dist",

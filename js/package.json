@@ -51,18 +51,18 @@
       "require": "./dist/browser.js",
       "default": "./dist/browser.mjs"
     },
-    "./apply-instrumentation": {
-      "types": "./dist/apply-instrumentation.d.ts",
-      "edge-light": "./dist/apply-instrumentation.browser.mjs",
-      "workerd": "./dist/apply-instrumentation.browser.mjs",
+    "./apply-auto-instrumentation": {
+      "types": "./dist/apply-auto-instrumentation.d.ts",
+      "edge-light": "./dist/apply-auto-instrumentation.browser.mjs",
+      "workerd": "./dist/apply-auto-instrumentation.browser.mjs",
       "node": {
-        "import": "./dist/apply-instrumentation.mjs",
-        "require": "./dist/apply-instrumentation.js"
+        "import": "./dist/apply-auto-instrumentation.mjs",
+        "require": "./dist/apply-auto-instrumentation.js"
       },
-      "browser": "./dist/apply-instrumentation.browser.mjs",
-      "import": "./dist/apply-instrumentation.mjs",
-      "require": "./dist/apply-instrumentation.js",
-      "default": "./dist/apply-instrumentation.mjs"
+      "browser": "./dist/apply-auto-instrumentation.browser.mjs",
+      "import": "./dist/apply-auto-instrumentation.mjs",
+      "require": "./dist/apply-auto-instrumentation.js",
+      "default": "./dist/apply-auto-instrumentation.mjs"
     },
     "./node": {
       "types": "./dist/index.d.ts",

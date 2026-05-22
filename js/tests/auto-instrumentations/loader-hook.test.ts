@@ -20,13 +20,13 @@ const helperPromisePath = path.join(
   fixturesDir,
   "test-api-promise-preservation.mjs",
 );
-const runtimeApplySideEffectEsmPath = path.join(
+const runtimeApplyAutoSideEffectEsmPath = path.join(
   fixturesDir,
-  "runtime-apply-side-effect-esm.mjs",
+  "runtime-apply-auto-side-effect-esm.mjs",
 );
-const runtimeApplySideEffectCjsPath = path.join(
+const runtimeApplyAutoSideEffectCjsPath = path.join(
   fixturesDir,
-  "runtime-apply-side-effect-cjs.cjs",
+  "runtime-apply-auto-side-effect-cjs.cjs",
 );
 
 interface TestResult {
@@ -85,11 +85,11 @@ describe("Unified Loader Hook Integration Tests", () => {
     });
   });
 
-  describe("apply-instrumentation side-effect runtime setup", () => {
+  describe("apply-auto-instrumentation side-effect runtime setup", () => {
     it("should apply instrumentation through the side-effect ESM export", async () => {
       const result = await runWithWorker({
         execArgv: ["--import", listenerPath],
-        script: runtimeApplySideEffectEsmPath,
+        script: runtimeApplyAutoSideEffectEsmPath,
       });
 
       expect(result.events.start.length).toBe(1);
@@ -99,7 +99,7 @@ describe("Unified Loader Hook Integration Tests", () => {
     it("should apply instrumentation through the side-effect CJS export", async () => {
       const result = await runWithWorker({
         execArgv: ["--import", listenerPath],
-        script: runtimeApplySideEffectCjsPath,
+        script: runtimeApplyAutoSideEffectCjsPath,
       });
 
       expect(result.events.start.length).toBe(1);
@@ -110,7 +110,7 @@ describe("Unified Loader Hook Integration Tests", () => {
       const result = await runWithWorker({
         env: { BRAINTRUST_DISABLE_INSTRUMENTATION: "openai" },
         execArgv: ["--import", listenerPath],
-        script: runtimeApplySideEffectEsmPath,
+        script: runtimeApplyAutoSideEffectEsmPath,
       });
 
       expect(result.events.start.length).toBe(0);
@@ -120,7 +120,7 @@ describe("Unified Loader Hook Integration Tests", () => {
     it("should not double-apply when import hook and side-effect export both run", async () => {
       const result = await runWithWorker({
         execArgv: ["--import", listenerPath, "--import", hookPath],
-        script: runtimeApplySideEffectEsmPath,
+        script: runtimeApplyAutoSideEffectEsmPath,
       });
 
       expect(result.events.start.length).toBe(1);

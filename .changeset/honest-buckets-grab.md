@@ -2,4 +2,4 @@
 "braintrust": minor
 ---
 
-feat: Add `braintrust/apply-instrumentation` entrypoint for CJS/TS patching
+feat: Add `braintrust/apply-auto-instrumentation` entrypoint for CJS/TS patching

@@ -5,16 +5,16 @@ import { getDefaultAutoInstrumentationConfigs } from "../auto-instrumentations/c
 import { ModulePatch } from "../auto-instrumentations/loader/cjs-patch";
 import { patchTracingChannel } from "../auto-instrumentations/patch-tracing-channel";
 
-interface ApplyInstrumentationState {
+interface ApplyAutoInstrumentationState {
   applied?: boolean;
 }
 
-const stateKey = Symbol.for("braintrust.applyInstrumentation");
+const stateKey = Symbol.for("braintrust.applyAutoInstrumentation");
 const existingState = Object.getOwnPropertyDescriptor(
   globalThis,
   stateKey,
 )?.value;
-const state: ApplyInstrumentationState = isApplyInstrumentationState(
+const state: ApplyAutoInstrumentationState = isApplyAutoInstrumentationState(
   existingState,
 )
   ? existingState
@@ -50,9 +50,9 @@ if (!state.applied) {
   }
 }
 
-function isApplyInstrumentationState(
+function isApplyAutoInstrumentationState(
   value: unknown,
-): value is ApplyInstrumentationState {
+): value is ApplyAutoInstrumentationState {
   return typeof value === "object" && value !== null;
 }
 
