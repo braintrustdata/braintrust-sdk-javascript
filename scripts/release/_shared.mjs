@@ -1,4 +1,6 @@
+import { spawnSync } from "node:child_process";
 import { appendFileSync, existsSync, readFileSync, readdirSync } from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -191,4 +193,21 @@ export function getReleaseTag(name, version) {
 
 export function formatPackageList(packages) {
   return packages.map((pkg) => `- ${pkg.name}@${pkg.version}`).join("\n");
+}
+
+export function isPublishedToNpm(name, version) {
+  const result = spawnSync(
+    "npm",
+    ["view", `${name}@${version}`, "version", "--registry", NPM_REGISTRY],
+    {
+      cwd: os.tmpdir(),
+      encoding: "utf8",
+    },
+  );
+
+  if (result.status !== 0) {
+    return false;
+  }
+
+  return result.stdout.trim() === version;
 }

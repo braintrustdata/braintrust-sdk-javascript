@@ -1,7 +1,12 @@
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 
-import { parseArgs, readPackage, repoPath } from "./_shared.mjs";
+import {
+  isPublishedToNpm,
+  parseArgs,
+  readPackage,
+  repoPath,
+} from "./_shared.mjs";
 
 const args = parseArgs();
 const manifestPath = args.manifest ?? ".release-manifest.json";
@@ -26,6 +31,13 @@ for (const pkg of packages) {
 
   if (npmTag) {
     publishArgs.push("--tag", npmTag);
+  }
+
+  if (isPublishedToNpm(packageJson.name, packageJson.version)) {
+    console.log(
+      `${packageJson.name}@${packageJson.version} is already published; skipping npm publish.`,
+    );
+    continue;
   }
 
   console.log(

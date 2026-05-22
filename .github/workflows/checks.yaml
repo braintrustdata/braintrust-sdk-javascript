@@ -405,7 +405,7 @@ jobs:
           docker run --rm otel-js-test-${{ matrix.test-dir }}-node${{ matrix.node-version }}
 
   js-zod-versions:
-    name: JS Zod Versions (${{ matrix.zod-version }})
+    name: Zod Versions (${{ matrix.zod-version }})
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
@@ -430,7 +430,7 @@ jobs:
         working-directory: ./js
         run: |
           pnpm add -D zod@${{ matrix.zod-version }}
-      - name: Build JS package
+      - name: Build package
         working-directory: ./js
         run: |
           pnpm run build

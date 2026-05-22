@@ -1,14 +1,13 @@
-import { execFileSync, spawnSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
-import os from "node:os";
 
 import {
-  NPM_REGISTRY,
   PUBLISHABLE_PACKAGES,
   filterPublishableReleases,
   formatPackageList,
   getApprovedPackageByName,
   getReleaseTag,
+  isPublishedToNpm,
   parseArgs,
   readPackage,
   writeGithubOutput,
@@ -18,6 +17,7 @@ const args = parseArgs();
 const mode = args.mode ?? "release";
 const outputPath = args.output ?? ".release-manifest.json";
 const statusPath = args["status-file"];
+const sinceRef = args.since;
 
 const headCommit = execFileSync("git", ["rev-parse", "HEAD"], {
   encoding: "utf8",
@@ -37,6 +37,7 @@ if (statusPath) {
     headCommit,
     mode,
     outputPath,
+    sinceRef,
     title,
   });
 }
@@ -98,28 +99,24 @@ function handleStableManifest({
   headCommit,
   mode: currentMode,
   outputPath: currentOutputPath,
+  sinceRef: currentSinceRef,
   title: currentTitle,
 }) {
-  const unpublishedPackages = PUBLISHABLE_PACKAGES.map((approved) => {
-    const manifest = readPackage(approved.dir);
-    if (isPublishedToNpm(manifest.name, manifest.version)) {
-      return null;
-    }
-
-    return {
-      dir: approved.dir,
-      name: manifest.name,
-      version: manifest.version,
-      tag: getReleaseTag(manifest.name, manifest.version),
-    };
-  }).filter(Boolean);
-
-  const hasWork = unpublishedPackages.length > 0;
-  const packages = unpublishedPackages;
+  const packages = (
+    currentSinceRef
+      ? getVersionedPackagesSince(currentSinceRef)
+      : getUnpublishedPackages()
+  ).map((pkg) => ({
+    ...pkg,
+    published: isPublishedToNpm(pkg.name, pkg.version),
+  }));
+  const hasWork = packages.length > 0;
+  const packagesNeedingPublish = packages.filter((pkg) => !pkg.published);
 
   writeManifestFile(currentOutputPath, {
     mode: currentMode,
     commit: headCommit,
+    since: currentSinceRef,
     packages,
   });
 
@@ -127,7 +124,7 @@ function handleStableManifest({
   const plainList = packagesToPlain(packages);
 
   writeGithubOutput("has_work", hasWork);
-  writeGithubOutput("needs_publish", packages.length > 0);
+  writeGithubOutput("needs_publish", packagesNeedingPublish.length > 0);
   writeGithubOutput("package_count", packages.length);
   writeGithubOutput("title", currentTitle);
   writeGithubOutput("markdown", markdownList);
@@ -140,8 +137,53 @@ function handleStableManifest({
   }
 
   console.log(
-    `Stable release work detected for ${packages.length} package(s):\n${formatPackageList(packages)}`,
+    `Stable release work detected for ${packages.length} package(s); ${packagesNeedingPublish.length} need npm publish:\n${formatPackageList(packages)}`,
   );
+}
+
+function getVersionedPackagesSince(sinceRef) {
+  return PUBLISHABLE_PACKAGES.map((approved) => {
+    const manifest = readPackage(approved.dir);
+    const previousVersion = readPackageVersionAtRef(sinceRef, approved.dir);
+    if (previousVersion === manifest.version) {
+      return null;
+    }
+
+    return {
+      dir: approved.dir,
+      name: manifest.name,
+      previousVersion,
+      version: manifest.version,
+      tag: getReleaseTag(manifest.name, manifest.version),
+    };
+  }).filter(Boolean);
+}
+
+function getUnpublishedPackages() {
+  return PUBLISHABLE_PACKAGES.map((approved) => {
+    const manifest = readPackage(approved.dir);
+    if (isPublishedToNpm(manifest.name, manifest.version)) {
+      return null;
+    }
+
+    return {
+      dir: approved.dir,
+      name: manifest.name,
+      version: manifest.version,
+      tag: getReleaseTag(manifest.name, manifest.version),
+    };
+  }).filter(Boolean);
+}
+
+function readPackageVersionAtRef(ref, relativeDir) {
+  const content = execFileSync(
+    "git",
+    ["show", `${ref}:${relativeDir}/package.json`],
+    {
+      encoding: "utf8",
+    },
+  );
+  return JSON.parse(content).version;
 }
 
 function writeManifestFile(currentOutputPath, manifest) {
@@ -162,23 +204,6 @@ function packagesToPlain(packages) {
   return packages.length === 0
     ? "none"
     : packages.map((pkg) => `${pkg.name}@${pkg.version}`).join(", ");
-}
-
-function isPublishedToNpm(name, version) {
-  const result = spawnSync(
-    "npm",
-    ["view", `${name}@${version}`, "version", "--registry", NPM_REGISTRY],
-    {
-      cwd: os.tmpdir(),
-      encoding: "utf8",
-    },
-  );
-
-  if (result.status !== 0) {
-    return false;
-  }
-
-  return result.stdout.trim() === version;
 }
 
 function getTitle(currentMode) {

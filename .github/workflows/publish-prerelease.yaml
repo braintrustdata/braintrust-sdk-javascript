@@ -1,0 +1,102 @@
+name: Publish Prerelease Snapshot
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Ref to snapshot
+        required: true
+        default: main
+        type: string
+
+concurrency:
+  group: publish-prerelease-${{ inputs.ref }}
+  cancel-in-progress: false
+
+env:
+  HUSKY: "0"
+  NPM_CONFIG_PROVENANCE: "true"
+
+jobs:
+  publish-prerelease:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.ref }}
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: .tool-versions
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Validate publishable package metadata
+        run: node scripts/release/validate-publishable-packages.mjs
+      - name: Compute changeset status
+        run: pnpm exec changeset status --output=.changeset-status.json
+      - name: Version packages
+        run: pnpm exec changeset version --snapshot rc
+      - name: Prepare release manifest
+        id: manifest
+        run: node scripts/release/release-manifest.mjs --mode prerelease --status-file .changeset-status.json --output .release-manifest.json
+      - name: Build publishable packages
+        if: steps.manifest.outputs.has_packages == 'true'
+        run: pnpm run build
+      - name: Publish prerelease packages to npm
+        if: steps.manifest.outputs.has_packages == 'true'
+        env:
+          NODE_AUTH_TOKEN: ""
+          NPM_TOKEN: ""
+        run: node scripts/release/publish-release-manifest.mjs --manifest .release-manifest.json --tag rc
+      - name: Post prerelease to Slack
+        if: steps.manifest.outputs.has_packages == 'true'
+        uses: slackapi/slack-github-action@af78098f536edbc4de71162a307590698245be95 # v3.0.1
+        with:
+          method: chat.postMessage
+          token: ${{ secrets.SLACK_BOT_TOKEN }}
+          payload: |
+            channel: C0ABHT0SWA2
+            text: "🧪 Prerelease snapshots published"
+            blocks:
+              - type: "header"
+                text:
+                  type: "plain_text"
+                  text: "🧪 Prerelease snapshots published"
+              - type: "section"
+                text:
+                  type: "mrkdwn"
+                  text: "*Ref:* `${{ inputs.ref }}`\n*Tag:* `rc`\n\n*Packages:*\n${{ steps.manifest.outputs.markdown }}\n\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>"
+
+  notify-failure:
+    needs:
+      - publish-prerelease
+    if: |
+      always() &&
+      needs.publish-prerelease.result == 'failure'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Post to Slack on failure
+        uses: slackapi/slack-github-action@af78098f536edbc4de71162a307590698245be95 # v3.0.1
+        with:
+          method: chat.postMessage
+          token: ${{ secrets.SLACK_BOT_TOKEN }}
+          payload: |
+            channel: C0ABHT0SWA2
+            text: "🚨 Prerelease snapshot failed"
+            blocks:
+              - type: "header"
+                text:
+                  type: "plain_text"
+                  text: "🚨 Prerelease snapshot failed"
+              - type: "section"
+                text:
+                  type: "mrkdwn"
+                  text: "*Workflow:* `Publish Prerelease Snapshot`\n*Ref:* `${{ inputs.ref }}`\n\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>"
