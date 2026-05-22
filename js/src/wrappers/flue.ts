@@ -1,4 +1,5 @@
 import { flueChannels } from "../instrumentation/plugins/flue-channels";
+import type { IsoTracingChannelCollection } from "../isomorph";
 import type {
   FlueCallHandle,
   FlueCallOptions,
@@ -25,17 +26,13 @@ type FlueOperationChannel =
   | typeof flueChannels.skill
   | typeof flueChannels.task
   | typeof flueChannels.compact;
-type PublishChannel = {
-  publish(message: unknown): void;
-  runStores?<T>(message: unknown, fn: () => T): T;
-};
-type ManualTracingChannel = {
-  asyncEnd?: PublishChannel;
-  asyncStart?: PublishChannel;
-  end?: PublishChannel;
-  error?: PublishChannel;
-  start?: PublishChannel;
-};
+type FlueOperationTraceContext<TResult> = Parameters<
+  FlueOperationChannel["tracePromise"]
+>[1] &
+  Partial<{
+    error: Error;
+    result: TResult;
+  }>;
 
 /**
  * Wraps a Flue context with Braintrust tracing. Context wrapping subscribes to
@@ -281,8 +278,11 @@ function traceFlueOperation<TResult>(
   originalResult: PromiseLike<TResult>;
   traced: Promise<TResult>;
 } {
-  const tracingChannel = channel.tracingChannel() as ManualTracingChannel;
-  const context = args.context as Record<string, unknown>;
+  const tracingChannel =
+    channel.tracingChannel() as IsoTracingChannelCollection<
+      FlueOperationTraceContext<TResult>
+    >;
+  const context = args.context as FlueOperationTraceContext<TResult>;
 
   let originalResult: PromiseLike<TResult>;
   let traced: Promise<TResult>;
