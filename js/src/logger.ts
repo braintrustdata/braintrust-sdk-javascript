@@ -2236,20 +2236,7 @@ function startSpanParentArgs(args: {
       );
     }
 
-    const parentComponentsObjectIdLambda = spanComponentsToObjectIdLambda(
-      args.state,
-      parentComponents,
-    );
-    const computeParentObjectId = async () => {
-      const parentComponentsObjectId = await parentComponentsObjectIdLambda();
-      if ((await args.parentObjectId.get()) !== parentComponentsObjectId) {
-        throw new Error(
-          `Mismatch between expected span parent object id ${await args.parentObjectId.get()} and provided id ${parentComponentsObjectId}`,
-        );
-      }
-      return await args.parentObjectId.get();
-    };
-    argParentObjectId = new LazyValue(computeParentObjectId);
+    argParentObjectId = args.parentObjectId;
     if (parentComponents.data.row_id) {
       argParentSpanIds = {
         spanId: parentComponents.data.span_id,
