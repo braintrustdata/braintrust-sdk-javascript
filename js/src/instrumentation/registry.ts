@@ -7,6 +7,13 @@
 
 import { BraintrustPlugin } from "./braintrust-plugin";
 import iso from "../isomorph";
+import {
+  getDefaultInstrumentationIntegrations,
+  readDisabledInstrumentationEnvConfig,
+  type InstrumentationConfig,
+} from "./config";
+
+export type { InstrumentationConfig } from "./config";
 
 // Key used to stamp the active PluginRegistry instance onto the shared
 // braintrust state object (globalThis[Symbol.for("braintrust-state")]).
@@ -31,35 +38,6 @@ function getSharedState(): Record<symbol, unknown> | undefined {
   return state && typeof state === "object"
     ? (state as Record<symbol, unknown>)
     : undefined;
-}
-
-export interface InstrumentationConfig {
-  /**
-   * Configuration for individual SDK integrations.
-   * Set to false to disable instrumentation for that SDK.
-   */
-  integrations?: {
-    openai?: boolean;
-    anthropic?: boolean;
-    vercel?: boolean;
-    aisdk?: boolean;
-    google?: boolean;
-    googleGenAI?: boolean;
-    googleADK?: boolean;
-    huggingface?: boolean;
-    claudeAgentSDK?: boolean;
-    cursor?: boolean;
-    cursorSDK?: boolean;
-    openrouter?: boolean;
-    openrouterAgent?: boolean;
-    mistral?: boolean;
-    cohere?: boolean;
-    groq?: boolean;
-    genkit?: boolean;
-    gitHubCopilot?: boolean;
-    openaiCodexSDK?: boolean;
-    openAIAgents?: boolean;
-  };
 }
 
 class PluginRegistry {
@@ -152,28 +130,7 @@ class PluginRegistry {
    * Get default configuration (all integrations enabled).
    */
   private getDefaultConfig(): Record<string, boolean> {
-    return {
-      openai: true,
-      openaiCodexSDK: true,
-      anthropic: true,
-      vercel: true,
-      aisdk: true,
-      google: true,
-      googleGenAI: true,
-      googleADK: true,
-      huggingface: true,
-      claudeAgentSDK: true,
-      cursor: true,
-      cursorSDK: true,
-      openAIAgents: true,
-      openrouter: true,
-      openrouterAgent: true,
-      mistral: true,
-      cohere: true,
-      groq: true,
-      genkit: true,
-      gitHubCopilot: true,
-    };
+    return getDefaultInstrumentationIntegrations();
   }
 
   /**
@@ -181,33 +138,9 @@ class PluginRegistry {
    * Supports: BRAINTRUST_DISABLE_INSTRUMENTATION=openai,anthropic,...
    */
   private readEnvConfig(): InstrumentationConfig {
-    const integrations: Record<string, boolean> = {};
-
-    const disabledList = iso.getEnv("BRAINTRUST_DISABLE_INSTRUMENTATION");
-    if (disabledList) {
-      const disabled = disabledList
-        .split(",")
-        .map((s) => s.trim().toLowerCase())
-        .filter((s) => s.length > 0);
-
-      for (const sdk of disabled) {
-        if (sdk === "cursor-sdk") {
-          integrations.cursorSDK = false;
-        } else if (
-          sdk === "githubcopilot" ||
-          sdk === "github-copilot" ||
-          sdk === "copilot-sdk"
-        ) {
-          integrations.gitHubCopilot = false;
-        } else if (sdk === "openai-codex-sdk") {
-          integrations.openaiCodexSDK = false;
-        } else {
-          integrations[sdk] = false;
-        }
-      }
-    }
-
-    return { integrations };
+    return readDisabledInstrumentationEnvConfig(
+      iso.getEnv("BRAINTRUST_DISABLE_INSTRUMENTATION"),
+    );
   }
 }
 
