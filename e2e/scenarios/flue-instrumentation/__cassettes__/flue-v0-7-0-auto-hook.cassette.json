@@ -59,9 +59,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "path"
-                  ],
+                  "required": ["path"],
                   "type": "object"
                 },
                 "name": "read"
@@ -80,10 +78,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "path",
-                    "content"
-                  ],
+                  "required": ["path", "content"],
                   "type": "object"
                 },
                 "name": "write"
@@ -110,11 +105,7 @@
                       "type": "boolean"
                     }
                   },
-                  "required": [
-                    "path",
-                    "oldText",
-                    "newText"
-                  ],
+                  "required": ["path", "oldText", "newText"],
                   "type": "object"
                 },
                 "name": "edit"
@@ -133,9 +124,7 @@
                       "type": "number"
                     }
                   },
-                  "required": [
-                    "command"
-                  ],
+                  "required": ["command"],
                   "type": "object"
                 },
                 "name": "bash"
@@ -158,9 +147,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "pattern"
-                  ],
+                  "required": ["pattern"],
                   "type": "object"
                 },
                 "name": "grep"
@@ -179,9 +166,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "pattern"
-                  ],
+                  "required": ["pattern"],
                   "type": "object"
                 },
                 "name": "glob"
@@ -208,9 +193,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "prompt"
-                  ],
+                  "required": ["prompt"],
                   "type": "object"
                 },
                 "name": "task"
@@ -224,9 +207,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "query"
-                  ],
+                  "required": ["query"],
                   "type": "object"
                 },
                 "name": "lookup"
@@ -243,10 +224,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "lookupId",
-                    "query"
-                  ],
+                  "required": ["lookupId", "query"],
                   "type": "object"
                 },
                 "name": "web_search"
@@ -263,9 +241,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "url"
-                  ],
+                  "required": ["url"],
                   "type": "object"
                 },
                 "name": "summarize_source"
@@ -432,9 +408,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "path"
-                  ],
+                  "required": ["path"],
                   "type": "object"
                 },
                 "name": "read"
@@ -453,10 +427,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "path",
-                    "content"
-                  ],
+                  "required": ["path", "content"],
                   "type": "object"
                 },
                 "name": "write"
@@ -483,11 +454,7 @@
                       "type": "boolean"
                     }
                   },
-                  "required": [
-                    "path",
-                    "oldText",
-                    "newText"
-                  ],
+                  "required": ["path", "oldText", "newText"],
                   "type": "object"
                 },
                 "name": "edit"
@@ -506,9 +473,7 @@
                       "type": "number"
                     }
                   },
-                  "required": [
-                    "command"
-                  ],
+                  "required": ["command"],
                   "type": "object"
                 },
                 "name": "bash"
@@ -531,9 +496,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "pattern"
-                  ],
+                  "required": ["pattern"],
                   "type": "object"
                 },
                 "name": "grep"
@@ -552,9 +515,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "pattern"
-                  ],
+                  "required": ["pattern"],
                   "type": "object"
                 },
                 "name": "glob"
@@ -581,9 +542,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "prompt"
-                  ],
+                  "required": ["prompt"],
                   "type": "object"
                 },
                 "name": "task"
@@ -597,9 +556,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "query"
-                  ],
+                  "required": ["query"],
                   "type": "object"
                 },
                 "name": "lookup"
@@ -616,10 +573,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "lookupId",
-                    "query"
-                  ],
+                  "required": ["lookupId", "query"],
                   "type": "object"
                 },
                 "name": "web_search"
@@ -636,9 +590,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "url"
-                  ],
+                  "required": ["url"],
                   "type": "object"
                 },
                 "name": "summarize_source"
@@ -839,9 +791,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "path"
-                  ],
+                  "required": ["path"],
                   "type": "object"
                 },
                 "name": "read"
@@ -860,10 +810,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "path",
-                    "content"
-                  ],
+                  "required": ["path", "content"],
                   "type": "object"
                 },
                 "name": "write"
@@ -890,11 +837,7 @@
                       "type": "boolean"
                     }
                   },
-                  "required": [
-                    "path",
-                    "oldText",
-                    "newText"
-                  ],
+                  "required": ["path", "oldText", "newText"],
                   "type": "object"
                 },
                 "name": "edit"
@@ -913,9 +856,7 @@
                       "type": "number"
                     }
                   },
-                  "required": [
-                    "command"
-                  ],
+                  "required": ["command"],
                   "type": "object"
                 },
                 "name": "bash"
@@ -938,9 +879,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "pattern"
-                  ],
+                  "required": ["pattern"],
                   "type": "object"
                 },
                 "name": "grep"
@@ -959,9 +898,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "pattern"
-                  ],
+                  "required": ["pattern"],
                   "type": "object"
                 },
                 "name": "glob"
@@ -988,9 +925,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "prompt"
-                  ],
+                  "required": ["prompt"],
                   "type": "object"
                 },
                 "name": "task"
@@ -1004,9 +939,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "query"
-                  ],
+                  "required": ["query"],
                   "type": "object"
                 },
                 "name": "lookup"
@@ -1023,10 +956,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "lookupId",
-                    "query"
-                  ],
+                  "required": ["lookupId", "query"],
                   "type": "object"
                 },
                 "name": "web_search"
@@ -1043,9 +973,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "url"
-                  ],
+                  "required": ["url"],
                   "type": "object"
                 },
                 "name": "summarize_source"
@@ -1277,9 +1205,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "path"
-                  ],
+                  "required": ["path"],
                   "type": "object"
                 },
                 "name": "read"
@@ -1298,10 +1224,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "path",
-                    "content"
-                  ],
+                  "required": ["path", "content"],
                   "type": "object"
                 },
                 "name": "write"
@@ -1328,11 +1251,7 @@
                       "type": "boolean"
                     }
                   },
-                  "required": [
-                    "path",
-                    "oldText",
-                    "newText"
-                  ],
+                  "required": ["path", "oldText", "newText"],
                   "type": "object"
                 },
                 "name": "edit"
@@ -1351,9 +1270,7 @@
                       "type": "number"
                     }
                   },
-                  "required": [
-                    "command"
-                  ],
+                  "required": ["command"],
                   "type": "object"
                 },
                 "name": "bash"
@@ -1376,9 +1293,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "pattern"
-                  ],
+                  "required": ["pattern"],
                   "type": "object"
                 },
                 "name": "grep"
@@ -1397,9 +1312,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "pattern"
-                  ],
+                  "required": ["pattern"],
                   "type": "object"
                 },
                 "name": "glob"
@@ -1426,9 +1339,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "prompt"
-                  ],
+                  "required": ["prompt"],
                   "type": "object"
                 },
                 "name": "task"
@@ -1442,9 +1353,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "query"
-                  ],
+                  "required": ["query"],
                   "type": "object"
                 },
                 "name": "lookup"
@@ -1461,10 +1370,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "lookupId",
-                    "query"
-                  ],
+                  "required": ["lookupId", "query"],
                   "type": "object"
                 },
                 "name": "web_search"
@@ -1481,9 +1387,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "url"
-                  ],
+                  "required": ["url"],
                   "type": "object"
                 },
                 "name": "summarize_source"
@@ -1607,9 +1511,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "path"
-                  ],
+                  "required": ["path"],
                   "type": "object"
                 },
                 "name": "read"
@@ -1628,10 +1530,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "path",
-                    "content"
-                  ],
+                  "required": ["path", "content"],
                   "type": "object"
                 },
                 "name": "write"
@@ -1658,11 +1557,7 @@
                       "type": "boolean"
                     }
                   },
-                  "required": [
-                    "path",
-                    "oldText",
-                    "newText"
-                  ],
+                  "required": ["path", "oldText", "newText"],
                   "type": "object"
                 },
                 "name": "edit"
@@ -1681,9 +1576,7 @@
                       "type": "number"
                     }
                   },
-                  "required": [
-                    "command"
-                  ],
+                  "required": ["command"],
                   "type": "object"
                 },
                 "name": "bash"
@@ -1706,9 +1599,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "pattern"
-                  ],
+                  "required": ["pattern"],
                   "type": "object"
                 },
                 "name": "grep"
@@ -1727,9 +1618,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "pattern"
-                  ],
+                  "required": ["pattern"],
                   "type": "object"
                 },
                 "name": "glob"
@@ -1759,9 +1648,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "prompt"
-                  ],
+                  "required": ["prompt"],
                   "type": "object"
                 },
                 "name": "task"
@@ -1914,9 +1801,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "path"
-                  ],
+                  "required": ["path"],
                   "type": "object"
                 },
                 "name": "read"
@@ -1935,10 +1820,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "path",
-                    "content"
-                  ],
+                  "required": ["path", "content"],
                   "type": "object"
                 },
                 "name": "write"
@@ -1965,11 +1847,7 @@
                       "type": "boolean"
                     }
                   },
-                  "required": [
-                    "path",
-                    "oldText",
-                    "newText"
-                  ],
+                  "required": ["path", "oldText", "newText"],
                   "type": "object"
                 },
                 "name": "edit"
@@ -1988,9 +1866,7 @@
                       "type": "number"
                     }
                   },
-                  "required": [
-                    "command"
-                  ],
+                  "required": ["command"],
                   "type": "object"
                 },
                 "name": "bash"
@@ -2013,9 +1889,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "pattern"
-                  ],
+                  "required": ["pattern"],
                   "type": "object"
                 },
                 "name": "grep"
@@ -2034,9 +1908,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "pattern"
-                  ],
+                  "required": ["pattern"],
                   "type": "object"
                 },
                 "name": "glob"
@@ -2066,9 +1938,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "prompt"
-                  ],
+                  "required": ["prompt"],
                   "type": "object"
                 },
                 "name": "task"
@@ -2176,9 +2046,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "path"
-                  ],
+                  "required": ["path"],
                   "type": "object"
                 },
                 "strict": false,
@@ -2198,10 +2066,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "path",
-                    "content"
-                  ],
+                  "required": ["path", "content"],
                   "type": "object"
                 },
                 "strict": false,
@@ -2229,11 +2094,7 @@
                       "type": "boolean"
                     }
                   },
-                  "required": [
-                    "path",
-                    "oldText",
-                    "newText"
-                  ],
+                  "required": ["path", "oldText", "newText"],
                   "type": "object"
                 },
                 "strict": false,
@@ -2253,9 +2114,7 @@
                       "type": "number"
                     }
                   },
-                  "required": [
-                    "command"
-                  ],
+                  "required": ["command"],
                   "type": "object"
                 },
                 "strict": false,
@@ -2279,9 +2138,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "pattern"
-                  ],
+                  "required": ["pattern"],
                   "type": "object"
                 },
                 "strict": false,
@@ -2301,9 +2158,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "pattern"
-                  ],
+                  "required": ["pattern"],
                   "type": "object"
                 },
                 "strict": false,
@@ -2331,9 +2186,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "prompt"
-                  ],
+                  "required": ["prompt"],
                   "type": "object"
                 },
                 "strict": false,
