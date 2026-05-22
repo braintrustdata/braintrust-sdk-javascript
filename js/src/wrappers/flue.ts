@@ -27,6 +27,7 @@ type FlueOperationChannel =
   | typeof flueChannels.compact;
 type PublishChannel = {
   publish(message: unknown): void;
+  runStores?<T>(message: unknown, fn: () => T): T;
 };
 type ManualTracingChannel = {
   asyncEnd?: PublishChannel;
@@ -259,14 +260,12 @@ function patchCompact(session: FlueSessionRecord): void {
   Object.defineProperty(session, "compact", {
     configurable: true,
     value() {
-      return traceFlueOperation(flueChannels.compact, {
-        context: {
-          arguments: [],
-          operation: "compact",
-          session,
-        } as never,
-        run: () => bound(),
-      }).traced;
+      const context = {
+        arguments: [],
+        operation: "compact",
+        session,
+      } as Parameters<typeof flueChannels.compact.tracePromise>[1];
+      return flueChannels.compact.tracePromise(() => bound(), context);
     },
     writable: true,
   });
@@ -285,35 +284,44 @@ function traceFlueOperation<TResult>(
   const tracingChannel = channel.tracingChannel() as ManualTracingChannel;
   const context = args.context as Record<string, unknown>;
 
-  tracingChannel.start?.publish(context);
   let originalResult: PromiseLike<TResult>;
-  try {
-    originalResult = args.run();
-    tracingChannel.end?.publish(context);
-  } catch (error) {
-    context.error = normalizeError(error);
-    tracingChannel.error?.publish(context);
-    tracingChannel.end?.publish(context);
-    throw error;
-  }
-
-  const traced = Promise.resolve(originalResult).then(
-    (result) => {
-      context.result = result;
-      tracingChannel.asyncStart?.publish(context);
-      tracingChannel.asyncEnd?.publish(context);
-      return result;
-    },
-    (error: unknown) => {
+  let traced: Promise<TResult>;
+  const run = () => {
+    try {
+      originalResult = args.run();
+      tracingChannel.end?.publish(context);
+    } catch (error) {
       context.error = normalizeError(error);
       tracingChannel.error?.publish(context);
-      tracingChannel.asyncStart?.publish(context);
-      tracingChannel.asyncEnd?.publish(context);
+      tracingChannel.end?.publish(context);
       throw error;
-    },
-  );
+    }
 
-  return { originalResult, traced };
+    traced = Promise.resolve(originalResult).then(
+      (result) => {
+        context.result = result;
+        tracingChannel.asyncStart?.publish(context);
+        tracingChannel.asyncEnd?.publish(context);
+        return result;
+      },
+      (error: unknown) => {
+        context.error = normalizeError(error);
+        tracingChannel.error?.publish(context);
+        tracingChannel.asyncStart?.publish(context);
+        tracingChannel.asyncEnd?.publish(context);
+        throw error;
+      },
+    );
+  };
+
+  if (tracingChannel.start?.runStores) {
+    tracingChannel.start.runStores(context, run);
+  } else {
+    tracingChannel.start?.publish(context);
+    run();
+  }
+
+  return { originalResult: originalResult!, traced: traced! };
 }
 
 function normalizeError(error: unknown): Error {

@@ -5,12 +5,29 @@ const {
   publishAsyncStart,
   publishEnd,
   publishStart,
+  tracePromise,
   traceSync,
 } = vi.hoisted(() => ({
   publishAsyncEnd: vi.fn(),
   publishAsyncStart: vi.fn(),
   publishEnd: vi.fn(),
   publishStart: vi.fn(),
+  tracePromise: vi.fn(
+    async (fn: () => Promise<unknown>, context: Record<string, unknown>) => {
+      publishStart(context);
+      try {
+        const result = fn();
+        publishEnd(context);
+        const resolved = await result;
+        context.result = resolved;
+        publishAsyncStart(context);
+        publishAsyncEnd(context);
+        return resolved;
+      } catch (error) {
+        throw error;
+      }
+    },
+  ),
   traceSync: vi.fn((fn: () => unknown) => fn()),
 }));
 
@@ -31,8 +48,13 @@ vi.mock("../isomorph", () => ({
       },
       start: {
         publish: publishStart,
+        runStores: vi.fn((context, fn) => {
+          publishStart(context);
+          return fn();
+        }),
       },
       subscribe: vi.fn(),
+      tracePromise,
       traceSync,
       unsubscribe: vi.fn(),
     })),

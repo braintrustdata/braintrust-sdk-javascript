@@ -17,6 +17,12 @@ const flueVersion = await readInstalledPackageVersion(
 const TIMEOUT_MS = 120_000;
 const wrappedVariantKey = "flue-v0-7-0-wrapped";
 const autoHookVariantKey = "flue-v0-7-0-auto-hook";
+const openAIAutoHookVariantKey = "flue-v0-7-0-openai-auto-hook";
+
+const openAIPromptEnv = {
+  FLUE_E2E_PROMPT_MODEL: "openai/gpt-4o-mini",
+  FLUE_E2E_PROMPT_THINKING_LEVEL: "off",
+};
 
 describe(`flue ${flueVersion}`, () => {
   defineFlueInstrumentationAssertions({
@@ -38,6 +44,7 @@ describe(`flue ${flueVersion}`, () => {
   });
 
   defineFlueInstrumentationAssertions({
+    expectedPromptProviderSpanName: "anthropic.messages.create",
     name: "auto-hook instrumentation",
     runScenario: async ({ runNodeScenarioDir }) => {
       await runNodeScenarioDir({
@@ -52,6 +59,28 @@ describe(`flue ${flueVersion}`, () => {
       });
     },
     snapshotName: "flue-v0-7-0-auto-hook",
+    testFileUrl: import.meta.url,
+    timeoutMs: TIMEOUT_MS,
+  });
+
+  defineFlueInstrumentationAssertions({
+    expectedPromptProviderSpanName: "openai.responses.create",
+    expectThinking: false,
+    name: "auto-hook instrumentation with OpenAI prompt model",
+    runScenario: async ({ runNodeScenarioDir }) => {
+      await runNodeScenarioDir({
+        entry: "scenario.mjs",
+        env: openAIPromptEnv,
+        nodeArgs: ["--import", "braintrust/hook.mjs"],
+        runContext: {
+          originalScenarioDir,
+          variantKey: openAIAutoHookVariantKey,
+        },
+        scenarioDir,
+        timeoutMs: TIMEOUT_MS,
+      });
+    },
+    snapshotName: "flue-v0-7-0-openai-auto-hook",
     testFileUrl: import.meta.url,
     timeoutMs: TIMEOUT_MS,
   });

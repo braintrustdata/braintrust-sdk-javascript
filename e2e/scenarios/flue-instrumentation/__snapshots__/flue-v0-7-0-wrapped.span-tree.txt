@@ -20,13 +20,13 @@ span_tree:
     │         "provider": "flue"
     │       }
     │       metrics: {
-    │         "completion_tokens": 558,
+    │         "completion_tokens": 556,
     │         "duration_ms": 0,
-    │         "estimated_cost": 0.0169593,
-    │         "prompt_cache_creation_tokens": 1564,
-    │         "prompt_cached_tokens": 8591,
+    │         "estimated_cost": 0.01692675,
+    │         "prompt_cache_creation_tokens": 1565,
+    │         "prompt_cached_tokens": 8570,
     │         "prompt_tokens": 49,
-    │         "tokens": 10762
+    │         "tokens": 10740
     │       }
     │       ├── flue.turn [llm]
     │       │   output: [
@@ -35,7 +35,7 @@ span_tree:
     │       │       "index": 0,
     │       │       "message": {
     │       │         "content": "I'll complete this instrumented research flow step by step. Starting with Step 1:",
-    │       │         "reasoning": "The user wants me to complete an instrumented research flow with exactly three steps:\n1. Call lookup with query \"flue instrumentation\"\n2. Use the lookup result id to call web_search with query \"Braintrust Flue reasoning stream instrumentation\"\n3. Use the first web_search result url to call summarize_source\n4. After that, reply with exactly \"PROMPT_DONE\"\n\nThe user also emphasizes that I should call exactly one tool per turn and wait for each tool result before choosing the next tool.\n\nLet me start with Step 1: calling lookup with query \"flue instrumentation\".",
+    │       │         "reasoning": "The user wants me to complete an instrumented research flow with specific steps:\n1. Call lookup with query \"flue instrumentation\"\n2. Use the lookup result id to call web_search with query \"Braintrust Flue reasoning stream instrumentation\"\n3. Use the first web_search result url to call summarize_source\n4. After summarize_source returns, reply with exactly \"PROMPT_DONE\"\n\nI need to call exactly one tool per turn and wait for each result. Let me start with step 1.",
     │       │         "role": "assistant",
     │       │         "tool_calls": [
     │       │           {
@@ -58,13 +58,13 @@ span_tree:
     │       │     "provider": "flue"
     │       │   }
     │       │   metrics: {
-    │       │     "completion_tokens": 217,
+    │       │     "completion_tokens": 198,
     │       │     "duration_ms": 0,
-    │       │     "estimated_cost": 0.00699285,
-    │       │     "prompt_cache_creation_tokens": 885,
+    │       │     "estimated_cost": 0.00671535,
+    │       │     "prompt_cache_creation_tokens": 887,
     │       │     "prompt_cached_tokens": 1297,
     │       │     "prompt_tokens": 10,
-    │       │     "tokens": 2409
+    │       │     "tokens": 2392
     │       │   }
     │       ├── tool: lookup [tool]
     │       │   input: {
@@ -95,8 +95,8 @@ span_tree:
     │       │       "finish_reason": "toolUse",
     │       │       "index": 0,
     │       │       "message": {
-    │       │         "content": "Now proceeding to Step 2:",
-    │       │         "reasoning": "Good, I got the lookup result with id \"flue-session-2026\". Now I need to proceed to Step 2: call web_search using this lookupId and the query \"Braintrust Flue reasoning stream instrumentation\".",
+    │       │         "content": "Now proceeding to Step 2 with the lookup ID:",
+    │       │         "reasoning": "Good, I got the lookup result with id \"flue-session-2026\". Now I need to proceed to Step 2 and use this id as the lookupId parameter when calling web_search with the query \"Braintrust Flue reasoning stream instrumentation\".",
     │       │         "role": "assistant",
     │       │         "tool_calls": [
     │       │           {
@@ -119,13 +119,13 @@ span_tree:
     │       │     "provider": "flue"
     │       │   }
     │       │   metrics: {
-    │       │     "completion_tokens": 158,
+    │       │     "completion_tokens": 169,
     │       │     "duration_ms": 0,
-    │       │     "estimated_cost": 0.00402735,
-    │       │     "prompt_cache_creation_tokens": 257,
-    │       │     "prompt_cached_tokens": 2182,
+    │       │     "estimated_cost": 0.0041217,
+    │       │     "prompt_cache_creation_tokens": 238,
+    │       │     "prompt_cached_tokens": 2184,
     │       │     "prompt_tokens": 13,
-    │       │     "tokens": 2610
+    │       │     "tokens": 2604
     │       │   }
     │       ├── tool: web_search [tool]
     │       │   input: {
@@ -157,8 +157,8 @@ span_tree:
     │       │       "finish_reason": "toolUse",
     │       │       "index": 0,
     │       │       "message": {
-    │       │         "content": "Now proceeding to Step 3:",
-    │       │         "reasoning": "Perfect! I got the web_search results. There's one result with the URL \"https://example.test/flue/reasoning-streams\". Now I need to proceed to Step 3: call summarize_source with this URL.",
+    │       │         "content": "Now proceeding to Step 3 with the first result URL:",
+    │       │         "reasoning": "Perfect! I got the web_search results. There's one result with the URL \"https://example.test/flue/reasoning-streams\". Now I need to proceed to Step 3 and call summarize_source with this URL.",
     │       │         "role": "assistant",
     │       │         "tool_calls": [
     │       │           {
@@ -181,13 +181,13 @@ span_tree:
     │       │     "provider": "flue"
     │       │   }
     │       │   metrics: {
-    │       │     "completion_tokens": 132,
+    │       │     "completion_tokens": 139,
     │       │     "duration_ms": 0,
-    │       │     "estimated_cost": 0.0036282,
-    │       │     "prompt_cache_creation_tokens": 234,
-    │       │     "prompt_cached_tokens": 2439,
+    │       │     "estimated_cost": 0.00376935,
+    │       │     "prompt_cache_creation_tokens": 245,
+    │       │     "prompt_cached_tokens": 2422,
     │       │     "prompt_tokens": 13,
-    │       │     "tokens": 2818
+    │       │     "tokens": 2819
     │       │   }
     │       ├── tool: summarize_source [tool]
     │       │   input: {
@@ -219,7 +219,7 @@ span_tree:
     │               "index": 0,
     │               "message": {
     │                 "content": "PROMPT_DONE",
-    │                 "reasoning": "Great! The summarize_source call has completed successfully. According to the instructions, I should now reply with exactly \"PROMPT_DONE\" and no other text.",
+    │                 "reasoning": "The summarize_source call has returned successfully. According to the instructions, I now need to reply with exactly \"PROMPT_DONE\" and no other text.",
     │                 "role": "assistant"
     │               }
     │             }
@@ -232,11 +232,11 @@ span_tree:
     │             "provider": "flue"
     │           }
     │           metrics: {
-    │             "completion_tokens": 51,
+    │             "completion_tokens": 50,
     │             "duration_ms": 0,
-    │             "estimated_cost": 0.0023109,
-    │             "prompt_cache_creation_tokens": 188,
-    │             "prompt_cached_tokens": 2673,
+    │             "estimated_cost": 0.00232035,
+    │             "prompt_cache_creation_tokens": 195,
+    │             "prompt_cached_tokens": 2667,
     │             "prompt_tokens": 13,
     │             "tokens": 2925
     │           }
@@ -265,11 +265,11 @@ span_tree:
     │       metrics: {
     │         "completion_tokens": 97,
     │         "duration_ms": 0,
-    │         "estimated_cost": 0.00561135,
-    │         "prompt_cache_creation_tokens": 869,
-    │         "prompt_cached_tokens": 2902,
+    │         "estimated_cost": 0.00561945,
+    │         "prompt_cache_creation_tokens": 871,
+    │         "prompt_cached_tokens": 2904,
     │         "prompt_tokens": 9,
-    │         "tokens": 3877
+    │         "tokens": 3881
     │       }
     │       ├── flue.turn [llm]
     │       │   output: [
@@ -301,11 +301,11 @@ span_tree:
     │       │   metrics: {
     │       │     "completion_tokens": 89,
     │       │     "duration_ms": 0,
-    │       │     "estimated_cost": 0.0043569,
-    │       │     "prompt_cache_creation_tokens": 716,
+    │       │     "estimated_cost": 0.0043644,
+    │       │     "prompt_cache_creation_tokens": 718,
     │       │     "prompt_cached_tokens": 1093,
     │       │     "prompt_tokens": 3,
-    │       │     "tokens": 1901
+    │       │     "tokens": 1903
     │       │   }
     │       ├── tool: read [tool]
     │       │   input: {
@@ -351,11 +351,11 @@ span_tree:
     │           metrics: {
     │             "completion_tokens": 8,
     │             "duration_ms": 0,
-    │             "estimated_cost": 0.00125445,
+    │             "estimated_cost": 0.00125505,
     │             "prompt_cache_creation_tokens": 153,
-    │             "prompt_cached_tokens": 1809,
+    │             "prompt_cached_tokens": 1811,
     │             "prompt_tokens": 6,
-    │             "tokens": 1976
+    │             "tokens": 1978
     │           }
     ├── flue-task-operation
     │   metadata: {
@@ -375,48 +375,48 @@ span_tree:
     │       metrics: {
     │         "completion_tokens": 4,
     │         "duration_ms": 0,
-    │         "estimated_cost": 0.00011789999999999999,
+    │         "estimated_cost": 0.0001182,
     │         "prompt_cache_creation_tokens": 0,
     │         "prompt_cached_tokens": 0,
-    │         "prompt_tokens": 770,
-    │         "tokens": 774
+    │         "prompt_tokens": 772,
+    │         "tokens": 776
     │       }
-    │       └── flue.task [task]
-    │           input: "Reply with exactly TASK_DONE and no other text."
-    │           output: "TASK_DONE"
+    │       ├── flue.task [task]
+    │       │   input: "Reply with exactly TASK_DONE and no other text."
+    │       │   output: "TASK_DONE"
+    │       │   metadata: {
+    │       │     "flue.session": "task",
+    │       │     "provider": "flue"
+    │       │   }
+    │       │   metrics: {
+    │       │     "duration_ms": 0
+    │       │   }
+    │       └── flue.turn [llm]
+    │           output: [
+    │             {
+    │               "finish_reason": "stop",
+    │               "index": 0,
+    │               "message": {
+    │                 "content": "TASK_DONE",
+    │                 "role": "assistant"
+    │               }
+    │             }
+    │           ]
     │           metadata: {
-    │             "flue.session": "task",
+    │             "flue.model": "gpt-4o-mini",
+    │             "flue.session": "task:task:<uuid:1>",
+    │             "model": "gpt-4o-mini",
     │             "provider": "flue"
     │           }
     │           metrics: {
-    │             "duration_ms": 0
+    │             "completion_tokens": 4,
+    │             "duration_ms": 0,
+    │             "estimated_cost": 0.0001182,
+    │             "prompt_cache_creation_tokens": 0,
+    │             "prompt_cached_tokens": 0,
+    │             "prompt_tokens": 772,
+    │             "tokens": 776
     │           }
-    │           └── flue.turn [llm]
-    │               output: [
-    │                 {
-    │                   "finish_reason": "stop",
-    │                   "index": 0,
-    │                   "message": {
-    │                     "content": "TASK_DONE",
-    │                     "role": "assistant"
-    │                   }
-    │                 }
-    │               ]
-    │               metadata: {
-    │                 "flue.model": "gpt-4o-mini",
-    │                 "flue.session": "task:task:<uuid:1>",
-    │                 "model": "gpt-4o-mini",
-    │                 "provider": "flue"
-    │               }
-    │               metrics: {
-    │                 "completion_tokens": 4,
-    │                 "duration_ms": 0,
-    │                 "estimated_cost": 0.00011789999999999999,
-    │                 "prompt_cache_creation_tokens": 0,
-    │                 "prompt_cached_tokens": 0,
-    │                 "prompt_tokens": 770,
-    │                 "tokens": 774
-    │               }
     └── flue-compact-operation
         metadata: {
           "operation": "compact"

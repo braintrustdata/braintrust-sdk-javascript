@@ -1,9 +1,26 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { mockCurrentParentSpan, mockStartSpan } = vi.hoisted(() => ({
+const {
+  mockContextManager,
+  mockCurrentParentSpan,
+  mockCurrentSpanStore,
+  mockStartSpan,
+} = vi.hoisted(() => ({
+  mockContextManager: {
+    wrapSpanForStore: vi.fn((span: unknown) => span),
+    [Symbol.for("braintrust.currentSpanStore")]: undefined as unknown,
+  },
   mockCurrentParentSpan: { current: undefined as any },
+  mockCurrentSpanStore: {
+    enterWith: vi.fn(),
+    getStore: vi.fn(),
+    run: vi.fn(),
+  },
   mockStartSpan: vi.fn(),
 }));
+
+mockContextManager[Symbol.for("braintrust.currentSpanStore")] =
+  mockCurrentSpanStore;
 
 vi.mock("../../isomorph", () => ({
   default: {
@@ -12,6 +29,10 @@ vi.mock("../../isomorph", () => ({
 }));
 
 vi.mock("../../logger", () => ({
+  BRAINTRUST_CURRENT_SPAN_STORE: Symbol.for("braintrust.currentSpanStore"),
+  _internalGetGlobalState: () => ({
+    contextManager: mockContextManager,
+  }),
   startSpan: (...args: unknown[]) => mockStartSpan(...args),
   withCurrent: (span: unknown, callback: () => unknown) => {
     const previous = mockCurrentParentSpan.current;
@@ -30,6 +51,7 @@ import { FluePlugin } from "./flue-plugin";
 const mockNewTracingChannel = iso.newTracingChannel as ReturnType<typeof vi.fn>;
 
 describe("FluePlugin", () => {
+  let boundStoreTransformsByName: Map<string, (event: any) => unknown>;
   let handlersByName: Map<string, any>;
   let spans: Array<{
     end: ReturnType<typeof vi.fn>;
@@ -42,10 +64,19 @@ describe("FluePlugin", () => {
   }>;
 
   beforeEach(() => {
+    boundStoreTransformsByName = new Map();
     handlersByName = new Map();
     spans = [];
     mockCurrentParentSpan.current = undefined;
+    mockContextManager.wrapSpanForStore.mockClear();
     mockNewTracingChannel.mockImplementation((name: string) => ({
+      start: {
+        bindStore: vi.fn((_store, transform) => {
+          boundStoreTransformsByName.set(name, transform);
+        }),
+        publish: vi.fn(),
+        unbindStore: vi.fn(),
+      },
       subscribe: vi.fn((handlers) => handlersByName.set(name, handlers)),
       tracePromise: vi.fn((fn) => fn()),
       traceSync: vi.fn((fn) => fn()),
@@ -105,6 +136,34 @@ describe("FluePlugin", () => {
     expect(
       handlersByName.has("orchestrion:@flue/runtime:session.compact"),
     ).toBe(true);
+  });
+
+  it("binds operation spans into the traced execution context", () => {
+    const plugin = new FluePlugin();
+    plugin.enable();
+
+    const promptEvent = {
+      arguments: ["Use a tool", { model: "pi/test" }],
+      operation: "prompt",
+      session: { name: "main" },
+    };
+    const bindTransform = boundStoreTransformsByName.get(
+      "orchestrion:@flue/runtime:session.prompt",
+    );
+
+    const storeValue = bindTransform?.(promptEvent);
+    handlersByName
+      .get("orchestrion:@flue/runtime:session.prompt")
+      .start(promptEvent);
+
+    const operationSpans = spans.filter(
+      (span) => span.name === "flue.session.prompt",
+    );
+    expect(operationSpans).toHaveLength(1);
+    expect(mockContextManager.wrapSpanForStore).toHaveBeenCalledWith(
+      operationSpans[0],
+    );
+    expect(storeValue).toBe(operationSpans[0]);
   });
 
   it("patches contexts and sessions returned by auto-instrumented entrypoints", async () => {
@@ -531,6 +590,64 @@ describe("FluePlugin", () => {
             }),
           }),
         ],
+      }),
+    );
+  });
+
+  it("ends compaction spans from compact operation completion when no final compaction event arrives", () => {
+    const plugin = new FluePlugin();
+    plugin.enable();
+
+    const contextHandlers = handlersByName.get(
+      "orchestrion:@flue/runtime:context.event",
+    );
+    const compactHandlers = handlersByName.get(
+      "orchestrion:@flue/runtime:session.compact",
+    );
+    const compactEvent = {
+      arguments: [],
+      operation: "compact",
+      session: { name: "main" },
+    };
+
+    compactHandlers.start(compactEvent);
+    contextHandlers.start({
+      arguments: [
+        {
+          operationId: "op_1",
+          operationKind: "compact",
+          session: "main",
+          type: "operation_start",
+        },
+      ],
+    });
+    contextHandlers.start({
+      arguments: [
+        {
+          estimatedTokens: 100,
+          operationId: "op_1",
+          reason: "manual",
+          session: "main",
+          type: "compaction_start",
+        },
+      ],
+    });
+    compactHandlers.asyncEnd(compactEvent);
+
+    const operationSpan = spans.find(
+      (span) => span.name === "flue.session.compact",
+    );
+    const compactionSpan = spans.find(
+      (span) => span.name === "flue.compaction",
+    );
+
+    expect(compactionSpan?.end).toHaveBeenCalledTimes(1);
+    expect(operationSpan?.end).toHaveBeenCalledTimes(1);
+    expect(compactionSpan?.log).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metrics: expect.objectContaining({
+          duration_ms: expect.any(Number),
+        }),
       }),
     );
   });

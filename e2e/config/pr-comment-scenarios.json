@@ -171,6 +171,10 @@
       {
         "variantKey": "flue-v0-7-0-auto-hook",
         "label": "v0.7.0 auto-hook"
+      },
+      {
+        "variantKey": "flue-v0-7-0-openai-auto-hook",
+        "label": "v0.7.0 OpenAI auto-hook"
       }
     ]
   },

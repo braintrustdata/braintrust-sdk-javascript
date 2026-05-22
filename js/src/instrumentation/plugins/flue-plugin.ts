@@ -1,8 +1,13 @@
 import { BasePlugin } from "../core";
 import type { ChannelMessage } from "../core/channel-definitions";
 import type { IsoChannelHandlers } from "../../isomorph";
-import { startSpan, withCurrent } from "../../logger";
-import type { Span } from "../../logger";
+import {
+  _internalGetGlobalState,
+  BRAINTRUST_CURRENT_SPAN_STORE,
+  startSpan,
+  withCurrent,
+} from "../../logger";
+import type { CurrentSpanStore, Span } from "../../logger";
 import { getCurrentUnixTimestamp, isObject } from "../../util";
 import { SpanTypeAttribute } from "../../../util/index";
 import {
@@ -46,6 +51,7 @@ type OperationState = {
 
 type SpanState = {
   metadata: Record<string, unknown>;
+  operationState?: OperationState;
   span: Span;
   startTime: number;
 };
@@ -153,18 +159,32 @@ export class FluePlugin extends BasePlugin {
   ): void {
     const tracingChannel = channel.tracingChannel();
     const states = new WeakMap<object, OperationState>();
+    const ensureState = (
+      event: ChannelMessage<typeof channel>,
+    ): OperationState => {
+      const existing = states.get(event);
+      if (existing) {
+        return existing;
+      }
+      const state = this.startOperationState({
+        args: event.arguments,
+        moduleVersion:
+          typeof event.moduleVersion === "string"
+            ? event.moduleVersion
+            : undefined,
+        operation: event.operation,
+        session: event.session,
+      });
+      states.set(event, state);
+      return state;
+    };
+    const unbindCurrentSpanStore = this.bindCurrentSpanStoreToOperationStart(
+      tracingChannel,
+      ensureState,
+    );
     const handlers: IsoChannelHandlers<ChannelMessage<typeof channel>> = {
       start: (event) => {
-        const state = this.startOperationState({
-          args: event.arguments,
-          moduleVersion:
-            typeof event.moduleVersion === "string"
-              ? event.moduleVersion
-              : undefined,
-          operation: event.operation,
-          session: event.session,
-        });
-        states.set(event, state);
+        ensureState(event);
       },
       asyncEnd: (event) => {
         this.endOperationState(states.get(event), event.result);
@@ -182,6 +202,7 @@ export class FluePlugin extends BasePlugin {
 
     tracingChannel.subscribe(handlers);
     this.unsubscribers.push(() => {
+      unbindCurrentSpanStore?.();
       tracingChannel.unsubscribe(handlers);
     });
   }
@@ -189,20 +210,34 @@ export class FluePlugin extends BasePlugin {
   private subscribeToCompact(): void {
     const tracingChannel = flueChannels.compact.tracingChannel();
     const states = new WeakMap<object, OperationState>();
+    const ensureState = (
+      event: ChannelMessage<typeof flueChannels.compact>,
+    ): OperationState => {
+      const existing = states.get(event);
+      if (existing) {
+        return existing;
+      }
+      const state = this.startOperationState({
+        args: [],
+        moduleVersion:
+          typeof event.moduleVersion === "string"
+            ? event.moduleVersion
+            : undefined,
+        operation: event.operation,
+        session: event.session,
+      });
+      states.set(event, state);
+      return state;
+    };
+    const unbindCurrentSpanStore = this.bindCurrentSpanStoreToOperationStart(
+      tracingChannel,
+      ensureState,
+    );
     const handlers: IsoChannelHandlers<
       ChannelMessage<typeof flueChannels.compact>
     > = {
       start: (event) => {
-        const state = this.startOperationState({
-          args: [],
-          moduleVersion:
-            typeof event.moduleVersion === "string"
-              ? event.moduleVersion
-              : undefined,
-          operation: event.operation,
-          session: event.session,
-        });
-        states.set(event, state);
+        ensureState(event);
       },
       asyncEnd: (event) => {
         this.endOperationState(states.get(event), undefined);
@@ -220,6 +255,7 @@ export class FluePlugin extends BasePlugin {
 
     tracingChannel.subscribe(handlers);
     this.unsubscribers.push(() => {
+      unbindCurrentSpanStore?.();
       tracingChannel.unsubscribe(handlers);
     });
   }
@@ -248,6 +284,43 @@ export class FluePlugin extends BasePlugin {
     this.unsubscribers.push(() => {
       channel.unsubscribe(handlers);
     });
+  }
+
+  private bindCurrentSpanStoreToOperationStart<TEvent extends object>(
+    tracingChannel: {
+      start?: {
+        bindStore<T>(
+          store: CurrentSpanStore,
+          transform: (event: TEvent) => T,
+        ): void;
+        unbindStore(store: CurrentSpanStore): boolean;
+      };
+    },
+    ensureState: (event: TEvent) => OperationState,
+  ): (() => void) | undefined {
+    const state = _internalGetGlobalState();
+    const startChannel = tracingChannel.start;
+    const contextManager = state?.contextManager;
+    const currentSpanStore = contextManager
+      ? (
+          contextManager as {
+            [BRAINTRUST_CURRENT_SPAN_STORE]?: CurrentSpanStore;
+          }
+        )[BRAINTRUST_CURRENT_SPAN_STORE]
+      : undefined;
+
+    if (!currentSpanStore || !startChannel) {
+      return undefined;
+    }
+
+    startChannel.bindStore(currentSpanStore, (event: TEvent) => {
+      const operationState = ensureState(event);
+      return contextManager!.wrapSpanForStore(operationState.span);
+    });
+
+    return () => {
+      startChannel.unbindStore(currentSpanStore);
+    };
   }
 
   private startOperationState(args: {
@@ -315,6 +388,9 @@ export class FluePlugin extends BasePlugin {
       metrics,
       output: extractOperationOutput(result),
     });
+    if (state.operation === "compact") {
+      this.finishCompactionsForOperation(state);
+    }
     this.finishOperationState(state);
   }
 
@@ -630,7 +706,8 @@ export class FluePlugin extends BasePlugin {
   }
 
   private handleCompactionStart(event: FlueCompactionStartEvent): void {
-    const parent = this.parentSpanForEvent(event);
+    const operationState = this.operationStateForEvent(event);
+    const parent = operationState?.span ?? this.parentSpanForEvent(event);
     const metadata = {
       ...extractEventMetadata(event),
       ...(event.reason ? { "flue.compaction_reason": event.reason } : {}),
@@ -649,6 +726,7 @@ export class FluePlugin extends BasePlugin {
     });
     this.compactionsByScope.set(scopeKey(event), {
       metadata,
+      operationState,
       span,
       startTime: getCurrentUnixTimestamp(),
     });
@@ -656,7 +734,8 @@ export class FluePlugin extends BasePlugin {
 
   private handleCompaction(event: FlueCompactionEvent): void {
     const key = scopeKey(event);
-    const state = this.compactionsByScope.get(key);
+    const state =
+      this.compactionsByScope.get(key) ?? this.findCompactionState(event);
     if (!state) {
       return;
     }
@@ -682,7 +761,43 @@ export class FluePlugin extends BasePlugin {
       },
     });
     state.span.end();
-    this.compactionsByScope.delete(key);
+    this.deleteCompactionState(state);
+  }
+
+  private findCompactionState(event: FlueBaseEvent): SpanState | undefined {
+    const operationState = this.operationStateForEvent(event);
+    for (const state of this.compactionsByScope.values()) {
+      if (operationState && state.operationState === operationState) {
+        return state;
+      }
+    }
+    return undefined;
+  }
+
+  private finishCompactionsForOperation(operationState: OperationState): void {
+    for (const state of [...this.compactionsByScope.values()]) {
+      if (state.operationState !== operationState) {
+        continue;
+      }
+      safeLog(state.span, {
+        metadata: state.metadata,
+        metrics: {
+          ...buildDurationMetrics(state.startTime),
+        },
+      });
+      state.span.end();
+      this.deleteCompactionState(state);
+    }
+  }
+
+  private deleteCompactionState(state: SpanState): void {
+    for (const [key, candidate] of this.compactionsByScope) {
+      if (candidate !== state) {
+        continue;
+      }
+      this.compactionsByScope.delete(key);
+      return;
+    }
   }
 
   private startSyntheticToolState(
@@ -704,11 +819,26 @@ export class FluePlugin extends BasePlugin {
     return { metadata, span, startTime: getCurrentUnixTimestamp() };
   }
 
-  private parentSpanForEvent(event: FlueBaseEvent): Span | undefined {
+  private operationStateForEvent(
+    event: FlueBaseEvent,
+  ): OperationState | undefined {
     if (event.operationId) {
       const operation =
         this.activeOperationsById.get(event.operationId) ??
         this.promotePendingOperationForEvent(event);
+      if (operation) {
+        return operation;
+      }
+    }
+    return (
+      this.activeOperationForEventScope(event) ??
+      this.pendingOperationForEventScope(event)
+    );
+  }
+
+  private parentSpanForEvent(event: FlueBaseEvent): Span | undefined {
+    if (event.operationId) {
+      const operation = this.operationStateForEvent(event);
       if (operation) {
         return operation.span;
       }
@@ -716,10 +846,7 @@ export class FluePlugin extends BasePlugin {
     if (event.taskId) {
       return this.tasksById.get(event.taskId)?.span;
     }
-    return (
-      this.activeOperationForEventScope(event)?.span ??
-      this.pendingOperationForEventScope(event)?.span
-    );
+    return this.operationStateForEvent(event)?.span;
   }
 
   private promotePendingOperationForEvent(

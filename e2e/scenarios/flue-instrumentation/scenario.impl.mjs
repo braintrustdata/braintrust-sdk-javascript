@@ -33,6 +33,28 @@ if (anthropicBaseUrl) {
   });
 }
 
+function flueModel() {
+  return process.env.FLUE_E2E_MODEL ?? FLUE_MODEL;
+}
+
+function flueReasoningModel() {
+  return process.env.FLUE_E2E_REASONING_MODEL ?? FLUE_REASONING_MODEL;
+}
+
+function fluePromptModel() {
+  return process.env.FLUE_E2E_PROMPT_MODEL ?? flueReasoningModel();
+}
+
+function fluePromptThinkingLevel() {
+  return (
+    process.env.FLUE_E2E_PROMPT_THINKING_LEVEL ?? flueReasoningThinkingLevel()
+  );
+}
+
+function flueReasoningThinkingLevel() {
+  return process.env.FLUE_E2E_REASONING_THINKING_LEVEL ?? "medium";
+}
+
 function makeContext() {
   const sandbox = local({ cwd: process.cwd() });
   return createFlueContext({
@@ -41,7 +63,7 @@ function makeContext() {
         keepRecentTokens: 1,
         reserveTokens: 64,
       },
-      model: resolveModel(FLUE_MODEL),
+      model: resolveModel(flueModel()),
       resolveModel,
       roles: {
         skillRunner: {
@@ -142,7 +164,7 @@ export async function runFlueInstrumentationScenario({ wrapContext }) {
           reserveTokens: 64,
         },
         cwd: process.cwd(),
-        model: FLUE_MODEL,
+        model: flueModel(),
         sandbox: local({ cwd: process.cwd() }),
       });
       const session = await harness.session("main");
@@ -162,8 +184,8 @@ export async function runFlueInstrumentationScenario({ wrapContext }) {
           {
             cacheRetention: "none",
             maxTokens: 2048,
-            model: FLUE_REASONING_MODEL,
-            thinkingLevel: "medium",
+            model: fluePromptModel(),
+            thinkingLevel: fluePromptThinkingLevel(),
             tools: [lookupTool, webSearchTool, summarizeSourceTool],
           },
         );
@@ -174,7 +196,7 @@ export async function runFlueInstrumentationScenario({ wrapContext }) {
           args: { marker: "SKILL_DONE" },
           cacheRetention: "none",
           maxTokens: 128,
-          model: FLUE_REASONING_MODEL,
+          model: flueReasoningModel(),
           role: "skillRunner",
           thinkingLevel: "off",
         });

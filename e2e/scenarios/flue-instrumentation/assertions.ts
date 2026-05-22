@@ -22,6 +22,7 @@ import { ROOT_NAME, SCENARIO_NAME } from "./constants.mjs";
 type RunFlueScenario = (harness: {
   runNodeScenarioDir: (options: {
     entry: string;
+    env?: Record<string, string>;
     nodeArgs: string[];
     runContext?: ScenarioRunContext;
     scenarioDir: string;
@@ -29,6 +30,7 @@ type RunFlueScenario = (harness: {
   }) => Promise<unknown>;
   runScenarioDir: (options: {
     entry: string;
+    env?: Record<string, string>;
     runContext?: ScenarioRunContext;
     scenarioDir: string;
     timeoutMs: number;
@@ -171,6 +173,18 @@ function isFlueChildSpan(event: CapturedLogEvent): boolean {
   );
 }
 
+function isProviderSpan(event: CapturedLogEvent): boolean {
+  return (
+    event.span.name === "anthropic.messages.create" ||
+    event.span.name === "openai.responses.create" ||
+    event.span.name === "openai.responses.compact"
+  );
+}
+
+function isOperationChildSpan(event: CapturedLogEvent): boolean {
+  return isFlueChildSpan(event) || isProviderSpan(event);
+}
+
 function expectToolsAndTurnsShareParent(
   parent: CapturedLogEvent | undefined,
   turns: CapturedLogEvent[],
@@ -231,25 +245,25 @@ function buildSpanTree(events: CapturedLogEvent[]): SpanTreeEntry[] {
     events,
     promptSpan,
     promptOperation,
-    isFlueChildSpan,
+    isOperationChildSpan,
   );
   const skillChildren = findFlueDescendants(
     events,
     skillSpan,
     skillOperation,
-    isFlueChildSpan,
+    isOperationChildSpan,
   );
   const taskChildren = findFlueDescendants(
     events,
     taskSpan,
     taskOperation,
-    isFlueChildSpan,
+    isOperationChildSpan,
   );
   const compactChildren = findFlueDescendants(
     events,
     compactSpan,
     compactOperation,
-    isFlueChildSpan,
+    isOperationChildSpan,
   );
 
   return [
@@ -272,6 +286,8 @@ function buildSpanTree(events: CapturedLogEvent[]): SpanTreeEntry[] {
 }
 
 export function defineFlueInstrumentationAssertions(options: {
+  expectedPromptProviderSpanName?: string;
+  expectThinking?: boolean;
   name: string;
   runScenario: RunFlueScenario;
   snapshotName: string;
@@ -339,7 +355,7 @@ export function defineFlueInstrumentationAssertions(options: {
           events,
           promptSpan,
           promptOperation,
-          isFlueChildSpan,
+          isOperationChildSpan,
         );
         const promptTurns = promptChildren.filter(
           (event) => event.span.name === "flue.turn",
@@ -363,7 +379,7 @@ export function defineFlueInstrumentationAssertions(options: {
           events,
           skillSpan,
           skillOperation,
-          isFlueChildSpan,
+          isOperationChildSpan,
         );
         const skillTurns = skillChildren.filter(
           (event) => event.span.name === "flue.turn",
@@ -409,15 +425,17 @@ export function defineFlueInstrumentationAssertions(options: {
         );
         expectToolsAndTurnsShareParent(promptSpan, promptTurns, promptTools);
         expectToolsAndTurnsShareParent(skillSpan, skillTurns, skillTools);
-        expect(reasoningTurn?.span.type).toBe("llm");
-        expect(reasoningTurn?.output).toBeDefined();
-        const reasoningOutput = JSON.stringify(reasoningTurn?.output);
-        expect(reasoningOutput).not.toContain("<reasoning>");
-        expect(reasoningOutput).not.toContain("content unavailable");
-        expect(reasoningOutput).not.toContain("[Reasoning redacted]");
-        expect(reasoningTurn?.metadata).toMatchObject({
-          "flue.thinking": true,
-        });
+        if (options.expectThinking !== false) {
+          expect(reasoningTurn?.span.type).toBe("llm");
+          expect(reasoningTurn?.output).toBeDefined();
+          const reasoningOutput = JSON.stringify(reasoningTurn?.output);
+          expect(reasoningOutput).not.toContain("<reasoning>");
+          expect(reasoningOutput).not.toContain("content unavailable");
+          expect(reasoningOutput).not.toContain("[Reasoning redacted]");
+          expect(reasoningTurn?.metadata).toMatchObject({
+            "flue.thinking": true,
+          });
+        }
         expect(promptTurns[0]?.metrics).toMatchObject({
           completion_tokens: expect.any(Number),
           prompt_tokens: expect.any(Number),
@@ -444,6 +462,32 @@ export function defineFlueInstrumentationAssertions(options: {
 
     test("does not instrument session.shell", testConfig, () => {
       expect(findAllSpans(events, "flue.session.shell")).toHaveLength(0);
+    });
+
+    test("nests provider spans inside Flue operations", testConfig, () => {
+      const promptSpan = findFlueOperation(
+        events,
+        "flue-prompt-operation",
+        "flue.session.prompt",
+      );
+      const promptProviders = findMatchingDescendants(
+        events,
+        promptSpan,
+        isProviderSpan,
+      );
+
+      if (options.expectedPromptProviderSpanName) {
+        const provider = promptProviders.find(
+          (event) => event.span.name === options.expectedPromptProviderSpanName,
+        );
+        expect(provider).toBeDefined();
+        expect(provider?.input).toBeDefined();
+        expect(JSON.stringify(provider?.input)).toContain(
+          "Complete this instrumented research flow",
+        );
+      } else {
+        expect(promptProviders).toHaveLength(0);
+      }
     });
 
     test("matches the span tree snapshot", testConfig, async () => {
