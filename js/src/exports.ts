@@ -179,6 +179,7 @@ export { wrapMastraAgent } from "./wrappers/mastra";
 export { wrapClaudeAgentSDK } from "./wrappers/claude-agent-sdk/claude-agent-sdk";
 export { wrapOpenAICodexSDK } from "./wrappers/openai-codex";
 export { wrapCursorSDK } from "./wrappers/cursor-sdk";
+export { wrapFlueContext, wrapFlueSession } from "./wrappers/flue";
 export { wrapGoogleGenAI } from "./wrappers/google-genai";
 export { wrapGoogleADK } from "./wrappers/google-adk";
 export { wrapGenkit } from "./wrappers/genkit";

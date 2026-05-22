@@ -16,6 +16,7 @@ import { CoherePlugin } from "./plugins/cohere-plugin";
 import { GroqPlugin } from "./plugins/groq-plugin";
 import { GenkitPlugin } from "./plugins/genkit-plugin";
 import { GitHubCopilotPlugin } from "./plugins/github-copilot-plugin";
+import { FluePlugin } from "./plugins/flue-plugin";
 import type { InstrumentationIntegrationsConfig } from "./config";
 
 export interface BraintrustPluginConfig {
@@ -64,6 +65,7 @@ export class BraintrustPlugin extends BasePlugin {
   private groqPlugin: GroqPlugin | null = null;
   private genkitPlugin: GenkitPlugin | null = null;
   private gitHubCopilotPlugin: GitHubCopilotPlugin | null = null;
+  private fluePlugin: FluePlugin | null = null;
 
   constructor(config: BraintrustPluginConfig = {}) {
     super();
@@ -166,6 +168,11 @@ export class BraintrustPlugin extends BasePlugin {
       this.gitHubCopilotPlugin = new GitHubCopilotPlugin();
       this.gitHubCopilotPlugin.enable();
     }
+
+    if (getIntegrationConfig(integrations, "flue") !== false) {
+      this.fluePlugin = new FluePlugin();
+      this.fluePlugin.enable();
+    }
   }
 
   protected onDisable(): void {
@@ -252,6 +259,11 @@ export class BraintrustPlugin extends BasePlugin {
     if (this.gitHubCopilotPlugin) {
       this.gitHubCopilotPlugin.disable();
       this.gitHubCopilotPlugin = null;
+    }
+
+    if (this.fluePlugin) {
+      this.fluePlugin.disable();
+      this.fluePlugin = null;
     }
   }
 }

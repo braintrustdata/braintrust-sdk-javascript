@@ -9,6 +9,7 @@ import { anthropicConfigs } from "./anthropic";
 import { claudeAgentSDKConfigs } from "./claude-agent-sdk";
 import { cohereConfigs } from "./cohere";
 import { cursorSDKConfigs } from "./cursor-sdk";
+import { flueConfigs } from "./flue";
 import { genkitConfigs } from "./genkit";
 import { gitHubCopilotConfigs } from "./github-copilot";
 import { googleADKConfigs } from "./google-adk";
@@ -44,6 +45,7 @@ const defaultInstrumentationConfigGroups: readonly InstrumentationConfigGroup[] 
       configs: claudeAgentSDKConfigs,
     },
     { integrations: ["cursor", "cursorSDK"], configs: cursorSDKConfigs },
+    { integrations: ["flue"], configs: flueConfigs },
     {
       integrations: ["openAIAgents"],
       configs: openAIAgentsCoreConfigs,
