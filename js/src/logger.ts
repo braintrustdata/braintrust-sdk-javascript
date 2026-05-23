@@ -3698,15 +3698,10 @@ export function init<IsOpen extends boolean = false>(
         if (repoInfo) {
           return repoInfo;
         }
-        let mergedGitMetadataSettings = {
-          ...(state.gitMetadataSettings || { collect: "none" as const }),
-        };
-        if (gitMetadataSettings) {
-          mergedGitMetadataSettings = mergeGitMetadataSettings(
-            mergedGitMetadataSettings,
-            gitMetadataSettings,
-          );
-        }
+        const mergedGitMetadataSettings = mergeGitMetadataSettings(
+          state.gitMetadataSettings ?? { collect: "all" as const },
+          gitMetadataSettings ?? { collect: "none" as const },
+        );
         return await iso.getRepoInfo(mergedGitMetadataSettings);
       })();
 
