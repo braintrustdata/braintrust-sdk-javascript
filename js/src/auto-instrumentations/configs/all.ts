@@ -1,9 +1,15 @@
 import type { InstrumentationConfig } from "@apm-js-collab/code-transformer";
+import {
+  isInstrumentationIntegrationDisabled,
+  readDisabledInstrumentationEnvConfig,
+  type InstrumentationIntegrationsConfig,
+} from "../../instrumentation/config";
 import { aiSDKConfigs } from "./ai-sdk";
 import { anthropicConfigs } from "./anthropic";
 import { claudeAgentSDKConfigs } from "./claude-agent-sdk";
 import { cohereConfigs } from "./cohere";
 import { cursorSDKConfigs } from "./cursor-sdk";
+import { flueConfigs } from "./flue";
 import { genkitConfigs } from "./genkit";
 import { gitHubCopilotConfigs } from "./github-copilot";
 import { googleADKConfigs } from "./google-adk";
@@ -11,72 +17,95 @@ import { googleGenAIConfigs } from "./google-genai";
 import { groqConfigs } from "./groq";
 import { huggingFaceConfigs } from "./huggingface";
 import { mistralConfigs } from "./mistral";
+import { openAIAgentsCoreConfigs } from "./openai-agents";
 import { openaiConfigs } from "./openai";
 import { openAICodexConfigs } from "./openai-codex";
 import { openRouterConfigs } from "./openrouter";
 import { openRouterAgentConfigs } from "./openrouter-agent";
 
 interface InstrumentationConfigGroup {
-  disabledNames: readonly string[];
+  integrations: readonly (keyof InstrumentationIntegrationsConfig)[];
   configs: readonly InstrumentationConfig[];
 }
 
 const defaultInstrumentationConfigGroups: readonly InstrumentationConfigGroup[] =
   [
-    { disabledNames: ["openai"], configs: openaiConfigs },
+    { integrations: ["openai"], configs: openaiConfigs },
     {
-      disabledNames: ["openai-codex", "openai-codex-sdk", "codex", "codex-sdk"],
+      integrations: ["openaiCodexSDK"],
       configs: openAICodexConfigs,
     },
-    { disabledNames: ["anthropic"], configs: anthropicConfigs },
+    { integrations: ["anthropic"], configs: anthropicConfigs },
     {
-      disabledNames: ["aisdk", "ai-sdk", "vercel-ai"],
+      integrations: ["aisdk", "vercel"],
       configs: aiSDKConfigs,
     },
     {
-      disabledNames: ["claudeagentsdk", "claude-agent-sdk"],
+      integrations: ["claudeAgentSDK"],
       configs: claudeAgentSDKConfigs,
     },
-    { disabledNames: ["cursor", "cursor-sdk"], configs: cursorSDKConfigs },
+    { integrations: ["cursor", "cursorSDK"], configs: cursorSDKConfigs },
+    { integrations: ["flue"], configs: flueConfigs },
     {
-      disabledNames: ["google", "google-genai"],
+      integrations: ["openAIAgents"],
+      configs: openAIAgentsCoreConfigs,
+    },
+    {
+      integrations: ["google", "googleGenAI"],
       configs: googleGenAIConfigs,
     },
-    { disabledNames: ["huggingface"], configs: huggingFaceConfigs },
-    { disabledNames: ["openrouter"], configs: openRouterConfigs },
+    { integrations: ["huggingface"], configs: huggingFaceConfigs },
+    { integrations: ["openrouter"], configs: openRouterConfigs },
     {
-      disabledNames: ["openrouteragent", "openrouter-agent"],
+      integrations: ["openrouterAgent"],
       configs: openRouterAgentConfigs,
     },
-    { disabledNames: ["mistral"], configs: mistralConfigs },
-    { disabledNames: ["googleadk", "google-adk"], configs: googleADKConfigs },
-    { disabledNames: ["cohere"], configs: cohereConfigs },
-    { disabledNames: ["groq", "groq-sdk"], configs: groqConfigs },
+    { integrations: ["mistral"], configs: mistralConfigs },
+    { integrations: ["googleADK"], configs: googleADKConfigs },
+    { integrations: ["cohere"], configs: cohereConfigs },
+    { integrations: ["groq"], configs: groqConfigs },
     {
-      disabledNames: ["genkit", "firebase-genkit"],
+      integrations: ["genkit"],
       configs: genkitConfigs,
     },
     {
-      disabledNames: ["githubcopilot", "github-copilot", "copilot-sdk"],
+      integrations: ["gitHubCopilot"],
       configs: gitHubCopilotConfigs,
     },
   ];
 
 export function getDefaultInstrumentationConfigs({
   additionalInstrumentations,
+  disabledIntegrationConfig,
   disabledIntegrations,
 }: {
   additionalInstrumentations?: readonly InstrumentationConfig[];
+  disabledIntegrationConfig?: InstrumentationIntegrationsConfig;
   disabledIntegrations?: ReadonlySet<string>;
 } = {}): InstrumentationConfig[] {
+  const disabledConfig =
+    disabledIntegrationConfig ??
+    (disabledIntegrations
+      ? readDisabledInstrumentationEnvConfig(
+          [...disabledIntegrations].join(","),
+        ).integrations
+      : undefined);
+
   return [
     ...defaultInstrumentationConfigGroups.flatMap(
-      ({ configs, disabledNames }) =>
-        disabledIntegrations &&
-        disabledNames.some((name) => disabledIntegrations.has(name))
+      ({ configs, integrations }) =>
+        isInstrumentationIntegrationDisabled(disabledConfig, ...integrations)
           ? []
           : configs,
     ),
     ...(additionalInstrumentations ?? []),
   ];
+}
+
+export function getDefaultAutoInstrumentationConfigs(): InstrumentationConfig[] {
+  return getDefaultInstrumentationConfigs({
+    disabledIntegrationConfig: readDisabledInstrumentationEnvConfig(
+      process.env.BRAINTRUST_DISABLE_INSTRUMENTATION,
+    ).integrations,
+  });
 }

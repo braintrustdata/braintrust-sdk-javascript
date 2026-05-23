@@ -11,6 +11,7 @@
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
+  "sideEffects": true,
   "browser": {
     "./dist/index.js": "./dist/browser.js",
     "./dist/index.d.ts": "./dist/browser.d.ts",
@@ -49,6 +50,19 @@
       "import": "./dist/browser.mjs",
       "require": "./dist/browser.js",
       "default": "./dist/browser.mjs"
+    },
+    "./apply-auto-instrumentation": {
+      "types": "./dist/apply-auto-instrumentation.d.ts",
+      "edge-light": "./dist/apply-auto-instrumentation.browser.mjs",
+      "workerd": "./dist/apply-auto-instrumentation.browser.mjs",
+      "node": {
+        "import": "./dist/apply-auto-instrumentation.mjs",
+        "require": "./dist/apply-auto-instrumentation.js"
+      },
+      "browser": "./dist/apply-auto-instrumentation.browser.mjs",
+      "import": "./dist/apply-auto-instrumentation.mjs",
+      "require": "./dist/apply-auto-instrumentation.js",
+      "default": "./dist/apply-auto-instrumentation.mjs"
     },
     "./node": {
       "types": "./dist/index.d.ts",

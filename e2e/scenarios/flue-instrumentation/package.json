@@ -1,0 +1,8 @@
+{
+  "name": "flue-instrumentation-scenario",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@flue/runtime": "0.7.0"
+  }
+}
