@@ -263,6 +263,11 @@ export interface GetThreadOptions {
   preprocessor?: string;
 }
 
+export interface GetSpansOptions {
+  spanType?: string[];
+  includeScorers?: boolean;
+}
+
 /**
  * Interface for trace objects that can be used by scorers.
  * Both the SDK's LocalTrace class and the API wrapper's WrapperTrace implement this.
@@ -273,7 +278,7 @@ export interface Trace {
     object_id: string;
     root_span_id: string;
   };
-  getSpans(options?: { spanType?: string[] }): Promise<SpanData[]>;
+  getSpans(options?: GetSpansOptions): Promise<SpanData[]>;
   /**
    * Get the thread (preprocessed messages) for this trace.
    * Uses the project default preprocessor, falling back to the global "thread" preprocessor.
@@ -356,9 +361,7 @@ export class LocalTrace implements Trace {
   async getSpans({
     spanType,
     includeScorers = false,
-  }: { spanType?: string[]; includeScorers?: boolean } = {}): Promise<
-    SpanData[]
-  > {
+  }: GetSpansOptions = {}): Promise<SpanData[]> {
     // Try local span cache first (for recently logged spans not yet flushed)
     const cachedSpans = this.state.spanCache.getByRootSpanId(this.rootSpanId);
     if (cachedSpans && cachedSpans.length > 0) {
