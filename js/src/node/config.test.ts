@@ -16,7 +16,7 @@ describe("configureNode .env.braintrust API key lookup", () => {
     originalApiKey = process.env.BRAINTRUST_API_KEY;
     originalCwd = process.cwd();
     delete process.env.BRAINTRUST_API_KEY;
-    tempDir = await mkdtemp(path.join(tmpdir(), "braintrust-env-"));
+    tempDir = await mkdtemp(path.join(tmpdir(), "bt-env-"));
   });
 
   afterEach(async () => {
@@ -92,7 +92,7 @@ describe("configureNode .env.braintrust API key lookup", () => {
   });
 
   test("searches the cwd and at most 64 parent directories", async () => {
-    const segments = Array.from({ length: 65 }, (_, i) => `d${i}`);
+    const segments = Array.from({ length: 65 }, () => "d");
     const nested = path.join(tempDir!, ...segments);
     await mkdir(nested, { recursive: true });
     await writeBraintrustEnv(tempDir!, "BRAINTRUST_API_KEY=too-high\n");
