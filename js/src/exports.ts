@@ -192,6 +192,11 @@ export { wrapGroq } from "./wrappers/groq";
 export { wrapCopilotClient } from "./wrappers/github-copilot";
 export { wrapVitest } from "./wrappers/vitest";
 export { initNodeTestSuite } from "./wrappers/node-test";
+export {
+  BRAINTRUST_LANGCHAIN_CALLBACK_HANDLER_NAME,
+  BraintrustLangChainCallbackHandler,
+} from "./wrappers/langchain/callback-handler";
+export type { LangChainCallbackHandlerOptions } from "./vendor-sdk-types/langchain";
 
 export * as graph from "./graph-framework";
 
