@@ -2,4 +2,4 @@
 "braintrust": patch
 ---
 
-Allow spans started with an exported parent to write to the receiver object while preserving trace lineage.
+feat: Allow for multi project tracing by removing parent project ID restriction
