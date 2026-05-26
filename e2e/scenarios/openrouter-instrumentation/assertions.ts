@@ -1,14 +1,12 @@
 import { beforeAll, describe, expect, test } from "vitest";
-import type { Json } from "../../helpers/normalize";
 import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
+import { resolveFileSnapshotPath } from "../../helpers/file-snapshot";
 import {
-  formatJsonFileSnapshot,
-  matchFileSnapshot,
-  resolveFileSnapshotPath,
-} from "../../helpers/file-snapshot";
-import { withScenarioHarness } from "../../helpers/scenario-harness";
+  withScenarioHarness,
+  type ScenarioRunContext,
+} from "../../helpers/scenario-harness";
+import { matchSpanTreeSnapshot } from "../../helpers/span-tree";
 import { findChildSpans, findLatestSpan } from "../../helpers/trace-selectors";
-import { summarizeWrapperContract } from "../../helpers/wrapper-contract";
 
 import {
   CALL_MODEL,
@@ -36,13 +34,13 @@ type RunOpenRouterScenario = (harness: {
   runNodeScenarioDir: (options: {
     entry: string;
     nodeArgs: string[];
-    runContext?: { variantKey: string };
+    runContext?: ScenarioRunContext;
     scenarioDir: string;
     timeoutMs: number;
   }) => Promise<unknown>;
   runScenarioDir: (options: {
     entry: string;
-    runContext?: { variantKey: string };
+    runContext?: ScenarioRunContext;
     scenarioDir: string;
     timeoutMs: number;
   }) => Promise<unknown>;
@@ -75,7 +73,7 @@ function findOpenRouterSpan(
 function buildSpanSummary(
   events: CapturedLogEvent[],
   options: { supportsRerank: boolean },
-): Json {
+): CapturedLogEvent[] {
   const chatOperation = findLatestSpan(events, "openrouter-chat-operation");
   const chatStreamOperation = findLatestSpan(
     events,
@@ -133,17 +131,7 @@ function buildSpanSummary(
     findOpenRouterSpan(events, callModelOperation?.span.id, [
       "openrouter.callModel",
     ]),
-  ].map((event) =>
-    summarizeWrapperContract(event!, [
-      "document_count",
-      "embedding_model",
-      "model",
-      "operation",
-      "provider",
-      "scenario",
-      "topN",
-    ]),
-  ) as Json;
+  ].map((event) => event!);
 }
 
 export function defineOpenRouterTraceAssertions(options: {
@@ -156,7 +144,7 @@ export function defineOpenRouterTraceAssertions(options: {
 }): void {
   const spanSnapshotPath = resolveFileSnapshotPath(
     options.testFileUrl,
-    `${options.snapshotName}.span-events.json`,
+    `${options.snapshotName}.span-tree.json`,
   );
   const testConfig = {
     timeout: options.timeoutMs,
@@ -371,6 +359,7 @@ export function defineOpenRouterTraceAssertions(options: {
         expect(operation).toBeDefined();
         expect(span).toBeDefined();
         expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
+        expect(span?.span.type).toBe("task");
         expect(span?.row.metadata).toMatchObject({
           provider: OPENROUTER_CALL_MODEL_PROVIDER,
         });
@@ -405,15 +394,8 @@ export function defineOpenRouterTraceAssertions(options: {
       },
     );
 
-    test("matches the shared span snapshot", testConfig, async () => {
-      await matchFileSnapshot(
-        formatJsonFileSnapshot(
-          buildSpanSummary(events, {
-            supportsRerank: options.supportsRerank,
-          }),
-        ),
-        spanSnapshotPath,
-      );
+    test("matches the shared span tree snapshot", testConfig, async () => {
+      await matchSpanTreeSnapshot(events, spanSnapshotPath);
     });
   });
 }

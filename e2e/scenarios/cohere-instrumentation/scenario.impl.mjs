@@ -32,6 +32,7 @@ export const COHERE_SCENARIO_SPECS = [
     autoEntry: "scenario.cohere-v7.mjs",
     dependencyName: "cohere-sdk-v7-20-0",
     snapshotName: "cohere-v7-20-0",
+    supportsThinking: false,
     useV2Namespace: true,
     wrapperEntry: "scenario.cohere-v7.ts",
   },
@@ -40,6 +41,7 @@ export const COHERE_SCENARIO_SPECS = [
     autoEntry: "scenario.cohere-v7.mjs",
     dependencyName: "cohere-sdk-v7-21-0",
     snapshotName: "cohere-v7-21-0",
+    supportsThinking: false,
     useV2Namespace: true,
     wrapperEntry: "scenario.cohere-v7.ts",
   },
@@ -48,6 +50,7 @@ export const COHERE_SCENARIO_SPECS = [
     autoEntry: "scenario.cohere-v7.mjs",
     dependencyName: "cohere-sdk-v7",
     snapshotName: "cohere-v7",
+    supportsThinking: false,
     useV2Namespace: true,
     wrapperEntry: "scenario.cohere-v7.ts",
   },
@@ -56,6 +59,7 @@ export const COHERE_SCENARIO_SPECS = [
     autoEntry: "scenario.mjs",
     dependencyName: "cohere-sdk-v8",
     snapshotName: "cohere-v8",
+    supportsThinking: false,
     wrapperEntry: "scenario.ts",
   },
 ];
@@ -189,6 +193,7 @@ async function runCohereInstrumentationScenario(
   }
 
   const baseClient = new CohereClient({
+    environment: process.env.COHERE_BASE_URL,
     token: apiKey,
   });
   const client = decorateClient ? decorateClient(baseClient) : baseClient;
@@ -198,6 +203,7 @@ async function runCohereInstrumentationScenario(
     thinkingClientClass === CohereClient
       ? baseClient
       : new thinkingClientClass({
+          environment: process.env.COHERE_BASE_URL,
           token: apiKey,
         });
   const thinkingClient = decorateClient

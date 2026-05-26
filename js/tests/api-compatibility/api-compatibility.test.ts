@@ -785,6 +785,11 @@ function normalizeTypeReference(type: string): string {
   return type;
 }
 
+function isObjectLiteralType(def: string): boolean {
+  const trimmed = def.trim();
+  return trimmed.startsWith("{") && trimmed.endsWith("}");
+}
+
 function parseObjectTypeProps(
   def: string,
 ): Map<string, { type: string; optional: boolean }> {
@@ -877,7 +882,15 @@ function areObjectTypeDefinitionsCompatible(
     const newTypeNorm = normalizeType(newProp.type);
 
     if (oldTypeNorm !== newTypeNorm) {
-      if (!isUnionTypeWidening(oldTypeNorm, newTypeNorm)) {
+      if (isUnionTypeWidening(oldTypeNorm, newTypeNorm)) {
+        // accepted
+      } else if (
+        isObjectLiteralType(oldProp.type) &&
+        isObjectLiteralType(newProp.type) &&
+        areObjectTypeDefinitionsCompatible(oldProp.type, newProp.type)
+      ) {
+        // accepted: nested object literal is structurally compatible
+      } else {
         return false;
       }
     }
@@ -1040,10 +1053,7 @@ function areTypeAliasSignaturesCompatible(
     return true;
   }
 
-  // Check if it's an object type
-  const isObjectType = (def: string) => def.trim().startsWith("{");
-
-  if (isObjectType(oldDef) && isObjectType(newDef)) {
+  if (isObjectLiteralType(oldDef) && isObjectLiteralType(newDef)) {
     return areObjectTypeDefinitionsCompatible(oldDef, newDef);
   }
 
@@ -1089,8 +1099,8 @@ function areTypeAliasSignaturesCompatible(
         }
 
         if (
-          isObjectType(oldPart) &&
-          isObjectType(newPart) &&
+          isObjectLiteralType(oldPart) &&
+          isObjectLiteralType(newPart) &&
           areObjectTypeDefinitionsCompatible(oldPart, newPart)
         ) {
           usedNewIndices.add(index);
@@ -1337,8 +1347,16 @@ function areInterfaceSignaturesCompatible(
     const newTypeNorm = normalizeType(newField.type);
 
     if (oldTypeNorm !== newTypeNorm) {
-      // Check if it's a union type widening (backwards compatible)
-      if (!isUnionTypeWidening(oldTypeNorm, newTypeNorm)) {
+      if (isUnionTypeWidening(oldTypeNorm, newTypeNorm)) {
+        // accepted: union type widened (e.g. `T` → `T | U`)
+      } else if (
+        isObjectLiteralType(oldField.type) &&
+        isObjectLiteralType(newField.type) &&
+        areObjectTypeDefinitionsCompatible(oldField.type, newField.type)
+      ) {
+        // accepted: inline object literal field is structurally compatible
+        // (e.g. an optional property added to `integrations`)
+      } else {
         // Field type changed in an incompatible way - breaking change
         return false;
       }
@@ -2242,6 +2260,39 @@ describe("areInterfaceSignaturesCompatible", () => {
 
     const result = areInterfaceSignaturesCompatible(oldInterface, newInterface);
     expect(result).toBe(false);
+  });
+
+  test("should allow adding optional property to an inline object literal field", () => {
+    // Real-world case: adding `mastra?: boolean` to InstrumentationConfig.integrations
+    const oldInterface = `export interface InstrumentationConfig { integrations?: { openai?: boolean; openaiCodexSDK?: boolean; }; }`;
+    const newInterface = `export interface InstrumentationConfig { integrations?: { openai?: boolean; openaiCodexSDK?: boolean; mastra?: boolean; }; }`;
+
+    const result = areInterfaceSignaturesCompatible(oldInterface, newInterface);
+    expect(result).toBe(true);
+  });
+
+  test("should reject adding required property to an inline object literal field", () => {
+    const oldInterface = `export interface Config { options: { foo?: string; }; }`;
+    const newInterface = `export interface Config { options: { foo?: string; bar: number; }; }`;
+
+    const result = areInterfaceSignaturesCompatible(oldInterface, newInterface);
+    expect(result).toBe(false);
+  });
+
+  test("should reject removing property from an inline object literal field", () => {
+    const oldInterface = `export interface Config { options: { foo?: string; bar?: number; }; }`;
+    const newInterface = `export interface Config { options: { foo?: string; }; }`;
+
+    const result = areInterfaceSignaturesCompatible(oldInterface, newInterface);
+    expect(result).toBe(false);
+  });
+
+  test("should allow adding optional property to a deeply nested inline object literal field", () => {
+    const oldInterface = `export interface Config { outer: { inner: { a?: string; }; }; }`;
+    const newInterface = `export interface Config { outer: { inner: { a?: string; b?: number; }; }; }`;
+
+    const result = areInterfaceSignaturesCompatible(oldInterface, newInterface);
+    expect(result).toBe(true);
   });
 });
 

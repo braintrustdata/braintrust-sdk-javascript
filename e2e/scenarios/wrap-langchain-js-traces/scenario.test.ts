@@ -1,15 +1,11 @@
 import { expect, test } from "vitest";
-import {
-  formatJsonFileSnapshot,
-  matchFileSnapshot,
-  resolveFileSnapshotPath,
-} from "../../helpers/file-snapshot";
+import { resolveFileSnapshotPath } from "../../helpers/file-snapshot";
 import {
   prepareScenarioDir,
   resolveScenarioDir,
   withScenarioHarness,
 } from "../../helpers/scenario-harness";
-import { cassetteTagsFor } from "../../helpers/tags";
+import { matchSpanTreeSnapshot } from "../../helpers/span-tree";
 
 import { assertLangchainTraces } from "./assertions";
 
@@ -24,10 +20,9 @@ test(
   "wrap-langchain-js-traces captures invoke, chain, stream, and tool spans via BraintrustCallbackHandler",
   {
     timeout: TIMEOUT_MS,
-    tags: cassetteTagsFor(import.meta.url, VARIANT_KEY),
   },
   async () => {
-    await withScenarioHarness(async ({ events, payloads, runScenarioDir }) => {
+    await withScenarioHarness(async ({ events, runScenarioDir }) => {
       await runScenarioDir({
         scenarioDir,
         timeoutMs: TIMEOUT_MS,
@@ -37,20 +32,15 @@ test(
         },
       });
 
-      const summaries = assertLangchainTraces({
+      const spanTree = assertLangchainTraces({
         capturedEvents: events(),
-        payloads: payloads(),
         rootName: "langchain-wrapper-root",
         scenarioName: "wrap-langchain-js-traces",
       });
 
-      await matchFileSnapshot(
-        formatJsonFileSnapshot(summaries.spanSummary),
-        resolveFileSnapshotPath(import.meta.url, "span-events.json"),
-      );
-      await matchFileSnapshot(
-        formatJsonFileSnapshot(summaries.payloadSummary),
-        resolveFileSnapshotPath(import.meta.url, "log-payloads.json"),
+      await matchSpanTreeSnapshot(
+        spanTree,
+        resolveFileSnapshotPath(import.meta.url, "span-tree.json"),
       );
     });
   },

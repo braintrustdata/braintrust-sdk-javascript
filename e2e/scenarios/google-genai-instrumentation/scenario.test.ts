@@ -4,7 +4,6 @@ import {
   readInstalledPackageVersion,
   resolveScenarioDir,
 } from "../../helpers/scenario-harness";
-import { cassetteTagsFor } from "../../helpers/tags";
 import { defineGoogleGenAIInstrumentationAssertions } from "./assertions";
 
 const originalScenarioDir = resolveScenarioDir(import.meta.url);
@@ -47,45 +46,45 @@ const googleGenAIScenarios = await Promise.all(
   })),
 );
 
-for (const scenario of googleGenAIScenarios) {
-  const tags = cassetteTagsFor(import.meta.url, scenario.snapshotName);
+describe.concurrent("variants", () => {
+  for (const scenario of googleGenAIScenarios) {
+    describe.sequential(`google genai sdk ${scenario.version}`, () => {
+      defineGoogleGenAIInstrumentationAssertions({
+        name: "wrapped instrumentation",
+        runScenario: async ({ runScenarioDir }) => {
+          await runScenarioDir({
+            entry: scenario.wrapperEntry,
+            runContext: {
+              variantKey: scenario.snapshotName,
+              originalScenarioDir,
+            },
+            scenarioDir,
+            timeoutMs: TIMEOUT_MS,
+          });
+        },
+        snapshotName: scenario.snapshotName,
+        testFileUrl: import.meta.url,
+        timeoutMs: TIMEOUT_MS,
+      });
 
-  describe(`google genai sdk ${scenario.version}`, { tags }, () => {
-    defineGoogleGenAIInstrumentationAssertions({
-      name: "wrapped instrumentation",
-      runScenario: async ({ runScenarioDir }) => {
-        await runScenarioDir({
-          entry: scenario.wrapperEntry,
-          runContext: {
-            variantKey: scenario.snapshotName,
-            originalScenarioDir,
-          },
-          scenarioDir,
-          timeoutMs: TIMEOUT_MS,
-        });
-      },
-      snapshotName: scenario.snapshotName,
-      testFileUrl: import.meta.url,
-      timeoutMs: TIMEOUT_MS,
+      defineGoogleGenAIInstrumentationAssertions({
+        name: "auto-hook instrumentation",
+        runScenario: async ({ runNodeScenarioDir }) => {
+          await runNodeScenarioDir({
+            entry: scenario.autoEntry,
+            nodeArgs: ["--import", "braintrust/hook.mjs"],
+            runContext: {
+              variantKey: scenario.snapshotName,
+              originalScenarioDir,
+            },
+            scenarioDir,
+            timeoutMs: TIMEOUT_MS,
+          });
+        },
+        snapshotName: scenario.snapshotName,
+        testFileUrl: import.meta.url,
+        timeoutMs: TIMEOUT_MS,
+      });
     });
-
-    defineGoogleGenAIInstrumentationAssertions({
-      name: "auto-hook instrumentation",
-      runScenario: async ({ runNodeScenarioDir }) => {
-        await runNodeScenarioDir({
-          entry: scenario.autoEntry,
-          nodeArgs: ["--import", "braintrust/hook.mjs"],
-          runContext: {
-            variantKey: scenario.snapshotName,
-            originalScenarioDir,
-          },
-          scenarioDir,
-          timeoutMs: TIMEOUT_MS,
-        });
-      },
-      snapshotName: scenario.snapshotName,
-      testFileUrl: import.meta.url,
-      timeoutMs: TIMEOUT_MS,
-    });
-  });
-}
+  }
+});

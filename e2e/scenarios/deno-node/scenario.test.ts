@@ -11,10 +11,9 @@ import {
   resolveScenarioDir,
   withScenarioHarness,
 } from "../../helpers/scenario-harness";
-import { E2E_TAGS } from "../../helpers/tags";
+import { matchSpanTreeSnapshot } from "../../helpers/span-tree";
 import { findLatestSpan } from "../../helpers/trace-selectors";
-import { summarizeEvent, summarizeRequest } from "../../helpers/trace-summary";
-import { payloadRowsForTestRunId } from "../../helpers/wrapper-contract";
+import { summarizeRequest } from "../../helpers/trace-summary";
 
 const scenarioDir = await prepareScenarioDir({
   scenarioDir: resolveScenarioDir(import.meta.url),
@@ -31,13 +30,11 @@ function findEventByCase(events: CapturedLogEvent[], testCase: string) {
 test(
   "deno-node captures real HTTP traces from a nested Deno runner",
   {
-    tags: [E2E_TAGS.hermetic],
     timeout: TIMEOUT_MS,
   },
   async () => {
     await withScenarioHarness(
       async ({
-        payloads,
         requestCursor,
         requestsAfter,
         runDenoScenarioDir,
@@ -160,27 +157,9 @@ test(
           ]),
         );
 
-        await matchFileSnapshot(
-          formatJsonFileSnapshot(
-            [
-              basicSpan,
-              jsonAttachment,
-              parentSpan,
-              childSpan,
-              nestedParent,
-              nestedChild,
-              nestedGrandchild,
-              currentSpan,
-            ].map((event) => summarizeEvent(event!)) as Json,
-          ),
-          resolveFileSnapshotPath(import.meta.url, "span-events.json"),
-        );
-
-        await matchFileSnapshot(
-          formatJsonFileSnapshot(
-            payloadRowsForTestRunId(payloads(), testRunId) as Json,
-          ),
-          resolveFileSnapshotPath(import.meta.url, "log-payloads.json"),
+        await matchSpanTreeSnapshot(
+          capturedEvents,
+          resolveFileSnapshotPath(import.meta.url, "span-tree.json"),
         );
 
         await matchFileSnapshot(

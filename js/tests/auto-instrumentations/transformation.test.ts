@@ -39,7 +39,7 @@ describe("Orchestrion Transformation Tests", () => {
 
   describe("esbuild", () => {
     it("should transform OpenAI SDK code with tracingChannel", async () => {
-      const { esbuildPlugin } =
+      const { braintrustEsbuildPlugin } =
         await import("../../src/auto-instrumentations/bundler/esbuild.js");
 
       const entryPoint = path.join(fixturesDir, "test-app.js");
@@ -51,9 +51,7 @@ describe("Orchestrion Transformation Tests", () => {
         write: true,
         outfile,
         format: "esm",
-        plugins: [
-          esbuildPlugin({ browser: false }), // Use Node.js built-in for tests
-        ],
+        plugins: [braintrustEsbuildPlugin()],
         logLevel: "error",
         absWorkingDir: fixturesDir,
         preserveSymlinks: true, // CRITICAL: Don't dereference symlinks!
@@ -68,10 +66,11 @@ describe("Orchestrion Transformation Tests", () => {
       // Verify orchestrion transformed the code
       expect(output).toContain("tracingChannel");
       expect(output).toContain("orchestrion:openai:chat.completions.create");
+      expect(output).not.toContain("TracingChannel");
     });
 
-    it("should bundle dc-browser module when browser: true", async () => {
-      const { esbuildPlugin } =
+    it("should bundle dc-browser module when useDiagnosticChannelCompatShim is true", async () => {
+      const { braintrustEsbuildPlugin } =
         await import("../../src/auto-instrumentations/bundler/esbuild.js");
 
       const entryPoint = path.join(fixturesDir, "test-app.js");
@@ -84,7 +83,7 @@ describe("Orchestrion Transformation Tests", () => {
         outfile,
         format: "esm",
         plugins: [
-          esbuildPlugin({ browser: true }), // Use browser mode
+          braintrustEsbuildPlugin({ useDiagnosticChannelCompatShim: true }),
         ],
         logLevel: "error",
         absWorkingDir: fixturesDir,
@@ -110,7 +109,7 @@ describe("Orchestrion Transformation Tests", () => {
 
   describe("vite", () => {
     it("should transform OpenAI SDK code with tracingChannel", async () => {
-      const { vitePlugin } =
+      const { braintrustVitePlugin } =
         await import("../../src/auto-instrumentations/bundler/vite.js");
 
       const entryPoint = path.join(fixturesDir, "test-app.js");
@@ -131,9 +130,7 @@ describe("Orchestrion Transformation Tests", () => {
             external: ["diagnostics_channel"], // Mark Node built-ins as external, don't try to bundle them
           },
         },
-        plugins: [
-          vitePlugin({ browser: false }), // Use Node.js built-in for tests
-        ],
+        plugins: [braintrustVitePlugin()],
         logLevel: "error",
         resolve: {
           preserveSymlinks: true, // Don't dereference symlinks
@@ -148,10 +145,11 @@ describe("Orchestrion Transformation Tests", () => {
       // Verify orchestrion transformed the code
       expect(output).toContain("tracingChannel");
       expect(output).toContain("orchestrion:openai:chat.completions.create");
+      expect(output).not.toContain("TracingChannel");
     });
 
-    it("should bundle dc-browser module when browser: true", async () => {
-      const { vitePlugin } =
+    it("should bundle dc-browser module when useDiagnosticChannelCompatShim is true", async () => {
+      const { braintrustVitePlugin } =
         await import("../../src/auto-instrumentations/bundler/vite.js");
 
       const entryPoint = path.join(fixturesDir, "test-app.js");
@@ -170,7 +168,7 @@ describe("Orchestrion Transformation Tests", () => {
           minify: false,
         },
         plugins: [
-          vitePlugin({ browser: true }), // Use browser mode
+          braintrustVitePlugin({ useDiagnosticChannelCompatShim: true }),
         ],
         logLevel: "error",
         resolve: {
@@ -222,7 +220,7 @@ describe("Orchestrion Transformation Tests", () => {
     }
 
     it("should transform OpenAI SDK code with tracingChannel", async () => {
-      const { webpackPlugin } =
+      const { braintrustWebpackPlugin } =
         await import("../../src/auto-instrumentations/bundler/webpack.js");
 
       const { errors, output } = await runWebpack({
@@ -236,16 +234,17 @@ describe("Orchestrion Transformation Tests", () => {
         mode: "development",
         resolve: { modules: [nodeModulesDir, "node_modules"] },
         externals: { diagnostics_channel: "module diagnostics_channel" },
-        plugins: [webpackPlugin({ browser: false })],
+        plugins: [braintrustWebpackPlugin()],
       });
 
       expect(errors).toHaveLength(0);
       expect(output).toContain("tracingChannel");
       expect(output).toContain("orchestrion:openai:chat.completions.create");
+      expect(output).not.toContain("TracingChannel");
     });
 
-    it("should bundle dc-browser module when browser: true", async () => {
-      const { webpackPlugin } =
+    it("should bundle dc-browser module when useDiagnosticChannelCompatShim is true", async () => {
+      const { braintrustWebpackPlugin } =
         await import("../../src/auto-instrumentations/bundler/webpack.js");
 
       const { errors, output } = await runWebpack({
@@ -258,7 +257,9 @@ describe("Orchestrion Transformation Tests", () => {
         experiments: { outputModule: true },
         mode: "development",
         resolve: { modules: [nodeModulesDir, "node_modules"] },
-        plugins: [webpackPlugin({ browser: true })],
+        plugins: [
+          braintrustWebpackPlugin({ useDiagnosticChannelCompatShim: true }),
+        ],
       });
 
       expect(errors).toHaveLength(0);
@@ -274,7 +275,6 @@ describe("Orchestrion Transformation Tests", () => {
       __dirname,
       "../../dist/auto-instrumentations/bundler/webpack-loader.cjs",
     );
-
     async function runWebpackWithLoader(
       config: object,
     ): Promise<{ errors: string[]; output: string }> {
@@ -370,7 +370,7 @@ describe("Orchestrion Transformation Tests", () => {
   describe("rollup", () => {
     it("should transform OpenAI SDK code with tracingChannel", async () => {
       const { rollup } = await import("rollup");
-      const { rollupPlugin } =
+      const { braintrustRollupPlugin } =
         await import("../../src/auto-instrumentations/bundler/rollup.js");
 
       const entryPoint = path.join(fixturesDir, "test-app.js");
@@ -392,10 +392,7 @@ describe("Orchestrion Transformation Tests", () => {
 
       const bundle = await rollup({
         input: entryPoint,
-        plugins: [
-          resolverPlugin,
-          rollupPlugin({ browser: false }), // Use Node.js built-in for tests
-        ],
+        plugins: [resolverPlugin, braintrustRollupPlugin()],
         external: [],
         preserveSymlinks: true, // Don't dereference symlinks
       });
@@ -414,11 +411,12 @@ describe("Orchestrion Transformation Tests", () => {
       // Verify orchestrion transformed the code
       expect(output).toContain("tracingChannel");
       expect(output).toContain("orchestrion:openai:chat.completions.create");
+      expect(output).not.toContain("TracingChannel");
     });
 
-    it("should bundle dc-browser module when browser: true", async () => {
+    it("should bundle dc-browser module when useDiagnosticChannelCompatShim is true", async () => {
       const { rollup } = await import("rollup");
-      const { rollupPlugin } =
+      const { braintrustRollupPlugin } =
         await import("../../src/auto-instrumentations/bundler/rollup.js");
 
       const entryPoint = path.join(fixturesDir, "test-app.js");
@@ -451,7 +449,7 @@ describe("Orchestrion Transformation Tests", () => {
         input: entryPoint,
         plugins: [
           resolverPlugin,
-          rollupPlugin({ browser: true }), // Use browser mode
+          braintrustRollupPlugin({ useDiagnosticChannelCompatShim: true }),
         ],
         external: [],
         preserveSymlinks: true,

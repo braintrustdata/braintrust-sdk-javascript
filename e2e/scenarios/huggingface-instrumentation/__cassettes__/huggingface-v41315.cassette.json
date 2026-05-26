@@ -4,14 +4,14 @@
       "callIndex": 0,
       "id": "e57cdc8cb2af8700",
       "matchKey": "GET huggingface.co/api/models/meta-llama/Llama-3.1-8B-Instruct",
-      "recordedAt": "2026-04-28T23:27:00.376Z",
+      "recordedAt": "2026-05-15T11:37:27.544Z",
       "request": {
         "body": {
           "kind": "empty"
         },
         "headers": {},
         "method": "GET",
-        "url": "https://huggingface.co/api/models/meta-llama/Llama-3.1-8B-Instruct?expand%5B%5D=inferenceProviderMapping"
+        "url": "https://huggingface.co/api/models/meta-llama/Llama-3.1-8B-Instruct?expand[]=inferenceProviderMapping"
       },
       "response": {
         "body": {
@@ -28,7 +28,7 @@
               },
               "featherless-ai": {
                 "isModelAuthor": false,
-                "providerId": "meta-llama/Llama-3.1-8B-Instruct",
+                "providerId": "meta-llama/Meta-Llama-3.1-8B-Instruct",
                 "status": "live",
                 "task": "conversational"
               },
@@ -41,7 +41,7 @@
               "nscale": {
                 "isModelAuthor": false,
                 "providerId": "meta-llama/Llama-3.1-8B-Instruct",
-                "status": "error",
+                "status": "live",
                 "task": "conversational"
               },
               "sambanova": {
@@ -63,18 +63,22 @@
           "access-control-allow-origin": "https://huggingface.co",
           "access-control-expose-headers": "X-Repo-Commit,X-Request-Id,X-Error-Code,X-Error-Message,X-Total-Count,ETag,Link,Accept-Ranges,Content-Range,X-Linked-Size,X-Linked-ETag,X-Xet-Hash",
           "access-control-max-age": "86400",
+          "connection": "keep-alive",
+          "content-length": "812",
           "content-type": "application/json; charset=utf-8",
           "cross-origin-opener-policy": "same-origin",
-          "etag": "W/\"328-jkx+S6NqBoEK1kro+uSJ4pK8big\"",
-          "ratelimit": "\"api\";r=995;t=179",
+          "date": "Fri, 15 May 2026 11:37:27 GMT",
+          "etag": "W/\"32c-AuB6sgZTIbkNCeInjqjAzrSGN6U\"",
+          "ratelimit": "\"api\";r=988;t=141",
           "ratelimit-policy": "\"fixed window\";\"api\";q=1000;w=300",
           "referrer-policy": "strict-origin-when-cross-origin",
           "vary": "Origin",
-          "via": "1.1 7df10ab947c52bef2e900077cb0f10e0.cloudfront.net (CloudFront)",
-          "x-amz-cf-id": "YtjumwBylnSb3_RSvhGbwJFZ_BawYyRMfUXM3owHelKee5K6dWzcGw==",
-          "x-amz-cf-pop": "YVR52-P2",
+          "via": "1.1 c0a286d52b6977b9439dcb6b51f2269c.cloudfront.net (CloudFront)",
+          "x-amz-cf-id": "FpV3aeqLntarSkDA43Urny9OFX6vlBPKhS0WnV45dQxWVrTI-3dTgA==",
+          "x-amz-cf-pop": "VIE50-P4",
           "x-cache": "Miss from cloudfront",
-          "x-powered-by": "huggingface-moon"
+          "x-powered-by": "huggingface-moon",
+          "x-request-id": "Root=1-6a070577-0dd42b9e09e072ad2e95cb6a"
         },
         "status": 200,
         "statusText": "OK"
@@ -82,9 +86,9 @@
     },
     {
       "callIndex": 0,
-      "id": "94efc3e0225b44c0",
+      "id": "3ca5b258d2627f18",
       "matchKey": "POST router.huggingface.co/featherless-ai/v1/chat/completions",
-      "recordedAt": "2026-04-28T23:27:00.376Z",
+      "recordedAt": "2026-05-15T11:37:28.991Z",
       "request": {
         "body": {
           "kind": "json",
@@ -96,7 +100,7 @@
                 "role": "user"
               }
             ],
-            "model": "meta-llama/Llama-3.1-8B-Instruct",
+            "model": "meta-llama/Meta-Llama-3.1-8B-Instruct",
             "temperature": 0
           }
         },
@@ -118,15 +122,15 @@
                 }
               }
             ],
-            "created": 1777418810,
-            "id": "f46bb251-d8d6-49f8-afec-669f54a943a6",
-            "model": "meta-llama/Llama-3.1-8B-Instruct",
+            "created": 1778845047,
+            "id": "85bb1b8f-61dd-4e65-8372-6c006050b109",
+            "model": "meta-llama/Meta-Llama-3.1-8B-Instruct",
             "object": "chat.completion",
-            "system_fingerprint": "fp1-rss-paw",
+            "system_fingerprint": "fp1-rss-s1",
             "usage": {
               "completion_tokens": 2,
-              "prompt_tokens": 40,
-              "total_tokens": 42
+              "prompt_tokens": 10,
+              "total_tokens": 12
             }
           }
         },
@@ -136,19 +140,27 @@
           "access-control-allow-origin": "*",
           "access-control-expose-headers": "X-Repo-Commit,X-Request-Id,X-Error-Code,X-Error-Message,X-Total-Count,ETag,Link,Accept-Ranges,Content-Range,X-Linked-Size,X-Linked-ETag,X-Xet-Hash",
           "cache-control": "no-cache",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "9fc1d9cc5b06d6dc-IAD",
+          "connection": "keep-alive",
           "content-type": "application/json",
           "cross-origin-opener-policy": "same-origin",
+          "date": "Fri, 15 May 2026 11:37:28 GMT",
           "nel": "{\"report_to\":\"cf-nel\",\"success_fraction\":0.0,\"max_age\":604800}",
           "referrer-policy": "strict-origin-when-cross-origin",
-          "report-to": "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=SCuweSOmcWoIOCqHYBFEQNrt%2FE5DqDK3JgQ%2FRgQx7Ecz2yDZ8ApZZ93g%2BHi9f3sCc3%2BX4EJoxmyr3bPJ%2B9MYl%2B8dquOqEvXmS9MhSOsDp%2FG8VRHPk1B%2FxXmXqv9UqogogFXVrw%3D%3D\"}]}",
-          "request-id": "f46bb251-d8d6-49f8-afec-669f54a943a6",
+          "report-to": "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=zwQfsHbGpskQMxxch%2Bq7lbzkeBmboZz1mjgoZMW%2FqZe6s4Fflwv72A78l9PQzGosAkcWjlsxed8rxZkoL1HRKklAEcG8JkQ0GWPw5eRVXLFwX7gUHBmqvAFpv19NVEv0F78O0w%3D%3D\"}]}",
+          "request-id": "85bb1b8f-61dd-4e65-8372-6c006050b109",
+          "server": "cloudflare",
+          "strict-transport-security": "max-age=15724800; includeSubDomains",
+          "transfer-encoding": "chunked",
           "vary": "Origin",
-          "via": "1.1 0c5ff101632b59c47cd99b22ac6119c0.cloudfront.net (CloudFront)",
-          "x-amz-cf-id": "SXMw0V4WAkeUFKDzIpAvsKca5yzldcTENfv7mcYbQhceW9pnT7SDxg==",
-          "x-amz-cf-pop": "YVR52-P2",
+          "via": "1.1 0162bc980684b46d98a2a4348ae0a198.cloudfront.net (CloudFront)",
+          "x-amz-cf-id": "9hY4no0W2pw_q4_bI_oB0HMC1mDumjby1z0AcKt2yHAZmh-U07hFwA==",
+          "x-amz-cf-pop": "VIE50-P4",
           "x-cache": "Miss from cloudfront",
           "x-inference-provider": "featherless-ai",
           "x-powered-by": "huggingface-moon",
+          "x-request-id": "Root=1-6a070577-3aaa61e12e5b50ec72d439cd",
           "x-robots-tag": "none"
         },
         "status": 200,
@@ -157,9 +169,9 @@
     },
     {
       "callIndex": 1,
-      "id": "463e85bc4f188f03",
+      "id": "f9dfb25c3e946122",
       "matchKey": "POST router.huggingface.co/featherless-ai/v1/chat/completions",
-      "recordedAt": "2026-04-28T23:27:00.376Z",
+      "recordedAt": "2026-05-15T11:37:30.394Z",
       "request": {
         "body": {
           "kind": "json",
@@ -171,7 +183,7 @@
                 "role": "user"
               }
             ],
-            "model": "meta-llama/Llama-3.1-8B-Instruct",
+            "model": "meta-llama/Meta-Llama-3.1-8B-Instruct",
             "stream": true,
             "temperature": 0
           }
@@ -183,10 +195,10 @@
       "response": {
         "body": {
           "chunks": [
-            "data: {\"id\":\"dbf5a8e0-97aa-447e-9efa-8fb9feeabe47\",\"object\":\"chat.completion.chunk\",\"created\":1777418811,\"model\":\"meta-llama/Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\"OK\",\"role\":\"assistant\"},\"index\":0,\"finish_reason\":null}]}",
-            "data: {\"id\":\"dbf5a8e0-97aa-447e-9efa-8fb9feeabe47\",\"object\":\"chat.completion.chunk\",\"created\":1777418811,\"model\":\"meta-llama/Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\".\"},\"index\":0,\"finish_reason\":null}]}",
-            "data: {\"id\":\"dbf5a8e0-97aa-447e-9efa-8fb9feeabe47\",\"object\":\"chat.completion.chunk\",\"created\":1777418811,\"model\":\"meta-llama/Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{},\"index\":0,\"finish_reason\":\"stop\"}],\"system_fingerprint\":\"fp1-rss-paw\"}",
-            "data: {\"id\":\"dbf5a8e0-97aa-447e-9efa-8fb9feeabe47\",\"object\":\"chat.completion.chunk\",\"model\":\"meta-llama/Llama-3.1-8B-Instruct\",\"created\":1777418811,\"choices\":[],\"usage\":{\"prompt_tokens\":40,\"completion_tokens\":2,\"total_tokens\":42}}",
+            "data: {\"id\":\"af947232-9399-41c3-b111-d9887517042c\",\"object\":\"chat.completion.chunk\",\"created\":1778845049,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\"OK\",\"role\":\"assistant\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"af947232-9399-41c3-b111-d9887517042c\",\"object\":\"chat.completion.chunk\",\"created\":1778845049,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\".\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"af947232-9399-41c3-b111-d9887517042c\",\"object\":\"chat.completion.chunk\",\"created\":1778845049,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{},\"index\":0,\"finish_reason\":\"stop\"}],\"system_fingerprint\":\"fp1-rss-s1\"}",
+            "data: {\"id\":\"af947232-9399-41c3-b111-d9887517042c\",\"object\":\"chat.completion.chunk\",\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"created\":1778845049,\"choices\":[],\"usage\":{\"prompt_tokens\":10,\"completion_tokens\":2,\"total_tokens\":12}}",
             "data: [DONE]"
           ],
           "kind": "sse"
@@ -196,19 +208,27 @@
           "access-control-allow-origin": "*",
           "access-control-expose-headers": "X-Repo-Commit,X-Request-Id,X-Error-Code,X-Error-Message,X-Total-Count,ETag,Link,Accept-Ranges,Content-Range,X-Linked-Size,X-Linked-ETag,X-Xet-Hash",
           "cache-control": "no-cache",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "9fc1d9d55a1ac9bc-IAD",
+          "connection": "keep-alive",
           "content-type": "text/event-stream",
           "cross-origin-opener-policy": "same-origin",
+          "date": "Fri, 15 May 2026 11:37:29 GMT",
           "nel": "{\"report_to\":\"cf-nel\",\"success_fraction\":0.0,\"max_age\":604800}",
           "referrer-policy": "strict-origin-when-cross-origin",
-          "report-to": "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=VGbqmb2yAjf7Ej9ZAw0q1OH9YbTYpvOsOyGlYPQh%2BzTl%2Bjqeml8hATKvRC7dO1oUxbyMnJM66VmgtTEq%2B%2F1q1aPs6wPqnZOqET%2FpYqEkaqkIUhZBhRWNHDynicYO13Logu3jww%3D%3D\"}]}",
-          "request-id": "dbf5a8e0-97aa-447e-9efa-8fb9feeabe47",
+          "report-to": "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=Je7nS4SGzsIwQ3JdvJ8G4rp7a1DmvrtmxjWSQPriYAKfHrVI6oI650GHjwxjpkefqkFNVDcp%2B5QgsbT3f5pbJMPNdnZdkHlsQGGWHG%2BW0CYqbgVkeUGkpGs3s7PiTC%2F1cL%2BdRg%3D%3D\"}]}",
+          "request-id": "af947232-9399-41c3-b111-d9887517042c",
+          "server": "cloudflare",
+          "strict-transport-security": "max-age=15724800; includeSubDomains",
+          "transfer-encoding": "chunked",
           "vary": "Origin",
-          "via": "1.1 0c5ff101632b59c47cd99b22ac6119c0.cloudfront.net (CloudFront)",
-          "x-amz-cf-id": "FCzFVaevg1VzU9qlf1DbaC6y_ssyRTZ55dSFpsyNqOfwv0vmBdHD1Q==",
-          "x-amz-cf-pop": "YVR52-P2",
+          "via": "1.1 0162bc980684b46d98a2a4348ae0a198.cloudfront.net (CloudFront)",
+          "x-amz-cf-id": "rGkKBKYfo95PHdkGNWKUgUWFOAJsMGf3NwGNjSjOOhYOK4FpM-nn3g==",
+          "x-amz-cf-pop": "VIE50-P4",
           "x-cache": "Miss from cloudfront",
           "x-inference-provider": "featherless-ai",
           "x-powered-by": "huggingface-moon",
+          "x-request-id": "Root=1-6a070579-43e98134774addff623baf80",
           "x-robots-tag": "none"
         },
         "status": 200,
@@ -217,9 +237,9 @@
     },
     {
       "callIndex": 2,
-      "id": "4b08c54e990c37e9",
+      "id": "8231fc5d9a4306d2",
       "matchKey": "POST router.huggingface.co/featherless-ai/v1/chat/completions",
-      "recordedAt": "2026-04-28T23:27:00.376Z",
+      "recordedAt": "2026-05-15T11:37:33.508Z",
       "request": {
         "body": {
           "kind": "json",
@@ -231,7 +251,7 @@
                 "role": "user"
               }
             ],
-            "model": "meta-llama/Llama-3.1-8B-Instruct",
+            "model": "meta-llama/Meta-Llama-3.1-8B-Instruct",
             "stream": true,
             "temperature": 0,
             "tool_choice": "required",
@@ -263,14 +283,72 @@
       "response": {
         "body": {
           "chunks": [
-            "data: {\"id\":\"7b2f7f0e-3e0c-4701-b32f-f64fdd427c73\",\"object\":\"chat.completion.chunk\",\"created\":1777418812,\"model\":\"meta-llama/Llama-3.1-8B-Instruct\",\"choices\":[{\"index\":0,\"finish_reason\":null,\"delta\":{\"content\":\"<|pyt\",\"role\":\"assistant\"}}]}",
-            "data: {\"id\":\"7b2f7f0e-3e0c-4701-b32f-f64fdd427c73\",\"object\":\"chat.completion.chunk\",\"created\":1777418812,\"model\":\"meta-llama/Llama-3.1-8B-Instruct\",\"choices\":[{\"index\":0,\"finish_reason\":null,\"delta\":{\"content\":\"ho\"}}]}",
-            "data: {\"id\":\"7b2f7f0e-3e0c-4701-b32f-f64fdd427c73\",\"object\":\"chat.completion.chunk\",\"created\":1777418812,\"model\":\"meta-llama/Llama-3.1-8B-Instruct\",\"choices\":[{\"index\":0,\"finish_reason\":null,\"delta\":{\"content\":\"n_ta\"}}]}",
-            "data: {\"id\":\"7b2f7f0e-3e0c-4701-b32f-f64fdd427c73\",\"object\":\"chat.completion.chunk\",\"created\":1777418812,\"model\":\"meta-llama/Llama-3.1-8B-Instruct\",\"choices\":[{\"index\":0,\"finish_reason\":null,\"delta\":{\"content\":\"g|\"}}]}",
-            "data: {\"id\":\"7b2f7f0e-3e0c-4701-b32f-f64fdd427c73\",\"object\":\"chat.completion.chunk\",\"created\":1777418812,\"model\":\"meta-llama/Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"tool_calls\":[{\"index\":0,\"id\":\"llama-0-1777418813421\",\"type\":\"function\",\"function\":{\"name\":\"get_current_weather\"}}]},\"index\":0}]}",
-            "data: {\"id\":\"7b2f7f0e-3e0c-4701-b32f-f64fdd427c73\",\"object\":\"chat.completion.chunk\",\"created\":1777418812,\"model\":\"meta-llama/Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"{\\\"location\\\":\\\"San Francisco\\\"}\"}}]},\"index\":0}]}",
-            "data: {\"id\":\"7b2f7f0e-3e0c-4701-b32f-f64fdd427c73\",\"object\":\"chat.completion.chunk\",\"created\":1777418812,\"model\":\"meta-llama/Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{},\"index\":0,\"finish_reason\":\"tool_calls\"}],\"system_fingerprint\":\"fp1-rss-paw-llam\"}",
-            "data: {\"id\":\"7b2f7f0e-3e0c-4701-b32f-f64fdd427c73\",\"object\":\"chat.completion.chunk\",\"model\":\"meta-llama/Llama-3.1-8B-Instruct\",\"created\":1777418812,\"choices\":[],\"usage\":{\"prompt_tokens\":203,\"completion_tokens\":24,\"total_tokens\":227}}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\"I\",\"role\":\"assistant\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\"'m\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\" not\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\" capable\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\" of\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\" directly\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\" accessing\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\" real\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\"-time\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\" weather\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\" data\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\".\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\" However\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\",\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\" I\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\" can\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\" guide\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\" you\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\" on\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\" how\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\" to\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\" use\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\" APIs\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\" to\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\" get\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\" the\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\" current\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\" weather\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\" in\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\" San\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\" Francisco\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\".\\n\\n\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\"You\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\" can\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\" use\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\" the\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\" Open\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\"Weather\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\"Map\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\" API\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\" to\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\" get\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\" the\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\" current\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\" weather\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\" in\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\" San\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\" Francisco\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\".\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\" Here\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\"'s\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\" a\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\" Python\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\" example\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\" using\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\" the\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\" `\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\"requests\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\"`\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\" library\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\":\\n\\n\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\"```\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\"python\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\"\\n\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"created\":1778845050,\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{},\"index\":0,\"finish_reason\":\"length\"}],\"system_fingerprint\":\"fp1-rss-s1\"}",
+            "data: {\"id\":\"e2a858d0-08ca-4a2e-9eb5-69b340c48cda\",\"object\":\"chat.completion.chunk\",\"model\":\"meta-llama/Meta-Llama-3.1-8B-Instruct\",\"created\":1778845050,\"choices\":[],\"usage\":{\"prompt_tokens\":20,\"completion_tokens\":64,\"total_tokens\":84}}",
             "data: [DONE]"
           ],
           "kind": "sse"
@@ -280,19 +358,27 @@
           "access-control-allow-origin": "*",
           "access-control-expose-headers": "X-Repo-Commit,X-Request-Id,X-Error-Code,X-Error-Message,X-Total-Count,ETag,Link,Accept-Ranges,Content-Range,X-Linked-Size,X-Linked-ETag,X-Xet-Hash",
           "cache-control": "no-cache",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "9fc1d9de1e75f289-IAD",
+          "connection": "keep-alive",
           "content-type": "text/event-stream",
           "cross-origin-opener-policy": "same-origin",
+          "date": "Fri, 15 May 2026 11:37:31 GMT",
           "nel": "{\"report_to\":\"cf-nel\",\"success_fraction\":0.0,\"max_age\":604800}",
           "referrer-policy": "strict-origin-when-cross-origin",
-          "report-to": "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=VC%2BAxYdJLJFtaKO8O%2BCEOA2jks0rFjRPyaW79XrkQiYg671cv%2B5wPKMrqPh2pLU7uBPlyNMX5BNxlPyxA39XnYPpZYJ5iN8qx2ydd4I%2BmNTaGNMI7%2FwNB0dhDPsfZoLlEM7K%2Fw%3D%3D\"}]}",
-          "request-id": "7b2f7f0e-3e0c-4701-b32f-f64fdd427c73",
+          "report-to": "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=i4vZCb56c8wWsyEdqwgBnfr7XkPewt%2BxJ9U%2FVQXi7Kj8VLO6jp2auxdQYaxpTXQkcmInVrCT%2FpMaUHP3lOAtCt%2FmcdrOWjsDVF337oSyr0qpR%2BbyjEewZYyRNQjIaqWSzXCplA%3D%3D\"}]}",
+          "request-id": "e2a858d0-08ca-4a2e-9eb5-69b340c48cda",
+          "server": "cloudflare",
+          "strict-transport-security": "max-age=15724800; includeSubDomains",
+          "transfer-encoding": "chunked",
           "vary": "Origin",
-          "via": "1.1 0c5ff101632b59c47cd99b22ac6119c0.cloudfront.net (CloudFront)",
-          "x-amz-cf-id": "oM4UCOHcknb9DZF2i0QjnQwhTv7crASzmxe74oEckeF8BPHmMbDDSA==",
-          "x-amz-cf-pop": "YVR52-P2",
+          "via": "1.1 0162bc980684b46d98a2a4348ae0a198.cloudfront.net (CloudFront)",
+          "x-amz-cf-id": "Aqe7PgUbmaL9Qvry-KXIIW88zceOe2sgHe76cA0uKKXSk_373s0cYA==",
+          "x-amz-cf-pop": "VIE50-P4",
           "x-cache": "Miss from cloudfront",
           "x-inference-provider": "featherless-ai",
           "x-powered-by": "huggingface-moon",
+          "x-request-id": "Root=1-6a07057a-3a8fbe3045f6e7cb6fa873b3",
           "x-robots-tag": "none"
         },
         "status": 200,
@@ -303,14 +389,14 @@
       "callIndex": 0,
       "id": "09b8ba9e1a3a15cd",
       "matchKey": "GET huggingface.co/api/models/meta-llama/Llama-3.1-8B",
-      "recordedAt": "2026-04-28T23:27:00.376Z",
+      "recordedAt": "2026-05-15T11:37:33.717Z",
       "request": {
         "body": {
           "kind": "empty"
         },
         "headers": {},
         "method": "GET",
-        "url": "https://huggingface.co/api/models/meta-llama/Llama-3.1-8B?expand%5B%5D=inferenceProviderMapping"
+        "url": "https://huggingface.co/api/models/meta-llama/Llama-3.1-8B?expand[]=inferenceProviderMapping"
       },
       "response": {
         "body": {
@@ -321,7 +407,7 @@
             "inferenceProviderMapping": {
               "featherless-ai": {
                 "isModelAuthor": false,
-                "providerId": "meta-llama/Meta-Llama-3.1-8B",
+                "providerId": "meta-llama/Llama-3.1-8B",
                 "status": "live",
                 "task": "text-generation"
               }
@@ -332,18 +418,22 @@
           "access-control-allow-origin": "https://huggingface.co",
           "access-control-expose-headers": "X-Repo-Commit,X-Request-Id,X-Error-Code,X-Error-Message,X-Total-Count,ETag,Link,Accept-Ranges,Content-Range,X-Linked-Size,X-Linked-ETag,X-Xet-Hash",
           "access-control-max-age": "86400",
+          "connection": "keep-alive",
+          "content-length": "215",
           "content-type": "application/json; charset=utf-8",
           "cross-origin-opener-policy": "same-origin",
-          "etag": "W/\"dc-W0FyxPM91s5ueKPnqs2bHZOqNJM\"",
-          "ratelimit": "\"api\";r=994;t=174",
+          "date": "Fri, 15 May 2026 11:37:33 GMT",
+          "etag": "W/\"d7-xuFLKyUbW6ROkAPDyhE3mthYJQ4\"",
+          "ratelimit": "\"api\";r=987;t=135",
           "ratelimit-policy": "\"fixed window\";\"api\";q=1000;w=300",
           "referrer-policy": "strict-origin-when-cross-origin",
           "vary": "Origin",
-          "via": "1.1 08fef49c592cbc94db33489b1c8dafcc.cloudfront.net (CloudFront)",
-          "x-amz-cf-id": "JCFnPXqCPFtOkTZYsMCWzVOWofAyo0QS6aTjM90p-mESVLIqe5W0CQ==",
-          "x-amz-cf-pop": "YVR52-P2",
+          "via": "1.1 98671e076847d2d85e4b050304c8ff1a.cloudfront.net (CloudFront)",
+          "x-amz-cf-id": "SU1RN5n9rAukBnZj7lHLCPbzTu9o16aAarVhDDQKFAQv7gGuKBzlmQ==",
+          "x-amz-cf-pop": "VIE50-P4",
           "x-cache": "Miss from cloudfront",
-          "x-powered-by": "huggingface-moon"
+          "x-powered-by": "huggingface-moon",
+          "x-request-id": "Root=1-6a07057d-3781fa56338ff5a05a085c17"
         },
         "status": 200,
         "statusText": "OK"
@@ -351,16 +441,16 @@
     },
     {
       "callIndex": 0,
-      "id": "c67c1732b0eb4954",
+      "id": "935173bcae49f969",
       "matchKey": "POST router.huggingface.co/featherless-ai/v1/completions",
-      "recordedAt": "2026-04-28T23:27:00.376Z",
+      "recordedAt": "2026-05-15T11:37:35.046Z",
       "request": {
         "body": {
           "kind": "json",
           "value": {
             "do_sample": false,
             "max_tokens": 4,
-            "model": "meta-llama/Meta-Llama-3.1-8B",
+            "model": "meta-llama/Llama-3.1-8B",
             "prompt": "The capital of France is",
             "return_full_text": false
           }
@@ -378,14 +468,14 @@
                 "finish_reason": "length",
                 "index": 0,
                 "logprobs": null,
-                "text": " the city of Paris"
+                "text": " the most visited city"
               }
             ],
-            "created": 1777418814,
-            "id": "77a83fb1-28d4-4149-91dc-1095761ff8bb",
-            "model": "meta-llama/Meta-Llama-3.1-8B",
+            "created": 1778845053,
+            "id": "7e164ed1-1a13-4522-b367-b659f04582e1",
+            "model": "meta-llama/Llama-3.1-8B",
             "object": "text_completion",
-            "system_fingerprint": "fp1-rss-paw",
+            "system_fingerprint": "fp1-rss-s1",
             "usage": {
               "completion_tokens": 4,
               "prompt_tokens": 5,
@@ -399,19 +489,27 @@
           "access-control-allow-origin": "*",
           "access-control-expose-headers": "X-Repo-Commit,X-Request-Id,X-Error-Code,X-Error-Message,X-Total-Count,ETag,Link,Accept-Ranges,Content-Range,X-Linked-Size,X-Linked-ETag,X-Xet-Hash",
           "cache-control": "no-cache",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "9fc1d9f2da68c9bc-IAD",
+          "connection": "keep-alive",
           "content-type": "application/json",
           "cross-origin-opener-policy": "same-origin",
+          "date": "Fri, 15 May 2026 11:37:34 GMT",
           "nel": "{\"report_to\":\"cf-nel\",\"success_fraction\":0.0,\"max_age\":604800}",
           "referrer-policy": "strict-origin-when-cross-origin",
-          "report-to": "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=mY34x%2BlzkHQrNLKzegMC%2FXGXl2HoG5BSXeTItnSdVkCSmrB1mkKIItZfxIU35DlGMLmFPqxlHzT6rg8fEKE%2Fcp81x2PF1a%2BytIDYQEeBWRMTo53fw91K%2FkhEl27osKm%2FFO07dw%3D%3D\"}]}",
-          "request-id": "77a83fb1-28d4-4149-91dc-1095761ff8bb",
+          "report-to": "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=Sq7Jahrd%2BRjsQoQcAsAInLPn%2FGHKN1hOgKDEZQmIoON2uteoDNCVWjZSfntBv4xZsvLyTkmpSvAIh7wccsJJt1q%2FAhBEEqUde8l0l3BsmHRYvXVBUZDGrzbWF0LcXYgn3Sd4Zw%3D%3D\"}]}",
+          "request-id": "7e164ed1-1a13-4522-b367-b659f04582e1",
+          "server": "cloudflare",
+          "strict-transport-security": "max-age=15724800; includeSubDomains",
+          "transfer-encoding": "chunked",
           "vary": "Origin",
-          "via": "1.1 0c5ff101632b59c47cd99b22ac6119c0.cloudfront.net (CloudFront)",
-          "x-amz-cf-id": "6oDHlh9NODviiBKZNQBskUGa-Jc1G1hilHHWON71MZseefjgqGjuJA==",
-          "x-amz-cf-pop": "YVR52-P2",
+          "via": "1.1 0162bc980684b46d98a2a4348ae0a198.cloudfront.net (CloudFront)",
+          "x-amz-cf-id": "z-yY9p9ag96UkHrcvCR2P9Rw_IIOrwIv4SFt6W8LwWXtv0SFnTyL1w==",
+          "x-amz-cf-pop": "VIE50-P4",
           "x-cache": "Miss from cloudfront",
           "x-inference-provider": "featherless-ai",
           "x-powered-by": "huggingface-moon",
+          "x-request-id": "Root=1-6a07057d-5ff2da334c788d813c842e4d",
           "x-robots-tag": "none"
         },
         "status": 200,
@@ -420,16 +518,16 @@
     },
     {
       "callIndex": 1,
-      "id": "aa2159c29ed1e98c",
+      "id": "50c83039f6d91cde",
       "matchKey": "POST router.huggingface.co/featherless-ai/v1/completions",
-      "recordedAt": "2026-04-28T23:27:00.376Z",
+      "recordedAt": "2026-05-15T11:37:36.300Z",
       "request": {
         "body": {
           "kind": "json",
           "value": {
             "do_sample": false,
             "max_tokens": 4,
-            "model": "meta-llama/Meta-Llama-3.1-8B",
+            "model": "meta-llama/Llama-3.1-8B",
             "prompt": "The capital of France is",
             "return_full_text": false,
             "stream": true
@@ -442,12 +540,12 @@
       "response": {
         "body": {
           "chunks": [
-            "data: {\"id\":\"e0b96a4b-9a97-4b29-a3ad-e7b39ce3a19a\",\"object\":\"text_completion\",\"created\":1777418818,\"model\":\"meta-llama/Meta-Llama-3.1-8B\",\"choices\":[{\"text\":\" Paris\",\"index\":0,\"finish_reason\":null}]}",
-            "data: {\"id\":\"e0b96a4b-9a97-4b29-a3ad-e7b39ce3a19a\",\"object\":\"text_completion\",\"created\":1777418818,\"model\":\"meta-llama/Meta-Llama-3.1-8B\",\"choices\":[{\"text\":\".\",\"index\":0,\"finish_reason\":null}]}",
-            "data: {\"id\":\"e0b96a4b-9a97-4b29-a3ad-e7b39ce3a19a\",\"object\":\"text_completion\",\"created\":1777418818,\"model\":\"meta-llama/Meta-Llama-3.1-8B\",\"choices\":[{\"text\":\" It\",\"index\":0,\"finish_reason\":null}]}",
-            "data: {\"id\":\"e0b96a4b-9a97-4b29-a3ad-e7b39ce3a19a\",\"object\":\"text_completion\",\"created\":1777418818,\"model\":\"meta-llama/Meta-Llama-3.1-8B\",\"choices\":[{\"text\":\" is\",\"index\":0,\"finish_reason\":null}]}",
-            "data: {\"id\":\"e0b96a4b-9a97-4b29-a3ad-e7b39ce3a19a\",\"object\":\"text_completion\",\"created\":1777418818,\"model\":\"meta-llama/Meta-Llama-3.1-8B\",\"choices\":[{\"text\":\"\",\"index\":0,\"finish_reason\":\"length\"}],\"system_fingerprint\":\"fp1-rss-paw\"}",
-            "data: {\"id\":\"e0b96a4b-9a97-4b29-a3ad-e7b39ce3a19a\",\"object\":\"text_completion\",\"model\":\"meta-llama/Meta-Llama-3.1-8B\",\"created\":1777418818,\"choices\":[],\"usage\":{\"prompt_tokens\":5,\"completion_tokens\":4,\"total_tokens\":9}}",
+            "data: {\"id\":\"a3b638ff-f2cc-4bba-bf82-b95445dc9518\",\"object\":\"text_completion\",\"created\":1778845055,\"model\":\"meta-llama/Llama-3.1-8B\",\"choices\":[{\"text\":\" Paris\",\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"a3b638ff-f2cc-4bba-bf82-b95445dc9518\",\"object\":\"text_completion\",\"created\":1778845055,\"model\":\"meta-llama/Llama-3.1-8B\",\"choices\":[{\"text\":\".\",\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"a3b638ff-f2cc-4bba-bf82-b95445dc9518\",\"object\":\"text_completion\",\"created\":1778845055,\"model\":\"meta-llama/Llama-3.1-8B\",\"choices\":[{\"text\":\" It\",\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"a3b638ff-f2cc-4bba-bf82-b95445dc9518\",\"object\":\"text_completion\",\"created\":1778845055,\"model\":\"meta-llama/Llama-3.1-8B\",\"choices\":[{\"text\":\" is\",\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"a3b638ff-f2cc-4bba-bf82-b95445dc9518\",\"object\":\"text_completion\",\"created\":1778845055,\"model\":\"meta-llama/Llama-3.1-8B\",\"choices\":[{\"text\":\"\",\"index\":0,\"finish_reason\":\"length\"}],\"system_fingerprint\":\"fp1-rss-s1\"}",
+            "data: {\"id\":\"a3b638ff-f2cc-4bba-bf82-b95445dc9518\",\"object\":\"text_completion\",\"model\":\"meta-llama/Llama-3.1-8B\",\"created\":1778845055,\"choices\":[],\"usage\":{\"prompt_tokens\":5,\"completion_tokens\":4,\"total_tokens\":9}}",
             "data: [DONE]"
           ],
           "kind": "sse"
@@ -457,19 +555,27 @@
           "access-control-allow-origin": "*",
           "access-control-expose-headers": "X-Repo-Commit,X-Request-Id,X-Error-Code,X-Error-Message,X-Total-Count,ETag,Link,Accept-Ranges,Content-Range,X-Linked-Size,X-Linked-ETag,X-Xet-Hash",
           "cache-control": "no-cache",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "9fc1d9fb3f09c967-IAD",
+          "connection": "keep-alive",
           "content-type": "text/event-stream",
           "cross-origin-opener-policy": "same-origin",
+          "date": "Fri, 15 May 2026 11:37:35 GMT",
           "nel": "{\"report_to\":\"cf-nel\",\"success_fraction\":0.0,\"max_age\":604800}",
           "referrer-policy": "strict-origin-when-cross-origin",
-          "report-to": "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=MPliJ1YIv1mZ4AdwpYxqzq6IsaMEQqRYulFy3FavMflJwDcziQxO61W1xUrk55Y5mr1nI0MDQryBBRKXet2Y4gs6PJ7Y6VpY9QfK%2BzyzlA%2FuFe2kEq4hnXofvvy7h9IC56wrJw%3D%3D\"}]}",
-          "request-id": "e0b96a4b-9a97-4b29-a3ad-e7b39ce3a19a",
+          "report-to": "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=OJ9zSMgu8HwCEMkIHDgfvHzaZGvI0GJpc5zhB96E4kItJEiY5Y1NNHVy2T7yBisq2GwjNY6RF7z%2FJaVwOjtxyBErHwZiW5UuO5w13I95K7gXX%2BIXN2Grib1CLqZfpt1j9VmT0Q%3D%3D\"}]}",
+          "request-id": "a3b638ff-f2cc-4bba-bf82-b95445dc9518",
+          "server": "cloudflare",
+          "strict-transport-security": "max-age=15724800; includeSubDomains",
+          "transfer-encoding": "chunked",
           "vary": "Origin",
-          "via": "1.1 0c5ff101632b59c47cd99b22ac6119c0.cloudfront.net (CloudFront)",
-          "x-amz-cf-id": "1VvsFHbcb6BJQX6-kAM3KtiJr2VEd_Qysb6tC7hq8KKB3AUOtzLYHw==",
-          "x-amz-cf-pop": "YVR52-P2",
+          "via": "1.1 0162bc980684b46d98a2a4348ae0a198.cloudfront.net (CloudFront)",
+          "x-amz-cf-id": "OLxqTYogyOl-BeH5iVKDnRFpS_E4a4y7E8cthcFUz2w5V2KXMLwpjQ==",
+          "x-amz-cf-pop": "VIE50-P4",
           "x-cache": "Miss from cloudfront",
           "x-inference-provider": "featherless-ai",
           "x-powered-by": "huggingface-moon",
+          "x-request-id": "Root=1-6a07057f-3787124436ba657507600f87",
           "x-robots-tag": "none"
         },
         "status": 200,
@@ -480,14 +586,14 @@
       "callIndex": 0,
       "id": "daf98736c72b7239",
       "matchKey": "GET huggingface.co/api/models/thenlper/gte-large",
-      "recordedAt": "2026-04-28T23:27:00.376Z",
+      "recordedAt": "2026-05-15T11:37:36.444Z",
       "request": {
         "body": {
           "kind": "empty"
         },
         "headers": {},
         "method": "GET",
-        "url": "https://huggingface.co/api/models/thenlper/gte-large?expand%5B%5D=inferenceProviderMapping"
+        "url": "https://huggingface.co/api/models/thenlper/gte-large?expand[]=inferenceProviderMapping"
       },
       "response": {
         "body": {
@@ -509,18 +615,22 @@
           "access-control-allow-origin": "https://huggingface.co",
           "access-control-expose-headers": "X-Repo-Commit,X-Request-Id,X-Error-Code,X-Error-Message,X-Total-Count,ETag,Link,Accept-Ranges,Content-Range,X-Linked-Size,X-Linked-ETag,X-Xet-Hash",
           "access-control-max-age": "86400",
+          "connection": "keep-alive",
+          "content-length": "207",
           "content-type": "application/json; charset=utf-8",
           "cross-origin-opener-policy": "same-origin",
+          "date": "Fri, 15 May 2026 11:37:36 GMT",
           "etag": "W/\"cf-GQV9MDOIuIIvOhkuehQ4kYwLtyU\"",
-          "ratelimit": "\"api\";r=993;t=168",
+          "ratelimit": "\"api\";r=986;t=132",
           "ratelimit-policy": "\"fixed window\";\"api\";q=1000;w=300",
           "referrer-policy": "strict-origin-when-cross-origin",
           "vary": "Origin",
-          "via": "1.1 0e8cf753c910842caa7345f2447eb5b8.cloudfront.net (CloudFront)",
-          "x-amz-cf-id": "iArcGLpXPLMiyQJ46q9d0iT4iFJIQws7Xw_qZYRm6qGd2vkrCG5Kfg==",
-          "x-amz-cf-pop": "YVR52-P2",
+          "via": "1.1 98671e076847d2d85e4b050304c8ff1a.cloudfront.net (CloudFront)",
+          "x-amz-cf-id": "oAR8wTgxV4oHf_K-ISxiFrkAK82GbPsksE4G2HJEhpwWQ2XwlPoTtw==",
+          "x-amz-cf-pop": "VIE50-P4",
           "x-cache": "Miss from cloudfront",
-          "x-powered-by": "huggingface-moon"
+          "x-powered-by": "huggingface-moon",
+          "x-request-id": "Root=1-6a070580-7452ba0018a78a157427fd77"
         },
         "status": 200,
         "statusText": "OK"
@@ -528,9 +638,9 @@
     },
     {
       "callIndex": 0,
-      "id": "f527cd5a0dc5d7f9",
+      "id": "74a095efcf384d0e",
       "matchKey": "POST router.huggingface.co/hf-inference/models/thenlper/gte-large/pipeline/feature-extraction",
-      "recordedAt": "2026-04-28T23:27:00.376Z",
+      "recordedAt": "2026-05-15T11:37:36.680Z",
       "request": {
         "body": {
           "kind": "json",
@@ -717,7 +827,7 @@
             0.022626269608736038, -0.016688846051692963, 0.005771295633167028,
             -0.009044435806572437, -0.05040424317121506, 0.001176387770101428,
             -0.00016678613610565662, -0.03416217118501663, -0.05471804365515709,
-            9.947750186256599e-6, -0.0496915839612484, 0.021129319444298744,
+            0.000009947750186256599, -0.0496915839612484, 0.021129319444298744,
             -0.01737176440656185, 0.0017752795247361064, -0.011021317914128304,
             -0.009284257888793945, 0.02842290885746479, 0.007452960591763258,
             0.005624083802103996, 0.0070625245571136475, -0.009976426139473915,
@@ -886,7 +996,7 @@
             -0.03245778754353523, 0.011912294663488865, 0.014013410545885563,
             -0.014327369630336761, 0.03169045224785805, -0.025917669758200645,
             -0.02307189628481865, -0.0029002863448113203, -0.021191135048866272,
-            -8.240768511313945e-5, -0.035654909908771515, 0.01273074746131897,
+            -0.00008240768511313945, -0.035654909908771515, 0.01273074746131897,
             0.04374304041266441, -0.039644595235586166, -0.05033861845731735,
             -0.01814350299537182, 0.04090336337685585, 0.0329778827726841,
             0.02721802331507206, -0.03109864704310894, 0.006142554339021444,
@@ -897,20 +1007,25 @@
           "access-control-allow-credentials": "true",
           "access-control-allow-origin": "*",
           "access-control-expose-headers": "X-Repo-Commit,X-Request-Id,X-Error-Code,X-Error-Message,X-Total-Count,ETag,Link,Accept-Ranges,Content-Range,X-Linked-Size,X-Linked-ETag,X-Xet-Hash",
+          "connection": "keep-alive",
+          "content-length": "21664",
           "content-type": "application/json",
           "cross-origin-opener-policy": "same-origin",
+          "date": "Fri, 15 May 2026 11:37:36 GMT",
           "referrer-policy": "strict-origin-when-cross-origin",
+          "server": "uvicorn",
           "vary": "origin, access-control-request-method, access-control-request-headers, origin, access-control-request-method, access-control-request-headers",
-          "via": "1.1 0c5ff101632b59c47cd99b22ac6119c0.cloudfront.net (CloudFront)",
-          "x-amz-cf-id": "wrthu7xtjuoon6bQ2rEhMno58eKaz3caVhlKe8A5VFvVhz1K18bUlQ==",
-          "x-amz-cf-pop": "YVR52-P2",
+          "via": "1.1 0162bc980684b46d98a2a4348ae0a198.cloudfront.net (CloudFront)",
+          "x-amz-cf-id": "TYGx27UPJ0RHAHnyFbMemYeYUzKeKPqdnm5tXGMKnBECzMGqrC_eiQ==",
+          "x-amz-cf-pop": "VIE50-P4",
           "x-cache": "Miss from cloudfront",
-          "x-inference-id": "32746f6d-bb10-4eb5-a156-8b98e6b88e8a",
+          "x-inference-id": "d2c6a991-4662-4a1d-b50b-126171e0c35a",
           "x-inference-provider": "hf-inference",
           "x-powered-by": "huggingface-moon",
-          "x-proxied-host": "http://10.109.142.216",
+          "x-proxied-host": "http://10.109.115.210",
           "x-proxied-path": "/pipeline/feature-extraction",
-          "x-proxied-replica": "44vf5qav-2f4nm",
+          "x-proxied-replica": "44vf5qav-slld9",
+          "x-request-id": "Root=1-6a070580-58d51c7f56e6631151de6176",
           "x-robots-tag": "none"
         },
         "status": 200,

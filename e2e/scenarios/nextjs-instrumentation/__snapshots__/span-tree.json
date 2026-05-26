@@ -1,0 +1,44 @@
+{
+  "span_tree": [
+    {
+      "name": "nextjs nodejs logger span",
+      "type": "task",
+      "children": [],
+      "input": {
+        "route": "/api/smoke-test/node",
+        "runtime": "nodejs"
+      },
+      "output": {
+        "ok": true,
+        "route": "/api/smoke-test/node",
+        "runtime": "nodejs"
+      },
+      "metadata": {
+        "runtime": "nodejs",
+        "scenario": "nextjs-instrumentation",
+        "testRunId": "<run:1>",
+        "transport": "http"
+      }
+    },
+    {
+      "name": "nextjs edge logger span",
+      "type": "task",
+      "children": [],
+      "input": {
+        "route": "/api/smoke-test/edge",
+        "runtime": "edge"
+      },
+      "output": {
+        "ok": true,
+        "route": "/api/smoke-test/edge",
+        "runtime": "edge"
+      },
+      "metadata": {
+        "runtime": "edge",
+        "scenario": "nextjs-instrumentation",
+        "testRunId": "<run:1>",
+        "transport": "http"
+      }
+    }
+  ]
+}

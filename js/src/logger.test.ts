@@ -1718,6 +1718,73 @@ test("simulateLoginForTests and simulateLogoutForTests", async () => {
   }
 });
 
+describe("HTTPConnection get_json retries", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+    _exportsForTestingOnly.simulateLogoutForTests();
+  });
+
+  test("backs off before retrying", async () => {
+    vi.useFakeTimers();
+
+    const state = await _exportsForTestingOnly.simulateLoginForTests();
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response("timeout", {
+          status: 504,
+          statusText: "Gateway Timeout",
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ ok: true }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      );
+    state.setFetch(fetchMock as unknown as typeof globalThis.fetch);
+
+    const resultPromise = state.apiConn().get_json("/retry-me", undefined, 1);
+
+    await vi.advanceTimersByTimeAsync(0);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    await vi.advanceTimersByTimeAsync(999);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    await vi.advanceTimersByTimeAsync(1);
+    await expect(resultPromise).resolves.toEqual({ ok: true });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  test("throws after retry exhaustion", async () => {
+    vi.useFakeTimers();
+
+    const state = await _exportsForTestingOnly.simulateLoginForTests();
+    const fetchMock = vi.fn().mockImplementation(() =>
+      Promise.resolve(
+        new Response("timeout", {
+          status: 504,
+          statusText: "Gateway Timeout",
+        }),
+      ),
+    );
+    state.setFetch(fetchMock as unknown as typeof globalThis.fetch);
+
+    const resultPromise = state.apiConn().get_json("/retry-me", undefined, 2);
+    const expectedFailure = expect(resultPromise).rejects.toThrow(
+      "504: Gateway Timeout",
+    );
+
+    await vi.advanceTimersByTimeAsync(1000);
+    await vi.advanceTimersByTimeAsync(2000);
+
+    await expectedFailure;
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+});
+
 test("span.export handles unauthenticated state", async () => {
   // Create a span without logging in
   const logger = initLogger({});

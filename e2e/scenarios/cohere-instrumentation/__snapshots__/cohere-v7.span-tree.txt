@@ -1,0 +1,134 @@
+span_tree:
+└── cohere-instrumentation-root [task]
+    metadata: {
+      "scenario": "cohere-instrumentation",
+      "testRunId": "<run:1>"
+    }
+    ├── cohere-v2-chat-operation
+    │   metadata: {
+    │     "operation": "chat",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── cohere.chat [llm]
+    │       input: [
+    │         {
+    │           "content": "Reply with exactly OK.",
+    │           "role": "user"
+    │         }
+    │       ]
+    │       output: {
+    │         "content": [
+    │           {
+    │             "text": "OK.",
+    │             "type": "text"
+    │           }
+    │         ],
+    │         "role": "assistant"
+    │       }
+    │       metadata: {
+    │         "finishReason": "COMPLETE",
+    │         "id": "<span:1>",
+    │         "maxTokens": 32,
+    │         "model": "command-a-03-2025",
+    │         "provider": "cohere",
+    │         "temperature": 0
+    │       }
+    │       metrics: {
+    │         "completion_tokens": 2,
+    │         "prompt_cached_tokens": 0,
+    │         "prompt_tokens": 5,
+    │         "time_to_first_token": 0,
+    │         "tokens": 7
+    │       }
+    ├── cohere-v2-chat-stream-operation
+    │   metadata: {
+    │     "operation": "chat-stream",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── cohere.chatStream [llm]
+    │       input: [
+    │         {
+    │           "content": "Reply with exactly STREAM.",
+    │           "role": "user"
+    │         }
+    │       ]
+    │       output: {
+    │         "content": "STREAM.",
+    │         "role": "assistant"
+    │       }
+    │       metadata: {
+    │         "finish_reason": "COMPLETE",
+    │         "id": "<span:1>",
+    │         "maxTokens": 32,
+    │         "model": "command-a-03-2025",
+    │         "provider": "cohere",
+    │         "temperature": 0
+    │       }
+    │       metrics: {
+    │         "completion_tokens": 2,
+    │         "prompt_cached_tokens": 0,
+    │         "prompt_tokens": 5,
+    │         "time_to_first_token": 0,
+    │         "tokens": 7
+    │       }
+    ├── cohere-v2-embed-operation
+    │   metadata: {
+    │     "operation": "embed",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── cohere.embed [llm]
+    │       input: [
+    │         "braintrust tracing"
+    │       ]
+    │       output: {
+    │         "embedding_length": 1024
+    │       }
+    │       metadata: {
+    │         "api_version": "2",
+    │         "embeddingTypes": [
+    │           "float"
+    │         ],
+    │         "id": "<span:1>",
+    │         "inputType": "search_document",
+    │         "model": "embed-english-v3.0",
+    │         "provider": "cohere",
+    │         "responseType": "embeddings_by_type"
+    │       }
+    │       metrics: {
+    │         "prompt_tokens": 3
+    │       }
+    └── cohere-v2-rerank-operation
+        metadata: {
+          "operation": "rerank",
+          "testRunId": "<run:1>"
+        }
+        └── cohere.rerank [llm]
+            input: {
+              "documents": [
+                "Paris is the capital city of France.",
+                "Vienna is the capital city of Austria.",
+                "Canberra is the capital city of Australia."
+              ],
+              "query": "What is the capital of France?"
+            }
+            output: [
+              {
+                "index": 0,
+                "relevance_score": 0.9980122
+              },
+              {
+                "index": 2,
+                "relevance_score": 0.00015720345
+              }
+            ]
+            metadata: {
+              "api_version": "2",
+              "document_count": 3,
+              "id": "<span:1>",
+              "model": "rerank-english-v3.0",
+              "provider": "cohere",
+              "topN": 2
+            }
+            metrics: {
+              "search_units": 1
+            }

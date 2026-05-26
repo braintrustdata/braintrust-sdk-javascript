@@ -5,6 +5,7 @@ import { AnthropicPlugin } from "./plugins/anthropic-plugin";
 import { AISDKPlugin } from "./plugins/ai-sdk-plugin";
 import { ClaudeAgentSDKPlugin } from "./plugins/claude-agent-sdk-plugin";
 import { CursorSDKPlugin } from "./plugins/cursor-sdk-plugin";
+import { OpenAIAgentsPlugin } from "./plugins/openai-agents-plugin";
 import { GoogleGenAIPlugin } from "./plugins/google-genai-plugin";
 import { HuggingFacePlugin } from "./plugins/huggingface-plugin";
 import { OpenRouterAgentPlugin } from "./plugins/openrouter-agent-plugin";
@@ -15,29 +16,11 @@ import { CoherePlugin } from "./plugins/cohere-plugin";
 import { GroqPlugin } from "./plugins/groq-plugin";
 import { GenkitPlugin } from "./plugins/genkit-plugin";
 import { GitHubCopilotPlugin } from "./plugins/github-copilot-plugin";
+import { FluePlugin } from "./plugins/flue-plugin";
+import type { InstrumentationIntegrationsConfig } from "./config";
 
 export interface BraintrustPluginConfig {
-  integrations?: {
-    openai?: boolean;
-    anthropic?: boolean;
-    vercel?: boolean;
-    aisdk?: boolean;
-    google?: boolean;
-    googleGenAI?: boolean;
-    huggingface?: boolean;
-    claudeAgentSDK?: boolean;
-    cursor?: boolean;
-    cursorSDK?: boolean;
-    openrouter?: boolean;
-    openrouterAgent?: boolean;
-    mistral?: boolean;
-    googleADK?: boolean;
-    cohere?: boolean;
-    groq?: boolean;
-    genkit?: boolean;
-    gitHubCopilot?: boolean;
-    openaiCodexSDK?: boolean;
-  };
+  integrations?: InstrumentationIntegrationsConfig;
 }
 
 function getIntegrationConfig(
@@ -71,6 +54,7 @@ export class BraintrustPlugin extends BasePlugin {
   private aiSDKPlugin: AISDKPlugin | null = null;
   private claudeAgentSDKPlugin: ClaudeAgentSDKPlugin | null = null;
   private cursorSDKPlugin: CursorSDKPlugin | null = null;
+  private openAIAgentsPlugin: OpenAIAgentsPlugin | null = null;
   private googleGenAIPlugin: GoogleGenAIPlugin | null = null;
   private huggingFacePlugin: HuggingFacePlugin | null = null;
   private openRouterPlugin: OpenRouterPlugin | null = null;
@@ -81,6 +65,7 @@ export class BraintrustPlugin extends BasePlugin {
   private groqPlugin: GroqPlugin | null = null;
   private genkitPlugin: GenkitPlugin | null = null;
   private gitHubCopilotPlugin: GitHubCopilotPlugin | null = null;
+  private fluePlugin: FluePlugin | null = null;
 
   constructor(config: BraintrustPluginConfig = {}) {
     super();
@@ -123,6 +108,12 @@ export class BraintrustPlugin extends BasePlugin {
     if (integrations.cursorSDK !== false && integrations.cursor !== false) {
       this.cursorSDKPlugin = new CursorSDKPlugin();
       this.cursorSDKPlugin.enable();
+    }
+
+    // Enable OpenAI Agents SDK integration (default: true)
+    if (integrations.openAIAgents !== false) {
+      this.openAIAgentsPlugin = new OpenAIAgentsPlugin();
+      this.openAIAgentsPlugin.enable();
     }
 
     // Enable Google GenAI integration (default: true)
@@ -177,6 +168,11 @@ export class BraintrustPlugin extends BasePlugin {
       this.gitHubCopilotPlugin = new GitHubCopilotPlugin();
       this.gitHubCopilotPlugin.enable();
     }
+
+    if (getIntegrationConfig(integrations, "flue") !== false) {
+      this.fluePlugin = new FluePlugin();
+      this.fluePlugin.enable();
+    }
   }
 
   protected onDisable(): void {
@@ -208,6 +204,11 @@ export class BraintrustPlugin extends BasePlugin {
     if (this.cursorSDKPlugin) {
       this.cursorSDKPlugin.disable();
       this.cursorSDKPlugin = null;
+    }
+
+    if (this.openAIAgentsPlugin) {
+      this.openAIAgentsPlugin.disable();
+      this.openAIAgentsPlugin = null;
     }
 
     if (this.googleGenAIPlugin) {
@@ -258,6 +259,11 @@ export class BraintrustPlugin extends BasePlugin {
     if (this.gitHubCopilotPlugin) {
       this.gitHubCopilotPlugin.disable();
       this.gitHubCopilotPlugin = null;
+    }
+
+    if (this.fluePlugin) {
+      this.fluePlugin.disable();
+      this.fluePlugin = null;
     }
   }
 }

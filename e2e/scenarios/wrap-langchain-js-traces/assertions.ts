@@ -1,192 +1,6 @@
 import { expect } from "vitest";
-import { normalizeForSnapshot, type Json } from "../../helpers/normalize";
-import type {
-  CapturedLogEvent,
-  CapturedLogPayload,
-} from "../../helpers/mock-braintrust-server";
+import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
 import { findChildSpans, findLatestSpan } from "../../helpers/trace-selectors";
-import {
-  payloadRowsForRootSpan,
-  summarizeWrapperContract,
-} from "../../helpers/wrapper-contract";
-
-/**
- * Normalizes LangChain payload rows to make snapshots deterministic by
- * replacing non-deterministic LLM output content and token counts with
- * stable placeholders.
- */
-function normalizeLangchainPayloads(payloadRows: unknown[]): unknown[] {
-  return payloadRows.map((payload) => {
-    if (!payload || typeof payload !== "object") {
-      return payload;
-    }
-
-    const row = structuredClone(payload) as Record<string, unknown>;
-
-    if (row.metrics && typeof row.metrics === "object") {
-      const metrics = row.metrics as Record<string, unknown>;
-      for (const key of Object.keys(metrics)) {
-        if (key.includes("token") && typeof metrics[key] === "number") {
-          metrics[key] = "<number>";
-        }
-        if (key === "time_to_first_token") {
-          metrics[key] = 0;
-        }
-      }
-    }
-
-    if (row.output && typeof row.output === "object") {
-      normalizeOutputObject(row.output as Record<string, unknown>);
-    }
-
-    normalizeToolCallIds(row);
-    normalizeLangchainVersions(row);
-
-    return row;
-  });
-}
-
-function normalizeOutputObject(obj: Record<string, unknown>): void {
-  if (obj.llmOutput && typeof obj.llmOutput === "object") {
-    const llmOutput = obj.llmOutput as Record<string, unknown>;
-    if (llmOutput.tokenUsage && typeof llmOutput.tokenUsage === "object") {
-      const tokenUsage = llmOutput.tokenUsage as Record<string, unknown>;
-      for (const key of Object.keys(tokenUsage)) {
-        tokenUsage[key] = "<number>";
-      }
-    }
-  }
-
-  if (Array.isArray(obj.generations)) {
-    for (const batch of obj.generations) {
-      if (!Array.isArray(batch)) continue;
-      for (const generation of batch) {
-        if (!generation || typeof generation !== "object") continue;
-        const normalizedGeneration = generation as Record<string, unknown>;
-        if (typeof normalizedGeneration.text === "string") {
-          normalizedGeneration.text = "<llm-response>";
-        }
-        if (
-          normalizedGeneration.message &&
-          typeof normalizedGeneration.message === "object"
-        ) {
-          normalizeMessageObject(
-            normalizedGeneration.message as Record<string, unknown>,
-          );
-        }
-      }
-    }
-  }
-}
-
-function normalizeMessageObject(message: Record<string, unknown>): void {
-  const kwargs = message.kwargs as Record<string, unknown> | undefined;
-  if (!kwargs) return;
-
-  if (typeof kwargs.content === "string" && kwargs.content !== "") {
-    kwargs.content = "<llm-response>";
-  }
-
-  normalizeTokenCounts(kwargs.usage_metadata);
-  if (
-    kwargs.response_metadata &&
-    typeof kwargs.response_metadata === "object"
-  ) {
-    const responseMetadata = kwargs.response_metadata as Record<
-      string,
-      unknown
-    >;
-    normalizeTokenCounts(responseMetadata.tokenUsage);
-    normalizeTokenCounts(responseMetadata.usage);
-  }
-}
-
-function normalizeTokenCounts(obj: unknown): void {
-  if (!obj || typeof obj !== "object") return;
-  const record = obj as Record<string, unknown>;
-  for (const [key, value] of Object.entries(record)) {
-    if (typeof value === "number") {
-      record[key] = "<number>";
-    } else if (typeof value === "object" && value !== null) {
-      normalizeTokenCounts(value);
-    }
-  }
-}
-
-function normalizeToolCallIds(obj: unknown): void {
-  if (!obj || typeof obj !== "object") return;
-
-  if (Array.isArray(obj)) {
-    for (const item of obj) {
-      normalizeToolCallIds(item);
-    }
-    return;
-  }
-
-  const record = obj as Record<string, unknown>;
-  for (const [key, value] of Object.entries(record)) {
-    if (
-      (key === "tool_call_id" || key === "id") &&
-      typeof value === "string" &&
-      value.startsWith("call_")
-    ) {
-      record[key] = "<tool_call_id>";
-    } else if (typeof value === "object" && value !== null) {
-      normalizeToolCallIds(value);
-    }
-  }
-}
-
-// Fields that older @langchain/openai included in the ls_* metadata block but
-// newer versions removed. Normalize them out so the snapshot is stable across
-// both locked and canary (latest) langchain versions.
-const LANGCHAIN_LS_VOLATILE_KEYS = new Set([
-  "max_tokens",
-  "model",
-  "stream",
-  "stream_options",
-  "temperature",
-]);
-
-function normalizeLangchainVersions(obj: unknown): void {
-  if (!obj || typeof obj !== "object") return;
-
-  if (Array.isArray(obj)) {
-    for (const item of obj) {
-      normalizeLangchainVersions(item);
-    }
-    return;
-  }
-
-  const record = obj as Record<string, unknown>;
-  if (
-    record.versions &&
-    typeof record.versions === "object" &&
-    !Array.isArray(record.versions)
-  ) {
-    const versions = record.versions as Record<string, unknown>;
-    for (const key of Object.keys(versions)) {
-      if (key.startsWith("@langchain/") && typeof versions[key] === "string") {
-        versions[key] = "<langchain-version>";
-      }
-    }
-  }
-
-  // If this object is the ls_* metadata block (identified by the presence of
-  // any `ls_` key), remove volatile keys that newer langchain drops.
-  const hasLsKey = Object.keys(record).some((k) => k.startsWith("ls_"));
-  if (hasLsKey) {
-    for (const key of LANGCHAIN_LS_VOLATILE_KEYS) {
-      delete record[key];
-    }
-  }
-
-  for (const value of Object.values(record)) {
-    if (typeof value === "object" && value !== null) {
-      normalizeLangchainVersions(value);
-    }
-  }
-}
 
 function findNamedChildSpan(
   capturedEvents: CapturedLogEvent[],
@@ -205,10 +19,9 @@ function findNamedChildSpan(
 
 export function assertLangchainTraces(options: {
   capturedEvents: CapturedLogEvent[];
-  payloads: CapturedLogPayload[];
   rootName: string;
   scenarioName: string;
-}): { payloadSummary: Json; spanSummary: Json } {
+}): CapturedLogEvent[] {
   const root = findLatestSpan(options.capturedEvents, options.rootName);
   const invokeOperation = findLatestSpan(
     options.capturedEvents,
@@ -260,10 +73,10 @@ export function assertLangchainTraces(options: {
   expect(invokeSpan).toBeDefined();
   expect(invokeSpan?.span.type).toBe("llm");
 
-  const chainChildren = options.capturedEvents.filter(
-    (event) =>
-      event.span.parentIds.includes(chainOperation?.span.id ?? "") &&
-      event.span.id !== chainOperation?.span.id,
+  const chainChildren = findChildSpans(
+    options.capturedEvents,
+    "RunnableSequence",
+    chainOperation?.span.id,
   );
   expect(chainChildren.length).toBeGreaterThanOrEqual(1);
 
@@ -288,35 +101,12 @@ export function assertLangchainTraces(options: {
   const toolOutputStr = JSON.stringify(toolSpan?.output ?? {});
   expect(toolOutputStr).toContain("get_weather");
 
-  const toolResultSpans = options.capturedEvents.filter(
-    (event) =>
-      event.span.name === "ChatOpenAI" &&
-      event.span.parentIds.includes(toolResultOperation?.span.id ?? ""),
+  const toolResultSpans = findChildSpans(
+    options.capturedEvents,
+    "ChatOpenAI",
+    toolResultOperation?.span.id,
   );
   expect(toolResultSpans.length).toBeGreaterThanOrEqual(2);
 
-  return {
-    spanSummary: normalizeForSnapshot(
-      [
-        root,
-        invokeOperation,
-        invokeSpan,
-        chainOperation,
-        ...chainChildren,
-        streamOperation,
-        streamSpan,
-        toolOperation,
-        toolSpan,
-        toolResultOperation,
-        ...toolResultSpans,
-      ].map((event) =>
-        summarizeWrapperContract(event!, ["model", "operation", "scenario"]),
-      ) as Json,
-    ),
-    payloadSummary: normalizeForSnapshot(
-      normalizeLangchainPayloads(
-        payloadRowsForRootSpan(options.payloads, root?.span.id),
-      ) as Json,
-    ),
-  };
+  return options.capturedEvents;
 }

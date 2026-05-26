@@ -4,7 +4,6 @@ import {
   readInstalledPackageVersion,
   resolveScenarioDir,
 } from "../../helpers/scenario-harness";
-import { cassetteTagsFor } from "../../helpers/tags";
 import { defineOpenRouterAgentTraceAssertions } from "./assertions";
 
 const originalScenarioDir = resolveScenarioDir(import.meta.url);
@@ -18,9 +17,7 @@ const openrouterAgentVersion = await readInstalledPackageVersion(
 const OPENROUTER_AGENT_VARIANT_KEY = "openrouter-agent-current";
 const TIMEOUT_MS = 90_000;
 
-const tags = cassetteTagsFor(import.meta.url, OPENROUTER_AGENT_VARIANT_KEY);
-
-describe(`openrouter agent ${openrouterAgentVersion}`, { tags }, () => {
+describe(`openrouter agent ${openrouterAgentVersion}`, () => {
   defineOpenRouterAgentTraceAssertions({
     name: "wrapped instrumentation",
     runScenario: async ({ runScenarioDir }) => {

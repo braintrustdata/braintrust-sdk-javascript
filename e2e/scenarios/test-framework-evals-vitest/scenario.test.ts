@@ -1,22 +1,12 @@
 import { expect, test } from "vitest";
-import {
-  formatJsonFileSnapshot,
-  matchFileSnapshot,
-  resolveFileSnapshotPath,
-} from "../../helpers/file-snapshot";
-import type { Json } from "../../helpers/normalize";
+import { resolveFileSnapshotPath } from "../../helpers/file-snapshot";
 import {
   prepareScenarioDir,
-  readInstalledPackageVersion,
   resolveScenarioDir,
   withScenarioHarness,
 } from "../../helpers/scenario-harness";
-import { E2E_TAGS } from "../../helpers/tags";
+import { matchSpanTreeSnapshot } from "../../helpers/span-tree";
 import { findLatestSpan } from "../../helpers/trace-selectors";
-import {
-  payloadRowsForTestRunId,
-  summarizeWrapperContract,
-} from "../../helpers/wrapper-contract";
 
 const scenarioDir = await prepareScenarioDir({
   scenarioDir: resolveScenarioDir(import.meta.url),
@@ -38,12 +28,11 @@ for (const scenario of scenarios) {
   test(
     `test-framework-evals-vitest captures wrapped Vitest task spans (${scenario.label})`,
     {
-      tags: [E2E_TAGS.hermetic],
       timeout: TIMEOUT_MS,
     },
     async () => {
       await withScenarioHarness(
-        async ({ payloads, runScenarioDir, testRunEvents, testRunId }) => {
+        async ({ runScenarioDir, testRunEvents, testRunId }) => {
           await runScenarioDir({
             entry: scenario.entry,
             scenarioDir,
@@ -112,35 +101,11 @@ for (const scenario of scenarios) {
             pass: 0,
           });
 
-          await matchFileSnapshot(
-            formatJsonFileSnapshot(
-              [
-                simplePass,
-                configured,
-                concurrentAlpha,
-                concurrentBeta,
-                expectedFailure,
-              ].map((event) =>
-                summarizeWrapperContract(event!, [
-                  "case",
-                  "scenario",
-                  "testRunId",
-                ]),
-              ) as Json,
-            ),
+          await matchSpanTreeSnapshot(
+            capturedEvents,
             resolveFileSnapshotPath(
               import.meta.url,
-              `${scenario.label}.span-events.json`,
-            ),
-          );
-
-          await matchFileSnapshot(
-            formatJsonFileSnapshot(
-              payloadRowsForTestRunId(payloads(), testRunId) as Json,
-            ),
-            resolveFileSnapshotPath(
-              import.meta.url,
-              `${scenario.label}.log-payloads.json`,
+              `${scenario.label}.span-tree.json`,
             ),
           );
         },

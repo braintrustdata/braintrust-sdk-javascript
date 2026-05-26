@@ -143,9 +143,12 @@ jobs:
           path: js/artifacts/*.tgz
           retention-days: 1
 
-  e2e-hermetic:
+  e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      BRAINTRUST_API_KEY: ${{ secrets.BRAINTRUST_API_KEY }}
+      BRAINTRUST_E2E_PROJECT_NAME: ${{ vars.BRAINTRUST_E2E_PROJECT_NAME }}
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - uses: denoland/setup-deno@667a34cdef165d8d2b2e98dde39547c9daac7282 # v2.0.4
@@ -156,10 +159,33 @@ jobs:
           node-version-file: .tool-versions
       - name: Setup pnpm
         uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
+      - name: Prepare e2e run context directory
+        id: run_context
+        shell: bash
+        run: |
+          RUN_CONTEXT_DIR="$(mktemp -d)"
+          echo "dir=$RUN_CONTEXT_DIR" >> "$GITHUB_OUTPUT"
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      - name: Run hermetic e2e tests
-        run: pnpm run test:e2e:hermetic
+      - name: Run e2e tests
+        env:
+          BRAINTRUST_E2E_RUN_CONTEXT_DIR: ${{ steps.run_context.outputs.dir }}
+        run: pnpm run test:e2e
+      - name: Build e2e Braintrust links summary
+        if: ${{ always() && steps.run_context.outputs.dir != '' }}
+        shell: bash
+        env:
+          BRAINTRUST_E2E_RUN_CONTEXT_DIR: ${{ steps.run_context.outputs.dir }}
+          BRAINTRUST_ORG_NAME: ${{ vars.BRAINTRUST_ORG_NAME }}
+          GITHUB_HEAD_REF: ${{ github.head_ref }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+          GITHUB_SERVER_URL: ${{ github.server_url }}
+        run: |
+          SUMMARY_PATH="$RUNNER_TEMP/e2e-braintrust-links-summary.md"
+          node e2e/scripts/build-pr-e2e-links-comment.mjs --output "$SUMMARY_PATH"
+          cat "$SUMMARY_PATH" >> "$GITHUB_STEP_SUMMARY"
 
   js-api-compatibility:
     runs-on: ubuntu-latest
@@ -458,7 +484,7 @@ jobs:
       - ensure-pinned-actions
       - js-test
       - js-build
-      - e2e-hermetic
+      - e2e
       - js-smoke-discover
       - js-smoke-test
       - temporal-js
@@ -490,7 +516,7 @@ jobs:
           check_result "ensure-pinned-actions" "${{ needs.ensure-pinned-actions.result }}"
           check_result "js-test" "${{ needs.js-test.result }}"
           check_result "js-build" "${{ needs.js-build.result }}"
-          check_result "e2e-hermetic" "${{ needs.e2e-hermetic.result }}"
+          check_result "e2e" "${{ needs.e2e.result }}"
           check_result "js-smoke-discover" "${{ needs.js-smoke-discover.result }}"
           check_result "js-smoke-test" "${{ needs.js-smoke-test.result }}"
           check_result "temporal-js" "${{ needs.temporal-js.result }}"

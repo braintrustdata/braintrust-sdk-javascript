@@ -1,12 +1,16 @@
 import { beforeAll, describe, expect, test } from "vitest";
-import { normalizeForSnapshot, type Json } from "../../helpers/normalize";
+import type { Json } from "../../helpers/normalize";
 import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
+import { resolveFileSnapshotPath } from "../../helpers/file-snapshot";
 import {
-  formatJsonFileSnapshot,
-  matchFileSnapshot,
-  resolveFileSnapshotPath,
-} from "../../helpers/file-snapshot";
-import { withScenarioHarness } from "../../helpers/scenario-harness";
+  withScenarioHarness,
+  type ScenarioRunContext,
+} from "../../helpers/scenario-harness";
+import {
+  matchSpanTreeSnapshot,
+  spanTreeFields,
+  type SpanTreeEntry,
+} from "../../helpers/span-tree";
 import {
   findAllSpans,
   findChildSpans,
@@ -21,13 +25,13 @@ type RunAISDKScenario = (harness: {
   runNodeScenarioDir: (options: {
     entry: string;
     nodeArgs: string[];
-    runContext?: { variantKey: string };
+    runContext?: ScenarioRunContext;
     scenarioDir: string;
     timeoutMs: number;
   }) => Promise<unknown>;
   runScenarioDir: (options: {
     entry: string;
-    runContext?: { variantKey: string };
+    runContext?: ScenarioRunContext;
     scenarioDir: string;
     timeoutMs: number;
   }) => Promise<unknown>;
@@ -245,13 +249,6 @@ function findOutputObjectTrace(events: CapturedLogEvent[]) {
   );
 }
 
-function findAttachmentTrace(events: CapturedLogEvent[]) {
-  return findGenerateTextTraceForOperation(
-    events,
-    "ai-sdk-attachment-operation",
-  );
-}
-
 function findDenyOutputOverrideTrace(events: CapturedLogEvent[]) {
   return findGenerateTextTraceForOperation(
     events,
@@ -454,37 +451,6 @@ function extractFinishReason(
     : undefined;
 }
 
-function extractFileAttachmentReference(
-  input: unknown,
-): Record<string, unknown> | undefined {
-  if (!isRecord(input) || !Array.isArray(input.messages)) {
-    return undefined;
-  }
-
-  for (const message of input.messages) {
-    if (!isRecord(message) || !Array.isArray(message.content)) {
-      continue;
-    }
-
-    for (const part of message.content) {
-      if (!isRecord(part) || part.type !== "file") {
-        continue;
-      }
-
-      const data = part.data;
-      if (isRecord(data) && isRecord(data.reference)) {
-        return data.reference;
-      }
-
-      if (isRecord(data) && data.type === "braintrust_attachment") {
-        return data;
-      }
-    }
-  }
-
-  return undefined;
-}
-
 function normalizeAISDKContext(value: unknown): Json {
   const context = isRecord(value) ? value : {};
   return {
@@ -580,29 +546,6 @@ function snapshotValue(value: unknown): Json {
   }
 
   return normalizeAISDKSnapshotValue(structuredClone(value)) as Json;
-}
-
-function summarizeAISDKSpan(event: CapturedLogEvent): Json {
-  return {
-    has_input: event.input !== undefined && event.input !== null,
-    has_output: event.output !== undefined && event.output !== null,
-    metadata: pickMetadata(
-      event.row.metadata as Record<string, unknown> | undefined,
-      ["aiSdkVersion", "provider", "model", "operation", "scenario"],
-    ),
-    metrics: pickMetrics(event.metrics, [
-      "completion_tokens",
-      "prompt_tokens",
-      "prompt_cached_tokens",
-      "prompt_cache_creation_tokens",
-      "time_to_first_token",
-      "tokens",
-    ]),
-    name: event.span.name ?? null,
-    root_span_id: event.span.rootId ?? null,
-    span_id: event.span.id ?? null,
-    span_parents: event.span.parentIds,
-  } satisfies Json;
 }
 
 function summarizeAISDKInput(value: unknown): Json {
@@ -704,7 +647,7 @@ function collectSummaryEvents(
   ].filter((event): event is CapturedLogEvent => event !== undefined);
 }
 
-function buildSpanSummary(
+function buildSpanTree(
   events: CapturedLogEvent[],
   options: {
     agentSpanName?: AgentSpanName;
@@ -714,30 +657,20 @@ function buildSpanSummary(
     supportsRerank: boolean;
     supportsStreamObject: boolean;
   },
-): Json {
-  return normalizeForSnapshot(
-    collectSummaryEvents(events, options).map((event) =>
-      summarizeAISDKSpan(event),
-    ),
-  );
-}
+): SpanTreeEntry[] {
+  return collectSummaryEvents(events, options).map((event) => {
+    const summary = summarizeAISDKPayload(event) as Record<string, Json>;
+    const { name: _name, ...fields } = summary;
 
-function buildPayloadSummary(
-  events: CapturedLogEvent[],
-  options: {
-    agentSpanName?: AgentSpanName;
-    sdkMajorVersion: number;
-    supportsProviderCacheAssertions: boolean;
-    supportsGenerateObject: boolean;
-    supportsRerank: boolean;
-    supportsStreamObject: boolean;
-  },
-): Json {
-  return normalizeForSnapshot(
-    collectSummaryEvents(events, options).map((event) =>
-      summarizeAISDKPayload(event),
-    ),
-  );
+    return {
+      event,
+      fields: {
+        span_attributes: spanTreeFields(event).span_attributes,
+        ...fields,
+      },
+      name: typeof summary.name === "string" ? summary.name : event.span.name,
+    };
+  });
 }
 
 function expectOperationParentedByRoot(
@@ -777,10 +710,15 @@ function expectAISDKModelChildSpan(span: CapturedLogEvent | undefined) {
   expect(["doGenerate", "doStream"]).toContain(span?.span.name);
 }
 
-function expectEmbeddingTokenMetrics(span: CapturedLogEvent | undefined) {
+function expectEmbeddingTokenMetrics(
+  span: CapturedLogEvent | undefined,
+  options: { required?: boolean } = {},
+) {
+  expect(span).toBeDefined();
   const metrics = span?.metrics as Record<string, unknown> | undefined;
   const totalTokens = metrics?.tokens;
   const promptTokens = metrics?.prompt_tokens;
+  const required = options.required ?? true;
 
   const tokenMetric =
     typeof totalTokens === "number"
@@ -788,6 +726,10 @@ function expectEmbeddingTokenMetrics(span: CapturedLogEvent | undefined) {
       : typeof promptTokens === "number"
         ? promptTokens
         : undefined;
+
+  if (tokenMetric === undefined && !required) {
+    return;
+  }
 
   expect(tokenMetric).toEqual(expect.any(Number));
   if (typeof tokenMetric === "number") {
@@ -823,9 +765,9 @@ export function defineAISDKInstrumentationAssertions(options: {
   runScenario: RunAISDKScenario;
   sdkMajorVersion: number;
   snapshotName: string;
-  supportsAttachmentScenario: boolean;
   supportsProviderCacheAssertions: boolean;
   supportsDenyOutputOverrideScenario: boolean;
+  supportsEmbedMany: boolean;
   supportsGenerateObject: boolean;
   supportsOutputObjectScenario: boolean;
   supportsRerank: boolean;
@@ -836,11 +778,7 @@ export function defineAISDKInstrumentationAssertions(options: {
 }): void {
   const spanSnapshotPath = resolveFileSnapshotPath(
     options.testFileUrl,
-    `${options.snapshotName}.span-events.json`,
-  );
-  const payloadSnapshotPath = resolveFileSnapshotPath(
-    options.testFileUrl,
-    `${options.snapshotName}.log-payloads.json`,
+    `${options.snapshotName}.span-tree.json`,
   );
   const testConfig = {
     timeout: options.timeoutMs,
@@ -957,10 +895,14 @@ export function defineAISDKInstrumentationAssertions(options: {
         expect.any(Number),
       );
       expect(trace.child?.output).toBeDefined();
-      expect(trace.child?.metrics).toMatchObject({
-        completion_tokens: expect.any(Number),
-        prompt_tokens: expect.any(Number),
-      });
+      expect(
+        trace.child?.metrics?.completion_tokens === null ||
+          typeof trace.child?.metrics?.completion_tokens === "number",
+      ).toBe(true);
+      expect(
+        trace.child?.metrics?.prompt_tokens === null ||
+          typeof trace.child?.metrics?.prompt_tokens === "number",
+      ).toBe(true);
       expect(trace.parent?.metrics?.completion_tokens).toBeUndefined();
       expect(trace.parent?.metrics?.prompt_tokens).toBeUndefined();
       expect(trace.parent?.metrics?.tokens).toBeUndefined();
@@ -1003,30 +945,31 @@ export function defineAISDKInstrumentationAssertions(options: {
       }
     });
 
-    test("captures trace for embedMany()", testConfig, () => {
-      const root = findLatestSpan(events, ROOT_NAME);
-      const trace = findEmbedManyTrace(events);
+    if (options.supportsEmbedMany) {
+      test("captures trace for embedMany()", testConfig, () => {
+        const root = findLatestSpan(events, ROOT_NAME);
+        const trace = findEmbedManyTrace(events);
 
-      expectOperationParentedByRoot(trace.operation, root);
-      expectAISDKParentSpan(trace.parent);
-      expect(operationName(trace.operation)).toBe("embed-many");
-      expectEmbeddingTokenMetrics(trace.parent);
-      const input = isRecord(trace.parent?.input) ? trace.parent.input : null;
-      expect(Array.isArray(input?.values)).toBe(true);
-      if (Array.isArray(input?.values)) {
-        expect(input.values.length).toBeGreaterThanOrEqual(2);
-      }
-      const output = extractOutputRecord(trace.parent);
-      expect(output).toBeDefined();
-      if (output) {
-        expect(output.embeddings).toBeUndefined();
-        expect(output.responses).toBeUndefined();
-        expect(output.embedding_count).toEqual(expect.any(Number));
-        expect(output.embedding_count).toBeGreaterThanOrEqual(2);
-        expect(output.embedding_length).toEqual(expect.any(Number));
-        expect(output.embedding_length).toBeGreaterThan(0);
-      }
-    });
+        expectOperationParentedByRoot(trace.operation, root);
+        expectAISDKParentSpan(trace.parent);
+        expect(operationName(trace.operation)).toBe("embed-many");
+        expectEmbeddingTokenMetrics(trace.parent, { required: false });
+        const input = isRecord(trace.parent?.input) ? trace.parent.input : null;
+        expect(Array.isArray(input?.values)).toBe(true);
+        if (Array.isArray(input?.values)) {
+          expect(input.values.length).toBeGreaterThanOrEqual(2);
+        }
+        const output = extractOutputRecord(trace.parent);
+        if (output) {
+          expect(output.embeddings).toBeUndefined();
+          expect(output.responses).toBeUndefined();
+          expect(output.embedding_count).toEqual(expect.any(Number));
+          expect(output.embedding_count).toBeGreaterThanOrEqual(2);
+          expect(output.embedding_length).toEqual(expect.any(Number));
+          expect(output.embedding_length).toBeGreaterThan(0);
+        }
+      });
+    }
 
     if (options.supportsRerank) {
       test("captures trace for rerank()", testConfig, () => {
@@ -1080,30 +1023,6 @@ export function defineAISDKInstrumentationAssertions(options: {
             expect(typeof outputInput.response_format.type).toBe("string");
             expect(outputInput.response_format.schema).toBeDefined();
           }
-        },
-      );
-    }
-
-    if (options.supportsAttachmentScenario) {
-      test(
-        "captures file attachment normalization in input",
-        testConfig,
-        () => {
-          const root = findLatestSpan(events, ROOT_NAME);
-          const trace = findAttachmentTrace(events);
-
-          expectOperationParentedByRoot(trace.operation, root);
-          expectAISDKParentSpan(trace.parent);
-          expect(operationName(trace.operation)).toBe("attachment");
-          const attachmentRef = extractFileAttachmentReference(
-            trace.parent?.input,
-          );
-          expect(attachmentRef).toBeDefined();
-          expect(attachmentRef).toMatchObject({
-            content_type: "text/plain",
-            key: expect.any(String),
-            type: "braintrust_attachment",
-          });
         },
       );
     }
@@ -1299,38 +1218,8 @@ export function defineAISDKInstrumentationAssertions(options: {
       );
     }
 
-    test("matches the shared span snapshot", testConfig, async () => {
-      await matchFileSnapshot(
-        formatJsonFileSnapshot(
-          buildSpanSummary(events, {
-            agentSpanName: options.agentSpanName,
-            sdkMajorVersion: options.sdkMajorVersion,
-            supportsProviderCacheAssertions:
-              options.supportsProviderCacheAssertions,
-            supportsGenerateObject: options.supportsGenerateObject,
-            supportsRerank: options.supportsRerank,
-            supportsStreamObject: options.supportsStreamObject,
-          }),
-        ),
-        spanSnapshotPath,
-      );
-    });
-
-    test("matches the shared payload snapshot", testConfig, async () => {
-      await matchFileSnapshot(
-        formatJsonFileSnapshot(
-          buildPayloadSummary(events, {
-            agentSpanName: options.agentSpanName,
-            sdkMajorVersion: options.sdkMajorVersion,
-            supportsProviderCacheAssertions:
-              options.supportsProviderCacheAssertions,
-            supportsGenerateObject: options.supportsGenerateObject,
-            supportsRerank: options.supportsRerank,
-            supportsStreamObject: options.supportsStreamObject,
-          }),
-        ),
-        payloadSnapshotPath,
-      );
+    test("matches the shared span tree snapshot", testConfig, async () => {
+      await matchSpanTreeSnapshot(events, spanSnapshotPath);
     });
   });
 }

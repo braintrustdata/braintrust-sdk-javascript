@@ -4,13 +4,17 @@ import {
   matchFileSnapshot,
   resolveFileSnapshotPath,
 } from "../../helpers/file-snapshot";
+import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
 import {
   prepareScenarioDir,
   readInstalledPackageVersion,
   resolveScenarioDir,
   withScenarioHarness,
 } from "../../helpers/scenario-harness";
-import { cassetteTagsFor } from "../../helpers/tags";
+import {
+  matchSpanTreeSnapshot,
+  type SpanTreeEntry,
+} from "../../helpers/span-tree";
 import {
   extractOtelSpans,
   summarizeRequest,
@@ -48,7 +52,6 @@ for (const scenario of scenarios) {
     `ai-sdk-otel-export sends AI SDK telemetry spans to Braintrust via BraintrustExporter (ai ${scenario.version})`,
     {
       timeout: TIMEOUT_MS,
-      tags: cassetteTagsFor(import.meta.url, variantKey),
     },
     async () => {
       await withScenarioHarness(
@@ -126,24 +129,65 @@ for (const scenario of scenarios) {
           );
           expect(nonAIRootSpans).toHaveLength(0);
 
-          // Snapshot the span names and key structure (not full payloads, since
-          // response content and token counts are non-deterministic).
-          // Sort for determinism — OTel spans arrive in non-deterministic order.
-          const spanSummary = allSpans
-            .map((span) => ({
-              hasParent: !!span.parentSpanId,
-              name: span.name,
-            }))
-            .sort((a, b) =>
-              a.name !== b.name
-                ? a.name.localeCompare(b.name)
-                : Number(a.hasParent) - Number(b.hasParent),
+          const spanTreeEntries = allSpans.map((span, index): SpanTreeEntry => {
+            const spanId = span.spanId ?? `otel-span-${index}`;
+            const attributes = Object.fromEntries(
+              Object.entries(span.attributes)
+                .map(([key, value]) => [
+                  key,
+                  key === "ai.response.avgOutputTokensPerSecond" ||
+                  key === "ai.response.msToFinish" ||
+                  key === "ai.response.msToFirstChunk"
+                    ? 0
+                    : value,
+                ])
+                .sort(([left], [right]) => left.localeCompare(right)),
             );
-          await matchFileSnapshot(
-            formatJsonFileSnapshot(spanSummary),
+            const event: CapturedLogEvent = {
+              apiVersion: 0,
+              isMerge: false,
+              row: {
+                span_attributes: {
+                  name: span.name,
+                },
+                span_id: spanId,
+                span_parents: span.parentSpanId ? [span.parentSpanId] : [],
+                root_span_id: span.traceId,
+              },
+              span: {
+                ended: true,
+                id: spanId,
+                name: span.name,
+                parentIds: span.parentSpanId ? [span.parentSpanId] : [],
+                rootId: span.traceId,
+                started: true,
+              },
+            };
+
+            return {
+              event,
+              fields: {
+                span_attributes: attributes,
+              },
+              name: span.name,
+            };
+          });
+          spanTreeEntries.sort((left, right) => {
+            const leftAttributes = JSON.stringify(left.fields?.span_attributes);
+            const rightAttributes = JSON.stringify(
+              right.fields?.span_attributes,
+            );
+            return (
+              (left.name ?? "").localeCompare(right.name ?? "") ||
+              leftAttributes.localeCompare(rightAttributes)
+            );
+          });
+
+          await matchSpanTreeSnapshot(
+            spanTreeEntries,
             resolveFileSnapshotPath(
               import.meta.url,
-              `${scenario.dependencyName}.otel-spans.json`,
+              `${scenario.dependencyName}.span-tree.json`,
             ),
           );
 

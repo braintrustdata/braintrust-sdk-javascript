@@ -1,31 +1,30 @@
 import { expect, test } from "vitest";
-import { normalizeForSnapshot, type Json } from "../../helpers/normalize";
+import { resolveFileSnapshotPath } from "../../helpers/file-snapshot";
 import {
   prepareScenarioDir,
   resolveScenarioDir,
   withScenarioHarness,
 } from "../../helpers/scenario-harness";
-import { E2E_TAGS } from "../../helpers/tags";
+import { matchSpanTreeSnapshot } from "../../helpers/span-tree";
 import { findLatestSpan } from "../../helpers/trace-selectors";
-import {
-  payloadRowsForTestRunId,
-  summarizeWrapperContract,
-} from "../../helpers/wrapper-contract";
 
 const scenarioDir = await prepareScenarioDir({
   scenarioDir: resolveScenarioDir(import.meta.url),
 });
 const TIMEOUT_MS = 90_000;
+const spanTreeSnapshotPath = resolveFileSnapshotPath(
+  import.meta.url,
+  "span-tree.json",
+);
 
 test(
   "test-framework-evals-node captures node:test task spans",
   {
-    tags: [E2E_TAGS.hermetic],
     timeout: TIMEOUT_MS,
   },
   async () => {
     await withScenarioHarness(
-      async ({ payloads, runScenarioDir, testRunEvents, testRunId }) => {
+      async ({ runScenarioDir, testRunEvents, testRunId }) => {
         await runScenarioDir({ scenarioDir, timeoutMs: TIMEOUT_MS });
 
         const capturedEvents = testRunEvents();
@@ -81,24 +80,7 @@ test(
 
         expect(nameOverride?.span.name).toBe("node-test overridden name");
 
-        expect(
-          normalizeForSnapshot(
-            [basicEval, configuredEval, extraOutput, nameOverride].map(
-              (event) =>
-                summarizeWrapperContract(event!, [
-                  "case",
-                  "scenario",
-                  "testRunId",
-                ]),
-            ) as Json,
-          ),
-        ).toMatchSnapshot("span-events");
-
-        expect(
-          normalizeForSnapshot(
-            payloadRowsForTestRunId(payloads(), testRunId) as Json,
-          ),
-        ).toMatchSnapshot("log-payloads");
+        await matchSpanTreeSnapshot(capturedEvents, spanTreeSnapshotPath);
       },
     );
   },

@@ -29,21 +29,8 @@ import {
 import { extname, join, sep } from "path";
 import { readFileSync } from "fs";
 import moduleDetailsFromPath from "module-details-from-path";
-import { openaiConfigs } from "../configs/openai";
-import { anthropicConfigs } from "../configs/anthropic";
-import { aiSDKConfigs } from "../configs/ai-sdk";
-import { claudeAgentSDKConfigs } from "../configs/claude-agent-sdk";
-import { cursorSDKConfigs } from "../configs/cursor-sdk";
-import { googleGenAIConfigs } from "../configs/google-genai";
-import { huggingFaceConfigs } from "../configs/huggingface";
-import { openRouterAgentConfigs } from "../configs/openrouter-agent";
-import { openRouterConfigs } from "../configs/openrouter";
-import { mistralConfigs } from "../configs/mistral";
-import { cohereConfigs } from "../configs/cohere";
-import { groqConfigs } from "../configs/groq";
-import { genkitConfigs } from "../configs/genkit";
-import { gitHubCopilotConfigs } from "../configs/github-copilot";
-import { type BundlerPluginOptions } from "./plugin";
+import { getDefaultInstrumentationConfigs } from "../configs/all";
+import { type LegacyBundlerPluginOptions } from "./plugin";
 
 /**
  * Helper function to get module version from package.json
@@ -68,24 +55,12 @@ const matcherCache = new Map<string, InstrumentationMatcher>();
 /**
  * Get or create a matcher instance, caching by config hash
  */
-function getMatcher(options: BundlerPluginOptions): InstrumentationMatcher {
-  const allInstrumentations = [
-    ...openaiConfigs,
-    ...anthropicConfigs,
-    ...aiSDKConfigs,
-    ...claudeAgentSDKConfigs,
-    ...cursorSDKConfigs,
-    ...googleGenAIConfigs,
-    ...huggingFaceConfigs,
-    ...openRouterConfigs,
-    ...openRouterAgentConfigs,
-    ...mistralConfigs,
-    ...cohereConfigs,
-    ...groqConfigs,
-    ...genkitConfigs,
-    ...gitHubCopilotConfigs,
-    ...(options.instrumentations ?? []),
-  ];
+function getMatcher(
+  options: LegacyBundlerPluginOptions,
+): InstrumentationMatcher {
+  const allInstrumentations = getDefaultInstrumentationConfigs({
+    additionalInstrumentations: options.instrumentations,
+  });
   const dcModule = options.browser ? "dc-browser" : undefined;
   const configHash = JSON.stringify({ allInstrumentations, dcModule });
 
@@ -117,7 +92,7 @@ process.on("exit", () => {
 /**
  * Webpack loader that instruments JavaScript code using code-transformer.
  *
- * Accepts the same options as the webpack plugin (BundlerPluginOptions).
+ * Accepts the same options as the legacy webpack plugin.
  */
 function codeTransformerLoader(
   this: any,
@@ -125,7 +100,7 @@ function codeTransformerLoader(
   inputSourceMap?: any,
 ): void {
   const callback = this.async();
-  const options: BundlerPluginOptions = this.getOptions() ?? {};
+  const options: LegacyBundlerPluginOptions = this.getOptions() ?? {};
   const resourcePath: string = this.resourcePath;
 
   // Skip virtual modules (e.g. Next.js loaders pass query-string URLs with no real path)
@@ -190,7 +165,7 @@ function codeTransformerLoader(
 
 // Attach Options type to the loader function
 namespace codeTransformerLoader {
-  export type Options = BundlerPluginOptions;
+  export type Options = LegacyBundlerPluginOptions;
 }
 
 export = codeTransformerLoader;

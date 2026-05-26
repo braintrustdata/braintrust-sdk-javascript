@@ -6,8 +6,9 @@ import {
 } from "../../helpers/scenario-harness";
 import { defineCursorSDKInstrumentationAssertions } from "./assertions";
 
+const originalScenarioDir = resolveScenarioDir(import.meta.url);
 const scenarioDir = await prepareScenarioDir({
-  scenarioDir: resolveScenarioDir(import.meta.url),
+  scenarioDir: originalScenarioDir,
 });
 const TIMEOUT_MS = 240_000;
 const cursorSDKScenario = {
@@ -26,7 +27,10 @@ describe("wrapped instrumentation", () => {
     runScenario: async ({ runScenarioDir }) => {
       await runScenarioDir({
         entry: cursorSDKScenario.wrapperEntry,
-        runContext: { variantKey: cursorSDKScenario.variantKey },
+        runContext: {
+          variantKey: cursorSDKScenario.variantKey,
+          originalScenarioDir,
+        },
         scenarioDir,
         timeoutMs: TIMEOUT_MS,
       });
@@ -44,7 +48,10 @@ describe("auto-hook instrumentation", () => {
       await runNodeScenarioDir({
         entry: cursorSDKScenario.autoEntry,
         nodeArgs: ["--import", "braintrust/hook.mjs"],
-        runContext: { variantKey: cursorSDKScenario.variantKey },
+        runContext: {
+          variantKey: cursorSDKScenario.variantKey,
+          originalScenarioDir,
+        },
         scenarioDir,
         timeoutMs: TIMEOUT_MS,
       });

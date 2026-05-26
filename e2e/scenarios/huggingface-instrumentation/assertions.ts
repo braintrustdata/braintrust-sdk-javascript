@@ -1,20 +1,21 @@
 import { beforeAll, describe, expect, test } from "vitest";
 import { type Json } from "../../helpers/normalize";
 import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
+import { resolveFileSnapshotPath } from "../../helpers/file-snapshot";
 import {
-  formatJsonFileSnapshot,
-  matchFileSnapshot,
-  resolveFileSnapshotPath,
-} from "../../helpers/file-snapshot";
-import { withScenarioHarness } from "../../helpers/scenario-harness";
+  withScenarioHarness,
+  type ScenarioRunContext,
+} from "../../helpers/scenario-harness";
 import {
   findLatestChildSpan,
   findLatestSpan,
 } from "../../helpers/trace-selectors";
 import {
-  payloadRowsForRootSpan,
-  summarizeWrapperContract,
-} from "../../helpers/wrapper-contract";
+  matchSpanTreeSnapshot,
+  spanTreeFields,
+  type SpanTreeEntry,
+  type SpanTreeFields,
+} from "../../helpers/span-tree";
 
 import { ROOT_NAME, SCENARIO_NAME } from "./scenario.impl.mjs";
 
@@ -22,13 +23,13 @@ type RunHuggingFaceScenario = (harness: {
   runNodeScenarioDir: (options: {
     entry: string;
     nodeArgs: string[];
-    runContext?: { variantKey: string };
+    runContext?: ScenarioRunContext;
     scenarioDir: string;
     timeoutMs: number;
   }) => Promise<unknown>;
   runScenarioDir: (options: {
     entry: string;
-    runContext?: { variantKey: string };
+    runContext?: ScenarioRunContext;
     scenarioDir: string;
     timeoutMs: number;
   }) => Promise<unknown>;
@@ -117,34 +118,43 @@ function summarizeTextGenerationOutput(output: Json | undefined): Json {
   } satisfies Json;
 }
 
-function summarizeProviderSpan(event: CapturedLogEvent): Json {
-  const summary = summarizeWrapperContract(event, [
-    "dimensions",
-    "endpointUrl",
-    "finish_reason",
-    "model",
-    "operation",
-    "provider",
-    "scenario",
-  ]) as Record<string, Json>;
+function normalizeEndpointUrl(value: string): string {
+  try {
+    const url = new URL(value);
+    if (url.protocol !== "http:" || url.hostname !== "127.0.0.1") {
+      return value;
+    }
 
-  switch (event.span.name) {
-    case "huggingface.chat_completion":
-    case "huggingface.chat_completion_stream":
-      summary.output = summarizeChatOutput(event.output as Json);
-      break;
-    case "huggingface.text_generation":
-    case "huggingface.text_generation_stream":
-      summary.output = summarizeTextGenerationOutput(event.output as Json);
-      break;
-    case "huggingface.feature_extraction":
-      summary.output = (event.output as Json) ?? null;
-      break;
-    default:
-      break;
+    if (url.pathname.startsWith("/huggingface-router")) {
+      return `https://router.huggingface.co${url.pathname.slice("/huggingface-router".length)}${url.search}${url.hash}`;
+    }
+    if (url.pathname.startsWith("/huggingface")) {
+      return `https://huggingface.co${url.pathname.slice("/huggingface".length)}${url.search}${url.hash}`;
+    }
+  } catch {
+    return value;
   }
 
-  return summary;
+  return value;
+}
+
+function normalizeEndpointUrls(value: Json): Json {
+  if (Array.isArray(value)) {
+    return value.map((entry) => normalizeEndpointUrls(entry as Json));
+  }
+
+  if (!isRecord(value)) {
+    return value;
+  }
+
+  const normalized: Record<string, Json> = {};
+  for (const [key, entry] of Object.entries(value)) {
+    normalized[key] =
+      key === "endpointUrl" && typeof entry === "string"
+        ? normalizeEndpointUrl(entry)
+        : normalizeEndpointUrls(entry as Json);
+  }
+  return normalized;
 }
 
 function normalizeMetrics(value: Json): Json {
@@ -199,24 +209,6 @@ function normalizeModelNames(value: Json): Json {
   return normalized;
 }
 
-function normalizePayloadOutput(row: Json): Json {
-  if (!isRecord(row)) {
-    return row;
-  }
-
-  const normalized =
-    "output" in row
-      ? {
-          ...row,
-          output: normalizeLoggedOutput(row.output, {
-            normalizeFinishReason: true,
-            omitToolCalls: true,
-          }),
-        }
-      : row;
-  return normalizeModelNames(normalized);
-}
-
 function normalizeLoggedOutput(
   output: Json,
   options?: {
@@ -246,7 +238,26 @@ function normalizeLoggedOutput(
   return output;
 }
 
-function buildSpanSummary(events: CapturedLogEvent[]): Json {
+function snapshotFields(event: CapturedLogEvent): SpanTreeFields {
+  const fields = spanTreeFields(event);
+  const output =
+    event.output === undefined
+      ? undefined
+      : normalizeLoggedOutput(event.output as Json, {
+          normalizeFinishReason: true,
+          omitToolCalls: true,
+        });
+
+  return normalizeEndpointUrls(
+    normalizeModelNames({
+      ...fields,
+      metrics: normalizeMetrics(fields.metrics as Json),
+      ...(output === undefined ? {} : { output }),
+    } as Json),
+  ) as SpanTreeFields;
+}
+
+function buildSpanTree(events: CapturedLogEvent[]): SpanTreeEntry[] {
   const root = findLatestSpan(events, ROOT_NAME);
   const chatOperation = findLatestSpan(events, "huggingface-chat-operation");
   const chatStreamOperation = findLatestSpan(
@@ -270,81 +281,61 @@ function buildSpanSummary(events: CapturedLogEvent[]): Json {
     "huggingface-feature-extraction-operation",
   );
 
-  return normalizeModelNames([
-    root ? summarizeWrapperContract(root, ["scenario"]) : null,
+  const relevantEvents = [
+    root,
+    chatOperation,
     chatOperation
-      ? summarizeWrapperContract(chatOperation, ["operation"])
-      : null,
-    chatOperation
-      ? summarizeProviderSpan(
-          findLatestChildSpan(
-            events,
-            "huggingface.chat_completion",
-            chatOperation.span.id,
-          )!,
+      ? findLatestChildSpan(
+          events,
+          "huggingface.chat_completion",
+          chatOperation.span.id,
         )
-      : null,
+      : undefined,
+    chatStreamOperation,
     chatStreamOperation
-      ? summarizeWrapperContract(chatStreamOperation, ["operation"])
-      : null,
-    chatStreamOperation
-      ? summarizeProviderSpan(
-          findLatestChildSpan(
-            events,
-            "huggingface.chat_completion_stream",
-            chatStreamOperation.span.id,
-          )!,
+      ? findLatestChildSpan(
+          events,
+          "huggingface.chat_completion_stream",
+          chatStreamOperation.span.id,
         )
-      : null,
+      : undefined,
+    chatStreamToolCallOperation,
     chatStreamToolCallOperation
-      ? summarizeWrapperContract(chatStreamToolCallOperation, ["operation"])
-      : null,
-    chatStreamToolCallOperation
-      ? summarizeProviderSpan(
-          findLatestChildSpan(
-            events,
-            "huggingface.chat_completion_stream",
-            chatStreamToolCallOperation.span.id,
-          )!,
+      ? findLatestChildSpan(
+          events,
+          "huggingface.chat_completion_stream",
+          chatStreamToolCallOperation.span.id,
         )
-      : null,
+      : undefined,
+    textGenerationOperation,
     textGenerationOperation
-      ? summarizeWrapperContract(textGenerationOperation, ["operation"])
-      : null,
-    textGenerationOperation
-      ? summarizeProviderSpan(
-          findLatestChildSpan(
-            events,
-            "huggingface.text_generation",
-            textGenerationOperation.span.id,
-          )!,
+      ? findLatestChildSpan(
+          events,
+          "huggingface.text_generation",
+          textGenerationOperation.span.id,
         )
-      : null,
+      : undefined,
+    textGenerationStreamOperation,
     textGenerationStreamOperation
-      ? summarizeWrapperContract(textGenerationStreamOperation, ["operation"])
-      : null,
-    textGenerationStreamOperation
-      ? summarizeProviderSpan(
-          findLatestChildSpan(
-            events,
-            "huggingface.text_generation_stream",
-            textGenerationStreamOperation.span.id,
-          )!,
+      ? findLatestChildSpan(
+          events,
+          "huggingface.text_generation_stream",
+          textGenerationStreamOperation.span.id,
         )
-      : null,
+      : undefined,
+    featureExtractionOperation,
     featureExtractionOperation
-      ? summarizeWrapperContract(featureExtractionOperation, ["operation"])
-      : null,
-    featureExtractionOperation
-      ? summarizeProviderSpan(
-          findLatestChildSpan(
-            events,
-            "huggingface.feature_extraction",
-            featureExtractionOperation.span.id,
-          )!,
+      ? findLatestChildSpan(
+          events,
+          "huggingface.feature_extraction",
+          featureExtractionOperation.span.id,
         )
-      : null,
-  ] satisfies Json);
+      : undefined,
+  ];
+
+  return relevantEvents.flatMap((event) =>
+    event ? [{ event, fields: snapshotFields(event) }] : [],
+  );
 }
 
 export function defineHuggingFaceInstrumentationAssertions(options: {
@@ -356,26 +347,16 @@ export function defineHuggingFaceInstrumentationAssertions(options: {
 }): void {
   const spanSnapshotPath = resolveFileSnapshotPath(
     options.testFileUrl,
-    `${options.snapshotName}.span-events.json`,
-  );
-  const payloadSnapshotPath = resolveFileSnapshotPath(
-    options.testFileUrl,
-    `${options.snapshotName}.log-payloads.json`,
+    `${options.snapshotName}.span-tree.json`,
   );
 
   describe(options.name, () => {
     let events: CapturedLogEvent[] = [];
-    let payloadRows: Json = [];
 
     beforeAll(async () => {
       await withScenarioHarness(async (harness) => {
         await options.runScenario(harness);
         events = harness.events();
-
-        const root = findLatestSpan(events, ROOT_NAME);
-        payloadRows = payloadRowsForRootSpan(harness.payloads(), root?.span.id)
-          .map((row) => normalizePayloadOutput(normalizeMetrics(row as Json)))
-          .filter((row) => row !== null);
       });
     }, options.timeoutMs);
 
@@ -396,21 +377,7 @@ export function defineHuggingFaceInstrumentationAssertions(options: {
       "matches the span contract snapshot",
       { timeout: options.timeoutMs },
       async ({ expect }) => {
-        await matchFileSnapshot(
-          formatJsonFileSnapshot(buildSpanSummary(events)),
-          spanSnapshotPath,
-        );
-      },
-    );
-
-    test(
-      "matches the log payload snapshot",
-      { timeout: options.timeoutMs },
-      async ({ expect }) => {
-        await matchFileSnapshot(
-          formatJsonFileSnapshot(payloadRows),
-          payloadSnapshotPath,
-        );
+        await matchSpanTreeSnapshot(events, spanSnapshotPath);
       },
     );
 

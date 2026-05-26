@@ -1297,6 +1297,13 @@ class HTTPConnection {
               (e as any).status
             } ${(e as any).text}`,
           );
+          const sleepTimeS = HTTP_RETRY_BASE_SLEEP_TIME_S * 2 ** i;
+          debugLogger.info(
+            `Sleeping for ${sleepTimeS}s before retrying API request`,
+          );
+          await new Promise((resolve) =>
+            setTimeout(resolve, sleepTimeS * 1000),
+          );
           continue;
         }
         throw e;
@@ -1523,6 +1530,7 @@ export class Attachment extends BaseAttachment {
             body: data,
           }),
         );
+        await objectStoreResponse.body?.cancel();
       } catch (error) {
         if (error instanceof FailedHTTPResponse) {
           throw new Error(
@@ -1562,6 +1570,7 @@ export class Attachment extends BaseAttachment {
         "/attachment/status",
         requestParams,
       );
+      await statusResponse.body?.cancel();
       if (!statusResponse.ok) {
         const errorStr = JSON.stringify(statusResponse);
         throw new Error(`Couldn't log attachment status: ${errorStr}`);
@@ -2752,6 +2761,7 @@ export class TestBackgroundLogger implements BackgroundLogger {
 }
 
 const BACKGROUND_LOGGER_BASE_SLEEP_TIME_S = 1.0;
+const HTTP_RETRY_BASE_SLEEP_TIME_S = 1.0;
 
 // We should only have one instance of this object per state object in
 // 'BraintrustState._bgLogger'. Be careful about spawning multiple

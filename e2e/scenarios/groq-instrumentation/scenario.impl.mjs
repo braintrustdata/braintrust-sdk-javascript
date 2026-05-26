@@ -45,6 +45,7 @@ export async function runGroqInstrumentationScenario(options) {
 
   const baseClient = new options.Groq({
     apiKey,
+    baseURL: process.env.GROQ_BASE_URL,
   });
   const client = options.decorateClient
     ? options.decorateClient(baseClient)

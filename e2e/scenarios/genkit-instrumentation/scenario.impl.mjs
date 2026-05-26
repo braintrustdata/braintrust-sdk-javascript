@@ -95,8 +95,13 @@ async function withRetry(
 async function buildAI(options = {}) {
   const { genkit, z } = await import("genkit");
   const { googleAI } = await import("@genkit-ai/google-genai");
+  const googleAIPlugin = googleAI(
+    process.env.GOOGLE_GENAI_BASE_URL
+      ? { baseUrl: process.env.GOOGLE_GENAI_BASE_URL }
+      : undefined,
+  );
   const baseAI = genkit({
-    plugins: [googleAI()],
+    plugins: [googleAIPlugin],
     model: googleAI.model(GOOGLE_MODEL_NAME),
     promptDir: null,
   });

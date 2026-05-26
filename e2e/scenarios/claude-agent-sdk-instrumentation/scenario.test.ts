@@ -4,7 +4,6 @@ import {
   readInstalledPackageVersion,
   resolveScenarioDir,
 } from "../../helpers/scenario-harness";
-import { cassetteTagsFor } from "../../helpers/tags";
 import { defineClaudeAgentSDKInstrumentationAssertions } from "./assertions";
 
 const originalScenarioDir = resolveScenarioDir(import.meta.url);
@@ -14,13 +13,6 @@ const scenarioDir = await prepareScenarioDir({
 const TIMEOUT_MS = 300_000;
 const claudeAgentSDKScenarios = await Promise.all(
   [
-    {
-      autoEntry: "scenario.claude-agent-sdk-v0.1.mjs",
-      dependencyName: "claude-agent-sdk-v0.1",
-      expectTaskLifecycleDetails: false,
-      snapshotName: "claude-agent-sdk-v0.1",
-      wrapperEntry: "scenario.claude-agent-sdk-v0.1.ts",
-    },
     {
       autoEntry: "scenario.claude-agent-sdk-v0.2.76.mjs",
       dependencyName: "claude-agent-sdk-v0.2.76",
@@ -53,10 +45,9 @@ const claudeAgentSDKScenarios = await Promise.all(
   }),
 );
 
-describe("wrapped instrumentation", () => {
+describe.concurrent("wrapped instrumentation", () => {
   for (const scenario of claudeAgentSDKScenarios) {
-    const tags = cassetteTagsFor(import.meta.url, scenario.snapshotName);
-    describe(`claude agent sdk ${scenario.version}`, { tags }, () => {
+    describe.sequential(`claude agent sdk ${scenario.version}`, () => {
       defineClaudeAgentSDKInstrumentationAssertions({
         assertLocalToolHandlerParenting: true,
         expectTaskLifecycleDetails: scenario.expectTaskLifecycleDetails,
@@ -72,7 +63,7 @@ describe("wrapped instrumentation", () => {
             timeoutMs: TIMEOUT_MS,
           });
         },
-        snapshotName: scenario.snapshotName,
+        snapshotName: `${scenario.snapshotName}-wrapped`,
         testFileUrl: import.meta.url,
         timeoutMs: TIMEOUT_MS,
       });
@@ -80,10 +71,9 @@ describe("wrapped instrumentation", () => {
   }
 });
 
-describe("auto-hook instrumentation", () => {
+describe.concurrent("auto-hook instrumentation", () => {
   for (const scenario of claudeAgentSDKScenarios) {
-    const tags = cassetteTagsFor(import.meta.url, scenario.snapshotName);
-    describe(`claude agent sdk ${scenario.version}`, { tags }, () => {
+    describe.sequential(`claude agent sdk ${scenario.version}`, () => {
       defineClaudeAgentSDKInstrumentationAssertions({
         assertLocalToolHandlerParenting: true,
         expectTaskLifecycleDetails: scenario.expectTaskLifecycleDetails,
@@ -100,7 +90,7 @@ describe("auto-hook instrumentation", () => {
             timeoutMs: TIMEOUT_MS,
           });
         },
-        snapshotName: scenario.snapshotName,
+        snapshotName: `${scenario.snapshotName}-auto-hook`,
         testFileUrl: import.meta.url,
         timeoutMs: TIMEOUT_MS,
       });

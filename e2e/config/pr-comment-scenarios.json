@@ -13,7 +13,21 @@
     "scenarioDirName": "openai-codex-instrumentation",
     "label": "OpenAI Codex Instrumentation",
     "metadataScenario": "openai-codex-instrumentation",
-    "variants": [{ "variantKey": "openai-codex-v0128", "label": "v0.128" }]
+    "variants": [
+      { "variantKey": "openai-codex-v0128-wrapped", "label": "v0.128 wrapped" },
+      {
+        "variantKey": "openai-codex-v0128-auto-hook",
+        "label": "v0.128 auto-hook"
+      }
+    ]
+  },
+  {
+    "scenarioDirName": "openai-agents-instrumentation",
+    "label": "OpenAI Agents Instrumentation",
+    "metadataScenario": "openai-agents-instrumentation",
+    "variants": [
+      { "variantKey": "openai-agents-auto-hook", "label": "Auto-hook" }
+    ]
   },
   {
     "scenarioDirName": "anthropic-instrumentation",
@@ -129,10 +143,6 @@
     "metadataScenario": "claude-agent-sdk-traces",
     "variants": [
       {
-        "variantKey": "claude-agent-sdk-v0.1",
-        "label": "v0.1"
-      },
-      {
         "variantKey": "claude-agent-sdk-v0.2.76",
         "label": "v0.2.76"
       },
@@ -153,12 +163,36 @@
     "variants": [{ "variantKey": "cursor-sdk-v1", "label": "v1" }]
   },
   {
+    "scenarioDirName": "flue-instrumentation",
+    "label": "Flue Instrumentation",
+    "metadataScenario": "flue-instrumentation",
+    "variants": [
+      { "variantKey": "flue-v0-7-0-wrapped", "label": "v0.7.0 wrapped" },
+      {
+        "variantKey": "flue-v0-7-0-auto-hook",
+        "label": "v0.7.0 auto-hook"
+      },
+      {
+        "variantKey": "flue-v0-7-0-openai-auto-hook",
+        "label": "v0.7.0 OpenAI auto-hook"
+      }
+    ]
+  },
+  {
     "scenarioDirName": "github-copilot-instrumentation",
     "label": "GitHub Copilot SDK Instrumentation",
     "metadataScenario": "github-copilot-instrumentation",
     "variants": [
       { "variantKey": "github-copilot-v0-wrapped", "label": "Wrapped" },
       { "variantKey": "github-copilot-v0-auto", "label": "Auto-hook" }
+    ]
+  },
+  {
+    "scenarioDirName": "openai-agents-instrumentation",
+    "label": "OpenAI Agents Instrumentation",
+    "metadataScenario": "openai-agents-instrumentation",
+    "variants": [
+      { "variantKey": "openai-agents-auto-hook", "label": "Auto-hook" }
     ]
   }
 ]

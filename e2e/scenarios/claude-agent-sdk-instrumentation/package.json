@@ -4,7 +4,6 @@
   "braintrustScenario": {
     "canary": {
       "dependencies": {
-        "claude-agent-sdk-v0.1": "@anthropic-ai/claude-agent-sdk@0.1",
         "claude-agent-sdk-v0.2.76": "@anthropic-ai/claude-agent-sdk@0.2.76",
         "claude-agent-sdk-v0.2.79": "@anthropic-ai/claude-agent-sdk@0.2.79",
         "claude-agent-sdk-v0.2.81": "@anthropic-ai/claude-agent-sdk@0.2.81"
@@ -12,7 +11,6 @@
     }
   },
   "dependencies": {
-    "claude-agent-sdk-v0.1": "npm:@anthropic-ai/claude-agent-sdk@0.1.77",
     "claude-agent-sdk-v0.2.76": "npm:@anthropic-ai/claude-agent-sdk@0.2.76",
     "claude-agent-sdk-v0.2.79": "npm:@anthropic-ai/claude-agent-sdk@0.2.79",
     "claude-agent-sdk-v0.2.81": "npm:@anthropic-ai/claude-agent-sdk@0.2.81",
