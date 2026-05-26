@@ -12,11 +12,11 @@
 ### Patch Changes
 
 - feat: Add OpenAI Agents SDK auto-instrumentation (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/1891)
-- feat: Add LangChain and LangGraph auto-instrumentation. The `@braintrust/langchain-js` `BraintrustCallbackHandler` now delegates to the shared implementation in `braintrust`, removing duplicated span/metric extraction logic. (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/1897)
-- fix(security): reject `__proto__`, `constructor`, and `prototype` keys in `mergeDicts` / `mergeDictsWithPaths` to prevent prototype pollution from untrusted merge sources Thanks @cpinn! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2026)
-- feat: Allow for multi project tracing by removing parent project ID restriction Thanks @ankrgyl! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2044)
-- feat: Do not collect git metadata by default when organization-level git metadata settings are absent Thanks @alexr17! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2045)
-- Add exponential backoff between existing `get_json` retry attempts. Thanks @btaaron! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/1965)
+- feat: Add LangChain and LangGraph auto-instrumentation (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/1897)
+- fix(security): reject `__proto__`, `constructor`, and `prototype` keys in `mergeDicts` / `mergeDictsWithPaths` to prevent prototype pollution from untrusted merge sources (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2026)
+- feat: Allow for multi project tracing by removing parent project ID restriction (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2044)
+- feat: Do not collect git metadata by default when organization-level git metadata settings are absent (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2045)
+- Add exponential backoff between existing `get_json` retry attempts (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/1965)
 
 ## 3.11.0
 
