@@ -16,6 +16,24 @@ type TokenMaps = {
 };
 
 const ISO_DATE_REGEX = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$/;
+const ISO_DATE_SUBSTRING_REGEX =
+  /(?<![A-Za-z0-9_-])\d{4}-\d{2}-\d{2}(?:[Tt ]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})?)?(?![A-Za-z0-9_-])/g;
+const NUMERIC_DATE_SUBSTRING_REGEX =
+  /(?<![A-Za-z0-9_-])(?:\d{1,2}[/-]\d{1,2}[/-]\d{2,4}|\d{4}[/-]\d{1,2}[/-]\d{1,2})(?![A-Za-z0-9_-])/g;
+const MONTH_NAME_PATTERN =
+  "Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?";
+const WEEKDAY_PATTERN =
+  "(?:(?:Mon|Tues?|Wed(?:nes)?|Thu(?:rs)?|Fri|Sat(?:ur)?|Sun)(?:day)?),?\\s+";
+const CLOCK_PATTERN =
+  "(?:\\s+\\d{1,2}:\\d{2}(?::\\d{2})?(?:\\.\\d+)?(?:\\s*(?:AM|PM|am|pm|Z|[A-Z]{2,4}|[+-]\\d{2}:?\\d{2}))?)?";
+const MONTH_NAME_DATE_SUBSTRING_REGEX = new RegExp(
+  `\\b(?:${WEEKDAY_PATTERN})?(?:${MONTH_NAME_PATTERN})\\s+\\d{1,2}(?:st|nd|rd|th)?(?:,)?${CLOCK_PATTERN}\\s*,?\\s+\\d{4}\\b`,
+  "gi",
+);
+const DAY_MONTH_NAME_DATE_SUBSTRING_REGEX = new RegExp(
+  `\\b(?:${WEEKDAY_PATTERN})?\\d{1,2}(?:st|nd|rd|th)?\\s+(?:${MONTH_NAME_PATTERN})(?:,)?${CLOCK_PATTERN}\\s*,?\\s+\\d{4}\\b`,
+  "gi",
+);
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const UUID_SUBSTRING_REGEX =
@@ -151,6 +169,14 @@ function normalizeModuleSourcePath(value: string): string {
   return value
     .replace(ANTHROPIC_PNPM_VERSION_REGEX, "$1<version>")
     .replace(ANTHROPIC_MESSAGE_STREAM_PATH_REGEX, "$1lib/MessageStream.js");
+}
+
+function normalizeDateLikeSubstrings(value: string): string {
+  return value
+    .replace(ISO_DATE_SUBSTRING_REGEX, "<timestamp>")
+    .replace(NUMERIC_DATE_SUBSTRING_REGEX, "<timestamp>")
+    .replace(MONTH_NAME_DATE_SUBSTRING_REGEX, "<timestamp>")
+    .replace(DAY_MONTH_NAME_DATE_SUBSTRING_REGEX, "<timestamp>");
 }
 
 function shouldNormalizeNodeInternalStyleCaller(
@@ -345,6 +371,11 @@ function normalizeValue(
         tokenFor(tokenMaps.ids, value, "uuid");
       }
       return "project_name:<project_name>";
+    }
+
+    const withNormalizedDates = normalizeDateLikeSubstrings(value);
+    if (withNormalizedDates !== value) {
+      return withNormalizedDates;
     }
 
     const withNormalizedUuids = value.replace(UUID_SUBSTRING_REGEX, (match) =>
