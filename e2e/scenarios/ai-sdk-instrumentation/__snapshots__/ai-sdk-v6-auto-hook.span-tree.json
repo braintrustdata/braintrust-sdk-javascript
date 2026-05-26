@@ -302,6 +302,14 @@
           }
         },
         {
+          "name": "ai-sdk-output-object-response-format-operation",
+          "children": [],
+          "metadata": {
+            "operation": "output-object-response-format",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
           "name": "ai-sdk-output-object-operation",
           "children": [
             {
@@ -4954,6 +4962,7 @@
                     "prompt_cache_key": "[REDACTED]",
                     "prompt_cache_retention": "in_memory",
                     "reasoning": {
+                      "context": null,
                       "effort": null,
                       "summary": null
                     },
@@ -5110,6 +5119,7 @@
                         "prompt_cache_key": "[REDACTED]",
                         "prompt_cache_retention": "in_memory",
                         "reasoning": {
+                          "context": null,
                           "effort": null,
                           "summary": null
                         },

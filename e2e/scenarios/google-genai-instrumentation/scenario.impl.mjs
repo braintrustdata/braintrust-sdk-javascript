@@ -142,6 +142,55 @@ async function runGoogleGenAIInstrumentationScenario(sdk, options = {}) {
         }, GOOGLE_GENAI_RETRY_OPTIONS);
       });
 
+      await runOperation(
+        "google-system-instruction-operation",
+        "system-instruction",
+        async () => {
+          await withRetry(async () => {
+            await client.models.generateContent({
+              model: GOOGLE_MODEL,
+              contents: "Tell me about the weather.",
+              config: {
+                maxOutputTokens: 64,
+                systemInstruction:
+                  "You are a pirate. Always respond in pirate speak.",
+                temperature: 0,
+              },
+            });
+          }, GOOGLE_GENAI_RETRY_OPTIONS);
+        },
+      );
+
+      await runOperation(
+        "google-multi-turn-operation",
+        "multi-turn",
+        async () => {
+          await withRetry(async () => {
+            await client.models.generateContent({
+              model: GOOGLE_MODEL,
+              contents: [
+                {
+                  role: "user",
+                  parts: [{ text: "Hi, my name is Alice." }],
+                },
+                {
+                  role: "model",
+                  parts: [{ text: "Hello Alice! Nice to meet you." }],
+                },
+                {
+                  role: "user",
+                  parts: [{ text: "What did I just tell you my name was?" }],
+                },
+              ],
+              config: {
+                maxOutputTokens: 64,
+                temperature: 0,
+              },
+            });
+          }, GOOGLE_GENAI_RETRY_OPTIONS);
+        },
+      );
+
       await runOperation("google-embed-operation", "embed", async () => {
         await withRetry(async () => {
           await client.models.embedContent({
@@ -314,6 +363,64 @@ async function runGoogleGenAIInstrumentationScenario(sdk, options = {}) {
           });
         }, GOOGLE_GENAI_RETRY_OPTIONS);
       });
+
+      await runOperation(
+        "google-multi-tool-operation",
+        "multi-tool",
+        async () => {
+          await withRetry(async () => {
+            await client.models.generateContent({
+              model: GOOGLE_MODEL,
+              contents:
+                "Use the get_weather function for New York and get_time for Tokyo. Do not answer from memory.",
+              config: {
+                maxOutputTokens: 128,
+                temperature: 0,
+                tools: [
+                  {
+                    functionDeclarations: [
+                      {
+                        name: "get_weather",
+                        description: "Get the weather for a location",
+                        parametersJsonSchema: {
+                          type: "object",
+                          properties: {
+                            location: {
+                              type: "string",
+                              description: "The location to get weather for",
+                            },
+                          },
+                          required: ["location"],
+                        },
+                      },
+                      {
+                        name: "get_time",
+                        description: "Get the current time for a timezone",
+                        parametersJsonSchema: {
+                          type: "object",
+                          properties: {
+                            timezone: {
+                              type: "string",
+                              description: "The timezone to get time for",
+                            },
+                          },
+                          required: ["timezone"],
+                        },
+                      },
+                    ],
+                  },
+                ],
+                toolConfig: {
+                  functionCallingConfig: {
+                    allowedFunctionNames: ["get_weather", "get_time"],
+                    mode: sdk.FunctionCallingConfigMode.ANY,
+                  },
+                },
+              },
+            });
+          }, GOOGLE_GENAI_RETRY_OPTIONS);
+        },
+      );
     },
     metadata: {
       scenario: SCENARIO_NAME,

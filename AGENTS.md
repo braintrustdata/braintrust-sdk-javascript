@@ -37,22 +37,6 @@ pnpm test -- -t "test name"       # Filter by test name
 pnpm run test:checks              # Hermetic tests (core + vitest wrapper)
 ```
 
-**Provider wrapper tests (require API keys):**
-
-```bash
-pnpm run test:external:openai
-pnpm run test:external:anthropic
-pnpm run test:external:google-genai
-pnpm run test:external:ai-sdk
-pnpm run test:external:claude-agent-sdk
-```
-
-```bash
-# Required env vars for provider tests
-export OPENAI_API_KEY="sk-..."
-export ANTHROPIC_API_KEY="sk-ant-..."
-```
-
 **E2E tests (`e2e/`):**
 
 Each scenario runs the SDK in a subprocess against a mock Braintrust server and snapshots the results. No API keys required for replay; recording needs provider keys.

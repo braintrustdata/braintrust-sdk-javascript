@@ -1,5 +1,12 @@
 # @braintrust/langchain-js
 
+## 0.2.4
+
+### Patch Changes
+
+- feat: Add LangChain and LangGraph auto-instrumentation (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/1897)
+- Updated dependencies: braintrust@3.12.0
+
 ## 0.2.3
 
 ### Patch Changes
