@@ -2496,6 +2496,68 @@ describe("parent precedence", () => {
     expect(byName.forced.span_parents).toContain(byName.outer.span_id);
     expect(byName.forced.span_parents).not.toContain(byName.inner.span_id);
   });
+
+  test("logger.startSpan with exported parent uses receiver project", async () => {
+    const primaryLogger = initLogger({
+      projectName: "primary",
+      projectId: "project-a",
+    });
+    const secondaryLogger = initLogger({
+      projectName: "secondary",
+      projectId: "project-b",
+    });
+
+    const root = primaryLogger.startSpan({ name: "root" });
+    const parentStr = await root.export();
+    root.end();
+
+    const child = secondaryLogger.startSpan({
+      name: "child",
+      parent: parentStr,
+    });
+    child.end();
+
+    await memory.flush();
+    const events = await memory.drain();
+    const byName: any = Object.fromEntries(
+      events.map((e: any) => [e.span_attributes?.name, e]),
+    );
+
+    expect(byName.child.project_id).toBe("project-b");
+    expect(byName.child.root_span_id).toBe(byName.root.root_span_id);
+    expect(byName.child.span_parents).toContain(byName.root.span_id);
+  });
+
+  test("experiment.startSpan with exported parent uses receiver experiment", async () => {
+    const primaryExperiment = _exportsForTestingOnly.initTestExperiment(
+      "experiment-a",
+      "project-a",
+    );
+    const secondaryExperiment = _exportsForTestingOnly.initTestExperiment(
+      "experiment-b",
+      "project-b",
+    );
+
+    const root = primaryExperiment.startSpan({ name: "root" });
+    const parentStr = await root.export();
+    root.end();
+
+    const child = secondaryExperiment.startSpan({
+      name: "child",
+      parent: parentStr,
+    });
+    child.end();
+
+    await memory.flush();
+    const events = await memory.drain();
+    const byName: any = Object.fromEntries(
+      events.map((e: any) => [e.span_attributes?.name, e]),
+    );
+
+    expect(byName.child.experiment_id).toBe("experiment-b");
+    expect(byName.child.root_span_id).toBe(byName.root.root_span_id);
+    expect(byName.child.span_parents).toContain(byName.root.span_id);
+  });
 });
 
 test("attachment with unreadable path logs warning", () => {
