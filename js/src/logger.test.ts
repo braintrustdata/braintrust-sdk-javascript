@@ -21,6 +21,7 @@ import {
 } from "./logger";
 
 import { configureNode } from "./node/config";
+import { type GitMetadataSettingsType as GitMetadataSettings } from "./generated_types";
 import { writeFile, unlink } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
@@ -483,6 +484,86 @@ function mockInitGitMetadata() {
     "getPastNAncestors",
   ).mockResolvedValue([]);
 }
+
+const initGitMetadataSettingsCases: Array<{
+  name: string;
+  orgSettings?: GitMetadataSettings;
+  initSettings?: GitMetadataSettings;
+  expected: GitMetadataSettings;
+}> = [
+  {
+    name: "uses organization settings by default",
+    orgSettings: { collect: "some", fields: ["commit", "branch"] },
+    expected: { collect: "some", fields: ["commit", "branch"] },
+  },
+  {
+    name: "does not collect by default when organization settings are absent",
+    expected: { collect: "none" },
+  },
+  {
+    name: "preserves explicit opt-in when organization settings are absent",
+    initSettings: { collect: "all" },
+    expected: { collect: "all" },
+  },
+  {
+    name: "intersects explicit settings with organization settings",
+    orgSettings: { collect: "some", fields: ["commit", "branch"] },
+    initSettings: { collect: "some", fields: ["branch", "git_diff"] },
+    expected: { collect: "some", fields: ["branch"] },
+  },
+  {
+    name: "lets organization settings constrain explicit all",
+    orgSettings: { collect: "some", fields: ["commit"] },
+    initSettings: { collect: "all" },
+    expected: { collect: "some", fields: ["commit"] },
+  },
+];
+
+test.each(initGitMetadataSettingsCases)(
+  "init applies git metadata settings: $name",
+  async ({ orgSettings, initSettings, expected }) => {
+    const state = await _exportsForTestingOnly.simulateLoginForTests();
+
+    try {
+      state.gitMetadataSettings = orgSettings;
+      vi.spyOn(state, "login").mockResolvedValue(state);
+      const getRepoInfo = vi
+        .spyOn(_exportsForTestingOnly.isomorph, "getRepoInfo")
+        .mockResolvedValue(undefined);
+      vi.spyOn(
+        _exportsForTestingOnly.isomorph,
+        "getPastNAncestors",
+      ).mockResolvedValue([]);
+      vi.spyOn(state.appConn(), "post_json").mockResolvedValue({
+        project: {
+          id: "00000000-0000-0000-0000-000000000001",
+          name: "test-project",
+        },
+        experiment: {
+          id: "00000000-0000-0000-0000-000000000003",
+          project_id: "00000000-0000-0000-0000-000000000001",
+          name: "test-experiment",
+          public: false,
+        },
+      });
+
+      const experiment = init({
+        project: "test-project",
+        experiment: "test-experiment",
+        gitMetadataSettings: initSettings,
+        setCurrent: false,
+        state,
+      });
+
+      await experiment.id;
+
+      expect(getRepoInfo).toHaveBeenCalledWith(expected);
+    } finally {
+      _exportsForTestingOnly.simulateLogoutForTests();
+      vi.restoreAllMocks();
+    }
+  },
+);
 
 test("init forwards dataset _internal_btql to experiment register", async () => {
   const state = await _exportsForTestingOnly.simulateLoginForTests();

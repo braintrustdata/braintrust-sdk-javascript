@@ -149,12 +149,12 @@ function truncateToByteLimit(s: string, byteLimit: number = 65536): string {
 }
 
 export async function getRepoInfo(settings?: GitMetadataSettings) {
-  if (settings && settings.collect === "none") {
+  if (!settings || settings.collect === "none") {
     return undefined;
   }
 
   const repo = await repoInfo();
-  if (!repo || !settings || settings.collect === "all") {
+  if (!repo || settings.collect === "all") {
     return repo;
   }
 

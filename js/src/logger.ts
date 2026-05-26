@@ -3532,7 +3532,7 @@ type InitializedExperiment<IsOpen extends boolean | undefined> =
  * @param options.apiKey The API key to use. If the parameter is not specified, will try to use the `BRAINTRUST_API_KEY` environment variable. If no API key is specified, will prompt the user to login.
  * @param options.orgName (Optional) The name of a specific organization to connect to. This is useful if you belong to multiple.
  * @param options.metadata (Optional) A dictionary with additional data about the test example, model outputs, or just about anything else that's relevant, that you can use to help find and analyze examples later. For example, you could log the `prompt`, example's `id`, or anything else that would be useful to slice/dice later. The values in `metadata` can be any JSON-serializable type, but its keys must be strings.
- * @param options.gitMetadataSettings (Optional) Settings for collecting git metadata. By default, will collect all git metadata fields allowed in org-level settings.
+ * @param options.gitMetadataSettings (Optional) Settings for collecting git metadata. By default, Braintrust collects the git metadata fields allowed by your organization's git metadata settings. If those settings are absent, git metadata is not collected unless this option is set.
  * @param setCurrent If true (the default), set the global current-experiment to the newly-created one.
  * @param options.open If the experiment already exists, open it in read-only mode. Throws an error if the experiment does not already exist.
  * @param options.projectId The id of the project to create the experiment in. This takes precedence over `project` if specified.
@@ -3685,17 +3685,13 @@ export function init<IsOpen extends boolean = false>(
         if (repoInfo) {
           return repoInfo;
         }
-        let mergedGitMetadataSettings = {
-          ...(state.gitMetadataSettings || {
-            collect: "all",
-          }),
-        };
-        if (gitMetadataSettings) {
-          mergedGitMetadataSettings = mergeGitMetadataSettings(
-            mergedGitMetadataSettings,
-            gitMetadataSettings,
-          );
-        }
+        const mergedGitMetadataSettings =
+          state.gitMetadataSettings == null
+            ? (gitMetadataSettings ?? { collect: "none" as const })
+            : mergeGitMetadataSettings(
+                state.gitMetadataSettings,
+                gitMetadataSettings ?? { collect: "all" as const },
+              );
         return await iso.getRepoInfo(mergedGitMetadataSettings);
       })();
 
