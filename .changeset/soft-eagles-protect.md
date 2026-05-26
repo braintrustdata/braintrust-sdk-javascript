@@ -2,4 +2,4 @@
 "braintrust": patch
 ---
 
-Do not collect git metadata when org-level metadata settings are absent.
+feat: Do not collect git metadata by default when organization-level git metadata settings are absent
