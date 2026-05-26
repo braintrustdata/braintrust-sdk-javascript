@@ -51,6 +51,7 @@ BRAINTRUST_API_KEY=<YOUR_API_KEY> npx braintrust eval tutorial.eval.ts
 
 ## Documentation
 
+- Publishing packages: [PUBLISHING.md](PUBLISHING.md)
 - TypeScript SDK docs: https://www.braintrust.dev/docs/reference/sdks/typescript
 - Release notes: https://www.braintrust.dev/docs/reference/release-notes
 
