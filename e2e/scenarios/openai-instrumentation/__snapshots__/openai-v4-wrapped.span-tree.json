@@ -107,6 +107,94 @@
           }
         },
         {
+          "name": "openai-chat-tool-operation",
+          "children": [
+            {
+              "name": "Chat Completion",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "Use the get_weather tool for Paris, France. Do not answer from memory.",
+                  "role": "user"
+                }
+              ],
+              "output": [
+                {
+                  "finish_reason": "stop",
+                  "index": 0,
+                  "logprobs": null,
+                  "message": {
+                    "annotations": [],
+                    "content": null,
+                    "refusal": null,
+                    "role": "assistant",
+                    "tool_calls": [
+                      {
+                        "function": {
+                          "arguments": "{\"location\":\"Paris, France\"}",
+                          "name": "get_weather"
+                        },
+                        "id": "<span:1>",
+                        "type": "function"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "metadata": {
+                "max_tokens": 64,
+                "model": "gpt-4o-mini-2024-07-18",
+                "provider": "openai",
+                "temperature": 0,
+                "tool_choice": {
+                  "function": {
+                    "name": "get_weather"
+                  },
+                  "type": "function"
+                },
+                "tools": [
+                  {
+                    "function": {
+                      "description": "Get the weather for a location",
+                      "name": "get_weather",
+                      "parameters": {
+                        "properties": {
+                          "location": {
+                            "description": "The location to get weather for",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "location"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "type": "function"
+                  }
+                ]
+              },
+              "metrics": {
+                "completion_accepted_prediction_tokens": 0,
+                "completion_audio_tokens": 0,
+                "completion_reasoning_tokens": 0,
+                "completion_rejected_prediction_tokens": 0,
+                "completion_tokens": 7,
+                "prompt_audio_tokens": 0,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 77,
+                "time_to_first_token": 0,
+                "tokens": 84
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "chat-tool",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
           "name": "openai-stream-operation",
           "children": [
             {
@@ -209,6 +297,95 @@
           ],
           "metadata": {
             "operation": "stream-with-response",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "openai-stream-tool-operation",
+          "children": [
+            {
+              "name": "Chat Completion",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "Use the get_weather tool for Paris, France. Do not answer from memory.",
+                  "role": "user"
+                }
+              ],
+              "output": [
+                {
+                  "finish_reason": "stop",
+                  "index": 0,
+                  "logprobs": null,
+                  "message": {
+                    "role": "assistant",
+                    "tool_calls": [
+                      {
+                        "function": {
+                          "arguments": "{\"location\":\"Paris, France\"}",
+                          "name": "get_weather"
+                        },
+                        "id": "<span:1>",
+                        "type": "function"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "metadata": {
+                "max_tokens": 64,
+                "model": "gpt-4o-mini-2024-07-18",
+                "provider": "openai",
+                "stream": true,
+                "stream_options": {
+                  "include_usage": true
+                },
+                "temperature": 0,
+                "tool_choice": {
+                  "function": {
+                    "name": "get_weather"
+                  },
+                  "type": "function"
+                },
+                "tools": [
+                  {
+                    "function": {
+                      "description": "Get the weather for a location",
+                      "name": "get_weather",
+                      "parameters": {
+                        "properties": {
+                          "location": {
+                            "description": "The location to get weather for",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "location"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "type": "function"
+                  }
+                ]
+              },
+              "metrics": {
+                "completion_accepted_prediction_tokens": 0,
+                "completion_audio_tokens": 0,
+                "completion_reasoning_tokens": 0,
+                "completion_rejected_prediction_tokens": 0,
+                "completion_tokens": 7,
+                "prompt_audio_tokens": 0,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 77,
+                "time_to_first_token": 0,
+                "tokens": 84
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "stream-tool",
             "testRunId": "<run:1>"
           }
         },
@@ -498,19 +675,19 @@
                     ]
                   },
                   "category_scores": {
-                    "harassment": 0.00001141223854434603,
-                    "harassment/threatening": 0.0000012219076020491008,
-                    "hate": 0.000003944258675190877,
-                    "hate/threatening": 1.2878952156558146e-7,
-                    "illicit": 0.000005738759521437678,
-                    "illicit/violent": 0.000003822911232549001,
-                    "self-harm": 0.000003120191139396651,
-                    "self-harm/instructions": 6.240930669504435e-7,
-                    "self-harm/intent": 0.0000022474089854291757,
-                    "sexual": 0.000006814872211615988,
-                    "sexual/minors": 5.255395707074638e-7,
-                    "violence": 0.000014202364022997911,
-                    "violence/graphic": 0.0000019525885208642222
+                    "harassment": 0.000010889691002655445,
+                    "harassment/threatening": 0.0000011843139025979655,
+                    "hate": 0.0000038831109868779005,
+                    "hate/threatening": 1.1726420733772349e-7,
+                    "illicit": 0.000005562206273647035,
+                    "illicit/violent": 0.0000036478537675800286,
+                    "self-harm": 0.00000297731143841062,
+                    "self-harm/instructions": 5.77192003016332e-7,
+                    "self-harm/intent": 0.0000020785170435063726,
+                    "sexual": 0.00000640200641038395,
+                    "sexual/minors": 5.093705003229987e-7,
+                    "violence": 0.000013342001090985438,
+                    "violence/graphic": 0.0000018342893327886845
                   },
                   "flagged": false
                 }
@@ -576,6 +753,7 @@
                 "prompt_cache_retention": "in_memory",
                 "provider": "openai",
                 "reasoning": {
+                  "context": null,
                   "effort": null,
                   "summary": null
                 },
@@ -662,6 +840,7 @@
                 "prompt_cache_retention": "in_memory",
                 "provider": "openai",
                 "reasoning": {
+                  "context": null,
                   "effort": null,
                   "summary": null
                 },
@@ -744,6 +923,7 @@
                 "prompt_cache_retention": "in_memory",
                 "provider": "openai",
                 "reasoning": {
+                  "context": null,
                   "effort": null,
                   "summary": null
                 },
@@ -827,6 +1007,7 @@
                 "prompt_cache_retention": "in_memory",
                 "provider": "openai",
                 "reasoning": {
+                  "context": null,
                   "effort": null,
                   "summary": null
                 },
@@ -877,7 +1058,7 @@
                     {
                       "annotations": [],
                       "logprobs": [],
-                      "text": "PARTIAL",
+                      "text": "PARTIAL.",
                       "type": "output_text"
                     }
                   ],
@@ -909,6 +1090,7 @@
                 "prompt_cache_retention": "in_memory",
                 "provider": "openai",
                 "reasoning": {
+                  "context": null,
                   "effort": null,
                   "summary": null
                 },
@@ -932,11 +1114,11 @@
               },
               "metrics": {
                 "completion_reasoning_tokens": 0,
-                "completion_tokens": 3,
+                "completion_tokens": 4,
                 "prompt_cached_tokens": 0,
                 "prompt_tokens": 13,
                 "time_to_first_token": 0,
-                "tokens": 16
+                "tokens": 17
               }
             }
           ],
@@ -960,10 +1142,10 @@
                       "annotations": [],
                       "logprobs": [],
                       "parsed": {
-                        "reasoning": "Adding 20 and 4 gives a total of 24.",
+                        "reasoning": "Adding 20 and 4 gives you a total of 24.",
                         "value": 24
                       },
-                      "text": "{\"reasoning\":\"Adding 20 and 4 gives a total of 24.\",\"value\":24}",
+                      "text": "{\"reasoning\":\"Adding 20 and 4 gives you a total of 24.\",\"value\":24}",
                       "type": "output_text"
                     }
                   ],
@@ -992,10 +1174,10 @@
                 "moderation": null,
                 "object": "response",
                 "output_parsed": {
-                  "reasoning": "Adding 20 and 4 gives a total of 24.",
+                  "reasoning": "Adding 20 and 4 gives you a total of 24.",
                   "value": 24
                 },
-                "output_text": "{\"reasoning\":\"Adding 20 and 4 gives a total of 24.\",\"value\":24}",
+                "output_text": "{\"reasoning\":\"Adding 20 and 4 gives you a total of 24.\",\"value\":24}",
                 "parallel_tool_calls": true,
                 "presence_penalty": 0,
                 "previous_response_id": null,
@@ -1003,6 +1185,7 @@
                 "prompt_cache_retention": "in_memory",
                 "provider": "openai",
                 "reasoning": {
+                  "context": null,
                   "effort": null,
                   "summary": null
                 },
@@ -1045,11 +1228,11 @@
               },
               "metrics": {
                 "completion_reasoning_tokens": 0,
-                "completion_tokens": 22,
+                "completion_tokens": 23,
                 "prompt_cached_tokens": 0,
                 "prompt_tokens": 46,
                 "time_to_first_token": 0,
-                "tokens": 68
+                "tokens": 69
               }
             }
           ],

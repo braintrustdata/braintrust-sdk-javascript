@@ -9,6 +9,29 @@ const EMBEDDING_MODEL = "text-embedding-3-small";
 const MODERATION_MODEL = "omni-moderation-2024-09-26";
 const ROOT_NAME = "openai-instrumentation-root";
 const SCENARIO_NAME = "openai-instrumentation";
+const BASE64_IMAGE =
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFBQIAX8jx0gAAAABJRU5ErkJggg==";
+const BASE64_PDF =
+  "JVBERi0xLjAKMSAwIG9iago8PC9UeXBlL0NhdGFsb2cvUGFnZXMgMiAwIFI+PmVuZG9iagoyIDAgb2JqCjw8L1R5cGUvUGFnZXMvS2lkc1szIDAgUl0vQ291bnQgMT4+ZW5kb2JqCjMgMCBvYmoKPDwvVHlwZS9QYWdlL01lZGlhQm94WzAgMCA2MTIgNzkyXT4+ZW5kb2JqCnhyZWYKMCA0CjAwMDAwMDAwMDAgNjU1MzUgZg0KMDAwMDAwMDAxMCAwMDAwMCBuDQowMDAwMDAwMDUzIDAwMDAwIG4NCjAwMDAwMDAxMDIgMDAwMDAgbg0KdHJhaWxlcgo8PC9TaXplIDQvUm9vdCAxIDAgUj4+CnN0YXJ0eHJlZgoxNDkKJUVPRg==";
+const CHAT_TOOLS = [
+  {
+    type: "function",
+    function: {
+      name: "get_weather",
+      description: "Get the weather for a location",
+      parameters: {
+        type: "object",
+        properties: {
+          location: {
+            type: "string",
+            description: "The location to get weather for",
+          },
+        },
+        required: ["location"],
+      },
+    },
+  },
+];
 const MOCK_CHAT_STREAM_SSE = [
   'data: {"id":"chatcmpl-fixture","object":"chat.completion.chunk","created":1740000000,"model":"gpt-4o-mini","choices":[{"index":0,"delta":{"role":"assistant"},"logprobs":null,"finish_reason":null}]}',
   "",
@@ -95,6 +118,8 @@ export async function runOpenAIInstrumentationScenario(options) {
     typeof options.decorateClient === "function" &&
     openAIMajorVersion !== null &&
     openAIMajorVersion >= 6;
+  const supportsChatAttachments =
+    openAIMajorVersion !== null && openAIMajorVersion >= 6;
 
   await runTracedScenario({
     callback: async () => {
@@ -148,14 +173,109 @@ export async function runOpenAIInstrumentationScenario(options) {
         "openai-chat-with-response-operation",
         "chat-with-response",
         async () => {
-          await awaitMaybeWithResponse(
-            client.chat.completions.create({
+          const request = client.chat.completions.create({
+            model: OPENAI_MODEL,
+            messages: [{ role: "user", content: "Reply with exactly FOUR." }],
+            max_tokens: 12,
+            temperature: 0,
+          });
+          const { data, response } = await awaitMaybeWithResponse(request);
+          if (response && response.status !== 200) {
+            throw new Error(`Expected status 200, got ${response.status}`);
+          }
+          if (typeof request?.withResponse === "function") {
+            const dataOnly = await request;
+            if (dataOnly !== data) {
+              throw new Error(
+                "Expected direct await to return cached withResponse data",
+              );
+            }
+          }
+        },
+      );
+
+      if (supportsChatAttachments) {
+        await runOperation(
+          "openai-chat-image-attachment-operation",
+          "chat-image-attachment",
+          async () => {
+            await client.chat.completions.create({
               model: OPENAI_MODEL,
-              messages: [{ role: "user", content: "Reply with exactly FOUR." }],
-              max_tokens: 12,
+              messages: [
+                {
+                  role: "user",
+                  content: [
+                    {
+                      type: "text",
+                      text: "Describe this image in three words or fewer.",
+                    },
+                    {
+                      type: "image_url",
+                      image_url: {
+                        url: `data:image/png;base64,${BASE64_IMAGE}`,
+                      },
+                    },
+                  ],
+                },
+              ],
+              max_tokens: 24,
               temperature: 0,
-            }),
-          );
+            });
+          },
+        );
+
+        await runOperation(
+          "openai-chat-pdf-attachment-operation",
+          "chat-pdf-attachment",
+          async () => {
+            await client.chat.completions.create({
+              model: OPENAI_MODEL,
+              messages: [
+                {
+                  role: "user",
+                  content: [
+                    {
+                      type: "text",
+                      text: "Summarize this document in one short phrase.",
+                    },
+                    {
+                      type: "file",
+                      file: {
+                        file_data: `data:application/pdf;base64,${BASE64_PDF}`,
+                        filename: "document.pdf",
+                      },
+                    },
+                  ],
+                },
+              ],
+              max_tokens: 24,
+              temperature: 0,
+            });
+          },
+        );
+      }
+
+      await runOperation(
+        "openai-chat-tool-operation",
+        "chat-tool",
+        async () => {
+          await client.chat.completions.create({
+            model: OPENAI_MODEL,
+            messages: [
+              {
+                role: "user",
+                content:
+                  "Use the get_weather tool for Paris, France. Do not answer from memory.",
+              },
+            ],
+            max_tokens: 64,
+            temperature: 0,
+            tool_choice: {
+              type: "function",
+              function: { name: "get_weather" },
+            },
+            tools: CHAT_TOOLS,
+          });
         },
       );
 
@@ -177,23 +297,64 @@ export async function runOpenAIInstrumentationScenario(options) {
         "openai-stream-with-response-operation",
         "stream-with-response",
         async () => {
-          const { data: chatStream } = await awaitMaybeWithResponse(
-            client.chat.completions.create({
-              model: OPENAI_MODEL,
-              messages: [
-                {
-                  role: "user",
-                  content: "Reply with exactly STREAM-WITH-RESPONSE.",
-                },
-              ],
-              stream: true,
-              max_tokens: 24,
-              temperature: 0,
-              stream_options: {
-                include_usage: true,
+          const request = client.chat.completions.create({
+            model: OPENAI_MODEL,
+            messages: [
+              {
+                role: "user",
+                content: "Reply with exactly STREAM-WITH-RESPONSE.",
               },
-            }),
-          );
+            ],
+            stream: true,
+            max_tokens: 24,
+            temperature: 0,
+            stream_options: {
+              include_usage: true,
+            },
+          });
+          const { data: chatStream, response } =
+            await awaitMaybeWithResponse(request);
+          if (response && response.status !== 200) {
+            throw new Error(`Expected status 200, got ${response.status}`);
+          }
+          const streamOnly =
+            typeof request?.withResponse === "function"
+              ? await request
+              : chatStream;
+          if (streamOnly !== chatStream) {
+            throw new Error(
+              "Expected direct await to return cached withResponse stream",
+            );
+          }
+          await collectAsync(streamOnly);
+        },
+      );
+
+      await runOperation(
+        "openai-stream-tool-operation",
+        "stream-tool",
+        async () => {
+          const chatStream = await client.chat.completions.create({
+            model: OPENAI_MODEL,
+            messages: [
+              {
+                role: "user",
+                content:
+                  "Use the get_weather tool for Paris, France. Do not answer from memory.",
+              },
+            ],
+            stream: true,
+            max_tokens: 64,
+            temperature: 0,
+            stream_options: {
+              include_usage: true,
+            },
+            tool_choice: {
+              type: "function",
+              function: { name: "get_weather" },
+            },
+            tools: CHAT_TOOLS,
+          });
           await collectAsync(chatStream);
         },
       );

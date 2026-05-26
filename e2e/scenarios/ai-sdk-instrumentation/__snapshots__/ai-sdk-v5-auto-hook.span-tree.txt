@@ -227,6 +227,11 @@ span_tree:
     │             "reasoning_tokens": 0,
     │             "tokens": 21
     │           }
+    ├── ai-sdk-output-object-response-format-operation
+    │   metadata: {
+    │     "operation": "output-object-response-format",
+    │     "testRunId": "<run:1>"
+    │   }
     ├── ai-sdk-output-object-operation
     │   metadata: {
     │     "operation": "output-object",
@@ -3831,6 +3836,7 @@ span_tree:
     │             "prompt_cache_key": "[REDACTED]",
     │             "prompt_cache_retention": "in_memory",
     │             "reasoning": {
+    │               "context": null,
     │               "effort": null,
     │               "summary": null
     │             },
@@ -3987,6 +3993,7 @@ span_tree:
     │                 "prompt_cache_key": "[REDACTED]",
     │                 "prompt_cache_retention": "in_memory",
     │                 "reasoning": {
+    │                   "context": null,
     │                   "effort": null,
     │                   "summary": null
     │                 },
