@@ -238,6 +238,7 @@ export interface Common {
   ) => Promise<RepoInfo | undefined>;
   getPastNAncestors: (n?: number, remote?: string) => Promise<string[]>;
   getEnv: (name: string) => string | undefined;
+  getBraintrustApiKey: () => Promise<string | undefined>;
   getCallerLocation: () => CallerLocation | undefined;
   newAsyncLocalStorage: <T>() => IsoAsyncLocalStorage<T>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -293,6 +294,7 @@ const iso: Common = {
   getRepoInfo: async (_settings) => undefined,
   getPastNAncestors: async () => [],
   getEnv: (_name) => undefined,
+  getBraintrustApiKey: async () => undefined,
   getCallerLocation: () => undefined,
   newAsyncLocalStorage: <T>() => new DefaultAsyncLocalStorage<T>(),
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

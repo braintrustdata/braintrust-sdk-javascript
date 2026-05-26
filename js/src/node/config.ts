@@ -8,6 +8,7 @@ import * as fsSync from "node:fs";
 import * as crypto from "node:crypto";
 import { promisify } from "node:util";
 import * as zlib from "node:zlib";
+import * as dotenv from "dotenv";
 
 import iso from "../isomorph";
 import { getRepoInfo, getPastNAncestors } from "../gitutil";
@@ -15,12 +16,83 @@ import { getCallerLocation } from "../stackutil";
 import { _internalSetInitialState } from "../logger";
 import { registry } from "../instrumentation/registry";
 
+const BRAINTRUST_ENV_SEARCH_PARENT_LIMIT = 64;
+
 export function configureNode() {
   iso.buildType = "node";
 
   iso.getRepoInfo = getRepoInfo;
   iso.getPastNAncestors = getPastNAncestors;
-  iso.getEnv = (name) => process.env[name];
+  iso.getEnv = (name) => {
+    const value = process.env[name];
+    return name === "BRAINTRUST_API_KEY" && !value?.trim() ? undefined : value;
+  };
+  iso.getBraintrustApiKey = async () => {
+    const value = process.env.BRAINTRUST_API_KEY;
+    if (value?.trim()) {
+      return value;
+    }
+
+    // Kick off the cwd/parent reads together, then drain them nearest-first so
+    // a slower local file still beats a faster parent.
+    const envPaths = [];
+    for (
+      let dir = process.cwd(), depth = 0;
+      depth <= BRAINTRUST_ENV_SEARCH_PARENT_LIMIT;
+      dir = path.dirname(dir), depth++
+    ) {
+      envPaths.push(path.join(dir, ".env.braintrust"));
+      if (path.dirname(dir) === dir) {
+        break;
+      }
+    }
+
+    type ReadResult =
+      | { envPath: string; index: number; contents: string }
+      | { envPath: string; index: number; error: unknown };
+
+    const pending = new Map<number, Promise<ReadResult>>();
+    envPaths.forEach((envPath, index) => {
+      pending.set(
+        index,
+        fs.readFile(envPath, "utf8").then(
+          (contents) => ({ contents, envPath, index }),
+          (error) => ({ error, envPath, index }),
+        ),
+      );
+    });
+
+    const results: Array<ReadResult | undefined> = [];
+    let nearestUnresolvedIndex = 0;
+    while (pending.size > 0) {
+      const result = await Promise.race(pending.values());
+      pending.delete(result.index);
+      results[result.index] = result;
+
+      while (results[nearestUnresolvedIndex]) {
+        const nearestResult = results[nearestUnresolvedIndex]!;
+        if ("contents" in nearestResult) {
+          const parsed = dotenv.parse(nearestResult.contents);
+          const apiKey = parsed.BRAINTRUST_API_KEY;
+          return apiKey?.trim() ? apiKey : undefined;
+        }
+
+        const e = nearestResult.error;
+        if (
+          typeof e === "object" &&
+          e !== null &&
+          "code" in e &&
+          e.code === "ENOENT"
+        ) {
+          nearestUnresolvedIndex++;
+          continue;
+        }
+        return undefined;
+      }
+    }
+
+    return undefined;
+  };
   iso.getCallerLocation = getCallerLocation;
   iso.newAsyncLocalStorage = <T>() => new AsyncLocalStorage<T>();
   iso.newTracingChannel = <_M = any>(nameOrChannels: string | object) =>

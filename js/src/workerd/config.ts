@@ -40,6 +40,10 @@ export function configureWorkerd(): void {
     }
     return process.env[name];
   };
+  iso.getBraintrustApiKey = async () => {
+    const value = iso.getEnv("BRAINTRUST_API_KEY");
+    return value?.trim() ? value : undefined;
+  };
 
   iso.hash = (data: string): string => {
     let hash = 0;

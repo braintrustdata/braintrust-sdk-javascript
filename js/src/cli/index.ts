@@ -1019,7 +1019,7 @@ async function run(args: RunArgs) {
 
 function addAuthArgs(parser: ArgumentParser) {
   parser.add_argument("--api-key", {
-    help: "Specify a braintrust api key. If the parameter is not specified, the BRAINTRUST_API_KEY environment variable will be used.",
+    help: "Specify a braintrust api key. If the parameter is not specified, BRAINTRUST_API_KEY or the nearest .env.braintrust file will be used.",
   });
   parser.add_argument("--org-name", {
     help: "The name of a specific organization to connect to. This is useful if you belong to multiple.",

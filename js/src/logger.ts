@@ -3529,7 +3529,7 @@ type InitializedExperiment<IsOpen extends boolean | undefined> =
  * @param options.baseExperiment An optional experiment name to use as a base. If specified, the new experiment will be summarized and compared to this experiment. Otherwise, it will pick an experiment by finding the closest ancestor on the default (e.g. main) branch.
  * @param options.isPublic An optional parameter to control whether the experiment is publicly visible to anybody with the link or privately visible to only members of the organization. Defaults to private.
  * @param options.appUrl The URL of the Braintrust App. Defaults to https://www.braintrust.dev.
- * @param options.apiKey The API key to use. If the parameter is not specified, will try to use the `BRAINTRUST_API_KEY` environment variable. If no API key is specified, will prompt the user to login.
+ * @param options.apiKey The API key to use. If the parameter is not specified, will try to use the `BRAINTRUST_API_KEY` environment variable. In Node.js, if that is unset, will try the nearest `.env.braintrust` file in the current working directory or parent directories. If no API key is specified, will prompt the user to login.
  * @param options.orgName (Optional) The name of a specific organization to connect to. This is useful if you belong to multiple.
  * @param options.metadata (Optional) A dictionary with additional data about the test example, model outputs, or just about anything else that's relevant, that you can use to help find and analyze examples later. For example, you could log the `prompt`, example's `id`, or anything else that would be useful to slice/dice later. The values in `metadata` can be any JSON-serializable type, but its keys must be strings.
  * @param options.gitMetadataSettings (Optional) Settings for collecting git metadata. By default, Braintrust collects the git metadata fields allowed by your organization's git metadata settings. If those settings are absent, git metadata is not collected unless this option is set.
@@ -4112,7 +4112,7 @@ async function serializeDatasetForExperiment({
  * @param options.snapshotName Pin the dataset to the version captured by this named snapshot. If `environment` is also provided, `snapshotName` takes precedence.
  * @param options.environment Pin the dataset to the version tagged with this environment slug.
  * @param options.appUrl The URL of the Braintrust App. Defaults to https://www.braintrust.dev.
- * @param options.apiKey The API key to use. If the parameter is not specified, will try to use the `BRAINTRUST_API_KEY` environment variable. If no API key is specified, will prompt the user to login.
+ * @param options.apiKey The API key to use. If the parameter is not specified, will try to use the `BRAINTRUST_API_KEY` environment variable. In Node.js, if that is unset, will try the nearest `.env.braintrust` file in the current working directory or parent directories. If no API key is specified, will prompt the user to login.
  * @param options.orgName (Optional) The name of a specific organization to connect to. This is useful if you belong to multiple.
  * @param options.projectId The id of the project to create the dataset in. This takes precedence over `project` if specified.
  * @param options.metadata A dictionary with additional data about the dataset. The values in `metadata` can be any JSON-serializable type, but its keys must be strings.
@@ -4369,8 +4369,8 @@ export type InitLoggerOptions<IsAsyncFlush> = FullLoginOptions & {
  * @param options.projectId The id of the project to log into. This takes precedence over projectName if specified.
  * @param options.asyncFlush If true, will log asynchronously in the background. Otherwise, will log synchronously. (true by default)
  * @param options.appUrl The URL of the Braintrust App. Defaults to https://www.braintrust.dev.
- * @param options.apiKey The API key to use. If the parameter is not specified, will try to use the `BRAINTRUST_API_KEY` environment variable. If no API
- * key is specified, will prompt the user to login.
+ * @param options.apiKey The API key to use. If the parameter is not specified, will try to use the `BRAINTRUST_API_KEY` environment variable. In Node.js,
+ * if that is unset, will try the nearest `.env.braintrust` file in the current working directory or parent directories. If no API key is specified, will prompt the user to login.
  * @param options.orgName (Optional) The name of a specific organization to connect to. This is useful if you belong to multiple.
  * @param options.forceLogin Login again, even if you have already logged in (by default, the logger will not login if you are already logged in)
  * @param options.debugLogLevel Enables internal Braintrust SDK troubleshooting output. Use `"error"`, `"warn"`, `"info"`, or `"debug"` to choose an explicit level, or `false` to explicitly disable it. If omitted, the SDK stays silent unless `BRAINTRUST_DEBUG_LOG_LEVEL` is set.
@@ -4524,8 +4524,8 @@ type LoadParametersImplementationOptions = LoadParametersBaseOptions & {
  * @param options.defaults (Optional) A dictionary of default values to use when rendering the prompt. Prompt values will override these defaults.
  * @param options.noTrace If true, do not include logging metadata for this prompt when build() is called.
  * @param options.appUrl The URL of the Braintrust App. Defaults to https://www.braintrust.dev.
- * @param options.apiKey The API key to use. If the parameter is not specified, will try to use the `BRAINTRUST_API_KEY` environment variable. If no API
- * key is specified, will prompt the user to login.
+ * @param options.apiKey The API key to use. If the parameter is not specified, will try to use the `BRAINTRUST_API_KEY` environment variable. In Node.js,
+ * if that is unset, will try the nearest `.env.braintrust` file in the current working directory or parent directories. If no API key is specified, will prompt the user to login.
  * @param options.orgName (Optional) The name of a specific organization to connect to. This is useful if you belong to multiple.
  * @returns The prompt object.
  * @throws If the prompt is not found.
@@ -4680,7 +4680,7 @@ export async function loadPrompt({
  * @param options.environment Fetch the version of the parameters assigned to the specified environment (e.g. "production", "staging"). If both `version` and `environment` are provided, `version` takes precedence.
  * @param options.id The id of specific parameters to load. If specified, this takes precedence over all other parameters (project and slug).
  * @param options.appUrl The URL of the Braintrust App. Defaults to https://www.braintrust.dev.
- * @param options.apiKey The API key to use. If the parameter is not specified, will try to use the `BRAINTRUST_API_KEY` environment variable.
+ * @param options.apiKey The API key to use. If the parameter is not specified, will try to use the `BRAINTRUST_API_KEY` environment variable. In Node.js, if that is unset, will try the nearest `.env.braintrust` file in the current working directory or parent directories.
  * @param options.orgName (Optional) The name of a specific organization to connect to. This is useful if you belong to multiple.
  * @returns The parameters object.
  * @throws If the parameters are not found.
@@ -4854,7 +4854,7 @@ export interface LoginOptions {
    */
   appUrl?: string;
   /**
-   * The API key to use. If the parameter is not specified, will try to use the `BRAINTRUST_API_KEY` environment variable.
+   * The API key to use. If the parameter is not specified, will try to use the `BRAINTRUST_API_KEY` environment variable. In Node.js, if that is unset, will try the nearest `.env.braintrust` file in the current working directory or parent directories.
    */
   apiKey?: string;
   /**
@@ -4919,8 +4919,8 @@ export function setMaskingFunction(
  *
  * @param options Options for configuring login().
  * @param options.appUrl The URL of the Braintrust App. Defaults to https://www.braintrust.dev.
- * @param options.apiKey The API key to use. If the parameter is not specified, will try to use the `BRAINTRUST_API_KEY` environment variable. If no API
- * key is specified, will prompt the user to login.
+ * @param options.apiKey The API key to use. If the parameter is not specified, will try to use the `BRAINTRUST_API_KEY` environment variable. In Node.js,
+ * if that is unset, will try the nearest `.env.braintrust` file in the current working directory or parent directories. If no API key is specified, will prompt the user to login.
  * @param options.orgName (Optional) The name of a specific organization to connect to. This is useful if you belong to multiple.
  * @param options.forceLogin Login again, even if you have already logged in (by default, this function will exit quickly if you have already logged in)
  */
@@ -4969,11 +4969,13 @@ export async function login(
 export async function loginToState(options: LoginOptions = {}) {
   const {
     appUrl = iso.getEnv("BRAINTRUST_APP_URL") || "https://www.braintrust.dev",
-    apiKey = iso.getEnv("BRAINTRUST_API_KEY"),
+    apiKey: apiKeyArg,
     orgName = iso.getEnv("BRAINTRUST_ORG_NAME"),
     fetch = globalThis.fetch,
   } = options || {};
 
+  const apiKey =
+    apiKeyArg !== undefined ? apiKeyArg : await iso.getBraintrustApiKey();
   const appPublicUrl = iso.getEnv("BRAINTRUST_APP_PUBLIC_URL") || appUrl;
 
   const state = new BraintrustState(options);
