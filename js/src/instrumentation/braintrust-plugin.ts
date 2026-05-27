@@ -16,30 +16,12 @@ import { CoherePlugin } from "./plugins/cohere-plugin";
 import { GroqPlugin } from "./plugins/groq-plugin";
 import { GenkitPlugin } from "./plugins/genkit-plugin";
 import { GitHubCopilotPlugin } from "./plugins/github-copilot-plugin";
+import { FluePlugin } from "./plugins/flue-plugin";
+import { LangChainPlugin } from "./plugins/langchain-plugin";
+import type { InstrumentationIntegrationsConfig } from "./config";
 
 export interface BraintrustPluginConfig {
-  integrations?: {
-    openai?: boolean;
-    anthropic?: boolean;
-    vercel?: boolean;
-    aisdk?: boolean;
-    google?: boolean;
-    googleGenAI?: boolean;
-    huggingface?: boolean;
-    claudeAgentSDK?: boolean;
-    cursor?: boolean;
-    cursorSDK?: boolean;
-    openrouter?: boolean;
-    openrouterAgent?: boolean;
-    mistral?: boolean;
-    googleADK?: boolean;
-    cohere?: boolean;
-    groq?: boolean;
-    genkit?: boolean;
-    gitHubCopilot?: boolean;
-    openaiCodexSDK?: boolean;
-    openAIAgents?: boolean;
-  };
+  integrations?: InstrumentationIntegrationsConfig;
 }
 
 function getIntegrationConfig(
@@ -59,6 +41,7 @@ function getIntegrationConfig(
  * - Vercel AI SDK (generateText, streamText, etc.)
  * - Google GenAI SDK
  * - HuggingFace Inference SDK
+ * - LangChain.js and LangGraph
  * - Mistral SDK
  * - Cohere SDK
  *
@@ -84,6 +67,8 @@ export class BraintrustPlugin extends BasePlugin {
   private groqPlugin: GroqPlugin | null = null;
   private genkitPlugin: GenkitPlugin | null = null;
   private gitHubCopilotPlugin: GitHubCopilotPlugin | null = null;
+  private fluePlugin: FluePlugin | null = null;
+  private langChainPlugin: LangChainPlugin | null = null;
 
   constructor(config: BraintrustPluginConfig = {}) {
     super();
@@ -186,6 +171,16 @@ export class BraintrustPlugin extends BasePlugin {
       this.gitHubCopilotPlugin = new GitHubCopilotPlugin();
       this.gitHubCopilotPlugin.enable();
     }
+
+    if (getIntegrationConfig(integrations, "flue") !== false) {
+      this.fluePlugin = new FluePlugin();
+      this.fluePlugin.enable();
+    }
+
+    if (integrations.langchain !== false && integrations.langgraph !== false) {
+      this.langChainPlugin = new LangChainPlugin();
+      this.langChainPlugin.enable();
+    }
   }
 
   protected onDisable(): void {
@@ -272,6 +267,16 @@ export class BraintrustPlugin extends BasePlugin {
     if (this.gitHubCopilotPlugin) {
       this.gitHubCopilotPlugin.disable();
       this.gitHubCopilotPlugin = null;
+    }
+
+    if (this.fluePlugin) {
+      this.fluePlugin.disable();
+      this.fluePlugin = null;
+    }
+
+    if (this.langChainPlugin) {
+      this.langChainPlugin.disable();
+      this.langChainPlugin = null;
     }
   }
 }

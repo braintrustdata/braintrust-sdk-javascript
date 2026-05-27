@@ -124,6 +124,42 @@ function createOutputObjectIfSupported(ai) {
   return undefined;
 }
 
+async function assertOutputObjectResponseFormatShape(ai, sdkMajorVersion) {
+  const outputSchema = ai.Output.object({
+    schema: z.object({
+      name: z.string().describe("A name"),
+    }),
+  });
+
+  if (sdkMajorVersion === 5) {
+    if (
+      outputSchema.responseFormat instanceof Promise ||
+      typeof outputSchema.responseFormat !== "object" ||
+      outputSchema.responseFormat?.type !== "json" ||
+      !outputSchema.responseFormat?.schema
+    ) {
+      throw new Error(
+        "Expected AI SDK v5 Output.object responseFormat to be a resolved JSON object",
+      );
+    }
+    return;
+  }
+
+  if (sdkMajorVersion >= 6) {
+    if (!(outputSchema.responseFormat instanceof Promise)) {
+      throw new Error(
+        "Expected AI SDK v6 Output.object responseFormat to be a Promise",
+      );
+    }
+    const resolved = await outputSchema.responseFormat;
+    if (resolved?.type !== "json" || !resolved?.schema) {
+      throw new Error(
+        "Expected AI SDK v6 Output.object responseFormat promise to resolve to a JSON schema",
+      );
+    }
+  }
+}
+
 function createWeatherTool(ai, schemaKey) {
   const zodSchema = z.object({
     location: z.string().describe("The city and country"),
@@ -189,6 +225,19 @@ async function runAISDKInstrumentationScenario(
       });
 
       if (outputObject) {
+        if (sdkMajorVersion >= 5) {
+          await runOperation(
+            "ai-sdk-output-object-response-format-operation",
+            "output-object-response-format",
+            async () => {
+              await assertOutputObjectResponseFormatShape(
+                options.ai,
+                sdkMajorVersion,
+              );
+            },
+          );
+        }
+
         await runOperation(
           "ai-sdk-output-object-operation",
           "output-object",

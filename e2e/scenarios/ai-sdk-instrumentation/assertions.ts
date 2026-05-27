@@ -249,6 +249,13 @@ function findOutputObjectTrace(events: CapturedLogEvent[]) {
   );
 }
 
+function findOutputObjectResponseFormatOperation(events: CapturedLogEvent[]) {
+  return findLatestSpan(
+    events,
+    "ai-sdk-output-object-response-format-operation",
+  );
+}
+
 function findDenyOutputOverrideTrace(events: CapturedLogEvent[]) {
   return findGenerateTextTraceForOperation(
     events,
@@ -1000,6 +1007,22 @@ export function defineAISDKInstrumentationAssertions(options: {
     }
 
     if (options.supportsOutputObjectScenario) {
+      if (options.sdkMajorVersion >= 5) {
+        test(
+          "checks Output.object responseFormat API shape",
+          testConfig,
+          () => {
+            const root = findLatestSpan(events, ROOT_NAME);
+            const operation = findOutputObjectResponseFormatOperation(events);
+
+            expectOperationParentedByRoot(operation, root);
+            expect(operationName(operation)).toBe(
+              "output-object-response-format",
+            );
+          },
+        );
+      }
+
       test(
         "captures Output.object schema on generateText()",
         testConfig,

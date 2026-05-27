@@ -43,6 +43,7 @@ type OperationSpec = {
   childNames: readonly string[];
   expectsOutput: boolean;
   expectsTimeToFirstToken: boolean;
+  minOpenAIMajorVersion?: number;
   name: string;
   operation: string;
   requiresResponsesCompact?: boolean;
@@ -72,6 +73,35 @@ function validateStreamFixtureOutput(span: CapturedLogEvent | undefined): void {
   expect(message?.refusal).toBe("NOPE");
 }
 
+function validateAttachmentInput(
+  span: CapturedLogEvent | undefined,
+  contentType: string,
+): void {
+  const serialized = JSON.stringify(span?.input);
+
+  expect(serialized).toContain("braintrust_attachment");
+  expect(serialized).toContain(contentType);
+}
+
+function validateToolOutput(span: CapturedLogEvent | undefined): void {
+  const choices = Array.isArray(span?.output) ? span.output : [];
+  const toolCalls = choices.flatMap((choice) => {
+    const message = asRecord(asRecord(choice)?.message);
+    const calls = message?.tool_calls;
+    return Array.isArray(calls) ? calls : [];
+  });
+
+  expect(toolCalls).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        function: expect.objectContaining({
+          name: "get_weather",
+        }),
+      }),
+    ]),
+  );
+}
+
 const OPERATION_SPECS: readonly OperationSpec[] = [
   {
     childNames: ["Chat Completion"],
@@ -92,6 +122,35 @@ const OPERATION_SPECS: readonly OperationSpec[] = [
   {
     childNames: ["Chat Completion"],
     expectsOutput: true,
+    expectsTimeToFirstToken: false,
+    minOpenAIMajorVersion: 6,
+    name: "openai-chat-image-attachment-operation",
+    operation: "chat-image-attachment",
+    testName: "captures trace for chat completion image attachments",
+    validate: (span) => validateAttachmentInput(span, "image/png"),
+  },
+  {
+    childNames: ["Chat Completion"],
+    expectsOutput: true,
+    expectsTimeToFirstToken: false,
+    minOpenAIMajorVersion: 6,
+    name: "openai-chat-pdf-attachment-operation",
+    operation: "chat-pdf-attachment",
+    testName: "captures trace for chat completion PDF attachments",
+    validate: (span) => validateAttachmentInput(span, "application/pdf"),
+  },
+  {
+    childNames: ["Chat Completion"],
+    expectsOutput: true,
+    expectsTimeToFirstToken: false,
+    name: "openai-chat-tool-operation",
+    operation: "chat-tool",
+    testName: "captures trace for chat completion tool calls",
+    validate: validateToolOutput,
+  },
+  {
+    childNames: ["Chat Completion"],
+    expectsOutput: true,
     expectsTimeToFirstToken: true,
     name: "openai-stream-operation",
     operation: "stream",
@@ -106,6 +165,15 @@ const OPERATION_SPECS: readonly OperationSpec[] = [
     operation: "stream-with-response",
     testName:
       "captures trace for streamed chat completion with response metadata",
+  },
+  {
+    childNames: ["Chat Completion"],
+    expectsOutput: true,
+    expectsTimeToFirstToken: true,
+    name: "openai-stream-tool-operation",
+    operation: "stream-tool",
+    testName: "captures trace for streamed chat completion tool calls",
+    validate: validateToolOutput,
   },
   {
     childNames: ["Chat Completion"],
@@ -239,8 +307,12 @@ function supportsResponsesCompact(version: string): boolean {
 
 function getOperationSpecs(version: string): OperationSpec[] {
   const compactSupported = supportsResponsesCompact(version);
+  const major = Number.parseInt(version.split(".")[0] ?? "", 10);
   return OPERATION_SPECS.filter(
-    (spec) => !spec.requiresResponsesCompact || compactSupported,
+    (spec) =>
+      (!spec.requiresResponsesCompact || compactSupported) &&
+      (!spec.minOpenAIMajorVersion ||
+        (Number.isFinite(major) && major >= spec.minOpenAIMajorVersion)),
   );
 }
 

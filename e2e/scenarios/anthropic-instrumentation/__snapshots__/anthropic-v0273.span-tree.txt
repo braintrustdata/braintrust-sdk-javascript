@@ -41,6 +41,60 @@ span_tree:
     │         "time_to_first_token": 0,
     │         "tokens": 16
     │       }
+    ├── anthropic-system-blocks-operation
+    │   metadata: {
+    │     "operation": "system-blocks",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── anthropic.messages.create [llm]
+    │       input: [
+    │         {
+    │           "content": "Bonjour mon ami!",
+    │           "role": "user"
+    │         },
+    │         {
+    │           "content": [
+    │             {
+    │               "text": "translate to english",
+    │               "type": "text"
+    │             },
+    │             {
+    │               "text": "remove all punctuation",
+    │               "type": "text"
+    │             },
+    │             {
+    │               "text": "only the answer no other text",
+    │               "type": "text"
+    │             }
+    │           ],
+    │           "role": "system"
+    │         }
+    │       ]
+    │       output: {
+    │         "content": [
+    │           {
+    │             "text": "Hello my friend",
+    │             "type": "text"
+    │           }
+    │         ],
+    │         "role": "assistant"
+    │       }
+    │       metadata: {
+    │         "max_tokens": 24,
+    │         "model": "claude-haiku-4-5",
+    │         "provider": "anthropic",
+    │         "stop_reason": "end_turn",
+    │         "stop_sequence": null,
+    │         "temperature": 0
+    │       }
+    │       metrics: {
+    │         "completion_tokens": 6,
+    │         "prompt_cache_creation_tokens": 0,
+    │         "prompt_cached_tokens": 0,
+    │         "prompt_tokens": 30,
+    │         "time_to_first_token": 0,
+    │         "tokens": 36
+    │       }
     ├── anthropic-create-with-response-operation
     │   metadata: {
     │     "operation": "create-with-response",

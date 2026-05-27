@@ -20,6 +20,14 @@ const helperPromisePath = path.join(
   fixturesDir,
   "test-api-promise-preservation.mjs",
 );
+const runtimeApplyAutoSideEffectEsmPath = path.join(
+  fixturesDir,
+  "runtime-apply-auto-side-effect-esm.mjs",
+);
+const runtimeApplyAutoSideEffectCjsPath = path.join(
+  fixturesDir,
+  "runtime-apply-auto-side-effect-cjs.cjs",
+);
 
 interface TestResult {
   events: { start: any[]; end: any[]; error: any[] };
@@ -76,9 +84,53 @@ describe("Unified Loader Hook Integration Tests", () => {
       expect(result.constructorName).toBe("HelperPromise");
     });
   });
+
+  describe("apply-auto-instrumentation side-effect runtime setup", () => {
+    it("should apply instrumentation through the side-effect ESM export", async () => {
+      const result = await runWithWorker({
+        execArgv: ["--import", listenerPath],
+        script: runtimeApplyAutoSideEffectEsmPath,
+      });
+
+      expect(result.events.start.length).toBe(1);
+      expect(result.events.end.length).toBe(1);
+    });
+
+    it("should apply instrumentation through the side-effect CJS export", async () => {
+      const result = await runWithWorker({
+        execArgv: ["--import", listenerPath],
+        script: runtimeApplyAutoSideEffectCjsPath,
+      });
+
+      expect(result.events.start.length).toBe(1);
+      expect(result.events.end.length).toBe(1);
+    });
+
+    it("should respect BRAINTRUST_DISABLE_INSTRUMENTATION", async () => {
+      const result = await runWithWorker({
+        env: { BRAINTRUST_DISABLE_INSTRUMENTATION: "openai" },
+        execArgv: ["--import", listenerPath],
+        script: runtimeApplyAutoSideEffectEsmPath,
+      });
+
+      expect(result.events.start.length).toBe(0);
+      expect(result.events.end.length).toBe(0);
+    });
+
+    it("should not double-apply when import hook and side-effect export both run", async () => {
+      const result = await runWithWorker({
+        execArgv: ["--import", listenerPath, "--import", hookPath],
+        script: runtimeApplyAutoSideEffectEsmPath,
+      });
+
+      expect(result.events.start.length).toBe(1);
+      expect(result.events.end.length).toBe(1);
+    });
+  });
 });
 
 async function runWithWorker(options: {
+  env?: NodeJS.ProcessEnv;
   execArgv: string[];
   script: string;
 }): Promise<TestResult> {
@@ -89,6 +141,7 @@ async function runWithWorker(options: {
 }
 
 async function runWithWorkerMessage<T>(options: {
+  env?: NodeJS.ProcessEnv;
   execArgv: string[];
   messageType: string;
   script: string;
@@ -123,7 +176,7 @@ async function runWithWorkerMessage<T>(options: {
 
     const worker = new Worker(scriptUrl, {
       execArgv,
-      env: { ...process.env, NODE_OPTIONS: "" },
+      env: { ...process.env, ...options.env, NODE_OPTIONS: "" },
     });
 
     worker.on("message", (msg) => {

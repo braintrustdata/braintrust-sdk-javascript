@@ -2173,6 +2173,14 @@ describe("areInterfaceSignaturesCompatible", () => {
     expect(result).toBe(true);
   });
 
+  test("should allow adding optional fields to nested object interface fields", () => {
+    const oldInterface = `export interface InstrumentationConfig { integrations?: { openai?: boolean; cohere?: boolean; }; }`;
+    const newInterface = `export interface InstrumentationConfig { integrations?: { openai?: boolean; cohere?: boolean; langchain?: boolean; }; }`;
+
+    const result = areInterfaceSignaturesCompatible(oldInterface, newInterface);
+    expect(result).toBe(true);
+  });
+
   test("should reject removing fields from interface", () => {
     const oldInterface = `export interface LogOptions<IsAsyncFlush> { asyncFlush?: IsAsyncFlush; computeMetadataArgs?: Record<string, any>; }`;
     const newInterface = `export interface LogOptions<IsAsyncFlush> { asyncFlush?: IsAsyncFlush; }`;

@@ -1,11 +1,13 @@
+import { spawnSync } from "node:child_process";
 import { appendFileSync, existsSync, readFileSync, readdirSync } from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const REPO_ROOT = path.resolve(__dirname, "../..");
-export const NPM_REGISTRY = "https://registry.npmjs.org/";
+const NPM_REGISTRY = "https://registry.npmjs.org/";
 export const GITHUB_REPO_URL =
   "git+https://github.com/braintrustdata/braintrust-sdk-javascript.git";
 export const DOCS_HOMEPAGE = "https://www.braintrust.dev/docs";
@@ -191,4 +193,21 @@ export function getReleaseTag(name, version) {
 
 export function formatPackageList(packages) {
   return packages.map((pkg) => `- ${pkg.name}@${pkg.version}`).join("\n");
+}
+
+export function isPublishedToNpm(name, version) {
+  const result = spawnSync(
+    "npm",
+    ["view", `${name}@${version}`, "version", "--registry", NPM_REGISTRY],
+    {
+      cwd: os.tmpdir(),
+      encoding: "utf8",
+    },
+  );
+
+  if (result.status !== 0) {
+    return false;
+  }
+
+  return result.stdout.trim() === version;
 }

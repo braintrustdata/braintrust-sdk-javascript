@@ -64,6 +64,7 @@ Cassettes mock provider HTTP responses (OpenAI, Anthropic, ...) so external-prov
 - When a scenario family already has `assertions.ts`, keep version- or provider-specific test setup in `scenario.test.ts` and reuse the shared assertions file.
 - Keep the CI e2e summary up to date. If a scenario version matrix or `variantKey` changes, update `e2e/config/pr-comment-scenarios.json` in the same change and follow the established pattern used by other versioned scenarios: one summary row per version, not separate wrapped/auto rows unless that pattern already exists for the scenario family.
 - Run new or updated scenarios three times in a row before considering snapshots stable.
+- Do not add tests directly asserting on the auto instrumentation configs.
 
 ## Scenario Patterns
 

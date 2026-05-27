@@ -88,6 +88,11 @@
     ]
   },
   {
+    "scenarioDirName": "langgraph-auto-instrumentation",
+    "label": "LangGraph Auto-Instrumentation",
+    "metadataScenario": "langgraph-auto-instrumentation"
+  },
+  {
     "scenarioDirName": "mistral-instrumentation",
     "label": "Mistral Instrumentation",
     "metadataScenario": "mistral-instrumentation",
@@ -161,6 +166,22 @@
     "label": "Cursor SDK Instrumentation",
     "metadataScenario": "cursor-sdk-instrumentation",
     "variants": [{ "variantKey": "cursor-sdk-v1", "label": "v1" }]
+  },
+  {
+    "scenarioDirName": "flue-instrumentation",
+    "label": "Flue Instrumentation",
+    "metadataScenario": "flue-instrumentation",
+    "variants": [
+      { "variantKey": "flue-v0-7-0-wrapped", "label": "v0.7.0 wrapped" },
+      {
+        "variantKey": "flue-v0-7-0-auto-hook",
+        "label": "v0.7.0 auto-hook"
+      },
+      {
+        "variantKey": "flue-v0-7-0-openai-auto-hook",
+        "label": "v0.7.0 OpenAI auto-hook"
+      }
+    ]
   },
   {
     "scenarioDirName": "github-copilot-instrumentation",

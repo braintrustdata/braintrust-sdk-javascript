@@ -1,6 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
 import { describe, it, expect, beforeEach, afterEach, vi, test } from "vitest";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import { trace, context, Tracer, propagation } from "@opentelemetry/api";
 import {
   BasicTracerProvider,
@@ -30,6 +33,21 @@ import {
 } from "../tests/utils";
 import { SpanComponentsV3, SpanComponentsV4 } from "braintrust/util";
 import { setupOtelCompat, resetOtelCompat } from ".";
+
+async function withEmptyBraintrustEnvFile<T>(
+  fn: () => T | Promise<T>,
+): Promise<T> {
+  const originalCwd = process.cwd();
+  const tempDir = await mkdtemp(path.join(tmpdir(), "braintrust-otel-env-"));
+  try {
+    await writeFile(path.join(tempDir, ".env.braintrust"), "");
+    process.chdir(tempDir);
+    return fn();
+  } finally {
+    process.chdir(originalCwd);
+    await rm(tempDir, { force: true, recursive: true });
+  }
+}
 
 describe("AISpanProcessor", () => {
   let memoryExporter: InMemorySpanExporter;
@@ -568,12 +586,34 @@ describe("BraintrustSpanProcessor", () => {
     }).not.toThrow();
   });
 
-  it("should throw error when no API key is provided", () => {
+  it("should reject forceFlush when no API key is provided", async () => {
     delete process.env.BRAINTRUST_API_KEY;
 
-    expect(() => {
-      new BraintrustSpanProcessor();
-    }).toThrow("Braintrust API key is required");
+    await withEmptyBraintrustEnvFile(async () => {
+      const processor = new BraintrustSpanProcessor();
+      await expect(processor.forceFlush()).rejects.toThrow(
+        "Braintrust API key is required",
+      );
+    });
+  });
+
+  it("should create BraintrustSpanProcessor with API key from .env.braintrust", async () => {
+    delete process.env.BRAINTRUST_API_KEY;
+    const originalCwd = process.cwd();
+    const tempDir = await mkdtemp(path.join(tmpdir(), "braintrust-otel-env-"));
+    try {
+      await writeFile(
+        path.join(tempDir, ".env.braintrust"),
+        "BRAINTRUST_API_KEY=file-api-key\n",
+      );
+      process.chdir(tempDir);
+
+      const processor = new BraintrustSpanProcessor();
+      await expect(processor.forceFlush()).resolves.toBeUndefined();
+    } finally {
+      process.chdir(originalCwd);
+      await rm(tempDir, { force: true, recursive: true });
+    }
   });
 
   it("should use default API URL when not provided", () => {
@@ -794,12 +834,15 @@ describe("BraintrustExporter", () => {
     }).not.toThrow();
   });
 
-  it("should throw error when no API key is provided", () => {
+  it("should reject forceFlush when no API key is provided", async () => {
     delete process.env.BRAINTRUST_API_KEY;
 
-    expect(() => {
-      new BraintrustExporter();
-    }).toThrow("Braintrust API key is required");
+    await withEmptyBraintrustEnvFile(async () => {
+      const exporter = new BraintrustExporter();
+      await expect(exporter.forceFlush()).rejects.toThrow(
+        "Braintrust API key is required",
+      );
+    });
   });
 
   it("should use same options as BraintrustSpanProcessor", () => {

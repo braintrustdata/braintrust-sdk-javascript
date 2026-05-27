@@ -107,7 +107,6 @@ span_tree:
     │         "batch_size": 1,
     │         "braintrust": {
     │           "integration_name": "langchain-js",
-    │           "integration_version": "0.2.0",
     │           "sdk_language": "javascript"
     │         },
     │         "invocation_params": {
@@ -233,7 +232,6 @@ span_tree:
     │       metadata: {
     │         "braintrust": {
     │           "integration_name": "langchain-js",
-    │           "integration_version": "0.2.0",
     │           "sdk_language": "javascript"
     │         },
     │         "metadata": {},
@@ -353,7 +351,6 @@ span_tree:
     │       │   metadata: {
     │       │     "braintrust": {
     │       │       "integration_name": "langchain-js",
-    │       │       "integration_version": "0.2.0",
     │       │       "sdk_language": "javascript"
     │       │     },
     │       │     "metadata": {},
@@ -509,7 +506,6 @@ span_tree:
     │             "batch_size": 1,
     │             "braintrust": {
     │               "integration_name": "langchain-js",
-    │               "integration_version": "0.2.0",
     │               "sdk_language": "javascript"
     │             },
     │             "invocation_params": {
@@ -676,7 +672,6 @@ span_tree:
     │         "batch_size": 1,
     │         "braintrust": {
     │           "integration_name": "langchain-js",
-    │           "integration_version": "0.2.0",
     │           "sdk_language": "javascript"
     │         },
     │         "invocation_params": {
@@ -865,7 +860,6 @@ span_tree:
     │         "batch_size": 1,
     │         "braintrust": {
     │           "integration_name": "langchain-js",
-    │           "integration_version": "0.2.0",
     │           "sdk_language": "javascript"
     │         },
     │         "invocation_params": {
@@ -1095,7 +1089,6 @@ span_tree:
         │     "batch_size": 1,
         │     "braintrust": {
         │       "integration_name": "langchain-js",
-        │       "integration_version": "0.2.0",
         │       "sdk_language": "javascript"
         │     },
         │     "invocation_params": {
@@ -1366,7 +1359,6 @@ span_tree:
               "batch_size": 1,
               "braintrust": {
                 "integration_name": "langchain-js",
-                "integration_version": "0.2.0",
                 "sdk_language": "javascript"
               },
               "invocation_params": {

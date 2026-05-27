@@ -21,6 +21,7 @@ import {
 } from "./logger";
 
 import { configureNode } from "./node/config";
+import { type GitMetadataSettingsType as GitMetadataSettings } from "./generated_types";
 import { writeFile, unlink } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
@@ -483,6 +484,86 @@ function mockInitGitMetadata() {
     "getPastNAncestors",
   ).mockResolvedValue([]);
 }
+
+const initGitMetadataSettingsCases: Array<{
+  name: string;
+  orgSettings?: GitMetadataSettings;
+  initSettings?: GitMetadataSettings;
+  expected: GitMetadataSettings;
+}> = [
+  {
+    name: "uses organization settings by default",
+    orgSettings: { collect: "some", fields: ["commit", "branch"] },
+    expected: { collect: "some", fields: ["commit", "branch"] },
+  },
+  {
+    name: "does not collect by default when organization settings are absent",
+    expected: { collect: "none" },
+  },
+  {
+    name: "preserves explicit opt-in when organization settings are absent",
+    initSettings: { collect: "all" },
+    expected: { collect: "all" },
+  },
+  {
+    name: "intersects explicit settings with organization settings",
+    orgSettings: { collect: "some", fields: ["commit", "branch"] },
+    initSettings: { collect: "some", fields: ["branch", "git_diff"] },
+    expected: { collect: "some", fields: ["branch"] },
+  },
+  {
+    name: "lets organization settings constrain explicit all",
+    orgSettings: { collect: "some", fields: ["commit"] },
+    initSettings: { collect: "all" },
+    expected: { collect: "some", fields: ["commit"] },
+  },
+];
+
+test.each(initGitMetadataSettingsCases)(
+  "init applies git metadata settings: $name",
+  async ({ orgSettings, initSettings, expected }) => {
+    const state = await _exportsForTestingOnly.simulateLoginForTests();
+
+    try {
+      state.gitMetadataSettings = orgSettings;
+      vi.spyOn(state, "login").mockResolvedValue(state);
+      const getRepoInfo = vi
+        .spyOn(_exportsForTestingOnly.isomorph, "getRepoInfo")
+        .mockResolvedValue(undefined);
+      vi.spyOn(
+        _exportsForTestingOnly.isomorph,
+        "getPastNAncestors",
+      ).mockResolvedValue([]);
+      vi.spyOn(state.appConn(), "post_json").mockResolvedValue({
+        project: {
+          id: "00000000-0000-0000-0000-000000000001",
+          name: "test-project",
+        },
+        experiment: {
+          id: "00000000-0000-0000-0000-000000000003",
+          project_id: "00000000-0000-0000-0000-000000000001",
+          name: "test-experiment",
+          public: false,
+        },
+      });
+
+      const experiment = init({
+        project: "test-project",
+        experiment: "test-experiment",
+        gitMetadataSettings: initSettings,
+        setCurrent: false,
+        state,
+      });
+
+      await experiment.id;
+
+      expect(getRepoInfo).toHaveBeenCalledWith(expected);
+    } finally {
+      _exportsForTestingOnly.simulateLogoutForTests();
+      vi.restoreAllMocks();
+    }
+  },
+);
 
 test("init forwards dataset _internal_btql to experiment register", async () => {
   const state = await _exportsForTestingOnly.simulateLoginForTests();
@@ -2495,6 +2576,68 @@ describe("parent precedence", () => {
     );
     expect(byName.forced.span_parents).toContain(byName.outer.span_id);
     expect(byName.forced.span_parents).not.toContain(byName.inner.span_id);
+  });
+
+  test("logger.startSpan with exported parent uses receiver project", async () => {
+    const primaryLogger = initLogger({
+      projectName: "primary",
+      projectId: "project-a",
+    });
+    const secondaryLogger = initLogger({
+      projectName: "secondary",
+      projectId: "project-b",
+    });
+
+    const root = primaryLogger.startSpan({ name: "root" });
+    const parentStr = await root.export();
+    root.end();
+
+    const child = secondaryLogger.startSpan({
+      name: "child",
+      parent: parentStr,
+    });
+    child.end();
+
+    await memory.flush();
+    const events = await memory.drain();
+    const byName: any = Object.fromEntries(
+      events.map((e: any) => [e.span_attributes?.name, e]),
+    );
+
+    expect(byName.child.project_id).toBe("project-b");
+    expect(byName.child.root_span_id).toBe(byName.root.root_span_id);
+    expect(byName.child.span_parents).toContain(byName.root.span_id);
+  });
+
+  test("experiment.startSpan with exported parent uses receiver experiment", async () => {
+    const primaryExperiment = _exportsForTestingOnly.initTestExperiment(
+      "experiment-a",
+      "project-a",
+    );
+    const secondaryExperiment = _exportsForTestingOnly.initTestExperiment(
+      "experiment-b",
+      "project-b",
+    );
+
+    const root = primaryExperiment.startSpan({ name: "root" });
+    const parentStr = await root.export();
+    root.end();
+
+    const child = secondaryExperiment.startSpan({
+      name: "child",
+      parent: parentStr,
+    });
+    child.end();
+
+    await memory.flush();
+    const events = await memory.drain();
+    const byName: any = Object.fromEntries(
+      events.map((e: any) => [e.span_attributes?.name, e]),
+    );
+
+    expect(byName.child.experiment_id).toBe("experiment-b");
+    expect(byName.child.root_span_id).toBe(byName.root.root_span_id);
+    expect(byName.child.span_parents).toContain(byName.root.span_id);
   });
 });
 

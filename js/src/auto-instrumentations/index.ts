@@ -45,6 +45,7 @@ export { cohereConfigs } from "./configs/cohere";
 export { groqConfigs } from "./configs/groq";
 export { genkitConfigs } from "./configs/genkit";
 export { gitHubCopilotConfigs } from "./configs/github-copilot";
+export { langchainConfigs } from "./configs/langchain";
 
 // Re-export orchestrion configuration types
 // Note: ModuleMetadata and FunctionQuery are properties of InstrumentationConfig,

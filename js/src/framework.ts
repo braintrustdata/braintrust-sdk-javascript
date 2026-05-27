@@ -344,7 +344,7 @@ export interface Evaluator<
   baseExperimentId?: string;
 
   /**
-   * Optional settings for collecting git metadata. By default, will collect all git metadata fields allowed in org-level settings.
+   * Optional settings for collecting git metadata. By default, Braintrust collects the git metadata fields allowed by your organization's git metadata settings. If those settings are absent, git metadata is not collected unless this option is set.
    */
   gitMetadataSettings?: GitMetadataSettings;
 

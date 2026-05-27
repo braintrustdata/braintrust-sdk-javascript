@@ -1,5 +1,23 @@
 # braintrust
 
+## 3.12.0
+
+### Minor Changes
+
+- feat: Add `@flue/runtime` instrumentation (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2037)
+- feat: Add `braintrust/apply-auto-instrumentation` entrypoint for CJS/TS patching (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2038)
+- feat(nextjs): Add `wrapNextjsConfigWithBraintrust` as canonical setup utility instead of webpack loader/plugin (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2033)
+- feat(bundler-plugins): Add `braintrustVitePlugin`, `braintrustWebpackPlugin`, `braintrustEsbuildPlugin`, `braintrustRollupPlugin` aliases for bundler plugins and deprecate old ones (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2032)
+
+### Patch Changes
+
+- feat: Add OpenAI Agents SDK auto-instrumentation (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/1891)
+- feat: Add LangChain and LangGraph auto-instrumentation (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/1897)
+- fix(security): reject `__proto__`, `constructor`, and `prototype` keys in `mergeDicts` / `mergeDictsWithPaths` to prevent prototype pollution from untrusted merge sources (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2026)
+- feat: Allow for multi project tracing by removing parent project ID restriction (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2044)
+- feat: Do not collect git metadata by default when organization-level git metadata settings are absent (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2045)
+- Add exponential backoff between existing `get_json` retry attempts (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/1965)
+
 ## 3.11.0
 
 ### Minor Changes
