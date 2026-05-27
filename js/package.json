@@ -1,6 +1,6 @@
 {
   "name": "braintrust",
-  "version": "3.12.0",
+  "version": "3.13.0",
   "description": "SDK for integrating Braintrust",
   "repository": {
     "type": "git",

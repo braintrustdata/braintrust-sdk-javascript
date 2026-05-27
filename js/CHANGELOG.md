@@ -1,5 +1,13 @@
 # braintrust
 
+## 3.13.0
+
+### Minor Changes
+
+- feat: Upwards-recursively read `.env.braintrust` containing `BRAINTRUST_API_KEY` on login in Node.js (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2049)
+- feat: Add Dataset pipelines (experimental) (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/1933)
+- feat: Include span id in dataset pipeline argument (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2055)
+
 ## 3.12.0
 
 ### Minor Changes
