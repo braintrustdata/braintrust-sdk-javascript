@@ -2,4 +2,4 @@
 "braintrust": patch
 ---
 
-Add dataset pipeline helpers for deriving datasets from traced spans.
+feat: Add Dataset pipelines (experimental)
