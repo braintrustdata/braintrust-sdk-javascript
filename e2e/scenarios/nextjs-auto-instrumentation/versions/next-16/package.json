@@ -2,12 +2,17 @@
   "name": "@braintrust/e2e-nextjs-auto-instrumentation-next-16",
   "private": true,
   "dependencies": {
-    "next": "16.2.1",
+    "next": "16.2.6",
     "openai": "6.32.0",
     "react": "19.2.4",
     "react-dom": "19.2.4"
   },
   "devDependencies": {
     "@types/react": "19.2.14"
+  },
+  "pnpm": {
+    "overrides": {
+      "postcss@<8.5.10": "^8.5.10"
+    }
   }
 }

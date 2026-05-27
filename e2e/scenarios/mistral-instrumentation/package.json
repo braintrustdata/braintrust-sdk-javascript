@@ -16,5 +16,10 @@
     "mistral-sdk-v1-15-1": "npm:@mistralai/mistralai@1.15.1",
     "mistral-sdk-v1-3-4": "npm:@mistralai/mistralai@1.3.4",
     "mistral-sdk-v2": "npm:@mistralai/mistralai@2.1.2"
+  },
+  "pnpm": {
+    "overrides": {
+      "ws@>=8.0.0 <8.20.1": "^8.20.1"
+    }
   }
 }

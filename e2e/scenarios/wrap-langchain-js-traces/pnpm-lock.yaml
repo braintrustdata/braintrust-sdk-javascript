@@ -4,6 +4,10 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  langsmith@<0.3.30: ^0.3.30
+  uuid: ^11.1.1
+
 importers:
 
   .:
@@ -123,12 +127,8 @@ packages:
   simple-wcswidth@1.1.2:
     resolution: {integrity: sha512-j7piyCjAeTDSjzTSQ7DokZtMNwNlEAyxqSZeCS+CXH7fJ4jx3FuJ/mTW3mE+6JLs4VJBbcll0Kjn+KXI5t21Iw==}
 
-  uuid@10.0.0:
-    resolution: {integrity: sha512-8XkAphELsDnEGrDxUOHB3RGvXz6TeuYSGEZBOjtTtPm2lwhGBjLgOzLHB63IUWfBpNucQjND6d3AOudO+H3RWQ==}
-    hasBin: true
-
-  uuid@11.1.0:
-    resolution: {integrity: sha512-0/A9rDy9P7cJ+8w1c9WD9V//9Wj15Ce2MPz8Ri6032usz+NfePxx5AcN3bN+r6ZL6jEo066/yNYB3tn4pQEx+A==}
+  uuid@11.1.1:
+    resolution: {integrity: sha512-vIYxrBCC/N/K+Js3qSN88go7kIfNPssr/hHCesKCQNAjmgvYS2oqr69kIufEG+O4+PfezOH4EbIeHCfFov8ZgQ==}
     hasBin: true
 
   zod@3.25.76:
@@ -149,7 +149,7 @@ snapshots:
       langsmith: 0.5.11(openai@6.32.0(zod@3.25.76))
       mustache: 4.2.0
       p-queue: 6.6.2
-      uuid: 11.1.0
+      uuid: 11.1.1
       zod: 3.25.76
     transitivePeerDependencies:
       - '@opentelemetry/api'
@@ -198,7 +198,7 @@ snapshots:
       console-table-printer: 2.15.0
       p-queue: 6.6.2
       semver: 7.7.4
-      uuid: 10.0.0
+      uuid: 11.1.1
     optionalDependencies:
       openai: 6.32.0(zod@3.25.76)
 
@@ -223,8 +223,6 @@ snapshots:
 
   simple-wcswidth@1.1.2: {}
 
-  uuid@10.0.0: {}
-
-  uuid@11.1.0: {}
+  uuid@11.1.1: {}
 
   zod@3.25.76: {}
