@@ -31,12 +31,12 @@
     "ai": "^6.0.0",
     "braintrust": "file:../../../../js/braintrust-2.2.0.tgz",
     "nanoid": "^3.3.4",
-    "uuid": "^9.0.0",
+    "uuid": "^11.1.1",
     "zod": "^3.25.76"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
-    "@types/uuid": "^9.0.0",
+    "@types/uuid": "^11.0.0",
     "ts-node": "^10.9.0",
     "tsx": "^3.12.0",
     "typescript": "^5.0.0"

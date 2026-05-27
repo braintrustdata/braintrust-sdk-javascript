@@ -19,11 +19,11 @@
     "@temporalio/worker": "^1.11.0",
     "@temporalio/workflow": "^1.11.0",
     "braintrust": "^2.0.0",
-    "uuid": "^9.0.0"
+    "uuid": "^11.1.1"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
-    "@types/uuid": "^9.0.0",
+    "@types/uuid": "^11.0.0",
     "ts-node": "^10.9.0",
     "tsconfig-paths": "^4.2.0",
     "tsx": "^3.12.0",
