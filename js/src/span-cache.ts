@@ -36,9 +36,15 @@ function canUseSpanCache(): boolean {
 export interface CachedSpan {
   input?: unknown;
   output?: unknown;
+  expected?: unknown;
+  error?: unknown;
+  scores?: Record<string, unknown>;
+  metrics?: Record<string, unknown>;
   metadata?: Record<string, unknown>;
+  tags?: string[];
   span_id: string;
   span_parents?: string[];
+  is_root?: boolean | null;
   span_attributes?: {
     name?: string;
     type?: string;

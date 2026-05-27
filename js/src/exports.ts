@@ -225,6 +225,8 @@ export {
   defaultErrorScoreHandler,
 } from "./framework";
 
+export { DatasetPipeline } from "./dataset-pipeline";
+
 export type {
   CodeOpts,
   CreateProjectOpts,

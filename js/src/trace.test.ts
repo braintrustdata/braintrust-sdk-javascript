@@ -8,7 +8,11 @@ import {
   afterEach,
 } from "vitest";
 import { CachedSpanFetcher, LocalTrace, SpanData, SpanFetchFn } from "./trace";
-import { _exportsForTestingOnly, _internalGetGlobalState } from "./logger";
+import {
+  _exportsForTestingOnly,
+  _internalGetGlobalState,
+  type BraintrustState,
+} from "./logger";
 import { configureNode } from "./node/config";
 
 // Mock the invoke function
@@ -54,6 +58,50 @@ describe("CachedSpanFetcher", () => {
         "span-2",
         "span-3",
       ]);
+    });
+
+    test("should preserve result fields from BTQL rows", async () => {
+      const post = vi.fn().mockResolvedValue({
+        json: vi.fn().mockResolvedValue({
+          data: [
+            {
+              id: "row-1",
+              span_id: "span-1",
+              root_span_id: "root-1",
+              input: { text: "input" },
+              output: { text: "output" },
+              expected: { text: "expected" },
+              error: { message: "boom" },
+              scores: { quality: 0 },
+              metrics: { start: 1, end: 2 },
+              metadata: { source: "test" },
+              tags: ["debug"],
+              is_root: true,
+              span_attributes: { type: "tool" },
+            },
+          ],
+          cursor: null,
+        }),
+      });
+      const state = {
+        apiConn: () => ({ post }),
+      } as unknown as BraintrustState;
+      const fetcher = new CachedSpanFetcher(
+        "project_logs",
+        "project-1",
+        "root-1",
+        async () => state,
+      );
+
+      const result = await fetcher.getSpans();
+
+      expect(result[0]).toMatchObject({
+        error: { message: "boom" },
+        scores: { quality: 0 },
+        metrics: { start: 1, end: 2 },
+        tags: ["debug"],
+        is_root: true,
+      });
     });
 
     test("should fetch specific span types when filter specified", async () => {
@@ -238,6 +286,49 @@ describe("CachedSpanFetcher", () => {
 
       expect(fetchFn).toHaveBeenCalledWith(undefined);
       expect(result).toHaveLength(1);
+    });
+  });
+});
+
+describe("LocalTrace.getSpans", () => {
+  beforeAll(() => {
+    configureNode();
+    _exportsForTestingOnly.setInitialTestState();
+  });
+
+  afterEach(() => {
+    const state = _internalGetGlobalState();
+    state.spanCache.clearAll();
+    state.spanCache.stop();
+  });
+
+  test("should preserve cached span result fields", async () => {
+    const state = _internalGetGlobalState();
+    state.spanCache.start();
+    state.spanCache.queueWrite("root-cached", "span-1", {
+      span_id: "span-1",
+      error: { message: "boom" },
+      scores: { quality: 0 },
+      metrics: { start: 1, end: 2 },
+      tags: ["debug"],
+      is_root: true,
+      span_attributes: { type: "tool" },
+    });
+    const trace = new LocalTrace({
+      objectType: "experiment",
+      objectId: "exp-123",
+      rootSpanId: "root-cached",
+      state,
+    });
+
+    const result = await trace.getSpans();
+
+    expect(result[0]).toMatchObject({
+      error: { message: "boom" },
+      scores: { quality: 0 },
+      metrics: { start: 1, end: 2 },
+      tags: ["debug"],
+      is_root: true,
     });
   });
 });

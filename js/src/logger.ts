@@ -79,6 +79,7 @@ import {
   type RepoInfoType as RepoInfo,
   type PromptBlockDataType as PromptBlockData,
   type ResponseFormatJsonSchemaType as ResponseFormatJsonSchema,
+  type ObjectReferenceType,
 } from "./generated_types";
 
 const BRAINTRUST_ATTACHMENT =
@@ -1392,6 +1393,20 @@ export abstract class BaseAttachment {
   abstract debugInfo(): Record<string, unknown>;
 }
 
+type DatasetPipelineDeferredJSONAttachmentHook = (
+  data: unknown,
+  options?: { filename?: string; pretty?: boolean },
+) => object;
+
+declare global {
+  // Set by the bt dataset pipeline runner so JSONAttachment can be represented
+  // as a destination-uploaded marker during transform.
+  // eslint-disable-next-line no-var
+  var __BT_DATASET_PIPELINE_DEFER_JSON_ATTACHMENT__:
+    | DatasetPipelineDeferredJSONAttachmentHook
+    | undefined;
+}
+
 /**
  * Represents an attachment to be uploaded and the associated metadata.
  * `Attachment` objects can be inserted anywhere in an event, allowing you to
@@ -1857,6 +1872,20 @@ export class JSONAttachment extends Attachment {
     },
   ) {
     const { filename = "data.json", pretty = false, state } = options ?? {};
+    const deferredJsonAttachment =
+      globalThis.__BT_DATASET_PIPELINE_DEFER_JSON_ATTACHMENT__;
+    if (deferredJsonAttachment) {
+      super({
+        data: new Blob([]),
+        filename,
+        contentType: "application/json",
+        state,
+      });
+      return deferredJsonAttachment(data, {
+        filename,
+        pretty,
+      }) as unknown as JSONAttachment;
+    }
 
     // Serialize the JSON data
     const jsonString = pretty
@@ -6895,9 +6924,15 @@ export class SpanImpl implements Span {
       const cachedSpan: CachedSpan = {
         input: partialRecord.input,
         output: partialRecord.output,
+        expected: partialRecord.expected,
+        error: partialRecord.error,
+        scores: partialRecord.scores,
+        metrics: partialRecord.metrics,
         metadata: partialRecord.metadata,
+        tags: partialRecord.tags,
         span_id: this._spanId,
         span_parents: this._spanParents,
+        is_root: this._spanId === this._rootSpanId,
         span_attributes: partialRecord.span_attributes,
       };
       this._state.spanCache.queueWrite(
@@ -7362,6 +7397,7 @@ export class Dataset<
     metadata,
     tags,
     output,
+    origin,
     isMerge,
   }: {
     id: string;
@@ -7370,6 +7406,7 @@ export class Dataset<
     metadata?: Record<string, unknown>;
     tags?: string[];
     output?: unknown;
+    origin?: ObjectReferenceType;
     isMerge?: boolean;
   }): LazyValue<BackgroundLogEvent> {
     return new LazyValue(async () => {
@@ -7384,6 +7421,7 @@ export class Dataset<
         dataset_id,
         created: !isMerge ? new Date().toISOString() : undefined, //if we're merging/updating an event we will not add this ts
         metadata,
+        origin,
         ...(!!isMerge
           ? {
               [IS_MERGE_FIELD]: true,
@@ -7407,6 +7445,7 @@ export class Dataset<
    * about anything else that's relevant, that you can use to help find and analyze examples later. For example, you could log the
    * `prompt`, example's `id`, or anything else that would be useful to slice/dice later. The values in `metadata` can be any
    * JSON-serializable type, but its keys must be strings.
+   * @param event.origin (Optional) a reference to the source object this dataset record was derived from.
    * @param event.id (Optional) a unique identifier for the event. If you don't provide one, Braintrust will generate one for you.
    * @param event.output: (Deprecated) The output of your application. Use `expected` instead.
    * @returns The `id` of the logged record.
@@ -7418,6 +7457,7 @@ export class Dataset<
     tags,
     id,
     output,
+    origin,
   }: {
     readonly input?: unknown;
     readonly expected?: unknown;
@@ -7425,6 +7465,7 @@ export class Dataset<
     readonly metadata?: Record<string, unknown>;
     readonly id?: string;
     readonly output?: unknown;
+    readonly origin?: ObjectReferenceType;
   }): string {
     this.validateEvent({ metadata, expected, output, tags });
 
@@ -7437,6 +7478,7 @@ export class Dataset<
         metadata,
         tags,
         output,
+        origin,
         isMerge: false,
       }),
     );

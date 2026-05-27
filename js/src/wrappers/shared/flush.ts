@@ -11,9 +11,12 @@ export async function summarizeAndFlush(
   options: { displaySummary?: boolean },
 ): Promise<void> {
   const shouldDisplay = options.displaySummary ?? true;
-  const summary = await experiment.summarize();
-  if (shouldDisplay) {
-    // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-    console.log(formatExperimentSummary(summary));
+  if (!shouldDisplay) {
+    await experiment.flush();
+    return;
   }
+
+  const summary = await experiment.summarize();
+  // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
+  console.log(formatExperimentSummary(summary));
 }

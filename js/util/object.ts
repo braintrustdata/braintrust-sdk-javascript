@@ -1,7 +1,6 @@
-import { z } from "zod/v3";
 import {
   AsyncScoringControlType as AsyncScoringControl,
-  ObjectReference as objectReferenceSchema,
+  type ObjectReferenceType,
 } from "./generated_types";
 import {
   Source,
@@ -25,7 +24,7 @@ export type OtherExperimentLogFields = {
   metadata: Record<string, unknown>;
   metrics: Record<string, unknown>;
   datasetRecordId: string;
-  origin: z.infer<typeof objectReferenceSchema>;
+  origin: ObjectReferenceType;
   span_attributes: Record<string, unknown>;
   [ASYNC_SCORING_CONTROL_FIELD]: AsyncScoringControl;
   [MERGE_PATHS_FIELD]: string[][];
@@ -100,6 +99,7 @@ export type DatasetEvent = {
   tags?: string[];
   metadata?: unknown;
   created?: string;
+  origin?: ObjectReferenceType;
   id: string;
   dataset_id: string;
 } & ({ expected?: unknown } | { output?: unknown });
