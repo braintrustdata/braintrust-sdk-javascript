@@ -43,6 +43,7 @@ type DatasetPipelineDefinition<Scope extends "span" | "trace"> = {
   transform: (
     transformInput: Scope extends "span"
       ? {
+          id: string;
           input: unknown;
           output: unknown;
           expected: unknown;
@@ -83,6 +84,7 @@ type DatasetPipelineBtDefinition = {
   transform: (
     transformInput:
       | {
+          id: string;
           input: unknown;
           output: unknown;
           expected: unknown;
