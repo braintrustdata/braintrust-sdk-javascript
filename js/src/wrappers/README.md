@@ -13,25 +13,23 @@ Most wrappers are single files that live directly in this directory:
 - `google-genai.ts` - Google GenAI wrapper
 - etc.
 
-### Isolated Test Wrappers
+### Private Test Workspaces
 
-Some wrappers have their own subdirectories with `package.json` files:
+Some wrappers have supporting test infrastructure in private workspace packages:
 
-- `ai-sdk` - AI SDK wrapper
-- `claude-agent-sdk/` - Claude Agent SDK wrapper
+- `vitest/` - Vitest wrapper test workspace
 
-**Important**: These subdirectories contain **private test-only packages** (`"private": true`). The code is still exported from the main `braintrust` package - the separate `package.json` files exist solely to run tests with specific dependency versions.
+**Important**: These workspace packages are marked `"private": true`. The code is still exported from the main `braintrust` package - the separate `package.json` files exist solely to run test infrastructure with isolated dependencies.
 
 ## Why Separate package.json Files?
 
-Some integrations need to be tested against specific versions of their underlying SDKs:
+Some integrations need isolated test infrastructure for their underlying SDKs or framework integrations:
 
-- **AI SDK v4 vs v5**: Breaking changes between major versions require separate test environments
-- **Claude Agent SDK**: Has its own versioning independent of Anthropic's main SDK
+- **Vitest wrapper**: Has dedicated test dependencies and config for wrapper-specific tests
 
 ### What Gets Published?
 
-**Everything in this directory ships in the main `braintrust` npm package.** The subdirectory `package.json` files are marked `"private": true` and are **never published to npm**.
+**Everything in this directory ships in the main `braintrust` npm package.** Any subdirectory `package.json` files are marked `"private": true` and are **never published to npm**.
 
 Users install just one package:
 
@@ -57,8 +55,7 @@ pnpm test  # Excludes subdirectory tests
 **Subdirectory tests** (with isolated dependencies):
 
 ```bash
-cd js/src/wrappers/ai-sdk && pnpm test
-cd js/src/wrappers/claude-agent-sdk && pnpm test
+cd js/src/wrappers/vitest && pnpm test
 ```
 
 ## Adding a New Wrapper

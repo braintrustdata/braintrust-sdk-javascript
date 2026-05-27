@@ -34,10 +34,6 @@ export const PRIVATE_WORKSPACE_PACKAGES = [
     dir: "js/src/wrappers/vitest",
     name: "@braintrust/vitest-wrapper-tests",
   },
-  {
-    dir: "js/src/wrappers/claude-agent-sdk",
-    name: "@braintrust/claude-agent-sdk-tests",
-  },
   { dir: "e2e", name: "@braintrust/js-e2e-tests" },
 ];
 
