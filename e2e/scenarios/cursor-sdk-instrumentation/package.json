@@ -12,6 +12,10 @@
     "cursor-sdk-v1": "npm:@cursor/sdk@1.0.12"
   },
   "pnpm": {
+    "overrides": {
+      "@tootallnate/once@>=3.0.0 <3.0.1": "^3.0.1",
+      "@tootallnate/once@<2.0.1": "^2.0.1"
+    },
     "onlyBuiltDependencies": [
       "sqlite3"
     ]
