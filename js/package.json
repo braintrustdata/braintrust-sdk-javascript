@@ -19,7 +19,8 @@
     "./dist/index.d.mts": "./dist/browser.d.mts"
   },
   "bin": {
-    "braintrust": "./dist/cli.js"
+    "braintrust": "./dist/cli.js",
+    "bt": "./bin/bt.cjs"
   },
   "exports": {
     "./package.json": "./package.json",
@@ -127,7 +128,8 @@
   "files": [
     "dist/**/*",
     "dev/dist/**/*",
-    "util/dist/**/*"
+    "util/dist/**/*",
+    "bin/bt.cjs"
   ],
   "scripts": {
     "build": "cross-env NODE_OPTIONS=\"--max-old-space-size=8192\" tsup",
@@ -223,6 +225,15 @@
   },
   "peerDependencies": {
     "zod": "^3.25.34 || ^4.0"
+  },
+  "optionalDependencies": {
+    "@braintrust/bt-darwin-arm64": "0.10.0",
+    "@braintrust/bt-darwin-x64": "0.10.0",
+    "@braintrust/bt-linux-arm64": "0.10.0",
+    "@braintrust/bt-linux-x64": "0.10.0",
+    "@braintrust/bt-linux-x64-musl": "0.10.0",
+    "@braintrust/bt-win32-arm64": "0.10.0",
+    "@braintrust/bt-win32-x64": "0.10.0"
   },
   "publishConfig": {
     "access": "public",
