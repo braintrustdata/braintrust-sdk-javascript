@@ -2,6 +2,9 @@
   "name": "@braintrust/vercel-ai-sdk",
   "version": "0.0.6",
   "description": "SDK for integrating Braintrust with Vercel AI SDK",
+  "engines": {
+    "node": ">=20"
+  },
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",

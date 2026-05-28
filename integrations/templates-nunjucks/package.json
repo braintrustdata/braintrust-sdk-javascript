@@ -2,6 +2,9 @@
   "name": "@braintrust/templates-nunjucks-js",
   "version": "0.0.1",
   "description": "Nunjucks templating support for the Braintrust JS SDK",
+  "engines": {
+    "node": ">=20"
+  },
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",

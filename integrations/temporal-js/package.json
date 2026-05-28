@@ -2,6 +2,9 @@
   "name": "@braintrust/temporal",
   "version": "0.1.1",
   "description": "SDK for integrating Braintrust with Temporal",
+  "engines": {
+    "node": ">=20"
+  },
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
