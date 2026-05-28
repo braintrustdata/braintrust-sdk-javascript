@@ -15,6 +15,12 @@ import { getRepoInfo, getPastNAncestors } from "../gitutil";
 import { getCallerLocation } from "../stackutil";
 import { _internalSetInitialState } from "../logger";
 import { registry } from "../instrumentation/registry";
+import {
+  isInstrumentationIntegrationDisabled,
+  readDisabledInstrumentationEnvConfig,
+} from "../instrumentation/config";
+import { installMastraExporterFactory } from "../auto-instrumentations/loader/mastra-observability-patch";
+import { BraintrustObservabilityExporter } from "../wrappers/mastra";
 
 const BRAINTRUST_ENV_SEARCH_PARENT_LIMIT = 64;
 
@@ -129,6 +135,19 @@ export function configureNode() {
   iso.hash = (data) => crypto.createHash("sha256").update(data).digest("hex");
 
   _internalSetInitialState();
+
+  // The Mastra patches rewritten by the bundler plugin and the loader hook
+  // both look up an exporter factory on `globalThis` at runtime. Register it
+  // here too so a bundled app (where neither hook.mjs nor the loader runs
+  // against `@mastra/core`) still gets the exporter installed when its code
+  // imports `braintrust`. The loader path (hook.mjs) also calls this; the
+  // `??=` makes double-registration a no-op.
+  const disabled = readDisabledInstrumentationEnvConfig(
+    iso.getEnv("BRAINTRUST_DISABLE_INSTRUMENTATION"),
+  ).integrations;
+  if (!isInstrumentationIntegrationDisabled(disabled, "mastra")) {
+    installMastraExporterFactory(() => new BraintrustObservabilityExporter());
+  }
 
   // Enable auto-instrumentation
   registry.enable();

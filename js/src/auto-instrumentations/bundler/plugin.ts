@@ -8,6 +8,7 @@ import { readFileSync } from "fs";
 import { fileURLToPath } from "url";
 import moduleDetailsFromPath from "module-details-from-path";
 import { getDefaultInstrumentationConfigs } from "../configs/all";
+import { applySpecialCasePatch } from "../loader/special-case-patches";
 
 export interface LegacyBundlerPluginOptions {
   /**
@@ -121,6 +122,26 @@ export const unplugin = createUnplugin<LegacyBundlerPluginOptions>(
 
         // Use module details for accurate module information
         const moduleName = moduleDetails.name;
+        // Normalize the module path for Windows compatibility (WASM transformer expects forward slashes)
+        const normalizedModulePath = moduleDetails.path.replace(/\\/g, "/");
+
+        // Per-package source patches (see loader/special-case-patches.ts).
+        // Same anti-pattern fallback the runtime loader uses — mirrored here
+        // so bundled apps get the patches without relying on hook.mjs.
+        // Skipped for browser bundles since the wrapper templates use
+        // `node:module`/`require` to resolve `@mastra/observability`.
+        if (options.browser !== true) {
+          const patched = applySpecialCasePatch({
+            packageName: moduleName,
+            modulePath: normalizedModulePath,
+            source: code,
+            format: isModule ? "esm" : "cjs",
+          });
+          if (patched !== null) {
+            return { code: patched, map: null };
+          }
+        }
+
         const moduleVersion = getModuleVersion(moduleDetails.basedir);
 
         // If no version found
@@ -132,8 +153,6 @@ export const unplugin = createUnplugin<LegacyBundlerPluginOptions>(
         }
 
         // Try to get a transformer for this file
-        // Normalize the module path for Windows compatibility (WASM transformer expects forward slashes)
-        const normalizedModulePath = moduleDetails.path.replace(/\\/g, "/");
         const transformer = instrumentationMatcher.getTransformer(
           moduleName,
           moduleVersion,

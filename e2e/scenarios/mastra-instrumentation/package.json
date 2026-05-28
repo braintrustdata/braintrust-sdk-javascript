@@ -1,0 +1,17 @@
+{
+  "name": "@braintrust/e2e-mastra-instrumentation",
+  "private": true,
+  "braintrustScenario": {
+    "canary": {
+      "dependencies": {
+        "@mastra/core": "@mastra/core@1.26.1-alpha.0",
+        "@mastra/observability": "@mastra/observability@latest"
+      }
+    }
+  },
+  "dependencies": {
+    "@mastra/core": "1.26.0",
+    "@mastra/observability": "latest",
+    "zod": "4.3.6"
+  }
+}

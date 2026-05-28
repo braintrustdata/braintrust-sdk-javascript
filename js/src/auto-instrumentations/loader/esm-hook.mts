@@ -12,11 +12,21 @@ import {
 } from "@apm-js-collab/code-transformer";
 import moduleDetailsFromPath from "module-details-from-path";
 import { getPackageName, getPackageVersion } from "./get-package-version.js";
-import { OPENAI_API_PROMISE_PATCH } from "./openai-api-promise-patch.js";
+import {
+  applySpecialCasePatch,
+  isSpecialCaseTarget,
+} from "./special-case-patches.js";
 
 let instrumentator: any;
 let packages: Set<string>;
 let transformers: Map<string, any> = new Map();
+// URLs that need a per-package source patch (see special-case-patches.ts).
+// Resolve records the (packageName, modulePath) it already computed so load
+// doesn't have to redo the moduleDetailsFromPath roundtrip.
+const specialCaseUrls: Map<
+  string,
+  { packageName: string; modulePath: string }
+> = new Map();
 
 function getModuleType(url: string, format: string | undefined) {
   if (format === "module") {
@@ -68,13 +78,24 @@ export async function resolve(
   if (resolvedModule) {
     const packageName =
       getPackageName(resolvedModule.basedir) ?? resolvedModule.name;
+    const normalizedModulePath = resolvedModule.path.replace(/\\/g, "/");
+
+    // Track files that need per-package source patches (see
+    // loader/special-case-patches.ts). Anti-pattern fallback for SDKs we
+    // can't instrument via the standard pipeline; the load step retrieves
+    // the recorded (packageName, modulePath) and applies the patch.
+    if (isSpecialCaseTarget(packageName, normalizedModulePath)) {
+      specialCaseUrls.set(url.url, {
+        packageName,
+        modulePath: normalizedModulePath,
+      });
+    }
+
     if (!packages?.has(packageName)) {
       return url;
     }
 
     const version = getPackageVersion(resolvedModule.basedir);
-    // Normalize module path for WASM transformer (expects forward slashes)
-    const normalizedModulePath = resolvedModule.path.replace(/\\/g, "/");
 
     const transformer = instrumentator.getTransformer(
       packageName,
@@ -90,22 +111,28 @@ export async function resolve(
   return url;
 }
 
-function isOpenAIApiPromise(url: string): boolean {
-  return url.includes("/openai") && url.includes("api-promise");
-}
-
 export async function load(url: string, context: any, nextLoad: Function) {
   const result = await nextLoad(url, context);
 
-  // Patch OpenAI's APIPromise to prevent double-read of HTTP response bodies.
-  if (isOpenAIApiPromise(url)) {
+  // Per-package source patches (see loader/special-case-patches.ts).
+  // Anti-pattern fallback — keep this branch and the helper module narrow.
+  const specialCase = specialCaseUrls.get(url);
+  if (specialCase) {
     if (result.format === "commonjs") {
       const parsedUrl = new URL(result.responseURL ?? url);
       result.source ??= await readFile(parsedUrl);
     }
     if (result.source) {
-      result.source = result.source.toString("utf8") + OPENAI_API_PROMISE_PATCH;
-      result.shortCircuit = true;
+      const patched = applySpecialCasePatch({
+        packageName: specialCase.packageName,
+        modulePath: specialCase.modulePath,
+        source: result.source.toString("utf8"),
+        format: result.format === "commonjs" ? "cjs" : "esm",
+      });
+      if (patched !== null) {
+        result.source = patched;
+        result.shortCircuit = true;
+      }
     }
     return result;
   }

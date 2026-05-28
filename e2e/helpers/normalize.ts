@@ -97,6 +97,12 @@ const TEMP_HELPER_PATH_REGEX = /\/e2e\/\.bt-tmp\/[^/\s)]+\/helpers\/?/g;
 const PROVIDER_HELPER_CALLER_REGEX = /^<repo>\/e2e\/helpers\/.+-scenario\.mjs$/;
 const ANTHROPIC_MESSAGE_STREAM_PATH_REGEX =
   /([/\\]node_modules[/\\]\.pnpm[/\\]@anthropic-ai\+sdk@[^/\\\s)]+[/\\]node_modules[/\\]@anthropic-ai[/\\]sdk[/\\])(?:src[/\\]lib[/\\]MessageStream\.ts|lib[/\\]MessageStream\.js)/g;
+// tsup's `splitting: true` for our own `dist/` emits content-hashed chunk
+// files (e.g. `<repo>/js/dist/chunk-7DWPOXBX.mjs`) whose names change any
+// time the bundle graph changes. Normalize them to a stable placeholder so
+// stack traces in error snapshots don't churn on unrelated bundle splits.
+const SDK_CHUNK_PATH_REGEX =
+  /(<repo>\/js\/dist\/)chunk-[A-Z0-9]+(\.(?:c?js|cjs|mjs))/g;
 const ANTHROPIC_PNPM_VERSION_REGEX =
   /([/\\]\.pnpm[/\\]@anthropic-ai\+sdk@)[^/\\\s)]+/g;
 
@@ -153,6 +159,7 @@ function normalizeStackLikeString(value: string): string {
   normalized = normalized.replace(REPO_PATH_REGEX, (_, suffix: string) => {
     return `<repo>${suffix.replace(/\\/g, "/")}`;
   });
+  normalized = normalized.replace(SDK_CHUNK_PATH_REGEX, "$1index$2");
   normalized = normalized.replace(
     /(<repo>(?:\/(?:e2e|js)\/[^:\s)\n]+)):\d+:\d+/g,
     "$1:0:0",
