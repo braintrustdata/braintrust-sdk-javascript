@@ -368,9 +368,6 @@ importers:
       express:
         specifier: ^5.2.1
         version: 5.2.1
-      graceful-fs:
-        specifier: ^4.2.11
-        version: 4.2.11
       http-errors:
         specifier: ^2.0.0
         version: 2.0.1
@@ -426,9 +423,6 @@ importers:
       '@types/express':
         specifier: ^5.0.0
         version: 5.0.1
-      '@types/graceful-fs':
-        specifier: ^4.1.9
-        version: 4.1.9
       '@types/http-errors':
         specifier: ^2.0.4
         version: 2.0.4
@@ -1708,9 +1702,6 @@ packages:
 
   '@types/express@5.0.1':
     resolution: {integrity: sha512-UZUw8vjpWFXuDnjFTh7/5c2TWDlQqeXHi6hcN7F2XSVT5P+WmUnnbFS3KA6Jnc6IsEqI2qCVu2bK0R0J4A8ZQQ==}
-
-  '@types/graceful-fs@4.1.9':
-    resolution: {integrity: sha512-olP3sd1qOEe5dXTSaFvQG+02VdRXcdytWLAZsAq1PecU8uqQAhkrnbli7DagjtXKW/Bl7YJbUsa8MPcuc8LHEQ==}
 
   '@types/hast@3.0.4':
     resolution: {integrity: sha512-WPs+bbQw5aCj+x6laNGWLH3wviHtoCv/P3+otBhbOhJgG8qtpdAMlTCxLtsTWA7LH1Oh/bFCHsBn0TPS5m30EQ==}
@@ -5388,10 +5379,6 @@ snapshots:
       '@types/body-parser': 1.19.5
       '@types/express-serve-static-core': 5.0.6
       '@types/serve-static': 1.15.7
-
-  '@types/graceful-fs@4.1.9':
-    dependencies:
-      '@types/node': 22.19.1
 
   '@types/hast@3.0.4':
     dependencies:
