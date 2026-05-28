@@ -162,10 +162,7 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "@ai-sdk/anthropic": "2.0.37",
     "@anthropic-ai/sdk": "^0.60.0",
-    "@google/adk": "^0.6.1",
-    "@google/genai": "^1.25.0",
     "@nodelib/fs.walk": "^1.2.8",
     "@types/argparse": "^2.0.14",
     "@types/async": "^3.2.24",
@@ -182,7 +179,6 @@
     "@typescript-eslint/parser": "^8.49.0",
     "ai": "^6.0.0",
     "async": "^3.2.5",
-    "autoevals": "^0.0.131",
     "cross-env": "^7.0.3",
     "eslint-plugin-node-import": "^1.0.5",
     "openai": "6.25.0",
