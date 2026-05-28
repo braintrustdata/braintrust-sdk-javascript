@@ -8,9 +8,7 @@
  */
 
 import * as path from "node:path";
-
-// BRAINTRUST: This was changed to be a relative import
-import tryRealpath from "./tryRealpath";
+import { realpathSync } from "node:fs";
 
 type NodeModulesPathsOptions = {
   moduleDirectory?: Array<string>;
@@ -41,7 +39,7 @@ export default function nodeModulesPaths(
   // traverses parents of the physical path, not the symlinked path
   let physicalBasedir;
   try {
-    physicalBasedir = tryRealpath(basedirAbs);
+    physicalBasedir = realpathSync.native(basedirAbs);
   } catch {
     // realpath can throw, e.g. on mapped drives
     physicalBasedir = basedirAbs;
