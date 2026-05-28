@@ -148,8 +148,7 @@ import {
   devNullWritableStream,
 } from "./functions/stream";
 import iso, { IsoAsyncLocalStorage } from "./isomorph";
-import { canUseDiskCache, DiskCache } from "./prompt-cache/disk-cache";
-import { LRUCache } from "./prompt-cache/lru-cache";
+import { createCacheLayers } from "./prompt-cache/cache-config";
 import { PromptCache } from "./prompt-cache/prompt-cache";
 import { ParametersCache } from "./prompt-cache/parameters-cache";
 import {
@@ -711,34 +710,25 @@ export class BraintrustState {
 
     this.resetLoginInfo();
 
-    const memoryCache = new LRUCache<string, Prompt>({
-      max: Number(iso.getEnv("BRAINTRUST_PROMPT_CACHE_MEMORY_MAX")) ?? 1 << 10,
+    const { memoryCache, diskCache } = createCacheLayers<Prompt>({
+      memoryMaxEnvVar: "BRAINTRUST_PROMPT_CACHE_MEMORY_MAX",
+      diskCacheDirEnvVar: "BRAINTRUST_PROMPT_CACHE_DIR",
+      diskMaxEnvVar: "BRAINTRUST_PROMPT_CACHE_DISK_MAX",
+      getDefaultDiskCacheDir: () =>
+        `${iso.getEnv("HOME") ?? iso.homedir!()}/.braintrust/prompt_cache`,
     });
-    const diskCache = canUseDiskCache()
-      ? new DiskCache<Prompt>({
-          cacheDir:
-            iso.getEnv("BRAINTRUST_PROMPT_CACHE_DIR") ??
-            `${iso.getEnv("HOME") ?? iso.homedir!()}/.braintrust/prompt_cache`,
-          max:
-            Number(iso.getEnv("BRAINTRUST_PROMPT_CACHE_DISK_MAX")) ?? 1 << 20,
-        })
-      : undefined;
     this.promptCache = new PromptCache({ memoryCache, diskCache });
 
-    const parametersMemoryCache = new LRUCache<string, RemoteEvalParameters>({
-      max:
-        Number(iso.getEnv("BRAINTRUST_PARAMETERS_CACHE_MEMORY_MAX")) ?? 1 << 10,
+    const {
+      memoryCache: parametersMemoryCache,
+      diskCache: parametersDiskCache,
+    } = createCacheLayers<RemoteEvalParameters>({
+      memoryMaxEnvVar: "BRAINTRUST_PARAMETERS_CACHE_MEMORY_MAX",
+      diskCacheDirEnvVar: "BRAINTRUST_PARAMETERS_CACHE_DIR",
+      diskMaxEnvVar: "BRAINTRUST_PARAMETERS_CACHE_DISK_MAX",
+      getDefaultDiskCacheDir: () =>
+        `${iso.getEnv("HOME") ?? iso.homedir!()}/.braintrust/parameters_cache`,
     });
-    const parametersDiskCache = canUseDiskCache()
-      ? new DiskCache<RemoteEvalParameters>({
-          cacheDir:
-            iso.getEnv("BRAINTRUST_PARAMETERS_CACHE_DIR") ??
-            `${iso.getEnv("HOME") ?? iso.homedir!()}/.braintrust/parameters_cache`,
-          max:
-            Number(iso.getEnv("BRAINTRUST_PARAMETERS_CACHE_DISK_MAX")) ??
-            1 << 20,
-        })
-      : undefined;
     this.parametersCache = new ParametersCache({
       memoryCache: parametersMemoryCache,
       diskCache: parametersDiskCache,
