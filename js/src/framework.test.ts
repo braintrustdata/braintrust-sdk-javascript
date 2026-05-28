@@ -1283,6 +1283,83 @@ describe("framework2 metadata support", () => {
     });
   });
 
+  describe("CodeParameters tags", () => {
+    test("parameters stores tags correctly", () => {
+      const project = projects.create({ name: "test-project" });
+      const tags = ["ci", "production"];
+
+      project.parameters.create({
+        name: "test-parameters",
+        schema: {
+          model: {
+            type: "model",
+            default: "gpt-5-mini",
+          },
+        },
+        tags,
+      });
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const parameters = (project as any)._publishableParameters;
+      expect(parameters).toHaveLength(1);
+      expect(parameters[0].tags).toEqual(tags);
+    });
+
+    test("toFunctionDefinition includes tags when present", async () => {
+      const project = projects.create({ name: "test-project" });
+      const tags = ["ci", "production"];
+
+      project.parameters.create({
+        name: "test-parameters",
+        schema: {
+          model: {
+            type: "model",
+            default: "gpt-5-mini",
+          },
+        },
+        tags,
+      });
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const parameters = (project as any)._publishableParameters;
+      const mockProjectMap = {
+        resolve: vi.fn().mockResolvedValue("project-123"),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any;
+
+      const funcDef = await parameters[0].toFunctionDefinition(mockProjectMap);
+
+      expect(funcDef.tags).toEqual(tags);
+      expect(funcDef.name).toBe("test-parameters");
+      expect(funcDef.project_id).toBe("project-123");
+    });
+
+    test("toFunctionDefinition excludes tags when undefined", async () => {
+      const project = projects.create({ name: "test-project" });
+
+      project.parameters.create({
+        name: "test-parameters",
+        schema: {
+          model: {
+            type: "model",
+            default: "gpt-5-mini",
+          },
+        },
+      });
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const parameters = (project as any)._publishableParameters;
+      const mockProjectMap = {
+        resolve: vi.fn().mockResolvedValue("project-123"),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any;
+
+      const funcDef = await parameters[0].toFunctionDefinition(mockProjectMap);
+
+      expect(funcDef.tags).toBeUndefined();
+    });
+  });
+
   describe("CodeParameters defaults", () => {
     test("toFunctionDefinition initializes data with schema defaults", async () => {
       const project = projects.create({ name: "test-project" });

@@ -586,6 +586,7 @@ export interface ParametersOpts<S extends EvalParameters> {
   description?: string;
   schema: S;
   ifExists?: IfExists;
+  tags?: string[];
   metadata?: Record<string, unknown>;
 }
 
@@ -596,6 +597,7 @@ export class CodeParameters {
   public readonly description?: string;
   public readonly schema: EvalParameters;
   public readonly ifExists?: IfExists;
+  public readonly tags?: string[];
   public readonly metadata?: Record<string, unknown>;
 
   constructor(
@@ -606,6 +608,7 @@ export class CodeParameters {
       description?: string;
       schema: EvalParameters;
       ifExists?: IfExists;
+      tags?: string[];
       metadata?: Record<string, unknown>;
     },
   ) {
@@ -615,6 +618,7 @@ export class CodeParameters {
     this.description = opts.description;
     this.schema = opts.schema;
     this.ifExists = opts.ifExists;
+    this.tags = opts.tags;
     this.metadata = opts.metadata;
   }
 
@@ -634,6 +638,7 @@ export class CodeParameters {
         __schema: schema,
       },
       if_exists: this.ifExists,
+      tags: this.tags,
       metadata: this.metadata,
     };
   }
@@ -651,6 +656,7 @@ class ParametersBuilder {
       description: opts.description,
       schema: opts.schema,
       ifExists: opts.ifExists,
+      tags: opts.tags,
       metadata: opts.metadata,
     });
 
