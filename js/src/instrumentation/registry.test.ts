@@ -154,6 +154,7 @@ describe("configureInstrumentation API", () => {
         openrouter: false,
         mistral: false,
         cohere: false,
+        mastra: false,
       },
     });
   });

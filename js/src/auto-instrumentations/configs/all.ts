@@ -80,6 +80,13 @@ const defaultInstrumentationConfigGroups: readonly InstrumentationConfigGroup[] 
       integrations: ["flue"],
       configs: flueConfigs,
     },
+    // Note: `@mastra/core` is not listed here because its instrumentation
+    // doesn't go through the AST `code-transformer` matcher — Mastra's
+    // content-hashed chunks make `filePath`-based matching too brittle.
+    // Instead it's handled by the source-replacement entry in
+    // `loader/special-case-patches.ts`, which both the runtime loader
+    // (`hook.mjs` → `cjs-patch.ts`/`esm-hook.mts`) and the bundler plugin
+    // (`bundler/plugin.ts`) call. The `mastra` env-var disable still works.
   ];
 
 export function getDefaultInstrumentationConfigs({

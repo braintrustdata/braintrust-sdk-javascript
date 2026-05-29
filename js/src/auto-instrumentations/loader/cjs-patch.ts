@@ -11,7 +11,7 @@ import * as NodeModule from "node:module";
 import { sep } from "node:path";
 import moduleDetailsFromPath from "module-details-from-path";
 import { getPackageName, getPackageVersion } from "./get-package-version.js";
-import { OPENAI_API_PROMISE_PATCH } from "./openai-api-promise-patch.js";
+import { applySpecialCasePatch } from "./special-case-patches.js";
 
 export class ModulePatch {
   private packages: Set<string>;
@@ -48,18 +48,24 @@ export class ModulePatch {
       if (resolvedModule) {
         const packageName =
           getPackageName(resolvedModule.basedir) ?? resolvedModule.name;
+        const normalizedModulePath = resolvedModule.path.replace(/\\/g, "/");
 
-        if (!self.packages.has(packageName)) {
+        // Per-package source patches (see loader/special-case-patches.ts).
+        // Anti-pattern intentionally isolated in its own module — do not
+        // expand inline here; new integrations belong in the standard plugin
+        // pipeline.
+        const patched = applySpecialCasePatch({
+          packageName,
+          modulePath: normalizedModulePath,
+          source: String(content),
+          format: "cjs",
+        });
+        if (patched !== null) {
+          args[0] = patched;
           return self.originalCompile.apply(this, args);
         }
 
-        // Patch OpenAI's APIPromise to prevent double-read of HTTP response bodies.
-        const normalizedModulePath = resolvedModule.path.replace(/\\/g, "/");
-        if (
-          packageName === "openai" &&
-          normalizedModulePath.includes("api-promise")
-        ) {
-          args[0] = content + OPENAI_API_PROMISE_PATCH;
+        if (!self.packages.has(packageName)) {
           return self.originalCompile.apply(this, args);
         }
 

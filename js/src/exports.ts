@@ -175,7 +175,11 @@ export {
   wrapAISDKModel,
 } from "./wrappers/ai-sdk";
 export { wrapAnthropic } from "./wrappers/anthropic";
-export { wrapMastraAgent } from "./wrappers/mastra";
+export {
+  BraintrustObservabilityExporter,
+  wrapMastraAgent,
+} from "./wrappers/mastra";
+export type { MastraObservabilityExporter } from "./wrappers/mastra";
 export { wrapClaudeAgentSDK } from "./wrappers/claude-agent-sdk/claude-agent-sdk";
 export { wrapOpenAICodexSDK } from "./wrappers/openai-codex";
 export { wrapCursorSDK } from "./wrappers/cursor-sdk";

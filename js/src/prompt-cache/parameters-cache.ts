@@ -26,11 +26,11 @@ function createCacheKey(key: ParametersKey): string {
 }
 
 export class ParametersCache {
-  private readonly memoryCache: LRUCache<string, RemoteEvalParameters>;
+  private readonly memoryCache?: LRUCache<string, RemoteEvalParameters>;
   private readonly diskCache?: DiskCache<RemoteEvalParameters>;
 
   constructor(options: {
-    memoryCache: LRUCache<string, RemoteEvalParameters>;
+    memoryCache?: LRUCache<string, RemoteEvalParameters>;
     diskCache?: DiskCache<RemoteEvalParameters>;
   }) {
     this.memoryCache = options.memoryCache;
@@ -40,9 +40,11 @@ export class ParametersCache {
   async get(key: ParametersKey): Promise<RemoteEvalParameters | undefined> {
     const cacheKey = createCacheKey(key);
 
-    const memoryParams = this.memoryCache.get(cacheKey);
-    if (memoryParams !== undefined) {
-      return memoryParams;
+    if (this.memoryCache) {
+      const memoryParams = this.memoryCache.get(cacheKey);
+      if (memoryParams !== undefined) {
+        return memoryParams;
+      }
     }
 
     if (this.diskCache) {
@@ -50,7 +52,7 @@ export class ParametersCache {
       if (!diskParams) {
         return undefined;
       }
-      this.memoryCache.set(cacheKey, diskParams);
+      this.memoryCache?.set(cacheKey, diskParams);
       return diskParams;
     }
 
@@ -60,7 +62,7 @@ export class ParametersCache {
   async set(key: ParametersKey, value: RemoteEvalParameters): Promise<void> {
     const cacheKey = createCacheKey(key);
 
-    this.memoryCache.set(cacheKey, value);
+    this.memoryCache?.set(cacheKey, value);
 
     if (this.diskCache) {
       await this.diskCache.set(cacheKey, value);
