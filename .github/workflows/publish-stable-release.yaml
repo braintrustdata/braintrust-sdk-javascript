@@ -17,7 +17,46 @@ env:
   NPM_CONFIG_PROVENANCE: "true"
 
 jobs:
+  print-changelog-links:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - name: Print changelog links
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_PR: ${{ inputs.release_pr }}
+          GITHUB_SERVER_URL: ${{ github.server_url }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "$RELEASE_PR" ]; then
+            echo "Stable releases must provide the prepare release PR number in release_pr." >&2
+            exit 1
+          fi
+
+          gh pr view "$RELEASE_PR" \
+            --repo "$GH_REPO" \
+            --json headRefOid,url \
+            > changelog-pr.json
+
+          changelog_pr_url="$(jq -r '.url' changelog-pr.json)"
+          head_sha="$(jq -r '.headRefOid' changelog-pr.json)"
+          latest_release_tag="$(gh api "repos/$GH_REPO/releases/latest" --jq '.tag_name')"
+          encoded_latest_release_tag="$(jq -rn --arg tag "$latest_release_tag" '$tag|@uri')"
+          diff_url="$GITHUB_SERVER_URL/$GH_REPO/compare/$encoded_latest_release_tag...$head_sha"
+
+          {
+            echo "Changelog PR: $changelog_pr_url"
+            echo "Diff to latest release: $diff_url"
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+
   publish-stable:
+    needs:
+      - print-changelog-links
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -216,10 +255,14 @@ jobs:
 
   notify-failure:
     needs:
+      - print-changelog-links
       - publish-stable
     if: |
       always() &&
-      needs.publish-stable.result == 'failure'
+      (
+        needs.print-changelog-links.result == 'failure' ||
+        needs.publish-stable.result == 'failure'
+      )
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

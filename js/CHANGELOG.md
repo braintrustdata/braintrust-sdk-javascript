@@ -1,5 +1,12 @@
 # braintrust
 
+## 3.14.0
+
+### Minor Changes
+
+- feat(mastra): Add Mastra auto-instrumentation (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/1901)
+- feat: Add `BRAINTRUST_CACHE_LOCATION` env var to control caching location (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2061)
+
 ## 3.13.0
 
 ### Minor Changes
