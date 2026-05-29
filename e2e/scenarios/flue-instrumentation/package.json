@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "@flue/runtime": "0.7.0"
+    "@flue/cli": "0.8.0",
+    "@flue/runtime": "0.8.0"
   }
 }

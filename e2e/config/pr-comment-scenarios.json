@@ -171,17 +171,7 @@
     "scenarioDirName": "flue-instrumentation",
     "label": "Flue Instrumentation",
     "metadataScenario": "flue-instrumentation",
-    "variants": [
-      { "variantKey": "flue-v0-7-0-wrapped", "label": "v0.7.0 wrapped" },
-      {
-        "variantKey": "flue-v0-7-0-auto-hook",
-        "label": "v0.7.0 auto-hook"
-      },
-      {
-        "variantKey": "flue-v0-7-0-openai-auto-hook",
-        "label": "v0.7.0 OpenAI auto-hook"
-      }
-    ]
+    "variants": [{ "variantKey": "flue-v0-8-0", "label": "v0.8.0" }]
   },
   {
     "scenarioDirName": "github-copilot-instrumentation",

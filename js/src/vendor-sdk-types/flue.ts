@@ -1,11 +1,13 @@
 /**
- * Vendored types for @flue/runtime used by Braintrust instrumentation.
+ * Vendored types for @flue/runtime 0.8 observe-based instrumentation.
  *
  * Keep this surface intentionally narrow. These types are not exported to SDK
- * users and should only cover fields we read, wrap, or log.
+ * users and should only cover fields we read, correlate, or log.
  */
 
 export type FlueOperationKind = "prompt" | "skill" | "task" | "compact";
+export type FlueRuntimeOperationKind = FlueOperationKind | "shell";
+export type FlueTurnPurpose = "agent" | "compaction" | "compaction_prefix";
 
 export interface FlueUsage {
   input?: number;
@@ -22,83 +24,11 @@ export interface FlueUsage {
   };
 }
 
-export interface FluePromptResponse {
-  text?: string;
-  data?: unknown;
-  result?: unknown;
-  usage?: FlueUsage;
-  model?: {
-    id?: string;
-  };
-  [key: string]: unknown;
-}
-
-export interface FlueCallOptions {
-  model?: string;
-  role?: string;
-  thinkingLevel?: string;
-  tools?: FlueToolDef[];
-  signal?: AbortSignal;
-  images?: unknown[];
-  result?: unknown;
-  schema?: unknown;
-  [key: string]: unknown;
-}
-
-export interface FlueSkillOptions extends FlueCallOptions {
-  args?: Record<string, unknown>;
-}
-
-export interface FlueTaskOptions extends FlueCallOptions {
-  cwd?: string;
-}
-
-export interface FlueToolDef {
-  name?: string;
-  description?: string;
-  parameters?: unknown;
-  execute?: unknown;
-  [key: string]: unknown;
-}
-
-export interface FlueCallHandle<T = unknown> extends PromiseLike<T> {
-  readonly signal: AbortSignal;
-  abort(reason?: unknown): void;
-}
-
-export interface FlueSession {
-  readonly name?: string;
-  prompt(text: string, options?: FlueCallOptions): FlueCallHandle<unknown>;
-  skill(name: string, options?: FlueSkillOptions): FlueCallHandle<unknown>;
-  task(text: string, options?: FlueTaskOptions): FlueCallHandle<unknown>;
-  compact(): Promise<void>;
-  [key: string | symbol]: unknown;
-}
-
-export interface FlueSessions {
-  get(name?: string, options?: unknown): Promise<FlueSession>;
-  create(name?: string, options?: unknown): Promise<FlueSession>;
-  [key: string | symbol]: unknown;
-}
-
-export interface FlueHarness {
-  readonly name?: string;
-  session(name?: string, options?: unknown): Promise<FlueSession>;
-  readonly sessions?: FlueSessions;
-  [key: string | symbol]: unknown;
-}
-
-export interface FlueContext {
-  readonly id?: string;
-  readonly runId?: string;
-  init(options: unknown): Promise<FlueHarness>;
-  subscribeEvent?: (callback: (event: FlueEvent) => void) => () => void;
-  [key: string | symbol]: unknown;
-}
-
 export interface FlueBaseEvent {
   type?: string;
   runId?: string;
+  instanceId?: string;
+  dispatchId?: string;
   eventIndex?: number;
   timestamp?: string;
   session?: string;
@@ -106,19 +36,42 @@ export interface FlueBaseEvent {
   taskId?: string;
   harness?: string;
   operationId?: string;
+  turnId?: string;
   [key: string]: unknown;
+}
+
+export interface FlueRunStartEvent extends FlueBaseEvent {
+  type: "run_start";
+  runId: string;
+  startedAt?: string;
+  workflowName?: string;
+  owner?: {
+    kind?: string;
+    workflowName?: string;
+    instanceId?: string;
+  };
+  payload?: unknown;
+}
+
+export interface FlueRunEndEvent extends FlueBaseEvent {
+  type: "run_end";
+  runId: string;
+  result?: unknown;
+  isError?: boolean;
+  error?: unknown;
+  durationMs?: number;
 }
 
 export interface FlueOperationStartEvent extends FlueBaseEvent {
   type: "operation_start";
   operationId: string;
-  operationKind: FlueOperationKind | "shell";
+  operationKind: FlueRuntimeOperationKind;
 }
 
 export interface FlueOperationEvent extends FlueBaseEvent {
   type: "operation";
   operationId: string;
-  operationKind: FlueOperationKind | "shell";
+  operationKind: FlueRuntimeOperationKind;
   durationMs?: number;
   isError?: boolean;
   error?: unknown;
@@ -126,37 +79,47 @@ export interface FlueOperationEvent extends FlueBaseEvent {
   usage?: FlueUsage;
 }
 
+export interface FlueTurnRequestEvent extends FlueBaseEvent {
+  type: "turn_request";
+  turnId: string;
+  purpose: FlueTurnPurpose;
+  model?: string;
+  provider?: string;
+  api?: string;
+  input?: {
+    systemPrompt?: string;
+    messages?: unknown[];
+    tools?: unknown[];
+  };
+  reasoning?: string;
+}
+
 export interface FlueTurnEvent extends FlueBaseEvent {
   type: "turn";
+  turnId: string;
+  purpose?: FlueTurnPurpose;
   durationMs?: number;
   model?: string;
+  provider?: string;
+  api?: string;
+  output?: unknown;
   usage?: FlueUsage;
   stopReason?: string;
   isError?: boolean;
   error?: unknown;
 }
 
-export interface FlueThinkingDeltaEvent extends FlueBaseEvent {
-  type: "thinking_delta";
-  delta?: string;
-}
-
-export interface FlueThinkingEndEvent extends FlueBaseEvent {
-  type: "thinking_end";
-  content?: string;
-}
-
 export interface FlueToolStartEvent extends FlueBaseEvent {
   type: "tool_start";
   toolName?: string;
-  toolCallId?: string;
+  toolCallId: string;
   args?: unknown;
 }
 
 export interface FlueToolCallEvent extends FlueBaseEvent {
   type: "tool_call";
   toolName?: string;
-  toolCallId?: string;
+  toolCallId: string;
   isError?: boolean;
   result?: unknown;
   durationMs?: number;
@@ -166,13 +129,14 @@ export interface FlueTaskStartEvent extends FlueBaseEvent {
   type: "task_start";
   taskId: string;
   prompt?: string;
-  role?: string;
+  agent?: string;
   cwd?: string;
 }
 
 export interface FlueTaskEvent extends FlueBaseEvent {
   type: "task";
   taskId: string;
+  agent?: string;
   isError?: boolean;
   result?: unknown;
   durationMs?: number;
@@ -192,16 +156,26 @@ export interface FlueCompactionEvent extends FlueBaseEvent {
   usage?: FlueUsage;
 }
 
+export interface FlueContext {
+  readonly id?: string;
+  readonly runId?: string;
+  [key: string | symbol]: unknown;
+}
+
+export interface FlueObservableContext extends FlueContext {
+  subscribeEvent(callback: (event: unknown) => unknown): () => void;
+}
+
 export type FlueEvent =
+  | FlueRunStartEvent
+  | FlueRunEndEvent
   | FlueOperationStartEvent
   | FlueOperationEvent
-  | FlueThinkingDeltaEvent
-  | FlueThinkingEndEvent
+  | FlueTurnRequestEvent
   | FlueTurnEvent
   | FlueToolStartEvent
   | FlueToolCallEvent
   | FlueTaskStartEvent
   | FlueTaskEvent
   | FlueCompactionStartEvent
-  | FlueCompactionEvent
-  | FlueBaseEvent;
+  | FlueCompactionEvent;
