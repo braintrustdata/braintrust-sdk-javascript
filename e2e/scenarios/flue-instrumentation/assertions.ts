@@ -239,6 +239,12 @@ export function defineFlueInstrumentationAssertions(options: {
           provider: "flue",
         });
       }
+      expect(findFlueOperation(events, "flue.prompt")?.output).toBe(
+        "PROMPT_DONE",
+      );
+      expect(findFlueOperation(events, "flue.skill")?.output).toBe(
+        "SKILL_DONE",
+      );
     });
 
     test(

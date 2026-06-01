@@ -31,26 +31,7 @@ span_tree:
     │       "role": "user"
     │     }
     │   ]
-    │   output: {
-    │     "model": {
-    │       "id": "<span:1>"
-    │     },
-    │     "text": "PROMPT_DONE",
-    │     "usage": {
-    │       "cacheRead": 7372,
-    │       "cacheWrite": 2886,
-    │       "cost": {
-    │         "cacheRead": 0.0022115999999999998,
-    │         "cacheWrite": 0.0108225,
-    │         "input": 0.000147,
-    │         "output": 0.008145000000000001,
-    │         "total": 0.0213261
-    │       },
-    │       "input": 49,
-    │       "output": 543,
-    │       "totalTokens": 10850
-    │     }
-    │   }
+    │   output: "PROMPT_DONE"
     │   metadata: {
     │     "flue.operation": "prompt",
     │     "flue.session": "main",
@@ -552,26 +533,7 @@ span_tree:
     │       "role": "user"
     │     }
     │   ]
-    │   output: {
-    │     "model": {
-    │       "id": "<span:1>"
-    │     },
-    │     "text": "SKILL_DONE",
-    │     "usage": {
-    │       "cacheRead": 11101,
-    │       "cacheWrite": 1207,
-    │       "cost": {
-    │         "cacheRead": 0.0033302999999999996,
-    │         "cacheWrite": 0.00452625,
-    │         "input": 0.00010200000000000001,
-    │         "output": 0.0050100000000000006,
-    │         "total": 0.012968549999999999
-    │       },
-    │       "input": 34,
-    │       "output": 334,
-    │       "totalTokens": 12676
-    │     }
-    │   }
+    │   output: "SKILL_DONE"
     │   metadata: {
     │     "flue.operation": "skill",
     │     "flue.session": "skill",

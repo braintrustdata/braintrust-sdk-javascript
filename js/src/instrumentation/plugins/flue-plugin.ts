@@ -24,7 +24,6 @@ import type {
   FlueToolStartEvent,
   FlueTurnEvent,
   FlueTurnRequestEvent,
-  FlueUsage,
 } from "../../vendor-sdk-types/flue";
 
 type FlueObserver = (event: unknown, ctx?: unknown) => void;
@@ -362,29 +361,29 @@ class FlueObserveBridge {
   }
 
   private handleRunEnd(event: FlueRunEndEvent): void {
+    const state = this.runsById.get(event.runId);
+    this.finishPendingSpansForRun(event);
+
+    if (state) {
+      safeLog(state.span, {
+        ...(event.isError ? { error: errorToString(event.error) } : {}),
+        metadata: {
+          ...state.metadata,
+          ...extractEventMetadata(event),
+          ...(event.isError !== undefined
+            ? { "flue.is_error": event.isError }
+            : {}),
+        },
+        metrics: durationMetrics(event.durationMs),
+        output: event.result,
+      });
+      safeEnd(state.span, eventTime(event.timestamp));
+      this.runsById.delete(event.runId);
+    }
+
     void flush().catch((error) => {
       logInstrumentationError("Flue flush", error);
     });
-
-    const state = this.runsById.get(event.runId);
-    if (!state) {
-      return;
-    }
-
-    safeLog(state.span, {
-      ...(event.isError ? { error: errorToString(event.error) } : {}),
-      metadata: {
-        ...state.metadata,
-        ...extractEventMetadata(event),
-        ...(event.isError !== undefined
-          ? { "flue.is_error": event.isError }
-          : {}),
-      },
-      metrics: durationMetrics(event.durationMs),
-      output: event.result,
-    });
-    safeEnd(state.span, eventTime(event.timestamp));
-    this.runsById.delete(event.runId);
   }
 
   private handleOperationStart(event: FlueOperationStartEvent): void {
@@ -416,6 +415,7 @@ class FlueObserveBridge {
     const state =
       this.operationsById.get(event.operationId) ??
       this.startSyntheticOperation(event);
+    const output = operationOutput(event);
     const metadata = {
       ...state.metadata,
       ...extractEventMetadata(event),
@@ -425,15 +425,13 @@ class FlueObserveBridge {
       ...(event.usage ? { "flue.usage": event.usage } : {}),
     };
 
+    this.finishPendingChildrenForOperation(event, output);
     safeLog(state.span, {
       ...(event.isError ? { error: errorToString(event.error) } : {}),
       metadata,
       metrics: durationMetrics(event.durationMs),
-      output:
-        event.result ??
-        (event.operationKind === "compact" ? { completed: true } : undefined),
+      output,
     });
-    this.finishCompactionsForOperation(event);
     safeEnd(state.span, eventTime(event.timestamp));
     this.operationsById.delete(event.operationId);
   }
@@ -804,9 +802,48 @@ class FlueObserveBridge {
     return { metadata, span };
   }
 
-  private finishCompactionsForOperation(event: FlueOperationEvent): void {
+  private finishPendingChildrenForOperation(
+    event: FlueOperationEvent,
+    operationOutput: unknown,
+  ): void {
+    const endTime = eventTime(event.timestamp);
+    const usage = event.usage ?? usageFromOperationResult(event.result);
+    const turnEntries = [...this.turnsByKey].filter(([, state]) =>
+      stateMatchesOperation(state, event.operationId),
+    );
+
+    turnEntries.forEach(([key, state], index) => {
+      const shouldLogOperationOutput =
+        (event.operationKind === "prompt" || event.operationKind === "skill") &&
+        index === turnEntries.length - 1 &&
+        operationOutput !== undefined;
+      safeLog(state.span, {
+        metadata: state.metadata,
+        metrics: metricsFromUsage(usage),
+        ...(shouldLogOperationOutput ? { output: operationOutput } : {}),
+      });
+      safeEnd(state.span, endTime);
+      this.turnsByKey.delete(key);
+    });
+
+    for (const [key, state] of this.toolsByKey) {
+      if (!stateMatchesOperation(state, event.operationId)) {
+        continue;
+      }
+      safeEnd(state.span, endTime);
+      this.toolsByKey.delete(key);
+    }
+
+    for (const [key, state] of this.tasksById) {
+      if (!stateMatchesOperation(state, event.operationId)) {
+        continue;
+      }
+      safeEnd(state.span, endTime);
+      this.tasksById.delete(key);
+    }
+
     for (const [key, state] of this.compactionsByKey) {
-      if (!key.includes(`:${event.operationId}:`)) {
+      if (!stateMatchesOperation(state, event.operationId)) {
         continue;
       }
       safeLog(state.span, {
@@ -816,6 +853,60 @@ class FlueObserveBridge {
       });
       safeEnd(state.span, eventTime(event.timestamp));
       this.compactionsByKey.delete(key);
+    }
+  }
+
+  private finishPendingSpansForRun(event: FlueRunEndEvent): void {
+    const endTime = eventTime(event.timestamp);
+
+    for (const [key, state] of this.toolsByKey) {
+      if (!stateMatchesRun(state, event.runId)) {
+        continue;
+      }
+      safeEnd(state.span, endTime);
+      this.toolsByKey.delete(key);
+    }
+
+    for (const [key, state] of this.turnsByKey) {
+      if (!stateMatchesRun(state, event.runId)) {
+        continue;
+      }
+      safeEnd(state.span, endTime);
+      this.turnsByKey.delete(key);
+    }
+
+    for (const [key, state] of this.tasksById) {
+      if (!stateMatchesRun(state, event.runId)) {
+        continue;
+      }
+      safeEnd(state.span, endTime);
+      this.tasksById.delete(key);
+    }
+
+    for (const [key, state] of this.compactionsByKey) {
+      if (!stateMatchesRun(state, event.runId)) {
+        continue;
+      }
+      safeLog(state.span, {
+        metadata: state.metadata,
+        output: { completed: true },
+      });
+      safeEnd(state.span, endTime);
+      this.compactionsByKey.delete(key);
+    }
+
+    for (const [key, state] of this.operationsById) {
+      if (!stateMatchesRun(state, event.runId)) {
+        continue;
+      }
+      safeLog(state.span, {
+        metadata: state.metadata,
+        ...(state.metadata["flue.operation"] === "compact"
+          ? { output: { completed: true } }
+          : {}),
+      });
+      safeEnd(state.span, endTime);
+      this.operationsById.delete(key);
     }
   }
 }
@@ -865,26 +956,54 @@ function extractPayloadMetadata(payload: unknown): Record<string, unknown> {
   return Object.fromEntries(Object.entries(metadata));
 }
 
-function metricsFromUsage(
-  usage: FlueUsage | undefined,
-): Record<string, number> {
+function operationOutput(event: FlueOperationEvent): unknown {
+  if (event.operationKind === "prompt" || event.operationKind === "skill") {
+    return llmResultFromOperationResult(event.result);
+  }
+  return (
+    event.result ??
+    (event.operationKind === "compact" ? { completed: true } : undefined)
+  );
+}
+
+function llmResultFromOperationResult(result: unknown): unknown {
+  if (!isObjectLike(result)) {
+    return result;
+  }
+  const text = Reflect.get(result, "text");
+  return text === undefined ? result : text;
+}
+
+function usageFromOperationResult(result: unknown): unknown {
+  if (!isObjectLike(result)) {
+    return undefined;
+  }
+  return Reflect.get(result, "usage");
+}
+
+function metricsFromUsage(usage: unknown): Record<string, number> {
+  if (!isObjectLike(usage)) {
+    return {};
+  }
+  const cacheRead = Reflect.get(usage, "cacheRead");
+  const cacheWrite = Reflect.get(usage, "cacheWrite");
+  const cost = Reflect.get(usage, "cost");
+  const input = Reflect.get(usage, "input");
+  const output = Reflect.get(usage, "output");
+  const totalTokens = Reflect.get(usage, "totalTokens");
+  const totalCost = isObjectLike(cost) ? Reflect.get(cost, "total") : undefined;
+
   return {
-    ...(typeof usage?.input === "number" ? { prompt_tokens: usage.input } : {}),
-    ...(typeof usage?.output === "number"
-      ? { completion_tokens: usage.output }
+    ...(typeof input === "number" ? { prompt_tokens: input } : {}),
+    ...(typeof output === "number" ? { completion_tokens: output } : {}),
+    ...(typeof cacheRead === "number"
+      ? { prompt_cached_tokens: cacheRead }
       : {}),
-    ...(typeof usage?.cacheRead === "number"
-      ? { prompt_cached_tokens: usage.cacheRead }
+    ...(typeof cacheWrite === "number"
+      ? { prompt_cache_creation_tokens: cacheWrite }
       : {}),
-    ...(typeof usage?.cacheWrite === "number"
-      ? { prompt_cache_creation_tokens: usage.cacheWrite }
-      : {}),
-    ...(typeof usage?.totalTokens === "number"
-      ? { tokens: usage.totalTokens }
-      : {}),
-    ...(typeof usage?.cost?.total === "number"
-      ? { estimated_cost: usage.cost.total }
-      : {}),
+    ...(typeof totalTokens === "number" ? { tokens: totalTokens } : {}),
+    ...(typeof totalCost === "number" ? { estimated_cost: totalCost } : {}),
   };
 }
 
@@ -916,6 +1035,14 @@ function compactionKey(event: FlueBaseEvent): string {
     event.operationId ?? "",
     event.taskId ?? "",
   ].join(":");
+}
+
+function stateMatchesOperation(state: SpanState, operationId: string): boolean {
+  return state.metadata["flue.operation_id"] === operationId;
+}
+
+function stateMatchesRun(state: SpanState, runId: string): boolean {
+  return state.metadata["flue.run_id"] === runId;
 }
 
 function startFlueSpan(parent: Span | undefined, args: StartSpanArgs): Span {

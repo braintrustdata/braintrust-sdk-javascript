@@ -374,6 +374,145 @@ describe("Flue observe instrumentation", () => {
     expect(findSpan("workflow:research")?.end).toHaveBeenCalledTimes(1);
   });
 
+  it("uses prompt and skill operation text as pending LLM output", () => {
+    const emit = observeEvents();
+    const usage = flueUsage();
+
+    emit({
+      runId: "run-1",
+      type: "run_start",
+      workflowName: "research",
+    });
+    emit({
+      operationId: "op-1",
+      operationKind: "prompt",
+      runId: "run-1",
+      type: "operation_start",
+    });
+    emit({
+      input: {
+        messages: [{ content: "finish", role: "user" }],
+      },
+      model: "claude-test",
+      operationId: "op-1",
+      provider: "anthropic",
+      purpose: "agent",
+      runId: "run-1",
+      turnId: "turn-1",
+      type: "turn_request",
+    });
+    emit({
+      args: { path: ".agents" },
+      operationId: "op-1",
+      runId: "run-1",
+      toolCallId: "tool-1",
+      toolName: "read",
+      turnId: "turn-1",
+      type: "tool_start",
+    });
+    emit({
+      durationMs: 50,
+      isError: false,
+      operationId: "op-1",
+      operationKind: "prompt",
+      result: { model: { id: "claude-test" }, text: "PROMPT_DONE", usage },
+      runId: "run-1",
+      timestamp: "2026-05-27T05:12:41.000Z",
+      type: "operation",
+      usage,
+    });
+
+    const operationSpan = findSpan("flue.prompt");
+    const turnSpan = findSpan("llm:claude-test");
+    const toolSpan = findSpan("tool:read");
+
+    expect(operationSpan?.log).toHaveBeenCalledWith(
+      expect.objectContaining({ output: "PROMPT_DONE" }),
+    );
+    expect(turnSpan?.log).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metrics: expect.objectContaining({
+          completion_tokens: 4,
+          prompt_tokens: 3,
+          tokens: 10,
+        }),
+        output: "PROMPT_DONE",
+      }),
+    );
+    expect(turnSpan?.end).toHaveBeenCalledWith({
+      endTime: Date.parse("2026-05-27T05:12:41.000Z") / 1000,
+    });
+    expect(toolSpan?.end).toHaveBeenCalledWith({
+      endTime: Date.parse("2026-05-27T05:12:41.000Z") / 1000,
+    });
+  });
+
+  it("closes unfinished operation children when a run ends", () => {
+    const emit = observeEvents();
+
+    emit({
+      runId: "run-1",
+      type: "run_start",
+      workflowName: "research",
+    });
+    emit({
+      operationId: "op-compact",
+      operationKind: "compact",
+      runId: "run-1",
+      session: "main",
+      type: "operation_start",
+    });
+    emit({
+      estimatedTokens: 200,
+      operationId: "op-compact",
+      reason: "manual",
+      runId: "run-1",
+      session: "main",
+      type: "compaction_start",
+    });
+    emit({
+      input: {
+        messages: [{ content: "summarize", role: "user" }],
+      },
+      model: "gpt-test",
+      operationId: "op-compact",
+      provider: "openai",
+      purpose: "compaction_prefix",
+      runId: "run-1",
+      session: "main",
+      turnId: "turn-compact",
+      type: "turn_request",
+    });
+    emit({
+      durationMs: 60,
+      isError: false,
+      result: { status: "done" },
+      runId: "run-1",
+      timestamp: "2026-05-27T05:12:42.000Z",
+      type: "run_end",
+    });
+
+    const operationSpan = findSpan("flue.compact");
+    const compactionSpan = findSpan("compaction:manual");
+    const turnSpan = findSpan("llm:gpt-test");
+
+    expect(turnSpan?.end).toHaveBeenCalledWith({
+      endTime: Date.parse("2026-05-27T05:12:42.000Z") / 1000,
+    });
+    expect(compactionSpan?.log).toHaveBeenCalledWith(
+      expect.objectContaining({ output: { completed: true } }),
+    );
+    expect(compactionSpan?.end).toHaveBeenCalledWith({
+      endTime: Date.parse("2026-05-27T05:12:42.000Z") / 1000,
+    });
+    expect(operationSpan?.log).toHaveBeenCalledWith(
+      expect.objectContaining({ output: { completed: true } }),
+    );
+    expect(operationSpan?.end).toHaveBeenCalledWith({
+      endTime: Date.parse("2026-05-27T05:12:42.000Z") / 1000,
+    });
+  });
+
   it("creates a root operation span for direct or dispatched agent events", () => {
     const emit = observeEvents();
 
