@@ -454,8 +454,8 @@ importers:
         specifier: ^7.0.3
         version: 7.0.3
       eslint-plugin-node-import:
-        specifier: ^1.0.5
-        version: 1.0.5(eslint@9.39.4(jiti@2.6.1))
+        specifier: ^1.2.0
+        version: 1.2.0(eslint@9.39.4(jiti@2.6.1))
       openai:
         specifier: 6.25.0
         version: 6.25.0(ws@8.20.1)(zod@3.25.76)
@@ -2364,8 +2364,8 @@ packages:
     resolution: {integrity: sha512-TtpcNJ3XAzx3Gq8sWRzJaVajRs0uVxA2YAkdb1jm2YkPz4G6egUFAyA3n5vtEIZefPk5Wa4UXbKuS5fKkJWdgA==}
     engines: {node: '>=10'}
 
-  eslint-plugin-node-import@1.0.5:
-    resolution: {integrity: sha512-razzgbr3EcB5+bm8/gqTqzTJ7Bpiu8PIChiAMRfZCNigr9GZBtnVSI+wPw+RGbWYCCIzWAsK/A7ihoAeSz5j7A==}
+  eslint-plugin-node-import@1.2.0:
+    resolution: {integrity: sha512-PO/98sYHIwXiHaX7pFl1h1ZFFTdtPDZmq4VU2ks/7kLjzDK+5cmMWN9A08wjUErYDuVdH8q4Ft0bXt39Fu/Eng==}
     engines: {node: ^14.18.0 || ^16.0.0 || >= 18.0.0}
     peerDependencies:
       eslint: '>=7'
@@ -2631,6 +2631,10 @@ packages:
 
   globals@14.0.0:
     resolution: {integrity: sha512-oahGvuMGQlPw/ivIYBjVSrWAfWLBeku5tpPE2fOPLi+WHffIWbuh2tCjhyQhTBPMf5E9jDEH4FOmTYgYwbKwtQ==}
+    engines: {node: '>=18'}
+
+  globals@17.6.0:
+    resolution: {integrity: sha512-sepffkT8stwnIYbsMBpoCHJuJM5l98FUF2AnE07hfvE0m/qp3R586hw4jF4uadbhvg1ooIdzuu7CsfD2jzCaNA==}
     engines: {node: '>=18'}
 
   globby@11.1.0:
@@ -6084,9 +6088,10 @@ snapshots:
 
   escape-string-regexp@4.0.0: {}
 
-  eslint-plugin-node-import@1.0.5(eslint@9.39.4(jiti@2.6.1)):
+  eslint-plugin-node-import@1.2.0(eslint@9.39.4(jiti@2.6.1)):
     dependencies:
       eslint: 9.39.4(jiti@2.6.1)
+      globals: 17.6.0
 
   eslint-scope@5.1.1:
     dependencies:
@@ -6404,6 +6409,8 @@ snapshots:
       path-is-absolute: 1.0.1
 
   globals@14.0.0: {}
+
+  globals@17.6.0: {}
 
   globby@11.1.0:
     dependencies:
