@@ -342,6 +342,7 @@ class FlueObserveBridge {
       event.owner?.workflowName ??
       (typeof ctx?.id === "string" ? ctx.id : "unknown");
     const metadata = {
+      ...extractPayloadMetadata(event.payload),
       ...extractEventMetadata(event, ctx),
       ...(workflowName ? { "flue.workflow_name": workflowName } : {}),
       provider: "flue",
@@ -807,6 +808,17 @@ function extractEventMetadata(
       ? { "flue.context_run_id": ctx.runId }
       : {}),
   };
+}
+
+function extractPayloadMetadata(payload: unknown): Record<string, unknown> {
+  if (!isObjectLike(payload)) {
+    return {};
+  }
+  const metadata = Reflect.get(payload, "metadata");
+  if (!isObjectLike(metadata)) {
+    return {};
+  }
+  return Object.fromEntries(Object.entries(metadata));
 }
 
 function metricsFromUsage(

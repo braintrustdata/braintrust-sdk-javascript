@@ -218,6 +218,8 @@ export function defineFlueInstrumentationAssertions(options: {
       expect(root?.row.metadata).toMatchObject({
         "flue.workflow_name": "instrumentation",
         provider: "flue",
+        scenario: SCENARIO_NAME,
+        testRunId: expect.any(String),
       });
     });
 

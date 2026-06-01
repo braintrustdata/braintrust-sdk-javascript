@@ -13,6 +13,16 @@ const flueCliPath = path.join(
 );
 const braintrustHookNodeOption = "--import=braintrust/hook.mjs";
 
+function workflowPayload() {
+  return {
+    metadata: {
+      scenario: SCENARIO_NAME,
+      testRunId: process.env.BRAINTRUST_E2E_RUN_ID,
+    },
+    scenario: SCENARIO_NAME,
+  };
+}
+
 export async function runNodeFlueInstrumentationScenario(options) {
   const env = scenarioEnv(options);
   const outputDir = path.join(process.cwd(), ".flue-build", options.outputName);
@@ -52,7 +62,7 @@ export async function runNodeFlueInstrumentationScenario(options) {
     const workflowResponse = await fetch(
       `http://127.0.0.1:${port}/workflows/instrumentation?wait=result`,
       {
-        body: JSON.stringify({ scenario: SCENARIO_NAME }),
+        body: JSON.stringify(workflowPayload()),
         headers: { "content-type": "application/json" },
         method: "POST",
       },
@@ -90,7 +100,7 @@ export async function runCliFlueInstrumentationScenario() {
       "--target",
       "node",
       "--payload",
-      JSON.stringify({ scenario: SCENARIO_NAME }),
+      JSON.stringify(workflowPayload()),
       "--root",
       process.cwd(),
     ],

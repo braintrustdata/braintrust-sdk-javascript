@@ -128,7 +128,13 @@ describe("Flue observe instrumentation", () => {
       {
         instanceId: "instance-1",
         owner: { kind: "workflow", workflowName: "research" },
-        payload: { topic: "flue" },
+        payload: {
+          metadata: {
+            scenario: "flue-instrumentation",
+            testRunId: "e2e-run-1",
+          },
+          topic: "flue",
+        },
         runId: "run-1",
         startedAt,
         timestamp: startedAt,
@@ -267,11 +273,19 @@ describe("Flue observe instrumentation", () => {
 
     expect(workflowSpan?.args).toMatchObject({
       event: {
-        input: { topic: "flue" },
+        input: {
+          metadata: {
+            scenario: "flue-instrumentation",
+            testRunId: "e2e-run-1",
+          },
+          topic: "flue",
+        },
         metadata: {
           "flue.context_id": "ctx-1",
           "flue.workflow_name": "research",
           provider: "flue",
+          scenario: "flue-instrumentation",
+          testRunId: "e2e-run-1",
         },
       },
       startTime: Date.parse(startedAt) / 1000,

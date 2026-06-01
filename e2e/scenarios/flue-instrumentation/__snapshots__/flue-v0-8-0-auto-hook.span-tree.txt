@@ -1,6 +1,10 @@
 span_tree:
 └── workflow:instrumentation [task]
     input: {
+      "metadata": {
+        "scenario": "flue-instrumentation",
+        "testRunId": "<run:1>"
+      },
       "scenario": "flue-instrumentation"
     }
     output: {
@@ -9,7 +13,8 @@ span_tree:
     }
     metadata: {
       "flue.workflow_name": "instrumentation",
-      "provider": "flue"
+      "provider": "flue",
+      "scenario": "flue-instrumentation"
     }
     metrics: {
       "duration_ms": 0

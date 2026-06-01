@@ -1592,6 +1592,10 @@
         }
       ],
       "input": {
+        "metadata": {
+          "scenario": "flue-instrumentation",
+          "testRunId": "<run:1>"
+        },
         "scenario": "flue-instrumentation"
       },
       "output": {
@@ -1600,7 +1604,8 @@
       },
       "metadata": {
         "flue.workflow_name": "instrumentation",
-        "provider": "flue"
+        "provider": "flue",
+        "scenario": "flue-instrumentation"
       },
       "metrics": {
         "duration_ms": 0
