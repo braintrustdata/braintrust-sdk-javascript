@@ -2,7 +2,7 @@
 
 ## 3.15.0
 
-### Minor Changes
+**Attention:** This release is technically a breaking change because it removes the `wrapFlueContext`, and `wrapFlueSession` exports for `@flue/runtime`. This release was still deemed as a minor because of the experimental state of flue and limited adoption of `@flue/runtime` instrumentation.
 
 - feat(flue): Update flue instrumentation to use new observe hooks (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2070)
 
