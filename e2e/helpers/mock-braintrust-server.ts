@@ -384,13 +384,19 @@ export async function startMockBraintrustServer(
 
   function trackProdForwarding(promise: Promise<void>): void {
     pendingProdForwarding.add(promise);
-    promise.finally(() => {
-      pendingProdForwarding.delete(promise);
-    });
+    void promise.then(
+      () => {
+        pendingProdForwarding.delete(promise);
+      },
+      () => {
+        pendingProdForwarding.delete(promise);
+      },
+    );
   }
 
   async function forwardProdRequest(
     capturedRequest: CapturedRequest,
+    options: { drainResponseBody?: boolean } = {},
   ): Promise<Response> {
     if (!prodForwarding) {
       throw new Error("prodForwarding is not enabled");
@@ -432,6 +438,10 @@ export async function startMockBraintrustServer(
       throw new Error(
         `prodForwarding failed for ${capturedRequest.method} ${capturedRequest.path}: ${response.status} ${response.statusText}`,
       );
+    }
+
+    if (options.drainResponseBody) {
+      await response.arrayBuffer();
     }
 
     return response;
@@ -658,7 +668,9 @@ export async function startMockBraintrustServer(
           }
           if (prodForwarding) {
             trackProdForwarding(
-              forwardProdRequest(capturedRequest)
+              forwardProdRequest(capturedRequest, {
+                drainResponseBody: true,
+              })
                 .then(() => undefined)
                 .catch(() => undefined),
             );
@@ -673,7 +685,9 @@ export async function startMockBraintrustServer(
         ) {
           if (prodForwarding) {
             trackProdForwarding(
-              forwardProdRequest(capturedRequest)
+              forwardProdRequest(capturedRequest, {
+                drainResponseBody: true,
+              })
                 .then(() => undefined)
                 .catch(() => undefined),
             );
@@ -706,7 +720,9 @@ export async function startMockBraintrustServer(
       await new Promise<void>((resolve, reject) => {
         server.close((error) => (error ? reject(error) : resolve()));
       });
-      await Promise.allSettled([...pendingProdForwarding]);
+      while (pendingProdForwarding.size > 0) {
+        await Promise.allSettled([...pendingProdForwarding]);
+      }
     },
     events,
     payloads,
