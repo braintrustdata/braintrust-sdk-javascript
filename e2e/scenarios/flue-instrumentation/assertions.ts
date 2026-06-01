@@ -227,13 +227,14 @@ export function defineFlueInstrumentationAssertions(options: {
       for (const flueSpanName of [
         "flue.prompt",
         "flue.skill",
-        "flue.task",
         "flue.compact",
       ] as const) {
         const span = findFlueOperation(events, flueSpanName);
 
         expect(span).toBeDefined();
         expect(span?.span.type).toBe("task");
+        expect(span?.input).toBeDefined();
+        expect(span?.output).toBeDefined();
         expect(span?.row.metadata).toMatchObject({
           provider: "flue",
         });
@@ -256,18 +257,23 @@ export function defineFlueInstrumentationAssertions(options: {
         const promptTools = promptChildren.filter((event) =>
           event.span.name?.startsWith("tool:"),
         );
+        const skillSpan = findFlueOperation(events, "flue.skill");
+        const compactSpan = findFlueOperation(events, "flue.compact");
+        const allLlmSpans = [promptSpan, skillSpan, compactSpan].flatMap(
+          (span) =>
+            findFlueDescendants(events, span, (event) =>
+              event.span.name?.startsWith("llm:"),
+            ),
+        );
         const lookupToolSpan = promptTools.find(
           (event) => event.span.name === "tool:lookup",
         );
         const taskSpan = findFlueOperation(events, "flue.task");
-        const childTask = findFlueDescendants(
+        const nestedTaskSpans = findFlueDescendants(
           events,
           taskSpan,
-          (event) =>
-            event.span.name === "flue.task" ||
-            event.span.name?.startsWith("task:") === true,
-        )[0];
-        const compactSpan = findFlueOperation(events, "flue.compact");
+          (event) => event.span.name === "flue.task",
+        );
         const compaction = findFlueDescendants(
           events,
           compactSpan,
@@ -275,6 +281,11 @@ export function defineFlueInstrumentationAssertions(options: {
         )[0];
 
         expect(promptTurns.length).toBeGreaterThan(0);
+        expect(allLlmSpans.length).toBeGreaterThan(0);
+        for (const llmSpan of allLlmSpans) {
+          expect(llmSpan.output).toBeDefined();
+          expect(llmSpan.span.ended).toBe(true);
+        }
         expect(promptTools.map((event) => event.span.name)).toEqual(
           expect.arrayContaining([
             "tool:lookup",
@@ -294,10 +305,13 @@ export function defineFlueInstrumentationAssertions(options: {
         expect(JSON.stringify(lookupToolSpan?.output)).toContain(
           "flue-session-2026",
         );
-        expect(childTask?.span.type).toBe("task");
-        expect(childTask?.input).toBe(
+        expect(lookupToolSpan?.span.parentIds).toEqual([promptSpan?.span.id]);
+        expect(taskSpan?.span.type).toBe("task");
+        expect(taskSpan?.input).toBe(
           "Reply with exactly TASK_DONE and no other text.",
         );
+        expect(taskSpan?.output).toBe("TASK_DONE");
+        expect(nestedTaskSpans).toHaveLength(0);
         expect(compaction?.span.type).toBe("task");
         expect(compaction?.metadata).toMatchObject({
           "flue.compaction_reason": "manual",

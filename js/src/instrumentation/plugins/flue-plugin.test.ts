@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { mockCurrentParentSpan, mockStartSpan } = vi.hoisted(() => ({
+const { mockCurrentParentSpan, mockFlush, mockStartSpan } = vi.hoisted(() => ({
   mockCurrentParentSpan: { current: undefined as any },
+  mockFlush: vi.fn(),
   mockStartSpan: vi.fn(),
 }));
 
@@ -23,6 +24,7 @@ const { mockChannelHandlers, mockNewTracingChannel, mockTracingChannel } =
   });
 
 vi.mock("../../logger", () => ({
+  flush: (...args: unknown[]) => mockFlush(...args),
   startSpan: (...args: unknown[]) => mockStartSpan(...args),
   withCurrent: (span: unknown, callback: () => unknown) => {
     const previous = mockCurrentParentSpan.current;
@@ -59,6 +61,7 @@ describe("Flue observe instrumentation", () => {
   beforeEach(() => {
     spans = [];
     mockCurrentParentSpan.current = undefined;
+    mockFlush.mockResolvedValue(undefined);
     mockStartSpan.mockImplementation((args: any = {}) => {
       const parentSpan = mockCurrentParentSpan.current;
       const spanId = `span-${spans.length}`;
@@ -292,7 +295,7 @@ describe("Flue observe instrumentation", () => {
     });
     expect(operationSpan?.spanParents).toEqual([workflowSpan?.spanId]);
     expect(turnSpan?.spanParents).toEqual([operationSpan?.spanId]);
-    expect(toolSpan?.spanParents).toEqual([turnSpan?.spanId]);
+    expect(toolSpan?.spanParents).toEqual([operationSpan?.spanId]);
     expect(taskSpan?.spanParents).toEqual([operationSpan?.spanId]);
     expect(compactionSpan?.spanParents).toEqual([operationSpan?.spanId]);
     expect(turnSpan?.args.event).toMatchObject({
@@ -326,6 +329,11 @@ describe("Flue observe instrumentation", () => {
     );
     expect(operationSpan?.log).toHaveBeenCalledWith(
       expect.objectContaining({
+        input: [{ content: "Find Flue changes", role: "user" }],
+      }),
+    );
+    expect(operationSpan?.log).toHaveBeenCalledWith(
+      expect.objectContaining({
         metadata: expect.objectContaining({
           "flue.usage": usage,
         }),
@@ -341,6 +349,29 @@ describe("Flue observe instrumentation", () => {
     expect(workflowSpan?.end).toHaveBeenCalledWith({
       endTime: Date.parse("2026-05-27T05:12:42.000Z") / 1000,
     });
+    expect(mockFlush).toHaveBeenCalledTimes(1);
+  });
+
+  it("flushes without awaiting when a run ends", () => {
+    const emit = observeEvents();
+    const pendingFlush = new Promise<void>(() => {});
+    mockFlush.mockReturnValueOnce(pendingFlush);
+
+    emit({
+      runId: "run-1",
+      type: "run_start",
+      workflowName: "research",
+    });
+    emit({
+      durationMs: 1,
+      isError: false,
+      runId: "run-1",
+      timestamp: "2026-05-27T05:12:42.000Z",
+      type: "run_end",
+    });
+
+    expect(mockFlush).toHaveBeenCalledTimes(1);
+    expect(findSpan("workflow:research")?.end).toHaveBeenCalledTimes(1);
   });
 
   it("creates a root operation span for direct or dispatched agent events", () => {
@@ -364,6 +395,60 @@ describe("Flue observe instrumentation", () => {
       "flue.session": "main",
       provider: "flue",
     });
+  });
+
+  it("uses task lifecycle spans instead of adding a task operation wrapper", () => {
+    const emit = observeEvents();
+
+    emit({
+      runId: "run-1",
+      type: "run_start",
+      workflowName: "research",
+    });
+    emit({
+      operationId: "op-task",
+      operationKind: "task",
+      runId: "run-1",
+      session: "task",
+      type: "operation_start",
+    });
+    emit({
+      operationId: "op-task",
+      prompt: "Reply with TASK_DONE",
+      runId: "run-1",
+      taskId: "task-1",
+      type: "task_start",
+    });
+    emit({
+      durationMs: 5,
+      isError: false,
+      operationId: "op-task",
+      result: "TASK_DONE",
+      runId: "run-1",
+      taskId: "task-1",
+      type: "task",
+    });
+    emit({
+      durationMs: 6,
+      isError: false,
+      operationId: "op-task",
+      operationKind: "task",
+      result: { text: "TASK_DONE" },
+      runId: "run-1",
+      type: "operation",
+    });
+
+    const workflowSpan = findSpan("workflow:research");
+    const taskSpans = spans.filter((span) => span.name === "flue.task");
+
+    expect(taskSpans).toHaveLength(1);
+    expect(taskSpans[0]?.spanParents).toEqual([workflowSpan?.spanId]);
+    expect(taskSpans[0]?.args.event.input).toBe("Reply with TASK_DONE");
+    expect(taskSpans[0]?.log).toHaveBeenCalledWith(
+      expect.objectContaining({
+        output: "TASK_DONE",
+      }),
+    );
   });
 
   it("contains observer failures so Flue calls are not affected", () => {

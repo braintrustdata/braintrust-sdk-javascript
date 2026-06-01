@@ -1,7 +1,7 @@
 import { BasePlugin } from "../core";
 import type { ChannelMessage } from "../core/channel-definitions";
 import type { IsoChannelHandlers } from "../../isomorph";
-import { startSpan, withCurrent } from "../../logger";
+import { flush, startSpan, withCurrent } from "../../logger";
 import type { Span, StartSpanArgs } from "../../logger";
 import { SpanTypeAttribute } from "../../../util/index";
 import { flueChannels } from "./flue-channels";
@@ -39,6 +39,7 @@ type FlueAutoState = {
 };
 
 type SpanState = {
+  loggedInput?: boolean;
   metadata: Record<string, unknown>;
   span: Span;
 };
@@ -361,6 +362,10 @@ class FlueObserveBridge {
   }
 
   private handleRunEnd(event: FlueRunEndEvent): void {
+    void flush().catch((error) => {
+      logInstrumentationError("Flue flush", error);
+    });
+
     const state = this.runsById.get(event.runId);
     if (!state) {
       return;
@@ -424,7 +429,9 @@ class FlueObserveBridge {
       ...(event.isError ? { error: errorToString(event.error) } : {}),
       metadata,
       metrics: durationMetrics(event.durationMs),
-      output: event.result,
+      output:
+        event.result ??
+        (event.operationKind === "compact" ? { completed: true } : undefined),
     });
     this.finishCompactionsForOperation(event);
     safeEnd(state.span, eventTime(event.timestamp));
@@ -461,6 +468,10 @@ class FlueObserveBridge {
       },
     });
 
+    this.logOperationInput(
+      event.operationId,
+      event.input?.messages ?? event.input,
+    );
     this.turnsByKey.set(key, { metadata, span });
   }
 
@@ -509,7 +520,7 @@ class FlueObserveBridge {
       "flue.tool_call_id": event.toolCallId,
       provider: "flue",
     };
-    const parent = this.parentSpanForEvent(event);
+    const parent = this.parentSpanForTool(event);
     const span = startFlueSpan(parent, {
       name: `tool:${event.toolName ?? "unknown"}`,
       spanAttributes: { type: SpanTypeAttribute.TOOL },
@@ -601,6 +612,12 @@ class FlueObserveBridge {
 
   private handleCompactionStart(event: FlueCompactionStartEvent): void {
     const key = compactionKey(event);
+    const input = {
+      ...(event.estimatedTokens !== undefined
+        ? { estimatedTokens: event.estimatedTokens }
+        : {}),
+      ...(event.reason ? { reason: event.reason } : {}),
+    };
     const metadata = {
       ...extractEventMetadata(event),
       ...(event.reason ? { "flue.compaction_reason": event.reason } : {}),
@@ -612,16 +629,12 @@ class FlueObserveBridge {
       spanAttributes: { type: SpanTypeAttribute.TASK },
       startTime: eventTime(event.timestamp),
       event: {
-        input: {
-          ...(event.estimatedTokens !== undefined
-            ? { estimatedTokens: event.estimatedTokens }
-            : {}),
-          ...(event.reason ? { reason: event.reason } : {}),
-        },
+        input,
         metadata,
       },
     });
 
+    this.logOperationInput(event.operationId, input);
     this.compactionsByKey.set(key, { metadata, span });
   }
 
@@ -694,6 +707,40 @@ class FlueObserveBridge {
     return undefined;
   }
 
+  private parentSpanForTool(event: FlueBaseEvent): Span | undefined {
+    if (event.taskId) {
+      const task = this.tasksById.get(event.taskId);
+      if (task) {
+        return task.span;
+      }
+    }
+    if (event.operationId) {
+      const operation = this.operationsById.get(event.operationId);
+      if (operation) {
+        return operation.span;
+      }
+    }
+    if (event.runId) {
+      return this.runsById.get(event.runId)?.span;
+    }
+    return undefined;
+  }
+
+  private logOperationInput(
+    operationId: string | undefined,
+    input: unknown,
+  ): void {
+    if (!operationId || input === undefined) {
+      return;
+    }
+    const operation = this.operationsById.get(operationId);
+    if (!operation || operation.loggedInput) {
+      return;
+    }
+    safeLog(operation.span, { input });
+    operation.loggedInput = true;
+  }
+
   private startSyntheticOperation(event: FlueOperationEvent): SpanState {
     const metadata = {
       ...extractEventMetadata(event),
@@ -734,7 +781,7 @@ class FlueObserveBridge {
       "flue.tool_call_id": event.toolCallId,
       provider: "flue",
     };
-    const span = startFlueSpan(this.parentSpanForEvent(event), {
+    const span = startFlueSpan(this.parentSpanForTool(event), {
       name: `tool:${event.toolName ?? "unknown"}`,
       spanAttributes: { type: SpanTypeAttribute.TOOL },
       startTime: eventTime(event.timestamp),
@@ -775,12 +822,9 @@ class FlueObserveBridge {
 
 function isInstrumentedOperation(
   operation: FlueRuntimeOperationKind,
-): operation is FlueOperationKind {
+): operation is Exclude<FlueOperationKind, "task"> {
   return (
-    operation === "prompt" ||
-    operation === "skill" ||
-    operation === "task" ||
-    operation === "compact"
+    operation === "prompt" || operation === "skill" || operation === "compact"
   );
 }
 

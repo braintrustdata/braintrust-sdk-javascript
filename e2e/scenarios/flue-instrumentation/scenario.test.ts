@@ -1,9 +1,8 @@
-import { describe, test } from "vitest";
+import { describe } from "vitest";
 import {
   prepareScenarioDir,
   readInstalledPackageVersion,
   resolveScenarioDir,
-  withScenarioHarness,
 } from "../../helpers/scenario-harness";
 import { defineFlueInstrumentationAssertions } from "./assertions";
 
@@ -56,8 +55,9 @@ describe.sequential(`flue ${flueVersion}`, () => {
     timeoutMs: TIMEOUT_MS,
   });
 
-  test("runs through flue cli", { timeout: TIMEOUT_MS }, async () => {
-    await withScenarioHarness(async ({ runNodeScenarioDir }) => {
+  defineFlueInstrumentationAssertions({
+    name: "cli instrumentation",
+    runScenario: async ({ runNodeScenarioDir }) => {
       await runNodeScenarioDir({
         entry: "scenario.cli.mjs",
         runContext: {
@@ -67,6 +67,9 @@ describe.sequential(`flue ${flueVersion}`, () => {
         scenarioDir,
         timeoutMs: TIMEOUT_MS,
       });
-    });
+    },
+    snapshotName: `${variantKey}-cli`,
+    testFileUrl: import.meta.url,
+    timeoutMs: TIMEOUT_MS,
   });
 });

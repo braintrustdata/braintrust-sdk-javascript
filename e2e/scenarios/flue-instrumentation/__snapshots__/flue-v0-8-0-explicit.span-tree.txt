@@ -20,6 +20,17 @@ span_tree:
       "duration_ms": 0
     }
     ├── flue.prompt [task]
+    │   input: [
+    │     {
+    │       "content": [
+    │         {
+    │           "text": "Complete this instrumented research flow. Call exactly one tool per turn and wait for each tool result before choosing the next tool. Step 1: call lookup with query \"flue instrumentation\". Step 2: use the lookup result id as lookupId and call web_search with query \"Braintrust Flue reasoning stream instrumentation\". Step 3: use the first web_search result url and call summarize_source. After summarize_source returns, reply with exactly PROMPT_DONE and no other text.",
+    │           "type": "text"
+    │         }
+    │       ],
+    │       "role": "user"
+    │     }
+    │   ]
     │   output: {
     │     "model": {
     │       "id": "<span:1>"
@@ -101,29 +112,29 @@ span_tree:
     │   │     "prompt_tokens": 10,
     │   │     "tokens": 2428
     │   │   }
-    │   │   └── tool:lookup [tool]
-    │   │       input: {
-    │   │         "query": "flue instrumentation"
+    │   ├── tool:lookup [tool]
+    │   │   input: {
+    │   │     "query": "flue instrumentation"
+    │   │   }
+    │   │   output: {
+    │   │     "content": [
+    │   │       {
+    │   │         "text": "{\"id\":\"flue-session-2026\",\"query\":\"flue instrumentation\",\"topic\":\"session instrumentation\"}",
+    │   │         "type": "text"
     │   │       }
-    │   │       output: {
-    │   │         "content": [
-    │   │           {
-    │   │             "text": "{\"id\":\"flue-session-2026\",\"query\":\"flue instrumentation\",\"topic\":\"session instrumentation\"}",
-    │   │             "type": "text"
-    │   │           }
-    │   │         ],
-    │   │         "details": {
-    │   │           "customTool": "lookup"
-    │   │         }
-    │   │       }
-    │   │       metadata: {
-    │   │         "flue.session": "main",
-    │   │         "flue.tool_name": "lookup",
-    │   │         "provider": "flue"
-    │   │       }
-    │   │       metrics: {
-    │   │         "duration_ms": 0
-    │   │       }
+    │   │     ],
+    │   │     "details": {
+    │   │       "customTool": "lookup"
+    │   │     }
+    │   │   }
+    │   │   metadata: {
+    │   │     "flue.session": "main",
+    │   │     "flue.tool_name": "lookup",
+    │   │     "provider": "flue"
+    │   │   }
+    │   │   metrics: {
+    │   │     "duration_ms": 0
+    │   │   }
     │   ├── llm:claude-sonnet-4-5-20250929 [llm]
     │   │   input: [
     │   │     {
@@ -212,30 +223,30 @@ span_tree:
     │   │     "prompt_tokens": 13,
     │   │     "tokens": 2629
     │   │   }
-    │   │   └── tool:web_search [tool]
-    │   │       input: {
-    │   │         "lookupId": "flue-session-2026",
-    │   │         "query": "Braintrust Flue reasoning stream instrumentation"
+    │   ├── tool:web_search [tool]
+    │   │   input: {
+    │   │     "lookupId": "flue-session-2026",
+    │   │     "query": "Braintrust Flue reasoning stream instrumentation"
+    │   │   }
+    │   │   output: {
+    │   │     "content": [
+    │   │       {
+    │   │         "text": "{\"lookupId\":\"flue-session-2026\",\"query\":\"Braintrust Flue reasoning stream instrumentation\",\"results\":[{\"title\":\"Flue reasoning stream instrumentation\",\"url\":\"https://example.test/flue/reasoning-streams\"}]}",
+    │   │         "type": "text"
     │   │       }
-    │   │       output: {
-    │   │         "content": [
-    │   │           {
-    │   │             "text": "{\"lookupId\":\"flue-session-2026\",\"query\":\"Braintrust Flue reasoning stream instrumentation\",\"results\":[{\"title\":\"Flue reasoning stream instrumentation\",\"url\":\"https://example.test/flue/reasoning-streams\"}]}",
-    │   │             "type": "text"
-    │   │           }
-    │   │         ],
-    │   │         "details": {
-    │   │           "customTool": "web_search"
-    │   │         }
-    │   │       }
-    │   │       metadata: {
-    │   │         "flue.session": "main",
-    │   │         "flue.tool_name": "web_search",
-    │   │         "provider": "flue"
-    │   │       }
-    │   │       metrics: {
-    │   │         "duration_ms": 0
-    │   │       }
+    │   │     ],
+    │   │     "details": {
+    │   │       "customTool": "web_search"
+    │   │     }
+    │   │   }
+    │   │   metadata: {
+    │   │     "flue.session": "main",
+    │   │     "flue.tool_name": "web_search",
+    │   │     "provider": "flue"
+    │   │   }
+    │   │   metrics: {
+    │   │     "duration_ms": 0
+    │   │   }
     │   ├── llm:claude-sonnet-4-5-20250929 [llm]
     │   │   input: [
     │   │     {
@@ -358,29 +369,29 @@ span_tree:
     │   │     "prompt_tokens": 13,
     │   │     "tokens": 2843
     │   │   }
-    │   │   └── tool:summarize_source [tool]
-    │   │       input: {
-    │   │         "url": "https://example.test/flue/reasoning-streams"
+    │   ├── tool:summarize_source [tool]
+    │   │   input: {
+    │   │     "url": "https://example.test/flue/reasoning-streams"
+    │   │   }
+    │   │   output: {
+    │   │     "content": [
+    │   │       {
+    │   │         "text": "{\"summary\":\"Flue emits reasoning, tool execution, and LLM turn events separately.\",\"url\":\"https://example.test/flue/reasoning-streams\"}",
+    │   │         "type": "text"
     │   │       }
-    │   │       output: {
-    │   │         "content": [
-    │   │           {
-    │   │             "text": "{\"summary\":\"Flue emits reasoning, tool execution, and LLM turn events separately.\",\"url\":\"https://example.test/flue/reasoning-streams\"}",
-    │   │             "type": "text"
-    │   │           }
-    │   │         ],
-    │   │         "details": {
-    │   │           "customTool": "summarize_source"
-    │   │         }
-    │   │       }
-    │   │       metadata: {
-    │   │         "flue.session": "main",
-    │   │         "flue.tool_name": "summarize_source",
-    │   │         "provider": "flue"
-    │   │       }
-    │   │       metrics: {
-    │   │         "duration_ms": 0
-    │   │       }
+    │   │     ],
+    │   │     "details": {
+    │   │       "customTool": "summarize_source"
+    │   │     }
+    │   │   }
+    │   │   metadata: {
+    │   │     "flue.session": "main",
+    │   │     "flue.tool_name": "summarize_source",
+    │   │     "provider": "flue"
+    │   │   }
+    │   │   metrics: {
+    │   │     "duration_ms": 0
+    │   │   }
     │   └── llm:claude-sonnet-4-5-20250929 [llm]
     │       input: [
     │         {
@@ -530,6 +541,17 @@ span_tree:
     │         "tokens": 2950
     │       }
     ├── flue.skill [task]
+    │   input: [
+    │     {
+    │       "content": [
+    │         {
+    │           "text": "Run the skill named \"e2e-flue-skill\".\n\nArguments:\n{\n  \"marker\": \"SKILL_DONE\"\n}",
+    │           "type": "text"
+    │         }
+    │       ],
+    │       "role": "user"
+    │     }
+    │   ]
     │   output: {
     │     "model": {
     │       "id": "<span:1>"
@@ -606,28 +628,28 @@ span_tree:
     │   │     "prompt_tokens": 3,
     │   │     "tokens": 1861
     │   │   }
-    │   │   └── tool:read [tool]
-    │   │       input: {
-    │   │         "path": ".agents/e2e-flue-skill.md"
+    │   ├── tool:read [tool]
+    │   │   input: {
+    │   │     "path": ".agents/e2e-flue-skill.md"
+    │   │   }
+    │   │   output: {
+    │   │     "content": [
+    │   │       {
+    │   │         "text": "ENOENT: no such file or directory, open '<repo>/e2e/scenarios/flue-instrumentation/.agents/e2e-flue-skill.md'",
+    │   │         "type": "text"
     │   │       }
-    │   │       output: {
-    │   │         "content": [
-    │   │           {
-    │   │             "text": "ENOENT: no such file or directory, open '<repo>/e2e/scenarios/flue-instrumentation/.agents/e2e-flue-skill.md'",
-    │   │             "type": "text"
-    │   │           }
-    │   │         ],
-    │   │         "details": {}
-    │   │       }
-    │   │       metadata: {
-    │   │         "flue.session": "skill",
-    │   │         "flue.tool_name": "read",
-    │   │         "provider": "flue"
-    │   │       }
-    │   │       metrics: {
-    │   │         "duration_ms": 0
-    │   │       }
-    │   │       error: "{\"content\":[{\"type\":\"text\",\"text\":\"ENOENT: no such file or directory, open '<repo>/e2e/scenarios/flue-instrumentation/.agents/e2e-flue-skill.md'\"}],\"details\":{}}"
+    │   │     ],
+    │   │     "details": {}
+    │   │   }
+    │   │   metadata: {
+    │   │     "flue.session": "skill",
+    │   │     "flue.tool_name": "read",
+    │   │     "provider": "flue"
+    │   │   }
+    │   │   metrics: {
+    │   │     "duration_ms": 0
+    │   │   }
+    │   │   error: "{\"content\":[{\"type\":\"text\",\"text\":\"ENOENT: no such file or directory, open '<repo>/e2e/scenarios/flue-instrumentation/.agents/e2e-flue-skill.md'\"}],\"details\":{}}"
     │   ├── llm:claude-sonnet-4-5-20250929 [llm]
     │   │   input: [
     │   │     {
@@ -701,31 +723,31 @@ span_tree:
     │   │     "prompt_tokens": 7,
     │   │     "tokens": 2011
     │   │   }
-    │   │   └── tool:read [tool]
-    │   │       input: {
-    │   │         "path": ".agents"
+    │   ├── tool:read [tool]
+    │   │   input: {
+    │   │     "path": ".agents"
+    │   │   }
+    │   │   output: {
+    │   │     "content": [
+    │   │       {
+    │   │         "text": "skills",
+    │   │         "type": "text"
     │   │       }
-    │   │       output: {
-    │   │         "content": [
-    │   │           {
-    │   │             "text": "skills",
-    │   │             "type": "text"
-    │   │           }
-    │   │         ],
-    │   │         "details": {
-    │   │           "entries": 1,
-    │   │           "isDirectory": true,
-    │   │           "path": ".agents"
-    │   │         }
-    │   │       }
-    │   │       metadata: {
-    │   │         "flue.session": "skill",
-    │   │         "flue.tool_name": "read",
-    │   │         "provider": "flue"
-    │   │       }
-    │   │       metrics: {
-    │   │         "duration_ms": 0
-    │   │       }
+    │   │     ],
+    │   │     "details": {
+    │   │       "entries": 1,
+    │   │       "isDirectory": true,
+    │   │       "path": ".agents"
+    │   │     }
+    │   │   }
+    │   │   metadata: {
+    │   │     "flue.session": "skill",
+    │   │     "flue.tool_name": "read",
+    │   │     "provider": "flue"
+    │   │   }
+    │   │   metrics: {
+    │   │     "duration_ms": 0
+    │   │   }
     │   ├── llm:claude-sonnet-4-5-20250929 [llm]
     │   │   input: [
     │   │     {
@@ -824,31 +846,31 @@ span_tree:
     │   │     "prompt_tokens": 6,
     │   │     "tokens": 2078
     │   │   }
-    │   │   └── tool:read [tool]
-    │   │       input: {
-    │   │         "path": ".agents/skills"
+    │   ├── tool:read [tool]
+    │   │   input: {
+    │   │     "path": ".agents/skills"
+    │   │   }
+    │   │   output: {
+    │   │     "content": [
+    │   │       {
+    │   │         "text": "e2e-flue-skill",
+    │   │         "type": "text"
     │   │       }
-    │   │       output: {
-    │   │         "content": [
-    │   │           {
-    │   │             "text": "e2e-flue-skill",
-    │   │             "type": "text"
-    │   │           }
-    │   │         ],
-    │   │         "details": {
-    │   │           "entries": 1,
-    │   │           "isDirectory": true,
-    │   │           "path": ".agents/skills"
-    │   │         }
-    │   │       }
-    │   │       metadata: {
-    │   │         "flue.session": "skill",
-    │   │         "flue.tool_name": "read",
-    │   │         "provider": "flue"
-    │   │       }
-    │   │       metrics: {
-    │   │         "duration_ms": 0
-    │   │       }
+    │   │     ],
+    │   │     "details": {
+    │   │       "entries": 1,
+    │   │       "isDirectory": true,
+    │   │       "path": ".agents/skills"
+    │   │     }
+    │   │   }
+    │   │   metadata: {
+    │   │     "flue.session": "skill",
+    │   │     "flue.tool_name": "read",
+    │   │     "provider": "flue"
+    │   │   }
+    │   │   metrics: {
+    │   │     "duration_ms": 0
+    │   │   }
     │   ├── llm:claude-sonnet-4-5-20250929 [llm]
     │   │   input: [
     │   │     {
@@ -972,31 +994,31 @@ span_tree:
     │   │     "prompt_tokens": 6,
     │   │     "tokens": 2161
     │   │   }
-    │   │   └── tool:read [tool]
-    │   │       input: {
-    │   │         "path": ".agents/skills/e2e-flue-skill"
+    │   ├── tool:read [tool]
+    │   │   input: {
+    │   │     "path": ".agents/skills/e2e-flue-skill"
+    │   │   }
+    │   │   output: {
+    │   │     "content": [
+    │   │       {
+    │   │         "text": "SKILL.md",
+    │   │         "type": "text"
     │   │       }
-    │   │       output: {
-    │   │         "content": [
-    │   │           {
-    │   │             "text": "SKILL.md",
-    │   │             "type": "text"
-    │   │           }
-    │   │         ],
-    │   │         "details": {
-    │   │           "entries": 1,
-    │   │           "isDirectory": true,
-    │   │           "path": ".agents/skills/e2e-flue-skill"
-    │   │         }
-    │   │       }
-    │   │       metadata: {
-    │   │         "flue.session": "skill",
-    │   │         "flue.tool_name": "read",
-    │   │         "provider": "flue"
-    │   │       }
-    │   │       metrics: {
-    │   │         "duration_ms": 0
-    │   │       }
+    │   │     ],
+    │   │     "details": {
+    │   │       "entries": 1,
+    │   │       "isDirectory": true,
+    │   │       "path": ".agents/skills/e2e-flue-skill"
+    │   │     }
+    │   │   }
+    │   │   metadata: {
+    │   │     "flue.session": "skill",
+    │   │     "flue.tool_name": "read",
+    │   │     "provider": "flue"
+    │   │   }
+    │   │   metrics: {
+    │   │     "duration_ms": 0
+    │   │   }
     │   ├── llm:claude-sonnet-4-5-20250929 [llm]
     │   │   input: [
     │   │     {
@@ -1145,30 +1167,30 @@ span_tree:
     │   │     "prompt_tokens": 6,
     │   │     "tokens": 2245
     │   │   }
-    │   │   └── tool:read [tool]
-    │   │       input: {
-    │   │         "path": ".agents/skills/e2e-flue-skill/SKILL.md"
+    │   ├── tool:read [tool]
+    │   │   input: {
+    │   │     "path": ".agents/skills/e2e-flue-skill/SKILL.md"
+    │   │   }
+    │   │   output: {
+    │   │     "content": [
+    │   │       {
+    │   │         "text": "---\nname: e2e-flue-skill\ndescription: Deterministic skill used by the Braintrust Flue instrumentation e2e test.\n---\n\nReturn the marker from the provided args exactly once. Output no other text.\n",
+    │   │         "type": "text"
     │   │       }
-    │   │       output: {
-    │   │         "content": [
-    │   │           {
-    │   │             "text": "---\nname: e2e-flue-skill\ndescription: Deterministic skill used by the Braintrust Flue instrumentation e2e test.\n---\n\nReturn the marker from the provided args exactly once. Output no other text.\n",
-    │   │             "type": "text"
-    │   │           }
-    │   │         ],
-    │   │         "details": {
-    │   │           "lines": 7,
-    │   │           "path": ".agents/skills/e2e-flue-skill/SKILL.md"
-    │   │         }
-    │   │       }
-    │   │       metadata: {
-    │   │         "flue.session": "skill",
-    │   │         "flue.tool_name": "read",
-    │   │         "provider": "flue"
-    │   │       }
-    │   │       metrics: {
-    │   │         "duration_ms": 0
-    │   │       }
+    │   │     ],
+    │   │     "details": {
+    │   │       "lines": 7,
+    │   │       "path": ".agents/skills/e2e-flue-skill/SKILL.md"
+    │   │     }
+    │   │   }
+    │   │   metadata: {
+    │   │     "flue.session": "skill",
+    │   │     "flue.tool_name": "read",
+    │   │     "provider": "flue"
+    │   │   }
+    │   │   metrics: {
+    │   │     "duration_ms": 0
+    │   │   }
     │   └── llm:claude-sonnet-4-5-20250929 [llm]
     │       input: [
     │         {
@@ -1339,86 +1361,64 @@ span_tree:
     │         "tokens": 2320
     │       }
     ├── flue.task [task]
-    │   output: {
-    │     "model": {
-    │       "id": "<span:1>"
-    │     },
-    │     "text": "TASK_DONE",
-    │     "usage": {
-    │       "cacheRead": 0,
-    │       "cacheWrite": 0,
-    │       "cost": {
-    │         "cacheRead": 0,
-    │         "cacheWrite": 0,
-    │         "input": 0.00012059999999999999,
-    │         "output": 0.0000024,
-    │         "total": 0.00012299999999999998
-    │       },
-    │       "input": 804,
-    │       "output": 4,
-    │       "totalTokens": 808
-    │     }
-    │   }
+    │   input: "Reply with exactly TASK_DONE and no other text."
+    │   output: "TASK_DONE"
     │   metadata: {
-    │     "flue.operation": "task",
     │     "flue.session": "task",
     │     "provider": "flue"
     │   }
     │   metrics: {
     │     "duration_ms": 0
     │   }
-    │   └── flue.task [task]
-    │       input: "Reply with exactly TASK_DONE and no other text."
-    │       output: "TASK_DONE"
+    │   └── llm:gpt-4o-mini [llm]
+    │       input: [
+    │         {
+    │           "content": [
+    │             {
+    │               "text": "Reply with exactly TASK_DONE and no other text.",
+    │               "type": "text"
+    │             }
+    │           ],
+    │           "role": "user"
+    │         }
+    │       ]
+    │       output: {
+    │         "content": [
+    │           {
+    │             "text": "TASK_DONE",
+    │             "textSignature": "{\"v\":1,\"id\":\"msg_09b32b2821e9a4d8016a184600019081929d34bb7d4c6a246f\"}",
+    │             "type": "text"
+    │           }
+    │         ],
+    │         "role": "assistant"
+    │       }
     │       metadata: {
-    │         "flue.session": "task",
-    │         "provider": "flue"
+    │         "flue.api": "openai-responses",
+    │         "flue.model": "gpt-4o-mini",
+    │         "flue.provider": "openai",
+    │         "flue.session": "task:task:<uuid:1>",
+    │         "flue.stop_reason": "stop",
+    │         "flue.turn_purpose": "agent",
+    │         "model": "gpt-4o-mini",
+    │         "provider": "openai"
     │       }
     │       metrics: {
-    │         "duration_ms": 0
+    │         "completion_tokens": 4,
+    │         "duration_ms": 0,
+    │         "estimated_cost": 0.00012299999999999998,
+    │         "prompt_cache_creation_tokens": 0,
+    │         "prompt_cached_tokens": 0,
+    │         "prompt_tokens": 804,
+    │         "tokens": 808
     │       }
-    │       └── llm:gpt-4o-mini [llm]
-    │           input: [
-    │             {
-    │               "content": [
-    │                 {
-    │                   "text": "Reply with exactly TASK_DONE and no other text.",
-    │                   "type": "text"
-    │                 }
-    │               ],
-    │               "role": "user"
-    │             }
-    │           ]
-    │           output: {
-    │             "content": [
-    │               {
-    │                 "text": "TASK_DONE",
-    │                 "textSignature": "{\"v\":1,\"id\":\"msg_09b32b2821e9a4d8016a184600019081929d34bb7d4c6a246f\"}",
-    │                 "type": "text"
-    │               }
-    │             ],
-    │             "role": "assistant"
-    │           }
-    │           metadata: {
-    │             "flue.api": "openai-responses",
-    │             "flue.model": "gpt-4o-mini",
-    │             "flue.provider": "openai",
-    │             "flue.session": "task:task:<uuid:1>",
-    │             "flue.stop_reason": "stop",
-    │             "flue.turn_purpose": "agent",
-    │             "model": "gpt-4o-mini",
-    │             "provider": "openai"
-    │           }
-    │           metrics: {
-    │             "completion_tokens": 4,
-    │             "duration_ms": 0,
-    │             "estimated_cost": 0.00012299999999999998,
-    │             "prompt_cache_creation_tokens": 0,
-    │             "prompt_cached_tokens": 0,
-    │             "prompt_tokens": 804,
-    │             "tokens": 808
-    │           }
     └── flue.compact [task]
+        input: {
+          "estimatedTokens": 2950,
+          "reason": "manual"
+        }
+        output: {
+          "completed": true
+        }
         metadata: {
           "flue.operation": "compact",
           "flue.session": "main",
