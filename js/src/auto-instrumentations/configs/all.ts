@@ -46,7 +46,6 @@ const defaultInstrumentationConfigGroups: readonly InstrumentationConfigGroup[] 
       configs: claudeAgentSDKConfigs,
     },
     { integrations: ["cursor", "cursorSDK"], configs: cursorSDKConfigs },
-    { integrations: ["flue"], configs: flueConfigs },
     {
       integrations: ["openAIAgents"],
       configs: openAIAgentsCoreConfigs,
@@ -76,6 +75,10 @@ const defaultInstrumentationConfigGroups: readonly InstrumentationConfigGroup[] 
     {
       integrations: ["gitHubCopilot"],
       configs: gitHubCopilotConfigs,
+    },
+    {
+      integrations: ["flue"],
+      configs: flueConfigs,
     },
     // Note: `@mastra/core` is not listed here because its instrumentation
     // doesn't go through the AST `code-transformer` matcher — Mastra's

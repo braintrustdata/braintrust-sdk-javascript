@@ -1,38 +1,30 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const {
-  mockContextManager,
-  mockCurrentParentSpan,
-  mockCurrentSpanStore,
-  mockStartSpan,
-} = vi.hoisted(() => ({
-  mockContextManager: {
-    wrapSpanForStore: vi.fn((span: unknown) => span),
-    [Symbol.for("braintrust.currentSpanStore")]: undefined as unknown,
-  },
+const { mockCurrentParentSpan, mockFlush, mockStartSpan } = vi.hoisted(() => ({
   mockCurrentParentSpan: { current: undefined as any },
-  mockCurrentSpanStore: {
-    enterWith: vi.fn(),
-    getStore: vi.fn(),
-    run: vi.fn(),
-  },
+  mockFlush: vi.fn(),
   mockStartSpan: vi.fn(),
 }));
 
-mockContextManager[Symbol.for("braintrust.currentSpanStore")] =
-  mockCurrentSpanStore;
+const { mockChannelHandlers, mockNewTracingChannel, mockTracingChannel } =
+  vi.hoisted(() => {
+    const handlers = new Set<any>();
+    const tracingChannel = {
+      subscribe: vi.fn((handler: any) => {
+        handlers.add(handler);
+      }),
+      unsubscribe: vi.fn((handler: any) => handlers.delete(handler)),
+    };
 
-vi.mock("../../isomorph", () => ({
-  default: {
-    newTracingChannel: vi.fn(),
-  },
-}));
+    return {
+      mockChannelHandlers: handlers,
+      mockNewTracingChannel: vi.fn(() => tracingChannel),
+      mockTracingChannel: tracingChannel,
+    };
+  });
 
 vi.mock("../../logger", () => ({
-  BRAINTRUST_CURRENT_SPAN_STORE: Symbol.for("braintrust.currentSpanStore"),
-  _internalGetGlobalState: () => ({
-    contextManager: mockContextManager,
-  }),
+  flush: (...args: unknown[]) => mockFlush(...args),
   startSpan: (...args: unknown[]) => mockStartSpan(...args),
   withCurrent: (span: unknown, callback: () => unknown) => {
     const previous = mockCurrentParentSpan.current;
@@ -45,17 +37,20 @@ vi.mock("../../logger", () => ({
   },
 }));
 
-import iso from "../../isomorph";
-import { FluePlugin } from "./flue-plugin";
+vi.mock("../../isomorph", () => ({
+  default: {
+    newTracingChannel: mockNewTracingChannel,
+  },
+}));
 
-const mockNewTracingChannel = iso.newTracingChannel as ReturnType<typeof vi.fn>;
+import { FluePlugin, braintrustFlueObserver } from "./flue-plugin";
 
-describe("FluePlugin", () => {
-  let boundStoreTransformsByName: Map<string, (event: any) => unknown>;
-  let handlersByName: Map<string, any>;
+type Subscriber = typeof braintrustFlueObserver;
+
+describe("Flue observe instrumentation", () => {
   let spans: Array<{
+    args: any;
     end: ReturnType<typeof vi.fn>;
-    export: ReturnType<typeof vi.fn>;
     log: ReturnType<typeof vi.fn>;
     name?: string;
     rootSpanId: string;
@@ -64,27 +59,12 @@ describe("FluePlugin", () => {
   }>;
 
   beforeEach(() => {
-    boundStoreTransformsByName = new Map();
-    handlersByName = new Map();
     spans = [];
     mockCurrentParentSpan.current = undefined;
-    mockContextManager.wrapSpanForStore.mockClear();
-    mockNewTracingChannel.mockImplementation((name: string) => ({
-      start: {
-        bindStore: vi.fn((_store, transform) => {
-          boundStoreTransformsByName.set(name, transform);
-        }),
-        publish: vi.fn(),
-        unbindStore: vi.fn(),
-      },
-      subscribe: vi.fn((handlers) => handlersByName.set(name, handlers)),
-      tracePromise: vi.fn((fn) => fn()),
-      traceSync: vi.fn((fn) => fn()),
-      unsubscribe: vi.fn(),
-    }));
-    mockStartSpan.mockImplementation((args: any) => {
-      const spanId = `span-${spans.length}`;
+    mockFlush.mockResolvedValue(undefined);
+    mockStartSpan.mockImplementation((args: any = {}) => {
       const parentSpan = mockCurrentParentSpan.current;
+      const spanId = `span-${spans.length}`;
       const rootSpanId =
         args.parentSpanIds?.rootSpanId ?? parentSpan?.rootSpanId ?? spanId;
       const spanParents = args.parentSpanIds?.spanId
@@ -93,8 +73,8 @@ describe("FluePlugin", () => {
           ? [parentSpan.spanId]
           : [];
       const span = {
+        args,
         end: vi.fn(),
-        export: vi.fn(async () => `${args.name}-export-${spans.length}`),
         log: vi.fn(),
         name: args.name,
         rootSpanId,
@@ -107,353 +87,230 @@ describe("FluePlugin", () => {
   });
 
   afterEach(() => {
+    delete (globalThis as Record<symbol, unknown>)[
+      Symbol.for("braintrust.flue.auto-state")
+    ];
+    delete (globalThis as Record<symbol, unknown>)[
+      Symbol.for("braintrust.flue.observe-bridge")
+    ];
+    mockChannelHandlers.clear();
     vi.clearAllMocks();
   });
 
-  it("subscribes to Flue channels", () => {
-    const plugin = new FluePlugin();
+  it("exports a subscriber that can be passed directly to Flue observe", () => {
+    const subscribers: Subscriber[] = [];
+    const unsubscribe = vi.fn();
+    const observe = vi.fn((subscriber: Subscriber) => {
+      subscribers.push(subscriber);
+      return unsubscribe;
+    });
 
-    plugin.enable();
+    const unregister = observe(braintrustFlueObserver);
 
-    expect(
-      handlersByName.has("orchestrion:@flue/runtime:createFlueContext"),
-    ).toBe(true);
-    expect(
-      handlersByName.has("orchestrion:@flue/runtime:Harness.openSession"),
-    ).toBe(true);
-    expect(handlersByName.has("orchestrion:@flue/runtime:context.event")).toBe(
-      true,
-    );
-    expect(handlersByName.has("orchestrion:@flue/runtime:session.prompt")).toBe(
-      true,
-    );
-    expect(handlersByName.has("orchestrion:@flue/runtime:session.skill")).toBe(
-      true,
-    );
-    expect(handlersByName.has("orchestrion:@flue/runtime:session.task")).toBe(
-      true,
-    );
-    expect(
-      handlersByName.has("orchestrion:@flue/runtime:session.compact"),
-    ).toBe(true);
+    expect(observe).toHaveBeenCalledTimes(1);
+    expect(observe).toHaveBeenCalledWith(braintrustFlueObserver);
+    expect(subscribers).toHaveLength(1);
+
+    subscribers[0]?.({
+      runId: "run-1",
+      type: "run_start",
+      workflowName: "research",
+    });
+    expect(findSpan("workflow:research")).toBeDefined();
+
+    unregister();
+    expect(unsubscribe).toHaveBeenCalledTimes(1);
   });
 
-  it("binds operation spans into the traced execution context", () => {
-    const plugin = new FluePlugin();
-    plugin.enable();
+  it("maps Flue 0.8 observe events into semantic Braintrust spans", () => {
+    const emit = observeEvents();
+    const usage = flueUsage();
+    const startedAt = "2026-05-27T05:12:31.000Z";
 
-    const promptEvent = {
-      arguments: ["Use a tool", { model: "pi/test" }],
-      operation: "prompt",
-      session: { name: "main" },
-    };
-    const bindTransform = boundStoreTransformsByName.get(
-      "orchestrion:@flue/runtime:session.prompt",
+    emit(
+      {
+        instanceId: "instance-1",
+        owner: { kind: "workflow", workflowName: "research" },
+        payload: {
+          metadata: {
+            scenario: "flue-instrumentation",
+            testRunId: "e2e-run-1",
+          },
+          topic: "flue",
+        },
+        runId: "run-1",
+        startedAt,
+        timestamp: startedAt,
+        type: "run_start",
+        workflowName: "research",
+      },
+      { id: "ctx-1", runId: "run-1" },
     );
+    emit({
+      operationId: "op-1",
+      operationKind: "prompt",
+      runId: "run-1",
+      session: "main",
+      timestamp: "2026-05-27T05:12:32.000Z",
+      type: "operation_start",
+    });
+    emit({
+      api: "responses",
+      input: {
+        messages: [{ content: "Find Flue changes", role: "user" }],
+        systemPrompt: "Be precise",
+        tools: [{ name: "lookup", parameters: {} }],
+      },
+      model: "claude-test",
+      operationId: "op-1",
+      provider: "anthropic",
+      purpose: "agent",
+      reasoning: "medium",
+      runId: "run-1",
+      timestamp: "2026-05-27T05:12:33.000Z",
+      turnId: "turn-1",
+      type: "turn_request",
+    });
+    emit({
+      args: { query: "flue instrumentation" },
+      operationId: "op-1",
+      runId: "run-1",
+      timestamp: "2026-05-27T05:12:34.000Z",
+      toolCallId: "tool-1",
+      toolName: "lookup",
+      turnId: "turn-1",
+      type: "tool_start",
+    });
+    emit({
+      durationMs: 4,
+      isError: false,
+      operationId: "op-1",
+      result: { ok: true },
+      runId: "run-1",
+      timestamp: "2026-05-27T05:12:35.000Z",
+      toolCallId: "tool-1",
+      toolName: "lookup",
+      turnId: "turn-1",
+      type: "tool_call",
+    });
+    emit({
+      api: "responses",
+      durationMs: 12,
+      isError: false,
+      model: "claude-test",
+      operationId: "op-1",
+      output: { content: [{ text: "done", type: "text" }], role: "assistant" },
+      provider: "anthropic",
+      purpose: "agent",
+      runId: "run-1",
+      stopReason: "stop",
+      timestamp: "2026-05-27T05:12:36.000Z",
+      turnId: "turn-1",
+      type: "turn",
+      usage,
+    });
+    emit({
+      agent: "worker",
+      operationId: "op-1",
+      prompt: "Summarize the source",
+      runId: "run-1",
+      taskId: "task-1",
+      timestamp: "2026-05-27T05:12:37.000Z",
+      type: "task_start",
+    });
+    emit({
+      durationMs: 8,
+      isError: false,
+      result: "task done",
+      runId: "run-1",
+      taskId: "task-1",
+      timestamp: "2026-05-27T05:12:38.000Z",
+      type: "task",
+    });
+    emit({
+      estimatedTokens: 200,
+      operationId: "op-1",
+      reason: "manual",
+      runId: "run-1",
+      session: "main",
+      timestamp: "2026-05-27T05:12:39.000Z",
+      type: "compaction_start",
+    });
+    emit({
+      durationMs: 6,
+      messagesAfter: 2,
+      messagesBefore: 8,
+      operationId: "op-1",
+      runId: "run-1",
+      session: "main",
+      timestamp: "2026-05-27T05:12:40.000Z",
+      type: "compaction",
+      usage,
+    });
+    emit({
+      durationMs: 50,
+      isError: false,
+      operationId: "op-1",
+      operationKind: "prompt",
+      result: "operation done",
+      runId: "run-1",
+      timestamp: "2026-05-27T05:12:41.000Z",
+      type: "operation",
+      usage,
+    });
+    emit({
+      durationMs: 60,
+      isError: false,
+      result: { final: true },
+      runId: "run-1",
+      timestamp: "2026-05-27T05:12:42.000Z",
+      type: "run_end",
+    });
 
-    const storeValue = bindTransform?.(promptEvent);
-    handlersByName
-      .get("orchestrion:@flue/runtime:session.prompt")
-      .start(promptEvent);
+    const workflowSpan = findSpan("workflow:research");
+    const operationSpan = findSpan("flue.prompt");
+    const turnSpan = findSpan("llm:claude-test");
+    const toolSpan = findSpan("tool:lookup");
+    const taskSpan = findSpan("task:worker");
+    const compactionSpan = findSpan("compaction:manual");
 
-    const operationSpans = spans.filter(
-      (span) => span.name === "flue.session.prompt",
-    );
-    expect(operationSpans).toHaveLength(1);
-    expect(mockContextManager.wrapSpanForStore).toHaveBeenCalledWith(
-      operationSpans[0],
-    );
-    expect(storeValue).toBe(operationSpans[0]);
-  });
-
-  it("patches contexts and sessions returned by auto-instrumented entrypoints", async () => {
-    const plugin = new FluePlugin();
-    plugin.enable();
-
-    const session = makeSession();
-    const harness = { session: vi.fn(async () => session) };
-    const ctx = {
-      init: vi.fn(async () => harness),
-      subscribeEvent: vi.fn(() => vi.fn()),
-    };
-    handlersByName
-      .get("orchestrion:@flue/runtime:createFlueContext")
-      .end({ arguments: [{}], result: ctx });
-
-    await ctx.init({ model: "pi/test" });
-    const wrappedSession = await harness.session();
-    await wrappedSession.prompt("hello");
-
-    expect(ctx.subscribeEvent).toHaveBeenCalledTimes(1);
-    await expect(wrappedSession.prompt("hello again")).resolves.toEqual({
-      text: "ok",
-    });
-  });
-
-  it("does not create Flue turn spans when context events disable them", () => {
-    const plugin = new FluePlugin();
-    plugin.enable();
-
-    const contextHandlers = handlersByName.get(
-      "orchestrion:@flue/runtime:context.event",
-    );
-    const promptHandlers = handlersByName.get(
-      "orchestrion:@flue/runtime:session.prompt",
-    );
-    const promptEvent = {
-      arguments: ["Use a tool", { model: "pi/test" }],
-      operation: "prompt",
-      session: { name: "main" },
-    };
-
-    promptHandlers.start(promptEvent);
-    contextHandlers.start({
-      arguments: [
-        {
-          operationId: "op_1",
-          operationKind: "prompt",
-          session: "main",
-          type: "operation_start",
+    expect(workflowSpan?.args).toMatchObject({
+      event: {
+        input: {
+          metadata: {
+            scenario: "flue-instrumentation",
+            testRunId: "e2e-run-1",
+          },
+          topic: "flue",
         },
-      ],
-      captureTurnSpans: false,
-    });
-    contextHandlers.start({
-      arguments: [{ operationId: "op_1", text: "Looking", type: "text_delta" }],
-      captureTurnSpans: false,
-    });
-    contextHandlers.start({
-      arguments: [
-        {
-          args: { query: "braintrust" },
-          operationId: "op_1",
-          toolCallId: "tool_1",
-          toolName: "lookup",
-          type: "tool_start",
-        },
-      ],
-      captureTurnSpans: false,
-    });
-    contextHandlers.start({
-      arguments: [
-        {
-          durationMs: 10,
-          isError: false,
-          model: "pi/test",
-          operationId: "op_1",
-          stopReason: "stop",
-          type: "turn",
-          usage: usage(),
-        },
-      ],
-      captureTurnSpans: false,
-    });
-
-    expect(spans.filter((span) => span.name === "flue.turn")).toHaveLength(0);
-    expect(spans.find((span) => span.name === "tool: lookup")).toBeDefined();
-  });
-
-  it("correlates operation, turn, tool, task, and compaction spans", () => {
-    const plugin = new FluePlugin();
-    plugin.enable();
-
-    const contextHandlers = handlersByName.get(
-      "orchestrion:@flue/runtime:context.event",
-    );
-    const promptHandlers = handlersByName.get(
-      "orchestrion:@flue/runtime:session.prompt",
-    );
-    const promptEvent = {
-      arguments: [
-        "Use a tool and delegate work",
-        { model: "pi/test", tools: [{ name: "lookup", parameters: {} }] },
-      ],
-      operation: "prompt",
-      session: { name: "main" },
-    };
-
-    promptHandlers.start(promptEvent);
-    contextHandlers.start({
-      arguments: [
-        {
-          eventIndex: 1,
-          operationId: "op_1",
-          operationKind: "prompt",
-          session: "main",
-          type: "operation_start",
-        },
-      ],
-    });
-    contextHandlers.start({
-      arguments: [{ operationId: "op_1", text: "Looking", type: "text_delta" }],
-    });
-    contextHandlers.start({
-      arguments: [{ operationId: "op_1", type: "thinking_start" }],
-    });
-    contextHandlers.start({
-      arguments: [
-        { delta: "Think it ", operationId: "op_1", type: "thinking_delta" },
-      ],
-    });
-    contextHandlers.start({
-      arguments: [
-        {
-          content: "Think it through.",
-          operationId: "op_1",
-          type: "thinking_end",
-        },
-      ],
-    });
-    contextHandlers.start({
-      arguments: [
-        {
-          args: { query: "braintrust" },
-          operationId: "op_1",
-          toolCallId: "tool_1",
-          toolName: "lookup",
-          type: "tool_start",
-        },
-      ],
-    });
-    contextHandlers.start({
-      arguments: [
-        {
-          durationMs: 3,
-          isError: false,
-          operationId: "op_1",
-          result: "lookup ok",
-          toolCallId: "tool_1",
-          toolName: "lookup",
-          type: "tool_call",
-        },
-      ],
-    });
-    contextHandlers.start({
-      arguments: [
-        {
-          durationMs: 10,
-          isError: false,
-          model: "pi/test",
-          operationId: "op_1",
-          stopReason: "stop",
-          type: "turn",
-          usage: usage(),
-        },
-      ],
-    });
-    contextHandlers.start({
-      arguments: [
-        {
-          operationId: "op_1",
-          parentSession: "main",
-          prompt: "child prompt",
-          taskId: "task_1",
-          type: "task_start",
-        },
-      ],
-    });
-    contextHandlers.start({
-      arguments: [
-        {
-          taskId: "task_1",
-          text: "child done",
-          type: "text_delta",
-        },
-      ],
-    });
-    contextHandlers.start({
-      arguments: [
-        {
-          durationMs: 8,
-          isError: false,
-          model: "pi/test",
-          stopReason: "stop",
-          taskId: "task_1",
-          type: "turn",
-          usage: usage(),
-        },
-      ],
-    });
-    contextHandlers.start({
-      arguments: [
-        {
-          durationMs: 20,
-          isError: false,
-          result: "task ok",
-          taskId: "task_1",
-          type: "task",
-        },
-      ],
-    });
-    contextHandlers.start({
-      arguments: [
-        {
-          estimatedTokens: 100,
-          operationId: "op_1",
-          reason: "manual",
-          type: "compaction_start",
-        },
-      ],
-    });
-    contextHandlers.start({
-      arguments: [
-        {
-          durationMs: 4,
-          messagesAfter: 2,
-          messagesBefore: 8,
-          operationId: "op_1",
-          type: "compaction",
-          usage: usage(),
-        },
-      ],
-    });
-    contextHandlers.start({
-      arguments: [
-        {
-          durationMs: 50,
-          isError: false,
-          operationId: "op_1",
-          operationKind: "prompt",
-          type: "operation",
-          usage: usage(),
-        },
-      ],
-    });
-    (promptEvent as any).result = {
-      model: { id: "pi/test" },
-      text: "done",
-      usage: usage(),
-    };
-    promptHandlers.asyncEnd(promptEvent);
-
-    const operationSpan = spans.find(
-      (span) => span.name === "flue.session.prompt",
-    );
-    const turnSpan = spans.find((span) => span.name === "flue.turn");
-    const toolSpan = spans.find((span) => span.name === "tool: lookup");
-    const taskSpan = spans.find((span) => span.name === "flue.task");
-    const childTurnSpan = spans.filter((span) => span.name === "flue.turn")[1];
-    const compactionSpan = spans.find(
-      (span) => span.name === "flue.compaction",
-    );
-
-    expect(operationSpan?.log).toHaveBeenCalledWith(
-      expect.objectContaining({
-        input: "Use a tool and delegate work",
-        metadata: expect.objectContaining({
-          "flue.operation": "prompt",
-          "flue.tools_count": 1,
+        metadata: {
+          "flue.context_id": "ctx-1",
+          "flue.workflow_name": "research",
           provider: "flue",
-        }),
-      }),
-    );
+          scenario: "flue-instrumentation",
+          testRunId: "e2e-run-1",
+        },
+      },
+      startTime: Date.parse(startedAt) / 1000,
+    });
+    expect(operationSpan?.spanParents).toEqual([workflowSpan?.spanId]);
     expect(turnSpan?.spanParents).toEqual([operationSpan?.spanId]);
     expect(toolSpan?.spanParents).toEqual([operationSpan?.spanId]);
-    expect(toolSpan?.spanParents).toEqual(turnSpan?.spanParents);
-    expect(toolSpan?.spanParents).not.toContain(turnSpan?.spanId);
     expect(taskSpan?.spanParents).toEqual([operationSpan?.spanId]);
-    expect(childTurnSpan?.spanParents).toEqual([taskSpan?.spanId]);
     expect(compactionSpan?.spanParents).toEqual([operationSpan?.spanId]);
+    expect(turnSpan?.args.event).toMatchObject({
+      input: [{ content: "Find Flue changes", role: "user" }],
+      metadata: {
+        "flue.api": "responses",
+        "flue.model": "claude-test",
+        "flue.provider": "anthropic",
+        "flue.system_prompt": "Be precise",
+        "flue.turn_purpose": "agent",
+        provider: "anthropic",
+        reasoning: "medium",
+        tools: [{ name: "lookup", parameters: {} }],
+      },
+    });
     expect(turnSpan?.log).toHaveBeenCalledWith(
       expect.objectContaining({
         metrics: expect.objectContaining({
@@ -464,281 +321,427 @@ describe("FluePlugin", () => {
           prompt_tokens: 3,
           tokens: 10,
         }),
-        output: [
-          expect.objectContaining({
-            message: expect.objectContaining({
-              content: "Looking",
-              reasoning: "Think it through.",
-              role: "assistant",
-              tool_calls: [
-                {
-                  function: {
-                    arguments: JSON.stringify({ query: "braintrust" }),
-                    name: "lookup",
-                  },
-                  id: "tool_1",
-                  type: "function",
-                },
-              ],
-            }),
-          }),
-        ],
+        output: {
+          content: [{ text: "done", type: "text" }],
+          role: "assistant",
+        },
       }),
     );
-    expect(operationSpan?.end).toHaveBeenCalledTimes(1);
+    expect(operationSpan?.log).toHaveBeenCalledWith(
+      expect.objectContaining({
+        input: [{ content: "Find Flue changes", role: "user" }],
+      }),
+    );
+    expect(operationSpan?.log).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: expect.objectContaining({
+          "flue.usage": usage,
+        }),
+        metrics: { duration_ms: 50 },
+        output: "operation done",
+      }),
+    );
+    expect(operationSpan?.log).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        metrics: expect.objectContaining({ prompt_tokens: 3 }),
+      }),
+    );
+    expect(workflowSpan?.end).toHaveBeenCalledWith({
+      endTime: Date.parse("2026-05-27T05:12:42.000Z") / 1000,
+    });
+    expect(mockFlush).toHaveBeenCalledTimes(1);
   });
 
-  it("parents synthetic tool spans as siblings of active turn spans", () => {
-    const plugin = new FluePlugin();
-    plugin.enable();
+  it("flushes without awaiting when a run ends", () => {
+    const emit = observeEvents();
+    const pendingFlush = new Promise<void>(() => {});
+    mockFlush.mockReturnValueOnce(pendingFlush);
 
-    const contextHandlers = handlersByName.get(
-      "orchestrion:@flue/runtime:context.event",
-    );
-    const promptHandlers = handlersByName.get(
-      "orchestrion:@flue/runtime:session.prompt",
-    );
-    const promptEvent = {
-      arguments: ["Use a tool", { model: "pi/test" }],
-      operation: "prompt",
-      session: { name: "main" },
-    };
-
-    promptHandlers.start(promptEvent);
-    contextHandlers.start({
-      arguments: [
-        {
-          operationId: "op_1",
-          operationKind: "prompt",
-          session: "main",
-          type: "operation_start",
-        },
-      ],
+    emit({
+      runId: "run-1",
+      type: "run_start",
+      workflowName: "research",
     });
-    contextHandlers.start({
-      arguments: [
-        { operationId: "op_1", text: "Using a tool", type: "text_delta" },
-      ],
-    });
-    contextHandlers.start({
-      arguments: [
-        {
-          durationMs: 2,
-          isError: false,
-          operationId: "op_1",
-          result: "lookup ok",
-          toolCallId: "tool_1",
-          toolName: "lookup",
-          type: "tool_call",
-        },
-      ],
-    });
-    contextHandlers.start({
-      arguments: [
-        {
-          durationMs: 10,
-          isError: false,
-          model: "pi/test",
-          operationId: "op_1",
-          stopReason: "toolUse",
-          type: "turn",
-          usage: usage(),
-        },
-      ],
+    emit({
+      durationMs: 1,
+      isError: false,
+      runId: "run-1",
+      timestamp: "2026-05-27T05:12:42.000Z",
+      type: "run_end",
     });
 
-    const operationSpan = spans.find(
-      (span) => span.name === "flue.session.prompt",
-    );
-    const turnSpan = spans.find((span) => span.name === "flue.turn");
-    const toolSpan = spans.find((span) => span.name === "tool: lookup");
-
-    expect(turnSpan?.spanParents).toEqual([operationSpan?.spanId]);
-    expect(toolSpan?.spanParents).toEqual([operationSpan?.spanId]);
-    expect(toolSpan?.spanParents).toEqual(turnSpan?.spanParents);
-    expect(toolSpan?.spanParents).not.toContain(turnSpan?.spanId);
+    expect(mockFlush).toHaveBeenCalledTimes(1);
+    expect(findSpan("workflow:research")?.end).toHaveBeenCalledTimes(1);
   });
 
-  it("records tool calls when tool_start is the first turn event", () => {
-    const plugin = new FluePlugin();
-    plugin.enable();
+  it("uses prompt and skill operation text as pending LLM output", () => {
+    const emit = observeEvents();
+    const usage = flueUsage();
 
-    const contextHandlers = handlersByName.get(
-      "orchestrion:@flue/runtime:context.event",
+    emit({
+      runId: "run-1",
+      type: "run_start",
+      workflowName: "research",
+    });
+    emit({
+      operationId: "op-1",
+      operationKind: "prompt",
+      runId: "run-1",
+      type: "operation_start",
+    });
+    emit({
+      input: {
+        messages: [{ content: "finish", role: "user" }],
+      },
+      model: "claude-test",
+      operationId: "op-1",
+      provider: "anthropic",
+      purpose: "agent",
+      runId: "run-1",
+      turnId: "turn-1",
+      type: "turn_request",
+    });
+    emit({
+      args: { path: ".agents" },
+      operationId: "op-1",
+      runId: "run-1",
+      toolCallId: "tool-1",
+      toolName: "read",
+      turnId: "turn-1",
+      type: "tool_start",
+    });
+    emit({
+      durationMs: 50,
+      isError: false,
+      operationId: "op-1",
+      operationKind: "prompt",
+      result: { model: { id: "claude-test" }, text: "PROMPT_DONE", usage },
+      runId: "run-1",
+      timestamp: "2026-05-27T05:12:41.000Z",
+      type: "operation",
+      usage,
+    });
+
+    const operationSpan = findSpan("flue.prompt");
+    const turnSpan = findSpan("llm:claude-test");
+    const toolSpan = findSpan("tool:read");
+
+    expect(operationSpan?.log).toHaveBeenCalledWith(
+      expect.objectContaining({ output: "PROMPT_DONE" }),
     );
-    const promptHandlers = handlersByName.get(
-      "orchestrion:@flue/runtime:session.prompt",
-    );
-    const promptEvent = {
-      arguments: ["Use a tool", { model: "pi/test" }],
-      operation: "prompt",
-      session: { name: "main" },
-    };
-
-    promptHandlers.start(promptEvent);
-    contextHandlers.start({
-      arguments: [
-        {
-          operationId: "op_1",
-          operationKind: "prompt",
-          session: "main",
-          type: "operation_start",
-        },
-      ],
-    });
-    contextHandlers.start({
-      arguments: [
-        {
-          args: { query: "braintrust" },
-          operationId: "op_1",
-          toolCallId: "tool_1",
-          toolName: "lookup",
-          type: "tool_start",
-        },
-      ],
-    });
-    contextHandlers.start({
-      arguments: [
-        {
-          durationMs: 2,
-          isError: false,
-          operationId: "op_1",
-          result: "lookup ok",
-          toolCallId: "tool_1",
-          toolName: "lookup",
-          type: "tool_call",
-        },
-      ],
-    });
-    contextHandlers.start({
-      arguments: [
-        {
-          durationMs: 10,
-          isError: false,
-          model: "pi/test",
-          operationId: "op_1",
-          stopReason: "toolUse",
-          type: "turn",
-          usage: usage(),
-        },
-      ],
-    });
-
-    const operationSpan = spans.find(
-      (span) => span.name === "flue.session.prompt",
-    );
-    const turnSpan = spans.find((span) => span.name === "flue.turn");
-    const toolSpan = spans.find((span) => span.name === "tool: lookup");
-
-    expect(turnSpan?.spanParents).toEqual([operationSpan?.spanId]);
-    expect(toolSpan?.spanParents).toEqual([operationSpan?.spanId]);
-    expect(toolSpan?.spanParents).not.toContain(turnSpan?.spanId);
     expect(turnSpan?.log).toHaveBeenCalledWith(
       expect.objectContaining({
-        output: [
-          expect.objectContaining({
-            message: expect.objectContaining({
-              content: "",
-              role: "assistant",
-              tool_calls: [
-                {
-                  function: {
-                    arguments: JSON.stringify({ query: "braintrust" }),
-                    name: "lookup",
-                  },
-                  id: "tool_1",
-                  type: "function",
-                },
-              ],
-            }),
-          }),
-        ],
+        metrics: expect.objectContaining({
+          completion_tokens: 4,
+          prompt_tokens: 3,
+          tokens: 10,
+        }),
+        output: "PROMPT_DONE",
+      }),
+    );
+    expect(turnSpan?.end).toHaveBeenCalledWith({
+      endTime: Date.parse("2026-05-27T05:12:41.000Z") / 1000,
+    });
+    expect(toolSpan?.end).toHaveBeenCalledWith({
+      endTime: Date.parse("2026-05-27T05:12:41.000Z") / 1000,
+    });
+  });
+
+  it("closes unfinished operation children when a run ends", () => {
+    const emit = observeEvents();
+
+    emit({
+      runId: "run-1",
+      type: "run_start",
+      workflowName: "research",
+    });
+    emit({
+      operationId: "op-compact",
+      operationKind: "compact",
+      runId: "run-1",
+      session: "main",
+      type: "operation_start",
+    });
+    emit({
+      estimatedTokens: 200,
+      operationId: "op-compact",
+      reason: "manual",
+      runId: "run-1",
+      session: "main",
+      type: "compaction_start",
+    });
+    emit({
+      input: {
+        messages: [{ content: "summarize", role: "user" }],
+      },
+      model: "gpt-test",
+      operationId: "op-compact",
+      provider: "openai",
+      purpose: "compaction_prefix",
+      runId: "run-1",
+      session: "main",
+      turnId: "turn-compact",
+      type: "turn_request",
+    });
+    emit({
+      durationMs: 60,
+      isError: false,
+      result: { status: "done" },
+      runId: "run-1",
+      timestamp: "2026-05-27T05:12:42.000Z",
+      type: "run_end",
+    });
+
+    const operationSpan = findSpan("flue.compact");
+    const compactionSpan = findSpan("compaction:manual");
+    const turnSpan = findSpan("llm:gpt-test");
+
+    expect(turnSpan?.end).toHaveBeenCalledWith({
+      endTime: Date.parse("2026-05-27T05:12:42.000Z") / 1000,
+    });
+    expect(compactionSpan?.log).toHaveBeenCalledWith(
+      expect.objectContaining({ output: { completed: true } }),
+    );
+    expect(compactionSpan?.end).toHaveBeenCalledWith({
+      endTime: Date.parse("2026-05-27T05:12:42.000Z") / 1000,
+    });
+    expect(operationSpan?.log).toHaveBeenCalledWith(
+      expect.objectContaining({ output: { completed: true } }),
+    );
+    expect(operationSpan?.end).toHaveBeenCalledWith({
+      endTime: Date.parse("2026-05-27T05:12:42.000Z") / 1000,
+    });
+  });
+
+  it("creates a root operation span for direct or dispatched agent events", () => {
+    const emit = observeEvents();
+
+    emit({
+      dispatchId: "dispatch-1",
+      instanceId: "instance-1",
+      operationId: "op-1",
+      operationKind: "prompt",
+      session: "main",
+      type: "operation_start",
+    });
+
+    const operationSpan = findSpan("flue.prompt");
+    expect(operationSpan?.spanParents).toEqual([]);
+    expect(operationSpan?.args.event.metadata).toMatchObject({
+      "flue.dispatch_id": "dispatch-1",
+      "flue.instance_id": "instance-1",
+      "flue.operation": "prompt",
+      "flue.session": "main",
+      provider: "flue",
+    });
+  });
+
+  it("uses task lifecycle spans instead of adding a task operation wrapper", () => {
+    const emit = observeEvents();
+
+    emit({
+      runId: "run-1",
+      type: "run_start",
+      workflowName: "research",
+    });
+    emit({
+      operationId: "op-task",
+      operationKind: "task",
+      runId: "run-1",
+      session: "task",
+      type: "operation_start",
+    });
+    emit({
+      operationId: "op-task",
+      prompt: "Reply with TASK_DONE",
+      runId: "run-1",
+      taskId: "task-1",
+      type: "task_start",
+    });
+    emit({
+      durationMs: 5,
+      isError: false,
+      operationId: "op-task",
+      result: "TASK_DONE",
+      runId: "run-1",
+      taskId: "task-1",
+      type: "task",
+    });
+    emit({
+      durationMs: 6,
+      isError: false,
+      operationId: "op-task",
+      operationKind: "task",
+      result: { text: "TASK_DONE" },
+      runId: "run-1",
+      type: "operation",
+    });
+
+    const workflowSpan = findSpan("workflow:research");
+    const taskSpans = spans.filter((span) => span.name === "flue.task");
+
+    expect(taskSpans).toHaveLength(1);
+    expect(taskSpans[0]?.spanParents).toEqual([workflowSpan?.spanId]);
+    expect(taskSpans[0]?.args.event.input).toBe("Reply with TASK_DONE");
+    expect(taskSpans[0]?.log).toHaveBeenCalledWith(
+      expect.objectContaining({
+        output: "TASK_DONE",
       }),
     );
   });
 
-  it("ends compaction spans from operation completion when no final compaction event arrives", () => {
-    const plugin = new FluePlugin();
-    plugin.enable();
+  it("contains observer failures so Flue calls are not affected", () => {
+    const emit = observeEvents();
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    mockStartSpan.mockImplementationOnce(() => {
+      throw new Error("start failed");
+    });
 
-    const contextHandlers = handlersByName.get(
-      "orchestrion:@flue/runtime:context.event",
+    expect(() =>
+      emit({
+        runId: "run-1",
+        type: "run_start",
+        workflowName: "broken",
+      }),
+    ).not.toThrow();
+    expect(errorSpy).toHaveBeenCalledWith(
+      "Error in Flue observe instrumentation:",
+      expect.any(Error),
     );
-    const promptHandlers = handlersByName.get(
-      "orchestrion:@flue/runtime:session.prompt",
-    );
-    const promptEvent = {
-      arguments: ["Trigger a compaction"],
-      operation: "prompt",
-      session: { name: "main" },
+  });
+
+  it("subscribes transformed Flue contexts for auto instrumentation", () => {
+    const plugin = new FluePlugin();
+    const contextSubscribers: Array<(event: unknown) => unknown> = [];
+    const unsubscribeContext = vi.fn();
+    const context = {
+      id: "ctx-1",
+      runId: "run-1",
+      subscribeEvent: vi.fn((subscriber: (event: unknown) => unknown) => {
+        contextSubscribers.push(subscriber);
+        return unsubscribeContext;
+      }),
     };
 
-    promptHandlers.start(promptEvent);
-    contextHandlers.start({
-      arguments: [
-        {
-          operationId: "op_1",
-          operationKind: "prompt",
-          session: "main",
-          type: "operation_start",
-        },
-      ],
-    });
-    contextHandlers.start({
-      arguments: [
-        {
-          estimatedTokens: 100,
-          operationId: "op_1",
-          reason: "manual",
-          session: "main",
-          type: "compaction_start",
-        },
-      ],
-    });
-    (promptEvent as any).result = { text: "done" };
-    promptHandlers.asyncEnd(promptEvent);
+    plugin.enable();
+    expect(mockNewTracingChannel).toHaveBeenCalledWith(
+      "orchestrion:@flue/runtime:createFlueContext",
+    );
+    expect(mockTracingChannel.subscribe).toHaveBeenCalledTimes(1);
 
-    const operationSpan = spans.find(
-      (span) => span.name === "flue.session.prompt",
-    );
-    const compactionSpan = spans.find(
-      (span) => span.name === "flue.compaction",
-    );
+    emitCreateContextEnd(context);
 
-    expect(compactionSpan?.end).toHaveBeenCalledTimes(1);
-    expect(operationSpan?.end).toHaveBeenCalledTimes(1);
-    expect(compactionSpan?.log).toHaveBeenCalledWith(
-      expect.objectContaining({
-        input: {
-          estimatedTokens: 100,
-          reason: "manual",
-        },
-        metrics: expect.objectContaining({
-          duration_ms: expect.any(Number),
-        }),
-        output: { completed: true },
-      }),
-    );
+    expect(context.subscribeEvent).toHaveBeenCalledTimes(1);
+    contextSubscribers[0]?.({
+      runId: "run-1",
+      type: "run_start",
+      workflowName: "auto-research",
+    });
+
+    expect(
+      findSpan("workflow:auto-research")?.args.event.metadata,
+    ).toMatchObject({
+      "flue.context_id": "ctx-1",
+      "flue.context_run_id": "run-1",
+    });
+    contextSubscribers[0]?.({
+      durationMs: 1,
+      isError: false,
+      result: "done",
+      runId: "run-1",
+      type: "run_end",
+    });
+    expect(unsubscribeContext).toHaveBeenCalledTimes(1);
+
+    plugin.disable();
+
+    expect(mockTracingChannel.unsubscribe).toHaveBeenCalledTimes(1);
+    expect(unsubscribeContext).toHaveBeenCalledTimes(1);
   });
+
+  it("keeps auto instrumentation idempotent across plugin instances", () => {
+    const first = new FluePlugin();
+    const second = new FluePlugin();
+    const contextSubscribers: Array<(event: unknown) => unknown> = [];
+    const unsubscribeContext = vi.fn();
+    const context = {
+      subscribeEvent: vi.fn((subscriber: (event: unknown) => unknown) => {
+        contextSubscribers.push(subscriber);
+        return unsubscribeContext;
+      }),
+    };
+
+    first.enable();
+    second.enable();
+    emitCreateContextEnd(context);
+    emitCreateContextEnd(context);
+
+    expect(mockTracingChannel.subscribe).toHaveBeenCalledTimes(1);
+    expect(context.subscribeEvent).toHaveBeenCalledTimes(1);
+
+    first.disable();
+    expect(mockTracingChannel.unsubscribe).not.toHaveBeenCalled();
+    expect(unsubscribeContext).not.toHaveBeenCalled();
+
+    second.disable();
+    expect(mockTracingChannel.unsubscribe).toHaveBeenCalledTimes(1);
+
+    contextSubscribers[0]?.({
+      runId: "run-after-disable",
+      type: "run_start",
+      workflowName: "after-disable",
+    });
+    expect(unsubscribeContext).toHaveBeenCalledTimes(1);
+    expect(findSpan("workflow:after-disable")).toBeUndefined();
+  });
+
+  it("unsubscribes direct Flue contexts on terminal operation events", () => {
+    const plugin = new FluePlugin();
+    const contextSubscribers: Array<(event: unknown) => unknown> = [];
+    const unsubscribeContext = vi.fn();
+    const context = {
+      id: "direct-agent-1",
+      subscribeEvent: vi.fn((subscriber: (event: unknown) => unknown) => {
+        contextSubscribers.push(subscriber);
+        return unsubscribeContext;
+      }),
+    };
+
+    plugin.enable();
+    emitCreateContextEnd(context);
+    contextSubscribers[0]?.({
+      durationMs: 2,
+      instanceId: "direct-agent-1",
+      isError: false,
+      operationId: "op-1",
+      operationKind: "prompt",
+      result: "done",
+      type: "operation",
+    });
+
+    expect(unsubscribeContext).toHaveBeenCalledTimes(1);
+    expect(findSpan("flue.prompt")).toBeDefined();
+
+    plugin.disable();
+  });
+
+  function observeEvents() {
+    return (event: unknown, ctx?: unknown) =>
+      braintrustFlueObserver(event, ctx);
+  }
+
+  function emitCreateContextEnd(result: unknown) {
+    for (const handlers of mockChannelHandlers) {
+      handlers.end?.({ result });
+    }
+  }
+
+  function findSpan(name: string) {
+    return spans.find((span) => span.name === name);
+  }
 });
 
-function makeSession() {
-  const promise = Promise.resolve({ text: "ok" });
-  const handle = {
-    abort: vi.fn(),
-    signal: new AbortController().signal,
-    then: promise.then.bind(promise),
-  };
-  return {
-    compact: vi.fn(async () => undefined),
-    name: "main",
-    prompt: vi.fn(() => handle),
-    skill: vi.fn(() => handle),
-    task: vi.fn(() => handle),
-  };
-}
-
-function usage() {
+function flueUsage() {
   return {
     cacheRead: 1,
     cacheWrite: 2,

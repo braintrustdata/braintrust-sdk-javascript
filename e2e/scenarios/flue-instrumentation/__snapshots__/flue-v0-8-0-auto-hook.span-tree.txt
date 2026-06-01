@@ -1,0 +1,1451 @@
+span_tree:
+└── workflow:instrumentation [task]
+    input: {
+      "metadata": {
+        "scenario": "flue-instrumentation",
+        "testRunId": "<run:1>"
+      },
+      "scenario": "flue-instrumentation"
+    }
+    output: {
+      "scenario": "flue-instrumentation",
+      "status": "done"
+    }
+    metadata: {
+      "flue.workflow_name": "instrumentation",
+      "provider": "flue",
+      "scenario": "flue-instrumentation"
+    }
+    metrics: {
+      "duration_ms": 0
+    }
+    ├── flue.prompt [task]
+    │   input: [
+    │     {
+    │       "content": [
+    │         {
+    │           "text": "Complete this instrumented research flow. Call exactly one tool per turn and wait for each tool result before choosing the next tool. Step 1: call lookup with query \"flue instrumentation\". Step 2: use the lookup result id as lookupId and call web_search with query \"Braintrust Flue reasoning stream instrumentation\". Step 3: use the first web_search result url and call summarize_source. After summarize_source returns, reply with exactly PROMPT_DONE and no other text.",
+    │           "type": "text"
+    │         }
+    │       ],
+    │       "role": "user"
+    │     }
+    │   ]
+    │   output: "PROMPT_DONE"
+    │   metadata: {
+    │     "flue.operation": "prompt",
+    │     "flue.session": "main",
+    │     "provider": "flue"
+    │   }
+    │   metrics: {
+    │     "duration_ms": 0
+    │   }
+    │   ├── llm:claude-sonnet-4-5-20250929 [llm]
+    │   │   input: [
+    │   │     {
+    │   │       "content": [
+    │   │         {
+    │   │           "text": "Complete this instrumented research flow. Call exactly one tool per turn and wait for each tool result before choosing the next tool. Step 1: call lookup with query \"flue instrumentation\". Step 2: use the lookup result id as lookupId and call web_search with query \"Braintrust Flue reasoning stream instrumentation\". Step 3: use the first web_search result url and call summarize_source. After summarize_source returns, reply with exactly PROMPT_DONE and no other text.",
+    │   │           "type": "text"
+    │   │         }
+    │   │       ],
+    │   │       "role": "user"
+    │   │     }
+    │   │   ]
+    │   │   output: {
+    │   │     "content": [
+    │   │       {
+    │   │         "thinking": "The user wants me to complete a research flow with exactly three steps:\n1. Call lookup with query \"flue instrumentation\"\n2. Call web_search with the lookupId from step 1 and query \"Braintrust Flue reasoning stream instrumentation\"\n3. Call summarize_source with the first URL from step 2\n4. Reply with exactly \"PROMPT_DONE\"\n\nThe user emphasizes I should call exactly one tool per turn and wait for each result. Let me start with step 1.",
+    │   │         "thinkingSignature": "EoQFCm4IDhgCKkD+AoKMhpXNPUJ5eANwM28uUCJPCE+AXh0ACw7aXniX+YN04zdJl3hlHMbtAuKhhczLiEeOJtu4KtVpea5u5NFdMhpjbGF1ZGUtc29ubmV0LTQtNS0yMDI1MDkyOTgAQgh0aGlua2luZxIMIOTWCNEtsiI9vF4SGgwPXC861uZx8lpOziEiMLsCukGIluD0U44degzYnHFc+BwXNIEB+yatSHlZE+a5smr9crZcft3OLmsIdXuaFSrDAyQxWd9oqfJdnvza9eWIaOCeNkVCjrTc/wotBwh5Xp8m9k/WKt7P4zzUJBuLQ1f6ZnsdWkL8OiL/2E7Up55z2+UuVWsg1Y90/x27YRFdQjv3RnztYp4bZ5oIHAlTJoCzWiBYEh/Z8c2O+wy6MHo1cp0T57OroB/4HAqRZxrjTOXpKYLmYKXAY5tU8DTd3A0/FfEhg3oPSbOhX+112szFCpm3BRNJYooUUhwSu1hO4H/6r7d/Yp9XIM4tBfzuDx83CC/YetdOFgnYkdliw0xaUGaj4o37rWIRctWHAMdlUc4NDA0Ljc1uirHDXkN8EJwWSoIjPSBTA/p/wgLrvRV5Yy9Z0dMoWOpgYF6t1H/tNAyY8ml1CA7IWyd3jnfTZ1/G3Y0xFDwJDFlb4/QKc67w36SSCa+X9mMoTxD/DYN249lsII+XX3lQ7F1zJ07THOtCyRirCaRhmE/kGwl5tiB1QHrWa9bNHxQxf9i92435JGKN053Fe14AR70MtBSzIU2/zbgvhB1vF5lZt2i46hNxfo4lXR495gEwdwC6+8HJnlEJAJkdeHfZKj+RiwXoiYKPKsSbHi83X8Hh32IifuglNxdlxVQYAQ==",
+    │   │         "type": "thinking"
+    │   │       },
+    │   │       {
+    │   │         "text": "I'll complete this instrumented research flow step by step. Starting with Step 1:",
+    │   │         "type": "text"
+    │   │       },
+    │   │       {
+    │   │         "arguments": {
+    │   │           "query": "flue instrumentation"
+    │   │         },
+    │   │         "id": "<span:1>",
+    │   │         "name": "lookup",
+    │   │         "type": "toolCall"
+    │   │       }
+    │   │     ],
+    │   │     "role": "assistant"
+    │   │   }
+    │   │   metadata: {
+    │   │     "flue.api": "anthropic-messages",
+    │   │     "flue.model": "claude-sonnet-4-5-20250929",
+    │   │     "flue.provider": "anthropic",
+    │   │     "flue.session": "main",
+    │   │     "flue.stop_reason": "toolUse",
+    │   │     "flue.turn_purpose": "agent",
+    │   │     "model": "claude-sonnet-4-5-20250929",
+    │   │     "provider": "anthropic"
+    │   │   }
+    │   │   metrics: {
+    │   │     "completion_tokens": 196,
+    │   │     "duration_ms": 0,
+    │   │     "estimated_cost": 0.0113025,
+    │   │     "prompt_cache_creation_tokens": 2222,
+    │   │     "prompt_cached_tokens": 0,
+    │   │     "prompt_tokens": 10,
+    │   │     "tokens": 2428
+    │   │   }
+    │   ├── tool:lookup [tool]
+    │   │   input: {
+    │   │     "query": "flue instrumentation"
+    │   │   }
+    │   │   output: {
+    │   │     "content": [
+    │   │       {
+    │   │         "text": "{\"id\":\"flue-session-2026\",\"query\":\"flue instrumentation\",\"topic\":\"session instrumentation\"}",
+    │   │         "type": "text"
+    │   │       }
+    │   │     ],
+    │   │     "details": {
+    │   │       "customTool": "lookup"
+    │   │     }
+    │   │   }
+    │   │   metadata: {
+    │   │     "flue.session": "main",
+    │   │     "flue.tool_name": "lookup",
+    │   │     "provider": "flue"
+    │   │   }
+    │   │   metrics: {
+    │   │     "duration_ms": 0
+    │   │   }
+    │   ├── llm:claude-sonnet-4-5-20250929 [llm]
+    │   │   input: [
+    │   │     {
+    │   │       "content": [
+    │   │         {
+    │   │           "text": "Complete this instrumented research flow. Call exactly one tool per turn and wait for each tool result before choosing the next tool. Step 1: call lookup with query \"flue instrumentation\". Step 2: use the lookup result id as lookupId and call web_search with query \"Braintrust Flue reasoning stream instrumentation\". Step 3: use the first web_search result url and call summarize_source. After summarize_source returns, reply with exactly PROMPT_DONE and no other text.",
+    │   │           "type": "text"
+    │   │         }
+    │   │       ],
+    │   │       "role": "user"
+    │   │     },
+    │   │     {
+    │   │       "content": [
+    │   │         {
+    │   │           "thinking": "The user wants me to complete a research flow with exactly three steps:\n1. Call lookup with query \"flue instrumentation\"\n2. Call web_search with the lookupId from step 1 and query \"Braintrust Flue reasoning stream instrumentation\"\n3. Call summarize_source with the first URL from step 2\n4. Reply with exactly \"PROMPT_DONE\"\n\nThe user emphasizes I should call exactly one tool per turn and wait for each result. Let me start with step 1.",
+    │   │           "thinkingSignature": "EoQFCm4IDhgCKkD+AoKMhpXNPUJ5eANwM28uUCJPCE+AXh0ACw7aXniX+YN04zdJl3hlHMbtAuKhhczLiEeOJtu4KtVpea5u5NFdMhpjbGF1ZGUtc29ubmV0LTQtNS0yMDI1MDkyOTgAQgh0aGlua2luZxIMIOTWCNEtsiI9vF4SGgwPXC861uZx8lpOziEiMLsCukGIluD0U44degzYnHFc+BwXNIEB+yatSHlZE+a5smr9crZcft3OLmsIdXuaFSrDAyQxWd9oqfJdnvza9eWIaOCeNkVCjrTc/wotBwh5Xp8m9k/WKt7P4zzUJBuLQ1f6ZnsdWkL8OiL/2E7Up55z2+UuVWsg1Y90/x27YRFdQjv3RnztYp4bZ5oIHAlTJoCzWiBYEh/Z8c2O+wy6MHo1cp0T57OroB/4HAqRZxrjTOXpKYLmYKXAY5tU8DTd3A0/FfEhg3oPSbOhX+112szFCpm3BRNJYooUUhwSu1hO4H/6r7d/Yp9XIM4tBfzuDx83CC/YetdOFgnYkdliw0xaUGaj4o37rWIRctWHAMdlUc4NDA0Ljc1uirHDXkN8EJwWSoIjPSBTA/p/wgLrvRV5Yy9Z0dMoWOpgYF6t1H/tNAyY8ml1CA7IWyd3jnfTZ1/G3Y0xFDwJDFlb4/QKc67w36SSCa+X9mMoTxD/DYN249lsII+XX3lQ7F1zJ07THOtCyRirCaRhmE/kGwl5tiB1QHrWa9bNHxQxf9i92435JGKN053Fe14AR70MtBSzIU2/zbgvhB1vF5lZt2i46hNxfo4lXR495gEwdwC6+8HJnlEJAJkdeHfZKj+RiwXoiYKPKsSbHi83X8Hh32IifuglNxdlxVQYAQ==",
+    │   │           "type": "thinking"
+    │   │         },
+    │   │         {
+    │   │           "text": "I'll complete this instrumented research flow step by step. Starting with Step 1:",
+    │   │           "type": "text"
+    │   │         },
+    │   │         {
+    │   │           "arguments": {
+    │   │             "query": "flue instrumentation"
+    │   │           },
+    │   │           "id": "<span:1>",
+    │   │           "name": "lookup",
+    │   │           "type": "toolCall"
+    │   │         }
+    │   │       ],
+    │   │       "role": "assistant"
+    │   │     },
+    │   │     {
+    │   │       "content": [
+    │   │         {
+    │   │           "text": "{\"id\":\"flue-session-2026\",\"query\":\"flue instrumentation\",\"topic\":\"session instrumentation\"}",
+    │   │           "type": "text"
+    │   │         }
+    │   │       ],
+    │   │       "isError": false,
+    │   │       "role": "toolResult",
+    │   │       "toolCallId": "<span:1>",
+    │   │       "toolName": "lookup"
+    │   │     }
+    │   │   ]
+    │   │   output: {
+    │   │     "content": [
+    │   │       {
+    │   │         "thinking": "Good, I got the lookup result with id \"flue-session-2026\". Now I need to proceed to step 2: call web_search with this lookupId and the query \"Braintrust Flue reasoning stream instrumentation\".",
+    │   │         "thinkingSignature": "EpEDCm4IDhgCKkAMahve1kB1j4njp1ZSzO8eCK4bb5Ex7MB6tjdoOXfuUDRfkBqvIGdwVly8GiA8GGYC7Y/RVfREXF6A6OXHTwFyMhpjbGF1ZGUtc29ubmV0LTQtNS0yMDI1MDkyOTgAQgh0aGlua2luZxIMLw+fsa4yo7a7ZSoIGgyaTdvH020n2dQj9bUiMB4OokY29w+uZb4rqDnKDbLXUqUj6U0f1QCGQF2ZBYDDfDJyM5Jv1xY3rQiUUjkhBirQAS4XivjvMnWI5zHBmpI/u/pq4aGdrdb3vUsJ/ne6R1d80JA/INGF8vLkQcZ5xxEK0jU4yRE+ldc2uzavmtoxIKAFD6bqKks1Qv6u+TIZtuW7tUB/7jFxDw93KmJNruMIa8c1J6pPUyBy3xE7QwgmU0kDfIfdnljxLoEBiMwtnxjCPj9lT7HHz4FkrhbnQTV4MvAQohCLjaSbOTd6LdLxwtJPm9mc26ID4eYN1gCCzyAxGXhqLHlzc23PafvQjsZliWnLhaiNMnG0YEo78XkuJQsYAQ==",
+    │   │         "type": "thinking"
+    │   │       },
+    │   │       {
+    │   │         "text": "Now proceeding to Step 2:",
+    │   │         "type": "text"
+    │   │       },
+    │   │       {
+    │   │         "arguments": {
+    │   │           "lookupId": "flue-session-2026",
+    │   │           "query": "Braintrust Flue reasoning stream instrumentation"
+    │   │         },
+    │   │         "id": "<span:1>",
+    │   │         "name": "web_search",
+    │   │         "type": "toolCall"
+    │   │       }
+    │   │     ],
+    │   │     "role": "assistant"
+    │   │   }
+    │   │   metadata: {
+    │   │     "flue.api": "anthropic-messages",
+    │   │     "flue.model": "claude-sonnet-4-5-20250929",
+    │   │     "flue.provider": "anthropic",
+    │   │     "flue.session": "main",
+    │   │     "flue.stop_reason": "toolUse",
+    │   │     "flue.turn_purpose": "agent",
+    │   │     "model": "claude-sonnet-4-5-20250929",
+    │   │     "provider": "anthropic"
+    │   │   }
+    │   │   metrics: {
+    │   │     "completion_tokens": 158,
+    │   │     "duration_ms": 0,
+    │   │     "estimated_cost": 0.0039606,
+    │   │     "prompt_cache_creation_tokens": 236,
+    │   │     "prompt_cached_tokens": 2222,
+    │   │     "prompt_tokens": 13,
+    │   │     "tokens": 2629
+    │   │   }
+    │   ├── tool:web_search [tool]
+    │   │   input: {
+    │   │     "lookupId": "flue-session-2026",
+    │   │     "query": "Braintrust Flue reasoning stream instrumentation"
+    │   │   }
+    │   │   output: {
+    │   │     "content": [
+    │   │       {
+    │   │         "text": "{\"lookupId\":\"flue-session-2026\",\"query\":\"Braintrust Flue reasoning stream instrumentation\",\"results\":[{\"title\":\"Flue reasoning stream instrumentation\",\"url\":\"https://example.test/flue/reasoning-streams\"}]}",
+    │   │         "type": "text"
+    │   │       }
+    │   │     ],
+    │   │     "details": {
+    │   │       "customTool": "web_search"
+    │   │     }
+    │   │   }
+    │   │   metadata: {
+    │   │     "flue.session": "main",
+    │   │     "flue.tool_name": "web_search",
+    │   │     "provider": "flue"
+    │   │   }
+    │   │   metrics: {
+    │   │     "duration_ms": 0
+    │   │   }
+    │   ├── llm:claude-sonnet-4-5-20250929 [llm]
+    │   │   input: [
+    │   │     {
+    │   │       "content": [
+    │   │         {
+    │   │           "text": "Complete this instrumented research flow. Call exactly one tool per turn and wait for each tool result before choosing the next tool. Step 1: call lookup with query \"flue instrumentation\". Step 2: use the lookup result id as lookupId and call web_search with query \"Braintrust Flue reasoning stream instrumentation\". Step 3: use the first web_search result url and call summarize_source. After summarize_source returns, reply with exactly PROMPT_DONE and no other text.",
+    │   │           "type": "text"
+    │   │         }
+    │   │       ],
+    │   │       "role": "user"
+    │   │     },
+    │   │     {
+    │   │       "content": [
+    │   │         {
+    │   │           "thinking": "The user wants me to complete a research flow with exactly three steps:\n1. Call lookup with query \"flue instrumentation\"\n2. Call web_search with the lookupId from step 1 and query \"Braintrust Flue reasoning stream instrumentation\"\n3. Call summarize_source with the first URL from step 2\n4. Reply with exactly \"PROMPT_DONE\"\n\nThe user emphasizes I should call exactly one tool per turn and wait for each result. Let me start with step 1.",
+    │   │           "thinkingSignature": "EoQFCm4IDhgCKkD+AoKMhpXNPUJ5eANwM28uUCJPCE+AXh0ACw7aXniX+YN04zdJl3hlHMbtAuKhhczLiEeOJtu4KtVpea5u5NFdMhpjbGF1ZGUtc29ubmV0LTQtNS0yMDI1MDkyOTgAQgh0aGlua2luZxIMIOTWCNEtsiI9vF4SGgwPXC861uZx8lpOziEiMLsCukGIluD0U44degzYnHFc+BwXNIEB+yatSHlZE+a5smr9crZcft3OLmsIdXuaFSrDAyQxWd9oqfJdnvza9eWIaOCeNkVCjrTc/wotBwh5Xp8m9k/WKt7P4zzUJBuLQ1f6ZnsdWkL8OiL/2E7Up55z2+UuVWsg1Y90/x27YRFdQjv3RnztYp4bZ5oIHAlTJoCzWiBYEh/Z8c2O+wy6MHo1cp0T57OroB/4HAqRZxrjTOXpKYLmYKXAY5tU8DTd3A0/FfEhg3oPSbOhX+112szFCpm3BRNJYooUUhwSu1hO4H/6r7d/Yp9XIM4tBfzuDx83CC/YetdOFgnYkdliw0xaUGaj4o37rWIRctWHAMdlUc4NDA0Ljc1uirHDXkN8EJwWSoIjPSBTA/p/wgLrvRV5Yy9Z0dMoWOpgYF6t1H/tNAyY8ml1CA7IWyd3jnfTZ1/G3Y0xFDwJDFlb4/QKc67w36SSCa+X9mMoTxD/DYN249lsII+XX3lQ7F1zJ07THOtCyRirCaRhmE/kGwl5tiB1QHrWa9bNHxQxf9i92435JGKN053Fe14AR70MtBSzIU2/zbgvhB1vF5lZt2i46hNxfo4lXR495gEwdwC6+8HJnlEJAJkdeHfZKj+RiwXoiYKPKsSbHi83X8Hh32IifuglNxdlxVQYAQ==",
+    │   │           "type": "thinking"
+    │   │         },
+    │   │         {
+    │   │           "text": "I'll complete this instrumented research flow step by step. Starting with Step 1:",
+    │   │           "type": "text"
+    │   │         },
+    │   │         {
+    │   │           "arguments": {
+    │   │             "query": "flue instrumentation"
+    │   │           },
+    │   │           "id": "<span:1>",
+    │   │           "name": "lookup",
+    │   │           "type": "toolCall"
+    │   │         }
+    │   │       ],
+    │   │       "role": "assistant"
+    │   │     },
+    │   │     {
+    │   │       "content": [
+    │   │         {
+    │   │           "text": "{\"id\":\"flue-session-2026\",\"query\":\"flue instrumentation\",\"topic\":\"session instrumentation\"}",
+    │   │           "type": "text"
+    │   │         }
+    │   │       ],
+    │   │       "isError": false,
+    │   │       "role": "toolResult",
+    │   │       "toolCallId": "<span:1>",
+    │   │       "toolName": "lookup"
+    │   │     },
+    │   │     {
+    │   │       "content": [
+    │   │         {
+    │   │           "thinking": "Good, I got the lookup result with id \"flue-session-2026\". Now I need to proceed to step 2: call web_search with this lookupId and the query \"Braintrust Flue reasoning stream instrumentation\".",
+    │   │           "thinkingSignature": "EpEDCm4IDhgCKkAMahve1kB1j4njp1ZSzO8eCK4bb5Ex7MB6tjdoOXfuUDRfkBqvIGdwVly8GiA8GGYC7Y/RVfREXF6A6OXHTwFyMhpjbGF1ZGUtc29ubmV0LTQtNS0yMDI1MDkyOTgAQgh0aGlua2luZxIMLw+fsa4yo7a7ZSoIGgyaTdvH020n2dQj9bUiMB4OokY29w+uZb4rqDnKDbLXUqUj6U0f1QCGQF2ZBYDDfDJyM5Jv1xY3rQiUUjkhBirQAS4XivjvMnWI5zHBmpI/u/pq4aGdrdb3vUsJ/ne6R1d80JA/INGF8vLkQcZ5xxEK0jU4yRE+ldc2uzavmtoxIKAFD6bqKks1Qv6u+TIZtuW7tUB/7jFxDw93KmJNruMIa8c1J6pPUyBy3xE7QwgmU0kDfIfdnljxLoEBiMwtnxjCPj9lT7HHz4FkrhbnQTV4MvAQohCLjaSbOTd6LdLxwtJPm9mc26ID4eYN1gCCzyAxGXhqLHlzc23PafvQjsZliWnLhaiNMnG0YEo78XkuJQsYAQ==",
+    │   │           "type": "thinking"
+    │   │         },
+    │   │         {
+    │   │           "text": "Now proceeding to Step 2:",
+    │   │           "type": "text"
+    │   │         },
+    │   │         {
+    │   │           "arguments": {
+    │   │             "lookupId": "flue-session-2026",
+    │   │             "query": "Braintrust Flue reasoning stream instrumentation"
+    │   │           },
+    │   │           "id": "<span:2>",
+    │   │           "name": "web_search",
+    │   │           "type": "toolCall"
+    │   │         }
+    │   │       ],
+    │   │       "role": "assistant"
+    │   │     },
+    │   │     {
+    │   │       "content": [
+    │   │         {
+    │   │           "text": "{\"lookupId\":\"flue-session-2026\",\"query\":\"Braintrust Flue reasoning stream instrumentation\",\"results\":[{\"title\":\"Flue reasoning stream instrumentation\",\"url\":\"https://example.test/flue/reasoning-streams\"}]}",
+    │   │           "type": "text"
+    │   │         }
+    │   │       ],
+    │   │       "isError": false,
+    │   │       "role": "toolResult",
+    │   │       "toolCallId": "<span:2>",
+    │   │       "toolName": "web_search"
+    │   │     }
+    │   │   ]
+    │   │   output: {
+    │   │     "content": [
+    │   │       {
+    │   │         "thinking": "Perfect! I got the web_search results with one result. The first (and only) result has the URL \"https://example.test/flue/reasoning-streams\". Now I need to proceed to step 3: call summarize_source with this URL.",
+    │   │         "thinkingSignature": "EqQDCm4IDhgCKkAXv7EDAhWMcrBz11bUd5qxlzyy03CAGQfRgLHDE0uKzLATh1o2sedd8GxLwwQqV0CmLRfNxsdK/ZDp3Lks9iysMhpjbGF1ZGUtc29ubmV0LTQtNS0yMDI1MDkyOTgAQgh0aGlua2luZxIMXDMniOy5Dy0KI8x7GgzgHs7BYJMs6/N0ur8iMPe0SwnHhP39OjEu7P8ASwK9ffwa3VP67QOlPzOstRRdEZNd0mq+BVjpmBXB+QcAzCrjAeAh/UO/d7SfFmXjqwA3//thoL/TTlGa6W+fdOCFRikn65JWT4ZdVFetfqD+9/QCP/nXEwMsLnTBAxC4EGryrgs2YT+OWwmEJ7rHKFeDs5djhwSb2J2ZJO1kRvD9s2vCCDkImygYBSIVgx1Y0CZJHhzn2Vf39v0Fbth2wDZa+OqxivV9NmDZEjmgcM+tTRx1CCnaww8LZEJQ68v/dUJy7hhD4MrNcQ62evJYPfT3+4EKKWJ/7HI7KXz91//+YAkph63XstbJMFJ3AldAFiq3ecauXt5r42N5gmCmwZX+sI48ENLGGAE=",
+    │   │         "type": "thinking"
+    │   │       },
+    │   │       {
+    │   │         "text": "Now proceeding to Step 3:",
+    │   │         "type": "text"
+    │   │       },
+    │   │       {
+    │   │         "arguments": {
+    │   │           "url": "https://example.test/flue/reasoning-streams"
+    │   │         },
+    │   │         "id": "<span:1>",
+    │   │         "name": "summarize_source",
+    │   │         "type": "toolCall"
+    │   │       }
+    │   │     ],
+    │   │     "role": "assistant"
+    │   │   }
+    │   │   metadata: {
+    │   │     "flue.api": "anthropic-messages",
+    │   │     "flue.model": "claude-sonnet-4-5-20250929",
+    │   │     "flue.provider": "anthropic",
+    │   │     "flue.session": "main",
+    │   │     "flue.stop_reason": "toolUse",
+    │   │     "flue.turn_purpose": "agent",
+    │   │     "model": "claude-sonnet-4-5-20250929",
+    │   │     "provider": "anthropic"
+    │   │   }
+    │   │   metrics: {
+    │   │     "completion_tokens": 138,
+    │   │     "duration_ms": 0,
+    │   │     "estimated_cost": 0.0037239000000000005,
+    │   │     "prompt_cache_creation_tokens": 234,
+    │   │     "prompt_cached_tokens": 2458,
+    │   │     "prompt_tokens": 13,
+    │   │     "tokens": 2843
+    │   │   }
+    │   ├── tool:summarize_source [tool]
+    │   │   input: {
+    │   │     "url": "https://example.test/flue/reasoning-streams"
+    │   │   }
+    │   │   output: {
+    │   │     "content": [
+    │   │       {
+    │   │         "text": "{\"summary\":\"Flue emits reasoning, tool execution, and LLM turn events separately.\",\"url\":\"https://example.test/flue/reasoning-streams\"}",
+    │   │         "type": "text"
+    │   │       }
+    │   │     ],
+    │   │     "details": {
+    │   │       "customTool": "summarize_source"
+    │   │     }
+    │   │   }
+    │   │   metadata: {
+    │   │     "flue.session": "main",
+    │   │     "flue.tool_name": "summarize_source",
+    │   │     "provider": "flue"
+    │   │   }
+    │   │   metrics: {
+    │   │     "duration_ms": 0
+    │   │   }
+    │   └── llm:claude-sonnet-4-5-20250929 [llm]
+    │       input: [
+    │         {
+    │           "content": [
+    │             {
+    │               "text": "Complete this instrumented research flow. Call exactly one tool per turn and wait for each tool result before choosing the next tool. Step 1: call lookup with query \"flue instrumentation\". Step 2: use the lookup result id as lookupId and call web_search with query \"Braintrust Flue reasoning stream instrumentation\". Step 3: use the first web_search result url and call summarize_source. After summarize_source returns, reply with exactly PROMPT_DONE and no other text.",
+    │               "type": "text"
+    │             }
+    │           ],
+    │           "role": "user"
+    │         },
+    │         {
+    │           "content": [
+    │             {
+    │               "thinking": "The user wants me to complete a research flow with exactly three steps:\n1. Call lookup with query \"flue instrumentation\"\n2. Call web_search with the lookupId from step 1 and query \"Braintrust Flue reasoning stream instrumentation\"\n3. Call summarize_source with the first URL from step 2\n4. Reply with exactly \"PROMPT_DONE\"\n\nThe user emphasizes I should call exactly one tool per turn and wait for each result. Let me start with step 1.",
+    │               "thinkingSignature": "EoQFCm4IDhgCKkD+AoKMhpXNPUJ5eANwM28uUCJPCE+AXh0ACw7aXniX+YN04zdJl3hlHMbtAuKhhczLiEeOJtu4KtVpea5u5NFdMhpjbGF1ZGUtc29ubmV0LTQtNS0yMDI1MDkyOTgAQgh0aGlua2luZxIMIOTWCNEtsiI9vF4SGgwPXC861uZx8lpOziEiMLsCukGIluD0U44degzYnHFc+BwXNIEB+yatSHlZE+a5smr9crZcft3OLmsIdXuaFSrDAyQxWd9oqfJdnvza9eWIaOCeNkVCjrTc/wotBwh5Xp8m9k/WKt7P4zzUJBuLQ1f6ZnsdWkL8OiL/2E7Up55z2+UuVWsg1Y90/x27YRFdQjv3RnztYp4bZ5oIHAlTJoCzWiBYEh/Z8c2O+wy6MHo1cp0T57OroB/4HAqRZxrjTOXpKYLmYKXAY5tU8DTd3A0/FfEhg3oPSbOhX+112szFCpm3BRNJYooUUhwSu1hO4H/6r7d/Yp9XIM4tBfzuDx83CC/YetdOFgnYkdliw0xaUGaj4o37rWIRctWHAMdlUc4NDA0Ljc1uirHDXkN8EJwWSoIjPSBTA/p/wgLrvRV5Yy9Z0dMoWOpgYF6t1H/tNAyY8ml1CA7IWyd3jnfTZ1/G3Y0xFDwJDFlb4/QKc67w36SSCa+X9mMoTxD/DYN249lsII+XX3lQ7F1zJ07THOtCyRirCaRhmE/kGwl5tiB1QHrWa9bNHxQxf9i92435JGKN053Fe14AR70MtBSzIU2/zbgvhB1vF5lZt2i46hNxfo4lXR495gEwdwC6+8HJnlEJAJkdeHfZKj+RiwXoiYKPKsSbHi83X8Hh32IifuglNxdlxVQYAQ==",
+    │               "type": "thinking"
+    │             },
+    │             {
+    │               "text": "I'll complete this instrumented research flow step by step. Starting with Step 1:",
+    │               "type": "text"
+    │             },
+    │             {
+    │               "arguments": {
+    │                 "query": "flue instrumentation"
+    │               },
+    │               "id": "<span:1>",
+    │               "name": "lookup",
+    │               "type": "toolCall"
+    │             }
+    │           ],
+    │           "role": "assistant"
+    │         },
+    │         {
+    │           "content": [
+    │             {
+    │               "text": "{\"id\":\"flue-session-2026\",\"query\":\"flue instrumentation\",\"topic\":\"session instrumentation\"}",
+    │               "type": "text"
+    │             }
+    │           ],
+    │           "isError": false,
+    │           "role": "toolResult",
+    │           "toolCallId": "<span:1>",
+    │           "toolName": "lookup"
+    │         },
+    │         {
+    │           "content": [
+    │             {
+    │               "thinking": "Good, I got the lookup result with id \"flue-session-2026\". Now I need to proceed to step 2: call web_search with this lookupId and the query \"Braintrust Flue reasoning stream instrumentation\".",
+    │               "thinkingSignature": "EpEDCm4IDhgCKkAMahve1kB1j4njp1ZSzO8eCK4bb5Ex7MB6tjdoOXfuUDRfkBqvIGdwVly8GiA8GGYC7Y/RVfREXF6A6OXHTwFyMhpjbGF1ZGUtc29ubmV0LTQtNS0yMDI1MDkyOTgAQgh0aGlua2luZxIMLw+fsa4yo7a7ZSoIGgyaTdvH020n2dQj9bUiMB4OokY29w+uZb4rqDnKDbLXUqUj6U0f1QCGQF2ZBYDDfDJyM5Jv1xY3rQiUUjkhBirQAS4XivjvMnWI5zHBmpI/u/pq4aGdrdb3vUsJ/ne6R1d80JA/INGF8vLkQcZ5xxEK0jU4yRE+ldc2uzavmtoxIKAFD6bqKks1Qv6u+TIZtuW7tUB/7jFxDw93KmJNruMIa8c1J6pPUyBy3xE7QwgmU0kDfIfdnljxLoEBiMwtnxjCPj9lT7HHz4FkrhbnQTV4MvAQohCLjaSbOTd6LdLxwtJPm9mc26ID4eYN1gCCzyAxGXhqLHlzc23PafvQjsZliWnLhaiNMnG0YEo78XkuJQsYAQ==",
+    │               "type": "thinking"
+    │             },
+    │             {
+    │               "text": "Now proceeding to Step 2:",
+    │               "type": "text"
+    │             },
+    │             {
+    │               "arguments": {
+    │                 "lookupId": "flue-session-2026",
+    │                 "query": "Braintrust Flue reasoning stream instrumentation"
+    │               },
+    │               "id": "<span:2>",
+    │               "name": "web_search",
+    │               "type": "toolCall"
+    │             }
+    │           ],
+    │           "role": "assistant"
+    │         },
+    │         {
+    │           "content": [
+    │             {
+    │               "text": "{\"lookupId\":\"flue-session-2026\",\"query\":\"Braintrust Flue reasoning stream instrumentation\",\"results\":[{\"title\":\"Flue reasoning stream instrumentation\",\"url\":\"https://example.test/flue/reasoning-streams\"}]}",
+    │               "type": "text"
+    │             }
+    │           ],
+    │           "isError": false,
+    │           "role": "toolResult",
+    │           "toolCallId": "<span:2>",
+    │           "toolName": "web_search"
+    │         },
+    │         {
+    │           "content": [
+    │             {
+    │               "thinking": "Perfect! I got the web_search results with one result. The first (and only) result has the URL \"https://example.test/flue/reasoning-streams\". Now I need to proceed to step 3: call summarize_source with this URL.",
+    │               "thinkingSignature": "EqQDCm4IDhgCKkAXv7EDAhWMcrBz11bUd5qxlzyy03CAGQfRgLHDE0uKzLATh1o2sedd8GxLwwQqV0CmLRfNxsdK/ZDp3Lks9iysMhpjbGF1ZGUtc29ubmV0LTQtNS0yMDI1MDkyOTgAQgh0aGlua2luZxIMXDMniOy5Dy0KI8x7GgzgHs7BYJMs6/N0ur8iMPe0SwnHhP39OjEu7P8ASwK9ffwa3VP67QOlPzOstRRdEZNd0mq+BVjpmBXB+QcAzCrjAeAh/UO/d7SfFmXjqwA3//thoL/TTlGa6W+fdOCFRikn65JWT4ZdVFetfqD+9/QCP/nXEwMsLnTBAxC4EGryrgs2YT+OWwmEJ7rHKFeDs5djhwSb2J2ZJO1kRvD9s2vCCDkImygYBSIVgx1Y0CZJHhzn2Vf39v0Fbth2wDZa+OqxivV9NmDZEjmgcM+tTRx1CCnaww8LZEJQ68v/dUJy7hhD4MrNcQ62evJYPfT3+4EKKWJ/7HI7KXz91//+YAkph63XstbJMFJ3AldAFiq3ecauXt5r42N5gmCmwZX+sI48ENLGGAE=",
+    │               "type": "thinking"
+    │             },
+    │             {
+    │               "text": "Now proceeding to Step 3:",
+    │               "type": "text"
+    │             },
+    │             {
+    │               "arguments": {
+    │                 "url": "https://example.test/flue/reasoning-streams"
+    │               },
+    │               "id": "<span:3>",
+    │               "name": "summarize_source",
+    │               "type": "toolCall"
+    │             }
+    │           ],
+    │           "role": "assistant"
+    │         },
+    │         {
+    │           "content": [
+    │             {
+    │               "text": "{\"summary\":\"Flue emits reasoning, tool execution, and LLM turn events separately.\",\"url\":\"https://example.test/flue/reasoning-streams\"}",
+    │               "type": "text"
+    │             }
+    │           ],
+    │           "isError": false,
+    │           "role": "toolResult",
+    │           "toolCallId": "<span:3>",
+    │           "toolName": "summarize_source"
+    │         }
+    │       ]
+    │       output: {
+    │         "content": [
+    │           {
+    │             "thinking": "Perfect! The summarize_source call has completed successfully. According to the instructions, I should now reply with exactly \"PROMPT_DONE\" and no other text.",
+    │             "thinkingSignature": "Eu8CCm4IDhgCKkAn2QOIIlYfvcs6ynsmhCslHDtBsrTA4CfmimK7zyz6+k6dZldV2JBtEBET41It0gFcGEKC0n0mAhaYVuLutpDDMhpjbGF1ZGUtc29ubmV0LTQtNS0yMDI1MDkyOTgAQgh0aGlua2luZxIM1xfLptxSF8rKzou8GgwRLuVmfiBYOT4CZIsiMAYz8TpvchMAWodP+T9uZ+dJ47MVdNv+p86nZXmT5d5EWlCroiAOFHHzJH2o0UjJQSquAX6wu+jIC8/DXwurGIIf2ToldPuJWF5HGj8kHMnwh777XS1NUFl1irM24rvP7kTAv3Dp8YEwb8t3g1EsicY7j+C5DzgwxVsPYCVOCgdMqQjtsqpL7AX5KQ9+hR1gK1DQjshv4Gze3hw/+C+9iptd3RlDIuwO0cm8NY+sVqeWVh3TtQujQlVt1rW/HfWjclrtT0LZSGwc6RypmfMMQi6lncIk/EPgy0XbS1plKW0tLBgB",
+    │             "type": "thinking"
+    │           },
+    │           {
+    │             "text": "PROMPT_DONE",
+    │             "type": "text"
+    │           }
+    │         ],
+    │         "role": "assistant"
+    │       }
+    │       metadata: {
+    │         "flue.api": "anthropic-messages",
+    │         "flue.model": "claude-sonnet-4-5-20250929",
+    │         "flue.provider": "anthropic",
+    │         "flue.session": "main",
+    │         "flue.stop_reason": "stop",
+    │         "flue.turn_purpose": "agent",
+    │         "model": "claude-sonnet-4-5-20250929",
+    │         "provider": "anthropic"
+    │       }
+    │       metrics: {
+    │         "completion_tokens": 51,
+    │         "duration_ms": 0,
+    │         "estimated_cost": 0.0023391,
+    │         "prompt_cache_creation_tokens": 194,
+    │         "prompt_cached_tokens": 2692,
+    │         "prompt_tokens": 13,
+    │         "tokens": 2950
+    │       }
+    ├── flue.skill [task]
+    │   input: [
+    │     {
+    │       "content": [
+    │         {
+    │           "text": "Run the skill named \"e2e-flue-skill\".\n\nArguments:\n{\n  \"marker\": \"SKILL_DONE\"\n}",
+    │           "type": "text"
+    │         }
+    │       ],
+    │       "role": "user"
+    │     }
+    │   ]
+    │   output: "SKILL_DONE"
+    │   metadata: {
+    │     "flue.operation": "skill",
+    │     "flue.session": "skill",
+    │     "provider": "flue"
+    │   }
+    │   metrics: {
+    │     "duration_ms": 0
+    │   }
+    │   ├── llm:claude-sonnet-4-5-20250929 [llm]
+    │   │   input: [
+    │   │     {
+    │   │       "content": [
+    │   │         {
+    │   │           "text": "Run the skill named \"e2e-flue-skill\".\n\nArguments:\n{\n  \"marker\": \"SKILL_DONE\"\n}",
+    │   │           "type": "text"
+    │   │         }
+    │   │       ],
+    │   │       "role": "user"
+    │   │     }
+    │   │   ]
+    │   │   output: {
+    │   │     "content": [
+    │   │       {
+    │   │         "text": "I'll run the e2e-flue-skill. Let me first read the skill file to understand its instructions.",
+    │   │         "type": "text"
+    │   │       },
+    │   │       {
+    │   │         "arguments": {
+    │   │           "path": ".agents/e2e-flue-skill.md"
+    │   │         },
+    │   │         "id": "<span:1>",
+    │   │         "name": "read",
+    │   │         "type": "toolCall"
+    │   │       }
+    │   │     ],
+    │   │     "role": "assistant"
+    │   │   }
+    │   │   metadata: {
+    │   │     "flue.api": "anthropic-messages",
+    │   │     "flue.model": "claude-sonnet-4-5-20250929",
+    │   │     "flue.provider": "anthropic",
+    │   │     "flue.session": "skill",
+    │   │     "flue.stop_reason": "toolUse",
+    │   │     "flue.turn_purpose": "agent",
+    │   │     "model": "claude-sonnet-4-5-20250929",
+    │   │     "provider": "anthropic"
+    │   │   }
+    │   │   metrics: {
+    │   │     "completion_tokens": 89,
+    │   │     "duration_ms": 0,
+    │   │     "estimated_cost": 0.0041862,
+    │   │     "prompt_cache_creation_tokens": 670,
+    │   │     "prompt_cached_tokens": 1099,
+    │   │     "prompt_tokens": 3,
+    │   │     "tokens": 1861
+    │   │   }
+    │   ├── tool:read [tool]
+    │   │   input: {
+    │   │     "path": ".agents/e2e-flue-skill.md"
+    │   │   }
+    │   │   output: {
+    │   │     "content": [
+    │   │       {
+    │   │         "text": "ENOENT: no such file or directory, open '<repo>/e2e/scenarios/flue-instrumentation/.agents/e2e-flue-skill.md'",
+    │   │         "type": "text"
+    │   │       }
+    │   │     ],
+    │   │     "details": {}
+    │   │   }
+    │   │   metadata: {
+    │   │     "flue.session": "skill",
+    │   │     "flue.tool_name": "read",
+    │   │     "provider": "flue"
+    │   │   }
+    │   │   metrics: {
+    │   │     "duration_ms": 0
+    │   │   }
+    │   │   error: "{\"content\":[{\"type\":\"text\",\"text\":\"ENOENT: no such file or directory, open '<repo>/e2e/scenarios/flue-instrumentation/.agents/e2e-flue-skill.md'\"}],\"details\":{}}"
+    │   ├── llm:claude-sonnet-4-5-20250929 [llm]
+    │   │   input: [
+    │   │     {
+    │   │       "content": [
+    │   │         {
+    │   │           "text": "Run the skill named \"e2e-flue-skill\".\n\nArguments:\n{\n  \"marker\": \"SKILL_DONE\"\n}",
+    │   │           "type": "text"
+    │   │         }
+    │   │       ],
+    │   │       "role": "user"
+    │   │     },
+    │   │     {
+    │   │       "content": [
+    │   │         {
+    │   │           "text": "I'll run the e2e-flue-skill. Let me first read the skill file to understand its instructions.",
+    │   │           "type": "text"
+    │   │         },
+    │   │         {
+    │   │           "arguments": {
+    │   │             "path": ".agents/e2e-flue-skill.md"
+    │   │           },
+    │   │           "id": "<span:1>",
+    │   │           "name": "read",
+    │   │           "type": "toolCall"
+    │   │         }
+    │   │       ],
+    │   │       "role": "assistant"
+    │   │     },
+    │   │     {
+    │   │       "content": [
+    │   │         {
+    │   │           "text": "ENOENT: no such file or directory, open '<repo>/e2e/scenarios/flue-instrumentation/.agents/e2e-flue-skill.md'",
+    │   │           "type": "text"
+    │   │         }
+    │   │       ],
+    │   │       "isError": true,
+    │   │       "role": "toolResult",
+    │   │       "toolCallId": "<span:1>",
+    │   │       "toolName": "read"
+    │   │     }
+    │   │   ]
+    │   │   output: {
+    │   │     "content": [
+    │   │       {
+    │   │         "arguments": {
+    │   │           "path": ".agents"
+    │   │         },
+    │   │         "id": "<span:1>",
+    │   │         "name": "read",
+    │   │         "type": "toolCall"
+    │   │       }
+    │   │     ],
+    │   │     "role": "assistant"
+    │   │   }
+    │   │   metadata: {
+    │   │     "flue.api": "anthropic-messages",
+    │   │     "flue.model": "claude-sonnet-4-5-20250929",
+    │   │     "flue.provider": "anthropic",
+    │   │     "flue.session": "skill",
+    │   │     "flue.stop_reason": "toolUse",
+    │   │     "flue.turn_purpose": "agent",
+    │   │     "model": "claude-sonnet-4-5-20250929",
+    │   │     "provider": "anthropic"
+    │   │   }
+    │   │   metrics: {
+    │   │     "completion_tokens": 52,
+    │   │     "duration_ms": 0,
+    │   │     "estimated_cost": 0.00201795,
+    │   │     "prompt_cache_creation_tokens": 183,
+    │   │     "prompt_cached_tokens": 1769,
+    │   │     "prompt_tokens": 7,
+    │   │     "tokens": 2011
+    │   │   }
+    │   ├── tool:read [tool]
+    │   │   input: {
+    │   │     "path": ".agents"
+    │   │   }
+    │   │   output: {
+    │   │     "content": [
+    │   │       {
+    │   │         "text": "skills",
+    │   │         "type": "text"
+    │   │       }
+    │   │     ],
+    │   │     "details": {
+    │   │       "entries": 1,
+    │   │       "isDirectory": true,
+    │   │       "path": ".agents"
+    │   │     }
+    │   │   }
+    │   │   metadata: {
+    │   │     "flue.session": "skill",
+    │   │     "flue.tool_name": "read",
+    │   │     "provider": "flue"
+    │   │   }
+    │   │   metrics: {
+    │   │     "duration_ms": 0
+    │   │   }
+    │   ├── llm:claude-sonnet-4-5-20250929 [llm]
+    │   │   input: [
+    │   │     {
+    │   │       "content": [
+    │   │         {
+    │   │           "text": "Run the skill named \"e2e-flue-skill\".\n\nArguments:\n{\n  \"marker\": \"SKILL_DONE\"\n}",
+    │   │           "type": "text"
+    │   │         }
+    │   │       ],
+    │   │       "role": "user"
+    │   │     },
+    │   │     {
+    │   │       "content": [
+    │   │         {
+    │   │           "text": "I'll run the e2e-flue-skill. Let me first read the skill file to understand its instructions.",
+    │   │           "type": "text"
+    │   │         },
+    │   │         {
+    │   │           "arguments": {
+    │   │             "path": ".agents/e2e-flue-skill.md"
+    │   │           },
+    │   │           "id": "<span:1>",
+    │   │           "name": "read",
+    │   │           "type": "toolCall"
+    │   │         }
+    │   │       ],
+    │   │       "role": "assistant"
+    │   │     },
+    │   │     {
+    │   │       "content": [
+    │   │         {
+    │   │           "text": "ENOENT: no such file or directory, open '<repo>/e2e/scenarios/flue-instrumentation/.agents/e2e-flue-skill.md'",
+    │   │           "type": "text"
+    │   │         }
+    │   │       ],
+    │   │       "isError": true,
+    │   │       "role": "toolResult",
+    │   │       "toolCallId": "<span:1>",
+    │   │       "toolName": "read"
+    │   │     },
+    │   │     {
+    │   │       "content": [
+    │   │         {
+    │   │           "arguments": {
+    │   │             "path": ".agents"
+    │   │           },
+    │   │           "id": "<span:2>",
+    │   │           "name": "read",
+    │   │           "type": "toolCall"
+    │   │         }
+    │   │       ],
+    │   │       "role": "assistant"
+    │   │     },
+    │   │     {
+    │   │       "content": [
+    │   │         {
+    │   │           "text": "skills",
+    │   │           "type": "text"
+    │   │         }
+    │   │       ],
+    │   │       "isError": false,
+    │   │       "role": "toolResult",
+    │   │       "toolCallId": "<span:2>",
+    │   │       "toolName": "read"
+    │   │     }
+    │   │   ]
+    │   │   output: {
+    │   │     "content": [
+    │   │       {
+    │   │         "arguments": {
+    │   │           "path": ".agents/skills"
+    │   │         },
+    │   │         "id": "<span:1>",
+    │   │         "name": "read",
+    │   │         "type": "toolCall"
+    │   │       }
+    │   │     ],
+    │   │     "role": "assistant"
+    │   │   }
+    │   │   metadata: {
+    │   │     "flue.api": "anthropic-messages",
+    │   │     "flue.model": "claude-sonnet-4-5-20250929",
+    │   │     "flue.provider": "anthropic",
+    │   │     "flue.session": "skill",
+    │   │     "flue.stop_reason": "toolUse",
+    │   │     "flue.turn_purpose": "agent",
+    │   │     "model": "claude-sonnet-4-5-20250929",
+    │   │     "provider": "anthropic"
+    │   │   }
+    │   │   metrics: {
+    │   │     "completion_tokens": 54,
+    │   │     "duration_ms": 0,
+    │   │     "estimated_cost": 0.0016611,
+    │   │     "prompt_cache_creation_tokens": 66,
+    │   │     "prompt_cached_tokens": 1952,
+    │   │     "prompt_tokens": 6,
+    │   │     "tokens": 2078
+    │   │   }
+    │   ├── tool:read [tool]
+    │   │   input: {
+    │   │     "path": ".agents/skills"
+    │   │   }
+    │   │   output: {
+    │   │     "content": [
+    │   │       {
+    │   │         "text": "e2e-flue-skill",
+    │   │         "type": "text"
+    │   │       }
+    │   │     ],
+    │   │     "details": {
+    │   │       "entries": 1,
+    │   │       "isDirectory": true,
+    │   │       "path": ".agents/skills"
+    │   │     }
+    │   │   }
+    │   │   metadata: {
+    │   │     "flue.session": "skill",
+    │   │     "flue.tool_name": "read",
+    │   │     "provider": "flue"
+    │   │   }
+    │   │   metrics: {
+    │   │     "duration_ms": 0
+    │   │   }
+    │   ├── llm:claude-sonnet-4-5-20250929 [llm]
+    │   │   input: [
+    │   │     {
+    │   │       "content": [
+    │   │         {
+    │   │           "text": "Run the skill named \"e2e-flue-skill\".\n\nArguments:\n{\n  \"marker\": \"SKILL_DONE\"\n}",
+    │   │           "type": "text"
+    │   │         }
+    │   │       ],
+    │   │       "role": "user"
+    │   │     },
+    │   │     {
+    │   │       "content": [
+    │   │         {
+    │   │           "text": "I'll run the e2e-flue-skill. Let me first read the skill file to understand its instructions.",
+    │   │           "type": "text"
+    │   │         },
+    │   │         {
+    │   │           "arguments": {
+    │   │             "path": ".agents/e2e-flue-skill.md"
+    │   │           },
+    │   │           "id": "<span:1>",
+    │   │           "name": "read",
+    │   │           "type": "toolCall"
+    │   │         }
+    │   │       ],
+    │   │       "role": "assistant"
+    │   │     },
+    │   │     {
+    │   │       "content": [
+    │   │         {
+    │   │           "text": "ENOENT: no such file or directory, open '<repo>/e2e/scenarios/flue-instrumentation/.agents/e2e-flue-skill.md'",
+    │   │           "type": "text"
+    │   │         }
+    │   │       ],
+    │   │       "isError": true,
+    │   │       "role": "toolResult",
+    │   │       "toolCallId": "<span:1>",
+    │   │       "toolName": "read"
+    │   │     },
+    │   │     {
+    │   │       "content": [
+    │   │         {
+    │   │           "arguments": {
+    │   │             "path": ".agents"
+    │   │           },
+    │   │           "id": "<span:2>",
+    │   │           "name": "read",
+    │   │           "type": "toolCall"
+    │   │         }
+    │   │       ],
+    │   │       "role": "assistant"
+    │   │     },
+    │   │     {
+    │   │       "content": [
+    │   │         {
+    │   │           "text": "skills",
+    │   │           "type": "text"
+    │   │         }
+    │   │       ],
+    │   │       "isError": false,
+    │   │       "role": "toolResult",
+    │   │       "toolCallId": "<span:2>",
+    │   │       "toolName": "read"
+    │   │     },
+    │   │     {
+    │   │       "content": [
+    │   │         {
+    │   │           "arguments": {
+    │   │             "path": ".agents/skills"
+    │   │           },
+    │   │           "id": "<span:3>",
+    │   │           "name": "read",
+    │   │           "type": "toolCall"
+    │   │         }
+    │   │       ],
+    │   │       "role": "assistant"
+    │   │     },
+    │   │     {
+    │   │       "content": [
+    │   │         {
+    │   │           "text": "e2e-flue-skill",
+    │   │           "type": "text"
+    │   │         }
+    │   │       ],
+    │   │       "isError": false,
+    │   │       "role": "toolResult",
+    │   │       "toolCallId": "<span:3>",
+    │   │       "toolName": "read"
+    │   │     }
+    │   │   ]
+    │   │   output: {
+    │   │     "content": [
+    │   │       {
+    │   │         "arguments": {
+    │   │           "path": ".agents/skills/e2e-flue-skill"
+    │   │         },
+    │   │         "id": "<span:1>",
+    │   │         "name": "read",
+    │   │         "type": "toolCall"
+    │   │       }
+    │   │     ],
+    │   │     "role": "assistant"
+    │   │   }
+    │   │   metadata: {
+    │   │     "flue.api": "anthropic-messages",
+    │   │     "flue.model": "claude-sonnet-4-5-20250929",
+    │   │     "flue.provider": "anthropic",
+    │   │     "flue.session": "skill",
+    │   │     "flue.stop_reason": "toolUse",
+    │   │     "flue.turn_purpose": "agent",
+    │   │     "model": "claude-sonnet-4-5-20250929",
+    │   │     "provider": "anthropic"
+    │   │   }
+    │   │   metrics: {
+    │   │     "completion_tokens": 63,
+    │   │     "duration_ms": 0,
+    │   │     "estimated_cost": 0.0018459,
+    │   │     "prompt_cache_creation_tokens": 74,
+    │   │     "prompt_cached_tokens": 2018,
+    │   │     "prompt_tokens": 6,
+    │   │     "tokens": 2161
+    │   │   }
+    │   ├── tool:read [tool]
+    │   │   input: {
+    │   │     "path": ".agents/skills/e2e-flue-skill"
+    │   │   }
+    │   │   output: {
+    │   │     "content": [
+    │   │       {
+    │   │         "text": "SKILL.md",
+    │   │         "type": "text"
+    │   │       }
+    │   │     ],
+    │   │     "details": {
+    │   │       "entries": 1,
+    │   │       "isDirectory": true,
+    │   │       "path": ".agents/skills/e2e-flue-skill"
+    │   │     }
+    │   │   }
+    │   │   metadata: {
+    │   │     "flue.session": "skill",
+    │   │     "flue.tool_name": "read",
+    │   │     "provider": "flue"
+    │   │   }
+    │   │   metrics: {
+    │   │     "duration_ms": 0
+    │   │   }
+    │   ├── llm:claude-sonnet-4-5-20250929 [llm]
+    │   │   input: [
+    │   │     {
+    │   │       "content": [
+    │   │         {
+    │   │           "text": "Run the skill named \"e2e-flue-skill\".\n\nArguments:\n{\n  \"marker\": \"SKILL_DONE\"\n}",
+    │   │           "type": "text"
+    │   │         }
+    │   │       ],
+    │   │       "role": "user"
+    │   │     },
+    │   │     {
+    │   │       "content": [
+    │   │         {
+    │   │           "text": "I'll run the e2e-flue-skill. Let me first read the skill file to understand its instructions.",
+    │   │           "type": "text"
+    │   │         },
+    │   │         {
+    │   │           "arguments": {
+    │   │             "path": ".agents/e2e-flue-skill.md"
+    │   │           },
+    │   │           "id": "<span:1>",
+    │   │           "name": "read",
+    │   │           "type": "toolCall"
+    │   │         }
+    │   │       ],
+    │   │       "role": "assistant"
+    │   │     },
+    │   │     {
+    │   │       "content": [
+    │   │         {
+    │   │           "text": "ENOENT: no such file or directory, open '<repo>/e2e/scenarios/flue-instrumentation/.agents/e2e-flue-skill.md'",
+    │   │           "type": "text"
+    │   │         }
+    │   │       ],
+    │   │       "isError": true,
+    │   │       "role": "toolResult",
+    │   │       "toolCallId": "<span:1>",
+    │   │       "toolName": "read"
+    │   │     },
+    │   │     {
+    │   │       "content": [
+    │   │         {
+    │   │           "arguments": {
+    │   │             "path": ".agents"
+    │   │           },
+    │   │           "id": "<span:2>",
+    │   │           "name": "read",
+    │   │           "type": "toolCall"
+    │   │         }
+    │   │       ],
+    │   │       "role": "assistant"
+    │   │     },
+    │   │     {
+    │   │       "content": [
+    │   │         {
+    │   │           "text": "skills",
+    │   │           "type": "text"
+    │   │         }
+    │   │       ],
+    │   │       "isError": false,
+    │   │       "role": "toolResult",
+    │   │       "toolCallId": "<span:2>",
+    │   │       "toolName": "read"
+    │   │     },
+    │   │     {
+    │   │       "content": [
+    │   │         {
+    │   │           "arguments": {
+    │   │             "path": ".agents/skills"
+    │   │           },
+    │   │           "id": "<span:3>",
+    │   │           "name": "read",
+    │   │           "type": "toolCall"
+    │   │         }
+    │   │       ],
+    │   │       "role": "assistant"
+    │   │     },
+    │   │     {
+    │   │       "content": [
+    │   │         {
+    │   │           "text": "e2e-flue-skill",
+    │   │           "type": "text"
+    │   │         }
+    │   │       ],
+    │   │       "isError": false,
+    │   │       "role": "toolResult",
+    │   │       "toolCallId": "<span:3>",
+    │   │       "toolName": "read"
+    │   │     },
+    │   │     {
+    │   │       "content": [
+    │   │         {
+    │   │           "arguments": {
+    │   │             "path": ".agents/skills/e2e-flue-skill"
+    │   │           },
+    │   │           "id": "<span:4>",
+    │   │           "name": "read",
+    │   │           "type": "toolCall"
+    │   │         }
+    │   │       ],
+    │   │       "role": "assistant"
+    │   │     },
+    │   │     {
+    │   │       "content": [
+    │   │         {
+    │   │           "text": "SKILL.md",
+    │   │           "type": "text"
+    │   │         }
+    │   │       ],
+    │   │       "isError": false,
+    │   │       "role": "toolResult",
+    │   │       "toolCallId": "<span:4>",
+    │   │       "toolName": "read"
+    │   │     }
+    │   │   ]
+    │   │   output: {
+    │   │     "content": [
+    │   │       {
+    │   │         "arguments": {
+    │   │           "path": ".agents/skills/e2e-flue-skill/SKILL.md"
+    │   │         },
+    │   │         "id": "<span:1>",
+    │   │         "name": "read",
+    │   │         "type": "toolCall"
+    │   │       }
+    │   │     ],
+    │   │     "role": "assistant"
+    │   │   }
+    │   │   metadata: {
+    │   │     "flue.api": "anthropic-messages",
+    │   │     "flue.model": "claude-sonnet-4-5-20250929",
+    │   │     "flue.provider": "anthropic",
+    │   │     "flue.session": "skill",
+    │   │     "flue.stop_reason": "toolUse",
+    │   │     "flue.turn_purpose": "agent",
+    │   │     "model": "claude-sonnet-4-5-20250929",
+    │   │     "provider": "anthropic"
+    │   │   }
+    │   │   metrics: {
+    │   │     "completion_tokens": 68,
+    │   │     "duration_ms": 0,
+    │   │     "estimated_cost": 0.0019618500000000002,
+    │   │     "prompt_cache_creation_tokens": 79,
+    │   │     "prompt_cached_tokens": 2092,
+    │   │     "prompt_tokens": 6,
+    │   │     "tokens": 2245
+    │   │   }
+    │   ├── tool:read [tool]
+    │   │   input: {
+    │   │     "path": ".agents/skills/e2e-flue-skill/SKILL.md"
+    │   │   }
+    │   │   output: {
+    │   │     "content": [
+    │   │       {
+    │   │         "text": "---\nname: e2e-flue-skill\ndescription: Deterministic skill used by the Braintrust Flue instrumentation e2e test.\n---\n\nReturn the marker from the provided args exactly once. Output no other text.\n",
+    │   │         "type": "text"
+    │   │       }
+    │   │     ],
+    │   │     "details": {
+    │   │       "lines": 7,
+    │   │       "path": ".agents/skills/e2e-flue-skill/SKILL.md"
+    │   │     }
+    │   │   }
+    │   │   metadata: {
+    │   │     "flue.session": "skill",
+    │   │     "flue.tool_name": "read",
+    │   │     "provider": "flue"
+    │   │   }
+    │   │   metrics: {
+    │   │     "duration_ms": 0
+    │   │   }
+    │   └── llm:claude-sonnet-4-5-20250929 [llm]
+    │       input: [
+    │         {
+    │           "content": [
+    │             {
+    │               "text": "Run the skill named \"e2e-flue-skill\".\n\nArguments:\n{\n  \"marker\": \"SKILL_DONE\"\n}",
+    │               "type": "text"
+    │             }
+    │           ],
+    │           "role": "user"
+    │         },
+    │         {
+    │           "content": [
+    │             {
+    │               "text": "I'll run the e2e-flue-skill. Let me first read the skill file to understand its instructions.",
+    │               "type": "text"
+    │             },
+    │             {
+    │               "arguments": {
+    │                 "path": ".agents/e2e-flue-skill.md"
+    │               },
+    │               "id": "<span:1>",
+    │               "name": "read",
+    │               "type": "toolCall"
+    │             }
+    │           ],
+    │           "role": "assistant"
+    │         },
+    │         {
+    │           "content": [
+    │             {
+    │               "text": "ENOENT: no such file or directory, open '<repo>/e2e/scenarios/flue-instrumentation/.agents/e2e-flue-skill.md'",
+    │               "type": "text"
+    │             }
+    │           ],
+    │           "isError": true,
+    │           "role": "toolResult",
+    │           "toolCallId": "<span:1>",
+    │           "toolName": "read"
+    │         },
+    │         {
+    │           "content": [
+    │             {
+    │               "arguments": {
+    │                 "path": ".agents"
+    │               },
+    │               "id": "<span:2>",
+    │               "name": "read",
+    │               "type": "toolCall"
+    │             }
+    │           ],
+    │           "role": "assistant"
+    │         },
+    │         {
+    │           "content": [
+    │             {
+    │               "text": "skills",
+    │               "type": "text"
+    │             }
+    │           ],
+    │           "isError": false,
+    │           "role": "toolResult",
+    │           "toolCallId": "<span:2>",
+    │           "toolName": "read"
+    │         },
+    │         {
+    │           "content": [
+    │             {
+    │               "arguments": {
+    │                 "path": ".agents/skills"
+    │               },
+    │               "id": "<span:3>",
+    │               "name": "read",
+    │               "type": "toolCall"
+    │             }
+    │           ],
+    │           "role": "assistant"
+    │         },
+    │         {
+    │           "content": [
+    │             {
+    │               "text": "e2e-flue-skill",
+    │               "type": "text"
+    │             }
+    │           ],
+    │           "isError": false,
+    │           "role": "toolResult",
+    │           "toolCallId": "<span:3>",
+    │           "toolName": "read"
+    │         },
+    │         {
+    │           "content": [
+    │             {
+    │               "arguments": {
+    │                 "path": ".agents/skills/e2e-flue-skill"
+    │               },
+    │               "id": "<span:4>",
+    │               "name": "read",
+    │               "type": "toolCall"
+    │             }
+    │           ],
+    │           "role": "assistant"
+    │         },
+    │         {
+    │           "content": [
+    │             {
+    │               "text": "SKILL.md",
+    │               "type": "text"
+    │             }
+    │           ],
+    │           "isError": false,
+    │           "role": "toolResult",
+    │           "toolCallId": "<span:4>",
+    │           "toolName": "read"
+    │         },
+    │         {
+    │           "content": [
+    │             {
+    │               "arguments": {
+    │                 "path": ".agents/skills/e2e-flue-skill/SKILL.md"
+    │               },
+    │               "id": "<span:5>",
+    │               "name": "read",
+    │               "type": "toolCall"
+    │             }
+    │           ],
+    │           "role": "assistant"
+    │         },
+    │         {
+    │           "content": [
+    │             {
+    │               "text": "---\nname: e2e-flue-skill\ndescription: Deterministic skill used by the Braintrust Flue instrumentation e2e test.\n---\n\nReturn the marker from the provided args exactly once. Output no other text.\n",
+    │               "type": "text"
+    │             }
+    │           ],
+    │           "isError": false,
+    │           "role": "toolResult",
+    │           "toolCallId": "<span:5>",
+    │           "toolName": "read"
+    │         }
+    │       ]
+    │       output: {
+    │         "content": [
+    │           {
+    │             "text": "SKILL_DONE",
+    │             "type": "text"
+    │           }
+    │         ],
+    │         "role": "assistant"
+    │       }
+    │       metadata: {
+    │         "flue.api": "anthropic-messages",
+    │         "flue.model": "claude-sonnet-4-5-20250929",
+    │         "flue.provider": "anthropic",
+    │         "flue.session": "skill",
+    │         "flue.stop_reason": "stop",
+    │         "flue.turn_purpose": "agent",
+    │         "model": "claude-sonnet-4-5-20250929",
+    │         "provider": "anthropic"
+    │       }
+    │       metrics: {
+    │         "completion_tokens": 8,
+    │         "duration_ms": 0,
+    │         "estimated_cost": 0.00129555,
+    │         "prompt_cache_creation_tokens": 135,
+    │         "prompt_cached_tokens": 2171,
+    │         "prompt_tokens": 6,
+    │         "tokens": 2320
+    │       }
+    ├── flue.task [task]
+    │   input: "Reply with exactly TASK_DONE and no other text."
+    │   output: "TASK_DONE"
+    │   metadata: {
+    │     "flue.session": "task",
+    │     "provider": "flue"
+    │   }
+    │   metrics: {
+    │     "duration_ms": 0
+    │   }
+    │   └── llm:gpt-4o-mini [llm]
+    │       input: [
+    │         {
+    │           "content": [
+    │             {
+    │               "text": "Reply with exactly TASK_DONE and no other text.",
+    │               "type": "text"
+    │             }
+    │           ],
+    │           "role": "user"
+    │         }
+    │       ]
+    │       output: {
+    │         "content": [
+    │           {
+    │             "text": "TASK_DONE",
+    │             "textSignature": "{\"v\":1,\"id\":\"msg_09b32b2821e9a4d8016a184600019081929d34bb7d4c6a246f\"}",
+    │             "type": "text"
+    │           }
+    │         ],
+    │         "role": "assistant"
+    │       }
+    │       metadata: {
+    │         "flue.api": "openai-responses",
+    │         "flue.model": "gpt-4o-mini",
+    │         "flue.provider": "openai",
+    │         "flue.session": "task:task:<uuid:1>",
+    │         "flue.stop_reason": "stop",
+    │         "flue.turn_purpose": "agent",
+    │         "model": "gpt-4o-mini",
+    │         "provider": "openai"
+    │       }
+    │       metrics: {
+    │         "completion_tokens": 4,
+    │         "duration_ms": 0,
+    │         "estimated_cost": 0.00012299999999999998,
+    │         "prompt_cache_creation_tokens": 0,
+    │         "prompt_cached_tokens": 0,
+    │         "prompt_tokens": 804,
+    │         "tokens": 808
+    │       }
+    └── flue.compact [task]
+        input: {
+          "estimatedTokens": 2950,
+          "reason": "manual"
+        }
+        output: {
+          "completed": true
+        }
+        metadata: {
+          "flue.operation": "compact",
+          "flue.session": "main",
+          "provider": "flue"
+        }
+        metrics: {
+          "duration_ms": 0
+        }
+        └── compaction:manual [task]
+            input: {
+              "estimatedTokens": 2950,
+              "reason": "manual"
+            }
+            output: {
+              "messagesAfter": 2,
+              "messagesBefore": 8
+            }
+            metadata: {
+              "flue.compaction_reason": "manual",
+              "flue.session": "main",
+              "provider": "flue"
+            }
+            metrics: {
+              "duration_ms": 0,
+              "messages_after": 2,
+              "messages_before": 8
+            }
+            └── llm:gpt-4o-mini [llm]
+                input: [
+                  {
+                    "content": [
+                      {
+                        "text": "<conversation>\n[User]: Complete this instrumented research flow. Call exactly one tool per turn and wait for each tool result before choosing the next tool. Step 1: call lookup with query \"flue instrumentation\". Step 2: use the lookup result id as lookupId and call web_search with query \"Braintrust Flue reasoning stream instrumentation\". Step 3: use the first web_search result url and call summarize_source. After summarize_source returns, reply with exactly PROMPT_DONE and no other text.\n\n[Assistant thinking]: The user wants me to complete a research flow with exactly three steps:\n1. Call lookup with query \"flue instrumentation\"\n2. Call web_search with the lookupId from step 1 and query \"Braintrust Flue reasoning stream instrumentation\"\n3. Call summarize_source with the first URL from step 2\n4. Reply with exactly \"PROMPT_DONE\"\n\nThe user emphasizes I should call exactly one tool per turn and wait for each result. Let me start with step 1.\n\n[Assistant]: I'll complete this instrumented research flow step by step. Starting with Step 1:\n\n[Assistant tool calls]: lookup(query=\"flue instrumentation\")\n\n[Tool result]: {\"id\":\"flue-session-2026\",\"query\":\"flue instrumentation\",\"topic\":\"session instrumentation\"}\n\n[Assistant thinking]: Good, I got the lookup result with id \"flue-session-2026\". Now I need to proceed to step 2: call web_search with this lookupId and the query \"Braintrust Flue reasoning stream instrumentation\".\n\n[Assistant]: Now proceeding to Step 2:\n\n[Assistant tool calls]: web_search(lookupId=\"flue-session-2026\", query=\"Braintrust Flue reasoning stream instrumentation\")\n\n[Tool result]: {\"lookupId\":\"flue-session-2026\",\"query\":\"Braintrust Flue reasoning stream instrumentation\",\"results\":[{\"title\":\"Flue reasoning stream instrumentation\",\"url\":\"https://example.test/flue/reasoning-streams\"}]}\n\n[Assistant thinking]: Perfect! I got the web_search results with one result. The first (and only) result has the URL \"https://example.test/flue/reasoning-streams\". Now I need to proceed to step 3: call summarize_source with this URL.\n\n[Assistant]: Now proceeding to Step 3:\n\n[Assistant tool calls]: summarize_source(url=\"https://example.test/flue/reasoning-streams\")\n\n[Tool result]: {\"summary\":\"Flue emits reasoning, tool execution, and LLM turn events separately.\",\"url\":\"https://example.test/flue/reasoning-streams\"}\n</conversation>\n\nThis is the PREFIX of a turn that was too large to keep. The SUFFIX (recent work) is retained.\n\nSummarize the prefix to provide context for the retained suffix:\n\n## Original Request\n[What did the user ask for in this turn?]\n\n## Early Progress\n- [Key decisions and work done in the prefix]\n\n## Context for Suffix\n- [Information needed to understand the retained recent work]\n\nBe concise. Focus on what's needed to understand the kept suffix.",
+                        "type": "text"
+                      }
+                    ],
+                    "role": "user"
+                  }
+                ]
+                output: {
+                  "content": [
+                    {
+                      "text": "## Original Request\nThe user requested to complete an instrumented research flow consisting of three specific steps, involving calling various tools in a sequential manner.\n\n## Early Progress",
+                      "textSignature": "{\"v\":1,\"id\":\"msg_01ecf68325f9e202016a184601309081a0878ef4054e950d32\"}",
+                      "type": "text"
+                    }
+                  ],
+                  "role": "assistant"
+                }
+                metadata: {
+                  "flue.api": "openai-responses",
+                  "flue.model": "gpt-4o-mini",
+                  "flue.provider": "openai",
+                  "flue.session": "main",
+                  "flue.stop_reason": "stop",
+                  "flue.turn_purpose": "compaction_prefix",
+                  "model": "gpt-4o-mini",
+                  "provider": "openai"
+                }
+                metrics: {
+                  "completion_tokens": 0,
+                  "duration_ms": 0,
+                  "estimated_cost": 0,
+                  "prompt_cache_creation_tokens": 0,
+                  "prompt_cached_tokens": 0,
+                  "prompt_tokens": 0,
+                  "tokens": 0
+                }

@@ -1,88 +1,65 @@
 import { BasePlugin } from "../core";
 import type { ChannelMessage } from "../core/channel-definitions";
 import type { IsoChannelHandlers } from "../../isomorph";
-import {
-  _internalGetGlobalState,
-  BRAINTRUST_CURRENT_SPAN_STORE,
-  startSpan,
-  withCurrent,
-} from "../../logger";
-import type { CurrentSpanStore, Span } from "../../logger";
-import { getCurrentUnixTimestamp, isObject } from "../../util";
+import { flush, startSpan, withCurrent } from "../../logger";
+import type { Span, StartSpanArgs } from "../../logger";
 import { SpanTypeAttribute } from "../../../util/index";
-import {
-  patchFlueContextInPlace,
-  patchFlueSessionInPlace,
-  subscribeFlueContextEvents,
-  wrapFlueHarness,
-} from "../../wrappers/flue";
 import { flueChannels } from "./flue-channels";
 import type {
   FlueBaseEvent,
-  FlueCallOptions,
   FlueCompactionEvent,
   FlueCompactionStartEvent,
+  FlueContext,
   FlueEvent,
+  FlueObservableContext,
   FlueOperationEvent,
   FlueOperationKind,
   FlueOperationStartEvent,
-  FluePromptResponse,
-  FlueSession,
-  FlueSkillOptions,
+  FlueRunEndEvent,
+  FlueRunStartEvent,
+  FlueRuntimeOperationKind,
   FlueTaskEvent,
-  FlueTaskOptions,
   FlueTaskStartEvent,
-  FlueThinkingDeltaEvent,
-  FlueThinkingEndEvent,
   FlueToolCallEvent,
   FlueToolStartEvent,
   FlueTurnEvent,
-  FlueUsage,
+  FlueTurnRequestEvent,
 } from "../../vendor-sdk-types/flue";
 
-type OperationState = {
-  metadata: Record<string, unknown>;
-  operation: FlueOperationKind;
-  operationId?: string;
-  sessionName?: string;
-  span: Span;
-  startTime: number;
+type FlueObserver = (event: unknown, ctx?: unknown) => void;
+
+type FlueAutoState = {
+  channel?: ReturnType<typeof flueChannels.createContext.tracingChannel>;
+  contexts: WeakSet<object>;
+  handlers?: IsoChannelHandlers<
+    ChannelMessage<typeof flueChannels.createContext>
+  >;
+  refCount: number;
 };
 
 type SpanState = {
-  input?: unknown;
+  loggedInput?: boolean;
   metadata: Record<string, unknown>;
-  operationState?: OperationState;
   span: Span;
-  startTime: number;
 };
 
-type TurnState = SpanState & {
-  finalThinking?: string;
-  hasThinking: boolean;
-  text: string[];
-  thinking: string[];
-  toolCalls: Array<{
-    args?: unknown;
-    toolCallId?: string;
-    toolName?: string;
-  }>;
+const FLUE_AUTO_STATE = Symbol.for("braintrust.flue.auto-state");
+const FLUE_OBSERVE_BRIDGE = Symbol.for("braintrust.flue.observe-bridge");
+
+/**
+ * Braintrust's Flue observe subscriber.
+ *
+ * Pass this directly to @flue/runtime/app.observe:
+ *
+ *   const unsubscribe = observe(braintrustFlueObserver);
+ */
+export const braintrustFlueObserver: FlueObserver = (event, ctx) => {
+  getObserveBridge().handle(event, ctx);
 };
 
 export class FluePlugin extends BasePlugin {
-  private activeOperationsById = new Map<string, OperationState>();
-  private activeOperationsByScope = new Map<string, OperationState[]>();
-  private compactionsByScope = new Map<string, SpanState>();
-  private pendingOperationsByKey = new Map<string, OperationState[]>();
-  private tasksById = new Map<string, SpanState>();
-  private toolsById = new Map<string, SpanState>();
-  private turnsByScope = new Map<string, TurnState>();
-
   protected onEnable(): void {
-    this.subscribeToContextCreation();
-    this.subscribeToSessionCreation();
-    this.subscribeToContextEvents();
-    this.subscribeToSessionOperations();
+    this.unsubscribers.push(enableFlueAutoInstrumentation());
   }
 
   protected onDisable(): void {
@@ -90,582 +67,483 @@ export class FluePlugin extends BasePlugin {
       unsubscribe();
     }
     this.unsubscribers = [];
-    this.activeOperationsById.clear();
-    this.activeOperationsByScope.clear();
-    this.compactionsByScope.clear();
-    this.pendingOperationsByKey.clear();
-    this.tasksById.clear();
-    this.toolsById.clear();
-    this.turnsByScope.clear();
   }
+}
 
-  private subscribeToContextCreation(): void {
+function enableFlueAutoInstrumentation(): () => void {
+  const state = getAutoState();
+  state.refCount += 1;
+
+  if (!state.handlers) {
     const channel = flueChannels.createContext.tracingChannel();
     const handlers: IsoChannelHandlers<
       ChannelMessage<typeof flueChannels.createContext>
     > = {
       end: (event) => {
-        const ctx = event.result;
-        if (!ctx) {
-          return;
-        }
-        subscribeFlueContextEvents(ctx, { captureTurnSpans: false });
-        patchFlueContextInPlace(ctx);
+        subscribeToFlueContext(event.result, state);
       },
-      error: () => {},
     };
 
     channel.subscribe(handlers);
-    this.unsubscribers.push(() => {
-      channel.unsubscribe(handlers);
-    });
+    state.channel = channel;
+    state.handlers = handlers;
   }
 
-  private subscribeToSessionCreation(): void {
-    const channel = flueChannels.openSession.tracingChannel();
-    const handlers: IsoChannelHandlers<
-      ChannelMessage<typeof flueChannels.openSession>
-    > = {
-      asyncEnd: (event) => {
-        if (event.result) {
-          patchFlueSessionInPlace(
-            event.result as FlueSession & Record<PropertyKey, unknown>,
-          );
-        }
-        if (event.harness) {
-          wrapFlueHarness(event.harness);
-        }
-      },
-      error: () => {},
-    };
-
-    channel.subscribe(handlers);
-    this.unsubscribers.push(() => {
-      channel.unsubscribe(handlers);
-    });
-  }
-
-  private subscribeToSessionOperations(): void {
-    this.subscribeToSessionOperation(flueChannels.prompt);
-    this.subscribeToSessionOperation(flueChannels.skill);
-    this.subscribeToSessionOperation(flueChannels.task);
-    this.subscribeToCompact();
-  }
-
-  private subscribeToSessionOperation(
-    channel:
-      | typeof flueChannels.prompt
-      | typeof flueChannels.skill
-      | typeof flueChannels.task,
-  ): void {
-    const tracingChannel = channel.tracingChannel();
-    const states = new WeakMap<object, OperationState>();
-    const ensureState = (
-      event: ChannelMessage<typeof channel>,
-    ): OperationState => {
-      const existing = states.get(event);
-      if (existing) {
-        return existing;
-      }
-      const state = this.startOperationState({
-        args: event.arguments,
-        moduleVersion:
-          typeof event.moduleVersion === "string"
-            ? event.moduleVersion
-            : undefined,
-        operation: event.operation,
-        session: event.session,
-      });
-      states.set(event, state);
-      return state;
-    };
-    const unbindCurrentSpanStore = this.bindCurrentSpanStoreToOperationStart(
-      tracingChannel,
-      ensureState,
-    );
-    const handlers: IsoChannelHandlers<ChannelMessage<typeof channel>> = {
-      start: (event) => {
-        ensureState(event);
-      },
-      asyncEnd: (event) => {
-        this.endOperationState(states.get(event), event.result);
-        states.delete(event);
-      },
-      error: (event) => {
-        const state = states.get(event);
-        if (state && event.error) {
-          safeLog(state.span, { error: errorToString(event.error) });
-          this.finishOperationState(state);
-        }
-        states.delete(event);
-      },
-    };
-
-    tracingChannel.subscribe(handlers);
-    this.unsubscribers.push(() => {
-      unbindCurrentSpanStore?.();
-      tracingChannel.unsubscribe(handlers);
-    });
-  }
-
-  private subscribeToCompact(): void {
-    const tracingChannel = flueChannels.compact.tracingChannel();
-    const states = new WeakMap<object, OperationState>();
-    const ensureState = (
-      event: ChannelMessage<typeof flueChannels.compact>,
-    ): OperationState => {
-      const existing = states.get(event);
-      if (existing) {
-        return existing;
-      }
-      const state = this.startOperationState({
-        args: [],
-        moduleVersion:
-          typeof event.moduleVersion === "string"
-            ? event.moduleVersion
-            : undefined,
-        operation: event.operation,
-        session: event.session,
-      });
-      states.set(event, state);
-      return state;
-    };
-    const unbindCurrentSpanStore = this.bindCurrentSpanStoreToOperationStart(
-      tracingChannel,
-      ensureState,
-    );
-    const handlers: IsoChannelHandlers<
-      ChannelMessage<typeof flueChannels.compact>
-    > = {
-      start: (event) => {
-        ensureState(event);
-      },
-      asyncEnd: (event) => {
-        this.endOperationState(states.get(event), undefined);
-        states.delete(event);
-      },
-      error: (event) => {
-        const state = states.get(event);
-        if (state && event.error) {
-          safeLog(state.span, { error: errorToString(event.error) });
-          this.finishOperationState(state);
-        }
-        states.delete(event);
-      },
-    };
-
-    tracingChannel.subscribe(handlers);
-    this.unsubscribers.push(() => {
-      unbindCurrentSpanStore?.();
-      tracingChannel.unsubscribe(handlers);
-    });
-  }
-
-  private subscribeToContextEvents(): void {
-    const channel = flueChannels.contextEvent.tracingChannel();
-    const handlers: IsoChannelHandlers<
-      ChannelMessage<typeof flueChannels.contextEvent>
-    > = {
-      start: (event) => {
-        const flueEvent = event.arguments[0];
-        if (!flueEvent) {
-          return;
-        }
-
-        try {
-          this.handleFlueEvent(flueEvent, {
-            captureTurnSpans: event.captureTurnSpans !== false,
-          });
-        } catch (error) {
-          logInstrumentationError("Flue event", error);
-        }
-      },
-      error: () => {},
-    };
-
-    channel.subscribe(handlers);
-    this.unsubscribers.push(() => {
-      channel.unsubscribe(handlers);
-    });
-  }
-
-  private bindCurrentSpanStoreToOperationStart<TEvent extends object>(
-    tracingChannel: {
-      start?: {
-        bindStore<T>(
-          store: CurrentSpanStore,
-          transform: (event: TEvent) => T,
-        ): void;
-        unbindStore(store: CurrentSpanStore): boolean;
-      };
-    },
-    ensureState: (event: TEvent) => OperationState,
-  ): (() => void) | undefined {
-    const state = _internalGetGlobalState();
-    const startChannel = tracingChannel.start;
-    const contextManager = state?.contextManager;
-    const currentSpanStore = contextManager
-      ? (
-          contextManager as {
-            [BRAINTRUST_CURRENT_SPAN_STORE]?: CurrentSpanStore;
-          }
-        )[BRAINTRUST_CURRENT_SPAN_STORE]
-      : undefined;
-
-    if (!currentSpanStore || !startChannel) {
-      return undefined;
-    }
-
-    startChannel.bindStore(currentSpanStore, (event: TEvent) => {
-      const operationState = ensureState(event);
-      return contextManager!.wrapSpanForStore(operationState.span);
-    });
-
-    return () => {
-      startChannel.unbindStore(currentSpanStore);
-    };
-  }
-
-  private startOperationState(args: {
-    args: ArrayLike<unknown>;
-    moduleVersion?: string;
-    operation: FlueOperationKind;
-    session?: FlueSession;
-  }): OperationState {
-    const sessionName = getSessionName(args.session);
-    const metadata = {
-      ...extractOperationInputMetadata(args.operation, args.args),
-      ...extractSessionMetadata(args.session),
-      "flue.operation": args.operation,
-      provider: "flue",
-      ...(args.moduleVersion ? { "flue.version": args.moduleVersion } : {}),
-    };
-    const span = startSpan({
-      name: `flue.session.${args.operation}`,
-      spanAttributes: { type: SpanTypeAttribute.TASK },
-    });
-    const state: OperationState = {
-      metadata,
-      operation: args.operation,
-      sessionName,
-      span,
-      startTime: getCurrentUnixTimestamp(),
-    };
-
-    safeLog(span, {
-      input: extractOperationInput(args.operation, args.args),
-      metadata,
-    });
-
-    this.pendingOperationQueue(operationKey(sessionName, args.operation)).push(
-      state,
-    );
-    addOperationToScope(
-      this.activeOperationsByScope,
-      sessionName ?? "unknown",
-      state,
-    );
-
-    return state;
-  }
-
-  private endOperationState(
-    state: OperationState | undefined,
-    result: FluePromptResponse | undefined,
-  ): void {
-    if (!state) {
+  let released = false;
+  return () => {
+    if (released) {
       return;
     }
+    released = true;
+    releaseAutoState(state);
+  };
+}
 
-    const metadata = {
-      ...state.metadata,
-      ...extractPromptResponseMetadata(result),
-    };
-    const metrics = {
-      ...buildDurationMetrics(state.startTime),
-      ...metricsFromUsage(result?.usage),
-    };
+function getAutoState(): FlueAutoState {
+  const existing = Reflect.get(globalThis, FLUE_AUTO_STATE);
+  if (isAutoState(existing)) {
+    return existing;
+  }
+  const state: FlueAutoState = {
+    contexts: new WeakSet(),
+    refCount: 0,
+  };
+  Reflect.set(globalThis, FLUE_AUTO_STATE, state);
+  return state;
+}
 
-    safeLog(state.span, {
-      metadata,
-      metrics,
-      output: extractOperationOutput(result),
-    });
-    this.finishCompactionsForOperation(state);
-    this.finishOperationState(state);
+function getObserveBridge(): FlueObserveBridge {
+  const existing = Reflect.get(globalThis, FLUE_OBSERVE_BRIDGE);
+  if (isFlueObserveBridge(existing)) {
+    return existing;
+  }
+  const bridge = new FlueObserveBridge();
+  Reflect.set(globalThis, FLUE_OBSERVE_BRIDGE, bridge);
+  return bridge;
+}
+
+function isFlueObserveBridge(value: unknown): value is FlueObserveBridge {
+  return (
+    isObjectLike(value) &&
+    typeof Reflect.get(value, "handle") === "function" &&
+    typeof Reflect.get(value, "reset") === "function"
+  );
+}
+
+function isAutoState(value: unknown): value is FlueAutoState {
+  return (
+    isObjectLike(value) &&
+    Reflect.get(value, "contexts") instanceof WeakSet &&
+    typeof Reflect.get(value, "refCount") === "number"
+  );
+}
+
+function releaseAutoState(state: FlueAutoState): void {
+  state.refCount -= 1;
+  if (state.refCount > 0) {
+    return;
   }
 
-  private finishOperationState(state: OperationState): void {
-    removePendingOperation(this.pendingOperationsByKey, state);
-    if (state.operationId) {
-      this.activeOperationsById.delete(state.operationId);
+  try {
+    if (state.channel && state.handlers) {
+      state.channel.unsubscribe(state.handlers);
     }
-    removeScopedOperation(this.activeOperationsByScope, state);
-    state.span.end();
+  } finally {
+    Reflect.deleteProperty(globalThis, FLUE_AUTO_STATE);
+  }
+}
+
+function subscribeToFlueContext(value: unknown, state: FlueAutoState): void {
+  if (!isObservableFlueContext(value) || state.contexts.has(value)) {
+    return;
   }
 
-  private handleFlueEvent(
-    event: FlueEvent,
-    options: { captureTurnSpans: boolean },
-  ): void {
+  const ctx = flueContextFromUnknown(value);
+  let released = false;
+  let unsubscribe: (() => void) | undefined;
+  const release = () => {
+    if (released) {
+      return;
+    }
+    released = true;
+    try {
+      unsubscribe?.();
+    } catch (error) {
+      logInstrumentationError("Flue context unsubscribe", error);
+    }
+  };
+
+  try {
+    unsubscribe = value.subscribeEvent((event) => {
+      if (state.refCount <= 0) {
+        release();
+        return;
+      }
+
+      braintrustFlueObserver(event, ctx);
+      if (isAutoContextTerminalEvent(event, ctx)) {
+        release();
+      }
+    });
+    state.contexts.add(value);
+  } catch (error) {
+    logInstrumentationError("Flue context subscription", error);
+  }
+}
+
+function isAutoContextTerminalEvent(
+  event: unknown,
+  ctx: FlueContext | undefined,
+): boolean {
+  if (!isObjectLike(event)) {
+    return false;
+  }
+  const type = Reflect.get(event, "type");
+  if (type === "run_end") {
+    return true;
+  }
+  if (type !== "operation") {
+    return false;
+  }
+  return !ctx?.runId && typeof Reflect.get(event, "runId") !== "string";
+}
+
+function isObservableFlueContext(
+  value: unknown,
+): value is FlueObservableContext {
+  return (
+    isObjectLike(value) &&
+    typeof Reflect.get(value, "subscribeEvent") === "function"
+  );
+}
+
+function isFlueEvent(event: object): event is FlueEvent {
+  const type = Reflect.get(event, "type");
+  return (
+    type === "run_start" ||
+    type === "run_end" ||
+    type === "operation_start" ||
+    type === "operation" ||
+    type === "turn_request" ||
+    type === "turn" ||
+    type === "tool_start" ||
+    type === "tool_call" ||
+    type === "task_start" ||
+    type === "task" ||
+    type === "compaction_start" ||
+    type === "compaction"
+  );
+}
+
+function flueContextFromUnknown(ctx: unknown): FlueContext | undefined {
+  if (!isObjectLike(ctx)) {
+    return undefined;
+  }
+  const id = Reflect.get(ctx, "id");
+  const runId = Reflect.get(ctx, "runId");
+  return {
+    ...(typeof id === "string" ? { id } : {}),
+    ...(typeof runId === "string" ? { runId } : {}),
+  };
+}
+
+function isObjectLike(value: unknown): value is object {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+class FlueObserveBridge {
+  private compactionsByKey = new Map<string, SpanState>();
+  private operationsById = new Map<string, SpanState>();
+  private runsById = new Map<string, SpanState>();
+  private seenEvents = new WeakSet<object>();
+  private tasksById = new Map<string, SpanState>();
+  private toolsByKey = new Map<string, SpanState>();
+  private turnsByKey = new Map<string, SpanState>();
+
+  handle(event: unknown, ctx: unknown): void {
+    if (!isObjectLike(event) || !isFlueEvent(event)) {
+      return;
+    }
+    if (this.seenEvents.has(event)) {
+      return;
+    }
+    this.seenEvents.add(event);
+
+    try {
+      this.handleEvent(event, flueContextFromUnknown(ctx));
+    } catch (error) {
+      logInstrumentationError("Flue observe", error);
+    }
+  }
+
+  reset(): void {
+    this.compactionsByKey.clear();
+    this.operationsById.clear();
+    this.runsById.clear();
+    this.seenEvents = new WeakSet();
+    this.tasksById.clear();
+    this.toolsByKey.clear();
+    this.turnsByKey.clear();
+  }
+
+  private handleEvent(event: FlueEvent, ctx: FlueContext | undefined): void {
     switch (event.type) {
+      case "run_start":
+        this.handleRunStart(event, ctx);
+        return;
+      case "run_end":
+        this.handleRunEnd(event);
+        return;
       case "operation_start":
-        this.handleOperationStart(event as FlueOperationStartEvent);
+        this.handleOperationStart(event);
         return;
       case "operation":
-        this.handleOperation(event as FlueOperationEvent);
+        this.handleOperation(event);
         return;
-      case "text_delta":
-        if (!options.captureTurnSpans) {
-          return;
-        }
-        this.ensureTurnState(event).text.push(
-          typeof event.text === "string" ? event.text : "",
-        );
-        return;
-      case "thinking_start":
-        if (!options.captureTurnSpans) {
-          return;
-        }
-        this.handleThinkingStart(event);
-        return;
-      case "thinking_delta":
-        if (!options.captureTurnSpans) {
-          return;
-        }
-        this.handleThinkingDelta(event as FlueThinkingDeltaEvent);
-        return;
-      case "thinking_end":
-        if (!options.captureTurnSpans) {
-          return;
-        }
-        this.handleThinkingEnd(event as FlueThinkingEndEvent);
+      case "turn_request":
+        this.handleTurnRequest(event);
         return;
       case "turn":
-        if (!options.captureTurnSpans) {
-          return;
-        }
-        this.handleTurn(event as FlueTurnEvent);
+        this.handleTurn(event);
         return;
       case "tool_start":
-        this.handleToolStart(event as FlueToolStartEvent, options);
+        this.handleToolStart(event);
         return;
       case "tool_call":
-        this.handleToolCall(event as FlueToolCallEvent);
+        this.handleToolCall(event);
         return;
       case "task_start":
-        this.handleTaskStart(event as FlueTaskStartEvent);
+        this.handleTaskStart(event);
         return;
       case "task":
-        this.handleTask(event as FlueTaskEvent);
+        this.handleTask(event);
         return;
       case "compaction_start":
-        this.handleCompactionStart(event as FlueCompactionStartEvent);
+        this.handleCompactionStart(event);
         return;
       case "compaction":
-        this.handleCompaction(event as FlueCompactionEvent);
+        this.handleCompaction(event);
         return;
       default:
         return;
     }
   }
 
+  private handleRunStart(
+    event: FlueRunStartEvent,
+    ctx: FlueContext | undefined,
+  ): void {
+    if (!event.runId) {
+      return;
+    }
+
+    const workflowName =
+      event.workflowName ??
+      event.owner?.workflowName ??
+      (typeof ctx?.id === "string" ? ctx.id : "unknown");
+    const metadata = {
+      ...extractPayloadMetadata(event.payload),
+      ...extractEventMetadata(event, ctx),
+      ...(workflowName ? { "flue.workflow_name": workflowName } : {}),
+      provider: "flue",
+    };
+    const span = startSpan({
+      name: `workflow:${workflowName}`,
+      spanAttributes: { type: SpanTypeAttribute.TASK },
+      startTime: eventTime(event.startedAt ?? event.timestamp),
+      event: {
+        input: event.payload,
+        metadata,
+      },
+    });
+
+    this.runsById.set(event.runId, { metadata, span });
+  }
+
+  private handleRunEnd(event: FlueRunEndEvent): void {
+    const state = this.runsById.get(event.runId);
+    this.finishPendingSpansForRun(event);
+
+    if (state) {
+      safeLog(state.span, {
+        ...(event.isError ? { error: errorToString(event.error) } : {}),
+        metadata: {
+          ...state.metadata,
+          ...extractEventMetadata(event),
+          ...(event.isError !== undefined
+            ? { "flue.is_error": event.isError }
+            : {}),
+        },
+        metrics: durationMetrics(event.durationMs),
+        output: event.result,
+      });
+      safeEnd(state.span, eventTime(event.timestamp));
+      this.runsById.delete(event.runId);
+    }
+
+    void flush().catch((error) => {
+      logInstrumentationError("Flue flush", error);
+    });
+  }
+
   private handleOperationStart(event: FlueOperationStartEvent): void {
+    if (!event.operationId || !isInstrumentedOperation(event.operationKind)) {
+      return;
+    }
+
+    const metadata = {
+      ...extractEventMetadata(event),
+      "flue.operation": event.operationKind,
+      provider: "flue",
+    };
+    const parent = this.parentSpanForEvent(event);
+    const span = startFlueSpan(parent, {
+      name: `flue.${event.operationKind}`,
+      spanAttributes: { type: SpanTypeAttribute.TASK },
+      startTime: eventTime(event.timestamp),
+      event: { metadata },
+    });
+
+    this.operationsById.set(event.operationId, { metadata, span });
+  }
+
+  private handleOperation(event: FlueOperationEvent): void {
     if (!isInstrumentedOperation(event.operationKind)) {
       return;
     }
 
-    const state = this.takePendingOperationForEvent(event);
-    if (!state) {
-      return;
-    }
-
-    state.operationId = event.operationId;
-    this.activeOperationsById.set(event.operationId, state);
-    addScopedOperation(this.activeOperationsByScope, event, state);
-    state.metadata = {
-      ...state.metadata,
-      ...extractEventMetadata(event),
-      "flue.operation_id": event.operationId,
-    };
-    safeLog(state.span, { metadata: state.metadata });
-  }
-
-  private handleOperation(event: FlueOperationEvent): void {
-    const state = event.operationId
-      ? this.activeOperationsById.get(event.operationId)
-      : undefined;
-    if (!state) {
-      return;
-    }
-
+    const state =
+      this.operationsById.get(event.operationId) ??
+      this.startSyntheticOperation(event);
+    const output = operationOutput(event);
     const metadata = {
       ...state.metadata,
       ...extractEventMetadata(event),
-      ...(typeof event.durationMs === "number"
-        ? { "flue.duration_ms": event.durationMs }
-        : {}),
       ...(event.isError !== undefined
         ? { "flue.is_error": event.isError }
         : {}),
+      ...(event.usage ? { "flue.usage": event.usage } : {}),
     };
-    const metrics = metricsFromUsage(event.usage);
 
+    this.finishPendingChildrenForOperation(event, output);
     safeLog(state.span, {
-      ...(event.error ? { error: errorToString(event.error) } : {}),
+      ...(event.isError ? { error: errorToString(event.error) } : {}),
       metadata,
-      ...(Object.keys(metrics).length ? { metrics } : {}),
+      metrics: durationMetrics(event.durationMs),
+      output,
     });
+    safeEnd(state.span, eventTime(event.timestamp));
+    this.operationsById.delete(event.operationId);
   }
 
-  private ensureTurnState(event: FlueBaseEvent): TurnState {
-    const scope = scopeKey(event);
-    const existing = this.turnsByScope.get(scope);
-    if (existing) {
-      return existing;
+  private handleTurnRequest(event: FlueTurnRequestEvent): void {
+    const key = turnKey(event);
+    if (!key) {
+      return;
     }
 
-    const parent = this.parentSpanForEvent(event);
     const metadata = {
       ...extractEventMetadata(event),
-      provider: "flue",
+      ...(event.api ? { "flue.api": event.api } : {}),
+      ...(event.model ? { model: event.model, "flue.model": event.model } : {}),
+      ...(event.provider ? { provider: event.provider } : { provider: "flue" }),
+      ...(event.provider ? { "flue.provider": event.provider } : {}),
+      ...(event.purpose ? { "flue.turn_purpose": event.purpose } : {}),
+      ...(event.reasoning ? { reasoning: event.reasoning } : {}),
+      ...(event.input?.systemPrompt
+        ? { "flue.system_prompt": event.input.systemPrompt }
+        : {}),
+      ...(event.input?.tools ? { tools: event.input.tools } : {}),
     };
+    const parent = this.parentSpanForTurn(event);
     const span = startFlueSpan(parent, {
-      name: "flue.turn",
+      name: `llm:${event.model ?? event.purpose ?? "unknown"}`,
       spanAttributes: { type: SpanTypeAttribute.LLM },
+      startTime: eventTime(event.timestamp),
+      event: {
+        input: event.input?.messages,
+        metadata,
+      },
     });
-    const state: TurnState = {
-      metadata,
-      span,
-      hasThinking: false,
-      startTime: getCurrentUnixTimestamp(),
-      text: [],
-      thinking: [],
-      toolCalls: [],
-    };
-    safeLog(span, { metadata });
-    this.turnsByScope.set(scope, state);
-    return state;
+
+    this.logOperationInput(
+      event.operationId,
+      event.input?.messages ?? event.input,
+    );
+    this.turnsByKey.set(key, { metadata, span });
   }
 
   private handleTurn(event: FlueTurnEvent): void {
-    const scope = scopeKey(event);
-    const state = this.ensureTurnState(event);
-    const text = state.text.join("");
-    const reasoning = state.finalThinking ?? state.thinking.join("");
-    const outputReasoning =
-      reasoning ||
-      (state.hasThinking
-        ? "[reasoning stream present; content unavailable]"
-        : undefined);
+    const key = turnKey(event);
+    if (!key) {
+      return;
+    }
+
+    const state = this.turnsByKey.get(key) ?? this.startSyntheticTurn(event);
     const metadata = {
       ...state.metadata,
       ...extractEventMetadata(event),
+      ...(event.api ? { "flue.api": event.api } : {}),
       ...(event.model ? { model: event.model, "flue.model": event.model } : {}),
+      ...(event.provider ? { provider: event.provider } : {}),
+      ...(event.provider ? { "flue.provider": event.provider } : {}),
+      ...(event.purpose ? { "flue.turn_purpose": event.purpose } : {}),
       ...(event.stopReason ? { "flue.stop_reason": event.stopReason } : {}),
       ...(event.isError !== undefined
         ? { "flue.is_error": event.isError }
         : {}),
-      provider: "flue",
     };
 
     safeLog(state.span, {
-      ...(event.error ? { error: errorToString(event.error) } : {}),
+      ...(event.isError ? { error: errorToString(event.error) } : {}),
       metadata,
       metrics: {
-        ...durationMsMetrics(event.durationMs),
+        ...durationMetrics(event.durationMs),
         ...metricsFromUsage(event.usage),
       },
-      output: toAssistantOutput(
-        text,
-        event.stopReason,
-        outputReasoning,
-        state.toolCalls,
-      ),
+      output: event.output,
     });
-    state.span.end();
-    this.turnsByScope.delete(scope);
+    safeEnd(state.span, eventTime(event.timestamp));
+    this.turnsByKey.delete(key);
   }
 
-  private handleThinkingDelta(event: FlueThinkingDeltaEvent): void {
-    const delta = event.delta;
-    if (typeof delta !== "string" || !delta) {
-      return;
-    }
-    const state = this.ensureTurnState(event);
-    state.hasThinking = true;
-    state.metadata["flue.thinking"] = true;
-    state.thinking.push(delta);
-  }
-
-  private handleThinkingStart(event: FlueBaseEvent): void {
-    const state = this.ensureTurnState(event);
-    state.hasThinking = true;
-    state.metadata["flue.thinking"] = true;
-  }
-
-  private handleThinkingEnd(event: FlueThinkingEndEvent): void {
-    const state = this.ensureTurnState(event);
-    state.hasThinking = true;
-    state.metadata["flue.thinking"] = true;
-    if (typeof event.content === "string" && event.content) {
-      state.finalThinking = event.content;
-    }
-  }
-
-  private handleToolStart(
-    event: FlueToolStartEvent,
-    options: { captureTurnSpans: boolean },
-  ): void {
-    const toolCallId = event.toolCallId;
-    if (!toolCallId) {
+  private handleToolStart(event: FlueToolStartEvent): void {
+    if (!event.toolCallId) {
       return;
     }
 
-    const parent = this.parentSpanForEvent(event);
-    const scope = scopeKey(event);
-    let turnState = this.turnsByScope.get(scope);
-    if (!turnState && parent && options.captureTurnSpans) {
-      turnState = this.ensureTurnState(event);
-    }
     const metadata = {
       ...extractEventMetadata(event),
       ...(event.toolName ? { "flue.tool_name": event.toolName } : {}),
-      "flue.tool_call_id": toolCallId,
+      "flue.tool_call_id": event.toolCallId,
       provider: "flue",
     };
+    const parent = this.parentSpanForTool(event);
     const span = startFlueSpan(parent, {
-      name: `tool: ${event.toolName ?? "unknown"}`,
+      name: `tool:${event.toolName ?? "unknown"}`,
       spanAttributes: { type: SpanTypeAttribute.TOOL },
+      startTime: eventTime(event.timestamp),
+      event: {
+        input: event.args,
+        metadata,
+      },
     });
-    if (turnState) {
-      turnState.toolCalls.push({
-        args: event.args,
-        toolCallId,
-        toolName: event.toolName,
-      });
-    }
-    safeLog(span, {
-      input: event.args,
-      metadata,
-    });
-    this.toolsById.set(toolKey(event), {
-      metadata,
-      span,
-      startTime: getCurrentUnixTimestamp(),
-    });
+
+    this.toolsByKey.set(toolKey(event), { metadata, span });
   }
 
   private handleToolCall(event: FlueToolCallEvent): void {
+    if (!event.toolCallId) {
+      return;
+    }
+
     const key = toolKey(event);
-    const state =
-      this.toolsById.get(key) ??
-      this.startSyntheticToolState(event, event.toolName ?? "unknown");
+    const state = this.toolsByKey.get(key) ?? this.startSyntheticTool(event);
     const metadata = {
       ...state.metadata,
       ...extractEventMetadata(event),
       ...(event.toolName ? { "flue.tool_name": event.toolName } : {}),
-      ...(event.toolCallId ? { "flue.tool_call_id": event.toolCallId } : {}),
+      "flue.tool_call_id": event.toolCallId,
       ...(event.isError !== undefined
         ? { "flue.is_error": event.isError }
         : {}),
@@ -674,35 +552,37 @@ export class FluePlugin extends BasePlugin {
     safeLog(state.span, {
       ...(event.isError ? { error: errorToString(event.result) } : {}),
       metadata,
-      metrics: durationMsMetrics(event.durationMs),
+      metrics: durationMetrics(event.durationMs),
       output: event.result,
     });
-    state.span.end();
-    this.toolsById.delete(key);
+    safeEnd(state.span, eventTime(event.timestamp));
+    this.toolsByKey.delete(key);
   }
 
   private handleTaskStart(event: FlueTaskStartEvent): void {
-    const parent = this.parentSpanForEvent(event);
+    if (!event.taskId) {
+      return;
+    }
+
     const metadata = {
       ...extractEventMetadata(event),
-      ...(event.role ? { "flue.role": event.role } : {}),
+      ...(event.agent ? { "flue.agent": event.agent } : {}),
       ...(event.cwd ? { "flue.cwd": event.cwd } : {}),
       "flue.task_id": event.taskId,
       provider: "flue",
     };
+    const parent = this.parentSpanForEvent(event);
     const span = startFlueSpan(parent, {
-      name: "flue.task",
+      name: event.agent ? `task:${event.agent}` : "flue.task",
       spanAttributes: { type: SpanTypeAttribute.TASK },
+      startTime: eventTime(event.timestamp),
+      event: {
+        input: event.prompt,
+        metadata,
+      },
     });
-    safeLog(span, {
-      input: event.prompt,
-      metadata,
-    });
-    this.tasksById.set(event.taskId, {
-      metadata,
-      span,
-      startTime: getCurrentUnixTimestamp(),
-    });
+
+    this.tasksById.set(event.taskId, { metadata, span });
   }
 
   private handleTask(event: FlueTaskEvent): void {
@@ -716,385 +596,337 @@ export class FluePlugin extends BasePlugin {
       metadata: {
         ...state.metadata,
         ...extractEventMetadata(event),
+        ...(event.agent ? { "flue.agent": event.agent } : {}),
         ...(event.isError !== undefined
           ? { "flue.is_error": event.isError }
           : {}),
       },
-      metrics: durationMsMetrics(event.durationMs),
+      metrics: durationMetrics(event.durationMs),
       output: event.result,
     });
-    state.span.end();
+    safeEnd(state.span, eventTime(event.timestamp));
     this.tasksById.delete(event.taskId);
   }
 
   private handleCompactionStart(event: FlueCompactionStartEvent): void {
-    const operationState = this.operationStateForEvent(event);
-    const parent = operationState?.span ?? this.parentSpanForEvent(event);
+    const key = compactionKey(event);
+    const input = {
+      ...(event.estimatedTokens !== undefined
+        ? { estimatedTokens: event.estimatedTokens }
+        : {}),
+      ...(event.reason ? { reason: event.reason } : {}),
+    };
     const metadata = {
       ...extractEventMetadata(event),
       ...(event.reason ? { "flue.compaction_reason": event.reason } : {}),
       provider: "flue",
     };
-    const input = {
-      ...(typeof event.estimatedTokens === "number"
-        ? { estimatedTokens: event.estimatedTokens }
-        : {}),
-      ...(event.reason ? { reason: event.reason } : {}),
-    };
+    const parent = this.parentSpanForEvent(event);
     const span = startFlueSpan(parent, {
-      name: "flue.compaction",
+      name: `compaction:${event.reason ?? "unknown"}`,
       spanAttributes: { type: SpanTypeAttribute.TASK },
+      startTime: eventTime(event.timestamp),
+      event: {
+        input,
+        metadata,
+      },
     });
-    safeLog(span, {
-      input,
-      metadata,
-    });
-    this.compactionsByScope.set(scopeKey(event), {
-      input,
-      metadata,
-      operationState,
-      span,
-      startTime: getCurrentUnixTimestamp(),
-    });
+
+    this.logOperationInput(event.operationId, input);
+    this.compactionsByKey.set(key, { metadata, span });
   }
 
   private handleCompaction(event: FlueCompactionEvent): void {
-    const key = scopeKey(event);
+    const key = compactionKey(event);
     const state =
-      this.compactionsByScope.get(key) ?? this.findCompactionState(event);
-    if (!state) {
-      return;
-    }
+      this.compactionsByKey.get(key) ?? this.startSyntheticCompaction(event);
+    const metadata = {
+      ...state.metadata,
+      ...extractEventMetadata(event),
+      ...(event.usage ? { "flue.usage": event.usage } : {}),
+    };
 
     safeLog(state.span, {
-      metadata: {
-        ...state.metadata,
-        ...extractEventMetadata(event),
+      metadata,
+      metrics: {
+        ...durationMetrics(event.durationMs),
         ...(typeof event.messagesBefore === "number"
-          ? { "flue.messages_before": event.messagesBefore }
+          ? { messages_before: event.messagesBefore }
           : {}),
         ...(typeof event.messagesAfter === "number"
-          ? { "flue.messages_after": event.messagesAfter }
+          ? { messages_after: event.messagesAfter }
           : {}),
-      },
-      metrics: {
-        ...durationMsMetrics(event.durationMs),
-        ...metricsFromUsage(event.usage),
       },
       output: {
         messagesAfter: event.messagesAfter,
         messagesBefore: event.messagesBefore,
       },
     });
-    state.span.end();
-    this.deleteCompactionState(state);
+    safeEnd(state.span, eventTime(event.timestamp));
+    this.compactionsByKey.delete(key);
   }
 
-  private findCompactionState(event: FlueBaseEvent): SpanState | undefined {
-    const operationState = this.operationStateForEvent(event);
-    for (const state of this.compactionsByScope.values()) {
-      if (operationState && state.operationState === operationState) {
-        return state;
+  private parentSpanForTurn(event: FlueTurnRequestEvent): Span | undefined {
+    if (
+      event.purpose === "compaction" ||
+      event.purpose === "compaction_prefix"
+    ) {
+      const compaction = this.compactionsByKey.get(compactionKey(event));
+      if (compaction) {
+        return compaction.span;
       }
     }
-    return undefined;
-  }
-
-  private finishCompactionsForOperation(operationState: OperationState): void {
-    for (const state of [...this.compactionsByScope.values()]) {
-      if (state.operationState !== operationState) {
-        continue;
-      }
-      safeLog(state.span, {
-        input: state.input,
-        metadata: state.metadata,
-        metrics: {
-          ...buildDurationMetrics(state.startTime),
-        },
-        output: { completed: true },
-      });
-      state.span.end();
-      this.deleteCompactionState(state);
-    }
-  }
-
-  private deleteCompactionState(state: SpanState): void {
-    for (const [key, candidate] of this.compactionsByScope) {
-      if (candidate !== state) {
-        continue;
-      }
-      this.compactionsByScope.delete(key);
-      return;
-    }
-  }
-
-  private startSyntheticToolState(
-    event: FlueToolCallEvent,
-    toolName: string,
-  ): SpanState {
-    const parent = this.parentSpanForEvent(event);
-    const metadata = {
-      ...extractEventMetadata(event),
-      ...(event.toolCallId ? { "flue.tool_call_id": event.toolCallId } : {}),
-      "flue.tool_name": toolName,
-      provider: "flue",
-    };
-    const span = startFlueSpan(parent, {
-      name: `tool: ${toolName}`,
-      spanAttributes: { type: SpanTypeAttribute.TOOL },
-    });
-    safeLog(span, { metadata });
-    return { metadata, span, startTime: getCurrentUnixTimestamp() };
-  }
-
-  private operationStateForEvent(
-    event: FlueBaseEvent,
-  ): OperationState | undefined {
-    if (event.operationId) {
-      const operation =
-        this.activeOperationsById.get(event.operationId) ??
-        this.promotePendingOperationForEvent(event);
-      if (operation) {
-        return operation;
-      }
-    }
-    return (
-      this.activeOperationForEventScope(event) ??
-      this.pendingOperationForEventScope(event)
-    );
+    return this.parentSpanForEvent(event);
   }
 
   private parentSpanForEvent(event: FlueBaseEvent): Span | undefined {
+    const turn = turnKey(event);
+    if (turn) {
+      const turnState = this.turnsByKey.get(turn);
+      if (turnState) {
+        return turnState.span;
+      }
+    }
+    if (event.taskId) {
+      const task = this.tasksById.get(event.taskId);
+      if (task) {
+        return task.span;
+      }
+    }
     if (event.operationId) {
-      const operation = this.operationStateForEvent(event);
+      const operation = this.operationsById.get(event.operationId);
       if (operation) {
         return operation.span;
       }
     }
+    if (event.runId) {
+      return this.runsById.get(event.runId)?.span;
+    }
+    return undefined;
+  }
+
+  private parentSpanForTool(event: FlueBaseEvent): Span | undefined {
     if (event.taskId) {
-      return this.tasksById.get(event.taskId)?.span;
+      const task = this.tasksById.get(event.taskId);
+      if (task) {
+        return task.span;
+      }
     }
-    return this.operationStateForEvent(event)?.span;
+    if (event.operationId) {
+      const operation = this.operationsById.get(event.operationId);
+      if (operation) {
+        return operation.span;
+      }
+    }
+    if (event.runId) {
+      return this.runsById.get(event.runId)?.span;
+    }
+    return undefined;
   }
 
-  private promotePendingOperationForEvent(
-    event: FlueBaseEvent,
-  ): OperationState | undefined {
-    if (!event.operationId) {
-      return undefined;
+  private logOperationInput(
+    operationId: string | undefined,
+    input: unknown,
+  ): void {
+    if (!operationId || input === undefined) {
+      return;
     }
+    const operation = this.operationsById.get(operationId);
+    if (!operation || operation.loggedInput) {
+      return;
+    }
+    safeLog(operation.span, { input });
+    operation.loggedInput = true;
+  }
 
-    const scopePrefixes = operationScopePrefixes(event);
-    for (const [candidateKey, candidateQueue] of this.pendingOperationsByKey) {
-      if (
-        !candidateQueue.length ||
-        !operationKeyMatchesScopes(candidateKey, scopePrefixes)
-      ) {
+  private startSyntheticOperation(event: FlueOperationEvent): SpanState {
+    const metadata = {
+      ...extractEventMetadata(event),
+      "flue.operation": event.operationKind,
+      provider: "flue",
+    };
+    const span = startFlueSpan(this.parentSpanForEvent(event), {
+      name: `flue.${event.operationKind}`,
+      spanAttributes: { type: SpanTypeAttribute.TASK },
+      startTime: eventTime(event.timestamp),
+      event: { metadata },
+    });
+    return { metadata, span };
+  }
+
+  private startSyntheticTurn(event: FlueTurnEvent): SpanState {
+    const metadata = {
+      ...extractEventMetadata(event),
+      ...(event.api ? { "flue.api": event.api } : {}),
+      ...(event.model ? { model: event.model, "flue.model": event.model } : {}),
+      ...(event.provider ? { provider: event.provider } : { provider: "flue" }),
+      ...(event.provider ? { "flue.provider": event.provider } : {}),
+      ...(event.purpose ? { "flue.turn_purpose": event.purpose } : {}),
+    };
+    const span = startFlueSpan(this.parentSpanForEvent(event), {
+      name: `llm:${event.model ?? event.purpose ?? "unknown"}`,
+      spanAttributes: { type: SpanTypeAttribute.LLM },
+      startTime: eventTime(event.timestamp),
+      event: { metadata },
+    });
+    return { metadata, span };
+  }
+
+  private startSyntheticTool(event: FlueToolCallEvent): SpanState {
+    const metadata = {
+      ...extractEventMetadata(event),
+      ...(event.toolName ? { "flue.tool_name": event.toolName } : {}),
+      "flue.tool_call_id": event.toolCallId,
+      provider: "flue",
+    };
+    const span = startFlueSpan(this.parentSpanForTool(event), {
+      name: `tool:${event.toolName ?? "unknown"}`,
+      spanAttributes: { type: SpanTypeAttribute.TOOL },
+      startTime: eventTime(event.timestamp),
+      event: { metadata },
+    });
+    return { metadata, span };
+  }
+
+  private startSyntheticCompaction(event: FlueCompactionEvent): SpanState {
+    const metadata = {
+      ...extractEventMetadata(event),
+      provider: "flue",
+    };
+    const span = startFlueSpan(this.parentSpanForEvent(event), {
+      name: "compaction:unknown",
+      spanAttributes: { type: SpanTypeAttribute.TASK },
+      startTime: eventTime(event.timestamp),
+      event: { metadata },
+    });
+    return { metadata, span };
+  }
+
+  private finishPendingChildrenForOperation(
+    event: FlueOperationEvent,
+    operationOutput: unknown,
+  ): void {
+    const endTime = eventTime(event.timestamp);
+    const usage = event.usage ?? usageFromOperationResult(event.result);
+    const turnEntries = [...this.turnsByKey].filter(([, state]) =>
+      stateMatchesOperation(state, event.operationId),
+    );
+
+    turnEntries.forEach(([key, state], index) => {
+      const shouldLogOperationOutput =
+        (event.operationKind === "prompt" || event.operationKind === "skill") &&
+        index === turnEntries.length - 1 &&
+        operationOutput !== undefined;
+      safeLog(state.span, {
+        metadata: state.metadata,
+        metrics: metricsFromUsage(usage),
+        ...(shouldLogOperationOutput ? { output: operationOutput } : {}),
+      });
+      safeEnd(state.span, endTime);
+      this.turnsByKey.delete(key);
+    });
+
+    for (const [key, state] of this.toolsByKey) {
+      if (!stateMatchesOperation(state, event.operationId)) {
         continue;
       }
-
-      const state = candidateQueue.shift();
-      if (!state) {
-        return undefined;
-      }
-      state.operationId = event.operationId;
-      this.activeOperationsById.set(event.operationId, state);
-      addScopedOperation(this.activeOperationsByScope, event, state);
-      state.metadata = {
-        ...state.metadata,
-        ...extractEventMetadata(event),
-        "flue.operation_id": event.operationId,
-      };
-      safeLog(state.span, { metadata: state.metadata });
-      return state;
+      safeEnd(state.span, endTime);
+      this.toolsByKey.delete(key);
     }
 
-    return undefined;
-  }
-
-  private activeOperationForEventScope(
-    event: FlueBaseEvent,
-  ): OperationState | undefined {
-    for (const scope of operationScopeNames(event)) {
-      const operations = this.activeOperationsByScope.get(scope);
-      if (operations?.length) {
-        return operations[operations.length - 1];
-      }
-    }
-
-    return undefined;
-  }
-
-  private pendingOperationForEventScope(
-    event: FlueBaseEvent,
-  ): OperationState | undefined {
-    const scopePrefixes = operationScopePrefixes(event);
-    for (const [candidateKey, candidateQueue] of this.pendingOperationsByKey) {
-      if (
-        !candidateQueue.length ||
-        !operationKeyMatchesScopes(candidateKey, scopePrefixes)
-      ) {
+    for (const [key, state] of this.tasksById) {
+      if (!stateMatchesOperation(state, event.operationId)) {
         continue;
       }
-      return candidateQueue[0];
+      safeEnd(state.span, endTime);
+      this.tasksById.delete(key);
     }
 
-    return undefined;
-  }
-
-  private takePendingOperationForEvent(
-    event: FlueOperationStartEvent,
-  ): OperationState | undefined {
-    const key = operationKey(event.session, event.operationKind);
-    const queue = this.pendingOperationsByKey.get(key);
-    if (queue?.length) {
-      return queue.shift();
-    }
-
-    for (const [candidateKey, candidateQueue] of this.pendingOperationsByKey) {
-      if (
-        candidateKey.endsWith(`::${event.operationKind}`) &&
-        candidateQueue.length
-      ) {
-        return candidateQueue.shift();
+    for (const [key, state] of this.compactionsByKey) {
+      if (!stateMatchesOperation(state, event.operationId)) {
+        continue;
       }
+      safeLog(state.span, {
+        metadata: state.metadata,
+        metrics: durationMetrics(event.durationMs),
+        output: { completed: true },
+      });
+      safeEnd(state.span, eventTime(event.timestamp));
+      this.compactionsByKey.delete(key);
     }
-
-    return undefined;
   }
 
-  private pendingOperationQueue(key: string): OperationState[] {
-    const existing = this.pendingOperationsByKey.get(key);
-    if (existing) {
-      return existing;
+  private finishPendingSpansForRun(event: FlueRunEndEvent): void {
+    const endTime = eventTime(event.timestamp);
+
+    for (const [key, state] of this.toolsByKey) {
+      if (!stateMatchesRun(state, event.runId)) {
+        continue;
+      }
+      safeEnd(state.span, endTime);
+      this.toolsByKey.delete(key);
     }
-    const queue: OperationState[] = [];
-    this.pendingOperationsByKey.set(key, queue);
-    return queue;
+
+    for (const [key, state] of this.turnsByKey) {
+      if (!stateMatchesRun(state, event.runId)) {
+        continue;
+      }
+      safeEnd(state.span, endTime);
+      this.turnsByKey.delete(key);
+    }
+
+    for (const [key, state] of this.tasksById) {
+      if (!stateMatchesRun(state, event.runId)) {
+        continue;
+      }
+      safeEnd(state.span, endTime);
+      this.tasksById.delete(key);
+    }
+
+    for (const [key, state] of this.compactionsByKey) {
+      if (!stateMatchesRun(state, event.runId)) {
+        continue;
+      }
+      safeLog(state.span, {
+        metadata: state.metadata,
+        output: { completed: true },
+      });
+      safeEnd(state.span, endTime);
+      this.compactionsByKey.delete(key);
+    }
+
+    for (const [key, state] of this.operationsById) {
+      if (!stateMatchesRun(state, event.runId)) {
+        continue;
+      }
+      safeLog(state.span, {
+        metadata: state.metadata,
+        ...(state.metadata["flue.operation"] === "compact"
+          ? { output: { completed: true } }
+          : {}),
+      });
+      safeEnd(state.span, endTime);
+      this.operationsById.delete(key);
+    }
   }
 }
 
 function isInstrumentedOperation(
-  operation: FlueOperationKind | "shell",
-): operation is FlueOperationKind {
+  operation: FlueRuntimeOperationKind,
+): operation is Exclude<FlueOperationKind, "task"> {
   return (
-    operation === "prompt" ||
-    operation === "skill" ||
-    operation === "task" ||
-    operation === "compact"
+    operation === "prompt" || operation === "skill" || operation === "compact"
   );
 }
 
-function getSessionName(session: FlueSession | undefined): string | undefined {
-  return typeof session?.name === "string" ? session.name : undefined;
-}
-
-function operationKey(
-  sessionName: string | undefined,
-  operation: FlueOperationKind | "shell",
-): string {
-  return `${sessionName ?? "unknown"}::${operation}`;
-}
-
-function operationScopePrefixes(event: FlueBaseEvent): Set<string> {
-  const scopes = new Set<string>();
-  for (const scope of operationScopeNames(event)) {
-    scopes.add(`${scope}::`);
-  }
-  return scopes;
-}
-
-function operationKeyMatchesScopes(key: string, scopes: Set<string>): boolean {
-  for (const scope of scopes) {
-    if (key.startsWith(scope)) {
-      return true;
-    }
-  }
-  return false;
-}
-
-function operationScopeNames(event: FlueBaseEvent): Set<string> {
-  const scopes = new Set<string>();
-  if (event.session) {
-    scopes.add(event.session);
-  }
-  if (event.parentSession) {
-    scopes.add(event.parentSession);
-  }
-  if (!scopes.size) {
-    scopes.add("unknown");
-  }
-  return scopes;
-}
-
-function addScopedOperation(
-  operationsByScope: Map<string, OperationState[]>,
+function extractEventMetadata(
   event: FlueBaseEvent,
-  state: OperationState,
-): void {
-  for (const scope of operationScopeNames(event)) {
-    addOperationToScope(operationsByScope, scope, state);
-  }
-}
-
-function addOperationToScope(
-  operationsByScope: Map<string, OperationState[]>,
-  scope: string,
-  state: OperationState,
-): void {
-  const operations = operationsByScope.get(scope);
-  if (operations) {
-    if (!operations.includes(state)) {
-      operations.push(state);
-    }
-  } else {
-    operationsByScope.set(scope, [state]);
-  }
-}
-
-function removeScopedOperation(
-  operationsByScope: Map<string, OperationState[]>,
-  state: OperationState,
-): void {
-  for (const [scope, operations] of operationsByScope) {
-    const index = operations.indexOf(state);
-    if (index === -1) {
-      continue;
-    }
-    operations.splice(index, 1);
-    if (operations.length === 0) {
-      operationsByScope.delete(scope);
-    }
-  }
-}
-
-function removePendingOperation(
-  pendingOperationsByKey: Map<string, OperationState[]>,
-  state: OperationState,
-): void {
-  for (const [key, queue] of pendingOperationsByKey) {
-    const index = queue.indexOf(state);
-    if (index === -1) {
-      continue;
-    }
-    queue.splice(index, 1);
-    if (queue.length === 0) {
-      pendingOperationsByKey.delete(key);
-    }
-    return;
-  }
-}
-
-function extractSessionMetadata(
-  session: FlueSession | undefined,
+  ctx?: FlueContext,
 ): Record<string, unknown> {
-  const sessionName = getSessionName(session);
-  return sessionName ? { "flue.session": sessionName } : {};
-}
-
-function extractEventMetadata(event: FlueBaseEvent): Record<string, unknown> {
   return {
     ...(event.runId ? { "flue.run_id": event.runId } : {}),
+    ...(event.instanceId ? { "flue.instance_id": event.instanceId } : {}),
+    ...(event.dispatchId ? { "flue.dispatch_id": event.dispatchId } : {}),
     ...(typeof event.eventIndex === "number"
       ? { "flue.event_index": event.eventIndex }
       : {}),
@@ -1105,216 +937,115 @@ function extractEventMetadata(event: FlueBaseEvent): Record<string, unknown> {
     ...(event.harness ? { "flue.harness": event.harness } : {}),
     ...(event.taskId ? { "flue.task_id": event.taskId } : {}),
     ...(event.operationId ? { "flue.operation_id": event.operationId } : {}),
+    ...(event.turnId ? { "flue.turn_id": event.turnId } : {}),
+    ...(typeof ctx?.id === "string" ? { "flue.context_id": ctx.id } : {}),
+    ...(typeof ctx?.runId === "string"
+      ? { "flue.context_run_id": ctx.runId }
+      : {}),
   };
 }
 
-function extractOperationInput(
-  operation: FlueOperationKind,
-  args: ArrayLike<unknown>,
-): unknown {
-  switch (operation) {
-    case "prompt":
-    case "task":
-      return args[0];
-    case "skill":
-      return {
-        args: getOptionObject(args[1])?.args,
-        name: args[0],
-      };
-    case "compact":
-      return undefined;
+function extractPayloadMetadata(payload: unknown): Record<string, unknown> {
+  if (!isObjectLike(payload)) {
+    return {};
   }
+  const metadata = Reflect.get(payload, "metadata");
+  if (!isObjectLike(metadata)) {
+    return {};
+  }
+  return Object.fromEntries(Object.entries(metadata));
 }
 
-function extractOperationInputMetadata(
-  operation: FlueOperationKind,
-  args: ArrayLike<unknown>,
-): Record<string, unknown> {
-  const options = getOptionObject(args[1]);
-  return {
-    ...(operation === "skill" && typeof args[0] === "string"
-      ? { "flue.skill_name": args[0] }
-      : {}),
-    ...(options?.model
-      ? { model: options.model, "flue.model": options.model }
-      : {}),
-    ...(options?.role ? { "flue.role": options.role } : {}),
-    ...(options?.thinkingLevel
-      ? { "flue.thinking_level": options.thinkingLevel }
-      : {}),
-    ...(typeof options?.cwd === "string" ? { "flue.cwd": options.cwd } : {}),
-    ...(Array.isArray(options?.tools)
-      ? {
-          "flue.tools_count": options.tools.length,
-          tools: summarizeTools(options.tools),
-        }
-      : {}),
-    ...(Array.isArray(options?.images)
-      ? { "flue.images_count": options.images.length }
-      : {}),
-    ...(options?.result || options?.schema
-      ? { "flue.result_schema": true }
-      : {}),
-  };
+function operationOutput(event: FlueOperationEvent): unknown {
+  if (event.operationKind === "prompt" || event.operationKind === "skill") {
+    return llmResultFromOperationResult(event.result);
+  }
+  return (
+    event.result ??
+    (event.operationKind === "compact" ? { completed: true } : undefined)
+  );
 }
 
-function getOptionObject(
-  value: unknown,
-): (FlueCallOptions & FlueSkillOptions & FlueTaskOptions) | undefined {
-  return isObject(value)
-    ? (value as FlueCallOptions & FlueSkillOptions & FlueTaskOptions)
-    : undefined;
+function llmResultFromOperationResult(result: unknown): unknown {
+  if (!isObjectLike(result)) {
+    return result;
+  }
+  const text = Reflect.get(result, "text");
+  return text === undefined ? result : text;
 }
 
-function summarizeTools(tools: unknown[]): unknown[] {
-  return tools.flatMap((tool) => {
-    if (!isObject(tool)) {
-      return [];
-    }
-    const name = typeof tool.name === "string" ? tool.name : undefined;
-    if (!name) {
-      return [];
-    }
-    return [
-      {
-        function: {
-          description:
-            typeof tool.description === "string" ? tool.description : undefined,
-          name,
-          parameters: tool.parameters,
-        },
-        type: "function",
-      },
-    ];
-  });
-}
-
-function extractPromptResponseMetadata(
-  result: FluePromptResponse | undefined,
-): Record<string, unknown> {
-  const modelId =
-    result?.model && typeof result.model.id === "string"
-      ? result.model.id
-      : undefined;
-  return modelId
-    ? {
-        model: modelId,
-        "flue.model": modelId,
-      }
-    : {};
-}
-
-function extractOperationOutput(
-  result: FluePromptResponse | undefined,
-): unknown {
-  if (!result) {
+function usageFromOperationResult(result: unknown): unknown {
+  if (!isObjectLike(result)) {
     return undefined;
   }
-  if ("data" in result) {
-    return result.data;
-  }
-  if ("text" in result) {
-    return result.text;
-  }
-  return result;
+  return Reflect.get(result, "usage");
 }
 
-function metricsFromUsage(
-  usage: FlueUsage | undefined,
-): Record<string, number> {
+function metricsFromUsage(usage: unknown): Record<string, number> {
+  if (!isObjectLike(usage)) {
+    return {};
+  }
+  const cacheRead = Reflect.get(usage, "cacheRead");
+  const cacheWrite = Reflect.get(usage, "cacheWrite");
+  const cost = Reflect.get(usage, "cost");
+  const input = Reflect.get(usage, "input");
+  const output = Reflect.get(usage, "output");
+  const totalTokens = Reflect.get(usage, "totalTokens");
+  const totalCost = isObjectLike(cost) ? Reflect.get(cost, "total") : undefined;
+
   return {
-    ...(typeof usage?.input === "number" ? { prompt_tokens: usage.input } : {}),
-    ...(typeof usage?.output === "number"
-      ? { completion_tokens: usage.output }
+    ...(typeof input === "number" ? { prompt_tokens: input } : {}),
+    ...(typeof output === "number" ? { completion_tokens: output } : {}),
+    ...(typeof cacheRead === "number"
+      ? { prompt_cached_tokens: cacheRead }
       : {}),
-    ...(typeof usage?.cacheRead === "number"
-      ? { prompt_cached_tokens: usage.cacheRead }
+    ...(typeof cacheWrite === "number"
+      ? { prompt_cache_creation_tokens: cacheWrite }
       : {}),
-    ...(typeof usage?.cacheWrite === "number"
-      ? { prompt_cache_creation_tokens: usage.cacheWrite }
-      : {}),
-    ...(typeof usage?.totalTokens === "number"
-      ? { tokens: usage.totalTokens }
-      : {}),
-    ...(typeof usage?.cost?.total === "number"
-      ? { estimated_cost: usage.cost.total }
-      : {}),
+    ...(typeof totalTokens === "number" ? { tokens: totalTokens } : {}),
+    ...(typeof totalCost === "number" ? { estimated_cost: totalCost } : {}),
   };
 }
 
-function buildDurationMetrics(startTime: number): Record<string, number> {
-  return {
-    duration_ms: Math.max(0, (getCurrentUnixTimestamp() - startTime) * 1000),
-  };
-}
-
-function durationMsMetrics(durationMs: unknown): Record<string, number> {
+function durationMetrics(durationMs: unknown): Record<string, number> {
   return typeof durationMs === "number" ? { duration_ms: durationMs } : {};
 }
 
-function scopeKey(event: FlueBaseEvent): string {
-  if (event.operationId) {
-    return `operation:${event.operationId}`;
+function eventTime(value: unknown): number | undefined {
+  if (typeof value !== "string") {
+    return undefined;
   }
-  if (event.taskId) {
-    return `task:${event.taskId}`;
-  }
-  if (event.session) {
-    return `session:${event.session}`;
-  }
-  return "flue:unknown";
+  const timestamp = Date.parse(value);
+  return Number.isFinite(timestamp) ? timestamp / 1000 : undefined;
 }
 
-function toolKey(
-  event: Pick<FlueBaseEvent, "operationId" | "taskId" | "session"> & {
-    toolCallId?: string;
-  },
-): string {
-  return `${scopeKey(event)}::tool:${event.toolCallId ?? "unknown"}`;
+function turnKey(event: FlueBaseEvent): string | undefined {
+  return event.turnId;
 }
 
-function toAssistantOutput(
-  text: string,
-  finishReason: string | undefined,
-  reasoning?: string,
-  toolCalls?: Array<{
-    args?: unknown;
-    toolCallId?: string;
-    toolName?: string;
-  }>,
-): unknown {
+function toolKey(event: FlueBaseEvent & { toolCallId?: string }): string {
+  return `${event.turnId ?? event.operationId ?? event.taskId ?? event.runId ?? "unknown"}:${event.toolCallId ?? "unknown"}`;
+}
+
+function compactionKey(event: FlueBaseEvent): string {
   return [
-    {
-      finish_reason: finishReason ?? "stop",
-      index: 0,
-      message: {
-        content: text,
-        ...(reasoning ? { reasoning } : {}),
-        role: "assistant",
-        ...(toolCalls?.length
-          ? {
-              tool_calls: toolCalls.map((toolCall) => ({
-                function: {
-                  arguments:
-                    toolCall.args === undefined
-                      ? "{}"
-                      : JSON.stringify(toolCall.args),
-                  name: toolCall.toolName ?? "unknown",
-                },
-                ...(toolCall.toolCallId ? { id: toolCall.toolCallId } : {}),
-                type: "function",
-              })),
-            }
-          : {}),
-      },
-    },
-  ];
+    event.instanceId ?? "",
+    event.runId ?? "",
+    event.session ?? "",
+    event.operationId ?? "",
+    event.taskId ?? "",
+  ].join(":");
 }
 
-function startFlueSpan(
-  parent: Span | undefined,
-  args: Parameters<typeof startSpan>[0],
-): Span {
+function stateMatchesOperation(state: SpanState, operationId: string): boolean {
+  return state.metadata["flue.operation_id"] === operationId;
+}
+
+function stateMatchesRun(state: SpanState, runId: string): boolean {
+  return state.metadata["flue.run_id"] === runId;
+}
+
+function startFlueSpan(parent: Span | undefined, args: StartSpanArgs): Span {
   return parent ? withCurrent(parent, () => startSpan(args)) : startSpan(args);
 }
 
@@ -1323,6 +1054,14 @@ function safeLog(span: Span, event: Parameters<Span["log"]>[0]): void {
     span.log(event);
   } catch (error) {
     logInstrumentationError("Flue span log", error);
+  }
+}
+
+function safeEnd(span: Span, endTime: number | undefined): void {
+  try {
+    span.end(endTime === undefined ? undefined : { endTime });
+  } catch (error) {
+    logInstrumentationError("Flue span end", error);
   }
 }
 

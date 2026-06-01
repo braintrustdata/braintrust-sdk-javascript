@@ -1,3 +1,3 @@
-import { runMain, runWrappedFlueInstrumentation } from "./scenario.impl.mjs";
+import { runExplicitFlueInstrumentation, runMain } from "./scenario.impl.mjs";
 
-runMain(runWrappedFlueInstrumentation);
+runMain(runExplicitFlueInstrumentation);
