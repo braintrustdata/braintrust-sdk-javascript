@@ -20,7 +20,7 @@
   },
   "bin": {
     "braintrust": "./dist/cli.js",
-    "bt": "./bin/bt.cjs"
+    "bt": "./bin/bt"
   },
   "exports": {
     "./package.json": "./package.json",
@@ -129,9 +129,12 @@
     "dist/**/*",
     "dev/dist/**/*",
     "util/dist/**/*",
-    "bin/bt.cjs"
+    "bin/bt",
+    "scripts/bt-helper.js",
+    "scripts/install.js"
   ],
   "scripts": {
+    "postinstall": "node ./scripts/install.js",
     "build": "cross-env NODE_OPTIONS=\"--max-old-space-size=8192\" tsup",
     "check:typings": "tsc --noEmit",
     "watch": "tsup --watch",

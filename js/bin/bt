@@ -1,0 +1,41 @@
+#!/usr/bin/env node
+"use strict";
+
+// Runtime launcher for the `bt` CLI. Resolves the platform-specific binary
+// (installed via the matching `@braintrust/bt-*` optionalDependency, or
+// downloaded by `scripts/install.js` as a fallback) and forwards argv,
+// stdio, signals, and the exit code.
+
+const childProcess = require("node:child_process");
+const { getBinaryPath } = require("../scripts/bt-helper");
+
+let binaryPath;
+try {
+  binaryPath = getBinaryPath();
+} catch (err) {
+  console.error(err.message);
+  process.exit(1);
+}
+
+const child = childProcess
+  .spawn(binaryPath, process.argv.slice(2), {
+    stdio: "inherit",
+    windowsHide: true,
+  })
+  .on("error", (err) => {
+    console.error(err);
+    process.exit(1);
+  })
+  .on("exit", (code, signal) => {
+    if (signal) {
+      // Detach our forwarding listener so the re-raised signal hits Node's
+      // default handler; otherwise we'd intercept it again and exit 0.
+      process.removeAllListeners(signal);
+      process.kill(process.pid, signal);
+      return;
+    }
+    process.exit(code ?? 1);
+  });
+
+process.on("SIGTERM", () => child.kill("SIGTERM"));
+process.on("SIGINT", () => child.kill("SIGINT"));
