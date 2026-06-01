@@ -1,5 +1,11 @@
 # braintrust
 
+## 3.15.0
+
+### Minor Changes
+
+- feat(flue): Update flue instrumentation to use new observe hooks (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2070)
+
 ## 3.14.0
 
 ### Minor Changes
