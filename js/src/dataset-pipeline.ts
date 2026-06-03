@@ -2,7 +2,6 @@ import type { Trace } from "./trace";
 
 type DatasetPipelineRow = {
   input?: unknown;
-  output?: unknown;
   expected?: unknown;
   tags?: string[];
   metadata?: Record<string, unknown>;
