@@ -1,5 +1,17 @@
 # braintrust
 
+## 3.16.0
+
+### Minor Changes
+
+- feat: Export `LocalTrace` (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2088)
+- feat(invoke): Allow passing `overrides` to `invoke()` Thanks @paultancre-bt! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2087)
+
+### Patch Changes
+
+- fix(stream): Preserve multi-byte UTF-8 split across chunk boundaries Thanks @stretpjc! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2091)
+- fix: Don't have `output` in dataset pipeline row type definition (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2089)
+
 ## 3.15.0
 
 **Attention:** This release is technically a breaking change because it removes the `wrapFlueContext`, and `wrapFlueSession` exports for `@flue/runtime`. This release was still deemed as a minor because of the experimental state of flue and limited adoption of `@flue/runtime` instrumentation.
