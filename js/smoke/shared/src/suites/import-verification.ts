@@ -63,6 +63,7 @@ export interface BraintrustModule {
   traced?: unknown;
   traceable?: unknown;
   wrapTraced?: unknown;
+  LocalTrace?: unknown;
   updateSpan?: unknown;
   withCurrent?: unknown;
 
@@ -266,6 +267,13 @@ export const testTracingExports = register(
     assertDefined(module.wrapTraced, "wrapTraced must exist");
     assertType(module.wrapTraced, "function", "wrapTraced must be a function");
 
+    assertDefined(module.LocalTrace, "LocalTrace must exist");
+    assertType(
+      module.LocalTrace,
+      "function",
+      "LocalTrace must be a function/class",
+    );
+
     assertDefined(module.updateSpan, "updateSpan must exist");
     assertType(module.updateSpan, "function", "updateSpan must be a function");
 
@@ -276,7 +284,7 @@ export const testTracingExports = register(
       "withCurrent must be a function",
     );
 
-    return "Tracing exports verified (5 exports)";
+    return "Tracing exports verified (6 exports)";
   },
 );
 

@@ -261,7 +261,7 @@ export {
 } from "./prompt-schemas";
 
 export type { Trace, SpanData, GetThreadOptions } from "./trace";
-export { SpanFetcher, CachedSpanFetcher } from "./trace";
+export { SpanFetcher, CachedSpanFetcher, LocalTrace } from "./trace";
 
 export type {
   ParentExperimentIds,
