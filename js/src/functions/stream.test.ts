@@ -55,6 +55,38 @@ test("final value passthrough", async () => {
   }
 });
 
+test("preserves multi-byte UTF-8 characters split across chunk boundaries", async () => {
+  // Regression test: btStreamParser previously decoded each Uint8Array chunk
+  // without `{ stream: true }`, so a partial UTF-8 sequence at the end of a
+  // chunk was flushed as U+FFFD instead of being held until the next chunk.
+  const encoder = new TextEncoder();
+  const payload = "“Hello, world.”"; // leading “ is U+201C -> bytes E2 80 9C
+  const sseBytes = encoder.encode(
+    `event: text_delta\ndata: ${JSON.stringify(payload)}\n\n`,
+  );
+
+  // Split inside the first multi-byte character: after E2 80, before 9C.
+  const quoteStart = sseBytes.indexOf(0xe2);
+  const splitAt = quoteStart + 2;
+
+  const inputStream = new ReadableStream<Uint8Array>({
+    start(controller) {
+      controller.enqueue(sseBytes.subarray(0, splitAt));
+      controller.enqueue(sseBytes.subarray(splitAt));
+      controller.close();
+    },
+  });
+
+  const stream = new BraintrustStream(inputStream);
+  let out = "";
+  for await (const chunk of stream) {
+    if (chunk.type === "text_delta") out += chunk.data;
+  }
+
+  expect(out).toBe(payload);
+  expect(out).not.toContain("\uFFFD");
+});
+
 test("final value passthrough with abort", async () => {
   const inputStream = new ReadableStream({
     start(controller) {},
