@@ -5,11 +5,11 @@
 ### Minor Changes
 
 - feat: Export `LocalTrace` (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2088)
-- feat(invoke): Allow passing `overrides` to `invoke()` Thanks @paultancre-bt! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2087)
+- feat(invoke): Allow passing `overrides` to `invoke()` (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2087)
 
 ### Patch Changes
 
-- fix(stream): Preserve multi-byte UTF-8 split across chunk boundaries Thanks @stretpjc! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2091)
+- fix(stream): Preserve multi-byte UTF-8 split across chunk boundaries (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2091)
 - fix: Don't have `output` in dataset pipeline row type definition (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2089)
 
 ## 3.15.0
