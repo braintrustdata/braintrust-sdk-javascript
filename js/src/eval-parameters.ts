@@ -7,23 +7,35 @@ import {
 } from "./prompt-schemas";
 import { PromptData as promptDataSchema } from "./generated_types";
 
+// Schema for a prompt-typed evaluation parameter
+export const promptParameterSchema = z.object({
+  type: z.literal("prompt"),
+  default: promptDefinitionWithToolsSchema.optional(),
+  description: z.string().optional(),
+});
+
+export type PromptParameter = z.infer<typeof promptParameterSchema>;
+
+// Schema for a model-typed evaluation parameter
+export const modelParameterSchema = z.object({
+  type: z.literal("model"),
+  default: z.string().optional(),
+  description: z.string().optional(),
+});
+
+export type ModelParameter = z.infer<typeof modelParameterSchema>;
+
+// Schema for a single evaluation parameter
+export const evalParameterSchema = z.union([
+  promptParameterSchema,
+  modelParameterSchema,
+  z.instanceof(z.ZodType), // For Zod schemas
+]);
+
+export type EvalParameter = z.infer<typeof evalParameterSchema>;
+
 // Schema for evaluation parameters
-export const evalParametersSchema = z.record(
-  z.string(),
-  z.union([
-    z.object({
-      type: z.literal("prompt"),
-      default: promptDefinitionWithToolsSchema.optional(),
-      description: z.string().optional(),
-    }),
-    z.object({
-      type: z.literal("model"),
-      default: z.string().optional(),
-      description: z.string().optional(),
-    }),
-    z.instanceof(z.ZodType), // For Zod schemas
-  ]),
-);
+export const evalParametersSchema = z.record(z.string(), evalParameterSchema);
 
 export type EvalParameters = z.infer<typeof evalParametersSchema>;
 

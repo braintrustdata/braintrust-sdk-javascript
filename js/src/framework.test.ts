@@ -17,6 +17,7 @@ import {
   _exportsForTestingOnly,
   BraintrustState,
   initLogger,
+  Prompt,
   TestBackgroundLogger,
 } from "./logger";
 import { configureNode } from "./node/config";
@@ -1284,7 +1285,7 @@ describe("framework2 metadata support", () => {
   });
 
   describe("CodeParameters defaults", () => {
-    test("toFunctionDefinition initializes data with schema defaults", async () => {
+    test("toFunctionDefinition does not initialize data from schema defaults", async () => {
       const project = projects.create({ name: "test-project" });
       project.parameters.create({
         name: "test-parameters",
@@ -1329,26 +1330,7 @@ describe("framework2 metadata support", () => {
       const funcDef = await parameters[0].toFunctionDefinition(mockProjectMap);
 
       expect(funcDef.function_data.type).toBe("parameters");
-      expect(funcDef.function_data.data).toMatchObject({
-        title: "default-title",
-        numSamples: 10,
-        enabled: true,
-        tags: ["default-tag"],
-        config: {
-          retryCount: 3,
-          strategy: "balanced",
-        },
-        main: {
-          prompt: {
-            type: "chat",
-            messages: [{ role: "user", content: "{{input}}" }],
-          },
-          options: {
-            model: "gpt-4",
-          },
-        },
-        model: "gpt-5-mini",
-      });
+      expect(funcDef.function_data.data).toEqual({});
       expect(funcDef.function_data.__schema.properties.model).toMatchObject({
         type: "string",
         "x-bt-type": "model",
@@ -1399,6 +1381,120 @@ describe("framework2 metadata support", () => {
       expect(funcDef.function_data.data).not.toHaveProperty("config");
       expect(funcDef.function_data.data).not.toHaveProperty("main");
       expect(funcDef.function_data.data).not.toHaveProperty("model");
+    });
+
+    test("toFunctionDefinition initializes data with validated values", async () => {
+      const project = projects.create({ name: "test-project" });
+      const mainPrompt = Prompt.fromPromptData("main", {
+        prompt: {
+          type: "chat",
+          messages: [{ role: "user", content: "{{input}}" }],
+        },
+        options: {
+          model: "gpt-4o",
+        },
+      });
+
+      const codeParameters = project.parameters.create({
+        name: "test-parameters-values",
+        schema: {
+          title: z.string(),
+          numSamples: z.number(),
+          enabled: z.boolean(),
+          config: z.object({
+            retryCount: z.number(),
+            strategy: z.string(),
+          }),
+          main: {
+            type: "prompt",
+          },
+          model: {
+            type: "model",
+          },
+        },
+      });
+
+      codeParameters.updateValues({
+        title: "configured-title",
+        numSamples: 5,
+        enabled: false,
+        config: {
+          retryCount: 5,
+          strategy: "fast",
+        },
+        main: mainPrompt,
+        model: "gpt-5-mini",
+      });
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const parameters = (project as any)._publishableParameters;
+      expect(parameters).toHaveLength(1);
+
+      const mockProjectMap = {
+        resolve: vi.fn().mockResolvedValue("project-123"),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any;
+
+      const funcDef = await parameters[0].toFunctionDefinition(mockProjectMap);
+
+      expect(funcDef.function_data.type).toBe("parameters");
+      expect(funcDef.function_data.data).toEqual({
+        title: "configured-title",
+        numSamples: 5,
+        enabled: false,
+        config: {
+          retryCount: 5,
+          strategy: "fast",
+        },
+        main: {
+          prompt: {
+            type: "chat",
+            messages: [{ role: "user", content: "{{input}}" }],
+          },
+          options: {
+            model: "gpt-4o",
+          },
+        },
+        model: "gpt-5-mini",
+      });
+    });
+
+    test("updateValues rejects values that do not match the schema", async () => {
+      const project = projects.create({ name: "test-project" });
+      const codeParameters = project.parameters.create({
+        name: "test-parameters-invalid-values",
+        schema: {
+          numSamples: z.number(),
+          model: {
+            type: "model",
+          },
+        },
+      });
+
+      codeParameters.updateValues({
+        model: "gpt-5-mini",
+      });
+
+      expect(() =>
+        codeParameters.updateValues({
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          numSamples: "ten" as any,
+          model: "gpt-5-mini",
+        }),
+      ).toThrow("Invalid parameter value 'numSamples'");
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      expect((project as any)._publishableParameters).toHaveLength(1);
+
+      const mockProjectMap = {
+        resolve: vi.fn().mockResolvedValue("project-123"),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any;
+
+      const funcDef = await codeParameters.toFunctionDefinition(mockProjectMap);
+      expect(funcDef.function_data.data).toEqual({
+        model: "gpt-5-mini",
+      });
     });
   });
 

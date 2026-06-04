@@ -9,6 +9,7 @@ import {
   type SavedFunctionIdType as SavedFunctionId,
   type PromptBlockDataType as PromptBlockData,
   type PromptDataType as PromptData,
+  PromptData as promptDataSchema,
   ToolFunctionDefinition as toolFunctionDefinitionSchema,
   type ToolFunctionDefinitionType as ToolFunctionDefinition,
   FunctionData as functionDataSchema,
@@ -24,8 +25,15 @@ import {
   RemoteEvalParameters,
 } from "./logger";
 import type { BaseFnOpts, GenericFunction } from "./framework-types";
-import type { EvalParameters } from "./eval-parameters";
+import type {
+  EvalParameter,
+  EvalParameters,
+  InferParameters,
+  ModelParameter,
+  PromptParameter,
+} from "./eval-parameters";
 import {
+  promptDefinitionWithToolsSchema,
   promptDefinitionToPromptData,
   type PromptDefinition,
 } from "./prompt-schemas";
@@ -589,14 +597,15 @@ export interface ParametersOpts<S extends EvalParameters> {
   metadata?: Record<string, unknown>;
 }
 
-export class CodeParameters {
+export class CodeParameters<S extends EvalParameters = EvalParameters> {
   public readonly project: Project;
   public readonly name: string;
   public readonly slug: string;
   public readonly description?: string;
-  public readonly schema: EvalParameters;
+  public readonly schema: S;
   public readonly ifExists?: IfExists;
   public readonly metadata?: Record<string, unknown>;
+  private values: Record<string, unknown> = {};
 
   constructor(
     project: Project,
@@ -604,7 +613,7 @@ export class CodeParameters {
       name: string;
       slug: string;
       description?: string;
-      schema: EvalParameters;
+      schema: S;
       ifExists?: IfExists;
       metadata?: Record<string, unknown>;
     },
@@ -616,6 +625,12 @@ export class CodeParameters {
     this.schema = opts.schema;
     this.ifExists = opts.ifExists;
     this.metadata = opts.metadata;
+  }
+
+  public updateValues(values: InferParameters<S>): this {
+    const validatedValues = validateParameterValues(this.schema, values);
+    this.values = validatedValues;
+    return this;
   }
 
   async toFunctionDefinition(
@@ -630,7 +645,7 @@ export class CodeParameters {
       function_type: "parameters",
       function_data: {
         type: "parameters",
-        data: getDefaultDataFromParametersSchema(schema),
+        data: this.values,
         __schema: schema,
       },
       if_exists: this.ifExists,
@@ -642,10 +657,12 @@ export class CodeParameters {
 class ParametersBuilder {
   constructor(private readonly project: Project) {}
 
-  public create<S extends EvalParameters>(opts: ParametersOpts<S>): S {
+  public create<S extends EvalParameters>(
+    opts: ParametersOpts<S>,
+  ): CodeParameters<S> {
     const slug = opts.slug ?? slugify(opts.name, { lower: true, strict: true });
 
-    const codeParameters = new CodeParameters(this.project, {
+    const codeParameters = new CodeParameters<S>(this.project, {
       name: opts.name,
       slug,
       description: opts.description,
@@ -656,8 +673,82 @@ class ParametersBuilder {
 
     this.project.addParameters(codeParameters);
 
-    return opts.schema;
+    return codeParameters;
   }
+}
+
+function validateParameterValues<S extends EvalParameters>(
+  schema: S,
+  values?: InferParameters<S>,
+): Record<string, unknown> {
+  if (!values) {
+    return {};
+  }
+
+  return Object.fromEntries(
+    Object.entries(values).flatMap(([name, value]) => {
+      if (value === undefined) {
+        return [];
+      }
+
+      const parameterSchema = schema[name];
+      if (parameterSchema === undefined) {
+        return [[name, value]];
+      }
+
+      try {
+        if (isPromptParameterSchema(parameterSchema)) {
+          return [[name, validatePromptParameterValue(value)]];
+        }
+
+        if (isModelParameterSchema(parameterSchema)) {
+          if (typeof value !== "string") {
+            throw new Error(
+              `Parameter '${name}' must be a string model identifier`,
+            );
+          }
+          return [[name, value]];
+        }
+
+        return [[name, parameterSchema.parse(value)]];
+      } catch (e) {
+        throw Error(
+          `Invalid parameter value '${name}': ${
+            e instanceof Error ? e.message : String(e)
+          }`,
+        );
+      }
+    }),
+  );
+}
+
+function isPromptParameterSchema(
+  schema: EvalParameter,
+): schema is PromptParameter {
+  return "type" in schema && schema.type === "prompt";
+}
+
+function isModelParameterSchema(
+  schema: EvalParameter,
+): schema is ModelParameter {
+  return "type" in schema && schema.type === "model";
+}
+
+function validatePromptParameterValue(value: unknown): PromptData {
+  if (Prompt.isPrompt(value)) {
+    return value.promptData;
+  }
+
+  const promptDefinitionResult =
+    promptDefinitionWithToolsSchema.safeParse(value);
+  if (promptDefinitionResult.success) {
+    return promptDefinitionToPromptData(
+      promptDefinitionResult.data,
+      promptDefinitionResult.data.tools,
+    );
+  }
+
+  return promptDataSchema.parse(value);
 }
 
 export function serializeEvalParametersToStaticParametersSchema(
@@ -665,7 +756,7 @@ export function serializeEvalParametersToStaticParametersSchema(
 ): StaticParametersSchema {
   return Object.fromEntries(
     Object.entries(parameters).map(([name, value]) => {
-      if ("type" in value && value.type === "prompt") {
+      if (isPromptParameterSchema(value)) {
         return [
           name,
           {
@@ -676,7 +767,7 @@ export function serializeEvalParametersToStaticParametersSchema(
             description: value.description,
           },
         ];
-      } else if ("type" in value && value.type === "model") {
+      } else if (isModelParameterSchema(value)) {
         return [
           name,
           {
@@ -761,20 +852,6 @@ function serializeEvalParameterstoParametersSchema(
     ...(required.length > 0 ? { required } : {}),
     additionalProperties: true,
   };
-}
-
-function getDefaultDataFromParametersSchema(
-  schema: ParametersSchema,
-): Record<string, unknown> {
-  return Object.fromEntries(
-    Object.entries(schema.properties).flatMap(([name, value]) => {
-      if (!("default" in value)) {
-        return [];
-      }
-
-      return [[name, value.default]];
-    }),
-  );
 }
 
 export function serializeRemoteEvalParametersContainer(
