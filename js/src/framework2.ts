@@ -627,7 +627,7 @@ export class CodeParameters<S extends EvalParameters = EvalParameters> {
     this.metadata = opts.metadata;
   }
 
-  public updateValues(values: InferParameters<S>): this {
+  public updateValues(values: Partial<InferParameters<S>>): this {
     const validatedValues = validateParameterValues(this.schema, values);
     this.values = validatedValues;
     return this;
@@ -679,7 +679,7 @@ class ParametersBuilder {
 
 function validateParameterValues<S extends EvalParameters>(
   schema: S,
-  values?: InferParameters<S>,
+  values?: Partial<InferParameters<S>>,
 ): Record<string, unknown> {
   if (!values) {
     return {};
