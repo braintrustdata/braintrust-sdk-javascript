@@ -688,6 +688,150 @@ test("Eval with noSendLogs: true runs locally without creating experiment", asyn
   expect(await memoryLogger.drain()).toHaveLength(0);
 });
 
+test("Eval scorer can call context exposed by the same task instance", async () => {
+  const scorerQuestions: string[] = [];
+
+  const result = await Eval(
+    "test-scorer-context",
+    {
+      data: [{ input: "research X", expected: "source" }],
+      task: async (input, hooks) => {
+        const agentSession = {
+          messages: [`task:${input}`],
+          async ask(question: string) {
+            this.messages.push(`scorer:${question}`);
+            return this.messages.join("|");
+          },
+        };
+
+        const output = `answer for ${input}`;
+        agentSession.messages.push(`output:${output}`);
+
+        hooks.exposeScorerContext(async (question: string) => {
+          scorerQuestions.push(question);
+          return agentSession.ask(question);
+        });
+
+        return output;
+      },
+      scores: [
+        async ({ scorerContext }) => {
+          const ask = scorerContext as (question: string) => Promise<string>;
+          const answer = await ask("what happened?");
+
+          return {
+            name: "has_task_history",
+            score:
+              answer.includes("task:research X") &&
+              answer.includes("output:answer for research X") &&
+              answer.includes("scorer:what happened?")
+                ? 1
+                : 0,
+          };
+        },
+      ],
+    },
+    { noSendLogs: true, returnResults: true },
+  );
+
+  expect(scorerQuestions).toEqual(["what happened?"]);
+  expect(result.results[0].scores.has_task_history).toBe(1);
+});
+
+test("Eval scorer context is isolated per row under concurrency", async () => {
+  const seenContexts: Array<{ input: number; contextInput: number }> = [];
+
+  const result = await Eval(
+    "test-scorer-context-isolation",
+    {
+      data: [1, 2, 3, 4].map((input) => ({ input, expected: input * 10 })),
+      maxConcurrency: 4,
+      task: async (input, hooks) => {
+        const session = {
+          input,
+          output: input * 10,
+        };
+
+        await new Promise((resolve) => setTimeout(resolve, 10 - input));
+        hooks.exposeScorerContext(() => session);
+
+        return session.output;
+      },
+      scores: [
+        ({ input, output, scorerContext }) => {
+          const getSession = scorerContext as () => {
+            input: number;
+            output: number;
+          };
+          const session = getSession();
+          seenContexts.push({ input, contextInput: session.input });
+
+          return {
+            name: "same_context",
+            score: session.input === input && session.output === output ? 1 : 0,
+          };
+        },
+      ],
+    },
+    { noSendLogs: true, returnResults: true },
+  );
+
+  expect(result.results).toHaveLength(4);
+  expect(result.results.every((r) => r.scores.same_context === 1)).toBe(true);
+  expect(
+    seenContexts
+      .map(({ input, contextInput }) => `${input}:${contextInput}`)
+      .sort(),
+  ).toEqual(["1:1", "2:2", "3:3", "4:4"]);
+});
+
+test("Eval scorer receives undefined context when task does not expose one", async () => {
+  const result = await Eval(
+    "test-scorer-context-undefined",
+    {
+      data: [{ input: "hello" }],
+      task: (input) => input,
+      scores: [
+        ({ scorerContext }) => ({
+          name: "missing_context",
+          score: scorerContext === undefined ? 1 : 0,
+        }),
+      ],
+    },
+    { noSendLogs: true, returnResults: true },
+  );
+
+  expect(result.results[0].scores.missing_context).toBe(1);
+});
+
+test("Eval classifiers receive scorer context", async () => {
+  const result = await Eval(
+    "test-classifier-scorer-context",
+    {
+      data: [{ input: "hello" }],
+      task: (input, hooks) => {
+        hooks.exposeScorerContext(() => `category:${input}`);
+        return input;
+      },
+      classifiers: [
+        ({ scorerContext }) => {
+          const getCategory = scorerContext as () => string;
+          return {
+            name: "category",
+            id: getCategory(),
+            label: "Context category",
+          };
+        },
+      ],
+    },
+    { noSendLogs: true, returnResults: true },
+  );
+
+  expect(result.results[0].classifications?.category).toEqual([
+    { id: "category:hello", label: "Context category" },
+  ]);
+});
+
 test("Eval with returnResults: false produces empty results but valid summary", async () => {
   const result = await Eval(
     "test-no-results-project",

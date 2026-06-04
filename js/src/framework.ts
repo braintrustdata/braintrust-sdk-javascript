@@ -111,14 +111,15 @@ export type EvalTask<
   Expected,
   Metadata extends BaseMetadata,
   Parameters extends EvalParameters,
+  ScorerContext = unknown,
 > =
   | ((
       input: Input,
-      hooks: EvalHooks<Expected, Metadata, Parameters>,
+      hooks: EvalHooks<Expected, Metadata, Parameters, ScorerContext>,
     ) => Promise<Output>)
   | ((
       input: Input,
-      hooks: EvalHooks<Expected, Metadata, Parameters>,
+      hooks: EvalHooks<Expected, Metadata, Parameters, ScorerContext>,
     ) => Output);
 
 export type TaskProgressEvent = Omit<
@@ -130,6 +131,7 @@ export interface EvalHooks<
   Expected,
   Metadata extends BaseMetadata,
   Parameters extends EvalParameters,
+  ScorerContext = unknown,
 > {
   /**
    * @deprecated Use `metadata` instead.
@@ -164,6 +166,10 @@ export interface EvalHooks<
    * The tags for the current evaluation.
    */
   tags: string[] | undefined;
+  /**
+   * Expose an in-memory value from this task run to its scorers.
+   */
+  exposeScorerContext: (context: ScorerContext) => void;
 }
 
 // This happens to be compatible with ScorerArgs defined in "../util".
@@ -172,9 +178,11 @@ export type EvalScorerArgs<
   Output,
   Expected,
   Metadata extends BaseMetadata = DefaultMetadataType,
+  ScorerContext = unknown,
 > = EvalCase<Input, Expected, Metadata> & {
   output: Output;
   trace?: Trace;
+  scorerContext?: ScorerContext;
 };
 
 export type OneOrMoreScores = Score | number | null | Array<Score>;
@@ -184,8 +192,9 @@ export type EvalScorer<
   Output,
   Expected,
   Metadata extends BaseMetadata = DefaultMetadataType,
+  ScorerContext = unknown,
 > = (
-  args: EvalScorerArgs<Input, Output, Expected, Metadata>,
+  args: EvalScorerArgs<Input, Output, Expected, Metadata, ScorerContext>,
 ) => OneOrMoreScores | Promise<OneOrMoreScores>;
 
 export type OneOrMoreClassifications = Classification | Classification[] | null;
@@ -195,8 +204,9 @@ export type EvalClassifier<
   Output,
   Expected,
   Metadata extends BaseMetadata = DefaultMetadataType,
+  ScorerContext = unknown,
 > = (
-  args: EvalScorerArgs<Input, Output, Expected, Metadata>,
+  args: EvalScorerArgs<Input, Output, Expected, Metadata, ScorerContext>,
 ) => OneOrMoreClassifications | Promise<OneOrMoreClassifications>;
 
 export type EvalResult<
@@ -228,6 +238,7 @@ export interface Evaluator<
   Expected,
   Metadata extends BaseMetadata = DefaultMetadataType,
   Parameters extends EvalParameters = EvalParameters,
+  ScorerContext = unknown,
 > {
   /**
    * A function that returns a list of inputs, expected outputs, and metadata.
@@ -237,20 +248,26 @@ export interface Evaluator<
   /**
    * A function that takes an input and returns an output.
    */
-  task: EvalTask<Input, Output, Expected, Metadata, Parameters>;
+  task: EvalTask<Input, Output, Expected, Metadata, Parameters, ScorerContext>;
 
   /**
    * A set of functions that take an input, output, and expected value and return a {@link Score}.
    * At least one of `scores` or `classifiers` must be provided.
    */
-  scores?: EvalScorer<Input, Output, Expected, Metadata>[];
+  scores?: EvalScorer<Input, Output, Expected, Metadata, ScorerContext>[];
 
   /**
    * A set of functions that take an input, output, and expected value and return a
    * {@link Classification}. Results are recorded under the `classifications` column.
    * At least one of `scores` or `classifiers` must be provided.
    */
-  classifiers?: EvalClassifier<Input, Output, Expected, Metadata>[];
+  classifiers?: EvalClassifier<
+    Input,
+    Output,
+    Expected,
+    Metadata,
+    ScorerContext
+  >[];
 
   /**
    * A set of parameters that will be passed to the evaluator.
@@ -424,10 +441,11 @@ export type EvaluatorDef<
   Expected,
   Metadata extends BaseMetadata = DefaultMetadataType,
   Parameters extends EvalParameters = EvalParameters,
+  ScorerContext = unknown,
 > = {
   projectName: string;
   evalName: string;
-} & Evaluator<Input, Output, Expected, Metadata, Parameters>;
+} & Evaluator<Input, Output, Expected, Metadata, Parameters, ScorerContext>;
 
 export type EvaluatorFile = {
   functions: CodeFunction<
@@ -647,9 +665,17 @@ export async function Eval<
   Metadata extends BaseMetadata = DefaultMetadataType,
   EvalReport = boolean,
   Parameters extends EvalParameters = EvalParameters,
+  ScorerContext = unknown,
 >(
   name: string,
-  evaluator: Evaluator<Input, Output, Expected, Metadata, Parameters>,
+  evaluator: Evaluator<
+    Input,
+    Output,
+    Expected,
+    Metadata,
+    Parameters,
+    ScorerContext
+  >,
   reporterOrOpts?:
     | ReporterDef<EvalReport>
     | string
@@ -1015,7 +1041,7 @@ function logScoringFailures(
 export async function runEvaluator(
   experiment: Experiment | null,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  evaluator: EvaluatorDef<any, any, any, any, any>,
+  evaluator: EvaluatorDef<any, any, any, any, any, any>,
   progressReporter: ProgressReporter,
   filters: Filter[],
   stream: ((data: SSEProgressEventData) => void) | undefined,
@@ -1054,7 +1080,7 @@ export const defaultErrorScoreHandler: ErrorScoreHandler = ({
 async function runEvaluatorInternal(
   experiment: Experiment | null,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  evaluator: EvaluatorDef<any, any, any, any>,
+  evaluator: EvaluatorDef<any, any, any, any, any, any>,
   progressReporter: ProgressReporter,
   filters: Filter[],
   stream: ((data: SSEProgressEventData) => void) | undefined,
@@ -1241,6 +1267,7 @@ async function runEvaluatorInternal(
           let output: unknown = undefined;
           let error: unknown | undefined = undefined;
           let tags: string[] = [...(datum.tags ?? [])];
+          let scorerContext: unknown | undefined = undefined;
           const scores: Record<string, number | null> = {};
           const classifications: Record<string, ClassificationItem[]> = {};
           const scorerNames = (evaluator.scores ?? []).map(scorerName);
@@ -1275,6 +1302,9 @@ async function runEvaluatorInternal(
                   },
                   trialIndex,
                   tags,
+                  exposeScorerContext: (context: unknown) => {
+                    scorerContext = context;
+                  },
                 };
 
                 const outputResult = evaluator.task(datum.input, hooksForTask);
@@ -1310,8 +1340,13 @@ async function runEvaluatorInternal(
               metadata,
               output,
               trace,
+              scorerContext,
             };
-            const { trace: _trace, ...scoringArgsForLogging } = scoringArgs;
+            const {
+              trace: _trace,
+              scorerContext: _scorerContext,
+              ...scoringArgsForLogging
+            } = scoringArgs;
             const propagatedEvent = makeScorerPropagatedEvent(
               await rootSpan.export(),
             );
@@ -1709,7 +1744,7 @@ function ensureScoreAccumulator(
 
 export function buildLocalSummary(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  evaluator: EvaluatorDef<any, any, any, any>,
+  evaluator: EvaluatorDef<any, any, any, any, any, any>,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   results: EvalResult<any, any, any, any>[],
   precomputedScores?: ScoreAccumulator,

@@ -24,7 +24,7 @@ export interface ReporterBody<EvalReport> {
     // These any's are required because these function specifications don't know
     // or need to know the types of the input/output/etc for the evaluator.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    evaluator: EvaluatorDef<any, any, any, any, any>,
+    evaluator: EvaluatorDef<any, any, any, any, any, any>,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     result: EvalResultWithSummary<any, any, any, any>,
     opts: ReporterOpts,
