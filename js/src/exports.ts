@@ -231,7 +231,6 @@ export {
 export { DatasetPipeline } from "./dataset-pipeline";
 
 export type {
-  ClassifierOpts,
   CodeOpts,
   CreateProjectOpts,
   FunctionEvent,
@@ -240,7 +239,6 @@ export type {
 } from "./framework2";
 
 export {
-  ClassifierBuilder,
   CodeFunction,
   CodePrompt,
   Project,
