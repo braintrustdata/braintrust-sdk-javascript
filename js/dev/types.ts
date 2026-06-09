@@ -109,7 +109,7 @@ export type SerializedParametersContainer = z.infer<
 >;
 
 export const evaluatorDefinitionSchema = z.object({
-  parameters: serializedParametersContainerSchema.optional(),
+  parameters: serializedParametersContainerSchema.nullish(),
   scores: z.array(z.object({ name: z.string() })).optional(),
   classifiers: z.array(z.object({ name: z.string() })).optional(),
 });
