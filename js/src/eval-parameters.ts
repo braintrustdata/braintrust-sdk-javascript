@@ -1,4 +1,5 @@
 import { z } from "zod/v3";
+import { z as zodV4 } from "zod";
 import Ajv from "ajv";
 import { Prompt, RemoteEvalParameters } from "./logger";
 import {
@@ -25,15 +26,33 @@ export const evalParametersSchema = z.record(
   ]),
 );
 
-export type EvalParameters = z.infer<typeof evalParametersSchema>;
+// A single parameter definition. The Zod-schema member is widened to accept
+// Zod 4 schemas (the `zod` peer) since all consumers now pass v4 schemas. The
+// non-schema members mirror `evalParametersSchema` above. We keep the runtime
+// validation schema on the v3 `z.instanceof(z.ZodType)` for the dual-version
+// peer, but the public type surface that users assign into must accept v4.
+export type EvalParameter =
+  | {
+      type: "prompt";
+      default?: z.infer<typeof promptDefinitionWithToolsSchema>;
+      description?: string;
+    }
+  | {
+      type: "model";
+      default?: string;
+      description?: string;
+    }
+  | zodV4.ZodType;
+
+export type EvalParameters = Record<string, EvalParameter>;
 
 // Type helper to infer the type of a parameter value
 type InferParameterValue<T> = T extends { type: "prompt" }
   ? Prompt
   : T extends { type: "model" }
     ? string
-    : T extends z.ZodType
-      ? z.infer<T>
+    : T extends zodV4.ZodType
+      ? zodV4.infer<T>
       : never;
 
 // Type helper to infer the full parameters type
@@ -120,7 +139,7 @@ function validateParametersWithZod<
           return [name, model];
         } else {
           // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-          const schemaCasted = schema as z.ZodSchema<unknown>;
+          const schemaCasted = schema as zodV4.ZodType<unknown>;
           return [name, schemaCasted.parse(value)];
         }
       } catch (e) {

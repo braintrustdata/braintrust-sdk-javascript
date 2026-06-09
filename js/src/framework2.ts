@@ -3,6 +3,7 @@ import type { Trace } from "./trace";
 import iso from "./isomorph";
 import { slugify } from "../util/string_util";
 import { z } from "zod/v3";
+import { z as zodV4 } from "zod";
 import {
   type FunctionTypeEnumType as FunctionType,
   type IfExistsType as IfExists,
@@ -295,8 +296,8 @@ export class ScorerBuilder {
 }
 
 type Schema<Input, Output> = Partial<{
-  parameters: z.ZodSchema<Input>;
-  returns: z.ZodSchema<Output>;
+  parameters: zodV4.ZodType<Input>;
+  returns: zodV4.ZodType<Output>;
 }>;
 
 export type CodeOpts<
@@ -360,8 +361,8 @@ export class CodeFunction<
   public readonly slug: string;
   public readonly type: FunctionType;
   public readonly description?: string;
-  public readonly parameters?: z.ZodSchema<Input>;
-  public readonly returns?: z.ZodSchema<Output>;
+  public readonly parameters?: zodV4.ZodType<Input>;
+  public readonly returns?: zodV4.ZodType<Output>;
   public readonly ifExists?: IfExists;
   public readonly tags?: string[];
   public readonly metadata?: Record<string, unknown>;
@@ -742,10 +743,7 @@ function serializeEvalParameterstoParametersSchema(
       }
     } else {
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      const schemaObj = zodToJsonSchema(value as z.ZodType) as Record<
-        string,
-        unknown
-      >;
+      const schemaObj = zodToJsonSchema(value) as Record<string, unknown>;
 
       properties[name] = schemaObj;
 
