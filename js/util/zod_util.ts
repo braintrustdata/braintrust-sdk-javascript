@@ -35,8 +35,11 @@ export class ExtraFieldsError extends Error {
 // Note: this check is not exactly equivalent to a deep version of `z.strict()`.
 // For instance, schemas which intentionally strip keys from objects using
 // something like `z.transform` can fail this check.
-export function parseNoStrip<T extends z.ZodType>(schema: T, input: unknown) {
-  const output = schema.parse(input) as z.infer<T>;
+export function parseNoStrip<T extends zodV4.ZodType>(
+  schema: T,
+  input: unknown,
+) {
+  const output = schema.parse(input) as zodV4.infer<T>;
   forEachMissingKey({
     lhs: output,
     rhs: input,
