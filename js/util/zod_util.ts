@@ -1,4 +1,5 @@
 import { z } from "zod/v3";
+import { z as zodV4 } from "zod";
 import { forEachMissingKey } from "./object_util";
 
 export class ExtraFieldsError extends Error {
@@ -51,20 +52,25 @@ export function parseNoStrip<T extends z.ZodType>(schema: T, input: unknown) {
 //
 // Basically the same as `z.partial()`, except instead of marking fields just
 // optional, it marks them nullish.
-export function objectNullish<
-  T extends z.ZodRawShape,
-  UnknownKeys extends z.UnknownKeysParam,
-  Catchall extends z.ZodTypeAny,
->(object: z.ZodObject<T, UnknownKeys, Catchall>) {
-  return new z.ZodObject({
-    ...object._def,
-    shape: () =>
-      Object.fromEntries(
-        Object.entries(object.shape).map(([k, v]) => [k, v.nullish()]),
-      ),
-  }) as z.ZodObject<
-    { [k in keyof T]: z.ZodOptional<z.ZodNullable<T[k]>> },
-    UnknownKeys,
-    Catchall
-  >;
+// Implemented against Zod 4 (the `zod` peer). Zod 4's ZodObject no longer
+// exposes the v3 `_def.shape()` constructor surface, so we rebuild the shape
+// with `z.object`.
+export function objectNullish<Shape extends zodV4.ZodRawShape>(
+  object: zodV4.ZodObject<Shape>,
+): zodV4.ZodObject<{
+  [K in keyof Shape]: zodV4.ZodOptional<zodV4.ZodNullable<Shape[K]>>;
+}> {
+  const nullishShape = Object.fromEntries(
+    Object.entries(object.shape).map(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- shape values are zod schemas; .nullish() is available at runtime
+      ([key, value]: [string, any]) => [key, value.nullish()],
+    ),
+  );
+  // The precise per-key mapped type cannot be inferred from the dynamically
+  // constructed shape, so we assert the documented return type. Runtime matches:
+  // every field is wrapped with .nullish().
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- dynamic shape construction; runtime matches the asserted type
+  return zodV4.object(nullishShape) as zodV4.ZodObject<{
+    [K in keyof Shape]: zodV4.ZodOptional<zodV4.ZodNullable<Shape[K]>>;
+  }>;
 }
