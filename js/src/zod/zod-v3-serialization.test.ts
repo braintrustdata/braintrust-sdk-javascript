@@ -19,7 +19,10 @@ import {
   serializeEvalParametersToStaticParametersSchema,
   serializeRemoteEvalParametersContainer,
 } from "../framework2";
-import { serializedParametersContainerSchema } from "../../dev/types";
+import {
+  serializedParametersContainerSchema,
+  evaluatorDefinitionSchema,
+} from "../../dev/types";
 // Detect which zod version is installed by checking for v4-specific properties
 function getInstalledZodVersion(): 3 | 4 {
   const testSchema = zodModule.z.string();
@@ -197,5 +200,35 @@ describe("serializedParametersContainerSchema parsing", () => {
       schema,
     });
     expect(result.success).toBe(true);
+  });
+});
+
+describe("evaluatorDefinitionSchema parameters nullish", () => {
+  test("allows parameters: null", () => {
+    const result = evaluatorDefinitionSchema.safeParse({
+      parameters: null,
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.parameters).toBeNull();
+    }
+  });
+
+  test("allows parameters: undefined", () => {
+    const result = evaluatorDefinitionSchema.safeParse({
+      parameters: undefined,
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.parameters).toBeUndefined();
+    }
+  });
+
+  test("allows parameters omitted entirely", () => {
+    const result = evaluatorDefinitionSchema.safeParse({});
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.parameters).toBeUndefined();
+    }
   });
 });
