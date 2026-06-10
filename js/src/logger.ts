@@ -77,6 +77,7 @@ import {
   type PromptType as PromptRow,
   type PromptSessionEventType as PromptSessionEvent,
   type RepoInfoType as RepoInfo,
+  type ObjectReferenceType as ObjectReference,
   type PromptBlockDataType as PromptBlockData,
   type ResponseFormatJsonSchemaType as ResponseFormatJsonSchema,
   type ObjectReferenceType,
@@ -6227,6 +6228,7 @@ export class ObjectFetcher<RecordType> implements AsyncIterable<
 
 export type BaseMetadata = Record<string, unknown> | void;
 export type DefaultMetadataType = void;
+export type EvalCaseOrigin = ObjectReference;
 export type EvalCase<Input, Expected, Metadata> = {
   input: Input;
   tags?: string[];
@@ -6234,6 +6236,7 @@ export type EvalCase<Input, Expected, Metadata> = {
   id?: string;
   _xact_id?: TransactionId;
   created?: string | null;
+  origin?: EvalCaseOrigin;
   // This field is used to help re-run a particular experiment row.
   upsert_id?: string;
   // The number of times to run the evaluator for this specific input.

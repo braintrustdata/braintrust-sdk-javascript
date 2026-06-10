@@ -1169,6 +1169,17 @@ async function runEvaluatorInternal(
           : Dataset.isDataset(evaluator.data)
             ? evaluator.data
             : undefined;
+        const origin =
+          datum.origin ??
+          (eventDataset && datum.id && datum._xact_id
+            ? {
+                object_type: "dataset",
+                object_id: await eventDataset.id,
+                id: datum.id,
+                created: datum.created,
+                _xact_id: datum._xact_id,
+              }
+            : undefined);
 
         const baseEvent: StartSpanArgs = {
           name: "eval",
@@ -1179,16 +1190,7 @@ async function runEvaluatorInternal(
             input: datum.input,
             expected: "expected" in datum ? datum.expected : undefined,
             tags: datum.tags,
-            origin:
-              eventDataset && datum.id && datum._xact_id
-                ? {
-                    object_type: "dataset",
-                    object_id: await eventDataset.id,
-                    id: datum.id,
-                    created: datum.created,
-                    _xact_id: datum._xact_id,
-                  }
-                : undefined,
+            origin,
             ...(datum.upsert_id ? { id: datum.upsert_id } : {}),
           },
         };
