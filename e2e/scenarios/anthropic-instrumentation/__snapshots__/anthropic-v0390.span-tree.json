@@ -58,10 +58,6 @@
               "children": [],
               "input": [
                 {
-                  "content": "Bonjour mon ami!",
-                  "role": "user"
-                },
-                {
                   "content": [
                     {
                       "text": "translate to english",
@@ -77,6 +73,10 @@
                     }
                   ],
                   "role": "system"
+                },
+                {
+                  "content": "Bonjour mon ami!",
+                  "role": "user"
                 }
               ],
               "output": {
