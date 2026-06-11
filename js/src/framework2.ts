@@ -296,7 +296,7 @@ export class ScorerBuilder {
   }
 }
 
-export class ClassifierBuilder {
+class ClassifierBuilder {
   private taskCounter = 0;
   constructor(private readonly project: Project) {}
 
@@ -390,7 +390,7 @@ export type ScorerOpts<
   metadata?: Record<string, unknown>;
 };
 
-export type ClassifierOpts<
+type ClassifierOpts<
   Output,
   Input,
   Params,
