@@ -425,7 +425,11 @@ test("verify MemoryBackgroundLogger intercepts logs", async () => {
 
 test("initLogger agentName sets span_attributes.agent_id", async () => {
   const state = await _exportsForTestingOnly.simulateLoginForTests();
-  vi.spyOn(state.appConn(), "post_json").mockResolvedValue({
+  const postJsonSpy = vi.spyOn(state.appConn(), "post_json").mockResolvedValue({
+    project: {
+      id: "test-project-id",
+      name: "test-project",
+    },
     agent: {
       id: "agent-id",
       name: "support-agent",
@@ -437,8 +441,7 @@ test("initLogger agentName sets span_attributes.agent_id", async () => {
 
   try {
     const logger = initLogger({
-      projectName: "test",
-      projectId: "test-project-id",
+      projectName: "test-project",
       agentName: "support-agent",
     });
 
@@ -463,6 +466,12 @@ test("initLogger agentName sets span_attributes.agent_id", async () => {
     expect(byName.get("override")?.span_attributes?.agent_id).toBe(
       "override-agent",
     );
+    expect(postJsonSpy).toHaveBeenCalledWith("api/project/register", {
+      project_name: "test-project",
+      org_id: "test-org-id",
+      agent_name: "support-agent",
+    });
+    expect(postJsonSpy).toHaveBeenCalledTimes(1);
   } finally {
     _exportsForTestingOnly.clearTestBackgroundLogger();
     _exportsForTestingOnly.simulateLogoutForTests();

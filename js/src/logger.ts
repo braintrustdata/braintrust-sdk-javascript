@@ -1361,6 +1361,26 @@ type DefaultSpanAttributes =
   | Record<string, unknown>
   | LazyValue<Record<string, unknown> | undefined>;
 
+function agentMetadataFromRegisterResponse(
+  response: unknown,
+): ObjectMetadata | undefined {
+  if (!isObject(response) || !isObject(response.agent)) {
+    return undefined;
+  }
+
+  const agentId = response.agent.id;
+  const agentName = response.agent.name;
+  if (typeof agentId !== "string" || typeof agentName !== "string") {
+    return undefined;
+  }
+
+  return {
+    id: agentId,
+    name: agentName,
+    fullInfo: response.agent,
+  };
+}
+
 export interface LinkArgs {
   org_name?: string;
   app_url?: string;
@@ -4347,10 +4367,34 @@ async function computeLoggerMetadata(
   const org_id = state.orgId!;
   let metadata: OrgProjectMetadata;
   if (isEmpty(project_id)) {
-    const response = await state.appConn().post_json("api/project/register", {
+    const registerArgs: Record<string, unknown> = {
       project_name: project_name || GLOBAL_PROJECT,
       org_id,
-    });
+    };
+    if (agent_name !== undefined) {
+      registerArgs.agent_name = agent_name;
+    }
+    let response;
+    try {
+      response = await state
+        .appConn()
+        .post_json("api/project/register", registerArgs);
+    } catch (e) {
+      if (
+        agent_name === undefined ||
+        !(e instanceof FailedHTTPResponse) ||
+        e.status !== 400
+      ) {
+        throw e;
+      }
+      debugLogger.debug(
+        "Project registration did not accept agent_name; retrying without it",
+      );
+      response = await state.appConn().post_json("api/project/register", {
+        project_name: project_name || GLOBAL_PROJECT,
+        org_id,
+      });
+    }
     metadata = {
       org_id,
       project: {
@@ -4358,6 +4402,7 @@ async function computeLoggerMetadata(
         name: response.project.name,
         fullInfo: response.project,
       },
+      agent: agentMetadataFromRegisterResponse(response),
     };
   } else if (isEmpty(project_name)) {
     const response = await state.appConn().get_json("api/project", {
@@ -4377,7 +4422,7 @@ async function computeLoggerMetadata(
       project: { id: project_id, name: project_name, fullInfo: {} },
     };
   }
-  if (agent_name !== undefined) {
+  if (agent_name !== undefined && metadata.agent === undefined) {
     metadata.agent = await registerAgentMetadata(
       state,
       metadata.project.id,
