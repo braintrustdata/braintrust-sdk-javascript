@@ -230,13 +230,13 @@
     "zod": "^3.25.34 || ^4.0"
   },
   "optionalDependencies": {
-    "@braintrust/bt-darwin-arm64": "0.11.1",
-    "@braintrust/bt-darwin-x64": "0.11.1",
-    "@braintrust/bt-linux-arm64": "0.11.1",
-    "@braintrust/bt-linux-x64": "0.11.1",
-    "@braintrust/bt-linux-x64-musl": "0.11.1",
-    "@braintrust/bt-win32-arm64": "0.11.1",
-    "@braintrust/bt-win32-x64": "0.11.1"
+    "@braintrust/bt-darwin-arm64": "0.12.0",
+    "@braintrust/bt-darwin-x64": "0.12.0",
+    "@braintrust/bt-linux-arm64": "0.12.0",
+    "@braintrust/bt-linux-x64": "0.12.0",
+    "@braintrust/bt-linux-x64-musl": "0.12.0",
+    "@braintrust/bt-win32-arm64": "0.12.0",
+    "@braintrust/bt-win32-x64": "0.12.0"
   },
   "publishConfig": {
     "access": "public",

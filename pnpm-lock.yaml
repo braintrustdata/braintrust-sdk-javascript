@@ -500,26 +500,26 @@ importers:
         version: 3.25.76
     optionalDependencies:
       '@braintrust/bt-darwin-arm64':
-        specifier: 0.11.1
-        version: 0.11.1
+        specifier: 0.12.0
+        version: 0.12.0
       '@braintrust/bt-darwin-x64':
-        specifier: 0.11.1
-        version: 0.11.1
+        specifier: 0.12.0
+        version: 0.12.0
       '@braintrust/bt-linux-arm64':
-        specifier: 0.11.1
-        version: 0.11.1
+        specifier: 0.12.0
+        version: 0.12.0
       '@braintrust/bt-linux-x64':
-        specifier: 0.11.1
-        version: 0.11.1
+        specifier: 0.12.0
+        version: 0.12.0
       '@braintrust/bt-linux-x64-musl':
-        specifier: 0.11.1
-        version: 0.11.1
+        specifier: 0.12.0
+        version: 0.12.0
       '@braintrust/bt-win32-arm64':
-        specifier: 0.11.1
-        version: 0.11.1
+        specifier: 0.12.0
+        version: 0.12.0
       '@braintrust/bt-win32-x64':
-        specifier: 0.11.1
-        version: 0.11.1
+        specifier: 0.12.0
+        version: 0.12.0
 
   js/src/wrappers/vitest:
     devDependencies:
@@ -606,41 +606,41 @@ packages:
     resolution: {integrity: sha512-Q/N6JNWvIvPnLDvjlE1OUBLPQHH6l3CltCEsHIujp45zQUSSh8K+gHnaEX45yAT1nyngnINhvWtzN+Nb9D8RAQ==}
     engines: {node: '>=6.9.0'}
 
-  '@braintrust/bt-darwin-arm64@0.11.1':
-    resolution: {integrity: sha512-jhL/X24ss4e4qMMdlXtxO8rA957Z77wJA59XXFHqpuaaVCd4pXE5JPUQBkms9dHcs4efJhY3Lx9zNQqoaeCqWg==}
+  '@braintrust/bt-darwin-arm64@0.12.0':
+    resolution: {integrity: sha512-mY6VW/3VwcOQOGN8sYHS6F0xzHTFwgZcNlj7zlQttI6OXOCGt/bhonGIqd03QBhxmj0M31ymSS7TqSeCK/RYIQ==}
     cpu: [arm64]
     os: [darwin]
 
-  '@braintrust/bt-darwin-x64@0.11.1':
-    resolution: {integrity: sha512-f4l25gVUpCJ99mFS9y+zmnYOcevtI7KLLvlLF/xOil2YCIx/KCM6AqS96jj6CJW74B7hYhd74dLnFKMFFL429w==}
+  '@braintrust/bt-darwin-x64@0.12.0':
+    resolution: {integrity: sha512-woyRyDv2DfCF8+von+3X9f1cddAbFnKLSfCbEkrBQVc0ZsAM60as8nehYv7DkafJF/67yKFx/sUraV65sukesQ==}
     cpu: [x64]
     os: [darwin]
 
-  '@braintrust/bt-linux-arm64@0.11.1':
-    resolution: {integrity: sha512-01GWsP/p17I3yy0kxkp+Yt8w5L28j3nFL+7iLCkQWtDdfCGkuRsnrIbrY8dbnqGo/wvgz7uPXBkCXoIuNsfoxw==}
+  '@braintrust/bt-linux-arm64@0.12.0':
+    resolution: {integrity: sha512-J9/7f3EIMKmFmSSQHQnAQLpUgB8YJENrOlkABjlTprBgsIYVgz7tSH7yg2P3ur+2Jem7PpGnrDxHGh/UjRfjsg==}
     cpu: [arm64]
     os: [linux]
     libc: [glibc]
 
-  '@braintrust/bt-linux-x64-musl@0.11.1':
-    resolution: {integrity: sha512-QLqlFsF6HKON5Vc0c8JfpQ4vrl4KjmInGF1Vsqy+ecVkgXVk8pwCVibb8Ea/udVpBQqctAaNMn7ZsmvWR2vO8Q==}
+  '@braintrust/bt-linux-x64-musl@0.12.0':
+    resolution: {integrity: sha512-KnLgENOoztBXcH+mLFJe4bYzi67kSOuELOQrm4Hler35GjgaBMI1fFLIUjKRPAmyT9VIhBMhy1ICfGEFLueMEQ==}
     cpu: [x64]
     os: [linux]
     libc: [musl]
 
-  '@braintrust/bt-linux-x64@0.11.1':
-    resolution: {integrity: sha512-E/XwRuhPrZxD+IZgSbPCuj4gywBrim/g+tU0MjWxFohpMMkJJW2CxMCIO+6RVk8gTxlVh/ajCIjv2/Ph1Yugeg==}
+  '@braintrust/bt-linux-x64@0.12.0':
+    resolution: {integrity: sha512-HJFbUl3HYYY1Ivw8OYBeIMcIsU9r7+fC9BzLWB5FdH7881ToKee2wbbLZssMCxFbMVeUxzEo+SzGD/1Z9Gk9CA==}
     cpu: [x64]
     os: [linux]
     libc: [glibc]
 
-  '@braintrust/bt-win32-arm64@0.11.1':
-    resolution: {integrity: sha512-0LSVXZ/tE79VVcpRjaTE+iTMQR4EKNC6tteAS01uKT34eID7OqJ7xJijZOthe11kGqMcX8nnNbdDrWHqLczDow==}
+  '@braintrust/bt-win32-arm64@0.12.0':
+    resolution: {integrity: sha512-+7PkdBAmiqEJsWteGHP/Zs62F75PkHPA8m/ej4TOz/mHGKulUU0bZibw91KRqIB7J7jGi5ItvCiqkiGaLKLnyw==}
     cpu: [arm64]
     os: [win32]
 
-  '@braintrust/bt-win32-x64@0.11.1':
-    resolution: {integrity: sha512-JPo3xffJvW0OKowqpbh+XtlafpoZq8VXzhOcW2yQmHcN56Me2u9plPiXi4gzrpgz2cnFx6/EiJ1bTa3F25F0RA==}
+  '@braintrust/bt-win32-x64@0.12.0':
+    resolution: {integrity: sha512-Q0c+pVUGm82n/7N8QJ5s6j/G/Q0GFzqOaTipHjkmElLbAOOEcfRH/uljdtIPNBiEQcrzqirS0GmOgiFkeQ3Txg==}
     cpu: [x64]
     os: [win32]
 
@@ -4258,25 +4258,25 @@ snapshots:
 
   '@babel/runtime@7.28.4': {}
 
-  '@braintrust/bt-darwin-arm64@0.11.1':
+  '@braintrust/bt-darwin-arm64@0.12.0':
     optional: true
 
-  '@braintrust/bt-darwin-x64@0.11.1':
+  '@braintrust/bt-darwin-x64@0.12.0':
     optional: true
 
-  '@braintrust/bt-linux-arm64@0.11.1':
+  '@braintrust/bt-linux-arm64@0.12.0':
     optional: true
 
-  '@braintrust/bt-linux-x64-musl@0.11.1':
+  '@braintrust/bt-linux-x64-musl@0.12.0':
     optional: true
 
-  '@braintrust/bt-linux-x64@0.11.1':
+  '@braintrust/bt-linux-x64@0.12.0':
     optional: true
 
-  '@braintrust/bt-win32-arm64@0.11.1':
+  '@braintrust/bt-win32-arm64@0.12.0':
     optional: true
 
-  '@braintrust/bt-win32-x64@0.11.1':
+  '@braintrust/bt-win32-x64@0.12.0':
     optional: true
 
   '@cfworker/json-schema@4.0.3': {}
