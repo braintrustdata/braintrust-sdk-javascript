@@ -60,6 +60,7 @@ export class Project {
   public prompts: PromptBuilder;
   public parameters: ParametersBuilder;
   public scorers: ScorerBuilder;
+  public classifiers: ClassifierBuilder;
 
   private _publishableCodeFunctions: CodeFunction<
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -80,6 +81,7 @@ export class Project {
     this.prompts = new PromptBuilder(this);
     this.parameters = new ParametersBuilder(this);
     this.scorers = new ScorerBuilder(this);
+    this.classifiers = new ClassifierBuilder(this);
   }
 
   public addPrompt(prompt: CodePrompt) {
@@ -294,6 +296,44 @@ export class ScorerBuilder {
   }
 }
 
+class ClassifierBuilder {
+  private taskCounter = 0;
+  constructor(private readonly project: Project) {}
+
+  public create<
+    Output,
+    Input,
+    Params,
+    Returns,
+    Fn extends GenericFunction<
+      Exact<Params, ScorerArgs<Output, Input>>,
+      Returns
+    >,
+  >(opts: ClassifierOpts<Output, Input, Params, Returns, Fn>) {
+    this.taskCounter++;
+
+    let resolvedName = opts.name ?? opts.handler.name;
+    if (!resolvedName || resolvedName.trim().length === 0) {
+      resolvedName = `Classifier ${iso.basename(currentFilename)} ${this.taskCounter}`;
+    }
+    const slug =
+      opts.slug ?? slugify(resolvedName, { lower: true, strict: true });
+
+    const classifier: CodeFunction<
+      Exact<Params, ScorerArgs<Output, Input>>,
+      Returns,
+      Fn
+    > = new CodeFunction(this.project, {
+      ...opts,
+      name: resolvedName,
+      slug,
+      type: "classifier",
+    });
+    this.project.addCodeFunction(classifier);
+    return classifier;
+  }
+}
+
 type Schema<Input, Output> = Partial<{
   parameters: z.ZodSchema<Input>;
   returns: z.ZodSchema<Output>;
@@ -347,6 +387,16 @@ export type ScorerOpts<
   Returns,
   Fn extends GenericFunction<Exact<Params, ScorerArgs<Output, Input>>, Returns>,
 > = ScorerOptsUnion<Output, Input, Params, Returns, Fn> & {
+  metadata?: Record<string, unknown>;
+};
+
+type ClassifierOpts<
+  Output,
+  Input,
+  Params,
+  Returns,
+  Fn extends GenericFunction<Exact<Params, ScorerArgs<Output, Input>>, Returns>,
+> = CodeOpts<Exact<Params, ScorerArgs<Output, Input>>, Returns, Fn> & {
   metadata?: Record<string, unknown>;
 };
 
