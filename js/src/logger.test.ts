@@ -423,6 +423,52 @@ test("verify MemoryBackgroundLogger intercepts logs", async () => {
   _exportsForTestingOnly.clearTestBackgroundLogger(); // can go back to normal
 });
 
+test("initLogger agentName sets span_attributes.agent_id", async () => {
+  const state = await _exportsForTestingOnly.simulateLoginForTests();
+  vi.spyOn(state.appConn(), "post_json").mockResolvedValue({
+    agent: {
+      id: "agent-id",
+      name: "support-agent",
+    },
+    found_existing: false,
+  });
+
+  const memoryLogger = _exportsForTestingOnly.useTestBackgroundLogger();
+
+  try {
+    const logger = initLogger({
+      projectName: "test",
+      projectId: "test-project-id",
+      agentName: "support-agent",
+    });
+
+    const parent = logger.startSpan({ name: "parent" });
+    parent.startSpan({ name: "child" }).end();
+    parent
+      .startSpan({
+        name: "override",
+        spanAttributes: { agent_id: "override-agent" },
+      })
+      .end();
+    parent.end();
+
+    await memoryLogger.flush();
+    const events = await memoryLogger.drain();
+    const byName = new Map(
+      events.map((event) => [event.span_attributes?.name, event]),
+    );
+
+    expect(byName.get("parent")?.span_attributes?.agent_id).toBe("agent-id");
+    expect(byName.get("child")?.span_attributes?.agent_id).toBe("agent-id");
+    expect(byName.get("override")?.span_attributes?.agent_id).toBe(
+      "override-agent",
+    );
+  } finally {
+    _exportsForTestingOnly.clearTestBackgroundLogger();
+    _exportsForTestingOnly.simulateLogoutForTests();
+  }
+});
+
 test("init validation", () => {
   expect(() => init({})).toThrow(
     "Must specify at least one of project or projectId",

@@ -1354,7 +1354,12 @@ interface ProjectDatasetMetadata {
 interface OrgProjectMetadata {
   org_id: string;
   project: ObjectMetadata;
+  agent?: ObjectMetadata;
 }
+
+type DefaultSpanAttributes =
+  | Record<string, unknown>
+  | LazyValue<Record<string, unknown> | undefined>;
 
 export interface LinkArgs {
   org_name?: string;
@@ -1367,6 +1372,7 @@ export interface LogOptions<IsAsyncFlush> {
   asyncFlush?: IsAsyncFlush;
   computeMetadataArgs?: Record<string, any>;
   linkArgs?: LinkArgs;
+  defaultSpanAttributes?: DefaultSpanAttributes;
 }
 
 export type PromiseUnless<B, R> = B extends true ? R : Promise<Awaited<R>>;
@@ -2291,6 +2297,7 @@ export class Logger<IsAsyncFlush extends boolean> implements Exportable {
   private _asyncFlush: IsAsyncFlush | undefined;
   private computeMetadataArgs: Record<string, any> | undefined;
   private _linkArgs: LinkArgs | undefined;
+  private defaultSpanAttributes: DefaultSpanAttributes | undefined;
   private lastStartTime: number;
   private lazyId: LazyValue<string>;
   private calledStartSpan: boolean;
@@ -2307,6 +2314,7 @@ export class Logger<IsAsyncFlush extends boolean> implements Exportable {
     this._asyncFlush = logOptions.asyncFlush;
     this.computeMetadataArgs = logOptions.computeMetadataArgs;
     this._linkArgs = logOptions.linkArgs;
+    this.defaultSpanAttributes = logOptions.defaultSpanAttributes;
     this.lastStartTime = getCurrentUnixTimestamp();
     this.lazyId = new LazyValue(async () => await this.id);
     this.calledStartSpan = false;
@@ -2431,6 +2439,8 @@ export class Logger<IsAsyncFlush extends boolean> implements Exportable {
   private startSpanImpl(args?: StartSpanArgs): Span {
     return new SpanImpl({
       ...args,
+      spanAttributes: args?.spanAttributes,
+      defaultSpanAttributes: this.defaultSpanAttributes,
       // Sometimes `args` gets passed directly into this function, and it contains an undefined value for `state`.
       // To ensure that we always use this logger's state, we override the `state` argument no matter what.
       state: this.state,
@@ -4273,8 +4283,8 @@ export function initDataset<
     legacy,
     _internal_btql,
     resolvedVersion instanceof LazyValue ||
-      normalizedEnvironment !== undefined ||
-      normalizedSnapshotName !== undefined
+    normalizedEnvironment !== undefined ||
+    normalizedSnapshotName !== undefined
       ? {
           ...(resolvedVersion instanceof LazyValue
             ? {
@@ -4326,19 +4336,22 @@ async function computeLoggerMetadata(
   {
     project_name,
     project_id,
+    agent_name,
   }: {
     project_name?: string;
     project_id?: string;
+    agent_name?: string;
   },
 ) {
   await state.login({});
   const org_id = state.orgId!;
+  let metadata: OrgProjectMetadata;
   if (isEmpty(project_id)) {
     const response = await state.appConn().post_json("api/project/register", {
       project_name: project_name || GLOBAL_PROJECT,
       org_id,
     });
-    return {
+    metadata = {
       org_id,
       project: {
         id: response.project.id,
@@ -4350,7 +4363,7 @@ async function computeLoggerMetadata(
     const response = await state.appConn().get_json("api/project", {
       id: project_id,
     });
-    return {
+    metadata = {
       org_id,
       project: {
         id: project_id,
@@ -4359,10 +4372,44 @@ async function computeLoggerMetadata(
       },
     };
   } else {
-    return {
+    metadata = {
       org_id,
       project: { id: project_id, name: project_name, fullInfo: {} },
     };
+  }
+  if (agent_name !== undefined) {
+    metadata.agent = await registerAgentMetadata(
+      state,
+      metadata.project.id,
+      agent_name,
+    );
+  }
+  return metadata;
+}
+
+async function registerAgentMetadata(
+  state: BraintrustState,
+  projectId: string,
+  agentName: string,
+): Promise<ObjectMetadata> {
+  try {
+    const response = await state.appConn().post_json("api/agent/register", {
+      project_id: projectId,
+      agent_name: agentName,
+    });
+    return {
+      id: response.agent.id,
+      name: response.agent.name,
+      fullInfo: response.agent,
+    };
+  } catch (e) {
+    if (e instanceof FailedHTTPResponse && e.status === 404) {
+      debugLogger.debug(
+        "Agent registration endpoint not found; using agent name as span attribute",
+      );
+      return { id: agentName, name: agentName, fullInfo: {} };
+    }
+    throw e;
   }
 }
 
@@ -4373,6 +4420,7 @@ type AsyncFlushArg<IsAsyncFlush> = {
 export type InitLoggerOptions<IsAsyncFlush> = FullLoginOptions & {
   projectName?: string;
   projectId?: string;
+  agentName?: string;
   setCurrent?: boolean;
   state?: BraintrustState;
   orgProjectMetadata?: OrgProjectMetadata;
@@ -4384,6 +4432,7 @@ export type InitLoggerOptions<IsAsyncFlush> = FullLoginOptions & {
  * @param options Additional options for configuring init().
  * @param options.projectName The name of the project to log into. If unspecified, will default to the Global project.
  * @param options.projectId The id of the project to log into. This takes precedence over projectName if specified.
+ * @param options.agentName The name of the agent to register and associate with logged spans. The registered agent id is stored as `span_attributes.agent_id`.
  * @param options.asyncFlush If true, will log asynchronously in the background. Otherwise, will log synchronously. (true by default)
  * @param options.appUrl The URL of the Braintrust App. Defaults to https://www.braintrust.dev.
  * @param options.apiKey The API key to use. If the parameter is not specified, will try to use the `BRAINTRUST_API_KEY` environment variable. If no API
@@ -4400,6 +4449,7 @@ export function initLogger<IsAsyncFlush extends boolean = true>(
   const {
     projectName,
     projectId,
+    agentName,
     asyncFlush: asyncFlushArg,
     appUrl,
     apiKey,
@@ -4416,6 +4466,7 @@ export function initLogger<IsAsyncFlush extends boolean = true>(
   const computeMetadataArgs = {
     project_name: projectName,
     project_id: projectId,
+    agent_name: agentName,
   };
 
   const linkArgs = {
@@ -4449,6 +4500,13 @@ export function initLogger<IsAsyncFlush extends boolean = true>(
     asyncFlush,
     computeMetadataArgs,
     linkArgs,
+    defaultSpanAttributes:
+      agentName === undefined
+        ? undefined
+        : new LazyValue(async () => {
+            const metadata = await lazyMetadata.get();
+            return { agent_id: metadata.agent?.id ?? agentName };
+          }),
   });
   if (options.setCurrent ?? true) {
     state.currentLogger = ret as Logger<false>;
@@ -6051,9 +6109,9 @@ export type WithTransactionId<R> = R & {
 export const DEFAULT_FETCH_BATCH_SIZE = 1000;
 export const MAX_BTQL_ITERATIONS = 10000;
 
-export class ObjectFetcher<RecordType> implements AsyncIterable<
-  WithTransactionId<RecordType>
-> {
+export class ObjectFetcher<RecordType>
+  implements AsyncIterable<WithTransactionId<RecordType>>
+{
   private _fetchedData: WithTransactionId<RecordType>[] | undefined = undefined;
 
   constructor(
@@ -6747,6 +6805,7 @@ export class SpanImpl implements Span {
   private parentObjectType: SpanObjectTypeV3;
   private parentObjectId: LazyValue<string>;
   private parentComputeObjectMetadataArgs: Record<string, any> | undefined;
+  private defaultSpanAttributes: DefaultSpanAttributes | undefined;
 
   private _id: string;
   private _spanId: string;
@@ -6762,13 +6821,25 @@ export class SpanImpl implements Span {
       parentObjectId: LazyValue<string>;
       parentComputeObjectMetadataArgs: Record<string, any> | undefined;
       parentSpanIds: ParentSpanIds | MultiParentSpanIds | undefined;
+      defaultSpanAttributes?: DefaultSpanAttributes;
       defaultRootType?: SpanType;
       spanId?: string;
     } & Omit<StartSpanArgs, "parent">,
   ) {
     this._state = args.state;
 
-    const spanAttributes = args.spanAttributes ?? {};
+    const lazyDefaultSpanAttributes =
+      args.defaultSpanAttributes instanceof LazyValue
+        ? args.defaultSpanAttributes
+        : undefined;
+    const staticDefaultSpanAttributes =
+      args.defaultSpanAttributes instanceof LazyValue
+        ? undefined
+        : args.defaultSpanAttributes;
+    const spanAttributes = {
+      ...(staticDefaultSpanAttributes ?? {}),
+      ...(args.spanAttributes ?? {}),
+    };
     const rawEvent = args.event ?? {};
     const type =
       args.type ?? (args.parentSpanIds ? undefined : args.defaultRootType);
@@ -6777,6 +6848,7 @@ export class SpanImpl implements Span {
     this.parentObjectType = args.parentObjectType;
     this.parentObjectId = args.parentObjectId;
     this.parentComputeObjectMetadataArgs = args.parentComputeObjectMetadataArgs;
+    this.defaultSpanAttributes = args.defaultSpanAttributes;
 
     // Merge propagatedEvent into event. The propagatedEvent data will get
     // propagated-and-merged into every subspan.
@@ -6802,19 +6874,28 @@ export class SpanImpl implements Span {
       return "subspan";
     })();
 
+    const baseSpanAttributes = {
+      name,
+      type,
+      ...spanAttributes,
+      exec_counter: executionCounter++,
+    };
     const internalData = {
       metrics: {
         start: args.startTime ?? getCurrentUnixTimestamp(),
       },
       context: { ...callerLocation },
-      span_attributes: {
-        name,
-        type,
-        ...spanAttributes,
-        exec_counter: executionCounter++,
-      },
+      span_attributes: baseSpanAttributes,
       created: new Date().toISOString(),
     };
+    const lazyInternalData = lazyDefaultSpanAttributes
+      ? {
+          span_attributes: new LazyValue(async () => ({
+            ...((await lazyDefaultSpanAttributes.get()) ?? {}),
+            ...baseSpanAttributes,
+          })),
+        }
+      : undefined;
 
     this._id = eventId ?? this._state.idGenerator.getSpanId();
 
@@ -6834,7 +6915,7 @@ export class SpanImpl implements Span {
     // The first log is a replacement, but subsequent logs to the same span
     // object will be merges.
     this.isMerge = false;
-    this.logInternal({ event, internalData });
+    this.logInternal({ event, internalData, lazyInternalData });
     this.isMerge = true;
   }
 
@@ -6879,16 +6960,22 @@ export class SpanImpl implements Span {
   private logInternal({
     event,
     internalData,
+    lazyInternalData: additionalLazyInternalData,
   }: {
     event?: ExperimentLogPartialArgs;
     // `internalData` contains fields that are not part of the "user-sanitized"
     // set of fields which we want to log in just one of the span rows.
     internalData?: Partial<ExperimentEvent>;
+    lazyInternalData?: Record<string, LazyValue<unknown>>;
   }): void {
     const [serializableInternalData, lazyInternalData] = splitLoggingData({
       event,
       internalData,
     });
+    const mergedLazyInternalData = {
+      ...lazyInternalData,
+      ...(additionalLazyInternalData ?? {}),
+    };
 
     // Deep copy mutable user data.
     const partialRecord = deepCopyEvent({
@@ -6926,7 +7013,7 @@ export class SpanImpl implements Span {
       ...partialRecord,
       ...Object.fromEntries(
         await Promise.all(
-          Object.entries(lazyInternalData).map(async ([key, value]) => [
+          Object.entries(mergedLazyInternalData).map(async ([key, value]) => [
             key,
             await value.get(),
           ]),
@@ -6976,6 +7063,7 @@ export class SpanImpl implements Span {
     return new SpanImpl({
       state: this._state,
       ...args,
+      defaultSpanAttributes: this.defaultSpanAttributes,
       ...startSpanParentArgs({
         state: this._state,
         parent: args?.parent,
@@ -7000,6 +7088,7 @@ export class SpanImpl implements Span {
     return new SpanImpl({
       state: this._state,
       ...args,
+      defaultSpanAttributes: this.defaultSpanAttributes,
       ...startSpanParentArgs({
         state: this._state,
         parent: args?.parent,
