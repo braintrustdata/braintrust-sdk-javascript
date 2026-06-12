@@ -211,7 +211,7 @@
     "cors": "^2.8.5",
     "dc-browser": "^1.0.4",
     "dotenv": "^16.4.5",
-    "esbuild": "0.28.0",
+    "esbuild": "0.28.1",
     "eventsource-parser": "^1.1.2",
     "express": "^5.2.1",
     "http-errors": "^2.0.0",
