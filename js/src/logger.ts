@@ -4425,7 +4425,7 @@ async function computeLoggerMetadata(
       project: { id: project_id, name: project_name, fullInfo: {} },
     };
   }
-  if (!isEmpty(agent_name) && metadata.agent === undefined) {
+  if (!isEmpty(agent_name) && isEmpty(metadata.agent)) {
     metadata.agent = await registerAgentMetadata(
       state,
       metadata.project.id,
