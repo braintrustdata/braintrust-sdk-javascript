@@ -25,7 +25,7 @@ import { type GitMetadataSettingsType as GitMetadataSettings } from "./generated
 import { writeFile, unlink } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { SpanComponentsV3 } from "../util/span_identifier_v3";
+import { SpanComponentsV3, SpanObjectTypeV3 } from "../util/span_identifier_v3";
 
 configureNode();
 
@@ -471,6 +471,62 @@ test("initLogger agentName sets span_attributes.agent_id", async () => {
       project_name: "test-project",
       org_id: "test-org-id",
       agent_name: "support-agent",
+    });
+    expect(postJsonSpy).toHaveBeenCalledTimes(1);
+  } finally {
+    _exportsForTestingOnly.clearTestBackgroundLogger();
+    _exportsForTestingOnly.simulateLogoutForTests();
+  }
+});
+
+test("startSpan treats null agent_name in parent metadata as absent", async () => {
+  const state = await _exportsForTestingOnly.simulateLoginForTests();
+  const postJsonSpy = vi
+    .spyOn(state.appConn(), "post_json")
+    .mockImplementation(async (path) => {
+      if (path === "api/project/register") {
+        return {
+          project: {
+            id: "test-project-id",
+            name: "test-project",
+          },
+          found_existing: true,
+        };
+      }
+      throw new Error(`Unexpected post_json path: ${path}`);
+    });
+
+  const memoryLogger = _exportsForTestingOnly.useTestBackgroundLogger();
+
+  try {
+    const parent = new SpanComponentsV3({
+      object_type: SpanObjectTypeV3.PROJECT_LOGS,
+      compute_object_metadata_args: {
+        project_name: "test-project",
+        project_id: null,
+        agent_name: null,
+      },
+      row_id: "parent-row-id",
+      span_id: "parent-span-id",
+      root_span_id: "root-span-id",
+    }).toStr();
+
+    const span = startSpan({
+      state,
+      parent,
+      name: "child",
+    });
+    span.end();
+
+    await memoryLogger.flush();
+    const events = await memoryLogger.drain();
+
+    expect(events).toHaveLength(1);
+    expect(events[0].project_id).toBe("test-project-id");
+    expect(events[0].span_attributes?.name).toBe("child");
+    expect(postJsonSpy).toHaveBeenCalledWith("api/project/register", {
+      project_name: "test-project",
+      org_id: "test-org-id",
     });
     expect(postJsonSpy).toHaveBeenCalledTimes(1);
   } finally {

@@ -4306,8 +4306,8 @@ export function initDataset<
     legacy,
     _internal_btql,
     resolvedVersion instanceof LazyValue ||
-    normalizedEnvironment !== undefined ||
-    normalizedSnapshotName !== undefined
+      normalizedEnvironment !== undefined ||
+      normalizedSnapshotName !== undefined
       ? {
           ...(resolvedVersion instanceof LazyValue
             ? {
@@ -4363,7 +4363,7 @@ async function computeLoggerMetadata(
   }: {
     project_name?: string;
     project_id?: string;
-    agent_name?: string;
+    agent_name?: string | null;
   },
 ) {
   await state.login({});
@@ -4374,7 +4374,7 @@ async function computeLoggerMetadata(
       project_name: project_name || GLOBAL_PROJECT,
       org_id,
     };
-    if (agent_name !== undefined) {
+    if (!isEmpty(agent_name)) {
       registerArgs.agent_name = agent_name;
     }
     let response;
@@ -4384,7 +4384,7 @@ async function computeLoggerMetadata(
         .post_json("api/project/register", registerArgs);
     } catch (e) {
       if (
-        agent_name === undefined ||
+        isEmpty(agent_name) ||
         !(e instanceof FailedHTTPResponse) ||
         e.status !== 400
       ) {
@@ -4425,7 +4425,7 @@ async function computeLoggerMetadata(
       project: { id: project_id, name: project_name, fullInfo: {} },
     };
   }
-  if (agent_name !== undefined && metadata.agent === undefined) {
+  if (!isEmpty(agent_name) && metadata.agent === undefined) {
     metadata.agent = await registerAgentMetadata(
       state,
       metadata.project.id,
@@ -6159,9 +6159,9 @@ export type WithTransactionId<R> = R & {
 export const DEFAULT_FETCH_BATCH_SIZE = 1000;
 export const MAX_BTQL_ITERATIONS = 10000;
 
-export class ObjectFetcher<RecordType>
-  implements AsyncIterable<WithTransactionId<RecordType>>
-{
+export class ObjectFetcher<RecordType> implements AsyncIterable<
+  WithTransactionId<RecordType>
+> {
   private _fetchedData: WithTransactionId<RecordType>[] | undefined = undefined;
 
   constructor(
