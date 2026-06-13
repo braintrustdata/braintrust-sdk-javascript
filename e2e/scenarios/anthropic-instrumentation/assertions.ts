@@ -287,6 +287,10 @@ function snapshotEvents(
   supportsThinking: boolean,
 ): CapturedLogEvent[] {
   const createOperation = findLatestSpan(events, "anthropic-create-operation");
+  const systemBlocksOperation = findLatestSpan(
+    events,
+    "anthropic-system-blocks-operation",
+  );
   const attachmentOperation = findLatestSpan(
     events,
     "anthropic-attachment-operation",
@@ -312,6 +316,14 @@ function snapshotEvents(
   const betaStreamOperation = findLatestSpan(
     events,
     "anthropic-beta-stream-operation",
+  );
+  const betaMessagesStreamOperation = findLatestSpan(
+    events,
+    "anthropic-beta-messages-stream-operation",
+  );
+  const betaStreamToolOperation = findLatestSpan(
+    events,
+    "anthropic-beta-stream-tool-operation",
   );
   const betaToolRunnerOperation = findLatestSpan(
     events,
@@ -342,6 +354,10 @@ function snapshotEvents(
     findLatestSpan(events, ROOT_NAME),
     createOperation,
     findAnthropicSpan(events, createOperation?.span.id, [
+      "anthropic.messages.create",
+    ]),
+    systemBlocksOperation,
+    findAnthropicSpan(events, systemBlocksOperation?.span.id, [
       "anthropic.messages.create",
     ]),
     attachmentOperation,
@@ -381,6 +397,16 @@ function snapshotEvents(
           ]),
           betaStreamOperation,
           findAnthropicSpan(events, betaStreamOperation?.span.id, [
+            "anthropic.messages.create",
+            "anthropic.beta.messages.create",
+          ]),
+          betaMessagesStreamOperation,
+          findAnthropicSpan(events, betaMessagesStreamOperation?.span.id, [
+            "anthropic.messages.create",
+            "anthropic.beta.messages.create",
+          ]),
+          betaStreamToolOperation,
+          findAnthropicSpan(events, betaStreamToolOperation?.span.id, [
             "anthropic.messages.create",
             "anthropic.beta.messages.create",
           ]),
@@ -504,6 +530,30 @@ export function defineAnthropicInstrumentationAssertions(options: {
         ).toBe("string");
       },
     );
+
+    test("captures system text blocks in input", testConfig, () => {
+      const root = findLatestSpan(events, ROOT_NAME);
+      const operation = findLatestSpan(
+        events,
+        "anthropic-system-blocks-operation",
+      );
+      const span = findAnthropicSpan(events, operation?.span.id, [
+        "anthropic.messages.create",
+      ]);
+      const input = span?.input as
+        | Array<{ content?: unknown; role?: string }>
+        | undefined;
+      const systemInput = input?.find((message) => message.role === "system");
+
+      expect(operation).toBeDefined();
+      expect(span).toBeDefined();
+      expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
+      expect(systemInput?.content).toEqual([
+        { type: "text", text: "translate to english" },
+        { type: "text", text: "remove all punctuation" },
+        { type: "text", text: "only the answer no other text" },
+      ]);
+    });
 
     test("captures trace for sending an attachment", testConfig, () => {
       const root = findLatestSpan(events, ROOT_NAME);
@@ -754,6 +804,71 @@ export function defineAnthropicInstrumentationAssertions(options: {
             prompt_tokens: expect.any(Number),
             completion_tokens: expect.any(Number),
           });
+        },
+      );
+
+      test(
+        "captures trace for client.beta.messages.stream()",
+        testConfig,
+        () => {
+          const root = findLatestSpan(events, ROOT_NAME);
+          const operation = findLatestSpan(
+            events,
+            "anthropic-beta-messages-stream-operation",
+          );
+          const span = findAnthropicSpan(events, operation?.span.id, [
+            "anthropic.messages.create",
+            "anthropic.beta.messages.create",
+          ]);
+
+          expect(operation).toBeDefined();
+          expect(span).toBeDefined();
+          expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
+          expect(span?.row.metadata).toMatchObject({
+            provider: "anthropic",
+          });
+          expect(span?.metrics).toMatchObject({
+            time_to_first_token: expect.any(Number),
+            prompt_tokens: expect.any(Number),
+            completion_tokens: expect.any(Number),
+          });
+        },
+      );
+
+      test(
+        "captures trace for client.beta.messages.create() streamed tool use",
+        testConfig,
+        () => {
+          const root = findLatestSpan(events, ROOT_NAME);
+          const operation = findLatestSpan(
+            events,
+            "anthropic-beta-stream-tool-operation",
+          );
+          const span = findAnthropicSpan(events, operation?.span.id, [
+            "anthropic.messages.create",
+            "anthropic.beta.messages.create",
+          ]);
+          const output = span?.output as
+            | { content?: Array<{ name?: string; type?: string }> }
+            | undefined;
+
+          expect(operation).toBeDefined();
+          expect(span).toBeDefined();
+          expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
+          expect(span?.row.metadata).toMatchObject({
+            provider: "anthropic",
+          });
+          expect(span?.metrics).toMatchObject({
+            time_to_first_token: expect.any(Number),
+            prompt_tokens: expect.any(Number),
+            completion_tokens: expect.any(Number),
+          });
+          expect(
+            output?.content?.some(
+              (block) =>
+                block.type === "tool_use" && block.name === "get_weather",
+            ),
+          ).toBe(true);
         },
       );
 

@@ -23,9 +23,14 @@ export class SpanFetcher extends ObjectFetcher<SpanRecord> {
     private readonly rootSpanId: string,
     private readonly _state: BraintrustState,
     private readonly spanTypeFilter?: string[],
+    includeScorers = false,
   ) {
     // Build the filter expression for root_span_id and optionally span_attributes.type
-    const filterExpr = SpanFetcher.buildFilter(rootSpanId, spanTypeFilter);
+    const filterExpr = SpanFetcher.buildFilter(
+      rootSpanId,
+      spanTypeFilter,
+      includeScorers,
+    );
 
     super(objectType, undefined, undefined, {
       filter: filterExpr,
@@ -35,6 +40,7 @@ export class SpanFetcher extends ObjectFetcher<SpanRecord> {
   private static buildFilter(
     rootSpanId: string,
     spanTypeFilter?: string[],
+    includeScorers = false,
   ): Record<string, unknown> {
     const children: Record<string, unknown>[] = [
       // Base filter: root_span_id = 'value'
@@ -43,8 +49,10 @@ export class SpanFetcher extends ObjectFetcher<SpanRecord> {
         left: { op: "ident", name: ["root_span_id"] },
         right: { op: "literal", value: rootSpanId },
       },
-      // Exclude span_attributes.purpose = 'score'
-      {
+    ];
+
+    if (!includeScorers) {
+      children.push({
         op: "or",
         children: [
           {
@@ -57,8 +65,8 @@ export class SpanFetcher extends ObjectFetcher<SpanRecord> {
             right: { op: "literal", value: "scorer" },
           },
         ],
-      },
-    ];
+      });
+    }
 
     // If no spanType filter, just return root_span_id filter
     if (spanTypeFilter && spanTypeFilter.length > 0) {
@@ -107,6 +115,10 @@ export interface SpanData {
 export type SpanFetchFn = (
   spanType: string[] | undefined,
 ) => Promise<SpanData[]>;
+export type SpanFetchWithOptionsFn = (
+  spanType: string[] | undefined,
+  includeScorers: boolean,
+) => Promise<SpanData[]>;
 
 /**
  * Cached span fetcher that handles fetching and caching spans by type.
@@ -119,7 +131,7 @@ export type SpanFetchFn = (
 export class CachedSpanFetcher {
   private spanCache = new Map<string, SpanData[]>();
   private allFetched = false;
-  private fetchFn: SpanFetchFn;
+  private fetchFn: SpanFetchWithOptionsFn;
 
   constructor(
     objectType: "experiment" | "project_logs" | "playground_logs",
@@ -140,11 +152,11 @@ export class CachedSpanFetcher {
   ) {
     if (typeof objectTypeOrFetchFn === "function") {
       // Direct fetch function injection (for testing)
-      this.fetchFn = objectTypeOrFetchFn;
+      this.fetchFn = (spanType) => objectTypeOrFetchFn(spanType);
     } else {
       // Standard constructor with SpanFetcher
       const objectType = objectTypeOrFetchFn;
-      this.fetchFn = async (spanType) => {
+      this.fetchFn = async (spanType, includeScorers) => {
         const state = await getState!();
         const fetcher = new SpanFetcher(
           objectType,
@@ -152,30 +164,43 @@ export class CachedSpanFetcher {
           rootSpanId!,
           state,
           spanType,
+          includeScorers,
         );
         const rows: WithTransactionId<SpanRecord>[] =
           await fetcher.fetchedData();
-        return rows
-          .filter((row) => row.span_attributes?.purpose !== "scorer")
-          .map((row) => ({
-            input: row.input,
-            output: row.output,
-            metadata: row.metadata,
-            span_id: row.span_id,
-            span_parents: row.span_parents,
-            span_attributes: row.span_attributes,
-            id: row.id,
-            _xact_id: row._xact_id,
-            _pagination_key: row._pagination_key,
-            root_span_id: row.root_span_id,
-          }));
+        return rows.map((row) => ({
+          input: row.input,
+          output: row.output,
+          expected: row.expected,
+          error: row.error,
+          scores: row.scores,
+          metrics: row.metrics,
+          metadata: row.metadata,
+          span_id: row.span_id,
+          span_parents: row.span_parents,
+          is_root: row.is_root,
+          span_attributes: row.span_attributes,
+          id: row.id,
+          _xact_id: row._xact_id,
+          _pagination_key: row._pagination_key,
+          root_span_id: row.root_span_id,
+          created: row.created,
+          tags: row.tags,
+        }));
       };
     }
   }
 
-  async getSpans({ spanType }: { spanType?: string[] } = {}): Promise<
+  async getSpans({
+    spanType,
+    includeScorers = false,
+  }: { spanType?: string[]; includeScorers?: boolean } = {}): Promise<
     SpanData[]
   > {
+    if (includeScorers) {
+      return this.fetchFn(spanType, true);
+    }
+
     // If we've fetched all spans, just filter from cache
     if (this.allFetched) {
       return this.getFromCache(spanType);
@@ -202,7 +227,7 @@ export class CachedSpanFetcher {
   }
 
   private async fetchSpans(spanType: string[] | undefined): Promise<void> {
-    const spans = await this.fetchFn(spanType);
+    const spans = await this.fetchFn(spanType, false);
 
     for (const span of spans) {
       const type = span.span_attributes?.type ?? "";
@@ -238,6 +263,11 @@ export interface GetThreadOptions {
   preprocessor?: string;
 }
 
+export interface GetSpansOptions {
+  spanType?: string[];
+  includeScorers?: boolean;
+}
+
 /**
  * Interface for trace objects that can be used by scorers.
  * Both the SDK's LocalTrace class and the API wrapper's WrapperTrace implement this.
@@ -248,7 +278,7 @@ export interface Trace {
     object_id: string;
     root_span_id: string;
   };
-  getSpans(options?: { spanType?: string[] }): Promise<SpanData[]>;
+  getSpans(options?: GetSpansOptions): Promise<SpanData[]>;
   /**
    * Get the thread (preprocessed messages) for this trace.
    * Uses the project default preprocessor, falling back to the global "thread" preprocessor.
@@ -328,15 +358,18 @@ export class LocalTrace implements Trace {
    * First checks the local span cache for recently logged spans, then falls
    * back to CachedSpanFetcher which handles BTQL fetching and caching.
    */
-  async getSpans({ spanType }: { spanType?: string[] } = {}): Promise<
-    SpanData[]
-  > {
+  async getSpans({
+    spanType,
+    includeScorers = false,
+  }: GetSpansOptions = {}): Promise<SpanData[]> {
     // Try local span cache first (for recently logged spans not yet flushed)
     const cachedSpans = this.state.spanCache.getByRootSpanId(this.rootSpanId);
     if (cachedSpans && cachedSpans.length > 0) {
-      let spans = cachedSpans.filter(
-        (span) => span.span_attributes?.purpose !== "scorer",
-      );
+      let spans = includeScorers
+        ? cachedSpans
+        : cachedSpans.filter(
+            (span) => span.span_attributes?.purpose !== "scorer",
+          );
 
       if (spanType && spanType.length > 0) {
         spans = spans.filter((span) =>
@@ -347,15 +380,21 @@ export class LocalTrace implements Trace {
       return spans.map((span) => ({
         input: span.input,
         output: span.output,
+        expected: span.expected,
+        error: span.error,
+        scores: span.scores,
+        metrics: span.metrics,
         metadata: span.metadata,
         span_id: span.span_id,
         span_parents: span.span_parents,
+        is_root: span.is_root,
         span_attributes: span.span_attributes,
+        tags: span.tags,
       }));
     }
 
     // Fall back to CachedSpanFetcher for BTQL fetching with caching
-    return this.cachedFetcher.getSpans({ spanType });
+    return this.cachedFetcher.getSpans({ spanType, includeScorers });
   }
 
   /**

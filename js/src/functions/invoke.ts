@@ -112,6 +112,13 @@ export interface InvokeFunctionArgs<
    */
   strict?: boolean;
   /**
+   * Per-call deep-merge into the resolved function data server-side. Useful for facet,
+   * code, global, and remote_eval functions (for example, overriding a facet's `model`
+   * or a global function's `config`). Has no effect on prompt functions, whose
+   * parameters live on a separate field that the override path does not touch.
+   */
+  overrides?: Record<string, unknown>;
+  /**
    * A Zod schema to validate the output of the function and return a typed value. This
    * is only used if `stream` is false.
    */
@@ -159,6 +166,7 @@ export async function invoke<Input, Output, Stream extends boolean = false>(
     mode,
     schema,
     strict,
+    overrides,
     projectId,
     ...functionIdArgs
   } = args;
@@ -204,6 +212,7 @@ export async function invoke<Input, Output, Stream extends boolean = false>(
     stream,
     mode,
     strict,
+    overrides,
   };
 
   const headers: Record<string, string> = {

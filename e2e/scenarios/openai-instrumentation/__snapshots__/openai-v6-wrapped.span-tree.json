@@ -115,6 +115,229 @@
           }
         },
         {
+          "name": "openai-chat-image-attachment-operation",
+          "children": [
+            {
+              "name": "Chat Completion",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": [
+                    {
+                      "text": "Describe this image in three words or fewer.",
+                      "type": "text"
+                    },
+                    {
+                      "image_url": {
+                        "url": {
+                          "content_type": "image/png",
+                          "filename": "image.png",
+                          "key": "<uuid:1>",
+                          "type": "braintrust_attachment"
+                        }
+                      },
+                      "type": "image_url"
+                    }
+                  ],
+                  "role": "user"
+                }
+              ],
+              "output": [
+                {
+                  "finish_reason": "stop",
+                  "index": 0,
+                  "logprobs": null,
+                  "message": {
+                    "annotations": [],
+                    "content": "Solid red.",
+                    "refusal": null,
+                    "role": "assistant"
+                  }
+                }
+              ],
+              "metadata": {
+                "max_tokens": 24,
+                "model": "gpt-4o-mini-2024-07-18",
+                "provider": "openai",
+                "temperature": 0
+              },
+              "metrics": {
+                "completion_accepted_prediction_tokens": 0,
+                "completion_audio_tokens": 0,
+                "completion_reasoning_tokens": 0,
+                "completion_rejected_prediction_tokens": 0,
+                "completion_tokens": 3,
+                "prompt_audio_tokens": 0,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 8516,
+                "time_to_first_token": 0,
+                "tokens": 8519
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "chat-image-attachment",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "openai-chat-pdf-attachment-operation",
+          "children": [
+            {
+              "name": "Chat Completion",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": [
+                    {
+                      "text": "Summarize this document in one short phrase.",
+                      "type": "text"
+                    },
+                    {
+                      "file": {
+                        "file_data": {
+                          "content_type": "application/pdf",
+                          "filename": "document.pdf",
+                          "key": "<uuid:1>",
+                          "type": "braintrust_attachment"
+                        },
+                        "filename": "document.pdf"
+                      },
+                      "type": "file"
+                    }
+                  ],
+                  "role": "user"
+                }
+              ],
+              "output": [
+                {
+                  "finish_reason": "length",
+                  "index": 0,
+                  "logprobs": null,
+                  "message": {
+                    "annotations": [],
+                    "content": "I can't access the content of the document to summarize it. If you can provide text or details, I'd be happy to",
+                    "refusal": null,
+                    "role": "assistant"
+                  }
+                }
+              ],
+              "metadata": {
+                "max_tokens": 24,
+                "model": "gpt-4o-mini-2024-07-18",
+                "provider": "openai",
+                "temperature": 0
+              },
+              "metrics": {
+                "completion_accepted_prediction_tokens": 0,
+                "completion_audio_tokens": 0,
+                "completion_reasoning_tokens": 0,
+                "completion_rejected_prediction_tokens": 0,
+                "completion_tokens": 24,
+                "prompt_audio_tokens": 0,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 236,
+                "time_to_first_token": 0,
+                "tokens": 260
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "chat-pdf-attachment",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "openai-chat-tool-operation",
+          "children": [
+            {
+              "name": "Chat Completion",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "Use the get_weather tool for Paris, France. Do not answer from memory.",
+                  "role": "user"
+                }
+              ],
+              "output": [
+                {
+                  "finish_reason": "stop",
+                  "index": 0,
+                  "logprobs": null,
+                  "message": {
+                    "annotations": [],
+                    "content": null,
+                    "refusal": null,
+                    "role": "assistant",
+                    "tool_calls": [
+                      {
+                        "function": {
+                          "arguments": "{\"location\":\"Paris, France\"}",
+                          "name": "get_weather"
+                        },
+                        "id": "<span:1>",
+                        "type": "function"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "metadata": {
+                "max_tokens": 64,
+                "model": "gpt-4o-mini-2024-07-18",
+                "provider": "openai",
+                "temperature": 0,
+                "tool_choice": {
+                  "function": {
+                    "name": "get_weather"
+                  },
+                  "type": "function"
+                },
+                "tools": [
+                  {
+                    "function": {
+                      "description": "Get the weather for a location",
+                      "name": "get_weather",
+                      "parameters": {
+                        "properties": {
+                          "location": {
+                            "description": "The location to get weather for",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "location"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "type": "function"
+                  }
+                ]
+              },
+              "metrics": {
+                "completion_accepted_prediction_tokens": 0,
+                "completion_audio_tokens": 0,
+                "completion_reasoning_tokens": 0,
+                "completion_rejected_prediction_tokens": 0,
+                "completion_tokens": 7,
+                "prompt_audio_tokens": 0,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 77,
+                "time_to_first_token": 0,
+                "tokens": 84
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "chat-tool",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
           "name": "openai-stream-operation",
           "children": [
             {
@@ -217,6 +440,95 @@
           ],
           "metadata": {
             "operation": "stream-with-response",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "openai-stream-tool-operation",
+          "children": [
+            {
+              "name": "Chat Completion",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "Use the get_weather tool for Paris, France. Do not answer from memory.",
+                  "role": "user"
+                }
+              ],
+              "output": [
+                {
+                  "finish_reason": "stop",
+                  "index": 0,
+                  "logprobs": null,
+                  "message": {
+                    "role": "assistant",
+                    "tool_calls": [
+                      {
+                        "function": {
+                          "arguments": "{\"location\":\"Paris, France\"}",
+                          "name": "get_weather"
+                        },
+                        "id": "<span:1>",
+                        "type": "function"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "metadata": {
+                "max_tokens": 64,
+                "model": "gpt-4o-mini-2024-07-18",
+                "provider": "openai",
+                "stream": true,
+                "stream_options": {
+                  "include_usage": true
+                },
+                "temperature": 0,
+                "tool_choice": {
+                  "function": {
+                    "name": "get_weather"
+                  },
+                  "type": "function"
+                },
+                "tools": [
+                  {
+                    "function": {
+                      "description": "Get the weather for a location",
+                      "name": "get_weather",
+                      "parameters": {
+                        "properties": {
+                          "location": {
+                            "description": "The location to get weather for",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "location"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "type": "function"
+                  }
+                ]
+              },
+              "metrics": {
+                "completion_accepted_prediction_tokens": 0,
+                "completion_audio_tokens": 0,
+                "completion_reasoning_tokens": 0,
+                "completion_rejected_prediction_tokens": 0,
+                "completion_tokens": 7,
+                "prompt_audio_tokens": 0,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 77,
+                "time_to_first_token": 0,
+                "tokens": 84
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "stream-tool",
             "testRunId": "<run:1>"
           }
         },
@@ -506,19 +818,19 @@
                     ]
                   },
                   "category_scores": {
-                    "harassment": 0.00001141223854434603,
-                    "harassment/threatening": 0.0000012219076020491008,
-                    "hate": 0.000003944258675190877,
-                    "hate/threatening": 1.2878952156558146e-7,
-                    "illicit": 0.000005738759521437678,
-                    "illicit/violent": 0.000003822911232549001,
-                    "self-harm": 0.000003120191139396651,
-                    "self-harm/instructions": 6.240930669504435e-7,
-                    "self-harm/intent": 0.0000022474089854291757,
-                    "sexual": 0.000006814872211615988,
-                    "sexual/minors": 5.255395707074638e-7,
-                    "violence": 0.000014202364022997911,
-                    "violence/graphic": 0.0000019525885208642222
+                    "harassment": 0.000010889691002655445,
+                    "harassment/threatening": 0.0000011843139025979655,
+                    "hate": 0.0000038831109868779005,
+                    "hate/threatening": 1.1726420733772349e-7,
+                    "illicit": 0.000005562206273647035,
+                    "illicit/violent": 0.0000036478537675800286,
+                    "self-harm": 0.00000297731143841062,
+                    "self-harm/instructions": 5.77192003016332e-7,
+                    "self-harm/intent": 0.0000020785170435063726,
+                    "sexual": 0.00000640200641038395,
+                    "sexual/minors": 5.093705003229987e-7,
+                    "violence": 0.000013342001090985438,
+                    "violence/graphic": 0.0000018342893327886845
                   },
                   "flagged": false
                 }
@@ -584,6 +896,7 @@
                 "prompt_cache_retention": "in_memory",
                 "provider": "openai",
                 "reasoning": {
+                  "context": null,
                   "effort": null,
                   "summary": null
                 },
@@ -670,6 +983,7 @@
                 "prompt_cache_retention": "in_memory",
                 "provider": "openai",
                 "reasoning": {
+                  "context": null,
                   "effort": null,
                   "summary": null
                 },
@@ -720,7 +1034,7 @@
                     {
                       "annotations": [],
                       "logprobs": [],
-                      "text": "Sure! What would you like to know or discuss?",
+                      "text": "RESPONSE STREAM",
                       "type": "output_text"
                     }
                   ],
@@ -752,6 +1066,7 @@
                 "prompt_cache_retention": "in_memory",
                 "provider": "openai",
                 "reasoning": {
+                  "context": null,
                   "effort": null,
                   "summary": null
                 },
@@ -776,11 +1091,11 @@
               },
               "metrics": {
                 "completion_reasoning_tokens": 0,
-                "completion_tokens": 12,
+                "completion_tokens": 4,
                 "prompt_cached_tokens": 0,
                 "prompt_tokens": 13,
                 "time_to_first_token": 0,
-                "tokens": 25
+                "tokens": 17
               }
             }
           ],
@@ -835,6 +1150,7 @@
                 "prompt_cache_retention": "in_memory",
                 "provider": "openai",
                 "reasoning": {
+                  "context": null,
                   "effort": null,
                   "summary": null
                 },
@@ -885,7 +1201,7 @@
                     {
                       "annotations": [],
                       "logprobs": [],
-                      "text": "PARTIAL.",
+                      "text": "PARTIAL",
                       "type": "output_text"
                     }
                   ],
@@ -917,6 +1233,7 @@
                 "prompt_cache_retention": "in_memory",
                 "provider": "openai",
                 "reasoning": {
+                  "context": null,
                   "effort": null,
                   "summary": null
                 },
@@ -940,11 +1257,11 @@
               },
               "metrics": {
                 "completion_reasoning_tokens": 0,
-                "completion_tokens": 4,
+                "completion_tokens": 3,
                 "prompt_cached_tokens": 0,
                 "prompt_tokens": 13,
                 "time_to_first_token": 0,
-                "tokens": 17
+                "tokens": 16
               }
             }
           ],
@@ -968,10 +1285,10 @@
                       "annotations": [],
                       "logprobs": [],
                       "parsed": {
-                        "reasoning": "Adding 20 and 4 gives you a total of 24.",
+                        "reasoning": "Adding 20 and 4 together gives us 24.",
                         "value": 24
                       },
-                      "text": "{\"reasoning\":\"Adding 20 and 4 gives you a total of 24.\",\"value\":24}",
+                      "text": "{\"reasoning\":\"Adding 20 and 4 together gives us 24.\",\"value\":24}",
                       "type": "output_text"
                     }
                   ],
@@ -1000,10 +1317,10 @@
                 "moderation": null,
                 "object": "response",
                 "output_parsed": {
-                  "reasoning": "Adding 20 and 4 gives you a total of 24.",
+                  "reasoning": "Adding 20 and 4 together gives us 24.",
                   "value": 24
                 },
-                "output_text": "{\"reasoning\":\"Adding 20 and 4 gives you a total of 24.\",\"value\":24}",
+                "output_text": "{\"reasoning\":\"Adding 20 and 4 together gives us 24.\",\"value\":24}",
                 "parallel_tool_calls": true,
                 "presence_penalty": 0,
                 "previous_response_id": null,
@@ -1011,6 +1328,7 @@
                 "prompt_cache_retention": "in_memory",
                 "provider": "openai",
                 "reasoning": {
+                  "context": null,
                   "effort": null,
                   "summary": null
                 },
@@ -1053,11 +1371,11 @@
               },
               "metrics": {
                 "completion_reasoning_tokens": 0,
-                "completion_tokens": 23,
+                "completion_tokens": 21,
                 "prompt_cached_tokens": 0,
                 "prompt_tokens": 46,
                 "time_to_first_token": 0,
-                "tokens": 69
+                "tokens": 67
               }
             }
           ],
@@ -1107,7 +1425,7 @@
                   "type": "message"
                 },
                 {
-                  "encrypted_content": "gAAAAABqBwV0tsDVAxoc2eIrNCzqFQMDcx_WtLB7jn1xjJshXoJiwnwd5Cu4dhaqCh9Xcc-MmsfZwlulYwKvJyc_9GMFb4a3hoZc-2P_IVhiMB3WBin89wlcd1L45sLcJ96FLirt0QD85Qq06DfX4ulYI_NiTA4jBtV2gZ-4EfubN4C8DrHHOvaQeq9twx6qNCEXCDOnJCeVC1QiblKYlQQmW4LEs8ej6QDonbxgwRZty2GxIXWXIzorpB9BD-JBlz9NruYz1gVJibftE3ItME06-Ej6ZTaGXvIYejuba9GWoIRVp4M74mBuWrD1cuvHHBOzLtOK0DD4VfuO7rYJkhrydbtBBEiG6KgmxuwAFNNcjUh8hlpdMi407ROMUhU4GhRq_t8lOJwTQmetb-U35B_DJqIiF5H2ub4_MNTfp732hqEUg51dAl4o4Ms75IMkApTgqwl1C_CnE_aIDkYtsGlVZo97M_2zS5DZ_aTzm2KrqKOM_fS68WZE4XZR8f5LaZyMnN5avHvl_dxE-tTsl_8SeyaLn3rj8mfEetv-Kf_Odld0fsNebcgakB8cZQ4tj-55guNDw3qqNoSXBCbnytk3Mr_WgdhzMofhZ3UrA6Vm1c5eyTtlX4GMwV09wgj-AcP48vfoOGJj-qNurjsGtdn30FzRlBUdGXExReHS0A2nr2-X3zcCkcjbEMoXjcHljpLbeuzkNRb6e5UyAQvQ0aIqa084U92k4icTyhlcHYPA2cVAap_P5c3qkkyZsiYBg13lzdKAkwMzpo6oznapLrhfwrvGIIW6k3dYEqMy5jfIZnrYz6BWWFuV2E9Iwg6R1tX8v3u2lG062YHgWSdT7uHk-ut68J-ilX92jbeWpy_1ML-sc866lstqW5qR_ogotAUWlIk8Xsw_ahN2HcGjVJuXzgwVU9QoaW8pwCimBfGF-dcP2-GvxTxBgGZSJe7iwA5wwFGEVgNE9Xrd3ESsTTTJyG_WLoAiBbZwWkIn68BYQzxJIWCJgXIF9-8BrGR5bD075IhFcMi9XTBdj3uzVjaDxv1t7_opxMXkxisZmCNxFcYuQZgOdWeRh07GtknWnDKJnPriVh17Rg1o8Yz8zGBHhoF2qgpmgwah7Gh1QzXbbrbSqTPKzsAVSzsn3H-S8e4dAaIIwqVFWa1d-bljp1cnh42b6b77rgB8BeVghY1My9VCmGie89vPx8nBdU3fl6sv-GZth0ttfLxhZVjkiTxZAyUJ0MaM3beKdVIbmmTNOJxoO6WfigZxQxT-pGBKkzL0GzFPcpclG6jYsRyCuht7vp2iDI33Q_FTro_cjqVywP_DVcsBPJy_KKPzhi2hzmTB1Dp7iwp0X6buk98Qt6jbEZqDYJKni6xXGrcJ49E0ulg7Omyh6CTn1zwQegDMovsw_4N-w5az8QHnow3stDa0SMzrp1PqZl1848PdQFRouAzuf7eRL2J6Svwdj8Q9-zVfgowBoEdLK-uyiPYKSoAxXacJcRaAb4VkdxsMNVE07OV87vwdOJ9R6ZrF2y3Tgjw7UVretIzGx-PGv4-HizHhUVn6lCajZPBvz3Lkj1F9xCxCRn-J0FRjgJQr47s999iLBcTYuzF4wm8M4cbB-xUuM4vY76WxUSKYJd5-laAHV4iUH91_QYiTDqx9HKygUMkZunYGB0Sv-QsDMDtyqBcCiaohxIVUAq-Buvg1LChRuNrHaIhFMr55z9qwVT0mNDf2-72qK_3_ADyUCuHKdrgaSYZGJTwhC47cZhBK2KxDFsOGXVnd-YN6qUSa9ijIp-w3PBQuk7-bhFJbN-6v5rxjtUapaHuEiK7cXTQFPPRt4gnSo6IyDOr_4Pp2xPNQZMWGw5szOHl1yCsYEo9FiYpE3IuyJ71BciraiQ9Cmr45fSrA1-wrxncr7ZPue09toI-9k9y0zTgXOqGoi1cHm7E06zZJ1WjIqolAlHTbfC-eVRWaLJ-HdHeh2ZP5dRdFUnNFeiwMcV0XXFFJLMmHOIUdy3Tt9zvfC35Lq2gDwxNLb1O1MLt6xDDJLpPBWDRj0dJWTTHDi0-ffIl6nf9GjvViEkekXpS3RbpFmkRWYj9rlEHeGRFif1sE7lfU0q1UtuymPrZA-u0eQoDAxmVE3USdGDVtJYJVfOHeuPaHB6DJkTRi3tm-XIhB418ZB5h3MfWwvHX4gMS7lAjf6ii6SYrGrXTcxib48ZfdWz08OGk4dpg04PMDtQNggmfwyLK6UpGtNiFjlUS6x7UblpqDOYLWUnC5ErdDABxlX3aioir3f6eOTtr3cLVQlx_zIkWoydxa9zV6hIiosz6KIJ1eAeLSQ0vAtZCWIJLhv_H9_A3xEq5YQgNLIt7dlIxWnjMlUjvTJXuWWBjfVLOifRmTOd2wimA_YjoAL4mY2iY2YndzOu3748re7PNg_QXfWQArd89FqLPkxdOHW19sl-xmcer8N4LRM2h14p6ZmJhVb_BdhyKtE3clvTpjYvs_y1KbHuwCDmwZ05TVqJ3dklnEPjDSL_KaOgBtR5DoBMc2Kmolakz0ogPLCi4hPgXpEOj6JYRuHDXsTj75buZM7zUv0aF_C2OqUBYFuLORRZlQBNATMExmMZcHyIm3qgktC7ZITeo8f-eI85q-RKHLg5ES6aIIspeqtOTESlFfnqV6R0rYTIlV9Du6_Egnixz_H15QdbxMNanONRzYy_RB6Khc2T-lc4Ndr4rnYp43_-1y6gJltIPqIVTTxXlFKW5Pixh-LhgQdV7jFEctEcoF5xW4Ck8sGf2L7bqxn2yI9HJnVMpPwT12q0nMV2dOEfYij1nDp6W-o5zZcpjyCiH6KyEc8UTYIfzmAVBTgFkX_Fd8tpICXHG66xWyX3UDJbMXaNVI-nPZSuCAsfBZ3h5upE_PPgIRlXNc7BxxFmM3HdPgvyHjiQGRL732muqYgrM2NP0jivxd9XsY1wcJGRBlK7MnwBecqvcNme-RN0oc1LQj-lzeCEP37RCyrNZDRY8QjeJT3O6Aj_NBEuzHHHFjyjxdC6OBuQxfOFm8RWHKNZWc36AuefsjliwzOyAG4dpdiZ-UYwV4E6k4ln8-I1YoxRfsOlqPTQ7YQc-uIz09R9MpQcZl9yGIs7J7a2i2DSUIHDkTSJbAw-5-G4zY",
+                  "encrypted_content": "gAAAAABqFa7LSc4oIp-nd8rupe3FLJTec2fgTECHw6aV8hKppP7SJ6ggnQoxuwLodUxnBkObrxuVGCzUPQi-BP8BOMFSI9yMubrK3Vu0DaRiBqyoXVPKS13jb7Pj-Ff7x_WnGePY3Yz61e2mk9xGauGP1kfzyV3jsZf4gC6E5CxquHcLpgScEoZYqSyiNAuIR5abIOWGqsxz9nbuvlrc0d_-wT7E96byOoJXPGBhGjyP_hMZVguHMBlKabrCqjlzQN0RLlGpHqyLqZg_GYOVGJWRR6xVP9M6Tder2zFyCKM_ifpKmfKcc9ojXRqBXVsomWqL-U6nxFK4D1E8BOBmEgIXEy8ITGwKP8T1IShk8ZifhdAAU-9v0Pv2En8lv6PBqovVAFZ0cN8-sVC9quP8ftREhgpMpOjxAReSourNobcizDVi-RTc-gc9OWaNZPhfU8sTgmr6gZUeY31gdPdbDdRP-334GQ7zKE2C3-mM1xOx8rjeuCZXsabSRPKOG4OP991tGMn4eKqMiw8JtQhU-RFI1juYUx6zwyUt6gg8zYppWbHUgV8aoViOokAGkQJivTeBpXrRAI5miuwKVOrHc8riLqR4F_5Qy1QRDnUgJvcJTKhV0pcE1w8vgt0psuKeb8TIKWnRi6Cyrs56KbvzkBJ9apl17di4WaYU4NmO_m1fjoYLMa3oSYm-bucFSn7RJSgO5FZlTJDLrb42K6pzNPgrQr9Kr8C3KHCidVht84GU2pln4tcQmfpbtIG4dAolP2laDqTshSQrVxCa80BHSr-XRMJVZdSghQceZkRGcjLYNpsXkGef4VDO-4kNpuBD-xlG3wBHkvSx3SnX2NqmOLbqgph_1VjefFeCIsHe6aWKPOuoKWfp0Y22RTq36FzUm9YKnL-blNRaa_RhDiW_tKQo25B1zZVvxLof0e_behb6JjUkH9GpiZ69V87N0Bb7WYKMaIXnUN5SpQrTUBPy97jpwau5ECx3xp7UQE-9eDxGPP2G9Gw8muYnPYFFFhpxOmaT7JIOYeh0HCpMwfsnOhxacGmTCN0Bpc3jEU0TkC2Jej2mI9NasXgoOXKi0B6W7qdAWykIjJY_UMi4W9JhUZBGBgNVa7nthdxZmuCNBbQbsWn7mydL_F1EGKkYuMiuiak8rQddT_snbBwKyVptMJYkCbmWs7YNbng6paOoyIBDQXAYIHsng2EfsuTgT7WFSU80rzV3YCFlglE9g7nWqIHcf8D06uJGEpW4e-Os5Mg8PmoiUEOpnsnRxDWbdSwJKeSq6M9oyxfgIVkoKJjeHfN0C1wAExPJDtb0li5uqQnsp-DVQKgDUD0mCnZWL7UThTlv10UBp-3Ev9P5TQHn_bkNg1eKve3XA2o6ODDGhBgRpTJ7c3w4Z439Ll8MCcBdZQ0PMNtvLc9QOedBwiqLxbrsoQ9W5Eg50J4aQtOe1lhC5vK4kAZ8-LSMQ9iFK62495nk5HXDkndtsK5KC3XF0SpsAkOuxsZoND4yftc3vGP-U-Hm3RzJOZ3Y8qRvB1qIoXSzQVmqTzbRS4T0GIwFYmkoIgsQnDyKaeOQC72FjKYsuZCBLADGKU5jM4zO_GCG92brqUVN9iRCdAc7Avn8UcuAl9hv4z_z-TEusKVflUXUemmiAK9FiRigTpWi8qZQeqCATjLckntnweBy0d35BzARmJDT-2CXN0WVcPks0WFkalXckvfRX39l2VpkXCZKO2RBFSInU23T7TIxbTi6BnaGm0M_r_LvW8TNX0mZt03zAoeYWR3rL2qI723v4d39lE6mjQ7_7PTp-eKx9bXsp1TKoB3FOWT6qSHOxKvQ6k9wN3MoXi-0LzSJjZdux5AUr9DmX5Y2rVUgxpu-eBbQlCEZy8JiQjaZG31cMhWbevPyVBFe0NGcUlSTyQU2jueK74Plos-W9FAAjAoOVad1bvL0OJbqktGQcu5eeoXha16xfdOX_oGWEe_BoojSwIb-uywzvDSuG-QFn78iNnUVEd4-HO-38bOzaeSMd_nNvRF7PXZqaRK-wBMzc8NBmTYduCUjpBKvpvKzCwYvwSovf0TIes8pRqP14SINNElsVE96fAg2O_cX2kEXqPVD-gazi5MdyzQ8oGMDpAHMwaBOAQHoZNH18p0Nwz1ICQStnixX552qA-WKshCwOozSbR_YvbEtdCen4XZ9uxvNM3v-6ErUPZ1H-gvZHiU8hC077Kw_wjbaVa0p5vHewwtxBzPthNn68ZdzucDcnlukP3fxjq9R92ltw68T-TLgv5eQt0Q84gpFk4yBsx_ILM8v88zq_QwFvP4Gvcf28qI3vEnFOLGMQwpxQGk-r4HaEgmvQ2CEdlOIR1uk1f0yRwe6iZh-ddhrZai81j-goLaxsYOVM1vTlgbXJwPbRZ4w-tVkIB5oHzHjpW2KjqX9aQuy3M6rEQ9t7ozvrW-18cJzKUTVM_Rqs2Epo9m7XrAOjQIislbH5nJJSGFzYUpwB-aJ9RZ-fCgDPci0MX_pinvuOHWVYCq8eHTDkv_pafUQJSRQvb69Y6zDEH0duiSYm_lTi1xSNr0kOF66lE0lFUVk863yZNcN2XEBmRAFzBhDLmDwThKJ6eDjtw5-QYTOCN1RIw3P6KOurFobmnEsJ-EZuCl1cJJllv9cAb8R2LeMb4klp1rhpYGsUOht3CyaXgxPOnP5oaKrhhAx9ikU8DYA3LkUHASKSwq3Ed6qxs2YDnSaHfLvEgPamKLZxahqpaludvjFRTe1rpy6G9-Cn3dLIRSx-OnvM6z2Ooy9ELNRqQ_7UN91NcPASFbOHE0kMG45d3PqlnGeaa-K0zWTyQoVHl3zmXdoK_rKy3jmOfFXXrY2RsCBV8XkPAxOIEEcx0cyONxJBPLJHo5RwkTp6QOQqby6aHweLxEMPUK7FiIAY_LMAKa0mpH9u34vk1azmmVSYgNNixn-Pd7u9r5RUCVhlSGOn6GSGaFlXGUimJDIdg1_b64qluXbzVtfWzqEFPdNxbkdmHtWnq4KItrjRqJ6Cdx4wyasqAzdD7qkOw==",
                   "id": "<span:2>",
                   "type": "compaction"
                 }
@@ -1122,11 +1440,11 @@
               },
               "metrics": {
                 "completion_reasoning_tokens": 0,
-                "completion_tokens": 213,
+                "completion_tokens": 183,
                 "prompt_cached_tokens": 0,
                 "prompt_tokens": 133,
                 "time_to_first_token": 0,
-                "tokens": 346
+                "tokens": 316
               }
             }
           ],

@@ -16,6 +16,7 @@ import { googleADKConfigs } from "./google-adk";
 import { googleGenAIConfigs } from "./google-genai";
 import { groqConfigs } from "./groq";
 import { huggingFaceConfigs } from "./huggingface";
+import { langchainConfigs } from "./langchain";
 import { mistralConfigs } from "./mistral";
 import { openAIAgentsCoreConfigs } from "./openai-agents";
 import { openaiConfigs } from "./openai";
@@ -45,7 +46,6 @@ const defaultInstrumentationConfigGroups: readonly InstrumentationConfigGroup[] 
       configs: claudeAgentSDKConfigs,
     },
     { integrations: ["cursor", "cursorSDK"], configs: cursorSDKConfigs },
-    { integrations: ["flue"], configs: flueConfigs },
     {
       integrations: ["openAIAgents"],
       configs: openAIAgentsCoreConfigs,
@@ -55,6 +55,10 @@ const defaultInstrumentationConfigGroups: readonly InstrumentationConfigGroup[] 
       configs: googleGenAIConfigs,
     },
     { integrations: ["huggingface"], configs: huggingFaceConfigs },
+    {
+      integrations: ["langchain", "langgraph"],
+      configs: langchainConfigs,
+    },
     { integrations: ["openrouter"], configs: openRouterConfigs },
     {
       integrations: ["openrouterAgent"],
@@ -72,6 +76,17 @@ const defaultInstrumentationConfigGroups: readonly InstrumentationConfigGroup[] 
       integrations: ["gitHubCopilot"],
       configs: gitHubCopilotConfigs,
     },
+    {
+      integrations: ["flue"],
+      configs: flueConfigs,
+    },
+    // Note: `@mastra/core` is not listed here because its instrumentation
+    // doesn't go through the AST `code-transformer` matcher — Mastra's
+    // content-hashed chunks make `filePath`-based matching too brittle.
+    // Instead it's handled by the source-replacement entry in
+    // `loader/special-case-patches.ts`, which both the runtime loader
+    // (`hook.mjs` → `cjs-patch.ts`/`esm-hook.mts`) and the bundler plugin
+    // (`bundler/plugin.ts`) call. The `mastra` env-var disable still works.
   ];
 
 export function getDefaultInstrumentationConfigs({

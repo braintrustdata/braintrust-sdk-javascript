@@ -60,6 +60,24 @@ async function runAnthropicInstrumentationScenario(
       });
 
       await runOperation(
+        "anthropic-system-blocks-operation",
+        "system-blocks",
+        async () => {
+          await client.messages.create({
+            model: ANTHROPIC_MODEL,
+            max_tokens: 24,
+            temperature: 0,
+            system: [
+              { type: "text", text: "translate to english" },
+              { type: "text", text: "remove all punctuation" },
+              { type: "text", text: "only the answer no other text" },
+            ],
+            messages: [{ role: "user", content: "Bonjour mon ami!" }],
+          });
+        },
+      );
+
+      await runOperation(
         "anthropic-create-with-response-operation",
         "create-with-response",
         async () => {
@@ -267,6 +285,53 @@ async function runAnthropicInstrumentationScenario(
                   role: "user",
                   content:
                     "Count from 1 to 3 and include the words one two three.",
+                },
+              ],
+            });
+            await collectAsync(stream);
+          },
+        );
+
+        await runOperation(
+          "anthropic-beta-messages-stream-operation",
+          "beta-messages-stream",
+          async () => {
+            const stream = client.beta.messages.stream({
+              model: ANTHROPIC_MODEL,
+              max_tokens: 32,
+              temperature: 0,
+              messages: [
+                {
+                  role: "user",
+                  content:
+                    "Count from 1 to 3 and include the words one two three.",
+                },
+              ],
+            });
+            await collectAsync(stream);
+          },
+        );
+
+        await runOperation(
+          "anthropic-beta-stream-tool-operation",
+          "beta-stream-tool",
+          async () => {
+            const stream = await client.beta.messages.create({
+              model: ANTHROPIC_MODEL,
+              max_tokens: 128,
+              temperature: 0,
+              stream: true,
+              tool_choice: {
+                type: "tool",
+                name: WEATHER_TOOL.name,
+                disable_parallel_tool_use: true,
+              },
+              tools: [WEATHER_TOOL],
+              messages: [
+                {
+                  role: "user",
+                  content:
+                    "Use the get_weather tool for Paris, France. Do not answer from memory.",
                 },
               ],
             });

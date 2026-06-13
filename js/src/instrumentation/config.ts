@@ -11,6 +11,7 @@ export interface InstrumentationIntegrationsConfig {
   cursor?: boolean;
   cursorSDK?: boolean;
   flue?: boolean;
+  mastra?: boolean;
   openAIAgents?: boolean;
   openrouter?: boolean;
   openrouterAgent?: boolean;
@@ -20,6 +21,8 @@ export interface InstrumentationIntegrationsConfig {
   genkit?: boolean;
   gitHubCopilot?: boolean;
   openaiCodexSDK?: boolean;
+  langchain?: boolean;
+  langgraph?: boolean;
 }
 
 export interface InstrumentationConfig {
@@ -52,6 +55,7 @@ const envIntegrationAliases: Record<
   cursorsdk: "cursorSDK",
   flue: "flue",
   "flue-runtime": "flue",
+  mastra: "mastra",
   "openai-agents": "openAIAgents",
   openaiagents: "openAIAgents",
   "openai-agents-core": "openAIAgents",
@@ -74,6 +78,10 @@ const envIntegrationAliases: Record<
   githubcopilot: "gitHubCopilot",
   "github-copilot": "gitHubCopilot",
   "copilot-sdk": "gitHubCopilot",
+  langchain: "langchain",
+  "langchain-js": "langchain",
+  "@langchain": "langchain",
+  langgraph: "langgraph",
 };
 
 export function getDefaultInstrumentationIntegrations(): Record<
@@ -94,6 +102,7 @@ export function getDefaultInstrumentationIntegrations(): Record<
     cursor: true,
     cursorSDK: true,
     flue: true,
+    mastra: true,
     openAIAgents: true,
     openrouter: true,
     openrouterAgent: true,
@@ -102,6 +111,8 @@ export function getDefaultInstrumentationIntegrations(): Record<
     groq: true,
     genkit: true,
     gitHubCopilot: true,
+    langchain: true,
+    langgraph: true,
   };
 }
 

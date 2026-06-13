@@ -11,5 +11,22 @@
   "dependencies": {
     "@google/adk": "1.0.0",
     "google-adk-sdk-v061": "npm:@google/adk@0.6.1"
+  },
+  "pnpm": {
+    "overrides": {
+      "protobufjs@<7.5.8": "^7.5.8",
+      "uuid": "^11.1.1",
+      "qs@>=6.7.0 <6.15.2": "^6.15.2",
+      "hono@>=4.0.0 <4.12.18": "^4.12.18",
+      "ws@>=8.0.0 <8.20.1": "^8.20.1",
+      "fast-uri@<3.1.2": "^3.1.2",
+      "fast-xml-builder@<1.1.7": "^1.1.7",
+      "ip-address@>=10.0.0 <10.1.1": "^10.1.1",
+      "brace-expansion@>=4.0.0 <5.0.6": "^5.0.6",
+      "@tootallnate/once@>=3.0.0 <3.0.1": "^3.0.1",
+      "@tootallnate/once@<2.0.1": "^2.0.1",
+      "@mikro-orm/knex@>=6.0.0 <6.6.14": "^6.6.14",
+      "@mikro-orm/knex@>=7.0.0 <7.0.14": "^7.0.14"
+    }
   }
 }

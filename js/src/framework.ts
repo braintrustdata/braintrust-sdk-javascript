@@ -344,7 +344,7 @@ export interface Evaluator<
   baseExperimentId?: string;
 
   /**
-   * Optional settings for collecting git metadata. By default, will collect all git metadata fields allowed in org-level settings.
+   * Optional settings for collecting git metadata. By default, Braintrust collects the git metadata fields allowed by your organization's git metadata settings. If those settings are absent, git metadata is not collected unless this option is set.
    */
   gitMetadataSettings?: GitMetadataSettings;
 
@@ -1169,6 +1169,17 @@ async function runEvaluatorInternal(
           : Dataset.isDataset(evaluator.data)
             ? evaluator.data
             : undefined;
+        const origin =
+          datum.origin ??
+          (eventDataset && datum.id && datum._xact_id
+            ? {
+                object_type: "dataset",
+                object_id: await eventDataset.id,
+                id: datum.id,
+                created: datum.created,
+                _xact_id: datum._xact_id,
+              }
+            : undefined);
 
         const baseEvent: StartSpanArgs = {
           name: "eval",
@@ -1179,16 +1190,7 @@ async function runEvaluatorInternal(
             input: datum.input,
             expected: "expected" in datum ? datum.expected : undefined,
             tags: datum.tags,
-            origin:
-              eventDataset && datum.id && datum._xact_id
-                ? {
-                    object_type: "dataset",
-                    object_id: await eventDataset.id,
-                    id: datum.id,
-                    created: datum.created,
-                    _xact_id: datum._xact_id,
-                  }
-                : undefined,
+            origin,
             ...(datum.upsert_id ? { id: datum.upsert_id } : {}),
           },
         };

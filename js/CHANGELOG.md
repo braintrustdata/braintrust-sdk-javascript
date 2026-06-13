@@ -1,5 +1,62 @@
 # braintrust
 
+## 3.17.0
+
+### Minor Changes
+
+- feat: ship the `bt` CLI with the SDK. Installing `braintrust` now exposes a `bt` command in `node_modules/.bin` that runs the prebuilt native binary for your platform (delivered via `@braintrust/bt-*` optional dependencies). If optional dependencies are skipped (e.g. `--no-optional` / `--omit=optional`), a postinstall script downloads the matching binary from the npm registry as a fallback. (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2067)
+
+## 3.16.0
+
+### Minor Changes
+
+- feat: Export `LocalTrace` (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2088)
+- feat(invoke): Allow passing `overrides` to `invoke()` (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2087)
+
+### Patch Changes
+
+- fix(stream): Preserve multi-byte UTF-8 split across chunk boundaries (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2091)
+- fix: Don't have `output` in dataset pipeline row type definition (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2089)
+
+## 3.15.0
+
+**Attention:** This release is technically a breaking change because it removes the `wrapFlueContext`, and `wrapFlueSession` exports for `@flue/runtime`. This release was still deemed as a minor because of the experimental state of flue and limited adoption of `@flue/runtime` instrumentation.
+
+- feat(flue): Update flue instrumentation to use new observe hooks (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2070)
+
+## 3.14.0
+
+### Minor Changes
+
+- feat(mastra): Add Mastra auto-instrumentation (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/1901)
+- feat: Add `BRAINTRUST_CACHE_LOCATION` env var to control caching location (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2061)
+
+## 3.13.0
+
+### Minor Changes
+
+- feat: Upwards-recursively read `.env.braintrust` containing `BRAINTRUST_API_KEY` on login in Node.js (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2049)
+- feat: Add Dataset pipelines (experimental) (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/1933)
+- feat: Include span id in dataset pipeline argument (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2055)
+
+## 3.12.0
+
+### Minor Changes
+
+- feat: Add `@flue/runtime` instrumentation (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2037)
+- feat: Add `braintrust/apply-auto-instrumentation` entrypoint for CJS/TS patching (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2038)
+- feat(nextjs): Add `wrapNextjsConfigWithBraintrust` as canonical setup utility instead of webpack loader/plugin (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2033)
+- feat(bundler-plugins): Add `braintrustVitePlugin`, `braintrustWebpackPlugin`, `braintrustEsbuildPlugin`, `braintrustRollupPlugin` aliases for bundler plugins and deprecate old ones (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2032)
+
+### Patch Changes
+
+- feat: Add OpenAI Agents SDK auto-instrumentation (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/1891)
+- feat: Add LangChain and LangGraph auto-instrumentation (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/1897)
+- fix(security): reject `__proto__`, `constructor`, and `prototype` keys in `mergeDicts` / `mergeDictsWithPaths` to prevent prototype pollution from untrusted merge sources (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2026)
+- feat: Allow for multi project tracing by removing parent project ID restriction (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2044)
+- feat: Do not collect git metadata by default when organization-level git metadata settings are absent (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2045)
+- Add exponential backoff between existing `get_json` retry attempts (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/1965)
+
 ## 3.11.0
 
 ### Minor Changes

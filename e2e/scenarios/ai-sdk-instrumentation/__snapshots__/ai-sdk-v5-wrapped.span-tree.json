@@ -240,6 +240,14 @@
           }
         },
         {
+          "name": "ai-sdk-output-object-response-format-operation",
+          "children": [],
+          "metadata": {
+            "operation": "output-object-response-format",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
           "name": "ai-sdk-output-object-operation",
           "children": [
             {
@@ -3567,6 +3575,7 @@
                     "prompt_cache_key": "[REDACTED]",
                     "prompt_cache_retention": "in_memory",
                     "reasoning": {
+                      "context": null,
                       "effort": null,
                       "summary": null
                     },
@@ -3610,7 +3619,7 @@
                     "openai-organization": "braintrust-data",
                     "openai-processing-ms": "<openai-processing-ms>",
                     "openai-project": "<openai-project>",
-                    "openai-version": "2020-10-01",
+                    "openai-version": "<timestamp>",
                     "server": "cloudflare",
                     "set-cookie": "<set-cookie>",
                     "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
@@ -3723,6 +3732,7 @@
                         "prompt_cache_key": "[REDACTED]",
                         "prompt_cache_retention": "in_memory",
                         "reasoning": {
+                          "context": null,
                           "effort": null,
                           "summary": null
                         },
@@ -3766,7 +3776,7 @@
                         "openai-organization": "braintrust-data",
                         "openai-processing-ms": "<openai-processing-ms>",
                         "openai-project": "<openai-project>",
-                        "openai-version": "2020-10-01",
+                        "openai-version": "<timestamp>",
                         "server": "cloudflare",
                         "set-cookie": "<set-cookie>",
                         "strict-transport-security": "max-age=31536000; includeSubDomains; preload",

@@ -57,18 +57,16 @@ function createCacheKey(key: PromptKey): string {
 }
 
 /**
- * A two-layer cache for Braintrust prompts with both in-memory and filesystem storage.
+ * A configurable cache for Braintrust prompts with optional in-memory and filesystem storage.
  *
- * This cache implements either a one or two-layer caching strategy:
- * 1. A fast in-memory LRU cache for frequently accessed prompts.
- * 2. An optional persistent filesystem-based cache that serves as a backing store.
+ * This cache can use either layer independently, both layers together, or no layers.
  */
 export class PromptCache {
-  private readonly memoryCache: LRUCache<string, Prompt>;
+  private readonly memoryCache?: LRUCache<string, Prompt>;
   private readonly diskCache?: DiskCache<Prompt>;
 
   constructor(options: {
-    memoryCache: LRUCache<string, Prompt>;
+    memoryCache?: LRUCache<string, Prompt>;
     diskCache?: DiskCache<Prompt>;
   }) {
     this.memoryCache = options.memoryCache;
@@ -83,9 +81,11 @@ export class PromptCache {
     const cacheKey = createCacheKey(key);
 
     // First check memory cache.
-    const memoryPrompt = this.memoryCache.get(cacheKey);
-    if (memoryPrompt !== undefined) {
-      return memoryPrompt;
+    if (this.memoryCache) {
+      const memoryPrompt = this.memoryCache.get(cacheKey);
+      if (memoryPrompt !== undefined) {
+        return memoryPrompt;
+      }
     }
 
     // If not in memory and disk cache exists, check disk cache.
@@ -94,8 +94,8 @@ export class PromptCache {
       if (!diskPrompt) {
         return undefined;
       }
-      // Store in memory cache.
-      this.memoryCache.set(cacheKey, diskPrompt);
+      // Store in memory cache if available.
+      this.memoryCache?.set(cacheKey, diskPrompt);
       return diskPrompt;
     }
 
@@ -113,8 +113,8 @@ export class PromptCache {
   async set(key: PromptKey, value: Prompt): Promise<void> {
     const cacheKey = createCacheKey(key);
 
-    // Update memory cache.
-    this.memoryCache.set(cacheKey, value);
+    // Update memory cache if available.
+    this.memoryCache?.set(cacheKey, value);
 
     // Update disk cache if available.
     if (this.diskCache) {

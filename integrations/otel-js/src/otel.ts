@@ -14,9 +14,11 @@ import {
   ReadableSpan,
   BatchSpanProcessor,
   type Span as SDKSpan,
+  type SpanExporter,
 } from "@opentelemetry/sdk-trace-base";
 import {
   IDGenerator,
+  _internalIso,
   currentSpan,
   registerOtelFlush,
   type Span as BraintrustSpan,
@@ -165,7 +167,8 @@ export class AISpanProcessor {
 
 interface BraintrustSpanProcessorOptions {
   /**
-   * Braintrust API key. If not provided, will use BRAINTRUST_API_KEY environment variable.
+   * Braintrust API key. If not provided, will use BRAINTRUST_API_KEY, then
+   * the nearest .env.braintrust file in Node.js.
    */
   apiKey?: string;
   /**
@@ -196,6 +199,70 @@ interface BraintrustSpanProcessorOptions {
   _spanProcessor?: SpanProcessor;
 }
 
+class LazyBraintrustOTLPTraceExporter implements SpanExporter {
+  private exporter?: OTLPTraceExporter;
+  private exporterPromise?: Promise<OTLPTraceExporter>;
+
+  constructor(
+    private readonly apiKey: string | undefined,
+    private readonly apiUrl: string,
+    private readonly parent: string,
+    private readonly headers: Record<string, string> | undefined,
+  ) {}
+
+  async initialize(): Promise<void> {
+    await this.getExporter();
+  }
+
+  export(
+    spans: ReadableSpan[],
+    resultCallback: (result: ExportResult) => void,
+  ): void {
+    void this.getExporter()
+      .then((exporter) => exporter.export(spans, resultCallback))
+      .catch((error) => {
+        const errorObj =
+          error instanceof Error ? error : new Error(String(error));
+        resultCallback({ code: 1, error: errorObj });
+      });
+  }
+
+  shutdown(): Promise<void> {
+    if (!this.exporterPromise) {
+      return Promise.resolve();
+    }
+    return this.getExporter().then((exporter) => exporter.shutdown());
+  }
+
+  private getExporter(): Promise<OTLPTraceExporter> {
+    if (!this.exporterPromise) {
+      this.exporterPromise = (async () => {
+        const apiKey =
+          this.apiKey !== undefined
+            ? this.apiKey
+            : await _internalIso.getBraintrustApiKey();
+        if (!apiKey?.trim()) {
+          throw new Error(
+            "Braintrust API key is required. Set BRAINTRUST_API_KEY, define it in .env.braintrust, or pass apiKey option.",
+          );
+        }
+
+        this.exporter = new OTLPTraceExporter({
+          url: new URL("otel/v1/traces", this.apiUrl).href,
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            "Content-Type": "application/json",
+            "x-bt-parent": this.parent,
+            ...this.headers,
+          },
+        });
+        return this.exporter;
+      })();
+    }
+    return this.exporterPromise;
+  }
+}
+
 /**
  * A span processor that sends OpenTelemetry spans to Braintrust.
  *
@@ -204,7 +271,7 @@ interface BraintrustSpanProcessorOptions {
  * by default but can be enabled with the filterAISpans option.
  *
  * Environment Variables:
- * - BRAINTRUST_API_KEY: Your Braintrust API key
+ * - BRAINTRUST_API_KEY: Your Braintrust API key. In Node.js, this can also be set in the nearest .env.braintrust file.
  * - BRAINTRUST_PARENT: Parent identifier (e.g., "project_name:test")
  * - BRAINTRUST_API_URL: Base URL for Braintrust API (defaults to https://api.braintrust.dev)
  *
@@ -238,6 +305,7 @@ interface BraintrustSpanProcessorOptions {
 export class BraintrustSpanProcessor implements SpanProcessor {
   private readonly processor: SpanProcessor;
   private readonly aiSpanProcessor: SpanProcessor;
+  private readonly exporter?: LazyBraintrustOTLPTraceExporter;
 
   constructor(options: BraintrustSpanProcessorOptions = {}) {
     // If a processor is injected (for testing), use it directly
@@ -258,12 +326,10 @@ export class BraintrustSpanProcessor implements SpanProcessor {
     }
 
     // Get API key from options or environment
-    const apiKey = options.apiKey || process.env.BRAINTRUST_API_KEY;
-    if (!apiKey) {
-      throw new Error(
-        "Braintrust API key is required. Set BRAINTRUST_API_KEY environment variable or pass apiKey option.",
-      );
-    }
+    const apiKey =
+      options.apiKey !== undefined
+        ? options.apiKey
+        : _internalIso.getEnv("BRAINTRUST_API_KEY");
 
     // Get API URL from options or environment
     let apiUrl =
@@ -288,19 +354,13 @@ export class BraintrustSpanProcessor implements SpanProcessor {
       );
     }
 
-    const headers = {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-      "x-bt-parent": parent,
-      ...options.headers,
-    };
-
-    const baseExporter = new OTLPTraceExporter({
-      url: new URL("otel/v1/traces", apiUrl).href,
-      headers,
-    });
-
-    const exporter = baseExporter;
+    const exporter = new LazyBraintrustOTLPTraceExporter(
+      apiKey,
+      apiUrl,
+      parent,
+      options.headers,
+    );
+    this.exporter = exporter;
 
     this.processor = new BatchSpanProcessor(exporter);
     // Conditionally wrap with filtering based on filterAISpans flag
@@ -400,7 +460,8 @@ export class BraintrustSpanProcessor implements SpanProcessor {
     return this.aiSpanProcessor.shutdown();
   }
 
-  forceFlush(): Promise<void> {
+  async forceFlush(): Promise<void> {
+    await this.exporter?.initialize();
     return this.aiSpanProcessor.forceFlush();
   }
 }
@@ -599,7 +660,7 @@ export function getOtelParentFromSpan(
  * only send AI-related telemetry.
  *
  * Environment Variables:
- * - BRAINTRUST_API_KEY: Your Braintrust API key
+ * - BRAINTRUST_API_KEY: Your Braintrust API key. In Node.js, this can also be set in the nearest .env.braintrust file.
  * - BRAINTRUST_PARENT: Parent identifier (e.g., "project_name:test")
  * - BRAINTRUST_API_URL: Base URL for Braintrust API (defaults to https://api.braintrust.dev)
  *

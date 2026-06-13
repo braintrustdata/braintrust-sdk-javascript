@@ -86,7 +86,7 @@ trace.setGlobalTracerProvider(provider);
 
 **Configuration options**:
 
-- `apiKey` (string, optional): Braintrust API key. Falls back to `BRAINTRUST_API_KEY` environment variable.
+- `apiKey` (string, optional): Braintrust API key. Falls back to the `BRAINTRUST_API_KEY` environment variable, then the nearest `.env.braintrust` file in Node.js.
 - `apiUrl` (string, optional): Braintrust API URL. Falls back to `BRAINTRUST_API_URL` environment variable. Defaults to `https://api.braintrust.dev`.
 - `parent` (string, optional): Parent project identifier in format `project_name:my_project` or `project_id:uuid`. Falls back to `BRAINTRUST_PARENT` environment variable.
 - `filterAISpans` (boolean, optional): When true, filters out non-AI spans. Only spans with prefixes like `gen_ai.*`, `llm.*`, `ai.*`, `braintrust.*`, or `traceloop.*` will be sent. Defaults to false.
@@ -216,7 +216,7 @@ await logger.traced(
 
 The following environment variables can be used to configure the integration:
 
-- `BRAINTRUST_API_KEY`: Your Braintrust API key (required for `BraintrustSpanProcessor`)
+- `BRAINTRUST_API_KEY`: Your Braintrust API key (required for `BraintrustSpanProcessor`; in Node.js, this can also be set in the nearest `.env.braintrust` file)
 - `BRAINTRUST_PARENT`: Parent project identifier (e.g., `project_name:my_project`)
 - `BRAINTRUST_API_URL`: Braintrust API endpoint (defaults to `https://api.braintrust.dev`)
 

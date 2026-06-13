@@ -272,6 +272,14 @@ function summarizeGooglePayload(event: CapturedLogEvent): Json {
 
 function buildRelevantEvents(events: CapturedLogEvent[]): CapturedLogEvent[] {
   const generateOperation = findLatestSpan(events, "google-generate-operation");
+  const systemInstructionOperation = findLatestSpan(
+    events,
+    "google-system-instruction-operation",
+  );
+  const multiTurnOperation = findLatestSpan(
+    events,
+    "google-multi-turn-operation",
+  );
   const embedOperation = findLatestSpan(events, "google-embed-operation");
   const attachmentOperation = findLatestSpan(
     events,
@@ -283,11 +291,25 @@ function buildRelevantEvents(events: CapturedLogEvent[]): CapturedLogEvent[] {
     "google-stream-return-operation",
   );
   const toolOperation = findLatestSpan(events, "google-tool-operation");
+  const multiToolOperation = findLatestSpan(
+    events,
+    "google-multi-tool-operation",
+  );
 
   return [
     findLatestSpan(events, ROOT_NAME),
     generateOperation,
     findGoogleSpan(events, generateOperation?.span.id, [
+      "generate_content",
+      "google-genai.generateContent",
+    ]),
+    systemInstructionOperation,
+    findGoogleSpan(events, systemInstructionOperation?.span.id, [
+      "generate_content",
+      "google-genai.generateContent",
+    ]),
+    multiTurnOperation,
+    findGoogleSpan(events, multiTurnOperation?.span.id, [
       "generate_content",
       "google-genai.generateContent",
     ]),
@@ -316,6 +338,11 @@ function buildRelevantEvents(events: CapturedLogEvent[]): CapturedLogEvent[] {
       "generate_content",
       "google-genai.generateContent",
     ]),
+    multiToolOperation,
+    findGoogleSpan(events, multiToolOperation?.span.id, [
+      "generate_content",
+      "google-genai.generateContent",
+    ]),
   ].map((event) => event!);
 }
 
@@ -333,6 +360,32 @@ function buildSpanTree(events: CapturedLogEvent[]): SpanTreeEntry[] {
       name: typeof summary.name === "string" ? summary.name : event.span.name,
     };
   });
+}
+
+function outputHasFunctionCall(
+  output:
+    | {
+        candidates?: Array<{
+          content?: {
+            parts?: Array<{
+              functionCall?: { name?: string };
+            }>;
+          };
+        }>;
+        functionCalls?: Array<{ name?: string }>;
+      }
+    | undefined,
+  name: string,
+): boolean {
+  return (
+    output?.functionCalls?.some((call) => call.name === name) ||
+    output?.candidates?.some((candidate) =>
+      candidate.content?.parts?.some(
+        (part) => part.functionCall?.name === name,
+      ),
+    ) ||
+    false
+  );
 }
 
 export function defineGoogleGenAIInstrumentationAssertions(options: {
@@ -389,6 +442,50 @@ export function defineGoogleGenAIInstrumentationAssertions(options: {
         });
       },
     );
+
+    test("captures system instruction metadata and input", testConfig, () => {
+      const root = findLatestSpan(events, ROOT_NAME);
+      const operation = findLatestSpan(
+        events,
+        "google-system-instruction-operation",
+      );
+      const span = findGoogleSpan(events, operation?.span.id, [
+        "generate_content",
+        "google-genai.generateContent",
+      ]);
+
+      expect(operation).toBeDefined();
+      expect(span).toBeDefined();
+      expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
+      expect(span?.row.metadata).toMatchObject({
+        model: GOOGLE_MODEL,
+        systemInstruction: "You are a pirate. Always respond in pirate speak.",
+      });
+      expect(span?.input).toMatchObject({
+        config: expect.objectContaining({
+          systemInstruction:
+            "You are a pirate. Always respond in pirate speak.",
+        }),
+      });
+    });
+
+    test("captures multi-turn conversation input", testConfig, () => {
+      const root = findLatestSpan(events, ROOT_NAME);
+      const operation = findLatestSpan(events, "google-multi-turn-operation");
+      const span = findGoogleSpan(events, operation?.span.id, [
+        "generate_content",
+        "google-genai.generateContent",
+      ]);
+      const input = span?.input as { contents?: unknown[] } | undefined;
+
+      expect(operation).toBeDefined();
+      expect(span).toBeDefined();
+      expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
+      expect(input?.contents).toHaveLength(3);
+      expect(span?.metrics).toMatchObject({
+        prompt_tokens: expect.any(Number),
+      });
+    });
 
     test("captures trace for client.models.embedContent()", testConfig, () => {
       const root = findLatestSpan(events, ROOT_NAME);
@@ -610,14 +707,38 @@ export function defineGoogleGenAIInstrumentationAssertions(options: {
       expect(span?.row.metadata).toMatchObject({
         model: GOOGLE_MODEL,
       });
-      expect(
-        output?.functionCalls?.some((call) => call.name === "get_weather") ||
-          output?.candidates?.some((candidate) =>
-            candidate.content?.parts?.some(
-              (part) => part.functionCall?.name === "get_weather",
-            ),
-          ),
-      ).toBe(true);
+      expect(outputHasFunctionCall(output, "get_weather")).toBe(true);
+    });
+
+    test("captures trace for multi-tool calling", testConfig, () => {
+      const root = findLatestSpan(events, ROOT_NAME);
+      const operation = findLatestSpan(events, "google-multi-tool-operation");
+      const span = findGoogleSpan(events, operation?.span.id, [
+        "generate_content",
+        "google-genai.generateContent",
+      ]);
+      const output = span?.output as
+        | {
+            candidates?: Array<{
+              content?: {
+                parts?: Array<{
+                  functionCall?: { name?: string };
+                }>;
+              };
+            }>;
+            functionCalls?: Array<{ name?: string }>;
+          }
+        | undefined;
+
+      expect(operation).toBeDefined();
+      expect(span).toBeDefined();
+      expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
+      expect(span?.row.metadata).toMatchObject({
+        model: GOOGLE_MODEL,
+      });
+      expect(JSON.stringify(span?.row.metadata)).toContain("get_weather");
+      expect(JSON.stringify(span?.row.metadata)).toContain("get_time");
+      expect(outputHasFunctionCall(output, "get_weather")).toBe(true);
     });
 
     test("matches the shared span tree snapshot", testConfig, async () => {

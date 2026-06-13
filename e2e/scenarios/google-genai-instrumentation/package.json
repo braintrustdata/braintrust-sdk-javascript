@@ -13,5 +13,11 @@
     "google-genai-sdk-v1300": "npm:@google/genai@1.30.0",
     "google-genai-sdk-v1440": "npm:@google/genai@1.44.0",
     "google-genai-sdk-v1450": "npm:@google/genai@1.45.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "protobufjs@<7.5.8": "^7.5.8",
+      "ws@>=8.0.0 <8.20.1": "^8.20.1"
+    }
   }
 }

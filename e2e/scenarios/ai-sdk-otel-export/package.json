@@ -18,5 +18,12 @@
     "ai-sdk-v5": "npm:ai@5.0.82",
     "ai-sdk-v6": "npm:ai@6.0.1",
     "zod": "3.25.76"
+  },
+  "pnpm": {
+    "overrides": {
+      "protobufjs@<7.5.8": "^7.5.8",
+      "@opentelemetry/sdk-node@<0.217.0": "^0.217.0",
+      "@opentelemetry/exporter-prometheus@<0.217.0": "^0.217.0"
+    }
   }
 }

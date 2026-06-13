@@ -49,8 +49,14 @@ BRAINTRUST_API_KEY=<YOUR_API_KEY> npx braintrust eval tutorial.eval.ts
 | `@braintrust/otel`          | OpenTelemetry span processor and compatibility helpers for Braintrust tracing.  | [![npm: @braintrust/otel](https://img.shields.io/npm/v/%40braintrust%2Fotel.svg)](https://www.npmjs.com/package/@braintrust/otel)                            | [integrations/otel-js/README.md](integrations/otel-js/README.md)                   |
 | `@braintrust/temporal`      | Temporal client/worker plugin and workflow interceptors for Braintrust tracing. | [![npm: @braintrust/temporal](https://img.shields.io/npm/v/%40braintrust%2Ftemporal.svg)](https://www.npmjs.com/package/@braintrust/temporal)                | [integrations/temporal-js/README.md](integrations/temporal-js/README.md)           |
 
+## CLI `bt`
+
+The `bt` cli is installed alongside `braintrust`, use it with `npx bt` or `pnpm exec bt`.
+See the [documentation](https://www.braintrust.dev/docs/reference/cli/quickstart).
+
 ## Documentation
 
+- Publishing packages: [PUBLISHING.md](PUBLISHING.md)
 - TypeScript SDK docs: https://www.braintrust.dev/docs/reference/sdks/typescript
 - Release notes: https://www.braintrust.dev/docs/reference/release-notes
 

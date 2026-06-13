@@ -175,11 +175,14 @@ export {
   wrapAISDKModel,
 } from "./wrappers/ai-sdk";
 export { wrapAnthropic } from "./wrappers/anthropic";
-export { wrapMastraAgent } from "./wrappers/mastra";
+export {
+  BraintrustObservabilityExporter,
+  wrapMastraAgent,
+} from "./wrappers/mastra";
+export type { MastraObservabilityExporter } from "./wrappers/mastra";
 export { wrapClaudeAgentSDK } from "./wrappers/claude-agent-sdk/claude-agent-sdk";
 export { wrapOpenAICodexSDK } from "./wrappers/openai-codex";
 export { wrapCursorSDK } from "./wrappers/cursor-sdk";
-export { wrapFlueContext, wrapFlueSession } from "./wrappers/flue";
 export { wrapGoogleGenAI } from "./wrappers/google-genai";
 export { wrapGoogleADK } from "./wrappers/google-adk";
 export { wrapGenkit } from "./wrappers/genkit";
@@ -192,6 +195,11 @@ export { wrapGroq } from "./wrappers/groq";
 export { wrapCopilotClient } from "./wrappers/github-copilot";
 export { wrapVitest } from "./wrappers/vitest";
 export { initNodeTestSuite } from "./wrappers/node-test";
+export {
+  BRAINTRUST_LANGCHAIN_CALLBACK_HANDLER_NAME,
+  BraintrustLangChainCallbackHandler,
+} from "./wrappers/langchain/callback-handler";
+export type { LangChainCallbackHandlerOptions } from "./vendor-sdk-types/langchain";
 
 export * as graph from "./graph-framework";
 
@@ -219,6 +227,8 @@ export {
   runEvaluator,
   defaultErrorScoreHandler,
 } from "./framework";
+
+export { DatasetPipeline } from "./dataset-pipeline";
 
 export type {
   CodeOpts,
@@ -251,7 +261,7 @@ export {
 } from "./prompt-schemas";
 
 export type { Trace, SpanData, GetThreadOptions } from "./trace";
-export { SpanFetcher, CachedSpanFetcher } from "./trace";
+export { SpanFetcher, CachedSpanFetcher, LocalTrace } from "./trace";
 
 export type {
   ParentExperimentIds,
@@ -288,4 +298,5 @@ export {
 
 // Auto-instrumentation configuration
 export { configureInstrumentation } from "./instrumentation";
+export { braintrustFlueObserver } from "./instrumentation";
 export type { InstrumentationConfig } from "./instrumentation";

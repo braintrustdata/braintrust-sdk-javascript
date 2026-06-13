@@ -1038,6 +1038,62 @@ describe("framework2 metadata support", () => {
 
       expect(tool.tags).toBeUndefined();
     });
+
+    test("classifier registers as a code function", () => {
+      const project = projects.create({ name: "test-project" });
+
+      const classifier = project.classifiers.create({
+        handler: ({ output }: { output: string }) => ({
+          name: "category",
+          id: output,
+        }),
+        name: "test-classifier",
+        parameters: z.object({
+          output: z.string(),
+        }),
+      });
+
+      expect(classifier.type).toBe("classifier");
+      expect(classifier.name).toBe("test-classifier");
+      expect(classifier.slug).toBe("test-classifier");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      expect((project as any)._publishableCodeFunctions).toEqual([classifier]);
+    });
+
+    test("lazy classifier registration uses the functions registry", () => {
+      const previousLazyLoad = globalThis._lazy_load;
+      const previousEvals = globalThis._evals;
+      globalThis._lazy_load = true;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      globalThis._evals = {
+        evaluators: [],
+        functions: [],
+        parameters: [],
+        prompts: [],
+        reporters: [],
+      } as any;
+
+      try {
+        const project = projects.create({ name: "test-project" });
+
+        const classifier = project.classifiers.create({
+          handler: ({ output }: { output: string }) => ({
+            name: "category",
+            id: output,
+          }),
+          name: "test-classifier",
+          parameters: z.object({
+            output: z.string(),
+          }),
+        });
+
+        expect(globalThis._evals.functions).toEqual([classifier]);
+        expect(globalThis._evals.functions[0].type).toBe("classifier");
+      } finally {
+        globalThis._lazy_load = previousLazyLoad;
+        globalThis._evals = previousEvals;
+      }
+    });
   });
 
   describe("CodePrompt metadata", () => {

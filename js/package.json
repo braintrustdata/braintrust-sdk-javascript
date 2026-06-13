@@ -1,6 +1,6 @@
 {
   "name": "braintrust",
-  "version": "3.11.0",
+  "version": "3.17.0",
   "description": "SDK for integrating Braintrust",
   "repository": {
     "type": "git",
@@ -19,7 +19,8 @@
     "./dist/index.d.mts": "./dist/browser.d.mts"
   },
   "bin": {
-    "braintrust": "./dist/cli.js"
+    "braintrust": "./dist/cli.js",
+    "bt": "./bin/bt"
   },
   "exports": {
     "./package.json": "./package.json",
@@ -127,9 +128,13 @@
   "files": [
     "dist/**/*",
     "dev/dist/**/*",
-    "util/dist/**/*"
+    "util/dist/**/*",
+    "bin/bt",
+    "scripts/bt-helper.js",
+    "scripts/install.js"
   ],
   "scripts": {
+    "postinstall": "node ./scripts/install.js",
     "build": "cross-env NODE_OPTIONS=\"--max-old-space-size=8192\" tsup",
     "check:typings": "tsc --noEmit",
     "watch": "tsup --watch",
@@ -138,29 +143,16 @@
     "test": "vitest run --exclude \"src/wrappers/**/*.test.ts\" --exclude \"src/otel/**/*.test.ts\" --exclude \"smoke/**/*.test.ts\" --exclude \"src/zod/**/*.test.ts\" --exclude \"tests/api-compatibility/**\"",
     "test:core": "pnpm prune && pnpm test",
     "test:checks": "pnpm run test:core && pnpm run test:vitest",
-    "test:external": "pnpm run test:external:sequential && node scripts/run-parallel.mjs test:external:ai-sdk-v5 test:external:ai-sdk-v6 test:external:claude-agent-sdk",
-    "test:external:sequential": "pnpm run test:external:openai && pnpm run test:external:anthropic && pnpm run test:external:google-genai",
-    "test:external:openai": "bash scripts/test-provider.sh test:openai openai",
-    "test:external:anthropic": "bash scripts/test-provider.sh test:anthropic @anthropic-ai/sdk",
-    "test:external:google-genai": "bash scripts/test-provider.sh test:google-genai @google/genai",
-    "test:external:ai-sdk": "pnpm run test:external:ai-sdk-v5 && pnpm run test:external:ai-sdk-v6",
-    "test:external:ai-sdk-v5": "cd src/wrappers/ai-sdk/tests/v5 && pnpm install --ignore-workspace && pnpm test",
-    "test:external:ai-sdk-v6": "cd src/wrappers/ai-sdk/tests/v6 && pnpm install --ignore-workspace && pnpm test",
-    "test:external:claude-agent-sdk": "cd src/wrappers/claude-agent-sdk && pnpm install && pnpm test",
-    "test:all": "pnpm run test:checks && pnpm run test:external",
+    "test:all": "pnpm run test:checks",
     "test:api-compat": "vitest run tests/api-compatibility/api-compatibility.test.ts",
-    "test:anthropic": "vitest run src/wrappers/anthropic.test.ts",
-    "test:openai": "vitest run src/wrappers/oai.test.ts",
     "test:otel": "vitest run --dir src/otel",
     "test:otel-no-deps": "vitest run src/otel/otel-no-deps.test.ts --reporter=verbose",
-    "test:google-genai": "vitest run src/wrappers/google-genai.test.ts",
     "test:ai-sdk-v1": "vitest run src/wrappers/ai-sdk-v1.test.ts",
     "test:ai-sdk-v2": "vitest run src/wrappers/ai-sdk-v2.test.ts src/wrappers/ai-sdk-v1.test.ts",
     "test:ai-sdk-v3": "vitest run src/wrappers/ai-sdk-v3.test.ts",
     "test:zod-v3": "vitest run src/zod/zod-v3-serialization.test.ts",
     "test:zod-v4": "vitest run src/zod/zod-v4-serialization.test.ts",
     "test:mastra": "vitest run src/wrappers/mastra.test.ts",
-    "test:claude-agent-sdk": "pnpm --filter @braintrust/claude-agent-sdk-tests test",
     "test:vitest": "pnpm --filter @braintrust/vitest-wrapper-tests test",
     "test:output": "tsx scripts/test-output.ts --with-comparison --with-metrics --with-progress",
     "bench": "tsx src/queue.bench.ts",
@@ -175,28 +167,22 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "@ai-sdk/anthropic": "2.0.37",
     "@anthropic-ai/sdk": "^0.60.0",
-    "@google/adk": "^0.6.1",
-    "@google/genai": "^1.25.0",
     "@nodelib/fs.walk": "^1.2.8",
     "@types/argparse": "^2.0.14",
     "@types/async": "^3.2.24",
     "@types/cli-progress": "^3.11.5",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
-    "@types/graceful-fs": "^4.1.9",
     "@types/http-errors": "^2.0.4",
     "@types/mustache": "^4.2.5",
     "@types/node": "^20.10.5",
     "@types/pluralize": "^0.0.30",
     "@types/tar": "^6.1.13",
-    "@types/uuid": "^9.0.7",
     "@typescript-eslint/eslint-plugin": "^8.49.0",
     "@typescript-eslint/parser": "^8.49.0",
     "ai": "^6.0.0",
     "async": "^3.2.5",
-    "autoevals": "^0.0.131",
     "cross-env": "^7.0.3",
     "eslint-plugin-node-import": "^1.0.5",
     "openai": "6.25.0",
@@ -228,7 +214,6 @@
     "esbuild": "0.28.0",
     "eventsource-parser": "^1.1.2",
     "express": "^5.2.1",
-    "graceful-fs": "^4.2.11",
     "http-errors": "^2.0.0",
     "minimatch": "^10.2.5",
     "module-details-from-path": "^1.0.4",
@@ -238,11 +223,20 @@
     "source-map": "^0.7.4",
     "termi-link": "^1.0.1",
     "unplugin": "^2.3.5",
-    "uuid": "^9.0.1",
+    "uuid": "^11.1.1",
     "zod-to-json-schema": "^3.25.0"
   },
   "peerDependencies": {
     "zod": "^3.25.34 || ^4.0"
+  },
+  "optionalDependencies": {
+    "@braintrust/bt-darwin-arm64": "0.12.0",
+    "@braintrust/bt-darwin-x64": "0.12.0",
+    "@braintrust/bt-linux-arm64": "0.12.0",
+    "@braintrust/bt-linux-x64": "0.12.0",
+    "@braintrust/bt-linux-x64-musl": "0.12.0",
+    "@braintrust/bt-win32-arm64": "0.12.0",
+    "@braintrust/bt-win32-x64": "0.12.0"
   },
   "publishConfig": {
     "access": "public",

@@ -1,239 +1,268 @@
-import { Type } from "@flue/runtime";
-import { configureProvider } from "@flue/runtime/app";
-import {
-  createFlueContext,
-  InMemorySessionStore,
-  resolveModel,
-} from "@flue/runtime/internal";
-import { local } from "@flue/runtime/node";
-import { wrapFlueContext } from "braintrust";
-import {
-  runMain,
-  runOperation,
-  runTracedScenario,
-} from "../../helpers/provider-runtime.mjs";
-import {
-  FLUE_MODEL,
-  FLUE_REASONING_MODEL,
-  ROOT_NAME,
-  SCENARIO_NAME,
-} from "./constants.mjs";
+import { spawn } from "node:child_process";
+import { access, rm } from "node:fs/promises";
+import { createServer } from "node:net";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { SCENARIO_NAME } from "./constants.mjs";
 
-const openAIBaseUrl =
-  process.env.OPENAI_BASE_URL ?? process.env.BRAINTRUST_E2E_MODEL_BASE_URL;
-if (openAIBaseUrl) {
-  configureProvider("openai", { baseUrl: openAIBaseUrl });
-}
+const flueCliPath = path.join(
+  path.dirname(
+    path.dirname(fileURLToPath(import.meta.resolve("@flue/cli/config"))),
+  ),
+  "bin",
+  "flue.mjs",
+);
+const braintrustHookNodeOption = "--import=braintrust/hook.mjs";
 
-const anthropicBaseUrl = process.env.ANTHROPIC_BASE_URL;
-if (anthropicBaseUrl) {
-  configureProvider("anthropic", {
-    apiKey: process.env.ANTHROPIC_API_KEY ?? "test-key",
-    baseUrl: anthropicBaseUrl,
-  });
-}
-
-function flueModel() {
-  return process.env.FLUE_E2E_MODEL ?? FLUE_MODEL;
-}
-
-function flueReasoningModel() {
-  return process.env.FLUE_E2E_REASONING_MODEL ?? FLUE_REASONING_MODEL;
-}
-
-function fluePromptModel() {
-  return process.env.FLUE_E2E_PROMPT_MODEL ?? flueReasoningModel();
-}
-
-function fluePromptThinkingLevel() {
-  return (
-    process.env.FLUE_E2E_PROMPT_THINKING_LEVEL ?? flueReasoningThinkingLevel()
-  );
-}
-
-function flueReasoningThinkingLevel() {
-  return process.env.FLUE_E2E_REASONING_THINKING_LEVEL ?? "medium";
-}
-
-function makeContext() {
-  const sandbox = local({ cwd: process.cwd() });
-  return createFlueContext({
-    agentConfig: {
-      compaction: {
-        keepRecentTokens: 1,
-        reserveTokens: 64,
-      },
-      model: resolveModel(flueModel()),
-      resolveModel,
-      roles: {
-        skillRunner: {
-          description: "Runs the Flue e2e skill without delegating.",
-          instructions: [
-            "Never call the task tool.",
-            "Do not delegate e2e-flue-skill to another session.",
-            "If you need the skill body, read .agents/skills/e2e-flue-skill/SKILL.md yourself with the read tool.",
-            "Return the marker from the Arguments object exactly, with no other text.",
-          ].join(" "),
-          name: "skillRunner",
-        },
-      },
-      skills: {},
-      systemPrompt: [
-        "You are a deterministic Flue instrumentation test agent.",
-        "Follow user instructions exactly.",
-        "When asked for a marker, output only that marker and no extra text.",
-        "When running a local skill file, read it yourself and do not delegate it to a task.",
-      ].join(" "),
-      thinkingLevel: "off",
-    },
-    createDefaultEnv: async () =>
-      sandbox.createSessionEnv({
-        cwd: process.cwd(),
-        id: "flue-e2e-default",
-      }),
-    defaultStore: new InMemorySessionStore(),
-    env: process.env,
-    id: "flue-e2e-instance",
-    payload: {
-      scenario: SCENARIO_NAME,
-    },
-    runId: `flue-e2e-${process.env.BRAINTRUST_E2E_RUN_ID ?? "local"}`,
-  });
-}
-
-const lookupTool = {
-  description:
-    "Return a deterministic lookup result with an id needed by web_search.",
-  execute: async (args) =>
-    JSON.stringify({
-      id: "flue-session-2026",
-      query: args.query,
-      topic: "session instrumentation",
-    }),
-  name: "lookup",
-  parameters: Type.Object({
-    query: Type.String(),
-  }),
-};
-
-const webSearchTool = {
-  description:
-    "Search a deterministic local web index. Requires the id returned by lookup.",
-  execute: async (args) =>
-    JSON.stringify({
-      lookupId: args.lookupId,
-      query: args.query,
-      results: [
-        {
-          title: "Flue reasoning stream instrumentation",
-          url: "https://example.test/flue/reasoning-streams",
-        },
-      ],
-    }),
-  name: "web_search",
-  parameters: Type.Object({
-    lookupId: Type.String(),
-    query: Type.String(),
-  }),
-};
-
-const summarizeSourceTool = {
-  description:
-    "Summarize the selected deterministic source after web_search returns a URL.",
-  execute: async (args) =>
-    JSON.stringify({
-      summary:
-        "Flue emits reasoning, tool execution, and LLM turn events separately.",
-      url: args.url,
-    }),
-  name: "summarize_source",
-  parameters: Type.Object({
-    url: Type.String(),
-  }),
-};
-
-export async function runFlueInstrumentationScenario({ wrapContext }) {
-  const rawContext = makeContext();
-  const ctx = wrapContext ? wrapFlueContext(rawContext) : rawContext;
-
-  await runTracedScenario({
-    callback: async () => {
-      const harness = await ctx.init({
-        compaction: {
-          keepRecentTokens: 1,
-          reserveTokens: 64,
-        },
-        cwd: process.cwd(),
-        model: flueModel(),
-        sandbox: local({ cwd: process.cwd() }),
-      });
-      const session = await harness.session("main");
-      const skillSession = await harness.session("skill");
-      const taskSession = await harness.session("task");
-
-      await runOperation("flue-prompt-operation", "prompt", async () => {
-        await session.prompt(
-          [
-            "Complete this instrumented research flow.",
-            "Call exactly one tool per turn and wait for each tool result before choosing the next tool.",
-            'Step 1: call lookup with query "flue instrumentation".',
-            'Step 2: use the lookup result id as lookupId and call web_search with query "Braintrust Flue reasoning stream instrumentation".',
-            "Step 3: use the first web_search result url and call summarize_source.",
-            "After summarize_source returns, reply with exactly PROMPT_DONE and no other text.",
-          ].join(" "),
-          {
-            cacheRetention: "none",
-            maxTokens: 2048,
-            model: fluePromptModel(),
-            thinkingLevel: fluePromptThinkingLevel(),
-            tools: [lookupTool, webSearchTool, summarizeSourceTool],
-          },
-        );
-      });
-
-      await runOperation("flue-skill-operation", "skill", async () => {
-        await skillSession.skill("e2e-flue-skill", {
-          args: { marker: "SKILL_DONE" },
-          cacheRetention: "none",
-          maxTokens: 128,
-          model: flueReasoningModel(),
-          role: "skillRunner",
-          thinkingLevel: "off",
-        });
-      });
-
-      await runOperation("flue-task-operation", "task", async () => {
-        await taskSession.task(
-          "Reply with exactly TASK_DONE and no other text.",
-          {
-            cacheRetention: "none",
-            maxTokens: 32,
-            model: FLUE_MODEL,
-            thinkingLevel: "off",
-          },
-        );
-      });
-
-      await runOperation("flue-compact-operation", "compact", async () => {
-        await session.compact();
-      });
-    },
-    flushCount: 2,
-    flushDelayMs: 100,
+function workflowPayload() {
+  return {
     metadata: {
       scenario: SCENARIO_NAME,
+      testRunId: process.env.BRAINTRUST_E2E_RUN_ID,
     },
-    projectNameBase: "e2e-flue-instrumentation",
-    rootName: ROOT_NAME,
-  });
+    scenario: SCENARIO_NAME,
+  };
 }
 
-export function runWrappedFlueInstrumentation() {
-  return runFlueInstrumentationScenario({ wrapContext: true });
+export async function runNodeFlueInstrumentationScenario(options) {
+  const env = scenarioEnv(options);
+  const outputDir = path.join(process.cwd(), ".flue-build", options.outputName);
+  await runFlueCli(
+    [
+      "build",
+      "--target",
+      "node",
+      "--root",
+      process.cwd(),
+      "--output",
+      outputDir,
+    ],
+    env,
+  );
+
+  const port = await getFreePort();
+  const child = spawn(process.execPath, [path.join(outputDir, "server.mjs")], {
+    cwd: process.cwd(),
+    env: {
+      ...env,
+      PORT: String(port),
+    },
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  let stdout = "";
+  let stderr = "";
+  child.stdout.on("data", (chunk) => {
+    stdout += chunk.toString();
+  });
+  child.stderr.on("data", (chunk) => {
+    stderr += chunk.toString();
+  });
+
+  try {
+    await waitForFlueServer(child, () => ({ stderr, stdout }));
+    const workflowResponse = await fetch(
+      `http://127.0.0.1:${port}/workflows/instrumentation?wait=result`,
+      {
+        body: JSON.stringify(workflowPayload()),
+        headers: { "content-type": "application/json" },
+        method: "POST",
+      },
+    );
+    if (!workflowResponse.ok) {
+      throw new Error(
+        `workflow request failed with ${workflowResponse.status}\n${await workflowResponse.text()}`,
+      );
+    }
+    await workflowResponse.arrayBuffer();
+
+    const flushResponse = await fetch(
+      `http://127.0.0.1:${port}/__braintrust_flush`,
+      { method: "POST" },
+    );
+    if (!flushResponse.ok) {
+      throw new Error(
+        `flush request failed with ${flushResponse.status}\n${await flushResponse.text()}`,
+      );
+    }
+  } catch (error) {
+    throw new Error(
+      `${error instanceof Error ? error.message : String(error)}\nSTDOUT:\n${stdout}\nSTDERR:\n${stderr}`,
+    );
+  } finally {
+    await stopChild(child);
+  }
+}
+
+export async function runCliFlueInstrumentationScenario() {
+  const flushFile = path.join(process.cwd(), ".flue-build", "cli-flushed");
+  await rm(flushFile, { force: true });
+  await runFlueCli(
+    [
+      "run",
+      "instrumentation",
+      "--target",
+      "node",
+      "--payload",
+      JSON.stringify(workflowPayload()),
+      "--root",
+      process.cwd(),
+    ],
+    {
+      ...scenarioEnv({ autoHook: true, explicitObserve: false }),
+      FLUE_E2E_FLUSH_FILE: flushFile,
+    },
+  );
+  await waitForFile(flushFile);
+}
+
+export function runExplicitFlueInstrumentation() {
+  return runNodeFlueInstrumentationScenario({
+    autoHook: false,
+    explicitObserve: true,
+    outputName: "explicit",
+  });
 }
 
 export function runAutoFlueInstrumentation() {
-  return runFlueInstrumentationScenario({ wrapContext: false });
+  return runNodeFlueInstrumentationScenario({
+    autoHook: true,
+    explicitObserve: false,
+    outputName: "auto-hook",
+  });
 }
 
-export { runMain };
+export function runCliFlueInstrumentation() {
+  return runCliFlueInstrumentationScenario();
+}
+
+function scenarioEnv({ autoHook, explicitObserve }) {
+  const env = {
+    ...process.env,
+    FLUE_E2E_EXPLICIT_OBSERVE: explicitObserve ? "1" : "0",
+  };
+  if (!autoHook) {
+    return env;
+  }
+  return {
+    ...env,
+    NODE_OPTIONS: [env.NODE_OPTIONS, braintrustHookNodeOption]
+      .filter(Boolean)
+      .join(" "),
+  };
+}
+
+async function runFlueCli(args, env) {
+  await new Promise((resolve, reject) => {
+    const child = spawn(process.execPath, [flueCliPath, ...args], {
+      cwd: process.cwd(),
+      env,
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+
+    let stdout = "";
+    let stderr = "";
+
+    child.stdout.on("data", (chunk) => {
+      stdout += chunk.toString();
+    });
+    child.stderr.on("data", (chunk) => {
+      stderr += chunk.toString();
+    });
+    child.on("error", reject);
+    child.on("close", (code) => {
+      if (code === 0) {
+        resolve();
+        return;
+      }
+
+      reject(
+        new Error(
+          `flue ${args.join(" ")} failed with exit code ${code ?? 0}\nSTDOUT:\n${stdout}\nSTDERR:\n${stderr}`,
+        ),
+      );
+    });
+  });
+}
+
+async function getFreePort() {
+  const server = createServer();
+  await new Promise((resolve, reject) => {
+    server.once("error", reject);
+    server.listen(0, "127.0.0.1", resolve);
+  });
+  const address = server.address();
+  await new Promise((resolve, reject) => {
+    server.close((error) => (error ? reject(error) : resolve()));
+  });
+  if (!address || typeof address === "string") {
+    throw new Error("failed to allocate a local port for the Flue server");
+  }
+  return address.port;
+}
+
+async function waitForFlueServer(child, output) {
+  await new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      reject(new Error("timed out waiting for Flue server startup"));
+    }, 30_000);
+    const onData = () => {
+      if (output().stdout.includes("Server listening")) {
+        cleanup();
+        resolve();
+      }
+    };
+    const onExit = (code) => {
+      cleanup();
+      reject(new Error(`Flue server exited before startup with code ${code}`));
+    };
+    const cleanup = () => {
+      clearTimeout(timeout);
+      child.stdout.off("data", onData);
+      child.stderr.off("data", onData);
+      child.off("exit", onExit);
+    };
+    child.stdout.on("data", onData);
+    child.stderr.on("data", onData);
+    child.once("exit", onExit);
+    onData();
+  });
+}
+
+async function stopChild(child) {
+  if (child.exitCode !== null || child.signalCode !== null) {
+    return;
+  }
+  await new Promise((resolve) => {
+    child.once("exit", resolve);
+    child.kill("SIGTERM");
+    setTimeout(() => {
+      if (child.exitCode === null && child.signalCode === null) {
+        child.kill("SIGKILL");
+      }
+    }, 5_000).unref();
+  });
+}
+
+async function waitForFile(filePath) {
+  const startedAt = Date.now();
+  while (true) {
+    try {
+      await access(filePath);
+      return;
+    } catch {
+      if (Date.now() - startedAt > 30_000) {
+        throw new Error(
+          `timed out waiting for Flue e2e flush marker: ${filePath}`,
+        );
+      }
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+  }
+}
+
+export function runMain(main) {
+  void main().catch((error) => {
+    console.error(error);
+    process.exitCode = 1;
+  });
+}
