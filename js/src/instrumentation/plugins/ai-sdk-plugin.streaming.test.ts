@@ -71,6 +71,13 @@ describe("AI SDK streaming instrumentation", () => {
                 modelId: "mock-delayed-model",
                 timestamp: new Date(0),
               });
+              controller.enqueue({
+                type: "raw",
+                rawValue: {
+                  type: "response.created",
+                  response: { id: "response-id" },
+                },
+              });
             },
             async pull(controller) {
               if (sentContent) {
@@ -115,6 +122,7 @@ describe("AI SDK streaming instrumentation", () => {
     const result = wrappedAI.streamText({
       model,
       prompt: "Reply with exactly DELAYED.",
+      includeRawChunks: true,
       maxOutputTokens: 16,
     });
 

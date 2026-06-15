@@ -1111,6 +1111,8 @@ function prepareAISDKChildTracing(
         const result = await withCurrent(span, () =>
           Reflect.apply(originalDoStream, resolvedModel, [options]),
         );
+        // firstChunkTime !== streamStartTime because the first few chunks may be actual bookkeeping stuff for the SDK
+        // instead of actual LLM output that can be streamed to users.
         let firstChunkTime: number | undefined;
         const output: Record<string, unknown> = {};
         let text = "";
@@ -1397,28 +1399,56 @@ function rawValueHasAISDKContent(value: unknown): boolean {
     return true;
   }
 
+  // Raw streams also include provider lifecycle events; only content shapes count.
+  const delta = value.delta;
   if (
     stringContent(value.content) ||
     stringContent(value.text) ||
-    (isObject(value.delta) && stringContent(value.delta.content)) ||
+    stringContent(value.delta) ||
+    stringContent(value.arguments) ||
+    stringContent(value.partial_json) ||
+    (isObject(delta) &&
+      (stringContent(delta.content) ||
+        stringContent(delta.text) ||
+        stringContent(delta.arguments) ||
+        stringContent(delta.partial_json) ||
+        stringContent(delta.thinking))) ||
     (Array.isArray(value.choices) &&
-      value.choices.some(
-        (choice) =>
-          isObject(choice) &&
-          isObject(choice.delta) &&
-          stringContent(choice.delta.content),
-      ))
+      value.choices.some((choice) => {
+        if (!isObject(choice) || !isObject(choice.delta)) {
+          return false;
+        }
+
+        const choiceDelta = choice.delta;
+        if (
+          stringContent(choiceDelta.content) ||
+          stringContent(choiceDelta.text)
+        ) {
+          return true;
+        }
+
+        if (
+          isObject(choiceDelta.function_call) &&
+          stringContent(choiceDelta.function_call.arguments)
+        ) {
+          return true;
+        }
+
+        return (
+          Array.isArray(choiceDelta.tool_calls) &&
+          choiceDelta.tool_calls.some(
+            (toolCall) =>
+              isObject(toolCall) &&
+              isObject(toolCall.function) &&
+              stringContent(toolCall.function.arguments),
+          )
+        );
+      }))
   ) {
     return true;
   }
 
-  const type = value.type;
-  return (
-    typeof type === "string" &&
-    type !== "start" &&
-    type !== "stream-start" &&
-    type !== "response-metadata"
-  );
+  return false;
 }
 
 function isAISDKContentStreamChunk(chunk: unknown): boolean {
@@ -1431,6 +1461,7 @@ function isAISDKContentStreamChunk(chunk: unknown): boolean {
     return false;
   }
 
+  // TTFT should ignore framing like stream-start, metadata, and text-start.
   switch (part.type) {
     case "text-delta":
       return (
