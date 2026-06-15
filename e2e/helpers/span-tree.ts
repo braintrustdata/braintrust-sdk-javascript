@@ -1,6 +1,10 @@
 import { matchFileSnapshot } from "./file-snapshot";
 import type { CapturedLogEvent } from "./mock-braintrust-server";
-import { normalizeForSnapshot, type Json } from "./normalize";
+import {
+  normalizeForSnapshot,
+  type Json,
+  type NormalizeOptions,
+} from "./normalize";
 
 export type SpanTreeFields = Record<string, unknown>;
 
@@ -24,6 +28,10 @@ type SpanTreeJsonNode = {
   name: string;
   type?: string;
 } & Record<string, Json | SpanTreeJsonNode[] | string | undefined>;
+
+type SpanTreeSnapshotOptions = {
+  normalize?: NormalizeOptions;
+};
 
 const FIELD_ORDER = [
   "span_attributes",
@@ -53,9 +61,14 @@ function jsonClone(value: unknown): Json | undefined {
   return JSON.parse(JSON.stringify(value)) as Json;
 }
 
-function normalizeJson(value: unknown): Json | undefined {
+function normalizeJson(
+  value: unknown,
+  options?: NormalizeOptions,
+): Json | undefined {
   const cloned = jsonClone(value);
-  return cloned === undefined ? undefined : normalizeForSnapshot(cloned);
+  return cloned === undefined
+    ? undefined
+    : normalizeForSnapshot(cloned, options);
 }
 
 function sortJsonKeys(value: Json): Json {
@@ -182,11 +195,14 @@ function shouldRenderField(value: Json | undefined): value is Json {
   return true;
 }
 
-function normalizeFields(fields: SpanTreeFields): Record<string, Json> {
+function normalizeFields(
+  fields: SpanTreeFields,
+  options?: NormalizeOptions,
+): Record<string, Json> {
   const normalized: Record<string, Json> = {};
 
   for (const [key, value] of Object.entries(fields)) {
-    const normalizedValue = normalizeJson(value);
+    const normalizedValue = normalizeJson(value, options);
     if (shouldRenderField(normalizedValue)) {
       normalized[key] = sortJsonKeys(normalizedValue);
     }
@@ -298,12 +314,13 @@ function renderEntry(
   entry: NormalizedEntry,
   prefix: string,
   isLast: boolean,
+  options?: SpanTreeSnapshotOptions,
 ): string[] {
   const connector = isLast ? "└── " : "├── ";
   const childPrefix = `${prefix}${isLast ? "    " : "│   "}`;
   const type = entry.event.span.type ? ` [${entry.event.span.type}]` : "";
   const lines = [`${prefix}${connector}${entry.name}${type}`];
-  const fields = normalizeFields(entry.fields);
+  const fields = normalizeFields(entry.fields, options?.normalize);
 
   for (const key of sortedFieldKeys(fields)) {
     lines.push(
@@ -313,7 +330,12 @@ function renderEntry(
 
   entry.children.forEach((child, index) => {
     lines.push(
-      ...renderEntry(child, childPrefix, index === entry.children.length - 1),
+      ...renderEntry(
+        child,
+        childPrefix,
+        index === entry.children.length - 1,
+        options,
+      ),
     );
   });
 
@@ -322,40 +344,45 @@ function renderEntry(
 
 export function formatSpanTreeSnapshot(
   entries: readonly (CapturedLogEvent | SpanTreeEntry)[],
+  options?: SpanTreeSnapshotOptions,
 ): string {
   const roots = buildEntries(entries);
   return [
     "span_tree:",
     ...roots.flatMap((entry, index) =>
-      renderEntry(entry, "", index === roots.length - 1),
+      renderEntry(entry, "", index === roots.length - 1, options),
     ),
     "",
   ].join("\n");
 }
 
-function jsonEntry(entry: NormalizedEntry): SpanTreeJsonNode {
+function jsonEntry(
+  entry: NormalizedEntry,
+  options?: SpanTreeSnapshotOptions,
+): SpanTreeJsonNode {
   const node: SpanTreeJsonNode = {
     name: entry.name,
     ...(entry.event.span.type ? { type: entry.event.span.type } : {}),
     children: [],
   };
-  const fields = normalizeFields(entry.fields);
+  const fields = normalizeFields(entry.fields, options?.normalize);
 
   for (const key of sortedFieldKeys(fields)) {
     node[fieldLabel(key)] = fields[key] as Json;
   }
 
-  node.children = entry.children.map((child) => jsonEntry(child));
+  node.children = entry.children.map((child) => jsonEntry(child, options));
   return node;
 }
 
 export function formatSpanTreeJsonSnapshot(
   entries: readonly (CapturedLogEvent | SpanTreeEntry)[],
+  options?: SpanTreeSnapshotOptions,
 ): string {
   const roots = buildEntries(entries);
   return `${JSON.stringify(
     {
-      span_tree: roots.map((entry) => jsonEntry(entry)),
+      span_tree: roots.map((entry) => jsonEntry(entry, options)),
     },
     null,
     2,
@@ -371,13 +398,14 @@ function txtSnapshotPath(jsonSnapshotPath: string): string {
 export async function matchSpanTreeSnapshot(
   entries: readonly (CapturedLogEvent | SpanTreeEntry)[],
   jsonSnapshotPath: string,
+  options?: SpanTreeSnapshotOptions,
 ): Promise<void> {
   await matchFileSnapshot(
-    formatSpanTreeSnapshot(entries),
+    formatSpanTreeSnapshot(entries, options),
     txtSnapshotPath(jsonSnapshotPath),
   );
   await matchFileSnapshot(
-    formatSpanTreeJsonSnapshot(entries),
+    formatSpanTreeJsonSnapshot(entries, options),
     jsonSnapshotPath,
   );
 }

@@ -5,8 +5,14 @@ import {
   traceSyncStreamChannel,
   unsubscribeAll,
 } from "../core/channel-tracing";
+import type { ChannelMessage } from "../core/channel-definitions";
 import { isAsyncIterable } from "../core/stream-patcher";
-import { SpanTypeAttribute, isPromiseLike } from "../../../util/index";
+import type { IsoChannelHandlers } from "../../isomorph";
+import {
+  SpanTypeAttribute,
+  isObject,
+  isPromiseLike,
+} from "../../../util/index";
 import { getCurrentUnixTimestamp } from "../../util";
 import { Attachment, type Span, withCurrent } from "../../logger";
 import {
@@ -15,6 +21,7 @@ import {
 } from "../../wrappers/attachment-utils";
 import { normalizeAISDKLoggedOutput } from "../../wrappers/ai-sdk/normalize-logged-output";
 import { serializeAISDKToolsForLogging } from "../../wrappers/ai-sdk/tool-serialization";
+import { braintrustAISDKTelemetry } from "../../wrappers/ai-sdk/telemetry";
 import { zodToJsonSchema } from "../../zod/utils";
 import { aiSDKChannels } from "./ai-sdk-channels";
 import type {
@@ -34,6 +41,7 @@ import type {
   AISDKTools,
   AISDKUsage,
 } from "../../vendor-sdk-types/ai-sdk";
+import type { AISDKV7Telemetry } from "../../vendor-sdk-types/ai-sdk-v7-telemetry";
 
 export interface AISDKPluginConfig {
   /**
@@ -47,7 +55,7 @@ export interface AISDKPluginConfig {
  * Default paths to omit from AI SDK output logging.
  * These contain redundant or verbose data that's not useful for tracing.
  */
-const DEFAULT_DENY_OUTPUT_PATHS: string[] = [
+export const DEFAULT_DENY_OUTPUT_PATHS: string[] = [
   // v3
   "roundtrips[].request.body",
   "roundtrips[].response.headers",
@@ -64,9 +72,31 @@ const DEFAULT_DENY_OUTPUT_PATHS: string[] = [
 
 const AUTO_PATCHED_MODEL = Symbol.for("braintrust.ai-sdk.auto-patched-model");
 const AUTO_PATCHED_TOOL = Symbol.for("braintrust.ai-sdk.auto-patched-tool");
+const AUTO_PATCHED_V7_TELEMETRY_DISPATCHER = Symbol.for(
+  "braintrust.ai-sdk.v7.auto-patched-telemetry-dispatcher",
+);
 const RUNTIME_DENY_OUTPUT_PATHS = Symbol.for(
   "braintrust.ai-sdk.deny-output-paths",
 );
+
+const AI_SDK_V7_TELEMETRY_CALLBACKS = [
+  "onStart",
+  "onStepStart",
+  "onLanguageModelCallStart",
+  "onLanguageModelCallEnd",
+  "onToolExecutionStart",
+  "onToolExecutionEnd",
+  "onChunk",
+  "onStepFinish",
+  "onObjectStepStart",
+  "onObjectStepFinish",
+  "onEmbedStart",
+  "onEmbedFinish",
+  "onRerankStart",
+  "onRerankFinish",
+  "onFinish",
+  "onError",
+] as const;
 
 /**
  * AI SDK plugin that subscribes to instrumentation channels
@@ -110,6 +140,8 @@ export class AISDKPlugin extends BasePlugin {
   private subscribeToAISDK(): void {
     const denyOutputPaths =
       this.config.denyOutputPaths || DEFAULT_DENY_OUTPUT_PATHS;
+
+    this.unsubscribers.push(subscribeToAISDKV7TelemetryDispatcher());
 
     // generateText - async function that may return streams
     this.unsubscribers.push(
@@ -400,6 +432,84 @@ export class AISDKPlugin extends BasePlugin {
       }),
     );
   }
+}
+
+function subscribeToAISDKV7TelemetryDispatcher(): () => void {
+  const channel = aiSDKChannels.v7CreateTelemetryDispatcher.tracingChannel();
+  const telemetry = braintrustAISDKTelemetry();
+  const handlers: IsoChannelHandlers<
+    ChannelMessage<typeof aiSDKChannels.v7CreateTelemetryDispatcher>
+  > = {
+    end: (event) => {
+      const telemetryOptions = event.arguments?.[0]?.telemetry;
+      if (telemetryOptions?.isEnabled === false) {
+        return;
+      }
+
+      patchAISDKV7TelemetryDispatcher(event.result, telemetry);
+    },
+  };
+
+  channel.subscribe(handlers);
+
+  return () => {
+    channel.unsubscribe(handlers);
+  };
+}
+
+function patchAISDKV7TelemetryDispatcher(
+  dispatcher: unknown,
+  telemetry: AISDKV7Telemetry,
+): void {
+  if (!isObject(dispatcher)) {
+    return;
+  }
+
+  const dispatcherRecord = dispatcher as Record<PropertyKey, unknown>;
+  if (dispatcherRecord[AUTO_PATCHED_V7_TELEMETRY_DISPATCHER]) {
+    return;
+  }
+  dispatcherRecord[AUTO_PATCHED_V7_TELEMETRY_DISPATCHER] = true;
+
+  for (const key of AI_SDK_V7_TELEMETRY_CALLBACKS) {
+    const braintrustCallback = telemetry[key];
+    if (typeof braintrustCallback !== "function") {
+      continue;
+    }
+
+    const existingCallback = dispatcherRecord[key];
+    dispatcherRecord[key] = (event: unknown) => {
+      const existingResult =
+        typeof existingCallback === "function"
+          ? existingCallback.call(dispatcher, event)
+          : undefined;
+      const braintrustResult = braintrustCallback.call(telemetry, event as any);
+      const pending = [existingResult, braintrustResult].filter(isPromiseLike);
+
+      if (pending.length > 0) {
+        return Promise.allSettled(pending).then(() => undefined);
+      }
+    };
+  }
+
+  const braintrustExecuteTool = telemetry.executeTool;
+  if (typeof braintrustExecuteTool !== "function") {
+    return;
+  }
+
+  const existingExecuteTool = dispatcherRecord.executeTool;
+  dispatcherRecord.executeTool = (args: {
+    callId: string;
+    toolCallId: string;
+    execute: () => PromiseLike<unknown>;
+  }) =>
+    braintrustExecuteTool.call(telemetry, {
+      ...args,
+      execute: () =>
+        typeof existingExecuteTool === "function"
+          ? existingExecuteTool.call(dispatcher, args)
+          : args.execute(),
+    });
 }
 
 function resolveDenyOutputPaths(
@@ -834,7 +944,7 @@ const convertDataToAttachment = (
 /**
  * Process AI SDK input parameters, converting attachments as needed.
  */
-function processAISDKCallInput(
+export function processAISDKCallInput(
   params: AISDKCallParams,
 ): ProcessCallInputSyncResult {
   return processInputAttachmentsSync(params);
@@ -943,7 +1053,7 @@ function hasModelChildTracing(event?: { [key: string]: unknown }): boolean {
   );
 }
 
-function createAISDKIntegrationMetadata(): Record<string, unknown> {
+export function createAISDKIntegrationMetadata(): Record<string, unknown> {
   return {
     braintrust: {
       integration_name: "ai-sdk",
@@ -1721,7 +1831,7 @@ function isAsyncGenerator(value: unknown): value is AsyncGenerator {
 /**
  * Process AI SDK output, omitting specified paths.
  */
-function processAISDKOutput(
+export function processAISDKOutput(
   output: AISDKResult,
   denyOutputPaths: string[],
 ): Record<string, unknown> | AISDKResult {
@@ -1733,7 +1843,7 @@ function processAISDKOutput(
   return normalizeAISDKLoggedOutput(omit(merged, denyOutputPaths));
 }
 
-function processAISDKEmbeddingOutput(
+export function processAISDKEmbeddingOutput(
   output: AISDKEmbeddingResult,
   denyOutputPaths: string[],
 ): Record<string, unknown> | AISDKEmbeddingResult {
@@ -1775,7 +1885,7 @@ function processAISDKEmbeddingOutput(
   return normalizeAISDKLoggedOutput(omit(summarized, denyOutputPaths));
 }
 
-function processAISDKRerankOutput(
+export function processAISDKRerankOutput(
   output: AISDKRerankResult,
   _denyOutputPaths: string[],
 ): unknown {
@@ -1807,7 +1917,9 @@ function processAISDKRerankOutput(
 /**
  * Extract token metrics from AI SDK result.
  */
-function extractTokenMetrics(result: AISDKResult): Record<string, number> {
+export function extractTokenMetrics(
+  result: AISDKResult,
+): Record<string, number> {
   const metrics: Record<string, number> = {};
 
   let usage: AISDKUsage | undefined;
@@ -2144,7 +2256,7 @@ function isSerializableOutputValue(value: unknown): boolean {
 /**
  * Extracts model ID and provider from a model object or string.
  */
-function serializeModelWithProvider(model: AISDKModel | undefined): {
+export function serializeModelWithProvider(model: AISDKModel | undefined): {
   model: string | undefined;
   provider?: string;
 } {

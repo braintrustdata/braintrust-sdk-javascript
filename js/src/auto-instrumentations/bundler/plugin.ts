@@ -124,6 +124,7 @@ export const unplugin = createUnplugin<LegacyBundlerPluginOptions>(
         const moduleName = moduleDetails.name;
         // Normalize the module path for Windows compatibility (WASM transformer expects forward slashes)
         const normalizedModulePath = moduleDetails.path.replace(/\\/g, "/");
+        const moduleVersion = getModuleVersion(moduleDetails.basedir);
 
         // Per-package source patches (see loader/special-case-patches.ts).
         // Same anti-pattern fallback the runtime loader uses — mirrored here
@@ -141,8 +142,6 @@ export const unplugin = createUnplugin<LegacyBundlerPluginOptions>(
             return { code: patched, map: null };
           }
         }
-
-        const moduleVersion = getModuleVersion(moduleDetails.basedir);
 
         // If no version found
         if (!moduleVersion) {

@@ -49,6 +49,7 @@ export class ModulePatch {
         const packageName =
           getPackageName(resolvedModule.basedir) ?? resolvedModule.name;
         const normalizedModulePath = resolvedModule.path.replace(/\\/g, "/");
+        const version = getPackageVersion(resolvedModule.basedir);
 
         // Per-package source patches (see loader/special-case-patches.ts).
         // Anti-pattern intentionally isolated in its own module — do not
@@ -68,9 +69,6 @@ export class ModulePatch {
         if (!self.packages.has(packageName)) {
           return self.originalCompile.apply(this, args);
         }
-
-        const version = getPackageVersion(resolvedModule.basedir);
-
         const transformer = self.instrumentator.getTransformer(
           packageName,
           version,
