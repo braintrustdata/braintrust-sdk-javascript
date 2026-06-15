@@ -7,6 +7,7 @@ import {
   type TestBackgroundLogger,
 } from "../../logger";
 import { configureNode } from "../../node/config";
+import { runWithAutoInstrumentationSuppressed } from "../auto-instrumentation-suppression";
 import { channel, defineChannels } from "./channel-definitions";
 import { traceAsyncChannel } from "./channel-tracing";
 
@@ -73,5 +74,38 @@ describe("traceAsyncChannel current span binding", () => {
 
     const spans = await backgroundLogger.drain();
     expect(spans).toHaveLength(1);
+  });
+
+  it("skips auto instrumentation spans while suppression is active", async () => {
+    const unsubscribe = traceAsyncChannel(testChannels.asyncCall, {
+      name: "channel-tracing-test",
+      type: "function",
+      extractInput: () => ({
+        input: "input",
+        metadata: undefined,
+      }),
+      extractOutput: (result) => result,
+      extractMetrics: () => ({}),
+    });
+
+    try {
+      await runWithAutoInstrumentationSuppressed(() =>
+        testChannels.asyncCall.tracePromise(
+          async () => {
+            expect(currentSpan()).toBe(NOOP_SPAN);
+            await Promise.resolve();
+            expect(currentSpan()).toBe(NOOP_SPAN);
+
+            return { ok: true as const };
+          },
+          { arguments: [{}] } as any,
+        ),
+      );
+    } finally {
+      unsubscribe();
+    }
+
+    const spans = await backgroundLogger.drain();
+    expect(spans).toHaveLength(0);
   });
 });

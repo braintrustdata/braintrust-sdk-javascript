@@ -1,11 +1,37 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { mockStartSpan } = vi.hoisted(() => ({
+const {
+  mockBindStore,
+  mockNewAsyncLocalStorage,
+  mockStartSpan,
+  mockUnbindStore,
+} = vi.hoisted(() => ({
+  mockBindStore: vi.fn(),
+  mockNewAsyncLocalStorage: vi.fn(() => {
+    let current: unknown;
+    return {
+      enterWith: vi.fn((store: unknown) => {
+        current = store;
+      }),
+      getStore: vi.fn(() => current),
+      run: vi.fn((store: unknown, callback: () => unknown) => {
+        const previous = current;
+        current = store;
+        try {
+          return callback();
+        } finally {
+          current = previous;
+        }
+      }),
+    };
+  }),
   mockStartSpan: vi.fn(),
+  mockUnbindStore: vi.fn(),
 }));
 
 vi.mock("../../isomorph", () => ({
   default: {
+    newAsyncLocalStorage: mockNewAsyncLocalStorage,
     newTracingChannel: vi.fn(),
   },
 }));
@@ -15,6 +41,7 @@ vi.mock("../../logger", () => ({
 }));
 
 import iso from "../../isomorph";
+import { isAutoInstrumentationSuppressed } from "../auto-instrumentation-suppression";
 import { PiCodingAgentPlugin } from "./pi-coding-agent-plugin";
 
 const mockNewTracingChannel = iso.newTracingChannel as ReturnType<typeof vi.fn>;
@@ -33,6 +60,10 @@ describe("PiCodingAgentPlugin", () => {
     handlersByName = new Map();
     spans = [];
     mockNewTracingChannel.mockImplementation((name: string) => ({
+      start: {
+        bindStore: mockBindStore,
+        unbindStore: mockUnbindStore,
+      },
       subscribe: vi.fn((handlers) => handlersByName.set(name, handlers)),
       unsubscribe: vi.fn(),
     }));
@@ -67,6 +98,17 @@ describe("PiCodingAgentPlugin", () => {
     ).toBe(true);
   });
 
+  it("binds auto instrumentation suppression while AgentSession.prompt runs", () => {
+    const plugin = new PiCodingAgentPlugin();
+    plugin.enable();
+
+    expect(mockBindStore).toHaveBeenCalledTimes(1);
+
+    plugin.disable();
+
+    expect(mockUnbindStore).toHaveBeenCalledTimes(1);
+  });
+
   it("wraps streamFn for exact LLM input and restores it on completion", async () => {
     const plugin = new PiCodingAgentPlugin();
     plugin.enable();
@@ -76,7 +118,10 @@ describe("PiCodingAgentPlugin", () => {
     );
     const finalMessage = makeAssistantMessage("done");
     const stream = makeStream(finalMessage);
-    const originalStreamFn = vi.fn(async () => stream);
+    const originalStreamFn = vi.fn(async () => {
+      expect(isAutoInstrumentationSuppressed()).toBe(true);
+      return stream;
+    });
     const unsubscribe = vi.fn();
     const agent = {
       state: { model: anthropicModel(), tools: [bashTool()] },
@@ -97,6 +142,7 @@ describe("PiCodingAgentPlugin", () => {
     };
 
     handlers.start(event);
+    expect(isAutoInstrumentationSuppressed()).toBe(true);
     expect(agent.streamFn).not.toBe(originalStreamFn);
 
     const context = {
@@ -117,6 +163,7 @@ describe("PiCodingAgentPlugin", () => {
     });
     await patchedStream.result();
     await handlers.asyncEnd(event);
+    expect(isAutoInstrumentationSuppressed()).toBe(false);
 
     const llmSpan = spans.find(
       (span) => span.name === "anthropic.messages.create",
@@ -178,12 +225,14 @@ describe("PiCodingAgentPlugin", () => {
     };
 
     handlers.start(event);
+    expect(isAutoInstrumentationSuppressed()).toBe(true);
     await listener({
       args: { command: "printf pi_tool_ok" },
       toolCallId: "tool-1",
       toolName: "bash",
       type: "tool_execution_start",
     });
+    expect(isAutoInstrumentationSuppressed()).toBe(false);
     await listener({
       isError: false,
       result: { stdout: "pi_tool_ok" },
@@ -191,7 +240,9 @@ describe("PiCodingAgentPlugin", () => {
       toolName: "bash",
       type: "tool_execution_end",
     });
+    expect(isAutoInstrumentationSuppressed()).toBe(true);
     await handlers.asyncEnd(event);
+    expect(isAutoInstrumentationSuppressed()).toBe(false);
 
     const toolSpan = spans.find((span) => span.name === "bash");
     expect(toolSpan?.args.event.input).toEqual({

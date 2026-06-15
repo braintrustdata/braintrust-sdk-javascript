@@ -7,6 +7,12 @@ import type { Span } from "../../logger";
 import { getCurrentUnixTimestamp } from "../../util";
 import { SpanTypeAttribute, isObject } from "../../../util/index";
 import { processInputAttachments } from "../../wrappers/attachment-utils";
+import {
+  bindAutoInstrumentationSuppressionToStart,
+  enterAutoInstrumentationAllowed,
+  enterAutoInstrumentationSuppressed,
+  runWithAutoInstrumentationSuppressed,
+} from "../auto-instrumentation-suppression";
 import { piCodingAgentChannels } from "./pi-coding-agent-channels";
 import type {
   PiAgent,
@@ -30,13 +36,14 @@ import type {
 
 type PiPromptState = {
   activeLlmSpans: Set<PiLlmSpanState>;
-  activeToolSpans: Map<string, Span>;
+  activeToolSpans: Map<string, PiToolSpanState>;
   agent: PiAgent;
   finalized: boolean;
   metrics: Record<string, number>;
   metadata: Record<string, unknown>;
   originalStreamFn: PiStreamFn;
   output?: unknown;
+  restoreAutoInstrumentationSuppression?: () => void;
   span: Span;
   startTime: number;
   unsubscribeAgent?: () => void;
@@ -49,6 +56,11 @@ type PiLlmSpanState = {
   metrics: Record<string, number>;
   span: Span;
   startTime: number;
+};
+
+type PiToolSpanState = {
+  restoreAutoInstrumentation?: () => void;
+  span: Span;
 };
 
 export class PiCodingAgentPlugin extends BasePlugin {
@@ -66,6 +78,8 @@ export class PiCodingAgentPlugin extends BasePlugin {
   private subscribeToPrompt(): void {
     const channel = piCodingAgentChannels.prompt.tracingChannel();
     const states = new WeakMap<object, PiPromptState>();
+    const unbindAutoInstrumentationSuppression =
+      bindAutoInstrumentationSuppressionToStart(channel);
 
     const handlers: IsoChannelHandlers<
       ChannelMessage<typeof piCodingAgentChannels.prompt>
@@ -96,6 +110,7 @@ export class PiCodingAgentPlugin extends BasePlugin {
 
     channel.subscribe(handlers);
     this.unsubscribers.push(() => {
+      unbindAutoInstrumentationSuppression?.();
       channel.unsubscribe(handlers);
     });
   }
@@ -130,6 +145,8 @@ function startPiPromptRun(
     name: "AgentSession.prompt",
     spanAttributes: { type: SpanTypeAttribute.TASK },
   });
+  const restoreAutoInstrumentationSuppression =
+    enterAutoInstrumentationSuppressed();
 
   const state: PiPromptState = {
     activeLlmSpans: new Set(),
@@ -140,6 +157,7 @@ function startPiPromptRun(
     metrics: {},
     originalStreamFn: agent.streamFn,
     span,
+    restoreAutoInstrumentationSuppression,
     startTime: getCurrentUnixTimestamp(),
     wrappedStreamFn: agent.streamFn,
   };
@@ -190,11 +208,9 @@ function makeInstrumentedStreamFn(
   ) {
     const llmState = await startPiLlmSpan(state, model, context, options);
     try {
-      const stream = await Reflect.apply(originalStreamFn, this, [
-        model,
-        context,
-        options,
-      ]);
+      const stream = await runWithAutoInstrumentationSuppressed(() =>
+        Reflect.apply(originalStreamFn, this, [model, context, options]),
+      );
       return patchAssistantMessageStream(stream, state, llmState);
     } catch (error) {
       finishPiLlmSpan(state, llmState, undefined, error);
@@ -344,29 +360,38 @@ async function startPiToolSpan(
     return;
   }
 
+  const restoreAutoInstrumentation = enterAutoInstrumentationAllowed();
   const metadata = {
     "gen_ai.tool.call.id": event.toolCallId,
     "gen_ai.tool.name": event.toolName,
     "pi_coding_agent.tool.name": event.toolName,
   };
-  const span = startSpan({
-    event: {
-      input: event.args,
-      metadata,
-    },
-    name: event.toolName || "tool",
-    parent: await state.span.export(),
-    spanAttributes: { type: SpanTypeAttribute.TOOL },
-  });
-  state.activeToolSpans.set(event.toolCallId, span);
+  try {
+    const span = startSpan({
+      event: {
+        input: event.args,
+        metadata,
+      },
+      name: event.toolName || "tool",
+      parent: await state.span.export(),
+      spanAttributes: { type: SpanTypeAttribute.TOOL },
+    });
+    state.activeToolSpans.set(event.toolCallId, {
+      restoreAutoInstrumentation,
+      span,
+    });
+  } catch (error) {
+    restoreAutoInstrumentation();
+    throw error;
+  }
 }
 
 function finishPiToolSpan(
   state: PiPromptState,
   event: Extract<PiAgentEvent, { type: "tool_execution_end" }>,
 ): void {
-  const span = state.activeToolSpans.get(event.toolCallId);
-  if (!span) {
+  const toolState = state.activeToolSpans.get(event.toolCallId);
+  if (!toolState) {
     return;
   }
 
@@ -378,13 +403,17 @@ function finishPiToolSpan(
     "pi_coding_agent.tool.is_error": event.isError,
   };
   try {
-    safeLog(span, {
+    safeLog(toolState.span, {
       ...(event.isError ? { error: stringifyUnknown(event.result) } : {}),
       metadata,
       output: event.result,
     });
   } finally {
-    span.end();
+    try {
+      toolState.span.end();
+    } finally {
+      toolState.restoreAutoInstrumentation?.();
+    }
   }
 }
 
@@ -422,7 +451,11 @@ async function finalizePiPromptRun(
       output: state.output,
     });
   } finally {
-    state.span.end();
+    try {
+      state.span.end();
+    } finally {
+      state.restoreAutoInstrumentationSuppression?.();
+    }
   }
 }
 
@@ -479,11 +512,15 @@ function finishPiLlmSpan(
 }
 
 function finishOpenToolSpans(state: PiPromptState, error?: unknown): void {
-  for (const [, span] of state.activeToolSpans) {
-    safeLog(span, {
-      error: error ? stringifyUnknown(error) : "Pi tool did not complete",
-    });
-    span.end();
+  for (const [, toolState] of state.activeToolSpans) {
+    try {
+      safeLog(toolState.span, {
+        error: error ? stringifyUnknown(error) : "Pi tool did not complete",
+      });
+      toolState.span.end();
+    } finally {
+      toolState.restoreAutoInstrumentation?.();
+    }
   }
   state.activeToolSpans.clear();
 }
