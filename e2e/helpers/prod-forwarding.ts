@@ -25,25 +25,34 @@ export async function initializeProdForwarding(): Promise<void> {
 
   const projectName =
     process.env.BRAINTRUST_E2E_PROJECT_NAME || DEFAULT_PROJECT_NAME;
-  const logger = initLogger({
-    apiKey,
-    appUrl: process.env.BRAINTRUST_APP_URL,
-    asyncFlush: false,
-    forceLogin: true,
-    projectName,
-  });
-  const projectId = await logger.id;
-  const state = logger.loggingState;
+  try {
+    const logger = initLogger({
+      apiKey,
+      appUrl: process.env.BRAINTRUST_APP_URL,
+      asyncFlush: false,
+      forceLogin: true,
+      projectName,
+    });
+    const projectId = await logger.id;
+    const state = logger.loggingState;
 
-  if (!state.apiUrl || !state.appUrl) {
-    throw new Error("Braintrust login did not resolve prodForwarding URLs");
+    if (!state.apiUrl || !state.appUrl) {
+      throw new Error("Braintrust login did not resolve prodForwarding URLs");
+    }
+
+    prodForwarding = {
+      apiKey,
+      apiUrl: state.apiUrl,
+      appUrl: state.appUrl,
+      projectId,
+      projectName,
+    };
+  } catch (error) {
+    prodForwarding = null;
+    console.warn(
+      `Braintrust e2e production forwarding disabled: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
   }
-
-  prodForwarding = {
-    apiKey,
-    apiUrl: state.apiUrl,
-    appUrl: state.appUrl,
-    projectId,
-    projectName,
-  };
 }
