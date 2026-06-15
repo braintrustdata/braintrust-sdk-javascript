@@ -1,8 +1,15 @@
 import { BasePlugin } from "../core";
 import type { ChannelMessage } from "../core/channel-definitions";
 import type { IsoChannelHandlers } from "../../isomorph";
-import { flush, startSpan, withCurrent } from "../../logger";
+import {
+  BRAINTRUST_CURRENT_SPAN_STORE,
+  flush,
+  _internalGetGlobalState,
+  startSpan,
+  withCurrent,
+} from "../../logger";
 import type { Span, StartSpanArgs } from "../../logger";
+import type { CurrentSpanStore } from "../../logger";
 import { SpanTypeAttribute } from "../../../util/index";
 import { flueChannels } from "./flue-channels";
 import type {
@@ -38,9 +45,15 @@ type FlueAutoState = {
 };
 
 type SpanState = {
+  activeContext?: ActiveSpanContext;
   loggedInput?: boolean;
   metadata: Record<string, unknown>;
   span: Span;
+};
+
+type ActiveSpanContext = {
+  previous: unknown;
+  store: CurrentSpanStore;
 };
 
 const FLUE_AUTO_STATE = Symbol.for("braintrust.flue.auto-state");
@@ -356,8 +369,9 @@ class FlueObserveBridge {
         metadata,
       },
     });
+    const activeContext = enterCurrentFlueSpan(span);
 
-    this.runsById.set(event.runId, { metadata, span });
+    this.runsById.set(event.runId, { activeContext, metadata, span });
   }
 
   private handleRunEnd(event: FlueRunEndEvent): void {
@@ -379,6 +393,7 @@ class FlueObserveBridge {
       });
       safeEnd(state.span, eventTime(event.timestamp));
       this.runsById.delete(event.runId);
+      restoreCurrentFlueSpan(state.activeContext);
     }
 
     void flush().catch((error) => {
@@ -528,8 +543,9 @@ class FlueObserveBridge {
         metadata,
       },
     });
+    const activeContext = enterCurrentFlueSpan(span);
 
-    this.toolsByKey.set(toolKey(event), { metadata, span });
+    this.toolsByKey.set(toolKey(event), { activeContext, metadata, span });
   }
 
   private handleToolCall(event: FlueToolCallEvent): void {
@@ -557,6 +573,7 @@ class FlueObserveBridge {
     });
     safeEnd(state.span, eventTime(event.timestamp));
     this.toolsByKey.delete(key);
+    restoreCurrentFlueSpan(state.activeContext);
   }
 
   private handleTaskStart(event: FlueTaskStartEvent): void {
@@ -1047,6 +1064,48 @@ function stateMatchesRun(state: SpanState, runId: string): boolean {
 
 function startFlueSpan(parent: Span | undefined, args: StartSpanArgs): Span {
   return parent ? withCurrent(parent, () => startSpan(args)) : startSpan(args);
+}
+
+function enterCurrentFlueSpan(span: Span): ActiveSpanContext | undefined {
+  const contextManager = _internalGetGlobalState()?.contextManager;
+  const store = contextManager
+    ? Reflect.get(contextManager, BRAINTRUST_CURRENT_SPAN_STORE)
+    : undefined;
+
+  if (!contextManager || !isCurrentSpanStore(store)) {
+    return undefined;
+  }
+
+  const previous = store.getStore();
+  try {
+    store.enterWith(contextManager.wrapSpanForStore(span));
+    return { previous, store };
+  } catch (error) {
+    logInstrumentationError("Flue context propagation", error);
+    return undefined;
+  }
+}
+
+function isCurrentSpanStore(value: unknown): value is CurrentSpanStore {
+  return (
+    isObjectLike(value) &&
+    typeof Reflect.get(value, "enterWith") === "function" &&
+    typeof Reflect.get(value, "getStore") === "function"
+  );
+}
+
+function restoreCurrentFlueSpan(
+  activeContext: ActiveSpanContext | undefined,
+): void {
+  if (!activeContext) {
+    return;
+  }
+
+  try {
+    activeContext.store.enterWith(activeContext.previous);
+  } catch (error) {
+    logInstrumentationError("Flue context restoration", error);
+  }
 }
 
 function safeLog(span: Span, event: Parameters<Span["log"]>[0]): void {
