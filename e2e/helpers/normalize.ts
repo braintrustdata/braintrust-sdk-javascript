@@ -82,7 +82,6 @@ const PROVIDER_ID_KEYS = new Set([
   "itemId",
   "previous_interaction_id",
   "responseId",
-  "signature",
   "toolCallId",
 ]);
 const PROJECT_ID_KEYS = new Set(["project_id", "projectId"]);
@@ -228,6 +227,14 @@ function normalizeObject(
         if (key === "caller_lineno") {
           return [key, 0];
         }
+      }
+
+      if (
+        key === "signature" &&
+        typeof entry === "string" &&
+        (value.type === "thought" || value.type === "thought_signature")
+      ) {
+        return [key, tokenFor(tokenMaps.ids, entry, "signature")];
       }
 
       return [key, normalizeValue(entry as Json, tokenMaps, key)];
