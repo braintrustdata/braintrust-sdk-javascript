@@ -9,6 +9,7 @@ import {
 const GOOGLE_MODEL = "gemini-2.5-flash-lite";
 const GOOGLE_EMBEDDING_MODEL = "gemini-embedding-001";
 const GOOGLE_GROUNDING_MODEL = "gemini-2.5-flash";
+const GOOGLE_INTERACTIONS_MODEL = "gemini-2.5-flash";
 const ROOT_NAME = "google-genai-instrumentation-root";
 const SCENARIO_NAME = "google-genai-instrumentation";
 const GOOGLE_GENAI_RETRY_OPTIONS = {
@@ -199,6 +200,134 @@ async function runGoogleGenAIInstrumentationScenario(sdk, options = {}) {
           });
         }, GOOGLE_GENAI_RETRY_OPTIONS);
       });
+
+      if (options.includeInteractions) {
+        await runOperation(
+          "google-interaction-operation",
+          "interaction",
+          async () => {
+            await withRetry(async () => {
+              await client.interactions.create({
+                model: GOOGLE_INTERACTIONS_MODEL,
+                input: {
+                  text: "Reply with exactly ROME.",
+                  type: "text",
+                },
+                generation_config: {
+                  max_output_tokens: 256,
+                  thinking_level: "minimal",
+                  temperature: 0,
+                },
+              });
+            }, GOOGLE_GENAI_RETRY_OPTIONS);
+          },
+        );
+
+        await runOperation(
+          "google-interaction-stream-operation",
+          "interaction-stream",
+          async () => {
+            await withRetry(async () => {
+              const stream = await client.interactions.create({
+                model: GOOGLE_INTERACTIONS_MODEL,
+                input: {
+                  text: "Count from 1 to 3 and include the words one two three.",
+                  type: "text",
+                },
+                generation_config: {
+                  max_output_tokens: 256,
+                  thinking_level: "minimal",
+                  temperature: 0,
+                },
+                stream: true,
+              });
+              await collectAsync(stream);
+            }, GOOGLE_GENAI_RETRY_OPTIONS);
+          },
+        );
+
+        let statefulInteractionId;
+        await runOperation(
+          "google-interaction-stateful-first-operation",
+          "interaction-stateful-first",
+          async () => {
+            await withRetry(async () => {
+              const interaction = await client.interactions.create({
+                model: GOOGLE_INTERACTIONS_MODEL,
+                input: {
+                  text: "Hi, my name is Amir.",
+                  type: "text",
+                },
+                generation_config: {
+                  max_output_tokens: 256,
+                  thinking_level: "minimal",
+                  temperature: 0,
+                },
+              });
+              statefulInteractionId = interaction.id;
+            }, GOOGLE_GENAI_RETRY_OPTIONS);
+          },
+        );
+
+        if (!statefulInteractionId) {
+          throw new Error("Missing stateful interaction id");
+        }
+
+        await runOperation(
+          "google-interaction-stateful-second-operation",
+          "interaction-stateful-second",
+          async () => {
+            await withRetry(async () => {
+              await client.interactions.create({
+                model: GOOGLE_INTERACTIONS_MODEL,
+                input: {
+                  text: "What is my name? Reply with exactly AMIR.",
+                  type: "text",
+                },
+                previous_interaction_id: statefulInteractionId,
+                generation_config: {
+                  max_output_tokens: 256,
+                  thinking_level: "minimal",
+                  temperature: 0,
+                },
+              });
+            }, GOOGLE_GENAI_RETRY_OPTIONS);
+          },
+        );
+
+        await runOperation(
+          "google-interaction-background-operation",
+          "interaction-background",
+          async () => {
+            try {
+              await withRetry(async () => {
+                await client.interactions.create({
+                  model: GOOGLE_INTERACTIONS_MODEL,
+                  input: {
+                    text: "Reply with exactly BACKGROUND.",
+                    type: "text",
+                  },
+                  background: true,
+                  generation_config: {
+                    max_output_tokens: 256,
+                    thinking_level: "minimal",
+                    temperature: 0,
+                  },
+                });
+              }, GOOGLE_GENAI_RETRY_OPTIONS);
+            } catch (error) {
+              const message =
+                error instanceof Error ? error.message : String(error ?? "");
+              if (
+                getRetryStatus(error) !== 400 ||
+                !message.includes("does not support background interactions")
+              ) {
+                throw error;
+              }
+            }
+          },
+        );
+      }
 
       // TODO(lforst): Figure out why these tests are failing with ordinary google gemini api keys
       // await runOperation("google-chat-operation", "chat", async () => {
@@ -430,14 +559,21 @@ async function runGoogleGenAIInstrumentationScenario(sdk, options = {}) {
   });
 }
 
-export async function runWrappedGoogleGenAIInstrumentation(sdk) {
+export async function runWrappedGoogleGenAIInstrumentation(sdk, options = {}) {
   await runGoogleGenAIInstrumentationScenario(sdk, {
+    ...options,
     decorateSDK: wrapGoogleGenAI,
   });
 }
 
-export async function runAutoGoogleGenAIInstrumentation(sdk) {
-  await runGoogleGenAIInstrumentationScenario(sdk);
+export async function runAutoGoogleGenAIInstrumentation(sdk, options = {}) {
+  await runGoogleGenAIInstrumentationScenario(sdk, options);
 }
 
-export { GOOGLE_EMBEDDING_MODEL, GOOGLE_MODEL, ROOT_NAME, SCENARIO_NAME };
+export {
+  GOOGLE_EMBEDDING_MODEL,
+  GOOGLE_INTERACTIONS_MODEL,
+  GOOGLE_MODEL,
+  ROOT_NAME,
+  SCENARIO_NAME,
+};

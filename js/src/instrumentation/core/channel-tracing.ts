@@ -212,6 +212,26 @@ function startSpanForEvent<
   return { span, startTime };
 }
 
+function shouldTraceEvent<
+  TChannel extends AnyAsyncChannel | AnySyncStreamChannel,
+>(
+  config: ChannelConfig,
+  event: StartOf<TChannel>,
+  channelName: string,
+): boolean {
+  if (!config.shouldTrace) {
+    return true;
+  }
+
+  try {
+    return config.shouldTrace(event.arguments, event);
+  } catch (error) {
+    // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
+    console.error(`Error checking trace predicate for ${channelName}:`, error);
+    return true;
+  }
+}
+
 function ensureSpanStateForEvent<
   TChannel extends AnyAsyncChannel | AnySyncStreamChannel,
 >(
@@ -228,11 +248,15 @@ function ensureSpanStateForEvent<
   },
   event: StartOf<TChannel>,
   channelName: string,
-): SpanState {
+): SpanState | undefined {
   const key = event as object;
   const existing = states.get(key);
   if (existing) {
     return existing;
+  }
+
+  if (!shouldTraceEvent<TChannel>(config, event, channelName)) {
+    return undefined;
   }
 
   const created = startSpanForEvent<TChannel>(config, event, channelName);
@@ -275,13 +299,15 @@ function bindCurrentSpanStoreToStart<
   startChannel.bindStore(
     currentSpanStore,
     (event: ChannelMessage<TChannel>) => {
-      const span = ensureSpanStateForEvent<TChannel>(
+      const spanState = ensureSpanStateForEvent<TChannel>(
         states,
         config,
         event as StartOf<TChannel>,
         channelName,
-      ).span;
-      return contextManager!.wrapSpanForStore(span);
+      );
+      return spanState
+        ? contextManager!.wrapSpanForStore(spanState.span)
+        : currentSpanStore.getStore();
     },
   );
 

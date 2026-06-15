@@ -1,0 +1,1443 @@
+{
+  "span_tree": [
+    {
+      "name": "google-genai-instrumentation-root",
+      "type": "task",
+      "children": [
+        {
+          "name": "google-generate-operation",
+          "children": [
+            {
+              "name": "generate_content",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "config": {
+                  "maxOutputTokens": 24,
+                  "temperature": 0
+                },
+                "contents": {
+                  "text": "Reply with exactly PARIS."
+                },
+                "model": "gemini-2.5-flash-lite"
+              },
+              "output": {
+                "candidates": [
+                  {
+                    "content": {
+                      "parts": [
+                        {
+                          "text": "PARIS"
+                        }
+                      ],
+                      "role": "model"
+                    },
+                    "finishReason": "STOP",
+                    "index": 0
+                  }
+                ],
+                "modelVersion": "gemini-2.5-flash-lite",
+                "responseId": "<responseId:1>",
+                "sdkHttpResponse": {
+                  "headers": {
+                    "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
+                    "connection": "keep-alive",
+                    "content-type": "application/json; charset=UTF-8",
+                    "date": "<timestamp>",
+                    "keep-alive": "timeout=5",
+                    "server": "scaffolding on HTTPServer2",
+                    "server-timing": "<server-timing>",
+                    "transfer-encoding": "chunked",
+                    "vary": "Origin, X-Origin, Referer",
+                    "x-content-type-options": "nosniff",
+                    "x-frame-options": "SAMEORIGIN",
+                    "x-gemini-service-tier": "<x-gemini-service-tier>",
+                    "x-xss-protection": "0"
+                  }
+                },
+                "usageMetadata": {
+                  "candidatesTokenCount": 2,
+                  "promptTokenCount": 6,
+                  "promptTokensDetails": [
+                    {
+                      "modality": "TEXT",
+                      "tokenCount": 6
+                    }
+                  ],
+                  "serviceTier": "standard",
+                  "totalTokenCount": 8
+                }
+              },
+              "metadata": {
+                "maxOutputTokens": 24,
+                "model": "gemini-2.5-flash-lite",
+                "temperature": 0
+              },
+              "metrics": {
+                "completion_tokens": 2,
+                "duration": 0,
+                "prompt_tokens": 6,
+                "tokens": 8
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "generate",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "google-system-instruction-operation",
+          "children": [
+            {
+              "name": "generate_content",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "config": {
+                  "maxOutputTokens": 64,
+                  "systemInstruction": "You are a pirate. Always respond in pirate speak.",
+                  "temperature": 0
+                },
+                "contents": {
+                  "text": "Tell me about the weather."
+                },
+                "model": "gemini-2.5-flash-lite"
+              },
+              "output": {
+                "candidates": [
+                  {
+                    "content": {
+                      "parts": [
+                        {
+                          "text": "Ahoy there, matey! The weather be a fickle mistress, she be!  Right now, the sky be lookin' a bit like a kraken's inkpot – dark and stormy, with a chance o' squalls brewin'.  The wind be howlin' like a banshee,"
+                        }
+                      ],
+                      "role": "model"
+                    },
+                    "finishReason": "MAX_TOKENS",
+                    "index": 0
+                  }
+                ],
+                "modelVersion": "gemini-2.5-flash-lite",
+                "responseId": "<responseId:1>",
+                "sdkHttpResponse": {
+                  "headers": {
+                    "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
+                    "connection": "keep-alive",
+                    "content-type": "application/json; charset=UTF-8",
+                    "date": "<timestamp>",
+                    "keep-alive": "timeout=5",
+                    "server": "scaffolding on HTTPServer2",
+                    "server-timing": "<server-timing>",
+                    "transfer-encoding": "chunked",
+                    "vary": "Origin, X-Origin, Referer",
+                    "x-content-type-options": "nosniff",
+                    "x-frame-options": "SAMEORIGIN",
+                    "x-gemini-service-tier": "<x-gemini-service-tier>",
+                    "x-xss-protection": "0"
+                  }
+                },
+                "usageMetadata": {
+                  "candidatesTokenCount": 64,
+                  "promptTokenCount": 19,
+                  "promptTokensDetails": [
+                    {
+                      "modality": "TEXT",
+                      "tokenCount": 19
+                    }
+                  ],
+                  "serviceTier": "standard",
+                  "totalTokenCount": 83
+                }
+              },
+              "metadata": {
+                "maxOutputTokens": 64,
+                "model": "gemini-2.5-flash-lite",
+                "systemInstruction": "You are a pirate. Always respond in pirate speak.",
+                "temperature": 0
+              },
+              "metrics": {
+                "completion_tokens": 64,
+                "duration": 0,
+                "prompt_tokens": 19,
+                "tokens": 83
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "system-instruction",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "google-multi-turn-operation",
+          "children": [
+            {
+              "name": "generate_content",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "config": {
+                  "maxOutputTokens": 64,
+                  "temperature": 0
+                },
+                "contents": [
+                  {
+                    "parts": [
+                      {
+                        "text": "Hi, my name is Alice."
+                      }
+                    ],
+                    "role": "user"
+                  },
+                  {
+                    "parts": [
+                      {
+                        "text": "Hello Alice! Nice to meet you."
+                      }
+                    ],
+                    "role": "model"
+                  },
+                  {
+                    "parts": [
+                      {
+                        "text": "What did I just tell you my name was?"
+                      }
+                    ],
+                    "role": "user"
+                  }
+                ],
+                "model": "gemini-2.5-flash-lite"
+              },
+              "output": {
+                "candidates": [
+                  {
+                    "content": {
+                      "parts": [
+                        {
+                          "text": "You just told me your name is Alice."
+                        }
+                      ],
+                      "role": "model"
+                    },
+                    "finishReason": "STOP",
+                    "index": 0
+                  }
+                ],
+                "modelVersion": "gemini-2.5-flash-lite",
+                "responseId": "<responseId:1>",
+                "sdkHttpResponse": {
+                  "headers": {
+                    "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
+                    "connection": "keep-alive",
+                    "content-type": "application/json; charset=UTF-8",
+                    "date": "<timestamp>",
+                    "keep-alive": "timeout=5",
+                    "server": "scaffolding on HTTPServer2",
+                    "server-timing": "<server-timing>",
+                    "transfer-encoding": "chunked",
+                    "vary": "Origin, X-Origin, Referer",
+                    "x-content-type-options": "nosniff",
+                    "x-frame-options": "SAMEORIGIN",
+                    "x-gemini-service-tier": "<x-gemini-service-tier>",
+                    "x-xss-protection": "0"
+                  }
+                },
+                "usageMetadata": {
+                  "candidatesTokenCount": 9,
+                  "promptTokenCount": 28,
+                  "promptTokensDetails": [
+                    {
+                      "modality": "TEXT",
+                      "tokenCount": 28
+                    }
+                  ],
+                  "serviceTier": "standard",
+                  "totalTokenCount": 37
+                }
+              },
+              "metadata": {
+                "maxOutputTokens": 64,
+                "model": "gemini-2.5-flash-lite",
+                "temperature": 0
+              },
+              "metrics": {
+                "completion_tokens": 9,
+                "duration": 0,
+                "prompt_tokens": 28,
+                "tokens": 37
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "multi-turn",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "google-embed-operation",
+          "children": [
+            {
+              "name": "embed_content",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "contents": {
+                  "text": "Paris is the capital of France."
+                },
+                "model": "gemini-embedding-001"
+              },
+              "output": {
+                "embedding_count": 1,
+                "embedding_length": 3072
+              },
+              "metadata": {
+                "model": "gemini-embedding-001"
+              },
+              "metrics": {
+                "duration": 0
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "embed",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "google-interaction-operation",
+          "children": [
+            {
+              "name": "create_interaction",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "generation_config": {
+                  "max_output_tokens": 256,
+                  "temperature": 0,
+                  "thinking_level": "minimal"
+                },
+                "input": {
+                  "text": "Reply with exactly ROME.",
+                  "type": "text"
+                },
+                "model": "gemini-2.5-flash"
+              },
+              "output": {
+                "created": "<timestamp>",
+                "id": "<span:1>",
+                "model": "gemini-2.5-flash",
+                "object": "interaction",
+                "output_text": "ROME",
+                "service_tier": "standard",
+                "status": "completed",
+                "steps": [
+                  {
+                    "signature": "<signature:2>",
+                    "type": "thought"
+                  },
+                  {
+                    "content": [
+                      {
+                        "text": "ROME",
+                        "type": "text"
+                      }
+                    ],
+                    "type": "model_output"
+                  }
+                ],
+                "updated": "<timestamp>",
+                "usage": {
+                  "input_tokens_by_modality": [
+                    {
+                      "modality": "text",
+                      "tokens": 7
+                    }
+                  ],
+                  "total_cached_tokens": 0,
+                  "total_input_tokens": 7,
+                  "total_output_tokens": 1,
+                  "total_thought_tokens": 7,
+                  "total_tokens": 15,
+                  "total_tool_use_tokens": 0
+                }
+              },
+              "metadata": {
+                "generation_config": {
+                  "max_output_tokens": 256,
+                  "temperature": 0,
+                  "thinking_level": "minimal"
+                },
+                "interaction_id": "<interaction_id:1>",
+                "model": "gemini-2.5-flash",
+                "status": "completed"
+              },
+              "metrics": {
+                "completion_reasoning_tokens": 7,
+                "completion_tokens": 1,
+                "duration": 0,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 7,
+                "tokens": 15
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "interaction",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "google-interaction-stream-operation",
+          "children": [
+            {
+              "name": "create_interaction",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "generation_config": {
+                  "max_output_tokens": 256,
+                  "temperature": 0,
+                  "thinking_level": "minimal"
+                },
+                "input": {
+                  "text": "Count from 1 to 3 and include the words one two three.",
+                  "type": "text"
+                },
+                "model": "gemini-2.5-flash",
+                "stream": true
+              },
+              "output": {
+                "created": "<timestamp>",
+                "id": "<span:1>",
+                "model": "gemini-2.5-flash",
+                "object": "interaction",
+                "output_text": "1, one\n2, two\n3, three",
+                "service_tier": "standard",
+                "status": "completed",
+                "steps": [
+                  {
+                    "deltas": [
+                      {
+                        "signature": "<signature:2>",
+                        "type": "thought_signature"
+                      }
+                    ],
+                    "index": 0,
+                    "type": "thought"
+                  },
+                  {
+                    "index": 1,
+                    "text": "1, one\n2, two\n3, three",
+                    "type": "model_output"
+                  }
+                ],
+                "updated": "<timestamp>",
+                "usage": {
+                  "input_tokens_by_modality": [
+                    {
+                      "modality": "text",
+                      "tokens": 16
+                    }
+                  ],
+                  "total_cached_tokens": 0,
+                  "total_input_tokens": 16,
+                  "total_output_tokens": 10,
+                  "total_thought_tokens": 12,
+                  "total_tokens": 38,
+                  "total_tool_use_tokens": 0
+                }
+              },
+              "metadata": {
+                "generation_config": {
+                  "max_output_tokens": 256,
+                  "temperature": 0,
+                  "thinking_level": "minimal"
+                },
+                "interaction_id": "<interaction_id:1>",
+                "model": "gemini-2.5-flash",
+                "status": "completed"
+              },
+              "metrics": {
+                "completion_reasoning_tokens": 12,
+                "completion_tokens": 10,
+                "duration": 0,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 16,
+                "time_to_first_token": 0,
+                "tokens": 38
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "interaction-stream",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "google-interaction-stateful-first-operation",
+          "children": [
+            {
+              "name": "create_interaction",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "generation_config": {
+                  "max_output_tokens": 256,
+                  "temperature": 0,
+                  "thinking_level": "minimal"
+                },
+                "input": {
+                  "text": "Hi, my name is Amir.",
+                  "type": "text"
+                },
+                "model": "gemini-2.5-flash"
+              },
+              "output": {
+                "created": "<timestamp>",
+                "id": "<span:1>",
+                "model": "gemini-2.5-flash",
+                "object": "interaction",
+                "output_text": "Hi Amir! It's nice to meet you. How can I help you today?",
+                "service_tier": "standard",
+                "status": "completed",
+                "steps": [
+                  {
+                    "signature": "<signature:2>",
+                    "type": "thought"
+                  },
+                  {
+                    "content": [
+                      {
+                        "text": "Hi Amir! It's nice to meet you. How can I help you today?",
+                        "type": "text"
+                      }
+                    ],
+                    "type": "model_output"
+                  }
+                ],
+                "updated": "<timestamp>",
+                "usage": {
+                  "input_tokens_by_modality": [
+                    {
+                      "modality": "text",
+                      "tokens": 8
+                    }
+                  ],
+                  "total_cached_tokens": 0,
+                  "total_input_tokens": 8,
+                  "total_output_tokens": 18,
+                  "total_thought_tokens": 13,
+                  "total_tokens": 39,
+                  "total_tool_use_tokens": 0
+                }
+              },
+              "metadata": {
+                "generation_config": {
+                  "max_output_tokens": 256,
+                  "temperature": 0,
+                  "thinking_level": "minimal"
+                },
+                "interaction_id": "<interaction_id:1>",
+                "model": "gemini-2.5-flash",
+                "status": "completed"
+              },
+              "metrics": {
+                "completion_reasoning_tokens": 13,
+                "completion_tokens": 18,
+                "duration": 0,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 8,
+                "tokens": 39
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "interaction-stateful-first",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "google-interaction-stateful-second-operation",
+          "children": [
+            {
+              "name": "create_interaction",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "generation_config": {
+                  "max_output_tokens": 256,
+                  "temperature": 0,
+                  "thinking_level": "minimal"
+                },
+                "input": {
+                  "text": "What is my name? Reply with exactly AMIR.",
+                  "type": "text"
+                },
+                "model": "gemini-2.5-flash",
+                "previous_interaction_id": "<previous_interaction_id:1>"
+              },
+              "output": {
+                "created": "<timestamp>",
+                "id": "<span:1>",
+                "model": "gemini-2.5-flash",
+                "object": "interaction",
+                "output_text": "AMIR",
+                "service_tier": "standard",
+                "status": "completed",
+                "steps": [
+                  {
+                    "signature": "<signature:2>",
+                    "type": "thought"
+                  },
+                  {
+                    "content": [
+                      {
+                        "text": "AMIR",
+                        "type": "text"
+                      }
+                    ],
+                    "type": "model_output"
+                  }
+                ],
+                "updated": "<timestamp>",
+                "usage": {
+                  "input_tokens_by_modality": [
+                    {
+                      "modality": "text",
+                      "tokens": 12
+                    }
+                  ],
+                  "total_cached_tokens": 0,
+                  "total_input_tokens": 12,
+                  "total_output_tokens": 2,
+                  "total_thought_tokens": 18,
+                  "total_tokens": 32,
+                  "total_tool_use_tokens": 0
+                }
+              },
+              "metadata": {
+                "generation_config": {
+                  "max_output_tokens": 256,
+                  "temperature": 0,
+                  "thinking_level": "minimal"
+                },
+                "interaction_id": "<interaction_id:1>",
+                "model": "gemini-2.5-flash",
+                "status": "completed"
+              },
+              "metrics": {
+                "completion_reasoning_tokens": 18,
+                "completion_tokens": 2,
+                "duration": 0,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 12,
+                "tokens": 32
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "interaction-stateful-second",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "google-interaction-background-operation",
+          "children": [],
+          "metadata": {
+            "operation": "interaction-background",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "google-attachment-operation",
+          "children": [
+            {
+              "name": "generate_content",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "config": {
+                  "maxOutputTokens": 48,
+                  "temperature": 0
+                },
+                "contents": [
+                  {
+                    "parts": [
+                      {
+                        "image_url": {
+                          "url": {
+                            "content_type": "image/png",
+                            "filename": "file.png",
+                            "key": "<uuid:1>",
+                            "type": "braintrust_attachment"
+                          }
+                        }
+                      },
+                      {
+                        "text": "Describe the attached image in one short sentence."
+                      }
+                    ],
+                    "role": "user"
+                  }
+                ],
+                "model": "gemini-2.5-flash-lite"
+              },
+              "output": {
+                "candidates": [
+                  {
+                    "content": {
+                      "parts": [
+                        {
+                          "text": "A majestic sailing ship battles a fierce storm with towering waves and lightning."
+                        }
+                      ],
+                      "role": "model"
+                    },
+                    "finishReason": "STOP",
+                    "index": 0
+                  }
+                ],
+                "modelVersion": "gemini-2.5-flash-lite",
+                "responseId": "<responseId:1>",
+                "sdkHttpResponse": {
+                  "headers": {
+                    "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
+                    "connection": "keep-alive",
+                    "content-type": "application/json; charset=UTF-8",
+                    "date": "<timestamp>",
+                    "keep-alive": "timeout=5",
+                    "server": "scaffolding on HTTPServer2",
+                    "server-timing": "<server-timing>",
+                    "transfer-encoding": "chunked",
+                    "vary": "Origin, X-Origin, Referer",
+                    "x-content-type-options": "nosniff",
+                    "x-frame-options": "SAMEORIGIN",
+                    "x-gemini-service-tier": "<x-gemini-service-tier>",
+                    "x-xss-protection": "0"
+                  }
+                },
+                "usageMetadata": {
+                  "candidatesTokenCount": 14,
+                  "promptTokenCount": 268,
+                  "promptTokensDetails": [
+                    {
+                      "modality": "TEXT",
+                      "tokenCount": 10
+                    },
+                    {
+                      "modality": "IMAGE",
+                      "tokenCount": 258
+                    }
+                  ],
+                  "serviceTier": "standard",
+                  "totalTokenCount": 282
+                }
+              },
+              "metadata": {
+                "maxOutputTokens": 48,
+                "model": "gemini-2.5-flash-lite",
+                "temperature": 0
+              },
+              "metrics": {
+                "completion_tokens": 14,
+                "duration": 0,
+                "prompt_tokens": 268,
+                "tokens": 282
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "attachment",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "google-stream-operation",
+          "children": [
+            {
+              "name": "generate_content_stream",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "config": {
+                  "maxOutputTokens": 64,
+                  "temperature": 0
+                },
+                "contents": {
+                  "text": "Count from 1 to 3 and include the words one two three."
+                },
+                "model": "gemini-2.5-flash-lite"
+              },
+              "output": {
+                "candidates": [
+                  {
+                    "content": {
+                      "parts": [
+                        {
+                          "text": "Here's the count from 1 to 3, including the words:\n\n1. One\n2. Two\n3. Three"
+                        }
+                      ],
+                      "role": "model"
+                    },
+                    "finishReason": "STOP"
+                  }
+                ],
+                "text": "Here's the count from 1 to 3, including the words:\n\n1. One\n2. Two\n3. Three",
+                "usageMetadata": {
+                  "candidatesTokenCount": 28,
+                  "promptTokenCount": 16,
+                  "promptTokensDetails": [
+                    {
+                      "modality": "TEXT",
+                      "tokenCount": 16
+                    }
+                  ],
+                  "serviceTier": "standard",
+                  "totalTokenCount": 44
+                }
+              },
+              "metadata": {
+                "maxOutputTokens": 64,
+                "model": "gemini-2.5-flash-lite",
+                "temperature": 0
+              },
+              "metrics": {
+                "completion_tokens": 28,
+                "duration": 0,
+                "prompt_tokens": 16,
+                "time_to_first_token": 0,
+                "tokens": 44
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "stream",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "google-stream-return-operation",
+          "children": [
+            {
+              "name": "generate_content_stream",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "config": {
+                  "maxOutputTokens": 24,
+                  "temperature": 0
+                },
+                "contents": {
+                  "text": "Reply with exactly BONJOUR."
+                },
+                "model": "gemini-2.5-flash-lite"
+              },
+              "output": {
+                "candidates": [
+                  {
+                    "content": {
+                      "parts": [
+                        {
+                          "text": "BONJOUR"
+                        }
+                      ],
+                      "role": "model"
+                    },
+                    "finishReason": "STOP"
+                  }
+                ],
+                "text": "BONJOUR",
+                "usageMetadata": {
+                  "candidatesTokenCount": 2,
+                  "promptTokenCount": 7,
+                  "promptTokensDetails": [
+                    {
+                      "modality": "TEXT",
+                      "tokenCount": 7
+                    }
+                  ],
+                  "serviceTier": "standard",
+                  "totalTokenCount": 9
+                }
+              },
+              "metadata": {
+                "maxOutputTokens": 24,
+                "model": "gemini-2.5-flash-lite",
+                "temperature": 0
+              },
+              "metrics": {
+                "completion_tokens": 2,
+                "duration": 0,
+                "prompt_tokens": 7,
+                "time_to_first_token": 0,
+                "tokens": 9
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "stream-return",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "google-grounded-generate-operation",
+          "children": [
+            {
+              "name": "generate_content",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "config": {
+                  "maxOutputTokens": 256,
+                  "temperature": 0
+                },
+                "contents": {
+                  "text": "Use Google Search grounding and answer in one sentence: What is the current population of Paris, France?"
+                },
+                "model": "gemini-2.5-flash"
+              },
+              "output": {
+                "candidates": [
+                  {
+                    "content": {
+                      "parts": [
+                        {
+                          "text": "The current estimated population of the city of Paris, France, is 2,047,602 as of 2026. [cite: "
+                        },
+                        {
+                          "text": "The current estimated population of the city of Paris, France, is 2,047,602 as of 2026. [cite: "
+                        }
+                      ],
+                      "role": "model"
+                    },
+                    "finishReason": "MAX_TOKENS",
+                    "groundingMetadata": {
+                      "searchEntryPoint": {
+                        "renderedContent": "<style>\n.container {\n  align-items: center;\n  border-radius: 8px;\n  display: flex;\n  font-family: Google Sans, Roboto, sans-serif;\n  font-size: 14px;\n  line-height: 20px;\n  padding: 8px 12px;\n}\n.chip {\n  display: inline-block;\n  border: solid 1px;\n  border-radius: 16px;\n  min-width: 14px;\n  padding: 5px 16px;\n  text-align: center;\n  user-select: none;\n  margin: 0 8px;\n  -webkit-tap-highlight-color: transparent;\n}\n.carousel {\n  overflow: auto;\n  scrollbar-width: none;\n  white-space: nowrap;\n  margin-right: -12px;\n}\n.headline {\n  display: flex;\n  margin-right: 4px;\n}\n.gradient-container {\n  position: relative;\n}\n.gradient {\n  position: absolute;\n  transform: translate(3px, -9px);\n  height: 36px;\n  width: 9px;\n}\n@media (prefers-color-scheme: light) {\n  .container {\n    background-color: #fafafa;\n    box-shadow: 0 0 0 1px #0000000f;\n  }\n  .headline-label {\n    color: #1f1f1f;\n  }\n  .chip {\n    background-color: #ffffff;\n    border-color: #d2d2d2;\n    color: #5e5e5e;\n    text-decoration: none;\n  }\n  .chip:hover {\n    background-color: #f2f2f2;\n  }\n  .chip:focus {\n    background-color: #f2f2f2;\n  }\n  .chip:active {\n    background-color: #d8d8d8;\n    border-color: #b6b6b6;\n  }\n  .logo-dark {\n    display: none;\n  }\n  .gradient {\n    background: linear-gradient(90deg, #fafafa 15%, #fafafa00 100%);\n  }\n}\n@media (prefers-color-scheme: dark) {\n  .container {\n    background-color: #1f1f1f;\n    box-shadow: 0 0 0 1px #ffffff26;\n  }\n  .headline-label {\n    color: #fff;\n  }\n  .chip {\n    background-color: #2c2c2c;\n    border-color: #3c4043;\n    color: #fff;\n    text-decoration: none;\n  }\n  .chip:hover {\n    background-color: #353536;\n  }\n  .chip:focus {\n    background-color: #353536;\n  }\n  .chip:active {\n    background-color: #464849;\n    border-color: #53575b;\n  }\n  .logo-light {\n    display: none;\n  }\n  .gradient {\n    background: linear-gradient(90deg, #1f1f1f 15%, #1f1f1f00 100%);\n  }\n}\n</style>\n<div class=\"container\">\n  <div class=\"headline\">\n    <svg class=\"logo-light\" width=\"18\" height=\"18\" viewBox=\"9 9 35 35\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n      <path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M42.8622 27.0064C42.8622 25.7839 42.7525 24.6084 42.5487 23.4799H26.3109V30.1568H35.5897C35.1821 32.3041 33.9596 34.1222 32.1258 35.3448V39.6864H37.7213C40.9814 36.677 42.8622 32.2571 42.8622 27.0064V27.0064Z\" fill=\"#4285F4\"/>\n      <path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M26.3109 43.8555C30.9659 43.8555 34.8687 42.3195 37.7213 39.6863L32.1258 35.3447C30.5898 36.3792 28.6306 37.0061 26.3109 37.0061C21.8282 37.0061 18.0195 33.9811 16.6559 29.906H10.9194V34.3573C13.7563 39.9841 19.5712 43.8555 26.3109 43.8555V43.8555Z\" fill=\"#34A853\"/>\n      <path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M16.6559 29.8904C16.3111 28.8559 16.1074 27.7588 16.1074 26.6146C16.1074 25.4704 16.3111 24.3733 16.6559 23.3388V18.8875H10.9194C9.74388 21.2072 9.06992 23.8247 9.06992 26.6146C9.06992 29.4045 9.74388 32.022 10.9194 34.3417L15.3864 30.8621L16.6559 29.8904V29.8904Z\" fill=\"#FBBC05\"/>\n      <path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M26.3109 16.2386C28.85 16.2386 31.107 17.1164 32.9095 18.8091L37.8466 13.8719C34.853 11.082 30.9659 9.3736 26.3109 9.3736C19.5712 9.3736 13.7563 13.245 10.9194 18.8875L16.6559 23.3388C18.0195 19.2636 21.8282 16.2386 26.3109 16.2386V16.2386Z\" fill=\"#EA4335\"/>\n    </svg>\n    <svg class=\"logo-dark\" width=\"18\" height=\"18\" viewBox=\"0 0 48 48\" xmlns=\"http://www.w3.org/2000/svg\">\n      <circle cx=\"24\" cy=\"23\" fill=\"#FFF\" r=\"22\"/>\n      <path d=\"M33.76 34.26c2.75-2.56 4.49-6.37 4.49-11.26 0-.89-.08-1.84-.29-3H24.01v5.99h8.03c-.4 2.02-1.5 3.56-3.07 4.56v.75l3.91 2.97h.88z\" fill=\"#4285F4\"/>\n      <path d=\"M15.58 25.77A8.845 8.845 0 0 0 24 31.86c1.92 0 3.62-.46 4.97-1.31l4.79 3.71C31.14 36.7 27.65 38 24 38c-5.93 0-11.01-3.4-13.45-8.36l.17-1.01 4.06-2.85h.8z\" fill=\"#34A853\"/>\n      <path d=\"M15.59 20.21a8.864 8.864 0 0 0 0 5.58l-5.03 3.86c-.98-2-1.53-4.25-1.53-6.64 0-2.39.55-4.64 1.53-6.64l1-.22 3.81 2.98.22 1.08z\" fill=\"#FBBC05\"/>\n      <path d=\"M24 14.14c2.11 0 4.02.75 5.52 1.98l4.36-4.36C31.22 9.43 27.81 8 24 8c-5.93 0-11.01 3.4-13.45 8.36l5.03 3.85A8.86 8.86 0 0 1 24 14.14z\" fill=\"#EA4335\"/>\n    </svg>\n    <div class=\"gradient-container\"><div class=\"gradient\"></div></div>\n  </div>\n  <div class=\"carousel\">\n    <a class=\"chip\" href=\"https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF_W7jeKTlR5ibZHyUEzO1Jmr-FhbqBYeZaf-6PLoHBSa9cd1DFIdWh8vLsUmWkGnE1rKIDNMylT61zUjxg6nMcmvUBwoyWoMf24iPmM-cRnMsakTyKgt2TgkDLgL_LLX9twlDVrAvJ6DxzmjnH_rCbHFapvI6NUnaRMicigbmBRmsf7FApwvhoLFPgazIDtJK9GeAuWvmlWHmLrUAvSqE4GHRhk_4=\">current population of Paris, France</a>\n    <a class=\"chip\" href=\"https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHxGpPZZniK5fzquUirOy4hOfMnzistghEPThJLeH_VXuHNE6rIL8I4bFEvIKaNI486CFGgnxRbnfOjxJI8ReUXDZSga1hinGEC4Y0U8_CdB9H-O-ugS5cGllYPEIVq6RRK4yy39PCu4L__IYG2x_pFhdKKrqt92k3Uhs-vqR_OGkzRSFq5Yn7186VhtUnip8x5wpSAGEfS\">Paris population 2026</a>\n  </div>\n</div>\n"
+                      },
+                      "webSearchQueries": [
+                        "current population of Paris, France",
+                        "Paris population 2026"
+                      ]
+                    },
+                    "index": 0
+                  }
+                ],
+                "modelVersion": "gemini-2.5-flash",
+                "responseId": "<responseId:1>",
+                "sdkHttpResponse": {
+                  "headers": {
+                    "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
+                    "connection": "keep-alive",
+                    "content-type": "application/json; charset=UTF-8",
+                    "date": "<timestamp>",
+                    "keep-alive": "timeout=5",
+                    "server": "scaffolding on HTTPServer2",
+                    "server-timing": "<server-timing>",
+                    "transfer-encoding": "chunked",
+                    "vary": "Origin, X-Origin, Referer",
+                    "x-content-type-options": "nosniff",
+                    "x-frame-options": "SAMEORIGIN",
+                    "x-gemini-service-tier": "<x-gemini-service-tier>",
+                    "x-xss-protection": "0"
+                  }
+                },
+                "usageMetadata": {
+                  "candidatesTokenCount": 94,
+                  "promptTokenCount": 21,
+                  "promptTokensDetails": [
+                    {
+                      "modality": "TEXT",
+                      "tokenCount": 21
+                    }
+                  ],
+                  "serviceTier": "standard",
+                  "thoughtsTokenCount": 270,
+                  "toolUsePromptTokenCount": 100,
+                  "toolUsePromptTokensDetails": [
+                    {
+                      "modality": "TEXT",
+                      "tokenCount": 100
+                    }
+                  ],
+                  "totalTokenCount": 485
+                }
+              },
+              "metadata": {
+                "groundingMetadata": {
+                  "searchEntryPoint": {
+                    "renderedContent": "<style>\n.container {\n  align-items: center;\n  border-radius: 8px;\n  display: flex;\n  font-family: Google Sans, Roboto, sans-serif;\n  font-size: 14px;\n  line-height: 20px;\n  padding: 8px 12px;\n}\n.chip {\n  display: inline-block;\n  border: solid 1px;\n  border-radius: 16px;\n  min-width: 14px;\n  padding: 5px 16px;\n  text-align: center;\n  user-select: none;\n  margin: 0 8px;\n  -webkit-tap-highlight-color: transparent;\n}\n.carousel {\n  overflow: auto;\n  scrollbar-width: none;\n  white-space: nowrap;\n  margin-right: -12px;\n}\n.headline {\n  display: flex;\n  margin-right: 4px;\n}\n.gradient-container {\n  position: relative;\n}\n.gradient {\n  position: absolute;\n  transform: translate(3px, -9px);\n  height: 36px;\n  width: 9px;\n}\n@media (prefers-color-scheme: light) {\n  .container {\n    background-color: #fafafa;\n    box-shadow: 0 0 0 1px #0000000f;\n  }\n  .headline-label {\n    color: #1f1f1f;\n  }\n  .chip {\n    background-color: #ffffff;\n    border-color: #d2d2d2;\n    color: #5e5e5e;\n    text-decoration: none;\n  }\n  .chip:hover {\n    background-color: #f2f2f2;\n  }\n  .chip:focus {\n    background-color: #f2f2f2;\n  }\n  .chip:active {\n    background-color: #d8d8d8;\n    border-color: #b6b6b6;\n  }\n  .logo-dark {\n    display: none;\n  }\n  .gradient {\n    background: linear-gradient(90deg, #fafafa 15%, #fafafa00 100%);\n  }\n}\n@media (prefers-color-scheme: dark) {\n  .container {\n    background-color: #1f1f1f;\n    box-shadow: 0 0 0 1px #ffffff26;\n  }\n  .headline-label {\n    color: #fff;\n  }\n  .chip {\n    background-color: #2c2c2c;\n    border-color: #3c4043;\n    color: #fff;\n    text-decoration: none;\n  }\n  .chip:hover {\n    background-color: #353536;\n  }\n  .chip:focus {\n    background-color: #353536;\n  }\n  .chip:active {\n    background-color: #464849;\n    border-color: #53575b;\n  }\n  .logo-light {\n    display: none;\n  }\n  .gradient {\n    background: linear-gradient(90deg, #1f1f1f 15%, #1f1f1f00 100%);\n  }\n}\n</style>\n<div class=\"container\">\n  <div class=\"headline\">\n    <svg class=\"logo-light\" width=\"18\" height=\"18\" viewBox=\"9 9 35 35\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n      <path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M42.8622 27.0064C42.8622 25.7839 42.7525 24.6084 42.5487 23.4799H26.3109V30.1568H35.5897C35.1821 32.3041 33.9596 34.1222 32.1258 35.3448V39.6864H37.7213C40.9814 36.677 42.8622 32.2571 42.8622 27.0064V27.0064Z\" fill=\"#4285F4\"/>\n      <path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M26.3109 43.8555C30.9659 43.8555 34.8687 42.3195 37.7213 39.6863L32.1258 35.3447C30.5898 36.3792 28.6306 37.0061 26.3109 37.0061C21.8282 37.0061 18.0195 33.9811 16.6559 29.906H10.9194V34.3573C13.7563 39.9841 19.5712 43.8555 26.3109 43.8555V43.8555Z\" fill=\"#34A853\"/>\n      <path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M16.6559 29.8904C16.3111 28.8559 16.1074 27.7588 16.1074 26.6146C16.1074 25.4704 16.3111 24.3733 16.6559 23.3388V18.8875H10.9194C9.74388 21.2072 9.06992 23.8247 9.06992 26.6146C9.06992 29.4045 9.74388 32.022 10.9194 34.3417L15.3864 30.8621L16.6559 29.8904V29.8904Z\" fill=\"#FBBC05\"/>\n      <path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M26.3109 16.2386C28.85 16.2386 31.107 17.1164 32.9095 18.8091L37.8466 13.8719C34.853 11.082 30.9659 9.3736 26.3109 9.3736C19.5712 9.3736 13.7563 13.245 10.9194 18.8875L16.6559 23.3388C18.0195 19.2636 21.8282 16.2386 26.3109 16.2386V16.2386Z\" fill=\"#EA4335\"/>\n    </svg>\n    <svg class=\"logo-dark\" width=\"18\" height=\"18\" viewBox=\"0 0 48 48\" xmlns=\"http://www.w3.org/2000/svg\">\n      <circle cx=\"24\" cy=\"23\" fill=\"#FFF\" r=\"22\"/>\n      <path d=\"M33.76 34.26c2.75-2.56 4.49-6.37 4.49-11.26 0-.89-.08-1.84-.29-3H24.01v5.99h8.03c-.4 2.02-1.5 3.56-3.07 4.56v.75l3.91 2.97h.88z\" fill=\"#4285F4\"/>\n      <path d=\"M15.58 25.77A8.845 8.845 0 0 0 24 31.86c1.92 0 3.62-.46 4.97-1.31l4.79 3.71C31.14 36.7 27.65 38 24 38c-5.93 0-11.01-3.4-13.45-8.36l.17-1.01 4.06-2.85h.8z\" fill=\"#34A853\"/>\n      <path d=\"M15.59 20.21a8.864 8.864 0 0 0 0 5.58l-5.03 3.86c-.98-2-1.53-4.25-1.53-6.64 0-2.39.55-4.64 1.53-6.64l1-.22 3.81 2.98.22 1.08z\" fill=\"#FBBC05\"/>\n      <path d=\"M24 14.14c2.11 0 4.02.75 5.52 1.98l4.36-4.36C31.22 9.43 27.81 8 24 8c-5.93 0-11.01 3.4-13.45 8.36l5.03 3.85A8.86 8.86 0 0 1 24 14.14z\" fill=\"#EA4335\"/>\n    </svg>\n    <div class=\"gradient-container\"><div class=\"gradient\"></div></div>\n  </div>\n  <div class=\"carousel\">\n    <a class=\"chip\" href=\"https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF_W7jeKTlR5ibZHyUEzO1Jmr-FhbqBYeZaf-6PLoHBSa9cd1DFIdWh8vLsUmWkGnE1rKIDNMylT61zUjxg6nMcmvUBwoyWoMf24iPmM-cRnMsakTyKgt2TgkDLgL_LLX9twlDVrAvJ6DxzmjnH_rCbHFapvI6NUnaRMicigbmBRmsf7FApwvhoLFPgazIDtJK9GeAuWvmlWHmLrUAvSqE4GHRhk_4=\">current population of Paris, France</a>\n    <a class=\"chip\" href=\"https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHxGpPZZniK5fzquUirOy4hOfMnzistghEPThJLeH_VXuHNE6rIL8I4bFEvIKaNI486CFGgnxRbnfOjxJI8ReUXDZSga1hinGEC4Y0U8_CdB9H-O-ugS5cGllYPEIVq6RRK4yy39PCu4L__IYG2x_pFhdKKrqt92k3Uhs-vqR_OGkzRSFq5Yn7186VhtUnip8x5wpSAGEfS\">Paris population 2026</a>\n  </div>\n</div>\n"
+                  },
+                  "webSearchQueries": [
+                    "current population of Paris, France",
+                    "Paris population 2026"
+                  ]
+                },
+                "maxOutputTokens": 256,
+                "model": "gemini-2.5-flash",
+                "temperature": 0,
+                "tools": [
+                  {
+                    "googleSearch": {}
+                  }
+                ]
+              },
+              "metrics": {
+                "completion_reasoning_tokens": 270,
+                "completion_tokens": 94,
+                "duration": 0,
+                "prompt_tokens": 21,
+                "tokens": 485
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "grounded-generate",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "google-grounded-stream-operation",
+          "children": [
+            {
+              "name": "generate_content_stream",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "config": {
+                  "maxOutputTokens": 256,
+                  "temperature": 0
+                },
+                "contents": {
+                  "text": "Use Google Search grounding and answer in one sentence: What is the current weather in Paris?"
+                },
+                "model": "gemini-2.5-flash"
+              },
+              "output": {
+                "candidates": [
+                  {
+                    "content": {
+                      "parts": [
+                        {
+                          "text": "The current weather in Paris, France, is mostly cloudy with a temperature of 83°F (28°C) and a 10% chance of rain."
+                        }
+                      ],
+                      "role": "model"
+                    },
+                    "finishReason": "STOP",
+                    "groundingMetadata": {
+                      "groundingChunks": [
+                        {
+                          "web": {
+                            "title": "Weather information for Paris, FR",
+                            "uri": "https://www.google.com/search?q=weather+in+Paris,+FR"
+                          }
+                        }
+                      ],
+                      "groundingSupports": [
+                        {
+                          "groundingChunkIndices": [
+                            0
+                          ],
+                          "segment": {
+                            "endIndex": 116,
+                            "text": "The current weather in Paris, France, is mostly cloudy with a temperature of 83°F (28°C) and a 10% chance of rain."
+                          }
+                        }
+                      ],
+                      "searchEntryPoint": {
+                        "renderedContent": "<style>\n.container {\n  align-items: center;\n  border-radius: 8px;\n  display: flex;\n  font-family: Google Sans, Roboto, sans-serif;\n  font-size: 14px;\n  line-height: 20px;\n  padding: 8px 12px;\n}\n.chip {\n  display: inline-block;\n  border: solid 1px;\n  border-radius: 16px;\n  min-width: 14px;\n  padding: 5px 16px;\n  text-align: center;\n  user-select: none;\n  margin: 0 8px;\n  -webkit-tap-highlight-color: transparent;\n}\n.carousel {\n  overflow: auto;\n  scrollbar-width: none;\n  white-space: nowrap;\n  margin-right: -12px;\n}\n.headline {\n  display: flex;\n  margin-right: 4px;\n}\n.gradient-container {\n  position: relative;\n}\n.gradient {\n  position: absolute;\n  transform: translate(3px, -9px);\n  height: 36px;\n  width: 9px;\n}\n@media (prefers-color-scheme: light) {\n  .container {\n    background-color: #fafafa;\n    box-shadow: 0 0 0 1px #0000000f;\n  }\n  .headline-label {\n    color: #1f1f1f;\n  }\n  .chip {\n    background-color: #ffffff;\n    border-color: #d2d2d2;\n    color: #5e5e5e;\n    text-decoration: none;\n  }\n  .chip:hover {\n    background-color: #f2f2f2;\n  }\n  .chip:focus {\n    background-color: #f2f2f2;\n  }\n  .chip:active {\n    background-color: #d8d8d8;\n    border-color: #b6b6b6;\n  }\n  .logo-dark {\n    display: none;\n  }\n  .gradient {\n    background: linear-gradient(90deg, #fafafa 15%, #fafafa00 100%);\n  }\n}\n@media (prefers-color-scheme: dark) {\n  .container {\n    background-color: #1f1f1f;\n    box-shadow: 0 0 0 1px #ffffff26;\n  }\n  .headline-label {\n    color: #fff;\n  }\n  .chip {\n    background-color: #2c2c2c;\n    border-color: #3c4043;\n    color: #fff;\n    text-decoration: none;\n  }\n  .chip:hover {\n    background-color: #353536;\n  }\n  .chip:focus {\n    background-color: #353536;\n  }\n  .chip:active {\n    background-color: #464849;\n    border-color: #53575b;\n  }\n  .logo-light {\n    display: none;\n  }\n  .gradient {\n    background: linear-gradient(90deg, #1f1f1f 15%, #1f1f1f00 100%);\n  }\n}\n</style>\n<div class=\"container\">\n  <div class=\"headline\">\n    <svg class=\"logo-light\" width=\"18\" height=\"18\" viewBox=\"9 9 35 35\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n      <path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M42.8622 27.0064C42.8622 25.7839 42.7525 24.6084 42.5487 23.4799H26.3109V30.1568H35.5897C35.1821 32.3041 33.9596 34.1222 32.1258 35.3448V39.6864H37.7213C40.9814 36.677 42.8622 32.2571 42.8622 27.0064V27.0064Z\" fill=\"#4285F4\"/>\n      <path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M26.3109 43.8555C30.9659 43.8555 34.8687 42.3195 37.7213 39.6863L32.1258 35.3447C30.5898 36.3792 28.6306 37.0061 26.3109 37.0061C21.8282 37.0061 18.0195 33.9811 16.6559 29.906H10.9194V34.3573C13.7563 39.9841 19.5712 43.8555 26.3109 43.8555V43.8555Z\" fill=\"#34A853\"/>\n      <path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M16.6559 29.8904C16.3111 28.8559 16.1074 27.7588 16.1074 26.6146C16.1074 25.4704 16.3111 24.3733 16.6559 23.3388V18.8875H10.9194C9.74388 21.2072 9.06992 23.8247 9.06992 26.6146C9.06992 29.4045 9.74388 32.022 10.9194 34.3417L15.3864 30.8621L16.6559 29.8904V29.8904Z\" fill=\"#FBBC05\"/>\n      <path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M26.3109 16.2386C28.85 16.2386 31.107 17.1164 32.9095 18.8091L37.8466 13.8719C34.853 11.082 30.9659 9.3736 26.3109 9.3736C19.5712 9.3736 13.7563 13.245 10.9194 18.8875L16.6559 23.3388C18.0195 19.2636 21.8282 16.2386 26.3109 16.2386V16.2386Z\" fill=\"#EA4335\"/>\n    </svg>\n    <svg class=\"logo-dark\" width=\"18\" height=\"18\" viewBox=\"0 0 48 48\" xmlns=\"http://www.w3.org/2000/svg\">\n      <circle cx=\"24\" cy=\"23\" fill=\"#FFF\" r=\"22\"/>\n      <path d=\"M33.76 34.26c2.75-2.56 4.49-6.37 4.49-11.26 0-.89-.08-1.84-.29-3H24.01v5.99h8.03c-.4 2.02-1.5 3.56-3.07 4.56v.75l3.91 2.97h.88z\" fill=\"#4285F4\"/>\n      <path d=\"M15.58 25.77A8.845 8.845 0 0 0 24 31.86c1.92 0 3.62-.46 4.97-1.31l4.79 3.71C31.14 36.7 27.65 38 24 38c-5.93 0-11.01-3.4-13.45-8.36l.17-1.01 4.06-2.85h.8z\" fill=\"#34A853\"/>\n      <path d=\"M15.59 20.21a8.864 8.864 0 0 0 0 5.58l-5.03 3.86c-.98-2-1.53-4.25-1.53-6.64 0-2.39.55-4.64 1.53-6.64l1-.22 3.81 2.98.22 1.08z\" fill=\"#FBBC05\"/>\n      <path d=\"M24 14.14c2.11 0 4.02.75 5.52 1.98l4.36-4.36C31.22 9.43 27.81 8 24 8c-5.93 0-11.01 3.4-13.45 8.36l5.03 3.85A8.86 8.86 0 0 1 24 14.14z\" fill=\"#EA4335\"/>\n    </svg>\n    <div class=\"gradient-container\"><div class=\"gradient\"></div></div>\n  </div>\n  <div class=\"carousel\">\n    <a class=\"chip\" href=\"https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHK33diJmFUOhaDLC49r4HFDNyLqlvWqTzRGf87UTOTWDy_RUiGX9Rnllh8XqtojbQSW_RvFafqBnWORDUgFZzRjWu-fD7EOEPm4ETOmiAA_IZyLv5tGegpxc8v_b7CZurIAmiiiiM6Kap_pj2LIBHyEZ7dYjIRLzztbvnHXJEDvBFpiAYe_uNGtTHQUSjBkMxloU7wIQuTew_U\">current weather in Paris</a>\n  </div>\n</div>\n"
+                      },
+                      "webSearchQueries": [
+                        "current weather in Paris"
+                      ]
+                    }
+                  }
+                ],
+                "groundingMetadata": {
+                  "groundingChunks": [
+                    {
+                      "web": {
+                        "title": "Weather information for Paris, FR",
+                        "uri": "https://www.google.com/search?q=weather+in+Paris,+FR"
+                      }
+                    }
+                  ],
+                  "groundingSupports": [
+                    {
+                      "groundingChunkIndices": [
+                        0
+                      ],
+                      "segment": {
+                        "endIndex": 116,
+                        "text": "The current weather in Paris, France, is mostly cloudy with a temperature of 83°F (28°C) and a 10% chance of rain."
+                      }
+                    }
+                  ],
+                  "searchEntryPoint": {
+                    "renderedContent": "<style>\n.container {\n  align-items: center;\n  border-radius: 8px;\n  display: flex;\n  font-family: Google Sans, Roboto, sans-serif;\n  font-size: 14px;\n  line-height: 20px;\n  padding: 8px 12px;\n}\n.chip {\n  display: inline-block;\n  border: solid 1px;\n  border-radius: 16px;\n  min-width: 14px;\n  padding: 5px 16px;\n  text-align: center;\n  user-select: none;\n  margin: 0 8px;\n  -webkit-tap-highlight-color: transparent;\n}\n.carousel {\n  overflow: auto;\n  scrollbar-width: none;\n  white-space: nowrap;\n  margin-right: -12px;\n}\n.headline {\n  display: flex;\n  margin-right: 4px;\n}\n.gradient-container {\n  position: relative;\n}\n.gradient {\n  position: absolute;\n  transform: translate(3px, -9px);\n  height: 36px;\n  width: 9px;\n}\n@media (prefers-color-scheme: light) {\n  .container {\n    background-color: #fafafa;\n    box-shadow: 0 0 0 1px #0000000f;\n  }\n  .headline-label {\n    color: #1f1f1f;\n  }\n  .chip {\n    background-color: #ffffff;\n    border-color: #d2d2d2;\n    color: #5e5e5e;\n    text-decoration: none;\n  }\n  .chip:hover {\n    background-color: #f2f2f2;\n  }\n  .chip:focus {\n    background-color: #f2f2f2;\n  }\n  .chip:active {\n    background-color: #d8d8d8;\n    border-color: #b6b6b6;\n  }\n  .logo-dark {\n    display: none;\n  }\n  .gradient {\n    background: linear-gradient(90deg, #fafafa 15%, #fafafa00 100%);\n  }\n}\n@media (prefers-color-scheme: dark) {\n  .container {\n    background-color: #1f1f1f;\n    box-shadow: 0 0 0 1px #ffffff26;\n  }\n  .headline-label {\n    color: #fff;\n  }\n  .chip {\n    background-color: #2c2c2c;\n    border-color: #3c4043;\n    color: #fff;\n    text-decoration: none;\n  }\n  .chip:hover {\n    background-color: #353536;\n  }\n  .chip:focus {\n    background-color: #353536;\n  }\n  .chip:active {\n    background-color: #464849;\n    border-color: #53575b;\n  }\n  .logo-light {\n    display: none;\n  }\n  .gradient {\n    background: linear-gradient(90deg, #1f1f1f 15%, #1f1f1f00 100%);\n  }\n}\n</style>\n<div class=\"container\">\n  <div class=\"headline\">\n    <svg class=\"logo-light\" width=\"18\" height=\"18\" viewBox=\"9 9 35 35\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n      <path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M42.8622 27.0064C42.8622 25.7839 42.7525 24.6084 42.5487 23.4799H26.3109V30.1568H35.5897C35.1821 32.3041 33.9596 34.1222 32.1258 35.3448V39.6864H37.7213C40.9814 36.677 42.8622 32.2571 42.8622 27.0064V27.0064Z\" fill=\"#4285F4\"/>\n      <path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M26.3109 43.8555C30.9659 43.8555 34.8687 42.3195 37.7213 39.6863L32.1258 35.3447C30.5898 36.3792 28.6306 37.0061 26.3109 37.0061C21.8282 37.0061 18.0195 33.9811 16.6559 29.906H10.9194V34.3573C13.7563 39.9841 19.5712 43.8555 26.3109 43.8555V43.8555Z\" fill=\"#34A853\"/>\n      <path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M16.6559 29.8904C16.3111 28.8559 16.1074 27.7588 16.1074 26.6146C16.1074 25.4704 16.3111 24.3733 16.6559 23.3388V18.8875H10.9194C9.74388 21.2072 9.06992 23.8247 9.06992 26.6146C9.06992 29.4045 9.74388 32.022 10.9194 34.3417L15.3864 30.8621L16.6559 29.8904V29.8904Z\" fill=\"#FBBC05\"/>\n      <path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M26.3109 16.2386C28.85 16.2386 31.107 17.1164 32.9095 18.8091L37.8466 13.8719C34.853 11.082 30.9659 9.3736 26.3109 9.3736C19.5712 9.3736 13.7563 13.245 10.9194 18.8875L16.6559 23.3388C18.0195 19.2636 21.8282 16.2386 26.3109 16.2386V16.2386Z\" fill=\"#EA4335\"/>\n    </svg>\n    <svg class=\"logo-dark\" width=\"18\" height=\"18\" viewBox=\"0 0 48 48\" xmlns=\"http://www.w3.org/2000/svg\">\n      <circle cx=\"24\" cy=\"23\" fill=\"#FFF\" r=\"22\"/>\n      <path d=\"M33.76 34.26c2.75-2.56 4.49-6.37 4.49-11.26 0-.89-.08-1.84-.29-3H24.01v5.99h8.03c-.4 2.02-1.5 3.56-3.07 4.56v.75l3.91 2.97h.88z\" fill=\"#4285F4\"/>\n      <path d=\"M15.58 25.77A8.845 8.845 0 0 0 24 31.86c1.92 0 3.62-.46 4.97-1.31l4.79 3.71C31.14 36.7 27.65 38 24 38c-5.93 0-11.01-3.4-13.45-8.36l.17-1.01 4.06-2.85h.8z\" fill=\"#34A853\"/>\n      <path d=\"M15.59 20.21a8.864 8.864 0 0 0 0 5.58l-5.03 3.86c-.98-2-1.53-4.25-1.53-6.64 0-2.39.55-4.64 1.53-6.64l1-.22 3.81 2.98.22 1.08z\" fill=\"#FBBC05\"/>\n      <path d=\"M24 14.14c2.11 0 4.02.75 5.52 1.98l4.36-4.36C31.22 9.43 27.81 8 24 8c-5.93 0-11.01 3.4-13.45 8.36l5.03 3.85A8.86 8.86 0 0 1 24 14.14z\" fill=\"#EA4335\"/>\n    </svg>\n    <div class=\"gradient-container\"><div class=\"gradient\"></div></div>\n  </div>\n  <div class=\"carousel\">\n    <a class=\"chip\" href=\"https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHK33diJmFUOhaDLC49r4HFDNyLqlvWqTzRGf87UTOTWDy_RUiGX9Rnllh8XqtojbQSW_RvFafqBnWORDUgFZzRjWu-fD7EOEPm4ETOmiAA_IZyLv5tGegpxc8v_b7CZurIAmiiiiM6Kap_pj2LIBHyEZ7dYjIRLzztbvnHXJEDvBFpiAYe_uNGtTHQUSjBkMxloU7wIQuTew_U\">current weather in Paris</a>\n  </div>\n</div>\n"
+                  },
+                  "webSearchQueries": [
+                    "current weather in Paris"
+                  ]
+                },
+                "text": "The current weather in Paris, France, is mostly cloudy with a temperature of 83°F (28°C) and a 10% chance of rain.",
+                "usageMetadata": {
+                  "candidatesTokenCount": 51,
+                  "promptTokenCount": 19,
+                  "promptTokensDetails": [
+                    {
+                      "modality": "TEXT",
+                      "tokenCount": 19
+                    }
+                  ],
+                  "serviceTier": "standard",
+                  "thoughtsTokenCount": 164,
+                  "toolUsePromptTokenCount": 70,
+                  "toolUsePromptTokensDetails": [
+                    {
+                      "modality": "TEXT",
+                      "tokenCount": 70
+                    }
+                  ],
+                  "totalTokenCount": 304
+                }
+              },
+              "metadata": {
+                "groundingMetadata": {
+                  "groundingChunks": [
+                    {
+                      "web": {
+                        "title": "Weather information for Paris, FR",
+                        "uri": "https://www.google.com/search?q=weather+in+Paris,+FR"
+                      }
+                    }
+                  ],
+                  "groundingSupports": [
+                    {
+                      "groundingChunkIndices": [
+                        0
+                      ],
+                      "segment": {
+                        "endIndex": 116,
+                        "text": "The current weather in Paris, France, is mostly cloudy with a temperature of 83°F (28°C) and a 10% chance of rain."
+                      }
+                    }
+                  ],
+                  "searchEntryPoint": {
+                    "renderedContent": "<style>\n.container {\n  align-items: center;\n  border-radius: 8px;\n  display: flex;\n  font-family: Google Sans, Roboto, sans-serif;\n  font-size: 14px;\n  line-height: 20px;\n  padding: 8px 12px;\n}\n.chip {\n  display: inline-block;\n  border: solid 1px;\n  border-radius: 16px;\n  min-width: 14px;\n  padding: 5px 16px;\n  text-align: center;\n  user-select: none;\n  margin: 0 8px;\n  -webkit-tap-highlight-color: transparent;\n}\n.carousel {\n  overflow: auto;\n  scrollbar-width: none;\n  white-space: nowrap;\n  margin-right: -12px;\n}\n.headline {\n  display: flex;\n  margin-right: 4px;\n}\n.gradient-container {\n  position: relative;\n}\n.gradient {\n  position: absolute;\n  transform: translate(3px, -9px);\n  height: 36px;\n  width: 9px;\n}\n@media (prefers-color-scheme: light) {\n  .container {\n    background-color: #fafafa;\n    box-shadow: 0 0 0 1px #0000000f;\n  }\n  .headline-label {\n    color: #1f1f1f;\n  }\n  .chip {\n    background-color: #ffffff;\n    border-color: #d2d2d2;\n    color: #5e5e5e;\n    text-decoration: none;\n  }\n  .chip:hover {\n    background-color: #f2f2f2;\n  }\n  .chip:focus {\n    background-color: #f2f2f2;\n  }\n  .chip:active {\n    background-color: #d8d8d8;\n    border-color: #b6b6b6;\n  }\n  .logo-dark {\n    display: none;\n  }\n  .gradient {\n    background: linear-gradient(90deg, #fafafa 15%, #fafafa00 100%);\n  }\n}\n@media (prefers-color-scheme: dark) {\n  .container {\n    background-color: #1f1f1f;\n    box-shadow: 0 0 0 1px #ffffff26;\n  }\n  .headline-label {\n    color: #fff;\n  }\n  .chip {\n    background-color: #2c2c2c;\n    border-color: #3c4043;\n    color: #fff;\n    text-decoration: none;\n  }\n  .chip:hover {\n    background-color: #353536;\n  }\n  .chip:focus {\n    background-color: #353536;\n  }\n  .chip:active {\n    background-color: #464849;\n    border-color: #53575b;\n  }\n  .logo-light {\n    display: none;\n  }\n  .gradient {\n    background: linear-gradient(90deg, #1f1f1f 15%, #1f1f1f00 100%);\n  }\n}\n</style>\n<div class=\"container\">\n  <div class=\"headline\">\n    <svg class=\"logo-light\" width=\"18\" height=\"18\" viewBox=\"9 9 35 35\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n      <path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M42.8622 27.0064C42.8622 25.7839 42.7525 24.6084 42.5487 23.4799H26.3109V30.1568H35.5897C35.1821 32.3041 33.9596 34.1222 32.1258 35.3448V39.6864H37.7213C40.9814 36.677 42.8622 32.2571 42.8622 27.0064V27.0064Z\" fill=\"#4285F4\"/>\n      <path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M26.3109 43.8555C30.9659 43.8555 34.8687 42.3195 37.7213 39.6863L32.1258 35.3447C30.5898 36.3792 28.6306 37.0061 26.3109 37.0061C21.8282 37.0061 18.0195 33.9811 16.6559 29.906H10.9194V34.3573C13.7563 39.9841 19.5712 43.8555 26.3109 43.8555V43.8555Z\" fill=\"#34A853\"/>\n      <path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M16.6559 29.8904C16.3111 28.8559 16.1074 27.7588 16.1074 26.6146C16.1074 25.4704 16.3111 24.3733 16.6559 23.3388V18.8875H10.9194C9.74388 21.2072 9.06992 23.8247 9.06992 26.6146C9.06992 29.4045 9.74388 32.022 10.9194 34.3417L15.3864 30.8621L16.6559 29.8904V29.8904Z\" fill=\"#FBBC05\"/>\n      <path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M26.3109 16.2386C28.85 16.2386 31.107 17.1164 32.9095 18.8091L37.8466 13.8719C34.853 11.082 30.9659 9.3736 26.3109 9.3736C19.5712 9.3736 13.7563 13.245 10.9194 18.8875L16.6559 23.3388C18.0195 19.2636 21.8282 16.2386 26.3109 16.2386V16.2386Z\" fill=\"#EA4335\"/>\n    </svg>\n    <svg class=\"logo-dark\" width=\"18\" height=\"18\" viewBox=\"0 0 48 48\" xmlns=\"http://www.w3.org/2000/svg\">\n      <circle cx=\"24\" cy=\"23\" fill=\"#FFF\" r=\"22\"/>\n      <path d=\"M33.76 34.26c2.75-2.56 4.49-6.37 4.49-11.26 0-.89-.08-1.84-.29-3H24.01v5.99h8.03c-.4 2.02-1.5 3.56-3.07 4.56v.75l3.91 2.97h.88z\" fill=\"#4285F4\"/>\n      <path d=\"M15.58 25.77A8.845 8.845 0 0 0 24 31.86c1.92 0 3.62-.46 4.97-1.31l4.79 3.71C31.14 36.7 27.65 38 24 38c-5.93 0-11.01-3.4-13.45-8.36l.17-1.01 4.06-2.85h.8z\" fill=\"#34A853\"/>\n      <path d=\"M15.59 20.21a8.864 8.864 0 0 0 0 5.58l-5.03 3.86c-.98-2-1.53-4.25-1.53-6.64 0-2.39.55-4.64 1.53-6.64l1-.22 3.81 2.98.22 1.08z\" fill=\"#FBBC05\"/>\n      <path d=\"M24 14.14c2.11 0 4.02.75 5.52 1.98l4.36-4.36C31.22 9.43 27.81 8 24 8c-5.93 0-11.01 3.4-13.45 8.36l5.03 3.85A8.86 8.86 0 0 1 24 14.14z\" fill=\"#EA4335\"/>\n    </svg>\n    <div class=\"gradient-container\"><div class=\"gradient\"></div></div>\n  </div>\n  <div class=\"carousel\">\n    <a class=\"chip\" href=\"https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHK33diJmFUOhaDLC49r4HFDNyLqlvWqTzRGf87UTOTWDy_RUiGX9Rnllh8XqtojbQSW_RvFafqBnWORDUgFZzRjWu-fD7EOEPm4ETOmiAA_IZyLv5tGegpxc8v_b7CZurIAmiiiiM6Kap_pj2LIBHyEZ7dYjIRLzztbvnHXJEDvBFpiAYe_uNGtTHQUSjBkMxloU7wIQuTew_U\">current weather in Paris</a>\n  </div>\n</div>\n"
+                  },
+                  "webSearchQueries": [
+                    "current weather in Paris"
+                  ]
+                },
+                "maxOutputTokens": 256,
+                "model": "gemini-2.5-flash",
+                "temperature": 0,
+                "tools": [
+                  {
+                    "googleSearch": {}
+                  }
+                ]
+              },
+              "metrics": {
+                "completion_reasoning_tokens": 164,
+                "completion_tokens": 51,
+                "duration": 0,
+                "prompt_tokens": 19,
+                "time_to_first_token": 0,
+                "tokens": 304
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "grounded-stream",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "google-tool-operation",
+          "children": [
+            {
+              "name": "generate_content",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "config": {
+                  "maxOutputTokens": 128,
+                  "temperature": 0,
+                  "toolConfig": {
+                    "functionCallingConfig": {
+                      "allowedFunctionNames": [
+                        "get_weather"
+                      ],
+                      "mode": "ANY"
+                    }
+                  }
+                },
+                "contents": {
+                  "text": "Use the get_weather function for Paris, France. Do not answer from memory."
+                },
+                "model": "gemini-2.5-flash-lite"
+              },
+              "output": {
+                "candidates": [
+                  {
+                    "content": {
+                      "parts": [
+                        {
+                          "functionCall": {
+                            "args": {
+                              "location": "Paris, France"
+                            },
+                            "name": "get_weather"
+                          }
+                        }
+                      ],
+                      "role": "model"
+                    },
+                    "finishReason": "STOP",
+                    "index": 0
+                  }
+                ],
+                "modelVersion": "gemini-2.5-flash-lite",
+                "responseId": "<responseId:1>",
+                "sdkHttpResponse": {
+                  "headers": {
+                    "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
+                    "connection": "keep-alive",
+                    "content-type": "application/json; charset=UTF-8",
+                    "date": "<timestamp>",
+                    "keep-alive": "timeout=5",
+                    "server": "scaffolding on HTTPServer2",
+                    "server-timing": "<server-timing>",
+                    "transfer-encoding": "chunked",
+                    "vary": "Origin, X-Origin, Referer",
+                    "x-content-type-options": "nosniff",
+                    "x-frame-options": "SAMEORIGIN",
+                    "x-gemini-service-tier": "<x-gemini-service-tier>",
+                    "x-xss-protection": "0"
+                  }
+                },
+                "usageMetadata": {
+                  "candidatesTokenCount": 17,
+                  "promptTokenCount": 65,
+                  "promptTokensDetails": [
+                    {
+                      "modality": "TEXT",
+                      "tokenCount": 65
+                    }
+                  ],
+                  "serviceTier": "standard",
+                  "totalTokenCount": 82
+                }
+              },
+              "metadata": {
+                "maxOutputTokens": 128,
+                "model": "gemini-2.5-flash-lite",
+                "temperature": 0,
+                "toolConfig": {
+                  "functionCallingConfig": {
+                    "allowedFunctionNames": [
+                      "get_weather"
+                    ],
+                    "mode": "ANY"
+                  }
+                },
+                "tools": [
+                  {
+                    "functionDeclarations": [
+                      {
+                        "description": "Get the current weather in a given location",
+                        "name": "get_weather",
+                        "parametersJsonSchema": {
+                          "properties": {
+                            "location": {
+                              "description": "The city and state or city and country",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "location"
+                          ],
+                          "type": "object"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              "metrics": {
+                "completion_tokens": 17,
+                "duration": 0,
+                "prompt_tokens": 65,
+                "tokens": 82
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "tool",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "google-multi-tool-operation",
+          "children": [
+            {
+              "name": "generate_content",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "config": {
+                  "maxOutputTokens": 128,
+                  "temperature": 0,
+                  "toolConfig": {
+                    "functionCallingConfig": {
+                      "allowedFunctionNames": [
+                        "get_weather",
+                        "get_time"
+                      ],
+                      "mode": "ANY"
+                    }
+                  }
+                },
+                "contents": {
+                  "text": "Use the get_weather function for New York and get_time for Tokyo. Do not answer from memory."
+                },
+                "model": "gemini-2.5-flash-lite"
+              },
+              "output": {
+                "candidates": [
+                  {
+                    "content": {
+                      "parts": [
+                        {
+                          "functionCall": {
+                            "args": {
+                              "location": "New York"
+                            },
+                            "name": "get_weather"
+                          }
+                        },
+                        {
+                          "functionCall": {
+                            "args": {
+                              "timezone": "Tokyo"
+                            },
+                            "name": "get_time"
+                          }
+                        }
+                      ],
+                      "role": "model"
+                    },
+                    "finishReason": "STOP",
+                    "index": 0
+                  }
+                ],
+                "modelVersion": "gemini-2.5-flash-lite",
+                "responseId": "<responseId:1>",
+                "sdkHttpResponse": {
+                  "headers": {
+                    "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
+                    "connection": "keep-alive",
+                    "content-type": "application/json; charset=UTF-8",
+                    "date": "<timestamp>",
+                    "keep-alive": "timeout=5",
+                    "server": "scaffolding on HTTPServer2",
+                    "server-timing": "<server-timing>",
+                    "transfer-encoding": "chunked",
+                    "vary": "Origin, X-Origin, Referer",
+                    "x-content-type-options": "nosniff",
+                    "x-frame-options": "SAMEORIGIN",
+                    "x-gemini-service-tier": "<x-gemini-service-tier>",
+                    "x-xss-protection": "0"
+                  }
+                },
+                "usageMetadata": {
+                  "candidatesTokenCount": 31,
+                  "promptTokenCount": 110,
+                  "promptTokensDetails": [
+                    {
+                      "modality": "TEXT",
+                      "tokenCount": 110
+                    }
+                  ],
+                  "serviceTier": "standard",
+                  "totalTokenCount": 141
+                }
+              },
+              "metadata": {
+                "maxOutputTokens": 128,
+                "model": "gemini-2.5-flash-lite",
+                "temperature": 0,
+                "toolConfig": {
+                  "functionCallingConfig": {
+                    "allowedFunctionNames": [
+                      "get_weather",
+                      "get_time"
+                    ],
+                    "mode": "ANY"
+                  }
+                },
+                "tools": [
+                  {
+                    "functionDeclarations": [
+                      {
+                        "description": "Get the weather for a location",
+                        "name": "get_weather",
+                        "parametersJsonSchema": {
+                          "properties": {
+                            "location": {
+                              "description": "The location to get weather for",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "location"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "description": "Get the current time for a timezone",
+                        "name": "get_time",
+                        "parametersJsonSchema": {
+                          "properties": {
+                            "timezone": {
+                              "description": "The timezone to get time for",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "timezone"
+                          ],
+                          "type": "object"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              "metrics": {
+                "completion_tokens": 31,
+                "duration": 0,
+                "prompt_tokens": 110,
+                "tokens": 141
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "multi-tool",
+            "testRunId": "<run:1>"
+          }
+        }
+      ],
+      "metadata": {
+        "scenario": "google-genai-instrumentation",
+        "testRunId": "<run:1>"
+      }
+    }
+  ]
+}

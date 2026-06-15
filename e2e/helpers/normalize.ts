@@ -78,8 +78,11 @@ const DYNAMIC_HEADER_KEYS = new Set([
 const PROVIDER_ID_KEYS = new Set([
   "agentId",
   "claude_agent_sdk.task_id",
+  "interaction_id",
   "itemId",
+  "previous_interaction_id",
   "responseId",
+  "signature",
   "toolCallId",
 ]);
 const PROJECT_ID_KEYS = new Set(["project_id", "projectId"]);
