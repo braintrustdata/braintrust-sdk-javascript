@@ -582,6 +582,12 @@ export function defineClaudeAgentSDKInstrumentationAssertions(options: {
         "anthropic.messages.create",
         nestedTask?.span.id,
       ).at(-1);
+      const nestedTaskLlmInput = nestedTaskLlm?.input as
+        | Array<{ content?: unknown; role?: string }>
+        | undefined;
+      const handoffToolInput = handoffTool?.input as
+        | { prompt?: unknown }
+        | undefined;
       const tool =
         findToolSpanByLocalHandler(events, "calculator-local-handler-add") ??
         findToolSpanByOperation(events, "add");
@@ -616,6 +622,27 @@ export function defineClaudeAgentSDKInstrumentationAssertions(options: {
       expect(nestedTaskLlm?.span.parentIds).not.toContain(
         taskRoot?.span.id ?? "",
       );
+      const nestedTaskLlmInputContent = nestedTaskLlmInput?.[0]?.content;
+      const nestedTaskLlmInputText =
+        typeof nestedTaskLlmInputContent === "string"
+          ? nestedTaskLlmInputContent
+          : Array.isArray(nestedTaskLlmInputContent)
+            ? nestedTaskLlmInputContent
+                .map((block) =>
+                  typeof block === "object" &&
+                  block !== null &&
+                  "text" in block &&
+                  typeof block.text === "string"
+                    ? block.text
+                    : "",
+                )
+                .join("")
+            : undefined;
+      expect(nestedTaskLlmInput?.[0]).toMatchObject({
+        role: "user",
+      });
+      expect(nestedTaskLlmInputText).toBe(handoffToolInput?.prompt);
+      expect(nestedTaskLlmInputText).not.toBe(taskRoot?.input);
       if (tool) {
         expect(tool.span.parentIds).not.toContain(taskRoot?.span.id ?? "");
         if (toolParent?.span.type === "llm") {

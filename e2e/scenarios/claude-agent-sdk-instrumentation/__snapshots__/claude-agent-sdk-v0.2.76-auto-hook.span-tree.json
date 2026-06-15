@@ -423,26 +423,13 @@
                           ],
                           "input": [
                             {
-                              "content": "Spawn a math-expert subagent to add 15 and 27 using the calculator tool. Report the result. Do not solve it yourself.",
-                              "role": "user"
-                            },
-                            {
                               "content": [
                                 {
-                                  "caller": {
-                                    "type": "direct"
-                                  },
-                                  "id": "<span:1>",
-                                  "input": {
-                                    "description": "Add 15 and 27 using calculator",
-                                    "prompt": "Please add 15 and 27 together using the calculator tool. Report the result to me.",
-                                    "subagent_type": "math-expert"
-                                  },
-                                  "name": "Agent",
-                                  "type": "tool_use"
+                                  "text": "Please add 15 and 27 together using the calculator tool. Report the result to me.",
+                                  "type": "text"
                                 }
                               ],
-                              "role": "assistant"
+                              "role": "user"
                             }
                           ],
                           "output": [
@@ -565,24 +552,6 @@
                             "subagent_type": "math-expert"
                           },
                           "name": "Agent",
-                          "type": "tool_use"
-                        }
-                      ],
-                      "role": "assistant"
-                    },
-                    {
-                      "content": [
-                        {
-                          "caller": {
-                            "type": "direct"
-                          },
-                          "id": "<span:2>",
-                          "input": {
-                            "a": 15,
-                            "b": 27,
-                            "operation": "add"
-                          },
-                          "name": "mcp__calculator__calculator",
                           "type": "tool_use"
                         }
                       ],
@@ -719,26 +688,13 @@
                           "children": [],
                           "input": [
                             {
-                              "content": "You MUST call the Agent tool now with subagent_type=\"echo\" and description \"echo greeting\". Do not call Bash yourself. Do not answer with text yourself; delegate to the echo sub-agent.",
-                              "role": "user"
-                            },
-                            {
                               "content": [
                                 {
-                                  "caller": {
-                                    "type": "direct"
-                                  },
-                                  "id": "<span:1>",
-                                  "input": {
-                                    "description": "echo greeting",
-                                    "prompt": "Please echo a greeting message",
-                                    "subagent_type": "echo"
-                                  },
-                                  "name": "Agent",
-                                  "type": "tool_use"
+                                  "text": "Please echo a greeting message",
+                                  "type": "text"
                                 }
                               ],
-                              "role": "assistant"
+                              "role": "user"
                             }
                           ],
                           "output": [
@@ -882,23 +838,6 @@
                             "subagent_type": "echo"
                           },
                           "name": "Agent",
-                          "type": "tool_use"
-                        }
-                      ],
-                      "role": "assistant"
-                    },
-                    {
-                      "content": [
-                        {
-                          "caller": {
-                            "type": "direct"
-                          },
-                          "id": "<span:2>",
-                          "input": {
-                            "command": "echo hello",
-                            "description": "Echo hello message"
-                          },
-                          "name": "Bash",
                           "type": "tool_use"
                         }
                       ],

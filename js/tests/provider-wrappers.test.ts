@@ -511,6 +511,135 @@ describe("provider wrapper", () => {
     },
   );
 
+  test("Claude Agent SDK keeps parented user tool results in sub-agent conversation history", async () => {
+    const rootPrompt = "Delegate the calculation.";
+    const subAgentPrompt = "Use the calculator to add 15 and 27.";
+    const wrappedSDK = wrapClaudeAgentSDK({
+      query: () =>
+        (async function* () {
+          yield {
+            type: "assistant",
+            message: {
+              id: "root-assistant",
+              role: "assistant",
+              content: [
+                {
+                  id: "agent-tool-use",
+                  input: {
+                    description: "math specialist",
+                    prompt: subAgentPrompt,
+                    subagent_type: "math-expert",
+                  },
+                  name: "Agent",
+                  type: "tool_use",
+                },
+              ],
+              usage: { input_tokens: 1, output_tokens: 1 },
+            },
+          };
+          yield {
+            type: "user",
+            parent_tool_use_id: "agent-tool-use",
+            message: {
+              role: "user",
+              content: [{ text: subAgentPrompt, type: "text" }],
+            },
+          };
+          yield {
+            type: "assistant",
+            parent_tool_use_id: "agent-tool-use",
+            message: {
+              id: "sub-agent-tool-call",
+              role: "assistant",
+              content: [
+                {
+                  id: "calculator-tool-use",
+                  input: { a: 15, b: 27, operation: "add" },
+                  name: "mcp__calculator__calculator",
+                  type: "tool_use",
+                },
+              ],
+              usage: { input_tokens: 1, output_tokens: 1 },
+            },
+          };
+          yield {
+            type: "user",
+            parent_tool_use_id: "agent-tool-use",
+            message: {
+              role: "user",
+              content: [
+                {
+                  content: "42",
+                  tool_use_id: "calculator-tool-use",
+                  type: "tool_result",
+                },
+              ],
+            },
+          };
+          yield {
+            type: "assistant",
+            parent_tool_use_id: "agent-tool-use",
+            message: {
+              id: "sub-agent-final",
+              role: "assistant",
+              content: [{ text: "The answer is 42.", type: "text" }],
+              usage: { input_tokens: 1, output_tokens: 1 },
+            },
+          };
+          yield {
+            type: "result",
+            usage: { input_tokens: 1, output_tokens: 3 },
+          };
+        })(),
+    });
+
+    for await (const _message of wrappedSDK.query({
+      prompt: rootPrompt,
+      options: { model: "test-model" },
+    } as any)) {
+    }
+
+    const spans = await backgroundLogger.drain();
+    const finalSubAgentLlm = spans.find(
+      (span: any) =>
+        span.span_attributes.name === "anthropic.messages.create" &&
+        Array.isArray(span.output) &&
+        span.output.some((message: any) =>
+          message.content?.some?.(
+            (block: any) => block.text === "The answer is 42.",
+          ),
+        ),
+    );
+
+    expect(finalSubAgentLlm?.input).toMatchObject([
+      {
+        content: [{ text: subAgentPrompt, type: "text" }],
+        role: "user",
+      },
+      {
+        content: [
+          {
+            id: "calculator-tool-use",
+            name: "mcp__calculator__calculator",
+            type: "tool_use",
+          },
+        ],
+        role: "assistant",
+      },
+      {
+        content: [
+          {
+            content: "42",
+            tool_use_id: "calculator-tool-use",
+            type: "tool_result",
+          },
+        ],
+        role: "user",
+      },
+    ]);
+    expect(JSON.stringify(finalSubAgentLlm?.input)).not.toContain(rootPrompt);
+  });
+
   test("Claude Agent SDK injects tracing hooks while preserving user hooks", async () => {
     let capturedOptions: any;
     const userPreHook = vi.fn().mockResolvedValue({});
