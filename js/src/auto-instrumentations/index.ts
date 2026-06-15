@@ -46,6 +46,7 @@ export { groqConfigs } from "./configs/groq";
 export { genkitConfigs } from "./configs/genkit";
 export { gitHubCopilotConfigs } from "./configs/github-copilot";
 export { langchainConfigs } from "./configs/langchain";
+export { piCodingAgentConfigs } from "./configs/pi-coding-agent";
 
 // Re-export orchestrion configuration types
 // Note: ModuleMetadata and FunctionQuery are properties of InstrumentationConfig,

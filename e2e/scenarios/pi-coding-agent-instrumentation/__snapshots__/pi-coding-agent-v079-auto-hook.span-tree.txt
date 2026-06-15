@@ -1,0 +1,121 @@
+span_tree:
+└── pi-coding-agent-root [task]
+    metadata: {
+      "scenario": "pi-coding-agent-instrumentation"
+    }
+    └── pi-coding-agent-prompt-operation
+        metadata: {
+          "operation": "prompt"
+        }
+        └── AgentSession.prompt [task]
+            input: "Use the bash tool to run `printf pi_tool_ok` exactly once, then reply with exactly PI_CODING_AGENT_OK and include the command output."
+            output: [
+              {
+                "finish_reason": "stop",
+                "index": 0,
+                "message": {
+                  "content": "PI_CODING_AGENT_OK\n\nCommand output: `pi_tool_ok`",
+                  "role": "assistant"
+                }
+              }
+            ]
+            metadata: {
+              "model": "claude-haiku-4-5",
+              "pi_coding_agent.api": "anthropic-messages",
+              "pi_coding_agent.model": "claude-haiku-4-5",
+              "pi_coding_agent.operation": "AgentSession.prompt",
+              "pi_coding_agent.source": "rpc",
+              "provider": "anthropic"
+            }
+            metrics: {
+              "completion_tokens": 160,
+              "duration": 0,
+              "prompt_cache_creation_tokens": 0,
+              "prompt_cached_tokens": 0,
+              "prompt_tokens": 9048,
+              "tokens": 9208
+            }
+            ├── anthropic.messages.create [llm]
+            │   input: [
+            │     {
+            │       "content": "You are an expert coding assistant operating inside pi, a coding agent harness. You help users by reading files, executing commands, editing code, and writing new files.\n\nAvailable tools:\n- bash: Execute bash commands (ls, grep, find, etc.)\n\nIn addition to the tools above, you may have access to other custom tools depending on the project.\n\nGuidelines:\n- Use bash for file operations like ls, rg, find\n- Be concise in your responses\n- Show file paths clearly when working with files\n\nPi documentation (read only when the user asks about pi itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: <repo>/e2e/.bt-tmp/scenario-deps/pi-coding-agent-instrumentation-locked-0c3eb72dc7a20ce8/node_modules/.pnpm/@earendil-works+pi-coding-agent@0.79.1_ws@8.21.0_zod@4.4.3/node_modules/@earendil-works/pi-coding-agent/README.md\n- Additional docs: <repo>/e2e/.bt-tmp/scenario-deps/pi-coding-agent-instrumentation-locked-0c3eb72dc7a20ce8/node_modules/.pnpm/@earendil-works+pi-coding-agent@0.79.1_ws@8.21.0_zod@4.4.3/node_modules/@earendil-works/pi-coding-agent/docs\n- Examples: <repo>/e2e/.bt-tmp/scenario-deps/pi-coding-agent-instrumentation-locked-0c3eb72dc7a20ce8/node_modules/.pnpm/@earendil-works+pi-coding-agent@0.79.1_ws@8.21.0_zod@4.4.3/node_modules/@earendil-works/pi-coding-agent/examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), pi packages (docs/packages.md)\n- When working on pi topics, read the docs and examples, and follow .md cross-references before implementing\n- Always read pi .md files completely and follow links to related docs (e.g., tui.md for TUI API details)\n\n<project_context>\n\nProject-specific instructions and guidelines:\n\n<project_instructions path=\"<repo>/AGENTS.md\">\n# Braintrust JavaScript SDK Monorepo\n\nTypeScript SDKs and integrations for Braintrust. Uses `pnpm` workspaces.\n\n## Repository Structure\n\n```text\n.\n├── js/             # Main `braintrust` package\n├── integrations/   # Integration packages (@braintrust/*)\n├── e2e/            # End-to-end scenario tests (mock server + subprocess isolation)\n├── docs/           # Docs and reference material\n└── internal/       # Internal test fixtures and golden projects\n```\n\n## Setup\n\n```bash\nmise install        # Install toolchain and dependencies\n```\n\n## Build\n\n```bash\npnpm run build      # Build all workspace packages (from repo root)\n```\n\n## Testing\n\nUses Vitest. Prefer running the **narrowest relevant test** rather than the full suite.\n\n**From `js/` directory:**\n\n```bash\npnpm test                         # Core vitest suite (excludes wrappers)\npnpm test -- -t \"test name\"       # Filter by test name\npnpm run test:checks              # Hermetic tests (core + vitest wrapper)\n```\n\n**E2E tests (`e2e/`):**\n\nEach scenario runs the SDK in a subprocess against a mock Braintrust server and snapshots the results. No API keys required for replay; recording needs provider keys.\n\n```bash\npnpm run test:e2e                 # Run all e2e scenarios (from repo root)\npnpm run test:e2e:update          # Update e2e snapshots without re-recording cassettes\npnpm run test:e2e:record          # Re-record provider cassettes and update snapshots\n```\n\nWhen adding or modifying e2e tests, run the relevant e2e verification twice before stopping so flakes are caught proactively. After running `pnpm run test:e2e:update` or `pnpm run test:e2e:record`, always run the normal e2e tests afterward to verify there is no snapshot drift or unstable output.\n\nSpan-tree snapshots are paired: `*.span-tree.json` is the structural contract, and `*.span-tree.txt` is the human-readable ASCII tree generated from the same normalized spans. Both files are asserted and should be updated together through `pnpm run test:e2e:update` or `pnpm run test:e2e:record`; do not hand-edit only one side of the pair.\n\n**From repo root:**\n\n```bash\npnpm run test       # Run all workspace tests via turbo\n```\n\n## Linting & Formatting\n\nRun from the repo root. **Always run `fix:formatting` before committing** — there is a pre-commit hook that will reject unformatted code.\n\n```bash\npnpm run formatting      # Check formatting (prettier)\npnpm run lint            # Run eslint checks\npnpm run fix:formatting  # Auto-fix formatting\npnpm run fix:lint        # Auto-fix eslint issues\n```\n\n</project_instructions>\n\n</project_context>\n\nCurrent date: <timestamp>\nCurrent working directory: <repo>/e2e/scenarios/pi-coding-agent-instrumentation/",
+            │       "role": "system"
+            │     },
+            │     {
+            │       "content": [
+            │         {
+            │           "text": "Use the bash tool to run `printf pi_tool_ok` exactly once, then reply with exactly PI_CODING_AGENT_OK and include the command output.",
+            │           "type": "text"
+            │         }
+            │       ],
+            │       "role": "user"
+            │     },
+            │     {
+            │       "content": null,
+            │       "role": "assistant",
+            │       "tool_calls": [
+            │         {
+            │           "function": {
+            │             "arguments": "{\"command\":\"printf pi_tool_ok\"}",
+            │             "name": "bash"
+            │           },
+            │           "id": "<span:1>",
+            │           "type": "function"
+            │         }
+            │       ]
+            │     },
+            │     {
+            │       "content": [
+            │         {
+            │           "text": "pi_tool_ok",
+            │           "type": "text"
+            │         }
+            │       ],
+            │       "role": "tool",
+            │       "tool_call_id": "<tool-call-id>"
+            │     }
+            │   ]
+            │   output: [
+            │     {
+            │       "finish_reason": "stop",
+            │       "index": 0,
+            │       "message": {
+            │         "content": "PI_CODING_AGENT_OK\n\nCommand output: `pi_tool_ok`",
+            │         "role": "assistant"
+            │       }
+            │     }
+            │   ]
+            │   metadata: {
+            │     "model": "claude-haiku-4-5",
+            │     "pi_coding_agent.api": "anthropic-messages",
+            │     "pi_coding_agent.model": "claude-haiku-4-5",
+            │     "pi_coding_agent.operation": "agent.streamFn",
+            │     "pi_coding_agent.stop_reason": "stop",
+            │     "provider": "anthropic"
+            │   }
+            │   metrics: {
+            │     "completion_tokens": 23,
+            │     "duration": 0,
+            │     "prompt_cache_creation_tokens": 0,
+            │     "prompt_cached_tokens": 0,
+            │     "prompt_tokens": 2299,
+            │     "time_to_first_token": 0,
+            │     "tokens": 2322
+            │   }
+            └── bash [tool]
+                input: {
+                  "command": "printf pi_tool_ok"
+                }
+                output: {
+                  "content": [
+                    {
+                      "text": "pi_tool_ok",
+                      "type": "text"
+                    }
+                  ]
+                }
+                metadata: {
+                  "gen_ai.tool.call.id": "<tool-call-id>",
+                  "gen_ai.tool.name": "bash",
+                  "pi_coding_agent.tool.name": "bash"
+                }
