@@ -59,7 +59,9 @@ export function wrapLocalClaudeToolHandler(
     const runWithResolvedParent = async () => {
       const parent =
         toolUseId && localToolParentResolver
-          ? await localToolParentResolver(toolUseId).catch(() => undefined)
+          ? await localToolParentResolver(toolUseId, {
+              preferTaskSiblingParent: true,
+            }).catch(() => undefined)
           : undefined;
       const span = startSpan({
         event: {

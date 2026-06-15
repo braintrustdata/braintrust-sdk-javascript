@@ -71,10 +71,6 @@ function isSubAgentDelegationToolName(toolName: string): boolean {
   return toolName === "Agent" || toolName === "Task";
 }
 
-function shouldParentToolAsTaskSibling(toolName: string): boolean {
-  return toolName === "Agent" || toolName === "Task" || toolName === "Bash";
-}
-
 function filterSerializableOptions(
   options: ClaudeAgentSDKQueryOptions,
 ): Record<string, unknown> {
@@ -534,7 +530,7 @@ function createToolTracingHooks(
       name: parsed.displayName,
       parent: await resolveParentSpan(toolUseID, {
         agentId: input.agent_id,
-        preferTaskSiblingParent: shouldParentToolAsTaskSibling(parsed.toolName),
+        preferTaskSiblingParent: true,
       }),
       spanAttributes: { type: SpanTypeAttribute.TOOL },
     });
@@ -1504,12 +1500,16 @@ export class ClaudeAgentSDKPlugin extends BasePlugin {
               : null);
           const parentKey = llmParentKey(parentToolUseId);
           const activeLlmSpan = activeLlmSpansByParentToolUse.get(parentKey);
+          const latestLlmParent = parentToolUseId
+            ? latestLlmParentBySubAgentToolUse.get(parentToolUseId)
+            : latestRootLlmParentRef.value;
 
-          if (context?.preferTaskSiblingParent) {
-            // Built-in Claude tools should be siblings of the driving LLM turn,
-            // but we still materialize that LLM span first so trace ordering
-            // reflects that the tool call was produced by the model.
-            if (!activeLlmSpan) {
+          if (context?.preferTaskSiblingParent || parentToolUseId) {
+            // Built-in root tools and sub-agent tools should be siblings of the
+            // driving LLM turn, but we still materialize that LLM span first so
+            // trace ordering reflects that the tool call was produced by the
+            // model.
+            if (!activeLlmSpan && !latestLlmParent) {
               await ensureActiveLlmSpanForParentToolUse(
                 span,
                 activeLlmSpansByParentToolUse,
@@ -1540,10 +1540,8 @@ export class ClaudeAgentSDKPlugin extends BasePlugin {
           }
 
           if (parentToolUseId) {
-            const parentLlm =
-              latestLlmParentBySubAgentToolUse.get(parentToolUseId);
-            if (parentLlm) {
-              return parentLlm;
+            if (latestLlmParent) {
+              return latestLlmParent;
             }
 
             const subAgentSpan = await ensureSubAgentSpan(
@@ -1556,8 +1554,8 @@ export class ClaudeAgentSDKPlugin extends BasePlugin {
             return subAgentSpan.export();
           }
 
-          if (latestRootLlmParentRef.value) {
-            return latestRootLlmParentRef.value;
+          if (latestLlmParent) {
+            return latestLlmParent;
           }
 
           return span.export();

@@ -514,9 +514,11 @@ describe("provider wrapper", () => {
   test("Claude Agent SDK keeps parented user tool results in sub-agent conversation history", async () => {
     const rootPrompt = "Delegate the calculation.";
     const subAgentPrompt = "Use the calculator to add 15 and 27.";
+    let capturedOptions: any;
     const wrappedSDK = wrapClaudeAgentSDK({
-      query: () =>
-        (async function* () {
+      query: (params: any) => {
+        capturedOptions = params.options;
+        return (async function* () {
           yield {
             type: "assistant",
             message: {
@@ -590,13 +592,45 @@ describe("provider wrapper", () => {
             type: "result",
             usage: { input_tokens: 1, output_tokens: 3 },
           };
-        })(),
+        })();
+      },
     });
 
-    for await (const _message of wrappedSDK.query({
+    for await (const message of wrappedSDK.query({
       prompt: rootPrompt,
       options: { model: "test-model" },
     } as any)) {
+      if (
+        message.type === "assistant" &&
+        message.message?.id === "sub-agent-tool-call"
+      ) {
+        await new Promise<void>((resolve) => setTimeout(resolve, 0));
+        await capturedOptions.hooks.PreToolUse.at(-1).hooks[0](
+          {
+            hook_event_name: "PreToolUse",
+            tool_name: "mcp__calculator__calculator",
+            tool_input: { a: 15, b: 27, operation: "add" },
+            session_id: "test-session",
+            transcript_path: "/tmp/transcript",
+            cwd: "/tmp",
+          },
+          "calculator-tool-use",
+          { signal: new AbortController().signal },
+        );
+        await capturedOptions.hooks.PostToolUse.at(-1).hooks[0](
+          {
+            hook_event_name: "PostToolUse",
+            tool_name: "mcp__calculator__calculator",
+            tool_input: { a: 15, b: 27, operation: "add" },
+            tool_response: "42",
+            session_id: "test-session",
+            transcript_path: "/tmp/transcript",
+            cwd: "/tmp",
+          },
+          "calculator-tool-use",
+          { signal: new AbortController().signal },
+        );
+      }
     }
 
     const spans = await backgroundLogger.drain();
@@ -638,6 +672,115 @@ describe("provider wrapper", () => {
       },
     ]);
     expect(JSON.stringify(finalSubAgentLlm?.input)).not.toContain(rootPrompt);
+
+    const subAgentSpan = spans.find(
+      (span: any) => span.span_attributes.name === "Agent: math specialist",
+    );
+    const calculatorToolSpan = spans.find(
+      (span: any) =>
+        span.span_attributes.name === "tool: calculator/calculator",
+    );
+    expect(calculatorToolSpan?.span_parents).toEqual([subAgentSpan?.span_id]);
+  });
+
+  test("Claude Agent SDK does not create duplicate LLM spans for late built-in tool hooks", async () => {
+    let capturedOptions: any;
+    const rootPrompt = "Delegate to an echo agent.";
+    const toolUseID = "agent-tool-use";
+    const wrappedSDK = wrapClaudeAgentSDK({
+      query: (params: any) => {
+        capturedOptions = params.options;
+        return (async function* () {
+          yield {
+            type: "assistant",
+            message: {
+              id: "root-assistant",
+              role: "assistant",
+              content: [
+                {
+                  id: toolUseID,
+                  input: {
+                    description: "echo greeting",
+                    prompt: "Run a bash echo command.",
+                    subagent_type: "echo",
+                  },
+                  name: "Agent",
+                  type: "tool_use",
+                },
+              ],
+              usage: { input_tokens: 1, output_tokens: 1 },
+            },
+          };
+          yield {
+            type: "user",
+            parent_tool_use_id: toolUseID,
+            message: {
+              role: "user",
+              content: [{ text: "Run a bash echo command.", type: "text" }],
+            },
+          };
+          yield {
+            type: "result",
+            usage: { input_tokens: 1, output_tokens: 1 },
+          };
+        })();
+      },
+    });
+
+    for await (const message of wrappedSDK.query({
+      prompt: rootPrompt,
+      options: { model: "test-model" },
+    } as any)) {
+      if (message.type === "user" && message.parent_tool_use_id === toolUseID) {
+        await new Promise<void>((resolve) => setTimeout(resolve, 0));
+        await capturedOptions.hooks.PreToolUse.at(-1).hooks[0](
+          {
+            hook_event_name: "PreToolUse",
+            tool_name: "Agent",
+            tool_input: {
+              description: "echo greeting",
+              prompt: "Run a bash echo command.",
+              subagent_type: "echo",
+            },
+            session_id: "test-session",
+            transcript_path: "/tmp/transcript",
+            cwd: "/tmp",
+          },
+          toolUseID,
+          { signal: new AbortController().signal },
+        );
+      }
+    }
+
+    const spans = await backgroundLogger.drain();
+    const taskSpan = spans.find(
+      (span: any) => span.span_attributes.name === "Claude Agent",
+    );
+    const rootLlmSpans = spans.filter(
+      (span: any) =>
+        span.span_attributes.name === "anthropic.messages.create" &&
+        span.span_parents?.includes(taskSpan?.span_id),
+    );
+
+    expect(rootLlmSpans).toHaveLength(1);
+    expect(rootLlmSpans[0]?.input).toEqual([
+      {
+        content: rootPrompt,
+        role: "user",
+      },
+    ]);
+    expect(rootLlmSpans[0]?.output).toMatchObject([
+      {
+        content: [
+          {
+            id: toolUseID,
+            name: "Agent",
+            type: "tool_use",
+          },
+        ],
+        role: "assistant",
+      },
+    ]);
   });
 
   test("Claude Agent SDK injects tracing hooks while preserving user hooks", async () => {

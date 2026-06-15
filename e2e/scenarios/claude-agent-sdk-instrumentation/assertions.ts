@@ -472,11 +472,14 @@ export function defineClaudeAgentSDKInstrumentationAssertions(options: {
           events,
           "calculator-local-handler-multiply",
         ) ?? findToolSpanByOperation(events, "multiply");
+      const toolParent = findSpanById(events, tool?.span.parentIds[0]);
 
       expect(operation).toBeDefined();
       expect(task).toBeDefined();
       expect(llm).toBeDefined();
       expect(tool).toBeDefined();
+      expect(toolParent?.span.id).toBe(task?.span.id);
+      expect(tool?.span.parentIds).not.toContain(llm?.span.id ?? "");
       expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
     });
 
@@ -643,14 +646,9 @@ export function defineClaudeAgentSDKInstrumentationAssertions(options: {
       });
       expect(nestedTaskLlmInputText).toBe(handoffToolInput?.prompt);
       expect(nestedTaskLlmInputText).not.toBe(taskRoot?.input);
-      if (tool) {
-        expect(tool.span.parentIds).not.toContain(taskRoot?.span.id ?? "");
-        if (toolParent?.span.type === "llm") {
-          expect(toolParent.span.parentIds).not.toContain(
-            taskRoot?.span.id ?? "",
-          );
-        }
-      }
+      expect(tool).toBeDefined();
+      expect(toolParent?.span.id).toBe(nestedTask?.span.id);
+      expect(tool?.span.parentIds).not.toContain(nestedTaskLlm?.span.id ?? "");
     });
 
     if (options.expectTaskLifecycleDetails) {
@@ -739,6 +737,7 @@ export function defineClaudeAgentSDKInstrumentationAssertions(options: {
       const tool =
         findToolSpanByLocalHandler(events, "calculator-local-handler-divide") ??
         findToolSpanByOperation(events, "divide");
+      const toolParent = findSpanById(events, tool?.span.parentIds[0]);
 
       expect(operation).toBeDefined();
       expect(task).toBeDefined();
@@ -746,6 +745,8 @@ export function defineClaudeAgentSDKInstrumentationAssertions(options: {
       if (tool) {
         expect(tool.row.error).toBe("division by zero");
       }
+      expect(toolParent?.span.id).toBe(task?.span.id);
+      expect(tool?.span.parentIds).not.toContain(llm?.span.id ?? "");
     });
 
     test("matches the shared span tree snapshot", testConfig, async () => {
