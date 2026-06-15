@@ -1,3 +1,4 @@
+import { debugLogger } from "../../debug-logger";
 import type { IsoChannelHandlers, IsoTracingChannel } from "../../isomorph";
 import {
   _internalGetGlobalState,
@@ -205,8 +206,7 @@ function startSpanForEvent<
       metadata: mergeInputMetadata(metadata, spanInfoMetadata),
     });
   } catch (error) {
-    // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-    console.error(`Error extracting input for ${channelName}:`, error);
+    debugLogger.error(`Error extracting input for ${channelName}:`, error);
   }
 
   return { span, startTime };
@@ -226,8 +226,10 @@ function shouldTraceEvent<
   try {
     return config.shouldTrace(event.arguments, event);
   } catch (error) {
-    // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-    console.error(`Error checking trace predicate for ${channelName}:`, error);
+    debugLogger.error(
+      `Error checking trace predicate for ${channelName}:`,
+      error,
+    );
     return true;
   }
 }

@@ -1,4 +1,12 @@
-import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import {
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 import {
   _exportsForTestingOnly,
   currentSpan,
@@ -116,5 +124,38 @@ describe("traceAsyncChannel current span binding", () => {
 
     const spans = await backgroundLogger.drain();
     expect(spans).toHaveLength(0);
+  });
+
+  it("uses debug logging when shouldTrace throws", async () => {
+    const consoleErrorSpy = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+    const unsubscribe = traceAsyncChannel(testChannels.asyncCall, {
+      name: "channel-tracing-test",
+      shouldTrace: () => {
+        throw new Error("predicate failed");
+      },
+      type: "function",
+      extractInput: () => ({
+        input: "input",
+        metadata: undefined,
+      }),
+      extractOutput: (result) => result,
+      extractMetrics: () => ({}),
+    });
+
+    try {
+      await testChannels.asyncCall.tracePromise(
+        async () => ({ ok: true as const }),
+        { arguments: [{}] } as any,
+      );
+    } finally {
+      unsubscribe();
+    }
+
+    expect(consoleErrorSpy).not.toHaveBeenCalled();
+
+    const spans = await backgroundLogger.drain();
+    expect(spans).toHaveLength(1);
   });
 });
