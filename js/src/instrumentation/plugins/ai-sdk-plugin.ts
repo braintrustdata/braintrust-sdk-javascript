@@ -6,7 +6,11 @@ import {
   unsubscribeAll,
 } from "../core/channel-tracing";
 import { isAsyncIterable } from "../core/stream-patcher";
-import { SpanTypeAttribute, isPromiseLike } from "../../../util/index";
+import {
+  SpanTypeAttribute,
+  isObject,
+  isPromiseLike,
+} from "../../../util/index";
 import { getCurrentUnixTimestamp } from "../../util";
 import { Attachment, type Span, withCurrent } from "../../logger";
 import {
@@ -1103,10 +1107,10 @@ function prepareAISDKChildTracing(
           },
         });
 
+        const streamStartTime = getCurrentUnixTimestamp();
         const result = await withCurrent(span, () =>
           Reflect.apply(originalDoStream, resolvedModel, [options]),
         );
-        const streamStartTime = getCurrentUnixTimestamp();
         let firstChunkTime: number | undefined;
         const output: Record<string, unknown> = {};
         let text = "";
@@ -1116,7 +1120,10 @@ function prepareAISDKChildTracing(
 
         const transformStream = new TransformStream({
           transform(chunk: AISDKModelStreamChunk, controller) {
-            if (firstChunkTime === undefined) {
+            if (
+              firstChunkTime === undefined &&
+              isAISDKContentStreamChunk(chunk)
+            ) {
               firstChunkTime = getCurrentUnixTimestamp();
             }
 
@@ -1365,6 +1372,107 @@ function finalizeAISDKChildTracing(event?: { [key: string]: unknown }): void {
   }
 }
 
+function extractAISDKStreamPart(chunk: unknown): unknown {
+  if (!isObject(chunk) || !isObject(chunk.part)) {
+    return chunk;
+  }
+
+  return chunk.part;
+}
+
+function stringContent(value: unknown): string | undefined {
+  return typeof value === "string" && value.length > 0 ? value : undefined;
+}
+
+function rawValueHasAISDKContent(value: unknown): boolean {
+  if (value === undefined || value === null) {
+    return false;
+  }
+
+  if (typeof value === "string") {
+    return value.length > 0;
+  }
+
+  if (!isObject(value)) {
+    return true;
+  }
+
+  if (
+    stringContent(value.content) ||
+    stringContent(value.text) ||
+    (isObject(value.delta) && stringContent(value.delta.content)) ||
+    (Array.isArray(value.choices) &&
+      value.choices.some(
+        (choice) =>
+          isObject(choice) &&
+          isObject(choice.delta) &&
+          stringContent(choice.delta.content),
+      ))
+  ) {
+    return true;
+  }
+
+  const type = value.type;
+  return (
+    typeof type === "string" &&
+    type !== "start" &&
+    type !== "stream-start" &&
+    type !== "response-metadata"
+  );
+}
+
+function isAISDKContentStreamChunk(chunk: unknown): boolean {
+  const part = extractAISDKStreamPart(chunk);
+  if (typeof part === "string") {
+    return part.length > 0;
+  }
+
+  if (!isObject(part) || typeof part.type !== "string") {
+    return false;
+  }
+
+  switch (part.type) {
+    case "text-delta":
+      return (
+        stringContent(part.textDelta) !== undefined ||
+        stringContent(part.delta) !== undefined ||
+        stringContent(part.text) !== undefined ||
+        stringContent(part.content) !== undefined
+      );
+    case "reasoning-delta":
+      return (
+        stringContent(part.delta) !== undefined ||
+        stringContent(part.text) !== undefined ||
+        stringContent(part.content) !== undefined
+      );
+    case "tool-input-start":
+    case "tool-call":
+    case "tool-result":
+    case "object":
+      return true;
+    case "tool-input-delta":
+    case "tool-call-delta":
+      return (
+        stringContent(part.delta) !== undefined ||
+        stringContent(part.text) !== undefined ||
+        stringContent(part.content) !== undefined
+      );
+    case "raw":
+      return rawValueHasAISDKContent(part.rawValue);
+    default:
+      return false;
+  }
+}
+
+function isAISDKContentAsyncIterableChunk(chunk: unknown): boolean {
+  if (isAISDKContentStreamChunk(chunk)) {
+    return true;
+  }
+
+  const part = extractAISDKStreamPart(chunk);
+  return isObject(part) && typeof part.type !== "string";
+}
+
 function patchAISDKStreamingResult(args: {
   defaultDenyOutputPaths: string[];
   endEvent: { denyOutputPaths?: string[]; [key: string]: unknown };
@@ -1387,7 +1495,10 @@ function patchAISDKStreamingResult(args: {
     const wrappedBaseStream = resultRecord.baseStream.pipeThrough(
       new TransformStream({
         transform(chunk, controller) {
-          if (firstChunkTime === undefined) {
+          if (
+            firstChunkTime === undefined &&
+            isAISDKContentStreamChunk(chunk)
+          ) {
             firstChunkTime = getCurrentUnixTimestamp();
           }
           controller.enqueue(chunk);
@@ -1441,8 +1552,11 @@ function patchAISDKStreamingResult(args: {
 
   let firstChunkTime: number | undefined;
   const wrappedStream = createPatchedAsyncIterable(streamField.stream, {
-    onChunk: () => {
-      if (firstChunkTime === undefined) {
+    onChunk: (chunk) => {
+      if (
+        firstChunkTime === undefined &&
+        isAISDKContentAsyncIterableChunk(chunk)
+      ) {
         firstChunkTime = getCurrentUnixTimestamp();
       }
     },
