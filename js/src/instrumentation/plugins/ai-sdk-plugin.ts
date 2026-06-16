@@ -1461,7 +1461,7 @@ function isAISDKContentStreamChunk(chunk: unknown): boolean {
     return false;
   }
 
-  // TTFT should ignore framing like stream-start, metadata, and text-start.
+  // TTFT should ignore framing like stream-start, metadata, and text/tool starts.
   switch (part.type) {
     case "text-delta":
       return (
@@ -1476,7 +1476,6 @@ function isAISDKContentStreamChunk(chunk: unknown): boolean {
         stringContent(part.text) !== undefined ||
         stringContent(part.content) !== undefined
       );
-    case "tool-input-start":
     case "tool-call":
     case "tool-result":
     case "object":

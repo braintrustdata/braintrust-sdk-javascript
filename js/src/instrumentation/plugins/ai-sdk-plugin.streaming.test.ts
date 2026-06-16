@@ -155,7 +155,7 @@ describe("AI SDK streaming instrumentation", () => {
     expect(doStreamSpan?.output?.text).toBe("DELAYED");
   });
 
-  test("streamText time_to_first_token counts streamed tool-call arguments", async () => {
+  test("streamText time_to_first_token counts streamed tool input arguments", async () => {
     expect(await backgroundLogger.drain()).toHaveLength(0);
 
     const contentDelayMs = 80;
@@ -166,6 +166,11 @@ describe("AI SDK streaming instrumentation", () => {
           start(controller) {
             controller.enqueue({ type: "stream-start", warnings: [] });
             controller.enqueue({ type: "text-start", id: "ignored-text" });
+            controller.enqueue({
+              type: "tool-input-start",
+              id: "call-1",
+              toolName: "lookup",
+            });
           },
           async pull(controller) {
             if (sentContent) {
@@ -176,11 +181,9 @@ describe("AI SDK streaming instrumentation", () => {
             sentContent = true;
             await sleep(contentDelayMs);
             controller.enqueue({
-              type: "tool-call-delta",
-              toolCallType: "function",
-              toolCallId: "call-1",
-              toolName: "lookup",
-              argsTextDelta: '{"query"',
+              type: "tool-input-delta",
+              id: "call-1",
+              inputTextDelta: '{"query"',
             });
             controller.close();
           },
