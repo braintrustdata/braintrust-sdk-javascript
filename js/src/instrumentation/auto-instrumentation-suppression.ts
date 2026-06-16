@@ -43,23 +43,6 @@ export function runWithAutoInstrumentationSuppressed<R>(callback: () => R): R {
   );
 }
 
-export function enterAutoInstrumentationSuppressed(): () => void {
-  const frame = {
-    id: Symbol("braintrust.auto-instrumentation-suppress"),
-    mode: "suppress" as const,
-  };
-  suppressionStore().enterWith({
-    frames: [...currentFrames(), frame],
-  });
-
-  return () => {
-    const frames = currentFrames().filter(
-      (candidate) => candidate.id !== frame.id,
-    );
-    suppressionStore().enterWith(frames.length > 0 ? { frames } : undefined);
-  };
-}
-
 export function bindAutoInstrumentationSuppressionToStart<T>(
   tracingChannel: Pick<IsoTracingChannel<T>, "start">,
 ): (() => void) | undefined {
