@@ -1,9 +1,6 @@
 import iso from "../../isomorph";
 
-type LocalToolParentResolver = (
-  toolUseId: string,
-  context?: { agentId?: string; preferTaskSiblingParent?: boolean },
-) => Promise<string>;
+type LocalToolParentResolver = (toolUseId: string) => Promise<string>;
 
 export type ClaudeAgentSDKLocalToolContext = {
   resolveLocalToolParent?: LocalToolParentResolver;

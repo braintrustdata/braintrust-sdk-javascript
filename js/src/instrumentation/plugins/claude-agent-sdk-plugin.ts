@@ -40,7 +40,7 @@ type ParsedToolName = {
 };
 type ParentSpanResolver = (
   toolUseID: string,
-  context?: { agentId?: string; preferTaskSiblingParent?: boolean },
+  context?: { agentId?: string },
 ) => Promise<string>;
 type LLMSpanResult = {
   finalMessage: ClaudeConversationMessage | undefined;
@@ -530,7 +530,6 @@ function createToolTracingHooks(
       name: parsed.displayName,
       parent: await resolveParentSpan(toolUseID, {
         agentId: input.agent_id,
-        preferTaskSiblingParent: true,
       }),
       spanAttributes: { type: SpanTypeAttribute.TOOL },
     });
@@ -1504,46 +1503,22 @@ export class ClaudeAgentSDKPlugin extends BasePlugin {
             ? latestLlmParentBySubAgentToolUse.get(parentToolUseId)
             : latestRootLlmParentRef.value;
 
-          if (context?.preferTaskSiblingParent || parentToolUseId) {
-            // Built-in root tools and sub-agent tools should be siblings of the
-            // driving LLM turn, but we still materialize that LLM span first so
-            // trace ordering reflects that the tool call was produced by the
-            // model.
-            if (!activeLlmSpan && !latestLlmParent) {
-              await ensureActiveLlmSpanForParentToolUse(
-                span,
-                activeLlmSpansByParentToolUse,
-                subAgentDetailsByToolUseId,
-                activeToolSpans,
-                subAgentSpans,
-                parentToolUseId,
-                getCurrentUnixTimestamp(),
-              );
-            }
-
-            if (parentToolUseId) {
-              const subAgentSpan = await ensureSubAgentSpan(
-                subAgentDetailsByToolUseId,
-                span,
-                activeToolSpans,
-                subAgentSpans,
-                parentToolUseId,
-              );
-              return subAgentSpan.export();
-            }
-
-            return span.export();
-          }
-
-          if (activeLlmSpan) {
-            return activeLlmSpan.export();
+          // Tool spans should be siblings of the driving LLM turn, but we still
+          // materialize that LLM span first so trace ordering reflects that the
+          // tool call was produced by the model.
+          if (!activeLlmSpan && !latestLlmParent) {
+            await ensureActiveLlmSpanForParentToolUse(
+              span,
+              activeLlmSpansByParentToolUse,
+              subAgentDetailsByToolUseId,
+              activeToolSpans,
+              subAgentSpans,
+              parentToolUseId,
+              getCurrentUnixTimestamp(),
+            );
           }
 
           if (parentToolUseId) {
-            if (latestLlmParent) {
-              return latestLlmParent;
-            }
-
             const subAgentSpan = await ensureSubAgentSpan(
               subAgentDetailsByToolUseId,
               span,
@@ -1552,10 +1527,6 @@ export class ClaudeAgentSDKPlugin extends BasePlugin {
               parentToolUseId,
             );
             return subAgentSpan.export();
-          }
-
-          if (latestLlmParent) {
-            return latestLlmParent;
           }
 
           return span.export();
