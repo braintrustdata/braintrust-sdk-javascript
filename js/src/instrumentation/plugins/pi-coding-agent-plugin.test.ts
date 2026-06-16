@@ -436,6 +436,118 @@ describe("PiCodingAgentPlugin", () => {
     expect(llmSpan?.end).toHaveBeenCalledTimes(1);
   });
 
+  it("keeps queued follow-up prompts active until their deferred turn runs", async () => {
+    const plugin = new PiCodingAgentPlugin();
+    plugin.enable();
+
+    const handlers = handlersByName.get(
+      "orchestrion:@earendil-works/pi-coding-agent:AgentSession.prompt",
+    );
+    const subscriptions: Array<{
+      active: boolean;
+      listener: (event: any, signal: AbortSignal) => unknown;
+      unsubscribe: ReturnType<typeof vi.fn>;
+    }> = [];
+    const originalStreamFn = vi.fn(async () =>
+      makeStream(makeAssistantMessage("done")),
+    );
+    const agent = {
+      state: { model: anthropicModel() },
+      streamFn: originalStreamFn,
+      subscribe: vi.fn((listener) => {
+        const subscription = {
+          active: true,
+          listener,
+          unsubscribe: vi.fn(() => {
+            subscription.active = false;
+          }),
+        };
+        subscriptions.push(subscription);
+        return subscription.unsubscribe;
+      }),
+    };
+    const activeEvent = {
+      arguments: ["active prompt", undefined],
+      self: { agent, model: anthropicModel(), prompt: vi.fn() },
+    };
+    const queuedEvent = {
+      arguments: ["queued prompt", { streamingBehavior: "followUp" as const }],
+      self: { agent, model: anthropicModel(), prompt: vi.fn() },
+    };
+    const emit = async (event: any) => {
+      for (const subscription of subscriptions) {
+        if (subscription.active) {
+          await subscription.listener(event, new AbortController().signal);
+        }
+      }
+    };
+
+    handlers.start(activeEvent);
+    const sharedWrappedStreamFn = agent.streamFn;
+    const activeStream = await agent.streamFn(anthropicModel(), {
+      messages: [{ role: "user", content: "active prompt" }],
+    });
+    await activeStream.result();
+
+    handlers.start(queuedEvent);
+    await handlers.asyncEnd(queuedEvent);
+
+    const rootSpans = spans.filter(
+      (span) => span.name === "AgentSession.prompt",
+    );
+    expect(rootSpans[1]?.end).not.toHaveBeenCalled();
+    expect(agent.streamFn).toBe(sharedWrappedStreamFn);
+    expect(subscriptions[1]?.active).toBe(true);
+
+    await emit({
+      message: makeAssistantMessage("active done"),
+      toolResults: [],
+      turnIndex: 0,
+      type: "turn_end",
+    });
+    await handlers.asyncEnd(activeEvent);
+
+    expect(rootSpans[0]?.end).toHaveBeenCalledTimes(1);
+    expect(rootSpans[1]?.end).not.toHaveBeenCalled();
+    expect(agent.streamFn).toBe(sharedWrappedStreamFn);
+
+    const queuedStream = await agent.streamFn(anthropicModel(), {
+      messages: [{ role: "user", content: "queued prompt" }],
+    });
+    await queuedStream.result();
+    await emit({
+      args: { command: "printf pi_tool_ok" },
+      toolCallId: "tool-queued",
+      toolName: "bash",
+      type: "tool_execution_start",
+    });
+    await emit({
+      isError: false,
+      result: { stdout: "pi_tool_ok" },
+      toolCallId: "tool-queued",
+      toolName: "bash",
+      type: "tool_execution_end",
+    });
+    await emit({
+      message: makeAssistantMessage("queued done"),
+      toolResults: [],
+      turnIndex: 1,
+      type: "turn_end",
+    });
+
+    const llmInputs = spans
+      .filter((span) => span.name === "anthropic.messages.create")
+      .map((span) => span.args.event.input);
+    expect(llmInputs).toEqual([
+      [{ role: "user", content: "active prompt" }],
+      [{ role: "user", content: "queued prompt" }],
+    ]);
+    expect(spans.filter((span) => span.name === "bash")).toHaveLength(1);
+    expect(rootSpans[1]?.end).toHaveBeenCalledTimes(1);
+    expect(subscriptions[1]?.unsubscribe).toHaveBeenCalledTimes(1);
+    expect(agent.streamFn).toBe(originalStreamFn);
+  });
+
   it("restores streamFn and ends open spans on error", async () => {
     const plugin = new PiCodingAgentPlugin();
     plugin.enable();

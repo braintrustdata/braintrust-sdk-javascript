@@ -41,15 +41,21 @@ type PiPromptState = {
   activeLlmSpans: Set<PiLlmSpanState>;
   activeToolSpans: Map<string, PiToolSpanState>;
   agent: PiAgent;
+  deferCompletionUntilTurnEnd: boolean;
   finalized: boolean;
   metrics: Record<string, number>;
   metadata: Record<string, unknown>;
   output?: unknown;
+  promptCallEnded: boolean;
+  promptText?: string;
+  queued: boolean;
   restoreAutoInstrumentationSuppression?: () => void;
   restorePromptContext?: () => void;
+  sawStreamFn: boolean;
   span: Span;
   startTime: number;
   streamPatchState: PiStreamPatchState;
+  turnEnded: boolean;
   unsubscribeAgent?: () => void;
 };
 
@@ -69,7 +75,9 @@ type PiToolSpanState = {
 type PiStreamPatchState = {
   activePromptStates: Set<PiPromptState>;
   agent: PiAgent;
+  eventPromptState?: PiPromptState;
   originalStreamFn: PiStreamFn;
+  queuedPromptStates: PiPromptState[];
   wrappedStreamFn: PiStreamFn;
 };
 
@@ -120,6 +128,20 @@ export class PiCodingAgentPlugin extends BasePlugin {
           return;
         }
         states.delete(event);
+        state.promptCallEnded = true;
+        if (
+          !state.finalized &&
+          state.deferCompletionUntilTurnEnd &&
+          !state.turnEnded
+        ) {
+          if (!state.sawStreamFn) {
+            state.queued = true;
+            if (!state.streamPatchState.queuedPromptStates.includes(state)) {
+              state.streamPatchState.queuedPromptStates.push(state);
+            }
+          }
+          return;
+        }
         await finalizePiPromptRun(state);
       },
       error: async (event) => {
@@ -172,18 +194,28 @@ function startPiPromptRun(
   const restoreAutoInstrumentationSuppression =
     enterAutoInstrumentationSuppressed();
   const streamPatchState = installPiStreamPatch(agent);
+  const options = event.arguments[1];
+  const promptText = event.arguments[0];
 
   const state: PiPromptState = {
     activeLlmSpans: new Set(),
     activeToolSpans: new Map(),
     agent,
+    deferCompletionUntilTurnEnd:
+      options?.streamingBehavior === "followUp" ||
+      options?.streamingBehavior === "steer",
     finalized: false,
     metadata,
     metrics: {},
+    promptCallEnded: false,
+    ...(typeof promptText === "string" ? { promptText } : {}),
+    queued: false,
     span,
     restoreAutoInstrumentationSuppression,
+    sawStreamFn: false,
     startTime: getCurrentUnixTimestamp(),
     streamPatchState,
+    turnEnded: false,
   };
   state.restorePromptContext = enterPiPromptContext(state);
   streamPatchState.activePromptStates.add(state);
@@ -270,6 +302,7 @@ function installPiStreamPatch(agent: PiAgent): PiStreamPatchState {
     activePromptStates: new Set<PiPromptState>(),
     agent,
     originalStreamFn: agent.streamFn,
+    queuedPromptStates: [],
     wrappedStreamFn: agent.streamFn,
   } satisfies PiStreamPatchState;
   patchState.wrappedStreamFn = makeSharedInstrumentedStreamFn(patchState);
@@ -280,9 +313,48 @@ function installPiStreamPatch(agent: PiAgent): PiStreamPatchState {
 
 function resolveStreamPromptState(
   patchState: PiStreamPatchState,
+  context: PiContext,
 ): PiPromptState | undefined {
+  let lastUserText: string | undefined;
+  if (Array.isArray(context.messages)) {
+    for (let i = context.messages.length - 1; i >= 0; i--) {
+      const message = context.messages[i];
+      if (isPiUserMessage(message)) {
+        if (typeof message.content === "string") {
+          lastUserText = message.content;
+        } else {
+          lastUserText = message.content
+            .flatMap((part) => (part.type === "text" ? [part.text] : []))
+            .join("");
+        }
+        break;
+      }
+    }
+  }
+
+  if (lastUserText !== undefined) {
+    const queuedMatch = patchState.queuedPromptStates.find(
+      (state) => state.promptText === lastUserText,
+    );
+    if (queuedMatch) {
+      return queuedMatch;
+    }
+
+    const matches = [...patchState.activePromptStates].filter(
+      (state) => state.promptText === lastUserText,
+    );
+    if (matches.length === 1) {
+      return matches[0];
+    }
+  }
+
   const contextState = currentPiPromptState();
-  if (contextState && patchState.activePromptStates.has(contextState)) {
+  if (
+    contextState &&
+    patchState.activePromptStates.has(contextState) &&
+    (!contextState.queued ||
+      (lastUserText !== undefined && contextState.promptText === lastUserText))
+  ) {
     return contextState;
   }
 
@@ -302,7 +374,7 @@ function makeSharedInstrumentedStreamFn(
     context: PiContext,
     options?: PiSimpleStreamOptions,
   ) {
-    const state = resolveStreamPromptState(patchState);
+    const state = resolveStreamPromptState(patchState, context);
     if (!state) {
       const invokeOriginal = () =>
         Reflect.apply(patchState.originalStreamFn, this, [
@@ -315,6 +387,9 @@ function makeSharedInstrumentedStreamFn(
         : invokeOriginal();
     }
 
+    state.sawStreamFn = true;
+    removeQueuedPromptState(state);
+    state.streamPatchState.eventPromptState = state;
     const llmState = await startPiLlmSpan(state, model, context, options);
     try {
       const stream = await runWithAutoInstrumentationSuppressed(() =>
@@ -494,6 +569,22 @@ async function handlePiAgentEvent(
   state: PiPromptState,
   event: PiAgentEvent,
 ): Promise<void> {
+  if (state.finalized) {
+    return;
+  }
+  const eventPromptState = state.streamPatchState.eventPromptState;
+  if (eventPromptState && eventPromptState !== state) {
+    return;
+  }
+  if (
+    !eventPromptState &&
+    (state.queued ||
+      (state.streamPatchState.activePromptStates.size > 1 &&
+        currentPiPromptState() !== state))
+  ) {
+    return;
+  }
+
   switch (event.type) {
     case "message_end":
       if (isPiAssistantMessage(event.message)) {
@@ -501,9 +592,16 @@ async function handlePiAgentEvent(
       }
       return;
     case "turn_end":
+      state.turnEnded = true;
       if (isPiAssistantMessage(event.message)) {
         state.output = extractAssistantOutput(event.message);
         addMetrics(state.metrics, extractUsageMetrics(event.message.usage));
+      }
+      if (state.streamPatchState.eventPromptState === state) {
+        state.streamPatchState.eventPromptState = undefined;
+      }
+      if (state.promptCallEnded && state.deferCompletionUntilTurnEnd) {
+        await finalizePiPromptRun(state);
       }
       return;
     case "tool_execution_start":
@@ -627,6 +725,10 @@ async function finalizePiPromptRun(
 function restorePiStreamFn(state: PiPromptState): void {
   const patchState = state.streamPatchState;
   patchState.activePromptStates.delete(state);
+  removeQueuedPromptState(state);
+  if (patchState.eventPromptState === state) {
+    patchState.eventPromptState = undefined;
+  }
   state.restorePromptContext?.();
 
   if (patchState.activePromptStates.size > 0) {
@@ -637,6 +739,15 @@ function restorePiStreamFn(state: PiPromptState): void {
     patchState.agent.streamFn = patchState.originalStreamFn;
   }
   piStreamPatchStates.delete(patchState.agent);
+}
+
+function removeQueuedPromptState(state: PiPromptState): void {
+  state.queued = false;
+  const queuedPromptStates = state.streamPatchState.queuedPromptStates;
+  const index = queuedPromptStates.indexOf(state);
+  if (index >= 0) {
+    queuedPromptStates.splice(index, 1);
+  }
 }
 
 async function finishOpenLlmSpans(
