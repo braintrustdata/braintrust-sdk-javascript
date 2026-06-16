@@ -1477,8 +1477,8 @@ function isAISDKContentStreamChunk(chunk: unknown): boolean {
         stringContent(part.content) !== undefined
       );
     case "tool-call":
-    case "tool-result":
     case "object":
+    case "file":
       return true;
     case "tool-input-delta":
     case "tool-call-delta":
