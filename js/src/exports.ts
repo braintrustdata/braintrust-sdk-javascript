@@ -169,6 +169,7 @@ export {
 } from "./wrappers/oai";
 
 export {
+  braintrustAISDKTelemetry,
   wrapAISDK,
   wrapAgentClass,
   BraintrustMiddleware,

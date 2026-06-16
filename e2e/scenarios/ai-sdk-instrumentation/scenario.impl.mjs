@@ -82,6 +82,27 @@ export const AI_SDK_SCENARIO_SPECS = [
     toolSchemaKey: "inputSchema",
     wrapperEntry: "scenario.ts",
   },
+  {
+    autoEntry: "scenario.ai-sdk-v7.mjs",
+    dependencyName: "ai-sdk-v7",
+    maxTokensKey: "maxOutputTokens",
+    openaiModuleName: "ai-sdk-openai-v7",
+    packageName: "ai-sdk-v7",
+    snapshotName: "ai-sdk-v7",
+    supportsDenyOutputOverrideScenario: false,
+    supportsEmbedMany: true,
+    supportsGenerateObject: true,
+    supportsOpenAICacheScenario: false,
+    supportsOutputObjectScenario: true,
+    supportsProviderCacheAssertions: false,
+    supportsRerank: false,
+    supportsStreamObject: true,
+    supportsToolExecution: true,
+    toolSchemaKey: "inputSchema",
+    wrapperEntry: "scenario.ai-sdk-v7.ts",
+    wrapperSnapshotSuffix: "explicit",
+    wrapperTestName: "explicit telemetry",
+  },
 ];
 
 function tokenLimit(key, value) {
@@ -211,6 +232,12 @@ async function runAISDKInstrumentationScenario(
       : undefined;
   const sdkMajorVersion = parseMajorVersion(options.sdkVersion);
   const supportsRichInputScenarios = sdkMajorVersion >= 5;
+  const supportsDenyOutputOverrideScenario =
+    options.supportsDenyOutputOverrideScenario ?? supportsRichInputScenarios;
+  const supportsOpenAICacheScenario =
+    options.supportsOpenAICacheScenario ?? sdkMajorVersion >= 5;
+  const supportsOutputObjectScenario =
+    options.supportsOutputObjectScenario ?? true;
   const outputObject = createOutputObjectIfSupported(options.ai);
 
   await runTracedScenario({
@@ -224,7 +251,7 @@ async function runAISDKInstrumentationScenario(
         });
       });
 
-      if (outputObject) {
+      if (outputObject && supportsOutputObjectScenario) {
         if (sdkMajorVersion >= 5) {
           await runOperation(
             "ai-sdk-output-object-response-format-operation",
@@ -331,7 +358,7 @@ async function runAISDKInstrumentationScenario(
         await instrumentedAI.generateText(toolRequest);
       });
 
-      if (sdkMajorVersion >= 5) {
+      if (supportsOpenAICacheScenario) {
         const prompt = `${CACHE_PROMPT_PREFIX}\n\nReply with exactly CACHE_OK and nothing else.`;
         const openaiCacheRequest = {
           model: openaiModel,
@@ -403,7 +430,7 @@ async function runAISDKInstrumentationScenario(
         );
       }
 
-      if (supportsRichInputScenarios) {
+      if (supportsDenyOutputOverrideScenario) {
         await runOperation(
           "ai-sdk-deny-output-override-operation",
           "deny-output-override",

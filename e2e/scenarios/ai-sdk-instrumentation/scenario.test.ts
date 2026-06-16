@@ -33,12 +33,18 @@ describe.concurrent("variants", () => {
   for (const scenario of aiSDKScenarios) {
     const sdkMajorVersion = parseMajorVersion(scenario.version);
     const supportsRichInputScenarios = sdkMajorVersion >= 5;
-    const supportsOutputObjectScenario = supportsRichInputScenarios;
+    const supportsDenyOutputOverrideScenario =
+      scenario.supportsDenyOutputOverrideScenario ?? supportsRichInputScenarios;
+    const supportsOpenAICacheAssertions =
+      (scenario.supportsOpenAICacheScenario ?? supportsRichInputScenarios) &&
+      sdkMajorVersion >= 5;
+    const supportsOutputObjectScenario =
+      scenario.supportsOutputObjectScenario ?? supportsRichInputScenarios;
 
     describe.sequential(`ai sdk ${scenario.version}`, () => {
       defineAISDKInstrumentationAssertions({
         agentSpanName: scenario.agentSpanName,
-        name: "wrapped instrumentation",
+        name: scenario.wrapperTestName ?? "wrapped instrumentation",
         runScenario: async ({ runScenarioDir }) => {
           await runScenarioDir({
             entry: scenario.wrapperEntry,
@@ -50,10 +56,11 @@ describe.concurrent("variants", () => {
             timeoutMs: AI_SDK_SCENARIO_TIMEOUT_MS,
           });
         },
-        snapshotName: `${scenario.snapshotName}-wrapped`,
+        snapshotName: `${scenario.snapshotName}-${scenario.wrapperSnapshotSuffix ?? "wrapped"}`,
+        supportsOpenAICacheAssertions,
         supportsProviderCacheAssertions:
           scenario.supportsProviderCacheAssertions,
-        supportsDenyOutputOverrideScenario: supportsRichInputScenarios,
+        supportsDenyOutputOverrideScenario,
         supportsEmbedMany: scenario.supportsEmbedMany !== false,
         supportsGenerateObject: scenario.supportsGenerateObject,
         supportsOutputObjectScenario,
@@ -81,9 +88,10 @@ describe.concurrent("variants", () => {
           });
         },
         snapshotName: `${scenario.snapshotName}-auto-hook`,
+        supportsOpenAICacheAssertions,
         supportsProviderCacheAssertions:
           scenario.supportsProviderCacheAssertions,
-        supportsDenyOutputOverrideScenario: supportsRichInputScenarios,
+        supportsDenyOutputOverrideScenario,
         supportsEmbedMany: scenario.supportsEmbedMany !== false,
         supportsGenerateObject: scenario.supportsGenerateObject,
         supportsOutputObjectScenario,

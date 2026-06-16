@@ -1,10 +1,22 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
+const telemetryMocks = vi.hoisted(() => ({
+  braintrustAISDKTelemetry: vi.fn(),
+  telemetry: {} as {
+    executeTool?: ReturnType<typeof vi.fn>;
+    onStart?: ReturnType<typeof vi.fn>;
+  },
+}));
+
 // Mock iso's newTracingChannel - must be before any imports that use it
 vi.mock("../../isomorph", () => ({
   default: {
     newTracingChannel: vi.fn(),
   },
+}));
+
+vi.mock("../../wrappers/ai-sdk/telemetry", () => ({
+  braintrustAISDKTelemetry: telemetryMocks.braintrustAISDKTelemetry,
 }));
 
 import { AISDKPlugin } from "./ai-sdk-plugin";
@@ -13,6 +25,13 @@ import iso from "../../isomorph";
 import { serializeAISDKToolsForLogging } from "../../wrappers/ai-sdk/tool-serialization";
 
 const mockNewTracingChannel = iso.newTracingChannel as ReturnType<typeof vi.fn>;
+type MockTracingChannel = {
+  handlers: any[];
+  hasSubscribers: boolean;
+  subscribe: ReturnType<typeof vi.fn>;
+  unsubscribe: ReturnType<typeof vi.fn>;
+};
+const mockChannels = new Map<string, MockTracingChannel>();
 
 // Import private functions by re-exporting them in the test
 // Since these are private, we'll test them through the public API
@@ -22,13 +41,33 @@ describe("AISDKPlugin", () => {
   let plugin: AISDKPlugin;
 
   beforeEach(() => {
-    // Setup mock channel
-    const mockChannel = {
-      subscribe: vi.fn(),
-      unsubscribe: vi.fn(),
-      hasSubscribers: false,
+    mockChannels.clear();
+    telemetryMocks.telemetry = {
+      executeTool: vi.fn(({ execute }) => execute()),
+      onStart: vi.fn(),
     };
-    mockNewTracingChannel.mockReturnValue(mockChannel);
+    telemetryMocks.braintrustAISDKTelemetry.mockReturnValue(
+      telemetryMocks.telemetry,
+    );
+    mockNewTracingChannel.mockImplementation((name: string) => {
+      const channel: MockTracingChannel = {
+        handlers: [],
+        hasSubscribers: false,
+        subscribe: vi.fn((handlers: any) => {
+          channel.handlers.push(handlers);
+          channel.hasSubscribers = true;
+        }),
+        unsubscribe: vi.fn((handlers: any) => {
+          channel.handlers = channel.handlers.filter(
+            (candidate) => candidate !== handlers,
+          );
+          channel.hasSubscribers = channel.handlers.length > 0;
+          return true;
+        }),
+      };
+      mockChannels.set(name, channel);
+      return channel;
+    });
 
     plugin = new AISDKPlugin();
   });
@@ -80,6 +119,81 @@ describe("AISDKPlugin", () => {
       // Verify that unsubscribers were called
       // This is tested indirectly - if it doesn't throw, unsubscribe worked
       expect(true).toBe(true);
+    });
+  });
+
+  describe("AI SDK v7 telemetry dispatcher", () => {
+    it("patches dispatcher callbacks through the standard channel", async () => {
+      const existingOnStart = vi.fn();
+      const originalExecute = vi.fn(async () => "done");
+      const existingExecuteTool = vi.fn(({ execute }) => execute());
+      const dispatcher = {
+        executeTool: existingExecuteTool,
+        onStart: existingOnStart,
+      };
+
+      plugin.enable();
+
+      const channel = mockChannels.get(
+        "orchestrion:ai:createTelemetryDispatcher",
+      );
+      expect(channel?.subscribe).toHaveBeenCalledTimes(1);
+
+      channel?.handlers[0]?.end({
+        arguments: [{ telemetry: { recordInputs: true } }],
+        result: dispatcher,
+      });
+
+      await dispatcher.onStart({
+        callId: "call-1",
+        operationId: "ai.generateText",
+      });
+      expect(existingOnStart).toHaveBeenCalledTimes(1);
+      expect(telemetryMocks.telemetry.onStart).toHaveBeenCalledWith({
+        callId: "call-1",
+        operationId: "ai.generateText",
+      });
+
+      await expect(
+        dispatcher.executeTool({
+          callId: "call-1",
+          execute: originalExecute,
+          toolCallId: "tool-1",
+        }),
+      ).resolves.toBe("done");
+      expect(telemetryMocks.telemetry.executeTool).toHaveBeenCalledTimes(1);
+      expect(existingExecuteTool).toHaveBeenCalledTimes(1);
+      expect(originalExecute).toHaveBeenCalledTimes(1);
+    });
+
+    it("patches each dispatcher once and respects telemetry opt-out", () => {
+      const dispatcher = {
+        onStart: vi.fn(),
+      };
+
+      plugin.enable();
+
+      const channel = mockChannels.get(
+        "orchestrion:ai:createTelemetryDispatcher",
+      );
+      channel?.handlers[0]?.end({
+        arguments: [{ telemetry: {} }],
+        result: dispatcher,
+      });
+      const patchedOnStart = dispatcher.onStart;
+
+      channel?.handlers[0]?.end({
+        arguments: [{ telemetry: {} }],
+        result: dispatcher,
+      });
+      expect(dispatcher.onStart).toBe(patchedOnStart);
+
+      const optedOutDispatcher = {};
+      channel?.handlers[0]?.end({
+        arguments: [{ telemetry: { isEnabled: false } }],
+        result: optedOutDispatcher,
+      });
+      expect(optedOutDispatcher).not.toHaveProperty("onStart");
     });
   });
 });

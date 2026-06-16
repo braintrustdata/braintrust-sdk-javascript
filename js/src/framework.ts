@@ -410,6 +410,16 @@ export type {
   ReporterDef,
 } from "./reporters/types";
 
+async function getPersistedBaseExperimentId(
+  experiment: Experiment,
+): Promise<string | undefined> {
+  try {
+    return await experiment._getBaseExperimentId();
+  } catch {
+    return undefined;
+  }
+}
+
 function makeEvalName(projectName: string, experimentName?: string) {
   let out = projectName;
   if (experimentName) {
@@ -1636,9 +1646,17 @@ async function runEvaluatorInternal(
       }
     }
 
+    const comparisonExperimentId = experiment
+      ? (evaluator.baseExperimentId ??
+        (await getPersistedBaseExperimentId(experiment)))
+      : undefined;
+
     const summary = experiment
       ? await experiment.summarize({
           summarizeScores: evaluator.summarizeScores,
+          ...(comparisonExperimentId !== undefined
+            ? { comparisonExperimentId }
+            : {}),
         })
       : buildLocalSummary(
           evaluator,

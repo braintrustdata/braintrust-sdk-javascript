@@ -27,6 +27,7 @@
   "author": "Braintrust Data Inc.",
   "license": "MIT",
   "devDependencies": {
+    "@opentelemetry/context-async-hooks": "2.6.1",
     "@types/node": "^22.15.21",
     "braintrust": "workspace:*",
     "tsup": "^8.5.0",

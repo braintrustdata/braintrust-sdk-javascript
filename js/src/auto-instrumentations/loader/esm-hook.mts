@@ -79,6 +79,7 @@ export async function resolve(
     const packageName =
       getPackageName(resolvedModule.basedir) ?? resolvedModule.name;
     const normalizedModulePath = resolvedModule.path.replace(/\\/g, "/");
+    const version = getPackageVersion(resolvedModule.basedir);
 
     // Track files that need per-package source patches (see
     // loader/special-case-patches.ts). Anti-pattern fallback for SDKs we
@@ -94,8 +95,6 @@ export async function resolve(
     if (!packages?.has(packageName)) {
       return url;
     }
-
-    const version = getPackageVersion(resolvedModule.basedir);
 
     const transformer = instrumentator.getTransformer(
       packageName,

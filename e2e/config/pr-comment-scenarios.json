@@ -146,7 +146,8 @@
       { "variantKey": "ai-sdk-v3", "label": "v3" },
       { "variantKey": "ai-sdk-v4", "label": "v4" },
       { "variantKey": "ai-sdk-v5", "label": "v5" },
-      { "variantKey": "ai-sdk-v6", "label": "v6" }
+      { "variantKey": "ai-sdk-v6", "label": "v6" },
+      { "variantKey": "ai-sdk-v7", "label": "v7" }
     ]
   },
   {

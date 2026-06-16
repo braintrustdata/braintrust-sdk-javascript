@@ -274,15 +274,17 @@ function findStreamTrace(events: CapturedLogEvent[]) {
 function findEmbedTrace(events: CapturedLogEvent[]) {
   const operation = findLatestSpan(events, "ai-sdk-embed-operation");
   const parent = findParentSpan(events, "embed", operation?.span.id);
+  const child = findChildSpans(events, "doEmbed", parent?.span.id)[0];
 
-  return { operation, parent };
+  return { child, operation, parent };
 }
 
 function findEmbedManyTrace(events: CapturedLogEvent[]) {
   const operation = findLatestSpan(events, "ai-sdk-embed-many-operation");
   const parent = findParentSpan(events, "embedMany", operation?.span.id);
+  const child = findChildSpans(events, "doEmbed", parent?.span.id)[0];
 
-  return { operation, parent };
+  return { child, operation, parent };
 }
 
 function findRerankTrace(events: CapturedLogEvent[]) {
@@ -489,6 +491,11 @@ function normalizeAISDKSnapshotValue(value: unknown): unknown {
 
     if (key === "aiSdkVersion") {
       normalized[key] = "<ai-sdk-version>";
+      continue;
+    }
+
+    if (key === "callId" && typeof entry === "string") {
+      normalized[key] = "<callId>";
       continue;
     }
 
@@ -772,6 +779,7 @@ export function defineAISDKInstrumentationAssertions(options: {
   runScenario: RunAISDKScenario;
   sdkMajorVersion: number;
   snapshotName: string;
+  supportsOpenAICacheAssertions: boolean;
   supportsProviderCacheAssertions: boolean;
   supportsDenyOutputOverrideScenario: boolean;
   supportsEmbedMany: boolean;
@@ -841,7 +849,7 @@ export function defineAISDKInstrumentationAssertions(options: {
       ).toBe(true);
     });
 
-    if (options.sdkMajorVersion >= 5) {
+    if (options.supportsOpenAICacheAssertions) {
       test(
         "captures cache metrics for OpenAI generateText()",
         testConfig,
@@ -940,7 +948,7 @@ export function defineAISDKInstrumentationAssertions(options: {
       expectOperationParentedByRoot(trace.operation, root);
       expectAISDKParentSpan(trace.parent);
       expect(operationName(trace.operation)).toBe("embed");
-      expectEmbeddingTokenMetrics(trace.parent);
+      expectEmbeddingTokenMetrics(trace.child ?? trace.parent);
       const input = isRecord(trace.parent?.input) ? trace.parent.input : null;
       expect(typeof input?.value).toBe("string");
       const output = extractOutputRecord(trace.parent);
@@ -1242,7 +1250,9 @@ export function defineAISDKInstrumentationAssertions(options: {
     }
 
     test("matches the shared span tree snapshot", testConfig, async () => {
-      await matchSpanTreeSnapshot(events, spanSnapshotPath);
+      await matchSpanTreeSnapshot(events, spanSnapshotPath, {
+        normalize: { additionalProviderIdKeys: ["callId"] },
+      });
     });
   });
 }

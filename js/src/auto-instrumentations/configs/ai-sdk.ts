@@ -18,7 +18,7 @@ export const aiSDKConfigs: InstrumentationConfig[] = [
     channelName: aiSDKChannels.generateText.channelName,
     module: {
       name: "ai",
-      versionRange: ">=3.0.0",
+      versionRange: ">=3.0.0 <7.0.0",
       filePath: "dist/index.mjs",
     },
     functionQuery: {
@@ -30,7 +30,7 @@ export const aiSDKConfigs: InstrumentationConfig[] = [
     channelName: aiSDKChannels.generateText.channelName,
     module: {
       name: "ai",
-      versionRange: ">=3.0.0",
+      versionRange: ">=3.0.0 <7.0.0",
       filePath: "dist/index.js",
     },
     functionQuery: {
@@ -58,7 +58,7 @@ export const aiSDKConfigs: InstrumentationConfig[] = [
     channelName: aiSDKChannels.streamTextSync.channelName,
     module: {
       name: "ai",
-      versionRange: ">=4.0.0",
+      versionRange: ">=4.0.0 <7.0.0",
       filePath: "dist/index.mjs",
     },
     functionQuery: {
@@ -82,7 +82,7 @@ export const aiSDKConfigs: InstrumentationConfig[] = [
     channelName: aiSDKChannels.streamTextSync.channelName,
     module: {
       name: "ai",
-      versionRange: ">=4.0.0",
+      versionRange: ">=4.0.0 <7.0.0",
       filePath: "dist/index.js",
     },
     functionQuery: {
@@ -96,7 +96,7 @@ export const aiSDKConfigs: InstrumentationConfig[] = [
     channelName: aiSDKChannels.generateObject.channelName,
     module: {
       name: "ai",
-      versionRange: ">=3.0.0",
+      versionRange: ">=3.0.0 <7.0.0",
       filePath: "dist/index.mjs",
     },
     functionQuery: {
@@ -108,7 +108,7 @@ export const aiSDKConfigs: InstrumentationConfig[] = [
     channelName: aiSDKChannels.generateObject.channelName,
     module: {
       name: "ai",
-      versionRange: ">=3.0.0",
+      versionRange: ">=3.0.0 <7.0.0",
       filePath: "dist/index.js",
     },
     functionQuery: {
@@ -122,7 +122,7 @@ export const aiSDKConfigs: InstrumentationConfig[] = [
     channelName: aiSDKChannels.embed.channelName,
     module: {
       name: "ai",
-      versionRange: ">=3.0.0",
+      versionRange: ">=3.0.0 <7.0.0",
       filePath: "dist/index.mjs",
     },
     functionQuery: {
@@ -134,7 +134,7 @@ export const aiSDKConfigs: InstrumentationConfig[] = [
     channelName: aiSDKChannels.embed.channelName,
     module: {
       name: "ai",
-      versionRange: ">=3.0.0",
+      versionRange: ">=3.0.0 <7.0.0",
       filePath: "dist/index.js",
     },
     functionQuery: {
@@ -148,7 +148,7 @@ export const aiSDKConfigs: InstrumentationConfig[] = [
     channelName: aiSDKChannels.embedMany.channelName,
     module: {
       name: "ai",
-      versionRange: ">=3.0.0",
+      versionRange: ">=3.0.0 <7.0.0",
       filePath: "dist/index.mjs",
     },
     functionQuery: {
@@ -160,7 +160,7 @@ export const aiSDKConfigs: InstrumentationConfig[] = [
     channelName: aiSDKChannels.embedMany.channelName,
     module: {
       name: "ai",
-      versionRange: ">=3.0.0",
+      versionRange: ">=3.0.0 <7.0.0",
       filePath: "dist/index.js",
     },
     functionQuery: {
@@ -174,7 +174,7 @@ export const aiSDKConfigs: InstrumentationConfig[] = [
     channelName: aiSDKChannels.rerank.channelName,
     module: {
       name: "ai",
-      versionRange: ">=5.0.0",
+      versionRange: ">=5.0.0 <7.0.0",
       filePath: "dist/index.mjs",
     },
     functionQuery: {
@@ -186,12 +186,28 @@ export const aiSDKConfigs: InstrumentationConfig[] = [
     channelName: aiSDKChannels.rerank.channelName,
     module: {
       name: "ai",
-      versionRange: ">=5.0.0",
+      versionRange: ">=5.0.0 <7.0.0",
       filePath: "dist/index.js",
     },
     functionQuery: {
       functionName: "rerank",
       kind: "Async",
+    },
+  },
+
+  // AI SDK v7 exposes its telemetry lifecycle through a dispatcher created for
+  // each operation. We patch that dispatcher in the plugin instead of rewriting
+  // the module to call registerTelemetry().
+  {
+    channelName: aiSDKChannels.v7CreateTelemetryDispatcher.channelName,
+    module: {
+      name: "ai",
+      versionRange: ">=7.0.0-0 <8.0.0",
+      filePath: "dist/index.js",
+    },
+    functionQuery: {
+      functionName: "createTelemetryDispatcher",
+      kind: "Sync",
     },
   },
 
@@ -214,7 +230,7 @@ export const aiSDKConfigs: InstrumentationConfig[] = [
     channelName: aiSDKChannels.streamObjectSync.channelName,
     module: {
       name: "ai",
-      versionRange: ">=4.0.0",
+      versionRange: ">=4.0.0 <7.0.0",
       filePath: "dist/index.mjs",
     },
     functionQuery: {
@@ -238,7 +254,7 @@ export const aiSDKConfigs: InstrumentationConfig[] = [
     channelName: aiSDKChannels.streamObjectSync.channelName,
     module: {
       name: "ai",
-      versionRange: ">=4.0.0",
+      versionRange: ">=4.0.0 <7.0.0",
       filePath: "dist/index.js",
     },
     functionQuery: {

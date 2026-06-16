@@ -1063,6 +1063,7 @@ function clearTestBackgroundLogger() {
 function initTestExperiment(
   experimentName: string,
   projectName?: string,
+  experimentFullInfo: Record<string, unknown> = {},
 ): Experiment {
   setInitialTestState();
   const state = _internalGetGlobalState();
@@ -1071,7 +1072,11 @@ function initTestExperiment(
   const lazyMetadata: LazyValue<ProjectExperimentMetadata> = new LazyValue(
     async () => ({
       project: { id: project, name: project, fullInfo: {} },
-      experiment: { id: experimentName, name: experimentName, fullInfo: {} },
+      experiment: {
+        id: experimentName,
+        name: experimentName,
+        fullInfo: experimentFullInfo,
+      },
     }),
   );
 
@@ -6317,6 +6322,14 @@ export class Experiment
     })();
   }
 
+  public async _getBaseExperimentId(): Promise<string | undefined> {
+    const baseExperimentId = (await this.lazyMetadata.get()).experiment
+      .fullInfo["base_exp_id"];
+    return typeof baseExperimentId === "string" && baseExperimentId
+      ? baseExperimentId
+      : undefined;
+  }
+
   private parentObjectType() {
     return SpanObjectTypeV3.EXPERIMENT;
   }
@@ -6483,6 +6496,17 @@ export class Experiment
         if (baseExperiment !== null) {
           comparisonExperimentId = baseExperiment.id;
           comparisonExperimentName = baseExperiment.name;
+        }
+      } else {
+        try {
+          const comparisonExperiment = await state
+            .apiConn()
+            .get_json(`v1/experiment/${comparisonExperimentId}`);
+          if (typeof comparisonExperiment["name"] === "string") {
+            comparisonExperimentName = comparisonExperiment["name"];
+          }
+        } catch {
+          // If the explicit comparison name lookup fails, still summarize by ID.
         }
       }
 
