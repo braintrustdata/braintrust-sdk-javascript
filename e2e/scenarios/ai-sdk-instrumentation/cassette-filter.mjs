@@ -4,9 +4,6 @@ export const filter = [
   "default",
   {
     ignoreBodyFields: [
-      // Ignore all body fields — deterministic call order makes callIndex
-      // the sole discriminator, which is stable across SDK releases.
-      "**",
       // AI SDK volatile fields (change per-run)
       "experimental_generateMessageId",
       "messageId",

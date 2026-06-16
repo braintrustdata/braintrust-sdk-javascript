@@ -759,6 +759,91 @@ test("Eval with returnResults: true collects all results", async () => {
   expect(result.summary.scores.exact_match.score).toBe(1);
 });
 
+test("runEvaluator forwards baseExperimentId to summary", async () => {
+  await _exportsForTestingOnly.simulateLoginForTests();
+  const experiment = _exportsForTestingOnly.initTestExperiment(
+    "js-base-experiment-id",
+    "proj",
+  );
+  const expectedSummary = {
+    projectName: "proj",
+    experimentName: "js-base-experiment-id",
+    projectId: "proj",
+    experimentId: "js-base-experiment-id",
+    scores: {},
+    metrics: {},
+  };
+  const summarize = vi
+    .spyOn(experiment, "summarize")
+    .mockResolvedValue(expectedSummary);
+
+  const result = await runEvaluator(
+    experiment,
+    {
+      projectName: "proj",
+      evalName: "js-base-experiment-id",
+      data: [{ input: "hello", expected: "hello" }],
+      task: (input) => input,
+      scores: [],
+      baseExperimentId: "base-exp-id",
+    },
+    new NoopProgressReporter(),
+    [],
+    undefined,
+    undefined,
+    true,
+  );
+
+  expect(result.summary).toBe(expectedSummary);
+  expect(summarize).toHaveBeenCalledWith({
+    summarizeScores: undefined,
+    comparisonExperimentId: "base-exp-id",
+  });
+});
+
+test("runEvaluator forwards persisted baseExperimentName id to summary", async () => {
+  await _exportsForTestingOnly.simulateLoginForTests();
+  const experiment = _exportsForTestingOnly.initTestExperiment(
+    "js-base-experiment-name",
+    "proj",
+    { base_exp_id: "resolved-base-exp-id" },
+  );
+  const expectedSummary = {
+    projectName: "proj",
+    experimentName: "js-base-experiment-name",
+    projectId: "proj",
+    experimentId: "js-base-experiment-name",
+    scores: {},
+    metrics: {},
+  };
+  const summarize = vi
+    .spyOn(experiment, "summarize")
+    .mockResolvedValue(expectedSummary);
+
+  const result = await runEvaluator(
+    experiment,
+    {
+      projectName: "proj",
+      evalName: "js-base-experiment-name",
+      data: [{ input: "hello", expected: "hello" }],
+      task: (input) => input,
+      scores: [],
+      baseExperimentName: "base-exp",
+    },
+    new NoopProgressReporter(),
+    [],
+    undefined,
+    undefined,
+    true,
+  );
+
+  expect(result.summary).toBe(expectedSummary);
+  expect(summarize).toHaveBeenCalledWith({
+    summarizeScores: undefined,
+    comparisonExperimentId: "resolved-base-exp-id",
+  });
+});
+
 test("tags can be appended and logged to root span", async () => {
   await _exportsForTestingOnly.simulateLoginForTests();
   const memoryLogger = _exportsForTestingOnly.useTestBackgroundLogger();

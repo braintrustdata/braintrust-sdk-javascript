@@ -19,7 +19,7 @@
     "build": "tsup",
     "watch": "tsup --watch",
     "clean": "rm -rf dist/*",
-    "build:deps": "(cd ../../../.. && pnpm turbo run build --filter=braintrust --filter=@braintrust/otel)",
+    "build:deps": "(cd ../../.. && pnpm turbo run build --filter=braintrust --filter=@braintrust/otel)",
     "test": "pnpm run build:deps && vitest run"
   },
   "author": "Braintrust Data Inc.",

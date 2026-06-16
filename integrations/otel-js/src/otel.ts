@@ -4,6 +4,7 @@ import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
 import {
   context,
   Context,
+  diag,
   trace,
   TraceFlags,
   propagation,
@@ -200,6 +201,9 @@ interface BraintrustSpanProcessorOptions {
 }
 
 class LazyBraintrustOTLPTraceExporter implements SpanExporter {
+  private readonly diagLogger = diag.createComponentLogger({
+    namespace: "@braintrust/otel",
+  });
   private exporter?: OTLPTraceExporter;
   private exporterPromise?: Promise<OTLPTraceExporter>;
 
@@ -219,10 +223,77 @@ class LazyBraintrustOTLPTraceExporter implements SpanExporter {
     resultCallback: (result: ExportResult) => void,
   ): void {
     void this.getExporter()
-      .then((exporter) => exporter.export(spans, resultCallback))
+      .then((exporter) => {
+        const compatibleSpans = spans.map((span) => {
+          const spanWithCompatFields = span as ReadableSpan & {
+            instrumentationLibrary?: unknown;
+            instrumentationScope?: unknown;
+            parentSpanContext?: { spanId?: string; isRemote?: boolean };
+            parentSpanId?: string;
+          };
+          const instrumentationScope =
+            spanWithCompatFields.instrumentationScope ??
+            spanWithCompatFields.instrumentationLibrary;
+          const instrumentationLibrary =
+            spanWithCompatFields.instrumentationLibrary ??
+            spanWithCompatFields.instrumentationScope;
+          const parentSpanContext =
+            spanWithCompatFields.parentSpanContext ??
+            (spanWithCompatFields.parentSpanId
+              ? {
+                  ...span.spanContext(),
+                  spanId: spanWithCompatFields.parentSpanId,
+                  isRemote: false,
+                }
+              : undefined);
+          const parentSpanId =
+            spanWithCompatFields.parentSpanId ??
+            spanWithCompatFields.parentSpanContext?.spanId;
+
+          return new Proxy(span, {
+            get(target, prop) {
+              if (prop === "instrumentationScope") {
+                return instrumentationScope;
+              }
+              if (prop === "instrumentationLibrary") {
+                return instrumentationLibrary;
+              }
+              if (prop === "parentSpanContext") {
+                return parentSpanContext;
+              }
+              if (prop === "parentSpanId") {
+                return parentSpanId;
+              }
+
+              const value = Reflect.get(target, prop, target);
+              return typeof value === "function" ? value.bind(target) : value;
+            },
+            has(target, prop) {
+              return (
+                prop === "instrumentationScope" ||
+                prop === "instrumentationLibrary" ||
+                prop === "parentSpanContext" ||
+                prop === "parentSpanId" ||
+                prop in target
+              );
+            },
+          });
+        });
+
+        exporter.export(compatibleSpans, (result) => {
+          if (result.code !== 0) {
+            this.diagLogger.error(
+              "Braintrust OTLP span export failed",
+              result.error,
+            );
+          }
+          resultCallback(result);
+        });
+      })
       .catch((error) => {
         const errorObj =
           error instanceof Error ? error : new Error(String(error));
+        this.diagLogger.error("Braintrust OTLP span export failed", errorObj);
         resultCallback({ code: 1, error: errorObj });
       });
   }
