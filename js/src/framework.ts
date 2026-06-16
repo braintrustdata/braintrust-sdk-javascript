@@ -10,6 +10,7 @@ import {
 } from "../util/index";
 import {
   type GitMetadataSettingsType as GitMetadataSettings,
+  ObjectReference as ObjectReferenceSchema,
   type ObjectReferenceType as ObjectReference,
   type RepoInfoType as RepoInfo,
   type SSEProgressEventDataType as SSEProgressEventData,
@@ -1179,8 +1180,12 @@ async function runEvaluatorInternal(
           : Dataset.isDataset(evaluator.data)
             ? evaluator.data
             : undefined;
+        const inlineOrigin =
+          datum.origin === undefined
+            ? undefined
+            : ObjectReferenceSchema.parse(datum.origin);
         const origin =
-          datum.origin ??
+          inlineOrigin ??
           (eventDataset && datum.id && datum._xact_id
             ? {
                 object_type: "dataset",

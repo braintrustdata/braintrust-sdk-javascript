@@ -166,6 +166,68 @@ function makeTestScorer(
 }
 
 describe("runEvaluator", () => {
+  test("preserves a valid inline origin", async () => {
+    const origin: {
+      object_type: "dataset";
+      object_id: string;
+      id: string;
+      _xact_id: string;
+      created: string;
+    } = {
+      object_type: "dataset",
+      object_id: "00000000-0000-0000-0000-000000000001",
+      id: "dataset-row-1",
+      _xact_id: "100",
+      created: "2026-06-01T00:00:00.000Z",
+    };
+
+    const out = await runEvaluator(
+      null,
+      {
+        projectName: "proj",
+        evalName: "eval",
+        data: [{ input: 1, origin }],
+        task: async (input: number) => input * 2,
+        scores: [],
+      },
+      new NoopProgressReporter(),
+      [],
+      undefined,
+    );
+
+    expect(out.results[0].origin).toEqual(origin);
+  });
+
+  test("rejects an invalid inline origin", async () => {
+    const origin: {
+      object_type: "dataset";
+      object_id: string;
+      id: string;
+    } = {
+      object_type: "dataset",
+      object_id: "not-a-uuid",
+      id: "dataset-row-1",
+    };
+    const task = vi.fn(async (input: number) => input * 2);
+
+    await expect(
+      runEvaluator(
+        null,
+        {
+          projectName: "proj",
+          evalName: "eval",
+          data: [{ input: 1, origin }],
+          task,
+          scores: [],
+        },
+        new NoopProgressReporter(),
+        [],
+        undefined,
+      ),
+    ).rejects.toThrow();
+    expect(task).not.toHaveBeenCalled();
+  });
+
   describe("errors", () => {
     test("task errors generate no scores", async () => {
       const out = await runEvaluator(
