@@ -28,7 +28,7 @@
     "@braintrust/otel": "file:..",
     "@opentelemetry/api": "1.9.0",
     "@opentelemetry/context-async-hooks": "1.9.0",
-    "@opentelemetry/core": "1.9.0",
+    "@opentelemetry/core": "2.8.0",
     "@opentelemetry/exporter-trace-otlp-http": "0.57.2",
     "@opentelemetry/otlp-exporter-base": "0.57.2",
     "@opentelemetry/otlp-transformer": "0.57.2",
