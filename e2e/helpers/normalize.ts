@@ -15,6 +15,14 @@ type TokenMaps = {
   xacts: Map<string, string>;
 };
 
+export type NormalizeOptions = {
+  additionalProviderIdKeys?: Iterable<string>;
+};
+
+type ResolvedNormalizeOptions = {
+  providerIdKeys: Set<string>;
+};
+
 const ISO_DATE_REGEX = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$/;
 const ISO_DATE_SUBSTRING_REGEX =
   /(?<![A-Za-z0-9_-])\d{4}-\d{2}-\d{2}(?:[Tt ]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})?)?(?![A-Za-z0-9_-])/g;
@@ -205,6 +213,7 @@ function shouldNormalizeNodeInternalStyleCaller(
 function normalizeObject(
   value: { [key: string]: Json },
   tokenMaps: TokenMaps,
+  options: ResolvedNormalizeOptions,
 ): Json {
   const callerFilename =
     typeof value.caller_filename === "string"
@@ -227,7 +236,7 @@ function normalizeObject(
         }
       }
 
-      return [key, normalizeValue(entry as Json, tokenMaps, key)];
+      return [key, normalizeValue(entry as Json, tokenMaps, options, key)];
     }),
   );
 }
@@ -250,6 +259,7 @@ function tokenFor(
 function normalizeValue(
   value: Json,
   tokenMaps: TokenMaps,
+  options: ResolvedNormalizeOptions,
   currentKey?: string,
 ): Json {
   if (Array.isArray(value)) {
@@ -257,15 +267,15 @@ function normalizeValue(
       return value.map((entry) =>
         typeof entry === "string"
           ? tokenFor(tokenMaps.ids, entry, "span")
-          : normalizeValue(entry, tokenMaps),
+          : normalizeValue(entry, tokenMaps, options),
       );
     }
 
-    return value.map((entry) => normalizeValue(entry, tokenMaps));
+    return value.map((entry) => normalizeValue(entry, tokenMaps, options));
   }
 
   if (value && typeof value === "object") {
-    return normalizeObject(value, tokenMaps);
+    return normalizeObject(value, tokenMaps, options);
   }
 
   if (typeof value === "number") {
@@ -339,7 +349,7 @@ function normalizeValue(
       return tokenFor(tokenMaps.runs, value, "run");
     }
 
-    if (currentKey && PROVIDER_ID_KEYS.has(currentKey)) {
+    if (currentKey && options.providerIdKeys.has(currentKey)) {
       return tokenFor(tokenMaps.ids, value, currentKey);
     }
 
@@ -400,10 +410,28 @@ function normalizeValue(
   return value;
 }
 
-export function normalizeForSnapshot(value: Json): Json {
-  return normalizeValue(value, {
-    ids: new Map(),
-    runs: new Map(),
-    xacts: new Map(),
-  });
+function resolveNormalizeOptions(
+  options: NormalizeOptions | undefined,
+): ResolvedNormalizeOptions {
+  return {
+    providerIdKeys: new Set([
+      ...PROVIDER_ID_KEYS,
+      ...(options?.additionalProviderIdKeys ?? []),
+    ]),
+  };
+}
+
+export function normalizeForSnapshot(
+  value: Json,
+  options?: NormalizeOptions,
+): Json {
+  return normalizeValue(
+    value,
+    {
+      ids: new Map(),
+      runs: new Map(),
+      xacts: new Map(),
+    },
+    resolveNormalizeOptions(options),
+  );
 }

@@ -9,6 +9,10 @@ import type {
   AISDKRerankResult,
   AISDKResult,
 } from "../../vendor-sdk-types/ai-sdk";
+import type {
+  AISDKV7CreateTelemetryDispatcherArgs,
+  AISDKV7TelemetryDispatcher,
+} from "../../vendor-sdk-types/ai-sdk-v7-telemetry";
 
 type AISDKStreamResult = AISDKResult | AsyncIterable<unknown>;
 type AISDKChannelContext = {
@@ -135,5 +139,12 @@ export const aiSDKChannels = defineChannels("ai", {
   >({
     channelName: "ToolLoopAgent.stream",
     kind: "async",
+  }),
+  v7CreateTelemetryDispatcher: channel<
+    [AISDKV7CreateTelemetryDispatcherArgs],
+    AISDKV7TelemetryDispatcher
+  >({
+    channelName: "createTelemetryDispatcher",
+    kind: "sync-stream",
   }),
 });
