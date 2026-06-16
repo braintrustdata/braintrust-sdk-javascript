@@ -38,8 +38,8 @@
     "@types/nunjucks": "^3.2.6",
     "braintrust": "workspace:*",
     "tsup": "^8.5.1",
-    "typescript": "5.5.4",
-    "vitest": "4.1.5"
+    "typescript": "5.9.3",
+    "vitest": "4.1.8"
   },
   "repository": {
     "type": "git",
