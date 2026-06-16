@@ -140,6 +140,226 @@ describe("braintrustAISDKTelemetry", () => {
     expect(operation).not.toHaveProperty("output");
   });
 
+  it("ends open child spans when an operation errors", async () => {
+    const telemetry = braintrustAISDKTelemetry();
+    const callId = "call-error";
+    const error = new Error("provider exploded");
+
+    telemetry.onStart?.({
+      callId,
+      operationId: "ai.streamText",
+    });
+    telemetry.onLanguageModelCallStart?.({
+      callId,
+      provider: "openai",
+      modelId: "gpt-4.1-mini",
+      prompt: [{ role: "user", content: "Reply with OK." }],
+    });
+    telemetry.onObjectStepStart?.({
+      callId,
+      provider: "openai",
+      modelId: "gpt-4.1-mini",
+      promptMessages: [{ role: "user", content: "Return an object." }],
+    });
+    telemetry.onEmbedStart?.({
+      callId,
+      embedCallId: "embed-error",
+      operationId: "ai.embed",
+      provider: "openai",
+      modelId: "text-embedding-3-small",
+      values: ["hello"],
+    });
+    telemetry.onRerankStart?.({
+      callId,
+      provider: "cohere",
+      modelId: "rerank-v3.5",
+      documents: ["alpha", "beta"],
+      query: "alpha",
+      topN: 1,
+    });
+    telemetry.onToolExecutionStart?.({
+      callId,
+      toolCall: {
+        toolCallId: "tool-error",
+        toolName: "lookupWeather",
+        input: { city: "Vienna" },
+      },
+    });
+
+    telemetry.onError?.({ callId, error });
+
+    const spans = (await backgroundLogger.drain()) as Array<
+      Record<string, any>
+    >;
+    const errorSpans = spans.filter((span) =>
+      String(span.error).includes("provider exploded"),
+    );
+
+    expect(errorSpans).toHaveLength(6);
+    expect(errorSpans.map((span) => span.span_attributes?.name)).toEqual(
+      expect.arrayContaining([
+        "streamText",
+        "doStream",
+        "doGenerate",
+        "doEmbed",
+        "doRerank",
+        "lookupWeather",
+      ]),
+    );
+
+    telemetry.onLanguageModelCallEnd?.({ callId, text: "late" });
+    telemetry.onObjectStepFinish?.({ callId, objectText: "{}" });
+    telemetry.onEmbedFinish?.({
+      callId,
+      embedCallId: "embed-error",
+      operationId: "ai.embed",
+      embeddings: [[0.1]],
+    });
+    telemetry.onRerankFinish?.({
+      callId,
+      ranking: [{ index: 0, relevanceScore: 1 }],
+    });
+    telemetry.onToolExecutionEnd?.({
+      callId,
+      toolCall: { toolCallId: "tool-error", toolName: "lookupWeather" },
+      toolOutput: { type: "tool-result", output: "late" },
+    });
+    telemetry.onFinish?.({
+      callId,
+      operationId: "ai.streamText",
+      text: "late",
+    });
+
+    expect(await backgroundLogger.drain()).toHaveLength(0);
+  });
+
+  it("ends superseded retry child spans before successful finish", async () => {
+    const telemetry = braintrustAISDKTelemetry();
+
+    telemetry.onStart?.({
+      callId: "stream-retry",
+      operationId: "ai.streamText",
+    });
+    telemetry.onLanguageModelCallStart?.({
+      callId: "stream-retry",
+      messages: [{ role: "user", content: "first stream attempt" }],
+    });
+    telemetry.onLanguageModelCallStart?.({
+      callId: "stream-retry",
+      messages: [{ role: "user", content: "retry stream attempt" }],
+    });
+    telemetry.onLanguageModelCallEnd?.({
+      callId: "stream-retry",
+      text: "OK",
+    });
+    telemetry.onFinish?.({
+      callId: "stream-retry",
+      operationId: "ai.streamText",
+      text: "OK",
+    });
+
+    telemetry.onStart?.({
+      callId: "embed-retry",
+      operationId: "ai.embed",
+    });
+    telemetry.onEmbedStart?.({
+      callId: "embed-retry",
+      embedCallId: "embed-attempt-1",
+      operationId: "ai.embed.doEmbed",
+      values: ["first embed attempt"],
+    });
+    telemetry.onEmbedStart?.({
+      callId: "embed-retry",
+      embedCallId: "embed-attempt-2",
+      operationId: "ai.embed.doEmbed",
+      values: ["retry embed attempt"],
+    });
+    telemetry.onEmbedFinish?.({
+      callId: "embed-retry",
+      embedCallId: "embed-attempt-2",
+      operationId: "ai.embed.doEmbed",
+      embeddings: [[0.1]],
+    });
+    telemetry.onFinish?.({
+      callId: "embed-retry",
+      operationId: "ai.embed",
+      embedding: [0.1],
+    });
+
+    telemetry.onStart?.({
+      callId: "rerank-retry",
+      operationId: "ai.rerank",
+    });
+    telemetry.onRerankStart?.({
+      callId: "rerank-retry",
+      documents: ["first rerank attempt"],
+      query: "first",
+    });
+    telemetry.onRerankStart?.({
+      callId: "rerank-retry",
+      documents: ["retry rerank attempt"],
+      query: "retry",
+    });
+    telemetry.onRerankFinish?.({
+      callId: "rerank-retry",
+      ranking: [{ index: 0, relevanceScore: 1 }],
+    });
+    telemetry.onFinish?.({
+      callId: "rerank-retry",
+      operationId: "ai.rerank",
+      ranking: [{ originalIndex: 0, score: 1 }],
+    });
+
+    const spans = (await backgroundLogger.drain()) as Array<
+      Record<string, any>
+    >;
+    const streamSpans = spans.filter(
+      (span) => span.span_attributes?.name === "doStream",
+    );
+    const embedSpans = spans.filter(
+      (span) => span.span_attributes?.name === "doEmbed",
+    );
+    const rerankSpans = spans.filter(
+      (span) => span.span_attributes?.name === "doRerank",
+    );
+
+    expect(streamSpans).toHaveLength(2);
+    expect(
+      streamSpans.find((span) =>
+        JSON.stringify(span.input).includes("first stream attempt"),
+      ),
+    ).not.toHaveProperty("output");
+    expect(
+      streamSpans.find((span) =>
+        JSON.stringify(span.input).includes("retry stream attempt"),
+      )?.output,
+    ).toMatchObject({ text: "OK" });
+
+    expect(embedSpans).toHaveLength(2);
+    expect(
+      embedSpans.find((span) =>
+        JSON.stringify(span.input).includes("first embed attempt"),
+      ),
+    ).not.toHaveProperty("output");
+    expect(
+      embedSpans.find((span) =>
+        JSON.stringify(span.input).includes("retry embed attempt"),
+      ),
+    ).toHaveProperty("output");
+
+    expect(rerankSpans).toHaveLength(2);
+    expect(
+      rerankSpans.find((span) =>
+        JSON.stringify(span.input).includes("first rerank attempt"),
+      ),
+    ).not.toHaveProperty("output");
+    expect(
+      rerankSpans.find((span) =>
+        JSON.stringify(span.input).includes("retry rerank attempt"),
+      ),
+    ).toHaveProperty("output");
+  });
+
   it("runs tool execution under the tool span", async () => {
     const telemetry = braintrustAISDKTelemetry();
 

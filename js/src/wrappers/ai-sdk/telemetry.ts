@@ -36,9 +36,13 @@ type OperationState = {
   startTime: number;
 };
 
-type ToolSpanState = {
+type CallSpanState = {
   callId: string;
   span: Span;
+};
+
+type EmbedSpanState = CallSpanState & {
+  values: unknown[];
 };
 
 /**
@@ -49,9 +53,9 @@ export function braintrustAISDKTelemetry(): AISDKV7Telemetry {
   const operations = new Map<string, OperationState>();
   const modelSpans = new Map<string, Span[]>();
   const objectSpans = new Map<string, Span>();
-  const embedSpans = new Map<string, Span>();
+  const embedSpans = new Map<string, EmbedSpanState>();
   const rerankSpans = new Map<string, Span>();
-  const toolSpans = new Map<string, ToolSpanState>();
+  const toolSpans = new Map<string, CallSpanState>();
 
   const runSafely = (name: string, callback: () => void) => {
     try {
@@ -132,6 +136,14 @@ export function braintrustAISDKTelemetry(): AISDKV7Telemetry {
     onLanguageModelCallStart(event) {
       runSafely("onLanguageModelCallStart", () => {
         const state = operations.get(event.callId);
+        const openSpans = modelSpans.get(event.callId);
+        if (openSpans) {
+          for (const span of openSpans) {
+            span.end();
+          }
+          modelSpans.delete(event.callId);
+        }
+
         const span = startChildSpan(
           event.callId,
           state?.operationName === "streamText" ? "doStream" : "doGenerate",
@@ -182,6 +194,12 @@ export function braintrustAISDKTelemetry(): AISDKV7Telemetry {
     onObjectStepStart(event) {
       runSafely("onObjectStepStart", () => {
         const state = operations.get(event.callId);
+        const openSpan = objectSpans.get(event.callId);
+        if (openSpan) {
+          openSpan.end();
+          objectSpans.delete(event.callId);
+        }
+
         const span = startChildSpan(
           event.callId,
           state?.operationName === "streamObject" ? "doStream" : "doGenerate",
@@ -227,6 +245,18 @@ export function braintrustAISDKTelemetry(): AISDKV7Telemetry {
 
     onEmbedStart(event) {
       runSafely("onEmbedStart", () => {
+        const state = operations.get(event.callId);
+        for (const [embedCallId, embedState] of embedSpans) {
+          if (
+            embedState.callId === event.callId &&
+            (state?.operationName === "embed" ||
+              embedState.values === event.values)
+          ) {
+            embedState.span.end();
+            embedSpans.delete(embedCallId);
+          }
+        }
+
         const span = startChildSpan(
           event.callId,
           "doEmbed",
@@ -242,14 +272,18 @@ export function braintrustAISDKTelemetry(): AISDKV7Telemetry {
             metadata: metadataFromEvent(event),
           },
         );
-        embedSpans.set(event.embedCallId, span);
+        embedSpans.set(event.embedCallId, {
+          callId: event.callId,
+          span,
+          values: event.values,
+        });
       });
     },
 
     onEmbedFinish(event) {
       runSafely("onEmbedFinish", () => {
-        const span = embedSpans.get(event.embedCallId);
-        if (!span) {
+        const state = embedSpans.get(event.embedCallId);
+        if (!state) {
           return;
         }
 
@@ -257,7 +291,7 @@ export function braintrustAISDKTelemetry(): AISDKV7Telemetry {
           ...event,
           embeddings: event.embeddings,
         } as AISDKEmbeddingResult;
-        span.log({
+        state.span.log({
           ...(shouldRecordOutputs(event)
             ? {
                 output: processAISDKEmbeddingOutput(
@@ -268,13 +302,19 @@ export function braintrustAISDKTelemetry(): AISDKV7Telemetry {
             : {}),
           metrics: extractTokenMetrics(result),
         });
-        span.end();
+        state.span.end();
         embedSpans.delete(event.embedCallId);
       });
     },
 
     onRerankStart(event) {
       runSafely("onRerankStart", () => {
+        const openSpan = rerankSpans.get(event.callId);
+        if (openSpan) {
+          openSpan.end();
+          rerankSpans.delete(event.callId);
+        }
+
         const span = startChildSpan(
           event.callId,
           "doRerank",
@@ -439,13 +479,58 @@ export function braintrustAISDKTelemetry(): AISDKV7Telemetry {
           : {};
         const callId =
           typeof errorEvent.callId === "string" ? errorEvent.callId : undefined;
-        const state = callId ? operations.get(callId) : undefined;
+        if (!callId) {
+          return;
+        }
+
+        const state = operations.get(callId);
         if (!state) {
           return;
         }
-        logError(state.span, errorEvent.error ?? event);
+        const error = errorEvent.error ?? event;
+
+        const openModelSpans = modelSpans.get(callId);
+        if (openModelSpans) {
+          for (const span of openModelSpans) {
+            logError(span, error);
+            span.end();
+          }
+          modelSpans.delete(callId);
+        }
+
+        const openObjectSpan = objectSpans.get(callId);
+        if (openObjectSpan) {
+          logError(openObjectSpan, error);
+          openObjectSpan.end();
+          objectSpans.delete(callId);
+        }
+
+        for (const [embedCallId, embedState] of embedSpans) {
+          if (embedState.callId === callId) {
+            logError(embedState.span, error);
+            embedState.span.end();
+            embedSpans.delete(embedCallId);
+          }
+        }
+
+        const openRerankSpan = rerankSpans.get(callId);
+        if (openRerankSpan) {
+          logError(openRerankSpan, error);
+          openRerankSpan.end();
+          rerankSpans.delete(callId);
+        }
+
+        for (const [toolCallId, toolState] of toolSpans) {
+          if (toolState.callId === callId) {
+            logError(toolState.span, error);
+            toolState.span.end();
+            toolSpans.delete(toolCallId);
+          }
+        }
+
+        logError(state.span, error);
         state.span.end();
-        operations.delete(callId!);
+        operations.delete(callId);
       });
     },
 
