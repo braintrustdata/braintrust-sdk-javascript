@@ -825,6 +825,53 @@ test("dataset.toEvalData preserves dataset_snapshot_name", async () => {
   vi.restoreAllMocks();
 });
 
+test("experiment.summarize resolves explicit comparison experiment name", async () => {
+  const state = await _exportsForTestingOnly.simulateLoginForTests();
+  const memoryLogger = _exportsForTestingOnly.useTestBackgroundLogger();
+  const experiment = _exportsForTestingOnly.initTestExperiment(
+    "test-evaluator",
+    "test-project",
+  );
+
+  try {
+    const getJson = vi
+      .spyOn(state.apiConn(), "get_json")
+      .mockImplementation(async (path, args) => {
+        if (path === "v1/experiment/base-exp-id") {
+          return { name: "base-exp" };
+        }
+        if (path === "/experiment-comparison2") {
+          expect(args).toEqual({
+            experiment_id: "test-evaluator",
+            base_experiment_id: "base-exp-id",
+          });
+          return { scores: {}, metrics: {} };
+        }
+        throw new Error(`Unexpected get_json call: ${path}`);
+      });
+
+    const summary = await experiment.summarize({
+      comparisonExperimentId: "base-exp-id",
+    });
+
+    expect(summary.comparisonExperimentName).toBe("base-exp");
+    expect(getJson).toHaveBeenCalledWith("v1/experiment/base-exp-id");
+    expect(getJson).toHaveBeenCalledWith(
+      "/experiment-comparison2",
+      {
+        experiment_id: "test-evaluator",
+        base_experiment_id: "base-exp-id",
+      },
+      3,
+    );
+  } finally {
+    await memoryLogger.flush();
+    _exportsForTestingOnly.clearTestBackgroundLogger();
+    _exportsForTestingOnly.simulateLogoutForTests();
+    vi.restoreAllMocks();
+  }
+});
+
 test("dataset.version preserves pinned-version fast path", async () => {
   const state = await _exportsForTestingOnly.simulateLoginForTests();
   const login = vi.spyOn(state, "login").mockResolvedValue(state);
