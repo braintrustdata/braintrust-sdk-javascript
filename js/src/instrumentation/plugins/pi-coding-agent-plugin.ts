@@ -1,6 +1,9 @@
 import { BasePlugin } from "../core";
 import type { ChannelMessage } from "../core/channel-definitions";
-import type { IsoChannelHandlers } from "../../isomorph";
+import iso, {
+  type IsoAsyncLocalStorage,
+  type IsoChannelHandlers,
+} from "../../isomorph";
 import { debugLogger } from "../../debug-logger";
 import { startSpan } from "../../logger";
 import type { Span } from "../../logger";
@@ -41,13 +44,13 @@ type PiPromptState = {
   finalized: boolean;
   metrics: Record<string, number>;
   metadata: Record<string, unknown>;
-  originalStreamFn: PiStreamFn;
   output?: unknown;
   restoreAutoInstrumentationSuppression?: () => void;
+  restorePromptContext?: () => void;
   span: Span;
   startTime: number;
+  streamPatchState: PiStreamPatchState;
   unsubscribeAgent?: () => void;
-  wrappedStreamFn: PiStreamFn;
 };
 
 type PiLlmSpanState = {
@@ -62,6 +65,27 @@ type PiToolSpanState = {
   restoreAutoInstrumentation?: () => void;
   span: Span;
 };
+
+type PiStreamPatchState = {
+  activePromptStates: Set<PiPromptState>;
+  agent: PiAgent;
+  originalStreamFn: PiStreamFn;
+  wrappedStreamFn: PiStreamFn;
+};
+
+type PiPromptContextFrame = {
+  id: symbol;
+  state: PiPromptState;
+};
+
+type PiPromptContextState = {
+  frames: PiPromptContextFrame[];
+};
+
+const piStreamPatchStates = new WeakMap<PiAgent, PiStreamPatchState>();
+let piPromptContextStore:
+  | IsoAsyncLocalStorage<PiPromptContextState | undefined>
+  | undefined;
 
 export class PiCodingAgentPlugin extends BasePlugin {
   protected onEnable(): void {
@@ -147,6 +171,7 @@ function startPiPromptRun(
   });
   const restoreAutoInstrumentationSuppression =
     enterAutoInstrumentationSuppressed();
+  const streamPatchState = installPiStreamPatch(agent);
 
   const state: PiPromptState = {
     activeLlmSpans: new Set(),
@@ -155,14 +180,13 @@ function startPiPromptRun(
     finalized: false,
     metadata,
     metrics: {},
-    originalStreamFn: agent.streamFn,
     span,
     restoreAutoInstrumentationSuppression,
     startTime: getCurrentUnixTimestamp(),
-    wrappedStreamFn: agent.streamFn,
+    streamPatchState,
   };
-  state.wrappedStreamFn = makeInstrumentedStreamFn(state, agent.streamFn);
-  agent.streamFn = state.wrappedStreamFn;
+  state.restorePromptContext = enterPiPromptContext(state);
+  streamPatchState.activePromptStates.add(state);
 
   try {
     state.unsubscribeAgent = agent.subscribe(async (agentEvent) => {
@@ -196,9 +220,81 @@ function isPiAgent(value: unknown): value is PiAgent {
   );
 }
 
-function makeInstrumentedStreamFn(
-  state: PiPromptState,
-  originalStreamFn: PiStreamFn,
+function promptContextStore(): IsoAsyncLocalStorage<
+  PiPromptContextState | undefined
+> {
+  piPromptContextStore ??= iso.newAsyncLocalStorage<
+    PiPromptContextState | undefined
+  >();
+  return piPromptContextStore;
+}
+
+function currentPromptContextFrames(): PiPromptContextFrame[] {
+  return promptContextStore().getStore()?.frames ?? [];
+}
+
+function currentPiPromptState(): PiPromptState | undefined {
+  const frames = currentPromptContextFrames();
+  return frames[frames.length - 1]?.state;
+}
+
+function enterPiPromptContext(state: PiPromptState): () => void {
+  const frame = {
+    id: Symbol("braintrust.pi-coding-agent.prompt"),
+    state,
+  };
+  promptContextStore().enterWith({
+    frames: [...currentPromptContextFrames(), frame],
+  });
+
+  return () => {
+    const frames = currentPromptContextFrames().filter(
+      (candidate) => candidate.id !== frame.id,
+    );
+    promptContextStore().enterWith(frames.length > 0 ? { frames } : undefined);
+  };
+}
+
+function installPiStreamPatch(agent: PiAgent): PiStreamPatchState {
+  const existing = piStreamPatchStates.get(agent);
+  if (existing) {
+    if (agent.streamFn !== existing.wrappedStreamFn) {
+      debugLogger.debug(
+        "Pi Coding Agent streamFn changed while Braintrust instrumentation was active; preserving existing patch state.",
+      );
+    }
+    return existing;
+  }
+
+  const patchState = {
+    activePromptStates: new Set<PiPromptState>(),
+    agent,
+    originalStreamFn: agent.streamFn,
+    wrappedStreamFn: agent.streamFn,
+  } satisfies PiStreamPatchState;
+  patchState.wrappedStreamFn = makeSharedInstrumentedStreamFn(patchState);
+  agent.streamFn = patchState.wrappedStreamFn;
+  piStreamPatchStates.set(agent, patchState);
+  return patchState;
+}
+
+function resolveStreamPromptState(
+  patchState: PiStreamPatchState,
+): PiPromptState | undefined {
+  const contextState = currentPiPromptState();
+  if (contextState && patchState.activePromptStates.has(contextState)) {
+    return contextState;
+  }
+
+  if (patchState.activePromptStates.size === 1) {
+    return [...patchState.activePromptStates][0];
+  }
+
+  return undefined;
+}
+
+function makeSharedInstrumentedStreamFn(
+  patchState: PiStreamPatchState,
 ): PiStreamFn {
   return async function instrumentedPiStreamFn(
     this: unknown,
@@ -206,10 +302,27 @@ function makeInstrumentedStreamFn(
     context: PiContext,
     options?: PiSimpleStreamOptions,
   ) {
+    const state = resolveStreamPromptState(patchState);
+    if (!state) {
+      const invokeOriginal = () =>
+        Reflect.apply(patchState.originalStreamFn, this, [
+          model,
+          context,
+          options,
+        ]);
+      return patchState.activePromptStates.size > 0
+        ? runWithAutoInstrumentationSuppressed(invokeOriginal)
+        : invokeOriginal();
+    }
+
     const llmState = await startPiLlmSpan(state, model, context, options);
     try {
       const stream = await runWithAutoInstrumentationSuppressed(() =>
-        Reflect.apply(originalStreamFn, this, [model, context, options]),
+        Reflect.apply(patchState.originalStreamFn, this, [
+          model,
+          context,
+          options,
+        ]),
       );
       return patchAssistantMessageStream(stream, state, llmState);
     } catch (error) {
@@ -282,32 +395,84 @@ function patchAssistantMessageStream(
 
   const originalIterator = stream[Symbol.asyncIterator];
   if (typeof originalIterator === "function") {
-    streamRecord[Symbol.asyncIterator] = async function* patchedPiIterator(
+    streamRecord[Symbol.asyncIterator] = function patchedPiIterator(
       this: PiAssistantMessageEventStream,
-    ) {
-      try {
-        const iterator = Reflect.apply(
-          originalIterator,
-          this,
-          [],
-        ) as AsyncIterator<PiAssistantMessageEvent>;
-        while (true) {
-          const result = await iterator.next();
-          if (result.done) {
-            return;
+    ): AsyncIterator<PiAssistantMessageEvent> &
+      AsyncIterable<PiAssistantMessageEvent> {
+      const iterator = Reflect.apply(
+        originalIterator,
+        this,
+        [],
+      ) as AsyncIterator<PiAssistantMessageEvent>;
+
+      return {
+        async next() {
+          try {
+            const result = await iterator.next();
+            if (result.done) {
+              finishPiLlmSpan(promptState, llmState);
+              return result;
+            }
+
+            recordPiAssistantMessageEvent(promptState, llmState, result.value);
+            return result;
+          } catch (error) {
+            finishPiLlmSpan(promptState, llmState, undefined, error);
+            throw error;
           }
-          const event = result.value;
-          recordFirstTokenMetric(llmState, event);
-          yield event;
-        }
-      } catch (error) {
-        finishPiLlmSpan(promptState, llmState, undefined, error);
-        throw error;
-      }
+        },
+        async return(value?: unknown) {
+          try {
+            if (typeof iterator.return === "function") {
+              return await iterator.return(value);
+            }
+            return {
+              done: true,
+              value,
+            } as IteratorResult<PiAssistantMessageEvent>;
+          } catch (error) {
+            finishPiLlmSpan(promptState, llmState, undefined, error);
+            throw error;
+          } finally {
+            finishPiLlmSpan(promptState, llmState);
+          }
+        },
+        async throw(error?: unknown) {
+          try {
+            if (typeof iterator.throw === "function") {
+              return await iterator.throw(error);
+            }
+            throw error;
+          } catch (thrownError) {
+            finishPiLlmSpan(promptState, llmState, undefined, thrownError);
+            throw thrownError;
+          }
+        },
+        [Symbol.asyncIterator]() {
+          return this;
+        },
+      };
     };
   }
 
   return stream;
+}
+
+function recordPiAssistantMessageEvent(
+  promptState: PiPromptState,
+  llmState: PiLlmSpanState,
+  event: PiAssistantMessageEvent,
+): void {
+  recordFirstTokenMetric(llmState, event);
+
+  const message = "message" in event ? event.message : undefined;
+  const errorMessage = "error" in event ? event.error : undefined;
+
+  if (event.type === "done" && isPiAssistantMessage(message)) {
+    finishPiLlmSpan(promptState, llmState, message);
+  } else if (event.type === "error" && isPiAssistantMessage(errorMessage)) {
+    finishPiLlmSpan(promptState, llmState, errorMessage);
+  }
 }
 
 function recordFirstTokenMetric(
@@ -460,9 +625,18 @@ async function finalizePiPromptRun(
 }
 
 function restorePiStreamFn(state: PiPromptState): void {
-  if (state.agent.streamFn === state.wrappedStreamFn) {
-    state.agent.streamFn = state.originalStreamFn;
+  const patchState = state.streamPatchState;
+  patchState.activePromptStates.delete(state);
+  state.restorePromptContext?.();
+
+  if (patchState.activePromptStates.size > 0) {
+    return;
   }
+
+  if (patchState.agent.streamFn === patchState.wrappedStreamFn) {
+    patchState.agent.streamFn = patchState.originalStreamFn;
+  }
+  piStreamPatchStates.delete(patchState.agent);
 }
 
 async function finishOpenLlmSpans(
@@ -632,10 +806,9 @@ function isPiUserMessage(
   return message.role === "user" && "content" in message;
 }
 
-function isPiAssistantMessage(
-  message: PiMessage,
-): message is PiAssistantMessage {
+function isPiAssistantMessage(message: unknown): message is PiAssistantMessage {
   return (
+    isObject(message) &&
     message.role === "assistant" &&
     Array.isArray((message as Partial<PiAssistantMessage>).content)
   );

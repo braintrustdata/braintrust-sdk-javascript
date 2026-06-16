@@ -260,6 +260,182 @@ describe("PiCodingAgentPlugin", () => {
     expect(toolSpan?.end).toHaveBeenCalledTimes(1);
   });
 
+  it("keeps one shared streamFn patch for overlapping prompts on the same agent", async () => {
+    const plugin = new PiCodingAgentPlugin();
+    plugin.enable();
+
+    const handlers = handlersByName.get(
+      "orchestrion:@earendil-works/pi-coding-agent:AgentSession.prompt",
+    );
+    const stream = makeStream(makeAssistantMessage("done"));
+    const originalStreamFn = vi.fn(async () => stream);
+    const agent = {
+      state: { model: anthropicModel() },
+      streamFn: originalStreamFn,
+      subscribe: vi.fn(() => vi.fn()),
+    };
+    const eventA = {
+      arguments: ["first", undefined],
+      self: { agent, model: anthropicModel(), prompt: vi.fn() },
+    };
+    const eventB = {
+      arguments: ["second", undefined],
+      self: { agent, model: anthropicModel(), prompt: vi.fn() },
+    };
+
+    handlers.start(eventA);
+    const sharedWrappedStreamFn = agent.streamFn;
+    handlers.start(eventB);
+
+    expect(agent.streamFn).toBe(sharedWrappedStreamFn);
+
+    const patchedStream = await agent.streamFn(anthropicModel(), {
+      messages: [{ role: "user", content: "second" }],
+    });
+    await patchedStream.result();
+
+    expect(originalStreamFn).toHaveBeenCalledTimes(1);
+    expect(
+      spans.filter((span) => span.name === "anthropic.messages.create"),
+    ).toHaveLength(1);
+
+    await handlers.asyncEnd(eventB);
+    expect(agent.streamFn).toBe(sharedWrappedStreamFn);
+
+    await handlers.asyncEnd(eventA);
+    expect(agent.streamFn).toBe(originalStreamFn);
+  });
+
+  it("finalizes LLM spans when the Pi stream is consumed through iteration only", async () => {
+    const plugin = new PiCodingAgentPlugin();
+    plugin.enable();
+
+    const handlers = handlersByName.get(
+      "orchestrion:@earendil-works/pi-coding-agent:AgentSession.prompt",
+    );
+    const finalMessage = makeAssistantMessage("done");
+    const { result, stream } = makeIteratorBackedStream([
+      { partial: finalMessage, type: "start" },
+      { message: finalMessage, type: "done" },
+    ]);
+    const agent = {
+      state: { model: anthropicModel() },
+      streamFn: vi.fn(async () => stream),
+      subscribe: vi.fn(() => vi.fn()),
+    };
+    const event = {
+      arguments: ["iterate", undefined],
+      self: { agent, model: anthropicModel(), prompt: vi.fn() },
+    };
+
+    handlers.start(event);
+    const patchedStream = await agent.streamFn(anthropicModel(), {
+      messages: [{ role: "user", content: "iterate" }],
+    });
+    for await (const _event of patchedStream) {
+      // consume the full iterator without calling result()
+    }
+    await handlers.asyncEnd(event);
+
+    const llmSpan = spans.find(
+      (span) => span.name === "anthropic.messages.create",
+    );
+    expect(result).not.toHaveBeenCalled();
+    expect(llmSpan?.log).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metrics: expect.objectContaining({
+          completion_tokens: 3,
+          prompt_tokens: 5,
+          tokens: 8,
+        }),
+        output: expect.any(Array),
+      }),
+    );
+    expect(llmSpan?.end).toHaveBeenCalledTimes(1);
+  });
+
+  it("forwards Pi stream iterator cancellation to the underlying iterator", async () => {
+    const plugin = new PiCodingAgentPlugin();
+    plugin.enable();
+
+    const handlers = handlersByName.get(
+      "orchestrion:@earendil-works/pi-coding-agent:AgentSession.prompt",
+    );
+    const finalMessage = makeAssistantMessage("done");
+    const { iterator, stream } = makeIteratorBackedStream([
+      { partial: finalMessage, type: "start" },
+    ]);
+    const agent = {
+      state: { model: anthropicModel() },
+      streamFn: vi.fn(async () => stream),
+      subscribe: vi.fn(() => vi.fn()),
+    };
+    const event = {
+      arguments: ["cancel", undefined],
+      self: { agent, model: anthropicModel(), prompt: vi.fn() },
+    };
+
+    handlers.start(event);
+    const patchedStream = await agent.streamFn(anthropicModel(), {
+      messages: [{ role: "user", content: "cancel" }],
+    });
+    const patchedIterator = patchedStream[Symbol.asyncIterator]();
+
+    await patchedIterator.next();
+    await patchedIterator.return?.("stopped");
+    await handlers.asyncEnd(event);
+
+    const llmSpan = spans.find(
+      (span) => span.name === "anthropic.messages.create",
+    );
+    expect(iterator.return).toHaveBeenCalledWith("stopped");
+    expect(llmSpan?.end).toHaveBeenCalledTimes(1);
+  });
+
+  it("forwards Pi stream iterator throw to the underlying iterator", async () => {
+    const plugin = new PiCodingAgentPlugin();
+    plugin.enable();
+
+    const handlers = handlersByName.get(
+      "orchestrion:@earendil-works/pi-coding-agent:AgentSession.prompt",
+    );
+    const finalMessage = makeAssistantMessage("done");
+    const { iterator, stream } = makeIteratorBackedStream([
+      { partial: finalMessage, type: "start" },
+    ]);
+    const agent = {
+      state: { model: anthropicModel() },
+      streamFn: vi.fn(async () => stream),
+      subscribe: vi.fn(() => vi.fn()),
+    };
+    const event = {
+      arguments: ["throw", undefined],
+      self: { agent, model: anthropicModel(), prompt: vi.fn() },
+    };
+    const error = new Error("stream aborted");
+
+    handlers.start(event);
+    const patchedStream = await agent.streamFn(anthropicModel(), {
+      messages: [{ role: "user", content: "throw" }],
+    });
+    const patchedIterator = patchedStream[Symbol.asyncIterator]();
+
+    await patchedIterator.next();
+    await expect(patchedIterator.throw?.(error)).rejects.toThrow(
+      "stream aborted",
+    );
+    await handlers.asyncEnd(event);
+
+    const llmSpan = spans.find(
+      (span) => span.name === "anthropic.messages.create",
+    );
+    expect(iterator.throw).toHaveBeenCalledWith(error);
+    expect(llmSpan?.log).toHaveBeenCalledWith(
+      expect.objectContaining({ error: "stream aborted" }),
+    );
+    expect(llmSpan?.end).toHaveBeenCalledTimes(1);
+  });
+
   it("restores streamFn and ends open spans on error", async () => {
     const plugin = new PiCodingAgentPlugin();
     plugin.enable();
@@ -341,4 +517,27 @@ function makeStream(message: ReturnType<typeof makeAssistantMessage>) {
     },
     result: vi.fn(async () => message),
   };
+}
+
+function makeIteratorBackedStream(events: any[]) {
+  const pendingEvents = [...events];
+  const result = vi.fn(async () => makeAssistantMessage("done"));
+  const iterator = {
+    next: vi.fn(async () => {
+      const event = pendingEvents.shift();
+      if (!event) {
+        return { done: true, value: undefined };
+      }
+      return { done: false, value: event };
+    }),
+    return: vi.fn(async (value?: unknown) => ({ done: true, value })),
+    throw: vi.fn(async (error?: unknown) => {
+      throw error;
+    }),
+  };
+  const stream = {
+    [Symbol.asyncIterator]: vi.fn(() => iterator),
+    result,
+  };
+  return { iterator, result, stream };
 }
