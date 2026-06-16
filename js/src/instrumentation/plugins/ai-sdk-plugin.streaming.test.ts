@@ -17,10 +17,14 @@ import {
   TestBackgroundLogger,
 } from "../../logger";
 import { wrapAISDK } from "../../wrappers/ai-sdk";
+import { aiSDKChannels } from "./ai-sdk-channels";
 
 try {
   configureNode();
 } catch {}
+
+const sleep = (ms: number) =>
+  new Promise<void>((resolve) => setTimeout(resolve, ms));
 
 describe("AI SDK streaming instrumentation", () => {
   let backgroundLogger: TestBackgroundLogger;
@@ -47,8 +51,6 @@ describe("AI SDK streaming instrumentation", () => {
 
     const requestDelayMs = 40;
     const contentDelayMs = 80;
-    const sleep = (ms: number) =>
-      new Promise<void>((resolve) => setTimeout(resolve, ms));
     let sentContent = false;
     const model = {
       specificationVersion: "v3",
@@ -151,5 +153,64 @@ describe("AI SDK streaming instrumentation", () => {
     );
     expect(streamTextSpan?.output?.text).toBe("DELAYED");
     expect(doStreamSpan?.output?.text).toBe("DELAYED");
+  });
+
+  test("streamText time_to_first_token counts streamed tool-call arguments", async () => {
+    expect(await backgroundLogger.drain()).toHaveLength(0);
+
+    const contentDelayMs = 80;
+    let sentContent = false;
+    const result = (await aiSDKChannels.streamText.tracePromise(
+      async () => ({
+        baseStream: new ReadableStream({
+          start(controller) {
+            controller.enqueue({ type: "stream-start", warnings: [] });
+            controller.enqueue({ type: "text-start", id: "ignored-text" });
+          },
+          async pull(controller) {
+            if (sentContent) {
+              controller.close();
+              return;
+            }
+
+            sentContent = true;
+            await sleep(contentDelayMs);
+            controller.enqueue({
+              type: "tool-call-delta",
+              toolCallType: "function",
+              toolCallId: "call-1",
+              toolName: "lookup",
+              argsTextDelta: '{"query"',
+            });
+            controller.close();
+          },
+        }),
+      }),
+      {
+        arguments: [
+          {
+            model: "mock-tool-model",
+            prompt: "Call the lookup tool.",
+          },
+        ],
+      } as any,
+    )) as any;
+
+    const reader = result.baseStream.getReader();
+    while (true) {
+      const { done } = await reader.read();
+      if (done) {
+        break;
+      }
+    }
+
+    const spans = (await backgroundLogger.drain()) as any[];
+    const streamTextSpan = spans.find(
+      (s) => s?.span_attributes?.name === "streamText",
+    );
+
+    expect(streamTextSpan?.metrics?.time_to_first_token).toBeGreaterThanOrEqual(
+      contentDelayMs / 1000 / 2,
+    );
   });
 });

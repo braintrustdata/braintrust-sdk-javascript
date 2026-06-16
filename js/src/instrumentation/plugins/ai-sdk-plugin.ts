@@ -1484,6 +1484,8 @@ function isAISDKContentStreamChunk(chunk: unknown): boolean {
     case "tool-input-delta":
     case "tool-call-delta":
       return (
+        stringContent(part.argsTextDelta) !== undefined ||
+        stringContent(part.inputTextDelta) !== undefined ||
         stringContent(part.delta) !== undefined ||
         stringContent(part.text) !== undefined ||
         stringContent(part.content) !== undefined
