@@ -142,7 +142,7 @@ describe("PiCodingAgentPlugin", () => {
     };
 
     handlers.start(event);
-    expect(isAutoInstrumentationSuppressed()).toBe(true);
+    expect(isAutoInstrumentationSuppressed()).toBe(false);
     expect(agent.streamFn).not.toBe(originalStreamFn);
 
     const context = {
@@ -225,7 +225,7 @@ describe("PiCodingAgentPlugin", () => {
     };
 
     handlers.start(event);
-    expect(isAutoInstrumentationSuppressed()).toBe(true);
+    expect(isAutoInstrumentationSuppressed()).toBe(false);
     await listener({
       args: { command: "printf pi_tool_ok" },
       toolCallId: "tool-1",
@@ -240,7 +240,7 @@ describe("PiCodingAgentPlugin", () => {
       toolName: "bash",
       type: "tool_execution_end",
     });
-    expect(isAutoInstrumentationSuppressed()).toBe(true);
+    expect(isAutoInstrumentationSuppressed()).toBe(false);
     await handlers.asyncEnd(event);
     expect(isAutoInstrumentationSuppressed()).toBe(false);
 
@@ -258,6 +258,52 @@ describe("PiCodingAgentPlugin", () => {
       }),
     );
     expect(toolSpan?.end).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not double-count prompt metrics from LLM and turn usage", async () => {
+    const plugin = new PiCodingAgentPlugin();
+    plugin.enable();
+
+    const handlers = handlersByName.get(
+      "orchestrion:@earendil-works/pi-coding-agent:AgentSession.prompt",
+    );
+    let listener: any;
+    const agent = {
+      state: { model: anthropicModel() },
+      streamFn: vi.fn(async () => makeStream(makeAssistantMessage("done"))),
+      subscribe: vi.fn((nextListener) => {
+        listener = nextListener;
+        return vi.fn();
+      }),
+    };
+    const event = {
+      arguments: ["count metrics", undefined],
+      self: { agent, model: anthropicModel(), prompt: vi.fn() },
+    };
+
+    handlers.start(event);
+    const patchedStream = await agent.streamFn(anthropicModel(), {
+      messages: [{ role: "user", content: "count metrics" }],
+    });
+    await patchedStream.result();
+    await listener({
+      message: makeAssistantMessage("done"),
+      toolResults: [],
+      turnIndex: 0,
+      type: "turn_end",
+    });
+    await handlers.asyncEnd(event);
+
+    const rootSpan = spans.find((span) => span.name === "AgentSession.prompt");
+    const finalLog =
+      rootSpan?.log.mock.calls[rootSpan.log.mock.calls.length - 1]?.[0];
+    expect(finalLog?.metrics).toMatchObject({
+      completion_tokens: 3,
+      prompt_cache_creation_tokens: 0,
+      prompt_cached_tokens: 0,
+      prompt_tokens: 5,
+      tokens: 8,
+    });
   });
 
   it("keeps one shared streamFn patch for overlapping prompts on the same agent", async () => {
@@ -546,6 +592,37 @@ describe("PiCodingAgentPlugin", () => {
     expect(rootSpans[1]?.end).toHaveBeenCalledTimes(1);
     expect(subscriptions[1]?.unsubscribe).toHaveBeenCalledTimes(1);
     expect(agent.streamFn).toBe(originalStreamFn);
+  });
+
+  it("restores active prompt patches when the plugin is disabled", async () => {
+    const plugin = new PiCodingAgentPlugin();
+    plugin.enable();
+
+    const handlers = handlersByName.get(
+      "orchestrion:@earendil-works/pi-coding-agent:AgentSession.prompt",
+    );
+    const unsubscribe = vi.fn();
+    const originalStreamFn = vi.fn();
+    const agent = {
+      state: { model: anthropicModel() },
+      streamFn: originalStreamFn,
+      subscribe: vi.fn(() => unsubscribe),
+    };
+    const event = {
+      arguments: ["disable cleanup", undefined],
+      self: { agent, model: anthropicModel(), prompt: vi.fn() },
+    };
+
+    handlers.start(event);
+    expect(agent.streamFn).not.toBe(originalStreamFn);
+
+    plugin.disable();
+    await Promise.resolve();
+
+    const rootSpan = spans.find((span) => span.name === "AgentSession.prompt");
+    expect(agent.streamFn).toBe(originalStreamFn);
+    expect(unsubscribe).toHaveBeenCalledTimes(1);
+    expect(rootSpan?.end).toHaveBeenCalledTimes(1);
   });
 
   it("restores streamFn and ends open spans on error", async () => {

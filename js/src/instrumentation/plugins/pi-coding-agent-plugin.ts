@@ -13,7 +13,6 @@ import { processInputAttachments } from "../../wrappers/attachment-utils";
 import {
   bindAutoInstrumentationSuppressionToStart,
   enterAutoInstrumentationAllowed,
-  enterAutoInstrumentationSuppressed,
   runWithAutoInstrumentationSuppressed,
 } from "../auto-instrumentation-suppression";
 import { piCodingAgentChannels } from "./pi-coding-agent-channels";
@@ -41,15 +40,16 @@ type PiPromptState = {
   activeLlmSpans: Set<PiLlmSpanState>;
   activeToolSpans: Map<string, PiToolSpanState>;
   agent: PiAgent;
+  collectedLlmUsageMetrics: boolean;
   deferCompletionUntilTurnEnd: boolean;
   finalized: boolean;
   metrics: Record<string, number>;
+  onFinalize?: (state: PiPromptState) => void;
   metadata: Record<string, unknown>;
   output?: unknown;
   promptCallEnded: boolean;
   promptText?: string;
   queued: boolean;
-  restoreAutoInstrumentationSuppression?: () => void;
   restorePromptContext?: () => void;
   sawStreamFn: boolean;
   span: Span;
@@ -96,6 +96,8 @@ let piPromptContextStore:
   | undefined;
 
 export class PiCodingAgentPlugin extends BasePlugin {
+  private readonly activePromptStates = new Set<PiPromptState>();
+
   protected onEnable(): void {
     this.subscribeToPrompt();
   }
@@ -105,6 +107,12 @@ export class PiCodingAgentPlugin extends BasePlugin {
       unsubscribe();
     }
     this.unsubscribers = [];
+
+    for (const state of [...this.activePromptStates]) {
+      void finalizePiPromptRun(state).catch((error) => {
+        logInstrumentationError("Pi Coding Agent disable cleanup", error);
+      });
+    }
   }
 
   private subscribeToPrompt(): void {
@@ -117,8 +125,11 @@ export class PiCodingAgentPlugin extends BasePlugin {
       ChannelMessage<typeof piCodingAgentChannels.prompt>
     > = {
       start: (event) => {
-        const state = startPiPromptRun(event);
+        const state = startPiPromptRun(event, (state) => {
+          this.activePromptStates.delete(state);
+        });
         if (state) {
+          this.activePromptStates.add(state);
           states.set(event, state);
         }
       },
@@ -164,6 +175,7 @@ export class PiCodingAgentPlugin extends BasePlugin {
 
 function startPiPromptRun(
   event: ChannelMessage<typeof piCodingAgentChannels.prompt>,
+  onFinalize?: (state: PiPromptState) => void,
 ): PiPromptState | undefined {
   const session = extractSession(event);
   const agent = session?.agent;
@@ -191,8 +203,6 @@ function startPiPromptRun(
     name: "AgentSession.prompt",
     spanAttributes: { type: SpanTypeAttribute.TASK },
   });
-  const restoreAutoInstrumentationSuppression =
-    enterAutoInstrumentationSuppressed();
   const streamPatchState = installPiStreamPatch(agent);
   const options = event.arguments[1];
   const promptText = event.arguments[0];
@@ -201,17 +211,18 @@ function startPiPromptRun(
     activeLlmSpans: new Set(),
     activeToolSpans: new Map(),
     agent,
+    collectedLlmUsageMetrics: false,
     deferCompletionUntilTurnEnd:
       options?.streamingBehavior === "followUp" ||
       options?.streamingBehavior === "steer",
     finalized: false,
     metadata,
     metrics: {},
+    onFinalize,
     promptCallEnded: false,
     ...(typeof promptText === "string" ? { promptText } : {}),
     queued: false,
     span,
-    restoreAutoInstrumentationSuppression,
     sawStreamFn: false,
     startTime: getCurrentUnixTimestamp(),
     streamPatchState,
@@ -223,7 +234,9 @@ function startPiPromptRun(
   try {
     state.unsubscribeAgent = agent.subscribe(async (agentEvent) => {
       try {
-        await handlePiAgentEvent(state, agentEvent);
+        await runWithAutoInstrumentationSuppressed(() =>
+          handlePiAgentEvent(state, agentEvent),
+        );
       } catch (error) {
         logInstrumentationError("Pi Coding Agent event", error);
       }
@@ -595,7 +608,9 @@ async function handlePiAgentEvent(
       state.turnEnded = true;
       if (isPiAssistantMessage(event.message)) {
         state.output = extractAssistantOutput(event.message);
-        addMetrics(state.metrics, extractUsageMetrics(event.message.usage));
+        if (!state.collectedLlmUsageMetrics) {
+          addMetrics(state.metrics, extractUsageMetrics(event.message.usage));
+        }
       }
       if (state.streamPatchState.eventPromptState === state) {
         state.streamPatchState.eventPromptState = undefined;
@@ -688,6 +703,7 @@ async function finalizePiPromptRun(
     return;
   }
   state.finalized = true;
+  state.onFinalize?.(state);
   restorePiStreamFn(state);
 
   try {
@@ -714,11 +730,7 @@ async function finalizePiPromptRun(
       output: state.output,
     });
   } finally {
-    try {
-      state.span.end();
-    } finally {
-      state.restoreAutoInstrumentationSuppression?.();
-    }
+    state.span.end();
   }
 }
 
@@ -777,7 +789,11 @@ function finishPiLlmSpan(
     ...cleanMetrics(llmState.metrics),
     ...buildDurationMetrics(llmState.startTime),
   };
-  addMetrics(promptState.metrics, extractUsageMetrics(message?.usage));
+  const usageMetrics = extractUsageMetrics(message?.usage);
+  if (Object.keys(usageMetrics).length > 0) {
+    promptState.collectedLlmUsageMetrics = true;
+    addMetrics(promptState.metrics, usageMetrics);
+  }
 
   try {
     safeLog(llmState.span, {

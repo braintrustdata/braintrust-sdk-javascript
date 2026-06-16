@@ -28,12 +28,12 @@ span_tree:
               "provider": "anthropic"
             }
             metrics: {
-              "completion_tokens": 160,
+              "completion_tokens": 80,
               "duration": 0,
               "prompt_cache_creation_tokens": 0,
               "prompt_cached_tokens": 0,
-              "prompt_tokens": 9048,
-              "tokens": 9208
+              "prompt_tokens": 4524,
+              "tokens": 4604
             }
             ├── anthropic.messages.create [llm]
             │   input: [
