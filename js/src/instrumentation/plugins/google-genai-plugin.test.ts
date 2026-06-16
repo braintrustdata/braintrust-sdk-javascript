@@ -124,11 +124,24 @@ describe("GoogleGenAIPlugin", () => {
       plugin.enable();
 
       const handlers = subscribeSpy.mock.calls[3][0];
+      const scheduledAt = new Date("2026-01-02T03:04:05.000Z");
+      const callbackUrl = new URL("https://example.com/callback");
       const event: any = {
         arguments: [
           {
+            agent: "agent-1",
+            agent_config: {
+              callback_url: callbackUrl,
+              instructions: "Use the support workflow.",
+              scheduled_at: scheduledAt,
+            },
             generation_config: { max_output_tokens: 16, temperature: 0 },
-            input: { text: "Reply with OK.", type: "text" },
+            input: {
+              callback_url: callbackUrl,
+              scheduled_at: scheduledAt,
+              text: "Reply with OK.",
+              type: "text",
+            },
             model: "gemini-2.5-flash",
             system_instruction: "Be brief.",
           },
@@ -141,7 +154,11 @@ describe("GoogleGenAIPlugin", () => {
         log: ReturnType<typeof vi.fn>;
       };
       event.result = {
+        created: scheduledAt,
         id: "interaction-1",
+        metadata: {
+          callback_url: callbackUrl,
+        },
         output_text: "OK",
         status: "completed",
         usage: {
@@ -159,12 +176,29 @@ describe("GoogleGenAIPlugin", () => {
         1,
         expect.objectContaining({
           input: expect.objectContaining({
+            agent: "agent-1",
+            agent_config: {
+              callback_url: callbackUrl.toJSON(),
+              instructions: "Use the support workflow.",
+              scheduled_at: scheduledAt.toJSON(),
+            },
             generation_config: { max_output_tokens: 16, temperature: 0 },
-            input: { text: "Reply with OK.", type: "text" },
+            input: {
+              callback_url: callbackUrl.toJSON(),
+              scheduled_at: scheduledAt.toJSON(),
+              text: "Reply with OK.",
+              type: "text",
+            },
             model: "gemini-2.5-flash",
             system_instruction: "Be brief.",
           }),
           metadata: expect.objectContaining({
+            agent: "agent-1",
+            agent_config: {
+              callback_url: callbackUrl.toJSON(),
+              instructions: "Use the support workflow.",
+              scheduled_at: scheduledAt.toJSON(),
+            },
             generation_config: { max_output_tokens: 16, temperature: 0 },
             model: "gemini-2.5-flash",
             system_instruction: "Be brief.",
@@ -186,7 +220,11 @@ describe("GoogleGenAIPlugin", () => {
             tokens: 13,
           }),
           output: expect.objectContaining({
+            created: scheduledAt.toJSON(),
             id: "interaction-1",
+            metadata: {
+              callback_url: callbackUrl.toJSON(),
+            },
             output_text: "OK",
             status: "completed",
           }),

@@ -669,6 +669,7 @@ function serializeInteractionInput(
   for (const key of [
     "model",
     "agent",
+    "agent_config",
     "api_version",
     "background",
     "environment",
@@ -700,6 +701,7 @@ function extractInteractionMetadata(
   for (const key of [
     "model",
     "agent",
+    "agent_config",
     "generation_config",
     "system_instruction",
     "response_format",
@@ -794,9 +796,13 @@ function serializeInteractionValue(
     return value.map((item) => serializeInteractionValue(item, seen));
   }
 
-  const dict = tryToDict(value);
-  if (!dict) {
-    return value;
+  const dict: unknown = tryToDict(value);
+  if (dict === null || dict === undefined || typeof dict !== "object") {
+    return dict;
+  }
+
+  if (Array.isArray(dict)) {
+    return dict.map((item) => serializeInteractionValue(item, seen));
   }
 
   if (seen.has(dict)) {
@@ -807,13 +813,13 @@ function serializeInteractionValue(
   try {
     const serialized: Record<string, unknown> = {};
     const mimeType =
-      typeof dict.mime_type === "string"
+      "mime_type" in dict && typeof dict.mime_type === "string"
         ? dict.mime_type
-        : typeof dict.mimeType === "string"
+        : "mimeType" in dict && typeof dict.mimeType === "string"
           ? dict.mimeType
           : undefined;
     const attachment =
-      mimeType && dict.data !== undefined
+      mimeType && "data" in dict && dict.data !== undefined
         ? createAttachmentFromInlineData(dict.data, mimeType)
         : null;
 

@@ -82,6 +82,7 @@ export interface GoogleGenAIInteractionCreateParams {
     | Record<string, unknown>;
   model?: string;
   agent?: string;
+  agent_config?: Record<string, unknown>;
   api_version?: string;
   background?: boolean;
   environment?: string | Record<string, unknown>;
