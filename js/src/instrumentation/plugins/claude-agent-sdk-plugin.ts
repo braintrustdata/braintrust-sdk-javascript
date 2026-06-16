@@ -40,7 +40,7 @@ type ParsedToolName = {
 };
 type ParentSpanResolver = (
   toolUseID: string,
-  context?: { agentId?: string; preferTaskSiblingParent?: boolean },
+  context?: { agentId?: string },
 ) => Promise<string>;
 type LLMSpanResult = {
   finalMessage: ClaudeConversationMessage | undefined;
@@ -56,6 +56,12 @@ type SubAgentDetails = {
   workflowName?: string;
 };
 const ROOT_LLM_PARENT_KEY = "__root__";
+const SUB_AGENT_PROMPT_SOURCE_PRIORITY = {
+  delegation: 0,
+  lifecycle: 1,
+  sidechain: 2,
+} as const;
+type SubAgentPromptSource = keyof typeof SUB_AGENT_PROMPT_SOURCE_PRIORITY;
 
 function llmParentKey(parentToolUseId: string | null): string {
   return parentToolUseId ?? ROOT_LLM_PARENT_KEY;
@@ -63,10 +69,6 @@ function llmParentKey(parentToolUseId: string | null): string {
 
 function isSubAgentDelegationToolName(toolName: string): boolean {
   return toolName === "Agent" || toolName === "Task";
-}
-
-function shouldParentToolAsTaskSibling(toolName: string): boolean {
-  return toolName === "Agent" || toolName === "Task" || toolName === "Bash";
 }
 
 function filterSerializableOptions(
@@ -253,26 +255,59 @@ function extractUsageFromMessage(
 }
 
 function buildLLMInput(
-  prompt: string | AsyncIterable<ClaudeAgentSDKMessage> | undefined,
+  promptMessages: ClaudeConversationMessage[],
   conversationHistory: ClaudeConversationMessage[],
-  capturedPromptMessages?: ClaudeAgentSDKMessage[],
 ): ClaudeConversationMessage[] | undefined {
-  const promptMessages: ClaudeConversationMessage[] = [];
-
-  if (typeof prompt === "string") {
-    promptMessages.push({ content: prompt, role: "user" });
-  } else if (capturedPromptMessages && capturedPromptMessages.length > 0) {
-    for (const msg of capturedPromptMessages) {
-      const role = msg.message?.role;
-      const content = msg.message?.content;
-      if (role && content !== undefined) {
-        promptMessages.push({ content, role });
-      }
-    }
-  }
-
   const inputParts = [...promptMessages, ...conversationHistory];
   return inputParts.length > 0 ? inputParts : undefined;
+}
+
+function conversationMessageFromSDKMessage(
+  message: ClaudeAgentSDKMessage,
+): ClaudeConversationMessage | undefined {
+  const role = message.message?.role;
+  const content = message.message?.content;
+  if (role && content !== undefined) {
+    return { content, role };
+  }
+
+  return undefined;
+}
+
+function messageContentHasBlockType(
+  message: ClaudeAgentSDKMessage,
+  blockType: string,
+): boolean {
+  const content = message.message?.content;
+  return (
+    Array.isArray(content) &&
+    content.some(
+      (block) =>
+        typeof block === "object" &&
+        block !== null &&
+        "type" in block &&
+        block.type === blockType,
+    )
+  );
+}
+
+function buildRootPromptMessages(
+  prompt: string | AsyncIterable<ClaudeAgentSDKMessage> | undefined,
+  capturedPromptMessages?: ClaudeAgentSDKMessage[],
+): ClaudeConversationMessage[] {
+  if (typeof prompt === "string") {
+    return [{ content: prompt, role: "user" }];
+  }
+
+  if (!capturedPromptMessages || capturedPromptMessages.length === 0) {
+    return [];
+  }
+
+  return capturedPromptMessages
+    .map(conversationMessageFromSDKMessage)
+    .filter(
+      (message): message is ClaudeConversationMessage => message !== undefined,
+    );
 }
 
 function formatCapturedMessages(
@@ -283,11 +318,10 @@ function formatCapturedMessages(
 
 async function createLLMSpanForMessages(
   messages: ClaudeAgentSDKMessage[],
-  prompt: string | AsyncIterable<ClaudeAgentSDKMessage> | undefined,
+  promptMessages: ClaudeConversationMessage[],
   conversationHistory: ClaudeConversationMessage[],
   options: ClaudeAgentSDKQueryOptions,
   startTime: number,
-  capturedPromptMessages: ClaudeAgentSDKMessage[] | undefined,
   parentSpan: string,
   existingSpan?: Span,
 ): Promise<LLMSpanResult | undefined> {
@@ -302,11 +336,7 @@ async function createLLMSpanForMessages(
 
   const model = lastMessage.message.model || options.model;
   const usage = extractUsageFromMessage(lastMessage);
-  const input = buildLLMInput(
-    prompt,
-    conversationHistory,
-    capturedPromptMessages,
-  );
+  const input = buildLLMInput(promptMessages, conversationHistory);
   const outputs = messages
     .map((m) =>
       m.message?.content && m.message?.role
@@ -500,7 +530,6 @@ function createToolTracingHooks(
       name: parsed.displayName,
       parent: await resolveParentSpan(toolUseID, {
         agentId: input.agent_id,
-        preferTaskSiblingParent: shouldParentToolAsTaskSibling(parsed.toolName),
       }),
       spanAttributes: { type: SpanTypeAttribute.TOOL },
     });
@@ -810,6 +839,7 @@ type QueryState = {
   accumulatedOutputTokens: number;
   activeLlmSpansByParentToolUse: Map<string, Span>;
   activeToolSpans: Map<string, Span>;
+  conversationHistoryByParentKey: Map<string, ClaudeConversationMessage[]>;
   capturedPromptMessages: ClaudeAgentSDKMessage[] | undefined;
   currentMessageId: string | undefined;
   currentMessageStartTime: number;
@@ -820,7 +850,9 @@ type QueryState = {
   originalPrompt: string | AsyncIterable<ClaudeAgentSDKMessage> | undefined;
   processing: Promise<void>;
   promptDone: Promise<void>;
+  promptMessagesByParentKey: Map<string, ClaudeConversationMessage[]>;
   promptStarted: () => boolean;
+  promptSourcePriorityByParentKey: Map<string, number>;
   span: Span;
   subAgentDetailsByToolUseId: Map<string, SubAgentDetails>;
   subAgentSpans: Map<string, Span>;
@@ -831,6 +863,40 @@ type QueryState = {
   localToolContext: ClaudeAgentSDKLocalToolContext;
 };
 
+function setSubAgentPromptMessages(
+  state: QueryState,
+  parentToolUseId: string,
+  promptMessages: ClaudeConversationMessage[],
+  source: SubAgentPromptSource,
+): void {
+  if (promptMessages.length === 0) {
+    return;
+  }
+
+  const parentKey = llmParentKey(parentToolUseId);
+  const sourcePriority = SUB_AGENT_PROMPT_SOURCE_PRIORITY[source];
+  const currentPriority =
+    state.promptSourcePriorityByParentKey.get(parentKey) ?? -1;
+
+  if (sourcePriority > currentPriority) {
+    state.promptMessagesByParentKey.set(parentKey, promptMessages);
+    state.promptSourcePriorityByParentKey.set(parentKey, sourcePriority);
+  }
+}
+
+function getConversationHistory(
+  state: QueryState,
+  parentKey: string,
+): ClaudeConversationMessage[] {
+  let conversationHistory = state.conversationHistoryByParentKey.get(parentKey);
+  if (!conversationHistory) {
+    conversationHistory = [];
+    state.conversationHistoryByParentKey.set(parentKey, conversationHistory);
+  }
+
+  return conversationHistory;
+}
+
 async function finalizeCurrentMessageGroup(state: QueryState): Promise<void> {
   if (state.currentMessages.length === 0) {
     return;
@@ -838,6 +904,13 @@ async function finalizeCurrentMessageGroup(state: QueryState): Promise<void> {
 
   const parentToolUseId = state.currentMessages[0]?.parent_tool_use_id ?? null;
   const parentKey = llmParentKey(parentToolUseId);
+  const conversationHistory = getConversationHistory(state, parentKey);
+  const promptMessages = parentToolUseId
+    ? (state.promptMessagesByParentKey.get(parentKey) ?? [])
+    : buildRootPromptMessages(
+        state.originalPrompt,
+        state.capturedPromptMessages,
+      );
   let parentSpan = await state.span.export();
   if (parentToolUseId) {
     const subAgentSpan = state.subAgentSpans.get(parentToolUseId);
@@ -849,11 +922,10 @@ async function finalizeCurrentMessageGroup(state: QueryState): Promise<void> {
 
   const llmSpanResult = await createLLMSpanForMessages(
     state.currentMessages,
-    state.originalPrompt,
-    state.finalResults,
+    promptMessages,
+    conversationHistory,
     state.options,
     state.currentMessageStartTime,
-    state.capturedPromptMessages,
     parentSpan,
     existingLlmSpan,
   );
@@ -869,6 +941,7 @@ async function finalizeCurrentMessageGroup(state: QueryState): Promise<void> {
     }
 
     if (llmSpanResult.finalMessage) {
+      conversationHistory.push(llmSpanResult.finalMessage);
       state.finalResults.push(llmSpanResult.finalMessage);
     }
   }
@@ -927,6 +1000,16 @@ function maybeTrackToolUseContext(
         description: getStringProperty(block.input, "description"),
         toolUseId: block.id,
       });
+
+      const prompt = getStringProperty(block.input, "prompt");
+      if (prompt) {
+        setSubAgentPromptMessages(
+          state,
+          block.id,
+          [{ content: prompt, role: "user" }],
+          "delegation",
+        );
+      }
     }
   }
 }
@@ -1087,6 +1170,14 @@ async function maybeHandleTaskLifecycleMessage(
 
   if (message.subtype === "task_started") {
     const prompt = getStringProperty(message, "prompt");
+    if (prompt) {
+      setSubAgentPromptMessages(
+        state,
+        toolUseId,
+        [{ content: prompt, role: "user" }],
+        "lifecycle",
+      );
+    }
     subAgentSpan.log({
       input: prompt,
       metadata,
@@ -1151,6 +1242,36 @@ async function handleStreamMessage(
     return;
   }
   await maybeStartSubAgentSpan(state, message);
+
+  const messageParentToolUseId = message.parent_tool_use_id;
+  if (messageParentToolUseId && message.type === "user") {
+    const conversationMessage = conversationMessageFromSDKMessage(message);
+    if (conversationMessage?.role === "user") {
+      await finalizeCurrentMessageGroup(state);
+      const parentKey = llmParentKey(messageParentToolUseId);
+      const conversationHistory = getConversationHistory(state, parentKey);
+      const currentPromptSourcePriority =
+        state.promptSourcePriorityByParentKey.get(parentKey) ?? -1;
+      const canUseAsInitialSidechainPrompt =
+        conversationHistory.length === 0 &&
+        currentPromptSourcePriority <
+          SUB_AGENT_PROMPT_SOURCE_PRIORITY.sidechain &&
+        !messageContentHasBlockType(message, "tool_result");
+
+      if (!canUseAsInitialSidechainPrompt) {
+        conversationHistory.push(conversationMessage);
+        return;
+      }
+
+      setSubAgentPromptMessages(
+        state,
+        messageParentToolUseId,
+        [conversationMessage],
+        "sidechain",
+      );
+      return;
+    }
+  }
 
   const messageId = message.message?.id;
   if (messageId && messageId !== state.currentMessageId) {
@@ -1342,6 +1463,10 @@ export class ClaudeAgentSDKPlugin extends BasePlugin {
 
         const activeToolSpans = new Map<string, Span>();
         const activeLlmSpansByParentToolUse = new Map<string, Span>();
+        const conversationHistoryByParentKey = new Map<
+          string,
+          ClaudeConversationMessage[]
+        >();
         const subAgentSpans = new Map<string, Span>();
         const endedSubAgentSpans = new Set<string>();
         const toolUseToParent = new Map<string, string | null>();
@@ -1351,6 +1476,11 @@ export class ClaudeAgentSDKPlugin extends BasePlugin {
         };
         const subAgentDetailsByToolUseId = new Map<string, SubAgentDetails>();
         const taskIdToToolUseId = new Map<string, string>();
+        const promptMessagesByParentKey = new Map<
+          string,
+          ClaudeConversationMessage[]
+        >();
+        const promptSourcePriorityByParentKey = new Map<string, number>();
         const localToolContext = createClaudeLocalToolContext();
         const { hasLocalToolHandlers, localToolHookNames } =
           prepareLocalToolHandlersInMcpServers(options.mcpServers);
@@ -1369,48 +1499,26 @@ export class ClaudeAgentSDKPlugin extends BasePlugin {
               : null);
           const parentKey = llmParentKey(parentToolUseId);
           const activeLlmSpan = activeLlmSpansByParentToolUse.get(parentKey);
+          const latestLlmParent = parentToolUseId
+            ? latestLlmParentBySubAgentToolUse.get(parentToolUseId)
+            : latestRootLlmParentRef.value;
 
-          if (context?.preferTaskSiblingParent) {
-            // Built-in Claude tools should be siblings of the driving LLM turn,
-            // but we still materialize that LLM span first so trace ordering
-            // reflects that the tool call was produced by the model.
-            if (!activeLlmSpan) {
-              await ensureActiveLlmSpanForParentToolUse(
-                span,
-                activeLlmSpansByParentToolUse,
-                subAgentDetailsByToolUseId,
-                activeToolSpans,
-                subAgentSpans,
-                parentToolUseId,
-                getCurrentUnixTimestamp(),
-              );
-            }
-
-            if (parentToolUseId) {
-              const subAgentSpan = await ensureSubAgentSpan(
-                subAgentDetailsByToolUseId,
-                span,
-                activeToolSpans,
-                subAgentSpans,
-                parentToolUseId,
-              );
-              return subAgentSpan.export();
-            }
-
-            return span.export();
-          }
-
-          if (activeLlmSpan) {
-            return activeLlmSpan.export();
+          // Tool spans should be siblings of the driving LLM turn, but we still
+          // materialize that LLM span first so trace ordering reflects that the
+          // tool call was produced by the model.
+          if (!activeLlmSpan && !latestLlmParent) {
+            await ensureActiveLlmSpanForParentToolUse(
+              span,
+              activeLlmSpansByParentToolUse,
+              subAgentDetailsByToolUseId,
+              activeToolSpans,
+              subAgentSpans,
+              parentToolUseId,
+              getCurrentUnixTimestamp(),
+            );
           }
 
           if (parentToolUseId) {
-            const parentLlm =
-              latestLlmParentBySubAgentToolUse.get(parentToolUseId);
-            if (parentLlm) {
-              return parentLlm;
-            }
-
             const subAgentSpan = await ensureSubAgentSpan(
               subAgentDetailsByToolUseId,
               span,
@@ -1419,10 +1527,6 @@ export class ClaudeAgentSDKPlugin extends BasePlugin {
               parentToolUseId,
             );
             return subAgentSpan.export();
-          }
-
-          if (latestRootLlmParentRef.value) {
-            return latestRootLlmParentRef.value;
           }
 
           return span.export();
@@ -1448,6 +1552,7 @@ export class ClaudeAgentSDKPlugin extends BasePlugin {
           accumulatedOutputTokens: 0,
           activeLlmSpansByParentToolUse,
           activeToolSpans,
+          conversationHistoryByParentKey,
           capturedPromptMessages,
           currentMessageId: undefined,
           currentMessageStartTime: startTime,
@@ -1458,7 +1563,9 @@ export class ClaudeAgentSDKPlugin extends BasePlugin {
           originalPrompt,
           processing: Promise.resolve(),
           promptDone,
+          promptMessagesByParentKey,
           promptStarted: () => promptStarted,
+          promptSourcePriorityByParentKey,
           span,
           subAgentDetailsByToolUseId,
           subAgentSpans,

@@ -72,27 +72,27 @@ span_tree:
     │       │     "prompt_tokens": 18927,
     │       │     "tokens": 18934
     │       │   }
-    │       │   └── tool: calculator/calculator [tool]
-    │       │       input: {
-    │       │         "a": 15,
-    │       │         "b": 7,
-    │       │         "operation": "multiply"
+    │       ├── tool: calculator/calculator [tool]
+    │       │   input: {
+    │       │     "a": 15,
+    │       │     "b": 7,
+    │       │     "operation": "multiply"
+    │       │   }
+    │       │   output: {
+    │       │     "content": [
+    │       │       {
+    │       │         "text": "multiply(15, 7) = 105",
+    │       │         "type": "text"
     │       │       }
-    │       │       output: {
-    │       │         "content": [
-    │       │           {
-    │       │             "text": "multiply(15, 7) = 105",
-    │       │             "type": "text"
-    │       │           }
-    │       │         ]
-    │       │       }
-    │       │       metadata: {
-    │       │         "claude_agent_sdk.raw_tool_name": "mcp__calculator__calculator",
-    │       │         "gen_ai.tool.call.id": "toolu_0117rPYttev4aUWbEHmd8MNP",
-    │       │         "gen_ai.tool.name": "calculator",
-    │       │         "mcp.server": "calculator"
-    │       │       }
-    │       │       └── calculator-local-handler-multiply
+    │       │     ]
+    │       │   }
+    │       │   metadata: {
+    │       │     "claude_agent_sdk.raw_tool_name": "mcp__calculator__calculator",
+    │       │     "gen_ai.tool.call.id": "toolu_0117rPYttev4aUWbEHmd8MNP",
+    │       │     "gen_ai.tool.name": "calculator",
+    │       │     "mcp.server": "calculator"
+    │       │   }
+    │       │   └── calculator-local-handler-multiply
     │       └── anthropic.messages.create [llm]
     │           input: [
     │             {
@@ -415,82 +415,69 @@ span_tree:
     │       │         "claude_agent_sdk.tool_use_id": "toolu_01JKWJX27jjQTVZ6zGBZETBo",
     │       │         "claude_agent_sdk.total_tokens": 22772
     │       │       }
-    │       │       └── anthropic.messages.create [llm]
-    │       │           input: [
-    │       │             {
-    │       │               "content": "Spawn a math-expert subagent to add 15 and 27 using the calculator tool. Report the result. Do not solve it yourself.",
-    │       │               "role": "user"
-    │       │             },
-    │       │             {
-    │       │               "content": [
-    │       │                 {
-    │       │                   "caller": {
-    │       │                     "type": "direct"
-    │       │                   },
-    │       │                   "id": "<span:1>",
-    │       │                   "input": {
-    │       │                     "description": "Add 15 and 27 together",
-    │       │                     "prompt": "Please use the calculator tool to add 15 and 27 together. Report the result.",
-    │       │                     "subagent_type": "math-expert"
-    │       │                   },
-    │       │                   "name": "Agent",
-    │       │                   "type": "tool_use"
-    │       │                 }
-    │       │               ],
-    │       │               "role": "assistant"
-    │       │             }
-    │       │           ]
-    │       │           output: [
-    │       │             {
-    │       │               "content": [
-    │       │                 {
-    │       │                   "caller": {
-    │       │                     "type": "direct"
-    │       │                   },
-    │       │                   "id": "<span:1>",
-    │       │                   "input": {
-    │       │                     "a": 15,
-    │       │                     "b": 27,
-    │       │                     "operation": "add"
-    │       │                   },
-    │       │                   "name": "mcp__calculator__calculator",
-    │       │                   "type": "tool_use"
-    │       │                 }
-    │       │               ],
-    │       │               "role": "assistant"
-    │       │             }
-    │       │           ]
+    │       │       ├── anthropic.messages.create [llm]
+    │       │       │   input: [
+    │       │       │     {
+    │       │       │       "content": [
+    │       │       │         {
+    │       │       │           "text": "Please use the calculator tool to add 15 and 27 together. Report the result.",
+    │       │       │           "type": "text"
+    │       │       │         }
+    │       │       │       ],
+    │       │       │       "role": "user"
+    │       │       │     }
+    │       │       │   ]
+    │       │       │   output: [
+    │       │       │     {
+    │       │       │       "content": [
+    │       │       │         {
+    │       │       │           "caller": {
+    │       │       │             "type": "direct"
+    │       │       │           },
+    │       │       │           "id": "<span:1>",
+    │       │       │           "input": {
+    │       │       │             "a": 15,
+    │       │       │             "b": 27,
+    │       │       │             "operation": "add"
+    │       │       │           },
+    │       │       │           "name": "mcp__calculator__calculator",
+    │       │       │           "type": "tool_use"
+    │       │       │         }
+    │       │       │       ],
+    │       │       │       "role": "assistant"
+    │       │       │     }
+    │       │       │   ]
+    │       │       │   metadata: {
+    │       │       │     "model": "claude-haiku-4-5-20251001"
+    │       │       │   }
+    │       │       │   metrics: {
+    │       │       │     "completion_tokens": 8,
+    │       │       │     "prompt_cache_creation_tokens": 9514,
+    │       │       │     "prompt_cached_tokens": 13239,
+    │       │       │     "prompt_tokens": 22756,
+    │       │       │     "tokens": 22764
+    │       │       │   }
+    │       │       └── tool: calculator/calculator [tool]
+    │       │           input: {
+    │       │             "a": 15,
+    │       │             "b": 27,
+    │       │             "operation": "add"
+    │       │           }
+    │       │           output: {
+    │       │             "content": [
+    │       │               {
+    │       │                 "text": "add(15, 27) = 42",
+    │       │                 "type": "text"
+    │       │               }
+    │       │             ]
+    │       │           }
     │       │           metadata: {
-    │       │             "model": "claude-haiku-4-5-20251001"
+    │       │             "claude_agent_sdk.raw_tool_name": "mcp__calculator__calculator",
+    │       │             "gen_ai.tool.call.id": "toolu_014XWmbx353UYpHZSZN82BU3",
+    │       │             "gen_ai.tool.name": "calculator",
+    │       │             "mcp.server": "calculator"
     │       │           }
-    │       │           metrics: {
-    │       │             "completion_tokens": 8,
-    │       │             "prompt_cache_creation_tokens": 9514,
-    │       │             "prompt_cached_tokens": 13239,
-    │       │             "prompt_tokens": 22756,
-    │       │             "tokens": 22764
-    │       │           }
-    │       │           └── tool: calculator/calculator [tool]
-    │       │               input: {
-    │       │                 "a": 15,
-    │       │                 "b": 27,
-    │       │                 "operation": "add"
-    │       │               }
-    │       │               output: {
-    │       │                 "content": [
-    │       │                   {
-    │       │                     "text": "add(15, 27) = 42",
-    │       │                     "type": "text"
-    │       │                   }
-    │       │                 ]
-    │       │               }
-    │       │               metadata: {
-    │       │                 "claude_agent_sdk.raw_tool_name": "mcp__calculator__calculator",
-    │       │                 "gen_ai.tool.call.id": "toolu_014XWmbx353UYpHZSZN82BU3",
-    │       │                 "gen_ai.tool.name": "calculator",
-    │       │                 "mcp.server": "calculator"
-    │       │               }
-    │       │               └── calculator-local-handler-add
+    │       │           └── calculator-local-handler-add
     │       └── anthropic.messages.create [llm]
     │           input: [
     │             {
@@ -510,24 +497,6 @@ span_tree:
     │                     "subagent_type": "math-expert"
     │                   },
     │                   "name": "Agent",
-    │                   "type": "tool_use"
-    │                 }
-    │               ],
-    │               "role": "assistant"
-    │             },
-    │             {
-    │               "content": [
-    │                 {
-    │                   "caller": {
-    │                     "type": "direct"
-    │                   },
-    │                   "id": "<span:2>",
-    │                   "input": {
-    │                     "a": 15,
-    │                     "b": 27,
-    │                     "operation": "add"
-    │                   },
-    │                   "name": "mcp__calculator__calculator",
     │                   "type": "tool_use"
     │                 }
     │               ],
@@ -705,26 +674,13 @@ span_tree:
     │       │       ├── anthropic.messages.create [llm]
     │       │       │   input: [
     │       │       │     {
-    │       │       │       "content": "You MUST call the Agent tool now with subagent_type=\"echo\" and description \"echo greeting\". Do not call Bash yourself. Do not answer with text yourself; delegate to the echo sub-agent.",
-    │       │       │       "role": "user"
-    │       │       │     },
-    │       │       │     {
     │       │       │       "content": [
     │       │       │         {
-    │       │       │           "caller": {
-    │       │       │             "type": "direct"
-    │       │       │           },
-    │       │       │           "id": "<span:1>",
-    │       │       │           "input": {
-    │       │       │             "description": "echo greeting",
-    │       │       │             "prompt": "Run a bash echo command to output a greeting message.",
-    │       │       │             "subagent_type": "echo"
-    │       │       │           },
-    │       │       │           "name": "Agent",
-    │       │       │           "type": "tool_use"
+    │       │       │           "text": "Run a bash echo command to output a greeting message.",
+    │       │       │           "type": "text"
     │       │       │         }
     │       │       │       ],
-    │       │       │       "role": "assistant"
+    │       │       │       "role": "user"
     │       │       │     }
     │       │       │   ]
     │       │       │   output: [
@@ -793,23 +749,6 @@ span_tree:
     │                     "subagent_type": "echo"
     │                   },
     │                   "name": "Agent",
-    │                   "type": "tool_use"
-    │                 }
-    │               ],
-    │               "role": "assistant"
-    │             },
-    │             {
-    │               "content": [
-    │                 {
-    │                   "caller": {
-    │                     "type": "direct"
-    │                   },
-    │                   "id": "<span:2>",
-    │                   "input": {
-    │                     "command": "echo \"hello\"",
-    │                     "description": "Output a greeting message"
-    │                   },
-    │                   "name": "Bash",
     │                   "type": "tool_use"
     │                 }
     │               ],
@@ -915,21 +854,21 @@ span_tree:
             │     "prompt_tokens": 19301,
             │     "tokens": 19309
             │   }
-            │   └── tool: calculator/calculator [tool]
-            │       input: {
-            │         "a": 2,
-            │         "b": 0,
-            │         "operation": "divide"
-            │       }
-            │       metadata: {
-            │         "claude_agent_sdk.raw_tool_name": "mcp__calculator__calculator",
-            │         "gen_ai.tool.call.id": "toolu_01HM53Dgu54gnzQEZMp744Ua",
-            │         "gen_ai.tool.name": "calculator",
-            │         "mcp.server": "calculator"
-            │       }
-            │       error: "division by zero"
-            │       └── calculator-local-handler-divide
-            │           error: "division by zero\n\nError: division by zero\n    at result.name (<repo>/e2e/scenarios/claude-agent-sdk-instrumentation/scenario.impl.mjs:0:0)\n    at <repo>/js/dist/index.js:0:0\n    at AsyncLocalStorage.run (node:<internal>:0:0)\n    at BraintrustContextManager.runInContext (<repo>/js/dist/index.js:0:0)\n    at withCurrent (<repo>/js/dist/index.js:0:0)\n    at <repo>/js/dist/index.js:0:0\n    at runCatchFinally (<repo>/js/dist/index.js:0:0)\n    at traced (<repo>/js/dist/index.js:0:0)\n    at <anonymous> (<repo>/e2e/scenarios/claude-agent-sdk-instrumentation/scenario.impl.mjs:0:0)\n    at runHandler (<repo>/js/dist/index.js:0:0)"
+            ├── tool: calculator/calculator [tool]
+            │   input: {
+            │     "a": 2,
+            │     "b": 0,
+            │     "operation": "divide"
+            │   }
+            │   metadata: {
+            │     "claude_agent_sdk.raw_tool_name": "mcp__calculator__calculator",
+            │     "gen_ai.tool.call.id": "toolu_01HM53Dgu54gnzQEZMp744Ua",
+            │     "gen_ai.tool.name": "calculator",
+            │     "mcp.server": "calculator"
+            │   }
+            │   error: "division by zero"
+            │   └── calculator-local-handler-divide
+            │       error: "division by zero\n\nError: division by zero\n    at result.name (<repo>/e2e/scenarios/claude-agent-sdk-instrumentation/scenario.impl.mjs:0:0)\n    at <repo>/js/dist/index.js:0:0\n    at AsyncLocalStorage.run (node:<internal>:0:0)\n    at BraintrustContextManager.runInContext (<repo>/js/dist/index.js:0:0)\n    at withCurrent (<repo>/js/dist/index.js:0:0)\n    at <repo>/js/dist/index.js:0:0\n    at runCatchFinally (<repo>/js/dist/index.js:0:0)\n    at traced (<repo>/js/dist/index.js:0:0)\n    at <anonymous> (<repo>/e2e/scenarios/claude-agent-sdk-instrumentation/scenario.impl.mjs:0:0)\n    at runHandler (<repo>/js/dist/index.js:0:0)"
             └── anthropic.messages.create [llm]
                 input: [
                   {
