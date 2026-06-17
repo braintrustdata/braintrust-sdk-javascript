@@ -75,4 +75,19 @@ export const googleGenAIConfigs: InstrumentationConfig[] = [
       kind: "Async",
     },
   },
+
+  // BaseInteractions.create - Interactions API entry point
+  {
+    channelName: googleGenAIChannels.interactionsCreate.channelName,
+    module: {
+      name: "@google/genai",
+      versionRange: ">=1.33.0",
+      filePath: "dist/node/index.mjs",
+    },
+    functionQuery: {
+      className: "BaseInteractions",
+      methodName: "create",
+      kind: "Async",
+    },
+  },
 ];

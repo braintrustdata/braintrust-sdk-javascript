@@ -24,6 +24,9 @@ importers:
       google-genai-sdk-v1450:
         specifier: npm:@google/genai@1.45.0
         version: '@google/genai@1.45.0'
+      google-genai-sdk-v280:
+        specifier: npm:@google/genai@2.8.0
+        version: '@google/genai@2.8.0'
 
 packages:
 
@@ -56,6 +59,15 @@ packages:
 
   '@google/genai@1.46.0':
     resolution: {integrity: sha512-ewPMN5JkKfgU5/kdco9ZhXBHDPhVqZpMQqIFQhwsHLf8kyZfx1cNpw1pHo1eV6PGEW7EhIBFi3aYZraFndAXqg==}
+    engines: {node: '>=20.0.0'}
+    peerDependencies:
+      '@modelcontextprotocol/sdk': ^1.25.2
+    peerDependenciesMeta:
+      '@modelcontextprotocol/sdk':
+        optional: true
+
+  '@google/genai@2.8.0':
+    resolution: {integrity: sha512-pc2ayxqO5+O7AvnHBqpNHIk7PAZkHZgL31tbyx0gJZBSS9qPYiQoqwK7oYOw/ePmG6QY4EMSu+304vD5QlhXAw==}
     engines: {node: '>=20.0.0'}
     peerDependencies:
       '@modelcontextprotocol/sdk': ^1.25.2
@@ -251,6 +263,17 @@ snapshots:
       - utf-8-validate
 
   '@google/genai@1.46.0':
+    dependencies:
+      google-auth-library: 10.6.2
+      p-retry: 4.6.2
+      protobufjs: 7.6.1
+      ws: 8.21.0
+    transitivePeerDependencies:
+      - bufferutil
+      - supports-color
+      - utf-8-validate
+
+  '@google/genai@2.8.0':
     dependencies:
       google-auth-library: 10.6.2
       p-retry: 4.6.2

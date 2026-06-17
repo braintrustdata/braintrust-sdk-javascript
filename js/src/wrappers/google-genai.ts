@@ -5,6 +5,8 @@ import type {
   GoogleGenAIConstructor,
   GoogleGenAIEmbedContentParams,
   GoogleGenAIGenerateContentParams,
+  GoogleGenAIInteractionCreateParams,
+  GoogleGenAIInteractions,
   GoogleGenAIModels,
 } from "../vendor-sdk-types/google-genai";
 
@@ -72,12 +74,30 @@ function wrapGoogleGenAIInstance(
   instance: GoogleGenAIClient,
 ): GoogleGenAIClient {
   const wrappedModels = wrapModels(instance.models);
+  let originalInteractions: GoogleGenAIInteractions | undefined;
+  let wrappedInteractions: GoogleGenAIInteractions | undefined;
   patchGoogleGenAIChats(instance, wrappedModels);
 
   return new Proxy(instance, {
     get(target, prop, receiver) {
       if (prop === "models") {
         return wrappedModels;
+      }
+      if (prop === "interactions") {
+        const interactions = Reflect.get(target, prop, receiver) as
+          | GoogleGenAIInteractions
+          | undefined;
+        if (
+          !isObject(interactions) ||
+          typeof interactions.create !== "function"
+        ) {
+          return interactions;
+        }
+        if (interactions !== originalInteractions) {
+          originalInteractions = interactions;
+          wrappedInteractions = wrapInteractions(interactions);
+        }
+        return wrappedInteractions;
       }
       return Reflect.get(target, prop, receiver);
     },
@@ -106,6 +126,19 @@ function wrapModels(models: GoogleGenAIModels): GoogleGenAIModels {
         );
       } else if (prop === "embedContent") {
         return wrapEmbedContent(target.embedContent.bind(target));
+      }
+      return Reflect.get(target, prop, receiver);
+    },
+  });
+}
+
+function wrapInteractions(
+  interactions: GoogleGenAIInteractions,
+): GoogleGenAIInteractions {
+  return new Proxy(interactions, {
+    get(target, prop, receiver) {
+      if (prop === "create") {
+        return wrapInteractionCreate(target.create.bind(target));
       }
       return Reflect.get(target, prop, receiver);
     },
@@ -144,6 +177,33 @@ function wrapEmbedContent(
       () => original(params),
       { arguments: [params] } as Parameters<
         typeof googleGenAIChannels.embedContent.tracePromise
+      >[1],
+    );
+  };
+}
+
+function wrapInteractionCreate(
+  original: GoogleGenAIInteractions["create"],
+): GoogleGenAIInteractions["create"] {
+  return function (
+    params: GoogleGenAIInteractionCreateParams,
+    options?: Record<string, unknown>,
+  ) {
+    if (params.background === true) {
+      return options === undefined
+        ? original(params)
+        : original(params, options);
+    }
+
+    const traceContext =
+      options === undefined
+        ? { arguments: [params] }
+        : { arguments: [params, options] };
+    return googleGenAIChannels.interactionsCreate.tracePromise(
+      () =>
+        options === undefined ? original(params) : original(params, options),
+      traceContext as Parameters<
+        typeof googleGenAIChannels.interactionsCreate.tracePromise
       >[1],
     );
   };

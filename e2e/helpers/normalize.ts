@@ -86,7 +86,9 @@ const DYNAMIC_HEADER_KEYS = new Set([
 const PROVIDER_ID_KEYS = new Set([
   "agentId",
   "claude_agent_sdk.task_id",
+  "interaction_id",
   "itemId",
+  "previous_interaction_id",
   "responseId",
   "toolCallId",
 ]);
@@ -240,6 +242,14 @@ function normalizeObject(
         if (key === "caller_lineno") {
           return [key, 0];
         }
+      }
+
+      if (
+        key === "signature" &&
+        typeof entry === "string" &&
+        (value.type === "thought" || value.type === "thought_signature")
+      ) {
+        return [key, tokenFor(tokenMaps.ids, entry, "signature")];
       }
 
       return [key, normalizeValue(entry as Json, tokenMaps, options, key)];

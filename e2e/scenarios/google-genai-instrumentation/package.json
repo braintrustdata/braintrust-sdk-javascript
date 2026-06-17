@@ -12,7 +12,8 @@
     "@google/genai": "1.46.0",
     "google-genai-sdk-v1300": "npm:@google/genai@1.30.0",
     "google-genai-sdk-v1440": "npm:@google/genai@1.44.0",
-    "google-genai-sdk-v1450": "npm:@google/genai@1.45.0"
+    "google-genai-sdk-v1450": "npm:@google/genai@1.45.0",
+    "google-genai-sdk-v280": "npm:@google/genai@2.8.0"
   },
   "pnpm": {
     "overrides": {

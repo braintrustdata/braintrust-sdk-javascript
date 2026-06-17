@@ -1,3 +1,4 @@
+import { debugLogger } from "../../debug-logger";
 import type { IsoChannelHandlers, IsoTracingChannel } from "../../isomorph";
 import {
   _internalGetGlobalState,
@@ -206,11 +207,32 @@ function startSpanForEvent<
       metadata: mergeInputMetadata(metadata, spanInfoMetadata),
     });
   } catch (error) {
-    // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-    console.error(`Error extracting input for ${channelName}:`, error);
+    debugLogger.error(`Error extracting input for ${channelName}:`, error);
   }
 
   return { span, startTime };
+}
+
+function shouldTraceEvent<
+  TChannel extends AnyAsyncChannel | AnySyncStreamChannel,
+>(
+  config: ChannelConfig,
+  event: StartOf<TChannel>,
+  channelName: string,
+): boolean {
+  if (!config.shouldTrace) {
+    return true;
+  }
+
+  try {
+    return config.shouldTrace(event.arguments, event);
+  } catch (error) {
+    debugLogger.error(
+      `Error checking trace predicate for ${channelName}:`,
+      error,
+    );
+    return true;
+  }
 }
 
 function ensureSpanStateForEvent<
@@ -229,11 +251,15 @@ function ensureSpanStateForEvent<
   },
   event: StartOf<TChannel>,
   channelName: string,
-): SpanState {
+): SpanState | undefined {
   const key = event as object;
   const existing = states.get(key);
   if (existing) {
     return existing;
+  }
+
+  if (!shouldTraceEvent<TChannel>(config, event, channelName)) {
+    return undefined;
   }
 
   const created = startSpanForEvent<TChannel>(config, event, channelName);
@@ -280,13 +306,15 @@ function bindCurrentSpanStoreToStart<
         return currentSpanStore.getStore();
       }
 
-      const span = ensureSpanStateForEvent<TChannel>(
+      const spanState = ensureSpanStateForEvent<TChannel>(
         states,
         config,
         event as StartOf<TChannel>,
         channelName,
-      ).span;
-      return contextManager!.wrapSpanForStore(span);
+      );
+      return spanState
+        ? contextManager!.wrapSpanForStore(spanState.span)
+        : currentSpanStore.getStore();
     },
   );
 
@@ -339,8 +367,10 @@ function runStreamingCompletionHook<TChannel extends AnyAsyncChannel>(args: {
       startTime: args.startTime,
     });
   } catch (error) {
-    // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-    console.error(`Error in onComplete hook for ${args.channelName}:`, error);
+    debugLogger.error(
+      `Error in onComplete hook for ${args.channelName}:`,
+      error,
+    );
   }
 }
 
@@ -405,8 +435,7 @@ export function traceAsyncChannel<TChannel extends AnyAsyncChannel>(
           metrics,
         });
       } catch (error) {
-        // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-        console.error(`Error extracting output for ${channelName}:`, error);
+        debugLogger.error(`Error extracting output for ${channelName}:`, error);
       } finally {
         span.end();
         states.delete(event as object);
@@ -532,8 +561,7 @@ export function traceStreamingChannel<TChannel extends AnyAsyncChannel>(
                 metrics,
               });
             } catch (error) {
-              // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-              console.error(
+              debugLogger.error(
                 `Error extracting output for ${channelName}:`,
                 error,
               );
@@ -603,8 +631,7 @@ export function traceStreamingChannel<TChannel extends AnyAsyncChannel>(
           metrics,
         });
       } catch (error) {
-        // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-        console.error(`Error extracting output for ${channelName}:`, error);
+        debugLogger.error(`Error extracting output for ${channelName}:`, error);
       } finally {
         span.end();
         states.delete(event as object);
@@ -707,8 +734,7 @@ export function traceSyncStreamChannel<TChannel extends AnySyncStreamChannel>(
               });
             }
           } catch (error) {
-            // eslint-disable-next-line no-restricted-properties
-            console.error(
+            debugLogger.error(
               `Error extracting chatCompletion for ${channelName}:`,
               error,
             );
@@ -735,8 +761,10 @@ export function traceSyncStreamChannel<TChannel extends AnySyncStreamChannel>(
               span.log(extracted);
             }
           } catch (error) {
-            // eslint-disable-next-line no-restricted-properties
-            console.error(`Error extracting event for ${channelName}:`, error);
+            debugLogger.error(
+              `Error extracting event for ${channelName}:`,
+              error,
+            );
           }
         });
 

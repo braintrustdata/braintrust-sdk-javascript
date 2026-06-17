@@ -3,15 +3,34 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 // Mock iso's newTracingChannel - must be before any imports that use it
 vi.mock("../../isomorph", () => ({
   default: {
+    newAsyncLocalStorage: vi.fn(() => {
+      let current: unknown;
+      return {
+        enterWith: vi.fn((store: unknown) => {
+          current = store;
+        }),
+        getStore: vi.fn(() => current),
+        run: vi.fn((store: unknown, callback: () => unknown) => {
+          const previous = current;
+          current = store;
+          try {
+            return callback();
+          } finally {
+            current = previous;
+          }
+        }),
+      };
+    }),
     newTracingChannel: vi.fn(),
   },
 }));
 
 import { GoogleGenAIPlugin } from "./google-genai-plugin";
-import { Attachment } from "../../logger";
+import { Attachment, startSpan } from "../../logger";
 import iso from "../../isomorph";
 
 const mockNewTracingChannel = iso.newTracingChannel as ReturnType<typeof vi.fn>;
+const mockStartSpan = vi.mocked(startSpan);
 
 // Mock logger
 vi.mock("../../logger", () => ({
@@ -106,6 +125,283 @@ describe("GoogleGenAIPlugin", () => {
       expect(handlers).toHaveProperty("start");
       expect(handlers).toHaveProperty("asyncEnd");
       expect(handlers).toHaveProperty("error");
+    });
+  });
+
+  describe("interactions.create channel subscription", () => {
+    it("subscribes to the interactions.create channel", () => {
+      plugin.enable();
+
+      expect(mockNewTracingChannel).toHaveBeenCalledWith(
+        "orchestrion:@google/genai:interactions.create",
+      );
+      expect(subscribeSpy).toHaveBeenCalledTimes(4);
+    });
+
+    it("logs non-streaming interaction output and metrics", () => {
+      plugin.enable();
+
+      const handlers = subscribeSpy.mock.calls[3][0];
+      const scheduledAt = new Date("2026-01-02T03:04:05.000Z");
+      const callbackUrl = new URL("https://example.com/callback");
+      const event: any = {
+        arguments: [
+          {
+            agent: "agent-1",
+            agent_config: {
+              callback_url: callbackUrl,
+              instructions: "Use the support workflow.",
+              scheduled_at: scheduledAt,
+            },
+            generation_config: { max_output_tokens: 16, temperature: 0 },
+            input: {
+              callback_url: callbackUrl,
+              scheduled_at: scheduledAt,
+              text: "Reply with OK.",
+              type: "text",
+            },
+            model: "gemini-2.5-flash",
+            system_instruction: "Be brief.",
+          },
+        ],
+      };
+
+      handlers.start(event);
+      const span = mockStartSpan.mock.results.at(-1)?.value as {
+        end: ReturnType<typeof vi.fn>;
+        log: ReturnType<typeof vi.fn>;
+      };
+      event.result = {
+        created: scheduledAt,
+        id: "interaction-1",
+        metadata: {
+          callback_url: callbackUrl,
+        },
+        output_text: "OK",
+        status: "completed",
+        usage: {
+          total_cached_tokens: 1,
+          total_input_tokens: 8,
+          total_output_tokens: 2,
+          total_thought_tokens: 3,
+          total_tokens: 13,
+        },
+      };
+
+      handlers.asyncEnd(event);
+
+      expect(span.log).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({
+          input: expect.objectContaining({
+            agent: "agent-1",
+            agent_config: {
+              callback_url: callbackUrl.toJSON(),
+              instructions: "Use the support workflow.",
+              scheduled_at: scheduledAt.toJSON(),
+            },
+            generation_config: { max_output_tokens: 16, temperature: 0 },
+            input: {
+              callback_url: callbackUrl.toJSON(),
+              scheduled_at: scheduledAt.toJSON(),
+              text: "Reply with OK.",
+              type: "text",
+            },
+            model: "gemini-2.5-flash",
+            system_instruction: "Be brief.",
+          }),
+          metadata: expect.objectContaining({
+            agent: "agent-1",
+            agent_config: {
+              callback_url: callbackUrl.toJSON(),
+              instructions: "Use the support workflow.",
+              scheduled_at: scheduledAt.toJSON(),
+            },
+            generation_config: { max_output_tokens: 16, temperature: 0 },
+            model: "gemini-2.5-flash",
+            system_instruction: "Be brief.",
+          }),
+        }),
+      );
+      expect(span.log).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({
+          metadata: {
+            interaction_id: "interaction-1",
+            status: "completed",
+          },
+          metrics: expect.objectContaining({
+            completion_reasoning_tokens: 3,
+            completion_tokens: 2,
+            prompt_cached_tokens: 1,
+            prompt_tokens: 8,
+            tokens: 13,
+          }),
+          output: expect.objectContaining({
+            created: scheduledAt.toJSON(),
+            id: "interaction-1",
+            metadata: {
+              callback_url: callbackUrl.toJSON(),
+            },
+            output_text: "OK",
+            status: "completed",
+          }),
+        }),
+      );
+      expect(span.end).toHaveBeenCalledTimes(1);
+    });
+
+    it("does not trace background interaction tasks", () => {
+      plugin.enable();
+
+      const handlers = subscribeSpy.mock.calls[3][0];
+      const event: any = {
+        arguments: [
+          {
+            agent: "deep-research-pro-preview-12-2025",
+            background: true,
+            input: "Research TPUs.",
+          },
+        ],
+      };
+
+      handlers.start(event);
+      event.result = {
+        id: "interaction-background",
+        status: "in_progress",
+      };
+      handlers.asyncEnd(event);
+
+      expect(mockStartSpan).not.toHaveBeenCalled();
+    });
+
+    it("aggregates streaming interaction events when consumed", async () => {
+      plugin.enable();
+
+      async function* stream() {
+        yield {
+          event_type: "interaction.created",
+          interaction: { id: "interaction-2", status: "in_progress" },
+        };
+        yield {
+          event_type: "step.start",
+          index: 0,
+          step: { type: "model_output" },
+        };
+        yield {
+          event_type: "step.delta",
+          index: 0,
+          delta: { text: "O", type: "text" },
+        };
+        yield {
+          event_type: "step.delta",
+          index: 0,
+          delta: { text: "K", type: "text" },
+        };
+        yield {
+          event_type: "interaction.completed",
+          interaction: {
+            id: "interaction-2",
+            status: "completed",
+            usage: {
+              total_input_tokens: 6,
+              total_output_tokens: 1,
+              total_tokens: 7,
+            },
+          },
+        };
+      }
+
+      const handlers = subscribeSpy.mock.calls[3][0];
+      const event: any = {
+        arguments: [
+          {
+            input: "Reply with OK.",
+            model: "gemini-2.5-flash",
+            stream: true,
+          },
+        ],
+      };
+
+      handlers.start(event);
+      const span = mockStartSpan.mock.results.at(-1)?.value as {
+        end: ReturnType<typeof vi.fn>;
+        log: ReturnType<typeof vi.fn>;
+      };
+      event.result = stream();
+      handlers.asyncEnd(event);
+
+      for await (const _chunk of event.result) {
+        // Consume the stream so aggregation completes.
+      }
+
+      expect(span.log).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          metadata: {
+            interaction_id: "interaction-2",
+            status: "completed",
+          },
+          metrics: expect.objectContaining({
+            completion_tokens: 1,
+            prompt_tokens: 6,
+            tokens: 7,
+          }),
+          output: expect.objectContaining({
+            output_text: "OK",
+            status: "completed",
+            steps: [
+              {
+                index: 0,
+                text: "OK",
+                type: "model_output",
+              },
+            ],
+          }),
+        }),
+      );
+      expect(span.end).toHaveBeenCalledTimes(1);
+    });
+
+    it("ends the interaction span when a stream errors", async () => {
+      plugin.enable();
+
+      async function* stream() {
+        yield {
+          event_type: "interaction.created",
+          interaction: { id: "interaction-3", status: "in_progress" },
+        };
+        throw new Error("stream failed");
+      }
+
+      const handlers = subscribeSpy.mock.calls[3][0];
+      const event: any = {
+        arguments: [
+          {
+            input: "Reply with OK.",
+            model: "gemini-2.5-flash",
+            stream: true,
+          },
+        ],
+      };
+
+      handlers.start(event);
+      const span = mockStartSpan.mock.results.at(-1)?.value as {
+        end: ReturnType<typeof vi.fn>;
+        log: ReturnType<typeof vi.fn>;
+      };
+      event.result = stream();
+      handlers.asyncEnd(event);
+
+      await expect(async () => {
+        for await (const _chunk of event.result) {
+          // Consume until the stream throws.
+        }
+      }).rejects.toThrow("stream failed");
+
+      expect(span.log).toHaveBeenLastCalledWith({
+        error: "stream failed",
+      });
+      expect(span.end).toHaveBeenCalledTimes(1);
     });
   });
 });

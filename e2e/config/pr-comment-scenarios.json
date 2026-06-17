@@ -65,7 +65,8 @@
       { "variantKey": "google-genai-v1300", "label": "v1.30.0" },
       { "variantKey": "google-genai-v1440", "label": "v1.44.0" },
       { "variantKey": "google-genai-v1450", "label": "v1.45.0" },
-      { "variantKey": "google-genai-v1460", "label": "v1.46.0" }
+      { "variantKey": "google-genai-v1460", "label": "v1.46.0" },
+      { "variantKey": "google-genai-v280", "label": "v2.8.0" }
     ]
   },
   {

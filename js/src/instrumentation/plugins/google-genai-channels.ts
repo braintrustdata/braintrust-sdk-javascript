@@ -4,11 +4,17 @@ import type {
   GoogleGenAIEmbedContentResponse,
   GoogleGenAIGenerateContentParams,
   GoogleGenAIGenerateContentResponse,
+  GoogleGenAIInteraction,
+  GoogleGenAIInteractionCreateParams,
+  GoogleGenAIInteractionSSEEvent,
 } from "../../vendor-sdk-types/google-genai";
 
 type GoogleGenAIStreamingResult =
   | GoogleGenAIGenerateContentResponse
   | AsyncIterable<GoogleGenAIGenerateContentResponse>;
+type GoogleGenAIInteractionResult =
+  | GoogleGenAIInteraction
+  | AsyncIterable<GoogleGenAIInteractionSSEEvent>;
 
 export const googleGenAIChannels = defineChannels("@google/genai", {
   generateContent: channel<
@@ -32,6 +38,15 @@ export const googleGenAIChannels = defineChannels("@google/genai", {
     GoogleGenAIEmbedContentResponse
   >({
     channelName: "models.embedContent",
+    kind: "async",
+  }),
+  interactionsCreate: channel<
+    [GoogleGenAIInteractionCreateParams, Record<string, unknown>?],
+    GoogleGenAIInteractionResult,
+    Record<string, unknown>,
+    GoogleGenAIInteractionSSEEvent
+  >({
+    channelName: "interactions.create",
     kind: "async",
   }),
 });
