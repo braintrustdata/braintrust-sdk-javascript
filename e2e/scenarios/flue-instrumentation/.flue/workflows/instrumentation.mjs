@@ -1,5 +1,6 @@
 import { createAgent, Type } from "@flue/runtime";
 import { local } from "@flue/runtime/node";
+import { traced } from "braintrust";
 import {
   FLUE_MODEL,
   FLUE_REASONING_MODEL,
@@ -48,12 +49,27 @@ const flueE2EAgent = createAgent(() => ({
 const lookupTool = {
   description:
     "Return a deterministic lookup result with an id needed by web_search.",
-  execute: async (args) =>
-    JSON.stringify({
+  execute: async (args) => {
+    await traced(
+      async (span) => {
+        span.log({ output: "lookup-active" });
+      },
+      {
+        name: "flue.toolCurrentProbe",
+        event: {
+          metadata: {
+            scenario: SCENARIO_NAME,
+          },
+        },
+      },
+    );
+
+    return JSON.stringify({
       id: "flue-session-2026",
       query: args.query,
       topic: "session instrumentation",
-    }),
+    });
+  },
   name: "lookup",
   parameters: Type.Object({
     query: Type.String(),
@@ -101,6 +117,20 @@ export async function route(_ctx, next) {
 }
 
 export async function run({ init, payload }) {
+  await traced(
+    async (span) => {
+      span.log({ output: "active" });
+    },
+    {
+      name: "flue.workflowCurrentProbe",
+      event: {
+        metadata: {
+          scenario: SCENARIO_NAME,
+        },
+      },
+    },
+  );
+
   const harness = await init(flueE2EAgent, { name: "default" });
   const session = await harness.session("main");
   const skillSession = await harness.session("skill");

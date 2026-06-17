@@ -20,6 +20,7 @@ import {
 
 import {
   GOOGLE_EMBEDDING_MODEL,
+  GOOGLE_INTERACTIONS_MODEL,
   GOOGLE_MODEL,
   ROOT_NAME,
   SCENARIO_NAME,
@@ -128,7 +129,9 @@ function normalizeGoogleVariableTokenCounts(value: Json): Json {
         "candidatesTokenCount",
         "completion_tokens",
         "tokens",
+        "total_output_tokens",
         "totalTokenCount",
+        "total_tokens",
       ].includes(key)
     ) {
       normalized[key] = "<number>";
@@ -157,7 +160,14 @@ function normalizeGooglePromptTokenCounts(value: Json): Json {
   for (const [key, entry] of Object.entries(normalized)) {
     if (
       typeof entry === "number" &&
-      ["prompt_tokens", "promptTokenCount", "tokenCount"].includes(key)
+      [
+        "prompt_tokens",
+        "prompt_cached_tokens",
+        "promptTokenCount",
+        "tokenCount",
+        "total_cached_tokens",
+        "total_input_tokens",
+      ].includes(key)
     ) {
       normalized[key] = "<number>";
       continue;
@@ -281,6 +291,26 @@ function buildRelevantEvents(events: CapturedLogEvent[]): CapturedLogEvent[] {
     "google-multi-turn-operation",
   );
   const embedOperation = findLatestSpan(events, "google-embed-operation");
+  const interactionOperation = findLatestSpan(
+    events,
+    "google-interaction-operation",
+  );
+  const interactionStreamOperation = findLatestSpan(
+    events,
+    "google-interaction-stream-operation",
+  );
+  const interactionStatefulFirstOperation = findLatestSpan(
+    events,
+    "google-interaction-stateful-first-operation",
+  );
+  const interactionStatefulSecondOperation = findLatestSpan(
+    events,
+    "google-interaction-stateful-second-operation",
+  );
+  const interactionBackgroundOperation = findLatestSpan(
+    events,
+    "google-interaction-background-operation",
+  );
   const attachmentOperation = findLatestSpan(
     events,
     "google-attachment-operation",
@@ -318,6 +348,27 @@ function buildRelevantEvents(events: CapturedLogEvent[]): CapturedLogEvent[] {
       "embed_content",
       "google-genai.embedContent",
     ]),
+    interactionOperation,
+    findGoogleSpan(events, interactionOperation?.span.id, [
+      "create_interaction",
+      "google-genai.interactionsCreate",
+    ]),
+    interactionStreamOperation,
+    findGoogleSpan(events, interactionStreamOperation?.span.id, [
+      "create_interaction",
+      "google-genai.interactionsCreate",
+    ]),
+    interactionStatefulFirstOperation,
+    findGoogleSpan(events, interactionStatefulFirstOperation?.span.id, [
+      "create_interaction",
+      "google-genai.interactionsCreate",
+    ]),
+    interactionStatefulSecondOperation,
+    findGoogleSpan(events, interactionStatefulSecondOperation?.span.id, [
+      "create_interaction",
+      "google-genai.interactionsCreate",
+    ]),
+    interactionBackgroundOperation,
     attachmentOperation,
     findGoogleSpan(events, attachmentOperation?.span.id, [
       "generate_content",
@@ -343,7 +394,7 @@ function buildRelevantEvents(events: CapturedLogEvent[]): CapturedLogEvent[] {
       "generate_content",
       "google-genai.generateContent",
     ]),
-  ].map((event) => event!);
+  ].filter((event): event is CapturedLogEvent => event !== undefined);
 }
 
 function buildSpanTree(events: CapturedLogEvent[]): SpanTreeEntry[] {
@@ -511,6 +562,173 @@ export function defineGoogleGenAIInstrumentationAssertions(options: {
         start: expect.any(Number),
       });
     });
+
+    test("captures trace for client.interactions.create()", testConfig, () => {
+      const root = findLatestSpan(events, ROOT_NAME);
+      const operation = findLatestSpan(events, "google-interaction-operation");
+      if (!operation) {
+        return;
+      }
+
+      const span = findGoogleSpan(events, operation.span.id, [
+        "create_interaction",
+        "google-genai.interactionsCreate",
+      ]);
+
+      expect(span).toBeDefined();
+      expect(operation.span.parentIds).toEqual([root?.span.id ?? ""]);
+      expect(span?.row.metadata).toMatchObject({
+        model: GOOGLE_INTERACTIONS_MODEL,
+      });
+      expect(span?.input).toMatchObject({
+        generation_config: expect.objectContaining({
+          max_output_tokens: 256,
+          thinking_level: "minimal",
+          temperature: 0,
+        }),
+        input: {
+          text: "Reply with exactly ROME.",
+          type: "text",
+        },
+        model: GOOGLE_INTERACTIONS_MODEL,
+      });
+      expect(span?.output).toMatchObject({
+        output_text: expect.any(String),
+        status: "completed",
+      });
+      expect(span?.metrics).toMatchObject({
+        prompt_tokens: expect.any(Number),
+        tokens: expect.any(Number),
+      });
+    });
+
+    test(
+      "captures trace for streaming client.interactions.create()",
+      testConfig,
+      () => {
+        const root = findLatestSpan(events, ROOT_NAME);
+        const operation = findLatestSpan(
+          events,
+          "google-interaction-stream-operation",
+        );
+        if (!operation) {
+          return;
+        }
+
+        const span = findGoogleSpan(events, operation.span.id, [
+          "create_interaction",
+          "google-genai.interactionsCreate",
+        ]);
+
+        expect(span).toBeDefined();
+        expect(operation.span.parentIds).toEqual([root?.span.id ?? ""]);
+        expect(span?.row.metadata).toMatchObject({
+          model: GOOGLE_INTERACTIONS_MODEL,
+        });
+        expect(span?.input).toMatchObject({
+          generation_config: expect.objectContaining({
+            max_output_tokens: 256,
+            thinking_level: "minimal",
+            temperature: 0,
+          }),
+          input: {
+            text: "Count from 1 to 3 and include the words one two three.",
+            type: "text",
+          },
+          model: GOOGLE_INTERACTIONS_MODEL,
+          stream: true,
+        });
+        expect(span?.output).toMatchObject({
+          output_text: expect.any(String),
+          status: "completed",
+        });
+        expect(span?.metrics).toMatchObject({
+          prompt_tokens: expect.any(Number),
+          time_to_first_token: expect.any(Number),
+          tokens: expect.any(Number),
+        });
+      },
+    );
+
+    test(
+      "captures stateful client.interactions.create() conversation",
+      testConfig,
+      () => {
+        const root = findLatestSpan(events, ROOT_NAME);
+        const firstOperation = findLatestSpan(
+          events,
+          "google-interaction-stateful-first-operation",
+        );
+        const secondOperation = findLatestSpan(
+          events,
+          "google-interaction-stateful-second-operation",
+        );
+        if (!firstOperation || !secondOperation) {
+          return;
+        }
+
+        const firstSpan = findGoogleSpan(events, firstOperation.span.id, [
+          "create_interaction",
+          "google-genai.interactionsCreate",
+        ]);
+        const secondSpan = findGoogleSpan(events, secondOperation.span.id, [
+          "create_interaction",
+          "google-genai.interactionsCreate",
+        ]);
+        const firstOutput = firstSpan?.output as
+          | { id?: string; status?: string }
+          | undefined;
+
+        expect(firstSpan).toBeDefined();
+        expect(secondSpan).toBeDefined();
+        expect(firstOperation.span.parentIds).toEqual([root?.span.id ?? ""]);
+        expect(secondOperation.span.parentIds).toEqual([root?.span.id ?? ""]);
+        expect(firstOutput?.id).toEqual(expect.any(String));
+        expect(firstSpan?.output).toMatchObject({
+          status: "completed",
+        });
+        expect(secondSpan?.input).toMatchObject({
+          generation_config: expect.objectContaining({
+            max_output_tokens: 256,
+            thinking_level: "minimal",
+            temperature: 0,
+          }),
+          input: {
+            text: "What is my name? Reply with exactly AMIR.",
+            type: "text",
+          },
+          model: GOOGLE_INTERACTIONS_MODEL,
+          previous_interaction_id: firstOutput?.id,
+        });
+        expect(secondSpan?.output).toMatchObject({
+          output_text: expect.any(String),
+          status: "completed",
+        });
+      },
+    );
+
+    test(
+      "does not trace background client.interactions.create() tasks",
+      testConfig,
+      () => {
+        const root = findLatestSpan(events, ROOT_NAME);
+        const operation = findLatestSpan(
+          events,
+          "google-interaction-background-operation",
+        );
+        if (!operation) {
+          return;
+        }
+
+        const span = findGoogleSpan(events, operation.span.id, [
+          "create_interaction",
+          "google-genai.interactionsCreate",
+        ]);
+
+        expect(operation.span.parentIds).toEqual([root?.span.id ?? ""]);
+        expect(span).toBeUndefined();
+      },
+    );
 
     // TODO(lforst): Gotta figure out why google rejects a normal ai studio api key for this call
     // test("captures trace for chat.sendMessage()", testConfig, () => {

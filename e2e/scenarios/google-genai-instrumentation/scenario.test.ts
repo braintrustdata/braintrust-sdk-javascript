@@ -32,6 +32,12 @@ const googleGenAIScenarios = await Promise.all(
       wrapperEntry: "scenario.google-genai-v1450.ts",
     },
     {
+      autoEntry: "scenario.google-genai-v280.mjs",
+      dependencyName: "google-genai-sdk-v280",
+      snapshotName: "google-genai-v280",
+      wrapperEntry: "scenario.google-genai-v280.ts",
+    },
+    {
       autoEntry: "scenario.mjs",
       dependencyName: "@google/genai",
       snapshotName: "google-genai-v1460",

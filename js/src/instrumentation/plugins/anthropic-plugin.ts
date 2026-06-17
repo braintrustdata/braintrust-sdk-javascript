@@ -10,6 +10,7 @@ import {
   isObject,
   isPromiseLike,
 } from "../../../util/index";
+import { isAutoInstrumentationSuppressed } from "../auto-instrumentation-suppression";
 import { filterFrom, getCurrentUnixTimestamp } from "../../util";
 import { finalizeAnthropicTokens } from "../../wrappers/anthropic-tokens-util";
 import { anthropicChannels } from "./anthropic-channels";
@@ -137,6 +138,10 @@ export class AnthropicPlugin extends BasePlugin {
       ChannelMessage<typeof anthropicChannels.betaMessagesToolRunner>
     > = {
       start: (event) => {
+        if (isAutoInstrumentationSuppressed()) {
+          return;
+        }
+
         const params = (event.arguments[0] ?? {}) as AnthropicToolRunnerParams;
         const span = startSpan({
           name: "anthropic.beta.messages.toolRunner",

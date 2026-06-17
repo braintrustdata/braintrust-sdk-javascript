@@ -10,6 +10,7 @@ import {
 } from "../util/index";
 import {
   type GitMetadataSettingsType as GitMetadataSettings,
+  ObjectReference as ObjectReferenceSchema,
   type ObjectReferenceType as ObjectReference,
   type RepoInfoType as RepoInfo,
   type SSEProgressEventDataType as SSEProgressEventData,
@@ -409,6 +410,16 @@ export type {
   ReporterBody,
   ReporterDef,
 } from "./reporters/types";
+
+async function getPersistedBaseExperimentId(
+  experiment: Experiment,
+): Promise<string | undefined> {
+  try {
+    return await experiment._getBaseExperimentId();
+  } catch {
+    return undefined;
+  }
+}
 
 function makeEvalName(projectName: string, experimentName?: string) {
   let out = projectName;
@@ -1169,6 +1180,21 @@ async function runEvaluatorInternal(
           : Dataset.isDataset(evaluator.data)
             ? evaluator.data
             : undefined;
+        const inlineOrigin =
+          datum.origin === undefined
+            ? undefined
+            : ObjectReferenceSchema.parse(datum.origin);
+        const origin =
+          inlineOrigin ??
+          (eventDataset && datum.id && datum._xact_id
+            ? {
+                object_type: "dataset",
+                object_id: await eventDataset.id,
+                id: datum.id,
+                created: datum.created,
+                _xact_id: datum._xact_id,
+              }
+            : undefined);
 
         const baseEvent: StartSpanArgs = {
           name: "eval",
@@ -1179,16 +1205,7 @@ async function runEvaluatorInternal(
             input: datum.input,
             expected: "expected" in datum ? datum.expected : undefined,
             tags: datum.tags,
-            origin:
-              eventDataset && datum.id && datum._xact_id
-                ? {
-                    object_type: "dataset",
-                    object_id: await eventDataset.id,
-                    id: datum.id,
-                    created: datum.created,
-                    _xact_id: datum._xact_id,
-                  }
-                : undefined,
+            origin,
             ...(datum.upsert_id ? { id: datum.upsert_id } : {}),
           },
         };
@@ -1634,9 +1651,17 @@ async function runEvaluatorInternal(
       }
     }
 
+    const comparisonExperimentId = experiment
+      ? (evaluator.baseExperimentId ??
+        (await getPersistedBaseExperimentId(experiment)))
+      : undefined;
+
     const summary = experiment
       ? await experiment.summarize({
           summarizeScores: evaluator.summarizeScores,
+          ...(comparisonExperimentId !== undefined
+            ? { comparisonExperimentId }
+            : {}),
         })
       : buildLocalSummary(
           evaluator,

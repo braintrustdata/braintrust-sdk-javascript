@@ -187,14 +187,14 @@
     "eslint-plugin-node-import": "^1.0.5",
     "openai": "6.25.0",
     "rollup": "^4.60.3",
-    "tar": "^7.5.2",
+    "tar": "^7.5.16",
     "tinybench": "^4.0.1",
     "tsup": "^8.5.1",
     "tsx": "^4.21.0",
     "typedoc": "^0.25.13",
     "typedoc-plugin-markdown": "^3.17.1",
     "typescript": "5.4.4",
-    "vite": "^6.4.2",
+    "vite": "^6.4.3",
     "vite-tsconfig-paths": "^4.3.2",
     "vitest": "4.1.5",
     "webpack": "^5.106.2",
@@ -230,13 +230,13 @@
     "zod": "^3.25.34 || ^4.0"
   },
   "optionalDependencies": {
-    "@braintrust/bt-darwin-arm64": "0.11.1",
-    "@braintrust/bt-darwin-x64": "0.11.1",
-    "@braintrust/bt-linux-arm64": "0.11.1",
-    "@braintrust/bt-linux-x64": "0.11.1",
-    "@braintrust/bt-linux-x64-musl": "0.11.1",
-    "@braintrust/bt-win32-arm64": "0.11.1",
-    "@braintrust/bt-win32-x64": "0.11.1"
+    "@braintrust/bt-darwin-arm64": "0.12.0",
+    "@braintrust/bt-darwin-x64": "0.12.0",
+    "@braintrust/bt-linux-arm64": "0.12.0",
+    "@braintrust/bt-linux-x64": "0.12.0",
+    "@braintrust/bt-linux-x64-musl": "0.12.0",
+    "@braintrust/bt-win32-arm64": "0.12.0",
+    "@braintrust/bt-win32-x64": "0.12.0"
   },
   "publishConfig": {
     "access": "public",

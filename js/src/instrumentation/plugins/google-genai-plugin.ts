@@ -1,5 +1,5 @@
 import { BasePlugin } from "../core";
-import { unsubscribeAll } from "../core/channel-tracing";
+import { traceStreamingChannel, unsubscribeAll } from "../core/channel-tracing";
 import type {
   ChannelMessage,
   ErrorOf,
@@ -24,6 +24,10 @@ import type {
   GoogleGenAIGenerateContentParams,
   GoogleGenAIGenerateContentResponse,
   GoogleGenAIContent,
+  GoogleGenAIInteraction,
+  GoogleGenAIInteractionCreateParams,
+  GoogleGenAIInteractionSSEEvent,
+  GoogleGenAIInteractionUsage,
   GoogleGenAIPart,
   GoogleGenAIUsageMetadata,
 } from "../../vendor-sdk-types/google-genai";
@@ -32,6 +36,7 @@ type GenerateContentChannel = typeof googleGenAIChannels.generateContent;
 type GenerateContentStreamChannel =
   typeof googleGenAIChannels.generateContentStream;
 type EmbedContentChannel = typeof googleGenAIChannels.embedContent;
+type InteractionsCreateChannel = typeof googleGenAIChannels.interactionsCreate;
 type GoogleGenAINonStreamingChannel =
   | GenerateContentChannel
   | EmbedContentChannel;
@@ -92,6 +97,7 @@ export class GoogleGenAIPlugin extends BasePlugin {
     this.subscribeToGenerateContentChannel();
     this.subscribeToGenerateContentStreamChannel();
     this.subscribeToEmbedContentChannel();
+    this.subscribeToInteractionsCreateChannel();
   }
 
   private subscribeToGenerateContentChannel(): void {
@@ -291,6 +297,34 @@ export class GoogleGenAIPlugin extends BasePlugin {
       tracingChannel.unsubscribe(handlers);
     });
   }
+
+  private subscribeToInteractionsCreateChannel(): void {
+    this.unsubscribers.push(
+      traceStreamingChannel(
+        googleGenAIChannels.interactionsCreate as InteractionsCreateChannel,
+        {
+          name: "create_interaction",
+          shouldTrace: ([params]) => !isBackgroundInteractionCreate(params),
+          type: SpanTypeAttribute.LLM,
+          extractInput: ([params]) => ({
+            input: serializeInteractionInput(params),
+            metadata: extractInteractionMetadata(params),
+          }),
+          extractOutput: (result) => serializeInteractionValue(result),
+          extractMetadata: (result) =>
+            extractInteractionResponseMetadata(result),
+          extractMetrics: (result, startTime) =>
+            cleanMetrics(extractInteractionMetrics(result, startTime)),
+          aggregateChunks: (chunks, _result, _event, startTime) =>
+            aggregateInteractionEvents(chunks, startTime),
+        },
+      ),
+    );
+  }
+}
+
+function isBackgroundInteractionCreate(params: unknown): boolean {
+  return tryToDict(params)?.background === true;
 }
 
 function ensureSpanState<TEvent extends object>(
@@ -625,6 +659,71 @@ function serializeEmbedContentInput(
   return input;
 }
 
+function serializeInteractionInput(
+  params: GoogleGenAIInteractionCreateParams,
+): Record<string, unknown> {
+  const input: Record<string, unknown> = {
+    input: serializeInteractionValue(params.input),
+  };
+
+  for (const key of [
+    "model",
+    "agent",
+    "agent_config",
+    "api_version",
+    "background",
+    "environment",
+    "generation_config",
+    "previous_interaction_id",
+    "response_format",
+    "response_mime_type",
+    "response_modalities",
+    "service_tier",
+    "store",
+    "stream",
+    "system_instruction",
+    "webhook_config",
+  ]) {
+    const value = params[key];
+    if (value !== undefined) {
+      input[key] = serializeInteractionValue(value);
+    }
+  }
+
+  return input;
+}
+
+function extractInteractionMetadata(
+  params: GoogleGenAIInteractionCreateParams,
+): Record<string, unknown> {
+  const metadata: Record<string, unknown> = {};
+
+  for (const key of [
+    "model",
+    "agent",
+    "agent_config",
+    "generation_config",
+    "system_instruction",
+    "response_format",
+    "response_mime_type",
+    "response_modalities",
+    "service_tier",
+  ]) {
+    const value = params[key];
+    if (value !== undefined) {
+      metadata[key] = serializeInteractionValue(value);
+    }
+  }
+
+  if (Array.isArray(params.tools)) {
+    metadata.tools = params.tools.map((tool) =>
+      serializeInteractionValue(tool),
+    );
+  }
+
+  return metadata;
+}
+
 /**
  * Serialize contents, converting inline data to Attachments.
  */
@@ -673,45 +772,9 @@ function serializePart(part: GoogleGenAIPart): unknown {
 
   if (part.inlineData && part.inlineData.data) {
     const { data, mimeType } = part.inlineData;
+    const attachment = createAttachmentFromInlineData(data, mimeType);
 
-    // Handle binary data (Uint8Array/Buffer) or base64 strings
-    if (
-      data instanceof Uint8Array ||
-      (typeof Buffer !== "undefined" && Buffer.isBuffer(data)) ||
-      typeof data === "string"
-    ) {
-      const extension = mimeType ? mimeType.split("/")[1] : "bin";
-      const filename = `file.${extension}`;
-
-      // Convert to Buffer/Uint8Array - handles Uint8Array, Buffer, and base64 strings
-      const buffer =
-        typeof data === "string"
-          ? typeof Buffer !== "undefined"
-            ? Buffer.from(data, "base64")
-            : new Uint8Array(
-                atob(data)
-                  .split("")
-                  .map((c) => c.charCodeAt(0)),
-              )
-          : typeof Buffer !== "undefined"
-            ? Buffer.from(data)
-            : new Uint8Array(data);
-
-      // Convert to ArrayBuffer for Attachment compatibility
-      const arrayBuffer =
-        buffer instanceof Uint8Array
-          ? buffer.buffer.slice(
-              buffer.byteOffset,
-              buffer.byteOffset + buffer.byteLength,
-            )
-          : buffer;
-
-      const attachment = new Attachment({
-        data: arrayBuffer,
-        filename,
-        contentType: mimeType || "application/octet-stream",
-      });
-
+    if (attachment) {
       return {
         image_url: { url: attachment },
       };
@@ -719,6 +782,102 @@ function serializePart(part: GoogleGenAIPart): unknown {
   }
 
   return part;
+}
+
+function serializeInteractionValue(
+  value: unknown,
+  seen = new WeakSet<object>(),
+): unknown {
+  if (value === null || value === undefined || typeof value !== "object") {
+    return value;
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((item) => serializeInteractionValue(item, seen));
+  }
+
+  const dict: unknown = tryToDict(value);
+  if (dict === null || dict === undefined || typeof dict !== "object") {
+    return dict;
+  }
+
+  if (Array.isArray(dict)) {
+    return dict.map((item) => serializeInteractionValue(item, seen));
+  }
+
+  if (seen.has(dict)) {
+    return "[Circular]";
+  }
+
+  seen.add(dict);
+  try {
+    const serialized: Record<string, unknown> = {};
+    const mimeType =
+      "mime_type" in dict && typeof dict.mime_type === "string"
+        ? dict.mime_type
+        : "mimeType" in dict && typeof dict.mimeType === "string"
+          ? dict.mimeType
+          : undefined;
+    const attachment =
+      mimeType && "data" in dict && dict.data !== undefined
+        ? createAttachmentFromInlineData(dict.data, mimeType)
+        : null;
+
+    for (const [key, entry] of Object.entries(dict)) {
+      if (key === "data" && attachment) {
+        serialized[key] = attachment;
+      } else {
+        serialized[key] = serializeInteractionValue(entry, seen);
+      }
+    }
+
+    return serialized;
+  } finally {
+    seen.delete(dict);
+  }
+}
+
+function createAttachmentFromInlineData(
+  data: unknown,
+  mimeType?: string,
+): Attachment | null {
+  if (
+    !(
+      data instanceof Uint8Array ||
+      (typeof Buffer !== "undefined" && Buffer.isBuffer(data)) ||
+      typeof data === "string"
+    )
+  ) {
+    return null;
+  }
+
+  const extension = mimeType ? mimeType.split("/")[1] : "bin";
+  const filename = `file.${extension}`;
+  const buffer =
+    typeof data === "string"
+      ? typeof Buffer !== "undefined"
+        ? Buffer.from(data, "base64")
+        : new Uint8Array(
+            atob(data)
+              .split("")
+              .map((c) => c.charCodeAt(0)),
+          )
+      : typeof Buffer !== "undefined"
+        ? Buffer.from(data)
+        : new Uint8Array(data);
+  const arrayBuffer =
+    buffer instanceof Uint8Array
+      ? buffer.buffer.slice(
+          buffer.byteOffset,
+          buffer.byteOffset + buffer.byteLength,
+        )
+      : buffer;
+
+  return new Attachment({
+    data: arrayBuffer,
+    filename,
+    contentType: mimeType || "application/octet-stream",
+  });
 }
 
 function serializeGenerateContentTools(
@@ -840,6 +999,45 @@ function extractEmbedContentMetrics(
   return metrics;
 }
 
+function extractInteractionMetrics(
+  response: GoogleGenAIInteraction | undefined,
+  startTime?: number,
+): Record<string, number> {
+  const metrics: Record<string, number> = {};
+
+  if (startTime !== undefined) {
+    const end = getCurrentUnixTimestamp();
+    metrics.start = startTime;
+    metrics.end = end;
+    metrics.duration = end - startTime;
+  }
+
+  if (response?.usage) {
+    populateInteractionUsageMetrics(metrics, response.usage);
+  }
+
+  return metrics;
+}
+
+function extractInteractionResponseMetadata(
+  response: GoogleGenAIInteraction | undefined,
+): Record<string, unknown> | undefined {
+  const responseDict = tryToDict(response);
+  if (!responseDict) {
+    return undefined;
+  }
+
+  const metadata: Record<string, unknown> = {};
+  if (typeof responseDict.id === "string") {
+    metadata.interaction_id = responseDict.id;
+  }
+  if (typeof responseDict.status === "string") {
+    metadata.status = responseDict.status;
+  }
+
+  return Object.keys(metadata).length > 0 ? metadata : undefined;
+}
+
 function extractEmbedPromptTokenCount(
   response: GoogleGenAIEmbedContentResponse | undefined,
 ): number | undefined {
@@ -933,6 +1131,27 @@ function populateUsageMetrics(
   }
   if (usage.thoughtsTokenCount !== undefined) {
     metrics.completion_reasoning_tokens = usage.thoughtsTokenCount;
+  }
+}
+
+function populateInteractionUsageMetrics(
+  metrics: Record<string, number>,
+  usage: GoogleGenAIInteractionUsage,
+): void {
+  if (typeof usage.total_input_tokens === "number") {
+    metrics.prompt_tokens = usage.total_input_tokens;
+  }
+  if (typeof usage.total_output_tokens === "number") {
+    metrics.completion_tokens = usage.total_output_tokens;
+  }
+  if (typeof usage.total_tokens === "number") {
+    metrics.tokens = usage.total_tokens;
+  }
+  if (typeof usage.total_cached_tokens === "number") {
+    metrics.prompt_cached_tokens = usage.total_cached_tokens;
+  }
+  if (typeof usage.total_thought_tokens === "number") {
+    metrics.completion_reasoning_tokens = usage.total_thought_tokens;
   }
 }
 
@@ -1056,6 +1275,198 @@ function aggregateGenerateContentChunks(
   }
 
   return { aggregated, metrics };
+}
+
+function aggregateInteractionEvents(
+  chunks: GoogleGenAIInteractionSSEEvent[],
+  startTime?: number,
+): {
+  output: unknown;
+  metrics: Record<string, number>;
+  metadata?: Record<string, unknown>;
+} {
+  const end = getCurrentUnixTimestamp();
+  const metrics: Record<string, number> = {};
+  if (startTime !== undefined) {
+    metrics.start = startTime;
+    metrics.end = end;
+    metrics.duration = end - startTime;
+  }
+
+  let latestInteraction: Record<string, unknown> | undefined;
+  let latestUsage: GoogleGenAIInteractionUsage | undefined;
+  let status: string | undefined;
+  let outputText = "";
+  const steps = new Map<number, Record<string, unknown>>();
+
+  for (const chunk of chunks) {
+    const event = tryToDict(chunk);
+    if (!event) {
+      continue;
+    }
+
+    const usage = extractInteractionUsageFromEvent(event);
+    if (usage) {
+      latestUsage = usage;
+    }
+
+    const interaction = tryToDict(event.interaction);
+    if (interaction) {
+      latestInteraction = serializeInteractionValue(interaction) as Record<
+        string,
+        unknown
+      >;
+      if (typeof interaction.status === "string") {
+        status = interaction.status;
+      }
+    }
+
+    if (typeof event.status === "string") {
+      status = event.status;
+    }
+
+    const index = typeof event.index === "number" ? event.index : undefined;
+    if (index === undefined) {
+      continue;
+    }
+
+    if (event.event_type === "step.start") {
+      const compact = compactInteractionStep(event.step);
+      compact.index = index;
+      steps.set(index, compact);
+      continue;
+    }
+
+    if (event.event_type === "step.delta") {
+      const step = steps.get(index) ?? { index };
+      const textDelta = applyInteractionDelta(step, event.delta);
+      if (textDelta) {
+        outputText += textDelta;
+      }
+      steps.set(index, step);
+    }
+  }
+
+  if (latestUsage) {
+    populateInteractionUsageMetrics(metrics, latestUsage);
+  }
+
+  const output: Record<string, unknown> = latestInteraction
+    ? { ...latestInteraction }
+    : {};
+  if (status) {
+    output.status = status;
+  }
+  if (outputText) {
+    output.output_text = outputText;
+  }
+  if (latestUsage) {
+    output.usage = serializeInteractionValue(latestUsage);
+  }
+
+  const compactSteps = Array.from(steps.values()).sort(
+    (left, right) => Number(left.index ?? 0) - Number(right.index ?? 0),
+  );
+  if (compactSteps.length > 0) {
+    output.steps = compactSteps;
+  }
+
+  const metadata: Record<string, unknown> = {};
+  if (typeof output.id === "string") {
+    metadata.interaction_id = output.id;
+  }
+  if (typeof output.status === "string") {
+    metadata.status = output.status;
+  }
+
+  return {
+    output,
+    metrics: cleanMetrics(metrics),
+    ...(Object.keys(metadata).length > 0 ? { metadata } : {}),
+  };
+}
+
+function extractInteractionUsageFromEvent(
+  event: Record<string, unknown>,
+): GoogleGenAIInteractionUsage | undefined {
+  const metadata = tryToDict(event.metadata);
+  const metadataUsage = tryToDict(metadata?.usage);
+  if (metadataUsage) {
+    return metadataUsage as GoogleGenAIInteractionUsage;
+  }
+  const metadataTotalUsage = tryToDict(metadata?.total_usage);
+  if (metadataTotalUsage) {
+    return metadataTotalUsage as GoogleGenAIInteractionUsage;
+  }
+
+  const interaction = tryToDict(event.interaction);
+  const interactionUsage = tryToDict(interaction?.usage);
+  return interactionUsage
+    ? (interactionUsage as GoogleGenAIInteractionUsage)
+    : undefined;
+}
+
+function compactInteractionStep(step: unknown): Record<string, unknown> {
+  const stepDict = tryToDict(step);
+  if (!stepDict) {
+    return {};
+  }
+
+  const compact: Record<string, unknown> = {};
+  for (const key of [
+    "type",
+    "content",
+    "name",
+    "server_name",
+    "arguments",
+    "result",
+    "is_error",
+  ]) {
+    if (stepDict[key] !== undefined) {
+      compact[key] = serializeInteractionValue(stepDict[key]);
+    }
+  }
+
+  return Object.keys(compact).length > 0
+    ? compact
+    : (serializeInteractionValue(stepDict) as Record<string, unknown>);
+}
+
+function applyInteractionDelta(
+  step: Record<string, unknown>,
+  delta: unknown,
+): string | undefined {
+  const deltaDict = tryToDict(delta);
+  if (!deltaDict) {
+    return undefined;
+  }
+
+  const deltaType = deltaDict.type;
+  if (typeof deltaType === "string" && typeof step.type !== "string") {
+    step.type = deltaType === "text" ? "model_output" : deltaType;
+  }
+
+  if (deltaType === "text" && typeof deltaDict.text === "string") {
+    step.text = `${typeof step.text === "string" ? step.text : ""}${
+      deltaDict.text
+    }`;
+    return deltaDict.text;
+  }
+
+  if (
+    deltaType === "arguments_delta" &&
+    typeof deltaDict.arguments === "string"
+  ) {
+    step.arguments = `${
+      typeof step.arguments === "string" ? step.arguments : ""
+    }${deltaDict.arguments}`;
+    return undefined;
+  }
+
+  const deltas = Array.isArray(step.deltas) ? step.deltas : [];
+  deltas.push(serializeInteractionValue(deltaDict));
+  step.deltas = deltas;
+  return undefined;
 }
 
 function cleanMetrics(metrics: Record<string, number>): Record<string, number> {

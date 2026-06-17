@@ -1,10 +1,36 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { mockCurrentParentSpan, mockFlush, mockStartSpan } = vi.hoisted(() => ({
-  mockCurrentParentSpan: { current: undefined as any },
-  mockFlush: vi.fn(),
-  mockStartSpan: vi.fn(),
-}));
+const {
+  mockCurrentParentSpan,
+  mockCurrentSpanStoreSymbol,
+  mockCurrentSpanStore,
+  mockFlush,
+  mockStartSpan,
+} = vi.hoisted(() => {
+  const currentParentSpan = { current: undefined as any };
+  const currentSpanStoreSymbol = Symbol.for("braintrust.currentSpanStore");
+  return {
+    mockCurrentParentSpan: currentParentSpan,
+    mockCurrentSpanStoreSymbol: currentSpanStoreSymbol,
+    mockCurrentSpanStore: {
+      enterWith: vi.fn((span: unknown) => {
+        currentParentSpan.current = span;
+      }),
+      getStore: vi.fn(() => currentParentSpan.current),
+      run: vi.fn((span: unknown, callback: () => unknown) => {
+        const previous = currentParentSpan.current;
+        currentParentSpan.current = span;
+        try {
+          return callback();
+        } finally {
+          currentParentSpan.current = previous;
+        }
+      }),
+    },
+    mockFlush: vi.fn(),
+    mockStartSpan: vi.fn(),
+  };
+});
 
 const { mockChannelHandlers, mockNewTracingChannel, mockTracingChannel } =
   vi.hoisted(() => {
@@ -24,7 +50,14 @@ const { mockChannelHandlers, mockNewTracingChannel, mockTracingChannel } =
   });
 
 vi.mock("../../logger", () => ({
+  BRAINTRUST_CURRENT_SPAN_STORE: mockCurrentSpanStoreSymbol,
   flush: (...args: unknown[]) => mockFlush(...args),
+  _internalGetGlobalState: () => ({
+    contextManager: {
+      [mockCurrentSpanStoreSymbol]: mockCurrentSpanStore,
+      wrapSpanForStore: (span: unknown) => span,
+    },
+  }),
   startSpan: (...args: unknown[]) => mockStartSpan(...args),
   withCurrent: (span: unknown, callback: () => unknown) => {
     const previous = mockCurrentParentSpan.current;
@@ -61,6 +94,9 @@ describe("Flue observe instrumentation", () => {
   beforeEach(() => {
     spans = [];
     mockCurrentParentSpan.current = undefined;
+    mockCurrentSpanStore.enterWith.mockClear();
+    mockCurrentSpanStore.getStore.mockClear();
+    mockCurrentSpanStore.run.mockClear();
     mockFlush.mockResolvedValue(undefined);
     mockStartSpan.mockImplementation((args: any = {}) => {
       const parentSpan = mockCurrentParentSpan.current;
@@ -608,6 +644,76 @@ describe("Flue observe instrumentation", () => {
       "Error in Flue observe instrumentation:",
       expect.any(Error),
     );
+  });
+
+  it("makes workflow spans current until the run ends", () => {
+    const emit = observeEvents();
+
+    emit({
+      runId: "run-1",
+      type: "run_start",
+      workflowName: "research",
+    });
+
+    const workflowSpan = findSpan("workflow:research");
+    expect(mockCurrentParentSpan.current).toBe(workflowSpan);
+
+    const appSpan = mockStartSpan({ name: "app.phase" });
+    expect(appSpan.spanParents).toEqual([workflowSpan?.spanId]);
+
+    emit({
+      durationMs: 1,
+      isError: false,
+      result: "done",
+      runId: "run-1",
+      type: "run_end",
+    });
+
+    expect(mockCurrentParentSpan.current).toBeUndefined();
+  });
+
+  it("makes tool spans current until the tool call ends", () => {
+    const emit = observeEvents();
+
+    emit({
+      runId: "run-1",
+      type: "run_start",
+      workflowName: "research",
+    });
+    emit({
+      operationId: "op-prompt",
+      operationKind: "prompt",
+      runId: "run-1",
+      type: "operation_start",
+    });
+    emit({
+      args: { query: "flue" },
+      operationId: "op-prompt",
+      runId: "run-1",
+      toolCallId: "tool-1",
+      toolName: "lookup",
+      type: "tool_start",
+    });
+
+    const workflowSpan = findSpan("workflow:research");
+    const toolSpan = findSpan("tool:lookup");
+    expect(mockCurrentParentSpan.current).toBe(toolSpan);
+
+    const appSpan = mockStartSpan({ name: "app.tool-phase" });
+    expect(appSpan.spanParents).toEqual([toolSpan?.spanId]);
+
+    emit({
+      durationMs: 1,
+      isError: false,
+      operationId: "op-prompt",
+      result: "done",
+      runId: "run-1",
+      toolCallId: "tool-1",
+      toolName: "lookup",
+      type: "tool_call",
+    });
+
+    expect(mockCurrentParentSpan.current).toBe(workflowSpan);
   });
 
   it("subscribes transformed Flue contexts for auto instrumentation", () => {

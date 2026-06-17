@@ -77,6 +77,7 @@ import {
   type PromptType as PromptRow,
   type PromptSessionEventType as PromptSessionEvent,
   type RepoInfoType as RepoInfo,
+  type ObjectReferenceType as ObjectReference,
   type PromptBlockDataType as PromptBlockData,
   type ResponseFormatJsonSchemaType as ResponseFormatJsonSchema,
   type ObjectReferenceType,
@@ -1062,6 +1063,7 @@ function clearTestBackgroundLogger() {
 function initTestExperiment(
   experimentName: string,
   projectName?: string,
+  experimentFullInfo: Record<string, unknown> = {},
 ): Experiment {
   setInitialTestState();
   const state = _internalGetGlobalState();
@@ -1070,7 +1072,11 @@ function initTestExperiment(
   const lazyMetadata: LazyValue<ProjectExperimentMetadata> = new LazyValue(
     async () => ({
       project: { id: project, name: project, fullInfo: {} },
-      experiment: { id: experimentName, name: experimentName, fullInfo: {} },
+      experiment: {
+        id: experimentName,
+        name: experimentName,
+        fullInfo: experimentFullInfo,
+      },
     }),
   );
 
@@ -6227,6 +6233,7 @@ export class ObjectFetcher<RecordType> implements AsyncIterable<
 
 export type BaseMetadata = Record<string, unknown> | void;
 export type DefaultMetadataType = void;
+export type EvalCaseOrigin = ObjectReference;
 export type EvalCase<Input, Expected, Metadata> = {
   input: Input;
   tags?: string[];
@@ -6234,6 +6241,7 @@ export type EvalCase<Input, Expected, Metadata> = {
   id?: string;
   _xact_id?: TransactionId;
   created?: string | null;
+  origin?: EvalCaseOrigin;
   // This field is used to help re-run a particular experiment row.
   upsert_id?: string;
   // The number of times to run the evaluator for this specific input.
@@ -6312,6 +6320,14 @@ export class Experiment
     return (async () => {
       return (await this.lazyMetadata.get()).project;
     })();
+  }
+
+  public async _getBaseExperimentId(): Promise<string | undefined> {
+    const baseExperimentId = (await this.lazyMetadata.get()).experiment
+      .fullInfo["base_exp_id"];
+    return typeof baseExperimentId === "string" && baseExperimentId
+      ? baseExperimentId
+      : undefined;
   }
 
   private parentObjectType() {
@@ -6480,6 +6496,17 @@ export class Experiment
         if (baseExperiment !== null) {
           comparisonExperimentId = baseExperiment.id;
           comparisonExperimentName = baseExperiment.name;
+        }
+      } else {
+        try {
+          const comparisonExperiment = await state
+            .apiConn()
+            .get_json(`v1/experiment/${comparisonExperimentId}`);
+          if (typeof comparisonExperiment["name"] === "string") {
+            comparisonExperimentName = comparisonExperiment["name"];
+          }
+        } catch {
+          // If the explicit comparison name lookup fails, still summarize by ID.
         }
       }
 

@@ -22,6 +22,12 @@
     ]
   },
   {
+    "scenarioDirName": "pi-coding-agent-instrumentation",
+    "label": "Pi Coding Agent Instrumentation",
+    "metadataScenario": "pi-coding-agent-instrumentation",
+    "variants": [{ "variantKey": "pi-coding-agent-v079", "label": "v0.79" }]
+  },
+  {
     "scenarioDirName": "openai-agents-instrumentation",
     "label": "OpenAI Agents Instrumentation",
     "metadataScenario": "openai-agents-instrumentation",
@@ -59,7 +65,8 @@
       { "variantKey": "google-genai-v1300", "label": "v1.30.0" },
       { "variantKey": "google-genai-v1440", "label": "v1.44.0" },
       { "variantKey": "google-genai-v1450", "label": "v1.45.0" },
-      { "variantKey": "google-genai-v1460", "label": "v1.46.0" }
+      { "variantKey": "google-genai-v1460", "label": "v1.46.0" },
+      { "variantKey": "google-genai-v280", "label": "v2.8.0" }
     ]
   },
   {
@@ -145,7 +152,8 @@
       { "variantKey": "ai-sdk-v3", "label": "v3" },
       { "variantKey": "ai-sdk-v4", "label": "v4" },
       { "variantKey": "ai-sdk-v5", "label": "v5" },
-      { "variantKey": "ai-sdk-v6", "label": "v6" }
+      { "variantKey": "ai-sdk-v6", "label": "v6" },
+      { "variantKey": "ai-sdk-v7", "label": "v7" }
     ]
   },
   {

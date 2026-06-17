@@ -15,6 +15,14 @@ type TokenMaps = {
   xacts: Map<string, string>;
 };
 
+export type NormalizeOptions = {
+  additionalProviderIdKeys?: Iterable<string>;
+};
+
+type ResolvedNormalizeOptions = {
+  providerIdKeys: Set<string>;
+};
+
 const ISO_DATE_REGEX = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$/;
 const ISO_DATE_SUBSTRING_REGEX =
   /(?<![A-Za-z0-9_-])\d{4}-\d{2}-\d{2}(?:[Tt ]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})?)?(?![A-Za-z0-9_-])/g;
@@ -78,7 +86,9 @@ const DYNAMIC_HEADER_KEYS = new Set([
 const PROVIDER_ID_KEYS = new Set([
   "agentId",
   "claude_agent_sdk.task_id",
+  "interaction_id",
   "itemId",
+  "previous_interaction_id",
   "responseId",
   "toolCallId",
 ]);
@@ -94,6 +104,8 @@ const NODE_INTERNAL_FRAME_REGEX = /node:[^)\n]+:\d+:\d+/g;
 const TEMP_SCENARIO_PATH_REGEX =
   /\/e2e\/\.bt-tmp\/[^/\s)]+\/scenarios\/([^/\s)]+)\/?/g;
 const TEMP_HELPER_PATH_REGEX = /\/e2e\/\.bt-tmp\/[^/\s)]+\/helpers\/?/g;
+const TEMP_SCENARIO_DEPENDENCY_PATH_REGEX =
+  /\/e2e\/\.bt-tmp\/scenario-deps\/([^/\s)]+)-locked-[0-9a-f]{8,}(?=\/|$)/gi;
 const PROVIDER_HELPER_CALLER_REGEX = /^<repo>\/e2e\/helpers\/.+-scenario\.mjs$/;
 const ANTHROPIC_MESSAGE_STREAM_PATH_REGEX =
   /([/\\]node_modules[/\\]\.pnpm[/\\]@anthropic-ai\+sdk@[^/\\\s)]+[/\\]node_modules[/\\]@anthropic-ai[/\\]sdk[/\\])(?:src[/\\]lib[/\\]MessageStream\.ts|lib[/\\]MessageStream\.js)/g;
@@ -151,6 +163,10 @@ function normalizeStackLikeString(value: string): string {
     "/e2e/scenarios/$1/",
   );
   normalized = normalized.replace(TEMP_HELPER_PATH_REGEX, "/e2e/helpers/");
+  normalized = normalized.replace(
+    TEMP_SCENARIO_DEPENDENCY_PATH_REGEX,
+    "/e2e/.bt-tmp/scenario-deps/$1-locked-<hash>",
+  );
 
   normalized = normalized.replace(
     STACK_FRAME_REPO_PATH_REGEX,
@@ -205,6 +221,7 @@ function shouldNormalizeNodeInternalStyleCaller(
 function normalizeObject(
   value: { [key: string]: Json },
   tokenMaps: TokenMaps,
+  options: ResolvedNormalizeOptions,
 ): Json {
   const callerFilename =
     typeof value.caller_filename === "string"
@@ -227,7 +244,15 @@ function normalizeObject(
         }
       }
 
-      return [key, normalizeValue(entry as Json, tokenMaps, key)];
+      if (
+        key === "signature" &&
+        typeof entry === "string" &&
+        (value.type === "thought" || value.type === "thought_signature")
+      ) {
+        return [key, tokenFor(tokenMaps.ids, entry, "signature")];
+      }
+
+      return [key, normalizeValue(entry as Json, tokenMaps, options, key)];
     }),
   );
 }
@@ -250,6 +275,7 @@ function tokenFor(
 function normalizeValue(
   value: Json,
   tokenMaps: TokenMaps,
+  options: ResolvedNormalizeOptions,
   currentKey?: string,
 ): Json {
   if (Array.isArray(value)) {
@@ -257,15 +283,15 @@ function normalizeValue(
       return value.map((entry) =>
         typeof entry === "string"
           ? tokenFor(tokenMaps.ids, entry, "span")
-          : normalizeValue(entry, tokenMaps),
+          : normalizeValue(entry, tokenMaps, options),
       );
     }
 
-    return value.map((entry) => normalizeValue(entry, tokenMaps));
+    return value.map((entry) => normalizeValue(entry, tokenMaps, options));
   }
 
   if (value && typeof value === "object") {
-    return normalizeObject(value, tokenMaps);
+    return normalizeObject(value, tokenMaps, options);
   }
 
   if (typeof value === "number") {
@@ -339,7 +365,7 @@ function normalizeValue(
       return tokenFor(tokenMaps.runs, value, "run");
     }
 
-    if (currentKey && PROVIDER_ID_KEYS.has(currentKey)) {
+    if (currentKey && options.providerIdKeys.has(currentKey)) {
       return tokenFor(tokenMaps.ids, value, currentKey);
     }
 
@@ -400,10 +426,28 @@ function normalizeValue(
   return value;
 }
 
-export function normalizeForSnapshot(value: Json): Json {
-  return normalizeValue(value, {
-    ids: new Map(),
-    runs: new Map(),
-    xacts: new Map(),
-  });
+function resolveNormalizeOptions(
+  options: NormalizeOptions | undefined,
+): ResolvedNormalizeOptions {
+  return {
+    providerIdKeys: new Set([
+      ...PROVIDER_ID_KEYS,
+      ...(options?.additionalProviderIdKeys ?? []),
+    ]),
+  };
+}
+
+export function normalizeForSnapshot(
+  value: Json,
+  options?: NormalizeOptions,
+): Json {
+  return normalizeValue(
+    value,
+    {
+      ids: new Map(),
+      runs: new Map(),
+      xacts: new Map(),
+    },
+    resolveNormalizeOptions(options),
+  );
 }

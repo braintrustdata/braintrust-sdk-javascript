@@ -166,6 +166,68 @@ function makeTestScorer(
 }
 
 describe("runEvaluator", () => {
+  test("preserves a valid inline origin", async () => {
+    const origin: {
+      object_type: "dataset";
+      object_id: string;
+      id: string;
+      _xact_id: string;
+      created: string;
+    } = {
+      object_type: "dataset",
+      object_id: "00000000-0000-0000-0000-000000000001",
+      id: "dataset-row-1",
+      _xact_id: "100",
+      created: "2026-06-01T00:00:00.000Z",
+    };
+
+    const out = await runEvaluator(
+      null,
+      {
+        projectName: "proj",
+        evalName: "eval",
+        data: [{ input: 1, origin }],
+        task: async (input: number) => input * 2,
+        scores: [],
+      },
+      new NoopProgressReporter(),
+      [],
+      undefined,
+    );
+
+    expect(out.results[0].origin).toEqual(origin);
+  });
+
+  test("rejects an invalid inline origin", async () => {
+    const origin: {
+      object_type: "dataset";
+      object_id: string;
+      id: string;
+    } = {
+      object_type: "dataset",
+      object_id: "not-a-uuid",
+      id: "dataset-row-1",
+    };
+    const task = vi.fn(async (input: number) => input * 2);
+
+    await expect(
+      runEvaluator(
+        null,
+        {
+          projectName: "proj",
+          evalName: "eval",
+          data: [{ input: 1, origin }],
+          task,
+          scores: [],
+        },
+        new NoopProgressReporter(),
+        [],
+        undefined,
+      ),
+    ).rejects.toThrow();
+    expect(task).not.toHaveBeenCalled();
+  });
+
   describe("errors", () => {
     test("task errors generate no scores", async () => {
       const out = await runEvaluator(
@@ -759,6 +821,91 @@ test("Eval with returnResults: true collects all results", async () => {
   expect(result.summary.scores.exact_match.score).toBe(1);
 });
 
+test("runEvaluator forwards baseExperimentId to summary", async () => {
+  await _exportsForTestingOnly.simulateLoginForTests();
+  const experiment = _exportsForTestingOnly.initTestExperiment(
+    "js-base-experiment-id",
+    "proj",
+  );
+  const expectedSummary = {
+    projectName: "proj",
+    experimentName: "js-base-experiment-id",
+    projectId: "proj",
+    experimentId: "js-base-experiment-id",
+    scores: {},
+    metrics: {},
+  };
+  const summarize = vi
+    .spyOn(experiment, "summarize")
+    .mockResolvedValue(expectedSummary);
+
+  const result = await runEvaluator(
+    experiment,
+    {
+      projectName: "proj",
+      evalName: "js-base-experiment-id",
+      data: [{ input: "hello", expected: "hello" }],
+      task: (input) => input,
+      scores: [],
+      baseExperimentId: "base-exp-id",
+    },
+    new NoopProgressReporter(),
+    [],
+    undefined,
+    undefined,
+    true,
+  );
+
+  expect(result.summary).toBe(expectedSummary);
+  expect(summarize).toHaveBeenCalledWith({
+    summarizeScores: undefined,
+    comparisonExperimentId: "base-exp-id",
+  });
+});
+
+test("runEvaluator forwards persisted baseExperimentName id to summary", async () => {
+  await _exportsForTestingOnly.simulateLoginForTests();
+  const experiment = _exportsForTestingOnly.initTestExperiment(
+    "js-base-experiment-name",
+    "proj",
+    { base_exp_id: "resolved-base-exp-id" },
+  );
+  const expectedSummary = {
+    projectName: "proj",
+    experimentName: "js-base-experiment-name",
+    projectId: "proj",
+    experimentId: "js-base-experiment-name",
+    scores: {},
+    metrics: {},
+  };
+  const summarize = vi
+    .spyOn(experiment, "summarize")
+    .mockResolvedValue(expectedSummary);
+
+  const result = await runEvaluator(
+    experiment,
+    {
+      projectName: "proj",
+      evalName: "js-base-experiment-name",
+      data: [{ input: "hello", expected: "hello" }],
+      task: (input) => input,
+      scores: [],
+      baseExperimentName: "base-exp",
+    },
+    new NoopProgressReporter(),
+    [],
+    undefined,
+    undefined,
+    true,
+  );
+
+  expect(result.summary).toBe(expectedSummary);
+  expect(summarize).toHaveBeenCalledWith({
+    summarizeScores: undefined,
+    comparisonExperimentId: "resolved-base-exp-id",
+  });
+});
+
 test("tags can be appended and logged to root span", async () => {
   await _exportsForTestingOnly.simulateLoginForTests();
   const memoryLogger = _exportsForTestingOnly.useTestBackgroundLogger();
@@ -1037,6 +1184,62 @@ describe("framework2 metadata support", () => {
       });
 
       expect(tool.tags).toBeUndefined();
+    });
+
+    test("classifier registers as a code function", () => {
+      const project = projects.create({ name: "test-project" });
+
+      const classifier = project.classifiers.create({
+        handler: ({ output }: { output: string }) => ({
+          name: "category",
+          id: output,
+        }),
+        name: "test-classifier",
+        parameters: z.object({
+          output: z.string(),
+        }),
+      });
+
+      expect(classifier.type).toBe("classifier");
+      expect(classifier.name).toBe("test-classifier");
+      expect(classifier.slug).toBe("test-classifier");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      expect((project as any)._publishableCodeFunctions).toEqual([classifier]);
+    });
+
+    test("lazy classifier registration uses the functions registry", () => {
+      const previousLazyLoad = globalThis._lazy_load;
+      const previousEvals = globalThis._evals;
+      globalThis._lazy_load = true;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      globalThis._evals = {
+        evaluators: [],
+        functions: [],
+        parameters: [],
+        prompts: [],
+        reporters: [],
+      } as any;
+
+      try {
+        const project = projects.create({ name: "test-project" });
+
+        const classifier = project.classifiers.create({
+          handler: ({ output }: { output: string }) => ({
+            name: "category",
+            id: output,
+          }),
+          name: "test-classifier",
+          parameters: z.object({
+            output: z.string(),
+          }),
+        });
+
+        expect(globalThis._evals.functions).toEqual([classifier]);
+        expect(globalThis._evals.functions[0].type).toBe("classifier");
+      } finally {
+        globalThis._lazy_load = previousLazyLoad;
+        globalThis._evals = previousEvals;
+      }
     });
   });
 

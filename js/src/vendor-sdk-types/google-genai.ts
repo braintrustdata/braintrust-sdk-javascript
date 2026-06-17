@@ -17,6 +17,7 @@ export interface GoogleGenAIConstructor {
 export interface GoogleGenAIClient {
   models: GoogleGenAIModels;
   chats: GoogleGenAIChats;
+  interactions?: GoogleGenAIInteractions;
 }
 
 export interface GoogleGenAIModels {
@@ -33,6 +34,15 @@ export interface GoogleGenAIModels {
 
 export interface GoogleGenAIChats {
   modelsModule?: GoogleGenAIModels;
+}
+
+export interface GoogleGenAIInteractions {
+  create: (
+    params: GoogleGenAIInteractionCreateParams,
+    options?: Record<string, unknown>,
+  ) => Promise<
+    GoogleGenAIInteraction | AsyncIterable<GoogleGenAIInteractionSSEEvent>
+  >;
 }
 
 // Requests
@@ -63,6 +73,33 @@ export interface GoogleGenAIEmbedContentParams {
   [key: string]: unknown;
 }
 
+export interface GoogleGenAIInteractionCreateParams {
+  input:
+    | string
+    | GoogleGenAIInteractionStep[]
+    | GoogleGenAIInteractionContent[]
+    | GoogleGenAIInteractionContent
+    | Record<string, unknown>;
+  model?: string;
+  agent?: string;
+  agent_config?: Record<string, unknown>;
+  api_version?: string;
+  background?: boolean;
+  environment?: string | Record<string, unknown>;
+  generation_config?: Record<string, unknown>;
+  previous_interaction_id?: string;
+  response_format?: unknown;
+  response_mime_type?: string;
+  response_modalities?: string[];
+  service_tier?: string;
+  store?: boolean;
+  stream?: boolean;
+  system_instruction?: string;
+  tools?: Record<string, unknown>[];
+  webhook_config?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
 export interface GoogleGenAIContent {
   role?: string;
   parts: GoogleGenAIPart[];
@@ -78,6 +115,21 @@ export interface GoogleGenAIPart {
   functionCall?: Record<string, unknown>;
   codeExecutionResult?: Record<string, unknown>;
   executableCode?: Record<string, unknown>;
+}
+
+export interface GoogleGenAIInteractionContent {
+  type?: string;
+  text?: string;
+  data?: string;
+  mime_type?: string;
+  uri?: string;
+  [key: string]: unknown;
+}
+
+export interface GoogleGenAIInteractionStep {
+  type?: string;
+  content?: GoogleGenAIInteractionContent | GoogleGenAIInteractionContent[];
+  [key: string]: unknown;
 }
 
 // Responses
@@ -118,6 +170,37 @@ export interface GoogleGenAIEmbedContentResponse {
   [key: string]: unknown;
 }
 
+export interface GoogleGenAIInteraction {
+  id?: string;
+  created?: string;
+  status?: string;
+  steps?: GoogleGenAIInteractionStep[];
+  updated?: string;
+  input?: GoogleGenAIInteractionCreateParams["input"];
+  model?: string;
+  agent?: string;
+  usage?: GoogleGenAIInteractionUsage;
+  output_text?: string;
+  output_image?: GoogleGenAIInteractionContent;
+  output_audio?: GoogleGenAIInteractionContent;
+  output_video?: GoogleGenAIInteractionContent;
+  [key: string]: unknown;
+}
+
+export interface GoogleGenAIInteractionSSEEvent {
+  event_type?: string;
+  interaction?: GoogleGenAIInteraction;
+  index?: number;
+  step?: GoogleGenAIInteractionStep;
+  delta?: Record<string, unknown>;
+  metadata?: {
+    total_usage?: GoogleGenAIInteractionUsage;
+    usage?: GoogleGenAIInteractionUsage;
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+}
+
 export interface GoogleGenAIGroundingMetadata {
   groundingChunks?: Array<{
     web?: {
@@ -139,4 +222,14 @@ export interface GoogleGenAIUsageMetadata {
   totalTokenCount?: number;
   cachedContentTokenCount?: number;
   thoughtsTokenCount?: number;
+}
+
+export interface GoogleGenAIInteractionUsage {
+  total_input_tokens?: number;
+  total_output_tokens?: number;
+  total_tokens?: number;
+  total_cached_tokens?: number;
+  total_thought_tokens?: number;
+  total_tool_use_tokens?: number; // This technically exists but we have no sensical way of mapping it to braintrust metrics. Also, the tool use tokens are already counted in output tokens so we don't need to add them.
+  [key: string]: unknown;
 }

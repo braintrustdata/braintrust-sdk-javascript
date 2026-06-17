@@ -3,6 +3,7 @@ import { isObject, mergeDicts } from "../../util";
 
 export type ChannelConfig = {
   name: string;
+  shouldTrace?: (args: unknown[], event: unknown) => boolean;
   type: string;
 };
 

@@ -160,12 +160,18 @@ function isFlueChildSpan(event: CapturedLogEvent): boolean {
     event.span.name?.startsWith("tool:") === true ||
     event.span.name?.startsWith("task:") === true ||
     event.span.name?.startsWith("compaction:") === true ||
+    event.span.name === "flue.toolCurrentProbe" ||
     event.span.name === "flue.task"
   );
 }
 
 function buildSpanTree(events: CapturedLogEvent[]): SpanTreeEntry[] {
   const workflow = findLatestSpanByPrefix(events, "workflow:");
+  const workflowCurrentProbe = findLatestChildSpan(
+    events,
+    "flue.workflowCurrentProbe",
+    workflow?.span.id,
+  );
   const promptSpan = findFlueOperation(events, "flue.prompt");
   const skillSpan = findFlueOperation(events, "flue.skill");
   const taskSpan = findFlueOperation(events, "flue.task");
@@ -173,6 +179,7 @@ function buildSpanTree(events: CapturedLogEvent[]): SpanTreeEntry[] {
 
   return [
     workflow,
+    workflowCurrentProbe,
     promptSpan,
     ...findFlueDescendants(events, promptSpan, isFlueChildSpan),
     skillSpan,
@@ -221,6 +228,41 @@ export function defineFlueInstrumentationAssertions(options: {
         scenario: SCENARIO_NAME,
         testRunId: expect.any(String),
       });
+    });
+
+    test(
+      "makes the Flue workflow span current for app spans",
+      testConfig,
+      () => {
+        const workflow = findLatestSpanByPrefix(events, "workflow:");
+        const appSpan = findLatestChildSpan(
+          events,
+          "flue.workflowCurrentProbe",
+          workflow?.span.id,
+        );
+
+        expect(appSpan).toBeDefined();
+        expect(appSpan?.span.parentIds).toEqual([workflow?.span.id]);
+        expect(appSpan?.output).toBe("active");
+      },
+    );
+
+    test("makes Flue tool spans current for app spans", testConfig, () => {
+      const promptSpan = findFlueOperation(events, "flue.prompt");
+      const lookupToolSpan = findFlueDescendants(
+        events,
+        promptSpan,
+        (event) => event.span.name === "tool:lookup",
+      )[0];
+      const appSpan = findLatestChildSpan(
+        events,
+        "flue.toolCurrentProbe",
+        lookupToolSpan?.span.id,
+      );
+
+      expect(appSpan).toBeDefined();
+      expect(appSpan?.span.parentIds).toEqual([lookupToolSpan?.span.id]);
+      expect(appSpan?.output).toBe("lookup-active");
     });
 
     test("captures observe-based Flue operation spans", testConfig, () => {
