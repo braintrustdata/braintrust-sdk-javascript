@@ -104,6 +104,8 @@ const NODE_INTERNAL_FRAME_REGEX = /node:[^)\n]+:\d+:\d+/g;
 const TEMP_SCENARIO_PATH_REGEX =
   /\/e2e\/\.bt-tmp\/[^/\s)]+\/scenarios\/([^/\s)]+)\/?/g;
 const TEMP_HELPER_PATH_REGEX = /\/e2e\/\.bt-tmp\/[^/\s)]+\/helpers\/?/g;
+const TEMP_SCENARIO_DEPENDENCY_PATH_REGEX =
+  /\/e2e\/\.bt-tmp\/scenario-deps\/([^/\s)]+)-locked-[0-9a-f]{8,}(?=\/|$)/gi;
 const PROVIDER_HELPER_CALLER_REGEX = /^<repo>\/e2e\/helpers\/.+-scenario\.mjs$/;
 const ANTHROPIC_MESSAGE_STREAM_PATH_REGEX =
   /([/\\]node_modules[/\\]\.pnpm[/\\]@anthropic-ai\+sdk@[^/\\\s)]+[/\\]node_modules[/\\]@anthropic-ai[/\\]sdk[/\\])(?:src[/\\]lib[/\\]MessageStream\.ts|lib[/\\]MessageStream\.js)/g;
@@ -161,6 +163,10 @@ function normalizeStackLikeString(value: string): string {
     "/e2e/scenarios/$1/",
   );
   normalized = normalized.replace(TEMP_HELPER_PATH_REGEX, "/e2e/helpers/");
+  normalized = normalized.replace(
+    TEMP_SCENARIO_DEPENDENCY_PATH_REGEX,
+    "/e2e/.bt-tmp/scenario-deps/$1-locked-<hash>",
+  );
 
   normalized = normalized.replace(
     STACK_FRAME_REPO_PATH_REGEX,

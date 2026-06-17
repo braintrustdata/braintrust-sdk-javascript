@@ -1213,10 +1213,12 @@ function prepareAISDKChildTracing(
           },
         });
 
+        const streamStartTime = getCurrentUnixTimestamp();
         const result = await withCurrent(span, () =>
           Reflect.apply(originalDoStream, resolvedModel, [options]),
         );
-        const streamStartTime = getCurrentUnixTimestamp();
+        // firstChunkTime !== streamStartTime because the first few chunks may be actual bookkeeping stuff for the SDK
+        // instead of actual LLM output that can be streamed to users.
         let firstChunkTime: number | undefined;
         const output: Record<string, unknown> = {};
         let text = "";
@@ -1226,7 +1228,10 @@ function prepareAISDKChildTracing(
 
         const transformStream = new TransformStream({
           transform(chunk: AISDKModelStreamChunk, controller) {
-            if (firstChunkTime === undefined) {
+            if (
+              firstChunkTime === undefined &&
+              isAISDKContentStreamChunk(chunk)
+            ) {
               firstChunkTime = getCurrentUnixTimestamp();
             }
 
@@ -1475,6 +1480,137 @@ function finalizeAISDKChildTracing(event?: { [key: string]: unknown }): void {
   }
 }
 
+function extractAISDKStreamPart(chunk: unknown): unknown {
+  if (!isObject(chunk) || !isObject(chunk.part)) {
+    return chunk;
+  }
+
+  return chunk.part;
+}
+
+function stringContent(value: unknown): string | undefined {
+  return typeof value === "string" && value.length > 0 ? value : undefined;
+}
+
+function rawValueHasAISDKContent(value: unknown): boolean {
+  if (value === undefined || value === null) {
+    return false;
+  }
+
+  if (typeof value === "string") {
+    return value.length > 0;
+  }
+
+  if (!isObject(value)) {
+    return true;
+  }
+
+  // Raw streams also include provider lifecycle events; only content shapes count.
+  const delta = value.delta;
+  if (
+    stringContent(value.content) ||
+    stringContent(value.text) ||
+    stringContent(value.delta) ||
+    stringContent(value.arguments) ||
+    stringContent(value.partial_json) ||
+    (isObject(delta) &&
+      (stringContent(delta.content) ||
+        stringContent(delta.text) ||
+        stringContent(delta.arguments) ||
+        stringContent(delta.partial_json) ||
+        stringContent(delta.thinking))) ||
+    (Array.isArray(value.choices) &&
+      value.choices.some((choice) => {
+        if (!isObject(choice) || !isObject(choice.delta)) {
+          return false;
+        }
+
+        const choiceDelta = choice.delta;
+        if (
+          stringContent(choiceDelta.content) ||
+          stringContent(choiceDelta.text)
+        ) {
+          return true;
+        }
+
+        if (
+          isObject(choiceDelta.function_call) &&
+          stringContent(choiceDelta.function_call.arguments)
+        ) {
+          return true;
+        }
+
+        return (
+          Array.isArray(choiceDelta.tool_calls) &&
+          choiceDelta.tool_calls.some(
+            (toolCall) =>
+              isObject(toolCall) &&
+              isObject(toolCall.function) &&
+              stringContent(toolCall.function.arguments),
+          )
+        );
+      }))
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+function isAISDKContentStreamChunk(chunk: unknown): boolean {
+  const part = extractAISDKStreamPart(chunk);
+  if (typeof part === "string") {
+    return part.length > 0;
+  }
+
+  if (!isObject(part) || typeof part.type !== "string") {
+    return false;
+  }
+
+  // TTFT should ignore framing like stream-start, metadata, and text/tool starts.
+  switch (part.type) {
+    case "text-delta":
+      return (
+        stringContent(part.textDelta) !== undefined ||
+        stringContent(part.delta) !== undefined ||
+        stringContent(part.text) !== undefined ||
+        stringContent(part.content) !== undefined
+      );
+    case "reasoning-delta":
+      return (
+        stringContent(part.delta) !== undefined ||
+        stringContent(part.text) !== undefined ||
+        stringContent(part.content) !== undefined
+      );
+    case "tool-call":
+    case "object":
+    case "file":
+      return true;
+    case "tool-input-delta":
+    case "tool-call-delta":
+      return (
+        stringContent(part.argsTextDelta) !== undefined ||
+        stringContent(part.inputTextDelta) !== undefined ||
+        stringContent(part.delta) !== undefined ||
+        stringContent(part.text) !== undefined ||
+        stringContent(part.content) !== undefined
+      );
+    case "raw":
+      return rawValueHasAISDKContent(part.rawValue);
+    default:
+      return false;
+  }
+}
+
+function isAISDKContentAsyncIterableChunk(chunk: unknown): boolean {
+  if (isAISDKContentStreamChunk(chunk)) {
+    return true;
+  }
+
+  const part = extractAISDKStreamPart(chunk);
+  return isObject(part) && typeof part.type !== "string";
+}
+
 function patchAISDKStreamingResult(args: {
   defaultDenyOutputPaths: string[];
   endEvent: { denyOutputPaths?: string[]; [key: string]: unknown };
@@ -1497,7 +1633,10 @@ function patchAISDKStreamingResult(args: {
     const wrappedBaseStream = resultRecord.baseStream.pipeThrough(
       new TransformStream({
         transform(chunk, controller) {
-          if (firstChunkTime === undefined) {
+          if (
+            firstChunkTime === undefined &&
+            isAISDKContentStreamChunk(chunk)
+          ) {
             firstChunkTime = getCurrentUnixTimestamp();
           }
           controller.enqueue(chunk);
@@ -1551,8 +1690,11 @@ function patchAISDKStreamingResult(args: {
 
   let firstChunkTime: number | undefined;
   const wrappedStream = createPatchedAsyncIterable(streamField.stream, {
-    onChunk: () => {
-      if (firstChunkTime === undefined) {
+    onChunk: (chunk) => {
+      if (
+        firstChunkTime === undefined &&
+        isAISDKContentAsyncIterableChunk(chunk)
+      ) {
         firstChunkTime = getCurrentUnixTimestamp();
       }
     },

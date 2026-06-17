@@ -15,6 +15,7 @@ import { CoherePlugin } from "./plugins/cohere-plugin";
 import { GroqPlugin } from "./plugins/groq-plugin";
 import { GitHubCopilotPlugin } from "./plugins/github-copilot-plugin";
 import { LangChainPlugin } from "./plugins/langchain-plugin";
+import { PiCodingAgentPlugin } from "./plugins/pi-coding-agent-plugin";
 
 function createPluginClassMock() {
   return vi.fn(function MockPlugin(this: {
@@ -94,6 +95,10 @@ vi.mock("./plugins/github-copilot-plugin", () => ({
 
 vi.mock("./plugins/langchain-plugin", () => ({
   LangChainPlugin: createPluginClassMock(),
+}));
+
+vi.mock("./plugins/pi-coding-agent-plugin", () => ({
+  PiCodingAgentPlugin: createPluginClassMock(),
 }));
 
 describe("BraintrustPlugin", () => {
@@ -557,6 +562,7 @@ describe("BraintrustPlugin", () => {
           groq: false,
           gitHubCopilot: false,
           langchain: false,
+          piCodingAgent: false,
         },
       });
       plugin.enable();
@@ -576,6 +582,18 @@ describe("BraintrustPlugin", () => {
       expect(GroqPlugin).not.toHaveBeenCalled();
       expect(GitHubCopilotPlugin).not.toHaveBeenCalled();
       expect(LangChainPlugin).not.toHaveBeenCalled();
+      expect(PiCodingAgentPlugin).not.toHaveBeenCalled();
+    });
+
+    it("should not create Pi Coding Agent plugin when piCodingAgent: false", () => {
+      const plugin = new BraintrustPlugin({
+        integrations: { piCodingAgent: false },
+      });
+      plugin.enable();
+
+      expect(PiCodingAgentPlugin).not.toHaveBeenCalled();
+      expect(OpenAIPlugin).toHaveBeenCalledTimes(1);
+      expect(AnthropicPlugin).toHaveBeenCalledTimes(1);
     });
 
     it("should allow selective enabling of plugins", () => {
@@ -731,6 +749,8 @@ describe("BraintrustPlugin", () => {
       const mistralMock = vi.mocked(MistralPlugin).mock.results[0].value;
       const cohereMock = vi.mocked(CoherePlugin).mock.results[0].value;
       const groqMock = vi.mocked(GroqPlugin).mock.results[0].value;
+      const piCodingAgentMock =
+        vi.mocked(PiCodingAgentPlugin).mock.results[0].value;
       const langChainMock = vi.mocked(LangChainPlugin).mock.results[0].value;
 
       expect(openaiMock.enable).toHaveBeenCalledTimes(1);
@@ -746,6 +766,7 @@ describe("BraintrustPlugin", () => {
       expect(mistralMock.enable).toHaveBeenCalledTimes(1);
       expect(cohereMock.enable).toHaveBeenCalledTimes(1);
       expect(groqMock.enable).toHaveBeenCalledTimes(1);
+      expect(piCodingAgentMock.enable).toHaveBeenCalledTimes(1);
       expect(langChainMock.enable).toHaveBeenCalledTimes(1);
     });
 
@@ -772,6 +793,8 @@ describe("BraintrustPlugin", () => {
       const mistralMock = vi.mocked(MistralPlugin).mock.results[0].value;
       const cohereMock = vi.mocked(CoherePlugin).mock.results[0].value;
       const groqMock = vi.mocked(GroqPlugin).mock.results[0].value;
+      const piCodingAgentMock =
+        vi.mocked(PiCodingAgentPlugin).mock.results[0].value;
       const langChainMock = vi.mocked(LangChainPlugin).mock.results[0].value;
 
       plugin.disable();
@@ -789,6 +812,7 @@ describe("BraintrustPlugin", () => {
       expect(mistralMock.disable).toHaveBeenCalledTimes(1);
       expect(cohereMock.disable).toHaveBeenCalledTimes(1);
       expect(groqMock.disable).toHaveBeenCalledTimes(1);
+      expect(piCodingAgentMock.disable).toHaveBeenCalledTimes(1);
       expect(langChainMock.disable).toHaveBeenCalledTimes(1);
     });
 
@@ -836,6 +860,7 @@ describe("BraintrustPlugin", () => {
       expect(MistralPlugin).not.toHaveBeenCalled();
       expect(CoherePlugin).not.toHaveBeenCalled();
       expect(GroqPlugin).not.toHaveBeenCalled();
+      expect(PiCodingAgentPlugin).not.toHaveBeenCalled();
     });
 
     it("should allow re-enabling after disable", () => {
@@ -860,6 +885,7 @@ describe("BraintrustPlugin", () => {
       expect(MistralPlugin).toHaveBeenCalledTimes(1);
       expect(CoherePlugin).toHaveBeenCalledTimes(1);
       expect(GroqPlugin).toHaveBeenCalledTimes(1);
+      expect(PiCodingAgentPlugin).toHaveBeenCalledTimes(1);
       expect(LangChainPlugin).toHaveBeenCalledTimes(1);
     });
 

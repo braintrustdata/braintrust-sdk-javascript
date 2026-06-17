@@ -25,6 +25,7 @@ import {
   mergeInputMetadata,
   type ChannelConfig,
 } from "./channel-tracing-utils";
+import { isAutoInstrumentationSuppressed } from "../auto-instrumentation-suppression";
 
 type SpanState = {
   span: Span;
@@ -301,6 +302,10 @@ function bindCurrentSpanStoreToStart<
   startChannel.bindStore(
     currentSpanStore,
     (event: ChannelMessage<TChannel>) => {
+      if (isAutoInstrumentationSuppressed()) {
+        return currentSpanStore.getStore();
+      }
+
       const spanState = ensureSpanStateForEvent<TChannel>(
         states,
         config,
@@ -387,6 +392,10 @@ export function traceAsyncChannel<TChannel extends AnyAsyncChannel>(
 
   const handlers: IsoChannelHandlers<ChannelMessage<TChannel>> = {
     start: (event) => {
+      if (isAutoInstrumentationSuppressed()) {
+        return;
+      }
+
       ensureSpanStateForEvent<TChannel>(
         states,
         config,
@@ -463,6 +472,10 @@ export function traceStreamingChannel<TChannel extends AnyAsyncChannel>(
 
   const handlers: IsoChannelHandlers<ChannelMessage<TChannel>> = {
     start: (event) => {
+      if (isAutoInstrumentationSuppressed()) {
+        return;
+      }
+
       ensureSpanStateForEvent<TChannel>(
         states,
         config,
@@ -655,6 +668,10 @@ export function traceSyncStreamChannel<TChannel extends AnySyncStreamChannel>(
 
   const handlers: IsoChannelHandlers<ChannelMessage<TChannel>> = {
     start: (event) => {
+      if (isAutoInstrumentationSuppressed()) {
+        return;
+      }
+
       ensureSpanStateForEvent<TChannel>(
         states,
         config,

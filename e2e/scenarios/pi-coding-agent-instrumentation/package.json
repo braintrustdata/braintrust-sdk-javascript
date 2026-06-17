@@ -1,0 +1,14 @@
+{
+  "name": "@braintrust/e2e-pi-coding-agent-instrumentation",
+  "private": true,
+  "braintrustScenario": {
+    "canary": {
+      "dependencies": {
+        "pi-coding-agent-v079": "@earendil-works/pi-coding-agent@latest"
+      }
+    }
+  },
+  "dependencies": {
+    "pi-coding-agent-v079": "npm:@earendil-works/pi-coding-agent@0.79.1"
+  }
+}

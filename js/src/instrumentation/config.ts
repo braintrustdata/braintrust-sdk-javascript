@@ -21,6 +21,7 @@ export interface InstrumentationIntegrationsConfig {
   genkit?: boolean;
   gitHubCopilot?: boolean;
   openaiCodexSDK?: boolean;
+  piCodingAgent?: boolean;
   langchain?: boolean;
   langgraph?: boolean;
 }
@@ -43,6 +44,11 @@ const envIntegrationAliases: Record<
   openaicodexsdk: "openaiCodexSDK",
   codex: "openaiCodexSDK",
   "codex-sdk": "openaiCodexSDK",
+  "pi-coding-agent": "piCodingAgent",
+  "pi-coding-agent-sdk": "piCodingAgent",
+  picodingagent: "piCodingAgent",
+  picodingagentsdk: "piCodingAgent",
+  "@earendil-works/pi-coding-agent": "piCodingAgent",
   anthropic: "anthropic",
   aisdk: "aisdk",
   "ai-sdk": "aisdk",
@@ -113,6 +119,7 @@ export function getDefaultInstrumentationIntegrations(): Record<
     gitHubCopilot: true,
     langchain: true,
     langgraph: true,
+    piCodingAgent: true,
   };
 }
 

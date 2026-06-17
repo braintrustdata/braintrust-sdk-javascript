@@ -22,6 +22,12 @@
     ]
   },
   {
+    "scenarioDirName": "pi-coding-agent-instrumentation",
+    "label": "Pi Coding Agent Instrumentation",
+    "metadataScenario": "pi-coding-agent-instrumentation",
+    "variants": [{ "variantKey": "pi-coding-agent-v079", "label": "v0.79" }]
+  },
+  {
     "scenarioDirName": "openai-agents-instrumentation",
     "label": "OpenAI Agents Instrumentation",
     "metadataScenario": "openai-agents-instrumentation",
