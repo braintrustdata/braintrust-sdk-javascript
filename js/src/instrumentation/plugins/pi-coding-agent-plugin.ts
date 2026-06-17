@@ -506,6 +506,16 @@ function patchAssistantMessageStream(
             return result;
           } catch (error) {
             finishPiLlmSpan(promptState, llmState, undefined, error);
+            if (typeof iterator.return === "function") {
+              try {
+                await iterator.return();
+              } catch (cleanupError) {
+                logInstrumentationError(
+                  "Pi Coding Agent stream cleanup",
+                  cleanupError,
+                );
+              }
+            }
             throw error;
           }
         },

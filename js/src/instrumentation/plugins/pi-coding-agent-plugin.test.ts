@@ -482,6 +482,45 @@ describe("PiCodingAgentPlugin", () => {
     expect(llmSpan?.end).toHaveBeenCalledTimes(1);
   });
 
+  it("closes the Pi stream iterator when next rejects", async () => {
+    const plugin = new PiCodingAgentPlugin();
+    plugin.enable();
+
+    const handlers = handlersByName.get(
+      "orchestrion:@earendil-works/pi-coding-agent:AgentSession.prompt",
+    );
+    const { iterator, stream } = makeIteratorBackedStream([]);
+    const nextError = new Error("stream next failed");
+    iterator.next.mockRejectedValueOnce(nextError);
+    const agent = {
+      state: { model: anthropicModel() },
+      streamFn: vi.fn(async () => stream),
+      subscribe: vi.fn(() => vi.fn()),
+    };
+    const event = {
+      arguments: ["next rejects", undefined],
+      self: { agent, model: anthropicModel(), prompt: vi.fn() },
+    };
+
+    handlers.start(event);
+    const patchedStream = await agent.streamFn(anthropicModel(), {
+      messages: [{ role: "user", content: "next rejects" }],
+    });
+    const patchedIterator = patchedStream[Symbol.asyncIterator]();
+
+    await expect(patchedIterator.next()).rejects.toThrow("stream next failed");
+    await handlers.asyncEnd(event);
+
+    const llmSpan = spans.find(
+      (span) => span.name === "anthropic.messages.create",
+    );
+    expect(iterator.return).toHaveBeenCalledTimes(1);
+    expect(llmSpan?.log).toHaveBeenCalledWith(
+      expect.objectContaining({ error: "stream next failed" }),
+    );
+    expect(llmSpan?.end).toHaveBeenCalledTimes(1);
+  });
+
   it("keeps queued follow-up prompts active until their deferred turn runs", async () => {
     const plugin = new PiCodingAgentPlugin();
     plugin.enable();
