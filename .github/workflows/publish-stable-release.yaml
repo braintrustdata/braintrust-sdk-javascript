@@ -61,6 +61,7 @@ jobs:
     timeout-minutes: 30
     permissions:
       contents: write
+      issues: write
       id-token: write
       pull-requests: write
     environment: npm-publish
@@ -217,6 +218,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: node scripts/release/create-github-releases.mjs --manifest .release-manifest.json
+      - name: Comment on issues closed by released PRs
+        if: steps.detect.outputs.has_work == 'true'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/release/comment-release-issues.mjs
       - name: Auto-merge release PR
         if: steps.detect.outputs.has_work == 'true'
         env:
