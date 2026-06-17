@@ -60,6 +60,32 @@ function getRetryStatus(error) {
   return undefined;
 }
 
+async function withGoogleGenAIRetry(callback) {
+  for (let attempt = 0; attempt < 4; attempt++) {
+    try {
+      return await callback();
+    } catch (error) {
+      const status = getRetryStatus(error);
+      if (
+        attempt === 3 ||
+        !(
+          status === 408 ||
+          status === 409 ||
+          status === 429 ||
+          status === 500 ||
+          status === 502 ||
+          status === 503 ||
+          status === 504
+        )
+      ) {
+        throw error;
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, (attempt + 1) * 100));
+    }
+  }
+}
+
 async function runGoogleGenAIInstrumentationScenario(sdk, options = {}) {
   const imageBase64 = (
     await readFile(new URL("./test-image.png", import.meta.url))
@@ -76,13 +102,15 @@ async function runGoogleGenAIInstrumentationScenario(sdk, options = {}) {
   await runTracedScenario({
     callback: async () => {
       await runOperation("google-generate-operation", "generate", async () => {
-        await client.models.generateContent({
-          model: GOOGLE_MODEL,
-          contents: "Reply with exactly PARIS.",
-          config: {
-            maxOutputTokens: 24,
-            temperature: 0,
-          },
+        await withGoogleGenAIRetry(async () => {
+          await client.models.generateContent({
+            model: GOOGLE_MODEL,
+            contents: "Reply with exactly PARIS.",
+            config: {
+              maxOutputTokens: 24,
+              temperature: 0,
+            },
+          });
         });
       });
 
@@ -90,15 +118,17 @@ async function runGoogleGenAIInstrumentationScenario(sdk, options = {}) {
         "google-system-instruction-operation",
         "system-instruction",
         async () => {
-          await client.models.generateContent({
-            model: GOOGLE_MODEL,
-            contents: "Tell me about the weather.",
-            config: {
-              maxOutputTokens: 64,
-              systemInstruction:
-                "You are a pirate. Always respond in pirate speak.",
-              temperature: 0,
-            },
+          await withGoogleGenAIRetry(async () => {
+            await client.models.generateContent({
+              model: GOOGLE_MODEL,
+              contents: "Tell me about the weather.",
+              config: {
+                maxOutputTokens: 64,
+                systemInstruction:
+                  "You are a pirate. Always respond in pirate speak.",
+                temperature: 0,
+              },
+            });
           });
         },
       );
@@ -107,34 +137,38 @@ async function runGoogleGenAIInstrumentationScenario(sdk, options = {}) {
         "google-multi-turn-operation",
         "multi-turn",
         async () => {
-          await client.models.generateContent({
-            model: GOOGLE_MODEL,
-            contents: [
-              {
-                role: "user",
-                parts: [{ text: "Hi, my name is Alice." }],
+          await withGoogleGenAIRetry(async () => {
+            await client.models.generateContent({
+              model: GOOGLE_MODEL,
+              contents: [
+                {
+                  role: "user",
+                  parts: [{ text: "Hi, my name is Alice." }],
+                },
+                {
+                  role: "model",
+                  parts: [{ text: "Hello Alice! Nice to meet you." }],
+                },
+                {
+                  role: "user",
+                  parts: [{ text: "What did I just tell you my name was?" }],
+                },
+              ],
+              config: {
+                maxOutputTokens: 64,
+                temperature: 0,
               },
-              {
-                role: "model",
-                parts: [{ text: "Hello Alice! Nice to meet you." }],
-              },
-              {
-                role: "user",
-                parts: [{ text: "What did I just tell you my name was?" }],
-              },
-            ],
-            config: {
-              maxOutputTokens: 64,
-              temperature: 0,
-            },
+            });
           });
         },
       );
 
       await runOperation("google-embed-operation", "embed", async () => {
-        await client.models.embedContent({
-          model: GOOGLE_EMBEDDING_MODEL,
-          contents: "Paris is the capital of France.",
+        await withGoogleGenAIRetry(async () => {
+          await client.models.embedContent({
+            model: GOOGLE_EMBEDDING_MODEL,
+            contents: "Paris is the capital of France.",
+          });
         });
       });
 
@@ -143,17 +177,19 @@ async function runGoogleGenAIInstrumentationScenario(sdk, options = {}) {
           "google-interaction-operation",
           "interaction",
           async () => {
-            await client.interactions.create({
-              model: GOOGLE_INTERACTIONS_MODEL,
-              input: {
-                text: "Reply with exactly ROME.",
-                type: "text",
-              },
-              generation_config: {
-                max_output_tokens: 256,
-                thinking_level: "minimal",
-                temperature: 0,
-              },
+            await withGoogleGenAIRetry(async () => {
+              await client.interactions.create({
+                model: GOOGLE_INTERACTIONS_MODEL,
+                input: {
+                  text: "Reply with exactly ROME.",
+                  type: "text",
+                },
+                generation_config: {
+                  max_output_tokens: 256,
+                  thinking_level: "minimal",
+                  temperature: 0,
+                },
+              });
             });
           },
         );
@@ -162,20 +198,22 @@ async function runGoogleGenAIInstrumentationScenario(sdk, options = {}) {
           "google-interaction-stream-operation",
           "interaction-stream",
           async () => {
-            const stream = await client.interactions.create({
-              model: GOOGLE_INTERACTIONS_MODEL,
-              input: {
-                text: "Count from 1 to 3 and include the words one two three.",
-                type: "text",
-              },
-              generation_config: {
-                max_output_tokens: 256,
-                thinking_level: "minimal",
-                temperature: 0,
-              },
-              stream: true,
+            await withGoogleGenAIRetry(async () => {
+              const stream = await client.interactions.create({
+                model: GOOGLE_INTERACTIONS_MODEL,
+                input: {
+                  text: "Count from 1 to 3 and include the words one two three.",
+                  type: "text",
+                },
+                generation_config: {
+                  max_output_tokens: 256,
+                  thinking_level: "minimal",
+                  temperature: 0,
+                },
+                stream: true,
+              });
+              await collectAsync(stream);
             });
-            await collectAsync(stream);
           },
         );
 
@@ -184,19 +222,21 @@ async function runGoogleGenAIInstrumentationScenario(sdk, options = {}) {
           "google-interaction-stateful-first-operation",
           "interaction-stateful-first",
           async () => {
-            const interaction = await client.interactions.create({
-              model: GOOGLE_INTERACTIONS_MODEL,
-              input: {
-                text: "Hi, my name is Amir.",
-                type: "text",
-              },
-              generation_config: {
-                max_output_tokens: 256,
-                thinking_level: "minimal",
-                temperature: 0,
-              },
+            await withGoogleGenAIRetry(async () => {
+              const interaction = await client.interactions.create({
+                model: GOOGLE_INTERACTIONS_MODEL,
+                input: {
+                  text: "Hi, my name is Amir.",
+                  type: "text",
+                },
+                generation_config: {
+                  max_output_tokens: 256,
+                  thinking_level: "minimal",
+                  temperature: 0,
+                },
+              });
+              statefulInteractionId = interaction.id;
             });
-            statefulInteractionId = interaction.id;
           },
         );
 
@@ -208,18 +248,20 @@ async function runGoogleGenAIInstrumentationScenario(sdk, options = {}) {
           "google-interaction-stateful-second-operation",
           "interaction-stateful-second",
           async () => {
-            await client.interactions.create({
-              model: GOOGLE_INTERACTIONS_MODEL,
-              input: {
-                text: "What is my name? Reply with exactly AMIR.",
-                type: "text",
-              },
-              previous_interaction_id: statefulInteractionId,
-              generation_config: {
-                max_output_tokens: 256,
-                thinking_level: "minimal",
-                temperature: 0,
-              },
+            await withGoogleGenAIRetry(async () => {
+              await client.interactions.create({
+                model: GOOGLE_INTERACTIONS_MODEL,
+                input: {
+                  text: "What is my name? Reply with exactly AMIR.",
+                  type: "text",
+                },
+                previous_interaction_id: statefulInteractionId,
+                generation_config: {
+                  max_output_tokens: 256,
+                  thinking_level: "minimal",
+                  temperature: 0,
+                },
+              });
             });
           },
         );
@@ -229,18 +271,20 @@ async function runGoogleGenAIInstrumentationScenario(sdk, options = {}) {
           "interaction-background",
           async () => {
             try {
-              await client.interactions.create({
-                model: GOOGLE_INTERACTIONS_MODEL,
-                input: {
-                  text: "Reply with exactly BACKGROUND.",
-                  type: "text",
-                },
-                background: true,
-                generation_config: {
-                  max_output_tokens: 256,
-                  thinking_level: "minimal",
-                  temperature: 0,
-                },
+              await withGoogleGenAIRetry(async () => {
+                await client.interactions.create({
+                  model: GOOGLE_INTERACTIONS_MODEL,
+                  input: {
+                    text: "Reply with exactly BACKGROUND.",
+                    type: "text",
+                  },
+                  background: true,
+                  generation_config: {
+                    max_output_tokens: 256,
+                    thinking_level: "minimal",
+                    temperature: 0,
+                  },
+                });
               });
             } catch (error) {
               const message =
@@ -293,60 +337,66 @@ async function runGoogleGenAIInstrumentationScenario(sdk, options = {}) {
         "google-attachment-operation",
         "attachment",
         async () => {
-          await client.models.generateContent({
-            model: GOOGLE_MODEL,
-            contents: [
-              {
-                parts: [
-                  {
-                    inlineData: {
-                      data: imageBase64,
-                      mimeType: "image/png",
+          await withGoogleGenAIRetry(async () => {
+            await client.models.generateContent({
+              model: GOOGLE_MODEL,
+              contents: [
+                {
+                  parts: [
+                    {
+                      inlineData: {
+                        data: imageBase64,
+                        mimeType: "image/png",
+                      },
                     },
-                  },
-                  {
-                    text: "Describe the attached image in one short sentence.",
-                  },
-                ],
-                role: "user",
+                    {
+                      text: "Describe the attached image in one short sentence.",
+                    },
+                  ],
+                  role: "user",
+                },
+              ],
+              config: {
+                maxOutputTokens: 48,
+                temperature: 0,
               },
-            ],
-            config: {
-              maxOutputTokens: 48,
-              temperature: 0,
-            },
+            });
           });
         },
       );
 
       await runOperation("google-stream-operation", "stream", async () => {
-        const stream = await client.models.generateContentStream({
-          model: GOOGLE_MODEL,
-          contents: "Count from 1 to 3 and include the words one two three.",
-          config: {
-            maxOutputTokens: 64,
-            temperature: 0,
-          },
+        await withGoogleGenAIRetry(async () => {
+          const stream = await client.models.generateContentStream({
+            model: GOOGLE_MODEL,
+            contents: "Count from 1 to 3 and include the words one two three.",
+            config: {
+              maxOutputTokens: 64,
+              temperature: 0,
+            },
+          });
+          await collectAsync(stream);
         });
-        await collectAsync(stream);
       });
 
       await runOperation(
         "google-stream-return-operation",
         "stream-return",
         async () => {
-          const stream = await client.models.generateContentStream({
-            model: GOOGLE_MODEL,
-            contents: "Reply with exactly BONJOUR.",
-            config: {
-              maxOutputTokens: 24,
-              temperature: 0,
-            },
-          });
+          await withGoogleGenAIRetry(async () => {
+            const stream = await client.models.generateContentStream({
+              model: GOOGLE_MODEL,
+              contents: "Reply with exactly BONJOUR.",
+              config: {
+                maxOutputTokens: 24,
+                temperature: 0,
+              },
+            });
 
-          for await (const _chunk of stream) {
-            break;
-          }
+            for await (const _chunk of stream) {
+              break;
+            }
+          });
         },
       );
 
@@ -354,15 +404,17 @@ async function runGoogleGenAIInstrumentationScenario(sdk, options = {}) {
         "google-grounded-generate-operation",
         "grounded-generate",
         async () => {
-          await client.models.generateContent({
-            model: GOOGLE_GROUNDING_MODEL,
-            contents:
-              "Use Google Search grounding and answer in one sentence: What is the current population of Paris, France?",
-            config: {
-              maxOutputTokens: 256,
-              temperature: 0,
-              tools: [GOOGLE_SEARCH_TOOL],
-            },
+          await withGoogleGenAIRetry(async () => {
+            await client.models.generateContent({
+              model: GOOGLE_GROUNDING_MODEL,
+              contents:
+                "Use Google Search grounding and answer in one sentence: What is the current population of Paris, France?",
+              config: {
+                maxOutputTokens: 256,
+                temperature: 0,
+                tools: [GOOGLE_SEARCH_TOOL],
+              },
+            });
           });
         },
       );
@@ -371,36 +423,40 @@ async function runGoogleGenAIInstrumentationScenario(sdk, options = {}) {
         "google-grounded-stream-operation",
         "grounded-stream",
         async () => {
-          const stream = await client.models.generateContentStream({
-            model: GOOGLE_GROUNDING_MODEL,
-            contents:
-              "Use Google Search grounding and answer in one sentence: What is the current weather in Paris?",
-            config: {
-              maxOutputTokens: 256,
-              temperature: 0,
-              tools: [GOOGLE_SEARCH_TOOL],
-            },
+          await withGoogleGenAIRetry(async () => {
+            const stream = await client.models.generateContentStream({
+              model: GOOGLE_GROUNDING_MODEL,
+              contents:
+                "Use Google Search grounding and answer in one sentence: What is the current weather in Paris?",
+              config: {
+                maxOutputTokens: 256,
+                temperature: 0,
+                tools: [GOOGLE_SEARCH_TOOL],
+              },
+            });
+            await collectAsync(stream);
           });
-          await collectAsync(stream);
         },
       );
 
       await runOperation("google-tool-operation", "tool", async () => {
-        await client.models.generateContent({
-          model: GOOGLE_MODEL,
-          contents:
-            "Use the get_weather function for Paris, France. Do not answer from memory.",
-          config: {
-            maxOutputTokens: 128,
-            temperature: 0,
-            tools: [WEATHER_TOOL],
-            toolConfig: {
-              functionCallingConfig: {
-                allowedFunctionNames: ["get_weather"],
-                mode: sdk.FunctionCallingConfigMode.ANY,
+        await withGoogleGenAIRetry(async () => {
+          await client.models.generateContent({
+            model: GOOGLE_MODEL,
+            contents:
+              "Use the get_weather function for Paris, France. Do not answer from memory.",
+            config: {
+              maxOutputTokens: 128,
+              temperature: 0,
+              tools: [WEATHER_TOOL],
+              toolConfig: {
+                functionCallingConfig: {
+                  allowedFunctionNames: ["get_weather"],
+                  mode: sdk.FunctionCallingConfigMode.ANY,
+                },
               },
             },
-          },
+          });
         });
       });
 
@@ -408,54 +464,56 @@ async function runGoogleGenAIInstrumentationScenario(sdk, options = {}) {
         "google-multi-tool-operation",
         "multi-tool",
         async () => {
-          await client.models.generateContent({
-            model: GOOGLE_MODEL,
-            contents:
-              "Use the get_weather function for New York and get_time for Tokyo. Do not answer from memory.",
-            config: {
-              maxOutputTokens: 128,
-              temperature: 0,
-              tools: [
-                {
-                  functionDeclarations: [
-                    {
-                      name: "get_weather",
-                      description: "Get the weather for a location",
-                      parametersJsonSchema: {
-                        type: "object",
-                        properties: {
-                          location: {
-                            type: "string",
-                            description: "The location to get weather for",
+          await withGoogleGenAIRetry(async () => {
+            await client.models.generateContent({
+              model: GOOGLE_MODEL,
+              contents:
+                "Use the get_weather function for New York and get_time for Tokyo. Do not answer from memory.",
+              config: {
+                maxOutputTokens: 128,
+                temperature: 0,
+                tools: [
+                  {
+                    functionDeclarations: [
+                      {
+                        name: "get_weather",
+                        description: "Get the weather for a location",
+                        parametersJsonSchema: {
+                          type: "object",
+                          properties: {
+                            location: {
+                              type: "string",
+                              description: "The location to get weather for",
+                            },
                           },
+                          required: ["location"],
                         },
-                        required: ["location"],
                       },
-                    },
-                    {
-                      name: "get_time",
-                      description: "Get the current time for a timezone",
-                      parametersJsonSchema: {
-                        type: "object",
-                        properties: {
-                          timezone: {
-                            type: "string",
-                            description: "The timezone to get time for",
+                      {
+                        name: "get_time",
+                        description: "Get the current time for a timezone",
+                        parametersJsonSchema: {
+                          type: "object",
+                          properties: {
+                            timezone: {
+                              type: "string",
+                              description: "The timezone to get time for",
+                            },
                           },
+                          required: ["timezone"],
                         },
-                        required: ["timezone"],
                       },
-                    },
-                  ],
-                },
-              ],
-              toolConfig: {
-                functionCallingConfig: {
-                  allowedFunctionNames: ["get_weather", "get_time"],
-                  mode: sdk.FunctionCallingConfigMode.ANY,
+                    ],
+                  },
+                ],
+                toolConfig: {
+                  functionCallingConfig: {
+                    allowedFunctionNames: ["get_weather", "get_time"],
+                    mode: sdk.FunctionCallingConfigMode.ANY,
+                  },
                 },
               },
-            },
+            });
           });
         },
       );
