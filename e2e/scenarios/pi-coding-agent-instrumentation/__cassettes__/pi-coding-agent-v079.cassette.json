@@ -1,0 +1,266 @@
+{
+  "entries": [
+    {
+      "callIndex": 0,
+      "id": "5625e915bcb72d05",
+      "matchKey": "POST api.anthropic.com/v1/messages",
+      "recordedAt": "2026-06-15T13:41:55.141Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "max_tokens": 64000,
+            "messages": [
+              {
+                "content": [
+                  {
+                    "cache_control": {
+                      "type": "ephemeral"
+                    },
+                    "text": "Use the bash tool to run `printf pi_tool_ok` exactly once, then reply with exactly PI_CODING_AGENT_OK and include the command output.",
+                    "type": "text"
+                  }
+                ],
+                "role": "user"
+              }
+            ],
+            "model": "claude-haiku-4-5",
+            "stream": true,
+            "system": [
+              {
+                "cache_control": {
+                  "type": "ephemeral"
+                },
+                "text": "You are an expert coding assistant operating inside pi, a coding agent harness. You help users by reading files, executing commands, editing code, and writing new files.\n\nAvailable tools:\n- bash: Execute bash commands (ls, grep, find, etc.)\n\nIn addition to the tools above, you may have access to other custom tools depending on the project.\n\nGuidelines:\n- Use bash for file operations like ls, rg, find\n- Be concise in your responses\n- Show file paths clearly when working with files\n\nPi documentation (read only when the user asks about pi itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: /Users/lucaforstner/conductor/workspaces/braintrust-sdk-javascript/baghdad/e2e/.bt-tmp/scenario-deps/pi-coding-agent-instrumentation-locked-0c3eb72dc7a20ce8/node_modules/.pnpm/@earendil-works+pi-coding-agent@0.79.1_ws@8.21.0_zod@4.4.3/node_modules/@earendil-works/pi-coding-agent/README.md\n- Additional docs: /Users/lucaforstner/conductor/workspaces/braintrust-sdk-javascript/baghdad/e2e/.bt-tmp/scenario-deps/pi-coding-agent-instrumentation-locked-0c3eb72dc7a20ce8/node_modules/.pnpm/@earendil-works+pi-coding-agent@0.79.1_ws@8.21.0_zod@4.4.3/node_modules/@earendil-works/pi-coding-agent/docs\n- Examples: /Users/lucaforstner/conductor/workspaces/braintrust-sdk-javascript/baghdad/e2e/.bt-tmp/scenario-deps/pi-coding-agent-instrumentation-locked-0c3eb72dc7a20ce8/node_modules/.pnpm/@earendil-works+pi-coding-agent@0.79.1_ws@8.21.0_zod@4.4.3/node_modules/@earendil-works/pi-coding-agent/examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), pi packages (docs/packages.md)\n- When working on pi topics, read the docs and examples, and follow .md cross-references before implementing\n- Always read pi .md files completely and follow links to related docs (e.g., tui.md for TUI API details)\n\n<project_context>\n\nProject-specific instructions and guidelines:\n\n<project_instructions path=\"/Users/lucaforstner/conductor/workspaces/braintrust-sdk-javascript/baghdad/AGENTS.md\">\n# Braintrust JavaScript SDK Monorepo\n\nTypeScript SDKs and integrations for Braintrust. Uses `pnpm` workspaces.\n\n## Repository Structure\n\n```text\n.\n├── js/             # Main `braintrust` package\n├── integrations/   # Integration packages (@braintrust/*)\n├── e2e/            # End-to-end scenario tests (mock server + subprocess isolation)\n├── docs/           # Docs and reference material\n└── internal/       # Internal test fixtures and golden projects\n```\n\n## Setup\n\n```bash\nmise install        # Install toolchain and dependencies\n```\n\n## Build\n\n```bash\npnpm run build      # Build all workspace packages (from repo root)\n```\n\n## Testing\n\nUses Vitest. Prefer running the **narrowest relevant test** rather than the full suite.\n\n**From `js/` directory:**\n\n```bash\npnpm test                         # Core vitest suite (excludes wrappers)\npnpm test -- -t \"test name\"       # Filter by test name\npnpm run test:checks              # Hermetic tests (core + vitest wrapper)\n```\n\n**E2E tests (`e2e/`):**\n\nEach scenario runs the SDK in a subprocess against a mock Braintrust server and snapshots the results. No API keys required for replay; recording needs provider keys.\n\n```bash\npnpm run test:e2e                 # Run all e2e scenarios (from repo root)\npnpm run test:e2e:update          # Update e2e snapshots without re-recording cassettes\npnpm run test:e2e:record          # Re-record provider cassettes and update snapshots\n```\n\nWhen adding or modifying e2e tests, run the relevant e2e verification twice before stopping so flakes are caught proactively. After running `pnpm run test:e2e:update` or `pnpm run test:e2e:record`, always run the normal e2e tests afterward to verify there is no snapshot drift or unstable output.\n\nSpan-tree snapshots are paired: `*.span-tree.json` is the structural contract, and `*.span-tree.txt` is the human-readable ASCII tree generated from the same normalized spans. Both files are asserted and should be updated together through `pnpm run test:e2e:update` or `pnpm run test:e2e:record`; do not hand-edit only one side of the pair.\n\n**From repo root:**\n\n```bash\npnpm run test       # Run all workspace tests via turbo\n```\n\n## Linting & Formatting\n\nRun from the repo root. **Always run `fix:formatting` before committing** — there is a pre-commit hook that will reject unformatted code.\n\n```bash\npnpm run formatting      # Check formatting (prettier)\npnpm run lint            # Run eslint checks\npnpm run fix:formatting  # Auto-fix formatting\npnpm run fix:lint        # Auto-fix eslint issues\n```\n\n</project_instructions>\n\n</project_context>\n\nCurrent date: 2026-06-15\nCurrent working directory: /Users/lucaforstner/conductor/workspaces/braintrust-sdk-javascript/baghdad/e2e/.bt-tmp/run-omEvbT/scenarios/pi-coding-agent-instrumentation",
+                "type": "text"
+              }
+            ],
+            "thinking": {
+              "type": "disabled"
+            },
+            "tools": [
+              {
+                "cache_control": {
+                  "type": "ephemeral"
+                },
+                "description": "Execute a bash command in the current working directory. Returns stdout and stderr. Output is truncated to last 2000 lines or 50KB (whichever is hit first). If truncated, full output is saved to a temp file. Optionally provide a timeout in seconds.",
+                "eager_input_streaming": true,
+                "input_schema": {
+                  "properties": {
+                    "command": {
+                      "description": "Bash command to execute",
+                      "type": "string"
+                    },
+                    "timeout": {
+                      "description": "Timeout in seconds (optional, no default timeout)",
+                      "type": "number"
+                    }
+                  },
+                  "required": ["command"],
+                  "type": "object"
+                },
+                "name": "bash"
+              }
+            ]
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages"
+      },
+      "response": {
+        "body": {
+          "chunks": [
+            "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-haiku-4-5-20251001\",\"id\":\"msg_01LqYsv4F2obg4yhc9uihdq4\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":2225,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":57,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"}}}",
+            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"tool_use\",\"id\":\"toolu_01Q4LnHM8Ehq3ZVe5cUVnNPE\",\"name\":\"bash\",\"input\":{},\"caller\":{\"type\":\"direct\"}}}",
+            "event: ping\ndata: {\"type\":\"ping\"}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"{\\\"command\\\": \\\"printf pi_tool_ok\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"\\\"}\"}}",
+            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0}",
+            "event: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"tool_use\",\"stop_sequence\":null,\"stop_details\":null},\"usage\":{\"input_tokens\":2225,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":57}}",
+            "event: message_stop\ndata: {\"type\":\"message_stop\"}"
+          ],
+          "kind": "sse"
+        },
+        "headers": {
+          "anthropic-organization-id": "27796668-7351-40ac-acc4-024aee8995a5",
+          "anthropic-ratelimit-input-tokens-limit": "4000000",
+          "anthropic-ratelimit-input-tokens-remaining": "3999000",
+          "anthropic-ratelimit-input-tokens-reset": "2026-06-15T13:41:54Z",
+          "anthropic-ratelimit-output-tokens-limit": "800000",
+          "anthropic-ratelimit-output-tokens-remaining": "800000",
+          "anthropic-ratelimit-output-tokens-reset": "2026-06-15T13:41:54Z",
+          "anthropic-ratelimit-requests-limit": "20000",
+          "anthropic-ratelimit-requests-remaining": "19999",
+          "anthropic-ratelimit-requests-reset": "2026-06-15T13:41:54Z",
+          "anthropic-ratelimit-tokens-limit": "4800000",
+          "anthropic-ratelimit-tokens-remaining": "4799000",
+          "anthropic-ratelimit-tokens-reset": "2026-06-15T13:41:54Z",
+          "cache-control": "no-cache",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "a0c1feb71f2d23b5-VIE",
+          "connection": "keep-alive",
+          "content-encoding": "gzip",
+          "content-security-policy": "default-src 'none'; frame-ancestors 'none'",
+          "content-type": "text/event-stream; charset=utf-8",
+          "date": "Mon, 15 Jun 2026 13:41:55 GMT",
+          "request-id": "req_011Cc59CR6Yq9vuRBV88XUTo",
+          "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+          "traceresponse": "00-2dea5198e9d2ddabf43804824f83afe4-d1a93703197df856-01",
+          "transfer-encoding": "chunked",
+          "vary": "Accept-Encoding",
+          "x-robots-tag": "none"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 1,
+      "id": "0c74acf5b76aad36",
+      "matchKey": "POST api.anthropic.com/v1/messages",
+      "recordedAt": "2026-06-15T13:41:56.111Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "max_tokens": 64000,
+            "messages": [
+              {
+                "content": [
+                  {
+                    "text": "Use the bash tool to run `printf pi_tool_ok` exactly once, then reply with exactly PI_CODING_AGENT_OK and include the command output.",
+                    "type": "text"
+                  }
+                ],
+                "role": "user"
+              },
+              {
+                "content": [
+                  {
+                    "id": "toolu_01Q4LnHM8Ehq3ZVe5cUVnNPE",
+                    "input": {
+                      "command": "printf pi_tool_ok"
+                    },
+                    "name": "bash",
+                    "type": "tool_use"
+                  }
+                ],
+                "role": "assistant"
+              },
+              {
+                "content": [
+                  {
+                    "cache_control": {
+                      "type": "ephemeral"
+                    },
+                    "content": "pi_tool_ok",
+                    "is_error": false,
+                    "tool_use_id": "toolu_01Q4LnHM8Ehq3ZVe5cUVnNPE",
+                    "type": "tool_result"
+                  }
+                ],
+                "role": "user"
+              }
+            ],
+            "model": "claude-haiku-4-5",
+            "stream": true,
+            "system": [
+              {
+                "cache_control": {
+                  "type": "ephemeral"
+                },
+                "text": "You are an expert coding assistant operating inside pi, a coding agent harness. You help users by reading files, executing commands, editing code, and writing new files.\n\nAvailable tools:\n- bash: Execute bash commands (ls, grep, find, etc.)\n\nIn addition to the tools above, you may have access to other custom tools depending on the project.\n\nGuidelines:\n- Use bash for file operations like ls, rg, find\n- Be concise in your responses\n- Show file paths clearly when working with files\n\nPi documentation (read only when the user asks about pi itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: /Users/lucaforstner/conductor/workspaces/braintrust-sdk-javascript/baghdad/e2e/.bt-tmp/scenario-deps/pi-coding-agent-instrumentation-locked-0c3eb72dc7a20ce8/node_modules/.pnpm/@earendil-works+pi-coding-agent@0.79.1_ws@8.21.0_zod@4.4.3/node_modules/@earendil-works/pi-coding-agent/README.md\n- Additional docs: /Users/lucaforstner/conductor/workspaces/braintrust-sdk-javascript/baghdad/e2e/.bt-tmp/scenario-deps/pi-coding-agent-instrumentation-locked-0c3eb72dc7a20ce8/node_modules/.pnpm/@earendil-works+pi-coding-agent@0.79.1_ws@8.21.0_zod@4.4.3/node_modules/@earendil-works/pi-coding-agent/docs\n- Examples: /Users/lucaforstner/conductor/workspaces/braintrust-sdk-javascript/baghdad/e2e/.bt-tmp/scenario-deps/pi-coding-agent-instrumentation-locked-0c3eb72dc7a20ce8/node_modules/.pnpm/@earendil-works+pi-coding-agent@0.79.1_ws@8.21.0_zod@4.4.3/node_modules/@earendil-works/pi-coding-agent/examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), pi packages (docs/packages.md)\n- When working on pi topics, read the docs and examples, and follow .md cross-references before implementing\n- Always read pi .md files completely and follow links to related docs (e.g., tui.md for TUI API details)\n\n<project_context>\n\nProject-specific instructions and guidelines:\n\n<project_instructions path=\"/Users/lucaforstner/conductor/workspaces/braintrust-sdk-javascript/baghdad/AGENTS.md\">\n# Braintrust JavaScript SDK Monorepo\n\nTypeScript SDKs and integrations for Braintrust. Uses `pnpm` workspaces.\n\n## Repository Structure\n\n```text\n.\n├── js/             # Main `braintrust` package\n├── integrations/   # Integration packages (@braintrust/*)\n├── e2e/            # End-to-end scenario tests (mock server + subprocess isolation)\n├── docs/           # Docs and reference material\n└── internal/       # Internal test fixtures and golden projects\n```\n\n## Setup\n\n```bash\nmise install        # Install toolchain and dependencies\n```\n\n## Build\n\n```bash\npnpm run build      # Build all workspace packages (from repo root)\n```\n\n## Testing\n\nUses Vitest. Prefer running the **narrowest relevant test** rather than the full suite.\n\n**From `js/` directory:**\n\n```bash\npnpm test                         # Core vitest suite (excludes wrappers)\npnpm test -- -t \"test name\"       # Filter by test name\npnpm run test:checks              # Hermetic tests (core + vitest wrapper)\n```\n\n**E2E tests (`e2e/`):**\n\nEach scenario runs the SDK in a subprocess against a mock Braintrust server and snapshots the results. No API keys required for replay; recording needs provider keys.\n\n```bash\npnpm run test:e2e                 # Run all e2e scenarios (from repo root)\npnpm run test:e2e:update          # Update e2e snapshots without re-recording cassettes\npnpm run test:e2e:record          # Re-record provider cassettes and update snapshots\n```\n\nWhen adding or modifying e2e tests, run the relevant e2e verification twice before stopping so flakes are caught proactively. After running `pnpm run test:e2e:update` or `pnpm run test:e2e:record`, always run the normal e2e tests afterward to verify there is no snapshot drift or unstable output.\n\nSpan-tree snapshots are paired: `*.span-tree.json` is the structural contract, and `*.span-tree.txt` is the human-readable ASCII tree generated from the same normalized spans. Both files are asserted and should be updated together through `pnpm run test:e2e:update` or `pnpm run test:e2e:record`; do not hand-edit only one side of the pair.\n\n**From repo root:**\n\n```bash\npnpm run test       # Run all workspace tests via turbo\n```\n\n## Linting & Formatting\n\nRun from the repo root. **Always run `fix:formatting` before committing** — there is a pre-commit hook that will reject unformatted code.\n\n```bash\npnpm run formatting      # Check formatting (prettier)\npnpm run lint            # Run eslint checks\npnpm run fix:formatting  # Auto-fix formatting\npnpm run fix:lint        # Auto-fix eslint issues\n```\n\n</project_instructions>\n\n</project_context>\n\nCurrent date: 2026-06-15\nCurrent working directory: /Users/lucaforstner/conductor/workspaces/braintrust-sdk-javascript/baghdad/e2e/.bt-tmp/run-omEvbT/scenarios/pi-coding-agent-instrumentation",
+                "type": "text"
+              }
+            ],
+            "thinking": {
+              "type": "disabled"
+            },
+            "tools": [
+              {
+                "cache_control": {
+                  "type": "ephemeral"
+                },
+                "description": "Execute a bash command in the current working directory. Returns stdout and stderr. Output is truncated to last 2000 lines or 50KB (whichever is hit first). If truncated, full output is saved to a temp file. Optionally provide a timeout in seconds.",
+                "eager_input_streaming": true,
+                "input_schema": {
+                  "properties": {
+                    "command": {
+                      "description": "Bash command to execute",
+                      "type": "string"
+                    },
+                    "timeout": {
+                      "description": "Timeout in seconds (optional, no default timeout)",
+                      "type": "number"
+                    }
+                  },
+                  "required": ["command"],
+                  "type": "object"
+                },
+                "name": "bash"
+              }
+            ]
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages"
+      },
+      "response": {
+        "body": {
+          "chunks": [
+            "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-haiku-4-5-20251001\",\"id\":\"msg_01AX1cFbRF4q8BvTWBegpRgy\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":2299,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":1,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"}}}",
+            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}}",
+            "event: ping\ndata: {\"type\":\"ping\"}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"PI\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"_CODING_AGENT_OK\\n\\nCommand output: `pi_tool_ok`\"}}",
+            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0}",
+            "event: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null},\"usage\":{\"input_tokens\":2299,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":23}}",
+            "event: message_stop\ndata: {\"type\":\"message_stop\"}"
+          ],
+          "kind": "sse"
+        },
+        "headers": {
+          "anthropic-organization-id": "27796668-7351-40ac-acc4-024aee8995a5",
+          "anthropic-ratelimit-input-tokens-limit": "4000000",
+          "anthropic-ratelimit-input-tokens-remaining": "3999000",
+          "anthropic-ratelimit-input-tokens-reset": "2026-06-15T13:41:55Z",
+          "anthropic-ratelimit-output-tokens-limit": "800000",
+          "anthropic-ratelimit-output-tokens-remaining": "800000",
+          "anthropic-ratelimit-output-tokens-reset": "2026-06-15T13:41:55Z",
+          "anthropic-ratelimit-requests-limit": "20000",
+          "anthropic-ratelimit-requests-remaining": "19999",
+          "anthropic-ratelimit-requests-reset": "2026-06-15T13:41:55Z",
+          "anthropic-ratelimit-tokens-limit": "4800000",
+          "anthropic-ratelimit-tokens-remaining": "4799000",
+          "anthropic-ratelimit-tokens-reset": "2026-06-15T13:41:55Z",
+          "cache-control": "no-cache",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "a0c1febc68d023b5-VIE",
+          "connection": "keep-alive",
+          "content-encoding": "gzip",
+          "content-security-policy": "default-src 'none'; frame-ancestors 'none'",
+          "content-type": "text/event-stream; charset=utf-8",
+          "date": "Mon, 15 Jun 2026 13:41:55 GMT",
+          "request-id": "req_011Cc59CVKoHopGJNCHdryA6",
+          "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+          "traceresponse": "00-0b14267e48bbd02df788256b562248a6-517917da69453693-01",
+          "transfer-encoding": "chunked",
+          "vary": "Accept-Encoding",
+          "x-robots-tag": "none"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    }
+  ],
+  "meta": {
+    "createdAt": "2026-06-15T13:36:47.679Z"
+  }
+}
