@@ -230,6 +230,6 @@ export interface GoogleGenAIInteractionUsage {
   total_tokens?: number;
   total_cached_tokens?: number;
   total_thought_tokens?: number;
-  total_tool_use_tokens?: number;
+  total_tool_use_tokens?: number; // This technically exists but we have no sensical way of mapping it to braintrust metrics. Also, the tool use tokens are already counted in output tokens so we don't need to add them.
   [key: string]: unknown;
 }
