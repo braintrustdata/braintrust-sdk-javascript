@@ -1,5 +1,5 @@
 ---
-"braintrust": minor
+"braintrust": patch
 ---
 
-Adds inline origin validation
+fix: Validate inline row origin for evals
