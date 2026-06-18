@@ -1,5 +1,12 @@
 # @braintrust/otel
 
+## 0.2.1
+
+### Patch Changes
+
+- fix(otel): Transform v1 spans into v2 compatible format before exporting (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2086)
+- Updated dependencies: braintrust@3.18.0
+
 ## 0.2.0
 
 ### Minor Changes
