@@ -166,6 +166,37 @@ function makeTestScorer(
 }
 
 describe("runEvaluator", () => {
+  function makeDatasetData(
+    datasetId: string,
+    datum: {
+      input: number;
+      id: string;
+      _xact_id?: string;
+      created?: string;
+      origin?: {
+        object_type:
+          | "project_logs"
+          | "experiment"
+          | "dataset"
+          | "prompt"
+          | "function"
+          | "prompt_session";
+        object_id: string;
+        id: string;
+        _xact_id?: string | null;
+        created?: string | null;
+      };
+    },
+  ) {
+    return {
+      __braintrust_dataset_marker: true,
+      id: Promise.resolve(datasetId),
+      async *[Symbol.asyncIterator]() {
+        yield datum;
+      },
+    };
+  }
+
   test("preserves a valid inline origin", async () => {
     const origin: {
       object_type: "dataset";
@@ -196,6 +227,123 @@ describe("runEvaluator", () => {
     );
 
     expect(out.results[0].origin).toEqual(origin);
+  });
+
+  test("prefers dataset row origin over source origin for dataset-backed evals", async () => {
+    const datasetId = "00000000-0000-0000-0000-000000000001";
+    const data = makeDatasetData(datasetId, {
+      input: 1,
+      id: "dataset-row-1",
+      _xact_id: "dataset-xact",
+      created: "2026-06-02T00:00:00.000Z",
+      origin: {
+        object_type: "project_logs",
+        object_id: "00000000-0000-0000-0000-000000000002",
+        id: "source-log-row-1",
+        _xact_id: "source-xact",
+        created: "2026-06-01T00:00:00.000Z",
+      },
+    });
+
+    const out = await runEvaluator(
+      null,
+      {
+        projectName: "proj",
+        evalName: "eval",
+        data,
+        task: async (input: number) => input * 2,
+        scores: [],
+      },
+      new NoopProgressReporter(),
+      [],
+      undefined,
+    );
+
+    expect(out.results[0].origin).toEqual({
+      object_type: "dataset",
+      object_id: datasetId,
+      id: "dataset-row-1",
+      _xact_id: "dataset-xact",
+      created: "2026-06-02T00:00:00.000Z",
+    });
+  });
+
+  test("uses dataset row origin without requiring a transaction id", async () => {
+    const datasetId = "00000000-0000-0000-0000-000000000001";
+    const data = makeDatasetData(datasetId, {
+      input: 1,
+      id: "dataset-row-1",
+      created: "2026-06-02T00:00:00.000Z",
+      origin: {
+        object_type: "project_logs",
+        object_id: "00000000-0000-0000-0000-000000000002",
+        id: "source-log-row-1",
+      },
+    });
+
+    const out = await runEvaluator(
+      null,
+      {
+        projectName: "proj",
+        evalName: "eval",
+        data,
+        task: async (input: number) => input * 2,
+        scores: [],
+      },
+      new NoopProgressReporter(),
+      [],
+      undefined,
+    );
+
+    expect(out.results[0].origin).toEqual({
+      object_type: "dataset",
+      object_id: datasetId,
+      id: "dataset-row-1",
+      created: "2026-06-02T00:00:00.000Z",
+    });
+  });
+
+  test("reports progress with dataset row origin for dataset-backed evals", async () => {
+    const datasetId = "00000000-0000-0000-0000-000000000001";
+    const data = makeDatasetData(datasetId, {
+      input: 1,
+      id: "dataset-row-1",
+      _xact_id: "dataset-xact",
+      origin: {
+        object_type: "project_logs",
+        object_id: "00000000-0000-0000-0000-000000000002",
+        id: "source-log-row-1",
+      },
+    });
+    const streamEvents: unknown[] = [];
+
+    await runEvaluator(
+      null,
+      {
+        projectName: "proj",
+        evalName: "eval",
+        data,
+        task: async (input: number, hooks) => {
+          hooks.reportProgress({ object_type: "progress", progress: 0.5 });
+          return input * 2;
+        },
+        scores: [],
+      },
+      new NoopProgressReporter(),
+      [],
+      (event) => streamEvents.push(event),
+    );
+
+    expect(streamEvents).toEqual([
+      expect.objectContaining({
+        origin: {
+          object_type: "dataset",
+          object_id: datasetId,
+          id: "dataset-row-1",
+          _xact_id: "dataset-xact",
+        },
+      }),
+    ]);
   });
 
   test("rejects an invalid inline origin", async () => {
