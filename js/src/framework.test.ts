@@ -346,7 +346,7 @@ describe("runEvaluator", () => {
     ]);
   });
 
-  test("rejects an invalid inline origin", async () => {
+  test("ignores an invalid inline origin", async () => {
     const origin: {
       object_type: "dataset";
       object_id: string;
@@ -358,22 +358,22 @@ describe("runEvaluator", () => {
     };
     const task = vi.fn(async (input: number) => input * 2);
 
-    await expect(
-      runEvaluator(
-        null,
-        {
-          projectName: "proj",
-          evalName: "eval",
-          data: [{ input: 1, origin }],
-          task,
-          scores: [],
-        },
-        new NoopProgressReporter(),
-        [],
-        undefined,
-      ),
-    ).rejects.toThrow();
-    expect(task).not.toHaveBeenCalled();
+    const out = await runEvaluator(
+      null,
+      {
+        projectName: "proj",
+        evalName: "eval",
+        data: [{ input: 1, origin }],
+        task,
+        scores: [],
+      },
+      new NoopProgressReporter(),
+      [],
+      undefined,
+    );
+
+    expect(task).toHaveBeenCalled();
+    expect(out.results[0].origin).toBeUndefined();
   });
 
   describe("errors", () => {

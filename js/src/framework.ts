@@ -1190,11 +1190,13 @@ async function runEvaluatorInternal(
                 _xact_id: datum._xact_id,
               }
             : undefined;
+        const parsedDatumOrigin =
+          datum.origin === undefined
+            ? undefined
+            : ObjectReferenceSchema.safeParse(datum.origin);
         const origin =
           inlineDatasetOrigin ??
-          (datum.origin === undefined
-            ? undefined
-            : ObjectReferenceSchema.parse(datum.origin));
+          (parsedDatumOrigin?.success ? parsedDatumOrigin.data : undefined);
 
         const baseEvent: StartSpanArgs = {
           name: "eval",
