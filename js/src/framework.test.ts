@@ -268,17 +268,20 @@ describe("runEvaluator", () => {
     });
   });
 
-  test("uses dataset row origin without requiring a transaction id", async () => {
+  test("falls back to source origin when dataset row origin is incomplete", async () => {
     const datasetId = "00000000-0000-0000-0000-000000000001";
+    const sourceOrigin = {
+      object_type: "project_logs" as const,
+      object_id: "00000000-0000-0000-0000-000000000002",
+      id: "source-log-row-1",
+      _xact_id: "source-xact",
+      created: "2026-06-01T00:00:00.000Z",
+    };
     const data = makeDatasetData(datasetId, {
       input: 1,
       id: "dataset-row-1",
       created: "2026-06-02T00:00:00.000Z",
-      origin: {
-        object_type: "project_logs",
-        object_id: "00000000-0000-0000-0000-000000000002",
-        id: "source-log-row-1",
-      },
+      origin: sourceOrigin,
     });
 
     const out = await runEvaluator(
@@ -295,12 +298,7 @@ describe("runEvaluator", () => {
       undefined,
     );
 
-    expect(out.results[0].origin).toEqual({
-      object_type: "dataset",
-      object_id: datasetId,
-      id: "dataset-row-1",
-      created: "2026-06-02T00:00:00.000Z",
-    });
+    expect(out.results[0].origin).toEqual(sourceOrigin);
   });
 
   test("reports progress with dataset row origin for dataset-backed evals", async () => {
@@ -309,6 +307,7 @@ describe("runEvaluator", () => {
       input: 1,
       id: "dataset-row-1",
       _xact_id: "dataset-xact",
+      created: "2026-06-02T00:00:00.000Z",
       origin: {
         object_type: "project_logs",
         object_id: "00000000-0000-0000-0000-000000000002",
@@ -341,6 +340,7 @@ describe("runEvaluator", () => {
           object_id: datasetId,
           id: "dataset-row-1",
           _xact_id: "dataset-xact",
+          created: "2026-06-02T00:00:00.000Z",
         },
       }),
     ]);

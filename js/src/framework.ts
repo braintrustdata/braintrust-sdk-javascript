@@ -1180,21 +1180,21 @@ async function runEvaluatorInternal(
           : Dataset.isDataset(evaluator.data)
             ? evaluator.data
             : undefined;
-        const datasetOrigin: ObjectReference | undefined =
-          eventDataset && datum.id
+        const inlineDatasetOrigin: ObjectReference | undefined =
+          eventDataset && datum.id && datum._xact_id && datum.created
             ? {
                 object_type: "dataset",
                 object_id: await eventDataset.id,
                 id: datum.id,
                 created: datum.created,
-                ...(datum._xact_id ? { _xact_id: datum._xact_id } : {}),
+                _xact_id: datum._xact_id,
               }
             : undefined;
-        const inlineOrigin =
-          datum.origin === undefined
+        const origin =
+          inlineDatasetOrigin ??
+          (datum.origin === undefined
             ? undefined
-            : ObjectReferenceSchema.parse(datum.origin);
-        const origin = datasetOrigin ?? inlineOrigin;
+            : ObjectReferenceSchema.parse(datum.origin));
 
         const baseEvent: StartSpanArgs = {
           name: "eval",
