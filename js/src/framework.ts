@@ -1181,7 +1181,7 @@ async function runEvaluatorInternal(
             ? evaluator.data
             : undefined;
         const inlineDatasetOrigin: ObjectReference | undefined =
-          eventDataset && datum.id && datum._xact_id && datum.created
+          eventDataset && datum.id && datum._xact_id
             ? {
                 object_type: "dataset",
                 object_id: await eventDataset.id,
