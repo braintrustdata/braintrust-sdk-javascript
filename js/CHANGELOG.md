@@ -4,20 +4,20 @@
 
 ### Minor Changes
 
+- feat(ai-sdk): Add AI SDK v7 support (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2121)
 - feat: Add `@earendil-works/pi-coding-agent` instrumentation (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2118)
 - feat(google-genai): Add instrumentation for interactions API (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2122)
-- update optional dependency bt to v0.12.0 Thanks @viadezo1er! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2111)
-- feat(ai-sdk): Add AI SDK v7 support (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2121)
-- Add support for preserving explicit origin metadata on inline eval cases, so evals that run transformed or pre-resolved rows can retain their source-row provenance. Thanks @max-braintrust! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2104)
+- deps: Update `bt` to v0.12.0 (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2111)
+- feat: Allow inline eval cases to carry explicit origin metadata (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2104)
+- feat: Add project-level classifier builder support for function push (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2095)
 
 ### Patch Changes
 
-- Add project-level classifier builder support for function push. (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2095)
 - fix(claude-agent-sdk): Fix subagents span nesting and input (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2119)
 - fix: Fix TTFT in AI SDK v6 (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2120)
 - fix(flue): Fix span nesting (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2098)
-- fix: Validate inline row origin for evals Thanks @max-braintrust! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2136)
-- Fix eval summaries to compare against the experiment’s explicit base experiment ID. Thanks @barrettpyke! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2124)
+- fix: Validate inline row origin for evals (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2136)
+- fix: Fix eval summaries to compare against the experiment’s explicit base experiment ID (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2124)
 
 ## 3.17.0
 
