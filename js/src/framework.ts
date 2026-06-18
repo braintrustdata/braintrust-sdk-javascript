@@ -1190,10 +1190,7 @@ async function runEvaluatorInternal(
                 _xact_id: datum._xact_id,
               }
             : undefined;
-        const parsedDatumOrigin =
-          datum.origin === undefined
-            ? undefined
-            : ObjectReferenceSchema.safeParse(datum.origin);
+        const parsedDatumOrigin = ObjectReferenceSchema.safeParse(datum.origin);
         const origin =
           inlineDatasetOrigin ??
           (parsedDatumOrigin?.success ? parsedDatumOrigin.data : undefined);
