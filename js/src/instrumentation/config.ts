@@ -22,7 +22,6 @@ export interface InstrumentationIntegrationsConfig {
   gitHubCopilot?: boolean;
   openaiCodexSDK?: boolean;
   piCodingAgent?: boolean;
-  strands?: boolean;
   strandsAgentSDK?: boolean;
   langchain?: boolean;
   langgraph?: boolean;
@@ -51,8 +50,10 @@ const envIntegrationAliases: Record<
   picodingagent: "piCodingAgent",
   picodingagentsdk: "piCodingAgent",
   "@earendil-works/pi-coding-agent": "piCodingAgent",
-  strands: "strands",
   strandsAgentSDK: "strandsAgentSDK",
+  strandsagentsdk: "strandsAgentSDK",
+  "strands-agent-sdk": "strandsAgentSDK",
+  "@strands-agents/sdk": "strandsAgentSDK",
   anthropic: "anthropic",
   aisdk: "aisdk",
   "ai-sdk": "aisdk",
@@ -124,7 +125,6 @@ export function getDefaultInstrumentationIntegrations(): Record<
     langchain: true,
     langgraph: true,
     piCodingAgent: true,
-    strands: true,
     strandsAgentSDK: true,
   };
 }

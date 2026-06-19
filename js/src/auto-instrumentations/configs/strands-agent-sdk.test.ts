@@ -49,20 +49,23 @@ describe("strandsAgentSDKConfigs", () => {
     ]);
   });
 
-  it("is included by default and disabled by Strands integration keys", () => {
+  it("is included by default and disabled by Strands Agent SDK integration keys", () => {
     expect(
       getDefaultInstrumentationConfigs().some((config) =>
         strandsChannelNames.includes(config.channelName as never),
       ),
     ).toBe(true);
 
-    for (const alias of ["strands", "strandsAgentSDK"]) {
+    for (const alias of [
+      "strandsAgentSDK",
+      "strandsagentsdk",
+      "strands-agent-sdk",
+      "@strands-agents/sdk",
+    ]) {
       const disabledConfig =
         readDisabledInstrumentationEnvConfig(alias).integrations;
 
-      expect(disabledConfig).toMatchObject(
-        alias === "strands" ? { strands: false } : { strandsAgentSDK: false },
-      );
+      expect(disabledConfig).toMatchObject({ strandsAgentSDK: false });
       expect(
         getDefaultInstrumentationConfigs({
           disabledIntegrationConfig: disabledConfig,

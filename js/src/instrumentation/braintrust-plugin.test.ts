@@ -581,7 +581,6 @@ describe("BraintrustPlugin", () => {
           gitHubCopilot: false,
           langchain: false,
           piCodingAgent: false,
-          strands: false,
           strandsAgentSDK: false,
         },
       });
@@ -617,19 +616,14 @@ describe("BraintrustPlugin", () => {
       expect(AnthropicPlugin).toHaveBeenCalledTimes(1);
     });
 
-    it("should not create Strands Agent SDK plugin when either Strands key is false", () => {
-      for (const integrations of [
-        { strands: false },
-        { strandsAgentSDK: false },
-      ]) {
-        vi.clearAllMocks();
+    it("should not create Strands Agent SDK plugin when strandsAgentSDK: false", () => {
+      const plugin = new BraintrustPlugin({
+        integrations: { strandsAgentSDK: false },
+      });
+      plugin.enable();
 
-        const plugin = new BraintrustPlugin({ integrations });
-        plugin.enable();
-
-        expect(StrandsAgentSDKPlugin).not.toHaveBeenCalled();
-        expect(OpenAIPlugin).toHaveBeenCalledTimes(1);
-      }
+      expect(StrandsAgentSDKPlugin).not.toHaveBeenCalled();
+      expect(OpenAIPlugin).toHaveBeenCalledTimes(1);
     });
 
     it("should allow selective enabling of plugins", () => {

@@ -174,10 +174,7 @@ export class BraintrustPlugin extends BasePlugin {
       this.piCodingAgentPlugin.enable();
     }
 
-    if (
-      integrations.strands !== false &&
-      integrations.strandsAgentSDK !== false
-    ) {
+    if (integrations.strandsAgentSDK !== false) {
       this.strandsAgentSDKPlugin = new StrandsAgentSDKPlugin();
       this.strandsAgentSDKPlugin.enable();
     }

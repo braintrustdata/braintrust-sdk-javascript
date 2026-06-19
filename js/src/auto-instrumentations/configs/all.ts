@@ -83,7 +83,7 @@ const defaultInstrumentationConfigGroups: readonly InstrumentationConfigGroup[] 
       configs: piCodingAgentConfigs,
     },
     {
-      integrations: ["strands", "strandsAgentSDK"],
+      integrations: ["strandsAgentSDK"],
       configs: strandsAgentSDKConfigs,
     },
     {
