@@ -272,7 +272,11 @@ function patchBedrockRuntimeStreamingResult(args: {
   }
 
   if (operation === "converseStream" && isAsyncIterable(args.result.stream)) {
-    patchConverseStream(args.result.stream, args.span, args.startTime);
+    patchConverseStream(
+      args.result.stream as AsyncIterable<BedrockRuntimeConverseStreamEvent>,
+      args.span,
+      args.startTime,
+    );
     return true;
   }
 
@@ -280,7 +284,11 @@ function patchBedrockRuntimeStreamingResult(args: {
     operation === "invokeModelWithResponseStream" &&
     isAsyncIterable(args.result.body)
   ) {
-    patchInvokeModelResponseStream(args.result.body, args.span, args.startTime);
+    patchInvokeModelResponseStream(
+      args.result.body as AsyncIterable<BedrockRuntimeResponseStreamEvent>,
+      args.span,
+      args.startTime,
+    );
     return true;
   }
 
@@ -440,11 +448,12 @@ function aggregateInvokeModelResponseStreamChunks(
   const parsedChunks = chunks
     .map((chunk) => parseJsonBody(chunk.chunk?.bytes))
     .filter((chunk) => chunk !== undefined);
+  const jsonLikeChunks = parsedChunks.filter(isObject);
   const text = parsedChunks.map(extractTextFromJsonLike).join("");
-  const lastMetadataChunk = parsedChunks
+  const lastMetadataChunk = jsonLikeChunks
     .slice()
     .reverse()
-    .find((chunk) => isObject(chunk?.metadata));
+    .find((chunk) => isObject(chunk.metadata));
   const metadata = isObject(lastMetadataChunk?.metadata)
     ? sanitizeRecord(lastMetadataChunk.metadata)
     : undefined;
@@ -455,7 +464,7 @@ function aggregateInvokeModelResponseStreamChunks(
         ? { text }
         : {
             chunk_count: chunks.length,
-            chunks: sanitizeBedrockValue(parsedChunks.slice(0, 20)),
+            chunks: sanitizeBedrockValue(jsonLikeChunks.slice(0, 20)),
           },
     metrics: parseBedrockRuntimeMetrics(
       isObject(metadata) ? metadata.usage : undefined,
