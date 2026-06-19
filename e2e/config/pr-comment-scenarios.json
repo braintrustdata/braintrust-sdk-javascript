@@ -28,6 +28,12 @@
     "variants": [{ "variantKey": "pi-coding-agent-v079", "label": "v0.79" }]
   },
   {
+    "scenarioDirName": "strands-agent-sdk-instrumentation",
+    "label": "Strands Agent SDK Instrumentation",
+    "metadataScenario": "strands-agent-sdk-instrumentation",
+    "variants": [{ "variantKey": "strands-agent-sdk-v160", "label": "v1.6.0" }]
+  },
+  {
     "scenarioDirName": "openai-agents-instrumentation",
     "label": "OpenAI Agents Instrumentation",
     "metadataScenario": "openai-agents-instrumentation",

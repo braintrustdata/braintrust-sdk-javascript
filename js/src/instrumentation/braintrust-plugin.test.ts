@@ -16,6 +16,7 @@ import { GroqPlugin } from "./plugins/groq-plugin";
 import { GitHubCopilotPlugin } from "./plugins/github-copilot-plugin";
 import { LangChainPlugin } from "./plugins/langchain-plugin";
 import { PiCodingAgentPlugin } from "./plugins/pi-coding-agent-plugin";
+import { StrandsAgentSDKPlugin } from "./plugins/strands-agent-sdk-plugin";
 
 function createPluginClassMock() {
   return vi.fn(function MockPlugin(this: {
@@ -99,6 +100,10 @@ vi.mock("./plugins/langchain-plugin", () => ({
 
 vi.mock("./plugins/pi-coding-agent-plugin", () => ({
   PiCodingAgentPlugin: createPluginClassMock(),
+}));
+
+vi.mock("./plugins/strands-agent-sdk-plugin", () => ({
+  StrandsAgentSDKPlugin: createPluginClassMock(),
 }));
 
 describe("BraintrustPlugin", () => {
@@ -245,6 +250,16 @@ describe("BraintrustPlugin", () => {
       expect(mockInstance.enable).toHaveBeenCalledTimes(1);
     });
 
+    it("should create and enable Strands Agent SDK plugin by default", () => {
+      const plugin = new BraintrustPlugin();
+      plugin.enable();
+
+      expect(StrandsAgentSDKPlugin).toHaveBeenCalledTimes(1);
+      const mockInstance = vi.mocked(StrandsAgentSDKPlugin).mock.results[0]
+        .value;
+      expect(mockInstance.enable).toHaveBeenCalledTimes(1);
+    });
+
     it("should create all plugins when enabled with no config", () => {
       const plugin = new BraintrustPlugin();
       plugin.enable();
@@ -263,6 +278,7 @@ describe("BraintrustPlugin", () => {
       expect(CoherePlugin).toHaveBeenCalledTimes(1);
       expect(GroqPlugin).toHaveBeenCalledTimes(1);
       expect(GitHubCopilotPlugin).toHaveBeenCalledTimes(1);
+      expect(StrandsAgentSDKPlugin).toHaveBeenCalledTimes(1);
       expect(LangChainPlugin).toHaveBeenCalledTimes(1);
     });
 
@@ -284,6 +300,7 @@ describe("BraintrustPlugin", () => {
       expect(CoherePlugin).toHaveBeenCalledTimes(1);
       expect(GroqPlugin).toHaveBeenCalledTimes(1);
       expect(GitHubCopilotPlugin).toHaveBeenCalledTimes(1);
+      expect(StrandsAgentSDKPlugin).toHaveBeenCalledTimes(1);
       expect(LangChainPlugin).toHaveBeenCalledTimes(1);
     });
 
@@ -304,6 +321,7 @@ describe("BraintrustPlugin", () => {
       expect(MistralPlugin).toHaveBeenCalledTimes(1);
       expect(CoherePlugin).toHaveBeenCalledTimes(1);
       expect(GroqPlugin).toHaveBeenCalledTimes(1);
+      expect(StrandsAgentSDKPlugin).toHaveBeenCalledTimes(1);
       expect(LangChainPlugin).toHaveBeenCalledTimes(1);
     });
   });
@@ -563,6 +581,8 @@ describe("BraintrustPlugin", () => {
           gitHubCopilot: false,
           langchain: false,
           piCodingAgent: false,
+          strands: false,
+          strandsAgentSDK: false,
         },
       });
       plugin.enable();
@@ -583,6 +603,7 @@ describe("BraintrustPlugin", () => {
       expect(GitHubCopilotPlugin).not.toHaveBeenCalled();
       expect(LangChainPlugin).not.toHaveBeenCalled();
       expect(PiCodingAgentPlugin).not.toHaveBeenCalled();
+      expect(StrandsAgentSDKPlugin).not.toHaveBeenCalled();
     });
 
     it("should not create Pi Coding Agent plugin when piCodingAgent: false", () => {
@@ -594,6 +615,21 @@ describe("BraintrustPlugin", () => {
       expect(PiCodingAgentPlugin).not.toHaveBeenCalled();
       expect(OpenAIPlugin).toHaveBeenCalledTimes(1);
       expect(AnthropicPlugin).toHaveBeenCalledTimes(1);
+    });
+
+    it("should not create Strands Agent SDK plugin when either Strands key is false", () => {
+      for (const integrations of [
+        { strands: false },
+        { strandsAgentSDK: false },
+      ]) {
+        vi.clearAllMocks();
+
+        const plugin = new BraintrustPlugin({ integrations });
+        plugin.enable();
+
+        expect(StrandsAgentSDKPlugin).not.toHaveBeenCalled();
+        expect(OpenAIPlugin).toHaveBeenCalledTimes(1);
+      }
     });
 
     it("should allow selective enabling of plugins", () => {
@@ -751,6 +787,8 @@ describe("BraintrustPlugin", () => {
       const groqMock = vi.mocked(GroqPlugin).mock.results[0].value;
       const piCodingAgentMock =
         vi.mocked(PiCodingAgentPlugin).mock.results[0].value;
+      const strandsAgentSDKMock = vi.mocked(StrandsAgentSDKPlugin).mock
+        .results[0].value;
       const langChainMock = vi.mocked(LangChainPlugin).mock.results[0].value;
 
       expect(openaiMock.enable).toHaveBeenCalledTimes(1);
@@ -767,6 +805,7 @@ describe("BraintrustPlugin", () => {
       expect(cohereMock.enable).toHaveBeenCalledTimes(1);
       expect(groqMock.enable).toHaveBeenCalledTimes(1);
       expect(piCodingAgentMock.enable).toHaveBeenCalledTimes(1);
+      expect(strandsAgentSDKMock.enable).toHaveBeenCalledTimes(1);
       expect(langChainMock.enable).toHaveBeenCalledTimes(1);
     });
 
@@ -795,6 +834,8 @@ describe("BraintrustPlugin", () => {
       const groqMock = vi.mocked(GroqPlugin).mock.results[0].value;
       const piCodingAgentMock =
         vi.mocked(PiCodingAgentPlugin).mock.results[0].value;
+      const strandsAgentSDKMock = vi.mocked(StrandsAgentSDKPlugin).mock
+        .results[0].value;
       const langChainMock = vi.mocked(LangChainPlugin).mock.results[0].value;
 
       plugin.disable();
@@ -813,6 +854,7 @@ describe("BraintrustPlugin", () => {
       expect(cohereMock.disable).toHaveBeenCalledTimes(1);
       expect(groqMock.disable).toHaveBeenCalledTimes(1);
       expect(piCodingAgentMock.disable).toHaveBeenCalledTimes(1);
+      expect(strandsAgentSDKMock.disable).toHaveBeenCalledTimes(1);
       expect(langChainMock.disable).toHaveBeenCalledTimes(1);
     });
 
@@ -861,6 +903,7 @@ describe("BraintrustPlugin", () => {
       expect(CoherePlugin).not.toHaveBeenCalled();
       expect(GroqPlugin).not.toHaveBeenCalled();
       expect(PiCodingAgentPlugin).not.toHaveBeenCalled();
+      expect(StrandsAgentSDKPlugin).not.toHaveBeenCalled();
     });
 
     it("should allow re-enabling after disable", () => {
@@ -886,6 +929,7 @@ describe("BraintrustPlugin", () => {
       expect(CoherePlugin).toHaveBeenCalledTimes(1);
       expect(GroqPlugin).toHaveBeenCalledTimes(1);
       expect(PiCodingAgentPlugin).toHaveBeenCalledTimes(1);
+      expect(StrandsAgentSDKPlugin).toHaveBeenCalledTimes(1);
       expect(LangChainPlugin).toHaveBeenCalledTimes(1);
     });
 

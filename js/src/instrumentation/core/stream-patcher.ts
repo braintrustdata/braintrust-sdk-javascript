@@ -48,6 +48,12 @@ export interface StreamPatchOptions<TChunk = unknown, TFinal = unknown> {
    * Default: collect all chunks.
    */
   shouldCollect?: (chunk: TChunk) => boolean;
+
+  /**
+   * Optional wrapper around iterator.next(). Used by integrations that need to
+   * preserve async context while the producer advances.
+   */
+  aroundNext?: <T>(callback: () => PromiseLike<T>) => PromiseLike<T> | T;
 }
 
 type AsyncIteratorLike<TChunk> = AsyncIterable<TChunk> &
@@ -155,7 +161,9 @@ export function patchStreamIfNeeded<TChunk = unknown, TFinal = unknown>(
 
       stream.next = async (...args: [] | [undefined]) => {
         try {
-          const result = await originalNext(...args);
+          const result = await runNextWithWrapper(options, () =>
+            originalNext(...args),
+          );
 
           if (result.done) {
             if (!completed) {
@@ -276,7 +284,9 @@ export function patchStreamIfNeeded<TChunk = unknown, TFinal = unknown>(
       // Patch the next() method
       iterator.next = async function (...args: [] | [undefined]) {
         try {
-          const result = await originalNext(...args);
+          const result = await runNextWithWrapper(options, () =>
+            originalNext(...args),
+          );
 
           if (result.done) {
             // Stream completed successfully
@@ -394,6 +404,13 @@ export function patchStreamIfNeeded<TChunk = unknown, TFinal = unknown>(
     console.warn("Failed to patch stream:", error);
     return stream;
   }
+}
+
+function runNextWithWrapper<T, TChunk, TFinal>(
+  options: StreamPatchOptions<TChunk, TFinal>,
+  callback: () => PromiseLike<T>,
+): PromiseLike<T> | T {
+  return options.aroundNext ? options.aroundNext(callback) : callback();
 }
 
 /**
