@@ -47,6 +47,7 @@ const HELPERS_DIR = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(HELPERS_DIR, "../..");
 const RUN_CONTEXT_DIR_ENV = "BRAINTRUST_E2E_RUN_CONTEXT_DIR";
 const CASSETTE_MODE_ENV = "BRAINTRUST_E2E_CASSETTE_MODE";
+const DEFAULT_ANTHROPIC_BEDROCK_REGION = "us-east-1";
 
 type ScenarioRunner = "deno" | "node" | "tsx";
 
@@ -282,25 +283,39 @@ interface ActiveCassetteWiring extends CassetteWiring {
   serverUrl: string;
 }
 
-const CASSETTE_SERVER_ROUTES: CassetteServerRoute[] = [
-  { prefix: "/anthropic", upstreamOrigin: "https://api.anthropic.com" },
-  { prefix: "/cohere", upstreamOrigin: "https://api.cohere.com" },
-  { prefix: "/cursor/v1", upstreamOrigin: "https://api.cursor.com/v1" },
-  { prefix: "/cursor", upstreamOrigin: "https://api2.cursor.sh" },
-  {
-    prefix: "/google-generative-language",
-    upstreamOrigin: "https://generativelanguage.googleapis.com",
-  },
-  { prefix: "/groq", upstreamOrigin: "https://api.groq.com" },
-  { prefix: "/huggingface", upstreamOrigin: "https://huggingface.co" },
-  {
-    prefix: "/huggingface-router",
-    upstreamOrigin: "https://router.huggingface.co",
-  },
-  { prefix: "/mistral", upstreamOrigin: "https://api.mistral.ai" },
-  { prefix: "/openai", upstreamOrigin: "https://api.openai.com" },
-  { prefix: "/openrouter", upstreamOrigin: "https://openrouter.ai" },
-];
+function getAnthropicBedrockRegion(): string {
+  return (
+    process.env.AWS_REGION ||
+    process.env.AWS_DEFAULT_REGION ||
+    DEFAULT_ANTHROPIC_BEDROCK_REGION
+  );
+}
+
+function getCassetteServerRoutes(): CassetteServerRoute[] {
+  return [
+    { prefix: "/anthropic", upstreamOrigin: "https://api.anthropic.com" },
+    {
+      prefix: "/anthropic-bedrock",
+      upstreamOrigin: `https://bedrock-runtime.${getAnthropicBedrockRegion()}.amazonaws.com`,
+    },
+    { prefix: "/cohere", upstreamOrigin: "https://api.cohere.com" },
+    { prefix: "/cursor/v1", upstreamOrigin: "https://api.cursor.com/v1" },
+    { prefix: "/cursor", upstreamOrigin: "https://api2.cursor.sh" },
+    {
+      prefix: "/google-generative-language",
+      upstreamOrigin: "https://generativelanguage.googleapis.com",
+    },
+    { prefix: "/groq", upstreamOrigin: "https://api.groq.com" },
+    { prefix: "/huggingface", upstreamOrigin: "https://huggingface.co" },
+    {
+      prefix: "/huggingface-router",
+      upstreamOrigin: "https://router.huggingface.co",
+    },
+    { prefix: "/mistral", upstreamOrigin: "https://api.mistral.ai" },
+    { prefix: "/openai", upstreamOrigin: "https://api.openai.com" },
+    { prefix: "/openrouter", upstreamOrigin: "https://openrouter.ai" },
+  ];
+}
 
 const CASSETTE_IGNORED_REQUESTS = [
   /^https:\/\/api2\.cursor\.sh\/aiserver\.v1\.AnalyticsService\/TrackEvents$/,
@@ -315,6 +330,7 @@ function getCassetteEnv(wiring: ActiveCassetteWiring): Record<string, string> {
     BRAINTRUST_E2E_CASSETTE_VARIANT: wiring.variantKey,
     BRAINTRUST_E2E_MODEL_BASE_URL: `${serverUrl}/openai/v1`,
     ANTHROPIC_BASE_URL: `${serverUrl}/anthropic`,
+    ANTHROPIC_BEDROCK_BASE_URL: `${serverUrl}/anthropic-bedrock`,
     COHERE_BASE_URL: `${serverUrl}/cohere`,
     COHERE_API_URL: `${serverUrl}/cohere`,
     CURSOR_BACKEND_URL: `${serverUrl}/cursor`,
@@ -361,6 +377,10 @@ const CASSETTE_PROVIDER_KEYS: Array<{
   {
     envVars: ["ANTHROPIC_API_KEY"],
     placeholder: "sk-ant-cassette-placeholder",
+  },
+  {
+    envVars: ["AWS_BEARER_TOKEN_BEDROCK"],
+    placeholder: "cassette-placeholder",
   },
   {
     envVars: ["COHERE_API_KEY", "CO_API_KEY"],
@@ -760,7 +780,7 @@ export async function withScenarioHarness(
       redact: cassetteOptions.redact,
       streamingRequests: cassetteOptions.streamingRequests,
       ignoredRequests: CASSETTE_IGNORED_REQUESTS,
-      routes: CASSETTE_SERVER_ROUTES,
+      routes: getCassetteServerRoutes(),
       onMiss: (req) => {
         process.stderr.write(`[cassette] MISS: ${req.method} ${req.url}\n`);
       },

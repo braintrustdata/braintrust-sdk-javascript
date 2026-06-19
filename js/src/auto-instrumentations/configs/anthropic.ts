@@ -13,6 +13,11 @@ import { anthropicChannels } from "../../instrumentation/plugins/anthropic-chann
  * "orchestrion:@anthropic-ai/sdk:messages.create"
  */
 export const anthropicConfigs: InstrumentationConfig[] = [
+  // Each logical target is listed for both published module formats:
+  // `.mjs` covers ESM imports, while `.js` covers CJS requires. The Bedrock
+  // SDK delegates CJS `messages.create` calls through these Anthropic SDK
+  // `.js` resource files.
+
   // Messages API - create in older SDK layouts (supports streaming via stream=true parameter)
   {
     channelName: anthropicChannels.messagesCreate.channelName,
@@ -20,6 +25,19 @@ export const anthropicConfigs: InstrumentationConfig[] = [
       name: "@anthropic-ai/sdk",
       versionRange: ">=0.27.0 <0.39.0",
       filePath: "resources/messages.mjs",
+    },
+    functionQuery: {
+      className: "Messages",
+      methodName: "create",
+      kind: "Async",
+    },
+  },
+  {
+    channelName: anthropicChannels.messagesCreate.channelName,
+    module: {
+      name: "@anthropic-ai/sdk",
+      versionRange: ">=0.27.0 <0.39.0",
+      filePath: "resources/messages.js",
     },
     functionQuery: {
       className: "Messages",
@@ -42,6 +60,19 @@ export const anthropicConfigs: InstrumentationConfig[] = [
       kind: "Async",
     },
   },
+  {
+    channelName: anthropicChannels.messagesCreate.channelName,
+    module: {
+      name: "@anthropic-ai/sdk",
+      versionRange: ">=0.39.0",
+      filePath: "resources/messages/messages.js",
+    },
+    functionQuery: {
+      className: "Messages",
+      methodName: "create",
+      kind: "Async",
+    },
+  },
 
   // Beta Messages API - create (supports streaming via stream=true parameter)
   {
@@ -57,6 +88,19 @@ export const anthropicConfigs: InstrumentationConfig[] = [
       kind: "Async",
     },
   },
+  {
+    channelName: anthropicChannels.betaMessagesCreate.channelName,
+    module: {
+      name: "@anthropic-ai/sdk",
+      versionRange: ">=0.39.0",
+      filePath: "resources/beta/messages/messages.js",
+    },
+    functionQuery: {
+      className: "Messages",
+      methodName: "create",
+      kind: "Async",
+    },
+  },
 
   // Beta Messages API - toolRunner (sync helper returning async iterable/thenable)
   {
@@ -65,6 +109,19 @@ export const anthropicConfigs: InstrumentationConfig[] = [
       name: "@anthropic-ai/sdk",
       versionRange: ">=0.39.0",
       filePath: "resources/beta/messages/messages.mjs",
+    },
+    functionQuery: {
+      className: "Messages",
+      methodName: "toolRunner",
+      kind: "Sync",
+    },
+  },
+  {
+    channelName: anthropicChannels.betaMessagesToolRunner.channelName,
+    module: {
+      name: "@anthropic-ai/sdk",
+      versionRange: ">=0.39.0",
+      filePath: "resources/beta/messages/messages.js",
     },
     functionQuery: {
       className: "Messages",
