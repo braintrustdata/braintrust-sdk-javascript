@@ -49,6 +49,25 @@
     ]
   },
   {
+    "scenarioDirName": "anthropic-bedrock-instrumentation",
+    "label": "Anthropic Bedrock Instrumentation",
+    "metadataScenario": "anthropic-bedrock-instrumentation",
+    "variants": [
+      {
+        "variantKey": "anthropic-bedrock-v0302-wrapped",
+        "label": "v0.30.2 wrapped"
+      },
+      {
+        "variantKey": "anthropic-bedrock-v0302-auto-esm",
+        "label": "v0.30.2 auto ESM"
+      },
+      {
+        "variantKey": "anthropic-bedrock-v0302-auto-cjs",
+        "label": "v0.30.2 auto CJS"
+      }
+    ]
+  },
+  {
     "scenarioDirName": "google-adk-instrumentation",
     "label": "Google ADK Instrumentation",
     "metadataScenario": "google-adk-instrumentation",
