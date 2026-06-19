@@ -25,6 +25,10 @@ mise install        # Install toolchain and dependencies
 pnpm run build      # Build all workspace packages (from repo root)
 ```
 
+## Instrumentation
+
+Use the normal Orchestrion config plus plugin/channel path by default. Special-case source patches should be rare exceptions only when the target SDK cannot be instrumented through the standard transformer path, and the reason should be documented next to the patch.
+
 ## Testing
 
 Uses Vitest. Prefer running the **narrowest relevant test** rather than the full suite.

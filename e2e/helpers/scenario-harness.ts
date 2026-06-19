@@ -284,6 +284,10 @@ interface ActiveCassetteWiring extends CassetteWiring {
 
 const CASSETTE_SERVER_ROUTES: CassetteServerRoute[] = [
   { prefix: "/anthropic", upstreamOrigin: "https://api.anthropic.com" },
+  {
+    prefix: "/aws-bedrock-runtime",
+    upstreamOrigin: "https://bedrock-runtime.us-east-1.amazonaws.com",
+  },
   { prefix: "/cohere", upstreamOrigin: "https://api.cohere.com" },
   { prefix: "/cursor/v1", upstreamOrigin: "https://api.cursor.com/v1" },
   { prefix: "/cursor", upstreamOrigin: "https://api2.cursor.sh" },
@@ -315,6 +319,7 @@ function getCassetteEnv(wiring: ActiveCassetteWiring): Record<string, string> {
     BRAINTRUST_E2E_CASSETTE_VARIANT: wiring.variantKey,
     BRAINTRUST_E2E_MODEL_BASE_URL: `${serverUrl}/openai/v1`,
     ANTHROPIC_BASE_URL: `${serverUrl}/anthropic`,
+    AWS_BEDROCK_RUNTIME_BASE_URL: `${serverUrl}/aws-bedrock-runtime`,
     COHERE_BASE_URL: `${serverUrl}/cohere`,
     COHERE_API_URL: `${serverUrl}/cohere`,
     CURSOR_BACKEND_URL: `${serverUrl}/cursor`,
@@ -361,6 +366,10 @@ const CASSETTE_PROVIDER_KEYS: Array<{
   {
     envVars: ["ANTHROPIC_API_KEY"],
     placeholder: "sk-ant-cassette-placeholder",
+  },
+  {
+    envVars: ["AWS_BEARER_TOKEN_BEDROCK"],
+    placeholder: "btb-cassette-placeholder",
   },
   {
     envVars: ["COHERE_API_KEY", "CO_API_KEY"],

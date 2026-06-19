@@ -1,0 +1,241 @@
+{
+  "entries": [
+    {
+      "callIndex": 0,
+      "id": "322a4f0839625dc9",
+      "matchKey": "POST bedrock-runtime.us-east-1.amazonaws.com/model/us.amazon.nova-lite-v1%3A0/converse",
+      "recordedAt": "2026-06-18T14:58:35.988Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "inferenceConfig": {
+              "maxTokens": 16,
+              "temperature": 0,
+              "topP": 0.9
+            },
+            "messages": [
+              {
+                "content": [
+                  {
+                    "text": "Reply with exactly OK."
+                  }
+                ],
+                "role": "user"
+              }
+            ]
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://bedrock-runtime.us-east-1.amazonaws.com/model/us.amazon.nova-lite-v1%3A0/converse"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "metrics": {
+              "latencyMs": 342
+            },
+            "output": {
+              "message": {
+                "content": [
+                  {
+                    "text": "OK."
+                  }
+                ],
+                "role": "assistant"
+              }
+            },
+            "stopReason": "end_turn",
+            "usage": {
+              "inputTokens": 5,
+              "outputTokens": 3,
+              "serverToolUsage": {},
+              "totalTokens": 8
+            }
+          }
+        },
+        "headers": {
+          "connection": "keep-alive",
+          "content-length": "202",
+          "content-type": "application/json",
+          "date": "[REDACTED]",
+          "x-amzn-requestid": "[REDACTED]"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 0,
+      "id": "d98c8ffcf884de04",
+      "matchKey": "POST bedrock-runtime.us-east-1.amazonaws.com/model/us.amazon.nova-lite-v1%3A0/converse-stream",
+      "recordedAt": "2026-06-18T14:58:36.755Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "inferenceConfig": {
+              "maxTokens": 16,
+              "temperature": 0,
+              "topP": 0.9
+            },
+            "messages": [
+              {
+                "content": [
+                  {
+                    "text": "Reply with exactly STREAM."
+                  }
+                ],
+                "role": "user"
+              }
+            ]
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://bedrock-runtime.us-east-1.amazonaws.com/model/us.amazon.nova-lite-v1%3A0/converse-stream"
+      },
+      "response": {
+        "body": {
+          "contentType": "application/vnd.amazon.eventstream",
+          "kind": "base64",
+          "value": "AAAAggAAAFIrYQxDCzpldmVudC10eXBlBwAMbWVzc2FnZVN0YXJ0DTpjb250ZW50LXR5cGUHABBhcHBsaWNhdGlvbi9qc29uDTptZXNzYWdlLXR5cGUHAAVldmVudHsicCI6ImFiY2RlIiwicm9sZSI6ImFzc2lzdGFudCJ9Ki5zGAAAAMsAAABXDujC9As6ZXZlbnQtdHlwZQcAEWNvbnRlbnRCbG9ja0RlbHRhDTpjb250ZW50LXR5cGUHABBhcHBsaWNhdGlvbi9qc29uDTptZXNzYWdlLXR5cGUHAAVldmVudHsiY29udGVudEJsb2NrSW5kZXgiOjAsImRlbHRhIjp7InRleHQiOiIifSwicCI6ImFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6QUJDREVGR0hJSktMTU5PUFFSU1RVVldYIn3BwnKHAAAAwwAAAFc+mIk1CzpldmVudC10eXBlBwARY29udGVudEJsb2NrRGVsdGENOmNvbnRlbnQtdHlwZQcAEGFwcGxpY2F0aW9uL2pzb24NOm1lc3NhZ2UtdHlwZQcABWV2ZW50eyJjb250ZW50QmxvY2tJbmRleCI6MCwiZGVsdGEiOnsidGV4dCI6IlNUUkVBTS4ifSwicCI6ImFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6QUJDREVGR0hJIn3cYal2AAAArQAAAFZvnXCPCzpldmVudC10eXBlBwAQY29udGVudEJsb2NrU3RvcA06Y29udGVudC10eXBlBwAQYXBwbGljYXRpb24vanNvbg06bWVzc2FnZS10eXBlBwAFZXZlbnR7ImNvbnRlbnRCbG9ja0luZGV4IjowLCJwIjoiYWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXpBQkNERUZHSElKS0xNTk8ifcKfBB4AAACFAAAAUQBIgekLOmV2ZW50LXR5cGUHAAttZXNzYWdlU3RvcA06Y29udGVudC10eXBlBwAQYXBwbGljYXRpb24vanNvbg06bWVzc2FnZS10eXBlBwAFZXZlbnR7InAiOiJhYmNkIiwic3RvcFJlYXNvbiI6ImVuZF90dXJuIn0c+t0FAAAA3wAAAE7/41t2CzpldmVudC10eXBlBwAIbWV0YWRhdGENOmNvbnRlbnQtdHlwZQcAEGFwcGxpY2F0aW9uL2pzb24NOm1lc3NhZ2UtdHlwZQcABWV2ZW50eyJtZXRyaWNzIjp7ImxhdGVuY3lNcyI6NjE3fSwicCI6ImFiY2RlZmdoaWprbCIsInVzYWdlIjp7ImlucHV0VG9rZW5zIjo2LCJvdXRwdXRUb2tlbnMiOjQsInNlcnZlclRvb2xVc2FnZSI6e30sInRvdGFsVG9rZW5zIjoxMH19T7Dl9A=="
+        },
+        "headers": {
+          "connection": "keep-alive",
+          "content-type": "application/vnd.amazon.eventstream",
+          "date": "[REDACTED]",
+          "transfer-encoding": "chunked",
+          "x-amzn-requestid": "[REDACTED]"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 0,
+      "id": "0f167aed4ca1a787",
+      "matchKey": "POST bedrock-runtime.us-east-1.amazonaws.com/model/us.amazon.nova-lite-v1%3A0/invoke",
+      "recordedAt": "2026-06-18T14:58:37.567Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "inferenceConfig": {
+              "maxTokens": 16,
+              "temperature": 0,
+              "topP": 0.9
+            },
+            "messages": [
+              {
+                "content": [
+                  {
+                    "text": "Reply with exactly RAW."
+                  }
+                ],
+                "role": "user"
+              }
+            ],
+            "schemaVersion": "messages-v1"
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://bedrock-runtime.us-east-1.amazonaws.com/model/us.amazon.nova-lite-v1%3A0/invoke"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "output": {
+              "message": {
+                "content": [
+                  {
+                    "text": "RAW"
+                  }
+                ],
+                "role": "assistant"
+              }
+            },
+            "stopReason": "end_turn",
+            "usage": {
+              "cacheReadInputTokenCount": 0,
+              "cacheWriteInputTokenCount": 0,
+              "inputTokens": 5,
+              "outputTokens": 2,
+              "totalTokens": 7
+            }
+          }
+        },
+        "headers": {
+          "connection": "keep-alive",
+          "content-length": "212",
+          "content-type": "application/json",
+          "date": "[REDACTED]",
+          "x-amzn-bedrock-cache-read-input-token-count": "0",
+          "x-amzn-bedrock-cache-write-input-token-count": "0",
+          "x-amzn-bedrock-input-token-count": "5",
+          "x-amzn-bedrock-invocation-latency": "665",
+          "x-amzn-bedrock-output-token-count": "2",
+          "x-amzn-requestid": "[REDACTED]"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 0,
+      "id": "79f562ce7e378bb8",
+      "matchKey": "POST bedrock-runtime.us-east-1.amazonaws.com/model/us.amazon.nova-lite-v1%3A0/invoke-with-response-stream",
+      "recordedAt": "2026-06-18T14:58:38.329Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "inferenceConfig": {
+              "maxTokens": 16,
+              "temperature": 0,
+              "topP": 0.9
+            },
+            "messages": [
+              {
+                "content": [
+                  {
+                    "text": "Reply with exactly RAWSTREAM."
+                  }
+                ],
+                "role": "user"
+              }
+            ],
+            "schemaVersion": "messages-v1"
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://bedrock-runtime.us-east-1.amazonaws.com/model/us.amazon.nova-lite-v1%3A0/invoke-with-response-stream"
+      },
+      "response": {
+        "body": {
+          "contentType": "application/vnd.amazon.eventstream",
+          "kind": "base64",
+          "value": "AAAAvgAAAEsr2/EECzpldmVudC10eXBlBwAFY2h1bmsNOmNvbnRlbnQtdHlwZQcAEGFwcGxpY2F0aW9uL2pzb24NOm1lc3NhZ2UtdHlwZQcABWV2ZW50eyJieXRlcyI6ImV5SnRaWE56WVdkbFUzUmhjblFpT25zaWNtOXNaU0k2SW1GemMybHpkR0Z1ZENKOWZRPT0iLCJwIjoiYWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXpBQiJ9NOrvXwAAAOUAAABLZBgP3gs6ZXZlbnQtdHlwZQcABWNodW5rDTpjb250ZW50LXR5cGUHABBhcHBsaWNhdGlvbi9qc29uDTptZXNzYWdlLXR5cGUHAAVldmVudHsiYnl0ZXMiOiJleUpqYjI1MFpXNTBRbXh2WTJ0RVpXeDBZU0k2ZXlKa1pXeDBZU0k2ZXlKMFpYaDBJam9pVWtGWEluMHNJbU52Ym5SbGJuUkNiRzlqYTBsdVpHVjRJam93ZlgwPSIsInAiOiJhYmNkZWZnaGlqa2xtbm9wcXJzdHV2d3h5ekEifVDFRRUAAACvAAAAS3ZbTzYLOmV2ZW50LXR5cGUHAAVjaHVuaw06Y29udGVudC10eXBlBwAQYXBwbGljYXRpb24vanNvbg06bWVzc2FnZS10eXBlBwAFZXZlbnR7ImJ5dGVzIjoiZXlKamIyNTBaVzUwUW14dlkydFRkRzl3SWpwN0ltTnZiblJsYm5SQ2JHOWphMGx1WkdWNElqb3dmWDA9IiwicCI6ImFiY2RlIn0EwbqNAAAA5wAAAEse2Fy+CzpldmVudC10eXBlBwAFY2h1bmsNOmNvbnRlbnQtdHlwZQcAEGFwcGxpY2F0aW9uL2pzb24NOm1lc3NhZ2UtdHlwZQcABWV2ZW50eyJieXRlcyI6ImV5SmpiMjUwWlc1MFFteHZZMnRFWld4MFlTSTZleUprWld4MFlTSTZleUowWlhoMElqb2lVMVJTUlVGTkluMHNJbU52Ym5SbGJuUkNiRzlqYTBsdVpHVjRJam94ZlgwPSIsInAiOiJhYmNkZWZnaGlqa2xtbm9wcXJzdHV2d3h5In37xV3mAAAAwAAAAEttOa+qCzpldmVudC10eXBlBwAFY2h1bmsNOmNvbnRlbnQtdHlwZQcAEGFwcGxpY2F0aW9uL2pzb24NOm1lc3NhZ2UtdHlwZQcABWV2ZW50eyJieXRlcyI6ImV5SmpiMjUwWlc1MFFteHZZMnRUZEc5d0lqcDdJbU52Ym5SbGJuUkNiRzlqYTBsdVpHVjRJam94ZlgwPSIsInAiOiJhYmNkZWZnaGlqa2xtbm9wcXJzdHV2In0n/4LKAAAAxAAAAEuYuQlqCzpldmVudC10eXBlBwAFY2h1bmsNOmNvbnRlbnQtdHlwZQcAEGFwcGxpY2F0aW9uL2pzb24NOm1lc3NhZ2UtdHlwZQcABWV2ZW50eyJieXRlcyI6ImV5SnRaWE56WVdkbFUzUnZjQ0k2ZXlKemRHOXdVbVZoYzI5dUlqb2laVzVrWDNSMWNtNGlmWDA9IiwicCI6ImFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6QUJDRCJ9luC75QAAAj8AAABL6pXJLQs6ZXZlbnQtdHlwZQcABWNodW5rDTpjb250ZW50LXR5cGUHABBhcHBsaWNhdGlvbi9qc29uDTptZXNzYWdlLXR5cGUHAAVldmVudHsiYnl0ZXMiOiJleUp0WlhSaFpHRjBZU0k2ZXlKMWMyRm5aU0k2ZXlKcGJuQjFkRlJ2YTJWdWN5STZOaXdpYjNWMGNIVjBWRzlyWlc1eklqb3pMQ0pqWVdOb1pWSmxZV1JKYm5CMWRGUnZhMlZ1UTI5MWJuUWlPakFzSW1OaFkyaGxWM0pwZEdWSmJuQjFkRlJ2YTJWdVEyOTFiblFpT2pCOUxDSnRaWFJ5YVdOeklqcDdmU3dpZEhKaFkyVWlPbnQ5ZlN3aVlXMWhlbTl1TFdKbFpISnZZMnN0YVc1MmIyTmhkR2x2YmsxbGRISnBZM01pT25zaWFXNXdkWFJVYjJ0bGJrTnZkVzUwSWpvMkxDSnZkWFJ3ZFhSVWIydGxia052ZFc1MElqb3pMQ0pwYm5adlkyRjBhVzl1VEdGMFpXNWplU0k2TlRBeUxDSm1hWEp6ZEVKNWRHVk1ZWFJsYm1ONUlqbzBOamtzSW1OaFkyaGxVbVZoWkVsdWNIVjBWRzlyWlc1RGIzVnVkQ0k2TUN3aVkyRmphR1ZYY21sMFpVbHVjSFYwVkc5clpXNURiM1Z1ZENJNk1IMTkiLCJwIjoiYWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXpBQkNERUZHIn1cwjZV"
+        },
+        "headers": {
+          "connection": "keep-alive",
+          "content-type": "application/vnd.amazon.eventstream",
+          "date": "[REDACTED]",
+          "transfer-encoding": "chunked",
+          "x-amzn-bedrock-content-type": "application/json",
+          "x-amzn-requestid": "[REDACTED]"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    }
+  ],
+  "meta": {
+    "createdAt": "2026-06-18T14:56:41.138Z"
+  }
+}

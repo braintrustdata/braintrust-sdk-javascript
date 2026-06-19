@@ -1,0 +1,236 @@
+{
+  "span_tree": [
+    {
+      "name": "bedrock-runtime-instrumentation-root",
+      "type": "task",
+      "children": [
+        {
+          "name": "bedrock-converse-operation",
+          "children": [
+            {
+              "name": "bedrock.converse",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "messages": [
+                  {
+                    "content": [
+                      {
+                        "text": "Reply with exactly OK."
+                      }
+                    ],
+                    "role": "user"
+                  }
+                ]
+              },
+              "output": {
+                "content": [
+                  {
+                    "text": "OK."
+                  }
+                ],
+                "role": "assistant"
+              },
+              "metadata": {
+                "command": "ConverseCommand",
+                "maxTokens": 16,
+                "model": "us.amazon.nova-lite-v1:0",
+                "operation": "converse",
+                "provider": "aws-bedrock",
+                "stopReason": "end_turn",
+                "temperature": 0,
+                "topP": 0.9
+              },
+              "metrics": {
+                "completion_tokens": 3,
+                "latency_ms": 0,
+                "prompt_tokens": 5,
+                "tokens": 8
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "converse",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "bedrock-converse-stream-operation",
+          "children": [
+            {
+              "name": "bedrock.converseStream",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "messages": [
+                  {
+                    "content": [
+                      {
+                        "text": "Reply with exactly STREAM."
+                      }
+                    ],
+                    "role": "user"
+                  }
+                ]
+              },
+              "output": {
+                "content": [
+                  {
+                    "text": "STREAM."
+                  }
+                ],
+                "role": "assistant"
+              },
+              "metadata": {
+                "command": "ConverseStreamCommand",
+                "maxTokens": 16,
+                "model": "us.amazon.nova-lite-v1:0",
+                "operation": "converseStream",
+                "provider": "aws-bedrock",
+                "stopReason": "end_turn",
+                "temperature": 0,
+                "topP": 0.9
+              },
+              "metrics": {
+                "completion_tokens": 4,
+                "latency_ms": 0,
+                "prompt_tokens": 6,
+                "time_to_first_token": 0,
+                "tokens": 10
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "converse-stream",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "bedrock-invoke-model-operation",
+          "children": [
+            {
+              "name": "bedrock.invokeModel",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "inferenceConfig": {
+                  "maxTokens": 16,
+                  "temperature": 0,
+                  "topP": 0.9
+                },
+                "messages": [
+                  {
+                    "content": [
+                      {
+                        "text": "Reply with exactly RAW."
+                      }
+                    ],
+                    "role": "user"
+                  }
+                ],
+                "schemaVersion": "messages-v1"
+              },
+              "output": {
+                "output": {
+                  "message": {
+                    "content": [
+                      {
+                        "text": "RAW"
+                      }
+                    ],
+                    "role": "assistant"
+                  }
+                },
+                "stopReason": "end_turn",
+                "usage": {
+                  "cacheReadInputTokenCount": 0,
+                  "cacheWriteInputTokenCount": 0,
+                  "inputTokens": 5,
+                  "outputTokens": 2,
+                  "totalTokens": 7
+                }
+              },
+              "metadata": {
+                "accept": "application/json",
+                "command": "InvokeModelCommand",
+                "contentType": "application/json",
+                "model": "us.amazon.nova-lite-v1:0",
+                "operation": "invokeModel",
+                "provider": "aws-bedrock"
+              },
+              "metrics": {
+                "completion_tokens": 2,
+                "prompt_tokens": 5,
+                "tokens": 7
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "invoke-model",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "bedrock-invoke-model-stream-operation",
+          "children": [
+            {
+              "name": "bedrock.invokeModelWithResponseStream",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "inferenceConfig": {
+                  "maxTokens": 16,
+                  "temperature": 0,
+                  "topP": 0.9
+                },
+                "messages": [
+                  {
+                    "content": [
+                      {
+                        "text": "Reply with exactly RAWSTREAM."
+                      }
+                    ],
+                    "role": "user"
+                  }
+                ],
+                "schemaVersion": "messages-v1"
+              },
+              "output": {
+                "text": "Sorry, I can't provide any information that might be confidential or proprietary."
+              },
+              "metadata": {
+                "accept": "application/json",
+                "command": "InvokeModelWithResponseStreamCommand",
+                "contentType": "application/json",
+                "metrics": {},
+                "model": "us.amazon.nova-lite-v1:0",
+                "operation": "invokeModelWithResponseStream",
+                "provider": "aws-bedrock",
+                "trace": {},
+                "usage": {
+                  "cacheReadInputTokenCount": 0,
+                  "cacheWriteInputTokenCount": 0,
+                  "inputTokens": 6,
+                  "outputTokens": 16
+                }
+              },
+              "metrics": {
+                "completion_tokens": 16,
+                "prompt_tokens": 6,
+                "time_to_first_token": 0
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "invoke-model-stream",
+            "testRunId": "<run:1>"
+          }
+        }
+      ],
+      "metadata": {
+        "scenario": "bedrock-runtime-instrumentation",
+        "testRunId": "<run:1>"
+      }
+    }
+  ]
+}
