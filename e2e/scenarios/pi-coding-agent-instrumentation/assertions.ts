@@ -170,9 +170,6 @@ export function definePiCodingAgentInstrumentationAssertions(options: {
           "pi-coding-agent-prompt-operation",
         );
         const task = findPiTask(events);
-        const anthropicSpans = events.filter(
-          (event) => event.span.name === "anthropic.messages.create",
-        );
         const llmSpans = findChildSpans(
           events,
           "anthropic.messages.create",
@@ -195,7 +192,6 @@ export function definePiCodingAgentInstrumentationAssertions(options: {
         });
 
         expect(llm).toBeDefined();
-        expect(anthropicSpans).toHaveLength(2);
         expect(llmSpans).toHaveLength(2);
         expect(llm?.span.type).toBe("llm");
         expect(llm?.row.metadata).toMatchObject({

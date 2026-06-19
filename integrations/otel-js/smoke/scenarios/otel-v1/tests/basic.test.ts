@@ -21,7 +21,9 @@ async function main() {
     // Use real OpenTelemetry SDK with BraintrustSpanProcessor
     const sdk = new NodeSDK({
       serviceName: "test-service",
-      spanProcessor: new BraintrustSpanProcessor() as unknown as SpanProcessor,
+      spanProcessor: new BraintrustSpanProcessor({
+        apiKey: "smoke-test-api-key",
+      }) as unknown as SpanProcessor,
     });
 
     await sdk.start();

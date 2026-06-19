@@ -1056,16 +1056,18 @@ export function processAttachmentsInInput(input: unknown): unknown {
 
 /**
  * Convert Anthropic args to the single "input" field Braintrust expects.
- * Combines messages array with system message if present.
+ * Combines messages array with system message if present. The system message
+ * is placed first to match the order the model sees and the chat-message
+ * convention used elsewhere (e.g. the playground).
  */
-function coalesceInput(
+export function coalesceInput(
   messages: AnthropicInputMessage[],
   system: AnthropicCreateParams["system"],
 ): AnthropicInputMessage[] {
   // Make a copy because we're going to mutate it
   const input = (messages || []).slice();
   if (system) {
-    input.push({ role: "system", content: system });
+    input.unshift({ role: "system", content: system });
   }
   return input;
 }

@@ -49,10 +49,6 @@ span_tree:
     │   └── anthropic.messages.create [llm]
     │       input: [
     │         {
-    │           "content": "Bonjour mon ami!",
-    │           "role": "user"
-    │         },
-    │         {
     │           "content": [
     │             {
     │               "text": "translate to english",
@@ -68,6 +64,10 @@ span_tree:
     │             }
     │           ],
     │           "role": "system"
+    │         },
+    │         {
+    │           "content": "Bonjour mon ami!",
+    │           "role": "user"
     │         }
     │       ]
     │       output: {
