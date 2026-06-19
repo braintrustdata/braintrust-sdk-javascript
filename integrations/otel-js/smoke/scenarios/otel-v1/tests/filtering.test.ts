@@ -39,6 +39,7 @@ async function main() {
     const sdk = new NodeSDK({
       serviceName: "filtering-test",
       spanProcessor: new BraintrustSpanProcessor({
+        apiKey: "smoke-test-api-key",
         filterAISpans: true,
       }) as unknown as SpanProcessor,
     });
