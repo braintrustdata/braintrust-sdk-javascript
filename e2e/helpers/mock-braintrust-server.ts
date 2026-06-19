@@ -72,6 +72,19 @@ interface StartMockBraintrustServerOptions {
 }
 
 const DEFAULT_API_KEY = "mock-braintrust-api-key";
+const PROD_FORWARDING_SKIPPED_HEADERS = new Set([
+  "authorization",
+  "connection",
+  "content-length",
+  "host",
+  "keep-alive",
+  "proxy-authenticate",
+  "proxy-authorization",
+  "te",
+  "trailer",
+  "transfer-encoding",
+  "upgrade",
+]);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -451,12 +464,7 @@ export async function startMockBraintrustServer(
 
     const headers = new Headers();
     for (const [key, value] of Object.entries(prodRequest.headers)) {
-      if (
-        key === "authorization" ||
-        key === "connection" ||
-        key === "content-length" ||
-        key === "host"
-      ) {
+      if (PROD_FORWARDING_SKIPPED_HEADERS.has(key)) {
         continue;
       }
 
