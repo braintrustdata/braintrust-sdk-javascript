@@ -144,23 +144,11 @@ type AgentAssertionScorerCallback<
   Expected,
   Metadata extends BaseMetadata = DefaultMetadataType,
 > = (
-  args: AgentAssertionScorerCallbackArgs<Input, Output, Expected, Metadata>,
+  args: Omit<EvalScorerArgs<Input, Output, Expected, Metadata>, "trace"> & {
+    /** Helpers for building assertions from Eval inputs, outputs, and traces. */
+    assert: AgentAssertionHelpers;
+  },
 ) => MaybePromise<AgentAssertion[]>;
-
-type AgentAssertionScorerCallbackArgs<
-  Input,
-  Output,
-  Expected,
-  Metadata extends BaseMetadata = DefaultMetadataType,
-> = {
-  input: Input;
-  output: Output;
-  /** Helpers for building assertions from Eval inputs, outputs, and traces. */
-  assert: AgentAssertionHelpers;
-} & (Expected extends void
-  ? { expected?: undefined }
-  : { expected: Expected }) &
-  (Metadata extends void ? { metadata?: undefined } : { metadata: Metadata });
 
 interface AgentAssertionResources {
   spans?: SpanData[];
@@ -202,7 +190,7 @@ type SchemaLike =
  *
  * await Eval("agent-eval", {
  *   data: () => [{ input: "What is the capital of Estonia?" }],
- *   task: () => ({ answer: `Tallinn is the capital of Estonia. ${input}` }),
+ *   task: async () => ({ answer: "Tallinn is the capital of Estonia." }),
  *   scores: [
  *     agentAssertionScorer(({ output, assert }) => [
  *       assert.contains(output.answer, /Tallinn/i, "mentions Tallinn"),
@@ -226,14 +214,11 @@ export function agentAssertionScorer<
   } = {},
 ): EvalScorer<Input, Output, Expected, Metadata> {
   return async (args) => {
-    const callbackArgs = {
-      input: args.input,
-      output: args.output,
-      ...("expected" in args ? { expected: args.expected } : {}),
-      ...("metadata" in args ? { metadata: args.metadata } : {}),
+    const { trace: _trace, ...callbackArgs } = args;
+    const assertions = await callback({
+      ...callbackArgs,
       assert: agentAssertionHelpers,
-    } as AgentAssertionScorerCallbackArgs<Input, Output, Expected, Metadata>;
-    const assertions = await callback(callbackArgs);
+    });
     const resources: AgentAssertionResources = {};
     if (assertions.some((assertion) => assertion.requiresTrace)) {
       resources.spans = await args.trace?.getSpans({ spanType: ["tool"] });
