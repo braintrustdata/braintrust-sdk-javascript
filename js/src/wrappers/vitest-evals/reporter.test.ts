@@ -120,7 +120,16 @@ describe("Braintrust vitest-evals reporter", () => {
                       name: "classify refund",
                       startedAt: "2026-01-01T00:00:00.000Z",
                       finishedAt: "2026-01-01T00:00:00.050Z",
-                      attributes: { "gen_ai.request.model": "gpt-test" },
+                      attributes: {
+                        "custom.attribute": "preserved",
+                        "gen_ai.request.model": "gpt-test",
+                        external_span_id: "user-external-span-id",
+                        name: "user span name",
+                        status: "user-status",
+                        trace_id: "user-trace-id",
+                        type: "custom",
+                        vitest_evals_kind: "custom",
+                      },
                     },
                     {
                       id: "tool-1",
@@ -185,6 +194,9 @@ describe("Braintrust vitest-evals reporter", () => {
     );
 
     expect(modelSpan?.span_attributes).toMatchObject({
+      "custom.attribute": "preserved",
+      "gen_ai.request.model": "gpt-test",
+      name: "classify refund",
       type: "llm",
       vitest_evals_kind: "model",
       trace_id: "trace-1",
@@ -226,7 +238,12 @@ describe("Braintrust vitest-evals reporter", () => {
           },
           name: "failed eval",
           result: {
-            errors: [{ message: "expected score to meet threshold" }],
+            errors: [
+              {
+                message: "expected score to meet threshold",
+                stack: "AssertionError: expected score to meet threshold",
+              },
+            ],
             state: "failed",
           },
         }),
@@ -248,6 +265,12 @@ describe("Braintrust vitest-evals reporter", () => {
       status: "failed",
       thresholdFailed: true,
     });
+    const errorRow = rows.find((row: any) => typeof row.error === "string");
+    expect(errorRow?.error).toContain("expected score to meet threshold");
+    expect(errorRow?.error).toContain(
+      "AssertionError: expected score to meet threshold",
+    );
+    expect(errorRow?.error).not.toContain("[object Object]");
   });
 
   test("logs fallback tool spans when no normalized traces are present", async () => {

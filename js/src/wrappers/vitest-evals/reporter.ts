@@ -137,6 +137,16 @@ type RunnableEvalTest = {
   test: TestLike;
 };
 
+const RESERVED_NORMALIZED_SPAN_ATTRIBUTE_KEYS = new Set([
+  "name",
+  "type",
+  "vitest_evals_kind",
+  "trace_id",
+  "external_span_id",
+  "external_parent_id",
+  "status",
+]);
+
 export default class BraintrustVitestEvalsReporter implements Reporter {
   private experiment?: Experiment;
 
@@ -249,7 +259,7 @@ function logEvalTest(
 
   if (result.state === "failed") {
     for (const error of result.errors ?? []) {
-      logError(rootSpan, error);
+      logReporterError(rootSpan, error);
     }
   }
 
@@ -399,13 +409,13 @@ function logNormalizedSpan(
   const span = parent.startSpan({
     name: normalized.name ?? normalized.kind ?? "harness span",
     spanAttributes: {
+      ...filteredNormalizedSpanAttributes(normalized.attributes),
       type: spanTypeForNormalizedKind(normalized.kind),
       vitest_evals_kind: normalized.kind,
       trace_id: normalized.traceId ?? trace.id,
       external_span_id: normalized.id,
       external_parent_id: normalized.parentId,
       status: normalized.status,
-      ...normalized.attributes,
     },
     startTime: epochSeconds(normalized.startedAt),
   });
@@ -424,7 +434,7 @@ function logNormalizedSpan(
     });
   }
   if (normalized.error !== undefined) {
-    logError(span, normalized.error);
+    logReporterError(span, normalized.error);
   }
 
   span.end({ endTime: epochSeconds(normalized.finishedAt) });
@@ -454,7 +464,7 @@ function logToolCallSpans(rootSpan: Span, calls: ToolCallRecord[]): void {
     });
 
     if (call.error !== undefined) {
-      logError(span, call.error);
+      logReporterError(span, call.error);
     }
     span.end({ endTime: epochSeconds(call.finishedAt) });
   }
@@ -516,6 +526,18 @@ function readHarnessMeta(input: unknown): HarnessMeta | undefined {
 function readToolCall(input: unknown): ToolCallRecord | undefined {
   if (!isObject(input)) return undefined;
   return input;
+}
+
+function filteredNormalizedSpanAttributes(
+  attributes: Record<string, unknown> | undefined,
+): Record<string, unknown> {
+  if (!attributes) return {};
+
+  return Object.fromEntries(
+    Object.entries(attributes).filter(
+      ([key]) => !RESERVED_NORMALIZED_SPAN_ATTRIBUTE_KEYS.has(key),
+    ),
+  );
 }
 
 function readFiniteOrNull(value: unknown): number | null | undefined {
@@ -581,6 +603,28 @@ function epochSeconds(value: string | undefined): number | undefined {
   if (value === undefined) return undefined;
   const ms = Date.parse(value);
   return Number.isFinite(ms) ? ms / 1000 : undefined;
+}
+
+function logReporterError(span: Span, error: unknown): void {
+  if (error instanceof Error) {
+    logError(span, error);
+    return;
+  }
+
+  if (isObject(error)) {
+    const message =
+      typeof error.message === "string" ? error.message : undefined;
+    const stack = typeof error.stack === "string" ? error.stack : undefined;
+
+    if (message !== undefined || stack !== undefined) {
+      span.log({
+        error: stack ? `${message ?? "<error>"}\n\n${stack}` : message,
+      });
+      return;
+    }
+  }
+
+  logError(span, error);
 }
 
 function formatErrorMessage(error: unknown): string {
