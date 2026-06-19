@@ -113,3 +113,69 @@ for (const scenario of scenarios) {
     },
   );
 }
+
+test(
+  "test-framework-evals-vitest captures vitest-evals reporter spans",
+  {
+    timeout: TIMEOUT_MS,
+  },
+  async () => {
+    await withScenarioHarness(async ({ events, runScenarioDir, testRunId }) => {
+      await runScenarioDir({
+        entry: "scenario.vitest-evals-reporter.ts",
+        scenarioDir,
+        timeoutMs: TIMEOUT_MS,
+      });
+
+      const capturedEvents = events();
+      const evalRoot = findLatestSpan(
+        capturedEvents,
+        "vitest-evals braintrust reporter > approves refundable invoice",
+      );
+      const modelSpan = findLatestSpan(capturedEvents, "classify refund");
+      const toolSpan = findLatestSpan(capturedEvents, "lookupInvoice");
+
+      expect(evalRoot).toBeDefined();
+      expect(evalRoot?.span.type).toBe("eval");
+      expect(evalRoot?.input).toMatchObject({
+        input: "Refund invoice inv_123",
+        test: "vitest-evals braintrust reporter > approves refundable invoice",
+      });
+      expect(evalRoot?.output).toMatchObject({
+        status: "approved",
+      });
+      expect(evalRoot?.scores).toMatchObject({
+        StatusJudge: 1,
+        avg_score: 1,
+        pass: 1,
+      });
+      expect(evalRoot?.metrics).toMatchObject({
+        input_tokens: 11,
+        output_tokens: 13,
+        total_tokens: 24,
+        tool_calls: 1,
+      });
+      expect(evalRoot?.row.metadata).toMatchObject({
+        artifacts: {
+          case: "vitest-evals-reporter",
+          scenario: "test-framework-evals-vitest",
+          testRunId,
+        },
+        harnessName: "braintrust-refund-harness",
+        status: "passed",
+      });
+
+      expect(modelSpan?.span.type).toBe("llm");
+      expect(toolSpan?.span.type).toBe("tool");
+      expect(toolSpan?.span.parentIds).toEqual([modelSpan?.span.id ?? ""]);
+
+      await matchSpanTreeSnapshot(
+        capturedEvents,
+        resolveFileSnapshotPath(
+          import.meta.url,
+          "vitest-evals-reporter.span-tree.json",
+        ),
+      );
+    });
+  },
+);
