@@ -152,8 +152,7 @@ export type StrandsAgentStreamEvent =
   | StrandsAfterToolCallEvent
   | StrandsToolStreamUpdateEvent
   | StrandsToolResultEvent
-  | StrandsAgentResultEvent
-  | { type?: string; [key: string]: unknown };
+  | StrandsAgentResultEvent;
 
 export interface StrandsBeforeModelCallEvent {
   type: "beforeModelCallEvent";
@@ -252,8 +251,7 @@ export type StrandsMultiAgentStreamEvent =
   | StrandsAfterNodeCallEvent
   | StrandsNodeResultEvent
   | StrandsMultiAgentHandoffEvent
-  | StrandsMultiAgentResultEvent
-  | { type?: string; [key: string]: unknown };
+  | StrandsMultiAgentResultEvent;
 
 export interface StrandsBeforeNodeCallEvent {
   type: "beforeNodeCallEvent";

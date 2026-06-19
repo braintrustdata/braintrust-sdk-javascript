@@ -23,6 +23,7 @@ import type {
   StrandsBeforeNodeCallEvent,
   StrandsBeforeToolCallEvent,
   StrandsContentBlock,
+  StrandsMessage,
   StrandsModel,
   StrandsModelMetrics,
   StrandsModelStreamUpdateEvent,
