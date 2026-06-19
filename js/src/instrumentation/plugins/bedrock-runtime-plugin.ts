@@ -510,7 +510,12 @@ function mergeContentBlockDelta(
   }
 
   for (const [key, value] of Object.entries(delta)) {
-    if (key !== "text" && key !== "reasoningContent" && key !== "toolUse") {
+    if (
+      key !== "text" &&
+      key !== "reasoningContent" &&
+      key !== "toolUse" &&
+      isSafeBedrockObjectKey(key)
+    ) {
       next[key] = sanitizeBedrockValue(value);
     }
   }
@@ -590,9 +595,16 @@ function sanitizeBedrockValue(value: unknown, depth = 0): unknown {
 
   const output: Record<string, unknown> = {};
   for (const [key, nested] of Object.entries(value)) {
+    if (!isSafeBedrockObjectKey(key)) {
+      continue;
+    }
     output[key] = sanitizeBedrockValue(nested, depth + 1);
   }
   return output;
+}
+
+function isSafeBedrockObjectKey(key: string): boolean {
+  return key !== "__proto__" && key !== "constructor" && key !== "prototype";
 }
 
 function extractTextFromJsonLike(value: unknown): string {

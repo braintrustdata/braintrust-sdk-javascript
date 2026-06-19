@@ -206,4 +206,88 @@ describe("aggregateBedrockConverseStreamChunks", () => {
       },
     });
   });
+
+  it("drops prototype pollution keys from sanitized Bedrock objects", () => {
+    const delta = JSON.parse(`{
+      "__proto__": { "pollutedFromDelta": true },
+      "constructor": { "prototype": { "pollutedFromConstructor": true } },
+      "extra": {
+        "__proto__": { "pollutedFromNestedDelta": true },
+        "keep": true
+      },
+      "prototype": { "pollutedFromPrototype": true },
+      "text": "OK"
+    }`);
+    const maliciousAdditionalModelResponseFields = JSON.parse(`{
+      "__proto__": { "pollutedFromMetadata": true },
+      "constructor": { "prototype": { "pollutedFromConstructor": true } },
+      "prototype": { "pollutedFromPrototype": true },
+      "safe": {
+        "__proto__": { "pollutedFromNestedMetadata": true },
+        "keep": true
+      }
+    }`);
+
+    expect(Object.getOwnPropertyDescriptor(delta, "__proto__")).toBeDefined();
+    expect(
+      Object.getOwnPropertyDescriptor(
+        maliciousAdditionalModelResponseFields,
+        "__proto__",
+      ),
+    ).toBeDefined();
+
+    const result = aggregateBedrockConverseStreamChunks([
+      {
+        contentBlockDelta: {
+          contentBlockIndex: 0,
+          delta,
+        },
+      },
+      {
+        messageStop: {
+          additionalModelResponseFields: maliciousAdditionalModelResponseFields,
+        },
+      },
+    ]);
+
+    const content = (
+      result.output as { content: Array<Record<string, unknown>> }
+    ).content[0];
+    const extra = content.extra as Record<string, unknown>;
+    const metadata = result.metadata as Record<string, unknown>;
+    const sanitizedAdditionalModelResponseFields =
+      metadata.additionalModelResponseFields as Record<string, unknown>;
+    const safe = sanitizedAdditionalModelResponseFields.safe as Record<
+      string,
+      unknown
+    >;
+
+    expect(content.text).toBe("OK");
+    expect(extra.keep).toBe(true);
+    expect(safe.keep).toBe(true);
+
+    for (const value of [
+      content,
+      extra,
+      sanitizedAdditionalModelResponseFields,
+      safe,
+      {},
+    ]) {
+      expect("pollutedFromDelta" in value).toBe(false);
+      expect("pollutedFromMetadata" in value).toBe(false);
+      expect("pollutedFromNestedDelta" in value).toBe(false);
+      expect("pollutedFromNestedMetadata" in value).toBe(false);
+      expect("pollutedFromConstructor" in value).toBe(false);
+      expect("pollutedFromPrototype" in value).toBe(false);
+      expect(Object.getOwnPropertyDescriptor(value, "__proto__")).toBe(
+        undefined,
+      );
+      expect(Object.getOwnPropertyDescriptor(value, "constructor")).toBe(
+        undefined,
+      );
+      expect(Object.getOwnPropertyDescriptor(value, "prototype")).toBe(
+        undefined,
+      );
+    }
+  });
 });
