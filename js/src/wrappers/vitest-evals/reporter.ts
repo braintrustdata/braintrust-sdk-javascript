@@ -11,7 +11,7 @@ import { summarizeAndFlush } from "../shared/flush";
 
 configureNode();
 
-export interface BraintrustVitestEvalsReporterOptions {
+interface BraintrustVitestEvalsReporterOptions {
   projectName?: string;
   projectId?: string;
   experimentName?: string;
