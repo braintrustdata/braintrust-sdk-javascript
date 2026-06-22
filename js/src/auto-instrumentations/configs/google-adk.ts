@@ -1,4 +1,4 @@
-import type { InstrumentationConfig } from "@apm-js-collab/code-transformer";
+import type { InstrumentationConfig } from "../orchestrion-js";
 import { googleADKChannels } from "../../instrumentation/plugins/google-adk-channels";
 
 const googleADKVersionRange = ">=0.1.0";

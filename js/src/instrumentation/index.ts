@@ -8,8 +8,8 @@
  * lives in the core SDK, while individual instrumentation implementations
  * can be separate packages.
  *
- * For orchestrion-js configuration types (InstrumentationConfig, ModuleMetadata, FunctionQuery),
- * import directly from @apm-js-collab/code-transformer.
+ * For auto-instrumentation config types, import InstrumentationConfig from the
+ * relevant Braintrust bundler subpath such as `braintrust/vite`.
  *
  * @module instrumentation
  */

@@ -1,0 +1,8 @@
+Component,Origin,License,Copyright
+@types/estree,https://github.com/DefinitelyTyped/DefinitelyTyped,MIT,Copyright (c) Microsoft Corporation.
+astring,https://github.com/davidbonnet/astring,MIT,"Copyright (c) 2015, David Bonnet"
+esquery,https://github.com/estools/esquery,BSD-3-Clause,"Copyright (c) 2013, Joel Feenstra"
+estraverse,https://github.com/estools/estraverse,BSD-2-Clause,Copyright (c) 2012-2016 Yusuke Suzuki and other contributors
+meriyah,https://github.com/meriyah/meriyah,ISC,"Copyright (c) 2019 and later, KFlash and others."
+semifies,https://github.com/holepunchto/semifies,Apache-2.0,Copyright Holepunch Inc
+source-map,https://github.com/mozilla/source-map,BSD-3-Clause,Copyright (c) 2009-2011, Mozilla Foundation and contributors

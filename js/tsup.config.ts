@@ -106,7 +106,7 @@ export default defineConfig([
     format: ["cjs", "esm"],
     outDir: "dist/auto-instrumentations",
     dts: true,
-    external: ["@apm-js-collab/code-transformer", "zod"],
+    external: ["zod"],
     outExtension({ format }) {
       if (format === "esm") {
         return { js: ".mjs" };
@@ -123,7 +123,7 @@ export default defineConfig([
     format: ["cjs"],
     outDir: "dist/auto-instrumentations",
     dts: true,
-    external: ["@apm-js-collab/code-transformer", "zod"],
+    external: ["zod"],
     outExtension() {
       return { js: ".cjs" };
     },
@@ -138,7 +138,7 @@ export default defineConfig([
     outDir: "dist/auto-instrumentations",
     dts: false,
     platform: "node",
-    external: ["@apm-js-collab/code-transformer", "@anthropic-ai/sdk", "zod"],
+    external: ["@anthropic-ai/sdk", "zod"],
     outExtension({ format }) {
       return { js: ".mjs" };
     },

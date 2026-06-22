@@ -20,7 +20,7 @@ This guide explains how to write plugins that consume diagnostics channel events
 
 ### What is Orchestrion?
 
-[Orchestrion](https://github.com/apm-js-collab/orchestrion-js) is a code transformation library that automatically instruments JavaScript/TypeScript code at bundle-time or load-time. It injects calls to Node.js's [diagnostics_channel API](https://nodejs.org/api/diagnostics_channel.html) to enable observability without manual code changes that may be enabled or disabled at any time.
+[Orchestrion](https://github.com/nodejs/orchestrion-js) is a code transformation library that automatically instruments JavaScript/TypeScript code at bundle-time or load-time. It injects calls to Node.js's [diagnostics_channel API](https://nodejs.org/api/diagnostics_channel.html) to enable observability without manual code changes that may be enabled or disabled at any time.
 
 **Key concepts:**
 
@@ -1401,7 +1401,7 @@ asyncEnd: (event) => {
 
 ## Additional Resources
 
-- [Orchestrion Documentation](https://github.com/apm-js-collab/orchestrion-js)
+- [Orchestrion Documentation](https://github.com/nodejs/orchestrion-js)
 - [Node.js Diagnostics Channel API](https://nodejs.org/api/diagnostics_channel.html)
 - [BraintrustPlugin Implementation](./braintrust-plugin.ts)
 - [Stream Patcher Source](./core/stream-patcher.ts)

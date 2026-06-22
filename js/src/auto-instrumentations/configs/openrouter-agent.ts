@@ -1,4 +1,4 @@
-import type { InstrumentationConfig } from "@apm-js-collab/code-transformer";
+import type { InstrumentationConfig } from "../orchestrion-js";
 import { openRouterAgentChannels } from "../../instrumentation/plugins/openrouter-agent-channels";
 
 export const openRouterAgentConfigs: InstrumentationConfig[] = [

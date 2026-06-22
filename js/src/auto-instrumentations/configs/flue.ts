@@ -1,4 +1,4 @@
-import type { InstrumentationConfig } from "@apm-js-collab/code-transformer";
+import type { InstrumentationConfig } from "../orchestrion-js";
 import { flueChannels } from "../../instrumentation/plugins/flue-channels";
 
 const flueVersionRange = ">=0.8.0";

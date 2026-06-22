@@ -48,7 +48,5 @@ export { gitHubCopilotConfigs } from "./configs/github-copilot";
 export { langchainConfigs } from "./configs/langchain";
 export { piCodingAgentConfigs } from "./configs/pi-coding-agent";
 
-// Re-export orchestrion configuration types
-// Note: ModuleMetadata and FunctionQuery are properties of InstrumentationConfig,
-// not separate exports from @apm-js-collab/code-transformer
-export type { InstrumentationConfig } from "@apm-js-collab/code-transformer";
+// Re-export orchestrion configuration types from the internal fork.
+export type { InstrumentationConfig } from "./orchestrion-js";
