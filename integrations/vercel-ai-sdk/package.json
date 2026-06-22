@@ -31,8 +31,8 @@
     "vitest": "4.1.5"
   },
   "dependencies": {
-    "@ai-sdk/provider": "^0.0.11",
-    "ai": "^5.0.76",
+    "@ai-sdk/provider": "^0.0.26",
+    "ai": "^5.0.204",
     "braintrust": "workspace:*"
   },
   "peerDependencies": {
