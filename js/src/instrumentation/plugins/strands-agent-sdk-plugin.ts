@@ -1,4 +1,4 @@
-import { BasePlugin } from "../core";
+import { BasePlugin, toLoggedError } from "../core";
 import type { ChannelMessage } from "../core/channel-definitions";
 import { isAsyncIterable, patchStreamIfNeeded } from "../core/stream-patcher";
 import type { IsoChannelHandlers } from "../../isomorph";
@@ -23,7 +23,6 @@ import type {
   StrandsBeforeNodeCallEvent,
   StrandsBeforeToolCallEvent,
   StrandsContentBlock,
-  StrandsMessage,
   StrandsModel,
   StrandsModelMetrics,
   StrandsModelStreamUpdateEvent,
@@ -254,7 +253,7 @@ function startAgentStream(
     ? withCurrent(parentSpan, () =>
         startSpan({
           event: {
-            input: normalizeSerializable(event.arguments[0]),
+            input: event.arguments[0],
             metadata,
           },
           name: formatAgentSpanName(agent),
@@ -263,7 +262,7 @@ function startAgentStream(
       )
     : startSpan({
         event: {
-          input: normalizeSerializable(event.arguments[0]),
+          input: event.arguments[0],
           metadata,
         },
         name: formatAgentSpanName(agent),
@@ -294,7 +293,7 @@ function startMultiAgentStream(
   };
   const span = startSpan({
     event: {
-      input: normalizeSerializable(event.arguments[0]),
+      input: event.arguments[0],
       metadata,
     },
     name: operation === "Graph.stream" ? "Strands Graph" : "Strands Swarm",
@@ -421,7 +420,9 @@ function startModelSpan(
   const span = withCurrent(state.span, () =>
     startSpan({
       event: {
-        input: normalizeMessages(event.agent?.messages),
+        input: Array.isArray(event.agent?.messages)
+          ? event.agent.messages
+          : undefined,
         metadata,
       },
       name: formatModelSpanName(model),
@@ -479,10 +480,10 @@ function finalizeModelSpan(
   };
 
   safeLog(modelState.span, {
-    ...(event?.error ? { error: stringifyUnknown(event.error) } : {}),
+    ...(event?.error ? { error: toLoggedError(event.error) } : {}),
     metadata,
     metrics: cleanMetrics(metrics),
-    output: normalizeSerializable(event?.stopData?.message),
+    output: event?.stopData?.message,
   });
   modelState.span.end();
 }
@@ -502,7 +503,7 @@ function startToolSpan(
   const span = withCurrent(state.span, () =>
     startSpan({
       event: {
-        input: normalizeSerializable(toolUse?.input),
+        input: toolUse?.input,
         metadata: {
           "gen_ai.tool.call.id": toolUse?.toolUseId,
           "gen_ai.tool.name": name,
@@ -571,9 +572,9 @@ function finalizeToolSpanState(
   if (!toolState) {
     return;
   }
-  const result = normalizeSerializable(data.result);
+  const result = data.result;
   safeLog(toolState.span, {
-    ...(data.error ? { error: stringifyUnknown(data.error) } : {}),
+    ...(data.error ? { error: toLoggedError(data.error) } : {}),
     metadata: {
       ...((data.toolUse?.toolUseId ?? toolState.toolUse?.toolUseId)
         ? {
@@ -643,7 +644,7 @@ function logNodeResult(
 
   safeLog(nodeState.span, {
     ...(event.result?.error
-      ? { error: stringifyUnknown(event.result.error) }
+      ? { error: toLoggedError(event.result.error) }
       : {}),
     metadata: {
       ...(event.nodeType ? { "strands.node.type": event.nodeType } : {}),
@@ -674,7 +675,7 @@ function finalizeNodeSpan(
   }
   state.activeNodes.delete(nodeId);
   if (event.error) {
-    safeLog(nodeState.span, { error: stringifyUnknown(event.error) });
+    safeLog(nodeState.span, { error: toLoggedError(event.error) });
   }
   nodeState.span.end();
   if (nodeState.child) {
@@ -709,9 +710,9 @@ function finalizeAgentStream(
   state.activeTools.clear();
 
   safeLog(state.span, {
-    ...(error ? { error: stringifyUnknown(error) } : {}),
+    ...(error ? { error: toLoggedError(error) } : {}),
     metrics: buildDurationMetrics(state.startTime),
-    ...(output !== undefined ? { output: normalizeSerializable(output) } : {}),
+    ...(output !== undefined ? { output } : {}),
   });
   state.span.end();
 }
@@ -736,9 +737,9 @@ function finalizeMultiAgentStream(
   state.activeNodes.clear();
 
   safeLog(state.span, {
-    ...(error ? { error: stringifyUnknown(error) } : {}),
+    ...(error ? { error: toLoggedError(error) } : {}),
     metrics: buildDurationMetrics(state.startTime),
-    ...(output !== undefined ? { output: normalizeSerializable(output) } : {}),
+    ...(output !== undefined ? { output } : {}),
   });
   state.span.end();
 }
@@ -873,38 +874,17 @@ function formatModelSpanName(model: StrandsModel | undefined): string {
   return modelName ? `Strands model: ${modelName}` : "Strands model";
 }
 
-function normalizeMessages(messages: StrandsMessage[] | undefined): unknown {
-  return Array.isArray(messages)
-    ? messages.map((message) => normalizeSerializable(message))
-    : undefined;
-}
-
-function normalizeSerializable(value: unknown): unknown {
-  if (!isObject(value)) {
-    return value;
-  }
-  const toJSON = value.toJSON;
-  if (typeof toJSON === "function") {
-    try {
-      return toJSON.call(value);
-    } catch {
-      return value;
-    }
-  }
-  return value;
-}
-
 function extractAgentResultOutput(result: StrandsAgentResult | undefined) {
   if (!result) {
     return undefined;
   }
   if (result.structuredOutput !== undefined) {
-    return normalizeSerializable(result.structuredOutput);
+    return result.structuredOutput;
   }
   if (result.lastMessage) {
-    return normalizeSerializable(result.lastMessage);
+    return result.lastMessage;
   }
-  return normalizeSerializable(result);
+  return result;
 }
 
 function extractMultiAgentResultOutput(
@@ -916,7 +896,7 @@ function extractMultiAgentResultOutput(
   if (Array.isArray(result.content)) {
     return normalizeContentBlocks(result.content);
   }
-  return normalizeSerializable(result);
+  return result;
 }
 
 function extractNodeResultOutput(result: StrandsNodeResultEvent["result"]) {
@@ -924,12 +904,12 @@ function extractNodeResultOutput(result: StrandsNodeResultEvent["result"]) {
     return undefined;
   }
   if (result.structuredOutput !== undefined) {
-    return normalizeSerializable(result.structuredOutput);
+    return result.structuredOutput;
   }
   if (Array.isArray(result.content)) {
     return normalizeContentBlocks(result.content);
   }
-  return normalizeSerializable(result);
+  return result;
 }
 
 function normalizeContentBlocks(blocks: StrandsContentBlock[]): unknown {
@@ -937,9 +917,7 @@ function normalizeContentBlocks(blocks: StrandsContentBlock[]): unknown {
     .map((block) => (typeof block.text === "string" ? block.text : undefined))
     .filter((part): part is string => Boolean(part))
     .join("");
-  return text.length > 0
-    ? text
-    : blocks.map((block) => normalizeSerializable(block));
+  return text.length > 0 ? text : blocks;
 }
 
 function parseUsage(usage: StrandsUsage | undefined): Record<string, number> {
@@ -1073,20 +1051,6 @@ function getConstructorName(value: unknown): string {
     typeof constructor.name === "string"
     ? constructor.name
     : "";
-}
-
-function stringifyUnknown(value: unknown): string {
-  if (value instanceof Error) {
-    return value.message;
-  }
-  if (typeof value === "string") {
-    return value;
-  }
-  try {
-    return JSON.stringify(value);
-  } catch {
-    return String(value);
-  }
 }
 
 function safeLog(span: Span, event: Parameters<Span["log"]>[0]): void {

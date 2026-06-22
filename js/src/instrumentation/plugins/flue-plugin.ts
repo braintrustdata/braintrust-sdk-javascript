@@ -1,4 +1,4 @@
-import { BasePlugin } from "../core";
+import { BasePlugin, toLoggedError } from "../core";
 import type { ChannelMessage } from "../core/channel-definitions";
 import type { IsoChannelHandlers } from "../../isomorph";
 import {
@@ -380,7 +380,7 @@ class FlueObserveBridge {
 
     if (state) {
       safeLog(state.span, {
-        ...(event.isError ? { error: errorToString(event.error) } : {}),
+        ...(event.isError ? { error: toLoggedError(event.error) } : {}),
         metadata: {
           ...state.metadata,
           ...extractEventMetadata(event),
@@ -442,7 +442,7 @@ class FlueObserveBridge {
 
     this.finishPendingChildrenForOperation(event, output);
     safeLog(state.span, {
-      ...(event.isError ? { error: errorToString(event.error) } : {}),
+      ...(event.isError ? { error: toLoggedError(event.error) } : {}),
       metadata,
       metrics: durationMetrics(event.durationMs),
       output,
@@ -510,7 +510,7 @@ class FlueObserveBridge {
     };
 
     safeLog(state.span, {
-      ...(event.isError ? { error: errorToString(event.error) } : {}),
+      ...(event.isError ? { error: toLoggedError(event.error) } : {}),
       metadata,
       metrics: {
         ...durationMetrics(event.durationMs),
@@ -566,7 +566,7 @@ class FlueObserveBridge {
     };
 
     safeLog(state.span, {
-      ...(event.isError ? { error: errorToString(event.result) } : {}),
+      ...(event.isError ? { error: toLoggedError(event.result) } : {}),
       metadata,
       metrics: durationMetrics(event.durationMs),
       output: event.result,
@@ -609,7 +609,7 @@ class FlueObserveBridge {
     }
 
     safeLog(state.span, {
-      ...(event.isError ? { error: errorToString(event.result) } : {}),
+      ...(event.isError ? { error: toLoggedError(event.result) } : {}),
       metadata: {
         ...state.metadata,
         ...extractEventMetadata(event),
@@ -1121,20 +1121,6 @@ function safeEnd(span: Span, endTime: number | undefined): void {
     span.end(endTime === undefined ? undefined : { endTime });
   } catch (error) {
     logInstrumentationError("Flue span end", error);
-  }
-}
-
-function errorToString(error: unknown): string {
-  if (error instanceof Error) {
-    return error.message;
-  }
-  if (typeof error === "string") {
-    return error;
-  }
-  try {
-    return JSON.stringify(error);
-  } catch {
-    return String(error);
   }
 }
 

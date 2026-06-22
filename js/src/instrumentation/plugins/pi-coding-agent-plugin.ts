@@ -1,4 +1,4 @@
-import { BasePlugin } from "../core";
+import { BasePlugin, toLoggedError } from "../core";
 import type { ChannelMessage } from "../core/channel-definitions";
 import iso, {
   type IsoAsyncLocalStorage,
@@ -692,7 +692,7 @@ function finishPiToolSpan(
   };
   try {
     safeLog(toolState.span, {
-      ...(event.isError ? { error: stringifyUnknown(event.result) } : {}),
+      ...(event.isError ? { error: toLoggedError(event.result) } : {}),
       metadata,
       output: event.result,
     });
@@ -731,7 +731,7 @@ async function finalizePiPromptRun(
   };
   try {
     safeLog(state.span, {
-      ...(error ? { error: stringifyUnknown(error) } : {}),
+      ...(error ? { error: toLoggedError(error) } : {}),
       metadata,
       metrics: {
         ...cleanMetrics(state.metrics),
@@ -808,7 +808,7 @@ function finishPiLlmSpan(
   try {
     safeLog(llmState.span, {
       ...(error || messageError
-        ? { error: stringifyUnknown(error ?? messageError) }
+        ? { error: toLoggedError(error ?? messageError) }
         : {}),
       metadata: {
         ...llmState.metadata,
@@ -826,7 +826,7 @@ function finishOpenToolSpans(state: PiPromptState, error?: unknown): void {
   for (const [, toolState] of state.activeToolSpans) {
     try {
       safeLog(toolState.span, {
-        error: error ? stringifyUnknown(error) : "Pi tool did not complete",
+        error: error ? toLoggedError(error) : "Pi tool did not complete",
       });
       toolState.span.end();
     } finally {
