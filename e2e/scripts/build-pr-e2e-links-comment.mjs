@@ -442,6 +442,11 @@ function buildCommentBody(options) {
     const configuredVariantKeys = new Set(
       configuredVariants.map((variant) => variant.variantKey),
     );
+    const evalOnlyVariantKeys = new Set(
+      (scenario.evals ?? [])
+        .map((evalConfig) => evalConfig.variantKey)
+        .filter((variantKey) => typeof variantKey === "string"),
+    );
 
     for (const variant of configuredVariants) {
       const observedRunIds = [
@@ -455,7 +460,11 @@ function buildCommentBody(options) {
     }
 
     const extraVariantKeys = [...observedVariants.keys()]
-      .filter((variantKey) => !configuredVariantKeys.has(variantKey))
+      .filter(
+        (variantKey) =>
+          !configuredVariantKeys.has(variantKey) &&
+          !evalOnlyVariantKeys.has(variantKey),
+      )
       .sort((left, right) =>
         left.localeCompare(right, undefined, { numeric: true }),
       );

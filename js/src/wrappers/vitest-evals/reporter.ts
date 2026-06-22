@@ -406,6 +406,17 @@ function logNormalizedSpan(
   normalized: NormalizedSpan,
   trace: NormalizedTrace,
 ): Span {
+  const durationMs =
+    typeof normalized.durationMs === "number" &&
+    Number.isFinite(normalized.durationMs)
+      ? normalized.durationMs
+      : undefined;
+  const startTime = epochSeconds(normalized.startedAt);
+  const endTime =
+    epochSeconds(normalized.finishedAt) ??
+    (startTime !== undefined && durationMs !== undefined
+      ? startTime + durationMs / 1000
+      : undefined);
   const span = parent.startSpan({
     name: normalized.name ?? normalized.kind ?? "harness span",
     spanAttributes: {
@@ -417,7 +428,10 @@ function logNormalizedSpan(
       external_parent_id: normalized.parentId,
       status: normalized.status,
     },
-    startTime: epochSeconds(normalized.startedAt),
+    startTime,
+    ...(durationMs !== undefined
+      ? { event: { metrics: { duration_ms: durationMs } } }
+      : {}),
   });
 
   const metadata: Record<string, unknown> = {
@@ -437,7 +451,7 @@ function logNormalizedSpan(
     logReporterError(span, normalized.error);
   }
 
-  span.end({ endTime: epochSeconds(normalized.finishedAt) });
+  span.end({ endTime });
   return span;
 }
 
@@ -445,28 +459,36 @@ function logToolCallSpans(rootSpan: Span, calls: ToolCallRecord[]): void {
   for (const call of calls) {
     if (!call.name) continue;
 
+    const durationMs =
+      typeof call.durationMs === "number" && Number.isFinite(call.durationMs)
+        ? call.durationMs
+        : undefined;
+    const startTime = epochSeconds(call.startedAt);
+    const endTime =
+      epochSeconds(call.finishedAt) ??
+      (startTime !== undefined && durationMs !== undefined
+        ? startTime + durationMs / 1000
+        : undefined);
     const span = rootSpan.startSpan({
       name: call.name,
       spanAttributes: {
         type: SpanTypeAttribute.TOOL,
         tool_call_id: call.id,
       },
-      startTime: epochSeconds(call.startedAt),
+      startTime,
       event: {
         input: call.arguments,
         ...(call.result !== undefined ? { output: call.result } : {}),
         metadata: call.metadata,
         metrics:
-          call.durationMs !== undefined
-            ? { duration_ms: call.durationMs }
-            : undefined,
+          durationMs !== undefined ? { duration_ms: durationMs } : undefined,
       },
     });
 
     if (call.error !== undefined) {
       logReporterError(span, call.error);
     }
-    span.end({ endTime: epochSeconds(call.finishedAt) });
+    span.end({ endTime });
   }
 }
 

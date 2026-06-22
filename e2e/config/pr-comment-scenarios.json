@@ -203,11 +203,7 @@
     "variants": [
       { "variantKey": "v2", "label": "v2" },
       { "variantKey": "v3", "label": "v3" },
-      { "variantKey": "v4.1", "label": "v4.1" },
-      {
-        "variantKey": "vitest-evals-reporter",
-        "label": "vitest-evals reporter"
-      }
+      { "variantKey": "v4.1", "label": "v4.1" }
     ],
     "evals": [
       {

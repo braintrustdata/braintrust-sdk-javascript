@@ -136,6 +136,8 @@ describe("Braintrust vitest-evals reporter", () => {
                       parentId: "model-1",
                       kind: "tool",
                       name: "lookupInvoice",
+                      startedAt: "2026-01-01T00:00:00.100Z",
+                      durationMs: 12,
                       attributes: { "gen_ai.tool.name": "lookupInvoice" },
                     },
                   ],
@@ -208,6 +210,14 @@ describe("Braintrust vitest-evals reporter", () => {
       external_parent_id: "model-1",
     });
     expect(toolSpan?.span_parents).toEqual([modelSpan?.span_id]);
+    expect(toolSpan?.metrics?.duration_ms).toBe(12);
+    expect(toolSpan?.metrics?.start).toBe(
+      Date.parse("2026-01-01T00:00:00.100Z") / 1000,
+    );
+    expect(toolSpan?.metrics?.end).toBeCloseTo(
+      Date.parse("2026-01-01T00:00:00.100Z") / 1000 + 0.012,
+      6,
+    );
   });
 
   test("logs failed eval scores and failure metadata", async () => {
@@ -296,6 +306,7 @@ describe("Braintrust vitest-evals reporter", () => {
                           name: "searchDocs",
                           arguments: { query: "refunds" },
                           result: { count: 2 },
+                          startedAt: "2026-01-01T00:00:00.200Z",
                           durationMs: 12,
                         },
                       ],
@@ -348,6 +359,13 @@ describe("Braintrust vitest-evals reporter", () => {
       output: { count: 2 },
       span_attributes: { type: "tool" },
     });
+    expect(toolSpan?.metrics?.start).toBe(
+      Date.parse("2026-01-01T00:00:00.200Z") / 1000,
+    );
+    expect(toolSpan?.metrics?.end).toBeCloseTo(
+      Date.parse("2026-01-01T00:00:00.200Z") / 1000 + 0.012,
+      6,
+    );
     expect(evalToolSpan).toMatchObject({
       input: { id: "legacy" },
       output: { ok: true },
