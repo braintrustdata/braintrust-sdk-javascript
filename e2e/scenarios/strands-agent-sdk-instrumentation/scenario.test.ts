@@ -25,6 +25,7 @@ const strandsAgentSDKScenario = {
 
 describe("wrapped instrumentation", () => {
   defineStrandsAgentSDKInstrumentationAssertions({
+    expectOverlapParentProbe: true,
     name: `Strands Agent SDK ${strandsAgentSDKScenario.version}`,
     runScenario: async ({ runScenarioDir }) => {
       await runScenarioDir({

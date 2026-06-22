@@ -55,6 +55,7 @@ const OPERATION_NAMES = [
   "strands-agent-invoke-operation",
   "strands-agent-stream-operation",
   "strands-graph-invoke-operation",
+  "strands-overlap-parent-operation",
   "strands-swarm-invoke-operation",
 ];
 
@@ -174,6 +175,7 @@ function summarize(events: CapturedLogEvent[]): SpanTreeEntry[] {
     "Agent: stream-agent",
     "Agent: graph-researcher",
     "Agent: graph-writer",
+    "Agent: overlap-agent",
     "Agent: swarm-router",
     "Agent: swarm-finisher",
     `Strands model: ${MODEL_NAME}`,
@@ -181,6 +183,8 @@ function summarize(events: CapturedLogEvent[]): SpanTreeEntry[] {
     "Strands Swarm",
     "node: graph-researcher",
     "node: graph-writer",
+    "node: overlap-node-a",
+    "node: overlap-node-b",
     "node: swarm-router",
     "node: swarm-finisher",
     "tool: lookup_weather",
@@ -204,6 +208,7 @@ function findLatestChild(
 
 export function defineStrandsAgentSDKInstrumentationAssertions(options: {
   name: string;
+  expectOverlapParentProbe?: boolean;
   runScenario: RunStrandsAgentSDKScenario;
   snapshotName: string;
   testFileUrl: string;
@@ -407,6 +412,66 @@ export function defineStrandsAgentSDKInstrumentationAssertions(options: {
         "STRANDS_SWARM_OK",
       );
     });
+
+    if (options.expectOverlapParentProbe) {
+      test(
+        "does not attach ambiguous child streams to the wrong node",
+        testConfig,
+        () => {
+          expect(setupError).toBeUndefined();
+          const operation = findLatestSpan(
+            events,
+            "strands-overlap-parent-operation",
+          );
+          const graph = findLatestChild(
+            events,
+            "Strands Graph",
+            operation?.span.id,
+          );
+          const overlapNodeA = findLatestChild(
+            events,
+            "node: overlap-node-a",
+            graph?.span.id,
+          );
+          const overlapNodeB = findLatestChild(
+            events,
+            "node: overlap-node-b",
+            graph?.span.id,
+          );
+          const agentUnderOperation = findLatestChild(
+            events,
+            "Agent: overlap-agent",
+            operation?.span.id,
+          );
+          const agentUnderNodeA = findLatestChild(
+            events,
+            "Agent: overlap-agent",
+            overlapNodeA?.span.id,
+          );
+          const agentUnderNodeB = findLatestChild(
+            events,
+            "Agent: overlap-agent",
+            overlapNodeB?.span.id,
+          );
+
+          expect(graph?.span.type).toBe("task");
+          expect(overlapNodeA?.row.metadata).toMatchObject({
+            "strands.node.id": "overlap-node-a",
+            "strands.node.status": "COMPLETED",
+          });
+          expect(overlapNodeB?.row.metadata).toMatchObject({
+            "strands.node.id": "overlap-node-b",
+            "strands.node.status": "COMPLETED",
+          });
+          expect(agentUnderOperation?.span.type).toBe("task");
+          expect(JSON.stringify(agentUnderOperation?.output)).toContain(
+            "OVERLAP_AGENT_OK",
+          );
+          expect(agentUnderNodeA).toBeUndefined();
+          expect(agentUnderNodeB).toBeUndefined();
+        },
+      );
+    }
 
     test(
       "does not emit duplicate OpenAI provider auto spans",

@@ -79,8 +79,10 @@ type MultiAgentStreamChannel =
   | typeof strandsAgentSDKChannels.graphStream
   | typeof strandsAgentSDKChannels.swarmStream;
 
+type ActiveChildParents = WeakMap<object, Set<Span>>;
+
 export class StrandsAgentSDKPlugin extends BasePlugin {
-  private readonly activeChildParents = new WeakMap<object, Span[]>();
+  private readonly activeChildParents: ActiveChildParents = new WeakMap();
 
   protected onEnable(): void {
     this.subscribeToAgentStream();
@@ -171,7 +173,11 @@ export class StrandsAgentSDKPlugin extends BasePlugin {
 
     const handlers: IsoChannelHandlers<ChannelMessage<typeof channel>> = {
       start: (event) => {
-        const state = startMultiAgentStream(event, operation);
+        const state = startMultiAgentStream(
+          event,
+          operation,
+          this.activeChildParents,
+        );
         if (state) {
           states.set(event, state);
         }
@@ -233,7 +239,7 @@ export class StrandsAgentSDKPlugin extends BasePlugin {
 
 function startAgentStream(
   event: ChannelMessage<typeof strandsAgentSDKChannels.agentStream>,
-  activeChildParents: WeakMap<object, Span[]>,
+  activeChildParents: ActiveChildParents,
 ): AgentStreamState | undefined {
   const agent = extractAgent(event);
   const model = agent?.model;
@@ -247,7 +253,7 @@ function startAgentStream(
       : {}),
   };
   const parentSpan = agent
-    ? peekChildParent(activeChildParents, agent)
+    ? getOnlyChildParent(activeChildParents, agent)
     : undefined;
   const span = parentSpan
     ? withCurrent(parentSpan, () =>
@@ -281,6 +287,7 @@ function startAgentStream(
 function startMultiAgentStream(
   event: ChannelMessage<MultiAgentStreamChannel>,
   operation: MultiAgentStreamState["operation"],
+  activeChildParents: ActiveChildParents,
 ): MultiAgentStreamState {
   const orchestrator = extractOrchestrator(event);
   const metadata = {
@@ -291,14 +298,29 @@ function startMultiAgentStream(
       ? { "strands_agent_sdk.version": event.moduleVersion }
       : {}),
   };
-  const span = startSpan({
-    event: {
-      input: event.arguments[0],
-      metadata,
-    },
-    name: operation === "Graph.stream" ? "Strands Graph" : "Strands Swarm",
-    spanAttributes: { type: SpanTypeAttribute.TASK },
-  });
+  const parentSpan = orchestrator
+    ? getOnlyChildParent(activeChildParents, orchestrator)
+    : undefined;
+  const span = parentSpan
+    ? withCurrent(parentSpan, () =>
+        startSpan({
+          event: {
+            input: event.arguments[0],
+            metadata,
+          },
+          name:
+            operation === "Graph.stream" ? "Strands Graph" : "Strands Swarm",
+          spanAttributes: { type: SpanTypeAttribute.TASK },
+        }),
+      )
+    : startSpan({
+        event: {
+          input: event.arguments[0],
+          metadata,
+        },
+        name: operation === "Graph.stream" ? "Strands Graph" : "Strands Swarm",
+        spanAttributes: { type: SpanTypeAttribute.TASK },
+      });
 
   return {
     activeNodes: new Map(),
@@ -360,7 +382,7 @@ function handleAgentStreamEvent(
 function handleMultiAgentStreamEvent(
   state: MultiAgentStreamState,
   event: StrandsMultiAgentStreamEvent,
-  activeChildParents: WeakMap<object, Span[]>,
+  activeChildParents: ActiveChildParents,
 ): void {
   try {
     switch (event.type) {
@@ -602,7 +624,7 @@ function finalizeToolSpanState(
 function startNodeSpan(
   state: MultiAgentStreamState,
   event: StrandsBeforeNodeCallEvent,
-  activeChildParents: WeakMap<object, Span[]>,
+  activeChildParents: ActiveChildParents,
 ): void {
   const nodeId = event.nodeId ?? "unknown";
   const node = findNode(event.orchestrator ?? state.orchestrator, nodeId);
@@ -666,7 +688,7 @@ function logNodeResult(
 function finalizeNodeSpan(
   state: MultiAgentStreamState,
   event: StrandsAfterNodeCallEvent,
-  activeChildParents: WeakMap<object, Span[]>,
+  activeChildParents: ActiveChildParents,
 ): void {
   const nodeId = event.nodeId ?? "unknown";
   const nodeState = state.activeNodes.get(nodeId);
@@ -719,7 +741,7 @@ function finalizeAgentStream(
 
 function finalizeMultiAgentStream(
   state: MultiAgentStreamState,
-  activeChildParents: WeakMap<object, Span[]>,
+  activeChildParents: ActiveChildParents,
   error?: unknown,
   output?: unknown,
 ): void {
@@ -1004,42 +1026,42 @@ function extractNodeChild(node: StrandsNode | undefined): object | undefined {
 }
 
 function pushChildParent(
-  activeChildParents: WeakMap<object, Span[]>,
+  activeChildParents: ActiveChildParents,
   child: object,
   span: Span,
 ): void {
-  activeChildParents.set(child, [
-    ...(activeChildParents.get(child) ?? []),
-    span,
-  ]);
+  const parents = activeChildParents.get(child) ?? new Set<Span>();
+  parents.add(span);
+  activeChildParents.set(child, parents);
 }
 
 function popChildParent(
-  activeChildParents: WeakMap<object, Span[]>,
+  activeChildParents: ActiveChildParents,
   child: object,
   span: Span,
 ): void {
-  const stack = activeChildParents.get(child);
-  if (!stack) {
+  const parents = activeChildParents.get(child);
+  if (!parents) {
     return;
   }
-  const index = stack.lastIndexOf(span);
-  if (index >= 0) {
-    stack.splice(index, 1);
-  }
-  if (stack.length === 0) {
+  parents.delete(span);
+  if (parents.size === 0) {
     activeChildParents.delete(child);
-  } else {
-    activeChildParents.set(child, stack);
   }
 }
 
-function peekChildParent(
-  activeChildParents: WeakMap<object, Span[]>,
+function getOnlyChildParent(
+  activeChildParents: ActiveChildParents,
   child: object,
 ): Span | undefined {
-  const stack = activeChildParents.get(child);
-  return stack?.[stack.length - 1];
+  const parents = activeChildParents.get(child);
+  if (!parents || parents.size !== 1) {
+    // Strands does not provide a child stream to node id correlation here.
+    // When a reused child has multiple active parents, choosing one would be
+    // a guess and can create a false parent/child relationship.
+    return undefined;
+  }
+  return parents.values().next().value;
 }
 
 function getConstructorName(value: unknown): string {

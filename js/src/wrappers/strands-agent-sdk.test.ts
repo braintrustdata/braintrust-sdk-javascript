@@ -150,4 +150,44 @@ describe("wrapStrandsAgentSDK", () => {
     expect(agent.read()).toBe("secret");
     await expect(agent.invoke("hello")).resolves.toEqual({ value: "secret" });
   });
+
+  it("preserves non-instrumented function and class exports unchanged", () => {
+    class Agent {
+      async *stream() {
+        return { stopReason: "end_turn" };
+      }
+    }
+    class Message {
+      static fromMessageData(data: unknown) {
+        return { data };
+      }
+    }
+    class InterruptResponseContent {
+      static fromJSON(json: unknown) {
+        return { json };
+      }
+    }
+    function helper() {
+      return "ok";
+    }
+
+    const wrapped = wrapStrandsAgentSDK({
+      Agent,
+      helper,
+      InterruptResponseContent,
+      Message,
+    });
+
+    expect(wrapped.Message).toBe(Message);
+    expect(wrapped.Message.fromMessageData({ role: "user" })).toEqual({
+      data: { role: "user" },
+    });
+    expect(wrapped.InterruptResponseContent).toBe(InterruptResponseContent);
+    expect(
+      wrapped.InterruptResponseContent.fromJSON({ type: "interrupt" }),
+    ).toEqual({
+      json: { type: "interrupt" },
+    });
+    expect(wrapped.helper).toBe(helper);
+  });
 });

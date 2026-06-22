@@ -361,6 +361,95 @@ describe("StrandsAgentSDKPlugin", () => {
     expect(nodeSpan?.end).toHaveBeenCalledTimes(1);
   });
 
+  it("parents nested graph spans under active graph nodes", async () => {
+    const plugin = new StrandsAgentSDKPlugin();
+    plugin.enable();
+
+    const graphHandlers = handlersByName.get(
+      "orchestrion:@strands-agents/sdk:Graph.stream",
+    );
+    const innerGraph = {
+      id: "inner-graph",
+      nodes: new Map(),
+      stream: vi.fn(),
+    };
+    const outerGraph = {
+      id: "outer-graph",
+      nodes: new Map([
+        ["inner", { id: "inner", orchestrator: innerGraph, type: "graphNode" }],
+      ]),
+      stream: vi.fn(),
+    };
+    const outerStream = makeMultiAgentStream([
+      {
+        nodeId: "inner",
+        orchestrator: outerGraph,
+        type: "beforeNodeCallEvent",
+      },
+      {
+        nodeId: "inner",
+        nodeType: "graphNode",
+        result: {
+          content: [{ text: "inner done" }],
+          nodeId: "inner",
+          status: "COMPLETED",
+        },
+        type: "nodeResultEvent",
+      },
+      { nodeId: "inner", orchestrator: outerGraph, type: "afterNodeCallEvent" },
+      {
+        result: { content: [{ text: "outer done" }], status: "COMPLETED" },
+        type: "multiAgentResultEvent",
+      },
+    ]);
+    const outerEvent = {
+      arguments: ["outer work", undefined],
+      result: outerStream,
+      self: outerGraph,
+    };
+
+    graphHandlers.start(outerEvent);
+    graphHandlers.end(outerEvent);
+    const outerIterator = outerStream[Symbol.asyncIterator]();
+    await outerIterator.next();
+
+    const innerStream = makeMultiAgentStream([
+      {
+        result: { content: [{ text: "nested done" }], status: "COMPLETED" },
+        type: "multiAgentResultEvent",
+      },
+    ]);
+    const innerEvent = {
+      arguments: ["inner work", undefined],
+      result: innerStream,
+      self: innerGraph,
+    };
+
+    graphHandlers.start(innerEvent);
+    graphHandlers.end(innerEvent);
+    for await (const _chunk of innerStream) {
+      // consume nested graph stream
+    }
+    await outerIterator.next();
+    await outerIterator.next();
+    await outerIterator.next();
+    await outerIterator.next();
+
+    const nodeSpan = spans.find((span) => span.args.name === "node: inner");
+    const innerGraphSpan = spans.find(
+      (span) =>
+        span.args.name === "Strands Graph" &&
+        span.args.event?.metadata?.["strands.orchestrator.id"] ===
+          "inner-graph",
+    );
+
+    expect(innerGraphSpan?.args.parentSpanIds).toEqual({
+      rootSpanId: nodeSpan?.rootSpanId,
+      spanId: nodeSpan?.spanId,
+    });
+    expect(nodeSpan?.end).toHaveBeenCalledTimes(1);
+  });
+
   it("ends open child spans when a stream errors", async () => {
     const plugin = new StrandsAgentSDKPlugin();
     plugin.enable();

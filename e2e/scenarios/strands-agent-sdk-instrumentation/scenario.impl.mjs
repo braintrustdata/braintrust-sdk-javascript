@@ -35,6 +35,152 @@ function expectContains(value, marker, label) {
   }
 }
 
+function createOverlappingParentSDK() {
+  class Agent {
+    constructor(options = {}) {
+      Object.assign(this, options);
+    }
+
+    async *stream(input) {
+      const result = {
+        type: "agentResult",
+        stopReason: "endTurn",
+        lastMessage: {
+          role: "assistant",
+          content: [
+            {
+              text: `OVERLAP_AGENT_OK ${input}`,
+            },
+          ],
+        },
+        metrics: {
+          accumulatedUsage: {
+            inputTokens: 1,
+            outputTokens: 1,
+            totalTokens: 2,
+          },
+        },
+      };
+      yield { type: "agentResultEvent", result };
+      return result;
+    }
+  }
+
+  class Graph {
+    constructor(options = {}) {
+      this.id = options.id;
+      this.nodes = new Map(
+        (options.nodes ?? []).map((node) => [node.id, node]),
+      );
+    }
+
+    async *stream() {
+      yield {
+        type: "beforeNodeCallEvent",
+        nodeId: "overlap-node-a",
+        orchestrator: this,
+      };
+      yield {
+        type: "beforeNodeCallEvent",
+        nodeId: "overlap-node-b",
+        orchestrator: this,
+      };
+      yield {
+        type: "nodeResultEvent",
+        nodeId: "overlap-node-b",
+        nodeType: "agentNode",
+        result: {
+          nodeId: "overlap-node-b",
+          status: "COMPLETED",
+          content: [{ text: "OVERLAP_NODE_B_OK" }],
+          duration: 1,
+        },
+      };
+      yield {
+        type: "afterNodeCallEvent",
+        nodeId: "overlap-node-b",
+        orchestrator: this,
+      };
+      yield {
+        type: "nodeResultEvent",
+        nodeId: "overlap-node-a",
+        nodeType: "agentNode",
+        result: {
+          nodeId: "overlap-node-a",
+          status: "COMPLETED",
+          content: [{ text: "OVERLAP_NODE_A_OK" }],
+          duration: 1,
+        },
+      };
+      yield {
+        type: "afterNodeCallEvent",
+        nodeId: "overlap-node-a",
+        orchestrator: this,
+      };
+
+      const result = {
+        type: "multiAgentResult",
+        status: "COMPLETED",
+        content: [{ text: "OVERLAP_GRAPH_OK" }],
+        duration: 2,
+      };
+      yield { type: "multiAgentResultEvent", result };
+      return result;
+    }
+  }
+
+  class Swarm extends Graph {}
+
+  return { Agent, Graph, Swarm };
+}
+
+async function runOverlappingParentProbe() {
+  const strands = wrapStrandsAgentSDK(createOverlappingParentSDK());
+  const sharedAgent = new strands.Agent({
+    id: "overlap-agent",
+    name: "overlap-agent",
+  });
+  const graph = new strands.Graph({
+    id: "overlap-graph",
+    nodes: [
+      {
+        id: "overlap-node-a",
+        type: "agentNode",
+        agent: sharedAgent,
+      },
+      {
+        id: "overlap-node-b",
+        type: "agentNode",
+        agent: sharedAgent,
+      },
+    ],
+  });
+  const graphIterator = graph.stream("overlap graph input");
+  const graphEvents = [];
+
+  graphEvents.push((await graphIterator.next()).value);
+  graphEvents.push((await graphIterator.next()).value);
+
+  const agentEvents = await collectAsync(
+    sharedAgent.stream("overlap-node-a work"),
+  );
+
+  while (true) {
+    const step = await graphIterator.next();
+    graphEvents.push(step.value);
+    if (step.done) {
+      break;
+    }
+  }
+
+  if (!JSON.stringify(agentEvents).includes("OVERLAP_AGENT_OK")) {
+    throw new Error("overlap agent stream did not include OVERLAP_AGENT_OK");
+  }
+  if (!JSON.stringify(graphEvents).includes("OVERLAP_GRAPH_OK")) {
+    throw new Error("overlap graph stream did not include OVERLAP_GRAPH_OK");
+  }
+}
+
 async function runStrandsAgentSDKInstrumentationScenario(
   sdk,
   OpenAIModel,
@@ -137,6 +283,14 @@ async function runStrandsAgentSDKInstrumentationScenario(
         },
       );
 
+      if (options.includeOverlapParentProbe) {
+        await runOperation(
+          "strands-overlap-parent-operation",
+          "overlap-parent",
+          runOverlappingParentProbe,
+        );
+      }
+
       await runOperation(
         "strands-swarm-invoke-operation",
         "swarm-invoke",
@@ -189,6 +343,7 @@ export async function runWrappedStrandsAgentSDKInstrumentation(
 ) {
   await runStrandsAgentSDKInstrumentationScenario(sdk, OpenAIModel, {
     decorateSDK: wrapStrandsAgentSDK,
+    includeOverlapParentProbe: true,
   });
 }
 

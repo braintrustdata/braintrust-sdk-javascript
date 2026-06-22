@@ -297,6 +297,71 @@ span_tree:
     │                     "prompt_tokens": 46,
     │                     "tokens": 50
     │                   }
+    ├── strands-overlap-parent-operation
+    │   metadata: {
+    │     "operation": "overlap-parent"
+    │   }
+    │   ├── Strands Graph [task]
+    │   │   input: "overlap graph input"
+    │   │   output: "OVERLAP_GRAPH_OK"
+    │   │   metadata: {
+    │   │     "provider": "strands",
+    │   │     "strands.operation": "Graph.stream",
+    │   │     "strands.orchestrator.id": "overlap-graph",
+    │   │     "strands.status": "COMPLETED"
+    │   │   }
+    │   │   metrics: {
+    │   │     "duration": "<duration>"
+    │   │   }
+    │   │   ├── node: overlap-node-a [task]
+    │   │   │   output: "OVERLAP_NODE_A_OK"
+    │   │   │   metadata: {
+    │   │   │     "provider": "strands",
+    │   │   │     "strands.node.id": "overlap-node-a",
+    │   │   │     "strands.node.status": "COMPLETED",
+    │   │   │     "strands.node.type": "agentNode",
+    │   │   │     "strands.operation": "node.call"
+    │   │   │   }
+    │   │   │   metrics: {
+    │   │   │     "duration": "<duration>",
+    │   │   │     "strands.node.duration_ms": "<duration>"
+    │   │   │   }
+    │   │   └── node: overlap-node-b [task]
+    │   │       output: "OVERLAP_NODE_B_OK"
+    │   │       metadata: {
+    │   │         "provider": "strands",
+    │   │         "strands.node.id": "overlap-node-b",
+    │   │         "strands.node.status": "COMPLETED",
+    │   │         "strands.node.type": "agentNode",
+    │   │         "strands.operation": "node.call"
+    │   │       }
+    │   │       metrics: {
+    │   │         "duration": "<duration>",
+    │   │         "strands.node.duration_ms": "<duration>"
+    │   │       }
+    │   └── Agent: overlap-agent [task]
+    │       input: "overlap-node-a work"
+    │       output: {
+    │         "content": [
+    │           {
+    │             "text": "OVERLAP_AGENT_OK overlap-node-a work"
+    │           }
+    │         ],
+    │         "role": "assistant"
+    │       }
+    │       metadata: {
+    │         "provider": "strands",
+    │         "strands.agent.id": "overlap-agent",
+    │         "strands.agent.name": "overlap-agent",
+    │         "strands.operation": "Agent.stream",
+    │         "strands.stop_reason": "endTurn"
+    │       }
+    │       metrics: {
+    │         "completion_tokens": 1,
+    │         "duration": "<duration>",
+    │         "prompt_tokens": 1,
+    │         "tokens": 2
+    │       }
     └── strands-swarm-invoke-operation
         metadata: {
           "operation": "swarm-invoke"

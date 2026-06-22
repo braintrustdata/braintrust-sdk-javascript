@@ -63,9 +63,6 @@ export function wrapStrandsAgentSDK<T>(sdk: T): T {
           "swarm",
         );
       }
-      if (typeof value === "function") {
-        return value.bind(target);
-      }
 
       return value;
     },
