@@ -1,5 +1,31 @@
 # braintrust
 
+## 3.18.0
+
+### Minor Changes
+
+- feat: Add reporter for `vitest-evals` (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2142)
+- feat: Add `@earendil-works/pi-coding-agent` instrumentation (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2118)
+- feat(google-genai): Add instrumentation for interactions API (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2122)
+- update optional dependency bt to v0.12.0 Thanks @viadezo1er! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2111)
+- feat(ai-sdk): Add AI SDK v7 support (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2121)
+- Add support for preserving explicit origin metadata on inline eval cases, so evals that run transformed or pre-resolved rows can retain their source-row provenance. Thanks @max-braintrust! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2104)
+- feat: Add support for `@anthropic-ai/bedrock-sdk` (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2143)
+- feat: Add support for `@aws-sdk/client-bedrock-runtime` (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2145)
+- feat: Add support for `@strands-agents/sdk` (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2144)
+- feat(flue): Remove `AsyncLocalStorage.enterWith()` usage from flue and add support for manual instrumentation for flue v1 (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2152)
+
+### Patch Changes
+
+- Fix: dataset-backed eval origin for copied dataset rows Thanks @evanmkeith! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2140)
+- Add project-level classifier builder support for function push. (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2095)
+- fix(anthropic): Log Anthropic system message first in span input Thanks @joshua-tj! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2109)
+- fix(claude-agent-sdk): Fix subagents span nesting and input (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2119)
+- fix: Fix TTFT in AI SDK v6 (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2120)
+- fix(flue): Fix span nesting (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2098)
+- fix: Validate inline row origin for evals Thanks @max-braintrust! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2136)
+- Fix eval summaries to compare against the experiment’s explicit base experiment ID. Thanks @barrettpyke! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2124)
+
 ## 3.17.0
 
 ### Minor Changes
