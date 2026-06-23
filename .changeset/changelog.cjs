@@ -126,7 +126,33 @@ const changelogFunctions = {
       : info.user
         ? [info.user]
         : [];
-    const thanks = formatThanks(users, ignoredAuthors);
+    const ignoredThanksAuthors = new Set(ignoredAuthors);
+    const [repoOwner, repoName] = options.repo.split("/");
+
+    if (githubToken && repoOwner === "braintrustdata" && info.pull) {
+      const response = await fetch(
+        `https://api.github.com/repos/${repoOwner}/${repoName}/pulls/${info.pull}`,
+        {
+          headers: {
+            Accept: "application/vnd.github+json",
+            Authorization: `Bearer ${githubToken}`,
+            "X-GitHub-Api-Version": "2022-11-28",
+          },
+        },
+      );
+
+      if (response.ok) {
+        const pull = await response.json();
+        if (
+          pull.user?.login &&
+          ["MEMBER", "OWNER"].includes(pull.author_association)
+        ) {
+          ignoredThanksAuthors.add(pull.user.login.toLowerCase());
+        }
+      }
+    }
+
+    const thanks = formatThanks(users, ignoredThanksAuthors);
     const pullUrl = info.pull
       ? ` (${githubServerUrl}/${options.repo}/pull/${info.pull})`
       : "";
