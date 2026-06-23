@@ -1,5 +1,20 @@
 # braintrust
 
+## 3.19.0
+
+### Minor Changes
+
+- feat: Add reporter for `vitest-evals` (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2142)
+- feat: Add support for `@anthropic-ai/bedrock-sdk` (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2143)
+- feat: Add support for `@aws-sdk/client-bedrock-runtime` (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2145)
+- feat: Add support for `@strands-agents/sdk` (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2144)
+- feat(flue): Remove `AsyncLocalStorage.enterWith()` usage from flue and add support for manual instrumentation for flue v1 (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2152)
+
+### Patch Changes
+
+- fix: Fix dataset row origin for evals and playgrounds (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2140)
+- fix(anthropic): Log Anthropic system message first in span input Thanks @joshua-tj! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2109)
+
 ## 3.18.0
 
 ### Minor Changes
