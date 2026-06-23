@@ -16,4 +16,4 @@ export function create(
   return new InstrumentationMatcher(configs, dcModule);
 }
 
-export type { InstrumentationConfig } from "./types";
+export type { InstrumentationConfig, ModuleType } from "./types";

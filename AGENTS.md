@@ -67,3 +67,11 @@ pnpm run lint            # Run eslint checks
 pnpm run fix:formatting  # Auto-fix formatting
 pnpm run fix:lint        # Auto-fix eslint issues
 ```
+
+## Vendored Forks and Licenses
+
+When touching forked third-party code in this repository, including the
+vendored `import-in-the-middle`, `require-in-the-middle`, or `orchestrion-js`
+code, preserve and respect the upstream license requirements. Keep copyright
+notices, license files, provenance notes, and `js/NOTICE` entries accurate when
+copying, updating, or materially modifying vendored code.
