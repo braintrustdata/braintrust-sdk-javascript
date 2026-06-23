@@ -24,6 +24,7 @@ import { openAICodexConfigs } from "./openai-codex";
 import { openRouterConfigs } from "./openrouter";
 import { openRouterAgentConfigs } from "./openrouter-agent";
 import { piCodingAgentConfigs } from "./pi-coding-agent";
+import { strandsAgentSDKConfigs } from "./strands-agent-sdk";
 
 interface InstrumentationConfigGroup {
   integrations: readonly (keyof InstrumentationIntegrationsConfig)[];
@@ -80,6 +81,10 @@ const defaultInstrumentationConfigGroups: readonly InstrumentationConfigGroup[] 
     {
       integrations: ["piCodingAgent"],
       configs: piCodingAgentConfigs,
+    },
+    {
+      integrations: ["strandsAgentSDK"],
+      configs: strandsAgentSDKConfigs,
     },
     {
       integrations: ["flue"],

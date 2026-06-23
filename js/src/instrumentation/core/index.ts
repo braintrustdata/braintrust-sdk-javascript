@@ -10,6 +10,7 @@
  */
 
 export { BasePlugin } from "./plugin";
+export { toLoggedError } from "./logging";
 export {
   createChannelName,
   parseChannelName,

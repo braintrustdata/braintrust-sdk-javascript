@@ -1,4 +1,4 @@
-import { BasePlugin } from "../core";
+import { BasePlugin, toLoggedError } from "../core";
 import {
   traceAsyncChannel,
   traceStreamingChannel,
@@ -949,9 +949,7 @@ function patchOpenRouterCallModelResult(args: {
       return;
     }
     ended = true;
-    span.log({
-      error: normalizeError(error).message,
-    });
+    span.log({ error: toLoggedError(error) });
     span.end();
   };
 

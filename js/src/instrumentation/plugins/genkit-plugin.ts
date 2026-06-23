@@ -1,4 +1,4 @@
-import { BasePlugin } from "../core";
+import { BasePlugin, toLoggedError } from "../core";
 import {
   traceAsyncChannel,
   traceSyncStreamChannel,
@@ -560,7 +560,7 @@ function createDeferredSpanFinalizer(
       try {
         await callback();
       } catch (error) {
-        span.log({ error: errorMessage(error) });
+        span.log({ error: toLoggedError(error) });
       } finally {
         span.end();
       }
@@ -757,10 +757,6 @@ function pickNumberMetrics(
       return typeof value === "number" && Number.isFinite(value);
     }),
   );
-}
-
-function errorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
 }
 
 function stringValue(value: unknown): string | undefined {

@@ -19,17 +19,11 @@ import { GitHubCopilotPlugin } from "./plugins/github-copilot-plugin";
 import { FluePlugin } from "./plugins/flue-plugin";
 import { LangChainPlugin } from "./plugins/langchain-plugin";
 import { PiCodingAgentPlugin } from "./plugins/pi-coding-agent-plugin";
+import { StrandsAgentSDKPlugin } from "./plugins/strands-agent-sdk-plugin";
 import type { InstrumentationIntegrationsConfig } from "./config";
 
 export interface BraintrustPluginConfig {
   integrations?: InstrumentationIntegrationsConfig;
-}
-
-function getIntegrationConfig(
-  integrations: NonNullable<BraintrustPluginConfig["integrations"]>,
-  key: string,
-): boolean | undefined {
-  return (integrations as Record<string, boolean | undefined>)[key];
 }
 
 /**
@@ -71,6 +65,7 @@ export class BraintrustPlugin extends BasePlugin {
   private fluePlugin: FluePlugin | null = null;
   private langChainPlugin: LangChainPlugin | null = null;
   private piCodingAgentPlugin: PiCodingAgentPlugin | null = null;
+  private strandsAgentSDKPlugin: StrandsAgentSDKPlugin | null = null;
 
   constructor(config: BraintrustPluginConfig = {}) {
     super();
@@ -179,7 +174,12 @@ export class BraintrustPlugin extends BasePlugin {
       this.piCodingAgentPlugin.enable();
     }
 
-    if (getIntegrationConfig(integrations, "flue") !== false) {
+    if (integrations.strandsAgentSDK !== false) {
+      this.strandsAgentSDKPlugin = new StrandsAgentSDKPlugin();
+      this.strandsAgentSDKPlugin.enable();
+    }
+
+    if (integrations.flue !== false) {
       this.fluePlugin = new FluePlugin();
       this.fluePlugin.enable();
     }
@@ -285,6 +285,11 @@ export class BraintrustPlugin extends BasePlugin {
     if (this.piCodingAgentPlugin) {
       this.piCodingAgentPlugin.disable();
       this.piCodingAgentPlugin = null;
+    }
+
+    if (this.strandsAgentSDKPlugin) {
+      this.strandsAgentSDKPlugin.disable();
+      this.strandsAgentSDKPlugin = null;
     }
 
     if (this.fluePlugin) {
