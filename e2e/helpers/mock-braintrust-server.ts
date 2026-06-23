@@ -72,6 +72,19 @@ interface StartMockBraintrustServerOptions {
 }
 
 const DEFAULT_API_KEY = "mock-braintrust-api-key";
+const PROD_FORWARDING_SKIPPED_HEADERS = new Set([
+  "authorization",
+  "connection",
+  "content-length",
+  "host",
+  "keep-alive",
+  "proxy-authenticate",
+  "proxy-authorization",
+  "te",
+  "trailer",
+  "transfer-encoding",
+  "upgrade",
+]);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -265,6 +278,7 @@ export async function startMockBraintrustServer(
   const events: CapturedLogEvent[] = [];
   const mergedRows = new Map<string, CapturedLogRow>();
   const projectsByName = new Map<string, { id: string; name: string }>();
+  const prodForwardingErrors: string[] = [];
   const experimentsByProjectAndName = new Map<
     string,
     {
@@ -382,16 +396,53 @@ export async function startMockBraintrustServer(
     return created;
   }
 
-  function trackProdForwarding(promise: Promise<void>): void {
+  function recordProdForwardingError(context: string, error: unknown): void {
+    prodForwardingErrors.push(
+      `${context}: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+
+  function trackProdForwarding(context: string, promise: Promise<void>): void {
     pendingProdForwarding.add(promise);
     void promise.then(
       () => {
         pendingProdForwarding.delete(promise);
       },
-      () => {
+      (error) => {
+        recordProdForwardingError(context, error);
         pendingProdForwarding.delete(promise);
       },
     );
+  }
+
+  function requestForProdForwarding(
+    capturedRequest: CapturedRequest,
+  ): CapturedRequest {
+    if (!prodForwarding || !isRecord(capturedRequest.jsonBody)) {
+      return capturedRequest;
+    }
+
+    const jsonBody = clone(capturedRequest.jsonBody) as Record<string, unknown>;
+    let changed = false;
+
+    if ("org_id" in jsonBody) {
+      jsonBody.org_id = prodForwarding.orgId;
+      changed = true;
+    }
+    if ("org_name" in jsonBody) {
+      jsonBody.org_name = prodForwarding.orgName;
+      changed = true;
+    }
+
+    if (!changed) {
+      return capturedRequest;
+    }
+
+    return {
+      ...capturedRequest,
+      jsonBody: jsonBody as JsonValue,
+      rawBody: JSON.stringify(jsonBody),
+    };
   }
 
   async function forwardProdRequest(
@@ -402,22 +453,18 @@ export async function startMockBraintrustServer(
       throw new Error("prodForwarding is not enabled");
     }
 
-    const baseUrl = capturedRequest.path.startsWith("/api/")
+    const prodRequest = requestForProdForwarding(capturedRequest);
+    const baseUrl = prodRequest.path.startsWith("/api/")
       ? prodForwarding.appUrl
       : prodForwarding.apiUrl;
-    const url = new URL(capturedRequest.path, baseUrl);
-    for (const [key, value] of Object.entries(capturedRequest.query)) {
+    const url = new URL(prodRequest.path, baseUrl);
+    for (const [key, value] of Object.entries(prodRequest.query)) {
       url.searchParams.set(key, value);
     }
 
     const headers = new Headers();
-    for (const [key, value] of Object.entries(capturedRequest.headers)) {
-      if (
-        key === "authorization" ||
-        key === "connection" ||
-        key === "content-length" ||
-        key === "host"
-      ) {
+    for (const [key, value] of Object.entries(prodRequest.headers)) {
+      if (PROD_FORWARDING_SKIPPED_HEADERS.has(key)) {
         continue;
       }
 
@@ -427,16 +474,19 @@ export async function startMockBraintrustServer(
 
     const response = await fetch(url, {
       body:
-        capturedRequest.method === "GET" || capturedRequest.method === "HEAD"
+        prodRequest.method === "GET" || prodRequest.method === "HEAD"
           ? undefined
-          : capturedRequest.rawBody,
+          : prodRequest.rawBody,
       headers,
-      method: capturedRequest.method,
+      method: prodRequest.method,
     });
 
     if (!response.ok) {
+      const responseText = await response.text().catch(() => "");
       throw new Error(
-        `prodForwarding failed for ${capturedRequest.method} ${capturedRequest.path}: ${response.status} ${response.statusText}`,
+        `prodForwarding failed for ${capturedRequest.method} ${capturedRequest.path}: ${response.status} ${response.statusText}${
+          responseText ? `: ${responseText.slice(0, 500)}` : ""
+        }`,
       );
     }
 
@@ -523,7 +573,8 @@ export async function startMockBraintrustServer(
                 });
                 return;
               }
-            } catch {
+            } catch (error) {
+              recordProdForwardingError("POST /api/project/register", error);
               // Fall back to local registration so e2e assertions still run.
             }
           }
@@ -583,7 +634,8 @@ export async function startMockBraintrustServer(
                 });
                 return;
               }
-            } catch {
+            } catch (error) {
+              recordProdForwardingError("POST /api/experiment/register", error);
               // Fall back to local registration so e2e assertions still run.
             }
           }
@@ -668,11 +720,10 @@ export async function startMockBraintrustServer(
           }
           if (prodForwarding) {
             trackProdForwarding(
+              "POST /logs3",
               forwardProdRequest(capturedRequest, {
                 drainResponseBody: true,
-              })
-                .then(() => undefined)
-                .catch(() => undefined),
+              }).then(() => undefined),
             );
           }
           respondJson(res, 200, { ok: true });
@@ -685,11 +736,10 @@ export async function startMockBraintrustServer(
         ) {
           if (prodForwarding) {
             trackProdForwarding(
+              "POST /otel/v1/traces",
               forwardProdRequest(capturedRequest, {
                 drainResponseBody: true,
-              })
-                .then(() => undefined)
-                .catch(() => undefined),
+              }).then(() => undefined),
             );
           }
           respondJson(res, 200, { ok: true });
@@ -722,6 +772,14 @@ export async function startMockBraintrustServer(
       });
       while (pendingProdForwarding.size > 0) {
         await Promise.allSettled([...pendingProdForwarding]);
+      }
+      if (prodForwardingErrors.length > 0) {
+        throw new Error(
+          [
+            "Braintrust prod forwarding failed:",
+            ...prodForwardingErrors.map((message) => `- ${message}`),
+          ].join("\n"),
+        );
       }
     },
     events,

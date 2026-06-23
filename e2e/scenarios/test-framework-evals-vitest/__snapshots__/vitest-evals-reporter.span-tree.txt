@@ -1,0 +1,81 @@
+span_tree:
+└── vitest-evals braintrust reporter > approves refundable invoice [eval]
+    attributes: {
+      "framework": "vitest",
+      "reporter": "vitest-evals"
+    }
+    input: {
+      "input": "Refund invoice inv_123",
+      "test": "vitest-evals braintrust reporter > approves refundable invoice"
+    }
+    output: {
+      "message": "Invoice inv_123 is refundable and the refund is approved.",
+      "status": "approved"
+    }
+    scores: {
+      "StatusJudge": 1,
+      "avg_score": 1,
+      "pass": 1
+    }
+    metadata: {
+      "artifacts": {
+        "case": "vitest-evals-reporter",
+        "scenario": "test-framework-evals-vitest",
+        "testRunId": "<run:1>"
+      },
+      "errors": [],
+      "failureMessages": [],
+      "file": "<repo>/e2e/scenarios/test-framework-evals-vitest/runner.vitest-evals-reporter.case.ts",
+      "fullName": "vitest-evals braintrust reporter > approves refundable invoice",
+      "harnessName": "braintrust-refund-harness",
+      "relativeFile": "runner.vitest-evals-reporter.case.ts",
+      "scoreMetadata": {
+        "StatusJudge": {
+          "expectedStatus": "approved",
+          "observedStatus": "approved"
+        }
+      },
+      "session": {
+        "messages": [
+          {
+            "content": "Refund invoice inv_123",
+            "role": "user"
+          },
+          {
+            "content": "Invoice inv_123 is refundable and the refund is approved.",
+            "role": "assistant"
+          }
+        ]
+      },
+      "status": "passed",
+      "testId": "-2057137040_0_0",
+      "thresholdFailed": false
+    }
+    metrics: {
+      "duration_ms": 0,
+      "input_tokens": 11,
+      "output_tokens": 13,
+      "tool_calls": 1,
+      "total_tokens": 24
+    }
+    └── classify refund [llm]
+        attributes: {
+          "external_span_id": "model-span",
+          "gen_ai.request.model": "deterministic-refund-model",
+          "trace_id": "refund-trace",
+          "vitest_evals_kind": "model"
+        }
+        metadata: {
+          "traceName": "refund trace"
+        }
+        └── lookupInvoice [tool]
+            attributes: {
+              "external_parent_id": "model-span",
+              "external_span_id": "tool-span",
+              "gen_ai.tool.name": "lookupInvoice",
+              "trace_id": "refund-trace",
+              "vitest_evals_kind": "tool"
+            }
+            metadata: {
+              "traceName": "refund trace"
+            }

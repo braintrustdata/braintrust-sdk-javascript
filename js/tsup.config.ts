@@ -7,6 +7,7 @@ export default defineConfig([
       index: "src/node/index.ts",
       "apply-auto-instrumentation":
         "src/node/apply-auto-instrumentation-entry.ts",
+      "vitest-evals-reporter": "src/wrappers/vitest-evals/reporter.ts",
     },
     format: ["cjs", "esm"],
     outDir: "dist",

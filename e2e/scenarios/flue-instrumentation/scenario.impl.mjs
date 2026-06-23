@@ -102,7 +102,7 @@ export async function runCliFlueInstrumentationScenario() {
       "instrumentation",
       "--target",
       "node",
-      "--payload",
+      process.env.FLUE_E2E_INPUT_FLAG ?? "--payload",
       JSON.stringify(workflowPayload()),
       "--root",
       process.cwd(),

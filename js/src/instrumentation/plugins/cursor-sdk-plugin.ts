@@ -1,4 +1,4 @@
-import { BasePlugin } from "../core";
+import { BasePlugin, toLoggedError } from "../core";
 import type { ChannelMessage } from "../core/channel-definitions";
 import type { IsoChannelHandlers } from "../../isomorph";
 import { debugLogger } from "../../debug-logger";
@@ -542,7 +542,7 @@ async function handleToolUpdate(
     }));
 
   finishToolSpan(toolState, {
-    error: toolCall?.status === "error" ? stringifyUnknown(result) : undefined,
+    error: toolCall?.status === "error" ? toLoggedError(result) : undefined,
     metadata: {
       "cursor_sdk.tool.status": toolCall?.status ?? "completed",
     },
@@ -654,7 +654,7 @@ async function handleToolMessage(
     }));
   finishToolSpan(toolState, {
     error:
-      message.status === "error" ? stringifyUnknown(message.result) : undefined,
+      message.status === "error" ? toLoggedError(message.result) : undefined,
     metadata: {
       "cursor_sdk.tool.status": message.status,
     },
@@ -722,9 +722,7 @@ async function handleConversationStep(
   });
   finishToolSpan(toolState, {
     error:
-      toolCall?.status === "error"
-        ? stringifyUnknown(toolCall.result)
-        : undefined,
+      toolCall?.status === "error" ? toLoggedError(toolCall.result) : undefined,
     metadata: {
       "cursor_sdk.tool.status": toolCall?.status ?? "completed",
     },
@@ -885,7 +883,7 @@ async function finalizeCursorRun(
     };
     if (error) {
       safeLog(state.span, {
-        error: error instanceof Error ? error.message : String(error),
+        error: toLoggedError(error),
         metadata,
         metrics: {
           ...cleanMetrics(state.metrics),
@@ -1140,20 +1138,6 @@ function getString(
 ): string | undefined {
   const value = obj?.[key];
   return typeof value === "string" ? value : undefined;
-}
-
-function stringifyUnknown(value: unknown): string {
-  if (value instanceof Error) {
-    return value.message;
-  }
-  if (typeof value === "string") {
-    return value;
-  }
-  try {
-    return JSON.stringify(value);
-  } catch {
-    return String(value);
-  }
 }
 
 function safeLog(span: Span, event: Parameters<Span["log"]>[0]): void {

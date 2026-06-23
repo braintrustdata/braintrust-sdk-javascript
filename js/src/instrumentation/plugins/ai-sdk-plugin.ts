@@ -1,4 +1,4 @@
-import { BasePlugin } from "../core";
+import { BasePlugin, toLoggedError } from "../core";
 import {
   traceAsyncChannel,
   traceStreamingChannel,
@@ -1361,9 +1361,7 @@ function prepareAISDKChildTracing(
             }
             span.log({ output: lastValue });
           } catch (error) {
-            span.log({
-              error: error instanceof Error ? error.message : String(error),
-            });
+            span.log({ error: toLoggedError(error) });
             throw error;
           } finally {
             span.end();

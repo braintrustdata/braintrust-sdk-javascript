@@ -1,0 +1,21 @@
+import {
+  BedrockRuntimeClient,
+  ConverseCommand,
+  ConverseStreamCommand,
+  InvokeModelCommand,
+  InvokeModelWithResponseStreamCommand,
+} from "@aws-sdk/client-bedrock-runtime";
+import { NodeHttpHandler } from "@smithy/node-http-handler";
+import { runMain } from "../../helpers/provider-runtime.mjs";
+import { runWrappedBedrockRuntimeInstrumentation } from "./scenario.impl.mjs";
+
+runMain(async () => {
+  await runWrappedBedrockRuntimeInstrumentation({
+    BedrockRuntimeClient,
+    ConverseCommand,
+    ConverseStreamCommand,
+    InvokeModelCommand,
+    InvokeModelWithResponseStreamCommand,
+    NodeHttpHandler,
+  });
+});
