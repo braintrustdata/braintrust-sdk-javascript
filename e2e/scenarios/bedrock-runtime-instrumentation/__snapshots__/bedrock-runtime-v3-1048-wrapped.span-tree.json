@@ -16,6 +16,14 @@
                   {
                     "content": [
                       {
+                        "text": "<bedrock-cacheable-context>"
+                      },
+                      {
+                        "cachePoint": {
+                          "type": "default"
+                        }
+                      },
+                      {
                         "text": "Reply with exactly OK."
                       }
                     ],
@@ -26,7 +34,7 @@
               "output": {
                 "content": [
                   {
-                    "text": "OK."
+                    "text": "OK"
                   }
                 ],
                 "role": "assistant"
@@ -42,10 +50,12 @@
                 "topP": 0.9
               },
               "metrics": {
-                "completion_tokens": 3,
+                "completion_tokens": 2,
                 "latency_ms": 0,
+                "prompt_cache_creation_tokens": 0,
+                "prompt_cached_tokens": 14922,
                 "prompt_tokens": 5,
-                "tokens": 8
+                "tokens": 14929
               }
             }
           ],
@@ -66,6 +76,14 @@
                   {
                     "content": [
                       {
+                        "text": "<bedrock-cacheable-context>"
+                      },
+                      {
+                        "cachePoint": {
+                          "type": "default"
+                        }
+                      },
+                      {
                         "text": "Reply with exactly STREAM."
                       }
                     ],
@@ -76,7 +94,7 @@
               "output": {
                 "content": [
                   {
-                    "text": "STREAM."
+                    "text": "STREAM"
                   }
                 ],
                 "role": "assistant"
@@ -92,11 +110,13 @@
                 "topP": 0.9
               },
               "metrics": {
-                "completion_tokens": 4,
+                "completion_tokens": 3,
                 "latency_ms": 0,
+                "prompt_cache_creation_tokens": 0,
+                "prompt_cached_tokens": 14922,
                 "prompt_tokens": 6,
                 "time_to_first_token": 0,
-                "tokens": 10
+                "tokens": 14931
               }
             }
           ],
@@ -122,6 +142,12 @@
                   {
                     "content": [
                       {
+                        "cachePoint": {
+                          "type": "default"
+                        },
+                        "text": "<bedrock-cacheable-context>"
+                      },
+                      {
                         "text": "Reply with exactly RAW."
                       }
                     ],
@@ -143,11 +169,11 @@
                 },
                 "stopReason": "end_turn",
                 "usage": {
-                  "cacheReadInputTokenCount": 0,
+                  "cacheReadInputTokenCount": 14922,
                   "cacheWriteInputTokenCount": 0,
                   "inputTokens": 5,
                   "outputTokens": 2,
-                  "totalTokens": 7
+                  "totalTokens": 14929
                 }
               },
               "metadata": {
@@ -160,8 +186,10 @@
               },
               "metrics": {
                 "completion_tokens": 2,
+                "prompt_cache_creation_tokens": 0,
+                "prompt_cached_tokens": 14922,
                 "prompt_tokens": 5,
-                "tokens": 7
+                "tokens": 14929
               }
             }
           ],
@@ -187,6 +215,12 @@
                   {
                     "content": [
                       {
+                        "cachePoint": {
+                          "type": "default"
+                        },
+                        "text": "<bedrock-cacheable-context>"
+                      },
+                      {
                         "text": "Reply with exactly RAWSTREAM."
                       }
                     ],
@@ -208,7 +242,7 @@
                 "provider": "aws-bedrock",
                 "trace": {},
                 "usage": {
-                  "cacheReadInputTokenCount": 0,
+                  "cacheReadInputTokenCount": 14922,
                   "cacheWriteInputTokenCount": 0,
                   "inputTokens": 6,
                   "outputTokens": 3
@@ -216,8 +250,11 @@
               },
               "metrics": {
                 "completion_tokens": 3,
+                "prompt_cache_creation_tokens": 0,
+                "prompt_cached_tokens": 14922,
                 "prompt_tokens": 6,
-                "time_to_first_token": 0
+                "time_to_first_token": 0,
+                "tokens": 14931
               }
             }
           ],

@@ -300,7 +300,7 @@ function getCassetteServerRoutes(): CassetteServerRoute[] {
     },
     {
       prefix: "/aws-bedrock-runtime",
-      upstreamOrigin: `https://bedrock-runtime.${DEFAULT_BEDROCK_REGION}.amazonaws.com`,
+      upstreamOrigin: `https://bedrock-runtime.${getBedrockRegion()}.amazonaws.com`,
     },
     { prefix: "/cohere", upstreamOrigin: "https://api.cohere.com" },
     { prefix: "/cursor/v1", upstreamOrigin: "https://api.cursor.com/v1" },

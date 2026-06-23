@@ -5,9 +5,18 @@ import {
   withScenarioHarness,
   type ScenarioRunContext,
 } from "../../helpers/scenario-harness";
-import { matchSpanTreeSnapshot } from "../../helpers/span-tree";
+import {
+  matchSpanTreeSnapshot,
+  spanTreeFields,
+  type SpanTreeEntry,
+} from "../../helpers/span-tree";
 import { findChildSpans, findLatestSpan } from "../../helpers/trace-selectors";
-import { MODEL, ROOT_NAME, SCENARIO_NAME } from "./constants.mjs";
+import {
+  CACHE_PROMPT_MARKER,
+  MODEL,
+  ROOT_NAME,
+  SCENARIO_NAME,
+} from "./constants.mjs";
 
 type RunBedrockRuntimeScenario = (harness: {
   runNodeScenarioDir: (options: {
@@ -46,9 +55,11 @@ function findBedrockSpan(
   return spans.find((candidate) => candidate.output !== undefined) ?? spans[0];
 }
 
-function spanTreeEvents(events: CapturedLogEvent[]): CapturedLogEvent[] {
+function spanTreeEvents(
+  events: CapturedLogEvent[],
+): Array<CapturedLogEvent | SpanTreeEntry> {
   const root = findLatestSpan(events, ROOT_NAME);
-  const items: CapturedLogEvent[] = root ? [root] : [];
+  const items: Array<CapturedLogEvent | SpanTreeEntry> = root ? [root] : [];
 
   for (const operationName of Object.keys(OPERATION_TO_SPAN_NAME) as Array<
     keyof typeof OPERATION_TO_SPAN_NAME
@@ -59,11 +70,44 @@ function spanTreeEvents(events: CapturedLogEvent[]): CapturedLogEvent[] {
       items.push(operation);
     }
     if (span) {
-      items.push(span);
+      items.push(snapshotBedrockSpan(span));
     }
   }
 
   return items;
+}
+
+function snapshotBedrockSpan(event: CapturedLogEvent): SpanTreeEntry {
+  return {
+    event,
+    fields: {
+      ...spanTreeFields(event),
+      input: normalizeBedrockCachePrompt(event.input),
+    },
+  };
+}
+
+function normalizeBedrockCachePrompt(value: unknown): unknown {
+  if (typeof value === "string") {
+    return value.includes(CACHE_PROMPT_MARKER)
+      ? "<bedrock-cacheable-context>"
+      : value;
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((entry) => normalizeBedrockCachePrompt(entry));
+  }
+
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, entry]) => [
+        key,
+        normalizeBedrockCachePrompt(entry),
+      ]),
+    );
+  }
+
+  return value;
 }
 
 export function defineBedrockRuntimeInstrumentationAssertions(options: {
@@ -134,6 +178,28 @@ export function defineBedrockRuntimeInstrumentationAssertions(options: {
         time_to_first_token: expect.any(Number),
         tokens: expect.any(Number),
       });
+    });
+
+    test("captures Bedrock prompt cache metrics", testConfig, () => {
+      const metrics = Object.keys(OPERATION_TO_SPAN_NAME)
+        .map((operationName) =>
+          findBedrockSpan(
+            events,
+            operationName as keyof typeof OPERATION_TO_SPAN_NAME,
+          ),
+        )
+        .map((span) => span?.metrics)
+        .filter((value): value is Record<string, unknown> => Boolean(value));
+
+      expect(
+        metrics.some(
+          (metric) =>
+            (typeof metric.prompt_cache_creation_tokens === "number" &&
+              metric.prompt_cache_creation_tokens > 0) ||
+            (typeof metric.prompt_cached_tokens === "number" &&
+              metric.prompt_cached_tokens > 0),
+        ),
+      ).toBe(true);
     });
 
     test("matches span tree snapshot", testConfig, async () => {

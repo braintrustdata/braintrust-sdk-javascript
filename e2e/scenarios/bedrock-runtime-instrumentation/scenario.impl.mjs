@@ -4,9 +4,49 @@ import {
   runOperation,
   runTracedScenario,
 } from "../../helpers/provider-runtime.mjs";
-import { MODEL, REGION, ROOT_NAME, SCENARIO_NAME } from "./constants.mjs";
+import {
+  CACHE_PROMPT_MARKER,
+  MODEL,
+  REGION,
+  ROOT_NAME,
+  SCENARIO_NAME,
+} from "./constants.mjs";
 
 export const BEDROCK_RUNTIME_SCENARIO_TIMEOUT_MS = 180_000;
+
+const CACHEABLE_CONTEXT = `${CACHE_PROMPT_MARKER}
+${Array.from({ length: 1_600 }, (_, index) => `stable-cache-token-${index}`).join(" ")}
+Use this stable cache context only to exercise Bedrock prompt caching in this e2e scenario.`;
+
+function cachedConverseMessageContent(text) {
+  return [
+    {
+      text: CACHEABLE_CONTEXT,
+    },
+    {
+      cachePoint: {
+        type: "default",
+      },
+    },
+    {
+      text,
+    },
+  ];
+}
+
+function cachedNovaMessageContent(text) {
+  return [
+    {
+      text: CACHEABLE_CONTEXT,
+      cachePoint: {
+        type: "default",
+      },
+    },
+    {
+      text,
+    },
+  ];
+}
 
 function novaMessageBody(text) {
   return {
@@ -14,7 +54,7 @@ function novaMessageBody(text) {
     messages: [
       {
         role: "user",
-        content: [{ text }],
+        content: cachedNovaMessageContent(text),
       },
     ],
     inferenceConfig: {
@@ -67,7 +107,7 @@ export async function runBedrockRuntimeInstrumentationScenario(options) {
             messages: [
               {
                 role: "user",
-                content: [{ text: "Reply with exactly OK." }],
+                content: cachedConverseMessageContent("Reply with exactly OK."),
               },
             ],
             modelId: MODEL,
@@ -89,7 +129,9 @@ export async function runBedrockRuntimeInstrumentationScenario(options) {
               messages: [
                 {
                   role: "user",
-                  content: [{ text: "Reply with exactly STREAM." }],
+                  content: cachedConverseMessageContent(
+                    "Reply with exactly STREAM.",
+                  ),
                 },
               ],
               modelId: MODEL,

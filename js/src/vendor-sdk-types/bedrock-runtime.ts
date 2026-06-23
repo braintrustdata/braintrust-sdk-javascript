@@ -65,6 +65,8 @@ export interface BedrockRuntimeTokenUsage {
   totalTokens?: number;
   cacheReadInputTokens?: number;
   cacheWriteInputTokens?: number;
+  cacheReadInputTokenCount?: number;
+  cacheWriteInputTokenCount?: number;
   [key: string]: unknown;
 }
 
@@ -89,6 +91,15 @@ export interface BedrockRuntimeConverseResponse {
 
 export interface BedrockRuntimeConverseStreamResponse {
   stream?: AsyncIterable<BedrockRuntimeConverseStreamEvent>;
+  [key: string]: unknown;
+}
+
+export interface BedrockRuntimeStreamException {
+  name?: string;
+  message?: string;
+  $fault?: string;
+  originalMessage?: string;
+  originalStatusCode?: number;
   [key: string]: unknown;
 }
 
@@ -124,6 +135,11 @@ export interface BedrockRuntimeConverseStreamEvent {
     serviceTier?: string;
     [key: string]: unknown;
   };
+  internalServerException?: BedrockRuntimeStreamException;
+  modelStreamErrorException?: BedrockRuntimeStreamException;
+  validationException?: BedrockRuntimeStreamException;
+  throttlingException?: BedrockRuntimeStreamException;
+  serviceUnavailableException?: BedrockRuntimeStreamException;
   [key: string]: unknown;
 }
 
@@ -161,6 +177,12 @@ export interface BedrockRuntimeResponseStreamEvent {
     bytes?: unknown;
     [key: string]: unknown;
   };
+  internalServerException?: BedrockRuntimeStreamException;
+  modelStreamErrorException?: BedrockRuntimeStreamException;
+  validationException?: BedrockRuntimeStreamException;
+  throttlingException?: BedrockRuntimeStreamException;
+  modelTimeoutException?: BedrockRuntimeStreamException;
+  serviceUnavailableException?: BedrockRuntimeStreamException;
   [key: string]: unknown;
 }
 

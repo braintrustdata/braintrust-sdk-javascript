@@ -27,6 +27,13 @@ const bedrockRuntimeProxyCache = new WeakMap<
   BedrockRuntimeClient
 >();
 
+const BEDROCK_RUNTIME_OPERATION_METHODS = new Set([
+  "converse",
+  "converseStream",
+  "invokeModel",
+  "invokeModelWithResponseStream",
+]);
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
@@ -49,6 +56,10 @@ function bedrockRuntimeProxy(
     (...args: unknown[]) => unknown,
     (...args: unknown[]) => unknown
   >();
+  const operationMethodCache = new WeakMap<
+    (...args: unknown[]) => unknown,
+    (...args: unknown[]) => unknown
+  >();
 
   const proxy: BedrockRuntimeClient = new Proxy(client, {
     get(target, prop, receiver) {
@@ -59,6 +70,28 @@ function bedrockRuntimeProxy(
       const value = Reflect.get(target, prop, receiver);
       if (typeof value !== "function") {
         return value;
+      }
+
+      if (
+        typeof prop === "string" &&
+        BEDROCK_RUNTIME_OPERATION_METHODS.has(prop)
+      ) {
+        const cachedValue = operationMethodCache.get(value);
+        if (cachedValue) {
+          return cachedValue;
+        }
+
+        const thisBoundValue = function (
+          this: unknown,
+          ...args: unknown[]
+        ): unknown {
+          const thisArg = this === proxy ? proxy : this;
+          const output = Reflect.apply(value, thisArg, args);
+          return output === target ? proxy : output;
+        };
+
+        operationMethodCache.set(value, thisBoundValue);
+        return thisBoundValue;
       }
 
       const cachedValue = privateMethodWorkaroundCache.get(value);

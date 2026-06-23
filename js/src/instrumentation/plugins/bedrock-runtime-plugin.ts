@@ -234,20 +234,67 @@ export function parseBedrockRuntimeMetrics(
     ? (usage as BedrockRuntimeTokenUsage)
     : {};
 
-  if (typeof usageRecord.inputTokens === "number") {
-    metrics.prompt_tokens = usageRecord.inputTokens;
+  const promptTokens = firstNumber(
+    usageRecord.inputTokens,
+    usageRecord.inputTokenCount,
+    usageRecord.input_tokens,
+    usageRecord.prompt_tokens,
+  );
+  if (promptTokens !== undefined) {
+    metrics.prompt_tokens = promptTokens;
   }
-  if (typeof usageRecord.outputTokens === "number") {
-    metrics.completion_tokens = usageRecord.outputTokens;
+
+  const completionTokens = firstNumber(
+    usageRecord.outputTokens,
+    usageRecord.outputTokenCount,
+    usageRecord.output_tokens,
+    usageRecord.completion_tokens,
+  );
+  if (completionTokens !== undefined) {
+    metrics.completion_tokens = completionTokens;
   }
-  if (typeof usageRecord.totalTokens === "number") {
-    metrics.tokens = usageRecord.totalTokens;
+
+  const totalTokens = firstNumber(
+    usageRecord.totalTokens,
+    usageRecord.totalTokenCount,
+    usageRecord.total_tokens,
+    usageRecord.tokens,
+  );
+  if (totalTokens !== undefined) {
+    metrics.tokens = totalTokens;
   }
-  if (typeof usageRecord.cacheReadInputTokens === "number") {
-    metrics.prompt_cached_tokens = usageRecord.cacheReadInputTokens;
+
+  const cacheReadInputTokens = firstNumber(
+    usageRecord.cacheReadInputTokens,
+    usageRecord.cacheReadInputTokenCount,
+    usageRecord.cache_read_input_tokens,
+    usageRecord.prompt_cached_tokens,
+  );
+  if (cacheReadInputTokens !== undefined) {
+    metrics.prompt_cached_tokens = cacheReadInputTokens;
   }
-  if (typeof usageRecord.cacheWriteInputTokens === "number") {
-    metrics.prompt_cache_creation_tokens = usageRecord.cacheWriteInputTokens;
+
+  const cacheWriteInputTokens = firstNumber(
+    usageRecord.cacheWriteInputTokens,
+    usageRecord.cacheWriteInputTokenCount,
+    usageRecord.cache_write_input_tokens,
+    usageRecord.cache_creation_input_tokens,
+    usageRecord.prompt_cache_creation_tokens,
+  );
+  if (cacheWriteInputTokens !== undefined) {
+    metrics.prompt_cache_creation_tokens = cacheWriteInputTokens;
+  }
+
+  if (metrics.tokens === undefined) {
+    const tokenParts = [
+      promptTokens,
+      completionTokens,
+      cacheReadInputTokens,
+      cacheWriteInputTokens,
+    ].filter((value): value is number => value !== undefined);
+    if (tokenParts.length > 0) {
+      metrics.tokens = tokenParts.reduce((total, value) => total + value, 0);
+    }
   }
 
   if (
@@ -258,6 +305,10 @@ export function parseBedrockRuntimeMetrics(
   }
 
   return metrics;
+}
+
+function firstNumber(...values: unknown[]): number | undefined {
+  return values.find((value): value is number => typeof value === "number");
 }
 
 function patchBedrockRuntimeStreamingResult(args: {
@@ -314,11 +365,7 @@ function patchConverseStream(
         metrics.time_to_first_token = firstChunkTime - startTime;
       }
 
-      span.log({
-        output: aggregated.output,
-        ...(aggregated.metadata ? { metadata: aggregated.metadata } : {}),
-        metrics,
-      });
+      logBedrockStreamAggregation(span, aggregated, metrics);
       span.end();
     },
     onError: (error) => {
@@ -347,11 +394,7 @@ function patchInvokeModelResponseStream(
         metrics.time_to_first_token = firstChunkTime - startTime;
       }
 
-      span.log({
-        output: aggregated.output,
-        ...(aggregated.metadata ? { metadata: aggregated.metadata } : {}),
-        metrics,
-      });
+      logBedrockStreamAggregation(span, aggregated, metrics);
       span.end();
     },
     onError: (error) => {
@@ -361,13 +404,25 @@ function patchInvokeModelResponseStream(
   });
 }
 
-export function aggregateBedrockConverseStreamChunks(
-  chunks: BedrockRuntimeConverseStreamEvent[],
-): {
-  output: unknown;
+const BEDROCK_STREAM_EXCEPTION_KEYS = [
+  "internalServerException",
+  "modelStreamErrorException",
+  "validationException",
+  "throttlingException",
+  "modelTimeoutException",
+  "serviceUnavailableException",
+] as const;
+
+type BedrockRuntimeStreamAggregation = {
+  output?: unknown;
+  error?: string;
   metrics: Record<string, number>;
   metadata?: Record<string, unknown>;
-} {
+};
+
+export function aggregateBedrockConverseStreamChunks(
+  chunks: BedrockRuntimeConverseStreamEvent[],
+): BedrockRuntimeStreamAggregation {
   let role: string | undefined;
   let stopReason: string | undefined;
   let usage: unknown;
@@ -376,6 +431,11 @@ export function aggregateBedrockConverseStreamChunks(
   const metadata: Record<string, unknown> = {};
 
   for (const chunk of chunks) {
+    const exception = extractBedrockStreamException(chunk);
+    if (exception) {
+      return exception;
+    }
+
     if (typeof chunk.messageStart?.role === "string") {
       role = chunk.messageStart.role;
     }
@@ -438,13 +498,16 @@ export function aggregateBedrockConverseStreamChunks(
   };
 }
 
-function aggregateInvokeModelResponseStreamChunks(
+export function aggregateInvokeModelResponseStreamChunks(
   chunks: BedrockRuntimeResponseStreamEvent[],
-): {
-  output: unknown;
-  metrics: Record<string, number>;
-  metadata?: Record<string, unknown>;
-} {
+): BedrockRuntimeStreamAggregation {
+  for (const chunk of chunks) {
+    const exception = extractBedrockStreamException(chunk);
+    if (exception) {
+      return exception;
+    }
+  }
+
   const parsedChunks = chunks
     .map((chunk) => parseJsonBody(chunk.chunk?.bytes))
     .filter((chunk) => chunk !== undefined);
@@ -457,6 +520,21 @@ function aggregateInvokeModelResponseStreamChunks(
   const metadata = isObject(lastMetadataChunk?.metadata)
     ? sanitizeRecord(lastMetadataChunk.metadata)
     : undefined;
+  let usage: Record<string, unknown> | undefined;
+  for (const chunk of jsonLikeChunks) {
+    const message = chunk.message;
+    for (const candidate of [
+      isObject(chunk.usage) ? chunk.usage : undefined,
+      isObject(message) && isObject(message.usage) ? message.usage : undefined,
+    ]) {
+      if (candidate !== undefined) {
+        usage = {
+          ...usage,
+          ...sanitizeRecord(candidate),
+        };
+      }
+    }
+  }
 
   return {
     output:
@@ -467,11 +545,83 @@ function aggregateInvokeModelResponseStreamChunks(
             chunks: sanitizeBedrockValue(jsonLikeChunks.slice(0, 20)),
           },
     metrics: parseBedrockRuntimeMetrics(
-      isObject(metadata) ? metadata.usage : undefined,
+      usage ?? (isObject(metadata) ? metadata.usage : undefined),
       isObject(metadata) ? metadata.metrics : undefined,
     ),
     ...(metadata ? { metadata } : {}),
   };
+}
+
+function logBedrockStreamAggregation(
+  span: Span,
+  aggregated: BedrockRuntimeStreamAggregation,
+  metrics: Record<string, number>,
+): void {
+  span.log(
+    aggregated.error !== undefined
+      ? {
+          error: aggregated.error,
+          ...(aggregated.metadata ? { metadata: aggregated.metadata } : {}),
+          metrics,
+        }
+      : {
+          output: aggregated.output,
+          ...(aggregated.metadata ? { metadata: aggregated.metadata } : {}),
+          metrics,
+        },
+  );
+}
+
+function extractBedrockStreamException(
+  chunk: unknown,
+): BedrockRuntimeStreamAggregation | undefined {
+  if (!isObject(chunk)) {
+    return undefined;
+  }
+
+  for (const [key, value] of Object.entries(chunk)) {
+    if (!isBedrockStreamExceptionKey(key) || !isObject(value)) {
+      continue;
+    }
+
+    const name = typeof value.name === "string" ? value.name : key;
+    const message =
+      typeof value.message === "string"
+        ? value.message
+        : typeof value.originalMessage === "string"
+          ? value.originalMessage
+          : undefined;
+    const metadata: Record<string, unknown> = {
+      exception: key,
+    };
+
+    if (typeof value.name === "string") {
+      metadata.exceptionName = value.name;
+    }
+    if (typeof value.$fault === "string") {
+      metadata.fault = value.$fault;
+    }
+    if (typeof value.originalMessage === "string") {
+      metadata.originalMessage = value.originalMessage;
+    }
+    if (typeof value.originalStatusCode === "number") {
+      metadata.originalStatusCode = value.originalStatusCode;
+    }
+
+    return {
+      error: message ? `${name}: ${message}` : name,
+      metadata,
+      metrics: {},
+    };
+  }
+
+  return undefined;
+}
+
+function isBedrockStreamExceptionKey(
+  key: string,
+): key is (typeof BEDROCK_STREAM_EXCEPTION_KEYS)[number] {
+  return BEDROCK_STREAM_EXCEPTION_KEYS.some((candidate) => candidate === key);
 }
 
 function mergeContentBlockDelta(
@@ -622,8 +772,14 @@ function extractTextFromJsonLike(value: unknown): string {
   if (isObject(contentBlockDelta)) {
     return extractTextFromJsonLike(contentBlockDelta.delta);
   }
+  if (isObject(value.delta)) {
+    return extractTextFromJsonLike(value.delta);
+  }
   if (typeof value.text === "string") {
     return value.text;
+  }
+  if (typeof value.outputText === "string") {
+    return value.outputText;
   }
   if (typeof value.completion === "string") {
     return value.completion;
@@ -636,6 +792,9 @@ function extractTextFromJsonLike(value: unknown): string {
   }
   if (Array.isArray(value.output)) {
     return value.output.map(extractTextFromJsonLike).join("");
+  }
+  if (Array.isArray(value.outputs)) {
+    return value.outputs.map(extractTextFromJsonLike).join("");
   }
 
   return "";

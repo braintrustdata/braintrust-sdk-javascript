@@ -237,4 +237,52 @@ describe("bedrock runtime wrapper", () => {
       tokens: 5,
     });
   });
+
+  test("wraps generated aggregated operation methods through proxy send", async () => {
+    const send = vi.fn(async (command: ConverseCommand) => ({
+      output: {
+        message: {
+          content: [{ text: "OK" }],
+          role: "assistant",
+        },
+      },
+      stopReason: "end_turn",
+      usage: {
+        inputTokens: 1,
+        outputTokens: 1,
+        totalTokens: 2,
+      },
+    }));
+
+    const wrapped = wrapBedrockRuntime({
+      send,
+      converse(this: { send: typeof send }, input: Record<string, unknown>) {
+        return this.send(new ConverseCommand(input));
+      },
+    });
+
+    await wrapped.converse({
+      messages: [
+        {
+          content: [{ text: "Reply with exactly OK." }],
+          role: "user",
+        },
+      ],
+      modelId: "us.amazon.nova-lite-v1:0",
+    });
+
+    expect(send).toHaveBeenCalledTimes(1);
+
+    const spans = await backgroundLogger.drain();
+    expect(spans).toHaveLength(1);
+    expect(spans[0]).toMatchObject({
+      output: {
+        content: [{ text: "OK" }],
+        role: "assistant",
+      },
+      span_attributes: {
+        name: "bedrock.converse",
+      },
+    });
+  });
 });

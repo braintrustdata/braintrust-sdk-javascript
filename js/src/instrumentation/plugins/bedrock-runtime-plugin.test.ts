@@ -4,6 +4,7 @@ import { configureNode } from "../../node/config";
 import { smithyCoreChannels } from "./bedrock-runtime-channels";
 import {
   aggregateBedrockConverseStreamChunks,
+  aggregateInvokeModelResponseStreamChunks,
   parseBedrockRuntimeMetrics,
 } from "./bedrock-runtime-plugin";
 
@@ -132,6 +133,54 @@ describe("parseBedrockRuntimeMetrics", () => {
       latency_ms: 321,
       prompt_cache_creation_tokens: 2,
       prompt_cached_tokens: 3,
+      prompt_tokens: 10,
+      tokens: 14,
+    });
+  });
+
+  it("maps Bedrock model usage token count cache metrics to Braintrust metrics", () => {
+    expect(
+      parseBedrockRuntimeMetrics({
+        cacheReadInputTokenCount: 5,
+        cacheWriteInputTokenCount: 7,
+      }),
+    ).toEqual({
+      prompt_cache_creation_tokens: 7,
+      prompt_cached_tokens: 5,
+      tokens: 12,
+    });
+  });
+
+  it("maps provider-native snake_case usage metrics and computes total tokens", () => {
+    expect(
+      parseBedrockRuntimeMetrics({
+        cache_creation_input_tokens: 7,
+        cache_read_input_tokens: 5,
+        input_tokens: 10,
+        output_tokens: 4,
+      }),
+    ).toEqual({
+      completion_tokens: 4,
+      prompt_cache_creation_tokens: 7,
+      prompt_cached_tokens: 5,
+      prompt_tokens: 10,
+      tokens: 26,
+    });
+  });
+
+  it("preserves explicit provider-native total tokens when present", () => {
+    expect(
+      parseBedrockRuntimeMetrics({
+        cache_creation_input_tokens: 7,
+        cache_read_input_tokens: 5,
+        input_tokens: 10,
+        output_tokens: 4,
+        total_tokens: 14,
+      }),
+    ).toEqual({
+      completion_tokens: 4,
+      prompt_cache_creation_tokens: 7,
+      prompt_cached_tokens: 5,
       prompt_tokens: 10,
       tokens: 14,
     });
@@ -289,5 +338,238 @@ describe("aggregateBedrockConverseStreamChunks", () => {
         undefined,
       );
     }
+  });
+
+  it("reports Bedrock Converse stream exception events as errors", () => {
+    expect(
+      aggregateBedrockConverseStreamChunks([
+        {
+          contentBlockDelta: {
+            contentBlockIndex: 0,
+            delta: {
+              text: "partial",
+            },
+          },
+        },
+        {
+          modelStreamErrorException: {
+            $fault: "client",
+            message: "model stream failed",
+            name: "ModelStreamErrorException",
+            originalMessage: "provider stream failed",
+            originalStatusCode: 424,
+          },
+        },
+      ]),
+    ).toEqual({
+      error: "ModelStreamErrorException: model stream failed",
+      metadata: {
+        exception: "modelStreamErrorException",
+        exceptionName: "ModelStreamErrorException",
+        fault: "client",
+        originalMessage: "provider stream failed",
+        originalStatusCode: 424,
+      },
+      metrics: {},
+    });
+  });
+});
+
+describe("aggregateInvokeModelResponseStreamChunks", () => {
+  it("aggregates Anthropic Claude stream delta text from InvokeModel response stream chunks", () => {
+    expect(
+      aggregateInvokeModelResponseStreamChunks([
+        {
+          chunk: {
+            bytes: new TextEncoder().encode(
+              JSON.stringify({
+                type: "content_block_delta",
+                delta: {
+                  text: "Hel",
+                },
+              }),
+            ),
+          },
+        },
+        {
+          chunk: {
+            bytes: new TextEncoder().encode(
+              JSON.stringify({
+                type: "content_block_delta",
+                delta: {
+                  text: "lo",
+                },
+              }),
+            ),
+          },
+        },
+      ]),
+    ).toEqual({
+      output: {
+        text: "Hello",
+      },
+      metrics: {},
+    });
+  });
+
+  it("aggregates Anthropic Claude stream usage metrics from message_start and message_delta chunks", () => {
+    expect(
+      aggregateInvokeModelResponseStreamChunks([
+        {
+          chunk: {
+            bytes: new TextEncoder().encode(
+              JSON.stringify({
+                type: "message_start",
+                message: {
+                  usage: {
+                    cache_creation_input_tokens: 2,
+                    cache_read_input_tokens: 3,
+                    input_tokens: 17,
+                  },
+                },
+              }),
+            ),
+          },
+        },
+        {
+          chunk: {
+            bytes: new TextEncoder().encode(
+              JSON.stringify({
+                type: "content_block_delta",
+                delta: {
+                  text: "Hi",
+                },
+              }),
+            ),
+          },
+        },
+        {
+          chunk: {
+            bytes: new TextEncoder().encode(
+              JSON.stringify({
+                type: "message_delta",
+                usage: {
+                  output_tokens: 5,
+                },
+              }),
+            ),
+          },
+        },
+      ]),
+    ).toEqual({
+      output: {
+        text: "Hi",
+      },
+      metrics: {
+        completion_tokens: 5,
+        prompt_cache_creation_tokens: 2,
+        prompt_cached_tokens: 3,
+        prompt_tokens: 17,
+        tokens: 27,
+      },
+    });
+  });
+
+  it("aggregates Titan stream outputText from InvokeModel response stream chunks", () => {
+    expect(
+      aggregateInvokeModelResponseStreamChunks([
+        {
+          chunk: {
+            bytes: new TextEncoder().encode(
+              JSON.stringify({
+                index: 0,
+                outputText: "Hel",
+              }),
+            ),
+          },
+        },
+        {
+          chunk: {
+            bytes: new TextEncoder().encode(
+              JSON.stringify({
+                index: 1,
+                outputText: "lo",
+              }),
+            ),
+          },
+        },
+      ]),
+    ).toEqual({
+      output: {
+        text: "Hello",
+      },
+      metrics: {},
+    });
+  });
+
+  it("aggregates Mistral stream outputs text from InvokeModel response stream chunks", () => {
+    expect(
+      aggregateInvokeModelResponseStreamChunks([
+        {
+          chunk: {
+            bytes: new TextEncoder().encode(
+              JSON.stringify({
+                outputs: [
+                  {
+                    text: "Hel",
+                  },
+                ],
+              }),
+            ),
+          },
+        },
+        {
+          chunk: {
+            bytes: new TextEncoder().encode(
+              JSON.stringify({
+                outputs: [
+                  {
+                    text: "lo",
+                  },
+                ],
+              }),
+            ),
+          },
+        },
+      ]),
+    ).toEqual({
+      output: {
+        text: "Hello",
+      },
+      metrics: {},
+    });
+  });
+
+  it("reports Bedrock InvokeModel response stream exception events as errors", () => {
+    expect(
+      aggregateInvokeModelResponseStreamChunks([
+        {
+          chunk: {
+            bytes: new TextEncoder().encode(
+              JSON.stringify({
+                contentBlockDelta: {
+                  delta: {
+                    text: "partial",
+                  },
+                },
+              }),
+            ),
+          },
+        },
+        {
+          modelTimeoutException: {
+            message: "model timed out",
+            name: "ModelTimeoutException",
+          },
+        },
+      ]),
+    ).toEqual({
+      error: "ModelTimeoutException: model timed out",
+      metadata: {
+        exception: "modelTimeoutException",
+        exceptionName: "ModelTimeoutException",
+      },
+      metrics: {},
+    });
   });
 });
