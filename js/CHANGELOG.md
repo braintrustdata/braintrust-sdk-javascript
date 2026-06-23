@@ -1,5 +1,11 @@
 # braintrust
 
+## 3.20.0
+
+### Minor Changes
+
+- feat: Make flue manual instrumentation slightly cleaner with `braintrustFlueInstrumentation()` (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2159)
+
 ## 3.19.0
 
 ### Minor Changes
