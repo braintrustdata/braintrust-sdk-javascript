@@ -14,6 +14,7 @@ import { MistralPlugin } from "./plugins/mistral-plugin";
 import { GoogleADKPlugin } from "./plugins/google-adk-plugin";
 import { CoherePlugin } from "./plugins/cohere-plugin";
 import { GroqPlugin } from "./plugins/groq-plugin";
+import { BedrockRuntimePlugin } from "./plugins/bedrock-runtime-plugin";
 import { GenkitPlugin } from "./plugins/genkit-plugin";
 import { GitHubCopilotPlugin } from "./plugins/github-copilot-plugin";
 import { FluePlugin } from "./plugins/flue-plugin";
@@ -60,6 +61,7 @@ export class BraintrustPlugin extends BasePlugin {
   private googleADKPlugin: GoogleADKPlugin | null = null;
   private coherePlugin: CoherePlugin | null = null;
   private groqPlugin: GroqPlugin | null = null;
+  private bedrockRuntimePlugin: BedrockRuntimePlugin | null = null;
   private genkitPlugin: GenkitPlugin | null = null;
   private gitHubCopilotPlugin: GitHubCopilotPlugin | null = null;
   private fluePlugin: FluePlugin | null = null;
@@ -157,6 +159,15 @@ export class BraintrustPlugin extends BasePlugin {
     if (integrations.groq !== false) {
       this.groqPlugin = new GroqPlugin();
       this.groqPlugin.enable();
+    }
+
+    if (
+      integrations.bedrock !== false &&
+      integrations.awsBedrock !== false &&
+      integrations.awsBedrockRuntime !== false
+    ) {
+      this.bedrockRuntimePlugin = new BedrockRuntimePlugin();
+      this.bedrockRuntimePlugin.enable();
     }
 
     if (integrations.genkit !== false) {
@@ -270,6 +281,11 @@ export class BraintrustPlugin extends BasePlugin {
     if (this.groqPlugin) {
       this.groqPlugin.disable();
       this.groqPlugin = null;
+    }
+
+    if (this.bedrockRuntimePlugin) {
+      this.bedrockRuntimePlugin.disable();
+      this.bedrockRuntimePlugin = null;
     }
 
     if (this.genkitPlugin) {

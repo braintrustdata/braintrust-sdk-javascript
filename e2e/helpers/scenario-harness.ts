@@ -47,7 +47,7 @@ const HELPERS_DIR = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(HELPERS_DIR, "../..");
 const RUN_CONTEXT_DIR_ENV = "BRAINTRUST_E2E_RUN_CONTEXT_DIR";
 const CASSETTE_MODE_ENV = "BRAINTRUST_E2E_CASSETTE_MODE";
-const DEFAULT_ANTHROPIC_BEDROCK_REGION = "us-east-1";
+const DEFAULT_BEDROCK_REGION = "us-east-1";
 
 type ScenarioRunner = "deno" | "node" | "tsx";
 
@@ -283,11 +283,11 @@ interface ActiveCassetteWiring extends CassetteWiring {
   serverUrl: string;
 }
 
-function getAnthropicBedrockRegion(): string {
+function getBedrockRegion(): string {
   return (
     process.env.AWS_REGION ||
     process.env.AWS_DEFAULT_REGION ||
-    DEFAULT_ANTHROPIC_BEDROCK_REGION
+    DEFAULT_BEDROCK_REGION
   );
 }
 
@@ -296,7 +296,11 @@ function getCassetteServerRoutes(): CassetteServerRoute[] {
     { prefix: "/anthropic", upstreamOrigin: "https://api.anthropic.com" },
     {
       prefix: "/anthropic-bedrock",
-      upstreamOrigin: `https://bedrock-runtime.${getAnthropicBedrockRegion()}.amazonaws.com`,
+      upstreamOrigin: `https://bedrock-runtime.${getBedrockRegion()}.amazonaws.com`,
+    },
+    {
+      prefix: "/aws-bedrock-runtime",
+      upstreamOrigin: `https://bedrock-runtime.${getBedrockRegion()}.amazonaws.com`,
     },
     { prefix: "/cohere", upstreamOrigin: "https://api.cohere.com" },
     { prefix: "/cursor/v1", upstreamOrigin: "https://api.cursor.com/v1" },
@@ -331,6 +335,7 @@ function getCassetteEnv(wiring: ActiveCassetteWiring): Record<string, string> {
     BRAINTRUST_E2E_MODEL_BASE_URL: `${serverUrl}/openai/v1`,
     ANTHROPIC_BASE_URL: `${serverUrl}/anthropic`,
     ANTHROPIC_BEDROCK_BASE_URL: `${serverUrl}/anthropic-bedrock`,
+    AWS_BEDROCK_RUNTIME_BASE_URL: `${serverUrl}/aws-bedrock-runtime`,
     COHERE_BASE_URL: `${serverUrl}/cohere`,
     COHERE_API_URL: `${serverUrl}/cohere`,
     CURSOR_BACKEND_URL: `${serverUrl}/cursor`,
@@ -380,7 +385,7 @@ const CASSETTE_PROVIDER_KEYS: Array<{
   },
   {
     envVars: ["AWS_BEARER_TOKEN_BEDROCK"],
-    placeholder: "cassette-placeholder",
+    placeholder: "btb-cassette-placeholder",
   },
   {
     envVars: ["COHERE_API_KEY", "CO_API_KEY"],

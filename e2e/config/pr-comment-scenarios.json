@@ -116,6 +116,15 @@
     ]
   },
   {
+    "scenarioDirName": "bedrock-runtime-instrumentation",
+    "label": "Bedrock Runtime Instrumentation",
+    "metadataScenario": "bedrock-runtime-instrumentation",
+    "variants": [
+      { "variantKey": "bedrock-runtime-v3-1048-wrapped", "label": "Wrapped" },
+      { "variantKey": "bedrock-runtime-v3-1048-auto", "label": "Auto-hook" }
+    ]
+  },
+  {
     "scenarioDirName": "huggingface-instrumentation",
     "label": "HuggingFace Instrumentation",
     "metadataScenario": "huggingface-instrumentation",

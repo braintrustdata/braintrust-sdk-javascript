@@ -18,6 +18,9 @@ export interface InstrumentationIntegrationsConfig {
   mistral?: boolean;
   cohere?: boolean;
   groq?: boolean;
+  bedrock?: boolean;
+  awsBedrock?: boolean;
+  awsBedrockRuntime?: boolean;
   genkit?: boolean;
   gitHubCopilot?: boolean;
   openaiCodexSDK?: boolean;
@@ -84,6 +87,12 @@ const envIntegrationAliases: Record<
   cohere: "cohere",
   groq: "groq",
   "groq-sdk": "groq",
+  bedrock: "bedrock",
+  "aws-bedrock": "awsBedrock",
+  awsbedrock: "awsBedrock",
+  "aws-bedrock-runtime": "awsBedrockRuntime",
+  awsbedrockruntime: "awsBedrockRuntime",
+  "@aws-sdk/client-bedrock-runtime": "awsBedrockRuntime",
   genkit: "genkit",
   "firebase-genkit": "genkit",
   githubcopilot: "gitHubCopilot",
@@ -120,6 +129,9 @@ export function getDefaultInstrumentationIntegrations(): Record<
     mistral: true,
     cohere: true,
     groq: true,
+    bedrock: true,
+    awsBedrock: true,
+    awsBedrockRuntime: true,
     genkit: true,
     gitHubCopilot: true,
     langchain: true,

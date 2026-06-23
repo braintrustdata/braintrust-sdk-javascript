@@ -6,6 +6,7 @@ import {
 } from "../../instrumentation/config";
 import { aiSDKConfigs } from "./ai-sdk";
 import { anthropicConfigs } from "./anthropic";
+import { bedrockRuntimeConfigs } from "./bedrock-runtime";
 import { claudeAgentSDKConfigs } from "./claude-agent-sdk";
 import { cohereConfigs } from "./cohere";
 import { cursorSDKConfigs } from "./cursor-sdk";
@@ -39,6 +40,10 @@ const defaultInstrumentationConfigGroups: readonly InstrumentationConfigGroup[] 
       configs: openAICodexConfigs,
     },
     { integrations: ["anthropic"], configs: anthropicConfigs },
+    {
+      integrations: ["bedrock", "awsBedrock", "awsBedrockRuntime"],
+      configs: bedrockRuntimeConfigs,
+    },
     {
       integrations: ["aisdk", "vercel"],
       configs: aiSDKConfigs,
