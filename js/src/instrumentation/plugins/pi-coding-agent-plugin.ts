@@ -288,6 +288,8 @@ function enterPiPromptContext(state: PiPromptState): () => void {
     id: Symbol("braintrust.pi-coding-agent.prompt"),
     state,
   };
+  // TODO(luca): Replace ALS.enterWith() with ALS.run()
+  // eslint-disable-next-line no-restricted-syntax -- Existing ALS.enterWith() usage tracked by the TODO above.
   promptContextStore().enterWith({
     frames: [...currentPromptContextFrames(), frame],
   });
@@ -296,6 +298,8 @@ function enterPiPromptContext(state: PiPromptState): () => void {
     const frames = currentPromptContextFrames().filter(
       (candidate) => candidate.id !== frame.id,
     );
+    // TODO(luca): Replace ALS.enterWith() with ALS.run()
+    // eslint-disable-next-line no-restricted-syntax -- Existing ALS.enterWith() usage tracked by the TODO above.
     promptContextStore().enterWith(frames.length > 0 ? { frames } : undefined);
   };
 }

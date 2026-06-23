@@ -1078,6 +1078,8 @@ function enterCurrentFlueSpan(span: Span): ActiveSpanContext | undefined {
 
   const previous = store.getStore();
   try {
+    // TODO(luca): Replace ALS.enterWith() with ALS.run()
+    // eslint-disable-next-line no-restricted-syntax -- Existing ALS.enterWith() usage tracked by the TODO above.
     store.enterWith(contextManager.wrapSpanForStore(span));
     return { previous, store };
   } catch (error) {
@@ -1102,6 +1104,8 @@ function restoreCurrentFlueSpan(
   }
 
   try {
+    // TODO(luca): Replace ALS.enterWith() with ALS.run()
+    // eslint-disable-next-line no-restricted-syntax -- Existing ALS.enterWith() usage tracked by the TODO above.
     activeContext.store.enterWith(activeContext.previous);
   } catch (error) {
     logInstrumentationError("Flue context restoration", error);
