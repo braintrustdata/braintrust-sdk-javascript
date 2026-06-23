@@ -829,7 +829,9 @@ export async function withScenarioHarness(
     await recordScenarioRunContext({
       entry: options.entry ?? defaultEntry,
       runner,
-      scenarioDirName: path.basename(options.scenarioDir),
+      scenarioDirName: path.basename(
+        options.runContext?.originalScenarioDir ?? options.scenarioDir,
+      ),
       testRunId,
       timestamp: new Date().toISOString(),
       variantKey: options.runContext?.variantKey,
