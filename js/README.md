@@ -102,16 +102,6 @@ If you use TypeScript or other transpilation plugins, place the Braintrust plugi
 
 For deeper details, see the [auto-instrumentation architecture docs](src/auto-instrumentations/README.md).
 
-## Browser Support
-
-For browser-only applications, use the dedicated browser package:
-
-```bash
-npm install @braintrust/browser braintrust
-```
-
-See the [`@braintrust/browser` README](../integrations/browser-js/README.md) for details and current limitations.
-
 ## Migration Guides
 
 ### Upgrading from 2.x to 3.x
