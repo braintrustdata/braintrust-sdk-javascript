@@ -204,7 +204,10 @@
     "scenarioDirName": "flue-instrumentation",
     "label": "Flue Instrumentation",
     "metadataScenario": "flue-instrumentation",
-    "variants": [{ "variantKey": "flue-v0-8-0", "label": "v0.8.0" }]
+    "variants": [
+      { "variantKey": "flue-v0-8-0", "label": "v0.8.0" },
+      { "variantKey": "flue-v1-0-0-beta-3", "label": "v1.0.0-beta.3" }
+    ]
   },
   {
     "scenarioDirName": "github-copilot-instrumentation",

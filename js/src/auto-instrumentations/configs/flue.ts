@@ -1,7 +1,7 @@
 import type { InstrumentationConfig } from "@apm-js-collab/code-transformer";
 import { flueChannels } from "../../instrumentation/plugins/flue-channels";
 
-const flueVersionRange = ">=0.8.0";
+export const flueVersionRange = ">=0.8.0 <1.0.0";
 
 export const flueConfigs: InstrumentationConfig[] = [
   {
