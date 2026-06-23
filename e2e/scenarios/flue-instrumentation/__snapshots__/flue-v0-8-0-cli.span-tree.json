@@ -5,14 +5,6 @@
       "type": "task",
       "children": [
         {
-          "name": "flue.workflowCurrentProbe",
-          "children": [],
-          "output": "active",
-          "metadata": {
-            "scenario": "flue-instrumentation"
-          }
-        },
-        {
           "name": "flue.prompt",
           "type": "task",
           "children": [
@@ -76,16 +68,7 @@
             {
               "name": "tool:lookup",
               "type": "tool",
-              "children": [
-                {
-                  "name": "flue.toolCurrentProbe",
-                  "children": [],
-                  "output": "lookup-active",
-                  "metadata": {
-                    "scenario": "flue-instrumentation"
-                  }
-                }
-              ],
+              "children": [],
               "input": {
                 "query": "flue instrumentation"
               },
