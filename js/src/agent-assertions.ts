@@ -18,15 +18,15 @@ type AssertionMatcher =
 
 interface ToolCallAssertionOptions {
   /**
-   * Match against the tool call input. Objects are matched partially, regular
-   * expressions are matched against stringified values, and functions are
-   * treated as predicates.
+   * Match against the tool call input. Objects are matched partially, arrays
+   * are matched recursively, regular expressions match raw strings as-is and
+   * formatted non-string values, and functions are treated as predicates.
    */
   input?: AssertionMatcher;
   /**
-   * Match against the tool call output. Objects are matched partially, regular
-   * expressions are matched against stringified values, and functions are
-   * treated as predicates.
+   * Match against the tool call output. Objects are matched partially, arrays
+   * are matched recursively, regular expressions match raw strings as-is and
+   * formatted non-string values, and functions are treated as predicates.
    */
   output?: AssertionMatcher;
   /** If set, require the matching tool call to have, or not have, an error. */
@@ -66,8 +66,8 @@ interface AgentAssertionHelpers {
     name?: string,
   ) => AgentAssertion;
   /**
-   * Assert that a stringified value contains a substring or matches a regular
-   * expression.
+   * Assert that a value contains a substring or matches a regular expression.
+   * Regular expressions test raw strings as-is and formatted non-string values.
    *
    * @param value - The value to inspect.
    * @param expected - The substring or regular expression to find.
@@ -144,11 +144,26 @@ type AgentAssertionScorerCallback<
   Expected,
   Metadata extends BaseMetadata = DefaultMetadataType,
 > = (
-  args: Omit<EvalScorerArgs<Input, Output, Expected, Metadata>, "trace"> & {
-    /** Helpers for building assertions from Eval inputs, outputs, and traces. */
-    assert: AgentAssertionHelpers;
-  },
+  args: AgentAssertionScorerCallbackArgs<Input, Output, Expected, Metadata>,
 ) => MaybePromise<AgentAssertion[]>;
+
+type AgentAssertionScorerCallbackArgs<
+  Input,
+  Output,
+  Expected,
+  Metadata extends BaseMetadata,
+> = Omit<
+  EvalScorerArgs<Input, Output, Expected, Metadata>,
+  "metadata" | "trace"
+> & {
+  /**
+   * Row metadata passed to the Eval scorer. Defaults to an empty object when
+   * the Eval row does not have typed metadata.
+   */
+  metadata: Metadata extends void ? Record<string, unknown> : Metadata;
+  /** Helpers for building assertions from Eval inputs, outputs, and traces. */
+  assert: AgentAssertionHelpers;
+};
 
 interface AgentAssertionResources {
   spans?: SpanData[];
@@ -215,10 +230,12 @@ export function agentAssertionScorer<
 ): EvalScorer<Input, Output, Expected, Metadata> {
   return async (args) => {
     const { trace: _trace, ...callbackArgs } = args;
+    const metadata = (callbackArgs as { metadata?: unknown }).metadata ?? {};
     const assertions = await callback({
       ...callbackArgs,
+      metadata,
       assert: agentAssertionHelpers,
-    });
+    } as AgentAssertionScorerCallbackArgs<Input, Output, Expected, Metadata>);
     const resources: AgentAssertionResources = {};
     if (assertions.some((assertion) => assertion.requiresTrace)) {
       resources.spans = await args.trace?.getSpans({ spanType: ["tool"] });
@@ -283,11 +300,12 @@ const agentAssertionHelpers: AgentAssertionHelpers = {
   contains: (value, expected, name = "contains") => ({
     name,
     evaluate: () => {
-      const stringValue = String(value);
+      const searchedValue =
+        typeof value === "string" ? value : formatValue(value);
       const passed =
         expected instanceof RegExp
-          ? expected.test(stringValue)
-          : stringValue.includes(expected);
+          ? testRegex(expected, value)
+          : searchedValue.includes(expected);
       return {
         passed,
         failure: passed
@@ -331,6 +349,11 @@ const agentAssertionHelpers: AgentAssertionHelpers = {
     name,
     requiresTrace: true,
     evaluate: ({ spans }) => {
+      // This negative assertion treats an unavailable trace as "no observed
+      // tool calls" on purpose. It lets users run the scorer for tasks that do
+      // not collect traces without turning the absence of tracing itself into a
+      // failure. Positive tool assertions still fail because they cannot find
+      // the required call.
       const calls = toolCalls(spans ?? []).filter(
         (span) => getToolName(span) === toolName,
       );
@@ -369,6 +392,9 @@ const agentAssertionHelpers: AgentAssertionHelpers = {
     name,
     requiresTrace: true,
     evaluate: ({ spans }) => {
+      // This is intentionally based on observed tool calls: if no trace is
+      // available, there are no observed calls, so this negative assertion
+      // passes instead of treating missing tracing as a scorer failure.
       const calls = toolCalls(spans ?? []);
       const passed = calls.length === 0;
       return {
@@ -383,6 +409,9 @@ const agentAssertionHelpers: AgentAssertionHelpers = {
     name,
     requiresTrace: true,
     evaluate: ({ spans }) => {
+      // Limit checks intentionally use the same "observed tool calls" model as
+      // usedNoTools: without trace data, the observed count is zero. This keeps
+      // missing tracing distinct from a task that actually exceeded the limit.
       const calls = toolCalls(spans ?? []);
       const passed = calls.length <= max;
       return {
@@ -438,13 +467,13 @@ function matchingToolCalls(
   return toolCalls(spans).filter((span) => {
     if (getToolName(span) !== toolName) return false;
     if (
-      options.input !== undefined &&
+      Object.prototype.hasOwnProperty.call(options, "input") &&
       !matchesValue(span.input, options.input)
     ) {
       return false;
     }
     if (
-      options.output !== undefined &&
+      Object.prototype.hasOwnProperty.call(options, "output") &&
       !matchesValue(span.output, options.output)
     ) {
       return false;
@@ -460,31 +489,65 @@ function matchingToolCalls(
 }
 
 function getToolName(span: SpanData) {
-  const rawName =
-    typeof span.span_attributes?.name === "string"
-      ? span.span_attributes.name
-      : typeof span.name === "string"
-        ? span.name
-        : undefined;
-  if (!rawName) return undefined;
-  return rawName.startsWith("tool:")
-    ? rawName.slice("tool:".length).trim()
-    : rawName;
+  const spanName = [span.span_attributes?.name, span.name]
+    .map(normalizeToolName)
+    .find((value): value is string => value !== undefined);
+  if (spanName?.includes("/")) {
+    return spanName;
+  }
+
+  const metadataName = [
+    span.metadata?.tool_name,
+    span.metadata?.["gen_ai.tool.name"],
+  ]
+    .map(normalizeToolName)
+    .find((value): value is string => value !== undefined);
+  const mcpServer = [
+    span.metadata?.["mcp.server"],
+    span.metadata?.["openai_codex.mcp.server"],
+  ].find((value): value is string => typeof value === "string" && value !== "");
+
+  if (metadataName && mcpServer) {
+    return `${mcpServer}/${metadataName}`;
+  }
+
+  return metadataName ?? spanName;
+}
+
+function normalizeToolName(value: unknown) {
+  if (typeof value !== "string" || value === "") {
+    return undefined;
+  }
+  return value.startsWith("tool:") ? value.slice("tool:".length).trim() : value;
 }
 
 function matchesValue(actual: unknown, matcher: AssertionMatcher): boolean {
   if (matcher instanceof RegExp) {
-    return matcher.test(String(actual));
+    return testRegex(matcher, actual);
   }
   if (typeof matcher === "function") {
     return matcher(actual);
   }
+  if (Array.isArray(matcher)) {
+    return (
+      Array.isArray(actual) &&
+      actual.length === matcher.length &&
+      matcher.every((value, index) => matchesValue(actual[index], value))
+    );
+  }
   if (isPlainObject(matcher) && isPlainObject(actual)) {
-    return Object.entries(matcher).every(([key, value]) =>
-      matchesValue(actual[key], value),
+    return Object.entries(matcher).every(
+      ([key, value]) =>
+        Object.prototype.hasOwnProperty.call(actual, key) &&
+        matchesValue(actual[key], value),
     );
   }
   return deepEqual(actual, matcher);
+}
+
+function testRegex(matcher: RegExp, value: unknown) {
+  matcher.lastIndex = 0;
+  return matcher.test(typeof value === "string" ? value : formatValue(value));
 }
 
 function deepEqual(left: unknown, right: unknown): boolean {
@@ -500,7 +563,11 @@ function deepEqual(left: unknown, right: unknown): boolean {
     const rightKeys = Object.keys(right);
     return (
       leftKeys.length === rightKeys.length &&
-      leftKeys.every((key) => deepEqual(left[key], right[key]))
+      leftKeys.every(
+        (key) =>
+          Object.prototype.hasOwnProperty.call(right, key) &&
+          deepEqual(left[key], right[key]),
+      )
     );
   }
   return false;
@@ -531,8 +598,91 @@ function formatValue(value: unknown) {
   }
   try {
     const serialized = JSON.stringify(value);
-    return serialized === undefined ? String(value) : serialized;
+    if (serialized !== undefined && !hasUndefinedJsonValue(value)) {
+      return serialized;
+    }
+    return formatValueWithUndefined(value, new Set());
   } catch {
     return String(value);
   }
+}
+
+function hasUndefinedJsonValue(
+  value: unknown,
+  seen = new Set<object>(),
+): boolean {
+  if (value === undefined) {
+    return true;
+  }
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+  if (seen.has(value)) {
+    return false;
+  }
+  seen.add(value);
+
+  if (Array.isArray(value)) {
+    return Array.from({ length: value.length }).some((_, index) =>
+      hasUndefinedJsonValue(value[index], seen),
+    );
+  }
+
+  return Object.keys(value).some((key) =>
+    hasUndefinedJsonValue((value as Record<string, unknown>)[key], seen),
+  );
+}
+
+function formatValueWithUndefined(value: unknown, seen: Set<object>): string {
+  if (value === undefined) {
+    return "undefined";
+  }
+  if (value === null) {
+    return "null";
+  }
+  if (typeof value === "string") {
+    return JSON.stringify(value);
+  }
+  if (typeof value === "number" || typeof value === "boolean") {
+    return JSON.stringify(value);
+  }
+  if (typeof value === "bigint" || typeof value === "function") {
+    return String(value);
+  }
+  if (typeof value === "symbol") {
+    return String(value);
+  }
+  if (value instanceof RegExp) {
+    return value.toString();
+  }
+  if (typeof value !== "object") {
+    return String(value);
+  }
+  if (seen.has(value)) {
+    return '"[Circular]"';
+  }
+
+  seen.add(value);
+  if (typeof (value as { toJSON?: unknown }).toJSON === "function") {
+    const jsonValue = (value as { toJSON: () => unknown }).toJSON();
+    seen.delete(value);
+    return formatValueWithUndefined(jsonValue, seen);
+  }
+  if (Array.isArray(value)) {
+    const formatted = Array.from({ length: value.length }, (_, index) =>
+      formatValueWithUndefined(value[index], seen),
+    );
+    seen.delete(value);
+    return `[${formatted.join(",")}]`;
+  }
+
+  const formatted = Object.keys(value).map(
+    (key) =>
+      `${JSON.stringify(key)}:${formatValueWithUndefined(
+        (value as Record<string, unknown>)[key],
+        seen,
+      )}`,
+  );
+  seen.delete(value);
+  return `{${formatted.join(",")}}`;
 }
