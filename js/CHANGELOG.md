@@ -12,7 +12,7 @@
 
 ### Patch Changes
 
-- Fix: dataset-backed eval origin for copied dataset rows Thanks @evanmkeith! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2140)
+- fix: Fix dataset row origin for evals and playgrounds (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2140)
 - fix(anthropic): Log Anthropic system message first in span input Thanks @joshua-tj! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2109)
 
 ## 3.18.0
