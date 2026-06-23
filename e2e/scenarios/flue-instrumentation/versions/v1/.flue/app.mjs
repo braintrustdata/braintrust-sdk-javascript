@@ -37,8 +37,8 @@ if (process.env.FLUE_E2E_FLUSH_FILE) {
 }
 
 if (process.env.FLUE_E2E_EXPLICIT_OBSERVE === "1") {
-  const { braintrustFlueObserver } = await import("braintrust");
-  instrument(braintrustFlueObserver);
+  const { braintrustFlueInstrumentation } = await import("braintrust");
+  instrument(braintrustFlueInstrumentation());
 }
 
 const openAIBaseUrl =
