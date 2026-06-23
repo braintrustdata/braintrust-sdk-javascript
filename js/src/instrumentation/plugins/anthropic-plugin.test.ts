@@ -12,6 +12,7 @@ import {
   parseMetricsFromUsage,
   aggregateAnthropicStreamChunks,
   processAttachmentsInInput,
+  coalesceInput,
 } from "./anthropic-plugin";
 import type { StartEvent } from "../core";
 import { Attachment } from "../../logger";
@@ -916,5 +917,51 @@ describe("processAttachmentsInInput", () => {
 
     // Should not crash, just return as-is or with minimal processing
     expect(result[0].type).toBe("image");
+  });
+});
+
+describe("coalesceInput", () => {
+  it("should place the system message before the conversation messages", () => {
+    const messages = [
+      { role: "user", content: "Hello" },
+      { role: "assistant", content: "Hi there" },
+      { role: "user", content: "How are you?" },
+    ];
+
+    const result = coalesceInput(messages, "You are a helpful assistant.");
+
+    expect(result).toEqual([
+      { role: "system", content: "You are a helpful assistant." },
+      { role: "user", content: "Hello" },
+      { role: "assistant", content: "Hi there" },
+      { role: "user", content: "How are you?" },
+    ]);
+  });
+
+  it("should support system content as an array of text blocks", () => {
+    const messages = [{ role: "user", content: "Bonjour" }];
+    const system = [
+      { type: "text" as const, text: "translate to english" },
+      { type: "text" as const, text: "only the answer no other text" },
+    ];
+
+    const result = coalesceInput(messages, system);
+
+    expect(result[0]).toEqual({ role: "system", content: system });
+    expect(result[1]).toEqual({ role: "user", content: "Bonjour" });
+  });
+
+  it("should return messages unchanged when there is no system prompt", () => {
+    const messages = [{ role: "user", content: "Hello" }];
+
+    expect(coalesceInput(messages, undefined)).toEqual(messages);
+  });
+
+  it("should not mutate the original messages array", () => {
+    const messages = [{ role: "user", content: "Hello" }];
+
+    coalesceInput(messages, "system prompt");
+
+    expect(messages).toEqual([{ role: "user", content: "Hello" }]);
   });
 });

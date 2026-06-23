@@ -1,0 +1,117 @@
+{
+  "entries": [
+    {
+      "callIndex": 0,
+      "id": "e6926053c025e8b6",
+      "matchKey": "POST bedrock-runtime.aws-region.amazonaws.com/model/us.anthropic.claude-sonnet-4-5-20250929-v1:0/invoke",
+      "recordedAt": "2026-06-18T15:28:14.064Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "anthropic_version": "bedrock-2023-05-31",
+            "max_tokens": 24,
+            "messages": [
+              {
+                "content": "Reply with exactly OK.",
+                "role": "user"
+              }
+            ],
+            "temperature": 0
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://bedrock-runtime.us-east-2.amazonaws.com/model/us.anthropic.claude-sonnet-4-5-20250929-v1:0/invoke"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "content": [
+              {
+                "text": "OK",
+                "type": "text"
+              }
+            ],
+            "id": "msg_bdrk_01PDHMbVh1e3wfda8w6duQxt",
+            "model": "claude-sonnet-4-5-20250929",
+            "role": "assistant",
+            "stop_reason": "end_turn",
+            "stop_sequence": null,
+            "type": "message",
+            "usage": {
+              "cache_creation": {
+                "ephemeral_1h_input_tokens": 0,
+                "ephemeral_5m_input_tokens": 0
+              },
+              "cache_creation_input_tokens": 0,
+              "cache_read_input_tokens": 0,
+              "input_tokens": 12,
+              "output_tokens": 4
+            }
+          }
+        },
+        "headers": {
+          "connection": "keep-alive",
+          "content-length": "386",
+          "content-type": "application/json",
+          "date": "Thu, 18 Jun 2026 15:28:13 GMT",
+          "x-amzn-bedrock-cache-read-input-token-count": "0",
+          "x-amzn-bedrock-cache-write-input-token-count": "0",
+          "x-amzn-bedrock-input-token-count": "12",
+          "x-amzn-bedrock-invocation-latency": "2096",
+          "x-amzn-bedrock-output-token-count": "4",
+          "x-amzn-requestid": "2df5aa6b-0e5c-4e34-b684-c9b88c700d76"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 0,
+      "id": "5dd8e64febed30e6",
+      "matchKey": "POST bedrock-runtime.aws-region.amazonaws.com/model/us.anthropic.claude-sonnet-4-5-20250929-v1:0/invoke-with-response-stream",
+      "recordedAt": "2026-06-18T15:28:16.226Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "anthropic_version": "bedrock-2023-05-31",
+            "max_tokens": 32,
+            "messages": [
+              {
+                "content": "Count from 1 to 3 and include the words one two three.",
+                "role": "user"
+              }
+            ],
+            "temperature": 0
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://bedrock-runtime.us-east-2.amazonaws.com/model/us.anthropic.claude-sonnet-4-5-20250929-v1:0/invoke-with-response-stream"
+      },
+      "response": {
+        "body": {
+          "contentType": "application/vnd.amazon.eventstream",
+          "kind": "base64",
+          "value": "AAACqQAAAEu00xudCzpldmVudC10eXBlBwAFY2h1bmsNOmNvbnRlbnQtdHlwZQcAEGFwcGxpY2F0aW9uL2pzb24NOm1lc3NhZ2UtdHlwZQcABWV2ZW50eyJieXRlcyI6ImV5SjBlWEJsSWpvaWJXVnpjMkZuWlY5emRHRnlkQ0lzSW0xbGMzTmhaMlVpT25zaWJXOWtaV3dpT2lKamJHRjFaR1V0YzI5dWJtVjBMVFF0TlMweU1ESTFNRGt5T1NJc0ltbGtJam9pYlhOblgySmtjbXRmTURFelUyNTRZblkyV1ZGWlZYbzNablpZZVhVM1RtMW5JaXdpZEhsd1pTSTZJbTFsYzNOaFoyVWlMQ0p5YjJ4bElqb2lZWE56YVhOMFlXNTBJaXdpWTI5dWRHVnVkQ0k2VzEwc0luTjBiM0JmY21WaGMyOXVJanB1ZFd4c0xDSnpkRzl3WDNObGNYVmxibU5sSWpwdWRXeHNMQ0oxYzJGblpTSTZleUpwYm5CMWRGOTBiMnRsYm5NaU9qSTBMQ0pqWVdOb1pWOWpjbVZoZEdsdmJsOXBibkIxZEY5MGIydGxibk1pT2pBc0ltTmhZMmhsWDNKbFlXUmZhVzV3ZFhSZmRHOXJaVzV6SWpvd0xDSmpZV05vWlY5amNtVmhkR2x2YmlJNmV5SmxjR2hsYldWeVlXeGZOVzFmYVc1d2RYUmZkRzlyWlc1eklqb3dMQ0psY0dobGJXVnlZV3hmTVdoZmFXNXdkWFJmZEc5clpXNXpJam93ZlN3aWIzVjBjSFYwWDNSdmEyVnVjeUk2TVgxOWZRPT0iLCJwIjoiYWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXpBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZIn0p73BIAAAA9QAAAEsE+JhcCzpldmVudC10eXBlBwAFY2h1bmsNOmNvbnRlbnQtdHlwZQcAEGFwcGxpY2F0aW9uL2pzb24NOm1lc3NhZ2UtdHlwZQcABWV2ZW50eyJieXRlcyI6ImV5SjBlWEJsSWpvaVkyOXVkR1Z1ZEY5aWJHOWphMTl6ZEdGeWRDSXNJbWx1WkdWNElqb3dMQ0pqYjI1MFpXNTBYMkpzYjJOcklqcDdJblI1Y0dVaU9pSjBaWGgwSWl3aWRHVjRkQ0k2SWlKOWZRPT0iLCJwIjoiYWJjZGVmZ2hpamtsbW5vcHFyc3R1dnciffZcoq0AAADwAAAAS8wYFywLOmV2ZW50LXR5cGUHAAVjaHVuaw06Y29udGVudC10eXBlBwAQYXBwbGljYXRpb24vanNvbg06bWVzc2FnZS10eXBlBwAFZXZlbnR7ImJ5dGVzIjoiZXlKMGVYQmxJam9pWTI5dWRHVnVkRjlpYkc5amExOWtaV3gwWVNJc0ltbHVaR1Y0SWpvd0xDSmtaV3gwWVNJNmV5SjBlWEJsSWpvaWRHVjRkRjlrWld4MFlTSXNJblJsZUhRaU9pSXhJQ0o5ZlE9PSIsInAiOiJhYmNkZWZnaGlqa2xtbm9wcXIifdPdQuIAAADgAAAAS6z4gK4LOmV2ZW50LXR5cGUHAAVjaHVuaw06Y29udGVudC10eXBlBwAQYXBwbGljYXRpb24vanNvbg06bWVzc2FnZS10eXBlBwAFZXZlbnR7ImJ5dGVzIjoiZXlKMGVYQmxJam9pWTI5dWRHVnVkRjlpYkc5amExOWtaV3gwWVNJc0ltbHVaR1Y0SWpvd0xDSmtaV3gwWVNJNmV5SjBlWEJsSWpvaWRHVjRkRjlrWld4MFlTSXNJblJsZUhRaU9pSXRJbjE5IiwicCI6ImFiY2RlZiJ9917xMQAAASYAAABLAfFOcAs6ZXZlbnQtdHlwZQcABWNodW5rDTpjb250ZW50LXR5cGUHABBhcHBsaWNhdGlvbi9qc29uDTptZXNzYWdlLXR5cGUHAAVldmVudHsiYnl0ZXMiOiJleUowZVhCbElqb2lZMjl1ZEdWdWRGOWliRzlqYTE5a1pXeDBZU0lzSW1sdVpHVjRJam93TENKa1pXeDBZU0k2ZXlKMGVYQmxJam9pZEdWNGRGOWtaV3gwWVNJc0luUmxlSFFpT2lJZ2IyNWxYRzR5SUMwZ2RIZHZYRzR6SW4xOSIsInAiOiJhYmNkZWZnaGlqa2xtbm9wcXJzdHV2d3h5ekFCQ0RFRkdISUpLTE1OT1BRUlNUVVZXWFlaMDEyMyJ9m7l8pwAAAOgAAABLnIjLbws6ZXZlbnQtdHlwZQcABWNodW5rDTpjb250ZW50LXR5cGUHABBhcHBsaWNhdGlvbi9qc29uDTptZXNzYWdlLXR5cGUHAAVldmVudHsiYnl0ZXMiOiJleUowZVhCbElqb2lZMjl1ZEdWdWRGOWliRzlqYTE5a1pXeDBZU0lzSW1sdVpHVjRJam93TENKa1pXeDBZU0k2ZXlKMGVYQmxJam9pZEdWNGRGOWtaV3gwWVNJc0luUmxlSFFpT2lJZ0xTQjBhSEpsWlNKOWZRPT0iLCJwIjoiYWIifSId/ioAAADHAAAAS98Zc7oLOmV2ZW50LXR5cGUHAAVjaHVuaw06Y29udGVudC10eXBlBwAQYXBwbGljYXRpb24vanNvbg06bWVzc2FnZS10eXBlBwAFZXZlbnR7ImJ5dGVzIjoiZXlKMGVYQmxJam9pWTI5dWRHVnVkRjlpYkc5amExOXpkRzl3SWl3aWFXNWtaWGdpT2pCOSIsInAiOiJhYmNkZWZnaGlqa2xtbm9wcXJzdHV2d3h5ekFCQ0RFRkdISUpLIn289g6LAAABbQAAAEsu0icoCzpldmVudC10eXBlBwAFY2h1bmsNOmNvbnRlbnQtdHlwZQcAEGFwcGxpY2F0aW9uL2pzb24NOm1lc3NhZ2UtdHlwZQcABWV2ZW50eyJieXRlcyI6ImV5SjBlWEJsSWpvaWJXVnpjMkZuWlY5a1pXeDBZU0lzSW1SbGJIUmhJanA3SW5OMGIzQmZjbVZoYzI5dUlqb2laVzVrWDNSMWNtNGlMQ0p6ZEc5d1gzTmxjWFZsYm1ObElqcHVkV3hzZlN3aWRYTmhaMlVpT25zaWFXNXdkWFJmZEc5clpXNXpJam95TkN3aVkyRmphR1ZmWTNKbFlYUnBiMjVmYVc1d2RYUmZkRzlyWlc1eklqb3dMQ0pqWVdOb1pWOXlaV0ZrWDJsdWNIVjBYM1J2YTJWdWN5STZNQ3dpYjNWMGNIVjBYM1J2YTJWdWN5STZNVGg5ZlE9PSIsInAiOiJhYmMifYVrvyYAAAFKAAAAS10z1DwLOmV2ZW50LXR5cGUHAAVjaHVuaw06Y29udGVudC10eXBlBwAQYXBwbGljYXRpb24vanNvbg06bWVzc2FnZS10eXBlBwAFZXZlbnR7ImJ5dGVzIjoiZXlKMGVYQmxJam9pYldWemMyRm5aVjl6ZEc5d0lpd2lZVzFoZW05dUxXSmxaSEp2WTJzdGFXNTJiMk5oZEdsdmJrMWxkSEpwWTNNaU9uc2lhVzV3ZFhSVWIydGxia052ZFc1MElqb3lOQ3dpYjNWMGNIVjBWRzlyWlc1RGIzVnVkQ0k2TVRnc0ltbHVkbTlqWVhScGIyNU1ZWFJsYm1ONUlqb3lNREF6TENKbWFYSnpkRUo1ZEdWTVlYUmxibU41SWpveE56SXhmWDA9IiwicCI6ImFiY2RlZmdoaWprbG1ub3AifVcUnoY="
+        },
+        "headers": {
+          "connection": "keep-alive",
+          "content-type": "application/vnd.amazon.eventstream",
+          "date": "Thu, 18 Jun 2026 15:28:15 GMT",
+          "transfer-encoding": "chunked",
+          "x-amzn-bedrock-content-type": "application/json",
+          "x-amzn-requestid": "a395b9be-8719-49a4-a721-f532db6e5650"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    }
+  ],
+  "meta": {
+    "createdAt": "2026-06-18T15:26:52.832Z"
+  }
+}

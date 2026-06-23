@@ -19,11 +19,6 @@ span_tree:
     metrics: {
       "duration_ms": 0
     }
-    ├── flue.workflowCurrentProbe
-    │   output: "active"
-    │   metadata: {
-    │     "scenario": "flue-instrumentation"
-    │   }
     ├── flue.prompt [task]
     │   input: [
     │     {
@@ -121,11 +116,6 @@ span_tree:
     │   │   metrics: {
     │   │     "duration_ms": 0
     │   │   }
-    │   │   └── flue.toolCurrentProbe
-    │   │       output: "lookup-active"
-    │   │       metadata: {
-    │   │         "scenario": "flue-instrumentation"
-    │   │       }
     │   ├── llm:claude-sonnet-4-5-20250929 [llm]
     │   │   input: [
     │   │     {

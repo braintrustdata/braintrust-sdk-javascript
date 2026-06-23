@@ -65,6 +65,12 @@
       "require": "./dist/apply-auto-instrumentation.js",
       "default": "./dist/apply-auto-instrumentation.mjs"
     },
+    "./vitest-evals-reporter": {
+      "types": "./dist/vitest-evals-reporter.d.ts",
+      "import": "./dist/vitest-evals-reporter.mjs",
+      "module": "./dist/vitest-evals-reporter.mjs",
+      "require": "./dist/vitest-evals-reporter.js"
+    },
     "./node": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs",

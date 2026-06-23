@@ -18,10 +18,14 @@ export interface InstrumentationIntegrationsConfig {
   mistral?: boolean;
   cohere?: boolean;
   groq?: boolean;
+  bedrock?: boolean;
+  awsBedrock?: boolean;
+  awsBedrockRuntime?: boolean;
   genkit?: boolean;
   gitHubCopilot?: boolean;
   openaiCodexSDK?: boolean;
   piCodingAgent?: boolean;
+  strandsAgentSDK?: boolean;
   langchain?: boolean;
   langgraph?: boolean;
 }
@@ -49,6 +53,10 @@ const envIntegrationAliases: Record<
   picodingagent: "piCodingAgent",
   picodingagentsdk: "piCodingAgent",
   "@earendil-works/pi-coding-agent": "piCodingAgent",
+  strandsAgentSDK: "strandsAgentSDK",
+  strandsagentsdk: "strandsAgentSDK",
+  "strands-agent-sdk": "strandsAgentSDK",
+  "@strands-agents/sdk": "strandsAgentSDK",
   anthropic: "anthropic",
   aisdk: "aisdk",
   "ai-sdk": "aisdk",
@@ -79,6 +87,12 @@ const envIntegrationAliases: Record<
   cohere: "cohere",
   groq: "groq",
   "groq-sdk": "groq",
+  bedrock: "bedrock",
+  "aws-bedrock": "awsBedrock",
+  awsbedrock: "awsBedrock",
+  "aws-bedrock-runtime": "awsBedrockRuntime",
+  awsbedrockruntime: "awsBedrockRuntime",
+  "@aws-sdk/client-bedrock-runtime": "awsBedrockRuntime",
   genkit: "genkit",
   "firebase-genkit": "genkit",
   githubcopilot: "gitHubCopilot",
@@ -115,11 +129,15 @@ export function getDefaultInstrumentationIntegrations(): Record<
     mistral: true,
     cohere: true,
     groq: true,
+    bedrock: true,
+    awsBedrock: true,
+    awsBedrockRuntime: true,
     genkit: true,
     gitHubCopilot: true,
     langchain: true,
     langgraph: true,
     piCodingAgent: true,
+    strandsAgentSDK: true,
   };
 }
 
@@ -130,9 +148,12 @@ export function readDisabledInstrumentationEnvConfig(
 
   if (disabledList) {
     for (const value of disabledList.split(",")) {
-      const sdk = value.trim().toLowerCase();
+      const rawSdk = value.trim();
+      const sdk = rawSdk.toLowerCase();
       if (sdk.length > 0) {
-        integrations[envIntegrationAliases[sdk] ?? sdk] = false;
+        integrations[
+          envIntegrationAliases[rawSdk] ?? envIntegrationAliases[sdk] ?? sdk
+        ] = false;
       }
     }
   }

@@ -1,0 +1,15 @@
+{
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@strands-agents/sdk": "1.6.0",
+    "openai": "^6.7.0"
+  },
+  "braintrustScenario": {
+    "canary": {
+      "dependencies": {
+        "@strands-agents/sdk": "latest"
+      }
+    }
+  }
+}

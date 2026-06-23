@@ -28,6 +28,12 @@
     "variants": [{ "variantKey": "pi-coding-agent-v079", "label": "v0.79" }]
   },
   {
+    "scenarioDirName": "strands-agent-sdk-instrumentation",
+    "label": "Strands Agent SDK Instrumentation",
+    "metadataScenario": "strands-agent-sdk-instrumentation",
+    "variants": [{ "variantKey": "strands-agent-sdk-v160", "label": "v1.6.0" }]
+  },
+  {
     "scenarioDirName": "openai-agents-instrumentation",
     "label": "OpenAI Agents Instrumentation",
     "metadataScenario": "openai-agents-instrumentation",
@@ -46,6 +52,25 @@
       { "variantKey": "anthropic-v0730", "label": "v0.73.0" },
       { "variantKey": "anthropic-v0780", "label": "v0.78.0" },
       { "variantKey": "anthropic-v0800", "label": "v0.80.0" }
+    ]
+  },
+  {
+    "scenarioDirName": "anthropic-bedrock-instrumentation",
+    "label": "Anthropic Bedrock Instrumentation",
+    "metadataScenario": "anthropic-bedrock-instrumentation",
+    "variants": [
+      {
+        "variantKey": "anthropic-bedrock-v0302-wrapped",
+        "label": "v0.30.2 wrapped"
+      },
+      {
+        "variantKey": "anthropic-bedrock-v0302-auto-esm",
+        "label": "v0.30.2 auto ESM"
+      },
+      {
+        "variantKey": "anthropic-bedrock-v0302-auto-cjs",
+        "label": "v0.30.2 auto CJS"
+      }
     ]
   },
   {
@@ -88,6 +113,15 @@
     "variants": [
       { "variantKey": "groq-v1-wrapped", "label": "Wrapped" },
       { "variantKey": "groq-v1-auto", "label": "Auto-hook" }
+    ]
+  },
+  {
+    "scenarioDirName": "bedrock-runtime-instrumentation",
+    "label": "Bedrock Runtime Instrumentation",
+    "metadataScenario": "bedrock-runtime-instrumentation",
+    "variants": [
+      { "variantKey": "bedrock-runtime-v3-1048-wrapped", "label": "Wrapped" },
+      { "variantKey": "bedrock-runtime-v3-1048-auto", "label": "Auto-hook" }
     ]
   },
   {
@@ -185,7 +219,10 @@
     "scenarioDirName": "flue-instrumentation",
     "label": "Flue Instrumentation",
     "metadataScenario": "flue-instrumentation",
-    "variants": [{ "variantKey": "flue-v0-8-0", "label": "v0.8.0" }]
+    "variants": [
+      { "variantKey": "flue-v0-8-0", "label": "v0.8.0" },
+      { "variantKey": "flue-v1-0-0-beta-3", "label": "v1.0.0-beta.3" }
+    ]
   },
   {
     "scenarioDirName": "github-copilot-instrumentation",
@@ -194,6 +231,24 @@
     "variants": [
       { "variantKey": "github-copilot-v0-wrapped", "label": "Wrapped" },
       { "variantKey": "github-copilot-v0-auto", "label": "Auto-hook" }
+    ]
+  },
+  {
+    "scenarioDirName": "test-framework-evals-vitest",
+    "label": "Vitest Test Framework Evals",
+    "metadataScenario": "test-framework-evals-vitest",
+    "variants": [
+      { "variantKey": "v2", "label": "v2" },
+      { "variantKey": "v3", "label": "v3" },
+      { "variantKey": "v4.1", "label": "v4.1" }
+    ],
+    "evals": [
+      {
+        "entry": "scenario.vitest-evals-reporter.ts",
+        "experimentNameTemplate": "vitest-evals-reporter-{testRunId}",
+        "label": "vitest-evals reporter",
+        "variantKey": "vitest-evals-reporter"
+      }
     ]
   },
   {
