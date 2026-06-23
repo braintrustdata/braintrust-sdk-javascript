@@ -93,7 +93,11 @@ vi.mock("../../isomorph", () => ({
   },
 }));
 
-import { FluePlugin, braintrustFlueObserver } from "./flue-plugin";
+import {
+  FluePlugin,
+  braintrustFlueInstrumentation,
+  braintrustFlueObserver,
+} from "./flue-plugin";
 
 type Subscriber = typeof braintrustFlueObserver;
 
@@ -180,7 +184,41 @@ describe("Flue observe instrumentation", () => {
     expect(unsubscribe).toHaveBeenCalledTimes(1);
   });
 
-  it("exports a Flue 1.0 instrumentation object", async () => {
+  it("exports a Flue 1.0 instrumentation factory", async () => {
+    const instrumentation = braintrustFlueInstrumentation();
+    const instrument = vi.fn((value: typeof instrumentation) => value);
+
+    const registered = instrument(instrumentation);
+
+    expect(instrument).toHaveBeenCalledWith(instrumentation);
+    expect(registered.observe).toBe(braintrustFlueObserver);
+    expect(registered.key).toBe(Symbol.for("braintrust.flue.instrumentation"));
+    expect(typeof registered.interceptor).toBe("function");
+    expect(() => registered.dispose()).not.toThrow();
+
+    const appSpan = await registered.interceptor(
+      {
+        phase: "start",
+        runId: "run-1",
+        startedAt: "2026-05-27T05:12:31.000Z",
+        type: "workflow",
+        workflowName: "research",
+      },
+      { eventContext: { id: "ctx-1", runId: "run-1" } },
+      async () => mockStartSpan({ name: "app.phase" }),
+    );
+    const workflowSpan = findSpan("workflow:research");
+
+    expect(workflowSpan).toBeDefined();
+    expect(appSpan.spanParents).toEqual([workflowSpan?.spanId]);
+    expect(mockCurrentSpanStore.run).toHaveBeenCalledWith(
+      workflowSpan,
+      expect.any(Function),
+    );
+    expect("enterWith" in mockCurrentSpanStore).toBe(false);
+  });
+
+  it("keeps the legacy observer compatible with Flue 1.0 instrumentation", async () => {
     expect(braintrustFlueObserver.observe).toBe(braintrustFlueObserver);
     expect(braintrustFlueObserver.key).toBe(
       Symbol.for("braintrust.flue.instrumentation"),

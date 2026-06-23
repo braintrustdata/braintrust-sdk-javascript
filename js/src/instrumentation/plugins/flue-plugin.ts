@@ -62,17 +62,6 @@ const FLUE_AUTO_STATE = Symbol.for("braintrust.flue.auto-state");
 const FLUE_INSTRUMENTATION_KEY = Symbol.for("braintrust.flue.instrumentation");
 const FLUE_OBSERVE_BRIDGE = Symbol.for("braintrust.flue.observe-bridge");
 
-/**
- * Braintrust's Flue instrumentation object.
- *
- * Legacy Flue:
- *
- *   const unsubscribe = observe(braintrustFlueObserver);
- *
- * Flue 1.0+:
- *
- *   const dispose = instrument(braintrustFlueObserver);
- */
 function observeFlue(event: unknown, ctx?: unknown): void {
   getObserveBridge().handle(event, ctx);
 }
@@ -83,14 +72,28 @@ const interceptFlueExecution: FlueExecutionInterceptor = (
   next,
 ) => getObserveBridge().intercept(operation, ctx, next);
 
-export const braintrustFlueObserver: BraintrustFlueObserver = Object.assign(
-  observeFlue,
-  {
+/**
+ * Manual instrumentation for flue.
+ *
+ * This should be passed to flue's `instrument()` API if not using auto-instrumentation: `instrument(braintrustFlueInstrumentation())`
+ */
+export function braintrustFlueInstrumentation(): FlueInstrumentation {
+  return {
     dispose() {},
     interceptor: interceptFlueExecution,
     key: FLUE_INSTRUMENTATION_KEY,
     observe: observeFlue,
-  },
+  };
+}
+
+/**
+ * Observer for flue pre version 1.0.0.
+ *
+ * This observer should be passed to flue's `observe()` API if not using auto-instrumentation.
+ */
+export const braintrustFlueObserver: BraintrustFlueObserver = Object.assign(
+  observeFlue,
+  braintrustFlueInstrumentation(),
 );
 
 export class FluePlugin extends BasePlugin {

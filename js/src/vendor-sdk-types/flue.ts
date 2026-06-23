@@ -200,7 +200,6 @@ export interface FlueCompactionEvent extends FlueBaseEvent {
 export interface FlueContext {
   readonly id?: string;
   readonly runId?: string;
-  [key: string | symbol]: unknown;
 }
 
 export interface FlueObservableContext extends FlueContext {
