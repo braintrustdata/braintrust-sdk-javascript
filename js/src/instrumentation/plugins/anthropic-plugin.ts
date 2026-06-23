@@ -1,4 +1,4 @@
-import { BasePlugin } from "../core";
+import { BasePlugin, toLoggedError } from "../core";
 import { traceStreamingChannel, unsubscribeAll } from "../core/channel-tracing";
 import { isAsyncIterable, patchStreamIfNeeded } from "../core/stream-patcher";
 import { Attachment, startSpan, withCurrent } from "../../logger";
@@ -277,10 +277,6 @@ function extractAnthropicToolNames(tools: unknown[]): string[] {
   return toolNames;
 }
 
-function toErrorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
-}
-
 function getAnthropicToolRunnerInput(args: unknown[]): unknown {
   return args.length > 0 ? args[0] : undefined;
 }
@@ -339,7 +335,7 @@ function wrapAnthropicToolRunnerTool(
           };
 
           const finalizeError = (error: unknown) => {
-            span.log({ error: toErrorMessage(error) });
+            span.log({ error: toLoggedError(error) });
             throw error;
           };
 
@@ -555,7 +551,7 @@ function finalizeAnthropicToolRunnerError(
   }
   state.finalized = true;
   state.span.log({
-    error: error instanceof Error ? error.message : String(error),
+    error: toLoggedError(error),
   });
   state.span.end();
 }

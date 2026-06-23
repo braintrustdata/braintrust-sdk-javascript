@@ -1,5 +1,6 @@
 import { startSpan, withCurrent } from "../../logger";
 import { SpanTypeAttribute, isPromiseLike } from "../../../util/index";
+import { toLoggedError } from "../core";
 import { getClaudeLocalToolParentResolver } from "./claude-agent-sdk-local-tool-context";
 
 export type LocalToolSpanMetadata = {
@@ -12,10 +13,6 @@ type LocalToolHandler = (...args: unknown[]) => unknown;
 const LOCAL_TOOL_HANDLER_WRAPPED = Symbol.for(
   "braintrust.claude_agent_sdk.local_tool_handler_wrapped",
 );
-
-function toErrorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
-}
 
 function getToolUseIdFromExtra(extra: unknown): string | undefined {
   if (!extra || typeof extra !== "object" || !("_meta" in extra)) {
@@ -85,7 +82,7 @@ export function wrapLocalClaudeToolHandler(
         return result;
       };
       const finalizeError = (error: unknown) => {
-        span.log({ error: toErrorMessage(error) });
+        span.log({ error: toLoggedError(error) });
         span.end();
         throw error;
       };

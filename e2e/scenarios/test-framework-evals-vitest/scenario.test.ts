@@ -16,12 +16,13 @@ const TIMEOUT_MS = 90_000;
 interface VitestScenario {
   entry: string;
   label: string;
+  variantKey: string;
 }
 
 const scenarios: VitestScenario[] = [
-  { entry: "scenario.ts", label: "v2" },
-  { entry: "scenario.vitest-v3.ts", label: "v3" },
-  { entry: "scenario.vitest-v4.ts", label: "v4.1" },
+  { entry: "scenario.ts", label: "v2", variantKey: "v2" },
+  { entry: "scenario.vitest-v3.ts", label: "v3", variantKey: "v3" },
+  { entry: "scenario.vitest-v4.ts", label: "v4.1", variantKey: "v4.1" },
 ];
 
 for (const scenario of scenarios) {
@@ -35,6 +36,10 @@ for (const scenario of scenarios) {
         async ({ runScenarioDir, testRunEvents, testRunId }) => {
           await runScenarioDir({
             entry: scenario.entry,
+            runContext: {
+              cassette: false,
+              variantKey: scenario.variantKey,
+            },
             scenarioDir,
             timeoutMs: TIMEOUT_MS,
           });
@@ -113,3 +118,73 @@ for (const scenario of scenarios) {
     },
   );
 }
+
+test(
+  "test-framework-evals-vitest captures vitest-evals reporter spans",
+  {
+    timeout: TIMEOUT_MS,
+  },
+  async () => {
+    await withScenarioHarness(async ({ events, runScenarioDir, testRunId }) => {
+      await runScenarioDir({
+        entry: "scenario.vitest-evals-reporter.ts",
+        runContext: {
+          cassette: false,
+          variantKey: "vitest-evals-reporter",
+        },
+        scenarioDir,
+        timeoutMs: TIMEOUT_MS,
+      });
+
+      const capturedEvents = events();
+      const evalRoot = findLatestSpan(
+        capturedEvents,
+        "vitest-evals braintrust reporter > approves refundable invoice",
+      );
+      const modelSpan = findLatestSpan(capturedEvents, "classify refund");
+      const toolSpan = findLatestSpan(capturedEvents, "lookupInvoice");
+
+      expect(evalRoot).toBeDefined();
+      expect(evalRoot?.span.type).toBe("eval");
+      expect(evalRoot?.input).toMatchObject({
+        input: "Refund invoice inv_123",
+        test: "vitest-evals braintrust reporter > approves refundable invoice",
+      });
+      expect(evalRoot?.output).toMatchObject({
+        status: "approved",
+      });
+      expect(evalRoot?.scores).toMatchObject({
+        StatusJudge: 1,
+        avg_score: 1,
+        pass: 1,
+      });
+      expect(evalRoot?.metrics).toMatchObject({
+        input_tokens: 11,
+        output_tokens: 13,
+        total_tokens: 24,
+        tool_calls: 1,
+      });
+      expect(evalRoot?.row.metadata).toMatchObject({
+        artifacts: {
+          case: "vitest-evals-reporter",
+          scenario: "test-framework-evals-vitest",
+          testRunId,
+        },
+        harnessName: "braintrust-refund-harness",
+        status: "passed",
+      });
+
+      expect(modelSpan?.span.type).toBe("llm");
+      expect(toolSpan?.span.type).toBe("tool");
+      expect(toolSpan?.span.parentIds).toEqual([modelSpan?.span.id ?? ""]);
+
+      await matchSpanTreeSnapshot(
+        capturedEvents,
+        resolveFileSnapshotPath(
+          import.meta.url,
+          "vitest-evals-reporter.span-tree.json",
+        ),
+      );
+    });
+  },
+);

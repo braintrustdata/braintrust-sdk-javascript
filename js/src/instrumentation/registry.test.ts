@@ -155,6 +155,7 @@ describe("configureInstrumentation API", () => {
         mistral: false,
         cohere: false,
         mastra: false,
+        strandsAgentSDK: false,
       },
     });
   });
