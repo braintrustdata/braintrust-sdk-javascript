@@ -18,6 +18,10 @@ class ConverseCommand {
   constructor(public input: Record<string, unknown>) {}
 }
 
+class InvokeModelWithBidirectionalStreamCommand {
+  constructor(public input: Record<string, unknown>) {}
+}
+
 describe("BedrockRuntimePlugin", () => {
   let backgroundLogger: ReturnType<
     typeof _exportsForTestingOnly.useTestBackgroundLogger
@@ -107,6 +111,68 @@ describe("BedrockRuntimePlugin", () => {
             role: "assistant",
             content: [{ text: "ignored" }],
           },
+        }),
+      ]),
+    );
+  });
+
+  it("traces bidirectional stream Smithy send events", async () => {
+    async function* body() {
+      yield {
+        chunk: {
+          bytes: new TextEncoder().encode(
+            JSON.stringify({
+              delta: {
+                text: "BI",
+              },
+            }),
+          ),
+        },
+      };
+      yield {
+        chunk: {
+          bytes: new TextEncoder().encode(
+            JSON.stringify({
+              delta: {
+                text: "DI",
+              },
+            }),
+          ),
+        },
+      };
+    }
+
+    const result = await smithyCoreChannels.clientSend.tracePromise(
+      async () => ({
+        body: body(),
+      }),
+      {
+        arguments: [
+          new InvokeModelWithBidirectionalStreamCommand({
+            body: undefined,
+            modelId: "us.amazon.nova-lite-v1:0",
+          }),
+        ],
+      },
+    );
+
+    for await (const _chunk of result.body) {
+      // Consume the stream so chunk aggregation runs.
+    }
+
+    const spans = await backgroundLogger.drain();
+    expect(spans).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          metrics: expect.objectContaining({
+            time_to_first_token: expect.any(Number),
+          }),
+          output: {
+            text: "BIDI",
+          },
+          span_attributes: expect.objectContaining({
+            name: "bedrock.invokeModelWithBidirectionalStream",
+          }),
         }),
       ]),
     );
@@ -568,6 +634,44 @@ describe("aggregateInvokeModelResponseStreamChunks", () => {
       metadata: {
         exception: "modelTimeoutException",
         exceptionName: "ModelTimeoutException",
+      },
+      metrics: {},
+    });
+  });
+
+  it("summarizes binary stream chunks when text extraction is not available", () => {
+    expect(
+      aggregateInvokeModelResponseStreamChunks([
+        {
+          chunk: {
+            bytes: new Uint8Array([1, 2, 3]),
+          },
+        },
+        {
+          chunk: {
+            bytes: new Uint8Array([4, 5]),
+          },
+        },
+      ]),
+    ).toEqual({
+      output: {
+        chunk_count: 2,
+        chunks: [
+          {
+            chunk: {
+              bytes: {
+                byte_length: 3,
+              },
+            },
+          },
+          {
+            chunk: {
+              bytes: {
+                byte_length: 2,
+              },
+            },
+          },
+        ],
       },
       metrics: {},
     });

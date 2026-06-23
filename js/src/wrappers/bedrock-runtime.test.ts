@@ -25,6 +25,10 @@ class ConverseStreamCommand {
   constructor(public input: Record<string, unknown>) {}
 }
 
+class InvokeModelWithBidirectionalStreamCommand {
+  constructor(public input: Record<string, unknown>) {}
+}
+
 class ListFoundationModelsCommand {
   constructor(public input: Record<string, unknown>) {}
 }
@@ -282,6 +286,65 @@ describe("bedrock runtime wrapper", () => {
       },
       span_attributes: {
         name: "bedrock.converse",
+      },
+    });
+  });
+
+  test("wraps bidirectional aggregated operation methods through proxy send", async () => {
+    async function* body() {
+      yield {
+        chunk: {
+          bytes: new TextEncoder().encode(
+            JSON.stringify({
+              delta: {
+                text: "BIDI",
+              },
+            }),
+          ),
+        },
+      };
+    }
+
+    const send = vi.fn(
+      async (_command: InvokeModelWithBidirectionalStreamCommand) => ({
+        body: body(),
+      }),
+    );
+
+    const wrapped = wrapBedrockRuntime({
+      send,
+      invokeModelWithBidirectionalStream(
+        this: { send: typeof send },
+        input: Record<string, unknown>,
+      ) {
+        return this.send(new InvokeModelWithBidirectionalStreamCommand(input));
+      },
+    });
+
+    const response = await wrapped.invokeModelWithBidirectionalStream({
+      body: undefined,
+      modelId: "us.amazon.nova-lite-v1:0",
+    });
+    for await (const _chunk of response.body) {
+      // Consume the stream so chunk aggregation runs.
+    }
+
+    expect(send).toHaveBeenCalledTimes(1);
+
+    const spans = await backgroundLogger.drain();
+    expect(spans).toHaveLength(1);
+    expect(spans[0]).toMatchObject({
+      metadata: {
+        command: "InvokeModelWithBidirectionalStreamCommand",
+        model: "us.amazon.nova-lite-v1:0",
+        operation: "invokeModelWithBidirectionalStream",
+        provider: "aws-bedrock",
+      },
+      output: {
+        text: "BIDI",
+      },
+      span_attributes: {
+        name: "bedrock.invokeModelWithBidirectionalStream",
       },
     });
   });

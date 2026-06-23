@@ -8,6 +8,7 @@ export type BedrockRuntimeOperation =
   | "converse"
   | "converseStream"
   | "invokeModel"
+  | "invokeModelWithBidirectionalStream"
   | "invokeModelWithResponseStream";
 
 const BEDROCK_RUNTIME_COMMAND_OPERATIONS: Record<
@@ -17,6 +18,8 @@ const BEDROCK_RUNTIME_COMMAND_OPERATIONS: Record<
   ConverseCommand: "converse",
   ConverseStreamCommand: "converseStream",
   InvokeModelCommand: "invokeModel",
+  InvokeModelWithBidirectionalStreamCommand:
+    "invokeModelWithBidirectionalStream",
   InvokeModelWithResponseStreamCommand: "invokeModelWithResponseStream",
 };
 
@@ -76,6 +79,7 @@ function isBedrockRuntimeCommandName(
     commandName === "ConverseCommand" ||
     commandName === "ConverseStreamCommand" ||
     commandName === "InvokeModelCommand" ||
+    commandName === "InvokeModelWithBidirectionalStreamCommand" ||
     commandName === "InvokeModelWithResponseStreamCommand"
   );
 }

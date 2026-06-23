@@ -53,6 +53,22 @@ describe("bedrockRuntimeConfigs", () => {
           moduleType: "cjs" as ModuleType,
           path: "dist-cjs/index.js",
           source: CJS_CLIENT_SOURCE,
+          version: "3.0.0",
+        },
+        {
+          channelName: "orchestrion:@smithy/smithy-client:client.send",
+          moduleName: "@smithy/smithy-client",
+          moduleType: "esm" as ModuleType,
+          path: "dist-es/client.js",
+          source: ESM_CLIENT_SOURCE,
+          version: "3.0.0",
+        },
+        {
+          channelName: "orchestrion:@smithy/smithy-client:client.send",
+          moduleName: "@smithy/smithy-client",
+          moduleType: "cjs" as ModuleType,
+          path: "dist-cjs/index.js",
+          source: CJS_CLIENT_SOURCE,
           version: "4.8.0",
         },
         {

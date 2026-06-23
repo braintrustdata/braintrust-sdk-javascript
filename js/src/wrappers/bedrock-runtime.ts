@@ -31,6 +31,7 @@ const BEDROCK_RUNTIME_OPERATION_METHODS = new Set([
   "converse",
   "converseStream",
   "invokeModel",
+  "invokeModelWithBidirectionalStream",
   "invokeModelWithResponseStream",
 ]);
 

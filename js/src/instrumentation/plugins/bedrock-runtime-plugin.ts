@@ -96,6 +96,7 @@ function extractBedrockRuntimeInput(command: unknown): {
 
   if (
     operation === "invokeModel" ||
+    operation === "invokeModelWithBidirectionalStream" ||
     operation === "invokeModelWithResponseStream"
   ) {
     const invokeRequest = isObject(request)
@@ -332,7 +333,8 @@ function patchBedrockRuntimeStreamingResult(args: {
   }
 
   if (
-    operation === "invokeModelWithResponseStream" &&
+    (operation === "invokeModelWithBidirectionalStream" ||
+      operation === "invokeModelWithResponseStream") &&
     isAsyncIterable(args.result.body)
   ) {
     patchInvokeModelResponseStream(
@@ -542,7 +544,12 @@ export function aggregateInvokeModelResponseStreamChunks(
         ? { text }
         : {
             chunk_count: chunks.length,
-            chunks: sanitizeBedrockValue(jsonLikeChunks.slice(0, 20)),
+            chunks: sanitizeBedrockValue(
+              (jsonLikeChunks.length > 0 ? jsonLikeChunks : chunks).slice(
+                0,
+                20,
+              ),
+            ),
           },
     metrics: parseBedrockRuntimeMetrics(
       usage ?? (isObject(metadata) ? metadata.usage : undefined),

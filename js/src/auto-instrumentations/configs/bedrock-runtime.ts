@@ -35,7 +35,7 @@ export const bedrockRuntimeConfigs: InstrumentationConfig[] = [
     channelName: smithyClientChannels.clientSend.channelName,
     module: {
       name: "@smithy/smithy-client",
-      versionRange: ">=4.0.0 <5.0.0",
+      versionRange: ">=3.0.0 <5.0.0",
       filePath: "dist-cjs/index.js",
     },
     functionQuery: {
@@ -48,7 +48,7 @@ export const bedrockRuntimeConfigs: InstrumentationConfig[] = [
     channelName: smithyClientChannels.clientSend.channelName,
     module: {
       name: "@smithy/smithy-client",
-      versionRange: ">=4.0.0 <5.0.0",
+      versionRange: ">=3.0.0 <5.0.0",
       filePath: "dist-es/client.js",
     },
     functionQuery: {

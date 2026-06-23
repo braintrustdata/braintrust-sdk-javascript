@@ -4,6 +4,7 @@ export type BedrockRuntimeCommandName =
   | "ConverseCommand"
   | "ConverseStreamCommand"
   | "InvokeModelCommand"
+  | "InvokeModelWithBidirectionalStreamCommand"
   | "InvokeModelWithResponseStreamCommand";
 
 export interface BedrockRuntimeCommandLike {
@@ -172,6 +173,11 @@ export interface BedrockRuntimeInvokeModelWithResponseStreamResponse {
   [key: string]: unknown;
 }
 
+export interface BedrockRuntimeInvokeModelWithBidirectionalStreamResponse {
+  body?: AsyncIterable<BedrockRuntimeResponseStreamEvent>;
+  [key: string]: unknown;
+}
+
 export interface BedrockRuntimeResponseStreamEvent {
   chunk?: {
     bytes?: unknown;
@@ -190,5 +196,6 @@ export type BedrockRuntimeSendResult =
   | BedrockRuntimeConverseResponse
   | BedrockRuntimeConverseStreamResponse
   | BedrockRuntimeInvokeModelResponse
+  | BedrockRuntimeInvokeModelWithBidirectionalStreamResponse
   | BedrockRuntimeInvokeModelWithResponseStreamResponse
   | unknown;
