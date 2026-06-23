@@ -1,7 +1,10 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { _exportsForTestingOnly, initLogger } from "../../logger";
 import { configureNode } from "../../node/config";
-import { smithyCoreChannels } from "./bedrock-runtime-channels";
+import {
+  smithyClientChannels,
+  smithyCoreChannels,
+} from "./bedrock-runtime-channels";
 import {
   aggregateBedrockConverseStreamChunks,
   aggregateInvokeModelResponseStreamChunks,
@@ -19,6 +22,10 @@ class ConverseCommand {
 }
 
 class InvokeModelWithBidirectionalStreamCommand {
+  constructor(public input: Record<string, unknown>) {}
+}
+
+class GetObjectCommand {
   constructor(public input: Record<string, unknown>) {}
 }
 
@@ -114,6 +121,54 @@ describe("BedrockRuntimePlugin", () => {
         }),
       ]),
     );
+  });
+
+  it("does not trace or patch non-Bedrock Smithy send events", async () => {
+    for (const channel of [
+      smithyCoreChannels.clientSend,
+      smithyClientChannels.clientSend,
+    ]) {
+      const stream = {
+        async *[Symbol.asyncIterator]() {
+          yield {
+            chunk: {
+              bytes: new TextEncoder().encode("not-bedrock"),
+            },
+          };
+        },
+      };
+      const originalIterator = stream[Symbol.asyncIterator];
+
+      const result = await channel.tracePromise(
+        async () => ({
+          body: stream,
+          service: "s3",
+        }),
+        {
+          arguments: [
+            new GetObjectCommand({
+              Bucket: "not-bedrock",
+              Key: "object.txt",
+            }),
+          ],
+        },
+      );
+
+      expect(result.body).toBe(stream);
+      expect(result.body[Symbol.asyncIterator]).toBe(originalIterator);
+      expect(
+        Object.getOwnPropertyDescriptor(
+          result.body[Symbol.asyncIterator],
+          "__braintrust_patched",
+        ),
+      ).toBeUndefined();
+
+      for await (const _chunk of result.body) {
+        // Consume the stream to verify there is no deferred Bedrock span.
+      }
+    }
+
+    await expect(backgroundLogger.drain()).resolves.toEqual([]);
   });
 
   it("traces bidirectional stream Smithy send events", async () => {
