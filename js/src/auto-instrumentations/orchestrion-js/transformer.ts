@@ -143,6 +143,8 @@ export class Transformer {
     return { code };
   }
 
+  free(): void {}
+
   private visit(state: TransformState, ...args: any[]): void {
     const transform = transforms[state.operator];
     const { index = 0 } = state.functionQuery as any;
