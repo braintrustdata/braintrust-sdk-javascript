@@ -114,8 +114,50 @@ async function readScenarioConfig(configPath) {
           };
         })
       : [];
+    const evals = Array.isArray(entry.evals)
+      ? entry.evals.map((evalEntry, evalIndex) => {
+          if (
+            !evalEntry ||
+            typeof evalEntry !== "object" ||
+            typeof evalEntry.label !== "string" ||
+            typeof evalEntry.experimentNameTemplate !== "string"
+          ) {
+            throw new Error(
+              `Invalid eval at scenario index ${index}, eval index ${evalIndex} in ${configPath}`,
+            );
+          }
+
+          const evalLabel = evalEntry.label.trim();
+          const experimentNameTemplate =
+            evalEntry.experimentNameTemplate.trim();
+          const variantKey =
+            typeof evalEntry.variantKey === "string"
+              ? evalEntry.variantKey.trim()
+              : null;
+          const entry =
+            typeof evalEntry.entry === "string" ? evalEntry.entry.trim() : null;
+          if (!evalLabel || !experimentNameTemplate) {
+            throw new Error(
+              `Eval label/experimentNameTemplate must be non-empty at scenario index ${index}, eval index ${evalIndex} in ${configPath}`,
+            );
+          }
+          if (!experimentNameTemplate.includes("{testRunId}")) {
+            throw new Error(
+              `Eval experimentNameTemplate must include {testRunId} at scenario index ${index}, eval index ${evalIndex} in ${configPath}`,
+            );
+          }
+
+          return {
+            entry: entry || null,
+            experimentNameTemplate,
+            label: evalLabel,
+            variantKey: variantKey || null,
+          };
+        })
+      : [];
 
     return {
+      evals,
       label: entry.label,
       metadataScenario: entry.metadataScenario,
       scenarioDirName: entry.scenarioDirName,
@@ -126,8 +168,9 @@ async function readScenarioConfig(configPath) {
 
 async function readRunContextRecords(runContextDir) {
   const runIdsByScenarioAndVariant = new Map();
+  const records = [];
   if (!runContextDir) {
-    return runIdsByScenarioAndVariant;
+    return { records, runIdsByScenarioAndVariant };
   }
 
   const entries = await readdir(runContextDir, { withFileTypes: true });
@@ -171,6 +214,12 @@ async function readRunContextRecords(runContextDir) {
         typeof parsed.variantKey === "string" && parsed.variantKey.trim()
           ? parsed.variantKey.trim()
           : DEFAULT_VARIANT_KEY;
+      records.push({
+        entry: typeof parsed.entry === "string" ? parsed.entry : null,
+        scenarioDirName,
+        testRunId: parsed.testRunId,
+        variantKey,
+      });
       if (!runIdsByScenarioAndVariant.has(scenarioDirName)) {
         runIdsByScenarioAndVariant.set(scenarioDirName, new Map());
       }
@@ -183,7 +232,7 @@ async function readRunContextRecords(runContextDir) {
     }
   }
 
-  return runIdsByScenarioAndVariant;
+  return { records, runIdsByScenarioAndVariant };
 }
 
 async function resolveOrgName() {
@@ -263,6 +312,41 @@ function buildLogsUrl({ appUrl, orgName, projectName, search }) {
   url.searchParams.set("tvt", "trace");
   url.searchParams.set("search", search);
   return url.toString();
+}
+
+function buildExperimentUrl({ appUrl, orgName, projectName, experimentName }) {
+  return new URL(
+    `/app/${encodeURIComponent(orgName)}/p/${encodeURIComponent(projectName)}/experiments/${encodeURIComponent(experimentName)}`,
+    appUrl,
+  ).toString();
+}
+
+function observedRunIdsForEval(runContextRecords, scenario, evalConfig) {
+  return [
+    ...new Set(
+      runContextRecords
+        .filter((record) => {
+          if (record.scenarioDirName !== scenario.scenarioDirName) {
+            return false;
+          }
+          if (
+            evalConfig.variantKey &&
+            record.variantKey !== evalConfig.variantKey
+          ) {
+            return false;
+          }
+          if (evalConfig.entry && record.entry !== evalConfig.entry) {
+            return false;
+          }
+          return true;
+        })
+        .map((record) => record.testRunId),
+    ),
+  ].sort();
+}
+
+function experimentNameForRunId(evalConfig, testRunId) {
+  return evalConfig.experimentNameTemplate.replaceAll("{testRunId}", testRunId);
 }
 
 function buildCommentBody(options) {
@@ -358,6 +442,11 @@ function buildCommentBody(options) {
     const configuredVariantKeys = new Set(
       configuredVariants.map((variant) => variant.variantKey),
     );
+    const evalOnlyVariantKeys = new Set(
+      (scenario.evals ?? [])
+        .map((evalConfig) => evalConfig.variantKey)
+        .filter((variantKey) => typeof variantKey === "string"),
+    );
 
     for (const variant of configuredVariants) {
       const observedRunIds = [
@@ -371,7 +460,11 @@ function buildCommentBody(options) {
     }
 
     const extraVariantKeys = [...observedVariants.keys()]
-      .filter((variantKey) => !configuredVariantKeys.has(variantKey))
+      .filter(
+        (variantKey) =>
+          !configuredVariantKeys.has(variantKey) &&
+          !evalOnlyVariantKeys.has(variantKey),
+      )
       .sort((left, right) =>
         left.localeCompare(right, undefined, { numeric: true }),
       );
@@ -385,6 +478,59 @@ function buildCommentBody(options) {
         rowLabel: `${scenario.label} (${variantKey})`,
         statusSuffix: "unconfigured variant",
       });
+    }
+  }
+
+  const evalConfigs = options.scenarios.flatMap((scenario) =>
+    (scenario.evals ?? []).map((evalConfig) => ({ evalConfig, scenario })),
+  );
+  if (evalConfigs.length > 0) {
+    lines.push("");
+    lines.push("## E2E Braintrust Evals");
+    lines.push("");
+    lines.push("| Eval | Braintrust Eval | Status |");
+    lines.push("| --- | --- | --- |");
+
+    for (const { evalConfig, scenario } of evalConfigs) {
+      const observedRunIds = observedRunIdsForEval(
+        options.runContextRecords,
+        scenario,
+        evalConfig,
+      );
+      const rowLabel = `${scenario.label} (${evalConfig.label})`;
+
+      if (observedRunIds.length === 0) {
+        lines.push(`| ${rowLabel} | N/A | Not observed in this run |`);
+        continue;
+      }
+
+      if (!options.orgName) {
+        lines.push(`| ${rowLabel} | N/A | Observed (link unavailable) |`);
+        continue;
+      }
+
+      const links = observedRunIds
+        .map((testRunId, index) => {
+          const experimentName = experimentNameForRunId(evalConfig, testRunId);
+          const experimentUrl = buildExperimentUrl({
+            appUrl: options.appPublicUrl,
+            experimentName,
+            orgName: options.orgName,
+            projectName: options.projectName,
+          });
+          const linkLabel =
+            observedRunIds.length === 1
+              ? "Open eval"
+              : `Open eval ${index + 1}`;
+          return `[${linkLabel}](${experimentUrl})`;
+        })
+        .join("<br>");
+      const runCount = observedRunIds.length;
+      const runWord = runCount === 1 ? "run" : "runs";
+
+      lines.push(
+        `| ${rowLabel} | ${links} | Observed (${runCount} ${runWord}) |`,
+      );
     }
   }
 
@@ -405,11 +551,12 @@ async function main() {
     );
   }
 
-  const [scenarios, runIdsByScenarioAndVariant, orgResult] = await Promise.all([
+  const [scenarios, runContext, orgResult] = await Promise.all([
     readScenarioConfig(configPath),
     readRunContextRecords(runContextDir),
     resolveOrgName(),
   ]);
+  const { records: runContextRecords, runIdsByScenarioAndVariant } = runContext;
 
   const recordsFound = [...runIdsByScenarioAndVariant.values()].reduce(
     (count, variants) =>
@@ -433,6 +580,7 @@ async function main() {
     projectName,
     recordsFound,
     runIdsByScenarioAndVariant,
+    runContextRecords,
     scenarios,
     warning: orgResult.warning,
   });

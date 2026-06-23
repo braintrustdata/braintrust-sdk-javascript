@@ -6,6 +6,8 @@ export interface ProdForwarding {
   apiKey: string;
   apiUrl: string;
   appUrl: string;
+  orgId: string;
+  orgName: string;
   projectId: string;
   projectName: string;
 }
@@ -36,7 +38,7 @@ export async function initializeProdForwarding(): Promise<void> {
     const projectId = await logger.id;
     const state = logger.loggingState;
 
-    if (!state.apiUrl || !state.appUrl) {
+    if (!state.apiUrl || !state.appUrl || !state.orgId || !state.orgName) {
       throw new Error("Braintrust login did not resolve prodForwarding URLs");
     }
 
@@ -44,6 +46,8 @@ export async function initializeProdForwarding(): Promise<void> {
       apiKey,
       apiUrl: state.apiUrl,
       appUrl: state.appUrl,
+      orgId: state.orgId,
+      orgName: state.orgName,
       projectId,
       projectName,
     };

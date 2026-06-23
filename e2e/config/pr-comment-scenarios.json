@@ -216,6 +216,24 @@
     ]
   },
   {
+    "scenarioDirName": "test-framework-evals-vitest",
+    "label": "Vitest Test Framework Evals",
+    "metadataScenario": "test-framework-evals-vitest",
+    "variants": [
+      { "variantKey": "v2", "label": "v2" },
+      { "variantKey": "v3", "label": "v3" },
+      { "variantKey": "v4.1", "label": "v4.1" }
+    ],
+    "evals": [
+      {
+        "entry": "scenario.vitest-evals-reporter.ts",
+        "experimentNameTemplate": "vitest-evals-reporter-{testRunId}",
+        "label": "vitest-evals reporter",
+        "variantKey": "vitest-evals-reporter"
+      }
+    ]
+  },
+  {
     "scenarioDirName": "openai-agents-instrumentation",
     "label": "OpenAI Agents Instrumentation",
     "metadataScenario": "openai-agents-instrumentation",
