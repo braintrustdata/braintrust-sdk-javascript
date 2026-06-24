@@ -2,4 +2,4 @@
 "braintrust": patch
 ---
 
-Fix the allow origin RegExp
+fix: Fix preview domain CORS regex
