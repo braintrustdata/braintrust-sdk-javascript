@@ -2,4 +2,4 @@
 "braintrust": patch
 ---
 
-fix: Fix preview domain CORS regex
+fix: Properly anchor preview domain CORS regex
