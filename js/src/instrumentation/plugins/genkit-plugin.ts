@@ -596,10 +596,19 @@ function durationMetrics(startTime: number): Record<string, number> {
 function extractActionMetadata(
   self: unknown,
 ): GenkitActionMetadata | undefined {
-  if (!isObject(self) || !isObject(self.__action)) {
+  if (
+    (typeof self !== "object" && typeof self !== "function") ||
+    self === null
+  ) {
     return undefined;
   }
-  return self.__action as GenkitActionMetadata;
+
+  const action = (self as { __action?: unknown }).__action;
+  if (!isObject(action)) {
+    return undefined;
+  }
+
+  return action as GenkitActionMetadata;
 }
 
 function extractActionSpanMetadata(
