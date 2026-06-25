@@ -6,6 +6,7 @@ import {
   init,
   initDataset,
   initLogger,
+  SpanImpl,
   Prompt,
   BraintrustState,
   loadPrompt,
@@ -25,7 +26,8 @@ import { type GitMetadataSettingsType as GitMetadataSettings } from "./generated
 import { writeFile, unlink } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { SpanComponentsV3 } from "../util/span_identifier_v3";
+import { LazyValue } from "./util";
+import { SpanComponentsV3, SpanObjectTypeV3 } from "../util/span_identifier_v3";
 
 configureNode();
 
@@ -2440,6 +2442,70 @@ describe("OTEL bootstrap auth", () => {
     expect(fetchUrls).not.toContain(
       "https://www.braintrust.dev/api/project/register",
     );
+  });
+
+  test("span logging falls back to project metadata lookup when the lazy parent id resolves empty", async () => {
+    const state = new BraintrustState({});
+    const fetchMock = vi.fn(
+      async (input: string | URL | Request, init?: RequestInit) => {
+        const url = otelBootstrapTestUrl(input);
+
+        if (url === "https://www.braintrust.dev/api/apikey/login") {
+          expectOtelBootstrapAuthHeader(init, "fallback-api-key");
+          return otelBootstrapLoginResponse();
+        }
+
+        if (url === "https://www.braintrust.dev/api/project/register") {
+          expectOtelBootstrapAuthHeader(init, "fallback-api-key");
+          return otelBootstrapProjectRegisterResponse(url);
+        }
+
+        if (url === "https://api.braintrust.dev/version") {
+          return new Response("{}", {
+            status: 200,
+            headers: { "content-type": "application/json" },
+          });
+        }
+
+        if (url === "https://api.braintrust.dev/logs3") {
+          expectOtelBootstrapAuthHeader(init, "fallback-api-key");
+          return new Response("{}", {
+            status: 200,
+            headers: { "content-type": "application/json" },
+          });
+        }
+
+        throw new Error(`Unexpected fetch to ${url}`);
+      },
+    );
+    state.setFetch(fetchMock as typeof globalThis.fetch);
+    state.httpLogger().syncFlush = true;
+
+    await state.login({
+      apiKey: "fallback-api-key",
+      appUrl: "https://www.braintrust.dev",
+    });
+
+    const span = new SpanImpl({
+      state,
+      parentObjectType: SpanObjectTypeV3.PROJECT_LOGS,
+      parentObjectId: new LazyValue(async () => ""),
+      parentComputeObjectMetadataArgs: {
+        project_name: "test-project",
+      },
+      parentSpanIds: undefined,
+      name: "fallback span",
+    });
+
+    span.log({ output: "world" });
+    span.end();
+    await state.bgLogger().flush();
+
+    const fetchUrls = fetchMock.mock.calls.map((call) => call[0]);
+    expect(fetchUrls).toContain(
+      "https://www.braintrust.dev/api/project/register",
+    );
+    expect(fetchUrls).toContain("https://api.braintrust.dev/logs3");
   });
 });
 

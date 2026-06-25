@@ -3,7 +3,7 @@
  * isObject([1, 2, 3]) // false
  */
 export function isObject(value: unknown): value is { [key: string]: unknown } {
-  return value instanceof Object && !(value instanceof Array);
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 export function isArray(value: unknown): value is unknown[] {
@@ -13,7 +13,7 @@ export function isArray(value: unknown): value is unknown[] {
 export function isObjectOrArray(
   value: unknown,
 ): value is { [key: string]: unknown } {
-  return value instanceof Object;
+  return typeof value === "object" && value !== null;
 }
 
 export function isEmpty(a: unknown): a is null | undefined {

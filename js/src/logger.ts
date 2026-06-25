@@ -1933,6 +1933,7 @@ function logFeedbackImpl(
   state: BraintrustState,
   parentObjectType: SpanObjectTypeV3,
   parentObjectId: LazyValue<string>,
+  parentComputeObjectMetadataArgs: Record<string, any> | undefined,
   {
     id,
     expected,
@@ -1975,7 +1976,12 @@ function logFeedbackImpl(
   const parentIds = async () =>
     new SpanComponentsV3({
       object_type: parentObjectType,
-      object_id: await parentObjectId.get(),
+      object_id: await resolveParentObjectId({
+        state,
+        parentObjectType,
+        parentObjectId,
+        parentComputeObjectMetadataArgs,
+      }),
     }).objectIdFields();
 
   if (Object.keys(updateEvent).length > 0) {
@@ -2018,6 +2024,7 @@ function updateSpanImpl({
   state,
   parentObjectType,
   parentObjectId,
+  parentComputeObjectMetadataArgs,
   id,
   root_span_id,
   span_id,
@@ -2026,6 +2033,7 @@ function updateSpanImpl({
   state: BraintrustState;
   parentObjectType: SpanObjectTypeV3;
   parentObjectId: LazyValue<string>;
+  parentComputeObjectMetadataArgs: Record<string, any> | undefined;
   id: string;
   root_span_id: string | undefined;
   span_id: string | undefined;
@@ -2047,7 +2055,12 @@ function updateSpanImpl({
   const parentIds = async () =>
     new SpanComponentsV3({
       object_type: parentObjectType,
-      object_id: await parentObjectId.get(),
+      object_id: await resolveParentObjectId({
+        state,
+        parentObjectType,
+        parentObjectId,
+        parentComputeObjectMetadataArgs,
+      }),
     }).objectIdFields();
 
   const record = new LazyValue(async () => ({
@@ -2090,6 +2103,8 @@ export function updateSpan({
     parentObjectId: new LazyValue(
       spanComponentsToObjectIdLambda(resolvedState, components),
     ),
+    parentComputeObjectMetadataArgs:
+      components.data.compute_object_metadata_args ?? undefined,
     id: components.data.row_id,
     root_span_id: components.data.root_span_id,
     span_id: components.data.span_id,
@@ -2159,6 +2174,42 @@ export async function spanComponentsToObjectId({
     state ?? _globalState,
     components,
   )();
+}
+
+async function resolveParentObjectId({
+  state,
+  parentObjectType,
+  parentObjectId,
+  parentComputeObjectMetadataArgs,
+}: {
+  state: BraintrustState;
+  parentObjectType: SpanObjectTypeV3;
+  parentObjectId: LazyValue<string>;
+  parentComputeObjectMetadataArgs: Record<string, any> | undefined;
+}): Promise<string> {
+  const objectId = await parentObjectId.get();
+  if (typeof objectId === "string" && objectId.length > 0) {
+    return objectId;
+  }
+
+  if (
+    parentObjectType === SpanObjectTypeV3.PROJECT_LOGS &&
+    parentComputeObjectMetadataArgs
+  ) {
+    const metadata = await computeLoggerMetadata(
+      await resolveLoggerStartupAuth(state, {}),
+      {
+        ...parentComputeObjectMetadataArgs,
+      },
+    );
+    if (metadata.project.id) {
+      return metadata.project.id;
+    }
+  }
+
+  throw new Error(
+    "Impossible: must provide either objectId or computeObjectMetadataArgs",
+  );
 }
 
 export const ERR_PERMALINK = "https://braintrust.dev/error-generating-link";
@@ -2505,7 +2556,13 @@ export class Logger<IsAsyncFlush extends boolean> implements Exportable {
    * @param event.source (Optional) the source of the feedback. Must be one of "external" (default), "app", or "api".
    */
   public logFeedback(event: LogFeedbackFullArgs): void {
-    logFeedbackImpl(this.state, this.parentObjectType(), this.lazyId, event);
+    logFeedbackImpl(
+      this.state,
+      this.parentObjectType(),
+      this.lazyId,
+      this.computeMetadataArgs,
+      event,
+    );
   }
 
   /**
@@ -2526,6 +2583,7 @@ export class Logger<IsAsyncFlush extends boolean> implements Exportable {
       state: this.state,
       parentObjectType: this.parentObjectType(),
       parentObjectId: this.lazyId,
+      parentComputeObjectMetadataArgs: this.computeMetadataArgs,
       id,
       root_span_id,
       span_id,
@@ -6763,7 +6821,13 @@ export class Experiment
    * @param event.source (Optional) the source of the feedback. Must be one of "external" (default), "app", or "api".
    */
   public logFeedback(event: LogFeedbackFullArgs): void {
-    logFeedbackImpl(this.state, this.parentObjectType(), this.lazyId, event);
+    logFeedbackImpl(
+      this.state,
+      this.parentObjectType(),
+      this.lazyId,
+      undefined,
+      event,
+    );
   }
 
   /**
@@ -6784,6 +6848,7 @@ export class Experiment
       state: this.state,
       parentObjectType: this.parentObjectType(),
       parentObjectId: this.lazyId,
+      parentComputeObjectMetadataArgs: undefined,
       id,
       root_span_id,
       span_id,
@@ -7176,17 +7241,28 @@ export class SpanImpl implements Span {
       ),
       ...new SpanComponentsV3({
         object_type: this.parentObjectType,
-        object_id: await this.parentObjectId.get(),
+        object_id: await resolveParentObjectId({
+          state: this._state,
+          parentObjectType: this.parentObjectType,
+          parentObjectId: this.parentObjectId,
+          parentComputeObjectMetadataArgs: this.parentComputeObjectMetadataArgs,
+        }),
       }).objectIdFields(),
     });
     this._state.bgLogger().log([new LazyValue(computeRecord)]);
   }
 
   public logFeedback(event: Omit<LogFeedbackFullArgs, "id">): void {
-    logFeedbackImpl(this._state, this.parentObjectType, this.parentObjectId, {
-      ...event,
-      id: this.id,
-    });
+    logFeedbackImpl(
+      this._state,
+      this.parentObjectType,
+      this.parentObjectId,
+      this.parentComputeObjectMetadataArgs,
+      {
+        ...event,
+        id: this.id,
+      },
+    );
   }
 
   public traced<R>(
