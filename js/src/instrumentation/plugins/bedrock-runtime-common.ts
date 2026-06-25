@@ -26,7 +26,7 @@ const BEDROCK_RUNTIME_COMMAND_OPERATIONS: Record<
 export function getBedrockRuntimeCommandName(
   command: unknown,
 ): BedrockRuntimeCommandName | undefined {
-  if (!isObject(command)) {
+  if (!isObject(command) || !isObject(command.constructor)) {
     return undefined;
   }
 
@@ -35,13 +35,7 @@ export function getBedrockRuntimeCommandName(
     return undefined;
   }
 
-  const constructor = (command as { constructor?: unknown }).constructor;
-  const commandName =
-    typeof constructor === "function"
-      ? constructor.name
-      : isObject(constructor) && typeof constructor.name === "string"
-        ? constructor.name
-        : undefined;
+  const commandName = command.constructor.name;
   return isBedrockRuntimeCommandName(commandName) ? commandName : undefined;
 }
 
