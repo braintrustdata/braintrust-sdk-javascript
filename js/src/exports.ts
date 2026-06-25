@@ -78,6 +78,7 @@ export {
   TestBackgroundLogger,
   _exportsForTestingOnly,
   _internalGetGlobalState,
+  _internalSetOtelBootstrapAuth,
   _internalSetInitialState,
   constructLogs3OverflowRequest,
   currentExperiment,

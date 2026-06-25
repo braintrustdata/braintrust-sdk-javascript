@@ -109,6 +109,8 @@ export async function runRuntimeCheck(runtime: Runtime) {
     transport: "http",
   };
 
+  await emitOtelSpan(runtime, testRunId);
+
   const logger = initLogger({ projectName });
 
   await logger.traced(
@@ -139,8 +141,6 @@ export async function runRuntimeCheck(runtime: Runtime) {
   );
 
   await logger.flush();
-
-  await emitOtelSpan(runtime, testRunId);
 
   return {
     instrumentationRegistered: Boolean(
