@@ -42,12 +42,57 @@ describe("ID Generation", () => {
   });
 
   describe("getIdGenerator factory function", () => {
-    test("returns UUID generator by default", () => {
+    test("returns hex-id generator by default (after reset)", () => {
+      // The core SDK now defaults to OpenTelemetry-compatible hex ids even
+      // without compat installed, so resetting the compat globals leaves the
+      // hex default in place (BRAINTRUST_LEGACY_IDS opts back into UUIDs).
+      const prevLegacy = process.env.BRAINTRUST_LEGACY_IDS;
+      const prevOtel = process.env.BRAINTRUST_OTEL_COMPAT;
+      delete process.env.BRAINTRUST_LEGACY_IDS;
+      delete process.env.BRAINTRUST_OTEL_COMPAT;
       resetOtelCompat();
 
-      const generator = getIdGenerator();
-      expect(generator).toBeInstanceOf(UUIDGenerator);
-      expect(generator.shareRootSpanId()).toBe(true);
+      try {
+        const generator = getIdGenerator();
+        expect(generator.shareRootSpanId()).toBe(false);
+        expect(/^[0-9a-f]{16}$/.test(generator.getSpanId())).toBe(true);
+      } finally {
+        if (prevLegacy === undefined) {
+          delete process.env.BRAINTRUST_LEGACY_IDS;
+        } else {
+          process.env.BRAINTRUST_LEGACY_IDS = prevLegacy;
+        }
+        if (prevOtel === undefined) {
+          delete process.env.BRAINTRUST_OTEL_COMPAT;
+        } else {
+          process.env.BRAINTRUST_OTEL_COMPAT = prevOtel;
+        }
+      }
+    });
+
+    test("returns UUID generator when BRAINTRUST_LEGACY_IDS is set", () => {
+      const prevLegacy = process.env.BRAINTRUST_LEGACY_IDS;
+      const prevOtel = process.env.BRAINTRUST_OTEL_COMPAT;
+      delete process.env.BRAINTRUST_OTEL_COMPAT;
+      process.env.BRAINTRUST_LEGACY_IDS = "true";
+      resetOtelCompat();
+
+      try {
+        const generator = getIdGenerator();
+        expect(generator).toBeInstanceOf(UUIDGenerator);
+        expect(generator.shareRootSpanId()).toBe(true);
+      } finally {
+        if (prevLegacy === undefined) {
+          delete process.env.BRAINTRUST_LEGACY_IDS;
+        } else {
+          process.env.BRAINTRUST_LEGACY_IDS = prevLegacy;
+        }
+        if (prevOtel === undefined) {
+          delete process.env.BRAINTRUST_OTEL_COMPAT;
+        } else {
+          process.env.BRAINTRUST_OTEL_COMPAT = prevOtel;
+        }
+      }
     });
 
     test("returns OTEL generator when otel is initialized", () => {

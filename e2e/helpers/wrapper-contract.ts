@@ -223,16 +223,24 @@ export function summarizeWrapperContract(
 export function payloadRowsForRootSpan(
   payloads: CapturedLogPayload[],
   rootSpanId: string | undefined,
+  traceId: string | undefined = rootSpanId,
 ): CapturedLogRow[] {
   if (!rootSpanId) {
     return [];
   }
 
+  // The whole trace is identified by `root_span_id` (the trace id). With the
+  // default OpenTelemetry-compatible hex ids the root span's own `span_id`
+  // differs from the trace id, so the trace is selected by `traceId` while the
+  // root row is identified by the root span's `span_id`. For legacy UUID ids the
+  // two are equal, which is why `traceId` defaults to `rootSpanId`.
+  const traceRootSpanId = traceId ?? rootSpanId;
+
   const rootRows: CapturedLogRow[] = [];
   const mergedRows = new Map<string, CapturedLogRow>();
 
   for (const row of payloads.flatMap((payload) => payload.rows)) {
-    if (row.root_span_id !== rootSpanId) continue;
+    if (row.root_span_id !== traceRootSpanId) continue;
 
     if (row.span_id === rootSpanId) {
       rootRows.push(...splitTerminalMergeRow(row));
