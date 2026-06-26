@@ -13,7 +13,19 @@ import {
   setDebugLogStateResolver,
   setGlobalDebugLogLevel,
 } from "./debug-logger";
-import { IDGenerator, getIdGenerator } from "./id-gen";
+import { IDGenerator, getIdGenerator, resolveUseLegacyUuidIds } from "./id-gen";
+import {
+  BAGGAGE_HEADER,
+  BRAINTRUST_PARENT_KEY,
+  PropagatedState,
+  TRACEPARENT_HEADER,
+  TRACESTATE_HEADER,
+  formatTraceparent,
+  getHeader,
+  mergeBaggage,
+  parseBaggage,
+  parseTraceparent,
+} from "./propagation";
 import {
   _urljoin,
   AnyDatasetRecord,
@@ -39,6 +51,7 @@ import {
   SanitizedExperimentLogPartialArgs,
   SpanComponentsV3,
   SpanComponentsV4,
+  SpanComponentsV4Data,
   SpanObjectTypeV3,
   spanObjectTypeV3ToString,
   SpanType,
@@ -253,7 +266,12 @@ export type StartSpanArgs = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   spanAttributes?: Record<any, any>;
   startTime?: number;
-  parent?: string;
+  /**
+   * The parent to start this span under. May be an exported span slug string
+   * (from `span.export()`) or an opaque W3C trace-context (from
+   * {@link extractTraceContext}).
+   */
+  parent?: string | PropagationContext;
   event?: StartSpanEventArgs;
   propagatedEvent?: StartSpanEventArgs;
   spanId?: string;
@@ -373,6 +391,22 @@ export interface Span extends Exportable {
    * @returns Serialized representation of this span's identifiers.
    */
   export(): Promise<string>;
+
+  /**
+   * Inject W3C trace-context headers (`traceparent` and `baggage`) for this span
+   * into a carrier, for distributed tracing across service boundaries.
+   *
+   * Adds `traceparent` (trace identity) and, when this span's Braintrust parent
+   * is known, a `baggage` entry `braintrust.parent=<parent>` (merged with any
+   * pre-existing baggage). Propagation is best-effort and never throws; if the
+   * span's ids are not W3C-shaped hex (e.g. legacy UUID mode), `traceparent` is
+   * omitted.
+   *
+   * @param carrier Optional existing carrier (e.g. outbound HTTP headers) to
+   *   mutate and return. A new object is created if not provided.
+   * @returns The carrier with propagation headers injected.
+   */
+  inject(carrier?: Record<string, string>): Record<string, string>;
 
   /**
    * Format a permalink to the Braintrust application for viewing this span.
@@ -508,10 +542,18 @@ declare global {
 
 type SpanComponent = typeof SpanComponentsV3 | typeof SpanComponentsV4;
 
+// Return the active span-component exporter class.
+//
+// The export version is coupled to the active ID format: hex IDs (the default)
+// serialize as V4, legacy UUID IDs serialize as V3. These must move together --
+// serializing hex IDs via V3 would lose the compact encoding and risk
+// corrupting hex values that happen to parse as UUIDs. An explicit
+// `globalThis.BRAINTRUST_SPAN_COMPONENT` (e.g. from `@braintrust/otel`) wins.
 function getSpanComponentsClass(): SpanComponent {
-  return globalThis.BRAINTRUST_SPAN_COMPONENT
-    ? globalThis.BRAINTRUST_SPAN_COMPONENT
-    : SpanComponentsV3;
+  if (globalThis.BRAINTRUST_SPAN_COMPONENT) {
+    return globalThis.BRAINTRUST_SPAN_COMPONENT;
+  }
+  return resolveUseLegacyUuidIds() ? SpanComponentsV3 : SpanComponentsV4;
 }
 
 export function getContextManager(): ContextManager {
@@ -563,6 +605,10 @@ export class NoopSpan implements Span {
 
   public async export(): Promise<string> {
     return "";
+  }
+
+  public inject(carrier?: Record<string, string>): Record<string, string> {
+    return carrier ?? {};
   }
 
   public async permalink(): Promise<string> {
@@ -645,7 +691,7 @@ export class BraintrustState {
   // Note: the value of IsAsyncFlush doesn't really matter here, since we
   // (safely) dynamically cast it whenever retrieving the logger.
   public currentLogger: Logger<false> | undefined;
-  public currentParent: IsoAsyncLocalStorage<string>;
+  public currentParent: IsoAsyncLocalStorage<string | PropagationContext>;
   public currentSpan: IsoAsyncLocalStorage<Span>;
   // Any time we re-log in, we directly update the apiConn inside the logger.
   // This is preferable to replacing the whole logger, which would create the
@@ -682,7 +728,9 @@ export class BraintrustState {
     this.id = `${new Date().toLocaleString()}-${stateNonce++}`; // This is for debugging. uuidv4() breaks on platforms like Cloudflare.
     this.currentExperiment = undefined;
     this.currentLogger = undefined;
-    this.currentParent = iso.newAsyncLocalStorage();
+    this.currentParent = iso.newAsyncLocalStorage<
+      string | PropagationContext
+    >();
     this.currentSpan = iso.newAsyncLocalStorage();
 
     if (loginParams.fetch) {
@@ -2047,7 +2095,7 @@ export function updateSpan({
 > &
   OptionalStateArg): void {
   const resolvedState = state ?? _globalState;
-  const components = getSpanComponentsClass().fromStr(exported);
+  const components = SpanComponentsV4.fromStr(exported);
 
   if (!components.data.row_id) {
     throw new Error("Exported span must have a row id");
@@ -2065,6 +2113,15 @@ export function updateSpan({
     event,
   });
 }
+
+/**
+ * An opaque W3C trace-context, as returned by {@link extractTraceContext}.
+ *
+ * Carries the relevant W3C headers (`traceparent`, `baggage`, `tracestate`).
+ * Callers MUST treat it as opaque and pass it straight to
+ * `startSpan({ parent })`.
+ */
+export type PropagationContext = Record<string, string>;
 
 interface ParentSpanIds {
   spanId: string;
@@ -2215,7 +2272,7 @@ export async function permalink(
   };
 
   try {
-    const components = getSpanComponentsClass().fromStr(slug);
+    const components = SpanComponentsV4.fromStr(slug);
     const object_type = spanObjectTypeV3ToString(components.data.object_type);
     const [orgName, appUrl, object_id] = await Promise.all([
       getOrgName(),
@@ -2242,28 +2299,35 @@ export async function permalink(
 // the original argument set.
 function startSpanParentArgs(args: {
   state: BraintrustState;
-  parent: string | undefined;
+  // `parent` may be an exported slug string or an opaque W3C trace-context
+  // (from `extractTraceContext`).
+  parent: string | PropagationContext | undefined;
   parentObjectType: SpanObjectTypeV3;
   parentObjectId: LazyValue<string>;
   parentComputeObjectMetadataArgs: Record<string, any> | undefined;
   parentSpanIds: ParentSpanIds | MultiParentSpanIds | undefined;
   propagatedEvent: StartSpanEventArgs | undefined;
+  propagatedState?: PropagatedState | undefined;
 }): {
   parentObjectType: SpanObjectTypeV3;
   parentObjectId: LazyValue<string>;
   parentComputeObjectMetadataArgs: Record<string, any> | undefined;
   parentSpanIds: ParentSpanIds | MultiParentSpanIds | undefined;
   propagatedEvent: StartSpanEventArgs | undefined;
+  propagatedState: PropagatedState | undefined;
 } {
   let argParentObjectId: LazyValue<string> | undefined = undefined;
   let argParentSpanIds: ParentSpanIds | MultiParentSpanIds | undefined =
     undefined;
   let argPropagatedEvent: StartSpanEventArgs | undefined = undefined;
-  if (args.parent) {
+  let argPropagatedState: PropagatedState | undefined = undefined;
+  const { parentSlug, propagatedState: parentPropagatedState } =
+    normalizeParent(args.parent, args.state);
+  if (parentSlug) {
     if (args.parentSpanIds) {
       throw new Error("Cannot specify both parent and parentSpanIds");
     }
-    const parentComponents = getSpanComponentsClass().fromStr(args.parent);
+    const parentComponents = SpanComponentsV4.fromStr(parentSlug);
     if (args.parentObjectType !== parentComponents.data.object_type) {
       throw new Error(
         `Mismatch between expected span parent object type ${args.parentObjectType} and provided type ${parentComponents.data.object_type}`,
@@ -2271,7 +2335,13 @@ function startSpanParentArgs(args: {
     }
 
     argParentObjectId = args.parentObjectId;
-    if (parentComponents.data.row_id) {
+    if (
+      parentComponents.data.row_id &&
+      parentSpanIdsUsable(
+        parentComponents.data.span_id,
+        parentComponents.data.root_span_id,
+      )
+    ) {
       argParentSpanIds = {
         spanId: parentComponents.data.span_id,
         rootSpanId: parentComponents.data.root_span_id,
@@ -2282,10 +2352,12 @@ function startSpanParentArgs(args: {
       ((parentComponents.data.propagated_event ?? undefined) as
         | StartSpanEventArgs
         | undefined);
+    argPropagatedState = args.propagatedState ?? parentPropagatedState;
   } else {
     argParentObjectId = args.parentObjectId;
     argParentSpanIds = args.parentSpanIds;
     argPropagatedEvent = args.propagatedEvent;
+    argPropagatedState = args.propagatedState;
   }
 
   return {
@@ -2294,6 +2366,7 @@ function startSpanParentArgs(args: {
     parentComputeObjectMetadataArgs: args.parentComputeObjectMetadataArgs,
     parentSpanIds: argParentSpanIds,
     propagatedEvent: argPropagatedEvent,
+    propagatedState: argPropagatedState,
   };
 }
 
@@ -2535,6 +2608,24 @@ export class Logger<IsAsyncFlush extends boolean> implements Exportable {
    */
   public _getLinkBaseUrl(): string | null {
     return _getLinkBaseUrl(this.state, this._linkArgs);
+  }
+
+  /**
+   * Return this logger's Braintrust parent string (`project_id:<id>` or
+   * `project_name:<name>`) for the `braintrust.parent` baggage entry, or
+   * undefined when it cannot be determined synchronously.
+   */
+  public _getOtelParent(): string | undefined {
+    const id =
+      this.computeMetadataArgs?.project_id || this.lazyId.getSync().value;
+    if (id) {
+      return `project_id:${id}`;
+    }
+    const name = this.computeMetadataArgs?.project_name;
+    if (name) {
+      return `project_name:${name}`;
+    }
+    return undefined;
   }
 }
 
@@ -5154,37 +5245,409 @@ export function currentSpan(options?: OptionalStateArg): Span {
 }
 
 /**
+ * Resolve the parent object and any forwarded W3C state in a single pass.
+ *
+ * Same precedence as {@link getSpanParentObject}, but also returns the W3C state
+ * (tracestate + raw traceparent flags) recovered while normalizing the `parent`
+ * argument, so callers don't have to re-run `normalizeParent` (which would
+ * re-parse baggage and re-resolve the active logger/experiment, potentially
+ * disagreeing if state changed between calls). The state is only meaningful when
+ * a parent slug was resolved; otherwise it is undefined.
+ */
+function getSpanParentObjectAndPropagatedState<IsAsyncFlush extends boolean>(
+  options?: AsyncFlushArg<IsAsyncFlush> &
+    OptionalStateArg & { parent?: string | PropagationContext },
+): {
+  parentObject:
+    | SpanComponentsV3
+    | SpanComponentsV4
+    | Span
+    | Experiment
+    | Logger<IsAsyncFlush>;
+  propagatedState: PropagatedState | undefined;
+} {
+  const state = options?.state ?? _globalState;
+
+  const parentSpan = currentSpan({ state });
+  if (!Object.is(parentSpan, NOOP_SPAN)) {
+    return { parentObject: parentSpan, propagatedState: undefined };
+  }
+
+  const parent = options?.parent ?? state.currentParent.getStore();
+  const { parentSlug, propagatedState } = normalizeParent(parent, state);
+  if (parentSlug) {
+    return {
+      parentObject: SpanComponentsV4.fromStr(parentSlug),
+      propagatedState,
+    };
+  }
+
+  const experiment = currentExperiment();
+  if (experiment) {
+    return { parentObject: experiment, propagatedState: undefined };
+  }
+  const logger = currentLogger<IsAsyncFlush>(options);
+  if (logger) {
+    return { parentObject: logger, propagatedState: undefined };
+  }
+  return { parentObject: NOOP_SPAN, propagatedState: undefined };
+}
+
+/**
  * Mainly for internal use. Return the parent object for starting a span in a global context.
- * Applies precedence: current span > propagated parent string > experiment > logger.
+ * Applies precedence: current span > propagated parent > experiment > logger.
+ *
+ * `parent` may be an exported slug string or an opaque W3C trace-context (from
+ * {@link extractTraceContext}).
  */
 export function getSpanParentObject<IsAsyncFlush extends boolean>(
   options?: AsyncFlushArg<IsAsyncFlush> &
-    OptionalStateArg & { parent?: string },
+    OptionalStateArg & { parent?: string | PropagationContext },
 ):
   | SpanComponentsV3
   | SpanComponentsV4
   | Span
   | Experiment
   | Logger<IsAsyncFlush> {
-  const state = options?.state ?? _globalState;
+  return getSpanParentObjectAndPropagatedState(options).parentObject;
+}
 
-  const parentSpan = currentSpan({ state });
-  if (!Object.is(parentSpan, NOOP_SPAN)) {
-    return parentSpan;
-  }
+/**
+ * Return the Braintrust parent string for the current logger/experiment, if any.
+ *
+ * Used as the fallback Braintrust parent on receive, when an inbound request
+ * carries trace identity (`traceparent`) but no `braintrust.parent` baggage.
+ */
+function currentBraintrustParent(state?: BraintrustState): string | undefined {
+  const resolvedState = state ?? _globalState;
 
-  const parentStr = options?.parent ?? state.currentParent.getStore();
-  if (parentStr) return getSpanComponentsClass().fromStr(parentStr);
-
-  const experiment = currentExperiment();
+  const experiment = currentExperiment({ state: resolvedState });
   if (experiment) {
-    return experiment;
+    try {
+      return experiment._getOtelParent() ?? undefined;
+    } catch {
+      return undefined;
+    }
   }
-  const logger = currentLogger<IsAsyncFlush>(options);
+
+  const logger = currentLogger({ state: resolvedState });
   if (logger) {
-    return logger;
+    try {
+      return logger._getOtelParent() ?? undefined;
+    } catch {
+      return undefined;
+    }
   }
-  return NOOP_SPAN;
+
+  return undefined;
+}
+
+interface BraintrustParentComponents {
+  objectType: SpanObjectTypeV3;
+  objectId: string | undefined;
+  computeArgs: Record<string, any> | undefined;
+}
+
+/**
+ * Parse a `braintrust.parent` string into object type / id / compute args.
+ *
+ * Accepts `project_id:<id>`, `project_name:<name>`, or `experiment_id:<id>`.
+ * Returns undefined if the value is empty or malformed.
+ */
+function braintrustParentToComponents(
+  braintrustParent: string | undefined | null,
+): BraintrustParentComponents | undefined {
+  if (!braintrustParent) {
+    return undefined;
+  }
+  if (braintrustParent.startsWith("project_id:")) {
+    const objectId = braintrustParent.slice("project_id:".length);
+    return objectId
+      ? {
+          objectType: SpanObjectTypeV3.PROJECT_LOGS,
+          objectId,
+          computeArgs: undefined,
+        }
+      : undefined;
+  }
+  if (braintrustParent.startsWith("project_name:")) {
+    const name = braintrustParent.slice("project_name:".length);
+    return name
+      ? {
+          objectType: SpanObjectTypeV3.PROJECT_LOGS,
+          objectId: undefined,
+          computeArgs: { project_name: name },
+        }
+      : undefined;
+  }
+  if (braintrustParent.startsWith("experiment_id:")) {
+    const objectId = braintrustParent.slice("experiment_id:".length);
+    return objectId
+      ? {
+          objectType: SpanObjectTypeV3.EXPERIMENT,
+          objectId,
+          computeArgs: undefined,
+        }
+      : undefined;
+  }
+  return undefined;
+}
+
+/**
+ * Set a W3C trace-context header on a carrier, sending the lowercase name.
+ *
+ * Per the W3C Trace Context spec (§3.2.1 / §3.3.1), vendors SHOULD send these
+ * header names in lowercase. `name` is always the canonical lowercase key. A
+ * plain object carrier is case-sensitive, so any pre-existing case-variant (e.g.
+ * `Baggage` from a framework that title-cases headers) must be removed first,
+ * otherwise the carrier would end up with two conflicting headers.
+ */
+function setHeader(
+  carrier: Record<string, string>,
+  name: string,
+  value: string,
+): void {
+  const lowered = name.toLowerCase();
+  for (const key of Object.keys(carrier)) {
+    if (key !== name && key.toLowerCase() === lowered) {
+      delete carrier[key];
+    }
+  }
+  carrier[name] = value;
+}
+
+/**
+ * Inject W3C trace-context headers into a carrier (in place).
+ *
+ * Emits `traceparent` from the hex trace/span ids, merges `braintrust.parent`
+ * into existing `baggage` when known, and forwards any inbound W3C state
+ * (`tracestate` plus the original `traceparent` trace-flags) carried in
+ * `propagatedState`. Pre-existing, non-Braintrust baggage entries are preserved.
+ */
+export function _injectIntoCarrier(
+  carrier: Record<string, string>,
+  args: {
+    traceId: string | undefined;
+    spanId: string | undefined;
+    braintrustParent: string | undefined | null;
+    propagatedState?: PropagatedState | undefined;
+  },
+): void {
+  // Re-emit the inbound trace-flags verbatim so the upstream sampling decision
+  // (and any future flag bits) is preserved; defaults to sampled when we
+  // originated the trace (no inbound flags).
+  const traceFlags = args.propagatedState?.traceFlags;
+  const traceparent = traceFlags
+    ? formatTraceparent(args.traceId, args.spanId, traceFlags)
+    : formatTraceparent(args.traceId, args.spanId);
+  if (traceparent === undefined) {
+    // Ids aren't W3C-shaped (e.g. legacy UUID mode); nothing to propagate.
+    return;
+  }
+  setHeader(carrier, TRACEPARENT_HEADER, traceparent);
+
+  // Forward upstream tracestate (per W3C, only alongside a valid traceparent).
+  const tracestate = args.propagatedState?.tracestate;
+  if (tracestate) {
+    setHeader(carrier, TRACESTATE_HEADER, tracestate);
+  }
+
+  // Merge braintrust.parent into any existing baggage. Other vendors' members
+  // are forwarded byte-for-byte (see mergeBaggage) so we never rewrite their
+  // percent-encoding.
+  const existing = getHeader(carrier, BAGGAGE_HEADER);
+  const baggageValue = mergeBaggage(existing, args.braintrustParent);
+  if (baggageValue !== undefined) {
+    setHeader(carrier, BAGGAGE_HEADER, baggageValue);
+  }
+}
+
+/**
+ * Inject W3C trace-context headers for the current (or given) span into a
+ * carrier.
+ *
+ * This is the free-function form of {@link Span.inject}, and the send-side
+ * counterpart of {@link extractTraceContext}. If no span is provided, the
+ * currently-active span is used. Propagation is best-effort and never throws.
+ *
+ * @param carrier Optional carrier (e.g. outbound HTTP headers) to mutate.
+ * @param options.span Optional span to inject. Defaults to the current span.
+ * @returns The carrier with propagation headers injected.
+ */
+export function injectTraceContext(
+  carrier?: Record<string, string>,
+  options?: OptionalStateArg & { span?: Span },
+): Record<string, string> {
+  const resolvedCarrier = carrier ?? {};
+  const span = options?.span ?? currentSpan({ state: options?.state });
+  try {
+    return span.inject(resolvedCarrier);
+  } catch (e) {
+    debugLogger.warn(`Error injecting trace context: ${e}`);
+    return resolvedCarrier;
+  }
+}
+
+/**
+ * Extract an opaque W3C trace-context from inbound request headers.
+ *
+ * This is the receive-side counterpart of {@link Span.inject} /
+ * {@link injectTraceContext}. The return value is an opaque propagation context
+ * that can be passed as `parent` to `startSpan`:
+ *
+ * ```ts
+ * const ctx = extractTraceContext(request.headers);
+ * traced((span) => { ... }, { name: "handler", parent: ctx });
+ * ```
+ *
+ * Only the W3C Trace Context headers are interpreted (`traceparent`, `baggage`,
+ * `tracestate`); header lookups are case-insensitive. If no valid `traceparent`
+ * is present, returns undefined (the caller starts a fresh root span). The
+ * Braintrust container the trace is routed under is resolved when the span is
+ * created: from the `braintrust.parent` baggage entry, or else the
+ * currently-active logger/experiment.
+ *
+ * Callers should treat the return value as opaque.
+ *
+ * @param headers Inbound request headers (e.g. an HTTP framework's headers).
+ * @returns An opaque context for `startSpan({ parent })`, or undefined.
+ */
+export function extractTraceContext(
+  headers: Record<string, unknown> | null | undefined,
+): PropagationContext | undefined {
+  if (!headers) {
+    return undefined;
+  }
+
+  const traceparent = getHeader(headers, TRACEPARENT_HEADER);
+  if (!traceparent || parseTraceparent(traceparent) === undefined) {
+    return undefined;
+  }
+
+  const context: PropagationContext = { [TRACEPARENT_HEADER]: traceparent };
+  const baggageValue = getHeader(headers, BAGGAGE_HEADER);
+  if (baggageValue) {
+    context[BAGGAGE_HEADER] = baggageValue;
+  }
+  const tracestate = getHeader(headers, TRACESTATE_HEADER);
+  if (tracestate) {
+    context[TRACESTATE_HEADER] = tracestate;
+  }
+  return context;
+}
+
+/**
+ * Resolve a W3C trace-context into `{ parentSlug, propagatedState }`.
+ *
+ * Reads `traceparent` for trace identity and `braintrust.parent` from `baggage`
+ * (falling back to the currently-active logger/experiment) for routing, and
+ * builds an internal Braintrust parent slug. Captures the `tracestate` and raw
+ * `traceparent` flags to forward onward. Returns `{ undefined, undefined }` if
+ * the context cannot be resolved into a usable parent (so the caller falls back
+ * to local precedence / a fresh root).
+ */
+function resolveW3cParent(
+  context: PropagationContext,
+  state?: BraintrustState,
+): {
+  parentSlug: string | undefined;
+  propagatedState: PropagatedState | undefined;
+} {
+  const traceparent = getHeader(context, TRACEPARENT_HEADER);
+  const parsed = traceparent ? parseTraceparent(traceparent) : undefined;
+  if (parsed === undefined) {
+    return { parentSlug: undefined, propagatedState: undefined };
+  }
+  const { traceId, spanId, traceFlags } = parsed;
+
+  // Determine the Braintrust container: baggage -> current logger/experiment.
+  let braintrustParent: string | undefined = undefined;
+  const baggageValue = getHeader(context, BAGGAGE_HEADER);
+  if (baggageValue) {
+    braintrustParent = parseBaggage(baggageValue)[BRAINTRUST_PARENT_KEY];
+  }
+  if (!braintrustParent) {
+    braintrustParent = currentBraintrustParent(state);
+  }
+  if (!braintrustParent) {
+    debugLogger.warn(
+      "Received traceparent without a braintrust.parent and no active logger/experiment; " +
+        "cannot route the trace. Starting a fresh local span instead.",
+    );
+    return { parentSlug: undefined, propagatedState: undefined };
+  }
+
+  const parsedParent = braintrustParentToComponents(braintrustParent);
+  if (parsedParent === undefined) {
+    debugLogger.warn(
+      `Invalid braintrust.parent: ${JSON.stringify(braintrustParent)}`,
+    );
+    return { parentSlug: undefined, propagatedState: undefined };
+  }
+  const { objectType, objectId, computeArgs } = parsedParent;
+
+  const tracestate = getHeader(context, TRACESTATE_HEADER) || undefined;
+
+  const slug = new SpanComponentsV4({
+    object_type: objectType,
+    ...(computeArgs
+      ? { compute_object_metadata_args: computeArgs }
+      : { object_id: objectId }),
+    row_id: "bt-propagation", // non-empty to enable span_id/root_span_id
+    span_id: spanId,
+    root_span_id: traceId,
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  } as SpanComponentsV4Data).toStr();
+  return {
+    parentSlug: slug,
+    propagatedState: { tracestate, traceFlags },
+  };
+}
+
+/**
+ * Normalize a `parent` argument into `{ parentSlug, propagatedState }`.
+ *
+ * - object -> interpreted as a W3C trace-context (from `extractTraceContext`)
+ * - string -> an exported span slug (passed through unchanged)
+ * - undefined -> no parent
+ *
+ * `propagatedState` carries any inbound W3C state (tracestate + raw flags) to
+ * forward on the next `inject`; it is undefined when there is no inbound W3C
+ * context.
+ */
+function normalizeParent(
+  parent: string | PropagationContext | undefined | null,
+  state?: BraintrustState,
+): {
+  parentSlug: string | undefined;
+  propagatedState: PropagatedState | undefined;
+} {
+  if (parent && typeof parent === "object") {
+    return resolveW3cParent(parent, state);
+  }
+  return {
+    parentSlug: parent ?? undefined,
+    propagatedState: undefined,
+  };
+}
+
+/**
+ * Return true if a parent slug carries span ids the child can link to.
+ *
+ * A child links to any parent slug that carries both a span id and a root span
+ * id, regardless of whether those ids are hex (the default) or legacy UUID. This
+ * keeps the deprecated `startSpan({ parent: <slug> })` path backwards
+ * compatible: a slug exported by an older (UUID) sender still links into a trace
+ * on a newer (hex) receiver, and vice versa. The child's own freshly generated
+ * span id stays in the active format; the backend supports traces whose nodes
+ * mix id formats across a propagation boundary. Empty ids (no row) are handled
+ * by the caller.
+ */
+function parentSpanIdsUsable(
+  spanId: string | undefined | null,
+  rootSpanId: string | undefined | null,
+): boolean {
+  return Boolean(spanId) && Boolean(rootSpanId);
 }
 
 export function logError(span: Span, error: unknown) {
@@ -5561,25 +6024,37 @@ function startSpanAndIsLogger<IsAsyncFlush extends boolean = true>(
 ): { span: Span; isSyncFlushLogger: boolean } {
   const state = args?.state ?? _globalState;
 
-  const parentObject = getSpanParentObject<IsAsyncFlush>({
-    asyncFlush: args?.asyncFlush,
-    parent: args?.parent,
-    state,
-  });
+  // Resolve the parent object and any forwarded W3C state in one pass, so we
+  // don't re-normalize `parent` (which could disagree if the active
+  // logger/experiment changed between calls).
+  const { parentObject, propagatedState } =
+    getSpanParentObjectAndPropagatedState<IsAsyncFlush>({
+      asyncFlush: args?.asyncFlush,
+      parent: args?.parent,
+      state,
+    });
 
   if (
     parentObject instanceof SpanComponentsV3 ||
     parentObject instanceof SpanComponentsV4
   ) {
-    const parentSpanIds: ParentSpanIds | undefined = parentObject.data.row_id
-      ? {
-          spanId: parentObject.data.span_id,
-          rootSpanId: parentObject.data.root_span_id,
-        }
-      : undefined;
+    const parentSpanIds: ParentSpanIds | undefined =
+      parentObject.data.row_id &&
+      parentSpanIdsUsable(
+        parentObject.data.span_id,
+        parentObject.data.root_span_id,
+      )
+        ? {
+            spanId: parentObject.data.span_id,
+            rootSpanId: parentObject.data.root_span_id,
+          }
+        : undefined;
+    // The parent object/state are already resolved from `parent` above; drop
+    // the raw `parent` so it isn't re-normalized.
+    const { parent: _ignoredParent, ...spanArgs } = args ?? {};
     const span = new SpanImpl({
       state,
-      ...args,
+      ...spanArgs,
       parentObjectType: parentObject.data.object_type,
       parentObjectId: new LazyValue(
         spanComponentsToObjectIdLambda(state, parentObject),
@@ -5593,6 +6068,7 @@ function startSpanAndIsLogger<IsAsyncFlush extends boolean = true>(
         ((parentObject.data.propagated_event ?? undefined) as
           | StartSpanEventArgs
           | undefined),
+      propagatedState,
     });
     return {
       span,
@@ -5695,7 +6171,7 @@ async function* asyncGeneratorWithCurrent<T>(
 }
 
 export function withParent<R>(
-  parent: string,
+  parent: string | PropagationContext,
   callback: () => R,
   state: BraintrustState | undefined = undefined,
 ): R {
@@ -6599,6 +7075,16 @@ export class Experiment
   }
 
   /**
+   * Return this experiment's Braintrust parent string (`experiment_id:<id>`) for
+   * the `braintrust.parent` baggage entry, or undefined when it cannot be
+   * determined synchronously.
+   */
+  public _getOtelParent(): string | undefined {
+    const id = this.lazyId.getSync().value;
+    return id ? `experiment_id:${id}` : undefined;
+  }
+
+  /**
    * Flush any pending rows to the server.
    */
   async flush(): Promise<void> {
@@ -6784,6 +7270,13 @@ export class SpanImpl implements Span {
   private _rootSpanId: string;
   private _spanParents: string[] | undefined;
 
+  // Inbound W3C trace-context state (tracestate + raw traceparent flags) to
+  // forward on outbound propagation. Captured at the span that received it (via
+  // extractTraceContext) and inherited by all subspans, so that any inject()
+  // within the trace re-emits the upstream state unchanged, per the W3C Trace
+  // Context spec. Not interpreted.
+  private _propagatedState: PropagatedState | undefined;
+
   public kind = "span" as const;
 
   constructor(
@@ -6795,9 +7288,11 @@ export class SpanImpl implements Span {
       parentSpanIds: ParentSpanIds | MultiParentSpanIds | undefined;
       defaultRootType?: SpanType;
       spanId?: string;
+      propagatedState?: PropagatedState | undefined;
     } & Omit<StartSpanArgs, "parent">,
   ) {
     this._state = args.state;
+    this._propagatedState = args.propagatedState;
 
     const spanAttributes = args.spanAttributes ?? {};
     const rawEvent = args.event ?? {};
@@ -7021,6 +7516,7 @@ export class SpanImpl implements Span {
         parentComputeObjectMetadataArgs: this.parentComputeObjectMetadataArgs,
         parentSpanIds,
         propagatedEvent: args?.propagatedEvent ?? this.propagatedEvent,
+        propagatedState: this._propagatedState,
       }),
     });
   }
@@ -7045,6 +7541,7 @@ export class SpanImpl implements Span {
         parentComputeObjectMetadataArgs: this.parentComputeObjectMetadataArgs,
         parentSpanIds,
         propagatedEvent: args?.propagatedEvent ?? this.propagatedEvent,
+        propagatedState: this._propagatedState,
       }),
       spanId,
     });
@@ -7079,6 +7576,49 @@ export class SpanImpl implements Span {
       root_span_id: this._rootSpanId,
       propagated_event: this.propagatedEvent,
     }).toStr();
+  }
+
+  /**
+   * Return this span's Braintrust parent string (`project_id:<id>`,
+   * `project_name:<name>`, or `experiment_id:<id>`) for the `braintrust.parent`
+   * baggage entry, or undefined when it cannot be determined synchronously.
+   */
+  public _getOtelParent(): string | undefined {
+    if (this.parentObjectType === SpanObjectTypeV3.PROJECT_LOGS) {
+      const id =
+        this.parentComputeObjectMetadataArgs?.project_id ||
+        this.parentObjectId.getSync().value;
+      const name = this.parentComputeObjectMetadataArgs?.project_name;
+      if (id) {
+        return `project_id:${id}`;
+      } else if (name) {
+        return `project_name:${name}`;
+      }
+    } else if (this.parentObjectType === SpanObjectTypeV3.EXPERIMENT) {
+      const id =
+        this.parentComputeObjectMetadataArgs?.experiment_id ||
+        this.parentObjectId.getSync().value;
+      if (id) {
+        return `experiment_id:${id}`;
+      }
+    }
+    return undefined;
+  }
+
+  public inject(carrier?: Record<string, string>): Record<string, string> {
+    const resolvedCarrier = carrier ?? {};
+    try {
+      _injectIntoCarrier(resolvedCarrier, {
+        traceId: this._rootSpanId,
+        spanId: this._spanId,
+        braintrustParent: this._getOtelParent(),
+        propagatedState: this._propagatedState,
+      });
+    } catch (e) {
+      // best-effort: never break the caller
+      debugLogger.warn(`Error injecting trace context: ${e}`);
+    }
+    return resolvedCarrier;
   }
 
   public async permalink(): Promise<string> {

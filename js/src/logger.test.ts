@@ -25,7 +25,7 @@ import { type GitMetadataSettingsType as GitMetadataSettings } from "./generated
 import { writeFile, unlink } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { SpanComponentsV3 } from "../util/span_identifier_v3";
+import { SpanComponentsV4 } from "../util/span_identifier_v4";
 
 configureNode();
 
@@ -2020,7 +2020,10 @@ test("startSpan support ids without parent", () => {
   const logger = initLogger({});
   const span = logger.startSpan({ name: "test-span", spanId: "123" });
   expect(span.spanId).toBe("123");
-  expect(span.rootSpanId).toBe("123");
+  // With the default hex (OTEL-compatible) ids, a root span gets a distinct
+  // trace id rather than reusing its span id, so root_span_id !== span_id.
+  expect(span.rootSpanId).not.toBe("123");
+  expect(span.rootSpanId.length).toBe(32); // 16-byte hex trace id
   expect(span.spanParents).toEqual([]);
   span.end();
 });
@@ -2862,8 +2865,8 @@ describe("sensitive data redaction", () => {
     expect(typeof exported).toBe("string");
     expect(exported.length).toBeGreaterThan(0);
 
-    // The exported string should be parseable by SpanComponentsV3
-    const components = SpanComponentsV3.fromStr(exported);
+    // The default export is now V4 (OTEL-compatible hex ids).
+    const components = SpanComponentsV4.fromStr(exported);
     expect(components.data.row_id).toBe(span.id);
     expect(components.data.span_id).toBe(span.spanId);
     expect(components.data.root_span_id).toBe(span.rootSpanId);

@@ -4,7 +4,7 @@ import {
   Classification,
   ClassificationItem,
   Score,
-  SpanComponentsV3,
+  SpanComponentsV4,
   SpanTypeAttribute,
   spanObjectTypeV3ToTypedString,
 } from "../util/index";
@@ -1228,9 +1228,15 @@ async function runEvaluatorInternal(
           };
 
           const parentStr = state.currentParent.getStore();
-          const parentComponents = parentStr
-            ? SpanComponentsV3.fromStr(parentStr)
-            : null;
+          // The eval framework only ever sets a slug string here; a W3C
+          // trace-context object (from extractTraceContext) is not expected in
+          // this path, so it is treated as no parent.
+          // SpanComponentsV4.fromStr decodes both V4 (default) and older V3
+          // slugs, so it works regardless of the active export version.
+          const parentComponents =
+            typeof parentStr === "string"
+              ? SpanComponentsV4.fromStr(parentStr)
+              : null;
 
           const trace = state
             ? new LocalTrace({

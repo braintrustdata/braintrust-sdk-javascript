@@ -17,7 +17,7 @@
       "start": 0
     },
     "project_id": "<project_id>",
-    "root_span_id": "<span:2>",
+    "root_span_id": "<span:3>",
     "span_attributes": {
       "exec_counter": 0,
       "name": "langgraph-auto-instrumentation-root",
@@ -33,7 +33,7 @@
       "end": 0
     },
     "project_id": "<project_id>",
-    "root_span_id": "<span:2>",
+    "root_span_id": "<span:3>",
     "span_id": "<span:2>"
   },
   {
@@ -43,7 +43,7 @@
       "caller_lineno": 0
     },
     "created": "<timestamp>",
-    "id": "<span:3>",
+    "id": "<span:4>",
     "input": {},
     "log_id": "g",
     "metadata": {
@@ -53,7 +53,7 @@
       },
       "metadata": {},
       "name": "LangGraph",
-      "run_id": "<uuid:5>",
+      "run_id": "<uuid:6>",
       "serialized": {
         "id": [
           "langgraph",
@@ -73,13 +73,13 @@
       "message": "hello from langgraph"
     },
     "project_id": "<project_id>",
-    "root_span_id": "<span:2>",
+    "root_span_id": "<span:3>",
     "span_attributes": {
       "exec_counter": 1,
       "name": "LangGraph",
       "type": "task"
     },
-    "span_id": "<span:4>",
+    "span_id": "<span:5>",
     "span_parents": [
       "<span:2>"
     ]
@@ -91,7 +91,7 @@
       "caller_lineno": 0
     },
     "created": "<timestamp>",
-    "id": "<span:5>",
+    "id": "<span:6>",
     "input": {
       "message": ""
     },
@@ -102,8 +102,8 @@
         "sdk_language": "javascript"
       },
       "metadata": {
-        "checkpoint_ns": "sayHello:<uuid:8>",
-        "langgraph_checkpoint_ns": "sayHello:<uuid:8>",
+        "checkpoint_ns": "sayHello:<uuid:9>",
+        "langgraph_checkpoint_ns": "sayHello:<uuid:9>",
         "langgraph_node": "sayHello",
         "langgraph_path": [
           "__pregel_pull",
@@ -115,8 +115,8 @@
         ]
       },
       "name": "sayHello",
-      "parent_run_id": "<uuid:5>",
-      "run_id": "<uuid:9>",
+      "parent_run_id": "<uuid:6>",
+      "run_id": "<uuid:10>",
       "serialized": {
         "id": [
           "langchain_core",
@@ -175,15 +175,15 @@
       "message": "hello from langgraph"
     },
     "project_id": "<project_id>",
-    "root_span_id": "<span:2>",
+    "root_span_id": "<span:3>",
     "span_attributes": {
       "exec_counter": 2,
       "name": "sayHello",
       "type": "task"
     },
-    "span_id": "<span:6>",
+    "span_id": "<span:7>",
     "span_parents": [
-      "<span:4>"
+      "<span:5>"
     ]
   },
   {
@@ -193,7 +193,7 @@
       "caller_lineno": 0
     },
     "created": "<timestamp>",
-    "id": "<span:7>",
+    "id": "<span:8>",
     "input": [
       [
         {
@@ -226,8 +226,8 @@
         "temperature": 0
       },
       "metadata": {
-        "checkpoint_ns": "sayHello:<uuid:8>",
-        "langgraph_checkpoint_ns": "sayHello:<uuid:8>",
+        "checkpoint_ns": "sayHello:<uuid:9>",
+        "langgraph_checkpoint_ns": "sayHello:<uuid:9>",
         "langgraph_node": "sayHello",
         "langgraph_path": [
           "__pregel_pull",
@@ -251,8 +251,8 @@
       "options": {
         "signal": {}
       },
-      "parent_run_id": "<uuid:9>",
-      "run_id": "<uuid:12>",
+      "parent_run_id": "<uuid:10>",
+      "run_id": "<uuid:13>",
       "serialized": {
         "id": [
           "langchain",
@@ -301,7 +301,7 @@
               "kwargs": {
                 "additional_kwargs": {},
                 "content": "<llm-response>",
-                "id": "<span:8>",
+                "id": "<span:9>",
                 "invalid_tool_calls": [],
                 "response_metadata": {
                   "finish_reason": "stop",
@@ -361,21 +361,21 @@
       }
     },
     "project_id": "<project_id>",
-    "root_span_id": "<span:2>",
+    "root_span_id": "<span:3>",
     "span_attributes": {
       "exec_counter": 3,
       "name": "ChatOpenAI",
       "type": "llm"
     },
-    "span_id": "<span:9>",
+    "span_id": "<span:10>",
     "span_parents": [
-      "<span:6>"
+      "<span:7>"
     ]
   },
   {
     "context": {},
     "created": "<timestamp>",
-    "id": "<span:10>",
+    "id": "<span:11>",
     "input": [
       {
         "content": "Reply with exactly: hello from langgraph",
@@ -418,13 +418,13 @@
       }
     ],
     "project_id": "<project_id>",
-    "root_span_id": "<span:2>",
+    "root_span_id": "<span:3>",
     "span_attributes": {
       "exec_counter": 4,
       "name": "Chat Completion",
       "type": "llm"
     },
-    "span_id": "<span:11>",
+    "span_id": "<span:12>",
     "span_parents": [
       "<span:2>"
     ]
@@ -436,7 +436,7 @@
       "caller_lineno": 0
     },
     "created": "<timestamp>",
-    "id": "<span:12>",
+    "id": "<span:13>",
     "input": {
       "message": "hello from langgraph"
     },
@@ -447,8 +447,8 @@
         "sdk_language": "javascript"
       },
       "metadata": {
-        "checkpoint_ns": "sayBye:<uuid:18>",
-        "langgraph_checkpoint_ns": "sayBye:<uuid:18>",
+        "checkpoint_ns": "sayBye:<uuid:19>",
+        "langgraph_checkpoint_ns": "sayBye:<uuid:19>",
         "langgraph_node": "sayBye",
         "langgraph_path": [
           "__pregel_pull",
@@ -460,8 +460,8 @@
         ]
       },
       "name": "sayBye",
-      "parent_run_id": "<uuid:5>",
-      "run_id": "<uuid:19>",
+      "parent_run_id": "<uuid:6>",
+      "run_id": "<uuid:20>",
       "serialized": {
         "id": [
           "langchain_core",
@@ -510,15 +510,15 @@
     },
     "output": {},
     "project_id": "<project_id>",
-    "root_span_id": "<span:2>",
+    "root_span_id": "<span:3>",
     "span_attributes": {
       "exec_counter": 5,
       "name": "sayBye",
       "type": "task"
     },
-    "span_id": "<span:13>",
+    "span_id": "<span:14>",
     "span_parents": [
-      "<span:4>"
+      "<span:5>"
     ]
   }
 ]

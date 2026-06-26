@@ -46,6 +46,15 @@ const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const UUID_SUBSTRING_REGEX =
   /[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/gi;
+// OpenTelemetry-compatible (the SDK default) span ids are 8 random bytes (16
+// lowercase hex chars) and trace ids are 16 random bytes (32 lowercase hex
+// chars). Like UUIDs, these are non-deterministic and show up not only under
+// the span-id keys handled above but also as plain string values (e.g. a span
+// id a scenario captured into its output), so an exact-match normalization
+// keeps such snapshots stable. They share the `tokenMaps.ids` map (and the
+// "span" token prefix) with the span-id keys so the same id resolves to one
+// token wherever it appears.
+const HEX_ID_REGEX = /^(?:[0-9a-f]{16}|[0-9a-f]{32})$/;
 const TIME_KEYS = new Set([
   "completed_at",
   "created",
@@ -420,6 +429,10 @@ function normalizeValue(
 
     if (UUID_REGEX.test(value)) {
       return tokenFor(tokenMaps.ids, value, "uuid");
+    }
+
+    if (HEX_ID_REGEX.test(value)) {
+      return tokenFor(tokenMaps.ids, value, "span");
     }
   }
 
