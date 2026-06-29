@@ -9,9 +9,17 @@ describe("type_util realm-safe object guards", () => {
     expect(isObject(crossRealmObject)).toBe(true);
   });
 
+  test("isObject accepts functions", () => {
+    expect(isObject(function noop() {})).toBe(true);
+  });
+
   test("isObjectOrArray accepts arrays from another vm context", () => {
     const crossRealmArray = vm.runInNewContext("[1, 2, 3]");
 
     expect(isObjectOrArray(crossRealmArray)).toBe(true);
+  });
+
+  test("isObjectOrArray accepts functions", () => {
+    expect(isObjectOrArray(function noop() {})).toBe(true);
   });
 });
