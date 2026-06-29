@@ -86,6 +86,122 @@ export function braintrustAISDKTelemetry(): AISDKV7Telemetry {
     return span;
   };
 
+  const onObjectStepEnd = (
+    event: Parameters<NonNullable<AISDKV7Telemetry["onObjectStepEnd"]>>[0],
+  ) => {
+    runSafely("onObjectStepEnd", () => {
+      const span = objectSpans.get(event.callId);
+      if (!span) {
+        return;
+      }
+
+      const result = {
+        ...event,
+        text: event.objectText,
+      } as AISDKResult;
+      span.log({
+        ...(shouldRecordOutputs(event)
+          ? {
+              output: processAISDKOutput(result, DEFAULT_DENY_OUTPUT_PATHS),
+            }
+          : {}),
+        metrics: extractTokenMetrics(result),
+      });
+      span.end();
+      objectSpans.delete(event.callId);
+    });
+  };
+
+  const onEmbedEnd = (
+    event: Parameters<NonNullable<AISDKV7Telemetry["onEmbedEnd"]>>[0],
+  ) => {
+    runSafely("onEmbedEnd", () => {
+      const state = embedSpans.get(event.embedCallId);
+      if (!state) {
+        return;
+      }
+
+      const result = {
+        ...event,
+        embeddings: event.embeddings,
+      } as AISDKEmbeddingResult;
+      state.span.log({
+        ...(shouldRecordOutputs(event)
+          ? {
+              output: processAISDKEmbeddingOutput(
+                result,
+                DEFAULT_DENY_OUTPUT_PATHS,
+              ),
+            }
+          : {}),
+        metrics: extractTokenMetrics(result),
+      });
+      state.span.end();
+      embedSpans.delete(event.embedCallId);
+    });
+  };
+
+  const onRerankEnd = (
+    event: Parameters<NonNullable<AISDKV7Telemetry["onRerankEnd"]>>[0],
+  ) => {
+    runSafely("onRerankEnd", () => {
+      const span = rerankSpans.get(event.callId);
+      if (!span) {
+        return;
+      }
+
+      const result = {
+        ranking: event.ranking?.map((entry) => ({
+          originalIndex: entry.index,
+          score: entry.relevanceScore,
+        })),
+      } as AISDKRerankResult;
+      span.log({
+        ...(shouldRecordOutputs(event)
+          ? {
+              output: processAISDKRerankOutput(
+                result,
+                DEFAULT_DENY_OUTPUT_PATHS,
+              ),
+            }
+          : {}),
+      });
+      span.end();
+      rerankSpans.delete(event.callId);
+    });
+  };
+
+  const onEnd = (
+    event: Parameters<NonNullable<AISDKV7Telemetry["onEnd"]>>[0],
+  ) => {
+    runSafely("onEnd", () => {
+      const state = operations.get(event.callId);
+      if (!state) {
+        return;
+      }
+
+      const result = finishResult(event, state.operationName);
+      const metrics: Record<string, number> = state.hadModelChild
+        ? {}
+        : extractTokenMetrics(result);
+      const timeToFirstToken = extractTimeToFirstToken(result, state);
+      if (timeToFirstToken !== undefined) {
+        metrics.time_to_first_token = timeToFirstToken;
+      }
+
+      state.span.log({
+        ...(shouldRecordOutputs(event)
+          ? {
+              output: finishOutput(result, state.operationName),
+            }
+          : {}),
+        metrics,
+      });
+      state.span.end();
+      operations.delete(event.callId);
+    });
+  };
+
   return {
     onStart(event) {
       runSafely("onStart", () => {
@@ -175,6 +291,16 @@ export function braintrustAISDKTelemetry(): AISDKV7Telemetry {
           return;
         }
 
+        const state = operations.get(event.callId);
+        const timeToFirstOutputMs = safePerformance(event)?.timeToFirstOutputMs;
+        if (
+          state?.operationName === "streamText" &&
+          state.firstChunkTime === undefined &&
+          typeof timeToFirstOutputMs === "number"
+        ) {
+          state.firstChunkTime = state.startTime + timeToFirstOutputMs / 1000;
+        }
+
         const result = {
           ...event,
           response: event.responseId ? { id: event.responseId } : undefined,
@@ -219,29 +345,7 @@ export function braintrustAISDKTelemetry(): AISDKV7Telemetry {
       });
     },
 
-    onObjectStepFinish(event) {
-      runSafely("onObjectStepFinish", () => {
-        const span = objectSpans.get(event.callId);
-        if (!span) {
-          return;
-        }
-
-        const result = {
-          ...event,
-          text: event.objectText,
-        } as AISDKResult;
-        span.log({
-          ...(shouldRecordOutputs(event)
-            ? {
-                output: processAISDKOutput(result, DEFAULT_DENY_OUTPUT_PATHS),
-              }
-            : {}),
-          metrics: extractTokenMetrics(result),
-        });
-        span.end();
-        objectSpans.delete(event.callId);
-      });
-    },
+    onObjectStepEnd,
 
     onEmbedStart(event) {
       runSafely("onEmbedStart", () => {
@@ -280,32 +384,7 @@ export function braintrustAISDKTelemetry(): AISDKV7Telemetry {
       });
     },
 
-    onEmbedFinish(event) {
-      runSafely("onEmbedFinish", () => {
-        const state = embedSpans.get(event.embedCallId);
-        if (!state) {
-          return;
-        }
-
-        const result = {
-          ...event,
-          embeddings: event.embeddings,
-        } as AISDKEmbeddingResult;
-        state.span.log({
-          ...(shouldRecordOutputs(event)
-            ? {
-                output: processAISDKEmbeddingOutput(
-                  result,
-                  DEFAULT_DENY_OUTPUT_PATHS,
-                ),
-              }
-            : {}),
-          metrics: extractTokenMetrics(result),
-        });
-        state.span.end();
-        embedSpans.delete(event.embedCallId);
-      });
-    },
+    onEmbedEnd,
 
     onRerankStart(event) {
       runSafely("onRerankStart", () => {
@@ -336,33 +415,7 @@ export function braintrustAISDKTelemetry(): AISDKV7Telemetry {
       });
     },
 
-    onRerankFinish(event) {
-      runSafely("onRerankFinish", () => {
-        const span = rerankSpans.get(event.callId);
-        if (!span) {
-          return;
-        }
-
-        const result = {
-          ranking: event.ranking?.map((entry) => ({
-            originalIndex: entry.index,
-            score: entry.relevanceScore,
-          })),
-        } as AISDKRerankResult;
-        span.log({
-          ...(shouldRecordOutputs(event)
-            ? {
-                output: processAISDKRerankOutput(
-                  result,
-                  DEFAULT_DENY_OUTPUT_PATHS,
-                ),
-              }
-            : {}),
-        });
-        span.end();
-        rerankSpans.delete(event.callId);
-      });
-    },
+    onRerankEnd,
 
     onToolExecutionStart(event) {
       runSafely("onToolExecutionStart", () => {
@@ -444,33 +497,7 @@ export function braintrustAISDKTelemetry(): AISDKV7Telemetry {
       });
     },
 
-    onFinish(event) {
-      runSafely("onFinish", () => {
-        const state = operations.get(event.callId);
-        if (!state) {
-          return;
-        }
-
-        const result = finishResult(event, state.operationName);
-        const metrics: Record<string, number> = state.hadModelChild
-          ? {}
-          : extractTokenMetrics(result);
-        if (state.firstChunkTime !== undefined) {
-          metrics.time_to_first_token = state.firstChunkTime - state.startTime;
-        }
-
-        state.span.log({
-          ...(shouldRecordOutputs(event)
-            ? {
-                output: finishOutput(result, state.operationName),
-              }
-            : {}),
-          metrics,
-        });
-        state.span.end();
-        operations.delete(event.callId);
-      });
-    },
+    onEnd,
 
     onError(event) {
       runSafely("onError", () => {
@@ -673,6 +700,45 @@ function finishResult(
   }
 
   return event as AISDKResult;
+}
+
+function extractTimeToFirstToken(
+  result: AISDKResult | AISDKEmbeddingResult | AISDKRerankResult,
+  state: OperationState,
+): number | undefined {
+  if (state.firstChunkTime !== undefined) {
+    return state.firstChunkTime - state.startTime;
+  }
+
+  const performanceCandidates = [
+    safePerformance(result),
+    safePerformance((result as { finalStep?: unknown }).finalStep),
+    ...(Array.isArray((result as { steps?: unknown }).steps)
+      ? ((result as { steps: unknown[] }).steps ?? []).map(safePerformance)
+      : []),
+  ];
+
+  for (const performance of performanceCandidates) {
+    const timeToFirstOutputMs = performance?.timeToFirstOutputMs;
+    if (typeof timeToFirstOutputMs === "number") {
+      return timeToFirstOutputMs / 1000;
+    }
+  }
+
+  return undefined;
+}
+
+function safePerformance(
+  value: unknown,
+): { timeToFirstOutputMs?: unknown } | undefined {
+  if (!isObject(value)) {
+    return undefined;
+  }
+
+  const performance = (value as { performance?: unknown }).performance;
+  return isObject(performance)
+    ? (performance as { timeToFirstOutputMs?: unknown })
+    : undefined;
 }
 
 function finishOutput(

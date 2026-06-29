@@ -30,6 +30,160 @@ describe("braintrustAISDKTelemetry", () => {
     _exportsForTestingOnly.clearTestBackgroundLogger();
   });
 
+  it("logs operations from AI SDK v7 end-family callbacks", async () => {
+    const telemetry = braintrustAISDKTelemetry();
+
+    expect(telemetry.onEnd).toEqual(expect.any(Function));
+    expect(telemetry.onEmbedEnd).toEqual(expect.any(Function));
+    expect(telemetry.onObjectStepEnd).toEqual(expect.any(Function));
+    expect(telemetry.onRerankEnd).toEqual(expect.any(Function));
+
+    telemetry.onStart?.({
+      callId: "call-v7-end",
+      operationId: "ai.streamText",
+      provider: "openai",
+      modelId: "gpt-4.1-mini",
+      messages: [{ role: "user", content: "Reply with OK." }],
+    });
+    telemetry.onLanguageModelCallStart?.({
+      callId: "call-v7-end",
+      provider: "openai",
+      modelId: "gpt-4.1-mini",
+      prompt: [{ role: "user", content: "Reply with OK." }],
+    });
+    telemetry.onLanguageModelCallEnd?.({
+      callId: "call-v7-end",
+      performance: {
+        timeToFirstOutputMs: 250,
+      },
+      provider: "openai",
+      modelId: "gpt-4.1-mini",
+      text: "OK",
+      usage: {
+        inputTokens: 6,
+        outputTokens: 1,
+        totalTokens: 7,
+      },
+    });
+    telemetry.onEnd?.({
+      callId: "call-v7-end",
+      operationId: "ai.streamText",
+      text: "OK",
+    });
+
+    telemetry.onStart?.({
+      callId: "object-v7-end",
+      operationId: "ai.generateObject",
+      provider: "openai",
+      modelId: "gpt-4.1-mini",
+    });
+    telemetry.onObjectStepStart?.({
+      callId: "object-v7-end",
+      provider: "openai",
+      modelId: "gpt-4.1-mini",
+      promptMessages: [{ role: "user", content: "Return JSON." }],
+    });
+    telemetry.onObjectStepEnd?.({
+      callId: "object-v7-end",
+      objectText: '{"answer":"OK"}',
+      usage: {
+        inputTokens: 6,
+        outputTokens: 4,
+        totalTokens: 10,
+      },
+    });
+    telemetry.onEnd?.({
+      callId: "object-v7-end",
+      operationId: "ai.generateObject",
+      object: { answer: "OK" },
+    });
+
+    telemetry.onStart?.({
+      callId: "embed-v7-end",
+      operationId: "ai.embed",
+      provider: "openai",
+      modelId: "text-embedding-3-small",
+      value: "hello",
+    });
+    telemetry.onEmbedStart?.({
+      callId: "embed-v7-end",
+      embedCallId: "embed-child-v7-end",
+      operationId: "ai.embed.doEmbed",
+      provider: "openai",
+      modelId: "text-embedding-3-small",
+      values: ["hello"],
+    });
+    telemetry.onEmbedEnd?.({
+      callId: "embed-v7-end",
+      embedCallId: "embed-child-v7-end",
+      operationId: "ai.embed.doEmbed",
+      embeddings: [[0.1, 0.2]],
+      usage: { tokens: 3 },
+    });
+    telemetry.onEnd?.({
+      callId: "embed-v7-end",
+      operationId: "ai.embed",
+      embedding: [0.1, 0.2],
+    });
+
+    telemetry.onStart?.({
+      callId: "rerank-v7-end",
+      operationId: "ai.rerank",
+      provider: "cohere",
+      modelId: "rerank-v3.5",
+      documents: ["alpha", "beta"],
+      query: "alpha",
+    });
+    telemetry.onRerankStart?.({
+      callId: "rerank-v7-end",
+      provider: "cohere",
+      modelId: "rerank-v3.5",
+      documents: ["alpha", "beta"],
+      query: "alpha",
+    });
+    telemetry.onRerankEnd?.({
+      callId: "rerank-v7-end",
+      ranking: [{ index: 0, relevanceScore: 0.9 }],
+    });
+    telemetry.onEnd?.({
+      callId: "rerank-v7-end",
+      operationId: "ai.rerank",
+      ranking: [{ originalIndex: 0, score: 0.9 }],
+    });
+
+    const spans = (await backgroundLogger.drain()) as Array<
+      Record<string, any>
+    >;
+
+    expect(
+      spans.find((span) => span.span_attributes?.name === "streamText"),
+    ).toMatchObject({
+      metrics: { time_to_first_token: 0.25 },
+      output: { text: "OK" },
+    });
+    expect(
+      spans.find((span) => span.span_attributes?.name === "generateObject"),
+    ).toMatchObject({ output: { object: { answer: "OK" } } });
+    expect(
+      spans.find((span) => span.span_attributes?.name === "embed"),
+    ).toMatchObject({ output: { embedding_length: 2 } });
+    expect(
+      spans.find((span) => span.span_attributes?.name === "rerank"),
+    ).toMatchObject({ output: [{ index: 0, relevance_score: 0.9 }] });
+    expect(
+      spans.find((span) => span.span_attributes?.name === "doStream"),
+    ).toMatchObject({ output: { text: "OK" } });
+    expect(
+      spans.find((span) => span.span_attributes?.name === "doGenerate"),
+    ).toMatchObject({ output: { text: '{"answer":"OK"}' } });
+    expect(
+      spans.find((span) => span.span_attributes?.name === "doEmbed"),
+    ).toMatchObject({ output: { embedding_count: 1, embedding_length: 2 } });
+    expect(
+      spans.find((span) => span.span_attributes?.name === "doRerank"),
+    ).toMatchObject({ output: [{ index: 0, relevance_score: 0.9 }] });
+  });
+
   it("logs a generateText operation and model call", async () => {
     const telemetry = braintrustAISDKTelemetry();
 
@@ -58,7 +212,7 @@ describe("braintrustAISDKTelemetry", () => {
         totalTokens: 7,
       },
     });
-    telemetry.onFinish?.({
+    telemetry.onEnd?.({
       callId: "call-1",
       operationId: "ai.generateText",
       text: "OK",
@@ -121,7 +275,7 @@ describe("braintrustAISDKTelemetry", () => {
       recordInputs: false,
       messages: [{ role: "user", content: "hidden" }],
     });
-    telemetry.onFinish?.({
+    telemetry.onEnd?.({
       callId: "call-2",
       operationId: "ai.generateText",
       recordOutputs: false,
@@ -208,14 +362,14 @@ describe("braintrustAISDKTelemetry", () => {
     );
 
     telemetry.onLanguageModelCallEnd?.({ callId, text: "late" });
-    telemetry.onObjectStepFinish?.({ callId, objectText: "{}" });
-    telemetry.onEmbedFinish?.({
+    telemetry.onObjectStepEnd?.({ callId, objectText: "{}" });
+    telemetry.onEmbedEnd?.({
       callId,
       embedCallId: "embed-error",
       operationId: "ai.embed",
       embeddings: [[0.1]],
     });
-    telemetry.onRerankFinish?.({
+    telemetry.onRerankEnd?.({
       callId,
       ranking: [{ index: 0, relevanceScore: 1 }],
     });
@@ -224,7 +378,7 @@ describe("braintrustAISDKTelemetry", () => {
       toolCall: { toolCallId: "tool-error", toolName: "lookupWeather" },
       toolOutput: { type: "tool-result", output: "late" },
     });
-    telemetry.onFinish?.({
+    telemetry.onEnd?.({
       callId,
       operationId: "ai.streamText",
       text: "late",
@@ -252,7 +406,7 @@ describe("braintrustAISDKTelemetry", () => {
       callId: "stream-retry",
       text: "OK",
     });
-    telemetry.onFinish?.({
+    telemetry.onEnd?.({
       callId: "stream-retry",
       operationId: "ai.streamText",
       text: "OK",
@@ -274,13 +428,13 @@ describe("braintrustAISDKTelemetry", () => {
       operationId: "ai.embed.doEmbed",
       values: ["retry embed attempt"],
     });
-    telemetry.onEmbedFinish?.({
+    telemetry.onEmbedEnd?.({
       callId: "embed-retry",
       embedCallId: "embed-attempt-2",
       operationId: "ai.embed.doEmbed",
       embeddings: [[0.1]],
     });
-    telemetry.onFinish?.({
+    telemetry.onEnd?.({
       callId: "embed-retry",
       operationId: "ai.embed",
       embedding: [0.1],
@@ -300,11 +454,11 @@ describe("braintrustAISDKTelemetry", () => {
       documents: ["retry rerank attempt"],
       query: "retry",
     });
-    telemetry.onRerankFinish?.({
+    telemetry.onRerankEnd?.({
       callId: "rerank-retry",
       ranking: [{ index: 0, relevanceScore: 1 }],
     });
-    telemetry.onFinish?.({
+    telemetry.onEnd?.({
       callId: "rerank-retry",
       operationId: "ai.rerank",
       ranking: [{ originalIndex: 0, score: 1 }],
@@ -398,7 +552,7 @@ describe("braintrustAISDKTelemetry", () => {
         output: { temperature: 21 },
       },
     });
-    telemetry.onFinish?.({
+    telemetry.onEnd?.({
       callId: "call-3",
       operationId: "ai.generateText",
       text: "It is 21 C.",

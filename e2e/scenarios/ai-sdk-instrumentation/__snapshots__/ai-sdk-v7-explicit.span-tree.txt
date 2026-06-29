@@ -1,7 +1,7 @@
 span_tree:
 └── ai-sdk-instrumentation-root [task]
     metadata: {
-      "aiSdkVersion": "7.0.0-beta.116",
+      "aiSdkVersion": "7.0.0",
       "scenario": "ai-sdk-instrumentation",
       "testRunId": "<run:1>"
     }
@@ -13,7 +13,7 @@ span_tree:
     │   └── generateText [function]
     │       input: {
     │         "headers": {
-    │           "user-agent": "ai/7.0.0-beta.116"
+    │           "user-agent": "ai/7.0.0"
     │         },
     │         "maxOutputTokens": 24,
     │         "maxRetries": 2,
@@ -49,7 +49,6 @@ span_tree:
     │           }
     │         },
     │         "response": {
-    │           "body": "<omitted>",
     │           "headers": "<omitted>",
     │           "id": "<span:3>",
     │           "messages": [
@@ -71,6 +70,7 @@ span_tree:
     │           "modelId": "gpt-4o-mini-2024-07-18",
     │           "timestamp": "<timestamp>"
     │         },
+    │         "responseMessages": "<omitted>",
     │         "steps": [
     │           {
     │             "callId": "<callId:1>",
@@ -97,7 +97,6 @@ span_tree:
     │               }
     │             },
     │             "response": {
-    │               "body": "<omitted>",
     │               "headers": "<omitted>",
     │               "id": "<span:3>",
     │               "messages": [
@@ -123,7 +122,6 @@ span_tree:
     │             "stepNumber": 0,
     │             "toolsContext": {},
     │             "usage": {
-    │               "cachedInputTokens": 0,
     │               "inputTokenDetails": {
     │                 "cacheReadTokens": 0,
     │                 "noCacheTokens": 18
@@ -144,7 +142,6 @@ span_tree:
     │                   "reasoning_tokens": 0
     │                 }
     │               },
-    │               "reasoningTokens": 0,
     │               "totalTokens": 21
     │             },
     │             "warnings": []
@@ -154,7 +151,6 @@ span_tree:
     │         "toolCalls": [],
     │         "toolResults": [],
     │         "totalUsage": {
-    │           "cachedInputTokens": 0,
     │           "inputTokenDetails": {
     │             "cacheReadTokens": 0,
     │             "noCacheTokens": 18
@@ -165,11 +161,9 @@ span_tree:
     │             "textTokens": 3
     │           },
     │           "outputTokens": 3,
-    │           "reasoningTokens": 0,
     │           "totalTokens": 21
     │         },
     │         "usage": {
-    │           "cachedInputTokens": 0,
     │           "inputTokenDetails": {
     │             "cacheReadTokens": 0,
     │             "noCacheTokens": 18
@@ -180,17 +174,6 @@ span_tree:
     │             "textTokens": 3
     │           },
     │           "outputTokens": 3,
-    │           "raw": {
-    │             "input_tokens": 18,
-    │             "input_tokens_details": {
-    │               "cached_tokens": 0
-    │             },
-    │             "output_tokens": 3,
-    │             "output_tokens_details": {
-    │               "reasoning_tokens": 0
-    │             }
-    │           },
-    │           "reasoningTokens": 0,
     │           "totalTokens": 21
     │         },
     │         "warnings": []
@@ -235,7 +218,6 @@ span_tree:
     │               "id": "<span:1>"
     │             },
     │             "usage": {
-    │               "cachedInputTokens": 0,
     │               "inputTokenDetails": {
     │                 "cacheReadTokens": 0,
     │                 "noCacheTokens": 18
@@ -256,7 +238,6 @@ span_tree:
     │                   "reasoning_tokens": 0
     │                 }
     │               },
-    │               "reasoningTokens": 0,
     │               "totalTokens": 21
     │             }
     │           }
@@ -269,11 +250,9 @@ span_tree:
     │             "provider": "openai.responses"
     │           }
     │           metrics: {
-    │             "completion_reasoning_tokens": 0,
     │             "completion_tokens": 3,
     │             "prompt_cached_tokens": 0,
     │             "prompt_tokens": 18,
-    │             "reasoning_tokens": 0,
     │             "tokens": 21
     │           }
     ├── ai-sdk-output-object-response-format-operation
@@ -289,7 +268,7 @@ span_tree:
     │   └── generateText [function]
     │       input: {
     │         "headers": {
-    │           "user-agent": "ai/7.0.0-beta.116"
+    │           "user-agent": "ai/7.0.0"
     │         },
     │         "maxOutputTokens": 32,
     │         "maxRetries": 2,
@@ -343,7 +322,6 @@ span_tree:
     │           }
     │         },
     │         "response": {
-    │           "body": "<omitted>",
     │           "headers": "<omitted>",
     │           "id": "<span:3>",
     │           "messages": [
@@ -365,6 +343,7 @@ span_tree:
     │           "modelId": "gpt-4o-mini-2024-07-18",
     │           "timestamp": "<timestamp>"
     │         },
+    │         "responseMessages": "<omitted>",
     │         "steps": [
     │           {
     │             "callId": "<callId:1>",
@@ -391,7 +370,6 @@ span_tree:
     │               }
     │             },
     │             "response": {
-    │               "body": "<omitted>",
     │               "headers": "<omitted>",
     │               "id": "<span:3>",
     │               "messages": [
@@ -417,7 +395,6 @@ span_tree:
     │             "stepNumber": 0,
     │             "toolsContext": {},
     │             "usage": {
-    │               "cachedInputTokens": 0,
     │               "inputTokenDetails": {
     │                 "cacheReadTokens": 0,
     │                 "noCacheTokens": 45
@@ -438,7 +415,6 @@ span_tree:
     │                   "reasoning_tokens": 0
     │                 }
     │               },
-    │               "reasoningTokens": 0,
     │               "totalTokens": 51
     │             },
     │             "warnings": []
@@ -448,7 +424,6 @@ span_tree:
     │         "toolCalls": [],
     │         "toolResults": [],
     │         "totalUsage": {
-    │           "cachedInputTokens": 0,
     │           "inputTokenDetails": {
     │             "cacheReadTokens": 0,
     │             "noCacheTokens": 45
@@ -459,11 +434,9 @@ span_tree:
     │             "textTokens": 6
     │           },
     │           "outputTokens": 6,
-    │           "reasoningTokens": 0,
     │           "totalTokens": 51
     │         },
     │         "usage": {
-    │           "cachedInputTokens": 0,
     │           "inputTokenDetails": {
     │             "cacheReadTokens": 0,
     │             "noCacheTokens": 45
@@ -474,17 +447,6 @@ span_tree:
     │             "textTokens": 6
     │           },
     │           "outputTokens": 6,
-    │           "raw": {
-    │             "input_tokens": 45,
-    │             "input_tokens_details": {
-    │               "cached_tokens": 0
-    │             },
-    │             "output_tokens": 6,
-    │             "output_tokens_details": {
-    │               "reasoning_tokens": 0
-    │             }
-    │           },
-    │           "reasoningTokens": 0,
     │           "totalTokens": 51
     │         },
     │         "warnings": []
@@ -529,7 +491,6 @@ span_tree:
     │               "id": "<span:1>"
     │             },
     │             "usage": {
-    │               "cachedInputTokens": 0,
     │               "inputTokenDetails": {
     │                 "cacheReadTokens": 0,
     │                 "noCacheTokens": 45
@@ -550,7 +511,6 @@ span_tree:
     │                   "reasoning_tokens": 0
     │                 }
     │               },
-    │               "reasoningTokens": 0,
     │               "totalTokens": 51
     │             }
     │           }
@@ -563,11 +523,9 @@ span_tree:
     │             "provider": "openai.responses"
     │           }
     │           metrics: {
-    │             "completion_reasoning_tokens": 0,
     │             "completion_tokens": 6,
     │             "prompt_cached_tokens": 0,
     │             "prompt_tokens": 45,
-    │             "reasoning_tokens": 0,
     │             "tokens": 51
     │           }
     ├── ai-sdk-stream-operation
@@ -632,6 +590,7 @@ span_tree:
     │           "modelId": "gpt-4o-mini-2024-07-18",
     │           "timestamp": "<timestamp>"
     │         },
+    │         "responseMessages": "<omitted>",
     │         "steps": [
     │           {
     │             "callId": "<callId:1>",
@@ -683,7 +642,6 @@ span_tree:
     │             "stepNumber": 0,
     │             "toolsContext": {},
     │             "usage": {
-    │               "cachedInputTokens": 0,
     │               "inputTokenDetails": {
     │                 "cacheReadTokens": 0,
     │                 "noCacheTokens": 22
@@ -704,7 +662,6 @@ span_tree:
     │                   "reasoning_tokens": 0
     │                 }
     │               },
-    │               "reasoningTokens": 0,
     │               "totalTokens": 29
     │             },
     │             "warnings": []
@@ -714,7 +671,6 @@ span_tree:
     │         "toolCalls": [],
     │         "toolResults": [],
     │         "totalUsage": {
-    │           "cachedInputTokens": 0,
     │           "inputTokenDetails": {
     │             "cacheReadTokens": 0,
     │             "noCacheTokens": 22
@@ -725,11 +681,9 @@ span_tree:
     │             "textTokens": 7
     │           },
     │           "outputTokens": 7,
-    │           "reasoningTokens": 0,
     │           "totalTokens": 29
     │         },
     │         "usage": {
-    │           "cachedInputTokens": 0,
     │           "inputTokenDetails": {
     │             "cacheReadTokens": 0,
     │             "noCacheTokens": 22
@@ -740,17 +694,6 @@ span_tree:
     │             "textTokens": 7
     │           },
     │           "outputTokens": 7,
-    │           "raw": {
-    │             "input_tokens": 22,
-    │             "input_tokens_details": {
-    │               "cached_tokens": 0
-    │             },
-    │             "output_tokens": 7,
-    │             "output_tokens_details": {
-    │               "reasoning_tokens": 0
-    │             }
-    │           },
-    │           "reasoningTokens": 0,
     │           "totalTokens": 29
     │         },
     │         "warnings": []
@@ -798,7 +741,6 @@ span_tree:
     │               "id": "<span:1>"
     │             },
     │             "usage": {
-    │               "cachedInputTokens": 0,
     │               "inputTokenDetails": {
     │                 "cacheReadTokens": 0,
     │                 "noCacheTokens": 22
@@ -819,7 +761,6 @@ span_tree:
     │                   "reasoning_tokens": 0
     │                 }
     │               },
-    │               "reasoningTokens": 0,
     │               "totalTokens": 29
     │             }
     │           }
@@ -832,11 +773,9 @@ span_tree:
     │             "provider": "openai.responses"
     │           }
     │           metrics: {
-    │             "completion_reasoning_tokens": 0,
     │             "completion_tokens": 7,
     │             "prompt_cached_tokens": 0,
     │             "prompt_tokens": 22,
-    │             "reasoning_tokens": 0,
     │             "tokens": 29
     │           }
     ├── ai-sdk-embed-operation
@@ -958,7 +897,7 @@ span_tree:
     │   └── generateText [function]
     │       input: {
     │         "headers": {
-    │           "user-agent": "ai/7.0.0-beta.116"
+    │           "user-agent": "ai/7.0.0"
     │         },
     │         "maxOutputTokens": 128,
     │         "maxRetries": 2,
@@ -972,7 +911,6 @@ span_tree:
     │           "modelId": "gpt-4o-mini-2024-07-18",
     │           "provider": "openai.responses"
     │         },
-    │         "system": "You must inspect live weather via the provided get_weather tool before responding.",
     │         "temperature": 0,
     │         "toolChoice": "required",
     │         "tools": {
@@ -997,6 +935,90 @@ span_tree:
     │       }
     │       output: {
     │         "content": [
+    │           {
+    │             "input": {
+    │               "location": "Paris, France"
+    │             },
+    │             "providerMetadata": {
+    │               "openai": {
+    │                 "itemId": "<itemId:3>"
+    │               }
+    │             },
+    │             "toolCallId": "<toolCallId:2>",
+    │             "toolName": "get_weather",
+    │             "type": "tool-call"
+    │           },
+    │           {
+    │             "dynamic": false,
+    │             "input": {
+    │               "location": "Paris, France"
+    │             },
+    │             "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
+    │             "providerMetadata": {
+    │               "openai": {
+    │                 "itemId": "<itemId:3>"
+    │               }
+    │             },
+    │             "toolCallId": "<toolCallId:2>",
+    │             "toolName": "get_weather",
+    │             "type": "tool-result"
+    │           },
+    │           {
+    │             "input": {
+    │               "location": "Paris, France"
+    │             },
+    │             "providerMetadata": {
+    │               "openai": {
+    │                 "itemId": "<itemId:6>"
+    │               }
+    │             },
+    │             "toolCallId": "<toolCallId:5>",
+    │             "toolName": "get_weather",
+    │             "type": "tool-call"
+    │           },
+    │           {
+    │             "dynamic": false,
+    │             "input": {
+    │               "location": "Paris, France"
+    │             },
+    │             "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
+    │             "providerMetadata": {
+    │               "openai": {
+    │                 "itemId": "<itemId:6>"
+    │               }
+    │             },
+    │             "toolCallId": "<toolCallId:5>",
+    │             "toolName": "get_weather",
+    │             "type": "tool-result"
+    │           },
+    │           {
+    │             "input": {
+    │               "location": "Paris, France"
+    │             },
+    │             "providerMetadata": {
+    │               "openai": {
+    │                 "itemId": "<itemId:9>"
+    │               }
+    │             },
+    │             "toolCallId": "<toolCallId:8>",
+    │             "toolName": "get_weather",
+    │             "type": "tool-call"
+    │           },
+    │           {
+    │             "dynamic": false,
+    │             "input": {
+    │               "location": "Paris, France"
+    │             },
+    │             "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
+    │             "providerMetadata": {
+    │               "openai": {
+    │                 "itemId": "<itemId:9>"
+    │               }
+    │             },
+    │             "toolCallId": "<toolCallId:8>",
+    │             "toolName": "get_weather",
+    │             "type": "tool-result"
+    │           },
     │           {
     │             "input": {
     │               "location": "Paris, France"
@@ -1034,121 +1056,9 @@ span_tree:
     │           }
     │         },
     │         "response": {
-    │           "body": "<omitted>",
     │           "headers": "<omitted>",
     │           "id": "<span:13>",
     │           "messages": [
-    │             {
-    │               "content": [
-    │                 {
-    │                   "input": {
-    │                     "location": "Paris, France"
-    │                   },
-    │                   "providerOptions": {
-    │                     "openai": {
-    │                       "itemId": "<itemId:3>"
-    │                     }
-    │                   },
-    │                   "toolCallId": "<toolCallId:2>",
-    │                   "toolName": "get_weather",
-    │                   "type": "tool-call"
-    │                 }
-    │               ],
-    │               "role": "assistant"
-    │             },
-    │             {
-    │               "content": [
-    │                 {
-    │                   "output": {
-    │                     "type": "text",
-    │                     "value": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
-    │                   },
-    │                   "providerOptions": {
-    │                     "openai": {
-    │                       "itemId": "<itemId:3>"
-    │                     }
-    │                   },
-    │                   "toolCallId": "<toolCallId:2>",
-    │                   "toolName": "get_weather",
-    │                   "type": "tool-result"
-    │                 }
-    │               ],
-    │               "role": "tool"
-    │             },
-    │             {
-    │               "content": [
-    │                 {
-    │                   "input": {
-    │                     "location": "Paris, France"
-    │                   },
-    │                   "providerOptions": {
-    │                     "openai": {
-    │                       "itemId": "<itemId:6>"
-    │                     }
-    │                   },
-    │                   "toolCallId": "<toolCallId:5>",
-    │                   "toolName": "get_weather",
-    │                   "type": "tool-call"
-    │                 }
-    │               ],
-    │               "role": "assistant"
-    │             },
-    │             {
-    │               "content": [
-    │                 {
-    │                   "output": {
-    │                     "type": "text",
-    │                     "value": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
-    │                   },
-    │                   "providerOptions": {
-    │                     "openai": {
-    │                       "itemId": "<itemId:6>"
-    │                     }
-    │                   },
-    │                   "toolCallId": "<toolCallId:5>",
-    │                   "toolName": "get_weather",
-    │                   "type": "tool-result"
-    │                 }
-    │               ],
-    │               "role": "tool"
-    │             },
-    │             {
-    │               "content": [
-    │                 {
-    │                   "input": {
-    │                     "location": "Paris, France"
-    │                   },
-    │                   "providerOptions": {
-    │                     "openai": {
-    │                       "itemId": "<itemId:9>"
-    │                     }
-    │                   },
-    │                   "toolCallId": "<toolCallId:8>",
-    │                   "toolName": "get_weather",
-    │                   "type": "tool-call"
-    │                 }
-    │               ],
-    │               "role": "assistant"
-    │             },
-    │             {
-    │               "content": [
-    │                 {
-    │                   "output": {
-    │                     "type": "text",
-    │                     "value": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
-    │                   },
-    │                   "providerOptions": {
-    │                     "openai": {
-    │                       "itemId": "<itemId:9>"
-    │                     }
-    │                   },
-    │                   "toolCallId": "<toolCallId:8>",
-    │                   "toolName": "get_weather",
-    │                   "type": "tool-result"
-    │                 }
-    │               ],
-    │               "role": "tool"
-    │             },
     │             {
     │               "content": [
     │                 {
@@ -1190,6 +1100,7 @@ span_tree:
     │           "modelId": "gpt-4o-mini-2024-07-18",
     │           "timestamp": "<timestamp>"
     │         },
+    │         "responseMessages": "<omitted>",
     │         "steps": [
     │           {
     │             "callId": "<callId:1>",
@@ -1235,7 +1146,6 @@ span_tree:
     │               }
     │             },
     │             "response": {
-    │               "body": "<omitted>",
     │               "headers": "<omitted>",
     │               "id": "<span:4>",
     │               "messages": [
@@ -1284,7 +1194,6 @@ span_tree:
     │             "stepNumber": 0,
     │             "toolsContext": {},
     │             "usage": {
-    │               "cachedInputTokens": 0,
     │               "inputTokenDetails": {
     │                 "cacheReadTokens": 0,
     │                 "noCacheTokens": 94
@@ -1305,7 +1214,6 @@ span_tree:
     │                   "reasoning_tokens": 0
     │                 }
     │               },
-    │               "reasoningTokens": 0,
     │               "totalTokens": 102
     │             },
     │             "warnings": []
@@ -1354,47 +1262,9 @@ span_tree:
     │               }
     │             },
     │             "response": {
-    │               "body": "<omitted>",
     │               "headers": "<omitted>",
     │               "id": "<span:7>",
     │               "messages": [
-    │                 {
-    │                   "content": [
-    │                     {
-    │                       "input": {
-    │                         "location": "Paris, France"
-    │                       },
-    │                       "providerOptions": {
-    │                         "openai": {
-    │                           "itemId": "<itemId:3>"
-    │                         }
-    │                       },
-    │                       "toolCallId": "<toolCallId:2>",
-    │                       "toolName": "get_weather",
-    │                       "type": "tool-call"
-    │                     }
-    │                   ],
-    │                   "role": "assistant"
-    │                 },
-    │                 {
-    │                   "content": [
-    │                     {
-    │                       "output": {
-    │                         "type": "text",
-    │                         "value": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
-    │                       },
-    │                       "providerOptions": {
-    │                         "openai": {
-    │                           "itemId": "<itemId:3>"
-    │                         }
-    │                       },
-    │                       "toolCallId": "<toolCallId:2>",
-    │                       "toolName": "get_weather",
-    │                       "type": "tool-result"
-    │                     }
-    │                   ],
-    │                   "role": "tool"
-    │                 },
     │                 {
     │                   "content": [
     │                     {
@@ -1440,7 +1310,6 @@ span_tree:
     │             "stepNumber": 1,
     │             "toolsContext": {},
     │             "usage": {
-    │               "cachedInputTokens": 0,
     │               "inputTokenDetails": {
     │                 "cacheReadTokens": 0,
     │                 "noCacheTokens": 133
@@ -1461,7 +1330,6 @@ span_tree:
     │                   "reasoning_tokens": 0
     │                 }
     │               },
-    │               "reasoningTokens": 0,
     │               "totalTokens": 141
     │             },
     │             "warnings": []
@@ -1510,84 +1378,9 @@ span_tree:
     │               }
     │             },
     │             "response": {
-    │               "body": "<omitted>",
     │               "headers": "<omitted>",
     │               "id": "<span:10>",
     │               "messages": [
-    │                 {
-    │                   "content": [
-    │                     {
-    │                       "input": {
-    │                         "location": "Paris, France"
-    │                       },
-    │                       "providerOptions": {
-    │                         "openai": {
-    │                           "itemId": "<itemId:3>"
-    │                         }
-    │                       },
-    │                       "toolCallId": "<toolCallId:2>",
-    │                       "toolName": "get_weather",
-    │                       "type": "tool-call"
-    │                     }
-    │                   ],
-    │                   "role": "assistant"
-    │                 },
-    │                 {
-    │                   "content": [
-    │                     {
-    │                       "output": {
-    │                         "type": "text",
-    │                         "value": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
-    │                       },
-    │                       "providerOptions": {
-    │                         "openai": {
-    │                           "itemId": "<itemId:3>"
-    │                         }
-    │                       },
-    │                       "toolCallId": "<toolCallId:2>",
-    │                       "toolName": "get_weather",
-    │                       "type": "tool-result"
-    │                     }
-    │                   ],
-    │                   "role": "tool"
-    │                 },
-    │                 {
-    │                   "content": [
-    │                     {
-    │                       "input": {
-    │                         "location": "Paris, France"
-    │                       },
-    │                       "providerOptions": {
-    │                         "openai": {
-    │                           "itemId": "<itemId:6>"
-    │                         }
-    │                       },
-    │                       "toolCallId": "<toolCallId:5>",
-    │                       "toolName": "get_weather",
-    │                       "type": "tool-call"
-    │                     }
-    │                   ],
-    │                   "role": "assistant"
-    │                 },
-    │                 {
-    │                   "content": [
-    │                     {
-    │                       "output": {
-    │                         "type": "text",
-    │                         "value": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
-    │                       },
-    │                       "providerOptions": {
-    │                         "openai": {
-    │                           "itemId": "<itemId:6>"
-    │                         }
-    │                       },
-    │                       "toolCallId": "<toolCallId:5>",
-    │                       "toolName": "get_weather",
-    │                       "type": "tool-result"
-    │                     }
-    │                   ],
-    │                   "role": "tool"
-    │                 },
     │                 {
     │                   "content": [
     │                     {
@@ -1633,7 +1426,6 @@ span_tree:
     │             "stepNumber": 2,
     │             "toolsContext": {},
     │             "usage": {
-    │               "cachedInputTokens": 0,
     │               "inputTokenDetails": {
     │                 "cacheReadTokens": 0,
     │                 "noCacheTokens": 172
@@ -1654,7 +1446,6 @@ span_tree:
     │                   "reasoning_tokens": 0
     │                 }
     │               },
-    │               "reasoningTokens": 0,
     │               "totalTokens": 180
     │             },
     │             "warnings": []
@@ -1703,121 +1494,9 @@ span_tree:
     │               }
     │             },
     │             "response": {
-    │               "body": "<omitted>",
     │               "headers": "<omitted>",
     │               "id": "<span:13>",
     │               "messages": [
-    │                 {
-    │                   "content": [
-    │                     {
-    │                       "input": {
-    │                         "location": "Paris, France"
-    │                       },
-    │                       "providerOptions": {
-    │                         "openai": {
-    │                           "itemId": "<itemId:3>"
-    │                         }
-    │                       },
-    │                       "toolCallId": "<toolCallId:2>",
-    │                       "toolName": "get_weather",
-    │                       "type": "tool-call"
-    │                     }
-    │                   ],
-    │                   "role": "assistant"
-    │                 },
-    │                 {
-    │                   "content": [
-    │                     {
-    │                       "output": {
-    │                         "type": "text",
-    │                         "value": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
-    │                       },
-    │                       "providerOptions": {
-    │                         "openai": {
-    │                           "itemId": "<itemId:3>"
-    │                         }
-    │                       },
-    │                       "toolCallId": "<toolCallId:2>",
-    │                       "toolName": "get_weather",
-    │                       "type": "tool-result"
-    │                     }
-    │                   ],
-    │                   "role": "tool"
-    │                 },
-    │                 {
-    │                   "content": [
-    │                     {
-    │                       "input": {
-    │                         "location": "Paris, France"
-    │                       },
-    │                       "providerOptions": {
-    │                         "openai": {
-    │                           "itemId": "<itemId:6>"
-    │                         }
-    │                       },
-    │                       "toolCallId": "<toolCallId:5>",
-    │                       "toolName": "get_weather",
-    │                       "type": "tool-call"
-    │                     }
-    │                   ],
-    │                   "role": "assistant"
-    │                 },
-    │                 {
-    │                   "content": [
-    │                     {
-    │                       "output": {
-    │                         "type": "text",
-    │                         "value": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
-    │                       },
-    │                       "providerOptions": {
-    │                         "openai": {
-    │                           "itemId": "<itemId:6>"
-    │                         }
-    │                       },
-    │                       "toolCallId": "<toolCallId:5>",
-    │                       "toolName": "get_weather",
-    │                       "type": "tool-result"
-    │                     }
-    │                   ],
-    │                   "role": "tool"
-    │                 },
-    │                 {
-    │                   "content": [
-    │                     {
-    │                       "input": {
-    │                         "location": "Paris, France"
-    │                       },
-    │                       "providerOptions": {
-    │                         "openai": {
-    │                           "itemId": "<itemId:9>"
-    │                         }
-    │                       },
-    │                       "toolCallId": "<toolCallId:8>",
-    │                       "toolName": "get_weather",
-    │                       "type": "tool-call"
-    │                     }
-    │                   ],
-    │                   "role": "assistant"
-    │                 },
-    │                 {
-    │                   "content": [
-    │                     {
-    │                       "output": {
-    │                         "type": "text",
-    │                         "value": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
-    │                       },
-    │                       "providerOptions": {
-    │                         "openai": {
-    │                           "itemId": "<itemId:9>"
-    │                         }
-    │                       },
-    │                       "toolCallId": "<toolCallId:8>",
-    │                       "toolName": "get_weather",
-    │                       "type": "tool-result"
-    │                     }
-    │                   ],
-    │                   "role": "tool"
-    │                 },
     │                 {
     │                   "content": [
     │                     {
@@ -1863,7 +1542,6 @@ span_tree:
     │             "stepNumber": 3,
     │             "toolsContext": {},
     │             "usage": {
-    │               "cachedInputTokens": 0,
     │               "inputTokenDetails": {
     │                 "cacheReadTokens": 0,
     │                 "noCacheTokens": 211
@@ -1884,7 +1562,6 @@ span_tree:
     │                   "reasoning_tokens": 0
     │                 }
     │               },
-    │               "reasoningTokens": 0,
     │               "totalTokens": 219
     │             },
     │             "warnings": []
@@ -1892,6 +1569,45 @@ span_tree:
     │         ],
     │         "text": "",
     │         "toolCalls": [
+    │           {
+    │             "input": {
+    │               "location": "Paris, France"
+    │             },
+    │             "providerMetadata": {
+    │               "openai": {
+    │                 "itemId": "<itemId:3>"
+    │               }
+    │             },
+    │             "toolCallId": "<toolCallId:2>",
+    │             "toolName": "get_weather",
+    │             "type": "tool-call"
+    │           },
+    │           {
+    │             "input": {
+    │               "location": "Paris, France"
+    │             },
+    │             "providerMetadata": {
+    │               "openai": {
+    │                 "itemId": "<itemId:6>"
+    │               }
+    │             },
+    │             "toolCallId": "<toolCallId:5>",
+    │             "toolName": "get_weather",
+    │             "type": "tool-call"
+    │           },
+    │           {
+    │             "input": {
+    │               "location": "Paris, France"
+    │             },
+    │             "providerMetadata": {
+    │               "openai": {
+    │                 "itemId": "<itemId:9>"
+    │               }
+    │             },
+    │             "toolCallId": "<toolCallId:8>",
+    │             "toolName": "get_weather",
+    │             "type": "tool-call"
+    │           },
     │           {
     │             "input": {
     │               "location": "Paris, France"
@@ -1915,6 +1631,51 @@ span_tree:
     │             "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
     │             "providerMetadata": {
     │               "openai": {
+    │                 "itemId": "<itemId:3>"
+    │               }
+    │             },
+    │             "toolCallId": "<toolCallId:2>",
+    │             "toolName": "get_weather",
+    │             "type": "tool-result"
+    │           },
+    │           {
+    │             "dynamic": false,
+    │             "input": {
+    │               "location": "Paris, France"
+    │             },
+    │             "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
+    │             "providerMetadata": {
+    │               "openai": {
+    │                 "itemId": "<itemId:6>"
+    │               }
+    │             },
+    │             "toolCallId": "<toolCallId:5>",
+    │             "toolName": "get_weather",
+    │             "type": "tool-result"
+    │           },
+    │           {
+    │             "dynamic": false,
+    │             "input": {
+    │               "location": "Paris, France"
+    │             },
+    │             "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
+    │             "providerMetadata": {
+    │               "openai": {
+    │                 "itemId": "<itemId:9>"
+    │               }
+    │             },
+    │             "toolCallId": "<toolCallId:8>",
+    │             "toolName": "get_weather",
+    │             "type": "tool-result"
+    │           },
+    │           {
+    │             "dynamic": false,
+    │             "input": {
+    │               "location": "Paris, France"
+    │             },
+    │             "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
+    │             "providerMetadata": {
+    │               "openai": {
     │                 "itemId": "<itemId:12>"
     │               }
     │             },
@@ -1924,7 +1685,6 @@ span_tree:
     │           }
     │         ],
     │         "totalUsage": {
-    │           "cachedInputTokens": 0,
     │           "inputTokenDetails": {
     │             "cacheReadTokens": 0,
     │             "noCacheTokens": 610
@@ -1935,33 +1695,20 @@ span_tree:
     │             "textTokens": 32
     │           },
     │           "outputTokens": 32,
-    │           "reasoningTokens": 0,
     │           "totalTokens": 642
     │         },
     │         "usage": {
-    │           "cachedInputTokens": 0,
     │           "inputTokenDetails": {
     │             "cacheReadTokens": 0,
-    │             "noCacheTokens": 211
+    │             "noCacheTokens": 610
     │           },
-    │           "inputTokens": 211,
+    │           "inputTokens": 610,
     │           "outputTokenDetails": {
     │             "reasoningTokens": 0,
-    │             "textTokens": 8
+    │             "textTokens": 32
     │           },
-    │           "outputTokens": 8,
-    │           "raw": {
-    │             "input_tokens": 211,
-    │             "input_tokens_details": {
-    │               "cached_tokens": 0
-    │             },
-    │             "output_tokens": 8,
-    │             "output_tokens_details": {
-    │               "reasoning_tokens": 0
-    │             }
-    │           },
-    │           "reasoningTokens": 0,
-    │           "totalTokens": 219
+    │           "outputTokens": 32,
+    │           "totalTokens": 642
     │         },
     │         "warnings": []
     │       }
@@ -1986,7 +1733,6 @@ span_tree:
     │       │       "modelId": "gpt-4o-mini-2024-07-18",
     │       │       "provider": "openai.responses"
     │       │     },
-    │       │     "system": "You must inspect live weather via the provided get_weather tool before responding.",
     │       │     "temperature": 0,
     │       │     "tools": [
     │       │       {
@@ -2031,7 +1777,6 @@ span_tree:
     │       │       "id": "<span:1>"
     │       │     },
     │       │     "usage": {
-    │       │       "cachedInputTokens": 0,
     │       │       "inputTokenDetails": {
     │       │         "cacheReadTokens": 0,
     │       │         "noCacheTokens": 94
@@ -2052,7 +1797,6 @@ span_tree:
     │       │           "reasoning_tokens": 0
     │       │         }
     │       │       },
-    │       │       "reasoningTokens": 0,
     │       │       "totalTokens": 102
     │       │     }
     │       │   }
@@ -2065,11 +1809,9 @@ span_tree:
     │       │     "provider": "openai.responses"
     │       │   }
     │       │   metrics: {
-    │       │     "completion_reasoning_tokens": 0,
     │       │     "completion_tokens": 8,
     │       │     "prompt_cached_tokens": 0,
     │       │     "prompt_tokens": 94,
-    │       │     "reasoning_tokens": 0,
     │       │     "tokens": 102
     │       │   }
     │       ├── get_weather [tool]
@@ -2084,9 +1826,6 @@ span_tree:
     │       │     },
     │       │     "toolCallId": "<toolCallId:1>",
     │       │     "toolName": "get_weather"
-    │       │   }
-    │       │   metrics: {
-    │       │     "duration_ms": 0
     │       │   }
     │       ├── doGenerate [llm]
     │       │   input: {
@@ -2138,7 +1877,6 @@ span_tree:
     │       │       "modelId": "gpt-4o-mini-2024-07-18",
     │       │       "provider": "openai.responses"
     │       │     },
-    │       │     "system": "You must inspect live weather via the provided get_weather tool before responding.",
     │       │     "temperature": 0,
     │       │     "tools": [
     │       │       {
@@ -2183,7 +1921,6 @@ span_tree:
     │       │       "id": "<span:1>"
     │       │     },
     │       │     "usage": {
-    │       │       "cachedInputTokens": 0,
     │       │       "inputTokenDetails": {
     │       │         "cacheReadTokens": 0,
     │       │         "noCacheTokens": 133
@@ -2204,7 +1941,6 @@ span_tree:
     │       │           "reasoning_tokens": 0
     │       │         }
     │       │       },
-    │       │       "reasoningTokens": 0,
     │       │       "totalTokens": 141
     │       │     }
     │       │   }
@@ -2217,11 +1953,9 @@ span_tree:
     │       │     "provider": "openai.responses"
     │       │   }
     │       │   metrics: {
-    │       │     "completion_reasoning_tokens": 0,
     │       │     "completion_tokens": 8,
     │       │     "prompt_cached_tokens": 0,
     │       │     "prompt_tokens": 133,
-    │       │     "reasoning_tokens": 0,
     │       │     "tokens": 141
     │       │   }
     │       ├── get_weather [tool]
@@ -2236,9 +1970,6 @@ span_tree:
     │       │     },
     │       │     "toolCallId": "<toolCallId:1>",
     │       │     "toolName": "get_weather"
-    │       │   }
-    │       │   metrics: {
-    │       │     "duration_ms": 0
     │       │   }
     │       ├── doGenerate [llm]
     │       │   input: {
@@ -2327,7 +2058,6 @@ span_tree:
     │       │       "modelId": "gpt-4o-mini-2024-07-18",
     │       │       "provider": "openai.responses"
     │       │     },
-    │       │     "system": "You must inspect live weather via the provided get_weather tool before responding.",
     │       │     "temperature": 0,
     │       │     "tools": [
     │       │       {
@@ -2372,7 +2102,6 @@ span_tree:
     │       │       "id": "<span:1>"
     │       │     },
     │       │     "usage": {
-    │       │       "cachedInputTokens": 0,
     │       │       "inputTokenDetails": {
     │       │         "cacheReadTokens": 0,
     │       │         "noCacheTokens": 172
@@ -2393,7 +2122,6 @@ span_tree:
     │       │           "reasoning_tokens": 0
     │       │         }
     │       │       },
-    │       │       "reasoningTokens": 0,
     │       │       "totalTokens": 180
     │       │     }
     │       │   }
@@ -2406,11 +2134,9 @@ span_tree:
     │       │     "provider": "openai.responses"
     │       │   }
     │       │   metrics: {
-    │       │     "completion_reasoning_tokens": 0,
     │       │     "completion_tokens": 8,
     │       │     "prompt_cached_tokens": 0,
     │       │     "prompt_tokens": 172,
-    │       │     "reasoning_tokens": 0,
     │       │     "tokens": 180
     │       │   }
     │       ├── get_weather [tool]
@@ -2425,9 +2151,6 @@ span_tree:
     │       │     },
     │       │     "toolCallId": "<toolCallId:1>",
     │       │     "toolName": "get_weather"
-    │       │   }
-    │       │   metrics: {
-    │       │     "duration_ms": 0
     │       │   }
     │       ├── doGenerate [llm]
     │       │   input: {
@@ -2553,7 +2276,6 @@ span_tree:
     │       │       "modelId": "gpt-4o-mini-2024-07-18",
     │       │       "provider": "openai.responses"
     │       │     },
-    │       │     "system": "You must inspect live weather via the provided get_weather tool before responding.",
     │       │     "temperature": 0,
     │       │     "tools": [
     │       │       {
@@ -2598,7 +2320,6 @@ span_tree:
     │       │       "id": "<span:1>"
     │       │     },
     │       │     "usage": {
-    │       │       "cachedInputTokens": 0,
     │       │       "inputTokenDetails": {
     │       │         "cacheReadTokens": 0,
     │       │         "noCacheTokens": 211
@@ -2619,7 +2340,6 @@ span_tree:
     │       │           "reasoning_tokens": 0
     │       │         }
     │       │       },
-    │       │       "reasoningTokens": 0,
     │       │       "totalTokens": 219
     │       │     }
     │       │   }
@@ -2632,11 +2352,9 @@ span_tree:
     │       │     "provider": "openai.responses"
     │       │   }
     │       │   metrics: {
-    │       │     "completion_reasoning_tokens": 0,
     │       │     "completion_tokens": 8,
     │       │     "prompt_cached_tokens": 0,
     │       │     "prompt_tokens": 211,
-    │       │     "reasoning_tokens": 0,
     │       │     "tokens": 219
     │       │   }
     │       └── get_weather [tool]
@@ -2652,9 +2370,6 @@ span_tree:
     │             "toolCallId": "<toolCallId:1>",
     │             "toolName": "get_weather"
     │           }
-    │           metrics: {
-    │             "duration_ms": 0
-    │           }
     ├── ai-sdk-generate-object-operation
     │   metadata: {
     │     "operation": "generate-object",
@@ -2663,7 +2378,7 @@ span_tree:
     │   └── generateObject [function]
     │       input: {
     │         "headers": {
-    │           "user-agent": "ai/7.0.0-beta.116"
+    │           "user-agent": "ai/7.0.0"
     │         },
     │         "maxOutputTokens": 32,
     │         "maxRetries": 2,
@@ -2707,7 +2422,6 @@ span_tree:
     │           "timestamp": "<timestamp>"
     │         },
     │         "usage": {
-    │           "cachedInputTokens": 0,
     │           "inputTokenDetails": {
     │             "cacheReadTokens": 0,
     │             "noCacheTokens": 38
@@ -2728,7 +2442,6 @@ span_tree:
     │               "reasoning_tokens": 0
     │             }
     │           },
-    │           "reasoningTokens": 0,
     │           "totalTokens": 44
     │         },
     │         "warnings": []
@@ -2772,7 +2485,6 @@ span_tree:
     │             },
     │             "text": "{\"city\":\"Paris\"}",
     │             "usage": {
-    │               "cachedInputTokens": 0,
     │               "inputTokenDetails": {
     │                 "cacheReadTokens": 0,
     │                 "noCacheTokens": 38
@@ -2793,7 +2505,6 @@ span_tree:
     │                   "reasoning_tokens": 0
     │                 }
     │               },
-    │               "reasoningTokens": 0,
     │               "totalTokens": 44
     │             },
     │             "warnings": []
@@ -2807,11 +2518,9 @@ span_tree:
     │             "provider": "openai.responses"
     │           }
     │           metrics: {
-    │             "completion_reasoning_tokens": 0,
     │             "completion_tokens": 6,
     │             "prompt_cached_tokens": 0,
     │             "prompt_tokens": 38,
-    │             "reasoning_tokens": 0,
     │             "tokens": 44
     │           }
     └── ai-sdk-stream-object-operation
@@ -2862,7 +2571,6 @@ span_tree:
                 "timestamp": "<timestamp>"
               },
               "usage": {
-                "cachedInputTokens": 0,
                 "inputTokenDetails": {
                   "cacheReadTokens": 0,
                   "noCacheTokens": 38
@@ -2883,7 +2591,6 @@ span_tree:
                     "reasoning_tokens": 0
                   }
                 },
-                "reasoningTokens": 0,
                 "totalTokens": 44
               },
               "warnings": []
@@ -2926,7 +2633,6 @@ span_tree:
                   },
                   "text": "{\"city\":\"Paris\"}",
                   "usage": {
-                    "cachedInputTokens": 0,
                     "inputTokenDetails": {
                       "cacheReadTokens": 0,
                       "noCacheTokens": 38
@@ -2947,7 +2653,6 @@ span_tree:
                         "reasoning_tokens": 0
                       }
                     },
-                    "reasoningTokens": 0,
                     "totalTokens": 44
                   },
                   "warnings": []
@@ -2961,10 +2666,8 @@ span_tree:
                   "provider": "openai.responses"
                 }
                 metrics: {
-                  "completion_reasoning_tokens": 0,
                   "completion_tokens": 6,
                   "prompt_cached_tokens": 0,
                   "prompt_tokens": 38,
-                  "reasoning_tokens": 0,
                   "tokens": 44
                 }

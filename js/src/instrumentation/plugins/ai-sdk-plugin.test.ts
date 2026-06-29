@@ -4,6 +4,7 @@ const telemetryMocks = vi.hoisted(() => ({
   braintrustAISDKTelemetry: vi.fn(),
   telemetry: {} as {
     executeTool?: ReturnType<typeof vi.fn>;
+    onEnd?: ReturnType<typeof vi.fn>;
     onStart?: ReturnType<typeof vi.fn>;
   },
 }));
@@ -44,6 +45,7 @@ describe("AISDKPlugin", () => {
     mockChannels.clear();
     telemetryMocks.telemetry = {
       executeTool: vi.fn(({ execute }) => execute()),
+      onEnd: vi.fn(),
       onStart: vi.fn(),
     };
     telemetryMocks.braintrustAISDKTelemetry.mockReturnValue(
@@ -124,11 +126,13 @@ describe("AISDKPlugin", () => {
 
   describe("AI SDK v7 telemetry dispatcher", () => {
     it("patches dispatcher callbacks through the standard channel", async () => {
+      const existingOnEnd = vi.fn();
       const existingOnStart = vi.fn();
       const originalExecute = vi.fn(async () => "done");
       const existingExecuteTool = vi.fn(({ execute }) => execute());
       const dispatcher = {
         executeTool: existingExecuteTool,
+        onEnd: existingOnEnd,
         onStart: existingOnStart,
       };
 
@@ -150,6 +154,16 @@ describe("AISDKPlugin", () => {
       });
       expect(existingOnStart).toHaveBeenCalledTimes(1);
       expect(telemetryMocks.telemetry.onStart).toHaveBeenCalledWith({
+        callId: "call-1",
+        operationId: "ai.generateText",
+      });
+
+      await dispatcher.onEnd({
+        callId: "call-1",
+        operationId: "ai.generateText",
+      });
+      expect(existingOnEnd).toHaveBeenCalledTimes(1);
+      expect(telemetryMocks.telemetry.onEnd).toHaveBeenCalledWith({
         callId: "call-1",
         operationId: "ai.generateText",
       });

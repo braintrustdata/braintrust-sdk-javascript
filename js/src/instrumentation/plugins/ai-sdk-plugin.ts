@@ -89,12 +89,12 @@ const AI_SDK_V7_TELEMETRY_CALLBACKS = [
   "onChunk",
   "onStepFinish",
   "onObjectStepStart",
-  "onObjectStepFinish",
+  "onObjectStepEnd",
   "onEmbedStart",
-  "onEmbedFinish",
+  "onEmbedEnd",
   "onRerankStart",
-  "onRerankFinish",
-  "onFinish",
+  "onRerankEnd",
+  "onEnd",
   "onError",
 ] as const;
 
