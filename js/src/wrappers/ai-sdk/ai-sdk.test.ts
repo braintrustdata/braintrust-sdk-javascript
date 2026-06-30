@@ -2676,6 +2676,8 @@ function extractTokenMetrics(result: any): Record<string, number> {
   );
   if (totalTokens !== undefined) {
     metrics.tokens = totalTokens;
+  } else if (promptTokens !== undefined && completionTokens !== undefined) {
+    metrics.tokens = promptTokens + completionTokens;
   }
 
   const promptCachedTokens = firstNumber(
@@ -2878,6 +2880,7 @@ describe("extractTokenMetrics", () => {
 
     expect(result.prompt_tokens).toBe(100);
     expect(result.completion_tokens).toBe(50);
+    expect(result.tokens).toBe(150);
     // null should not be included - it should be undefined or not present
     expect(result.prompt_cached_tokens).toBeUndefined();
   });
@@ -2893,6 +2896,7 @@ describe("extractTokenMetrics", () => {
 
     expect(result.prompt_tokens).toBe(100);
     expect(result.completion_tokens).toBe(50);
+    expect(result.tokens).toBe(150);
     // Zero should be preserved, not treated as falsy
     expect(result.prompt_cached_tokens).toBe(0);
   });
@@ -2932,6 +2936,7 @@ describe("extractTokenMetrics", () => {
 
     expect(result.prompt_tokens).toBe(25);
     expect(result.completion_tokens).toBe(790);
+    expect(result.tokens).toBe(815);
     expect(result.reasoning_tokens).toBe(768);
     expect(result.completion_reasoning_tokens).toBe(768);
     expect(result.prompt_cached_tokens).toBe(0);
@@ -2970,6 +2975,33 @@ describe("extractTokenMetrics", () => {
     expect(result.tokens).toBe(75);
     expect(result.reasoning_tokens).toBe(20);
     expect(result.completion_reasoning_tokens).toBe(20);
+  });
+
+  test("synthesizes total tokens when usage has no explicit total", () => {
+    const result = extractTokenMetrics({
+      usage: {
+        inputTokens: 10,
+        outputTokens: 2,
+      },
+    });
+
+    expect(result.prompt_tokens).toBe(10);
+    expect(result.completion_tokens).toBe(2);
+    expect(result.tokens).toBe(12);
+  });
+
+  test("prefers explicit total tokens over synthesized total", () => {
+    const result = extractTokenMetrics({
+      usage: {
+        promptTokens: 10,
+        completionTokens: 2,
+        totalTokens: 99,
+      },
+    });
+
+    expect(result.prompt_tokens).toBe(10);
+    expect(result.completion_tokens).toBe(2);
+    expect(result.tokens).toBe(99);
   });
 });
 
