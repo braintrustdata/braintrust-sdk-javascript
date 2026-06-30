@@ -3903,6 +3903,13 @@ type UseOutputOption<IsLegacyDataset extends boolean> = {
   useOutput?: IsLegacyDataset;
 };
 
+declare global {
+  // Set by the bt eval runner when CLI-controlled BTQL should be pushed down
+  // into dataset-backed evals.
+  // eslint-disable-next-line no-var
+  var __bt_eval_internal_btql: Record<string, unknown> | undefined;
+}
+
 export type InitDatasetOptions<IsLegacyDataset extends boolean> =
   FullLoginOptions & {
     dataset?: string;
@@ -4214,6 +4221,16 @@ export function initDataset<
   const normalizedEnvironment = selection.environment;
   const normalizedSnapshotName = selection.snapshotName;
 
+  const cliInternalBtql = globalThis.__bt_eval_internal_btql;
+  const internalBtql =
+    cliInternalBtql === undefined
+      ? _internal_btql
+      : _internal_btql === undefined
+        ? cliInternalBtql
+        : isObject(_internal_btql)
+          ? { ...cliInternalBtql, ..._internal_btql }
+          : _internal_btql;
+
   const state = stateArg ?? _globalState;
 
   const lazyMetadata: LazyValue<ProjectDatasetMetadata> = new LazyValue(
@@ -4279,7 +4296,7 @@ export function initDataset<
     lazyMetadata,
     typeof resolvedVersion === "string" ? resolvedVersion : undefined,
     legacy,
-    _internal_btql,
+    internalBtql,
     resolvedVersion instanceof LazyValue ||
       normalizedEnvironment !== undefined ||
       normalizedSnapshotName !== undefined
