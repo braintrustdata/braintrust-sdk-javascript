@@ -836,7 +836,10 @@ test("initDataset merges bt eval internal BTQL with existing _internal_btql", as
 test("initDataset preserves explicit _internal_btql sample", async () => {
   const state = await _exportsForTestingOnly.simulateLoginForTests();
   const previousInternalBtql = globalThis.__bt_eval_internal_btql;
-  globalThis.__bt_eval_internal_btql = { sample: 5 };
+  globalThis.__bt_eval_internal_btql = {
+    sample: 5,
+    limit: 7,
+  };
 
   try {
     vi.spyOn(state, "login").mockResolvedValue(state);
@@ -865,6 +868,7 @@ test("initDataset preserves explicit _internal_btql sample", async () => {
       dataset_id: "00000000-0000-0000-0000-000000000002",
       _internal_btql: {
         filter: "metadata.kind = 'synthetic'",
+        limit: 7,
         sample: 2,
       },
     });

@@ -4227,9 +4227,8 @@ export function initDataset<
       ? _internal_btql
       : _internal_btql === undefined
         ? cliInternalBtql
-        : isObject(_internal_btql) &&
-            !Object.prototype.hasOwnProperty.call(_internal_btql, "sample")
-          ? { ..._internal_btql, ...cliInternalBtql }
+        : isObject(_internal_btql)
+          ? { ...cliInternalBtql, ..._internal_btql }
           : _internal_btql;
 
   const state = stateArg ?? _globalState;
