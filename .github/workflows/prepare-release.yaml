@@ -72,8 +72,10 @@ jobs:
           fi
 
           git commit -m "chore: Prepare release"
+          release_sha="$(git rev-parse HEAD)"
           git push origin HEAD:refs/heads/${{ steps.source.outputs.prepare_branch }}
           echo "has_changes=true" >> "$GITHUB_OUTPUT"
+          echo "release_sha=$release_sha" >> "$GITHUB_OUTPUT"
       - name: Summarize empty release
         if: steps.release_commit.outputs.has_changes == 'false'
         run: |
@@ -98,7 +100,6 @@ jobs:
             --head "${{ steps.source.outputs.prepare_branch }}" \
             --title "chore: Prepare release (${{ steps.source.outputs.short_main_sha }})" \
             --body-file release-pr-body.md)"
-          pr_number="${pr_url##*/}"
 
           {
             echo "## Prepare release"
@@ -108,6 +109,6 @@ jobs:
             echo "To publish this release, run the \`Publish Stable Release\` workflow with:"
             echo
             echo "\`\`\`text"
-            echo "release_pr: $pr_number"
+            echo "release_sha: ${{ steps.release_commit.outputs.release_sha }}"
             echo "\`\`\`"
           } >> "$GITHUB_STEP_SUMMARY"
