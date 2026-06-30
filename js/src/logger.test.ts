@@ -715,10 +715,10 @@ test("dataset fetch forwards _internal_btql filter arrays to btql", async () => 
   }
 });
 
-test("initDataset applies bt eval sample runtime value to eval data", async () => {
+test("initDataset applies bt eval internal BTQL runtime value to eval data", async () => {
   const state = await _exportsForTestingOnly.simulateLoginForTests();
-  const previousSampleRate = globalThis.__bt_eval_sample_rate;
-  globalThis.__bt_eval_sample_rate = 5;
+  const previousInternalBtql = globalThis.__bt_eval_internal_btql;
+  globalThis.__bt_eval_internal_btql = { sample: 5 };
 
   try {
     vi.spyOn(state, "login").mockResolvedValue(state);
@@ -746,16 +746,16 @@ test("initDataset applies bt eval sample runtime value to eval data", async () =
       },
     });
   } finally {
-    globalThis.__bt_eval_sample_rate = previousSampleRate;
+    globalThis.__bt_eval_internal_btql = previousInternalBtql;
     _exportsForTestingOnly.simulateLogoutForTests();
     vi.restoreAllMocks();
   }
 });
 
-test("legacy initDataset applies bt eval sample runtime value", async () => {
+test("legacy initDataset applies bt eval internal BTQL runtime value", async () => {
   const state = await _exportsForTestingOnly.simulateLoginForTests();
-  const previousSampleRate = globalThis.__bt_eval_sample_rate;
-  globalThis.__bt_eval_sample_rate = 5;
+  const previousInternalBtql = globalThis.__bt_eval_internal_btql;
+  globalThis.__bt_eval_internal_btql = { sample: 5 };
 
   try {
     vi.spyOn(state, "login").mockResolvedValue(state);
@@ -782,16 +782,19 @@ test("legacy initDataset applies bt eval sample runtime value", async () => {
       },
     });
   } finally {
-    globalThis.__bt_eval_sample_rate = previousSampleRate;
+    globalThis.__bt_eval_internal_btql = previousInternalBtql;
     _exportsForTestingOnly.simulateLogoutForTests();
     vi.restoreAllMocks();
   }
 });
 
-test("initDataset merges bt eval sample with existing _internal_btql", async () => {
+test("initDataset merges bt eval internal BTQL with existing _internal_btql", async () => {
   const state = await _exportsForTestingOnly.simulateLoginForTests();
-  const previousSampleRate = globalThis.__bt_eval_sample_rate;
-  globalThis.__bt_eval_sample_rate = 5;
+  const previousInternalBtql = globalThis.__bt_eval_internal_btql;
+  globalThis.__bt_eval_internal_btql = {
+    sample: 5,
+    limit: 7,
+  };
 
   try {
     vi.spyOn(state, "login").mockResolvedValue(state);
@@ -819,11 +822,12 @@ test("initDataset merges bt eval sample with existing _internal_btql", async () 
       dataset_id: "00000000-0000-0000-0000-000000000002",
       _internal_btql: {
         filter: "metadata.kind = 'synthetic'",
+        limit: 7,
         sample: 5,
       },
     });
   } finally {
-    globalThis.__bt_eval_sample_rate = previousSampleRate;
+    globalThis.__bt_eval_internal_btql = previousInternalBtql;
     _exportsForTestingOnly.simulateLogoutForTests();
     vi.restoreAllMocks();
   }
@@ -831,8 +835,8 @@ test("initDataset merges bt eval sample with existing _internal_btql", async () 
 
 test("initDataset preserves explicit _internal_btql sample", async () => {
   const state = await _exportsForTestingOnly.simulateLoginForTests();
-  const previousSampleRate = globalThis.__bt_eval_sample_rate;
-  globalThis.__bt_eval_sample_rate = 5;
+  const previousInternalBtql = globalThis.__bt_eval_internal_btql;
+  globalThis.__bt_eval_internal_btql = { sample: 5 };
 
   try {
     vi.spyOn(state, "login").mockResolvedValue(state);
@@ -865,16 +869,16 @@ test("initDataset preserves explicit _internal_btql sample", async () => {
       },
     });
   } finally {
-    globalThis.__bt_eval_sample_rate = previousSampleRate;
+    globalThis.__bt_eval_internal_btql = previousInternalBtql;
     _exportsForTestingOnly.simulateLogoutForTests();
     vi.restoreAllMocks();
   }
 });
 
-test("initDataset keeps eval data unchanged without bt eval sample runtime value", async () => {
+test("initDataset keeps eval data unchanged without bt eval internal BTQL runtime value", async () => {
   const state = await _exportsForTestingOnly.simulateLoginForTests();
-  const previousSampleRate = globalThis.__bt_eval_sample_rate;
-  globalThis.__bt_eval_sample_rate = undefined;
+  const previousInternalBtql = globalThis.__bt_eval_internal_btql;
+  globalThis.__bt_eval_internal_btql = undefined;
 
   try {
     vi.spyOn(state, "login").mockResolvedValue(state);
@@ -899,16 +903,16 @@ test("initDataset keeps eval data unchanged without bt eval sample runtime value
       dataset_id: "00000000-0000-0000-0000-000000000002",
     });
   } finally {
-    globalThis.__bt_eval_sample_rate = previousSampleRate;
+    globalThis.__bt_eval_internal_btql = previousInternalBtql;
     _exportsForTestingOnly.simulateLogoutForTests();
     vi.restoreAllMocks();
   }
 });
 
-test("dataset fetch forwards bt eval sample runtime value to btql", async () => {
+test("dataset fetch forwards bt eval internal BTQL runtime value to btql", async () => {
   const state = await _exportsForTestingOnly.simulateLoginForTests();
-  const previousSampleRate = globalThis.__bt_eval_sample_rate;
-  globalThis.__bt_eval_sample_rate = 5;
+  const previousInternalBtql = globalThis.__bt_eval_internal_btql;
+  globalThis.__bt_eval_internal_btql = { sample: 5 };
 
   try {
     vi.spyOn(state, "login").mockResolvedValue(state);
@@ -954,7 +958,7 @@ test("dataset fetch forwards bt eval sample runtime value to btql", async () => 
       }),
     );
   } finally {
-    globalThis.__bt_eval_sample_rate = previousSampleRate;
+    globalThis.__bt_eval_internal_btql = previousInternalBtql;
     _exportsForTestingOnly.simulateLogoutForTests();
     vi.restoreAllMocks();
   }
