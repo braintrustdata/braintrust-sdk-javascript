@@ -115,6 +115,21 @@ export default [
           message: "Use debugLogger instead of console for SDK logging.",
         },
       ],
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector:
+            "CallExpression[callee.type='MemberExpression'][callee.property.type='Identifier'][callee.property.name='enterWith']",
+          message:
+            "AsyncLocalStorage.enterWith() is not supported in Cloudflare Workers. Use AsyncLocalStorage.run() to scope context instead.",
+        },
+        {
+          selector:
+            "CallExpression[callee.type='MemberExpression'][callee.property.type='Literal'][callee.property.value='enterWith']",
+          message:
+            "AsyncLocalStorage.enterWith() is not supported in Cloudflare Workers. Use AsyncLocalStorage.run() to scope context instead.",
+        },
+      ],
       // Require node: protocol for Node.js built-in imports (for Deno compatibility)
       // This plugin automatically detects ALL Node.js built-ins - no manual list needed!
       "node-import/prefer-node-protocol": "error",

@@ -73,6 +73,8 @@ function ensureClaudeLocalToolContext():
   }
 
   const created: ClaudeAgentSDKLocalToolContext = {};
+  // TODO(luca): Replace ALS.enterWith() with ALS.run()
+  // eslint-disable-next-line no-restricted-syntax -- Existing ALS.enterWith() usage tracked by the TODO above.
   localToolContextStore.enterWith(created);
   return created;
 }
