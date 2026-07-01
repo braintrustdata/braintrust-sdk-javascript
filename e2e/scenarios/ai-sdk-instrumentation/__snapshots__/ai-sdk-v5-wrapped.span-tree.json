@@ -791,19 +791,9 @@
                   "name": "get_weather",
                   "type": "tool",
                   "children": [],
-                  "input": [
-                    {
-                      "location": "Paris, France"
-                    },
-                    {
-                      "messages": [
-                        {
-                          "content": "Use the get_weather tool for Paris, France. If you do not call the tool, the answer is invalid.",
-                          "role": "user"
-                        }
-                      ]
-                    }
-                  ],
+                  "input": {
+                    "location": "Paris, France"
+                  },
                   "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
                 },
                 {
@@ -943,49 +933,9 @@
                   "name": "get_weather",
                   "type": "tool",
                   "children": [],
-                  "input": [
-                    {
-                      "location": "Paris, France"
-                    },
-                    {
-                      "messages": [
-                        {
-                          "content": "Use the get_weather tool for Paris, France. If you do not call the tool, the answer is invalid.",
-                          "role": "user"
-                        },
-                        {
-                          "content": [
-                            {
-                              "input": {
-                                "location": "Paris, France"
-                              },
-                              "providerOptions": {
-                                "openai": {
-                                  "itemId": "<itemId:1>"
-                                }
-                              },
-                              "toolName": "get_weather",
-                              "type": "tool-call"
-                            }
-                          ],
-                          "role": "assistant"
-                        },
-                        {
-                          "content": [
-                            {
-                              "output": {
-                                "type": "text",
-                                "value": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
-                              },
-                              "toolName": "get_weather",
-                              "type": "tool-result"
-                            }
-                          ],
-                          "role": "tool"
-                        }
-                      ]
-                    }
-                  ],
+                  "input": {
+                    "location": "Paris, France"
+                  },
                   "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
                 },
                 {
@@ -1155,79 +1105,9 @@
                   "name": "get_weather",
                   "type": "tool",
                   "children": [],
-                  "input": [
-                    {
-                      "location": "Paris, France"
-                    },
-                    {
-                      "messages": [
-                        {
-                          "content": "Use the get_weather tool for Paris, France. If you do not call the tool, the answer is invalid.",
-                          "role": "user"
-                        },
-                        {
-                          "content": [
-                            {
-                              "input": {
-                                "location": "Paris, France"
-                              },
-                              "providerOptions": {
-                                "openai": {
-                                  "itemId": "<itemId:1>"
-                                }
-                              },
-                              "toolName": "get_weather",
-                              "type": "tool-call"
-                            }
-                          ],
-                          "role": "assistant"
-                        },
-                        {
-                          "content": [
-                            {
-                              "output": {
-                                "type": "text",
-                                "value": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
-                              },
-                              "toolName": "get_weather",
-                              "type": "tool-result"
-                            }
-                          ],
-                          "role": "tool"
-                        },
-                        {
-                          "content": [
-                            {
-                              "input": {
-                                "location": "Paris, France"
-                              },
-                              "providerOptions": {
-                                "openai": {
-                                  "itemId": "<itemId:2>"
-                                }
-                              },
-                              "toolName": "get_weather",
-                              "type": "tool-call"
-                            }
-                          ],
-                          "role": "assistant"
-                        },
-                        {
-                          "content": [
-                            {
-                              "output": {
-                                "type": "text",
-                                "value": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
-                              },
-                              "toolName": "get_weather",
-                              "type": "tool-result"
-                            }
-                          ],
-                          "role": "tool"
-                        }
-                      ]
-                    }
-                  ],
+                  "input": {
+                    "location": "Paris, France"
+                  },
                   "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
                 },
                 {
@@ -1427,109 +1307,9 @@
                   "name": "get_weather",
                   "type": "tool",
                   "children": [],
-                  "input": [
-                    {
-                      "location": "Paris, France"
-                    },
-                    {
-                      "messages": [
-                        {
-                          "content": "Use the get_weather tool for Paris, France. If you do not call the tool, the answer is invalid.",
-                          "role": "user"
-                        },
-                        {
-                          "content": [
-                            {
-                              "input": {
-                                "location": "Paris, France"
-                              },
-                              "providerOptions": {
-                                "openai": {
-                                  "itemId": "<itemId:1>"
-                                }
-                              },
-                              "toolName": "get_weather",
-                              "type": "tool-call"
-                            }
-                          ],
-                          "role": "assistant"
-                        },
-                        {
-                          "content": [
-                            {
-                              "output": {
-                                "type": "text",
-                                "value": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
-                              },
-                              "toolName": "get_weather",
-                              "type": "tool-result"
-                            }
-                          ],
-                          "role": "tool"
-                        },
-                        {
-                          "content": [
-                            {
-                              "input": {
-                                "location": "Paris, France"
-                              },
-                              "providerOptions": {
-                                "openai": {
-                                  "itemId": "<itemId:2>"
-                                }
-                              },
-                              "toolName": "get_weather",
-                              "type": "tool-call"
-                            }
-                          ],
-                          "role": "assistant"
-                        },
-                        {
-                          "content": [
-                            {
-                              "output": {
-                                "type": "text",
-                                "value": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
-                              },
-                              "toolName": "get_weather",
-                              "type": "tool-result"
-                            }
-                          ],
-                          "role": "tool"
-                        },
-                        {
-                          "content": [
-                            {
-                              "input": {
-                                "location": "Paris, France"
-                              },
-                              "providerOptions": {
-                                "openai": {
-                                  "itemId": "<itemId:3>"
-                                }
-                              },
-                              "toolName": "get_weather",
-                              "type": "tool-call"
-                            }
-                          ],
-                          "role": "assistant"
-                        },
-                        {
-                          "content": [
-                            {
-                              "output": {
-                                "type": "text",
-                                "value": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
-                              },
-                              "toolName": "get_weather",
-                              "type": "tool-result"
-                            }
-                          ],
-                          "role": "tool"
-                        }
-                      ]
-                    }
-                  ],
+                  "input": {
+                    "location": "Paris, France"
+                  },
                   "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
                 }
               ],

@@ -1304,6 +1304,27 @@ export function defineAISDKInstrumentationAssertions(options: {
         const toolNames = trace.toolSpans.map((event) => event.span.name);
         expect(toolNames).toContain("get_store_price");
         expect(toolNames).toContain("apply_discount");
+        expect(
+          trace.toolSpans.map((toolSpan) => ({
+            input: toolSpan.input,
+            name: toolSpan.span.name,
+          })),
+        ).toEqual(
+          expect.arrayContaining([
+            {
+              input: { item: "laptop", store: "StoreA" },
+              name: "get_store_price",
+            },
+            {
+              input: { item: "laptop", store: "StoreB" },
+              name: "get_store_price",
+            },
+            {
+              input: { discountCode: "SAVE20", total: 999 },
+              name: "apply_discount",
+            },
+          ]),
+        );
         trace.toolSpans.forEach((toolSpan) => {
           expect(toolSpan.input).toBeDefined();
           expect(toolSpan.output).toBeDefined();

@@ -765,19 +765,9 @@
                   "name": "get_weather",
                   "type": "tool",
                   "children": [],
-                  "input": [
-                    {
-                      "location": "Paris, France"
-                    },
-                    {
-                      "messages": [
-                        {
-                          "content": "Use the get_weather tool for Paris, France. If you do not call the tool, the answer is invalid.",
-                          "role": "user"
-                        }
-                      ]
-                    }
-                  ],
+                  "input": {
+                    "location": "Paris, France"
+                  },
                   "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
                 }
               ],

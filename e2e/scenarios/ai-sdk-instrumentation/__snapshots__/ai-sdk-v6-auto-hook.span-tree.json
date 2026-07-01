@@ -977,19 +977,9 @@
                   "name": "get_weather",
                   "type": "tool",
                   "children": [],
-                  "input": [
-                    {
-                      "location": "Paris, France"
-                    },
-                    {
-                      "messages": [
-                        {
-                          "content": "Use the get_weather tool for Paris, France. If you do not call the tool, the answer is invalid.",
-                          "role": "user"
-                        }
-                      ]
-                    }
-                  ],
+                  "input": {
+                    "location": "Paris, France"
+                  },
                   "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
                 },
                 {
@@ -1152,54 +1142,9 @@
                   "name": "get_weather",
                   "type": "tool",
                   "children": [],
-                  "input": [
-                    {
-                      "location": "Paris, France"
-                    },
-                    {
-                      "messages": [
-                        {
-                          "content": "Use the get_weather tool for Paris, France. If you do not call the tool, the answer is invalid.",
-                          "role": "user"
-                        },
-                        {
-                          "content": [
-                            {
-                              "input": {
-                                "location": "Paris, France"
-                              },
-                              "providerOptions": {
-                                "openai": {
-                                  "itemId": "<itemId:1>"
-                                }
-                              },
-                              "toolName": "get_weather",
-                              "type": "tool-call"
-                            }
-                          ],
-                          "role": "assistant"
-                        },
-                        {
-                          "content": [
-                            {
-                              "output": {
-                                "type": "text",
-                                "value": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
-                              },
-                              "providerOptions": {
-                                "openai": {
-                                  "itemId": "<itemId:1>"
-                                }
-                              },
-                              "toolName": "get_weather",
-                              "type": "tool-result"
-                            }
-                          ],
-                          "role": "tool"
-                        }
-                      ]
-                    }
-                  ],
+                  "input": {
+                    "location": "Paris, France"
+                  },
                   "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
                 },
                 {
@@ -1397,89 +1342,9 @@
                   "name": "get_weather",
                   "type": "tool",
                   "children": [],
-                  "input": [
-                    {
-                      "location": "Paris, France"
-                    },
-                    {
-                      "messages": [
-                        {
-                          "content": "Use the get_weather tool for Paris, France. If you do not call the tool, the answer is invalid.",
-                          "role": "user"
-                        },
-                        {
-                          "content": [
-                            {
-                              "input": {
-                                "location": "Paris, France"
-                              },
-                              "providerOptions": {
-                                "openai": {
-                                  "itemId": "<itemId:1>"
-                                }
-                              },
-                              "toolName": "get_weather",
-                              "type": "tool-call"
-                            }
-                          ],
-                          "role": "assistant"
-                        },
-                        {
-                          "content": [
-                            {
-                              "output": {
-                                "type": "text",
-                                "value": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
-                              },
-                              "providerOptions": {
-                                "openai": {
-                                  "itemId": "<itemId:1>"
-                                }
-                              },
-                              "toolName": "get_weather",
-                              "type": "tool-result"
-                            }
-                          ],
-                          "role": "tool"
-                        },
-                        {
-                          "content": [
-                            {
-                              "input": {
-                                "location": "Paris, France"
-                              },
-                              "providerOptions": {
-                                "openai": {
-                                  "itemId": "<itemId:2>"
-                                }
-                              },
-                              "toolName": "get_weather",
-                              "type": "tool-call"
-                            }
-                          ],
-                          "role": "assistant"
-                        },
-                        {
-                          "content": [
-                            {
-                              "output": {
-                                "type": "text",
-                                "value": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
-                              },
-                              "providerOptions": {
-                                "openai": {
-                                  "itemId": "<itemId:2>"
-                                }
-                              },
-                              "toolName": "get_weather",
-                              "type": "tool-result"
-                            }
-                          ],
-                          "role": "tool"
-                        }
-                      ]
-                    }
-                  ],
+                  "input": {
+                    "location": "Paris, France"
+                  },
                   "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
                 },
                 {
@@ -1712,124 +1577,9 @@
                   "name": "get_weather",
                   "type": "tool",
                   "children": [],
-                  "input": [
-                    {
-                      "location": "Paris, France"
-                    },
-                    {
-                      "messages": [
-                        {
-                          "content": "Use the get_weather tool for Paris, France. If you do not call the tool, the answer is invalid.",
-                          "role": "user"
-                        },
-                        {
-                          "content": [
-                            {
-                              "input": {
-                                "location": "Paris, France"
-                              },
-                              "providerOptions": {
-                                "openai": {
-                                  "itemId": "<itemId:1>"
-                                }
-                              },
-                              "toolName": "get_weather",
-                              "type": "tool-call"
-                            }
-                          ],
-                          "role": "assistant"
-                        },
-                        {
-                          "content": [
-                            {
-                              "output": {
-                                "type": "text",
-                                "value": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
-                              },
-                              "providerOptions": {
-                                "openai": {
-                                  "itemId": "<itemId:1>"
-                                }
-                              },
-                              "toolName": "get_weather",
-                              "type": "tool-result"
-                            }
-                          ],
-                          "role": "tool"
-                        },
-                        {
-                          "content": [
-                            {
-                              "input": {
-                                "location": "Paris, France"
-                              },
-                              "providerOptions": {
-                                "openai": {
-                                  "itemId": "<itemId:2>"
-                                }
-                              },
-                              "toolName": "get_weather",
-                              "type": "tool-call"
-                            }
-                          ],
-                          "role": "assistant"
-                        },
-                        {
-                          "content": [
-                            {
-                              "output": {
-                                "type": "text",
-                                "value": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
-                              },
-                              "providerOptions": {
-                                "openai": {
-                                  "itemId": "<itemId:2>"
-                                }
-                              },
-                              "toolName": "get_weather",
-                              "type": "tool-result"
-                            }
-                          ],
-                          "role": "tool"
-                        },
-                        {
-                          "content": [
-                            {
-                              "input": {
-                                "location": "Paris, France"
-                              },
-                              "providerOptions": {
-                                "openai": {
-                                  "itemId": "<itemId:3>"
-                                }
-                              },
-                              "toolName": "get_weather",
-                              "type": "tool-call"
-                            }
-                          ],
-                          "role": "assistant"
-                        },
-                        {
-                          "content": [
-                            {
-                              "output": {
-                                "type": "text",
-                                "value": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
-                              },
-                              "providerOptions": {
-                                "openai": {
-                                  "itemId": "<itemId:3>"
-                                }
-                              },
-                              "toolName": "get_weather",
-                              "type": "tool-result"
-                            }
-                          ],
-                          "role": "tool"
-                        }
-                      ]
-                    }
-                  ],
+                  "input": {
+                    "location": "Paris, France"
+                  },
                   "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
                 }
               ],
@@ -7233,56 +6983,20 @@
                   "name": "get_store_price",
                   "type": "tool",
                   "children": [],
-                  "input": [
-                    {
-                      "item": "laptop",
-                      "store": "StoreA"
-                    },
-                    {
-                      "messages": [
-                        {
-                          "content": "I need help comparing laptop prices before checkout.",
-                          "role": "user"
-                        },
-                        {
-                          "content": "I can compare store prices and apply a discount code.",
-                          "role": "assistant"
-                        },
-                        {
-                          "content": "Call get_store_price for a laptop at StoreA and StoreB, then call apply_discount with code SAVE20 for the cheaper price. Finish with the discounted total.",
-                          "role": "user"
-                        }
-                      ]
-                    }
-                  ],
+                  "input": {
+                    "item": "laptop",
+                    "store": "StoreA"
+                  },
                   "output": "{\"item\":\"laptop\",\"price\":999,\"store\":\"StoreA\"}"
                 },
                 {
                   "name": "get_store_price",
                   "type": "tool",
                   "children": [],
-                  "input": [
-                    {
-                      "item": "laptop",
-                      "store": "StoreB"
-                    },
-                    {
-                      "messages": [
-                        {
-                          "content": "I need help comparing laptop prices before checkout.",
-                          "role": "user"
-                        },
-                        {
-                          "content": "I can compare store prices and apply a discount code.",
-                          "role": "assistant"
-                        },
-                        {
-                          "content": "Call get_store_price for a laptop at StoreA and StoreB, then call apply_discount with code SAVE20 for the cheaper price. Finish with the discounted total.",
-                          "role": "user"
-                        }
-                      ]
-                    }
-                  ],
+                  "input": {
+                    "item": "laptop",
+                    "store": "StoreB"
+                  },
                   "output": "{\"item\":\"laptop\",\"price\":1099,\"store\":\"StoreB\"}"
                 },
                 {
@@ -7519,90 +7233,10 @@
                   "name": "apply_discount",
                   "type": "tool",
                   "children": [],
-                  "input": [
-                    {
-                      "discountCode": "SAVE20",
-                      "total": 999
-                    },
-                    {
-                      "messages": [
-                        {
-                          "content": "I need help comparing laptop prices before checkout.",
-                          "role": "user"
-                        },
-                        {
-                          "content": "I can compare store prices and apply a discount code.",
-                          "role": "assistant"
-                        },
-                        {
-                          "content": "Call get_store_price for a laptop at StoreA and StoreB, then call apply_discount with code SAVE20 for the cheaper price. Finish with the discounted total.",
-                          "role": "user"
-                        },
-                        {
-                          "content": [
-                            {
-                              "input": {
-                                "item": "laptop",
-                                "store": "StoreA"
-                              },
-                              "providerOptions": {
-                                "openai": {
-                                  "itemId": "<itemId:1>"
-                                }
-                              },
-                              "toolName": "get_store_price",
-                              "type": "tool-call"
-                            },
-                            {
-                              "input": {
-                                "item": "laptop",
-                                "store": "StoreB"
-                              },
-                              "providerOptions": {
-                                "openai": {
-                                  "itemId": "<itemId:2>"
-                                }
-                              },
-                              "toolName": "get_store_price",
-                              "type": "tool-call"
-                            }
-                          ],
-                          "role": "assistant"
-                        },
-                        {
-                          "content": [
-                            {
-                              "output": {
-                                "type": "text",
-                                "value": "{\"item\":\"laptop\",\"price\":999,\"store\":\"StoreA\"}"
-                              },
-                              "providerOptions": {
-                                "openai": {
-                                  "itemId": "<itemId:1>"
-                                }
-                              },
-                              "toolName": "get_store_price",
-                              "type": "tool-result"
-                            },
-                            {
-                              "output": {
-                                "type": "text",
-                                "value": "{\"item\":\"laptop\",\"price\":1099,\"store\":\"StoreB\"}"
-                              },
-                              "providerOptions": {
-                                "openai": {
-                                  "itemId": "<itemId:2>"
-                                }
-                              },
-                              "toolName": "get_store_price",
-                              "type": "tool-result"
-                            }
-                          ],
-                          "role": "tool"
-                        }
-                      ]
-                    }
-                  ],
+                  "input": {
+                    "discountCode": "SAVE20",
+                    "total": 999
+                  },
                   "output": "{\"discountCode\":\"SAVE20\",\"finalTotal\":799.2,\"originalTotal\":999}"
                 },
                 {
