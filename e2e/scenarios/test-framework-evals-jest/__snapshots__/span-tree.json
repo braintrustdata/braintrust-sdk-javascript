@@ -110,7 +110,7 @@
       "type": "task",
       "children": [],
       "output": {
-        "observedSpanId": "<uuid:1>"
+        "observedSpanId": "<span:1>"
       },
       "metadata": {
         "case": "current-span",

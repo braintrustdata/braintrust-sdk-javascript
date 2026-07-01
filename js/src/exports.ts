@@ -34,6 +34,7 @@ export type {
   MetricSummary,
   ObjectMetadata,
   PromiseUnless,
+  PropagationContext,
   PromptRowWithId,
   ScoreSummary,
   SerializedBraintrustState,
@@ -85,11 +86,13 @@ export {
   currentSpan,
   deepCopyEvent,
   deserializePlainStringAsJSON,
+  extractTraceContext,
   flush,
   getContextManager,
   getPromptVersions,
   getSpanParentObject,
   init,
+  injectTraceContext,
   initDataset,
   initExperiment,
   initLogger,
@@ -158,7 +161,20 @@ export {
   devNullWritableStream,
 } from "./functions/stream";
 
-export { IDGenerator, UUIDGenerator, getIdGenerator } from "./id-gen";
+export {
+  IDGenerator,
+  UUIDGenerator,
+  OTELIDGenerator,
+  getIdGenerator,
+} from "./id-gen";
+
+export {
+  TRACEPARENT_HEADER,
+  TRACESTATE_HEADER,
+  BAGGAGE_HEADER,
+  BRAINTRUST_PARENT_KEY,
+} from "./propagation";
+export type { ParsedTraceparent, PropagatedState } from "./propagation";
 
 export {
   LEGACY_CACHED_HEADER,
