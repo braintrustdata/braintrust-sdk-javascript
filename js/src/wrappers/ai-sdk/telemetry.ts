@@ -7,11 +7,14 @@ import { logError, startSpan, withCurrent, type Span } from "../../logger";
 import {
   createAISDKIntegrationMetadata,
   DEFAULT_DENY_OUTPUT_PATHS,
+  extractWorkflowMetadataFromCallParams,
   extractTokenMetrics,
   processAISDKCallInput,
   processAISDKEmbeddingOutput,
   processAISDKOutput,
   processAISDKRerankOutput,
+  processAISDKWorkflowAgentCallInput,
+  processAISDKWorkflowAgentModelCallInput,
   serializeModelWithProvider,
 } from "../../instrumentation/plugins/ai-sdk-plugin";
 import type {
@@ -27,17 +30,22 @@ import type {
   AISDKV7Telemetry,
   AISDKV7TelemetryOptions,
 } from "../../vendor-sdk-types/ai-sdk-v7-telemetry";
+import { BRAINTRUST_AI_SDK_V7_OPERATION_KEY as AI_SDK_V7_OPERATION_KEY } from "../../vendor-sdk-types/ai-sdk-v7-telemetry";
+import { currentWorkflowAgentWrapperSpan } from "./workflow-agent-context";
 
 type OperationState = {
+  callId: string;
   firstChunkTime?: number;
   hadModelChild: boolean;
   operationName: string;
+  operationKey: string;
+  ownsSpan: boolean;
   span: Span;
   startTime: number;
 };
 
 type CallSpanState = {
-  callId: string;
+  operationKey: string;
   span: Span;
 };
 
@@ -51,11 +59,13 @@ type EmbedSpanState = CallSpanState & {
  */
 export function braintrustAISDKTelemetry(): AISDKV7Telemetry {
   const operations = new Map<string, OperationState>();
+  const operationKeysByCallId = new Map<string, string[]>();
   const modelSpans = new Map<string, Span[]>();
   const objectSpans = new Map<string, Span>();
   const embedSpans = new Map<string, EmbedSpanState>();
   const rerankSpans = new Map<string, Span>();
   const toolSpans = new Map<string, CallSpanState>();
+  let workflowAgentOperationCounter = 0;
 
   const runSafely = (name: string, callback: () => void) => {
     try {
@@ -67,31 +77,225 @@ export function braintrustAISDKTelemetry(): AISDKV7Telemetry {
   };
 
   const startChildSpan = (
-    callId: string,
+    operationKey: string,
     name: string,
     type: SpanTypeAttribute,
     event?: { input?: unknown; metadata?: Record<string, unknown> },
   ) => {
-    const parent = operations.get(callId)?.span;
+    const parent = operations.get(operationKey)?.span;
     const spanArgs = {
       name,
       spanAttributes: { type },
       ...(event ? { event } : {}),
     };
     const span = parent ? parent.startSpan(spanArgs) : startSpan(spanArgs);
-    const state = operations.get(callId);
+    const state = operations.get(operationKey);
     if (state && type === SpanTypeAttribute.LLM) {
       state.hadModelChild = true;
     }
     return span;
   };
 
+  const registerOperation = (state: OperationState): void => {
+    operations.set(state.operationKey, state);
+    const keys = operationKeysByCallId.get(state.callId) ?? [];
+    keys.push(state.operationKey);
+    operationKeysByCallId.set(state.callId, keys);
+  };
+
+  const deleteOperation = (operationKey: string): void => {
+    const state = operations.get(operationKey);
+    if (!state) {
+      return;
+    }
+
+    operations.delete(operationKey);
+    const keys = operationKeysByCallId.get(state.callId);
+    if (!keys) {
+      return;
+    }
+
+    const index = keys.indexOf(operationKey);
+    if (index >= 0) {
+      keys.splice(index, 1);
+    }
+    if (keys.length === 0) {
+      operationKeysByCallId.delete(state.callId);
+    }
+  };
+
+  const explicitOperationKey = (event: unknown): string | undefined => {
+    if (!isObject(event)) {
+      return undefined;
+    }
+
+    const key = (event as { [AI_SDK_V7_OPERATION_KEY]?: unknown })[
+      AI_SDK_V7_OPERATION_KEY
+    ];
+    return typeof key === "string" ? key : undefined;
+  };
+
+  const createOperationKey = (
+    event: AISDKV7OperationEvent,
+    operationName: string,
+  ): string => {
+    const explicit = explicitOperationKey(event);
+    if (explicit) {
+      return explicit;
+    }
+
+    if (operationName === "WorkflowAgent.stream") {
+      workflowAgentOperationCounter += 1;
+      return `${event.callId}:${workflowAgentOperationCounter}`;
+    }
+
+    return event.callId;
+  };
+
+  const operationKeyForCallId = (
+    callId: string,
+    mode: "active" | "finish" = "active",
+  ): string | undefined => {
+    const keys = operationKeysByCallId.get(callId);
+    if (!keys || keys.length === 0) {
+      return operations.has(callId) ? callId : undefined;
+    }
+
+    if (keys.length === 1) {
+      return keys[0];
+    }
+
+    const wrapperSpan = currentWorkflowAgentWrapperSpan();
+    if (wrapperSpan?.spanId) {
+      const key = keys.find(
+        (candidate) =>
+          operations.get(candidate)?.span.spanId === wrapperSpan.spanId,
+      );
+      if (key) {
+        return key;
+      }
+    }
+
+    return mode === "finish" ? keys[0] : keys[keys.length - 1];
+  };
+
+  const operationKeyFromEvent = (
+    event: { callId?: unknown } | unknown,
+    mode: "active" | "finish" = "active",
+  ): string | undefined => {
+    const explicit = explicitOperationKey(event);
+    if (explicit && operations.has(explicit)) {
+      return explicit;
+    }
+
+    if (isObject(event)) {
+      const callId = (event as { callId?: unknown }).callId;
+      if (typeof callId === "string") {
+        return operationKeyForCallId(callId, mode) ?? callId;
+      }
+    }
+
+    const wrapperSpan = currentWorkflowAgentWrapperSpan();
+    if (wrapperSpan?.spanId) {
+      for (const [operationKey, state] of operations) {
+        if (
+          state.operationName === "WorkflowAgent.stream" &&
+          state.span.spanId === wrapperSpan.spanId
+        ) {
+          return operationKey;
+        }
+      }
+    }
+
+    // WorkflowAgent uses this callId on the operation, but omits it from
+    // tool start/end callbacks in @ai-sdk/workflow@1.0.x.
+    const workflowAgentKeys = operationKeysByCallId.get("workflow-agent");
+    if (workflowAgentKeys?.length === 1) {
+      return workflowAgentKeys[0];
+    }
+
+    if (operations.size === 1) {
+      return operations.keys().next().value;
+    }
+
+    return undefined;
+  };
+
+  const closeOpenChildSpans = (operationKey: string, error?: unknown): void => {
+    const openModelSpans = modelSpans.get(operationKey);
+    if (openModelSpans) {
+      for (const span of openModelSpans) {
+        if (error !== undefined) {
+          logError(span, error);
+        }
+        span.end();
+      }
+      modelSpans.delete(operationKey);
+    }
+
+    const openObjectSpan = objectSpans.get(operationKey);
+    if (openObjectSpan) {
+      if (error !== undefined) {
+        logError(openObjectSpan, error);
+      }
+      openObjectSpan.end();
+      objectSpans.delete(operationKey);
+    }
+
+    for (const [embedCallId, embedState] of embedSpans) {
+      if (embedState.operationKey === operationKey) {
+        if (error !== undefined) {
+          logError(embedState.span, error);
+        }
+        embedState.span.end();
+        embedSpans.delete(embedCallId);
+      }
+    }
+
+    const openRerankSpan = rerankSpans.get(operationKey);
+    if (openRerankSpan) {
+      if (error !== undefined) {
+        logError(openRerankSpan, error);
+      }
+      openRerankSpan.end();
+      rerankSpans.delete(operationKey);
+    }
+
+    for (const [toolCallId, toolState] of toolSpans) {
+      if (toolState.operationKey === operationKey) {
+        if (error !== undefined) {
+          logError(toolState.span, error);
+        }
+        toolState.span.end();
+        toolSpans.delete(toolCallId);
+      }
+    }
+  };
+
+  const abortReasonFromEvent = (event: unknown): unknown => {
+    if (isObject(event)) {
+      const abortEvent = event as { error?: unknown; reason?: unknown };
+      if (abortEvent.error !== undefined) {
+        return abortEvent.error;
+      }
+      if (abortEvent.reason !== undefined) {
+        return abortEvent.reason;
+      }
+    }
+
+    return new Error("AI SDK operation aborted");
+  };
+
+  const shouldSkipTelemetryChildren = (state?: OperationState): boolean =>
+    state?.operationName === "WorkflowAgent.stream" && !state.ownsSpan;
+
   const onObjectStepEnd = (
     event: Parameters<NonNullable<AISDKV7Telemetry["onObjectStepEnd"]>>[0],
   ) => {
     runSafely("onObjectStepEnd", () => {
-      const span = objectSpans.get(event.callId);
-      if (!span) {
+      const operationKey = operationKeyFromEvent(event);
+      const span = operationKey ? objectSpans.get(operationKey) : undefined;
+      if (!operationKey || !span) {
         return;
       }
 
@@ -108,7 +312,7 @@ export function braintrustAISDKTelemetry(): AISDKV7Telemetry {
         metrics: extractTokenMetrics(result),
       });
       span.end();
-      objectSpans.delete(event.callId);
+      objectSpans.delete(operationKey);
     });
   };
 
@@ -145,8 +349,9 @@ export function braintrustAISDKTelemetry(): AISDKV7Telemetry {
     event: Parameters<NonNullable<AISDKV7Telemetry["onRerankEnd"]>>[0],
   ) => {
     runSafely("onRerankEnd", () => {
-      const span = rerankSpans.get(event.callId);
-      if (!span) {
+      const operationKey = operationKeyFromEvent(event);
+      const span = operationKey ? rerankSpans.get(operationKey) : undefined;
+      if (!operationKey || !span) {
         return;
       }
 
@@ -167,7 +372,7 @@ export function braintrustAISDKTelemetry(): AISDKV7Telemetry {
           : {}),
       });
       span.end();
-      rerankSpans.delete(event.callId);
+      rerankSpans.delete(operationKey);
     });
   };
 
@@ -175,8 +380,13 @@ export function braintrustAISDKTelemetry(): AISDKV7Telemetry {
     event: Parameters<NonNullable<AISDKV7Telemetry["onEnd"]>>[0],
   ) => {
     runSafely("onEnd", () => {
-      const state = operations.get(event.callId);
+      const operationKey = operationKeyFromEvent(event, "finish");
+      const state = operationKey ? operations.get(operationKey) : undefined;
       if (!state) {
+        return;
+      }
+      if (!state.ownsSpan) {
+        deleteOperation(state.operationKey);
         return;
       }
 
@@ -184,7 +394,10 @@ export function braintrustAISDKTelemetry(): AISDKV7Telemetry {
       const metrics: Record<string, number> = state.hadModelChild
         ? {}
         : extractTokenMetrics(result);
-      const timeToFirstToken = extractTimeToFirstToken(result, state);
+      const timeToFirstToken =
+        state.operationName === "WorkflowAgent.stream"
+          ? undefined
+          : extractTimeToFirstToken(result, state);
       if (timeToFirstToken !== undefined) {
         metrics.time_to_first_token = timeToFirstToken;
       }
@@ -198,7 +411,7 @@ export function braintrustAISDKTelemetry(): AISDKV7Telemetry {
         metrics,
       });
       state.span.end();
-      operations.delete(event.callId);
+      deleteOperation(state.operationKey);
     });
   };
 
@@ -206,30 +419,63 @@ export function braintrustAISDKTelemetry(): AISDKV7Telemetry {
     onStart(event) {
       runSafely("onStart", () => {
         const operationName = operationNameFromId(event.operationId);
-        const span = startSpan({
-          name: operationName,
-          spanAttributes: { type: SpanTypeAttribute.FUNCTION },
-        });
+        const workflowAgent = operationName === "WorkflowAgent.stream";
+        const wrapperSpan = workflowAgent
+          ? currentWorkflowAgentWrapperSpan()
+          : undefined;
+        const ownsSpan = !wrapperSpan;
+        const span = ownsSpan
+          ? startSpan({
+              name: operationName,
+              spanAttributes: { type: SpanTypeAttribute.FUNCTION },
+            })
+          : wrapperSpan;
+        const operationKey = createOperationKey(event, operationName);
 
-        operations.set(event.callId, {
+        registerOperation({
+          callId: event.callId,
           hadModelChild: false,
           operationName,
+          operationKey,
+          ownsSpan,
           span,
           startTime: getCurrentUnixTimestamp(),
         });
 
-        const metadata = metadataFromEvent(event);
+        if (!ownsSpan) {
+          return;
+        }
+
+        let metadata = metadataFromEvent(event);
         const logPayload: {
           input?: unknown;
           metadata: Record<string, unknown>;
         } = { metadata };
 
+        const workflowAgentCallInput = workflowAgent
+          ? operationInput(event, operationName)
+          : undefined;
+        if (workflowAgentCallInput) {
+          metadata = {
+            ...metadata,
+            ...extractWorkflowMetadataFromCallParams(workflowAgentCallInput),
+          };
+          logPayload.metadata = metadata;
+        }
+
         if (shouldRecordInputs(event)) {
-          const { input, outputPromise } = processAISDKCallInput(
-            operationInput(event, operationName),
-          );
+          const callInput =
+            workflowAgentCallInput ?? operationInput(event, operationName);
+          const { input, outputPromise } = workflowAgent
+            ? processAISDKWorkflowAgentCallInput(callInput)
+            : processAISDKCallInput(callInput);
           logPayload.input = input;
-          if (outputPromise && input && typeof input === "object") {
+          if (
+            outputPromise &&
+            !workflowAgent &&
+            input &&
+            typeof input === "object"
+          ) {
             outputPromise
               .then((resolvedData) => {
                 span.log({
@@ -251,47 +497,65 @@ export function braintrustAISDKTelemetry(): AISDKV7Telemetry {
 
     onLanguageModelCallStart(event) {
       runSafely("onLanguageModelCallStart", () => {
-        const state = operations.get(event.callId);
-        const openSpans = modelSpans.get(event.callId);
-        if (openSpans) {
+        const operationKey = operationKeyFromEvent(event);
+        const state = operationKey ? operations.get(operationKey) : undefined;
+        if (shouldSkipTelemetryChildren(state)) {
+          return;
+        }
+        const operationName = state?.operationName ?? "generateText";
+        const callInput = operationInput(event, operationName);
+        const workflowAgent = operationName === "WorkflowAgent.stream";
+        const openSpans = operationKey
+          ? modelSpans.get(operationKey)
+          : undefined;
+        if (operationKey && openSpans) {
           for (const span of openSpans) {
             span.end();
           }
-          modelSpans.delete(event.callId);
+          modelSpans.delete(operationKey);
         }
 
         const span = startChildSpan(
-          event.callId,
-          state?.operationName === "streamText" ? "doStream" : "doGenerate",
+          operationKey ?? event.callId,
+          operationName === "streamText" ? "doStream" : "doGenerate",
           SpanTypeAttribute.LLM,
           {
             ...(shouldRecordInputs(event)
               ? {
-                  input: processAISDKCallInput(
-                    operationInput(
-                      event,
-                      state?.operationName ?? "generateText",
-                    ),
-                  ).input,
+                  input: workflowAgent
+                    ? processAISDKWorkflowAgentModelCallInput(callInput).input
+                    : processAISDKCallInput(callInput).input,
                 }
               : {}),
-            metadata: metadataFromEvent(event),
+            metadata: workflowAgent
+              ? {
+                  ...metadataFromEvent(event),
+                  ...extractWorkflowMetadataFromCallParams(callInput),
+                }
+              : metadataFromEvent(event),
           },
         );
-        const spans = modelSpans.get(event.callId) ?? [];
+        const spanKey = operationKey ?? event.callId;
+        const spans = modelSpans.get(spanKey) ?? [];
         spans.push(span);
-        modelSpans.set(event.callId, spans);
+        modelSpans.set(spanKey, spans);
       });
     },
 
     onLanguageModelCallEnd(event) {
       runSafely("onLanguageModelCallEnd", () => {
-        const span = shiftModelSpan(modelSpans, event.callId);
+        const operationKey = operationKeyFromEvent(event);
+        const state = operationKey ? operations.get(operationKey) : undefined;
+        if (shouldSkipTelemetryChildren(state)) {
+          return;
+        }
+        const span = operationKey
+          ? shiftModelSpan(modelSpans, operationKey)
+          : undefined;
         if (!span) {
           return;
         }
 
-        const state = operations.get(event.callId);
         const timeToFirstOutputMs = safePerformance(event)?.timeToFirstOutputMs;
         if (
           state?.operationName === "streamText" &&
@@ -319,15 +583,21 @@ export function braintrustAISDKTelemetry(): AISDKV7Telemetry {
 
     onObjectStepStart(event) {
       runSafely("onObjectStepStart", () => {
-        const state = operations.get(event.callId);
-        const openSpan = objectSpans.get(event.callId);
-        if (openSpan) {
+        const operationKey = operationKeyFromEvent(event);
+        const state = operationKey ? operations.get(operationKey) : undefined;
+        if (shouldSkipTelemetryChildren(state)) {
+          return;
+        }
+        const openSpan = operationKey
+          ? objectSpans.get(operationKey)
+          : undefined;
+        if (operationKey && openSpan) {
           openSpan.end();
-          objectSpans.delete(event.callId);
+          objectSpans.delete(operationKey);
         }
 
         const span = startChildSpan(
-          event.callId,
+          operationKey ?? event.callId,
           state?.operationName === "streamObject" ? "doStream" : "doGenerate",
           SpanTypeAttribute.LLM,
           {
@@ -341,7 +611,7 @@ export function braintrustAISDKTelemetry(): AISDKV7Telemetry {
             metadata: metadataFromEvent(event),
           },
         );
-        objectSpans.set(event.callId, span);
+        objectSpans.set(operationKey ?? event.callId, span);
       });
     },
 
@@ -349,10 +619,14 @@ export function braintrustAISDKTelemetry(): AISDKV7Telemetry {
 
     onEmbedStart(event) {
       runSafely("onEmbedStart", () => {
-        const state = operations.get(event.callId);
+        const operationKey = operationKeyFromEvent(event);
+        const state = operationKey ? operations.get(operationKey) : undefined;
+        if (shouldSkipTelemetryChildren(state)) {
+          return;
+        }
         for (const [embedCallId, embedState] of embedSpans) {
           if (
-            embedState.callId === event.callId &&
+            embedState.operationKey === operationKey &&
             (state?.operationName === "embed" ||
               embedState.values === event.values)
           ) {
@@ -362,7 +636,7 @@ export function braintrustAISDKTelemetry(): AISDKV7Telemetry {
         }
 
         const span = startChildSpan(
-          event.callId,
+          operationKey ?? event.callId,
           "doEmbed",
           SpanTypeAttribute.LLM,
           {
@@ -377,7 +651,7 @@ export function braintrustAISDKTelemetry(): AISDKV7Telemetry {
           },
         );
         embedSpans.set(event.embedCallId, {
-          callId: event.callId,
+          operationKey: operationKey ?? event.callId,
           span,
           values: event.values,
         });
@@ -388,14 +662,21 @@ export function braintrustAISDKTelemetry(): AISDKV7Telemetry {
 
     onRerankStart(event) {
       runSafely("onRerankStart", () => {
-        const openSpan = rerankSpans.get(event.callId);
-        if (openSpan) {
+        const operationKey = operationKeyFromEvent(event);
+        const state = operationKey ? operations.get(operationKey) : undefined;
+        if (shouldSkipTelemetryChildren(state)) {
+          return;
+        }
+        const openSpan = operationKey
+          ? rerankSpans.get(operationKey)
+          : undefined;
+        if (operationKey && openSpan) {
           openSpan.end();
-          rerankSpans.delete(event.callId);
+          rerankSpans.delete(operationKey);
         }
 
         const span = startChildSpan(
-          event.callId,
+          operationKey ?? event.callId,
           "doRerank",
           SpanTypeAttribute.LLM,
           {
@@ -411,7 +692,7 @@ export function braintrustAISDKTelemetry(): AISDKV7Telemetry {
             metadata: metadataFromEvent(event),
           },
         );
-        rerankSpans.set(event.callId, span);
+        rerankSpans.set(operationKey ?? event.callId, span);
       });
     },
 
@@ -419,13 +700,18 @@ export function braintrustAISDKTelemetry(): AISDKV7Telemetry {
 
     onToolExecutionStart(event) {
       runSafely("onToolExecutionStart", () => {
+        const operationKey = operationKeyFromEvent(event);
+        const state = operationKey ? operations.get(operationKey) : undefined;
+        if (shouldSkipTelemetryChildren(state)) {
+          return;
+        }
         const toolCallId = event.toolCall.toolCallId;
-        if (!toolCallId) {
+        if (!operationKey || !toolCallId) {
           return;
         }
 
         const span = startChildSpan(
-          event.callId,
+          operationKey,
           event.toolCall.toolName || "tool",
           SpanTypeAttribute.TOOL,
           {
@@ -443,7 +729,7 @@ export function braintrustAISDKTelemetry(): AISDKV7Telemetry {
             },
           },
         );
-        toolSpans.set(toolCallId, { callId: event.callId, span });
+        toolSpans.set(toolCallId, { operationKey, span });
       });
     },
 
@@ -456,22 +742,30 @@ export function braintrustAISDKTelemetry(): AISDKV7Telemetry {
         }
 
         const toolOutput = event.toolOutput;
-        if (toolOutput?.type === "tool-error") {
+        const workflowToolError =
+          (event as { success?: unknown }).success === false && "error" in event
+            ? (event as { error?: unknown }).error
+            : undefined;
+
+        if (
+          toolOutput?.type === "tool-error" ||
+          workflowToolError !== undefined
+        ) {
+          const error = toolOutput?.error ?? workflowToolError;
           state.span.log({
-            error:
-              toolOutput.error instanceof Error
-                ? toolOutput.error.message
-                : String(toolOutput?.error),
+            error: error instanceof Error ? error.message : String(error),
             metrics:
               typeof event.durationMs === "number"
                 ? { duration_ms: event.durationMs }
                 : {},
           });
         } else {
+          const output =
+            toolOutput && "output" in toolOutput
+              ? toolOutput.output
+              : (event as { output?: unknown }).output;
           state.span.log({
-            ...(shouldRecordOutputs(event)
-              ? { output: toolOutput?.output }
-              : {}),
+            ...(shouldRecordOutputs(event) ? { output } : {}),
             metrics:
               typeof event.durationMs === "number"
                 ? { duration_ms: event.durationMs }
@@ -489,7 +783,8 @@ export function braintrustAISDKTelemetry(): AISDKV7Telemetry {
         if (!callId) {
           return;
         }
-        const state = operations.get(callId);
+        const operationKey = operationKeyForCallId(callId);
+        const state = operationKey ? operations.get(operationKey) : undefined;
         if (!state || state.firstChunkTime !== undefined) {
           return;
         }
@@ -499,65 +794,42 @@ export function braintrustAISDKTelemetry(): AISDKV7Telemetry {
 
     onEnd,
 
+    onAbort(event) {
+      runSafely("onAbort", () => {
+        const operationKey = operationKeyFromEvent(event, "finish");
+        const state = operationKey ? operations.get(operationKey) : undefined;
+        if (!operationKey || !state) {
+          return;
+        }
+
+        const error = abortReasonFromEvent(event);
+        closeOpenChildSpans(operationKey, error);
+        if (state.ownsSpan) {
+          logError(state.span, error);
+          state.span.end();
+        }
+        deleteOperation(operationKey);
+      });
+    },
+
     onError(event) {
       runSafely("onError", () => {
         const errorEvent = isObject(event)
           ? (event as { callId?: unknown; error?: unknown })
           : {};
-        const callId =
-          typeof errorEvent.callId === "string" ? errorEvent.callId : undefined;
-        if (!callId) {
-          return;
-        }
-
-        const state = operations.get(callId);
-        if (!state) {
+        const operationKey = operationKeyFromEvent(errorEvent, "finish");
+        const state = operationKey ? operations.get(operationKey) : undefined;
+        if (!operationKey || !state) {
           return;
         }
         const error = errorEvent.error ?? event;
 
-        const openModelSpans = modelSpans.get(callId);
-        if (openModelSpans) {
-          for (const span of openModelSpans) {
-            logError(span, error);
-            span.end();
-          }
-          modelSpans.delete(callId);
+        closeOpenChildSpans(operationKey, error);
+        if (state.ownsSpan) {
+          logError(state.span, error);
+          state.span.end();
         }
-
-        const openObjectSpan = objectSpans.get(callId);
-        if (openObjectSpan) {
-          logError(openObjectSpan, error);
-          openObjectSpan.end();
-          objectSpans.delete(callId);
-        }
-
-        for (const [embedCallId, embedState] of embedSpans) {
-          if (embedState.callId === callId) {
-            logError(embedState.span, error);
-            embedState.span.end();
-            embedSpans.delete(embedCallId);
-          }
-        }
-
-        const openRerankSpan = rerankSpans.get(callId);
-        if (openRerankSpan) {
-          logError(openRerankSpan, error);
-          openRerankSpan.end();
-          rerankSpans.delete(callId);
-        }
-
-        for (const [toolCallId, toolState] of toolSpans) {
-          if (toolState.callId === callId) {
-            logError(toolState.span, error);
-            toolState.span.end();
-            toolSpans.delete(toolCallId);
-          }
-        }
-
-        logError(state.span, error);
-        state.span.end();
-        operations.delete(callId);
+        deleteOperation(operationKey);
       });
     },
 
@@ -577,6 +849,10 @@ function shouldRecordOutputs(event: AISDKV7TelemetryOptions): boolean {
 }
 
 function operationNameFromId(operationId: string | undefined): string {
+  if (operationId === "ai.workflowAgent.stream") {
+    return "WorkflowAgent.stream";
+  }
+
   return operationId?.startsWith("ai.")
     ? operationId.slice("ai.".length)
     : operationId || "ai-sdk";

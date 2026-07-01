@@ -4,8 +4,10 @@ const telemetryMocks = vi.hoisted(() => ({
   braintrustAISDKTelemetry: vi.fn(),
   telemetry: {} as {
     executeTool?: ReturnType<typeof vi.fn>;
+    onAbort?: ReturnType<typeof vi.fn>;
     onEnd?: ReturnType<typeof vi.fn>;
     onStart?: ReturnType<typeof vi.fn>;
+    onStepEnd?: ReturnType<typeof vi.fn>;
   },
 }));
 
@@ -24,6 +26,7 @@ import { AISDKPlugin } from "./ai-sdk-plugin";
 import { Attachment } from "../../logger";
 import iso from "../../isomorph";
 import { serializeAISDKToolsForLogging } from "../../wrappers/ai-sdk/tool-serialization";
+import { BRAINTRUST_AI_SDK_V7_OPERATION_KEY as AI_SDK_V7_OPERATION_KEY } from "../../vendor-sdk-types/ai-sdk-v7-telemetry";
 
 const mockNewTracingChannel = iso.newTracingChannel as ReturnType<typeof vi.fn>;
 type MockTracingChannel = {
@@ -45,8 +48,10 @@ describe("AISDKPlugin", () => {
     mockChannels.clear();
     telemetryMocks.telemetry = {
       executeTool: vi.fn(({ execute }) => execute()),
+      onAbort: vi.fn(),
       onEnd: vi.fn(),
       onStart: vi.fn(),
+      onStepEnd: vi.fn(),
     };
     telemetryMocks.braintrustAISDKTelemetry.mockReturnValue(
       telemetryMocks.telemetry,
@@ -128,12 +133,16 @@ describe("AISDKPlugin", () => {
     it("patches dispatcher callbacks through the standard channel", async () => {
       const existingOnEnd = vi.fn();
       const existingOnStart = vi.fn();
+      const existingOnStepEnd = vi.fn();
+      const existingOnAbort = vi.fn();
       const originalExecute = vi.fn(async () => "done");
       const existingExecuteTool = vi.fn(({ execute }) => execute());
       const dispatcher = {
         executeTool: existingExecuteTool,
+        onAbort: existingOnAbort,
         onEnd: existingOnEnd,
         onStart: existingOnStart,
+        onStepEnd: existingOnStepEnd,
       };
 
       plugin.enable();
@@ -168,6 +177,26 @@ describe("AISDKPlugin", () => {
         operationId: "ai.generateText",
       });
 
+      await dispatcher.onStepEnd({
+        callId: "call-1",
+        operationId: "ai.workflowAgent.stream",
+      });
+      expect(existingOnStepEnd).toHaveBeenCalledTimes(1);
+      expect(telemetryMocks.telemetry.onStepEnd).toHaveBeenCalledWith({
+        callId: "call-1",
+        operationId: "ai.workflowAgent.stream",
+      });
+
+      await dispatcher.onAbort({
+        callId: "call-1",
+        operationId: "ai.workflowAgent.stream",
+      });
+      expect(existingOnAbort).toHaveBeenCalledTimes(1);
+      expect(telemetryMocks.telemetry.onAbort).toHaveBeenCalledWith({
+        callId: "call-1",
+        operationId: "ai.workflowAgent.stream",
+      });
+
       await expect(
         dispatcher.executeTool({
           callId: "call-1",
@@ -178,6 +207,67 @@ describe("AISDKPlugin", () => {
       expect(telemetryMocks.telemetry.executeTool).toHaveBeenCalledTimes(1);
       expect(existingExecuteTool).toHaveBeenCalledTimes(1);
       expect(originalExecute).toHaveBeenCalledTimes(1);
+    });
+
+    it("stamps a stable unique operation key on each dispatcher", async () => {
+      const dispatcherA = {
+        executeTool: vi.fn(({ execute }) => execute()),
+        onAbort: vi.fn(),
+        onStart: vi.fn(),
+      };
+      const dispatcherB = {
+        executeTool: vi.fn(({ execute }) => execute()),
+        onStart: vi.fn(),
+      };
+
+      plugin.enable();
+
+      const channel = mockChannels.get(
+        "orchestrion:ai:createTelemetryDispatcher",
+      );
+      channel?.handlers[0]?.end({
+        arguments: [{ telemetry: {} }],
+        result: dispatcherA,
+      });
+      channel?.handlers[0]?.end({
+        arguments: [{ telemetry: {} }],
+        result: dispatcherB,
+      });
+
+      await dispatcherA.onStart({
+        callId: "workflow-agent",
+        operationId: "ai.workflowAgent.stream",
+      });
+      await dispatcherB.onStart({
+        callId: "workflow-agent",
+        operationId: "ai.workflowAgent.stream",
+      });
+      await dispatcherA.onAbort({
+        callId: "workflow-agent",
+        operationId: "ai.workflowAgent.stream",
+      });
+      await dispatcherB.executeTool({
+        callId: "workflow-agent",
+        execute: async () => "done",
+        toolCallId: "tool-b",
+      });
+
+      const runAStart = telemetryMocks.telemetry.onStart?.mock.calls[0]?.[0];
+      const runBStart = telemetryMocks.telemetry.onStart?.mock.calls[1]?.[0];
+      const runAAbort = telemetryMocks.telemetry.onAbort?.mock.calls[0]?.[0];
+      const runBTool = telemetryMocks.telemetry.executeTool?.mock.calls[0]?.[0];
+
+      expect(runAStart?.[AI_SDK_V7_OPERATION_KEY]).toEqual(expect.any(String));
+      expect(runBStart?.[AI_SDK_V7_OPERATION_KEY]).toEqual(expect.any(String));
+      expect(runAStart?.[AI_SDK_V7_OPERATION_KEY]).not.toBe(
+        runBStart?.[AI_SDK_V7_OPERATION_KEY],
+      );
+      expect(runAAbort?.[AI_SDK_V7_OPERATION_KEY]).toBe(
+        runAStart?.[AI_SDK_V7_OPERATION_KEY],
+      );
+      expect(runBTool?.[AI_SDK_V7_OPERATION_KEY]).toBe(
+        runBStart?.[AI_SDK_V7_OPERATION_KEY],
+      );
     });
 
     it("patches each dispatcher once and respects telemetry opt-out", () => {

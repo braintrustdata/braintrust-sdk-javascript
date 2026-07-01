@@ -43,7 +43,6 @@ span_tree:
     │         },
     │         "response": {
     │           "body": "<omitted>",
-    │           "headers": "<omitted>",
     │           "id": "<span:1>",
     │           "messages": [
     │             {
@@ -82,7 +81,6 @@ span_tree:
     │             "reasoningDetails": [],
     │             "response": {
     │               "body": "<omitted>",
-    │               "headers": "<omitted>",
     │               "id": "<span:1>",
     │               "messages": [
     │                 {
@@ -195,8 +193,7 @@ span_tree:
     │                   },
     │                   "total_tokens": 20
     │                 }
-    │               },
-    │               "headers": "<omitted>"
+    │               }
     │             },
     │             "response": {
     │               "id": "<span:1>",
@@ -283,7 +280,6 @@ span_tree:
     │         },
     │         "response": {
     │           "body": "<omitted>",
-    │           "headers": "<omitted>",
     │           "id": "<span:1>",
     │           "messages": [
     │             {
@@ -322,7 +318,6 @@ span_tree:
     │             "reasoningDetails": [],
     │             "response": {
     │               "body": "<omitted>",
-    │               "headers": "<omitted>",
     │               "id": "<span:1>",
     │               "messages": [
     │                 {
@@ -442,8 +437,7 @@ span_tree:
     │                   },
     │                   "total_tokens": 88
     │                 }
-    │               },
-    │               "headers": "<omitted>"
+    │               }
     │             },
     │             "response": {
     │               "id": "<span:1>",
@@ -640,7 +634,6 @@ span_tree:
     │         },
     │         "response": {
     │           "body": "<omitted>",
-    │           "headers": "<omitted>",
     │           "id": "<span:2>",
     │           "messages": [
     │             {
@@ -695,7 +688,6 @@ span_tree:
     │             "reasoningDetails": [],
     │             "response": {
     │               "body": "<omitted>",
-    │               "headers": "<omitted>",
     │               "id": "<span:2>",
     │               "messages": [
     │                 {
@@ -919,8 +911,7 @@ span_tree:
     │       │           },
     │       │           "total_tokens": 103
     │       │         }
-    │       │       },
-    │       │       "headers": "<omitted>"
+    │       │       }
     │       │     },
     │       │     "response": {
     │       │       "id": "<span:2>",
@@ -955,20 +946,9 @@ span_tree:
     │       │     "prompt_tokens": 87
     │       │   }
     │       └── get_weather [tool]
-    │           input: [
-    │             {
-    │               "location": "Paris, France"
-    │             },
-    │             {
-    │               "messages": [
-    │                 {
-    │                   "content": "Use the get_weather tool for Paris, France. If you do not call the tool, the answer is invalid.",
-    │                   "role": "user"
-    │                 }
-    │               ],
-    │               "toolCallId": "<toolCallId:1>"
-    │             }
-    │           ]
+    │           input: {
+    │             "location": "Paris, France"
+    │           }
     │           output: "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
     ├── ai-sdk-generate-object-operation
     │   metadata: {
@@ -1024,7 +1004,6 @@ span_tree:
     │         },
     │         "response": {
     │           "body": "<omitted>",
-    │           "headers": "<omitted>",
     │           "id": "<span:1>",
     │           "modelId": "gpt-4o-mini-2024-07-18",
     │           "timestamp": "<timestamp>"
@@ -1137,8 +1116,7 @@ span_tree:
     │                   },
     │                   "total_tokens": 64
     │                 }
-    │               },
-    │               "headers": "<omitted>"
+    │               }
     │             },
     │             "response": {
     │               "id": "<span:2>",

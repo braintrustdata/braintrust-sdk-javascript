@@ -42,9 +42,7 @@
                         "reasoningTokens": 0
                       }
                     },
-                    "rawResponse": {
-                      "headers": "<omitted>"
-                    },
+                    "rawResponse": {},
                     "response": {
                       "id": "<span:1>",
                       "modelId": "gpt-4o-mini-2024-07-18",
@@ -93,11 +91,8 @@
                   }
                 },
                 "finishReason": "stop",
-                "rawResponse": {
-                  "headers": "<omitted>"
-                },
+                "rawResponse": {},
                 "response": {
-                  "headers": "<omitted>",
                   "id": "<span:1>",
                   "messages": [
                     {
@@ -124,7 +119,6 @@
                     "finishReason": "stop",
                     "isContinued": false,
                     "response": {
-                      "headers": "<omitted>",
                       "id": "<span:1>",
                       "messages": [
                         {
@@ -249,9 +243,7 @@
               },
               "output": {
                 "finishReason": "stop",
-                "rawResponse": {
-                  "headers": "<omitted>"
-                },
+                "rawResponse": {},
                 "text": "One, two, three.",
                 "warnings": []
               },
@@ -381,9 +373,7 @@
                         "reasoningTokens": 0
                       }
                     },
-                    "rawResponse": {
-                      "headers": "<omitted>"
-                    },
+                    "rawResponse": {},
                     "response": {
                       "id": "<span:1>",
                       "modelId": "gpt-4o-mini-2024-07-18",
@@ -421,12 +411,9 @@
                   "name": "get_weather",
                   "type": "tool",
                   "children": [],
-                  "input": [
-                    {
-                      "location": "Paris, France"
-                    },
-                    {}
-                  ],
+                  "input": {
+                    "location": "Paris, France"
+                  },
                   "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
                 }
               ],
@@ -471,11 +458,8 @@
                   }
                 },
                 "finishReason": "tool-calls",
-                "rawResponse": {
-                  "headers": "<omitted>"
-                },
+                "rawResponse": {},
                 "response": {
-                  "headers": "<omitted>",
                   "id": "<span:2>",
                   "messages": [
                     {
@@ -521,7 +505,6 @@
                     "finishReason": "tool-calls",
                     "isContinued": false,
                     "response": {
-                      "headers": "<omitted>",
                       "id": "<span:2>",
                       "messages": [
                         {
@@ -704,9 +687,7 @@
                         "reasoningTokens": 0
                       }
                     },
-                    "rawResponse": {
-                      "headers": "<omitted>"
-                    },
+                    "rawResponse": {},
                     "response": {
                       "id": "<span:1>",
                       "modelId": "gpt-4o-mini-2024-07-18",
@@ -778,11 +759,8 @@
                 "object": {
                   "city": "Paris"
                 },
-                "rawResponse": {
-                  "headers": "<omitted>"
-                },
+                "rawResponse": {},
                 "response": {
-                  "headers": "<omitted>",
                   "id": "<span:1>",
                   "modelId": "gpt-4o-mini-2024-07-18",
                   "timestamp": "<timestamp>"
@@ -922,9 +900,7 @@
                 "object": {
                   "city": "Paris"
                 },
-                "rawResponse": {
-                  "headers": "<omitted>"
-                },
+                "rawResponse": {},
                 "warnings": []
               },
               "metadata": {

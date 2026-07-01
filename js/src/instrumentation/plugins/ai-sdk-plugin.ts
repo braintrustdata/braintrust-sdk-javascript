@@ -14,7 +14,7 @@ import {
   isPromiseLike,
 } from "../../../util/index";
 import { getCurrentUnixTimestamp } from "../../util";
-import { Attachment, type Span, withCurrent } from "../../logger";
+import { Attachment, currentSpan, type Span, withCurrent } from "../../logger";
 import {
   convertDataToBlob,
   getExtensionFromMediaType,
@@ -22,6 +22,10 @@ import {
 import { normalizeAISDKLoggedOutput } from "../../wrappers/ai-sdk/normalize-logged-output";
 import { serializeAISDKToolsForLogging } from "../../wrappers/ai-sdk/tool-serialization";
 import { braintrustAISDKTelemetry } from "../../wrappers/ai-sdk/telemetry";
+import {
+  registerWorkflowAgentWrapperSpan,
+  unregisterWorkflowAgentWrapperSpan,
+} from "../../wrappers/ai-sdk/workflow-agent-context";
 import { zodToJsonSchema } from "../../zod/utils";
 import { aiSDKChannels } from "./ai-sdk-channels";
 import type {
@@ -30,6 +34,7 @@ import type {
   AISDKEmbedParams,
   AISDKEmbeddingResult,
   AISDKLanguageModel,
+  AISDKMessage,
   AISDKModel,
   AISDKModelStreamChunk,
   AISDKOutputObject,
@@ -42,6 +47,7 @@ import type {
   AISDKUsage,
 } from "../../vendor-sdk-types/ai-sdk";
 import type { AISDKV7Telemetry } from "../../vendor-sdk-types/ai-sdk-v7-telemetry";
+import { BRAINTRUST_AI_SDK_V7_OPERATION_KEY as AI_SDK_V7_OPERATION_KEY } from "../../vendor-sdk-types/ai-sdk-v7-telemetry";
 
 export interface AISDKPluginConfig {
   /**
@@ -78,6 +84,7 @@ const AUTO_PATCHED_V7_TELEMETRY_DISPATCHER = Symbol.for(
 const RUNTIME_DENY_OUTPUT_PATHS = Symbol.for(
   "braintrust.ai-sdk.deny-output-paths",
 );
+let aiSDKV7TelemetryOperationCounter = 0;
 
 const AI_SDK_V7_TELEMETRY_CALLBACKS = [
   "onStart",
@@ -87,6 +94,7 @@ const AI_SDK_V7_TELEMETRY_CALLBACKS = [
   "onToolExecutionStart",
   "onToolExecutionEnd",
   "onChunk",
+  "onStepEnd",
   "onStepFinish",
   "onObjectStepStart",
   "onObjectStepEnd",
@@ -95,6 +103,7 @@ const AI_SDK_V7_TELEMETRY_CALLBACKS = [
   "onRerankStart",
   "onRerankEnd",
   "onEnd",
+  "onAbort",
   "onError",
 ] as const;
 
@@ -114,6 +123,7 @@ const AI_SDK_V7_TELEMETRY_CALLBACKS = [
  * - Agent.stream (async method returning stream)
  * - ToolLoopAgent.generate (async method)
  * - ToolLoopAgent.stream (async method returning stream)
+ * - WorkflowAgent.stream (async method returning stream)
  *
  * The plugin automatically extracts:
  * - Model and provider information
@@ -328,7 +338,9 @@ export class AISDKPlugin extends BasePlugin {
         name: "Agent.generate",
         type: SpanTypeAttribute.FUNCTION,
         extractInput: ([params], event, span) =>
-          prepareAISDKCallInput(params, event, span, denyOutputPaths),
+          prepareAISDKCallInput(params, event, span, denyOutputPaths, {
+            agentOwner: true,
+          }),
         extractOutput: (result, endEvent) => {
           finalizeAISDKChildTracing(endEvent as { [key: string]: unknown });
           return processAISDKOutput(
@@ -348,7 +360,9 @@ export class AISDKPlugin extends BasePlugin {
         name: "Agent.stream",
         type: SpanTypeAttribute.FUNCTION,
         extractInput: ([params], event, span) =>
-          prepareAISDKCallInput(params, event, span, denyOutputPaths),
+          prepareAISDKCallInput(params, event, span, denyOutputPaths, {
+            agentOwner: true,
+          }),
         extractOutput: (result, endEvent) =>
           processAISDKOutput(
             result,
@@ -374,7 +388,9 @@ export class AISDKPlugin extends BasePlugin {
         name: "Agent.stream",
         type: SpanTypeAttribute.FUNCTION,
         extractInput: ([params], event, span) =>
-          prepareAISDKCallInput(params, event, span, denyOutputPaths),
+          prepareAISDKCallInput(params, event, span, denyOutputPaths, {
+            agentOwner: true,
+          }),
         patchResult: ({ endEvent, result, span, startTime }) =>
           patchAISDKStreamingResult({
             defaultDenyOutputPaths: denyOutputPaths,
@@ -392,7 +408,9 @@ export class AISDKPlugin extends BasePlugin {
         name: "ToolLoopAgent.generate",
         type: SpanTypeAttribute.FUNCTION,
         extractInput: ([params], event, span) =>
-          prepareAISDKCallInput(params, event, span, denyOutputPaths),
+          prepareAISDKCallInput(params, event, span, denyOutputPaths, {
+            agentOwner: true,
+          }),
         extractOutput: (result, endEvent) => {
           finalizeAISDKChildTracing(endEvent as { [key: string]: unknown });
           return processAISDKOutput(
@@ -412,7 +430,9 @@ export class AISDKPlugin extends BasePlugin {
         name: "ToolLoopAgent.stream",
         type: SpanTypeAttribute.FUNCTION,
         extractInput: ([params], event, span) =>
-          prepareAISDKCallInput(params, event, span, denyOutputPaths),
+          prepareAISDKCallInput(params, event, span, denyOutputPaths, {
+            agentOwner: true,
+          }),
         extractOutput: (result, endEvent) =>
           processAISDKOutput(
             result,
@@ -425,6 +445,47 @@ export class AISDKPlugin extends BasePlugin {
           patchAISDKStreamingResult({
             defaultDenyOutputPaths: denyOutputPaths,
             endEvent,
+            result,
+            span,
+            startTime,
+          }),
+      }),
+    );
+
+    // WorkflowAgent.stream - async method returning stream
+    this.unsubscribers.push(
+      traceStreamingChannel(aiSDKChannels.workflowAgentStream, {
+        name: "WorkflowAgent.stream",
+        type: SpanTypeAttribute.FUNCTION,
+        extractInput: ([params], event, span) =>
+          prepareAISDKWorkflowAgentStreamInput(
+            params,
+            event,
+            span,
+            denyOutputPaths,
+          ),
+        extractOutput: (result, endEvent) => {
+          finalizeAISDKChildTracing(endEvent as { [key: string]: unknown });
+          return processAISDKOutput(
+            result,
+            resolveDenyOutputPaths(endEvent, denyOutputPaths),
+          );
+        },
+        extractMetrics: (result, _startTime, endEvent) =>
+          extractTopLevelAISDKMetrics(result, endEvent),
+        aggregateChunks: aggregateAISDKChunks,
+        onComplete: ({ span }) => {
+          unregisterWorkflowAgentWrapperSpan(span);
+        },
+        onError: ({ event, span }) => {
+          finalizeAISDKChildTracing(event as { [key: string]: unknown });
+          unregisterWorkflowAgentWrapperSpan(span);
+        },
+        patchResult: ({ endEvent, result, span, startTime }) =>
+          patchAISDKStreamingResult({
+            defaultDenyOutputPaths: denyOutputPaths,
+            endEvent,
+            onComplete: () => unregisterWorkflowAgentWrapperSpan(span),
             result,
             span,
             startTime,
@@ -470,6 +531,32 @@ function patchAISDKV7TelemetryDispatcher(
     return;
   }
   dispatcherRecord[AUTO_PATCHED_V7_TELEMETRY_DISPATCHER] = true;
+  let operationKey: string | undefined;
+
+  const eventWithOperationKey = (event: unknown): unknown => {
+    if (!isObject(event)) {
+      return event;
+    }
+
+    const eventRecord = event as Record<PropertyKey, unknown>;
+    const callId =
+      typeof eventRecord.callId === "string" ? eventRecord.callId : "unknown";
+    operationKey ??= `${callId}:${++aiSDKV7TelemetryOperationCounter}`;
+
+    try {
+      Object.defineProperty(eventRecord, AI_SDK_V7_OPERATION_KEY, {
+        configurable: true,
+        enumerable: false,
+        value: operationKey,
+      });
+      return event;
+    } catch {
+      return {
+        ...(event as Record<string, unknown>),
+        [AI_SDK_V7_OPERATION_KEY]: operationKey,
+      };
+    }
+  };
 
   for (const key of AI_SDK_V7_TELEMETRY_CALLBACKS) {
     const braintrustCallback = telemetry[key];
@@ -483,7 +570,10 @@ function patchAISDKV7TelemetryDispatcher(
         typeof existingCallback === "function"
           ? existingCallback.call(dispatcher, event)
           : undefined;
-      const braintrustResult = braintrustCallback.call(telemetry, event as any);
+      const braintrustResult = braintrustCallback.call(
+        telemetry,
+        eventWithOperationKey(event) as any,
+      );
       const pending = [existingResult, braintrustResult].filter(isPromiseLike);
 
       if (pending.length > 0) {
@@ -505,6 +595,7 @@ function patchAISDKV7TelemetryDispatcher(
   }) =>
     braintrustExecuteTool.call(telemetry, {
       ...args,
+      ...(operationKey ? { [AI_SDK_V7_OPERATION_KEY]: operationKey } : {}),
       execute: () =>
         typeof existingExecuteTool === "function"
           ? existingExecuteTool.call(dispatcher, args)
@@ -546,7 +637,7 @@ function resolveDenyOutputPaths(
   return defaultDenyOutputPaths;
 }
 
-interface ProcessCallInputSyncResult {
+export interface ProcessCallInputSyncResult {
   input: AISDKCallParams;
   outputPromise?: Promise<{
     output: {
@@ -684,6 +775,7 @@ const processInputAttachmentsSync = (
   if (!input) return { input };
 
   const processed: AISDKCallParams = { ...input };
+  delete processed.headers;
 
   if (input.messages && Array.isArray(input.messages)) {
     processed.messages = input.messages.map(processMessage);
@@ -742,7 +834,10 @@ const processInputAttachmentsSync = (
     processed.prepareCall = "[Function]";
   }
 
-  return { input: processed, outputPromise };
+  return {
+    input: removeHeadersDeep(processed) as AISDKCallParams,
+    outputPromise,
+  };
 };
 
 const processMessage = (message: any): any => {
@@ -950,6 +1045,26 @@ export function processAISDKCallInput(
   return processInputAttachmentsSync(params);
 }
 
+export function processAISDKWorkflowAgentCallInput(
+  params: AISDKCallParams,
+): ProcessCallInputSyncResult {
+  const processed = processAISDKCallInput(params);
+  return {
+    ...processed,
+    input: extractMessagesInput(processed.input),
+  };
+}
+
+export function processAISDKWorkflowAgentModelCallInput(
+  params: AISDKCallParams,
+): ProcessCallInputSyncResult {
+  const processed = processAISDKCallInput(params);
+  return {
+    ...processed,
+    input: extractMessagesInput(processed.input),
+  };
+}
+
 function prepareAISDKCallInput(
   params: AISDKCallParams,
   event: {
@@ -960,6 +1075,7 @@ function prepareAISDKCallInput(
   },
   span: Span,
   defaultDenyOutputPaths: string[],
+  childTracingOptions: AISDKChildTracingOptions = {},
 ): {
   input: unknown;
   metadata: Record<string, unknown>;
@@ -987,6 +1103,43 @@ function prepareAISDKCallInput(
     span,
     defaultDenyOutputPaths,
     event.aiSDK,
+    childTracingOptions,
+  );
+  event.modelWrapped = childTracing.modelWrapped;
+  if (childTracing.cleanup) {
+    event.__braintrust_ai_sdk_cleanup = childTracing.cleanup;
+  }
+
+  return {
+    input,
+    metadata,
+  };
+}
+
+function prepareAISDKWorkflowAgentStreamInput(
+  params: AISDKCallParams,
+  event: {
+    aiSDK?: AISDK;
+    denyOutputPaths?: string[];
+    self?: unknown;
+    [key: string]: unknown;
+  },
+  span: Span,
+  defaultDenyOutputPaths: string[],
+): {
+  input: unknown;
+  metadata: Record<string, unknown>;
+} {
+  registerWorkflowAgentWrapperSpan(span);
+  const { input } = processAISDKWorkflowAgentCallInput(params);
+  const metadata = extractWorkflowMetadataFromCallParams(params, event.self);
+  const childTracing = prepareAISDKChildTracing(
+    params,
+    event.self,
+    span,
+    defaultDenyOutputPaths,
+    event.aiSDK,
+    { agentOwner: true, workflowAgent: true },
   );
   event.modelWrapped = childTracing.modelWrapped;
   if (childTracing.cleanup) {
@@ -1053,6 +1206,10 @@ function hasModelChildTracing(event?: { [key: string]: unknown }): boolean {
   );
 }
 
+function serializeToolExecutionInput(args: unknown[]): unknown {
+  return args.length > 0 ? args[0] : args;
+}
+
 export function createAISDKIntegrationMetadata(): Record<string, unknown> {
   return {
     braintrust: {
@@ -1074,6 +1231,19 @@ function resolveModelFromSelf(self?: unknown): AISDKModel | undefined {
         (self as { settings?: { model?: AISDKModel } }).settings?.model
       ? (self as { settings?: { model?: AISDKModel } }).settings?.model
       : undefined;
+}
+
+function resolveToolsFromSelf(self?: unknown): AISDKTools | undefined {
+  if (!self || typeof self !== "object") {
+    return undefined;
+  }
+
+  const selfRecord = self as {
+    settings?: { tools?: AISDKTools };
+    tools?: AISDKTools;
+  };
+
+  return selfRecord.tools ?? selfRecord.settings?.tools;
 }
 
 function extractBaseMetadata(
@@ -1098,11 +1268,156 @@ function extractMetadataFromCallParams(
   self?: unknown,
 ): Record<string, unknown> {
   const metadata = extractBaseMetadata(params.model, self);
-  const tools = serializeAISDKToolsForLogging(params.tools);
+  const tools = serializeAISDKToolsForLogging(
+    params.tools ?? resolveToolsFromSelf(self),
+  );
   if (tools) {
     metadata.tools = tools;
   }
   return metadata;
+}
+
+export function extractWorkflowMetadataFromCallParams(
+  params: AISDKCallParams,
+  self?: unknown,
+): Record<string, unknown> {
+  const processed = processAISDKCallInput(params).input;
+  const metadata = extractMetadataFromCallParams(processed, self);
+  const options = extractAISDKCallOptionsForMetadata(processed);
+  if (Object.keys(options).length > 0) {
+    metadata.options = options;
+  }
+  return metadata;
+}
+
+function extractMessagesInput(params: AISDKCallParams): AISDKCallParams {
+  if (Array.isArray(params.messages)) {
+    return { messages: params.messages };
+  }
+
+  if (Array.isArray(params.prompt)) {
+    return { messages: params.prompt };
+  }
+
+  if (params.prompt && typeof params.prompt === "object") {
+    return { messages: [params.prompt as AISDKMessage] };
+  }
+
+  return {};
+}
+
+function extractAISDKCallOptionsForMetadata(
+  params: AISDKCallParams,
+): Record<string, unknown> {
+  const options: Record<string, unknown> = {};
+  const inputOrTopLevelKeys = new Set([
+    "model",
+    "messages",
+    "prompt",
+    "system",
+    "tools",
+    "headers",
+    "abortSignal",
+    "signal",
+  ]);
+
+  for (const [key, value] of Object.entries(params)) {
+    if (
+      inputOrTopLevelKeys.has(key) ||
+      key === "__proto__" ||
+      key === "constructor" ||
+      key === "prototype" ||
+      (/^on[A-Z]/.test(key) && typeof value === "function")
+    ) {
+      continue;
+    }
+
+    const sanitized = sanitizeAISDKMetadataValue(value);
+    if (sanitized !== undefined) {
+      options[key] = sanitized;
+    }
+  }
+
+  return options;
+}
+
+function sanitizeAISDKMetadataValue(value: unknown, depth = 0): unknown {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (typeof value === "function") {
+    return "[Function]";
+  }
+
+  if (value === null || typeof value !== "object") {
+    return value;
+  }
+
+  if (isPromiseLike(value)) {
+    return "[Promise]";
+  }
+
+  if (typeof AbortSignal !== "undefined" && value instanceof AbortSignal) {
+    return "[AbortSignal]";
+  }
+
+  if (depth >= 8) {
+    return "[Object]";
+  }
+
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => sanitizeAISDKMetadataValue(item, depth + 1))
+      .filter((item) => item !== undefined);
+  }
+
+  if (!isObject(value)) {
+    return value;
+  }
+
+  const sanitized: Record<string, unknown> = {};
+  for (const [key, nested] of Object.entries(value)) {
+    if (
+      key === "__proto__" ||
+      key === "constructor" ||
+      key === "prototype" ||
+      key.toLowerCase() === "headers"
+    ) {
+      continue;
+    }
+
+    const sanitizedNested = sanitizeAISDKMetadataValue(nested, depth + 1);
+    if (sanitizedNested !== undefined) {
+      sanitized[key] = sanitizedNested;
+    }
+  }
+
+  return sanitized;
+}
+
+function buildAISDKModelStartEvent(
+  callOptions: AISDKCallParams,
+  baseMetadata: Record<string, unknown>,
+  options: { workflowAgent?: boolean },
+): {
+  input: unknown;
+  metadata: Record<string, unknown>;
+} {
+  if (!options.workflowAgent) {
+    return {
+      input: processAISDKCallInput(callOptions).input,
+      metadata: baseMetadata,
+    };
+  }
+
+  return {
+    input: processAISDKWorkflowAgentModelCallInput(callOptions).input,
+    metadata: {
+      ...baseMetadata,
+      ...extractWorkflowMetadataFromCallParams(callOptions),
+    },
+  };
 }
 
 function extractMetadataFromEmbedParams(
@@ -1128,12 +1443,132 @@ function extractMetadataFromRerankParams(
   return metadata;
 }
 
+type AISDKChildTracingOptions = {
+  agentOwner?: boolean;
+  workflowAgent?: boolean;
+};
+
+type AISDKModelPatchEntry = {
+  activeSpanIds: Set<string>;
+  baseMetadata: Record<string, unknown>;
+  childTracingOptions: AISDKChildTracingOptions;
+  denyOutputPaths: string[];
+  parentSpan: Span;
+};
+
+type AISDKModelPatchState = {
+  entries: AISDKModelPatchEntry[];
+  originalDoGenerate: NonNullable<AISDKLanguageModel["doGenerate"]>;
+  originalDoStream?: AISDKLanguageModel["doStream"];
+};
+
+type AISDKToolPatchEntry = {
+  activeSpanIds: Set<string>;
+  childTracingOptions: AISDKChildTracingOptions;
+  name: string;
+  parentSpan: Span;
+};
+
+type AISDKToolPatchState = {
+  entries: AISDKToolPatchEntry[];
+  originalExecute: (...args: unknown[]) => unknown;
+};
+
+function activeAISDKChildPatchEntry<
+  TEntry extends { activeSpanIds: Set<string>; parentSpan: Span },
+>(entries: TEntry[]): TEntry | undefined {
+  const activeSpan = currentSpan();
+  const activeSpanId = activeSpan.spanId;
+  if (activeSpanId) {
+    for (let index = entries.length - 1; index >= 0; index -= 1) {
+      const entry = entries[index];
+      if (entry?.activeSpanIds.has(activeSpanId)) {
+        return entry;
+      }
+    }
+  }
+
+  const activeParentSpanIds = activeSpan.spanParents ?? [];
+  for (let index = entries.length - 1; index >= 0; index -= 1) {
+    const entry = entries[index];
+    if (
+      entry?.parentSpan.spanId &&
+      activeParentSpanIds.includes(entry.parentSpan.spanId)
+    ) {
+      return entry;
+    }
+  }
+
+  for (let index = entries.length - 1; index >= 0; index -= 1) {
+    const entry = entries[index];
+    if (entry?.parentSpan.spanId === activeSpanId) {
+      return entry;
+    }
+  }
+
+  return entries[entries.length - 1];
+}
+
+function attachNestedAISDKChildPatchEntry<
+  TEntry extends { activeSpanIds: Set<string>; parentSpan: Span },
+>(entries: TEntry[], nestedSpan: Span, cleanup: Array<() => void>): boolean {
+  const activeSpanId = currentSpan().spanId;
+  if (!activeSpanId || activeSpanId === nestedSpan.spanId) {
+    return false;
+  }
+
+  for (let index = entries.length - 1; index >= 0; index -= 1) {
+    const entry = entries[index];
+    if (
+      entry?.parentSpan.spanId === activeSpanId ||
+      entry?.activeSpanIds.has(activeSpanId)
+    ) {
+      entry.activeSpanIds.add(nestedSpan.spanId);
+      cleanup.push(() => {
+        entry.activeSpanIds.delete(nestedSpan.spanId);
+      });
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function shadowActiveAISDKChildPatchEntry<
+  TEntry extends { activeSpanIds: Set<string>; parentSpan: Span },
+>(
+  entries: TEntry[],
+  entry: TEntry,
+  nestedSpan: Span,
+  cleanup: Array<() => void>,
+) {
+  const activeSpanId = currentSpan().spanId;
+  if (!activeSpanId || activeSpanId === nestedSpan.spanId) {
+    return;
+  }
+
+  for (let index = entries.length - 1; index >= 0; index -= 1) {
+    const existingEntry = entries[index];
+    if (
+      existingEntry?.parentSpan.spanId === activeSpanId ||
+      existingEntry?.activeSpanIds.has(activeSpanId)
+    ) {
+      entry.activeSpanIds.add(activeSpanId);
+      cleanup.push(() => {
+        entry.activeSpanIds.delete(activeSpanId);
+      });
+      return;
+    }
+  }
+}
+
 function prepareAISDKChildTracing(
   params: AISDKCallParams,
   self: unknown,
   parentSpan: Span,
   denyOutputPaths: string[],
   aiSDK?: AISDK,
+  childTracingOptions: AISDKChildTracingOptions = {},
 ): {
   cleanup?: () => void;
   modelWrapped: boolean;
@@ -1151,34 +1586,92 @@ function prepareAISDKChildTracing(
       !resolvedModel ||
       typeof resolvedModel !== "object" ||
       typeof resolvedModel.doGenerate !== "function" ||
-      patchedModels.has(resolvedModel) ||
-      (resolvedModel as { [AUTO_PATCHED_MODEL]?: boolean })[AUTO_PATCHED_MODEL]
+      patchedModels.has(resolvedModel)
     ) {
       return resolvedModel;
     }
 
     patchedModels.add(resolvedModel);
-    (resolvedModel as { [AUTO_PATCHED_MODEL]?: boolean })[AUTO_PATCHED_MODEL] =
-      true;
     modelWrapped = true;
+
+    const modelRecord = resolvedModel as AISDKLanguageModel & {
+      [AUTO_PATCHED_MODEL]?: AISDKModelPatchState;
+    };
+    const entry: AISDKModelPatchEntry = {
+      activeSpanIds: new Set([parentSpan.spanId]),
+      baseMetadata: buildAISDKChildMetadata(resolvedModel),
+      childTracingOptions,
+      denyOutputPaths,
+      parentSpan,
+    };
+    const cleanupModelEntry = (state: AISDKModelPatchState) => {
+      const index = state.entries.indexOf(entry);
+      if (index >= 0) {
+        state.entries.splice(index, 1);
+      }
+      if (state.entries.length > 0) {
+        return;
+      }
+      resolvedModel.doGenerate = state.originalDoGenerate;
+      resolvedModel.doStream = state.originalDoStream;
+      delete modelRecord[AUTO_PATCHED_MODEL];
+    };
+    const existingState = modelRecord[AUTO_PATCHED_MODEL];
+    if (existingState) {
+      if (
+        childTracingOptions.agentOwner &&
+        attachNestedAISDKChildPatchEntry(
+          existingState.entries,
+          parentSpan,
+          cleanup,
+        )
+      ) {
+        return resolvedModel;
+      }
+
+      if (!childTracingOptions.agentOwner) {
+        shadowActiveAISDKChildPatchEntry(
+          existingState.entries,
+          entry,
+          parentSpan,
+          cleanup,
+        );
+      }
+
+      existingState.entries.push(entry);
+      cleanup.push(() => {
+        cleanupModelEntry(existingState);
+      });
+      return resolvedModel;
+    }
 
     const originalDoGenerate = resolvedModel.doGenerate;
     const originalDoStream = resolvedModel.doStream;
-    const baseMetadata = buildAISDKChildMetadata(resolvedModel);
+    const state: AISDKModelPatchState = {
+      entries: [entry],
+      originalDoGenerate,
+      originalDoStream,
+    };
+    modelRecord[AUTO_PATCHED_MODEL] = state;
 
     resolvedModel.doGenerate = async function doGeneratePatched(
-      options: AISDKCallParams,
+      callOptions: AISDKCallParams,
     ) {
-      return parentSpan.traced(
+      const activeEntry = activeAISDKChildPatchEntry(state.entries);
+      if (!activeEntry) {
+        return Reflect.apply(originalDoGenerate, resolvedModel, [callOptions]);
+      }
+
+      return activeEntry.parentSpan.traced(
         async (span) => {
           const result = await Reflect.apply(
             originalDoGenerate,
             resolvedModel,
-            [options],
+            [callOptions],
           );
 
           span.log({
-            output: processAISDKOutput(result, denyOutputPaths),
+            output: processAISDKOutput(result, activeEntry.denyOutputPaths),
             metrics: extractTokenMetrics(result),
             ...buildResolvedMetadataPayload(result),
           });
@@ -1190,32 +1683,43 @@ function prepareAISDKChildTracing(
           spanAttributes: {
             type: SpanTypeAttribute.LLM,
           },
-          event: {
-            input: processAISDKCallInput(options).input,
-            metadata: baseMetadata,
-          },
+          event: buildAISDKModelStartEvent(
+            callOptions,
+            activeEntry.baseMetadata,
+            {
+              workflowAgent: activeEntry.childTracingOptions.workflowAgent,
+            },
+          ),
         },
       );
     };
 
     if (originalDoStream) {
       resolvedModel.doStream = async function doStreamPatched(
-        options: AISDKCallParams,
+        callOptions: AISDKCallParams,
       ) {
-        const span = parentSpan.startSpan({
+        const activeEntry = activeAISDKChildPatchEntry(state.entries);
+        if (!activeEntry) {
+          return Reflect.apply(originalDoStream, resolvedModel, [callOptions]);
+        }
+
+        const span = activeEntry.parentSpan.startSpan({
           name: "doStream",
           spanAttributes: {
             type: SpanTypeAttribute.LLM,
           },
-          event: {
-            input: processAISDKCallInput(options).input,
-            metadata: baseMetadata,
-          },
+          event: buildAISDKModelStartEvent(
+            callOptions,
+            activeEntry.baseMetadata,
+            {
+              workflowAgent: activeEntry.childTracingOptions.workflowAgent,
+            },
+          ),
         });
 
         const streamStartTime = getCurrentUnixTimestamp();
         const result = await withCurrent(span, () =>
-          Reflect.apply(originalDoStream, resolvedModel, [options]),
+          Reflect.apply(originalDoStream, resolvedModel, [callOptions]),
         );
         // firstChunkTime !== streamStartTime because the first few chunks may be actual bookkeeping stuff for the SDK
         // instead of actual LLM output that can be streamed to users.
@@ -1283,7 +1787,10 @@ function prepareAISDKChildTracing(
                 }
 
                 const metrics = extractTokenMetrics(output as AISDKResult);
-                if (firstChunkTime !== undefined) {
+                if (
+                  firstChunkTime !== undefined &&
+                  !activeEntry.childTracingOptions.workflowAgent
+                ) {
                   metrics.time_to_first_token = Math.max(
                     firstChunkTime - streamStartTime,
                     1e-6,
@@ -1293,7 +1800,7 @@ function prepareAISDKChildTracing(
                 span.log({
                   output: processAISDKOutput(
                     output as AISDKResult,
-                    denyOutputPaths,
+                    activeEntry.denyOutputPaths,
                   ),
                   metrics,
                   ...buildResolvedMetadataPayload(output as AISDKResult),
@@ -1313,13 +1820,7 @@ function prepareAISDKChildTracing(
     }
 
     cleanup.push(() => {
-      resolvedModel.doGenerate = originalDoGenerate;
-      if (originalDoStream) {
-        resolvedModel.doStream = originalDoStream;
-      }
-      delete (resolvedModel as { [AUTO_PATCHED_MODEL]?: boolean })[
-        AUTO_PATCHED_MODEL
-      ];
+      cleanupModelEntry(state);
     });
 
     return resolvedModel;
@@ -1331,27 +1832,84 @@ function prepareAISDKChildTracing(
       typeof tool !== "object" ||
       !("execute" in tool) ||
       typeof tool.execute !== "function" ||
-      patchedTools.has(tool) ||
-      (tool as { [AUTO_PATCHED_TOOL]?: boolean })[AUTO_PATCHED_TOOL]
+      patchedTools.has(tool)
     ) {
       return;
     }
 
     patchedTools.add(tool);
-    (tool as { [AUTO_PATCHED_TOOL]?: boolean })[AUTO_PATCHED_TOOL] = true;
-    const originalExecute = tool.execute;
+    const toolRecord = tool as AISDKTool & {
+      [AUTO_PATCHED_TOOL]?: AISDKToolPatchState;
+      execute: (...args: unknown[]) => unknown;
+    };
+    const entry: AISDKToolPatchEntry = {
+      activeSpanIds: new Set([parentSpan.spanId]),
+      childTracingOptions,
+      name,
+      parentSpan,
+    };
+    const cleanupToolEntry = (state: AISDKToolPatchState) => {
+      const index = state.entries.indexOf(entry);
+      if (index >= 0) {
+        state.entries.splice(index, 1);
+      }
+      if (state.entries.length > 0) {
+        return;
+      }
+      tool.execute = state.originalExecute;
+      delete toolRecord[AUTO_PATCHED_TOOL];
+    };
+    const existingState = toolRecord[AUTO_PATCHED_TOOL];
+    if (existingState) {
+      if (
+        childTracingOptions.agentOwner &&
+        attachNestedAISDKChildPatchEntry(
+          existingState.entries,
+          parentSpan,
+          cleanup,
+        )
+      ) {
+        return;
+      }
+
+      if (!childTracingOptions.agentOwner) {
+        shadowActiveAISDKChildPatchEntry(
+          existingState.entries,
+          entry,
+          parentSpan,
+          cleanup,
+        );
+      }
+
+      existingState.entries.push(entry);
+      cleanup.push(() => {
+        cleanupToolEntry(existingState);
+      });
+      return;
+    }
+
+    const originalExecute = toolRecord.execute;
+    const state: AISDKToolPatchState = {
+      entries: [entry],
+      originalExecute,
+    };
+    toolRecord[AUTO_PATCHED_TOOL] = state;
     tool.execute = function executePatched(...args: unknown[]) {
+      const activeEntry = activeAISDKChildPatchEntry(state.entries);
       const result = Reflect.apply(originalExecute, this, args);
+      if (!activeEntry) {
+        return result;
+      }
 
       if (isAsyncGenerator(result)) {
         return (async function* () {
-          const span = parentSpan.startSpan({
-            name,
+          const span = activeEntry.parentSpan.startSpan({
+            name: activeEntry.name,
             spanAttributes: {
               type: SpanTypeAttribute.TOOL,
             },
           });
-          span.log({ input: args.length === 1 ? args[0] : args });
+          span.log({ input: serializeToolExecutionInput(args) });
 
           try {
             let lastValue: unknown;
@@ -1369,15 +1927,15 @@ function prepareAISDKChildTracing(
         })();
       }
 
-      return parentSpan.traced(
+      return activeEntry.parentSpan.traced(
         async (span) => {
-          span.log({ input: args.length === 1 ? args[0] : args });
+          span.log({ input: serializeToolExecutionInput(args) });
           const awaitedResult = await result;
           span.log({ output: awaitedResult });
           return awaitedResult;
         },
         {
-          name,
+          name: activeEntry.name,
           spanAttributes: {
             type: SpanTypeAttribute.TOOL,
           },
@@ -1386,8 +1944,7 @@ function prepareAISDKChildTracing(
     };
 
     cleanup.push(() => {
-      tool.execute = originalExecute;
-      delete (tool as { [AUTO_PATCHED_TOOL]?: boolean })[AUTO_PATCHED_TOOL];
+      cleanupToolEntry(state);
     });
   };
 
@@ -1426,6 +1983,7 @@ function prepareAISDKChildTracing(
   if (self && typeof self === "object") {
     const selfRecord = self as {
       model?: AISDKModel;
+      tools?: AISDKTools;
       settings?: { model?: AISDKModel; tools?: AISDKTools };
     };
 
@@ -1438,6 +1996,10 @@ function prepareAISDKChildTracing(
       ) {
         selfRecord.model = patchedSelfModel;
       }
+    }
+
+    if (selfRecord.tools !== undefined) {
+      patchTools(selfRecord.tools);
     }
 
     if (selfRecord.settings && typeof selfRecord.settings === "object") {
@@ -1612,11 +2174,19 @@ function isAISDKContentAsyncIterableChunk(chunk: unknown): boolean {
 function patchAISDKStreamingResult(args: {
   defaultDenyOutputPaths: string[];
   endEvent: { denyOutputPaths?: string[]; [key: string]: unknown };
+  onComplete?: () => void;
   result: AISDKResult;
   span: Span;
   startTime: number;
 }): boolean {
-  const { defaultDenyOutputPaths, endEvent, result, span, startTime } = args;
+  const {
+    defaultDenyOutputPaths,
+    endEvent,
+    onComplete,
+    result,
+    span,
+    startTime,
+  } = args;
 
   if (!result || typeof result !== "object") {
     return false;
@@ -1624,6 +2194,16 @@ function patchAISDKStreamingResult(args: {
 
   const resultRecord = result as Record<string, unknown>;
   attachKnownResultPromiseHandlers(resultRecord);
+  let finalized = false;
+  const finalize = () => {
+    if (finalized) {
+      return;
+    }
+    finalized = true;
+    finalizeAISDKChildTracing(endEvent);
+    span.end();
+    onComplete?.();
+  };
 
   if (isReadableStreamLike(resultRecord.baseStream)) {
     let firstChunkTime: number | undefined;
@@ -1640,28 +2220,31 @@ function patchAISDKStreamingResult(args: {
           controller.enqueue(chunk);
         },
         async flush() {
-          const metrics = extractTopLevelAISDKMetrics(result, endEvent);
-          if (
-            metrics.time_to_first_token === undefined &&
-            firstChunkTime !== undefined
-          ) {
-            metrics.time_to_first_token = firstChunkTime - startTime;
+          try {
+            const metrics = extractTopLevelAISDKMetrics(result, endEvent);
+            if (
+              metrics.time_to_first_token === undefined &&
+              firstChunkTime !== undefined
+            ) {
+              metrics.time_to_first_token = firstChunkTime - startTime;
+            }
+
+            const output = await processAISDKStreamingOutput(
+              result,
+              resolveDenyOutputPaths(endEvent, defaultDenyOutputPaths),
+            );
+            const metadata = buildResolvedMetadataPayload(result).metadata;
+
+            span.log({
+              output,
+              ...(metadata ? { metadata } : {}),
+              metrics,
+            });
+          } catch (error) {
+            span.log({ error: toLoggedError(error) });
+          } finally {
+            finalize();
           }
-
-          const output = await processAISDKStreamingOutput(
-            result,
-            resolveDenyOutputPaths(endEvent, defaultDenyOutputPaths),
-          );
-          const metadata = buildResolvedMetadataPayload(result).metadata;
-
-          span.log({
-            output,
-            ...(metadata ? { metadata } : {}),
-            metrics,
-          });
-
-          finalizeAISDKChildTracing(endEvent);
-          span.end();
         },
       }),
     );
@@ -1697,34 +2280,37 @@ function patchAISDKStreamingResult(args: {
       }
     },
     onComplete: async () => {
-      const metrics = extractTopLevelAISDKMetrics(result, endEvent);
-      if (
-        metrics.time_to_first_token === undefined &&
-        firstChunkTime !== undefined
-      ) {
-        metrics.time_to_first_token = firstChunkTime - startTime;
+      try {
+        const metrics = extractTopLevelAISDKMetrics(result, endEvent);
+        if (
+          metrics.time_to_first_token === undefined &&
+          firstChunkTime !== undefined
+        ) {
+          metrics.time_to_first_token = firstChunkTime - startTime;
+        }
+
+        const output = await processAISDKStreamingOutput(
+          result,
+          resolveDenyOutputPaths(endEvent, defaultDenyOutputPaths),
+        );
+        const metadata = buildResolvedMetadataPayload(result).metadata;
+
+        span.log({
+          output,
+          ...(metadata ? { metadata } : {}),
+          metrics,
+        });
+      } catch (error) {
+        span.log({ error: toLoggedError(error) });
+      } finally {
+        finalize();
       }
-
-      const output = await processAISDKStreamingOutput(
-        result,
-        resolveDenyOutputPaths(endEvent, defaultDenyOutputPaths),
-      );
-      const metadata = buildResolvedMetadataPayload(result).metadata;
-
-      span.log({
-        output,
-        ...(metadata ? { metadata } : {}),
-        metrics,
-      });
-      finalizeAISDKChildTracing(endEvent);
-      span.end();
     },
     onError: (error) => {
       span.log({
         error: error.message,
       });
-      finalizeAISDKChildTracing(endEvent);
-      span.end();
+      finalize();
     },
   });
 
@@ -1968,6 +2554,31 @@ function isAsyncGenerator(value: unknown): value is AsyncGenerator {
   );
 }
 
+function removeHeadersDeep(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map((item) => removeHeadersDeep(item));
+  }
+
+  if (!isObject(value)) {
+    return value;
+  }
+
+  const prototype = Object.getPrototypeOf(value);
+  if (prototype !== Object.prototype && prototype !== null) {
+    return value;
+  }
+
+  const sanitized: Record<string, unknown> = {};
+  for (const [key, nested] of Object.entries(value)) {
+    if (key.toLowerCase() === "headers") {
+      continue;
+    }
+    sanitized[key] = removeHeadersDeep(nested);
+  }
+
+  return sanitized;
+}
+
 /**
  * Process AI SDK output, omitting specified paths.
  */
@@ -1980,7 +2591,9 @@ export function processAISDKOutput(
   const merged = extractSerializableOutputFields(output);
 
   // Apply omit to remove unwanted paths
-  return normalizeAISDKLoggedOutput(omit(merged, denyOutputPaths));
+  return normalizeAISDKLoggedOutput(
+    removeHeadersDeep(omit(merged, denyOutputPaths)),
+  );
 }
 
 export function processAISDKEmbeddingOutput(
@@ -2283,7 +2896,9 @@ function extractGetterValues(
 
   const getterNames = [
     "content",
+    "messages",
     "text",
+    "output",
     "object",
     "value",
     "values",
@@ -2332,7 +2947,9 @@ function extractSerializableOutputFields(
 ): Record<string, unknown> {
   const serialized: Record<string, unknown> = {};
   const directFieldNames = [
+    "messages",
     "steps",
+    "output",
     "request",
     "responseMessages",
     "warnings",
