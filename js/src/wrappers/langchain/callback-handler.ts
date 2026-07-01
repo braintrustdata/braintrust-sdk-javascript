@@ -438,6 +438,23 @@ function cleanObject(obj: Record<string, unknown>): Record<string, number> {
   ) as Record<string, number>;
 }
 
+function normalizeTokenMetrics(
+  obj: Record<string, unknown>,
+): Record<string, number> {
+  const metrics = cleanObject(obj);
+
+  if (metrics.total_tokens !== undefined) {
+    metrics.tokens = metrics.total_tokens;
+  } else if (
+    metrics.prompt_tokens !== undefined &&
+    metrics.completion_tokens !== undefined
+  ) {
+    metrics.tokens = metrics.prompt_tokens + metrics.completion_tokens;
+  }
+
+  return metrics;
+}
+
 function walkGenerations(
   response: LangChainLLMResult,
 ): Record<string, unknown>[] {
@@ -497,7 +514,7 @@ function getMetricsFromResponse(
     }
 
     const inputTokenDetails = usageMetadata.input_token_details;
-    return cleanObject({
+    return normalizeTokenMetrics({
       total_tokens: usageMetadata.total_tokens,
       prompt_tokens: usageMetadata.input_tokens,
       completion_tokens: usageMetadata.output_tokens,
@@ -517,7 +534,7 @@ function getMetricsFromResponse(
       ? llmOutput.estimatedTokens
       : {};
 
-  return cleanObject({
+  return normalizeTokenMetrics({
     total_tokens: tokenUsage.totalTokens,
     prompt_tokens: tokenUsage.promptTokens,
     completion_tokens: tokenUsage.completionTokens,
