@@ -6108,6 +6108,7 @@ export class ObjectFetcher<RecordType> implements AsyncIterable<
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private mutateRecord?: (r: any) => WithTransactionId<RecordType>,
     private _internal_btql?: Record<string, unknown>,
+    private _internalBrainstoreRealtime = true,
   ) {}
 
   public get id(): Promise<string> {
@@ -6178,7 +6179,7 @@ export class ObjectFetcher<RecordType> implements AsyncIterable<
             ...internalBtqlWithoutReservedQueryKeys,
           },
           use_columnstore: false,
-          brainstore_realtime: true,
+          brainstore_realtime: this._internalBrainstoreRealtime,
           query_source: `js_sdk_object_fetcher_${this.objectType}`,
           ...(this.pinnedVersion !== undefined
             ? {

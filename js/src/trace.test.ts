@@ -104,6 +104,31 @@ describe("CachedSpanFetcher", () => {
       });
     });
 
+    test("should thread brainstore realtime setting to BTQL fetches", async () => {
+      const post = vi.fn().mockResolvedValue({
+        json: vi.fn().mockResolvedValue({
+          data: [],
+          cursor: null,
+        }),
+      });
+      const state = {
+        apiConn: () => ({ post }),
+      } as unknown as BraintrustState;
+      const fetcher = new CachedSpanFetcher(
+        "project_logs",
+        "project-1",
+        "root-1",
+        async () => state,
+        false,
+      );
+
+      await fetcher.getSpans();
+
+      expect(post.mock.calls[0][1]).toMatchObject({
+        brainstore_realtime: false,
+      });
+    });
+
     test("should fetch specific span types when filter specified", async () => {
       const llmSpans = [makeSpan("span-1", "llm"), makeSpan("span-2", "llm")];
 
