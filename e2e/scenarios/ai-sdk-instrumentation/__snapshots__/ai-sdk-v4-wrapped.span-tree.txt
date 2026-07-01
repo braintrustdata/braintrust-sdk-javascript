@@ -221,7 +221,8 @@ span_tree:
     │           }
     │           metrics: {
     │             "completion_tokens": 2,
-    │             "prompt_tokens": 18
+    │             "prompt_tokens": 18,
+    │             "tokens": 20
     │           }
     ├── ai-sdk-output-object-operation
     │   metadata: {
@@ -468,7 +469,8 @@ span_tree:
     │           }
     │           metrics: {
     │             "completion_tokens": 5,
-    │             "prompt_tokens": 83
+    │             "prompt_tokens": 83,
+    │             "tokens": 88
     │           }
     ├── ai-sdk-stream-operation
     │   metadata: {
@@ -546,7 +548,8 @@ span_tree:
     │           metrics: {
     │             "completion_tokens": null,
     │             "prompt_tokens": null,
-    │             "time_to_first_token": 0
+    │             "time_to_first_token": 0,
+    │             "tokens": null
     │           }
     ├── ai-sdk-embed-operation
     │   metadata: {
@@ -952,7 +955,8 @@ span_tree:
     │       │   }
     │       │   metrics: {
     │       │     "completion_tokens": 16,
-    │       │     "prompt_tokens": 87
+    │       │     "prompt_tokens": 87,
+    │       │     "tokens": 103
     │       │   }
     │       └── get_weather [tool]
     │           input: [
@@ -1170,7 +1174,8 @@ span_tree:
     │           }
     │           metrics: {
     │             "completion_tokens": 5,
-    │             "prompt_tokens": 59
+    │             "prompt_tokens": 59,
+    │             "tokens": 64
     │           }
     └── ai-sdk-stream-object-operation
         metadata: {
@@ -1288,5 +1293,6 @@ span_tree:
                 metrics: {
                   "completion_tokens": null,
                   "prompt_tokens": null,
-                  "time_to_first_token": 0
+                  "time_to_first_token": 0,
+                  "tokens": null
                 }
