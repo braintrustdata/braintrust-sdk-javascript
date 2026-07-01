@@ -2814,6 +2814,18 @@ describe("sensitive data redaction", () => {
     expect(str.length).toBeLessThan(150);
   });
 
+  test("proxyConn strips the /v1/proxy suffix for EU/self-hosted proxy URLs", () => {
+    const euState = new BraintrustState({});
+    euState.proxyUrl = "https://api-eu.braintrust.dev/v1/proxy";
+    expect(euState.proxyConn().base_url).toBe("https://api-eu.braintrust.dev");
+  });
+
+  test("proxyConn leaves a bare proxy host unchanged", () => {
+    const usState = new BraintrustState({});
+    usState.proxyUrl = "https://api.braintrust.dev";
+    expect(usState.proxyConn().base_url).toBe("https://api.braintrust.dev");
+  });
+
   test("redaction works in nested objects and JSON.stringify", () => {
     const span = logger.startSpan({ name: "test-span" });
 
