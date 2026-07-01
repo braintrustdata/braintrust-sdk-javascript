@@ -631,6 +631,47 @@ describe("BraintrustSpanProcessor", () => {
     expect(processor).toBeDefined();
   });
 
+  it("primes OTEL bootstrap auth when the exporter initializes", async () => {
+    const exporter = new BraintrustExporter({
+      apiKey: "test-api-key",
+      apiUrl: "https://custom.api.url",
+    });
+
+    await exporter.forceFlush();
+
+    // @ts-expect-error internal OTEL bootstrap helper added by the login-burst fix
+    expect(_exportsForTestingOnly.getOtelBootstrapAuthForTests()).toEqual({
+      apiKey: "test-api-key",
+      apiUrl: "https://custom.api.url/",
+    });
+  });
+
+  it("initializes without the OTEL bootstrap auth helper on older braintrust versions", async () => {
+    vi.resetModules();
+    vi.doMock("braintrust", async () => {
+      const actual =
+        await vi.importActual<typeof import("braintrust")>("braintrust");
+      const { _internalSetOtelBootstrapAuth: _unused, ...compatExports } =
+        actual;
+      return compatExports;
+    });
+
+    try {
+      const compatModule = await import(
+        /* @vite-ignore */ `./otel.ts?compat=${Date.now()}`
+      );
+      const exporter = new compatModule.BraintrustExporter({
+        apiKey: "test-api-key",
+        apiUrl: "https://custom.api.url",
+      });
+
+      await expect(exporter.forceFlush()).resolves.toBeUndefined();
+    } finally {
+      vi.doUnmock("braintrust");
+      vi.resetModules();
+    }
+  });
+
   it("should support custom headers", () => {
     const processor = new BraintrustSpanProcessor({
       apiKey: "test-api-key",

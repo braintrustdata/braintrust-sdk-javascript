@@ -11,19 +11,20 @@ import {
   Span,
 } from "@opentelemetry/api";
 import {
-  SpanProcessor,
-  ReadableSpan,
-  BatchSpanProcessor,
-  type Span as SDKSpan,
-  type SpanExporter,
-} from "@opentelemetry/sdk-trace-base";
-import {
   IDGenerator,
   _internalIso,
   currentSpan,
   registerOtelFlush,
   type Span as BraintrustSpan,
 } from "braintrust";
+import * as braintrustNamespace from "braintrust";
+import {
+  SpanProcessor,
+  ReadableSpan,
+  BatchSpanProcessor,
+  type Span as SDKSpan,
+  type SpanExporter,
+} from "@opentelemetry/sdk-trace-base";
 
 interface ExportResult {
   code: number;
@@ -37,6 +38,11 @@ const FILTER_PREFIXES = [
   "ai.",
   "traceloop.",
 ] as const;
+
+const setOtelBootstrapAuth =
+  "_internalSetOtelBootstrapAuth" in braintrustNamespace
+    ? braintrustNamespace._internalSetOtelBootstrapAuth
+    : undefined;
 
 /**
  * Custom filter function type for span filtering.
@@ -317,6 +323,11 @@ class LazyBraintrustOTLPTraceExporter implements SpanExporter {
             "Braintrust API key is required. Set BRAINTRUST_API_KEY, define it in .env.braintrust, or pass apiKey option.",
           );
         }
+
+        setOtelBootstrapAuth?.({
+          apiKey,
+          apiUrl: this.apiUrl,
+        });
 
         this.exporter = new OTLPTraceExporter({
           url: new URL("otel/v1/traces", this.apiUrl).href,

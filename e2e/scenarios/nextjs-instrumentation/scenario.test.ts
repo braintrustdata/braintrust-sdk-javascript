@@ -80,6 +80,31 @@ function normalizeProjectRegisterRequestSummary(
   };
 }
 
+function normalizeLogs3RequestSummary(summary: Record<string, unknown>) {
+  if (summary.path !== "/logs3") {
+    return summary;
+  }
+
+  const normalizeBody = (body: unknown) => {
+    if (!isObject(body) || !Array.isArray(body.rows)) {
+      return body;
+    }
+
+    return {
+      ...body,
+      rows: body.rows.map((row) =>
+        isObject(row) ? { ...row, context: {} } : row,
+      ),
+    };
+  };
+
+  return {
+    ...summary,
+    jsonBody: normalizeBody(summary.jsonBody),
+    rawBody: normalizeBody(summary.rawBody),
+  };
+}
+
 function dedupeProjectRegisterRequestSummaries(
   summaries: Record<string, unknown>[],
 ) {
@@ -170,6 +195,12 @@ test(
         expect(
           requests.some((request) => request.path === "/otel/v1/traces"),
         ).toBe(true);
+        expect(
+          requests.some((request) => request.path === "/api/project/register"),
+        ).toBe(true);
+        expect(
+          requests.some((request) => request.path === "/api/apikey/login"),
+        ).toBe(false);
 
         const otelRequests = requests.filter(
           (request) => request.path === "/otel/v1/traces",
@@ -252,7 +283,9 @@ test(
                   };
                 }
 
-                return normalizeProjectRegisterRequestSummary(summary);
+                return normalizeLogs3RequestSummary(
+                  normalizeProjectRegisterRequestSummary(summary),
+                );
               }),
             ) as Json,
           ),

@@ -621,6 +621,37 @@ declare global {
   }
 }
 
+type OtelBootstrapAuth = {
+  apiKey: string;
+  apiUrl: string;
+};
+
+const OTEL_BOOTSTRAP_AUTH_SYMBOL = Symbol.for("braintrust-otel-bootstrap-auth");
+
+function getOtelBootstrapAuth(): OtelBootstrapAuth | null {
+  return (
+    ((globalThis as any)[OTEL_BOOTSTRAP_AUTH_SYMBOL] as OtelBootstrapAuth) ??
+    null
+  );
+}
+
+/**
+ * @internal
+ */
+export function _internalSetOtelBootstrapAuth(
+  auth: OtelBootstrapAuth | null,
+): void {
+  if (!auth) {
+    (globalThis as any)[OTEL_BOOTSTRAP_AUTH_SYMBOL] = null;
+    return;
+  }
+
+  (globalThis as any)[OTEL_BOOTSTRAP_AUTH_SYMBOL] = {
+    apiKey: HTTPConnection.sanitize_token(auth.apiKey),
+    apiUrl: auth.apiUrl,
+  } satisfies OtelBootstrapAuth;
+}
+
 const loginSchema = z.strictObject({
   appUrl: z.string(),
   appPublicUrl: z.string(),
@@ -1902,6 +1933,7 @@ function logFeedbackImpl(
   state: BraintrustState,
   parentObjectType: SpanObjectTypeV3,
   parentObjectId: LazyValue<string>,
+  parentComputeObjectMetadataArgs: Record<string, any> | undefined,
   {
     id,
     expected,
@@ -1944,7 +1976,12 @@ function logFeedbackImpl(
   const parentIds = async () =>
     new SpanComponentsV3({
       object_type: parentObjectType,
-      object_id: await parentObjectId.get(),
+      object_id: await resolveParentObjectId({
+        state,
+        parentObjectType,
+        parentObjectId,
+        parentComputeObjectMetadataArgs,
+      }),
     }).objectIdFields();
 
   if (Object.keys(updateEvent).length > 0) {
@@ -1987,6 +2024,7 @@ function updateSpanImpl({
   state,
   parentObjectType,
   parentObjectId,
+  parentComputeObjectMetadataArgs,
   id,
   root_span_id,
   span_id,
@@ -1995,6 +2033,7 @@ function updateSpanImpl({
   state: BraintrustState;
   parentObjectType: SpanObjectTypeV3;
   parentObjectId: LazyValue<string>;
+  parentComputeObjectMetadataArgs: Record<string, any> | undefined;
   id: string;
   root_span_id: string | undefined;
   span_id: string | undefined;
@@ -2016,7 +2055,12 @@ function updateSpanImpl({
   const parentIds = async () =>
     new SpanComponentsV3({
       object_type: parentObjectType,
-      object_id: await parentObjectId.get(),
+      object_id: await resolveParentObjectId({
+        state,
+        parentObjectType,
+        parentObjectId,
+        parentComputeObjectMetadataArgs,
+      }),
     }).objectIdFields();
 
   const record = new LazyValue(async () => ({
@@ -2059,6 +2103,8 @@ export function updateSpan({
     parentObjectId: new LazyValue(
       spanComponentsToObjectIdLambda(resolvedState, components),
     ),
+    parentComputeObjectMetadataArgs:
+      components.data.compute_object_metadata_args ?? undefined,
     id: components.data.row_id,
     root_span_id: components.data.root_span_id,
     span_id: components.data.span_id,
@@ -2101,9 +2147,12 @@ function spanComponentsToObjectIdLambda(
     case SpanObjectTypeV3.PROJECT_LOGS:
       return async () =>
         (
-          await computeLoggerMetadata(state, {
-            ...components.data.compute_object_metadata_args,
-          })
+          await computeLoggerMetadata(
+            await resolveLoggerStartupAuth(state, {}),
+            {
+              ...components.data.compute_object_metadata_args,
+            },
+          )
         ).project.id;
     default:
       const x: never = components.data.object_type;
@@ -2125,6 +2174,42 @@ export async function spanComponentsToObjectId({
     state ?? _globalState,
     components,
   )();
+}
+
+async function resolveParentObjectId({
+  state,
+  parentObjectType,
+  parentObjectId,
+  parentComputeObjectMetadataArgs,
+}: {
+  state: BraintrustState;
+  parentObjectType: SpanObjectTypeV3;
+  parentObjectId: LazyValue<string>;
+  parentComputeObjectMetadataArgs: Record<string, any> | undefined;
+}): Promise<string> {
+  const objectId = await parentObjectId.get();
+  if (typeof objectId === "string" && objectId.length > 0) {
+    return objectId;
+  }
+
+  if (
+    parentObjectType === SpanObjectTypeV3.PROJECT_LOGS &&
+    parentComputeObjectMetadataArgs
+  ) {
+    const metadata = await computeLoggerMetadata(
+      await resolveLoggerStartupAuth(state, {}),
+      {
+        ...parentComputeObjectMetadataArgs,
+      },
+    );
+    if (metadata.project.id) {
+      return metadata.project.id;
+    }
+  }
+
+  throw new Error(
+    "Impossible: must provide either objectId or computeObjectMetadataArgs",
+  );
 }
 
 export const ERR_PERMALINK = "https://braintrust.dev/error-generating-link";
@@ -2471,7 +2556,13 @@ export class Logger<IsAsyncFlush extends boolean> implements Exportable {
    * @param event.source (Optional) the source of the feedback. Must be one of "external" (default), "app", or "api".
    */
   public logFeedback(event: LogFeedbackFullArgs): void {
-    logFeedbackImpl(this.state, this.parentObjectType(), this.lazyId, event);
+    logFeedbackImpl(
+      this.state,
+      this.parentObjectType(),
+      this.lazyId,
+      this.computeMetadataArgs,
+      event,
+    );
   }
 
   /**
@@ -2492,6 +2583,7 @@ export class Logger<IsAsyncFlush extends boolean> implements Exportable {
       state: this.state,
       parentObjectType: this.parentObjectType(),
       parentObjectId: this.lazyId,
+      parentComputeObjectMetadataArgs: this.computeMetadataArgs,
       id,
       root_span_id,
       span_id,
@@ -4346,49 +4438,208 @@ export function withDataset<
 // Note: the argument names *must* serialize the same way as the argument names
 // for the corresponding python function, because this function may be invoked
 // from arguments serialized elsewhere.
-async function computeLoggerMetadata(
+type LoggerStartupAuth =
+  | {
+      kind: "bootstrap";
+      appConn: HTTPConnection;
+      orgId: string | undefined;
+      orgName: string | undefined;
+    }
+  | {
+      kind: "state";
+      appConn: HTTPConnection;
+      orgId: string;
+    };
+
+function makeLongLivedAuthConn(
+  baseUrl: string,
+  token: string,
+  fetch: typeof globalThis.fetch,
+) {
+  const conn = new HTTPConnection(baseUrl, fetch);
+  conn.set_token(token);
+  conn.make_long_lived();
+  return conn;
+}
+
+async function resolveLoggerStartupAuth(
   state: BraintrustState,
   {
-    project_name,
-    project_id,
+    app_url,
+    org_name,
+    api_key,
+    force_login,
+    fetch,
   }: {
     project_name?: string;
     project_id?: string;
+    app_url?: string;
+    org_name?: string;
+    api_key?: string;
+    force_login?: boolean;
+    fetch?: typeof globalThis.fetch;
   },
-) {
-  await state.login({});
-  const org_id = state.orgId!;
-  if (isEmpty(project_id)) {
-    const response = await state.appConn().post_json("api/project/register", {
-      project_name: project_name || GLOBAL_PROJECT,
-      org_id,
-    });
+): Promise<LoggerStartupAuth> {
+  if (fetch) {
+    state.setFetch(fetch);
+  }
+
+  const otelBootstrapAuth = getOtelBootstrapAuth();
+  const effectiveApiKey =
+    api_key !== undefined ? api_key : await iso.getBraintrustApiKey();
+  const effectiveOrgName =
+    org_name !== undefined
+      ? org_name
+      : state.orgId
+        ? undefined
+        : iso.getEnv("BRAINTRUST_ORG_NAME") || undefined;
+  const sanitizedApiKey =
+    effectiveApiKey !== undefined
+      ? HTTPConnection.sanitize_token(effectiveApiKey)
+      : undefined;
+  const matchesLoggedInState =
+    !state.loggedIn ||
+    (!!otelBootstrapAuth &&
+      state.loginToken === otelBootstrapAuth.apiKey &&
+      state.apiUrl === otelBootstrapAuth.apiUrl);
+  const canUseOtelBootstrap =
+    !!otelBootstrapAuth &&
+    !force_login &&
+    (!sanitizedApiKey || sanitizedApiKey === otelBootstrapAuth.apiKey) &&
+    matchesLoggedInState;
+
+  if (canUseOtelBootstrap) {
+    const appConn = makeLongLivedAuthConn(
+      _getAppUrl(state.appUrl || app_url),
+      otelBootstrapAuth.apiKey,
+      fetch ?? state.fetch,
+    );
+    state.loginReplaceApiConn(
+      makeLongLivedAuthConn(
+        otelBootstrapAuth.apiUrl,
+        otelBootstrapAuth.apiKey,
+        fetch ?? state.fetch,
+      ),
+    );
     return {
-      org_id,
-      project: {
-        id: response.project.id,
-        name: response.project.name,
-        fullInfo: response.project,
-      },
-    };
-  } else if (isEmpty(project_name)) {
-    const response = await state.appConn().get_json("api/project", {
-      id: project_id,
-    });
-    return {
-      org_id,
-      project: {
-        id: project_id,
-        name: response.name,
-        fullInfo: response.project,
-      },
-    };
-  } else {
-    return {
-      org_id,
-      project: { id: project_id, name: project_name, fullInfo: {} },
+      kind: "bootstrap",
+      appConn,
+      orgId: state.orgId ?? undefined,
+      orgName: state.orgId ? undefined : effectiveOrgName,
     };
   }
+
+  await state.login({
+    orgName: org_name,
+    apiKey: api_key,
+    appUrl: app_url,
+    fetch,
+    forceLogin: force_login,
+  });
+  return {
+    kind: "state",
+    appConn: state.appConn(),
+    orgId: state.orgId!,
+  };
+}
+
+function normalizeLoggerProjectMetadata(
+  response: unknown,
+  {
+    fallbackId,
+    fallbackName,
+  }: {
+    fallbackId?: string;
+    fallbackName?: string;
+  },
+): OrgProjectMetadata {
+  const projectLike =
+    isObject(response) && isObject(response.project)
+      ? response.project
+      : response;
+  const fullInfo = isObject(projectLike)
+    ? projectLike
+    : isObject(response)
+      ? response
+      : {};
+  const org_id =
+    isObject(projectLike) && typeof projectLike.org_id === "string"
+      ? projectLike.org_id
+      : isObject(response) && typeof response.org_id === "string"
+        ? response.org_id
+        : "";
+  const id =
+    isObject(projectLike) && typeof projectLike.id === "string"
+      ? projectLike.id
+      : (fallbackId ?? "");
+  const name =
+    isObject(projectLike) && typeof projectLike.name === "string"
+      ? projectLike.name
+      : isObject(response) && typeof response.name === "string"
+        ? response.name
+        : (fallbackName ?? "");
+
+  return {
+    org_id,
+    project: {
+      id,
+      name,
+      fullInfo,
+    },
+  };
+}
+
+async function computeLoggerMetadata(
+  auth: LoggerStartupAuth,
+  {
+    project_name,
+    project_id,
+    org_project_metadata,
+  }: {
+    project_name?: string;
+    project_id?: string;
+    org_project_metadata?: OrgProjectMetadata;
+  },
+) {
+  if (org_project_metadata) {
+    return org_project_metadata;
+  }
+
+  if (isEmpty(project_id)) {
+    const response = await auth.appConn.post_json("api/project/register", {
+      project_name: project_name || GLOBAL_PROJECT,
+      ...(auth.orgId
+        ? { org_id: auth.orgId }
+        : auth.kind === "bootstrap" && auth.orgName
+          ? { org_name: auth.orgName }
+          : {}),
+    });
+    const metadata = normalizeLoggerProjectMetadata(response, {
+      fallbackName: project_name || GLOBAL_PROJECT,
+    });
+    return {
+      ...metadata,
+      org_id: metadata.org_id || auth.orgId || "",
+    };
+  }
+
+  if (isEmpty(project_name)) {
+    const response = await auth.appConn.get_json("api/project", {
+      id: project_id,
+    });
+    const metadata = normalizeLoggerProjectMetadata(response, {
+      fallbackId: project_id,
+    });
+    return {
+      ...metadata,
+      org_id: metadata.org_id || auth.orgId || "",
+    };
+  }
+
+  return {
+    org_id: auth.orgId ?? "",
+    project: { id: project_id, name: project_name, fullInfo: {} },
+  };
 }
 
 type AsyncFlushArg<IsAsyncFlush> = {
@@ -4433,15 +4684,18 @@ export function initLogger<IsAsyncFlush extends boolean = true>(
     debugLogLevel,
     fetch,
     state: stateArg,
+    orgProjectMetadata,
   } = options || {};
 
   const asyncFlush =
     asyncFlushArg === undefined ? (true as IsAsyncFlush) : asyncFlushArg;
 
-  const computeMetadataArgs = {
-    project_name: projectName,
-    project_id: projectId,
-  };
+  const computeMetadataArgs = orgProjectMetadata
+    ? undefined
+    : {
+        project_name: projectName,
+        project_id: projectId,
+      };
 
   const linkArgs = {
     org_name: orgName,
@@ -4452,21 +4706,30 @@ export function initLogger<IsAsyncFlush extends boolean = true>(
 
   const state = stateArg ?? _globalState;
   state.setDebugLogLevel(debugLogLevel);
+  if (fetch) {
+    state.setFetch(fetch);
+  }
 
   // Enable queue size limit enforcement for initLogger() calls
   // This ensures production observability doesn't OOM customer processes
   state.enforceQueueSizeLimit(true);
+  const startupAuth = new LazyValue(
+    async () =>
+      await resolveLoggerStartupAuth(state, {
+        org_name: orgName,
+        app_url: appUrl,
+        api_key: apiKey,
+        force_login: forceLogin,
+        fetch,
+      }),
+  );
   const lazyMetadata: LazyValue<OrgProjectMetadata> = new LazyValue(
     async () => {
-      // Otherwise actually log in.
-      await state.login({
-        orgName,
-        apiKey,
-        appUrl,
-        forceLogin,
-        fetch,
+      const auth = await startupAuth.get();
+      return await computeLoggerMetadata(auth, {
+        ...(computeMetadataArgs ?? {}),
+        org_project_metadata: orgProjectMetadata,
       });
-      return computeLoggerMetadata(state, computeMetadataArgs);
     },
   );
 
@@ -6575,7 +6838,13 @@ export class Experiment
    * @param event.source (Optional) the source of the feedback. Must be one of "external" (default), "app", or "api".
    */
   public logFeedback(event: LogFeedbackFullArgs): void {
-    logFeedbackImpl(this.state, this.parentObjectType(), this.lazyId, event);
+    logFeedbackImpl(
+      this.state,
+      this.parentObjectType(),
+      this.lazyId,
+      undefined,
+      event,
+    );
   }
 
   /**
@@ -6596,6 +6865,7 @@ export class Experiment
       state: this.state,
       parentObjectType: this.parentObjectType(),
       parentObjectId: this.lazyId,
+      parentComputeObjectMetadataArgs: undefined,
       id,
       root_span_id,
       span_id,
@@ -6988,17 +7258,28 @@ export class SpanImpl implements Span {
       ),
       ...new SpanComponentsV3({
         object_type: this.parentObjectType,
-        object_id: await this.parentObjectId.get(),
+        object_id: await resolveParentObjectId({
+          state: this._state,
+          parentObjectType: this.parentObjectType,
+          parentObjectId: this.parentObjectId,
+          parentComputeObjectMetadataArgs: this.parentComputeObjectMetadataArgs,
+        }),
       }).objectIdFields(),
     });
     this._state.bgLogger().log([new LazyValue(computeRecord)]);
   }
 
   public logFeedback(event: Omit<LogFeedbackFullArgs, "id">): void {
-    logFeedbackImpl(this._state, this.parentObjectType, this.parentObjectId, {
-      ...event,
-      id: this.id,
-    });
+    logFeedbackImpl(
+      this._state,
+      this.parentObjectType,
+      this.parentObjectId,
+      this.parentComputeObjectMetadataArgs,
+      {
+        ...event,
+        id: this.id,
+      },
+    );
   }
 
   public traced<R>(
@@ -8633,6 +8914,7 @@ async function simulateLoginForTests() {
 // This is a helper function to simulate a logout for testing.
 function simulateLogoutForTests() {
   const state = _internalGetGlobalState();
+  _internalSetOtelBootstrapAuth(null);
   state.resetLoginInfo();
   state.resetIdGenState();
   state[RESET_CONTEXT_MANAGER_STATE]();
@@ -8734,6 +9016,8 @@ export const _exportsForTestingOnly = {
   isGeneratorFunction,
   isAsyncGeneratorFunction,
   resetIdGenStateForTests,
+  getOtelBootstrapAuthForTests: getOtelBootstrapAuth,
+  setOtelBootstrapAuthForTests: _internalSetOtelBootstrapAuth,
   validateTags,
   isomorph: iso, // Expose isomorph for build type detection
 };

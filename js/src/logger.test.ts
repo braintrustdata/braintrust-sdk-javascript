@@ -6,6 +6,7 @@ import {
   init,
   initDataset,
   initLogger,
+  SpanImpl,
   Prompt,
   BraintrustState,
   loadPrompt,
@@ -25,7 +26,8 @@ import { type GitMetadataSettingsType as GitMetadataSettings } from "./generated
 import { writeFile, unlink } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { SpanComponentsV3 } from "../util/span_identifier_v3";
+import { LazyValue } from "./util";
+import { SpanComponentsV3, SpanObjectTypeV3 } from "../util/span_identifier_v3";
 
 configureNode();
 
@@ -2192,6 +2194,572 @@ test("span.export disables cache", async () => {
 
   await span.export();
   expect(span.state().spanCache.disabled).toBe(true);
+});
+
+function otelBootstrapTestUrl(input: string | URL | Request): string {
+  return typeof input === "string"
+    ? input
+    : input instanceof URL
+      ? input.toString()
+      : input.url;
+}
+
+function otelBootstrapProjectRegisterResponse(url: string): Response {
+  if (
+    url === "https://www.braintrust.dev/api/project/register" ||
+    url === "https://braintrust.dev/api/project/register"
+  ) {
+    return new Response(
+      JSON.stringify({
+        project: {
+          id: "test-project-id",
+          name: "test-project",
+        },
+      }),
+      {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      },
+    );
+  }
+
+  throw new Error(`Unexpected fetch to ${url}`);
+}
+
+function otelBootstrapLoginResponse(): Response {
+  return new Response(
+    JSON.stringify({
+      org_info: [
+        {
+          id: "test-org-id",
+          name: "test-org",
+          api_url: "https://api.braintrust.dev",
+          proxy_url: "https://api.braintrust.dev",
+        },
+      ],
+    }),
+    {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    },
+  );
+}
+
+function expectOtelBootstrapAuthHeader(
+  init: RequestInit | undefined,
+  token: string,
+) {
+  expect(init?.headers).toMatchObject({
+    Authorization: `Bearer ${token}`,
+  });
+}
+
+function otelBootstrapRequestBody(init: RequestInit | undefined) {
+  return JSON.parse(String(init?.body));
+}
+
+function setOtelBootstrapAuthForTests(
+  auth: {
+    apiKey: string;
+    apiUrl: string;
+  } | null,
+) {
+  // @ts-expect-error internal OTEL bootstrap helper added by the login-burst fix
+  _exportsForTestingOnly.setOtelBootstrapAuthForTests(auth);
+}
+
+describe("OTEL bootstrap auth", () => {
+  beforeEach(() => {
+    _exportsForTestingOnly.setInitialTestState();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    setOtelBootstrapAuthForTests(null);
+    _exportsForTestingOnly.clearTestBackgroundLogger();
+    _exportsForTestingOnly.simulateLogoutForTests();
+  });
+
+  test("initLogger still logs in when OTEL bootstrap auth is absent", async () => {
+    const state = _exportsForTestingOnly.simulateLogoutForTests();
+    const memoryLogger = _exportsForTestingOnly.useTestBackgroundLogger();
+    const fetchMock = vi.fn(
+      async (input: string | URL | Request, _init?: RequestInit) => {
+        const url = otelBootstrapTestUrl(input);
+
+        if (url === "https://www.braintrust.dev/api/apikey/login") {
+          return otelBootstrapLoginResponse();
+        }
+
+        return otelBootstrapProjectRegisterResponse(url);
+      },
+    );
+    state.setFetch(fetchMock as typeof globalThis.fetch);
+
+    const logger = initLogger({
+      projectName: "test-project",
+      apiKey: "bootstrap-api-key",
+      appUrl: "https://www.braintrust.dev",
+    });
+    logger.log({ input: "hello" });
+
+    await memoryLogger.drain();
+
+    expect(fetchMock.mock.calls.map((call) => call[0])).toContain(
+      "https://www.braintrust.dev/api/apikey/login",
+    );
+  });
+
+  test("initLogger prefers the env API key over OTEL bootstrap auth", async () => {
+    const state = _exportsForTestingOnly.simulateLogoutForTests();
+    const memoryLogger = _exportsForTestingOnly.useTestBackgroundLogger();
+    const fetchMock = vi.fn(
+      async (input: string | URL | Request, init?: RequestInit) => {
+        const url = otelBootstrapTestUrl(input);
+
+        if (url === "https://www.braintrust.dev/api/apikey/login") {
+          expectOtelBootstrapAuthHeader(init, "env-api-key");
+          return otelBootstrapLoginResponse();
+        }
+
+        if (url === "https://www.braintrust.dev/api/project/register") {
+          expectOtelBootstrapAuthHeader(init, "env-api-key");
+          return otelBootstrapProjectRegisterResponse(url);
+        }
+
+        throw new Error(`Unexpected fetch to ${url}`);
+      },
+    );
+    state.setFetch(fetchMock as typeof globalThis.fetch);
+    vi.spyOn(
+      _exportsForTestingOnly.isomorph,
+      "getBraintrustApiKey",
+    ).mockResolvedValue("env-api-key");
+
+    setOtelBootstrapAuthForTests({
+      apiKey: "bootstrap-api-key",
+      apiUrl: "https://api.braintrust.dev",
+    });
+
+    const logger = initLogger({
+      projectName: "test-project",
+      appUrl: "https://www.braintrust.dev",
+    });
+    logger.log({ input: "hello" });
+
+    await memoryLogger.drain();
+
+    expect(fetchMock.mock.calls.map((call) => call[0])).toContain(
+      "https://www.braintrust.dev/api/apikey/login",
+    );
+  });
+
+  test("initLogger uses the env org name when OTEL bootstrap auth starts from a fresh state", async () => {
+    const state = _exportsForTestingOnly.simulateLogoutForTests();
+    const memoryLogger = _exportsForTestingOnly.useTestBackgroundLogger();
+    const fetchMock = vi.fn(
+      async (input: string | URL | Request, init?: RequestInit) => {
+        const url = otelBootstrapTestUrl(input);
+
+        if (url === "https://www.braintrust.dev/api/project/register") {
+          expectOtelBootstrapAuthHeader(init, "bootstrap-api-key");
+          expect(otelBootstrapRequestBody(init)).toEqual({
+            project_name: "test-project",
+            org_name: "env-org-name",
+          });
+          return otelBootstrapProjectRegisterResponse(url);
+        }
+
+        throw new Error(`Unexpected fetch to ${url}`);
+      },
+    );
+    state.setFetch(fetchMock as typeof globalThis.fetch);
+    vi.spyOn(_exportsForTestingOnly.isomorph, "getEnv").mockImplementation(
+      (name: string) => {
+        return name === "BRAINTRUST_ORG_NAME" ? "env-org-name" : undefined;
+      },
+    );
+
+    setOtelBootstrapAuthForTests({
+      apiKey: "bootstrap-api-key",
+      apiUrl: "https://api.braintrust.dev",
+    });
+
+    const logger = initLogger({
+      projectName: "test-project",
+      appUrl: "https://www.braintrust.dev",
+    });
+    logger.log({ input: "hello" });
+
+    await memoryLogger.drain();
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls.map((call) => call[0])).not.toContain(
+      "https://www.braintrust.dev/api/apikey/login",
+    );
+  });
+
+  test.each([
+    {
+      name: "a different key",
+      loggedInApiKey: "already-logged-in-api-key",
+      bootstrapApiKey: "bootstrap-api-key",
+      bootstrapApiUrl: "https://api.braintrust.dev",
+    },
+    {
+      name: "a different API URL",
+      loggedInApiKey: "shared-api-key",
+      bootstrapApiKey: "shared-api-key",
+      bootstrapApiUrl: "https://api.braintrust.dev",
+    },
+  ])(
+    "initLogger skips OTEL bootstrap auth when state is already logged in with $name",
+    async ({ loggedInApiKey, bootstrapApiKey, bootstrapApiUrl }) => {
+      const state = await _exportsForTestingOnly.simulateLoginForTests();
+      const memoryLogger = _exportsForTestingOnly.useTestBackgroundLogger();
+      const fetchMock = vi.fn(
+        async (input: string | URL | Request, init?: RequestInit) => {
+          const url = otelBootstrapTestUrl(input);
+          if (url === "https://braintrust.dev/api/project/register") {
+            expectOtelBootstrapAuthHeader(init, loggedInApiKey);
+            return otelBootstrapProjectRegisterResponse(url);
+          }
+
+          throw new Error(`Unexpected fetch to ${url}`);
+        },
+      );
+      state.loginToken = loggedInApiKey;
+      state.appConn().set_token(loggedInApiKey);
+      state.apiConn().set_token(loggedInApiKey);
+      state.setFetch(fetchMock as typeof globalThis.fetch);
+
+      setOtelBootstrapAuthForTests({
+        apiKey: bootstrapApiKey,
+        apiUrl: bootstrapApiUrl,
+      });
+
+      const logger = initLogger({
+        projectName: "test-project",
+        appUrl: "https://braintrust.dev",
+        state,
+        setCurrent: false,
+      });
+      logger.log({ input: "hello" });
+
+      await memoryLogger.drain();
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(state.apiConn().token).toBe(loggedInApiKey);
+      expect(state.apiConn().base_url).toBe(
+        "https://braintrust.dev/fake-api-url",
+      );
+    },
+  );
+
+  test("initLogger preserves the logged-in org when OTEL bootstrap auth registers a project", async () => {
+    const state = await _exportsForTestingOnly.simulateLoginForTests();
+    const memoryLogger = _exportsForTestingOnly.useTestBackgroundLogger();
+    const fetchMock = vi.fn(
+      async (input: string | URL | Request, init?: RequestInit) => {
+        const url = otelBootstrapTestUrl(input);
+        if (url === "https://braintrust.dev/api/project/register") {
+          expectOtelBootstrapAuthHeader(init, "shared-api-key");
+          expect(otelBootstrapRequestBody(init)).toEqual({
+            project_name: "test-project",
+            org_id: "selected-org-id",
+          });
+          return otelBootstrapProjectRegisterResponse(url);
+        }
+
+        throw new Error(`Unexpected fetch to ${url}`);
+      },
+    );
+    state.loginToken = "shared-api-key";
+    state.apiUrl = "https://api.braintrust.dev";
+    state.orgId = "selected-org-id";
+    state.appConn().set_token("shared-api-key");
+    state.apiConn().set_token("shared-api-key");
+    state.setFetch(fetchMock as typeof globalThis.fetch);
+
+    setOtelBootstrapAuthForTests({
+      apiKey: "shared-api-key",
+      apiUrl: "https://api.braintrust.dev",
+    });
+
+    const logger = initLogger({
+      projectName: "test-project",
+      appUrl: "https://braintrust.dev",
+      state,
+      setCurrent: false,
+    });
+    logger.log({ input: "hello" });
+
+    await memoryLogger.drain();
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  test("OTEL bootstrap auth handles top-level project lookup responses", async () => {
+    const state = _exportsForTestingOnly.simulateLogoutForTests();
+    const fetchMock = vi.fn(
+      async (input: string | URL | Request, init?: RequestInit) => {
+        const url = otelBootstrapTestUrl(input);
+        if (
+          url === "https://www.braintrust.dev/api/project?id=test-project-id"
+        ) {
+          expectOtelBootstrapAuthHeader(init, "bootstrap-api-key");
+          return new Response(
+            JSON.stringify({
+              id: "test-project-id",
+              name: "test-project",
+              org_id: "test-org-id",
+            }),
+            {
+              status: 200,
+              headers: { "content-type": "application/json" },
+            },
+          );
+        }
+
+        throw new Error(`Unexpected fetch to ${url}`);
+      },
+    );
+    state.setFetch(fetchMock as typeof globalThis.fetch);
+
+    setOtelBootstrapAuthForTests({
+      apiKey: "bootstrap-api-key",
+      apiUrl: "https://api.braintrust.dev",
+    });
+
+    const logger = initLogger({
+      projectId: "test-project-id",
+      appUrl: "https://www.braintrust.dev",
+      state,
+      setCurrent: false,
+    });
+
+    await expect(logger.project).resolves.toMatchObject({
+      id: "test-project-id",
+      name: "test-project",
+    });
+  });
+
+  test("OTEL bootstrap auth is used for logs3 without eager login", async () => {
+    const state = new BraintrustState({});
+    const fetchMock = vi.fn(
+      async (input: string | URL | Request, _init?: RequestInit) => {
+        const url = otelBootstrapTestUrl(input);
+        if (url === "https://www.braintrust.dev/api/project/register") {
+          return otelBootstrapProjectRegisterResponse(url);
+        }
+
+        if (url === "https://api.braintrust.dev/logs3") {
+          return new Response("{}", {
+            status: 200,
+            headers: { "content-type": "application/json" },
+          });
+        }
+
+        throw new Error(`Unexpected fetch to ${url}`);
+      },
+    );
+    state.setFetch(fetchMock as typeof globalThis.fetch);
+    state.httpLogger().syncFlush = true;
+
+    setOtelBootstrapAuthForTests({
+      apiKey: "bootstrap-api-key",
+      apiUrl: "https://api.braintrust.dev",
+    });
+
+    const logger = initLogger({
+      projectName: "test-project",
+      appUrl: "https://www.braintrust.dev",
+      apiKey: "bootstrap-api-key",
+      asyncFlush: false,
+      state,
+      setCurrent: false,
+    });
+    await logger.log({ input: "hello", output: "world" });
+
+    const fetchUrls = fetchMock.mock.calls.map((call) => call[0]);
+    expect(fetchUrls).toContain(
+      "https://www.braintrust.dev/api/project/register",
+    );
+    expect(fetchUrls).toContain("https://api.braintrust.dev/logs3");
+    expect(fetchUrls).not.toContain(
+      "https://www.braintrust.dev/api/apikey/login",
+    );
+  });
+
+  test("orgProjectMetadata preserves OTEL bootstrap auth for logs3", async () => {
+    const state = new BraintrustState({});
+    const fetchMock = vi.fn(
+      async (input: string | URL | Request, init?: RequestInit) => {
+        const url = otelBootstrapTestUrl(input);
+        if (url === "https://api.braintrust.dev/logs3") {
+          expectOtelBootstrapAuthHeader(init, "bootstrap-api-key");
+          return new Response("{}", {
+            status: 200,
+            headers: { "content-type": "application/json" },
+          });
+        }
+
+        throw new Error(`Unexpected fetch to ${url}`);
+      },
+    );
+    state.setFetch(fetchMock as typeof globalThis.fetch);
+    state.httpLogger().syncFlush = true;
+
+    setOtelBootstrapAuthForTests({
+      apiKey: "bootstrap-api-key",
+      apiUrl: "https://api.braintrust.dev",
+    });
+
+    const logger = initLogger({
+      appUrl: "https://www.braintrust.dev",
+      asyncFlush: false,
+      state,
+      setCurrent: false,
+      orgProjectMetadata: {
+        org_id: "test-org-id",
+        project: {
+          id: "test-project-id",
+          name: "test-project",
+          fullInfo: {},
+        },
+      },
+    });
+
+    await logger.log({ input: "hello", output: "world" });
+
+    const fetchUrls = fetchMock.mock.calls.map((call) => call[0]);
+    expect(fetchUrls).toContain("https://api.braintrust.dev/logs3");
+    expect(fetchUrls).not.toContain(
+      "https://www.braintrust.dev/api/apikey/login",
+    );
+    expect(fetchUrls).not.toContain(
+      "https://www.braintrust.dev/api/project/register",
+    );
+  });
+
+  test("orgProjectMetadata uses the explicit apiKey instead of ambient auth", async () => {
+    const state = new BraintrustState({});
+    const fetchMock = vi.fn(
+      async (input: string | URL | Request, init?: RequestInit) => {
+        const url = otelBootstrapTestUrl(input);
+
+        if (url === "https://www.braintrust.dev/api/apikey/login") {
+          expectOtelBootstrapAuthHeader(init, "explicit-api-key");
+          return otelBootstrapLoginResponse();
+        }
+
+        if (url === "https://api.braintrust.dev/logs3") {
+          expectOtelBootstrapAuthHeader(init, "explicit-api-key");
+          return new Response("{}", {
+            status: 200,
+            headers: { "content-type": "application/json" },
+          });
+        }
+
+        throw new Error(`Unexpected fetch to ${url}`);
+      },
+    );
+    state.setFetch(fetchMock as typeof globalThis.fetch);
+    state.httpLogger().syncFlush = true;
+    vi.spyOn(
+      _exportsForTestingOnly.isomorph,
+      "getBraintrustApiKey",
+    ).mockResolvedValue("env-api-key");
+
+    const logger = initLogger({
+      apiKey: "explicit-api-key",
+      appUrl: "https://www.braintrust.dev",
+      asyncFlush: false,
+      state,
+      setCurrent: false,
+      orgProjectMetadata: {
+        org_id: "test-org-id",
+        project: {
+          id: "test-project-id",
+          name: "test-project",
+          fullInfo: {},
+        },
+      },
+    });
+
+    await logger.log({ input: "hello", output: "world" });
+
+    const fetchUrls = fetchMock.mock.calls.map((call) => call[0]);
+    expect(fetchUrls).toContain("https://www.braintrust.dev/api/apikey/login");
+    expect(fetchUrls).toContain("https://api.braintrust.dev/logs3");
+    expect(fetchUrls).not.toContain(
+      "https://www.braintrust.dev/api/project/register",
+    );
+  });
+
+  test("span logging falls back to project metadata lookup when the lazy parent id resolves empty", async () => {
+    const state = new BraintrustState({});
+    const fetchMock = vi.fn(
+      async (input: string | URL | Request, init?: RequestInit) => {
+        const url = otelBootstrapTestUrl(input);
+
+        if (url === "https://www.braintrust.dev/api/apikey/login") {
+          expectOtelBootstrapAuthHeader(init, "fallback-api-key");
+          return otelBootstrapLoginResponse();
+        }
+
+        if (url === "https://www.braintrust.dev/api/project/register") {
+          expectOtelBootstrapAuthHeader(init, "fallback-api-key");
+          return otelBootstrapProjectRegisterResponse(url);
+        }
+
+        if (url === "https://api.braintrust.dev/version") {
+          return new Response("{}", {
+            status: 200,
+            headers: { "content-type": "application/json" },
+          });
+        }
+
+        if (url === "https://api.braintrust.dev/logs3") {
+          expectOtelBootstrapAuthHeader(init, "fallback-api-key");
+          return new Response("{}", {
+            status: 200,
+            headers: { "content-type": "application/json" },
+          });
+        }
+
+        throw new Error(`Unexpected fetch to ${url}`);
+      },
+    );
+    state.setFetch(fetchMock as typeof globalThis.fetch);
+    state.httpLogger().syncFlush = true;
+
+    await state.login({
+      apiKey: "fallback-api-key",
+      appUrl: "https://www.braintrust.dev",
+    });
+
+    const span = new SpanImpl({
+      state,
+      parentObjectType: SpanObjectTypeV3.PROJECT_LOGS,
+      parentObjectId: new LazyValue(async () => ""),
+      parentComputeObjectMetadataArgs: {
+        project_name: "test-project",
+      },
+      parentSpanIds: undefined,
+      name: "fallback span",
+    });
+
+    span.log({ output: "world" });
+    span.end();
+    await state.bgLogger().flush();
+
+    const fetchUrls = fetchMock.mock.calls.map((call) => call[0]);
+    expect(fetchUrls).toContain(
+      "https://www.braintrust.dev/api/project/register",
+    );
+    expect(fetchUrls).toContain("https://api.braintrust.dev/logs3");
+  });
 });
 
 test("span.export handles unresolved parent object ID", async () => {
