@@ -95,11 +95,40 @@ function collectToolCallNames(output: unknown): string[] {
 
   const steps = Array.isArray(output.steps) ? output.steps : [];
   const toolCalls = Array.isArray(output.toolCalls) ? output.toolCalls : [];
-  const names = [...toolCalls, ...steps.flatMap((step) => step.toolCalls ?? [])]
+  const names = [
+    ...toolCalls,
+    ...steps.flatMap((step) => (isRecord(step) ? (step.toolCalls ?? []) : [])),
+  ]
     .map((call) => (isRecord(call) ? (call.toolName ?? call.name) : undefined))
     .filter((name): name is string => typeof name === "string");
 
-  return [...new Set(names)];
+  return [...new Set([...names, ...collectToolPartNames(output, "tool-call")])];
+}
+
+function collectToolPartNames(output: unknown, partType: string): string[] {
+  const names = new Set<string>();
+  const visit = (value: unknown) => {
+    if (Array.isArray(value)) {
+      value.forEach(visit);
+      return;
+    }
+
+    if (!isRecord(value)) {
+      return;
+    }
+
+    if (value.type === partType) {
+      const name = value.toolName ?? value.name;
+      if (typeof name === "string") {
+        names.add(name);
+      }
+    }
+
+    Object.values(value).forEach(visit);
+  };
+
+  visit(output);
+  return [...names];
 }
 
 function collectToolResultNames(output: unknown): string[] {
@@ -127,7 +156,9 @@ function collectToolResultNames(output: unknown): string[] {
     )
     .filter((name): name is string => typeof name === "string");
 
-  return [...new Set(names)];
+  return [
+    ...new Set([...names, ...collectToolPartNames(output, "tool-result")]),
+  ];
 }
 
 function collectMetricValues(
@@ -369,6 +400,35 @@ function findAgentStreamTrace(
     modelChildren,
     operation,
     parent,
+  };
+}
+
+function findAgentToolLoopTrace(
+  events: CapturedLogEvent[],
+  agentSpanName: AgentSpanName | undefined,
+) {
+  const operation = findLatestSpan(events, "ai-sdk-agent-tool-loop-operation");
+  const parent =
+    (agentSpanName
+      ? findParentSpan(events, `${agentSpanName}.generate`, operation?.span.id)
+      : undefined) ??
+    findParentSpan(events, "generateText", operation?.span.id);
+  const rootEvents = events.filter(
+    (event) => event.span.rootId === operation?.span.rootId,
+  );
+  const modelChildren = rootEvents.filter((event) => {
+    const name = event.span.name ?? "";
+    return name === "doGenerate" || name === "doStream";
+  });
+  const toolSpans = rootEvents.filter((event) =>
+    ["apply_discount", "get_store_price"].includes(event.span.name ?? ""),
+  );
+
+  return {
+    modelChildren,
+    operation,
+    parent,
+    toolSpans,
   };
 }
 
@@ -779,6 +839,7 @@ export function defineAISDKInstrumentationAssertions(options: {
   runScenario: RunAISDKScenario;
   sdkMajorVersion: number;
   snapshotName: string;
+  supportsAgentToolLoop: boolean;
   supportsOpenAICacheAssertions: boolean;
   supportsProviderCacheAssertions: boolean;
   supportsDenyOutputOverrideScenario: boolean;
@@ -1227,6 +1288,49 @@ export function defineAISDKInstrumentationAssertions(options: {
       }
     }
 
+    if (options.supportsAgentToolLoop) {
+      test("captures trace for ToolLoopAgent tool loop", testConfig, () => {
+        const root = findLatestSpan(events, ROOT_NAME);
+        const trace = findAgentToolLoopTrace(events, options.agentSpanName);
+
+        expectOperationParentedByRoot(trace.operation, root);
+        expectAISDKParentSpan(trace.parent);
+        expect(operationName(trace.operation)).toBe("agent-tool-loop");
+        expect(hasPromptLikeInput(trace.parent?.input)).toBe(true);
+        expect(trace.parent?.output).toBeDefined();
+        expect(trace.modelChildren.length).toBeGreaterThanOrEqual(2);
+        trace.modelChildren.forEach(expectAISDKModelChildSpan);
+
+        const toolNames = trace.toolSpans.map((event) => event.span.name);
+        expect(toolNames).toContain("get_store_price");
+        expect(toolNames).toContain("apply_discount");
+        trace.toolSpans.forEach((toolSpan) => {
+          expect(toolSpan.input).toBeDefined();
+          expect(toolSpan.output).toBeDefined();
+        });
+
+        const toolCallNames = [
+          ...collectToolCallNames(trace.parent?.output),
+          ...trace.modelChildren.flatMap((event) =>
+            collectToolCallNames(event.output),
+          ),
+        ];
+        const toolResultNames = [
+          ...collectToolResultNames(trace.parent?.output),
+          ...trace.modelChildren.flatMap((event) =>
+            collectToolResultNames(event.output),
+          ),
+        ];
+
+        expect(toolCallNames).toEqual(
+          expect.arrayContaining(["apply_discount", "get_store_price"]),
+        );
+        expect(toolResultNames).toEqual(
+          expect.arrayContaining(["apply_discount", "get_store_price"]),
+        );
+      });
+    }
+
     if (options.supportsDenyOutputOverrideScenario) {
       test(
         "captures denyOutputPaths override on instrumentation events",
@@ -1253,7 +1357,7 @@ export function defineAISDKInstrumentationAssertions(options: {
       await matchSpanTreeSnapshot(events, spanSnapshotPath, {
         normalize: {
           additionalProviderIdKeys: ["callId"],
-          omittedKeys: ["performance"],
+          omittedKeys: ["id", "performance", "prompt_cache_key", "toolCallId"],
         },
       });
     });
