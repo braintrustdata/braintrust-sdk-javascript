@@ -32,11 +32,8 @@ span_tree:
     │           }
     │         },
     │         "finishReason": "stop",
-    │         "rawResponse": {
-    │           "headers": "<omitted>"
-    │         },
+    │         "rawResponse": {},
     │         "response": {
-    │           "headers": "<omitted>",
     │           "id": "<span:1>",
     │           "messages": [
     │             {
@@ -63,7 +60,6 @@ span_tree:
     │             "finishReason": "stop",
     │             "isContinued": false,
     │             "response": {
-    │               "headers": "<omitted>",
     │               "id": "<span:1>",
     │               "messages": [
     │                 {
@@ -137,9 +133,7 @@ span_tree:
     │                 "reasoningTokens": 0
     │               }
     │             },
-    │             "rawResponse": {
-    │               "headers": "<omitted>"
-    │             },
+    │             "rawResponse": {},
     │             "response": {
     │               "id": "<span:1>",
     │               "modelId": "gpt-4o-mini-2024-07-18",
@@ -187,9 +181,7 @@ span_tree:
     │       }
     │       output: {
     │         "finishReason": "stop",
-    │         "rawResponse": {
-    │           "headers": "<omitted>"
-    │         },
+    │         "rawResponse": {},
     │         "text": "One, two, three.",
     │         "warnings": []
     │       }
@@ -329,11 +321,8 @@ span_tree:
     │           }
     │         },
     │         "finishReason": "tool-calls",
-    │         "rawResponse": {
-    │           "headers": "<omitted>"
-    │         },
+    │         "rawResponse": {},
     │         "response": {
-    │           "headers": "<omitted>",
     │           "id": "<span:2>",
     │           "messages": [
     │             {
@@ -379,7 +368,6 @@ span_tree:
     │             "finishReason": "tool-calls",
     │             "isContinued": false,
     │             "response": {
-    │               "headers": "<omitted>",
     │               "id": "<span:2>",
     │               "messages": [
     │                 {
@@ -555,9 +543,7 @@ span_tree:
     │       │         "reasoningTokens": 0
     │       │       }
     │       │     },
-    │       │     "rawResponse": {
-    │       │       "headers": "<omitted>"
-    │       │     },
+    │       │     "rawResponse": {},
     │       │     "response": {
     │       │       "id": "<span:1>",
     │       │       "modelId": "gpt-4o-mini-2024-07-18",
@@ -591,12 +577,9 @@ span_tree:
     │       │     "prompt_tokens": 87
     │       │   }
     │       └── get_weather [tool]
-    │           input: [
-    │             {
-    │               "location": "Paris, France"
-    │             },
-    │             {}
-    │           ]
+    │           input: {
+    │             "location": "Paris, France"
+    │           }
     │           output: "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
     ├── ai-sdk-generate-object-operation
     │   metadata: {
@@ -641,11 +624,8 @@ span_tree:
     │         "object": {
     │           "city": "Paris"
     │         },
-    │         "rawResponse": {
-    │           "headers": "<omitted>"
-    │         },
+    │         "rawResponse": {},
     │         "response": {
-    │           "headers": "<omitted>",
     │           "id": "<span:1>",
     │           "modelId": "gpt-4o-mini-2024-07-18",
     │           "timestamp": "<timestamp>"
@@ -711,9 +691,7 @@ span_tree:
     │                 "reasoningTokens": 0
     │               }
     │             },
-    │             "rawResponse": {
-    │               "headers": "<omitted>"
-    │             },
+    │             "rawResponse": {},
     │             "response": {
     │               "id": "<span:1>",
     │               "modelId": "gpt-4o-mini-2024-07-18",
@@ -783,9 +761,7 @@ span_tree:
               "object": {
                 "city": "Paris"
               },
-              "rawResponse": {
-                "headers": "<omitted>"
-              },
+              "rawResponse": {},
               "warnings": []
             }
             metadata: {

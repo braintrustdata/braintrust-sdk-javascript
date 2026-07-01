@@ -30,6 +30,8 @@ import type {
   AISDKTools,
   AISDKTokenBucket,
   AISDKUsage,
+  AISDKWorkflowAgentClass,
+  AISDKWorkflowAgentInstance,
 } from "./ai-sdk-common";
 import type { AISDKV3 } from "./ai-sdk-v3";
 import type { AISDKV4 } from "./ai-sdk-v4";
@@ -76,4 +78,6 @@ export type {
   AISDKTools,
   AISDKTokenBucket,
   AISDKUsage,
+  AISDKWorkflowAgentClass,
+  AISDKWorkflowAgentInstance,
 };

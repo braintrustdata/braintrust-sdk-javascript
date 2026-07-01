@@ -184,6 +184,30 @@ function findModelChildren(
   });
 }
 
+function findModelDescendants(
+  capturedEvents: CapturedLogEvent[],
+  parentId: string | undefined,
+) {
+  if (!parentId) {
+    return [];
+  }
+
+  const descendantIds = new Set([parentId]);
+  for (const event of capturedEvents) {
+    if (event.span.parentIds.some((id) => descendantIds.has(id))) {
+      descendantIds.add(event.span.id);
+    }
+  }
+
+  return capturedEvents.filter((event) => {
+    const name = event.span.name ?? "";
+    return (
+      event.span.parentIds.some((id) => descendantIds.has(id)) &&
+      (name === "doGenerate" || name === "doStream")
+    );
+  });
+}
+
 function findParentSpan(
   events: CapturedLogEvent[],
   name: string,
@@ -342,7 +366,7 @@ function findAgentGenerateTrace(
     `${agentSpanName}.generate`,
     operation?.span.id,
   );
-  const modelChildren = findModelChildren(events, parent?.span.id);
+  const modelChildren = findModelDescendants(events, parent?.span.id);
 
   return {
     latestChild: latestEvent(modelChildren),
@@ -362,7 +386,7 @@ function findAgentStreamTrace(
     `${agentSpanName}.stream`,
     operation?.span.id,
   );
-  const modelChildren = findModelChildren(events, parent?.span.id);
+  const modelChildren = findModelDescendants(events, parent?.span.id);
 
   return {
     latestChild: latestEvent(modelChildren),
@@ -788,6 +812,7 @@ export function defineAISDKInstrumentationAssertions(options: {
   supportsRerank: boolean;
   supportsStreamObject: boolean;
   supportsToolExecution: boolean;
+  supportsWorkflowAgent?: boolean;
   testFileUrl: string;
   timeoutMs: number;
 }): void {
@@ -1227,6 +1252,42 @@ export function defineAISDKInstrumentationAssertions(options: {
       }
     }
 
+    if (options.supportsWorkflowAgent) {
+      test("captures trace for WorkflowAgent.stream()", testConfig, () => {
+        const root = findLatestSpan(events, ROOT_NAME);
+        const trace = findWorkflowAgentTrace(events);
+
+        expectOperationParentedByRoot(trace.operation, root);
+        expect(operationName(trace.operation)).toBe("workflow-agent-stream");
+        expect(findAllSpans(events, "WorkflowAgent.stream")).toHaveLength(1);
+        expect(trace.workflowSpans).toHaveLength(1);
+        expectAISDKParentSpan(trace.parent);
+        expect(hasPromptLikeInput(trace.parent?.input)).toBe(true);
+        expect(
+          hasSemanticOutput(trace.parent?.output, [
+            "messages",
+            "steps",
+            "text",
+            "toolCalls",
+            "toolResults",
+          ]),
+        ).toBe(true);
+        expect(trace.modelChildren.length).toBeGreaterThanOrEqual(1);
+        trace.modelChildren.forEach(expectAISDKModelChildSpan);
+        expect(trace.toolSpans.length).toBeGreaterThanOrEqual(1);
+        expect(trace.toolSpans[0]?.input).toMatchObject({
+          location: expect.any(String),
+        });
+        expect(trace.toolSpans[0]?.output).toBeDefined();
+        expect(collectToolCallNames(trace.parent?.output)).toContain(
+          "get_weather",
+        );
+        expect(collectToolResultNames(trace.parent?.output)).toContain(
+          "get_weather",
+        );
+      });
+    }
+
     if (options.supportsDenyOutputOverrideScenario) {
       test(
         "captures denyOutputPaths override on instrumentation events",
@@ -1258,4 +1319,27 @@ export function defineAISDKInstrumentationAssertions(options: {
       });
     });
   });
+}
+
+function findWorkflowAgentTrace(events: CapturedLogEvent[]) {
+  const operation = findLatestSpan(
+    events,
+    "ai-sdk-workflow-agent-stream-operation",
+  );
+  const workflowSpans = findChildSpans(
+    events,
+    "WorkflowAgent.stream",
+    operation?.span.id,
+  );
+  const parent = latestEvent(workflowSpans);
+  const modelChildren = findModelChildren(events, parent?.span.id);
+  const toolSpans = findChildSpans(events, "get_weather", parent?.span.id);
+
+  return {
+    modelChildren,
+    operation,
+    parent,
+    toolSpans,
+    workflowSpans,
+  };
 }

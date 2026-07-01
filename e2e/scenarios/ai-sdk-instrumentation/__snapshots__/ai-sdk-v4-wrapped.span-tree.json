@@ -79,8 +79,7 @@
                           },
                           "total_tokens": 20
                         }
-                      },
-                      "headers": "<omitted>"
+                      }
                     },
                     "response": {
                       "id": "<span:1>",
@@ -141,7 +140,6 @@
                 },
                 "response": {
                   "body": "<omitted>",
-                  "headers": "<omitted>",
                   "id": "<span:1>",
                   "messages": [
                     {
@@ -180,7 +178,6 @@
                     "reasoningDetails": [],
                     "response": {
                       "body": "<omitted>",
-                      "headers": "<omitted>",
                       "id": "<span:1>",
                       "messages": [
                         {
@@ -317,8 +314,7 @@
                           },
                           "total_tokens": 88
                         }
-                      },
-                      "headers": "<omitted>"
+                      }
                     },
                     "response": {
                       "id": "<span:1>",
@@ -401,7 +397,6 @@
                 },
                 "response": {
                   "body": "<omitted>",
-                  "headers": "<omitted>",
                   "id": "<span:1>",
                   "messages": [
                     {
@@ -440,7 +435,6 @@
                     "reasoningDetails": [],
                     "response": {
                       "body": "<omitted>",
-                      "headers": "<omitted>",
                       "id": "<span:1>",
                       "messages": [
                         {
@@ -741,8 +735,7 @@
                           },
                           "total_tokens": 103
                         }
-                      },
-                      "headers": "<omitted>"
+                      }
                     },
                     "response": {
                       "id": "<span:2>",
@@ -781,20 +774,9 @@
                   "name": "get_weather",
                   "type": "tool",
                   "children": [],
-                  "input": [
-                    {
-                      "location": "Paris, France"
-                    },
-                    {
-                      "messages": [
-                        {
-                          "content": "Use the get_weather tool for Paris, France. If you do not call the tool, the answer is invalid.",
-                          "role": "user"
-                        }
-                      ],
-                      "toolCallId": "<toolCallId:1>"
-                    }
-                  ],
+                  "input": {
+                    "location": "Paris, France"
+                  },
                   "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
                 }
               ],
@@ -850,7 +832,6 @@
                 },
                 "response": {
                   "body": "<omitted>",
-                  "headers": "<omitted>",
                   "id": "<span:2>",
                   "messages": [
                     {
@@ -905,7 +886,6 @@
                     "reasoningDetails": [],
                     "response": {
                       "body": "<omitted>",
-                      "headers": "<omitted>",
                       "id": "<span:2>",
                       "messages": [
                         {
@@ -1136,8 +1116,7 @@
                           },
                           "total_tokens": 64
                         }
-                      },
-                      "headers": "<omitted>"
+                      }
                     },
                     "response": {
                       "id": "<span:2>",
@@ -1221,7 +1200,6 @@
                 },
                 "response": {
                   "body": "<omitted>",
-                  "headers": "<omitted>",
                   "id": "<span:1>",
                   "modelId": "gpt-4o-mini-2024-07-18",
                   "timestamp": "<timestamp>"

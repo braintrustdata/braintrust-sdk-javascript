@@ -47,6 +47,7 @@ span_tree:
     │           }
     │         ],
     │         "finishReason": "stop",
+    │         "output": "PARIS",
     │         "providerMetadata": {
     │           "openai": {
     │             "responseId": "<span:2>",
@@ -55,7 +56,6 @@ span_tree:
     │         },
     │         "response": {
     │           "body": "<omitted>",
-    │           "headers": "<omitted>",
     │           "id": "<span:2>",
     │           "messages": [
     │             {
@@ -98,7 +98,6 @@ span_tree:
     │             },
     │             "response": {
     │               "body": "<omitted>",
-    │               "headers": "<omitted>",
     │               "id": "<span:2>",
     │               "messages": [
     │                 {
@@ -202,9 +201,6 @@ span_tree:
     │       }
     │       └── doGenerate [llm]
     │           input: {
-    │             "headers": {
-    │               "user-agent": "ai/6.0.1"
-    │             },
     │             "maxOutputTokens": 24,
     │             "prompt": [
     │               {
@@ -242,7 +238,6 @@ span_tree:
     │             },
     │             "response": {
     │               "body": "<omitted>",
-    │               "headers": "<omitted>",
     │               "id": "<span:1>",
     │               "modelId": "gpt-4o-mini-2024-07-18",
     │               "timestamp": "<timestamp>"
@@ -357,6 +352,9 @@ span_tree:
     │           }
     │         ],
     │         "finishReason": "stop",
+    │         "output": {
+    │           "answer": "4"
+    │         },
     │         "providerMetadata": {
     │           "openai": {
     │             "responseId": "<span:2>",
@@ -365,7 +363,6 @@ span_tree:
     │         },
     │         "response": {
     │           "body": "<omitted>",
-    │           "headers": "<omitted>",
     │           "id": "<span:2>",
     │           "messages": [
     │             {
@@ -408,7 +405,6 @@ span_tree:
     │             },
     │             "response": {
     │               "body": "<omitted>",
-    │               "headers": "<omitted>",
     │               "id": "<span:2>",
     │               "messages": [
     │                 {
@@ -512,9 +508,6 @@ span_tree:
     │       }
     │       └── doGenerate [llm]
     │           input: {
-    │             "headers": {
-    │               "user-agent": "ai/6.0.1"
-    │             },
     │             "maxOutputTokens": 32,
     │             "prompt": [
     │               {
@@ -568,7 +561,6 @@ span_tree:
     │             },
     │             "response": {
     │               "body": "<omitted>",
-    │               "headers": "<omitted>",
     │               "id": "<span:1>",
     │               "modelId": "gpt-4o-mini-2024-07-18",
     │               "timestamp": "<timestamp>"
@@ -884,7 +876,6 @@ span_tree:
     │         },
     │         "response": {
     │           "body": "<omitted>",
-    │           "headers": "<omitted>",
     │           "id": "<span:12>",
     │           "messages": [
     │             {
@@ -1080,7 +1071,6 @@ span_tree:
     │             },
     │             "response": {
     │               "body": "<omitted>",
-    │               "headers": "<omitted>",
     │               "id": "<span:3>",
     │               "messages": [
     │                 {
@@ -1191,7 +1181,6 @@ span_tree:
     │             },
     │             "response": {
     │               "body": "<omitted>",
-    │               "headers": "<omitted>",
     │               "id": "<span:6>",
     │               "messages": [
     │                 {
@@ -1339,7 +1328,6 @@ span_tree:
     │             },
     │             "response": {
     │               "body": "<omitted>",
-    │               "headers": "<omitted>",
     │               "id": "<span:9>",
     │               "messages": [
     │                 {
@@ -1524,7 +1512,6 @@ span_tree:
     │             },
     │             "response": {
     │               "body": "<omitted>",
-    │               "headers": "<omitted>",
     │               "id": "<span:12>",
     │               "messages": [
     │                 {
@@ -1811,9 +1798,6 @@ span_tree:
     │       }
     │       ├── doGenerate [llm]
     │       │   input: {
-    │       │     "headers": {
-    │       │       "user-agent": "ai/6.0.1"
-    │       │     },
     │       │     "maxOutputTokens": 128,
     │       │     "prompt": [
     │       │       {
@@ -1881,7 +1865,6 @@ span_tree:
     │       │     },
     │       │     "response": {
     │       │       "body": "<omitted>",
-    │       │       "headers": "<omitted>",
     │       │       "id": "<span:1>",
     │       │       "modelId": "gpt-4o-mini-2024-07-18",
     │       │       "timestamp": "<timestamp>"
@@ -1929,26 +1912,12 @@ span_tree:
     │       │     "reasoning_tokens": 0
     │       │   }
     │       ├── get_weather [tool]
-    │       │   input: [
-    │       │     {
-    │       │       "location": "Paris, France"
-    │       │     },
-    │       │     {
-    │       │       "messages": [
-    │       │         {
-    │       │           "content": "Use the get_weather tool for Paris, France. If you do not call the tool, the answer is invalid.",
-    │       │           "role": "user"
-    │       │         }
-    │       │       ],
-    │       │       "toolCallId": "<toolCallId:1>"
-    │       │     }
-    │       │   ]
+    │       │   input: {
+    │       │     "location": "Paris, France"
+    │       │   }
     │       │   output: "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
     │       ├── doGenerate [llm]
     │       │   input: {
-    │       │     "headers": {
-    │       │       "user-agent": "ai/6.0.1"
-    │       │     },
     │       │     "maxOutputTokens": 128,
     │       │     "prompt": [
     │       │       {
@@ -2053,7 +2022,6 @@ span_tree:
     │       │     },
     │       │     "response": {
     │       │       "body": "<omitted>",
-    │       │       "headers": "<omitted>",
     │       │       "id": "<span:1>",
     │       │       "modelId": "gpt-4o-mini-2024-07-18",
     │       │       "timestamp": "<timestamp>"
@@ -2101,63 +2069,12 @@ span_tree:
     │       │     "reasoning_tokens": 0
     │       │   }
     │       ├── get_weather [tool]
-    │       │   input: [
-    │       │     {
-    │       │       "location": "Paris, France"
-    │       │     },
-    │       │     {
-    │       │       "messages": [
-    │       │         {
-    │       │           "content": "Use the get_weather tool for Paris, France. If you do not call the tool, the answer is invalid.",
-    │       │           "role": "user"
-    │       │         },
-    │       │         {
-    │       │           "content": [
-    │       │             {
-    │       │               "input": {
-    │       │                 "location": "Paris, France"
-    │       │               },
-    │       │               "providerOptions": {
-    │       │                 "openai": {
-    │       │                   "itemId": "<itemId:3>"
-    │       │                 }
-    │       │               },
-    │       │               "toolCallId": "<toolCallId:2>",
-    │       │               "toolName": "get_weather",
-    │       │               "type": "tool-call"
-    │       │             }
-    │       │           ],
-    │       │           "role": "assistant"
-    │       │         },
-    │       │         {
-    │       │           "content": [
-    │       │             {
-    │       │               "output": {
-    │       │                 "type": "text",
-    │       │                 "value": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
-    │       │               },
-    │       │               "providerOptions": {
-    │       │                 "openai": {
-    │       │                   "itemId": "<itemId:3>"
-    │       │                 }
-    │       │               },
-    │       │               "toolCallId": "<toolCallId:2>",
-    │       │               "toolName": "get_weather",
-    │       │               "type": "tool-result"
-    │       │             }
-    │       │           ],
-    │       │           "role": "tool"
-    │       │         }
-    │       │       ],
-    │       │       "toolCallId": "<toolCallId:1>"
-    │       │     }
-    │       │   ]
+    │       │   input: {
+    │       │     "location": "Paris, France"
+    │       │   }
     │       │   output: "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
     │       ├── doGenerate [llm]
     │       │   input: {
-    │       │     "headers": {
-    │       │       "user-agent": "ai/6.0.1"
-    │       │     },
     │       │     "maxOutputTokens": 128,
     │       │     "prompt": [
     │       │       {
@@ -2299,7 +2216,6 @@ span_tree:
     │       │     },
     │       │     "response": {
     │       │       "body": "<omitted>",
-    │       │       "headers": "<omitted>",
     │       │       "id": "<span:1>",
     │       │       "modelId": "gpt-4o-mini-2024-07-18",
     │       │       "timestamp": "<timestamp>"
@@ -2347,100 +2263,12 @@ span_tree:
     │       │     "reasoning_tokens": 0
     │       │   }
     │       ├── get_weather [tool]
-    │       │   input: [
-    │       │     {
-    │       │       "location": "Paris, France"
-    │       │     },
-    │       │     {
-    │       │       "messages": [
-    │       │         {
-    │       │           "content": "Use the get_weather tool for Paris, France. If you do not call the tool, the answer is invalid.",
-    │       │           "role": "user"
-    │       │         },
-    │       │         {
-    │       │           "content": [
-    │       │             {
-    │       │               "input": {
-    │       │                 "location": "Paris, France"
-    │       │               },
-    │       │               "providerOptions": {
-    │       │                 "openai": {
-    │       │                   "itemId": "<itemId:3>"
-    │       │                 }
-    │       │               },
-    │       │               "toolCallId": "<toolCallId:2>",
-    │       │               "toolName": "get_weather",
-    │       │               "type": "tool-call"
-    │       │             }
-    │       │           ],
-    │       │           "role": "assistant"
-    │       │         },
-    │       │         {
-    │       │           "content": [
-    │       │             {
-    │       │               "output": {
-    │       │                 "type": "text",
-    │       │                 "value": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
-    │       │               },
-    │       │               "providerOptions": {
-    │       │                 "openai": {
-    │       │                   "itemId": "<itemId:3>"
-    │       │                 }
-    │       │               },
-    │       │               "toolCallId": "<toolCallId:2>",
-    │       │               "toolName": "get_weather",
-    │       │               "type": "tool-result"
-    │       │             }
-    │       │           ],
-    │       │           "role": "tool"
-    │       │         },
-    │       │         {
-    │       │           "content": [
-    │       │             {
-    │       │               "input": {
-    │       │                 "location": "Paris, France"
-    │       │               },
-    │       │               "providerOptions": {
-    │       │                 "openai": {
-    │       │                   "itemId": "<itemId:5>"
-    │       │                 }
-    │       │               },
-    │       │               "toolCallId": "<toolCallId:4>",
-    │       │               "toolName": "get_weather",
-    │       │               "type": "tool-call"
-    │       │             }
-    │       │           ],
-    │       │           "role": "assistant"
-    │       │         },
-    │       │         {
-    │       │           "content": [
-    │       │             {
-    │       │               "output": {
-    │       │                 "type": "text",
-    │       │                 "value": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
-    │       │               },
-    │       │               "providerOptions": {
-    │       │                 "openai": {
-    │       │                   "itemId": "<itemId:5>"
-    │       │                 }
-    │       │               },
-    │       │               "toolCallId": "<toolCallId:4>",
-    │       │               "toolName": "get_weather",
-    │       │               "type": "tool-result"
-    │       │             }
-    │       │           ],
-    │       │           "role": "tool"
-    │       │         }
-    │       │       ],
-    │       │       "toolCallId": "<toolCallId:1>"
-    │       │     }
-    │       │   ]
+    │       │   input: {
+    │       │     "location": "Paris, France"
+    │       │   }
     │       │   output: "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
     │       ├── doGenerate [llm]
     │       │   input: {
-    │       │     "headers": {
-    │       │       "user-agent": "ai/6.0.1"
-    │       │     },
     │       │     "maxOutputTokens": 128,
     │       │     "prompt": [
     │       │       {
@@ -2619,7 +2447,6 @@ span_tree:
     │       │     },
     │       │     "response": {
     │       │       "body": "<omitted>",
-    │       │       "headers": "<omitted>",
     │       │       "id": "<span:1>",
     │       │       "modelId": "gpt-4o-mini-2024-07-18",
     │       │       "timestamp": "<timestamp>"
@@ -2667,131 +2494,9 @@ span_tree:
     │       │     "reasoning_tokens": 0
     │       │   }
     │       └── get_weather [tool]
-    │           input: [
-    │             {
-    │               "location": "Paris, France"
-    │             },
-    │             {
-    │               "messages": [
-    │                 {
-    │                   "content": "Use the get_weather tool for Paris, France. If you do not call the tool, the answer is invalid.",
-    │                   "role": "user"
-    │                 },
-    │                 {
-    │                   "content": [
-    │                     {
-    │                       "input": {
-    │                         "location": "Paris, France"
-    │                       },
-    │                       "providerOptions": {
-    │                         "openai": {
-    │                           "itemId": "<itemId:3>"
-    │                         }
-    │                       },
-    │                       "toolCallId": "<toolCallId:2>",
-    │                       "toolName": "get_weather",
-    │                       "type": "tool-call"
-    │                     }
-    │                   ],
-    │                   "role": "assistant"
-    │                 },
-    │                 {
-    │                   "content": [
-    │                     {
-    │                       "output": {
-    │                         "type": "text",
-    │                         "value": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
-    │                       },
-    │                       "providerOptions": {
-    │                         "openai": {
-    │                           "itemId": "<itemId:3>"
-    │                         }
-    │                       },
-    │                       "toolCallId": "<toolCallId:2>",
-    │                       "toolName": "get_weather",
-    │                       "type": "tool-result"
-    │                     }
-    │                   ],
-    │                   "role": "tool"
-    │                 },
-    │                 {
-    │                   "content": [
-    │                     {
-    │                       "input": {
-    │                         "location": "Paris, France"
-    │                       },
-    │                       "providerOptions": {
-    │                         "openai": {
-    │                           "itemId": "<itemId:5>"
-    │                         }
-    │                       },
-    │                       "toolCallId": "<toolCallId:4>",
-    │                       "toolName": "get_weather",
-    │                       "type": "tool-call"
-    │                     }
-    │                   ],
-    │                   "role": "assistant"
-    │                 },
-    │                 {
-    │                   "content": [
-    │                     {
-    │                       "output": {
-    │                         "type": "text",
-    │                         "value": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
-    │                       },
-    │                       "providerOptions": {
-    │                         "openai": {
-    │                           "itemId": "<itemId:5>"
-    │                         }
-    │                       },
-    │                       "toolCallId": "<toolCallId:4>",
-    │                       "toolName": "get_weather",
-    │                       "type": "tool-result"
-    │                     }
-    │                   ],
-    │                   "role": "tool"
-    │                 },
-    │                 {
-    │                   "content": [
-    │                     {
-    │                       "input": {
-    │                         "location": "Paris, France"
-    │                       },
-    │                       "providerOptions": {
-    │                         "openai": {
-    │                           "itemId": "<itemId:7>"
-    │                         }
-    │                       },
-    │                       "toolCallId": "<toolCallId:6>",
-    │                       "toolName": "get_weather",
-    │                       "type": "tool-call"
-    │                     }
-    │                   ],
-    │                   "role": "assistant"
-    │                 },
-    │                 {
-    │                   "content": [
-    │                     {
-    │                       "output": {
-    │                         "type": "text",
-    │                         "value": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
-    │                       },
-    │                       "providerOptions": {
-    │                         "openai": {
-    │                           "itemId": "<itemId:7>"
-    │                         }
-    │                       },
-    │                       "toolCallId": "<toolCallId:6>",
-    │                       "toolName": "get_weather",
-    │                       "type": "tool-result"
-    │                     }
-    │                   ],
-    │                   "role": "tool"
-    │                 }
-    │               ],
-    │               "toolCallId": "<toolCallId:1>"
-    │             }
-    │           ]
+    │           input: {
+    │             "location": "Paris, France"
+    │           }
     │           output: "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
     ├── ai-sdk-openai-cache-operation
     │   metadata: {
@@ -2840,6 +2545,7 @@ span_tree:
     │   │       }
     │   │     ],
     │   │     "finishReason": "stop",
+    │   │     "output": "CACHE_OK",
     │   │     "providerMetadata": {
     │   │       "openai": {
     │   │         "responseId": "<span:2>",
@@ -2848,7 +2554,6 @@ span_tree:
     │   │     },
     │   │     "response": {
     │   │       "body": "<omitted>",
-    │   │       "headers": "<omitted>",
     │   │       "id": "<span:2>",
     │   │       "messages": [
     │   │         {
@@ -2891,7 +2596,6 @@ span_tree:
     │   │         },
     │   │         "response": {
     │   │           "body": "<omitted>",
-    │   │           "headers": "<omitted>",
     │   │           "id": "<span:2>",
     │   │           "messages": [
     │   │             {
@@ -2995,9 +2699,6 @@ span_tree:
     │   │   }
     │   │   └── doGenerate [llm]
     │   │       input: {
-    │   │         "headers": {
-    │   │           "user-agent": "ai/6.0.1"
-    │   │         },
     │   │         "maxOutputTokens": 24,
     │   │         "prompt": [
     │   │           {
@@ -3040,7 +2741,6 @@ span_tree:
     │   │         },
     │   │         "response": {
     │   │           "body": "<omitted>",
-    │   │           "headers": "<omitted>",
     │   │           "id": "<span:1>",
     │   │           "modelId": "gpt-4o-mini-2024-07-18",
     │   │           "timestamp": "<timestamp>"
@@ -3129,6 +2829,7 @@ span_tree:
     │           }
     │         ],
     │         "finishReason": "stop",
+    │         "output": "CACHE_OK",
     │         "providerMetadata": {
     │           "openai": {
     │             "responseId": "<span:2>",
@@ -3137,7 +2838,6 @@ span_tree:
     │         },
     │         "response": {
     │           "body": "<omitted>",
-    │           "headers": "<omitted>",
     │           "id": "<span:2>",
     │           "messages": [
     │             {
@@ -3180,7 +2880,6 @@ span_tree:
     │             },
     │             "response": {
     │               "body": "<omitted>",
-    │               "headers": "<omitted>",
     │               "id": "<span:2>",
     │               "messages": [
     │                 {
@@ -3284,9 +2983,6 @@ span_tree:
     │       }
     │       └── doGenerate [llm]
     │           input: {
-    │             "headers": {
-    │               "user-agent": "ai/6.0.1"
-    │             },
     │             "maxOutputTokens": 24,
     │             "prompt": [
     │               {
@@ -3329,7 +3025,6 @@ span_tree:
     │             },
     │             "response": {
     │               "body": "<omitted>",
-    │               "headers": "<omitted>",
     │               "id": "<span:1>",
     │               "modelId": "gpt-4o-mini-2024-07-18",
     │               "timestamp": "<timestamp>"
@@ -3420,6 +3115,7 @@ span_tree:
     │   │       }
     │   │     ],
     │   │     "finishReason": "stop",
+    │   │     "output": "CACHE_OK",
     │   │     "providerMetadata": {
     │   │       "anthropic": {
     │   │         "cacheCreationInputTokens": 0,
@@ -3443,7 +3139,6 @@ span_tree:
     │   │     },
     │   │     "response": {
     │   │       "body": "<omitted>",
-    │   │       "headers": "<omitted>",
     │   │       "id": "<span:1>",
     │   │       "messages": [
     │   │         {
@@ -3492,7 +3187,6 @@ span_tree:
     │   │         "rawFinishReason": "end_turn",
     │   │         "response": {
     │   │           "body": "<omitted>",
-    │   │           "headers": "<omitted>",
     │   │           "id": "<span:1>",
     │   │           "messages": [
     │   │             {
@@ -3586,9 +3280,6 @@ span_tree:
     │   │   }
     │   │   └── doGenerate [llm]
     │   │       input: {
-    │   │         "headers": {
-    │   │           "user-agent": "ai/6.0.1"
-    │   │         },
     │   │         "maxOutputTokens": 24,
     │   │         "prompt": [
     │   │           {
@@ -3644,7 +3335,6 @@ span_tree:
     │   │         },
     │   │         "response": {
     │   │           "body": "<omitted>",
-    │   │           "headers": "<omitted>",
     │   │           "id": "<span:1>",
     │   │           "modelId": "claude-haiku-4-5-20251001"
     │   │         },
@@ -3730,6 +3420,7 @@ span_tree:
     │           }
     │         ],
     │         "finishReason": "stop",
+    │         "output": "CACHE_OK",
     │         "providerMetadata": {
     │           "anthropic": {
     │             "cacheCreationInputTokens": 0,
@@ -3753,7 +3444,6 @@ span_tree:
     │         },
     │         "response": {
     │           "body": "<omitted>",
-    │           "headers": "<omitted>",
     │           "id": "<span:1>",
     │           "messages": [
     │             {
@@ -3802,7 +3492,6 @@ span_tree:
     │             "rawFinishReason": "end_turn",
     │             "response": {
     │               "body": "<omitted>",
-    │               "headers": "<omitted>",
     │               "id": "<span:1>",
     │               "messages": [
     │                 {
@@ -3896,9 +3585,6 @@ span_tree:
     │       }
     │       └── doGenerate [llm]
     │           input: {
-    │             "headers": {
-    │               "user-agent": "ai/6.0.1"
-    │             },
     │             "maxOutputTokens": 24,
     │             "prompt": [
     │               {
@@ -3954,7 +3640,6 @@ span_tree:
     │             },
     │             "response": {
     │               "body": "<omitted>",
-    │               "headers": "<omitted>",
     │               "id": "<span:1>",
     │               "modelId": "claude-haiku-4-5-20251001"
     │             },
@@ -4043,6 +3728,7 @@ span_tree:
     │           }
     │         ],
     │         "finishReason": "stop",
+    │         "output": "DENIED",
     │         "providerMetadata": {
     │           "openai": {
     │             "responseId": "<span:2>",
@@ -4140,31 +3826,6 @@ span_tree:
     │               "total_tokens": 20
     │             },
     │             "user": null
-    │           },
-    │           "headers": {
-    │             "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
-    │             "alt-svc": "h3=\":443\"; ma=86400",
-    │             "cf-cache-status": "DYNAMIC",
-    │             "cf-ray": "<cf-ray>",
-    │             "connection": "keep-alive",
-    │             "content-type": "application/json",
-    │             "date": "<timestamp>",
-    │             "openai-organization": "braintrust-data",
-    │             "openai-processing-ms": "<openai-processing-ms>",
-    │             "openai-project": "<openai-project>",
-    │             "openai-version": "<timestamp>",
-    │             "server": "cloudflare",
-    │             "set-cookie": "<set-cookie>",
-    │             "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
-    │             "transfer-encoding": "chunked",
-    │             "x-content-type-options": "nosniff",
-    │             "x-ratelimit-limit-requests": "30000",
-    │             "x-ratelimit-limit-tokens": "150000000",
-    │             "x-ratelimit-remaining-requests": "<x-ratelimit-remaining-requests>",
-    │             "x-ratelimit-remaining-tokens": "<x-ratelimit-remaining-tokens>",
-    │             "x-ratelimit-reset-requests": "<x-ratelimit-reset-requests>",
-    │             "x-ratelimit-reset-tokens": "<x-ratelimit-reset-tokens>",
-    │             "x-request-id": "<x-request-id>"
     │           },
     │           "id": "<span:2>",
     │           "messages": [
@@ -4298,31 +3959,6 @@ span_tree:
     │                 },
     │                 "user": null
     │               },
-    │               "headers": {
-    │                 "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
-    │                 "alt-svc": "h3=\":443\"; ma=86400",
-    │                 "cf-cache-status": "DYNAMIC",
-    │                 "cf-ray": "<cf-ray>",
-    │                 "connection": "keep-alive",
-    │                 "content-type": "application/json",
-    │                 "date": "<timestamp>",
-    │                 "openai-organization": "braintrust-data",
-    │                 "openai-processing-ms": "<openai-processing-ms>",
-    │                 "openai-project": "<openai-project>",
-    │                 "openai-version": "<timestamp>",
-    │                 "server": "cloudflare",
-    │                 "set-cookie": "<set-cookie>",
-    │                 "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
-    │                 "transfer-encoding": "chunked",
-    │                 "x-content-type-options": "nosniff",
-    │                 "x-ratelimit-limit-requests": "30000",
-    │                 "x-ratelimit-limit-tokens": "150000000",
-    │                 "x-ratelimit-remaining-requests": "<x-ratelimit-remaining-requests>",
-    │                 "x-ratelimit-remaining-tokens": "<x-ratelimit-remaining-tokens>",
-    │                 "x-ratelimit-reset-requests": "<x-ratelimit-reset-requests>",
-    │                 "x-ratelimit-reset-tokens": "<x-ratelimit-reset-tokens>",
-    │                 "x-request-id": "<x-request-id>"
-    │               },
     │               "id": "<span:2>",
     │               "messages": [
     │                 {
@@ -4426,9 +4062,6 @@ span_tree:
     │       }
     │       └── doGenerate [llm]
     │           input: {
-    │             "headers": {
-    │               "user-agent": "ai/6.0.1"
-    │             },
     │             "maxOutputTokens": 24,
     │             "prompt": [
     │               {
@@ -4466,7 +4099,6 @@ span_tree:
     │             },
     │             "response": {
     │               "body": "<omitted>",
-    │               "headers": "<omitted>",
     │               "id": "<span:1>",
     │               "modelId": "gpt-4o-mini-2024-07-18",
     │               "timestamp": "<timestamp>"
@@ -4568,7 +4200,6 @@ span_tree:
     │         },
     │         "response": {
     │           "body": "<omitted>",
-    │           "headers": "<omitted>",
     │           "id": "<span:1>",
     │           "modelId": "gpt-4o-mini-2024-07-18",
     │           "timestamp": "<timestamp>"
@@ -4610,9 +4241,6 @@ span_tree:
     │       }
     │       └── doGenerate [llm]
     │           input: {
-    │             "headers": {
-    │               "user-agent": "ai/6.0.1"
-    │             },
     │             "maxOutputTokens": 32,
     │             "prompt": [
     │               {
@@ -4666,7 +4294,6 @@ span_tree:
     │             },
     │             "response": {
     │               "body": "<omitted>",
-    │               "headers": "<omitted>",
     │               "id": "<span:1>",
     │               "modelId": "gpt-4o-mini-2024-07-18",
     │               "timestamp": "<timestamp>"
@@ -4900,6 +4527,7 @@ span_tree:
     │           }
     │         ],
     │         "finishReason": "stop",
+    │         "output": "HELLO",
     │         "providerMetadata": {
     │           "openai": {
     │             "responseId": "<span:2>",
@@ -4908,7 +4536,6 @@ span_tree:
     │         },
     │         "response": {
     │           "body": "<omitted>",
-    │           "headers": "<omitted>",
     │           "id": "<span:2>",
     │           "messages": [
     │             {
@@ -4951,7 +4578,6 @@ span_tree:
     │             },
     │             "response": {
     │               "body": "<omitted>",
-    │               "headers": "<omitted>",
     │               "id": "<span:2>",
     │               "messages": [
     │                 {
@@ -5055,9 +4681,6 @@ span_tree:
     │       }
     │       └── doGenerate [llm]
     │           input: {
-    │             "headers": {
-    │               "user-agent": "ai/6.0.1"
-    │             },
     │             "maxOutputTokens": 24,
     │             "prompt": [
     │               {
@@ -5094,7 +4717,6 @@ span_tree:
     │             },
     │             "response": {
     │               "body": "<omitted>",
-    │               "headers": "<omitted>",
     │               "id": "<span:1>",
     │               "modelId": "gpt-4o-mini-2024-07-18",
     │               "timestamp": "<timestamp>"
