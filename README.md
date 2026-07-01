@@ -1,3 +1,5 @@
+[![Braintrust](./braintrust-logo.svg)](https://www.braintrust.dev/)
+
 # Braintrust JavaScript SDKs
 
 [Braintrust](https://www.braintrust.dev/) is a platform for evaluating and shipping AI products. Learn more at [braintrust.dev](https://www.braintrust.dev/) and in the [docs](https://www.braintrust.dev/docs).
