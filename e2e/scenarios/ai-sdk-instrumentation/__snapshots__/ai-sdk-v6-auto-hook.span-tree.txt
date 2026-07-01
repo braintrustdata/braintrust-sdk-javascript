@@ -287,7 +287,8 @@ span_tree:
     │             "completion_tokens": 3,
     │             "prompt_cached_tokens": 0,
     │             "prompt_tokens": 18,
-    │             "reasoning_tokens": 0
+    │             "reasoning_tokens": 0,
+    │             "tokens": 21
     │           }
     ├── ai-sdk-output-object-response-format-operation
     │   metadata: {
@@ -613,7 +614,8 @@ span_tree:
     │             "completion_tokens": 6,
     │             "prompt_cached_tokens": 0,
     │             "prompt_tokens": 45,
-    │             "reasoning_tokens": 0
+    │             "reasoning_tokens": 0,
+    │             "tokens": 51
     │           }
     ├── ai-sdk-stream-operation
     │   metadata: {
@@ -722,7 +724,8 @@ span_tree:
     │             "prompt_cached_tokens": 0,
     │             "prompt_tokens": 22,
     │             "reasoning_tokens": 0,
-    │             "time_to_first_token": 0
+    │             "time_to_first_token": 0,
+    │             "tokens": 29
     │           }
     ├── ai-sdk-embed-operation
     │   metadata: {
@@ -1926,7 +1929,8 @@ span_tree:
     │       │     "completion_tokens": 8,
     │       │     "prompt_cached_tokens": 0,
     │       │     "prompt_tokens": 94,
-    │       │     "reasoning_tokens": 0
+    │       │     "reasoning_tokens": 0,
+    │       │     "tokens": 102
     │       │   }
     │       ├── get_weather [tool]
     │       │   input: [
@@ -2098,7 +2102,8 @@ span_tree:
     │       │     "completion_tokens": 8,
     │       │     "prompt_cached_tokens": 0,
     │       │     "prompt_tokens": 133,
-    │       │     "reasoning_tokens": 0
+    │       │     "reasoning_tokens": 0,
+    │       │     "tokens": 141
     │       │   }
     │       ├── get_weather [tool]
     │       │   input: [
@@ -2344,7 +2349,8 @@ span_tree:
     │       │     "completion_tokens": 8,
     │       │     "prompt_cached_tokens": 0,
     │       │     "prompt_tokens": 172,
-    │       │     "reasoning_tokens": 0
+    │       │     "reasoning_tokens": 0,
+    │       │     "tokens": 180
     │       │   }
     │       ├── get_weather [tool]
     │       │   input: [
@@ -2664,7 +2670,8 @@ span_tree:
     │       │     "completion_tokens": 8,
     │       │     "prompt_cached_tokens": 0,
     │       │     "prompt_tokens": 211,
-    │       │     "reasoning_tokens": 0
+    │       │     "reasoning_tokens": 0,
+    │       │     "tokens": 219
     │       │   }
     │       └── get_weather [tool]
     │           input: [
@@ -3080,7 +3087,8 @@ span_tree:
     │         "completion_tokens": 3,
     │         "prompt_cached_tokens": 3456,
     │         "prompt_tokens": 3617,
-    │         "reasoning_tokens": 0
+    │         "reasoning_tokens": 0,
+    │         "tokens": 3620
     │       }
     ├── ai-sdk-openai-cache-operation
     │   metadata: {
@@ -3374,7 +3382,8 @@ span_tree:
     │   │         "completion_tokens": 3,
     │   │         "prompt_cached_tokens": 3456,
     │   │         "prompt_tokens": 3617,
-    │   │         "reasoning_tokens": 0
+    │   │         "reasoning_tokens": 0,
+    │   │         "tokens": 3620
     │   │       }
     │   └── generateText [function]
     │       input: {
@@ -3663,7 +3672,8 @@ span_tree:
     │             "completion_tokens": 3,
     │             "prompt_cached_tokens": 3456,
     │             "prompt_tokens": 3617,
-    │             "reasoning_tokens": 0
+    │             "reasoning_tokens": 0,
+    │             "tokens": 3620
     │           }
     ├── generateText [function]
     │   input: {
@@ -3973,7 +3983,8 @@ span_tree:
     │         "completion_tokens": 7,
     │         "prompt_cache_creation_tokens": 0,
     │         "prompt_cached_tokens": 4516,
-    │         "prompt_tokens": 4519
+    │         "prompt_tokens": 4519,
+    │         "tokens": 4526
     │       }
     ├── ai-sdk-anthropic-cache-operation
     │   metadata: {
@@ -4288,7 +4299,8 @@ span_tree:
     │   │         "completion_tokens": 7,
     │   │         "prompt_cache_creation_tokens": 0,
     │   │         "prompt_cached_tokens": 4516,
-    │   │         "prompt_tokens": 4519
+    │   │         "prompt_tokens": 4519,
+    │   │         "tokens": 4526
     │   │       }
     │   └── generateText [function]
     │       input: {
@@ -4598,7 +4610,8 @@ span_tree:
     │             "completion_tokens": 7,
     │             "prompt_cache_creation_tokens": 0,
     │             "prompt_cached_tokens": 4516,
-    │             "prompt_tokens": 4519
+    │             "prompt_tokens": 4519,
+    │             "tokens": 4526
     │           }
     ├── ai-sdk-deny-output-override-operation
     │   metadata: {
@@ -5110,7 +5123,8 @@ span_tree:
     │             "completion_tokens": 3,
     │             "prompt_cached_tokens": 0,
     │             "prompt_tokens": 17,
-    │             "reasoning_tokens": 0
+    │             "reasoning_tokens": 0,
+    │             "tokens": 20
     │           }
     ├── ai-sdk-generate-object-operation
     │   metadata: {
@@ -5310,7 +5324,8 @@ span_tree:
     │             "completion_tokens": 6,
     │             "prompt_cached_tokens": 0,
     │             "prompt_tokens": 38,
-    │             "reasoning_tokens": 0
+    │             "reasoning_tokens": 0,
+    │             "tokens": 44
     │           }
     ├── ai-sdk-stream-object-operation
     │   metadata: {
@@ -5450,7 +5465,8 @@ span_tree:
     │             "prompt_cached_tokens": 0,
     │             "prompt_tokens": 38,
     │             "reasoning_tokens": 0,
-    │             "time_to_first_token": 0
+    │             "time_to_first_token": 0,
+    │             "tokens": 44
     │           }
     ├── ai-sdk-agent-generate-operation
     │   metadata: {
@@ -5921,7 +5937,8 @@ span_tree:
     │             "completion_tokens": 3,
     │             "prompt_cached_tokens": 0,
     │             "prompt_tokens": 16,
-    │             "reasoning_tokens": 0
+    │             "reasoning_tokens": 0,
+    │             "tokens": 19
     │           }
     └── ai-sdk-agent-stream-operation
         metadata: {
@@ -6058,5 +6075,6 @@ span_tree:
                   "prompt_cached_tokens": 0,
                   "prompt_tokens": 17,
                   "reasoning_tokens": 0,
-                  "time_to_first_token": 0
+                  "time_to_first_token": 0,
+                  "tokens": 21
                 }
