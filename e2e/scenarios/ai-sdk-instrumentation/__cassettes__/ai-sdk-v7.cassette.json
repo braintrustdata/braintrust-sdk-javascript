@@ -2,9 +2,9 @@
   "entries": [
     {
       "callIndex": 0,
-      "id": "7c0e162d6794cf5d",
+      "id": "9aa262365558ebc2",
       "matchKey": "POST api.openai.com/v1/responses",
-      "recordedAt": "2026-06-15T13:08:34.738Z",
+      "recordedAt": "2026-07-01T11:36:50.233Z",
       "request": {
         "body": {
           "kind": "json",
@@ -37,11 +37,11 @@
             "billing": {
               "payer": "developer"
             },
-            "completed_at": 1781528914,
-            "created_at": 1781528913,
+            "completed_at": 1782905810,
+            "created_at": 1782905809,
             "error": null,
             "frequency_penalty": 0,
-            "id": "resp_08e21a27e86c971e006a2ff951c5048192a0af2698bfaf280b",
+            "id": "resp_0348ef0bcf29c7a9006a44fbd19e6481a1a6bf4c1982861b47",
             "incomplete_details": null,
             "instructions": null,
             "max_output_tokens": 24,
@@ -60,7 +60,7 @@
                     "type": "output_text"
                   }
                 ],
-                "id": "msg_08e21a27e86c971e006a2ff952764c8192915880c5d463c15f",
+                "id": "msg_0348ef0bcf29c7a9006a44fbd2130c81a1b57271d385ab73b6",
                 "role": "assistant",
                 "status": "completed",
                 "type": "message"
@@ -88,6 +88,24 @@
               "verbosity": "medium"
             },
             "tool_choice": "auto",
+            "tool_usage": {
+              "image_gen": {
+                "input_tokens": 0,
+                "input_tokens_details": {
+                  "image_tokens": 0,
+                  "text_tokens": 0
+                },
+                "output_tokens": 0,
+                "output_tokens_details": {
+                  "image_tokens": 0,
+                  "text_tokens": 0
+                },
+                "total_tokens": 0
+              },
+              "web_search": {
+                "num_requests": 0
+              }
+            },
             "tools": [],
             "top_logprobs": 0,
             "top_p": 1,
@@ -110,13 +128,13 @@
           "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "a0c1cdde08b43249-VIE",
+          "cf-ray": "a1451d7d7b4a5a6b-VIE",
           "connection": "keep-alive",
           "content-encoding": "gzip",
           "content-type": "application/json",
-          "date": "Mon, 15 Jun 2026 13:08:34 GMT",
+          "date": "Wed, 01 Jul 2026 11:36:50 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "1035",
+          "openai-processing-ms": "655",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
@@ -130,7 +148,7 @@
           "x-ratelimit-remaining-tokens": "149999962",
           "x-ratelimit-reset-requests": "2ms",
           "x-ratelimit-reset-tokens": "0s",
-          "x-request-id": "req_c1eb4fa2cddc4c94906c59ce4ec7d77a"
+          "x-request-id": "f1d6c868-7785-4ae3-9ea0-d60be05b745f"
         },
         "status": 200,
         "statusText": "OK"
@@ -138,9 +156,9 @@
     },
     {
       "callIndex": 1,
-      "id": "f12aff3913439248",
+      "id": "9e077c56377ca81c",
       "matchKey": "POST api.openai.com/v1/responses",
-      "recordedAt": "2026-06-15T13:08:36.241Z",
+      "recordedAt": "2026-07-01T11:36:51.426Z",
       "request": {
         "body": {
           "kind": "json",
@@ -191,11 +209,11 @@
             "billing": {
               "payer": "developer"
             },
-            "completed_at": 1781528916,
-            "created_at": 1781528914,
+            "completed_at": 1782905811,
+            "created_at": 1782905810,
             "error": null,
             "frequency_penalty": 0,
-            "id": "resp_04d2d681e1b09a4a006a2ff952f2bc81a1a73280bae81965e2",
+            "id": "resp_04b05ea9abbdaf41006a44fbd27738819ebae857af0d3bd794",
             "incomplete_details": null,
             "instructions": null,
             "max_output_tokens": 32,
@@ -214,7 +232,7 @@
                     "type": "output_text"
                   }
                 ],
-                "id": "msg_04d2d681e1b09a4a006a2ff953cd1081a183158139618edb2d",
+                "id": "msg_04b05ea9abbdaf41006a44fbd30c24819e97d83368a212ffa5",
                 "role": "assistant",
                 "status": "completed",
                 "type": "message"
@@ -255,6 +273,24 @@
               "verbosity": "medium"
             },
             "tool_choice": "auto",
+            "tool_usage": {
+              "image_gen": {
+                "input_tokens": 0,
+                "input_tokens_details": {
+                  "image_tokens": 0,
+                  "text_tokens": 0
+                },
+                "output_tokens": 0,
+                "output_tokens_details": {
+                  "image_tokens": 0,
+                  "text_tokens": 0
+                },
+                "total_tokens": 0
+              },
+              "web_search": {
+                "num_requests": 0
+              }
+            },
             "tools": [],
             "top_logprobs": 0,
             "top_p": 1,
@@ -277,13 +313,13 @@
           "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "a0c1cde5d91d3249-VIE",
+          "cf-ray": "a1451d82dd1d5a6b-VIE",
           "connection": "keep-alive",
           "content-encoding": "gzip",
           "content-type": "application/json",
-          "date": "Mon, 15 Jun 2026 13:08:36 GMT",
+          "date": "Wed, 01 Jul 2026 11:36:51 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "1325",
+          "openai-processing-ms": "1000",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
@@ -297,7 +333,7 @@
           "x-ratelimit-remaining-tokens": "149999937",
           "x-ratelimit-reset-requests": "2ms",
           "x-ratelimit-reset-tokens": "0s",
-          "x-request-id": "req_d2fe9d24b8fe40a0a42eb23029b05c16"
+          "x-request-id": "1737e2b1-3b49-477b-8287-d7627795ae57"
         },
         "status": 200,
         "statusText": "OK"
@@ -305,9 +341,9 @@
     },
     {
       "callIndex": 2,
-      "id": "5d2312f425df9f2f",
+      "id": "bdbf85bb8f9015c8",
       "matchKey": "POST api.openai.com/v1/responses",
-      "recordedAt": "2026-06-15T13:08:37.546Z",
+      "recordedAt": "2026-07-01T11:36:52.400Z",
       "request": {
         "body": {
           "kind": "json",
@@ -336,20 +372,20 @@
       "response": {
         "body": {
           "chunks": [
-            "event: response.created\ndata: {\"type\":\"response.created\",\"response\":{\"id\":\"resp_003258bee4145e59006a2ff9548af081a29187e415896a4044\",\"object\":\"response\",\"created_at\":1781528916,\"status\":\"in_progress\",\"background\":false,\"completed_at\":null,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":32,\"max_tool_calls\":null,\"model\":\"gpt-4o-mini-2024-07-18\",\"moderation\":null,\"output\":[],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":null,\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"context\":null,\"effort\":null,\"summary\":null},\"safety_identifier\":null,\"service_tier\":\"auto\",\"store\":true,\"temperature\":0,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tools\":[],\"top_logprobs\":0,\"top_p\":1,\"truncation\":\"disabled\",\"usage\":null,\"user\":null,\"metadata\":{}},\"sequence_number\":0}",
-            "event: response.in_progress\ndata: {\"type\":\"response.in_progress\",\"response\":{\"id\":\"resp_003258bee4145e59006a2ff9548af081a29187e415896a4044\",\"object\":\"response\",\"created_at\":1781528916,\"status\":\"in_progress\",\"background\":false,\"completed_at\":null,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":32,\"max_tool_calls\":null,\"model\":\"gpt-4o-mini-2024-07-18\",\"moderation\":null,\"output\":[],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":null,\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"context\":null,\"effort\":null,\"summary\":null},\"safety_identifier\":null,\"service_tier\":\"auto\",\"store\":true,\"temperature\":0,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tools\":[],\"top_logprobs\":0,\"top_p\":1,\"truncation\":\"disabled\",\"usage\":null,\"user\":null,\"metadata\":{}},\"sequence_number\":1}",
-            "event: response.output_item.added\ndata: {\"type\":\"response.output_item.added\",\"item\":{\"id\":\"msg_003258bee4145e59006a2ff9552f4081a2bf63b33b370ef0c6\",\"type\":\"message\",\"status\":\"in_progress\",\"content\":[],\"role\":\"assistant\"},\"output_index\":0,\"sequence_number\":2}",
-            "event: response.content_part.added\ndata: {\"type\":\"response.content_part.added\",\"content_index\":0,\"item_id\":\"msg_003258bee4145e59006a2ff9552f4081a2bf63b33b370ef0c6\",\"output_index\":0,\"part\":{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"\"},\"sequence_number\":3}",
-            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"One\",\"item_id\":\"msg_003258bee4145e59006a2ff9552f4081a2bf63b33b370ef0c6\",\"logprobs\":[],\"obfuscation\":\"KhAN5ehZudKpu\",\"output_index\":0,\"sequence_number\":4}",
-            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\",\",\"item_id\":\"msg_003258bee4145e59006a2ff9552f4081a2bf63b33b370ef0c6\",\"logprobs\":[],\"obfuscation\":\"6ypyq0ysbrSz7BX\",\"output_index\":0,\"sequence_number\":5}",
-            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\" two\",\"item_id\":\"msg_003258bee4145e59006a2ff9552f4081a2bf63b33b370ef0c6\",\"logprobs\":[],\"obfuscation\":\"D5nW88UhRzk2\",\"output_index\":0,\"sequence_number\":6}",
-            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\",\",\"item_id\":\"msg_003258bee4145e59006a2ff9552f4081a2bf63b33b370ef0c6\",\"logprobs\":[],\"obfuscation\":\"XTRoBmEEWkvzRVi\",\"output_index\":0,\"sequence_number\":7}",
-            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\" three\",\"item_id\":\"msg_003258bee4145e59006a2ff9552f4081a2bf63b33b370ef0c6\",\"logprobs\":[],\"obfuscation\":\"7YtPHZTD2K\",\"output_index\":0,\"sequence_number\":8}",
-            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\".\",\"item_id\":\"msg_003258bee4145e59006a2ff9552f4081a2bf63b33b370ef0c6\",\"logprobs\":[],\"obfuscation\":\"P2enBKQJmr3WGo7\",\"output_index\":0,\"sequence_number\":9}",
-            "event: response.output_text.done\ndata: {\"type\":\"response.output_text.done\",\"content_index\":0,\"item_id\":\"msg_003258bee4145e59006a2ff9552f4081a2bf63b33b370ef0c6\",\"logprobs\":[],\"output_index\":0,\"sequence_number\":10,\"text\":\"One, two, three.\"}",
-            "event: response.content_part.done\ndata: {\"type\":\"response.content_part.done\",\"content_index\":0,\"item_id\":\"msg_003258bee4145e59006a2ff9552f4081a2bf63b33b370ef0c6\",\"output_index\":0,\"part\":{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"One, two, three.\"},\"sequence_number\":11}",
-            "event: response.output_item.done\ndata: {\"type\":\"response.output_item.done\",\"item\":{\"id\":\"msg_003258bee4145e59006a2ff9552f4081a2bf63b33b370ef0c6\",\"type\":\"message\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"One, two, three.\"}],\"role\":\"assistant\"},\"output_index\":0,\"sequence_number\":12}",
-            "event: response.completed\ndata: {\"type\":\"response.completed\",\"response\":{\"id\":\"resp_003258bee4145e59006a2ff9548af081a29187e415896a4044\",\"object\":\"response\",\"created_at\":1781528916,\"status\":\"completed\",\"background\":false,\"completed_at\":1781528917,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":32,\"max_tool_calls\":null,\"model\":\"gpt-4o-mini-2024-07-18\",\"moderation\":null,\"output\":[{\"id\":\"msg_003258bee4145e59006a2ff9552f4081a2bf63b33b370ef0c6\",\"type\":\"message\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"One, two, three.\"}],\"role\":\"assistant\"}],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":null,\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"context\":null,\"effort\":null,\"summary\":null},\"safety_identifier\":null,\"service_tier\":\"default\",\"store\":true,\"temperature\":0,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tools\":[],\"top_logprobs\":0,\"top_p\":1,\"truncation\":\"disabled\",\"usage\":{\"input_tokens\":22,\"input_tokens_details\":{\"cached_tokens\":0},\"output_tokens\":7,\"output_tokens_details\":{\"reasoning_tokens\":0},\"total_tokens\":29},\"user\":null,\"metadata\":{}},\"sequence_number\":13}"
+            "event: response.created\ndata: {\"type\":\"response.created\",\"response\":{\"id\":\"resp_0b9c56d090cafe02006a44fbd3a5b481a0809da4876a70b3e5\",\"object\":\"response\",\"created_at\":1782905811,\"status\":\"in_progress\",\"background\":false,\"completed_at\":null,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":32,\"max_tool_calls\":null,\"model\":\"gpt-4o-mini-2024-07-18\",\"moderation\":null,\"output\":[],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":null,\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"context\":null,\"effort\":null,\"summary\":null},\"safety_identifier\":null,\"service_tier\":\"auto\",\"store\":true,\"temperature\":0,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tool_usage\":{\"image_gen\":{\"input_tokens\":0,\"input_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"output_tokens\":0,\"output_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"total_tokens\":0},\"web_search\":{\"num_requests\":0}},\"tools\":[],\"top_logprobs\":0,\"top_p\":1,\"truncation\":\"disabled\",\"usage\":null,\"user\":null,\"metadata\":{}},\"sequence_number\":0}",
+            "event: response.in_progress\ndata: {\"type\":\"response.in_progress\",\"response\":{\"id\":\"resp_0b9c56d090cafe02006a44fbd3a5b481a0809da4876a70b3e5\",\"object\":\"response\",\"created_at\":1782905811,\"status\":\"in_progress\",\"background\":false,\"completed_at\":null,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":32,\"max_tool_calls\":null,\"model\":\"gpt-4o-mini-2024-07-18\",\"moderation\":null,\"output\":[],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":null,\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"context\":null,\"effort\":null,\"summary\":null},\"safety_identifier\":null,\"service_tier\":\"auto\",\"store\":true,\"temperature\":0,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tool_usage\":{\"image_gen\":{\"input_tokens\":0,\"input_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"output_tokens\":0,\"output_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"total_tokens\":0},\"web_search\":{\"num_requests\":0}},\"tools\":[],\"top_logprobs\":0,\"top_p\":1,\"truncation\":\"disabled\",\"usage\":null,\"user\":null,\"metadata\":{}},\"sequence_number\":1}",
+            "event: response.output_item.added\ndata: {\"type\":\"response.output_item.added\",\"item\":{\"id\":\"msg_0b9c56d090cafe02006a44fbd42e8c81a08c65b55aaeef3780\",\"type\":\"message\",\"status\":\"in_progress\",\"content\":[],\"role\":\"assistant\"},\"output_index\":0,\"sequence_number\":2}",
+            "event: response.content_part.added\ndata: {\"type\":\"response.content_part.added\",\"content_index\":0,\"item_id\":\"msg_0b9c56d090cafe02006a44fbd42e8c81a08c65b55aaeef3780\",\"output_index\":0,\"part\":{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"\"},\"sequence_number\":3}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"One\",\"item_id\":\"msg_0b9c56d090cafe02006a44fbd42e8c81a08c65b55aaeef3780\",\"logprobs\":[],\"obfuscation\":\"TS0gW9dnuWRap\",\"output_index\":0,\"sequence_number\":4}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\",\",\"item_id\":\"msg_0b9c56d090cafe02006a44fbd42e8c81a08c65b55aaeef3780\",\"logprobs\":[],\"obfuscation\":\"VFJbHuFkWkWaejM\",\"output_index\":0,\"sequence_number\":5}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\" two\",\"item_id\":\"msg_0b9c56d090cafe02006a44fbd42e8c81a08c65b55aaeef3780\",\"logprobs\":[],\"obfuscation\":\"R9NsOD2ZrAhK\",\"output_index\":0,\"sequence_number\":6}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\",\",\"item_id\":\"msg_0b9c56d090cafe02006a44fbd42e8c81a08c65b55aaeef3780\",\"logprobs\":[],\"obfuscation\":\"OzoL78ZCdl4i2i0\",\"output_index\":0,\"sequence_number\":7}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\" three\",\"item_id\":\"msg_0b9c56d090cafe02006a44fbd42e8c81a08c65b55aaeef3780\",\"logprobs\":[],\"obfuscation\":\"avL7DCNlgv\",\"output_index\":0,\"sequence_number\":8}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\".\",\"item_id\":\"msg_0b9c56d090cafe02006a44fbd42e8c81a08c65b55aaeef3780\",\"logprobs\":[],\"obfuscation\":\"qxurc5sy78vmaLj\",\"output_index\":0,\"sequence_number\":9}",
+            "event: response.output_text.done\ndata: {\"type\":\"response.output_text.done\",\"content_index\":0,\"item_id\":\"msg_0b9c56d090cafe02006a44fbd42e8c81a08c65b55aaeef3780\",\"logprobs\":[],\"output_index\":0,\"sequence_number\":10,\"text\":\"One, two, three.\"}",
+            "event: response.content_part.done\ndata: {\"type\":\"response.content_part.done\",\"content_index\":0,\"item_id\":\"msg_0b9c56d090cafe02006a44fbd42e8c81a08c65b55aaeef3780\",\"output_index\":0,\"part\":{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"One, two, three.\"},\"sequence_number\":11}",
+            "event: response.output_item.done\ndata: {\"type\":\"response.output_item.done\",\"item\":{\"id\":\"msg_0b9c56d090cafe02006a44fbd42e8c81a08c65b55aaeef3780\",\"type\":\"message\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"One, two, three.\"}],\"role\":\"assistant\"},\"output_index\":0,\"sequence_number\":12}",
+            "event: response.completed\ndata: {\"type\":\"response.completed\",\"response\":{\"id\":\"resp_0b9c56d090cafe02006a44fbd3a5b481a0809da4876a70b3e5\",\"object\":\"response\",\"created_at\":1782905811,\"status\":\"completed\",\"background\":false,\"completed_at\":1782905812,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":32,\"max_tool_calls\":null,\"model\":\"gpt-4o-mini-2024-07-18\",\"moderation\":null,\"output\":[{\"id\":\"msg_0b9c56d090cafe02006a44fbd42e8c81a08c65b55aaeef3780\",\"type\":\"message\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"One, two, three.\"}],\"role\":\"assistant\"}],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":null,\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"context\":null,\"effort\":null,\"summary\":null},\"safety_identifier\":null,\"service_tier\":\"default\",\"store\":true,\"temperature\":0,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tool_usage\":{\"image_gen\":{\"input_tokens\":0,\"input_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"output_tokens\":0,\"output_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"total_tokens\":0},\"web_search\":{\"num_requests\":0}},\"tools\":[],\"top_logprobs\":0,\"top_p\":1,\"truncation\":\"disabled\",\"usage\":{\"input_tokens\":22,\"input_tokens_details\":{\"cached_tokens\":0},\"output_tokens\":7,\"output_tokens_details\":{\"reasoning_tokens\":0},\"total_tokens\":29},\"user\":null,\"metadata\":{}},\"sequence_number\":13}"
           ],
           "kind": "sse"
         },
@@ -357,12 +393,12 @@
           "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "a0c1cdef39103249-VIE",
+          "cf-ray": "a1451d8a3f5a5a6b-VIE",
           "connection": "keep-alive",
           "content-type": "text/event-stream; charset=utf-8",
-          "date": "Mon, 15 Jun 2026 13:08:36 GMT",
+          "date": "Wed, 01 Jul 2026 11:36:51 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "312",
+          "openai-processing-ms": "129",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
@@ -370,7 +406,7 @@
           "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
           "transfer-encoding": "chunked",
           "x-content-type-options": "nosniff",
-          "x-request-id": "req_68374548a7194c579321e84e19a23da6"
+          "x-request-id": "83e34dc6-c6b7-4bd7-be80-bb48ac896348"
         },
         "status": 200,
         "statusText": "OK"
@@ -378,9 +414,9 @@
     },
     {
       "callIndex": 0,
-      "id": "7d3c0bb6426e6be4",
+      "id": "49a95bf2b3466013",
       "matchKey": "POST api.openai.com/v1/embeddings",
-      "recordedAt": "2026-06-15T13:08:37.757Z",
+      "recordedAt": "2026-07-01T11:36:52.623Z",
       "request": {
         "body": {
           "kind": "json",
@@ -968,13 +1004,13 @@
           "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "a0c1cdf768f93249-VIE",
+          "cf-ray": "a1451d9079245a6b-VIE",
           "connection": "keep-alive",
           "content-encoding": "gzip",
           "content-type": "application/json",
-          "date": "Mon, 15 Jun 2026 13:08:37 GMT",
+          "date": "Wed, 01 Jul 2026 11:36:52 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "42",
+          "openai-processing-ms": "68",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
@@ -989,7 +1025,7 @@
           "x-ratelimit-remaining-tokens": "9999993",
           "x-ratelimit-reset-requests": "6ms",
           "x-ratelimit-reset-tokens": "0s",
-          "x-request-id": "req_03dbab6160094a719bcbc01a4069874d"
+          "x-request-id": "b4a842ba-4420-4fd0-be72-cc00164c83d9"
         },
         "status": 200,
         "statusText": "OK"
@@ -997,9 +1033,9 @@
     },
     {
       "callIndex": 1,
-      "id": "43d0f8f8c8d2a679",
+      "id": "fcc3d17c88f1552b",
       "matchKey": "POST api.openai.com/v1/embeddings",
-      "recordedAt": "2026-06-15T13:08:37.963Z",
+      "recordedAt": "2026-07-01T11:36:52.837Z",
       "request": {
         "body": {
           "kind": "json",
@@ -1028,13 +1064,13 @@
           "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "a0c1cdf8a9ec3249-VIE",
+          "cf-ray": "a1451d91c9875a6b-VIE",
           "connection": "keep-alive",
           "content-encoding": "gzip",
           "content-type": "application/json",
-          "date": "Mon, 15 Jun 2026 13:08:38 GMT",
+          "date": "Wed, 01 Jul 2026 11:36:52 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "83",
+          "openai-processing-ms": "76",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
@@ -1049,7 +1085,7 @@
           "x-ratelimit-remaining-tokens": "9999985",
           "x-ratelimit-reset-requests": "6ms",
           "x-ratelimit-reset-tokens": "0s",
-          "x-request-id": "req_130d8dd80ff340f3be99289a6f249e78"
+          "x-request-id": "cd17b8fe-5d3f-4b3a-8e19-965528fa7643"
         },
         "status": 200,
         "statusText": "OK"
@@ -1057,9 +1093,9 @@
     },
     {
       "callIndex": 3,
-      "id": "83cbbf6da482c905",
+      "id": "e09f32cc805b35e9",
       "matchKey": "POST api.openai.com/v1/responses",
-      "recordedAt": "2026-06-15T13:08:39.460Z",
+      "recordedAt": "2026-07-01T11:36:53.803Z",
       "request": {
         "body": {
           "kind": "json",
@@ -1116,11 +1152,11 @@
             "billing": {
               "payer": "developer"
             },
-            "completed_at": 1781528919,
-            "created_at": 1781528918,
+            "completed_at": 1782905813,
+            "created_at": 1782905813,
             "error": null,
             "frequency_penalty": 0,
-            "id": "resp_0b25a1d2d8c902f6006a2ff9562f3881a39ccc1431e249b362",
+            "id": "resp_0d1670a4a982ae06006a44fbd50dd4819ca2bc96afa7993544",
             "incomplete_details": null,
             "instructions": null,
             "max_output_tokens": 128,
@@ -1132,8 +1168,8 @@
             "output": [
               {
                 "arguments": "{\"location\":\"Paris, France\"}",
-                "call_id": "call_AvQX7688fhEaCdlxjn3wmZeZ",
-                "id": "fc_0b25a1d2d8c902f6006a2ff957358081a38b137a8dbbf2df4e",
+                "call_id": "call_2Q7v9joZrNYZM7MGcOJ7m0Kr",
+                "id": "fc_0d1670a4a982ae06006a44fbd5a3bc819c94f9d101027baa9c",
                 "name": "get_weather",
                 "status": "completed",
                 "type": "function_call"
@@ -1161,6 +1197,24 @@
               "verbosity": "medium"
             },
             "tool_choice": "required",
+            "tool_usage": {
+              "image_gen": {
+                "input_tokens": 0,
+                "input_tokens_details": {
+                  "image_tokens": 0,
+                  "text_tokens": 0
+                },
+                "output_tokens": 0,
+                "output_tokens_details": {
+                  "image_tokens": 0,
+                  "text_tokens": 0
+                },
+                "total_tokens": 0
+              },
+              "web_search": {
+                "num_requests": 0
+              }
+            },
             "tools": [
               {
                 "description": "Get the weather for a location",
@@ -1202,13 +1256,13 @@
           "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "a0c1cdf9fb223249-VIE",
+          "cf-ray": "a1451d9309eb5a6b-VIE",
           "connection": "keep-alive",
           "content-encoding": "gzip",
           "content-type": "application/json",
-          "date": "Mon, 15 Jun 2026 13:08:39 GMT",
+          "date": "Wed, 01 Jul 2026 11:36:53 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "1309",
+          "openai-processing-ms": "780",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
@@ -1219,10 +1273,10 @@
           "x-ratelimit-limit-requests": "30000",
           "x-ratelimit-limit-tokens": "150000000",
           "x-ratelimit-remaining-requests": "29999",
-          "x-ratelimit-remaining-tokens": "149999690",
+          "x-ratelimit-remaining-tokens": "149999687",
           "x-ratelimit-reset-requests": "2ms",
           "x-ratelimit-reset-tokens": "0s",
-          "x-request-id": "req_9c1f789f969d498fb28a0c780f54e9d8"
+          "x-request-id": "f7672a23-8157-4391-9117-b7a2795d1198"
         },
         "status": 200,
         "statusText": "OK"
@@ -1230,9 +1284,9 @@
     },
     {
       "callIndex": 4,
-      "id": "417e64addcf59da7",
+      "id": "ac165a19d6cc00c6",
       "matchKey": "POST api.openai.com/v1/responses",
-      "recordedAt": "2026-06-15T13:08:41.140Z",
+      "recordedAt": "2026-07-01T11:36:54.765Z",
       "request": {
         "body": {
           "kind": "json",
@@ -1252,11 +1306,11 @@
                 "role": "user"
               },
               {
-                "id": "fc_0b25a1d2d8c902f6006a2ff957358081a38b137a8dbbf2df4e",
+                "id": "fc_0d1670a4a982ae06006a44fbd5a3bc819c94f9d101027baa9c",
                 "type": "item_reference"
               },
               {
-                "call_id": "call_AvQX7688fhEaCdlxjn3wmZeZ",
+                "call_id": "call_2Q7v9joZrNYZM7MGcOJ7m0Kr",
                 "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
                 "type": "function_call_output"
               }
@@ -1298,11 +1352,11 @@
             "billing": {
               "payer": "developer"
             },
-            "completed_at": 1781528921,
-            "created_at": 1781528919,
+            "completed_at": 1782905814,
+            "created_at": 1782905814,
             "error": null,
             "frequency_penalty": 0,
-            "id": "resp_0b25a1d2d8c902f6006a2ff957b31481a3a25543b14b094372",
+            "id": "resp_0d1670a4a982ae06006a44fbd5ff34819c86ef100a58b377b5",
             "incomplete_details": null,
             "instructions": null,
             "max_output_tokens": 128,
@@ -1314,8 +1368,8 @@
             "output": [
               {
                 "arguments": "{\"location\":\"Paris, France\"}",
-                "call_id": "call_XSXU38q42QnVKyDrElH4Obkg",
-                "id": "fc_0b25a1d2d8c902f6006a2ff958eac481a39747145bfcbd44a9",
+                "call_id": "call_J2mBiH5mXs6wRrpj5za8jTbl",
+                "id": "fc_0d1670a4a982ae06006a44fbd69938819cbce2cd7ca7e4aa82",
                 "name": "get_weather",
                 "status": "completed",
                 "type": "function_call"
@@ -1343,6 +1397,24 @@
               "verbosity": "medium"
             },
             "tool_choice": "required",
+            "tool_usage": {
+              "image_gen": {
+                "input_tokens": 0,
+                "input_tokens_details": {
+                  "image_tokens": 0,
+                  "text_tokens": 0
+                },
+                "output_tokens": 0,
+                "output_tokens_details": {
+                  "image_tokens": 0,
+                  "text_tokens": 0
+                },
+                "total_tokens": 0
+              },
+              "web_search": {
+                "num_requests": 0
+              }
+            },
             "tools": [
               {
                 "description": "Get the weather for a location",
@@ -1384,13 +1456,13 @@
           "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "a0c1ce034b363249-VIE",
+          "cf-ray": "a1451d98fba15a6b-VIE",
           "connection": "keep-alive",
           "content-encoding": "gzip",
           "content-type": "application/json",
-          "date": "Mon, 15 Jun 2026 13:08:41 GMT",
+          "date": "Wed, 01 Jul 2026 11:36:54 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "1478",
+          "openai-processing-ms": "803",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
@@ -1404,7 +1476,7 @@
           "x-ratelimit-remaining-tokens": "149999650",
           "x-ratelimit-reset-requests": "2ms",
           "x-ratelimit-reset-tokens": "0s",
-          "x-request-id": "req_72a976cf46384707ba8f41bbc737cf3b"
+          "x-request-id": "e58ea406-fd31-408a-8dca-9a98622087d1"
         },
         "status": 200,
         "statusText": "OK"
@@ -1412,9 +1484,9 @@
     },
     {
       "callIndex": 5,
-      "id": "341675a0a1a88c63",
+      "id": "9953f150c1ffa8a0",
       "matchKey": "POST api.openai.com/v1/responses",
-      "recordedAt": "2026-06-15T13:08:42.343Z",
+      "recordedAt": "2026-07-01T11:36:56.030Z",
       "request": {
         "body": {
           "kind": "json",
@@ -1434,20 +1506,20 @@
                 "role": "user"
               },
               {
-                "id": "fc_0b25a1d2d8c902f6006a2ff957358081a38b137a8dbbf2df4e",
+                "id": "fc_0d1670a4a982ae06006a44fbd5a3bc819c94f9d101027baa9c",
                 "type": "item_reference"
               },
               {
-                "call_id": "call_AvQX7688fhEaCdlxjn3wmZeZ",
+                "call_id": "call_2Q7v9joZrNYZM7MGcOJ7m0Kr",
                 "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
                 "type": "function_call_output"
               },
               {
-                "id": "fc_0b25a1d2d8c902f6006a2ff958eac481a39747145bfcbd44a9",
+                "id": "fc_0d1670a4a982ae06006a44fbd69938819cbce2cd7ca7e4aa82",
                 "type": "item_reference"
               },
               {
-                "call_id": "call_XSXU38q42QnVKyDrElH4Obkg",
+                "call_id": "call_J2mBiH5mXs6wRrpj5za8jTbl",
                 "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
                 "type": "function_call_output"
               }
@@ -1489,11 +1561,11 @@
             "billing": {
               "payer": "developer"
             },
-            "completed_at": 1781528922,
-            "created_at": 1781528921,
+            "completed_at": 1782905815,
+            "created_at": 1782905815,
             "error": null,
             "frequency_penalty": 0,
-            "id": "resp_0b25a1d2d8c902f6006a2ff9595f2081a38f8aa915715e7646",
+            "id": "resp_0d1670a4a982ae06006a44fbd6f700819cb7ac7acf214ce1d8",
             "incomplete_details": null,
             "instructions": null,
             "max_output_tokens": 128,
@@ -1505,8 +1577,8 @@
             "output": [
               {
                 "arguments": "{\"location\":\"Paris, France\"}",
-                "call_id": "call_of374lHpH3YYQpti3LoZMJz8",
-                "id": "fc_0b25a1d2d8c902f6006a2ff95a165481a3959ecf69f5beea46",
+                "call_id": "call_EyyNRQfPYeHhb9lc8TNZ6WtZ",
+                "id": "fc_0d1670a4a982ae06006a44fbd7c610819cb4841356f23c3429",
                 "name": "get_weather",
                 "status": "completed",
                 "type": "function_call"
@@ -1534,6 +1606,24 @@
               "verbosity": "medium"
             },
             "tool_choice": "required",
+            "tool_usage": {
+              "image_gen": {
+                "input_tokens": 0,
+                "input_tokens_details": {
+                  "image_tokens": 0,
+                  "text_tokens": 0
+                },
+                "output_tokens": 0,
+                "output_tokens_details": {
+                  "image_tokens": 0,
+                  "text_tokens": 0
+                },
+                "total_tokens": 0
+              },
+              "web_search": {
+                "num_requests": 0
+              }
+            },
             "tools": [
               {
                 "description": "Get the weather for a location",
@@ -1575,13 +1665,13 @@
           "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "a0c1ce0dcc613249-VIE",
+          "cf-ray": "a1451d9efdf95a6b-VIE",
           "connection": "keep-alive",
           "content-encoding": "gzip",
           "content-type": "application/json",
-          "date": "Mon, 15 Jun 2026 13:08:42 GMT",
+          "date": "Wed, 01 Jul 2026 11:36:56 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "1035",
+          "openai-processing-ms": "1099",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
@@ -1595,7 +1685,7 @@
           "x-ratelimit-remaining-tokens": "149999612",
           "x-ratelimit-reset-requests": "2ms",
           "x-ratelimit-reset-tokens": "0s",
-          "x-request-id": "req_49d7920b1bae4f0da8fa87a9331efed2"
+          "x-request-id": "f29f86b4-fa2a-4168-8945-db203ca8ca05"
         },
         "status": 200,
         "statusText": "OK"
@@ -1603,9 +1693,9 @@
     },
     {
       "callIndex": 6,
-      "id": "cbb9070d68f84d1b",
+      "id": "bf0ae6643e03845d",
       "matchKey": "POST api.openai.com/v1/responses",
-      "recordedAt": "2026-06-15T13:08:43.548Z",
+      "recordedAt": "2026-07-01T11:36:57.177Z",
       "request": {
         "body": {
           "kind": "json",
@@ -1625,29 +1715,29 @@
                 "role": "user"
               },
               {
-                "id": "fc_0b25a1d2d8c902f6006a2ff957358081a38b137a8dbbf2df4e",
+                "id": "fc_0d1670a4a982ae06006a44fbd5a3bc819c94f9d101027baa9c",
                 "type": "item_reference"
               },
               {
-                "call_id": "call_AvQX7688fhEaCdlxjn3wmZeZ",
+                "call_id": "call_2Q7v9joZrNYZM7MGcOJ7m0Kr",
                 "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
                 "type": "function_call_output"
               },
               {
-                "id": "fc_0b25a1d2d8c902f6006a2ff958eac481a39747145bfcbd44a9",
+                "id": "fc_0d1670a4a982ae06006a44fbd69938819cbce2cd7ca7e4aa82",
                 "type": "item_reference"
               },
               {
-                "call_id": "call_XSXU38q42QnVKyDrElH4Obkg",
+                "call_id": "call_J2mBiH5mXs6wRrpj5za8jTbl",
                 "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
                 "type": "function_call_output"
               },
               {
-                "id": "fc_0b25a1d2d8c902f6006a2ff95a165481a3959ecf69f5beea46",
+                "id": "fc_0d1670a4a982ae06006a44fbd7c610819cb4841356f23c3429",
                 "type": "item_reference"
               },
               {
-                "call_id": "call_of374lHpH3YYQpti3LoZMJz8",
+                "call_id": "call_EyyNRQfPYeHhb9lc8TNZ6WtZ",
                 "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
                 "type": "function_call_output"
               }
@@ -1689,11 +1779,11 @@
             "billing": {
               "payer": "developer"
             },
-            "completed_at": 1781528923,
-            "created_at": 1781528922,
+            "completed_at": 1782905817,
+            "created_at": 1782905816,
             "error": null,
             "frequency_penalty": 0,
-            "id": "resp_0b25a1d2d8c902f6006a2ff95a8dd481a3847100dca2e05e64",
+            "id": "resp_0d1670a4a982ae06006a44fbd8401c819ca9812b93377bfe47",
             "incomplete_details": null,
             "instructions": null,
             "max_output_tokens": 128,
@@ -1705,8 +1795,8 @@
             "output": [
               {
                 "arguments": "{\"location\":\"Paris, France\"}",
-                "call_id": "call_nfHRx6yknrL5pAQPlKeRYu8d",
-                "id": "fc_0b25a1d2d8c902f6006a2ff95b435c81a39123ec9099a17d27",
+                "call_id": "call_m9y7HRD5gRKrWDTEZXJOTdm6",
+                "id": "fc_0d1670a4a982ae06006a44fbd8efd4819cb6b504cf8fbc2cfc",
                 "name": "get_weather",
                 "status": "completed",
                 "type": "function_call"
@@ -1734,6 +1824,24 @@
               "verbosity": "medium"
             },
             "tool_choice": "required",
+            "tool_usage": {
+              "image_gen": {
+                "input_tokens": 0,
+                "input_tokens_details": {
+                  "image_tokens": 0,
+                  "text_tokens": 0
+                },
+                "output_tokens": 0,
+                "output_tokens_details": {
+                  "image_tokens": 0,
+                  "text_tokens": 0
+                },
+                "total_tokens": 0
+              },
+              "web_search": {
+                "num_requests": 0
+              }
+            },
             "tools": [
               {
                 "description": "Get the weather for a location",
@@ -1775,13 +1883,13 @@
           "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "a0c1ce154acb3249-VIE",
+          "cf-ray": "a1451da6f9325a6b-VIE",
           "connection": "keep-alive",
           "content-encoding": "gzip",
           "content-type": "application/json",
-          "date": "Mon, 15 Jun 2026 13:08:43 GMT",
+          "date": "Wed, 01 Jul 2026 11:36:57 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "1029",
+          "openai-processing-ms": "964",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
@@ -1795,7 +1903,7 @@
           "x-ratelimit-remaining-tokens": "149999572",
           "x-ratelimit-reset-requests": "2ms",
           "x-ratelimit-reset-tokens": "0s",
-          "x-request-id": "req_eec9413044834713a0935560ff057d17"
+          "x-request-id": "063a6d44-dea2-4039-88c5-257076e01b2d"
         },
         "status": 200,
         "statusText": "OK"
@@ -1803,9 +1911,9 @@
     },
     {
       "callIndex": 7,
-      "id": "bccc54d212e2503d",
+      "id": "d22bae6c42006c81",
       "matchKey": "POST api.openai.com/v1/responses",
-      "recordedAt": "2026-06-15T13:08:44.902Z",
+      "recordedAt": "2026-07-01T11:36:57.945Z",
       "request": {
         "body": {
           "kind": "json",
@@ -1856,11 +1964,11 @@
             "billing": {
               "payer": "developer"
             },
-            "completed_at": 1781528924,
-            "created_at": 1781528923,
+            "completed_at": 1782905817,
+            "created_at": 1782905817,
             "error": null,
             "frequency_penalty": 0,
-            "id": "resp_0edc151d34749c0a006a2ff95bc61c8192830a0789e2952249",
+            "id": "resp_07d0eacb5e020f19006a44fbd9638c8191bf06a3346592d6d4",
             "incomplete_details": null,
             "instructions": null,
             "max_output_tokens": 32,
@@ -1879,7 +1987,7 @@
                     "type": "output_text"
                   }
                 ],
-                "id": "msg_0edc151d34749c0a006a2ff95cae188192bd080dc85e574076",
+                "id": "msg_07d0eacb5e020f19006a44fbd9cd088191a86403d6e5e83780",
                 "role": "assistant",
                 "status": "completed",
                 "type": "message"
@@ -1920,6 +2028,24 @@
               "verbosity": "medium"
             },
             "tool_choice": "auto",
+            "tool_usage": {
+              "image_gen": {
+                "input_tokens": 0,
+                "input_tokens_details": {
+                  "image_tokens": 0,
+                  "text_tokens": 0
+                },
+                "output_tokens": 0,
+                "output_tokens_details": {
+                  "image_tokens": 0,
+                  "text_tokens": 0
+                },
+                "total_tokens": 0
+              },
+              "web_search": {
+                "num_requests": 0
+              }
+            },
             "tools": [],
             "top_logprobs": 0,
             "top_p": 1,
@@ -1942,13 +2068,13 @@
           "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "a0c1ce1ce95c3249-VIE",
+          "cf-ray": "a1451dae0b145a6b-VIE",
           "connection": "keep-alive",
           "content-encoding": "gzip",
           "content-type": "application/json",
-          "date": "Mon, 15 Jun 2026 13:08:44 GMT",
+          "date": "Wed, 01 Jul 2026 11:36:58 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "1173",
+          "openai-processing-ms": "588",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
@@ -1962,7 +2088,7 @@
           "x-ratelimit-remaining-tokens": "149999942",
           "x-ratelimit-reset-requests": "2ms",
           "x-ratelimit-reset-tokens": "0s",
-          "x-request-id": "req_f88919222bd54f849db8d5d44579efa8"
+          "x-request-id": "0c9b409a-3a76-498e-847f-a6f8b8b0a32b"
         },
         "status": 200,
         "statusText": "OK"
@@ -1970,9 +2096,9 @@
     },
     {
       "callIndex": 8,
-      "id": "8eec740c1be01c5c",
+      "id": "6d0eec1cfcef015d",
       "matchKey": "POST api.openai.com/v1/responses",
-      "recordedAt": "2026-06-15T13:08:45.904Z",
+      "recordedAt": "2026-07-01T11:36:58.917Z",
       "request": {
         "body": {
           "kind": "json",
@@ -2019,19 +2145,19 @@
       "response": {
         "body": {
           "chunks": [
-            "event: response.created\ndata: {\"type\":\"response.created\",\"response\":{\"id\":\"resp_0418ddb09e120f3d006a2ff95d20048192bb64d14000f93e29\",\"object\":\"response\",\"created_at\":1781528925,\"status\":\"in_progress\",\"background\":false,\"completed_at\":null,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":32,\"max_tool_calls\":null,\"model\":\"gpt-4o-mini-2024-07-18\",\"moderation\":null,\"output\":[],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":null,\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"context\":null,\"effort\":null,\"summary\":null},\"safety_identifier\":null,\"service_tier\":\"auto\",\"store\":true,\"temperature\":0,\"text\":{\"format\":{\"type\":\"json_schema\",\"description\":null,\"name\":\"response\",\"schema\":{\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"additionalProperties\":false},\"strict\":true},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tools\":[],\"top_logprobs\":0,\"top_p\":1,\"truncation\":\"disabled\",\"usage\":null,\"user\":null,\"metadata\":{}},\"sequence_number\":0}",
-            "event: response.in_progress\ndata: {\"type\":\"response.in_progress\",\"response\":{\"id\":\"resp_0418ddb09e120f3d006a2ff95d20048192bb64d14000f93e29\",\"object\":\"response\",\"created_at\":1781528925,\"status\":\"in_progress\",\"background\":false,\"completed_at\":null,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":32,\"max_tool_calls\":null,\"model\":\"gpt-4o-mini-2024-07-18\",\"moderation\":null,\"output\":[],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":null,\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"context\":null,\"effort\":null,\"summary\":null},\"safety_identifier\":null,\"service_tier\":\"auto\",\"store\":true,\"temperature\":0,\"text\":{\"format\":{\"type\":\"json_schema\",\"description\":null,\"name\":\"response\",\"schema\":{\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"additionalProperties\":false},\"strict\":true},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tools\":[],\"top_logprobs\":0,\"top_p\":1,\"truncation\":\"disabled\",\"usage\":null,\"user\":null,\"metadata\":{}},\"sequence_number\":1}",
-            "event: response.output_item.added\ndata: {\"type\":\"response.output_item.added\",\"item\":{\"id\":\"msg_0418ddb09e120f3d006a2ff95d96548192a0f5f1a115863f8e\",\"type\":\"message\",\"status\":\"in_progress\",\"content\":[],\"role\":\"assistant\"},\"output_index\":0,\"sequence_number\":2}",
-            "event: response.content_part.added\ndata: {\"type\":\"response.content_part.added\",\"content_index\":0,\"item_id\":\"msg_0418ddb09e120f3d006a2ff95d96548192a0f5f1a115863f8e\",\"output_index\":0,\"part\":{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"\"},\"sequence_number\":3}",
-            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"{\\\"\",\"item_id\":\"msg_0418ddb09e120f3d006a2ff95d96548192a0f5f1a115863f8e\",\"logprobs\":[],\"obfuscation\":\"aNMhy7LXjxBJqr\",\"output_index\":0,\"sequence_number\":4}",
-            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"city\",\"item_id\":\"msg_0418ddb09e120f3d006a2ff95d96548192a0f5f1a115863f8e\",\"logprobs\":[],\"obfuscation\":\"qHh2rTbrslig\",\"output_index\":0,\"sequence_number\":5}",
-            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"\\\":\\\"\",\"item_id\":\"msg_0418ddb09e120f3d006a2ff95d96548192a0f5f1a115863f8e\",\"logprobs\":[],\"obfuscation\":\"QEBmKUnMLL31l\",\"output_index\":0,\"sequence_number\":6}",
-            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"Paris\",\"item_id\":\"msg_0418ddb09e120f3d006a2ff95d96548192a0f5f1a115863f8e\",\"logprobs\":[],\"obfuscation\":\"qdHMOPoZeY2\",\"output_index\":0,\"sequence_number\":7}",
-            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"\\\"}\",\"item_id\":\"msg_0418ddb09e120f3d006a2ff95d96548192a0f5f1a115863f8e\",\"logprobs\":[],\"obfuscation\":\"40TvwA19dzdkKS\",\"output_index\":0,\"sequence_number\":8}",
-            "event: response.output_text.done\ndata: {\"type\":\"response.output_text.done\",\"content_index\":0,\"item_id\":\"msg_0418ddb09e120f3d006a2ff95d96548192a0f5f1a115863f8e\",\"logprobs\":[],\"output_index\":0,\"sequence_number\":9,\"text\":\"{\\\"city\\\":\\\"Paris\\\"}\"}",
-            "event: response.content_part.done\ndata: {\"type\":\"response.content_part.done\",\"content_index\":0,\"item_id\":\"msg_0418ddb09e120f3d006a2ff95d96548192a0f5f1a115863f8e\",\"output_index\":0,\"part\":{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"{\\\"city\\\":\\\"Paris\\\"}\"},\"sequence_number\":10}",
-            "event: response.output_item.done\ndata: {\"type\":\"response.output_item.done\",\"item\":{\"id\":\"msg_0418ddb09e120f3d006a2ff95d96548192a0f5f1a115863f8e\",\"type\":\"message\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"{\\\"city\\\":\\\"Paris\\\"}\"}],\"role\":\"assistant\"},\"output_index\":0,\"sequence_number\":11}",
-            "event: response.completed\ndata: {\"type\":\"response.completed\",\"response\":{\"id\":\"resp_0418ddb09e120f3d006a2ff95d20048192bb64d14000f93e29\",\"object\":\"response\",\"created_at\":1781528925,\"status\":\"completed\",\"background\":false,\"completed_at\":1781528925,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":32,\"max_tool_calls\":null,\"model\":\"gpt-4o-mini-2024-07-18\",\"moderation\":null,\"output\":[{\"id\":\"msg_0418ddb09e120f3d006a2ff95d96548192a0f5f1a115863f8e\",\"type\":\"message\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"{\\\"city\\\":\\\"Paris\\\"}\"}],\"role\":\"assistant\"}],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":null,\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"context\":null,\"effort\":null,\"summary\":null},\"safety_identifier\":null,\"service_tier\":\"default\",\"store\":true,\"temperature\":0,\"text\":{\"format\":{\"type\":\"json_schema\",\"description\":null,\"name\":\"response\",\"schema\":{\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"additionalProperties\":false},\"strict\":true},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tools\":[],\"top_logprobs\":0,\"top_p\":1,\"truncation\":\"disabled\",\"usage\":{\"input_tokens\":38,\"input_tokens_details\":{\"cached_tokens\":0},\"output_tokens\":6,\"output_tokens_details\":{\"reasoning_tokens\":0},\"total_tokens\":44},\"user\":null,\"metadata\":{}},\"sequence_number\":12}"
+            "event: response.created\ndata: {\"type\":\"response.created\",\"response\":{\"id\":\"resp_0f2b6bcc380a0fa0006a44fbda2d208192a2aadb0ba544e277\",\"object\":\"response\",\"created_at\":1782905818,\"status\":\"in_progress\",\"background\":false,\"completed_at\":null,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":32,\"max_tool_calls\":null,\"model\":\"gpt-4o-mini-2024-07-18\",\"moderation\":null,\"output\":[],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":null,\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"context\":null,\"effort\":null,\"summary\":null},\"safety_identifier\":null,\"service_tier\":\"auto\",\"store\":true,\"temperature\":0,\"text\":{\"format\":{\"type\":\"json_schema\",\"description\":null,\"name\":\"response\",\"schema\":{\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"additionalProperties\":false},\"strict\":true},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tool_usage\":{\"image_gen\":{\"input_tokens\":0,\"input_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"output_tokens\":0,\"output_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"total_tokens\":0},\"web_search\":{\"num_requests\":0}},\"tools\":[],\"top_logprobs\":0,\"top_p\":1,\"truncation\":\"disabled\",\"usage\":null,\"user\":null,\"metadata\":{}},\"sequence_number\":0}",
+            "event: response.in_progress\ndata: {\"type\":\"response.in_progress\",\"response\":{\"id\":\"resp_0f2b6bcc380a0fa0006a44fbda2d208192a2aadb0ba544e277\",\"object\":\"response\",\"created_at\":1782905818,\"status\":\"in_progress\",\"background\":false,\"completed_at\":null,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":32,\"max_tool_calls\":null,\"model\":\"gpt-4o-mini-2024-07-18\",\"moderation\":null,\"output\":[],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":null,\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"context\":null,\"effort\":null,\"summary\":null},\"safety_identifier\":null,\"service_tier\":\"auto\",\"store\":true,\"temperature\":0,\"text\":{\"format\":{\"type\":\"json_schema\",\"description\":null,\"name\":\"response\",\"schema\":{\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"additionalProperties\":false},\"strict\":true},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tool_usage\":{\"image_gen\":{\"input_tokens\":0,\"input_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"output_tokens\":0,\"output_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"total_tokens\":0},\"web_search\":{\"num_requests\":0}},\"tools\":[],\"top_logprobs\":0,\"top_p\":1,\"truncation\":\"disabled\",\"usage\":null,\"user\":null,\"metadata\":{}},\"sequence_number\":1}",
+            "event: response.output_item.added\ndata: {\"type\":\"response.output_item.added\",\"item\":{\"id\":\"msg_0f2b6bcc380a0fa0006a44fbdac0f88192a9cf5e86637b442d\",\"type\":\"message\",\"status\":\"in_progress\",\"content\":[],\"role\":\"assistant\"},\"output_index\":0,\"sequence_number\":2}",
+            "event: response.content_part.added\ndata: {\"type\":\"response.content_part.added\",\"content_index\":0,\"item_id\":\"msg_0f2b6bcc380a0fa0006a44fbdac0f88192a9cf5e86637b442d\",\"output_index\":0,\"part\":{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"\"},\"sequence_number\":3}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"{\\\"\",\"item_id\":\"msg_0f2b6bcc380a0fa0006a44fbdac0f88192a9cf5e86637b442d\",\"logprobs\":[],\"obfuscation\":\"2DliUQjkuLhdNV\",\"output_index\":0,\"sequence_number\":4}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"city\",\"item_id\":\"msg_0f2b6bcc380a0fa0006a44fbdac0f88192a9cf5e86637b442d\",\"logprobs\":[],\"obfuscation\":\"1HdUFHZ9vH30\",\"output_index\":0,\"sequence_number\":5}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"\\\":\\\"\",\"item_id\":\"msg_0f2b6bcc380a0fa0006a44fbdac0f88192a9cf5e86637b442d\",\"logprobs\":[],\"obfuscation\":\"dvUetfHZwh9cp\",\"output_index\":0,\"sequence_number\":6}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"Paris\",\"item_id\":\"msg_0f2b6bcc380a0fa0006a44fbdac0f88192a9cf5e86637b442d\",\"logprobs\":[],\"obfuscation\":\"EUsYDfvOvNR\",\"output_index\":0,\"sequence_number\":7}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"\\\"}\",\"item_id\":\"msg_0f2b6bcc380a0fa0006a44fbdac0f88192a9cf5e86637b442d\",\"logprobs\":[],\"obfuscation\":\"gpCUzuQR1TaHJZ\",\"output_index\":0,\"sequence_number\":8}",
+            "event: response.output_text.done\ndata: {\"type\":\"response.output_text.done\",\"content_index\":0,\"item_id\":\"msg_0f2b6bcc380a0fa0006a44fbdac0f88192a9cf5e86637b442d\",\"logprobs\":[],\"output_index\":0,\"sequence_number\":9,\"text\":\"{\\\"city\\\":\\\"Paris\\\"}\"}",
+            "event: response.content_part.done\ndata: {\"type\":\"response.content_part.done\",\"content_index\":0,\"item_id\":\"msg_0f2b6bcc380a0fa0006a44fbdac0f88192a9cf5e86637b442d\",\"output_index\":0,\"part\":{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"{\\\"city\\\":\\\"Paris\\\"}\"},\"sequence_number\":10}",
+            "event: response.output_item.done\ndata: {\"type\":\"response.output_item.done\",\"item\":{\"id\":\"msg_0f2b6bcc380a0fa0006a44fbdac0f88192a9cf5e86637b442d\",\"type\":\"message\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"{\\\"city\\\":\\\"Paris\\\"}\"}],\"role\":\"assistant\"},\"output_index\":0,\"sequence_number\":11}",
+            "event: response.completed\ndata: {\"type\":\"response.completed\",\"response\":{\"id\":\"resp_0f2b6bcc380a0fa0006a44fbda2d208192a2aadb0ba544e277\",\"object\":\"response\",\"created_at\":1782905818,\"status\":\"completed\",\"background\":false,\"completed_at\":1782905818,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":32,\"max_tool_calls\":null,\"model\":\"gpt-4o-mini-2024-07-18\",\"moderation\":null,\"output\":[{\"id\":\"msg_0f2b6bcc380a0fa0006a44fbdac0f88192a9cf5e86637b442d\",\"type\":\"message\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"{\\\"city\\\":\\\"Paris\\\"}\"}],\"role\":\"assistant\"}],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":null,\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"context\":null,\"effort\":null,\"summary\":null},\"safety_identifier\":null,\"service_tier\":\"default\",\"store\":true,\"temperature\":0,\"text\":{\"format\":{\"type\":\"json_schema\",\"description\":null,\"name\":\"response\",\"schema\":{\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"additionalProperties\":false},\"strict\":true},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tool_usage\":{\"image_gen\":{\"input_tokens\":0,\"input_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"output_tokens\":0,\"output_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"total_tokens\":0},\"web_search\":{\"num_requests\":0}},\"tools\":[],\"top_logprobs\":0,\"top_p\":1,\"truncation\":\"disabled\",\"usage\":{\"input_tokens\":38,\"input_tokens_details\":{\"cached_tokens\":0},\"output_tokens\":6,\"output_tokens_details\":{\"reasoning_tokens\":0},\"total_tokens\":44},\"user\":null,\"metadata\":{}},\"sequence_number\":12}"
           ],
           "kind": "sse"
         },
@@ -2039,12 +2165,12 @@
           "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "a0c1ce2559313249-VIE",
+          "cf-ray": "a1451db2ec825a6b-VIE",
           "connection": "keep-alive",
           "content-type": "text/event-stream; charset=utf-8",
-          "date": "Mon, 15 Jun 2026 13:08:45 GMT",
+          "date": "Wed, 01 Jul 2026 11:36:58 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "192",
+          "openai-processing-ms": "183",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
@@ -2052,7 +2178,1076 @@
           "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
           "transfer-encoding": "chunked",
           "x-content-type-options": "nosniff",
-          "x-request-id": "req_944fa722f10441f99d1f4c15b4907561"
+          "x-request-id": "038452fa-ef3f-4fa7-9905-b960091f7fb9"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 9,
+      "id": "3f08b53881e505ce",
+      "matchKey": "POST api.openai.com/v1/responses",
+      "recordedAt": "2026-07-01T11:37:00.098Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "input": [
+              {
+                "content": "You are a terse assistant.",
+                "role": "system"
+              },
+              {
+                "content": [
+                  {
+                    "text": "Reply with exactly HELLO and no punctuation.",
+                    "type": "input_text"
+                  }
+                ],
+                "role": "user"
+              }
+            ],
+            "max_output_tokens": 24,
+            "model": "gpt-4o-mini-2024-07-18"
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.openai.com/v1/responses"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "background": false,
+            "billing": {
+              "payer": "developer"
+            },
+            "completed_at": 1782905819,
+            "created_at": 1782905819,
+            "error": null,
+            "frequency_penalty": 0,
+            "id": "resp_0a0c15d796c6a34f006a44fbdb2284819fb736e3e820c1a23b",
+            "incomplete_details": null,
+            "instructions": null,
+            "max_output_tokens": 24,
+            "max_tool_calls": null,
+            "metadata": {},
+            "model": "gpt-4o-mini-2024-07-18",
+            "moderation": null,
+            "object": "response",
+            "output": [
+              {
+                "content": [
+                  {
+                    "annotations": [],
+                    "logprobs": [],
+                    "text": "HELLO",
+                    "type": "output_text"
+                  }
+                ],
+                "id": "msg_0a0c15d796c6a34f006a44fbdbc284819fb41f32c54acf1f53",
+                "role": "assistant",
+                "status": "completed",
+                "type": "message"
+              }
+            ],
+            "parallel_tool_calls": true,
+            "presence_penalty": 0,
+            "previous_response_id": null,
+            "prompt_cache_key": "[REDACTED]",
+            "prompt_cache_retention": "in_memory",
+            "reasoning": {
+              "context": null,
+              "effort": null,
+              "summary": null
+            },
+            "safety_identifier": null,
+            "service_tier": "default",
+            "status": "completed",
+            "store": true,
+            "temperature": 1,
+            "text": {
+              "format": {
+                "type": "text"
+              },
+              "verbosity": "medium"
+            },
+            "tool_choice": "auto",
+            "tool_usage": {
+              "image_gen": {
+                "input_tokens": 0,
+                "input_tokens_details": {
+                  "image_tokens": 0,
+                  "text_tokens": 0
+                },
+                "output_tokens": 0,
+                "output_tokens_details": {
+                  "image_tokens": 0,
+                  "text_tokens": 0
+                },
+                "total_tokens": 0
+              },
+              "web_search": {
+                "num_requests": 0
+              }
+            },
+            "tools": [],
+            "top_logprobs": 0,
+            "top_p": 1,
+            "truncation": "disabled",
+            "usage": {
+              "input_tokens": 26,
+              "input_tokens_details": {
+                "cached_tokens": 0
+              },
+              "output_tokens": 3,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "total_tokens": 29
+            },
+            "user": null
+          }
+        },
+        "headers": {
+          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "a1451db8fe9d5a6b-VIE",
+          "connection": "keep-alive",
+          "content-encoding": "gzip",
+          "content-type": "application/json",
+          "date": "Wed, 01 Jul 2026 11:37:00 GMT",
+          "openai-organization": "braintrust-data",
+          "openai-processing-ms": "908",
+          "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
+          "openai-version": "2020-10-01",
+          "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+          "transfer-encoding": "chunked",
+          "x-content-type-options": "nosniff",
+          "x-ratelimit-limit-requests": "30000",
+          "x-ratelimit-limit-tokens": "150000000",
+          "x-ratelimit-remaining-requests": "29999",
+          "x-ratelimit-remaining-tokens": "149999955",
+          "x-ratelimit-reset-requests": "2ms",
+          "x-ratelimit-reset-tokens": "0s",
+          "x-request-id": "04232a6b-5e31-45df-82dd-a90abcd939c6"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 10,
+      "id": "d026123ce87dfbca",
+      "matchKey": "POST api.openai.com/v1/responses",
+      "recordedAt": "2026-07-01T11:37:01.278Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "input": [
+              {
+                "content": "You are a terse assistant.",
+                "role": "system"
+              },
+              {
+                "content": [
+                  {
+                    "text": "Reply with exactly STREAM HELLO and no punctuation.",
+                    "type": "input_text"
+                  }
+                ],
+                "role": "user"
+              }
+            ],
+            "max_output_tokens": 24,
+            "model": "gpt-4o-mini-2024-07-18",
+            "stream": true
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.openai.com/v1/responses"
+      },
+      "response": {
+        "body": {
+          "chunks": [
+            "event: response.created\ndata: {\"type\":\"response.created\",\"response\":{\"id\":\"resp_0e769a01cfb03e99006a44fbdc61dc819fb50fcb4e64cab6ba\",\"object\":\"response\",\"created_at\":1782905820,\"status\":\"in_progress\",\"background\":false,\"completed_at\":null,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":24,\"max_tool_calls\":null,\"model\":\"gpt-4o-mini-2024-07-18\",\"moderation\":null,\"output\":[],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":null,\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"context\":null,\"effort\":null,\"summary\":null},\"safety_identifier\":null,\"service_tier\":\"auto\",\"store\":true,\"temperature\":1,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tool_usage\":{\"image_gen\":{\"input_tokens\":0,\"input_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"output_tokens\":0,\"output_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"total_tokens\":0},\"web_search\":{\"num_requests\":0}},\"tools\":[],\"top_logprobs\":0,\"top_p\":1,\"truncation\":\"disabled\",\"usage\":null,\"user\":null,\"metadata\":{}},\"sequence_number\":0}",
+            "event: response.in_progress\ndata: {\"type\":\"response.in_progress\",\"response\":{\"id\":\"resp_0e769a01cfb03e99006a44fbdc61dc819fb50fcb4e64cab6ba\",\"object\":\"response\",\"created_at\":1782905820,\"status\":\"in_progress\",\"background\":false,\"completed_at\":null,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":24,\"max_tool_calls\":null,\"model\":\"gpt-4o-mini-2024-07-18\",\"moderation\":null,\"output\":[],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":null,\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"context\":null,\"effort\":null,\"summary\":null},\"safety_identifier\":null,\"service_tier\":\"auto\",\"store\":true,\"temperature\":1,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tool_usage\":{\"image_gen\":{\"input_tokens\":0,\"input_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"output_tokens\":0,\"output_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"total_tokens\":0},\"web_search\":{\"num_requests\":0}},\"tools\":[],\"top_logprobs\":0,\"top_p\":1,\"truncation\":\"disabled\",\"usage\":null,\"user\":null,\"metadata\":{}},\"sequence_number\":1}",
+            "event: response.output_item.added\ndata: {\"type\":\"response.output_item.added\",\"item\":{\"id\":\"msg_0e769a01cfb03e99006a44fbdd1c34819f847b257326c553a3\",\"type\":\"message\",\"status\":\"in_progress\",\"content\":[],\"role\":\"assistant\"},\"output_index\":0,\"sequence_number\":2}",
+            "event: response.content_part.added\ndata: {\"type\":\"response.content_part.added\",\"content_index\":0,\"item_id\":\"msg_0e769a01cfb03e99006a44fbdd1c34819f847b257326c553a3\",\"output_index\":0,\"part\":{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"\"},\"sequence_number\":3}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"STREAM\",\"item_id\":\"msg_0e769a01cfb03e99006a44fbdd1c34819f847b257326c553a3\",\"logprobs\":[],\"obfuscation\":\"hTnuV2wiJV\",\"output_index\":0,\"sequence_number\":4}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\" HEL\",\"item_id\":\"msg_0e769a01cfb03e99006a44fbdd1c34819f847b257326c553a3\",\"logprobs\":[],\"obfuscation\":\"BHAgzgld0ZoK\",\"output_index\":0,\"sequence_number\":5}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"LO\",\"item_id\":\"msg_0e769a01cfb03e99006a44fbdd1c34819f847b257326c553a3\",\"logprobs\":[],\"obfuscation\":\"XjE1Ce8MJwWqVW\",\"output_index\":0,\"sequence_number\":6}",
+            "event: response.output_text.done\ndata: {\"type\":\"response.output_text.done\",\"content_index\":0,\"item_id\":\"msg_0e769a01cfb03e99006a44fbdd1c34819f847b257326c553a3\",\"logprobs\":[],\"output_index\":0,\"sequence_number\":7,\"text\":\"STREAM HELLO\"}",
+            "event: response.content_part.done\ndata: {\"type\":\"response.content_part.done\",\"content_index\":0,\"item_id\":\"msg_0e769a01cfb03e99006a44fbdd1c34819f847b257326c553a3\",\"output_index\":0,\"part\":{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"STREAM HELLO\"},\"sequence_number\":8}",
+            "event: response.output_item.done\ndata: {\"type\":\"response.output_item.done\",\"item\":{\"id\":\"msg_0e769a01cfb03e99006a44fbdd1c34819f847b257326c553a3\",\"type\":\"message\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"STREAM HELLO\"}],\"role\":\"assistant\"},\"output_index\":0,\"sequence_number\":9}",
+            "event: response.completed\ndata: {\"type\":\"response.completed\",\"response\":{\"id\":\"resp_0e769a01cfb03e99006a44fbdc61dc819fb50fcb4e64cab6ba\",\"object\":\"response\",\"created_at\":1782905820,\"status\":\"completed\",\"background\":false,\"completed_at\":1782905821,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":24,\"max_tool_calls\":null,\"model\":\"gpt-4o-mini-2024-07-18\",\"moderation\":null,\"output\":[{\"id\":\"msg_0e769a01cfb03e99006a44fbdd1c34819f847b257326c553a3\",\"type\":\"message\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"STREAM HELLO\"}],\"role\":\"assistant\"}],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":null,\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"context\":null,\"effort\":null,\"summary\":null},\"safety_identifier\":null,\"service_tier\":\"default\",\"store\":true,\"temperature\":1,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tool_usage\":{\"image_gen\":{\"input_tokens\":0,\"input_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"output_tokens\":0,\"output_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"total_tokens\":0},\"web_search\":{\"num_requests\":0}},\"tools\":[],\"top_logprobs\":0,\"top_p\":1,\"truncation\":\"disabled\",\"usage\":{\"input_tokens\":27,\"input_tokens_details\":{\"cached_tokens\":0},\"output_tokens\":4,\"output_tokens_details\":{\"reasoning_tokens\":0},\"total_tokens\":31},\"user\":null,\"metadata\":{}},\"sequence_number\":10}"
+          ],
+          "kind": "sse"
+        },
+        "headers": {
+          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "a1451dc058b05a6b-VIE",
+          "connection": "keep-alive",
+          "content-type": "text/event-stream; charset=utf-8",
+          "date": "Wed, 01 Jul 2026 11:37:00 GMT",
+          "openai-organization": "braintrust-data",
+          "openai-processing-ms": "245",
+          "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
+          "openai-version": "2020-10-01",
+          "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+          "transfer-encoding": "chunked",
+          "x-content-type-options": "nosniff",
+          "x-request-id": "470f07ce-d6bf-49d8-9e80-3e076c946f99"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 11,
+      "id": "34ad62d7c96775e7",
+      "matchKey": "POST api.openai.com/v1/responses",
+      "recordedAt": "2026-07-01T11:37:04.625Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "input": [
+              {
+                "content": "You are a shopping assistant. Use the tools before answering pricing questions.",
+                "role": "system"
+              },
+              {
+                "content": [
+                  {
+                    "text": "I need help comparing laptop prices before checkout.",
+                    "type": "input_text"
+                  }
+                ],
+                "role": "user"
+              },
+              {
+                "content": [
+                  {
+                    "text": "I can compare store prices and apply a discount code.",
+                    "type": "output_text"
+                  }
+                ],
+                "role": "assistant"
+              },
+              {
+                "content": [
+                  {
+                    "text": "Call get_store_price for a laptop at StoreA and StoreB, then call apply_discount with code SAVE20 for the cheaper price. Finish with the discounted total.",
+                    "type": "input_text"
+                  }
+                ],
+                "role": "user"
+              }
+            ],
+            "max_output_tokens": 256,
+            "model": "gpt-4o-mini-2024-07-18",
+            "temperature": 0,
+            "tool_choice": "auto",
+            "tools": [
+              {
+                "description": "Get the price of an item at a store",
+                "name": "get_store_price",
+                "parameters": {
+                  "$schema": "http://json-schema.org/draft-07/schema#",
+                  "additionalProperties": false,
+                  "properties": {
+                    "item": {
+                      "description": "The item to price",
+                      "type": "string"
+                    },
+                    "store": {
+                      "description": "The store name",
+                      "type": "string"
+                    }
+                  },
+                  "required": ["item", "store"],
+                  "type": "object"
+                },
+                "type": "function"
+              },
+              {
+                "description": "Apply a discount code to a total",
+                "name": "apply_discount",
+                "parameters": {
+                  "$schema": "http://json-schema.org/draft-07/schema#",
+                  "additionalProperties": false,
+                  "properties": {
+                    "discountCode": {
+                      "description": "The discount code to apply",
+                      "type": "string"
+                    },
+                    "total": {
+                      "description": "The original total",
+                      "type": "number"
+                    }
+                  },
+                  "required": ["discountCode", "total"],
+                  "type": "object"
+                },
+                "type": "function"
+              }
+            ]
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.openai.com/v1/responses"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "background": false,
+            "billing": {
+              "payer": "developer"
+            },
+            "completed_at": 1782905824,
+            "created_at": 1782905821,
+            "error": null,
+            "frequency_penalty": 0,
+            "id": "resp_05a90b95f7a788b5006a44fbdd814c81a3baad795e58c3a0e1",
+            "incomplete_details": null,
+            "instructions": null,
+            "max_output_tokens": 256,
+            "max_tool_calls": null,
+            "metadata": {},
+            "model": "gpt-4o-mini-2024-07-18",
+            "moderation": null,
+            "object": "response",
+            "output": [
+              {
+                "arguments": "{\"item\":\"laptop\",\"store\":\"StoreA\"}",
+                "call_id": "call_8GGuS9G3qXOu0uQjVEsKgw1t",
+                "id": "fc_05a90b95f7a788b5006a44fbe05b4c81a3b5987ee6fd97b39f",
+                "name": "get_store_price",
+                "status": "completed",
+                "type": "function_call"
+              },
+              {
+                "arguments": "{\"item\":\"laptop\",\"store\":\"StoreB\"}",
+                "call_id": "call_lLjZSipWvTnUgrfgIhcwNsBk",
+                "id": "fc_05a90b95f7a788b5006a44fbe05b6481a38c617a786b550ef3",
+                "name": "get_store_price",
+                "status": "completed",
+                "type": "function_call"
+              }
+            ],
+            "parallel_tool_calls": true,
+            "presence_penalty": 0,
+            "previous_response_id": null,
+            "prompt_cache_key": "[REDACTED]",
+            "prompt_cache_retention": "in_memory",
+            "reasoning": {
+              "context": null,
+              "effort": null,
+              "summary": null
+            },
+            "safety_identifier": null,
+            "service_tier": "default",
+            "status": "completed",
+            "store": true,
+            "temperature": 0,
+            "text": {
+              "format": {
+                "type": "text"
+              },
+              "verbosity": "medium"
+            },
+            "tool_choice": "auto",
+            "tool_usage": {
+              "image_gen": {
+                "input_tokens": 0,
+                "input_tokens_details": {
+                  "image_tokens": 0,
+                  "text_tokens": 0
+                },
+                "output_tokens": 0,
+                "output_tokens_details": {
+                  "image_tokens": 0,
+                  "text_tokens": 0
+                },
+                "total_tokens": 0
+              },
+              "web_search": {
+                "num_requests": 0
+              }
+            },
+            "tools": [
+              {
+                "description": "Get the price of an item at a store",
+                "name": "get_store_price",
+                "parameters": {
+                  "$schema": "http://json-schema.org/draft-07/schema#",
+                  "additionalProperties": false,
+                  "properties": {
+                    "item": {
+                      "description": "The item to price",
+                      "type": "string"
+                    },
+                    "store": {
+                      "description": "The store name",
+                      "type": "string"
+                    }
+                  },
+                  "required": ["item", "store"],
+                  "type": "object"
+                },
+                "strict": true,
+                "type": "function"
+              },
+              {
+                "description": "Apply a discount code to a total",
+                "name": "apply_discount",
+                "parameters": {
+                  "$schema": "http://json-schema.org/draft-07/schema#",
+                  "additionalProperties": false,
+                  "properties": {
+                    "discountCode": {
+                      "description": "The discount code to apply",
+                      "type": "string"
+                    },
+                    "total": {
+                      "description": "The original total",
+                      "type": "number"
+                    }
+                  },
+                  "required": ["discountCode", "total"],
+                  "type": "object"
+                },
+                "strict": true,
+                "type": "function"
+              }
+            ],
+            "top_logprobs": 0,
+            "top_p": 1,
+            "truncation": "disabled",
+            "usage": {
+              "input_tokens": 173,
+              "input_tokens_details": {
+                "cached_tokens": 0
+              },
+              "output_tokens": 59,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "total_tokens": 232
+            },
+            "user": null
+          }
+        },
+        "headers": {
+          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "a1451dc7cb805a6b-VIE",
+          "connection": "keep-alive",
+          "content-encoding": "gzip",
+          "content-type": "application/json",
+          "date": "Wed, 01 Jul 2026 11:37:04 GMT",
+          "openai-organization": "braintrust-data",
+          "openai-processing-ms": "3170",
+          "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
+          "openai-version": "2020-10-01",
+          "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+          "transfer-encoding": "chunked",
+          "x-content-type-options": "nosniff",
+          "x-ratelimit-limit-requests": "30000",
+          "x-ratelimit-limit-tokens": "150000000",
+          "x-ratelimit-remaining-requests": "29999",
+          "x-ratelimit-remaining-tokens": "149999610",
+          "x-ratelimit-reset-requests": "2ms",
+          "x-ratelimit-reset-tokens": "0s",
+          "x-request-id": "0d0edd0f-d34b-41f6-bf81-c4924d539f1f"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 12,
+      "id": "9f95a51ba8770b2c",
+      "matchKey": "POST api.openai.com/v1/responses",
+      "recordedAt": "2026-07-01T11:37:06.632Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "input": [
+              {
+                "content": "You are a shopping assistant. Use the tools before answering pricing questions.",
+                "role": "system"
+              },
+              {
+                "content": [
+                  {
+                    "text": "I need help comparing laptop prices before checkout.",
+                    "type": "input_text"
+                  }
+                ],
+                "role": "user"
+              },
+              {
+                "content": [
+                  {
+                    "text": "I can compare store prices and apply a discount code.",
+                    "type": "output_text"
+                  }
+                ],
+                "role": "assistant"
+              },
+              {
+                "content": [
+                  {
+                    "text": "Call get_store_price for a laptop at StoreA and StoreB, then call apply_discount with code SAVE20 for the cheaper price. Finish with the discounted total.",
+                    "type": "input_text"
+                  }
+                ],
+                "role": "user"
+              },
+              {
+                "id": "fc_05a90b95f7a788b5006a44fbe05b4c81a3b5987ee6fd97b39f",
+                "type": "item_reference"
+              },
+              {
+                "id": "fc_05a90b95f7a788b5006a44fbe05b6481a38c617a786b550ef3",
+                "type": "item_reference"
+              },
+              {
+                "call_id": "call_8GGuS9G3qXOu0uQjVEsKgw1t",
+                "output": "{\"item\":\"laptop\",\"price\":999,\"store\":\"StoreA\"}",
+                "type": "function_call_output"
+              },
+              {
+                "call_id": "call_lLjZSipWvTnUgrfgIhcwNsBk",
+                "output": "{\"item\":\"laptop\",\"price\":1099,\"store\":\"StoreB\"}",
+                "type": "function_call_output"
+              }
+            ],
+            "max_output_tokens": 256,
+            "model": "gpt-4o-mini-2024-07-18",
+            "temperature": 0,
+            "tool_choice": "auto",
+            "tools": [
+              {
+                "description": "Get the price of an item at a store",
+                "name": "get_store_price",
+                "parameters": {
+                  "$schema": "http://json-schema.org/draft-07/schema#",
+                  "additionalProperties": false,
+                  "properties": {
+                    "item": {
+                      "description": "The item to price",
+                      "type": "string"
+                    },
+                    "store": {
+                      "description": "The store name",
+                      "type": "string"
+                    }
+                  },
+                  "required": ["item", "store"],
+                  "type": "object"
+                },
+                "type": "function"
+              },
+              {
+                "description": "Apply a discount code to a total",
+                "name": "apply_discount",
+                "parameters": {
+                  "$schema": "http://json-schema.org/draft-07/schema#",
+                  "additionalProperties": false,
+                  "properties": {
+                    "discountCode": {
+                      "description": "The discount code to apply",
+                      "type": "string"
+                    },
+                    "total": {
+                      "description": "The original total",
+                      "type": "number"
+                    }
+                  },
+                  "required": ["discountCode", "total"],
+                  "type": "object"
+                },
+                "type": "function"
+              }
+            ]
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.openai.com/v1/responses"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "background": false,
+            "billing": {
+              "payer": "developer"
+            },
+            "completed_at": 1782905826,
+            "created_at": 1782905825,
+            "error": null,
+            "frequency_penalty": 0,
+            "id": "resp_05a90b95f7a788b5006a44fbe111fc81a3af1e565785a2640c",
+            "incomplete_details": null,
+            "instructions": null,
+            "max_output_tokens": 256,
+            "max_tool_calls": null,
+            "metadata": {},
+            "model": "gpt-4o-mini-2024-07-18",
+            "moderation": null,
+            "object": "response",
+            "output": [
+              {
+                "arguments": "{\"discountCode\":\"SAVE20\",\"total\":999}",
+                "call_id": "call_1fMn3W7IWFXGflea0D6gbIW0",
+                "id": "fc_05a90b95f7a788b5006a44fbe210fc81a3b1afb5c0bda84357",
+                "name": "apply_discount",
+                "status": "completed",
+                "type": "function_call"
+              }
+            ],
+            "parallel_tool_calls": true,
+            "presence_penalty": 0,
+            "previous_response_id": null,
+            "prompt_cache_key": "[REDACTED]",
+            "prompt_cache_retention": "in_memory",
+            "reasoning": {
+              "context": null,
+              "effort": null,
+              "summary": null
+            },
+            "safety_identifier": null,
+            "service_tier": "default",
+            "status": "completed",
+            "store": true,
+            "temperature": 0,
+            "text": {
+              "format": {
+                "type": "text"
+              },
+              "verbosity": "medium"
+            },
+            "tool_choice": "auto",
+            "tool_usage": {
+              "image_gen": {
+                "input_tokens": 0,
+                "input_tokens_details": {
+                  "image_tokens": 0,
+                  "text_tokens": 0
+                },
+                "output_tokens": 0,
+                "output_tokens_details": {
+                  "image_tokens": 0,
+                  "text_tokens": 0
+                },
+                "total_tokens": 0
+              },
+              "web_search": {
+                "num_requests": 0
+              }
+            },
+            "tools": [
+              {
+                "description": "Get the price of an item at a store",
+                "name": "get_store_price",
+                "parameters": {
+                  "$schema": "http://json-schema.org/draft-07/schema#",
+                  "additionalProperties": false,
+                  "properties": {
+                    "item": {
+                      "description": "The item to price",
+                      "type": "string"
+                    },
+                    "store": {
+                      "description": "The store name",
+                      "type": "string"
+                    }
+                  },
+                  "required": ["item", "store"],
+                  "type": "object"
+                },
+                "strict": true,
+                "type": "function"
+              },
+              {
+                "description": "Apply a discount code to a total",
+                "name": "apply_discount",
+                "parameters": {
+                  "$schema": "http://json-schema.org/draft-07/schema#",
+                  "additionalProperties": false,
+                  "properties": {
+                    "discountCode": {
+                      "description": "The discount code to apply",
+                      "type": "string"
+                    },
+                    "total": {
+                      "description": "The original total",
+                      "type": "number"
+                    }
+                  },
+                  "required": ["discountCode", "total"],
+                  "type": "object"
+                },
+                "strict": true,
+                "type": "function"
+              }
+            ],
+            "top_logprobs": 0,
+            "top_p": 1,
+            "truncation": "disabled",
+            "usage": {
+              "input_tokens": 260,
+              "input_tokens_details": {
+                "cached_tokens": 0
+              },
+              "output_tokens": 21,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "total_tokens": 281
+            },
+            "user": null
+          }
+        },
+        "headers": {
+          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "a1451ddcaa4e5a6b-VIE",
+          "connection": "keep-alive",
+          "content-encoding": "gzip",
+          "content-type": "application/json",
+          "date": "Wed, 01 Jul 2026 11:37:06 GMT",
+          "openai-organization": "braintrust-data",
+          "openai-processing-ms": "1806",
+          "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
+          "openai-version": "2020-10-01",
+          "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+          "transfer-encoding": "chunked",
+          "x-content-type-options": "nosniff",
+          "x-ratelimit-limit-requests": "30000",
+          "x-ratelimit-limit-tokens": "150000000",
+          "x-ratelimit-remaining-requests": "29999",
+          "x-ratelimit-remaining-tokens": "149999522",
+          "x-ratelimit-reset-requests": "2ms",
+          "x-ratelimit-reset-tokens": "0s",
+          "x-request-id": "459dc5f6-acb9-474b-991a-5181e7dac227"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 13,
+      "id": "058eaddbb1690160",
+      "matchKey": "POST api.openai.com/v1/responses",
+      "recordedAt": "2026-07-01T11:37:09.462Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "input": [
+              {
+                "content": "You are a shopping assistant. Use the tools before answering pricing questions.",
+                "role": "system"
+              },
+              {
+                "content": [
+                  {
+                    "text": "I need help comparing laptop prices before checkout.",
+                    "type": "input_text"
+                  }
+                ],
+                "role": "user"
+              },
+              {
+                "content": [
+                  {
+                    "text": "I can compare store prices and apply a discount code.",
+                    "type": "output_text"
+                  }
+                ],
+                "role": "assistant"
+              },
+              {
+                "content": [
+                  {
+                    "text": "Call get_store_price for a laptop at StoreA and StoreB, then call apply_discount with code SAVE20 for the cheaper price. Finish with the discounted total.",
+                    "type": "input_text"
+                  }
+                ],
+                "role": "user"
+              },
+              {
+                "id": "fc_05a90b95f7a788b5006a44fbe05b4c81a3b5987ee6fd97b39f",
+                "type": "item_reference"
+              },
+              {
+                "id": "fc_05a90b95f7a788b5006a44fbe05b6481a38c617a786b550ef3",
+                "type": "item_reference"
+              },
+              {
+                "call_id": "call_8GGuS9G3qXOu0uQjVEsKgw1t",
+                "output": "{\"item\":\"laptop\",\"price\":999,\"store\":\"StoreA\"}",
+                "type": "function_call_output"
+              },
+              {
+                "call_id": "call_lLjZSipWvTnUgrfgIhcwNsBk",
+                "output": "{\"item\":\"laptop\",\"price\":1099,\"store\":\"StoreB\"}",
+                "type": "function_call_output"
+              },
+              {
+                "id": "fc_05a90b95f7a788b5006a44fbe210fc81a3b1afb5c0bda84357",
+                "type": "item_reference"
+              },
+              {
+                "call_id": "call_1fMn3W7IWFXGflea0D6gbIW0",
+                "output": "{\"discountCode\":\"SAVE20\",\"finalTotal\":799.2,\"originalTotal\":999}",
+                "type": "function_call_output"
+              }
+            ],
+            "max_output_tokens": 256,
+            "model": "gpt-4o-mini-2024-07-18",
+            "temperature": 0,
+            "tool_choice": "auto",
+            "tools": [
+              {
+                "description": "Get the price of an item at a store",
+                "name": "get_store_price",
+                "parameters": {
+                  "$schema": "http://json-schema.org/draft-07/schema#",
+                  "additionalProperties": false,
+                  "properties": {
+                    "item": {
+                      "description": "The item to price",
+                      "type": "string"
+                    },
+                    "store": {
+                      "description": "The store name",
+                      "type": "string"
+                    }
+                  },
+                  "required": ["item", "store"],
+                  "type": "object"
+                },
+                "type": "function"
+              },
+              {
+                "description": "Apply a discount code to a total",
+                "name": "apply_discount",
+                "parameters": {
+                  "$schema": "http://json-schema.org/draft-07/schema#",
+                  "additionalProperties": false,
+                  "properties": {
+                    "discountCode": {
+                      "description": "The discount code to apply",
+                      "type": "string"
+                    },
+                    "total": {
+                      "description": "The original total",
+                      "type": "number"
+                    }
+                  },
+                  "required": ["discountCode", "total"],
+                  "type": "object"
+                },
+                "type": "function"
+              }
+            ]
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.openai.com/v1/responses"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "background": false,
+            "billing": {
+              "payer": "developer"
+            },
+            "completed_at": 1782905829,
+            "created_at": 1782905827,
+            "error": null,
+            "frequency_penalty": 0,
+            "id": "resp_05a90b95f7a788b5006a44fbe30f2081a38db9d8811b348009",
+            "incomplete_details": null,
+            "instructions": null,
+            "max_output_tokens": 256,
+            "max_tool_calls": null,
+            "metadata": {},
+            "model": "gpt-4o-mini-2024-07-18",
+            "moderation": null,
+            "object": "response",
+            "output": [
+              {
+                "content": [
+                  {
+                    "annotations": [],
+                    "logprobs": [],
+                    "text": "Here are the prices for the laptop:\n\n- **Store A**: $999\n- **Store B**: $1099\n\nThe cheaper price is from **Store A** at $999. After applying the discount code **SAVE20**, the final total is **$799.20**.",
+                    "type": "output_text"
+                  }
+                ],
+                "id": "msg_05a90b95f7a788b5006a44fbe3dc2c81a39292caa71b0ff248",
+                "role": "assistant",
+                "status": "completed",
+                "type": "message"
+              }
+            ],
+            "parallel_tool_calls": true,
+            "presence_penalty": 0,
+            "previous_response_id": null,
+            "prompt_cache_key": "[REDACTED]",
+            "prompt_cache_retention": "in_memory",
+            "reasoning": {
+              "context": null,
+              "effort": null,
+              "summary": null
+            },
+            "safety_identifier": null,
+            "service_tier": "default",
+            "status": "completed",
+            "store": true,
+            "temperature": 0,
+            "text": {
+              "format": {
+                "type": "text"
+              },
+              "verbosity": "medium"
+            },
+            "tool_choice": "auto",
+            "tool_usage": {
+              "image_gen": {
+                "input_tokens": 0,
+                "input_tokens_details": {
+                  "image_tokens": 0,
+                  "text_tokens": 0
+                },
+                "output_tokens": 0,
+                "output_tokens_details": {
+                  "image_tokens": 0,
+                  "text_tokens": 0
+                },
+                "total_tokens": 0
+              },
+              "web_search": {
+                "num_requests": 0
+              }
+            },
+            "tools": [
+              {
+                "description": "Get the price of an item at a store",
+                "name": "get_store_price",
+                "parameters": {
+                  "$schema": "http://json-schema.org/draft-07/schema#",
+                  "additionalProperties": false,
+                  "properties": {
+                    "item": {
+                      "description": "The item to price",
+                      "type": "string"
+                    },
+                    "store": {
+                      "description": "The store name",
+                      "type": "string"
+                    }
+                  },
+                  "required": ["item", "store"],
+                  "type": "object"
+                },
+                "strict": true,
+                "type": "function"
+              },
+              {
+                "description": "Apply a discount code to a total",
+                "name": "apply_discount",
+                "parameters": {
+                  "$schema": "http://json-schema.org/draft-07/schema#",
+                  "additionalProperties": false,
+                  "properties": {
+                    "discountCode": {
+                      "description": "The discount code to apply",
+                      "type": "string"
+                    },
+                    "total": {
+                      "description": "The original total",
+                      "type": "number"
+                    }
+                  },
+                  "required": ["discountCode", "total"],
+                  "type": "object"
+                },
+                "strict": true,
+                "type": "function"
+              }
+            ],
+            "top_logprobs": 0,
+            "top_p": 1,
+            "truncation": "disabled",
+            "usage": {
+              "input_tokens": 308,
+              "input_tokens_details": {
+                "cached_tokens": 0
+              },
+              "output_tokens": 62,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "total_tokens": 370
+            },
+            "user": null
+          }
+        },
+        "headers": {
+          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "a1451de93ec35a6b-VIE",
+          "connection": "keep-alive",
+          "content-encoding": "gzip",
+          "content-type": "application/json",
+          "date": "Wed, 01 Jul 2026 11:37:09 GMT",
+          "openai-organization": "braintrust-data",
+          "openai-processing-ms": "2552",
+          "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
+          "openai-version": "2020-10-01",
+          "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+          "transfer-encoding": "chunked",
+          "x-content-type-options": "nosniff",
+          "x-ratelimit-limit-requests": "30000",
+          "x-ratelimit-limit-tokens": "150000000",
+          "x-ratelimit-remaining-requests": "29999",
+          "x-ratelimit-remaining-tokens": "149999475",
+          "x-ratelimit-reset-requests": "2ms",
+          "x-ratelimit-reset-tokens": "0s",
+          "x-request-id": "e566f085-89cd-4852-a34c-b7d7e0b2f196"
         },
         "status": 200,
         "statusText": "OK"

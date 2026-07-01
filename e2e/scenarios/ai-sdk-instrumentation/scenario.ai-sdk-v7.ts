@@ -11,12 +11,14 @@ ai.registerTelemetry(braintrustAISDKTelemetry());
 
 runMain(async () =>
   runAutoAISDKInstrumentation({
+    agentClassExport: "ToolLoopAgent",
     ai,
     createOpenAI,
     maxTokensKey: "maxOutputTokens",
     openai,
     sdkVersion: await getInstalledPackageVersion(import.meta.url, "ai-sdk-v7"),
     supportsDenyOutputOverrideScenario: false,
+    supportsAgentToolLoop: true,
     supportsEmbedMany: true,
     supportsGenerateObject: true,
     supportsOpenAICacheScenario: false,

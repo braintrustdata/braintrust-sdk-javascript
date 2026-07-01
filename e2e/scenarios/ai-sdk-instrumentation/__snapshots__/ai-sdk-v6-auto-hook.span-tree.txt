@@ -49,14 +49,13 @@ span_tree:
     │         "finishReason": "stop",
     │         "providerMetadata": {
     │           "openai": {
-    │             "responseId": "<span:2>",
+    │             "responseId": "<responseId:2>",
     │             "serviceTier": "default"
     │           }
     │         },
     │         "response": {
     │           "body": "<omitted>",
     │           "headers": "<omitted>",
-    │           "id": "<span:2>",
     │           "messages": [
     │             {
     │               "content": [
@@ -92,14 +91,13 @@ span_tree:
     │             "finishReason": "stop",
     │             "providerMetadata": {
     │               "openai": {
-    │                 "responseId": "<span:2>",
+    │                 "responseId": "<responseId:2>",
     │                 "serviceTier": "default"
     │               }
     │             },
     │             "response": {
     │               "body": "<omitted>",
     │               "headers": "<omitted>",
-    │               "id": "<span:2>",
     │               "messages": [
     │                 {
     │                   "content": [
@@ -236,14 +234,13 @@ span_tree:
     │             },
     │             "providerMetadata": {
     │               "openai": {
-    │                 "responseId": "<span:1>",
+    │                 "responseId": "<responseId:1>",
     │                 "serviceTier": "default"
     │               }
     │             },
     │             "response": {
     │               "body": "<omitted>",
     │               "headers": "<omitted>",
-    │               "id": "<span:1>",
     │               "modelId": "gpt-4o-mini-2024-07-18",
     │               "timestamp": "<timestamp>"
     │             },
@@ -359,14 +356,13 @@ span_tree:
     │         "finishReason": "stop",
     │         "providerMetadata": {
     │           "openai": {
-    │             "responseId": "<span:2>",
+    │             "responseId": "<responseId:2>",
     │             "serviceTier": "default"
     │           }
     │         },
     │         "response": {
     │           "body": "<omitted>",
     │           "headers": "<omitted>",
-    │           "id": "<span:2>",
     │           "messages": [
     │             {
     │               "content": [
@@ -402,14 +398,13 @@ span_tree:
     │             "finishReason": "stop",
     │             "providerMetadata": {
     │               "openai": {
-    │                 "responseId": "<span:2>",
+    │                 "responseId": "<responseId:2>",
     │                 "serviceTier": "default"
     │               }
     │             },
     │             "response": {
     │               "body": "<omitted>",
     │               "headers": "<omitted>",
-    │               "id": "<span:2>",
     │               "messages": [
     │                 {
     │                   "content": [
@@ -562,14 +557,13 @@ span_tree:
     │             },
     │             "providerMetadata": {
     │               "openai": {
-    │                 "responseId": "<span:1>",
+    │                 "responseId": "<responseId:1>",
     │                 "serviceTier": "default"
     │               }
     │             },
     │             "response": {
     │               "body": "<omitted>",
     │               "headers": "<omitted>",
-    │               "id": "<span:1>",
     │               "modelId": "gpt-4o-mini-2024-07-18",
     │               "timestamp": "<timestamp>"
     │             },
@@ -777,7 +771,7 @@ span_tree:
     │       output: [
     │         {
     │           "index": 1,
-    │           "relevance_score": 0.06664825
+    │           "relevance_score": 0.06657539
     │         },
     │         {
     │           "index": 0,
@@ -852,10 +846,9 @@ span_tree:
     │             },
     │             "providerMetadata": {
     │               "openai": {
-    │                 "itemId": "<itemId:11>"
+    │                 "itemId": "<itemId:7>"
     │               }
     │             },
-    │             "toolCallId": "<toolCallId:10>",
     │             "toolName": "get_weather",
     │             "type": "tool-call"
     │           },
@@ -867,10 +860,9 @@ span_tree:
     │             "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
     │             "providerMetadata": {
     │               "openai": {
-    │                 "itemId": "<itemId:11>"
+    │                 "itemId": "<itemId:7>"
     │               }
     │             },
-    │             "toolCallId": "<toolCallId:10>",
     │             "toolName": "get_weather",
     │             "type": "tool-result"
     │           }
@@ -878,14 +870,13 @@ span_tree:
     │         "finishReason": "tool-calls",
     │         "providerMetadata": {
     │           "openai": {
-    │             "responseId": "<span:12>",
+    │             "responseId": "<responseId:8>",
     │             "serviceTier": "default"
     │           }
     │         },
     │         "response": {
     │           "body": "<omitted>",
     │           "headers": "<omitted>",
-    │           "id": "<span:12>",
     │           "messages": [
     │             {
     │               "content": [
@@ -895,10 +886,9 @@ span_tree:
     │                   },
     │                   "providerOptions": {
     │                     "openai": {
-    │                       "itemId": "<itemId:2>"
+    │                       "itemId": "<itemId:1>"
     │                     }
     │                   },
-    │                   "toolCallId": "<toolCallId:1>",
     │                   "toolName": "get_weather",
     │                   "type": "tool-call"
     │                 }
@@ -914,10 +904,44 @@ span_tree:
     │                   },
     │                   "providerOptions": {
     │                     "openai": {
-    │                       "itemId": "<itemId:2>"
+    │                       "itemId": "<itemId:1>"
     │                     }
     │                   },
-    │                   "toolCallId": "<toolCallId:1>",
+    │                   "toolName": "get_weather",
+    │                   "type": "tool-result"
+    │                 }
+    │               ],
+    │               "role": "tool"
+    │             },
+    │             {
+    │               "content": [
+    │                 {
+    │                   "input": {
+    │                     "location": "Paris, France"
+    │                   },
+    │                   "providerOptions": {
+    │                     "openai": {
+    │                       "itemId": "<itemId:3>"
+    │                     }
+    │                   },
+    │                   "toolName": "get_weather",
+    │                   "type": "tool-call"
+    │                 }
+    │               ],
+    │               "role": "assistant"
+    │             },
+    │             {
+    │               "content": [
+    │                 {
+    │                   "output": {
+    │                     "type": "text",
+    │                     "value": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
+    │                   },
+    │                   "providerOptions": {
+    │                     "openai": {
+    │                       "itemId": "<itemId:3>"
+    │                     }
+    │                   },
     │                   "toolName": "get_weather",
     │                   "type": "tool-result"
     │                 }
@@ -935,7 +959,6 @@ span_tree:
     │                       "itemId": "<itemId:5>"
     │                     }
     │                   },
-    │                   "toolCallId": "<toolCallId:4>",
     │                   "toolName": "get_weather",
     │                   "type": "tool-call"
     │                 }
@@ -954,7 +977,6 @@ span_tree:
     │                       "itemId": "<itemId:5>"
     │                     }
     │                   },
-    │                   "toolCallId": "<toolCallId:4>",
     │                   "toolName": "get_weather",
     │                   "type": "tool-result"
     │                 }
@@ -969,10 +991,9 @@ span_tree:
     │                   },
     │                   "providerOptions": {
     │                     "openai": {
-    │                       "itemId": "<itemId:8>"
+    │                       "itemId": "<itemId:7>"
     │                     }
     │                   },
-    │                   "toolCallId": "<toolCallId:7>",
     │                   "toolName": "get_weather",
     │                   "type": "tool-call"
     │                 }
@@ -988,47 +1009,9 @@ span_tree:
     │                   },
     │                   "providerOptions": {
     │                     "openai": {
-    │                       "itemId": "<itemId:8>"
+    │                       "itemId": "<itemId:7>"
     │                     }
     │                   },
-    │                   "toolCallId": "<toolCallId:7>",
-    │                   "toolName": "get_weather",
-    │                   "type": "tool-result"
-    │                 }
-    │               ],
-    │               "role": "tool"
-    │             },
-    │             {
-    │               "content": [
-    │                 {
-    │                   "input": {
-    │                     "location": "Paris, France"
-    │                   },
-    │                   "providerOptions": {
-    │                     "openai": {
-    │                       "itemId": "<itemId:11>"
-    │                     }
-    │                   },
-    │                   "toolCallId": "<toolCallId:10>",
-    │                   "toolName": "get_weather",
-    │                   "type": "tool-call"
-    │                 }
-    │               ],
-    │               "role": "assistant"
-    │             },
-    │             {
-    │               "content": [
-    │                 {
-    │                   "output": {
-    │                     "type": "text",
-    │                     "value": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
-    │                   },
-    │                   "providerOptions": {
-    │                     "openai": {
-    │                       "itemId": "<itemId:11>"
-    │                     }
-    │                   },
-    │                   "toolCallId": "<toolCallId:10>",
     │                   "toolName": "get_weather",
     │                   "type": "tool-result"
     │                 }
@@ -1048,10 +1031,9 @@ span_tree:
     │                 },
     │                 "providerMetadata": {
     │                   "openai": {
-    │                     "itemId": "<itemId:2>"
+    │                     "itemId": "<itemId:1>"
     │                   }
     │                 },
-    │                 "toolCallId": "<toolCallId:1>",
     │                 "toolName": "get_weather",
     │                 "type": "tool-call"
     │               },
@@ -1063,10 +1045,9 @@ span_tree:
     │                 "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
     │                 "providerMetadata": {
     │                   "openai": {
-    │                     "itemId": "<itemId:2>"
+    │                     "itemId": "<itemId:1>"
     │                   }
     │                 },
-    │                 "toolCallId": "<toolCallId:1>",
     │                 "toolName": "get_weather",
     │                 "type": "tool-result"
     │               }
@@ -1074,14 +1055,13 @@ span_tree:
     │             "finishReason": "tool-calls",
     │             "providerMetadata": {
     │               "openai": {
-    │                 "responseId": "<span:3>",
+    │                 "responseId": "<responseId:2>",
     │                 "serviceTier": "default"
     │               }
     │             },
     │             "response": {
     │               "body": "<omitted>",
     │               "headers": "<omitted>",
-    │               "id": "<span:3>",
     │               "messages": [
     │                 {
     │                   "content": [
@@ -1091,10 +1071,9 @@ span_tree:
     │                       },
     │                       "providerOptions": {
     │                         "openai": {
-    │                           "itemId": "<itemId:2>"
+    │                           "itemId": "<itemId:1>"
     │                         }
     │                       },
-    │                       "toolCallId": "<toolCallId:1>",
     │                       "toolName": "get_weather",
     │                       "type": "tool-call"
     │                     }
@@ -1110,10 +1089,9 @@ span_tree:
     │                       },
     │                       "providerOptions": {
     │                         "openai": {
-    │                           "itemId": "<itemId:2>"
+    │                           "itemId": "<itemId:1>"
     │                         }
     │                       },
-    │                       "toolCallId": "<toolCallId:1>",
     │                       "toolName": "get_weather",
     │                       "type": "tool-result"
     │                     }
@@ -1159,10 +1137,9 @@ span_tree:
     │                 },
     │                 "providerMetadata": {
     │                   "openai": {
-    │                     "itemId": "<itemId:5>"
+    │                     "itemId": "<itemId:3>"
     │                   }
     │                 },
-    │                 "toolCallId": "<toolCallId:4>",
     │                 "toolName": "get_weather",
     │                 "type": "tool-call"
     │               },
@@ -1174,10 +1151,9 @@ span_tree:
     │                 "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
     │                 "providerMetadata": {
     │                   "openai": {
-    │                     "itemId": "<itemId:5>"
+    │                     "itemId": "<itemId:3>"
     │                   }
     │                 },
-    │                 "toolCallId": "<toolCallId:4>",
     │                 "toolName": "get_weather",
     │                 "type": "tool-result"
     │               }
@@ -1185,14 +1161,13 @@ span_tree:
     │             "finishReason": "tool-calls",
     │             "providerMetadata": {
     │               "openai": {
-    │                 "responseId": "<span:6>",
+    │                 "responseId": "<responseId:4>",
     │                 "serviceTier": "default"
     │               }
     │             },
     │             "response": {
     │               "body": "<omitted>",
     │               "headers": "<omitted>",
-    │               "id": "<span:6>",
     │               "messages": [
     │                 {
     │                   "content": [
@@ -1202,10 +1177,9 @@ span_tree:
     │                       },
     │                       "providerOptions": {
     │                         "openai": {
-    │                           "itemId": "<itemId:2>"
+    │                           "itemId": "<itemId:1>"
     │                         }
     │                       },
-    │                       "toolCallId": "<toolCallId:1>",
     │                       "toolName": "get_weather",
     │                       "type": "tool-call"
     │                     }
@@ -1221,10 +1195,9 @@ span_tree:
     │                       },
     │                       "providerOptions": {
     │                         "openai": {
-    │                           "itemId": "<itemId:2>"
+    │                           "itemId": "<itemId:1>"
     │                         }
     │                       },
-    │                       "toolCallId": "<toolCallId:1>",
     │                       "toolName": "get_weather",
     │                       "type": "tool-result"
     │                     }
@@ -1239,10 +1212,9 @@ span_tree:
     │                       },
     │                       "providerOptions": {
     │                         "openai": {
-    │                           "itemId": "<itemId:5>"
+    │                           "itemId": "<itemId:3>"
     │                         }
     │                       },
-    │                       "toolCallId": "<toolCallId:4>",
     │                       "toolName": "get_weather",
     │                       "type": "tool-call"
     │                     }
@@ -1258,10 +1230,9 @@ span_tree:
     │                       },
     │                       "providerOptions": {
     │                         "openai": {
-    │                           "itemId": "<itemId:5>"
+    │                           "itemId": "<itemId:3>"
     │                         }
     │                       },
-    │                       "toolCallId": "<toolCallId:4>",
     │                       "toolName": "get_weather",
     │                       "type": "tool-result"
     │                     }
@@ -1307,10 +1278,9 @@ span_tree:
     │                 },
     │                 "providerMetadata": {
     │                   "openai": {
-    │                     "itemId": "<itemId:8>"
+    │                     "itemId": "<itemId:5>"
     │                   }
     │                 },
-    │                 "toolCallId": "<toolCallId:7>",
     │                 "toolName": "get_weather",
     │                 "type": "tool-call"
     │               },
@@ -1322,10 +1292,9 @@ span_tree:
     │                 "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
     │                 "providerMetadata": {
     │                   "openai": {
-    │                     "itemId": "<itemId:8>"
+    │                     "itemId": "<itemId:5>"
     │                   }
     │                 },
-    │                 "toolCallId": "<toolCallId:7>",
     │                 "toolName": "get_weather",
     │                 "type": "tool-result"
     │               }
@@ -1333,14 +1302,13 @@ span_tree:
     │             "finishReason": "tool-calls",
     │             "providerMetadata": {
     │               "openai": {
-    │                 "responseId": "<span:9>",
+    │                 "responseId": "<responseId:6>",
     │                 "serviceTier": "default"
     │               }
     │             },
     │             "response": {
     │               "body": "<omitted>",
     │               "headers": "<omitted>",
-    │               "id": "<span:9>",
     │               "messages": [
     │                 {
     │                   "content": [
@@ -1350,10 +1318,9 @@ span_tree:
     │                       },
     │                       "providerOptions": {
     │                         "openai": {
-    │                           "itemId": "<itemId:2>"
+    │                           "itemId": "<itemId:1>"
     │                         }
     │                       },
-    │                       "toolCallId": "<toolCallId:1>",
     │                       "toolName": "get_weather",
     │                       "type": "tool-call"
     │                     }
@@ -1369,10 +1336,44 @@ span_tree:
     │                       },
     │                       "providerOptions": {
     │                         "openai": {
-    │                           "itemId": "<itemId:2>"
+    │                           "itemId": "<itemId:1>"
     │                         }
     │                       },
-    │                       "toolCallId": "<toolCallId:1>",
+    │                       "toolName": "get_weather",
+    │                       "type": "tool-result"
+    │                     }
+    │                   ],
+    │                   "role": "tool"
+    │                 },
+    │                 {
+    │                   "content": [
+    │                     {
+    │                       "input": {
+    │                         "location": "Paris, France"
+    │                       },
+    │                       "providerOptions": {
+    │                         "openai": {
+    │                           "itemId": "<itemId:3>"
+    │                         }
+    │                       },
+    │                       "toolName": "get_weather",
+    │                       "type": "tool-call"
+    │                     }
+    │                   ],
+    │                   "role": "assistant"
+    │                 },
+    │                 {
+    │                   "content": [
+    │                     {
+    │                       "output": {
+    │                         "type": "text",
+    │                         "value": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
+    │                       },
+    │                       "providerOptions": {
+    │                         "openai": {
+    │                           "itemId": "<itemId:3>"
+    │                         }
+    │                       },
     │                       "toolName": "get_weather",
     │                       "type": "tool-result"
     │                     }
@@ -1390,7 +1391,6 @@ span_tree:
     │                           "itemId": "<itemId:5>"
     │                         }
     │                       },
-    │                       "toolCallId": "<toolCallId:4>",
     │                       "toolName": "get_weather",
     │                       "type": "tool-call"
     │                     }
@@ -1409,44 +1409,6 @@ span_tree:
     │                           "itemId": "<itemId:5>"
     │                         }
     │                       },
-    │                       "toolCallId": "<toolCallId:4>",
-    │                       "toolName": "get_weather",
-    │                       "type": "tool-result"
-    │                     }
-    │                   ],
-    │                   "role": "tool"
-    │                 },
-    │                 {
-    │                   "content": [
-    │                     {
-    │                       "input": {
-    │                         "location": "Paris, France"
-    │                       },
-    │                       "providerOptions": {
-    │                         "openai": {
-    │                           "itemId": "<itemId:8>"
-    │                         }
-    │                       },
-    │                       "toolCallId": "<toolCallId:7>",
-    │                       "toolName": "get_weather",
-    │                       "type": "tool-call"
-    │                     }
-    │                   ],
-    │                   "role": "assistant"
-    │                 },
-    │                 {
-    │                   "content": [
-    │                     {
-    │                       "output": {
-    │                         "type": "text",
-    │                         "value": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
-    │                       },
-    │                       "providerOptions": {
-    │                         "openai": {
-    │                           "itemId": "<itemId:8>"
-    │                         }
-    │                       },
-    │                       "toolCallId": "<toolCallId:7>",
     │                       "toolName": "get_weather",
     │                       "type": "tool-result"
     │                     }
@@ -1492,10 +1454,9 @@ span_tree:
     │                 },
     │                 "providerMetadata": {
     │                   "openai": {
-    │                     "itemId": "<itemId:11>"
+    │                     "itemId": "<itemId:7>"
     │                   }
     │                 },
-    │                 "toolCallId": "<toolCallId:10>",
     │                 "toolName": "get_weather",
     │                 "type": "tool-call"
     │               },
@@ -1507,10 +1468,9 @@ span_tree:
     │                 "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
     │                 "providerMetadata": {
     │                   "openai": {
-    │                     "itemId": "<itemId:11>"
+    │                     "itemId": "<itemId:7>"
     │                   }
     │                 },
-    │                 "toolCallId": "<toolCallId:10>",
     │                 "toolName": "get_weather",
     │                 "type": "tool-result"
     │               }
@@ -1518,14 +1478,13 @@ span_tree:
     │             "finishReason": "tool-calls",
     │             "providerMetadata": {
     │               "openai": {
-    │                 "responseId": "<span:12>",
+    │                 "responseId": "<responseId:8>",
     │                 "serviceTier": "default"
     │               }
     │             },
     │             "response": {
     │               "body": "<omitted>",
     │               "headers": "<omitted>",
-    │               "id": "<span:12>",
     │               "messages": [
     │                 {
     │                   "content": [
@@ -1535,10 +1494,9 @@ span_tree:
     │                       },
     │                       "providerOptions": {
     │                         "openai": {
-    │                           "itemId": "<itemId:2>"
+    │                           "itemId": "<itemId:1>"
     │                         }
     │                       },
-    │                       "toolCallId": "<toolCallId:1>",
     │                       "toolName": "get_weather",
     │                       "type": "tool-call"
     │                     }
@@ -1554,10 +1512,44 @@ span_tree:
     │                       },
     │                       "providerOptions": {
     │                         "openai": {
-    │                           "itemId": "<itemId:2>"
+    │                           "itemId": "<itemId:1>"
     │                         }
     │                       },
-    │                       "toolCallId": "<toolCallId:1>",
+    │                       "toolName": "get_weather",
+    │                       "type": "tool-result"
+    │                     }
+    │                   ],
+    │                   "role": "tool"
+    │                 },
+    │                 {
+    │                   "content": [
+    │                     {
+    │                       "input": {
+    │                         "location": "Paris, France"
+    │                       },
+    │                       "providerOptions": {
+    │                         "openai": {
+    │                           "itemId": "<itemId:3>"
+    │                         }
+    │                       },
+    │                       "toolName": "get_weather",
+    │                       "type": "tool-call"
+    │                     }
+    │                   ],
+    │                   "role": "assistant"
+    │                 },
+    │                 {
+    │                   "content": [
+    │                     {
+    │                       "output": {
+    │                         "type": "text",
+    │                         "value": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
+    │                       },
+    │                       "providerOptions": {
+    │                         "openai": {
+    │                           "itemId": "<itemId:3>"
+    │                         }
+    │                       },
     │                       "toolName": "get_weather",
     │                       "type": "tool-result"
     │                     }
@@ -1575,7 +1567,6 @@ span_tree:
     │                           "itemId": "<itemId:5>"
     │                         }
     │                       },
-    │                       "toolCallId": "<toolCallId:4>",
     │                       "toolName": "get_weather",
     │                       "type": "tool-call"
     │                     }
@@ -1594,7 +1585,6 @@ span_tree:
     │                           "itemId": "<itemId:5>"
     │                         }
     │                       },
-    │                       "toolCallId": "<toolCallId:4>",
     │                       "toolName": "get_weather",
     │                       "type": "tool-result"
     │                     }
@@ -1609,10 +1599,9 @@ span_tree:
     │                       },
     │                       "providerOptions": {
     │                         "openai": {
-    │                           "itemId": "<itemId:8>"
+    │                           "itemId": "<itemId:7>"
     │                         }
     │                       },
-    │                       "toolCallId": "<toolCallId:7>",
     │                       "toolName": "get_weather",
     │                       "type": "tool-call"
     │                     }
@@ -1628,47 +1617,9 @@ span_tree:
     │                       },
     │                       "providerOptions": {
     │                         "openai": {
-    │                           "itemId": "<itemId:8>"
+    │                           "itemId": "<itemId:7>"
     │                         }
     │                       },
-    │                       "toolCallId": "<toolCallId:7>",
-    │                       "toolName": "get_weather",
-    │                       "type": "tool-result"
-    │                     }
-    │                   ],
-    │                   "role": "tool"
-    │                 },
-    │                 {
-    │                   "content": [
-    │                     {
-    │                       "input": {
-    │                         "location": "Paris, France"
-    │                       },
-    │                       "providerOptions": {
-    │                         "openai": {
-    │                           "itemId": "<itemId:11>"
-    │                         }
-    │                       },
-    │                       "toolCallId": "<toolCallId:10>",
-    │                       "toolName": "get_weather",
-    │                       "type": "tool-call"
-    │                     }
-    │                   ],
-    │                   "role": "assistant"
-    │                 },
-    │                 {
-    │                   "content": [
-    │                     {
-    │                       "output": {
-    │                         "type": "text",
-    │                         "value": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
-    │                       },
-    │                       "providerOptions": {
-    │                         "openai": {
-    │                           "itemId": "<itemId:11>"
-    │                         }
-    │                       },
-    │                       "toolCallId": "<toolCallId:10>",
     │                       "toolName": "get_weather",
     │                       "type": "tool-result"
     │                     }
@@ -1715,10 +1666,9 @@ span_tree:
     │             },
     │             "providerMetadata": {
     │               "openai": {
-    │                 "itemId": "<itemId:11>"
+    │                 "itemId": "<itemId:7>"
     │               }
     │             },
-    │             "toolCallId": "<toolCallId:10>",
     │             "toolName": "get_weather",
     │             "type": "tool-call"
     │           }
@@ -1732,10 +1682,9 @@ span_tree:
     │             "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
     │             "providerMetadata": {
     │               "openai": {
-    │                 "itemId": "<itemId:11>"
+    │                 "itemId": "<itemId:7>"
     │               }
     │             },
-    │             "toolCallId": "<toolCallId:10>",
     │             "toolName": "get_weather",
     │             "type": "tool-result"
     │           }
@@ -1862,10 +1811,9 @@ span_tree:
     │       │         "input": "{\"location\":\"Paris, France\"}",
     │       │         "providerMetadata": {
     │       │           "openai": {
-    │       │             "itemId": "<itemId:3>"
+    │       │             "itemId": "<itemId:2>"
     │       │           }
     │       │         },
-    │       │         "toolCallId": "<toolCallId:2>",
     │       │         "toolName": "get_weather",
     │       │         "type": "tool-call"
     │       │       }
@@ -1875,14 +1823,13 @@ span_tree:
     │       │     },
     │       │     "providerMetadata": {
     │       │       "openai": {
-    │       │         "responseId": "<span:1>",
+    │       │         "responseId": "<responseId:1>",
     │       │         "serviceTier": "default"
     │       │       }
     │       │     },
     │       │     "response": {
     │       │       "body": "<omitted>",
     │       │       "headers": "<omitted>",
-    │       │       "id": "<span:1>",
     │       │       "modelId": "gpt-4o-mini-2024-07-18",
     │       │       "timestamp": "<timestamp>"
     │       │     },
@@ -1929,20 +1876,9 @@ span_tree:
     │       │     "reasoning_tokens": 0
     │       │   }
     │       ├── get_weather [tool]
-    │       │   input: [
-    │       │     {
-    │       │       "location": "Paris, France"
-    │       │     },
-    │       │     {
-    │       │       "messages": [
-    │       │         {
-    │       │           "content": "Use the get_weather tool for Paris, France. If you do not call the tool, the answer is invalid.",
-    │       │           "role": "user"
-    │       │         }
-    │       │       ],
-    │       │       "toolCallId": "<toolCallId:1>"
-    │       │     }
-    │       │   ]
+    │       │   input: {
+    │       │     "location": "Paris, France"
+    │       │   }
     │       │   output: "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
     │       ├── doGenerate [llm]
     │       │   input: {
@@ -1972,10 +1908,9 @@ span_tree:
     │       │             },
     │       │             "providerOptions": {
     │       │               "openai": {
-    │       │                 "itemId": "<itemId:2>"
+    │       │                 "itemId": "<itemId:1>"
     │       │               }
     │       │             },
-    │       │             "toolCallId": "<toolCallId:1>",
     │       │             "toolName": "get_weather",
     │       │             "type": "tool-call"
     │       │           }
@@ -1991,10 +1926,9 @@ span_tree:
     │       │             },
     │       │             "providerOptions": {
     │       │               "openai": {
-    │       │                 "itemId": "<itemId:2>"
+    │       │                 "itemId": "<itemId:1>"
     │       │               }
     │       │             },
-    │       │             "toolCallId": "<toolCallId:1>",
     │       │             "toolName": "get_weather",
     │       │             "type": "tool-result"
     │       │           }
@@ -2034,10 +1968,9 @@ span_tree:
     │       │         "input": "{\"location\":\"Paris, France\"}",
     │       │         "providerMetadata": {
     │       │           "openai": {
-    │       │             "itemId": "<itemId:3>"
+    │       │             "itemId": "<itemId:2>"
     │       │           }
     │       │         },
-    │       │         "toolCallId": "<toolCallId:2>",
     │       │         "toolName": "get_weather",
     │       │         "type": "tool-call"
     │       │       }
@@ -2047,14 +1980,13 @@ span_tree:
     │       │     },
     │       │     "providerMetadata": {
     │       │       "openai": {
-    │       │         "responseId": "<span:1>",
+    │       │         "responseId": "<responseId:1>",
     │       │         "serviceTier": "default"
     │       │       }
     │       │     },
     │       │     "response": {
     │       │       "body": "<omitted>",
     │       │       "headers": "<omitted>",
-    │       │       "id": "<span:1>",
     │       │       "modelId": "gpt-4o-mini-2024-07-18",
     │       │       "timestamp": "<timestamp>"
     │       │     },
@@ -2101,57 +2033,9 @@ span_tree:
     │       │     "reasoning_tokens": 0
     │       │   }
     │       ├── get_weather [tool]
-    │       │   input: [
-    │       │     {
-    │       │       "location": "Paris, France"
-    │       │     },
-    │       │     {
-    │       │       "messages": [
-    │       │         {
-    │       │           "content": "Use the get_weather tool for Paris, France. If you do not call the tool, the answer is invalid.",
-    │       │           "role": "user"
-    │       │         },
-    │       │         {
-    │       │           "content": [
-    │       │             {
-    │       │               "input": {
-    │       │                 "location": "Paris, France"
-    │       │               },
-    │       │               "providerOptions": {
-    │       │                 "openai": {
-    │       │                   "itemId": "<itemId:3>"
-    │       │                 }
-    │       │               },
-    │       │               "toolCallId": "<toolCallId:2>",
-    │       │               "toolName": "get_weather",
-    │       │               "type": "tool-call"
-    │       │             }
-    │       │           ],
-    │       │           "role": "assistant"
-    │       │         },
-    │       │         {
-    │       │           "content": [
-    │       │             {
-    │       │               "output": {
-    │       │                 "type": "text",
-    │       │                 "value": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
-    │       │               },
-    │       │               "providerOptions": {
-    │       │                 "openai": {
-    │       │                   "itemId": "<itemId:3>"
-    │       │                 }
-    │       │               },
-    │       │               "toolCallId": "<toolCallId:2>",
-    │       │               "toolName": "get_weather",
-    │       │               "type": "tool-result"
-    │       │             }
-    │       │           ],
-    │       │           "role": "tool"
-    │       │         }
-    │       │       ],
-    │       │       "toolCallId": "<toolCallId:1>"
-    │       │     }
-    │       │   ]
+    │       │   input: {
+    │       │     "location": "Paris, France"
+    │       │   }
     │       │   output: "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
     │       ├── doGenerate [llm]
     │       │   input: {
@@ -2181,10 +2065,9 @@ span_tree:
     │       │             },
     │       │             "providerOptions": {
     │       │               "openai": {
-    │       │                 "itemId": "<itemId:2>"
+    │       │                 "itemId": "<itemId:1>"
     │       │               }
     │       │             },
-    │       │             "toolCallId": "<toolCallId:1>",
     │       │             "toolName": "get_weather",
     │       │             "type": "tool-call"
     │       │           }
@@ -2200,10 +2083,9 @@ span_tree:
     │       │             },
     │       │             "providerOptions": {
     │       │               "openai": {
-    │       │                 "itemId": "<itemId:2>"
+    │       │                 "itemId": "<itemId:1>"
     │       │               }
     │       │             },
-    │       │             "toolCallId": "<toolCallId:1>",
     │       │             "toolName": "get_weather",
     │       │             "type": "tool-result"
     │       │           }
@@ -2218,10 +2100,9 @@ span_tree:
     │       │             },
     │       │             "providerOptions": {
     │       │               "openai": {
-    │       │                 "itemId": "<itemId:4>"
+    │       │                 "itemId": "<itemId:2>"
     │       │               }
     │       │             },
-    │       │             "toolCallId": "<toolCallId:3>",
     │       │             "toolName": "get_weather",
     │       │             "type": "tool-call"
     │       │           }
@@ -2237,10 +2118,9 @@ span_tree:
     │       │             },
     │       │             "providerOptions": {
     │       │               "openai": {
-    │       │                 "itemId": "<itemId:4>"
+    │       │                 "itemId": "<itemId:2>"
     │       │               }
     │       │             },
-    │       │             "toolCallId": "<toolCallId:3>",
     │       │             "toolName": "get_weather",
     │       │             "type": "tool-result"
     │       │           }
@@ -2280,10 +2160,9 @@ span_tree:
     │       │         "input": "{\"location\":\"Paris, France\"}",
     │       │         "providerMetadata": {
     │       │           "openai": {
-    │       │             "itemId": "<itemId:3>"
+    │       │             "itemId": "<itemId:2>"
     │       │           }
     │       │         },
-    │       │         "toolCallId": "<toolCallId:2>",
     │       │         "toolName": "get_weather",
     │       │         "type": "tool-call"
     │       │       }
@@ -2293,14 +2172,13 @@ span_tree:
     │       │     },
     │       │     "providerMetadata": {
     │       │       "openai": {
-    │       │         "responseId": "<span:1>",
+    │       │         "responseId": "<responseId:1>",
     │       │         "serviceTier": "default"
     │       │       }
     │       │     },
     │       │     "response": {
     │       │       "body": "<omitted>",
     │       │       "headers": "<omitted>",
-    │       │       "id": "<span:1>",
     │       │       "modelId": "gpt-4o-mini-2024-07-18",
     │       │       "timestamp": "<timestamp>"
     │       │     },
@@ -2347,94 +2225,9 @@ span_tree:
     │       │     "reasoning_tokens": 0
     │       │   }
     │       ├── get_weather [tool]
-    │       │   input: [
-    │       │     {
-    │       │       "location": "Paris, France"
-    │       │     },
-    │       │     {
-    │       │       "messages": [
-    │       │         {
-    │       │           "content": "Use the get_weather tool for Paris, France. If you do not call the tool, the answer is invalid.",
-    │       │           "role": "user"
-    │       │         },
-    │       │         {
-    │       │           "content": [
-    │       │             {
-    │       │               "input": {
-    │       │                 "location": "Paris, France"
-    │       │               },
-    │       │               "providerOptions": {
-    │       │                 "openai": {
-    │       │                   "itemId": "<itemId:3>"
-    │       │                 }
-    │       │               },
-    │       │               "toolCallId": "<toolCallId:2>",
-    │       │               "toolName": "get_weather",
-    │       │               "type": "tool-call"
-    │       │             }
-    │       │           ],
-    │       │           "role": "assistant"
-    │       │         },
-    │       │         {
-    │       │           "content": [
-    │       │             {
-    │       │               "output": {
-    │       │                 "type": "text",
-    │       │                 "value": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
-    │       │               },
-    │       │               "providerOptions": {
-    │       │                 "openai": {
-    │       │                   "itemId": "<itemId:3>"
-    │       │                 }
-    │       │               },
-    │       │               "toolCallId": "<toolCallId:2>",
-    │       │               "toolName": "get_weather",
-    │       │               "type": "tool-result"
-    │       │             }
-    │       │           ],
-    │       │           "role": "tool"
-    │       │         },
-    │       │         {
-    │       │           "content": [
-    │       │             {
-    │       │               "input": {
-    │       │                 "location": "Paris, France"
-    │       │               },
-    │       │               "providerOptions": {
-    │       │                 "openai": {
-    │       │                   "itemId": "<itemId:5>"
-    │       │                 }
-    │       │               },
-    │       │               "toolCallId": "<toolCallId:4>",
-    │       │               "toolName": "get_weather",
-    │       │               "type": "tool-call"
-    │       │             }
-    │       │           ],
-    │       │           "role": "assistant"
-    │       │         },
-    │       │         {
-    │       │           "content": [
-    │       │             {
-    │       │               "output": {
-    │       │                 "type": "text",
-    │       │                 "value": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
-    │       │               },
-    │       │               "providerOptions": {
-    │       │                 "openai": {
-    │       │                   "itemId": "<itemId:5>"
-    │       │                 }
-    │       │               },
-    │       │               "toolCallId": "<toolCallId:4>",
-    │       │               "toolName": "get_weather",
-    │       │               "type": "tool-result"
-    │       │             }
-    │       │           ],
-    │       │           "role": "tool"
-    │       │         }
-    │       │       ],
-    │       │       "toolCallId": "<toolCallId:1>"
-    │       │     }
-    │       │   ]
+    │       │   input: {
+    │       │     "location": "Paris, France"
+    │       │   }
     │       │   output: "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
     │       ├── doGenerate [llm]
     │       │   input: {
@@ -2464,10 +2257,9 @@ span_tree:
     │       │             },
     │       │             "providerOptions": {
     │       │               "openai": {
-    │       │                 "itemId": "<itemId:2>"
+    │       │                 "itemId": "<itemId:1>"
     │       │               }
     │       │             },
-    │       │             "toolCallId": "<toolCallId:1>",
     │       │             "toolName": "get_weather",
     │       │             "type": "tool-call"
     │       │           }
@@ -2483,10 +2275,9 @@ span_tree:
     │       │             },
     │       │             "providerOptions": {
     │       │               "openai": {
-    │       │                 "itemId": "<itemId:2>"
+    │       │                 "itemId": "<itemId:1>"
     │       │               }
     │       │             },
-    │       │             "toolCallId": "<toolCallId:1>",
     │       │             "toolName": "get_weather",
     │       │             "type": "tool-result"
     │       │           }
@@ -2501,10 +2292,9 @@ span_tree:
     │       │             },
     │       │             "providerOptions": {
     │       │               "openai": {
-    │       │                 "itemId": "<itemId:4>"
+    │       │                 "itemId": "<itemId:2>"
     │       │               }
     │       │             },
-    │       │             "toolCallId": "<toolCallId:3>",
     │       │             "toolName": "get_weather",
     │       │             "type": "tool-call"
     │       │           }
@@ -2520,10 +2310,9 @@ span_tree:
     │       │             },
     │       │             "providerOptions": {
     │       │               "openai": {
-    │       │                 "itemId": "<itemId:4>"
+    │       │                 "itemId": "<itemId:2>"
     │       │               }
     │       │             },
-    │       │             "toolCallId": "<toolCallId:3>",
     │       │             "toolName": "get_weather",
     │       │             "type": "tool-result"
     │       │           }
@@ -2538,10 +2327,9 @@ span_tree:
     │       │             },
     │       │             "providerOptions": {
     │       │               "openai": {
-    │       │                 "itemId": "<itemId:6>"
+    │       │                 "itemId": "<itemId:3>"
     │       │               }
     │       │             },
-    │       │             "toolCallId": "<toolCallId:5>",
     │       │             "toolName": "get_weather",
     │       │             "type": "tool-call"
     │       │           }
@@ -2557,10 +2345,9 @@ span_tree:
     │       │             },
     │       │             "providerOptions": {
     │       │               "openai": {
-    │       │                 "itemId": "<itemId:6>"
+    │       │                 "itemId": "<itemId:3>"
     │       │               }
     │       │             },
-    │       │             "toolCallId": "<toolCallId:5>",
     │       │             "toolName": "get_weather",
     │       │             "type": "tool-result"
     │       │           }
@@ -2600,10 +2387,9 @@ span_tree:
     │       │         "input": "{\"location\":\"Paris, France\"}",
     │       │         "providerMetadata": {
     │       │           "openai": {
-    │       │             "itemId": "<itemId:3>"
+    │       │             "itemId": "<itemId:2>"
     │       │           }
     │       │         },
-    │       │         "toolCallId": "<toolCallId:2>",
     │       │         "toolName": "get_weather",
     │       │         "type": "tool-call"
     │       │       }
@@ -2613,14 +2399,13 @@ span_tree:
     │       │     },
     │       │     "providerMetadata": {
     │       │       "openai": {
-    │       │         "responseId": "<span:1>",
+    │       │         "responseId": "<responseId:1>",
     │       │         "serviceTier": "default"
     │       │       }
     │       │     },
     │       │     "response": {
     │       │       "body": "<omitted>",
     │       │       "headers": "<omitted>",
-    │       │       "id": "<span:1>",
     │       │       "modelId": "gpt-4o-mini-2024-07-18",
     │       │       "timestamp": "<timestamp>"
     │       │     },
@@ -2667,131 +2452,9 @@ span_tree:
     │       │     "reasoning_tokens": 0
     │       │   }
     │       └── get_weather [tool]
-    │           input: [
-    │             {
-    │               "location": "Paris, France"
-    │             },
-    │             {
-    │               "messages": [
-    │                 {
-    │                   "content": "Use the get_weather tool for Paris, France. If you do not call the tool, the answer is invalid.",
-    │                   "role": "user"
-    │                 },
-    │                 {
-    │                   "content": [
-    │                     {
-    │                       "input": {
-    │                         "location": "Paris, France"
-    │                       },
-    │                       "providerOptions": {
-    │                         "openai": {
-    │                           "itemId": "<itemId:3>"
-    │                         }
-    │                       },
-    │                       "toolCallId": "<toolCallId:2>",
-    │                       "toolName": "get_weather",
-    │                       "type": "tool-call"
-    │                     }
-    │                   ],
-    │                   "role": "assistant"
-    │                 },
-    │                 {
-    │                   "content": [
-    │                     {
-    │                       "output": {
-    │                         "type": "text",
-    │                         "value": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
-    │                       },
-    │                       "providerOptions": {
-    │                         "openai": {
-    │                           "itemId": "<itemId:3>"
-    │                         }
-    │                       },
-    │                       "toolCallId": "<toolCallId:2>",
-    │                       "toolName": "get_weather",
-    │                       "type": "tool-result"
-    │                     }
-    │                   ],
-    │                   "role": "tool"
-    │                 },
-    │                 {
-    │                   "content": [
-    │                     {
-    │                       "input": {
-    │                         "location": "Paris, France"
-    │                       },
-    │                       "providerOptions": {
-    │                         "openai": {
-    │                           "itemId": "<itemId:5>"
-    │                         }
-    │                       },
-    │                       "toolCallId": "<toolCallId:4>",
-    │                       "toolName": "get_weather",
-    │                       "type": "tool-call"
-    │                     }
-    │                   ],
-    │                   "role": "assistant"
-    │                 },
-    │                 {
-    │                   "content": [
-    │                     {
-    │                       "output": {
-    │                         "type": "text",
-    │                         "value": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
-    │                       },
-    │                       "providerOptions": {
-    │                         "openai": {
-    │                           "itemId": "<itemId:5>"
-    │                         }
-    │                       },
-    │                       "toolCallId": "<toolCallId:4>",
-    │                       "toolName": "get_weather",
-    │                       "type": "tool-result"
-    │                     }
-    │                   ],
-    │                   "role": "tool"
-    │                 },
-    │                 {
-    │                   "content": [
-    │                     {
-    │                       "input": {
-    │                         "location": "Paris, France"
-    │                       },
-    │                       "providerOptions": {
-    │                         "openai": {
-    │                           "itemId": "<itemId:7>"
-    │                         }
-    │                       },
-    │                       "toolCallId": "<toolCallId:6>",
-    │                       "toolName": "get_weather",
-    │                       "type": "tool-call"
-    │                     }
-    │                   ],
-    │                   "role": "assistant"
-    │                 },
-    │                 {
-    │                   "content": [
-    │                     {
-    │                       "output": {
-    │                         "type": "text",
-    │                         "value": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
-    │                       },
-    │                       "providerOptions": {
-    │                         "openai": {
-    │                           "itemId": "<itemId:7>"
-    │                         }
-    │                       },
-    │                       "toolCallId": "<toolCallId:6>",
-    │                       "toolName": "get_weather",
-    │                       "type": "tool-result"
-    │                     }
-    │                   ],
-    │                   "role": "tool"
-    │                 }
-    │               ],
-    │               "toolCallId": "<toolCallId:1>"
-    │             }
-    │           ]
+    │           input: {
+    │             "location": "Paris, France"
+    │           }
     │           output: "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
     ├── generateText [function]
     │   input: {
@@ -2837,14 +2500,13 @@ span_tree:
     │     "finishReason": "stop",
     │     "providerMetadata": {
     │       "openai": {
-    │         "responseId": "<span:2>",
+    │         "responseId": "<responseId:2>",
     │         "serviceTier": "default"
     │       }
     │     },
     │     "response": {
     │       "body": "<omitted>",
     │       "headers": "<omitted>",
-    │       "id": "<span:2>",
     │       "messages": [
     │         {
     │           "content": [
@@ -2880,14 +2542,13 @@ span_tree:
     │         "finishReason": "stop",
     │         "providerMetadata": {
     │           "openai": {
-    │             "responseId": "<span:2>",
+    │             "responseId": "<responseId:2>",
     │             "serviceTier": "default"
     │           }
     │         },
     │         "response": {
     │           "body": "<omitted>",
     │           "headers": "<omitted>",
-    │           "id": "<span:2>",
     │           "messages": [
     │             {
     │               "content": [
@@ -3029,14 +2690,13 @@ span_tree:
     │         },
     │         "providerMetadata": {
     │           "openai": {
-    │             "responseId": "<span:1>",
+    │             "responseId": "<responseId:1>",
     │             "serviceTier": "default"
     │           }
     │         },
     │         "response": {
     │           "body": "<omitted>",
     │           "headers": "<omitted>",
-    │           "id": "<span:1>",
     │           "modelId": "gpt-4o-mini-2024-07-18",
     │           "timestamp": "<timestamp>"
     │         },
@@ -3131,14 +2791,13 @@ span_tree:
     │   │     "finishReason": "stop",
     │   │     "providerMetadata": {
     │   │       "openai": {
-    │   │         "responseId": "<span:2>",
+    │   │         "responseId": "<responseId:2>",
     │   │         "serviceTier": "default"
     │   │       }
     │   │     },
     │   │     "response": {
     │   │       "body": "<omitted>",
     │   │       "headers": "<omitted>",
-    │   │       "id": "<span:2>",
     │   │       "messages": [
     │   │         {
     │   │           "content": [
@@ -3174,14 +2833,13 @@ span_tree:
     │   │         "finishReason": "stop",
     │   │         "providerMetadata": {
     │   │           "openai": {
-    │   │             "responseId": "<span:2>",
+    │   │             "responseId": "<responseId:2>",
     │   │             "serviceTier": "default"
     │   │           }
     │   │         },
     │   │         "response": {
     │   │           "body": "<omitted>",
     │   │           "headers": "<omitted>",
-    │   │           "id": "<span:2>",
     │   │           "messages": [
     │   │             {
     │   │               "content": [
@@ -3323,14 +2981,13 @@ span_tree:
     │   │         },
     │   │         "providerMetadata": {
     │   │           "openai": {
-    │   │             "responseId": "<span:1>",
+    │   │             "responseId": "<responseId:1>",
     │   │             "serviceTier": "default"
     │   │           }
     │   │         },
     │   │         "response": {
     │   │           "body": "<omitted>",
     │   │           "headers": "<omitted>",
-    │   │           "id": "<span:1>",
     │   │           "modelId": "gpt-4o-mini-2024-07-18",
     │   │           "timestamp": "<timestamp>"
     │   │         },
@@ -3420,14 +3077,13 @@ span_tree:
     │         "finishReason": "stop",
     │         "providerMetadata": {
     │           "openai": {
-    │             "responseId": "<span:2>",
+    │             "responseId": "<responseId:2>",
     │             "serviceTier": "default"
     │           }
     │         },
     │         "response": {
     │           "body": "<omitted>",
     │           "headers": "<omitted>",
-    │           "id": "<span:2>",
     │           "messages": [
     │             {
     │               "content": [
@@ -3463,14 +3119,13 @@ span_tree:
     │             "finishReason": "stop",
     │             "providerMetadata": {
     │               "openai": {
-    │                 "responseId": "<span:2>",
+    │                 "responseId": "<responseId:2>",
     │                 "serviceTier": "default"
     │               }
     │             },
     │             "response": {
     │               "body": "<omitted>",
     │               "headers": "<omitted>",
-    │               "id": "<span:2>",
     │               "messages": [
     │                 {
     │                   "content": [
@@ -3612,14 +3267,13 @@ span_tree:
     │             },
     │             "providerMetadata": {
     │               "openai": {
-    │                 "responseId": "<span:1>",
+    │                 "responseId": "<responseId:1>",
     │                 "serviceTier": "default"
     │               }
     │             },
     │             "response": {
     │               "body": "<omitted>",
     │               "headers": "<omitted>",
-    │               "id": "<span:1>",
     │               "modelId": "gpt-4o-mini-2024-07-18",
     │               "timestamp": "<timestamp>"
     │             },
@@ -3728,7 +3382,6 @@ span_tree:
     │     "response": {
     │       "body": "<omitted>",
     │       "headers": "<omitted>",
-    │       "id": "<span:1>",
     │       "messages": [
     │         {
     │           "content": [
@@ -3777,7 +3430,6 @@ span_tree:
     │         "response": {
     │           "body": "<omitted>",
     │           "headers": "<omitted>",
-    │           "id": "<span:1>",
     │           "messages": [
     │             {
     │               "content": [
@@ -3929,7 +3581,6 @@ span_tree:
     │         "response": {
     │           "body": "<omitted>",
     │           "headers": "<omitted>",
-    │           "id": "<span:1>",
     │           "modelId": "claude-haiku-4-5-20251001"
     │         },
     │         "usage": {
@@ -4043,7 +3694,6 @@ span_tree:
     │   │     "response": {
     │   │       "body": "<omitted>",
     │   │       "headers": "<omitted>",
-    │   │       "id": "<span:1>",
     │   │       "messages": [
     │   │         {
     │   │           "content": [
@@ -4092,7 +3742,6 @@ span_tree:
     │   │         "response": {
     │   │           "body": "<omitted>",
     │   │           "headers": "<omitted>",
-    │   │           "id": "<span:1>",
     │   │           "messages": [
     │   │             {
     │   │               "content": [
@@ -4244,7 +3893,6 @@ span_tree:
     │   │         "response": {
     │   │           "body": "<omitted>",
     │   │           "headers": "<omitted>",
-    │   │           "id": "<span:1>",
     │   │           "modelId": "claude-haiku-4-5-20251001"
     │   │         },
     │   │         "usage": {
@@ -4353,7 +4001,6 @@ span_tree:
     │         "response": {
     │           "body": "<omitted>",
     │           "headers": "<omitted>",
-    │           "id": "<span:1>",
     │           "messages": [
     │             {
     │               "content": [
@@ -4402,7 +4049,6 @@ span_tree:
     │             "response": {
     │               "body": "<omitted>",
     │               "headers": "<omitted>",
-    │               "id": "<span:1>",
     │               "messages": [
     │                 {
     │                   "content": [
@@ -4554,7 +4200,6 @@ span_tree:
     │             "response": {
     │               "body": "<omitted>",
     │               "headers": "<omitted>",
-    │               "id": "<span:1>",
     │               "modelId": "claude-haiku-4-5-20251001"
     │             },
     │             "usage": {
@@ -4644,7 +4289,7 @@ span_tree:
     │         "finishReason": "stop",
     │         "providerMetadata": {
     │           "openai": {
-    │             "responseId": "<span:2>",
+    │             "responseId": "<responseId:2>",
     │             "serviceTier": "default"
     │           }
     │         },
@@ -4676,7 +4321,6 @@ span_tree:
     │             "created_at": 0,
     │             "error": null,
     │             "frequency_penalty": 0,
-    │             "id": "<span:2>",
     │             "incomplete_details": null,
     │             "instructions": null,
     │             "max_output_tokens": 24,
@@ -4695,7 +4339,6 @@ span_tree:
     │                     "type": "output_text"
     │                   }
     │                 ],
-    │                 "id": "<itemId:1>",
     │                 "role": "assistant",
     │                 "status": "completed",
     │                 "type": "message"
@@ -4704,7 +4347,6 @@ span_tree:
     │             "parallel_tool_calls": true,
     │             "presence_penalty": 0,
     │             "previous_response_id": null,
-    │             "prompt_cache_key": "[REDACTED]",
     │             "prompt_cache_retention": "in_memory",
     │             "reasoning": {
     │               "context": null,
@@ -4723,6 +4365,24 @@ span_tree:
     │               "verbosity": "medium"
     │             },
     │             "tool_choice": "auto",
+    │             "tool_usage": {
+    │               "image_gen": {
+    │                 "input_tokens": 0,
+    │                 "input_tokens_details": {
+    │                   "image_tokens": 0,
+    │                   "text_tokens": 0
+    │                 },
+    │                 "output_tokens": 0,
+    │                 "output_tokens_details": {
+    │                   "image_tokens": 0,
+    │                   "text_tokens": 0
+    │                 },
+    │                 "total_tokens": 0
+    │               },
+    │               "web_search": {
+    │                 "num_requests": 0
+    │               }
+    │             },
     │             "tools": [],
     │             "top_logprobs": 0,
     │             "top_p": 1,
@@ -4765,7 +4425,6 @@ span_tree:
     │             "x-ratelimit-reset-tokens": "<x-ratelimit-reset-tokens>",
     │             "x-request-id": "<x-request-id>"
     │           },
-    │           "id": "<span:2>",
     │           "messages": [
     │             {
     │               "content": [
@@ -4801,7 +4460,7 @@ span_tree:
     │             "finishReason": "stop",
     │             "providerMetadata": {
     │               "openai": {
-    │                 "responseId": "<span:2>",
+    │                 "responseId": "<responseId:2>",
     │                 "serviceTier": "default"
     │               }
     │             },
@@ -4833,7 +4492,6 @@ span_tree:
     │                 "created_at": 0,
     │                 "error": null,
     │                 "frequency_penalty": 0,
-    │                 "id": "<span:2>",
     │                 "incomplete_details": null,
     │                 "instructions": null,
     │                 "max_output_tokens": 24,
@@ -4852,7 +4510,6 @@ span_tree:
     │                         "type": "output_text"
     │                       }
     │                     ],
-    │                     "id": "<itemId:1>",
     │                     "role": "assistant",
     │                     "status": "completed",
     │                     "type": "message"
@@ -4861,7 +4518,6 @@ span_tree:
     │                 "parallel_tool_calls": true,
     │                 "presence_penalty": 0,
     │                 "previous_response_id": null,
-    │                 "prompt_cache_key": "[REDACTED]",
     │                 "prompt_cache_retention": "in_memory",
     │                 "reasoning": {
     │                   "context": null,
@@ -4880,6 +4536,24 @@ span_tree:
     │                   "verbosity": "medium"
     │                 },
     │                 "tool_choice": "auto",
+    │                 "tool_usage": {
+    │                   "image_gen": {
+    │                     "input_tokens": 0,
+    │                     "input_tokens_details": {
+    │                       "image_tokens": 0,
+    │                       "text_tokens": 0
+    │                     },
+    │                     "output_tokens": 0,
+    │                     "output_tokens_details": {
+    │                       "image_tokens": 0,
+    │                       "text_tokens": 0
+    │                     },
+    │                     "total_tokens": 0
+    │                   },
+    │                   "web_search": {
+    │                     "num_requests": 0
+    │                   }
+    │                 },
     │                 "tools": [],
     │                 "top_logprobs": 0,
     │                 "top_p": 1,
@@ -4922,7 +4596,6 @@ span_tree:
     │                 "x-ratelimit-reset-tokens": "<x-ratelimit-reset-tokens>",
     │                 "x-request-id": "<x-request-id>"
     │               },
-    │               "id": "<span:2>",
     │               "messages": [
     │                 {
     │                   "content": [
@@ -5059,14 +4732,13 @@ span_tree:
     │             },
     │             "providerMetadata": {
     │               "openai": {
-    │                 "responseId": "<span:1>",
+    │                 "responseId": "<responseId:1>",
     │                 "serviceTier": "default"
     │               }
     │             },
     │             "response": {
     │               "body": "<omitted>",
     │               "headers": "<omitted>",
-    │               "id": "<span:1>",
     │               "modelId": "gpt-4o-mini-2024-07-18",
     │               "timestamp": "<timestamp>"
     │             },
@@ -5161,14 +4833,13 @@ span_tree:
     │         },
     │         "providerMetadata": {
     │           "openai": {
-    │             "responseId": "<span:1>",
+    │             "responseId": "<responseId:1>",
     │             "serviceTier": "default"
     │           }
     │         },
     │         "response": {
     │           "body": "<omitted>",
     │           "headers": "<omitted>",
-    │           "id": "<span:1>",
     │           "modelId": "gpt-4o-mini-2024-07-18",
     │           "timestamp": "<timestamp>"
     │         },
@@ -5259,14 +4930,13 @@ span_tree:
     │             },
     │             "providerMetadata": {
     │               "openai": {
-    │                 "responseId": "<span:1>",
+    │                 "responseId": "<responseId:1>",
     │                 "serviceTier": "default"
     │               }
     │             },
     │             "response": {
     │               "body": "<omitted>",
     │               "headers": "<omitted>",
-    │               "id": "<span:1>",
     │               "modelId": "gpt-4o-mini-2024-07-18",
     │               "timestamp": "<timestamp>"
     │             },
@@ -5482,14 +5152,13 @@ span_tree:
     │         "finishReason": "stop",
     │         "providerMetadata": {
     │           "openai": {
-    │             "responseId": "<span:2>",
+    │             "responseId": "<responseId:2>",
     │             "serviceTier": "default"
     │           }
     │         },
     │         "response": {
     │           "body": "<omitted>",
     │           "headers": "<omitted>",
-    │           "id": "<span:2>",
     │           "messages": [
     │             {
     │               "content": [
@@ -5525,14 +5194,13 @@ span_tree:
     │             "finishReason": "stop",
     │             "providerMetadata": {
     │               "openai": {
-    │                 "responseId": "<span:2>",
+    │                 "responseId": "<responseId:2>",
     │                 "serviceTier": "default"
     │               }
     │             },
     │             "response": {
     │               "body": "<omitted>",
     │               "headers": "<omitted>",
-    │               "id": "<span:2>",
     │               "messages": [
     │                 {
     │                   "content": [
@@ -5676,14 +5344,13 @@ span_tree:
     │       │     "finishReason": "stop",
     │       │     "providerMetadata": {
     │       │       "openai": {
-    │       │         "responseId": "<span:2>",
+    │       │         "responseId": "<responseId:2>",
     │       │         "serviceTier": "default"
     │       │       }
     │       │     },
     │       │     "response": {
     │       │       "body": "<omitted>",
     │       │       "headers": "<omitted>",
-    │       │       "id": "<span:2>",
     │       │       "messages": [
     │       │         {
     │       │           "content": [
@@ -5719,14 +5386,13 @@ span_tree:
     │       │         "finishReason": "stop",
     │       │         "providerMetadata": {
     │       │           "openai": {
-    │       │             "responseId": "<span:2>",
+    │       │             "responseId": "<responseId:2>",
     │       │             "serviceTier": "default"
     │       │           }
     │       │         },
     │       │         "response": {
     │       │           "body": "<omitted>",
     │       │           "headers": "<omitted>",
-    │       │           "id": "<span:2>",
     │       │           "messages": [
     │       │             {
     │       │               "content": [
@@ -5870,14 +5536,13 @@ span_tree:
     │             },
     │             "providerMetadata": {
     │               "openai": {
-    │                 "responseId": "<span:1>",
+    │                 "responseId": "<responseId:1>",
     │                 "serviceTier": "default"
     │               }
     │             },
     │             "response": {
     │               "body": "<omitted>",
     │               "headers": "<omitted>",
-    │               "id": "<span:1>",
     │               "modelId": "gpt-4o-mini-2024-07-18",
     │               "timestamp": "<timestamp>"
     │             },
@@ -5923,24 +5588,851 @@ span_tree:
     │             "prompt_tokens": 16,
     │             "reasoning_tokens": 0
     │           }
-    └── ai-sdk-agent-stream-operation
+    ├── ai-sdk-agent-stream-operation
+    │   metadata: {
+    │     "operation": "agent-stream",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── ToolLoopAgent.stream [function]
+    │       input: {
+    │         "maxOutputTokens": 24,
+    │         "messages": [
+    │           {
+    │             "content": "Reply with exactly STREAM HELLO and no punctuation.",
+    │             "role": "user"
+    │           }
+    │         ]
+    │       }
+    │       output: {
+    │         "finishReason": "stop",
+    │         "text": "STREAM HELLO"
+    │       }
+    │       metadata: {
+    │         "braintrust": {
+    │           "integration_name": "ai-sdk",
+    │           "sdk_language": "typescript"
+    │         },
+    │         "model": "gpt-4o-mini-2024-07-18",
+    │         "provider": "openai.responses"
+    │       }
+    │       metrics: {
+    │         "time_to_first_token": 0
+    │       }
+    │       ├── streamText [function]
+    │       │   input: {
+    │       │     "maxOutputTokens": 24,
+    │       │     "messages": [
+    │       │       {
+    │       │         "content": "Reply with exactly STREAM HELLO and no punctuation.",
+    │       │         "role": "user"
+    │       │       }
+    │       │     ],
+    │       │     "model": {
+    │       │       "config": {
+    │       │         "fileIdPrefixes": [
+    │       │           "file-"
+    │       │         ],
+    │       │         "provider": "openai.responses"
+    │       │       },
+    │       │       "modelId": "gpt-4o-mini-2024-07-18",
+    │       │       "specificationVersion": "v3",
+    │       │       "supportedUrls": {
+    │       │         "application/pdf": [
+    │       │           {}
+    │       │         ],
+    │       │         "image/*": [
+    │       │           {}
+    │       │         ]
+    │       │       }
+    │       │     }
+    │       │   }
+    │       │   output: {
+    │       │     "finishReason": "stop",
+    │       │     "text": "STREAM HELLO"
+    │       │   }
+    │       │   metadata: {
+    │       │     "braintrust": {
+    │       │       "integration_name": "ai-sdk",
+    │       │       "sdk_language": "typescript"
+    │       │     },
+    │       │     "model": "gpt-4o-mini-2024-07-18",
+    │       │     "provider": "openai.responses"
+    │       │   }
+    │       │   metrics: {
+    │       │     "time_to_first_token": 0
+    │       │   }
+    │       └── doStream [llm]
+    │           input: {
+    │             "includeRawChunks": false,
+    │             "maxOutputTokens": 24,
+    │             "prompt": [
+    │               {
+    │                 "content": [
+    │                   {
+    │                     "text": "Reply with exactly STREAM HELLO and no punctuation.",
+    │                     "type": "text"
+    │                   }
+    │                 ],
+    │                 "role": "user"
+    │               }
+    │             ]
+    │           }
+    │           output: {
+    │             "finishReason": {
+    │               "unified": "stop"
+    │             },
+    │             "text": "STREAM HELLO",
+    │             "toolCalls": [],
+    │             "usage": {
+    │               "inputTokens": {
+    │                 "cacheRead": 0,
+    │                 "noCache": 17,
+    │                 "total": 17
+    │               },
+    │               "outputTokens": {
+    │                 "reasoning": 0,
+    │                 "text": 4,
+    │                 "total": 4
+    │               },
+    │               "raw": {
+    │                 "input_tokens": 17,
+    │                 "input_tokens_details": {
+    │                   "cached_tokens": 0
+    │                 },
+    │                 "output_tokens": 4,
+    │                 "output_tokens_details": {
+    │                   "reasoning_tokens": 0
+    │                 }
+    │               }
+    │             }
+    │           }
+    │           metadata: {
+    │             "braintrust": {
+    │               "integration_name": "ai-sdk",
+    │               "sdk_language": "typescript"
+    │             },
+    │             "finish_reason": {
+    │               "unified": "stop"
+    │             },
+    │             "model": "gpt-4o-mini-2024-07-18",
+    │             "provider": "openai.responses"
+    │           }
+    │           metrics: {
+    │             "completion_reasoning_tokens": 0,
+    │             "completion_tokens": 4,
+    │             "prompt_cached_tokens": 0,
+    │             "prompt_tokens": 17,
+    │             "reasoning_tokens": 0,
+    │             "time_to_first_token": 0
+    │           }
+    └── ai-sdk-agent-tool-loop-operation
         metadata: {
-          "operation": "agent-stream",
+          "operation": "agent-tool-loop",
           "testRunId": "<run:1>"
         }
-        └── ToolLoopAgent.stream [function]
+        └── ToolLoopAgent.generate [function]
             input: {
-              "maxOutputTokens": 24,
+              "maxOutputTokens": 256,
               "messages": [
                 {
-                  "content": "Reply with exactly STREAM HELLO and no punctuation.",
+                  "content": "I need help comparing laptop prices before checkout.",
+                  "role": "user"
+                },
+                {
+                  "content": "I can compare store prices and apply a discount code.",
+                  "role": "assistant"
+                },
+                {
+                  "content": "Call get_store_price for a laptop at StoreA and StoreB, then call apply_discount with code SAVE20 for the cheaper price. Finish with the discounted total.",
                   "role": "user"
                 }
               ]
             }
             output: {
+              "content": [
+                {
+                  "providerMetadata": {
+                    "openai": {
+                      "itemId": "<itemId:6>"
+                    }
+                  },
+                  "text": "Here are the prices for the laptop:\n\n- **Store A**: $999\n- **Store B**: $1099\n\nThe cheaper price is from **Store A** at $999. After applying the discount code **SAVE20**, the final total is **$799.20**.",
+                  "type": "text"
+                }
+              ],
               "finishReason": "stop",
-              "text": "STREAM HELLO"
+              "providerMetadata": {
+                "openai": {
+                  "responseId": "<responseId:7>",
+                  "serviceTier": "default"
+                }
+              },
+              "response": {
+                "body": "<omitted>",
+                "headers": "<omitted>",
+                "messages": [
+                  {
+                    "content": [
+                      {
+                        "input": {
+                          "item": "laptop",
+                          "store": "StoreA"
+                        },
+                        "providerOptions": {
+                          "openai": {
+                            "itemId": "<itemId:1>"
+                          }
+                        },
+                        "toolName": "get_store_price",
+                        "type": "tool-call"
+                      },
+                      {
+                        "input": {
+                          "item": "laptop",
+                          "store": "StoreB"
+                        },
+                        "providerOptions": {
+                          "openai": {
+                            "itemId": "<itemId:2>"
+                          }
+                        },
+                        "toolName": "get_store_price",
+                        "type": "tool-call"
+                      }
+                    ],
+                    "role": "assistant"
+                  },
+                  {
+                    "content": [
+                      {
+                        "output": {
+                          "type": "text",
+                          "value": "{\"item\":\"laptop\",\"price\":999,\"store\":\"StoreA\"}"
+                        },
+                        "providerOptions": {
+                          "openai": {
+                            "itemId": "<itemId:1>"
+                          }
+                        },
+                        "toolName": "get_store_price",
+                        "type": "tool-result"
+                      },
+                      {
+                        "output": {
+                          "type": "text",
+                          "value": "{\"item\":\"laptop\",\"price\":1099,\"store\":\"StoreB\"}"
+                        },
+                        "providerOptions": {
+                          "openai": {
+                            "itemId": "<itemId:2>"
+                          }
+                        },
+                        "toolName": "get_store_price",
+                        "type": "tool-result"
+                      }
+                    ],
+                    "role": "tool"
+                  },
+                  {
+                    "content": [
+                      {
+                        "input": {
+                          "discountCode": "SAVE20",
+                          "total": 999
+                        },
+                        "providerOptions": {
+                          "openai": {
+                            "itemId": "<itemId:4>"
+                          }
+                        },
+                        "toolName": "apply_discount",
+                        "type": "tool-call"
+                      }
+                    ],
+                    "role": "assistant"
+                  },
+                  {
+                    "content": [
+                      {
+                        "output": {
+                          "type": "text",
+                          "value": "{\"discountCode\":\"SAVE20\",\"finalTotal\":799.2,\"originalTotal\":999}"
+                        },
+                        "providerOptions": {
+                          "openai": {
+                            "itemId": "<itemId:4>"
+                          }
+                        },
+                        "toolName": "apply_discount",
+                        "type": "tool-result"
+                      }
+                    ],
+                    "role": "tool"
+                  },
+                  {
+                    "content": [
+                      {
+                        "providerOptions": {
+                          "openai": {
+                            "itemId": "<itemId:6>"
+                          }
+                        },
+                        "text": "Here are the prices for the laptop:\n\n- **Store A**: $999\n- **Store B**: $1099\n\nThe cheaper price is from **Store A** at $999. After applying the discount code **SAVE20**, the final total is **$799.20**.",
+                        "type": "text"
+                      }
+                    ],
+                    "role": "assistant"
+                  }
+                ],
+                "modelId": "gpt-4o-mini-2024-07-18",
+                "timestamp": "<timestamp>"
+              },
+              "steps": [
+                {
+                  "content": [
+                    {
+                      "input": {
+                        "item": "laptop",
+                        "store": "StoreA"
+                      },
+                      "providerMetadata": {
+                        "openai": {
+                          "itemId": "<itemId:1>"
+                        }
+                      },
+                      "toolName": "get_store_price",
+                      "type": "tool-call"
+                    },
+                    {
+                      "input": {
+                        "item": "laptop",
+                        "store": "StoreB"
+                      },
+                      "providerMetadata": {
+                        "openai": {
+                          "itemId": "<itemId:2>"
+                        }
+                      },
+                      "toolName": "get_store_price",
+                      "type": "tool-call"
+                    },
+                    {
+                      "dynamic": false,
+                      "input": {
+                        "item": "laptop",
+                        "store": "StoreA"
+                      },
+                      "output": "{\"item\":\"laptop\",\"price\":999,\"store\":\"StoreA\"}",
+                      "providerMetadata": {
+                        "openai": {
+                          "itemId": "<itemId:1>"
+                        }
+                      },
+                      "toolName": "get_store_price",
+                      "type": "tool-result"
+                    },
+                    {
+                      "dynamic": false,
+                      "input": {
+                        "item": "laptop",
+                        "store": "StoreB"
+                      },
+                      "output": "{\"item\":\"laptop\",\"price\":1099,\"store\":\"StoreB\"}",
+                      "providerMetadata": {
+                        "openai": {
+                          "itemId": "<itemId:2>"
+                        }
+                      },
+                      "toolName": "get_store_price",
+                      "type": "tool-result"
+                    }
+                  ],
+                  "finishReason": "tool-calls",
+                  "providerMetadata": {
+                    "openai": {
+                      "responseId": "<responseId:3>",
+                      "serviceTier": "default"
+                    }
+                  },
+                  "response": {
+                    "body": "<omitted>",
+                    "headers": "<omitted>",
+                    "messages": [
+                      {
+                        "content": [
+                          {
+                            "input": {
+                              "item": "laptop",
+                              "store": "StoreA"
+                            },
+                            "providerOptions": {
+                              "openai": {
+                                "itemId": "<itemId:1>"
+                              }
+                            },
+                            "toolName": "get_store_price",
+                            "type": "tool-call"
+                          },
+                          {
+                            "input": {
+                              "item": "laptop",
+                              "store": "StoreB"
+                            },
+                            "providerOptions": {
+                              "openai": {
+                                "itemId": "<itemId:2>"
+                              }
+                            },
+                            "toolName": "get_store_price",
+                            "type": "tool-call"
+                          }
+                        ],
+                        "role": "assistant"
+                      },
+                      {
+                        "content": [
+                          {
+                            "output": {
+                              "type": "text",
+                              "value": "{\"item\":\"laptop\",\"price\":999,\"store\":\"StoreA\"}"
+                            },
+                            "providerOptions": {
+                              "openai": {
+                                "itemId": "<itemId:1>"
+                              }
+                            },
+                            "toolName": "get_store_price",
+                            "type": "tool-result"
+                          },
+                          {
+                            "output": {
+                              "type": "text",
+                              "value": "{\"item\":\"laptop\",\"price\":1099,\"store\":\"StoreB\"}"
+                            },
+                            "providerOptions": {
+                              "openai": {
+                                "itemId": "<itemId:2>"
+                              }
+                            },
+                            "toolName": "get_store_price",
+                            "type": "tool-result"
+                          }
+                        ],
+                        "role": "tool"
+                      }
+                    ],
+                    "modelId": "gpt-4o-mini-2024-07-18",
+                    "timestamp": "<timestamp>"
+                  },
+                  "usage": {
+                    "cachedInputTokens": 0,
+                    "inputTokenDetails": {
+                      "cacheReadTokens": 0,
+                      "noCacheTokens": 173
+                    },
+                    "inputTokens": 173,
+                    "outputTokenDetails": {
+                      "reasoningTokens": 0,
+                      "textTokens": 59
+                    },
+                    "outputTokens": 59,
+                    "raw": {
+                      "input_tokens": 173,
+                      "input_tokens_details": {
+                        "cached_tokens": 0
+                      },
+                      "output_tokens": 59,
+                      "output_tokens_details": {
+                        "reasoning_tokens": 0
+                      }
+                    },
+                    "reasoningTokens": 0,
+                    "totalTokens": 232
+                  },
+                  "warnings": []
+                },
+                {
+                  "content": [
+                    {
+                      "input": {
+                        "discountCode": "SAVE20",
+                        "total": 999
+                      },
+                      "providerMetadata": {
+                        "openai": {
+                          "itemId": "<itemId:4>"
+                        }
+                      },
+                      "toolName": "apply_discount",
+                      "type": "tool-call"
+                    },
+                    {
+                      "dynamic": false,
+                      "input": {
+                        "discountCode": "SAVE20",
+                        "total": 999
+                      },
+                      "output": "{\"discountCode\":\"SAVE20\",\"finalTotal\":799.2,\"originalTotal\":999}",
+                      "providerMetadata": {
+                        "openai": {
+                          "itemId": "<itemId:4>"
+                        }
+                      },
+                      "toolName": "apply_discount",
+                      "type": "tool-result"
+                    }
+                  ],
+                  "finishReason": "tool-calls",
+                  "providerMetadata": {
+                    "openai": {
+                      "responseId": "<responseId:5>",
+                      "serviceTier": "default"
+                    }
+                  },
+                  "response": {
+                    "body": "<omitted>",
+                    "headers": "<omitted>",
+                    "messages": [
+                      {
+                        "content": [
+                          {
+                            "input": {
+                              "item": "laptop",
+                              "store": "StoreA"
+                            },
+                            "providerOptions": {
+                              "openai": {
+                                "itemId": "<itemId:1>"
+                              }
+                            },
+                            "toolName": "get_store_price",
+                            "type": "tool-call"
+                          },
+                          {
+                            "input": {
+                              "item": "laptop",
+                              "store": "StoreB"
+                            },
+                            "providerOptions": {
+                              "openai": {
+                                "itemId": "<itemId:2>"
+                              }
+                            },
+                            "toolName": "get_store_price",
+                            "type": "tool-call"
+                          }
+                        ],
+                        "role": "assistant"
+                      },
+                      {
+                        "content": [
+                          {
+                            "output": {
+                              "type": "text",
+                              "value": "{\"item\":\"laptop\",\"price\":999,\"store\":\"StoreA\"}"
+                            },
+                            "providerOptions": {
+                              "openai": {
+                                "itemId": "<itemId:1>"
+                              }
+                            },
+                            "toolName": "get_store_price",
+                            "type": "tool-result"
+                          },
+                          {
+                            "output": {
+                              "type": "text",
+                              "value": "{\"item\":\"laptop\",\"price\":1099,\"store\":\"StoreB\"}"
+                            },
+                            "providerOptions": {
+                              "openai": {
+                                "itemId": "<itemId:2>"
+                              }
+                            },
+                            "toolName": "get_store_price",
+                            "type": "tool-result"
+                          }
+                        ],
+                        "role": "tool"
+                      },
+                      {
+                        "content": [
+                          {
+                            "input": {
+                              "discountCode": "SAVE20",
+                              "total": 999
+                            },
+                            "providerOptions": {
+                              "openai": {
+                                "itemId": "<itemId:4>"
+                              }
+                            },
+                            "toolName": "apply_discount",
+                            "type": "tool-call"
+                          }
+                        ],
+                        "role": "assistant"
+                      },
+                      {
+                        "content": [
+                          {
+                            "output": {
+                              "type": "text",
+                              "value": "{\"discountCode\":\"SAVE20\",\"finalTotal\":799.2,\"originalTotal\":999}"
+                            },
+                            "providerOptions": {
+                              "openai": {
+                                "itemId": "<itemId:4>"
+                              }
+                            },
+                            "toolName": "apply_discount",
+                            "type": "tool-result"
+                          }
+                        ],
+                        "role": "tool"
+                      }
+                    ],
+                    "modelId": "gpt-4o-mini-2024-07-18",
+                    "timestamp": "<timestamp>"
+                  },
+                  "usage": {
+                    "cachedInputTokens": 0,
+                    "inputTokenDetails": {
+                      "cacheReadTokens": 0,
+                      "noCacheTokens": 260
+                    },
+                    "inputTokens": 260,
+                    "outputTokenDetails": {
+                      "reasoningTokens": 0,
+                      "textTokens": 21
+                    },
+                    "outputTokens": 21,
+                    "raw": {
+                      "input_tokens": 260,
+                      "input_tokens_details": {
+                        "cached_tokens": 0
+                      },
+                      "output_tokens": 21,
+                      "output_tokens_details": {
+                        "reasoning_tokens": 0
+                      }
+                    },
+                    "reasoningTokens": 0,
+                    "totalTokens": 281
+                  },
+                  "warnings": []
+                },
+                {
+                  "content": [
+                    {
+                      "providerMetadata": {
+                        "openai": {
+                          "itemId": "<itemId:6>"
+                        }
+                      },
+                      "text": "Here are the prices for the laptop:\n\n- **Store A**: $999\n- **Store B**: $1099\n\nThe cheaper price is from **Store A** at $999. After applying the discount code **SAVE20**, the final total is **$799.20**.",
+                      "type": "text"
+                    }
+                  ],
+                  "finishReason": "stop",
+                  "providerMetadata": {
+                    "openai": {
+                      "responseId": "<responseId:7>",
+                      "serviceTier": "default"
+                    }
+                  },
+                  "response": {
+                    "body": "<omitted>",
+                    "headers": "<omitted>",
+                    "messages": [
+                      {
+                        "content": [
+                          {
+                            "input": {
+                              "item": "laptop",
+                              "store": "StoreA"
+                            },
+                            "providerOptions": {
+                              "openai": {
+                                "itemId": "<itemId:1>"
+                              }
+                            },
+                            "toolName": "get_store_price",
+                            "type": "tool-call"
+                          },
+                          {
+                            "input": {
+                              "item": "laptop",
+                              "store": "StoreB"
+                            },
+                            "providerOptions": {
+                              "openai": {
+                                "itemId": "<itemId:2>"
+                              }
+                            },
+                            "toolName": "get_store_price",
+                            "type": "tool-call"
+                          }
+                        ],
+                        "role": "assistant"
+                      },
+                      {
+                        "content": [
+                          {
+                            "output": {
+                              "type": "text",
+                              "value": "{\"item\":\"laptop\",\"price\":999,\"store\":\"StoreA\"}"
+                            },
+                            "providerOptions": {
+                              "openai": {
+                                "itemId": "<itemId:1>"
+                              }
+                            },
+                            "toolName": "get_store_price",
+                            "type": "tool-result"
+                          },
+                          {
+                            "output": {
+                              "type": "text",
+                              "value": "{\"item\":\"laptop\",\"price\":1099,\"store\":\"StoreB\"}"
+                            },
+                            "providerOptions": {
+                              "openai": {
+                                "itemId": "<itemId:2>"
+                              }
+                            },
+                            "toolName": "get_store_price",
+                            "type": "tool-result"
+                          }
+                        ],
+                        "role": "tool"
+                      },
+                      {
+                        "content": [
+                          {
+                            "input": {
+                              "discountCode": "SAVE20",
+                              "total": 999
+                            },
+                            "providerOptions": {
+                              "openai": {
+                                "itemId": "<itemId:4>"
+                              }
+                            },
+                            "toolName": "apply_discount",
+                            "type": "tool-call"
+                          }
+                        ],
+                        "role": "assistant"
+                      },
+                      {
+                        "content": [
+                          {
+                            "output": {
+                              "type": "text",
+                              "value": "{\"discountCode\":\"SAVE20\",\"finalTotal\":799.2,\"originalTotal\":999}"
+                            },
+                            "providerOptions": {
+                              "openai": {
+                                "itemId": "<itemId:4>"
+                              }
+                            },
+                            "toolName": "apply_discount",
+                            "type": "tool-result"
+                          }
+                        ],
+                        "role": "tool"
+                      },
+                      {
+                        "content": [
+                          {
+                            "providerOptions": {
+                              "openai": {
+                                "itemId": "<itemId:6>"
+                              }
+                            },
+                            "text": "Here are the prices for the laptop:\n\n- **Store A**: $999\n- **Store B**: $1099\n\nThe cheaper price is from **Store A** at $999. After applying the discount code **SAVE20**, the final total is **$799.20**.",
+                            "type": "text"
+                          }
+                        ],
+                        "role": "assistant"
+                      }
+                    ],
+                    "modelId": "gpt-4o-mini-2024-07-18",
+                    "timestamp": "<timestamp>"
+                  },
+                  "usage": {
+                    "cachedInputTokens": 0,
+                    "inputTokenDetails": {
+                      "cacheReadTokens": 0,
+                      "noCacheTokens": 308
+                    },
+                    "inputTokens": 308,
+                    "outputTokenDetails": {
+                      "reasoningTokens": 0,
+                      "textTokens": 62
+                    },
+                    "outputTokens": 62,
+                    "raw": {
+                      "input_tokens": 308,
+                      "input_tokens_details": {
+                        "cached_tokens": 0
+                      },
+                      "output_tokens": 62,
+                      "output_tokens_details": {
+                        "reasoning_tokens": 0
+                      }
+                    },
+                    "reasoningTokens": 0,
+                    "totalTokens": 370
+                  },
+                  "warnings": []
+                }
+              ],
+              "text": "Here are the prices for the laptop:\n\n- **Store A**: $999\n- **Store B**: $1099\n\nThe cheaper price is from **Store A** at $999. After applying the discount code **SAVE20**, the final total is **$799.20**.",
+              "toolCalls": [],
+              "toolResults": [],
+              "totalUsage": {
+                "cachedInputTokens": 0,
+                "inputTokenDetails": {
+                  "cacheReadTokens": 0,
+                  "noCacheTokens": 741
+                },
+                "inputTokens": 741,
+                "outputTokenDetails": {
+                  "reasoningTokens": 0,
+                  "textTokens": 142
+                },
+                "outputTokens": 142,
+                "reasoningTokens": 0,
+                "totalTokens": 883
+              },
+              "usage": {
+                "cachedInputTokens": 0,
+                "inputTokenDetails": {
+                  "cacheReadTokens": 0,
+                  "noCacheTokens": 308
+                },
+                "inputTokens": 308,
+                "outputTokenDetails": {
+                  "reasoningTokens": 0,
+                  "textTokens": 62
+                },
+                "outputTokens": 62,
+                "raw": {
+                  "input_tokens": 308,
+                  "input_tokens_details": {
+                    "cached_tokens": 0
+                  },
+                  "output_tokens": 62,
+                  "output_tokens_details": {
+                    "reasoning_tokens": 0
+                  }
+                },
+                "reasoningTokens": 0,
+                "totalTokens": 370
+              },
+              "warnings": []
             }
             metadata: {
               "braintrust": {
@@ -5950,15 +6442,20 @@ span_tree:
               "model": "gpt-4o-mini-2024-07-18",
               "provider": "openai.responses"
             }
-            metrics: {
-              "time_to_first_token": 0
-            }
-            ├── streamText [function]
+            ├── generateText [function]
             │   input: {
-            │     "maxOutputTokens": 24,
+            │     "maxOutputTokens": 256,
             │     "messages": [
             │       {
-            │         "content": "Reply with exactly STREAM HELLO and no punctuation.",
+            │         "content": "I need help comparing laptop prices before checkout.",
+            │         "role": "user"
+            │       },
+            │       {
+            │         "content": "I can compare store prices and apply a discount code.",
+            │         "role": "assistant"
+            │       },
+            │       {
+            │         "content": "Call get_store_price for a laptop at StoreA and StoreB, then call apply_discount with code SAVE20 for the cheaper price. Finish with the discounted total.",
             │         "role": "user"
             │       }
             │     ],
@@ -5979,11 +6476,741 @@ span_tree:
             │           {}
             │         ]
             │       }
+            │     },
+            │     "system": "You are a shopping assistant. Use the tools before answering pricing questions.",
+            │     "temperature": 0,
+            │     "tools": {
+            │       "apply_discount": {
+            │         "description": "Apply a discount code to a total",
+            │         "inputSchema": {
+            │           "$schema": "http://json-schema.org/draft-07/schema#",
+            │           "additionalProperties": false,
+            │           "properties": {
+            │             "discountCode": {
+            │               "description": "The discount code to apply",
+            │               "type": "string"
+            │             },
+            │             "total": {
+            │               "description": "The original total",
+            │               "type": "number"
+            │             }
+            │           },
+            │           "required": [
+            │             "discountCode",
+            │             "total"
+            │           ],
+            │           "type": "object"
+            │         }
+            │       },
+            │       "get_store_price": {
+            │         "description": "Get the price of an item at a store",
+            │         "inputSchema": {
+            │           "$schema": "http://json-schema.org/draft-07/schema#",
+            │           "additionalProperties": false,
+            │           "properties": {
+            │             "item": {
+            │               "description": "The item to price",
+            │               "type": "string"
+            │             },
+            │             "store": {
+            │               "description": "The store name",
+            │               "type": "string"
+            │             }
+            │           },
+            │           "required": [
+            │             "item",
+            │             "store"
+            │           ],
+            │           "type": "object"
+            │         }
+            │       }
             │     }
             │   }
             │   output: {
+            │     "content": [
+            │       {
+            │         "providerMetadata": {
+            │           "openai": {
+            │             "itemId": "<itemId:6>"
+            │           }
+            │         },
+            │         "text": "Here are the prices for the laptop:\n\n- **Store A**: $999\n- **Store B**: $1099\n\nThe cheaper price is from **Store A** at $999. After applying the discount code **SAVE20**, the final total is **$799.20**.",
+            │         "type": "text"
+            │       }
+            │     ],
             │     "finishReason": "stop",
-            │     "text": "STREAM HELLO"
+            │     "providerMetadata": {
+            │       "openai": {
+            │         "responseId": "<responseId:7>",
+            │         "serviceTier": "default"
+            │       }
+            │     },
+            │     "response": {
+            │       "body": "<omitted>",
+            │       "headers": "<omitted>",
+            │       "messages": [
+            │         {
+            │           "content": [
+            │             {
+            │               "input": {
+            │                 "item": "laptop",
+            │                 "store": "StoreA"
+            │               },
+            │               "providerOptions": {
+            │                 "openai": {
+            │                   "itemId": "<itemId:1>"
+            │                 }
+            │               },
+            │               "toolName": "get_store_price",
+            │               "type": "tool-call"
+            │             },
+            │             {
+            │               "input": {
+            │                 "item": "laptop",
+            │                 "store": "StoreB"
+            │               },
+            │               "providerOptions": {
+            │                 "openai": {
+            │                   "itemId": "<itemId:2>"
+            │                 }
+            │               },
+            │               "toolName": "get_store_price",
+            │               "type": "tool-call"
+            │             }
+            │           ],
+            │           "role": "assistant"
+            │         },
+            │         {
+            │           "content": [
+            │             {
+            │               "output": {
+            │                 "type": "text",
+            │                 "value": "{\"item\":\"laptop\",\"price\":999,\"store\":\"StoreA\"}"
+            │               },
+            │               "providerOptions": {
+            │                 "openai": {
+            │                   "itemId": "<itemId:1>"
+            │                 }
+            │               },
+            │               "toolName": "get_store_price",
+            │               "type": "tool-result"
+            │             },
+            │             {
+            │               "output": {
+            │                 "type": "text",
+            │                 "value": "{\"item\":\"laptop\",\"price\":1099,\"store\":\"StoreB\"}"
+            │               },
+            │               "providerOptions": {
+            │                 "openai": {
+            │                   "itemId": "<itemId:2>"
+            │                 }
+            │               },
+            │               "toolName": "get_store_price",
+            │               "type": "tool-result"
+            │             }
+            │           ],
+            │           "role": "tool"
+            │         },
+            │         {
+            │           "content": [
+            │             {
+            │               "input": {
+            │                 "discountCode": "SAVE20",
+            │                 "total": 999
+            │               },
+            │               "providerOptions": {
+            │                 "openai": {
+            │                   "itemId": "<itemId:4>"
+            │                 }
+            │               },
+            │               "toolName": "apply_discount",
+            │               "type": "tool-call"
+            │             }
+            │           ],
+            │           "role": "assistant"
+            │         },
+            │         {
+            │           "content": [
+            │             {
+            │               "output": {
+            │                 "type": "text",
+            │                 "value": "{\"discountCode\":\"SAVE20\",\"finalTotal\":799.2,\"originalTotal\":999}"
+            │               },
+            │               "providerOptions": {
+            │                 "openai": {
+            │                   "itemId": "<itemId:4>"
+            │                 }
+            │               },
+            │               "toolName": "apply_discount",
+            │               "type": "tool-result"
+            │             }
+            │           ],
+            │           "role": "tool"
+            │         },
+            │         {
+            │           "content": [
+            │             {
+            │               "providerOptions": {
+            │                 "openai": {
+            │                   "itemId": "<itemId:6>"
+            │                 }
+            │               },
+            │               "text": "Here are the prices for the laptop:\n\n- **Store A**: $999\n- **Store B**: $1099\n\nThe cheaper price is from **Store A** at $999. After applying the discount code **SAVE20**, the final total is **$799.20**.",
+            │               "type": "text"
+            │             }
+            │           ],
+            │           "role": "assistant"
+            │         }
+            │       ],
+            │       "modelId": "gpt-4o-mini-2024-07-18",
+            │       "timestamp": "<timestamp>"
+            │     },
+            │     "steps": [
+            │       {
+            │         "content": [
+            │           {
+            │             "input": {
+            │               "item": "laptop",
+            │               "store": "StoreA"
+            │             },
+            │             "providerMetadata": {
+            │               "openai": {
+            │                 "itemId": "<itemId:1>"
+            │               }
+            │             },
+            │             "toolName": "get_store_price",
+            │             "type": "tool-call"
+            │           },
+            │           {
+            │             "input": {
+            │               "item": "laptop",
+            │               "store": "StoreB"
+            │             },
+            │             "providerMetadata": {
+            │               "openai": {
+            │                 "itemId": "<itemId:2>"
+            │               }
+            │             },
+            │             "toolName": "get_store_price",
+            │             "type": "tool-call"
+            │           },
+            │           {
+            │             "dynamic": false,
+            │             "input": {
+            │               "item": "laptop",
+            │               "store": "StoreA"
+            │             },
+            │             "output": "{\"item\":\"laptop\",\"price\":999,\"store\":\"StoreA\"}",
+            │             "providerMetadata": {
+            │               "openai": {
+            │                 "itemId": "<itemId:1>"
+            │               }
+            │             },
+            │             "toolName": "get_store_price",
+            │             "type": "tool-result"
+            │           },
+            │           {
+            │             "dynamic": false,
+            │             "input": {
+            │               "item": "laptop",
+            │               "store": "StoreB"
+            │             },
+            │             "output": "{\"item\":\"laptop\",\"price\":1099,\"store\":\"StoreB\"}",
+            │             "providerMetadata": {
+            │               "openai": {
+            │                 "itemId": "<itemId:2>"
+            │               }
+            │             },
+            │             "toolName": "get_store_price",
+            │             "type": "tool-result"
+            │           }
+            │         ],
+            │         "finishReason": "tool-calls",
+            │         "providerMetadata": {
+            │           "openai": {
+            │             "responseId": "<responseId:3>",
+            │             "serviceTier": "default"
+            │           }
+            │         },
+            │         "response": {
+            │           "body": "<omitted>",
+            │           "headers": "<omitted>",
+            │           "messages": [
+            │             {
+            │               "content": [
+            │                 {
+            │                   "input": {
+            │                     "item": "laptop",
+            │                     "store": "StoreA"
+            │                   },
+            │                   "providerOptions": {
+            │                     "openai": {
+            │                       "itemId": "<itemId:1>"
+            │                     }
+            │                   },
+            │                   "toolName": "get_store_price",
+            │                   "type": "tool-call"
+            │                 },
+            │                 {
+            │                   "input": {
+            │                     "item": "laptop",
+            │                     "store": "StoreB"
+            │                   },
+            │                   "providerOptions": {
+            │                     "openai": {
+            │                       "itemId": "<itemId:2>"
+            │                     }
+            │                   },
+            │                   "toolName": "get_store_price",
+            │                   "type": "tool-call"
+            │                 }
+            │               ],
+            │               "role": "assistant"
+            │             },
+            │             {
+            │               "content": [
+            │                 {
+            │                   "output": {
+            │                     "type": "text",
+            │                     "value": "{\"item\":\"laptop\",\"price\":999,\"store\":\"StoreA\"}"
+            │                   },
+            │                   "providerOptions": {
+            │                     "openai": {
+            │                       "itemId": "<itemId:1>"
+            │                     }
+            │                   },
+            │                   "toolName": "get_store_price",
+            │                   "type": "tool-result"
+            │                 },
+            │                 {
+            │                   "output": {
+            │                     "type": "text",
+            │                     "value": "{\"item\":\"laptop\",\"price\":1099,\"store\":\"StoreB\"}"
+            │                   },
+            │                   "providerOptions": {
+            │                     "openai": {
+            │                       "itemId": "<itemId:2>"
+            │                     }
+            │                   },
+            │                   "toolName": "get_store_price",
+            │                   "type": "tool-result"
+            │                 }
+            │               ],
+            │               "role": "tool"
+            │             }
+            │           ],
+            │           "modelId": "gpt-4o-mini-2024-07-18",
+            │           "timestamp": "<timestamp>"
+            │         },
+            │         "usage": {
+            │           "cachedInputTokens": 0,
+            │           "inputTokenDetails": {
+            │             "cacheReadTokens": 0,
+            │             "noCacheTokens": 173
+            │           },
+            │           "inputTokens": 173,
+            │           "outputTokenDetails": {
+            │             "reasoningTokens": 0,
+            │             "textTokens": 59
+            │           },
+            │           "outputTokens": 59,
+            │           "raw": {
+            │             "input_tokens": 173,
+            │             "input_tokens_details": {
+            │               "cached_tokens": 0
+            │             },
+            │             "output_tokens": 59,
+            │             "output_tokens_details": {
+            │               "reasoning_tokens": 0
+            │             }
+            │           },
+            │           "reasoningTokens": 0,
+            │           "totalTokens": 232
+            │         },
+            │         "warnings": []
+            │       },
+            │       {
+            │         "content": [
+            │           {
+            │             "input": {
+            │               "discountCode": "SAVE20",
+            │               "total": 999
+            │             },
+            │             "providerMetadata": {
+            │               "openai": {
+            │                 "itemId": "<itemId:4>"
+            │               }
+            │             },
+            │             "toolName": "apply_discount",
+            │             "type": "tool-call"
+            │           },
+            │           {
+            │             "dynamic": false,
+            │             "input": {
+            │               "discountCode": "SAVE20",
+            │               "total": 999
+            │             },
+            │             "output": "{\"discountCode\":\"SAVE20\",\"finalTotal\":799.2,\"originalTotal\":999}",
+            │             "providerMetadata": {
+            │               "openai": {
+            │                 "itemId": "<itemId:4>"
+            │               }
+            │             },
+            │             "toolName": "apply_discount",
+            │             "type": "tool-result"
+            │           }
+            │         ],
+            │         "finishReason": "tool-calls",
+            │         "providerMetadata": {
+            │           "openai": {
+            │             "responseId": "<responseId:5>",
+            │             "serviceTier": "default"
+            │           }
+            │         },
+            │         "response": {
+            │           "body": "<omitted>",
+            │           "headers": "<omitted>",
+            │           "messages": [
+            │             {
+            │               "content": [
+            │                 {
+            │                   "input": {
+            │                     "item": "laptop",
+            │                     "store": "StoreA"
+            │                   },
+            │                   "providerOptions": {
+            │                     "openai": {
+            │                       "itemId": "<itemId:1>"
+            │                     }
+            │                   },
+            │                   "toolName": "get_store_price",
+            │                   "type": "tool-call"
+            │                 },
+            │                 {
+            │                   "input": {
+            │                     "item": "laptop",
+            │                     "store": "StoreB"
+            │                   },
+            │                   "providerOptions": {
+            │                     "openai": {
+            │                       "itemId": "<itemId:2>"
+            │                     }
+            │                   },
+            │                   "toolName": "get_store_price",
+            │                   "type": "tool-call"
+            │                 }
+            │               ],
+            │               "role": "assistant"
+            │             },
+            │             {
+            │               "content": [
+            │                 {
+            │                   "output": {
+            │                     "type": "text",
+            │                     "value": "{\"item\":\"laptop\",\"price\":999,\"store\":\"StoreA\"}"
+            │                   },
+            │                   "providerOptions": {
+            │                     "openai": {
+            │                       "itemId": "<itemId:1>"
+            │                     }
+            │                   },
+            │                   "toolName": "get_store_price",
+            │                   "type": "tool-result"
+            │                 },
+            │                 {
+            │                   "output": {
+            │                     "type": "text",
+            │                     "value": "{\"item\":\"laptop\",\"price\":1099,\"store\":\"StoreB\"}"
+            │                   },
+            │                   "providerOptions": {
+            │                     "openai": {
+            │                       "itemId": "<itemId:2>"
+            │                     }
+            │                   },
+            │                   "toolName": "get_store_price",
+            │                   "type": "tool-result"
+            │                 }
+            │               ],
+            │               "role": "tool"
+            │             },
+            │             {
+            │               "content": [
+            │                 {
+            │                   "input": {
+            │                     "discountCode": "SAVE20",
+            │                     "total": 999
+            │                   },
+            │                   "providerOptions": {
+            │                     "openai": {
+            │                       "itemId": "<itemId:4>"
+            │                     }
+            │                   },
+            │                   "toolName": "apply_discount",
+            │                   "type": "tool-call"
+            │                 }
+            │               ],
+            │               "role": "assistant"
+            │             },
+            │             {
+            │               "content": [
+            │                 {
+            │                   "output": {
+            │                     "type": "text",
+            │                     "value": "{\"discountCode\":\"SAVE20\",\"finalTotal\":799.2,\"originalTotal\":999}"
+            │                   },
+            │                   "providerOptions": {
+            │                     "openai": {
+            │                       "itemId": "<itemId:4>"
+            │                     }
+            │                   },
+            │                   "toolName": "apply_discount",
+            │                   "type": "tool-result"
+            │                 }
+            │               ],
+            │               "role": "tool"
+            │             }
+            │           ],
+            │           "modelId": "gpt-4o-mini-2024-07-18",
+            │           "timestamp": "<timestamp>"
+            │         },
+            │         "usage": {
+            │           "cachedInputTokens": 0,
+            │           "inputTokenDetails": {
+            │             "cacheReadTokens": 0,
+            │             "noCacheTokens": 260
+            │           },
+            │           "inputTokens": 260,
+            │           "outputTokenDetails": {
+            │             "reasoningTokens": 0,
+            │             "textTokens": 21
+            │           },
+            │           "outputTokens": 21,
+            │           "raw": {
+            │             "input_tokens": 260,
+            │             "input_tokens_details": {
+            │               "cached_tokens": 0
+            │             },
+            │             "output_tokens": 21,
+            │             "output_tokens_details": {
+            │               "reasoning_tokens": 0
+            │             }
+            │           },
+            │           "reasoningTokens": 0,
+            │           "totalTokens": 281
+            │         },
+            │         "warnings": []
+            │       },
+            │       {
+            │         "content": [
+            │           {
+            │             "providerMetadata": {
+            │               "openai": {
+            │                 "itemId": "<itemId:6>"
+            │               }
+            │             },
+            │             "text": "Here are the prices for the laptop:\n\n- **Store A**: $999\n- **Store B**: $1099\n\nThe cheaper price is from **Store A** at $999. After applying the discount code **SAVE20**, the final total is **$799.20**.",
+            │             "type": "text"
+            │           }
+            │         ],
+            │         "finishReason": "stop",
+            │         "providerMetadata": {
+            │           "openai": {
+            │             "responseId": "<responseId:7>",
+            │             "serviceTier": "default"
+            │           }
+            │         },
+            │         "response": {
+            │           "body": "<omitted>",
+            │           "headers": "<omitted>",
+            │           "messages": [
+            │             {
+            │               "content": [
+            │                 {
+            │                   "input": {
+            │                     "item": "laptop",
+            │                     "store": "StoreA"
+            │                   },
+            │                   "providerOptions": {
+            │                     "openai": {
+            │                       "itemId": "<itemId:1>"
+            │                     }
+            │                   },
+            │                   "toolName": "get_store_price",
+            │                   "type": "tool-call"
+            │                 },
+            │                 {
+            │                   "input": {
+            │                     "item": "laptop",
+            │                     "store": "StoreB"
+            │                   },
+            │                   "providerOptions": {
+            │                     "openai": {
+            │                       "itemId": "<itemId:2>"
+            │                     }
+            │                   },
+            │                   "toolName": "get_store_price",
+            │                   "type": "tool-call"
+            │                 }
+            │               ],
+            │               "role": "assistant"
+            │             },
+            │             {
+            │               "content": [
+            │                 {
+            │                   "output": {
+            │                     "type": "text",
+            │                     "value": "{\"item\":\"laptop\",\"price\":999,\"store\":\"StoreA\"}"
+            │                   },
+            │                   "providerOptions": {
+            │                     "openai": {
+            │                       "itemId": "<itemId:1>"
+            │                     }
+            │                   },
+            │                   "toolName": "get_store_price",
+            │                   "type": "tool-result"
+            │                 },
+            │                 {
+            │                   "output": {
+            │                     "type": "text",
+            │                     "value": "{\"item\":\"laptop\",\"price\":1099,\"store\":\"StoreB\"}"
+            │                   },
+            │                   "providerOptions": {
+            │                     "openai": {
+            │                       "itemId": "<itemId:2>"
+            │                     }
+            │                   },
+            │                   "toolName": "get_store_price",
+            │                   "type": "tool-result"
+            │                 }
+            │               ],
+            │               "role": "tool"
+            │             },
+            │             {
+            │               "content": [
+            │                 {
+            │                   "input": {
+            │                     "discountCode": "SAVE20",
+            │                     "total": 999
+            │                   },
+            │                   "providerOptions": {
+            │                     "openai": {
+            │                       "itemId": "<itemId:4>"
+            │                     }
+            │                   },
+            │                   "toolName": "apply_discount",
+            │                   "type": "tool-call"
+            │                 }
+            │               ],
+            │               "role": "assistant"
+            │             },
+            │             {
+            │               "content": [
+            │                 {
+            │                   "output": {
+            │                     "type": "text",
+            │                     "value": "{\"discountCode\":\"SAVE20\",\"finalTotal\":799.2,\"originalTotal\":999}"
+            │                   },
+            │                   "providerOptions": {
+            │                     "openai": {
+            │                       "itemId": "<itemId:4>"
+            │                     }
+            │                   },
+            │                   "toolName": "apply_discount",
+            │                   "type": "tool-result"
+            │                 }
+            │               ],
+            │               "role": "tool"
+            │             },
+            │             {
+            │               "content": [
+            │                 {
+            │                   "providerOptions": {
+            │                     "openai": {
+            │                       "itemId": "<itemId:6>"
+            │                     }
+            │                   },
+            │                   "text": "Here are the prices for the laptop:\n\n- **Store A**: $999\n- **Store B**: $1099\n\nThe cheaper price is from **Store A** at $999. After applying the discount code **SAVE20**, the final total is **$799.20**.",
+            │                   "type": "text"
+            │                 }
+            │               ],
+            │               "role": "assistant"
+            │             }
+            │           ],
+            │           "modelId": "gpt-4o-mini-2024-07-18",
+            │           "timestamp": "<timestamp>"
+            │         },
+            │         "usage": {
+            │           "cachedInputTokens": 0,
+            │           "inputTokenDetails": {
+            │             "cacheReadTokens": 0,
+            │             "noCacheTokens": 308
+            │           },
+            │           "inputTokens": 308,
+            │           "outputTokenDetails": {
+            │             "reasoningTokens": 0,
+            │             "textTokens": 62
+            │           },
+            │           "outputTokens": 62,
+            │           "raw": {
+            │             "input_tokens": 308,
+            │             "input_tokens_details": {
+            │               "cached_tokens": 0
+            │             },
+            │             "output_tokens": 62,
+            │             "output_tokens_details": {
+            │               "reasoning_tokens": 0
+            │             }
+            │           },
+            │           "reasoningTokens": 0,
+            │           "totalTokens": 370
+            │         },
+            │         "warnings": []
+            │       }
+            │     ],
+            │     "text": "Here are the prices for the laptop:\n\n- **Store A**: $999\n- **Store B**: $1099\n\nThe cheaper price is from **Store A** at $999. After applying the discount code **SAVE20**, the final total is **$799.20**.",
+            │     "toolCalls": [],
+            │     "toolResults": [],
+            │     "totalUsage": {
+            │       "cachedInputTokens": 0,
+            │       "inputTokenDetails": {
+            │         "cacheReadTokens": 0,
+            │         "noCacheTokens": 741
+            │       },
+            │       "inputTokens": 741,
+            │       "outputTokenDetails": {
+            │         "reasoningTokens": 0,
+            │         "textTokens": 142
+            │       },
+            │       "outputTokens": 142,
+            │       "reasoningTokens": 0,
+            │       "totalTokens": 883
+            │     },
+            │     "usage": {
+            │       "cachedInputTokens": 0,
+            │       "inputTokenDetails": {
+            │         "cacheReadTokens": 0,
+            │         "noCacheTokens": 308
+            │       },
+            │       "inputTokens": 308,
+            │       "outputTokenDetails": {
+            │         "reasoningTokens": 0,
+            │         "textTokens": 62
+            │       },
+            │       "outputTokens": 62,
+            │       "raw": {
+            │         "input_tokens": 308,
+            │         "input_tokens_details": {
+            │           "cached_tokens": 0
+            │         },
+            │         "output_tokens": 62,
+            │         "output_tokens_details": {
+            │           "reasoning_tokens": 0
+            │         }
+            │       },
+            │       "reasoningTokens": 0,
+            │       "totalTokens": 370
+            │     },
+            │     "warnings": []
             │   }
             │   metadata: {
             │     "braintrust": {
@@ -5991,55 +7218,722 @@ span_tree:
             │       "sdk_language": "typescript"
             │     },
             │     "model": "gpt-4o-mini-2024-07-18",
+            │     "provider": "openai.responses",
+            │     "tools": {
+            │       "apply_discount": {
+            │         "description": "Apply a discount code to a total",
+            │         "inputSchema": {
+            │           "$schema": "http://json-schema.org/draft-07/schema#",
+            │           "additionalProperties": false,
+            │           "properties": {
+            │             "discountCode": {
+            │               "description": "The discount code to apply",
+            │               "type": "string"
+            │             },
+            │             "total": {
+            │               "description": "The original total",
+            │               "type": "number"
+            │             }
+            │           },
+            │           "required": [
+            │             "discountCode",
+            │             "total"
+            │           ],
+            │           "type": "object"
+            │         }
+            │       },
+            │       "get_store_price": {
+            │         "description": "Get the price of an item at a store",
+            │         "inputSchema": {
+            │           "$schema": "http://json-schema.org/draft-07/schema#",
+            │           "additionalProperties": false,
+            │           "properties": {
+            │             "item": {
+            │               "description": "The item to price",
+            │               "type": "string"
+            │             },
+            │             "store": {
+            │               "description": "The store name",
+            │               "type": "string"
+            │             }
+            │           },
+            │           "required": [
+            │             "item",
+            │             "store"
+            │           ],
+            │           "type": "object"
+            │         }
+            │       }
+            │     }
+            │   }
+            │   metrics: {
+            │     "completion_reasoning_tokens": 0,
+            │     "completion_tokens": 142,
+            │     "prompt_cached_tokens": 0,
+            │     "prompt_tokens": 741,
+            │     "reasoning_tokens": 0,
+            │     "tokens": 883
+            │   }
+            ├── doGenerate [llm]
+            │   input: {
+            │     "headers": {
+            │       "user-agent": "ai/6.0.1"
+            │     },
+            │     "maxOutputTokens": 256,
+            │     "prompt": [
+            │       {
+            │         "content": "You are a shopping assistant. Use the tools before answering pricing questions.",
+            │         "role": "system"
+            │       },
+            │       {
+            │         "content": [
+            │           {
+            │             "text": "I need help comparing laptop prices before checkout.",
+            │             "type": "text"
+            │           }
+            │         ],
+            │         "role": "user"
+            │       },
+            │       {
+            │         "content": [
+            │           {
+            │             "text": "I can compare store prices and apply a discount code.",
+            │             "type": "text"
+            │           }
+            │         ],
+            │         "role": "assistant"
+            │       },
+            │       {
+            │         "content": [
+            │           {
+            │             "text": "Call get_store_price for a laptop at StoreA and StoreB, then call apply_discount with code SAVE20 for the cheaper price. Finish with the discounted total.",
+            │             "type": "text"
+            │           }
+            │         ],
+            │         "role": "user"
+            │       }
+            │     ],
+            │     "temperature": 0,
+            │     "toolChoice": {
+            │       "type": "auto"
+            │     },
+            │     "tools": [
+            │       {
+            │         "description": "Get the price of an item at a store",
+            │         "inputSchema": {
+            │           "$schema": "http://json-schema.org/draft-07/schema#",
+            │           "additionalProperties": false,
+            │           "properties": {
+            │             "item": {
+            │               "description": "The item to price",
+            │               "type": "string"
+            │             },
+            │             "store": {
+            │               "description": "The store name",
+            │               "type": "string"
+            │             }
+            │           },
+            │           "required": [
+            │             "item",
+            │             "store"
+            │           ],
+            │           "type": "object"
+            │         },
+            │         "name": "get_store_price",
+            │         "type": "function"
+            │       },
+            │       {
+            │         "description": "Apply a discount code to a total",
+            │         "inputSchema": {
+            │           "$schema": "http://json-schema.org/draft-07/schema#",
+            │           "additionalProperties": false,
+            │           "properties": {
+            │             "discountCode": {
+            │               "description": "The discount code to apply",
+            │               "type": "string"
+            │             },
+            │             "total": {
+            │               "description": "The original total",
+            │               "type": "number"
+            │             }
+            │           },
+            │           "required": [
+            │             "discountCode",
+            │             "total"
+            │           ],
+            │           "type": "object"
+            │         },
+            │         "name": "apply_discount",
+            │         "type": "function"
+            │       }
+            │     ]
+            │   }
+            │   output: {
+            │     "content": [
+            │       {
+            │         "input": "{\"item\":\"laptop\",\"store\":\"StoreA\"}",
+            │         "providerMetadata": {
+            │           "openai": {
+            │             "itemId": "<itemId:2>"
+            │           }
+            │         },
+            │         "toolName": "get_store_price",
+            │         "type": "tool-call"
+            │       },
+            │       {
+            │         "input": "{\"item\":\"laptop\",\"store\":\"StoreB\"}",
+            │         "providerMetadata": {
+            │           "openai": {
+            │             "itemId": "<itemId:3>"
+            │           }
+            │         },
+            │         "toolName": "get_store_price",
+            │         "type": "tool-call"
+            │       }
+            │     ],
+            │     "finishReason": {
+            │       "unified": "tool-calls"
+            │     },
+            │     "providerMetadata": {
+            │       "openai": {
+            │         "responseId": "<responseId:1>",
+            │         "serviceTier": "default"
+            │       }
+            │     },
+            │     "response": {
+            │       "body": "<omitted>",
+            │       "headers": "<omitted>",
+            │       "modelId": "gpt-4o-mini-2024-07-18",
+            │       "timestamp": "<timestamp>"
+            │     },
+            │     "usage": {
+            │       "inputTokens": {
+            │         "cacheRead": 0,
+            │         "noCache": 173,
+            │         "total": 173
+            │       },
+            │       "outputTokens": {
+            │         "reasoning": 0,
+            │         "text": 59,
+            │         "total": 59
+            │       },
+            │       "raw": {
+            │         "input_tokens": 173,
+            │         "input_tokens_details": {
+            │           "cached_tokens": 0
+            │         },
+            │         "output_tokens": 59,
+            │         "output_tokens_details": {
+            │           "reasoning_tokens": 0
+            │         }
+            │       }
+            │     },
+            │     "warnings": []
+            │   }
+            │   metadata: {
+            │     "braintrust": {
+            │       "integration_name": "ai-sdk",
+            │       "sdk_language": "typescript"
+            │     },
+            │     "finish_reason": {
+            │       "unified": "tool-calls"
+            │     },
+            │     "model": "gpt-4o-mini-2024-07-18",
             │     "provider": "openai.responses"
             │   }
             │   metrics: {
-            │     "time_to_first_token": 0
+            │     "completion_reasoning_tokens": 0,
+            │     "completion_tokens": 59,
+            │     "prompt_cached_tokens": 0,
+            │     "prompt_tokens": 173,
+            │     "reasoning_tokens": 0
             │   }
-            └── doStream [llm]
+            ├── get_store_price [tool]
+            │   input: {
+            │     "item": "laptop",
+            │     "store": "StoreA"
+            │   }
+            │   output: "{\"item\":\"laptop\",\"price\":999,\"store\":\"StoreA\"}"
+            ├── get_store_price [tool]
+            │   input: {
+            │     "item": "laptop",
+            │     "store": "StoreB"
+            │   }
+            │   output: "{\"item\":\"laptop\",\"price\":1099,\"store\":\"StoreB\"}"
+            ├── doGenerate [llm]
+            │   input: {
+            │     "headers": {
+            │       "user-agent": "ai/6.0.1"
+            │     },
+            │     "maxOutputTokens": 256,
+            │     "prompt": [
+            │       {
+            │         "content": "You are a shopping assistant. Use the tools before answering pricing questions.",
+            │         "role": "system"
+            │       },
+            │       {
+            │         "content": [
+            │           {
+            │             "text": "I need help comparing laptop prices before checkout.",
+            │             "type": "text"
+            │           }
+            │         ],
+            │         "role": "user"
+            │       },
+            │       {
+            │         "content": [
+            │           {
+            │             "text": "I can compare store prices and apply a discount code.",
+            │             "type": "text"
+            │           }
+            │         ],
+            │         "role": "assistant"
+            │       },
+            │       {
+            │         "content": [
+            │           {
+            │             "text": "Call get_store_price for a laptop at StoreA and StoreB, then call apply_discount with code SAVE20 for the cheaper price. Finish with the discounted total.",
+            │             "type": "text"
+            │           }
+            │         ],
+            │         "role": "user"
+            │       },
+            │       {
+            │         "content": [
+            │           {
+            │             "input": {
+            │               "item": "laptop",
+            │               "store": "StoreA"
+            │             },
+            │             "providerOptions": {
+            │               "openai": {
+            │                 "itemId": "<itemId:1>"
+            │               }
+            │             },
+            │             "toolName": "get_store_price",
+            │             "type": "tool-call"
+            │           },
+            │           {
+            │             "input": {
+            │               "item": "laptop",
+            │               "store": "StoreB"
+            │             },
+            │             "providerOptions": {
+            │               "openai": {
+            │                 "itemId": "<itemId:2>"
+            │               }
+            │             },
+            │             "toolName": "get_store_price",
+            │             "type": "tool-call"
+            │           }
+            │         ],
+            │         "role": "assistant"
+            │       },
+            │       {
+            │         "content": [
+            │           {
+            │             "output": {
+            │               "type": "text",
+            │               "value": "{\"item\":\"laptop\",\"price\":999,\"store\":\"StoreA\"}"
+            │             },
+            │             "providerOptions": {
+            │               "openai": {
+            │                 "itemId": "<itemId:1>"
+            │               }
+            │             },
+            │             "toolName": "get_store_price",
+            │             "type": "tool-result"
+            │           },
+            │           {
+            │             "output": {
+            │               "type": "text",
+            │               "value": "{\"item\":\"laptop\",\"price\":1099,\"store\":\"StoreB\"}"
+            │             },
+            │             "providerOptions": {
+            │               "openai": {
+            │                 "itemId": "<itemId:2>"
+            │               }
+            │             },
+            │             "toolName": "get_store_price",
+            │             "type": "tool-result"
+            │           }
+            │         ],
+            │         "role": "tool"
+            │       }
+            │     ],
+            │     "temperature": 0,
+            │     "toolChoice": {
+            │       "type": "auto"
+            │     },
+            │     "tools": [
+            │       {
+            │         "description": "Get the price of an item at a store",
+            │         "inputSchema": {
+            │           "$schema": "http://json-schema.org/draft-07/schema#",
+            │           "additionalProperties": false,
+            │           "properties": {
+            │             "item": {
+            │               "description": "The item to price",
+            │               "type": "string"
+            │             },
+            │             "store": {
+            │               "description": "The store name",
+            │               "type": "string"
+            │             }
+            │           },
+            │           "required": [
+            │             "item",
+            │             "store"
+            │           ],
+            │           "type": "object"
+            │         },
+            │         "name": "get_store_price",
+            │         "type": "function"
+            │       },
+            │       {
+            │         "description": "Apply a discount code to a total",
+            │         "inputSchema": {
+            │           "$schema": "http://json-schema.org/draft-07/schema#",
+            │           "additionalProperties": false,
+            │           "properties": {
+            │             "discountCode": {
+            │               "description": "The discount code to apply",
+            │               "type": "string"
+            │             },
+            │             "total": {
+            │               "description": "The original total",
+            │               "type": "number"
+            │             }
+            │           },
+            │           "required": [
+            │             "discountCode",
+            │             "total"
+            │           ],
+            │           "type": "object"
+            │         },
+            │         "name": "apply_discount",
+            │         "type": "function"
+            │       }
+            │     ]
+            │   }
+            │   output: {
+            │     "content": [
+            │       {
+            │         "input": "{\"discountCode\":\"SAVE20\",\"total\":999}",
+            │         "providerMetadata": {
+            │           "openai": {
+            │             "itemId": "<itemId:2>"
+            │           }
+            │         },
+            │         "toolName": "apply_discount",
+            │         "type": "tool-call"
+            │       }
+            │     ],
+            │     "finishReason": {
+            │       "unified": "tool-calls"
+            │     },
+            │     "providerMetadata": {
+            │       "openai": {
+            │         "responseId": "<responseId:1>",
+            │         "serviceTier": "default"
+            │       }
+            │     },
+            │     "response": {
+            │       "body": "<omitted>",
+            │       "headers": "<omitted>",
+            │       "modelId": "gpt-4o-mini-2024-07-18",
+            │       "timestamp": "<timestamp>"
+            │     },
+            │     "usage": {
+            │       "inputTokens": {
+            │         "cacheRead": 0,
+            │         "noCache": 260,
+            │         "total": 260
+            │       },
+            │       "outputTokens": {
+            │         "reasoning": 0,
+            │         "text": 21,
+            │         "total": 21
+            │       },
+            │       "raw": {
+            │         "input_tokens": 260,
+            │         "input_tokens_details": {
+            │           "cached_tokens": 0
+            │         },
+            │         "output_tokens": 21,
+            │         "output_tokens_details": {
+            │           "reasoning_tokens": 0
+            │         }
+            │       }
+            │     },
+            │     "warnings": []
+            │   }
+            │   metadata: {
+            │     "braintrust": {
+            │       "integration_name": "ai-sdk",
+            │       "sdk_language": "typescript"
+            │     },
+            │     "finish_reason": {
+            │       "unified": "tool-calls"
+            │     },
+            │     "model": "gpt-4o-mini-2024-07-18",
+            │     "provider": "openai.responses"
+            │   }
+            │   metrics: {
+            │     "completion_reasoning_tokens": 0,
+            │     "completion_tokens": 21,
+            │     "prompt_cached_tokens": 0,
+            │     "prompt_tokens": 260,
+            │     "reasoning_tokens": 0
+            │   }
+            ├── apply_discount [tool]
+            │   input: {
+            │     "discountCode": "SAVE20",
+            │     "total": 999
+            │   }
+            │   output: "{\"discountCode\":\"SAVE20\",\"finalTotal\":799.2,\"originalTotal\":999}"
+            └── doGenerate [llm]
                 input: {
-                  "includeRawChunks": false,
-                  "maxOutputTokens": 24,
+                  "headers": {
+                    "user-agent": "ai/6.0.1"
+                  },
+                  "maxOutputTokens": 256,
                   "prompt": [
+                    {
+                      "content": "You are a shopping assistant. Use the tools before answering pricing questions.",
+                      "role": "system"
+                    },
                     {
                       "content": [
                         {
-                          "text": "Reply with exactly STREAM HELLO and no punctuation.",
+                          "text": "I need help comparing laptop prices before checkout.",
                           "type": "text"
                         }
                       ],
                       "role": "user"
+                    },
+                    {
+                      "content": [
+                        {
+                          "text": "I can compare store prices and apply a discount code.",
+                          "type": "text"
+                        }
+                      ],
+                      "role": "assistant"
+                    },
+                    {
+                      "content": [
+                        {
+                          "text": "Call get_store_price for a laptop at StoreA and StoreB, then call apply_discount with code SAVE20 for the cheaper price. Finish with the discounted total.",
+                          "type": "text"
+                        }
+                      ],
+                      "role": "user"
+                    },
+                    {
+                      "content": [
+                        {
+                          "input": {
+                            "item": "laptop",
+                            "store": "StoreA"
+                          },
+                          "providerOptions": {
+                            "openai": {
+                              "itemId": "<itemId:1>"
+                            }
+                          },
+                          "toolName": "get_store_price",
+                          "type": "tool-call"
+                        },
+                        {
+                          "input": {
+                            "item": "laptop",
+                            "store": "StoreB"
+                          },
+                          "providerOptions": {
+                            "openai": {
+                              "itemId": "<itemId:2>"
+                            }
+                          },
+                          "toolName": "get_store_price",
+                          "type": "tool-call"
+                        }
+                      ],
+                      "role": "assistant"
+                    },
+                    {
+                      "content": [
+                        {
+                          "output": {
+                            "type": "text",
+                            "value": "{\"item\":\"laptop\",\"price\":999,\"store\":\"StoreA\"}"
+                          },
+                          "providerOptions": {
+                            "openai": {
+                              "itemId": "<itemId:1>"
+                            }
+                          },
+                          "toolName": "get_store_price",
+                          "type": "tool-result"
+                        },
+                        {
+                          "output": {
+                            "type": "text",
+                            "value": "{\"item\":\"laptop\",\"price\":1099,\"store\":\"StoreB\"}"
+                          },
+                          "providerOptions": {
+                            "openai": {
+                              "itemId": "<itemId:2>"
+                            }
+                          },
+                          "toolName": "get_store_price",
+                          "type": "tool-result"
+                        }
+                      ],
+                      "role": "tool"
+                    },
+                    {
+                      "content": [
+                        {
+                          "input": {
+                            "discountCode": "SAVE20",
+                            "total": 999
+                          },
+                          "providerOptions": {
+                            "openai": {
+                              "itemId": "<itemId:3>"
+                            }
+                          },
+                          "toolName": "apply_discount",
+                          "type": "tool-call"
+                        }
+                      ],
+                      "role": "assistant"
+                    },
+                    {
+                      "content": [
+                        {
+                          "output": {
+                            "type": "text",
+                            "value": "{\"discountCode\":\"SAVE20\",\"finalTotal\":799.2,\"originalTotal\":999}"
+                          },
+                          "providerOptions": {
+                            "openai": {
+                              "itemId": "<itemId:3>"
+                            }
+                          },
+                          "toolName": "apply_discount",
+                          "type": "tool-result"
+                        }
+                      ],
+                      "role": "tool"
+                    }
+                  ],
+                  "temperature": 0,
+                  "toolChoice": {
+                    "type": "auto"
+                  },
+                  "tools": [
+                    {
+                      "description": "Get the price of an item at a store",
+                      "inputSchema": {
+                        "$schema": "http://json-schema.org/draft-07/schema#",
+                        "additionalProperties": false,
+                        "properties": {
+                          "item": {
+                            "description": "The item to price",
+                            "type": "string"
+                          },
+                          "store": {
+                            "description": "The store name",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "item",
+                          "store"
+                        ],
+                        "type": "object"
+                      },
+                      "name": "get_store_price",
+                      "type": "function"
+                    },
+                    {
+                      "description": "Apply a discount code to a total",
+                      "inputSchema": {
+                        "$schema": "http://json-schema.org/draft-07/schema#",
+                        "additionalProperties": false,
+                        "properties": {
+                          "discountCode": {
+                            "description": "The discount code to apply",
+                            "type": "string"
+                          },
+                          "total": {
+                            "description": "The original total",
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "discountCode",
+                          "total"
+                        ],
+                        "type": "object"
+                      },
+                      "name": "apply_discount",
+                      "type": "function"
                     }
                   ]
                 }
                 output: {
+                  "content": [
+                    {
+                      "providerMetadata": {
+                        "openai": {
+                          "itemId": "<itemId:2>"
+                        }
+                      },
+                      "text": "Here are the prices for the laptop:\n\n- **Store A**: $999\n- **Store B**: $1099\n\nThe cheaper price is from **Store A** at $999. After applying the discount code **SAVE20**, the final total is **$799.20**.",
+                      "type": "text"
+                    }
+                  ],
                   "finishReason": {
                     "unified": "stop"
                   },
-                  "text": "STREAM HELLO",
-                  "toolCalls": [],
+                  "providerMetadata": {
+                    "openai": {
+                      "responseId": "<responseId:1>",
+                      "serviceTier": "default"
+                    }
+                  },
+                  "response": {
+                    "body": "<omitted>",
+                    "headers": "<omitted>",
+                    "modelId": "gpt-4o-mini-2024-07-18",
+                    "timestamp": "<timestamp>"
+                  },
                   "usage": {
                     "inputTokens": {
                       "cacheRead": 0,
-                      "noCache": 17,
-                      "total": 17
+                      "noCache": 308,
+                      "total": 308
                     },
                     "outputTokens": {
                       "reasoning": 0,
-                      "text": 4,
-                      "total": 4
+                      "text": 62,
+                      "total": 62
                     },
                     "raw": {
-                      "input_tokens": 17,
+                      "input_tokens": 308,
                       "input_tokens_details": {
                         "cached_tokens": 0
                       },
-                      "output_tokens": 4,
+                      "output_tokens": 62,
                       "output_tokens_details": {
                         "reasoning_tokens": 0
                       }
                     }
-                  }
+                  },
+                  "warnings": []
                 }
                 metadata: {
                   "braintrust": {
@@ -6054,9 +7948,8 @@ span_tree:
                 }
                 metrics: {
                   "completion_reasoning_tokens": 0,
-                  "completion_tokens": 4,
+                  "completion_tokens": 62,
                   "prompt_cached_tokens": 0,
-                  "prompt_tokens": 17,
-                  "reasoning_tokens": 0,
-                  "time_to_first_token": 0
+                  "prompt_tokens": 308,
+                  "reasoning_tokens": 0
                 }
