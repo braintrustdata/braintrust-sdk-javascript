@@ -1,4 +1,4 @@
-import type { InstrumentationConfig } from "@apm-js-collab/code-transformer";
+import type { InstrumentationConfig } from "../orchestrion-js";
 import { openAICodexChannels } from "../../instrumentation/plugins/openai-codex-channels";
 
 const openAICodexVersionRange = ">=0.128.0 <1.0.0";

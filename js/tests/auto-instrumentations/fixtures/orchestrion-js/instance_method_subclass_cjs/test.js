@@ -1,0 +1,18 @@
+/**
+ * Forked from @apm-js-collab/code-transformer@0.12.0 (Orchestrion-JS),
+ * licensed under Apache-2.0. Modified by Braintrust.
+ **/
+const { Undici } = require("./instrumented.js");
+const { assert, getContext } = require("../common/preamble.js");
+const context = getContext("orchestrion:undici:Base_fetch");
+(async () => {
+  const undici = new Undici();
+  const result = await undici.fetch("https://example.com");
+  assert.strictEqual(result, 42);
+  assert.deepStrictEqual(context, {
+    start: true,
+    end: true,
+    asyncStart: 42,
+    asyncEnd: 42,
+  });
+})();

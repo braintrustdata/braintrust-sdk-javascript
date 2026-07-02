@@ -1,4 +1,4 @@
-import type { InstrumentationConfig } from "@apm-js-collab/code-transformer";
+import type { InstrumentationConfig } from "../orchestrion-js";
 import { cursorSDKChannels } from "../../instrumentation/plugins/cursor-sdk-channels";
 
 const cursorSDKVersionRange = ">=1.0.7 <2.0.0";

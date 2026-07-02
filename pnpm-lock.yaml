@@ -332,21 +332,33 @@ importers:
 
   js:
     dependencies:
-      '@apm-js-collab/code-transformer':
-        specifier: ^0.12.0
-        version: 0.12.0
       '@next/env':
         specifier: ^14.2.3
         version: 14.2.3
+      '@types/estree':
+        specifier: ^1.0.8
+        version: 1.0.9
       '@vercel/functions':
         specifier: ^1.0.2
         version: 1.0.2
+      acorn:
+        specifier: ^8.16.0
+        version: 8.16.0
+      acorn-import-attributes:
+        specifier: ^1.9.5
+        version: 1.9.5(acorn@8.16.0)
       ajv:
         specifier: ^8.20.0
         version: 8.20.0
       argparse:
         specifier: ^2.0.1
         version: 2.0.1
+      astring:
+        specifier: ^1.9.0
+        version: 1.9.0
+      cjs-module-lexer:
+        specifier: ^2.2.0
+        version: 2.2.0
       cli-progress:
         specifier: ^3.12.0
         version: 3.12.0
@@ -365,6 +377,9 @@ importers:
       esbuild:
         specifier: 0.27.4
         version: 0.27.4
+      esquery:
+        specifier: ^1.7.0
+        version: 1.7.0
       eventsource-parser:
         specifier: ^1.1.2
         version: 1.1.2
@@ -374,6 +389,9 @@ importers:
       http-errors:
         specifier: ^2.0.0
         version: 2.0.1
+      meriyah:
+        specifier: ^6.1.4
+        version: 6.1.4
       minimatch:
         specifier: ^10.2.5
         version: 10.2.5
@@ -386,6 +404,9 @@ importers:
       pluralize:
         specifier: ^8.0.0
         version: 8.0.0
+      semifies:
+        specifier: ^1.0.0
+        version: 1.0.0
       simple-git:
         specifier: ^3.36.0
         version: 3.36.0
@@ -601,9 +622,6 @@ packages:
     peerDependenciesMeta:
       zod:
         optional: true
-
-  '@apm-js-collab/code-transformer@0.12.0':
-    resolution: {integrity: sha512-5F2ob4cMYezbaUGAk+YltbDvb9BFIghN92ubct9Ho/0MFx4FkChCxYV99NkU6Kx+RAgaqBV6yxKuWreQ6K8SOw==}
 
   '@babel/runtime@7.28.4':
     resolution: {integrity: sha512-Q/N6JNWvIvPnLDvjlE1OUBLPQHH6l3CltCEsHIujp45zQUSSh8K+gHnaEX45yAT1nyngnINhvWtzN+Nb9D8RAQ==}
@@ -1991,6 +2009,11 @@ packages:
     resolution: {integrity: sha512-5cvg6CtKwfgdmVqY1WIiXKc3Q1bkRqGLi+2W/6ao+6Y7gu/RCwRuAhGEzh5B4KlszSuTLgZYuqFqo5bImjNKng==}
     engines: {node: '>= 0.6'}
 
+  acorn-import-attributes@1.9.5:
+    resolution: {integrity: sha512-n02Vykv5uA3eHGM/Z2dQrcD56kL8TyDb2p1+0P83PClMnC/nc+anbQRhIOWnSq4Ke/KvDPrY3C9hDtC/A3eHnQ==}
+    peerDependencies:
+      acorn: ^8
+
   acorn-import-phases@1.0.4:
     resolution: {integrity: sha512-wKmbr/DDiIXzEOiWrTTUcDm24kQ2vGfZQvM2fwg2vXqR5uW6aapr7ObPtj1th32b9u90/Pf4AItvdTh42fBmVQ==}
     engines: {node: '>=10.13.0'}
@@ -2206,6 +2229,9 @@ packages:
   chrome-trace-event@1.0.4:
     resolution: {integrity: sha512-rNjApaLzuwaOTjCiT8lSDdGN1APCiqkChLMJxJPWLunPAt5fy8xgU9/jNOchV84wfIxrA0lRQB7oCT8jrn/wrQ==}
     engines: {node: '>=6.0'}
+
+  cjs-module-lexer@2.2.0:
+    resolution: {integrity: sha512-4bHTS2YuzUvtoLjdy+98ykbNB5jS0+07EvFNXerqZQJ89F7DI6ET7OQo/HJuW6K0aVsKA9hj9/RVb2kQVOrPDQ==}
 
   cli-cursor@5.0.0:
     resolution: {integrity: sha512-aCj4O5wKyszjMmDT4tZj93kxyydN/K5zPWSCe6/0AV/AA1pqe5ZBIw0a2ZfPQV7lL5/yb5HsUreJ6UFAF1tEQw==}
@@ -4255,15 +4281,6 @@ snapshots:
     optionalDependencies:
       zod: 3.25.76
 
-  '@apm-js-collab/code-transformer@0.12.0':
-    dependencies:
-      '@types/estree': 1.0.9
-      astring: 1.9.0
-      esquery: 1.7.0
-      meriyah: 6.1.4
-      semifies: 1.0.0
-      source-map: 0.6.1
-
   '@babel/runtime@7.28.4': {}
 
   '@braintrust/bt-darwin-arm64@0.12.0':
@@ -5790,6 +5807,10 @@ snapshots:
       mime-types: 3.0.1
       negotiator: 1.0.0
 
+  acorn-import-attributes@1.9.5(acorn@8.16.0):
+    dependencies:
+      acorn: 8.16.0
+
   acorn-import-phases@1.0.4(acorn@8.16.0):
     dependencies:
       acorn: 8.16.0
@@ -5978,6 +5999,8 @@ snapshots:
   chownr@3.0.0: {}
 
   chrome-trace-event@1.0.4: {}
+
+  cjs-module-lexer@2.2.0: {}
 
   cli-cursor@5.0.0:
     dependencies:

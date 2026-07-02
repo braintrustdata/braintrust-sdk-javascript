@@ -5,6 +5,12 @@
     "module": "commonjs",
     "target": "es2022",
     "moduleResolution": "node",
+    "baseUrl": ".",
+    "paths": {
+      "@apm-js-collab/code-transformer": [
+        "src/auto-instrumentations/orchestrion-js/index.ts"
+      ]
+    },
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true
