@@ -117,6 +117,12 @@ const ZERO_SPAN_ID = "0".repeat(16);
 const MAX_BAGGAGE_LENGTH = 8192;
 const MAX_BAGGAGE_MEMBERS = 64;
 
+// W3C Trace Context §3.3.1.5 limits tracestate to 32 list-members and 512
+// characters total. The grammar is ASCII-only, so character count and byte count
+// are equivalent after validation.
+const MAX_TRACESTATE_LENGTH = 512;
+const MAX_TRACESTATE_MEMBERS = 32;
+
 const _utf8Encoder = new TextEncoder();
 
 function utf8ByteLength(value: string): number {
@@ -213,6 +219,57 @@ function headerValueToString(value: unknown, name: string): string | undefined {
     return isListHeader(name) ? stringValues.join(",") : stringValues[0];
   }
   return typeof value === "string" ? value : String(value);
+}
+
+export function isValidTracestate(value: string | undefined | null): boolean {
+  if (!value || value.length > MAX_TRACESTATE_LENGTH) {
+    return false;
+  }
+
+  const members = value.split(",");
+  if (members.length > MAX_TRACESTATE_MEMBERS) {
+    return false;
+  }
+
+  const seenKeys = new Set<string>();
+  for (const rawMember of members) {
+    const member = rawMember.trim();
+    const eq = member.indexOf("=");
+    if (eq <= 0 || member.indexOf("=", eq + 1) !== -1) {
+      return false;
+    }
+
+    const key = member.slice(0, eq);
+    const valuePart = member.slice(eq + 1);
+    const keyIsValid =
+      /^[a-z][a-z0-9_\-*/]{0,255}$/.test(key) ||
+      /^[a-z][a-z0-9_\-*/]{0,240}@[a-z][a-z0-9_\-*/]{0,13}$/.test(key);
+    if (
+      !keyIsValid ||
+      seenKeys.has(key) ||
+      valuePart.length === 0 ||
+      valuePart.length > 256 ||
+      valuePart.charCodeAt(valuePart.length - 1) === 0x20
+    ) {
+      return false;
+    }
+    seenKeys.add(key);
+
+    for (let i = 0; i < valuePart.length; i++) {
+      const c = valuePart.charCodeAt(i);
+      const valid =
+        c === 0x20 ||
+        c === 0x21 ||
+        (c >= 0x23 && c <= 0x2b) ||
+        (c >= 0x2d && c <= 0x3c) ||
+        (c >= 0x3e && c <= 0x7e);
+      if (!valid) {
+        return false;
+      }
+    }
+  }
+
+  return true;
 }
 
 /**
@@ -439,11 +496,12 @@ export function parseBaggage(
  * `existing` is dropped in favor of the supplied value.
  *
  * The result is bounded to both W3C limits (§3.3.2): at most 64 list-members and
- * at most 8192 bytes. Our own `braintrust.parent` member is prioritized: its
- * byte cost and one member slot are reserved first, then relayed members are
- * appended in order until either budget is exhausted, always on whole-member
- * boundaries (never a partial list-member). Relayed members that do not fit are
- * dropped.
+ * at most 8192 bytes. Our own `braintrust.parent` member is prioritized when it
+ * fits: its byte cost and one member slot are reserved first, then relayed
+ * members are appended in order until either budget is exhausted, always on
+ * whole-member boundaries (never a partial list-member). Relayed members that do
+ * not fit are dropped. If the encoded `braintrust.parent` member is itself too
+ * large to fit in a valid baggage header, it is omitted.
  *
  * Returns the merged header value, or undefined if there is nothing to emit (so
  * callers omit the header rather than emit an empty one).
@@ -457,10 +515,13 @@ export function mergeBaggage(
     const encodedKey = percentEncode(BRAINTRUST_PARENT_KEY);
     const encodedVal = percentEncode(String(braintrustParent));
     btMember = `${encodedKey}=${encodedVal}`;
+    if (utf8ByteLength(btMember) > MAX_BAGGAGE_LENGTH) {
+      btMember = undefined;
+    }
   }
 
-  // Reserve both budgets for our own member first so it always survives; relayed
-  // members fill whatever space remains.
+  // Reserve both budgets for our own member first when it fits; relayed members
+  // fill whatever space remains.
   let byteBudget = MAX_BAGGAGE_LENGTH;
   let memberBudget = MAX_BAGGAGE_MEMBERS;
   if (btMember !== undefined) {

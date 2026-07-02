@@ -294,6 +294,18 @@ describe("mergeBaggage", () => {
     });
   });
 
+  test("omits oversized braintrust parent", () => {
+    const oversizedParent = `project_name:${"a".repeat(9000)}`;
+    expect(mergeBaggage(null, oversizedParent)).toBeUndefined();
+    expect(mergeBaggage("vendor=x", oversizedParent)).toBe("vendor=x");
+    expect(
+      mergeBaggage(
+        `${BRAINTRUST_PARENT_KEY}=project_id%3Aold,vendor=x`,
+        oversizedParent,
+      ),
+    ).toBe("vendor=x");
+  });
+
   // The braintrust.parent value embeds a user-controlled project/experiment
   // name. Per W3C Baggage §3.3.1.3 a value's unencoded bytes are restricted to
   // baggage-octet; everything else MUST be percent-encoded.
@@ -1029,6 +1041,26 @@ describe("tracestate / flags pass-through", () => {
   test("no tracestate emitted when none inbound", () => {
     const logger = makeLogger();
     const span = logger.startSpan({ name: "root" });
+    const outbound = span.inject({});
+    span.end();
+    expect(TRACESTATE_HEADER in outbound).toBe(false);
+  });
+
+  test.each([
+    "ConGo=t61rcWkgMzE", // uppercase key
+    "congo=", // empty value
+    "congo=bad=value", // value cannot contain equals
+    "congo=\u00e9", // non-ASCII value
+    Array.from({ length: 33 }, (_, i) => `k${i}=v`).join(","), // too many members
+    `congo=${"a".repeat(513)}`, // too long overall
+  ])("invalid tracestate is not forwarded: %s", (tracestate) => {
+    const logger = makeLogger();
+    const parent = extractTraceContextFromHeaders({
+      traceparent: VALID_TRACEPARENT,
+      baggage: `${BRAINTRUST_PARENT_KEY}=project_id:abc`,
+      tracestate,
+    });
+    const span = logger.startSpan({ name: "mid", parent });
     const outbound = span.inject({});
     span.end();
     expect(TRACESTATE_HEADER in outbound).toBe(false);

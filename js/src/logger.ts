@@ -24,6 +24,7 @@ import {
   TRACESTATE_HEADER,
   formatTraceparent,
   getHeader,
+  isValidTracestate,
   mergeBaggage,
   parseBaggage,
   parseTraceparent,
@@ -5654,7 +5655,7 @@ export function extractTraceContextFromHeaders(
     context[BAGGAGE_HEADER] = baggageValue;
   }
   const tracestate = getHeader(headers, TRACESTATE_HEADER);
-  if (tracestate) {
+  if (tracestate && isValidTracestate(tracestate)) {
     context[TRACESTATE_HEADER] = tracestate;
   }
   return context;
@@ -5710,7 +5711,11 @@ function resolveW3cParent(
   }
   const { objectType, objectId, computeArgs } = parsedParent;
 
-  const tracestate = getHeader(context, TRACESTATE_HEADER) || undefined;
+  const tracestateValue = getHeader(context, TRACESTATE_HEADER);
+  const tracestate =
+    tracestateValue && isValidTracestate(tracestateValue)
+      ? tracestateValue
+      : undefined;
 
   const slug = new SpanComponentsV4({
     object_type: objectType,
