@@ -19,6 +19,7 @@ import {
   BRAINTRUST_PARENT_KEY,
   PropagatedState,
   TRACEPARENT_HEADER,
+  TraceContextCarrier,
   TraceContextHeaders,
   TRACESTATE_HEADER,
   formatTraceparent,
@@ -404,10 +405,13 @@ export interface Span extends Exportable {
    * omitted.
    *
    * @param carrier Optional existing carrier (e.g. outbound HTTP headers) to
-   *   mutate and return. A new object is created if not provided.
+   *   mutate and return. Supports plain objects, Web `Headers`, Node-style
+   *   `setHeader` carriers, framework `header` carriers, and mutable
+   *   `HeadersInit` tuple arrays. A new object is created if not provided.
    * @returns The carrier with propagation headers injected.
    */
-  inject(carrier?: Record<string, string>): Record<string, string>;
+  inject(): Record<string, string>;
+  inject<T extends TraceContextCarrier>(carrier: T): T;
 
   /**
    * Format a permalink to the Braintrust application for viewing this span.
@@ -608,7 +612,11 @@ export class NoopSpan implements Span {
     return "";
   }
 
-  public inject(carrier?: Record<string, string>): Record<string, string> {
+  public inject(): Record<string, string>;
+  public inject<T extends TraceContextCarrier>(carrier: T): T;
+  public inject<T extends TraceContextCarrier>(
+    carrier?: T,
+  ): T | Record<string, string> {
     return carrier ?? {};
   }
 
@@ -5436,18 +5444,89 @@ function braintrustParentToComponents(
  * `Baggage` from a framework that title-cases headers) must be removed first,
  * otherwise the carrier would end up with two conflicting headers.
  */
+function isMutableHeaderTupleArray(
+  carrier: TraceContextCarrier,
+): carrier is [string, string][] {
+  return (
+    Array.isArray(carrier) &&
+    carrier.every((item) => Array.isArray(item) && typeof item[0] === "string")
+  );
+}
+
 function setHeader(
-  carrier: Record<string, string>,
+  carrier: TraceContextCarrier,
   name: string,
   value: string,
 ): void {
+  if (isMutableHeaderTupleArray(carrier)) {
+    const lowered = name.toLowerCase();
+    for (let i = carrier.length - 1; i >= 0; i--) {
+      if (carrier[i][0].toLowerCase() === lowered) {
+        carrier.splice(i, 1);
+      }
+    }
+    carrier.push([name, value]);
+    return;
+  }
+
+  const setter = (carrier as { set?: unknown }).set;
+  if (typeof setter === "function") {
+    const deleter = (carrier as { delete?: unknown }).delete;
+    if (typeof deleter === "function") {
+      try {
+        deleter.call(carrier, name);
+      } catch {
+        // Setting below may still succeed for custom header-like objects.
+      }
+    }
+    setter.call(carrier, name, value);
+    return;
+  }
+
+  const nodeSetter = (carrier as { setHeader?: unknown }).setHeader;
+  if (typeof nodeSetter === "function") {
+    const remover = (carrier as { removeHeader?: unknown }).removeHeader;
+    if (typeof remover === "function") {
+      try {
+        remover.call(carrier, name);
+      } catch {
+        // Setting below may still succeed for custom header-like objects.
+      }
+    }
+    nodeSetter.call(carrier, name, value);
+    return;
+  }
+
+  const headerSetter = (carrier as { header?: unknown }).header;
+  if (typeof headerSetter === "function") {
+    const deleter = (carrier as { delete?: unknown }).delete;
+    if (typeof deleter === "function") {
+      try {
+        deleter.call(carrier, name);
+      } catch {
+        // Setting below may still succeed for custom header-like objects.
+      }
+    }
+    const remover = (carrier as { removeHeader?: unknown }).removeHeader;
+    if (typeof remover === "function") {
+      try {
+        remover.call(carrier, name);
+      } catch {
+        // Setting below may still succeed for custom header-like objects.
+      }
+    }
+    headerSetter.call(carrier, name, value);
+    return;
+  }
+
+  const headerBag = carrier as { [name: string]: string };
   const lowered = name.toLowerCase();
-  for (const key of Object.keys(carrier)) {
+  for (const key of Object.keys(headerBag)) {
     if (key !== name && key.toLowerCase() === lowered) {
-      delete carrier[key];
+      delete headerBag[key];
     }
   }
-  carrier[name] = value;
+  headerBag[name] = value;
 }
 
 /**
@@ -5459,7 +5538,7 @@ function setHeader(
  * `propagatedState`. Pre-existing, non-Braintrust baggage entries are preserved.
  */
 export function _injectIntoCarrier(
-  carrier: Record<string, string>,
+  carrier: TraceContextCarrier,
   args: {
     traceId: string | undefined;
     spanId: string | undefined;
@@ -5506,13 +5585,23 @@ export function _injectIntoCarrier(
  * never throws.
  *
  * @param carrier Optional carrier (e.g. outbound HTTP headers) to mutate.
+ *   Supports plain objects, Web `Headers`, Node-style `setHeader` carriers,
+ *   framework `header` carriers, and mutable `HeadersInit` tuple arrays.
  * @param options.span Optional span to inject. Defaults to the current span.
  * @returns The carrier with propagation headers injected.
  */
 export function injectTraceContext(
-  carrier?: Record<string, string>,
+  carrier?: undefined,
   options?: OptionalStateArg & { span?: Span },
-): Record<string, string> {
+): Record<string, string>;
+export function injectTraceContext<T extends TraceContextCarrier>(
+  carrier: T,
+  options?: OptionalStateArg & { span?: Span },
+): T;
+export function injectTraceContext<T extends TraceContextCarrier>(
+  carrier?: T,
+  options?: OptionalStateArg & { span?: Span },
+): T | Record<string, string> {
   const resolvedCarrier = carrier ?? {};
   const span = options?.span ?? currentSpan({ state: options?.state });
   try {
@@ -7641,7 +7730,11 @@ export class SpanImpl implements Span {
     return undefined;
   }
 
-  public inject(carrier?: Record<string, string>): Record<string, string> {
+  public inject(): Record<string, string>;
+  public inject<T extends TraceContextCarrier>(carrier: T): T;
+  public inject<T extends TraceContextCarrier>(
+    carrier?: T,
+  ): T | Record<string, string> {
     const resolvedCarrier = carrier ?? {};
     try {
       _injectIntoCarrier(resolvedCarrier, {

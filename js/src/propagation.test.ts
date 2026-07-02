@@ -404,16 +404,42 @@ test("getHeader case insensitive", () => {
   expect(getHeader(headers, "missing")).toBeUndefined();
 });
 
-test("getHeader reduces array-valued headers to the first element", () => {
-  // Node's IncomingHttpHeaders can expose multi-valued headers as arrays; the
-  // W3C trace-context headers are single-valued, so we take the first element.
+test("getHeader handles array-valued headers", () => {
+  // Node's IncomingHttpHeaders can expose multi-valued headers as arrays.
+  // traceparent is single-valued, while baggage and tracestate are list headers.
   const headers = {
     traceparent: [VALID_TRACEPARENT, "00-extra"],
-    baggage: ["foo=bar"],
+    baggage: ["foo=bar", "team=eng"],
+    tracestate: ["congo=t61", "rojo=00f"],
+  };
+  expect(getHeader(headers, "traceparent")).toBe(VALID_TRACEPARENT);
+  expect(getHeader(headers, "baggage")).toBe("foo=bar,team=eng");
+  expect(getHeader(headers, "tracestate")).toBe("congo=t61,rojo=00f");
+  expect(getHeader({ traceparent: [] }, "traceparent")).toBeUndefined();
+});
+
+test("getHeader reads tuple-array headers", () => {
+  const headers: [string, string][] = [
+    ["TraceParent", VALID_TRACEPARENT],
+    ["baggage", "foo=bar"],
+    ["Baggage", "team=eng"],
+  ];
+  expect(getHeader(headers, "traceparent")).toBe(VALID_TRACEPARENT);
+  expect(getHeader(headers, "baggage")).toBe("foo=bar,team=eng");
+});
+
+test("getHeader reads Node setHeader-style objects", () => {
+  const headers = {
+    getHeader(name: string) {
+      const values: Record<string, string> = {
+        traceparent: VALID_TRACEPARENT,
+        baggage: "foo=bar",
+      };
+      return values[name.toLowerCase()];
+    },
   };
   expect(getHeader(headers, "traceparent")).toBe(VALID_TRACEPARENT);
   expect(getHeader(headers, "baggage")).toBe("foo=bar");
-  expect(getHeader({ traceparent: [] }, "traceparent")).toBeUndefined();
 });
 
 test("getHeader skips a null case-variant and keeps searching", () => {
@@ -499,6 +525,22 @@ describe("inject / extract / round-trip", () => {
       );
     });
 
+    test("array-valued baggage is joined before merge", () => {
+      const logger = makeLogger();
+      const span = logger.startSpan({ name: "svc_a" });
+      const carrier = span.inject({
+        [BAGGAGE_HEADER]: ["user=alice", "team=eng"],
+      });
+      span.end();
+
+      const parsed = parseBaggage(carrier[BAGGAGE_HEADER]);
+      expect(parsed["user"]).toBe("alice");
+      expect(parsed["team"]).toBe("eng");
+      expect(parsed[BRAINTRUST_PARENT_KEY]).toBe(
+        `project_name:${PROJECT_NAME}`,
+      );
+    });
+
     test("title-cased baggage emits single lowercase header", () => {
       const logger = makeLogger();
       const span = logger.startSpan({ name: "svc_a" });
@@ -539,6 +581,128 @@ describe("inject / extract / round-trip", () => {
       expect(Object.keys(carrier).map((k) => k.toLowerCase())).not.toContain(
         "x-bt-parent",
       );
+    });
+
+    test("injects into Web Headers-style objects", () => {
+      const HeadersCtor = (
+        globalThis as unknown as {
+          Headers?: new (init?: Record<string, string>) => {
+            get(name: string): string | null;
+            set(name: string, value: string): void;
+          };
+        }
+      ).Headers;
+      if (!HeadersCtor) {
+        return;
+      }
+
+      const logger = makeLogger();
+      const span = logger.startSpan({ name: "svc_a" });
+      const carrier = new HeadersCtor({ Baggage: "user=alice" });
+      const returned = span.inject(carrier);
+      span.end();
+
+      expect(returned).toBe(carrier);
+      expect(carrier.get(TRACEPARENT_HEADER)).toMatch(TRACEPARENT_RE);
+      expect(parseBaggage(carrier.get(BAGGAGE_HEADER))).toEqual({
+        user: "alice",
+        [BRAINTRUST_PARENT_KEY]: `project_name:${PROJECT_NAME}`,
+      });
+    });
+
+    test("injects into tuple-array headers", () => {
+      const logger = makeLogger();
+      const span = logger.startSpan({ name: "svc_a" });
+      const carrier: [string, string][] = [["Baggage", "user=alice"]];
+      const returned = span.inject(carrier);
+      span.end();
+
+      expect(returned).toBe(carrier);
+      expect(getHeader(carrier, TRACEPARENT_HEADER)).toMatch(TRACEPARENT_RE);
+      expect(getHeader(carrier, BAGGAGE_HEADER)).not.toBeUndefined();
+      expect(
+        carrier.filter(([key]) => key.toLowerCase() === BAGGAGE_HEADER),
+      ).toHaveLength(1);
+      expect(parseBaggage(getHeader(carrier, BAGGAGE_HEADER))).toEqual({
+        user: "alice",
+        [BRAINTRUST_PARENT_KEY]: `project_name:${PROJECT_NAME}`,
+      });
+    });
+
+    test("injects into Node setHeader-style objects", () => {
+      const logger = makeLogger();
+      const span = logger.startSpan({ name: "svc_a" });
+      const carrier = {
+        values: { Baggage: "user=alice" } as Record<string, string>,
+        getHeader(name: string) {
+          const lowered = name.toLowerCase();
+          for (const key of Object.keys(this.values)) {
+            if (key.toLowerCase() === lowered) {
+              return this.values[key];
+            }
+          }
+          return undefined;
+        },
+        setHeader(name: string, value: string) {
+          this.values[name] = value;
+        },
+        removeHeader(name: string) {
+          const lowered = name.toLowerCase();
+          for (const key of Object.keys(this.values)) {
+            if (key.toLowerCase() === lowered) {
+              delete this.values[key];
+            }
+          }
+        },
+      };
+      const returned = span.inject(carrier);
+      span.end();
+
+      expect(returned).toBe(carrier);
+      expect(carrier.values[TRACEPARENT_HEADER]).toMatch(TRACEPARENT_RE);
+      expect("Baggage" in carrier.values).toBe(false);
+      expect(parseBaggage(carrier.values[BAGGAGE_HEADER])).toEqual({
+        user: "alice",
+        [BRAINTRUST_PARENT_KEY]: `project_name:${PROJECT_NAME}`,
+      });
+    });
+
+    test("injects into header-style response objects", () => {
+      const logger = makeLogger();
+      const span = logger.startSpan({ name: "svc_a" });
+      const carrier = {
+        values: { Baggage: "user=alice" } as Record<string, string>,
+        getHeader(name: string) {
+          const lowered = name.toLowerCase();
+          for (const key of Object.keys(this.values)) {
+            if (key.toLowerCase() === lowered) {
+              return this.values[key];
+            }
+          }
+          return undefined;
+        },
+        header(name: string, value: string) {
+          this.values[name] = value;
+        },
+        removeHeader(name: string) {
+          const lowered = name.toLowerCase();
+          for (const key of Object.keys(this.values)) {
+            if (key.toLowerCase() === lowered) {
+              delete this.values[key];
+            }
+          }
+        },
+      };
+      const returned = span.inject(carrier);
+      span.end();
+
+      expect(returned).toBe(carrier);
+      expect(carrier.values[TRACEPARENT_HEADER]).toMatch(TRACEPARENT_RE);
+      expect("Baggage" in carrier.values).toBe(false);
+      expect(parseBaggage(carrier.values[BAGGAGE_HEADER])).toEqual({
+        user: "alice",
+        [BRAINTRUST_PARENT_KEY]: `project_name:${PROJECT_NAME}`,
+      });
     });
 
     test("no braintrust parent injects traceparent without baggage", () => {

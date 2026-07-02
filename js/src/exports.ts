@@ -174,7 +174,12 @@ export {
   BAGGAGE_HEADER,
   BRAINTRUST_PARENT_KEY,
 } from "./propagation";
-export type { ParsedTraceparent, PropagatedState } from "./propagation";
+export type {
+  ParsedTraceparent,
+  PropagatedState,
+  TraceContextCarrier,
+  TraceContextHeaders,
+} from "./propagation";
 
 export {
   LEGACY_CACHED_HEADER,

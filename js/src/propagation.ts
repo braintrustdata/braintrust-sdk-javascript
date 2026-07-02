@@ -49,7 +49,14 @@ export interface PropagatedState {
   traceFlags?: string;
 }
 
-type TraceContextHeaderValue = string | readonly string[] | null | undefined;
+type TraceContextHeaderValue =
+  | string
+  | number
+  | readonly string[]
+  | null
+  | undefined;
+
+export type TraceContextHeaderTuple = readonly [name: string, value: string];
 
 /**
  * Minimal structural interface for inbound HTTP headers.
@@ -59,7 +66,36 @@ type TraceContextHeaderValue = string | readonly string[] | null | undefined;
  */
 export type TraceContextHeaders =
   | { [name: string]: TraceContextHeaderValue }
-  | { get(name: string): TraceContextHeaderValue };
+  | { get(name: string): TraceContextHeaderValue }
+  | { getHeader(name: string): TraceContextHeaderValue }
+  | readonly TraceContextHeaderTuple[];
+
+/**
+ * Minimal structural interface for outbound HTTP header carriers.
+ *
+ * Supports plain objects, Web/Fetch-compatible `Headers`, Node/Fastify-style
+ * response carriers, and mutable `HeadersInit` tuple arrays.
+ */
+export type TraceContextCarrier =
+  | { [name: string]: TraceContextHeaderValue }
+  | {
+      get(name: string): TraceContextHeaderValue;
+      set(name: string, value: string): void;
+      delete?(name: string): void;
+    }
+  | {
+      getHeader(name: string): TraceContextHeaderValue;
+      setHeader(name: string, value: string): void;
+      removeHeader?(name: string): void;
+    }
+  | {
+      get?(name: string): TraceContextHeaderValue;
+      getHeader?(name: string): TraceContextHeaderValue;
+      header(name: string, value: string): void;
+      delete?(name: string): void;
+      removeHeader?(name: string): void;
+    }
+  | [string, string][];
 
 // W3C traceparent: version-traceid-parentid-flags, version 00, lowercase hex.
 const TRACEPARENT_RE = /^00-([0-9a-f]{32})-([0-9a-f]{16})-([0-9a-f]{2})$/;
@@ -144,13 +180,37 @@ function capBaggageToMemberBoundary(value: string): string {
  * as a string array; the W3C trace-context headers are single-valued, so we take
  * the first element. Returns undefined for missing/empty values.
  */
-function headerValueToString(value: unknown): string | undefined {
+function isTraceContextHeaderTupleArray(
+  value: unknown,
+): value is readonly TraceContextHeaderTuple[] {
+  return (
+    Array.isArray(value) &&
+    value.every(
+      (item) =>
+        Array.isArray(item) &&
+        typeof item[0] === "string" &&
+        typeof item[1] === "string",
+    )
+  );
+}
+
+function isListHeader(name: string): boolean {
+  const lowered = name.toLowerCase();
+  return lowered === BAGGAGE_HEADER || lowered === TRACESTATE_HEADER;
+}
+
+function headerValueToString(value: unknown, name: string): string | undefined {
   if (value === undefined || value === null) {
     return undefined;
   }
   if (Array.isArray(value)) {
-    const first = value[0];
-    return typeof first === "string" ? first : undefined;
+    const stringValues = value.filter((item): item is string => {
+      return typeof item === "string";
+    });
+    if (!stringValues.length) {
+      return undefined;
+    }
+    return isListHeader(name) ? stringValues.join(",") : stringValues[0];
   }
   return typeof value === "string" ? value : String(value);
 }
@@ -161,21 +221,44 @@ function headerValueToString(value: unknown): string | undefined {
  * Some frameworks normalize header names to title case (e.g. `Traceparent`)
  * while the W3C keys are lowercase; Web `Headers` objects expose a
  * case-insensitive `.get(name)` method. Returns the first matching value or
- * undefined. Array-valued headers are reduced to their first element, since
- * these headers are single-valued.
+ * undefined. Array-valued `baggage` and `tracestate` headers are comma-joined;
+ * other array-valued headers are reduced to their first element.
  */
 export function getHeader(
-  headers: TraceContextHeaders | null | undefined,
+  headers: TraceContextHeaders | TraceContextCarrier | null | undefined,
   name: string,
 ): string | undefined {
   if (!headers) {
     return undefined;
   }
 
+  if (isTraceContextHeaderTupleArray(headers)) {
+    const lowered = name.toLowerCase();
+    const matches = headers
+      .filter(([key]) => key.toLowerCase() === lowered)
+      .map(([, value]) => value);
+    if (!matches.length) {
+      return undefined;
+    }
+    return headerValueToString(matches, name);
+  }
+
   const getter = (headers as { get?: unknown }).get;
   if (typeof getter === "function") {
     try {
-      const value = headerValueToString(getter.call(headers, name));
+      const value = headerValueToString(getter.call(headers, name), name);
+      if (value !== undefined) {
+        return value;
+      }
+    } catch {
+      // Fall back to other lookup styles for custom header-like objects.
+    }
+  }
+
+  const nodeGetter = (headers as { getHeader?: unknown }).getHeader;
+  if (typeof nodeGetter === "function") {
+    try {
+      const value = headerValueToString(nodeGetter.call(headers, name), name);
       if (value !== undefined) {
         return value;
       }
@@ -186,14 +269,14 @@ export function getHeader(
 
   const headerBag = headers as { [name: string]: TraceContextHeaderValue };
   // Fast path: exact (lowercase) match.
-  const exact = headerValueToString(headerBag[name]);
+  const exact = headerValueToString(headerBag[name], name);
   if (exact !== undefined) {
     return exact;
   }
   const lowered = name.toLowerCase();
   for (const key of Object.keys(headers)) {
     if (key !== name && key.toLowerCase() === lowered) {
-      const value = headerValueToString(headerBag[key]);
+      const value = headerValueToString(headerBag[key], name);
       if (value !== undefined) {
         return value;
       }
