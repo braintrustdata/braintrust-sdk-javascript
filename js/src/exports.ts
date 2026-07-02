@@ -86,7 +86,7 @@ export {
   currentSpan,
   deepCopyEvent,
   deserializePlainStringAsJSON,
-  extractTraceContext,
+  extractTraceContextFromHeaders,
   flush,
   getContextManager,
   getPromptVersions,

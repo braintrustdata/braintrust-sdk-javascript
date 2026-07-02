@@ -35,9 +35,10 @@ export interface ParsedTraceparent {
 /**
  * Inbound W3C trace-context state that Braintrust forwards but never interprets.
  *
- * Captured at the span created from inbound headers (via `extractTraceContext`)
- * and inherited by every subspan, so that any `inject()` within the trace
- * re-emits the upstream state unchanged, per the W3C Trace Context spec.
+ * Captured at the span created from inbound headers (via
+ * `extractTraceContextFromHeaders`) and inherited by every subspan, so that any
+ * `inject()` within the trace re-emits the upstream state unchanged, per the W3C
+ * Trace Context spec.
  *
  * - `tracestate`: the W3C `tracestate` header (opaque vendor state).
  * - `traceFlags`: the raw 2-hex `traceparent` trace-flags byte. Stored raw so
@@ -47,6 +48,18 @@ export interface PropagatedState {
   tracestate?: string;
   traceFlags?: string;
 }
+
+type TraceContextHeaderValue = string | readonly string[] | null | undefined;
+
+/**
+ * Minimal structural interface for inbound HTTP headers.
+ *
+ * Covers Node/framework header bags and Web/Fetch-compatible `Headers` objects
+ * without depending on Node or DOM platform typings.
+ */
+export type TraceContextHeaders =
+  | { [name: string]: TraceContextHeaderValue }
+  | { get(name: string): TraceContextHeaderValue };
 
 // W3C traceparent: version-traceid-parentid-flags, version 00, lowercase hex.
 const TRACEPARENT_RE = /^00-([0-9a-f]{32})-([0-9a-f]{16})-([0-9a-f]{2})$/;
@@ -146,26 +159,41 @@ function headerValueToString(value: unknown): string | undefined {
  * Case-insensitive header lookup.
  *
  * Some frameworks normalize header names to title case (e.g. `Traceparent`)
- * while the W3C keys are lowercase. Returns the first matching value or
- * undefined. Array-valued headers (e.g. Node's `IncomingHttpHeaders`) are
- * reduced to their first element, since these headers are single-valued.
+ * while the W3C keys are lowercase; Web `Headers` objects expose a
+ * case-insensitive `.get(name)` method. Returns the first matching value or
+ * undefined. Array-valued headers are reduced to their first element, since
+ * these headers are single-valued.
  */
 export function getHeader(
-  headers: Record<string, unknown> | null | undefined,
+  headers: TraceContextHeaders | null | undefined,
   name: string,
 ): string | undefined {
   if (!headers) {
     return undefined;
   }
+
+  const getter = (headers as { get?: unknown }).get;
+  if (typeof getter === "function") {
+    try {
+      const value = headerValueToString(getter.call(headers, name));
+      if (value !== undefined) {
+        return value;
+      }
+    } catch {
+      // Fall back to object lookup for custom header-like objects.
+    }
+  }
+
+  const headerBag = headers as { [name: string]: TraceContextHeaderValue };
   // Fast path: exact (lowercase) match.
-  const exact = headerValueToString(headers[name]);
+  const exact = headerValueToString(headerBag[name]);
   if (exact !== undefined) {
     return exact;
   }
   const lowered = name.toLowerCase();
   for (const key of Object.keys(headers)) {
     if (key !== name && key.toLowerCase() === lowered) {
-      const value = headerValueToString(headers[key]);
+      const value = headerValueToString(headerBag[key]);
       if (value !== undefined) {
         return value;
       }

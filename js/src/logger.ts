@@ -19,6 +19,7 @@ import {
   BRAINTRUST_PARENT_KEY,
   PropagatedState,
   TRACEPARENT_HEADER,
+  TraceContextHeaders,
   TRACESTATE_HEADER,
   formatTraceparent,
   getHeader,
@@ -269,7 +270,7 @@ export type StartSpanArgs = {
   /**
    * The parent to start this span under. May be an exported span slug string
    * (from `span.export()`) or an opaque W3C trace-context (from
-   * {@link extractTraceContext}).
+   * {@link extractTraceContextFromHeaders}).
    */
   parent?: string | PropagationContext;
   event?: StartSpanEventArgs;
@@ -2130,7 +2131,8 @@ export function updateSpan({
 }
 
 /**
- * An opaque W3C trace-context, as returned by {@link extractTraceContext}.
+ * An opaque W3C trace-context, as returned by
+ * {@link extractTraceContextFromHeaders}.
  *
  * Carries the relevant W3C headers (`traceparent`, `baggage`, `tracestate`).
  * Callers MUST treat it as opaque and pass it straight to
@@ -2315,7 +2317,7 @@ export async function permalink(
 function startSpanParentArgs(args: {
   state: BraintrustState;
   // `parent` may be an exported slug string or an opaque W3C trace-context
-  // (from `extractTraceContext`).
+  // (from `extractTraceContextFromHeaders`).
   parent: string | PropagationContext | undefined;
   parentObjectType: SpanObjectTypeV3;
   parentObjectId: LazyValue<string>;
@@ -5330,7 +5332,7 @@ function getSpanParentObjectAndPropagatedState<IsAsyncFlush extends boolean>(
  * Applies precedence: current span > propagated parent > experiment > logger.
  *
  * `parent` may be an exported slug string or an opaque W3C trace-context (from
- * {@link extractTraceContext}).
+ * {@link extractTraceContextFromHeaders}).
  */
 export function getSpanParentObject<IsAsyncFlush extends boolean>(
   options?: AsyncFlushArg<IsAsyncFlush> &
@@ -5499,8 +5501,9 @@ export function _injectIntoCarrier(
  * carrier.
  *
  * This is the free-function form of {@link Span.inject}, and the send-side
- * counterpart of {@link extractTraceContext}. If no span is provided, the
- * currently-active span is used. Propagation is best-effort and never throws.
+ * counterpart of {@link extractTraceContextFromHeaders}. If no span is
+ * provided, the currently-active span is used. Propagation is best-effort and
+ * never throws.
  *
  * @param carrier Optional carrier (e.g. outbound HTTP headers) to mutate.
  * @param options.span Optional span to inject. Defaults to the current span.
@@ -5528,7 +5531,7 @@ export function injectTraceContext(
  * that can be passed as `parent` to `startSpan`:
  *
  * ```ts
- * const ctx = extractTraceContext(request.headers);
+ * const ctx = extractTraceContextFromHeaders(request.headers);
  * traced((span) => { ... }, { name: "handler", parent: ctx });
  * ```
  *
@@ -5544,8 +5547,8 @@ export function injectTraceContext(
  * @param headers Inbound request headers (e.g. an HTTP framework's headers).
  * @returns An opaque context for `startSpan({ parent })`, or undefined.
  */
-export function extractTraceContext(
-  headers: Record<string, unknown> | null | undefined,
+export function extractTraceContextFromHeaders(
+  headers: TraceContextHeaders | null | undefined,
 ): PropagationContext | undefined {
   if (!headers) {
     return undefined;
@@ -5639,7 +5642,8 @@ function resolveW3cParent(
 /**
  * Normalize a `parent` argument into `{ parentSlug, propagatedState }`.
  *
- * - object -> interpreted as a W3C trace-context (from `extractTraceContext`)
+ * - object -> interpreted as a W3C trace-context (from
+ *   `extractTraceContextFromHeaders`)
  * - string -> an exported span slug (passed through unchanged)
  * - undefined -> no parent
  *
@@ -7304,9 +7308,9 @@ export class SpanImpl implements Span {
 
   // Inbound W3C trace-context state (tracestate + raw traceparent flags) to
   // forward on outbound propagation. Captured at the span that received it (via
-  // extractTraceContext) and inherited by all subspans, so that any inject()
-  // within the trace re-emits the upstream state unchanged, per the W3C Trace
-  // Context spec. Not interpreted.
+  // extractTraceContextFromHeaders) and inherited by all subspans, so that any
+  // inject() within the trace re-emits the upstream state unchanged, per the W3C
+  // Trace Context spec. Not interpreted.
   private _propagatedState: PropagatedState | undefined;
 
   public kind = "span" as const;

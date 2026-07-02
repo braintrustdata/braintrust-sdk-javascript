@@ -1225,8 +1225,8 @@ async function runEvaluatorInternal(
 
           const parentStr = state.currentParent.getStore();
           // The eval framework only ever sets a slug string here; a W3C
-          // trace-context object (from extractTraceContext) is not expected in
-          // this path, so it is treated as no parent.
+          // trace-context object (from extractTraceContextFromHeaders) is not
+          // expected in this path, so it is treated as no parent.
           // SpanComponentsV4.fromStr decodes both V4 (default) and older V3
           // slugs, so it works regardless of the active export version.
           const parentComponents =

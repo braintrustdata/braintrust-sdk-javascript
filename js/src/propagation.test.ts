@@ -11,7 +11,7 @@ import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import {
   _exportsForTestingOnly,
   _injectIntoCarrier,
-  extractTraceContext,
+  extractTraceContextFromHeaders,
   initLogger,
   injectTraceContext,
   startSpan,
@@ -423,6 +423,16 @@ test("getHeader skips a null case-variant and keeps searching", () => {
   expect(getHeader(headers, "traceparent")).toBe(VALID_TRACEPARENT);
 });
 
+test("getHeader reads Web Headers-style objects", () => {
+  const headers = {
+    get(name: string) {
+      return name === "traceparent" ? VALID_TRACEPARENT : null;
+    },
+  };
+  expect(getHeader(headers, "traceparent")).toBe(VALID_TRACEPARENT);
+  expect(getHeader(headers, "missing")).toBeUndefined();
+});
+
 // --------------------------------------------------------------------------- //
 // Send / receive / round-trip against a live logger
 // --------------------------------------------------------------------------- //
@@ -581,7 +591,7 @@ describe("inject / extract / round-trip", () => {
   describe("extract", () => {
     test("traceparent with baggage parent", () => {
       const logger = makeLogger();
-      const ctx = extractTraceContext({
+      const ctx = extractTraceContextFromHeaders({
         traceparent: VALID_TRACEPARENT,
         baggage: `${BRAINTRUST_PARENT_KEY}=project_id:abc123`,
       });
@@ -593,7 +603,7 @@ describe("inject / extract / round-trip", () => {
 
     test("traceparent baggage with unrelated keys", () => {
       const logger = makeLogger();
-      const ctx = extractTraceContext({
+      const ctx = extractTraceContextFromHeaders({
         traceparent: VALID_TRACEPARENT,
         baggage: `user=alice,${BRAINTRUST_PARENT_KEY}=project_id:abc,team=eng`,
       });
@@ -605,7 +615,9 @@ describe("inject / extract / round-trip", () => {
 
     test("traceparent no baggage uses current logger", () => {
       const logger = makeLogger();
-      const ctx = extractTraceContext({ traceparent: VALID_TRACEPARENT });
+      const ctx = extractTraceContextFromHeaders({
+        traceparent: VALID_TRACEPARENT,
+      });
       expect(ctx).not.toBeUndefined();
       const span = logger.startSpan({ name: "h", parent: ctx });
       expect(span.rootSpanId).toBe(VALID_TRACE_ID);
@@ -614,14 +626,14 @@ describe("inject / extract / round-trip", () => {
     });
 
     test("no headers returns undefined", () => {
-      expect(extractTraceContext({})).toBeUndefined();
-      expect(extractTraceContext(null)).toBeUndefined();
-      expect(extractTraceContext(undefined)).toBeUndefined();
+      expect(extractTraceContextFromHeaders({})).toBeUndefined();
+      expect(extractTraceContextFromHeaders(null)).toBeUndefined();
+      expect(extractTraceContextFromHeaders(undefined)).toBeUndefined();
     });
 
     test("malformed traceparent returns undefined", () => {
       expect(
-        extractTraceContext({
+        extractTraceContextFromHeaders({
           traceparent: "garbage",
           baggage: `${BRAINTRUST_PARENT_KEY}=project_id:abc`,
         }),
@@ -630,7 +642,7 @@ describe("inject / extract / round-trip", () => {
 
     test("case insensitive headers", () => {
       const logger = makeLogger();
-      const ctx = extractTraceContext({
+      const ctx = extractTraceContextFromHeaders({
         TraceParent: VALID_TRACEPARENT,
         Baggage: `${BRAINTRUST_PARENT_KEY}=project_id:abc`,
       });
@@ -640,8 +652,64 @@ describe("inject / extract / round-trip", () => {
       span.end();
     });
 
+    test("Node-style array headers", () => {
+      const logger = makeLogger();
+      const ctx = extractTraceContextFromHeaders({
+        traceparent: [VALID_TRACEPARENT, "00-extra"],
+        baggage: [`${BRAINTRUST_PARENT_KEY}=project_id:abc`],
+        tracestate: ["congo=t61"],
+      });
+      const span = logger.startSpan({ name: "h", parent: ctx });
+      expect(span.rootSpanId).toBe(VALID_TRACE_ID);
+      expect(span.spanParents).toEqual([VALID_SPAN_ID]);
+      span.end();
+    });
+
+    test("Web Headers-style getter object", () => {
+      const logger = makeLogger();
+      const headers = {
+        get(name: string) {
+          const values: Record<string, string> = {
+            traceparent: VALID_TRACEPARENT,
+            baggage: `${BRAINTRUST_PARENT_KEY}=project_id:abc`,
+          };
+          return values[name] ?? null;
+        },
+      };
+      const ctx = extractTraceContextFromHeaders(headers);
+      const span = logger.startSpan({ name: "h", parent: ctx });
+      expect(span.rootSpanId).toBe(VALID_TRACE_ID);
+      expect(span.spanParents).toEqual([VALID_SPAN_ID]);
+      span.end();
+    });
+
+    test("native Headers object when available", () => {
+      const HeadersCtor = (
+        globalThis as unknown as {
+          Headers?: new (init?: Record<string, string>) => {
+            get(name: string): string | null;
+          };
+        }
+      ).Headers;
+      if (!HeadersCtor) {
+        return;
+      }
+
+      const logger = makeLogger();
+      const ctx = extractTraceContextFromHeaders(
+        new HeadersCtor({
+          traceparent: VALID_TRACEPARENT,
+          baggage: `${BRAINTRUST_PARENT_KEY}=project_id:abc`,
+        }),
+      );
+      const span = logger.startSpan({ name: "h", parent: ctx });
+      expect(span.rootSpanId).toBe(VALID_TRACE_ID);
+      expect(span.spanParents).toEqual([VALID_SPAN_ID]);
+      span.end();
+    });
+
     test("extract returns opaque dict", () => {
-      const ctx = extractTraceContext({
+      const ctx = extractTraceContextFromHeaders({
         traceparent: VALID_TRACEPARENT,
         baggage: `${BRAINTRUST_PARENT_KEY}=project_id:abc`,
         tracestate: "congo=t61",
@@ -652,7 +720,9 @@ describe("inject / extract / round-trip", () => {
 
     test("no parent and logger present starts span without throwing", () => {
       const logger = makeLogger();
-      const ctx = extractTraceContext({ traceparent: VALID_TRACEPARENT });
+      const ctx = extractTraceContextFromHeaders({
+        traceparent: VALID_TRACEPARENT,
+      });
       const span = logger.startSpan({ name: "h", parent: ctx });
       expect(span.spanId).not.toBeUndefined();
       span.end();
@@ -667,7 +737,7 @@ describe("inject / extract / round-trip", () => {
     const aSpan = spanA.spanId;
     spanA.end();
 
-    const parent = extractTraceContext(carrier);
+    const parent = extractTraceContextFromHeaders(carrier);
     const spanB = logger.startSpan({ name: "svc_b", parent });
     expect(spanB.rootSpanId).toBe(aRoot);
     expect(spanB.spanParents).toEqual([aSpan]);
@@ -780,7 +850,7 @@ describe("tracestate / flags pass-through", () => {
 
   test("extract then inject forwards tracestate", () => {
     const logger = makeLogger();
-    const parent = extractTraceContext({
+    const parent = extractTraceContextFromHeaders({
       traceparent: VALID_TRACEPARENT,
       baggage: `${BRAINTRUST_PARENT_KEY}=project_id:abc`,
       tracestate: UPSTREAM_TRACESTATE,
@@ -803,7 +873,7 @@ describe("tracestate / flags pass-through", () => {
   test("extract then inject preserves unsampled flag", () => {
     const logger = makeLogger();
     const unsampled = `00-${VALID_TRACE_ID}-${VALID_SPAN_ID}-00`;
-    const parent = extractTraceContext({
+    const parent = extractTraceContextFromHeaders({
       traceparent: unsampled,
       baggage: `${BRAINTRUST_PARENT_KEY}=project_id:abc`,
     });
@@ -815,7 +885,7 @@ describe("tracestate / flags pass-through", () => {
 
   test("extract then inject preserves sampled flag", () => {
     const logger = makeLogger();
-    const parent = extractTraceContext({
+    const parent = extractTraceContextFromHeaders({
       traceparent: VALID_TRACEPARENT, // ...-01
       baggage: `${BRAINTRUST_PARENT_KEY}=project_id:abc`,
     });
