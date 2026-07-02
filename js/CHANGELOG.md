@@ -1,5 +1,19 @@
 # braintrust
 
+## 3.21.0
+
+### Minor Changes
+
+- feat: Expose flag for toggling realtime mode in span fetcher Thanks @choochootrain! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2187)
+- feat(evals): Forward/pick up `bt eval <...> --sample N` flag (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2165)
+
+### Patch Changes
+
+- fix(ai-sdk): Close `braintrustAISDKTelemetry()` parent spans with AI SDK 7 `onEnd` callbacks (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2172)
+- fix: Fix function invocations by stripping `/v1/proxy` from functions endpoint Thanks @paultancre-bt! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2180)
+- ref: Fork `orchestrion-js`, `import-in-the-middle` and `require-in-the-middle` (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2154)
+- fix: Properly anchor preview domain CORS regex Thanks @mathisliens-braintrust! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2162)
+
 ## 3.20.0
 
 ### Minor Changes
