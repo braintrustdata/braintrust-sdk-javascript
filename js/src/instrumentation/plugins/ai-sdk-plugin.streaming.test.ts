@@ -741,4 +741,67 @@ describe("AI SDK streaming instrumentation", () => {
       plugin.disable();
     }
   });
+
+  test("async iterable stream accessors preserve ReadableStream methods", async () => {
+    expect(await backgroundLogger.drain()).toHaveLength(0);
+
+    const plugin = new AISDKPlugin();
+    plugin.enable();
+
+    try {
+      const result = (await aiSDKChannels.streamText.tracePromise(
+        async () => {
+          const resultRecord = {
+            stream: new ReadableStream({
+              start(controller) {
+                controller.enqueue("v7");
+                controller.close();
+              },
+            }),
+            text: Promise.resolve("v7"),
+          } as any;
+
+          Object.defineProperty(resultRecord, "textStream", {
+            configurable: true,
+            enumerable: true,
+            get() {
+              return this.stream.pipeThrough(
+                new TransformStream({
+                  transform(chunk: string, controller) {
+                    controller.enqueue(chunk.toUpperCase());
+                  },
+                }),
+              );
+            },
+          });
+
+          return resultRecord;
+        },
+        {
+          arguments: [
+            {
+              model: "mock-v7-stream-model",
+              prompt: "Reply with v7.",
+            },
+          ],
+        } as any,
+      )) as any;
+
+      expect(result.stream.pipeThrough).toEqual(expect.any(Function));
+      expect(result.stream.getReader).toEqual(expect.any(Function));
+
+      const textStream = result.textStream;
+      expect(textStream.pipeThrough).toEqual(expect.any(Function));
+      expect(textStream.getReader).toEqual(expect.any(Function));
+
+      const reader = textStream.getReader();
+      const first = await reader.read();
+      const second = await reader.read();
+
+      expect(first).toEqual({ done: false, value: "V7" });
+      expect(second).toEqual({ done: true, value: undefined });
+    } finally {
+      plugin.disable();
+    }
+  });
 });

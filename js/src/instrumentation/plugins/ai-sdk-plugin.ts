@@ -2336,6 +2336,10 @@ function patchAISDKStreamingResult(args: {
       onCancel: finalize,
     };
   };
+  const patchAsyncIterable = (stream: AsyncIterable<unknown>) =>
+    isReadableStreamLike(stream)
+      ? createPatchedReadableStream(stream, createAsyncIterableHooks())
+      : createPatchedAsyncIterable(stream, createAsyncIterableHooks());
   const patchAsyncIterableField = (field: string): boolean => {
     let descriptorOwner: object | null = resultRecord;
     let descriptor: PropertyDescriptor | undefined;
@@ -2364,10 +2368,7 @@ function patchAISDKStreamingResult(args: {
           configurable:
             descriptorOwner === resultRecord ? descriptor.configurable : true,
           enumerable: descriptor.enumerable,
-          value: createPatchedAsyncIterable(
-            descriptor.value,
-            createAsyncIterableHooks(),
-          ),
+          value: patchAsyncIterable(descriptor.value),
           writable: descriptor.writable,
         });
         return true;
@@ -2389,9 +2390,7 @@ function patchAISDKStreamingResult(args: {
         enumerable: descriptor.enumerable,
         get() {
           const stream = originalGet.call(this);
-          return isAsyncIterable(stream)
-            ? createPatchedAsyncIterable(stream, createAsyncIterableHooks())
-            : stream;
+          return isAsyncIterable(stream) ? patchAsyncIterable(stream) : stream;
         },
         ...(originalSet
           ? {
@@ -2508,14 +2507,73 @@ function attachKnownResultPromiseHandlers(
   }
 }
 
-function isReadableStreamLike(value: unknown): value is {
+type ReadableStreamLike = {
+  cancel?: (reason?: unknown) => Promise<void>;
+  getReader(): ReadableStreamDefaultReader<unknown>;
   pipeThrough<T>(transform: TransformStream<unknown, T>): ReadableStream<T>;
-} {
+};
+
+function isReadableStreamLike(value: unknown): value is ReadableStreamLike {
   return (
     value != null &&
     typeof value === "object" &&
+    typeof (value as { getReader?: unknown }).getReader === "function" &&
     typeof (value as { pipeThrough?: unknown }).pipeThrough === "function"
   );
+}
+
+function createPatchedReadableStream(
+  stream: ReadableStreamLike,
+  hooks: {
+    onCancel?: () => void | Promise<void>;
+    onChunk: (chunk: unknown) => void;
+    onComplete: () => Promise<void>;
+    onError: (error: Error) => void;
+  },
+): ReadableStream<unknown> {
+  let reader: ReadableStreamDefaultReader<unknown> | undefined;
+  let completed = false;
+
+  return new ReadableStream({
+    async pull(controller) {
+      reader ??= stream.getReader();
+
+      try {
+        const { done, value } = await reader.read();
+        if (done) {
+          completed = true;
+          await hooks.onComplete();
+          controller.close();
+          return;
+        }
+
+        hooks.onChunk(value);
+        controller.enqueue(value);
+      } catch (error) {
+        completed = true;
+        hooks.onError(
+          error instanceof Error ? error : new Error(String(error)),
+        );
+        controller.error(error);
+      }
+    },
+    async cancel(reason) {
+      if (!completed) {
+        completed = true;
+        try {
+          await hooks.onCancel?.();
+        } catch {
+          // Ignore cleanup errors so stream cancellation keeps its behavior.
+        }
+      }
+
+      if (reader) {
+        await reader.cancel(reason);
+      } else if (stream.cancel) {
+        await stream.cancel(reason);
+      }
+    },
+  });
 }
 
 function createPatchedAsyncIterable(
