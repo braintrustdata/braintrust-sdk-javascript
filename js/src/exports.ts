@@ -262,7 +262,7 @@ export {
   PromptDefinitionWithTools,
 } from "./prompt-schemas";
 
-export { prompt, s } from "./experimental-prompt-api";
+export { prompt } from "./experimental-prompt-api";
 
 export type { Trace, SpanData, GetThreadOptions } from "./trace";
 export { SpanFetcher, CachedSpanFetcher, LocalTrace } from "./trace";

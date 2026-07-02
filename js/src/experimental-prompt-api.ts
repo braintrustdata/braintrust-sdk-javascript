@@ -1,3 +1,5 @@
+import { adapters } from "./experimental-prompt-adapters";
+
 type JsonPrimitive = string | number | boolean | null;
 
 export type PromptJsonSchema = {
@@ -13,9 +15,18 @@ export type PromptJsonSchema = {
 
 type SchemaParser<T> = (value: unknown, path: string, root: unknown) => T;
 
-export class PromptSchema<TParsed, TInput = TParsed> {
+type SchemaDomain = "input" | "output";
+
+class PromptSchema<
+  TParsed,
+  TInput = TParsed,
+  TKind = unknown,
+  TDomain extends SchemaDomain = "input",
+> {
   readonly _type!: TParsed;
   readonly _input!: TInput;
+  readonly _kind!: TKind;
+  readonly _domain!: TDomain;
 
   constructor(
     private readonly parser: SchemaParser<TParsed>,
@@ -31,8 +42,18 @@ export class PromptSchema<TParsed, TInput = TParsed> {
     return this.jsonSchema();
   }
 
-  optional(): PromptSchema<TParsed | undefined, TInput | undefined> {
-    return new PromptSchema<TParsed | undefined, TInput | undefined>(
+  optional(): PromptSchema<
+    TParsed | undefined,
+    TInput | undefined,
+    TKind,
+    TDomain
+  > {
+    return new PromptSchema<
+      TParsed | undefined,
+      TInput | undefined,
+      TKind,
+      TDomain
+    >(
       (value, path, root) =>
         value === undefined ? undefined : this.parser(value, path, root),
       () => this.jsonSchema(),
@@ -41,20 +62,34 @@ export class PromptSchema<TParsed, TInput = TParsed> {
   }
 }
 
-export type InferSchema<TSchema extends PromptSchema<unknown, unknown>> =
-  TSchema extends PromptSchema<infer TParsed, unknown> ? TParsed : never;
+type AnySchema = PromptSchema<unknown, unknown, unknown, SchemaDomain>;
+type InputSchema = PromptSchema<unknown, unknown, unknown, "input">;
+type OutputSchema = PromptSchema<unknown, unknown, unknown, "output">;
 
-export type InferInputSchema<TSchema extends PromptSchema<unknown, unknown>> =
-  TSchema extends PromptSchema<unknown, infer TInput> ? TInput : never;
+type InferSchema<TSchema extends AnySchema> =
+  TSchema extends PromptSchema<infer TParsed, unknown, unknown, SchemaDomain>
+    ? TParsed
+    : never;
 
-type SchemaShape = Record<string, PromptSchema<unknown, unknown>>;
+type InferInputSchema<TSchema extends AnySchema> =
+  TSchema extends PromptSchema<unknown, infer TInput, unknown, SchemaDomain>
+    ? TInput
+    : never;
+
+type SchemaShape = Record<string, AnySchema>;
+type InputSchemaShape = Record<string, InputSchema>;
+type OutputSchemaShape = Record<string, OutputSchema>;
 
 type OptionalParsedKeys<TShape extends SchemaShape> = {
   [K in keyof TShape]: undefined extends InferSchema<TShape[K]> ? K : never;
 }[keyof TShape];
 
 type OptionalInputKeys<TShape extends SchemaShape> = {
-  [K in keyof TShape]: undefined extends InferInputSchema<TShape[K]>
+  [K in keyof TShape]: undefined extends InferObjectInputSchema<
+    TShape[K],
+    TShape,
+    K
+  >
     ? K
     : never;
 }[keyof TShape];
@@ -73,27 +108,59 @@ type InferParsedObject<TShape extends SchemaShape> = {
 type InferInputObject<TShape extends SchemaShape> = {
   [K in keyof TShape as K extends OptionalInputKeys<TShape>
     ? never
-    : K]: InferInputSchema<TShape[K]>;
+    : K]: InferObjectInputSchema<TShape[K], TShape, K>;
 } & {
   [K in OptionalInputKeys<TShape>]?: Exclude<
-    InferInputSchema<TShape[K]>,
+    InferObjectInputSchema<TShape[K], TShape, K>,
     undefined
   >;
 };
+
+type InferObjectInputSchema<
+  TSchema extends AnySchema,
+  TShape extends SchemaShape,
+  TKey extends keyof TShape,
+> =
+  TSchema extends PromptSchema<unknown, infer TInput, infer TKind, SchemaDomain>
+    ? TKind extends PromptFieldKind<infer TDefinition, infer TPromptKind>
+      ? PromptInputValueForObject<
+          TDefinition,
+          TPromptKind,
+          TShape,
+          TKey,
+          TInput
+        >
+      : TInput
+    : never;
 
 const builtPromptMarker = Symbol("braintrust.experimental_prompt.built");
 const promptDefinitionMarker = Symbol(
   "braintrust.experimental_prompt.definition",
 );
+const promptTextMarker = Symbol("braintrust.experimental_prompt.text");
+const promptDependencyMarker = Symbol(
+  "braintrust.experimental_prompt.dependencies",
+);
 
-export type PromptRole = "system" | "user" | "assistant";
+type PromptRole = "system" | "user" | "assistant";
+type PromptKind = "messages" | "string";
 
 export type PromptMessage = {
   role: PromptRole;
   content: string;
 };
 
-export type PromptDependencyEntry = {
+type PromptMessageWithDependencies = PromptMessage & {
+  readonly [promptDependencyMarker]?: PromptDependencyEntry[];
+};
+
+type PromptText = {
+  readonly [promptTextMarker]: true;
+  readonly content: string;
+  readonly dependencies: PromptDependencyEntry[];
+};
+
+type PromptDependencyEntry = {
   id?: string;
   slug: string;
   name?: string;
@@ -101,7 +168,6 @@ export type PromptDependencyEntry = {
   role: "root" | "include";
   parent?: string;
   input: unknown;
-  metadata?: Record<string, unknown>;
 };
 
 export type PromptDependencies = {
@@ -112,42 +178,42 @@ export type PromptDependencies = {
     version?: string;
   };
   prompts: PromptDependencyEntry[];
-  metadata?: Record<string, unknown>;
 };
 
-export type PromptRenderable =
-  | PromptMessage
-  | BuiltPrompt<unknown, unknown>
-  | readonly PromptRenderable[];
+type PromptRenderResult = readonly PromptMessage[] | PromptText;
 
-export type PromptRenderContext<TInput> = {
+type PromptRenderContext<TInput> = {
   input: TInput;
   include: <TDefinition extends AnyPromptDefinition>(
     definition: TDefinition,
     input: InputOf<TDefinition>,
-  ) => BuiltPrompt<ParsedInputOf<TDefinition>, OutputOf<TDefinition>>;
+  ) => BuiltPromptOf<TDefinition>;
 };
 
-export type PromptDefinitionOptions<
-  TInputSchema extends PromptSchema<unknown, unknown>,
-  TOutputSchema extends PromptSchema<unknown, unknown> | undefined = undefined,
+type InputSchemaHelpers = typeof inputSchemaHelpers;
+type OutputSchemaHelpers = typeof outputSchemaHelpers;
+
+type PromptDefinitionOptions<
+  TInputSchema extends InputSchema,
+  TOutputSchema extends OutputSchema | undefined,
+  TRenderResult extends PromptRenderResult,
 > = {
   id?: string;
   slug: string;
   name?: string;
   version?: string;
   model?: string;
-  input: TInputSchema;
-  output?: TOutputSchema;
-  metadata?: Record<string, unknown>;
+  input: (s: InputSchemaHelpers) => TInputSchema;
+  output?: (s: OutputSchemaHelpers) => TOutputSchema;
   render: (
     context: PromptRenderContext<InferSchema<TInputSchema>>,
-  ) => PromptRenderable | readonly PromptRenderable[];
+  ) => TRenderResult;
 };
 
-export class PromptDefinition<
-  TInputSchema extends PromptSchema<unknown, unknown>,
-  TOutputSchema extends PromptSchema<unknown, unknown> | undefined = undefined,
+class PromptDefinition<
+  TInputSchema extends InputSchema,
+  TOutputSchema extends OutputSchema | undefined,
+  TRenderResult extends PromptRenderResult,
 > {
   readonly [promptDefinitionMarker] = true;
   readonly id?: string;
@@ -157,29 +223,39 @@ export class PromptDefinition<
   readonly model?: string;
   readonly inputSchema: TInputSchema;
   readonly outputSchema?: TOutputSchema;
-  readonly metadata?: Record<string, unknown>;
 
   private readonly renderer: PromptDefinitionOptions<
     TInputSchema,
-    TOutputSchema
+    TOutputSchema,
+    TRenderResult
   >["render"];
 
-  constructor(opts: PromptDefinitionOptions<TInputSchema, TOutputSchema>) {
+  constructor(
+    opts: PromptDefinitionOptions<TInputSchema, TOutputSchema, TRenderResult>,
+  ) {
     this.id = opts.id;
     this.slug = opts.slug;
     this.name = opts.name;
     this.version = opts.version;
     this.model = opts.model;
-    this.inputSchema = opts.input;
-    this.outputSchema = opts.output;
-    this.metadata = opts.metadata;
+    if (typeof opts.input !== "function") {
+      throw new Error("input must be a schema function");
+    }
+    if (opts.output !== undefined && typeof opts.output !== "function") {
+      throw new Error("output must be a schema function");
+    }
+    this.inputSchema = opts.input(inputSchemaHelpers);
+    this.outputSchema = opts.output?.(outputSchemaHelpers);
     this.renderer = opts.render;
   }
 
   build(
     input: InferInputSchema<TInputSchema>,
-    opts: { metadata?: Record<string, unknown> } = {},
-  ): BuiltPrompt<InferSchema<TInputSchema>, InferOutput<TOutputSchema>> {
+  ): BuiltPromptForRenderResult<
+    InferSchema<TInputSchema>,
+    InferOutput<TOutputSchema>,
+    TRenderResult
+  > {
     const parsedInput = this.inputSchema.parse(
       input,
       "input",
@@ -188,238 +264,424 @@ export class PromptDefinition<
     const rendered = this.renderer({
       input: parsedInput,
       include: (definition, includeInput) =>
-        definition.build(includeInput) as BuiltPrompt<
-          ParsedInputOf<typeof definition>,
-          OutputOf<typeof definition>
-        >,
+        definition.build(includeInput) as BuiltPromptOf<typeof definition>,
     });
-    const flattened = flattenRenderable(rendered, this.slug);
     const root = {
       id: this.id,
       slug: this.slug,
       name: this.name,
       version: this.version,
     };
-    const promptMetadata =
-      this.metadata || opts.metadata
-        ? { ...this.metadata, ...opts.metadata }
-        : undefined;
-    const dependencies: PromptDependencies = {
-      root,
-      prompts: [
-        {
-          ...root,
-          role: "root",
-          input: sanitizeDependencyInput(parsedInput),
-          metadata: promptMetadata,
-        },
-        ...dedupeDependencyEntries([
-          ...collectBuiltPromptDependencies(parsedInput, this.slug),
-          ...flattened.dependencies,
-        ]),
-      ],
-      metadata: opts.metadata,
-    };
 
-    return new BuiltPrompt<
+    if (isPromptText(rendered)) {
+      const dependencies = createPromptDependencies(root, parsedInput, [
+        ...collectBuiltPromptDependencies(parsedInput, this.slug),
+        ...collectDependencyEntries(rendered.dependencies, this.slug),
+      ]);
+
+      return new BuiltStringPrompt<
+        InferSchema<TInputSchema>,
+        InferOutput<TOutputSchema>
+      >({
+        definition: {
+          model: this.model,
+          inputSchema: this.inputSchema as PromptSchema<
+            InferSchema<TInputSchema>,
+            unknown,
+            unknown,
+            "input"
+          >,
+          outputSchema: this.outputSchema as
+            | PromptSchema<
+                InferOutput<TOutputSchema>,
+                unknown,
+                unknown,
+                "output"
+              >
+            | undefined,
+        },
+        input: parsedInput,
+        content: rendered.content,
+        dependencies,
+      }) as BuiltPromptForRenderResult<
+        InferSchema<TInputSchema>,
+        InferOutput<TOutputSchema>,
+        TRenderResult
+      >;
+    }
+
+    if (!Array.isArray(rendered)) {
+      throw new Error("render must return a message array or prompt.text");
+    }
+
+    const messages = rendered.map((message, index) =>
+      assertPromptMessage(message, `render[${index}]`),
+    );
+    const dependencies = createPromptDependencies(root, parsedInput, [
+      ...collectBuiltPromptDependencies(parsedInput, this.slug),
+      ...collectMessageDependencies(messages, this.slug),
+    ]);
+
+    return new BuiltMessagesPrompt<
       InferSchema<TInputSchema>,
       InferOutput<TOutputSchema>
     >({
       definition: {
         model: this.model,
+        inputSchema: this.inputSchema as PromptSchema<
+          InferSchema<TInputSchema>,
+          unknown,
+          unknown,
+          "input"
+        >,
         outputSchema: this.outputSchema as
-          | PromptSchema<InferOutput<TOutputSchema>>
+          | PromptSchema<InferOutput<TOutputSchema>, unknown, unknown, "output">
           | undefined,
       },
       input: parsedInput,
-      messages: flattened.messages,
+      messages,
       dependencies,
-    });
+    }) as BuiltPromptForRenderResult<
+      InferSchema<TInputSchema>,
+      InferOutput<TOutputSchema>,
+      TRenderResult
+    >;
   }
 }
 
 type AnyPromptDefinition = PromptDefinition<
-  PromptSchema<unknown, unknown>,
-  PromptSchema<unknown, unknown> | undefined
+  InputSchema,
+  OutputSchema | undefined,
+  PromptRenderResult
+>;
+
+type AnyMessagesPromptDefinition = PromptDefinition<
+  InputSchema,
+  OutputSchema | undefined,
+  readonly PromptMessage[]
+>;
+
+type AnyStringPromptDefinition = PromptDefinition<
+  InputSchema,
+  OutputSchema | undefined,
+  PromptText
 >;
 
 type InferOutput<TOutputSchema> =
-  TOutputSchema extends PromptSchema<infer TParsed, unknown>
+  TOutputSchema extends PromptSchema<infer TParsed, unknown, unknown, "output">
     ? TParsed
     : unknown;
 
-export type InputOf<TDefinition> =
+type InputOf<TDefinition> =
   TDefinition extends PromptDefinition<
     infer TInputSchema,
-    PromptSchema<unknown, unknown> | undefined
+    OutputSchema | undefined,
+    PromptRenderResult
   >
     ? InferInputSchema<TInputSchema>
     : never;
 
-export type ParsedInputOf<TDefinition> =
+type ParsedInputOf<TDefinition> =
   TDefinition extends PromptDefinition<
     infer TInputSchema,
-    PromptSchema<unknown, unknown> | undefined
+    OutputSchema | undefined,
+    PromptRenderResult
   >
     ? InferSchema<TInputSchema>
     : never;
 
-export type OutputOf<TDefinition> =
+type OutputOf<TDefinition> =
   TDefinition extends PromptDefinition<
-    PromptSchema<unknown, unknown>,
-    infer TOutputSchema
+    InputSchema,
+    infer TOutputSchema,
+    PromptRenderResult
   >
     ? InferOutput<TOutputSchema>
     : never;
 
-export type PromptInputValue<TDefinition extends AnyPromptDefinition> =
-  | BuiltPrompt<ParsedInputOf<TDefinition>, OutputOf<TDefinition>>
-  | Partial<InputOf<TDefinition>>
-  | undefined;
+type BuiltPromptOf<TDefinition> =
+  TDefinition extends PromptDefinition<
+    infer TInputSchema,
+    infer TOutputSchema,
+    infer TRenderResult
+  >
+    ? BuiltPromptForRenderResult<
+        InferSchema<TInputSchema>,
+        InferOutput<TOutputSchema>,
+        TRenderResult
+      >
+    : never;
 
-export type DynamicPromptInputValue =
-  | BuiltPrompt<unknown, unknown>
-  | AnyPromptDefinition
-  | {
-      prompt: AnyPromptDefinition;
-      input?: Record<string, unknown>;
-    };
+type BuiltPromptForRenderResult<TInput, TOutput, TRenderResult> =
+  TRenderResult extends PromptText
+    ? BuiltStringPrompt<TInput, TOutput>
+    : TRenderResult extends readonly PromptMessage[]
+      ? BuiltMessagesPrompt<TInput, TOutput>
+      : never;
 
-export type BuiltPromptOptions<TInput, TOutput> = {
+type BuiltPromptForKind<
+  TInput,
+  TOutput,
+  TKind extends PromptKind,
+> = TKind extends "messages"
+  ? BuiltMessagesPrompt<TInput, TOutput>
+  : BuiltStringPrompt<TInput, TOutput>;
+
+type PromptFieldKind<
+  TDefinition extends AnyPromptDefinition,
+  TPromptKind extends PromptKind,
+> = {
+  type: "prompt";
+  definition: TDefinition;
+  promptKind: TPromptKind;
+};
+
+type PromptInputOverrides<
+  TInput,
+  TParentKeys extends PropertyKey,
+> = TInput extends object
+  ? Omit<TInput, TParentKeys> &
+      Partial<Pick<TInput, Extract<keyof TInput, TParentKeys>>>
+  : TInput;
+
+type PromptInputValue<
+  TDefinition extends AnyPromptDefinition,
+  TPromptKind extends PromptKind,
+> =
+  | BuiltPromptForKind<
+      ParsedInputOf<TDefinition>,
+      OutputOf<TDefinition>,
+      TPromptKind
+    >
+  | InputOf<TDefinition>;
+
+type PromptInputValueForObject<
+  TDefinition extends AnyPromptDefinition,
+  TPromptKind extends PromptKind,
+  TShape extends SchemaShape,
+  TKey extends keyof TShape,
+  TInput,
+> =
+  | BuiltPromptForKind<
+      ParsedInputOf<TDefinition>,
+      OutputOf<TDefinition>,
+      TPromptKind
+    >
+  | PromptInputOverrides<InputOf<TDefinition>, Exclude<keyof TShape, TKey>>
+  | (undefined extends TInput ? undefined : never);
+
+type BuiltPromptOptions<TInput, TOutput> = {
   definition: {
     model?: string;
-    outputSchema?: PromptSchema<TOutput>;
+    inputSchema: PromptSchema<TInput, unknown, unknown, "input">;
+    outputSchema?: PromptSchema<TOutput, unknown, unknown, "output">;
   };
   input: TInput;
-  messages: PromptMessage[];
   dependencies: PromptDependencies;
 };
 
-export type PromptAdapter<TResult> = (
-  builtPrompt: BuiltPrompt<unknown, unknown>,
+type BuiltMessagesPromptOptions<TInput, TOutput> = BuiltPromptOptions<
+  TInput,
+  TOutput
+> & {
+  messages: PromptMessage[];
+};
+
+type BuiltStringPromptOptions<TInput, TOutput> = BuiltPromptOptions<
+  TInput,
+  TOutput
+> & {
+  content: string;
+};
+
+type PromptAdapterInput<TInput, TOutput> = {
+  model?: string;
+  inputSchema: PromptSchema<TInput, unknown, unknown, "input">;
+  outputSchema?: PromptSchema<TOutput, unknown, unknown, "output">;
+  input: TInput;
+  dependencies: PromptDependencies;
+} & (
+  | {
+      kind: "messages";
+      messages: PromptMessage[];
+    }
+  | {
+      kind: "string";
+      content: string;
+      messages: PromptMessage[];
+    }
+);
+
+type Simplify<T> = { [K in keyof T]: T[K] } & {};
+
+type DeepMerge<TBase, TExtension> = Simplify<
+  Omit<TBase, keyof TExtension> & {
+    [K in keyof TExtension]: K extends keyof TBase
+      ? DeepMergeValue<TBase[K], TExtension[K]>
+      : TExtension[K];
+  }
+>;
+
+type DeepMergeValue<TBase, TExtension> = TBase extends readonly unknown[]
+  ? TExtension
+  : TExtension extends readonly unknown[]
+    ? TExtension
+    : TBase extends object
+      ? TExtension extends object
+        ? DeepMerge<TBase, TExtension>
+        : TExtension
+      : TExtension;
+
+type PromptExtension = Record<string, unknown>;
+type PromptAdapterResult = PromptExtension;
+
+type Extendable<T extends PromptAdapterResult> = T & {
+  extend<TExtension extends PromptExtension>(
+    extension: TExtension,
+  ): Extendable<DeepMerge<T, TExtension>>;
+};
+
+type PromptAdapter<TResult extends PromptAdapterResult> = (
+  builtPrompt: PromptAdapterInput<unknown, unknown>,
 ) => TResult;
 
-export class BuiltPrompt<TInput, TOutput> {
+class BuiltMessagesPrompt<TInput, TOutput> implements Iterable<PromptMessage> {
   readonly [builtPromptMarker] = true;
-  readonly definition: { model?: string; outputSchema?: PromptSchema<TOutput> };
+  readonly kind = "messages";
+  readonly definition: {
+    model?: string;
+    inputSchema: PromptSchema<TInput, unknown, unknown, "input">;
+    outputSchema?: PromptSchema<TOutput, unknown, unknown, "output">;
+  };
   readonly input: TInput;
   readonly messages: PromptMessage[];
   readonly dependencies: PromptDependencies;
 
-  constructor(opts: BuiltPromptOptions<TInput, TOutput>) {
+  constructor(opts: BuiltMessagesPromptOptions<TInput, TOutput>) {
     this.definition = opts.definition;
     this.input = opts.input;
     this.messages = opts.messages;
     this.dependencies = opts.dependencies;
   }
 
-  get model(): string | undefined {
-    return this.definition.model;
-  }
-
-  get outputJSONSchema(): PromptJsonSchema | undefined {
-    return this.definition.outputSchema?.toJSONSchema();
-  }
-
-  get spanInfo() {
-    return {
-      metadata: {
-        prompt: this.dependencies,
-      },
-    };
-  }
-
-  parseOutput(value: unknown): TOutput {
-    if (!this.definition.outputSchema) {
-      return value as TOutput;
-    }
-    return this.definition.outputSchema.parse(value, "output");
-  }
-
-  asText(): string {
+  [Symbol.iterator](): Iterator<PromptMessage> {
     return this.messages
-      .map((message) => `${message.role}: ${message.content}`)
-      .join("\n");
+      .map((message) =>
+        attachDependenciesToMessage(message, this.dependencies.prompts),
+      )
+      [Symbol.iterator]();
   }
 
-  to<TResult>(adapter: PromptAdapter<TResult>): TResult {
-    return adapter(this);
+  to<TResult extends PromptAdapterResult>(
+    adapter: PromptAdapter<TResult>,
+  ): Extendable<TResult> {
+    return makeExtendableAdapterResult(
+      adapter({
+        kind: "messages",
+        model: this.definition.model,
+        inputSchema: this.definition.inputSchema,
+        outputSchema: this.definition.outputSchema,
+        input: this.input,
+        messages: this.messages,
+        dependencies: this.dependencies,
+      }),
+    );
   }
 }
 
-export type OpenAIChatPromptArgs = {
-  model?: string;
-  messages: PromptMessage[];
-  response_format?: {
-    type: "json_schema";
-    json_schema: {
-      name: string;
-      schema: PromptJsonSchema;
-      strict: true;
-    };
+class BuiltStringPrompt<TInput, TOutput> {
+  readonly [builtPromptMarker] = true;
+  readonly kind = "string";
+  readonly definition: {
+    model?: string;
+    inputSchema: PromptSchema<TInput, unknown, unknown, "input">;
+    outputSchema?: PromptSchema<TOutput, unknown, unknown, "output">;
   };
-  span_info: {
-    metadata: {
-      prompt: PromptDependencies;
-    };
-  };
-};
+  readonly input: TInput;
+  readonly content: string;
+  readonly dependencies: PromptDependencies;
 
-export type AISDKGenerateObjectPromptArgs = {
-  model?: string;
-  messages: PromptMessage[];
-  schema?: PromptJsonSchema;
-  experimental_telemetry: {
-    metadata: {
-      braintrustPrompt: PromptDependencies;
-    };
-  };
-};
+  constructor(opts: BuiltStringPromptOptions<TInput, TOutput>) {
+    this.definition = opts.definition;
+    this.input = opts.input;
+    this.content = opts.content;
+    this.dependencies = opts.dependencies;
+  }
 
-function openAIChatAdapter(
-  builtPrompt: BuiltPrompt<unknown, unknown>,
-): OpenAIChatPromptArgs {
-  const outputSchema = builtPrompt.outputJSONSchema;
-  return {
-    model: builtPrompt.model,
-    messages: builtPrompt.messages,
-    ...(outputSchema
-      ? {
-          response_format: {
-            type: "json_schema" as const,
-            json_schema: {
-              name: schemaName(builtPrompt.dependencies.root.slug),
-              schema: outputSchema,
-              strict: true as const,
-            },
-          },
-        }
-      : {}),
-    span_info: builtPrompt.spanInfo,
-  };
+  to<TResult extends PromptAdapterResult>(
+    adapter: PromptAdapter<TResult>,
+  ): Extendable<TResult> {
+    return makeExtendableAdapterResult(
+      adapter({
+        kind: "string",
+        model: this.definition.model,
+        inputSchema: this.definition.inputSchema,
+        outputSchema: this.definition.outputSchema,
+        input: this.input,
+        content: this.content,
+        messages: [{ role: "user", content: this.content }],
+        dependencies: this.dependencies,
+      }),
+    );
+  }
 }
 
-function aiSDKGenerateObjectAdapter(
-  builtPrompt: BuiltPrompt<unknown, unknown>,
-): AISDKGenerateObjectPromptArgs {
-  return {
-    model: builtPrompt.model,
-    messages: builtPrompt.messages,
-    schema: builtPrompt.outputJSONSchema,
-    experimental_telemetry: {
-      metadata: {
-        braintrustPrompt: builtPrompt.dependencies,
-      },
+function makeExtendableAdapterResult<TResult extends PromptAdapterResult>(
+  result: TResult,
+): Extendable<TResult> {
+  if (!isMergeableObject(result)) {
+    throw new Error("prompt adapters must return an object");
+  }
+
+  const extendable = result as Extendable<TResult>;
+  Object.defineProperty(extendable, "extend", {
+    value: <TExtension extends PromptExtension>(extension: TExtension) => {
+      if (!isMergeableObject(extension)) {
+        throw new Error("extend must receive an object");
+      }
+      return makeExtendableAdapterResult(
+        deepMergeObjects(extendable, extension) as DeepMerge<
+          TResult,
+          TExtension
+        >,
+      );
     },
-  };
+    enumerable: false,
+    configurable: true,
+  });
+  return extendable;
 }
+
+function deepMergeObjects(
+  base: PromptExtension,
+  extension: PromptExtension,
+): PromptExtension {
+  const merged: PromptExtension = { ...base };
+  for (const [key, value] of Object.entries(extension)) {
+    const baseValue = merged[key];
+    merged[key] =
+      isMergeableObject(baseValue) && isMergeableObject(value)
+        ? deepMergeObjects(baseValue, value)
+        : value;
+  }
+  return merged;
+}
+
+function isMergeableObject(value: unknown): value is PromptExtension {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+type AnyBuiltPrompt =
+  | BuiltMessagesPrompt<unknown, unknown>
+  | BuiltStringPrompt<unknown, unknown>;
 
 function definePrompt<
-  TInputSchema extends PromptSchema<unknown>,
-  TOutputSchema extends PromptSchema<unknown> | undefined = undefined,
+  TInputSchema extends InputSchema,
+  TOutputSchema extends OutputSchema | undefined = undefined,
+  TRenderResult extends PromptRenderResult = PromptRenderResult,
 >(
-  opts: PromptDefinitionOptions<TInputSchema, TOutputSchema>,
-): PromptDefinition<TInputSchema, TOutputSchema> {
+  opts: PromptDefinitionOptions<TInputSchema, TOutputSchema, TRenderResult>,
+): PromptDefinition<TInputSchema, TOutputSchema, TRenderResult> {
   return new PromptDefinition(opts);
 }
 
@@ -427,71 +689,140 @@ function messageTag(role: PromptRole) {
   return (
     strings: TemplateStringsArray,
     ...values: readonly unknown[]
-  ): PromptMessage => ({
-    role,
-    content: renderTaggedTemplate(strings, values),
-  });
+  ): PromptMessage => {
+    const rendered = renderTaggedTemplate(strings, values);
+    return attachDependenciesToMessage(
+      { role, content: rendered.content },
+      rendered.dependencies,
+    );
+  };
+}
+
+function textTag(
+  strings: TemplateStringsArray,
+  ...values: readonly unknown[]
+): PromptText {
+  const rendered = renderTaggedTemplate(strings, values);
+  return {
+    [promptTextMarker]: true,
+    content: rendered.content,
+    dependencies: rendered.dependencies,
+  };
 }
 
 function renderTaggedTemplate(
   strings: TemplateStringsArray,
   values: readonly unknown[],
-): string {
-  let rendered = strings[0] ?? "";
+): { content: string; dependencies: PromptDependencyEntry[] } {
+  let content = strings[0] ?? "";
+  const dependencies: PromptDependencyEntry[] = [];
   for (let i = 0; i < values.length; i++) {
-    rendered += stringifyTemplateValue(values[i]) + (strings[i + 1] ?? "");
+    const rendered = stringifyTemplateValue(values[i]);
+    content += rendered.content + (strings[i + 1] ?? "");
+    dependencies.push(...rendered.dependencies);
   }
-  return rendered;
+  return { content, dependencies };
 }
 
-function stringifyTemplateValue(value: unknown): string {
+function stringifyTemplateValue(value: unknown): {
+  content: string;
+  dependencies: PromptDependencyEntry[];
+} {
   if (value === undefined || value === null) {
-    return "";
+    return { content: "", dependencies: [] };
   }
-  if (isBuiltPrompt(value)) {
-    return value.asText();
+  if (isBuiltStringPrompt(value)) {
+    return { content: value.content, dependencies: value.dependencies.prompts };
+  }
+  if (isBuiltMessagesPrompt(value)) {
+    throw new Error("message prompts cannot be interpolated as text");
+  }
+  if (isPromptText(value)) {
+    return { content: value.content, dependencies: value.dependencies };
   }
   if (isPromptDefinition(value)) {
-    return `[prompt:${value.slug}${value.version ? `@${value.version}` : ""}]`;
+    return {
+      content: `[prompt:${value.slug}${value.version ? `@${value.version}` : ""}]`,
+      dependencies: [],
+    };
   }
   if (
     typeof value === "string" ||
     typeof value === "number" ||
     typeof value === "boolean"
   ) {
-    return String(value);
+    return { content: String(value), dependencies: [] };
   }
-  return JSON.stringify(value);
+  return { content: JSON.stringify(value), dependencies: [] };
 }
 
-function flattenRenderable(
-  renderable: PromptRenderable | readonly PromptRenderable[],
-  parent: string,
-): { messages: PromptMessage[]; dependencies: PromptDependencyEntry[] } {
-  const messages: PromptMessage[] = [];
-  const dependencies: PromptDependencyEntry[] = [];
-  const stack = Array.isArray(renderable) ? renderable : [renderable];
-
-  for (const item of stack) {
-    if (Array.isArray(item)) {
-      const flattened = flattenRenderable(item, parent);
-      messages.push(...flattened.messages);
-      dependencies.push(...flattened.dependencies);
-    } else if (isBuiltPrompt(item)) {
-      messages.push(...item.messages);
-      dependencies.push(
-        ...item.dependencies.prompts.map((entry) => ({
-          ...entry,
-          role: "include" as const,
-          parent,
-        })),
-      );
-    } else {
-      messages.push(item);
-    }
+function attachDependenciesToMessage(
+  message: PromptMessage,
+  dependencies: PromptDependencyEntry[],
+): PromptMessage {
+  if (dependencies.length === 0) {
+    return message;
   }
+  const messageWithDependencies: PromptMessageWithDependencies = { ...message };
+  Object.defineProperty(messageWithDependencies, promptDependencyMarker, {
+    value: dependencies,
+    enumerable: false,
+  });
+  return messageWithDependencies;
+}
 
-  return { messages, dependencies };
+function assertPromptMessage(value: unknown, path: string): PromptMessage {
+  if (
+    !isRecord(value) ||
+    (value.role !== "system" &&
+      value.role !== "user" &&
+      value.role !== "assistant") ||
+    typeof value.content !== "string"
+  ) {
+    throw new Error(`${path} must be a prompt message`);
+  }
+  return value as PromptMessage;
+}
+
+function createPromptDependencies(
+  root: PromptDependencies["root"],
+  input: unknown,
+  entries: PromptDependencyEntry[],
+): PromptDependencies {
+  return {
+    root,
+    prompts: [
+      {
+        ...root,
+        role: "root",
+        input: sanitizeDependencyInput(input),
+      },
+      ...dedupeDependencyEntries(entries),
+    ],
+  };
+}
+
+function collectDependencyEntries(
+  entries: readonly PromptDependencyEntry[],
+  parent: string,
+): PromptDependencyEntry[] {
+  return entries.map((entry) => ({
+    ...entry,
+    role: "include" as const,
+    parent,
+  }));
+}
+
+function collectMessageDependencies(
+  messages: readonly PromptMessage[],
+  parent: string,
+): PromptDependencyEntry[] {
+  return messages.flatMap((message) =>
+    collectDependencyEntries(
+      (message as PromptMessageWithDependencies)[promptDependencyMarker] ?? [],
+      parent,
+    ),
+  );
 }
 
 function collectBuiltPromptDependencies(
@@ -499,11 +830,7 @@ function collectBuiltPromptDependencies(
   parent: string,
 ): PromptDependencyEntry[] {
   if (isBuiltPrompt(value)) {
-    return value.dependencies.prompts.map((entry) => ({
-      ...entry,
-      role: "include" as const,
-      parent,
-    }));
+    return collectDependencyEntries(value.dependencies.prompts, parent);
   }
   if (Array.isArray(value)) {
     return value.flatMap((item) =>
@@ -535,7 +862,10 @@ function dedupeDependencyEntries(
 function sanitizeDependencyInput(value: unknown): unknown {
   if (isBuiltPrompt(value)) {
     return {
-      type: "built_prompt",
+      type:
+        value.kind === "messages"
+          ? "built_messages_prompt"
+          : "built_string_prompt",
       root: value.dependencies.root,
     };
   }
@@ -560,15 +890,22 @@ function sanitizeDependencyInput(value: unknown): unknown {
   return value;
 }
 
-function schemaName(slug: string): string {
-  const name = slug.replace(/[^a-zA-Z0-9_-]/g, "_");
-  return name.length > 0 ? `${name}_output` : "prompt_output";
-}
-
-function isBuiltPrompt(value: unknown): value is BuiltPrompt<unknown, unknown> {
+function isBuiltPrompt(value: unknown): value is AnyBuiltPrompt {
   return (
     typeof value === "object" && value !== null && builtPromptMarker in value
   );
+}
+
+function isBuiltMessagesPrompt(
+  value: unknown,
+): value is BuiltMessagesPrompt<unknown, unknown> {
+  return isBuiltPrompt(value) && value.kind === "messages";
+}
+
+function isBuiltStringPrompt(
+  value: unknown,
+): value is BuiltStringPrompt<unknown, unknown> {
+  return isBuiltPrompt(value) && value.kind === "string";
 }
 
 function isPromptDefinition(value: unknown): value is AnyPromptDefinition {
@@ -576,6 +913,12 @@ function isPromptDefinition(value: unknown): value is AnyPromptDefinition {
     typeof value === "object" &&
     value !== null &&
     promptDefinitionMarker in value
+  );
+}
+
+function isPromptText(value: unknown): value is PromptText {
+  return (
+    typeof value === "object" && value !== null && promptTextMarker in value
   );
 }
 
@@ -597,12 +940,17 @@ function mergePromptInputs(parent: unknown, overrides: unknown): unknown {
 function buildAnyPrompt(
   definition: AnyPromptDefinition,
   input: unknown,
-): BuiltPrompt<unknown, unknown> {
-  return definition.build(input as never) as BuiltPrompt<unknown, unknown>;
+): AnyBuiltPrompt {
+  return definition.build(input as never) as AnyBuiltPrompt;
 }
 
-function stringSchema(): PromptSchema<string> {
-  return new PromptSchema(
+function stringSchema<TDomain extends SchemaDomain = "input">(): PromptSchema<
+  string,
+  string,
+  unknown,
+  TDomain
+> {
+  return new PromptSchema<string, string, unknown, TDomain>(
     (value, path) => {
       if (typeof value !== "string") {
         throw new Error(`${path} must be a string`);
@@ -613,8 +961,13 @@ function stringSchema(): PromptSchema<string> {
   );
 }
 
-function numberSchema(): PromptSchema<number> {
-  return new PromptSchema(
+function numberSchema<TDomain extends SchemaDomain = "input">(): PromptSchema<
+  number,
+  number,
+  unknown,
+  TDomain
+> {
+  return new PromptSchema<number, number, unknown, TDomain>(
     (value, path) => {
       if (typeof value !== "number") {
         throw new Error(`${path} must be a number`);
@@ -625,8 +978,13 @@ function numberSchema(): PromptSchema<number> {
   );
 }
 
-function booleanSchema(): PromptSchema<boolean> {
-  return new PromptSchema(
+function booleanSchema<TDomain extends SchemaDomain = "input">(): PromptSchema<
+  boolean,
+  boolean,
+  unknown,
+  TDomain
+> {
+  return new PromptSchema<boolean, boolean, unknown, TDomain>(
     (value, path) => {
       if (typeof value !== "boolean") {
         throw new Error(`${path} must be a boolean`);
@@ -637,10 +995,13 @@ function booleanSchema(): PromptSchema<boolean> {
   );
 }
 
-function enumSchema<const TValues extends readonly [string, ...string[]]>(
+function enumSchema<
+  const TValues extends readonly [string, ...string[]],
+  TDomain extends SchemaDomain = "input",
+>(
   values: TValues,
-): PromptSchema<TValues[number]> {
-  return new PromptSchema(
+): PromptSchema<TValues[number], TValues[number], unknown, TDomain> {
+  return new PromptSchema<TValues[number], TValues[number], unknown, TDomain>(
     (value, path) => {
       if (typeof value !== "string" || !values.includes(value)) {
         throw new Error(`${path} must be one of ${values.join(", ")}`);
@@ -651,10 +1012,23 @@ function enumSchema<const TValues extends readonly [string, ...string[]]>(
   );
 }
 
-function arraySchema<TItemSchema extends PromptSchema<unknown>>(
+function createArraySchema<
+  TItemSchema extends AnySchema,
+  TDomain extends SchemaDomain,
+>(
   item: TItemSchema,
-): PromptSchema<InferSchema<TItemSchema>[], InferInputSchema<TItemSchema>[]> {
-  return new PromptSchema(
+): PromptSchema<
+  InferSchema<TItemSchema>[],
+  InferInputSchema<TItemSchema>[],
+  unknown,
+  TDomain
+> {
+  return new PromptSchema<
+    InferSchema<TItemSchema>[],
+    InferInputSchema<TItemSchema>[],
+    unknown,
+    TDomain
+  >(
     (value, path, root) => {
       if (!Array.isArray(value)) {
         throw new Error(`${path} must be an array`);
@@ -667,10 +1041,45 @@ function arraySchema<TItemSchema extends PromptSchema<unknown>>(
   );
 }
 
-function objectSchema<TShape extends SchemaShape>(
+function arraySchema<TItemSchema extends InputSchema>(
+  item: TItemSchema,
+): PromptSchema<
+  InferSchema<TItemSchema>[],
+  InferInputSchema<TItemSchema>[],
+  unknown,
+  "input"
+> {
+  return createArraySchema<TItemSchema, "input">(item);
+}
+
+function outputArraySchema<TItemSchema extends OutputSchema>(
+  item: TItemSchema,
+): PromptSchema<
+  InferSchema<TItemSchema>[],
+  InferInputSchema<TItemSchema>[],
+  unknown,
+  "output"
+> {
+  return createArraySchema<TItemSchema, "output">(item);
+}
+
+function createObjectSchema<
+  TShape extends SchemaShape,
+  TDomain extends SchemaDomain,
+>(
   shape: TShape,
-): PromptSchema<InferParsedObject<TShape>, InferInputObject<TShape>> {
-  return new PromptSchema(
+): PromptSchema<
+  InferParsedObject<TShape>,
+  InferInputObject<TShape>,
+  unknown,
+  TDomain
+> {
+  return new PromptSchema<
+    InferParsedObject<TShape>,
+    InferInputObject<TShape>,
+    unknown,
+    TDomain
+  >(
     (value, path, root) => {
       if (typeof value !== "object" || value === null || Array.isArray(value)) {
         throw new Error(`${path} must be an object`);
@@ -702,90 +1111,166 @@ function objectSchema<TShape extends SchemaShape>(
   );
 }
 
-function unknownSchema(): PromptSchema<unknown> {
-  return new PromptSchema(
+function objectSchema<TShape extends InputSchemaShape>(
+  shape: TShape,
+): PromptSchema<
+  InferParsedObject<TShape>,
+  InferInputObject<TShape>,
+  unknown,
+  "input"
+> {
+  return createObjectSchema<TShape, "input">(shape);
+}
+
+function outputObjectSchema<TShape extends OutputSchemaShape>(
+  shape: TShape,
+): PromptSchema<
+  InferParsedObject<TShape>,
+  InferInputObject<TShape>,
+  unknown,
+  "output"
+> {
+  return createObjectSchema<TShape, "output">(shape);
+}
+
+function unknownSchema<TDomain extends SchemaDomain = "input">(): PromptSchema<
+  unknown,
+  unknown,
+  unknown,
+  TDomain
+> {
+  return new PromptSchema<unknown, unknown, unknown, TDomain>(
     (value) => value,
     () => ({}),
   );
 }
 
-function builtPromptSchema<TInput = unknown, TOutput = unknown>(): PromptSchema<
-  BuiltPrompt<TInput, TOutput>
+function builtMessagesPromptSchema(): PromptSchema<
+  BuiltMessagesPrompt<unknown, unknown>,
+  BuiltMessagesPrompt<unknown, unknown>,
+  unknown,
+  "input"
 > {
+  return builtPromptSchema("messages");
+}
+
+function builtStringPromptSchema(): PromptSchema<
+  BuiltStringPrompt<unknown, unknown>,
+  BuiltStringPrompt<unknown, unknown>,
+  unknown,
+  "input"
+> {
+  return builtPromptSchema("string");
+}
+
+function messagesPromptDefinitionSchema<
+  TDefinition extends AnyMessagesPromptDefinition,
+>(
+  definition: TDefinition,
+): PromptSchema<
+  BuiltMessagesPrompt<ParsedInputOf<TDefinition>, OutputOf<TDefinition>>,
+  PromptInputValue<TDefinition, "messages">,
+  PromptFieldKind<TDefinition, "messages">,
+  "input"
+> {
+  return promptDefinitionSchema("messages", definition);
+}
+
+function stringPromptDefinitionSchema<
+  TDefinition extends AnyStringPromptDefinition,
+>(
+  definition: TDefinition,
+): PromptSchema<
+  BuiltStringPrompt<ParsedInputOf<TDefinition>, OutputOf<TDefinition>>,
+  PromptInputValue<TDefinition, "string">,
+  PromptFieldKind<TDefinition, "string">,
+  "input"
+> {
+  return promptDefinitionSchema("string", definition);
+}
+
+function builtPromptSchema<TKind extends PromptKind>(
+  kind: TKind,
+): PromptSchema<
+  BuiltPromptForKind<unknown, unknown, TKind>,
+  BuiltPromptForKind<unknown, unknown, TKind>,
+  unknown,
+  "input"
+> {
+  const label = kind === "messages" ? "messages" : "string";
   return new PromptSchema(
     (value, path) => {
-      if (!isBuiltPrompt(value)) {
-        throw new Error(`${path} must be a built prompt`);
+      if (isBuiltPrompt(value)) {
+        if (value.kind !== kind) {
+          throw new Error(`${path} must be a built ${label} prompt`);
+        }
+        return value as BuiltPromptForKind<unknown, unknown, TKind>;
       }
-      return value as BuiltPrompt<TInput, TOutput>;
+
+      throw new Error(`${path} must be a built ${label} prompt`);
     },
-    () => ({ type: "object", "x-bt-type": "built_prompt" }),
+    () => ({
+      type: "object",
+      "x-bt-type":
+        kind === "messages" ? "built_messages_prompt" : "built_string_prompt",
+    }),
   );
 }
 
 function promptDefinitionSchema<
-  TDefinition extends AnyPromptDefinition = AnyPromptDefinition,
->(): PromptSchema<TDefinition> {
-  return new PromptSchema(
-    (value, path) => {
-      if (!isPromptDefinition(value)) {
-        throw new Error(`${path} must be a prompt definition`);
-      }
-      return value as TDefinition;
-    },
-    () => ({ type: "object", "x-bt-type": "prompt_definition" }),
-  );
-}
-
-function promptSchema<TDefinition extends AnyPromptDefinition>(
+  TDefinition extends AnyPromptDefinition,
+  TKind extends PromptKind,
+>(
+  kind: TKind,
   definition: TDefinition,
 ): PromptSchema<
-  BuiltPrompt<ParsedInputOf<TDefinition>, OutputOf<TDefinition>>,
-  PromptInputValue<TDefinition>
->;
-function promptSchema(): PromptSchema<
-  BuiltPrompt<unknown, unknown>,
-  DynamicPromptInputValue
->;
-function promptSchema(
-  definition?: AnyPromptDefinition,
-): PromptSchema<BuiltPrompt<unknown, unknown>, unknown> {
+  BuiltPromptForKind<ParsedInputOf<TDefinition>, OutputOf<TDefinition>, TKind>,
+  PromptInputValue<TDefinition, TKind>,
+  PromptFieldKind<TDefinition, TKind>,
+  "input"
+> {
+  const label = kind === "messages" ? "messages" : "string";
   return new PromptSchema(
     (value, path, root) => {
       if (isBuiltPrompt(value)) {
-        return value;
-      }
-
-      let promptDefinition = definition;
-      let promptInput = value;
-      if (!promptDefinition) {
-        if (isPromptDefinition(value)) {
-          promptDefinition = value;
-          promptInput = undefined;
-        } else if (isRecord(value) && isPromptDefinition(value.prompt)) {
-          promptDefinition = value.prompt;
-          promptInput = value.input;
-        } else {
-          throw new Error(`${path} must be a prompt or built prompt`);
+        if (value.kind !== kind) {
+          throw new Error(`${path} must be a built ${label} prompt`);
         }
-      } else if (isPromptDefinition(value)) {
-        promptDefinition = value;
-        promptInput = undefined;
-      } else if (isRecord(value) && isPromptDefinition(value.prompt)) {
-        promptDefinition = value.prompt;
-        promptInput = value.input;
+        return value as BuiltPromptForKind<
+          ParsedInputOf<TDefinition>,
+          OutputOf<TDefinition>,
+          TKind
+        >;
       }
 
-      return buildAnyPrompt(
-        promptDefinition,
-        mergePromptInputs(root, promptInput),
-      );
+      if (
+        isPromptDefinition(value) ||
+        (isRecord(value) && isPromptDefinition(value.prompt))
+      ) {
+        throw new Error(
+          `${path} must be a built ${label} prompt or prompt input`,
+        );
+      }
+
+      const built = buildAnyPrompt(definition, mergePromptInputs(root, value));
+      if (built.kind !== kind) {
+        throw new Error(`${path} must be a built ${label} prompt`);
+      }
+      return built as BuiltPromptForKind<
+        ParsedInputOf<TDefinition>,
+        OutputOf<TDefinition>,
+        TKind
+      >;
     },
-    () => ({ type: "object", "x-bt-type": "prompt" }),
+    () => ({
+      type: "object",
+      "x-bt-type":
+        kind === "messages" ? "built_messages_prompt" : "built_string_prompt",
+    }),
   );
 }
 
-export const s = {
+const inputSchemaHelpers = {
   string: stringSchema,
   number: numberSchema,
   boolean: booleanSchema,
@@ -793,12 +1278,22 @@ export const s = {
   array: arraySchema,
   object: objectSchema,
   unknown: unknownSchema,
-  // Requires an already-built prompt value; useful when the caller owns construction.
-  builtPrompt: builtPromptSchema,
-  // Accepts a built prompt, or builds a prompt definition by merging parent input plus overrides.
-  prompt: promptSchema,
-  // Accepts an unbuilt prompt definition as data; render code decides whether/when to build it.
-  promptDefinition: promptDefinitionSchema,
+  builtMessagesPrompt: builtMessagesPromptSchema,
+  builtStringPrompt: builtStringPromptSchema,
+  messagesPromptDefinition: messagesPromptDefinitionSchema,
+  stringPromptDefinition: stringPromptDefinitionSchema,
+};
+
+const outputSchemaHelpers = {
+  string: () => stringSchema<"output">(),
+  number: () => numberSchema<"output">(),
+  boolean: () => booleanSchema<"output">(),
+  enum: <const TValues extends readonly [string, ...string[]]>(
+    values: TValues,
+  ) => enumSchema<TValues, "output">(values),
+  array: outputArraySchema,
+  object: outputObjectSchema,
+  unknown: () => unknownSchema<"output">(),
 };
 
 export const prompt = {
@@ -806,11 +1301,8 @@ export const prompt = {
   system: messageTag("system"),
   user: messageTag("user"),
   assistant: messageTag("assistant"),
-  asText: (builtPrompt: BuiltPrompt<unknown, unknown>) => builtPrompt.asText(),
+  text: textTag,
   isBuiltPrompt,
   isPromptDefinition,
-  adapters: {
-    openAIChat: openAIChatAdapter,
-    aiSDKGenerateObject: aiSDKGenerateObjectAdapter,
-  },
+  adapters,
 };
