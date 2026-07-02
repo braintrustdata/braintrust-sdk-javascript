@@ -5,7 +5,7 @@
  *
  * Every entry in this file represents a target SDK that doesn't expose a
  * stable extension point we can hook through diagnostics_channel + the
- * `@apm-js-collab/code-transformer` matcher. New integrations should
+ * internal Orchestrion matcher. New integrations should
  * **prefer the standard channel-handler / `BasePlugin` pattern** used by
  * every other integration in `js/src/instrumentation/plugins/*-plugin.ts`.
  * Only add an entry here when the target SDK gives us no other option (e.g.

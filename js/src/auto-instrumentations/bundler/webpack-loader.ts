@@ -21,11 +21,7 @@
  * ```
  */
 
-import {
-  create,
-  type InstrumentationMatcher,
-  type ModuleType,
-} from "@apm-js-collab/code-transformer";
+import { create } from "../orchestrion-js";
 import { extname, join, sep } from "path";
 import { readFileSync } from "fs";
 import moduleDetailsFromPath from "module-details-from-path";
@@ -49,15 +45,16 @@ function getModuleVersion(basedir: string): string | undefined {
   return undefined;
 }
 
-// Matcher cache keyed by config hash for cache invalidation
-const matcherCache = new Map<string, InstrumentationMatcher>();
+type Matcher = ReturnType<typeof create>;
+type ModuleType = "esm" | "cjs";
+
+// Matcher cache keyed by config hash for cache invalidation.
+const matcherCache = new Map<string, Matcher>();
 
 /**
  * Get or create a matcher instance, caching by config hash
  */
-function getMatcher(
-  options: LegacyBundlerPluginOptions,
-): InstrumentationMatcher {
+function getMatcher(options: LegacyBundlerPluginOptions): Matcher {
   const allInstrumentations = getDefaultInstrumentationConfigs({
     additionalInstrumentations: options.instrumentations,
   });
@@ -68,10 +65,8 @@ function getMatcher(
     return matcherCache.get(configHash)!;
   }
 
-  // Free old matchers to prevent memory leaks
-  for (const [hash, matcher] of matcherCache.entries()) {
+  for (const hash of matcherCache.keys()) {
     if (hash !== configHash) {
-      matcher.free();
       matcherCache.delete(hash);
     }
   }
@@ -83,9 +78,6 @@ function getMatcher(
 
 // Cleanup on process exit
 process.on("exit", () => {
-  for (const matcher of matcherCache.values()) {
-    matcher.free();
-  }
   matcherCache.clear();
 });
 
@@ -158,8 +150,6 @@ function codeTransformerLoader(
       error,
     );
     callback(null, code, inputSourceMap);
-  } finally {
-    transformer.free();
   }
 }
 

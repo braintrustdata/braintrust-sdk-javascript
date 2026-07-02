@@ -1,4 +1,4 @@
-import type { InstrumentationConfig } from "@apm-js-collab/code-transformer";
+import type { InstrumentationConfig } from "../orchestrion-js";
 import { piCodingAgentChannels } from "../../instrumentation/plugins/pi-coding-agent-channels";
 
 const piCodingAgentVersionRange = ">=0.79.0 <0.80.0";

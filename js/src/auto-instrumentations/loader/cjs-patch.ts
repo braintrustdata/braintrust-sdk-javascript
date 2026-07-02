@@ -3,10 +3,7 @@
  * Patches Module.prototype._compile to transform CommonJS modules at load time.
  */
 
-import {
-  create,
-  type InstrumentationConfig,
-} from "@apm-js-collab/code-transformer";
+import { create, type InstrumentationConfig } from "../orchestrion-js";
 import * as NodeModule from "node:module";
 import { sep } from "node:path";
 import moduleDetailsFromPath from "module-details-from-path";
@@ -81,8 +78,6 @@ export class ModulePatch {
             args[0] = transformedCode?.code;
           } catch (error) {
             console.warn(`Error transforming module ${filename}:`, error);
-          } finally {
-            transformer.free();
           }
         }
       }
