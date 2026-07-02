@@ -24,6 +24,7 @@ export class SpanFetcher extends ObjectFetcher<SpanRecord> {
     private readonly _state: BraintrustState,
     private readonly spanTypeFilter?: string[],
     includeScorers = false,
+    brainstoreRealtime = true,
   ) {
     // Build the filter expression for root_span_id and optionally span_attributes.type
     const filterExpr = SpanFetcher.buildFilter(
@@ -32,9 +33,15 @@ export class SpanFetcher extends ObjectFetcher<SpanRecord> {
       includeScorers,
     );
 
-    super(objectType, undefined, undefined, {
-      filter: filterExpr,
-    });
+    super(
+      objectType,
+      undefined,
+      undefined,
+      {
+        filter: filterExpr,
+      },
+      brainstoreRealtime,
+    );
   }
 
   private static buildFilter(
@@ -138,6 +145,7 @@ export class CachedSpanFetcher {
     objectId: string,
     rootSpanId: string,
     getState: () => Promise<BraintrustState>,
+    brainstoreRealtime?: boolean,
   );
   constructor(fetchFn: SpanFetchFn);
   constructor(
@@ -149,6 +157,7 @@ export class CachedSpanFetcher {
     objectId?: string,
     rootSpanId?: string,
     getState?: () => Promise<BraintrustState>,
+    brainstoreRealtime = true,
   ) {
     if (typeof objectTypeOrFetchFn === "function") {
       // Direct fetch function injection (for testing)
@@ -165,6 +174,7 @@ export class CachedSpanFetcher {
           state,
           spanType,
           includeScorers,
+          brainstoreRealtime,
         );
         const rows: WithTransactionId<SpanRecord>[] =
           await fetcher.fetchedData();
