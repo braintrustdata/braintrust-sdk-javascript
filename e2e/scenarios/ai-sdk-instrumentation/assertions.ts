@@ -1285,6 +1285,10 @@ export function defineAISDKInstrumentationAssertions(options: {
         expect(collectToolResultNames(trace.parent?.output)).toContain(
           "get_weather",
         );
+        expect(trace.parent?.span.ended).toBe(true);
+        expect(trace.modelChildren.every((child) => child.span.ended)).toBe(
+          true,
+        );
       });
     }
 
@@ -1332,7 +1336,10 @@ function findWorkflowAgentTrace(events: CapturedLogEvent[]) {
     operation?.span.id,
   );
   const parent = latestEvent(workflowSpans);
-  const modelChildren = findModelChildren(events, parent?.span.id);
+  const modelChildren = [
+    ...findChildSpans(events, "doGenerate", parent?.span.id),
+    ...findChildSpans(events, "doStream", parent?.span.id),
+  ];
   const toolSpans = findChildSpans(events, "get_weather", parent?.span.id);
 
   return {

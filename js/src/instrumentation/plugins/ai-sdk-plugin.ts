@@ -1506,6 +1506,7 @@ type AISDKModelPatchEntry = {
   baseMetadata: Record<string, unknown>;
   childTracingOptions: AISDKChildTracingOptions;
   denyOutputPaths: string[];
+  openSpans: Set<Span>;
   parentSpan: Span;
 };
 
@@ -1615,6 +1616,13 @@ function shadowActiveAISDKChildPatchEntry<
   }
 }
 
+function closeOpenAISDKModelPatchSpans(entry: AISDKModelPatchEntry): void {
+  for (const span of entry.openSpans) {
+    span.end();
+  }
+  entry.openSpans.clear();
+}
+
 function prepareAISDKChildTracing(
   params: AISDKCallParams,
   self: unknown,
@@ -1655,9 +1663,11 @@ function prepareAISDKChildTracing(
       baseMetadata: buildAISDKChildMetadata(resolvedModel),
       childTracingOptions,
       denyOutputPaths,
+      openSpans: new Set(),
       parentSpan,
     };
     const cleanupModelEntry = (state: AISDKModelPatchState) => {
+      closeOpenAISDKModelPatchSpans(entry);
       const index = state.entries.indexOf(entry);
       if (index >= 0) {
         state.entries.splice(index, 1);
@@ -1715,21 +1725,27 @@ function prepareAISDKChildTracing(
         return Reflect.apply(originalDoGenerate, resolvedModel, [callOptions]);
       }
 
+      closeOpenAISDKModelPatchSpans(activeEntry);
       return activeEntry.parentSpan.traced(
         async (span) => {
-          const result = await Reflect.apply(
-            originalDoGenerate,
-            resolvedModel,
-            [callOptions],
-          );
+          activeEntry.openSpans.add(span);
+          try {
+            const result = await Reflect.apply(
+              originalDoGenerate,
+              resolvedModel,
+              [callOptions],
+            );
 
-          span.log({
-            output: processAISDKOutput(result, activeEntry.denyOutputPaths),
-            metrics: extractTokenMetrics(result),
-            ...buildResolvedMetadataPayload(result),
-          });
+            span.log({
+              output: processAISDKOutput(result, activeEntry.denyOutputPaths),
+              metrics: extractTokenMetrics(result),
+              ...buildResolvedMetadataPayload(result),
+            });
 
-          return result;
+            return result;
+          } finally {
+            activeEntry.openSpans.delete(span);
+          }
         },
         {
           name: "doGenerate",
@@ -1756,6 +1772,7 @@ function prepareAISDKChildTracing(
           return Reflect.apply(originalDoStream, resolvedModel, [callOptions]);
         }
 
+        closeOpenAISDKModelPatchSpans(activeEntry);
         const span = activeEntry.parentSpan.startSpan({
           name: "doStream",
           spanAttributes: {
@@ -1769,6 +1786,7 @@ function prepareAISDKChildTracing(
             },
           ),
         });
+        activeEntry.openSpans.add(span);
 
         const streamStartTime = getCurrentUnixTimestamp();
         const result = await withCurrent(span, () =>
@@ -1858,6 +1876,7 @@ function prepareAISDKChildTracing(
                   metrics,
                   ...buildResolvedMetadataPayload(output as AISDKResult),
                 });
+                activeEntry.openSpans.delete(span);
                 span.end();
                 break;
             }
