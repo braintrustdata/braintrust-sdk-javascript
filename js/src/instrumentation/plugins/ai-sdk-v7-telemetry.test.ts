@@ -599,6 +599,102 @@ describe("braintrustAISDKTelemetry", () => {
     });
   });
 
+  it("keeps concurrent direct WorkflowAgent telemetry separated without dispatcher keys", async () => {
+    const telemetry = braintrustAISDKTelemetry();
+    const callId = "workflow-agent";
+    const sleep = (ms: number) =>
+      new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+    const runWorkflow = async (label: "First" | "Second", delayMs: number) => {
+      telemetry.onStart?.({
+        callId,
+        messages: [{ role: "user", content: `${label} workflow run` }],
+        operationId: "ai.workflowAgent.stream",
+      });
+
+      await sleep(delayMs);
+
+      telemetry.onLanguageModelCallStart?.({
+        callId,
+        prompt: [{ role: "user", content: `${label} workflow run` }],
+      });
+      telemetry.onLanguageModelCallEnd?.({
+        callId,
+        text: `${label} model answer`,
+      });
+      telemetry.onToolExecutionStart?.({
+        toolCall: {
+          toolCallId: `tool-${label}`,
+          toolName: "get_weather",
+          input: { location: label },
+        },
+      });
+      telemetry.onToolExecutionEnd?.({
+        output: { condition: label },
+        success: true,
+        toolCall: {
+          toolCallId: `tool-${label}`,
+          toolName: "get_weather",
+        },
+      });
+      telemetry.onEnd?.({
+        callId,
+        messages: [{ role: "assistant", content: `${label} answer` }],
+        operationId: "ai.workflowAgent.stream",
+        text: `${label} answer`,
+      });
+    };
+
+    await Promise.all([runWorkflow("First", 20), runWorkflow("Second", 0)]);
+
+    const spans = (await backgroundLogger.drain()) as Array<
+      Record<string, any>
+    >;
+    const workflowSpans = spans.filter(
+      (span) => span.span_attributes?.name === "WorkflowAgent.stream",
+    );
+    const firstWorkflow = workflowSpans.find((span) =>
+      JSON.stringify(span.input).includes("First workflow run"),
+    );
+    const secondWorkflow = workflowSpans.find((span) =>
+      JSON.stringify(span.input).includes("Second workflow run"),
+    );
+    const firstModel = spans.find(
+      (span) =>
+        span.span_attributes?.name === "doGenerate" &&
+        JSON.stringify(span.input).includes("First workflow run"),
+    );
+    const secondModel = spans.find(
+      (span) =>
+        span.span_attributes?.name === "doGenerate" &&
+        JSON.stringify(span.input).includes("Second workflow run"),
+    );
+    const firstTool = spans.find(
+      (span) =>
+        span.span_attributes?.name === "get_weather" &&
+        span.input?.location === "First",
+    );
+    const secondTool = spans.find(
+      (span) =>
+        span.span_attributes?.name === "get_weather" &&
+        span.input?.location === "Second",
+    );
+
+    expect(workflowSpans).toHaveLength(2);
+    expect(firstWorkflow?.output).toMatchObject({ text: "First answer" });
+    expect(secondWorkflow?.output).toMatchObject({ text: "Second answer" });
+    expect(firstModel?.span_parents).toEqual([firstWorkflow?.span_id]);
+    expect(secondModel?.span_parents).toEqual([secondWorkflow?.span_id]);
+    expect(firstTool).toMatchObject({
+      output: { condition: "First" },
+      span_parents: [firstWorkflow?.span_id],
+    });
+    expect(secondTool).toMatchObject({
+      output: { condition: "Second" },
+      span_parents: [secondWorkflow?.span_id],
+    });
+  });
+
   it("honors recordInputs and recordOutputs", async () => {
     const telemetry = braintrustAISDKTelemetry();
 

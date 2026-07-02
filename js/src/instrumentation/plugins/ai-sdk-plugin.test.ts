@@ -22,7 +22,11 @@ vi.mock("../../wrappers/ai-sdk/telemetry", () => ({
   braintrustAISDKTelemetry: telemetryMocks.braintrustAISDKTelemetry,
 }));
 
-import { AISDKPlugin } from "./ai-sdk-plugin";
+import {
+  AISDKPlugin,
+  DEFAULT_DENY_OUTPUT_PATHS,
+  processAISDKOutput as processAISDKOutputActual,
+} from "./ai-sdk-plugin";
 import { Attachment } from "../../logger";
 import iso from "../../isomorph";
 import { serializeAISDKToolsForLogging } from "../../wrappers/ai-sdk/tool-serialization";
@@ -153,7 +157,7 @@ describe("AISDKPlugin", () => {
       expect(channel?.subscribe).toHaveBeenCalledTimes(1);
 
       channel?.handlers[0]?.end({
-        arguments: [{ telemetry: { recordInputs: true } }],
+        arguments: [{ telemetry: {} }],
         result: dispatcher,
       });
 
@@ -207,6 +211,61 @@ describe("AISDKPlugin", () => {
       expect(telemetryMocks.telemetry.executeTool).toHaveBeenCalledTimes(1);
       expect(existingExecuteTool).toHaveBeenCalledTimes(1);
       expect(originalExecute).toHaveBeenCalledTimes(1);
+    });
+
+    it("passes AI SDK v7 telemetry redaction options to Braintrust callbacks", async () => {
+      const existingOnStart = vi.fn();
+      const dispatcher = {
+        onEnd: vi.fn(),
+        onStart: existingOnStart,
+      };
+
+      plugin.enable();
+
+      const channel = mockChannels.get(
+        "orchestrion:ai:createTelemetryDispatcher",
+      );
+      channel?.handlers[0]?.end({
+        arguments: [
+          {
+            telemetry: {
+              functionId: "redacted-function",
+              recordInputs: false,
+              recordOutputs: false,
+            },
+          },
+        ],
+        result: dispatcher,
+      });
+
+      const startEvent = {
+        callId: "call-redacted",
+        messages: [{ role: "user", content: "hidden input" }],
+        operationId: "ai.generateText",
+      };
+      await dispatcher.onStart(startEvent);
+      await dispatcher.onEnd({
+        callId: "call-redacted",
+        operationId: "ai.generateText",
+        text: "hidden output",
+      });
+
+      expect(existingOnStart).toHaveBeenCalledWith(startEvent);
+      expect(telemetryMocks.telemetry.onStart).toHaveBeenCalledWith(
+        expect.objectContaining({
+          functionId: "redacted-function",
+          recordInputs: false,
+          recordOutputs: false,
+        }),
+      );
+      expect(telemetryMocks.telemetry.onEnd).toHaveBeenCalledWith(
+        expect.objectContaining({
+          functionId: "redacted-function",
+          recordInputs: false,
+          recordOutputs: false,
+        }),
+      );
+      expect(startEvent).not.toHaveProperty("recordInputs");
     });
 
     it("stamps a stable unique operation key on each dispatcher", async () => {
@@ -1118,6 +1177,153 @@ describe("AI SDK utility functions", () => {
       const result = processAISDKOutput(output, ["roundtrips[].request.body"]);
       expect(result.roundtrips[0].request.body).toBe("<omitted>");
       expect(result.roundtrips[0].response.data).toBe("ok");
+    });
+
+    it("preserves user headers fields while omitting configured transport headers", () => {
+      const output = {
+        text: "Hello",
+        object: {
+          headers: { "x-user-data": "keep" },
+        },
+        content: [
+          {
+            type: "text",
+            text: "Hello",
+            headers: { source: "tool-payload" },
+          },
+        ],
+        request: {
+          headers: { authorization: "secret" },
+          body: "secret-request-body",
+          providerPayload: {
+            headers: { authorization: "nested-request-secret" },
+          },
+        },
+        response: {
+          headers: { authorization: "secret" },
+          body: "secret-body",
+          id: "response-id",
+          messages: [
+            {
+              role: "assistant",
+              content: [
+                {
+                  type: "provider-result",
+                  result: {
+                    headers: { authorization: "nested-secret" },
+                    id: "nested-provider-response-id",
+                  },
+                },
+              ],
+            },
+          ],
+        },
+        rawResponse: {
+          headers: { authorization: "secret" },
+        },
+        responses: [
+          {
+            headers: { authorization: "secret" },
+            id: "provider-response-id",
+          },
+        ],
+        roundtrips: [
+          {
+            request: {
+              headers: { authorization: "secret" },
+              body: "secret-roundtrip-request-body",
+              providerPayload: {
+                headers: { authorization: "nested-roundtrip-request-secret" },
+              },
+            },
+            response: {
+              headers: { authorization: "secret" },
+              id: "roundtrip-response-id",
+            },
+          },
+        ],
+        steps: [
+          {
+            request: {
+              headers: { authorization: "secret" },
+              body: "secret-step-request-body",
+              providerPayload: {
+                headers: { authorization: "nested-step-request-secret" },
+              },
+            },
+            response: {
+              headers: { authorization: "secret" },
+              body: "secret-step-body",
+              id: "step-response-id",
+              messages: [
+                {
+                  role: "assistant",
+                  content: [
+                    {
+                      type: "provider-result",
+                      result: {
+                        headers: { authorization: "nested-step-secret" },
+                        id: "nested-step-provider-response-id",
+                      },
+                    },
+                  ],
+                },
+              ],
+            },
+            output: {
+              headers: { "x-user-data": "keep-step" },
+            },
+            responses: [
+              {
+                headers: { authorization: "secret" },
+                id: "step-provider-response-id",
+              },
+            ],
+          },
+        ],
+      };
+
+      const result = processAISDKOutputActual(
+        output as any,
+        DEFAULT_DENY_OUTPUT_PATHS,
+      ) as Record<string, any>;
+
+      expect(result.object.headers).toEqual({ "x-user-data": "keep" });
+      expect(result.content[0].headers).toEqual({ source: "tool-payload" });
+      expect(result.steps[0].output.headers).toEqual({
+        "x-user-data": "keep-step",
+      });
+      const serializedResult = JSON.stringify(result);
+      expect(serializedResult).not.toContain("secret-request-body");
+      expect(serializedResult).not.toContain("secret-roundtrip-request-body");
+      expect(serializedResult).not.toContain("secret-step-request-body");
+      expect(serializedResult).not.toContain("authorization");
+      expect(result.request).not.toHaveProperty("headers");
+      expect(result.request.providerPayload).not.toHaveProperty("headers");
+      expect(result.response).not.toHaveProperty("headers");
+      expect(result.response.body).toBe("<omitted>");
+      expect(result.response.messages[0].content[0].result).not.toHaveProperty(
+        "headers",
+      );
+      expect(result.rawResponse).not.toHaveProperty("headers");
+      expect(result.responses[0]).not.toHaveProperty("headers");
+      if (result.roundtrips) {
+        expect(result.roundtrips[0].request).not.toHaveProperty("headers");
+        expect(result.roundtrips[0].request.providerPayload).not.toHaveProperty(
+          "headers",
+        );
+        expect(result.roundtrips[0].response).not.toHaveProperty("headers");
+      }
+      expect(result.steps[0].request).not.toHaveProperty("headers");
+      expect(result.steps[0].request.providerPayload).not.toHaveProperty(
+        "headers",
+      );
+      expect(result.steps[0].response).not.toHaveProperty("headers");
+      expect(result.steps[0].response.body).toBe("<omitted>");
+      expect(
+        result.steps[0].response.messages[0].content[0].result,
+      ).not.toHaveProperty("headers");
+      expect(result.steps[0].responses[0]).not.toHaveProperty("headers");
     });
 
     it("should handle null output", () => {

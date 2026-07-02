@@ -24,6 +24,7 @@ import type {
   AISDKResult,
   AISDKRerankResult,
 } from "../../vendor-sdk-types/ai-sdk";
+import iso from "../../isomorph";
 import type {
   AISDKV7LanguageModelCallStartEvent,
   AISDKV7OperationEvent,
@@ -60,6 +61,9 @@ type EmbedSpanState = CallSpanState & {
 export function braintrustAISDKTelemetry(): AISDKV7Telemetry {
   const operations = new Map<string, OperationState>();
   const operationKeysByCallId = new Map<string, string[]>();
+  const workflowOperationKeyStore = iso.newAsyncLocalStorage<
+    string | undefined
+  >();
   const modelSpans = new Map<string, Span[]>();
   const objectSpans = new Map<string, Span>();
   const embedSpans = new Map<string, EmbedSpanState>();
@@ -110,6 +114,13 @@ export function braintrustAISDKTelemetry(): AISDKV7Telemetry {
     }
 
     operations.delete(operationKey);
+    if (workflowOperationKeyStore.getStore() === operationKey) {
+      // TODO(luca): Replace ALS.enterWith() with ALS.run() once direct
+      // telemetry can wrap the full WorkflowAgent callback lifecycle.
+      // eslint-disable-next-line no-restricted-syntax -- Existing ALS.enterWith() usage tracked by the TODO above.
+      workflowOperationKeyStore.enterWith(undefined);
+    }
+
     const keys = operationKeysByCallId.get(state.callId);
     if (!keys) {
       return;
@@ -176,6 +187,15 @@ export function braintrustAISDKTelemetry(): AISDKV7Telemetry {
       }
     }
 
+    const workflowOperationKey = workflowOperationKeyStore.getStore();
+    if (workflowOperationKey && keys.includes(workflowOperationKey)) {
+      return workflowOperationKey;
+    }
+
+    if (callId === "workflow-agent") {
+      return undefined;
+    }
+
     return mode === "finish" ? keys[0] : keys[keys.length - 1];
   };
 
@@ -191,8 +211,16 @@ export function braintrustAISDKTelemetry(): AISDKV7Telemetry {
     if (isObject(event)) {
       const callId = (event as { callId?: unknown }).callId;
       if (typeof callId === "string") {
-        return operationKeyForCallId(callId, mode) ?? callId;
+        return (
+          operationKeyForCallId(callId, mode) ??
+          (callId === "workflow-agent" ? undefined : callId)
+        );
       }
+    }
+
+    const workflowOperationKey = workflowOperationKeyStore.getStore();
+    if (workflowOperationKey && operations.has(workflowOperationKey)) {
+      return workflowOperationKey;
     }
 
     const wrapperSpan = currentWorkflowAgentWrapperSpan();
@@ -444,6 +472,15 @@ export function braintrustAISDKTelemetry(): AISDKV7Telemetry {
 
         if (!ownsSpan) {
           return;
+        }
+
+        if (workflowAgent) {
+          // Direct registerTelemetry() calls do not receive the hidden
+          // dispatcher operation key used by auto-instrumentation.
+          // TODO(luca): Replace ALS.enterWith() with ALS.run() once direct
+          // telemetry can wrap the full WorkflowAgent callback lifecycle.
+          // eslint-disable-next-line no-restricted-syntax -- Existing ALS.enterWith() usage tracked by the TODO above.
+          workflowOperationKeyStore.enterWith(operationKey);
         }
 
         let metadata = metadataFromEvent(event);

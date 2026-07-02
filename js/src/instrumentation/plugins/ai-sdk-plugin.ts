@@ -46,7 +46,10 @@ import type {
   AISDKTools,
   AISDKUsage,
 } from "../../vendor-sdk-types/ai-sdk";
-import type { AISDKV7Telemetry } from "../../vendor-sdk-types/ai-sdk-v7-telemetry";
+import type {
+  AISDKV7Telemetry,
+  AISDKV7TelemetryOptions,
+} from "../../vendor-sdk-types/ai-sdk-v7-telemetry";
 import { BRAINTRUST_AI_SDK_V7_OPERATION_KEY as AI_SDK_V7_OPERATION_KEY } from "../../vendor-sdk-types/ai-sdk-v7-telemetry";
 
 export interface AISDKPluginConfig {
@@ -64,14 +67,19 @@ export interface AISDKPluginConfig {
 export const DEFAULT_DENY_OUTPUT_PATHS: string[] = [
   // v3
   "roundtrips[].request.body",
+  "roundtrips[].request.headers",
   "roundtrips[].response.headers",
   "rawResponse.headers",
   "responseMessages",
   // v5
   "request.body",
+  "request.headers",
+  "responses[].headers",
   "response.body",
   "response.headers",
   "steps[].request.body",
+  "steps[].request.headers",
+  "steps[].responses[].headers",
   "steps[].response.body",
   "steps[].response.headers",
 ];
@@ -85,6 +93,17 @@ const RUNTIME_DENY_OUTPUT_PATHS = Symbol.for(
   "braintrust.ai-sdk.deny-output-paths",
 );
 let aiSDKV7TelemetryOperationCounter = 0;
+const TRANSPORT_PAYLOAD_ROOT_PATHS = [
+  "rawResponse",
+  "request",
+  "response",
+  "responses[]",
+  "roundtrips[].request",
+  "roundtrips[].response",
+  "steps[].request",
+  "steps[].response",
+  "steps[].responses[]",
+];
 
 const AI_SDK_V7_TELEMETRY_CALLBACKS = [
   "onStart",
@@ -507,7 +526,11 @@ function subscribeToAISDKV7TelemetryDispatcher(): () => void {
         return;
       }
 
-      patchAISDKV7TelemetryDispatcher(event.result, telemetry);
+      patchAISDKV7TelemetryDispatcher(
+        event.result,
+        telemetry,
+        telemetryOptions,
+      );
     },
   };
 
@@ -521,6 +544,7 @@ function subscribeToAISDKV7TelemetryDispatcher(): () => void {
 function patchAISDKV7TelemetryDispatcher(
   dispatcher: unknown,
   telemetry: AISDKV7Telemetry,
+  telemetryOptions?: AISDKV7TelemetryOptions,
 ): void {
   if (!isObject(dispatcher)) {
     return;
@@ -532,6 +556,16 @@ function patchAISDKV7TelemetryDispatcher(
   }
   dispatcherRecord[AUTO_PATCHED_V7_TELEMETRY_DISPATCHER] = true;
   let operationKey: string | undefined;
+  const telemetryEventFields: AISDKV7TelemetryOptions = {};
+  if (typeof telemetryOptions?.recordInputs === "boolean") {
+    telemetryEventFields.recordInputs = telemetryOptions.recordInputs;
+  }
+  if (typeof telemetryOptions?.recordOutputs === "boolean") {
+    telemetryEventFields.recordOutputs = telemetryOptions.recordOutputs;
+  }
+  if (typeof telemetryOptions?.functionId === "string") {
+    telemetryEventFields.functionId = telemetryOptions.functionId;
+  }
 
   const eventWithOperationKey = (event: unknown): unknown => {
     if (!isObject(event)) {
@@ -542,6 +576,25 @@ function patchAISDKV7TelemetryDispatcher(
     const callId =
       typeof eventRecord.callId === "string" ? eventRecord.callId : "unknown";
     operationKey ??= `${callId}:${++aiSDKV7TelemetryOperationCounter}`;
+
+    if (Object.keys(telemetryEventFields).length > 0) {
+      const augmentedEvent = {
+        ...telemetryEventFields,
+        ...(event as Record<string, unknown>),
+      };
+      try {
+        Object.defineProperty(augmentedEvent, AI_SDK_V7_OPERATION_KEY, {
+          configurable: true,
+          enumerable: false,
+          value: operationKey,
+        });
+      } catch {
+        (augmentedEvent as Record<PropertyKey, unknown>)[
+          AI_SDK_V7_OPERATION_KEY
+        ] = operationKey;
+      }
+      return augmentedEvent;
+    }
 
     try {
       Object.defineProperty(eventRecord, AI_SDK_V7_OPERATION_KEY, {
@@ -2204,11 +2257,142 @@ function patchAISDKStreamingResult(args: {
     span.end();
     onComplete?.();
   };
+  let outputLogged = false;
+  const logStreamingOutput = async (firstChunkTime?: number) => {
+    if (outputLogged) {
+      return;
+    }
+    outputLogged = true;
+
+    try {
+      const metrics = extractTopLevelAISDKMetrics(result, endEvent);
+      if (
+        metrics.time_to_first_token === undefined &&
+        firstChunkTime !== undefined
+      ) {
+        metrics.time_to_first_token = firstChunkTime - startTime;
+      }
+
+      const output = await processAISDKStreamingOutput(
+        result,
+        resolveDenyOutputPaths(endEvent, defaultDenyOutputPaths),
+      );
+      const metadata = buildResolvedMetadataPayload(result).metadata;
+
+      span.log({
+        output,
+        ...(metadata ? { metadata } : {}),
+        metrics,
+      });
+    } catch (error) {
+      span.log({ error: toLoggedError(error) });
+    } finally {
+      finalize();
+    }
+  };
+  const createAsyncIterableHooks = () => {
+    let firstChunkTime: number | undefined;
+
+    return {
+      onChunk: (chunk: unknown) => {
+        if (
+          firstChunkTime === undefined &&
+          isAISDKContentAsyncIterableChunk(chunk)
+        ) {
+          firstChunkTime = getCurrentUnixTimestamp();
+        }
+      },
+      onComplete: async () => {
+        await logStreamingOutput(firstChunkTime);
+      },
+      onError: (error: Error) => {
+        if (!outputLogged) {
+          outputLogged = true;
+          span.log({
+            error: error.message,
+          });
+        }
+        finalize();
+      },
+      onCancel: finalize,
+    };
+  };
+  const patchAsyncIterableField = (field: string): boolean => {
+    let descriptorOwner: object | null = resultRecord;
+    let descriptor: PropertyDescriptor | undefined;
+    while (descriptorOwner) {
+      descriptor = Object.getOwnPropertyDescriptor(descriptorOwner, field);
+      if (descriptor) {
+        break;
+      }
+      descriptorOwner = Object.getPrototypeOf(descriptorOwner);
+    }
+
+    if (
+      !descriptor ||
+      (descriptorOwner === resultRecord && !descriptor.configurable)
+    ) {
+      return false;
+    }
+
+    if ("value" in descriptor) {
+      if (!isAsyncIterable(descriptor.value)) {
+        return false;
+      }
+
+      try {
+        Object.defineProperty(resultRecord, field, {
+          configurable:
+            descriptorOwner === resultRecord ? descriptor.configurable : true,
+          enumerable: descriptor.enumerable,
+          value: createPatchedAsyncIterable(
+            descriptor.value,
+            createAsyncIterableHooks(),
+          ),
+          writable: descriptor.writable,
+        });
+        return true;
+      } catch {
+        return false;
+      }
+    }
+
+    if (typeof descriptor.get !== "function") {
+      return false;
+    }
+
+    const originalGet = descriptor.get;
+    const originalSet = descriptor.set;
+    try {
+      Object.defineProperty(resultRecord, field, {
+        configurable:
+          descriptorOwner === resultRecord ? descriptor.configurable : true,
+        enumerable: descriptor.enumerable,
+        get() {
+          const stream = originalGet.call(this);
+          return isAsyncIterable(stream)
+            ? createPatchedAsyncIterable(stream, createAsyncIterableHooks())
+            : stream;
+        },
+        ...(originalSet
+          ? {
+              set(value: unknown) {
+                originalSet.call(this, value);
+              },
+            }
+          : {}),
+      });
+      return true;
+    } catch {
+      return false;
+    }
+  };
+  let patched = false;
 
   if (isReadableStreamLike(resultRecord.baseStream)) {
     let firstChunkTime: number | undefined;
 
-    const wrappedBaseStream = resultRecord.baseStream.pipeThrough(
+    const transformedBaseStream = resultRecord.baseStream.pipeThrough(
       new TransformStream({
         transform(chunk, controller) {
           if (
@@ -2220,34 +2404,35 @@ function patchAISDKStreamingResult(args: {
           controller.enqueue(chunk);
         },
         async flush() {
-          try {
-            const metrics = extractTopLevelAISDKMetrics(result, endEvent);
-            if (
-              metrics.time_to_first_token === undefined &&
-              firstChunkTime !== undefined
-            ) {
-              metrics.time_to_first_token = firstChunkTime - startTime;
-            }
-
-            const output = await processAISDKStreamingOutput(
-              result,
-              resolveDenyOutputPaths(endEvent, defaultDenyOutputPaths),
-            );
-            const metadata = buildResolvedMetadataPayload(result).metadata;
-
-            span.log({
-              output,
-              ...(metadata ? { metadata } : {}),
-              metrics,
-            });
-          } catch (error) {
-            span.log({ error: toLoggedError(error) });
-          } finally {
-            finalize();
-          }
+          await logStreamingOutput(firstChunkTime);
         },
       }),
     );
+    const reader = transformedBaseStream.getReader();
+    const wrappedBaseStream = new ReadableStream({
+      async pull(controller) {
+        try {
+          const { done, value } = await reader.read();
+          if (done) {
+            controller.close();
+            return;
+          }
+
+          controller.enqueue(value);
+        } catch (error) {
+          span.log({ error: toLoggedError(error) });
+          finalize();
+          controller.error(error);
+        }
+      },
+      async cancel(reason) {
+        try {
+          finalize();
+        } finally {
+          await reader.cancel(reason);
+        }
+      },
+    });
 
     Object.defineProperty(resultRecord, "baseStream", {
       configurable: true,
@@ -2256,72 +2441,19 @@ function patchAISDKStreamingResult(args: {
       writable: true,
     });
 
-    return true;
+    patched = true;
   }
 
-  const streamField = findAsyncIterableField(resultRecord, [
+  for (const field of [
     "partialObjectStream",
     "textStream",
     "fullStream",
     "stream",
-  ]);
-  if (!streamField) {
-    return false;
+  ]) {
+    patched = patchAsyncIterableField(field) || patched;
   }
 
-  let firstChunkTime: number | undefined;
-  const wrappedStream = createPatchedAsyncIterable(streamField.stream, {
-    onChunk: (chunk) => {
-      if (
-        firstChunkTime === undefined &&
-        isAISDKContentAsyncIterableChunk(chunk)
-      ) {
-        firstChunkTime = getCurrentUnixTimestamp();
-      }
-    },
-    onComplete: async () => {
-      try {
-        const metrics = extractTopLevelAISDKMetrics(result, endEvent);
-        if (
-          metrics.time_to_first_token === undefined &&
-          firstChunkTime !== undefined
-        ) {
-          metrics.time_to_first_token = firstChunkTime - startTime;
-        }
-
-        const output = await processAISDKStreamingOutput(
-          result,
-          resolveDenyOutputPaths(endEvent, defaultDenyOutputPaths),
-        );
-        const metadata = buildResolvedMetadataPayload(result).metadata;
-
-        span.log({
-          output,
-          ...(metadata ? { metadata } : {}),
-          metrics,
-        });
-      } catch (error) {
-        span.log({ error: toLoggedError(error) });
-      } finally {
-        finalize();
-      }
-    },
-    onError: (error) => {
-      span.log({
-        error: error.message,
-      });
-      finalize();
-    },
-  });
-
-  Object.defineProperty(resultRecord, streamField.field, {
-    configurable: true,
-    enumerable: true,
-    value: wrappedStream,
-    writable: true,
-  });
-
-  return true;
+  return patched;
 }
 
 function attachKnownResultPromiseHandlers(
@@ -2367,27 +2499,10 @@ function isReadableStreamLike(value: unknown): value is {
   );
 }
 
-function findAsyncIterableField(
-  result: Record<string, unknown>,
-  candidateFields: string[],
-): { field: string; stream: AsyncIterable<unknown> } | null {
-  for (const field of candidateFields) {
-    try {
-      const stream = result[field];
-      if (isAsyncIterable(stream)) {
-        return { field, stream };
-      }
-    } catch {
-      // Ignore getter failures.
-    }
-  }
-
-  return null;
-}
-
 function createPatchedAsyncIterable(
   stream: AsyncIterable<unknown>,
   hooks: {
+    onCancel?: () => void | Promise<void>;
     onChunk: (chunk: unknown) => void;
     onComplete: () => Promise<void>;
     onError: (error: Error) => void;
@@ -2395,17 +2510,28 @@ function createPatchedAsyncIterable(
 ): AsyncIterable<unknown> {
   return {
     async *[Symbol.asyncIterator]() {
+      let completed = false;
       try {
         for await (const chunk of stream) {
           hooks.onChunk(chunk);
           yield chunk;
         }
+        completed = true;
         await hooks.onComplete();
       } catch (error) {
+        completed = true;
         hooks.onError(
           error instanceof Error ? error : new Error(String(error)),
         );
         throw error;
+      } finally {
+        if (!completed) {
+          try {
+            await hooks.onCancel?.();
+          } catch {
+            // Ignore cleanup errors so stream cancellation keeps its behavior.
+          }
+        }
       }
     },
   };
@@ -2589,11 +2715,65 @@ export function processAISDKOutput(
   if (!output) return output;
 
   const merged = extractSerializableOutputFields(output);
-
-  // Apply omit to remove unwanted paths
-  return normalizeAISDKLoggedOutput(
-    removeHeadersDeep(omit(merged, denyOutputPaths)),
+  const deleteOutputPaths = denyOutputPaths.filter((path) =>
+    path.toLowerCase().endsWith("headers"),
   );
+  const sanitized = omit(merged, denyOutputPaths, deleteOutputPaths);
+
+  // Transport payloads can contain nested provider request/response headers; keep
+  // user/model/tool payload fields named "headers" outside these roots intact.
+  for (const path of TRANSPORT_PAYLOAD_ROOT_PATHS) {
+    const stack: Array<{
+      obj: Record<string, unknown> | unknown[] | undefined;
+      keys: (string | number)[];
+    }> = [{ obj: sanitized, keys: parsePath(path) }];
+
+    while (stack.length > 0) {
+      const entry = stack.pop();
+      if (!entry || entry.keys.length === 0) {
+        continue;
+      }
+
+      const firstKey = entry.keys[0];
+      const remainingKeys = entry.keys.slice(1);
+
+      if (firstKey === "[]") {
+        if (Array.isArray(entry.obj)) {
+          for (const item of entry.obj) {
+            stack.push({
+              obj: item as Record<string, unknown> | unknown[] | undefined,
+              keys: remainingKeys,
+            });
+          }
+        }
+        continue;
+      }
+
+      if (
+        !entry.obj ||
+        typeof entry.obj !== "object" ||
+        !(firstKey in entry.obj)
+      ) {
+        continue;
+      }
+
+      const record = entry.obj as Record<string | number, unknown>;
+      if (remainingKeys.length === 0) {
+        record[firstKey] = removeHeadersDeep(record[firstKey]);
+        continue;
+      }
+
+      stack.push({
+        obj: record[firstKey] as
+          | Record<string, unknown>
+          | unknown[]
+          | undefined,
+        keys: remainingKeys,
+      });
+    }
+  }
+
+  return normalizeAISDKLoggedOutput(sanitized);
 }
 
 export function processAISDKEmbeddingOutput(
@@ -3212,6 +3392,7 @@ function parsePath(path: string): (string | number)[] {
 function omitAtPath(
   obj: Record<string, unknown> | unknown[] | undefined,
   keys: (string | number)[],
+  deleteLeaf = false,
 ): void {
   if (keys.length === 0) return;
 
@@ -3225,13 +3406,18 @@ function omitAtPath(
           omitAtPath(
             item as Record<string, unknown> | unknown[] | undefined,
             remainingKeys,
+            deleteLeaf,
           );
         }
       });
     }
   } else if (remainingKeys.length === 0) {
     if (obj && typeof obj === "object" && firstKey in obj) {
-      (obj as Record<string | number, unknown>)[firstKey] = "<omitted>";
+      if (deleteLeaf) {
+        delete (obj as Record<string | number, unknown>)[firstKey];
+      } else {
+        (obj as Record<string | number, unknown>)[firstKey] = "<omitted>";
+      }
     }
   } else {
     if (obj && typeof obj === "object" && firstKey in obj) {
@@ -3241,6 +3427,7 @@ function omitAtPath(
           | unknown[]
           | undefined,
         remainingKeys,
+        deleteLeaf,
       );
     }
   }
@@ -3252,12 +3439,14 @@ function omitAtPath(
 function omit(
   obj: Record<string, unknown>,
   paths: string[],
+  deletePaths: string[] = [],
 ): Record<string, unknown> {
   const result = deepCopy(obj);
+  const deletePathSet = new Set(deletePaths);
 
   for (const path of paths) {
     const keys = parsePath(path);
-    omitAtPath(result, keys);
+    omitAtPath(result, keys, deletePathSet.has(path));
   }
 
   return result;
