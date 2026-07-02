@@ -1,8 +1,13 @@
 import type { ChannelSpanInfo, SpanInfoCarrier, StartEvent } from "./types";
+import { debugLogger } from "../../debug-logger";
 import { isObject, mergeDicts } from "../../util";
 
+type ChannelConfigName =
+  | string
+  | ((args: unknown[], event: unknown) => string | undefined);
+
 export type ChannelConfig = {
-  name: string;
+  name: ChannelConfigName;
   shouldTrace?: (args: unknown[], event: unknown) => boolean;
   type: string;
 };
@@ -49,12 +54,26 @@ export function buildStartSpanArgs(
     name:
       typeof spanInfo?.name === "string" && spanInfo.name
         ? spanInfo.name
-        : config.name,
+        : resolveConfigName(config.name, event),
     spanAttributes,
     spanInfoMetadata: isObject(spanInfo?.metadata)
       ? spanInfo.metadata
       : undefined,
   };
+}
+
+function resolveConfigName(name: ChannelConfigName, event: StartEvent): string {
+  if (typeof name === "string") {
+    return name;
+  }
+
+  try {
+    const resolved = name(event.arguments ?? [], event);
+    return resolved || "unknown";
+  } catch (error) {
+    debugLogger.error("Error resolving instrumentation span name:", error);
+    return "unknown";
+  }
 }
 
 export function mergeInputMetadata(

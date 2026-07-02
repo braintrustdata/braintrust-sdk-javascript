@@ -535,7 +535,7 @@ function normalizeAISDKSnapshotValue(value: unknown): unknown {
       continue;
     }
 
-    if (key === "stepNumber") {
+    if (key === "performance" || key === "stepNumber") {
       continue;
     }
 
@@ -1251,7 +1251,10 @@ export function defineAISDKInstrumentationAssertions(options: {
 
     test("matches the shared span tree snapshot", testConfig, async () => {
       await matchSpanTreeSnapshot(events, spanSnapshotPath, {
-        normalize: { additionalProviderIdKeys: ["callId"] },
+        normalize: {
+          additionalProviderIdKeys: ["callId"],
+          omittedKeys: ["performance"],
+        },
       });
     });
   });

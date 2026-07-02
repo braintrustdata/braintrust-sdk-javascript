@@ -154,24 +154,32 @@ function findFlueDescendants(
   return findMatchingDescendants(events, flueSpan, predicate);
 }
 
-function isFlueChildSpan(event: CapturedLogEvent): boolean {
+function isFlueChildSpan(
+  event: CapturedLogEvent,
+  includeAmbientProbeSpans = true,
+): boolean {
   return (
     event.span.name?.startsWith("llm:") === true ||
     event.span.name?.startsWith("tool:") === true ||
     event.span.name?.startsWith("task:") === true ||
     event.span.name?.startsWith("compaction:") === true ||
-    event.span.name === "flue.toolCurrentProbe" ||
+    (includeAmbientProbeSpans && event.span.name === "flue.toolCurrentProbe") ||
     event.span.name === "flue.task"
   );
 }
 
-function buildSpanTree(events: CapturedLogEvent[]): SpanTreeEntry[] {
+function buildSpanTree(
+  events: CapturedLogEvent[],
+  includeAmbientProbeSpans: boolean,
+): SpanTreeEntry[] {
   const workflow = findLatestSpanByPrefix(events, "workflow:");
-  const workflowCurrentProbe = findLatestChildSpan(
-    events,
-    "flue.workflowCurrentProbe",
-    workflow?.span.id,
-  );
+  const workflowCurrentProbe = includeAmbientProbeSpans
+    ? findLatestChildSpan(
+        events,
+        "flue.workflowCurrentProbe",
+        workflow?.span.id,
+      )
+    : undefined;
   const promptSpan = findFlueOperation(events, "flue.prompt");
   const skillSpan = findFlueOperation(events, "flue.skill");
   const taskSpan = findFlueOperation(events, "flue.task");
@@ -181,19 +189,28 @@ function buildSpanTree(events: CapturedLogEvent[]): SpanTreeEntry[] {
     workflow,
     workflowCurrentProbe,
     promptSpan,
-    ...findFlueDescendants(events, promptSpan, isFlueChildSpan),
+    ...findFlueDescendants(events, promptSpan, (event) =>
+      isFlueChildSpan(event, includeAmbientProbeSpans),
+    ),
     skillSpan,
-    ...findFlueDescendants(events, skillSpan, isFlueChildSpan),
+    ...findFlueDescendants(events, skillSpan, (event) =>
+      isFlueChildSpan(event, includeAmbientProbeSpans),
+    ),
     taskSpan,
-    ...findFlueDescendants(events, taskSpan, isFlueChildSpan),
+    ...findFlueDescendants(events, taskSpan, (event) =>
+      isFlueChildSpan(event, includeAmbientProbeSpans),
+    ),
     compactSpan,
-    ...findFlueDescendants(events, compactSpan, isFlueChildSpan),
+    ...findFlueDescendants(events, compactSpan, (event) =>
+      isFlueChildSpan(event, includeAmbientProbeSpans),
+    ),
   ].flatMap((event) =>
     event ? [{ event, fields: snapshotFields(event) }] : [],
   );
 }
 
 export function defineFlueInstrumentationAssertions(options: {
+  expectAmbientContext?: boolean;
   name: string;
   runScenario: RunFlueScenario;
   snapshotName: string;
@@ -206,6 +223,7 @@ export function defineFlueInstrumentationAssertions(options: {
   );
   const timeoutMs = effectiveScenarioTimeoutMs(options.timeoutMs);
   const testConfig = { timeout: timeoutMs };
+  const expectAmbientContext = options.expectAmbientContext ?? true;
 
   describe.sequential(options.name, () => {
     let events: CapturedLogEvent[] = [];
@@ -230,40 +248,44 @@ export function defineFlueInstrumentationAssertions(options: {
       });
     });
 
-    test(
-      "makes the Flue workflow span current for app spans",
-      testConfig,
-      () => {
+    if (expectAmbientContext) {
+      test(
+        "makes the Flue workflow span current for app spans",
+        testConfig,
+        () => {
+          const workflow = findLatestSpanByPrefix(events, "workflow:");
+          const appSpan = findLatestChildSpan(
+            events,
+            "flue.workflowCurrentProbe",
+            workflow?.span.id,
+          );
+
+          expect(appSpan).toBeDefined();
+          expect(appSpan?.span.parentIds).toEqual([workflow?.span.id]);
+          expect(appSpan?.output).toBe("active");
+        },
+      );
+
+      test("makes Flue tool spans current for app spans", testConfig, () => {
         const workflow = findLatestSpanByPrefix(events, "workflow:");
+        const promptSpan = findFlueOperation(events, "flue.prompt");
+        const lookupToolSpan = findFlueDescendants(
+          events,
+          promptSpan,
+          (event) => event.span.name === "tool:lookup",
+        )[0];
         const appSpan = findLatestChildSpan(
           events,
-          "flue.workflowCurrentProbe",
-          workflow?.span.id,
+          "flue.toolCurrentProbe",
+          lookupToolSpan?.span.id,
         );
 
         expect(appSpan).toBeDefined();
-        expect(appSpan?.span.parentIds).toEqual([workflow?.span.id]);
-        expect(appSpan?.output).toBe("active");
-      },
-    );
-
-    test("makes Flue tool spans current for app spans", testConfig, () => {
-      const promptSpan = findFlueOperation(events, "flue.prompt");
-      const lookupToolSpan = findFlueDescendants(
-        events,
-        promptSpan,
-        (event) => event.span.name === "tool:lookup",
-      )[0];
-      const appSpan = findLatestChildSpan(
-        events,
-        "flue.toolCurrentProbe",
-        lookupToolSpan?.span.id,
-      );
-
-      expect(appSpan).toBeDefined();
-      expect(appSpan?.span.parentIds).toEqual([lookupToolSpan?.span.id]);
-      expect(appSpan?.output).toBe("lookup-active");
-    });
+        expect(appSpan?.span.parentIds).toEqual([lookupToolSpan?.span.id]);
+        expect(appSpan?.output).toBe("lookup-active");
+        expect(workflow).toBeDefined();
+      });
+    }
 
     test("captures observe-based Flue operation spans", testConfig, () => {
       for (const flueSpanName of [
@@ -297,7 +319,7 @@ export function defineFlueInstrumentationAssertions(options: {
         const promptChildren = findFlueDescendants(
           events,
           promptSpan,
-          isFlueChildSpan,
+          (event) => isFlueChildSpan(event, expectAmbientContext),
         );
         const promptTurns = promptChildren.filter((event) =>
           event.span.name?.startsWith("llm:"),
@@ -372,7 +394,10 @@ export function defineFlueInstrumentationAssertions(options: {
     });
 
     test("matches the span tree snapshot", testConfig, async () => {
-      await matchSpanTreeSnapshot(buildSpanTree(events), snapshotPath);
+      await matchSpanTreeSnapshot(
+        buildSpanTree(events, expectAmbientContext),
+        snapshotPath,
+      );
     });
   });
 }

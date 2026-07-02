@@ -1,6 +1,6 @@
 {
   "name": "braintrust",
-  "version": "3.17.0",
+  "version": "3.20.0",
   "description": "SDK for integrating Braintrust",
   "repository": {
     "type": "git",
@@ -64,6 +64,12 @@
       "import": "./dist/apply-auto-instrumentation.mjs",
       "require": "./dist/apply-auto-instrumentation.js",
       "default": "./dist/apply-auto-instrumentation.mjs"
+    },
+    "./vitest-evals-reporter": {
+      "types": "./dist/vitest-evals-reporter.d.ts",
+      "import": "./dist/vitest-evals-reporter.mjs",
+      "module": "./dist/vitest-evals-reporter.mjs",
+      "require": "./dist/vitest-evals-reporter.js"
     },
     "./node": {
       "types": "./dist/index.d.ts",

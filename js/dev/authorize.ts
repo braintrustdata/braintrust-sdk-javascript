@@ -163,7 +163,7 @@ const MAIN_ORIGIN = "https://www.braintrust.dev";
 const WHITELISTED_ORIGINS = [
   MAIN_ORIGIN,
   "https://www.braintrustdata.com",
-  new RegExp("https://.*.preview.braintrust.dev"),
+  new RegExp("^https://[^/]+\\.preview\\.braintrust\\.dev$"),
 ]
   .concat(
     process.env.WHITELISTED_ORIGIN ? [process.env.WHITELISTED_ORIGIN] : [],

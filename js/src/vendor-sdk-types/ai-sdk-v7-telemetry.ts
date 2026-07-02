@@ -147,13 +147,13 @@ export interface AISDKV7Telemetry {
   onObjectStepStart?: (
     event: AISDKV7ObjectStepStartEvent,
   ) => void | PromiseLike<void>;
-  onObjectStepFinish?: (
+  onObjectStepEnd?: (
     event: AISDKV7ObjectStepEndEvent,
   ) => void | PromiseLike<void>;
   onEmbedStart?: (event: AISDKV7EmbedStartEvent) => void | PromiseLike<void>;
-  onEmbedFinish?: (event: AISDKV7EmbedEndEvent) => void | PromiseLike<void>;
+  onEmbedEnd?: (event: AISDKV7EmbedEndEvent) => void | PromiseLike<void>;
   onRerankStart?: (event: AISDKV7RerankStartEvent) => void | PromiseLike<void>;
-  onRerankFinish?: (event: AISDKV7RerankEndEvent) => void | PromiseLike<void>;
+  onRerankEnd?: (event: AISDKV7RerankEndEvent) => void | PromiseLike<void>;
   onToolExecutionStart?: (
     event: AISDKV7ToolExecutionStartEvent,
   ) => void | PromiseLike<void>;
@@ -162,7 +162,7 @@ export interface AISDKV7Telemetry {
   ) => void | PromiseLike<void>;
   onChunk?: (event: AISDKV7ChunkEvent) => void | PromiseLike<void>;
   onStepFinish?: (event: unknown) => void | PromiseLike<void>;
-  onFinish?: (event: AISDKV7OperationEvent) => void | PromiseLike<void>;
+  onEnd?: (event: AISDKV7OperationEvent) => void | PromiseLike<void>;
   onError?: (event: unknown) => void | PromiseLike<void>;
   executeTool?: <T>(options: {
     callId: string;

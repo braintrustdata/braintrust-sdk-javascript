@@ -6,6 +6,7 @@ import {
 } from "../../instrumentation/config";
 import { aiSDKConfigs } from "./ai-sdk";
 import { anthropicConfigs } from "./anthropic";
+import { bedrockRuntimeConfigs } from "./bedrock-runtime";
 import { claudeAgentSDKConfigs } from "./claude-agent-sdk";
 import { cohereConfigs } from "./cohere";
 import { cursorSDKConfigs } from "./cursor-sdk";
@@ -24,6 +25,7 @@ import { openAICodexConfigs } from "./openai-codex";
 import { openRouterConfigs } from "./openrouter";
 import { openRouterAgentConfigs } from "./openrouter-agent";
 import { piCodingAgentConfigs } from "./pi-coding-agent";
+import { strandsAgentSDKConfigs } from "./strands-agent-sdk";
 
 interface InstrumentationConfigGroup {
   integrations: readonly (keyof InstrumentationIntegrationsConfig)[];
@@ -38,6 +40,10 @@ const defaultInstrumentationConfigGroups: readonly InstrumentationConfigGroup[] 
       configs: openAICodexConfigs,
     },
     { integrations: ["anthropic"], configs: anthropicConfigs },
+    {
+      integrations: ["bedrock", "awsBedrock", "awsBedrockRuntime"],
+      configs: bedrockRuntimeConfigs,
+    },
     {
       integrations: ["aisdk", "vercel"],
       configs: aiSDKConfigs,
@@ -80,6 +86,10 @@ const defaultInstrumentationConfigGroups: readonly InstrumentationConfigGroup[] 
     {
       integrations: ["piCodingAgent"],
       configs: piCodingAgentConfigs,
+    },
+    {
+      integrations: ["strandsAgentSDK"],
+      configs: strandsAgentSDKConfigs,
     },
     {
       integrations: ["flue"],

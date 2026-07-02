@@ -72,6 +72,8 @@ export function enterAutoInstrumentationAllowed(): () => void {
     id: Symbol("braintrust.auto-instrumentation-allow"),
     mode: "allow" as const,
   };
+  // TODO(luca): Replace ALS.enterWith() with ALS.run()
+  // eslint-disable-next-line no-restricted-syntax -- Existing ALS.enterWith() usage tracked by the TODO above.
   suppressionStore().enterWith({
     frames: [...currentFrames(), frame],
   });
@@ -80,6 +82,8 @@ export function enterAutoInstrumentationAllowed(): () => void {
     const frames = currentFrames().filter(
       (candidate) => candidate.id !== frame.id,
     );
+    // TODO(luca): Replace ALS.enterWith() with ALS.run()
+    // eslint-disable-next-line no-restricted-syntax -- Existing ALS.enterWith() usage tracked by the TODO above.
     suppressionStore().enterWith(frames.length > 0 ? { frames } : undefined);
   };
 }

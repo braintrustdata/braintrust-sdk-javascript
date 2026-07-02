@@ -17,9 +17,11 @@ type TokenMaps = {
 
 export type NormalizeOptions = {
   additionalProviderIdKeys?: Iterable<string>;
+  omittedKeys?: Iterable<string>;
 };
 
 type ResolvedNormalizeOptions = {
+  omittedKeys: Set<string>;
   providerIdKeys: Set<string>;
 };
 
@@ -231,16 +233,20 @@ function normalizeObject(
     shouldNormalizeNodeInternalStyleCaller(callerFilename);
 
   return Object.fromEntries(
-    Object.entries(value).map(([key, entry]) => {
+    Object.entries(value).flatMap(([key, entry]) => {
+      if (options.omittedKeys.has(key)) {
+        return [];
+      }
+
       if (isNodeInternalCaller) {
         if (key === "caller_filename") {
-          return [key, "<node-internal>"];
+          return [[key, "<node-internal>"]];
         }
         if (key === "caller_functionname") {
-          return [key, "<node-internal>"];
+          return [[key, "<node-internal>"]];
         }
         if (key === "caller_lineno") {
-          return [key, 0];
+          return [[key, 0]];
         }
       }
 
@@ -249,10 +255,10 @@ function normalizeObject(
         typeof entry === "string" &&
         (value.type === "thought" || value.type === "thought_signature")
       ) {
-        return [key, tokenFor(tokenMaps.ids, entry, "signature")];
+        return [[key, tokenFor(tokenMaps.ids, entry, "signature")]];
       }
 
-      return [key, normalizeValue(entry as Json, tokenMaps, options, key)];
+      return [[key, normalizeValue(entry as Json, tokenMaps, options, key)]];
     }),
   );
 }
@@ -430,6 +436,7 @@ function resolveNormalizeOptions(
   options: NormalizeOptions | undefined,
 ): ResolvedNormalizeOptions {
   return {
+    omittedKeys: new Set(options?.omittedKeys ?? []),
     providerIdKeys: new Set([
       ...PROVIDER_ID_KEYS,
       ...(options?.additionalProviderIdKeys ?? []),

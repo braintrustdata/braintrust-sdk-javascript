@@ -715,6 +715,259 @@ test("dataset fetch forwards _internal_btql filter arrays to btql", async () => 
   }
 });
 
+test("initDataset applies bt eval internal BTQL runtime value to eval data", async () => {
+  const state = await _exportsForTestingOnly.simulateLoginForTests();
+  const previousInternalBtql = globalThis.__bt_eval_internal_btql;
+  globalThis.__bt_eval_internal_btql = { sample: 5 };
+
+  try {
+    vi.spyOn(state, "login").mockResolvedValue(state);
+    vi.spyOn(state.appConn(), "post_json").mockResolvedValue({
+      project: {
+        id: "00000000-0000-0000-0000-000000000001",
+        name: "test-project",
+      },
+      dataset: {
+        id: "00000000-0000-0000-0000-000000000002",
+        name: "test-dataset",
+      },
+    });
+
+    const dataset = initDataset({
+      project: "test-project",
+      dataset: "test-dataset",
+      state,
+    });
+
+    await expect(dataset.toEvalData()).resolves.toEqual({
+      dataset_id: "00000000-0000-0000-0000-000000000002",
+      _internal_btql: {
+        sample: 5,
+      },
+    });
+  } finally {
+    globalThis.__bt_eval_internal_btql = previousInternalBtql;
+    _exportsForTestingOnly.simulateLogoutForTests();
+    vi.restoreAllMocks();
+  }
+});
+
+test("legacy initDataset applies bt eval internal BTQL runtime value", async () => {
+  const state = await _exportsForTestingOnly.simulateLoginForTests();
+  const previousInternalBtql = globalThis.__bt_eval_internal_btql;
+  globalThis.__bt_eval_internal_btql = { sample: 5 };
+
+  try {
+    vi.spyOn(state, "login").mockResolvedValue(state);
+    vi.spyOn(state.appConn(), "post_json").mockResolvedValue({
+      project: {
+        id: "00000000-0000-0000-0000-000000000001",
+        name: "test-project",
+      },
+      dataset: {
+        id: "00000000-0000-0000-0000-000000000002",
+        name: "test-dataset",
+      },
+    });
+
+    const dataset = initDataset("test-project", {
+      dataset: "test-dataset",
+      state,
+    });
+
+    await expect(dataset.toEvalData()).resolves.toEqual({
+      dataset_id: "00000000-0000-0000-0000-000000000002",
+      _internal_btql: {
+        sample: 5,
+      },
+    });
+  } finally {
+    globalThis.__bt_eval_internal_btql = previousInternalBtql;
+    _exportsForTestingOnly.simulateLogoutForTests();
+    vi.restoreAllMocks();
+  }
+});
+
+test("initDataset merges bt eval internal BTQL with existing _internal_btql", async () => {
+  const state = await _exportsForTestingOnly.simulateLoginForTests();
+  const previousInternalBtql = globalThis.__bt_eval_internal_btql;
+  globalThis.__bt_eval_internal_btql = {
+    sample: 5,
+    limit: 7,
+  };
+
+  try {
+    vi.spyOn(state, "login").mockResolvedValue(state);
+    vi.spyOn(state.appConn(), "post_json").mockResolvedValue({
+      project: {
+        id: "00000000-0000-0000-0000-000000000001",
+        name: "test-project",
+      },
+      dataset: {
+        id: "00000000-0000-0000-0000-000000000002",
+        name: "test-dataset",
+      },
+    });
+
+    const dataset = initDataset({
+      project: "test-project",
+      dataset: "test-dataset",
+      _internal_btql: {
+        filter: "metadata.kind = 'synthetic'",
+      },
+      state,
+    });
+
+    await expect(dataset.toEvalData()).resolves.toEqual({
+      dataset_id: "00000000-0000-0000-0000-000000000002",
+      _internal_btql: {
+        filter: "metadata.kind = 'synthetic'",
+        limit: 7,
+        sample: 5,
+      },
+    });
+  } finally {
+    globalThis.__bt_eval_internal_btql = previousInternalBtql;
+    _exportsForTestingOnly.simulateLogoutForTests();
+    vi.restoreAllMocks();
+  }
+});
+
+test("initDataset preserves explicit _internal_btql sample", async () => {
+  const state = await _exportsForTestingOnly.simulateLoginForTests();
+  const previousInternalBtql = globalThis.__bt_eval_internal_btql;
+  globalThis.__bt_eval_internal_btql = {
+    sample: 5,
+    limit: 7,
+  };
+
+  try {
+    vi.spyOn(state, "login").mockResolvedValue(state);
+    vi.spyOn(state.appConn(), "post_json").mockResolvedValue({
+      project: {
+        id: "00000000-0000-0000-0000-000000000001",
+        name: "test-project",
+      },
+      dataset: {
+        id: "00000000-0000-0000-0000-000000000002",
+        name: "test-dataset",
+      },
+    });
+
+    const dataset = initDataset({
+      project: "test-project",
+      dataset: "test-dataset",
+      _internal_btql: {
+        filter: "metadata.kind = 'synthetic'",
+        sample: 2,
+      },
+      state,
+    });
+
+    await expect(dataset.toEvalData()).resolves.toEqual({
+      dataset_id: "00000000-0000-0000-0000-000000000002",
+      _internal_btql: {
+        filter: "metadata.kind = 'synthetic'",
+        limit: 7,
+        sample: 2,
+      },
+    });
+  } finally {
+    globalThis.__bt_eval_internal_btql = previousInternalBtql;
+    _exportsForTestingOnly.simulateLogoutForTests();
+    vi.restoreAllMocks();
+  }
+});
+
+test("initDataset keeps eval data unchanged without bt eval internal BTQL runtime value", async () => {
+  const state = await _exportsForTestingOnly.simulateLoginForTests();
+  const previousInternalBtql = globalThis.__bt_eval_internal_btql;
+  globalThis.__bt_eval_internal_btql = undefined;
+
+  try {
+    vi.spyOn(state, "login").mockResolvedValue(state);
+    vi.spyOn(state.appConn(), "post_json").mockResolvedValue({
+      project: {
+        id: "00000000-0000-0000-0000-000000000001",
+        name: "test-project",
+      },
+      dataset: {
+        id: "00000000-0000-0000-0000-000000000002",
+        name: "test-dataset",
+      },
+    });
+
+    const dataset = initDataset({
+      project: "test-project",
+      dataset: "test-dataset",
+      state,
+    });
+
+    await expect(dataset.toEvalData()).resolves.toEqual({
+      dataset_id: "00000000-0000-0000-0000-000000000002",
+    });
+  } finally {
+    globalThis.__bt_eval_internal_btql = previousInternalBtql;
+    _exportsForTestingOnly.simulateLogoutForTests();
+    vi.restoreAllMocks();
+  }
+});
+
+test("dataset fetch forwards bt eval internal BTQL runtime value to btql", async () => {
+  const state = await _exportsForTestingOnly.simulateLoginForTests();
+  const previousInternalBtql = globalThis.__bt_eval_internal_btql;
+  globalThis.__bt_eval_internal_btql = { sample: 5 };
+
+  try {
+    vi.spyOn(state, "login").mockResolvedValue(state);
+    vi.spyOn(state.appConn(), "post_json").mockResolvedValue({
+      project: {
+        id: "00000000-0000-0000-0000-000000000001",
+        name: "test-project",
+      },
+      dataset: {
+        id: "00000000-0000-0000-0000-000000000002",
+        name: "test-dataset",
+      },
+    });
+
+    let btqlBody: unknown;
+    vi.spyOn(state.apiConn(), "post").mockImplementation(
+      async (_path, body) => {
+        btqlBody = body;
+        return new Response(JSON.stringify({ data: [] }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      },
+    );
+
+    const dataset = initDataset({
+      project: "test-project",
+      dataset: "test-dataset",
+      state,
+    });
+
+    const rows: unknown[] = [];
+    for await (const row of dataset) {
+      rows.push(row);
+    }
+
+    expect(rows).toEqual([]);
+    expect(btqlBody).toEqual(
+      expect.objectContaining({
+        query: expect.objectContaining({
+          sample: 5,
+        }),
+      }),
+    );
+  } finally {
+    globalThis.__bt_eval_internal_btql = previousInternalBtql;
+    _exportsForTestingOnly.simulateLogoutForTests();
+    vi.restoreAllMocks();
+  }
+});
+
 test("initDataset prefers version over environment in eval data", async () => {
   const state = await _exportsForTestingOnly.simulateLoginForTests();
   vi.spyOn(state, "login").mockResolvedValue(state);
@@ -2812,6 +3065,18 @@ describe("sensitive data redaction", () => {
     // Should NOT contain token
     expect(str).not.toContain("___TEST_API_KEY__THIS_IS_NOT_REAL___");
     expect(str.length).toBeLessThan(150);
+  });
+
+  test("proxyConn strips the /v1/proxy suffix for EU/self-hosted proxy URLs", () => {
+    const euState = new BraintrustState({});
+    euState.proxyUrl = "https://api-eu.braintrust.dev/v1/proxy";
+    expect(euState.proxyConn().base_url).toBe("https://api-eu.braintrust.dev");
+  });
+
+  test("proxyConn leaves a bare proxy host unchanged", () => {
+    const usState = new BraintrustState({});
+    usState.proxyUrl = "https://api.braintrust.dev";
+    expect(usState.proxyConn().base_url).toBe("https://api.braintrust.dev");
   });
 
   test("redaction works in nested objects and JSON.stringify", () => {

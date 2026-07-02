@@ -1,4 +1,4 @@
-import { BasePlugin } from "../core";
+import { BasePlugin, toLoggedError } from "../core";
 import type { ChannelMessage } from "../core/channel-definitions";
 import type { IsoChannelHandlers } from "../../isomorph";
 import { debugLogger } from "../../debug-logger";
@@ -309,9 +309,7 @@ async function finalizeCodexRun(
   try {
     const error = params.error;
     safeLog(state.span, {
-      ...(error
-        ? { error: error instanceof Error ? error.message : String(error) }
-        : {}),
+      ...(error ? { error: toLoggedError(error) } : {}),
       metadata: state.metadata,
       metrics,
       output,
@@ -464,9 +462,7 @@ async function finishActiveLlmSpan(
   state.activeLlmSpan = undefined;
   const output = buildLlmOutput(active);
   safeLog(active.span, {
-    ...(error
-      ? { error: error instanceof Error ? error.message : String(error) }
-      : {}),
+    ...(error ? { error: toLoggedError(error) } : {}),
     metadata: active.metadata,
     ...(output ? { output } : {}),
   });

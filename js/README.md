@@ -1,3 +1,5 @@
+[![Braintrust](https://raw.githubusercontent.com/braintrustdata/braintrust-sdk-javascript/main/braintrust-logo.svg)](https://www.braintrust.dev/)
+
 # Braintrust JavaScript SDK
 
 [![npm version](https://img.shields.io/npm/v/braintrust.svg)](https://www.npmjs.com/package/braintrust)
@@ -101,16 +103,6 @@ export default {
 If you use TypeScript or other transpilation plugins, place the Braintrust plugin after them so transformed output is instrumented.
 
 For deeper details, see the [auto-instrumentation architecture docs](src/auto-instrumentations/README.md).
-
-## Browser Support
-
-For browser-only applications, use the dedicated browser package:
-
-```bash
-npm install @braintrust/browser braintrust
-```
-
-See the [`@braintrust/browser` README](../integrations/browser-js/README.md) for details and current limitations.
 
 ## Migration Guides
 

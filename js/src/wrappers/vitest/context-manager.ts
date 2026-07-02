@@ -55,6 +55,8 @@ class VitestContextManager {
   }
 
   setContext(context: VitestExperimentContext): void {
+    // TODO(luca): Replace ALS.enterWith() with ALS.run()
+    // eslint-disable-next-line no-restricted-syntax -- Existing ALS.enterWith() usage tracked by the TODO above.
     this.contextStorage.enterWith(context);
   }
 

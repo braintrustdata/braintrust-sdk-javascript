@@ -3,13 +3,13 @@ name: Publish Stable Release
 on:
   workflow_dispatch:
     inputs:
-      release_pr:
-        description: Prepare release PR number to publish
+      release_sha:
+        description: Full commit SHA to publish
         required: true
         type: string
 
 concurrency:
-  group: publish-stable-release-${{ inputs.release_pr }}
+  group: publish-stable-release-${{ inputs.release_sha }}
   cancel-in-progress: false
 
 env:
@@ -17,45 +17,61 @@ env:
   NPM_CONFIG_PROVENANCE: "true"
 
 jobs:
+  validate-release-sha:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      release_sha: ${{ steps.release.outputs.release_sha }}
+    steps:
+      - name: Validate release SHA
+        id: release
+        env:
+          RELEASE_SHA: ${{ inputs.release_sha }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "$RELEASE_SHA" ]; then
+            echo "Stable releases must provide the commit SHA to publish in release_sha." >&2
+            exit 1
+          fi
+
+          if ! printf '%s\n' "$RELEASE_SHA" | grep -Eq '^[0-9a-fA-F]{40}$'; then
+            echo "release_sha must be the full 40-character commit SHA." >&2
+            exit 1
+          fi
+
+          release_sha="$(printf '%s\n' "$RELEASE_SHA" | tr '[:upper:]' '[:lower:]')"
+          echo "release_sha=$release_sha" >> "$GITHUB_OUTPUT"
+
   print-changelog-links:
+    needs:
+      - validate-release-sha
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
       contents: read
-      pull-requests: read
     steps:
       - name: Print changelog links
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          RELEASE_PR: ${{ inputs.release_pr }}
+          RELEASE_SHA: ${{ needs.validate-release-sha.outputs.release_sha }}
           GITHUB_SERVER_URL: ${{ github.server_url }}
         run: |
           set -euo pipefail
 
-          if [ -z "$RELEASE_PR" ]; then
-            echo "Stable releases must provide the prepare release PR number in release_pr." >&2
-            exit 1
-          fi
-
-          gh pr view "$RELEASE_PR" \
-            --repo "$GH_REPO" \
-            --json headRefOid,url \
-            > changelog-pr.json
-
-          changelog_pr_url="$(jq -r '.url' changelog-pr.json)"
-          head_sha="$(jq -r '.headRefOid' changelog-pr.json)"
           latest_release_tag="$(gh api "repos/$GH_REPO/releases/latest" --jq '.tag_name')"
           encoded_latest_release_tag="$(jq -rn --arg tag "$latest_release_tag" '$tag|@uri')"
-          diff_url="$GITHUB_SERVER_URL/$GH_REPO/compare/$encoded_latest_release_tag...$head_sha"
+          diff_url="$GITHUB_SERVER_URL/$GH_REPO/compare/$encoded_latest_release_tag...$RELEASE_SHA"
 
           {
-            echo "Changelog PR: $changelog_pr_url"
+            echo "Release SHA: $RELEASE_SHA"
             echo "Diff to latest release: $diff_url"
           } | tee -a "$GITHUB_STEP_SUMMARY"
 
   publish-stable:
     needs:
+      - validate-release-sha
       - print-changelog-links
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -63,80 +79,33 @@ jobs:
       contents: write
       issues: write
       id-token: write
-      pull-requests: write
+      pull-requests: read
     environment: npm-publish
     steps:
-      - name: Resolve release PR
-        id: release_pr
-        env:
-          GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
-          RELEASE_PR: ${{ inputs.release_pr }}
-        run: |
-          set -euo pipefail
-
-          if [ -z "$RELEASE_PR" ]; then
-            echo "Stable releases must provide the prepare release PR number in release_pr." >&2
-            exit 1
-          fi
-
-          gh pr view "$RELEASE_PR" \
-            --repo "$GH_REPO" \
-            --json number,state,baseRefName,body,headRefName,headRefOid,isCrossRepository,url \
-            > release-pr.json
-
-          number="$(jq -r '.number' release-pr.json)"
-          state="$(jq -r '.state' release-pr.json)"
-          base_ref="$(jq -r '.baseRefName' release-pr.json)"
-          head_ref="$(jq -r '.headRefName' release-pr.json)"
-          head_sha="$(jq -r '.headRefOid' release-pr.json)"
-          is_cross_repository="$(jq -r '.isCrossRepository' release-pr.json)"
-          url="$(jq -r '.url' release-pr.json)"
-          source_main_sha="$(
-            jq -r '.body // ""' release-pr.json |
-              sed -nE 's/^Source-main-sha:[[:space:]]*([0-9a-f]{7,40})$/\1/p' |
-              head -n 1
-          )"
-
-          if [ "$state" != "OPEN" ]; then
-            echo "Release PR #$number must be open. Current state: $state." >&2
-            exit 1
-          fi
-
-          if [ "$base_ref" != "main" ]; then
-            echo "Release PR #$number must target main. Current base: $base_ref." >&2
-            exit 1
-          fi
-
-          if [ "$is_cross_repository" != "false" ]; then
-            echo "Release PR #$number must come from this repository." >&2
-            exit 1
-          fi
-
-          case "$head_ref" in
-            prepare-release/*) ;;
-            *)
-              echo "Release PR #$number must use a prepare-release/* branch. Current head: $head_ref." >&2
-              exit 1
-              ;;
-          esac
-
-          if [ -z "$source_main_sha" ]; then
-            echo "Release PR #$number is missing Source-main-sha in the body." >&2
-            exit 1
-          fi
-
-          {
-            echo "number=$number"
-            echo "head_ref=$head_ref"
-            echo "head_sha=$head_sha"
-            echo "source_main_sha=$source_main_sha"
-            echo "url=$url"
-          } >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
-          ref: ${{ steps.release_pr.outputs.head_sha }}
+          ref: ${{ needs.validate-release-sha.outputs.release_sha }}
+      - name: Resolve release commits
+        id: release
+        env:
+          RELEASE_SHA: ${{ needs.validate-release-sha.outputs.release_sha }}
+        run: |
+          set -euo pipefail
+
+          checked_out_sha="$(git rev-parse HEAD | tr '[:upper:]' '[:lower:]')"
+          if [ "$checked_out_sha" != "$RELEASE_SHA" ]; then
+            echo "Checked out $checked_out_sha, expected $RELEASE_SHA." >&2
+            exit 1
+          fi
+
+          first_parent="$(git rev-parse --verify HEAD^1 2>/dev/null || true)"
+          if [ -z "$first_parent" ]; then
+            echo "release_sha must identify a commit with at least one parent." >&2
+            exit 1
+          fi
+
+          echo "since_sha=$first_parent" >> "$GITHUB_OUTPUT"
       - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
         with:
@@ -149,7 +118,7 @@ jobs:
         run: node scripts/release/validate-publishable-packages.mjs
       - name: Detect stable publish work
         id: detect
-        run: node scripts/release/release-manifest.mjs --mode stable --since "${{ steps.release_pr.outputs.source_main_sha }}" --output .release-manifest.json
+        run: node scripts/release/release-manifest.mjs --mode stable --since "${{ steps.release.outputs.since_sha }}" --output .release-manifest.json
       - name: Build packages
         if: steps.detect.outputs.needs_publish == 'true'
         run: pnpm run build
@@ -223,23 +192,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: node scripts/release/comment-release-issues.mjs
-      - name: Auto-merge release PR
-        if: steps.detect.outputs.has_work == 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
-        run: |
-          set -euo pipefail
-
-          if gh pr merge "${{ steps.release_pr.outputs.number }}" \
-            --repo "$GH_REPO" \
-            --auto \
-            --squash \
-            --match-head-commit "${{ steps.release_pr.outputs.head_sha }}"; then
-            echo "Release PR auto-merge requested."
-          else
-            echo "::warning::Published packages, but could not auto-merge release PR #${{ steps.release_pr.outputs.number }}."
-          fi
       - name: Post stable release to Slack
         if: steps.detect.outputs.has_work == 'true'
         uses: slackapi/slack-github-action@af78098f536edbc4de71162a307590698245be95 # v3.0.1
@@ -257,15 +209,17 @@ jobs:
               - type: "section"
                 text:
                   type: "mrkdwn"
-                  text: "*Release PR:* <${{ steps.release_pr.outputs.url }}|#${{ steps.release_pr.outputs.number }}>\n\n*Packages:*\n${{ steps.detect.outputs.markdown }}\n\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>"
+                  text: "*Release SHA:* `${{ needs.validate-release-sha.outputs.release_sha }}`\n\n*Packages:*\n${{ steps.detect.outputs.markdown }}\n\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>"
 
   notify-failure:
     needs:
+      - validate-release-sha
       - print-changelog-links
       - publish-stable
     if: |
       always() &&
       (
+        needs.validate-release-sha.result == 'failure' ||
         needs.print-changelog-links.result == 'failure' ||
         needs.publish-stable.result == 'failure'
       )
@@ -288,4 +242,4 @@ jobs:
               - type: "section"
                 text:
                   type: "mrkdwn"
-                  text: "*Workflow:* `Publish Stable Release`\n*Release PR:* `${{ inputs.release_pr }}`\n\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>"
+                  text: "*Workflow:* `Publish Stable Release`\n*Release SHA:* `${{ inputs.release_sha }}`\n\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>"

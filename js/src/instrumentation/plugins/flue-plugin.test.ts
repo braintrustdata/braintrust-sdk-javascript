@@ -13,9 +13,6 @@ const {
     mockCurrentParentSpan: currentParentSpan,
     mockCurrentSpanStoreSymbol: currentSpanStoreSymbol,
     mockCurrentSpanStore: {
-      enterWith: vi.fn((span: unknown) => {
-        currentParentSpan.current = span;
-      }),
       getStore: vi.fn(() => currentParentSpan.current),
       run: vi.fn((span: unknown, callback: () => unknown) => {
         const previous = currentParentSpan.current;
@@ -32,22 +29,42 @@ const {
   };
 });
 
-const { mockChannelHandlers, mockNewTracingChannel, mockTracingChannel } =
-  vi.hoisted(() => {
+const { mockNewTracingChannel, mockTracingChannels } = vi.hoisted(() => {
+  const tracingChannels = new Map<string, any>();
+
+  function tracingChannel(name: string) {
+    const existing = tracingChannels.get(name);
+    if (existing) {
+      return existing;
+    }
+
     const handlers = new Set<any>();
-    const tracingChannel = {
+    const stores = new Map<any, (message: any) => unknown>();
+    const channel = {
+      __handlers: handlers,
+      __stores: stores,
+      start: {
+        bindStore: vi.fn(
+          (store: unknown, transform: (message: any) => unknown) => {
+            stores.set(store, transform);
+          },
+        ),
+        unbindStore: vi.fn((store: unknown) => stores.delete(store)),
+      },
       subscribe: vi.fn((handler: any) => {
         handlers.add(handler);
       }),
       unsubscribe: vi.fn((handler: any) => handlers.delete(handler)),
     };
+    tracingChannels.set(name, channel);
+    return channel;
+  }
 
-    return {
-      mockChannelHandlers: handlers,
-      mockNewTracingChannel: vi.fn(() => tracingChannel),
-      mockTracingChannel: tracingChannel,
-    };
-  });
+  return {
+    mockNewTracingChannel: vi.fn((name: string) => tracingChannel(name)),
+    mockTracingChannels: tracingChannels,
+  };
+});
 
 vi.mock("../../logger", () => ({
   BRAINTRUST_CURRENT_SPAN_STORE: mockCurrentSpanStoreSymbol,
@@ -76,9 +93,16 @@ vi.mock("../../isomorph", () => ({
   },
 }));
 
-import { FluePlugin, braintrustFlueObserver } from "./flue-plugin";
+import {
+  FluePlugin,
+  braintrustFlueInstrumentation,
+  braintrustFlueObserver,
+} from "./flue-plugin";
 
 type Subscriber = typeof braintrustFlueObserver;
+
+const CREATE_CONTEXT_CHANNEL_NAME =
+  "orchestrion:@flue/runtime:createFlueContext";
 
 describe("Flue observe instrumentation", () => {
   let spans: Array<{
@@ -94,7 +118,6 @@ describe("Flue observe instrumentation", () => {
   beforeEach(() => {
     spans = [];
     mockCurrentParentSpan.current = undefined;
-    mockCurrentSpanStore.enterWith.mockClear();
     mockCurrentSpanStore.getStore.mockClear();
     mockCurrentSpanStore.run.mockClear();
     mockFlush.mockResolvedValue(undefined);
@@ -129,7 +152,10 @@ describe("Flue observe instrumentation", () => {
     delete (globalThis as Record<symbol, unknown>)[
       Symbol.for("braintrust.flue.observe-bridge")
     ];
-    mockChannelHandlers.clear();
+    for (const channel of mockTracingChannels.values()) {
+      channel.__handlers.clear();
+      channel.__stores.clear();
+    }
     vi.clearAllMocks();
   });
 
@@ -156,6 +182,70 @@ describe("Flue observe instrumentation", () => {
 
     unregister();
     expect(unsubscribe).toHaveBeenCalledTimes(1);
+  });
+
+  it("exports a Flue 1.0 instrumentation factory", async () => {
+    const instrumentation = braintrustFlueInstrumentation();
+    const instrument = vi.fn((value: typeof instrumentation) => value);
+
+    const registered = instrument(instrumentation);
+
+    expect(instrument).toHaveBeenCalledWith(instrumentation);
+    expect(registered.observe).toBe(braintrustFlueObserver);
+    expect(registered.key).toBe(Symbol.for("braintrust.flue.instrumentation"));
+    expect(typeof registered.interceptor).toBe("function");
+    expect(() => registered.dispose()).not.toThrow();
+
+    const appSpan = await registered.interceptor(
+      {
+        phase: "start",
+        runId: "run-1",
+        startedAt: "2026-05-27T05:12:31.000Z",
+        type: "workflow",
+        workflowName: "research",
+      },
+      { eventContext: { id: "ctx-1", runId: "run-1" } },
+      async () => mockStartSpan({ name: "app.phase" }),
+    );
+    const workflowSpan = findSpan("workflow:research");
+
+    expect(workflowSpan).toBeDefined();
+    expect(appSpan.spanParents).toEqual([workflowSpan?.spanId]);
+    expect(mockCurrentSpanStore.run).toHaveBeenCalledWith(
+      workflowSpan,
+      expect.any(Function),
+    );
+    expect("enterWith" in mockCurrentSpanStore).toBe(false);
+  });
+
+  it("keeps the legacy observer compatible with Flue 1.0 instrumentation", async () => {
+    expect(braintrustFlueObserver.observe).toBe(braintrustFlueObserver);
+    expect(braintrustFlueObserver.key).toBe(
+      Symbol.for("braintrust.flue.instrumentation"),
+    );
+    expect(typeof braintrustFlueObserver.interceptor).toBe("function");
+    expect(() => braintrustFlueObserver.dispose()).not.toThrow();
+
+    const appSpan = await braintrustFlueObserver.interceptor(
+      {
+        phase: "start",
+        runId: "run-1",
+        startedAt: "2026-05-27T05:12:31.000Z",
+        type: "workflow",
+        workflowName: "research",
+      },
+      { eventContext: { id: "ctx-1", runId: "run-1" } },
+      async () => mockStartSpan({ name: "app.phase" }),
+    );
+    const workflowSpan = findSpan("workflow:research");
+
+    expect(workflowSpan).toBeDefined();
+    expect(appSpan.spanParents).toEqual([workflowSpan?.spanId]);
+    expect(mockCurrentSpanStore.run).toHaveBeenCalledWith(
+      workflowSpan,
+      expect.any(Function),
+    );
+    expect("enterWith" in mockCurrentSpanStore).toBe(false);
   });
 
   it("maps Flue 0.8 observe events into semantic Braintrust spans", () => {
@@ -386,6 +476,150 @@ describe("Flue observe instrumentation", () => {
       endTime: Date.parse("2026-05-27T05:12:42.000Z") / 1000,
     });
     expect(mockFlush).toHaveBeenCalledTimes(1);
+  });
+
+  it("maps Flue 1.0 observations into semantic Braintrust spans", () => {
+    const emit = observeEvents();
+    const usage = flueUsage();
+
+    emit(
+      {
+        eventIndex: 0,
+        input: {
+          metadata: { scenario: "flue-v1" },
+          topic: "native instrumentation",
+        },
+        runId: "run-1",
+        timestamp: "2026-05-27T05:12:31.000Z",
+        type: "run_start",
+        v: 3,
+        workflowName: "research",
+      },
+      { id: "ctx-1", runId: "run-1" },
+    );
+    emit({
+      eventIndex: 1,
+      operationId: "op-1",
+      operationKind: "prompt",
+      runId: "run-1",
+      type: "operation_start",
+      v: 3,
+    });
+    emit({
+      eventIndex: 2,
+      operationId: "op-1",
+      purpose: "agent",
+      request: {
+        api: "responses",
+        input: {
+          messages: [{ content: "Find native hooks", role: "user" }],
+          systemPrompt: "Be exact",
+          tools: [{ name: "lookup" }],
+        },
+        model: "claude-test",
+        providerId: "anthropic",
+        providerName: "anthropic",
+        reasoning: "medium",
+      },
+      runId: "run-1",
+      turnId: "turn-1",
+      type: "turn_request",
+      v: 3,
+    });
+    emit({
+      args: { query: "native flue instrumentation" },
+      eventIndex: 3,
+      operationId: "op-1",
+      runId: "run-1",
+      toolCallId: "tool-1",
+      toolName: "lookup",
+      turnId: "turn-1",
+      type: "tool_start",
+      v: 3,
+    });
+    emit({
+      durationMs: 4,
+      eventIndex: 4,
+      isError: false,
+      operationId: "op-1",
+      output: { ok: true },
+      runId: "run-1",
+      toolCallId: "tool-1",
+      toolName: "lookup",
+      turnId: "turn-1",
+      type: "tool",
+      v: 3,
+    });
+    emit({
+      durationMs: 12,
+      eventIndex: 5,
+      isError: false,
+      operationId: "op-1",
+      purpose: "agent",
+      request: {
+        api: "responses",
+        model: "claude-test",
+        providerId: "anthropic",
+        providerName: "anthropic",
+      },
+      response: {
+        output: { content: [{ text: "done", type: "text" }] },
+        stopReason: "stop",
+        usage,
+      },
+      runId: "run-1",
+      turnId: "turn-1",
+      type: "turn",
+      v: 3,
+    });
+    emit({
+      durationMs: 50,
+      eventIndex: 6,
+      isError: false,
+      operationId: "op-1",
+      operationKind: "prompt",
+      result: { text: "PROMPT_DONE", usage },
+      runId: "run-1",
+      type: "operation",
+      usage,
+      v: 3,
+    });
+
+    const workflowSpan = findSpan("workflow:research");
+    const turnSpan = findSpan("llm:claude-test");
+    const toolSpan = findSpan("tool:lookup");
+    const operationSpan = findSpan("flue.prompt");
+
+    expect(workflowSpan?.args.event.input).toMatchObject({
+      metadata: { scenario: "flue-v1" },
+      topic: "native instrumentation",
+    });
+    expect(turnSpan?.args.event).toMatchObject({
+      input: [{ content: "Find native hooks", role: "user" }],
+      metadata: {
+        "flue.api": "responses",
+        "flue.model": "claude-test",
+        "flue.provider": "anthropic",
+        "flue.system_prompt": "Be exact",
+        provider: "anthropic",
+        reasoning: "medium",
+        tools: [{ name: "lookup" }],
+      },
+    });
+    expect(toolSpan?.log).toHaveBeenCalledWith(
+      expect.objectContaining({ output: { ok: true } }),
+    );
+    expect(turnSpan?.log).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: expect.objectContaining({
+          "flue.stop_reason": "stop",
+        }),
+        output: { content: [{ text: "done", type: "text" }] },
+      }),
+    );
+    expect(operationSpan?.log).toHaveBeenCalledWith(
+      expect.objectContaining({ output: "PROMPT_DONE" }),
+    );
   });
 
   it("flushes without awaiting when a run ends", () => {
@@ -646,7 +880,7 @@ describe("Flue observe instrumentation", () => {
     );
   });
 
-  it("makes workflow spans current until the run ends", () => {
+  it("does not need enterWith or ambient current in the observer-only workflow path", () => {
     const emit = observeEvents();
 
     emit({
@@ -655,11 +889,12 @@ describe("Flue observe instrumentation", () => {
       workflowName: "research",
     });
 
-    const workflowSpan = findSpan("workflow:research");
-    expect(mockCurrentParentSpan.current).toBe(workflowSpan);
+    expect("enterWith" in mockCurrentSpanStore).toBe(false);
+    expect(findSpan("workflow:research")).toBeDefined();
+    expect(mockCurrentParentSpan.current).toBeUndefined();
 
     const appSpan = mockStartSpan({ name: "app.phase" });
-    expect(appSpan.spanParents).toEqual([workflowSpan?.spanId]);
+    expect(appSpan.spanParents).toEqual([]);
 
     emit({
       durationMs: 1,
@@ -672,7 +907,7 @@ describe("Flue observe instrumentation", () => {
     expect(mockCurrentParentSpan.current).toBeUndefined();
   });
 
-  it("makes tool spans current until the tool call ends", () => {
+  it("does not make tool spans ambient current in the observer-only path", () => {
     const emit = observeEvents();
 
     emit({
@@ -695,12 +930,11 @@ describe("Flue observe instrumentation", () => {
       type: "tool_start",
     });
 
-    const workflowSpan = findSpan("workflow:research");
-    const toolSpan = findSpan("tool:lookup");
-    expect(mockCurrentParentSpan.current).toBe(toolSpan);
+    expect(findSpan("tool:lookup")).toBeDefined();
+    expect(mockCurrentParentSpan.current).toBeUndefined();
 
     const appSpan = mockStartSpan({ name: "app.tool-phase" });
-    expect(appSpan.spanParents).toEqual([toolSpan?.spanId]);
+    expect(appSpan.spanParents).toEqual([]);
 
     emit({
       durationMs: 1,
@@ -713,7 +947,135 @@ describe("Flue observe instrumentation", () => {
       type: "tool_call",
     });
 
-    expect(mockCurrentParentSpan.current).toBe(workflowSpan);
+    expect(mockCurrentParentSpan.current).toBeUndefined();
+  });
+
+  it("makes the workflow span current during Flue workflow execution", async () => {
+    const emit = observeEvents();
+
+    emit(
+      {
+        input: { topic: "flue" },
+        runId: "run-1",
+        type: "run_start",
+        workflowName: "research",
+      },
+      { id: "ctx-1", runId: "run-1" },
+    );
+    const workflowSpan = findSpan("workflow:research");
+    const appSpan = await braintrustFlueObserver.interceptor(
+      {
+        phase: "start",
+        runId: "run-1",
+        startedAt: "2026-05-27T05:12:31.000Z",
+        type: "workflow",
+        workflowName: "research",
+      },
+      { eventContext: { id: "ctx-1", runId: "run-1" } },
+      async () => mockStartSpan({ name: "app.phase" }),
+    );
+
+    expect(appSpan.spanParents).toEqual([workflowSpan?.spanId]);
+    expect(mockCurrentParentSpan.current).toBeUndefined();
+    expect(mockCurrentSpanStore.run).toHaveBeenCalledWith(
+      workflowSpan,
+      expect.any(Function),
+    );
+  });
+
+  it("makes Flue tool spans current during tool execution", async () => {
+    const emit = observeEvents();
+
+    emit({
+      runId: "run-1",
+      type: "run_start",
+      workflowName: "research",
+    });
+    emit({
+      operationId: "op-prompt",
+      operationKind: "prompt",
+      runId: "run-1",
+      type: "operation_start",
+    });
+    emit({
+      args: { query: "flue" },
+      operationId: "op-prompt",
+      runId: "run-1",
+      toolCallId: "tool-1",
+      toolName: "lookup",
+      type: "tool_start",
+    });
+
+    const toolSpan = findSpan("tool:lookup");
+    const appSpan = await braintrustFlueObserver.interceptor(
+      { toolCallId: "tool-1", toolName: "lookup", type: "tool" },
+      { operationId: "op-prompt", runId: "run-1" },
+      async () => mockStartSpan({ name: "app.tool-phase" }),
+    );
+
+    expect(appSpan.spanParents).toEqual([toolSpan?.spanId]);
+    expect(mockCurrentParentSpan.current).toBeUndefined();
+    expect(mockCurrentSpanStore.run).toHaveBeenCalledWith(
+      toolSpan,
+      expect.any(Function),
+    );
+  });
+
+  it("makes agent, model, and task spans current during native execution", async () => {
+    const emit = observeEvents();
+
+    emit({
+      runId: "run-1",
+      type: "run_start",
+      workflowName: "research",
+    });
+    emit({
+      operationId: "op-prompt",
+      operationKind: "prompt",
+      runId: "run-1",
+      type: "operation_start",
+    });
+    emit({
+      input: { messages: [{ content: "hello", role: "user" }] },
+      model: "claude-test",
+      operationId: "op-prompt",
+      provider: "anthropic",
+      purpose: "agent",
+      runId: "run-1",
+      turnId: "turn-1",
+      type: "turn_request",
+    });
+    emit({
+      operationId: "op-prompt",
+      prompt: "Reply with TASK_DONE",
+      runId: "run-1",
+      taskId: "task-1",
+      type: "task_start",
+    });
+
+    const operationSpan = findSpan("flue.prompt");
+    const turnSpan = findSpan("llm:claude-test");
+    const taskSpan = findSpan("flue.task");
+    const agentAppSpan = await braintrustFlueObserver.interceptor(
+      { operationId: "op-prompt", operationKind: "prompt", type: "agent" },
+      { operationId: "op-prompt", runId: "run-1" },
+      async () => mockStartSpan({ name: "app.agent-phase" }),
+    );
+    const modelAppSpan = await braintrustFlueObserver.interceptor(
+      { turnId: "turn-1", type: "model" },
+      { operationId: "op-prompt", runId: "run-1", turnId: "turn-1" },
+      async () => mockStartSpan({ name: "app.model-phase" }),
+    );
+    const taskAppSpan = await braintrustFlueObserver.interceptor(
+      { taskId: "task-1", type: "task" },
+      { operationId: "op-prompt", runId: "run-1", taskId: "task-1" },
+      async () => mockStartSpan({ name: "app.task-phase" }),
+    );
+
+    expect(agentAppSpan.spanParents).toEqual([operationSpan?.spanId]);
+    expect(modelAppSpan.spanParents).toEqual([turnSpan?.spanId]);
+    expect(taskAppSpan.spanParents).toEqual([taskSpan?.spanId]);
+    expect(mockCurrentParentSpan.current).toBeUndefined();
   });
 
   it("subscribes transformed Flue contexts for auto instrumentation", () => {
@@ -731,9 +1093,11 @@ describe("Flue observe instrumentation", () => {
 
     plugin.enable();
     expect(mockNewTracingChannel).toHaveBeenCalledWith(
-      "orchestrion:@flue/runtime:createFlueContext",
+      CREATE_CONTEXT_CHANNEL_NAME,
     );
-    expect(mockTracingChannel.subscribe).toHaveBeenCalledTimes(1);
+    expect(
+      tracingChannel(CREATE_CONTEXT_CHANNEL_NAME).subscribe,
+    ).toHaveBeenCalledTimes(1);
 
     emitCreateContextEnd(context);
 
@@ -761,7 +1125,9 @@ describe("Flue observe instrumentation", () => {
 
     plugin.disable();
 
-    expect(mockTracingChannel.unsubscribe).toHaveBeenCalledTimes(1);
+    expect(
+      tracingChannel(CREATE_CONTEXT_CHANNEL_NAME).unsubscribe,
+    ).toHaveBeenCalledTimes(1);
     expect(unsubscribeContext).toHaveBeenCalledTimes(1);
   });
 
@@ -782,15 +1148,21 @@ describe("Flue observe instrumentation", () => {
     emitCreateContextEnd(context);
     emitCreateContextEnd(context);
 
-    expect(mockTracingChannel.subscribe).toHaveBeenCalledTimes(1);
+    expect(
+      tracingChannel(CREATE_CONTEXT_CHANNEL_NAME).subscribe,
+    ).toHaveBeenCalledTimes(1);
     expect(context.subscribeEvent).toHaveBeenCalledTimes(1);
 
     first.disable();
-    expect(mockTracingChannel.unsubscribe).not.toHaveBeenCalled();
+    expect(
+      tracingChannel(CREATE_CONTEXT_CHANNEL_NAME).unsubscribe,
+    ).not.toHaveBeenCalled();
     expect(unsubscribeContext).not.toHaveBeenCalled();
 
     second.disable();
-    expect(mockTracingChannel.unsubscribe).toHaveBeenCalledTimes(1);
+    expect(
+      tracingChannel(CREATE_CONTEXT_CHANNEL_NAME).unsubscribe,
+    ).toHaveBeenCalledTimes(1);
 
     contextSubscribers[0]?.({
       runId: "run-after-disable",
@@ -837,9 +1209,18 @@ describe("Flue observe instrumentation", () => {
   }
 
   function emitCreateContextEnd(result: unknown) {
-    for (const handlers of mockChannelHandlers) {
+    for (const handlers of tracingChannel(CREATE_CONTEXT_CHANNEL_NAME)
+      .__handlers) {
       handlers.end?.({ result });
     }
+  }
+
+  function tracingChannel(channelName: string) {
+    const channel = mockTracingChannels.get(channelName);
+    if (!channel) {
+      throw new Error(`Missing mocked tracing channel: ${channelName}`);
+    }
+    return channel;
   }
 
   function findSpan(name: string) {
