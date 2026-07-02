@@ -1,6 +1,5 @@
 import assert from "node:assert";
 import { register } from "node:module";
-import { fileURLToPath } from "node:url";
 import {
   Hook,
   createAddHookMessageChannel,
@@ -13,7 +12,7 @@ const hookUrl = new URL(
 const { addHookMessagePort, registerOptions, waitForAllMessagesAcknowledged } =
   createAddHookMessageChannel();
 
-register(fileURLToPath(hookUrl), import.meta.url, registerOptions);
+register(hookUrl.href, import.meta.url, registerOptions);
 
 globalThis.__braintrustIitmAsyncHookCalls = 0;
 const hook = new Hook(["hook-target", "cjs-hook-target"], (exports, name) => {
