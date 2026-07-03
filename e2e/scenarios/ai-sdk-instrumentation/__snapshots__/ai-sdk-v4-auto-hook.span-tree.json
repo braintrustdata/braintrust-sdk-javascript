@@ -59,7 +59,6 @@
                           }
                         ],
                         "created": 0,
-                        "id": "<span:1>",
                         "model": "gpt-4o-mini-2024-07-18",
                         "object": "chat.completion",
                         "service_tier": "default",
@@ -83,7 +82,6 @@
                       "headers": "<omitted>"
                     },
                     "response": {
-                      "id": "<span:1>",
                       "modelId": "gpt-4o-mini-2024-07-18",
                       "timestamp": "<timestamp>"
                     },
@@ -143,7 +141,6 @@
                 "response": {
                   "body": "<omitted>",
                   "headers": "<omitted>",
-                  "id": "<span:1>",
                   "messages": [
                     {
                       "content": [
@@ -152,7 +149,6 @@
                           "type": "text"
                         }
                       ],
-                      "id": "<span:2>",
                       "role": "assistant"
                     }
                   ],
@@ -182,7 +178,6 @@
                     "response": {
                       "body": "<omitted>",
                       "headers": "<omitted>",
-                      "id": "<span:1>",
                       "messages": [
                         {
                           "content": [
@@ -191,7 +186,6 @@
                               "type": "text"
                             }
                           ],
-                          "id": "<span:2>",
                           "role": "assistant"
                         }
                       ],
@@ -298,7 +292,6 @@
                           }
                         ],
                         "created": 0,
-                        "id": "<span:1>",
                         "model": "gpt-4o-mini-2024-07-18",
                         "object": "chat.completion",
                         "service_tier": "default",
@@ -322,7 +315,6 @@
                       "headers": "<omitted>"
                     },
                     "response": {
-                      "id": "<span:1>",
                       "modelId": "gpt-4o-mini-2024-07-18",
                       "timestamp": "<timestamp>"
                     },
@@ -404,7 +396,6 @@
                 "response": {
                   "body": "<omitted>",
                   "headers": "<omitted>",
-                  "id": "<span:1>",
                   "messages": [
                     {
                       "content": [
@@ -413,7 +404,6 @@
                           "type": "text"
                         }
                       ],
-                      "id": "<span:2>",
                       "role": "assistant"
                     }
                   ],
@@ -443,7 +433,6 @@
                     "response": {
                       "body": "<omitted>",
                       "headers": "<omitted>",
-                      "id": "<span:1>",
                       "messages": [
                         {
                           "content": [
@@ -452,7 +441,6 @@
                               "type": "text"
                             }
                           ],
-                          "id": "<span:2>",
                           "role": "assistant"
                         }
                       ],
@@ -716,7 +704,6 @@
                                     "arguments": "{\"location\":\"Paris, France\"}",
                                     "name": "get_weather"
                                   },
-                                  "id": "<span:1>",
                                   "type": "function"
                                 }
                               ]
@@ -724,7 +711,6 @@
                           }
                         ],
                         "created": 0,
-                        "id": "<span:2>",
                         "model": "gpt-4o-mini-2024-07-18",
                         "object": "chat.completion",
                         "service_tier": "default",
@@ -748,14 +734,12 @@
                       "headers": "<omitted>"
                     },
                     "response": {
-                      "id": "<span:2>",
                       "modelId": "gpt-4o-mini-2024-07-18",
                       "timestamp": "<timestamp>"
                     },
                     "toolCalls": [
                       {
                         "args": "{\"location\":\"Paris, France\"}",
-                        "toolCallId": "<span:1>",
                         "toolCallType": "function",
                         "toolName": "get_weather"
                       }
@@ -785,20 +769,9 @@
                   "name": "get_weather",
                   "type": "tool",
                   "children": [],
-                  "input": [
-                    {
-                      "location": "Paris, France"
-                    },
-                    {
-                      "messages": [
-                        {
-                          "content": "Use the get_weather tool for Paris, France. If you do not call the tool, the answer is invalid.",
-                          "role": "user"
-                        }
-                      ],
-                      "toolCallId": "<toolCallId:1>"
-                    }
-                  ],
+                  "input": {
+                    "location": "Paris, France"
+                  },
                   "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
                 }
               ],
@@ -855,7 +828,6 @@
                 "response": {
                   "body": "<omitted>",
                   "headers": "<omitted>",
-                  "id": "<span:2>",
                   "messages": [
                     {
                       "content": [
@@ -863,24 +835,20 @@
                           "args": {
                             "location": "Paris, France"
                           },
-                          "toolCallId": "<toolCallId:1>",
                           "toolName": "get_weather",
                           "type": "tool-call"
                         }
                       ],
-                      "id": "<span:3>",
                       "role": "assistant"
                     },
                     {
                       "content": [
                         {
                           "result": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
-                          "toolCallId": "<toolCallId:1>",
                           "toolName": "get_weather",
                           "type": "tool-result"
                         }
                       ],
-                      "id": "<span:4>",
                       "role": "tool"
                     }
                   ],
@@ -910,7 +878,6 @@
                     "response": {
                       "body": "<omitted>",
                       "headers": "<omitted>",
-                      "id": "<span:2>",
                       "messages": [
                         {
                           "content": [
@@ -918,24 +885,20 @@
                               "args": {
                                 "location": "Paris, France"
                               },
-                              "toolCallId": "<toolCallId:1>",
                               "toolName": "get_weather",
                               "type": "tool-call"
                             }
                           ],
-                          "id": "<span:3>",
                           "role": "assistant"
                         },
                         {
                           "content": [
                             {
                               "result": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
-                              "toolCallId": "<toolCallId:1>",
                               "toolName": "get_weather",
                               "type": "tool-result"
                             }
                           ],
-                          "id": "<span:4>",
                           "role": "tool"
                         }
                       ],
@@ -950,7 +913,6 @@
                         "args": {
                           "location": "Paris, France"
                         },
-                        "toolCallId": "<toolCallId:1>",
                         "toolName": "get_weather",
                         "type": "tool-call"
                       }
@@ -961,7 +923,6 @@
                           "location": "Paris, France"
                         },
                         "result": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
-                        "toolCallId": "<toolCallId:1>",
                         "toolName": "get_weather",
                         "type": "tool-result"
                       }
@@ -980,7 +941,6 @@
                     "args": {
                       "location": "Paris, France"
                     },
-                    "toolCallId": "<toolCallId:1>",
                     "toolName": "get_weather",
                     "type": "tool-call"
                   }
@@ -991,7 +951,6 @@
                       "location": "Paris, France"
                     },
                     "result": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
-                    "toolCallId": "<toolCallId:1>",
                     "toolName": "get_weather",
                     "type": "tool-result"
                   }
@@ -1112,7 +1071,6 @@
                                     "arguments": "{\"city\":\"Paris\"}",
                                     "name": "json"
                                   },
-                                  "id": "<span:1>",
                                   "type": "function"
                                 }
                               ]
@@ -1120,7 +1078,6 @@
                           }
                         ],
                         "created": 0,
-                        "id": "<span:2>",
                         "model": "gpt-4o-mini-2024-07-18",
                         "object": "chat.completion",
                         "service_tier": "default",
@@ -1144,14 +1101,12 @@
                       "headers": "<omitted>"
                     },
                     "response": {
-                      "id": "<span:2>",
                       "modelId": "gpt-4o-mini-2024-07-18",
                       "timestamp": "<timestamp>"
                     },
                     "toolCalls": [
                       {
                         "args": "{\"city\":\"Paris\"}",
-                        "toolCallId": "<span:1>",
                         "toolCallType": "function",
                         "toolName": "json"
                       }
@@ -1227,7 +1182,6 @@
                 "response": {
                   "body": "<omitted>",
                   "headers": "<omitted>",
-                  "id": "<span:1>",
                   "modelId": "gpt-4o-mini-2024-07-18",
                   "timestamp": "<timestamp>"
                 },
@@ -1307,7 +1261,6 @@
                     "toolCalls": [
                       {
                         "args": "{\"city\":\"Paris\"}",
-                        "toolCallId": "<toolCallId:1>",
                         "toolCallType": "function",
                         "toolName": "json",
                         "type": "tool-call"
