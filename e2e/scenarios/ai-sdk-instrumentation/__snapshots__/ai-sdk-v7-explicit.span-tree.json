@@ -2892,7 +2892,8 @@
                     "completion_tokens": 8,
                     "prompt_cached_tokens": 0,
                     "prompt_tokens": 84,
-                    "reasoning_tokens": 0
+                    "reasoning_tokens": 0,
+                    "tokens": 92
                   }
                 },
                 {
@@ -3046,7 +3047,8 @@
                     "completion_tokens": 8,
                     "prompt_cached_tokens": 0,
                     "prompt_tokens": 123,
-                    "reasoning_tokens": 0
+                    "reasoning_tokens": 0,
+                    "tokens": 131
                   }
                 },
                 {
@@ -3231,7 +3233,8 @@
                     "completion_tokens": 8,
                     "prompt_cached_tokens": 0,
                     "prompt_tokens": 162,
-                    "reasoning_tokens": 0
+                    "reasoning_tokens": 0,
+                    "tokens": 170
                   }
                 },
                 {
@@ -3447,7 +3450,8 @@
                     "completion_tokens": 8,
                     "prompt_cached_tokens": 0,
                     "prompt_tokens": 201,
-                    "reasoning_tokens": 0
+                    "reasoning_tokens": 0,
+                    "tokens": 209
                   }
                 },
                 {

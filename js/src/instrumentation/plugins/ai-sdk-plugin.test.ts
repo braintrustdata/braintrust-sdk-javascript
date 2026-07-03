@@ -808,6 +808,94 @@ describe("AI SDK utility functions", () => {
       expect(metrics).toEqual({
         prompt_tokens: 100,
         completion_tokens: 50,
+        tokens: 150,
+      });
+    });
+
+    it("should synthesize total tokens from input and output tokens", () => {
+      const result = {
+        usage: {
+          inputTokens: 10,
+          outputTokens: 2,
+        },
+      };
+      const metrics = extractTokenMetrics(result);
+      expect(metrics).toEqual({
+        prompt_tokens: 10,
+        completion_tokens: 2,
+        tokens: 12,
+      });
+    });
+
+    it("should synthesize total tokens from prompt and completion tokens", () => {
+      const result = {
+        usage: {
+          promptTokens: 10,
+          completionTokens: 2,
+        },
+      };
+      const metrics = extractTokenMetrics(result);
+      expect(metrics).toEqual({
+        prompt_tokens: 10,
+        completion_tokens: 2,
+        tokens: 12,
+      });
+    });
+
+    it("should prefer explicit total tokens over synthesized total", () => {
+      const result = {
+        usage: {
+          promptTokens: 10,
+          completionTokens: 2,
+          totalTokens: 99,
+        },
+      };
+      const metrics = extractTokenMetrics(result);
+      expect(metrics).toEqual({
+        prompt_tokens: 10,
+        completion_tokens: 2,
+        tokens: 99,
+      });
+    });
+
+    it("should synthesize total tokens for OpenAI-style usage", () => {
+      const result = {
+        usage: {
+          prompt_tokens: 10,
+          completion_tokens: 2,
+        },
+      };
+      const metrics = extractTokenMetrics(result);
+      expect(metrics).toEqual({
+        prompt_tokens: 10,
+        completion_tokens: 2,
+        tokens: 12,
+      });
+    });
+
+    it("should synthesize total tokens for Anthropic-style usage", () => {
+      const result = {
+        usage: {
+          inputTokens: 10,
+          inputTokenDetails: {
+            cacheWriteTokens: 3,
+          },
+          outputTokens: 2,
+        },
+        providerMetadata: {
+          anthropic: {
+            usage: {
+              cache_creation_input_tokens: 3,
+            },
+          },
+        },
+      };
+      const metrics = extractTokenMetrics(result);
+      expect(metrics).toEqual({
+        prompt_tokens: 10,
+        completion_tokens: 2,
+        tokens: 12,
+        prompt_cache_creation_tokens: 3,
       });
     });
 
@@ -827,6 +915,7 @@ describe("AI SDK utility functions", () => {
       expect(metrics).toEqual({
         prompt_tokens: 10,
         completion_tokens: 20,
+        tokens: 30,
         estimated_cost: 0.05,
       });
     });
@@ -858,6 +947,7 @@ describe("AI SDK utility functions", () => {
       expect(metrics).toEqual({
         prompt_tokens: 10,
         completion_tokens: 20,
+        tokens: 30,
         estimated_cost: 0.05,
       });
     });
@@ -886,6 +976,7 @@ describe("AI SDK utility functions", () => {
       expect(metrics).toEqual({
         prompt_tokens: 100,
         completion_tokens: 20,
+        tokens: 120,
         prompt_cached_tokens: 0,
         prompt_cache_creation_tokens: 80,
       });
@@ -1647,6 +1738,8 @@ function extractTokenMetrics(result: any): Record<string, number> {
   );
   if (totalTokens !== undefined) {
     metrics.tokens = totalTokens;
+  } else if (promptTokens !== undefined && completionTokens !== undefined) {
+    metrics.tokens = promptTokens + completionTokens;
   }
 
   const promptCachedTokens = firstNumber(

@@ -31,8 +31,9 @@ class TestObjectFetcher extends ObjectFetcher<TestRecord> {
   constructor(
     private readonly postMock: ReturnType<typeof createPostMock>,
     internalBtql?: Record<string, unknown>,
+    brainstoreRealtime = true,
   ) {
-    super("dataset", undefined, undefined, internalBtql);
+    super("dataset", undefined, undefined, internalBtql, brainstoreRealtime);
   }
 
   public get id(): Promise<string> {
@@ -66,6 +67,23 @@ function getBtqlQuery(
 }
 
 describe("ObjectFetcher internal BTQL limit handling", () => {
+  test.each([
+    ["default", undefined, true],
+    ["disabled", false, false],
+  ])(
+    "sets brainstore realtime to %s",
+    async (_name, inputFlag, expectedFlag) => {
+      const postMock = createPostMock();
+      const fetcher = new TestObjectFetcher(postMock, undefined, inputFlag);
+
+      await triggerFetch(fetcher);
+
+      expect(postMock.mock.calls[0][1]).toMatchObject({
+        brainstore_realtime: expectedFlag,
+      });
+    },
+  );
+
   test("preserves custom _internal_btql limit instead of default batch size", async () => {
     const postMock = createPostMock();
     const fetcher = new TestObjectFetcher(postMock, {

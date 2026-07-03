@@ -1,8 +1,8 @@
 /**
  * ORCHESTRION TRANSFORMATION TESTS
  *
- * These tests verify that @apm-js-collab/code-transformer (orchestrion)
- * correctly transforms code to inject tracingChannel calls at build time.
+ * These tests verify that the internal Orchestrion-JS fork correctly
+ * transforms code to inject tracingChannel calls at build time.
  *
  * IMPORTANT: Tests use a mock OpenAI package structure in test/fixtures/node_modules/openai.
  * IMPORTANT: dc-browser is now an npm package dependency.
@@ -14,11 +14,49 @@ import { build as viteBuild } from "vite";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  create,
+  type InstrumentationConfig,
+} from "../../src/auto-instrumentations/orchestrion-js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const fixturesDir = path.join(__dirname, "fixtures");
 const outputDir = path.join(__dirname, "output-transformation");
 const nodeModulesDir = path.join(fixturesDir, "node_modules");
+
+function testConfig(
+  functionQuery: InstrumentationConfig["functionQuery"],
+  astQuery?: string,
+): InstrumentationConfig {
+  const config: InstrumentationConfig = {
+    channelName: "test",
+    module: {
+      name: "test-sdk",
+      versionRange: ">=1.0.0",
+      filePath: "index.mjs",
+    },
+    functionQuery,
+  };
+
+  if (astQuery) {
+    config.astQuery = astQuery;
+  }
+
+  return config;
+}
+
+function transformTestCode(
+  functionQuery: InstrumentationConfig["functionQuery"],
+  code: string,
+  moduleType: "esm" | "cjs" = "esm",
+  astQuery?: string,
+) {
+  const matcher = create([testConfig(functionQuery, astQuery)]);
+  const transformer = matcher.getTransformer("test-sdk", "1.0.0", "index.mjs");
+
+  expect(transformer).toBeDefined();
+  return transformer!.transform(code, moduleType);
+}
 
 describe("Orchestrion Transformation Tests", () => {
   beforeAll(() => {
@@ -35,6 +73,205 @@ describe("Orchestrion Transformation Tests", () => {
     if (fs.existsSync(outputDir)) {
       fs.rmSync(outputDir, { recursive: true, force: true });
     }
+  });
+
+  describe("internal transformer query surface", () => {
+    it("supports class method configs", () => {
+      const result = transformTestCode(
+        { className: "Client", methodName: "create", kind: "Async" },
+        `
+          export class Client {
+            async create(input) {
+              return input;
+            }
+          }
+        `,
+      );
+
+      expect(result.code).toContain("orchestrion:test-sdk:test");
+      expect(result.code).toContain("tr_ch_apm$test.start.runStores");
+    });
+
+    it("supports method-only configs", () => {
+      const result = transformTestCode(
+        { methodName: "create", kind: "Async" },
+        `
+          export const client = {
+            create: async function (input) {
+              return input;
+            },
+          };
+        `,
+      );
+
+      expect(result.code).toContain("orchestrion:test-sdk:test");
+      expect(result.code).toContain("tr_ch_apm$test.start.runStores");
+    });
+
+    it("supports function declaration configs", () => {
+      const result = transformTestCode(
+        { functionName: "query", kind: "Sync" },
+        `
+          export function query(input) {
+            return input;
+          }
+        `,
+      );
+
+      expect(result.code).toContain("orchestrion:test-sdk:test");
+      expect(result.code).toContain("tr_ch_apm$test.start.runStores");
+    });
+
+    it("supports export-alias function configs", () => {
+      const result = transformTestCode(
+        { functionName: "query", kind: "Sync", isExportAlias: true },
+        `
+          function queryImpl(input) {
+            return input;
+          }
+          export { queryImpl as query };
+        `,
+      );
+
+      expect(result.code).toContain("orchestrion:test-sdk:test");
+      expect(result.code).toContain("tr_ch_apm$test.start.runStores");
+    });
+
+    it("supports export-alias class method configs", () => {
+      const result = transformTestCode(
+        {
+          className: "Client",
+          methodName: "create",
+          kind: "Async",
+          isExportAlias: true,
+        },
+        `
+          class Impl {
+            async create(input) {
+              return input;
+            }
+          }
+          export { Impl as Client };
+        `,
+      );
+
+      expect(result.code).toContain("orchestrion:test-sdk:test");
+      expect(result.code).toContain("tr_ch_apm$test.start.runStores");
+    });
+
+    it("supports private class method configs", () => {
+      const result = transformTestCode(
+        { className: "Client", privateMethodName: "create", kind: "Async" },
+        `
+          class Client {
+            async #create(input) {
+              return input;
+            }
+
+            async run(input) {
+              return this.#create(input);
+            }
+          }
+          module.exports = Client;
+        `,
+        "cjs",
+      );
+
+      expect(result.code).toContain("orchestrion:test-sdk:test");
+      expect(result.code).toContain("tr_ch_apm$test.start.runStores");
+    });
+
+    it("supports object/property configs", () => {
+      const result = transformTestCode(
+        { objectName: "this", propertyName: "create", kind: "Async" },
+        `
+          function Client() {
+            this.create = async () => {
+              return "ok";
+            };
+          }
+          module.exports = Client;
+        `,
+        "cjs",
+      );
+
+      expect(result.code).toContain("orchestrion:test-sdk:test");
+      expect(result.code).toContain("tr_ch_apm$test.start.runStores");
+    });
+
+    it("supports callback configs", () => {
+      const result = transformTestCode(
+        { functionName: "request", kind: "Callback" },
+        `
+          export function request(input, callback) {
+            callback(null, input);
+          }
+        `,
+      );
+
+      expect(result.code).toContain("orchestrion:test-sdk:test");
+      expect(result.code).toContain("Array.prototype.splice.call");
+      expect(result.code).toContain("tr_ch_apm$test.asyncStart.runStores");
+    });
+
+    it("supports raw AST query configs", () => {
+      const result = transformTestCode(
+        { kind: "Async" },
+        `
+          export async function request(input) {
+            return input;
+          }
+        `,
+        "esm",
+        'FunctionDeclaration[id.name="request"][async]',
+      );
+
+      expect(result.code).toContain("orchestrion:test-sdk:test");
+      expect(result.code).toContain("tr_ch_apm$test.start.runStores");
+    });
+
+    it("supports index selection", () => {
+      const result = transformTestCode(
+        { methodName: "create", kind: "Async", index: 1 },
+        `
+          export const first = {
+            create: async function firstCreate() {
+              return "first";
+            },
+          };
+          export const second = {
+            create: async function secondCreate() {
+              return "second";
+            },
+          };
+        `,
+      );
+
+      const wrapperCount = result.code.match(
+        /tr_ch_apm\$test\.start\.runStores/g,
+      );
+      expect(wrapperCount).toHaveLength(1);
+      expect(result.code.indexOf("secondCreate")).toBeLessThan(
+        result.code.indexOf("tr_ch_apm$test.start.runStores"),
+      );
+    });
+
+    it("generates source maps", () => {
+      const result = transformTestCode(
+        { functionName: "query", kind: "Sync" },
+        `
+          export function query(input) {
+            return input;
+          }
+        `,
+      );
+
+      expect(result.map).toBeDefined();
+      expect(JSON.parse(result.map!)).toMatchObject({
+        version: 3,
+        file: "test-sdk/index.mjs",
+      });
+    });
   });
 
   describe("esbuild", () => {

@@ -5,8 +5,8 @@
  * InstrumentationBase pattern - core infrastructure lives here, but individual
  * instrumentations can be separate packages.
  *
- * Note: Orchestrion-specific types (InstrumentationConfig, ModuleMetadata, FunctionQuery)
- * should be imported directly from @apm-js-collab/code-transformer.
+ * Note: auto-instrumentation config types are exposed from the Braintrust
+ * bundler subpaths, such as `braintrust/vite`.
  */
 
 export { BasePlugin } from "./plugin";

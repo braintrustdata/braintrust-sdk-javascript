@@ -639,6 +639,18 @@ export type SerializedBraintrustState = z.infer<typeof loginSchema>;
 
 let stateNonce = 0;
 
+const V1_PROXY_SUFFIX = "/v1/proxy";
+
+// proxyUrl may point at the universal proxy (`{apiUrl}/v1/proxy`) for
+// EU/self-hosted orgs, but proxyConn only targets Braintrust API endpoints
+// (e.g. function/invoke, function/sandbox-list) served at the API host root.
+// Drop the suffix so these requests resolve on all data planes.
+function normalizeProxyConnUrl(proxyUrl: string): string {
+  return proxyUrl.endsWith(V1_PROXY_SUFFIX)
+    ? proxyUrl.slice(0, proxyUrl.length - V1_PROXY_SUFFIX.length)
+    : proxyUrl;
+}
+
 export class BraintrustState {
   public id: string;
   public currentExperiment: Experiment | undefined;
@@ -969,7 +981,10 @@ export class BraintrustState {
       if (!this.proxyUrl) {
         throw new Error("Must initialize proxyUrl before requesting proxyConn");
       }
-      this._proxyConn = new HTTPConnection(this.proxyUrl, this.fetch);
+      this._proxyConn = new HTTPConnection(
+        normalizeProxyConnUrl(this.proxyUrl),
+        this.fetch,
+      );
     }
     return this._proxyConn!;
   }
@@ -3903,6 +3918,13 @@ type UseOutputOption<IsLegacyDataset extends boolean> = {
   useOutput?: IsLegacyDataset;
 };
 
+declare global {
+  // Set by the bt eval runner when CLI-controlled BTQL should be pushed down
+  // into dataset-backed evals.
+  // eslint-disable-next-line no-var
+  var __bt_eval_internal_btql: Record<string, unknown> | undefined;
+}
+
 export type InitDatasetOptions<IsLegacyDataset extends boolean> =
   FullLoginOptions & {
     dataset?: string;
@@ -4214,6 +4236,16 @@ export function initDataset<
   const normalizedEnvironment = selection.environment;
   const normalizedSnapshotName = selection.snapshotName;
 
+  const cliInternalBtql = globalThis.__bt_eval_internal_btql;
+  const internalBtql =
+    cliInternalBtql === undefined
+      ? _internal_btql
+      : _internal_btql === undefined
+        ? cliInternalBtql
+        : isObject(_internal_btql)
+          ? { ...cliInternalBtql, ..._internal_btql }
+          : _internal_btql;
+
   const state = stateArg ?? _globalState;
 
   const lazyMetadata: LazyValue<ProjectDatasetMetadata> = new LazyValue(
@@ -4279,7 +4311,7 @@ export function initDataset<
     lazyMetadata,
     typeof resolvedVersion === "string" ? resolvedVersion : undefined,
     legacy,
-    _internal_btql,
+    internalBtql,
     resolvedVersion instanceof LazyValue ||
       normalizedEnvironment !== undefined ||
       normalizedSnapshotName !== undefined
@@ -6076,6 +6108,7 @@ export class ObjectFetcher<RecordType> implements AsyncIterable<
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private mutateRecord?: (r: any) => WithTransactionId<RecordType>,
     private _internal_btql?: Record<string, unknown>,
+    private _internalBrainstoreRealtime = true,
   ) {}
 
   public get id(): Promise<string> {
@@ -6146,7 +6179,7 @@ export class ObjectFetcher<RecordType> implements AsyncIterable<
             ...internalBtqlWithoutReservedQueryKeys,
           },
           use_columnstore: false,
-          brainstore_realtime: true,
+          brainstore_realtime: this._internalBrainstoreRealtime,
           query_source: `js_sdk_object_fetcher_${this.objectType}`,
           ...(this.pinnedVersion !== undefined
             ? {

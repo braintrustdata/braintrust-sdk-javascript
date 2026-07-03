@@ -4,6 +4,7 @@ import {
   unplugin,
   type LegacyBundlerPluginOptions,
 } from "./plugin";
+export type { InstrumentationConfig } from "../orchestrion-js";
 
 export function braintrustEsbuildPlugin(
   options: BundlerPluginOptions = {},

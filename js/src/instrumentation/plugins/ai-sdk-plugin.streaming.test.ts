@@ -48,6 +48,178 @@ describe("AI SDK streaming instrumentation", () => {
     _exportsForTestingOnly.clearTestBackgroundLogger();
   });
 
+  test("generateText child span logs missing usage diagnostic when output has no usage", async () => {
+    expect(await backgroundLogger.drain()).toHaveLength(0);
+
+    const model = {
+      specificationVersion: "v3",
+      provider: "mock-provider",
+      modelId: "mock-model",
+      supportedUrls: {},
+      doGenerate: async () => ({
+        text: "hello",
+        finishReason: "stop",
+        usage: null,
+      }),
+      doStream: async () => {
+        throw new Error("doStream should not be called");
+      },
+    } as any;
+
+    const params = {
+      model,
+      prompt: "Say hello.",
+      maxOutputTokens: 16,
+    };
+    const result = (await aiSDKChannels.generateText.tracePromise(
+      async () => params.model.doGenerate(params),
+      {
+        arguments: [params],
+      } as any,
+    )) as any;
+
+    expect(result.text).toBe("hello");
+
+    const spans = (await backgroundLogger.drain()) as any[];
+    const doGenerateSpan = spans.find(
+      (s) => s?.span_attributes?.name === "doGenerate",
+    );
+
+    expect(doGenerateSpan?.output?.text).toBe("hello");
+    expect(doGenerateSpan?.metrics?.prompt_tokens).toBeUndefined();
+    expect(doGenerateSpan?.metrics?.completion_tokens).toBeUndefined();
+    expect(doGenerateSpan?.metrics?.tokens).toBeUndefined();
+    expect(doGenerateSpan?.metadata?.usage_unavailable_reason).toBe(
+      "ai_sdk_result_missing_usage",
+    );
+  });
+
+  test("streamText child span logs missing usage diagnostic when finish usage is empty", async () => {
+    expect(await backgroundLogger.drain()).toHaveLength(0);
+
+    const model = {
+      specificationVersion: "v3",
+      provider: "mock-provider",
+      modelId: "mock-model",
+      supportedUrls: {},
+      doGenerate: async () => {
+        throw new Error("doGenerate should not be called");
+      },
+      doStream: async () => ({
+        stream: new ReadableStream({
+          start(controller) {
+            controller.enqueue({
+              type: "text-delta",
+              textDelta: "hello",
+            });
+            controller.enqueue({
+              type: "finish",
+              finishReason: "stop",
+              usage: {},
+            });
+            controller.close();
+          },
+        }),
+        warnings: [],
+      }),
+    } as any;
+
+    const params = {
+      model,
+      prompt: "Say hello.",
+      maxOutputTokens: 16,
+    };
+    const result = (await aiSDKChannels.streamText.tracePromise(
+      async () => params.model.doStream(params),
+      {
+        arguments: [params],
+      } as any,
+    )) as any;
+
+    for await (const _chunk of result.stream) {
+      // Drain stream so the TransformStream flush and finish handlers run.
+    }
+
+    const spans = (await backgroundLogger.drain()) as any[];
+    const doStreamSpan = spans.find(
+      (s) => s?.span_attributes?.name === "doStream",
+    );
+
+    expect(doStreamSpan?.output?.text).toBe("hello");
+    expect(doStreamSpan?.output?.finishReason).toBe("stop");
+    expect(doStreamSpan?.metrics?.prompt_tokens).toBeUndefined();
+    expect(doStreamSpan?.metrics?.completion_tokens).toBeUndefined();
+    expect(doStreamSpan?.metrics?.tokens).toBeUndefined();
+    expect(doStreamSpan?.metadata?.usage_unavailable_reason).toBe(
+      "ai_sdk_result_missing_usage",
+    );
+  });
+
+  test("streamText child span logs accumulated output when stream ends without finish chunk", async () => {
+    expect(await backgroundLogger.drain()).toHaveLength(0);
+
+    const model = {
+      specificationVersion: "v3",
+      provider: "mock-provider",
+      modelId: "mock-model",
+      supportedUrls: {},
+      doGenerate: async () => {
+        throw new Error("doGenerate should not be called");
+      },
+      doStream: async () => ({
+        stream: new ReadableStream({
+          start(controller) {
+            controller.enqueue({
+              type: "text-delta",
+              textDelta: "hel",
+            });
+            controller.enqueue({
+              type: "text-delta",
+              textDelta: "lo",
+            });
+            controller.close();
+          },
+        }),
+        warnings: [],
+      }),
+    } as any;
+
+    const params = {
+      model,
+      prompt: "Say hello.",
+      maxOutputTokens: 16,
+    };
+    const result = (await aiSDKChannels.streamText.tracePromise(
+      async () => params.model.doStream(params),
+      {
+        arguments: [params],
+      } as any,
+    )) as any;
+
+    const chunks: any[] = [];
+    for await (const chunk of result.stream) {
+      chunks.push(chunk);
+    }
+
+    expect(chunks).toHaveLength(2);
+
+    const spans = (await backgroundLogger.drain()) as any[];
+    const doStreamSpan = spans.find(
+      (s) => s?.span_attributes?.name === "doStream",
+    );
+
+    expect(doStreamSpan?.output?.text).toBe("hello");
+    expect(doStreamSpan?.output?.finishReason).toBeUndefined();
+    expect(doStreamSpan?.output?.usage).toBeUndefined();
+    expect(doStreamSpan?.metrics?.prompt_tokens).toBeUndefined();
+    expect(doStreamSpan?.metrics?.completion_tokens).toBeUndefined();
+    expect(doStreamSpan?.metrics?.tokens).toBeUndefined();
+    expect(doStreamSpan?.metrics?.time_to_first_token).toBeGreaterThan(0);
+    expect(doStreamSpan?.metadata?.usage_unavailable_reason).toBe(
+      "ai_sdk_stream_finished_without_usage",
+    );
+  });
+
   test("streamText time_to_first_token ignores AI SDK v6 framing chunks", async () => {
     expect(await backgroundLogger.drain()).toHaveLength(0);
 

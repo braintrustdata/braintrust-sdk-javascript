@@ -1736,10 +1736,22 @@ function prepareAISDKChildTracing(
               [callOptions],
             );
 
+            const output = processAISDKOutput(
+              result,
+              activeEntry.denyOutputPaths,
+            );
+            const metrics = extractTokenMetrics(result);
+            const metadataPayload = buildResolvedMetadataPayload(result);
+            const missingUsageMetadata = buildMissingUsageMetadata(
+              output,
+              metrics,
+              "ai_sdk_result_missing_usage",
+            );
+
             span.log({
-              output: processAISDKOutput(result, activeEntry.denyOutputPaths),
-              metrics: extractTokenMetrics(result),
-              ...buildResolvedMetadataPayload(result),
+              output,
+              metrics,
+              ...mergeMetadataPayload(metadataPayload, missingUsageMetadata),
             });
 
             return result;
@@ -1800,6 +1812,55 @@ function prepareAISDKChildTracing(
         let reasoning = "";
         const toolCalls: unknown[] = [];
         let object: unknown = undefined;
+        let streamSpanEnded = false;
+
+        const logAndEndStreamSpan = (usageUnavailableReason?: string): void => {
+          if (streamSpanEnded) {
+            return;
+          }
+
+          output.text = text;
+          output.reasoning = reasoning;
+          output.toolCalls = toolCalls;
+
+          if (object !== undefined) {
+            output.object = object;
+          }
+
+          const metrics = extractTokenMetrics(output as AISDKResult);
+          if (
+            firstChunkTime !== undefined &&
+            !activeEntry.childTracingOptions.workflowAgent
+          ) {
+            metrics.time_to_first_token = Math.max(
+              firstChunkTime - streamStartTime,
+              1e-6,
+            );
+          }
+
+          const metadataPayload = buildResolvedMetadataPayload(
+            output as AISDKResult,
+          );
+          const missingUsageMetadata = usageUnavailableReason
+            ? { usage_unavailable_reason: usageUnavailableReason }
+            : buildMissingUsageMetadata(
+                output,
+                metrics,
+                "ai_sdk_result_missing_usage",
+              );
+
+          span.log({
+            output: processAISDKOutput(
+              output as AISDKResult,
+              activeEntry.denyOutputPaths,
+            ),
+            metrics,
+            ...mergeMetadataPayload(metadataPayload, missingUsageMetadata),
+          });
+          activeEntry.openSpans.delete(span);
+          span.end();
+          streamSpanEnded = true;
+        };
 
         const transformStream = new TransformStream({
           transform(chunk: AISDKModelStreamChunk, controller) {
@@ -1847,40 +1908,16 @@ function prepareAISDKChildTracing(
                 }
                 break;
               case "finish":
-                output.text = text;
-                output.reasoning = reasoning;
-                output.toolCalls = toolCalls;
                 output.finishReason = chunk.finishReason;
                 output.usage = chunk.usage;
 
-                if (object !== undefined) {
-                  output.object = object;
-                }
-
-                const metrics = extractTokenMetrics(output as AISDKResult);
-                if (
-                  firstChunkTime !== undefined &&
-                  !activeEntry.childTracingOptions.workflowAgent
-                ) {
-                  metrics.time_to_first_token = Math.max(
-                    firstChunkTime - streamStartTime,
-                    1e-6,
-                  );
-                }
-
-                span.log({
-                  output: processAISDKOutput(
-                    output as AISDKResult,
-                    activeEntry.denyOutputPaths,
-                  ),
-                  metrics,
-                  ...buildResolvedMetadataPayload(output as AISDKResult),
-                });
-                activeEntry.openSpans.delete(span);
-                span.end();
+                logAndEndStreamSpan();
                 break;
             }
             controller.enqueue(chunk);
+          },
+          flush() {
+            logAndEndStreamSpan("ai_sdk_stream_finished_without_usage");
           },
         });
 
@@ -2712,6 +2749,56 @@ function buildResolvedMetadataPayload(result: AISDKResult): {
   return Object.keys(metadata).length > 0 ? { metadata } : {};
 }
 
+function mergeMetadataPayload(
+  metadataPayload: { metadata?: Record<string, unknown> },
+  extraMetadata?: Record<string, unknown>,
+): { metadata?: Record<string, unknown> } {
+  if (!extraMetadata || Object.keys(extraMetadata).length === 0) {
+    return metadataPayload;
+  }
+
+  return {
+    metadata: {
+      ...(metadataPayload.metadata ?? {}),
+      ...extraMetadata,
+    },
+  };
+}
+
+function buildMissingUsageMetadata(
+  output: unknown,
+  metrics: Record<string, number>,
+  reason: string,
+): Record<string, unknown> | undefined {
+  if (!hasLoggedOutput(output) || hasTokenUsageMetrics(metrics)) {
+    return undefined;
+  }
+
+  return { usage_unavailable_reason: reason };
+}
+
+function hasLoggedOutput(output: unknown): boolean {
+  if (output === null || output === undefined) {
+    return false;
+  }
+
+  if (Array.isArray(output)) {
+    return output.length > 0;
+  }
+
+  if (typeof output === "object") {
+    return Object.keys(output as Record<string, unknown>).length > 0;
+  }
+
+  return true;
+}
+
+function hasTokenUsageMetrics(metrics: Record<string, number>): boolean {
+  return Object.keys(metrics).some(
+    (key) => key !== "estimated_cost" && key !== "time_to_first_token",
+  );
+}
+
 function resolveAISDKModel(
   model: AISDKModel | undefined,
   aiSDK?: AISDK,
@@ -2977,6 +3064,8 @@ export function extractTokenMetrics(
   );
   if (totalTokens !== undefined) {
     metrics.tokens = totalTokens;
+  } else if (promptTokens !== undefined && completionTokens !== undefined) {
+    metrics.tokens = promptTokens + completionTokens;
   }
 
   const promptCachedTokens = firstNumber(
