@@ -70,7 +70,6 @@ export const DEFAULT_DENY_OUTPUT_PATHS: string[] = [
   "steps[].response.headers",
 ];
 
-const AUTO_PATCHED_MODEL = Symbol.for("braintrust.ai-sdk.auto-patched-model");
 const AUTO_PATCHED_TOOL = Symbol.for("braintrust.ai-sdk.auto-patched-tool");
 const AUTO_PATCHED_V7_TELEMETRY_DISPATCHER = Symbol.for(
   "braintrust.ai-sdk.v7.auto-patched-telemetry-dispatcher",
@@ -1139,7 +1138,7 @@ function prepareAISDKChildTracing(
   modelWrapped: boolean;
 } {
   const cleanup: Array<() => void> = [];
-  const patchedModels = new WeakSet<object>();
+  const patchedModels = new WeakMap<object, AISDKModel>();
   const patchedTools = new WeakSet<object>();
   let modelWrapped = false;
 
@@ -1150,23 +1149,24 @@ function prepareAISDKChildTracing(
     if (
       !resolvedModel ||
       typeof resolvedModel !== "object" ||
-      typeof resolvedModel.doGenerate !== "function" ||
-      patchedModels.has(resolvedModel) ||
-      (resolvedModel as { [AUTO_PATCHED_MODEL]?: boolean })[AUTO_PATCHED_MODEL]
+      typeof resolvedModel.doGenerate !== "function"
     ) {
       return resolvedModel;
     }
 
-    patchedModels.add(resolvedModel);
-    (resolvedModel as { [AUTO_PATCHED_MODEL]?: boolean })[AUTO_PATCHED_MODEL] =
-      true;
+    const existingWrappedModel = patchedModels.get(resolvedModel);
+    if (existingWrappedModel) {
+      return existingWrappedModel;
+    }
+
     modelWrapped = true;
 
     const originalDoGenerate = resolvedModel.doGenerate;
     const originalDoStream = resolvedModel.doStream;
     const baseMetadata = buildAISDKChildMetadata(resolvedModel);
+    const wrappedModel = Object.create(resolvedModel) as AISDKLanguageModel;
 
-    resolvedModel.doGenerate = async function doGeneratePatched(
+    wrappedModel.doGenerate = async function doGeneratePatched(
       options: AISDKCallParams,
     ) {
       return parentSpan.traced(
@@ -1208,7 +1208,7 @@ function prepareAISDKChildTracing(
     };
 
     if (originalDoStream) {
-      resolvedModel.doStream = async function doStreamPatched(
+      wrappedModel.doStream = async function doStreamPatched(
         options: AISDKCallParams,
       ) {
         const span = parentSpan.startSpan({
@@ -1343,17 +1343,8 @@ function prepareAISDKChildTracing(
       };
     }
 
-    cleanup.push(() => {
-      resolvedModel.doGenerate = originalDoGenerate;
-      if (originalDoStream) {
-        resolvedModel.doStream = originalDoStream;
-      }
-      delete (resolvedModel as { [AUTO_PATCHED_MODEL]?: boolean })[
-        AUTO_PATCHED_MODEL
-      ];
-    });
-
-    return resolvedModel;
+    patchedModels.set(resolvedModel, wrappedModel);
+    return wrappedModel;
   };
 
   const patchTool = (tool: AISDKTool, name: string): void => {
@@ -1444,11 +1435,7 @@ function prepareAISDKChildTracing(
 
   if (params && typeof params === "object") {
     const patchedParamModel = patchModel(params.model);
-    if (
-      typeof params.model === "string" &&
-      patchedParamModel &&
-      typeof patchedParamModel === "object"
-    ) {
+    if (patchedParamModel && patchedParamModel !== params.model) {
       params.model = patchedParamModel;
     }
     patchTools(params.tools);
@@ -1461,25 +1448,30 @@ function prepareAISDKChildTracing(
     };
 
     if (selfRecord.model !== undefined) {
-      const patchedSelfModel = patchModel(selfRecord.model);
-      if (
-        typeof selfRecord.model === "string" &&
-        patchedSelfModel &&
-        typeof patchedSelfModel === "object"
-      ) {
+      const originalSelfModel = selfRecord.model;
+      const patchedSelfModel = patchModel(originalSelfModel);
+      if (patchedSelfModel && patchedSelfModel !== originalSelfModel) {
         selfRecord.model = patchedSelfModel;
+        cleanup.push(() => {
+          selfRecord.model = originalSelfModel;
+        });
       }
     }
 
     if (selfRecord.settings && typeof selfRecord.settings === "object") {
       if (selfRecord.settings.model !== undefined) {
-        const patchedSettingsModel = patchModel(selfRecord.settings.model);
+        const originalSettingsModel = selfRecord.settings.model;
+        const patchedSettingsModel = patchModel(originalSettingsModel);
         if (
-          typeof selfRecord.settings.model === "string" &&
           patchedSettingsModel &&
-          typeof patchedSettingsModel === "object"
+          patchedSettingsModel !== originalSettingsModel
         ) {
           selfRecord.settings.model = patchedSettingsModel;
+          cleanup.push(() => {
+            if (selfRecord.settings) {
+              selfRecord.settings.model = originalSettingsModel;
+            }
+          });
         }
       }
       if (selfRecord.settings.tools !== undefined) {
