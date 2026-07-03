@@ -299,11 +299,10 @@ export type ExperimentalPromptData = {
     }
 );
 
-type PromptRenderResult = readonly PromptMessage[] | PromptText;
+type PromptTemplateResult = readonly PromptMessage[] | PromptText;
 
-type PromptRenderContext<TVariables, TValues> = {
+type PromptTemplateContext<TVariables> = {
   variables: TVariables;
-  values: TValues;
   include: <TDefinition extends AnyPromptDefinition>(
     definition: TDefinition,
     input: InputOf<TDefinition>,
@@ -346,27 +345,26 @@ type OutputSchemaHelpers = typeof outputSchemaHelpers;
 type PromptDefinitionOptions<
   TInputSchema extends InputSchema,
   TOutputSchema extends OutputSchema | undefined,
-  TRenderResult extends PromptRenderResult,
+  TTemplateResult extends PromptTemplateResult,
 > = {
   id?: string;
   slug: string;
   name?: string;
   version?: string;
   model?: string;
-  input: (s: InputSchemaHelpers) => TInputSchema;
-  output?: (s: OutputSchemaHelpers) => TOutputSchema;
-  render: (
-    context: PromptRenderContext<
-      PromptTemplateField<InferSchema<TInputSchema>>,
-      InferSchema<TInputSchema>
+  inputSchema: (s: InputSchemaHelpers) => TInputSchema;
+  outputSchema?: (s: OutputSchemaHelpers) => TOutputSchema;
+  template: (
+    context: PromptTemplateContext<
+      PromptTemplateField<InferSchema<TInputSchema>>
     >,
-  ) => TRenderResult;
+  ) => TTemplateResult;
 };
 
 class PromptDefinition<
   TInputSchema extends InputSchema,
   TOutputSchema extends OutputSchema | undefined,
-  TRenderResult extends PromptRenderResult,
+  TTemplateResult extends PromptTemplateResult,
 > {
   readonly [promptDefinitionMarker] = true;
   readonly id?: string;
@@ -377,37 +375,31 @@ class PromptDefinition<
   readonly inputSchema: TInputSchema;
   readonly outputSchema?: TOutputSchema;
 
-  private readonly renderer: PromptDefinitionOptions<
+  private readonly template: PromptDefinitionOptions<
     TInputSchema,
     TOutputSchema,
-    TRenderResult
-  >["render"];
+    TTemplateResult
+  >["template"];
 
   constructor(
-    opts: PromptDefinitionOptions<TInputSchema, TOutputSchema, TRenderResult>,
+    opts: PromptDefinitionOptions<TInputSchema, TOutputSchema, TTemplateResult>,
   ) {
     this.id = opts.id;
     this.slug = opts.slug;
     this.name = opts.name;
     this.version = opts.version;
     this.model = opts.model;
-    if (typeof opts.input !== "function") {
-      throw new Error("input must be a schema function");
-    }
-    if (opts.output !== undefined && typeof opts.output !== "function") {
-      throw new Error("output must be a schema function");
-    }
-    this.inputSchema = opts.input(inputSchemaHelpers);
-    this.outputSchema = opts.output?.(outputSchemaHelpers);
-    this.renderer = opts.render;
+    this.inputSchema = opts.inputSchema(inputSchemaHelpers);
+    this.outputSchema = opts.outputSchema?.(outputSchemaHelpers);
+    this.template = opts.template;
   }
 
   build(
     input: InferInputSchema<TInputSchema>,
-  ): BuiltPromptForRenderResult<
+  ): BuiltPromptForTemplateResult<
     InferSchema<TInputSchema>,
     InferOutput<TOutputSchema>,
-    TRenderResult
+    TTemplateResult
   > {
     const parsedInput = this.inputSchema.parse(
       input,
@@ -423,9 +415,8 @@ class PromptDefinition<
         throw new Error("prompt variables could not resolve a built prompt");
       },
     ) as PromptTemplateField<InferSchema<TInputSchema>>;
-    const rendered = this.renderer({
+    const rendered = this.template({
       variables,
-      values: parsedInput,
       include: (definition, includeInput) =>
         definition.build(includeInput) as BuiltPromptOf<typeof definition>,
     });
@@ -471,19 +462,19 @@ class PromptDefinition<
         input: parsedInput,
         content: rendered.content,
         dependencies,
-      }) as BuiltPromptForRenderResult<
+      }) as BuiltPromptForTemplateResult<
         InferSchema<TInputSchema>,
         InferOutput<TOutputSchema>,
-        TRenderResult
+        TTemplateResult
       >;
     }
 
     if (!Array.isArray(rendered)) {
-      throw new Error("render must return a message array or prompt.text");
+      throw new Error("template must return a message array or prompt.text");
     }
 
     const messages = rendered.map((message, index) =>
-      assertPromptMessage(message, `render[${index}]`),
+      assertPromptMessage(message, `template[${index}]`),
     );
     const dependencies = createPromptDependencies(
       root,
@@ -514,10 +505,10 @@ class PromptDefinition<
       input: parsedInput,
       messages,
       dependencies,
-    }) as BuiltPromptForRenderResult<
+    }) as BuiltPromptForTemplateResult<
       InferSchema<TInputSchema>,
       InferOutput<TOutputSchema>,
-      TRenderResult
+      TTemplateResult
     >;
   }
 
@@ -542,9 +533,8 @@ class PromptDefinition<
         return templateDataToBuiltPrompt(nested, kind);
       },
     ) as PromptTemplateField<InferSchema<TInputSchema>>;
-    const rendered = this.renderer({
+    const rendered = this.template({
       variables,
-      values: createUnavailableValuesProxy() as InferSchema<TInputSchema>,
       include: (definition) => {
         const nested = definition.compileTemplate(
           createRootTemplateScope(definition.inputSchema),
@@ -578,11 +568,11 @@ class PromptDefinition<
     }
 
     if (!Array.isArray(rendered)) {
-      throw new Error("render must return a message array or prompt.text");
+      throw new Error("template must return a message array or prompt.text");
     }
 
     const messages = rendered.map((message, index) =>
-      assertPromptMessage(message, `render[${index}]`),
+      assertPromptMessage(message, `template[${index}]`),
     );
     const dependencies = createPromptDependencies(root, inputSnapshot, [
       ...collectBuiltPromptDependencies(variables, this.slug),
@@ -604,7 +594,7 @@ class PromptDefinition<
 type AnyPromptDefinition = PromptDefinition<
   InputSchema,
   OutputSchema | undefined,
-  PromptRenderResult
+  PromptTemplateResult
 >;
 
 type AnyMessagesPromptDefinition = PromptDefinition<
@@ -628,7 +618,7 @@ type InputOf<TDefinition> =
   TDefinition extends PromptDefinition<
     infer TInputSchema,
     OutputSchema | undefined,
-    PromptRenderResult
+    PromptTemplateResult
   >
     ? InferInputSchema<TInputSchema>
     : never;
@@ -637,7 +627,7 @@ type ParsedInputOf<TDefinition> =
   TDefinition extends PromptDefinition<
     infer TInputSchema,
     OutputSchema | undefined,
-    PromptRenderResult
+    PromptTemplateResult
   >
     ? InferSchema<TInputSchema>
     : never;
@@ -646,7 +636,7 @@ type OutputOf<TDefinition> =
   TDefinition extends PromptDefinition<
     InputSchema,
     infer TOutputSchema,
-    PromptRenderResult
+    PromptTemplateResult
   >
     ? InferOutput<TOutputSchema>
     : never;
@@ -655,19 +645,19 @@ type BuiltPromptOf<TDefinition> =
   TDefinition extends PromptDefinition<
     infer TInputSchema,
     infer TOutputSchema,
-    infer TRenderResult
+    infer TTemplateResult
   >
-    ? BuiltPromptForRenderResult<
+    ? BuiltPromptForTemplateResult<
         InferSchema<TInputSchema>,
         InferOutput<TOutputSchema>,
-        TRenderResult
+        TTemplateResult
       >
     : never;
 
-type BuiltPromptForRenderResult<TInput, TOutput, TRenderResult> =
-  TRenderResult extends PromptText
+type BuiltPromptForTemplateResult<TInput, TOutput, TTemplateResult> =
+  TTemplateResult extends PromptText
     ? BuiltStringPrompt<TInput, TOutput>
-    : TRenderResult extends readonly PromptMessage[]
+    : TTemplateResult extends readonly PromptMessage[]
       ? BuiltMessagesPrompt<TInput, TOutput>
       : never;
 
@@ -941,10 +931,10 @@ type AnyBuiltPrompt =
 function definePrompt<
   TInputSchema extends InputSchema,
   TOutputSchema extends OutputSchema | undefined = undefined,
-  TRenderResult extends PromptRenderResult = PromptRenderResult,
+  TTemplateResult extends PromptTemplateResult = PromptTemplateResult,
 >(
-  opts: PromptDefinitionOptions<TInputSchema, TOutputSchema, TRenderResult>,
-): PromptDefinition<TInputSchema, TOutputSchema, TRenderResult> {
+  opts: PromptDefinitionOptions<TInputSchema, TOutputSchema, TTemplateResult>,
+): PromptDefinition<TInputSchema, TOutputSchema, TTemplateResult> {
   return new PromptDefinition(opts);
 }
 
@@ -1507,22 +1497,6 @@ function stringifyRuntimeValue(value: unknown): string {
     return String(value);
   }
   return JSON.stringify(value);
-}
-
-function createUnavailableValuesProxy(): unknown {
-  return new Proxy(
-    {},
-    {
-      get(_target, key) {
-        if (typeof key === "symbol") {
-          return undefined;
-        }
-        throw new Error(
-          "Runtime values are not available while exporting prompt data; use variables in prompt templates.",
-        );
-      },
-    },
-  );
 }
 
 function isMustacheTemplateValue(
