@@ -17,6 +17,7 @@ import {
   updateSpan,
   Attachment,
   deepCopyEvent,
+  ReadonlyExperiment,
   renderMessageImpl,
 } from "./logger";
 
@@ -26,6 +27,7 @@ import { writeFile, unlink } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { SpanComponentsV4 } from "../util/span_identifier_v4";
+import { SpanCache } from "./span-cache";
 
 configureNode();
 
@@ -2941,6 +2943,81 @@ describe("parent precedence", () => {
     expect(byName.child.experiment_id).toBe("experiment-b");
     expect(byName.child.root_span_id).toBe(byName.root.root_span_id);
     expect(byName.child.span_parents).toContain(byName.root.span_id);
+  });
+
+  test("ReadonlyExperiment.asDataset keeps root rows when trace id differs from span id", async () => {
+    const experiment = Object.create(ReadonlyExperiment.prototype) as any;
+    experiment.fetch = async function* () {
+      yield {
+        root_span_id: "trace-id",
+        span_id: "root-span-id",
+        is_root: true,
+        input: "root-input",
+        output: "root-output",
+      };
+      yield {
+        root_span_id: "trace-id",
+        span_id: "child-span-id",
+        is_root: false,
+        input: "child-input",
+        output: "child-output",
+      };
+      yield {
+        root_span_id: "legacy-root-id",
+        span_id: "legacy-root-id",
+        input: "legacy-input",
+        output: "legacy-output",
+      };
+    };
+
+    const rows = [];
+    for await (const row of experiment.asDataset()) {
+      rows.push(row);
+    }
+
+    expect(rows).toEqual([
+      {
+        input: "root-input",
+        expected: "root-output",
+        metadata: undefined,
+        tags: undefined,
+      },
+      {
+        input: "legacy-input",
+        expected: "legacy-output",
+        metadata: undefined,
+        tags: undefined,
+      },
+    ]);
+  });
+
+  test("span cache marks root spans by parent list", () => {
+    const experiment = _exportsForTestingOnly.initTestExperiment(
+      "cache-root",
+      "project",
+    );
+    const state = experiment.loggingState;
+    const previousSpanCache = state.spanCache;
+    state.spanCache = new SpanCache();
+    state.spanCache.start();
+    try {
+      const root = experiment.startSpan({ name: "root" });
+      const child = root.startSpan({ name: "child" });
+      child.end();
+      root.end();
+
+      const rows = state.spanCache.getByRootSpanId(root.rootSpanId) ?? [];
+      const rootRow = rows.find((row) => row.span_id === root.spanId);
+      const childRow = rows.find((row) => row.span_id === child.spanId);
+
+      expect(root.spanId).not.toBe(root.rootSpanId);
+      expect(rootRow?.is_root).toBe(true);
+      expect(childRow?.is_root).toBe(false);
+    } finally {
+      state.spanCache.stop();
+      state.spanCache.clearAll();
+      state.spanCache = previousSpanCache;
+    }
   });
 });
 

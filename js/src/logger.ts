@@ -24,7 +24,6 @@ import {
   TRACESTATE_HEADER,
   formatTraceparent,
   getHeader,
-  isValidTracestate,
   mergeBaggage,
   parseBaggage,
   parseTraceparent,
@@ -5701,7 +5700,10 @@ export function extractTraceContextFromHeaders(
     context[BAGGAGE_HEADER] = baggageValue;
   }
   const tracestate = getHeader(headers, TRACESTATE_HEADER);
-  if (tracestate && isValidTracestate(tracestate)) {
+  if (tracestate) {
+    // `tracestate` is opaque vendor state. Once `traceparent` is valid, keep the
+    // raw value even if our local grammar check would reject it; dropping or
+    // rewriting another vendor's state can break an otherwise usable trace.
     context[TRACESTATE_HEADER] = tracestate;
   }
   return context;
@@ -5757,11 +5759,7 @@ function resolveW3cParent(
   }
   const { objectType, objectId, computeArgs } = parsedParent;
 
-  const tracestateValue = getHeader(context, TRACESTATE_HEADER);
-  const tracestate =
-    tracestateValue && isValidTracestate(tracestateValue)
-      ? tracestateValue
-      : undefined;
+  const tracestate = getHeader(context, TRACESTATE_HEADER);
 
   const slug = new SpanComponentsV4({
     object_type: objectType,
@@ -7324,7 +7322,8 @@ export class ReadonlyExperiment extends ObjectFetcher<ExperimentEvent> {
     const records = this.fetch(options);
 
     for await (const record of records) {
-      if (record.root_span_id !== record.span_id) {
+      const isRoot = record.is_root ?? record.root_span_id === record.span_id;
+      if (!isRoot) {
         continue;
       }
 
@@ -7620,7 +7619,7 @@ export class SpanImpl implements Span {
         tags: partialRecord.tags,
         span_id: this._spanId,
         span_parents: this._spanParents,
-        is_root: this._spanId === this._rootSpanId,
+        is_root: !this._spanParents || this._spanParents.length === 0,
         span_attributes: partialRecord.span_attributes,
       };
       this._state.spanCache.queueWrite(

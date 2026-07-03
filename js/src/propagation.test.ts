@@ -1061,6 +1061,14 @@ describe("tracestate / flags pass-through", () => {
     expect(TRACESTATE_HEADER in outbound).toBe(false);
   });
 
+  test("inject leaves existing tracestate untouched when none inbound", () => {
+    const logger = makeLogger();
+    const span = logger.startSpan({ name: "root" });
+    const outbound = span.inject({ [TRACESTATE_HEADER]: UPSTREAM_TRACESTATE });
+    span.end();
+    expect(outbound[TRACESTATE_HEADER]).toBe(UPSTREAM_TRACESTATE);
+  });
+
   test.each([
     "ConGo=t61rcWkgMzE", // uppercase key
     "congo=", // empty value
@@ -1068,7 +1076,7 @@ describe("tracestate / flags pass-through", () => {
     "congo=\u00e9", // non-ASCII value
     Array.from({ length: 33 }, (_, i) => `k${i}=v`).join(","), // too many members
     `congo=${"a".repeat(513)}`, // too long overall
-  ])("invalid tracestate is not forwarded: %s", (tracestate) => {
+  ])("invalid tracestate is forwarded unchanged: %s", (tracestate) => {
     const logger = makeLogger();
     const parent = extractTraceContextFromHeaders({
       traceparent: VALID_TRACEPARENT,
@@ -1078,7 +1086,7 @@ describe("tracestate / flags pass-through", () => {
     const span = logger.startSpan({ name: "mid", parent });
     const outbound = span.inject({});
     span.end();
-    expect(TRACESTATE_HEADER in outbound).toBe(false);
+    expect(outbound[TRACESTATE_HEADER]).toBe(tracestate);
   });
 
   test("extract then inject preserves unsampled flag", () => {
