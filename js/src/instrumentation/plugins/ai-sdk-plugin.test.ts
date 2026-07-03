@@ -329,6 +329,43 @@ describe("AISDKPlugin", () => {
       );
     });
 
+    it("preserves existing dispatcher callback return and rejection semantics", async () => {
+      const rejection = new Error("user telemetry failed");
+      let rejectExisting: (error: Error) => void;
+      const existingPromise = new Promise<void>((_resolve, reject) => {
+        rejectExisting = reject;
+      });
+      const existingOnStart = vi.fn(() => existingPromise);
+      telemetryMocks.telemetry.onStart = vi.fn(() =>
+        Promise.reject(new Error("braintrust telemetry failed")),
+      );
+      const dispatcher = {
+        onStart: existingOnStart,
+      };
+
+      plugin.enable();
+
+      const channel = mockChannels.get(
+        "orchestrion:ai:createTelemetryDispatcher",
+      );
+      channel?.handlers[0]?.end({
+        arguments: [{ telemetry: {} }],
+        result: dispatcher,
+      });
+
+      const returned = dispatcher.onStart({
+        callId: "call-reject",
+        operationId: "ai.generateText",
+      });
+
+      expect(returned).toBe(existingPromise);
+      expect(existingOnStart).toHaveBeenCalledTimes(1);
+      expect(telemetryMocks.telemetry.onStart).toHaveBeenCalledTimes(1);
+
+      rejectExisting!(rejection);
+      await expect(returned).rejects.toBe(rejection);
+    });
+
     it("patches each dispatcher once and respects telemetry opt-out", () => {
       const dispatcher = {
         onStart: vi.fn(),

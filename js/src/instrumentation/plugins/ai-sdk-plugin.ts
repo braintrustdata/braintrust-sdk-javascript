@@ -623,15 +623,18 @@ function patchAISDKV7TelemetryDispatcher(
         typeof existingCallback === "function"
           ? existingCallback.call(dispatcher, event)
           : undefined;
-      const braintrustResult = braintrustCallback.call(
-        telemetry,
-        eventWithOperationKey(event) as any,
-      );
-      const pending = [existingResult, braintrustResult].filter(isPromiseLike);
-
-      if (pending.length > 0) {
-        return Promise.allSettled(pending).then(() => undefined);
+      try {
+        const braintrustResult = braintrustCallback.call(
+          telemetry,
+          eventWithOperationKey(event) as any,
+        );
+        if (isPromiseLike(braintrustResult)) {
+          void Promise.resolve(braintrustResult).catch(() => undefined);
+        }
+      } catch {
+        // Keep Braintrust telemetry isolated from the user's callback path.
       }
+      return existingResult;
     };
   }
 
