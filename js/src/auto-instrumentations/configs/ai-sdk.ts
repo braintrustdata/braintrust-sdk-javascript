@@ -1,4 +1,4 @@
-import type { InstrumentationConfig } from "@apm-js-collab/code-transformer";
+import type { InstrumentationConfig } from "../orchestrion-js";
 import { aiSDKChannels } from "../../instrumentation/plugins/ai-sdk-channels";
 
 /**

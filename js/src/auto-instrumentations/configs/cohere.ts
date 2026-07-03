@@ -1,4 +1,4 @@
-import type { InstrumentationConfig } from "@apm-js-collab/code-transformer";
+import type { InstrumentationConfig } from "../orchestrion-js";
 import { cohereChannels } from "../../instrumentation/plugins/cohere-channels";
 
 export const cohereConfigs: InstrumentationConfig[] = [

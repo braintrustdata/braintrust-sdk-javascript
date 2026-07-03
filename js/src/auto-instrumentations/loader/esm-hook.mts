@@ -6,10 +6,7 @@
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { extname, sep } from "node:path";
-import {
-  create,
-  type InstrumentationConfig,
-} from "@apm-js-collab/code-transformer";
+import { create, type InstrumentationConfig } from "../orchestrion-js";
 import moduleDetailsFromPath from "module-details-from-path";
 import { getPackageName, getPackageVersion } from "./get-package-version.js";
 import {
@@ -159,8 +156,6 @@ export async function load(url: string, context: any, nextLoad: Function) {
       result.shortCircuit = true;
     } catch (err) {
       console.warn(`Error transforming module ${url}:`, err);
-    } finally {
-      transformer.free();
     }
   }
 

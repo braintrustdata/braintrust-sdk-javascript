@@ -4,7 +4,7 @@ This document describes the internal architecture of the Braintrust auto-instrum
 
 ## Architecture Overview
 
-The auto-instrumentation system uses [orchestrion-js](https://github.com/apm-js-collab/orchestrion-js) to perform AST transformations at load-time or build-time, injecting `diagnostics_channel` instrumentation into AI SDK methods.
+The auto-instrumentation system uses an internal fork of [orchestrion-js](https://github.com/nodejs/orchestrion-js) to perform AST transformations at load-time or build-time, injecting `diagnostics_channel` instrumentation into AI SDK methods.
 
 ## How It Works
 
@@ -165,7 +165,7 @@ Configuration is merged in the following order (later overrides earlier):
 1. **Create a config file** in `src/configs/` (e.g., `anthropic.ts`):
 
 ```typescript
-import type { InstrumentationConfig } from "@apm-js-collab/code-transformer";
+import type { InstrumentationConfig } from "braintrust/vite";
 
 export const anthropicConfigs: InstrumentationConfig[] = [
   {

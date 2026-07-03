@@ -100,7 +100,8 @@
                     "completion_tokens": 3,
                     "prompt_cached_tokens": 0,
                     "prompt_tokens": 18,
-                    "reasoning_tokens": 0
+                    "reasoning_tokens": 0,
+                    "tokens": 21
                   }
                 }
               ],
@@ -418,7 +419,8 @@
                     "completion_tokens": 6,
                     "prompt_cached_tokens": 0,
                     "prompt_tokens": 45,
-                    "reasoning_tokens": 0
+                    "reasoning_tokens": 0,
+                    "tokens": 51
                   }
                 }
               ],
@@ -710,7 +712,8 @@
                     "prompt_cached_tokens": 0,
                     "prompt_tokens": 22,
                     "reasoning_tokens": 0,
-                    "time_to_first_token": 0
+                    "time_to_first_token": 0,
+                    "tokens": 29
                   }
                 }
               ],
@@ -970,7 +973,8 @@
                     "completion_tokens": 8,
                     "prompt_cached_tokens": 0,
                     "prompt_tokens": 94,
-                    "reasoning_tokens": 0
+                    "reasoning_tokens": 0,
+                    "tokens": 102
                   }
                 },
                 {
@@ -1135,7 +1139,8 @@
                     "completion_tokens": 8,
                     "prompt_cached_tokens": 0,
                     "prompt_tokens": 133,
-                    "reasoning_tokens": 0
+                    "reasoning_tokens": 0,
+                    "tokens": 141
                   }
                 },
                 {
@@ -1335,7 +1340,8 @@
                     "completion_tokens": 8,
                     "prompt_cached_tokens": 0,
                     "prompt_tokens": 172,
-                    "reasoning_tokens": 0
+                    "reasoning_tokens": 0,
+                    "tokens": 180
                   }
                 },
                 {
@@ -1570,7 +1576,8 @@
                     "completion_tokens": 8,
                     "prompt_cached_tokens": 0,
                     "prompt_tokens": 211,
-                    "reasoning_tokens": 0
+                    "reasoning_tokens": 0,
+                    "tokens": 219
                   }
                 },
                 {
@@ -2652,7 +2659,8 @@
                 "completion_tokens": 3,
                 "prompt_cached_tokens": 3456,
                 "prompt_tokens": 3617,
-                "reasoning_tokens": 0
+                "reasoning_tokens": 0,
+                "tokens": 3620
               }
             }
           ],
@@ -2950,7 +2958,8 @@
                     "completion_tokens": 3,
                     "prompt_cached_tokens": 3456,
                     "prompt_tokens": 3617,
-                    "reasoning_tokens": 0
+                    "reasoning_tokens": 0,
+                    "tokens": 3620
                   }
                 }
               ],
@@ -3245,7 +3254,8 @@
                     "completion_tokens": 3,
                     "prompt_cached_tokens": 3456,
                     "prompt_tokens": 3617,
-                    "reasoning_tokens": 0
+                    "reasoning_tokens": 0,
+                    "tokens": 3620
                   }
                 }
               ],
@@ -3559,7 +3569,8 @@
                 "completion_tokens": 7,
                 "prompt_cache_creation_tokens": 0,
                 "prompt_cached_tokens": 4516,
-                "prompt_tokens": 4519
+                "prompt_tokens": 4519,
+                "tokens": 4526
               }
             }
           ],
@@ -3878,7 +3889,8 @@
                     "completion_tokens": 7,
                     "prompt_cache_creation_tokens": 0,
                     "prompt_cached_tokens": 4516,
-                    "prompt_tokens": 4519
+                    "prompt_tokens": 4519,
+                    "tokens": 4526
                   }
                 }
               ],
@@ -4194,7 +4206,8 @@
                     "completion_tokens": 7,
                     "prompt_cache_creation_tokens": 0,
                     "prompt_cached_tokens": 4516,
-                    "prompt_tokens": 4519
+                    "prompt_tokens": 4519,
+                    "tokens": 4526
                   }
                 }
               ],
@@ -4501,7 +4514,8 @@
                     "completion_tokens": 3,
                     "prompt_cached_tokens": 0,
                     "prompt_tokens": 17,
-                    "reasoning_tokens": 0
+                    "reasoning_tokens": 0,
+                    "tokens": 20
                   }
                 }
               ],
@@ -5069,7 +5083,8 @@
                     "completion_tokens": 6,
                     "prompt_cached_tokens": 0,
                     "prompt_tokens": 38,
-                    "reasoning_tokens": 0
+                    "reasoning_tokens": 0,
+                    "tokens": 44
                   }
                 }
               ],
@@ -5257,7 +5272,8 @@
                     "prompt_cached_tokens": 0,
                     "prompt_tokens": 38,
                     "reasoning_tokens": 0,
-                    "time_to_first_token": 0
+                    "time_to_first_token": 0,
+                    "tokens": 44
                   }
                 }
               ],
@@ -5620,7 +5636,8 @@
                     "completion_tokens": 3,
                     "prompt_cached_tokens": 0,
                     "prompt_tokens": 16,
-                    "reasoning_tokens": 0
+                    "reasoning_tokens": 0,
+                    "tokens": 19
                   }
                 }
               ],
@@ -5923,7 +5940,8 @@
                     "prompt_cached_tokens": 0,
                     "prompt_tokens": 17,
                     "reasoning_tokens": 0,
-                    "time_to_first_token": 0
+                    "time_to_first_token": 0,
+                    "tokens": 21
                   }
                 }
               ],
@@ -6976,7 +6994,8 @@
                     "completion_tokens": 59,
                     "prompt_cached_tokens": 0,
                     "prompt_tokens": 173,
-                    "reasoning_tokens": 0
+                    "reasoning_tokens": 0,
+                    "tokens": 232
                   }
                 },
                 {
@@ -7226,7 +7245,8 @@
                     "completion_tokens": 21,
                     "prompt_cached_tokens": 0,
                     "prompt_tokens": 260,
-                    "reasoning_tokens": 0
+                    "reasoning_tokens": 0,
+                    "tokens": 281
                   }
                 },
                 {
@@ -7501,7 +7521,8 @@
                     "completion_tokens": 62,
                     "prompt_cached_tokens": 0,
                     "prompt_tokens": 308,
-                    "reasoning_tokens": 0
+                    "reasoning_tokens": 0,
+                    "tokens": 370
                   }
                 }
               ],

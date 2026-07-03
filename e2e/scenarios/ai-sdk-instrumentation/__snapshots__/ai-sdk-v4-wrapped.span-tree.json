@@ -103,7 +103,8 @@
                   },
                   "metrics": {
                     "completion_tokens": 2,
-                    "prompt_tokens": 18
+                    "prompt_tokens": 18,
+                    "tokens": 20
                   }
                 }
               ],
@@ -335,7 +336,8 @@
                   },
                   "metrics": {
                     "completion_tokens": 5,
-                    "prompt_tokens": 83
+                    "prompt_tokens": 83,
+                    "tokens": 88
                   }
                 }
               ],
@@ -534,7 +536,8 @@
                   "metrics": {
                     "completion_tokens": null,
                     "prompt_tokens": null,
-                    "time_to_first_token": 0
+                    "time_to_first_token": 0,
+                    "tokens": null
                   }
                 }
               ],
@@ -758,7 +761,8 @@
                   },
                   "metrics": {
                     "completion_tokens": 16,
-                    "prompt_tokens": 87
+                    "prompt_tokens": 87,
+                    "tokens": 103
                   }
                 },
                 {
@@ -1124,7 +1128,8 @@
                   },
                   "metrics": {
                     "completion_tokens": 5,
-                    "prompt_tokens": 59
+                    "prompt_tokens": 59,
+                    "tokens": 64
                   }
                 }
               ],
@@ -1278,7 +1283,8 @@
                   "metrics": {
                     "completion_tokens": null,
                     "prompt_tokens": null,
-                    "time_to_first_token": 0
+                    "time_to_first_token": 0,
+                    "tokens": null
                   }
                 }
               ],

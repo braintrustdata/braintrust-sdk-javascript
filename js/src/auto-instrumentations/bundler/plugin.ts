@@ -1,8 +1,5 @@
 import { createUnplugin } from "unplugin";
-import {
-  create,
-  type InstrumentationConfig,
-} from "@apm-js-collab/code-transformer";
+import { create, type InstrumentationConfig } from "../orchestrion-js";
 import { extname, join, sep } from "path";
 import { readFileSync } from "fs";
 import { fileURLToPath } from "url";
