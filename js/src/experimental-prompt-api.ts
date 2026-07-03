@@ -1,4 +1,10 @@
 import { adapters } from "./experimental-prompt-adapters";
+import { BaseAttachment, ReadonlyAttachment } from "./logger";
+import type {
+  AttachmentReferenceType as AttachmentReference,
+  ChatCompletionContentPartType,
+  ChatCompletionMessageParamType,
+} from "./generated_types";
 import type { PromptDefinition as MustachePromptDefinition } from "./prompt-schemas";
 
 type JsonPrimitive = string | number | boolean | null;
@@ -32,6 +38,9 @@ type PromptSchemaTemplateInfo =
       type: "promptDefinition";
       definition: AnyPromptDefinition;
       kind: PromptKind;
+    }
+  | {
+      type: "attachment";
     };
 
 class PromptSchema<
@@ -157,6 +166,7 @@ const promptDefinitionMarker = Symbol(
   "braintrust.experimental_prompt.definition",
 );
 const promptTextMarker = Symbol("braintrust.experimental_prompt.text");
+const promptFileMarker = Symbol("braintrust.experimental_prompt.file");
 const promptDependencyMarker = Symbol(
   "braintrust.experimental_prompt.dependencies",
 );
@@ -168,9 +178,60 @@ const templateValueStateMarker = Symbol(
 );
 
 type PromptRole = "system" | "user" | "assistant";
+
+export type InlineAttachmentReference = {
+  type: "inline_attachment";
+  src: string;
+  content_type?: string;
+  filename?: string;
+  data?: string;
+};
+
+export type PromptAttachment =
+  | string
+  | Blob
+  | ArrayBuffer
+  | ArrayBufferView
+  | BaseAttachment
+  | ReadonlyAttachment
+  | AttachmentReference
+  | InlineAttachmentReference;
+
+type PromptFileOptions = {
+  filename?: string;
+  contentType?: string;
+  detail?: "auto" | "low" | "high";
+};
+
+export type PromptTextContentPart = {
+  type: "text";
+  text: string;
+};
+
+export type PromptFileContentPart = {
+  readonly [promptFileMarker]: true;
+  type: "file";
+  file: {
+    value: unknown;
+    filename?: string;
+    contentType?: string;
+    detail?: "auto" | "low" | "high";
+  };
+};
+
+export type PromptMessageContentPart =
+  | PromptTextContentPart
+  | PromptFileContentPart;
+
+type PromptUserContentPartInput =
+  | string
+  | PromptText
+  | PromptTextContentPart
+  | PromptFileContentPart;
+
 export type PromptMessage = {
   role: PromptRole;
-  content: string;
+  content: string | PromptMessageContentPart[];
 };
 
 type PromptMessageWithDependencies = PromptMessage & {
@@ -376,10 +437,15 @@ class PromptDefinition<
     };
 
     if (isPromptText(rendered)) {
-      const dependencies = createPromptDependencies(root, parsedInput, [
-        ...collectBuiltPromptDependencies(parsedInput, this.slug),
-        ...collectDependencyEntries(rendered.dependencies, this.slug),
-      ]);
+      const dependencies = createPromptDependencies(
+        root,
+        parsedInput,
+        [
+          ...collectBuiltPromptDependencies(parsedInput, this.slug),
+          ...collectDependencyEntries(rendered.dependencies, this.slug),
+        ],
+        this.inputSchema,
+      );
 
       return new BuiltStringPrompt<
         InferSchema<TInputSchema>,
@@ -419,10 +485,15 @@ class PromptDefinition<
     const messages = rendered.map((message, index) =>
       assertPromptMessage(message, `render[${index}]`),
     );
-    const dependencies = createPromptDependencies(root, parsedInput, [
-      ...collectBuiltPromptDependencies(parsedInput, this.slug),
-      ...collectMessageDependencies(messages, this.slug),
-    ]);
+    const dependencies = createPromptDependencies(
+      root,
+      parsedInput,
+      [
+        ...collectBuiltPromptDependencies(parsedInput, this.slug),
+        ...collectMessageDependencies(messages, this.slug),
+      ],
+      this.inputSchema,
+    );
 
     return new BuiltMessagesPrompt<
       InferSchema<TInputSchema>,
@@ -715,6 +786,7 @@ type DeepMergeValue<TBase, TExtension> = TBase extends readonly unknown[]
 
 type PromptExtension = Record<string, unknown>;
 type PromptAdapterResult = PromptExtension;
+type MaybePromise<T> = T | Promise<T>;
 
 type Extendable<T extends PromptAdapterResult> = T & {
   extend<TExtension extends PromptExtension>(
@@ -724,7 +796,11 @@ type Extendable<T extends PromptAdapterResult> = T & {
 
 type PromptAdapter<TResult extends PromptAdapterResult> = (
   builtPrompt: PromptAdapterInput<unknown, unknown>,
-) => TResult;
+) => MaybePromise<TResult>;
+
+type PromptAdapterToResult<TResult extends PromptAdapterResult> =
+  | Extendable<TResult>
+  | Promise<Extendable<TResult>>;
 
 class BuiltMessagesPrompt<TInput, TOutput> implements Iterable<PromptMessage> {
   readonly [builtPromptMarker] = true;
@@ -755,18 +831,19 @@ class BuiltMessagesPrompt<TInput, TOutput> implements Iterable<PromptMessage> {
 
   to<TResult extends PromptAdapterResult>(
     adapter: PromptAdapter<TResult>,
-  ): Extendable<TResult> {
-    return makeExtendableAdapterResult(
-      adapter({
-        kind: "messages",
-        model: this.definition.model,
-        inputSchema: this.definition.inputSchema,
-        outputSchema: this.definition.outputSchema,
-        input: this.input,
-        messages: this.messages,
-        dependencies: this.dependencies,
-      }),
-    );
+  ): PromptAdapterToResult<TResult> {
+    const result = adapter({
+      kind: "messages",
+      model: this.definition.model,
+      inputSchema: this.definition.inputSchema,
+      outputSchema: this.definition.outputSchema,
+      input: this.input,
+      messages: this.messages,
+      dependencies: this.dependencies,
+    });
+    return isPromiseLike(result)
+      ? result.then((resolved) => makeExtendableAdapterResult(resolved))
+      : makeExtendableAdapterResult(result);
   }
 }
 
@@ -791,20 +868,25 @@ class BuiltStringPrompt<TInput, TOutput> {
 
   to<TResult extends PromptAdapterResult>(
     adapter: PromptAdapter<TResult>,
-  ): Extendable<TResult> {
-    return makeExtendableAdapterResult(
-      adapter({
-        kind: "string",
-        model: this.definition.model,
-        inputSchema: this.definition.inputSchema,
-        outputSchema: this.definition.outputSchema,
-        input: this.input,
-        content: this.content,
-        messages: [{ role: "user", content: this.content }],
-        dependencies: this.dependencies,
-      }),
-    );
+  ): PromptAdapterToResult<TResult> {
+    const result = adapter({
+      kind: "string",
+      model: this.definition.model,
+      inputSchema: this.definition.inputSchema,
+      outputSchema: this.definition.outputSchema,
+      input: this.input,
+      content: this.content,
+      messages: [{ role: "user", content: this.content }],
+      dependencies: this.dependencies,
+    });
+    return isPromiseLike(result)
+      ? result.then((resolved) => makeExtendableAdapterResult(resolved))
+      : makeExtendableAdapterResult(result);
   }
+}
+
+function isPromiseLike<T>(value: MaybePromise<T>): value is Promise<T> {
+  return isRecord(value) && typeof value.then === "function";
 }
 
 function makeExtendableAdapterResult<TResult extends PromptAdapterResult>(
@@ -866,17 +948,91 @@ function definePrompt<
   return new PromptDefinition(opts);
 }
 
-function messageTag(role: PromptRole) {
-  return (
-    strings: TemplateStringsArray,
+type PromptMessageTag = (
+  strings: TemplateStringsArray,
+  ...values: readonly unknown[]
+) => PromptMessage;
+
+type PromptUserMessageTag = PromptMessageTag & {
+  (content: readonly PromptUserContentPartInput[]): PromptMessage;
+};
+
+function messageTag(role: "system" | "assistant"): PromptMessageTag;
+function messageTag(role: "user"): PromptUserMessageTag;
+function messageTag(role: PromptRole): PromptMessageTag | PromptUserMessageTag {
+  return ((
+    stringsOrContent:
+      | TemplateStringsArray
+      | readonly PromptUserContentPartInput[],
     ...values: readonly unknown[]
   ): PromptMessage => {
-    const rendered = renderTaggedTemplate(strings, values);
+    if (!isTemplateStringsArray(stringsOrContent)) {
+      if (role !== "user") {
+        throw new Error(
+          "rich prompt content is only supported for user messages",
+        );
+      }
+      return userMessageFromContentParts(stringsOrContent);
+    }
+
+    const rendered = renderTaggedTemplate(stringsOrContent, values);
     return attachDependenciesToMessage(
       { role, content: rendered.content },
       rendered.dependencies,
     );
+  }) as PromptMessageTag | PromptUserMessageTag;
+}
+
+function userMessageFromContentParts(
+  parts: readonly PromptUserContentPartInput[],
+): PromptMessage {
+  const dependencies: PromptDependencyEntry[] = [];
+  const content = parts.map((part, index): PromptMessageContentPart => {
+    if (typeof part === "string") {
+      return { type: "text", text: part };
+    }
+    if (isPromptText(part)) {
+      dependencies.push(...part.dependencies);
+      return { type: "text", text: part.content };
+    }
+    if (isPromptFileContentPart(part)) {
+      return part;
+    }
+    if (
+      isRecord(part) &&
+      part.type === "text" &&
+      typeof part.text === "string"
+    ) {
+      return { type: "text", text: part.text };
+    }
+
+    throw new Error(
+      `user content part ${index} must be prompt.text or prompt.file`,
+    );
+  });
+  return attachDependenciesToMessage({ role: "user", content }, dependencies);
+}
+
+function filePart(
+  value: unknown,
+  options: PromptFileOptions = {},
+): PromptFileContentPart {
+  return {
+    [promptFileMarker]: true,
+    type: "file",
+    file: {
+      value,
+      filename: options.filename,
+      contentType: options.contentType,
+      detail: options.detail,
+    },
   };
+}
+
+function isTemplateStringsArray(value: unknown): value is TemplateStringsArray {
+  return (
+    Array.isArray(value) && Array.isArray((value as { raw?: unknown }).raw)
+  );
 }
 
 function textTag(
@@ -987,11 +1143,36 @@ function assertPromptMessage(value: unknown, path: string): PromptMessage {
     (value.role !== "system" &&
       value.role !== "user" &&
       value.role !== "assistant") ||
-    typeof value.content !== "string"
+    !isPromptMessageContent(value.role, value.content)
   ) {
     throw new Error(`${path} must be a prompt message`);
   }
   return value as PromptMessage;
+}
+
+function isPromptMessageContent(role: unknown, content: unknown): boolean {
+  if (typeof content === "string") {
+    return true;
+  }
+  if (!Array.isArray(content)) {
+    return false;
+  }
+  if (role !== "user") {
+    return false;
+  }
+  return content.every(isPromptMessageContentPart);
+}
+
+function isPromptMessageContentPart(
+  value: unknown,
+): value is PromptMessageContentPart {
+  if (!isRecord(value) || typeof value.type !== "string") {
+    return false;
+  }
+  if (value.type === "text") {
+    return typeof value.text === "string";
+  }
+  return isPromptFileContentPart(value);
 }
 
 function createRootTemplateScope(
@@ -1072,6 +1253,18 @@ function createPromptVariables(
     return mode === "runtime"
       ? runtimeValue
       : nestedPromptBuilder(templateInfo.definition, templateInfo.kind, path);
+  }
+
+  if (templateInfo?.type === "attachment") {
+    return mode === "runtime"
+      ? runtimeValue
+      : createPromptVariableValue({
+          path,
+          mode,
+          runtimeValue,
+          sectionPath,
+          relativePath,
+        });
   }
 
   return createPromptVariableValue({
@@ -1387,6 +1580,7 @@ function createPromptDependencies(
   root: PromptDependencies["root"],
   input: unknown,
   entries: PromptDependencyEntry[],
+  inputSchema?: InputSchema,
 ): PromptDependencies {
   return {
     root,
@@ -1394,7 +1588,7 @@ function createPromptDependencies(
       {
         ...root,
         role: "root",
-        input: sanitizeDependencyInput(input),
+        input: sanitizeDependencyInput(input, inputSchema),
       },
       ...dedupeDependencyEntries(entries),
     ],
@@ -1428,6 +1622,9 @@ function collectBuiltPromptDependencies(
   value: unknown,
   parent: string,
 ): PromptDependencyEntry[] {
+  if (isPromptAttachmentValue(value) || isPromptFileContentPart(value)) {
+    return [];
+  }
   if (isBuiltPrompt(value)) {
     return collectDependencyEntries(value.dependencies.prompts, parent);
   }
@@ -1458,7 +1655,27 @@ function dedupeDependencyEntries(
   });
 }
 
-function sanitizeDependencyInput(value: unknown): unknown {
+function sanitizeDependencyInput(
+  value: unknown,
+  schema?: InputSchema,
+): unknown {
+  const templateInfo = schema?.templateInfo;
+  if (templateInfo?.type === "attachment") {
+    return summarizeAttachmentInput(value);
+  }
+  if (templateInfo?.type === "object" && isRecord(value)) {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, item]) => [
+        key,
+        sanitizeDependencyInput(item, templateInfo.shape[key] as InputSchema),
+      ]),
+    );
+  }
+  if (templateInfo?.type === "array" && Array.isArray(value)) {
+    return value.map((item) =>
+      sanitizeDependencyInput(item, templateInfo.item as InputSchema),
+    );
+  }
   if (isBuiltPrompt(value)) {
     return {
       type:
@@ -1475,6 +1692,20 @@ function sanitizeDependencyInput(value: unknown): unknown {
       version: value.version,
     };
   }
+  if (isPromptFileContentPart(value)) {
+    return {
+      type: "prompt_file",
+      file: summarizeAttachmentInput(value.file.value),
+      filename: value.file.filename,
+      content_type: value.file.contentType,
+    };
+  }
+  if (isPromptAttachmentValue(value)) {
+    return summarizeAttachmentInput(value);
+  }
+  if (typeof value === "string" && value.startsWith("data:")) {
+    return summarizeStringAttachment(value);
+  }
   if (Array.isArray(value)) {
     return value.map((item) => sanitizeDependencyInput(item));
   }
@@ -1485,6 +1716,57 @@ function sanitizeDependencyInput(value: unknown): unknown {
         sanitizeDependencyInput(item),
       ]),
     );
+  }
+  return value;
+}
+
+function summarizeAttachmentInput(value: unknown): unknown {
+  if (value instanceof BaseAttachment || value instanceof ReadonlyAttachment) {
+    return {
+      type: "attachment",
+      reference: value.reference,
+    };
+  }
+  if (isAttachmentReference(value)) {
+    return value;
+  }
+  if (isInlineAttachmentReference(value)) {
+    return {
+      type: "inline_attachment",
+      content_type: value.content_type,
+      filename: value.filename,
+      src: summarizeStringAttachment(value.src),
+    };
+  }
+  if (isBlob(value)) {
+    return {
+      type: "blob",
+      content_type: value.type || undefined,
+      byte_length: value.size,
+    };
+  }
+  if (value instanceof ArrayBuffer) {
+    return { type: "array_buffer", byte_length: value.byteLength };
+  }
+  if (ArrayBuffer.isView(value)) {
+    return {
+      type: "binary",
+      byte_length: value.byteLength,
+    };
+  }
+  if (typeof value === "string") {
+    return summarizeStringAttachment(value);
+  }
+  return { type: "attachment", value_type: typeof value };
+}
+
+function summarizeStringAttachment(value: string): unknown {
+  if (value.startsWith("data:")) {
+    return {
+      type: "data_url",
+      content_type: dataUrlContentType(value),
+      byte_length: value.length,
+    };
   }
   return value;
 }
@@ -1519,6 +1801,63 @@ function isPromptText(value: unknown): value is PromptText {
   return (
     typeof value === "object" && value !== null && promptTextMarker in value
   );
+}
+
+function isPromptFileContentPart(
+  value: unknown,
+): value is PromptFileContentPart {
+  return (
+    typeof value === "object" && value !== null && promptFileMarker in value
+  );
+}
+
+function isPromptAttachmentValue(value: unknown): value is PromptAttachment {
+  return (
+    typeof value === "string" ||
+    isBlob(value) ||
+    value instanceof ArrayBuffer ||
+    ArrayBuffer.isView(value) ||
+    value instanceof BaseAttachment ||
+    value instanceof ReadonlyAttachment ||
+    isAttachmentReference(value) ||
+    isInlineAttachmentReference(value)
+  );
+}
+
+function isBlob(value: unknown): value is Blob {
+  return typeof Blob !== "undefined" && value instanceof Blob;
+}
+
+function isAttachmentReference(value: unknown): value is AttachmentReference {
+  return (
+    isRecord(value) &&
+    ((value.type === "braintrust_attachment" &&
+      typeof value.key === "string" &&
+      typeof value.filename === "string" &&
+      typeof value.content_type === "string") ||
+      (value.type === "external_attachment" &&
+        typeof value.url === "string" &&
+        typeof value.filename === "string" &&
+        typeof value.content_type === "string"))
+  );
+}
+
+function isInlineAttachmentReference(
+  value: unknown,
+): value is InlineAttachmentReference {
+  return (
+    isRecord(value) &&
+    value.type === "inline_attachment" &&
+    typeof value.src === "string" &&
+    (value.content_type === undefined ||
+      typeof value.content_type === "string") &&
+    (value.filename === undefined || typeof value.filename === "string") &&
+    (value.data === undefined || typeof value.data === "string")
+  );
+}
+
+function dataUrlContentType(value: string): string | undefined {
+  return value.match(/^data:([^;,]+)[;,]/)?.[1];
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -1748,6 +2087,25 @@ function unknownSchema<TDomain extends SchemaDomain = "input">(): PromptSchema<
   );
 }
 
+function attachmentSchema(): PromptSchema<
+  PromptAttachment,
+  PromptAttachment,
+  unknown,
+  "input"
+> {
+  return new PromptSchema<PromptAttachment, PromptAttachment, unknown, "input">(
+    (value, path) => {
+      if (!isPromptAttachmentValue(value)) {
+        throw new Error(`${path} must be an attachment`);
+      }
+      return value;
+    },
+    () => ({ "x-bt-type": "attachment" }),
+    false,
+    { type: "attachment" },
+  );
+}
+
 function builtMessagesPromptSchema(): PromptSchema<
   BuiltMessagesPrompt<unknown, unknown>,
   BuiltMessagesPrompt<unknown, unknown>,
@@ -1889,7 +2247,7 @@ export function promptDefinitionToMustache(
   if (data.kind === "messages") {
     return {
       model: data.model,
-      messages: data.messages,
+      messages: data.messages.map(promptMessageToMustacheMessage),
     };
   }
 
@@ -1897,6 +2255,61 @@ export function promptDefinitionToMustache(
     model: data.model,
     messages: [{ role: "user", content: data.content }],
   };
+}
+
+function promptMessageToMustacheMessage(
+  message: PromptMessage,
+): ChatCompletionMessageParamType {
+  if (typeof message.content === "string") {
+    if (message.role === "system") {
+      return { role: "system", content: message.content };
+    }
+    if (message.role === "assistant") {
+      return { role: "assistant", content: message.content };
+    }
+    return { role: "user", content: message.content };
+  }
+  if (message.role !== "user") {
+    throw new Error("Only user messages can contain prompt.file parts");
+  }
+  return {
+    role: "user",
+    content: message.content.map(promptContentPartToMustachePart),
+  };
+}
+
+function promptContentPartToMustachePart(
+  part: PromptMessageContentPart,
+): ChatCompletionContentPartType {
+  if (part.type === "text") {
+    return part;
+  }
+
+  const value = stringifyTemplateValue(part.file.value).content;
+  const contentType =
+    part.file.contentType ??
+    (typeof value === "string" ? dataUrlContentType(value) : undefined);
+  if (isImageContentType(contentType)) {
+    return {
+      type: "image_url" as const,
+      image_url: {
+        url: value,
+        ...(part.file.detail ? { detail: part.file.detail } : undefined),
+      },
+    };
+  }
+
+  return {
+    type: "file" as const,
+    file: {
+      file_data: value,
+      ...(part.file.filename ? { filename: part.file.filename } : undefined),
+    },
+  };
+}
+
+function isImageContentType(contentType: string | undefined): boolean {
+  return contentType?.startsWith("image/") ?? false;
 }
 
 const inputSchemaHelpers = {
@@ -1907,6 +2320,7 @@ const inputSchemaHelpers = {
   array: arraySchema,
   object: objectSchema,
   unknown: unknownSchema,
+  attachment: attachmentSchema,
   builtMessagesPrompt: builtMessagesPromptSchema,
   builtStringPrompt: builtStringPromptSchema,
   messagesPromptDefinition: messagesPromptDefinitionSchema,
@@ -1931,6 +2345,7 @@ export const prompt = {
   user: messageTag("user"),
   assistant: messageTag("assistant"),
   text: textTag,
+  file: filePart,
   isBuiltPrompt,
   isPromptDefinition,
   adapters,

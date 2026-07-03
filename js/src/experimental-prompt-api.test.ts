@@ -1,8 +1,9 @@
 import { describe, expect, test } from "vitest";
 import { prompt, promptDefinitionToMustache } from "./experimental-prompt-api";
+import { Attachment, ReadonlyAttachment } from "./logger";
 
 describe("experimental prompt API", () => {
-  test("builds message prompts and translates to OpenAI chat args", () => {
+  test("builds message prompts and translates to OpenAI chat args", async () => {
     const supportReply = prompt.define({
       slug: "support-reply",
       model: "gpt-4o",
@@ -37,38 +38,40 @@ describe("experimental prompt API", () => {
     expect(built.definition.outputSchema?.parse(output, "output")).toEqual(
       output,
     );
-    expect(built.to(prompt.adapters.openAIChat())).toMatchObject({
-      model: "gpt-4o",
-      messages: [
-        { role: "system", content: "You write concise support replies." },
-        { role: "user", content: "Ticket: I cannot find eval history." },
-      ],
-      response_format: {
-        type: "json_schema",
-        json_schema: {
-          name: "support-reply_output",
-          strict: true,
-          schema: {
-            type: "object",
-            required: ["subject", "body", "urgency"],
+    await expect(built.to(prompt.adapters.openAIChat())).resolves.toMatchObject(
+      {
+        model: "gpt-4o",
+        messages: [
+          { role: "system", content: "You write concise support replies." },
+          { role: "user", content: "Ticket: I cannot find eval history." },
+        ],
+        response_format: {
+          type: "json_schema",
+          json_schema: {
+            name: "support-reply_output",
+            strict: true,
+            schema: {
+              type: "object",
+              required: ["subject", "body", "urgency"],
+            },
+          },
+        },
+        span_info: {
+          metadata: {
+            prompt: {
+              root: { slug: "support-reply" },
+              prompts: [
+                {
+                  slug: "support-reply",
+                  role: "root",
+                  input: { ticket: "I cannot find eval history." },
+                },
+              ],
+            },
           },
         },
       },
-      span_info: {
-        metadata: {
-          prompt: {
-            root: { slug: "support-reply" },
-            prompts: [
-              {
-                slug: "support-reply",
-                role: "root",
-                input: { ticket: "I cannot find eval history." },
-              },
-            ],
-          },
-        },
-      },
-    });
+    );
 
     if (false) {
       // @ts-expect-error message prompts do not expose string content
@@ -76,7 +79,7 @@ describe("experimental prompt API", () => {
     }
   });
 
-  test("builds string prompts and coerces adapters to a user message", () => {
+  test("builds string prompts and coerces adapters to a user message", async () => {
     const policyText = prompt.define({
       slug: "policy-text",
       model: "gpt-4o-mini",
@@ -92,17 +95,19 @@ describe("experimental prompt API", () => {
     expect(built.kind).toBe("string");
     expect(built.content).toBe("Policy: Prefer short answers.");
     expect("messages" in built).toBe(false);
-    expect(built.to(prompt.adapters.openAIChat())).toMatchObject({
-      model: "gpt-4o-mini",
-      messages: [{ role: "user", content: "Policy: Prefer short answers." }],
-      span_info: {
-        metadata: {
-          prompt: {
-            root: { slug: "policy-text" },
+    await expect(built.to(prompt.adapters.openAIChat())).resolves.toMatchObject(
+      {
+        model: "gpt-4o-mini",
+        messages: [{ role: "user", content: "Policy: Prefer short answers." }],
+        span_info: {
+          metadata: {
+            prompt: {
+              root: { slug: "policy-text" },
+            },
           },
         },
       },
-    });
+    );
     expect(
       built.to((snapshot) => ({
         kind: snapshot.kind,
@@ -397,7 +402,168 @@ describe("experimental prompt API", () => {
     );
   });
 
-  test("extends adapter args with a typed deep merge", () => {
+  test("converts prompt.file parts for OpenAI and AI SDK adapters", async () => {
+    const imageDataUrl = "data:image/png;base64,aW1hZ2U=";
+    const pdfDataUrl = "data:application/pdf;base64,cGRm";
+    const describeFiles = prompt.define({
+      slug: "describe-files",
+      model: "gpt-4o",
+      input: (s) =>
+        s.object({
+          image: s.attachment(),
+          document: s.attachment(),
+          gallery: s.array(s.attachment()),
+        }),
+      render: ({ variables, values }) => [
+        prompt.user([
+          prompt.text`Describe these files.`,
+          prompt.file(variables.image),
+          prompt.file(variables.document, { filename: "brief.pdf" }),
+          ...values.gallery.map((item) => prompt.file(item)),
+        ]),
+      ],
+    });
+
+    const built = describeFiles.build({
+      image: imageDataUrl,
+      document: pdfDataUrl,
+      gallery: [
+        "https://example.com/first.png",
+        "https://example.com/second.jpg",
+      ],
+    });
+    const openAIArgs = await built.to(prompt.adapters.openAIChat());
+    const aiSDKArgs = await built.to(prompt.adapters.aiSDKGenerateObject());
+
+    expect(openAIArgs.messages[0]?.content).toEqual([
+      { type: "text", text: "Describe these files." },
+      { type: "image_url", image_url: { url: imageDataUrl } },
+      {
+        type: "file",
+        file: { file_data: pdfDataUrl, filename: "brief.pdf" },
+      },
+      {
+        type: "image_url",
+        image_url: { url: "https://example.com/first.png" },
+      },
+      {
+        type: "image_url",
+        image_url: { url: "https://example.com/second.jpg" },
+      },
+    ]);
+    expect(aiSDKArgs.messages[0]?.content).toEqual([
+      { type: "text", text: "Describe these files." },
+      { type: "image", image: imageDataUrl, mediaType: "image/png" },
+      {
+        type: "file",
+        data: pdfDataUrl,
+        mediaType: "application/pdf",
+        filename: "brief.pdf",
+      },
+      {
+        type: "image",
+        image: "https://example.com/first.png",
+        mediaType: "image/png",
+      },
+      {
+        type: "image",
+        image: "https://example.com/second.jpg",
+        mediaType: "image/jpeg",
+      },
+    ]);
+  });
+
+  test("resolves Attachment and ReadonlyAttachment values without leaking bytes", async () => {
+    const attachment = new Attachment({
+      data: new Blob(["hello"], { type: "text/plain" }),
+      filename: "hello.txt",
+      contentType: "text/plain",
+    });
+    const readonly = new ReadonlyAttachment({
+      type: "external_attachment",
+      url: "https://example.com/doc.pdf",
+      filename: "doc.pdf",
+      content_type: "application/pdf",
+    });
+    readonly.asBase64Url = async () => "data:application/pdf;base64,cGRm";
+    const describeFiles = prompt.define({
+      slug: "describe-uploaded-files",
+      model: "gpt-4o",
+      input: (s) =>
+        s.object({
+          attachment: s.attachment(),
+          readonly: s.attachment(),
+        }),
+      render: ({ variables }) => [
+        prompt.user([
+          prompt.text`Describe these uploads.`,
+          prompt.file(variables.attachment),
+          prompt.file(variables.readonly),
+        ]),
+      ],
+    });
+
+    const built = describeFiles.build({ attachment, readonly });
+    const args = await built.to(prompt.adapters.openAIChat());
+
+    expect(args.messages[0]?.content).toEqual([
+      { type: "text", text: "Describe these uploads." },
+      {
+        type: "file",
+        file: {
+          file_data: "data:text/plain;base64,aGVsbG8=",
+          filename: "hello.txt",
+        },
+      },
+      {
+        type: "file",
+        file: {
+          file_data: "data:application/pdf;base64,cGRm",
+          filename: "doc.pdf",
+        },
+      },
+    ]);
+    expect(JSON.stringify(built.dependencies.prompts[0]?.input)).not.toContain(
+      "aGVsbG8=",
+    );
+    expect(built.dependencies.prompts[0]?.input).toMatchObject({
+      attachment: {
+        type: "attachment",
+        reference: {
+          type: "braintrust_attachment",
+          filename: "hello.txt",
+          content_type: "text/plain",
+        },
+      },
+      readonly: {
+        type: "attachment",
+        reference: {
+          type: "external_attachment",
+          filename: "doc.pdf",
+          content_type: "application/pdf",
+        },
+      },
+    });
+  });
+
+  test("rejects rich media content outside user messages", () => {
+    const invalid = prompt.define({
+      slug: "invalid-media-role",
+      input: (s) => s.object({}),
+      render: () => [
+        {
+          role: "system" as const,
+          content: [prompt.file("https://example.com/image.png")],
+        },
+      ],
+    });
+
+    expect(() => invalid.build({})).toThrow(
+      "render[0] must be a prompt message",
+    );
+  });
+
+  test("extends adapter args with a typed deep merge", async () => {
     const classify = prompt.define({
       slug: "classify",
       model: "gpt-4o-mini",
@@ -413,7 +579,7 @@ describe("experimental prompt API", () => {
     });
 
     const built = classify.build({ text: "It crashes" });
-    const args = built.to(prompt.adapters.openAIChat());
+    const args = await built.to(prompt.adapters.openAIChat());
     const extended = args.extend({
       temperature: 0.2,
       span_info: {
@@ -471,23 +637,27 @@ describe("experimental prompt API", () => {
       // @ts-expect-error adapters must return objects
       void built.to(() => "nope");
 
-      const typedArgs = built.to(prompt.adapters.openAIChat()).extend({
-        temperature: 0.2,
-        span_info: {
-          metadata: {
-            caller: "support-workflow",
+      void (async () => {
+        const typedArgs = (await built.to(prompt.adapters.openAIChat())).extend(
+          {
+            temperature: 0.2,
+            span_info: {
+              metadata: {
+                caller: "support-workflow",
+              },
+            },
           },
-        },
-      });
-      const temperature: number = typedArgs.temperature;
-      const caller: string = typedArgs.span_info.metadata.caller;
-      const slug: string = typedArgs.span_info.metadata.prompt.root.slug;
-      void temperature;
-      void caller;
-      void slug;
+        );
+        const temperature: number = typedArgs.temperature;
+        const caller: string = typedArgs.span_info.metadata.caller;
+        const slug: string = typedArgs.span_info.metadata.prompt.root.slug;
+        void temperature;
+        void caller;
+        void slug;
 
-      // @ts-expect-error extend only accepts objects
-      void typedArgs.extend("nope");
+        // @ts-expect-error extend only accepts objects
+        void typedArgs.extend("nope");
+      });
     }
   });
 
@@ -993,6 +1163,7 @@ describe("experimental prompt API", () => {
         expect("builtStringPrompt" in s).toBe(true);
         expect("messagesPromptDefinition" in s).toBe(true);
         expect("stringPromptDefinition" in s).toBe(true);
+        expect("attachment" in s).toBe(true);
         expect("prompt" in s).toBe(false);
         expect("builtPrompt" in s).toBe(false);
         expect("promptDefinition" in s).toBe(false);
@@ -1012,6 +1183,8 @@ describe("experimental prompt API", () => {
           void s.builtPrompt;
           // @ts-expect-error prompt definitions are no longer accepted as schema inputs
           void s.promptDefinition;
+          // @ts-expect-error rich content is only supported by prompt.user
+          void prompt.system([prompt.file("https://example.com/image.png")]);
         }
 
         return s.object({});
