@@ -44,6 +44,7 @@
       "ignoreDependencies": ["openai", "openai-v4", "openai-v5"],
     },
     "js": {
+      "ignore": ["promptDefinitionToMustache"],
       "entry": [
         "src/auto-instrumentations/bundler/*.ts",
         "tests/**/*.{ts,tsx,mts,cts,cjs,mjs}",

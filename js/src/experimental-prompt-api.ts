@@ -1,4 +1,5 @@
 import { adapters } from "./experimental-prompt-adapters";
+import type { PromptDefinition as MustachePromptDefinition } from "./prompt-schemas";
 
 type JsonPrimitive = string | number | boolean | null;
 
@@ -16,6 +17,22 @@ export type PromptJsonSchema = {
 type SchemaParser<T> = (value: unknown, path: string, root: unknown) => T;
 
 type SchemaDomain = "input" | "output";
+type PromptKind = "messages" | "string";
+
+type PromptSchemaTemplateInfo =
+  | {
+      type: "object";
+      shape: SchemaShape;
+    }
+  | {
+      type: "array";
+      item: AnySchema;
+    }
+  | {
+      type: "promptDefinition";
+      definition: AnyPromptDefinition;
+      kind: PromptKind;
+    };
 
 class PromptSchema<
   TParsed,
@@ -32,6 +49,7 @@ class PromptSchema<
     private readonly parser: SchemaParser<TParsed>,
     private readonly jsonSchema: () => PromptJsonSchema,
     public readonly isOptional = false,
+    public readonly templateInfo?: PromptSchemaTemplateInfo,
   ) {}
 
   parse(value: unknown, path = "value", root: unknown = value): TParsed {
@@ -58,6 +76,7 @@ class PromptSchema<
         value === undefined ? undefined : this.parser(value, path, root),
       () => this.jsonSchema(),
       true,
+      this.templateInfo,
     );
   }
 }
@@ -141,10 +160,14 @@ const promptTextMarker = Symbol("braintrust.experimental_prompt.text");
 const promptDependencyMarker = Symbol(
   "braintrust.experimental_prompt.dependencies",
 );
+const mustacheTemplateValueMarker = Symbol(
+  "braintrust.experimental_prompt.mustache_template_value",
+);
+const templateValueStateMarker = Symbol(
+  "braintrust.experimental_prompt.template_value_state",
+);
 
 type PromptRole = "system" | "user" | "assistant";
-type PromptKind = "messages" | "string";
-
 export type PromptMessage = {
   role: PromptRole;
   content: string;
@@ -158,6 +181,21 @@ type PromptText = {
   readonly [promptTextMarker]: true;
   readonly content: string;
   readonly dependencies: PromptDependencyEntry[];
+};
+
+type PromptVariableMode = "runtime" | "mustache";
+
+type TemplateValueState = {
+  readonly path: string;
+  readonly mode: PromptVariableMode;
+  readonly runtimeValue?: unknown;
+  readonly sectionPath?: string;
+  readonly relativePath?: string;
+};
+
+type MustacheTemplateValue = {
+  readonly [mustacheTemplateValueMarker]: true;
+  readonly [templateValueStateMarker]: TemplateValueState;
 };
 
 type PromptDependencyEntry = {
@@ -180,14 +218,65 @@ export type PromptDependencies = {
   prompts: PromptDependencyEntry[];
 };
 
+export type ExperimentalPromptData = {
+  id?: string;
+  slug: string;
+  name?: string;
+  version?: string;
+  model?: string;
+  inputSchema: PromptJsonSchema;
+  outputSchema?: PromptJsonSchema;
+  dependencies: PromptDependencies;
+} & (
+  | {
+      kind: "messages";
+      messages: PromptMessage[];
+    }
+  | {
+      kind: "string";
+      content: string;
+    }
+);
+
 type PromptRenderResult = readonly PromptMessage[] | PromptText;
 
-type PromptRenderContext<TInput> = {
-  input: TInput;
+type PromptRenderContext<TVariables, TValues> = {
+  variables: TVariables;
+  values: TValues;
   include: <TDefinition extends AnyPromptDefinition>(
     definition: TDefinition,
     input: InputOf<TDefinition>,
   ) => BuiltPromptOf<TDefinition>;
+};
+
+type PromptTemplateScope = {
+  rootKeys: ReadonlySet<string>;
+  pathForKey: (key: string) => string;
+};
+
+type TemplateNestedPromptBuilder = (
+  definition: AnyPromptDefinition,
+  kind: PromptKind,
+  fieldPath: string,
+) => AnyBuiltPrompt;
+
+type PromptListTag = (
+  strings: TemplateStringsArray,
+  ...values: readonly unknown[]
+) => PromptText;
+
+type PromptTemplateField<TValue> = TValue extends AnyBuiltPrompt
+  ? TValue
+  : unknown &
+      (TValue extends readonly (infer TItem)[]
+        ? { list: PromptListTag & PromptTemplateField<TItem> }
+        : TValue extends object
+          ? { [K in keyof TValue]: PromptTemplateField<TValue[K]> }
+          : {});
+
+type TemplateRenderContext = {
+  sectionPath?: string;
+  item?: unknown;
 };
 
 type InputSchemaHelpers = typeof inputSchemaHelpers;
@@ -206,7 +295,10 @@ type PromptDefinitionOptions<
   input: (s: InputSchemaHelpers) => TInputSchema;
   output?: (s: OutputSchemaHelpers) => TOutputSchema;
   render: (
-    context: PromptRenderContext<InferSchema<TInputSchema>>,
+    context: PromptRenderContext<
+      PromptTemplateField<InferSchema<TInputSchema>>,
+      InferSchema<TInputSchema>
+    >,
   ) => TRenderResult;
 };
 
@@ -261,8 +353,18 @@ class PromptDefinition<
       "input",
       input,
     ) as InferSchema<TInputSchema>;
+    const variables = createPromptVariables(
+      this.inputSchema,
+      createRootTemplateScope(this.inputSchema),
+      "runtime",
+      parsedInput,
+      () => {
+        throw new Error("prompt variables could not resolve a built prompt");
+      },
+    ) as PromptTemplateField<InferSchema<TInputSchema>>;
     const rendered = this.renderer({
-      input: parsedInput,
+      variables,
+      values: parsedInput,
       include: (definition, includeInput) =>
         definition.build(includeInput) as BuiltPromptOf<typeof definition>,
     });
@@ -346,6 +448,85 @@ class PromptDefinition<
       InferOutput<TOutputSchema>,
       TRenderResult
     >;
+  }
+
+  toPromptData(): ExperimentalPromptData {
+    return this.compileTemplate(createRootTemplateScope(this.inputSchema));
+  }
+
+  private compileTemplate(scope: PromptTemplateScope): ExperimentalPromptData {
+    const variables = createPromptVariables(
+      this.inputSchema,
+      scope,
+      "mustache",
+      undefined,
+      (definition, kind, fieldPath) => {
+        const nested = definition.compileTemplate(
+          createNestedTemplateScope(
+            definition.inputSchema,
+            scope.rootKeys,
+            fieldPath,
+          ),
+        );
+        return templateDataToBuiltPrompt(nested, kind);
+      },
+    ) as PromptTemplateField<InferSchema<TInputSchema>>;
+    const rendered = this.renderer({
+      variables,
+      values: createUnavailableValuesProxy() as InferSchema<TInputSchema>,
+      include: (definition) => {
+        const nested = definition.compileTemplate(
+          createRootTemplateScope(definition.inputSchema),
+        );
+        return templateDataToBuiltPrompt(nested, nested.kind) as BuiltPromptOf<
+          typeof definition
+        >;
+      },
+    });
+    const root = promptDefinitionRoot(this);
+    const inputSnapshot = createTemplateDependencyInput(
+      this.inputSchema,
+      scope,
+    );
+
+    if (isPromptText(rendered)) {
+      const dependencies = createPromptDependencies(root, inputSnapshot, [
+        ...collectBuiltPromptDependencies(variables, this.slug),
+        ...collectDependencyEntries(rendered.dependencies, this.slug),
+      ]);
+
+      return {
+        ...root,
+        model: this.model,
+        inputSchema: this.inputSchema.toJSONSchema(),
+        outputSchema: this.outputSchema?.toJSONSchema(),
+        dependencies,
+        kind: "string",
+        content: rendered.content,
+      };
+    }
+
+    if (!Array.isArray(rendered)) {
+      throw new Error("render must return a message array or prompt.text");
+    }
+
+    const messages = rendered.map((message, index) =>
+      assertPromptMessage(message, `render[${index}]`),
+    );
+    const dependencies = createPromptDependencies(root, inputSnapshot, [
+      ...collectBuiltPromptDependencies(variables, this.slug),
+      ...collectMessageDependencies(messages, this.slug),
+    ]);
+
+    return {
+      ...root,
+      model: this.model,
+      inputSchema: this.inputSchema.toJSONSchema(),
+      outputSchema: this.outputSchema?.toJSONSchema(),
+      dependencies,
+      kind: "messages",
+      messages,
+    };
   }
 }
 
@@ -713,23 +894,52 @@ function textTag(
 function renderTaggedTemplate(
   strings: TemplateStringsArray,
   values: readonly unknown[],
+  context?: TemplateRenderContext,
 ): { content: string; dependencies: PromptDependencyEntry[] } {
   let content = strings[0] ?? "";
   const dependencies: PromptDependencyEntry[] = [];
   for (let i = 0; i < values.length; i++) {
-    const rendered = stringifyTemplateValue(values[i]);
+    const rendered = stringifyTemplateValue(values[i], context);
     content += rendered.content + (strings[i + 1] ?? "");
     dependencies.push(...rendered.dependencies);
   }
   return { content, dependencies };
 }
 
-function stringifyTemplateValue(value: unknown): {
+function stringifyTemplateValue(
+  value: unknown,
+  context?: TemplateRenderContext,
+): {
+  content: string;
+  dependencies: PromptDependencyEntry[];
+};
+function stringifyTemplateValue(
+  value: unknown,
+  context?: TemplateRenderContext,
+): {
   content: string;
   dependencies: PromptDependencyEntry[];
 } {
   if (value === undefined || value === null) {
     return { content: "", dependencies: [] };
+  }
+  if (isMustacheTemplateValue(value)) {
+    const state = value[templateValueStateMarker];
+    if (state.mode === "mustache") {
+      if (context?.sectionPath && state.sectionPath === context.sectionPath) {
+        return {
+          content: `{{${state.relativePath ?? "."}}}`,
+          dependencies: [],
+        };
+      }
+      return { content: `{{${state.path}}}`, dependencies: [] };
+    }
+
+    const runtimeValue =
+      context?.sectionPath && state.sectionPath === context.sectionPath
+        ? getPathValue(context.item, state.relativePath)
+        : state.runtimeValue;
+    return { content: stringifyRuntimeValue(runtimeValue), dependencies: [] };
   }
   if (isBuiltStringPrompt(value)) {
     return { content: value.content, dependencies: value.dependencies.prompts };
@@ -782,6 +992,395 @@ function assertPromptMessage(value: unknown, path: string): PromptMessage {
     throw new Error(`${path} must be a prompt message`);
   }
   return value as PromptMessage;
+}
+
+function createRootTemplateScope(
+  inputSchema: InputSchema,
+): PromptTemplateScope {
+  return {
+    rootKeys: getObjectSchemaKeys(inputSchema),
+    pathForKey: (key) => key,
+  };
+}
+
+function createNestedTemplateScope(
+  inputSchema: InputSchema,
+  rootKeys: ReadonlySet<string>,
+  fieldPath: string,
+): PromptTemplateScope {
+  const nestedKeys = getObjectSchemaKeys(inputSchema);
+  const fieldKey = lastPathSegment(fieldPath);
+  return {
+    rootKeys: new Set([...rootKeys, ...nestedKeys]),
+    pathForKey: (key) =>
+      rootKeys.has(key) && key !== fieldKey ? key : `${fieldPath}.${key}`,
+  };
+}
+
+function getObjectSchemaKeys(schema: InputSchema): Set<string> {
+  return schema.templateInfo?.type === "object"
+    ? new Set(Object.keys(schema.templateInfo.shape))
+    : new Set();
+}
+
+function lastPathSegment(path: string): string {
+  return path.split(".").at(-1) ?? path;
+}
+
+function createPromptVariables(
+  schema: InputSchema,
+  scope: PromptTemplateScope,
+  mode: PromptVariableMode,
+  runtimeValue: unknown,
+  nestedPromptBuilder: TemplateNestedPromptBuilder,
+  path = "input",
+  sectionPath?: string,
+  relativePath?: string,
+): unknown {
+  if (mode === "runtime" && isBuiltPrompt(runtimeValue)) {
+    return runtimeValue;
+  }
+
+  const templateInfo = schema.templateInfo;
+  if (templateInfo?.type === "object") {
+    return createPromptVariableObject(
+      templateInfo.shape,
+      scope,
+      mode,
+      runtimeValue,
+      nestedPromptBuilder,
+      path === "input" ? undefined : path,
+      sectionPath,
+      relativePath,
+    );
+  }
+
+  if (templateInfo?.type === "array") {
+    return createPromptVariableArray(
+      templateInfo.item as InputSchema,
+      scope,
+      mode,
+      runtimeValue,
+      nestedPromptBuilder,
+      path,
+      sectionPath,
+      relativePath,
+    );
+  }
+
+  if (templateInfo?.type === "promptDefinition") {
+    return mode === "runtime"
+      ? runtimeValue
+      : nestedPromptBuilder(templateInfo.definition, templateInfo.kind, path);
+  }
+
+  return createPromptVariableValue({
+    path,
+    mode,
+    runtimeValue,
+    sectionPath,
+    relativePath,
+  });
+}
+
+function createPromptVariableObject(
+  shape: SchemaShape,
+  scope: PromptTemplateScope,
+  mode: PromptVariableMode,
+  runtimeValue: unknown,
+  nestedPromptBuilder: TemplateNestedPromptBuilder,
+  basePath?: string,
+  sectionPath?: string,
+  relativePath?: string,
+): Record<string, unknown> {
+  const variableObject: Record<string, unknown> = {};
+  if (basePath) {
+    attachPromptVariableValue(variableObject, {
+      path: basePath,
+      mode,
+      runtimeValue,
+      sectionPath,
+      relativePath,
+    });
+  }
+  for (const [key, schema] of Object.entries(shape)) {
+    const path = basePath ? `${basePath}.${key}` : scope.pathForKey(key);
+    const childRelativePath = sectionPath
+      ? relativePath
+        ? `${relativePath}.${key}`
+        : key
+      : undefined;
+    variableObject[key] = createPromptVariables(
+      schema as InputSchema,
+      scope,
+      mode,
+      getObjectProperty(runtimeValue, key),
+      nestedPromptBuilder,
+      path,
+      sectionPath,
+      childRelativePath,
+    );
+  }
+  return variableObject;
+}
+
+function createPromptVariableArray(
+  itemSchema: InputSchema,
+  scope: PromptTemplateScope,
+  mode: PromptVariableMode,
+  runtimeValue: unknown,
+  nestedPromptBuilder: TemplateNestedPromptBuilder,
+  path: string,
+  sectionPath?: string,
+  relativePath?: string,
+): Record<string, unknown> {
+  const variableArray = createPromptVariableValue({
+    path,
+    mode,
+    runtimeValue,
+    sectionPath,
+    relativePath,
+  }) as Record<string, unknown>;
+  const listSectionPath = path;
+  const listTag = ((
+    strings: TemplateStringsArray,
+    ...values: readonly unknown[]
+  ): PromptText => {
+    if (mode === "mustache") {
+      const rendered = renderTaggedTemplate(strings, values, {
+        sectionPath: listSectionPath,
+      });
+      const sectionName = relativePath ?? path;
+      return {
+        [promptTextMarker]: true,
+        content: `{{#${sectionName}}}${rendered.content}{{/${sectionName}}}`,
+        dependencies: rendered.dependencies,
+      };
+    }
+
+    const items = Array.isArray(runtimeValue) ? runtimeValue : [];
+    const renderedItems = items.map((item) =>
+      renderTaggedTemplate(strings, values, {
+        sectionPath: listSectionPath,
+        item,
+      }),
+    );
+    return {
+      [promptTextMarker]: true,
+      content: renderedItems.map((item) => item.content).join(""),
+      dependencies: renderedItems.flatMap((item) => item.dependencies),
+    };
+  }) as PromptListTag & Record<string, unknown>;
+
+  attachPromptVariableValue(listTag, {
+    path,
+    mode,
+    runtimeValue,
+    sectionPath: listSectionPath,
+    relativePath: undefined,
+  });
+  const itemVariables = createPromptVariables(
+    itemSchema,
+    scope,
+    mode,
+    undefined,
+    nestedPromptBuilder,
+    path,
+    listSectionPath,
+  );
+  if (isRecord(itemVariables)) {
+    for (const key of Object.keys(itemVariables)) {
+      Object.defineProperty(
+        listTag,
+        key,
+        Object.getOwnPropertyDescriptor(itemVariables, key) ?? {
+          value: itemVariables[key],
+          enumerable: true,
+        },
+      );
+    }
+  }
+
+  Object.defineProperty(variableArray, "list", {
+    value: listTag,
+    enumerable: true,
+  });
+  return variableArray;
+}
+
+function createTemplateDependencyInput(
+  schema: InputSchema,
+  scope: PromptTemplateScope,
+  path = "input",
+): unknown {
+  const templateInfo = schema.templateInfo;
+  if (templateInfo?.type === "object") {
+    return Object.fromEntries(
+      Object.entries(templateInfo.shape).map(([key, childSchema]) => {
+        const childPath =
+          path === "input" ? scope.pathForKey(key) : `${path}.${key}`;
+        return [
+          key,
+          createTemplateDependencyInput(
+            childSchema as InputSchema,
+            scope,
+            childPath,
+          ),
+        ];
+      }),
+    );
+  }
+
+  if (templateInfo?.type === "array") {
+    return `{{${path}}}`;
+  }
+
+  if (templateInfo?.type === "promptDefinition") {
+    return {
+      type:
+        templateInfo.kind === "messages"
+          ? "template_messages_prompt"
+          : "template_string_prompt",
+      root: promptDefinitionRoot(templateInfo.definition),
+    };
+  }
+
+  return `{{${path}}}`;
+}
+
+function createPromptVariableValue(
+  state: TemplateValueState,
+): MustacheTemplateValue {
+  return attachPromptVariableValue({}, state) as MustacheTemplateValue;
+}
+
+function attachPromptVariableValue<T extends object>(
+  value: T,
+  state: TemplateValueState,
+): T {
+  Object.defineProperties(value, {
+    [mustacheTemplateValueMarker]: {
+      value: true,
+      enumerable: false,
+    },
+    [templateValueStateMarker]: {
+      value: state,
+      enumerable: false,
+    },
+    toString: {
+      value: () => stringifyTemplateValue(value).content,
+      enumerable: false,
+    },
+    valueOf: {
+      value: () => stringifyTemplateValue(value).content,
+      enumerable: false,
+    },
+    [Symbol.toPrimitive]: {
+      value: () => stringifyTemplateValue(value).content,
+      enumerable: false,
+    },
+  });
+  return value;
+}
+
+function getObjectProperty(value: unknown, key: string): unknown {
+  if (isRecord(value)) {
+    return value[key];
+  }
+  if (Array.isArray(value)) {
+    return value[Number(key)];
+  }
+  return undefined;
+}
+
+function getPathValue(value: unknown, path?: string): unknown {
+  if (!path) {
+    return value;
+  }
+  return path
+    .split(".")
+    .reduce<unknown>((current, key) => getObjectProperty(current, key), value);
+}
+
+function stringifyRuntimeValue(value: unknown): string {
+  if (value === undefined || value === null) {
+    return "";
+  }
+  if (
+    typeof value === "string" ||
+    typeof value === "number" ||
+    typeof value === "boolean"
+  ) {
+    return String(value);
+  }
+  return JSON.stringify(value);
+}
+
+function createUnavailableValuesProxy(): unknown {
+  return new Proxy(
+    {},
+    {
+      get(_target, key) {
+        if (typeof key === "symbol") {
+          return undefined;
+        }
+        throw new Error(
+          "Runtime values are not available while exporting prompt data; use variables in prompt templates.",
+        );
+      },
+    },
+  );
+}
+
+function isMustacheTemplateValue(
+  value: unknown,
+): value is MustacheTemplateValue {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    mustacheTemplateValueMarker in value
+  );
+}
+
+function promptDefinitionRoot(
+  definition: AnyPromptDefinition,
+): PromptDependencies["root"] {
+  return {
+    id: definition.id,
+    slug: definition.slug,
+    name: definition.name,
+    version: definition.version,
+  };
+}
+
+function templateDataToBuiltPrompt(
+  data: ExperimentalPromptData,
+  kind: PromptKind,
+): AnyBuiltPrompt {
+  if (data.kind !== kind) {
+    const label = kind === "messages" ? "messages" : "string";
+    throw new Error(`template prompt must be a ${label} prompt`);
+  }
+
+  const definition = {
+    model: data.model,
+    inputSchema: unknownSchema(),
+    outputSchema: undefined,
+  };
+  if (data.kind === "messages") {
+    return new BuiltMessagesPrompt({
+      definition,
+      input: data.dependencies.prompts[0]?.input,
+      messages: data.messages,
+      dependencies: data.dependencies,
+    });
+  }
+  return new BuiltStringPrompt({
+    definition,
+    input: data.dependencies.prompts[0]?.input,
+    content: data.content,
+    dependencies: data.dependencies,
+  });
 }
 
 function createPromptDependencies(
@@ -1038,6 +1637,8 @@ function createArraySchema<
       ) as InferSchema<TItemSchema>[];
     },
     () => ({ type: "array", items: item.toJSONSchema() }),
+    false,
+    { type: "array", item },
   );
 }
 
@@ -1108,6 +1709,8 @@ function createObjectSchema<
         .map(([key]) => key),
       additionalProperties: false,
     }),
+    false,
+    { type: "object", shape },
   );
 }
 
@@ -1267,7 +1870,33 @@ function promptDefinitionSchema<
       "x-bt-type":
         kind === "messages" ? "built_messages_prompt" : "built_string_prompt",
     }),
+    false,
+    { type: "promptDefinition", definition, kind },
   );
+}
+
+/**
+ * @internal Converts experimental prompt template data into the existing prompt
+ * definition shape. This is intended for future backend-saving code paths.
+ */
+export function promptDefinitionToMustache(
+  data: ExperimentalPromptData,
+): MustachePromptDefinition {
+  if (!data.model) {
+    throw new Error("Cannot convert prompt data to mustache without a model");
+  }
+
+  if (data.kind === "messages") {
+    return {
+      model: data.model,
+      messages: data.messages,
+    };
+  }
+
+  return {
+    model: data.model,
+    messages: [{ role: "user", content: data.content }],
+  };
 }
 
 const inputSchemaHelpers = {

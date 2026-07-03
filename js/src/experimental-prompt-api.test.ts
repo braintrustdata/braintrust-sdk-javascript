@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { prompt } from "./experimental-prompt-api";
+import { prompt, promptDefinitionToMustache } from "./experimental-prompt-api";
 
 describe("experimental prompt API", () => {
   test("builds message prompts and translates to OpenAI chat args", () => {
@@ -16,9 +16,9 @@ describe("experimental prompt API", () => {
           body: s.string(),
           urgency: s.enum(["low", "medium", "high"]),
         }),
-      render: ({ input }) => [
+      render: ({ variables }) => [
         prompt.system`You write concise support replies.`,
-        prompt.user`Ticket: ${input.ticket}`,
+        prompt.user`Ticket: ${variables.ticket}`,
       ],
     });
 
@@ -84,7 +84,7 @@ describe("experimental prompt API", () => {
         s.object({
           policy: s.string(),
         }),
-      render: ({ input }) => prompt.text`Policy: ${input.policy}`,
+      render: ({ variables }) => prompt.text`Policy: ${variables.policy}`,
     });
 
     const built = policyText.build({ policy: "Prefer short answers." });
@@ -123,6 +123,280 @@ describe("experimental prompt API", () => {
     }
   });
 
+  test("exports message prompt data as inlined mustache templates", () => {
+    const supportReply = prompt.define({
+      slug: "support-reply",
+      model: "gpt-4o",
+      input: (s) =>
+        s.object({
+          customer: s.object({
+            name: s.string(),
+          }),
+          ticket: s.string(),
+        }),
+      output: (s) =>
+        s.object({
+          body: s.string(),
+        }),
+      render: ({ variables }) => [
+        prompt.system`You write concise support replies.`,
+        prompt.user`Customer: ${variables.customer.name}\nTicket: ${variables.ticket}`,
+      ],
+    });
+
+    const data = supportReply.toPromptData();
+
+    expect(data).toMatchObject({
+      slug: "support-reply",
+      model: "gpt-4o",
+      kind: "messages",
+      inputSchema: {
+        type: "object",
+        required: ["customer", "ticket"],
+      },
+      outputSchema: {
+        type: "object",
+        required: ["body"],
+      },
+      messages: [
+        { role: "system", content: "You write concise support replies." },
+        {
+          role: "user",
+          content: "Customer: {{customer.name}}\nTicket: {{ticket}}",
+        },
+      ],
+    });
+    expect(promptDefinitionToMustache(data)).toEqual({
+      model: "gpt-4o",
+      messages: [
+        { role: "system", content: "You write concise support replies." },
+        {
+          role: "user",
+          content: "Customer: {{customer.name}}\nTicket: {{ticket}}",
+        },
+      ],
+    });
+  });
+
+  test("exports string prompt data as a mustache user message template", () => {
+    const summarize = prompt.define({
+      slug: "summarize",
+      model: "gpt-4o-mini",
+      input: (s) =>
+        s.object({
+          text: s.string(),
+        }),
+      render: ({ variables }) => prompt.text`Summarize: ${variables.text}`,
+    });
+
+    const data = summarize.toPromptData();
+
+    expect(data).toMatchObject({
+      slug: "summarize",
+      model: "gpt-4o-mini",
+      kind: "string",
+      content: "Summarize: {{text}}",
+    });
+    expect(promptDefinitionToMustache(data)).toEqual({
+      model: "gpt-4o-mini",
+      messages: [{ role: "user", content: "Summarize: {{text}}" }],
+    });
+  });
+
+  test("inlines nested message prompt definitions in mustache prompt data", () => {
+    const brandVoice = prompt.define({
+      slug: "brand-voice",
+      version: "v3",
+      input: (s) =>
+        s.object({
+          company: s.string(),
+          tone: s.string(),
+        }),
+      render: ({ variables }) => [
+        prompt.system`Use ${variables.company}'s ${variables.tone} voice.`,
+      ],
+    });
+    const supportReply = prompt.define({
+      slug: "support-reply",
+      model: "gpt-4o",
+      input: (s) =>
+        s.object({
+          company: s.string(),
+          ticket: s.string(),
+          voice: s.messagesPromptDefinition(brandVoice),
+        }),
+      render: ({ variables }) => [
+        ...variables.voice,
+        prompt.user`Draft a reply for: ${variables.ticket}`,
+      ],
+    });
+
+    const data = supportReply.toPromptData();
+
+    expect(data.kind).toBe("messages");
+    expect(data.messages).toEqual([
+      {
+        role: "system",
+        content: "Use {{company}}'s {{voice.tone}} voice.",
+      },
+      { role: "user", content: "Draft a reply for: {{ticket}}" },
+    ]);
+    expect(data.dependencies.prompts).toMatchObject([
+      { slug: "support-reply", role: "root" },
+      {
+        slug: "brand-voice",
+        version: "v3",
+        role: "include",
+        parent: "support-reply",
+      },
+    ]);
+  });
+
+  test("inlines nested string prompt definitions in mustache prompt data", () => {
+    const policyText = prompt.define({
+      slug: "policy-text",
+      version: "v2",
+      input: (s) =>
+        s.object({
+          company: s.string(),
+          text: s.string(),
+        }),
+      render: ({ variables }) =>
+        prompt.text`${variables.company}: ${variables.text}`,
+    });
+    const supportReply = prompt.define({
+      slug: "support-reply",
+      model: "gpt-4o",
+      input: (s) =>
+        s.object({
+          company: s.string(),
+          ticket: s.string(),
+          policy: s.stringPromptDefinition(policyText),
+        }),
+      render: ({ variables }) => [
+        prompt.system`Follow this policy: ${variables.policy}`,
+        prompt.user`Draft a reply for: ${variables.ticket}`,
+      ],
+    });
+
+    const data = supportReply.toPromptData();
+
+    expect(data.kind).toBe("messages");
+    expect(data.messages).toEqual([
+      {
+        role: "system",
+        content: "Follow this policy: {{company}}: {{policy.text}}",
+      },
+      { role: "user", content: "Draft a reply for: {{ticket}}" },
+    ]);
+    expect(data.dependencies.prompts).toMatchObject([
+      { slug: "support-reply", role: "root" },
+      {
+        slug: "policy-text",
+        version: "v2",
+        role: "include",
+        parent: "support-reply",
+      },
+    ]);
+  });
+
+  test("promptDefinitionToMustache requires a model", () => {
+    const modeless = prompt.define({
+      slug: "modeless",
+      input: (s) => s.object({ text: s.string() }),
+      render: ({ variables }) => [prompt.user`Say ${variables.text}`],
+    });
+
+    expect(() => promptDefinitionToMustache(modeless.toPromptData())).toThrow(
+      "Cannot convert prompt data to mustache without a model",
+    );
+  });
+
+  test("exports array list templates as mustache sections", () => {
+    const itemList = prompt.define({
+      slug: "item-list",
+      model: "gpt-4o",
+      input: (s) =>
+        s.object({
+          items: s.array(
+            s.object({
+              foobar: s.string(),
+              author: s.object({
+                name: s.string(),
+              }),
+            }),
+          ),
+        }),
+      render: ({ variables }) => [
+        prompt.user`Items:\n${variables.items.list`- ${variables.items.list.foobar} by ${variables.items.list.author.name}\n`}`,
+      ],
+    });
+
+    const built = itemList.build({
+      items: [
+        { foobar: "first", author: { name: "Ada" } },
+        { foobar: "second", author: { name: "Grace" } },
+      ],
+    });
+    const data = itemList.toPromptData();
+
+    expect(built.messages).toEqual([
+      {
+        role: "user",
+        content: "Items:\n- first by Ada\n- second by Grace\n",
+      },
+    ]);
+    expect(data.kind).toBe("messages");
+    expect(data.messages).toEqual([
+      {
+        role: "user",
+        content:
+          "Items:\n{{#items}}- {{foobar}} by {{author.name}}\n{{/items}}",
+      },
+    ]);
+    expect(promptDefinitionToMustache(data)).toEqual({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "user",
+          content:
+            "Items:\n{{#items}}- {{foobar}} by {{author.name}}\n{{/items}}",
+        },
+      ],
+    });
+  });
+
+  test("passes parsed runtime values separately from template variables", () => {
+    const itemSummary = prompt.define({
+      slug: "item-summary",
+      input: (s) =>
+        s.object({
+          items: s.array(
+            s.object({
+              foobar: s.string(),
+            }),
+          ),
+        }),
+      render: ({ values }) => [
+        prompt.user`Second: ${values.items[1]?.foobar}\nAll: ${values.items.map((item) => item.foobar).join(", ")}`,
+      ],
+    });
+
+    expect(
+      itemSummary.build({
+        items: [{ foobar: "first" }, { foobar: "second" }],
+      }).messages,
+    ).toEqual([
+      {
+        role: "user",
+        content: "Second: second\nAll: first, second",
+      },
+    ]);
+    expect(() => itemSummary.toPromptData()).toThrow(
+      "Runtime values are not available while exporting prompt data; use variables in prompt templates.",
+    );
+  });
+
   test("extends adapter args with a typed deep merge", () => {
     const classify = prompt.define({
       slug: "classify",
@@ -135,7 +409,7 @@ describe("experimental prompt API", () => {
         s.object({
           label: s.enum(["bug", "question"]),
         }),
-      render: ({ input }) => [prompt.user`Classify: ${input.text}`],
+      render: ({ variables }) => [prompt.user`Classify: ${variables.text}`],
     });
 
     const built = classify.build({ text: "It crashes" });
@@ -226,8 +500,8 @@ describe("experimental prompt API", () => {
           company: s.string(),
           tone: s.string(),
         }),
-      render: ({ input }) => [
-        prompt.system`Use ${input.company}'s ${input.tone} voice.`,
+      render: ({ variables }) => [
+        prompt.system`Use ${variables.company}'s ${variables.tone} voice.`,
       ],
     });
 
@@ -240,9 +514,9 @@ describe("experimental prompt API", () => {
           ticket: s.string(),
           voice: s.messagesPromptDefinition(brandVoice),
         }),
-      render: ({ input }) => [
-        ...input.voice,
-        prompt.user`Draft a reply for: ${input.ticket}`,
+      render: ({ variables }) => [
+        ...variables.voice,
+        prompt.user`Draft a reply for: ${variables.ticket}`,
       ],
     });
 
@@ -334,7 +608,8 @@ describe("experimental prompt API", () => {
           company: s.string(),
           policy: s.string(),
         }),
-      render: ({ input }) => prompt.text`${input.company}: ${input.policy}`,
+      render: ({ variables }) =>
+        prompt.text`${variables.company}: ${variables.policy}`,
     });
 
     const supportReply = prompt.define({
@@ -345,9 +620,9 @@ describe("experimental prompt API", () => {
           ticket: s.string(),
           policy: s.stringPromptDefinition(policyText),
         }),
-      render: ({ input }) => [
-        prompt.system`Follow this policy: ${input.policy}`,
-        prompt.user`Draft a reply for: ${input.ticket}`,
+      render: ({ variables }) => [
+        prompt.system`Follow this policy: ${variables.policy}`,
+        prompt.user`Draft a reply for: ${variables.ticket}`,
       ],
     });
 
@@ -410,7 +685,9 @@ describe("experimental prompt API", () => {
         s.object({
           topic: s.string(),
         }),
-      render: ({ input }) => [prompt.user`Message about ${input.topic}`],
+      render: ({ variables }) => [
+        prompt.user`Message about ${variables.topic}`,
+      ],
     });
     const stringPrompt = prompt.define({
       slug: "string-prompt",
@@ -418,7 +695,7 @@ describe("experimental prompt API", () => {
         s.object({
           topic: s.string(),
         }),
-      render: ({ input }) => prompt.text`String about ${input.topic}`,
+      render: ({ variables }) => prompt.text`String about ${variables.topic}`,
     });
 
     const consumeBoth = prompt.define({
@@ -428,9 +705,9 @@ describe("experimental prompt API", () => {
           messagePart: s.builtMessagesPrompt(),
           stringPart: s.builtStringPrompt(),
         }),
-      render: ({ input }) => [
-        ...input.messagePart,
-        prompt.user`Fragment: ${input.stringPart}`,
+      render: ({ variables }) => [
+        ...variables.messagePart,
+        prompt.user`Fragment: ${variables.stringPart}`,
       ],
     });
 
@@ -487,7 +764,9 @@ describe("experimental prompt API", () => {
         s.object({
           topic: s.string(),
         }),
-      render: ({ input }) => [prompt.user`Message about ${input.topic}`],
+      render: ({ variables }) => [
+        prompt.user`Message about ${variables.topic}`,
+      ],
     });
     const stringPrompt = prompt.define({
       slug: "string-prompt",
@@ -495,7 +774,7 @@ describe("experimental prompt API", () => {
         s.object({
           topic: s.string(),
         }),
-      render: ({ input }) => prompt.text`String about ${input.topic}`,
+      render: ({ variables }) => prompt.text`String about ${variables.topic}`,
     });
 
     const messagePart = messagePrompt.build({ topic: "tracing" });
@@ -526,7 +805,7 @@ describe("experimental prompt API", () => {
         s.object({
           ok: s.boolean(),
         }),
-      render: ({ input }) => [prompt.user`Count: ${input.count}`],
+      render: ({ variables }) => [prompt.user`Count: ${variables.count}`],
     });
     const invalidRenderPrompt = prompt.define({
       slug: "invalid-render",
@@ -565,7 +844,7 @@ describe("experimental prompt API", () => {
           ok: s.boolean(),
         });
       },
-      render: ({ input }) => [prompt.user`Topic: ${input.topic}`],
+      render: ({ variables }) => [prompt.user`Topic: ${variables.topic}`],
     });
 
     expect(inputHelperKeys).toContain("builtMessagesPrompt");
@@ -642,7 +921,7 @@ describe("experimental prompt API", () => {
         s.object({
           label: s.enum(["bug", "question"]),
         }),
-      render: ({ input }) => [prompt.user`Classify: ${input.text}`],
+      render: ({ variables }) => [prompt.user`Classify: ${variables.text}`],
     });
     const summarize = prompt.define({
       slug: "summarize",
@@ -650,7 +929,7 @@ describe("experimental prompt API", () => {
         s.object({
           text: s.string(),
         }),
-      render: ({ input }) => prompt.text`Summarize: ${input.text}`,
+      render: ({ variables }) => prompt.text`Summarize: ${variables.text}`,
     });
 
     expect(
