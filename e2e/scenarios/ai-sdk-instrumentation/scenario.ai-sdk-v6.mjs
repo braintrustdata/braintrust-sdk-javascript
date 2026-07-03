@@ -11,6 +11,7 @@ runAutoAISDKInstrumentationOrExit({
   maxTokensKey: "maxOutputTokens",
   openai,
   sdkVersion: await getInstalledPackageVersion(import.meta.url, "ai-sdk-v6"),
+  supportsAgentToolLoop: true,
   supportsEmbedMany: false,
   supportsGenerateObject: true,
   supportsStreamObject: true,

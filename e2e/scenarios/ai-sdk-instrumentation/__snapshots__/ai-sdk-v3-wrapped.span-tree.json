@@ -44,7 +44,6 @@
                     },
                     "rawResponse": {},
                     "response": {
-                      "id": "<span:1>",
                       "modelId": "gpt-4o-mini-2024-07-18",
                       "timestamp": "<timestamp>"
                     },
@@ -94,7 +93,6 @@
                 "finishReason": "stop",
                 "rawResponse": {},
                 "response": {
-                  "id": "<span:1>",
                   "messages": [
                     {
                       "content": [
@@ -120,7 +118,6 @@
                     "finishReason": "stop",
                     "isContinued": false,
                     "response": {
-                      "id": "<span:1>",
                       "messages": [
                         {
                           "content": [
@@ -377,14 +374,12 @@
                     },
                     "rawResponse": {},
                     "response": {
-                      "id": "<span:1>",
                       "modelId": "gpt-4o-mini-2024-07-18",
                       "timestamp": "<timestamp>"
                     },
                     "toolCalls": [
                       {
                         "args": "{\"location\":\"Paris, France\"}",
-                        "toolCallId": "<toolCallId:2>",
                         "toolCallType": "function",
                         "toolName": "get_weather"
                       }
@@ -463,7 +458,6 @@
                 "finishReason": "tool-calls",
                 "rawResponse": {},
                 "response": {
-                  "id": "<span:2>",
                   "messages": [
                     {
                       "content": [
@@ -475,7 +469,6 @@
                           "args": {
                             "location": "Paris, France"
                           },
-                          "toolCallId": "<toolCallId:1>",
                           "toolName": "get_weather",
                           "type": "tool-call"
                         }
@@ -486,7 +479,6 @@
                       "content": [
                         {
                           "result": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
-                          "toolCallId": "<toolCallId:1>",
                           "toolName": "get_weather",
                           "type": "tool-result"
                         }
@@ -508,7 +500,6 @@
                     "finishReason": "tool-calls",
                     "isContinued": false,
                     "response": {
-                      "id": "<span:2>",
                       "messages": [
                         {
                           "content": [
@@ -520,7 +511,6 @@
                               "args": {
                                 "location": "Paris, France"
                               },
-                              "toolCallId": "<toolCallId:1>",
                               "toolName": "get_weather",
                               "type": "tool-call"
                             }
@@ -531,7 +521,6 @@
                           "content": [
                             {
                               "result": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
-                              "toolCallId": "<toolCallId:1>",
                               "toolName": "get_weather",
                               "type": "tool-result"
                             }
@@ -549,7 +538,6 @@
                         "args": {
                           "location": "Paris, France"
                         },
-                        "toolCallId": "<toolCallId:1>",
                         "toolName": "get_weather",
                         "type": "tool-call"
                       }
@@ -560,7 +548,6 @@
                           "location": "Paris, France"
                         },
                         "result": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
-                        "toolCallId": "<toolCallId:1>",
                         "toolName": "get_weather"
                       }
                     ],
@@ -578,7 +565,6 @@
                     "args": {
                       "location": "Paris, France"
                     },
-                    "toolCallId": "<toolCallId:1>",
                     "toolName": "get_weather",
                     "type": "tool-call"
                   }
@@ -589,7 +575,6 @@
                       "location": "Paris, France"
                     },
                     "result": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
-                    "toolCallId": "<toolCallId:1>",
                     "toolName": "get_weather"
                   }
                 ],
@@ -692,14 +677,12 @@
                     },
                     "rawResponse": {},
                     "response": {
-                      "id": "<span:1>",
                       "modelId": "gpt-4o-mini-2024-07-18",
                       "timestamp": "<timestamp>"
                     },
                     "toolCalls": [
                       {
                         "args": "{\"city\":\"Paris\"}",
-                        "toolCallId": "<toolCallId:2>",
                         "toolCallType": "function",
                         "toolName": "json"
                       }
@@ -765,7 +748,6 @@
                 },
                 "rawResponse": {},
                 "response": {
-                  "id": "<span:1>",
                   "modelId": "gpt-4o-mini-2024-07-18",
                   "timestamp": "<timestamp>"
                 },
@@ -846,7 +828,6 @@
                     "toolCalls": [
                       {
                         "args": "{\"city\":\"Paris\"}",
-                        "toolCallId": "<toolCallId:1>",
                         "toolCallType": "function",
                         "toolName": "json",
                         "type": "tool-call"

@@ -74,6 +74,7 @@ export const AI_SDK_SCENARIO_SPECS = [
     openaiModuleName: "ai-sdk-openai-v6",
     packageName: "ai-sdk-v6",
     snapshotName: "ai-sdk-v6",
+    supportsAgentToolLoop: true,
     supportsEmbedMany: false,
     supportsProviderCacheAssertions: true,
     supportsGenerateObject: true,
@@ -83,12 +84,14 @@ export const AI_SDK_SCENARIO_SPECS = [
     wrapperEntry: "scenario.ts",
   },
   {
+    agentClassExport: "ToolLoopAgent",
     autoEntry: "scenario.ai-sdk-v7.mjs",
     dependencyName: "ai-sdk-v7",
     maxTokensKey: "maxOutputTokens",
     openaiModuleName: "ai-sdk-openai-v7",
     packageName: "ai-sdk-v7",
     snapshotName: "ai-sdk-v7",
+    supportsAgentToolLoop: true,
     supportsDenyOutputOverrideScenario: false,
     supportsEmbedMany: true,
     supportsGenerateObject: true,
@@ -577,6 +580,82 @@ async function runAISDKInstrumentationScenario(
             }
           },
         );
+
+        if (options.supportsAgentToolLoop) {
+          await runOperation(
+            "ai-sdk-agent-tool-loop-operation",
+            "agent-tool-loop",
+            async () => {
+              const AgentClass = instrumentedAI[options.agentClassExport];
+              const agent = new AgentClass({
+                model: openaiModel,
+                instructions:
+                  "You are a shopping assistant. Use the tools before answering pricing questions.",
+                tools: {
+                  get_store_price: options.ai.tool({
+                    description: "Get the price of an item at a store",
+                    [options.toolSchemaKey]: z.object({
+                      item: z.string().describe("The item to price"),
+                      store: z.string().describe("The store name"),
+                    }),
+                    execute: async (args) =>
+                      JSON.stringify({
+                        item: args.item,
+                        price:
+                          args.store === "StoreA"
+                            ? 999
+                            : args.store === "StoreB"
+                              ? 1099
+                              : 0,
+                        store: args.store,
+                      }),
+                  }),
+                  apply_discount: options.ai.tool({
+                    description: "Apply a discount code to a total",
+                    [options.toolSchemaKey]: z.object({
+                      discountCode: z
+                        .string()
+                        .describe("The discount code to apply"),
+                      total: z.number().describe("The original total"),
+                    }),
+                    execute: async (args) =>
+                      JSON.stringify({
+                        discountCode: args.discountCode,
+                        finalTotal:
+                          args.discountCode === "SAVE20"
+                            ? args.total * 0.8
+                            : args.total,
+                        originalTotal: args.total,
+                      }),
+                  }),
+                },
+                stopWhen: options.ai.stepCountIs(6),
+                temperature: 0,
+              });
+
+              await agent.generate({
+                messages: [
+                  {
+                    role: "user",
+                    content:
+                      "I need help comparing laptop prices before checkout.",
+                  },
+                  {
+                    role: "assistant",
+                    content:
+                      "I can compare store prices and apply a discount code.",
+                  },
+                  {
+                    role: "user",
+                    content:
+                      "Call get_store_price for a laptop at StoreA and StoreB, then call apply_discount with code SAVE20 for the cheaper price. Finish with the discounted total.",
+                  },
+                ],
+                ...tokenLimit(options.maxTokensKey, 256),
+              });
+            },
+          );
+        }
       }
 
       if (options.workflow) {

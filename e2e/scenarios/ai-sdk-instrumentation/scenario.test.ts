@@ -57,6 +57,7 @@ describe.concurrent("variants", () => {
           });
         },
         snapshotName: `${scenario.snapshotName}-${scenario.wrapperSnapshotSuffix ?? "wrapped"}`,
+        supportsAgentToolLoop: scenario.supportsAgentToolLoop === true,
         supportsOpenAICacheAssertions,
         supportsProviderCacheAssertions:
           scenario.supportsProviderCacheAssertions,
@@ -89,6 +90,7 @@ describe.concurrent("variants", () => {
           });
         },
         snapshotName: `${scenario.snapshotName}-auto-hook`,
+        supportsAgentToolLoop: scenario.supportsAgentToolLoop === true,
         supportsOpenAICacheAssertions,
         supportsProviderCacheAssertions:
           scenario.supportsProviderCacheAssertions,

@@ -34,7 +34,6 @@ span_tree:
     │         "finishReason": "stop",
     │         "rawResponse": {},
     │         "response": {
-    │           "id": "<span:1>",
     │           "messages": [
     │             {
     │               "content": [
@@ -60,7 +59,6 @@ span_tree:
     │             "finishReason": "stop",
     │             "isContinued": false,
     │             "response": {
-    │               "id": "<span:1>",
     │               "messages": [
     │                 {
     │                   "content": [
@@ -135,7 +133,6 @@ span_tree:
     │             },
     │             "rawResponse": {},
     │             "response": {
-    │               "id": "<span:1>",
     │               "modelId": "gpt-4o-mini-2024-07-18",
     │               "timestamp": "<timestamp>"
     │             },
@@ -325,7 +322,6 @@ span_tree:
     │         "finishReason": "tool-calls",
     │         "rawResponse": {},
     │         "response": {
-    │           "id": "<span:2>",
     │           "messages": [
     │             {
     │               "content": [
@@ -337,7 +333,6 @@ span_tree:
     │                   "args": {
     │                     "location": "Paris, France"
     │                   },
-    │                   "toolCallId": "<toolCallId:1>",
     │                   "toolName": "get_weather",
     │                   "type": "tool-call"
     │                 }
@@ -348,7 +343,6 @@ span_tree:
     │               "content": [
     │                 {
     │                   "result": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
-    │                   "toolCallId": "<toolCallId:1>",
     │                   "toolName": "get_weather",
     │                   "type": "tool-result"
     │                 }
@@ -370,7 +364,6 @@ span_tree:
     │             "finishReason": "tool-calls",
     │             "isContinued": false,
     │             "response": {
-    │               "id": "<span:2>",
     │               "messages": [
     │                 {
     │                   "content": [
@@ -382,7 +375,6 @@ span_tree:
     │                       "args": {
     │                         "location": "Paris, France"
     │                       },
-    │                       "toolCallId": "<toolCallId:1>",
     │                       "toolName": "get_weather",
     │                       "type": "tool-call"
     │                     }
@@ -393,7 +385,6 @@ span_tree:
     │                   "content": [
     │                     {
     │                       "result": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
-    │                       "toolCallId": "<toolCallId:1>",
     │                       "toolName": "get_weather",
     │                       "type": "tool-result"
     │                     }
@@ -411,7 +402,6 @@ span_tree:
     │                 "args": {
     │                   "location": "Paris, France"
     │                 },
-    │                 "toolCallId": "<toolCallId:1>",
     │                 "toolName": "get_weather",
     │                 "type": "tool-call"
     │               }
@@ -422,7 +412,6 @@ span_tree:
     │                   "location": "Paris, France"
     │                 },
     │                 "result": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
-    │                 "toolCallId": "<toolCallId:1>",
     │                 "toolName": "get_weather"
     │               }
     │             ],
@@ -440,7 +429,6 @@ span_tree:
     │             "args": {
     │               "location": "Paris, France"
     │             },
-    │             "toolCallId": "<toolCallId:1>",
     │             "toolName": "get_weather",
     │             "type": "tool-call"
     │           }
@@ -451,7 +439,6 @@ span_tree:
     │               "location": "Paris, France"
     │             },
     │             "result": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
-    │             "toolCallId": "<toolCallId:1>",
     │             "toolName": "get_weather"
     │           }
     │         ],
@@ -547,14 +534,12 @@ span_tree:
     │       │     },
     │       │     "rawResponse": {},
     │       │     "response": {
-    │       │       "id": "<span:1>",
     │       │       "modelId": "gpt-4o-mini-2024-07-18",
     │       │       "timestamp": "<timestamp>"
     │       │     },
     │       │     "toolCalls": [
     │       │       {
     │       │         "args": "{\"location\":\"Paris, France\"}",
-    │       │         "toolCallId": "<toolCallId:2>",
     │       │         "toolCallType": "function",
     │       │         "toolName": "get_weather"
     │       │       }
@@ -629,7 +614,6 @@ span_tree:
     │         },
     │         "rawResponse": {},
     │         "response": {
-    │           "id": "<span:1>",
     │           "modelId": "gpt-4o-mini-2024-07-18",
     │           "timestamp": "<timestamp>"
     │         },
@@ -696,14 +680,12 @@ span_tree:
     │             },
     │             "rawResponse": {},
     │             "response": {
-    │               "id": "<span:1>",
     │               "modelId": "gpt-4o-mini-2024-07-18",
     │               "timestamp": "<timestamp>"
     │             },
     │             "toolCalls": [
     │               {
     │                 "args": "{\"city\":\"Paris\"}",
-    │                 "toolCallId": "<toolCallId:2>",
     │                 "toolCallType": "function",
     │                 "toolName": "json"
     │               }
@@ -824,7 +806,6 @@ span_tree:
                   "toolCalls": [
                     {
                       "args": "{\"city\":\"Paris\"}",
-                      "toolCallId": "<toolCallId:1>",
                       "toolCallType": "function",
                       "toolName": "json",
                       "type": "tool-call"
