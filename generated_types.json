@@ -87,9 +87,57 @@
           "role",
           "org_member",
           "project_log",
-          "org_project"
+          "org_project",
+          "org_audit_logs"
         ],
         "description": "The object type that the ACL applies to"
+      },
+      "Agent": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier for the agent"
+          },
+          "project_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier for the project that the agent belongs under"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "created": {
+            "type": ["string", "null"],
+            "format": "date-time",
+            "description": "Date of agent creation"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the agent. Within a project, agent names are unique"
+          },
+          "slug": {
+            "type": "string",
+            "description": "Stable, URL-safe identifier for the agent, unique within its project."
+          },
+          "kind": {
+            "type": "string",
+            "description": "Agent classification: 'custom' for customer-defined agents, 'loop' for built-in Loop agents."
+          },
+          "description": {
+            "type": ["string", "null"],
+            "description": "Textual description of the agent"
+          },
+          "metadata": {
+            "type": ["object", "null"],
+            "additionalProperties": {},
+            "description": "User-controlled metadata about the agent"
+          }
+        },
+        "required": ["id", "project_id", "user_id", "name", "slug", "kind"],
+        "description": "An agent is a project-scoped durable object that identifies an AI agent or service emitting spans"
       },
       "AISecret": {
         "type": "object",
@@ -531,6 +579,11 @@
           }
         },
         "required": ["upload_status"]
+      },
+      "AutomationStatus": {
+        "type": "string",
+        "enum": ["active", "paused"],
+        "description": "Whether the automation is active or paused."
       },
       "BatchedFacetData": {
         "type": "object",
@@ -1689,7 +1742,9 @@
           },
           "facets": {
             "type": ["object", "null"],
-            "additionalProperties": {},
+            "additionalProperties": {
+              "type": ["string", "null"]
+            },
             "description": "Facets for categorization (dictionary from facet id to value)"
           },
           "classifications": {
@@ -2146,7 +2201,9 @@
           },
           "facets": {
             "type": ["object", "null"],
-            "additionalProperties": {},
+            "additionalProperties": {
+              "type": ["string", "null"]
+            },
             "description": "Facets for categorization (dictionary from facet id to value)"
           },
           "classifications": {
@@ -3289,12 +3346,28 @@
             "type": "string",
             "description": "Field path to group by, e.g. metadata.session_id"
           },
+          "interval_seconds": {
+            "type": "number",
+            "minimum": 1,
+            "description": "Maximum time range to include when constructing a group"
+          },
+          "max_traces": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 64,
+            "description": "Maximum number of traces to include when constructing a group (default/max: 64)"
+          },
+          "placement": {
+            "type": "string",
+            "enum": ["first", "each"],
+            "description": "Which trace or traces to write grouped scorer results to"
+          },
           "idle_seconds": {
             "type": "number",
             "description": "Optional: trigger after this many seconds of inactivity"
           }
         },
-        "required": ["type", "group_by"],
+        "required": ["type", "group_by", "placement"],
         "description": "Process spans/traces grouped by a field (e.g., session_id)"
       },
       "IfExists": {
@@ -3872,7 +3945,7 @@
                 "type": "null"
               }
             ],
-            "description": "The scope at which to run the functions. Defaults to span-level execution. Trace/group scope requires all functions to be facets."
+            "description": "The scope at which to run the functions. Defaults to span-level execution."
           }
         },
         "required": ["sampling_rate", "scorers"]
@@ -4081,6 +4154,9 @@
                     "enum": ["btql_export"],
                     "description": "The type of automation."
                   },
+                  "status": {
+                    "$ref": "#/components/schemas/AutomationStatus"
+                  },
                   "export_definition": {
                     "oneOf": [
                       {
@@ -4207,6 +4283,61 @@
                 "properties": {
                   "event_type": {
                     "type": "string",
+                    "enum": ["async_query"],
+                    "description": "The type of automation."
+                  },
+                  "status": {
+                    "$ref": "#/components/schemas/AutomationStatus"
+                  },
+                  "created_by_user_id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The user who submitted the async query"
+                  },
+                  "object_type": {
+                    "type": "string",
+                    "enum": [
+                      "project_logs",
+                      "experiment",
+                      "dataset",
+                      "playground_logs"
+                    ],
+                    "description": "The source object type for the async query"
+                  },
+                  "object_id": {
+                    "type": "string",
+                    "description": "The source object ID for the async query"
+                  },
+                  "query": {
+                    "type": "string",
+                    "description": "The SQL query to execute asynchronously"
+                  },
+                  "format": {
+                    "type": "string",
+                    "enum": ["jsonl"],
+                    "description": "The materialized result format"
+                  },
+                  "batch_size": {
+                    "type": ["integer", "null"],
+                    "exclusiveMinimum": 0,
+                    "maximum": 100000,
+                    "description": "The maximum number of result rows to write per async query batch"
+                  }
+                },
+                "required": [
+                  "event_type",
+                  "created_by_user_id",
+                  "object_type",
+                  "object_id",
+                  "query",
+                  "format"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "event_type": {
+                    "type": "string",
                     "enum": ["retention"],
                     "description": "The type of automation."
                   },
@@ -4284,6 +4415,9 @@
               },
               {
                 "$ref": "#/components/schemas/TopicAutomationConfig"
+              },
+              {
+                "$ref": "#/components/schemas/TopicDigestAutomationConfig"
               }
             ],
             "description": "The configuration for the automation rule"
@@ -4462,7 +4596,9 @@
           },
           "facets": {
             "type": ["object", "null"],
-            "additionalProperties": {},
+            "additionalProperties": {
+              "type": ["string", "null"]
+            },
             "description": "Facets for categorization (dictionary from facet id to value)"
           },
           "classifications": {
@@ -4650,6 +4786,40 @@
         "required": ["name", "value"],
         "description": "For categorical-type project scores, defines a single category"
       },
+      "ProjectScoreCondition": {
+        "type": ["object", "null"],
+        "properties": {
+          "when": {
+            "type": "object",
+            "properties": {
+              "clauses": {
+                "type": ["array", "null"],
+                "items": {
+                  "type": "string"
+                }
+              },
+              "subspan_clauses": {
+                "type": ["array", "null"],
+                "items": {
+                  "type": "string"
+                }
+              },
+              "trace_clauses": {
+                "type": ["array", "null"],
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "behavior": {
+            "type": "string",
+            "enum": ["hidden"],
+            "default": "hidden"
+          }
+        },
+        "required": ["when"]
+      },
       "ProjectScoreConfig": {
         "type": ["object", "null"],
         "properties": {
@@ -4659,8 +4829,35 @@
           "destination": {
             "type": ["string", "null"]
           },
+          "visibility": {
+            "type": ["object", "null"],
+            "properties": {
+              "users": {
+                "type": ["array", "null"],
+                "items": {
+                  "type": "string"
+                }
+              },
+              "groups": {
+                "type": ["array", "null"],
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
           "online": {
             "$ref": "#/components/schemas/OnlineScoreConfig"
+          },
+          "condition": {
+            "$ref": "#/components/schemas/ProjectScoreCondition"
+          },
+          "object_types": {
+            "type": ["array", "null"],
+            "items": {
+              "type": "string",
+              "enum": ["project_logs", "dataset", "experiment"]
+            }
           }
         }
       },
@@ -5635,7 +5832,7 @@
               },
               {
                 "type": ["object", "null"],
-                "description": "Optional settings for collecting git metadata. By default, will collect all git metadata fields allowed in org-level settings."
+                "description": "Optional settings for collecting git metadata. By default, will collect git metadata fields allowed in org-level settings, excluding diff content unless the org opts in."
               }
             ]
           },
@@ -5968,11 +6165,17 @@
             "enum": ["topic"],
             "description": "The type of automation."
           },
+          "status": {
+            "$ref": "#/components/schemas/AutomationStatus"
+          },
           "sampling_rate": {
             "type": "number",
             "minimum": 0,
             "maximum": 1,
             "description": "The sampling rate for topic automation"
+          },
+          "facet_model": {
+            "$ref": "#/components/schemas/TopicAutomationFacetModel"
           },
           "facet_functions": {
             "type": "array",
@@ -6094,6 +6297,70 @@
         ],
         "description": "Optional data scope for topic automation."
       },
+      "TopicAutomationFacetModel": {
+        "type": ["string", "null"],
+        "enum": ["brain-facet-latest", "brain-facet-1", "brain-facet-2"],
+        "description": "Optional facet model override for topic automation"
+      },
+      "TopicDigestAutomationConfig": {
+        "type": "object",
+        "properties": {
+          "event_type": {
+            "type": "string",
+            "enum": ["topic_digest"],
+            "description": "The type of automation."
+          },
+          "status": {
+            "$ref": "#/components/schemas/AutomationStatus"
+          },
+          "window_seconds": {
+            "type": "integer",
+            "minimum": 3600,
+            "maximum": 2592000,
+            "default": 86400,
+            "description": "How much recent history to include in each digest"
+          },
+          "scheduled_time_minutes_utc": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1439,
+            "description": "Minutes after midnight UTC when the digest should be sent"
+          },
+          "action": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["slack"],
+                "description": "The type of action to take"
+              },
+              "workspace_id": {
+                "type": "string",
+                "description": "The Slack workspace ID to post to"
+              },
+              "channel": {
+                "type": "string",
+                "description": "The Slack channel ID to post to"
+              },
+              "message_template": {
+                "type": "string",
+                "description": "Custom message template for the alert"
+              }
+            },
+            "required": ["type", "workspace_id", "channel"],
+            "description": "The Slack action to take when the digest is sent"
+          },
+          "topic_map_function_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 10,
+            "description": "Optional topic map function IDs to include in the digest"
+          }
+        },
+        "required": ["event_type", "scheduled_time_minutes_utc", "action"]
+      },
       "TopicMapData": {
         "type": "object",
         "properties": {
@@ -6134,6 +6401,14 @@
           "distance_threshold": {
             "type": "number",
             "description": "Maximum distance to nearest centroid. If exceeded, returns no_match."
+          },
+          "btql_filter": {
+            "type": "string",
+            "description": "Per-topic-map BTQL filter that was applied when this version was generated. Absent on versions generated before this was recorded."
+          },
+          "automation_btql_filter": {
+            "type": "string",
+            "description": "Automation-level BTQL filter that was applied when this version was generated. Absent on versions generated before this was recorded."
           }
         },
         "required": ["type", "source_facet", "embedding_model"]
@@ -6308,10 +6583,6 @@
             "type": ["string", "null"],
             "format": "date-time",
             "description": "Date of user creation"
-          },
-          "last_active_at": {
-            "type": ["number", "null"],
-            "description": "Unix timestamp in milliseconds of the user's last activity, when available"
           }
         },
         "required": ["id"]
