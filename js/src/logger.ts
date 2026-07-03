@@ -2359,6 +2359,12 @@ function startSpanParentArgs(args: {
       );
     }
 
+    // For logger/span method calls that receive a W3C parent, the inbound
+    // context links this span to the upstream trace ids, but the span still
+    // belongs to the current Braintrust project/experiment and should propagate
+    // that current parent onward. Keep the receiver's object id/metadata and
+    // only forward opaque W3C state (trace-flags/tracestate), not the inbound
+    // braintrust.parent fallback.
     argParentObjectId = args.parentObjectId;
     if (
       parentComponents.data.row_id &&
@@ -2377,7 +2383,12 @@ function startSpanParentArgs(args: {
       ((parentComponents.data.propagated_event ?? undefined) as
         | StartSpanEventArgs
         | undefined);
-    argPropagatedState = args.propagatedState ?? parentPropagatedState;
+    const propagatedState = args.propagatedState ?? parentPropagatedState;
+    if (propagatedState) {
+      const { braintrustParent: _ignoredBraintrustParent, ...w3cState } =
+        propagatedState;
+      argPropagatedState = w3cState;
+    }
   } else {
     argParentObjectId = args.parentObjectId;
     argParentSpanIds = args.parentSpanIds;
@@ -5773,7 +5784,7 @@ function resolveW3cParent(
   } as SpanComponentsV4Data).toStr();
   return {
     parentSlug: slug,
-    propagatedState: { tracestate, traceFlags },
+    propagatedState: { tracestate, traceFlags, braintrustParent },
   };
 }
 
@@ -7790,7 +7801,8 @@ export class SpanImpl implements Span {
       _injectIntoCarrier(resolvedCarrier, {
         traceId: this._rootSpanId,
         spanId: this._spanId,
-        braintrustParent: this._getOtelParent(),
+        braintrustParent:
+          this._getOtelParent() ?? this._propagatedState?.braintrustParent,
         propagatedState: this._propagatedState,
       });
     } catch (e) {

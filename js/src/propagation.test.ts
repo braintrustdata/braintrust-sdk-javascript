@@ -935,6 +935,56 @@ describe("inject / extract / round-trip", () => {
     spanB.end();
   });
 
+  test("top-level propagated project_id parent is re-injected before lazy id resolves", () => {
+    makeLogger();
+    const parent = extractTraceContextFromHeaders({
+      traceparent: VALID_TRACEPARENT,
+      baggage: `${BRAINTRUST_PARENT_KEY}=project_id:remote-project-id`,
+    });
+    const span = startSpan({ name: "svc_b", parent });
+    const carrier = span.inject({});
+    span.end();
+
+    expect(parseBaggage(carrier[BAGGAGE_HEADER])).toEqual({
+      [BRAINTRUST_PARENT_KEY]: "project_id:remote-project-id",
+    });
+  });
+
+  test("top-level propagated experiment_id parent is re-injected before lazy id resolves", () => {
+    makeLogger();
+    const parent = extractTraceContextFromHeaders({
+      traceparent: VALID_TRACEPARENT,
+      baggage: `${BRAINTRUST_PARENT_KEY}=experiment_id:remote-experiment-id`,
+    });
+    const span = startSpan({ name: "svc_b", parent });
+    const carrier = span.inject({});
+    span.end();
+
+    expect(parseBaggage(carrier[BAGGAGE_HEADER])).toEqual({
+      [BRAINTRUST_PARENT_KEY]: "experiment_id:remote-experiment-id",
+    });
+  });
+
+  test("logger method links inbound trace but propagates current project", () => {
+    const logger = initLogger({
+      projectName: PROJECT_NAME,
+      projectId: "current-project-id",
+    });
+    const parent = extractTraceContextFromHeaders({
+      traceparent: VALID_TRACEPARENT,
+      baggage: `${BRAINTRUST_PARENT_KEY}=project_id:remote-project-id`,
+    });
+    const span = logger.startSpan({ name: "svc_b", parent });
+    const carrier = span.inject({});
+    span.end();
+
+    expect(span.rootSpanId).toBe(VALID_TRACE_ID);
+    expect(span.spanParents).toEqual([VALID_SPAN_ID]);
+    expect(parseBaggage(carrier[BAGGAGE_HEADER])).toEqual({
+      [BRAINTRUST_PARENT_KEY]: "project_id:current-project-id",
+    });
+  });
+
   test("inject does not break span emission without parent", async () => {
     // inject is best-effort and must never drop the span. Use a projectId so
     // draining doesn't require a metadata round-trip.

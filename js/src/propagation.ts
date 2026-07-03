@@ -43,10 +43,14 @@ export interface ParsedTraceparent {
  * - `tracestate`: the W3C `tracestate` header (opaque vendor state).
  * - `traceFlags`: the raw 2-hex `traceparent` trace-flags byte. Stored raw so
  *   future flag bits are preserved without per-bit handling.
+ * - `braintrustParent`: the resolved `braintrust.parent` value, kept so
+ *   id-based propagated parents can be re-injected synchronously before their
+ *   lazy object id has been awaited.
  */
 export interface PropagatedState {
   tracestate?: string;
   traceFlags?: string;
+  braintrustParent?: string;
 }
 
 type TraceContextHeaderValue =
