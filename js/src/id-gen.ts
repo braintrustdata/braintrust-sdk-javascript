@@ -48,6 +48,8 @@ export class UUIDGenerator extends IDGenerator {
 
 function generateHexId(bytes: number): string {
   let result = "";
+  // Math.random() is intentional here: these ids only correlate telemetry and
+  // are not auth tokens or mission-critical identifiers.
   for (let i = 0; i < bytes; i++) {
     result += Math.floor(Math.random() * 256)
       .toString(16)

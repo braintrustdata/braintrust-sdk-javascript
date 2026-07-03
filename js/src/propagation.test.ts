@@ -742,6 +742,21 @@ describe("inject / extract / round-trip", () => {
       expect(BRAINTRUST_PARENT_KEY in parsed).toBe(false);
     });
 
+    test("no braintrust parent removes stale braintrust baggage", () => {
+      const carrier: Record<string, string> = {
+        Baggage: `${BRAINTRUST_PARENT_KEY}=project_id%3Aold`,
+      };
+      _injectIntoCarrier(carrier, {
+        traceId: VALID_TRACE_ID,
+        spanId: VALID_SPAN_ID,
+        braintrustParent: undefined,
+      });
+      expect(carrier[TRACEPARENT_HEADER]).toMatch(TRACEPARENT_RE);
+      expect(
+        Object.keys(carrier).map((key) => key.toLowerCase()),
+      ).not.toContain(BAGGAGE_HEADER);
+    });
+
     test("injectTraceContext free function", () => {
       const logger = makeLogger();
       let captured: { root: string; span: string } | undefined;

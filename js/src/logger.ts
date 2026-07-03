@@ -5530,6 +5530,45 @@ function setHeader(
   headerBag[name] = value;
 }
 
+function deleteHeader(carrier: TraceContextCarrier, name: string): void {
+  const lowered = name.toLowerCase();
+  if (isMutableHeaderTupleArray(carrier)) {
+    for (let i = carrier.length - 1; i >= 0; i--) {
+      if (carrier[i][0].toLowerCase() === lowered) {
+        carrier.splice(i, 1);
+      }
+    }
+    return;
+  }
+
+  const deleter = (carrier as { delete?: unknown }).delete;
+  if (typeof deleter === "function") {
+    try {
+      deleter.call(carrier, name);
+      return;
+    } catch {
+      // Fall through to other header carrier styles.
+    }
+  }
+
+  const remover = (carrier as { removeHeader?: unknown }).removeHeader;
+  if (typeof remover === "function") {
+    try {
+      remover.call(carrier, name);
+      return;
+    } catch {
+      // Fall through to plain object cleanup.
+    }
+  }
+
+  const headerBag = carrier as { [name: string]: string };
+  for (const key of Object.keys(headerBag)) {
+    if (key.toLowerCase() === lowered) {
+      delete headerBag[key];
+    }
+  }
+}
+
 /**
  * Inject W3C trace-context headers into a carrier (in place).
  *
@@ -5573,6 +5612,13 @@ export function _injectIntoCarrier(
   const baggageValue = mergeBaggage(existing, args.braintrustParent);
   if (baggageValue !== undefined) {
     setHeader(carrier, BAGGAGE_HEADER, baggageValue);
+  } else if (existing !== undefined) {
+    // mergeBaggage returns undefined when the existing header only had a stale
+    // braintrust.parent (or otherwise no members worth forwarding), so remove
+    // the old header instead of letting a reused carrier propagate bad routing.
+    // If left in place, a downstream service could attach this trace to the
+    // previous project/experiment, or leak that parent to an unrelated request.
+    deleteHeader(carrier, BAGGAGE_HEADER);
   }
 }
 
