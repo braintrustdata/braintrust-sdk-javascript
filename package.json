@@ -40,7 +40,7 @@
     "@changesets/cli": "^2.30.0",
     "@changesets/get-github-info": "^0.8.0",
     "@sentry/dotagents": "1.17.0",
-    "dotenv": "^17.2.3",
+    "dotenv": "^16.6.1",
     "eslint": "^9.39.2",
     "husky": "^9.1.7",
     "knip": "^5.85.0",
