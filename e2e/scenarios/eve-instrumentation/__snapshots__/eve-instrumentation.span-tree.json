@@ -1,0 +1,281 @@
+{
+  "span_tree": [
+    {
+      "name": "eve.turn",
+      "type": "task",
+      "children": [
+        {
+          "name": "eve.step",
+          "type": "llm",
+          "children": [],
+          "input": [
+            {
+              "content": "Run the Braintrust Eve instrumentation e2e scenario",
+              "role": "user"
+            }
+          ],
+          "output": {
+            "message": {
+              "content": null,
+              "role": "assistant",
+              "tool_calls": [
+                {
+                  "function": {
+                    "arguments": "{\"query\":\"Run the Braintrust Eve instrumentation e2e scenario\"}",
+                    "name": "search"
+                  },
+                  "id": "<span:1>",
+                  "type": "function"
+                }
+              ]
+            }
+          },
+          "metadata": {
+            "eve.agent.name": "eve-instrumentation-scenario",
+            "eve.channel.kind": "http",
+            "eve.finish_reason": "tool-calls",
+            "eve.model.id": "openai/gpt-5.4-mini",
+            "eve.session.id": "<eve.session.id:1>",
+            "eve.step.index": 0,
+            "eve.turn.id": "<eve.turn.id:2>",
+            "eve.turn.sequence": 0,
+            "model": "gpt-5.4-mini",
+            "provider": "openai"
+          },
+          "metrics": {
+            "completion_tokens": 26,
+            "prompt_cached_tokens": 0,
+            "prompt_tokens": 6564,
+            "tokens": 6590
+          }
+        },
+        {
+          "name": "search",
+          "type": "tool",
+          "children": [],
+          "input": {
+            "query": "Run the Braintrust Eve instrumentation e2e scenario"
+          },
+          "output": {
+            "query": "Run the Braintrust Eve instrumentation e2e scenario",
+            "title": "Eve instrumentation",
+            "url": "https://eve.dev/docs/guides/instrumentation"
+          },
+          "metadata": {
+            "eve.action.status": "completed",
+            "eve.agent.name": "eve-instrumentation-scenario",
+            "eve.channel.kind": "http",
+            "eve.session.id": "<eve.session.id:1>",
+            "eve.step.index": 0,
+            "eve.tool.call_id": "<eve.tool.call_id:3>",
+            "eve.tool.name": "search",
+            "eve.turn.id": "<eve.turn.id:2>",
+            "eve.turn.sequence": 0
+          }
+        },
+        {
+          "name": "eve.step",
+          "type": "llm",
+          "children": [],
+          "input": [
+            {
+              "content": "Run the Braintrust Eve instrumentation e2e scenario",
+              "role": "user"
+            },
+            {
+              "content": null,
+              "role": "assistant",
+              "tool_calls": [
+                {
+                  "function": {
+                    "arguments": "{\"query\":\"Run the Braintrust Eve instrumentation e2e scenario\"}",
+                    "name": "search"
+                  },
+                  "id": "<span:1>",
+                  "type": "function"
+                }
+              ]
+            },
+            {
+              "content": {
+                "query": "Run the Braintrust Eve instrumentation e2e scenario",
+                "title": "Eve instrumentation",
+                "url": "https://eve.dev/docs/guides/instrumentation"
+              },
+              "name": "search",
+              "role": "tool",
+              "tool_call_id": "call_OJGkAZ5ouXaH7NjuUH2mSbk6"
+            }
+          ],
+          "output": {
+            "message": {
+              "content": null,
+              "role": "assistant",
+              "tool_calls": [
+                {
+                  "function": {
+                    "arguments": "{\"url\":\"https://eve.dev/docs/guides/instrumentation\"}",
+                    "name": "read"
+                  },
+                  "id": "<span:1>",
+                  "type": "function"
+                }
+              ]
+            }
+          },
+          "metadata": {
+            "eve.agent.name": "eve-instrumentation-scenario",
+            "eve.channel.kind": "http",
+            "eve.finish_reason": "tool-calls",
+            "eve.model.id": "openai/gpt-5.4-mini",
+            "eve.session.id": "<eve.session.id:1>",
+            "eve.step.index": 1,
+            "eve.turn.id": "<eve.turn.id:2>",
+            "eve.turn.sequence": 0,
+            "model": "gpt-5.4-mini",
+            "provider": "openai"
+          },
+          "metrics": {
+            "completion_tokens": 27,
+            "prompt_cached_tokens": 0,
+            "prompt_tokens": 6634,
+            "tokens": 6661
+          }
+        },
+        {
+          "name": "read",
+          "type": "tool",
+          "children": [],
+          "input": {
+            "url": "https://eve.dev/docs/guides/instrumentation"
+          },
+          "output": {
+            "excerpt": "Eve hooks expose runtime stream events that Braintrust maps into a flat turn trace.",
+            "section": "Runtime context",
+            "title": "Eve instrumentation",
+            "url": "https://eve.dev/docs/guides/instrumentation"
+          },
+          "metadata": {
+            "eve.action.status": "completed",
+            "eve.agent.name": "eve-instrumentation-scenario",
+            "eve.channel.kind": "http",
+            "eve.session.id": "<eve.session.id:1>",
+            "eve.step.index": 1,
+            "eve.tool.call_id": "<eve.tool.call_id:3>",
+            "eve.tool.name": "read",
+            "eve.turn.id": "<eve.turn.id:2>",
+            "eve.turn.sequence": 0
+          }
+        },
+        {
+          "name": "eve.step",
+          "type": "llm",
+          "children": [],
+          "input": [
+            {
+              "content": "Run the Braintrust Eve instrumentation e2e scenario",
+              "role": "user"
+            },
+            {
+              "content": null,
+              "role": "assistant",
+              "tool_calls": [
+                {
+                  "function": {
+                    "arguments": "{\"query\":\"Run the Braintrust Eve instrumentation e2e scenario\"}",
+                    "name": "search"
+                  },
+                  "id": "<span:1>",
+                  "type": "function"
+                }
+              ]
+            },
+            {
+              "content": {
+                "query": "Run the Braintrust Eve instrumentation e2e scenario",
+                "title": "Eve instrumentation",
+                "url": "https://eve.dev/docs/guides/instrumentation"
+              },
+              "name": "search",
+              "role": "tool",
+              "tool_call_id": "call_OJGkAZ5ouXaH7NjuUH2mSbk6"
+            },
+            {
+              "content": null,
+              "role": "assistant",
+              "tool_calls": [
+                {
+                  "function": {
+                    "arguments": "{\"url\":\"https://eve.dev/docs/guides/instrumentation\"}",
+                    "name": "read"
+                  },
+                  "id": "<span:2>",
+                  "type": "function"
+                }
+              ]
+            },
+            {
+              "content": {
+                "excerpt": "Eve hooks expose runtime stream events that Braintrust maps into a flat turn trace.",
+                "section": "Runtime context",
+                "title": "Eve instrumentation",
+                "url": "https://eve.dev/docs/guides/instrumentation"
+              },
+              "name": "read",
+              "role": "tool",
+              "tool_call_id": "call_kZ7AzZ9mCqataCzrSSLxRkFh"
+            }
+          ],
+          "output": {
+            "finish_reason": "stop",
+            "message": {
+              "content": "Final answer from read: Eve instrumentation — https://eve.dev/docs/guides/instrumentation — Eve hooks expose runtime stream events that Braintrust maps into a flat turn trace.",
+              "role": "assistant"
+            }
+          },
+          "metadata": {
+            "eve.agent.name": "eve-instrumentation-scenario",
+            "eve.channel.kind": "http",
+            "eve.finish_reason": "stop",
+            "eve.model.id": "openai/gpt-5.4-mini",
+            "eve.session.id": "<eve.session.id:1>",
+            "eve.step.index": 2,
+            "eve.turn.id": "<eve.turn.id:2>",
+            "eve.turn.sequence": 0,
+            "model": "gpt-5.4-mini",
+            "provider": "openai"
+          },
+          "metrics": {
+            "completion_tokens": 40,
+            "prompt_cached_tokens": 0,
+            "prompt_tokens": 6716,
+            "tokens": 6756
+          }
+        }
+      ],
+      "input": [
+        {
+          "content": "Run the Braintrust Eve instrumentation e2e scenario",
+          "role": "user"
+        }
+      ],
+      "output": "Final answer from read: Eve instrumentation — https://eve.dev/docs/guides/instrumentation — Eve hooks expose runtime stream events that Braintrust maps into a flat turn trace.",
+      "metadata": {
+        "eve.agent.name": "eve-instrumentation-scenario",
+        "eve.channel.kind": "http",
+        "eve.model.id": "openai/gpt-5.4-mini",
+        "eve.session.id": "<eve.session.id:1>",
+        "eve.turn.id": "<eve.turn.id:2>",
+        "eve.turn.sequence": 0,
+        "model": "gpt-5.4-mini",
+        "provider": "openai"
+      },
+      "metrics": {
+        "completion_tokens": 93,
+        "prompt_cached_tokens": 0,
+        "prompt_tokens": 19914,
+        "tokens": 20007
+      }
+    }
+  ]
+}

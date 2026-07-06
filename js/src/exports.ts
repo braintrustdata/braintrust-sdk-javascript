@@ -175,6 +175,7 @@ export {
   BraintrustMiddleware,
   wrapAISDKModel,
 } from "./wrappers/ai-sdk";
+export { braintrustEveHook } from "./instrumentation/plugins/eve-plugin";
 export { wrapAnthropic } from "./wrappers/anthropic";
 export {
   BraintrustObservabilityExporter,
