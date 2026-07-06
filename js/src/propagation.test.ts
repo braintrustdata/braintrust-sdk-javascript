@@ -23,7 +23,6 @@ import {
   TRACESTATE_HEADER,
   formatTraceparent,
   getHeader,
-  isValidTracestate,
   mergeBaggage,
   parseBaggage,
   parseTraceparent,
@@ -205,41 +204,6 @@ describe("baggage", () => {
     expect(
       parseBaggage(`${BRAINTRUST_PARENT_KEY}=project_id%3Aabc123`),
     ).toEqual({ [BRAINTRUST_PARENT_KEY]: "project_id:abc123" });
-  });
-});
-
-describe("isValidTracestate", () => {
-  test.each([
-    "congo=t61rcWkgMzE",
-    "congo=t61rcWkgMzE,rojo=00f067aa0ba902b7",
-    "vendor@system=value",
-    "a=b", // minimal single member
-    `k=${"a".repeat(256)}`, // max value length
-    "k=a b c", // spaces allowed mid-value
-    Array.from({ length: 32 }, (_, i) => `k${i}=v`).join(","), // max members
-  ])("accepts valid tracestate: %s", (value) => {
-    expect(isValidTracestate(value)).toBe(true);
-  });
-
-  test.each([
-    ["", "empty"],
-    [null, "null"],
-    [undefined, "undefined"],
-    ["ConGo=t61", "uppercase key"],
-    ["1congo=t61", "key must start with a letter"],
-    ["congo=", "empty value"],
-    ["congo=bad=value", "value cannot contain equals"],
-    ["congo,rojo=v", "member missing equals"],
-    ["congo=\u00e9", "non-ASCII value"],
-    ["congo=a,congo=b", "duplicate key"],
-    [`k=${"a".repeat(257)}`, "value too long"],
-    [
-      Array.from({ length: 33 }, (_, i) => `k${i}=v`).join(","),
-      "too many members",
-    ],
-    [`congo=${"a".repeat(513)}`, "over 512 chars total"],
-  ])("rejects invalid tracestate (%s): %s", (value) => {
-    expect(isValidTracestate(value as string)).toBe(false);
   });
 });
 
@@ -537,7 +501,7 @@ describe("inject / extract / round-trip", () => {
     test("traceparent well-formed and matches span", () => {
       const logger = makeLogger();
       const span = logger.startSpan({ name: "svc_a" });
-      const carrier = span.inject({});
+      const carrier = span.inject<Record<string, string>>({});
       span.end();
 
       const tp = carrier[TRACEPARENT_HEADER];
@@ -550,7 +514,7 @@ describe("inject / extract / round-trip", () => {
     test("baggage contains braintrust parent", () => {
       const logger = makeLogger();
       const span = logger.startSpan({ name: "svc_a" });
-      const carrier = span.inject({});
+      const carrier = span.inject<Record<string, string>>({});
       span.end();
 
       const parsed = parseBaggage(carrier[BAGGAGE_HEADER]);
@@ -576,12 +540,13 @@ describe("inject / extract / round-trip", () => {
     test("array-valued baggage is joined before merge", () => {
       const logger = makeLogger();
       const span = logger.startSpan({ name: "svc_a" });
-      const carrier = span.inject({
+      const carrier = span.inject<Record<string, string | string[]>>({
         [BAGGAGE_HEADER]: ["user=alice", "team=eng"],
       });
       span.end();
 
-      const parsed = parseBaggage(carrier[BAGGAGE_HEADER]);
+      // inject() joins and replaces the array value with a single string.
+      const parsed = parseBaggage(String(carrier[BAGGAGE_HEADER]));
       expect(parsed["user"]).toBe("alice");
       expect(parsed["team"]).toBe("eng");
       expect(parsed[BRAINTRUST_PARENT_KEY]).toBe(
@@ -592,7 +557,9 @@ describe("inject / extract / round-trip", () => {
     test("title-cased baggage emits single lowercase header", () => {
       const logger = makeLogger();
       const span = logger.startSpan({ name: "svc_a" });
-      const carrier = span.inject({ Baggage: "user=alice" });
+      const carrier = span.inject<Record<string, string>>({
+        Baggage: "user=alice",
+      });
       span.end();
 
       const baggageKeys = Object.keys(carrier).filter(
@@ -609,7 +576,9 @@ describe("inject / extract / round-trip", () => {
     test("title-cased traceparent emits single lowercase header", () => {
       const logger = makeLogger();
       const span = logger.startSpan({ name: "svc_a" });
-      const carrier = span.inject({ Traceparent: "stale" });
+      const carrier = span.inject<Record<string, string>>({
+        Traceparent: "stale",
+      });
       span.end();
 
       const traceparentKeys = Object.keys(carrier).filter(
@@ -624,7 +593,7 @@ describe("inject / extract / round-trip", () => {
     test("never emits x-bt-parent", () => {
       const logger = makeLogger();
       const span = logger.startSpan({ name: "svc_a" });
-      const carrier = span.inject({});
+      const carrier = span.inject<Record<string, string>>({});
       span.end();
       expect(Object.keys(carrier).map((k) => k.toLowerCase())).not.toContain(
         "x-bt-parent",
@@ -978,7 +947,7 @@ describe("inject / extract / round-trip", () => {
       baggage: `${BRAINTRUST_PARENT_KEY}=project_id:remote-project-id`,
     });
     const span = startSpan({ name: "svc_b", parent });
-    const carrier = span.inject({});
+    const carrier = span.inject<Record<string, string>>({});
     span.end();
 
     expect(parseBaggage(carrier[BAGGAGE_HEADER])).toEqual({
@@ -993,7 +962,7 @@ describe("inject / extract / round-trip", () => {
       baggage: `${BRAINTRUST_PARENT_KEY}=experiment_id:remote-experiment-id`,
     });
     const span = startSpan({ name: "svc_b", parent });
-    const carrier = span.inject({});
+    const carrier = span.inject<Record<string, string>>({});
     span.end();
 
     expect(parseBaggage(carrier[BAGGAGE_HEADER])).toEqual({
@@ -1011,7 +980,7 @@ describe("inject / extract / round-trip", () => {
       baggage: `${BRAINTRUST_PARENT_KEY}=project_id:remote-project-id`,
     });
     const span = logger.startSpan({ name: "svc_b", parent });
-    const carrier = span.inject({});
+    const carrier = span.inject<Record<string, string>>({});
     span.end();
 
     expect(span.rootSpanId).toBe(VALID_TRACE_ID);
@@ -1133,7 +1102,7 @@ describe("tracestate / flags pass-through", () => {
       tracestate: UPSTREAM_TRACESTATE,
     });
     const span = logger.startSpan({ name: "mid", parent });
-    const outbound = span.inject({});
+    const outbound = span.inject<Record<string, string>>({});
     span.end();
     expect(outbound[TRACESTATE_HEADER]).toBe(UPSTREAM_TRACESTATE);
     expect(outbound[TRACEPARENT_HEADER]).toMatch(TRACEPARENT_RE);
@@ -1142,7 +1111,7 @@ describe("tracestate / flags pass-through", () => {
   test("no tracestate emitted when none inbound", () => {
     const logger = makeLogger();
     const span = logger.startSpan({ name: "root" });
-    const outbound = span.inject({});
+    const outbound = span.inject<Record<string, string>>({});
     span.end();
     expect(TRACESTATE_HEADER in outbound).toBe(false);
   });
@@ -1162,10 +1131,10 @@ describe("tracestate / flags pass-through", () => {
     "congo=\u00e9", // non-ASCII value
     Array.from({ length: 33 }, (_, i) => `k${i}=v`).join(","), // too many members
     `congo=${"a".repeat(513)}`, // too long overall
-  ])("invalid tracestate is not forwarded: %s", (tracestate) => {
-    // `tracestate` we forward but never author, so an inbound value that does
-    // not conform to the W3C grammar/limits is dropped on extract rather than
-    // relayed onward.
+  ])("invalid tracestate is forwarded unchanged: %s", (tracestate) => {
+    // `tracestate` is opaque vendor state that Braintrust forwards but never
+    // authors or interprets, so even a value our local grammar would reject is
+    // relayed unchanged; receivers validate it themselves per the W3C spec.
     const logger = makeLogger();
     const parent = extractTraceContextFromHeaders({
       traceparent: VALID_TRACEPARENT,
@@ -1173,9 +1142,9 @@ describe("tracestate / flags pass-through", () => {
       tracestate,
     });
     const span = logger.startSpan({ name: "mid", parent });
-    const outbound = span.inject({});
+    const outbound = span.inject<Record<string, string>>({});
     span.end();
-    expect(TRACESTATE_HEADER in outbound).toBe(false);
+    expect(outbound[TRACESTATE_HEADER]).toBe(tracestate);
   });
 
   test("extract then inject preserves unsampled flag", () => {
@@ -1186,7 +1155,7 @@ describe("tracestate / flags pass-through", () => {
       baggage: `${BRAINTRUST_PARENT_KEY}=project_id:abc`,
     });
     const span = logger.startSpan({ name: "mid", parent });
-    const outbound = span.inject({});
+    const outbound = span.inject<Record<string, string>>({});
     span.end();
     expect(outbound[TRACEPARENT_HEADER].endsWith("-00")).toBe(true);
   });
@@ -1198,7 +1167,7 @@ describe("tracestate / flags pass-through", () => {
       baggage: `${BRAINTRUST_PARENT_KEY}=project_id:abc`,
     });
     const span = logger.startSpan({ name: "mid", parent });
-    const outbound = span.inject({});
+    const outbound = span.inject<Record<string, string>>({});
     span.end();
     expect(outbound[TRACEPARENT_HEADER].endsWith("-01")).toBe(true);
   });

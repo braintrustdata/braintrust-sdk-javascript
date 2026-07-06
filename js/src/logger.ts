@@ -24,7 +24,6 @@ import {
   TRACESTATE_HEADER,
   formatTraceparent,
   getHeader,
-  isValidTracestate,
   mergeBaggage,
   parseBaggage,
   parseTraceparent,
@@ -5712,10 +5711,10 @@ export function extractTraceContextFromHeaders(
     context[BAGGAGE_HEADER] = baggageValue;
   }
   const tracestate = getHeader(headers, TRACESTATE_HEADER);
-  if (tracestate && isValidTracestate(tracestate)) {
-    // `tracestate` is opaque vendor state that we forward but never author. We
-    // only adopt it when it conforms to the W3C grammar/limits, so a malformed
-    // or oversized inbound value is dropped rather than propagated onward.
+  if (tracestate) {
+    // `tracestate` is opaque vendor state that we forward but never author or
+    // interpret. It is passed along unchanged; receivers that want to use it
+    // validate it themselves, per the W3C Trace Context spec.
     context[TRACESTATE_HEADER] = tracestate;
   }
   return context;
@@ -5771,13 +5770,9 @@ function resolveW3cParent(
   }
   const { objectType, objectId, computeArgs } = parsedParent;
 
-  // Only carry forward `tracestate` that conforms to the W3C grammar/limits; a
-  // malformed or oversized value is dropped rather than propagated onward.
-  const tracestateValue = getHeader(context, TRACESTATE_HEADER);
-  const tracestate =
-    tracestateValue && isValidTracestate(tracestateValue)
-      ? tracestateValue
-      : undefined;
+  // `tracestate` is opaque vendor state, forwarded unchanged and never
+  // authored or interpreted by Braintrust.
+  const tracestate = getHeader(context, TRACESTATE_HEADER);
 
   const slug = new SpanComponentsV4({
     object_type: objectType,
