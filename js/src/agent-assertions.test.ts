@@ -3,7 +3,6 @@ import { z } from "zod";
 
 import { agentAssertionScorer, Eval } from "./exports";
 import { configureNode } from "./node/config";
-import type { AgentAssertionScoreMetadata } from "./agent-assertions";
 import type { Trace } from "./trace";
 import type { Score } from "../util";
 
@@ -52,7 +51,6 @@ test("agentAssertionScorer emits one score with assertion metadata", async () =>
     input: "hello",
     expected: { answer: "hi" },
     output: { answer: "hi", count: 2 },
-    metadata: {},
   })) as Score;
 
   expect(score.name).toBe("agent_contract");
@@ -66,7 +64,7 @@ test("agentAssertionScorer emits one score with assertion metadata", async () =>
       { name: "output schema", passed: true },
     ],
     failed: ["count is three: expected 2 to equal 3"],
-  } satisfies AgentAssertionScoreMetadata);
+  });
 });
 
 test("agentAssertionScorer compares object keys before undefined values", async () => {
@@ -86,7 +84,6 @@ test("agentAssertionScorer compares object keys before undefined values", async 
   const score = (await scorer({
     input: "hello",
     output: "done",
-    metadata: {},
   })) as Score;
 
   expect(score.score).toBe(0.5);
@@ -99,7 +96,7 @@ test("agentAssertionScorer compares object keys before undefined values", async 
       },
     ],
   });
-  const metadata = score.metadata as AgentAssertionScoreMetadata;
+  const metadata = score.metadata as any;
   expect(metadata.failed).toEqual([
     'different undefined keys are not equal: expected {"a":undefined} to equal {"b":undefined}',
   ]);
@@ -146,7 +143,6 @@ test("agentAssertionScorer evaluates trace-backed tool assertions after collecti
   const score = (await scorer({
     input: "weather",
     output: "done",
-    metadata: {},
     trace,
   })) as Score;
 
@@ -165,7 +161,7 @@ test("agentAssertionScorer evaluates trace-backed tool assertions after collecti
     failed: [
       'called tool charge_card: expected tool "charge_card" to be called; found 0 matching calls',
     ],
-  } satisfies AgentAssertionScoreMetadata);
+  });
 });
 
 test("agentAssertionScorer requires undefined matcher keys to exist", async () => {
@@ -205,7 +201,6 @@ test("agentAssertionScorer requires undefined matcher keys to exist", async () =
   const score = (await scorer({
     input: "cache",
     output: "done",
-    metadata: {},
     trace,
   })) as Score;
 
@@ -215,7 +210,7 @@ test("agentAssertionScorer requires undefined matcher keys to exist", async () =
       { name: "matches present undefined fields once", passed: true },
     ],
     failed: [],
-  } satisfies AgentAssertionScoreMetadata);
+  });
 });
 
 test("agentAssertionScorer applies explicit undefined input and output matchers", async () => {
@@ -255,7 +250,6 @@ test("agentAssertionScorer applies explicit undefined input and output matchers"
   const score = (await scorer({
     input: "cache",
     output: "done",
-    metadata: {},
     trace,
   })) as Score;
 
@@ -265,7 +259,7 @@ test("agentAssertionScorer applies explicit undefined input and output matchers"
       { name: "matches undefined input and output once", passed: true },
     ],
     failed: [],
-  } satisfies AgentAssertionScoreMetadata);
+  });
 });
 
 test("agentAssertionScorer matches object tool inputs and outputs with regexes", async () => {
@@ -309,7 +303,6 @@ test("agentAssertionScorer matches object tool inputs and outputs with regexes",
   const score = (await scorer({
     input: "weather",
     output: "done",
-    metadata: {},
     trace,
   })) as Score;
 
@@ -317,7 +310,7 @@ test("agentAssertionScorer matches object tool inputs and outputs with regexes",
   expect(score.metadata).toEqual({
     assertions: [{ name: "matches repeated object tool calls", passed: true }],
     failed: [],
-  } satisfies AgentAssertionScoreMetadata);
+  });
 });
 
 test("agentAssertionScorer matches raw string regexes and array matchers", async () => {
@@ -366,7 +359,6 @@ test("agentAssertionScorer matches raw string regexes and array matchers", async
   const score = (await scorer({
     input: "weather",
     output: "done",
-    metadata: {},
     trace,
   })) as Score;
 
@@ -377,7 +369,7 @@ test("agentAssertionScorer matches raw string regexes and array matchers", async
       { name: "matches nested tool values", passed: true },
     ],
     failed: [],
-  } satisfies AgentAssertionScoreMetadata);
+  });
 });
 
 test("agentAssertionScorer matches tool names from span metadata", async () => {
@@ -443,7 +435,6 @@ test("agentAssertionScorer matches tool names from span metadata", async () => {
   const score = (await scorer({
     input: "weather",
     output: "done",
-    metadata: {},
     trace,
   })) as Score;
 
@@ -459,7 +450,7 @@ test("agentAssertionScorer matches tool names from span metadata", async () => {
       { name: "did not call tool search", passed: true },
     ],
     failed: [],
-  } satisfies AgentAssertionScoreMetadata);
+  });
 });
 
 test("agentAssertionScorer works as an Eval scorer", async () => {

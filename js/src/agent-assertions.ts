@@ -230,10 +230,11 @@ export function agentAssertionScorer<
 ): EvalScorer<Input, Output, Expected, Metadata> {
   return async (args) => {
     const { trace: _trace, ...callbackArgs } = args;
-    const metadata = (callbackArgs as { metadata?: unknown }).metadata ?? {};
+    const callbackMetadata =
+      (callbackArgs as { metadata?: unknown }).metadata ?? {};
     const assertions = await callback({
       ...callbackArgs,
-      metadata,
+      metadata: callbackMetadata,
       assert: agentAssertionHelpers,
     } as AgentAssertionScorerCallbackArgs<Input, Output, Expected, Metadata>);
     const resources: AgentAssertionResources = {};
