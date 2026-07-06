@@ -49,7 +49,7 @@
           },
           "output": "Paris",
           "project_id": "<project_id>",
-          "root_span_id": "<span:3>",
+          "root_span_id": "<span:4>",
           "span_attributes": {
             "exec_counter": 0,
             "name": "deno node basic span",
@@ -64,12 +64,12 @@
             "caller_lineno": 0
           },
           "created": "<timestamp>",
-          "id": "<span:5>",
+          "id": "<span:6>",
           "input": {
             "transcript": {
               "content_type": "application/json",
               "filename": "conversation_transcript.json",
-              "key": "<uuid:6>",
+              "key": "<uuid:7>",
               "type": "braintrust_attachment"
             },
             "type": "chat_completion"
@@ -88,13 +88,13 @@
             "attachment": true
           },
           "project_id": "<project_id>",
-          "root_span_id": "<span:7>",
+          "root_span_id": "<span:9>",
           "span_attributes": {
             "exec_counter": 1,
             "name": "deno node json attachment span",
             "type": "task"
           },
-          "span_id": "<span:7>"
+          "span_id": "<span:8>"
         },
         {
           "context": {
@@ -103,7 +103,7 @@
             "caller_lineno": 0
           },
           "created": "<timestamp>",
-          "id": "<span:8>",
+          "id": "<span:10>",
           "input": {
             "phase": "parent",
             "testRunId": "<run:1>"
@@ -123,13 +123,13 @@
             "phase": "parent"
           },
           "project_id": "<project_id>",
-          "root_span_id": "<span:9>",
+          "root_span_id": "<span:12>",
           "span_attributes": {
             "exec_counter": 2,
             "name": "deno node parent span",
             "type": "task"
           },
-          "span_id": "<span:9>"
+          "span_id": "<span:11>"
         },
         {
           "context": {
@@ -138,7 +138,7 @@
             "caller_lineno": 0
           },
           "created": "<timestamp>",
-          "id": "<span:10>",
+          "id": "<span:13>",
           "input": {
             "step": "child",
             "testRunId": "<run:1>"
@@ -158,14 +158,14 @@
             "phase": "child"
           },
           "project_id": "<project_id>",
-          "root_span_id": "<span:9>",
+          "root_span_id": "<span:12>",
           "span_attributes": {
             "exec_counter": 3,
             "name": "deno node child span"
           },
-          "span_id": "<span:11>",
+          "span_id": "<span:14>",
           "span_parents": [
-            "<span:9>"
+            "<span:11>"
           ]
         },
         {
@@ -175,7 +175,7 @@
             "caller_lineno": 0
           },
           "created": "<timestamp>",
-          "id": "<span:12>",
+          "id": "<span:15>",
           "log_id": "g",
           "metadata": {
             "case": "nested-parent",
@@ -187,13 +187,13 @@
             "start": 0
           },
           "project_id": "<project_id>",
-          "root_span_id": "<span:13>",
+          "root_span_id": "<span:17>",
           "span_attributes": {
             "exec_counter": 4,
             "name": "deno node nested parent span",
             "type": "task"
           },
-          "span_id": "<span:13>"
+          "span_id": "<span:16>"
         },
         {
           "context": {
@@ -202,7 +202,7 @@
             "caller_lineno": 0
           },
           "created": "<timestamp>",
-          "id": "<span:14>",
+          "id": "<span:18>",
           "log_id": "g",
           "metadata": {
             "case": "nested-child",
@@ -214,14 +214,14 @@
             "start": 0
           },
           "project_id": "<project_id>",
-          "root_span_id": "<span:13>",
+          "root_span_id": "<span:17>",
           "span_attributes": {
             "exec_counter": 5,
             "name": "deno node nested child span"
           },
-          "span_id": "<span:15>",
+          "span_id": "<span:19>",
           "span_parents": [
-            "<span:13>"
+            "<span:16>"
           ]
         },
         {
@@ -231,7 +231,7 @@
             "caller_lineno": 0
           },
           "created": "<timestamp>",
-          "id": "<span:16>",
+          "id": "<span:20>",
           "log_id": "g",
           "metadata": {
             "case": "nested-grandchild",
@@ -246,14 +246,14 @@
             "depth": 3
           },
           "project_id": "<project_id>",
-          "root_span_id": "<span:13>",
+          "root_span_id": "<span:17>",
           "span_attributes": {
             "exec_counter": 6,
             "name": "deno node nested grandchild span"
           },
-          "span_id": "<span:17>",
+          "span_id": "<span:21>",
           "span_parents": [
-            "<span:15>"
+            "<span:19>"
           ]
         },
         {
@@ -263,7 +263,7 @@
             "caller_lineno": 0
           },
           "created": "<timestamp>",
-          "id": "<span:18>",
+          "id": "<span:22>",
           "log_id": "g",
           "metadata": {
             "case": "current-span",
@@ -275,16 +275,16 @@
             "start": 0
           },
           "output": {
-            "observedSpanId": "<uuid:19>"
+            "observedSpanId": "<span:23>"
           },
           "project_id": "<project_id>",
-          "root_span_id": "<uuid:19>",
+          "root_span_id": "<span:24>",
           "span_attributes": {
             "exec_counter": 7,
             "name": "deno node current span",
             "type": "task"
           },
-          "span_id": "<uuid:19>"
+          "span_id": "<span:23>"
         }
       ]
     },
@@ -317,7 +317,7 @@
           },
           "output": "Paris",
           "project_id": "<project_id>",
-          "root_span_id": "<span:3>",
+          "root_span_id": "<span:4>",
           "span_attributes": {
             "exec_counter": 0,
             "name": "deno node basic span",
@@ -332,12 +332,12 @@
             "caller_lineno": 0
           },
           "created": "<timestamp>",
-          "id": "<span:5>",
+          "id": "<span:6>",
           "input": {
             "transcript": {
               "content_type": "application/json",
               "filename": "conversation_transcript.json",
-              "key": "<uuid:6>",
+              "key": "<uuid:7>",
               "type": "braintrust_attachment"
             },
             "type": "chat_completion"
@@ -356,13 +356,13 @@
             "attachment": true
           },
           "project_id": "<project_id>",
-          "root_span_id": "<span:7>",
+          "root_span_id": "<span:9>",
           "span_attributes": {
             "exec_counter": 1,
             "name": "deno node json attachment span",
             "type": "task"
           },
-          "span_id": "<span:7>"
+          "span_id": "<span:8>"
         },
         {
           "context": {
@@ -371,7 +371,7 @@
             "caller_lineno": 0
           },
           "created": "<timestamp>",
-          "id": "<span:8>",
+          "id": "<span:10>",
           "input": {
             "phase": "parent",
             "testRunId": "<run:1>"
@@ -391,13 +391,13 @@
             "phase": "parent"
           },
           "project_id": "<project_id>",
-          "root_span_id": "<span:9>",
+          "root_span_id": "<span:12>",
           "span_attributes": {
             "exec_counter": 2,
             "name": "deno node parent span",
             "type": "task"
           },
-          "span_id": "<span:9>"
+          "span_id": "<span:11>"
         },
         {
           "context": {
@@ -406,7 +406,7 @@
             "caller_lineno": 0
           },
           "created": "<timestamp>",
-          "id": "<span:10>",
+          "id": "<span:13>",
           "input": {
             "step": "child",
             "testRunId": "<run:1>"
@@ -426,14 +426,14 @@
             "phase": "child"
           },
           "project_id": "<project_id>",
-          "root_span_id": "<span:9>",
+          "root_span_id": "<span:12>",
           "span_attributes": {
             "exec_counter": 3,
             "name": "deno node child span"
           },
-          "span_id": "<span:11>",
+          "span_id": "<span:14>",
           "span_parents": [
-            "<span:9>"
+            "<span:11>"
           ]
         },
         {
@@ -443,7 +443,7 @@
             "caller_lineno": 0
           },
           "created": "<timestamp>",
-          "id": "<span:12>",
+          "id": "<span:15>",
           "log_id": "g",
           "metadata": {
             "case": "nested-parent",
@@ -455,13 +455,13 @@
             "start": 0
           },
           "project_id": "<project_id>",
-          "root_span_id": "<span:13>",
+          "root_span_id": "<span:17>",
           "span_attributes": {
             "exec_counter": 4,
             "name": "deno node nested parent span",
             "type": "task"
           },
-          "span_id": "<span:13>"
+          "span_id": "<span:16>"
         },
         {
           "context": {
@@ -470,7 +470,7 @@
             "caller_lineno": 0
           },
           "created": "<timestamp>",
-          "id": "<span:14>",
+          "id": "<span:18>",
           "log_id": "g",
           "metadata": {
             "case": "nested-child",
@@ -482,14 +482,14 @@
             "start": 0
           },
           "project_id": "<project_id>",
-          "root_span_id": "<span:13>",
+          "root_span_id": "<span:17>",
           "span_attributes": {
             "exec_counter": 5,
             "name": "deno node nested child span"
           },
-          "span_id": "<span:15>",
+          "span_id": "<span:19>",
           "span_parents": [
-            "<span:13>"
+            "<span:16>"
           ]
         },
         {
@@ -499,7 +499,7 @@
             "caller_lineno": 0
           },
           "created": "<timestamp>",
-          "id": "<span:16>",
+          "id": "<span:20>",
           "log_id": "g",
           "metadata": {
             "case": "nested-grandchild",
@@ -514,14 +514,14 @@
             "depth": 3
           },
           "project_id": "<project_id>",
-          "root_span_id": "<span:13>",
+          "root_span_id": "<span:17>",
           "span_attributes": {
             "exec_counter": 6,
             "name": "deno node nested grandchild span"
           },
-          "span_id": "<span:17>",
+          "span_id": "<span:21>",
           "span_parents": [
-            "<span:15>"
+            "<span:19>"
           ]
         },
         {
@@ -531,7 +531,7 @@
             "caller_lineno": 0
           },
           "created": "<timestamp>",
-          "id": "<span:18>",
+          "id": "<span:22>",
           "log_id": "g",
           "metadata": {
             "case": "current-span",
@@ -543,16 +543,16 @@
             "start": 0
           },
           "output": {
-            "observedSpanId": "<uuid:19>"
+            "observedSpanId": "<span:23>"
           },
           "project_id": "<project_id>",
-          "root_span_id": "<uuid:19>",
+          "root_span_id": "<span:24>",
           "span_attributes": {
             "exec_counter": 7,
             "name": "deno node current span",
             "type": "task"
           },
-          "span_id": "<uuid:19>"
+          "span_id": "<span:23>"
         }
       ]
     }

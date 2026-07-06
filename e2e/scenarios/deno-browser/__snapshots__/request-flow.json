@@ -45,7 +45,7 @@
           },
           "output": "Paris",
           "project_id": "<project_id>",
-          "root_span_id": "<span:3>",
+          "root_span_id": "<span:4>",
           "span_attributes": {
             "exec_counter": 0,
             "name": "deno browser basic span",
@@ -56,12 +56,12 @@
         {
           "context": {},
           "created": "<timestamp>",
-          "id": "<span:5>",
+          "id": "<span:6>",
           "input": {
             "transcript": {
               "content_type": "application/json",
               "filename": "conversation_transcript.json",
-              "key": "<uuid:6>",
+              "key": "<uuid:7>",
               "type": "braintrust_attachment"
             },
             "type": "chat_completion"
@@ -80,18 +80,18 @@
             "attachment": true
           },
           "project_id": "<project_id>",
-          "root_span_id": "<span:7>",
+          "root_span_id": "<span:9>",
           "span_attributes": {
             "exec_counter": 1,
             "name": "deno browser json attachment span",
             "type": "task"
           },
-          "span_id": "<span:7>"
+          "span_id": "<span:8>"
         },
         {
           "context": {},
           "created": "<timestamp>",
-          "id": "<span:8>",
+          "id": "<span:10>",
           "input": {
             "phase": "parent",
             "testRunId": "<run:1>"
@@ -111,18 +111,18 @@
             "phase": "parent"
           },
           "project_id": "<project_id>",
-          "root_span_id": "<span:9>",
+          "root_span_id": "<span:12>",
           "span_attributes": {
             "exec_counter": 2,
             "name": "deno browser parent span",
             "type": "task"
           },
-          "span_id": "<span:9>"
+          "span_id": "<span:11>"
         },
         {
           "context": {},
           "created": "<timestamp>",
-          "id": "<span:10>",
+          "id": "<span:13>",
           "input": {
             "step": "child",
             "testRunId": "<run:1>"
@@ -142,18 +142,18 @@
             "phase": "child"
           },
           "project_id": "<project_id>",
-          "root_span_id": "<span:11>",
+          "root_span_id": "<span:15>",
           "span_attributes": {
             "exec_counter": 3,
             "name": "deno browser child span",
             "type": "task"
           },
-          "span_id": "<span:11>"
+          "span_id": "<span:14>"
         },
         {
           "context": {},
           "created": "<timestamp>",
-          "id": "<span:12>",
+          "id": "<span:16>",
           "log_id": "g",
           "metadata": {
             "case": "nested-parent",
@@ -165,18 +165,18 @@
             "start": 0
           },
           "project_id": "<project_id>",
-          "root_span_id": "<span:13>",
+          "root_span_id": "<span:18>",
           "span_attributes": {
             "exec_counter": 4,
             "name": "deno browser nested parent span",
             "type": "task"
           },
-          "span_id": "<span:13>"
+          "span_id": "<span:17>"
         },
         {
           "context": {},
           "created": "<timestamp>",
-          "id": "<span:14>",
+          "id": "<span:19>",
           "log_id": "g",
           "metadata": {
             "case": "nested-child",
@@ -188,18 +188,18 @@
             "start": 0
           },
           "project_id": "<project_id>",
-          "root_span_id": "<span:15>",
+          "root_span_id": "<span:21>",
           "span_attributes": {
             "exec_counter": 5,
             "name": "deno browser nested child span",
             "type": "task"
           },
-          "span_id": "<span:15>"
+          "span_id": "<span:20>"
         },
         {
           "context": {},
           "created": "<timestamp>",
-          "id": "<span:16>",
+          "id": "<span:22>",
           "log_id": "g",
           "metadata": {
             "case": "nested-grandchild",
@@ -211,18 +211,18 @@
             "start": 0
           },
           "project_id": "<project_id>",
-          "root_span_id": "<span:17>",
+          "root_span_id": "<span:24>",
           "span_attributes": {
             "exec_counter": 6,
             "name": "deno browser nested grandchild span",
             "type": "task"
           },
-          "span_id": "<span:17>"
+          "span_id": "<span:23>"
         },
         {
           "context": {},
           "created": "<timestamp>",
-          "id": "<span:18>",
+          "id": "<span:25>",
           "log_id": "g",
           "metadata": {
             "case": "current-span",
@@ -234,13 +234,13 @@
             "start": 0
           },
           "project_id": "<project_id>",
-          "root_span_id": "<span:19>",
+          "root_span_id": "<span:27>",
           "span_attributes": {
             "exec_counter": 7,
             "name": "deno browser current span",
             "type": "task"
           },
-          "span_id": "<span:19>"
+          "span_id": "<span:26>"
         }
       ]
     },
@@ -269,7 +269,7 @@
           },
           "output": "Paris",
           "project_id": "<project_id>",
-          "root_span_id": "<span:3>",
+          "root_span_id": "<span:4>",
           "span_attributes": {
             "exec_counter": 0,
             "name": "deno browser basic span",
@@ -280,12 +280,12 @@
         {
           "context": {},
           "created": "<timestamp>",
-          "id": "<span:5>",
+          "id": "<span:6>",
           "input": {
             "transcript": {
               "content_type": "application/json",
               "filename": "conversation_transcript.json",
-              "key": "<uuid:6>",
+              "key": "<uuid:7>",
               "type": "braintrust_attachment"
             },
             "type": "chat_completion"
@@ -304,18 +304,18 @@
             "attachment": true
           },
           "project_id": "<project_id>",
-          "root_span_id": "<span:7>",
+          "root_span_id": "<span:9>",
           "span_attributes": {
             "exec_counter": 1,
             "name": "deno browser json attachment span",
             "type": "task"
           },
-          "span_id": "<span:7>"
+          "span_id": "<span:8>"
         },
         {
           "context": {},
           "created": "<timestamp>",
-          "id": "<span:8>",
+          "id": "<span:10>",
           "input": {
             "phase": "parent",
             "testRunId": "<run:1>"
@@ -335,18 +335,18 @@
             "phase": "parent"
           },
           "project_id": "<project_id>",
-          "root_span_id": "<span:9>",
+          "root_span_id": "<span:12>",
           "span_attributes": {
             "exec_counter": 2,
             "name": "deno browser parent span",
             "type": "task"
           },
-          "span_id": "<span:9>"
+          "span_id": "<span:11>"
         },
         {
           "context": {},
           "created": "<timestamp>",
-          "id": "<span:10>",
+          "id": "<span:13>",
           "input": {
             "step": "child",
             "testRunId": "<run:1>"
@@ -366,18 +366,18 @@
             "phase": "child"
           },
           "project_id": "<project_id>",
-          "root_span_id": "<span:11>",
+          "root_span_id": "<span:15>",
           "span_attributes": {
             "exec_counter": 3,
             "name": "deno browser child span",
             "type": "task"
           },
-          "span_id": "<span:11>"
+          "span_id": "<span:14>"
         },
         {
           "context": {},
           "created": "<timestamp>",
-          "id": "<span:12>",
+          "id": "<span:16>",
           "log_id": "g",
           "metadata": {
             "case": "nested-parent",
@@ -389,18 +389,18 @@
             "start": 0
           },
           "project_id": "<project_id>",
-          "root_span_id": "<span:13>",
+          "root_span_id": "<span:18>",
           "span_attributes": {
             "exec_counter": 4,
             "name": "deno browser nested parent span",
             "type": "task"
           },
-          "span_id": "<span:13>"
+          "span_id": "<span:17>"
         },
         {
           "context": {},
           "created": "<timestamp>",
-          "id": "<span:14>",
+          "id": "<span:19>",
           "log_id": "g",
           "metadata": {
             "case": "nested-child",
@@ -412,18 +412,18 @@
             "start": 0
           },
           "project_id": "<project_id>",
-          "root_span_id": "<span:15>",
+          "root_span_id": "<span:21>",
           "span_attributes": {
             "exec_counter": 5,
             "name": "deno browser nested child span",
             "type": "task"
           },
-          "span_id": "<span:15>"
+          "span_id": "<span:20>"
         },
         {
           "context": {},
           "created": "<timestamp>",
-          "id": "<span:16>",
+          "id": "<span:22>",
           "log_id": "g",
           "metadata": {
             "case": "nested-grandchild",
@@ -435,18 +435,18 @@
             "start": 0
           },
           "project_id": "<project_id>",
-          "root_span_id": "<span:17>",
+          "root_span_id": "<span:24>",
           "span_attributes": {
             "exec_counter": 6,
             "name": "deno browser nested grandchild span",
             "type": "task"
           },
-          "span_id": "<span:17>"
+          "span_id": "<span:23>"
         },
         {
           "context": {},
           "created": "<timestamp>",
-          "id": "<span:18>",
+          "id": "<span:25>",
           "log_id": "g",
           "metadata": {
             "case": "current-span",
@@ -458,13 +458,13 @@
             "start": 0
           },
           "project_id": "<project_id>",
-          "root_span_id": "<span:19>",
+          "root_span_id": "<span:27>",
           "span_attributes": {
             "exec_counter": 7,
             "name": "deno browser current span",
             "type": "task"
           },
-          "span_id": "<span:19>"
+          "span_id": "<span:26>"
         }
       ]
     }

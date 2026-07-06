@@ -44,7 +44,11 @@ test("trace-primitives-basic collects a minimal manual trace tree", async () => 
 
       expect(child?.span.parentIds).toEqual([root?.span.id ?? ""]);
       expect(error?.span.parentIds).toEqual([root?.span.id ?? ""]);
-      expect(root?.span.rootId).toBe(root?.span.id);
+      // With the default OTEL-compatible hex ids, root_span_id is a distinct
+      // trace id shared across the whole trace, not the root span's own id.
+      expect(root?.span.rootId).not.toBe(root?.span.id);
+      expect(child?.span.rootId).toBe(root?.span.rootId);
+      expect(error?.span.rootId).toBe(root?.span.rootId);
 
       await matchSpanTreeSnapshot(capturedEvents, spanTreeSnapshotPath);
 

@@ -630,18 +630,43 @@ function areFunctionSignaturesCompatible(
   oldFn: string,
   newFn: string,
 ): boolean {
-  // Extract function name and parameters
+  // Extract function name and parameters. The parameter list is extracted by
+  // balancing parentheses (rather than a `[^)]*` regex) so that parameters whose
+  // types contain their own parentheses -- e.g. a `callback: () => R` arrow type
+  // -- are captured in full instead of truncating the signature.
   const parseFunctionSig = (sig: string) => {
-    // Match: export function name(params): returnType OR function name(params): returnType (for re-exports)
-    const match = sig.match(
-      /(?:export\s+)?(?:declare\s+)?function\s+(\w+)\s*\(([^)]*)\)\s*:\s*(.+)$/,
+    const headerMatch = sig.match(
+      /(?:export\s+)?(?:declare\s+)?function\s+(\w+)\s*(?:<[^(]*>)?\s*\(/,
     );
-    if (!match) return null;
+    if (!headerMatch || headerMatch.index === undefined) return null;
+    const name = headerMatch[1];
+
+    const openParenIndex = headerMatch.index + headerMatch[0].length - 1;
+    let depth = 0;
+    let closeParenIndex = -1;
+    for (let i = openParenIndex; i < sig.length; i++) {
+      const char = sig[i];
+      if (char === "(") {
+        depth++;
+      } else if (char === ")") {
+        depth--;
+        if (depth === 0) {
+          closeParenIndex = i;
+          break;
+        }
+      }
+    }
+    if (closeParenIndex === -1) return null;
+
+    const params = sig.slice(openParenIndex + 1, closeParenIndex).trim();
+    const afterParams = sig.slice(closeParenIndex + 1).trim();
+    if (!afterParams.startsWith(":")) return null;
+    const returnType = afterParams.slice(1).trim();
 
     return {
-      name: match[1],
-      params: match[2].trim(),
-      returnType: match[3].trim(),
+      name,
+      params,
+      returnType,
     };
   };
 
@@ -733,8 +758,11 @@ function areFunctionSignaturesCompatible(
       return false;
     }
 
-    if (oldParam.type !== newParam.type) {
-      // Parameter type changed - breaking change
+    if (
+      oldParam.type !== newParam.type &&
+      !areParamTypesCompatible(oldParam.type, newParam.type)
+    ) {
+      // Parameter type changed incompatibly - breaking change
       return false;
     }
 
@@ -788,6 +816,38 @@ function normalizeTypeReference(type: string): string {
 function isObjectLiteralType(def: string): boolean {
   const trimmed = def.trim();
   return trimmed.startsWith("{") && trimmed.endsWith("}");
+}
+
+// True if the type text contains an inline object literal (e.g. an options
+// object, possibly inside an intersection like `A & B & { ... }`).
+function containsObjectLiteralType(def: string): boolean {
+  return def.includes("{") && def.includes("}");
+}
+
+/**
+ * True if a parameter type changed from `oldType` to `newType` in a
+ * backwards-compatible way: identical, widened to a union that still accepts the
+ * old type (`T` -> `T | U`), or an object-literal/options type whose fields were
+ * only added (optional) or widened (e.g. an inline `{ parent?: string }` ->
+ * `{ parent?: string | Context }`, including inside an intersection).
+ */
+function areParamTypesCompatible(oldType: string, newType: string): boolean {
+  const oldNorm = normalizeTypeReference(oldType.replace(/\s+/g, " ").trim());
+  const newNorm = normalizeTypeReference(newType.replace(/\s+/g, " ").trim());
+  if (oldNorm === newNorm) {
+    return true;
+  }
+  if (isUnionTypeWidening(oldNorm, newNorm)) {
+    return true;
+  }
+  if (
+    containsObjectLiteralType(oldType) &&
+    containsObjectLiteralType(newType) &&
+    areObjectTypeDefinitionsCompatible(oldType, newType)
+  ) {
+    return true;
+  }
+  return false;
 }
 
 function parseObjectTypeProps(
@@ -1283,6 +1343,12 @@ function areInterfaceSignaturesCompatible(
   oldInterface: string,
   newInterface: string,
 ): boolean {
+  type InterfaceMethod = {
+    params: Array<{ type: string; optional: boolean }>;
+    returnType: string;
+    optional: boolean;
+  };
+
   const parseInterface = (interfaceSig: string) => {
     const sourceFile = ts.createSourceFile(
       "interface.ts",
@@ -1304,20 +1370,35 @@ function areInterfaceSignaturesCompatible(
     }
 
     const fields = new Map<string, { type: string; optional: boolean }>();
+    const methods = new Map<string, InterfaceMethod>();
     for (const member of declaration.members) {
-      if (!ts.isPropertySignature(member) || !member.type) {
+      if (ts.isPropertySignature(member) && member.type) {
+        fields.set(member.name.getText(sourceFile), {
+          type: member.type.getText(sourceFile),
+          optional: !!member.questionToken,
+        });
+      } else if (ts.isMethodSignature(member)) {
+        // Method members (e.g. `inject(carrier?): ...`) are captured so that
+        // adding a method, or widening a method's parameters, can be recognized
+        // as backwards compatible rather than treated as unparseable.
+        methods.set(member.name.getText(sourceFile), {
+          params: member.parameters.map((param) => ({
+            type: param.type ? param.type.getText(sourceFile) : "any",
+            optional: !!param.questionToken || !!param.initializer,
+          })),
+          returnType: member.type ? member.type.getText(sourceFile) : "any",
+          optional: !!member.questionToken,
+        });
+      } else {
+        // Unknown member kind (e.g. index/call signatures) - be conservative.
         return null;
       }
-
-      fields.set(member.name.getText(sourceFile), {
-        type: member.type.getText(sourceFile),
-        optional: !!member.questionToken,
-      });
     }
 
     return {
       name: declaration.name.text,
       fields,
+      methods,
     };
   };
 
@@ -1330,6 +1411,8 @@ function areInterfaceSignaturesCompatible(
 
   const oldFields = oldParsed.fields;
   const newFields = newParsed.fields;
+  const oldMethods = oldParsed.methods;
+  const newMethods = newParsed.methods;
 
   // Check that all old fields exist in new interface with compatible types
   for (const [fieldName, oldField] of oldFields) {
@@ -1384,6 +1467,55 @@ function areInterfaceSignaturesCompatible(
       // New optional field - compatible
     }
   }
+
+  // Existing methods must still exist with a compatible signature.
+  const normalizeType = (type: string) =>
+    normalizeTypeReference(type.replace(/\s+/g, " ").trim());
+  for (const [methodName, oldMethod] of oldMethods) {
+    const newMethod = newMethods.get(methodName);
+    if (!newMethod) {
+      // Method removed - breaking change
+      return false;
+    }
+
+    if (
+      normalizeType(oldMethod.returnType) !==
+      normalizeType(newMethod.returnType)
+    ) {
+      // Return type changed - breaking change
+      return false;
+    }
+
+    // Each previously-existing parameter must remain, with a compatible type
+    // (identical or widened to a union that still accepts the old type) and may
+    // not become required if it was optional.
+    for (let i = 0; i < oldMethod.params.length; i++) {
+      const oldParam = oldMethod.params[i];
+      const newParam = newMethod.params[i];
+      if (!newParam) {
+        return false;
+      }
+      if (
+        oldParam.type !== newParam.type &&
+        !areParamTypesCompatible(oldParam.type, newParam.type)
+      ) {
+        return false;
+      }
+      if (oldParam.optional && !newParam.optional) {
+        return false;
+      }
+    }
+
+    // Any added parameters must be optional.
+    for (let i = oldMethod.params.length; i < newMethod.params.length; i++) {
+      if (!newMethod.params[i].optional) {
+        return false;
+      }
+    }
+  }
+
+  // Newly-added methods are additive (existing callers are unaffected), matching
+  // how new optional fields are treated above.
 
   // All checks passed - interfaces are compatible
   return true;
@@ -2189,6 +2321,63 @@ describe("areInterfaceSignaturesCompatible", () => {
     const result = areInterfaceSignaturesCompatible(oldInterface, newInterface);
     expect(result).toBe(true);
   });
+
+  test("should allow adding a new method to an interface", () => {
+    // Real-world case: adding `inject(carrier?)` to the Span interface.
+    const oldInterface = `export interface Span { export(): Promise<string>; link(): string; }`;
+    const newInterface = `export interface Span { export(): Promise<string>; inject(carrier?: Record<string, string>): Record<string, string>; link(): string; }`;
+
+    const result = areInterfaceSignaturesCompatible(oldInterface, newInterface);
+    expect(result).toBe(true);
+  });
+
+  test("should reject removing a method from an interface", () => {
+    const oldInterface = `export interface Span { export(): Promise<string>; link(): string; }`;
+    const newInterface = `export interface Span { export(): Promise<string>; }`;
+
+    const result = areInterfaceSignaturesCompatible(oldInterface, newInterface);
+    expect(result).toBe(false);
+  });
+
+  test("should allow widening a method parameter type to a union", () => {
+    const oldInterface = `export interface Api { run(parent: string): void; }`;
+    const newInterface = `export interface Api { run(parent: string | PropagationContext): void; }`;
+
+    const result = areInterfaceSignaturesCompatible(oldInterface, newInterface);
+    expect(result).toBe(true);
+  });
+
+  test("should reject narrowing a method parameter type", () => {
+    const oldInterface = `export interface Api { run(parent: string | PropagationContext): void; }`;
+    const newInterface = `export interface Api { run(parent: string): void; }`;
+
+    const result = areInterfaceSignaturesCompatible(oldInterface, newInterface);
+    expect(result).toBe(false);
+  });
+
+  test("should reject changing a method return type", () => {
+    const oldInterface = `export interface Api { run(): void; }`;
+    const newInterface = `export interface Api { run(): string; }`;
+
+    const result = areInterfaceSignaturesCompatible(oldInterface, newInterface);
+    expect(result).toBe(false);
+  });
+
+  test("should allow adding an optional parameter to a method", () => {
+    const oldInterface = `export interface Api { run(): void; }`;
+    const newInterface = `export interface Api { run(opts?: Options): void; }`;
+
+    const result = areInterfaceSignaturesCompatible(oldInterface, newInterface);
+    expect(result).toBe(true);
+  });
+
+  test("should reject adding a required parameter to a method", () => {
+    const oldInterface = `export interface Api { run(): void; }`;
+    const newInterface = `export interface Api { run(opts: Options): void; }`;
+
+    const result = areInterfaceSignaturesCompatible(oldInterface, newInterface);
+    expect(result).toBe(false);
+  });
 });
 
 describe("areClassSignaturesCompatible", () => {
@@ -2331,6 +2520,40 @@ describe("areFunctionSignaturesCompatible", () => {
     const oldFn = `export function foo(a: string): void`;
     const newFn = `export function foo(a: string): number`;
     expect(areFunctionSignaturesCompatible(oldFn, newFn)).toBe(false);
+  });
+
+  test("should allow widening a parameter type to a union", () => {
+    // Real-world case: `withParent(parent: string)` ->
+    // `withParent(parent: string | PropagationContext)`.
+    const oldFn = `export function withParent<R>(parent: string, callback: () => R): R`;
+    const newFn = `export function withParent<R>(parent: string | PropagationContext, callback: () => R): R`;
+    expect(areFunctionSignaturesCompatible(oldFn, newFn)).toBe(true);
+  });
+
+  test("should reject narrowing a parameter type from a union", () => {
+    const oldFn = `export function foo(a: string | number): void`;
+    const newFn = `export function foo(a: string): void`;
+    expect(areFunctionSignaturesCompatible(oldFn, newFn)).toBe(false);
+  });
+
+  test("should allow widening a field inside an options-object parameter", () => {
+    // Real-world case: getSpanParentObject's options param widens its nested
+    // `parent?` field from `string` to `string | PropagationContext`.
+    const oldFn = `export function getSpanParentObject<IsAsyncFlush extends boolean>(options?: AsyncFlushArg<IsAsyncFlush> & OptionalStateArg & { parent?: string; }): Span`;
+    const newFn = `export function getSpanParentObject<IsAsyncFlush extends boolean>(options?: AsyncFlushArg<IsAsyncFlush> & OptionalStateArg & { parent?: string | PropagationContext; }): Span`;
+    expect(areFunctionSignaturesCompatible(oldFn, newFn)).toBe(true);
+  });
+
+  test("should reject adding a required field to an options-object parameter", () => {
+    const oldFn = `export function foo(options?: { a?: string; }): void`;
+    const newFn = `export function foo(options?: { a?: string; b: number; }): void`;
+    expect(areFunctionSignaturesCompatible(oldFn, newFn)).toBe(false);
+  });
+
+  test("should handle a parameter whose type is an arrow function", () => {
+    const oldFn = `export function withParent<R>(parent: string, callback: () => R, state?: BraintrustState | undefined): R`;
+    const newFn = `export function withParent<R>(parent: string | PropagationContext, callback: () => R, state?: BraintrustState | undefined): R`;
+    expect(areFunctionSignaturesCompatible(oldFn, newFn)).toBe(true);
   });
 });
 
