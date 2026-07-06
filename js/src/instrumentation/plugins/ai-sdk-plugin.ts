@@ -70,6 +70,7 @@ export const DEFAULT_DENY_OUTPUT_PATHS: string[] = [
   "steps[].response.headers",
 ];
 
+const AUTO_PATCHED_MODEL = Symbol.for("braintrust.ai-sdk.auto-patched-model");
 const AUTO_PATCHED_TOOL = Symbol.for("braintrust.ai-sdk.auto-patched-tool");
 const AUTO_PATCHED_V7_TELEMETRY_DISPATCHER = Symbol.for(
   "braintrust.ai-sdk.v7.auto-patched-telemetry-dispatcher",
@@ -1149,7 +1150,8 @@ function prepareAISDKChildTracing(
     if (
       !resolvedModel ||
       typeof resolvedModel !== "object" ||
-      typeof resolvedModel.doGenerate !== "function"
+      typeof resolvedModel.doGenerate !== "function" ||
+      (resolvedModel as { [AUTO_PATCHED_MODEL]?: boolean })[AUTO_PATCHED_MODEL]
     ) {
       return resolvedModel;
     }
@@ -1164,7 +1166,17 @@ function prepareAISDKChildTracing(
     const originalDoGenerate = resolvedModel.doGenerate;
     const originalDoStream = resolvedModel.doStream;
     const baseMetadata = buildAISDKChildMetadata(resolvedModel);
-    const wrappedModel = Object.create(resolvedModel) as AISDKLanguageModel;
+    const wrappedModel = Object.create(
+      Object.getPrototypeOf(resolvedModel),
+    ) as AISDKLanguageModel;
+    Object.defineProperties(
+      wrappedModel,
+      Object.getOwnPropertyDescriptors(resolvedModel),
+    );
+    Object.defineProperty(wrappedModel, AUTO_PATCHED_MODEL, {
+      configurable: true,
+      value: true,
+    });
 
     wrappedModel.doGenerate = async function doGeneratePatched(
       options: AISDKCallParams,
@@ -1434,9 +1446,13 @@ function prepareAISDKChildTracing(
   };
 
   if (params && typeof params === "object") {
-    const patchedParamModel = patchModel(params.model);
-    if (patchedParamModel && patchedParamModel !== params.model) {
+    const originalParamModel = params.model;
+    const patchedParamModel = patchModel(originalParamModel);
+    if (patchedParamModel && patchedParamModel !== originalParamModel) {
       params.model = patchedParamModel;
+      cleanup.push(() => {
+        params.model = originalParamModel;
+      });
     }
     patchTools(params.tools);
   }
