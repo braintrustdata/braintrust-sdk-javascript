@@ -44,7 +44,12 @@ describe("braintrustEveHook", () => {
   });
 
   it("records a flat Eve turn with session model metadata", async () => {
-    const wildcard = braintrustEveHook().events?.["*"];
+    const wildcard = braintrustEveHook({
+      metadata: {
+        scenario: "eve-plugin-unit",
+        testRunId: "test-run-flat-tree",
+      },
+    }).events?.["*"];
     expect(wildcard).toBeDefined();
 
     const ctx: EveHookContext = {
@@ -208,6 +213,8 @@ describe("braintrustEveHook", () => {
         "eve.channel.kind": "http",
         "eve.session.id": "session-flat-tree",
         "eve.turn.id": "turn-flat-tree",
+        scenario: "eve-plugin-unit",
+        testRunId: "test-run-flat-tree",
       },
       metrics: {
         completion_tokens: 13,
@@ -240,6 +247,8 @@ describe("braintrustEveHook", () => {
       expect(step.metadata).toMatchObject({
         ...expectedModelMetadata,
         "eve.step.index": index,
+        scenario: "eve-plugin-unit",
+        testRunId: "test-run-flat-tree",
       });
     }
     expect(steps[0]?.input).toEqual([

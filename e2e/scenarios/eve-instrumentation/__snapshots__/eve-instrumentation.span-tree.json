@@ -40,7 +40,9 @@
             "eve.turn.id": "<eve.turn.id:2>",
             "eve.turn.sequence": 0,
             "model": "gpt-5.4-mini",
-            "provider": "openai"
+            "provider": "openai",
+            "scenario": "eve-instrumentation",
+            "testRunId": "<run:1>"
           },
           "metrics": {
             "completion_tokens": 26,
@@ -70,7 +72,9 @@
             "eve.tool.call_id": "<eve.tool.call_id:3>",
             "eve.tool.name": "search",
             "eve.turn.id": "<eve.turn.id:2>",
-            "eve.turn.sequence": 0
+            "eve.turn.sequence": 0,
+            "scenario": "eve-instrumentation",
+            "testRunId": "<run:1>"
           }
         },
         {
@@ -133,7 +137,9 @@
             "eve.turn.id": "<eve.turn.id:2>",
             "eve.turn.sequence": 0,
             "model": "gpt-5.4-mini",
-            "provider": "openai"
+            "provider": "openai",
+            "scenario": "eve-instrumentation",
+            "testRunId": "<run:1>"
           },
           "metrics": {
             "completion_tokens": 27,
@@ -164,7 +170,9 @@
             "eve.tool.call_id": "<eve.tool.call_id:3>",
             "eve.tool.name": "read",
             "eve.turn.id": "<eve.turn.id:2>",
-            "eve.turn.sequence": 0
+            "eve.turn.sequence": 0,
+            "scenario": "eve-instrumentation",
+            "testRunId": "<run:1>"
           }
         },
         {
@@ -243,7 +251,9 @@
             "eve.turn.id": "<eve.turn.id:2>",
             "eve.turn.sequence": 0,
             "model": "gpt-5.4-mini",
-            "provider": "openai"
+            "provider": "openai",
+            "scenario": "eve-instrumentation",
+            "testRunId": "<run:1>"
           },
           "metrics": {
             "completion_tokens": 40,
@@ -268,7 +278,9 @@
         "eve.turn.id": "<eve.turn.id:2>",
         "eve.turn.sequence": 0,
         "model": "gpt-5.4-mini",
-        "provider": "openai"
+        "provider": "openai",
+        "scenario": "eve-instrumentation",
+        "testRunId": "<run:1>"
       },
       "metrics": {
         "completion_tokens": 93,

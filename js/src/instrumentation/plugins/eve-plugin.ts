@@ -45,11 +45,13 @@ type ToolState = SpanState & {
 const EVE_BRIDGE = Symbol.for("braintrust.eve.bridge");
 
 /** Manual hook instrumentation for eve runtime stream events. */
-export function braintrustEveHook(): EveHookDefinition {
+export function braintrustEveHook(
+  options: { metadata?: Record<string, unknown> } = {},
+): EveHookDefinition {
   return {
     events: {
       "*": (event: EveHandleMessageStreamEvent, ctx: EveHookContext) => {
-        getEveBridge().handle(event, ctx);
+        getEveBridge().handle(event, ctx, options.metadata);
       },
     },
   };
@@ -73,31 +75,39 @@ class EveBridge {
   private toolsByCallKey = new Map<string, ToolState>();
   private turnsByKey = new Map<string, TurnState>();
 
-  handle(event: unknown, ctx: unknown): void {
+  handle(
+    event: unknown,
+    ctx: unknown,
+    hookMetadata?: Record<string, unknown>,
+  ): void {
     if (!isObject(event)) {
       return;
     }
 
     try {
-      this.handleEvent(event as EveHandleMessageStreamEvent, ctx);
+      this.handleEvent(event as EveHandleMessageStreamEvent, ctx, hookMetadata);
     } catch (error) {
       logInstrumentationError("Eve hook event", error);
     }
   }
 
-  private handleEvent(event: EveHandleMessageStreamEvent, ctx: unknown): void {
+  private handleEvent(
+    event: EveHandleMessageStreamEvent,
+    ctx: unknown,
+    hookMetadata?: Record<string, unknown>,
+  ): void {
     switch (event.type) {
       case "session.started":
         this.handleSessionStarted(event, ctx);
         return;
       case "turn.started":
-        this.handleTurnStarted(event, ctx);
+        this.handleTurnStarted(event, ctx, hookMetadata);
         return;
       case "message.received":
-        this.handleMessageReceived(event, ctx);
+        this.handleMessageReceived(event, ctx, hookMetadata);
         return;
       case "step.started":
-        this.handleStepStarted(event, ctx);
+        this.handleStepStarted(event, ctx, hookMetadata);
         return;
       case "message.completed":
         this.handleMessageCompleted(event, ctx);
@@ -106,10 +116,10 @@ class EveBridge {
         this.handleResultCompleted(event, ctx);
         return;
       case "actions.requested":
-        this.handleActionsRequested(event, ctx);
+        this.handleActionsRequested(event, ctx, hookMetadata);
         return;
       case "action.result":
-        this.handleActionResult(event, ctx);
+        this.handleActionResult(event, ctx, hookMetadata);
         return;
       case "step.completed":
         this.handleStepCompleted(event, ctx);
@@ -162,6 +172,7 @@ class EveBridge {
   private handleTurnStarted(
     event: Extract<EveHandleMessageStreamEvent, { type: "turn.started" }>,
     ctx: unknown,
+    hookMetadata?: Record<string, unknown>,
   ): void {
     const sessionId = sessionIdFromContext(ctx);
     if (!sessionId) {
@@ -169,7 +180,7 @@ class EveBridge {
     }
 
     const key = turnKey(sessionId, event.data.turnId);
-    const metadata = this.turnMetadata(sessionId, event, ctx);
+    const metadata = this.turnMetadata(sessionId, event, ctx, hookMetadata);
     const existing = this.turnsByKey.get(key);
     if (existing) {
       existing.metadata = metadata;
@@ -197,8 +208,9 @@ class EveBridge {
   private handleMessageReceived(
     event: Extract<EveHandleMessageStreamEvent, { type: "message.received" }>,
     ctx: unknown,
+    hookMetadata?: Record<string, unknown>,
   ): void {
-    const turn = this.ensureTurn(event, ctx);
+    const turn = this.ensureTurn(event, ctx, hookMetadata);
     if (!turn) {
       return;
     }
@@ -214,8 +226,9 @@ class EveBridge {
   private handleStepStarted(
     event: Extract<EveHandleMessageStreamEvent, { type: "step.started" }>,
     ctx: unknown,
+    hookMetadata?: Record<string, unknown>,
   ): void {
-    const turn = this.ensureTurn(event, ctx);
+    const turn = this.ensureTurn(event, ctx, hookMetadata);
     if (!turn) {
       return;
     }
@@ -294,8 +307,9 @@ class EveBridge {
   private handleActionsRequested(
     event: Extract<EveHandleMessageStreamEvent, { type: "actions.requested" }>,
     ctx: unknown,
+    hookMetadata?: Record<string, unknown>,
   ): void {
-    const turn = this.ensureTurn(event, ctx);
+    const turn = this.ensureTurn(event, ctx, hookMetadata);
     const sessionId = sessionIdFromContext(ctx);
     if (!turn || !sessionId) {
       return;
@@ -368,6 +382,7 @@ class EveBridge {
   private handleActionResult(
     event: Extract<EveHandleMessageStreamEvent, { type: "action.result" }>,
     ctx: unknown,
+    hookMetadata?: Record<string, unknown>,
   ): void {
     if (!isToolResult(event.data.result)) {
       return;
@@ -381,7 +396,7 @@ class EveBridge {
     const key = toolKey(sessionId, event.data.result.callId);
     const tool =
       this.toolsByCallKey.get(key) ??
-      this.startSyntheticTool(event, ctx, event.data.result);
+      this.startSyntheticTool(event, ctx, event.data.result, hookMetadata);
     if (!tool) {
       return;
     }
@@ -575,6 +590,7 @@ class EveBridge {
       }
     >,
     ctx: unknown,
+    hookMetadata?: Record<string, unknown>,
   ): TurnState | undefined {
     const sessionId = sessionIdFromContext(ctx);
     if (!sessionId) {
@@ -587,7 +603,7 @@ class EveBridge {
       return existing;
     }
 
-    const metadata = this.turnMetadata(sessionId, event, ctx);
+    const metadata = this.turnMetadata(sessionId, event, ctx, hookMetadata);
     const span = startSpan({
       event: { metadata },
       name: "eve.turn",
@@ -636,8 +652,9 @@ class EveBridge {
     event: Extract<EveHandleMessageStreamEvent, { type: "action.result" }>,
     ctx: unknown,
     result: EveRuntimeToolResultActionResult,
+    hookMetadata?: Record<string, unknown>,
   ): ToolState | undefined {
-    const turn = this.ensureTurn(event, ctx);
+    const turn = this.ensureTurn(event, ctx, hookMetadata);
     const sessionId = sessionIdFromContext(ctx);
     if (!turn || !sessionId) {
       return undefined;
@@ -711,6 +728,7 @@ class EveBridge {
       { data: { readonly sequence: number; readonly turnId: string } }
     >,
     ctx: unknown,
+    hookMetadata?: Record<string, unknown>,
   ): Record<string, unknown> {
     return {
       ...baseMetadata({
@@ -719,6 +737,7 @@ class EveBridge {
         turnId: event.data.turnId,
         turnSequence: event.data.sequence,
       }),
+      ...(hookMetadata ?? {}),
       ...agentMetadataFromContext(ctx),
       ...(this.sessionsById.get(sessionId)?.metadata ?? {}),
     };
