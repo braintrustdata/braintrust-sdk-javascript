@@ -416,9 +416,6 @@
                 }
               ],
               "input": {
-                "experimental_output": {
-                  "responseFormat": "[Promise]"
-                },
                 "maxOutputTokens": 32,
                 "model": {
                   "config": {

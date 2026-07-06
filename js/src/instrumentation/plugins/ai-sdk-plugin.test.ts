@@ -168,6 +168,10 @@ describe("AISDKPlugin", () => {
           doStream: async () => ({ stream: new ReadableStream() }),
           modelId: "gpt-4.1-mini",
         },
+        experimental_output: {
+          responseFormat: Promise.resolve({ type: "json" }),
+          type: "object",
+        },
         prompt: "Hello",
         stopWhen: () => true,
       }).input as Record<string, any>;
@@ -181,6 +185,7 @@ describe("AISDKPlugin", () => {
         },
         prompt: "Hello",
       });
+      expect(processed).not.toHaveProperty("experimental_output");
       expect(processed).not.toHaveProperty("stopWhen");
       expect(processed.model).not.toHaveProperty("doGenerate");
       expect(processed.model).not.toHaveProperty("doStream");

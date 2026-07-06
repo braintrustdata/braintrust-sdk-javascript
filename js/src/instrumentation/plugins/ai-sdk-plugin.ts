@@ -832,6 +832,7 @@ const processInputAttachmentsSync = (
 
   const processed: AISDKCallParams = { ...input };
   delete processed.headers;
+  delete processed.experimental_output;
 
   if (input.messages && Array.isArray(input.messages)) {
     processed.messages = input.messages.map(processMessage);
@@ -1458,6 +1459,7 @@ function extractAISDKCallOptionsForMetadata(
     "headers",
     "abortSignal",
     "signal",
+    "experimental_output",
   ]);
 
   for (const [key, value] of Object.entries(params)) {

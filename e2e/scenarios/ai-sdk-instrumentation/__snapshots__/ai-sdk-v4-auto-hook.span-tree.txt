@@ -222,9 +222,6 @@ span_tree:
     │   }
     │   └── generateText [function]
     │       input: {
-    │         "experimental_output": {
-    │           "type": "object"
-    │         },
     │         "maxTokens": 32,
     │         "model": {
     │           "config": {
