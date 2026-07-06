@@ -1314,43 +1314,90 @@ export function defineAISDKInstrumentationAssertions(options: {
     }
 
     if (options.supportsWorkflowAgent) {
-      test("captures trace for WorkflowAgent.stream()", testConfig, () => {
-        const root = findLatestSpan(events, ROOT_NAME);
-        const trace = findWorkflowAgentTrace(events);
+      test(
+        "captures trace for WorkflowAgent.stream() with messages",
+        testConfig,
+        () => {
+          const root = findLatestSpan(events, ROOT_NAME);
+          const trace = findWorkflowAgentTrace(
+            events,
+            "ai-sdk-workflow-agent-stream-operation",
+          );
 
-        expectOperationParentedByRoot(trace.operation, root);
-        expect(operationName(trace.operation)).toBe("workflow-agent-stream");
-        expect(findAllSpans(events, "WorkflowAgent.stream")).toHaveLength(1);
-        expect(trace.workflowSpans).toHaveLength(1);
-        expectAISDKParentSpan(trace.parent);
-        expect(hasPromptLikeInput(trace.parent?.input)).toBe(true);
-        expect(
-          hasSemanticOutput(trace.parent?.output, [
-            "messages",
-            "steps",
-            "text",
-            "toolCalls",
-            "toolResults",
-          ]),
-        ).toBe(true);
-        expect(trace.modelChildren.length).toBeGreaterThanOrEqual(1);
-        trace.modelChildren.forEach(expectAISDKModelChildSpan);
-        expect(trace.toolSpans.length).toBeGreaterThanOrEqual(1);
-        expect(trace.toolSpans[0]?.input).toMatchObject({
-          location: expect.any(String),
-        });
-        expect(trace.toolSpans[0]?.output).toBeDefined();
-        expect(collectToolCallNames(trace.parent?.output)).toContain(
-          "get_weather",
-        );
-        expect(collectToolResultNames(trace.parent?.output)).toContain(
-          "get_weather",
-        );
-        expect(trace.parent?.span.ended).toBe(true);
-        expect(trace.modelChildren.every((child) => child.span.ended)).toBe(
-          true,
-        );
-      });
+          expectOperationParentedByRoot(trace.operation, root);
+          expect(operationName(trace.operation)).toBe("workflow-agent-stream");
+          expect(findAllSpans(events, "WorkflowAgent.stream")).toHaveLength(2);
+          expect(trace.workflowSpans).toHaveLength(1);
+          expectAISDKParentSpan(trace.parent);
+          expect(hasPromptLikeInput(trace.parent?.input)).toBe(true);
+          expect(
+            hasSemanticOutput(trace.parent?.output, [
+              "messages",
+              "steps",
+              "text",
+              "toolCalls",
+              "toolResults",
+            ]),
+          ).toBe(true);
+          expect(trace.modelChildren.length).toBeGreaterThanOrEqual(1);
+          trace.modelChildren.forEach(expectAISDKModelChildSpan);
+          expect(trace.toolSpans.length).toBeGreaterThanOrEqual(1);
+          expect(trace.toolSpans[0]?.input).toMatchObject({
+            location: expect.any(String),
+          });
+          expect(trace.toolSpans[0]?.output).toBeDefined();
+          expect(collectToolCallNames(trace.parent?.output)).toContain(
+            "get_weather",
+          );
+          expect(collectToolResultNames(trace.parent?.output)).toContain(
+            "get_weather",
+          );
+          expect(trace.parent?.span.ended).toBe(true);
+          expect(trace.modelChildren.every((child) => child.span.ended)).toBe(
+            true,
+          );
+        },
+      );
+
+      test(
+        "captures trace for WorkflowAgent.stream() with system and prompt",
+        testConfig,
+        () => {
+          const root = findLatestSpan(events, ROOT_NAME);
+          const trace = findWorkflowAgentTrace(
+            events,
+            "ai-sdk-workflow-agent-stream-prompt-operation",
+          );
+
+          expectOperationParentedByRoot(trace.operation, root);
+          expect(operationName(trace.operation)).toBe(
+            "workflow-agent-stream-prompt",
+          );
+          expect(trace.workflowSpans).toHaveLength(1);
+          expectAISDKParentSpan(trace.parent);
+          const input = isRecord(trace.parent?.input)
+            ? trace.parent.input
+            : null;
+          expect(hasPromptLikeInput(input)).toBe(true);
+          expect(JSON.stringify(input)).toContain("weather in Paris");
+          expect(
+            hasSemanticOutput(trace.parent?.output, [
+              "messages",
+              "steps",
+              "text",
+              "toolCalls",
+              "toolResults",
+            ]),
+          ).toBe(true);
+          expect(trace.modelChildren.length).toBeGreaterThanOrEqual(1);
+          trace.modelChildren.forEach(expectAISDKModelChildSpan);
+          expect(trace.toolSpans.length).toBeGreaterThanOrEqual(1);
+          expect(trace.toolSpans[0]?.input).toMatchObject({
+            location: expect.any(String),
+          });
+          expect(trace.parent?.span.ended).toBe(true);
+        },
+      );
     }
 
     if (options.supportsAgentToolLoop) {
@@ -1450,11 +1497,11 @@ export function defineAISDKInstrumentationAssertions(options: {
   });
 }
 
-function findWorkflowAgentTrace(events: CapturedLogEvent[]) {
-  const operation = findLatestSpan(
-    events,
-    "ai-sdk-workflow-agent-stream-operation",
-  );
+function findWorkflowAgentTrace(
+  events: CapturedLogEvent[],
+  operationSpanName: string,
+) {
+  const operation = findLatestSpan(events, operationSpanName);
   const workflowSpans = findChildSpans(
     events,
     "WorkflowAgent.stream",

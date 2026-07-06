@@ -347,6 +347,7 @@ describe("AI SDK streaming instrumentation", () => {
       async stream(params: any) {
         return {
           messages: params.messages,
+          prompt: params.prompt,
           steps: [],
           text: `Streamed by ${this.#_name}`,
         };
@@ -376,8 +377,9 @@ describe("AI SDK streaming instrumentation", () => {
     await directlyWrappedAgent.stream({
       headers: { authorization: "secret" },
       maxOutputTokens: 12,
-      messages: [{ role: "user", content: "Hello again" }],
+      prompt: "Hello again",
       stopWhen: () => true,
+      system: "You are terse.",
     });
     expect(workflowAgentWrapperSpanCountForTesting()).toBe(0);
 
@@ -387,13 +389,21 @@ describe("AI SDK streaming instrumentation", () => {
     );
 
     expect(workflowSpans).toHaveLength(2);
+    expect(
+      workflowSpans.find((span) => Array.isArray(span.input?.messages))?.input,
+    ).toMatchObject({
+      messages: [{ role: "user", content: "Hello" }],
+    });
+    expect(
+      workflowSpans.find((span) => span.input?.prompt === "Hello again")?.input,
+    ).toMatchObject({
+      prompt: "Hello again",
+      system: "You are terse.",
+    });
     for (const span of workflowSpans) {
       expect(span.span_attributes).toMatchObject({
         type: "function",
         name: "WorkflowAgent.stream",
-      });
-      expect(span.input).toMatchObject({
-        messages: expect.any(Array),
       });
       expect(span.input).not.toHaveProperty("headers");
       expect(span.input).not.toHaveProperty("maxOutputTokens");

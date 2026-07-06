@@ -873,6 +873,7 @@ span_tree:
     │   }
     │   └── generateText [function]
     │       input: {
+    │         "instructions": "You must inspect live weather via the provided get_weather tool before responding.",
     │         "maxOutputTokens": 128,
     │         "maxRetries": 2,
     │         "messages": [
@@ -1652,6 +1653,7 @@ span_tree:
     │       }
     │       ├── doGenerate [llm]
     │       │   input: {
+    │       │     "instructions": "You must inspect live weather via the provided get_weather tool before responding.",
     │       │     "maxOutputTokens": 128,
     │       │     "messages": [
     │       │       {
@@ -1755,6 +1757,7 @@ span_tree:
     │       │   }
     │       ├── doGenerate [llm]
     │       │   input: {
+    │       │     "instructions": "You must inspect live weather via the provided get_weather tool before responding.",
     │       │     "maxOutputTokens": 128,
     │       │     "messages": [
     │       │       {
@@ -1893,6 +1896,7 @@ span_tree:
     │       │   }
     │       ├── doGenerate [llm]
     │       │   input: {
+    │       │     "instructions": "You must inspect live weather via the provided get_weather tool before responding.",
     │       │     "maxOutputTokens": 128,
     │       │     "messages": [
     │       │       {
@@ -2066,6 +2070,7 @@ span_tree:
     │       │   }
     │       ├── doGenerate [llm]
     │       │   input: {
+    │       │     "instructions": "You must inspect live weather via the provided get_weather tool before responding.",
     │       │     "maxOutputTokens": 128,
     │       │     "messages": [
     │       │       {
@@ -2569,6 +2574,7 @@ span_tree:
     │   }
     │   └── generateText [function]
     │       input: {
+    │         "instructions": "You are a terse assistant.",
     │         "maxOutputTokens": 24,
     │         "maxRetries": 2,
     │         "messages": [
@@ -2737,6 +2743,7 @@ span_tree:
     │       }
     │       └── doGenerate [llm]
     │           input: {
+    │             "instructions": "You are a terse assistant.",
     │             "maxOutputTokens": 24,
     │             "messages": [
     │               {
@@ -2808,6 +2815,7 @@ span_tree:
     │   }
     │   └── streamText [function]
     │       input: {
+    │         "instructions": "You are a terse assistant.",
     │         "maxOutputTokens": 24,
     │         "maxRetries": 2,
     │         "messages": [
@@ -2979,6 +2987,7 @@ span_tree:
     │       }
     │       └── doStream [llm]
     │           input: {
+    │             "instructions": "You are a terse assistant.",
     │             "maxOutputTokens": 24,
     │             "messages": [
     │               {
@@ -3050,6 +3059,7 @@ span_tree:
     │   }
     │   └── generateText [function]
     │       input: {
+    │         "instructions": "You are a shopping assistant. Use the tools before answering pricing questions.",
     │         "maxOutputTokens": 256,
     │         "maxRetries": 2,
     │         "messages": [
@@ -3723,6 +3733,7 @@ span_tree:
     │       }
     │       ├── doGenerate [llm]
     │       │   input: {
+    │       │     "instructions": "You are a shopping assistant. Use the tools before answering pricing questions.",
     │       │     "maxOutputTokens": 256,
     │       │     "messages": [
     │       │       {
@@ -3891,6 +3902,7 @@ span_tree:
     │       │   }
     │       ├── doGenerate [llm]
     │       │   input: {
+    │       │     "instructions": "You are a shopping assistant. Use the tools before answering pricing questions.",
     │       │     "maxOutputTokens": 256,
     │       │     "messages": [
     │       │       {
@@ -4095,6 +4107,7 @@ span_tree:
     │       │   }
     │       └── doGenerate [llm]
     │           input: {
+    │             "instructions": "You are a shopping assistant. Use the tools before answering pricing questions.",
     │             "maxOutputTokens": 256,
     │             "messages": [
     │               {
@@ -4316,16 +4329,959 @@ span_tree:
     │             "prompt_tokens": 308,
     │             "tokens": 370
     │           }
-    └── ai-sdk-workflow-agent-stream-operation
+    ├── ai-sdk-workflow-agent-stream-operation
+    │   metadata: {
+    │     "operation": "workflow-agent-stream",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── WorkflowAgent.stream [function]
+    │       input: {
+    │         "messages": [
+    │           {
+    │             "content": "Use get_weather for Paris, France, then reply with one short sentence.",
+    │             "role": "user"
+    │           }
+    │         ]
+    │       }
+    │       output: {
+    │         "content": [
+    │           {
+    │             "input": {
+    │               "location": "Paris, France"
+    │             },
+    │             "toolName": "get_weather",
+    │             "type": "tool-call"
+    │           }
+    │         ],
+    │         "finishReason": "tool-calls",
+    │         "providerMetadata": {
+    │           "openai": {
+    │             "responseId": "<responseId:5>",
+    │             "serviceTier": "default"
+    │           }
+    │         },
+    │         "request": {
+    │           "messages": []
+    │         },
+    │         "response": {
+    │           "messages": [],
+    │           "modelId": "gpt-4o-mini-2024-07-18",
+    │           "timestamp": "<timestamp>"
+    │         },
+    │         "steps": [
+    │           {
+    │             "callId": "<callId:1>",
+    │             "content": [
+    │               {
+    │                 "input": {
+    │                   "location": "Paris, France"
+    │                 },
+    │                 "toolName": "get_weather",
+    │                 "type": "tool-call"
+    │               }
+    │             ],
+    │             "finishReason": "tool-calls",
+    │             "model": {
+    │               "modelId": "gpt-4o-mini-2024-07-18",
+    │               "provider": "gpt-4o-mini-2024-07-18"
+    │             },
+    │             "providerMetadata": {
+    │               "openai": {
+    │                 "responseId": "<responseId:2>",
+    │                 "serviceTier": "default"
+    │               }
+    │             },
+    │             "request": {
+    │               "messages": []
+    │             },
+    │             "response": {
+    │               "messages": [],
+    │               "modelId": "gpt-4o-mini-2024-07-18",
+    │               "timestamp": "<timestamp>"
+    │             },
+    │             "runtimeContext": {},
+    │             "stepNumber": 0,
+    │             "toolsContext": {},
+    │             "usage": {
+    │               "inputTokenDetails": {
+    │                 "cacheReadTokens": 0,
+    │                 "noCacheTokens": 84
+    │               },
+    │               "inputTokens": 84,
+    │               "outputTokenDetails": {
+    │                 "reasoningTokens": 0,
+    │                 "textTokens": 8
+    │               },
+    │               "outputTokens": 8,
+    │               "raw": {
+    │                 "input_tokens": 84,
+    │                 "input_tokens_details": {
+    │                   "cached_tokens": 0
+    │                 },
+    │                 "output_tokens": 8,
+    │                 "output_tokens_details": {
+    │                   "reasoning_tokens": 0
+    │                 }
+    │               },
+    │               "totalTokens": 92
+    │             },
+    │             "warnings": []
+    │           },
+    │           {
+    │             "callId": "<callId:1>",
+    │             "content": [
+    │               {
+    │                 "input": {
+    │                   "location": "Paris, France"
+    │                 },
+    │                 "toolName": "get_weather",
+    │                 "type": "tool-call"
+    │               }
+    │             ],
+    │             "finishReason": "tool-calls",
+    │             "model": {
+    │               "modelId": "gpt-4o-mini-2024-07-18",
+    │               "provider": "gpt-4o-mini-2024-07-18"
+    │             },
+    │             "providerMetadata": {
+    │               "openai": {
+    │                 "responseId": "<responseId:3>",
+    │                 "serviceTier": "default"
+    │               }
+    │             },
+    │             "request": {
+    │               "messages": []
+    │             },
+    │             "response": {
+    │               "messages": [],
+    │               "modelId": "gpt-4o-mini-2024-07-18",
+    │               "timestamp": "<timestamp>"
+    │             },
+    │             "runtimeContext": {},
+    │             "stepNumber": 1,
+    │             "toolsContext": {},
+    │             "usage": {
+    │               "inputTokenDetails": {
+    │                 "cacheReadTokens": 0,
+    │                 "noCacheTokens": 123
+    │               },
+    │               "inputTokens": 123,
+    │               "outputTokenDetails": {
+    │                 "reasoningTokens": 0,
+    │                 "textTokens": 8
+    │               },
+    │               "outputTokens": 8,
+    │               "raw": {
+    │                 "input_tokens": 123,
+    │                 "input_tokens_details": {
+    │                   "cached_tokens": 0
+    │                 },
+    │                 "output_tokens": 8,
+    │                 "output_tokens_details": {
+    │                   "reasoning_tokens": 0
+    │                 }
+    │               },
+    │               "totalTokens": 131
+    │             },
+    │             "warnings": []
+    │           },
+    │           {
+    │             "callId": "<callId:1>",
+    │             "content": [
+    │               {
+    │                 "input": {
+    │                   "location": "Paris, France"
+    │                 },
+    │                 "toolName": "get_weather",
+    │                 "type": "tool-call"
+    │               }
+    │             ],
+    │             "finishReason": "tool-calls",
+    │             "model": {
+    │               "modelId": "gpt-4o-mini-2024-07-18",
+    │               "provider": "gpt-4o-mini-2024-07-18"
+    │             },
+    │             "providerMetadata": {
+    │               "openai": {
+    │                 "responseId": "<responseId:4>",
+    │                 "serviceTier": "default"
+    │               }
+    │             },
+    │             "request": {
+    │               "messages": []
+    │             },
+    │             "response": {
+    │               "messages": [],
+    │               "modelId": "gpt-4o-mini-2024-07-18",
+    │               "timestamp": "<timestamp>"
+    │             },
+    │             "runtimeContext": {},
+    │             "stepNumber": 2,
+    │             "toolsContext": {},
+    │             "usage": {
+    │               "inputTokenDetails": {
+    │                 "cacheReadTokens": 0,
+    │                 "noCacheTokens": 162
+    │               },
+    │               "inputTokens": 162,
+    │               "outputTokenDetails": {
+    │                 "reasoningTokens": 0,
+    │                 "textTokens": 8
+    │               },
+    │               "outputTokens": 8,
+    │               "raw": {
+    │                 "input_tokens": 162,
+    │                 "input_tokens_details": {
+    │                   "cached_tokens": 0
+    │                 },
+    │                 "output_tokens": 8,
+    │                 "output_tokens_details": {
+    │                   "reasoning_tokens": 0
+    │                 }
+    │               },
+    │               "totalTokens": 170
+    │             },
+    │             "warnings": []
+    │           },
+    │           {
+    │             "callId": "<callId:1>",
+    │             "content": [
+    │               {
+    │                 "input": {
+    │                   "location": "Paris, France"
+    │                 },
+    │                 "toolName": "get_weather",
+    │                 "type": "tool-call"
+    │               }
+    │             ],
+    │             "finishReason": "tool-calls",
+    │             "model": {
+    │               "modelId": "gpt-4o-mini-2024-07-18",
+    │               "provider": "gpt-4o-mini-2024-07-18"
+    │             },
+    │             "providerMetadata": {
+    │               "openai": {
+    │                 "responseId": "<responseId:5>",
+    │                 "serviceTier": "default"
+    │               }
+    │             },
+    │             "request": {
+    │               "messages": []
+    │             },
+    │             "response": {
+    │               "messages": [],
+    │               "modelId": "gpt-4o-mini-2024-07-18",
+    │               "timestamp": "<timestamp>"
+    │             },
+    │             "runtimeContext": {},
+    │             "stepNumber": 3,
+    │             "toolsContext": {},
+    │             "usage": {
+    │               "inputTokenDetails": {
+    │                 "cacheReadTokens": 0,
+    │                 "noCacheTokens": 201
+    │               },
+    │               "inputTokens": 201,
+    │               "outputTokenDetails": {
+    │                 "reasoningTokens": 0,
+    │                 "textTokens": 8
+    │               },
+    │               "outputTokens": 8,
+    │               "raw": {
+    │                 "input_tokens": 201,
+    │                 "input_tokens_details": {
+    │                   "cached_tokens": 0
+    │                 },
+    │                 "output_tokens": 8,
+    │                 "output_tokens_details": {
+    │                   "reasoning_tokens": 0
+    │                 }
+    │               },
+    │               "totalTokens": 209
+    │             },
+    │             "warnings": []
+    │           }
+    │         ],
+    │         "text": "",
+    │         "toolCalls": [
+    │           {
+    │             "input": {
+    │               "location": "Paris, France"
+    │             },
+    │             "toolName": "get_weather",
+    │             "type": "tool-call"
+    │           }
+    │         ],
+    │         "toolResults": [],
+    │         "totalUsage": {
+    │           "inputTokens": 570,
+    │           "outputTokens": 32,
+    │           "totalTokens": 602
+    │         },
+    │         "usage": {
+    │           "inputTokens": 570,
+    │           "outputTokens": 32,
+    │           "totalTokens": 602
+    │         },
+    │         "warnings": []
+    │       }
+    │       metadata: {
+    │         "braintrust": {
+    │           "integration_name": "ai-sdk",
+    │           "sdk_language": "typescript"
+    │         },
+    │         "model": "gpt-4o-mini-2024-07-18",
+    │         "options": {
+    │           "maxOutputTokens": 96,
+    │           "maxRetries": 2,
+    │           "temperature": 0,
+    │           "toolChoice": "required"
+    │         },
+    │         "provider": "openai.responses",
+    │         "tools": {
+    │           "get_weather": {
+    │             "description": "Get the weather for a location",
+    │             "inputSchema": {
+    │               "$schema": "http://json-schema.org/draft-07/schema#",
+    │               "additionalProperties": false,
+    │               "properties": {
+    │                 "location": {
+    │                   "description": "The city and country",
+    │                   "type": "string"
+    │                 }
+    │               },
+    │               "required": [
+    │                 "location"
+    │               ],
+    │               "type": "object"
+    │             }
+    │           }
+    │         }
+    │       }
+    │       ├── doGenerate [llm]
+    │       │   input: {
+    │       │     "messages": [
+    │       │       {
+    │       │         "content": "You are a terse weather assistant. Use tools before answering.",
+    │       │         "role": "system"
+    │       │       },
+    │       │       {
+    │       │         "content": [
+    │       │           {
+    │       │             "text": "Use get_weather for Paris, France, then reply with one short sentence.",
+    │       │             "type": "text"
+    │       │           }
+    │       │         ],
+    │       │         "role": "user"
+    │       │       }
+    │       │     ]
+    │       │   }
+    │       │   output: {
+    │       │     "content": [
+    │       │       {
+    │       │         "input": {
+    │       │           "location": "Paris, France"
+    │       │         },
+    │       │         "toolName": "get_weather",
+    │       │         "type": "tool-call"
+    │       │       }
+    │       │     ],
+    │       │     "finishReason": "tool-calls",
+    │       │     "response": {},
+    │       │     "usage": {
+    │       │       "inputTokenDetails": {
+    │       │         "cacheReadTokens": 0,
+    │       │         "noCacheTokens": 84
+    │       │       },
+    │       │       "inputTokens": 84,
+    │       │       "outputTokenDetails": {
+    │       │         "reasoningTokens": 0,
+    │       │         "textTokens": 8
+    │       │       },
+    │       │       "outputTokens": 8,
+    │       │       "raw": {
+    │       │         "input_tokens": 84,
+    │       │         "input_tokens_details": {
+    │       │           "cached_tokens": 0
+    │       │         },
+    │       │         "output_tokens": 8,
+    │       │         "output_tokens_details": {
+    │       │           "reasoning_tokens": 0
+    │       │         }
+    │       │       },
+    │       │       "totalTokens": 92
+    │       │     }
+    │       │   }
+    │       │   metadata: {
+    │       │     "braintrust": {
+    │       │       "integration_name": "ai-sdk",
+    │       │       "sdk_language": "typescript"
+    │       │     },
+    │       │     "model": "gpt-4o-mini-2024-07-18",
+    │       │     "options": {
+    │       │       "maxOutputTokens": 96,
+    │       │       "temperature": 0
+    │       │     },
+    │       │     "provider": "openai.responses",
+    │       │     "tools": [
+    │       │       {
+    │       │         "description": "Get the weather for a location",
+    │       │         "inputSchema": {
+    │       │           "$schema": "http://json-schema.org/draft-07/schema#",
+    │       │           "additionalProperties": false,
+    │       │           "properties": {
+    │       │             "location": {
+    │       │               "description": "The city and country",
+    │       │               "type": "string"
+    │       │             }
+    │       │           },
+    │       │           "required": [
+    │       │             "location"
+    │       │           ],
+    │       │           "type": "object"
+    │       │         }
+    │       │       }
+    │       │     ]
+    │       │   }
+    │       │   metrics: {
+    │       │     "completion_tokens": 8,
+    │       │     "prompt_cached_tokens": 0,
+    │       │     "prompt_tokens": 84,
+    │       │     "tokens": 92
+    │       │   }
+    │       ├── get_weather [tool]
+    │       │   input: {
+    │       │     "location": "Paris, France"
+    │       │   }
+    │       │   output: {
+    │       │     "condition": "sunny",
+    │       │     "location": "Paris, France",
+    │       │     "temperatureC": 22
+    │       │   }
+    │       │   metadata: {
+    │       │     "braintrust": {
+    │       │       "integration_name": "ai-sdk",
+    │       │       "sdk_language": "typescript"
+    │       │     },
+    │       │     "toolName": "get_weather"
+    │       │   }
+    │       │   metrics: {
+    │       │     "duration_ms": 0
+    │       │   }
+    │       ├── doGenerate [llm]
+    │       │   input: {
+    │       │     "messages": [
+    │       │       {
+    │       │         "content": "You are a terse weather assistant. Use tools before answering.",
+    │       │         "role": "system"
+    │       │       },
+    │       │       {
+    │       │         "content": [
+    │       │           {
+    │       │             "text": "Use get_weather for Paris, France, then reply with one short sentence.",
+    │       │             "type": "text"
+    │       │           }
+    │       │         ],
+    │       │         "role": "user"
+    │       │       },
+    │       │       {
+    │       │         "content": [
+    │       │           {
+    │       │             "input": {
+    │       │               "location": "Paris, France"
+    │       │             },
+    │       │             "toolName": "get_weather",
+    │       │             "type": "tool-call"
+    │       │           }
+    │       │         ],
+    │       │         "role": "assistant"
+    │       │       },
+    │       │       {
+    │       │         "content": [
+    │       │           {
+    │       │             "output": {
+    │       │               "type": "json",
+    │       │               "value": {
+    │       │                 "condition": "sunny",
+    │       │                 "location": "Paris, France",
+    │       │                 "temperatureC": 22
+    │       │               }
+    │       │             },
+    │       │             "toolName": "get_weather",
+    │       │             "type": "tool-result"
+    │       │           }
+    │       │         ],
+    │       │         "role": "tool"
+    │       │       }
+    │       │     ]
+    │       │   }
+    │       │   output: {
+    │       │     "content": [
+    │       │       {
+    │       │         "input": {
+    │       │           "location": "Paris, France"
+    │       │         },
+    │       │         "toolName": "get_weather",
+    │       │         "type": "tool-call"
+    │       │       }
+    │       │     ],
+    │       │     "finishReason": "tool-calls",
+    │       │     "response": {},
+    │       │     "usage": {
+    │       │       "inputTokenDetails": {
+    │       │         "cacheReadTokens": 0,
+    │       │         "noCacheTokens": 123
+    │       │       },
+    │       │       "inputTokens": 123,
+    │       │       "outputTokenDetails": {
+    │       │         "reasoningTokens": 0,
+    │       │         "textTokens": 8
+    │       │       },
+    │       │       "outputTokens": 8,
+    │       │       "raw": {
+    │       │         "input_tokens": 123,
+    │       │         "input_tokens_details": {
+    │       │           "cached_tokens": 0
+    │       │         },
+    │       │         "output_tokens": 8,
+    │       │         "output_tokens_details": {
+    │       │           "reasoning_tokens": 0
+    │       │         }
+    │       │       },
+    │       │       "totalTokens": 131
+    │       │     }
+    │       │   }
+    │       │   metadata: {
+    │       │     "braintrust": {
+    │       │       "integration_name": "ai-sdk",
+    │       │       "sdk_language": "typescript"
+    │       │     },
+    │       │     "model": "gpt-4o-mini-2024-07-18",
+    │       │     "options": {
+    │       │       "maxOutputTokens": 96,
+    │       │       "temperature": 0
+    │       │     },
+    │       │     "provider": "openai.responses",
+    │       │     "tools": [
+    │       │       {
+    │       │         "description": "Get the weather for a location",
+    │       │         "inputSchema": {
+    │       │           "$schema": "http://json-schema.org/draft-07/schema#",
+    │       │           "additionalProperties": false,
+    │       │           "properties": {
+    │       │             "location": {
+    │       │               "description": "The city and country",
+    │       │               "type": "string"
+    │       │             }
+    │       │           },
+    │       │           "required": [
+    │       │             "location"
+    │       │           ],
+    │       │           "type": "object"
+    │       │         }
+    │       │       }
+    │       │     ]
+    │       │   }
+    │       │   metrics: {
+    │       │     "completion_tokens": 8,
+    │       │     "prompt_cached_tokens": 0,
+    │       │     "prompt_tokens": 123,
+    │       │     "tokens": 131
+    │       │   }
+    │       ├── get_weather [tool]
+    │       │   input: {
+    │       │     "location": "Paris, France"
+    │       │   }
+    │       │   output: {
+    │       │     "condition": "sunny",
+    │       │     "location": "Paris, France",
+    │       │     "temperatureC": 22
+    │       │   }
+    │       │   metadata: {
+    │       │     "braintrust": {
+    │       │       "integration_name": "ai-sdk",
+    │       │       "sdk_language": "typescript"
+    │       │     },
+    │       │     "toolName": "get_weather"
+    │       │   }
+    │       │   metrics: {
+    │       │     "duration_ms": 0
+    │       │   }
+    │       ├── doGenerate [llm]
+    │       │   input: {
+    │       │     "messages": [
+    │       │       {
+    │       │         "content": "You are a terse weather assistant. Use tools before answering.",
+    │       │         "role": "system"
+    │       │       },
+    │       │       {
+    │       │         "content": [
+    │       │           {
+    │       │             "text": "Use get_weather for Paris, France, then reply with one short sentence.",
+    │       │             "type": "text"
+    │       │           }
+    │       │         ],
+    │       │         "role": "user"
+    │       │       },
+    │       │       {
+    │       │         "content": [
+    │       │           {
+    │       │             "input": {
+    │       │               "location": "Paris, France"
+    │       │             },
+    │       │             "toolName": "get_weather",
+    │       │             "type": "tool-call"
+    │       │           }
+    │       │         ],
+    │       │         "role": "assistant"
+    │       │       },
+    │       │       {
+    │       │         "content": [
+    │       │           {
+    │       │             "output": {
+    │       │               "type": "json",
+    │       │               "value": {
+    │       │                 "condition": "sunny",
+    │       │                 "location": "Paris, France",
+    │       │                 "temperatureC": 22
+    │       │               }
+    │       │             },
+    │       │             "toolName": "get_weather",
+    │       │             "type": "tool-result"
+    │       │           }
+    │       │         ],
+    │       │         "role": "tool"
+    │       │       },
+    │       │       {
+    │       │         "content": [
+    │       │           {
+    │       │             "input": {
+    │       │               "location": "Paris, France"
+    │       │             },
+    │       │             "toolName": "get_weather",
+    │       │             "type": "tool-call"
+    │       │           }
+    │       │         ],
+    │       │         "role": "assistant"
+    │       │       },
+    │       │       {
+    │       │         "content": [
+    │       │           {
+    │       │             "output": {
+    │       │               "type": "json",
+    │       │               "value": {
+    │       │                 "condition": "sunny",
+    │       │                 "location": "Paris, France",
+    │       │                 "temperatureC": 22
+    │       │               }
+    │       │             },
+    │       │             "toolName": "get_weather",
+    │       │             "type": "tool-result"
+    │       │           }
+    │       │         ],
+    │       │         "role": "tool"
+    │       │       }
+    │       │     ]
+    │       │   }
+    │       │   output: {
+    │       │     "content": [
+    │       │       {
+    │       │         "input": {
+    │       │           "location": "Paris, France"
+    │       │         },
+    │       │         "toolName": "get_weather",
+    │       │         "type": "tool-call"
+    │       │       }
+    │       │     ],
+    │       │     "finishReason": "tool-calls",
+    │       │     "response": {},
+    │       │     "usage": {
+    │       │       "inputTokenDetails": {
+    │       │         "cacheReadTokens": 0,
+    │       │         "noCacheTokens": 162
+    │       │       },
+    │       │       "inputTokens": 162,
+    │       │       "outputTokenDetails": {
+    │       │         "reasoningTokens": 0,
+    │       │         "textTokens": 8
+    │       │       },
+    │       │       "outputTokens": 8,
+    │       │       "raw": {
+    │       │         "input_tokens": 162,
+    │       │         "input_tokens_details": {
+    │       │           "cached_tokens": 0
+    │       │         },
+    │       │         "output_tokens": 8,
+    │       │         "output_tokens_details": {
+    │       │           "reasoning_tokens": 0
+    │       │         }
+    │       │       },
+    │       │       "totalTokens": 170
+    │       │     }
+    │       │   }
+    │       │   metadata: {
+    │       │     "braintrust": {
+    │       │       "integration_name": "ai-sdk",
+    │       │       "sdk_language": "typescript"
+    │       │     },
+    │       │     "model": "gpt-4o-mini-2024-07-18",
+    │       │     "options": {
+    │       │       "maxOutputTokens": 96,
+    │       │       "temperature": 0
+    │       │     },
+    │       │     "provider": "openai.responses",
+    │       │     "tools": [
+    │       │       {
+    │       │         "description": "Get the weather for a location",
+    │       │         "inputSchema": {
+    │       │           "$schema": "http://json-schema.org/draft-07/schema#",
+    │       │           "additionalProperties": false,
+    │       │           "properties": {
+    │       │             "location": {
+    │       │               "description": "The city and country",
+    │       │               "type": "string"
+    │       │             }
+    │       │           },
+    │       │           "required": [
+    │       │             "location"
+    │       │           ],
+    │       │           "type": "object"
+    │       │         }
+    │       │       }
+    │       │     ]
+    │       │   }
+    │       │   metrics: {
+    │       │     "completion_tokens": 8,
+    │       │     "prompt_cached_tokens": 0,
+    │       │     "prompt_tokens": 162,
+    │       │     "tokens": 170
+    │       │   }
+    │       ├── get_weather [tool]
+    │       │   input: {
+    │       │     "location": "Paris, France"
+    │       │   }
+    │       │   output: {
+    │       │     "condition": "sunny",
+    │       │     "location": "Paris, France",
+    │       │     "temperatureC": 22
+    │       │   }
+    │       │   metadata: {
+    │       │     "braintrust": {
+    │       │       "integration_name": "ai-sdk",
+    │       │       "sdk_language": "typescript"
+    │       │     },
+    │       │     "toolName": "get_weather"
+    │       │   }
+    │       │   metrics: {
+    │       │     "duration_ms": 0
+    │       │   }
+    │       ├── doGenerate [llm]
+    │       │   input: {
+    │       │     "messages": [
+    │       │       {
+    │       │         "content": "You are a terse weather assistant. Use tools before answering.",
+    │       │         "role": "system"
+    │       │       },
+    │       │       {
+    │       │         "content": [
+    │       │           {
+    │       │             "text": "Use get_weather for Paris, France, then reply with one short sentence.",
+    │       │             "type": "text"
+    │       │           }
+    │       │         ],
+    │       │         "role": "user"
+    │       │       },
+    │       │       {
+    │       │         "content": [
+    │       │           {
+    │       │             "input": {
+    │       │               "location": "Paris, France"
+    │       │             },
+    │       │             "toolName": "get_weather",
+    │       │             "type": "tool-call"
+    │       │           }
+    │       │         ],
+    │       │         "role": "assistant"
+    │       │       },
+    │       │       {
+    │       │         "content": [
+    │       │           {
+    │       │             "output": {
+    │       │               "type": "json",
+    │       │               "value": {
+    │       │                 "condition": "sunny",
+    │       │                 "location": "Paris, France",
+    │       │                 "temperatureC": 22
+    │       │               }
+    │       │             },
+    │       │             "toolName": "get_weather",
+    │       │             "type": "tool-result"
+    │       │           }
+    │       │         ],
+    │       │         "role": "tool"
+    │       │       },
+    │       │       {
+    │       │         "content": [
+    │       │           {
+    │       │             "input": {
+    │       │               "location": "Paris, France"
+    │       │             },
+    │       │             "toolName": "get_weather",
+    │       │             "type": "tool-call"
+    │       │           }
+    │       │         ],
+    │       │         "role": "assistant"
+    │       │       },
+    │       │       {
+    │       │         "content": [
+    │       │           {
+    │       │             "output": {
+    │       │               "type": "json",
+    │       │               "value": {
+    │       │                 "condition": "sunny",
+    │       │                 "location": "Paris, France",
+    │       │                 "temperatureC": 22
+    │       │               }
+    │       │             },
+    │       │             "toolName": "get_weather",
+    │       │             "type": "tool-result"
+    │       │           }
+    │       │         ],
+    │       │         "role": "tool"
+    │       │       },
+    │       │       {
+    │       │         "content": [
+    │       │           {
+    │       │             "input": {
+    │       │               "location": "Paris, France"
+    │       │             },
+    │       │             "toolName": "get_weather",
+    │       │             "type": "tool-call"
+    │       │           }
+    │       │         ],
+    │       │         "role": "assistant"
+    │       │       },
+    │       │       {
+    │       │         "content": [
+    │       │           {
+    │       │             "output": {
+    │       │               "type": "json",
+    │       │               "value": {
+    │       │                 "condition": "sunny",
+    │       │                 "location": "Paris, France",
+    │       │                 "temperatureC": 22
+    │       │               }
+    │       │             },
+    │       │             "toolName": "get_weather",
+    │       │             "type": "tool-result"
+    │       │           }
+    │       │         ],
+    │       │         "role": "tool"
+    │       │       }
+    │       │     ]
+    │       │   }
+    │       │   output: {
+    │       │     "content": [
+    │       │       {
+    │       │         "input": {
+    │       │           "location": "Paris, France"
+    │       │         },
+    │       │         "toolName": "get_weather",
+    │       │         "type": "tool-call"
+    │       │       }
+    │       │     ],
+    │       │     "finishReason": "tool-calls",
+    │       │     "response": {},
+    │       │     "usage": {
+    │       │       "inputTokenDetails": {
+    │       │         "cacheReadTokens": 0,
+    │       │         "noCacheTokens": 201
+    │       │       },
+    │       │       "inputTokens": 201,
+    │       │       "outputTokenDetails": {
+    │       │         "reasoningTokens": 0,
+    │       │         "textTokens": 8
+    │       │       },
+    │       │       "outputTokens": 8,
+    │       │       "raw": {
+    │       │         "input_tokens": 201,
+    │       │         "input_tokens_details": {
+    │       │           "cached_tokens": 0
+    │       │         },
+    │       │         "output_tokens": 8,
+    │       │         "output_tokens_details": {
+    │       │           "reasoning_tokens": 0
+    │       │         }
+    │       │       },
+    │       │       "totalTokens": 209
+    │       │     }
+    │       │   }
+    │       │   metadata: {
+    │       │     "braintrust": {
+    │       │       "integration_name": "ai-sdk",
+    │       │       "sdk_language": "typescript"
+    │       │     },
+    │       │     "model": "gpt-4o-mini-2024-07-18",
+    │       │     "options": {
+    │       │       "maxOutputTokens": 96,
+    │       │       "temperature": 0
+    │       │     },
+    │       │     "provider": "openai.responses",
+    │       │     "tools": [
+    │       │       {
+    │       │         "description": "Get the weather for a location",
+    │       │         "inputSchema": {
+    │       │           "$schema": "http://json-schema.org/draft-07/schema#",
+    │       │           "additionalProperties": false,
+    │       │           "properties": {
+    │       │             "location": {
+    │       │               "description": "The city and country",
+    │       │               "type": "string"
+    │       │             }
+    │       │           },
+    │       │           "required": [
+    │       │             "location"
+    │       │           ],
+    │       │           "type": "object"
+    │       │         }
+    │       │       }
+    │       │     ]
+    │       │   }
+    │       │   metrics: {
+    │       │     "completion_tokens": 8,
+    │       │     "prompt_cached_tokens": 0,
+    │       │     "prompt_tokens": 201,
+    │       │     "tokens": 209
+    │       │   }
+    │       └── get_weather [tool]
+    │           input: {
+    │             "location": "Paris, France"
+    │           }
+    │           output: {
+    │             "condition": "sunny",
+    │             "location": "Paris, France",
+    │             "temperatureC": 22
+    │           }
+    │           metadata: {
+    │             "braintrust": {
+    │               "integration_name": "ai-sdk",
+    │               "sdk_language": "typescript"
+    │             },
+    │             "toolName": "get_weather"
+    │           }
+    │           metrics: {
+    │             "duration_ms": 0
+    │           }
+    └── ai-sdk-workflow-agent-stream-prompt-operation
         metadata: {
-          "operation": "workflow-agent-stream",
+          "operation": "workflow-agent-stream-prompt",
           "testRunId": "<run:1>"
         }
         └── WorkflowAgent.stream [function]
             input: {
               "messages": [
                 {
-                  "content": "Use get_weather for Paris, France, then reply with one short sentence.",
+                  "content": "What's the weather in Paris?",
                   "role": "user"
                 }
               ]
@@ -4392,16 +5348,16 @@ span_tree:
                   "usage": {
                     "inputTokenDetails": {
                       "cacheReadTokens": 0,
-                      "noCacheTokens": 84
+                      "noCacheTokens": 70
                     },
-                    "inputTokens": 84,
+                    "inputTokens": 70,
                     "outputTokenDetails": {
                       "reasoningTokens": 0,
                       "textTokens": 8
                     },
                     "outputTokens": 8,
                     "raw": {
-                      "input_tokens": 84,
+                      "input_tokens": 70,
                       "input_tokens_details": {
                         "cached_tokens": 0
                       },
@@ -4410,7 +5366,7 @@ span_tree:
                         "reasoning_tokens": 0
                       }
                     },
-                    "totalTokens": 92
+                    "totalTokens": 78
                   },
                   "warnings": []
                 },
@@ -4450,16 +5406,16 @@ span_tree:
                   "usage": {
                     "inputTokenDetails": {
                       "cacheReadTokens": 0,
-                      "noCacheTokens": 123
+                      "noCacheTokens": 109
                     },
-                    "inputTokens": 123,
+                    "inputTokens": 109,
                     "outputTokenDetails": {
                       "reasoningTokens": 0,
                       "textTokens": 8
                     },
                     "outputTokens": 8,
                     "raw": {
-                      "input_tokens": 123,
+                      "input_tokens": 109,
                       "input_tokens_details": {
                         "cached_tokens": 0
                       },
@@ -4468,7 +5424,7 @@ span_tree:
                         "reasoning_tokens": 0
                       }
                     },
-                    "totalTokens": 131
+                    "totalTokens": 117
                   },
                   "warnings": []
                 },
@@ -4508,16 +5464,16 @@ span_tree:
                   "usage": {
                     "inputTokenDetails": {
                       "cacheReadTokens": 0,
-                      "noCacheTokens": 162
+                      "noCacheTokens": 148
                     },
-                    "inputTokens": 162,
+                    "inputTokens": 148,
                     "outputTokenDetails": {
                       "reasoningTokens": 0,
                       "textTokens": 8
                     },
                     "outputTokens": 8,
                     "raw": {
-                      "input_tokens": 162,
+                      "input_tokens": 148,
                       "input_tokens_details": {
                         "cached_tokens": 0
                       },
@@ -4526,7 +5482,7 @@ span_tree:
                         "reasoning_tokens": 0
                       }
                     },
-                    "totalTokens": 170
+                    "totalTokens": 156
                   },
                   "warnings": []
                 },
@@ -4566,16 +5522,16 @@ span_tree:
                   "usage": {
                     "inputTokenDetails": {
                       "cacheReadTokens": 0,
-                      "noCacheTokens": 201
+                      "noCacheTokens": 187
                     },
-                    "inputTokens": 201,
+                    "inputTokens": 187,
                     "outputTokenDetails": {
                       "reasoningTokens": 0,
                       "textTokens": 8
                     },
                     "outputTokens": 8,
                     "raw": {
-                      "input_tokens": 201,
+                      "input_tokens": 187,
                       "input_tokens_details": {
                         "cached_tokens": 0
                       },
@@ -4584,7 +5540,7 @@ span_tree:
                         "reasoning_tokens": 0
                       }
                     },
-                    "totalTokens": 209
+                    "totalTokens": 195
                   },
                   "warnings": []
                 }
@@ -4601,14 +5557,14 @@ span_tree:
               ],
               "toolResults": [],
               "totalUsage": {
-                "inputTokens": 570,
+                "inputTokens": 514,
                 "outputTokens": 32,
-                "totalTokens": 602
+                "totalTokens": 546
               },
               "usage": {
-                "inputTokens": 570,
+                "inputTokens": 514,
                 "outputTokens": 32,
-                "totalTokens": 602
+                "totalTokens": 546
               },
               "warnings": []
             }
@@ -4649,13 +5605,13 @@ span_tree:
             │   input: {
             │     "messages": [
             │       {
-            │         "content": "You are a terse weather assistant. Use tools before answering.",
+            │         "content": "You are a helpful weather assistant.",
             │         "role": "system"
             │       },
             │       {
             │         "content": [
             │           {
-            │             "text": "Use get_weather for Paris, France, then reply with one short sentence.",
+            │             "text": "What's the weather in Paris?",
             │             "type": "text"
             │           }
             │         ],
@@ -4678,16 +5634,16 @@ span_tree:
             │     "usage": {
             │       "inputTokenDetails": {
             │         "cacheReadTokens": 0,
-            │         "noCacheTokens": 84
+            │         "noCacheTokens": 70
             │       },
-            │       "inputTokens": 84,
+            │       "inputTokens": 70,
             │       "outputTokenDetails": {
             │         "reasoningTokens": 0,
             │         "textTokens": 8
             │       },
             │       "outputTokens": 8,
             │       "raw": {
-            │         "input_tokens": 84,
+            │         "input_tokens": 70,
             │         "input_tokens_details": {
             │           "cached_tokens": 0
             │         },
@@ -4696,7 +5652,7 @@ span_tree:
             │           "reasoning_tokens": 0
             │         }
             │       },
-            │       "totalTokens": 92
+            │       "totalTokens": 78
             │     }
             │   }
             │   metadata: {
@@ -4733,8 +5689,8 @@ span_tree:
             │   metrics: {
             │     "completion_tokens": 8,
             │     "prompt_cached_tokens": 0,
-            │     "prompt_tokens": 84,
-            │     "tokens": 92
+            │     "prompt_tokens": 70,
+            │     "tokens": 78
             │   }
             ├── get_weather [tool]
             │   input: {
@@ -4759,13 +5715,13 @@ span_tree:
             │   input: {
             │     "messages": [
             │       {
-            │         "content": "You are a terse weather assistant. Use tools before answering.",
+            │         "content": "You are a helpful weather assistant.",
             │         "role": "system"
             │       },
             │       {
             │         "content": [
             │           {
-            │             "text": "Use get_weather for Paris, France, then reply with one short sentence.",
+            │             "text": "What's the weather in Paris?",
             │             "type": "text"
             │           }
             │         ],
@@ -4817,16 +5773,16 @@ span_tree:
             │     "usage": {
             │       "inputTokenDetails": {
             │         "cacheReadTokens": 0,
-            │         "noCacheTokens": 123
+            │         "noCacheTokens": 109
             │       },
-            │       "inputTokens": 123,
+            │       "inputTokens": 109,
             │       "outputTokenDetails": {
             │         "reasoningTokens": 0,
             │         "textTokens": 8
             │       },
             │       "outputTokens": 8,
             │       "raw": {
-            │         "input_tokens": 123,
+            │         "input_tokens": 109,
             │         "input_tokens_details": {
             │           "cached_tokens": 0
             │         },
@@ -4835,7 +5791,7 @@ span_tree:
             │           "reasoning_tokens": 0
             │         }
             │       },
-            │       "totalTokens": 131
+            │       "totalTokens": 117
             │     }
             │   }
             │   metadata: {
@@ -4872,8 +5828,8 @@ span_tree:
             │   metrics: {
             │     "completion_tokens": 8,
             │     "prompt_cached_tokens": 0,
-            │     "prompt_tokens": 123,
-            │     "tokens": 131
+            │     "prompt_tokens": 109,
+            │     "tokens": 117
             │   }
             ├── get_weather [tool]
             │   input: {
@@ -4898,13 +5854,13 @@ span_tree:
             │   input: {
             │     "messages": [
             │       {
-            │         "content": "You are a terse weather assistant. Use tools before answering.",
+            │         "content": "You are a helpful weather assistant.",
             │         "role": "system"
             │       },
             │       {
             │         "content": [
             │           {
-            │             "text": "Use get_weather for Paris, France, then reply with one short sentence.",
+            │             "text": "What's the weather in Paris?",
             │             "type": "text"
             │           }
             │         ],
@@ -4985,16 +5941,16 @@ span_tree:
             │     "usage": {
             │       "inputTokenDetails": {
             │         "cacheReadTokens": 0,
-            │         "noCacheTokens": 162
+            │         "noCacheTokens": 148
             │       },
-            │       "inputTokens": 162,
+            │       "inputTokens": 148,
             │       "outputTokenDetails": {
             │         "reasoningTokens": 0,
             │         "textTokens": 8
             │       },
             │       "outputTokens": 8,
             │       "raw": {
-            │         "input_tokens": 162,
+            │         "input_tokens": 148,
             │         "input_tokens_details": {
             │           "cached_tokens": 0
             │         },
@@ -5003,7 +5959,7 @@ span_tree:
             │           "reasoning_tokens": 0
             │         }
             │       },
-            │       "totalTokens": 170
+            │       "totalTokens": 156
             │     }
             │   }
             │   metadata: {
@@ -5040,8 +5996,8 @@ span_tree:
             │   metrics: {
             │     "completion_tokens": 8,
             │     "prompt_cached_tokens": 0,
-            │     "prompt_tokens": 162,
-            │     "tokens": 170
+            │     "prompt_tokens": 148,
+            │     "tokens": 156
             │   }
             ├── get_weather [tool]
             │   input: {
@@ -5066,13 +6022,13 @@ span_tree:
             │   input: {
             │     "messages": [
             │       {
-            │         "content": "You are a terse weather assistant. Use tools before answering.",
+            │         "content": "You are a helpful weather assistant.",
             │         "role": "system"
             │       },
             │       {
             │         "content": [
             │           {
-            │             "text": "Use get_weather for Paris, France, then reply with one short sentence.",
+            │             "text": "What's the weather in Paris?",
             │             "type": "text"
             │           }
             │         ],
@@ -5182,16 +6138,16 @@ span_tree:
             │     "usage": {
             │       "inputTokenDetails": {
             │         "cacheReadTokens": 0,
-            │         "noCacheTokens": 201
+            │         "noCacheTokens": 187
             │       },
-            │       "inputTokens": 201,
+            │       "inputTokens": 187,
             │       "outputTokenDetails": {
             │         "reasoningTokens": 0,
             │         "textTokens": 8
             │       },
             │       "outputTokens": 8,
             │       "raw": {
-            │         "input_tokens": 201,
+            │         "input_tokens": 187,
             │         "input_tokens_details": {
             │           "cached_tokens": 0
             │         },
@@ -5200,7 +6156,7 @@ span_tree:
             │           "reasoning_tokens": 0
             │         }
             │       },
-            │       "totalTokens": 209
+            │       "totalTokens": 195
             │     }
             │   }
             │   metadata: {
@@ -5237,8 +6193,8 @@ span_tree:
             │   metrics: {
             │     "completion_tokens": 8,
             │     "prompt_cached_tokens": 0,
-            │     "prompt_tokens": 201,
-            │     "tokens": 209
+            │     "prompt_tokens": 187,
+            │     "tokens": 195
             │   }
             └── get_weather [tool]
                 input: {

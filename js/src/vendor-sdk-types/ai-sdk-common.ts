@@ -178,7 +178,9 @@ export interface AISDKRerankParams {
 
 export interface AISDKCallParams {
   model?: AISDKModel;
-  prompt?: AISDKMessage[] | Record<string, unknown>;
+  instructions?: unknown;
+  prompt?: string | AISDKMessage[];
+  system?: unknown;
   messages?: AISDKMessage[];
   tools?: AISDKTools;
   schema?: unknown;

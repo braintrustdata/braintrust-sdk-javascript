@@ -207,29 +207,29 @@ async function runWorkflowAgentStreamOperation({
   instrumentedWorkflow,
   openaiModel,
 }) {
+  const agent = new instrumentedWorkflow.WorkflowAgent({
+    instructions:
+      "You are a terse weather assistant. Use tools before answering.",
+    model: openaiModel,
+    tools: {
+      get_weather: ai.tool({
+        description: "Get the weather for a location",
+        inputSchema: z.object({
+          location: z.string().describe("The city and country"),
+        }),
+        execute: async ({ location }) => ({
+          condition: "sunny",
+          location,
+          temperatureC: 22,
+        }),
+      }),
+    },
+  });
+
   await runOperation(
     "ai-sdk-workflow-agent-stream-operation",
     "workflow-agent-stream",
     async () => {
-      const agent = new instrumentedWorkflow.WorkflowAgent({
-        instructions:
-          "You are a terse weather assistant. Use tools before answering.",
-        model: openaiModel,
-        tools: {
-          get_weather: ai.tool({
-            description: "Get the weather for a location",
-            inputSchema: z.object({
-              location: z.string().describe("The city and country"),
-            }),
-            execute: async ({ location }) => ({
-              condition: "sunny",
-              location,
-              temperatureC: 22,
-            }),
-          }),
-        },
-      });
-
       await agent.stream({
         messages: [
           {
@@ -238,6 +238,21 @@ async function runWorkflowAgentStreamOperation({
               "Use get_weather for Paris, France, then reply with one short sentence.",
           },
         ],
+        stopWhen: ai.stepCountIs(4),
+        temperature: 0,
+        toolChoice: "required",
+        maxOutputTokens: 96,
+      });
+    },
+  );
+
+  await runOperation(
+    "ai-sdk-workflow-agent-stream-prompt-operation",
+    "workflow-agent-stream-prompt",
+    async () => {
+      await agent.stream({
+        system: "You are a helpful weather assistant.",
+        prompt: "What's the weather in Paris?",
         stopWhen: ai.stepCountIs(4),
         temperature: 0,
         toolChoice: "required",

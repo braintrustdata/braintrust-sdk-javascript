@@ -417,7 +417,7 @@
               ],
               "input": {
                 "experimental_output": {
-                  "responseFormat": {}
+                  "responseFormat": "[Promise]"
                 },
                 "maxOutputTokens": 32,
                 "model": {

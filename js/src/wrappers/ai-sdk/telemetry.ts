@@ -38,6 +38,7 @@ type OperationState = {
   callId: string;
   firstChunkTime?: number;
   hadModelChild: boolean;
+  loggedInput: boolean;
   operationName: string;
   operationKey: string;
   ownsSpan: boolean;
@@ -211,10 +212,17 @@ export function braintrustAISDKTelemetry(): AISDKV7Telemetry {
     if (isObject(event)) {
       const callId = (event as { callId?: unknown }).callId;
       if (typeof callId === "string") {
-        return (
-          operationKeyForCallId(callId, mode) ??
-          (callId === "workflow-agent" ? undefined : callId)
-        );
+        const operationKey = operationKeyForCallId(callId, mode);
+        if (operationKey) {
+          return operationKey;
+        }
+
+        const workflowOperationKey = workflowOperationKeyStore.getStore();
+        if (workflowOperationKey && operations.has(workflowOperationKey)) {
+          return workflowOperationKey;
+        }
+
+        return callId === "workflow-agent" ? undefined : callId;
       }
     }
 
@@ -463,6 +471,7 @@ export function braintrustAISDKTelemetry(): AISDKV7Telemetry {
         registerOperation({
           callId: event.callId,
           hadModelChild: false,
+          loggedInput: false,
           operationName,
           operationKey,
           ownsSpan,
@@ -507,6 +516,10 @@ export function braintrustAISDKTelemetry(): AISDKV7Telemetry {
             ? processAISDKWorkflowAgentCallInput(callInput)
             : processAISDKCallInput(callInput);
           logPayload.input = input;
+          const state = operations.get(operationKey);
+          if (state) {
+            state.loggedInput = hasPromptLikeInput(input);
+          }
           if (
             outputPromise &&
             !workflowAgent &&
@@ -542,6 +555,27 @@ export function braintrustAISDKTelemetry(): AISDKV7Telemetry {
         const operationName = state?.operationName ?? "generateText";
         const callInput = operationInput(event, operationName);
         const workflowAgent = operationName === "WorkflowAgent.stream";
+        const processedInput =
+          shouldRecordInputs(event) && workflowAgent
+            ? processAISDKWorkflowAgentModelCallInput(callInput).input
+            : shouldRecordInputs(event)
+              ? processAISDKCallInput(callInput).input
+              : undefined;
+        if (
+          workflowAgent &&
+          state?.ownsSpan &&
+          !state.loggedInput &&
+          hasPromptLikeInput(processedInput)
+        ) {
+          state.span.log({
+            input: processedInput,
+            metadata: {
+              ...metadataFromEvent(event),
+              ...extractWorkflowMetadataFromCallParams(callInput),
+            },
+          });
+          state.loggedInput = true;
+        }
         const openSpans = operationKey
           ? modelSpans.get(operationKey)
           : undefined;
@@ -559,9 +593,7 @@ export function braintrustAISDKTelemetry(): AISDKV7Telemetry {
           {
             ...(shouldRecordInputs(event)
               ? {
-                  input: workflowAgent
-                    ? processAISDKWorkflowAgentModelCallInput(callInput).input
-                    : processAISDKCallInput(callInput).input,
+                  input: processedInput,
                 }
               : {}),
             metadata: workflowAgent
@@ -885,6 +917,14 @@ function shouldRecordOutputs(event: AISDKV7TelemetryOptions): boolean {
   return event.recordOutputs !== false;
 }
 
+function hasPromptLikeInput(input: unknown): boolean {
+  if (!isObject(input)) {
+    return false;
+  }
+
+  return input.prompt !== undefined || input.messages !== undefined;
+}
+
 function operationNameFromId(operationId: string | undefined): string {
   if (operationId === "ai.workflowAgent.stream") {
     return "WorkflowAgent.stream";
@@ -955,6 +995,7 @@ function operationInput(
 
   return {
     model: modelFromEvent(event),
+    instructions: event.instructions,
     system: event.system,
     prompt: event.prompt,
     messages: event.messages,

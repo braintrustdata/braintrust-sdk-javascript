@@ -883,15 +883,8 @@ const processInputAttachmentsSync = (
     }
   }
 
-  if (
-    "prepareCall" in processed &&
-    typeof processed.prepareCall === "function"
-  ) {
-    processed.prepareCall = "[Function]";
-  }
-
   return {
-    input: removeHeadersDeep(processed) as AISDKCallParams,
+    input: sanitizeAISDKCallInputValue(processed) as AISDKCallParams,
     outputPromise,
   };
 };
@@ -1107,7 +1100,7 @@ export function processAISDKWorkflowAgentCallInput(
   const processed = processAISDKCallInput(params);
   return {
     ...processed,
-    input: extractMessagesInput(processed.input),
+    input: extractWorkflowAgentInput(processed.input),
   };
 }
 
@@ -1117,7 +1110,7 @@ export function processAISDKWorkflowAgentModelCallInput(
   const processed = processAISDKCallInput(params);
   return {
     ...processed,
-    input: extractMessagesInput(processed.input),
+    input: extractWorkflowAgentModelInput(processed.input),
   };
 }
 
@@ -1337,29 +1330,118 @@ export function extractWorkflowMetadataFromCallParams(
   params: AISDKCallParams,
   self?: unknown,
 ): Record<string, unknown> {
-  const processed = processAISDKCallInput(params).input;
-  const metadata = extractMetadataFromCallParams(processed, self);
-  const options = extractAISDKCallOptionsForMetadata(processed);
+  const metadata = extractMetadataFromCallParams(params, self);
+  const options = extractAISDKCallOptionsForMetadata(params);
   if (Object.keys(options).length > 0) {
     metadata.options = options;
   }
   return metadata;
 }
 
-function extractMessagesInput(params: AISDKCallParams): AISDKCallParams {
+function extractWorkflowAgentInput(params: AISDKCallParams): AISDKCallParams {
+  const input: AISDKCallParams = {};
+  if (params.instructions !== undefined) {
+    input.instructions = params.instructions;
+  }
+  if (params.system !== undefined) {
+    input.system = params.system;
+  }
+
   if (Array.isArray(params.messages)) {
-    return { messages: params.messages };
+    return { ...input, messages: params.messages };
+  }
+
+  if (typeof params.prompt === "string") {
+    return { ...input, prompt: params.prompt };
   }
 
   if (Array.isArray(params.prompt)) {
-    return { messages: params.prompt };
+    return { ...input, prompt: params.prompt };
   }
 
-  if (params.prompt && typeof params.prompt === "object") {
-    return { messages: [params.prompt as AISDKMessage] };
+  return input;
+}
+
+function extractWorkflowAgentModelInput(
+  params: AISDKCallParams,
+): AISDKCallParams {
+  const input: AISDKCallParams = {};
+  if (params.instructions !== undefined) {
+    input.instructions = params.instructions;
+  }
+  if (params.system !== undefined) {
+    input.system = params.system;
   }
 
-  return {};
+  if (Array.isArray(params.messages)) {
+    return { ...input, messages: params.messages };
+  }
+
+  if (typeof params.prompt === "string") {
+    return { ...input, prompt: params.prompt };
+  }
+
+  if (Array.isArray(params.prompt)) {
+    return { ...input, messages: params.prompt };
+  }
+
+  return input;
+}
+
+function sanitizeAISDKCallInputValue(value: unknown, depth = 0): unknown {
+  if (value === undefined || typeof value === "function") {
+    return undefined;
+  }
+
+  if (value === null || typeof value !== "object") {
+    return value;
+  }
+
+  if (isPromiseLike(value)) {
+    return "[Promise]";
+  }
+
+  if (typeof AbortSignal !== "undefined" && value instanceof AbortSignal) {
+    return "[AbortSignal]";
+  }
+
+  if (depth >= 8) {
+    return "[Object]";
+  }
+
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => sanitizeAISDKCallInputValue(item, depth + 1))
+      .filter((item) => item !== undefined);
+  }
+
+  if (!isObject(value)) {
+    return value;
+  }
+
+  const prototype = Object.getPrototypeOf(value);
+  if (prototype !== Object.prototype && prototype !== null) {
+    return value;
+  }
+
+  const sanitized: Record<string, unknown> = {};
+  for (const [key, nested] of Object.entries(value)) {
+    if (
+      key === "__proto__" ||
+      key === "constructor" ||
+      key === "prototype" ||
+      key.toLowerCase() === "headers"
+    ) {
+      continue;
+    }
+
+    const sanitizedNested = sanitizeAISDKCallInputValue(nested, depth + 1);
+    if (sanitizedNested !== undefined) {
+      sanitized[key] = sanitizedNested;
+    }
+  }
+
+  return sanitized;
 }
 
 function extractAISDKCallOptionsForMetadata(
@@ -1368,6 +1450,7 @@ function extractAISDKCallOptionsForMetadata(
   const options: Record<string, unknown> = {};
   const inputOrTopLevelKeys = new Set([
     "model",
+    "instructions",
     "messages",
     "prompt",
     "system",
@@ -2847,31 +2930,6 @@ function isAsyncGenerator(value: unknown): value is AsyncGenerator {
   );
 }
 
-function removeHeadersDeep(value: unknown): unknown {
-  if (Array.isArray(value)) {
-    return value.map((item) => removeHeadersDeep(item));
-  }
-
-  if (!isObject(value)) {
-    return value;
-  }
-
-  const prototype = Object.getPrototypeOf(value);
-  if (prototype !== Object.prototype && prototype !== null) {
-    return value;
-  }
-
-  const sanitized: Record<string, unknown> = {};
-  for (const [key, nested] of Object.entries(value)) {
-    if (key.toLowerCase() === "headers") {
-      continue;
-    }
-    sanitized[key] = removeHeadersDeep(nested);
-  }
-
-  return sanitized;
-}
-
 /**
  * Process AI SDK output, omitting specified paths.
  */
@@ -2926,7 +2984,7 @@ export function processAISDKOutput(
 
       const record = entry.obj as Record<string | number, unknown>;
       if (remainingKeys.length === 0) {
-        record[firstKey] = removeHeadersDeep(record[firstKey]);
+        record[firstKey] = sanitizeAISDKMetadataValue(record[firstKey]);
         continue;
       }
 

@@ -200,6 +200,7 @@ describe("braintrustAISDKTelemetry", () => {
 
     telemetry.onStart?.({
       callId: "call-1",
+      instructions: "Be terse.",
       operationId: "ai.generateText",
       provider: "openai",
       modelId: "gpt-4.1-mini",
@@ -208,9 +209,10 @@ describe("braintrustAISDKTelemetry", () => {
     });
     telemetry.onLanguageModelCallStart?.({
       callId: "call-1",
+      instructions: "Be terse.",
       provider: "openai",
       modelId: "gpt-4.1-mini",
-      prompt: [{ role: "user", content: "Reply with OK." }],
+      messages: [{ role: "user", content: "Reply with OK." }],
     });
     telemetry.onLanguageModelCallEnd?.({
       callId: "call-1",
@@ -250,6 +252,7 @@ describe("braintrustAISDKTelemetry", () => {
         name: "generateText",
       },
       input: {
+        instructions: "Be terse.",
         messages: [{ role: "user", content: "Reply with OK." }],
       },
       metadata: {
@@ -274,6 +277,10 @@ describe("braintrustAISDKTelemetry", () => {
         model: "gpt-4.1-mini",
       },
     });
+    expect(modelCall?.input).toMatchObject({
+      instructions: "Be terse.",
+      messages: [{ role: "user", content: "Reply with OK." }],
+    });
     expect(modelCall?.output).toMatchObject({ text: "OK" });
   });
 
@@ -297,7 +304,7 @@ describe("braintrustAISDKTelemetry", () => {
       },
     });
     telemetry.onLanguageModelCallStart?.({
-      callId: "workflow-agent",
+      callId: "workflow-agent-model-call",
       headers: { authorization: "secret" },
       maxOutputTokens: 32,
       provider: "openai",
@@ -307,7 +314,7 @@ describe("braintrustAISDKTelemetry", () => {
       toolChoice: "required",
     });
     telemetry.onLanguageModelCallEnd?.({
-      callId: "workflow-agent",
+      callId: "workflow-agent-model-call",
       provider: "openai",
       modelId: "gpt-4.1-mini",
       text: "It is sunny.",
@@ -428,6 +435,70 @@ describe("braintrustAISDKTelemetry", () => {
       metrics: { duration_ms: 12 },
       span_parents: [operation?.span_id],
     });
+  });
+
+  it("backfills WorkflowAgent stream input from model call telemetry", async () => {
+    const telemetry = braintrustAISDKTelemetry();
+
+    telemetry.onStart?.({
+      callId: "workflow-agent",
+      operationId: "ai.workflowAgent.stream",
+      provider: "openai",
+      modelId: "gpt-4.1-mini",
+    });
+    telemetry.onLanguageModelCallStart?.({
+      callId: "workflow-agent-model-call",
+      headers: { authorization: "secret" },
+      maxOutputTokens: 32,
+      provider: "openai",
+      modelId: "gpt-4.1-mini",
+      messages: [{ role: "user", content: "What's the weather in Paris?" }],
+      toolChoice: "required",
+    });
+    telemetry.onLanguageModelCallEnd?.({
+      callId: "workflow-agent-model-call",
+      provider: "openai",
+      modelId: "gpt-4.1-mini",
+      text: "It is sunny.",
+      usage: {
+        inputTokens: 8,
+        outputTokens: 4,
+        totalTokens: 12,
+      },
+    });
+    telemetry.onEnd?.({
+      callId: "workflow-agent",
+      finishReason: "stop",
+      operationId: "ai.workflowAgent.stream",
+      text: "It is sunny.",
+      totalUsage: {
+        inputTokens: 8,
+        outputTokens: 4,
+        totalTokens: 12,
+      },
+    });
+
+    const spans = (await backgroundLogger.drain()) as Array<
+      Record<string, any>
+    >;
+    const operation = spans.find(
+      (span) => span.span_attributes?.name === "WorkflowAgent.stream",
+    );
+
+    expect(operation).toMatchObject({
+      input: {
+        messages: [{ role: "user", content: "What's the weather in Paris?" }],
+      },
+      metadata: {
+        provider: "openai",
+        model: "gpt-4.1-mini",
+        options: {
+          maxOutputTokens: 32,
+          toolChoice: "required",
+        },
+      },
+    });
+    expect(operation?.input).not.toHaveProperty("headers");
   });
 
   it("does not create telemetry child spans for wrapper-owned WorkflowAgent streams", async () => {

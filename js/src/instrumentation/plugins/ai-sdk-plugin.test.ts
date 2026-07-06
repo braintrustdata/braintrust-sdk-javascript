@@ -25,6 +25,9 @@ vi.mock("../../wrappers/ai-sdk/telemetry", () => ({
 import {
   AISDKPlugin,
   DEFAULT_DENY_OUTPUT_PATHS,
+  processAISDKCallInput,
+  processAISDKWorkflowAgentCallInput,
+  processAISDKWorkflowAgentModelCallInput,
   processAISDKOutput as processAISDKOutputActual,
 } from "./ai-sdk-plugin";
 import { Attachment } from "../../logger";
@@ -100,6 +103,88 @@ describe("AISDKPlugin", () => {
         denyOutputPaths: ["custom.path"],
       });
       expect(customPlugin).toBeInstanceOf(AISDKPlugin);
+    });
+  });
+
+  describe("WorkflowAgent input extraction", () => {
+    it("preserves string prompts and system overrides", () => {
+      expect(
+        processAISDKWorkflowAgentCallInput({
+          headers: { authorization: "secret" },
+          maxOutputTokens: 12,
+          prompt: "What's the weather in Paris?",
+          stopWhen: () => true,
+          system: "You are a helpful weather assistant.",
+        }).input,
+      ).toEqual({
+        prompt: "What's the weather in Paris?",
+        system: "You are a helpful weather assistant.",
+      });
+    });
+
+    it("preserves public prompt message arrays for WorkflowAgent spans", () => {
+      expect(
+        processAISDKWorkflowAgentCallInput({
+          prompt: [{ role: "user", content: "Hello" }],
+          system: "You are terse.",
+        }).input,
+      ).toEqual({
+        prompt: [{ role: "user", content: "Hello" }],
+        system: "You are terse.",
+      });
+    });
+
+    it("normalizes model call prompt arrays for WorkflowAgent child spans", () => {
+      expect(
+        processAISDKWorkflowAgentModelCallInput({
+          instructions: "You are terse.",
+          prompt: [{ role: "user", content: "Hello" }],
+        }).input,
+      ).toEqual({
+        instructions: "You are terse.",
+        messages: [{ role: "user", content: "Hello" }],
+      });
+    });
+
+    it("does not treat arbitrary prompt objects as public AI SDK prompts", () => {
+      expect(
+        processAISDKWorkflowAgentCallInput({
+          prompt: { role: "user", content: "Hello" } as any,
+          system: "You are terse.",
+        }).input,
+      ).toEqual({
+        system: "You are terse.",
+      });
+    });
+
+    it("omits SDK internals and function options from call inputs", () => {
+      const processed = processAISDKCallInput({
+        model: {
+          config: {
+            provider: "openai.responses",
+            url: () => "https://example.test",
+          },
+          doGenerate: async () => ({}),
+          doStream: async () => ({ stream: new ReadableStream() }),
+          modelId: "gpt-4.1-mini",
+        },
+        prompt: "Hello",
+        stopWhen: () => true,
+      }).input as Record<string, any>;
+
+      expect(processed).toMatchObject({
+        model: {
+          config: {
+            provider: "openai.responses",
+          },
+          modelId: "gpt-4.1-mini",
+        },
+        prompt: "Hello",
+      });
+      expect(processed).not.toHaveProperty("stopWhen");
+      expect(processed.model).not.toHaveProperty("doGenerate");
+      expect(processed.model).not.toHaveProperty("doStream");
+      expect(processed.model.config).not.toHaveProperty("url");
     });
   });
 
@@ -1330,6 +1415,7 @@ describe("AI SDK utility functions", () => {
         response: {
           headers: { authorization: "secret" },
           body: "secret-body",
+          constructor: "unsafe",
           id: "response-id",
           messages: [
             {
@@ -1340,6 +1426,7 @@ describe("AI SDK utility functions", () => {
                   result: {
                     headers: { authorization: "nested-secret" },
                     id: "nested-provider-response-id",
+                    prototype: "unsafe",
                   },
                 },
               ],
@@ -1430,8 +1517,12 @@ describe("AI SDK utility functions", () => {
       expect(result.request.providerPayload).not.toHaveProperty("headers");
       expect(result.response).not.toHaveProperty("headers");
       expect(result.response.body).toBe("<omitted>");
+      expect(result.response).not.toHaveProperty("constructor");
       expect(result.response.messages[0].content[0].result).not.toHaveProperty(
         "headers",
+      );
+      expect(result.response.messages[0].content[0].result).not.toHaveProperty(
+        "prototype",
       );
       expect(result.rawResponse).not.toHaveProperty("headers");
       expect(result.responses[0]).not.toHaveProperty("headers");
