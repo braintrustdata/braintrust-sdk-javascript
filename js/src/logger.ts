@@ -24,6 +24,7 @@ import {
   TRACESTATE_HEADER,
   formatTraceparent,
   getHeader,
+  isValidTracestate,
   mergeBaggage,
   parseBaggage,
   parseTraceparent,
@@ -5711,10 +5712,10 @@ export function extractTraceContextFromHeaders(
     context[BAGGAGE_HEADER] = baggageValue;
   }
   const tracestate = getHeader(headers, TRACESTATE_HEADER);
-  if (tracestate) {
-    // `tracestate` is opaque vendor state. Once `traceparent` is valid, keep the
-    // raw value even if our local grammar check would reject it; dropping or
-    // rewriting another vendor's state can break an otherwise usable trace.
+  if (tracestate && isValidTracestate(tracestate)) {
+    // `tracestate` is opaque vendor state that we forward but never author. We
+    // only adopt it when it conforms to the W3C grammar/limits, so a malformed
+    // or oversized inbound value is dropped rather than propagated onward.
     context[TRACESTATE_HEADER] = tracestate;
   }
   return context;
@@ -5770,7 +5771,13 @@ function resolveW3cParent(
   }
   const { objectType, objectId, computeArgs } = parsedParent;
 
-  const tracestate = getHeader(context, TRACESTATE_HEADER);
+  // Only carry forward `tracestate` that conforms to the W3C grammar/limits; a
+  // malformed or oversized value is dropped rather than propagated onward.
+  const tracestateValue = getHeader(context, TRACESTATE_HEADER);
+  const tracestate =
+    tracestateValue && isValidTracestate(tracestateValue)
+      ? tracestateValue
+      : undefined;
 
   const slug = new SpanComponentsV4({
     object_type: objectType,

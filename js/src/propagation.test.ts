@@ -23,6 +23,7 @@ import {
   TRACESTATE_HEADER,
   formatTraceparent,
   getHeader,
+  isValidTracestate,
   mergeBaggage,
   parseBaggage,
   parseTraceparent,
@@ -204,6 +205,41 @@ describe("baggage", () => {
     expect(
       parseBaggage(`${BRAINTRUST_PARENT_KEY}=project_id%3Aabc123`),
     ).toEqual({ [BRAINTRUST_PARENT_KEY]: "project_id:abc123" });
+  });
+});
+
+describe("isValidTracestate", () => {
+  test.each([
+    "congo=t61rcWkgMzE",
+    "congo=t61rcWkgMzE,rojo=00f067aa0ba902b7",
+    "vendor@system=value",
+    "a=b", // minimal single member
+    `k=${"a".repeat(256)}`, // max value length
+    "k=a b c", // spaces allowed mid-value
+    Array.from({ length: 32 }, (_, i) => `k${i}=v`).join(","), // max members
+  ])("accepts valid tracestate: %s", (value) => {
+    expect(isValidTracestate(value)).toBe(true);
+  });
+
+  test.each([
+    ["", "empty"],
+    [null, "null"],
+    [undefined, "undefined"],
+    ["ConGo=t61", "uppercase key"],
+    ["1congo=t61", "key must start with a letter"],
+    ["congo=", "empty value"],
+    ["congo=bad=value", "value cannot contain equals"],
+    ["congo,rojo=v", "member missing equals"],
+    ["congo=\u00e9", "non-ASCII value"],
+    ["congo=a,congo=b", "duplicate key"],
+    [`k=${"a".repeat(257)}`, "value too long"],
+    [
+      Array.from({ length: 33 }, (_, i) => `k${i}=v`).join(","),
+      "too many members",
+    ],
+    [`congo=${"a".repeat(513)}`, "over 512 chars total"],
+  ])("rejects invalid tracestate (%s): %s", (value) => {
+    expect(isValidTracestate(value as string)).toBe(false);
   });
 });
 
@@ -1126,7 +1162,10 @@ describe("tracestate / flags pass-through", () => {
     "congo=\u00e9", // non-ASCII value
     Array.from({ length: 33 }, (_, i) => `k${i}=v`).join(","), // too many members
     `congo=${"a".repeat(513)}`, // too long overall
-  ])("invalid tracestate is forwarded unchanged: %s", (tracestate) => {
+  ])("invalid tracestate is not forwarded: %s", (tracestate) => {
+    // `tracestate` we forward but never author, so an inbound value that does
+    // not conform to the W3C grammar/limits is dropped on extract rather than
+    // relayed onward.
     const logger = makeLogger();
     const parent = extractTraceContextFromHeaders({
       traceparent: VALID_TRACEPARENT,
@@ -1136,7 +1175,7 @@ describe("tracestate / flags pass-through", () => {
     const span = logger.startSpan({ name: "mid", parent });
     const outbound = span.inject({});
     span.end();
-    expect(outbound[TRACESTATE_HEADER]).toBe(tracestate);
+    expect(TRACESTATE_HEADER in outbound).toBe(false);
   });
 
   test("extract then inject preserves unsampled flag", () => {
