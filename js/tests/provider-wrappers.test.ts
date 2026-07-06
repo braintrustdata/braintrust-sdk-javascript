@@ -313,7 +313,7 @@ describe("provider wrapper", () => {
         tokens: 6,
       },
     });
-    expect(rawEvents[1].metrics.end).toBeUndefined();
+    expect((rawEvents[1] as any).metrics.end).toBeUndefined();
     expect(rawEvents[2]).toMatchObject({
       _is_merge: true,
       metrics: { end: expect.any(Number) },
@@ -400,7 +400,7 @@ describe("provider wrapper", () => {
           (generator as any).interrupt = interrupt;
           return generator;
         },
-      });
+      } as any) as any;
       const result = wrappedSDK.query({ prompt: "test" }) as any;
 
       if (startIteration) {
@@ -423,10 +423,10 @@ describe("provider wrapper", () => {
         (generator as any).customMethod = () => "custom-value";
         return generator;
       },
-    });
+    } as any) as any;
 
     const result = wrappedSDK.query({ prompt: "test" }) as any;
-    const messages = [];
+    const messages: any[] = [];
     for await (const message of result) {
       messages.push(message);
     }

@@ -92,7 +92,7 @@ describe("openrouter wrapper", () => {
     const client = wrapOpenRouter({
       chat: { send },
       embeddings: { generate: vi.fn() },
-    });
+    } as any) as any;
 
     const result = await client.chat.send(request, options);
     expect(result).toMatchObject({
@@ -105,7 +105,7 @@ describe("openrouter wrapper", () => {
       ],
     });
 
-    const spans = await backgroundLogger.drain();
+    const spans = (await backgroundLogger.drain()) as any[];
     expect(spans).toHaveLength(1);
     const span = spans[0] as Record<string, any>;
     expect(span.span_attributes).toMatchObject({
@@ -186,7 +186,7 @@ describe("openrouter wrapper", () => {
     const client = wrapOpenRouter({
       chat: { send },
       embeddings: { generate: vi.fn() },
-    });
+    } as any) as any;
 
     const result = await client.chat.send({
       chatGenerationParams: {
@@ -267,7 +267,7 @@ describe("openrouter wrapper", () => {
       embeddings: {
         generate: embeddingsGenerate,
       },
-    });
+    } as any) as any;
 
     await client.beta.responses.send({
       openResponsesRequest: {
@@ -284,7 +284,7 @@ describe("openrouter wrapper", () => {
       },
     });
 
-    const spans = await backgroundLogger.drain();
+    const spans = (await backgroundLogger.drain()) as any[];
     expect(spans).toHaveLength(2);
 
     const responseSpan = spans.find(
@@ -357,7 +357,7 @@ describe("openrouter wrapper", () => {
       rerank: {
         rerank: rerankFn,
       },
-    });
+    } as any) as any;
 
     await client.rerank.rerank({
       requestBody: {
@@ -438,7 +438,7 @@ describe("openrouter wrapper", () => {
     };
     const callModel = vi.fn((request) => {
       const result = {
-        allToolExecutionRounds: [],
+        allToolExecutionRounds: [] as any[],
         finalResponse,
         resolvedRequest: {
           input:
@@ -493,7 +493,7 @@ describe("openrouter wrapper", () => {
 
     const client = wrapOpenRouter({
       callModel,
-    });
+    } as any) as any;
 
     const result = client.callModel({
       input:
@@ -515,7 +515,7 @@ describe("openrouter wrapper", () => {
 
     await expect(result.getText()).resolves.toBe("Sunny in Vienna");
 
-    const spans = await backgroundLogger.drain();
+    const spans = (await backgroundLogger.drain()) as any[];
     expect(spans).toHaveLength(4);
     const callModelSpan = spans.find(
       (span) => span.span_attributes?.name === "openrouter.callModel",
@@ -632,7 +632,7 @@ describe("openrouter wrapper", () => {
 
     const client = wrapOpenRouter({
       callModel,
-    });
+    } as any) as any;
 
     const result = client.callModel({
       model: TEST_MODEL,
@@ -656,7 +656,7 @@ describe("openrouter wrapper", () => {
     }
     expect(chunks).toHaveLength(2);
 
-    const spans = await backgroundLogger.drain();
+    const spans = (await backgroundLogger.drain()) as any[];
     expect(spans).toHaveLength(2);
     const callModelSpan = spans.find(
       (span) => span.span_attributes?.name === "openrouter.callModel",

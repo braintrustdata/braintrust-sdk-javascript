@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const { tracePromise } = vi.hoisted(() => ({
-  tracePromise: vi.fn((fn: () => Promise<unknown>) => fn()),
+  tracePromise: vi.fn((fn: () => Promise<unknown>, _event?: unknown) => fn()),
 }));
 
 vi.mock("../isomorph", () => ({

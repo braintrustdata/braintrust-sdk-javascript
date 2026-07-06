@@ -1,10 +1,7 @@
-import { vi, expect, test, describe, beforeEach, afterEach } from "vitest";
+import { expect, test, describe, beforeEach, afterEach } from "vitest";
 import {
   _exportsForTestingOnly,
-  init,
   initLogger,
-  initExperiment,
-  initDataset,
   wrapTraced,
   currentSpan,
   setMaskingFunction,
@@ -315,7 +312,7 @@ describe("masking functionality", () => {
           if (key === "secrets" && Array.isArray(value)) {
             masked[key] = value.map(() => "REDACTED");
           } else if (key === "tokens" && typeof value === "object") {
-            masked[key] = Object.keys(value).reduce((acc: any, k) => {
+            masked[key] = Object.keys(value ?? {}).reduce((acc: any, k) => {
               acc[k] = "REDACTED";
               return acc;
             }, {});
@@ -499,7 +496,7 @@ describe("masking functionality", () => {
         for (const [key, value] of Object.entries(data)) {
           if (key === "secret" && typeof value === "string") {
             // Another type of error
-            const result = 1 / 0; // This will be Infinity, not an error
+            1 / 0; // This will be Infinity, not an error
             throw new Error("Division by zero error");
           } else if (key === "complex" && Array.isArray(value)) {
             // Try to access non-existent index

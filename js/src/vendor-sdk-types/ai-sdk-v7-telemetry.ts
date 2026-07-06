@@ -12,7 +12,7 @@ export interface AISDKV7TelemetryOptions {
   functionId?: string;
 }
 
-export interface AISDKV7ModelInfo {
+interface AISDKV7ModelInfo {
   provider?: string;
   modelId?: string;
 }
@@ -98,7 +98,7 @@ export interface AISDKV7RerankEndEvent
   [key: string]: unknown;
 }
 
-export interface AISDKV7ToolCall {
+interface AISDKV7ToolCall {
   toolCallId?: string;
   toolName?: string;
   input?: unknown;
@@ -112,7 +112,7 @@ export interface AISDKV7ToolExecutionStartEvent extends AISDKV7TelemetryOptions 
   [key: string]: unknown;
 }
 
-export interface AISDKV7ToolOutput {
+interface AISDKV7ToolOutput {
   type?: "tool-result" | "tool-error" | string;
   output?: unknown;
   error?: unknown;

@@ -1,6 +1,4 @@
-// Mirror of the functions in py/src/braintrust/merge_row_batch.py.
-
-import { IS_MERGE_FIELD, PARENT_ID_FIELD } from "./db_fields";
+import { IS_MERGE_FIELD } from "./db_fields";
 import { mergeDicts } from "./object_util";
 
 function generateMergedRowKey(row: Record<string, unknown>) {

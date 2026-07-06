@@ -43,7 +43,7 @@ import type {
 } from "../../vendor-sdk-types/ai-sdk";
 import type { AISDKV7Telemetry } from "../../vendor-sdk-types/ai-sdk-v7-telemetry";
 
-export interface AISDKPluginConfig {
+interface AISDKPluginConfig {
   /**
    * List of JSON paths to remove from output field.
    * Uses dot notation with array wildcards: "roundtrips[].request.body"

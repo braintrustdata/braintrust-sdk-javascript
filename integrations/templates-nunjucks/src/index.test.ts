@@ -2,6 +2,8 @@ import { describe, test, expect, beforeAll } from "vitest";
 import { registerTemplatePlugin, Prompt } from "braintrust";
 import { nunjucksPlugin } from "./index";
 
+const promptRow = (row: unknown) => row as any;
+
 // Register and activate the plugin for all tests
 beforeAll(() => {
   // registerTemplatePlugin will auto-activate using the plugin's
@@ -12,7 +14,7 @@ beforeAll(() => {
 describe("nunjucks rendering via Prompt", () => {
   test("renders variable and control structures", () => {
     const prompt = new Prompt(
-      {
+      promptRow({
         name: "test-prompt",
         slug: "test-prompt",
         prompt_data: {
@@ -28,7 +30,7 @@ describe("nunjucks rendering via Prompt", () => {
           },
           options: { model: "gpt-4" },
         },
-      },
+      }),
       {},
       false,
     );
@@ -42,7 +44,7 @@ describe("nunjucks rendering via Prompt", () => {
 
   test("loops render", () => {
     const prompt = new Prompt(
-      {
+      promptRow({
         name: "test-prompt",
         slug: "test-prompt",
         prompt_data: {
@@ -57,7 +59,7 @@ describe("nunjucks rendering via Prompt", () => {
           },
           options: { model: "gpt-4" },
         },
-      },
+      }),
       {},
       false,
     );
@@ -71,7 +73,7 @@ describe("nunjucks rendering via Prompt", () => {
 
   test("strict mode throws for missing top-level variable", () => {
     const prompt = new Prompt(
-      {
+      promptRow({
         name: "test-prompt",
         slug: "test-prompt",
         prompt_data: {
@@ -86,7 +88,7 @@ describe("nunjucks rendering via Prompt", () => {
           },
           options: { model: "gpt-4" },
         },
-      },
+      }),
       {},
       false,
     );
@@ -98,7 +100,7 @@ describe("nunjucks rendering via Prompt", () => {
 
   test("strict mode passes for defined variable and filters", () => {
     const prompt = new Prompt(
-      {
+      promptRow({
         name: "test-prompt",
         slug: "test-prompt",
         prompt_data: {
@@ -113,7 +115,7 @@ describe("nunjucks rendering via Prompt", () => {
           },
           options: { model: "gpt-4" },
         },
-      },
+      }),
       {},
       false,
     );
@@ -128,7 +130,7 @@ describe("nunjucks rendering via Prompt", () => {
 
   test("strict mode: for over undefined is empty (does not throw)", () => {
     const prompt1 = new Prompt(
-      {
+      promptRow({
         name: "test-prompt",
         slug: "test-prompt",
         prompt_data: {
@@ -143,7 +145,7 @@ describe("nunjucks rendering via Prompt", () => {
           },
           options: { model: "gpt-4" },
         },
-      },
+      }),
       {},
       false,
     );
@@ -162,7 +164,7 @@ describe("nunjucks rendering via Prompt", () => {
 
   test("strict mode: nested path with numeric index using brackets", () => {
     const prompt = new Prompt(
-      {
+      promptRow({
         name: "test-prompt",
         slug: "test-prompt",
         prompt_data: {
@@ -177,7 +179,7 @@ describe("nunjucks rendering via Prompt", () => {
           },
           options: { model: "gpt-4" },
         },
-      },
+      }),
       {},
       false,
     );
@@ -195,7 +197,7 @@ describe("nunjucks rendering via Prompt", () => {
 
   test("renders nested object properties", () => {
     const prompt = new Prompt(
-      {
+      promptRow({
         name: "test-prompt",
         slug: "test-prompt",
         prompt_data: {
@@ -210,7 +212,7 @@ describe("nunjucks rendering via Prompt", () => {
           },
           options: { model: "gpt-4" },
         },
-      },
+      }),
       {},
       false,
     );
@@ -224,7 +226,7 @@ describe("nunjucks rendering via Prompt", () => {
 
   test("renders multiple variables with context", () => {
     const prompt = new Prompt(
-      {
+      promptRow({
         name: "test-prompt",
         slug: "test-prompt",
         prompt_data: {
@@ -240,7 +242,7 @@ describe("nunjucks rendering via Prompt", () => {
           },
           options: { model: "gpt-4" },
         },
-      },
+      }),
       {},
       false,
     );
@@ -254,7 +256,7 @@ describe("nunjucks rendering via Prompt", () => {
 
   test("renders with string concatenation", () => {
     const prompt = new Prompt(
-      {
+      promptRow({
         name: "test-prompt",
         slug: "test-prompt",
         prompt_data: {
@@ -269,7 +271,7 @@ describe("nunjucks rendering via Prompt", () => {
           },
           options: { model: "gpt-4" },
         },
-      },
+      }),
       {},
       false,
     );
@@ -283,7 +285,7 @@ describe("nunjucks rendering via Prompt", () => {
 
   test("renders numeric operations", () => {
     const prompt = new Prompt(
-      {
+      promptRow({
         name: "test-prompt",
         slug: "test-prompt",
         prompt_data: {
@@ -298,7 +300,7 @@ describe("nunjucks rendering via Prompt", () => {
           },
           options: { model: "gpt-4" },
         },
-      },
+      }),
       {},
       false,
     );
@@ -312,7 +314,7 @@ describe("nunjucks rendering via Prompt", () => {
 
   test("renders with filters and context", () => {
     const prompt = new Prompt(
-      {
+      promptRow({
         name: "test-prompt",
         slug: "test-prompt",
         prompt_data: {
@@ -327,7 +329,7 @@ describe("nunjucks rendering via Prompt", () => {
           },
           options: { model: "gpt-4" },
         },
-      },
+      }),
       {},
       false,
     );
@@ -341,7 +343,7 @@ describe("nunjucks rendering via Prompt", () => {
 
   test("renders array elements with index", () => {
     const prompt = new Prompt(
-      {
+      promptRow({
         name: "test-prompt",
         slug: "test-prompt",
         prompt_data: {
@@ -356,7 +358,7 @@ describe("nunjucks rendering via Prompt", () => {
           },
           options: { model: "gpt-4" },
         },
-      },
+      }),
       {},
       false,
     );
@@ -370,7 +372,7 @@ describe("nunjucks rendering via Prompt", () => {
 
   test("renders nested arrays and objects", () => {
     const prompt = new Prompt(
-      {
+      promptRow({
         name: "test-prompt",
         slug: "test-prompt",
         prompt_data: {
@@ -385,7 +387,7 @@ describe("nunjucks rendering via Prompt", () => {
           },
           options: { model: "gpt-4" },
         },
-      },
+      }),
       {},
       false,
     );
@@ -404,7 +406,7 @@ describe("nunjucks rendering via Prompt", () => {
 
   test("renders with default filter", () => {
     const prompt = new Prompt(
-      {
+      promptRow({
         name: "test-prompt",
         slug: "test-prompt",
         prompt_data: {
@@ -419,7 +421,7 @@ describe("nunjucks rendering via Prompt", () => {
           },
           options: { model: "gpt-4" },
         },
-      },
+      }),
       {},
       false,
     );
@@ -436,7 +438,7 @@ describe("nunjucks rendering via Prompt", () => {
 
   test("renders ternary expressions", () => {
     const prompt = new Prompt(
-      {
+      promptRow({
         name: "test-prompt",
         slug: "test-prompt",
         prompt_data: {
@@ -451,7 +453,7 @@ describe("nunjucks rendering via Prompt", () => {
           },
           options: { model: "gpt-4" },
         },
-      },
+      }),
       {},
       false,
     );
@@ -468,7 +470,7 @@ describe("nunjucks rendering via Prompt", () => {
 
   test("renders with multiple filters chained", () => {
     const prompt = new Prompt(
-      {
+      promptRow({
         name: "test-prompt",
         slug: "test-prompt",
         prompt_data: {
@@ -483,7 +485,7 @@ describe("nunjucks rendering via Prompt", () => {
           },
           options: { model: "gpt-4" },
         },
-      },
+      }),
       {},
       false,
     );
@@ -497,7 +499,7 @@ describe("nunjucks rendering via Prompt", () => {
 
   test("renders complex nested context", () => {
     const prompt = new Prompt(
-      {
+      promptRow({
         name: "test-prompt",
         slug: "test-prompt",
         prompt_data: {
@@ -513,7 +515,7 @@ describe("nunjucks rendering via Prompt", () => {
           },
           options: { model: "gpt-4" },
         },
-      },
+      }),
       {},
       false,
     );
@@ -533,7 +535,7 @@ describe("nunjucks rendering via Prompt", () => {
 
   test("renders with length filter on arrays", () => {
     const prompt = new Prompt(
-      {
+      promptRow({
         name: "test-prompt",
         slug: "test-prompt",
         prompt_data: {
@@ -548,7 +550,7 @@ describe("nunjucks rendering via Prompt", () => {
           },
           options: { model: "gpt-4" },
         },
-      },
+      }),
       {},
       false,
     );
@@ -562,7 +564,7 @@ describe("nunjucks rendering via Prompt", () => {
 
   test("renders with join filter", () => {
     const prompt = new Prompt(
-      {
+      promptRow({
         name: "test-prompt",
         slug: "test-prompt",
         prompt_data: {
@@ -577,7 +579,7 @@ describe("nunjucks rendering via Prompt", () => {
           },
           options: { model: "gpt-4" },
         },
-      },
+      }),
       {},
       false,
     );
@@ -593,7 +595,7 @@ describe("nunjucks rendering via Prompt", () => {
 describe("nunjucks linting", () => {
   test("lint throws for missing variable", () => {
     const prompt = new Prompt(
-      {
+      promptRow({
         name: "test-prompt",
         slug: "test-prompt",
         prompt_data: {
@@ -608,7 +610,7 @@ describe("nunjucks linting", () => {
           },
           options: { model: "gpt-4" },
         },
-      },
+      }),
       {},
       false,
     );
@@ -620,7 +622,7 @@ describe("nunjucks linting", () => {
 
   test("lint passes for valid template with loops", () => {
     const prompt = new Prompt(
-      {
+      promptRow({
         name: "test-prompt",
         slug: "test-prompt",
         prompt_data: {
@@ -635,7 +637,7 @@ describe("nunjucks linting", () => {
           },
           options: { model: "gpt-4" },
         },
-      },
+      }),
       {},
       false,
     );
@@ -647,7 +649,7 @@ describe("nunjucks linting", () => {
 
   test("lint passes for valid template with conditionals", () => {
     const prompt = new Prompt(
-      {
+      promptRow({
         name: "test-prompt",
         slug: "test-prompt",
         prompt_data: {
@@ -662,7 +664,7 @@ describe("nunjucks linting", () => {
           },
           options: { model: "gpt-4" },
         },
-      },
+      }),
       {},
       false,
     );
@@ -674,7 +676,7 @@ describe("nunjucks linting", () => {
 
   test("lint throws for invalid template syntax", () => {
     const prompt = new Prompt(
-      {
+      promptRow({
         name: "test-prompt",
         slug: "test-prompt",
         prompt_data: {
@@ -689,7 +691,7 @@ describe("nunjucks linting", () => {
           },
           options: { model: "gpt-4" },
         },
-      },
+      }),
       {},
       false,
     );
@@ -701,7 +703,7 @@ describe("nunjucks linting", () => {
 
   test("lint throws for mismatched tags", () => {
     const prompt = new Prompt(
-      {
+      promptRow({
         name: "test-prompt",
         slug: "test-prompt",
         prompt_data: {
@@ -716,7 +718,7 @@ describe("nunjucks linting", () => {
           },
           options: { model: "gpt-4" },
         },
-      },
+      }),
       {},
       false,
     );

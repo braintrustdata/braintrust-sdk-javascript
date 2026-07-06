@@ -21,7 +21,6 @@ vi.mock("../../wrappers/ai-sdk/telemetry", () => ({
 }));
 
 import { AISDKPlugin } from "./ai-sdk-plugin";
-import { Attachment } from "../../logger";
 import iso from "../../isomorph";
 import { serializeAISDKToolsForLogging } from "../../wrappers/ai-sdk/tool-serialization";
 

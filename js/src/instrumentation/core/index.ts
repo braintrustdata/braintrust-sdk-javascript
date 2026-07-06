@@ -18,13 +18,10 @@ export {
 } from "./channel";
 export type {
   BaseContext,
-  ChannelSpanInfo,
   StartEvent,
   EndEvent,
   ErrorEvent,
   AsyncStartEvent,
   AsyncEndEvent,
   ChannelHandlers,
-  SpanInfoCarrier,
 } from "./types";
-export type { StreamPatchOptions } from "./stream-patcher";

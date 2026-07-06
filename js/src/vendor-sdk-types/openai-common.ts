@@ -58,13 +58,13 @@ export interface OpenAIUsage {
   [key: string]: number | Record<string, number> | undefined;
 }
 
-export interface OpenAIChatToolFunction {
+interface OpenAIChatToolFunction {
   arguments: string;
   name?: string;
   [key: string]: unknown;
 }
 
-export interface OpenAIChatToolCall {
+interface OpenAIChatToolCall {
   id?: string;
   type?: string;
   function: OpenAIChatToolFunction;
@@ -107,7 +107,7 @@ export interface OpenAIChatCompletion {
   [key: string]: unknown;
 }
 
-export interface OpenAIChatDelta {
+interface OpenAIChatDelta {
   role?: string;
   content?: string;
   refusal?: string;

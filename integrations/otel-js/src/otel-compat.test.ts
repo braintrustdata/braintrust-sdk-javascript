@@ -104,7 +104,7 @@ describe("OTEL compatibility mode", () => {
       async (span1) => {
         expect(currentSpan()).toBe(span1);
 
-        await tracer.startActiveSpan("otel-span-2", async (otelSpan2) => {
+        await tracer.startActiveSpan("otel-span-2", async (otelSpan2: any) => {
           await logger.traced(
             async (span3) => {
               expect(currentSpan()).toBe(span3);
@@ -143,7 +143,7 @@ describe("OTEL compatibility mode", () => {
     );
     const logger = initLogger({ projectName: "mixed-tracing-otel-first" });
 
-    await tracer.startActiveSpan("otel-span-1", async (otelSpan1) => {
+    await tracer.startActiveSpan("otel-span-1", async (otelSpan1: any) => {
       await logger.traced(
         async (span2) => {
           expect(currentSpan()).toBe(span2);
@@ -154,9 +154,12 @@ describe("OTEL compatibility mode", () => {
 
           expect(span2.rootSpanId).toBe(otelTraceId);
 
-          await tracer.startActiveSpan("otel-span-3", async (otelSpan3) => {
-            otelSpan3.end();
-          });
+          await tracer.startActiveSpan(
+            "otel-span-3",
+            async (otelSpan3: any) => {
+              otelSpan3.end();
+            },
+          );
         },
         { name: "bt-span-2" },
       );
@@ -176,7 +179,7 @@ describe("OTEL compatibility mode", () => {
       setupOtelFixture("bt-inherits-otel");
     const logger = initLogger({ projectName: "bt-inherits-otel" });
 
-    await tracer.startActiveSpan("otel-parent", async (otelParent) => {
+    await tracer.startActiveSpan("otel-parent", async (otelParent: any) => {
       const btSpan = logger.startSpan({ name: "bt-child" });
 
       const otelContext = otelParent.spanContext();
@@ -212,7 +215,7 @@ describe("OTEL compatibility mode", () => {
     await cm.runInContext(span1, async () => {
       expect(currentSpan()).toBe(span1);
 
-      await tracer.startActiveSpan("otel-span-2", async (otelSpan2) => {
+      await tracer.startActiveSpan("otel-span-2", async (otelSpan2: any) => {
         const span3 = logger.startSpan({ name: "bt-span-3" });
 
         await cm.runInContext(span3, async () => {
@@ -295,7 +298,7 @@ describe("OTEL compatibility mode", () => {
 
     await logger.traced(
       async () => {
-        await tracer.startActiveSpan("otel-child", async (otelChild) => {
+        await tracer.startActiveSpan("otel-child", async (otelChild: any) => {
           // Verify the span context is created
           expect(otelChild.spanContext().traceId).toBeDefined();
           otelChild.end();
@@ -332,7 +335,7 @@ describe("OTEL compatibility mode", () => {
     );
 
     let trace2Id: string | undefined;
-    await tracer.startActiveSpan("otel-trace-2", async (otelSpan2) => {
+    await tracer.startActiveSpan("otel-trace-2", async (otelSpan2: any) => {
       const otelContext = otelSpan2.spanContext();
       trace2Id = otelContext.traceId.toString().padStart(32, "0");
       otelSpan2.setAttribute("test", "second_trace");
@@ -340,21 +343,24 @@ describe("OTEL compatibility mode", () => {
     });
 
     let trace3Id: string | undefined;
-    await tracer.startActiveSpan("otel-trace-3-root", async (otelSpan3) => {
-      const otelContext = otelSpan3.spanContext();
-      trace3Id = otelContext.traceId.toString().padStart(32, "0");
+    await tracer.startActiveSpan(
+      "otel-trace-3-root",
+      async (otelSpan3: any) => {
+        const otelContext = otelSpan3.spanContext();
+        trace3Id = otelContext.traceId.toString().padStart(32, "0");
 
-      await logger.traced(
-        async (btSpan3) => {
-          // BT span inside OTEL should inherit OTEL trace ID
-          expect(btSpan3.rootSpanId).toBe(trace3Id);
-          expect(btSpan3.rootSpanId).not.toBe(trace1Id);
-        },
-        { name: "bt-inside-otel-3" },
-      );
+        await logger.traced(
+          async (btSpan3) => {
+            // BT span inside OTEL should inherit OTEL trace ID
+            expect(btSpan3.rootSpanId).toBe(trace3Id);
+            expect(btSpan3.rootSpanId).not.toBe(trace1Id);
+          },
+          { name: "bt-inside-otel-3" },
+        );
 
-      otelSpan3.end();
-    });
+        otelSpan3.end();
+      },
+    );
 
     // Verify we have 3 separate traces
     expect(trace1Id).toBeDefined();
@@ -391,10 +397,13 @@ describe("OTEL compatibility mode", () => {
           }
 
           // Create an OTEL span inside the eval task
-          await tracer.startActiveSpan("otel-compute", async (otelSpan) => {
-            otelSpan.setAttribute("computation", input * 2);
-            otelSpan.end();
-          });
+          await tracer.startActiveSpan(
+            "otel-compute",
+            async (otelSpan: any) => {
+              otelSpan.setAttribute("computation", input * 2);
+              otelSpan.end();
+            },
+          );
           return input * 2;
         },
         scores: [],
@@ -453,7 +462,7 @@ describe("OTEL compatibility mode", () => {
 
     await logger.traced(
       async () => {
-        await tracer.startActiveSpan("otel-child", async (otelSpan) => {
+        await tracer.startActiveSpan("otel-child", async (otelSpan: any) => {
           const ctx = otelSpan.spanContext();
           otelSpanCreated = true;
           otelSpanHasValidContext =
@@ -489,7 +498,7 @@ describe("OTEL compatibility mode", () => {
         btTraceId = btSpan.rootSpanId;
         btSpanId = btSpan.spanId;
 
-        await tracer.startActiveSpan("otel-child", async (otelSpan) => {
+        await tracer.startActiveSpan("otel-child", async (otelSpan: any) => {
           const ctx = otelSpan.spanContext();
           otelTraceId = ctx.traceId.toString().padStart(32, "0");
           otelSpan.end();
@@ -534,7 +543,7 @@ describe("OTEL compatibility mode", () => {
       async (btSpan1) => {
         spanIds.push(btSpan1.spanId);
 
-        await tracer.startActiveSpan("otel-span-1", async (otelSpan1) => {
+        await tracer.startActiveSpan("otel-span-1", async (otelSpan1: any) => {
           spanIds.push(
             otelSpan1.spanContext().spanId.toString().padStart(16, "0"),
           );
@@ -543,12 +552,15 @@ describe("OTEL compatibility mode", () => {
             async (btSpan2) => {
               spanIds.push(btSpan2.spanId);
 
-              await tracer.startActiveSpan("otel-span-2", async (otelSpan2) => {
-                spanIds.push(
-                  otelSpan2.spanContext().spanId.toString().padStart(16, "0"),
-                );
-                otelSpan2.end();
-              });
+              await tracer.startActiveSpan(
+                "otel-span-2",
+                async (otelSpan2: any) => {
+                  spanIds.push(
+                    otelSpan2.spanContext().spanId.toString().padStart(16, "0"),
+                  );
+                  otelSpan2.end();
+                },
+              );
             },
             { name: "bt-span-2" },
           );
@@ -596,10 +608,13 @@ describe("OTEL compatibility mode", () => {
 
     await logger.traced(
       async () => {
-        await tracer.startActiveSpan("otel-with-attrs", async (otelSpan) => {
-          otelSpan.setAttribute("custom.attribute", "test-value");
-          otelSpan.end();
-        });
+        await tracer.startActiveSpan(
+          "otel-with-attrs",
+          async (otelSpan: any) => {
+            otelSpan.setAttribute("custom.attribute", "test-value");
+            otelSpan.end();
+          },
+        );
       },
       { name: "bt-parent" },
     );
@@ -1001,10 +1016,13 @@ describe("Distributed Tracing (BT → OTEL)", () => {
 
     // Use context.with() to run code in the imported context
     await context.with(ctx, async () => {
-      await tracer.startActiveSpan("service_b_span", async (serviceBSpan) => {
-        serviceBSpan.setAttribute("service", "service_b");
-        serviceBSpan.end();
-      });
+      await tracer.startActiveSpan(
+        "service_b_span",
+        async (serviceBSpan: any) => {
+          serviceBSpan.setAttribute("service", "service_b");
+          serviceBSpan.end();
+        },
+      );
     });
 
     await processor.forceFlush();
@@ -1024,8 +1042,8 @@ describe("Distributed Tracing (BT → OTEL)", () => {
     expect(serviceBTraceId).toBe(serviceATraceId);
 
     // Service B span should have Service A span as parent
-    if (serviceBSpan.parentSpanId) {
-      expect(serviceBSpan.parentSpanId).toBe(serviceASpanId);
+    if ((serviceBSpan as any).parentSpanId) {
+      expect((serviceBSpan as any).parentSpanId).toBe(serviceASpanId);
     }
 
     // Note: In distributed tracing, the braintrust.parent attribute is NOT

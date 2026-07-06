@@ -3,7 +3,7 @@ import { SpanTypeAttribute, isPromiseLike } from "../../../util/index";
 import { toLoggedError } from "../core";
 import { getClaudeLocalToolParentResolver } from "./claude-agent-sdk-local-tool-context";
 
-export type LocalToolSpanMetadata = {
+type LocalToolSpanMetadata = {
   serverName?: string;
   toolName: string;
 };

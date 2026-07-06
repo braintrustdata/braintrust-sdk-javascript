@@ -1,6 +1,6 @@
 import iso, { CallerLocation } from "./isomorph";
 
-export interface StackTraceEntry {
+interface StackTraceEntry {
   functionName: string;
   fileName: string;
   lineNo: number;

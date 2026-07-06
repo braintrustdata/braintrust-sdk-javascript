@@ -4,10 +4,6 @@ import { summarizeAndFlush } from "../shared/flush";
 import { logOutputs, logFeedback, getCurrentSpan } from "../shared/logging";
 import type { VitestMethods, BraintrustVitest, WrapperConfig } from "./types";
 
-export type { Score } from "../../../util/score";
-export type { TestConfig, TestContext, ScorerFunction } from "./types";
-export type { DatasetOptions, DatasetRecord } from "./dataset-helpers";
-
 /**
  * Wraps Vitest methods with Braintrust experiment tracking. This automatically creates
  * datasets and experiments from your Vitest tests, tracking pass/fail rates and evaluation metrics.

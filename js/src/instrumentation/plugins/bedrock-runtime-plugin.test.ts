@@ -72,7 +72,7 @@ describe("BedrockRuntimePlugin", () => {
           new ConverseCommand({
             messages: [{ role: "user", content: [{ text: "OK" }] }],
             modelId: "us.amazon.nova-lite-v1:0",
-          }),
+          }) as any,
         ],
       },
     );
@@ -86,7 +86,7 @@ describe("BedrockRuntimePlugin", () => {
         () => {},
       ],
     };
-    tracingChannel.start.publish(callbackEvent);
+    tracingChannel.start!.publish(callbackEvent);
     callbackEvent.result = {
       output: {
         message: {
@@ -95,7 +95,7 @@ describe("BedrockRuntimePlugin", () => {
         },
       },
     };
-    tracingChannel.asyncEnd.publish(callbackEvent);
+    tracingChannel.asyncEnd!.publish(callbackEvent);
 
     const spans = await backgroundLogger.drain();
     expect(spans).toEqual(
@@ -149,7 +149,7 @@ describe("BedrockRuntimePlugin", () => {
             new GetObjectCommand({
               Bucket: "not-bedrock",
               Key: "object.txt",
-            }),
+            }) as any,
           ],
         },
       );
@@ -206,7 +206,7 @@ describe("BedrockRuntimePlugin", () => {
           new InvokeModelWithBidirectionalStreamCommand({
             body: undefined,
             modelId: "us.amazon.nova-lite-v1:0",
-          }),
+          }) as any,
         ],
       },
     );

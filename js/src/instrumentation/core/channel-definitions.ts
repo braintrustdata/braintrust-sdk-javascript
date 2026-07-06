@@ -24,7 +24,7 @@ type ChannelTypeInfo<
   __chunk?: TChunk;
 };
 
-export type ChannelSpec<
+type ChannelSpec<
   TArgs extends EventArguments,
   TResult,
   TExtra extends object = Record<string, unknown>,

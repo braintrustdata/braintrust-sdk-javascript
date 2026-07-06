@@ -1,0 +1,30 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "declaration": false,
+    "module": "es2022",
+    "noEmit": true,
+    "types": ["node", "vitest/globals"],
+    "paths": {
+      "@apm-js-collab/code-transformer": [
+        "src/auto-instrumentations/orchestrion-js/index.ts"
+      ],
+      "@ai-sdk/openai": ["tests/type-shims/ai-sdk-openai.d.ts"],
+      "ai": ["tests/type-shims/ai.d.ts"],
+      "braintrust": ["src/node/index.ts"]
+    }
+  },
+  "include": [
+    "src/**/*.test.ts",
+    "tests/**/*.test.ts",
+    "tests/typecheck.d.ts",
+    "util/**/*.test.ts"
+  ],
+  "exclude": [
+    "node_modules/**",
+    "**/dist/**",
+    "vendor/**",
+    "**/smoke/**",
+    "src/wrappers/vitest/**"
+  ]
+}

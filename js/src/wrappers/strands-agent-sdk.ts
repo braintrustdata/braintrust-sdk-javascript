@@ -255,5 +255,3 @@ async function consumeAsyncGenerator<TChunk, TReturn>(
   }
   return result.value;
 }
-
-export type { StrandsAgentSDKModule };

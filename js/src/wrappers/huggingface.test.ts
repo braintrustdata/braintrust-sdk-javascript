@@ -10,7 +10,6 @@ import { configureNode } from "../node/config";
 import {
   _exportsForTestingOnly,
   initLogger,
-  Logger,
   TestBackgroundLogger,
 } from "../logger";
 import { wrapHuggingFace } from "./huggingface";
@@ -222,7 +221,6 @@ async function collectAsync<T>(records: AsyncIterable<T>) {
 
 describe("wrapHuggingFace", () => {
   let backgroundLogger: TestBackgroundLogger;
-  let _logger: Logger<false>;
 
   beforeAll(async () => {
     await _exportsForTestingOnly.simulateLoginForTests();
@@ -230,7 +228,7 @@ describe("wrapHuggingFace", () => {
 
   beforeEach(() => {
     backgroundLogger = _exportsForTestingOnly.useTestBackgroundLogger();
-    _logger = initLogger({
+    initLogger({
       projectName: "huggingface.test.ts",
       projectId: "test-project-id",
     });
@@ -241,7 +239,7 @@ describe("wrapHuggingFace", () => {
   });
 
   test("wraps InferenceClient chatCompletion calls", async () => {
-    const { InferenceClient } = wrapHuggingFace(buildModernModule());
+    const { InferenceClient } = wrapHuggingFace(buildModernModule()) as any;
     const client = new InferenceClient("hf_test");
 
     await client.chatCompletion({
@@ -277,7 +275,7 @@ describe("wrapHuggingFace", () => {
   });
 
   test("wraps direct textGenerationStream exports", async () => {
-    const huggingFace = wrapHuggingFace(buildModernModule());
+    const huggingFace = wrapHuggingFace(buildModernModule()) as any;
 
     const stream = huggingFace.textGenerationStream!(
       {
@@ -315,7 +313,7 @@ describe("wrapHuggingFace", () => {
   });
 
   test("supports legacy HfInference exports and feature extraction", async () => {
-    const huggingFace = wrapHuggingFace(buildLegacyModule());
+    const huggingFace = wrapHuggingFace(buildLegacyModule()) as any;
     const client = new huggingFace.HfInference!("hf_test");
 
     await client.endpoint("https://example.invalid").chatCompletion({
@@ -358,7 +356,7 @@ describe("wrapHuggingFace", () => {
   test("wraps completion-style textGenerationStream chunks", async () => {
     const huggingFace = wrapHuggingFace(
       buildCompletionStyleTextGenerationModule(),
-    );
+    ) as any;
 
     const stream = huggingFace.textGenerationStream!(
       {

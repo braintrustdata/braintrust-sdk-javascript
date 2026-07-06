@@ -70,5 +70,3 @@ function patchAgentSessionClass(AgentSession: PiAgentSessionClass): void {
     value: true,
   });
 }
-
-export type { PiCodingAgentModule };

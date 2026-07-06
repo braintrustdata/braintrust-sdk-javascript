@@ -23,7 +23,7 @@ export function isAsyncIterable(
 /**
  * Options for stream patching.
  */
-export interface StreamPatchOptions<TChunk = unknown, TFinal = unknown> {
+interface StreamPatchOptions<TChunk = unknown, TFinal = unknown> {
   /**
    * Called for each chunk as it's yielded.
    * Optional - if not provided, chunks are just collected.

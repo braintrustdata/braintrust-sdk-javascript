@@ -2,7 +2,7 @@ import { RemoteEvalParameters } from "../logger";
 import { LRUCache } from "./lru-cache";
 import { DiskCache } from "./disk-cache";
 
-export interface ParametersKey {
+interface ParametersKey {
   slug?: string;
   version?: string;
   projectId?: string;

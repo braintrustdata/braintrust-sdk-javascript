@@ -1,7 +1,7 @@
 import { BraintrustState, ObjectFetcher, WithTransactionId } from "./logger";
 import { invoke } from "./functions/invoke";
 
-export interface TraceOptions {
+interface TraceOptions {
   objectType: "experiment" | "project_logs" | "playground_logs";
   objectId: string;
   rootSpanId: string;
@@ -20,9 +20,9 @@ export class SpanFetcher extends ObjectFetcher<SpanRecord> {
   constructor(
     objectType: "experiment" | "project_logs" | "playground_logs",
     private readonly _objectId: string,
-    private readonly rootSpanId: string,
+    rootSpanId: string,
     private readonly _state: BraintrustState,
-    private readonly spanTypeFilter?: string[],
+    spanTypeFilter?: string[],
     includeScorers = false,
     brainstoreRealtime = true,
   ) {
@@ -122,7 +122,7 @@ export interface SpanData {
 export type SpanFetchFn = (
   spanType: string[] | undefined,
 ) => Promise<SpanData[]>;
-export type SpanFetchWithOptionsFn = (
+type SpanFetchWithOptionsFn = (
   spanType: string[] | undefined,
   includeScorers: boolean,
 ) => Promise<SpanData[]>;

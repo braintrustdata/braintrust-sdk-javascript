@@ -768,8 +768,6 @@ export function getOtelParentFromSpan(
  */
 export class BraintrustExporter {
   private readonly processor: BraintrustSpanProcessor;
-  private readonly spans: ReadableSpan[] = [];
-  private readonly callbacks: Array<(result: unknown) => void> = [];
 
   constructor(options: BraintrustSpanProcessorOptions = {}) {
     // Use BraintrustSpanProcessor under the hood

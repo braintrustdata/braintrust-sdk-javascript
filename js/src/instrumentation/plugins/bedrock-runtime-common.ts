@@ -4,7 +4,7 @@ import type {
   BedrockRuntimeCommandName,
 } from "../../vendor-sdk-types/bedrock-runtime";
 
-export type BedrockRuntimeOperation =
+type BedrockRuntimeOperation =
   | "converse"
   | "converseStream"
   | "invokeModel"

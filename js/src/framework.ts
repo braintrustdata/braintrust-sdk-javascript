@@ -189,7 +189,7 @@ export type EvalScorer<
   args: EvalScorerArgs<Input, Output, Expected, Metadata>,
 ) => OneOrMoreScores | Promise<OneOrMoreScores>;
 
-export type OneOrMoreClassifications = Classification | Classification[] | null;
+type OneOrMoreClassifications = Classification | Classification[] | null;
 
 export type EvalClassifier<
   Input,
@@ -405,11 +405,7 @@ export class EvalResultWithSummary<
   }
 }
 
-export type {
-  ReporterOpts,
-  ReporterBody,
-  ReporterDef,
-} from "./reporters/types";
+export type { ReporterBody, ReporterDef } from "./reporters/types";
 
 async function getPersistedBaseExperimentId(
   experiment: Experiment,
@@ -566,7 +562,7 @@ globalThis._evals = {
   reporters: {},
 };
 
-export interface EvalOptions<EvalReport, Parameters extends EvalParameters> {
+interface EvalOptions<EvalReport, Parameters extends EvalParameters> {
   /**
    * A `Reporter` which you can use to summarize progress after an Eval() runs.
    */

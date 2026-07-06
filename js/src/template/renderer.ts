@@ -1,7 +1,5 @@
 import { getTemplateRenderer, type TemplateFormat } from "./registry";
 
-export type { TemplateFormat } from "./registry";
-
 export function isTemplateFormat(v: unknown): v is TemplateFormat {
   return v === "mustache" || v === "nunjucks" || v === "none";
 }

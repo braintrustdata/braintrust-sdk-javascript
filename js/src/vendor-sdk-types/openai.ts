@@ -11,7 +11,6 @@ import type {
   OpenAIModerationResponse,
   OpenAIResponse,
   OpenAIResponseCompactParams,
-  OpenAIResponseCompletedEvent,
   OpenAIResponseCreateParams,
   OpenAIResponseStreamEvent,
 } from "./openai-common";
@@ -39,7 +38,6 @@ export type {
   OpenAIModerationResponse,
   OpenAIResponse,
   OpenAIResponseCompactParams,
-  OpenAIResponseCompletedEvent,
   OpenAIResponseCreateParams,
   OpenAIResponseStreamEvent,
 };

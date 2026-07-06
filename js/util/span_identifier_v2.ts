@@ -1,5 +1,3 @@
-// Mirror of py/src/braintrust/span_identifier_v2.py.
-
 import * as uuid from "uuid";
 import { ParentExperimentIds, ParentProjectLogIds } from "./object";
 import { SpanComponentsV1 } from "./span_identifier_v1";

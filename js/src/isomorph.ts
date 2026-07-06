@@ -16,12 +16,12 @@ export interface IsoAsyncLocalStorage<T> {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type IsoMessageFunction<M = any, N extends string | symbol = string> = (
+type IsoMessageFunction<M = any, N extends string | symbol = string> = (
   message: M,
   name: N,
 ) => void;
 
-export type IsoTransformFunction<M, S> = (message: M) => S;
+type IsoTransformFunction<M, S> = (message: M) => S;
 
 /**
  * Channel interface matching the shared node:diagnostics_channel and dc-browser API.
@@ -224,7 +224,7 @@ class DefaultTracingChannel<M> implements IsoTracingChannel<M> {
   }
 }
 
-export interface Common {
+interface Common {
   buildType:
     | "browser" // deprecated, use /workerd or /edge-light entrypoints for edge environments
     | "browser-js" // @braintrust/browser package

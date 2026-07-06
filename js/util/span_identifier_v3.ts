@@ -1,5 +1,3 @@
-// Mirror of py/src/braintrust/span_identifier_v3.py.
-
 import * as uuid from "uuid";
 import {
   ParentExperimentIds,
@@ -239,7 +237,7 @@ export class SpanComponentsV3 {
       case SpanObjectTypeV3.PLAYGROUND_LOGS:
         return { prompt_session_id: this.data.object_id, log_id: "x" };
       default:
-        const _: never = this.data.object_type;
+        this.data.object_type satisfies never;
         throw new Error("Impossible");
     }
   }
