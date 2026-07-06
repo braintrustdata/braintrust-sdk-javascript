@@ -32,7 +32,7 @@ type SpanState = {
   startTime: number;
 };
 
-export type AsyncChannelSpanConfig<TChannel extends AnyAsyncChannel> =
+type AsyncChannelSpanConfig<TChannel extends AnyAsyncChannel> =
   ChannelConfig & {
     extractInput: (
       args: [...ArgsOf<TChannel>, ...any[]],
@@ -62,7 +62,7 @@ type StreamingResult<TChannel extends AnyAsyncChannel> = Exclude<
   AsyncIterable<unknown>
 >;
 
-export type StreamingChannelSpanConfig<TChannel extends AnyAsyncChannel> =
+type StreamingChannelSpanConfig<TChannel extends AnyAsyncChannel> =
   ChannelConfig & {
     extractInput: (
       args: [...ArgsOf<TChannel>, ...any[]],
@@ -122,7 +122,7 @@ export type StreamingChannelSpanConfig<TChannel extends AnyAsyncChannel> =
     }) => void;
   };
 
-export type SyncStreamChannelSpanConfig<TChannel extends AnySyncStreamChannel> =
+type SyncStreamChannelSpanConfig<TChannel extends AnySyncStreamChannel> =
   ChannelConfig & {
     extractInput: (
       args: [...ArgsOf<TChannel>, ...any[]],

@@ -22,6 +22,7 @@
   ],
   "scripts": {
     "build": "tsup",
+    "check:typings": "tsc --noEmit",
     "dev": "tsup --watch",
     "typecheck": "tsc --noEmit"
   },

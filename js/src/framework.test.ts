@@ -323,7 +323,10 @@ describe("runEvaluator", () => {
         evalName: "eval",
         data,
         task: async (input: number, hooks) => {
-          hooks.reportProgress({ object_type: "progress", progress: 0.5 });
+          hooks.reportProgress({
+            object_type: "progress",
+            progress: 0.5,
+          } as any);
           return input * 2;
         },
         scores: [],

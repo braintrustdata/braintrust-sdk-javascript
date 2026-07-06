@@ -5,11 +5,6 @@
  * users and should only cover fields we read, wrap, or log.
  */
 
-export interface CursorSDKModule {
-  Agent: CursorSDKAgentClass;
-  [key: string]: unknown;
-}
-
 export interface CursorSDKAgentClass {
   create(options: CursorSDKAgentOptions): Promise<CursorSDKAgent>;
   resume(
@@ -102,7 +97,7 @@ export type CursorSDKImage =
       [key: string]: unknown;
     };
 
-export interface CursorSDKImageDimension {
+interface CursorSDKImageDimension {
   width?: number;
   height?: number;
 }
@@ -230,12 +225,12 @@ export interface CursorSDKRequestMessage {
   request_id?: string;
 }
 
-export interface CursorSDKTextBlock {
+interface CursorSDKTextBlock {
   type?: "text";
   text?: string;
 }
 
-export interface CursorSDKToolUseBlock {
+interface CursorSDKToolUseBlock {
   type?: "tool_use";
   id?: string;
   name?: string;

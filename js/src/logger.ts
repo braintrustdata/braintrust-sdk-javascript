@@ -6730,7 +6730,6 @@ interface ResolvedSpanIds {
 
 /**
  * Resolve all span IDs (span_id, root_span_id, span_parents) from explicit values, parent info, or context.
- * Matches the Python implementation in logger.py::_resolve_span_ids.
  *
  * @param spanId - Optional explicit span_id (from public API)
  * @param parentSpanIds - Optional explicit parent span IDs (from parent string or parent span)
@@ -7325,6 +7324,7 @@ export class Dataset<
         ) as WithTransactionId<DatasetRecord<IsLegacyDataset>>,
       _internal_btql,
     );
+    void this.__braintrust_dataset_marker;
     this.lazyMetadata = lazyMetadata;
     this.lazyPinnedVersion = pinState?.lazyPinnedVersion;
     this.pinnedEnvironment = pinState?.pinnedEnvironment;
@@ -8118,7 +8118,9 @@ export class Prompt<
     private metadata: PromptRowWithId<HasId, HasVersion> | PromptSessionEvent,
     private defaults: DefaultPromptArgs,
     private noTrace: boolean,
-  ) {}
+  ) {
+    void this.__braintrust_prompt_marker;
+  }
 
   public get id(): HasId extends true ? string : string | undefined {
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
@@ -8462,7 +8464,9 @@ export class RemoteEvalParameters<
 > {
   private readonly __braintrust_parameters_marker = true;
 
-  constructor(private metadata: ParametersRow) {}
+  constructor(private metadata: ParametersRow) {
+    void this.__braintrust_parameters_marker;
+  }
 
   public get id(): HasId extends true ? string : string | undefined {
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
@@ -8751,5 +8755,6 @@ export const _exportsForTestingOnly = {
   isAsyncGeneratorFunction,
   resetIdGenStateForTests,
   validateTags,
-  isomorph: iso, // Expose isomorph for build type detection
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  isomorph: iso as any, // Expose isomorph for build type detection
 };

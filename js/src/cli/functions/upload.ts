@@ -3,7 +3,7 @@ import {
   type FunctionType as FunctionObject,
   type IfExistsType as IfExists,
 } from "../../generated_types";
-import type { BuildSuccess, EvaluatorState, FileHandle } from "../types";
+import type { BuildSuccess, FileHandle } from "../types";
 import { classifierName, scorerName, warning } from "../../framework";
 import {
   _internalGetGlobalState,
@@ -26,14 +26,6 @@ import {
   ProjectNameIdMap,
   serializeRemoteEvalParametersContainer,
 } from "../../framework2";
-
-export type EvaluatorMap = Record<
-  string,
-  {
-    evaluator: EvaluatorState["evaluators"][number];
-    experiment: Experiment;
-  }
->;
 
 interface BundledFunctionSpec {
   project_id: string;

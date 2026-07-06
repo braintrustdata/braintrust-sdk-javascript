@@ -13,7 +13,6 @@ import { configureNode } from "../../node/config";
 import {
   _exportsForTestingOnly,
   initLogger,
-  Logger,
   TestBackgroundLogger,
 } from "../../logger";
 import { wrapAISDK, wrapAgentClass } from "../../wrappers/ai-sdk";
@@ -30,7 +29,6 @@ const sleep = (ms: number) =>
 
 describe("AI SDK streaming instrumentation", () => {
   let backgroundLogger: TestBackgroundLogger;
-  let _logger: Logger<false>;
 
   beforeAll(async () => {
     await _exportsForTestingOnly.simulateLoginForTests();
@@ -38,7 +36,7 @@ describe("AI SDK streaming instrumentation", () => {
 
   beforeEach(() => {
     backgroundLogger = _exportsForTestingOnly.useTestBackgroundLogger();
-    _logger = initLogger({
+    initLogger({
       projectName: "ai-sdk-plugin.streaming.test.ts",
       projectId: "test-project-id",
     });
@@ -424,7 +422,7 @@ describe("AI SDK streaming instrumentation", () => {
     expect(workflowAgentWrapperSpanCountForTesting()).toBe(0);
 
     class WorkflowAgent {
-      async stream() {
+      async stream(_params?: any) {
         throw new Error("workflow stream failed");
       }
     }

@@ -6,7 +6,7 @@ test("wrapAnthropic works even if not installed", () => {
   expect(wrapAnthropic).toBeInstanceOf(Function);
 
   try {
-    const Anthropic = require("@anthropic-ai/sdk");
+    require("@anthropic-ai/sdk");
   } catch (e) {
     // anthropic should not be installed when this test runs
     // so make sure it's a no-op

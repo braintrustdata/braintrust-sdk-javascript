@@ -89,8 +89,5 @@ export interface CassetteFile {
   entries: CassetteEntry[];
 }
 
-/** @deprecated Use `CassetteFile` instead. */
-export type Cassette = CassetteFile;
-
 /** The three execution modes used by the cassette server. */
 export type CassetteMode = "replay" | "record" | "passthrough";

@@ -130,11 +130,11 @@ describe("groq wrapper", () => {
       model: "llama-3.3-70b-versatile",
       stream: true,
     });
-    for await (const _chunk of streamed) {
+    for await (const _chunk of streamed as any) {
       // Consume the stream so chunk aggregation runs.
     }
 
-    await wrapped.embeddings.create({
+    await (wrapped.embeddings.create as any)({
       input: "braintrust tracing",
       model: "nomic-embed-text-v1_5",
     });

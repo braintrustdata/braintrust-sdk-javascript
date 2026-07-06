@@ -54,7 +54,7 @@ describe("wrapGenkit", () => {
           name: "summarizeCity",
         },
       },
-    ) as GenkitAction;
+    ) as unknown as GenkitAction;
     const lookupAction = vi.fn(async () => originalTool);
     class FakeRegistry {
       lookupAction = lookupAction;
@@ -71,21 +71,24 @@ describe("wrapGenkit", () => {
           typeof input === "object" && input !== null && !Array.isArray(input)
             ? input
             : {};
-        const toolRef = Array.isArray(options.tools)
-          ? options.tools[0]
+        const typedOptions = options as any;
+        const toolRef = Array.isArray(typedOptions.tools)
+          ? typedOptions.tools[0]
           : undefined;
         if (typeof toolRef !== "string") {
           throw new Error("Expected a tool name");
         }
 
-        const childRegistry = FakeRegistry.withParent(registry);
-        const tool = await childRegistry.lookupAction(`/tool/${toolRef}`);
-        return tool({ city: "Vienna" });
+        const childRegistry = (FakeRegistry.withParent as any)(registry);
+        const tool = await (childRegistry.lookupAction as any)(
+          `/tool/${toolRef}`,
+        );
+        return (tool as any)({ city: "Vienna" });
       },
       registry,
     };
 
-    const wrapped = wrapGenkit(genkitInstance);
+    const wrapped = wrapGenkit(genkitInstance as any) as any;
     wrapped.defineTool(
       {
         name: "summarizeCity",

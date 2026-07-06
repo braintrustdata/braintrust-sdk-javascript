@@ -142,7 +142,7 @@ describe.each([
       });
 
       const spans = await backgroundLogger.drain();
-      const spanNames = spans.map((span) => span.span_attributes?.name);
+      const spanNames = spans.map((span: any) => span.span_attributes?.name);
 
       expect(spanNames).toContain("root");
       expect(spanNames).toContain("generateText");

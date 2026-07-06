@@ -210,7 +210,7 @@ describe("BraintrustTemporalPlugin", () => {
     expect(configured.interceptors).toBeDefined();
     expect(configured.interceptors?.workflow).toBeDefined();
     expect(Array.isArray(configured.interceptors?.workflow)).toBe(true);
-    expect(configured.interceptors?.workflow?.length).toBe(1);
+    expect((configured.interceptors?.workflow as any[]).length).toBe(1);
   });
 
   test("configureClient preserves existing interceptors", () => {
@@ -224,7 +224,7 @@ describe("BraintrustTemporalPlugin", () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const configured = plugin.configureClient(options as any);
 
-    expect(configured.interceptors?.workflow?.length).toBe(2);
+    expect((configured.interceptors?.workflow as any[]).length).toBe(2);
   });
 
   test("configureWorker adds activity interceptor and sinks", () => {

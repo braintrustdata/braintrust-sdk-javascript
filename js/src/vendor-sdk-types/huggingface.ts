@@ -100,7 +100,7 @@ export interface HuggingFaceUsage {
   [key: string]: unknown;
 }
 
-export interface HuggingFaceChatMessage {
+interface HuggingFaceChatMessage {
   role?: string;
   content?: string | null | unknown[];
   tool_calls?: unknown;

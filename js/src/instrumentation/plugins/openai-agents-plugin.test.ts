@@ -68,22 +68,22 @@ describe("OpenAIAgentsPlugin", () => {
 
     await openAIAgentsCoreChannels.onTraceStart.tracePromise(
       async () => undefined,
-      { arguments: [trace] },
+      { arguments: [trace as any] },
     );
     await openAIAgentsCoreChannels.onSpanStart.tracePromise(
       async () => undefined,
-      { arguments: [span] },
+      { arguments: [span as any] },
     );
     await openAIAgentsCoreChannels.onSpanEnd.tracePromise(
       async () => undefined,
-      { arguments: [span] },
+      { arguments: [span as any] },
     );
     await openAIAgentsCoreChannels.onTraceEnd.tracePromise(
       async () => undefined,
-      { arguments: [trace] },
+      { arguments: [trace as any] },
     );
 
-    const spans = await backgroundLogger.drain();
+    const spans = (await backgroundLogger.drain()) as any[];
     const taskSpan = spans.find(
       (s) => s.span_attributes?.name === "Agent workflow",
     );

@@ -19,25 +19,25 @@ function createManager(handlers: unknown[] = []) {
 }
 
 function traceConfigureResult(result: unknown) {
-  return langChainChannels.configure.traceSync(() => result, {
+  return langChainChannels.configure.traceSync(() => result as any, {
     arguments: [],
   });
 }
 
 function traceConfigureArguments(args: unknown[]) {
-  return langChainChannels.configure.traceSync(() => args, {
-    arguments: args,
+  return langChainChannels.configure.traceSync(() => args as any, {
+    arguments: args as any,
   });
 }
 
 function traceConfigureArgumentsObject(args: IArguments) {
-  return langChainChannels.configure.traceSync(() => args, {
-    arguments: args,
+  return langChainChannels.configure.traceSync(() => args as any, {
+    arguments: args as any,
   });
 }
 
 function createArgumentsObject(...args: unknown[]): IArguments {
-  return (function getArgumentsObject() {
+  return (function getArgumentsObject(..._args: unknown[]) {
     return arguments;
   })(...args);
 }

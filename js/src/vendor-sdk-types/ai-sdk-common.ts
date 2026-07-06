@@ -4,7 +4,7 @@
  * These are intentionally small and only model the surface Braintrust reads.
  */
 
-export interface AISDKTokenBucket {
+interface AISDKTokenBucket {
   total?: number;
   cacheRead?: number;
   cacheWrite?: number;
@@ -50,13 +50,13 @@ export interface AISDKUsage {
   completion_audio_tokens?: number;
 }
 
-export interface AISDKGatewayRouting {
+interface AISDKGatewayRouting {
   resolvedProvider?: string;
   finalProvider?: string;
   resolvedProviderApiModelId?: string;
 }
 
-export interface AISDKGatewayMetadata {
+interface AISDKGatewayMetadata {
   routing?: AISDKGatewayRouting;
   cost?: number | string;
   marketCost?: number | string;
@@ -72,7 +72,7 @@ export interface AISDKStepResult {
   [key: string]: unknown;
 }
 
-export interface AISDKGeneratedFile {
+interface AISDKGeneratedFile {
   mediaType?: string;
   base64?: string;
   uint8Array?: Uint8Array;

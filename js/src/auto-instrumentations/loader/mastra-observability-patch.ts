@@ -80,7 +80,7 @@ const MASTRA_OBSERVABILITY_ENTRY_PATHS = new Set([
   "dist/index.cjs",
 ]);
 
-export type MastraTargetKind = "core" | "observability";
+type MastraTargetKind = "core" | "observability";
 export type MastraModuleFormat = "esm" | "cjs";
 
 export function classifyMastraTarget(

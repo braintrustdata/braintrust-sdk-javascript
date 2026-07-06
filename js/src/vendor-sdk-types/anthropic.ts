@@ -33,7 +33,7 @@ export interface AnthropicAPIPromise<T> extends Promise<T> {
   withResponse(): Promise<AnthropicWithResponse<T>>;
 }
 
-export interface AnthropicWithResponse<T> {
+interface AnthropicWithResponse<T> {
   data: T;
 }
 
@@ -128,7 +128,7 @@ export interface AnthropicServerToolUseContentBlock {
   input: Record<string, unknown>;
 }
 
-export interface AnthropicWebSearchResultContentBlock {
+interface AnthropicWebSearchResultContentBlock {
   type: string;
   [key: string]: unknown;
 }

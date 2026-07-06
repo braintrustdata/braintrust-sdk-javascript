@@ -194,7 +194,7 @@ describe("patchTracingChannel", () => {
 
     const apiPromise = new MockAPIPromise(Promise.resolve("hello"));
     const traced = channel.tracePromise(() => apiPromise, {}, null);
-    const withResponse = await traced.withResponse();
+    const withResponse = await (traced as any).withResponse();
 
     expect(traced).toBe(apiPromise);
     expect(withResponse.data).toBe("hello");

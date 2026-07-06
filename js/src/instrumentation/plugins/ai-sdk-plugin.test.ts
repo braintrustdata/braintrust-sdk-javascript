@@ -30,7 +30,6 @@ import {
   processAISDKWorkflowAgentModelCallInput,
   processAISDKOutput as processAISDKOutputActual,
 } from "./ai-sdk-plugin";
-import { Attachment } from "../../logger";
 import iso from "../../isomorph";
 import { serializeAISDKToolsForLogging } from "../../wrappers/ai-sdk/tool-serialization";
 import { BRAINTRUST_AI_SDK_V7_OPERATION_KEY as AI_SDK_V7_OPERATION_KEY } from "../../vendor-sdk-types/ai-sdk-v7-telemetry";
@@ -429,7 +428,7 @@ describe("AISDKPlugin", () => {
       telemetryMocks.telemetry.onStart = vi.fn(() =>
         Promise.reject(new Error("braintrust telemetry failed")),
       );
-      const dispatcher = {
+      const dispatcher: any = {
         onStart: existingOnStart,
       };
 

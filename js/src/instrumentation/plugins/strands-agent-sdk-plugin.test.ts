@@ -227,7 +227,7 @@ describe("StrandsAgentSDKPlugin", () => {
 
     handlers.start(event);
     handlers.end(event);
-    const chunks = [];
+    const chunks: unknown[] = [];
     for await (const chunk of stream) {
       chunks.push(chunk);
     }

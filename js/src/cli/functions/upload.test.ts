@@ -1,6 +1,5 @@
 import { describe, expect, test, vi } from "vitest";
 import { buildBundledFunctionEntry } from "./upload";
-import { findCodeDefinition } from "./infer-source";
 
 vi.mock("./infer-source", () => ({
   findCodeDefinition: vi.fn(),
@@ -61,7 +60,7 @@ describe("buildBundledFunctionEntry", () => {
         },
       },
     });
-    expect(entry.function_data.data.preview).toBeUndefined();
+    expect(((entry.function_data as any).data as any).preview).toBeUndefined();
   });
 
   test("does not invent tags when they are omitted", async () => {
@@ -108,7 +107,7 @@ describe("buildBundledFunctionEntry", () => {
     });
 
     expect(entry.function_type).toBe("classifier");
-    expect(entry.function_data.data.location).toEqual({
+    expect(((entry.function_data as any).data as any).location).toEqual({
       type: "experiment",
       eval_name: "eval-1",
       position: {

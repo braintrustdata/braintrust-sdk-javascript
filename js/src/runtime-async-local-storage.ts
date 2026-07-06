@@ -1,6 +1,6 @@
 import type { AsyncLocalStorage as NodeAsyncLocalStorage } from "node:async_hooks";
 
-export type RuntimeAsyncLocalStorageConstructor = new <
+type RuntimeAsyncLocalStorageConstructor = new <
   T,
 >() => NodeAsyncLocalStorage<T>;
 

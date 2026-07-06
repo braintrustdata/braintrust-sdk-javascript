@@ -138,7 +138,7 @@ test("remote prompt parameter is rehydrated correctly", async () => {
 
   const validated = await validateParameters({}, parameters);
 
-  expect(validated.main.build({ input: "test input" })).toMatchObject({
+  expect((validated.main as any).build({ input: "test input" })).toMatchObject({
     messages: [{ role: "user", content: "test input" }],
     model: "gpt-5-mini",
   });

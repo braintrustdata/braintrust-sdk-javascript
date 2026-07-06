@@ -51,7 +51,7 @@ import type {
 } from "../../vendor-sdk-types/ai-sdk-v7-telemetry";
 import { BRAINTRUST_AI_SDK_V7_OPERATION_KEY as AI_SDK_V7_OPERATION_KEY } from "../../vendor-sdk-types/ai-sdk-v7-telemetry";
 
-export interface AISDKPluginConfig {
+interface AISDKPluginConfig {
   /**
    * List of JSON paths to remove from output field.
    * Uses dot notation with array wildcards: "roundtrips[].request.body"
@@ -692,7 +692,7 @@ function resolveDenyOutputPaths(
   return defaultDenyOutputPaths;
 }
 
-export interface ProcessCallInputSyncResult {
+interface ProcessCallInputSyncResult {
   input: AISDKCallParams;
   outputPromise?: Promise<{
     output: {
