@@ -34,7 +34,6 @@ import type {
   AISDKEmbedParams,
   AISDKEmbeddingResult,
   AISDKLanguageModel,
-  AISDKMessage,
   AISDKModel,
   AISDKModelStreamChunk,
   AISDKOutputObject,
