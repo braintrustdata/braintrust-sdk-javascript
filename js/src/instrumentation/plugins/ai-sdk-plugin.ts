@@ -1139,7 +1139,7 @@ function prepareAISDKChildTracing(
   modelWrapped: boolean;
 } {
   const cleanup: Array<() => void> = [];
-  const patchedModels = new WeakSet<object>();
+  const patchedModels = new WeakMap<object, AISDKModel>();
   const patchedTools = new WeakSet<object>();
   let modelWrapped = false;
 
@@ -1151,22 +1151,34 @@ function prepareAISDKChildTracing(
       !resolvedModel ||
       typeof resolvedModel !== "object" ||
       typeof resolvedModel.doGenerate !== "function" ||
-      patchedModels.has(resolvedModel) ||
       (resolvedModel as { [AUTO_PATCHED_MODEL]?: boolean })[AUTO_PATCHED_MODEL]
     ) {
       return resolvedModel;
     }
 
-    patchedModels.add(resolvedModel);
-    (resolvedModel as { [AUTO_PATCHED_MODEL]?: boolean })[AUTO_PATCHED_MODEL] =
-      true;
+    const existingWrappedModel = patchedModels.get(resolvedModel);
+    if (existingWrappedModel) {
+      return existingWrappedModel;
+    }
+
     modelWrapped = true;
 
     const originalDoGenerate = resolvedModel.doGenerate;
     const originalDoStream = resolvedModel.doStream;
     const baseMetadata = buildAISDKChildMetadata(resolvedModel);
+    const wrappedModel = Object.create(
+      Object.getPrototypeOf(resolvedModel),
+    ) as AISDKLanguageModel;
+    Object.defineProperties(
+      wrappedModel,
+      Object.getOwnPropertyDescriptors(resolvedModel),
+    );
+    Object.defineProperty(wrappedModel, AUTO_PATCHED_MODEL, {
+      configurable: true,
+      value: true,
+    });
 
-    resolvedModel.doGenerate = async function doGeneratePatched(
+    wrappedModel.doGenerate = async function doGeneratePatched(
       options: AISDKCallParams,
     ) {
       return parentSpan.traced(
@@ -1208,7 +1220,7 @@ function prepareAISDKChildTracing(
     };
 
     if (originalDoStream) {
-      resolvedModel.doStream = async function doStreamPatched(
+      wrappedModel.doStream = async function doStreamPatched(
         options: AISDKCallParams,
       ) {
         const span = parentSpan.startSpan({
@@ -1343,17 +1355,8 @@ function prepareAISDKChildTracing(
       };
     }
 
-    cleanup.push(() => {
-      resolvedModel.doGenerate = originalDoGenerate;
-      if (originalDoStream) {
-        resolvedModel.doStream = originalDoStream;
-      }
-      delete (resolvedModel as { [AUTO_PATCHED_MODEL]?: boolean })[
-        AUTO_PATCHED_MODEL
-      ];
-    });
-
-    return resolvedModel;
+    patchedModels.set(resolvedModel, wrappedModel);
+    return wrappedModel;
   };
 
   const patchTool = (tool: AISDKTool, name: string): void => {
@@ -1443,13 +1446,13 @@ function prepareAISDKChildTracing(
   };
 
   if (params && typeof params === "object") {
-    const patchedParamModel = patchModel(params.model);
-    if (
-      typeof params.model === "string" &&
-      patchedParamModel &&
-      typeof patchedParamModel === "object"
-    ) {
+    const originalParamModel = params.model;
+    const patchedParamModel = patchModel(originalParamModel);
+    if (patchedParamModel && patchedParamModel !== originalParamModel) {
       params.model = patchedParamModel;
+      cleanup.push(() => {
+        params.model = originalParamModel;
+      });
     }
     patchTools(params.tools);
   }
@@ -1461,25 +1464,30 @@ function prepareAISDKChildTracing(
     };
 
     if (selfRecord.model !== undefined) {
-      const patchedSelfModel = patchModel(selfRecord.model);
-      if (
-        typeof selfRecord.model === "string" &&
-        patchedSelfModel &&
-        typeof patchedSelfModel === "object"
-      ) {
+      const originalSelfModel = selfRecord.model;
+      const patchedSelfModel = patchModel(originalSelfModel);
+      if (patchedSelfModel && patchedSelfModel !== originalSelfModel) {
         selfRecord.model = patchedSelfModel;
+        cleanup.push(() => {
+          selfRecord.model = originalSelfModel;
+        });
       }
     }
 
     if (selfRecord.settings && typeof selfRecord.settings === "object") {
       if (selfRecord.settings.model !== undefined) {
-        const patchedSettingsModel = patchModel(selfRecord.settings.model);
+        const originalSettingsModel = selfRecord.settings.model;
+        const patchedSettingsModel = patchModel(originalSettingsModel);
         if (
-          typeof selfRecord.settings.model === "string" &&
           patchedSettingsModel &&
-          typeof patchedSettingsModel === "object"
+          patchedSettingsModel !== originalSettingsModel
         ) {
           selfRecord.settings.model = patchedSettingsModel;
+          cleanup.push(() => {
+            if (selfRecord.settings) {
+              selfRecord.settings.model = originalSettingsModel;
+            }
+          });
         }
       }
       if (selfRecord.settings.tools !== undefined) {
