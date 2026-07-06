@@ -210,6 +210,18 @@ export const aiSDKConfigs: InstrumentationConfig[] = [
       kind: "Sync",
     },
   },
+  {
+    channelName: aiSDKChannels.v7CreateTelemetryDispatcher.channelName,
+    module: {
+      name: "ai",
+      versionRange: ">=7.0.0-0 <8.0.0",
+      filePath: "dist/internal/index.js",
+    },
+    functionQuery: {
+      functionName: "createTelemetryDispatcher",
+      kind: "Sync",
+    },
+  },
 
   // streamObject - async function (v3 only, before the sync refactor in v4)
   {

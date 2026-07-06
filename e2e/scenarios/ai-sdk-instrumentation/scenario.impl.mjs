@@ -101,8 +101,9 @@ export const AI_SDK_SCENARIO_SPECS = [
     supportsRerank: false,
     supportsStreamObject: true,
     supportsToolExecution: true,
+    supportsWorkflowAgent: true,
     toolSchemaKey: "inputSchema",
-    wrapperEntry: "scenario.ai-sdk-v7.ts",
+    wrapperEntry: "scenario.ai-sdk-v7-explicit.mjs",
     wrapperSnapshotSuffix: "explicit",
     wrapperTestName: "explicit telemetry",
   },
@@ -199,6 +200,66 @@ function createWeatherTool(ai, schemaKey) {
         temperatureC: 22,
       }),
   });
+}
+
+async function runWorkflowAgentStreamOperation({
+  ai,
+  instrumentedWorkflow,
+  openaiModel,
+}) {
+  const agent = new instrumentedWorkflow.WorkflowAgent({
+    instructions:
+      "You are a terse weather assistant. Use tools before answering.",
+    model: openaiModel,
+    tools: {
+      get_weather: ai.tool({
+        description: "Get the weather for a location",
+        inputSchema: z.object({
+          location: z.string().describe("The city and country"),
+        }),
+        execute: async ({ location }) => ({
+          condition: "sunny",
+          location,
+          temperatureC: 22,
+        }),
+      }),
+    },
+  });
+
+  await runOperation(
+    "ai-sdk-workflow-agent-stream-operation",
+    "workflow-agent-stream",
+    async () => {
+      await agent.stream({
+        messages: [
+          {
+            role: "user",
+            content:
+              "Use get_weather for Paris, France, then reply with one short sentence.",
+          },
+        ],
+        stopWhen: ai.stepCountIs(4),
+        temperature: 0,
+        toolChoice: "required",
+        maxOutputTokens: 96,
+      });
+    },
+  );
+
+  await runOperation(
+    "ai-sdk-workflow-agent-stream-prompt-operation",
+    "workflow-agent-stream-prompt",
+    async () => {
+      await agent.stream({
+        system: "You are a helpful weather assistant.",
+        prompt: "What's the weather in Paris?",
+        stopWhen: ai.stepCountIs(4),
+        temperature: 0,
+        toolChoice: "required",
+        maxOutputTokens: 96,
+      });
+    },
+  );
 }
 
 async function runAISDKInstrumentationScenario(
@@ -611,12 +672,23 @@ async function runAISDKInstrumentationScenario(
           );
         }
       }
+
+      if (options.workflow) {
+        await runWorkflowAgentStreamOperation({
+          ai: options.workflowAI ?? options.ai,
+          instrumentedWorkflow: options.workflow,
+          openaiModel,
+        });
+      }
     },
     flushCount,
     flushDelayMs,
     metadata: {
       aiSdkVersion: options.sdkVersion,
       scenario: SCENARIO_NAME,
+      ...(options.workflowVersion
+        ? { workflowVersion: options.workflowVersion }
+        : {}),
     },
     projectNameBase: "e2e-ai-sdk-instrumentation",
     rootName: ROOT_NAME,

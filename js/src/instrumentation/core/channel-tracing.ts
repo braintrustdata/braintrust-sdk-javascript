@@ -113,6 +113,13 @@ type StreamingChannelSpanConfig<TChannel extends AnyAsyncChannel> =
       span: Span;
       startTime: number;
     }) => void;
+    onError?: (args: {
+      channelName: string;
+      error: Error;
+      event: AsyncEndOf<TChannel> | ErrorOf<TChannel>;
+      span: Span;
+      startTime: number;
+    }) => void;
   };
 
 type SyncStreamChannelSpanConfig<TChannel extends AnySyncStreamChannel> =
@@ -374,6 +381,31 @@ function runStreamingCompletionHook<TChannel extends AnyAsyncChannel>(args: {
   }
 }
 
+function runStreamingErrorHook<TChannel extends AnyAsyncChannel>(args: {
+  channelName: string;
+  config: StreamingChannelSpanConfig<TChannel>;
+  error: Error;
+  event: AsyncEndOf<TChannel> | ErrorOf<TChannel>;
+  span: Span;
+  startTime: number;
+}): void {
+  if (!args.config.onError) {
+    return;
+  }
+
+  try {
+    args.config.onError({
+      channelName: args.channelName,
+      error: args.error,
+      event: args.event,
+      span: args.span,
+      startTime: args.startTime,
+    });
+  } catch (error) {
+    debugLogger.error(`Error in onError hook for ${args.channelName}:`, error);
+  }
+}
+
 export function traceAsyncChannel<TChannel extends AnyAsyncChannel>(
   channel: TChannel,
   config: AsyncChannelSpanConfig<TChannel>,
@@ -571,6 +603,14 @@ export function traceStreamingChannel<TChannel extends AnyAsyncChannel>(
             }
           },
           onError: (error: Error) => {
+            runStreamingErrorHook<TChannel>({
+              channelName,
+              config,
+              error,
+              event: asyncEndEvent,
+              span,
+              startTime,
+            });
             span.log({
               error: error.message,
             });
@@ -638,6 +678,17 @@ export function traceStreamingChannel<TChannel extends AnyAsyncChannel>(
       }
     },
     error: (event) => {
+      const spanData = states.get(event as object);
+      if (spanData) {
+        runStreamingErrorHook<TChannel>({
+          channelName,
+          config,
+          error: (event as ErrorOf<TChannel>).error,
+          event: event as ErrorOf<TChannel>,
+          span: spanData.span,
+          startTime: spanData.startTime,
+        });
+      }
       logErrorAndEnd(states, event as ErrorOf<TChannel>);
     },
   };

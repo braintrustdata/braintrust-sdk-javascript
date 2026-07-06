@@ -43,7 +43,6 @@ span_tree:
     │         },
     │         "response": {
     │           "body": "<omitted>",
-    │           "headers": "<omitted>",
     │           "messages": [
     │             {
     │               "content": [
@@ -80,7 +79,6 @@ span_tree:
     │             "reasoningDetails": [],
     │             "response": {
     │               "body": "<omitted>",
-    │               "headers": "<omitted>",
     │               "messages": [
     │                 {
     │                   "content": [
@@ -190,8 +188,7 @@ span_tree:
     │                   },
     │                   "total_tokens": 20
     │                 }
-    │               },
-    │               "headers": "<omitted>"
+    │               }
     │             },
     │             "response": {
     │               "modelId": "gpt-4o-mini-2024-07-18",
@@ -225,9 +222,6 @@ span_tree:
     │   }
     │   └── generateText [function]
     │       input: {
-    │         "experimental_output": {
-    │           "type": "object"
-    │         },
     │         "maxTokens": 32,
     │         "model": {
     │           "config": {
@@ -278,7 +272,6 @@ span_tree:
     │         },
     │         "response": {
     │           "body": "<omitted>",
-    │           "headers": "<omitted>",
     │           "messages": [
     │             {
     │               "content": [
@@ -315,7 +308,6 @@ span_tree:
     │             "reasoningDetails": [],
     │             "response": {
     │               "body": "<omitted>",
-    │               "headers": "<omitted>",
     │               "messages": [
     │                 {
     │                   "content": [
@@ -432,8 +424,7 @@ span_tree:
     │                   },
     │                   "total_tokens": 88
     │                 }
-    │               },
-    │               "headers": "<omitted>"
+    │               }
     │             },
     │             "response": {
     │               "modelId": "gpt-4o-mini-2024-07-18",
@@ -631,7 +622,6 @@ span_tree:
     │         },
     │         "response": {
     │           "body": "<omitted>",
-    │           "headers": "<omitted>",
     │           "messages": [
     │             {
     │               "content": [
@@ -681,7 +671,6 @@ span_tree:
     │             "reasoningDetails": [],
     │             "response": {
     │               "body": "<omitted>",
-    │               "headers": "<omitted>",
     │               "messages": [
     │                 {
     │                   "content": [
@@ -894,8 +883,7 @@ span_tree:
     │       │           },
     │       │           "total_tokens": 103
     │       │         }
-    │       │       },
-    │       │       "headers": "<omitted>"
+    │       │       }
     │       │     },
     │       │     "response": {
     │       │       "modelId": "gpt-4o-mini-2024-07-18",
@@ -987,7 +975,6 @@ span_tree:
     │         },
     │         "response": {
     │           "body": "<omitted>",
-    │           "headers": "<omitted>",
     │           "modelId": "gpt-4o-mini-2024-07-18",
     │           "timestamp": "<timestamp>"
     │         },
@@ -1097,8 +1084,7 @@ span_tree:
     │                   },
     │                   "total_tokens": 64
     │                 }
-    │               },
-    │               "headers": "<omitted>"
+    │               }
     │             },
     │             "response": {
     │               "modelId": "gpt-4o-mini-2024-07-18",

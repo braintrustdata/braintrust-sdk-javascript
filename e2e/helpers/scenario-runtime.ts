@@ -2,6 +2,7 @@ import { spawn } from "node:child_process";
 import { promises as fs } from "node:fs";
 import { createRequire } from "node:module";
 import * as path from "node:path";
+import { fileURLToPath } from "node:url";
 import { BasicTracerProvider } from "@opentelemetry/sdk-trace-base";
 
 export interface SubprocessResult {
@@ -121,7 +122,41 @@ export async function getInstalledPackageVersion(
   packageName: string,
 ): Promise<string> {
   const require = createRequire(importMetaUrl);
-  let currentDir = path.dirname(require.resolve(packageName));
+  let currentDir: string;
+
+  try {
+    currentDir = path.dirname(require.resolve(packageName));
+  } catch {
+    currentDir = path.dirname(fileURLToPath(importMetaUrl));
+
+    while (true) {
+      const manifestPath = path.join(
+        currentDir,
+        "node_modules",
+        ...packageName.split("/"),
+        "package.json",
+      );
+
+      try {
+        const manifestRaw = await fs.readFile(manifestPath, "utf8");
+        const manifest = JSON.parse(manifestRaw) as { version?: string };
+
+        if (typeof manifest.version === "string") {
+          return manifest.version;
+        }
+      } catch {
+        // Keep walking upward until we find the package root.
+      }
+
+      const parentDir = path.dirname(currentDir);
+      if (parentDir === currentDir) {
+        break;
+      }
+      currentDir = parentDir;
+    }
+
+    throw new Error(`Could not resolve installed version for ${packageName}`);
+  }
 
   while (true) {
     const manifestPath = path.join(currentDir, "package.json");

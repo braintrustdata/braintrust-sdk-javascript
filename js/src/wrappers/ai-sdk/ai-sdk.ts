@@ -13,7 +13,9 @@ import type {
   AISDKRerankFunction,
   AISDKRerankParams,
   AISDKStreamFunction,
+  AISDKWorkflowAgentClass,
 } from "../../vendor-sdk-types/ai-sdk";
+import { currentWorkflowAgentWrapperSpan } from "./workflow-agent-context";
 
 interface WrapAISDKOptions {
   denyOutputPaths?: string[];
@@ -137,6 +139,7 @@ export function wrapAISDK<T>(aiSDK: T, options: WrapAISDKOptions = {}): T {
         case "Agent":
         case "Experimental_Agent":
         case "ToolLoopAgent":
+        case "WorkflowAgent":
           return original ? wrapAgentClass(original, options) : original;
       }
       return original;
@@ -148,7 +151,9 @@ export const wrapAgentClass = (
   AgentClass: any,
   options: WrapAISDKOptions = {},
 ): any => {
-  const typedAgentClass = AgentClass as AISDKAgentClass;
+  const typedAgentClass = AgentClass as
+    | AISDKAgentClass
+    | AISDKWorkflowAgentClass;
 
   return new Proxy(typedAgentClass, {
     construct(target, args, newTarget) {
@@ -161,11 +166,15 @@ export const wrapAgentClass = (
         get(instanceTarget, prop, instanceReceiver) {
           const original = Reflect.get(instanceTarget, prop, instanceTarget);
 
-          if (prop === "generate") {
+          if (
+            prop === "generate" &&
+            typeof original === "function" &&
+            instanceTarget.constructor.name !== "WorkflowAgent"
+          ) {
             return wrapAgentGenerate(original, instanceTarget, options);
           }
 
-          if (prop === "stream") {
+          if (prop === "stream" && typeof original === "function") {
             return wrapAgentStream(original, instanceTarget, options);
           }
 
@@ -189,7 +198,7 @@ const wrapAgentGenerate = (
   const defaultName = `${instance.constructor.name}.generate`;
   return async (params: AISDKCallParams & SpanInfo) =>
     makeGenerateTextWrapper(
-      aiSDKChannels.generateText,
+      generateChannelForAgent(instance.constructor.name),
       defaultName,
       generate.bind(instance),
       {
@@ -200,29 +209,62 @@ const wrapAgentGenerate = (
     )({ ...instance.settings, ...params });
 };
 
+function generateChannelForAgent(agentName: string) {
+  if (agentName === "ToolLoopAgent") {
+    return aiSDKChannels.toolLoopAgentGenerate;
+  }
+
+  return aiSDKChannels.agentGenerate;
+}
+
 const wrapAgentStream = (
   stream: AISDKStreamFunction,
   instance: AISDKAgentInstance,
   options: WrapAISDKOptions = {},
 ) => {
   const defaultName = `${instance.constructor.name}.stream`;
-  return (params: AISDKCallParams & SpanInfo) =>
-    makeStreamWrapper(
-      aiSDKChannels.agentStream,
-      defaultName,
-      stream.bind(instance),
-      {
-        self: instance,
-        spanType: SpanTypeAttribute.FUNCTION,
-      },
-      options,
-    )({ ...instance.settings, ...params });
+  return (params: AISDKCallParams & SpanInfo) => {
+    const workflowAgent = instance.constructor.name === "WorkflowAgent";
+
+    if (workflowAgent && currentWorkflowAgentWrapperSpan()) {
+      const { span_info: _spanInfo, ...cleanParams } = params;
+      return stream.call(instance, { ...instance.settings, ...cleanParams });
+    }
+
+    const trace = () =>
+      makeStreamWrapper(
+        streamChannelForAgent(instance.constructor.name),
+        defaultName,
+        stream.bind(instance),
+        {
+          self: instance,
+          spanType: SpanTypeAttribute.FUNCTION,
+        },
+        options,
+      )({ ...instance.settings, ...params });
+
+    return trace();
+  };
 };
+
+function streamChannelForAgent(agentName: string) {
+  if (agentName === "ToolLoopAgent") {
+    return aiSDKChannels.toolLoopAgentStream;
+  }
+
+  if (agentName === "WorkflowAgent") {
+    return aiSDKChannels.workflowAgentStream;
+  }
+
+  return aiSDKChannels.agentStream;
+}
 
 const makeGenerateTextWrapper = (
   channel:
     | typeof aiSDKChannels.generateText
-    | typeof aiSDKChannels.generateObject,
+    | typeof aiSDKChannels.generateObject
+    | typeof aiSDKChannels.agentGenerate
+    | typeof aiSDKChannels.toolLoopAgentGenerate,
   name: string,
   generateText: AISDKGenerateFunction,
   contextOptions: {
@@ -384,7 +426,8 @@ const makeStreamWrapper = (
     | typeof aiSDKChannels.streamText
     | typeof aiSDKChannels.streamObject
     | typeof aiSDKChannels.agentStream
-    | typeof aiSDKChannels.toolLoopAgentStream,
+    | typeof aiSDKChannels.toolLoopAgentStream
+    | typeof aiSDKChannels.workflowAgentStream,
   name: string,
   streamText: AISDKStreamFunction,
   contextOptions: {

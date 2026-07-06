@@ -4,8 +4,10 @@ const telemetryMocks = vi.hoisted(() => ({
   braintrustAISDKTelemetry: vi.fn(),
   telemetry: {} as {
     executeTool?: ReturnType<typeof vi.fn>;
+    onAbort?: ReturnType<typeof vi.fn>;
     onEnd?: ReturnType<typeof vi.fn>;
     onStart?: ReturnType<typeof vi.fn>;
+    onStepEnd?: ReturnType<typeof vi.fn>;
   },
 }));
 
@@ -20,9 +22,17 @@ vi.mock("../../wrappers/ai-sdk/telemetry", () => ({
   braintrustAISDKTelemetry: telemetryMocks.braintrustAISDKTelemetry,
 }));
 
-import { AISDKPlugin } from "./ai-sdk-plugin";
+import {
+  AISDKPlugin,
+  DEFAULT_DENY_OUTPUT_PATHS,
+  processAISDKCallInput,
+  processAISDKWorkflowAgentCallInput,
+  processAISDKWorkflowAgentModelCallInput,
+  processAISDKOutput as processAISDKOutputActual,
+} from "./ai-sdk-plugin";
 import iso from "../../isomorph";
 import { serializeAISDKToolsForLogging } from "../../wrappers/ai-sdk/tool-serialization";
+import { BRAINTRUST_AI_SDK_V7_OPERATION_KEY as AI_SDK_V7_OPERATION_KEY } from "../../vendor-sdk-types/ai-sdk-v7-telemetry";
 
 const mockNewTracingChannel = iso.newTracingChannel as ReturnType<typeof vi.fn>;
 type MockTracingChannel = {
@@ -44,8 +54,10 @@ describe("AISDKPlugin", () => {
     mockChannels.clear();
     telemetryMocks.telemetry = {
       executeTool: vi.fn(({ execute }) => execute()),
+      onAbort: vi.fn(),
       onEnd: vi.fn(),
       onStart: vi.fn(),
+      onStepEnd: vi.fn(),
     };
     telemetryMocks.braintrustAISDKTelemetry.mockReturnValue(
       telemetryMocks.telemetry,
@@ -93,6 +105,93 @@ describe("AISDKPlugin", () => {
     });
   });
 
+  describe("WorkflowAgent input extraction", () => {
+    it("preserves string prompts and system overrides", () => {
+      expect(
+        processAISDKWorkflowAgentCallInput({
+          headers: { authorization: "secret" },
+          maxOutputTokens: 12,
+          prompt: "What's the weather in Paris?",
+          stopWhen: () => true,
+          system: "You are a helpful weather assistant.",
+        }).input,
+      ).toEqual({
+        prompt: "What's the weather in Paris?",
+        system: "You are a helpful weather assistant.",
+      });
+    });
+
+    it("preserves public prompt message arrays for WorkflowAgent spans", () => {
+      expect(
+        processAISDKWorkflowAgentCallInput({
+          prompt: [{ role: "user", content: "Hello" }],
+          system: "You are terse.",
+        }).input,
+      ).toEqual({
+        prompt: [{ role: "user", content: "Hello" }],
+        system: "You are terse.",
+      });
+    });
+
+    it("normalizes model call prompt arrays for WorkflowAgent child spans", () => {
+      expect(
+        processAISDKWorkflowAgentModelCallInput({
+          instructions: "You are terse.",
+          prompt: [{ role: "user", content: "Hello" }],
+        }).input,
+      ).toEqual({
+        instructions: "You are terse.",
+        messages: [{ role: "user", content: "Hello" }],
+      });
+    });
+
+    it("does not treat arbitrary prompt objects as public AI SDK prompts", () => {
+      expect(
+        processAISDKWorkflowAgentCallInput({
+          prompt: { role: "user", content: "Hello" } as any,
+          system: "You are terse.",
+        }).input,
+      ).toEqual({
+        system: "You are terse.",
+      });
+    });
+
+    it("omits SDK internals and function options from call inputs", () => {
+      const processed = processAISDKCallInput({
+        model: {
+          config: {
+            provider: "openai.responses",
+            url: () => "https://example.test",
+          },
+          doGenerate: async () => ({}),
+          doStream: async () => ({ stream: new ReadableStream() }),
+          modelId: "gpt-4.1-mini",
+        },
+        experimental_output: {
+          responseFormat: Promise.resolve({ type: "json" }),
+          type: "object",
+        },
+        prompt: "Hello",
+        stopWhen: () => true,
+      }).input as Record<string, any>;
+
+      expect(processed).toMatchObject({
+        model: {
+          config: {
+            provider: "openai.responses",
+          },
+          modelId: "gpt-4.1-mini",
+        },
+        prompt: "Hello",
+      });
+      expect(processed).not.toHaveProperty("experimental_output");
+      expect(processed).not.toHaveProperty("stopWhen");
+      expect(processed.model).not.toHaveProperty("doGenerate");
+      expect(processed.model).not.toHaveProperty("doStream");
+      expect(processed.model.config).not.toHaveProperty("url");
+    });
+  });
+
   describe("enable/disable", () => {
     it("should enable plugin", () => {
       expect(() => plugin.enable()).not.toThrow();
@@ -127,12 +226,16 @@ describe("AISDKPlugin", () => {
     it("patches dispatcher callbacks through the standard channel", async () => {
       const existingOnEnd = vi.fn();
       const existingOnStart = vi.fn();
+      const existingOnStepEnd = vi.fn();
+      const existingOnAbort = vi.fn();
       const originalExecute = vi.fn(async () => "done");
       const existingExecuteTool = vi.fn(({ execute }) => execute());
       const dispatcher = {
         executeTool: existingExecuteTool,
+        onAbort: existingOnAbort,
         onEnd: existingOnEnd,
         onStart: existingOnStart,
+        onStepEnd: existingOnStepEnd,
       };
 
       plugin.enable();
@@ -143,7 +246,7 @@ describe("AISDKPlugin", () => {
       expect(channel?.subscribe).toHaveBeenCalledTimes(1);
 
       channel?.handlers[0]?.end({
-        arguments: [{ telemetry: { recordInputs: true } }],
+        arguments: [{ telemetry: {} }],
         result: dispatcher,
       });
 
@@ -167,6 +270,26 @@ describe("AISDKPlugin", () => {
         operationId: "ai.generateText",
       });
 
+      await dispatcher.onStepEnd({
+        callId: "call-1",
+        operationId: "ai.workflowAgent.stream",
+      });
+      expect(existingOnStepEnd).toHaveBeenCalledTimes(1);
+      expect(telemetryMocks.telemetry.onStepEnd).toHaveBeenCalledWith({
+        callId: "call-1",
+        operationId: "ai.workflowAgent.stream",
+      });
+
+      await dispatcher.onAbort({
+        callId: "call-1",
+        operationId: "ai.workflowAgent.stream",
+      });
+      expect(existingOnAbort).toHaveBeenCalledTimes(1);
+      expect(telemetryMocks.telemetry.onAbort).toHaveBeenCalledWith({
+        callId: "call-1",
+        operationId: "ai.workflowAgent.stream",
+      });
+
       await expect(
         dispatcher.executeTool({
           callId: "call-1",
@@ -177,6 +300,159 @@ describe("AISDKPlugin", () => {
       expect(telemetryMocks.telemetry.executeTool).toHaveBeenCalledTimes(1);
       expect(existingExecuteTool).toHaveBeenCalledTimes(1);
       expect(originalExecute).toHaveBeenCalledTimes(1);
+    });
+
+    it("passes AI SDK v7 telemetry redaction options to Braintrust callbacks", async () => {
+      const existingOnStart = vi.fn();
+      const dispatcher = {
+        onEnd: vi.fn(),
+        onStart: existingOnStart,
+      };
+
+      plugin.enable();
+
+      const channel = mockChannels.get(
+        "orchestrion:ai:createTelemetryDispatcher",
+      );
+      channel?.handlers[0]?.end({
+        arguments: [
+          {
+            telemetry: {
+              functionId: "redacted-function",
+              recordInputs: false,
+              recordOutputs: false,
+            },
+          },
+        ],
+        result: dispatcher,
+      });
+
+      const startEvent = {
+        callId: "call-redacted",
+        messages: [{ role: "user", content: "hidden input" }],
+        operationId: "ai.generateText",
+      };
+      await dispatcher.onStart(startEvent);
+      await dispatcher.onEnd({
+        callId: "call-redacted",
+        operationId: "ai.generateText",
+        text: "hidden output",
+      });
+
+      expect(existingOnStart).toHaveBeenCalledWith(startEvent);
+      expect(telemetryMocks.telemetry.onStart).toHaveBeenCalledWith(
+        expect.objectContaining({
+          functionId: "redacted-function",
+          recordInputs: false,
+          recordOutputs: false,
+        }),
+      );
+      expect(telemetryMocks.telemetry.onEnd).toHaveBeenCalledWith(
+        expect.objectContaining({
+          functionId: "redacted-function",
+          recordInputs: false,
+          recordOutputs: false,
+        }),
+      );
+      expect(startEvent).not.toHaveProperty("recordInputs");
+    });
+
+    it("stamps a stable unique operation key on each dispatcher", async () => {
+      const dispatcherA = {
+        executeTool: vi.fn(({ execute }) => execute()),
+        onAbort: vi.fn(),
+        onStart: vi.fn(),
+      };
+      const dispatcherB = {
+        executeTool: vi.fn(({ execute }) => execute()),
+        onStart: vi.fn(),
+      };
+
+      plugin.enable();
+
+      const channel = mockChannels.get(
+        "orchestrion:ai:createTelemetryDispatcher",
+      );
+      channel?.handlers[0]?.end({
+        arguments: [{ telemetry: {} }],
+        result: dispatcherA,
+      });
+      channel?.handlers[0]?.end({
+        arguments: [{ telemetry: {} }],
+        result: dispatcherB,
+      });
+
+      await dispatcherA.onStart({
+        callId: "workflow-agent",
+        operationId: "ai.workflowAgent.stream",
+      });
+      await dispatcherB.onStart({
+        callId: "workflow-agent",
+        operationId: "ai.workflowAgent.stream",
+      });
+      await dispatcherA.onAbort({
+        callId: "workflow-agent",
+        operationId: "ai.workflowAgent.stream",
+      });
+      await dispatcherB.executeTool({
+        callId: "workflow-agent",
+        execute: async () => "done",
+        toolCallId: "tool-b",
+      });
+
+      const runAStart = telemetryMocks.telemetry.onStart?.mock.calls[0]?.[0];
+      const runBStart = telemetryMocks.telemetry.onStart?.mock.calls[1]?.[0];
+      const runAAbort = telemetryMocks.telemetry.onAbort?.mock.calls[0]?.[0];
+      const runBTool = telemetryMocks.telemetry.executeTool?.mock.calls[0]?.[0];
+
+      expect(runAStart?.[AI_SDK_V7_OPERATION_KEY]).toEqual(expect.any(String));
+      expect(runBStart?.[AI_SDK_V7_OPERATION_KEY]).toEqual(expect.any(String));
+      expect(runAStart?.[AI_SDK_V7_OPERATION_KEY]).not.toBe(
+        runBStart?.[AI_SDK_V7_OPERATION_KEY],
+      );
+      expect(runAAbort?.[AI_SDK_V7_OPERATION_KEY]).toBe(
+        runAStart?.[AI_SDK_V7_OPERATION_KEY],
+      );
+      expect(runBTool?.[AI_SDK_V7_OPERATION_KEY]).toBe(
+        runBStart?.[AI_SDK_V7_OPERATION_KEY],
+      );
+    });
+
+    it("preserves existing dispatcher callback return and rejection semantics", async () => {
+      const rejection = new Error("user telemetry failed");
+      let rejectExisting: (error: Error) => void;
+      const existingPromise = new Promise<void>((_resolve, reject) => {
+        rejectExisting = reject;
+      });
+      const existingOnStart = vi.fn(() => existingPromise);
+      telemetryMocks.telemetry.onStart = vi.fn(() =>
+        Promise.reject(new Error("braintrust telemetry failed")),
+      );
+      const dispatcher: any = {
+        onStart: existingOnStart,
+      };
+
+      plugin.enable();
+
+      const channel = mockChannels.get(
+        "orchestrion:ai:createTelemetryDispatcher",
+      );
+      channel?.handlers[0]?.end({
+        arguments: [{ telemetry: {} }],
+        result: dispatcher,
+      });
+
+      const returned = dispatcher.onStart({
+        callId: "call-reject",
+        operationId: "ai.generateText",
+      });
+
+      expect(returned).toBe(existingPromise);
+      expect(existingOnStart).toHaveBeenCalledTimes(1);
+      expect(telemetryMocks.telemetry.onStart).toHaveBeenCalledTimes(1);
+
+      rejectExisting!(rejection);
+      await expect(returned).rejects.toBe(rejection);
     });
 
     it("patches each dispatcher once and respects telemetry opt-out", () => {
@@ -1118,6 +1394,159 @@ describe("AI SDK utility functions", () => {
       const result = processAISDKOutput(output, ["roundtrips[].request.body"]);
       expect(result.roundtrips[0].request.body).toBe("<omitted>");
       expect(result.roundtrips[0].response.data).toBe("ok");
+    });
+
+    it("preserves user headers fields while omitting configured transport headers", () => {
+      const output = {
+        text: "Hello",
+        object: {
+          headers: { "x-user-data": "keep" },
+        },
+        content: [
+          {
+            type: "text",
+            text: "Hello",
+            headers: { source: "tool-payload" },
+          },
+        ],
+        request: {
+          headers: { authorization: "secret" },
+          body: "secret-request-body",
+          providerPayload: {
+            headers: { authorization: "nested-request-secret" },
+          },
+        },
+        response: {
+          headers: { authorization: "secret" },
+          body: "secret-body",
+          constructor: "unsafe",
+          id: "response-id",
+          messages: [
+            {
+              role: "assistant",
+              content: [
+                {
+                  type: "provider-result",
+                  result: {
+                    headers: { authorization: "nested-secret" },
+                    id: "nested-provider-response-id",
+                    prototype: "unsafe",
+                  },
+                },
+              ],
+            },
+          ],
+        },
+        rawResponse: {
+          headers: { authorization: "secret" },
+        },
+        responses: [
+          {
+            headers: { authorization: "secret" },
+            id: "provider-response-id",
+          },
+        ],
+        roundtrips: [
+          {
+            request: {
+              headers: { authorization: "secret" },
+              body: "secret-roundtrip-request-body",
+              providerPayload: {
+                headers: { authorization: "nested-roundtrip-request-secret" },
+              },
+            },
+            response: {
+              headers: { authorization: "secret" },
+              id: "roundtrip-response-id",
+            },
+          },
+        ],
+        steps: [
+          {
+            request: {
+              headers: { authorization: "secret" },
+              body: "secret-step-request-body",
+              providerPayload: {
+                headers: { authorization: "nested-step-request-secret" },
+              },
+            },
+            response: {
+              headers: { authorization: "secret" },
+              body: "secret-step-body",
+              id: "step-response-id",
+              messages: [
+                {
+                  role: "assistant",
+                  content: [
+                    {
+                      type: "provider-result",
+                      result: {
+                        headers: { authorization: "nested-step-secret" },
+                        id: "nested-step-provider-response-id",
+                      },
+                    },
+                  ],
+                },
+              ],
+            },
+            output: {
+              headers: { "x-user-data": "keep-step" },
+            },
+            responses: [
+              {
+                headers: { authorization: "secret" },
+                id: "step-provider-response-id",
+              },
+            ],
+          },
+        ],
+      };
+
+      const result = processAISDKOutputActual(
+        output as any,
+        DEFAULT_DENY_OUTPUT_PATHS,
+      ) as Record<string, any>;
+
+      expect(result.object.headers).toEqual({ "x-user-data": "keep" });
+      expect(result.content[0].headers).toEqual({ source: "tool-payload" });
+      expect(result.steps[0].output.headers).toEqual({
+        "x-user-data": "keep-step",
+      });
+      const serializedResult = JSON.stringify(result);
+      expect(serializedResult).not.toContain("secret-request-body");
+      expect(serializedResult).not.toContain("secret-roundtrip-request-body");
+      expect(serializedResult).not.toContain("secret-step-request-body");
+      expect(serializedResult).not.toContain("authorization");
+      expect(result.request).not.toHaveProperty("headers");
+      expect(result.request.providerPayload).not.toHaveProperty("headers");
+      expect(result.response).not.toHaveProperty("headers");
+      expect(result.response.body).toBe("<omitted>");
+      expect(result.response).not.toHaveProperty("constructor");
+      expect(result.response.messages[0].content[0].result).not.toHaveProperty(
+        "headers",
+      );
+      expect(result.response.messages[0].content[0].result).not.toHaveProperty(
+        "prototype",
+      );
+      expect(result.rawResponse).not.toHaveProperty("headers");
+      expect(result.responses[0]).not.toHaveProperty("headers");
+      if (result.roundtrips) {
+        expect(result.roundtrips[0].request).not.toHaveProperty("headers");
+        expect(result.roundtrips[0].request.providerPayload).not.toHaveProperty(
+          "headers",
+        );
+        expect(result.roundtrips[0].response).not.toHaveProperty("headers");
+      }
+      expect(result.steps[0].request).not.toHaveProperty("headers");
+      expect(result.steps[0].request.providerPayload).not.toHaveProperty(
+        "headers",
+      );
+      expect(result.steps[0].response).not.toHaveProperty("headers");
+      expect(result.steps[0].response.body).toBe("<omitted>");
+      expect(
+        result.steps[0].response.messages[0].content[0].result,
+      ).not.toHaveProperty("headers");
+      expect(result.steps[0].responses[0]).not.toHaveProperty("headers");
     });
 
     it("should handle null output", () => {

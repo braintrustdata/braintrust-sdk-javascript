@@ -178,7 +178,9 @@ export interface AISDKRerankParams {
 
 export interface AISDKCallParams {
   model?: AISDKModel;
-  prompt?: AISDKMessage[] | Record<string, unknown>;
+  instructions?: unknown;
+  prompt?: string | AISDKMessage[];
+  system?: unknown;
   messages?: AISDKMessage[];
   tools?: AISDKTools;
   schema?: unknown;
@@ -265,7 +267,7 @@ export type AISDKGenerateFunction = (
 export type AISDKStreamFunction = (params: AISDKCallParams) => AISDKResult;
 
 export interface AISDKAgentInstance {
-  settings: AISDKCallParams;
+  settings?: AISDKCallParams;
   generate: AISDKGenerateFunction;
   stream: AISDKStreamFunction;
   constructor: {
@@ -276,6 +278,18 @@ export interface AISDKAgentInstance {
 
 export interface AISDKAgentClass {
   new (...args: unknown[]): AISDKAgentInstance;
+}
+
+export interface AISDKWorkflowAgentInstance {
+  stream: AISDKStreamFunction;
+  constructor: {
+    name: string;
+  };
+  [key: string]: unknown;
+}
+
+export interface AISDKWorkflowAgentClass {
+  new (...args: unknown[]): AISDKWorkflowAgentInstance;
 }
 
 export interface AISDKProviderResolver {
