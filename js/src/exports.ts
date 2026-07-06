@@ -232,6 +232,8 @@ export {
   defaultErrorScoreHandler,
 } from "./framework";
 
+export { agentAssertionScorer } from "./agent-assertions";
+
 export { DatasetPipeline } from "./dataset-pipeline";
 
 export type {
