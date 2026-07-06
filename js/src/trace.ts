@@ -20,9 +20,11 @@ export class SpanFetcher extends ObjectFetcher<SpanRecord> {
   constructor(
     objectType: "experiment" | "project_logs" | "playground_logs",
     private readonly _objectId: string,
-    rootSpanId: string,
+    // @ts-expect-error unused
+    private readonly rootSpanId: string,
     private readonly _state: BraintrustState,
-    spanTypeFilter?: string[],
+    // @ts-expect-error unused
+    private readonly spanTypeFilter?: string[],
     includeScorers = false,
     brainstoreRealtime = true,
   ) {
