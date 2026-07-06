@@ -11,4 +11,7 @@ deno.lock
 # Template files with special formatting
 js/scripts/openapi_zod_client_output_template.hbs
 
+# Generated dotagents skill content
+.agents/skills/dotagents/
+
 .context

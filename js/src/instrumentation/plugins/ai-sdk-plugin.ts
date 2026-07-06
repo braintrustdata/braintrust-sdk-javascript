@@ -1382,7 +1382,7 @@ function prepareAISDKChildTracing(
               type: SpanTypeAttribute.TOOL,
             },
           });
-          span.log({ input: args.length === 1 ? args[0] : args });
+          span.log({ input: args[0] });
 
           try {
             let lastValue: unknown;
@@ -1402,7 +1402,7 @@ function prepareAISDKChildTracing(
 
       return parentSpan.traced(
         async (span) => {
-          span.log({ input: args.length === 1 ? args[0] : args });
+          span.log({ input: args[0] });
           const awaitedResult = await result;
           span.log({ output: awaitedResult });
           return awaitedResult;
