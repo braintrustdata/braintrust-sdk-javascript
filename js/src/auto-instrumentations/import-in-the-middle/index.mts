@@ -19,11 +19,7 @@ const {
   toHook,
 } = registerState;
 
-type HookFn = (
-  exported: Namespace,
-  name: string,
-  baseDir?: string,
-) => unknown;
+type HookFn = (exported: Namespace, name: string, baseDir?: string) => unknown;
 
 interface HookInstance {
   _iitmHook: ImportHook;
