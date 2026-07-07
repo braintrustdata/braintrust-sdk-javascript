@@ -16,8 +16,11 @@ import type {
   ResolveOperation,
   ResolveResult,
 } from "./lib/io.mjs";
+import type { register as registerGeneratedWrapper } from "./lib/register.mjs";
 
-export type { LoaderContext, LoadResult, ResolveResult } from "./lib/io.mjs";
+const generatedWrapperRegister: typeof registerGeneratedWrapper | undefined =
+  undefined;
+void generatedWrapperRegister;
 
 const specifiers = new Map<string, string>();
 const isWin = process.platform === "win32";
@@ -34,33 +37,30 @@ const [, NODE_MAJOR, NODE_MINOR, NODE_PATCH] = process.versions.node
   .match(/^(\d+)\.(\d+)\.(\d+)/)
   ?.map(Number) ?? [0, 0, 0, 0];
 
-export type LoaderMeta = { url: string };
-export type HookData = {
+type LoaderMeta = { url: string };
+type HookData = {
   addHookMessagePort?: MessagePort;
   exclude?: never;
   include?: readonly string[];
   shouldInclude?: never;
 };
-export type AsyncLoadFunction = (
+type AsyncLoadFunction = (
   url: string,
   context: LoaderContext,
 ) => LoadResult | Promise<LoadResult>;
-export type SyncLoadFunction = (
-  url: string,
-  context: LoaderContext,
-) => LoadResult;
-export type AsyncResolveFunction = (
+type SyncLoadFunction = (url: string, context: LoaderContext) => LoadResult;
+type AsyncResolveFunction = (
   specifier: string,
   context: LoaderContext,
 ) => ResolveResult | Promise<ResolveResult>;
-export type SyncResolveFunction = (
+type SyncResolveFunction = (
   specifier: string,
   context: LoaderContext,
 ) => ResolveResult;
 type ResolveFunction = AsyncResolveFunction | SyncResolveFunction;
 type SetterMap = Map<string, string>;
 
-export interface ImportInTheMiddleHook {
+interface ImportInTheMiddleHook {
   applyOptions(data: HookData): void;
   initialize(data?: HookData): Promise<void>;
   load(

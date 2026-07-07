@@ -11,8 +11,6 @@ import registerState, {
   type Namespace,
 } from "./lib/register.mjs";
 
-export type { Namespace } from "./lib/register.mjs";
-
 const {
   addHookedModules,
   deleteHookedModules,
@@ -21,17 +19,17 @@ const {
   toHook,
 } = registerState;
 
-export type HookFn<Exported extends object = Namespace, Result = unknown> = (
+type HookFn<Exported extends object = Namespace, Result = unknown> = (
   exported: Exported,
   name: string,
   baseDir?: string,
 ) => Result;
 
-export interface Hook<Exported extends object = Namespace> {
+interface Hook<Exported extends object = Namespace> {
   unhook(): void;
 }
 
-export interface HookConstructor {
+interface HookConstructor {
   new <Exported extends object = Namespace>(
     modules: readonly string[],
     hookFn: HookFn<Exported>,
@@ -42,12 +40,12 @@ export interface HookConstructor {
   ): Hook<Exported>;
 }
 
-export type HookRegisterData = {
+type HookRegisterData = {
   addHookMessagePort: MessagePort;
   include: string[];
 };
 
-export type CreateAddHookMessageChannelReturn = {
+type CreateAddHookMessageChannelReturn = {
   addHookMessagePort: MessagePort;
   waitForAllMessagesAcknowledged: () => Promise<void>;
   registerOptions: {
@@ -263,4 +261,3 @@ HookImpl.prototype.unhook = function (this: HookInstance): void {
 };
 
 export const Hook = HookImpl as unknown as HookConstructor;
-export default Hook;

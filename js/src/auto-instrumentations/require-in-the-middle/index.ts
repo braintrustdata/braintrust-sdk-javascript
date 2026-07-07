@@ -2,26 +2,11 @@ import Module from "node:module";
 import moduleDetailsFromPath from "module-details-from-path";
 import path from "node:path";
 
-export type OnRequireFn<Exports = unknown, PatchedExports = Exports> = (
+type OnRequireFn<Exports = unknown, PatchedExports = Exports> = (
   exports: Exports,
   name: string,
   basedir?: string,
 ) => PatchedExports;
-
-export interface Hook<Exports = unknown, PatchedExports = Exports> {
-  unhook(): void;
-}
-
-export interface HookConstructor {
-  new <Exports = unknown, PatchedExports = Exports>(
-    modules: readonly string[],
-    onrequire: OnRequireFn<Exports, PatchedExports>,
-  ): Hook<Exports, PatchedExports>;
-  <Exports = unknown, PatchedExports = Exports>(
-    modules: readonly string[],
-    onrequire: OnRequireFn<Exports, PatchedExports>,
-  ): Hook<Exports, PatchedExports>;
-}
 
 type GetBuiltinModuleFn = (this: unknown, id: string) => unknown;
 type ProcessWithGetBuiltinModule = Omit<typeof process, "getBuiltinModule"> & {

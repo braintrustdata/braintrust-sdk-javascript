@@ -39,11 +39,11 @@ export type ResolveResult = {
 export type LoadOperation = [typeof LOAD, string, LoaderContext];
 export type ResolveOperation = [typeof RESOLVE, string, LoaderContext];
 export type LoaderOperation = LoadOperation | ResolveOperation;
-export type SyncLoaderIo = {
+type SyncLoaderIo = {
   load: (url: string, context: LoaderContext) => LoadResult;
   resolve?: (specifier: string, context: LoaderContext) => ResolveResult;
 };
-export type AsyncLoaderIo = {
+type AsyncLoaderIo = {
   load: (url: string, context: LoaderContext) => Promise<LoadResult>;
   resolve?: (
     specifier: string,
