@@ -181,6 +181,7 @@
     "@types/async": "^3.2.24",
     "@types/cli-progress": "^3.11.5",
     "@types/cors": "^2.8.17",
+    "@types/esquery": "^1.5.4",
     "@types/express": "^5.0.0",
     "@types/http-errors": "^2.0.4",
     "@types/mustache": "^4.2.5",
@@ -213,7 +214,6 @@
   },
   "dependencies": {
     "@next/env": "^14.2.3",
-    "@types/estree": "^1.0.8",
     "@vercel/functions": "^1.0.2",
     "acorn": "^8.16.0",
     "acorn-import-attributes": "^1.9.5",
