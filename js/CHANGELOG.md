@@ -4,9 +4,9 @@
 
 ### Minor Changes
 
-- feat: W3C-compatible distributed tracing - Add `inject`/`extract` APIs for distributed tracing across service boundaries (`span.inject(carrier)`, `injectTraceContext()`, and `extractTraceContextFromHeaders(headers)`), implementing the [W3C Trace Context](https://www.w3.org/TR/trace-context/) and [W3C Baggage](https://www.w3.org/TR/baggage/) specs. `startSpan({ parent })` now accepts the opaque context returned by `extractTraceContextFromHeaders` in addition to an exported span slug. - Default to OpenTelemetry-compatible hex span/trace IDs (and V4 span-component export). Set `BRAINTRUST_LEGACY_IDS` to opt back into legacy UUID IDs (and V3 export). `BRAINTRUST_OTEL_COMPAT` continues to force hex IDs and takes precedence over `BRAINTRUST_LEGACY_IDS`. Note: The deprecated `span.export()` / `startSpan({ parent: <slug> })` path remains supported and links correctly across the UUID and hex formats. Thanks @realark! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2141)
+- feat: Add `inject`/`extract` APIs for distributed tracing across service boundaries (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2141)
 - fix(ai-sdk): Don't capture message history in tool spans (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2179)
-- feat: Expose flag for toggling realtime mode in span fetcher Thanks @choochootrain! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2187)
+- feat: Expose flag for toggling realtime mode in span fetcher (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2187)
 - feat: Add scorer that exposes helpers to evaluate agents (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2146)
 - feat(evals): Forward/pick up `bt eval <...> --sample N` flag (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2165)
 - feat(ai-sdk): Add Workflow Agent instrumentation (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2177)
@@ -16,10 +16,10 @@
 - fix: Synthesize AI SDK total token metrics from prompt and completion counts (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2174)
 - fix(ai-sdk): Close `braintrustAISDKTelemetry()` parent spans with AI SDK 7 `onEnd` callbacks (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2172)
 - fix(ai-sdk): Keep `wrapAISDK` model child spans correctly parented for concurrent calls sharing a model instance (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2194)
-- fix: Fix function invocations by stripping `/v1/proxy` from functions endpoint Thanks @paultancre-bt! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2180)
+- fix: Fix function invocations by stripping `/v1/proxy` from functions endpoint (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2180)
 - ref: Fork `orchestrion-js`, `import-in-the-middle` and `require-in-the-middle` (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2154)
-- chore: Update platform types Thanks @braintrust-bot! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2196)
-- fix: Properly anchor preview domain CORS regex Thanks @mathisliens-braintrust! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2162)
+- chore: Update platform types (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2196)
+- fix: Properly anchor preview domain CORS regex (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2162)
 
 ## 3.20.0
 
