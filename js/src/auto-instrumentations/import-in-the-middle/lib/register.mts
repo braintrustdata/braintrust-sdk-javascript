@@ -3,8 +3,8 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/). Copyright 2021 Datadog, Inc.
 
 export type Namespace = Record<string | symbol, unknown>;
-export type ExportSetter = (value: unknown) => boolean;
-export type ExportGetter = () => unknown;
+type ExportSetter = (value: unknown) => boolean;
+type ExportGetter = () => unknown;
 export type ImportHook = (
   name: string,
   namespace: Namespace,
@@ -85,7 +85,7 @@ const proxyHandler: ProxyHandler<Namespace> = {
   },
 };
 
-export function register(
+function register(
   name: string,
   namespace: Namespace,
   set: Record<string | symbol, ExportSetter>,

@@ -19,7 +19,7 @@ const {
   toHook,
 } = registerState;
 
-export type HookFn = (
+type HookFn = (
   exported: Namespace,
   name: string,
   baseDir?: string,
@@ -196,4 +196,3 @@ class Hook implements HookInstance {
 }
 
 export { Hook };
-export default Hook;

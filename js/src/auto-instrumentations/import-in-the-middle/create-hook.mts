@@ -52,7 +52,7 @@ type SyncResolveFunction = (
 ) => ResolveResult;
 type SetterMap = Map<string, string>;
 
-export interface ImportInTheMiddleHook {
+interface ImportInTheMiddleHook {
   applyOptions(data: HookData): void;
   initialize(data?: HookData): Promise<void>;
   load(
@@ -626,7 +626,7 @@ export function createHook(meta: LoaderMeta): ImportInTheMiddleHook {
     originalSpecifier: string | undefined,
   ): string {
     return `
-import { register } from '${iitmURL}'
+import registerState from '${iitmURL}'
 import * as namespace from ${JSON.stringify(realUrl)}
 
 // Mimic a Module object (https://tc39.es/ecma262/#sec-module-namespace-objects).
@@ -692,7 +692,7 @@ if (__pending.length > 0) {
   })
 }
 
-register(${JSON.stringify(realUrl)}, _, set, get, ${JSON.stringify(originalSpecifier)})
+registerState.register(${JSON.stringify(realUrl)}, _, set, get, ${JSON.stringify(originalSpecifier)})
 `;
   }
 
