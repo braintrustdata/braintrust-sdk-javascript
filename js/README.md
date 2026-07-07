@@ -119,3 +119,7 @@ See the [Migrate from v1.x to v2.x guide](https://www.braintrust.dev/docs/refere
 ### Upgrading from 0.x to 1.x
 
 See the [Migrate from v1.x to v2.x guide](https://www.braintrust.dev/docs/reference/sdks/typescript/migrations/v0-to-v1).
+
+## Compatibility
+
+The `braintrust` package is compatible with Node.js versions 20.12.0, 22.13.0, for the respective major Node.js release lines and above.
