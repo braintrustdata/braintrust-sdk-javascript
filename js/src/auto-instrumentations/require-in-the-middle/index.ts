@@ -2,12 +2,11 @@ import Module from "node:module";
 import moduleDetailsFromPath from "module-details-from-path";
 import path from "node:path";
 
-type OnRequireFn<Exports = unknown, PatchedExports = Exports> = (
-  exports: Exports,
+type OnRequireFn = (
+  exports: unknown,
   name: string,
   basedir?: string,
-) => PatchedExports;
-
+) => unknown;
 type GetBuiltinModuleFn = (this: unknown, id: string) => unknown;
 type ProcessWithGetBuiltinModule = Omit<typeof process, "getBuiltinModule"> & {
   getBuiltinModule?: GetBuiltinModuleFn;
@@ -18,44 +17,8 @@ type ModuleWithInternals = typeof Module & {
 type CachedModule = NodeJS.Module & Record<symbol, unknown>;
 type HookedRequire = (this: NodeJS.Module, id: string) => unknown;
 
-interface HookInstance {
-  _cache: ExportsCache;
-  _getBuiltinModule?: GetBuiltinModuleFn;
-  _origGetBuiltinModule?: GetBuiltinModuleFn;
-  _origRequire: HookedRequire;
-  _require: HookedRequire;
-  _unhooked: boolean;
-}
-
-interface HookImplementationConstructor {
-  new (modules: unknown, onrequire: unknown): HookInstance;
-  (modules: unknown, onrequire: unknown): HookInstance;
-  prototype: HookInstance & { unhook(): void };
-}
-
-let builtinModules: Set<string> | undefined;
-
 const ModuleInternals = Module as ModuleWithInternals;
-let isCore: (moduleName: string) => boolean;
-if (Module.isBuiltin) {
-  isCore = Module.isBuiltin;
-} else if (Module.builtinModules) {
-  isCore = (moduleName: string) => {
-    if (moduleName.startsWith("node:")) {
-      return true;
-    }
-
-    if (builtinModules === undefined) {
-      builtinModules = new Set(Module.builtinModules);
-    }
-
-    return builtinModules.has(moduleName);
-  };
-} else {
-  throw new Error(
-    "Braintrust require-in-the-middle requires Node.js >=v9.3.0 or >=v8.10.0",
-  );
-}
+const isCore = Module.isBuiltin;
 
 const normalize = /([/\\]index)?(\.js|\.cjs)?$/;
 
@@ -95,91 +58,67 @@ class ExportsCache {
   }
 }
 
-function normalizeModules(modules: unknown): string[] {
-  if (!Array.isArray(modules) || modules.length === 0) {
-    throw new TypeError(
-      "Braintrust require-in-the-middle requires a non-empty modules array",
-    );
-  }
+class Hook {
+  private readonly _cache = new ExportsCache();
+  private readonly _origRequire: HookedRequire;
+  private readonly _patching = new Set<string>();
+  private readonly _normalizedModules: string[];
+  private _getBuiltinModule?: GetBuiltinModuleFn;
+  private _origGetBuiltinModule?: GetBuiltinModuleFn;
+  private _require: HookedRequire;
+  private _unhooked = false;
 
-  const normalized: string[] = [];
-  for (const each of modules) {
-    if (typeof each !== "string") {
-      throw new TypeError(
-        "Braintrust require-in-the-middle only supports string module names or absolute paths",
-      );
-    }
-    normalized.push(each);
-  }
-
-  return normalized;
-}
-
-const Hook: HookImplementationConstructor = function (
-  this: HookInstance | undefined,
-  modules: unknown,
-  onrequire: unknown,
-): HookInstance | void {
-  if (!this || !(this instanceof Hook)) {
-    return new Hook(modules, onrequire);
-  }
-
-  const normalizedModules = normalizeModules(modules);
-  if (typeof onrequire !== "function") {
-    throw new TypeError(
-      "Braintrust require-in-the-middle requires an onrequire function",
-    );
-  }
-  const onRequireFn = onrequire as OnRequireFn;
-
-  if (typeof ModuleInternals._resolveFilename !== "function") {
-    throw new Error(
-      `Expected Module._resolveFilename to be a function, got ${typeof ModuleInternals._resolveFilename}`,
-    );
-  }
-
-  this._cache = new ExportsCache();
-  this._unhooked = false;
-  this._origRequire = Module.prototype.require;
-
-  const self = this;
-  const patching = new Set<string>();
-
-  this._require = Module.prototype.require = function (
-    this: NodeJS.Module,
-    id: string,
+  constructor(
+    modules: readonly string[],
+    private readonly _onRequireFn: OnRequireFn,
   ) {
-    if (self._unhooked === true) {
-      return self._origRequire.call(this, id);
+    this._normalizedModules = Array.from(modules);
+    this._origRequire = Module.prototype.require;
+    const self = this;
+
+    this._require = Module.prototype.require = function (
+      this: NodeJS.Module,
+      id: string,
+    ) {
+      if (self._unhooked === true) {
+        return self._origRequire.call(this, id);
+      }
+
+      return self._patchedRequire(this, id, false);
+    };
+
+    const processWithGetBuiltinModule: ProcessWithGetBuiltinModule = process;
+    if (typeof processWithGetBuiltinModule.getBuiltinModule === "function") {
+      this._origGetBuiltinModule = processWithGetBuiltinModule.getBuiltinModule;
+      this._getBuiltinModule = processWithGetBuiltinModule.getBuiltinModule =
+        function (this: unknown, id: string) {
+          if (self._unhooked === true) {
+            return self._origGetBuiltinModule!.call(this, id);
+          }
+
+          return self._patchedRequire(this as NodeJS.Module, id, true);
+        };
     }
-
-    return patchedRequire.call(this, id, false);
-  };
-
-  const processWithGetBuiltinModule: ProcessWithGetBuiltinModule = process;
-  if (typeof processWithGetBuiltinModule.getBuiltinModule === "function") {
-    this._origGetBuiltinModule = processWithGetBuiltinModule.getBuiltinModule;
-    this._getBuiltinModule = processWithGetBuiltinModule.getBuiltinModule =
-      function (this: unknown, id: string) {
-        if (self._unhooked === true) {
-          return getOrigGetBuiltinModule().call(this, id);
-        }
-
-        return patchedRequire.call(this as NodeJS.Module, id, true);
-      };
   }
 
-  function getOrigGetBuiltinModule(): GetBuiltinModuleFn {
-    if (!self._origGetBuiltinModule) {
-      throw new Error(
-        "Expected process.getBuiltinModule to be captured before patching builtins",
-      );
+  unhook(): void {
+    this._unhooked = true;
+
+    if (this._require === Module.prototype.require) {
+      Module.prototype.require = this._origRequire;
     }
-    return self._origGetBuiltinModule;
+
+    const processWithGetBuiltinModule: ProcessWithGetBuiltinModule = process;
+    if (
+      this._getBuiltinModule &&
+      this._getBuiltinModule === processWithGetBuiltinModule.getBuiltinModule
+    ) {
+      processWithGetBuiltinModule.getBuiltinModule = this._origGetBuiltinModule;
+    }
   }
 
-  function patchedRequire(
-    this: NodeJS.Module,
+  private _patchedRequire(
+    requireThis: NodeJS.Module,
     id: string,
     coreOnly: boolean,
   ): unknown {
@@ -194,43 +133,43 @@ const Hook: HookImplementationConstructor = function (
         }
       }
     } else if (coreOnly) {
-      return getOrigGetBuiltinModule().call(this, id);
+      return this._origGetBuiltinModule!.call(requireThis, id);
     } else {
       try {
-        filename = ModuleInternals._resolveFilename(id, this);
+        filename = ModuleInternals._resolveFilename(id, requireThis);
       } catch {
-        return self._origRequire.call(this, id);
+        return this._origRequire.call(requireThis, id);
       }
     }
 
-    if (self._cache.has(filename, core) === true) {
-      return self._cache.get(filename, core);
+    if (this._cache.has(filename, core) === true) {
+      return this._cache.get(filename, core);
     }
 
-    const isPatching = patching.has(filename);
+    const isPatching = this._patching.has(filename);
     if (isPatching === false) {
-      patching.add(filename);
+      this._patching.add(filename);
     }
 
     const exports = coreOnly
-      ? getOrigGetBuiltinModule().call(this, id)
-      : self._origRequire.call(this, id);
+      ? this._origGetBuiltinModule!.call(requireThis, id)
+      : this._origRequire.call(requireThis, id);
 
     if (isPatching === true) {
       return exports;
     }
 
-    patching.delete(filename);
+    this._patching.delete(filename);
 
     let moduleName: string;
     let basedir: string | undefined;
 
     if (core === true) {
-      if (normalizedModules.includes(filename) === false) {
+      if (this._normalizedModules.includes(filename) === false) {
         return exports;
       }
       moduleName = filename;
-    } else if (normalizedModules.includes(filename)) {
+    } else if (this._normalizedModules.includes(filename)) {
       const parsedPath = path.parse(filename);
       moduleName = parsedPath.name;
       basedir = parsedPath.dir;
@@ -244,20 +183,20 @@ const Hook: HookImplementationConstructor = function (
 
       const fullModuleName = resolveModuleName(stat);
       let matchFound = false;
-      if (!id.startsWith(".") && normalizedModules.includes(id)) {
+      if (!id.startsWith(".") && this._normalizedModules.includes(id)) {
         moduleName = id;
         matchFound = true;
       }
 
       if (
-        !normalizedModules.includes(moduleName) &&
-        !normalizedModules.includes(fullModuleName)
+        !this._normalizedModules.includes(moduleName) &&
+        !this._normalizedModules.includes(fullModuleName)
       ) {
         return exports;
       }
 
       if (
-        normalizedModules.includes(fullModuleName) &&
+        this._normalizedModules.includes(fullModuleName) &&
         fullModuleName !== moduleName
       ) {
         moduleName = fullModuleName;
@@ -267,46 +206,26 @@ const Hook: HookImplementationConstructor = function (
       if (!matchFound) {
         let res: string;
         try {
-          res = require.resolve(moduleName, { paths: [basedir as string] });
+          res = require.resolve(moduleName, { paths: [basedir] });
         } catch {
-          self._cache.set(filename, exports, core);
+          this._cache.set(filename, exports, core);
           return exports;
         }
 
         if (res !== filename) {
-          self._cache.set(filename, exports, core);
+          this._cache.set(filename, exports, core);
           return exports;
         }
       }
     }
 
-    self._cache.set(filename, exports, core);
-    const patchedExports = onRequireFn(exports, moduleName, basedir);
-    self._cache.set(filename, patchedExports, core);
+    this._cache.set(filename, exports, core);
+    const patchedExports = this._onRequireFn(exports, moduleName, basedir);
+    this._cache.set(filename, patchedExports, core);
 
     return patchedExports;
   }
-} as HookImplementationConstructor;
-
-Hook.prototype.unhook = function (this: HookInstance): void {
-  this._unhooked = true;
-
-  if (this._require === Module.prototype.require) {
-    Module.prototype.require = this._origRequire;
-  }
-
-  const processWithGetBuiltinModule: ProcessWithGetBuiltinModule = process;
-  if (processWithGetBuiltinModule.getBuiltinModule !== undefined) {
-    if (
-      this._getBuiltinModule === processWithGetBuiltinModule.getBuiltinModule
-    ) {
-      if (this._origGetBuiltinModule) {
-        processWithGetBuiltinModule.getBuiltinModule =
-          this._origGetBuiltinModule;
-      }
-    }
-  }
-};
+}
 
 module.exports = Hook;
 module.exports.Hook = Hook;

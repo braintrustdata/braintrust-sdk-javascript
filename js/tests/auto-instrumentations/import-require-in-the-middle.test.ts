@@ -31,6 +31,13 @@ describe("vendored import-in-the-middle and require-in-the-middle", () => {
       cwd: fixturesDir,
     });
   });
+
+  it("coexists with other CommonJS require wrappers", async () => {
+    await runNode({
+      args: [path.join(fixturesDir, "ritm-coexist-app.cjs")],
+      cwd: fixturesDir,
+    });
+  });
 });
 
 function runNode({

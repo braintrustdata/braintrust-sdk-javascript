@@ -30,11 +30,13 @@ function ensureParserInitialized() {
 
 type NodeRequire = ReturnType<typeof createRequire>;
 type ExportGenerator = Generator<LoaderOperation, Set<string>, LoadResult>;
-type PackageImportObject = {
-  default?: string;
-  import?: { default?: string; node?: string };
-  node?: string;
-  require?: { default?: string; node?: string };
+type PackageImportBranch = {
+  default?: unknown;
+  node?: unknown;
+};
+type PackageImportObject = PackageImportBranch & {
+  import?: unknown;
+  require?: unknown;
 };
 
 function addDefault(arr: Iterable<string>): Set<string> {
@@ -169,13 +171,53 @@ let require: NodeRequire | undefined;
 
 function getRequire(): NodeRequire {
   if (!require) {
-    require = createRequire(import.meta.url);
+    require = createRequire(pathToFileURL(process.execPath));
   }
   return require;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === "object";
+}
+
+function getStringProperty(
+  value: Record<string, unknown>,
+  property: string,
+): string | undefined {
+  const result = value[property];
+  return typeof result === "string" ? result : undefined;
+}
+
+function getImportBranch(value: unknown): PackageImportBranch | undefined {
+  return isRecord(value) ? value : undefined;
+}
+
+function getPackageImportTarget(imports: unknown): string | undefined {
+  if (typeof imports === "string") {
+    return imports;
+  }
+
+  if (!isRecord(imports)) {
+    return undefined;
+  }
+
+  const conditionalImports = imports as PackageImportObject;
+  const requireExport = getImportBranch(conditionalImports.require);
+  const importExport = getImportBranch(conditionalImports.import);
+
+  if (requireExport || importExport) {
+    return (
+      (requireExport && getStringProperty(requireExport, "node")) ||
+      (requireExport && getStringProperty(requireExport, "default")) ||
+      (importExport && getStringProperty(importExport, "node")) ||
+      (importExport && getStringProperty(importExport, "default"))
+    );
+  }
+
+  return (
+    getStringProperty(conditionalImports, "node") ||
+    getStringProperty(conditionalImports, "default")
+  );
 }
 
 // Returns a builtin's exports object. `process.getBuiltinModule` (Node >=
@@ -234,31 +276,14 @@ function resolvePackageImports(
       if (existsSync(packageJsonPath)) {
         const packageJson = JSON.parse(
           readFileSync(packageJsonPath, "utf8"),
-        ) as { imports?: Record<string, PackageImportObject | string> };
-        if (packageJson.imports && packageJson.imports[specifier]) {
-          const imports = packageJson.imports[specifier];
+        ) as unknown;
+        const packageImports =
+          isRecord(packageJson) && isRecord(packageJson.imports)
+            ? packageJson.imports[specifier]
+            : undefined;
 
-          // Look for path inside packageJson
-          let resolvedExport: string | undefined;
-          if (isRecord(imports)) {
-            const conditionalImports = imports as PackageImportObject;
-            const requireExport = conditionalImports.require;
-            const importExport = conditionalImports.import;
-            // look for the possibility of require and import which is standard for CJS/ESM
-            if (requireExport || importExport) {
-              // trying to resolve based on order of importance
-              resolvedExport =
-                requireExport?.node ||
-                requireExport?.default ||
-                importExport?.node ||
-                importExport?.default;
-            } else if (conditionalImports.node || conditionalImports.default) {
-              resolvedExport =
-                conditionalImports.node || conditionalImports.default;
-            }
-          } else if (typeof imports === "string") {
-            resolvedExport = imports;
-          }
+        if (packageImports) {
+          const resolvedExport = getPackageImportTarget(packageImports);
 
           if (resolvedExport) {
             const url = resolvedExport.startsWith(".")

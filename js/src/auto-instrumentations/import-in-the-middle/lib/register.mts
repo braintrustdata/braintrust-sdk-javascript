@@ -85,7 +85,7 @@ const proxyHandler: ProxyHandler<Namespace> = {
   },
 };
 
-export function register(
+function register(
   name: string,
   namespace: Namespace,
   set: Record<string | symbol, ExportSetter>,

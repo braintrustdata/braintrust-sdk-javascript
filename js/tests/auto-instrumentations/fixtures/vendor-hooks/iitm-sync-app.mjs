@@ -14,7 +14,7 @@ register();
 
 let calls = 0;
 const hook = new Hook(
-  ["hook-target", "cjs-hook-target", "fs"],
+  ["hook-target", "cjs-hook-target", "cjs-reexport-target", "fs"],
   (exports, name) => {
     calls++;
     if (name === "hook-target") {
@@ -33,6 +33,8 @@ const hook = new Hook(
 const target = await import("hook-target");
 const other = await import("unhooked-target");
 const cjsTarget = await import("cjs-hook-target");
+const cjsReexportTarget = await import("cjs-reexport-target");
+const queryParamTarget = await import("./query-param-target.mjs?iitm=true");
 const fs = await import("node:fs");
 
 assert.equal(target.foo, 57);
@@ -40,11 +42,14 @@ assert.equal(target.default(), "patched");
 assert.equal(other.foo, 10);
 assert.equal(other.default(), "untouched");
 assert.equal(cjsTarget.default.value, 8);
+assert.equal(cjsReexportTarget.nestedValue, "nested");
+assert.equal(cjsReexportTarget.rootValue, undefined);
+assert.equal(queryParamTarget.sawIitmParam, true);
 assert.equal(fs.existsSync("/definitely/not/a/real/path"), true);
 
 const require = createRequire(import.meta.url);
 const requiredFs = require("fs");
 assert.equal(Object.isExtensible(requiredFs), true);
 
-assert.equal(calls, 3);
+assert.equal(calls, 4);
 hook.unhook();

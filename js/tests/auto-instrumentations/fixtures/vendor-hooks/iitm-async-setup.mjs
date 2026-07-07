@@ -12,24 +12,27 @@ const hookUrl = new URL(
 const { addHookMessagePort, registerOptions, waitForAllMessagesAcknowledged } =
   createAddHookMessageChannel();
 
-register(hookUrl.href, import.meta.url, registerOptions);
+register(hookUrl, import.meta.url, registerOptions);
 
 globalThis.__braintrustIitmAsyncHookCalls = 0;
-const hook = new Hook(["hook-target", "cjs-hook-target"], (exports, name) => {
-  globalThis.__braintrustIitmAsyncHookCalls++;
-  if (name === "hook-target") {
-    exports.foo += 15;
-    exports.default = () => "patched";
-  }
-  if (name === "cjs-hook-target") {
-    exports.default.value = 8;
-  }
-});
+const hook = new Hook(
+  ["hook-target", "cjs-hook-target", "cjs-reexport-target"],
+  (exports, name) => {
+    globalThis.__braintrustIitmAsyncHookCalls++;
+    if (name === "hook-target") {
+      exports.foo += 15;
+      exports.default = () => "patched";
+    }
+    if (name === "cjs-hook-target") {
+      exports.default.value = 8;
+    }
+  },
+);
 
 await waitForAllMessagesAcknowledged();
 
 process.on("exit", () => {
-  assert.equal(globalThis.__braintrustIitmAsyncHookCalls, 2);
+  assert.equal(globalThis.__braintrustIitmAsyncHookCalls, 3);
   hook.unhook();
   addHookMessagePort.close();
 });
