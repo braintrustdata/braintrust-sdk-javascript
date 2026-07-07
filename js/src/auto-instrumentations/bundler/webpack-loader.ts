@@ -27,6 +27,15 @@ import { readFileSync } from "fs";
 import moduleDetailsFromPath from "module-details-from-path";
 import { getDefaultInstrumentationConfigs } from "../configs/all";
 import { type LegacyBundlerPluginOptions } from "./plugin";
+import { applySpecialCasePatch } from "../loader/special-case-patches";
+import {
+  buildTopLevelImportHookSourceWrapper,
+  getDefaultTopLevelImportHooks,
+  type TopLevelImportHookTarget,
+} from "../loader/top-level-export-patches";
+import { readDisabledInstrumentationEnvConfig } from "../../instrumentation/config";
+
+const TOP_LEVEL_ORIGINAL_QUERY = "braintrust-top-level-original";
 
 /**
  * Helper function to get module version from package.json
@@ -94,9 +103,13 @@ function codeTransformerLoader(
   const callback = this.async();
   const options: LegacyBundlerPluginOptions = this.getOptions() ?? {};
   const resourcePath: string = this.resourcePath;
+  const resourceQuery: string = this.resourceQuery ?? "";
 
   // Skip virtual modules (e.g. Next.js loaders pass query-string URLs with no real path)
   if (!resourcePath) {
+    return callback(null, code, inputSourceMap);
+  }
+  if (resourceQuery.includes(TOP_LEVEL_ORIGINAL_QUERY)) {
     return callback(null, code, inputSourceMap);
   }
 
@@ -122,12 +135,54 @@ function codeTransformerLoader(
   const moduleName = moduleDetails.name;
   const moduleVersion = getModuleVersion(moduleDetails.basedir);
 
-  if (!moduleVersion) {
-    return callback(null, code, inputSourceMap);
-  }
-
   // Normalize the module path for Windows compatibility (WASM transformer expects forward slashes)
   const normalizedModulePath = moduleDetails.path.replace(/\\/g, "/");
+  const moduleType: ModuleType = isModule ? "esm" : "cjs";
+  const target: TopLevelImportHookTarget =
+    options.browser === true ? "browser" : "node";
+  const disabledIntegrationConfig = readDisabledInstrumentationEnvConfig(
+    process.env.BRAINTRUST_DISABLE_INSTRUMENTATION,
+  ).integrations;
+  const topLevelImportHooks = getDefaultTopLevelImportHooks({
+    disabledIntegrationConfig,
+    target,
+  });
+
+  let nextCode = code;
+  let didPatch = false;
+
+  if (options.browser !== true) {
+    const patched = applySpecialCasePatch({
+      format: moduleType,
+      modulePath: normalizedModulePath,
+      packageName: moduleName,
+      source: nextCode,
+    });
+    if (patched !== null) {
+      nextCode = patched;
+      didPatch = true;
+    }
+  }
+
+  const topLevelWrapper = buildTopLevelImportHookSourceWrapper(
+    topLevelImportHooks,
+    {
+      format: moduleType,
+      modulePath: normalizedModulePath,
+      originalModuleSpecifier: `${resourcePath}?${TOP_LEVEL_ORIGINAL_QUERY}`,
+      packageName: moduleName,
+      source: nextCode,
+      target,
+    },
+  );
+  if (topLevelWrapper !== null) {
+    nextCode = topLevelWrapper;
+    didPatch = true;
+  }
+
+  if (!moduleVersion) {
+    return callback(null, nextCode, inputSourceMap);
+  }
 
   const matcher = getMatcher(options);
   const transformer = matcher.getTransformer(
@@ -137,19 +192,18 @@ function codeTransformerLoader(
   );
 
   if (!transformer) {
-    return callback(null, code, inputSourceMap);
+    return callback(null, nextCode, inputSourceMap);
   }
 
   try {
-    const moduleType: ModuleType = isModule ? "esm" : "cjs";
-    const result = transformer.transform(code, moduleType);
+    const result = transformer.transform(nextCode, moduleType);
     callback(null, result.code, result.map ?? undefined);
   } catch (error) {
     console.warn(
       `[code-transformer-loader] Error transforming ${resourcePath}:`,
       error,
     );
-    callback(null, code, inputSourceMap);
+    callback(null, didPatch ? nextCode : code, inputSourceMap);
   }
 }
 

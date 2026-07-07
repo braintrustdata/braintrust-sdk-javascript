@@ -20,6 +20,10 @@ import {
   readDisabledInstrumentationEnvConfig,
 } from "../instrumentation/config";
 import { installMastraExporterFactory } from "../auto-instrumentations/loader/mastra-observability-patch";
+import {
+  getDefaultTopLevelImportHooks,
+  installTopLevelImportHookRunner,
+} from "../auto-instrumentations/loader/top-level-export-patches";
 import { BraintrustObservabilityExporter } from "../wrappers/mastra";
 
 const BRAINTRUST_ENV_SEARCH_PARENT_LIMIT = 64;
@@ -136,15 +140,19 @@ export function configureNode() {
 
   _internalSetInitialState();
 
-  // The Mastra patches rewritten by the bundler plugin and the loader hook
-  // both look up an exporter factory on `globalThis` at runtime. Register it
-  // here too so a bundled app (where neither hook.mjs nor the loader runs
-  // against `@mastra/core`) still gets the exporter installed when its code
-  // imports `braintrust`. The loader path (hook.mjs) also calls this; the
-  // `??=` makes double-registration a no-op.
+  // Bundled wrapper modules call the top-level import hook runner through
+  // `globalThis`, and Mastra's hook uses the exporter factory below. Register
+  // both when the app imports `braintrust`; the loader path (hook.mjs) does
+  // the same setup for zero-line instrumentation.
   const disabled = readDisabledInstrumentationEnvConfig(
     iso.getEnv("BRAINTRUST_DISABLE_INSTRUMENTATION"),
   ).integrations;
+  installTopLevelImportHookRunner(
+    getDefaultTopLevelImportHooks({
+      disabledIntegrationConfig: disabled,
+      target: "node",
+    }),
+  );
   if (!isInstrumentationIntegrationDisabled(disabled, "mastra")) {
     installMastraExporterFactory(() => new BraintrustObservabilityExporter());
   }

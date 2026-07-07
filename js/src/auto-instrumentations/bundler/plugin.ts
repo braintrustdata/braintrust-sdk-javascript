@@ -1,11 +1,20 @@
 import { createUnplugin } from "unplugin";
 import { create, type InstrumentationConfig } from "../orchestrion-js";
-import { extname, join, sep } from "path";
+import { dirname, extname, join, resolve, sep } from "path";
 import { readFileSync } from "fs";
 import { fileURLToPath } from "url";
 import moduleDetailsFromPath from "module-details-from-path";
 import { getDefaultInstrumentationConfigs } from "../configs/all";
 import { applySpecialCasePatch } from "../loader/special-case-patches";
+import {
+  buildTopLevelImportHookSourceWrapper,
+  getDefaultTopLevelImportHooks,
+  type TopLevelImportHookTarget,
+} from "../loader/top-level-export-patches";
+import { readDisabledInstrumentationEnvConfig } from "../../instrumentation/config";
+
+const TOP_LEVEL_ORIGINAL_IMPORT_PREFIX = "braintrust-top-level-original:";
+const TOP_LEVEL_ORIGINAL_RESOLVED_PREFIX = `\0${TOP_LEVEL_ORIGINAL_IMPORT_PREFIX}`;
 
 export interface LegacyBundlerPluginOptions {
   /**
@@ -75,6 +84,18 @@ export const unplugin = createUnplugin<LegacyBundlerPluginOptions>(
     const allInstrumentations = getDefaultInstrumentationConfigs({
       additionalInstrumentations: options.instrumentations,
     });
+    const disabledIntegrationConfig = readDisabledInstrumentationEnvConfig(
+      process.env.BRAINTRUST_DISABLE_INSTRUMENTATION,
+    ).integrations;
+    const topLevelImportHookTarget: TopLevelImportHookTarget =
+      options.browser === false ? "node" : "browser";
+    const topLevelImportHooks = getDefaultTopLevelImportHooks({
+      disabledIntegrationConfig,
+      target: topLevelImportHookTarget,
+    });
+    const originalSources = new Map<string, string>();
+    const originalDirectories = new Map<string, string>();
+    let nextOriginalId = 0;
 
     // Default to browser build, use polyfill unless explicitly disabled
     const dcModule = options.browser === false ? undefined : "dc-browser";
@@ -85,9 +106,35 @@ export const unplugin = createUnplugin<LegacyBundlerPluginOptions>(
     return {
       name: "code-transformer",
       enforce: "pre",
+      resolveId(id: string, importer?: string) {
+        if (id.startsWith(TOP_LEVEL_ORIGINAL_IMPORT_PREFIX)) {
+          return `${TOP_LEVEL_ORIGINAL_RESOLVED_PREFIX}${id.slice(
+            TOP_LEVEL_ORIGINAL_IMPORT_PREFIX.length,
+          )}`;
+        }
+        if (
+          id.startsWith(".") &&
+          importer?.startsWith(TOP_LEVEL_ORIGINAL_RESOLVED_PREFIX)
+        ) {
+          const originalDirectory = originalDirectories.get(importer);
+          if (originalDirectory) {
+            return resolve(originalDirectory, id);
+          }
+        }
+        return null;
+      },
+      load(id: string) {
+        if (id.startsWith(TOP_LEVEL_ORIGINAL_RESOLVED_PREFIX)) {
+          return originalSources.get(id) ?? null;
+        }
+        return null;
+      },
       transform(code: string, id: string) {
         if (!id) {
           // Some modules apparently don't have an id?
+          return null;
+        }
+        if (id.startsWith(TOP_LEVEL_ORIGINAL_RESOLVED_PREFIX)) {
           return null;
         }
 
@@ -123,25 +170,52 @@ export const unplugin = createUnplugin<LegacyBundlerPluginOptions>(
         const normalizedModulePath = moduleDetails.path.replace(/\\/g, "/");
         const moduleVersion = getModuleVersion(moduleDetails.basedir);
 
+        let nextCode = code;
+        let didPatch = false;
+
         // Per-package source patches (see loader/special-case-patches.ts).
-        // Same anti-pattern fallback the runtime loader uses — mirrored here
-        // so bundled apps get the patches without relying on hook.mjs.
-        // Skipped for browser bundles since the wrapper templates use
-        // `node:module`/`require` to resolve `@mastra/observability`.
+        // Skipped for browser bundles to preserve the historical behavior of
+        // the OpenAI APIPromise patch path.
         if (options.browser !== true) {
           const patched = applySpecialCasePatch({
             packageName: moduleName,
             modulePath: normalizedModulePath,
-            source: code,
+            source: nextCode,
             format: isModule ? "esm" : "cjs",
           });
           if (patched !== null) {
-            return { code: patched, map: null };
+            nextCode = patched;
+            didPatch = true;
           }
+        }
+
+        const originalModuleSpecifier = `${TOP_LEVEL_ORIGINAL_IMPORT_PREFIX}${nextOriginalId++}`;
+        const originalModuleId = `${TOP_LEVEL_ORIGINAL_RESOLVED_PREFIX}${originalModuleSpecifier.slice(
+          TOP_LEVEL_ORIGINAL_IMPORT_PREFIX.length,
+        )}`;
+        const topLevelWrapper = buildTopLevelImportHookSourceWrapper(
+          topLevelImportHooks,
+          {
+            format: isModule ? "esm" : "cjs",
+            modulePath: normalizedModulePath,
+            originalModuleSpecifier,
+            packageName: moduleName,
+            source: nextCode,
+            target: topLevelImportHookTarget,
+          },
+        );
+        if (topLevelWrapper !== null) {
+          originalSources.set(originalModuleId, nextCode);
+          originalDirectories.set(originalModuleId, dirname(filePath));
+          nextCode = topLevelWrapper;
+          didPatch = true;
         }
 
         // If no version found
         if (!moduleVersion) {
+          if (didPatch) {
+            return { code: nextCode, map: null };
+          }
           console.warn(
             `No 'package.json' version found for module ${moduleName} at ${moduleDetails.basedir}. Skipping transformation.`,
           );
@@ -157,13 +231,13 @@ export const unplugin = createUnplugin<LegacyBundlerPluginOptions>(
 
         if (!transformer) {
           // No instrumentations match this file
-          return null;
+          return didPatch ? { code: nextCode, map: null } : null;
         }
 
         try {
           // Transform the code
           const moduleType = isModule ? "esm" : "cjs";
-          const result = transformer.transform(code, moduleType);
+          const result = transformer.transform(nextCode, moduleType);
           const transformedCode = result.code.replace(
             /const \{tracingChannel: ([A-Za-z_$][\w$]*)\} = ([A-Za-z_$][\w$]*);/g,
             "const $1 = $2.tracingChannel;",

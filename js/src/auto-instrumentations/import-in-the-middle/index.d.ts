@@ -1,25 +1,44 @@
 // Forked from import-in-the-middle@3.2.0. Modified by Braintrust.
 
-export type Namespace = { [key: string]: any };
-export type HookFn = (
-  exported: Namespace,
-  name: string,
-  baseDir: string | void,
-) => any;
+import type { MessagePort } from "node:worker_threads";
 
-export declare class Hook {
-  constructor(modules: string[], hookFn: HookFn);
+export type Namespace = Record<string | symbol, unknown>;
+export type HookFn<Exported extends object = Namespace, Result = unknown> = (
+  exported: Exported,
+  name: string,
+  baseDir?: string,
+) => Result;
+
+export interface Hook<Exported extends object = Namespace> {
   unhook(): void;
 }
 
+export interface HookConstructor {
+  new <Exported extends object = Namespace>(
+    modules: readonly string[],
+    hookFn: HookFn<Exported>,
+  ): Hook<Exported>;
+  <Exported extends object = Namespace>(
+    modules: readonly string[],
+    hookFn: HookFn<Exported>,
+  ): Hook<Exported>;
+}
+
+export declare const Hook: HookConstructor;
 export default Hook;
 
-type CreateAddHookMessageChannelReturn<Data> = {
+export type HookRegisterData = {
   addHookMessagePort: MessagePort;
-  waitForAllMessagesAcknowledged: () => Promise<void>;
-  registerOptions: { data?: Data; transferList?: any[] };
+  include: string[];
 };
 
-export declare function createAddHookMessageChannel<
-  Data = any,
->(): CreateAddHookMessageChannelReturn<Data>;
+type CreateAddHookMessageChannelReturn = {
+  addHookMessagePort: MessagePort;
+  waitForAllMessagesAcknowledged: () => Promise<void>;
+  registerOptions: {
+    data: HookRegisterData;
+    transferList: [MessagePort];
+  };
+};
+
+export declare function createAddHookMessageChannel(): CreateAddHookMessageChannelReturn;
