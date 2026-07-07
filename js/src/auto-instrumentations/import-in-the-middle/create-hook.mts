@@ -16,14 +16,10 @@ import type {
   ResolveOperation,
   ResolveResult,
 } from "./lib/io.mjs";
-import type { register as registerGeneratedWrapper } from "./lib/register.mjs";
-
-const generatedWrapperRegister: typeof registerGeneratedWrapper | undefined =
-  undefined;
-void generatedWrapperRegister;
 
 const specifiers = new Map<string, string>();
 const isWin = process.platform === "win32";
+const IITM_QUERY_PARAM = "braintrust_iitm";
 
 // FIXME: Typescript extensions are added temporarily until we find a better
 // way of supporting arbitrary extensions
@@ -40,9 +36,6 @@ const [, NODE_MAJOR, NODE_MINOR, NODE_PATCH] = process.versions.node
 type LoaderMeta = { url: string };
 type HookData = {
   addHookMessagePort?: MessagePort;
-  exclude?: never;
-  include?: readonly string[];
-  shouldInclude?: never;
 };
 type AsyncLoadFunction = (
   url: string,
@@ -57,10 +50,9 @@ type SyncResolveFunction = (
   specifier: string,
   context: LoaderContext,
 ) => ResolveResult;
-type ResolveFunction = AsyncResolveFunction | SyncResolveFunction;
 type SetterMap = Map<string, string>;
 
-interface ImportInTheMiddleHook {
+export interface ImportInTheMiddleHook {
   applyOptions(data: HookData): void;
   initialize(data?: HookData): Promise<void>;
   load(
@@ -110,12 +102,12 @@ export function supportsSyncHooks(): boolean {
 }
 
 function hasIitm(url: unknown): boolean {
-  // Fast path: avoid URL parsing on the hot path when there's clearly no iitm.
-  if (typeof url !== "string" || url.indexOf("iitm") === -1) {
+  // Fast path: avoid URL parsing on the hot path when our marker is absent.
+  if (typeof url !== "string" || url.indexOf(IITM_QUERY_PARAM) === -1) {
     return false;
   }
   try {
-    return new URL(url).searchParams.has("iitm");
+    return new URL(url).searchParams.has(IITM_QUERY_PARAM);
   } catch {
     return false;
   }
@@ -129,7 +121,7 @@ function isIitm(url: string, meta: LoaderMeta): boolean {
 
 function deleteIitm(url: string): string {
   // Fast path: avoid URL parsing / try-catch on bare specifiers and normal file URLs.
-  if (typeof url !== "string" || url.indexOf("iitm") === -1) {
+  if (typeof url !== "string" || url.indexOf(IITM_QUERY_PARAM) === -1) {
     return url;
   }
   let resultUrl: string;
@@ -137,8 +129,8 @@ function deleteIitm(url: string): string {
   try {
     Error.stackTraceLimit = 0;
     const urlObj = new URL(url);
-    if (urlObj.searchParams.has("iitm")) {
-      urlObj.searchParams.delete("iitm");
+    if (urlObj.searchParams.has(IITM_QUERY_PARAM)) {
+      urlObj.searchParams.delete(IITM_QUERY_PARAM);
       resultUrl = urlObj.href;
       if (resultUrl.startsWith("file:///node:")) {
         resultUrl = resultUrl.replace("file:///", "");
@@ -371,17 +363,18 @@ function* processModule({
 
 function addIitm(url: string): string {
   const urlObj = new URL(url);
-  urlObj.searchParams.set("iitm", "true");
+  urlObj.searchParams.set(IITM_QUERY_PARAM, "true");
   return urlObj.href;
 }
 
 export function createHook(meta: LoaderMeta): ImportInTheMiddleHook {
-  let cachedResolve: ResolveFunction | undefined;
+  let cachedAsyncResolve: AsyncResolveFunction | undefined;
+  let cachedSyncResolve: SyncResolveFunction | undefined;
   const iitmURL = new URL(
     meta.url.endsWith(".mts") ? "lib/register.mts" : "lib/register.mjs",
     meta.url,
   ).toString();
-  const includeModules = new Set<string>();
+  const loaderThreadHookedModules = new Set<string>();
 
   // Track CJS module URLs that IITM has wrapped. On Node 24+, CJS modules loaded
   // via loadCJSModule (in an ESM import chain) have their require() calls for
@@ -391,7 +384,7 @@ export function createHook(meta: LoaderMeta): ImportInTheMiddleHook {
   // patterns like `class App extends require('events') {}`.
   const cjsInIitmChain = new Set<string>();
 
-  function addExplicitIncludes(modules: unknown): void {
+  function addExplicitHookModules(modules: unknown): void {
     if (!Array.isArray(modules)) {
       return;
     }
@@ -402,16 +395,18 @@ export function createHook(meta: LoaderMeta): ImportInTheMiddleHook {
           `Braintrust import-in-the-middle only supports string module names. Invalid entry: ${inspect(each)}`,
         );
       }
-      includeModules.add(each);
+      loaderThreadHookedModules.add(each);
       if (!each.startsWith("node:") && builtinModules.includes(each)) {
-        includeModules.add(`node:${each}`);
+        loaderThreadHookedModules.add(`node:${each}`);
       }
     }
   }
 
-  function defaultShouldInclude(url: string, specifier: string): boolean {
+  function shouldWrapExplicitHook(url: string, specifier: string): boolean {
     const modules =
-      includeModules.size > 0 ? includeModules : registerState.hookedModules;
+      loaderThreadHookedModules.size > 0
+        ? loaderThreadHookedModules
+        : registerState.hookedModules;
     if (!modules || modules.size === 0) {
       return false;
     }
@@ -445,19 +440,11 @@ export function createHook(meta: LoaderMeta): ImportInTheMiddleHook {
   }
 
   function applyOptions(data: HookData): void {
-    if (data.exclude || data.shouldInclude) {
-      throw new Error(
-        "Braintrust import-in-the-middle only supports explicit Hook([...]) module interception",
-      );
-    }
-
-    addExplicitIncludes(data.include);
-
     const { addHookMessagePort } = data;
     if (addHookMessagePort) {
       addHookMessagePort
         .on("message", (modules: unknown) => {
-          addExplicitIncludes(modules);
+          addExplicitHookModules(modules);
           addHookMessagePort.postMessage("ack");
         })
         .unref();
@@ -466,15 +453,15 @@ export function createHook(meta: LoaderMeta): ImportInTheMiddleHook {
 
   async function initialize(data?: HookData): Promise<void> {
     const globalState = globalThis as typeof globalThis & {
-      __import_in_the_middle_initialized__?: boolean;
+      __braintrust_import_in_the_middle_initialized__?: boolean;
     };
-    if (globalState.__import_in_the_middle_initialized__) {
+    if (globalState.__braintrust_import_in_the_middle_initialized__) {
       process.emitWarning(
-        "The 'import-in-the-middle' hook has already been initialized",
+        "The Braintrust import-in-the-middle hook has already been initialized",
       );
     }
 
-    globalState.__import_in_the_middle_initialized__ = true;
+    globalState.__braintrust_import_in_the_middle_initialized__ = true;
 
     if (data) {
       applyOptions(data);
@@ -520,7 +507,7 @@ export function createHook(meta: LoaderMeta): ImportInTheMiddleHook {
       return result;
     }
 
-    if (!defaultShouldInclude(result.url, specifier)) {
+    if (!shouldWrapExplicitHook(result.url, specifier)) {
       return result;
     }
 
@@ -579,7 +566,7 @@ export function createHook(meta: LoaderMeta): ImportInTheMiddleHook {
     context: LoaderContext,
     parentResolve: AsyncResolveFunction,
   ): Promise<ResolveResult> {
-    cachedResolve = parentResolve;
+    cachedAsyncResolve = parentResolve;
 
     // See https://github.com/nodejs/import-in-the-middle/pull/76.
     if (specifier === iitmURL) {
@@ -611,7 +598,7 @@ export function createHook(meta: LoaderMeta): ImportInTheMiddleHook {
     context: LoaderContext,
     nextResolve: SyncResolveFunction,
   ): ResolveResult {
-    cachedResolve = nextResolve;
+    cachedSyncResolve = nextResolve;
 
     if (specifier === iitmURL) {
       return {
@@ -753,7 +740,7 @@ register(${JSON.stringify(realUrl)}, _, set, get, ${JSON.stringify(originalSpeci
       const originalSpecifier = specifiers.get(realUrl);
 
       try {
-        const resolveForWrap = cachedResolve;
+        const resolveForWrap = cachedAsyncResolve;
         const setters = await driveAsync(
           processModule({ srcUrl: realUrl, context }),
           {
@@ -797,7 +784,7 @@ register(${JSON.stringify(realUrl)}, _, set, get, ${JSON.stringify(originalSpeci
         const setters = driveSync(processModule({ srcUrl: realUrl, context }), {
           load: (loadUrl, loadContext) =>
             nextLoad(loadUrl, loadContext) as LoadResult,
-          resolve: cachedResolve as SyncResolveFunction | undefined,
+          resolve: cachedSyncResolve,
         });
         return {
           source: onWrapSuccess(realUrl, context, originalSpecifier, setters),
