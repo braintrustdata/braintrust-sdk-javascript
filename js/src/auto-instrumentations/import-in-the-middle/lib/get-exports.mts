@@ -1,4 +1,4 @@
-import getEsmExports from "./get-esm-exports.mjs";
+import { lexEsm } from "./get-esm-exports.mjs";
 import { parse as parseCjs, initSync } from "cjs-module-lexer";
 import { existsSync, readFileSync } from "node:fs";
 import { builtinModules, createRequire } from "node:module";
@@ -14,6 +14,19 @@ import type {
 
 const nodeMajor = Number(process.versions.node.split(".")[0]);
 export const hasModuleExportsCJSDefault = nodeMajor >= 23;
+
+type StripTypeScriptTypes = (
+  source: string,
+  options: { mode: "strip" },
+) => string;
+
+const stripTypeScriptTypes = (
+  process as NodeJS.Process & {
+    getBuiltinModule?: (name: "module") => {
+      stripTypeScriptTypes?: StripTypeScriptTypes;
+    };
+  }
+).getBuiltinModule?.("module").stripTypeScriptTypes;
 
 let parserInitialized = false;
 
@@ -43,129 +56,9 @@ function addDefault(arr: Iterable<string>): Set<string> {
   return new Set(["default", ...arr]);
 }
 
-function hasEsmSyntax(source: string): boolean {
-  // Lightweight scan (no full parse) to determine if the *source code*
-  // contains ESM-specific syntax. This is used only when:
-  // - the loader chain didn't tell us a `format`, and
-  // - `getEsmExports()` found no exports.
-  //
-  // Notes:
-  // - We ignore comments and strings to reduce false positives.
-  // - We treat `import.meta` and static `import ...` as ESM.
-  // - We do NOT treat `import(` (dynamic import) as ESM because it is allowed
-  //   in CJS as an expression.
-  if (source.indexOf("import") === -1) return false;
-
-  const isIdentCharCode = (code: number) =>
-    (code >= 48 && code <= 57) || // 0-9
-    (code >= 65 && code <= 90) || // A-Z
-    (code >= 97 && code <= 122) || // a-z
-    code === 95 || // _
-    code === 36; // $
-
-  const skipWhitespace = (idx: number) => {
-    while (idx < source.length) {
-      const c = source.charCodeAt(idx);
-      // space, tab, cr, lf
-      if (c !== 32 && c !== 9 && c !== 13 && c !== 10) break;
-      idx++;
-    }
-    return idx;
-  };
-
-  let i = 0;
-  while (i < source.length) {
-    const ch = source[i];
-
-    // Line comment
-    if (ch === "/" && source[i + 1] === "/") {
-      i += 2;
-      while (i < source.length && source[i] !== "\n") i++;
-      continue;
-    }
-
-    // Block comment
-    if (ch === "/" && source[i + 1] === "*") {
-      i += 2;
-      while (i < source.length && !(source[i] === "*" && source[i + 1] === "/"))
-        i++;
-      i += 2;
-      continue;
-    }
-
-    // Strings: '...' or "..."
-    if (ch === "'" || ch === '"') {
-      const quote = ch;
-      i++;
-      while (i < source.length) {
-        const c = source[i];
-        if (c === "\\") {
-          i += 2;
-          continue;
-        }
-        if (c === quote) {
-          i++;
-          break;
-        }
-        i++;
-      }
-      continue;
-    }
-
-    // Template strings: `...`
-    if (ch === "`") {
-      i++;
-      while (i < source.length) {
-        const c = source[i];
-        if (c === "\\") {
-          i += 2;
-          continue;
-        }
-        if (c === "`") {
-          i++;
-          break;
-        }
-        i++;
-      }
-      continue;
-    }
-
-    // Keyword scan (word-boundary): import
-    if (ch === "i") {
-      const prev = source.charCodeAt(i - 1);
-      if (i > 0 && isIdentCharCode(prev)) {
-        i++;
-        continue;
-      }
-
-      if (source.startsWith("import", i)) {
-        const next = source.charCodeAt(i + 6);
-        if (isIdentCharCode(next)) {
-          i++;
-          continue;
-        }
-
-        const j = skipWhitespace(i + 6);
-        // `import.meta` is ESM-only
-        if (source[j] === ".") return true;
-        // `import(` is dynamic import, allowed in CJS
-        if (source[j] === "(") {
-          i = j + 1;
-          continue;
-        }
-        // Otherwise assume it's a static import form
-        return true;
-      }
-    }
-
-    i++;
-  }
-
-  return false;
-}
-
 // Cached exports for Node built-in modules
 const BUILT_INS = new Map<string, Set<string>>();
+const esmExportsCache = new Map<string, { exportNames: Set<string> }>();
 
 let require: NodeRequire | undefined;
 
@@ -393,6 +286,11 @@ export function* getExports(
   url: string,
   context: LoaderContext,
 ): ExportGenerator {
+  const cached = esmExportsCache.get(url);
+  if (cached !== undefined) {
+    return cached.exportNames;
+  }
+
   // `[LOAD, ...]` gives us the possibility of getting the source from an
   // upstream loader. This doesn't always work though, so later on we fall back
   // to reading it from disk.
@@ -431,31 +329,38 @@ export function* getExports(
     source = readFileSync(fileURLToPath(url), "utf8");
   }
 
-  const moduleSource = source as string;
-
   try {
-    if (format === "module") {
-      return getEsmExports(moduleSource);
+    let moduleSource = source as string;
+    let moduleFormat = format;
+    if (
+      moduleFormat === "module-typescript" ||
+      moduleFormat === "commonjs-typescript"
+    ) {
+      if (stripTypeScriptTypes !== undefined) {
+        moduleSource = stripTypeScriptTypes(moduleSource, { mode: "strip" });
+      }
+      moduleFormat =
+        moduleFormat === "module-typescript" ? "module" : "commonjs";
     }
 
-    if (format === "commonjs") {
+    if (moduleFormat === "commonjs") {
       return yield* getCjsExports(url, context, moduleSource);
     }
 
-    // At this point our `format` is either undefined or not known by us. Fall
-    // back to parsing as ESM/CJS.
-    const esmExports = getEsmExports(moduleSource);
-    if (!esmExports.size) {
-      // If there's strong evidence this is ESM (static import/import.meta),
-      // prefer returning the empty ESM export set over incorrectly treating it
-      // as CJS.
-      if (!hasEsmSyntax(moduleSource)) {
-        // It might be possible to get here if the format
-        // isn't set at first and yet we have an ESM module with no exports.
-        return yield* getCjsExports(url, context, moduleSource);
-      }
+    const { exportNames, hasModuleSyntax } = lexEsm(moduleSource);
+
+    if (moduleFormat === "module") {
+      esmExportsCache.set(url, { exportNames });
+      return exportNames;
     }
-    return esmExports;
+
+    // At this point our `format` is either undefined or not known by us. When
+    // there are no exports and no ESM syntax, fall back to CommonJS detection.
+    if (!exportNames.size && !hasModuleSyntax) {
+      return yield* getCjsExports(url, context, moduleSource);
+    }
+    esmExportsCache.set(url, { exportNames });
+    return exportNames;
   } catch (cause) {
     throw new Error(`Failed to parse '${url}'`, { cause });
   }

@@ -28,6 +28,20 @@ interface HookInstance {
 
 let sendModulesToLoader: ((modules: string[]) => void) | undefined;
 
+function isTurbopackSpecifier(
+  specifier: string | undefined,
+  baseDir: string,
+): boolean {
+  const usingTurbopack =
+    process.env.TURBOPACK ?? process.argv.includes("--turbo");
+  if (!usingTurbopack || !specifier) return false;
+
+  const hashIndex = specifier.lastIndexOf("-");
+  if (hashIndex === -1) return false;
+
+  return baseDir.endsWith(specifier.slice(0, hashIndex));
+}
+
 function addHook(hook: ImportHook): void {
   importHooks.push(hook);
   toHook.forEach(([name, namespace, specifier]) =>
@@ -76,7 +90,12 @@ function moduleMatches(
 
   // Keep the top-level package check from upstream, but do not support the
   // broad internals mode. Internal files must be listed explicitly.
-  return matchArg === name && baseDir.endsWith(String(specifiers.get(loadUrl)));
+  const originalSpecifier = specifiers.get(loadUrl);
+  return (
+    matchArg === name &&
+    (baseDir.endsWith(String(originalSpecifier)) ||
+      isTurbopackSpecifier(originalSpecifier, baseDir))
+  );
 }
 
 export function createAddHookMessageChannel() {

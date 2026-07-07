@@ -212,8 +212,6 @@
   "dependencies": {
     "@next/env": "^14.2.3",
     "@vercel/functions": "^1.0.2",
-    "acorn": "^8.16.0",
-    "acorn-import-attributes": "^1.9.5",
     "ajv": "^8.20.0",
     "argparse": "^2.0.1",
     "astring": "^1.9.0",
@@ -223,6 +221,7 @@
     "cors": "^2.8.5",
     "dc-browser": "^1.0.4",
     "dotenv": "^16.4.5",
+    "es-module-lexer": "^2.3.0",
     "esbuild": "0.28.0",
     "esquery": "^1.7.0",
     "eventsource-parser": "^1.1.2",
