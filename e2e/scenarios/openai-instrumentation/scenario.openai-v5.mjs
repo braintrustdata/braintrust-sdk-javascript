@@ -1,4 +1,5 @@
-import OpenAI from "openai-v5";
+const openaiPackageName = process.env.OPENAI_PACKAGE_NAME ?? "openai-v5-latest";
+const { default: OpenAI } = await import(openaiPackageName);
 import {
   getInstalledPackageVersion,
   runMain,
@@ -10,7 +11,7 @@ runMain(async () =>
     chatHelperNamespace: "ga",
     openaiSdkVersion: await getInstalledPackageVersion(
       import.meta.url,
-      "openai-v5",
+      openaiPackageName,
     ),
   }),
 );

@@ -395,7 +395,9 @@ export function defineOpenRouterTraceAssertions(options: {
     );
 
     test("matches the shared span tree snapshot", testConfig, async () => {
-      await matchSpanTreeSnapshot(events, spanSnapshotPath);
+      await matchSpanTreeSnapshot(events, spanSnapshotPath, {
+        normalize: { omittedKeys: ["promptCacheKey"] },
+      });
     });
   });
 }

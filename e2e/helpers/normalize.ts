@@ -107,7 +107,9 @@ const TEMP_SCENARIO_PATH_REGEX =
   /\/e2e\/\.bt-tmp\/[^/\s)]+\/scenarios\/([^/\s)]+)\/?/g;
 const TEMP_HELPER_PATH_REGEX = /\/e2e\/\.bt-tmp\/[^/\s)]+\/helpers\/?/g;
 const TEMP_SCENARIO_DEPENDENCY_PATH_REGEX =
-  /\/e2e\/\.bt-tmp\/scenario-deps\/([^/\s)]+)-locked-[0-9a-f]{8,}(?=\/|$)/gi;
+  /\/e2e\/\.bt-tmp\/scenario-deps\/(.+?)(?:-locked)?-[0-9a-f]{8,}(?=\/|$)/gi;
+const CLAUDE_AGENT_OUTPUT_FILE_REGEX =
+  /(?:\/private)?\/tmp\/claude-\d+\/[^"\s]+\/tasks\/[0-9a-f]+\.output/g;
 const PROVIDER_HELPER_CALLER_REGEX = /^<repo>\/e2e\/helpers\/.+-scenario\.mjs$/;
 const ANTHROPIC_MESSAGE_STREAM_PATH_REGEX =
   /([/\\]node_modules[/\\]\.pnpm[/\\]@anthropic-ai\+sdk@[^/\\\s)]+[/\\]node_modules[/\\]@anthropic-ai[/\\]sdk[/\\])(?:src[/\\]lib[/\\]MessageStream\.ts|lib[/\\]MessageStream\.js)/g;
@@ -119,6 +121,8 @@ const SDK_CHUNK_PATH_REGEX =
   /(<repo>\/js\/dist\/)chunk-[A-Z0-9]+(\.(?:c?js|cjs|mjs))/g;
 const ANTHROPIC_PNPM_VERSION_REGEX =
   /([/\\]\.pnpm[/\\]@anthropic-ai\+sdk@)[^/\\\s)]+/g;
+const LOCALHOST_HTTP_URL_SUBSTRING_REGEX =
+  /http:\/\/127\.0\.0\.1:\d+([^\s"'<>)]*)/g;
 
 function isRecord(value: Json | undefined): value is { [key: string]: Json } {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -159,6 +163,14 @@ function normalizeMockServerUrl(value: string): string | undefined {
 
 function normalizeStackLikeString(value: string): string {
   let normalized = value.replaceAll("file://", "");
+  normalized = normalized.replace(
+    LOCALHOST_HTTP_URL_SUBSTRING_REGEX,
+    (_match, suffix: string) => {
+      return suffix === "/" || suffix === ""
+        ? "<mock-server>"
+        : `<mock-server>${suffix}`;
+    },
+  );
   normalized = normalized.replaceAll(REPO_ROOT, "<repo>");
   normalized = normalized.replace(
     TEMP_SCENARIO_PATH_REGEX,
@@ -168,6 +180,10 @@ function normalizeStackLikeString(value: string): string {
   normalized = normalized.replace(
     TEMP_SCENARIO_DEPENDENCY_PATH_REGEX,
     "/e2e/.bt-tmp/scenario-deps/$1-locked-<hash>",
+  );
+  normalized = normalized.replace(
+    CLAUDE_AGENT_OUTPUT_FILE_REGEX,
+    "<tmp>/claude-agent/tasks/<output-file>",
   );
 
   normalized = normalized.replace(

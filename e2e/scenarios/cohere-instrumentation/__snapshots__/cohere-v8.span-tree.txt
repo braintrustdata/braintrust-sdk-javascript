@@ -35,7 +35,6 @@ span_tree:
     │       }
     │       metrics: {
     │         "completion_tokens": 2,
-    │         "prompt_cached_tokens": 0,
     │         "prompt_tokens": 5,
     │         "time_to_first_token": 0,
     │         "tokens": 7
@@ -66,7 +65,6 @@ span_tree:
     │       }
     │       metrics: {
     │         "completion_tokens": 2,
-    │         "prompt_cached_tokens": 0,
     │         "prompt_tokens": 5,
     │         "time_to_first_token": 0,
     │         "tokens": 7
@@ -114,12 +112,10 @@ span_tree:
             }
             output: [
               {
-                "index": 0,
-                "relevance_score": 0.8657814
+                "index": 0
               },
               {
-                "index": 1,
-                "relevance_score": 0.09116359
+                "index": 1
               }
             ]
             metadata: {

@@ -1,0 +1,201 @@
+span_tree:
+└── groq-instrumentation-root [task]
+    metadata: {
+      "scenario": "groq-instrumentation",
+      "testRunId": "<run:1>"
+    }
+    ├── groq-chat-operation
+    │   metadata: {
+    │     "operation": "chat",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── groq.chat.completions.create [llm]
+    │       input: [
+    │         {
+    │           "content": "Reply with exactly OK.",
+    │           "role": "user"
+    │         }
+    │       ]
+    │       output: [
+    │         {
+    │           "finish_reason": "stop",
+    │           "index": 0,
+    │           "logprobs": null,
+    │           "message": {
+    │             "content": "OK",
+    │             "role": "assistant"
+    │           }
+    │         }
+    │       ]
+    │       metadata: {
+    │         "max_completion_tokens": 12,
+    │         "model": "llama-3.3-70b-versatile",
+    │         "provider": "groq",
+    │         "temperature": 0
+    │       }
+    │       metrics: {
+    │         "completion_time": 0.008214024,
+    │         "completion_tokens": 2,
+    │         "prompt_time": 0.001729875,
+    │         "prompt_tokens": 40,
+    │         "queue_time": 0.122455043,
+    │         "time_to_first_token": 0,
+    │         "tokens": 42,
+    │         "total_time": 0.009943899
+    │       }
+    ├── groq-stream-operation
+    │   metadata: {
+    │     "operation": "stream",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── groq.chat.completions.create [llm]
+    │       input: [
+    │         {
+    │           "content": "Reply with exactly STREAM.",
+    │           "role": "user"
+    │         }
+    │       ]
+    │       output: [
+    │         {
+    │           "finish_reason": "stop",
+    │           "index": 0,
+    │           "logprobs": null,
+    │           "message": {
+    │             "content": "STREAM",
+    │             "role": "assistant"
+    │           }
+    │         }
+    │       ]
+    │       metadata: {
+    │         "model": "llama-3.3-70b-versatile",
+    │         "provider": "groq",
+    │         "stream": true,
+    │         "temperature": 0
+    │       }
+    │       metrics: {
+    │         "completion_time": 0.006698614,
+    │         "completion_tokens": 2,
+    │         "prompt_time": 0.005232794,
+    │         "prompt_tokens": 40,
+    │         "queue_time": 0.050999295,
+    │         "time_to_first_token": 0,
+    │         "tokens": 42,
+    │         "total_time": 0.011931408
+    │       }
+    ├── groq-reasoning-stream-operation
+    │   metadata: {
+    │     "operation": "reasoning-stream",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── groq.chat.completions.create [llm]
+    │       input: [
+    │         {
+    │           "content": "Solve this step by step: Elena has 3 boxes with 4 marbles each, gives away 5 marbles, then doubles what remains. Reply with just the final number.",
+    │           "role": "user"
+    │         }
+    │       ]
+    │       output: [
+    │         {
+    │           "finish_reason": "stop",
+    │           "index": 0,
+    │           "logprobs": null,
+    │           "message": {
+    │             "content": "14",
+    │             "reasoning": "Okay, let's see. So Elena has 3 boxes, each with 4 marbles. First, I need to figure out how many marbles she has in total. If each box has 4 marbles and there are 3 boxes, then I should multiply 3 by 4. That would be 3 * 4 = 12 marbles.\n\nThen, she gives away 5 marbles. So I need to subtract 5 from the total she had. So 12 minus 5 is... 7. Wait, 12 - 5 is 7. So now she has 7 marbles left.\n\nAfter that, she doubles what remains. So doubling 7 would be 7 * 2. Let me calculate that. 7 * 2 is 14. So the final number should be 14. Let me just check each step again to make sure I didn't make a mistake.\n\nStart with 3 boxes * 4 marbles = 12. Correct. Then subtract 5: 12 - 5 = 7. Then double 7: 14. Yep, that seems right. I don't think I missed anything here. The answer should be 14.\n",
+    │             "role": "assistant"
+    │           }
+    │         }
+    │       ]
+    │       metadata: {
+    │         "max_completion_tokens": 512,
+    │         "model": "qwen/qwen3-32b",
+    │         "provider": "groq",
+    │         "reasoning_format": "parsed",
+    │         "stream": true,
+    │         "temperature": 0.6
+    │       }
+    │       metrics: {
+    │         "completion_reasoning_tokens": 259,
+    │         "completion_time": 0.497964449,
+    │         "completion_tokens": 266,
+    │         "prompt_time": 0.002169301,
+    │         "prompt_tokens": 46,
+    │         "queue_time": 0.193393463,
+    │         "time_to_first_token": 0,
+    │         "tokens": 312,
+    │         "total_time": 0.50013375
+    │       }
+    └── groq-tool-operation
+        metadata: {
+          "operation": "tool",
+          "testRunId": "<run:1>"
+        }
+        └── groq.chat.completions.create [llm]
+            input: [
+              {
+                "content": "Check the weather in Vienna and use the weather tool.",
+                "role": "user"
+              }
+            ]
+            output: [
+              {
+                "finish_reason": "tool_calls",
+                "index": 0,
+                "logprobs": null,
+                "message": {
+                  "role": "assistant",
+                  "tool_calls": [
+                    {
+                      "function": {
+                        "arguments": "{\"location\":\"Vienna\"}",
+                        "name": "get_weather"
+                      },
+                      "id": "<span:1>",
+                      "type": "function"
+                    }
+                  ]
+                }
+              }
+            ]
+            metadata: {
+              "model": "llama-3.3-70b-versatile",
+              "provider": "groq",
+              "temperature": 0,
+              "tool_choice": {
+                "function": {
+                  "name": "get_weather"
+                },
+                "type": "function"
+              },
+              "tools": [
+                {
+                  "function": {
+                    "description": "Get the weather for a city.",
+                    "name": "get_weather",
+                    "parameters": {
+                      "properties": {
+                        "location": {
+                          "description": "City name.",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "location"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "type": "function"
+                }
+              ]
+            }
+            metrics: {
+              "completion_time": 0.036818462,
+              "completion_tokens": 11,
+              "prompt_time": 0.013157764,
+              "prompt_tokens": 246,
+              "queue_time": 0.090738845,
+              "time_to_first_token": 0,
+              "tokens": 257,
+              "total_time": 0.049976226
+            }

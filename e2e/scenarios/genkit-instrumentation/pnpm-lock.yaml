@@ -17,12 +17,18 @@ importers:
 
   .:
     dependencies:
-      '@genkit-ai/google-genai':
-        specifier: 1.33.0
-        version: 1.33.0(genkit@1.33.0(@google-cloud/firestore@7.11.6)(firebase-admin@13.8.0))
-      genkit:
-        specifier: 1.33.0
-        version: 1.33.0(@google-cloud/firestore@7.11.6)(firebase-admin@13.8.0)
+      genkit-google-genai-v1-latest:
+        specifier: npm:@genkit-ai/google-genai@1.33.0
+        version: '@genkit-ai/google-genai@1.33.0(genkit@1.33.0(@google-cloud/firestore@7.11.6)(firebase-admin@13.8.0))'
+      genkit-google-genai-v1:
+        specifier: npm:@genkit-ai/google-genai@1.33.0
+        version: '@genkit-ai/google-genai@1.33.0(genkit@1.33.0(@google-cloud/firestore@7.11.6)(firebase-admin@13.8.0))'
+      genkit-v1-latest:
+        specifier: npm:genkit@1.33.0
+        version: genkit@1.33.0(@google-cloud/firestore@7.11.6)(firebase-admin@13.8.0)
+      genkit-v1:
+        specifier: npm:genkit@1.33.0
+        version: genkit@1.33.0(@google-cloud/firestore@7.11.6)(firebase-admin@13.8.0)
 
 packages:
 

@@ -8,7 +8,7 @@ import { MODEL_TOOL_MARKER, ROOT_NAME, SCENARIO_NAME } from "./constants.mjs";
 
 export const GENKIT_SCENARIO_TIMEOUT_MS = 90_000;
 
-const GOOGLE_MODEL_NAME = "gemini-2.5-flash-lite";
+const GOOGLE_MODEL_NAME = "gemini-3.1-flash-lite";
 const GOOGLE_EMBEDDING_MODEL_NAME = "gemini-embedding-001";
 const GOOGLE_GENAI_RETRY_OPTIONS = {
   attempts: 4,
@@ -93,8 +93,13 @@ async function withRetry(
 }
 
 async function buildAI(options = {}) {
-  const { genkit, z } = await import("genkit");
-  const { googleAI } = await import("@genkit-ai/google-genai");
+  const genkitPackageName =
+    process.env.GENKIT_PACKAGE_NAME ?? "genkit-v1-latest";
+  const genkitGoogleGenAIPackageName =
+    process.env.GENKIT_GOOGLE_GENAI_PACKAGE_NAME ??
+    "genkit-google-genai-v1-latest";
+  const { genkit, z } = await import(genkitPackageName);
+  const { googleAI } = await import(genkitGoogleGenAIPackageName);
   const googleAIPlugin = googleAI(
     process.env.GOOGLE_GENAI_BASE_URL
       ? { baseUrl: process.env.GOOGLE_GENAI_BASE_URL }
@@ -189,11 +194,11 @@ export async function runGenkitInstrumentationScenario(options = {}) {
               maxOutputTokens: 32,
             },
           });
+          void response.catch(() => undefined);
           const chunks = await collectAsync(stream);
           if (chunks.length === 0) {
             throw new Error("Expected Genkit stream to yield chunks");
           }
-          await response;
         }, GOOGLE_GENAI_RETRY_OPTIONS);
       });
 

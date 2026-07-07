@@ -11,49 +11,78 @@ const originalScenarioDir = resolveScenarioDir(import.meta.url);
 const scenarioDir = await prepareScenarioDir({
   scenarioDir: originalScenarioDir,
 });
+const genkitScenarios = await Promise.all(
+  [
+    {
+      genkitDependencyName: "genkit-v1",
+      googleGenAIDependencyName: "genkit-google-genai-v1",
+      snapshotName: "genkit-v1",
+    },
+    {
+      genkitDependencyName: "genkit-v1-latest",
+      googleGenAIDependencyName: "genkit-google-genai-v1-latest",
+      snapshotName: "genkit-v1-latest",
+    },
+  ].map(async (scenario) => ({
+    ...scenario,
+    version: await readInstalledPackageVersion(
+      scenarioDir,
+      scenario.genkitDependencyName,
+    ),
+  })),
+);
 
-const genkitVersion = await readInstalledPackageVersion(scenarioDir, "genkit");
-const snapshotName = `genkit-v${genkitVersion.replace(/\./g, "-")}`;
-const wrappedSnapshotName = `${snapshotName}-wrapped`;
-const autoSnapshotName = `${snapshotName}-auto`;
-
-describe(`genkit ${genkitVersion}`, () => {
-  defineGenkitInstrumentationAssertions({
-    name: "wrapped instrumentation",
-    runScenario: async ({ runScenarioDir }) => {
-      await runScenarioDir({
-        entry: "scenario.ts",
-        runContext: {
-          variantKey: snapshotName,
-          originalScenarioDir,
+describe.concurrent("variants", () => {
+  for (const scenario of genkitScenarios) {
+    describe.sequential(`genkit ${scenario.version}`, () => {
+      defineGenkitInstrumentationAssertions({
+        name: "wrapped instrumentation",
+        runScenario: async ({ runScenarioDir }) => {
+          await runScenarioDir({
+            entry: "scenario.ts",
+            env: {
+              GENKIT_GOOGLE_GENAI_PACKAGE_NAME:
+                scenario.googleGenAIDependencyName,
+              GENKIT_PACKAGE_NAME: scenario.genkitDependencyName,
+            },
+            runContext: {
+              variantKey: scenario.snapshotName,
+              originalScenarioDir,
+            },
+            scenarioDir,
+            timeoutMs: GENKIT_SCENARIO_TIMEOUT_MS,
+          });
         },
-        scenarioDir,
+        snapshotName: `${scenario.snapshotName}-wrapped`,
+        supportsActionSpans: true,
+        testFileUrl: import.meta.url,
         timeoutMs: GENKIT_SCENARIO_TIMEOUT_MS,
       });
-    },
-    snapshotName: wrappedSnapshotName,
-    supportsActionSpans: true,
-    testFileUrl: import.meta.url,
-    timeoutMs: GENKIT_SCENARIO_TIMEOUT_MS,
-  });
 
-  defineGenkitInstrumentationAssertions({
-    name: "auto-hook instrumentation",
-    runScenario: async ({ runNodeScenarioDir }) => {
-      await runNodeScenarioDir({
-        entry: "scenario.mjs",
-        nodeArgs: ["--import", "braintrust/hook.mjs"],
-        runContext: {
-          variantKey: snapshotName,
-          originalScenarioDir,
+      defineGenkitInstrumentationAssertions({
+        name: "auto-hook instrumentation",
+        runScenario: async ({ runNodeScenarioDir }) => {
+          await runNodeScenarioDir({
+            entry: "scenario.mjs",
+            env: {
+              GENKIT_GOOGLE_GENAI_PACKAGE_NAME:
+                scenario.googleGenAIDependencyName,
+              GENKIT_PACKAGE_NAME: scenario.genkitDependencyName,
+            },
+            nodeArgs: ["--import", "braintrust/hook.mjs"],
+            runContext: {
+              variantKey: scenario.snapshotName,
+              originalScenarioDir,
+            },
+            scenarioDir,
+            timeoutMs: GENKIT_SCENARIO_TIMEOUT_MS,
+          });
         },
-        scenarioDir,
+        snapshotName: `${scenario.snapshotName}-auto`,
+        supportsActionSpans: true,
+        testFileUrl: import.meta.url,
         timeoutMs: GENKIT_SCENARIO_TIMEOUT_MS,
       });
-    },
-    snapshotName: autoSnapshotName,
-    supportsActionSpans: true,
-    testFileUrl: import.meta.url,
-    timeoutMs: GENKIT_SCENARIO_TIMEOUT_MS,
-  });
+    });
+  }
 });

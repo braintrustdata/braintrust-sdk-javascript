@@ -1,4 +1,3 @@
-import { Agent, run, tool, setTraceProcessors } from "@openai/agents";
 import {
   runMain,
   runOperation,
@@ -14,22 +13,28 @@ import {
   TOOL_NAME,
 } from "./constants.mjs";
 
-const lookupWeather = tool({
-  name: TOOL_NAME,
-  description: "Look up the weather forecast for a city.",
-  parameters: {
-    type: "object",
-    properties: {
-      city: { type: "string" },
-    },
-    required: ["city"],
-    additionalProperties: false,
-  },
-  strict: false,
-  execute: async ({ city }) => `Sunny in ${city}`,
-});
-
 export async function runOpenAIAgentsAutoInstrumentationScenario() {
+  const openAIAgentsPackageName =
+    process.env.OPENAI_AGENTS_PACKAGE_NAME ?? "openai-agents-v0-latest";
+  const { Agent, run, setTraceProcessors, tool } = await import(
+    openAIAgentsPackageName
+  );
+
+  const lookupWeather = tool({
+    name: TOOL_NAME,
+    description: "Look up the weather forecast for a city.",
+    parameters: {
+      type: "object",
+      properties: {
+        city: { type: "string" },
+      },
+      required: ["city"],
+      additionalProperties: false,
+    },
+    strict: false,
+    execute: async ({ city }) => `Sunny in ${city}`,
+  });
+
   // Remove the built-in OpenAI trace exporter so it doesn't POST to
   // api.openai.com/v1/traces/ingest with the cassette placeholder key.
   // Braintrust captures trace events via diagnostics_channel independently.

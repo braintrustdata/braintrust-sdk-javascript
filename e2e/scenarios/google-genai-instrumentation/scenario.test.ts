@@ -15,33 +15,27 @@ const googleGenAIScenarios = await Promise.all(
   [
     {
       autoEntry: "scenario.google-genai-v1300.mjs",
-      dependencyName: "google-genai-sdk-v1300",
-      snapshotName: "google-genai-v1300",
+      dependencyName: "google-genai-sdk-v1",
+      snapshotName: "google-genai-v1",
       wrapperEntry: "scenario.google-genai-v1300.ts",
     },
     {
-      autoEntry: "scenario.google-genai-v1440.mjs",
-      dependencyName: "google-genai-sdk-v1440",
-      snapshotName: "google-genai-v1440",
-      wrapperEntry: "scenario.google-genai-v1440.ts",
-    },
-    {
-      autoEntry: "scenario.google-genai-v1450.mjs",
-      dependencyName: "google-genai-sdk-v1450",
-      snapshotName: "google-genai-v1450",
-      wrapperEntry: "scenario.google-genai-v1450.ts",
+      autoEntry: "scenario.mjs",
+      dependencyName: "google-genai-sdk-v1-latest",
+      snapshotName: "google-genai-v1-latest",
+      wrapperEntry: "scenario.ts",
     },
     {
       autoEntry: "scenario.google-genai-v280.mjs",
-      dependencyName: "google-genai-sdk-v280",
-      snapshotName: "google-genai-v280",
+      dependencyName: "google-genai-sdk-v2",
+      snapshotName: "google-genai-v2",
       wrapperEntry: "scenario.google-genai-v280.ts",
     },
     {
-      autoEntry: "scenario.mjs",
-      dependencyName: "@google/genai",
-      snapshotName: "google-genai-v1460",
-      wrapperEntry: "scenario.ts",
+      autoEntry: "scenario.google-genai-v280.mjs",
+      dependencyName: "google-genai-sdk-v2-latest",
+      snapshotName: "google-genai-v2-latest",
+      wrapperEntry: "scenario.google-genai-v280.ts",
     },
   ].map(async (scenario) => ({
     ...scenario,
@@ -60,6 +54,7 @@ describe.concurrent("variants", () => {
         runScenario: async ({ runScenarioDir }) => {
           await runScenarioDir({
             entry: scenario.wrapperEntry,
+            env: { GOOGLE_GENAI_PACKAGE_NAME: scenario.dependencyName },
             runContext: {
               variantKey: scenario.snapshotName,
               originalScenarioDir,
@@ -78,6 +73,7 @@ describe.concurrent("variants", () => {
         runScenario: async ({ runNodeScenarioDir }) => {
           await runNodeScenarioDir({
             entry: scenario.autoEntry,
+            env: { GOOGLE_GENAI_PACKAGE_NAME: scenario.dependencyName },
             nodeArgs: ["--import", "braintrust/hook.mjs"],
             runContext: {
               variantKey: scenario.snapshotName,

@@ -1,0 +1,388 @@
+{
+  "entries": [
+    {
+      "callIndex": 0,
+      "id": "7c0e162d6794cf5d",
+      "matchKey": "POST api.openai.com/v1/responses",
+      "recordedAt": "2026-07-07T14:11:17.022Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "include": [],
+            "input": [
+              {
+                "content": "What is the weather in Vienna? Answer only with the forecast.",
+                "role": "user"
+              }
+            ],
+            "instructions": "Use the lookup_weather tool exactly once, then answer only with the forecast.",
+            "model": "gpt-4o-mini",
+            "stream": false,
+            "temperature": 0,
+            "tool_choice": "required",
+            "tools": [
+              {
+                "description": "Look up the weather forecast for a city.",
+                "name": "lookup_weather",
+                "parameters": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "city": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["city"],
+                  "type": "object"
+                },
+                "strict": false,
+                "type": "function"
+              }
+            ]
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.openai.com/v1/responses"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "background": false,
+            "billing": {
+              "payer": "developer"
+            },
+            "completed_at": 1783433476,
+            "created_at": 1783433476,
+            "error": null,
+            "frequency_penalty": 0,
+            "id": "resp_0e40c1648b66213e006a4d09042924819e9ff4ebd89376b996",
+            "incomplete_details": null,
+            "instructions": "Use the lookup_weather tool exactly once, then answer only with the forecast.",
+            "max_output_tokens": null,
+            "max_tool_calls": null,
+            "metadata": {},
+            "model": "gpt-4o-mini-2024-07-18",
+            "moderation": null,
+            "object": "response",
+            "output": [
+              {
+                "arguments": "{\"city\":\"Vienna\"}",
+                "call_id": "call_tBDFWK0zZBjOK0bSamAmfrg0",
+                "id": "fc_0e40c1648b66213e006a4d0904c990819ebeabdd286ca56a79",
+                "name": "lookup_weather",
+                "status": "completed",
+                "type": "function_call"
+              }
+            ],
+            "parallel_tool_calls": true,
+            "presence_penalty": 0,
+            "previous_response_id": null,
+            "prompt_cache_key": "[REDACTED]",
+            "prompt_cache_retention": "in_memory",
+            "reasoning": {
+              "context": null,
+              "effort": null,
+              "summary": null
+            },
+            "safety_identifier": null,
+            "service_tier": "default",
+            "status": "completed",
+            "store": true,
+            "temperature": 0,
+            "text": {
+              "format": {
+                "type": "text"
+              },
+              "verbosity": "medium"
+            },
+            "tool_choice": "required",
+            "tool_usage": {
+              "image_gen": {
+                "input_tokens": 0,
+                "input_tokens_details": {
+                  "image_tokens": 0,
+                  "text_tokens": 0
+                },
+                "output_tokens": 0,
+                "output_tokens_details": {
+                  "image_tokens": 0,
+                  "text_tokens": 0
+                },
+                "total_tokens": 0
+              },
+              "web_search": {
+                "num_requests": 0
+              }
+            },
+            "tools": [
+              {
+                "description": "Look up the weather forecast for a city.",
+                "name": "lookup_weather",
+                "parameters": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "city": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["city"],
+                  "type": "object"
+                },
+                "strict": false,
+                "type": "function"
+              }
+            ],
+            "top_logprobs": 0,
+            "top_p": 1,
+            "truncation": "disabled",
+            "usage": {
+              "input_tokens": 81,
+              "input_tokens_details": {
+                "cached_tokens": 0
+              },
+              "output_tokens": 7,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "total_tokens": 88
+            },
+            "user": null
+          }
+        },
+        "headers": {
+          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "a1776ff8ca81b4b5-VIE",
+          "connection": "keep-alive",
+          "content-encoding": "gzip",
+          "content-type": "application/json",
+          "date": "Tue, 07 Jul 2026 14:11:17 GMT",
+          "openai-organization": "braintrust-data",
+          "openai-processing-ms": "851",
+          "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
+          "openai-version": "2020-10-01",
+          "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+          "transfer-encoding": "chunked",
+          "x-content-type-options": "nosniff",
+          "x-ratelimit-limit-requests": "30000",
+          "x-ratelimit-limit-tokens": "150000000",
+          "x-ratelimit-remaining-requests": "29999",
+          "x-ratelimit-remaining-tokens": "149999702",
+          "x-ratelimit-reset-requests": "2ms",
+          "x-ratelimit-reset-tokens": "0s",
+          "x-request-id": "f4091604-c5f4-4ad3-b863-6da1442a7f03"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 1,
+      "id": "f12aff3913439248",
+      "matchKey": "POST api.openai.com/v1/responses",
+      "recordedAt": "2026-07-07T14:11:17.893Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "include": [],
+            "input": [
+              {
+                "content": "What is the weather in Vienna? Answer only with the forecast.",
+                "role": "user"
+              },
+              {
+                "arguments": "{\"city\":\"Vienna\"}",
+                "call_id": "call_tBDFWK0zZBjOK0bSamAmfrg0",
+                "id": "fc_0e40c1648b66213e006a4d0904c990819ebeabdd286ca56a79",
+                "name": "lookup_weather",
+                "status": "completed",
+                "type": "function_call"
+              },
+              {
+                "call_id": "call_tBDFWK0zZBjOK0bSamAmfrg0",
+                "output": "Sunny in Vienna",
+                "status": "completed",
+                "type": "function_call_output"
+              }
+            ],
+            "instructions": "Use the lookup_weather tool exactly once, then answer only with the forecast.",
+            "model": "gpt-4o-mini",
+            "stream": false,
+            "temperature": 0,
+            "tools": [
+              {
+                "description": "Look up the weather forecast for a city.",
+                "name": "lookup_weather",
+                "parameters": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "city": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["city"],
+                  "type": "object"
+                },
+                "strict": false,
+                "type": "function"
+              }
+            ]
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.openai.com/v1/responses"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "background": false,
+            "billing": {
+              "payer": "developer"
+            },
+            "completed_at": 1783433477,
+            "created_at": 1783433477,
+            "error": null,
+            "frequency_penalty": 0,
+            "id": "resp_0e40c1648b66213e006a4d0905321c819e8b8dc500fabb074d",
+            "incomplete_details": null,
+            "instructions": "Use the lookup_weather tool exactly once, then answer only with the forecast.",
+            "max_output_tokens": null,
+            "max_tool_calls": null,
+            "metadata": {},
+            "model": "gpt-4o-mini-2024-07-18",
+            "moderation": null,
+            "object": "response",
+            "output": [
+              {
+                "content": [
+                  {
+                    "annotations": [],
+                    "logprobs": [],
+                    "text": "Sunny in Vienna.",
+                    "type": "output_text"
+                  }
+                ],
+                "id": "msg_0e40c1648b66213e006a4d0905bbb0819ea93cfe2c76f382c9",
+                "role": "assistant",
+                "status": "completed",
+                "type": "message"
+              }
+            ],
+            "parallel_tool_calls": true,
+            "presence_penalty": 0,
+            "previous_response_id": null,
+            "prompt_cache_key": "[REDACTED]",
+            "prompt_cache_retention": "in_memory",
+            "reasoning": {
+              "context": null,
+              "effort": null,
+              "summary": null
+            },
+            "safety_identifier": null,
+            "service_tier": "default",
+            "status": "completed",
+            "store": true,
+            "temperature": 0,
+            "text": {
+              "format": {
+                "type": "text"
+              },
+              "verbosity": "medium"
+            },
+            "tool_choice": "auto",
+            "tool_usage": {
+              "image_gen": {
+                "input_tokens": 0,
+                "input_tokens_details": {
+                  "image_tokens": 0,
+                  "text_tokens": 0
+                },
+                "output_tokens": 0,
+                "output_tokens_details": {
+                  "image_tokens": 0,
+                  "text_tokens": 0
+                },
+                "total_tokens": 0
+              },
+              "web_search": {
+                "num_requests": 0
+              }
+            },
+            "tools": [
+              {
+                "description": "Look up the weather forecast for a city.",
+                "name": "lookup_weather",
+                "parameters": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "city": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["city"],
+                  "type": "object"
+                },
+                "strict": false,
+                "type": "function"
+              }
+            ],
+            "top_logprobs": 0,
+            "top_p": 1,
+            "truncation": "disabled",
+            "usage": {
+              "input_tokens": 96,
+              "input_tokens_details": {
+                "cached_tokens": 0
+              },
+              "output_tokens": 6,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "total_tokens": 102
+            },
+            "user": null
+          }
+        },
+        "headers": {
+          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "a1776fffdadeb4b5-VIE",
+          "connection": "keep-alive",
+          "content-encoding": "gzip",
+          "content-type": "application/json",
+          "date": "Tue, 07 Jul 2026 14:11:17 GMT",
+          "openai-organization": "braintrust-data",
+          "openai-processing-ms": "706",
+          "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
+          "openai-version": "2020-10-01",
+          "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+          "transfer-encoding": "chunked",
+          "x-content-type-options": "nosniff",
+          "x-ratelimit-limit-requests": "30000",
+          "x-ratelimit-limit-tokens": "150000000",
+          "x-ratelimit-remaining-requests": "29999",
+          "x-ratelimit-remaining-tokens": "149999687",
+          "x-ratelimit-reset-requests": "2ms",
+          "x-ratelimit-reset-tokens": "0s",
+          "x-request-id": "1ec7b02e-1b24-4e76-8b5f-a13c354ae23b"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    }
+  ],
+  "meta": {
+    "createdAt": "2026-07-06T14:01:33.252Z"
+  }
+}

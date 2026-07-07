@@ -29,7 +29,13 @@ function parseMajorVersion(version: string): number {
   return Number.isFinite(major) ? major : 0;
 }
 
-describe.concurrent("variants", () => {
+const describeVariants =
+  process.env.BRAINTRUST_E2E_CASSETTE_MODE === "record" ||
+  process.env.BRAINTRUST_E2E_CASSETTE_MODE === "record-missing"
+    ? describe.sequential
+    : describe.concurrent;
+
+describeVariants("variants", () => {
   for (const scenario of aiSDKScenarios) {
     const sdkMajorVersion = parseMajorVersion(scenario.version);
     const supportsRichInputScenarios = sdkMajorVersion >= 5;
@@ -48,6 +54,18 @@ describe.concurrent("variants", () => {
         runScenario: async ({ runScenarioDir }) => {
           await runScenarioDir({
             entry: scenario.wrapperEntry,
+            env: {
+              AI_SDK_PACKAGE_NAME: scenario.packageName,
+              AI_SDK_OPENAI_PACKAGE_NAME: scenario.openaiModuleName,
+              ...(scenario.anthropicModuleName
+                ? {
+                    AI_SDK_ANTHROPIC_PACKAGE_NAME: scenario.anthropicModuleName,
+                  }
+                : {}),
+              ...(scenario.cohereModuleName
+                ? { AI_SDK_COHERE_PACKAGE_NAME: scenario.cohereModuleName }
+                : {}),
+            },
             runContext: {
               variantKey: scenario.snapshotName,
               originalScenarioDir,
@@ -79,6 +97,18 @@ describe.concurrent("variants", () => {
         runScenario: async ({ runNodeScenarioDir }) => {
           await runNodeScenarioDir({
             entry: scenario.autoEntry,
+            env: {
+              AI_SDK_PACKAGE_NAME: scenario.packageName,
+              AI_SDK_OPENAI_PACKAGE_NAME: scenario.openaiModuleName,
+              ...(scenario.anthropicModuleName
+                ? {
+                    AI_SDK_ANTHROPIC_PACKAGE_NAME: scenario.anthropicModuleName,
+                  }
+                : {}),
+              ...(scenario.cohereModuleName
+                ? { AI_SDK_COHERE_PACKAGE_NAME: scenario.cohereModuleName }
+                : {}),
+            },
             nodeArgs: ["--import", "braintrust/hook.mjs"],
             runContext: {
               variantKey: scenario.snapshotName,

@@ -8,12 +8,15 @@ importers:
 
   .:
     dependencies:
-      '@strands-agents/sdk':
-        specifier: 1.6.0
-        version: 1.6.0(@modelcontextprotocol/sdk@1.29.0(zod@4.4.3))(@opentelemetry/api@1.9.1)(@smithy/types@4.15.0)(express@5.2.1)(openai@6.44.0(zod@4.4.3))(zod@4.4.3)
       openai:
         specifier: ^6.7.0
         version: 6.44.0(zod@4.4.3)
+      strands-agent-sdk-v1-latest:
+        specifier: npm:@strands-agents/sdk@1.7.0
+        version: '@strands-agents/sdk@1.7.0(@modelcontextprotocol/sdk@1.29.0(zod@4.4.3))(@opentelemetry/api@1.9.1)(@smithy/types@4.15.0)(express@5.2.1)(openai@6.44.0(zod@4.4.3))(zod@4.4.3)'
+      strands-agent-sdk-v1:
+        specifier: npm:@strands-agents/sdk@1.6.0
+        version: '@strands-agents/sdk@1.6.0(@modelcontextprotocol/sdk@1.29.0(zod@4.4.3))(@opentelemetry/api@1.9.1)(@smithy/types@4.15.0)(express@5.2.1)(openai@6.44.0(zod@4.4.3))(zod@4.4.3)'
 
 packages:
 
@@ -198,6 +201,72 @@ packages:
       '@smithy/types': ^4.0.0
       express: ^5.1.0
       openai: ^6.7.0
+      zod: ^4.1.12
+    peerDependenciesMeta:
+      '@a2a-js/sdk':
+        optional: true
+      '@ai-sdk/provider':
+        optional: true
+      '@anthropic-ai/sdk':
+        optional: true
+      '@aws-sdk/client-bedrock-agent':
+        optional: true
+      '@aws-sdk/client-bedrock-agent-runtime':
+        optional: true
+      '@aws-sdk/client-s3':
+        optional: true
+      '@aws/bedrock-token-generator':
+        optional: true
+      '@cedar-policy/cedar-wasm':
+        optional: true
+      '@cedar-policy/mcp-schema-generator-wasm':
+        optional: true
+      '@google/genai':
+        optional: true
+      '@opentelemetry/exporter-metrics-otlp-http':
+        optional: true
+      '@opentelemetry/exporter-trace-otlp-http':
+        optional: true
+      '@opentelemetry/resources':
+        optional: true
+      '@opentelemetry/sdk-metrics':
+        optional: true
+      '@opentelemetry/sdk-trace-base':
+        optional: true
+      '@opentelemetry/sdk-trace-node':
+        optional: true
+      '@smithy/types':
+        optional: true
+      express:
+        optional: true
+      openai:
+        optional: true
+
+  '@strands-agents/sdk@1.7.0':
+    resolution: {integrity: sha512-/ds9Su6KBbBykfN456I958h4Kw5lJ29jniCzRmJFDPrxWDNShx50Mxng+tmuvyBHDCjWO8W7pvebYeFUkVkdQA==}
+    engines: {node: '>=20.0.0'}
+    peerDependencies:
+      '@a2a-js/sdk': ^0.3.10
+      '@ai-sdk/provider': ^3.0.0
+      '@anthropic-ai/sdk': ^0.104.2
+      '@aws-sdk/client-bedrock-agent': ^3.1075.0
+      '@aws-sdk/client-bedrock-agent-runtime': ^3.1075.0
+      '@aws-sdk/client-s3': ^3.1069.0
+      '@aws/bedrock-token-generator': ^1.1.0
+      '@cedar-policy/cedar-wasm': ^4.0.0
+      '@cedar-policy/mcp-schema-generator-wasm': ^0.6.0
+      '@google/genai': ^2.6.0
+      '@modelcontextprotocol/sdk': ^1.25.2
+      '@opentelemetry/api': ^1.9.0
+      '@opentelemetry/exporter-metrics-otlp-http': ^0.219.0
+      '@opentelemetry/exporter-trace-otlp-http': ^0.219.0
+      '@opentelemetry/resources': ^2.8.0
+      '@opentelemetry/sdk-metrics': ^2.6.1
+      '@opentelemetry/sdk-trace-base': ^2.6.1
+      '@opentelemetry/sdk-trace-node': ^2.6.1
+      '@smithy/types': ^4.15.0
+      express: ^5.1.0
+      openai: ^6.42.0
       zod: ^4.1.12
     peerDependenciesMeta:
       '@a2a-js/sdk':
@@ -614,6 +683,10 @@ packages:
     resolution: {integrity: sha512-Qo+uWgilfSmAhXCMav1uYFynlQO7fMFiMVZsQqZRMIXp0O7rR7qjkj+cPvBHLgBqi960QCoo/PH2/6ZtVqKvrg==}
     hasBin: true
 
+  uuid@14.0.1:
+    resolution: {integrity: sha512-6ZxzVpzDXDa3bJWaHilVayA+BH/1zmxCJoVgvmqJnid/gPoKHxUrS/aC/T6LGQtNHT+XHG9fXPJB4d+IrU30Ew==}
+    hasBin: true
+
   vary@1.1.2:
     resolution: {integrity: sha512-BNGbWLfd0eUPabhkXUVm0j8uuvREyTh5ovRa/dyow/BqAbZJyC+5fU+IzQOzmAKzYqYRAISoRhdQr3eIZ/PXqg==}
     engines: {node: '>= 0.8'}
@@ -944,6 +1017,20 @@ snapshots:
       '@opentelemetry/api': 1.9.1
       '@types/json-schema': 7.0.15
       uuid: 14.0.0
+      yaml: 2.9.0
+      zod: 4.4.3
+    optionalDependencies:
+      '@smithy/types': 4.15.0
+      express: 5.2.1
+      openai: 6.44.0(zod@4.4.3)
+
+  '@strands-agents/sdk@1.7.0(@modelcontextprotocol/sdk@1.29.0(zod@4.4.3))(@opentelemetry/api@1.9.1)(@smithy/types@4.15.0)(express@5.2.1)(openai@6.44.0(zod@4.4.3))(zod@4.4.3)':
+    dependencies:
+      '@aws-sdk/client-bedrock-runtime': 3.1071.0
+      '@modelcontextprotocol/sdk': 1.29.0(zod@4.4.3)
+      '@opentelemetry/api': 1.9.1
+      '@types/json-schema': 7.0.15
+      uuid: 14.0.1
       yaml: 2.9.0
       zod: 4.4.3
     optionalDependencies:
@@ -1335,6 +1422,8 @@ snapshots:
   unpipe@1.0.0: {}
 
   uuid@14.0.0: {}
+
+  uuid@14.0.1: {}
 
   vary@1.1.2: {}
 

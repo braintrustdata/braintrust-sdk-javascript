@@ -15,20 +15,14 @@ const claudeAgentSDKScenarios = await Promise.all(
   [
     {
       autoEntry: "scenario.claude-agent-sdk-v0.2.76.mjs",
-      dependencyName: "claude-agent-sdk-v0.2.76",
-      snapshotName: "claude-agent-sdk-v0.2.76",
+      dependencyName: "claude-agent-sdk-v0",
+      snapshotName: "claude-agent-sdk-v0",
       wrapperEntry: "scenario.claude-agent-sdk-v0.2.76.ts",
     },
     {
-      autoEntry: "scenario.claude-agent-sdk-v0.2.79.mjs",
-      dependencyName: "claude-agent-sdk-v0.2.79",
-      snapshotName: "claude-agent-sdk-v0.2.79",
-      wrapperEntry: "scenario.claude-agent-sdk-v0.2.79.ts",
-    },
-    {
       autoEntry: "scenario.claude-agent-sdk-v0.2.81.mjs",
-      dependencyName: "claude-agent-sdk-v0.2.81",
-      snapshotName: "claude-agent-sdk-v0.2.81",
+      dependencyName: "claude-agent-sdk-v0-latest",
+      snapshotName: "claude-agent-sdk-v0-latest",
       wrapperEntry: "scenario.claude-agent-sdk-v0.2.81.ts",
     },
   ].map(async (scenario) => {
@@ -55,6 +49,7 @@ describe.concurrent("wrapped instrumentation", () => {
         runScenario: async ({ runScenarioDir }) => {
           await runScenarioDir({
             entry: scenario.wrapperEntry,
+            env: { CLAUDE_AGENT_SDK_PACKAGE_NAME: scenario.dependencyName },
             runContext: {
               variantKey: scenario.snapshotName,
               originalScenarioDir,
@@ -81,6 +76,7 @@ describe.concurrent("auto-hook instrumentation", () => {
         runScenario: async ({ runNodeScenarioDir }) => {
           await runNodeScenarioDir({
             entry: scenario.autoEntry,
+            env: { CLAUDE_AGENT_SDK_PACKAGE_NAME: scenario.dependencyName },
             nodeArgs: ["--import", "braintrust/hook.mjs"],
             runContext: {
               variantKey: scenario.snapshotName,

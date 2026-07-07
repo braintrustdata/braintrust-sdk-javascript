@@ -4,7 +4,7 @@
       "callIndex": 0,
       "id": "3056d63956e85565",
       "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
-      "recordedAt": "2026-05-15T11:36:09.163Z",
+      "recordedAt": "2026-07-07T14:09:45.924Z",
       "request": {
         "body": {
           "kind": "json",
@@ -28,7 +28,7 @@
           "connection": "keep-alive",
           "content-length": "932",
           "content-type": "application/json; charset=utf-8",
-          "date": "Fri, 15 May 2026 11:36:09 GMT",
+          "date": "Tue, 07 Jul 2026 14:09:45 GMT",
           "vary": "Origin"
         },
         "status": 200,
@@ -39,7 +39,7 @@
       "callIndex": 0,
       "id": "30973cd9bcce6459",
       "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetUserPrivacyMode",
-      "recordedAt": "2026-05-15T11:36:09.321Z",
+      "recordedAt": "2026-07-07T14:09:46.117Z",
       "request": {
         "body": {
           "contentType": "application/proto",
@@ -62,7 +62,7 @@
           "connection": "keep-alive",
           "content-length": "4",
           "content-type": "application/proto",
-          "date": "Fri, 15 May 2026 11:36:09 GMT",
+          "date": "Tue, 07 Jul 2026 14:09:46 GMT",
           "vary": "Origin"
         },
         "status": 200,
@@ -73,7 +73,7 @@
       "callIndex": 0,
       "id": "61bed072048628da",
       "matchKey": "GET api.cursor.com/v1/models",
-      "recordedAt": "2026-05-15T11:36:09.994Z",
+      "recordedAt": "2026-07-07T14:09:46.948Z",
       "request": {
         "body": {
           "kind": "empty"
@@ -88,6 +88,7 @@
           "value": {
             "items": [
               {
+                "aliases": ["auto"],
                 "displayName": "Auto",
                 "id": "default",
                 "variants": [
@@ -99,9 +100,9 @@
                 ]
               },
               {
-                "aliases": ["composer-latest", "composer"],
-                "displayName": "Composer 2",
-                "id": "composer-2",
+                "aliases": ["composer-latest", "composer", "composer-2-5"],
+                "displayName": "Composer 2.5",
+                "id": "composer-2.5",
                 "parameters": [
                   {
                     "displayName": "Fast",
@@ -119,7 +120,7 @@
                 ],
                 "variants": [
                   {
-                    "displayName": "Composer 2",
+                    "displayName": "Composer 2.5",
                     "isDefault": true,
                     "params": [
                       {
@@ -129,7 +130,7 @@
                     ]
                   },
                   {
-                    "displayName": "Composer 2",
+                    "displayName": "Composer 2.5",
                     "params": [
                       {
                         "id": "fast",
@@ -140,7 +141,1082 @@
                 ]
               },
               {
-                "aliases": ["gpt-latest", "gpt", "gpt-5-5"],
+                "aliases": ["opus-latest", "opus", "opus-4.8", "opus-4-8"],
+                "displayName": "Opus 4.8",
+                "id": "claude-opus-4-8",
+                "parameters": [
+                  {
+                    "displayName": "Thinking",
+                    "id": "thinking",
+                    "values": [
+                      {
+                        "value": "false"
+                      },
+                      {
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Context",
+                    "id": "context",
+                    "values": [
+                      {
+                        "displayName": "300K",
+                        "value": "300k"
+                      },
+                      {
+                        "displayName": "1M",
+                        "value": "1m"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Effort",
+                    "id": "effort",
+                    "values": [
+                      {
+                        "displayName": "Low",
+                        "value": "low"
+                      },
+                      {
+                        "displayName": "Medium",
+                        "value": "medium"
+                      },
+                      {
+                        "displayName": "High",
+                        "value": "high"
+                      },
+                      {
+                        "displayName": "Extra High",
+                        "value": "xhigh"
+                      },
+                      {
+                        "displayName": "Max",
+                        "value": "max"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Fast",
+                    "id": "fast",
+                    "values": [
+                      {
+                        "value": "false"
+                      },
+                      {
+                        "displayName": "Fast",
+                        "value": "true"
+                      }
+                    ]
+                  }
+                ],
+                "variants": [
+                  {
+                    "displayName": "Opus 4.8",
+                    "params": [
+                      {
+                        "id": "cyber",
+                        "value": "false"
+                      },
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "300k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "low"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.8",
+                    "params": [
+                      {
+                        "id": "cyber",
+                        "value": "false"
+                      },
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "300k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "low"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.8",
+                    "params": [
+                      {
+                        "id": "cyber",
+                        "value": "false"
+                      },
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "300k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "medium"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.8",
+                    "params": [
+                      {
+                        "id": "cyber",
+                        "value": "false"
+                      },
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "300k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "medium"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.8",
+                    "params": [
+                      {
+                        "id": "cyber",
+                        "value": "false"
+                      },
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "300k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "high"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.8",
+                    "params": [
+                      {
+                        "id": "cyber",
+                        "value": "false"
+                      },
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "300k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "high"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.8",
+                    "params": [
+                      {
+                        "id": "cyber",
+                        "value": "false"
+                      },
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "300k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "xhigh"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.8",
+                    "params": [
+                      {
+                        "id": "cyber",
+                        "value": "false"
+                      },
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "300k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "xhigh"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.8",
+                    "params": [
+                      {
+                        "id": "cyber",
+                        "value": "false"
+                      },
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "300k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "max"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.8",
+                    "params": [
+                      {
+                        "id": "cyber",
+                        "value": "false"
+                      },
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "300k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "max"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.8",
+                    "params": [
+                      {
+                        "id": "cyber",
+                        "value": "false"
+                      },
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "low"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.8",
+                    "params": [
+                      {
+                        "id": "cyber",
+                        "value": "false"
+                      },
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "low"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.8",
+                    "params": [
+                      {
+                        "id": "cyber",
+                        "value": "false"
+                      },
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "medium"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.8",
+                    "params": [
+                      {
+                        "id": "cyber",
+                        "value": "false"
+                      },
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "medium"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.8",
+                    "params": [
+                      {
+                        "id": "cyber",
+                        "value": "false"
+                      },
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "high"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.8",
+                    "params": [
+                      {
+                        "id": "cyber",
+                        "value": "false"
+                      },
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "high"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.8",
+                    "params": [
+                      {
+                        "id": "cyber",
+                        "value": "false"
+                      },
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "xhigh"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.8",
+                    "params": [
+                      {
+                        "id": "cyber",
+                        "value": "false"
+                      },
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "xhigh"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.8",
+                    "params": [
+                      {
+                        "id": "cyber",
+                        "value": "false"
+                      },
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "max"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.8",
+                    "params": [
+                      {
+                        "id": "cyber",
+                        "value": "false"
+                      },
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "max"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.8",
+                    "params": [
+                      {
+                        "id": "cyber",
+                        "value": "false"
+                      },
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "300k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "low"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.8",
+                    "params": [
+                      {
+                        "id": "cyber",
+                        "value": "false"
+                      },
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "300k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "low"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.8",
+                    "params": [
+                      {
+                        "id": "cyber",
+                        "value": "false"
+                      },
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "300k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "medium"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.8",
+                    "params": [
+                      {
+                        "id": "cyber",
+                        "value": "false"
+                      },
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "300k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "medium"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.8",
+                    "params": [
+                      {
+                        "id": "cyber",
+                        "value": "false"
+                      },
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "300k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "high"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.8",
+                    "params": [
+                      {
+                        "id": "cyber",
+                        "value": "false"
+                      },
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "300k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "high"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.8",
+                    "params": [
+                      {
+                        "id": "cyber",
+                        "value": "false"
+                      },
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "300k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "xhigh"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.8",
+                    "params": [
+                      {
+                        "id": "cyber",
+                        "value": "false"
+                      },
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "300k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "xhigh"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.8",
+                    "params": [
+                      {
+                        "id": "cyber",
+                        "value": "false"
+                      },
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "300k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "max"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.8",
+                    "params": [
+                      {
+                        "id": "cyber",
+                        "value": "false"
+                      },
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "300k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "max"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.8",
+                    "params": [
+                      {
+                        "id": "cyber",
+                        "value": "false"
+                      },
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "low"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.8",
+                    "params": [
+                      {
+                        "id": "cyber",
+                        "value": "false"
+                      },
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "low"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.8",
+                    "params": [
+                      {
+                        "id": "cyber",
+                        "value": "false"
+                      },
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "medium"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.8",
+                    "params": [
+                      {
+                        "id": "cyber",
+                        "value": "false"
+                      },
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "medium"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.8",
+                    "isDefault": true,
+                    "params": [
+                      {
+                        "id": "cyber",
+                        "value": "false"
+                      },
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "high"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.8",
+                    "params": [
+                      {
+                        "id": "cyber",
+                        "value": "false"
+                      },
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "high"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.8",
+                    "params": [
+                      {
+                        "id": "cyber",
+                        "value": "false"
+                      },
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "xhigh"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.8",
+                    "params": [
+                      {
+                        "id": "cyber",
+                        "value": "false"
+                      },
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "xhigh"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.8",
+                    "params": [
+                      {
+                        "id": "cyber",
+                        "value": "false"
+                      },
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "max"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Opus 4.8",
+                    "params": [
+                      {
+                        "id": "cyber",
+                        "value": "false"
+                      },
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "max"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "aliases": ["gpt-5-5"],
                 "displayName": "GPT-5.5",
                 "id": "gpt-5.5",
                 "parameters": [
@@ -458,6 +1534,1185 @@
                 ]
               },
               {
+                "aliases": ["fable", "fable-5", "fable-5"],
+                "displayName": "Fable 5",
+                "id": "claude-fable-5",
+                "parameters": [
+                  {
+                    "displayName": "Thinking",
+                    "id": "thinking",
+                    "values": [
+                      {
+                        "value": "false"
+                      },
+                      {
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Context",
+                    "id": "context",
+                    "values": [
+                      {
+                        "displayName": "300K",
+                        "value": "300k"
+                      },
+                      {
+                        "displayName": "1M",
+                        "value": "1m"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Effort",
+                    "id": "effort",
+                    "values": [
+                      {
+                        "displayName": "Low",
+                        "value": "low"
+                      },
+                      {
+                        "displayName": "Medium",
+                        "value": "medium"
+                      },
+                      {
+                        "displayName": "High",
+                        "value": "high"
+                      },
+                      {
+                        "displayName": "Extra High",
+                        "value": "xhigh"
+                      },
+                      {
+                        "displayName": "Max",
+                        "value": "max"
+                      }
+                    ]
+                  }
+                ],
+                "variants": [
+                  {
+                    "displayName": "Fable 5",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "300k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "low"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Fable 5",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "300k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "medium"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Fable 5",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "300k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "high"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Fable 5",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "300k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "xhigh"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Fable 5",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "300k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "max"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Fable 5",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "low"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Fable 5",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "medium"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Fable 5",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "high"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Fable 5",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "xhigh"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Fable 5",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "max"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Fable 5",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "300k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "low"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Fable 5",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "300k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "medium"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Fable 5",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "300k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "high"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Fable 5",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "300k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "xhigh"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Fable 5",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "300k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "max"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Fable 5",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "low"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Fable 5",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "medium"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Fable 5",
+                    "isDefault": true,
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "high"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Fable 5",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "xhigh"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Fable 5",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "max"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "aliases": ["sonnet-latest", "sonnet-5"],
+                "displayName": "Sonnet 5",
+                "id": "claude-sonnet-5",
+                "parameters": [
+                  {
+                    "displayName": "Thinking",
+                    "id": "thinking",
+                    "values": [
+                      {
+                        "value": "false"
+                      },
+                      {
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Context",
+                    "id": "context",
+                    "values": [
+                      {
+                        "displayName": "300K",
+                        "value": "300k"
+                      },
+                      {
+                        "displayName": "1M",
+                        "value": "1m"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Effort",
+                    "id": "effort",
+                    "values": [
+                      {
+                        "displayName": "Low",
+                        "value": "low"
+                      },
+                      {
+                        "displayName": "Medium",
+                        "value": "medium"
+                      },
+                      {
+                        "displayName": "High",
+                        "value": "high"
+                      },
+                      {
+                        "displayName": "Extra High",
+                        "value": "xhigh"
+                      },
+                      {
+                        "displayName": "Max",
+                        "value": "max"
+                      }
+                    ]
+                  }
+                ],
+                "variants": [
+                  {
+                    "displayName": "Sonnet 5",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "300k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "low"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Sonnet 5",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "300k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "medium"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Sonnet 5",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "300k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "high"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Sonnet 5",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "300k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "xhigh"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Sonnet 5",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "300k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "max"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Sonnet 5",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "low"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Sonnet 5",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "medium"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Sonnet 5",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "high"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Sonnet 5",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "xhigh"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Sonnet 5",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "max"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Sonnet 5",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "300k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "low"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Sonnet 5",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "300k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "medium"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Sonnet 5",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "300k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "high"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Sonnet 5",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "300k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "xhigh"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Sonnet 5",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "300k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "max"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Sonnet 5",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "low"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Sonnet 5",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "medium"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Sonnet 5",
+                    "isDefault": true,
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "high"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Sonnet 5",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "xhigh"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Sonnet 5",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "max"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "aliases": [
+                  "sonnet-latest",
+                  "sonnet",
+                  "sonnet-4.6",
+                  "sonnet-4-6"
+                ],
+                "displayName": "Sonnet 4.6",
+                "id": "claude-sonnet-4-6",
+                "parameters": [
+                  {
+                    "displayName": "Thinking",
+                    "id": "thinking",
+                    "values": [
+                      {
+                        "value": "false"
+                      },
+                      {
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Context",
+                    "id": "context",
+                    "values": [
+                      {
+                        "displayName": "200K",
+                        "value": "200k"
+                      },
+                      {
+                        "displayName": "1M",
+                        "value": "1m"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Effort",
+                    "id": "effort",
+                    "values": [
+                      {
+                        "displayName": "Low",
+                        "value": "low"
+                      },
+                      {
+                        "displayName": "Medium",
+                        "value": "medium"
+                      },
+                      {
+                        "displayName": "High",
+                        "value": "high"
+                      },
+                      {
+                        "displayName": "Max",
+                        "value": "max"
+                      }
+                    ]
+                  }
+                ],
+                "variants": [
+                  {
+                    "displayName": "Sonnet 4.6",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "200k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "low"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Sonnet 4.6",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "200k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "medium"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Sonnet 4.6",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "200k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "high"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Sonnet 4.6",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "200k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "max"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Sonnet 4.6",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "low"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Sonnet 4.6",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "medium"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Sonnet 4.6",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "high"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Sonnet 4.6",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "false"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "max"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Sonnet 4.6",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "200k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "low"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Sonnet 4.6",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "200k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "medium"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Sonnet 4.6",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "200k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "high"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Sonnet 4.6",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "200k"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "max"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Sonnet 4.6",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "low"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Sonnet 4.6",
+                    "isDefault": true,
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "medium"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Sonnet 4.6",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "high"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Sonnet 4.6",
+                    "params": [
+                      {
+                        "id": "thinking",
+                        "value": "true"
+                      },
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "effort",
+                        "value": "max"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "displayName": "Composer 2",
+                "id": "composer-2",
+                "parameters": [
+                  {
+                    "displayName": "Fast",
+                    "id": "fast",
+                    "values": [
+                      {
+                        "value": "false"
+                      },
+                      {
+                        "displayName": "Fast",
+                        "value": "true"
+                      }
+                    ]
+                  }
+                ],
+                "variants": [
+                  {
+                    "displayName": "Composer 2",
+                    "isDefault": true,
+                    "params": [
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Composer 2",
+                    "params": [
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
                 "aliases": ["codex-latest", "codex", "codex-5.3"],
                 "displayName": "Codex 5.3",
                 "id": "gpt-5.3-codex",
@@ -607,343 +2862,7 @@
                 ]
               },
               {
-                "aliases": [
-                  "sonnet-latest",
-                  "sonnet",
-                  "sonnet-4.6",
-                  "sonnet-4-6"
-                ],
-                "displayName": "Sonnet 4.6",
-                "id": "claude-sonnet-4-6",
-                "parameters": [
-                  {
-                    "displayName": "Thinking",
-                    "id": "thinking",
-                    "values": [
-                      {
-                        "value": "false"
-                      },
-                      {
-                        "displayName": ":icon-brain:",
-                        "value": "true"
-                      }
-                    ]
-                  },
-                  {
-                    "displayName": "Context",
-                    "id": "context",
-                    "values": [
-                      {
-                        "displayName": "200K",
-                        "value": "200k"
-                      },
-                      {
-                        "displayName": "1M",
-                        "value": "1m"
-                      }
-                    ]
-                  },
-                  {
-                    "displayName": "Effort",
-                    "id": "effort",
-                    "values": [
-                      {
-                        "displayName": "Low",
-                        "value": "low"
-                      },
-                      {
-                        "displayName": "Medium",
-                        "value": "medium"
-                      },
-                      {
-                        "displayName": "High",
-                        "value": "high"
-                      },
-                      {
-                        "displayName": "Max",
-                        "value": "max"
-                      }
-                    ]
-                  }
-                ],
-                "variants": [
-                  {
-                    "displayName": "Sonnet 4.6",
-                    "params": [
-                      {
-                        "id": "thinking",
-                        "value": "false"
-                      },
-                      {
-                        "id": "context",
-                        "value": "200k"
-                      },
-                      {
-                        "id": "effort",
-                        "value": "low"
-                      }
-                    ]
-                  },
-                  {
-                    "displayName": "Sonnet 4.6",
-                    "params": [
-                      {
-                        "id": "thinking",
-                        "value": "false"
-                      },
-                      {
-                        "id": "context",
-                        "value": "200k"
-                      },
-                      {
-                        "id": "effort",
-                        "value": "medium"
-                      }
-                    ]
-                  },
-                  {
-                    "displayName": "Sonnet 4.6",
-                    "params": [
-                      {
-                        "id": "thinking",
-                        "value": "false"
-                      },
-                      {
-                        "id": "context",
-                        "value": "200k"
-                      },
-                      {
-                        "id": "effort",
-                        "value": "high"
-                      }
-                    ]
-                  },
-                  {
-                    "displayName": "Sonnet 4.6",
-                    "params": [
-                      {
-                        "id": "thinking",
-                        "value": "false"
-                      },
-                      {
-                        "id": "context",
-                        "value": "200k"
-                      },
-                      {
-                        "id": "effort",
-                        "value": "max"
-                      }
-                    ]
-                  },
-                  {
-                    "displayName": "Sonnet 4.6",
-                    "params": [
-                      {
-                        "id": "thinking",
-                        "value": "false"
-                      },
-                      {
-                        "id": "context",
-                        "value": "1m"
-                      },
-                      {
-                        "id": "effort",
-                        "value": "low"
-                      }
-                    ]
-                  },
-                  {
-                    "displayName": "Sonnet 4.6",
-                    "params": [
-                      {
-                        "id": "thinking",
-                        "value": "false"
-                      },
-                      {
-                        "id": "context",
-                        "value": "1m"
-                      },
-                      {
-                        "id": "effort",
-                        "value": "medium"
-                      }
-                    ]
-                  },
-                  {
-                    "displayName": "Sonnet 4.6",
-                    "params": [
-                      {
-                        "id": "thinking",
-                        "value": "false"
-                      },
-                      {
-                        "id": "context",
-                        "value": "1m"
-                      },
-                      {
-                        "id": "effort",
-                        "value": "high"
-                      }
-                    ]
-                  },
-                  {
-                    "displayName": "Sonnet 4.6",
-                    "params": [
-                      {
-                        "id": "thinking",
-                        "value": "false"
-                      },
-                      {
-                        "id": "context",
-                        "value": "1m"
-                      },
-                      {
-                        "id": "effort",
-                        "value": "max"
-                      }
-                    ]
-                  },
-                  {
-                    "displayName": "Sonnet 4.6",
-                    "params": [
-                      {
-                        "id": "thinking",
-                        "value": "true"
-                      },
-                      {
-                        "id": "context",
-                        "value": "200k"
-                      },
-                      {
-                        "id": "effort",
-                        "value": "low"
-                      }
-                    ]
-                  },
-                  {
-                    "displayName": "Sonnet 4.6",
-                    "params": [
-                      {
-                        "id": "thinking",
-                        "value": "true"
-                      },
-                      {
-                        "id": "context",
-                        "value": "200k"
-                      },
-                      {
-                        "id": "effort",
-                        "value": "medium"
-                      }
-                    ]
-                  },
-                  {
-                    "displayName": "Sonnet 4.6",
-                    "params": [
-                      {
-                        "id": "thinking",
-                        "value": "true"
-                      },
-                      {
-                        "id": "context",
-                        "value": "200k"
-                      },
-                      {
-                        "id": "effort",
-                        "value": "high"
-                      }
-                    ]
-                  },
-                  {
-                    "displayName": "Sonnet 4.6",
-                    "params": [
-                      {
-                        "id": "thinking",
-                        "value": "true"
-                      },
-                      {
-                        "id": "context",
-                        "value": "200k"
-                      },
-                      {
-                        "id": "effort",
-                        "value": "max"
-                      }
-                    ]
-                  },
-                  {
-                    "displayName": "Sonnet 4.6",
-                    "params": [
-                      {
-                        "id": "thinking",
-                        "value": "true"
-                      },
-                      {
-                        "id": "context",
-                        "value": "1m"
-                      },
-                      {
-                        "id": "effort",
-                        "value": "low"
-                      }
-                    ]
-                  },
-                  {
-                    "displayName": "Sonnet 4.6",
-                    "isDefault": true,
-                    "params": [
-                      {
-                        "id": "thinking",
-                        "value": "true"
-                      },
-                      {
-                        "id": "context",
-                        "value": "1m"
-                      },
-                      {
-                        "id": "effort",
-                        "value": "medium"
-                      }
-                    ]
-                  },
-                  {
-                    "displayName": "Sonnet 4.6",
-                    "params": [
-                      {
-                        "id": "thinking",
-                        "value": "true"
-                      },
-                      {
-                        "id": "context",
-                        "value": "1m"
-                      },
-                      {
-                        "id": "effort",
-                        "value": "high"
-                      }
-                    ]
-                  },
-                  {
-                    "displayName": "Sonnet 4.6",
-                    "params": [
-                      {
-                        "id": "thinking",
-                        "value": "true"
-                      },
-                      {
-                        "id": "context",
-                        "value": "1m"
-                      },
-                      {
-                        "id": "effort",
-                        "value": "max"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "aliases": ["opus-latest", "opus", "opus-4.7", "opus-4-7"],
+                "aliases": ["opus-4.7", "opus-4-7"],
                 "displayName": "Opus 4.7",
                 "id": "claude-opus-4-7",
                 "parameters": [
@@ -955,7 +2874,6 @@
                         "value": "false"
                       },
                       {
-                        "displayName": ":icon-brain:",
                         "value": "true"
                       }
                     ]
@@ -1019,6 +2937,10 @@
                     "displayName": "Opus 4.7",
                     "params": [
                       {
+                        "id": "cyber",
+                        "value": "false"
+                      },
+                      {
                         "id": "thinking",
                         "value": "false"
                       },
@@ -1039,6 +2961,10 @@
                   {
                     "displayName": "Opus 4.7",
                     "params": [
+                      {
+                        "id": "cyber",
+                        "value": "false"
+                      },
                       {
                         "id": "thinking",
                         "value": "false"
@@ -1060,6 +2986,10 @@
                   {
                     "displayName": "Opus 4.7",
                     "params": [
+                      {
+                        "id": "cyber",
+                        "value": "false"
+                      },
                       {
                         "id": "thinking",
                         "value": "false"
@@ -1082,6 +3012,10 @@
                     "displayName": "Opus 4.7",
                     "params": [
                       {
+                        "id": "cyber",
+                        "value": "false"
+                      },
+                      {
                         "id": "thinking",
                         "value": "false"
                       },
@@ -1103,6 +3037,10 @@
                     "displayName": "Opus 4.7",
                     "params": [
                       {
+                        "id": "cyber",
+                        "value": "false"
+                      },
+                      {
                         "id": "thinking",
                         "value": "false"
                       },
@@ -1123,6 +3061,10 @@
                   {
                     "displayName": "Opus 4.7",
                     "params": [
+                      {
+                        "id": "cyber",
+                        "value": "false"
+                      },
                       {
                         "id": "thinking",
                         "value": "false"
@@ -1144,6 +3086,10 @@
                   {
                     "displayName": "Opus 4.7",
                     "params": [
+                      {
+                        "id": "cyber",
+                        "value": "false"
+                      },
                       {
                         "id": "thinking",
                         "value": "false"
@@ -1166,6 +3112,10 @@
                     "displayName": "Opus 4.7",
                     "params": [
                       {
+                        "id": "cyber",
+                        "value": "false"
+                      },
+                      {
                         "id": "thinking",
                         "value": "false"
                       },
@@ -1187,6 +3137,10 @@
                     "displayName": "Opus 4.7",
                     "params": [
                       {
+                        "id": "cyber",
+                        "value": "false"
+                      },
+                      {
                         "id": "thinking",
                         "value": "false"
                       },
@@ -1207,6 +3161,10 @@
                   {
                     "displayName": "Opus 4.7",
                     "params": [
+                      {
+                        "id": "cyber",
+                        "value": "false"
+                      },
                       {
                         "id": "thinking",
                         "value": "false"
@@ -1228,6 +3186,10 @@
                   {
                     "displayName": "Opus 4.7",
                     "params": [
+                      {
+                        "id": "cyber",
+                        "value": "false"
+                      },
                       {
                         "id": "thinking",
                         "value": "false"
@@ -1250,6 +3212,10 @@
                     "displayName": "Opus 4.7",
                     "params": [
                       {
+                        "id": "cyber",
+                        "value": "false"
+                      },
+                      {
                         "id": "thinking",
                         "value": "false"
                       },
@@ -1271,6 +3237,10 @@
                     "displayName": "Opus 4.7",
                     "params": [
                       {
+                        "id": "cyber",
+                        "value": "false"
+                      },
+                      {
                         "id": "thinking",
                         "value": "false"
                       },
@@ -1291,6 +3261,10 @@
                   {
                     "displayName": "Opus 4.7",
                     "params": [
+                      {
+                        "id": "cyber",
+                        "value": "false"
+                      },
                       {
                         "id": "thinking",
                         "value": "false"
@@ -1312,6 +3286,10 @@
                   {
                     "displayName": "Opus 4.7",
                     "params": [
+                      {
+                        "id": "cyber",
+                        "value": "false"
+                      },
                       {
                         "id": "thinking",
                         "value": "false"
@@ -1334,6 +3312,10 @@
                     "displayName": "Opus 4.7",
                     "params": [
                       {
+                        "id": "cyber",
+                        "value": "false"
+                      },
+                      {
                         "id": "thinking",
                         "value": "false"
                       },
@@ -1354,6 +3336,10 @@
                   {
                     "displayName": "Opus 4.7",
                     "params": [
+                      {
+                        "id": "cyber",
+                        "value": "false"
+                      },
                       {
                         "id": "thinking",
                         "value": "false"
@@ -1376,6 +3362,10 @@
                     "displayName": "Opus 4.7",
                     "params": [
                       {
+                        "id": "cyber",
+                        "value": "false"
+                      },
+                      {
                         "id": "thinking",
                         "value": "false"
                       },
@@ -1397,6 +3387,10 @@
                     "displayName": "Opus 4.7",
                     "params": [
                       {
+                        "id": "cyber",
+                        "value": "false"
+                      },
+                      {
                         "id": "thinking",
                         "value": "false"
                       },
@@ -1417,6 +3411,10 @@
                   {
                     "displayName": "Opus 4.7",
                     "params": [
+                      {
+                        "id": "cyber",
+                        "value": "false"
+                      },
                       {
                         "id": "thinking",
                         "value": "false"
@@ -1438,6 +3436,10 @@
                   {
                     "displayName": "Opus 4.7",
                     "params": [
+                      {
+                        "id": "cyber",
+                        "value": "false"
+                      },
                       {
                         "id": "thinking",
                         "value": "true"
@@ -1460,6 +3462,10 @@
                     "displayName": "Opus 4.7",
                     "params": [
                       {
+                        "id": "cyber",
+                        "value": "false"
+                      },
+                      {
                         "id": "thinking",
                         "value": "true"
                       },
@@ -1480,6 +3486,10 @@
                   {
                     "displayName": "Opus 4.7",
                     "params": [
+                      {
+                        "id": "cyber",
+                        "value": "false"
+                      },
                       {
                         "id": "thinking",
                         "value": "true"
@@ -1502,6 +3512,10 @@
                     "displayName": "Opus 4.7",
                     "params": [
                       {
+                        "id": "cyber",
+                        "value": "false"
+                      },
+                      {
                         "id": "thinking",
                         "value": "true"
                       },
@@ -1522,6 +3536,10 @@
                   {
                     "displayName": "Opus 4.7",
                     "params": [
+                      {
+                        "id": "cyber",
+                        "value": "false"
+                      },
                       {
                         "id": "thinking",
                         "value": "true"
@@ -1544,6 +3562,10 @@
                     "displayName": "Opus 4.7",
                     "params": [
                       {
+                        "id": "cyber",
+                        "value": "false"
+                      },
+                      {
                         "id": "thinking",
                         "value": "true"
                       },
@@ -1564,6 +3586,10 @@
                   {
                     "displayName": "Opus 4.7",
                     "params": [
+                      {
+                        "id": "cyber",
+                        "value": "false"
+                      },
                       {
                         "id": "thinking",
                         "value": "true"
@@ -1586,6 +3612,10 @@
                     "displayName": "Opus 4.7",
                     "params": [
                       {
+                        "id": "cyber",
+                        "value": "false"
+                      },
+                      {
                         "id": "thinking",
                         "value": "true"
                       },
@@ -1607,6 +3637,10 @@
                     "displayName": "Opus 4.7",
                     "params": [
                       {
+                        "id": "cyber",
+                        "value": "false"
+                      },
+                      {
                         "id": "thinking",
                         "value": "true"
                       },
@@ -1628,6 +3662,10 @@
                     "displayName": "Opus 4.7",
                     "params": [
                       {
+                        "id": "cyber",
+                        "value": "false"
+                      },
+                      {
                         "id": "thinking",
                         "value": "true"
                       },
@@ -1648,6 +3686,10 @@
                   {
                     "displayName": "Opus 4.7",
                     "params": [
+                      {
+                        "id": "cyber",
+                        "value": "false"
+                      },
                       {
                         "id": "thinking",
                         "value": "true"
@@ -1670,6 +3712,10 @@
                     "displayName": "Opus 4.7",
                     "params": [
                       {
+                        "id": "cyber",
+                        "value": "false"
+                      },
+                      {
                         "id": "thinking",
                         "value": "true"
                       },
@@ -1690,6 +3736,10 @@
                   {
                     "displayName": "Opus 4.7",
                     "params": [
+                      {
+                        "id": "cyber",
+                        "value": "false"
+                      },
                       {
                         "id": "thinking",
                         "value": "true"
@@ -1712,6 +3762,10 @@
                     "displayName": "Opus 4.7",
                     "params": [
                       {
+                        "id": "cyber",
+                        "value": "false"
+                      },
+                      {
                         "id": "thinking",
                         "value": "true"
                       },
@@ -1732,6 +3786,10 @@
                   {
                     "displayName": "Opus 4.7",
                     "params": [
+                      {
+                        "id": "cyber",
+                        "value": "false"
+                      },
                       {
                         "id": "thinking",
                         "value": "true"
@@ -1753,6 +3811,10 @@
                   {
                     "displayName": "Opus 4.7",
                     "params": [
+                      {
+                        "id": "cyber",
+                        "value": "false"
+                      },
                       {
                         "id": "thinking",
                         "value": "true"
@@ -1776,6 +3838,10 @@
                     "isDefault": true,
                     "params": [
                       {
+                        "id": "cyber",
+                        "value": "false"
+                      },
+                      {
                         "id": "thinking",
                         "value": "true"
                       },
@@ -1797,6 +3863,10 @@
                     "displayName": "Opus 4.7",
                     "params": [
                       {
+                        "id": "cyber",
+                        "value": "false"
+                      },
+                      {
                         "id": "thinking",
                         "value": "true"
                       },
@@ -1817,6 +3887,10 @@
                   {
                     "displayName": "Opus 4.7",
                     "params": [
+                      {
+                        "id": "cyber",
+                        "value": "false"
+                      },
                       {
                         "id": "thinking",
                         "value": "true"
@@ -1838,6 +3912,10 @@
                   {
                     "displayName": "Opus 4.7",
                     "params": [
+                      {
+                        "id": "cyber",
+                        "value": "false"
+                      },
                       {
                         "id": "thinking",
                         "value": "true"
@@ -1859,9 +3937,9 @@
                 ]
               },
               {
-                "aliases": ["grok-latest", "grok"],
-                "displayName": "Grok 4.3",
-                "id": "grok-4.3",
+                "aliases": ["grok-build"],
+                "displayName": "Grok Build 0.1",
+                "id": "grok-build-0.1",
                 "parameters": [
                   {
                     "displayName": "Context",
@@ -1880,7 +3958,7 @@
                 ],
                 "variants": [
                   {
-                    "displayName": "Grok 4.3",
+                    "displayName": "Grok Build 0.1",
                     "params": [
                       {
                         "id": "context",
@@ -1889,7 +3967,7 @@
                     ]
                   },
                   {
-                    "displayName": "Grok 4.3",
+                    "displayName": "Grok Build 0.1",
                     "isDefault": true,
                     "params": [
                       {
@@ -2231,7 +4309,6 @@
                         "value": "false"
                       },
                       {
-                        "displayName": ":icon-brain:",
                         "value": "true"
                       }
                     ]
@@ -2271,19 +4348,6 @@
                         "value": "max"
                       }
                     ]
-                  },
-                  {
-                    "displayName": "Fast",
-                    "id": "fast",
-                    "values": [
-                      {
-                        "value": "false"
-                      },
-                      {
-                        "displayName": "Fast",
-                        "value": "true"
-                      }
-                    ]
                   }
                 ],
                 "variants": [
@@ -2301,31 +4365,6 @@
                       {
                         "id": "effort",
                         "value": "low"
-                      },
-                      {
-                        "id": "fast",
-                        "value": "false"
-                      }
-                    ]
-                  },
-                  {
-                    "displayName": "Opus 4.6",
-                    "params": [
-                      {
-                        "id": "thinking",
-                        "value": "false"
-                      },
-                      {
-                        "id": "context",
-                        "value": "200k"
-                      },
-                      {
-                        "id": "effort",
-                        "value": "low"
-                      },
-                      {
-                        "id": "fast",
-                        "value": "true"
                       }
                     ]
                   },
@@ -2343,31 +4382,6 @@
                       {
                         "id": "effort",
                         "value": "medium"
-                      },
-                      {
-                        "id": "fast",
-                        "value": "false"
-                      }
-                    ]
-                  },
-                  {
-                    "displayName": "Opus 4.6",
-                    "params": [
-                      {
-                        "id": "thinking",
-                        "value": "false"
-                      },
-                      {
-                        "id": "context",
-                        "value": "200k"
-                      },
-                      {
-                        "id": "effort",
-                        "value": "medium"
-                      },
-                      {
-                        "id": "fast",
-                        "value": "true"
                       }
                     ]
                   },
@@ -2385,31 +4399,6 @@
                       {
                         "id": "effort",
                         "value": "high"
-                      },
-                      {
-                        "id": "fast",
-                        "value": "false"
-                      }
-                    ]
-                  },
-                  {
-                    "displayName": "Opus 4.6",
-                    "params": [
-                      {
-                        "id": "thinking",
-                        "value": "false"
-                      },
-                      {
-                        "id": "context",
-                        "value": "200k"
-                      },
-                      {
-                        "id": "effort",
-                        "value": "high"
-                      },
-                      {
-                        "id": "fast",
-                        "value": "true"
                       }
                     ]
                   },
@@ -2427,31 +4416,6 @@
                       {
                         "id": "effort",
                         "value": "max"
-                      },
-                      {
-                        "id": "fast",
-                        "value": "false"
-                      }
-                    ]
-                  },
-                  {
-                    "displayName": "Opus 4.6",
-                    "params": [
-                      {
-                        "id": "thinking",
-                        "value": "false"
-                      },
-                      {
-                        "id": "context",
-                        "value": "200k"
-                      },
-                      {
-                        "id": "effort",
-                        "value": "max"
-                      },
-                      {
-                        "id": "fast",
-                        "value": "true"
                       }
                     ]
                   },
@@ -2469,31 +4433,6 @@
                       {
                         "id": "effort",
                         "value": "low"
-                      },
-                      {
-                        "id": "fast",
-                        "value": "false"
-                      }
-                    ]
-                  },
-                  {
-                    "displayName": "Opus 4.6",
-                    "params": [
-                      {
-                        "id": "thinking",
-                        "value": "false"
-                      },
-                      {
-                        "id": "context",
-                        "value": "1m"
-                      },
-                      {
-                        "id": "effort",
-                        "value": "low"
-                      },
-                      {
-                        "id": "fast",
-                        "value": "true"
                       }
                     ]
                   },
@@ -2511,31 +4450,6 @@
                       {
                         "id": "effort",
                         "value": "medium"
-                      },
-                      {
-                        "id": "fast",
-                        "value": "false"
-                      }
-                    ]
-                  },
-                  {
-                    "displayName": "Opus 4.6",
-                    "params": [
-                      {
-                        "id": "thinking",
-                        "value": "false"
-                      },
-                      {
-                        "id": "context",
-                        "value": "1m"
-                      },
-                      {
-                        "id": "effort",
-                        "value": "medium"
-                      },
-                      {
-                        "id": "fast",
-                        "value": "true"
                       }
                     ]
                   },
@@ -2553,31 +4467,6 @@
                       {
                         "id": "effort",
                         "value": "high"
-                      },
-                      {
-                        "id": "fast",
-                        "value": "false"
-                      }
-                    ]
-                  },
-                  {
-                    "displayName": "Opus 4.6",
-                    "params": [
-                      {
-                        "id": "thinking",
-                        "value": "false"
-                      },
-                      {
-                        "id": "context",
-                        "value": "1m"
-                      },
-                      {
-                        "id": "effort",
-                        "value": "high"
-                      },
-                      {
-                        "id": "fast",
-                        "value": "true"
                       }
                     ]
                   },
@@ -2595,31 +4484,6 @@
                       {
                         "id": "effort",
                         "value": "max"
-                      },
-                      {
-                        "id": "fast",
-                        "value": "false"
-                      }
-                    ]
-                  },
-                  {
-                    "displayName": "Opus 4.6",
-                    "params": [
-                      {
-                        "id": "thinking",
-                        "value": "false"
-                      },
-                      {
-                        "id": "context",
-                        "value": "1m"
-                      },
-                      {
-                        "id": "effort",
-                        "value": "max"
-                      },
-                      {
-                        "id": "fast",
-                        "value": "true"
                       }
                     ]
                   },
@@ -2637,31 +4501,6 @@
                       {
                         "id": "effort",
                         "value": "low"
-                      },
-                      {
-                        "id": "fast",
-                        "value": "false"
-                      }
-                    ]
-                  },
-                  {
-                    "displayName": "Opus 4.6",
-                    "params": [
-                      {
-                        "id": "thinking",
-                        "value": "true"
-                      },
-                      {
-                        "id": "context",
-                        "value": "200k"
-                      },
-                      {
-                        "id": "effort",
-                        "value": "low"
-                      },
-                      {
-                        "id": "fast",
-                        "value": "true"
                       }
                     ]
                   },
@@ -2679,31 +4518,6 @@
                       {
                         "id": "effort",
                         "value": "medium"
-                      },
-                      {
-                        "id": "fast",
-                        "value": "false"
-                      }
-                    ]
-                  },
-                  {
-                    "displayName": "Opus 4.6",
-                    "params": [
-                      {
-                        "id": "thinking",
-                        "value": "true"
-                      },
-                      {
-                        "id": "context",
-                        "value": "200k"
-                      },
-                      {
-                        "id": "effort",
-                        "value": "medium"
-                      },
-                      {
-                        "id": "fast",
-                        "value": "true"
                       }
                     ]
                   },
@@ -2721,31 +4535,6 @@
                       {
                         "id": "effort",
                         "value": "high"
-                      },
-                      {
-                        "id": "fast",
-                        "value": "false"
-                      }
-                    ]
-                  },
-                  {
-                    "displayName": "Opus 4.6",
-                    "params": [
-                      {
-                        "id": "thinking",
-                        "value": "true"
-                      },
-                      {
-                        "id": "context",
-                        "value": "200k"
-                      },
-                      {
-                        "id": "effort",
-                        "value": "high"
-                      },
-                      {
-                        "id": "fast",
-                        "value": "true"
                       }
                     ]
                   },
@@ -2763,31 +4552,6 @@
                       {
                         "id": "effort",
                         "value": "max"
-                      },
-                      {
-                        "id": "fast",
-                        "value": "false"
-                      }
-                    ]
-                  },
-                  {
-                    "displayName": "Opus 4.6",
-                    "params": [
-                      {
-                        "id": "thinking",
-                        "value": "true"
-                      },
-                      {
-                        "id": "context",
-                        "value": "200k"
-                      },
-                      {
-                        "id": "effort",
-                        "value": "max"
-                      },
-                      {
-                        "id": "fast",
-                        "value": "true"
                       }
                     ]
                   },
@@ -2805,31 +4569,6 @@
                       {
                         "id": "effort",
                         "value": "low"
-                      },
-                      {
-                        "id": "fast",
-                        "value": "false"
-                      }
-                    ]
-                  },
-                  {
-                    "displayName": "Opus 4.6",
-                    "params": [
-                      {
-                        "id": "thinking",
-                        "value": "true"
-                      },
-                      {
-                        "id": "context",
-                        "value": "1m"
-                      },
-                      {
-                        "id": "effort",
-                        "value": "low"
-                      },
-                      {
-                        "id": "fast",
-                        "value": "true"
                       }
                     ]
                   },
@@ -2847,31 +4586,6 @@
                       {
                         "id": "effort",
                         "value": "medium"
-                      },
-                      {
-                        "id": "fast",
-                        "value": "false"
-                      }
-                    ]
-                  },
-                  {
-                    "displayName": "Opus 4.6",
-                    "params": [
-                      {
-                        "id": "thinking",
-                        "value": "true"
-                      },
-                      {
-                        "id": "context",
-                        "value": "1m"
-                      },
-                      {
-                        "id": "effort",
-                        "value": "medium"
-                      },
-                      {
-                        "id": "fast",
-                        "value": "true"
                       }
                     ]
                   },
@@ -2890,31 +4604,6 @@
                       {
                         "id": "effort",
                         "value": "high"
-                      },
-                      {
-                        "id": "fast",
-                        "value": "false"
-                      }
-                    ]
-                  },
-                  {
-                    "displayName": "Opus 4.6",
-                    "params": [
-                      {
-                        "id": "thinking",
-                        "value": "true"
-                      },
-                      {
-                        "id": "context",
-                        "value": "1m"
-                      },
-                      {
-                        "id": "effort",
-                        "value": "high"
-                      },
-                      {
-                        "id": "fast",
-                        "value": "true"
                       }
                     ]
                   },
@@ -2932,31 +4621,6 @@
                       {
                         "id": "effort",
                         "value": "max"
-                      },
-                      {
-                        "id": "fast",
-                        "value": "false"
-                      }
-                    ]
-                  },
-                  {
-                    "displayName": "Opus 4.6",
-                    "params": [
-                      {
-                        "id": "thinking",
-                        "value": "true"
-                      },
-                      {
-                        "id": "context",
-                        "value": "1m"
-                      },
-                      {
-                        "id": "effort",
-                        "value": "max"
-                      },
-                      {
-                        "id": "fast",
-                        "value": "true"
                       }
                     ]
                   }
@@ -2975,7 +4639,6 @@
                         "value": "false"
                       },
                       {
-                        "displayName": ":icon-brain:",
                         "value": "true"
                       }
                     ]
@@ -3344,7 +5007,6 @@
                         "value": "false"
                       },
                       {
-                        "displayName": ":icon-brain:",
                         "value": "true"
                       }
                     ]
@@ -3373,6 +5035,48 @@
                 ]
               },
               {
+                "aliases": ["grok-latest", "grok"],
+                "displayName": "Grok 4.3",
+                "id": "grok-4.3",
+                "parameters": [
+                  {
+                    "displayName": "Context",
+                    "id": "context",
+                    "values": [
+                      {
+                        "displayName": "200K",
+                        "value": "200k"
+                      },
+                      {
+                        "displayName": "1M",
+                        "value": "1m"
+                      }
+                    ]
+                  }
+                ],
+                "variants": [
+                  {
+                    "displayName": "Grok 4.3",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "200k"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Grok 4.3",
+                    "isDefault": true,
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
                 "aliases": ["sonnet", "sonnet-4.5", "sonnet-4-5"],
                 "displayName": "Sonnet 4.5",
                 "id": "claude-sonnet-4-5",
@@ -3385,7 +5089,6 @@
                         "value": "false"
                       },
                       {
-                        "displayName": ":icon-brain:",
                         "value": "true"
                       }
                     ]
@@ -3785,12 +5488,23 @@
                 ]
               },
               {
-                "aliases": ["gemini-flash-latest", "gemini-flash"],
                 "displayName": "Gemini 3 Flash",
                 "id": "gemini-3-flash",
                 "variants": [
                   {
                     "displayName": "Gemini 3 Flash",
+                    "isDefault": true,
+                    "params": []
+                  }
+                ]
+              },
+              {
+                "aliases": ["gemini-flash-latest", "gemini-flash"],
+                "displayName": "Gemini 3.5 Flash",
+                "id": "gemini-3.5-flash",
+                "variants": [
+                  {
+                    "displayName": "Gemini 3.5 Flash",
                     "isDefault": true,
                     "params": []
                   }
@@ -3864,7 +5578,6 @@
                         "value": "false"
                       },
                       {
-                        "displayName": ":icon-brain:",
                         "value": "true"
                       }
                     ]
@@ -3936,13 +5649,54 @@
               },
               {
                 "aliases": ["kimi-latest", "kimi"],
-                "displayName": "Kimi K2.5",
-                "id": "kimi-k2.5",
+                "displayName": "Kimi K2.7 Code",
+                "id": "kimi-k2.7-code",
                 "variants": [
                   {
-                    "displayName": "Kimi K2.5",
+                    "displayName": "Kimi K2.7 Code",
                     "isDefault": true,
                     "params": []
+                  }
+                ]
+              },
+              {
+                "displayName": "GLM 5.2",
+                "id": "glm-5.2",
+                "parameters": [
+                  {
+                    "displayName": "Reasoning",
+                    "id": "reasoning",
+                    "values": [
+                      {
+                        "displayName": "High",
+                        "value": "high"
+                      },
+                      {
+                        "displayName": "Max",
+                        "value": "max"
+                      }
+                    ]
+                  }
+                ],
+                "variants": [
+                  {
+                    "displayName": "GLM 5.2",
+                    "isDefault": true,
+                    "params": [
+                      {
+                        "id": "reasoning",
+                        "value": "high"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GLM 5.2",
+                    "params": [
+                      {
+                        "id": "reasoning",
+                        "value": "max"
+                      }
+                    ]
                   }
                 ]
               }
@@ -3953,9 +5707,9 @@
           "access-control-allow-credentials": "true",
           "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
           "connection": "keep-alive",
-          "content-length": "32522",
+          "content-length": "46614",
           "content-type": "application/json; charset=utf-8",
-          "date": "Fri, 15 May 2026 11:36:09 GMT",
+          "date": "Tue, 07 Jul 2026 14:09:46 GMT",
           "vary": "Origin"
         },
         "status": 200,
@@ -3966,7 +5720,7 @@
       "callIndex": 1,
       "id": "0a485ba15b4341f4",
       "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
-      "recordedAt": "2026-05-15T11:36:10.700Z",
+      "recordedAt": "2026-07-07T14:09:47.107Z",
       "request": {
         "body": {
           "kind": "json",
@@ -3990,7 +5744,7 @@
           "connection": "keep-alive",
           "content-length": "932",
           "content-type": "application/json; charset=utf-8",
-          "date": "Fri, 15 May 2026 11:36:10 GMT",
+          "date": "Tue, 07 Jul 2026 14:09:47 GMT",
           "vary": "Origin"
         },
         "status": 200,
@@ -4001,7 +5755,7 @@
       "callIndex": 0,
       "id": "d1f7ceb3bf90cdd7",
       "matchKey": "POST api2.cursor.sh/aiserver.v1.AnalyticsService/BootstrapStatsig",
-      "recordedAt": "2026-05-15T11:36:11.180Z",
+      "recordedAt": "2026-07-07T14:09:47.360Z",
       "request": {
         "body": {
           "kind": "json",
@@ -4015,17 +5769,17 @@
         "body": {
           "contentType": "application/json",
           "kind": "binary",
-          "path": "cursor-sdk-v1.cassette.blobs/b027eca4ea158d665aa633a08123111e849897784d631461a8d709a985ab042f.bin",
-          "sha256": "b027eca4ea158d665aa633a08123111e849897784d631461a8d709a985ab042f"
+          "path": "cursor-sdk-v1.cassette.blobs/123b16623ff17157f2915e19d5890f7893b4b29b8510019e13acd798c56af853.bin",
+          "sha256": "123b16623ff17157f2915e19d5890f7893b4b29b8510019e13acd798c56af853"
         },
         "headers": {
           "access-control-allow-credentials": "true",
           "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
           "connection": "keep-alive",
           "content-encoding": "gzip",
-          "content-length": "62531",
+          "content-length": "82150",
           "content-type": "application/json",
-          "date": "Fri, 15 May 2026 11:36:10 GMT",
+          "date": "Tue, 07 Jul 2026 14:09:47 GMT",
           "vary": "Origin"
         },
         "status": 200,
@@ -4036,7 +5790,7 @@
       "callIndex": 2,
       "id": "597e06e6bda9541c",
       "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
-      "recordedAt": "2026-05-15T11:36:11.370Z",
+      "recordedAt": "2026-07-07T14:09:47.535Z",
       "request": {
         "body": {
           "kind": "json",
@@ -4060,7 +5814,7 @@
           "connection": "keep-alive",
           "content-length": "932",
           "content-type": "application/json; charset=utf-8",
-          "date": "Fri, 15 May 2026 11:36:11 GMT",
+          "date": "Tue, 07 Jul 2026 14:09:47 GMT",
           "vary": "Origin"
         },
         "status": 200,
@@ -4071,7 +5825,7 @@
       "callIndex": 0,
       "id": "d53dfb862e5ae5f7",
       "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetTeamAdminSettingsOrEmptyIfNotInTeam",
-      "recordedAt": "2026-05-15T11:36:11.565Z",
+      "recordedAt": "2026-07-07T14:09:47.704Z",
       "request": {
         "body": {
           "kind": "empty"
@@ -4084,15 +5838,15 @@
         "body": {
           "contentType": "application/proto",
           "kind": "base64",
-          "value": "GghCBggBEAEYASIAMgQIABgAOhIgAjAAQAJIAFgBcAGAAQCIAQBCAEoAggEAkAEAmAEAoAEAqgEHCAESAQIYAMABAMoBAOIBAOgBAfIBAggB+gEAgAIAigICEACqAgCyAgIKAMACAeACAA=="
+          "value": "GgxCBggBEAEYAVAAWAEiADIGCAAYACAAOhUgAjAAQAJIAFgBcAGAAQCIAQCoAQBCAEoAggEAkAEAmAEAoAEAqgEHCAESAQIYAMABAMoBAOIBAOgBAfIBAggB+gEAgAIAigICEACqAgCyAgIKAMACAdgCgJy1B+ACAIIDAIoDAJIDBhIEVEVBTaADALADAMADAMgDAQ=="
         },
         "headers": {
           "access-control-allow-credentials": "true",
           "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
           "connection": "keep-alive",
-          "content-length": "106",
+          "content-length": "148",
           "content-type": "application/proto",
-          "date": "Fri, 15 May 2026 11:36:11 GMT",
+          "date": "Tue, 07 Jul 2026 14:09:47 GMT",
           "vary": "Origin"
         },
         "status": 200,
@@ -4103,7 +5857,7 @@
       "callIndex": 1,
       "id": "4d511cf3b47c2629",
       "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetUserPrivacyMode",
-      "recordedAt": "2026-05-15T11:36:11.861Z",
+      "recordedAt": "2026-07-07T14:09:47.964Z",
       "request": {
         "body": {
           "contentType": "application/proto",
@@ -4126,7 +5880,7 @@
           "connection": "keep-alive",
           "content-length": "4",
           "content-type": "application/proto",
-          "date": "Fri, 15 May 2026 11:36:11 GMT",
+          "date": "Tue, 07 Jul 2026 14:09:47 GMT",
           "vary": "Origin"
         },
         "status": 200,
@@ -4137,7 +5891,7 @@
       "callIndex": 3,
       "id": "6533d1db768ada38",
       "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
-      "recordedAt": "2026-05-15T11:36:12.566Z",
+      "recordedAt": "2026-07-07T14:09:48.153Z",
       "request": {
         "body": {
           "kind": "json",
@@ -4161,7 +5915,7 @@
           "connection": "keep-alive",
           "content-length": "932",
           "content-type": "application/json; charset=utf-8",
-          "date": "Fri, 15 May 2026 11:36:12 GMT",
+          "date": "Tue, 07 Jul 2026 14:09:48 GMT",
           "vary": "Origin"
         },
         "status": 200,
@@ -4172,7 +5926,7 @@
       "callIndex": 0,
       "id": "f6841d25c577100e",
       "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetTeamReposOrEmptyIfNotInTeam",
-      "recordedAt": "2026-05-15T11:36:12.602Z",
+      "recordedAt": "2026-07-07T14:09:48.197Z",
       "request": {
         "body": {
           "kind": "empty"
@@ -4191,7 +5945,7 @@
           "connection": "keep-alive",
           "content-length": "0",
           "content-type": "application/proto",
-          "date": "Fri, 15 May 2026 11:36:12 GMT",
+          "date": "Tue, 07 Jul 2026 14:09:48 GMT",
           "vary": "Origin"
         },
         "status": 200,
@@ -4202,7 +5956,7 @@
       "callIndex": 0,
       "id": "a340d783dfbb6997",
       "matchKey": "POST api2.cursor.sh/agent.v1.AgentService/Run",
-      "recordedAt": "2026-05-15T11:36:13.017Z",
+      "recordedAt": "2026-07-07T14:09:48.555Z",
       "request": {
         "body": {
           "kind": "empty"
@@ -4218,7 +5972,7 @@
         "headers": {
           "connection": "keep-alive",
           "content-length": "0",
-          "date": "Fri, 15 May 2026 11:36:13 GMT",
+          "date": "Tue, 07 Jul 2026 14:09:48 GMT",
           "server": "awselb/2.0"
         },
         "status": 464
@@ -4228,7 +5982,7 @@
       "callIndex": 4,
       "id": "713ac62a8481085f",
       "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
-      "recordedAt": "2026-05-15T11:36:13.197Z",
+      "recordedAt": "2026-07-07T14:09:48.716Z",
       "request": {
         "body": {
           "kind": "json",
@@ -4252,7 +6006,7 @@
           "connection": "keep-alive",
           "content-length": "932",
           "content-type": "application/json; charset=utf-8",
-          "date": "Fri, 15 May 2026 11:36:13 GMT",
+          "date": "Tue, 07 Jul 2026 14:09:48 GMT",
           "vary": "Origin"
         },
         "status": 200,
@@ -4263,7 +6017,7 @@
       "callIndex": 5,
       "id": "159b9254fd967a4f",
       "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
-      "recordedAt": "2026-05-15T11:36:13.375Z",
+      "recordedAt": "2026-07-07T14:09:48.882Z",
       "request": {
         "body": {
           "kind": "json",
@@ -4287,7 +6041,7 @@
           "connection": "keep-alive",
           "content-length": "932",
           "content-type": "application/json; charset=utf-8",
-          "date": "Fri, 15 May 2026 11:36:13 GMT",
+          "date": "Tue, 07 Jul 2026 14:09:48 GMT",
           "vary": "Origin"
         },
         "status": 200,
@@ -4298,7 +6052,7 @@
       "callIndex": 6,
       "id": "83ee8051122ed115",
       "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
-      "recordedAt": "2026-05-15T11:36:13.728Z",
+      "recordedAt": "2026-07-07T14:09:49.051Z",
       "request": {
         "body": {
           "kind": "json",
@@ -4322,39 +6076,7 @@
           "connection": "keep-alive",
           "content-length": "932",
           "content-type": "application/json; charset=utf-8",
-          "date": "Fri, 15 May 2026 11:36:13 GMT",
-          "vary": "Origin"
-        },
-        "status": 200,
-        "statusText": "OK"
-      }
-    },
-    {
-      "callIndex": 1,
-      "id": "d2ea7953262b608d",
-      "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetTeamAdminSettingsOrEmptyIfNotInTeam",
-      "recordedAt": "2026-05-15T11:36:13.911Z",
-      "request": {
-        "body": {
-          "kind": "empty"
-        },
-        "headers": {},
-        "method": "POST",
-        "url": "https://api2.cursor.sh/aiserver.v1.DashboardService/GetTeamAdminSettingsOrEmptyIfNotInTeam"
-      },
-      "response": {
-        "body": {
-          "contentType": "application/proto",
-          "kind": "base64",
-          "value": "GghCBggBEAEYASIAMgQIABgAOhIgAjAAQAJIAFgBcAGAAQCIAQBCAEoAggEAkAEAmAEAoAEAqgEHCAESAQIYAMABAMoBAOIBAOgBAfIBAggB+gEAgAIAigICEACqAgCyAgIKAMACAeACAA=="
-        },
-        "headers": {
-          "access-control-allow-credentials": "true",
-          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
-          "connection": "keep-alive",
-          "content-length": "106",
-          "content-type": "application/proto",
-          "date": "Fri, 15 May 2026 11:36:13 GMT",
+          "date": "Tue, 07 Jul 2026 14:09:49 GMT",
           "vary": "Origin"
         },
         "status": 200,
@@ -4365,7 +6087,7 @@
       "callIndex": 2,
       "id": "00f0c09b48c1898a",
       "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetUserPrivacyMode",
-      "recordedAt": "2026-05-15T11:36:13.913Z",
+      "recordedAt": "2026-07-07T14:09:49.215Z",
       "request": {
         "body": {
           "contentType": "application/proto",
@@ -4388,7 +6110,39 @@
           "connection": "keep-alive",
           "content-length": "4",
           "content-type": "application/proto",
-          "date": "Fri, 15 May 2026 11:36:13 GMT",
+          "date": "Tue, 07 Jul 2026 14:09:49 GMT",
+          "vary": "Origin"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 1,
+      "id": "d2ea7953262b608d",
+      "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetTeamAdminSettingsOrEmptyIfNotInTeam",
+      "recordedAt": "2026-07-07T14:09:49.224Z",
+      "request": {
+        "body": {
+          "kind": "empty"
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api2.cursor.sh/aiserver.v1.DashboardService/GetTeamAdminSettingsOrEmptyIfNotInTeam"
+      },
+      "response": {
+        "body": {
+          "contentType": "application/proto",
+          "kind": "base64",
+          "value": "GgxCBggBEAEYAVAAWAEiADIGCAAYACAAOhUgAjAAQAJIAFgBcAGAAQCIAQCoAQBCAEoAggEAkAEAmAEAoAEAqgEHCAESAQIYAMABAMoBAOIBAOgBAfIBAggB+gEAgAIAigICEACqAgCyAgIKAMACAdgCgJy1B+ACAIIDAIoDAJIDBhIEVEVBTaADALADAMADAMgDAQ=="
+        },
+        "headers": {
+          "access-control-allow-credentials": "true",
+          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
+          "connection": "keep-alive",
+          "content-length": "148",
+          "content-type": "application/proto",
+          "date": "Tue, 07 Jul 2026 14:09:49 GMT",
           "vary": "Origin"
         },
         "status": 200,
@@ -4399,7 +6153,7 @@
       "callIndex": 7,
       "id": "215c1c7456d5ac18",
       "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
-      "recordedAt": "2026-05-15T11:36:14.745Z",
+      "recordedAt": "2026-07-07T14:09:49.401Z",
       "request": {
         "body": {
           "kind": "json",
@@ -4423,7 +6177,7 @@
           "connection": "keep-alive",
           "content-length": "932",
           "content-type": "application/json; charset=utf-8",
-          "date": "Fri, 15 May 2026 11:36:14 GMT",
+          "date": "Tue, 07 Jul 2026 14:09:49 GMT",
           "vary": "Origin"
         },
         "status": 200,
@@ -4434,7 +6188,7 @@
       "callIndex": 1,
       "id": "0fe2bdc8216b7c85",
       "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetTeamReposOrEmptyIfNotInTeam",
-      "recordedAt": "2026-05-15T11:36:14.835Z",
+      "recordedAt": "2026-07-07T14:09:49.449Z",
       "request": {
         "body": {
           "kind": "empty"
@@ -4453,7 +6207,7 @@
           "connection": "keep-alive",
           "content-length": "0",
           "content-type": "application/proto",
-          "date": "Fri, 15 May 2026 11:36:14 GMT",
+          "date": "Tue, 07 Jul 2026 14:09:49 GMT",
           "vary": "Origin"
         },
         "status": 200,
@@ -4464,7 +6218,7 @@
       "callIndex": 1,
       "id": "f76197c334b438d4",
       "matchKey": "POST api2.cursor.sh/agent.v1.AgentService/Run",
-      "recordedAt": "2026-05-15T11:36:15.168Z",
+      "recordedAt": "2026-07-07T14:09:49.803Z",
       "request": {
         "body": {
           "kind": "empty"
@@ -4480,7 +6234,7 @@
         "headers": {
           "connection": "keep-alive",
           "content-length": "0",
-          "date": "Fri, 15 May 2026 11:36:15 GMT",
+          "date": "Tue, 07 Jul 2026 14:09:49 GMT",
           "server": "awselb/2.0"
         },
         "status": 464
@@ -4490,7 +6244,7 @@
       "callIndex": 8,
       "id": "b5a62fe3d5fdca42",
       "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
-      "recordedAt": "2026-05-15T11:36:15.348Z",
+      "recordedAt": "2026-07-07T14:09:49.963Z",
       "request": {
         "body": {
           "kind": "json",
@@ -4514,41 +6268,7 @@
           "connection": "keep-alive",
           "content-length": "932",
           "content-type": "application/json; charset=utf-8",
-          "date": "Fri, 15 May 2026 11:36:15 GMT",
-          "vary": "Origin"
-        },
-        "status": 200,
-        "statusText": "OK"
-      }
-    },
-    {
-      "callIndex": 3,
-      "id": "ca48e39a4afe13dd",
-      "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetUserPrivacyMode",
-      "recordedAt": "2026-05-15T11:36:15.512Z",
-      "request": {
-        "body": {
-          "contentType": "application/proto",
-          "kind": "base64",
-          "value": "CAE="
-        },
-        "headers": {},
-        "method": "POST",
-        "url": "https://api2.cursor.sh/aiserver.v1.DashboardService/GetUserPrivacyMode"
-      },
-      "response": {
-        "body": {
-          "contentType": "application/proto",
-          "kind": "base64",
-          "value": "CAIYAQ=="
-        },
-        "headers": {
-          "access-control-allow-credentials": "true",
-          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
-          "connection": "keep-alive",
-          "content-length": "4",
-          "content-type": "application/proto",
-          "date": "Fri, 15 May 2026 11:36:15 GMT",
+          "date": "Tue, 07 Jul 2026 14:09:49 GMT",
           "vary": "Origin"
         },
         "status": 200,
@@ -4559,7 +6279,7 @@
       "callIndex": 2,
       "id": "70d3bcff6501f80d",
       "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetTeamAdminSettingsOrEmptyIfNotInTeam",
-      "recordedAt": "2026-05-15T11:36:15.517Z",
+      "recordedAt": "2026-07-07T14:09:50.142Z",
       "request": {
         "body": {
           "kind": "empty"
@@ -4572,15 +6292,15 @@
         "body": {
           "contentType": "application/proto",
           "kind": "base64",
-          "value": "GghCBggBEAEYASIAMgQIABgAOhIgAjAAQAJIAFgBcAGAAQCIAQBCAEoAggEAkAEAmAEAoAEAqgEHCAESAQIYAMABAMoBAOIBAOgBAfIBAggB+gEAgAIAigICEACqAgCyAgIKAMACAeACAA=="
+          "value": "GgxCBggBEAEYAVAAWAEiADIGCAAYACAAOhUgAjAAQAJIAFgBcAGAAQCIAQCoAQBCAEoAggEAkAEAmAEAoAEAqgEHCAESAQIYAMABAMoBAOIBAOgBAfIBAggB+gEAgAIAigICEACqAgCyAgIKAMACAdgCgJy1B+ACAIIDAIoDAJIDBhIEVEVBTaADALADAMADAMgDAQ=="
         },
         "headers": {
           "access-control-allow-credentials": "true",
           "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
           "connection": "keep-alive",
-          "content-length": "106",
+          "content-length": "148",
           "content-type": "application/proto",
-          "date": "Fri, 15 May 2026 11:36:15 GMT",
+          "date": "Tue, 07 Jul 2026 14:09:50 GMT",
           "vary": "Origin"
         },
         "status": 200,
@@ -4588,136 +6308,10 @@
       }
     },
     {
-      "callIndex": 9,
-      "id": "89cbc244285e665c",
-      "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
-      "recordedAt": "2026-05-15T11:36:16.123Z",
-      "request": {
-        "body": {
-          "kind": "json",
-          "value": {}
-        },
-        "headers": {},
-        "method": "POST",
-        "url": "https://api2.cursor.sh/auth/exchange_user_api_key"
-      },
-      "response": {
-        "body": {
-          "kind": "json",
-          "value": {
-            "accessToken": "[REDACTED]",
-            "refreshToken": "[REDACTED]"
-          }
-        },
-        "headers": {
-          "access-control-allow-credentials": "true",
-          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
-          "connection": "keep-alive",
-          "content-length": "932",
-          "content-type": "application/json; charset=utf-8",
-          "date": "Fri, 15 May 2026 11:36:16 GMT",
-          "vary": "Origin"
-        },
-        "status": 200,
-        "statusText": "OK"
-      }
-    },
-    {
-      "callIndex": 2,
-      "id": "d73f41eeedbf5def",
-      "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetTeamReposOrEmptyIfNotInTeam",
-      "recordedAt": "2026-05-15T11:36:16.140Z",
-      "request": {
-        "body": {
-          "kind": "empty"
-        },
-        "headers": {},
-        "method": "POST",
-        "url": "https://api2.cursor.sh/aiserver.v1.DashboardService/GetTeamReposOrEmptyIfNotInTeam"
-      },
-      "response": {
-        "body": {
-          "kind": "empty"
-        },
-        "headers": {
-          "access-control-allow-credentials": "true",
-          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
-          "connection": "keep-alive",
-          "content-length": "0",
-          "content-type": "application/proto",
-          "date": "Fri, 15 May 2026 11:36:16 GMT",
-          "vary": "Origin"
-        },
-        "status": 200,
-        "statusText": "OK"
-      }
-    },
-    {
-      "callIndex": 2,
-      "id": "3298fd0cf5accbd1",
-      "matchKey": "POST api2.cursor.sh/agent.v1.AgentService/Run",
-      "recordedAt": "2026-05-15T11:36:16.586Z",
-      "request": {
-        "body": {
-          "kind": "empty"
-        },
-        "headers": {},
-        "method": "POST",
-        "url": "https://api2.cursor.sh/agent.v1.AgentService/Run"
-      },
-      "response": {
-        "body": {
-          "kind": "empty"
-        },
-        "headers": {
-          "connection": "keep-alive",
-          "content-length": "0",
-          "date": "Fri, 15 May 2026 11:36:16 GMT",
-          "server": "awselb/2.0"
-        },
-        "status": 464
-      }
-    },
-    {
-      "callIndex": 10,
-      "id": "3fa8e8ca5dbfda3f",
-      "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
-      "recordedAt": "2026-05-15T11:36:16.798Z",
-      "request": {
-        "body": {
-          "kind": "json",
-          "value": {}
-        },
-        "headers": {},
-        "method": "POST",
-        "url": "https://api2.cursor.sh/auth/exchange_user_api_key"
-      },
-      "response": {
-        "body": {
-          "kind": "json",
-          "value": {
-            "accessToken": "[REDACTED]",
-            "refreshToken": "[REDACTED]"
-          }
-        },
-        "headers": {
-          "access-control-allow-credentials": "true",
-          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
-          "connection": "keep-alive",
-          "content-length": "932",
-          "content-type": "application/json; charset=utf-8",
-          "date": "Fri, 15 May 2026 11:36:16 GMT",
-          "vary": "Origin"
-        },
-        "status": 200,
-        "statusText": "OK"
-      }
-    },
-    {
-      "callIndex": 4,
-      "id": "233bbcc27fbdca7f",
+      "callIndex": 3,
+      "id": "ca48e39a4afe13dd",
       "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetUserPrivacyMode",
-      "recordedAt": "2026-05-15T11:36:16.963Z",
+      "recordedAt": "2026-07-07T14:09:50.150Z",
       "request": {
         "body": {
           "contentType": "application/proto",
@@ -4740,7 +6334,7 @@
           "connection": "keep-alive",
           "content-length": "4",
           "content-type": "application/proto",
-          "date": "Fri, 15 May 2026 11:36:16 GMT",
+          "date": "Tue, 07 Jul 2026 14:09:50 GMT",
           "vary": "Origin"
         },
         "status": 200,
@@ -4748,42 +6342,10 @@
       }
     },
     {
-      "callIndex": 3,
-      "id": "88f9130fc6561ba9",
-      "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetTeamAdminSettingsOrEmptyIfNotInTeam",
-      "recordedAt": "2026-05-15T11:36:16.966Z",
-      "request": {
-        "body": {
-          "kind": "empty"
-        },
-        "headers": {},
-        "method": "POST",
-        "url": "https://api2.cursor.sh/aiserver.v1.DashboardService/GetTeamAdminSettingsOrEmptyIfNotInTeam"
-      },
-      "response": {
-        "body": {
-          "contentType": "application/proto",
-          "kind": "base64",
-          "value": "GghCBggBEAEYASIAMgQIABgAOhIgAjAAQAJIAFgBcAGAAQCIAQBCAEoAggEAkAEAmAEAoAEAqgEHCAESAQIYAMABAMoBAOIBAOgBAfIBAggB+gEAgAIAigICEACqAgCyAgIKAMACAeACAA=="
-        },
-        "headers": {
-          "access-control-allow-credentials": "true",
-          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
-          "connection": "keep-alive",
-          "content-length": "106",
-          "content-type": "application/proto",
-          "date": "Fri, 15 May 2026 11:36:16 GMT",
-          "vary": "Origin"
-        },
-        "status": 200,
-        "statusText": "OK"
-      }
-    },
-    {
-      "callIndex": 11,
-      "id": "f2a00b03d6c1de3c",
+      "callIndex": 9,
+      "id": "89cbc244285e665c",
       "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
-      "recordedAt": "2026-05-15T11:36:17.532Z",
+      "recordedAt": "2026-07-07T14:09:50.330Z",
       "request": {
         "body": {
           "kind": "json",
@@ -4807,7 +6369,7 @@
           "connection": "keep-alive",
           "content-length": "932",
           "content-type": "application/json; charset=utf-8",
-          "date": "Fri, 15 May 2026 11:36:17 GMT",
+          "date": "Tue, 07 Jul 2026 14:09:50 GMT",
           "vary": "Origin"
         },
         "status": 200,
@@ -4815,10 +6377,10 @@
       }
     },
     {
-      "callIndex": 3,
-      "id": "4b1a9ef52c437a05",
+      "callIndex": 2,
+      "id": "d73f41eeedbf5def",
       "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetTeamReposOrEmptyIfNotInTeam",
-      "recordedAt": "2026-05-15T11:36:17.583Z",
+      "recordedAt": "2026-07-07T14:09:50.391Z",
       "request": {
         "body": {
           "kind": "empty"
@@ -4837,7 +6399,7 @@
           "connection": "keep-alive",
           "content-length": "0",
           "content-type": "application/proto",
-          "date": "Fri, 15 May 2026 11:36:17 GMT",
+          "date": "Tue, 07 Jul 2026 14:09:50 GMT",
           "vary": "Origin"
         },
         "status": 200,
@@ -4845,10 +6407,10 @@
       }
     },
     {
-      "callIndex": 3,
-      "id": "a471eaadb3f011d8",
+      "callIndex": 2,
+      "id": "3298fd0cf5accbd1",
       "matchKey": "POST api2.cursor.sh/agent.v1.AgentService/Run",
-      "recordedAt": "2026-05-15T11:36:17.945Z",
+      "recordedAt": "2026-07-07T14:09:50.742Z",
       "request": {
         "body": {
           "kind": "empty"
@@ -4864,7 +6426,199 @@
         "headers": {
           "connection": "keep-alive",
           "content-length": "0",
-          "date": "Fri, 15 May 2026 11:36:17 GMT",
+          "date": "Tue, 07 Jul 2026 14:09:50 GMT",
+          "server": "awselb/2.0"
+        },
+        "status": 464
+      }
+    },
+    {
+      "callIndex": 10,
+      "id": "3fa8e8ca5dbfda3f",
+      "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
+      "recordedAt": "2026-07-07T14:09:50.937Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {}
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api2.cursor.sh/auth/exchange_user_api_key"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "accessToken": "[REDACTED]",
+            "refreshToken": "[REDACTED]"
+          }
+        },
+        "headers": {
+          "access-control-allow-credentials": "true",
+          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
+          "connection": "keep-alive",
+          "content-length": "932",
+          "content-type": "application/json; charset=utf-8",
+          "date": "Tue, 07 Jul 2026 14:09:50 GMT",
+          "vary": "Origin"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 3,
+      "id": "88f9130fc6561ba9",
+      "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetTeamAdminSettingsOrEmptyIfNotInTeam",
+      "recordedAt": "2026-07-07T14:09:51.102Z",
+      "request": {
+        "body": {
+          "kind": "empty"
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api2.cursor.sh/aiserver.v1.DashboardService/GetTeamAdminSettingsOrEmptyIfNotInTeam"
+      },
+      "response": {
+        "body": {
+          "contentType": "application/proto",
+          "kind": "base64",
+          "value": "GgxCBggBEAEYAVAAWAEiADIGCAAYACAAOhUgAjAAQAJIAFgBcAGAAQCIAQCoAQBCAEoAggEAkAEAmAEAoAEAqgEHCAESAQIYAMABAMoBAOIBAOgBAfIBAggB+gEAgAIAigICEACqAgCyAgIKAMACAdgCgJy1B+ACAIIDAIoDAJIDBhIEVEVBTaADALADAMADAMgDAQ=="
+        },
+        "headers": {
+          "access-control-allow-credentials": "true",
+          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
+          "connection": "keep-alive",
+          "content-length": "148",
+          "content-type": "application/proto",
+          "date": "Tue, 07 Jul 2026 14:09:51 GMT",
+          "vary": "Origin"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 4,
+      "id": "233bbcc27fbdca7f",
+      "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetUserPrivacyMode",
+      "recordedAt": "2026-07-07T14:09:51.137Z",
+      "request": {
+        "body": {
+          "contentType": "application/proto",
+          "kind": "base64",
+          "value": "CAE="
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api2.cursor.sh/aiserver.v1.DashboardService/GetUserPrivacyMode"
+      },
+      "response": {
+        "body": {
+          "contentType": "application/proto",
+          "kind": "base64",
+          "value": "CAIYAQ=="
+        },
+        "headers": {
+          "access-control-allow-credentials": "true",
+          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
+          "connection": "keep-alive",
+          "content-length": "4",
+          "content-type": "application/proto",
+          "date": "Tue, 07 Jul 2026 14:09:51 GMT",
+          "vary": "Origin"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 11,
+      "id": "f2a00b03d6c1de3c",
+      "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
+      "recordedAt": "2026-07-07T14:09:51.314Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {}
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api2.cursor.sh/auth/exchange_user_api_key"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "accessToken": "[REDACTED]",
+            "refreshToken": "[REDACTED]"
+          }
+        },
+        "headers": {
+          "access-control-allow-credentials": "true",
+          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
+          "connection": "keep-alive",
+          "content-length": "932",
+          "content-type": "application/json; charset=utf-8",
+          "date": "Tue, 07 Jul 2026 14:09:51 GMT",
+          "vary": "Origin"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 3,
+      "id": "4b1a9ef52c437a05",
+      "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetTeamReposOrEmptyIfNotInTeam",
+      "recordedAt": "2026-07-07T14:09:51.352Z",
+      "request": {
+        "body": {
+          "kind": "empty"
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api2.cursor.sh/aiserver.v1.DashboardService/GetTeamReposOrEmptyIfNotInTeam"
+      },
+      "response": {
+        "body": {
+          "kind": "empty"
+        },
+        "headers": {
+          "access-control-allow-credentials": "true",
+          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
+          "connection": "keep-alive",
+          "content-length": "0",
+          "content-type": "application/proto",
+          "date": "Tue, 07 Jul 2026 14:09:51 GMT",
+          "vary": "Origin"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 3,
+      "id": "a471eaadb3f011d8",
+      "matchKey": "POST api2.cursor.sh/agent.v1.AgentService/Run",
+      "recordedAt": "2026-07-07T14:09:51.709Z",
+      "request": {
+        "body": {
+          "kind": "empty"
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api2.cursor.sh/agent.v1.AgentService/Run"
+      },
+      "response": {
+        "body": {
+          "kind": "empty"
+        },
+        "headers": {
+          "connection": "keep-alive",
+          "content-length": "0",
+          "date": "Tue, 07 Jul 2026 14:09:51 GMT",
           "server": "awselb/2.0"
         },
         "status": 464
@@ -4872,8 +6626,6 @@
     }
   ],
   "meta": {
-    "createdAt": "2026-05-13T11:16:11.700Z",
-    "seinfeldVersion": "0.0.0"
-  },
-  "version": 1
+    "createdAt": "2026-07-06T14:00:47.004Z"
+  }
 }

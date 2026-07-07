@@ -2,15 +2,18 @@
   "name": "@braintrust/e2e-openrouter-instrumentation",
   "private": true,
   "braintrustScenario": {
-    "canary": {
+    "bump": {
       "dependencies": {
-        "@openrouter/sdk": "latest"
+        "openrouter-sdk-v0-latest": {
+          "package": "@openrouter/sdk",
+          "range": "0"
+        }
       }
     }
   },
   "dependencies": {
-    "@openrouter/sdk": "0.12.22",
-    "openrouter-sdk-v0911": "npm:@openrouter/sdk@0.9.11",
-    "zod": "4.1.11"
+    "zod": "4.1.11",
+    "openrouter-sdk-v0": "npm:@openrouter/sdk@0.9.11",
+    "openrouter-sdk-v0-latest": "npm:@openrouter/sdk@0.13.24"
   }
 }

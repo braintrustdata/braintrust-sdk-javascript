@@ -1,4 +1,6 @@
-import * as claudeAgentSDK from "claude-agent-sdk-v0.2.81";
+const claudeAgentSDKPackageName =
+  process.env.CLAUDE_AGENT_SDK_PACKAGE_NAME ?? "claude-agent-sdk-v0-latest";
+const claudeAgentSDK = await import(claudeAgentSDKPackageName);
 import { runMain } from "../../helpers/provider-runtime.mjs";
 import { runAutoClaudeAgentSDKInstrumentation } from "./scenario.impl.mjs";
 

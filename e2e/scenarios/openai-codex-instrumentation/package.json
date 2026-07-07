@@ -2,13 +2,17 @@
   "name": "@braintrust/e2e-openai-codex-instrumentation",
   "private": true,
   "braintrustScenario": {
-    "canary": {
+    "bump": {
       "dependencies": {
-        "openai-codex-sdk-v0128": "@openai/codex-sdk@latest"
+        "openai-codex-sdk-v0-latest": {
+          "package": "@openai/codex-sdk",
+          "range": "0"
+        }
       }
     }
   },
   "dependencies": {
-    "openai-codex-sdk-v0128": "npm:@openai/codex-sdk@0.128.0"
+    "openai-codex-sdk-v0": "npm:@openai/codex-sdk@0.142.5",
+    "openai-codex-sdk-v0-latest": "npm:@openai/codex-sdk@0.142.5"
   }
 }

@@ -2,13 +2,17 @@
   "name": "@braintrust/e2e-anthropic-bedrock-instrumentation",
   "private": true,
   "braintrustScenario": {
-    "canary": {
+    "bump": {
       "dependencies": {
-        "@anthropic-ai/bedrock-sdk": "latest"
+        "anthropic-bedrock-sdk-v0-latest": {
+          "package": "@anthropic-ai/bedrock-sdk",
+          "range": "0"
+        }
       }
     }
   },
   "dependencies": {
-    "@anthropic-ai/bedrock-sdk": "0.30.2"
+    "anthropic-bedrock-sdk-v0": "npm:@anthropic-ai/bedrock-sdk@0.30.2",
+    "anthropic-bedrock-sdk-v0-latest": "npm:@anthropic-ai/bedrock-sdk@0.32.0"
   }
 }

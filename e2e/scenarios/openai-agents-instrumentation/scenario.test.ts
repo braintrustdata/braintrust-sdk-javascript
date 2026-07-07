@@ -10,33 +10,51 @@ const originalScenarioDir = resolveScenarioDir(import.meta.url);
 const scenarioDir = await prepareScenarioDir({
   scenarioDir: originalScenarioDir,
 });
-const OPENAI_AGENTS_VARIANT_KEY = "openai-agents-auto-hook";
-const openAIAgentsVersion = await readInstalledPackageVersion(
-  scenarioDir,
-  "@openai/agents",
-);
 const TIMEOUT_MS = 60_000;
+const openAIAgentsScenarios = await Promise.all(
+  [
+    {
+      dependencyName: "openai-agents-v0",
+      variantKey: "openai-agents-v0",
+    },
+    {
+      dependencyName: "openai-agents-v0-latest",
+      variantKey: "openai-agents-v0-latest",
+    },
+  ].map(async (scenario) => ({
+    ...scenario,
+    version: await readInstalledPackageVersion(
+      scenarioDir,
+      scenario.dependencyName,
+    ),
+  })),
+);
 
-describe(`openai agents sdk ${openAIAgentsVersion}`, () => {
-  defineOpenAIAgentsAutoInstrumentationAssertions({
-    name: "auto-hook instrumentation",
-    runScenario: async ({ runNodeScenarioDir }) => {
-      await runNodeScenarioDir({
-        entry: "scenario.mjs",
-        env: {
-          NODE_ENV: "development",
+describe.concurrent("variants", () => {
+  for (const scenario of openAIAgentsScenarios) {
+    describe.sequential(`openai agents sdk ${scenario.version}`, () => {
+      defineOpenAIAgentsAutoInstrumentationAssertions({
+        name: "auto-hook instrumentation",
+        runScenario: async ({ runNodeScenarioDir }) => {
+          await runNodeScenarioDir({
+            entry: "scenario.mjs",
+            env: {
+              NODE_ENV: "development",
+              OPENAI_AGENTS_PACKAGE_NAME: scenario.dependencyName,
+            },
+            nodeArgs: ["--import", "braintrust/hook.mjs"],
+            runContext: {
+              variantKey: scenario.variantKey,
+              originalScenarioDir,
+            },
+            scenarioDir,
+            timeoutMs: TIMEOUT_MS,
+          });
         },
-        nodeArgs: ["--import", "braintrust/hook.mjs"],
-        runContext: {
-          variantKey: OPENAI_AGENTS_VARIANT_KEY,
-          originalScenarioDir,
-        },
-        scenarioDir,
+        snapshotName: scenario.variantKey,
+        testFileUrl: import.meta.url,
         timeoutMs: TIMEOUT_MS,
       });
-    },
-    snapshotName: OPENAI_AGENTS_VARIANT_KEY,
-    testFileUrl: import.meta.url,
-    timeoutMs: TIMEOUT_MS,
-  });
+    });
+  }
 });

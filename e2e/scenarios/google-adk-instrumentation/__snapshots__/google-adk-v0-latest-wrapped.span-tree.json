@@ -1,0 +1,183 @@
+{
+  "span_tree": [
+    {
+      "name": "google-adk-instrumentation-root",
+      "type": "task",
+      "children": [
+        {
+          "name": "adk-simple-run-operation",
+          "children": [
+            {
+              "name": "Google ADK Runner",
+              "type": "task",
+              "children": [
+                {
+                  "name": "Agent: weather_agent",
+                  "type": "task",
+                  "children": [
+                    {
+                      "name": "tool: get_weather",
+                      "type": "tool",
+                      "children": [],
+                      "input": {
+                        "location": "Paris, France"
+                      },
+                      "output": {
+                        "condition": "sunny",
+                        "location": "Paris, France",
+                        "temperature": 72
+                      },
+                      "metadata": {
+                        "google_adk.tool_call_id": "direct-weather-tool",
+                        "google_adk.tool_name": "get_weather",
+                        "provider": "google-adk"
+                      },
+                      "metrics": {
+                        "duration": 0
+                      }
+                    }
+                  ],
+                  "output": {
+                    "author": "weather_agent",
+                    "content": "The weather in Paris, France is currently 15°C and cloudy.",
+                    "role": "model"
+                  },
+                  "metadata": {
+                    "google_adk.agent_name": "weather_agent",
+                    "model": "gemini-2.5-flash-lite",
+                    "provider": "google-adk"
+                  },
+                  "metrics": {
+                    "duration": 0
+                  }
+                }
+              ],
+              "input": {
+                "messages": [
+                  {
+                    "content": "What is the weather in Paris, France?",
+                    "role": "user"
+                  }
+                ]
+              },
+              "output": {
+                "author": "weather_agent",
+                "content": "The weather in Paris, France is currently 15°C and cloudy.",
+                "role": "model"
+              },
+              "metadata": {
+                "google_adk.session_id": "test-session-1",
+                "google_adk.user_id": "test-user",
+                "provider": "google-adk"
+              },
+              "metrics": {
+                "completion_tokens": 16,
+                "duration": 0,
+                "prompt_tokens": 37,
+                "tokens": 53
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "simple-run",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "adk-sequential-run-operation",
+          "children": [
+            {
+              "name": "Google ADK Runner",
+              "type": "task",
+              "children": [
+                {
+                  "name": "Agent: sequential_workflow",
+                  "type": "task",
+                  "children": [
+                    {
+                      "name": "Agent: greeter",
+                      "type": "task",
+                      "children": [],
+                      "output": {
+                        "author": "greeter",
+                        "content": "Hello.",
+                        "role": "model"
+                      },
+                      "metadata": {
+                        "google_adk.agent_name": "greeter",
+                        "model": "gemini-2.5-flash-lite",
+                        "provider": "google-adk"
+                      },
+                      "metrics": {
+                        "duration": 0
+                      }
+                    },
+                    {
+                      "name": "Agent: farewell",
+                      "type": "task",
+                      "children": [],
+                      "output": {
+                        "author": "farewell",
+                        "content": "Goodbye.",
+                        "role": "model"
+                      },
+                      "metadata": {
+                        "google_adk.agent_name": "farewell",
+                        "model": "gemini-2.5-flash-lite",
+                        "provider": "google-adk"
+                      },
+                      "metrics": {
+                        "duration": 0
+                      }
+                    }
+                  ],
+                  "output": {
+                    "author": "farewell",
+                    "content": "Goodbye.",
+                    "role": "model"
+                  },
+                  "metadata": {
+                    "google_adk.agent_name": "sequential_workflow",
+                    "provider": "google-adk"
+                  },
+                  "metrics": {
+                    "duration": 0
+                  }
+                }
+              ],
+              "input": {
+                "messages": [
+                  {
+                    "content": "Hello.",
+                    "role": "user"
+                  }
+                ]
+              },
+              "output": {
+                "author": "farewell",
+                "content": "Goodbye.",
+                "role": "model"
+              },
+              "metadata": {
+                "google_adk.session_id": "test-session-sequential",
+                "google_adk.user_id": "test-user",
+                "provider": "google-adk"
+              },
+              "metrics": {
+                "duration": 0
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "sequential-run",
+            "testRunId": "<run:1>"
+          }
+        }
+      ],
+      "metadata": {
+        "scenario": "google-adk-instrumentation",
+        "testRunId": "<run:1>"
+      }
+    }
+  ]
+}

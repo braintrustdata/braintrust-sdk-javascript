@@ -1,5 +1,9 @@
-import { OpenRouter } from "@openrouter/sdk";
+const openRouterPackageName =
+  process.env.OPENROUTER_PACKAGE_NAME ?? "openrouter-sdk-v0-latest";
 import { runMain } from "../../helpers/scenario-runtime";
 import { runWrappedOpenRouterInstrumentation } from "./scenario.impl.mjs";
 
-runMain(async () => runWrappedOpenRouterInstrumentation(OpenRouter));
+runMain(async () => {
+  const { OpenRouter } = await import(openRouterPackageName);
+  await runWrappedOpenRouterInstrumentation(OpenRouter);
+});

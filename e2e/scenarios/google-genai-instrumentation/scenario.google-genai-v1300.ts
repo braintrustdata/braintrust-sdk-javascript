@@ -1,5 +1,9 @@
-import * as googleGenAI from "google-genai-sdk-v1300";
+const googleGenAIPackageName =
+  process.env.GOOGLE_GENAI_PACKAGE_NAME ?? "google-genai-sdk-v1";
 import { runMain } from "../../helpers/scenario-runtime";
 import { runWrappedGoogleGenAIInstrumentation } from "./scenario.impl.mjs";
 
-runMain(async () => runWrappedGoogleGenAIInstrumentation(googleGenAI));
+runMain(async () => {
+  const googleGenAI = await import(googleGenAIPackageName);
+  await runWrappedGoogleGenAIInstrumentation(googleGenAI);
+});

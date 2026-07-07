@@ -8,15 +8,24 @@ importers:
 
   .:
     dependencies:
-      '@huggingface/inference':
-        specifier: 4.13.15
-        version: 4.13.15
+      huggingface-inference-sdk-v2-latest:
+        specifier: npm:@huggingface/inference@2.8.1
+        version: '@huggingface/inference@2.8.1'
       huggingface-inference-sdk-v2:
         specifier: npm:@huggingface/inference@2.8.1
         version: '@huggingface/inference@2.8.1'
+      huggingface-inference-sdk-v3-latest:
+        specifier: npm:@huggingface/inference@3.15.0
+        version: '@huggingface/inference@3.15.0'
       huggingface-inference-sdk-v3:
         specifier: npm:@huggingface/inference@3.15.0
         version: '@huggingface/inference@3.15.0'
+      huggingface-inference-sdk-v4-latest:
+        specifier: npm:@huggingface/inference@4.13.22
+        version: '@huggingface/inference@4.13.22'
+      huggingface-inference-sdk-v4:
+        specifier: npm:@huggingface/inference@4.13.15
+        version: '@huggingface/inference@4.13.15'
 
 packages:
 
@@ -32,8 +41,16 @@ packages:
     resolution: {integrity: sha512-V7B13KFDVhYkQqgx8vpMcmtEG+PoePlh65IUvpphTTItHAq6zRLcsS4torh1QavUaT+6nEwho4wFXzBQNGBwKQ==}
     engines: {node: '>=18'}
 
+  '@huggingface/inference@4.13.22':
+    resolution: {integrity: sha512-z14IAfhOkp7A6s4AR9ZbCylXMl27BchYt2suxoW5haXTW70OIVM/Gu2EgPbx4mCtjdI2mQTz3llJBKoDoOn3FA==}
+    engines: {node: '>=18'}
+
   '@huggingface/jinja@0.5.6':
     resolution: {integrity: sha512-MyMWyLnjqo+KRJYSH7oWNbsOn5onuIvfXYPcc0WOGxU0eHUV7oAYUoQTl2BMdu7ml+ea/bu11UM+EshbeHwtIA==}
+    engines: {node: '>=18'}
+
+  '@huggingface/jinja@0.5.9':
+    resolution: {integrity: sha512-uWTG+l3VJRsl7EXxYizuL3P+cCPoc3cRqbWWRcQN0FhejRfbdq0RNhCmbY/YDtnTcz9icdLYuLDjsnz4d8JMuw==}
     engines: {node: '>=18'}
 
   '@huggingface/tasks@0.12.30':
@@ -41,6 +58,9 @@ packages:
 
   '@huggingface/tasks@0.19.90':
     resolution: {integrity: sha512-nfV9luJbvwGQ/5oKXkKhCV9h4X7mwh1YaGG3ORd6UMLDSwr1OFSSatcBX0O9OtBtmNK19aGSjbLFqqgcIR6+IA==}
+
+  '@huggingface/tasks@0.21.21':
+    resolution: {integrity: sha512-6cHtkeMvgbudI6p4+gPP/+xvcAG2uumF+ntojCSNnHy5xcSzuHXCMJHzh+rlX0TSZ/QdDZ4uWkPLQikbphNyEw==}
 
 snapshots:
 
@@ -58,8 +78,17 @@ snapshots:
       '@huggingface/jinja': 0.5.6
       '@huggingface/tasks': 0.19.90
 
+  '@huggingface/inference@4.13.22':
+    dependencies:
+      '@huggingface/jinja': 0.5.9
+      '@huggingface/tasks': 0.21.21
+
   '@huggingface/jinja@0.5.6': {}
+
+  '@huggingface/jinja@0.5.9': {}
 
   '@huggingface/tasks@0.12.30': {}
 
   '@huggingface/tasks@0.19.90': {}
+
+  '@huggingface/tasks@0.21.21': {}

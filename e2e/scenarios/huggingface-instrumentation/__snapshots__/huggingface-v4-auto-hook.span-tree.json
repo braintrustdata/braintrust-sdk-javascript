@@ -1,0 +1,268 @@
+{
+  "span_tree": [
+    {
+      "name": "huggingface-instrumentation-root",
+      "type": "task",
+      "children": [
+        {
+          "name": "huggingface-chat-operation",
+          "children": [
+            {
+              "name": "huggingface.chat_completion",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "Reply with exactly OK.",
+                  "role": "user"
+                }
+              ],
+              "output": [
+                {
+                  "finish_reason": "stop",
+                  "index": 0,
+                  "message": {
+                    "content": "OK.",
+                    "role": "assistant"
+                  }
+                }
+              ],
+              "metadata": {
+                "created": 0,
+                "id": "<span:1>",
+                "max_tokens": 16,
+                "model": "meta-llama/Llama-3.1-8B-Instruct",
+                "object": "chat.completion",
+                "provider": "featherless-ai",
+                "temperature": 0
+              },
+              "metrics": {
+                "completion_tokens": 2,
+                "prompt_tokens": 40,
+                "tokens": 42
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "chat",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "huggingface-chat-stream-operation",
+          "children": [
+            {
+              "name": "huggingface.chat_completion_stream",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "Reply with exactly OK.",
+                  "role": "user"
+                }
+              ],
+              "output": {
+                "choices": [
+                  {
+                    "finish_reason": "stop",
+                    "index": 0,
+                    "message": {
+                      "content": "OK.",
+                      "role": "assistant"
+                    }
+                  }
+                ]
+              },
+              "metadata": {
+                "created": 0,
+                "id": "<span:1>",
+                "max_tokens": 16,
+                "model": "meta-llama/Llama-3.1-8B-Instruct",
+                "object": "chat.completion.chunk",
+                "provider": "featherless-ai",
+                "temperature": 0
+              },
+              "metrics": {
+                "completion_tokens": 2,
+                "prompt_tokens": 40,
+                "time_to_first_token": 0,
+                "tokens": 42
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "chat-stream",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "huggingface-chat-stream-tool-call-operation",
+          "children": [
+            {
+              "name": "huggingface.chat_completion_stream",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "What is the weather in San Francisco? Call the get_current_weather tool.",
+                  "role": "user"
+                }
+              ],
+              "output": {
+                "choices": [
+                  {
+                    "finish_reason": "tool_calls",
+                    "index": 0,
+                    "message": {
+                      "content": "",
+                      "role": "assistant",
+                      "tool_calls": [
+                        {
+                          "function": {
+                            "arguments": "{\"location\":\"San Francisco\"}",
+                            "name": "get_current_weather"
+                          },
+                          "id": "<span:1>",
+                          "type": "function"
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              "metadata": {
+                "created": 0,
+                "id": "<span:1>",
+                "max_tokens": 64,
+                "model": "meta-llama/Llama-3.1-8B-Instruct",
+                "object": "chat.completion.chunk",
+                "provider": "featherless-ai",
+                "temperature": 0,
+                "tool_choice": "required",
+                "tools": [
+                  {
+                    "function": {
+                      "description": "Get the current weather for a location.",
+                      "name": "get_current_weather",
+                      "parameters": {
+                        "properties": {
+                          "location": {
+                            "description": "City and state or city and country.",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "location"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "type": "function"
+                  }
+                ]
+              },
+              "metrics": {
+                "completion_tokens": 18,
+                "prompt_tokens": 203,
+                "time_to_first_token": 0,
+                "tokens": 221
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "chat-stream-tool-call",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "huggingface-text-generation-operation",
+          "children": [
+            {
+              "name": "huggingface.text_generation",
+              "type": "llm",
+              "children": [],
+              "input": "The capital of France is",
+              "output": {
+                "generated_text": " a city that is"
+              },
+              "metadata": {
+                "model": "meta-llama/Llama-3.1-8B",
+                "parameters": {
+                  "do_sample": false,
+                  "max_new_tokens": 4,
+                  "return_full_text": false
+                },
+                "provider": "featherless-ai"
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "text-generation",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "huggingface-text-generation-stream-operation",
+          "children": [
+            {
+              "name": "huggingface.text_generation_stream",
+              "type": "llm",
+              "children": [],
+              "input": "The capital of France is",
+              "output": {
+                "finish_reason": "length",
+                "generated_text": " a city that is"
+              },
+              "metadata": {
+                "finish_reason": "length",
+                "model": "meta-llama/Llama-3.1-8B",
+                "parameters": {
+                  "do_sample": false,
+                  "max_new_tokens": 4,
+                  "return_full_text": false
+                },
+                "provider": "featherless-ai"
+              },
+              "metrics": {
+                "completion_tokens": 4,
+                "prompt_tokens": 5,
+                "time_to_first_token": 0,
+                "tokens": 9
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "text-generation-stream",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "huggingface-feature-extraction-operation",
+          "children": [
+            {
+              "name": "huggingface.feature_extraction",
+              "type": "llm",
+              "children": [],
+              "input": "Paris France",
+              "output": {
+                "embedding_length": 1024
+              },
+              "metadata": {
+                "model": "thenlper/gte-large",
+                "provider": "hf-inference"
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "feature-extraction",
+            "testRunId": "<run:1>"
+          }
+        }
+      ],
+      "metadata": {
+        "scenario": "huggingface-instrumentation",
+        "testRunId": "<run:1>"
+      }
+    }
+  ]
+}

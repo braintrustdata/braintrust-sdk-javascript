@@ -212,13 +212,36 @@ async function runVitest(scenarioNames, runContextDir) {
   );
   const vitestArgs =
     scenarioPaths.length > 0
-      ? ["run", ...scenarioPaths, "--update"]
-      : ["run", "--update"];
+      ? ["run", "--no-file-parallelism", ...scenarioPaths, "--update"]
+      : [
+          "run",
+          "--no-file-parallelism",
+          ...(await defaultScenarioTestPaths()),
+          "--update",
+        ];
 
   return await runProcess(VITEST_COMMAND, vitestArgs, {
     cwd: E2E_DIR,
     env,
   });
+}
+
+async function defaultScenarioTestPaths() {
+  const entries = await readdir(path.join(E2E_DIR, "scenarios"), {
+    withFileTypes: true,
+  });
+  const scenarioPaths = entries
+    .filter((entry) => entry.isDirectory() && !entry.name.startsWith("."))
+    .map((entry) => `scenarios/${entry.name}/scenario.test.ts`)
+    .filter((scenarioPath) => existsSync(path.join(E2E_DIR, scenarioPath)))
+    .sort();
+
+  if (scenarioPaths.length === 0) {
+    console.error("[record] No scenario test files found.");
+    process.exit(1);
+  }
+
+  return scenarioPaths;
 }
 
 async function runProcess(command, args, options) {
