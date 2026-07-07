@@ -104,6 +104,8 @@ If you use TypeScript or other transpilation plugins, place the Braintrust plugi
 
 For deeper details, see the [auto-instrumentation architecture docs](src/auto-instrumentations/README.md).
 
+## Migration Guides
+
 ### Upgrading from 2.x to 3.x
 
 See the [Migrate from v2.x to v3.x guide](https://www.braintrust.dev/docs/reference/sdks/typescript/migrations/v2-to-v3).
