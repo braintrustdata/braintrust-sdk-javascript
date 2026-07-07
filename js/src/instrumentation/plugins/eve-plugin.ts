@@ -16,17 +16,26 @@ type SpanState = {
   span: Span;
 };
 
+type ToolCall = {
+  function: {
+    arguments: string;
+    name: string;
+  };
+  id: string;
+  type: "function";
+};
+
+type AssistantToolCallMessage = {
+  content: unknown;
+  role: "assistant";
+  tool_calls: ToolCall[];
+};
+
 type StepState = SpanState & {
+  assistantToolCallMessage?: AssistantToolCallMessage;
   metrics: Record<string, number>;
   output?: unknown;
-  toolCalls: Array<{
-    function: {
-      arguments: string;
-      name: string;
-    };
-    id: string;
-    type: "function";
-  }>;
+  toolCalls: ToolCall[];
 };
 
 type TurnState = SpanState & {
@@ -278,6 +287,10 @@ class EveBridge {
           : {}),
       },
     };
+    if (step.assistantToolCallMessage) {
+      step.assistantToolCallMessage.content = event.data.message;
+      step.assistantToolCallMessage.tool_calls = [...step.toolCalls];
+    }
 
     const turn = this.turnForEvent(event, ctx);
     if (turn && event.data.finishReason !== "tool-calls") {
@@ -321,28 +334,11 @@ class EveBridge {
       return;
     }
 
-    turn.messages.push({
-      content: null,
-      role: "assistant",
-      tool_calls: toolActions.map(openAIToolCallFromAction),
-    });
-
     for (const action of toolActions) {
-      step?.toolCalls.push(openAIToolCallFromAction(action));
       if (step) {
-        if (step.output && isObject(step.output)) {
-          const message = Reflect.get(step.output, "message");
-          if (isObject(message)) {
-            Reflect.set(message, "tool_calls", [...step.toolCalls]);
-          }
-        } else {
-          step.output = {
-            message: {
-              content: null,
-              role: "assistant",
-              tool_calls: [...step.toolCalls],
-            },
-          };
+        const toolCall = openAIToolCallFromAction(action);
+        if (!step.toolCalls.some((existing) => existing.id === toolCall.id)) {
+          step.toolCalls.push(toolCall);
         }
       }
 
@@ -376,6 +372,46 @@ class EveBridge {
         stepIndex: event.data.stepIndex,
         turnKey: turnKey(sessionId, event.data.turnId),
       });
+    }
+
+    if (!step) {
+      turn.messages.push({
+        content: null,
+        role: "assistant",
+        tool_calls: toolActions.map(openAIToolCallFromAction),
+      });
+      return;
+    }
+
+    const outputMessage =
+      step.output && isObject(step.output)
+        ? Reflect.get(step.output, "message")
+        : undefined;
+    const content = isObject(outputMessage)
+      ? Reflect.get(outputMessage, "content")
+      : null;
+    if (!step.assistantToolCallMessage) {
+      step.assistantToolCallMessage = {
+        content,
+        role: "assistant",
+        tool_calls: [...step.toolCalls],
+      };
+      turn.messages.push(step.assistantToolCallMessage);
+    } else {
+      step.assistantToolCallMessage.content = content;
+      step.assistantToolCallMessage.tool_calls = [...step.toolCalls];
+    }
+
+    if (isObject(outputMessage)) {
+      Reflect.set(outputMessage, "tool_calls", [...step.toolCalls]);
+    } else {
+      step.output = {
+        message: {
+          content,
+          role: "assistant",
+          tool_calls: [...step.toolCalls],
+        },
+      };
     }
   }
 

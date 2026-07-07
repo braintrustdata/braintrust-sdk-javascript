@@ -317,6 +317,168 @@ describe("braintrustEveHook", () => {
     });
   });
 
+  it("merges incremental tool call requests into one assistant message", async () => {
+    const wildcard = braintrustEveHook().events?.["*"];
+    expect(wildcard).toBeDefined();
+
+    const ctx: EveHookContext = {
+      agent: { name: "eve-test-agent" },
+      channel: { kind: "http" },
+      session: { id: "session-incremental-tools" },
+    };
+    const emit = (event: EveHandleMessageStreamEvent) => wildcard?.(event, ctx);
+
+    emit({
+      data: { sequence: 0, turnId: "turn-incremental-tools" },
+      type: "turn.started",
+    });
+    emit({
+      data: {
+        message: "Search then read",
+        sequence: 0,
+        turnId: "turn-incremental-tools",
+      },
+      type: "message.received",
+    });
+    emit({
+      data: { sequence: 0, stepIndex: 0, turnId: "turn-incremental-tools" },
+      type: "step.started",
+    });
+    emit({
+      data: {
+        actions: [
+          {
+            callId: "call-search",
+            input: { query: "Eve instrumentation" },
+            kind: "tool-call",
+            toolName: "search",
+          },
+        ],
+        sequence: 0,
+        stepIndex: 0,
+        turnId: "turn-incremental-tools",
+      },
+      type: "actions.requested",
+    });
+    emit({
+      data: {
+        actions: [
+          {
+            callId: "call-read",
+            input: { url: "https://eve.dev/docs/guides/instrumentation" },
+            kind: "tool-call",
+            toolName: "read",
+          },
+        ],
+        sequence: 0,
+        stepIndex: 0,
+        turnId: "turn-incremental-tools",
+      },
+      type: "actions.requested",
+    });
+    emit({
+      data: {
+        result: {
+          callId: "call-search",
+          kind: "tool-result",
+          output: { url: "https://eve.dev/docs/guides/instrumentation" },
+          toolName: "search",
+        },
+        sequence: 0,
+        status: "completed",
+        stepIndex: 0,
+        turnId: "turn-incremental-tools",
+      },
+      type: "action.result",
+    });
+    emit({
+      data: {
+        result: {
+          callId: "call-read",
+          kind: "tool-result",
+          output: { excerpt: "Eve hooks expose runtime stream events." },
+          toolName: "read",
+        },
+        sequence: 0,
+        status: "completed",
+        stepIndex: 0,
+        turnId: "turn-incremental-tools",
+      },
+      type: "action.result",
+    });
+    emit({
+      data: {
+        finishReason: "tool-calls",
+        sequence: 0,
+        stepIndex: 0,
+        turnId: "turn-incremental-tools",
+      },
+      type: "step.completed",
+    });
+    emit({
+      data: { sequence: 0, stepIndex: 1, turnId: "turn-incremental-tools" },
+      type: "step.started",
+    });
+    emit({
+      data: {
+        finishReason: "stop",
+        message: "Done.",
+        sequence: 0,
+        stepIndex: 1,
+        turnId: "turn-incremental-tools",
+      },
+      type: "message.completed",
+    });
+    emit({
+      data: {
+        finishReason: "stop",
+        sequence: 0,
+        stepIndex: 1,
+        turnId: "turn-incremental-tools",
+      },
+      type: "step.completed",
+    });
+    emit({
+      data: { sequence: 0, turnId: "turn-incremental-tools" },
+      type: "turn.completed",
+    });
+
+    const spans = (await backgroundLogger.drain()) as Array<
+      Record<string, any>
+    >;
+    const steps = spans
+      .filter((span) =>
+        String(span.span_attributes?.name).startsWith("eve.step"),
+      )
+      .sort(
+        (left, right) =>
+          Number(left.metadata?.["eve.step.index"]) -
+          Number(right.metadata?.["eve.step.index"]),
+      );
+
+    expect(steps[0]?.output).toMatchObject({
+      message: {
+        tool_calls: [
+          { id: "call-search", function: { name: "search" } },
+          { id: "call-read", function: { name: "read" } },
+        ],
+      },
+    });
+    const assistantToolMessages = steps[1]?.input.filter(
+      (message: Record<string, any>) =>
+        message.role === "assistant" && Array.isArray(message.tool_calls),
+    );
+    expect(assistantToolMessages).toHaveLength(1);
+    expect(assistantToolMessages?.[0]).toMatchObject({
+      content: null,
+      role: "assistant",
+      tool_calls: [
+        { id: "call-search", function: { name: "search" }, type: "function" },
+        { id: "call-read", function: { name: "read" }, type: "function" },
+      ],
+    });
+  });
+
   it("does not throw when Eve emits malformed events or failures", async () => {
     const wildcard = braintrustEveHook().events?.["*"];
     expect(wildcard).toBeDefined();
