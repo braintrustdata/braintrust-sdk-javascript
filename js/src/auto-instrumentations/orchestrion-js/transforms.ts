@@ -249,7 +249,7 @@ function wrap(
 
   block.body.unshift(...common);
 
-  esquery.query(block, "[id.name=__apm$wrapped]")[0].init = node;
+  (esquery.query(block, "[id.name=__apm$wrapped]")[0] as AnyNode).init = node;
 
   return block;
 }
