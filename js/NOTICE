@@ -10,7 +10,7 @@ This product includes software developed at Datadog (<https://www.datadoghq.com/
 The Orchestrion-JS fork is licensed under the Apache License, Version 2.0.
 See licenses/orchestrion-js/LICENSE and licenses/orchestrion-js/NOTICE.
 
-This package also includes a modified fork of import-in-the-middle 3.2.0.
+This package also includes a modified fork of import-in-the-middle 3.3.1.
 import-in-the-middle is licensed under the Apache License, Version 2.0.
 See licenses/import-in-the-middle/LICENSE and
 licenses/import-in-the-middle/NOTICE.

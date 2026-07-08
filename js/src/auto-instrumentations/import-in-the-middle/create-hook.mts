@@ -20,18 +20,19 @@ import type {
 const specifiers = new Map<string, string>();
 const isWin = process.platform === "win32";
 const IITM_QUERY_PARAM = "braintrust_iitm";
+const STAR_CYCLE_DEPTH = 100;
 
 // FIXME: Typescript extensions are added temporarily until we find a better
 // way of supporting arbitrary extensions
 const EXTENSION_RE = /\.(js|mjs|cjs|ts|mts|cts)$/;
-const HANDLED_FORMATS = new Set<string>(["builtin", "module", "commonjs"]);
+const HANDLED_FORMATS = new Set<string>([
+  "builtin",
+  "module",
+  "commonjs",
+  "module-typescript",
+  "commonjs-typescript",
+]);
 const TRACE_WARNINGS = process.execArgv.includes("--trace-warnings");
-
-// process.versions.node is always "major.minor.patch" (nightlies add a suffix
-// the regex ignores).
-const [, NODE_MAJOR, NODE_MINOR, NODE_PATCH] = process.versions.node
-  .match(/^(\d+)\.(\d+)\.(\d+)/)
-  ?.map(Number) ?? [0, 0, 0, 0];
 
 type LoaderMeta = { url: string };
 type HookData = {
@@ -51,6 +52,12 @@ type SyncResolveFunction = (
   context: LoaderContext,
 ) => ResolveResult;
 type SetterMap = Map<string, string>;
+type OriginNamespaceMap = Map<string, string>;
+type ProcessModuleResult = {
+  originNamespaces?: OriginNamespaceMap;
+  origins?: Map<string, string>;
+  setters: SetterMap;
+};
 
 interface ImportInTheMiddleHook {
   applyOptions(data: HookData): void;
@@ -75,30 +82,6 @@ interface ImportInTheMiddleHook {
     context: LoaderContext,
     nextResolve: SyncResolveFunction,
   ): ResolveResult;
-}
-
-/**
- * Whether the running Node.js can correctly run the synchronous loader via
- * `module.registerHooks`.
- *
- * `module.registerHooks` exists since v22.15, but its synchronous load hook
- * rejected the nullish CommonJS `source` the loader returns for `require()`s
- * pulled into the ESM graph (throwing `ERR_INVALID_RETURN_PROPERTY_VALUE`) until
- * https://github.com/nodejs/node/pull/59929, released in 22.22.3, 24.11.1,
- * 25.1.0 and 26.0.0. Earlier 24.x (<= 24.11.0) and 25.0.0 ship `registerHooks`
- * but predate the fix, so the synchronous loader must fall back to the
- * asynchronous one there.
- *
- * @returns {boolean}
- */
-export function supportsSyncHooks(): boolean {
-  if (NODE_MAJOR >= 26) return true;
-  if (NODE_MAJOR === 25) return NODE_MINOR >= 1;
-  if (NODE_MAJOR === 24)
-    return NODE_MINOR > 11 || (NODE_MINOR === 11 && NODE_PATCH >= 1);
-  if (NODE_MAJOR === 22)
-    return NODE_MINOR > 22 || (NODE_MINOR === 22 && NODE_PATCH >= 3);
-  return false;
 }
 
 function hasIitm(url: unknown): boolean {
@@ -207,17 +190,14 @@ function emitWarning(err: unknown): void {
  * @param {string} srcUrl The URL of the module the export belongs to.
  * @returns {string}
  */
-function buildSetter(n: string, srcUrl: string): string {
+function buildSetter(n: string, srcUrl: string, namespaceVar: string): string {
   const variableName = `$${n.replace(/[^a-zA-Z0-9_$]/g, "_")}`;
   const objectKey = JSON.stringify(n);
   const reExportedName = n === "default" ? n : objectKey;
 
-  // For the module.exports synthetic export (Node 23+), fall back to $default
-  // when namespace['module.exports'] is not exposed by the native ESM namespace
-  // (builtins don't expose it). This ensures the IITM hook proxy returns the
-  // actual CJS value (e.g. EventEmitter) when an instrumentor reads
-  // capturedExports['module.exports'], rather than undefined.
-  const moduleExportsFallback = n === "module.exports" ? " ?? $default" : "";
+  // Fall back to namespace.default for the module.exports synthetic export,
+  // which builtins don't expose on the native ESM namespace.
+  const useFallback = n === "module.exports";
 
   const reExportLine =
     n === "module.exports" &&
@@ -225,32 +205,9 @@ function buildSetter(n: string, srcUrl: string): string {
       ? ""
       : `export { ${variableName} as ${reExportedName} }`;
 
-  return `
-      let ${variableName}
-      __overridden[${objectKey}] = false
-      let ${variableName}Defer = false
-      try {
-        ${variableName} = _[${objectKey}] = namespace[${objectKey}]${moduleExportsFallback}
-      } catch (err) {
-        if (!(err instanceof ReferenceError)) throw err
-        ${variableName}Defer = true
-      }
-
-      if (${variableName}Defer || ${variableName} === undefined) {
-        __pending.push(__makeUpdater(
-          ${objectKey},
-          () => namespace[${objectKey}]${moduleExportsFallback},
-          (v) => { ${variableName} = _[${objectKey}] = v }
-        ))
-      }
-      ${reExportLine}
-      set[${objectKey}] = (v) => {
-        __overridden[${objectKey}] = true
-        ${variableName} = v
-        return true
-      }
-      get[${objectKey}] = () => ${variableName}
-      `;
+  return `let ${variableName}
+__binder.bind(${objectKey}, ${namespaceVar}, v => { ${variableName} = v }, () => ${variableName}, ${useFallback})
+${reExportLine}`;
 }
 
 /**
@@ -276,40 +233,59 @@ function* processModule({
   srcUrl,
   context,
   excludeDefault = false,
+  depth = 0,
+  seen,
+  originNamespaces,
 }: {
   context: LoaderContext;
+  depth?: number;
   excludeDefault?: boolean;
+  originNamespaces?: OriginNamespaceMap;
+  seen?: Set<string>;
   srcUrl: string;
-}): Generator<LoaderOperation, SetterMap, LoadResult | ResolveResult> {
+}): Generator<
+  LoaderOperation,
+  ProcessModuleResult,
+  LoadResult | ResolveResult
+> {
   const exportNames = yield* getExports(srcUrl, context);
-  const starExports = new Set<string>();
-  const setters = new Map<string, string>();
+  const setters: SetterMap = new Map();
+  let starOrigins: Map<string, string> | undefined;
+
+  const ensureOriginNamespace = (origin: string): string => {
+    originNamespaces ??= new Map();
+    let alias = originNamespaces.get(origin);
+    if (alias === undefined) {
+      alias = `__ns${originNamespaces.size}`;
+      originNamespaces.set(origin, alias);
+    }
+    return alias;
+  };
 
   const addSetter = (
     name: string,
     setter: string,
-    isStarExport = false,
+    isStarExport: boolean,
+    origin: string,
   ): void => {
     if (setters.has(name)) {
       if (isStarExport) {
-        // If there's already a matching star export, delete it
-        if (starExports.has(name)) {
-          setters.delete(name);
+        if (starOrigins?.has(name)) {
+          if (starOrigins.get(name) === origin) {
+            setters.set(
+              name,
+              buildSetter(name, origin, ensureOriginNamespace(origin)),
+            );
+          } else {
+            setters.delete(name);
+            starOrigins.delete(name);
+          }
         }
-        // and return so this is excluded
-        return;
-      }
-
-      // if we already have this export but it is from a * export, overwrite it
-      if (starExports.has(name)) {
-        starExports.delete(name);
-        setters.set(name, setter);
       }
     } else {
-      // Store export * exports so we know they can be overridden by explicit
-      // named exports
       if (isStarExport) {
-        starExports.add(name);
+        starOrigins ??= new Map();
+        starOrigins.set(name, origin);
       }
 
       setters.set(name, setter);
@@ -344,21 +320,38 @@ function* processModule({
       ];
       const result = (yield resolveOperation) as ResolveResult;
 
-      const subSetters = yield* processModule({
-        srcUrl: result.url,
-        context: { ...context, format: result.format },
-        excludeDefault: true,
-      });
+      starOrigins ??= new Map();
 
-      for (const [name, setter] of subSetters.entries()) {
-        addSetter(name, setter, true);
+      if (depth >= STAR_CYCLE_DEPTH) {
+        seen ??= new Set();
+        if (seen.has(result.url)) continue;
+        seen.add(result.url);
+      }
+
+      try {
+        const sub = yield* processModule({
+          srcUrl: result.url,
+          context: { ...context, format: result.format },
+          excludeDefault: true,
+          depth: depth + 1,
+          seen,
+          originNamespaces,
+        });
+
+        originNamespaces ??= sub.originNamespaces;
+
+        for (const [name, setter] of sub.setters) {
+          addSetter(name, setter, true, sub.origins?.get(name) ?? result.url);
+        }
+      } finally {
+        seen?.delete(result.url);
       }
     } else {
-      addSetter(n, buildSetter(n, srcUrl));
+      addSetter(n, buildSetter(n, srcUrl, "namespace"), false, srcUrl);
     }
   }
 
-  return setters;
+  return { setters, origins: starOrigins, originNamespaces };
 }
 
 function addIitm(url: string): string {
@@ -624,75 +617,26 @@ export function createHook(meta: LoaderMeta): ImportInTheMiddleHook {
     realUrl: string,
     setters: SetterMap,
     originalSpecifier: string | undefined,
+    originNamespaces: OriginNamespaceMap | undefined,
   ): string {
+    let originImports = "";
+    if (originNamespaces !== undefined) {
+      for (const [originUrl, alias] of originNamespaces) {
+        originImports += `import * as ${alias} from ${JSON.stringify(originUrl)}\n`;
+      }
+    }
+
     return `
 import registerState from '${iitmURL}'
 import * as namespace from ${JSON.stringify(realUrl)}
-
-// Mimic a Module object (https://tc39.es/ecma262/#sec-module-namespace-objects).
-const _ = Object.create(null, { [Symbol.toStringTag]: { value: 'Module' } })
-const set = {}
-const get = {}
-const __overridden = Object.create(null)
-let __pending = []
-
-function __makeUpdater (key, read, assign) {
-  return () => {
-    if (__overridden[key] === true) return true
-    try {
-      const v = read()
-      if (v !== undefined) {
-        assign(v)
-        return true
-      }
-      return false
-    } catch (err) {
-      if (err instanceof ReferenceError) return false
-      throw err
-    }
-  }
-}
-
-function __flushPendingOnce () {
-  if (__pending.length === 0) return
-  const next = []
-  for (const fn of __pending) {
-    // If it still throws ReferenceError, keep it for the (single) next attempt.
-    if (fn() !== true) next.push(fn)
-  }
-  __pending = next
-}
+${originImports}
+const __binder = new registerState.ModuleBinder()
 
 ${Array.from(setters.values()).join("\n")}
 
-if (__pending.length > 0) {
-  queueMicrotask(() => {
-    __flushPendingOnce()
+__binder.flush()
 
-    if (__pending.length > 0) {
-      const __retryDelays = [0, 10, 50]
-      const __schedulePending = (i) => {
-        if (__pending.length === 0) return
-        if (i >= __retryDelays.length) {
-          // Give up: leave exports as-is to avoid unbounded retries.
-          __pending = []
-          return
-        }
-
-        const t = setTimeout(() => {
-          __flushPendingOnce()
-          __schedulePending(i + 1)
-        }, __retryDelays[i])
-        // Don't keep the process alive just for best-effort retries.
-        if (t && typeof t.unref === 'function') t.unref()
-      }
-
-      __schedulePending(0)
-    }
-  })
-}
-
-registerState.register(${JSON.stringify(realUrl)}, _, set, get, ${JSON.stringify(originalSpecifier)})
+registerState.register(${JSON.stringify(realUrl)}, __binder.namespace, __binder.set, __binder.get, ${JSON.stringify(originalSpecifier)})
 `;
   }
 
@@ -705,13 +649,19 @@ registerState.register(${JSON.stringify(realUrl)}, _, set, get, ${JSON.stringify
     context: LoaderContext,
     originalSpecifier: string | undefined,
     setters: SetterMap,
+    originNamespaces: OriginNamespaceMap | undefined,
   ): string {
     specifiers.delete(realUrl);
     // context.format is set to 'commonjs' by getCjsExports during processModule.
     if (context.format === "commonjs") {
       cjsInIitmChain.add(realUrl);
     }
-    return buildWrapperSource(realUrl, setters, originalSpecifier);
+    return buildWrapperSource(
+      realUrl,
+      setters,
+      originalSpecifier,
+      originNamespaces,
+    );
   }
 
   // Bookkeeping shared by the async and sync wrap paths when `processModule`
@@ -741,7 +691,7 @@ registerState.register(${JSON.stringify(realUrl)}, _, set, get, ${JSON.stringify
 
       try {
         const resolveForWrap = cachedAsyncResolve;
-        const setters = await driveAsync(
+        const { setters, originNamespaces } = await driveAsync(
           processModule({ srcUrl: realUrl, context }),
           {
             load: async (loadUrl, loadContext) =>
@@ -756,7 +706,13 @@ registerState.register(${JSON.stringify(realUrl)}, _, set, get, ${JSON.stringify
           },
         );
         return {
-          source: onWrapSuccess(realUrl, context, originalSpecifier, setters),
+          source: onWrapSuccess(
+            realUrl,
+            context,
+            originalSpecifier,
+            setters,
+            originNamespaces,
+          ),
         };
       } catch (cause) {
         onWrapFailure(realUrl, cause);
@@ -781,13 +737,22 @@ registerState.register(${JSON.stringify(realUrl)}, _, set, get, ${JSON.stringify
       const originalSpecifier = specifiers.get(realUrl);
 
       try {
-        const setters = driveSync(processModule({ srcUrl: realUrl, context }), {
-          load: (loadUrl, loadContext) =>
-            nextLoad(loadUrl, loadContext) as LoadResult,
-          resolve: cachedSyncResolve,
-        });
+        const { setters, originNamespaces } = driveSync(
+          processModule({ srcUrl: realUrl, context }),
+          {
+            load: (loadUrl, loadContext) =>
+              nextLoad(loadUrl, loadContext) as LoadResult,
+            resolve: cachedSyncResolve,
+          },
+        );
         return {
-          source: onWrapSuccess(realUrl, context, originalSpecifier, setters),
+          source: onWrapSuccess(
+            realUrl,
+            context,
+            originalSpecifier,
+            setters,
+            originNamespaces,
+          ),
         };
       } catch (cause) {
         onWrapFailure(realUrl, cause);

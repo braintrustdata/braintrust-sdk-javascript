@@ -7,11 +7,3 @@ declare module "semifies" {
   function semifies(version: string, range: string): boolean;
   export = semifies;
 }
-
-declare module "acorn-import-attributes" {
-  import type { Parser } from "acorn";
-
-  export function importAttributesOrAssertions(
-    BaseParser: typeof Parser,
-  ): typeof Parser;
-}

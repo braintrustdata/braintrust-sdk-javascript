@@ -100,6 +100,103 @@ function register(
   toHook.push([name, proxy, specifier]);
 }
 
+// Delays (ms) for re-reading exports that were still in their temporal dead zone
+// when the wrapper first ran. Retried on a microtask first, then at these
+// intervals; unref'd so best-effort retries never hold the process open.
+const RETRY_DELAYS = [0, 10, 50];
+
+class ModuleBinder {
+  namespace: Namespace = Object.create(null, {
+    [Symbol.toStringTag]: { value: "Module" },
+  });
+  set: Record<string | symbol, ExportSetter> = {};
+  get: Record<string | symbol, ExportGetter> = {};
+  #overridden: Record<string | symbol, boolean> = Object.create(null);
+  #pending: Array<() => boolean> = [];
+
+  bind(
+    key: string,
+    source: Namespace,
+    write: (value: unknown) => void,
+    read: () => unknown,
+    useFallback: boolean,
+  ): void {
+    const readSource = useFallback
+      ? () => source[key] ?? source.default
+      : () => source[key];
+    this.#overridden[key] = false;
+    let deferred = false;
+    try {
+      const value = readSource();
+      write(value);
+      this.namespace[key] = value;
+    } catch (error) {
+      if (!(error instanceof ReferenceError)) throw error;
+      deferred = true;
+    }
+    if (deferred || read() === undefined) {
+      this.#pending.push(this.#makeUpdater(key, readSource, write));
+    }
+    this.set[key] = (value) => {
+      this.#overridden[key] = true;
+      write(value);
+      return true;
+    };
+    this.get[key] = read;
+  }
+
+  #makeUpdater(
+    key: string,
+    readSource: () => unknown,
+    write: (value: unknown) => void,
+  ): () => boolean {
+    return () => {
+      if (this.#overridden[key] === true) return true;
+      try {
+        const value = readSource();
+        if (value !== undefined) {
+          write(value);
+          this.namespace[key] = value;
+          return true;
+        }
+        return false;
+      } catch (error) {
+        if (error instanceof ReferenceError) return false;
+        throw error;
+      }
+    };
+  }
+
+  #flushOnce(): void {
+    const next = [];
+    for (const updater of this.#pending) {
+      if (updater() !== true) next.push(updater);
+    }
+    this.#pending = next;
+  }
+
+  flush(): void {
+    if (this.#pending.length === 0) return;
+    queueMicrotask(() => {
+      this.#flushOnce();
+      this.#scheduleRetry(0);
+    });
+  }
+
+  #scheduleRetry(attempt: number): void {
+    if (this.#pending.length === 0) return;
+    if (attempt >= RETRY_DELAYS.length) {
+      this.#pending = [];
+      return;
+    }
+    const timer = setTimeout(() => {
+      this.#flushOnce();
+      this.#scheduleRetry(attempt + 1);
+    }, RETRY_DELAYS[attempt]);
+    timer.unref?.();
+  }
+}
+
 function addHookedModules(modules: readonly string[]): void {
   for (const each of modules) {
     const nextCount = (hookedModuleCounts.get(each) || 0) + 1;
@@ -125,6 +222,7 @@ export default {
   deleteHookedModules,
   hookedModules,
   importHooks,
+  ModuleBinder,
   register,
   specifiers,
   toHook,

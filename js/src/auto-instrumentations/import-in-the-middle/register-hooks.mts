@@ -1,5 +1,6 @@
 import * as module from "node:module";
-import { createHook, supportsSyncHooks } from "./create-hook.mjs";
+import { createHook } from "./create-hook.mjs";
+import { supportsSyncHooks } from "./supports-sync-hooks.mjs";
 
 export { supportsSyncHooks };
 
