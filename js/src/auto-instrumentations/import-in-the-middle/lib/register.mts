@@ -105,7 +105,7 @@ function register(
 // intervals; unref'd so best-effort retries never hold the process open.
 const RETRY_DELAYS = [0, 10, 50];
 
-export class ModuleBinder {
+class ModuleBinder {
   namespace: Namespace = Object.create(null, {
     [Symbol.toStringTag]: { value: "Module" },
   });

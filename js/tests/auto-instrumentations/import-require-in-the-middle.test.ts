@@ -100,7 +100,10 @@ describe("vendored import-in-the-middle and require-in-the-middle", () => {
   });
 
   it("keeps ModuleBinder state isolated and resolves deferred exports", async () => {
-    const { ModuleBinder } = await import(`${iitmSrc}lib/register.mts`);
+    const { default: registerState } = await import(
+      `${iitmSrc}lib/register.mts`
+    );
+    const { ModuleBinder } = registerState;
 
     const first = new ModuleBinder();
     const second = new ModuleBinder();

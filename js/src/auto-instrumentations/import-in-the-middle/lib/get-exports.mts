@@ -279,7 +279,7 @@ function* getCjsExports(
  *
  * @returns {Generator<Array, Set<string>>} A generator that yields I/O
  * operations and ultimately returns the identifiers exported by the module.
- * Please see {@link getEsmExports} for caveats on special identifiers that may
+ * Please see {@link lexEsm} for caveats on special identifiers that may
  * be included in the result set.
  */
 export function* getExports(

@@ -73,10 +73,6 @@ function decodeExportName(name: string): string {
 const GAP = String.raw`(?:\s|/\*[^]*?\*/|//[^\n]*\n)*`;
 const STAR_REEXPORT = new RegExp(`^export${GAP}\\*${GAP}from`);
 
-export default function getEsmExports(moduleSource: string): Set<string> {
-  return lexEsm(moduleSource).exportNames;
-}
-
 export function lexEsm(moduleSource: string): {
   exportNames: Set<string>;
   hasModuleSyntax: boolean;

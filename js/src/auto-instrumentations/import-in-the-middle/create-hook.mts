@@ -9,7 +9,6 @@ import type { MessagePort } from "node:worker_threads";
 import registerState from "./lib/register.mjs";
 import { getExports, hasModuleExportsCJSDefault } from "./lib/get-exports.mjs";
 import { RESOLVE, driveSync, driveAsync } from "./lib/io.mjs";
-import { supportsSyncHooks } from "./supports-sync-hooks.mjs";
 import type {
   LoaderContext,
   LoaderOperation,
@@ -17,8 +16,6 @@ import type {
   ResolveOperation,
   ResolveResult,
 } from "./lib/io.mjs";
-
-export { supportsSyncHooks };
 
 const specifiers = new Map<string, string>();
 const isWin = process.platform === "win32";
@@ -630,10 +627,10 @@ export function createHook(meta: LoaderMeta): ImportInTheMiddleHook {
     }
 
     return `
-import registerState, { ModuleBinder } from '${iitmURL}'
+import registerState from '${iitmURL}'
 import * as namespace from ${JSON.stringify(realUrl)}
 ${originImports}
-const __binder = new ModuleBinder()
+const __binder = new registerState.ModuleBinder()
 
 ${Array.from(setters.values()).join("\n")}
 
