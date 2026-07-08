@@ -31,28 +31,26 @@
     "type": "task"
   },
   {
-    "input": {
-      "messages": [
-        {
-          "content": "Answer weather questions with the provided mock forecast.",
-          "role": "system"
-        },
-        {
-          "content": [
-            {
-              "providerOptions": {
-                "mastra": {
-                  "createdAt": 0
-                }
-              },
-              "text": "What is the weather in Paris?",
-              "type": "text"
-            }
-          ],
-          "role": "user"
-        }
-      ]
-    },
+    "input": [
+      {
+        "content": "Answer weather questions with the provided mock forecast.",
+        "role": "system"
+      },
+      {
+        "content": [
+          {
+            "providerOptions": {
+              "mastra": {
+                "createdAt": 0
+              }
+            },
+            "text": "What is the weather in Paris?",
+            "type": "text"
+          }
+        ],
+        "role": "user"
+      }
+    ],
     "metadata": {
       "entity_id": "weather-agent",
       "entity_name": "Weather Agent",
@@ -67,10 +65,11 @@
     ],
     "name": "llm: 'mock-model-id'",
     "output": {
+      "content": "The forecast is sunny.",
       "files": [],
       "reasoning": [],
+      "role": "assistant",
       "sources": [],
-      "text": "The forecast is sunny.",
       "warnings": []
     },
     "type": "llm"
@@ -89,7 +88,8 @@
     ],
     "name": "step: 0",
     "output": {
-      "text": "The forecast is sunny.",
+      "content": "The forecast is sunny.",
+      "role": "assistant",
       "toolCalls": []
     },
     "type": "llm"
@@ -103,7 +103,8 @@
     "metric_keys": [],
     "name": "chunk: 'text'",
     "output": {
-      "text": "The forecast is sunny."
+      "content": "The forecast is sunny.",
+      "role": "assistant"
     },
     "type": "llm"
   },
@@ -131,28 +132,26 @@
     "type": "task"
   },
   {
-    "input": {
-      "messages": [
-        {
-          "content": "Answer weather questions with the provided mock forecast.",
-          "role": "system"
-        },
-        {
-          "content": [
-            {
-              "providerOptions": {
-                "mastra": {
-                  "createdAt": 0
-                }
-              },
-              "text": "Stream the Paris forecast.",
-              "type": "text"
-            }
-          ],
-          "role": "user"
-        }
-      ]
-    },
+    "input": [
+      {
+        "content": "Answer weather questions with the provided mock forecast.",
+        "role": "system"
+      },
+      {
+        "content": [
+          {
+            "providerOptions": {
+              "mastra": {
+                "createdAt": 0
+              }
+            },
+            "text": "Stream the Paris forecast.",
+            "type": "text"
+          }
+        ],
+        "role": "user"
+      }
+    ],
     "metadata": {
       "entity_id": "weather-agent",
       "entity_name": "Weather Agent",
@@ -167,10 +166,11 @@
     ],
     "name": "llm: 'mock-model-id'",
     "output": {
+      "content": "The forecast is sunny.",
       "files": [],
       "reasoning": [],
+      "role": "assistant",
       "sources": [],
-      "text": "The forecast is sunny.",
       "warnings": []
     },
     "type": "llm"
@@ -189,7 +189,8 @@
     ],
     "name": "step: 0",
     "output": {
-      "text": "The forecast is sunny.",
+      "content": "The forecast is sunny.",
+      "role": "assistant",
       "toolCalls": []
     },
     "type": "llm"
@@ -203,7 +204,8 @@
     "metric_keys": [],
     "name": "chunk: 'text'",
     "output": {
-      "text": "The forecast is sunny."
+      "content": "The forecast is sunny.",
+      "role": "assistant"
     },
     "type": "llm"
   },

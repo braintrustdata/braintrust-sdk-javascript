@@ -24,7 +24,8 @@
                           "type": "llm",
                           "children": [],
                           "output": {
-                            "text": "The forecast is sunny."
+                            "content": "The forecast is sunny.",
+                            "role": "assistant"
                           },
                           "metadata": {
                             "entity_id": "weather-agent",
@@ -34,7 +35,8 @@
                         }
                       ],
                       "output": {
-                        "text": "The forecast is sunny.",
+                        "content": "The forecast is sunny.",
+                        "role": "assistant",
                         "toolCalls": []
                       },
                       "metadata": {
@@ -49,33 +51,32 @@
                       ]
                     }
                   ],
-                  "input": {
-                    "messages": [
-                      {
-                        "content": "Answer weather questions with the provided mock forecast.",
-                        "role": "system"
-                      },
-                      {
-                        "content": [
-                          {
-                            "providerOptions": {
-                              "mastra": {
-                                "createdAt": 0
-                              }
-                            },
-                            "text": "What is the weather in Paris?",
-                            "type": "text"
-                          }
-                        ],
-                        "role": "user"
-                      }
-                    ]
-                  },
+                  "input": [
+                    {
+                      "content": "Answer weather questions with the provided mock forecast.",
+                      "role": "system"
+                    },
+                    {
+                      "content": [
+                        {
+                          "providerOptions": {
+                            "mastra": {
+                              "createdAt": 0
+                            }
+                          },
+                          "text": "What is the weather in Paris?",
+                          "type": "text"
+                        }
+                      ],
+                      "role": "user"
+                    }
+                  ],
                   "output": {
+                    "content": "The forecast is sunny.",
                     "files": [],
                     "reasoning": [],
+                    "role": "assistant",
                     "sources": [],
-                    "text": "The forecast is sunny.",
                     "warnings": []
                   },
                   "metadata": {
@@ -120,7 +121,8 @@
                           "type": "llm",
                           "children": [],
                           "output": {
-                            "text": "The forecast is sunny."
+                            "content": "The forecast is sunny.",
+                            "role": "assistant"
                           },
                           "metadata": {
                             "entity_id": "weather-agent",
@@ -130,7 +132,8 @@
                         }
                       ],
                       "output": {
-                        "text": "The forecast is sunny.",
+                        "content": "The forecast is sunny.",
+                        "role": "assistant",
                         "toolCalls": []
                       },
                       "metadata": {
@@ -145,33 +148,32 @@
                       ]
                     }
                   ],
-                  "input": {
-                    "messages": [
-                      {
-                        "content": "Answer weather questions with the provided mock forecast.",
-                        "role": "system"
-                      },
-                      {
-                        "content": [
-                          {
-                            "providerOptions": {
-                              "mastra": {
-                                "createdAt": 0
-                              }
-                            },
-                            "text": "Stream the Paris forecast.",
-                            "type": "text"
-                          }
-                        ],
-                        "role": "user"
-                      }
-                    ]
-                  },
+                  "input": [
+                    {
+                      "content": "Answer weather questions with the provided mock forecast.",
+                      "role": "system"
+                    },
+                    {
+                      "content": [
+                        {
+                          "providerOptions": {
+                            "mastra": {
+                              "createdAt": 0
+                            }
+                          },
+                          "text": "Stream the Paris forecast.",
+                          "type": "text"
+                        }
+                      ],
+                      "role": "user"
+                    }
+                  ],
                   "output": {
+                    "content": "The forecast is sunny.",
                     "files": [],
                     "reasoning": [],
+                    "role": "assistant",
                     "sources": [],
-                    "text": "The forecast is sunny.",
                     "warnings": []
                   },
                   "metadata": {

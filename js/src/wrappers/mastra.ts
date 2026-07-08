@@ -170,6 +170,59 @@ function modelMetrics(
   return Object.keys(out).length > 0 ? out : undefined;
 }
 
+/** Mastra span types whose input/output carry the AI-SDK chat shapes that
+ *  Braintrust's Thread view renders as a conversation. All three map to the
+ *  Braintrust `llm` span type, and Thread view collects every `llm` span in
+ *  the tree (`getThreadSpans` in the app), so a child `model_step` /
+ *  `model_chunk` whose output stays as raw `{ text }` renders as JSON next to
+ *  the properly-formatted `model_generation` turn. Transforming all three
+ *  lets the app's hash dedup coalesce them into one assistant turn.
+ *
+ *  `rag_embedding` is deliberately excluded: it is also `llm`-typed but its
+ *  payload is embedding text/vectors, not chat messages. */
+const MODEL_SPAN_TYPES = new Set([
+  "model_generation",
+  "model_step",
+  "model_chunk",
+]);
+
+/**
+ * Unwrap a model span's input into the message-array shape Braintrust's Thread
+ * view expects. Mastra logs LLM input as `{ messages: [...] }` (or occasionally
+ * a single `{ role, content }` object); Braintrust renders a bare array of chat
+ * messages. Non-model spans and unrecognized shapes pass through unchanged.
+ */
+function transformModelInput(input: unknown, mastraType: string): unknown {
+  if (!MODEL_SPAN_TYPES.has(mastraType)) return input;
+  if (isObject(input) && Array.isArray(input.messages)) {
+    return input.messages;
+  }
+  if (isObject(input) && "content" in input) {
+    return [{ role: input.role, content: input.content }];
+  }
+  return input;
+}
+
+/**
+ * Reshape a model span's output into the assistant-message shape Braintrust's
+ * Thread view expects. Mastra logs a text turn as `{ text, ...rest }`;
+ * Braintrust renders `{ role: 'assistant', content }`, so we lift `text` into
+ * `content` (the explicit fields win over any collisions in `rest`).
+ *
+ * Only a string `text` is reshaped. A tool-call turn has no `text`; forcing
+ * `content: undefined` there makes the downstream message importer drop the
+ * whole turn, so those outputs pass through unchanged and are rendered by the
+ * importer's own tool-call handling. Non-model spans and non-object outputs
+ * also pass through unchanged.
+ */
+function transformModelOutput(output: unknown, mastraType: string): unknown {
+  if (!MODEL_SPAN_TYPES.has(mastraType)) return output;
+  if (!isObject(output)) return output;
+  if (typeof output.text !== "string") return output;
+  const { text, ...rest } = output;
+  return { ...rest, role: "assistant", content: text };
+}
+
 /** Build the metadata payload Braintrust shows on the span, merging
  *  Mastra's own `metadata`, `attributes` (sans usage), and entity fields. */
 function buildMetadata(exported: MastraExportedSpan): Record<string, unknown> {
@@ -340,11 +393,11 @@ export class BraintrustObservabilityExporter implements MastraObservabilityExpor
     const event: Record<string, unknown> = {};
 
     if (exported.input !== undefined) {
-      event.input = exported.input;
+      event.input = transformModelInput(exported.input, exported.type);
       record.hasLoggedInput = true;
     }
     if (exported.output !== undefined) {
-      event.output = exported.output;
+      event.output = transformModelOutput(exported.output, exported.type);
     }
 
     const metadata = buildMetadata(exported);
