@@ -63,6 +63,7 @@
     "metric_keys": [
       "completion_tokens",
       "prompt_tokens",
+      "time_to_first_token",
       "tokens"
     ],
     "name": "llm: 'mock-model-id'",
@@ -163,6 +164,7 @@
     "metric_keys": [
       "completion_tokens",
       "prompt_tokens",
+      "time_to_first_token",
       "tokens"
     ],
     "name": "llm: 'mock-model-id'",

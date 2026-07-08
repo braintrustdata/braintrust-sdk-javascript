@@ -58,6 +58,7 @@ span_tree:
     │   │       metric_keys: [
     │   │         "completion_tokens",
     │   │         "prompt_tokens",
+    │   │         "time_to_first_token",
     │   │         "tokens"
     │   │       ]
     │   │       └── step: 0 [llm]
@@ -135,6 +136,7 @@ span_tree:
     │   │       metric_keys: [
     │   │         "completion_tokens",
     │   │         "prompt_tokens",
+    │   │         "time_to_first_token",
     │   │         "tokens"
     │   │       ]
     │   │       └── step: 0 [llm]

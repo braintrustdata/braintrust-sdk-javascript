@@ -88,6 +88,7 @@
                   "metric_keys": [
                     "completion_tokens",
                     "prompt_tokens",
+                    "time_to_first_token",
                     "tokens"
                   ]
                 }
@@ -184,6 +185,7 @@
                   "metric_keys": [
                     "completion_tokens",
                     "prompt_tokens",
+                    "time_to_first_token",
                     "tokens"
                   ]
                 }
