@@ -186,9 +186,9 @@ function buildMetadata(exported: MastraExportedSpan): Record<string, unknown> {
       if (value !== undefined) out[key] = value;
     }
   }
-  if (exported.tags && exported.tags.length > 0) {
-    out.tags = exported.tags;
-  }
+  // Note: `exported.tags` is intentionally NOT placed in metadata. Braintrust
+  // surfaces tags from the top-level `tags` row field (see `logPayload`), and
+  // nesting them under `metadata.tags` would hide them from the tag UI/filters.
   if (exported.requestContext && isObject(exported.requestContext)) {
     out.request_context = exported.requestContext;
   }
@@ -349,6 +349,18 @@ export class BraintrustObservabilityExporter implements MastraObservabilityExpor
     const metrics = modelMetrics(exported.attributes);
     if (metrics) {
       event.metrics = metrics;
+    }
+
+    // Emit tags as the top-level `tags` row field (via ExperimentLogPartialArgs)
+    // so Braintrust surfaces them as first-class tags rather than metadata.
+    // Braintrust tags are a trace-level concept, so — matching
+    // `@mastra/braintrust` — we only attach them to the Mastra root span.
+    if (
+      exported.isRootSpan === true &&
+      exported.tags &&
+      exported.tags.length > 0
+    ) {
+      event.tags = exported.tags;
     }
 
     if (Object.keys(event).length > 0) {
