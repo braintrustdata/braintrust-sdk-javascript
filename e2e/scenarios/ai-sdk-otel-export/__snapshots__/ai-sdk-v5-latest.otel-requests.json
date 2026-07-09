@@ -1,0 +1,145 @@
+[
+  {
+    "headers": {
+      "content-type": "application/json",
+      "x-bt-parent": "<x-bt-parent>"
+    },
+    "jsonBody": "<omitted>",
+    "method": "POST",
+    "path": "/otel/v1/traces",
+    "query": null,
+    "rawBody": "<omitted>"
+  },
+  {
+    "headers": {
+      "content-type": "application/json",
+      "x-bt-parent": "<x-bt-parent>"
+    },
+    "jsonBody": "<omitted>",
+    "method": "POST",
+    "path": "/otel/v1/traces",
+    "query": null,
+    "rawBody": "<omitted>"
+  },
+  {
+    "headers": {
+      "content-type": "application/json",
+      "x-bt-parent": "<x-bt-parent>"
+    },
+    "jsonBody": "<omitted>",
+    "method": "POST",
+    "path": "/otel/v1/traces",
+    "query": null,
+    "rawBody": "<omitted>"
+  },
+  {
+    "headers": {
+      "content-type": "application/json",
+      "x-bt-parent": "<x-bt-parent>"
+    },
+    "jsonBody": "<omitted>",
+    "method": "POST",
+    "path": "/otel/v1/traces",
+    "query": null,
+    "rawBody": "<omitted>"
+  },
+  {
+    "headers": {
+      "content-type": "application/json",
+      "x-bt-parent": "<x-bt-parent>"
+    },
+    "jsonBody": "<omitted>",
+    "method": "POST",
+    "path": "/otel/v1/traces",
+    "query": null,
+    "rawBody": "<omitted>"
+  },
+  {
+    "headers": {
+      "content-type": "application/json",
+      "x-bt-parent": "<x-bt-parent>"
+    },
+    "jsonBody": "<omitted>",
+    "method": "POST",
+    "path": "/otel/v1/traces",
+    "query": null,
+    "rawBody": "<omitted>"
+  },
+  {
+    "headers": {
+      "content-type": "application/json",
+      "x-bt-parent": "<x-bt-parent>"
+    },
+    "jsonBody": "<omitted>",
+    "method": "POST",
+    "path": "/otel/v1/traces",
+    "query": null,
+    "rawBody": "<omitted>"
+  },
+  {
+    "headers": {
+      "content-type": "application/json",
+      "x-bt-parent": "<x-bt-parent>"
+    },
+    "jsonBody": "<omitted>",
+    "method": "POST",
+    "path": "/otel/v1/traces",
+    "query": null,
+    "rawBody": "<omitted>"
+  },
+  {
+    "headers": {
+      "content-type": "application/json",
+      "x-bt-parent": "<x-bt-parent>"
+    },
+    "jsonBody": "<omitted>",
+    "method": "POST",
+    "path": "/otel/v1/traces",
+    "query": null,
+    "rawBody": "<omitted>"
+  },
+  {
+    "headers": {
+      "content-type": "application/json",
+      "x-bt-parent": "<x-bt-parent>"
+    },
+    "jsonBody": "<omitted>",
+    "method": "POST",
+    "path": "/otel/v1/traces",
+    "query": null,
+    "rawBody": "<omitted>"
+  },
+  {
+    "headers": {
+      "content-type": "application/json",
+      "x-bt-parent": "<x-bt-parent>"
+    },
+    "jsonBody": "<omitted>",
+    "method": "POST",
+    "path": "/otel/v1/traces",
+    "query": null,
+    "rawBody": "<omitted>"
+  },
+  {
+    "headers": {
+      "content-type": "application/json",
+      "x-bt-parent": "<x-bt-parent>"
+    },
+    "jsonBody": "<omitted>",
+    "method": "POST",
+    "path": "/otel/v1/traces",
+    "query": null,
+    "rawBody": "<omitted>"
+  },
+  {
+    "headers": {
+      "content-type": "application/json",
+      "x-bt-parent": "<x-bt-parent>"
+    },
+    "jsonBody": "<omitted>",
+    "method": "POST",
+    "path": "/otel/v1/traces",
+    "query": null,
+    "rawBody": "<omitted>"
+  }
+]

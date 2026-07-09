@@ -2,13 +2,17 @@
   "name": "@braintrust/e2e-groq-instrumentation",
   "private": true,
   "braintrustScenario": {
-    "canary": {
+    "bump": {
       "dependencies": {
-        "groq-sdk": "latest"
+        "groq-sdk-v1-latest": {
+          "package": "groq-sdk",
+          "range": "1"
+        }
       }
     }
   },
   "dependencies": {
-    "groq-sdk": "1.1.2"
+    "groq-sdk-v1": "npm:groq-sdk@1.1.2",
+    "groq-sdk-v1-latest": "npm:groq-sdk@1.3.0"
   }
 }

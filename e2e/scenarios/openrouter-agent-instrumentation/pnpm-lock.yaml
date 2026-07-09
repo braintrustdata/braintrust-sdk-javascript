@@ -8,9 +8,12 @@ importers:
 
   .:
     dependencies:
-      '@openrouter/agent':
-        specifier: 0.1.2
-        version: 0.1.2
+      openrouter-agent-v0-latest:
+        specifier: npm:@openrouter/agent@0.7.2
+        version: '@openrouter/agent@0.7.2'
+      openrouter-agent-v0:
+        specifier: npm:@openrouter/agent@0.1.2
+        version: '@openrouter/agent@0.1.2'
       zod:
         specifier: 4.1.11
         version: 4.1.11
@@ -20,8 +23,14 @@ packages:
   '@openrouter/agent@0.1.2':
     resolution: {integrity: sha512-nlbatensa2OpQTVJHKAEnzkfcO/aBOIz+ao9YZ/gh6R3cxCXBHejp0sH7ZC3afXMNKtxUikF+gLfxHyrIky2Ng==}
 
+  '@openrouter/agent@0.7.2':
+    resolution: {integrity: sha512-G3Rp4iPKP7RQSJ+k7ea2+fDOJXUhsZNmiKoz8Ddlo7fY9KDdNiP4xKA0IA/9Y27FJjb2kagHvP9Dw2ycEwlzmA==}
+
   '@openrouter/sdk@0.11.2':
     resolution: {integrity: sha512-uu8zu7vd4hA2l4vUD1UiZuefxqaH2/ixFcUG8GIO9+qcEJkWX4AYAil7SpGmZOTgy8STLFTEk4M4MmyUW0YMLg==}
+
+  '@openrouter/sdk@0.13.24':
+    resolution: {integrity: sha512-E/gdhaUl9UKn1ngm+kw21ybnqB5iAAwbxnsDzE2iTZzQCbR7J0REZa65HJY8TxYwpaOs3rLpiHyi4w8LNKpvmQ==}
 
   zod@4.1.11:
     resolution: {integrity: sha512-WPsqwxITS2tzx1bzhIKsEs19ABD5vmCVa4xBo2tq/SrV4RNZtfws1EnCWQXM6yh8bD08a1idvkB5MZSBiZsjwg==}
@@ -33,7 +42,16 @@ snapshots:
       '@openrouter/sdk': 0.11.2
       zod: 4.1.11
 
+  '@openrouter/agent@0.7.2':
+    dependencies:
+      '@openrouter/sdk': 0.13.24
+      zod: 4.1.11
+
   '@openrouter/sdk@0.11.2':
+    dependencies:
+      zod: 4.1.11
+
+  '@openrouter/sdk@0.13.24':
     dependencies:
       zod: 4.1.11
 

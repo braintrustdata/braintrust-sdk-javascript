@@ -1,4 +1,3 @@
-import { tool } from "@openrouter/agent";
 import { wrapOpenRouterAgent } from "braintrust";
 import { z } from "zod";
 import {
@@ -25,15 +24,17 @@ function createWeatherTool(toolFactory) {
 
 async function runOpenRouterAgentInstrumentationScenario(
   OpenRouter,
-  { decorateClient } = {},
+  options = {},
 ) {
   const openRouterBaseUrl = process.env.OPENROUTER_BASE_URL;
   const baseClient = new OpenRouter({
     apiKey: process.env.OPENROUTER_API_KEY,
     ...(openRouterBaseUrl ? { serverURL: openRouterBaseUrl } : {}),
   });
-  const client = decorateClient ? decorateClient(baseClient) : baseClient;
-  const weatherTool = createWeatherTool(tool);
+  const client = options.decorateClient
+    ? options.decorateClient(baseClient)
+    : baseClient;
+  const weatherTool = createWeatherTool(options.tool);
 
   await runTracedScenario({
     callback: async () => {
@@ -45,10 +46,8 @@ async function runOpenRouterAgentInstrumentationScenario(
             input:
               "Use the lookup_weather tool for Vienna exactly once, then answer with only the forecast.",
             maxOutputTokens: 16,
-            maxToolCalls: 1,
             model: CHAT_MODEL,
             temperature: 0,
-            toolChoice: "required",
             tools: [weatherTool],
           });
 
@@ -64,12 +63,21 @@ async function runOpenRouterAgentInstrumentationScenario(
   });
 }
 
-export async function runWrappedOpenRouterAgentInstrumentation(OpenRouter) {
+export async function runWrappedOpenRouterAgentInstrumentation(
+  OpenRouter,
+  toolFactory,
+) {
   await runOpenRouterAgentInstrumentationScenario(OpenRouter, {
     decorateClient: wrapOpenRouterAgent,
+    tool: toolFactory,
   });
 }
 
-export async function runAutoOpenRouterAgentInstrumentation(OpenRouter) {
-  await runOpenRouterAgentInstrumentationScenario(OpenRouter);
+export async function runAutoOpenRouterAgentInstrumentation(
+  OpenRouter,
+  toolFactory,
+) {
+  await runOpenRouterAgentInstrumentationScenario(OpenRouter, {
+    tool: toolFactory,
+  });
 }

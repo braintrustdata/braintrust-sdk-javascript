@@ -15,15 +15,15 @@ const openRouterScenarios = await Promise.all(
   [
     {
       autoEntry: "scenario.openrouter-v0911.mjs",
-      dependencyName: "openrouter-sdk-v0911",
-      snapshotName: "openrouter-v0911",
+      dependencyName: "openrouter-sdk-v0",
+      snapshotName: "openrouter-v0",
       supportsRerank: false,
       wrapperEntry: "scenario.openrouter-v0911.ts",
     },
     {
       autoEntry: "scenario.mjs",
-      dependencyName: "@openrouter/sdk",
-      snapshotName: "openrouter-v0123",
+      dependencyName: "openrouter-sdk-v0-latest",
+      snapshotName: "openrouter-v0-latest",
       supportsRerank: true,
       wrapperEntry: "scenario.ts",
     },
@@ -44,6 +44,7 @@ describe.concurrent("variants", () => {
         runScenario: async ({ runScenarioDir }) => {
           await runScenarioDir({
             entry: scenario.wrapperEntry,
+            env: { OPENROUTER_PACKAGE_NAME: scenario.dependencyName },
             runContext: {
               variantKey: scenario.snapshotName,
               originalScenarioDir,
@@ -63,6 +64,7 @@ describe.concurrent("variants", () => {
         runScenario: async ({ runNodeScenarioDir }) => {
           await runNodeScenarioDir({
             entry: scenario.autoEntry,
+            env: { OPENROUTER_PACKAGE_NAME: scenario.dependencyName },
             nodeArgs: ["--import", "braintrust/hook.mjs"],
             runContext: {
               variantKey: scenario.snapshotName,

@@ -20,7 +20,7 @@
                       "type": "llm",
                       "children": [],
                       "metadata": {
-                        "github_copilot.api_call_id": "chatcmpl-Dfl7nGaoedcSfrmf6rVMJ9F1bE71S",
+                        "github_copilot.api_call_id": "chatcmpl-Dz0m4bFQA3x9b0lECIv2URbntiufR",
                         "github_copilot.cost": 0,
                         "github_copilot.duration_ms": 0,
                         "github_copilot.initiator": "user",
@@ -31,9 +31,9 @@
                         "completion_reasoning_tokens": 0,
                         "completion_tokens": 2,
                         "prompt_cached_tokens": 6144,
-                        "prompt_tokens": 18585,
+                        "prompt_tokens": 19488,
                         "reasoning_tokens": 0,
-                        "tokens": 18587
+                        "tokens": 19490
                       }
                     }
                   ],
@@ -48,7 +48,7 @@
                 "github_copilot.end_reason": "complete",
                 "github_copilot.model": "gpt-4.1",
                 "github_copilot.provider_type": "openai",
-                "github_copilot.total_input_tokens": 12441,
+                "github_copilot.total_input_tokens": 13344,
                 "github_copilot.total_output_tokens": 2
               }
             }
@@ -74,7 +74,7 @@
                       "type": "llm",
                       "children": [],
                       "metadata": {
-                        "github_copilot.api_call_id": "chatcmpl-Dfl7qQSE3SNFqkisyWCQwNUeQlzs4",
+                        "github_copilot.api_call_id": "chatcmpl-Dz0m8BrtPeNu6rFlhy8HV9YiamecI",
                         "github_copilot.cost": 0,
                         "github_copilot.duration_ms": 0,
                         "github_copilot.initiator": "user",
@@ -84,10 +84,10 @@
                       "metrics": {
                         "completion_reasoning_tokens": 0,
                         "completion_tokens": 14,
-                        "prompt_cached_tokens": 6144,
-                        "prompt_tokens": 18606,
+                        "prompt_cached_tokens": 6528,
+                        "prompt_tokens": 19910,
                         "reasoning_tokens": 0,
-                        "tokens": 18620
+                        "tokens": 19924
                       }
                     },
                     {
@@ -102,7 +102,7 @@
                         "detailedContent": "The weather in Tokyo is 72°F and sunny."
                       },
                       "metadata": {
-                        "gen_ai.tool.call.id": "call_EtVZ0wzZObwD18ZoOOzxhR6U",
+                        "gen_ai.tool.call.id": "call_8rwbKI8PnoBqNh9f9k0EoLaV",
                         "gen_ai.tool.name": "get_weather"
                       }
                     }
@@ -119,7 +119,7 @@
                       "type": "llm",
                       "children": [],
                       "metadata": {
-                        "github_copilot.api_call_id": "chatcmpl-Dfl7rX2REjanlVkzA24AuyMy1zaQZ",
+                        "github_copilot.api_call_id": "chatcmpl-Dz0m9qFHEsV0C0HGsShZRoufrdlU1",
                         "github_copilot.cost": 0,
                         "github_copilot.duration_ms": 0,
                         "github_copilot.initiator": "agent",
@@ -129,10 +129,10 @@
                       "metrics": {
                         "completion_reasoning_tokens": 0,
                         "completion_tokens": 13,
-                        "prompt_cached_tokens": 12416,
-                        "prompt_tokens": 24911,
+                        "prompt_cached_tokens": 13312,
+                        "prompt_tokens": 26727,
                         "reasoning_tokens": 0,
-                        "tokens": 24924
+                        "tokens": 26740
                       }
                     }
                   ],
@@ -146,7 +146,7 @@
                 "github_copilot.end_reason": "complete",
                 "github_copilot.model": "gpt-4.1",
                 "github_copilot.provider_type": "openai",
-                "github_copilot.total_input_tokens": 24957,
+                "github_copilot.total_input_tokens": 26797,
                 "github_copilot.total_output_tokens": 27
               }
             }

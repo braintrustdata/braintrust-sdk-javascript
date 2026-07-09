@@ -4,14 +4,17 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "@openai/agents": "0.0.14",
-    "zod": "3.25.67"
+    "zod": "4.4.3",
+    "openai-agents-v0": "npm:@openai/agents@0.0.14",
+    "openai-agents-v0-latest": "npm:@openai/agents@0.12.0"
   },
   "braintrustScenario": {
-    "canary": {
+    "bump": {
       "dependencies": {
-        "@openai/agents": "latest",
-        "zod": "zod@^4.0.0"
+        "openai-agents-v0-latest": {
+          "package": "@openai/agents",
+          "range": "0"
+        }
       }
     }
   },

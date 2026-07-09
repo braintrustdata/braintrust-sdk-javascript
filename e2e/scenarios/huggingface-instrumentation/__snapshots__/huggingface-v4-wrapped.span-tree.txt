@@ -1,0 +1,36 @@
+span_tree:
+└── huggingface-instrumentation-root [task]
+    metadata: {
+      "scenario": "huggingface-instrumentation",
+      "testRunId": "<run:1>"
+    }
+    ├── huggingface-chat-operation
+    │   metadata: {
+    │     "operation": "chat",
+    │     "testRunId": "<run:1>"
+    │   }
+    ├── huggingface-chat-stream-operation
+    │   metadata: {
+    │     "operation": "chat-stream",
+    │     "testRunId": "<run:1>"
+    │   }
+    ├── huggingface-chat-stream-tool-call-operation
+    │   metadata: {
+    │     "operation": "chat-stream-tool-call",
+    │     "testRunId": "<run:1>"
+    │   }
+    ├── huggingface-text-generation-operation
+    │   metadata: {
+    │     "operation": "text-generation",
+    │     "testRunId": "<run:1>"
+    │   }
+    ├── huggingface-text-generation-stream-operation
+    │   metadata: {
+    │     "operation": "text-generation-stream",
+    │     "testRunId": "<run:1>"
+    │   }
+    └── huggingface-feature-extraction-operation
+        metadata: {
+          "operation": "feature-extraction",
+          "testRunId": "<run:1>"
+        }

@@ -1,10 +1,12 @@
-import {
+const bedrockRuntimePackageName =
+  process.env.BEDROCK_RUNTIME_PACKAGE_NAME ?? "bedrock-runtime-sdk-v3-latest";
+const {
   BedrockRuntimeClient,
   ConverseCommand,
   ConverseStreamCommand,
   InvokeModelCommand,
   InvokeModelWithResponseStreamCommand,
-} from "@aws-sdk/client-bedrock-runtime";
+} = await import(bedrockRuntimePackageName);
 import { NodeHttpHandler } from "@smithy/node-http-handler";
 import { runMain } from "../../helpers/provider-runtime.mjs";
 import { runAutoBedrockRuntimeInstrumentation } from "./scenario.impl.mjs";

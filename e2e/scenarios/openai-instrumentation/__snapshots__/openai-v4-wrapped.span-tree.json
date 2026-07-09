@@ -13,46 +13,34 @@
               "children": [],
               "input": [
                 {
-                  "content": "Reply with exactly OK.",
+                  "content_kind": "string",
                   "role": "user"
                 }
               ],
               "output": [
                 {
-                  "finish_reason": "stop",
-                  "index": 0,
-                  "logprobs": null,
-                  "message": {
-                    "annotations": [],
-                    "content": "OK.",
-                    "refusal": null,
-                    "role": "assistant"
-                  }
+                  "json_keys": [],
+                  "role": "assistant"
                 }
               ],
               "metadata": {
-                "max_tokens": 12,
                 "model": "gpt-4o-mini-2024-07-18",
-                "provider": "openai",
-                "temperature": 0
+                "provider": "openai"
               },
               "metrics": {
-                "completion_accepted_prediction_tokens": 0,
-                "completion_audio_tokens": 0,
-                "completion_reasoning_tokens": 0,
-                "completion_rejected_prediction_tokens": 0,
-                "completion_tokens": 2,
-                "prompt_audio_tokens": 0,
-                "prompt_cached_tokens": 0,
-                "prompt_tokens": 12,
-                "time_to_first_token": 0,
-                "tokens": 14
+                "has_time_to_first_token": true
               }
             }
           ],
+          "input": {
+            "kind": "undefined"
+          },
+          "output": null,
           "metadata": {
-            "operation": "chat",
-            "testRunId": "<run:1>"
+            "operation": "chat"
+          },
+          "metrics": {
+            "has_time_to_first_token": false
           }
         },
         {
@@ -64,46 +52,34 @@
               "children": [],
               "input": [
                 {
-                  "content": "Reply with exactly FOUR.",
+                  "content_kind": "string",
                   "role": "user"
                 }
               ],
               "output": [
                 {
-                  "finish_reason": "stop",
-                  "index": 0,
-                  "logprobs": null,
-                  "message": {
-                    "annotations": [],
-                    "content": "Four.",
-                    "refusal": null,
-                    "role": "assistant"
-                  }
+                  "json_keys": [],
+                  "role": "assistant"
                 }
               ],
               "metadata": {
-                "max_tokens": 12,
                 "model": "gpt-4o-mini-2024-07-18",
-                "provider": "openai",
-                "temperature": 0
+                "provider": "openai"
               },
               "metrics": {
-                "completion_accepted_prediction_tokens": 0,
-                "completion_audio_tokens": 0,
-                "completion_reasoning_tokens": 0,
-                "completion_rejected_prediction_tokens": 0,
-                "completion_tokens": 2,
-                "prompt_audio_tokens": 0,
-                "prompt_cached_tokens": 0,
-                "prompt_tokens": 12,
-                "time_to_first_token": 0,
-                "tokens": 14
+                "has_time_to_first_token": true
               }
             }
           ],
+          "input": {
+            "kind": "undefined"
+          },
+          "output": null,
           "metadata": {
-            "operation": "chat-with-response",
-            "testRunId": "<run:1>"
+            "operation": "chat-with-response"
+          },
+          "metrics": {
+            "has_time_to_first_token": false
           }
         },
         {
@@ -115,83 +91,34 @@
               "children": [],
               "input": [
                 {
-                  "content": "Use the get_weather tool for Paris, France. Do not answer from memory.",
+                  "content_kind": "string",
                   "role": "user"
                 }
               ],
               "output": [
                 {
-                  "finish_reason": "stop",
-                  "index": 0,
-                  "logprobs": null,
-                  "message": {
-                    "annotations": [],
-                    "content": null,
-                    "refusal": null,
-                    "role": "assistant",
-                    "tool_calls": [
-                      {
-                        "function": {
-                          "arguments": "{\"location\":\"Paris, France\"}",
-                          "name": "get_weather"
-                        },
-                        "id": "<span:1>",
-                        "type": "function"
-                      }
-                    ]
-                  }
+                  "json_keys": [],
+                  "role": "assistant"
                 }
               ],
               "metadata": {
-                "max_tokens": 64,
                 "model": "gpt-4o-mini-2024-07-18",
-                "provider": "openai",
-                "temperature": 0,
-                "tool_choice": {
-                  "function": {
-                    "name": "get_weather"
-                  },
-                  "type": "function"
-                },
-                "tools": [
-                  {
-                    "function": {
-                      "description": "Get the weather for a location",
-                      "name": "get_weather",
-                      "parameters": {
-                        "properties": {
-                          "location": {
-                            "description": "The location to get weather for",
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "location"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "type": "function"
-                  }
-                ]
+                "provider": "openai"
               },
               "metrics": {
-                "completion_accepted_prediction_tokens": 0,
-                "completion_audio_tokens": 0,
-                "completion_reasoning_tokens": 0,
-                "completion_rejected_prediction_tokens": 0,
-                "completion_tokens": 7,
-                "prompt_audio_tokens": 0,
-                "prompt_cached_tokens": 0,
-                "prompt_tokens": 77,
-                "time_to_first_token": 0,
-                "tokens": 84
+                "has_time_to_first_token": true
               }
             }
           ],
+          "input": {
+            "kind": "undefined"
+          },
+          "output": null,
           "metadata": {
-            "operation": "chat-tool",
-            "testRunId": "<run:1>"
+            "operation": "chat-tool"
+          },
+          "metrics": {
+            "has_time_to_first_token": false
           }
         },
         {
@@ -203,48 +130,34 @@
               "children": [],
               "input": [
                 {
-                  "content": "Reply with exactly STREAM.",
+                  "content_kind": "string",
                   "role": "user"
                 }
               ],
               "output": [
                 {
-                  "finish_reason": "stop",
-                  "index": 0,
-                  "logprobs": null,
-                  "message": {
-                    "content": "STREAM",
-                    "role": "assistant"
-                  }
+                  "json_keys": [],
+                  "role": "assistant"
                 }
               ],
               "metadata": {
-                "max_tokens": 12,
                 "model": "gpt-4o-mini-2024-07-18",
-                "provider": "openai",
-                "stream": true,
-                "stream_options": {
-                  "include_usage": true
-                },
-                "temperature": 0
+                "provider": "openai"
               },
               "metrics": {
-                "completion_accepted_prediction_tokens": 0,
-                "completion_audio_tokens": 0,
-                "completion_reasoning_tokens": 0,
-                "completion_rejected_prediction_tokens": 0,
-                "completion_tokens": 1,
-                "prompt_audio_tokens": 0,
-                "prompt_cached_tokens": 0,
-                "prompt_tokens": 12,
-                "time_to_first_token": 0,
-                "tokens": 13
+                "has_time_to_first_token": true
               }
             }
           ],
+          "input": {
+            "kind": "undefined"
+          },
+          "output": null,
           "metadata": {
-            "operation": "stream",
-            "testRunId": "<run:1>"
+            "operation": "stream"
+          },
+          "metrics": {
+            "has_time_to_first_token": false
           }
         },
         {
@@ -256,48 +169,34 @@
               "children": [],
               "input": [
                 {
-                  "content": "Reply with exactly STREAM-WITH-RESPONSE.",
+                  "content_kind": "string",
                   "role": "user"
                 }
               ],
               "output": [
                 {
-                  "finish_reason": "stop",
-                  "index": 0,
-                  "logprobs": null,
-                  "message": {
-                    "content": "STREAM-WITH-RESPONSE",
-                    "role": "assistant"
-                  }
+                  "json_keys": [],
+                  "role": "assistant"
                 }
               ],
               "metadata": {
-                "max_tokens": 24,
                 "model": "gpt-4o-mini-2024-07-18",
-                "provider": "openai",
-                "stream": true,
-                "stream_options": {
-                  "include_usage": true
-                },
-                "temperature": 0
+                "provider": "openai"
               },
               "metrics": {
-                "completion_accepted_prediction_tokens": 0,
-                "completion_audio_tokens": 0,
-                "completion_reasoning_tokens": 0,
-                "completion_rejected_prediction_tokens": 0,
-                "completion_tokens": 6,
-                "prompt_audio_tokens": 0,
-                "prompt_cached_tokens": 0,
-                "prompt_tokens": 17,
-                "time_to_first_token": 0,
-                "tokens": 23
+                "has_time_to_first_token": true
               }
             }
           ],
+          "input": {
+            "kind": "undefined"
+          },
+          "output": null,
           "metadata": {
-            "operation": "stream-with-response",
-            "testRunId": "<run:1>"
+            "operation": "stream-with-response"
+          },
+          "metrics": {
+            "has_time_to_first_token": false
           }
         },
         {
@@ -309,84 +208,34 @@
               "children": [],
               "input": [
                 {
-                  "content": "Use the get_weather tool for Paris, France. Do not answer from memory.",
+                  "content_kind": "string",
                   "role": "user"
                 }
               ],
               "output": [
                 {
-                  "finish_reason": "stop",
-                  "index": 0,
-                  "logprobs": null,
-                  "message": {
-                    "role": "assistant",
-                    "tool_calls": [
-                      {
-                        "function": {
-                          "arguments": "{\"location\":\"Paris, France\"}",
-                          "name": "get_weather"
-                        },
-                        "id": "<span:1>",
-                        "type": "function"
-                      }
-                    ]
-                  }
+                  "json_keys": [],
+                  "role": "assistant"
                 }
               ],
               "metadata": {
-                "max_tokens": 64,
                 "model": "gpt-4o-mini-2024-07-18",
-                "provider": "openai",
-                "stream": true,
-                "stream_options": {
-                  "include_usage": true
-                },
-                "temperature": 0,
-                "tool_choice": {
-                  "function": {
-                    "name": "get_weather"
-                  },
-                  "type": "function"
-                },
-                "tools": [
-                  {
-                    "function": {
-                      "description": "Get the weather for a location",
-                      "name": "get_weather",
-                      "parameters": {
-                        "properties": {
-                          "location": {
-                            "description": "The location to get weather for",
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "location"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "type": "function"
-                  }
-                ]
+                "provider": "openai"
               },
               "metrics": {
-                "completion_accepted_prediction_tokens": 0,
-                "completion_audio_tokens": 0,
-                "completion_reasoning_tokens": 0,
-                "completion_rejected_prediction_tokens": 0,
-                "completion_tokens": 7,
-                "prompt_audio_tokens": 0,
-                "prompt_cached_tokens": 0,
-                "prompt_tokens": 77,
-                "time_to_first_token": 0,
-                "tokens": 84
+                "has_time_to_first_token": true
               }
             }
           ],
+          "input": {
+            "kind": "undefined"
+          },
+          "output": null,
           "metadata": {
-            "operation": "stream-tool",
-            "testRunId": "<run:1>"
+            "operation": "stream-tool"
+          },
+          "metrics": {
+            "has_time_to_first_token": false
           }
         },
         {
@@ -398,77 +247,34 @@
               "children": [],
               "input": [
                 {
-                  "content": "Reply with a refusal stream fixture.",
+                  "content_kind": "string",
                   "role": "user"
                 }
               ],
               "output": [
                 {
-                  "finish_reason": "stop",
-                  "index": 0,
-                  "logprobs": {
-                    "content": [
-                      {
-                        "bytes": [
-                          78,
-                          79
-                        ],
-                        "logprob": -0.1,
-                        "token": "NO",
-                        "top_logprobs": [
-                          {
-                            "bytes": [
-                              78,
-                              79
-                            ],
-                            "logprob": -0.1,
-                            "token": "NO"
-                          }
-                        ]
-                      },
-                      {
-                        "bytes": [
-                          80,
-                          69
-                        ],
-                        "logprob": -0.2,
-                        "token": "PE",
-                        "top_logprobs": [
-                          {
-                            "bytes": [
-                              80,
-                              69
-                            ],
-                            "logprob": -0.2,
-                            "token": "PE"
-                          }
-                        ]
-                      }
-                    ]
-                  },
-                  "message": {
-                    "refusal": "NOPE",
-                    "role": "assistant"
-                  }
+                  "json_keys": [],
+                  "role": "assistant"
                 }
               ],
               "metadata": {
-                "logprobs": true,
-                "max_tokens": 12,
                 "model": "gpt-4o-mini-2024-07-18",
-                "provider": "openai",
-                "stream": true,
-                "temperature": 0,
-                "top_logprobs": 2
+                "provider": "openai"
               },
               "metrics": {
-                "time_to_first_token": 0
+                "has_time_to_first_token": true
               }
             }
           ],
+          "input": {
+            "kind": "undefined"
+          },
+          "output": null,
           "metadata": {
-            "operation": "stream-fixture",
-            "testRunId": "<run:1>"
+            "operation": "stream-fixture"
+          },
+          "metrics": {
+            "has_time_to_first_token": false
           }
         },
         {
@@ -480,64 +286,36 @@
               "children": [],
               "input": [
                 {
-                  "content": "What is 2 + 2?",
+                  "content_kind": "string",
                   "role": "user"
                 }
               ],
               "output": [
                 {
-                  "finish_reason": "stop",
-                  "index": 0,
-                  "logprobs": null,
-                  "message": {
-                    "annotations": [],
-                    "content": "{\"answer\":4}",
-                    "parsed": {
-                      "answer": 4
-                    },
-                    "refusal": null,
-                    "role": "assistant"
-                  }
+                  "json_keys": [
+                    "answer"
+                  ],
+                  "role": "assistant"
                 }
               ],
               "metadata": {
                 "model": "gpt-4o-mini-2024-07-18",
-                "provider": "openai",
-                "response_format": {
-                  "json_schema": {
-                    "name": "math_response",
-                    "schema": {
-                      "properties": {
-                        "answer": {
-                          "type": "number"
-                        }
-                      },
-                      "required": [
-                        "answer"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "type": "json_schema"
-                }
+                "provider": "openai"
               },
               "metrics": {
-                "completion_accepted_prediction_tokens": 0,
-                "completion_audio_tokens": 0,
-                "completion_reasoning_tokens": 0,
-                "completion_rejected_prediction_tokens": 0,
-                "completion_tokens": 5,
-                "prompt_audio_tokens": 0,
-                "prompt_cached_tokens": 0,
-                "prompt_tokens": 45,
-                "time_to_first_token": 0,
-                "tokens": 50
+                "has_time_to_first_token": true
               }
             }
           ],
+          "input": {
+            "kind": "undefined"
+          },
+          "output": null,
           "metadata": {
-            "operation": "parse",
-            "testRunId": "<run:1>"
+            "operation": "parse"
+          },
+          "metrics": {
+            "has_time_to_first_token": false
           }
         },
         {
@@ -549,37 +327,34 @@
               "children": [],
               "input": [
                 {
-                  "content": "Reply with exactly SYNC STREAM.",
+                  "content_kind": "string",
                   "role": "user"
                 }
               ],
               "output": [
                 {
-                  "finish_reason": "stop",
-                  "index": 0,
-                  "logprobs": null,
-                  "message": {
-                    "content": "SYNC STREAM",
-                    "parsed": null,
-                    "refusal": null,
-                    "role": "assistant"
-                  }
+                  "json_keys": [],
+                  "role": "assistant"
                 }
               ],
               "metadata": {
-                "max_tokens": 24,
                 "model": "gpt-4o-mini-2024-07-18",
-                "provider": "openai",
-                "temperature": 0
+                "provider": "openai"
               },
               "metrics": {
-                "time_to_first_token": 0
+                "has_time_to_first_token": true
               }
             }
           ],
+          "input": {
+            "kind": "undefined"
+          },
+          "output": null,
           "metadata": {
-            "operation": "sync-stream",
-            "testRunId": "<run:1>"
+            "operation": "sync-stream"
+          },
+          "metrics": {
+            "has_time_to_first_token": false
           }
         },
         {
@@ -589,7 +364,9 @@
               "name": "Embedding",
               "type": "llm",
               "children": [],
-              "input": "Paris",
+              "input": {
+                "kind": "text"
+              },
               "output": {
                 "embedding_length": 1536
               },
@@ -598,14 +375,19 @@
                 "provider": "openai"
               },
               "metrics": {
-                "prompt_tokens": 1,
-                "tokens": 1
+                "has_time_to_first_token": false
               }
             }
           ],
+          "input": {
+            "kind": "undefined"
+          },
+          "output": null,
           "metadata": {
-            "operation": "embeddings",
-            "testRunId": "<run:1>"
+            "operation": "embeddings"
+          },
+          "metrics": {
+            "has_time_to_first_token": false
           }
         },
         {
@@ -615,92 +397,31 @@
               "name": "Moderation",
               "type": "llm",
               "children": [],
-              "input": "Hello from Braintrust.",
-              "output": [
-                {
-                  "categories": {
-                    "harassment": false,
-                    "harassment/threatening": false,
-                    "hate": false,
-                    "hate/threatening": false,
-                    "illicit": false,
-                    "illicit/violent": false,
-                    "self-harm": false,
-                    "self-harm/instructions": false,
-                    "self-harm/intent": false,
-                    "sexual": false,
-                    "sexual/minors": false,
-                    "violence": false,
-                    "violence/graphic": false
-                  },
-                  "category_applied_input_types": {
-                    "harassment": [
-                      "text"
-                    ],
-                    "harassment/threatening": [
-                      "text"
-                    ],
-                    "hate": [
-                      "text"
-                    ],
-                    "hate/threatening": [
-                      "text"
-                    ],
-                    "illicit": [
-                      "text"
-                    ],
-                    "illicit/violent": [
-                      "text"
-                    ],
-                    "self-harm": [
-                      "text"
-                    ],
-                    "self-harm/instructions": [
-                      "text"
-                    ],
-                    "self-harm/intent": [
-                      "text"
-                    ],
-                    "sexual": [
-                      "text"
-                    ],
-                    "sexual/minors": [
-                      "text"
-                    ],
-                    "violence": [
-                      "text"
-                    ],
-                    "violence/graphic": [
-                      "text"
-                    ]
-                  },
-                  "category_scores": {
-                    "harassment": 0.000010889691002655445,
-                    "harassment/threatening": 0.0000011843139025979655,
-                    "hate": 0.0000038831109868779005,
-                    "hate/threatening": 1.1726420733772349e-7,
-                    "illicit": 0.000005562206273647035,
-                    "illicit/violent": 0.0000036478537675800286,
-                    "self-harm": 0.00000297731143841062,
-                    "self-harm/instructions": 5.77192003016332e-7,
-                    "self-harm/intent": 0.0000020785170435063726,
-                    "sexual": 0.00000640200641038395,
-                    "sexual/minors": 5.093705003229987e-7,
-                    "violence": 0.000013342001090985438,
-                    "violence/graphic": 0.0000018342893327886845
-                  },
-                  "flagged": false
-                }
-              ],
+              "input": {
+                "kind": "text"
+              },
+              "output": {
+                "flagged_count": 0,
+                "result_count": 1
+              },
               "metadata": {
                 "model": "omni-moderation-2024-09-26",
                 "provider": "openai"
+              },
+              "metrics": {
+                "has_time_to_first_token": false
               }
             }
           ],
+          "input": {
+            "kind": "undefined"
+          },
+          "output": null,
           "metadata": {
-            "operation": "moderations",
-            "testRunId": "<run:1>"
+            "operation": "moderations"
+          },
+          "metrics": {
+            "has_time_to_first_token": false
           }
         },
         {
@@ -710,84 +431,38 @@
               "name": "openai.responses.create",
               "type": "llm",
               "children": [],
-              "input": "Reply with exactly PARIS.",
+              "input": {
+                "kind": "text"
+              },
               "output": [
                 {
-                  "content": [
-                    {
-                      "annotations": [],
-                      "logprobs": [],
-                      "text": "PARIS.",
-                      "type": "output_text"
-                    }
+                  "content_types": [
+                    "output_text"
                   ],
-                  "id": "<span:1>",
+                  "json_keys": [],
                   "role": "assistant",
                   "status": "completed",
                   "type": "message"
                 }
               ],
               "metadata": {
-                "background": false,
-                "billing": {
-                  "payer": "developer"
-                },
-                "completed_at": 0,
-                "created_at": 0,
-                "error": null,
-                "frequency_penalty": 0,
-                "id": "<span:1>",
-                "incomplete_details": null,
-                "instructions": null,
-                "max_output_tokens": 24,
-                "max_tool_calls": null,
-                "metadata": {},
                 "model": "gpt-4o-mini-2024-07-18",
-                "moderation": null,
-                "object": "response",
-                "output_text": "PARIS.",
-                "parallel_tool_calls": true,
-                "presence_penalty": 0,
-                "previous_response_id": null,
-                "prompt_cache_key": "[REDACTED]",
-                "prompt_cache_retention": "in_memory",
-                "provider": "openai",
-                "reasoning": {
-                  "context": null,
-                  "effort": null,
-                  "summary": null
-                },
-                "safety_identifier": null,
-                "service_tier": "default",
-                "status": "completed",
-                "store": true,
-                "temperature": 1,
-                "text": {
-                  "format": {
-                    "type": "text"
-                  },
-                  "verbosity": "medium"
-                },
-                "tool_choice": "auto",
-                "tools": [],
-                "top_logprobs": 0,
-                "top_p": 1,
-                "truncation": "disabled",
-                "user": null
+                "provider": "openai"
               },
               "metrics": {
-                "completion_reasoning_tokens": 0,
-                "completion_tokens": 4,
-                "prompt_cached_tokens": 0,
-                "prompt_tokens": 13,
-                "time_to_first_token": 0,
-                "tokens": 17
+                "has_time_to_first_token": true
               }
             }
           ],
+          "input": {
+            "kind": "undefined"
+          },
+          "output": null,
           "metadata": {
-            "operation": "responses",
-            "testRunId": "<run:1>"
+            "operation": "responses"
+          },
+          "metrics": {
+            "has_time_to_first_token": false
           }
         },
         {
@@ -797,84 +472,38 @@
               "name": "openai.responses.create",
               "type": "llm",
               "children": [],
-              "input": "What is 2 + 2? Reply with just the number.",
+              "input": {
+                "kind": "text"
+              },
               "output": [
                 {
-                  "content": [
-                    {
-                      "annotations": [],
-                      "logprobs": [],
-                      "text": "4",
-                      "type": "output_text"
-                    }
+                  "content_types": [
+                    "output_text"
                   ],
-                  "id": "<span:1>",
+                  "json_keys": [],
                   "role": "assistant",
                   "status": "completed",
                   "type": "message"
                 }
               ],
               "metadata": {
-                "background": false,
-                "billing": {
-                  "payer": "developer"
-                },
-                "completed_at": 0,
-                "created_at": 0,
-                "error": null,
-                "frequency_penalty": 0,
-                "id": "<span:1>",
-                "incomplete_details": null,
-                "instructions": null,
-                "max_output_tokens": 24,
-                "max_tool_calls": null,
-                "metadata": {},
                 "model": "gpt-4o-mini-2024-07-18",
-                "moderation": null,
-                "object": "response",
-                "output_text": "4",
-                "parallel_tool_calls": true,
-                "presence_penalty": 0,
-                "previous_response_id": null,
-                "prompt_cache_key": "[REDACTED]",
-                "prompt_cache_retention": "in_memory",
-                "provider": "openai",
-                "reasoning": {
-                  "context": null,
-                  "effort": null,
-                  "summary": null
-                },
-                "safety_identifier": null,
-                "service_tier": "default",
-                "status": "completed",
-                "store": true,
-                "temperature": 1,
-                "text": {
-                  "format": {
-                    "type": "text"
-                  },
-                  "verbosity": "medium"
-                },
-                "tool_choice": "auto",
-                "tools": [],
-                "top_logprobs": 0,
-                "top_p": 1,
-                "truncation": "disabled",
-                "user": null
+                "provider": "openai"
               },
               "metrics": {
-                "completion_reasoning_tokens": 0,
-                "completion_tokens": 2,
-                "prompt_cached_tokens": 0,
-                "prompt_tokens": 21,
-                "time_to_first_token": 0,
-                "tokens": 23
+                "has_time_to_first_token": true
               }
             }
           ],
+          "input": {
+            "kind": "undefined"
+          },
+          "output": null,
           "metadata": {
-            "operation": "responses-with-response",
-            "testRunId": "<run:1>"
+            "operation": "responses-with-response"
+          },
+          "metrics": {
+            "has_time_to_first_token": false
           }
         },
         {
@@ -884,81 +513,38 @@
               "name": "openai.responses.create",
               "type": "llm",
               "children": [],
-              "input": "Reply with exactly RESPONSE STREAM.",
+              "input": {
+                "kind": "text"
+              },
               "output": [
                 {
-                  "content": [
-                    {
-                      "annotations": [],
-                      "logprobs": [],
-                      "text": "RESPONSE STREAM",
-                      "type": "output_text"
-                    }
+                  "content_types": [
+                    "output_text"
                   ],
-                  "id": "<span:1>",
+                  "json_keys": [],
                   "role": "assistant",
                   "status": "completed",
                   "type": "message"
                 }
               ],
               "metadata": {
-                "background": false,
-                "completed_at": 0,
-                "created_at": 0,
-                "error": null,
-                "frequency_penalty": 0,
-                "id": "<span:1>",
-                "incomplete_details": null,
-                "instructions": null,
-                "max_output_tokens": 24,
-                "max_tool_calls": null,
-                "metadata": {},
                 "model": "gpt-4o-mini-2024-07-18",
-                "moderation": null,
-                "object": "response",
-                "parallel_tool_calls": true,
-                "presence_penalty": 0,
-                "previous_response_id": null,
-                "prompt_cache_key": null,
-                "prompt_cache_retention": "in_memory",
-                "provider": "openai",
-                "reasoning": {
-                  "context": null,
-                  "effort": null,
-                  "summary": null
-                },
-                "safety_identifier": null,
-                "service_tier": "default",
-                "status": "completed",
-                "store": true,
-                "stream": true,
-                "temperature": 1,
-                "text": {
-                  "format": {
-                    "type": "text"
-                  },
-                  "verbosity": "medium"
-                },
-                "tool_choice": "auto",
-                "tools": [],
-                "top_logprobs": 0,
-                "top_p": 1,
-                "truncation": "disabled",
-                "user": null
+                "provider": "openai"
               },
               "metrics": {
-                "completion_reasoning_tokens": 0,
-                "completion_tokens": 4,
-                "prompt_cached_tokens": 0,
-                "prompt_tokens": 13,
-                "time_to_first_token": 0,
-                "tokens": 17
+                "has_time_to_first_token": true
               }
             }
           ],
+          "input": {
+            "kind": "undefined"
+          },
+          "output": null,
           "metadata": {
-            "operation": "responses-create-stream",
-            "testRunId": "<run:1>"
+            "operation": "responses-create-stream"
+          },
+          "metrics": {
+            "has_time_to_first_token": false
           }
         },
         {
@@ -968,80 +554,38 @@
               "name": "openai.responses.create",
               "type": "llm",
               "children": [],
-              "input": "What is 6 x 6? Reply with just the number.",
+              "input": {
+                "kind": "text"
+              },
               "output": [
                 {
-                  "content": [
-                    {
-                      "annotations": [],
-                      "logprobs": [],
-                      "text": "36",
-                      "type": "output_text"
-                    }
+                  "content_types": [
+                    "output_text"
                   ],
-                  "id": "<span:1>",
+                  "json_keys": [],
                   "role": "assistant",
                   "status": "completed",
                   "type": "message"
                 }
               ],
               "metadata": {
-                "background": false,
-                "completed_at": 0,
-                "created_at": 0,
-                "error": null,
-                "frequency_penalty": 0,
-                "id": "<span:1>",
-                "incomplete_details": null,
-                "instructions": null,
-                "max_output_tokens": 24,
-                "max_tool_calls": null,
-                "metadata": {},
                 "model": "gpt-4o-mini-2024-07-18",
-                "moderation": null,
-                "object": "response",
-                "parallel_tool_calls": true,
-                "presence_penalty": 0,
-                "previous_response_id": null,
-                "prompt_cache_key": null,
-                "prompt_cache_retention": "in_memory",
-                "provider": "openai",
-                "reasoning": {
-                  "context": null,
-                  "effort": null,
-                  "summary": null
-                },
-                "safety_identifier": null,
-                "service_tier": "default",
-                "status": "completed",
-                "store": true,
-                "temperature": 1,
-                "text": {
-                  "format": {
-                    "type": "text"
-                  },
-                  "verbosity": "medium"
-                },
-                "tool_choice": "auto",
-                "tools": [],
-                "top_logprobs": 0,
-                "top_p": 1,
-                "truncation": "disabled",
-                "user": null
+                "provider": "openai"
               },
               "metrics": {
-                "completion_reasoning_tokens": 0,
-                "completion_tokens": 2,
-                "prompt_cached_tokens": 0,
-                "prompt_tokens": 21,
-                "time_to_first_token": 0,
-                "tokens": 23
+                "has_time_to_first_token": true
               }
             }
           ],
+          "input": {
+            "kind": "undefined"
+          },
+          "output": null,
           "metadata": {
-            "operation": "responses-stream",
-            "testRunId": "<run:1>"
+            "operation": "responses-stream"
+          },
+          "metrics": {
+            "has_time_to_first_token": false
           }
         },
         {
@@ -1051,80 +595,38 @@
               "name": "openai.responses.create",
               "type": "llm",
               "children": [],
-              "input": "Reply with exactly PARTIAL.",
+              "input": {
+                "kind": "text"
+              },
               "output": [
                 {
-                  "content": [
-                    {
-                      "annotations": [],
-                      "logprobs": [],
-                      "text": "PARTIAL.",
-                      "type": "output_text"
-                    }
+                  "content_types": [
+                    "output_text"
                   ],
-                  "id": "<span:1>",
+                  "json_keys": [],
                   "role": "assistant",
                   "status": "completed",
                   "type": "message"
                 }
               ],
               "metadata": {
-                "background": false,
-                "completed_at": 0,
-                "created_at": 0,
-                "error": null,
-                "frequency_penalty": 0,
-                "id": "<span:1>",
-                "incomplete_details": null,
-                "instructions": null,
-                "max_output_tokens": 24,
-                "max_tool_calls": null,
-                "metadata": {},
                 "model": "gpt-4o-mini-2024-07-18",
-                "moderation": null,
-                "object": "response",
-                "parallel_tool_calls": true,
-                "presence_penalty": 0,
-                "previous_response_id": null,
-                "prompt_cache_key": null,
-                "prompt_cache_retention": "in_memory",
-                "provider": "openai",
-                "reasoning": {
-                  "context": null,
-                  "effort": null,
-                  "summary": null
-                },
-                "safety_identifier": null,
-                "service_tier": "default",
-                "status": "completed",
-                "store": true,
-                "temperature": 1,
-                "text": {
-                  "format": {
-                    "type": "text"
-                  },
-                  "verbosity": "medium"
-                },
-                "tool_choice": "auto",
-                "tools": [],
-                "top_logprobs": 0,
-                "top_p": 1,
-                "truncation": "disabled",
-                "user": null
+                "provider": "openai"
               },
               "metrics": {
-                "completion_reasoning_tokens": 0,
-                "completion_tokens": 4,
-                "prompt_cached_tokens": 0,
-                "prompt_tokens": 13,
-                "time_to_first_token": 0,
-                "tokens": 17
+                "has_time_to_first_token": true
               }
             }
           ],
+          "input": {
+            "kind": "undefined"
+          },
+          "output": null,
           "metadata": {
-            "operation": "responses-stream-partial",
-            "testRunId": "<run:1>"
+            "operation": "responses-stream-partial"
+          },
+          "metrics": {
+            "has_time_to_first_token": false
           }
         },
         {
@@ -1134,118 +636,54 @@
               "name": "openai.responses.parse",
               "type": "llm",
               "children": [],
-              "input": "What is 20 + 4?",
+              "input": {
+                "kind": "text"
+              },
               "output": [
                 {
-                  "content": [
-                    {
-                      "annotations": [],
-                      "logprobs": [],
-                      "parsed": {
-                        "reasoning": "Adding 20 and 4 gives you a total of 24.",
-                        "value": 24
-                      },
-                      "text": "{\"reasoning\":\"Adding 20 and 4 gives you a total of 24.\",\"value\":24}",
-                      "type": "output_text"
-                    }
+                  "content_types": [
+                    "output_text"
                   ],
-                  "id": "<span:1>",
+                  "json_keys": [
+                    "reasoning",
+                    "value"
+                  ],
                   "role": "assistant",
                   "status": "completed",
                   "type": "message"
                 }
               ],
               "metadata": {
-                "background": false,
-                "billing": {
-                  "payer": "developer"
-                },
-                "completed_at": 0,
-                "created_at": 0,
-                "error": null,
-                "frequency_penalty": 0,
-                "id": "<span:1>",
-                "incomplete_details": null,
-                "instructions": null,
-                "max_output_tokens": null,
-                "max_tool_calls": null,
-                "metadata": {},
                 "model": "gpt-4o-mini-2024-07-18",
-                "moderation": null,
-                "object": "response",
-                "output_parsed": {
-                  "reasoning": "Adding 20 and 4 gives you a total of 24.",
-                  "value": 24
-                },
-                "output_text": "{\"reasoning\":\"Adding 20 and 4 gives you a total of 24.\",\"value\":24}",
-                "parallel_tool_calls": true,
-                "presence_penalty": 0,
-                "previous_response_id": null,
-                "prompt_cache_key": "[REDACTED]",
-                "prompt_cache_retention": "in_memory",
-                "provider": "openai",
-                "reasoning": {
-                  "context": null,
-                  "effort": null,
-                  "summary": null
-                },
-                "safety_identifier": null,
-                "service_tier": "default",
-                "status": "completed",
-                "store": true,
-                "temperature": 1,
-                "text": {
-                  "format": {
-                    "description": null,
-                    "name": "NumberAnswer",
-                    "schema": {
-                      "additionalProperties": false,
-                      "properties": {
-                        "reasoning": {
-                          "type": "string"
-                        },
-                        "value": {
-                          "type": "integer"
-                        }
-                      },
-                      "required": [
-                        "value",
-                        "reasoning"
-                      ],
-                      "type": "object"
-                    },
-                    "strict": true,
-                    "type": "json_schema"
-                  },
-                  "verbosity": "medium"
-                },
-                "tool_choice": "auto",
-                "tools": [],
-                "top_logprobs": 0,
-                "top_p": 1,
-                "truncation": "disabled",
-                "user": null
+                "provider": "openai"
               },
               "metrics": {
-                "completion_reasoning_tokens": 0,
-                "completion_tokens": 23,
-                "prompt_cached_tokens": 0,
-                "prompt_tokens": 46,
-                "time_to_first_token": 0,
-                "tokens": 69
+                "has_time_to_first_token": true
               }
             }
           ],
+          "input": {
+            "kind": "undefined"
+          },
+          "output": null,
           "metadata": {
-            "operation": "responses-parse",
-            "testRunId": "<run:1>"
+            "operation": "responses-parse"
+          },
+          "metrics": {
+            "has_time_to_first_token": false
           }
         }
       ],
+      "input": {
+        "kind": "undefined"
+      },
+      "output": null,
       "metadata": {
-        "openaiSdkVersion": "4.104.0",
-        "scenario": "openai-instrumentation",
-        "testRunId": "<run:1>"
+        "openaiSdkVersion": "<openai-sdk-version>",
+        "scenario": "openai-instrumentation"
+      },
+      "metrics": {
+        "has_time_to_first_token": false
       }
     }
   ]

@@ -29,7 +29,9 @@ async function findVitestBin(packageName: string): Promise<string> {
 }
 
 async function main() {
-  const vitestCliPath = await findVitestBin("vitest-v3");
+  const vitestPackageName =
+    process.env.VITEST_PACKAGE_NAME ?? "vitest-v3-latest";
+  const vitestCliPath = await findVitestBin(vitestPackageName);
   const testRunId = getTestRunId();
 
   await runNodeSubprocess({
@@ -37,6 +39,7 @@ async function main() {
     cwd: scenarioDir,
     env: {
       BRAINTRUST_E2E_RUN_ID: testRunId,
+      VITEST_CONFIG_PACKAGE_NAME: vitestPackageName,
     },
     timeoutMs: 60_000,
   });

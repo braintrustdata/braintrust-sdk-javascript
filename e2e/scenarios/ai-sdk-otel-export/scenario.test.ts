@@ -30,13 +30,37 @@ const TIMEOUT_MS = 120_000;
 interface OtelExportScenario {
   dependencyName: string;
   entry: string;
+  openaiModuleName: string;
+  variantKey: string;
   version: string;
 }
 
 const scenarios: OtelExportScenario[] = await Promise.all(
   [
-    { dependencyName: "ai-sdk-v5", entry: "scenario.ai-sdk-v5.ts" },
-    { dependencyName: "ai-sdk-v6", entry: "scenario.ai-sdk-v6.ts" },
+    {
+      dependencyName: "ai-sdk-v5",
+      entry: "scenario.ai-sdk-v5.ts",
+      openaiModuleName: "ai-sdk-openai-v5",
+      variantKey: "ai-sdk-v5",
+    },
+    {
+      dependencyName: "ai-sdk-v5-latest",
+      entry: "scenario.ai-sdk-v5.ts",
+      openaiModuleName: "ai-sdk-openai-v5-latest",
+      variantKey: "ai-sdk-v5-latest",
+    },
+    {
+      dependencyName: "ai-sdk-v6",
+      entry: "scenario.ai-sdk-v6.ts",
+      openaiModuleName: "ai-sdk-openai-v6",
+      variantKey: "ai-sdk-v6",
+    },
+    {
+      dependencyName: "ai-sdk-v6-latest",
+      entry: "scenario.ai-sdk-v6.ts",
+      openaiModuleName: "ai-sdk-openai-v6-latest",
+      variantKey: "ai-sdk-v6-latest",
+    },
   ].map(async (spec) => ({
     ...spec,
     version: await readInstalledPackageVersion(
@@ -47,7 +71,6 @@ const scenarios: OtelExportScenario[] = await Promise.all(
 );
 
 for (const scenario of scenarios) {
-  const variantKey = scenario.dependencyName;
   test(
     `ai-sdk-otel-export sends AI SDK telemetry spans to Braintrust via BraintrustExporter (ai ${scenario.version})`,
     {
@@ -58,10 +81,14 @@ for (const scenario of scenarios) {
         async ({ requestsAfter, runScenarioDir, testRunId }) => {
           await runScenarioDir({
             entry: scenario.entry,
+            env: {
+              AI_SDK_PACKAGE_NAME: scenario.dependencyName,
+              AI_SDK_OPENAI_PACKAGE_NAME: scenario.openaiModuleName,
+            },
             scenarioDir,
             timeoutMs: TIMEOUT_MS,
             runContext: {
-              variantKey,
+              variantKey: scenario.variantKey,
               originalScenarioDir,
             },
           });
@@ -187,7 +214,7 @@ for (const scenario of scenarios) {
             spanTreeEntries,
             resolveFileSnapshotPath(
               import.meta.url,
-              `${scenario.dependencyName}.span-tree.json`,
+              `${scenario.variantKey}.span-tree.json`,
             ),
           );
 
@@ -217,7 +244,7 @@ for (const scenario of scenarios) {
             ),
             resolveFileSnapshotPath(
               import.meta.url,
-              `${scenario.dependencyName}.otel-requests.json`,
+              `${scenario.variantKey}.otel-requests.json`,
             ),
           );
         },

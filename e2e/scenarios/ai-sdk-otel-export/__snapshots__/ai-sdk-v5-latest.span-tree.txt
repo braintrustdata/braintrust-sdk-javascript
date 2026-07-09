@@ -1,0 +1,350 @@
+span_tree:
+├── ai.generateText
+│   attributes: {
+│     "ai.model.id": "gpt-4o-mini-2024-07-18",
+│     "ai.model.provider": "openai.responses",
+│     "ai.operationId": "ai.generateText",
+│     "ai.prompt": "{\"prompt\":\"Reply with the single token PARIS and no punctuation.\"}",
+│     "ai.request.headers.user-agent": "ai/5.0.210",
+│     "ai.response.finishReason": "stop",
+│     "ai.response.providerMetadata": "{\"openai\":{\"responseId\":\"resp_02d098ea1fa7980e006a4d0dc4ddec819284ff357edf37a42a\",\"serviceTier\":\"default\"}}",
+│     "ai.response.text": "PARIS",
+│     "ai.settings.maxOutputTokens": 24,
+│     "ai.settings.maxRetries": 2,
+│     "ai.settings.temperature": 0,
+│     "ai.telemetry.functionId": "otel-generate",
+│     "ai.telemetry.metadata.scenario": "ai-sdk-otel-export",
+│     "ai.telemetry.metadata.sdkVersion": "5.0.210",
+│     "ai.telemetry.metadata.testRunId": "e2e-<uuid:1>",
+│     "ai.usage.completionTokens": 3,
+│     "ai.usage.promptTokens": 18,
+│     "operation.name": "ai.generateText otel-generate",
+│     "resource.name": "otel-generate"
+│   }
+├── ai.generateText
+│   attributes: {
+│     "ai.model.id": "gpt-4o-mini-2024-07-18",
+│     "ai.model.provider": "openai.responses",
+│     "ai.operationId": "ai.generateText",
+│     "ai.prompt": "{\"system\":\"You must inspect live weather via the provided get_weather tool before responding.\",\"prompt\":\"Use the get_weather tool for Paris, France. If you do not call the tool, the answer is invalid.\"}",
+│     "ai.request.headers.user-agent": "ai/5.0.210",
+│     "ai.response.finishReason": "tool-calls",
+│     "ai.response.providerMetadata": "{\"openai\":{\"responseId\":\"resp_04722b25e4a6c39b006a4d0dca34bc819f864a49b72ef8f039\",\"serviceTier\":\"default\"}}",
+│     "ai.response.toolCalls": "[{\"toolCallId\":\"call_ElIaTti42Jbk6UXixRrS2noT\",\"toolName\":\"get_weather\",\"input\":\"{\\\"location\\\":\\\"Paris, France\\\"}\"}]",
+│     "ai.settings.maxOutputTokens": 128,
+│     "ai.settings.maxRetries": 2,
+│     "ai.settings.temperature": 0,
+│     "ai.telemetry.functionId": "otel-tool",
+│     "ai.telemetry.metadata.scenario": "ai-sdk-otel-export",
+│     "ai.telemetry.metadata.sdkVersion": "5.0.210",
+│     "ai.telemetry.metadata.testRunId": "e2e-<uuid:1>",
+│     "ai.usage.completionTokens": 8,
+│     "ai.usage.promptTokens": 211,
+│     "operation.name": "ai.generateText otel-tool",
+│     "resource.name": "otel-tool"
+│   }
+├── ai.generateText.doGenerate
+│   attributes: {
+│     "ai.model.id": "gpt-4o-mini-2024-07-18",
+│     "ai.model.provider": "openai.responses",
+│     "ai.operationId": "ai.generateText.doGenerate",
+│     "ai.prompt.messages": "[{\"role\":\"system\",\"content\":\"You must inspect live weather via the provided get_weather tool before responding.\"},{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Use the get_weather tool for Paris, France. If you do not call the tool, the answer is invalid.\"}]},{\"role\":\"assistant\",\"content\":[{\"type\":\"tool-call\",\"toolCallId\":\"call_QSnd9wDpAjvZ2RNsfdRVCiq0\",\"toolName\":\"get_weather\",\"input\":{\"location\":\"Paris, France\"},\"providerOptions\":{\"openai\":{\"itemId\":\"fc_04722b25e4a6c39b006a4d0dc74064819fa4b99819482f36db\"}}}]},{\"role\":\"tool\",\"content\":[{\"type\":\"tool-result\",\"toolCallId\":\"call_QSnd9wDpAjvZ2RNsfdRVCiq0\",\"toolName\":\"get_weather\",\"output\":{\"type\":\"text\",\"value\":\"{\\\"condition\\\":\\\"sunny\\\",\\\"location\\\":\\\"Paris, France\\\",\\\"temperatureC\\\":22}\"}}]},{\"role\":\"assistant\",\"content\":[{\"type\":\"tool-call\",\"toolCallId\":\"call_9zhyMbdck0chtKu3MzjaPmjl\",\"toolName\":\"get_weather\",\"input\":{\"location\":\"Paris, France\"},\"providerOptions\":{\"openai\":{\"itemId\":\"fc_04722b25e4a6c39b006a4d0dc868f8819f93bb52740752908a\"}}}]},{\"role\":\"tool\",\"content\":[{\"type\":\"tool-result\",\"toolCallId\":\"call_9zhyMbdck0chtKu3MzjaPmjl\",\"toolName\":\"get_weather\",\"output\":{\"type\":\"text\",\"value\":\"{\\\"condition\\\":\\\"sunny\\\",\\\"location\\\":\\\"Paris, France\\\",\\\"temperatureC\\\":22}\"}}]},{\"role\":\"assistant\",\"content\":[{\"type\":\"tool-call\",\"toolCallId\":\"call_zzOVJTsUzVhMKxp8P9YEAXMx\",\"toolName\":\"get_weather\",\"input\":{\"location\":\"Paris, France\"},\"providerOptions\":{\"openai\":{\"itemId\":\"fc_04722b25e4a6c39b006a4d0dc96068819f804c692d6757a5b5\"}}}]},{\"role\":\"tool\",\"content\":[{\"type\":\"tool-result\",\"toolCallId\":\"call_zzOVJTsUzVhMKxp8P9YEAXMx\",\"toolName\":\"get_weather\",\"output\":{\"type\":\"text\",\"value\":\"{\\\"condition\\\":\\\"sunny\\\",\\\"location\\\":\\\"Paris, France\\\",\\\"temperatureC\\\":22}\"}}]}]",
+│     "ai.prompt.toolChoice": "{\"type\":\"required\"}",
+│     "ai.prompt.tools": [
+│       "{\"type\":\"function\",\"name\":\"get_weather\",\"description\":\"Get the weather for a location\",\"inputSchema\":{\"type\":\"object\",\"properties\":{\"location\":{\"type\":\"string\",\"description\":\"The city and country\"}},\"required\":[\"location\"],\"additionalProperties\":false,\"$schema\":\"http://json-schema.org/draft-07/schema#\"}}"
+│     ],
+│     "ai.request.headers.user-agent": "ai/5.0.210",
+│     "ai.response.finishReason": "tool-calls",
+│     "ai.response.id": "resp_04722b25e4a6c39b006a4d0dca34bc819f864a49b72ef8f039",
+│     "ai.response.model": "gpt-4o-mini-2024-07-18",
+│     "ai.response.providerMetadata": "{\"openai\":{\"responseId\":\"resp_04722b25e4a6c39b006a4d0dca34bc819f864a49b72ef8f039\",\"serviceTier\":\"default\"}}",
+│     "ai.response.timestamp": "<timestamp>",
+│     "ai.response.toolCalls": "[{\"toolCallId\":\"call_ElIaTti42Jbk6UXixRrS2noT\",\"toolName\":\"get_weather\",\"input\":\"{\\\"location\\\":\\\"Paris, France\\\"}\"}]",
+│     "ai.settings.maxOutputTokens": 128,
+│     "ai.settings.maxRetries": 2,
+│     "ai.settings.temperature": 0,
+│     "ai.telemetry.functionId": "otel-tool",
+│     "ai.telemetry.metadata.scenario": "ai-sdk-otel-export",
+│     "ai.telemetry.metadata.sdkVersion": "5.0.210",
+│     "ai.telemetry.metadata.testRunId": "e2e-<uuid:1>",
+│     "ai.usage.completionTokens": 8,
+│     "ai.usage.promptTokens": 211,
+│     "gen_ai.request.max_tokens": 128,
+│     "gen_ai.request.model": "gpt-4o-mini-2024-07-18",
+│     "gen_ai.request.temperature": 0,
+│     "gen_ai.response.finish_reasons": [
+│       "tool-calls"
+│     ],
+│     "gen_ai.response.id": "resp_04722b25e4a6c39b006a4d0dca34bc819f864a49b72ef8f039",
+│     "gen_ai.response.model": "gpt-4o-mini-2024-07-18",
+│     "gen_ai.system": "openai.responses",
+│     "gen_ai.usage.input_tokens": 211,
+│     "gen_ai.usage.output_tokens": 8,
+│     "operation.name": "ai.generateText.doGenerate otel-tool",
+│     "resource.name": "otel-tool"
+│   }
+├── ai.generateText.doGenerate
+│   attributes: {
+│     "ai.model.id": "gpt-4o-mini-2024-07-18",
+│     "ai.model.provider": "openai.responses",
+│     "ai.operationId": "ai.generateText.doGenerate",
+│     "ai.prompt.messages": "[{\"role\":\"system\",\"content\":\"You must inspect live weather via the provided get_weather tool before responding.\"},{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Use the get_weather tool for Paris, France. If you do not call the tool, the answer is invalid.\"}]},{\"role\":\"assistant\",\"content\":[{\"type\":\"tool-call\",\"toolCallId\":\"call_QSnd9wDpAjvZ2RNsfdRVCiq0\",\"toolName\":\"get_weather\",\"input\":{\"location\":\"Paris, France\"},\"providerOptions\":{\"openai\":{\"itemId\":\"fc_04722b25e4a6c39b006a4d0dc74064819fa4b99819482f36db\"}}}]},{\"role\":\"tool\",\"content\":[{\"type\":\"tool-result\",\"toolCallId\":\"call_QSnd9wDpAjvZ2RNsfdRVCiq0\",\"toolName\":\"get_weather\",\"output\":{\"type\":\"text\",\"value\":\"{\\\"condition\\\":\\\"sunny\\\",\\\"location\\\":\\\"Paris, France\\\",\\\"temperatureC\\\":22}\"}}]},{\"role\":\"assistant\",\"content\":[{\"type\":\"tool-call\",\"toolCallId\":\"call_9zhyMbdck0chtKu3MzjaPmjl\",\"toolName\":\"get_weather\",\"input\":{\"location\":\"Paris, France\"},\"providerOptions\":{\"openai\":{\"itemId\":\"fc_04722b25e4a6c39b006a4d0dc868f8819f93bb52740752908a\"}}}]},{\"role\":\"tool\",\"content\":[{\"type\":\"tool-result\",\"toolCallId\":\"call_9zhyMbdck0chtKu3MzjaPmjl\",\"toolName\":\"get_weather\",\"output\":{\"type\":\"text\",\"value\":\"{\\\"condition\\\":\\\"sunny\\\",\\\"location\\\":\\\"Paris, France\\\",\\\"temperatureC\\\":22}\"}}]}]",
+│     "ai.prompt.toolChoice": "{\"type\":\"required\"}",
+│     "ai.prompt.tools": [
+│       "{\"type\":\"function\",\"name\":\"get_weather\",\"description\":\"Get the weather for a location\",\"inputSchema\":{\"type\":\"object\",\"properties\":{\"location\":{\"type\":\"string\",\"description\":\"The city and country\"}},\"required\":[\"location\"],\"additionalProperties\":false,\"$schema\":\"http://json-schema.org/draft-07/schema#\"}}"
+│     ],
+│     "ai.request.headers.user-agent": "ai/5.0.210",
+│     "ai.response.finishReason": "tool-calls",
+│     "ai.response.id": "resp_04722b25e4a6c39b006a4d0dc8e084819fbda7002a3c96d3d6",
+│     "ai.response.model": "gpt-4o-mini-2024-07-18",
+│     "ai.response.providerMetadata": "{\"openai\":{\"responseId\":\"resp_04722b25e4a6c39b006a4d0dc8e084819fbda7002a3c96d3d6\",\"serviceTier\":\"default\"}}",
+│     "ai.response.timestamp": "<timestamp>",
+│     "ai.response.toolCalls": "[{\"toolCallId\":\"call_zzOVJTsUzVhMKxp8P9YEAXMx\",\"toolName\":\"get_weather\",\"input\":\"{\\\"location\\\":\\\"Paris, France\\\"}\"}]",
+│     "ai.settings.maxOutputTokens": 128,
+│     "ai.settings.maxRetries": 2,
+│     "ai.settings.temperature": 0,
+│     "ai.telemetry.functionId": "otel-tool",
+│     "ai.telemetry.metadata.scenario": "ai-sdk-otel-export",
+│     "ai.telemetry.metadata.sdkVersion": "5.0.210",
+│     "ai.telemetry.metadata.testRunId": "e2e-<uuid:1>",
+│     "ai.usage.completionTokens": 8,
+│     "ai.usage.promptTokens": 172,
+│     "gen_ai.request.max_tokens": 128,
+│     "gen_ai.request.model": "gpt-4o-mini-2024-07-18",
+│     "gen_ai.request.temperature": 0,
+│     "gen_ai.response.finish_reasons": [
+│       "tool-calls"
+│     ],
+│     "gen_ai.response.id": "resp_04722b25e4a6c39b006a4d0dc8e084819fbda7002a3c96d3d6",
+│     "gen_ai.response.model": "gpt-4o-mini-2024-07-18",
+│     "gen_ai.system": "openai.responses",
+│     "gen_ai.usage.input_tokens": 172,
+│     "gen_ai.usage.output_tokens": 8,
+│     "operation.name": "ai.generateText.doGenerate otel-tool",
+│     "resource.name": "otel-tool"
+│   }
+├── ai.generateText.doGenerate
+│   attributes: {
+│     "ai.model.id": "gpt-4o-mini-2024-07-18",
+│     "ai.model.provider": "openai.responses",
+│     "ai.operationId": "ai.generateText.doGenerate",
+│     "ai.prompt.messages": "[{\"role\":\"system\",\"content\":\"You must inspect live weather via the provided get_weather tool before responding.\"},{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Use the get_weather tool for Paris, France. If you do not call the tool, the answer is invalid.\"}]},{\"role\":\"assistant\",\"content\":[{\"type\":\"tool-call\",\"toolCallId\":\"call_QSnd9wDpAjvZ2RNsfdRVCiq0\",\"toolName\":\"get_weather\",\"input\":{\"location\":\"Paris, France\"},\"providerOptions\":{\"openai\":{\"itemId\":\"fc_04722b25e4a6c39b006a4d0dc74064819fa4b99819482f36db\"}}}]},{\"role\":\"tool\",\"content\":[{\"type\":\"tool-result\",\"toolCallId\":\"call_QSnd9wDpAjvZ2RNsfdRVCiq0\",\"toolName\":\"get_weather\",\"output\":{\"type\":\"text\",\"value\":\"{\\\"condition\\\":\\\"sunny\\\",\\\"location\\\":\\\"Paris, France\\\",\\\"temperatureC\\\":22}\"}}]}]",
+│     "ai.prompt.toolChoice": "{\"type\":\"required\"}",
+│     "ai.prompt.tools": [
+│       "{\"type\":\"function\",\"name\":\"get_weather\",\"description\":\"Get the weather for a location\",\"inputSchema\":{\"type\":\"object\",\"properties\":{\"location\":{\"type\":\"string\",\"description\":\"The city and country\"}},\"required\":[\"location\"],\"additionalProperties\":false,\"$schema\":\"http://json-schema.org/draft-07/schema#\"}}"
+│     ],
+│     "ai.request.headers.user-agent": "ai/5.0.210",
+│     "ai.response.finishReason": "tool-calls",
+│     "ai.response.id": "resp_04722b25e4a6c39b006a4d0dc7d9e4819fb8add300bdd44ca7",
+│     "ai.response.model": "gpt-4o-mini-2024-07-18",
+│     "ai.response.providerMetadata": "{\"openai\":{\"responseId\":\"resp_04722b25e4a6c39b006a4d0dc7d9e4819fb8add300bdd44ca7\",\"serviceTier\":\"default\"}}",
+│     "ai.response.timestamp": "<timestamp>",
+│     "ai.response.toolCalls": "[{\"toolCallId\":\"call_9zhyMbdck0chtKu3MzjaPmjl\",\"toolName\":\"get_weather\",\"input\":\"{\\\"location\\\":\\\"Paris, France\\\"}\"}]",
+│     "ai.settings.maxOutputTokens": 128,
+│     "ai.settings.maxRetries": 2,
+│     "ai.settings.temperature": 0,
+│     "ai.telemetry.functionId": "otel-tool",
+│     "ai.telemetry.metadata.scenario": "ai-sdk-otel-export",
+│     "ai.telemetry.metadata.sdkVersion": "5.0.210",
+│     "ai.telemetry.metadata.testRunId": "e2e-<uuid:1>",
+│     "ai.usage.completionTokens": 8,
+│     "ai.usage.promptTokens": 133,
+│     "gen_ai.request.max_tokens": 128,
+│     "gen_ai.request.model": "gpt-4o-mini-2024-07-18",
+│     "gen_ai.request.temperature": 0,
+│     "gen_ai.response.finish_reasons": [
+│       "tool-calls"
+│     ],
+│     "gen_ai.response.id": "resp_04722b25e4a6c39b006a4d0dc7d9e4819fb8add300bdd44ca7",
+│     "gen_ai.response.model": "gpt-4o-mini-2024-07-18",
+│     "gen_ai.system": "openai.responses",
+│     "gen_ai.usage.input_tokens": 133,
+│     "gen_ai.usage.output_tokens": 8,
+│     "operation.name": "ai.generateText.doGenerate otel-tool",
+│     "resource.name": "otel-tool"
+│   }
+├── ai.generateText.doGenerate
+│   attributes: {
+│     "ai.model.id": "gpt-4o-mini-2024-07-18",
+│     "ai.model.provider": "openai.responses",
+│     "ai.operationId": "ai.generateText.doGenerate",
+│     "ai.prompt.messages": "[{\"role\":\"system\",\"content\":\"You must inspect live weather via the provided get_weather tool before responding.\"},{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Use the get_weather tool for Paris, France. If you do not call the tool, the answer is invalid.\"}]}]",
+│     "ai.prompt.toolChoice": "{\"type\":\"required\"}",
+│     "ai.prompt.tools": [
+│       "{\"type\":\"function\",\"name\":\"get_weather\",\"description\":\"Get the weather for a location\",\"inputSchema\":{\"type\":\"object\",\"properties\":{\"location\":{\"type\":\"string\",\"description\":\"The city and country\"}},\"required\":[\"location\"],\"additionalProperties\":false,\"$schema\":\"http://json-schema.org/draft-07/schema#\"}}"
+│     ],
+│     "ai.request.headers.user-agent": "ai/5.0.210",
+│     "ai.response.finishReason": "tool-calls",
+│     "ai.response.id": "resp_04722b25e4a6c39b006a4d0dc6a340819fa6d49519dd6e5e71",
+│     "ai.response.model": "gpt-4o-mini-2024-07-18",
+│     "ai.response.providerMetadata": "{\"openai\":{\"responseId\":\"resp_04722b25e4a6c39b006a4d0dc6a340819fa6d49519dd6e5e71\",\"serviceTier\":\"default\"}}",
+│     "ai.response.timestamp": "<timestamp>",
+│     "ai.response.toolCalls": "[{\"toolCallId\":\"call_QSnd9wDpAjvZ2RNsfdRVCiq0\",\"toolName\":\"get_weather\",\"input\":\"{\\\"location\\\":\\\"Paris, France\\\"}\"}]",
+│     "ai.settings.maxOutputTokens": 128,
+│     "ai.settings.maxRetries": 2,
+│     "ai.settings.temperature": 0,
+│     "ai.telemetry.functionId": "otel-tool",
+│     "ai.telemetry.metadata.scenario": "ai-sdk-otel-export",
+│     "ai.telemetry.metadata.sdkVersion": "5.0.210",
+│     "ai.telemetry.metadata.testRunId": "e2e-<uuid:1>",
+│     "ai.usage.completionTokens": 8,
+│     "ai.usage.promptTokens": 94,
+│     "gen_ai.request.max_tokens": 128,
+│     "gen_ai.request.model": "gpt-4o-mini-2024-07-18",
+│     "gen_ai.request.temperature": 0,
+│     "gen_ai.response.finish_reasons": [
+│       "tool-calls"
+│     ],
+│     "gen_ai.response.id": "resp_04722b25e4a6c39b006a4d0dc6a340819fa6d49519dd6e5e71",
+│     "gen_ai.response.model": "gpt-4o-mini-2024-07-18",
+│     "gen_ai.system": "openai.responses",
+│     "gen_ai.usage.input_tokens": 94,
+│     "gen_ai.usage.output_tokens": 8,
+│     "operation.name": "ai.generateText.doGenerate otel-tool",
+│     "resource.name": "otel-tool"
+│   }
+├── ai.generateText.doGenerate
+│   attributes: {
+│     "ai.model.id": "gpt-4o-mini-2024-07-18",
+│     "ai.model.provider": "openai.responses",
+│     "ai.operationId": "ai.generateText.doGenerate",
+│     "ai.prompt.messages": "[{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Reply with the single token PARIS and no punctuation.\"}]}]",
+│     "ai.request.headers.user-agent": "ai/5.0.210",
+│     "ai.response.finishReason": "stop",
+│     "ai.response.id": "resp_02d098ea1fa7980e006a4d0dc4ddec819284ff357edf37a42a",
+│     "ai.response.model": "gpt-4o-mini-2024-07-18",
+│     "ai.response.providerMetadata": "{\"openai\":{\"responseId\":\"resp_02d098ea1fa7980e006a4d0dc4ddec819284ff357edf37a42a\",\"serviceTier\":\"default\"}}",
+│     "ai.response.text": "PARIS",
+│     "ai.response.timestamp": "<timestamp>",
+│     "ai.settings.maxOutputTokens": 24,
+│     "ai.settings.maxRetries": 2,
+│     "ai.settings.temperature": 0,
+│     "ai.telemetry.functionId": "otel-generate",
+│     "ai.telemetry.metadata.scenario": "ai-sdk-otel-export",
+│     "ai.telemetry.metadata.sdkVersion": "5.0.210",
+│     "ai.telemetry.metadata.testRunId": "e2e-<uuid:1>",
+│     "ai.usage.completionTokens": 3,
+│     "ai.usage.promptTokens": 18,
+│     "gen_ai.request.max_tokens": 24,
+│     "gen_ai.request.model": "gpt-4o-mini-2024-07-18",
+│     "gen_ai.request.temperature": 0,
+│     "gen_ai.response.finish_reasons": [
+│       "stop"
+│     ],
+│     "gen_ai.response.id": "resp_02d098ea1fa7980e006a4d0dc4ddec819284ff357edf37a42a",
+│     "gen_ai.response.model": "gpt-4o-mini-2024-07-18",
+│     "gen_ai.system": "openai.responses",
+│     "gen_ai.usage.input_tokens": 18,
+│     "gen_ai.usage.output_tokens": 3,
+│     "operation.name": "ai.generateText.doGenerate otel-generate",
+│     "resource.name": "otel-generate"
+│   }
+├── ai.streamText
+│   attributes: {
+│     "ai.model.id": "gpt-4o-mini-2024-07-18",
+│     "ai.model.provider": "openai.responses",
+│     "ai.operationId": "ai.streamText",
+│     "ai.prompt": "{\"prompt\":\"Count from 1 to 3 and include the words one two three.\"}",
+│     "ai.response.finishReason": "stop",
+│     "ai.response.providerMetadata": "{\"openai\":{\"responseId\":\"resp_0b04c12d74dacdbc006a4d0dc5ae5c819d9e43f4f990d283d0\",\"serviceTier\":\"default\"}}",
+│     "ai.response.text": "One, two, three.",
+│     "ai.settings.maxOutputTokens": 32,
+│     "ai.settings.maxRetries": 2,
+│     "ai.settings.temperature": 0,
+│     "ai.telemetry.functionId": "otel-stream",
+│     "ai.telemetry.metadata.scenario": "ai-sdk-otel-export",
+│     "ai.telemetry.metadata.sdkVersion": "5.0.210",
+│     "ai.telemetry.metadata.testRunId": "e2e-<uuid:1>",
+│     "ai.usage.cachedInputTokens": 0,
+│     "ai.usage.inputTokens": 22,
+│     "ai.usage.outputTokens": 7,
+│     "ai.usage.reasoningTokens": 0,
+│     "ai.usage.totalTokens": 29,
+│     "operation.name": "ai.streamText otel-stream",
+│     "resource.name": "otel-stream"
+│   }
+├── ai.streamText.doStream
+│   attributes: {
+│     "ai.model.id": "gpt-4o-mini-2024-07-18",
+│     "ai.model.provider": "openai.responses",
+│     "ai.operationId": "ai.streamText.doStream",
+│     "ai.prompt.messages": "[{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Count from 1 to 3 and include the words one two three.\"}]}]",
+│     "ai.response.avgOutputTokensPerSecond": 0,
+│     "ai.response.finishReason": "stop",
+│     "ai.response.id": "resp_0b04c12d74dacdbc006a4d0dc5ae5c819d9e43f4f990d283d0",
+│     "ai.response.model": "gpt-4o-mini-2024-07-18",
+│     "ai.response.msToFinish": 0,
+│     "ai.response.msToFirstChunk": 0,
+│     "ai.response.providerMetadata": "{\"openai\":{\"responseId\":\"resp_0b04c12d74dacdbc006a4d0dc5ae5c819d9e43f4f990d283d0\",\"serviceTier\":\"default\"}}",
+│     "ai.response.text": "One, two, three.",
+│     "ai.response.timestamp": "<timestamp>",
+│     "ai.settings.maxOutputTokens": 32,
+│     "ai.settings.maxRetries": 2,
+│     "ai.settings.temperature": 0,
+│     "ai.telemetry.functionId": "otel-stream",
+│     "ai.telemetry.metadata.scenario": "ai-sdk-otel-export",
+│     "ai.telemetry.metadata.sdkVersion": "5.0.210",
+│     "ai.telemetry.metadata.testRunId": "e2e-<uuid:1>",
+│     "ai.usage.cachedInputTokens": 0,
+│     "ai.usage.inputTokens": 22,
+│     "ai.usage.outputTokens": 7,
+│     "ai.usage.reasoningTokens": 0,
+│     "ai.usage.totalTokens": 29,
+│     "gen_ai.request.max_tokens": 32,
+│     "gen_ai.request.model": "gpt-4o-mini-2024-07-18",
+│     "gen_ai.request.temperature": 0,
+│     "gen_ai.response.finish_reasons": [
+│       "stop"
+│     ],
+│     "gen_ai.response.id": "resp_0b04c12d74dacdbc006a4d0dc5ae5c819d9e43f4f990d283d0",
+│     "gen_ai.response.model": "gpt-4o-mini-2024-07-18",
+│     "gen_ai.system": "openai.responses",
+│     "gen_ai.usage.input_tokens": 22,
+│     "gen_ai.usage.output_tokens": 7,
+│     "operation.name": "ai.streamText.doStream otel-stream",
+│     "resource.name": "otel-stream"
+│   }
+├── ai.toolCall
+│   attributes: {
+│     "ai.operationId": "ai.toolCall",
+│     "ai.telemetry.functionId": "otel-tool",
+│     "ai.toolCall.args": "{\"location\":\"Paris, France\"}",
+│     "ai.toolCall.id": "call_9zhyMbdck0chtKu3MzjaPmjl",
+│     "ai.toolCall.name": "get_weather",
+│     "ai.toolCall.result": "\"{\\\"condition\\\":\\\"sunny\\\",\\\"location\\\":\\\"Paris, France\\\",\\\"temperatureC\\\":22}\"",
+│     "operation.name": "ai.toolCall otel-tool",
+│     "resource.name": "otel-tool"
+│   }
+├── ai.toolCall
+│   attributes: {
+│     "ai.operationId": "ai.toolCall",
+│     "ai.telemetry.functionId": "otel-tool",
+│     "ai.toolCall.args": "{\"location\":\"Paris, France\"}",
+│     "ai.toolCall.id": "call_ElIaTti42Jbk6UXixRrS2noT",
+│     "ai.toolCall.name": "get_weather",
+│     "ai.toolCall.result": "\"{\\\"condition\\\":\\\"sunny\\\",\\\"location\\\":\\\"Paris, France\\\",\\\"temperatureC\\\":22}\"",
+│     "operation.name": "ai.toolCall otel-tool",
+│     "resource.name": "otel-tool"
+│   }
+├── ai.toolCall
+│   attributes: {
+│     "ai.operationId": "ai.toolCall",
+│     "ai.telemetry.functionId": "otel-tool",
+│     "ai.toolCall.args": "{\"location\":\"Paris, France\"}",
+│     "ai.toolCall.id": "call_QSnd9wDpAjvZ2RNsfdRVCiq0",
+│     "ai.toolCall.name": "get_weather",
+│     "ai.toolCall.result": "\"{\\\"condition\\\":\\\"sunny\\\",\\\"location\\\":\\\"Paris, France\\\",\\\"temperatureC\\\":22}\"",
+│     "operation.name": "ai.toolCall otel-tool",
+│     "resource.name": "otel-tool"
+│   }
+└── ai.toolCall
+    attributes: {
+      "ai.operationId": "ai.toolCall",
+      "ai.telemetry.functionId": "otel-tool",
+      "ai.toolCall.args": "{\"location\":\"Paris, France\"}",
+      "ai.toolCall.id": "call_zzOVJTsUzVhMKxp8P9YEAXMx",
+      "ai.toolCall.name": "get_weather",
+      "ai.toolCall.result": "\"{\\\"condition\\\":\\\"sunny\\\",\\\"location\\\":\\\"Paris, France\\\",\\\"temperatureC\\\":22}\"",
+      "operation.name": "ai.toolCall otel-tool",
+      "resource.name": "otel-tool"
+    }

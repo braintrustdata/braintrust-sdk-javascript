@@ -11,32 +11,20 @@ importers:
 
   .:
     dependencies:
+      mistral-sdk-v1-latest:
+        specifier: npm:@mistralai/mistralai@1.15.1
+        version: '@mistralai/mistralai@1.15.1'
       mistral-sdk-v1:
-        specifier: npm:@mistralai/mistralai@1.15.1
-        version: '@mistralai/mistralai@1.15.1'
-      mistral-sdk-v1-10-0:
-        specifier: npm:@mistralai/mistralai@1.10.0
-        version: '@mistralai/mistralai@1.10.0'
-      mistral-sdk-v1-14-1:
-        specifier: npm:@mistralai/mistralai@1.14.1
-        version: '@mistralai/mistralai@1.14.1'
-      mistral-sdk-v1-15-1:
-        specifier: npm:@mistralai/mistralai@1.15.1
-        version: '@mistralai/mistralai@1.15.1'
-      mistral-sdk-v1-3-4:
         specifier: npm:@mistralai/mistralai@1.3.4
         version: '@mistralai/mistralai@1.3.4(zod@4.3.6)'
+      mistral-sdk-v2-latest:
+        specifier: npm:@mistralai/mistralai@2.4.1
+        version: '@mistralai/mistralai@2.4.1'
       mistral-sdk-v2:
         specifier: npm:@mistralai/mistralai@2.1.2
         version: '@mistralai/mistralai@2.1.2'
 
 packages:
-
-  '@mistralai/mistralai@1.10.0':
-    resolution: {integrity: sha512-tdIgWs4Le8vpvPiUEWne6tK0qbVc+jMenujnvTqOjogrJUsCSQhus0tHTU1avDDh5//Rq2dFgP9mWRAdIEoBqg==}
-
-  '@mistralai/mistralai@1.14.1':
-    resolution: {integrity: sha512-IiLmmZFCCTReQgPAT33r7KQ1nYo5JPdvGkrkZqA8qQ2qB1GHgs5LoP5K2ICyrjnpw2n8oSxMM/VP+liiKcGNlQ==}
 
   '@mistralai/mistralai@1.15.1':
     resolution: {integrity: sha512-fb995eiz3r0KsBGtRjFV+/iLbX+UpfalxpF+YitT3R6ukrPD4PN+FGwwmYcRFhNAzVzDUtTVxQYnjQWEnwV5nw==}
@@ -48,6 +36,18 @@ packages:
 
   '@mistralai/mistralai@2.1.2':
     resolution: {integrity: sha512-0NlXBNdTMmi4z0oSUWa8KseBHlli+/FkaUTaAyLYTJzkKh3mYM/D3DnJzRil8VD6QC7W3IteARjd3LnxAZGPUw==}
+
+  '@mistralai/mistralai@2.4.1':
+    resolution: {integrity: sha512-vNpR2GR76aW7fK8Dcu1NRx3fdSPO1QruRDo4GbfXfkro2mvp194xIAvJ2BP4ZykzyWtJoDmBe+Qsk9D443aqlg==}
+    peerDependencies:
+      '@opentelemetry/api': ^1.9.0
+    peerDependenciesMeta:
+      '@opentelemetry/api':
+        optional: true
+
+  '@opentelemetry/semantic-conventions@1.41.1':
+    resolution: {integrity: sha512-/UhIkaZgPutTFmQ7RnIJGgDXZmtEJ7Dvi86xNTFWcnRxVRNk/aotsqDJYeEvDP+FSMB2SdW+pQzNMcWP0rwuNA==}
+    engines: {node: '>=14'}
 
   ws@8.21.0:
     resolution: {integrity: sha512-Vsp28b7DRcimFQvrqu2Wek3z1iYxDCWqHYB8Qsnk/S4RfaCQzPGPyBNuVjJV3cd6UiKtUtp6sNM77gWvzcCH+g==}
@@ -66,27 +66,10 @@ packages:
     peerDependencies:
       zod: ^3.25.28 || ^4
 
-  zod@3.25.76:
-    resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
-
   zod@4.3.6:
     resolution: {integrity: sha512-rftlrkhHZOcjDwkGlnUtZZkvaPHCsDATp4pGpuOOMDaTdDDXF91wuVDJoWoPsKX/3YPQ5fHuF3STjcYyKr+Qhg==}
 
 snapshots:
-
-  '@mistralai/mistralai@1.10.0':
-    dependencies:
-      zod: 3.25.76
-      zod-to-json-schema: 3.25.2(zod@3.25.76)
-
-  '@mistralai/mistralai@1.14.1':
-    dependencies:
-      ws: 8.21.0
-      zod: 4.3.6
-      zod-to-json-schema: 3.25.2(zod@4.3.6)
-    transitivePeerDependencies:
-      - bufferutil
-      - utf-8-validate
 
   '@mistralai/mistralai@1.15.1':
     dependencies:
@@ -110,16 +93,22 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  ws@8.21.0: {}
-
-  zod-to-json-schema@3.25.2(zod@3.25.76):
+  '@mistralai/mistralai@2.4.1':
     dependencies:
-      zod: 3.25.76
+      '@opentelemetry/semantic-conventions': 1.41.1
+      ws: 8.21.0
+      zod: 4.3.6
+      zod-to-json-schema: 3.25.2(zod@4.3.6)
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+
+  '@opentelemetry/semantic-conventions@1.41.1': {}
+
+  ws@8.21.0: {}
 
   zod-to-json-schema@3.25.2(zod@4.3.6):
     dependencies:
       zod: 4.3.6
-
-  zod@3.25.76: {}
 
   zod@4.3.6: {}

@@ -2,15 +2,19 @@
   "name": "@braintrust/e2e-github-copilot-instrumentation",
   "private": true,
   "braintrustScenario": {
-    "canary": {
+    "bump": {
       "dependencies": {
-        "@github/copilot-sdk": "latest"
+        "github-copilot-sdk-v0-latest": {
+          "package": "@github/copilot-sdk",
+          "range": "0"
+        }
       }
     }
   },
   "dependencies": {
-    "@github/copilot-sdk": "0.3.0",
-    "vscode-jsonrpc": "8.2.1"
+    "vscode-jsonrpc": "8.2.1",
+    "github-copilot-sdk-v0": "npm:@github/copilot-sdk@0.3.0",
+    "github-copilot-sdk-v0-latest": "npm:@github/copilot-sdk@0.3.0"
   },
   "pnpm": {
     "overrides": {

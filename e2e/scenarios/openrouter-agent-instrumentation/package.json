@@ -2,14 +2,18 @@
   "name": "@braintrust/e2e-openrouter-agent-instrumentation",
   "private": true,
   "braintrustScenario": {
-    "canary": {
+    "bump": {
       "dependencies": {
-        "@openrouter/agent": "latest"
+        "openrouter-agent-v0-latest": {
+          "package": "@openrouter/agent",
+          "range": "0"
+        }
       }
     }
   },
   "dependencies": {
-    "@openrouter/agent": "0.1.2",
-    "zod": "4.1.11"
+    "zod": "4.1.11",
+    "openrouter-agent-v0": "npm:@openrouter/agent@0.1.2",
+    "openrouter-agent-v0-latest": "npm:@openrouter/agent@0.7.2"
   }
 }

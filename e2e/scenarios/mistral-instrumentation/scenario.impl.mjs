@@ -24,9 +24,9 @@ const MISTRAL_REQUEST_RETRY_OPTIONS = {
   maxDelayMs: 10_000,
 };
 
-const MISTRAL_THINKING_STREAM_OPTOUTS = new Set(["mistral-sdk-v1-3-4"]);
-const MISTRAL_CLASSIFIER_OPTOUTS = new Set(["mistral-sdk-v1-3-4"]);
-const MISTRAL_CLASSIFY_OPTOUTS = new Set(["mistral-sdk-v1-3-4"]);
+const MISTRAL_THINKING_STREAM_OPTOUTS = new Set(["mistral-sdk-v1"]);
+const MISTRAL_CLASSIFIER_OPTOUTS = new Set(["mistral-sdk-v1"]);
+const MISTRAL_CLASSIFY_OPTOUTS = new Set(["mistral-sdk-v1"]);
 
 function createMistralScenarioSpec(spec) {
   return {
@@ -46,38 +46,26 @@ function createMistralScenarioSpec(spec) {
 export const MISTRAL_SCENARIO_SPECS = [
   createMistralScenarioSpec({
     autoEntry: "scenario.mistral-v1-3-4.mjs",
-    dependencyName: "mistral-sdk-v1-3-4",
-    snapshotName: "mistral-v1-3-4",
+    dependencyName: "mistral-sdk-v1",
+    snapshotName: "mistral-v1",
     wrapperEntry: "scenario.mistral-v1-3-4.ts",
   }),
   createMistralScenarioSpec({
-    autoEntry: "scenario.mistral-v1-10-0.mjs",
-    dependencyName: "mistral-sdk-v1-10-0",
-    snapshotName: "mistral-v1-10-0",
-    wrapperEntry: "scenario.mistral-v1-10-0.ts",
-  }),
-  createMistralScenarioSpec({
-    autoEntry: "scenario.mistral-v1-14-1.mjs",
-    dependencyName: "mistral-sdk-v1-14-1",
-    snapshotName: "mistral-v1-14-1",
-    wrapperEntry: "scenario.mistral-v1-14-1.ts",
-  }),
-  createMistralScenarioSpec({
-    autoEntry: "scenario.mistral-v1-15-1.mjs",
-    dependencyName: "mistral-sdk-v1-15-1",
-    snapshotName: "mistral-v1-15-1",
-    wrapperEntry: "scenario.mistral-v1-15-1.ts",
-  }),
-  createMistralScenarioSpec({
     autoEntry: "scenario.mistral-v1.mjs",
-    dependencyName: "mistral-sdk-v1",
-    snapshotName: "mistral-v1",
+    dependencyName: "mistral-sdk-v1-latest",
+    snapshotName: "mistral-v1-latest",
     wrapperEntry: "scenario.mistral-v1.ts",
   }),
   createMistralScenarioSpec({
     autoEntry: "scenario.mjs",
     dependencyName: "mistral-sdk-v2",
     snapshotName: "mistral-v2",
+    wrapperEntry: "scenario.ts",
+  }),
+  createMistralScenarioSpec({
+    autoEntry: "scenario.mjs",
+    dependencyName: "mistral-sdk-v2-latest",
+    snapshotName: "mistral-v2-latest",
     wrapperEntry: "scenario.ts",
   }),
 ];

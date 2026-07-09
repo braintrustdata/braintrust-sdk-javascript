@@ -1,6 +1,6 @@
 import { wrapAISDK } from "braintrust";
-import * as ai from "ai-sdk-v6";
-import { MockLanguageModelV3 } from "ai-sdk-v6/test";
+import * as ai from "ai-sdk-v6-latest";
+import { MockLanguageModelV3 } from "ai-sdk-v6-latest/test";
 import { runMain, runTracedScenario } from "../../helpers/provider-runtime.mjs";
 
 const ROOT_NAME = "ai-sdk-concurrent-shared-model-root";

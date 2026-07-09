@@ -1,4 +1,7 @@
-const mod = require("@anthropic-ai/bedrock-sdk");
+const packageName =
+  process.env.ANTHROPIC_BEDROCK_PACKAGE_NAME ||
+  "anthropic-bedrock-sdk-v0-latest";
+const mod = require(packageName);
 const AnthropicBedrock = mod.default ?? mod.AnthropicBedrock ?? mod;
 
 void (async () => {

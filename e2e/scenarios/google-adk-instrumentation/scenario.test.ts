@@ -15,14 +15,26 @@ const googleADKScenarios = await Promise.all(
   [
     {
       autoEntry: "scenario.google-adk-v061.mjs",
-      dependencyName: "google-adk-sdk-v061",
-      snapshotName: "google-adk-v061",
+      dependencyName: "google-adk-sdk-v0",
+      snapshotName: "google-adk-v0",
+      wrapperEntry: "scenario.google-adk-v061.ts",
+    },
+    {
+      autoEntry: "scenario.google-adk-v061.mjs",
+      dependencyName: "google-adk-sdk-v0-latest",
+      snapshotName: "google-adk-v0-latest",
       wrapperEntry: "scenario.google-adk-v061.ts",
     },
     {
       autoEntry: "scenario.mjs",
-      dependencyName: "@google/adk",
-      snapshotName: "google-adk-v1000",
+      dependencyName: "google-adk-sdk-v1",
+      snapshotName: "google-adk-v1",
+      wrapperEntry: "scenario.ts",
+    },
+    {
+      autoEntry: "scenario.mjs",
+      dependencyName: "google-adk-sdk-v1-latest",
+      snapshotName: "google-adk-v1-latest",
       wrapperEntry: "scenario.ts",
     },
   ].map(async (scenario) => ({
@@ -42,6 +54,7 @@ describe.concurrent("variants", () => {
         runScenario: async ({ runScenarioDir }) => {
           await runScenarioDir({
             entry: scenario.wrapperEntry,
+            env: { GOOGLE_ADK_PACKAGE_NAME: scenario.dependencyName },
             runContext: {
               variantKey: scenario.snapshotName,
               originalScenarioDir,
@@ -61,6 +74,7 @@ describe.concurrent("variants", () => {
         runScenario: async ({ runNodeScenarioDir }) => {
           await runNodeScenarioDir({
             entry: scenario.autoEntry,
+            env: { GOOGLE_ADK_PACKAGE_NAME: scenario.dependencyName },
             nodeArgs: ["--import", "braintrust/hook.mjs"],
             runContext: {
               variantKey: scenario.snapshotName,
