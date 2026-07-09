@@ -186,9 +186,13 @@ function buildMetadata(exported: MastraExportedSpan): Record<string, unknown> {
       if (value !== undefined) out[key] = value;
     }
   }
-  // Note: `exported.tags` is intentionally NOT placed in metadata. Braintrust
-  // surfaces tags from the top-level `tags` row field (see `logPayload`), and
-  // nesting them under `metadata.tags` would hide them from the tag UI/filters.
+  // Retained for backward compatibility: prior releases surfaced `tags` here,
+  // so anything referencing `metadata.tags` keeps working. The top-level `tags`
+  // row field (see `logPayload`) is what Braintrust surfaces as first-class,
+  // filterable tags; this copy is redundant-but-harmless metadata.
+  if (exported.tags && exported.tags.length > 0) {
+    out.tags = exported.tags;
+  }
   if (exported.requestContext && isObject(exported.requestContext)) {
     out.request_context = exported.requestContext;
   }

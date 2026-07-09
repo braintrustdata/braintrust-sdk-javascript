@@ -87,14 +87,18 @@ describe("BraintrustObservabilityExporter tags", () => {
 
     const root = byName("agent run");
     expect(root).toBeDefined();
-    // Braintrust surfaces top-level `tags` as first-class tags; not metadata.
+    // Braintrust surfaces the top-level `tags` field as first-class tags.
     expect(root.tags).toEqual(["production", "beta"]);
-    expect(root.metadata?.tags).toBeUndefined();
+    // Backward compatibility: prior releases mirrored tags under metadata, so
+    // that mirror is retained alongside the first-class top-level field.
+    expect(root.metadata?.tags).toEqual(["production", "beta"]);
 
-    // Braintrust tags are trace-level, so non-root spans carry none.
+    // Top-level `tags` are trace-level, so non-root spans carry none.
     const child = byName("tool call");
     expect(child).toBeDefined();
     expect(child.tags).toBeUndefined();
-    expect(child.metadata?.tags).toBeUndefined();
+    // Backward compatibility: prior releases mirrored any span's tags under
+    // metadata, regardless of root-ness, so that behavior is preserved here.
+    expect(child.metadata?.tags).toEqual(["should-not-appear"]);
   });
 });
