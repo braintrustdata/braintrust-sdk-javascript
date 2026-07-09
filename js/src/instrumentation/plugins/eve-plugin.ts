@@ -8,6 +8,8 @@ import type {
   EveHandleMessageStreamEvent,
   EveHookContext,
   EveHookDefinition,
+  EveInstrumentationDefinition,
+  EveInstrumentationStepStartedEventInput,
   EveRuntimeActionRequest,
   EveRuntimeActionResult,
   EveRuntimeToolCallActionRequest,
@@ -19,33 +21,15 @@ type SpanState = {
   span: Span;
 };
 
-type ToolCall = {
-  function: {
-    arguments: string;
-    name: string;
-  };
-  id: string;
-  type: "function";
-};
-
-type AssistantToolCallMessage = {
-  content: unknown;
-  role: "assistant";
-  tool_calls: ToolCall[];
-};
-
 type StepState = SpanState & {
-  assistantToolCallMessage?: AssistantToolCallMessage;
+  input?: unknown;
   metrics: Record<string, number>;
   ordinal: number;
   output?: unknown;
-  toolCalls: ToolCall[];
 };
 
 type TurnState = SpanState & {
-  inputLogged: boolean;
   key: string;
-  messages: unknown[];
   metrics: Record<string, number>;
   nextStepOrdinal: number;
   output?: unknown;
@@ -69,6 +53,23 @@ type ParentLineage = {
 };
 
 const EVE_BRIDGE = Symbol.for("braintrust.eve.bridge");
+const EVE_CONTEXT_KEY_REGISTRY = Symbol.for("eve.context-key-registry");
+const EVE_CONTEXT_STORAGE = Symbol.for("eve.context-storage");
+const EVE_LLM_INPUT_STATE_KEY = "braintrust.eve.llmInputs";
+const EVE_LLM_INPUT_STATE = { name: EVE_LLM_INPUT_STATE_KEY };
+const MAX_STORED_LLM_INPUTS = 100;
+
+type CapturedEveModelInput = {
+  instructions?: string | readonly unknown[];
+  messages: readonly unknown[];
+};
+
+type EveLlmInputState = {
+  entries: readonly {
+    input: CapturedEveModelInput;
+    key: string;
+  }[];
+};
 
 /** Manual hook instrumentation for eve runtime stream events. */
 export function braintrustEveHook(
@@ -83,14 +84,49 @@ export function braintrustEveHook(
   };
 }
 
+/** Eve instrumentation helper for logger setup and durable LLM input capture. */
+export function braintrustEveInstrumentation(
+  options: {
+    setup?: EveInstrumentationDefinition["setup"];
+  } = {},
+): EveInstrumentationDefinition {
+  return {
+    events: {
+      "step.started": (input: EveInstrumentationStepStartedEventInput) => {
+        try {
+          captureEveModelInput(input);
+        } catch (error) {
+          debugLogger.warn("Error in Eve LLM input capture:", error);
+        }
+      },
+    },
+    recordInputs: false,
+    recordOutputs: false,
+    setup: options.setup,
+  };
+}
+
 function getEveBridge(): EveBridge {
-  const existing = Reflect.get(globalThis, EVE_BRIDGE);
+  const existing = Object.getOwnPropertyDescriptor(
+    globalThis,
+    EVE_BRIDGE,
+  )?.value;
   if (existing instanceof EveBridge) {
     return existing;
   }
   const bridge = new EveBridge();
-  Reflect.set(globalThis, EVE_BRIDGE, bridge);
+  Object.defineProperty(globalThis, EVE_BRIDGE, {
+    configurable: true,
+    value: bridge,
+    writable: true,
+  });
   return bridge;
+}
+
+function isEveHandleMessageStreamEvent(
+  event: unknown,
+): event is EveHandleMessageStreamEvent {
+  return isObject(event) && typeof event["type"] === "string";
 }
 
 class EveBridge {
@@ -99,7 +135,7 @@ class EveBridge {
     { metadata: Record<string, unknown> }
   >();
   private completedToolKeys = new Set<string>();
-  private queue = Promise.resolve();
+  private queuesBySessionId = new Map<string, Promise<void>>();
   private toolsByCallKey = new Map<string, ToolState>();
   private turnsByKey = new Map<string, TurnState>();
 
@@ -108,20 +144,21 @@ class EveBridge {
     ctx: unknown,
     hookMetadata?: Record<string, unknown>,
   ): Promise<void> {
-    if (!isObject(event)) {
+    if (!isEveHandleMessageStreamEvent(event)) {
       return Promise.resolve();
     }
 
-    const next = this.queue
-      .then(() =>
-        this.handleEvent(
-          event as EveHandleMessageStreamEvent,
-          ctx,
-          hookMetadata,
-        ),
-      )
+    const queueKey = queueKeyForEvent(event, ctx);
+    const previous = this.queuesBySessionId.get(queueKey) ?? Promise.resolve();
+    const next = previous
+      .then(() => this.handleEvent(event, ctx, hookMetadata))
       .catch(() => undefined);
-    this.queue = next;
+    this.queuesBySessionId.set(queueKey, next);
+    void next.finally(() => {
+      if (this.queuesBySessionId.get(queueKey) === next) {
+        this.queuesBySessionId.delete(queueKey);
+      }
+    });
     return next;
   }
 
@@ -177,7 +214,7 @@ class EveBridge {
         await this.handleSessionFailed(event, ctx);
         return;
       case "session.completed":
-        this.handleSessionCompleted(ctx);
+        await this.handleSessionCompleted(event, ctx);
         return;
       default:
         return;
@@ -200,6 +237,8 @@ class EveBridge {
         continue;
       }
 
+      turn.metadata = { ...turn.metadata, ...metadata };
+      turn.span.log({ metadata: turn.metadata });
       for (const step of turn.stepsByIndex.values()) {
         step.metadata = { ...step.metadata, ...metadata };
         step.span.log({ metadata: step.metadata });
@@ -218,20 +257,21 @@ class EveBridge {
     }
 
     const key = turnKey(sessionId, event.data.turnId);
-    const metadata = { ...(hookMetadata ?? {}) };
+    const metadata = {
+      ...(hookMetadata ?? {}),
+      ...(this.sessionsById.get(sessionId)?.metadata ?? {}),
+    };
     const existing = this.turnsByKey.get(key);
     if (existing) {
-      existing.metadata = metadata;
-      existing.span.log({ metadata });
+      existing.metadata = { ...existing.metadata, ...metadata };
+      existing.span.log({ metadata: existing.metadata });
       return;
     }
 
     const span = await this.startTurnSpan(sessionId, event, ctx, metadata);
     span.log({ metadata });
     this.turnsByKey.set(key, {
-      inputLogged: false,
       key,
-      messages: [],
       metadata,
       metrics: {},
       nextStepOrdinal: 0,
@@ -251,11 +291,7 @@ class EveBridge {
     }
 
     const input = [{ content: event.data.message, role: "user" }];
-    turn.messages.push(...input);
-    if (!turn.inputLogged) {
-      turn.inputLogged = true;
-      turn.span.log({ input });
-    }
+    turn.span.log({ input });
   }
 
   private async handleStepStarted(
@@ -272,6 +308,7 @@ class EveBridge {
     const existing = turn.stepsByIndex.get(event.data.stepIndex);
     if (existing) {
       existing.span.log({
+        ...(existing.input !== undefined ? { input: existing.input } : {}),
         metadata: existing.metadata,
         metrics: existing.metrics,
         output: existing.output,
@@ -285,7 +322,11 @@ class EveBridge {
       ...turn.metadata,
       ...(this.sessionsById.get(sessionId)?.metadata ?? {}),
     };
-    const input = turn.messages.length > 0 ? [...turn.messages] : undefined;
+    const input = consumeCapturedEveModelInput(
+      sessionId,
+      event.data.turnId,
+      event.data.stepIndex,
+    );
     const [eventId, spanId] = await Promise.all([
       rowIdForStep(sessionId, event.data.turnId, stepOrdinal),
       spanIdForStep(sessionId, event.data.turnId, stepOrdinal),
@@ -293,7 +334,7 @@ class EveBridge {
     const span = startChildSpan(turn.span, {
       event: {
         id: eventId,
-        input,
+        ...(input !== undefined ? { input } : {}),
         metadata,
       },
       name: "eve.step",
@@ -301,14 +342,14 @@ class EveBridge {
       spanId,
       startTime: eventTime(event),
     });
-    span.log({ input, metadata });
+    span.log({ ...(input !== undefined ? { input } : {}), metadata });
 
     turn.stepsByIndex.set(event.data.stepIndex, {
+      ...(input !== undefined ? { input } : {}),
       metadata,
       metrics: {},
       ordinal: stepOrdinal,
       span,
-      toolCalls: [],
     });
   }
 
@@ -321,6 +362,13 @@ class EveBridge {
       return;
     }
 
+    const existingMessage =
+      Array.isArray(step.output) && isObject(step.output[0])
+        ? step.output[0].message
+        : undefined;
+    const existingToolCalls = isObject(existingMessage)
+      ? existingMessage.tool_calls
+      : undefined;
     step.output = [
       {
         finish_reason: normalizedFinishReason(event.data.finishReason),
@@ -328,24 +376,16 @@ class EveBridge {
         message: {
           content: event.data.message,
           role: "assistant",
-          ...(step.toolCalls.length > 0
-            ? { tool_calls: [...step.toolCalls] }
+          ...(Array.isArray(existingToolCalls)
+            ? { tool_calls: existingToolCalls }
             : {}),
         },
       },
     ];
-    if (step.assistantToolCallMessage) {
-      step.assistantToolCallMessage.content = event.data.message;
-      step.assistantToolCallMessage.tool_calls = [...step.toolCalls];
-    }
 
     const turn = this.turnForEvent(event, ctx);
     if (turn && event.data.finishReason !== "tool-calls") {
       turn.output = event.data.message;
-      turn.messages.push({
-        content: event.data.message,
-        role: "assistant",
-      });
     }
   }
 
@@ -391,13 +431,6 @@ class EveBridge {
     }
 
     for (const action of traceActions) {
-      if (step) {
-        const toolCall = toolCallMessageFromAction(action);
-        if (!step.toolCalls.some((existing) => existing.id === toolCall.id)) {
-          step.toolCalls.push(toolCall);
-        }
-      }
-
       if (isToolCallAction(action)) {
         await this.startRequestedTool(event, turn, sessionId, action, step);
       } else if (isLocalSubagentCallAction(action)) {
@@ -406,51 +439,34 @@ class EveBridge {
     }
 
     if (!step) {
-      turn.messages.push({
-        content: null,
-        role: "assistant",
-        tool_calls: traceActions.map(toolCallMessageFromAction),
-      });
       return;
     }
 
-    const outputChoice =
-      Array.isArray(step.output) && isObject(step.output[0])
-        ? step.output[0]
-        : undefined;
-    const outputMessage = outputChoice
-      ? Reflect.get(outputChoice, "message")
-      : undefined;
-    const content = isObject(outputMessage)
-      ? Reflect.get(outputMessage, "content")
-      : null;
-    if (!step.assistantToolCallMessage) {
-      step.assistantToolCallMessage = {
-        content,
-        role: "assistant",
-        tool_calls: [...step.toolCalls],
-      };
-      turn.messages.push(step.assistantToolCallMessage);
-    } else {
-      step.assistantToolCallMessage.content = content;
-      step.assistantToolCallMessage.tool_calls = [...step.toolCalls];
-    }
-
-    if (isObject(outputMessage)) {
-      Reflect.set(outputMessage, "tool_calls", [...step.toolCalls]);
-    } else {
-      step.output = [
-        {
-          finish_reason: "tool_calls",
-          index: 0,
-          message: {
-            content,
-            role: "assistant",
-            tool_calls: [...step.toolCalls],
-          },
+    step.output = [
+      {
+        finish_reason: "tool_calls",
+        index: 0,
+        message: {
+          content: null,
+          role: "assistant",
+          tool_calls: traceActions.map((action) => {
+            const name =
+              action.kind === "tool-call"
+                ? action.toolName
+                : (action.subagentName ?? action.name ?? "agent");
+            return {
+              function: {
+                arguments: JSON.stringify(action.input),
+                name,
+              },
+              id: action.callId,
+              type: "function",
+            };
+          }),
         },
-      ];
-    }
+      },
+    ];
+    step.span.log({ metadata: step.metadata, output: step.output });
   }
 
   private async handleActionResult(
@@ -509,14 +525,6 @@ class EveBridge {
       output: result.output,
     });
 
-    const turn = this.turnForEvent(event, ctx);
-    turn?.messages.push({
-      content: toolMessageContent(result.output),
-      name: result.toolName,
-      role: "tool",
-      tool_call_id: result.callId,
-    });
-
     const endTime = eventTime(event);
     tool.span.end(endTime === undefined ? undefined : { endTime });
     this.toolsByCallKey.delete(key);
@@ -542,11 +550,14 @@ class EveBridge {
     }
 
     const key = toolKey(sessionId, event.data.callId);
-    const metadata = { ...turn.metadata };
+    const metadata = toolMetadataFromTurn(turn);
     const existing = this.toolsByCallKey.get(key);
     if (existing) {
       existing.metadata = { ...existing.metadata, ...metadata };
       existing.span.log({ metadata: existing.metadata });
+      return;
+    }
+    if (this.completedToolKeys.has(key)) {
       return;
     }
 
@@ -554,6 +565,14 @@ class EveBridge {
       rowIdForSubagent(sessionId, event.data.callId),
       spanIdForSubagent(sessionId, event.data.callId),
     ]);
+    const pending = this.toolsByCallKey.get(key);
+    if (pending || this.completedToolKeys.has(key)) {
+      if (pending) {
+        pending.metadata = { ...pending.metadata, ...metadata };
+        pending.span.log({ metadata: pending.metadata });
+      }
+      return;
+    }
     const span = startChildSpan(turn.span, {
       event: {
         id: eventId,
@@ -604,14 +623,6 @@ class EveBridge {
       status: event.data.status,
     });
 
-    const turn = this.turnForEvent(event, ctx);
-    turn?.messages.push({
-      content: toolMessageContent(event.data.output),
-      name: event.data.subagentName,
-      role: "tool",
-      tool_call_id: event.data.callId,
-    });
-
     this.toolsByCallKey.delete(key);
     this.completedToolKeys.add(key);
     if (flushAfterCompletion) {
@@ -657,14 +668,6 @@ class EveBridge {
       output: result.output,
       spanState: subagent,
       status: event.data.status,
-    });
-
-    const turn = this.turnForEvent(event, ctx);
-    turn?.messages.push({
-      content: toolMessageContent(result.output),
-      name: result.subagentName,
-      role: "tool",
-      tool_call_id: result.callId,
     });
 
     this.toolsByCallKey.delete(key);
@@ -734,16 +737,15 @@ class EveBridge {
     };
     step.metrics = { ...step.metrics, ...metrics };
     if (Array.isArray(step.output) && isObject(step.output[0])) {
-      const finishReason = Reflect.get(step.output[0], "finish_reason");
+      const finishReason = step.output[0].finish_reason;
       if (typeof finishReason !== "string") {
-        Reflect.set(
-          step.output[0],
-          "finish_reason",
-          normalizedFinishReason(event.data.finishReason),
+        step.output[0].finish_reason = normalizedFinishReason(
+          event.data.finishReason,
         );
       }
     }
     step.span.log({
+      ...(step.input !== undefined ? { input: step.input } : {}),
       metadata: step.metadata,
       metrics,
       output: step.output,
@@ -855,8 +857,11 @@ class EveBridge {
     for (const [key, tool] of this.toolsByCallKey) {
       if (key.startsWith(`${sessionId}:`)) {
         const endTime = eventTime(event);
-        tool.span.end(endTime === undefined ? undefined : { endTime });
-        this.toolsByCallKey.delete(key);
+        if (!tool.endedByTurn) {
+          tool.span.log({ metadata: tool.metadata });
+          tool.span.end(endTime === undefined ? undefined : { endTime });
+          tool.endedByTurn = true;
+        }
       }
     }
 
@@ -865,21 +870,41 @@ class EveBridge {
     await this.flushInstrumentation();
   }
 
-  private handleSessionCompleted(ctx: unknown): void {
+  private async handleSessionCompleted(
+    event: Extract<EveHandleMessageStreamEvent, { type: "session.completed" }>,
+    ctx: unknown,
+  ): Promise<void> {
     const sessionId = sessionIdFromContext(ctx);
-    if (sessionId) {
-      this.sessionsById.delete(sessionId);
-      for (const key of this.toolsByCallKey.keys()) {
-        if (key.startsWith(`${sessionId}:`)) {
-          this.toolsByCallKey.delete(key);
-        }
+    if (!sessionId) {
+      return;
+    }
+
+    for (const [key, turn] of this.turnsByKey) {
+      if (!key.startsWith(`${sessionId}:`)) {
+        continue;
       }
-      for (const completedKey of this.completedToolKeys) {
-        if (completedKey.startsWith(`${sessionId}:`)) {
-          this.completedToolKeys.delete(completedKey);
-        }
+      this.endOpenChildrenForTurn(turn, eventTime(event));
+      turn.span.log({
+        metadata: turn.metadata,
+        metrics: turn.metrics,
+        output: turn.output,
+      });
+      const endTime = eventTime(event);
+      turn.span.end(endTime === undefined ? undefined : { endTime });
+      this.turnsByKey.delete(key);
+    }
+
+    for (const [key, tool] of this.toolsByCallKey) {
+      if (key.startsWith(`${sessionId}:`) && !tool.endedByTurn) {
+        const endTime = eventTime(event);
+        tool.span.log({ metadata: tool.metadata });
+        tool.span.end(endTime === undefined ? undefined : { endTime });
+        tool.endedByTurn = true;
       }
     }
+    this.sessionsById.delete(sessionId);
+
+    await this.flushInstrumentation();
   }
 
   private async ensureTurn(
@@ -903,13 +928,14 @@ class EveBridge {
       return existing;
     }
 
-    const metadata = { ...(hookMetadata ?? {}) };
+    const metadata = {
+      ...(hookMetadata ?? {}),
+      ...(this.sessionsById.get(sessionId)?.metadata ?? {}),
+    };
     const span = await this.startTurnSpan(sessionId, event, ctx, metadata);
     span.log({ metadata });
     const state = {
-      inputLogged: false,
       key,
-      messages: [],
       metadata,
       metrics: {},
       nextStepOrdinal: 0,
@@ -928,15 +954,18 @@ class EveBridge {
     step?: StepState,
   ): Promise<void> {
     const key = toolKey(sessionId, action.callId);
-    if (this.toolsByCallKey.has(key)) {
+    if (this.toolsByCallKey.has(key) || this.completedToolKeys.has(key)) {
       return;
     }
 
-    const metadata = { ...turn.metadata };
+    const metadata = toolMetadataFromTurn(turn);
     const [eventId, spanId] = await Promise.all([
       rowIdForTool(sessionId, event.data.turnId, action.callId),
       spanIdForTool(sessionId, event.data.turnId, action.callId),
     ]);
+    if (this.toolsByCallKey.has(key) || this.completedToolKeys.has(key)) {
+      return;
+    }
     const span = startChildSpan(turn.span, {
       event: {
         id: eventId,
@@ -967,16 +996,19 @@ class EveBridge {
     step?: StepState,
   ): Promise<void> {
     const key = toolKey(sessionId, action.callId);
-    if (this.toolsByCallKey.has(key)) {
+    if (this.toolsByCallKey.has(key) || this.completedToolKeys.has(key)) {
       return;
     }
 
     const name = action.subagentName ?? action.name ?? "agent";
-    const metadata = { ...turn.metadata };
+    const metadata = toolMetadataFromTurn(turn);
     const [eventId, spanId] = await Promise.all([
       rowIdForSubagent(sessionId, action.callId),
       spanIdForSubagent(sessionId, action.callId),
     ]);
+    if (this.toolsByCallKey.has(key) || this.completedToolKeys.has(key)) {
+      return;
+    }
     const span = startChildSpan(turn.span, {
       event: {
         id: eventId,
@@ -1011,11 +1043,15 @@ class EveBridge {
       return undefined;
     }
 
-    const metadata = { ...turn.metadata };
+    const metadata = toolMetadataFromTurn(turn);
     const [eventId, spanId] = await Promise.all([
       rowIdForTool(sessionId, event.data.turnId, result.callId),
       spanIdForTool(sessionId, event.data.turnId, result.callId),
     ]);
+    const existing = this.toolsByCallKey.get(toolKey(sessionId, result.callId));
+    if (existing) {
+      return existing;
+    }
     const span = startChildSpan(turn.span, {
       event: {
         id: eventId,
@@ -1049,11 +1085,17 @@ class EveBridge {
       return undefined;
     }
 
-    const metadata = { ...turn.metadata };
+    const metadata = toolMetadataFromTurn(turn);
     const [eventId, spanId] = await Promise.all([
       rowIdForSubagent(sessionId, event.data.callId),
       spanIdForSubagent(sessionId, event.data.callId),
     ]);
+    const existing = this.toolsByCallKey.get(
+      toolKey(sessionId, event.data.callId),
+    );
+    if (existing) {
+      return existing;
+    }
     const span = startChildSpan(turn.span, {
       event: {
         id: eventId,
@@ -1087,11 +1129,15 @@ class EveBridge {
       return undefined;
     }
 
-    const metadata = { ...turn.metadata };
+    const metadata = toolMetadataFromTurn(turn);
     const [eventId, spanId] = await Promise.all([
       rowIdForSubagent(sessionId, result.callId),
       spanIdForSubagent(sessionId, result.callId),
     ]);
+    const existing = this.toolsByCallKey.get(toolKey(sessionId, result.callId));
+    if (existing) {
+      return existing;
+    }
     const span = startChildSpan(turn.span, {
       event: {
         id: eventId,
@@ -1208,6 +1254,12 @@ class EveBridge {
       spanIdForTurn(lineage.sessionId, lineage.turnId),
       rootSpanIdForLineage(lineage),
     ]);
+    const pending = this.toolsByCallKey.get(
+      toolKey(lineage.sessionId, lineage.callId),
+    );
+    if (pending) {
+      return;
+    }
     const parentTurn = this.turnsByKey.get(
       turnKey(lineage.sessionId, lineage.turnId),
     );
@@ -1262,6 +1314,7 @@ class EveBridge {
   private endOpenChildrenForTurn(turn: TurnState, endTime: number | undefined) {
     for (const step of turn.stepsByIndex.values()) {
       step.span.log({
+        ...(step.input !== undefined ? { input: step.input } : {}),
         metadata: step.metadata,
         metrics: step.metrics,
         output: step.output,
@@ -1272,6 +1325,9 @@ class EveBridge {
 
     for (const tool of this.toolsByCallKey.values()) {
       if (tool.turnKey !== turn.key) {
+        continue;
+      }
+      if (tool.endedByTurn) {
         continue;
       }
       tool.span.log({ metadata: tool.metadata });
@@ -1308,19 +1364,251 @@ function subagentNameFromContext(ctx: unknown): string | undefined {
   if (!isObject(ctx)) {
     return undefined;
   }
-  const agent = Reflect.get(ctx, "agent");
+  const agent = ctx["agent"];
   if (!isObject(agent)) {
     return undefined;
   }
-  const name = Reflect.get(agent, "name");
+  const name = agent["name"];
   return typeof name === "string" ? name : undefined;
+}
+
+function captureEveModelInput(
+  input: EveInstrumentationStepStartedEventInput,
+): void {
+  if (!isObject(input)) {
+    return;
+  }
+  const session = input["session"];
+  const turn = input["turn"];
+  const step = input["step"];
+  if (!isObject(session) || !isObject(turn) || !isObject(step)) {
+    return;
+  }
+
+  const sessionId = session["id"];
+  const turnId = turn["id"];
+  const stepIndex = step["index"];
+  if (
+    typeof sessionId !== "string" ||
+    typeof turnId !== "string" ||
+    typeof stepIndex !== "number" ||
+    !Number.isInteger(stepIndex)
+  ) {
+    return;
+  }
+
+  const captured = capturedModelInput(input["modelInput"]);
+  if (!captured) {
+    return;
+  }
+
+  const state = readEveLlmInputState();
+  if (!state) {
+    return;
+  }
+
+  const key = llmInputKey(sessionId, turnId, stepIndex);
+  const entries = state.entries.filter((entry) => entry.key !== key);
+  entries.push({ input: captured, key });
+  writeEveLlmInputState({
+    entries: entries.slice(-MAX_STORED_LLM_INPUTS),
+  });
+}
+
+function consumeCapturedEveModelInput(
+  sessionId: string,
+  turnId: string,
+  stepIndex: number,
+): CapturedEveModelInput | undefined {
+  try {
+    const state = readEveLlmInputState();
+    if (!state) {
+      return undefined;
+    }
+
+    const key = llmInputKey(sessionId, turnId, stepIndex);
+    const entry = state.entries.find((candidate) => candidate.key === key);
+    if (!entry) {
+      return undefined;
+    }
+
+    writeEveLlmInputState({
+      entries: state.entries.filter((candidate) => candidate.key !== key),
+    });
+    return entry.input;
+  } catch (error) {
+    debugLogger.warn("Error in Eve LLM input consumption:", error);
+    return undefined;
+  }
+}
+
+function capturedModelInput(
+  modelInput: unknown,
+): CapturedEveModelInput | undefined {
+  if (!isObject(modelInput)) {
+    return undefined;
+  }
+
+  const messages = modelInput["messages"];
+  if (!Array.isArray(messages)) {
+    return undefined;
+  }
+
+  const instructions = modelInput["instructions"];
+  const value = {
+    ...(instructions !== undefined ? { instructions } : {}),
+    messages,
+  };
+  try {
+    const cloned: unknown = JSON.parse(JSON.stringify(value));
+    if (!isObject(cloned)) {
+      return undefined;
+    }
+    const clonedMessages = cloned["messages"];
+    if (!Array.isArray(clonedMessages)) {
+      return undefined;
+    }
+    const clonedInstructions = cloned["instructions"];
+    if (
+      clonedInstructions !== undefined &&
+      typeof clonedInstructions !== "string" &&
+      !Array.isArray(clonedInstructions)
+    ) {
+      return undefined;
+    }
+    return {
+      ...(clonedInstructions !== undefined
+        ? { instructions: clonedInstructions }
+        : {}),
+      messages: clonedMessages,
+    };
+  } catch {
+    return undefined;
+  }
+}
+
+function readEveLlmInputState(): EveLlmInputState | undefined {
+  const context = activeEveContext();
+  const key = eveLlmInputStateKey();
+  if (!context || !key) {
+    return undefined;
+  }
+
+  const get = context["get"];
+  if (typeof get !== "function") {
+    return undefined;
+  }
+
+  let state: unknown;
+  try {
+    state = get.call(context, key);
+  } catch {
+    return undefined;
+  }
+  if (!isObject(state)) {
+    return { entries: [] };
+  }
+
+  const entries = state["entries"];
+  if (!Array.isArray(entries)) {
+    return { entries: [] };
+  }
+
+  return {
+    entries: entries.flatMap((entry): EveLlmInputState["entries"] => {
+      if (!isObject(entry)) {
+        return [];
+      }
+      const entryKey = entry["key"];
+      const entryInput = entry["input"];
+      if (typeof entryKey !== "string" || !isCapturedModelInput(entryInput)) {
+        return [];
+      }
+      return [{ input: entryInput, key: entryKey }];
+    }),
+  };
+}
+
+function writeEveLlmInputState(state: EveLlmInputState): void {
+  const context = activeEveContext();
+  const key = eveLlmInputStateKey();
+  if (!context || !key) {
+    return;
+  }
+
+  const set = context["set"];
+  if (typeof set !== "function") {
+    return;
+  }
+
+  try {
+    set.call(context, key, state);
+  } catch {
+    return;
+  }
+}
+
+function activeEveContext(): Record<string, unknown> | undefined {
+  const storage = Object.getOwnPropertyDescriptor(
+    globalThis,
+    EVE_CONTEXT_STORAGE,
+  )?.value;
+  if (!isObject(storage)) {
+    return undefined;
+  }
+
+  const getStore = storage["getStore"];
+  if (typeof getStore !== "function") {
+    return undefined;
+  }
+
+  const context = getStore.call(storage);
+  return isObject(context) ? context : undefined;
+}
+
+function eveLlmInputStateKey(): object | undefined {
+  const registry = Object.getOwnPropertyDescriptor(
+    globalThis,
+    EVE_CONTEXT_KEY_REGISTRY,
+  )?.value;
+  if (!(registry instanceof Map)) {
+    return undefined;
+  }
+
+  const existing = registry.get(EVE_LLM_INPUT_STATE_KEY);
+  if (isObject(existing)) {
+    return existing;
+  }
+
+  registry.set(EVE_LLM_INPUT_STATE_KEY, EVE_LLM_INPUT_STATE);
+  return EVE_LLM_INPUT_STATE;
+}
+
+function isCapturedModelInput(input: unknown): input is CapturedEveModelInput {
+  if (!isObject(input) || !Array.isArray(input["messages"])) {
+    return false;
+  }
+  const instructions = input["instructions"];
+  return (
+    instructions === undefined ||
+    typeof instructions === "string" ||
+    Array.isArray(instructions)
+  );
+}
+
+function llmInputKey(
+  sessionId: string,
+  turnId: string,
+  stepIndex: number,
+): string {
+  return `${sessionId}\0${turnId}\0${stepIndex}`;
 }
 
 function modelMetadataFromRuntime(runtime: unknown): Record<string, unknown> {
   if (!isObject(runtime)) {
     return {};
   }
-  const modelId = Reflect.get(runtime, "modelId");
+  const modelId = runtime["modelId"];
   return typeof modelId === "string" ? modelMetadataFromModelId(modelId) : {};
 }
 
@@ -1347,30 +1635,45 @@ function sessionIdFromContext(ctx: unknown): string | undefined {
   if (!isObject(ctx)) {
     return undefined;
   }
-  const session = Reflect.get(ctx, "session");
+  const session = ctx["session"];
   if (!isObject(session)) {
     return undefined;
   }
-  const id = Reflect.get(session, "id");
+  const id = session["id"];
   return typeof id === "string" ? id : undefined;
+}
+
+function queueKeyForEvent(event: Record<PropertyKey, unknown>, ctx: unknown) {
+  if (isObject(event.data)) {
+    const sessionId = event.data["sessionId"];
+    if (typeof sessionId === "string") {
+      return sessionId;
+    }
+  }
+  return sessionIdFromContext(ctx) ?? "__unknown__";
+}
+
+function toolMetadataFromTurn(turn: TurnState): Record<string, unknown> {
+  const { model: _model, provider: _provider, ...metadata } = turn.metadata;
+  return metadata;
 }
 
 function parentLineageFromContext(ctx: unknown): ParentLineage | undefined {
   if (!isObject(ctx)) {
     return undefined;
   }
-  const session = Reflect.get(ctx, "session");
+  const session = ctx.session;
   if (!isObject(session)) {
     return undefined;
   }
-  const parent = Reflect.get(session, "parent");
+  const parent = session["parent"];
   if (!isObject(parent)) {
     return undefined;
   }
 
-  const callId = Reflect.get(parent, "callId");
-  const rootSessionId = Reflect.get(parent, "rootSessionId");
-  const sessionId = Reflect.get(parent, "sessionId");
+  const callId = parent["callId"];
+  const rootSessionId = parent["rootSessionId"];
+  const sessionId = parent["sessionId"];
   if (
     typeof callId !== "string" ||
     typeof rootSessionId !== "string" ||
@@ -1379,11 +1682,9 @@ function parentLineageFromContext(ctx: unknown): ParentLineage | undefined {
     return undefined;
   }
 
-  const turn = Reflect.get(parent, "turn");
-  const turnId = isObject(turn) ? Reflect.get(turn, "id") : undefined;
-  const turnSequence = isObject(turn)
-    ? Reflect.get(turn, "sequence")
-    : undefined;
+  const turn = parent["turn"];
+  const turnId = isObject(turn) ? turn["id"] : undefined;
+  const turnSequence = isObject(turn) ? turn["sequence"] : undefined;
   return {
     callId,
     rootSessionId,
@@ -1398,10 +1699,10 @@ function isToolCallAction(
 ): action is EveRuntimeToolCallActionRequest {
   return (
     isObject(action) &&
-    Reflect.get(action, "kind") === "tool-call" &&
-    typeof Reflect.get(action, "callId") === "string" &&
-    typeof Reflect.get(action, "toolName") === "string" &&
-    isObject(Reflect.get(action, "input"))
+    action["kind"] === "tool-call" &&
+    typeof action["callId"] === "string" &&
+    typeof action["toolName"] === "string" &&
+    isObject(action["input"])
   );
 }
 
@@ -1410,9 +1711,9 @@ function isLocalSubagentCallAction(
 ): action is Extract<EveRuntimeActionRequest, { kind: "subagent-call" }> {
   return (
     isObject(action) &&
-    Reflect.get(action, "kind") === "subagent-call" &&
-    typeof Reflect.get(action, "callId") === "string" &&
-    isObject(Reflect.get(action, "input"))
+    action["kind"] === "subagent-call" &&
+    typeof action["callId"] === "string" &&
+    isObject(action["input"])
   );
 }
 
@@ -1429,9 +1730,9 @@ function isToolResult(
 ): result is EveRuntimeToolResultActionResult {
   return (
     isObject(result) &&
-    Reflect.get(result, "kind") === "tool-result" &&
-    typeof Reflect.get(result, "callId") === "string" &&
-    typeof Reflect.get(result, "toolName") === "string"
+    result["kind"] === "tool-result" &&
+    typeof result["callId"] === "string" &&
+    typeof result["toolName"] === "string"
   );
 }
 
@@ -1440,44 +1741,10 @@ function isSubagentResult(
 ): result is Extract<EveRuntimeActionResult, { kind: "subagent-result" }> {
   return (
     isObject(result) &&
-    Reflect.get(result, "kind") === "subagent-result" &&
-    typeof Reflect.get(result, "callId") === "string" &&
-    typeof Reflect.get(result, "subagentName") === "string"
+    result["kind"] === "subagent-result" &&
+    typeof result["callId"] === "string" &&
+    typeof result["subagentName"] === "string"
   );
-}
-
-function toolCallMessageFromAction(
-  action:
-    | EveRuntimeToolCallActionRequest
-    | Extract<EveRuntimeActionRequest, { kind: "subagent-call" }>,
-): ToolCall {
-  const name =
-    action.kind === "tool-call"
-      ? action.toolName
-      : (action.subagentName ?? action.name ?? "agent");
-  return {
-    function: {
-      arguments: JSON.stringify(action.input),
-      name,
-    },
-    id: action.callId,
-    type: "function",
-  };
-}
-
-function toolMessageContent(output: unknown): string {
-  if (typeof output === "string") {
-    return output;
-  }
-  try {
-    const serialized = JSON.stringify(output);
-    if (typeof serialized === "string") {
-      return serialized;
-    }
-  } catch {
-    // Fall back to a string representation for unexpected hook payloads.
-  }
-  return output === undefined || output === null ? "" : String(output);
 }
 
 function normalizedFinishReason(

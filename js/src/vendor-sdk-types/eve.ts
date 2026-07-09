@@ -305,3 +305,43 @@ export interface EveHookDefinition {
       | undefined;
   };
 }
+
+export interface EveInstrumentationSetupContext {
+  readonly agentName: string;
+}
+
+export interface EveInstrumentationModelInput {
+  readonly instructions?: string | readonly EveJsonObject[];
+  readonly messages: readonly EveJsonObject[];
+}
+
+export interface EveInstrumentationStepStartedEventInput {
+  readonly channel?: unknown;
+  readonly modelInput: EveInstrumentationModelInput;
+  readonly session: {
+    readonly id?: string;
+  };
+  readonly step: {
+    readonly index?: number;
+  };
+  readonly turn: {
+    readonly id?: string;
+    readonly sequence?: number;
+  };
+}
+
+export interface EveInstrumentationDefinition {
+  readonly events?: {
+    readonly "step.started"?: (
+      input: EveInstrumentationStepStartedEventInput,
+    ) => void | { readonly runtimeContext?: EveJsonObject };
+    readonly [eventType: string]:
+      | ((
+          input: EveInstrumentationStepStartedEventInput,
+        ) => void | { readonly runtimeContext?: EveJsonObject })
+      | undefined;
+  };
+  readonly recordInputs?: boolean;
+  readonly recordOutputs?: boolean;
+  readonly setup?: (context: EveInstrumentationSetupContext) => void;
+}

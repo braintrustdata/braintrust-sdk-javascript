@@ -55,6 +55,7 @@ describe("eve instrumentation", () => {
       "eve.turn",
       researcher?.span.id,
     )[0];
+    const childSteps = findChildSpans(events, "eve.step", childTurn?.span.id);
     const childSearch = findLatestChildSpan(
       events,
       "search",
@@ -78,7 +79,9 @@ describe("eve instrumentation", () => {
     expect(steps.map((step) => step.span.type)).toEqual(["llm", "llm", "llm"]);
     for (const step of steps) {
       expect(step.span.parentIds).toEqual([root?.span.id]);
-      expect(step.input).toEqual(expect.arrayContaining([expect.anything()]));
+      expect(step.input).toMatchObject({
+        messages: expect.any(Array),
+      });
       expect(step.metadata).toMatchObject({
         model: "gpt-5.4-mini",
         provider: "openai",
@@ -107,6 +110,21 @@ describe("eve instrumentation", () => {
       scenario: "eve-instrumentation",
       testRunId: expect.any(String),
     });
+
+    expect(childSteps).toHaveLength(2);
+    for (const step of childSteps) {
+      expect(step.span.type).toBe("llm");
+      expect(step.span.parentIds).toEqual([childTurn?.span.id]);
+      expect(step.input).toMatchObject({
+        messages: expect.any(Array),
+      });
+      expect(step.metadata).toMatchObject({
+        model: "gpt-5.4-mini",
+        provider: "openai",
+        scenario: "eve-instrumentation",
+        testRunId: expect.any(String),
+      });
+    }
 
     expect(childSearch).toBeDefined();
     expect(childSearch?.span.type).toBe("tool");

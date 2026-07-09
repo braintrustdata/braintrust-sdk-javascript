@@ -1,5 +1,14 @@
-import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import {
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 import { createHash } from "node:crypto";
+import * as braintrustExports from "../../exports";
 import { configureNode } from "../../node/config";
 import {
   _exportsForTestingOnly,
@@ -7,7 +16,8 @@ import {
   startSpan,
   withCurrent,
 } from "../../logger";
-import { braintrustEveHook } from "./eve-plugin";
+import * as instrumentationExports from "../index";
+import { braintrustEveHook, braintrustEveInstrumentation } from "./eve-plugin";
 import type {
   EveHandleMessageStreamEvent,
   EveHookContext,
@@ -21,6 +31,55 @@ function deterministicEveIdForTest(...parts: string[]): string {
     .replace(/^(.{8})(.{4})(.{4})(.{4})(.{12})$/, "$1-$2-$3-$4-$5");
 }
 
+const EVE_CONTEXT_KEY_REGISTRY = Symbol.for("eve.context-key-registry");
+const EVE_CONTEXT_STORAGE = Symbol.for("eve.context-storage");
+const EVE_LLM_INPUT_STATE_KEY = "braintrust.eve.llmInputs";
+
+function installFakeEveContext() {
+  const hadRegistry = Reflect.has(globalThis, EVE_CONTEXT_KEY_REGISTRY);
+  const hadStorage = Reflect.has(globalThis, EVE_CONTEXT_STORAGE);
+  const previousRegistry = Reflect.get(globalThis, EVE_CONTEXT_KEY_REGISTRY);
+  const previousStorage = Reflect.get(globalThis, EVE_CONTEXT_STORAGE);
+  const values = new Map<string, unknown>();
+  const keyName = (key: unknown) =>
+    key && typeof key === "object" && "name" in key
+      ? Reflect.get(key, "name")
+      : undefined;
+  const context = {
+    get(key: unknown) {
+      const name = keyName(key);
+      return typeof name === "string" ? values.get(name) : undefined;
+    },
+    set(key: unknown, value: unknown) {
+      const name = keyName(key);
+      if (typeof name === "string") {
+        values.set(name, value);
+      }
+    },
+  };
+
+  Reflect.set(globalThis, EVE_CONTEXT_KEY_REGISTRY, new Map());
+  Reflect.set(globalThis, EVE_CONTEXT_STORAGE, {
+    getStore: () => context,
+  });
+
+  return {
+    values,
+    restore() {
+      if (hadRegistry) {
+        Reflect.set(globalThis, EVE_CONTEXT_KEY_REGISTRY, previousRegistry);
+      } else {
+        Reflect.deleteProperty(globalThis, EVE_CONTEXT_KEY_REGISTRY);
+      }
+      if (hadStorage) {
+        Reflect.set(globalThis, EVE_CONTEXT_STORAGE, previousStorage);
+      } else {
+        Reflect.deleteProperty(globalThis, EVE_CONTEXT_STORAGE);
+      }
+    },
+  };
+}
+
 try {
   configureNode();
 } catch {
@@ -31,6 +90,7 @@ describe("braintrustEveHook", () => {
   let backgroundLogger: ReturnType<
     typeof _exportsForTestingOnly.useTestBackgroundLogger
   >;
+  let restoreFakeEveContext: (() => void) | undefined;
 
   beforeAll(async () => {
     await _exportsForTestingOnly.simulateLoginForTests();
@@ -46,6 +106,9 @@ describe("braintrustEveHook", () => {
   });
 
   afterEach(() => {
+    vi.restoreAllMocks();
+    restoreFakeEveContext?.();
+    restoreFakeEveContext = undefined;
     Reflect.deleteProperty(globalThis, Symbol.for("braintrust.eve.bridge"));
     _exportsForTestingOnly.clearTestBackgroundLogger();
   });
@@ -55,6 +118,167 @@ describe("braintrustEveHook", () => {
 
     expect(Object.keys(hook)).toEqual(["events"]);
     expect(typeof hook.events?.["*"]).toBe("function");
+  });
+
+  it("returns an Eve instrumentation definition", () => {
+    const setup = vi.fn();
+    const instrumentation = braintrustEveInstrumentation({ setup });
+
+    expect(instrumentation).toMatchObject({
+      recordInputs: false,
+      recordOutputs: false,
+      setup,
+    });
+    expect(typeof instrumentation.events?.["step.started"]).toBe("function");
+  });
+
+  it("exports Eve APIs from root and instrumentation entrypoints", () => {
+    expect(braintrustExports.braintrustEveHook).toBe(braintrustEveHook);
+    expect(braintrustExports.braintrustEveInstrumentation).toBe(
+      braintrustEveInstrumentation,
+    );
+    expect(instrumentationExports.braintrustEveHook).toBe(braintrustEveHook);
+    expect(instrumentationExports.braintrustEveInstrumentation).toBe(
+      braintrustEveInstrumentation,
+    );
+  });
+
+  it("captures Eve instrumentation model input on the matching LLM step", async () => {
+    const fakeEve = installFakeEveContext();
+    restoreFakeEveContext = fakeEve.restore;
+    const instrumentation = braintrustEveInstrumentation();
+    const wildcard = braintrustEveHook().events?.["*"];
+    expect(wildcard).toBeDefined();
+
+    const ctx: EveHookContext = {
+      session: { id: "session-captured-input" },
+    };
+    const emit = (event: EveHandleMessageStreamEvent) => wildcard?.(event, ctx);
+    const modelInput = {
+      instructions: "Answer with the relevant Eve instrumentation detail.",
+      messages: [
+        {
+          content: "What should Braintrust capture?",
+          role: "user",
+        },
+      ],
+    };
+
+    await emit({
+      data: { sequence: 0, turnId: "turn-captured-input" },
+      type: "turn.started",
+    });
+    instrumentation.events?.["step.started"]?.({
+      modelInput,
+      session: { id: "session-captured-input" },
+      step: { index: 0 },
+      turn: { id: "turn-captured-input", sequence: 0 },
+    });
+    await emit({
+      data: { sequence: 0, stepIndex: 0, turnId: "turn-captured-input" },
+      type: "step.started",
+    });
+    await emit({
+      data: {
+        finishReason: "stop",
+        message: "Capture the model input.",
+        sequence: 0,
+        stepIndex: 0,
+        turnId: "turn-captured-input",
+      },
+      type: "message.completed",
+    });
+    await emit({
+      data: {
+        finishReason: "stop",
+        sequence: 0,
+        stepIndex: 0,
+        turnId: "turn-captured-input",
+      },
+      type: "step.completed",
+    });
+    await emit({
+      data: { sequence: 0, turnId: "turn-captured-input" },
+      type: "turn.completed",
+    });
+
+    const spans = (await backgroundLogger.drain()) as Array<
+      Record<string, any>
+    >;
+    const step = spans.find(
+      (span) => span.span_attributes?.name === "eve.step",
+    );
+    expect(step?.input).toEqual(modelInput);
+    expect(fakeEve.values.get(EVE_LLM_INPUT_STATE_KEY)).toEqual({
+      entries: [],
+    });
+  });
+
+  it("skips missing or malformed Eve instrumentation state without throwing", async () => {
+    const instrumentation = braintrustEveInstrumentation();
+    expect(() =>
+      instrumentation.events?.["step.started"]?.({ bad: true } as never),
+    ).not.toThrow();
+
+    const fakeEve = installFakeEveContext();
+    restoreFakeEveContext = fakeEve.restore;
+    fakeEve.values.set(EVE_LLM_INPUT_STATE_KEY, {
+      entries: [{ input: { messages: "not an array" }, key: "bad" }],
+    });
+    expect(() =>
+      instrumentation.events?.["step.started"]?.({
+        modelInput: {
+          messages: [{ content: "hello", role: "user" }],
+        },
+        session: { id: "session-malformed-state" },
+        step: { index: 0 },
+        turn: { id: "turn-malformed-state" },
+      }),
+    ).not.toThrow();
+
+    const wildcard = braintrustEveHook().events?.["*"];
+    const ctx: EveHookContext = { session: { id: "session-no-state" } };
+    await wildcard?.(
+      {
+        data: { sequence: 0, turnId: "turn-no-state" },
+        type: "turn.started",
+      },
+      ctx,
+    );
+    await wildcard?.(
+      {
+        data: { sequence: 0, stepIndex: 0, turnId: "turn-no-state" },
+        type: "step.started",
+      },
+      ctx,
+    );
+    await wildcard?.(
+      {
+        data: {
+          finishReason: "stop",
+          sequence: 0,
+          stepIndex: 0,
+          turnId: "turn-no-state",
+        },
+        type: "step.completed",
+      },
+      ctx,
+    );
+    await wildcard?.(
+      {
+        data: { sequence: 0, turnId: "turn-no-state" },
+        type: "turn.completed",
+      },
+      ctx,
+    );
+
+    const spans = (await backgroundLogger.drain()) as Array<
+      Record<string, any>
+    >;
+    const step = spans.find(
+      (span) => span.span_attributes?.name === "eve.step",
+    );
+    expect(step?.input).toBeUndefined();
   });
 
   it("records a flat Eve turn with session model metadata", async () => {
@@ -215,6 +439,7 @@ describe("braintrustEveHook", () => {
     expect(root).toMatchObject({
       input: [{ content: "Search then read", role: "user" }],
       metadata: {
+        ...expectedModelMetadata,
         scenario: "eve-plugin-unit",
         testRunId: "test-run-flat-tree",
       },
@@ -252,32 +477,8 @@ describe("braintrustEveHook", () => {
         testRunId: "test-run-flat-tree",
       });
     }
-    expect(steps[0]?.input).toEqual([
-      { content: "Search then read", role: "user" },
-    ]);
-    expect(steps[1]?.input).toMatchObject([
-      { content: "Search then read", role: "user" },
-      {
-        content: null,
-        role: "assistant",
-        tool_calls: [
-          {
-            function: {
-              arguments: JSON.stringify({ query: "Eve instrumentation" }),
-              name: "search",
-            },
-            id: "call-search",
-            type: "function",
-          },
-        ],
-      },
-      {
-        content: JSON.stringify({ hits: ["eve.dev/docs"] }),
-        name: "search",
-        role: "tool",
-        tool_call_id: "call-search",
-      },
-    ]);
+    expect(steps[0]?.input).toBeUndefined();
+    expect(steps[1]?.input).toBeUndefined();
     expect(tool).toMatchObject({
       input: { query: "Eve instrumentation" },
       metadata: {
@@ -321,7 +522,7 @@ describe("braintrustEveHook", () => {
     ]);
   });
 
-  it("merges incremental tool call requests into one assistant message", async () => {
+  it("does not reconstruct later LLM inputs from earlier hook events", async () => {
     const wildcard = braintrustEveHook().events?.["*"];
     expect(wildcard).toBeDefined();
 
@@ -458,26 +659,11 @@ describe("braintrustEveHook", () => {
       {
         finish_reason: "tool_calls",
         message: {
-          tool_calls: [
-            { id: "call-search", function: { name: "search" } },
-            { id: "call-read", function: { name: "read" } },
-          ],
+          tool_calls: [{ id: "call-read", function: { name: "read" } }],
         },
       },
     ]);
-    const assistantToolMessages = steps[1]?.input.filter(
-      (message: Record<string, any>) =>
-        message.role === "assistant" && Array.isArray(message.tool_calls),
-    );
-    expect(assistantToolMessages).toHaveLength(1);
-    expect(assistantToolMessages?.[0]).toMatchObject({
-      content: null,
-      role: "assistant",
-      tool_calls: [
-        { id: "call-search", function: { name: "search" }, type: "function" },
-        { id: "call-read", function: { name: "read" }, type: "function" },
-      ],
-    });
+    expect(steps[1]?.input).toBeUndefined();
   });
 
   it("merges late tool results into tool spans closed by turn completion", async () => {
@@ -568,6 +754,179 @@ describe("braintrustEveHook", () => {
       span_parents: [turns[0]?.span_id],
     });
     expect(tool?.metrics?.end).toEqual(expect.any(Number));
+  });
+
+  it("keeps deterministic tool state available after session completion", async () => {
+    const wildcard = braintrustEveHook({
+      metadata: {
+        scenario: "eve-plugin-unit",
+        testRunId: "test-run-late-after-session",
+      },
+    }).events?.["*"];
+    expect(wildcard).toBeDefined();
+
+    const ctx: EveHookContext = {
+      agent: { name: "eve-test-agent" },
+      channel: { kind: "http" },
+      session: { id: "session-late-after-session" },
+    };
+    const emit = (event: EveHandleMessageStreamEvent) => wildcard?.(event, ctx);
+
+    await emit({
+      data: { sequence: 0, turnId: "turn-late-after-session" },
+      meta: { at: "2026-01-01T00:00:00.000Z" },
+      type: "turn.started",
+    });
+    await emit({
+      data: { sequence: 0, stepIndex: 0, turnId: "turn-late-after-session" },
+      meta: { at: "2026-01-01T00:00:00.010Z" },
+      type: "step.started",
+    });
+    await emit({
+      data: {
+        actions: [
+          {
+            callId: "call-after-session",
+            input: { query: "after session" },
+            kind: "tool-call",
+            toolName: "search",
+          },
+        ],
+        sequence: 0,
+        stepIndex: 0,
+        turnId: "turn-late-after-session",
+      },
+      meta: { at: "2026-01-01T00:00:00.020Z" },
+      type: "actions.requested",
+    });
+    await emit({
+      meta: { at: "2026-01-01T00:00:00.030Z" },
+      type: "session.completed",
+    });
+    await emit({
+      data: {
+        result: {
+          callId: "call-after-session",
+          kind: "tool-result",
+          output: { title: "After session" },
+          toolName: "search",
+        },
+        sequence: 0,
+        status: "completed",
+        stepIndex: 0,
+        turnId: "turn-late-after-session",
+      },
+      meta: { at: "2026-01-01T00:00:00.040Z" },
+      type: "action.result",
+    });
+
+    const spans = (await backgroundLogger.drain()) as Array<
+      Record<string, any>
+    >;
+    const tool = spans.find((span) => span.span_attributes?.name === "search");
+    expect(tool).toMatchObject({
+      input: { query: "after session" },
+      output: { title: "After session" },
+    });
+    expect(tool?.metrics?.end).toEqual(expect.any(Number));
+  });
+
+  it("records result-only tool events without invented input", async () => {
+    const wildcard = braintrustEveHook({
+      metadata: {
+        scenario: "eve-plugin-unit",
+        testRunId: "test-run-result-only",
+      },
+    }).events?.["*"];
+    expect(wildcard).toBeDefined();
+
+    const ctx: EveHookContext = {
+      agent: { name: "eve-test-agent" },
+      channel: { kind: "http" },
+      session: { id: "session-result-only" },
+    };
+    const emit = (event: EveHandleMessageStreamEvent) => wildcard?.(event, ctx);
+
+    await emit({
+      data: {
+        result: {
+          callId: "call-result-only",
+          kind: "tool-result",
+          output: { title: "Result only" },
+          toolName: "search",
+        },
+        sequence: 0,
+        status: "completed",
+        stepIndex: 0,
+        turnId: "turn-result-only",
+      },
+      type: "action.result",
+    });
+    await emit({
+      data: { sequence: 0, turnId: "turn-result-only" },
+      type: "turn.completed",
+    });
+
+    const spans = (await backgroundLogger.drain()) as Array<
+      Record<string, any>
+    >;
+    const tool = spans.find((span) => span.span_attributes?.name === "search");
+    expect(tool).toMatchObject({
+      output: { title: "Result only" },
+      span_attributes: { name: "search", type: "tool" },
+    });
+    expect(tool?.input).toBeUndefined();
+  });
+
+  it("serializes events per session without blocking other sessions", async () => {
+    const wildcard = braintrustEveHook().events?.["*"];
+    expect(wildcard).toBeDefined();
+
+    const sessionA: EveHookContext = { session: { id: "session-queue-a" } };
+    const sessionB: EveHookContext = { session: { id: "session-queue-b" } };
+    const emitA = (event: EveHandleMessageStreamEvent) =>
+      wildcard?.(event, sessionA);
+    const emitB = (event: EveHandleMessageStreamEvent) =>
+      wildcard?.(event, sessionB);
+
+    await emitA({
+      data: { sequence: 0, turnId: "turn-a" },
+      type: "turn.started",
+    });
+    await emitB({
+      data: { sequence: 0, turnId: "turn-b" },
+      type: "turn.started",
+    });
+
+    let releaseFirstFlush: (() => void) | undefined;
+    const firstFlush = new Promise<void>((resolve) => {
+      releaseFirstFlush = resolve;
+    });
+    const flushSpy = vi
+      .spyOn(backgroundLogger, "flush")
+      .mockImplementationOnce(() => firstFlush)
+      .mockResolvedValue(undefined);
+
+    const doneA = emitA({
+      data: { sequence: 0, turnId: "turn-a" },
+      type: "turn.completed",
+    });
+    for (let i = 0; i < 10 && flushSpy.mock.calls.length < 1; i++) {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    }
+    expect(flushSpy).toHaveBeenCalledTimes(1);
+
+    const doneB = emitB({
+      data: { sequence: 0, turnId: "turn-b" },
+      type: "turn.completed",
+    });
+    for (let i = 0; i < 10 && flushSpy.mock.calls.length < 2; i++) {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    }
+    expect(flushSpy).toHaveBeenCalledTimes(2);
+
+    releaseFirstFlush?.();
+    await Promise.all([doneA, doneB]);
   });
 
   it("uses deterministic ids and nests local subagent sessions from Eve lineage", async () => {
