@@ -1,7 +1,18 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { _exportsForTestingOnly, currentSpan, initLogger } from "../../logger";
+import {
+  _exportsForTestingOnly,
+  currentSpan,
+  initLogger,
+  startSpan,
+  withCurrent,
+} from "../../logger";
 import { configureNode } from "../../node/config";
 import { braintrustAISDKTelemetry } from "../../wrappers/ai-sdk/telemetry";
+import {
+  registerWorkflowAgentWrapperSpan,
+  unregisterWorkflowAgentWrapperSpan,
+} from "../../wrappers/ai-sdk/workflow-agent-context";
+import { BRAINTRUST_AI_SDK_V7_OPERATION_KEY as AI_SDK_V7_OPERATION_KEY } from "../../vendor-sdk-types/ai-sdk-v7-telemetry";
 
 try {
   configureNode();
@@ -189,6 +200,7 @@ describe("braintrustAISDKTelemetry", () => {
 
     telemetry.onStart?.({
       callId: "call-1",
+      instructions: "Be terse.",
       operationId: "ai.generateText",
       provider: "openai",
       modelId: "gpt-4.1-mini",
@@ -197,9 +209,10 @@ describe("braintrustAISDKTelemetry", () => {
     });
     telemetry.onLanguageModelCallStart?.({
       callId: "call-1",
+      instructions: "Be terse.",
       provider: "openai",
       modelId: "gpt-4.1-mini",
-      prompt: [{ role: "user", content: "Reply with OK." }],
+      messages: [{ role: "user", content: "Reply with OK." }],
     });
     telemetry.onLanguageModelCallEnd?.({
       callId: "call-1",
@@ -239,6 +252,7 @@ describe("braintrustAISDKTelemetry", () => {
         name: "generateText",
       },
       input: {
+        instructions: "Be terse.",
         messages: [{ role: "user", content: "Reply with OK." }],
       },
       metadata: {
@@ -263,7 +277,493 @@ describe("braintrustAISDKTelemetry", () => {
         model: "gpt-4.1-mini",
       },
     });
+    expect(modelCall?.input).toMatchObject({
+      instructions: "Be terse.",
+      messages: [{ role: "user", content: "Reply with OK." }],
+    });
     expect(modelCall?.output).toMatchObject({ text: "OK" });
+  });
+
+  it("normalizes WorkflowAgent stream operation names", async () => {
+    const telemetry = braintrustAISDKTelemetry();
+
+    telemetry.onStart?.({
+      callId: "workflow-agent",
+      headers: { authorization: "secret" },
+      maxOutputTokens: 32,
+      operationId: "ai.workflowAgent.stream",
+      provider: "openai",
+      modelId: "gpt-4.1-mini",
+      temperature: 0,
+      messages: [{ role: "user", content: "Use the weather tool." }],
+      toolChoice: "required",
+      tools: {
+        get_weather: {
+          description: "Get weather for a location",
+        },
+      },
+    });
+    telemetry.onLanguageModelCallStart?.({
+      callId: "workflow-agent-model-call",
+      headers: { authorization: "secret" },
+      maxOutputTokens: 32,
+      provider: "openai",
+      modelId: "gpt-4.1-mini",
+      temperature: 0,
+      prompt: [{ role: "user", content: "Use the weather tool." }],
+      toolChoice: "required",
+    });
+    telemetry.onLanguageModelCallEnd?.({
+      callId: "workflow-agent-model-call",
+      provider: "openai",
+      modelId: "gpt-4.1-mini",
+      text: "It is sunny.",
+      usage: {
+        inputTokens: 8,
+        outputTokens: 4,
+        totalTokens: 12,
+      },
+    });
+    telemetry.onToolExecutionStart?.({
+      toolCall: {
+        toolCallId: "tool-workflow",
+        toolName: "get_weather",
+        input: { location: "Vienna, Austria" },
+      },
+    });
+    telemetry.onToolExecutionEnd?.({
+      durationMs: 12,
+      output: {
+        condition: "sunny",
+        location: "Vienna, Austria",
+        temperatureC: 21,
+      },
+      success: true,
+      toolCall: {
+        toolCallId: "tool-workflow",
+        toolName: "get_weather",
+      },
+    });
+    telemetry.onEnd?.({
+      callId: "workflow-agent",
+      finishReason: "stop",
+      messages: [{ role: "assistant", content: "It is sunny." }],
+      operationId: "ai.workflowAgent.stream",
+      steps: [],
+      text: "It is sunny.",
+      totalUsage: {
+        inputTokens: 8,
+        outputTokens: 4,
+        totalTokens: 12,
+      },
+    });
+
+    const spans = (await backgroundLogger.drain()) as Array<
+      Record<string, any>
+    >;
+    const operation = spans.find(
+      (span) => span.span_attributes?.name === "WorkflowAgent.stream",
+    );
+    const tool = spans.find(
+      (span) => span.span_attributes?.name === "get_weather",
+    );
+    const model = spans.find(
+      (span) => span.span_attributes?.name === "doGenerate",
+    );
+
+    expect(operation).toMatchObject({
+      span_attributes: {
+        type: "function",
+        name: "WorkflowAgent.stream",
+      },
+      input: {
+        messages: [{ role: "user", content: "Use the weather tool." }],
+      },
+      metadata: {
+        provider: "openai",
+        model: "gpt-4.1-mini",
+        options: {
+          maxOutputTokens: 32,
+          temperature: 0,
+          toolChoice: "required",
+        },
+        tools: {
+          get_weather: {
+            description: "Get weather for a location",
+          },
+        },
+      },
+      output: {
+        text: "It is sunny.",
+      },
+    });
+    expect(operation?.input).not.toHaveProperty("headers");
+    expect(operation?.input).not.toHaveProperty("maxOutputTokens");
+    expect(operation?.metadata?.options).not.toHaveProperty("headers");
+    expect(model).toMatchObject({
+      span_attributes: {
+        type: "llm",
+        name: "doGenerate",
+      },
+      input: {
+        messages: [{ role: "user", content: "Use the weather tool." }],
+      },
+      metadata: {
+        provider: "openai",
+        model: "gpt-4.1-mini",
+        options: {
+          maxOutputTokens: 32,
+          temperature: 0,
+          toolChoice: "required",
+        },
+      },
+      span_parents: [operation?.span_id],
+    });
+    expect(model?.input).not.toHaveProperty("headers");
+    expect(model?.metadata?.options).not.toHaveProperty("headers");
+    expect(tool).toMatchObject({
+      span_attributes: {
+        type: "tool",
+        name: "get_weather",
+      },
+      input: { location: "Vienna, Austria" },
+      output: {
+        condition: "sunny",
+        location: "Vienna, Austria",
+        temperatureC: 21,
+      },
+      metrics: { duration_ms: 12 },
+      span_parents: [operation?.span_id],
+    });
+  });
+
+  it("backfills WorkflowAgent stream input from model call telemetry", async () => {
+    const telemetry = braintrustAISDKTelemetry();
+
+    telemetry.onStart?.({
+      callId: "workflow-agent",
+      operationId: "ai.workflowAgent.stream",
+      provider: "openai",
+      modelId: "gpt-4.1-mini",
+    });
+    telemetry.onLanguageModelCallStart?.({
+      callId: "workflow-agent-model-call",
+      headers: { authorization: "secret" },
+      maxOutputTokens: 32,
+      provider: "openai",
+      modelId: "gpt-4.1-mini",
+      messages: [{ role: "user", content: "What's the weather in Paris?" }],
+      toolChoice: "required",
+    });
+    telemetry.onLanguageModelCallEnd?.({
+      callId: "workflow-agent-model-call",
+      provider: "openai",
+      modelId: "gpt-4.1-mini",
+      text: "It is sunny.",
+      usage: {
+        inputTokens: 8,
+        outputTokens: 4,
+        totalTokens: 12,
+      },
+    });
+    telemetry.onEnd?.({
+      callId: "workflow-agent",
+      finishReason: "stop",
+      operationId: "ai.workflowAgent.stream",
+      text: "It is sunny.",
+      totalUsage: {
+        inputTokens: 8,
+        outputTokens: 4,
+        totalTokens: 12,
+      },
+    });
+
+    const spans = (await backgroundLogger.drain()) as Array<
+      Record<string, any>
+    >;
+    const operation = spans.find(
+      (span) => span.span_attributes?.name === "WorkflowAgent.stream",
+    );
+
+    expect(operation).toMatchObject({
+      input: {
+        messages: [{ role: "user", content: "What's the weather in Paris?" }],
+      },
+      metadata: {
+        provider: "openai",
+        model: "gpt-4.1-mini",
+        options: {
+          maxOutputTokens: 32,
+          toolChoice: "required",
+        },
+      },
+    });
+    expect(operation?.input).not.toHaveProperty("headers");
+  });
+
+  it("does not create telemetry child spans for wrapper-owned WorkflowAgent streams", async () => {
+    const telemetry = braintrustAISDKTelemetry();
+    const wrapperSpan = startSpan({ name: "WorkflowAgent.stream" });
+    registerWorkflowAgentWrapperSpan(wrapperSpan);
+
+    try {
+      withCurrent(wrapperSpan, () => {
+        telemetry.onStart?.({
+          callId: "workflow-agent",
+          messages: [{ role: "user", content: "Use the weather tool." }],
+          operationId: "ai.workflowAgent.stream",
+        });
+        telemetry.onLanguageModelCallStart?.({
+          callId: "workflow-agent",
+          prompt: [{ role: "user", content: "Use the weather tool." }],
+        });
+        telemetry.onLanguageModelCallEnd?.({
+          callId: "workflow-agent",
+          text: "Calling get_weather.",
+        });
+        telemetry.onToolExecutionStart?.({
+          toolCall: {
+            toolCallId: "tool-workflow",
+            toolName: "get_weather",
+            input: { location: "Vienna, Austria" },
+          },
+        });
+        telemetry.onToolExecutionEnd?.({
+          output: { condition: "sunny" },
+          success: true,
+          toolCall: {
+            toolCallId: "tool-workflow",
+            toolName: "get_weather",
+          },
+        });
+        telemetry.onEnd?.({
+          callId: "workflow-agent",
+          operationId: "ai.workflowAgent.stream",
+          text: "It is sunny.",
+        });
+      });
+    } finally {
+      unregisterWorkflowAgentWrapperSpan(wrapperSpan);
+      wrapperSpan.end();
+    }
+
+    const spans = (await backgroundLogger.drain()) as Array<
+      Record<string, any>
+    >;
+
+    expect(
+      spans.filter((span) => span.span_attributes?.name === "doGenerate"),
+    ).toHaveLength(0);
+    expect(
+      spans.filter((span) => span.span_attributes?.name === "get_weather"),
+    ).toHaveLength(0);
+  });
+
+  it("keeps concurrent WorkflowAgent streams with shared callIds separate", async () => {
+    const telemetry = braintrustAISDKTelemetry();
+    const callId = "workflow-agent";
+    const runA = "workflow-agent:run-a";
+    const runB = "workflow-agent:run-b";
+
+    telemetry.onStart?.({
+      [AI_SDK_V7_OPERATION_KEY]: runA,
+      callId,
+      messages: [{ role: "user", content: "First workflow run" }],
+      operationId: "ai.workflowAgent.stream",
+    });
+    telemetry.onStart?.({
+      [AI_SDK_V7_OPERATION_KEY]: runB,
+      callId,
+      messages: [{ role: "user", content: "Second workflow run" }],
+      operationId: "ai.workflowAgent.stream",
+    });
+
+    telemetry.onLanguageModelCallStart?.({
+      [AI_SDK_V7_OPERATION_KEY]: runA,
+      callId,
+      prompt: [{ role: "user", content: "First workflow run" }],
+    });
+    telemetry.onLanguageModelCallEnd?.({
+      [AI_SDK_V7_OPERATION_KEY]: runA,
+      callId,
+      text: "First answer",
+    });
+    telemetry.onLanguageModelCallStart?.({
+      [AI_SDK_V7_OPERATION_KEY]: runB,
+      callId,
+      prompt: [{ role: "user", content: "Second workflow run" }],
+    });
+    telemetry.onLanguageModelCallEnd?.({
+      [AI_SDK_V7_OPERATION_KEY]: runB,
+      callId,
+      text: "Calling get_weather.",
+    });
+
+    telemetry.onToolExecutionStart?.({
+      [AI_SDK_V7_OPERATION_KEY]: runB,
+      toolCall: {
+        toolCallId: "tool-run-b",
+        toolName: "get_weather",
+        input: { location: "Vienna, Austria" },
+      },
+    });
+    telemetry.onToolExecutionEnd?.({
+      [AI_SDK_V7_OPERATION_KEY]: runB,
+      output: { condition: "sunny" },
+      success: true,
+      toolCall: {
+        toolCallId: "tool-run-b",
+        toolName: "get_weather",
+      },
+    });
+
+    telemetry.onEnd?.({
+      [AI_SDK_V7_OPERATION_KEY]: runA,
+      callId,
+      messages: [{ role: "assistant", content: "First answer" }],
+      operationId: "ai.workflowAgent.stream",
+      text: "First answer",
+    });
+    telemetry.onEnd?.({
+      [AI_SDK_V7_OPERATION_KEY]: runB,
+      callId,
+      messages: [{ role: "assistant", content: "Second answer" }],
+      operationId: "ai.workflowAgent.stream",
+      text: "Second answer",
+    });
+
+    const spans = (await backgroundLogger.drain()) as Array<
+      Record<string, any>
+    >;
+    const workflowSpans = spans.filter(
+      (span) => span.span_attributes?.name === "WorkflowAgent.stream",
+    );
+    const firstWorkflow = workflowSpans.find((span) =>
+      JSON.stringify(span.input).includes("First workflow run"),
+    );
+    const secondWorkflow = workflowSpans.find((span) =>
+      JSON.stringify(span.input).includes("Second workflow run"),
+    );
+    const firstModel = spans.find(
+      (span) =>
+        span.span_attributes?.name === "doGenerate" &&
+        JSON.stringify(span.input).includes("First workflow run"),
+    );
+    const secondModel = spans.find(
+      (span) =>
+        span.span_attributes?.name === "doGenerate" &&
+        JSON.stringify(span.input).includes("Second workflow run"),
+    );
+    const tool = spans.find(
+      (span) => span.span_attributes?.name === "get_weather",
+    );
+
+    expect(workflowSpans).toHaveLength(2);
+    expect(firstWorkflow?.output).toMatchObject({ text: "First answer" });
+    expect(secondWorkflow?.output).toMatchObject({ text: "Second answer" });
+    expect(firstModel?.span_parents).toEqual([firstWorkflow?.span_id]);
+    expect(secondModel?.span_parents).toEqual([secondWorkflow?.span_id]);
+    expect(tool).toMatchObject({
+      input: { location: "Vienna, Austria" },
+      output: { condition: "sunny" },
+      span_parents: [secondWorkflow?.span_id],
+    });
+  });
+
+  it("keeps concurrent direct WorkflowAgent telemetry separated without dispatcher keys", async () => {
+    const telemetry = braintrustAISDKTelemetry();
+    const callId = "workflow-agent";
+    const sleep = (ms: number) =>
+      new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+    const runWorkflow = async (label: "First" | "Second", delayMs: number) => {
+      telemetry.onStart?.({
+        callId,
+        messages: [{ role: "user", content: `${label} workflow run` }],
+        operationId: "ai.workflowAgent.stream",
+      });
+
+      await sleep(delayMs);
+
+      telemetry.onLanguageModelCallStart?.({
+        callId,
+        prompt: [{ role: "user", content: `${label} workflow run` }],
+      });
+      telemetry.onLanguageModelCallEnd?.({
+        callId,
+        text: `${label} model answer`,
+      });
+      telemetry.onToolExecutionStart?.({
+        toolCall: {
+          toolCallId: `tool-${label}`,
+          toolName: "get_weather",
+          input: { location: label },
+        },
+      });
+      telemetry.onToolExecutionEnd?.({
+        output: { condition: label },
+        success: true,
+        toolCall: {
+          toolCallId: `tool-${label}`,
+          toolName: "get_weather",
+        },
+      });
+      telemetry.onEnd?.({
+        callId,
+        messages: [{ role: "assistant", content: `${label} answer` }],
+        operationId: "ai.workflowAgent.stream",
+        text: `${label} answer`,
+      });
+    };
+
+    await Promise.all([runWorkflow("First", 20), runWorkflow("Second", 0)]);
+
+    const spans = (await backgroundLogger.drain()) as Array<
+      Record<string, any>
+    >;
+    const workflowSpans = spans.filter(
+      (span) => span.span_attributes?.name === "WorkflowAgent.stream",
+    );
+    const firstWorkflow = workflowSpans.find((span) =>
+      JSON.stringify(span.input).includes("First workflow run"),
+    );
+    const secondWorkflow = workflowSpans.find((span) =>
+      JSON.stringify(span.input).includes("Second workflow run"),
+    );
+    const firstModel = spans.find(
+      (span) =>
+        span.span_attributes?.name === "doGenerate" &&
+        JSON.stringify(span.input).includes("First workflow run"),
+    );
+    const secondModel = spans.find(
+      (span) =>
+        span.span_attributes?.name === "doGenerate" &&
+        JSON.stringify(span.input).includes("Second workflow run"),
+    );
+    const firstTool = spans.find(
+      (span) =>
+        span.span_attributes?.name === "get_weather" &&
+        span.input?.location === "First",
+    );
+    const secondTool = spans.find(
+      (span) =>
+        span.span_attributes?.name === "get_weather" &&
+        span.input?.location === "Second",
+    );
+
+    expect(workflowSpans).toHaveLength(2);
+    expect(firstWorkflow?.output).toMatchObject({ text: "First answer" });
+    expect(secondWorkflow?.output).toMatchObject({ text: "Second answer" });
+    expect(firstModel?.span_parents).toEqual([firstWorkflow?.span_id]);
+    expect(secondModel?.span_parents).toEqual([secondWorkflow?.span_id]);
+    expect(firstTool).toMatchObject({
+      output: { condition: "First" },
+      span_parents: [firstWorkflow?.span_id],
+    });
+    expect(secondTool).toMatchObject({
+      output: { condition: "Second" },
+      span_parents: [secondWorkflow?.span_id],
+    });
   });
 
   it("honors recordInputs and recordOutputs", async () => {
@@ -376,6 +876,57 @@ describe("braintrustAISDKTelemetry", () => {
     telemetry.onToolExecutionEnd?.({
       callId,
       toolCall: { toolCallId: "tool-error", toolName: "lookupWeather" },
+      toolOutput: { type: "tool-result", output: "late" },
+    });
+    telemetry.onEnd?.({
+      callId,
+      operationId: "ai.streamText",
+      text: "late",
+    });
+
+    expect(await backgroundLogger.drain()).toHaveLength(0);
+  });
+
+  it("ends open child spans when an operation aborts", async () => {
+    const telemetry = braintrustAISDKTelemetry();
+    const callId = "call-abort";
+    const reason = new Error("user aborted stream");
+
+    telemetry.onStart?.({
+      callId,
+      operationId: "ai.streamText",
+    });
+    telemetry.onLanguageModelCallStart?.({
+      callId,
+      prompt: [{ role: "user", content: "Reply slowly." }],
+    });
+    telemetry.onToolExecutionStart?.({
+      callId,
+      toolCall: {
+        toolCallId: "tool-abort",
+        toolName: "lookupWeather",
+        input: { city: "Vienna" },
+      },
+    });
+
+    telemetry.onAbort?.({ callId, reason });
+
+    const spans = (await backgroundLogger.drain()) as Array<
+      Record<string, any>
+    >;
+    const errorSpans = spans.filter((span) =>
+      String(span.error).includes("user aborted stream"),
+    );
+
+    expect(errorSpans).toHaveLength(3);
+    expect(errorSpans.map((span) => span.span_attributes?.name)).toEqual(
+      expect.arrayContaining(["streamText", "doStream", "lookupWeather"]),
+    );
+
+    telemetry.onLanguageModelCallEnd?.({ callId, text: "late" });
+    telemetry.onToolExecutionEnd?.({
+      callId,
+      toolCall: { toolCallId: "tool-abort", toolName: "lookupWeather" },
       toolOutput: { type: "tool-result", output: "late" },
     });
     telemetry.onEnd?.({

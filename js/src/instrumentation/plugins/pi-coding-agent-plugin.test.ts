@@ -123,7 +123,7 @@ describe("PiCodingAgentPlugin", () => {
       return stream;
     });
     const unsubscribe = vi.fn();
-    const agent = {
+    const agent: any = {
       state: { model: anthropicModel(), tools: [bashTool()] },
       streamFn: originalStreamFn,
       subscribe: vi.fn(() => unsubscribe),
@@ -211,7 +211,7 @@ describe("PiCodingAgentPlugin", () => {
       "orchestrion:@earendil-works/pi-coding-agent:AgentSession.prompt",
     );
     let listener: any;
-    const agent = {
+    const agent: any = {
       state: { model: anthropicModel() },
       streamFn: vi.fn(),
       subscribe: vi.fn((nextListener) => {
@@ -268,7 +268,7 @@ describe("PiCodingAgentPlugin", () => {
       "orchestrion:@earendil-works/pi-coding-agent:AgentSession.prompt",
     );
     let listener: any;
-    const agent = {
+    const agent: any = {
       state: { model: anthropicModel() },
       streamFn: vi.fn(async () => makeStream(makeAssistantMessage("done"))),
       subscribe: vi.fn((nextListener) => {
@@ -315,7 +315,7 @@ describe("PiCodingAgentPlugin", () => {
     );
     const stream = makeStream(makeAssistantMessage("done"));
     const originalStreamFn = vi.fn(async () => stream);
-    const agent = {
+    const agent: any = {
       state: { model: anthropicModel() },
       streamFn: originalStreamFn,
       subscribe: vi.fn(() => vi.fn()),
@@ -364,7 +364,7 @@ describe("PiCodingAgentPlugin", () => {
       { partial: finalMessage, type: "start" },
       { message: finalMessage, type: "done" },
     ]);
-    const agent = {
+    const agent: any = {
       state: { model: anthropicModel() },
       streamFn: vi.fn(async () => stream),
       subscribe: vi.fn(() => vi.fn()),
@@ -411,7 +411,7 @@ describe("PiCodingAgentPlugin", () => {
     const { iterator, stream } = makeIteratorBackedStream([
       { partial: finalMessage, type: "start" },
     ]);
-    const agent = {
+    const agent: any = {
       state: { model: anthropicModel() },
       streamFn: vi.fn(async () => stream),
       subscribe: vi.fn(() => vi.fn()),
@@ -449,7 +449,7 @@ describe("PiCodingAgentPlugin", () => {
     const { iterator, stream } = makeIteratorBackedStream([
       { partial: finalMessage, type: "start" },
     ]);
-    const agent = {
+    const agent: any = {
       state: { model: anthropicModel() },
       streamFn: vi.fn(async () => stream),
       subscribe: vi.fn(() => vi.fn()),
@@ -492,7 +492,7 @@ describe("PiCodingAgentPlugin", () => {
     const { iterator, stream } = makeIteratorBackedStream([]);
     const nextError = new Error("stream next failed");
     iterator.next.mockRejectedValueOnce(nextError);
-    const agent = {
+    const agent: any = {
       state: { model: anthropicModel() },
       streamFn: vi.fn(async () => stream),
       subscribe: vi.fn(() => vi.fn()),
@@ -536,7 +536,7 @@ describe("PiCodingAgentPlugin", () => {
     const originalStreamFn = vi.fn(async () =>
       makeStream(makeAssistantMessage("done")),
     );
-    const agent = {
+    const agent: any = {
       state: { model: anthropicModel() },
       streamFn: originalStreamFn,
       subscribe: vi.fn((listener) => {
@@ -642,7 +642,7 @@ describe("PiCodingAgentPlugin", () => {
     );
     const unsubscribe = vi.fn();
     const originalStreamFn = vi.fn();
-    const agent = {
+    const agent: any = {
       state: { model: anthropicModel() },
       streamFn: originalStreamFn,
       subscribe: vi.fn(() => unsubscribe),
@@ -750,7 +750,7 @@ function makeStream(message: ReturnType<typeof makeAssistantMessage>) {
 function makeIteratorBackedStream(events: any[]) {
   const pendingEvents = [...events];
   const result = vi.fn(async () => makeAssistantMessage("done"));
-  const iterator = {
+  const iterator: any = {
     next: vi.fn(async () => {
       const event = pendingEvents.shift();
       if (!event) {

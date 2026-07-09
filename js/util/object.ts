@@ -90,6 +90,9 @@ export type ExperimentEvent = Partial<InputField> &
     span_parents: string[];
     span_attributes: Record<string, unknown>;
     context: Record<string, unknown>;
+    // Server-populated on read: whether this row is the root span of its trace.
+    // a root span id may differ from its trace id so `is_root` is the authoritative root marker.
+    is_root: boolean | null;
     [AUDIT_SOURCE_FIELD]: Source;
     [AUDIT_METADATA_FIELD]?: Record<string, unknown>;
   }>;

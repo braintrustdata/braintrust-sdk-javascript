@@ -62,7 +62,7 @@ describe("cohere wrapper", () => {
         },
         text: "OK",
       })),
-    });
+    } as any) as any;
 
     await client.chat({
       message: "Reply with exactly OK.",
@@ -115,7 +115,7 @@ describe("cohere wrapper", () => {
 
     const client = wrapCohere({
       chatStream: vi.fn(async () => stream()),
-    });
+    } as any) as any;
 
     const chunks: unknown[] = [];
     const result = await client.chatStream({
@@ -174,7 +174,7 @@ describe("cohere wrapper", () => {
     );
     const client = wrapCohere({
       chatStream: vi.fn(() => rawPromise),
-    });
+    } as any) as any;
 
     const resultPromise = client.chatStream({
       message: "Say OK",
@@ -220,7 +220,7 @@ describe("cohere wrapper", () => {
           },
         ],
       })),
-    });
+    } as any) as any;
 
     await client.embed({
       inputType: "search_document",
@@ -290,7 +290,7 @@ describe("cohere wrapper", () => {
     const client = wrapCohere({
       chat: vi.fn(),
       v2: rawV2Client,
-    });
+    } as any) as any;
 
     expect(client.v2).toBe(client.v2);
 

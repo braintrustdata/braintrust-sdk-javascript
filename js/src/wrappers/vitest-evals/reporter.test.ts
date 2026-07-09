@@ -153,7 +153,7 @@ describe("Braintrust vitest-evals reporter", () => {
 
     await reporter.onTestRunEnd([module] as any);
     await backgroundLogger.flush();
-    const rows = await backgroundLogger.drain();
+    const rows = (await backgroundLogger.drain()) as any[];
 
     const root = rows.find((row: any) => row.scores?.FactualityJudge === 0.8);
     expect(root).toMatchObject({
@@ -261,7 +261,7 @@ describe("Braintrust vitest-evals reporter", () => {
     ] as any);
 
     await backgroundLogger.flush();
-    const rows = await backgroundLogger.drain();
+    const rows = (await backgroundLogger.drain()) as any[];
     const root = rows.find((row: any) => row.scores?.StatusJudge === 0);
 
     expect(root?.scores).toMatchObject({
@@ -345,7 +345,7 @@ describe("Braintrust vitest-evals reporter", () => {
     ] as any);
 
     await backgroundLogger.flush();
-    const rows = await backgroundLogger.drain();
+    const rows = (await backgroundLogger.drain()) as any[];
     const toolSpan = rows.find(
       (row: any) => row.span_attributes?.name === "searchDocs",
     );

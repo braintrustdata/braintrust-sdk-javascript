@@ -1,4 +1,4 @@
-// Auto-generated file (content hash adad84b723c4d072) -- do not modify
+// Auto-generated file (content hash 0ba4b792e8f1345d) -- do not modify
 
 import { z } from "zod/v3";
 
@@ -1003,6 +1003,7 @@ export const PromptParserNullish = z.union([
     choice_scores: z.record(z.number().gte(0).lte(1)).optional(),
     choice: z.array(z.string()).optional(),
     allow_no_match: z.boolean().optional(),
+    allow_skip: z.boolean().optional(),
   }),
   z.null(),
 ]);

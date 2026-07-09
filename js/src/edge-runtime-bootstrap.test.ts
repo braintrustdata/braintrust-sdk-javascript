@@ -105,7 +105,9 @@ describe.each([
       expect(result.isNoop).toBe(false);
       expect(result.sameObject).toBe(true);
       expect(result.childParents).toHaveLength(1);
-      expect(result.childRootSpanId).toBe(root.spanId);
+      // With the default hex (OTEL-compatible) ids, root_span_id is the trace
+      // id shared across the trace, not the root span's own span id.
+      expect(result.childRootSpanId).toBe(root.rootSpanId);
       expect(await backgroundLogger.drain()).toHaveLength(3);
     });
 
@@ -142,7 +144,7 @@ describe.each([
       });
 
       const spans = await backgroundLogger.drain();
-      const spanNames = spans.map((span) => span.span_attributes?.name);
+      const spanNames = spans.map((span: any) => span.span_attributes?.name);
 
       expect(spanNames).toContain("root");
       expect(spanNames).toContain("generateText");

@@ -11,7 +11,7 @@ import {
   type LangChainCallbackHandlerOptions,
 } from "braintrust";
 
-export type BraintrustCallbackHandlerOptions<IsAsyncFlush extends boolean> =
+type BraintrustCallbackHandlerOptions<IsAsyncFlush extends boolean> =
   LangChainCallbackHandlerOptions<IsAsyncFlush>;
 
 /**

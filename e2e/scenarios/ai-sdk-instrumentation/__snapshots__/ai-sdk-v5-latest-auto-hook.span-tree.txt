@@ -55,7 +55,6 @@ span_tree:
     │         },
     │         "response": {
     │           "body": "<omitted>",
-    │           "headers": "<omitted>",
     │           "messages": [
     │             {
     │               "content": [
@@ -97,7 +96,6 @@ span_tree:
     │             },
     │             "response": {
     │               "body": "<omitted>",
-    │               "headers": "<omitted>",
     │               "messages": [
     │                 {
     │                   "content": [
@@ -156,9 +154,6 @@ span_tree:
     │       }
     │       └── doGenerate [llm]
     │           input: {
-    │             "headers": {
-    │               "user-agent": "ai/5.0.210"
-    │             },
     │             "maxOutputTokens": 24,
     │             "prompt": [
     │               {
@@ -194,7 +189,6 @@ span_tree:
     │             },
     │             "response": {
     │               "body": "<omitted>",
-    │               "headers": "<omitted>",
     │               "modelId": "gpt-4o-mini-2024-07-18",
     │               "timestamp": "<timestamp>"
     │             },
@@ -236,25 +230,6 @@ span_tree:
     │   }
     │   └── generateText [function]
     │       input: {
-    │         "experimental_output": {
-    │           "responseFormat": {
-    │             "schema": {
-    │               "$schema": "http://json-schema.org/draft-07/schema#",
-    │               "additionalProperties": false,
-    │               "properties": {
-    │                 "answer": {
-    │                   "type": "string"
-    │                 }
-    │               },
-    │               "required": [
-    │                 "answer"
-    │               ],
-    │               "type": "object"
-    │             },
-    │             "type": "json"
-    │           },
-    │           "type": "object"
-    │         },
     │         "maxOutputTokens": 32,
     │         "model": {
     │           "config": {
@@ -317,7 +292,6 @@ span_tree:
     │         },
     │         "response": {
     │           "body": "<omitted>",
-    │           "headers": "<omitted>",
     │           "messages": [
     │             {
     │               "content": [
@@ -359,7 +333,6 @@ span_tree:
     │             },
     │             "response": {
     │               "body": "<omitted>",
-    │               "headers": "<omitted>",
     │               "messages": [
     │                 {
     │                   "content": [
@@ -418,9 +391,6 @@ span_tree:
     │       }
     │       └── doGenerate [llm]
     │           input: {
-    │             "headers": {
-    │               "user-agent": "ai/5.0.210"
-    │             },
     │             "maxOutputTokens": 32,
     │             "prompt": [
     │               {
@@ -472,7 +442,6 @@ span_tree:
     │             },
     │             "response": {
     │               "body": "<omitted>",
-    │               "headers": "<omitted>",
     │               "modelId": "gpt-4o-mini-2024-07-18",
     │               "timestamp": "<timestamp>"
     │             },
@@ -711,7 +680,6 @@ span_tree:
     │         },
     │         "response": {
     │           "body": "<omitted>",
-    │           "headers": "<omitted>",
     │           "messages": [
     │             {
     │               "content": [
@@ -871,7 +839,6 @@ span_tree:
     │             },
     │             "response": {
     │               "body": "<omitted>",
-    │               "headers": "<omitted>",
     │               "messages": [
     │                 {
     │                   "content": [
@@ -949,7 +916,6 @@ span_tree:
     │             },
     │             "response": {
     │               "body": "<omitted>",
-    │               "headers": "<omitted>",
     │               "messages": [
     │                 {
     │                   "content": [
@@ -1057,7 +1023,6 @@ span_tree:
     │             },
     │             "response": {
     │               "body": "<omitted>",
-    │               "headers": "<omitted>",
     │               "messages": [
     │                 {
     │                   "content": [
@@ -1195,7 +1160,6 @@ span_tree:
     │             },
     │             "response": {
     │               "body": "<omitted>",
-    │               "headers": "<omitted>",
     │               "messages": [
     │                 {
     │                   "content": [
@@ -1402,9 +1366,6 @@ span_tree:
     │       }
     │       ├── doGenerate [llm]
     │       │   input: {
-    │       │     "headers": {
-    │       │       "user-agent": "ai/5.0.210"
-    │       │     },
     │       │     "maxOutputTokens": 128,
     │       │     "prompt": [
     │       │       {
@@ -1469,7 +1430,6 @@ span_tree:
     │       │     },
     │       │     "response": {
     │       │       "body": "<omitted>",
-    │       │       "headers": "<omitted>",
     │       │       "modelId": "gpt-4o-mini-2024-07-18",
     │       │       "timestamp": "<timestamp>"
     │       │     },
@@ -1506,9 +1466,6 @@ span_tree:
     │       │   output: "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
     │       ├── doGenerate [llm]
     │       │   input: {
-    │       │     "headers": {
-    │       │       "user-agent": "ai/5.0.210"
-    │       │     },
     │       │     "maxOutputTokens": 128,
     │       │     "prompt": [
     │       │       {
@@ -1603,7 +1560,6 @@ span_tree:
     │       │     },
     │       │     "response": {
     │       │       "body": "<omitted>",
-    │       │       "headers": "<omitted>",
     │       │       "modelId": "gpt-4o-mini-2024-07-18",
     │       │       "timestamp": "<timestamp>"
     │       │     },
@@ -1640,9 +1596,6 @@ span_tree:
     │       │   output: "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
     │       ├── doGenerate [llm]
     │       │   input: {
-    │       │     "headers": {
-    │       │       "user-agent": "ai/5.0.210"
-    │       │     },
     │       │     "maxOutputTokens": 128,
     │       │     "prompt": [
     │       │       {
@@ -1767,7 +1720,6 @@ span_tree:
     │       │     },
     │       │     "response": {
     │       │       "body": "<omitted>",
-    │       │       "headers": "<omitted>",
     │       │       "modelId": "gpt-4o-mini-2024-07-18",
     │       │       "timestamp": "<timestamp>"
     │       │     },
@@ -1804,9 +1756,6 @@ span_tree:
     │       │   output: "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
     │       ├── doGenerate [llm]
     │       │   input: {
-    │       │     "headers": {
-    │       │       "user-agent": "ai/5.0.210"
-    │       │     },
     │       │     "maxOutputTokens": 128,
     │       │     "prompt": [
     │       │       {
@@ -1961,7 +1910,6 @@ span_tree:
     │       │     },
     │       │     "response": {
     │       │       "body": "<omitted>",
-    │       │       "headers": "<omitted>",
     │       │       "modelId": "gpt-4o-mini-2024-07-18",
     │       │       "timestamp": "<timestamp>"
     │       │     },
@@ -2046,7 +1994,6 @@ span_tree:
     │     },
     │     "response": {
     │       "body": "<omitted>",
-    │       "headers": "<omitted>",
     │       "messages": [
     │         {
     │           "content": [
@@ -2088,7 +2035,6 @@ span_tree:
     │         },
     │         "response": {
     │           "body": "<omitted>",
-    │           "headers": "<omitted>",
     │           "messages": [
     │             {
     │               "content": [
@@ -2147,9 +2093,6 @@ span_tree:
     │   }
     │   └── doGenerate [llm]
     │       input: {
-    │         "headers": {
-    │           "user-agent": "ai/5.0.210"
-    │         },
     │         "maxOutputTokens": 24,
     │         "prompt": [
     │           {
@@ -2190,7 +2133,6 @@ span_tree:
     │         },
     │         "response": {
     │           "body": "<omitted>",
-    │           "headers": "<omitted>",
     │           "modelId": "gpt-4o-mini-2024-07-18",
     │           "timestamp": "<timestamp>"
     │         },
@@ -2275,7 +2217,6 @@ span_tree:
     │   │     },
     │   │     "response": {
     │   │       "body": "<omitted>",
-    │   │       "headers": "<omitted>",
     │   │       "messages": [
     │   │         {
     │   │           "content": [
@@ -2317,7 +2258,6 @@ span_tree:
     │   │         },
     │   │         "response": {
     │   │           "body": "<omitted>",
-    │   │           "headers": "<omitted>",
     │   │           "messages": [
     │   │             {
     │   │               "content": [
@@ -2376,9 +2316,6 @@ span_tree:
     │   │   }
     │   │   └── doGenerate [llm]
     │   │       input: {
-    │   │         "headers": {
-    │   │           "user-agent": "ai/5.0.210"
-    │   │         },
     │   │         "maxOutputTokens": 24,
     │   │         "prompt": [
     │   │           {
@@ -2419,7 +2356,6 @@ span_tree:
     │   │         },
     │   │         "response": {
     │   │           "body": "<omitted>",
-    │   │           "headers": "<omitted>",
     │   │           "modelId": "gpt-4o-mini-2024-07-18",
     │   │           "timestamp": "<timestamp>"
     │   │         },
@@ -2499,7 +2435,6 @@ span_tree:
     │         },
     │         "response": {
     │           "body": "<omitted>",
-    │           "headers": "<omitted>",
     │           "messages": [
     │             {
     │               "content": [
@@ -2541,7 +2476,6 @@ span_tree:
     │             },
     │             "response": {
     │               "body": "<omitted>",
-    │               "headers": "<omitted>",
     │               "messages": [
     │                 {
     │                   "content": [
@@ -2600,9 +2534,6 @@ span_tree:
     │       }
     │       └── doGenerate [llm]
     │           input: {
-    │             "headers": {
-    │               "user-agent": "ai/5.0.210"
-    │             },
     │             "maxOutputTokens": 24,
     │             "prompt": [
     │               {
@@ -2643,7 +2574,6 @@ span_tree:
     │             },
     │             "response": {
     │               "body": "<omitted>",
-    │               "headers": "<omitted>",
     │               "modelId": "gpt-4o-mini-2024-07-18",
     │               "timestamp": "<timestamp>"
     │             },
@@ -2735,7 +2665,6 @@ span_tree:
     │     },
     │     "response": {
     │       "body": "<omitted>",
-    │       "headers": "<omitted>",
     │       "messages": [
     │         {
     │           "content": [
@@ -2782,7 +2711,6 @@ span_tree:
     │         },
     │         "response": {
     │           "body": "<omitted>",
-    │           "headers": "<omitted>",
     │           "messages": [
     │             {
     │               "content": [
@@ -2833,9 +2761,6 @@ span_tree:
     │   }
     │   └── doGenerate [llm]
     │       input: {
-    │         "headers": {
-    │           "user-agent": "ai/5.0.210"
-    │         },
     │         "maxOutputTokens": 24,
     │         "prompt": [
     │           {
@@ -2888,7 +2813,6 @@ span_tree:
     │         },
     │         "response": {
     │           "body": "<omitted>",
-    │           "headers": "<omitted>",
     │           "modelId": "claude-haiku-4-5-20251001"
     │         },
     │         "usage": {
@@ -2982,7 +2906,6 @@ span_tree:
     │   │     },
     │   │     "response": {
     │   │       "body": "<omitted>",
-    │   │       "headers": "<omitted>",
     │   │       "messages": [
     │   │         {
     │   │           "content": [
@@ -3029,7 +2952,6 @@ span_tree:
     │   │         },
     │   │         "response": {
     │   │           "body": "<omitted>",
-    │   │           "headers": "<omitted>",
     │   │           "messages": [
     │   │             {
     │   │               "content": [
@@ -3080,9 +3002,6 @@ span_tree:
     │   │   }
     │   │   └── doGenerate [llm]
     │   │       input: {
-    │   │         "headers": {
-    │   │           "user-agent": "ai/5.0.210"
-    │   │         },
     │   │         "maxOutputTokens": 24,
     │   │         "prompt": [
     │   │           {
@@ -3135,7 +3054,6 @@ span_tree:
     │   │         },
     │   │         "response": {
     │   │           "body": "<omitted>",
-    │   │           "headers": "<omitted>",
     │   │           "modelId": "claude-haiku-4-5-20251001"
     │   │         },
     │   │         "usage": {
@@ -3224,7 +3142,6 @@ span_tree:
     │         },
     │         "response": {
     │           "body": "<omitted>",
-    │           "headers": "<omitted>",
     │           "messages": [
     │             {
     │               "content": [
@@ -3271,7 +3188,6 @@ span_tree:
     │             },
     │             "response": {
     │               "body": "<omitted>",
-    │               "headers": "<omitted>",
     │               "messages": [
     │                 {
     │                   "content": [
@@ -3322,9 +3238,6 @@ span_tree:
     │       }
     │       └── doGenerate [llm]
     │           input: {
-    │             "headers": {
-    │               "user-agent": "ai/5.0.210"
-    │             },
     │             "maxOutputTokens": 24,
     │             "prompt": [
     │               {
@@ -3377,7 +3290,6 @@ span_tree:
     │             },
     │             "response": {
     │               "body": "<omitted>",
-    │               "headers": "<omitted>",
     │               "modelId": "claude-haiku-4-5-20251001"
     │             },
     │             "usage": {
@@ -3559,31 +3471,6 @@ span_tree:
     │             },
     │             "user": null
     │           },
-    │           "headers": {
-    │             "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
-    │             "alt-svc": "h3=\":443\"; ma=86400",
-    │             "cf-cache-status": "DYNAMIC",
-    │             "cf-ray": "<cf-ray>",
-    │             "connection": "keep-alive",
-    │             "content-type": "application/json",
-    │             "date": "<timestamp>",
-    │             "openai-organization": "braintrust-data",
-    │             "openai-processing-ms": "<openai-processing-ms>",
-    │             "openai-project": "<openai-project>",
-    │             "openai-version": "<timestamp>",
-    │             "server": "cloudflare",
-    │             "set-cookie": "<set-cookie>",
-    │             "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
-    │             "transfer-encoding": "chunked",
-    │             "x-content-type-options": "nosniff",
-    │             "x-ratelimit-limit-requests": "30000",
-    │             "x-ratelimit-limit-tokens": "150000000",
-    │             "x-ratelimit-remaining-requests": "<x-ratelimit-remaining-requests>",
-    │             "x-ratelimit-remaining-tokens": "<x-ratelimit-remaining-tokens>",
-    │             "x-ratelimit-reset-requests": "<x-ratelimit-reset-requests>",
-    │             "x-ratelimit-reset-tokens": "<x-ratelimit-reset-tokens>",
-    │             "x-request-id": "<x-request-id>"
-    │           },
     │           "messages": [
     │             {
     │               "content": [
@@ -3730,31 +3617,6 @@ span_tree:
     │                 },
     │                 "user": null
     │               },
-    │               "headers": {
-    │                 "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
-    │                 "alt-svc": "h3=\":443\"; ma=86400",
-    │                 "cf-cache-status": "DYNAMIC",
-    │                 "cf-ray": "<cf-ray>",
-    │                 "connection": "keep-alive",
-    │                 "content-type": "application/json",
-    │                 "date": "<timestamp>",
-    │                 "openai-organization": "braintrust-data",
-    │                 "openai-processing-ms": "<openai-processing-ms>",
-    │                 "openai-project": "<openai-project>",
-    │                 "openai-version": "<timestamp>",
-    │                 "server": "cloudflare",
-    │                 "set-cookie": "<set-cookie>",
-    │                 "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
-    │                 "transfer-encoding": "chunked",
-    │                 "x-content-type-options": "nosniff",
-    │                 "x-ratelimit-limit-requests": "30000",
-    │                 "x-ratelimit-limit-tokens": "150000000",
-    │                 "x-ratelimit-remaining-requests": "<x-ratelimit-remaining-requests>",
-    │                 "x-ratelimit-remaining-tokens": "<x-ratelimit-remaining-tokens>",
-    │                 "x-ratelimit-reset-requests": "<x-ratelimit-reset-requests>",
-    │                 "x-ratelimit-reset-tokens": "<x-ratelimit-reset-tokens>",
-    │                 "x-request-id": "<x-request-id>"
-    │               },
     │               "messages": [
     │                 {
     │                   "content": [
@@ -3813,9 +3675,6 @@ span_tree:
     │       }
     │       └── doGenerate [llm]
     │           input: {
-    │             "headers": {
-    │               "user-agent": "ai/5.0.210"
-    │             },
     │             "maxOutputTokens": 24,
     │             "prompt": [
     │               {
@@ -3851,7 +3710,6 @@ span_tree:
     │             },
     │             "response": {
     │               "body": "<omitted>",
-    │               "headers": "<omitted>",
     │               "modelId": "gpt-4o-mini-2024-07-18",
     │               "timestamp": "<timestamp>"
     │             },
@@ -3936,7 +3794,6 @@ span_tree:
     │         },
     │         "response": {
     │           "body": "<omitted>",
-    │           "headers": "<omitted>",
     │           "modelId": "gpt-4o-mini-2024-07-18",
     │           "timestamp": "<timestamp>"
     │         },
@@ -3959,9 +3816,6 @@ span_tree:
     │       }
     │       └── doGenerate [llm]
     │           input: {
-    │             "headers": {
-    │               "user-agent": "ai/5.0.210"
-    │             },
     │             "maxOutputTokens": 32,
     │             "prompt": [
     │               {
@@ -4013,7 +3867,6 @@ span_tree:
     │             },
     │             "response": {
     │               "body": "<omitted>",
-    │               "headers": "<omitted>",
     │               "modelId": "gpt-4o-mini-2024-07-18",
     │               "timestamp": "<timestamp>"
     │             },
@@ -4201,7 +4054,6 @@ span_tree:
     │         },
     │         "response": {
     │           "body": "<omitted>",
-    │           "headers": "<omitted>",
     │           "messages": [
     │             {
     │               "content": [
@@ -4243,7 +4095,6 @@ span_tree:
     │             },
     │             "response": {
     │               "body": "<omitted>",
-    │               "headers": "<omitted>",
     │               "messages": [
     │                 {
     │                   "content": [
@@ -4300,191 +4151,41 @@ span_tree:
     │         "model": "gpt-4o-mini-2024-07-18",
     │         "provider": "openai.responses"
     │       }
-    │       ├── generateText [function]
-    │       │   input: {
-    │       │     "maxOutputTokens": 24,
-    │       │     "messages": [
-    │       │       {
-    │       │         "content": "Reply with exactly HELLO and no punctuation.",
-    │       │         "role": "user"
-    │       │       }
-    │       │     ],
-    │       │     "model": {
-    │       │       "config": {
-    │       │         "fileIdPrefixes": [
-    │       │           "file-"
-    │       │         ],
-    │       │         "provider": "openai.responses"
-    │       │       },
-    │       │       "modelId": "gpt-4o-mini-2024-07-18",
-    │       │       "specificationVersion": "v2",
-    │       │       "supportedUrls": {
-    │       │         "application/pdf": [
-    │       │           {}
-    │       │         ],
-    │       │         "image/*": [
-    │       │           {}
-    │       │         ]
-    │       │       }
-    │       │     },
-    │       │     "system": "You are a terse assistant."
-    │       │   }
-    │       │   output: {
-    │       │     "content": [
-    │       │       {
-    │       │         "providerMetadata": {
-    │       │           "openai": {
-    │       │             "itemId": "<itemId:1>"
-    │       │           }
-    │       │         },
-    │       │         "text": "HELLO",
-    │       │         "type": "text"
-    │       │       }
-    │       │     ],
-    │       │     "finishReason": "stop",
-    │       │     "providerMetadata": {
-    │       │       "openai": {
-    │       │         "responseId": "<responseId:2>",
-    │       │         "serviceTier": "default"
-    │       │       }
-    │       │     },
-    │       │     "response": {
-    │       │       "body": "<omitted>",
-    │       │       "headers": "<omitted>",
-    │       │       "messages": [
-    │       │         {
-    │       │           "content": [
-    │       │             {
-    │       │               "providerOptions": {
-    │       │                 "openai": {
-    │       │                   "itemId": "<itemId:1>"
-    │       │                 }
-    │       │               },
-    │       │               "text": "HELLO",
-    │       │               "type": "text"
-    │       │             }
-    │       │           ],
-    │       │           "role": "assistant"
-    │       │         }
-    │       │       ],
-    │       │       "modelId": "gpt-4o-mini-2024-07-18",
-    │       │       "timestamp": "<timestamp>"
-    │       │     },
-    │       │     "steps": [
-    │       │       {
-    │       │         "content": [
-    │       │           {
-    │       │             "providerMetadata": {
-    │       │               "openai": {
-    │       │                 "itemId": "<itemId:1>"
-    │       │               }
-    │       │             },
-    │       │             "text": "HELLO",
-    │       │             "type": "text"
-    │       │           }
-    │       │         ],
-    │       │         "finishReason": "stop",
-    │       │         "providerMetadata": {
-    │       │           "openai": {
-    │       │             "responseId": "<responseId:2>",
-    │       │             "serviceTier": "default"
-    │       │           }
-    │       │         },
-    │       │         "response": {
-    │       │           "body": "<omitted>",
-    │       │           "headers": "<omitted>",
-    │       │           "messages": [
-    │       │             {
-    │       │               "content": [
-    │       │                 {
-    │       │                   "providerOptions": {
-    │       │                     "openai": {
-    │       │                       "itemId": "<itemId:1>"
-    │       │                     }
-    │       │                   },
-    │       │                   "text": "HELLO",
-    │       │                   "type": "text"
-    │       │                 }
-    │       │               ],
-    │       │               "role": "assistant"
-    │       │             }
-    │       │           ],
-    │       │           "modelId": "gpt-4o-mini-2024-07-18",
-    │       │           "timestamp": "<timestamp>"
-    │       │         },
-    │       │         "usage": {
-    │       │           "cachedInputTokens": 0,
-    │       │           "inputTokens": 26,
-    │       │           "outputTokens": 3,
-    │       │           "reasoningTokens": 0,
-    │       │           "totalTokens": 29
-    │       │         },
-    │       │         "warnings": []
-    │       │       }
-    │       │     ],
-    │       │     "text": "HELLO",
-    │       │     "toolCalls": [],
-    │       │     "toolResults": [],
-    │       │     "totalUsage": {
-    │       │       "cachedInputTokens": 0,
-    │       │       "inputTokens": 26,
-    │       │       "outputTokens": 3,
-    │       │       "reasoningTokens": 0,
-    │       │       "totalTokens": 29
-    │       │     },
-    │       │     "usage": {
-    │       │       "cachedInputTokens": 0,
-    │       │       "inputTokens": 26,
-    │       │       "outputTokens": 3,
-    │       │       "reasoningTokens": 0,
-    │       │       "totalTokens": 29
-    │       │     },
-    │       │     "warnings": []
-    │       │   }
-    │       │   metadata: {
-    │       │     "braintrust": {
-    │       │       "integration_name": "ai-sdk",
-    │       │       "sdk_language": "typescript"
-    │       │     },
-    │       │     "model": "gpt-4o-mini-2024-07-18",
-    │       │     "provider": "openai.responses"
-    │       │   }
-    │       │   metrics: {
-    │       │     "completion_reasoning_tokens": 0,
-    │       │     "completion_tokens": 3,
-    │       │     "prompt_cached_tokens": 0,
-    │       │     "prompt_tokens": 26,
-    │       │     "reasoning_tokens": 0,
-    │       │     "tokens": 29
-    │       │   }
-    │       └── doGenerate [llm]
+    │       └── generateText [function]
     │           input: {
-    │             "headers": {
-    │               "user-agent": "ai/5.0.210"
-    │             },
     │             "maxOutputTokens": 24,
-    │             "prompt": [
+    │             "messages": [
     │               {
-    │                 "content": "You are a terse assistant.",
-    │                 "role": "system"
-    │               },
-    │               {
-    │                 "content": [
-    │                   {
-    │                     "text": "Reply with exactly HELLO and no punctuation.",
-    │                     "type": "text"
-    │                   }
-    │                 ],
+    │                 "content": "Reply with exactly HELLO and no punctuation.",
     │                 "role": "user"
     │               }
-    │             ]
+    │             ],
+    │             "model": {
+    │               "config": {
+    │                 "fileIdPrefixes": [
+    │                   "file-"
+    │                 ],
+    │                 "provider": "openai.responses"
+    │               },
+    │               "modelId": "gpt-4o-mini-2024-07-18",
+    │               "specificationVersion": "v2",
+    │               "supportedUrls": {
+    │                 "application/pdf": [
+    │                   {}
+    │                 ],
+    │                 "image/*": [
+    │                   {}
+    │                 ]
+    │               }
+    │             },
+    │             "system": "You are a terse assistant."
     │           }
     │           output: {
     │             "content": [
     │               {
     │                 "providerMetadata": {
     │                   "openai": {
-    │                     "itemId": "<itemId:2>"
+    │                     "itemId": "<itemId:1>"
     │                   }
     │                 },
     │                 "text": "HELLO",
@@ -4494,15 +4195,91 @@ span_tree:
     │             "finishReason": "stop",
     │             "providerMetadata": {
     │               "openai": {
-    │                 "responseId": "<responseId:1>",
+    │                 "responseId": "<responseId:2>",
     │                 "serviceTier": "default"
     │               }
     │             },
     │             "response": {
     │               "body": "<omitted>",
-    │               "headers": "<omitted>",
+    │               "messages": [
+    │                 {
+    │                   "content": [
+    │                     {
+    │                       "providerOptions": {
+    │                         "openai": {
+    │                           "itemId": "<itemId:1>"
+    │                         }
+    │                       },
+    │                       "text": "HELLO",
+    │                       "type": "text"
+    │                     }
+    │                   ],
+    │                   "role": "assistant"
+    │                 }
+    │               ],
     │               "modelId": "gpt-4o-mini-2024-07-18",
     │               "timestamp": "<timestamp>"
+    │             },
+    │             "steps": [
+    │               {
+    │                 "content": [
+    │                   {
+    │                     "providerMetadata": {
+    │                       "openai": {
+    │                         "itemId": "<itemId:1>"
+    │                       }
+    │                     },
+    │                     "text": "HELLO",
+    │                     "type": "text"
+    │                   }
+    │                 ],
+    │                 "finishReason": "stop",
+    │                 "providerMetadata": {
+    │                   "openai": {
+    │                     "responseId": "<responseId:2>",
+    │                     "serviceTier": "default"
+    │                   }
+    │                 },
+    │                 "response": {
+    │                   "body": "<omitted>",
+    │                   "messages": [
+    │                     {
+    │                       "content": [
+    │                         {
+    │                           "providerOptions": {
+    │                             "openai": {
+    │                               "itemId": "<itemId:1>"
+    │                             }
+    │                           },
+    │                           "text": "HELLO",
+    │                           "type": "text"
+    │                         }
+    │                       ],
+    │                       "role": "assistant"
+    │                     }
+    │                   ],
+    │                   "modelId": "gpt-4o-mini-2024-07-18",
+    │                   "timestamp": "<timestamp>"
+    │                 },
+    │                 "usage": {
+    │                   "cachedInputTokens": 0,
+    │                   "inputTokens": 26,
+    │                   "outputTokens": 3,
+    │                   "reasoningTokens": 0,
+    │                   "totalTokens": 29
+    │                 },
+    │                 "warnings": []
+    │               }
+    │             ],
+    │             "text": "HELLO",
+    │             "toolCalls": [],
+    │             "toolResults": [],
+    │             "totalUsage": {
+    │               "cachedInputTokens": 0,
+    │               "inputTokens": 26,
+    │               "outputTokens": 3,
+    │               "reasoningTokens": 0,
+    │               "totalTokens": 29
     │             },
     │             "usage": {
     │               "cachedInputTokens": 0,
@@ -4518,18 +4295,78 @@ span_tree:
     │               "integration_name": "ai-sdk",
     │               "sdk_language": "typescript"
     │             },
-    │             "finish_reason": "stop",
     │             "model": "gpt-4o-mini-2024-07-18",
     │             "provider": "openai.responses"
     │           }
-    │           metrics: {
-    │             "completion_reasoning_tokens": 0,
-    │             "completion_tokens": 3,
-    │             "prompt_cached_tokens": 0,
-    │             "prompt_tokens": 26,
-    │             "reasoning_tokens": 0,
-    │             "tokens": 29
-    │           }
+    │           └── doGenerate [llm]
+    │               input: {
+    │                 "maxOutputTokens": 24,
+    │                 "prompt": [
+    │                   {
+    │                     "content": "You are a terse assistant.",
+    │                     "role": "system"
+    │                   },
+    │                   {
+    │                     "content": [
+    │                       {
+    │                         "text": "Reply with exactly HELLO and no punctuation.",
+    │                         "type": "text"
+    │                       }
+    │                     ],
+    │                     "role": "user"
+    │                   }
+    │                 ]
+    │               }
+    │               output: {
+    │                 "content": [
+    │                   {
+    │                     "providerMetadata": {
+    │                       "openai": {
+    │                         "itemId": "<itemId:2>"
+    │                       }
+    │                     },
+    │                     "text": "HELLO",
+    │                     "type": "text"
+    │                   }
+    │                 ],
+    │                 "finishReason": "stop",
+    │                 "providerMetadata": {
+    │                   "openai": {
+    │                     "responseId": "<responseId:1>",
+    │                     "serviceTier": "default"
+    │                   }
+    │                 },
+    │                 "response": {
+    │                   "body": "<omitted>",
+    │                   "modelId": "gpt-4o-mini-2024-07-18",
+    │                   "timestamp": "<timestamp>"
+    │                 },
+    │                 "usage": {
+    │                   "cachedInputTokens": 0,
+    │                   "inputTokens": 26,
+    │                   "outputTokens": 3,
+    │                   "reasoningTokens": 0,
+    │                   "totalTokens": 29
+    │                 },
+    │                 "warnings": []
+    │               }
+    │               metadata: {
+    │                 "braintrust": {
+    │                   "integration_name": "ai-sdk",
+    │                   "sdk_language": "typescript"
+    │                 },
+    │                 "finish_reason": "stop",
+    │                 "model": "gpt-4o-mini-2024-07-18",
+    │                 "provider": "openai.responses"
+    │               }
+    │               metrics: {
+    │                 "completion_reasoning_tokens": 0,
+    │                 "completion_tokens": 3,
+    │                 "prompt_cached_tokens": 0,
+    │                 "prompt_tokens": 26,
+    │                 "reasoning_tokens": 0,
+    │                 "tokens": 29
+    │               }
     └── ai-sdk-agent-stream-operation
         metadata: {
           "operation": "agent-stream",
@@ -4560,97 +4397,97 @@ span_tree:
             metrics: {
               "time_to_first_token": 0
             }
-            ├── streamText [function]
-            │   input: {
-            │     "maxOutputTokens": 24,
-            │     "messages": [
-            │       {
-            │         "content": "Reply with exactly STREAM HELLO and no punctuation.",
-            │         "role": "user"
-            │       }
-            │     ],
-            │     "model": {
-            │       "config": {
-            │         "fileIdPrefixes": [
-            │           "file-"
-            │         ],
-            │         "provider": "openai.responses"
-            │       },
-            │       "modelId": "gpt-4o-mini-2024-07-18",
-            │       "specificationVersion": "v2",
-            │       "supportedUrls": {
-            │         "application/pdf": [
-            │           {}
-            │         ],
-            │         "image/*": [
-            │           {}
-            │         ]
-            │       }
-            │     },
-            │     "system": "You are a terse assistant."
-            │   }
-            │   output: {
-            │     "finishReason": "stop",
-            │     "text": "STREAM HELLO"
-            │   }
-            │   metadata: {
-            │     "braintrust": {
-            │       "integration_name": "ai-sdk",
-            │       "sdk_language": "typescript"
-            │     },
-            │     "model": "gpt-4o-mini-2024-07-18",
-            │     "provider": "openai.responses"
-            │   }
-            │   metrics: {
-            │     "time_to_first_token": 0
-            │   }
-            └── doStream [llm]
+            └── streamText [function]
                 input: {
-                  "includeRawChunks": false,
                   "maxOutputTokens": 24,
-                  "prompt": [
+                  "messages": [
                     {
-                      "content": "You are a terse assistant.",
-                      "role": "system"
-                    },
-                    {
-                      "content": [
-                        {
-                          "text": "Reply with exactly STREAM HELLO and no punctuation.",
-                          "type": "text"
-                        }
-                      ],
+                      "content": "Reply with exactly STREAM HELLO and no punctuation.",
                       "role": "user"
                     }
-                  ]
+                  ],
+                  "model": {
+                    "config": {
+                      "fileIdPrefixes": [
+                        "file-"
+                      ],
+                      "provider": "openai.responses"
+                    },
+                    "modelId": "gpt-4o-mini-2024-07-18",
+                    "specificationVersion": "v2",
+                    "supportedUrls": {
+                      "application/pdf": [
+                        {}
+                      ],
+                      "image/*": [
+                        {}
+                      ]
+                    }
+                  },
+                  "system": "You are a terse assistant."
                 }
                 output: {
                   "finishReason": "stop",
-                  "text": "STREAM HELLO",
-                  "toolCalls": [],
-                  "usage": {
-                    "cachedInputTokens": 0,
-                    "inputTokens": 27,
-                    "outputTokens": 4,
-                    "reasoningTokens": 0,
-                    "totalTokens": 31
-                  }
+                  "text": "STREAM HELLO"
                 }
                 metadata: {
                   "braintrust": {
                     "integration_name": "ai-sdk",
                     "sdk_language": "typescript"
                   },
-                  "finish_reason": "stop",
                   "model": "gpt-4o-mini-2024-07-18",
                   "provider": "openai.responses"
                 }
                 metrics: {
-                  "completion_reasoning_tokens": 0,
-                  "completion_tokens": 4,
-                  "prompt_cached_tokens": 0,
-                  "prompt_tokens": 27,
-                  "reasoning_tokens": 0,
-                  "time_to_first_token": 0,
-                  "tokens": 31
+                  "time_to_first_token": 0
                 }
+                └── doStream [llm]
+                    input: {
+                      "includeRawChunks": false,
+                      "maxOutputTokens": 24,
+                      "prompt": [
+                        {
+                          "content": "You are a terse assistant.",
+                          "role": "system"
+                        },
+                        {
+                          "content": [
+                            {
+                              "text": "Reply with exactly STREAM HELLO and no punctuation.",
+                              "type": "text"
+                            }
+                          ],
+                          "role": "user"
+                        }
+                      ]
+                    }
+                    output: {
+                      "finishReason": "stop",
+                      "text": "STREAM HELLO",
+                      "toolCalls": [],
+                      "usage": {
+                        "cachedInputTokens": 0,
+                        "inputTokens": 27,
+                        "outputTokens": 4,
+                        "reasoningTokens": 0,
+                        "totalTokens": 31
+                      }
+                    }
+                    metadata: {
+                      "braintrust": {
+                        "integration_name": "ai-sdk",
+                        "sdk_language": "typescript"
+                      },
+                      "finish_reason": "stop",
+                      "model": "gpt-4o-mini-2024-07-18",
+                      "provider": "openai.responses"
+                    }
+                    metrics: {
+                      "completion_reasoning_tokens": 0,
+                      "completion_tokens": 4,
+                      "prompt_cached_tokens": 0,
+                      "prompt_tokens": 27,
+                      "reasoning_tokens": 0,
+                      "time_to_first_token": 0,
+                      "tokens": 31
+                    }

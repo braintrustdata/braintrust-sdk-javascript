@@ -462,7 +462,7 @@ describe("OpenRouter Agent Plugin", () => {
       const result = openRouterAgentChannels.callModel.traceSync(
         () => {
           const modelResult = {
-            allToolExecutionRounds: [],
+            allToolExecutionRounds: [] as any[],
             finalResponse,
             resolvedRequest: {
               input:
@@ -490,7 +490,9 @@ describe("OpenRouter Agent Plugin", () => {
             },
             async getText() {
               const currentResponse = await modelResult.getInitialResponse();
-              const toolResult = await request.tools[0].function.execute(
+              const toolResult = await (
+                request.tools[0].function.execute as any
+              )(
                 { city: "Vienna" },
                 {
                   toolCall: {
@@ -514,7 +516,7 @@ describe("OpenRouter Agent Plugin", () => {
           return modelResult;
         },
         {
-          arguments: [request],
+          arguments: [request as any],
         },
       );
       expect(request.tools[0]).not.toBe(tool);
@@ -522,7 +524,7 @@ describe("OpenRouter Agent Plugin", () => {
       await expect(result.getText()).resolves.toBe("Sunny in Vienna");
       expect(request.tools[0]).not.toBe(tool);
 
-      const spans = await backgroundLogger.drain();
+      const spans = (await backgroundLogger.drain()) as any[];
       expect(spans).toHaveLength(4);
       const callModelSpan = spans.find(
         (span) => span.span_attributes?.name === "openrouter.callModel",
@@ -649,7 +651,7 @@ describe("OpenRouter Agent Plugin", () => {
 
       await expect(result.getText()).resolves.toBe("ok");
 
-      const spans = await backgroundLogger.drain();
+      const spans = (await backgroundLogger.drain()) as any[];
       const callModelSpan = spans.find(
         (span) => span.span_attributes?.name === "openrouter.callModel",
       ) as Record<string, any> | undefined;

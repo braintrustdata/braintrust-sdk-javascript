@@ -17,7 +17,7 @@ export interface APIPromise<T> extends Promise<T> {
   withResponse(): Promise<EnhancedResponse<T>>;
 }
 
-export type ChannelContext<TChannel extends OpenAIAsyncChannel> =
+type ChannelContext<TChannel extends OpenAIAsyncChannel> =
   OpenAIStartContext<TChannel>;
 
 type ChannelParam<TChannel extends OpenAIChannel> = ArgsOf<TChannel>[0];

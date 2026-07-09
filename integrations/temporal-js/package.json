@@ -22,7 +22,7 @@
   },
   "scripts": {
     "build": "tsup",
-    "check:typings": "tsc --noEmit",
+    "check:typings": "tsc --noEmit && tsc --noEmit -p tsconfig.test.json",
     "watch": "tsup --watch",
     "clean": "rm -r dist/*",
     "test": "vitest run",

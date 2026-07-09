@@ -3,7 +3,6 @@ import type {
   CursorSDKAgent,
   CursorSDKAgentClass,
   CursorSDKAgentOptions,
-  CursorSDKModule,
   CursorSDKRunResult,
   CursorSDKSendOptions,
   CursorSDKUserMessage,
@@ -178,5 +177,3 @@ function wrapCursorAgent(agent: CursorSDKAgent): CursorSDKAgent {
 
   return proxy as CursorSDKAgent;
 }
-
-export type { CursorSDKModule };

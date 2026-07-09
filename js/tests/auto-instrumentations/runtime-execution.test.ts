@@ -23,7 +23,6 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const fixturesDir = path.join(__dirname, "fixtures");
 const testFilesDir = path.join(fixturesDir, "test-files");
 const outputDir = path.join(__dirname, "output-runtime-execution");
-const nodeModulesDir = path.join(fixturesDir, "node_modules");
 
 describe("Runtime Execution of Bundled Code", () => {
   beforeAll(() => {

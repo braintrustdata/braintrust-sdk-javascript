@@ -630,7 +630,7 @@ export class PromptBuilder {
   }
 }
 
-export interface ParametersOpts<S extends EvalParameters> {
+interface ParametersOpts<S extends EvalParameters> {
   name: string;
   slug?: string;
   description?: string;

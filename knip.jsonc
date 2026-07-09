@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/knip/schema-jsonc.json",
-  "include": ["files", "exports"],
+  "include": ["files", "exports", "types"],
   "ignoreFiles": [
     ".context/**",
     ".changeset/changelog.cjs",
@@ -45,6 +45,11 @@
     },
     "js": {
       "entry": [
+        "src/node/index.ts",
+        "src/browser/index.ts",
+        "src/edge-light/index.ts",
+        "src/workerd/index.ts",
+        "src/instrumentation/index.ts",
         "src/auto-instrumentations/bundler/*.ts",
         "tests/**/*.{ts,tsx,mts,cts,cjs,mjs}",
         "scripts/**/*.ts",

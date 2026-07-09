@@ -10,7 +10,7 @@
  * Tests use mock modules that simulate having multiple instrumented methods.
  */
 
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
+import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import * as esbuild from "esbuild";
 import * as fs from "node:fs";
 import * as path from "node:path";

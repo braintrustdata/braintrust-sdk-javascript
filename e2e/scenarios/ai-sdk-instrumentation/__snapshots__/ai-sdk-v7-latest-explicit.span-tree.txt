@@ -12,9 +12,6 @@ span_tree:
     │   }
     │   └── generateText [function]
     │       input: {
-    │         "headers": {
-    │           "user-agent": "ai/7.0.0"
-    │         },
     │         "maxOutputTokens": 24,
     │         "maxRetries": 2,
     │         "messages": [
@@ -49,7 +46,6 @@ span_tree:
     │           }
     │         },
     │         "response": {
-    │           "headers": "<omitted>",
     │           "messages": [
     │             {
     │               "content": [
@@ -96,7 +92,6 @@ span_tree:
     │               }
     │             },
     │             "response": {
-    │               "headers": "<omitted>",
     │               "messages": [
     │                 {
     │                   "content": [
@@ -263,9 +258,6 @@ span_tree:
     │   }
     │   └── generateText [function]
     │       input: {
-    │         "headers": {
-    │           "user-agent": "ai/7.0.0"
-    │         },
     │         "maxOutputTokens": 32,
     │         "maxRetries": 2,
     │         "messages": [
@@ -318,7 +310,6 @@ span_tree:
     │           }
     │         },
     │         "response": {
-    │           "headers": "<omitted>",
     │           "messages": [
     │             {
     │               "content": [
@@ -365,7 +356,6 @@ span_tree:
     │               }
     │             },
     │             "response": {
-    │               "headers": "<omitted>",
     │               "messages": [
     │                 {
     │                   "content": [
@@ -561,7 +551,6 @@ span_tree:
     │           }
     │         },
     │         "response": {
-    │           "headers": "<omitted>",
     │           "messages": [
     │             {
     │               "content": [
@@ -608,7 +597,6 @@ span_tree:
     │               }
     │             },
     │             "response": {
-    │               "headers": "<omitted>",
     │               "messages": [
     │                 {
     │                   "content": [
@@ -884,9 +872,7 @@ span_tree:
     │   }
     │   └── generateText [function]
     │       input: {
-    │         "headers": {
-    │           "user-agent": "ai/7.0.0"
-    │         },
+    │         "instructions": "You must inspect live weather via the provided get_weather tool before responding.",
     │         "maxOutputTokens": 128,
     │         "maxRetries": 2,
     │         "messages": [
@@ -1036,7 +1022,6 @@ span_tree:
     │           }
     │         },
     │         "response": {
-    │           "headers": "<omitted>",
     │           "messages": [
     │             {
     │               "content": [
@@ -1121,7 +1106,6 @@ span_tree:
     │               }
     │             },
     │             "response": {
-    │               "headers": "<omitted>",
     │               "messages": [
     │                 {
     │                   "content": [
@@ -1232,7 +1216,6 @@ span_tree:
     │               }
     │             },
     │             "response": {
-    │               "headers": "<omitted>",
     │               "messages": [
     │                 {
     │                   "content": [
@@ -1343,7 +1326,6 @@ span_tree:
     │               }
     │             },
     │             "response": {
-    │               "headers": "<omitted>",
     │               "messages": [
     │                 {
     │                   "content": [
@@ -1454,7 +1436,6 @@ span_tree:
     │               }
     │             },
     │             "response": {
-    │               "headers": "<omitted>",
     │               "messages": [
     │                 {
     │                   "content": [
@@ -1671,6 +1652,7 @@ span_tree:
     │       }
     │       ├── doGenerate [llm]
     │       │   input: {
+    │       │     "instructions": "You must inspect live weather via the provided get_weather tool before responding.",
     │       │     "maxOutputTokens": 128,
     │       │     "messages": [
     │       │       {
@@ -1774,6 +1756,7 @@ span_tree:
     │       │   }
     │       ├── doGenerate [llm]
     │       │   input: {
+    │       │     "instructions": "You must inspect live weather via the provided get_weather tool before responding.",
     │       │     "maxOutputTokens": 128,
     │       │     "messages": [
     │       │       {
@@ -1912,6 +1895,7 @@ span_tree:
     │       │   }
     │       ├── doGenerate [llm]
     │       │   input: {
+    │       │     "instructions": "You must inspect live weather via the provided get_weather tool before responding.",
     │       │     "maxOutputTokens": 128,
     │       │     "messages": [
     │       │       {
@@ -2085,6 +2069,7 @@ span_tree:
     │       │   }
     │       ├── doGenerate [llm]
     │       │   input: {
+    │       │     "instructions": "You must inspect live weather via the provided get_weather tool before responding.",
     │       │     "maxOutputTokens": 128,
     │       │     "messages": [
     │       │       {
@@ -2298,9 +2283,6 @@ span_tree:
     │   }
     │   └── generateObject [function]
     │       input: {
-    │         "headers": {
-    │           "user-agent": "ai/7.0.0"
-    │         },
     │         "maxOutputTokens": 32,
     │         "maxRetries": 2,
     │         "model": {
@@ -2337,7 +2319,6 @@ span_tree:
     │         },
     │         "response": {
     │           "body": "<omitted>",
-    │           "headers": "<omitted>",
     │           "modelId": "gpt-4o-mini-2024-07-18",
     │           "timestamp": "<timestamp>"
     │         },
@@ -2398,7 +2379,6 @@ span_tree:
     │             },
     │             "response": {
     │               "body": "<omitted>",
-    │               "headers": "<omitted>",
     │               "modelId": "gpt-4o-mini-2024-07-18",
     │               "timestamp": "<timestamp>"
     │             },
@@ -2484,7 +2464,6 @@ span_tree:
     │           }
     │         },
     │         "response": {
-    │           "headers": "<omitted>",
     │           "modelId": "gpt-4o-mini-2024-07-18",
     │           "timestamp": "<timestamp>"
     │         },
@@ -2544,7 +2523,6 @@ span_tree:
     │               }
     │             },
     │             "response": {
-    │               "headers": "<omitted>",
     │               "modelId": "gpt-4o-mini-2024-07-18",
     │               "timestamp": "<timestamp>"
     │             },
@@ -2595,9 +2573,7 @@ span_tree:
     │   }
     │   └── generateText [function]
     │       input: {
-    │         "headers": {
-    │           "user-agent": "ai-sdk-agent/tool-loop ai/7.0.0"
-    │         },
+    │         "instructions": "You are a terse assistant.",
     │         "maxOutputTokens": 24,
     │         "maxRetries": 2,
     │         "messages": [
@@ -2631,7 +2607,6 @@ span_tree:
     │           }
     │         },
     │         "response": {
-    │           "headers": "<omitted>",
     │           "messages": [
     │             {
     │               "content": [
@@ -2678,7 +2653,6 @@ span_tree:
     │               }
     │             },
     │             "response": {
-    │               "headers": "<omitted>",
     │               "messages": [
     │                 {
     │                   "content": [
@@ -2768,6 +2742,7 @@ span_tree:
     │       }
     │       └── doGenerate [llm]
     │           input: {
+    │             "instructions": "You are a terse assistant.",
     │             "maxOutputTokens": 24,
     │             "messages": [
     │               {
@@ -2839,9 +2814,7 @@ span_tree:
     │   }
     │   └── streamText [function]
     │       input: {
-    │         "headers": {
-    │           "user-agent": "ai-sdk-agent/tool-loop"
-    │         },
+    │         "instructions": "You are a terse assistant.",
     │         "maxOutputTokens": 24,
     │         "maxRetries": 2,
     │         "messages": [
@@ -2875,7 +2848,6 @@ span_tree:
     │           }
     │         },
     │         "response": {
-    │           "headers": "<omitted>",
     │           "messages": [
     │             {
     │               "content": [
@@ -2922,7 +2894,6 @@ span_tree:
     │               }
     │             },
     │             "response": {
-    │               "headers": "<omitted>",
     │               "messages": [
     │                 {
     │                   "content": [
@@ -3015,6 +2986,7 @@ span_tree:
     │       }
     │       └── doStream [llm]
     │           input: {
+    │             "instructions": "You are a terse assistant.",
     │             "maxOutputTokens": 24,
     │             "messages": [
     │               {
@@ -3086,9 +3058,7 @@ span_tree:
         }
         └── generateText [function]
             input: {
-              "headers": {
-                "user-agent": "ai-sdk-agent/tool-loop ai/7.0.0"
-              },
+              "instructions": "You are a shopping assistant. Use the tools before answering pricing questions.",
               "maxOutputTokens": 256,
               "maxRetries": 2,
               "messages": [
@@ -3261,7 +3231,6 @@ span_tree:
                 }
               },
               "response": {
-                "headers": "<omitted>",
                 "messages": [
                   {
                     "content": [
@@ -3355,7 +3324,6 @@ span_tree:
                     }
                   },
                   "response": {
-                    "headers": "<omitted>",
                     "messages": [
                       {
                         "content": [
@@ -3495,7 +3463,6 @@ span_tree:
                     }
                   },
                   "response": {
-                    "headers": "<omitted>",
                     "messages": [
                       {
                         "content": [
@@ -3590,7 +3557,6 @@ span_tree:
                     }
                   },
                   "response": {
-                    "headers": "<omitted>",
                     "messages": [
                       {
                         "content": [
@@ -3766,6 +3732,7 @@ span_tree:
             }
             ├── doGenerate [llm]
             │   input: {
+            │     "instructions": "You are a shopping assistant. Use the tools before answering pricing questions.",
             │     "maxOutputTokens": 256,
             │     "messages": [
             │       {
@@ -3934,6 +3901,7 @@ span_tree:
             │   }
             ├── doGenerate [llm]
             │   input: {
+            │     "instructions": "You are a shopping assistant. Use the tools before answering pricing questions.",
             │     "maxOutputTokens": 256,
             │     "messages": [
             │       {
@@ -4138,6 +4106,7 @@ span_tree:
             │   }
             └── doGenerate [llm]
                 input: {
+                  "instructions": "You are a shopping assistant. Use the tools before answering pricing questions.",
                   "maxOutputTokens": 256,
                   "messages": [
                     {

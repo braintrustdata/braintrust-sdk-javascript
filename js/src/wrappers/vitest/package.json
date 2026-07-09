@@ -3,6 +3,7 @@
   "private": true,
   "description": "Test infrastructure for Vitest wrapper",
   "scripts": {
+    "check:typings": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run"
   },
   "devDependencies": {

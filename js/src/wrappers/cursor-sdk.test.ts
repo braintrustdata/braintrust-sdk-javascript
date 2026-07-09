@@ -47,7 +47,7 @@ describe("wrapCursorSDK", () => {
       },
     };
 
-    const wrapped = wrapCursorSDK(sdk);
+    const wrapped = wrapCursorSDK(sdk as any) as any;
     const created = await wrapped.Agent.create({ local: { cwd: "/tmp/repo" } });
     const result = await created.send("hello", {
       onDelta: vi.fn(),
@@ -81,7 +81,7 @@ describe("wrapCursorSDK", () => {
       },
     };
 
-    const wrapped = wrapCursorSDK(sdk);
+    const wrapped = wrapCursorSDK(sdk as any) as any;
     const agent = await wrapped.Agent.resume("agent-2");
 
     await expect(agent.send("hello")).resolves.toMatchObject({ id: "run-1" });
@@ -97,7 +97,7 @@ describe("wrapCursorSDK", () => {
       },
     };
 
-    const wrapped = wrapCursorSDK(sdk);
+    const wrapped = wrapCursorSDK(sdk as any) as any;
     await expect(wrapped.Agent.prompt("hello")).resolves.toMatchObject({
       result: "hello",
     });
@@ -117,7 +117,7 @@ describe("wrapCursorSDK", () => {
       writable: false,
     });
 
-    const wrapped = wrapCursorSDK(sdk as { Agent: typeof Agent });
+    const wrapped = wrapCursorSDK(sdk as any) as any;
 
     await expect(wrapped.Agent.prompt("hello")).resolves.toMatchObject({
       status: "finished",

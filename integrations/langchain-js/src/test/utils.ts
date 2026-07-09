@@ -1,36 +1,6 @@
 import { mergeDicts } from "braintrust/util";
 import { BaseCallbackHandler } from "@langchain/core/callbacks/base";
-import { bypass, HttpResponse, JsonBodyType } from "msw";
-import { TransformStream } from "stream/web";
 import { LogsRequest } from "./types";
-
-const decoder = new TextDecoder();
-// comment out process.env overriding in setup.ts for this to be helpful
-const bypassAndLog = async (request: Request): Promise<Response> => {
-  console.log(request.method, request.url);
-  const res = await fetch(bypass(request));
-
-  // If it's not a stream, handle as before
-  if (!res.body || !res.headers.get("content-type")?.includes("stream")) {
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    const json = (await res.json()) as JsonBodyType;
-    console.log(JSON.stringify(json, null, 2));
-    return HttpResponse.json(json);
-  }
-
-  const spy = new TransformStream({
-    transform(chunk, controller) {
-      console.log(decoder.decode(chunk));
-      controller.enqueue(chunk);
-    },
-  });
-
-  return new Response(res.body.pipeThrough(spy), {
-    headers: res.headers,
-    status: res.status,
-    statusText: res.statusText,
-  });
-};
 
 export const logsToSpans = (logs: LogsRequest[]) => {
   if (logs.length === 0) {

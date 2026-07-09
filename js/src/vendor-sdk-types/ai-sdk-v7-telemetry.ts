@@ -12,7 +12,11 @@ export interface AISDKV7TelemetryOptions {
   functionId?: string;
 }
 
-export interface AISDKV7ModelInfo {
+export const BRAINTRUST_AI_SDK_V7_OPERATION_KEY = Symbol.for(
+  "braintrust.ai-sdk.v7.telemetry-operation-key",
+);
+
+interface AISDKV7ModelInfo {
   provider?: string;
   modelId?: string;
 }
@@ -21,12 +25,14 @@ export interface AISDKV7OperationEvent
   extends AISDKV7TelemetryOptions, AISDKV7ModelInfo {
   callId: string;
   operationId: string;
+  [BRAINTRUST_AI_SDK_V7_OPERATION_KEY]?: string;
   [key: string]: unknown;
 }
 
 export interface AISDKV7LanguageModelCallStartEvent
   extends AISDKV7TelemetryOptions, AISDKV7ModelInfo {
   callId: string;
+  [BRAINTRUST_AI_SDK_V7_OPERATION_KEY]?: string;
   [key: string]: unknown;
 }
 
@@ -37,6 +43,7 @@ export interface AISDKV7LanguageModelCallEndEvent
   finishReason?: unknown;
   responseId?: string;
   usage?: unknown;
+  [BRAINTRUST_AI_SDK_V7_OPERATION_KEY]?: string;
   [key: string]: unknown;
 }
 
@@ -45,6 +52,7 @@ export interface AISDKV7ObjectStepStartEvent
   callId: string;
   promptMessages?: unknown;
   stepNumber?: number;
+  [BRAINTRUST_AI_SDK_V7_OPERATION_KEY]?: string;
   [key: string]: unknown;
 }
 
@@ -59,6 +67,7 @@ export interface AISDKV7ObjectStepEndEvent
   response?: unknown;
   usage?: unknown;
   warnings?: unknown;
+  [BRAINTRUST_AI_SDK_V7_OPERATION_KEY]?: string;
   [key: string]: unknown;
 }
 
@@ -68,6 +77,7 @@ export interface AISDKV7EmbedStartEvent
   embedCallId: string;
   operationId: string;
   values: unknown[];
+  [BRAINTRUST_AI_SDK_V7_OPERATION_KEY]?: string;
   [key: string]: unknown;
 }
 
@@ -79,6 +89,7 @@ export interface AISDKV7EmbedEndEvent
   embeddings?: unknown[];
   usage?: unknown;
   values?: unknown[];
+  [BRAINTRUST_AI_SDK_V7_OPERATION_KEY]?: string;
   [key: string]: unknown;
 }
 
@@ -88,6 +99,7 @@ export interface AISDKV7RerankStartEvent
   documents?: unknown[];
   query?: string;
   topN?: number;
+  [BRAINTRUST_AI_SDK_V7_OPERATION_KEY]?: string;
   [key: string]: unknown;
 }
 
@@ -95,10 +107,11 @@ export interface AISDKV7RerankEndEvent
   extends AISDKV7TelemetryOptions, AISDKV7ModelInfo {
   callId: string;
   ranking?: Array<{ index?: number; relevanceScore?: number }>;
+  [BRAINTRUST_AI_SDK_V7_OPERATION_KEY]?: string;
   [key: string]: unknown;
 }
 
-export interface AISDKV7ToolCall {
+interface AISDKV7ToolCall {
   toolCallId?: string;
   toolName?: string;
   input?: unknown;
@@ -106,13 +119,14 @@ export interface AISDKV7ToolCall {
 }
 
 export interface AISDKV7ToolExecutionStartEvent extends AISDKV7TelemetryOptions {
-  callId: string;
+  callId?: string;
   toolCall: AISDKV7ToolCall;
   toolContext?: unknown;
+  [BRAINTRUST_AI_SDK_V7_OPERATION_KEY]?: string;
   [key: string]: unknown;
 }
 
-export interface AISDKV7ToolOutput {
+interface AISDKV7ToolOutput {
   type?: "tool-result" | "tool-error" | string;
   output?: unknown;
   error?: unknown;
@@ -120,10 +134,14 @@ export interface AISDKV7ToolOutput {
 }
 
 export interface AISDKV7ToolExecutionEndEvent extends AISDKV7TelemetryOptions {
-  callId: string;
+  callId?: string;
   durationMs?: number;
+  error?: unknown;
+  output?: unknown;
+  success?: boolean;
   toolCall: AISDKV7ToolCall;
   toolOutput?: AISDKV7ToolOutput;
+  [BRAINTRUST_AI_SDK_V7_OPERATION_KEY]?: string;
   [key: string]: unknown;
 }
 
@@ -161,13 +179,16 @@ export interface AISDKV7Telemetry {
     event: AISDKV7ToolExecutionEndEvent,
   ) => void | PromiseLike<void>;
   onChunk?: (event: AISDKV7ChunkEvent) => void | PromiseLike<void>;
+  onStepEnd?: (event: unknown) => void | PromiseLike<void>;
   onStepFinish?: (event: unknown) => void | PromiseLike<void>;
   onEnd?: (event: AISDKV7OperationEvent) => void | PromiseLike<void>;
+  onAbort?: (event: unknown) => void | PromiseLike<void>;
   onError?: (event: unknown) => void | PromiseLike<void>;
   executeTool?: <T>(options: {
     callId: string;
     toolCallId: string;
     execute: () => PromiseLike<T>;
+    [BRAINTRUST_AI_SDK_V7_OPERATION_KEY]?: string;
   }) => PromiseLike<T>;
 }
 

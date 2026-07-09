@@ -1,6 +1,5 @@
 import { channel, defineChannels } from "../core/channel-definitions";
 import type {
-  GroqChatChoice,
   GroqChatCompletion,
   GroqChatCompletionChunk,
   GroqChatCreateParams,
@@ -29,5 +28,3 @@ export const groqChannels = defineChannels("groq-sdk", {
     },
   ),
 });
-
-export type GroqChatResultChoice = GroqChatChoice;

@@ -42,9 +42,7 @@
                         "reasoningTokens": 0
                       }
                     },
-                    "rawResponse": {
-                      "headers": "<omitted>"
-                    },
+                    "rawResponse": {},
                     "response": {
                       "modelId": "gpt-4o-mini-2024-07-18",
                       "timestamp": "<timestamp>"
@@ -93,11 +91,8 @@
                   }
                 },
                 "finishReason": "stop",
-                "rawResponse": {
-                  "headers": "<omitted>"
-                },
+                "rawResponse": {},
                 "response": {
-                  "headers": "<omitted>",
                   "messages": [
                     {
                       "content": [
@@ -123,7 +118,6 @@
                     "finishReason": "stop",
                     "isContinued": false,
                     "response": {
-                      "headers": "<omitted>",
                       "messages": [
                         {
                           "content": [
@@ -248,9 +242,7 @@
               },
               "output": {
                 "finishReason": "stop",
-                "rawResponse": {
-                  "headers": "<omitted>"
-                },
+                "rawResponse": {},
                 "text": "One, two, three.",
                 "warnings": []
               },
@@ -380,9 +372,7 @@
                         "reasoningTokens": 0
                       }
                     },
-                    "rawResponse": {
-                      "headers": "<omitted>"
-                    },
+                    "rawResponse": {},
                     "response": {
                       "modelId": "gpt-4o-mini-2024-07-18",
                       "timestamp": "<timestamp>"
@@ -466,11 +456,8 @@
                   }
                 },
                 "finishReason": "tool-calls",
-                "rawResponse": {
-                  "headers": "<omitted>"
-                },
+                "rawResponse": {},
                 "response": {
-                  "headers": "<omitted>",
                   "messages": [
                     {
                       "content": [
@@ -513,7 +500,6 @@
                     "finishReason": "tool-calls",
                     "isContinued": false,
                     "response": {
-                      "headers": "<omitted>",
                       "messages": [
                         {
                           "content": [
@@ -689,9 +675,7 @@
                         "reasoningTokens": 0
                       }
                     },
-                    "rawResponse": {
-                      "headers": "<omitted>"
-                    },
+                    "rawResponse": {},
                     "response": {
                       "modelId": "gpt-4o-mini-2024-07-18",
                       "timestamp": "<timestamp>"
@@ -762,11 +746,8 @@
                 "object": {
                   "city": "Paris"
                 },
-                "rawResponse": {
-                  "headers": "<omitted>"
-                },
+                "rawResponse": {},
                 "response": {
-                  "headers": "<omitted>",
                   "modelId": "gpt-4o-mini-2024-07-18",
                   "timestamp": "<timestamp>"
                 },
@@ -905,9 +886,7 @@
                 "object": {
                   "city": "Paris"
                 },
-                "rawResponse": {
-                  "headers": "<omitted>"
-                },
+                "rawResponse": {},
                 "warnings": []
               },
               "metadata": {

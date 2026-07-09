@@ -1277,7 +1277,7 @@ describe("aggregateChatCompletionChunks", () => {
       },
     ];
 
-    const result = aggregateChatCompletionChunks(chunks);
+    const result = aggregateChatCompletionChunks(chunks as any);
 
     expect(result.output).toEqual([
       {
@@ -1304,7 +1304,7 @@ describe("aggregateChatCompletionChunks", () => {
       },
     ];
 
-    const result = aggregateChatCompletionChunks(chunks);
+    const result = aggregateChatCompletionChunks(chunks as any);
 
     expect(result.output[0].message.role).toBe("assistant");
   });
@@ -1442,15 +1442,16 @@ describe("aggregateChatCompletionChunks", () => {
       },
     ];
 
-    const result = aggregateChatCompletionChunks(chunks);
+    const result = aggregateChatCompletionChunks(chunks as any);
+    const output = result.output as any[];
 
-    expect(result.output[0].message.tool_calls).toHaveLength(2);
-    expect(result.output[0].message.tool_calls[0]).toEqual({
+    expect(output[0].message.tool_calls).toHaveLength(2);
+    expect(output[0].message.tool_calls[0]).toEqual({
       id: "call_1",
       type: "function",
       function: { name: "tool1", arguments: '{"a":1}' },
     });
-    expect(result.output[0].message.tool_calls[1]).toEqual({
+    expect(output[0].message.tool_calls[1]).toEqual({
       id: "call_2",
       type: "function",
       function: { name: "tool2", arguments: '{"b":2}' },
@@ -1472,7 +1473,7 @@ describe("aggregateChatCompletionChunks", () => {
       },
     ];
 
-    const result = aggregateChatCompletionChunks(chunks);
+    const result = aggregateChatCompletionChunks(chunks as any);
 
     expect(result.metrics).toEqual({
       prompt_tokens: 10,
@@ -1533,7 +1534,7 @@ describe("aggregateChatCompletionChunks", () => {
       { choices: [{ delta: { content: "Hi" } }] },
     ];
 
-    const result = aggregateChatCompletionChunks(chunks);
+    const result = aggregateChatCompletionChunks(chunks as any);
 
     expect(result.output[0].message.content).toBe("Hi");
   });

@@ -65,6 +65,15 @@ describeVariants("variants", () => {
               ...(scenario.cohereModuleName
                 ? { AI_SDK_COHERE_PACKAGE_NAME: scenario.cohereModuleName }
                 : {}),
+              ...(scenario.workflowModuleName
+                ? { AI_SDK_WORKFLOW_PACKAGE_NAME: scenario.workflowModuleName }
+                : {}),
+              ...(scenario.workflowAIModuleName
+                ? {
+                    AI_SDK_WORKFLOW_AI_PACKAGE_NAME:
+                      scenario.workflowAIModuleName,
+                  }
+                : {}),
             },
             runContext: {
               variantKey: scenario.snapshotName,
@@ -86,6 +95,7 @@ describeVariants("variants", () => {
         supportsRerank: scenario.supportsRerank !== false,
         supportsStreamObject: scenario.supportsStreamObject,
         supportsToolExecution: scenario.supportsToolExecution,
+        supportsWorkflowAgent: scenario.supportsWorkflowAgent,
         sdkMajorVersion,
         testFileUrl: import.meta.url,
         timeoutMs: AI_SDK_SCENARIO_TIMEOUT_MS,
@@ -107,6 +117,15 @@ describeVariants("variants", () => {
                 : {}),
               ...(scenario.cohereModuleName
                 ? { AI_SDK_COHERE_PACKAGE_NAME: scenario.cohereModuleName }
+                : {}),
+              ...(scenario.workflowModuleName
+                ? { AI_SDK_WORKFLOW_PACKAGE_NAME: scenario.workflowModuleName }
+                : {}),
+              ...(scenario.workflowAIModuleName
+                ? {
+                    AI_SDK_WORKFLOW_AI_PACKAGE_NAME:
+                      scenario.workflowAIModuleName,
+                  }
                 : {}),
             },
             nodeArgs: ["--import", "braintrust/hook.mjs"],
@@ -130,6 +149,7 @@ describeVariants("variants", () => {
         supportsRerank: scenario.supportsRerank !== false,
         supportsStreamObject: scenario.supportsStreamObject,
         supportsToolExecution: scenario.supportsToolExecution,
+        supportsWorkflowAgent: scenario.supportsWorkflowAgent,
         sdkMajorVersion,
         testFileUrl: import.meta.url,
         timeoutMs: AI_SDK_SCENARIO_TIMEOUT_MS,

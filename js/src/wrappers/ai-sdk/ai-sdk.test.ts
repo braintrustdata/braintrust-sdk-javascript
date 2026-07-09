@@ -17,7 +17,6 @@ import { openai } from "@ai-sdk/openai";
 import {
   _exportsForTestingOnly,
   initLogger,
-  Logger,
   TestBackgroundLogger,
 } from "../../logger";
 import { wrapAISDK, wrapAgentClass } from "./ai-sdk";
@@ -41,7 +40,6 @@ test("ai sdk is installed", () => {
 describe("ai sdk client unit tests", TEST_SUITE_OPTIONS, () => {
   let wrappedAI: typeof ai;
   let backgroundLogger: TestBackgroundLogger;
-  let _logger: Logger<false>;
 
   beforeAll(async () => {
     await _exportsForTestingOnly.simulateLoginForTests();
@@ -50,7 +48,7 @@ describe("ai sdk client unit tests", TEST_SUITE_OPTIONS, () => {
   beforeEach(() => {
     backgroundLogger = _exportsForTestingOnly.useTestBackgroundLogger();
     wrappedAI = wrapAISDK(ai);
-    _logger = initLogger({
+    initLogger({
       projectName: "ai-sdk.test.ts",
       projectId: "test-project-id",
     });
@@ -1181,7 +1179,7 @@ describe("ai sdk client unit tests", TEST_SUITE_OPTIONS, () => {
     };
 
     const paths = ["request.body", "response.body"];
-    const result = omit(testObj, paths);
+    const result = omit(testObj, paths) as any;
 
     // Root-level body should NOT be omitted
     expect(result.body).toBe("This should NOT be omitted");
@@ -1212,7 +1210,7 @@ describe("ai sdk client unit tests", TEST_SUITE_OPTIONS, () => {
     };
 
     const paths = ["a.b.c.d", "x.y.z", "a.nonexistent"];
-    const result = omit(testObj, paths);
+    const result = omit(testObj, paths) as any;
 
     // Non-existent paths should not affect the output
     expect(result).toEqual({
@@ -1252,7 +1250,7 @@ describe("ai sdk client unit tests", TEST_SUITE_OPTIONS, () => {
     };
 
     const paths = ["request.body", "response.body"];
-    const result = omit(testObj, paths);
+    const result = omit(testObj, paths) as any;
 
     // request.body doesn't exist, so request should be unchanged
     expect(result.request).toEqual({
@@ -1272,7 +1270,7 @@ describe("ai sdk client unit tests", TEST_SUITE_OPTIONS, () => {
 
   test("omit function handles root-level primitives", () => {
     const obj = { a: { b: 2 }, c: 3, d: 4 };
-    const result = omit(obj, ["a.b", "c"]);
+    const result = omit(obj, ["a.b", "c"]) as any;
 
     expect(result).toEqual({
       a: { b: "<omitted>" },
@@ -1289,7 +1287,7 @@ describe("ai sdk client unit tests", TEST_SUITE_OPTIONS, () => {
       },
     };
 
-    const result = omit(testObj, ["items", "nested.arr"]);
+    const result = omit(testObj, ["items", "nested.arr"]) as any;
 
     expect(result.items).toBe("<omitted>");
     expect(result.nested.arr).toBe("<omitted>");
@@ -1309,7 +1307,7 @@ describe("ai sdk client unit tests", TEST_SUITE_OPTIONS, () => {
       key3: "value3",
     };
 
-    const result = omit(testObj, ["key1", "key3"]);
+    const result = omit(testObj, ["key1", "key3"]) as any;
 
     expect(result.key1).toBe("<omitted>");
     expect(result.key2).toEqual({ nested: "value2" });
@@ -1332,7 +1330,7 @@ describe("ai sdk client unit tests", TEST_SUITE_OPTIONS, () => {
       "boolean",
       "nullValue",
       "obj.nested",
-    ]);
+    ]) as any;
 
     expect(result.string).toBe("<omitted>");
     expect(result.number).toBe("<omitted>");
@@ -1347,7 +1345,7 @@ describe("ai sdk client unit tests", TEST_SUITE_OPTIONS, () => {
       a: [{ b: 1 }, { b: 2 }, { b: 3 }],
     };
 
-    const result = omit(testObj, ["a[].b"]);
+    const result = omit(testObj, ["a[].b"]) as any;
 
     expect(result.a).toEqual([
       { b: "<omitted>" },
@@ -1521,7 +1519,7 @@ describe("ai sdk client unit tests", TEST_SUITE_OPTIONS, () => {
       return;
     }
 
-    const AgentClass = wrappedAI.Agent || wrappedAI.Experimental_Agent;
+    const AgentClass = (wrappedAI.Agent || wrappedAI.Experimental_Agent) as any;
     const model = openai(TEST_MODEL);
 
     // Create a custom Agent subclass
@@ -1531,7 +1529,7 @@ describe("ai sdk client unit tests", TEST_SUITE_OPTIONS, () => {
       }
     }
 
-    const agent = new CustomAgent({
+    const agent = new (CustomAgent as any)({
       model,
       system: "You are a helpful assistant.",
     });
@@ -1555,7 +1553,7 @@ describe("ai sdk client unit tests", TEST_SUITE_OPTIONS, () => {
     expect(result.text.toLowerCase()).toContain("hello");
 
     // Verify tracing still works with proper span structure
-    const spans = await backgroundLogger.drain();
+    const spans = (await backgroundLogger.drain()) as any[];
     expect(spans.length).toBeGreaterThanOrEqual(1);
 
     const span = spans[0];
@@ -2349,6 +2347,7 @@ describe("ai sdk client unit tests", TEST_SUITE_OPTIONS, () => {
     });
 
     for await (const chunk of stream.textStream) {
+      void chunk;
     }
 
     const spans = (await backgroundLogger.drain()) as any[];
@@ -2454,6 +2453,7 @@ describe("ai sdk client unit tests", TEST_SUITE_OPTIONS, () => {
     });
 
     for await (const chunk of stream.textStream) {
+      void chunk;
     }
 
     const spans = (await backgroundLogger.drain()) as any[];
@@ -2913,7 +2913,7 @@ describe("extractTokenMetrics", () => {
     });
 
     // Every value should be a number or not present (undefined)
-    for (const [key, value] of Object.entries(result)) {
+    for (const value of Object.values(result)) {
       expect(typeof value === "number" || value === undefined).toBe(true);
     }
   });
@@ -3013,7 +3013,7 @@ describe("wrapAISDK with ES module namespace objects", () => {
 
     // Simulate an ES module namespace object with non-configurable properties
     // This mimics what happens in strict ESM environments
-    const mockAISDK = {};
+    const mockAISDK: any = {};
 
     // Define non-configurable properties like ES module namespaces have
     Object.defineProperty(mockAISDK, "generateText", {
@@ -3049,7 +3049,7 @@ describe("wrapAISDK with ES module namespace objects", () => {
 
   test("prototype chain approach preserves all properties including non-enumerable", () => {
     // Simulate an ES module namespace object with both enumerable and non-enumerable properties
-    const mockAISDK = {};
+    const mockAISDK: any = {};
 
     Object.defineProperty(mockAISDK, "generateText", {
       value: async () => ({ text: "mock" }),
@@ -3079,7 +3079,7 @@ describe("wrapAISDK with ES module namespace objects", () => {
     expect("hiddenProperty" in spreadSDK).toBe(false); // Lost!
 
     // Approach 2: Prototype chain (preserves everything)
-    const protoSDK = Object.setPrototypeOf({}, mockAISDK);
+    const protoSDK: any = Object.setPrototypeOf({}, mockAISDK);
     expect("generateText" in protoSDK).toBe(true);
     expect("hiddenProperty" in protoSDK).toBe(true); // Preserved!
     expect(protoSDK.hiddenProperty).toBe("secret");
@@ -3117,7 +3117,7 @@ describe("wrapAISDK with ES module namespace objects", () => {
     }).not.toThrow();
 
     // ModuleRecord-like object (strict ESM environments)
-    const moduleRecord = {};
+    const moduleRecord: any = {};
     Object.defineProperty(moduleRecord, "generateText", {
       value: async () => ({ text: "mock" }),
       writable: false,
@@ -3141,7 +3141,7 @@ describe("wrapAISDK with ES module namespace objects", () => {
   test("detects objects with constructor.name === 'Module'", () => {
     // Create a mock object that looks like a Module
     class Module {}
-    const mockModule = new Module();
+    const mockModule: any = new Module();
 
     // Add some properties
     Object.defineProperty(mockModule, "generateText", {

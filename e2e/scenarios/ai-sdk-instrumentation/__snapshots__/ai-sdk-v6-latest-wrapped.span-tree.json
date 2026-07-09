@@ -16,9 +16,6 @@
                   "type": "llm",
                   "children": [],
                   "input": {
-                    "headers": {
-                      "user-agent": "ai/6.0.219"
-                    },
                     "maxOutputTokens": 24,
                     "prompt": [
                       {
@@ -56,7 +53,6 @@
                     },
                     "response": {
                       "body": "<omitted>",
-                      "headers": "<omitted>",
                       "modelId": "gpt-4o-mini-2024-07-18",
                       "timestamp": "<timestamp>"
                     },
@@ -141,6 +137,7 @@
                   }
                 ],
                 "finishReason": "stop",
+                "output": "PARIS",
                 "providerMetadata": {
                   "openai": {
                     "responseId": "<responseId:2>",
@@ -149,7 +146,6 @@
                 },
                 "response": {
                   "body": "<omitted>",
-                  "headers": "<omitted>",
                   "messages": [
                     {
                       "content": [
@@ -195,7 +191,6 @@
                     },
                     "response": {
                       "body": "<omitted>",
-                      "headers": "<omitted>",
                       "messages": [
                         {
                           "content": [
@@ -324,9 +319,6 @@
                   "type": "llm",
                   "children": [],
                   "input": {
-                    "headers": {
-                      "user-agent": "ai/6.0.219"
-                    },
                     "maxOutputTokens": 32,
                     "prompt": [
                       {
@@ -380,7 +372,6 @@
                     },
                     "response": {
                       "body": "<omitted>",
-                      "headers": "<omitted>",
                       "modelId": "gpt-4o-mini-2024-07-18",
                       "timestamp": "<timestamp>"
                     },
@@ -430,10 +421,6 @@
                 }
               ],
               "input": {
-                "experimental_output": {
-                  "name": "object",
-                  "responseFormat": {}
-                },
                 "maxOutputTokens": 32,
                 "model": {
                   "config": {
@@ -487,6 +474,9 @@
                   }
                 ],
                 "finishReason": "stop",
+                "output": {
+                  "answer": "4"
+                },
                 "providerMetadata": {
                   "openai": {
                     "responseId": "<responseId:2>",
@@ -495,7 +485,6 @@
                 },
                 "response": {
                   "body": "<omitted>",
-                  "headers": "<omitted>",
                   "messages": [
                     {
                       "content": [
@@ -541,7 +530,6 @@
                     },
                     "response": {
                       "body": "<omitted>",
-                      "headers": "<omitted>",
                       "messages": [
                         {
                           "content": [
@@ -871,9 +859,6 @@
                   "type": "llm",
                   "children": [],
                   "input": {
-                    "headers": {
-                      "user-agent": "ai/6.0.219"
-                    },
                     "maxOutputTokens": 128,
                     "prompt": [
                       {
@@ -940,7 +925,6 @@
                     },
                     "response": {
                       "body": "<omitted>",
-                      "headers": "<omitted>",
                       "modelId": "gpt-4o-mini-2024-07-18",
                       "timestamp": "<timestamp>"
                     },
@@ -1002,9 +986,6 @@
                   "type": "llm",
                   "children": [],
                   "input": {
-                    "headers": {
-                      "user-agent": "ai/6.0.219"
-                    },
                     "maxOutputTokens": 128,
                     "prompt": [
                       {
@@ -1106,7 +1087,6 @@
                     },
                     "response": {
                       "body": "<omitted>",
-                      "headers": "<omitted>",
                       "modelId": "gpt-4o-mini-2024-07-18",
                       "timestamp": "<timestamp>"
                     },
@@ -1168,9 +1148,6 @@
                   "type": "llm",
                   "children": [],
                   "input": {
-                    "headers": {
-                      "user-agent": "ai/6.0.219"
-                    },
                     "maxOutputTokens": 128,
                     "prompt": [
                       {
@@ -1307,7 +1284,6 @@
                     },
                     "response": {
                       "body": "<omitted>",
-                      "headers": "<omitted>",
                       "modelId": "gpt-4o-mini-2024-07-18",
                       "timestamp": "<timestamp>"
                     },
@@ -1369,9 +1345,6 @@
                   "type": "llm",
                   "children": [],
                   "input": {
-                    "headers": {
-                      "user-agent": "ai/6.0.219"
-                    },
                     "maxOutputTokens": 128,
                     "prompt": [
                       {
@@ -1543,7 +1516,6 @@
                     },
                     "response": {
                       "body": "<omitted>",
-                      "headers": "<omitted>",
                       "modelId": "gpt-4o-mini-2024-07-18",
                       "timestamp": "<timestamp>"
                     },
@@ -1683,7 +1655,6 @@
                 },
                 "response": {
                   "body": "<omitted>",
-                  "headers": "<omitted>",
                   "messages": [
                     {
                       "content": [
@@ -1872,7 +1843,6 @@
                     },
                     "response": {
                       "body": "<omitted>",
-                      "headers": "<omitted>",
                       "messages": [
                         {
                           "content": [
@@ -1983,7 +1953,6 @@
                     },
                     "response": {
                       "body": "<omitted>",
-                      "headers": "<omitted>",
                       "messages": [
                         {
                           "content": [
@@ -2129,7 +2098,6 @@
                     },
                     "response": {
                       "body": "<omitted>",
-                      "headers": "<omitted>",
                       "messages": [
                         {
                           "content": [
@@ -2310,7 +2278,6 @@
                     },
                     "response": {
                       "body": "<omitted>",
-                      "headers": "<omitted>",
                       "messages": [
                         {
                           "content": [
@@ -2604,9 +2571,6 @@
                   "type": "llm",
                   "children": [],
                   "input": {
-                    "headers": {
-                      "user-agent": "ai/6.0.219"
-                    },
                     "maxOutputTokens": 24,
                     "prompt": [
                       {
@@ -2649,7 +2613,6 @@
                     },
                     "response": {
                       "body": "<omitted>",
-                      "headers": "<omitted>",
                       "modelId": "gpt-4o-mini-2024-07-18",
                       "timestamp": "<timestamp>"
                     },
@@ -2739,6 +2702,7 @@
                   }
                 ],
                 "finishReason": "stop",
+                "output": "CACHE_OK",
                 "providerMetadata": {
                   "openai": {
                     "responseId": "<responseId:2>",
@@ -2747,7 +2711,6 @@
                 },
                 "response": {
                   "body": "<omitted>",
-                  "headers": "<omitted>",
                   "messages": [
                     {
                       "content": [
@@ -2793,7 +2756,6 @@
                     },
                     "response": {
                       "body": "<omitted>",
-                      "headers": "<omitted>",
                       "messages": [
                         {
                           "content": [
@@ -2905,9 +2867,6 @@
                   "type": "llm",
                   "children": [],
                   "input": {
-                    "headers": {
-                      "user-agent": "ai/6.0.219"
-                    },
                     "maxOutputTokens": 24,
                     "prompt": [
                       {
@@ -2950,7 +2909,6 @@
                     },
                     "response": {
                       "body": "<omitted>",
-                      "headers": "<omitted>",
                       "modelId": "gpt-4o-mini-2024-07-18",
                       "timestamp": "<timestamp>"
                     },
@@ -3040,6 +2998,7 @@
                   }
                 ],
                 "finishReason": "stop",
+                "output": "CACHE_OK",
                 "providerMetadata": {
                   "openai": {
                     "responseId": "<responseId:2>",
@@ -3048,7 +3007,6 @@
                 },
                 "response": {
                   "body": "<omitted>",
-                  "headers": "<omitted>",
                   "messages": [
                     {
                       "content": [
@@ -3094,7 +3052,6 @@
                     },
                     "response": {
                       "body": "<omitted>",
-                      "headers": "<omitted>",
                       "messages": [
                         {
                           "content": [
@@ -3215,9 +3172,6 @@
                   "type": "llm",
                   "children": [],
                   "input": {
-                    "headers": {
-                      "user-agent": "ai/6.0.219"
-                    },
                     "maxOutputTokens": 24,
                     "prompt": [
                       {
@@ -3273,7 +3227,6 @@
                     },
                     "response": {
                       "body": "<omitted>",
-                      "headers": "<omitted>",
                       "modelId": "claude-haiku-4-5-20251001"
                     },
                     "usage": {
@@ -3360,6 +3313,7 @@
                   }
                 ],
                 "finishReason": "stop",
+                "output": "CACHE_OK",
                 "providerMetadata": {
                   "anthropic": {
                     "cacheCreationInputTokens": 0,
@@ -3383,7 +3337,6 @@
                 },
                 "response": {
                   "body": "<omitted>",
-                  "headers": "<omitted>",
                   "messages": [
                     {
                       "content": [
@@ -3435,7 +3388,6 @@
                     "rawFinishReason": "end_turn",
                     "response": {
                       "body": "<omitted>",
-                      "headers": "<omitted>",
                       "messages": [
                         {
                           "content": [
@@ -3537,9 +3489,6 @@
                   "type": "llm",
                   "children": [],
                   "input": {
-                    "headers": {
-                      "user-agent": "ai/6.0.219"
-                    },
                     "maxOutputTokens": 24,
                     "prompt": [
                       {
@@ -3595,7 +3544,6 @@
                     },
                     "response": {
                       "body": "<omitted>",
-                      "headers": "<omitted>",
                       "modelId": "claude-haiku-4-5-20251001"
                     },
                     "usage": {
@@ -3682,6 +3630,7 @@
                   }
                 ],
                 "finishReason": "stop",
+                "output": "CACHE_OK",
                 "providerMetadata": {
                   "anthropic": {
                     "cacheCreationInputTokens": 0,
@@ -3705,7 +3654,6 @@
                 },
                 "response": {
                   "body": "<omitted>",
-                  "headers": "<omitted>",
                   "messages": [
                     {
                       "content": [
@@ -3757,7 +3705,6 @@
                     "rawFinishReason": "end_turn",
                     "response": {
                       "body": "<omitted>",
-                      "headers": "<omitted>",
                       "messages": [
                         {
                           "content": [
@@ -3868,9 +3815,6 @@
                   "type": "llm",
                   "children": [],
                   "input": {
-                    "headers": {
-                      "user-agent": "ai/6.0.219"
-                    },
                     "maxOutputTokens": 24,
                     "prompt": [
                       {
@@ -3908,7 +3852,6 @@
                     },
                     "response": {
                       "body": "<omitted>",
-                      "headers": "<omitted>",
                       "modelId": "gpt-4o-mini-2024-07-18",
                       "timestamp": "<timestamp>"
                     },
@@ -3993,6 +3936,7 @@
                   }
                 ],
                 "finishReason": "stop",
+                "output": "DENIED",
                 "providerMetadata": {
                   "openai": {
                     "responseId": "<responseId:2>",
@@ -4105,31 +4049,6 @@
                       "total_tokens": 20
                     },
                     "user": null
-                  },
-                  "headers": {
-                    "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
-                    "alt-svc": "h3=\":443\"; ma=86400",
-                    "cf-cache-status": "DYNAMIC",
-                    "cf-ray": "<cf-ray>",
-                    "connection": "keep-alive",
-                    "content-type": "application/json",
-                    "date": "<timestamp>",
-                    "openai-organization": "braintrust-data",
-                    "openai-processing-ms": "<openai-processing-ms>",
-                    "openai-project": "<openai-project>",
-                    "openai-version": "<timestamp>",
-                    "server": "cloudflare",
-                    "set-cookie": "<set-cookie>",
-                    "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
-                    "transfer-encoding": "chunked",
-                    "x-content-type-options": "nosniff",
-                    "x-ratelimit-limit-requests": "30000",
-                    "x-ratelimit-limit-tokens": "150000000",
-                    "x-ratelimit-remaining-requests": "<x-ratelimit-remaining-requests>",
-                    "x-ratelimit-remaining-tokens": "<x-ratelimit-remaining-tokens>",
-                    "x-ratelimit-reset-requests": "<x-ratelimit-reset-requests>",
-                    "x-ratelimit-reset-tokens": "<x-ratelimit-reset-tokens>",
-                    "x-request-id": "<x-request-id>"
                   },
                   "messages": [
                     {
@@ -4281,31 +4200,6 @@
                         },
                         "user": null
                       },
-                      "headers": {
-                        "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
-                        "alt-svc": "h3=\":443\"; ma=86400",
-                        "cf-cache-status": "DYNAMIC",
-                        "cf-ray": "<cf-ray>",
-                        "connection": "keep-alive",
-                        "content-type": "application/json",
-                        "date": "<timestamp>",
-                        "openai-organization": "braintrust-data",
-                        "openai-processing-ms": "<openai-processing-ms>",
-                        "openai-project": "<openai-project>",
-                        "openai-version": "<timestamp>",
-                        "server": "cloudflare",
-                        "set-cookie": "<set-cookie>",
-                        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
-                        "transfer-encoding": "chunked",
-                        "x-content-type-options": "nosniff",
-                        "x-ratelimit-limit-requests": "30000",
-                        "x-ratelimit-limit-tokens": "150000000",
-                        "x-ratelimit-remaining-requests": "<x-ratelimit-remaining-requests>",
-                        "x-ratelimit-remaining-tokens": "<x-ratelimit-remaining-tokens>",
-                        "x-ratelimit-reset-requests": "<x-ratelimit-reset-requests>",
-                        "x-ratelimit-reset-tokens": "<x-ratelimit-reset-tokens>",
-                        "x-request-id": "<x-request-id>"
-                      },
                       "messages": [
                         {
                           "content": [
@@ -4426,9 +4320,6 @@
                   "type": "llm",
                   "children": [],
                   "input": {
-                    "headers": {
-                      "user-agent": "ai/6.0.219"
-                    },
                     "maxOutputTokens": 32,
                     "prompt": [
                       {
@@ -4482,7 +4373,6 @@
                     },
                     "response": {
                       "body": "<omitted>",
-                      "headers": "<omitted>",
                       "modelId": "gpt-4o-mini-2024-07-18",
                       "timestamp": "<timestamp>"
                     },
@@ -4580,7 +4470,6 @@
                 },
                 "response": {
                   "body": "<omitted>",
-                  "headers": "<omitted>",
                   "modelId": "gpt-4o-mini-2024-07-18",
                   "timestamp": "<timestamp>"
                 },
@@ -4792,9 +4681,6 @@
                   "type": "llm",
                   "children": [],
                   "input": {
-                    "headers": {
-                      "user-agent": "ai/6.0.219"
-                    },
                     "maxOutputTokens": 24,
                     "prompt": [
                       {
@@ -4831,7 +4717,6 @@
                     },
                     "response": {
                       "body": "<omitted>",
-                      "headers": "<omitted>",
                       "modelId": "gpt-4o-mini-2024-07-18",
                       "timestamp": "<timestamp>"
                     },
@@ -4921,6 +4806,7 @@
                   }
                 ],
                 "finishReason": "stop",
+                "output": "HELLO",
                 "providerMetadata": {
                   "openai": {
                     "responseId": "<responseId:2>",
@@ -4929,7 +4815,6 @@
                 },
                 "response": {
                   "body": "<omitted>",
-                  "headers": "<omitted>",
                   "messages": [
                     {
                       "content": [
@@ -4975,7 +4860,6 @@
                     },
                     "response": {
                       "body": "<omitted>",
-                      "headers": "<omitted>",
                       "messages": [
                         {
                           "content": [
@@ -5223,9 +5107,6 @@
                   "type": "llm",
                   "children": [],
                   "input": {
-                    "headers": {
-                      "user-agent": "ai/6.0.219"
-                    },
                     "maxOutputTokens": 256,
                     "prompt": [
                       {
@@ -5349,7 +5230,6 @@
                     },
                     "response": {
                       "body": "<omitted>",
-                      "headers": "<omitted>",
                       "modelId": "gpt-4o-mini-2024-07-18",
                       "timestamp": "<timestamp>"
                     },
@@ -5422,9 +5302,6 @@
                   "type": "llm",
                   "children": [],
                   "input": {
-                    "headers": {
-                      "user-agent": "ai/6.0.219"
-                    },
                     "maxOutputTokens": 256,
                     "prompt": [
                       {
@@ -5600,7 +5477,6 @@
                     },
                     "response": {
                       "body": "<omitted>",
-                      "headers": "<omitted>",
                       "modelId": "gpt-4o-mini-2024-07-18",
                       "timestamp": "<timestamp>"
                     },
@@ -5663,9 +5539,6 @@
                   "type": "llm",
                   "children": [],
                   "input": {
-                    "headers": {
-                      "user-agent": "ai/6.0.219"
-                    },
                     "maxOutputTokens": 256,
                     "prompt": [
                       {
@@ -5876,7 +5749,6 @@
                     },
                     "response": {
                       "body": "<omitted>",
-                      "headers": "<omitted>",
                       "modelId": "gpt-4o-mini-2024-07-18",
                       "timestamp": "<timestamp>"
                     },
@@ -6021,6 +5893,7 @@
                   }
                 ],
                 "finishReason": "stop",
+                "output": "Here are the prices for the laptop:\n\n- **Store A**: $999\n- **Store B**: $1099\n\nThe cheaper price is from **Store A** at $999. After applying the discount code **SAVE20**, the final total is **$799.20**.",
                 "providerMetadata": {
                   "openai": {
                     "responseId": "<responseId:7>",
@@ -6029,7 +5902,6 @@
                 },
                 "response": {
                   "body": "<omitted>",
-                  "headers": "<omitted>",
                   "messages": [
                     {
                       "content": [
@@ -6220,7 +6092,6 @@
                     },
                     "response": {
                       "body": "<omitted>",
-                      "headers": "<omitted>",
                       "messages": [
                         {
                           "content": [
@@ -6360,7 +6231,6 @@
                     },
                     "response": {
                       "body": "<omitted>",
-                      "headers": "<omitted>",
                       "messages": [
                         {
                           "content": [
@@ -6517,7 +6387,6 @@
                     },
                     "response": {
                       "body": "<omitted>",
-                      "headers": "<omitted>",
                       "messages": [
                         {
                           "content": [

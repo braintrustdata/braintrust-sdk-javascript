@@ -8,7 +8,7 @@ import type {
 import type { WorkflowClientInterceptor } from "@temporalio/client";
 import { defaultPayloadConverter } from "@temporalio/common";
 import * as braintrust from "braintrust";
-import { SpanComponentsV3 } from "braintrust/util";
+import { SpanComponentsV4 } from "braintrust/util";
 import { getWorkflowSpanExport } from "./sinks";
 import {
   BRAINTRUST_SPAN_HEADER,
@@ -103,7 +103,7 @@ class BraintrustActivityInterceptor implements ActivityInboundCallsInterceptor {
 
       if (workflowSpanId && clientContext) {
         try {
-          const clientComponents = SpanComponentsV3.fromStr(clientContext);
+          const clientComponents = SpanComponentsV4.fromStr(clientContext);
           const clientData = clientComponents.data;
 
           // We can only construct a workflow parent if we have:
@@ -125,11 +125,11 @@ class BraintrustActivityInterceptor implements ActivityInboundCallsInterceptor {
               root_span_id: clientData.root_span_id, // Keep same trace
             };
             const workflowComponents = clientData.object_id
-              ? new SpanComponentsV3({
+              ? new SpanComponentsV4({
                   ...workflowParentBase,
                   object_id: clientData.object_id,
                 })
-              : new SpanComponentsV3({
+              : new SpanComponentsV4({
                   ...workflowParentBase,
                   compute_object_metadata_args:
                     clientData.compute_object_metadata_args!,

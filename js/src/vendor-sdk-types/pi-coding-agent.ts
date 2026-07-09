@@ -156,7 +156,7 @@ export interface PiUserMessage {
   [key: string]: unknown;
 }
 
-export type PiUserContent = PiTextContent | PiImageContent;
+type PiUserContent = PiTextContent | PiImageContent;
 
 export interface PiTextContent {
   type: "text";

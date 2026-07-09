@@ -5,12 +5,6 @@
  * users and should only cover fields we read, wrap, or log.
  */
 
-export interface OpenAICodexSDKModule {
-  Codex: OpenAICodexClass;
-  Thread?: OpenAICodexThreadClass;
-  [key: string]: unknown;
-}
-
 export interface OpenAICodexClass {
   new (options?: OpenAICodexOptions): OpenAICodexClient;
   [key: string]: unknown;
@@ -22,11 +16,6 @@ export interface OpenAICodexClient {
     id: string,
     options?: OpenAICodexThreadOptions,
   ): OpenAICodexThread;
-  [key: string]: unknown;
-}
-
-export interface OpenAICodexThreadClass {
-  new (...args: unknown[]): OpenAICodexThread;
   [key: string]: unknown;
 }
 
@@ -51,14 +40,14 @@ export interface OpenAICodexOptions {
   env?: Record<string, string>;
 }
 
-export type OpenAICodexConfigValue =
+type OpenAICodexConfigValue =
   | string
   | number
   | boolean
   | OpenAICodexConfigValue[]
   | OpenAICodexConfigObject;
 
-export interface OpenAICodexConfigObject {
+interface OpenAICodexConfigObject {
   [key: string]: OpenAICodexConfigValue;
 }
 

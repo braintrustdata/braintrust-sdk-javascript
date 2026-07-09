@@ -3,7 +3,6 @@ import type {
   OpenAICodexClass,
   OpenAICodexClient,
   OpenAICodexInput,
-  OpenAICodexSDKModule,
   OpenAICodexStreamedTurn,
   OpenAICodexThread,
   OpenAICodexThreadOptions,
@@ -182,5 +181,3 @@ function wrapCodexThread(thread: OpenAICodexThread): OpenAICodexThread {
     },
   });
 }
-
-export type { OpenAICodexSDKModule };

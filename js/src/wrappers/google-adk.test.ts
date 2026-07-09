@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 
 // Mock iso's newTracingChannel
 vi.mock("../isomorph", () => {
@@ -154,8 +154,6 @@ describe("wrapGoogleADK", () => {
   });
 
   it("should wrap Runner.runAsync to call traceSync channel", async () => {
-    let traceSyncCalled = false;
-
     class FakeRunner {
       constructor(_input: any) {}
       async *runAsync(_params: any): AsyncGenerator<any> {
