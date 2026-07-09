@@ -9,7 +9,7 @@ export default defineTool({
   async execute({ url }) {
     return {
       excerpt:
-        "Eve hooks expose runtime stream events that Braintrust maps into a flat turn trace.",
+        "Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace.",
       section: "Runtime context",
       title: "Eve instrumentation",
       url,

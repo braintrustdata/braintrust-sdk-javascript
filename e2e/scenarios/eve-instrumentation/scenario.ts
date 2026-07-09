@@ -48,7 +48,11 @@ async function main() {
       throw new Error(`Eve session create did not return a sessionId`);
     }
 
-    await streamUntilTurnCompleted(baseUrl, body.sessionId);
+    await streamUntilTurnCompleted(
+      baseUrl,
+      body.sessionId,
+      new Set([body.sessionId]),
+    );
     await new Promise((resolve) => setTimeout(resolve, 5000));
   } finally {
     await stopServer(server);
@@ -135,8 +139,10 @@ async function waitForEve(
 async function streamUntilTurnCompleted(
   baseUrl: string,
   sessionId: string,
+  seenSessionIds: Set<string>,
 ): Promise<void> {
   const controller = new AbortController();
+  const childStreams: Promise<void>[] = [];
   const response = await fetch(
     `${baseUrl}/eve/v1/session/${sessionId}/stream`,
     {
@@ -167,7 +173,7 @@ async function streamUntilTurnCompleted(
           continue;
         }
         const event = JSON.parse(trimmed) as {
-          data?: { message?: string };
+          data?: { childSessionId?: string; message?: string };
           type?: string;
         };
         if (
@@ -179,7 +185,22 @@ async function streamUntilTurnCompleted(
             `Eve emitted ${event.type}: ${event.data?.message ?? trimmed}`,
           );
         }
+        if (
+          event.type === "subagent.called" &&
+          typeof event.data?.childSessionId === "string" &&
+          !seenSessionIds.has(event.data.childSessionId)
+        ) {
+          seenSessionIds.add(event.data.childSessionId);
+          childStreams.push(
+            streamUntilTurnCompleted(
+              baseUrl,
+              event.data.childSessionId,
+              seenSessionIds,
+            ),
+          );
+        }
         if (event.type === "turn.completed") {
+          await Promise.all(childStreams);
           return;
         }
       }

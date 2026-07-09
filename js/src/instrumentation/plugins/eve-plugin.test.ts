@@ -1,11 +1,25 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { createHash } from "node:crypto";
 import { configureNode } from "../../node/config";
-import { _exportsForTestingOnly, initLogger } from "../../logger";
+import {
+  _exportsForTestingOnly,
+  initLogger,
+  startSpan,
+  withCurrent,
+} from "../../logger";
 import { braintrustEveHook } from "./eve-plugin";
 import type {
   EveHandleMessageStreamEvent,
   EveHookContext,
 } from "../../vendor-sdk-types/eve";
+
+function deterministicEveIdForTest(...parts: string[]): string {
+  return createHash("sha256")
+    .update(parts.map((part) => `${part.length}:${part}`).join("\0"))
+    .digest("hex")
+    .slice(0, 32)
+    .replace(/^(.{8})(.{4})(.{4})(.{4})(.{12})$/, "$1-$2-$3-$4-$5");
+}
 
 try {
   configureNode();
@@ -59,12 +73,11 @@ describe("braintrustEveHook", () => {
     };
     const emit = (event: EveHandleMessageStreamEvent) => wildcard?.(event, ctx);
     const expectedModelMetadata = {
-      "eve.model.id": "eve-mock/braintrust-eve-mock",
       model: "braintrust-eve-mock",
       provider: "eve-mock",
     };
 
-    emit({
+    await emit({
       data: {
         runtime: {
           agentId: "agent-id",
@@ -76,12 +89,12 @@ describe("braintrustEveHook", () => {
       meta: { at: "2026-01-01T00:00:00.000Z" },
       type: "session.started",
     });
-    emit({
+    await emit({
       data: { sequence: 0, turnId: "turn-flat-tree" },
       meta: { at: "2026-01-01T00:00:00.010Z" },
       type: "turn.started",
     });
-    emit({
+    await emit({
       data: {
         message: "Search then read",
         sequence: 0,
@@ -90,12 +103,12 @@ describe("braintrustEveHook", () => {
       meta: { at: "2026-01-01T00:00:00.020Z" },
       type: "message.received",
     });
-    emit({
+    await emit({
       data: { sequence: 0, stepIndex: 0, turnId: "turn-flat-tree" },
       meta: { at: "2026-01-01T00:00:00.030Z" },
       type: "step.started",
     });
-    emit({
+    await emit({
       data: {
         actions: [
           {
@@ -112,7 +125,7 @@ describe("braintrustEveHook", () => {
       meta: { at: "2026-01-01T00:00:00.040Z" },
       type: "actions.requested",
     });
-    emit({
+    await emit({
       data: {
         error: undefined,
         result: {
@@ -129,7 +142,7 @@ describe("braintrustEveHook", () => {
       meta: { at: "2026-01-01T00:00:00.050Z" },
       type: "action.result",
     });
-    emit({
+    await emit({
       data: {
         finishReason: "tool-calls",
         sequence: 0,
@@ -146,12 +159,12 @@ describe("braintrustEveHook", () => {
       meta: { at: "2026-01-01T00:00:00.060Z" },
       type: "step.completed",
     });
-    emit({
+    await emit({
       data: { sequence: 0, stepIndex: 1, turnId: "turn-flat-tree" },
       meta: { at: "2026-01-01T00:00:00.070Z" },
       type: "step.started",
     });
-    emit({
+    await emit({
       data: {
         finishReason: "stop",
         message: "Here is the Eve instrumentation guide.",
@@ -162,7 +175,7 @@ describe("braintrustEveHook", () => {
       meta: { at: "2026-01-01T00:00:00.080Z" },
       type: "message.completed",
     });
-    emit({
+    await emit({
       data: {
         finishReason: "stop",
         sequence: 0,
@@ -176,7 +189,7 @@ describe("braintrustEveHook", () => {
       meta: { at: "2026-01-01T00:00:00.090Z" },
       type: "step.completed",
     });
-    emit({
+    await emit({
       data: { sequence: 0, turnId: "turn-flat-tree" },
       meta: { at: "2026-01-01T00:00:00.100Z" },
       type: "turn.completed",
@@ -188,15 +201,9 @@ describe("braintrustEveHook", () => {
     const root = spans.find(
       (span) => span.span_attributes?.name === "eve.turn",
     );
-    const steps = spans
-      .filter((span) =>
-        String(span.span_attributes?.name).startsWith("eve.step"),
-      )
-      .sort(
-        (left, right) =>
-          Number(left.metadata?.["eve.step.index"]) -
-          Number(right.metadata?.["eve.step.index"]),
-      );
+    const steps = spans.filter((span) =>
+      String(span.span_attributes?.name).startsWith("eve.step"),
+    );
     const tool = spans.find((span) => span.span_attributes?.name === "search");
 
     expect(spans.map((span) => span.span_attributes?.name)).toEqual([
@@ -208,11 +215,6 @@ describe("braintrustEveHook", () => {
     expect(root).toMatchObject({
       input: [{ content: "Search then read", role: "user" }],
       metadata: {
-        ...expectedModelMetadata,
-        "eve.agent.name": "eve-test-agent",
-        "eve.channel.kind": "http",
-        "eve.session.id": "session-flat-tree",
-        "eve.turn.id": "turn-flat-tree",
         scenario: "eve-plugin-unit",
         testRunId: "test-run-flat-tree",
       },
@@ -243,10 +245,9 @@ describe("braintrustEveHook", () => {
       [root?.span_id],
       [root?.span_id],
     ]);
-    for (const [index, step] of steps.entries()) {
-      expect(step.metadata).toMatchObject({
+    for (const step of steps) {
+      expect(step.metadata).toEqual({
         ...expectedModelMetadata,
-        "eve.step.index": index,
         scenario: "eve-plugin-unit",
         testRunId: "test-run-flat-tree",
       });
@@ -271,7 +272,7 @@ describe("braintrustEveHook", () => {
         ],
       },
       {
-        content: { hits: ["eve.dev/docs"] },
+        content: JSON.stringify({ hits: ["eve.dev/docs"] }),
         name: "search",
         role: "tool",
         tool_call_id: "call-search",
@@ -280,9 +281,8 @@ describe("braintrustEveHook", () => {
     expect(tool).toMatchObject({
       input: { query: "Eve instrumentation" },
       metadata: {
-        "eve.step.index": 0,
-        "eve.tool.call_id": "call-search",
-        "eve.tool.name": "search",
+        scenario: "eve-plugin-unit",
+        testRunId: "test-run-flat-tree",
       },
       output: { hits: ["eve.dev/docs"] },
       span_attributes: {
@@ -291,30 +291,34 @@ describe("braintrustEveHook", () => {
       },
       span_parents: [root?.span_id],
     });
-    expect(tool?.metadata).not.toHaveProperty("eve.model.id");
     expect(tool?.metadata).not.toHaveProperty("model");
     expect(tool?.metadata).not.toHaveProperty("provider");
-    expect(steps[0]?.output).toMatchObject({
-      message: {
-        tool_calls: [
-          {
-            function: {
-              arguments: JSON.stringify({ query: "Eve instrumentation" }),
-              name: "search",
+    expect(steps[0]?.output).toMatchObject([
+      {
+        finish_reason: "tool_calls",
+        message: {
+          tool_calls: [
+            {
+              function: {
+                arguments: JSON.stringify({ query: "Eve instrumentation" }),
+                name: "search",
+              },
+              id: "call-search",
+              type: "function",
             },
-            id: "call-search",
-            type: "function",
-          },
-        ],
+          ],
+        },
       },
-    });
-    expect(steps[1]?.output).toMatchObject({
-      finish_reason: "stop",
-      message: {
-        content: "Here is the Eve instrumentation guide.",
-        role: "assistant",
+    ]);
+    expect(steps[1]?.output).toMatchObject([
+      {
+        finish_reason: "stop",
+        message: {
+          content: "Here is the Eve instrumentation guide.",
+          role: "assistant",
+        },
       },
-    });
+    ]);
   });
 
   it("merges incremental tool call requests into one assistant message", async () => {
@@ -328,11 +332,11 @@ describe("braintrustEveHook", () => {
     };
     const emit = (event: EveHandleMessageStreamEvent) => wildcard?.(event, ctx);
 
-    emit({
+    await emit({
       data: { sequence: 0, turnId: "turn-incremental-tools" },
       type: "turn.started",
     });
-    emit({
+    await emit({
       data: {
         message: "Search then read",
         sequence: 0,
@@ -340,11 +344,11 @@ describe("braintrustEveHook", () => {
       },
       type: "message.received",
     });
-    emit({
+    await emit({
       data: { sequence: 0, stepIndex: 0, turnId: "turn-incremental-tools" },
       type: "step.started",
     });
-    emit({
+    await emit({
       data: {
         actions: [
           {
@@ -360,7 +364,7 @@ describe("braintrustEveHook", () => {
       },
       type: "actions.requested",
     });
-    emit({
+    await emit({
       data: {
         actions: [
           {
@@ -376,7 +380,7 @@ describe("braintrustEveHook", () => {
       },
       type: "actions.requested",
     });
-    emit({
+    await emit({
       data: {
         result: {
           callId: "call-search",
@@ -391,7 +395,7 @@ describe("braintrustEveHook", () => {
       },
       type: "action.result",
     });
-    emit({
+    await emit({
       data: {
         result: {
           callId: "call-read",
@@ -406,7 +410,7 @@ describe("braintrustEveHook", () => {
       },
       type: "action.result",
     });
-    emit({
+    await emit({
       data: {
         finishReason: "tool-calls",
         sequence: 0,
@@ -415,11 +419,11 @@ describe("braintrustEveHook", () => {
       },
       type: "step.completed",
     });
-    emit({
+    await emit({
       data: { sequence: 0, stepIndex: 1, turnId: "turn-incremental-tools" },
       type: "step.started",
     });
-    emit({
+    await emit({
       data: {
         finishReason: "stop",
         message: "Done.",
@@ -429,7 +433,7 @@ describe("braintrustEveHook", () => {
       },
       type: "message.completed",
     });
-    emit({
+    await emit({
       data: {
         finishReason: "stop",
         sequence: 0,
@@ -438,7 +442,7 @@ describe("braintrustEveHook", () => {
       },
       type: "step.completed",
     });
-    emit({
+    await emit({
       data: { sequence: 0, turnId: "turn-incremental-tools" },
       type: "turn.completed",
     });
@@ -446,24 +450,21 @@ describe("braintrustEveHook", () => {
     const spans = (await backgroundLogger.drain()) as Array<
       Record<string, any>
     >;
-    const steps = spans
-      .filter((span) =>
-        String(span.span_attributes?.name).startsWith("eve.step"),
-      )
-      .sort(
-        (left, right) =>
-          Number(left.metadata?.["eve.step.index"]) -
-          Number(right.metadata?.["eve.step.index"]),
-      );
+    const steps = spans.filter((span) =>
+      String(span.span_attributes?.name).startsWith("eve.step"),
+    );
 
-    expect(steps[0]?.output).toMatchObject({
-      message: {
-        tool_calls: [
-          { id: "call-search", function: { name: "search" } },
-          { id: "call-read", function: { name: "read" } },
-        ],
+    expect(steps[0]?.output).toMatchObject([
+      {
+        finish_reason: "tool_calls",
+        message: {
+          tool_calls: [
+            { id: "call-search", function: { name: "search" } },
+            { id: "call-read", function: { name: "read" } },
+          ],
+        },
       },
-    });
+    ]);
     const assistantToolMessages = steps[1]?.input.filter(
       (message: Record<string, any>) =>
         message.role === "assistant" && Array.isArray(message.tool_calls),
@@ -479,12 +480,441 @@ describe("braintrustEveHook", () => {
     });
   });
 
+  it("uses deterministic ids and nests local subagent sessions from Eve lineage", async () => {
+    const wildcard = braintrustEveHook().events?.["*"];
+    expect(wildcard).toBeDefined();
+
+    const parentCtx: EveHookContext = {
+      agent: { name: "eve-parent-agent" },
+      channel: { kind: "http" },
+      session: { id: "session-parent" },
+    };
+    const childCtx: EveHookContext = {
+      agent: { name: "eve-child-agent", nodeId: "researcher-node" },
+      channel: { kind: "subagent" },
+      session: {
+        id: "session-child",
+        parent: {
+          callId: "call-researcher",
+          rootSessionId: "session-parent",
+          sessionId: "session-parent",
+          turn: { id: "turn-parent", sequence: 0 },
+        },
+      },
+    };
+    const emitParent = (event: EveHandleMessageStreamEvent) =>
+      wildcard?.(event, parentCtx);
+    const emitChild = (event: EveHandleMessageStreamEvent) =>
+      wildcard?.(event, childCtx);
+
+    await emitParent({
+      data: { sequence: 0, turnId: "turn-parent" },
+      type: "turn.started",
+    });
+    await emitParent({
+      data: {
+        message: "Research Eve tracing",
+        sequence: 0,
+        turnId: "turn-parent",
+      },
+      type: "message.received",
+    });
+    await emitParent({
+      data: { sequence: 0, stepIndex: 0, turnId: "turn-parent" },
+      type: "step.started",
+    });
+    await emitParent({
+      data: {
+        actions: [
+          {
+            callId: "call-researcher",
+            input: { message: "Find the relevant section" },
+            kind: "subagent-call",
+            name: "researcher",
+            subagentName: "researcher",
+          },
+        ],
+        sequence: 0,
+        stepIndex: 0,
+        turnId: "turn-parent",
+      },
+      type: "actions.requested",
+    });
+    await emitParent({
+      data: {
+        callId: "call-researcher",
+        childSessionId: "session-child",
+        name: "researcher",
+        sequence: 0,
+        toolName: "researcher",
+        turnId: "turn-parent",
+      },
+      type: "subagent.called",
+    });
+
+    await emitChild({
+      data: { sequence: 0, turnId: "turn-child" },
+      type: "turn.started",
+    });
+    await emitChild({
+      data: {
+        message: "Find the relevant section",
+        sequence: 0,
+        turnId: "turn-child",
+      },
+      type: "message.received",
+    });
+    await emitChild({
+      data: { sequence: 0, stepIndex: 0, turnId: "turn-child" },
+      type: "step.started",
+    });
+    await emitChild({
+      data: {
+        actions: [
+          {
+            callId: "call-search",
+            input: { query: "nested eve" },
+            kind: "tool-call",
+            toolName: "search",
+          },
+        ],
+        sequence: 0,
+        stepIndex: 0,
+        turnId: "turn-child",
+      },
+      type: "actions.requested",
+    });
+    await emitChild({
+      data: {
+        result: {
+          callId: "call-search",
+          kind: "tool-result",
+          output: { title: "Nested Eve" },
+          toolName: "search",
+        },
+        sequence: 0,
+        status: "completed",
+        stepIndex: 0,
+        turnId: "turn-child",
+      },
+      type: "action.result",
+    });
+    await emitChild({
+      data: {
+        finishReason: "stop",
+        message: "Child found Nested Eve.",
+        sequence: 0,
+        stepIndex: 0,
+        turnId: "turn-child",
+      },
+      type: "message.completed",
+    });
+    await emitChild({
+      data: {
+        finishReason: "stop",
+        sequence: 0,
+        stepIndex: 0,
+        turnId: "turn-child",
+      },
+      type: "step.completed",
+    });
+    await emitChild({
+      data: { sequence: 0, turnId: "turn-child" },
+      type: "turn.completed",
+    });
+
+    await emitParent({
+      data: {
+        callId: "call-researcher",
+        output: "Child found Nested Eve.",
+        sequence: 0,
+        status: "completed",
+        subagentName: "researcher",
+        turnId: "turn-parent",
+      },
+      type: "subagent.completed",
+    });
+    await emitParent({
+      data: {
+        result: {
+          callId: "call-researcher",
+          kind: "subagent-result",
+          output: "Child found Nested Eve.",
+          subagentName: "researcher",
+        },
+        sequence: 0,
+        status: "completed",
+        stepIndex: 0,
+        turnId: "turn-parent",
+      },
+      type: "action.result",
+    });
+    await emitParent({
+      data: { sequence: 0, stepIndex: 0, turnId: "turn-parent" },
+      type: "step.started",
+    });
+    await emitParent({
+      data: {
+        actions: [
+          {
+            callId: "call-read",
+            input: { url: "https://eve.dev/docs/guides/instrumentation" },
+            kind: "tool-call",
+            toolName: "read",
+          },
+        ],
+        sequence: 0,
+        stepIndex: 0,
+        turnId: "turn-parent",
+      },
+      type: "actions.requested",
+    });
+    await emitParent({
+      data: {
+        result: {
+          callId: "call-read",
+          kind: "tool-result",
+          output: { title: "Runtime context" },
+          toolName: "read",
+        },
+        sequence: 0,
+        status: "completed",
+        stepIndex: 0,
+        turnId: "turn-parent",
+      },
+      type: "action.result",
+    });
+    await emitParent({
+      data: {
+        finishReason: "tool-calls",
+        sequence: 0,
+        stepIndex: 0,
+        turnId: "turn-parent",
+      },
+      type: "step.completed",
+    });
+    await emitParent({
+      data: { sequence: 0, stepIndex: 1, turnId: "turn-parent" },
+      type: "step.started",
+    });
+    await emitParent({
+      data: {
+        finishReason: "stop",
+        message: "Parent used the child result.",
+        sequence: 0,
+        stepIndex: 1,
+        turnId: "turn-parent",
+      },
+      type: "message.completed",
+    });
+    await emitParent({
+      data: {
+        finishReason: "stop",
+        sequence: 0,
+        stepIndex: 1,
+        turnId: "turn-parent",
+      },
+      type: "step.completed",
+    });
+    await emitParent({
+      data: { sequence: 0, turnId: "turn-parent" },
+      type: "turn.completed",
+    });
+
+    const spans = (await backgroundLogger.drain()) as Array<
+      Record<string, any>
+    >;
+    const parentTurnId = deterministicEveIdForTest(
+      "eve:turn",
+      "session-parent",
+      "turn-parent",
+    );
+    const childTurnId = deterministicEveIdForTest(
+      "eve:turn",
+      "session-child",
+      "turn-child",
+    );
+    const subagentSpanId = deterministicEveIdForTest(
+      "eve:subagent",
+      "session-parent",
+      "call-researcher",
+    );
+    const parentTurn = spans.find(
+      (span) =>
+        span.span_attributes?.name === "eve.turn" &&
+        span.span_id === parentTurnId,
+    );
+    const subagentSpans = spans.filter(
+      (span) => span.span_attributes?.name === "researcher",
+    );
+    const childTurn = spans.find(
+      (span) =>
+        span.span_attributes?.name === "eve.turn" &&
+        span.span_id === childTurnId,
+    );
+    const childSearch = spans.find(
+      (span) =>
+        span.span_attributes?.name === "search" &&
+        span.span_parents?.[0] === childTurnId,
+    );
+    const parentRead = spans.find(
+      (span) =>
+        span.span_attributes?.name === "read" &&
+        span.span_parents?.[0] === parentTurnId,
+    );
+    const parentSteps = spans.filter(
+      (span) =>
+        span.span_attributes?.name === "eve.step" &&
+        span.span_parents?.[0] === parentTurnId,
+    );
+
+    expect(parentTurn).toBeDefined();
+    expect(subagentSpans).toHaveLength(1);
+    expect(subagentSpans[0]?.span_id).toBe(subagentSpanId);
+    expect(childTurn).toBeDefined();
+    expect(childSearch).toBeDefined();
+    expect(parentRead).toBeDefined();
+    expect(parentSteps).toHaveLength(3);
+    expect(parentTurn?.span_parents ?? []).toEqual([]);
+    expect(parentTurn?.span_id).toBe(parentTurnId);
+    expect(parentTurn?.span_id).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+    );
+    expect(parentTurn?.root_span_id).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+    );
+    expect(subagentSpans[0]?.span_parents).toEqual([parentTurn?.span_id]);
+    expect(childTurn?.span_parents).toEqual([subagentSpans[0]?.span_id]);
+    expect(childTurn?.root_span_id).toBe(parentTurn?.root_span_id);
+    expect(childTurn?.metadata ?? {}).toEqual({});
+    expect(subagentSpans[0]?.metadata ?? {}).toEqual({});
+    expect(childSearch?.span_parents).toEqual([childTurn?.span_id]);
+    expect(childSearch?.span_id).toBe(
+      deterministicEveIdForTest(
+        "eve:tool",
+        "session-child",
+        "turn-child",
+        "call-search",
+      ),
+    );
+    expect(parentRead?.span_id).toBe(
+      deterministicEveIdForTest(
+        "eve:tool",
+        "session-parent",
+        "turn-parent",
+        "call-read",
+      ),
+    );
+    expect(parentSteps.map((span) => span.span_id)).toEqual([
+      deterministicEveIdForTest(
+        "eve:step",
+        "session-parent",
+        "turn-parent",
+        "0",
+      ),
+      deterministicEveIdForTest(
+        "eve:step",
+        "session-parent",
+        "turn-parent",
+        "1",
+      ),
+      deterministicEveIdForTest(
+        "eve:step",
+        "session-parent",
+        "turn-parent",
+        "2",
+      ),
+    ]);
+    expect(spans.map((span) => span.span_attributes?.name)).toEqual([
+      "eve.turn",
+      "eve.step",
+      "researcher",
+      "eve.turn",
+      "eve.step",
+      "search",
+      "eve.step",
+      "read",
+      "eve.step",
+    ]);
+
+    Reflect.deleteProperty(globalThis, Symbol.for("braintrust.eve.bridge"));
+    backgroundLogger = _exportsForTestingOnly.useTestBackgroundLogger();
+    initLogger({
+      projectName: "eve-plugin.test.ts",
+      projectId: "test-project-id",
+    });
+    const replay = braintrustEveHook().events?.["*"];
+    await replay?.(
+      {
+        data: { sequence: 0, turnId: "turn-parent" },
+        type: "turn.started",
+      },
+      parentCtx,
+    );
+    await replay?.(
+      {
+        data: { sequence: 0, turnId: "turn-parent" },
+        type: "turn.completed",
+      },
+      parentCtx,
+    );
+    const replaySpans = (await backgroundLogger.drain()) as Array<
+      Record<string, any>
+    >;
+    expect(
+      replaySpans.find((span) => span.span_attributes?.name === "eve.turn")
+        ?.span_id,
+    ).toBe(parentTurn?.span_id);
+  });
+
+  it("parents root Eve turns under the active Braintrust span", async () => {
+    const wildcard = braintrustEveHook().events?.["*"];
+    expect(wildcard).toBeDefined();
+
+    const ctx: EveHookContext = {
+      session: { id: "session-wrapped" },
+    };
+    const parent = startSpan({ name: "workflow" });
+    await withCurrent(parent, async () => {
+      await wildcard?.(
+        {
+          data: { sequence: 0, turnId: "turn-wrapped" },
+          type: "turn.started",
+        },
+        ctx,
+      );
+      await wildcard?.(
+        {
+          data: { sequence: 0, turnId: "turn-wrapped" },
+          type: "turn.completed",
+        },
+        ctx,
+      );
+    });
+    parent.end();
+
+    const spans = (await backgroundLogger.drain()) as Array<
+      Record<string, any>
+    >;
+    const turn = spans.find(
+      (span) => span.span_attributes?.name === "eve.turn",
+    );
+
+    expect(turn?.span_id).toBe(
+      deterministicEveIdForTest("eve:turn", "session-wrapped", "turn-wrapped"),
+    );
+    expect(turn?.span_parents).toEqual([parent.spanId]);
+    expect(turn?.root_span_id).toBe(parent.rootSpanId);
+  });
+
   it("does not throw when Eve emits malformed events or failures", async () => {
     const wildcard = braintrustEveHook().events?.["*"];
     expect(wildcard).toBeDefined();
 
-    expect(() => wildcard?.({ bad: true } as never, {})).not.toThrow();
-    expect(() =>
+    await expect(
+      wildcard?.({ bad: true } as never, {}),
+    ).resolves.toBeUndefined();
+    await expect(
       wildcard?.(
         {
           data: {
@@ -498,8 +928,8 @@ describe("braintrustEveHook", () => {
         },
         {},
       ),
-    ).not.toThrow();
-    expect(() =>
+    ).resolves.toBeUndefined();
+    await expect(
       wildcard?.(
         {
           data: { runtime: { modelId: 123 } },
@@ -507,7 +937,7 @@ describe("braintrustEveHook", () => {
         } as never,
         { session: { id: "session-malformed-runtime" } },
       ),
-    ).not.toThrow();
+    ).resolves.toBeUndefined();
 
     const spans = await backgroundLogger.drain();
     expect(spans).toEqual([]);

@@ -14,65 +14,185 @@
               "role": "user"
             }
           ],
-          "output": {
-            "message": {
-              "content": null,
-              "role": "assistant",
-              "tool_calls": [
-                {
-                  "function": {
-                    "arguments": "{\"query\":\"Run the Braintrust Eve instrumentation e2e scenario\"}",
-                    "name": "search"
-                  },
-                  "id": "<span:1>",
-                  "type": "function"
-                }
-              ]
+          "output": [
+            {
+              "finish_reason": "tool_calls",
+              "index": 0,
+              "message": {
+                "content": null,
+                "role": "assistant",
+                "tool_calls": [
+                  {
+                    "function": {
+                      "arguments": "{\"message\":\"Run the Braintrust Eve instrumentation e2e scenario\"}",
+                      "name": "researcher"
+                    },
+                    "id": "<span:1>",
+                    "type": "function"
+                  }
+                ]
+              }
             }
-          },
+          ],
           "metadata": {
-            "eve.agent.name": "eve-instrumentation-scenario",
-            "eve.channel.kind": "http",
-            "eve.finish_reason": "tool-calls",
-            "eve.model.id": "openai/gpt-5.4-mini",
-            "eve.session.id": "<eve.session.id:1>",
-            "eve.step.index": 0,
-            "eve.turn.id": "<eve.turn.id:2>",
-            "eve.turn.sequence": 0,
             "model": "gpt-5.4-mini",
             "provider": "openai",
             "scenario": "eve-instrumentation",
             "testRunId": "<run:1>"
           },
           "metrics": {
-            "completion_tokens": 26,
+            "completion_tokens": 28,
             "prompt_cached_tokens": 0,
-            "prompt_tokens": 6564,
-            "tokens": 6590
+            "prompt_tokens": 6666,
+            "tokens": 6694
           }
         },
         {
-          "name": "search",
+          "name": "researcher",
           "type": "tool",
-          "children": [],
+          "children": [
+            {
+              "name": "eve.turn",
+              "type": "task",
+              "children": [
+                {
+                  "name": "eve.step",
+                  "type": "llm",
+                  "children": [],
+                  "input": [
+                    {
+                      "content": "You are the subagent \"researcher\".\nDescription: Research the Eve instrumentation documentation before the parent reads it.\n\nThe caller delegated the following task to you. Complete it and return the final result directly.\n\nCaller message:\nRun the Braintrust Eve instrumentation e2e scenario",
+                      "role": "user"
+                    }
+                  ],
+                  "output": [
+                    {
+                      "finish_reason": "tool_calls",
+                      "index": 0,
+                      "message": {
+                        "content": null,
+                        "role": "assistant",
+                        "tool_calls": [
+                          {
+                            "function": {
+                              "arguments": "{\"query\":\"Run the Braintrust Eve instrumentation e2e scenario\"}",
+                              "name": "search"
+                            },
+                            "id": "<span:1>",
+                            "type": "function"
+                          }
+                        ]
+                      }
+                    }
+                  ],
+                  "metadata": {
+                    "model": "gpt-5.4-mini",
+                    "provider": "openai",
+                    "scenario": "eve-instrumentation",
+                    "testRunId": "<run:1>"
+                  },
+                  "metrics": {
+                    "completion_tokens": 26,
+                    "prompt_cached_tokens": 5504,
+                    "prompt_tokens": 6554,
+                    "tokens": 6580
+                  }
+                },
+                {
+                  "name": "search",
+                  "type": "tool",
+                  "children": [],
+                  "input": {
+                    "query": "Run the Braintrust Eve instrumentation e2e scenario"
+                  },
+                  "output": {
+                    "query": "Run the Braintrust Eve instrumentation e2e scenario",
+                    "title": "Eve instrumentation",
+                    "url": "https://eve.dev/docs/guides/instrumentation"
+                  },
+                  "metadata": {
+                    "scenario": "eve-instrumentation",
+                    "testRunId": "<run:1>"
+                  }
+                },
+                {
+                  "name": "eve.step",
+                  "type": "llm",
+                  "children": [],
+                  "input": [
+                    {
+                      "content": "You are the subagent \"researcher\".\nDescription: Research the Eve instrumentation documentation before the parent reads it.\n\nThe caller delegated the following task to you. Complete it and return the final result directly.\n\nCaller message:\nRun the Braintrust Eve instrumentation e2e scenario",
+                      "role": "user"
+                    },
+                    {
+                      "content": null,
+                      "role": "assistant",
+                      "tool_calls": [
+                        {
+                          "function": {
+                            "arguments": "{\"query\":\"Run the Braintrust Eve instrumentation e2e scenario\"}",
+                            "name": "search"
+                          },
+                          "id": "<span:1>",
+                          "type": "function"
+                        }
+                      ]
+                    },
+                    {
+                      "content": "{\"query\":\"Run the Braintrust Eve instrumentation e2e scenario\",\"title\":\"Eve instrumentation\",\"url\":\"https://eve.dev/docs/guides/instrumentation\"}",
+                      "name": "search",
+                      "role": "tool",
+                      "tool_call_id": "call_bsPk0zM9ENF7o5XXNuEmMjhA"
+                    }
+                  ],
+                  "output": [
+                    {
+                      "finish_reason": "stop",
+                      "index": 0,
+                      "message": {
+                        "content": "Researcher result: Eve instrumentation — https://eve.dev/docs/guides/instrumentation",
+                        "role": "assistant"
+                      }
+                    }
+                  ],
+                  "metadata": {
+                    "model": "gpt-5.4-mini",
+                    "provider": "openai",
+                    "scenario": "eve-instrumentation",
+                    "testRunId": "<run:1>"
+                  },
+                  "metrics": {
+                    "completion_tokens": 22,
+                    "prompt_cached_tokens": 6528,
+                    "prompt_tokens": 6624,
+                    "tokens": 6646
+                  }
+                }
+              ],
+              "input": [
+                {
+                  "content": "You are the subagent \"researcher\".\nDescription: Research the Eve instrumentation documentation before the parent reads it.\n\nThe caller delegated the following task to you. Complete it and return the final result directly.\n\nCaller message:\nRun the Braintrust Eve instrumentation e2e scenario",
+                  "role": "user"
+                }
+              ],
+              "output": "Researcher result: Eve instrumentation — https://eve.dev/docs/guides/instrumentation",
+              "metadata": {
+                "scenario": "eve-instrumentation",
+                "testRunId": "<run:1>"
+              },
+              "metrics": {
+                "completion_tokens": 48,
+                "prompt_cached_tokens": 12032,
+                "prompt_tokens": 13178,
+                "tokens": 13226
+              }
+            }
+          ],
           "input": {
-            "query": "Run the Braintrust Eve instrumentation e2e scenario"
+            "message": "Run the Braintrust Eve instrumentation e2e scenario"
           },
-          "output": {
-            "query": "Run the Braintrust Eve instrumentation e2e scenario",
-            "title": "Eve instrumentation",
-            "url": "https://eve.dev/docs/guides/instrumentation"
-          },
+          "output": "Researcher result: Eve instrumentation — https://eve.dev/docs/guides/instrumentation",
           "metadata": {
-            "eve.action.status": "completed",
-            "eve.agent.name": "eve-instrumentation-scenario",
-            "eve.channel.kind": "http",
-            "eve.session.id": "<eve.session.id:1>",
-            "eve.step.index": 0,
-            "eve.tool.call_id": "<eve.tool.call_id:3>",
-            "eve.tool.name": "search",
-            "eve.turn.id": "<eve.turn.id:2>",
-            "eve.turn.sequence": 0,
             "scenario": "eve-instrumentation",
             "testRunId": "<run:1>"
           }
@@ -92,50 +212,36 @@
               "tool_calls": [
                 {
                   "function": {
-                    "arguments": "{\"query\":\"Run the Braintrust Eve instrumentation e2e scenario\"}",
-                    "name": "search"
+                    "arguments": "{\"message\":\"Run the Braintrust Eve instrumentation e2e scenario\"}",
+                    "name": "researcher"
                   },
                   "id": "<span:1>",
                   "type": "function"
                 }
               ]
-            },
-            {
-              "content": {
-                "query": "Run the Braintrust Eve instrumentation e2e scenario",
-                "title": "Eve instrumentation",
-                "url": "https://eve.dev/docs/guides/instrumentation"
-              },
-              "name": "search",
-              "role": "tool",
-              "tool_call_id": "call_OJGkAZ5ouXaH7NjuUH2mSbk6"
             }
           ],
-          "output": {
-            "message": {
-              "content": null,
-              "role": "assistant",
-              "tool_calls": [
-                {
-                  "function": {
-                    "arguments": "{\"url\":\"https://eve.dev/docs/guides/instrumentation\"}",
-                    "name": "read"
-                  },
-                  "id": "<span:1>",
-                  "type": "function"
-                }
-              ]
+          "output": [
+            {
+              "finish_reason": "tool_calls",
+              "index": 0,
+              "message": {
+                "content": null,
+                "role": "assistant",
+                "tool_calls": [
+                  {
+                    "function": {
+                      "arguments": "{\"url\":\"https://eve.dev/docs/guides/instrumentation\"}",
+                      "name": "read"
+                    },
+                    "id": "<span:1>",
+                    "type": "function"
+                  }
+                ]
+              }
             }
-          },
+          ],
           "metadata": {
-            "eve.agent.name": "eve-instrumentation-scenario",
-            "eve.channel.kind": "http",
-            "eve.finish_reason": "tool-calls",
-            "eve.model.id": "openai/gpt-5.4-mini",
-            "eve.session.id": "<eve.session.id:1>",
-            "eve.step.index": 1,
-            "eve.turn.id": "<eve.turn.id:2>",
-            "eve.turn.sequence": 0,
             "model": "gpt-5.4-mini",
             "provider": "openai",
             "scenario": "eve-instrumentation",
@@ -143,9 +249,9 @@
           },
           "metrics": {
             "completion_tokens": 27,
-            "prompt_cached_tokens": 0,
-            "prompt_tokens": 6634,
-            "tokens": 6661
+            "prompt_cached_tokens": 6528,
+            "prompt_tokens": 6724,
+            "tokens": 6751
           }
         },
         {
@@ -156,21 +262,12 @@
             "url": "https://eve.dev/docs/guides/instrumentation"
           },
           "output": {
-            "excerpt": "Eve hooks expose runtime stream events that Braintrust maps into a flat turn trace.",
+            "excerpt": "Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace.",
             "section": "Runtime context",
             "title": "Eve instrumentation",
             "url": "https://eve.dev/docs/guides/instrumentation"
           },
           "metadata": {
-            "eve.action.status": "completed",
-            "eve.agent.name": "eve-instrumentation-scenario",
-            "eve.channel.kind": "http",
-            "eve.session.id": "<eve.session.id:1>",
-            "eve.step.index": 1,
-            "eve.tool.call_id": "<eve.tool.call_id:3>",
-            "eve.tool.name": "read",
-            "eve.turn.id": "<eve.turn.id:2>",
-            "eve.turn.sequence": 0,
             "scenario": "eve-instrumentation",
             "testRunId": "<run:1>"
           }
@@ -190,23 +287,13 @@
               "tool_calls": [
                 {
                   "function": {
-                    "arguments": "{\"query\":\"Run the Braintrust Eve instrumentation e2e scenario\"}",
-                    "name": "search"
+                    "arguments": "{\"message\":\"Run the Braintrust Eve instrumentation e2e scenario\"}",
+                    "name": "researcher"
                   },
                   "id": "<span:1>",
                   "type": "function"
                 }
               ]
-            },
-            {
-              "content": {
-                "query": "Run the Braintrust Eve instrumentation e2e scenario",
-                "title": "Eve instrumentation",
-                "url": "https://eve.dev/docs/guides/instrumentation"
-              },
-              "name": "search",
-              "role": "tool",
-              "tool_call_id": "call_OJGkAZ5ouXaH7NjuUH2mSbk6"
             },
             {
               "content": null,
@@ -223,43 +310,33 @@
               ]
             },
             {
-              "content": {
-                "excerpt": "Eve hooks expose runtime stream events that Braintrust maps into a flat turn trace.",
-                "section": "Runtime context",
-                "title": "Eve instrumentation",
-                "url": "https://eve.dev/docs/guides/instrumentation"
-              },
+              "content": "{\"excerpt\":\"Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace.\",\"section\":\"Runtime context\",\"title\":\"Eve instrumentation\",\"url\":\"https://eve.dev/docs/guides/instrumentation\"}",
               "name": "read",
               "role": "tool",
-              "tool_call_id": "call_kZ7AzZ9mCqataCzrSSLxRkFh"
+              "tool_call_id": "call_yRc6f1bJPthZhaIEzCySgUi0"
             }
           ],
-          "output": {
-            "finish_reason": "stop",
-            "message": {
-              "content": "Final answer from read: Eve instrumentation — https://eve.dev/docs/guides/instrumentation — Eve hooks expose runtime stream events that Braintrust maps into a flat turn trace.",
-              "role": "assistant"
+          "output": [
+            {
+              "finish_reason": "stop",
+              "index": 0,
+              "message": {
+                "content": "Final answer from read: researcher result: Eve instrumentation — https://eve.dev/docs/guides/instrumentation; read title: Eve instrumentation; URL: https://eve.dev/docs/guides/instrumentation; read excerpt: Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace.",
+                "role": "assistant"
+              }
             }
-          },
+          ],
           "metadata": {
-            "eve.agent.name": "eve-instrumentation-scenario",
-            "eve.channel.kind": "http",
-            "eve.finish_reason": "stop",
-            "eve.model.id": "openai/gpt-5.4-mini",
-            "eve.session.id": "<eve.session.id:1>",
-            "eve.step.index": 2,
-            "eve.turn.id": "<eve.turn.id:2>",
-            "eve.turn.sequence": 0,
             "model": "gpt-5.4-mini",
             "provider": "openai",
             "scenario": "eve-instrumentation",
             "testRunId": "<run:1>"
           },
           "metrics": {
-            "completion_tokens": 40,
-            "prompt_cached_tokens": 0,
-            "prompt_tokens": 6716,
-            "tokens": 6756
+            "completion_tokens": 66,
+            "prompt_cached_tokens": 6528,
+            "prompt_tokens": 6806,
+            "tokens": 6872
           }
         }
       ],
@@ -269,24 +346,16 @@
           "role": "user"
         }
       ],
-      "output": "Final answer from read: Eve instrumentation — https://eve.dev/docs/guides/instrumentation — Eve hooks expose runtime stream events that Braintrust maps into a flat turn trace.",
+      "output": "Final answer from read: researcher result: Eve instrumentation — https://eve.dev/docs/guides/instrumentation; read title: Eve instrumentation; URL: https://eve.dev/docs/guides/instrumentation; read excerpt: Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace.",
       "metadata": {
-        "eve.agent.name": "eve-instrumentation-scenario",
-        "eve.channel.kind": "http",
-        "eve.model.id": "openai/gpt-5.4-mini",
-        "eve.session.id": "<eve.session.id:1>",
-        "eve.turn.id": "<eve.turn.id:2>",
-        "eve.turn.sequence": 0,
-        "model": "gpt-5.4-mini",
-        "provider": "openai",
         "scenario": "eve-instrumentation",
         "testRunId": "<run:1>"
       },
       "metrics": {
-        "completion_tokens": 93,
-        "prompt_cached_tokens": 0,
-        "prompt_tokens": 19914,
-        "tokens": 20007
+        "completion_tokens": 121,
+        "prompt_cached_tokens": 13056,
+        "prompt_tokens": 20196,
+        "tokens": 20317
       }
     }
   ]

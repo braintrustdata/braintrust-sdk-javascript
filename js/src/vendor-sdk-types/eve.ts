@@ -26,6 +26,15 @@ export interface EveHookContext {
   };
   readonly session?: {
     readonly id?: string;
+    readonly parent?: {
+      readonly callId?: string;
+      readonly rootSessionId?: string;
+      readonly sessionId?: string;
+      readonly turn?: {
+        readonly id?: string;
+        readonly sequence?: number;
+      };
+    };
   };
 }
 
@@ -61,8 +70,15 @@ export type EveRuntimeActionRequest =
   | {
       readonly callId: string;
       readonly input?: EveJsonObject;
-      readonly kind: "load-skill" | "remote-agent-call" | "subagent-call";
+      readonly kind: "load-skill" | "remote-agent-call";
       readonly name?: string;
+    }
+  | {
+      readonly callId: string;
+      readonly input: EveJsonObject;
+      readonly kind: "subagent-call";
+      readonly name?: string;
+      readonly subagentName?: string;
     };
 
 export type EveRuntimeActionResult =
@@ -70,9 +86,15 @@ export type EveRuntimeActionResult =
   | {
       readonly callId: string;
       readonly isError?: boolean;
-      readonly kind: "load-skill-result" | "subagent-result";
+      readonly kind: "load-skill-result";
       readonly output?: EveJsonValue;
       readonly name?: string;
+    }
+  | {
+      readonly callId: string;
+      readonly isError?: boolean;
+      readonly kind: "subagent-result";
+      readonly output?: EveJsonValue;
       readonly subagentName?: string;
     };
 
@@ -207,6 +229,34 @@ export type EveHandleMessageStreamEvent =
       };
       readonly meta?: EveStreamEventMeta;
       readonly type: "action.result";
+    }
+  | {
+      readonly data: {
+        readonly callId: string;
+        readonly childSessionId: string;
+        readonly name: string;
+        readonly remote?: {
+          readonly url?: string;
+        };
+        readonly sequence: number;
+        readonly toolName?: string;
+        readonly turnId: string;
+      };
+      readonly meta?: EveStreamEventMeta;
+      readonly type: "subagent.called";
+    }
+  | {
+      readonly data: {
+        readonly callId: string;
+        readonly error?: EveActionResultError;
+        readonly output?: EveJsonValue;
+        readonly sequence: number;
+        readonly status?: EveActionResultStatus;
+        readonly subagentName: string;
+        readonly turnId: string;
+      };
+      readonly meta?: EveStreamEventMeta;
+      readonly type: "subagent.completed";
     }
   | {
       readonly data: {
