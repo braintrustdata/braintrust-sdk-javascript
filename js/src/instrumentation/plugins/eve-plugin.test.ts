@@ -480,6 +480,96 @@ describe("braintrustEveHook", () => {
     });
   });
 
+  it("merges late tool results into tool spans closed by turn completion", async () => {
+    const wildcard = braintrustEveHook({
+      metadata: {
+        scenario: "eve-plugin-unit",
+        testRunId: "test-run-late-tool-result",
+      },
+    }).events?.["*"];
+    expect(wildcard).toBeDefined();
+
+    const ctx: EveHookContext = {
+      agent: { name: "eve-test-agent" },
+      channel: { kind: "http" },
+      session: { id: "session-late-tool-result" },
+    };
+    const emit = (event: EveHandleMessageStreamEvent) => wildcard?.(event, ctx);
+
+    await emit({
+      data: { sequence: 0, turnId: "turn-late-tool-result" },
+      meta: { at: "2026-01-01T00:00:00.000Z" },
+      type: "turn.started",
+    });
+    await emit({
+      data: { sequence: 0, stepIndex: 0, turnId: "turn-late-tool-result" },
+      meta: { at: "2026-01-01T00:00:00.010Z" },
+      type: "step.started",
+    });
+    await emit({
+      data: {
+        actions: [
+          {
+            callId: "call-late-search",
+            input: { query: "late tool result" },
+            kind: "tool-call",
+            toolName: "search",
+          },
+        ],
+        sequence: 0,
+        stepIndex: 0,
+        turnId: "turn-late-tool-result",
+      },
+      meta: { at: "2026-01-01T00:00:00.020Z" },
+      type: "actions.requested",
+    });
+    await emit({
+      data: { sequence: 0, turnId: "turn-late-tool-result" },
+      meta: { at: "2026-01-01T00:00:00.030Z" },
+      type: "turn.completed",
+    });
+    await emit({
+      data: {
+        result: {
+          callId: "call-late-search",
+          kind: "tool-result",
+          output: { title: "Late result" },
+          toolName: "search",
+        },
+        sequence: 0,
+        status: "completed",
+        stepIndex: 0,
+        turnId: "turn-late-tool-result",
+      },
+      meta: { at: "2026-01-01T00:00:00.040Z" },
+      type: "action.result",
+    });
+
+    const spans = (await backgroundLogger.drain()) as Array<
+      Record<string, any>
+    >;
+    const turns = spans.filter(
+      (span) => span.span_attributes?.name === "eve.turn",
+    );
+    const tool = spans.find((span) => span.span_attributes?.name === "search");
+
+    expect(turns).toHaveLength(1);
+    expect(tool).toMatchObject({
+      input: { query: "late tool result" },
+      metadata: {
+        scenario: "eve-plugin-unit",
+        testRunId: "test-run-late-tool-result",
+      },
+      output: { title: "Late result" },
+      span_attributes: {
+        name: "search",
+        type: "tool",
+      },
+      span_parents: [turns[0]?.span_id],
+    });
+    expect(tool?.metrics?.end).toEqual(expect.any(Number));
+  });
+
   it("uses deterministic ids and nests local subagent sessions from Eve lineage", async () => {
     const wildcard = braintrustEveHook().events?.["*"];
     expect(wildcard).toBeDefined();

@@ -53,6 +53,7 @@ type TurnState = SpanState & {
 };
 
 type ToolState = SpanState & {
+  endedByTurn?: boolean;
   kind: "subagent" | "tool";
   stepIndex?: number;
   stepOrdinal?: number;
@@ -167,13 +168,13 @@ class EveBridge {
         this.handleStepFailed(event, ctx);
         return;
       case "turn.completed":
-        this.handleTurnCompleted(event, ctx);
+        await this.handleTurnCompleted(event, ctx);
         return;
       case "turn.failed":
-        this.handleTurnFailed(event, ctx);
+        await this.handleTurnFailed(event, ctx);
         return;
       case "session.failed":
-        this.handleSessionFailed(event, ctx);
+        await this.handleSessionFailed(event, ctx);
         return;
       case "session.completed":
         this.handleSessionCompleted(ctx);
@@ -492,6 +493,7 @@ class EveBridge {
     if (!tool) {
       return;
     }
+    const flushAfterCompletion = tool.endedByTurn === true;
 
     const failed =
       event.data.status === "failed" ||
@@ -519,6 +521,9 @@ class EveBridge {
     tool.span.end(endTime === undefined ? undefined : { endTime });
     this.toolsByCallKey.delete(key);
     this.completedToolKeys.add(key);
+    if (flushAfterCompletion) {
+      await this.flushInstrumentation();
+    }
   }
 
   private async handleSubagentCalled(
@@ -588,6 +593,7 @@ class EveBridge {
     if (!subagent) {
       return;
     }
+    const flushAfterCompletion = subagent.endedByTurn === true;
 
     this.completeSubagentSpan({
       endTime: eventTime(event),
@@ -608,6 +614,9 @@ class EveBridge {
 
     this.toolsByCallKey.delete(key);
     this.completedToolKeys.add(key);
+    if (flushAfterCompletion) {
+      await this.flushInstrumentation();
+    }
   }
 
   private async handleSubagentResult(
@@ -636,6 +645,7 @@ class EveBridge {
     if (!subagent) {
       return;
     }
+    const flushAfterCompletion = subagent.endedByTurn === true;
 
     this.completeSubagentSpan({
       endTime: eventTime(event),
@@ -659,6 +669,9 @@ class EveBridge {
 
     this.toolsByCallKey.delete(key);
     this.completedToolKeys.add(key);
+    if (flushAfterCompletion) {
+      await this.flushInstrumentation();
+    }
   }
 
   private handleStepCompleted(
@@ -769,10 +782,10 @@ class EveBridge {
     turn?.stepsByIndex.delete(event.data.stepIndex);
   }
 
-  private handleTurnCompleted(
+  private async handleTurnCompleted(
     event: Extract<EveHandleMessageStreamEvent, { type: "turn.completed" }>,
     ctx: unknown,
-  ): void {
+  ): Promise<void> {
     const turn = this.turnForEvent(event, ctx);
     if (!turn) {
       return;
@@ -788,15 +801,13 @@ class EveBridge {
     turn.span.end(endTime === undefined ? undefined : { endTime });
     this.cleanupTurn(event, ctx);
 
-    void flush().catch((error) => {
-      debugLogger.warn("Error in Eve flush instrumentation:", error);
-    });
+    await this.flushInstrumentation();
   }
 
-  private handleTurnFailed(
+  private async handleTurnFailed(
     event: Extract<EveHandleMessageStreamEvent, { type: "turn.failed" }>,
     ctx: unknown,
-  ): void {
+  ): Promise<void> {
     const turn = this.turnForEvent(event, ctx);
     if (!turn) {
       return;
@@ -811,15 +822,13 @@ class EveBridge {
     turn.span.end(endTime === undefined ? undefined : { endTime });
     this.cleanupTurn(event, ctx);
 
-    void flush().catch((error) => {
-      debugLogger.warn("Error in Eve flush instrumentation:", error);
-    });
+    await this.flushInstrumentation();
   }
 
-  private handleSessionFailed(
+  private async handleSessionFailed(
     event: Extract<EveHandleMessageStreamEvent, { type: "session.failed" }>,
     ctx: unknown,
-  ): void {
+  ): Promise<void> {
     const sessionId = event.data.sessionId || sessionIdFromContext(ctx);
     if (!sessionId) {
       return;
@@ -853,15 +862,23 @@ class EveBridge {
 
     this.sessionsById.delete(sessionId);
 
-    void flush().catch((error) => {
-      debugLogger.warn("Error in Eve flush instrumentation:", error);
-    });
+    await this.flushInstrumentation();
   }
 
   private handleSessionCompleted(ctx: unknown): void {
     const sessionId = sessionIdFromContext(ctx);
     if (sessionId) {
       this.sessionsById.delete(sessionId);
+      for (const key of this.toolsByCallKey.keys()) {
+        if (key.startsWith(`${sessionId}:`)) {
+          this.toolsByCallKey.delete(key);
+        }
+      }
+      for (const completedKey of this.completedToolKeys) {
+        if (completedKey.startsWith(`${sessionId}:`)) {
+          this.completedToolKeys.delete(completedKey);
+        }
+      }
     }
   }
 
@@ -1244,16 +1261,22 @@ class EveBridge {
 
   private endOpenChildrenForTurn(turn: TurnState, endTime: number | undefined) {
     for (const step of turn.stepsByIndex.values()) {
+      step.span.log({
+        metadata: step.metadata,
+        metrics: step.metrics,
+        output: step.output,
+      });
       step.span.end(endTime === undefined ? undefined : { endTime });
     }
     turn.stepsByIndex.clear();
 
-    for (const [key, tool] of this.toolsByCallKey) {
+    for (const tool of this.toolsByCallKey.values()) {
       if (tool.turnKey !== turn.key) {
         continue;
       }
+      tool.span.log({ metadata: tool.metadata });
       tool.span.end(endTime === undefined ? undefined : { endTime });
-      this.toolsByCallKey.delete(key);
+      tool.endedByTurn = true;
     }
   }
 
@@ -1270,11 +1293,13 @@ class EveBridge {
     }
     const key = turnKey(sessionId, event.data.turnId);
     this.turnsByKey.delete(key);
+  }
 
-    for (const completedKey of this.completedToolKeys) {
-      if (completedKey.startsWith(`${sessionId}:`)) {
-        this.completedToolKeys.delete(completedKey);
-      }
+  private async flushInstrumentation(): Promise<void> {
+    try {
+      await flush();
+    } catch (error) {
+      debugLogger.warn("Error in Eve flush instrumentation:", error);
     }
   }
 }

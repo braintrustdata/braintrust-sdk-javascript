@@ -89,6 +89,7 @@ describe("eve instrumentation", () => {
 
     expect(researcher).toBeDefined();
     expect(researcher?.span.type).toBe("tool");
+    expect(researcher?.span.ended).toBe(true);
     expect(researcher?.span.parentIds).toEqual([root?.span.id]);
     expect(researcher?.input).toMatchObject({
       message: expect.stringContaining("Braintrust Eve instrumentation"),
@@ -109,6 +110,7 @@ describe("eve instrumentation", () => {
 
     expect(childSearch).toBeDefined();
     expect(childSearch?.span.type).toBe("tool");
+    expect(childSearch?.span.ended).toBe(true);
     expect(childSearch?.span.parentIds).toEqual([childTurn?.span.id]);
     expect(childSearch?.input).toMatchObject({
       query: expect.stringContaining("Braintrust Eve instrumentation"),
@@ -119,6 +121,7 @@ describe("eve instrumentation", () => {
 
     expect(read).toBeDefined();
     expect(read?.span.type).toBe("tool");
+    expect(read?.span.ended).toBe(true);
     expect(read?.span.parentIds).toEqual([root?.span.id]);
     expect(read?.input).toMatchObject({
       url: "https://eve.dev/docs/guides/instrumentation",
