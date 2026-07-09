@@ -8,10 +8,7 @@ export type InstallScenarioDependenciesResult =
   | { status: "no-manifest" }
   | { status: "installed" };
 
-export type ScenarioDependencyMode = "canary" | "locked";
-
 export interface InstallScenarioDependenciesOptions {
-  mode?: ScenarioDependencyMode;
   preferOffline?: boolean;
   scenarioDir: string;
 }
@@ -19,7 +16,6 @@ export interface InstallScenarioDependenciesOptions {
 const PNPM_COMMAND = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
 const TEMP_DIR_NAME = ".bt-tmp";
 const DEPENDENCY_CACHE_DIR_NAME = "scenario-deps";
-const CANARY_MODE_ENV = "BRAINTRUST_E2E_MODE";
 const INSTALL_SECRET_ENV_VARS = [
   "ANTHROPIC_API_KEY",
   "BRAINTRUST_API_KEY",
@@ -44,25 +40,9 @@ const dependencyCacheInstalls = new Map<
   string,
   Promise<CachedScenarioDependenciesResult>
 >();
-// Canary mode can resolve "latest"; keep that cache scoped to this test process.
-const processCacheId = `${process.pid}-${Date.now()}`;
-
-type CanaryDependencyRule = {
-  packageName: string;
-  version: string;
-};
 
 const HELPERS_DIR = path.dirname(fileURLToPath(import.meta.url));
 const E2E_ROOT = path.resolve(HELPERS_DIR, "..");
-
-interface ScenarioManifest {
-  braintrustScenario?: {
-    canary?: {
-      dependencies?: Record<string, string>;
-    };
-  };
-  dependencies?: Record<string, string>;
-}
 
 type ScenarioInstallInputs = {
   lockfileRaw: string;
@@ -165,95 +145,6 @@ function scenarioNameForPath(scenarioDir: string): string {
   return path.basename(scenarioDir);
 }
 
-function packageSpecifier(
-  dependencyName: string,
-  packageName: string,
-  version: string,
-): string {
-  return dependencyName === packageName
-    ? version
-    : `npm:${packageName}@${version}`;
-}
-
-function parseCanaryDependencyRule(
-  dependencyName: string,
-  rawRule: string,
-  scenarioDir: string,
-): CanaryDependencyRule {
-  if (typeof rawRule !== "string" || rawRule.length === 0) {
-    throw new Error(
-      `Invalid canary rule for ${dependencyName} in ${scenarioDir}/package.json`,
-    );
-  }
-
-  if (rawRule === "latest") {
-    return {
-      packageName: dependencyName,
-      version: "latest",
-    };
-  }
-
-  const versionSeparator = rawRule.lastIndexOf("@");
-  if (versionSeparator <= 0) {
-    throw new Error(
-      `Invalid canary rule for ${dependencyName} in ${scenarioDir}/package.json`,
-    );
-  }
-
-  return {
-    packageName: rawRule.slice(0, versionSeparator),
-    version: rawRule.slice(versionSeparator + 1),
-  };
-}
-
-async function rewriteManifestForCanary(scenarioDir: string): Promise<void> {
-  const manifestPath = path.join(scenarioDir, "package.json");
-  const manifestRaw = await fs.readFile(manifestPath, "utf8");
-  const manifest = JSON.parse(manifestRaw) as ScenarioManifest;
-  const dependencies = manifest.dependencies ?? {};
-  const rawRules = manifest.braintrustScenario?.canary?.dependencies ?? {};
-  let updated = false;
-
-  for (const [dependencyName, rawRule] of Object.entries(rawRules)) {
-    if (!(dependencyName in dependencies)) {
-      continue;
-    }
-
-    const rule = parseCanaryDependencyRule(
-      dependencyName,
-      rawRule,
-      scenarioDir,
-    );
-    dependencies[dependencyName] = packageSpecifier(
-      dependencyName,
-      rule.packageName,
-      rule.version,
-    );
-    updated = true;
-  }
-
-  if (!updated) {
-    return;
-  }
-
-  manifest.dependencies = dependencies;
-  await fs.writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
-
-  await spawnOrThrow(
-    PNPM_COMMAND,
-    [
-      "install",
-      "--dir",
-      scenarioDir,
-      "--ignore-workspace",
-      "--lockfile-only",
-      "--strict-peer-dependencies=false",
-    ],
-    scenarioDir,
-    installEnv(),
-  );
-}
-
 function findWorkspaceSpecs(
   manifest: Record<string, unknown>,
 ): Array<{ name: string; section: string; spec: string }> {
@@ -313,13 +204,10 @@ async function readScenarioInstallInputs(
 
 function scenarioDependencyCacheKey(
   scenarioDir: string,
-  mode: ScenarioDependencyMode,
   inputs: ScenarioInstallInputs,
 ): string {
   const hash = createHash("sha256");
   hash.update(path.resolve(scenarioDir));
-  hash.update("\0");
-  hash.update(mode === "canary" ? `${mode}:${processCacheId}` : mode);
   hash.update("\0");
   hash.update(process.platform);
   hash.update("\0");
@@ -331,11 +219,10 @@ function scenarioDependencyCacheKey(
   hash.update("\0");
   hash.update(inputs.lockfileRaw);
 
-  return `${scenarioNameForPath(scenarioDir)}-${mode}-${hash.digest("hex").slice(0, 16)}`;
+  return `${scenarioNameForPath(scenarioDir)}-${hash.digest("hex").slice(0, 16)}`;
 }
 
 async function installCachedScenarioDependencies({
-  mode = getScenarioDependencyMode(),
   preferOffline = true,
   scenarioDir,
 }: InstallScenarioDependenciesOptions): Promise<CachedScenarioDependenciesResult> {
@@ -344,7 +231,7 @@ async function installCachedScenarioDependencies({
     return { status: "no-manifest" };
   }
 
-  const cacheKey = scenarioDependencyCacheKey(scenarioDir, mode, inputs);
+  const cacheKey = scenarioDependencyCacheKey(scenarioDir, inputs);
   const cachedInstall = dependencyCacheInstalls.get(cacheKey);
   if (cachedInstall) {
     return await cachedInstall;
@@ -378,7 +265,6 @@ async function installCachedScenarioDependencies({
       inputs.lockfileRaw,
     );
     await installScenarioDependencies({
-      mode,
       preferOffline,
       scenarioDir: stagingDir,
     });
@@ -396,11 +282,6 @@ async function installCachedScenarioDependencies({
       }
     }
 
-    if (mode === "canary") {
-      cleanupDirs.add(cacheDir);
-      registerCleanupHandlers();
-    }
-
     return { nodeModulesDir, status: "installed" as const };
   })();
 
@@ -414,13 +295,11 @@ async function installCachedScenarioDependencies({
 }
 
 async function linkCachedScenarioDependencies(options: {
-  mode?: ScenarioDependencyMode;
   preferOffline?: boolean;
   preparedDir: string;
   scenarioDir: string;
 }): Promise<void> {
   const result = await installCachedScenarioDependencies({
-    mode: options.mode,
     preferOffline: options.preferOffline,
     scenarioDir: options.scenarioDir,
   });
@@ -453,17 +332,12 @@ async function linkCachedScenarioDependencies(options: {
 }
 
 export async function installScenarioDependencies({
-  mode = getScenarioDependencyMode(),
   preferOffline = true,
   scenarioDir,
 }: InstallScenarioDependenciesOptions): Promise<InstallScenarioDependenciesResult> {
   const inputs = await readScenarioInstallInputs(scenarioDir);
   if (!inputs) {
     return { status: "no-manifest" };
-  }
-
-  if (mode === "canary") {
-    await rewriteManifestForCanary(scenarioDir);
   }
 
   const installArgs = [
@@ -483,17 +357,8 @@ export async function installScenarioDependencies({
   return { status: "installed" };
 }
 
-export function getScenarioDependencyMode(): ScenarioDependencyMode {
-  return process.env[CANARY_MODE_ENV] === "canary" ? "canary" : "locked";
-}
-
-export function isCanaryMode(): boolean {
-  return getScenarioDependencyMode() === "canary";
-}
-
 export async function prepareScenarioDir(options: {
   linkDependencies?: boolean;
-  mode?: ScenarioDependencyMode;
   preferOffline?: boolean;
   scenarioDir: string;
 }): Promise<string> {
@@ -530,13 +395,11 @@ export async function prepareScenarioDir(options: {
 
   if (options.linkDependencies === false) {
     await installScenarioDependencies({
-      mode: options.mode,
       preferOffline: options.preferOffline,
       scenarioDir: preparedDir,
     });
   } else {
     await linkCachedScenarioDependencies({
-      mode: options.mode,
       preparedDir,
       preferOffline: options.preferOffline,
       scenarioDir: options.scenarioDir,

@@ -17,7 +17,7 @@
     "test:e2e": "turbo run test:e2e",
     "test:e2e:update": "turbo run test:e2e:update",
     "test:e2e:record": "node e2e/scripts/run-record-tests.mjs --braintrust-build-deps",
-    "test:e2e:canary": "turbo run test:e2e:canary",
+    "test:e2e:bump": "node e2e/scripts/run-e2e-bump-docker.mjs",
     "dotagents:install": "dotagents install",
     "dotagents:sync": "dotagents sync",
     "changeset": "changeset",
