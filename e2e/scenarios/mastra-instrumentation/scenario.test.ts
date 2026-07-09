@@ -199,6 +199,40 @@ describe(`mastra sdk ${mastraVersion} auto-hook instrumentation`, () => {
     expect(modelSpans.length).toBeGreaterThanOrEqual(1);
   });
 
+  // Non-circular check of the fix: real @mastra/core emits `tags` on the trace
+  // root span (via tracingOptions.tags), and the exporter must land them on the
+  // top-level `tags` row field the mock server receives (which Braintrust
+  // surfaces as first-class, filterable tags) while — for backward
+  // compatibility — still mirroring them under metadata.tags.
+  test("emits agent tags on the top-level tags field of the root span only", () => {
+    const EXPECTED_TAGS = ["e2e-production", "e2e-beta"];
+
+    const taggedEvents = events.filter(
+      (event) => (event.row.tags as unknown[] | undefined) !== undefined,
+    );
+    expect(taggedEvents.length).toBeGreaterThanOrEqual(1);
+
+    for (const event of taggedEvents) {
+      // Tags only ride on the Mastra agent-run root span.
+      expect(event.row.metadata?.entity_type).toBe("agent");
+      expect(event.span.type).toBe("task");
+      // First-class, filterable top-level field (the fix).
+      expect(event.row.tags).toEqual(EXPECTED_TAGS);
+      // Backward-compatible mirror retained under metadata.
+      expect((event.row.metadata as Record<string, unknown>)?.tags).toEqual(
+        EXPECTED_TAGS,
+      );
+    }
+
+    // No child span (tool/model/workflow) carries top-level tags.
+    const childrenWithTags = events.filter(
+      (event) =>
+        event.row.tags !== undefined &&
+        event.row.metadata?.entity_type !== "agent",
+    );
+    expect(childrenWithTags).toEqual([]);
+  });
+
   test("matches the shared span tree snapshot", async () => {
     await matchSpanTreeSnapshot(
       relevantMastraEvents(events).map((event) => {

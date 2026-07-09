@@ -81,6 +81,9 @@ async function runMastraInstrumentationScenario() {
         registeredAgent.generate("What is the weather in Paris?", {
           runId: "agent-generate-run",
           resourceId: "weather-user",
+          // Mastra applies `tags` only to the trace root span; the exporter
+          // must surface them on the top-level `tags` row field, not metadata.
+          tracingOptions: { tags: ["e2e-production", "e2e-beta"] },
         }),
       );
 
