@@ -3,11 +3,14 @@ import { readFileSync, writeFileSync } from "node:fs";
 
 import {
   PUBLISHABLE_PACKAGES,
+  extractReleaseNotes,
   filterPublishableReleases,
   formatPackageList,
   getApprovedPackageByName,
   getReleaseTag,
   isPublishedToNpm,
+  orderPackagesForPublish,
+  packageArtifactBase,
   parseArgs,
   readPackage,
   writeGithubOutput,
@@ -49,23 +52,22 @@ function handleStatusManifest({
 }) {
   const status = JSON.parse(readFileSync(currentStatusPath, "utf8"));
   const releases = filterPublishableReleases(status);
-  const packages = releases.map((release) => {
-    const approved = getApprovedPackageByName(release.name);
-    if (!approved) {
-      throw new Error(
-        `Unapproved publishable package in status file: ${release.name}`,
-      );
-    }
+  const packages = orderPackagesForPublish(
+    releases.map((release) => {
+      const approved = getApprovedPackageByName(release.name);
+      if (!approved) {
+        throw new Error(
+          `Unapproved publishable package in status file: ${release.name}`,
+        );
+      }
 
-    const manifest = readPackage(approved.dir);
-    return {
-      dir: approved.dir,
-      name: manifest.name,
-      version: manifest.version,
-      type: release.type,
-      tag: getReleaseTag(manifest.name, manifest.version),
-    };
-  });
+      const packageJson = readPackage(approved.dir);
+      return {
+        ...buildPackageManifest(approved.dir, packageJson),
+        type: release.type,
+      };
+    }),
+  );
 
   writeManifestFile(currentOutputPath, {
     mode: currentMode,
@@ -75,9 +77,11 @@ function handleStatusManifest({
 
   const markdownList = packagesToMarkdown(packages);
   const plainList = packagesToPlain(packages);
+  const packageNamesJson = packagesToNamesJson(packages);
 
   writeGithubOutput("has_packages", packages.length > 0);
   writeGithubOutput("package_count", packages.length);
+  writeGithubOutput("package_names_json", packageNamesJson);
   writeGithubOutput("title", currentTitle);
   writeGithubOutput("markdown", markdownList);
   writeGithubOutput("plain", plainList);
@@ -99,7 +103,7 @@ function handleStableManifest({
   outputPath: currentOutputPath,
   title: currentTitle,
 }) {
-  const packages = getUnpublishedPackages();
+  const packages = orderPackagesForPublish(getUnpublishedPackages());
   const hasWork = packages.length > 0;
 
   writeManifestFile(currentOutputPath, {
@@ -110,10 +114,12 @@ function handleStableManifest({
 
   const markdownList = packagesToMarkdown(packages);
   const plainList = packagesToPlain(packages);
+  const packageNamesJson = packagesToNamesJson(packages);
 
   writeGithubOutput("has_work", hasWork);
   writeGithubOutput("needs_publish", hasWork);
   writeGithubOutput("package_count", packages.length);
+  writeGithubOutput("package_names_json", packageNamesJson);
   writeGithubOutput("title", currentTitle);
   writeGithubOutput("markdown", markdownList);
   writeGithubOutput("plain", plainList);
@@ -136,13 +142,35 @@ function getUnpublishedPackages() {
     }
 
     return {
-      dir: approved.dir,
-      name: manifest.name,
-      version: manifest.version,
-      tag: getReleaseTag(manifest.name, manifest.version),
+      ...buildPackageManifest(approved.dir, manifest),
       published: false,
     };
   }).filter(Boolean);
+}
+
+function buildPackageManifest(dir, packageJson) {
+  const tag = getReleaseTag(packageJson.name, packageJson.version);
+  const artifactBase = packageArtifactBase(
+    packageJson.name,
+    packageJson.version,
+  );
+
+  return {
+    dir,
+    name: packageJson.name,
+    version: packageJson.version,
+    tag,
+    tarball_asset: `${artifactBase}.tgz`,
+    sbom_asset: `${artifactBase}.sbom.json`,
+    release_title: tag,
+    release_body: extractReleaseNotes(
+      dir,
+      packageJson.name,
+      packageJson.version,
+    ),
+    channel: "latest",
+    provenance: packageJson.publishConfig?.provenance ?? true,
+  };
 }
 
 function writeManifestFile(currentOutputPath, manifest) {
@@ -163,6 +191,10 @@ function packagesToPlain(packages) {
   return packages.length === 0
     ? "none"
     : packages.map((pkg) => `${pkg.name}@${pkg.version}`).join(", ");
+}
+
+function packagesToNamesJson(packages) {
+  return JSON.stringify(packages.map((pkg) => pkg.name));
 }
 
 function getTitle(currentMode) {

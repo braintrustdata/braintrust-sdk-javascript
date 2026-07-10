@@ -1,6 +1,6 @@
-import { existsSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 
-import { escapeRegExp, parseArgs } from "./_shared.mjs";
+import { extractReleaseNotes, parseArgs } from "./_shared.mjs";
 
 const args = parseArgs();
 const manifestPath = args.manifest ?? ".release-manifest.json";
@@ -27,46 +27,23 @@ for (const pkg of manifest.packages) {
 
   if (existing.status === 200) {
     console.log(`GitHub release already exists for ${tag}`);
-    continue;
+  } else {
+    await fetchGithub(`/repos/${repository}/releases`, token, {
+      method: "POST",
+      body: JSON.stringify({
+        tag_name: tag,
+        name: pkg.release_title ?? tag,
+        body:
+          pkg.release_body ??
+          extractReleaseNotes(pkg.dir, pkg.name, pkg.version),
+        draft: false,
+        prerelease: false,
+        generate_release_notes: false,
+      }),
+    }).then((response) => response.json());
+
+    console.log(`Created GitHub release for ${tag}`);
   }
-
-  await fetchGithub(`/repos/${repository}/releases`, token, {
-    method: "POST",
-    body: JSON.stringify({
-      tag_name: tag,
-      name: tag,
-      body: extractReleaseNotes(pkg.dir, pkg.name, pkg.version),
-      draft: false,
-      prerelease: false,
-      generate_release_notes: false,
-    }),
-  });
-
-  console.log(`Created GitHub release for ${tag}`);
-}
-
-function extractReleaseNotes(relativeDir, packageName, version) {
-  const changelogPath = `${relativeDir}/CHANGELOG.md`;
-  if (!existsSync(changelogPath)) {
-    return `Published ${packageName}@${version}.`;
-  }
-
-  const changelog = readFileSync(changelogPath, "utf8");
-  const heading = new RegExp(`^##\\s+${escapeRegExp(version)}\\s*$`, "m");
-  const match = heading.exec(changelog);
-  if (!match) {
-    return `Published ${packageName}@${version}.`;
-  }
-
-  const start = match.index;
-  const afterHeading = changelog.slice(start);
-  const nextHeading = afterHeading.slice(match[0].length).search(/^##\s+/m);
-  const section =
-    nextHeading === -1
-      ? afterHeading
-      : afterHeading.slice(0, match[0].length + nextHeading);
-
-  return `# ${packageName}\n\n${section.trim()}`;
 }
 
 async function fetchGithub(endpoint, authToken, options) {

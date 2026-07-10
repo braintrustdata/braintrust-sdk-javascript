@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const REPO_ROOT = path.resolve(__dirname, "../..");
-const NPM_REGISTRY = "https://registry.npmjs.org/";
+export const NPM_REGISTRY = "https://registry.npmjs.org/";
 export const GITHUB_REPO_URL =
   "git+https://github.com/braintrustdata/braintrust-sdk-javascript.git";
 export const DOCS_HOMEPAGE = "https://www.braintrust.dev/docs";
@@ -189,6 +189,97 @@ export function getReleaseTag(name, version) {
 
 export function formatPackageList(packages) {
   return packages.map((pkg) => `- ${pkg.name}@${pkg.version}`).join("\n");
+}
+
+export function extractReleaseNotes(relativeDir, packageName, version) {
+  const changelogPath = repoPath(relativeDir, "CHANGELOG.md");
+  if (!existsSync(changelogPath)) {
+    return `Published ${packageName}@${version}.`;
+  }
+
+  const changelog = readFileSync(changelogPath, "utf8");
+  const heading = new RegExp(`^##\\s+${escapeRegExp(version)}\\s*$`, "m");
+  const match = heading.exec(changelog);
+  if (!match) {
+    return `Published ${packageName}@${version}.`;
+  }
+
+  const start = match.index;
+  const afterHeading = changelog.slice(start);
+  const nextHeading = afterHeading.slice(match[0].length).search(/^##\s+/m);
+  const section =
+    nextHeading === -1
+      ? afterHeading
+      : afterHeading.slice(0, match[0].length + nextHeading);
+
+  return `# ${packageName}\n\n${section.trim()}`;
+}
+
+export function packageArtifactBase(name, version) {
+  return `${name.replace(/^@/, "").replace(/[\\/@]/g, "-")}-${version}`;
+}
+
+export function orderPackagesForPublish(packages) {
+  const packageMap = new Map(
+    packages.map((pkg) => [
+      pkg.name,
+      { ...pkg, manifest: readPackage(pkg.dir) },
+    ]),
+  );
+  const visiting = new Set();
+  const visited = new Set();
+  const ordered = [];
+
+  for (const pkg of packageMap.values()) {
+    visit(pkg);
+  }
+
+  return ordered.map(({ manifest: _manifest, ...pkg }) => pkg);
+
+  function visit(pkg) {
+    if (visited.has(pkg.name)) {
+      return;
+    }
+
+    if (visiting.has(pkg.name)) {
+      throw new Error(
+        `Detected a publish dependency cycle involving ${pkg.name}`,
+      );
+    }
+
+    visiting.add(pkg.name);
+
+    for (const dependencyName of getWorkspaceReleaseDependencies(
+      pkg.manifest,
+    )) {
+      const dependency = packageMap.get(dependencyName);
+      if (dependency) {
+        visit(dependency);
+      }
+    }
+
+    visiting.delete(pkg.name);
+    visited.add(pkg.name);
+    ordered.push(pkg);
+  }
+}
+
+function getWorkspaceReleaseDependencies(manifest) {
+  const dependencyNames = new Set();
+
+  for (const field of [
+    "dependencies",
+    "optionalDependencies",
+    "peerDependencies",
+    "devDependencies",
+  ]) {
+    for (const dependencyName of Object.keys(manifest[field] ?? {})) {
+      dependencyNames.add(dependencyName);
+    }
+  }
+
+  dependencyNames.delete(manifest.name);
+  return dependencyNames;
 }
 
 export function isPublishedToNpm(name, version) {
