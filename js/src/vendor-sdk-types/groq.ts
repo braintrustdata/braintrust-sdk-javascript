@@ -3,7 +3,6 @@ import type {
   OpenAIChatChoice,
   OpenAIChatCompletionChunk,
   OpenAIChatCreateParams,
-  OpenAIChatLogprobs,
   OpenAIChatStream,
   OpenAIEmbeddingCreateParams,
   OpenAIUsage,
@@ -29,8 +28,6 @@ export interface GroqChatCompletion {
   [key: string]: unknown;
 }
 
-export type GroqChatChoice = OpenAIChatChoice;
-export type GroqChatLogprobs = OpenAIChatLogprobs;
 export type GroqChatCompletionChunk = OpenAIChatCompletionChunk & {
   usage?: GroqUsage;
 };
@@ -50,7 +47,7 @@ export interface GroqEmbeddingResponse {
   [key: string]: unknown;
 }
 
-export interface GroqTranscriptionCreateParams {
+interface GroqTranscriptionCreateParams {
   file?: unknown;
   language?: string | null;
   model: string;
@@ -62,7 +59,7 @@ export interface GroqTranscriptionCreateParams {
   [key: string]: unknown;
 }
 
-export interface GroqTranscription {
+interface GroqTranscription {
   text?: string;
   [key: string]: unknown;
 }
@@ -85,7 +82,7 @@ export interface GroqEmbeddings {
   ) => OpenAIAPIPromise<GroqEmbeddingResponse>;
 }
 
-export interface GroqAudioTranscriptions {
+interface GroqAudioTranscriptions {
   create: (
     params: GroqTranscriptionCreateParams,
     options?: unknown,

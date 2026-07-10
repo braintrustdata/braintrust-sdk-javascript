@@ -112,7 +112,7 @@ export interface GoogleADKContent {
   parts?: GoogleADKPart[];
 }
 
-export interface GoogleADKPart {
+interface GoogleADKPart {
   text?: string;
   thought?: boolean;
   functionCall?: {
@@ -141,19 +141,4 @@ export interface GoogleADKUsageMetadata {
   totalTokenCount?: number;
   cachedContentTokenCount?: number;
   thoughtsTokenCount?: number;
-}
-
-// ---- Module shape ----
-
-export interface GoogleADKModule {
-  Runner: GoogleADKRunnerConstructor;
-  InMemoryRunner: GoogleADKInMemoryRunnerConstructor;
-  LlmAgent: new (config: unknown) => GoogleADKLlmAgent;
-  Agent: new (config: unknown) => GoogleADKLlmAgent;
-  BaseAgent: new (config: unknown) => GoogleADKBaseAgent;
-  SequentialAgent: new (config: unknown) => GoogleADKBaseAgent;
-  ParallelAgent: new (config: unknown) => GoogleADKBaseAgent;
-  LoopAgent: new (config: unknown) => GoogleADKBaseAgent;
-  FunctionTool: new (config: unknown) => GoogleADKBaseTool;
-  [key: string]: unknown;
 }

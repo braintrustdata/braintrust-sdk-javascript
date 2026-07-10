@@ -26,7 +26,7 @@ vi.mock("../../isomorph", () => ({
 }));
 
 import { GoogleGenAIPlugin } from "./google-genai-plugin";
-import { Attachment, startSpan } from "../../logger";
+import { startSpan } from "../../logger";
 import iso from "../../isomorph";
 
 const mockNewTracingChannel = iso.newTracingChannel as ReturnType<typeof vi.fn>;
@@ -546,7 +546,7 @@ describe("Google GenAI serialization functions", () => {
     });
 
     it("should handle missing usage metadata", () => {
-      const response = {};
+      const response: any = {};
       expect(response.usageMetadata).toBeUndefined();
     });
 
@@ -735,8 +735,8 @@ describe("Google GenAI serialization functions", () => {
       ];
 
       const lastChunk = chunks[chunks.length - 1];
-      expect(lastChunk.usageMetadata).toBeDefined();
-      expect(lastChunk.usageMetadata.totalTokenCount).toBe(15);
+      expect(lastChunk?.usageMetadata).toBeDefined();
+      expect(lastChunk?.usageMetadata?.totalTokenCount).toBe(15);
     });
 
     it("should include finish reason and safety ratings", () => {
@@ -827,8 +827,6 @@ describe("Google GenAI serialization functions", () => {
 
   describe("inline data to attachment conversion", () => {
     it("should create proper attachment structure for base64 image", () => {
-      const base64Data =
-        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFBQIAX8jx0gAAAABJRU5ErkJggg==";
       const mimeType = "image/png";
 
       // Simulate attachment creation
@@ -848,7 +846,7 @@ describe("Google GenAI serialization functions", () => {
     });
 
     it("should use default extension for unknown mime types", () => {
-      const mimeType = undefined;
+      const mimeType = undefined as string | undefined;
       const extension = mimeType ? mimeType.split("/")[1] : "bin";
       expect(extension).toBe("bin");
     });
@@ -894,7 +892,7 @@ describe("Google GenAI serialization functions", () => {
     });
 
     it("should handle null tools config", () => {
-      const config = {
+      const config: any = {
         temperature: 0.7,
       };
 

@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const { traceSync } = vi.hoisted(() => ({
-  traceSync: vi.fn((fn: () => unknown) => fn()),
+  traceSync: vi.fn((fn: () => unknown, _event?: unknown) => fn()),
 }));
 
 vi.mock("../isomorph", () => ({
@@ -49,7 +49,7 @@ describe("wrapStrandsAgentSDK", () => {
       }
     }
 
-    const wrapped = wrapStrandsAgentSDK({ Agent });
+    const wrapped = wrapStrandsAgentSDK({ Agent }) as any;
     const agent = new wrapped.Agent();
     const chunks = [];
     for await (const chunk of agent.stream("hello")) {
@@ -93,7 +93,7 @@ describe("wrapStrandsAgentSDK", () => {
       }
     }
 
-    const wrapped = wrapStrandsAgentSDK({ Graph, Swarm });
+    const wrapped = wrapStrandsAgentSDK({ Graph, Swarm }) as any;
 
     await expect(new wrapped.Graph().invoke("graph")).resolves.toMatchObject({
       status: "COMPLETED",
@@ -121,7 +121,9 @@ describe("wrapStrandsAgentSDK", () => {
       }
     }
 
-    const wrapped = wrapStrandsAgentSDK(wrapStrandsAgentSDK({ Agent }));
+    const wrapped = wrapStrandsAgentSDK(
+      wrapStrandsAgentSDK({ Agent }) as any,
+    ) as any;
 
     await new wrapped.Agent().invoke("hello");
     expect(traceSync).toHaveBeenCalledTimes(1);
@@ -144,7 +146,7 @@ describe("wrapStrandsAgentSDK", () => {
       }
     }
 
-    const wrapped = wrapStrandsAgentSDK({ Agent });
+    const wrapped = wrapStrandsAgentSDK({ Agent }) as any;
     const agent = new wrapped.Agent();
 
     expect(agent.read()).toBe("secret");

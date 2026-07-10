@@ -28,9 +28,9 @@ const mockStartSpan = vi.fn(() => ({
 }));
 
 vi.mock("../../logger", () => ({
-  startSpan: (...args: any[]) => mockStartSpan(...args),
+  startSpan: (...args: any[]) => (mockStartSpan as any)(...args),
   _internalGetGlobalState: (...args: any[]) =>
-    mockInternalGetGlobalState(...args),
+    (mockInternalGetGlobalState as any)(...args),
   BRAINTRUST_CURRENT_SPAN_STORE: MOCK_CURRENT_SPAN_STORE_SYMBOL,
   Attachment: class MockAttachment {
     reference: any;
@@ -225,7 +225,7 @@ describe("GoogleADKPlugin", () => {
           [MOCK_CURRENT_SPAN_STORE_SYMBOL]: currentSpanStore,
           wrapSpanForStore,
         },
-      });
+      } as any);
 
       plugin.enable();
 
@@ -351,7 +351,7 @@ describe("GoogleADKPlugin", () => {
           [MOCK_CURRENT_SPAN_STORE_SYMBOL]: currentSpanStore,
           wrapSpanForStore,
         },
-      });
+      } as any);
 
       plugin.enable();
 

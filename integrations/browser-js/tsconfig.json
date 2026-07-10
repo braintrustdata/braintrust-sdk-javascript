@@ -6,6 +6,7 @@
     "target": "es2022",
     "moduleResolution": "bundler",
     "strict": true,
+    "noUnusedLocals": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "resolveJsonModule": true

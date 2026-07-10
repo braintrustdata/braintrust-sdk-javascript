@@ -4,7 +4,7 @@ import {
   Classification,
   ClassificationItem,
   Score,
-  SpanComponentsV3,
+  SpanComponentsV4,
   SpanTypeAttribute,
   spanObjectTypeV3ToTypedString,
 } from "../util/index";
@@ -189,7 +189,7 @@ export type EvalScorer<
   args: EvalScorerArgs<Input, Output, Expected, Metadata>,
 ) => OneOrMoreScores | Promise<OneOrMoreScores>;
 
-export type OneOrMoreClassifications = Classification | Classification[] | null;
+type OneOrMoreClassifications = Classification | Classification[] | null;
 
 export type EvalClassifier<
   Input,
@@ -405,11 +405,7 @@ export class EvalResultWithSummary<
   }
 }
 
-export type {
-  ReporterOpts,
-  ReporterBody,
-  ReporterDef,
-} from "./reporters/types";
+export type { ReporterBody, ReporterDef } from "./reporters/types";
 
 async function getPersistedBaseExperimentId(
   experiment: Experiment,
@@ -566,7 +562,7 @@ globalThis._evals = {
   reporters: {},
 };
 
-export interface EvalOptions<EvalReport, Parameters extends EvalParameters> {
+interface EvalOptions<EvalReport, Parameters extends EvalParameters> {
   /**
    * A `Reporter` which you can use to summarize progress after an Eval() runs.
    */
@@ -1228,9 +1224,15 @@ async function runEvaluatorInternal(
           };
 
           const parentStr = state.currentParent.getStore();
-          const parentComponents = parentStr
-            ? SpanComponentsV3.fromStr(parentStr)
-            : null;
+          // The eval framework only ever sets a slug string here; a W3C
+          // trace-context object (from extractTraceContextFromHeaders) is not
+          // expected in this path, so it is treated as no parent.
+          // SpanComponentsV4.fromStr decodes both V4 (default) and older V3
+          // slugs, so it works regardless of the active export version.
+          const parentComponents =
+            typeof parentStr === "string"
+              ? SpanComponentsV4.fromStr(parentStr)
+              : null;
 
           const trace = state
             ? new LocalTrace({

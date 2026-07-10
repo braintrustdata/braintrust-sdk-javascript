@@ -37,9 +37,9 @@ import {
 } from "./mastra-observability-patch.js";
 import { OPENAI_API_PROMISE_PATCH } from "./openai-api-promise-patch.js";
 
-export type SpecialCaseFormat = MastraModuleFormat;
+type SpecialCaseFormat = MastraModuleFormat;
 
-export interface SpecialCaseInput {
+interface SpecialCaseInput {
   packageName: string;
   /** Forward-slash-normalized path inside the package, e.g. `dist/index.js`. */
   modulePath: string;

@@ -21,7 +21,6 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const fixturesDir = path.join(__dirname, "fixtures");
 const testFilesDir = path.join(fixturesDir, "test-files");
 const outputDir = path.join(__dirname, "output-error-handling");
-const nodeModulesDir = path.join(fixturesDir, "node_modules");
 
 describe("Error Handling", () => {
   let collector: ReturnType<typeof createEventCollector>;

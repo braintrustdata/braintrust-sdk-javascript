@@ -35,7 +35,6 @@ export const server = setupServer(
 );
 
 beforeAll(() => {
-  // comment out specific to use bypassAndLog
   process.env.BRAINTRUST_API_KEY = "braintrust-api-key";
   process.env.BRAINTRUST_APP_URL = "http://braintrust.local";
   process.env.BRAINTRUST_ORG_NAME = "braintrustdata.com";

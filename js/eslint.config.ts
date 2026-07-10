@@ -1,7 +1,11 @@
 import tseslint from "@typescript-eslint/eslint-plugin";
 import tsparser from "@typescript-eslint/parser";
+import esX from "eslint-plugin-es-x";
+import n from "eslint-plugin-n";
 import nodeImport from "eslint-plugin-node-import";
 import tsupConfigImport from "./tsup.config";
+
+const supportedNodeVersionRange = "^20.12.0 || ^21.7.0 || ^22.13.0 || >=23.5.0";
 
 // Handle both ESM and CJS module formats
 const tsupConfig = Array.isArray(tsupConfigImport)
@@ -51,11 +55,14 @@ export default [
     },
     plugins: {
       "@typescript-eslint": tseslint,
+      "es-x": esX,
+      n,
       "node-import": nodeImport,
     },
     rules: {
       // Base TypeScript rules
       ...tseslint.configs.recommended.rules,
+      ...esX.configs["flat/restrict-to-es2022"].rules,
       // TODO: Fix violations and re-enable as "error"
       "@typescript-eslint/no-explicit-any": "warn",
       "@typescript-eslint/no-unused-vars": [
@@ -129,6 +136,21 @@ export default [
           message:
             "AsyncLocalStorage.enterWith() is not supported in Cloudflare Workers. Use AsyncLocalStorage.run() to scope context instead.",
         },
+      ],
+      "n/no-unsupported-features/node-builtins": [
+        "error",
+        {
+          version: supportedNodeVersionRange,
+          allowExperimental: true,
+        },
+      ],
+      "n/no-unsupported-features/es-builtins": [
+        "error",
+        { version: supportedNodeVersionRange },
+      ],
+      "n/no-unsupported-features/es-syntax": [
+        "error",
+        { version: supportedNodeVersionRange },
       ],
       // Require node: protocol for Node.js built-in imports (for Deno compatibility)
       // This plugin automatically detects ALL Node.js built-ins - no manual list needed!

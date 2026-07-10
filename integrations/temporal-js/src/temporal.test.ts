@@ -6,7 +6,11 @@ import {
   BRAINTRUST_WORKFLOW_SPAN_HEADER,
   BRAINTRUST_WORKFLOW_SPAN_ID_HEADER,
 } from "./utils";
-import { SpanComponentsV3, SpanObjectTypeV3 } from "braintrust/util";
+import {
+  SpanComponentsV3,
+  SpanComponentsV4,
+  SpanObjectTypeV3,
+} from "braintrust/util";
 import {
   BraintrustTemporalPlugin,
   createBraintrustTemporalPlugin,
@@ -74,8 +78,49 @@ describe("temporal header utilities", () => {
   });
 });
 
-describe("SpanComponentsV3 cross-worker reconstruction", () => {
-  test("can parse and reconstruct span components with new span_id", () => {
+describe("SpanComponentsV4 cross-worker reconstruction", () => {
+  test("can parse and reconstruct V4 span components with new span_id", () => {
+    const clientComponents = new SpanComponentsV4({
+      object_type: SpanObjectTypeV3.PROJECT_LOGS,
+      object_id: "project-123",
+      row_id: "row-456",
+      span_id: "1234567890abcdef",
+      root_span_id: "1234567890abcdef1234567890abcdef",
+    });
+
+    const clientContext = clientComponents.toStr();
+    const workflowSpanId = "workflow-span-id";
+
+    const parsed = SpanComponentsV4.fromStr(clientContext);
+    const data = parsed.data;
+
+    expect(data.row_id).toBe("row-456");
+    expect(data.root_span_id).toBe("1234567890abcdef1234567890abcdef");
+    expect(data.span_id).toBe("1234567890abcdef");
+
+    if (data.row_id && data.root_span_id) {
+      const workflowComponents = new SpanComponentsV4({
+        object_type: data.object_type,
+        object_id: data.object_id,
+        propagated_event: data.propagated_event,
+        row_id: workflowSpanId,
+        root_span_id: data.root_span_id,
+        span_id: workflowSpanId,
+      });
+
+      const reconstructed = SpanComponentsV4.fromStr(
+        workflowComponents.toStr(),
+      );
+      expect(reconstructed.data.span_id).toBe(workflowSpanId);
+      expect(reconstructed.data.row_id).toBe(workflowSpanId);
+      expect(reconstructed.data.root_span_id).toBe(
+        "1234567890abcdef1234567890abcdef",
+      );
+      expect(reconstructed.data.object_id).toBe("project-123");
+    }
+  });
+
+  test("can parse legacy V3 client context and reconstruct V4 parent", () => {
     const clientComponents = new SpanComponentsV3({
       object_type: SpanObjectTypeV3.PROJECT_LOGS,
       object_id: "project-123",
@@ -84,34 +129,21 @@ describe("SpanComponentsV3 cross-worker reconstruction", () => {
       root_span_id: "root-span-id",
     });
 
-    const clientContext = clientComponents.toStr();
-    const workflowSpanId = "workflow-span-id";
+    const parsed = SpanComponentsV4.fromStr(clientComponents.toStr());
+    const workflowComponents = new SpanComponentsV4({
+      object_type: parsed.data.object_type,
+      object_id: parsed.data.object_id,
+      propagated_event: parsed.data.propagated_event,
+      row_id: "workflow-span-id",
+      root_span_id: parsed.data.root_span_id!,
+      span_id: "workflow-span-id",
+    });
 
-    const parsed = SpanComponentsV3.fromStr(clientContext);
-    const data = parsed.data;
-
-    expect(data.row_id).toBe("row-456");
-    expect(data.root_span_id).toBe("root-span-id");
-    expect(data.span_id).toBe("client-span-id");
-
-    if (data.row_id && data.root_span_id) {
-      const workflowComponents = new SpanComponentsV3({
-        object_type: data.object_type,
-        object_id: data.object_id,
-        propagated_event: data.propagated_event,
-        row_id: data.row_id,
-        root_span_id: data.root_span_id,
-        span_id: workflowSpanId,
-      });
-
-      const reconstructed = SpanComponentsV3.fromStr(
-        workflowComponents.toStr(),
-      );
-      expect(reconstructed.data.span_id).toBe(workflowSpanId);
-      expect(reconstructed.data.row_id).toBe("row-456");
-      expect(reconstructed.data.root_span_id).toBe("root-span-id");
-      expect(reconstructed.data.object_id).toBe("project-123");
-    }
+    const reconstructed = SpanComponentsV4.fromStr(workflowComponents.toStr());
+    expect(reconstructed.data.span_id).toBe("workflow-span-id");
+    expect(reconstructed.data.row_id).toBe("workflow-span-id");
+    expect(reconstructed.data.root_span_id).toBe("root-span-id");
+    expect(reconstructed.data.object_id).toBe("project-123");
   });
 
   test("preserves object_type when reconstructing", () => {
@@ -122,7 +154,7 @@ describe("SpanComponentsV3 cross-worker reconstruction", () => {
     ];
 
     for (const objectType of objectTypes) {
-      const original = new SpanComponentsV3({
+      const original = new SpanComponentsV4({
         object_type: objectType,
         object_id: "test-id",
         row_id: "row-id",
@@ -130,9 +162,9 @@ describe("SpanComponentsV3 cross-worker reconstruction", () => {
         root_span_id: "root-span-id",
       });
 
-      const parsed = SpanComponentsV3.fromStr(original.toStr());
+      const parsed = SpanComponentsV4.fromStr(original.toStr());
 
-      const reconstructed = new SpanComponentsV3({
+      const reconstructed = new SpanComponentsV4({
         object_type: parsed.data.object_type,
         object_id: parsed.data.object_id,
         propagated_event: parsed.data.propagated_event,
@@ -146,12 +178,12 @@ describe("SpanComponentsV3 cross-worker reconstruction", () => {
   });
 
   test("handles span components without row_id fields", () => {
-    const componentsWithoutRowId = new SpanComponentsV3({
+    const componentsWithoutRowId = new SpanComponentsV4({
       object_type: SpanObjectTypeV3.PROJECT_LOGS,
       object_id: "test-id",
     });
 
-    const parsed = SpanComponentsV3.fromStr(componentsWithoutRowId.toStr());
+    const parsed = SpanComponentsV4.fromStr(componentsWithoutRowId.toStr());
 
     expect(parsed.data.row_id).toBeUndefined();
     expect(parsed.data.span_id).toBeUndefined();
@@ -161,7 +193,7 @@ describe("SpanComponentsV3 cross-worker reconstruction", () => {
   test("preserves propagated_event when reconstructing", () => {
     const propagatedEvent = { key: "value", nested: { inner: 123 } };
 
-    const original = new SpanComponentsV3({
+    const original = new SpanComponentsV4({
       object_type: SpanObjectTypeV3.PROJECT_LOGS,
       object_id: "test-id",
       propagated_event: propagatedEvent,
@@ -170,9 +202,9 @@ describe("SpanComponentsV3 cross-worker reconstruction", () => {
       root_span_id: "root-span-id",
     });
 
-    const parsed = SpanComponentsV3.fromStr(original.toStr());
+    const parsed = SpanComponentsV4.fromStr(original.toStr());
 
-    const reconstructed = new SpanComponentsV3({
+    const reconstructed = new SpanComponentsV4({
       object_type: parsed.data.object_type,
       object_id: parsed.data.object_id,
       propagated_event: parsed.data.propagated_event,
@@ -210,7 +242,7 @@ describe("BraintrustTemporalPlugin", () => {
     expect(configured.interceptors).toBeDefined();
     expect(configured.interceptors?.workflow).toBeDefined();
     expect(Array.isArray(configured.interceptors?.workflow)).toBe(true);
-    expect(configured.interceptors?.workflow?.length).toBe(1);
+    expect((configured.interceptors?.workflow as any[]).length).toBe(1);
   });
 
   test("configureClient preserves existing interceptors", () => {
@@ -224,7 +256,7 @@ describe("BraintrustTemporalPlugin", () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const configured = plugin.configureClient(options as any);
 
-    expect(configured.interceptors?.workflow?.length).toBe(2);
+    expect((configured.interceptors?.workflow as any[]).length).toBe(2);
   });
 
   test("configureWorker adds activity interceptor and sinks", () => {

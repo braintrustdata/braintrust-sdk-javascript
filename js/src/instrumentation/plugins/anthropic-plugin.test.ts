@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 
 // Mock iso's newTracingChannel - must be before any imports that use it
 vi.mock("../../isomorph", () => ({
@@ -8,17 +8,17 @@ vi.mock("../../isomorph", () => ({
 }));
 
 import {
-  AnthropicPlugin,
   parseMetricsFromUsage,
   aggregateAnthropicStreamChunks,
   processAttachmentsInInput,
   coalesceInput,
 } from "./anthropic-plugin";
-import type { StartEvent } from "../core";
 import { Attachment } from "../../logger";
-import iso from "../../isomorph";
 
-const mockNewTracingChannel = iso.newTracingChannel as ReturnType<typeof vi.fn>;
+const parseMetricsFromUsageForTest = (usage: unknown) =>
+  parseMetricsFromUsage(usage as any);
+const aggregateAnthropicStreamChunksForTest = (chunks: unknown[]) =>
+  aggregateAnthropicStreamChunks(chunks as any);
 
 // Mock startSpan from logger
 vi.mock("../../logger", () => ({
@@ -40,11 +40,11 @@ vi.mock("../../logger", () => ({
 
 describe("parseMetricsFromUsage", () => {
   it("should return empty object for null usage", () => {
-    expect(parseMetricsFromUsage(null)).toEqual({});
+    expect(parseMetricsFromUsageForTest(null)).toEqual({});
   });
 
   it("should return empty object for undefined usage", () => {
-    expect(parseMetricsFromUsage(undefined)).toEqual({});
+    expect(parseMetricsFromUsageForTest(undefined)).toEqual({});
   });
 
   it("should map Anthropic token names to Braintrust names", () => {
@@ -53,7 +53,7 @@ describe("parseMetricsFromUsage", () => {
       output_tokens: 50,
     };
 
-    const result = parseMetricsFromUsage(usage);
+    const result = parseMetricsFromUsageForTest(usage);
 
     expect(result).toEqual({
       prompt_tokens: 100,
@@ -68,7 +68,7 @@ describe("parseMetricsFromUsage", () => {
       cache_read_input_tokens: 25,
     };
 
-    const result = parseMetricsFromUsage(usage);
+    const result = parseMetricsFromUsageForTest(usage);
 
     expect(result).toEqual({
       prompt_tokens: 100,
@@ -84,7 +84,7 @@ describe("parseMetricsFromUsage", () => {
       cache_creation_input_tokens: 30,
     };
 
-    const result = parseMetricsFromUsage(usage);
+    const result = parseMetricsFromUsageForTest(usage);
 
     expect(result).toEqual({
       prompt_tokens: 100,
@@ -101,7 +101,7 @@ describe("parseMetricsFromUsage", () => {
       cache_creation_input_tokens: 30,
     };
 
-    const result = parseMetricsFromUsage(usage);
+    const result = parseMetricsFromUsageForTest(usage);
 
     expect(result).toEqual({
       prompt_tokens: 100,
@@ -118,7 +118,7 @@ describe("parseMetricsFromUsage", () => {
       cache_read_input_tokens: null,
     };
 
-    const result = parseMetricsFromUsage(usage);
+    const result = parseMetricsFromUsageForTest(usage);
 
     expect(result).toEqual({
       completion_tokens: 50,
@@ -126,7 +126,7 @@ describe("parseMetricsFromUsage", () => {
   });
 
   it("should handle empty usage object", () => {
-    expect(parseMetricsFromUsage({})).toEqual({});
+    expect(parseMetricsFromUsageForTest({})).toEqual({});
   });
 
   it("should flatten server_tool_use metrics", () => {
@@ -139,7 +139,7 @@ describe("parseMetricsFromUsage", () => {
       },
     };
 
-    const result = parseMetricsFromUsage(usage);
+    const result = parseMetricsFromUsageForTest(usage);
 
     expect(result).toEqual({
       prompt_tokens: 100,
@@ -158,7 +158,7 @@ describe("parseMetricsFromUsage", () => {
       },
     };
 
-    const result = parseMetricsFromUsage(usage);
+    const result = parseMetricsFromUsageForTest(usage);
 
     expect(result).toEqual({
       prompt_tokens: 100,
@@ -203,7 +203,7 @@ describe("aggregateAnthropicStreamChunks", () => {
       },
     ];
 
-    const result = aggregateAnthropicStreamChunks(chunks);
+    const result = aggregateAnthropicStreamChunksForTest(chunks);
 
     expect(result.output).toBe("Hello world");
     expect(result.metrics).toMatchObject({
@@ -225,7 +225,7 @@ describe("aggregateAnthropicStreamChunks", () => {
       },
     ];
 
-    const result = aggregateAnthropicStreamChunks(chunks);
+    const result = aggregateAnthropicStreamChunksForTest(chunks);
 
     // finalizeAnthropicTokens adds all cache tokens to prompt_tokens
     expect(result.metrics).toMatchObject({
@@ -255,7 +255,7 @@ describe("aggregateAnthropicStreamChunks", () => {
       },
     ];
 
-    const result = aggregateAnthropicStreamChunks(chunks);
+    const result = aggregateAnthropicStreamChunksForTest(chunks);
 
     expect(result.output).toBe("The quick brown fox");
   });
@@ -282,7 +282,7 @@ describe("aggregateAnthropicStreamChunks", () => {
       },
     ];
 
-    const result = aggregateAnthropicStreamChunks(chunks);
+    const result = aggregateAnthropicStreamChunksForTest(chunks);
 
     expect(result.metrics).toMatchObject({
       prompt_tokens: 100,
@@ -304,7 +304,7 @@ describe("aggregateAnthropicStreamChunks", () => {
       },
     ];
 
-    const result = aggregateAnthropicStreamChunks(chunks);
+    const result = aggregateAnthropicStreamChunksForTest(chunks);
 
     expect(result.metadata).toEqual({
       stop_reason: "end_turn",
@@ -322,7 +322,7 @@ describe("aggregateAnthropicStreamChunks", () => {
       },
     ];
 
-    const result = aggregateAnthropicStreamChunks(chunks);
+    const result = aggregateAnthropicStreamChunksForTest(chunks);
 
     expect(result.metadata).toEqual({
       stop_reason: "stop_sequence",
@@ -331,7 +331,7 @@ describe("aggregateAnthropicStreamChunks", () => {
   });
 
   it("should handle empty chunks array", () => {
-    const result = aggregateAnthropicStreamChunks([]);
+    const result = aggregateAnthropicStreamChunksForTest([]);
 
     expect(result.output).toBe("");
     // finalizeAnthropicTokens always adds prompt_tokens and tokens
@@ -358,7 +358,7 @@ describe("aggregateAnthropicStreamChunks", () => {
       },
     ];
 
-    const result = aggregateAnthropicStreamChunks(chunks);
+    const result = aggregateAnthropicStreamChunksForTest(chunks);
 
     expect(result.output).toBe("Hello world");
   });
@@ -409,7 +409,7 @@ describe("aggregateAnthropicStreamChunks", () => {
       },
     ];
 
-    const result = aggregateAnthropicStreamChunks(chunks);
+    const result = aggregateAnthropicStreamChunksForTest(chunks);
 
     expect(result.output).toEqual({
       role: "assistant",
@@ -445,7 +445,7 @@ describe("aggregateAnthropicStreamChunks", () => {
       { type: "message_stop" },
     ];
 
-    const result = aggregateAnthropicStreamChunks(chunks);
+    const result = aggregateAnthropicStreamChunksForTest(chunks);
 
     expect(result.output).toBe("Hi");
   });
@@ -481,7 +481,7 @@ describe("aggregateAnthropicStreamChunks", () => {
       { type: "content_block_stop", index: 1 },
     ];
 
-    const result = aggregateAnthropicStreamChunks(chunks);
+    const result = aggregateAnthropicStreamChunksForTest(chunks);
 
     expect(result.output).toEqual({
       content: [
@@ -518,7 +518,7 @@ describe("aggregateAnthropicStreamChunks", () => {
       { type: "content_block_stop", index: 0 },
     ];
 
-    const result = aggregateAnthropicStreamChunks(chunks);
+    const result = aggregateAnthropicStreamChunksForTest(chunks);
 
     expect(result.output).toEqual({
       content: [
@@ -546,7 +546,7 @@ describe("aggregateAnthropicStreamChunks", () => {
       { type: "content_block_stop", index: 0 },
     ];
 
-    const result = aggregateAnthropicStreamChunks(chunks);
+    const result = aggregateAnthropicStreamChunksForTest(chunks);
 
     expect(result.output).toEqual({
       content: [
@@ -591,7 +591,7 @@ describe("aggregateAnthropicStreamChunks", () => {
       { type: "content_block_stop", index: 0 },
     ];
 
-    const result = aggregateAnthropicStreamChunks(chunks);
+    const result = aggregateAnthropicStreamChunksForTest(chunks);
 
     expect(result.output).toEqual({
       content: [
@@ -625,7 +625,7 @@ describe("aggregateAnthropicStreamChunks", () => {
       { type: "content_block_stop", index: 0 },
     ];
 
-    const result = aggregateAnthropicStreamChunks(chunks);
+    const result = aggregateAnthropicStreamChunksForTest(chunks);
 
     expect(result.output).toEqual({
       content: [
@@ -654,7 +654,7 @@ describe("aggregateAnthropicStreamChunks", () => {
       { type: "content_block_stop", index: 0 },
     ];
 
-    const result = aggregateAnthropicStreamChunks(chunks);
+    const result = aggregateAnthropicStreamChunksForTest(chunks);
 
     expect(result.output).toEqual({
       content: [{ type: "some_future_type", data: "value" }],
@@ -708,7 +708,7 @@ describe("aggregateAnthropicStreamChunks", () => {
       { type: "content_block_stop", index: 2 },
     ];
 
-    const result = aggregateAnthropicStreamChunks(chunks);
+    const result = aggregateAnthropicStreamChunksForTest(chunks);
 
     expect(result.output).toEqual({
       content: [
@@ -737,7 +737,7 @@ describe("processAttachmentsInInput", () => {
       },
     ];
 
-    const result = processAttachmentsInInput(input);
+    const result = processAttachmentsInInput(input) as any;
 
     expect(result[0].type).toBe("image");
     expect(result[0].source.type).toBe("base64");
@@ -762,7 +762,7 @@ describe("processAttachmentsInInput", () => {
       },
     ];
 
-    const result = processAttachmentsInInput(input);
+    const result = processAttachmentsInInput(input) as any;
 
     expect(result[0].type).toBe("document");
     expect(result[0].source.data).toBeInstanceOf(Attachment);
@@ -787,7 +787,7 @@ describe("processAttachmentsInInput", () => {
       },
     ];
 
-    const result = processAttachmentsInInput(input);
+    const result = processAttachmentsInInput(input) as any;
 
     const attachment = result[0].source.data as Attachment;
     expect(attachment.reference.filename).toBe("image.gif");
@@ -808,7 +808,7 @@ describe("processAttachmentsInInput", () => {
       },
     ];
 
-    const result = processAttachmentsInInput(input);
+    const result = processAttachmentsInInput(input) as any;
 
     const attachment = result[0].source.data as Attachment;
     expect(attachment.reference.filename).toBe("image.png");
@@ -837,7 +837,7 @@ describe("processAttachmentsInInput", () => {
       ],
     };
 
-    const result = processAttachmentsInInput(input);
+    const result = processAttachmentsInInput(input) as any;
 
     expect(result.messages[0].content[0].type).toBe("text");
     expect(result.messages[0].content[1].source.data).toBeInstanceOf(
@@ -861,7 +861,7 @@ describe("processAttachmentsInInput", () => {
       { type: "text", text: "World" },
     ];
 
-    const result = processAttachmentsInInput(input);
+    const result = processAttachmentsInInput(input) as any;
 
     expect(result[0]).toEqual({ type: "text", text: "Hello" });
     expect(result[1].source.data).toBeInstanceOf(Attachment);
@@ -874,7 +874,7 @@ describe("processAttachmentsInInput", () => {
       { type: "custom", data: "some data" },
     ];
 
-    const result = processAttachmentsInInput(input);
+    const result = processAttachmentsInInput(input) as any;
 
     expect(result).toEqual(input);
   });
@@ -897,7 +897,7 @@ describe("processAttachmentsInInput", () => {
       },
     ];
 
-    const result = processAttachmentsInInput(input);
+    const result = processAttachmentsInInput(input) as any;
 
     expect(result).toEqual(input);
   });
@@ -913,7 +913,7 @@ describe("processAttachmentsInInput", () => {
       },
     ];
 
-    const result = processAttachmentsInInput(input);
+    const result = processAttachmentsInInput(input) as any;
 
     // Should not crash, just return as-is or with minimal processing
     expect(result[0].type).toBe("image");

@@ -84,7 +84,7 @@ describe("CursorSDKPlugin", () => {
     );
     const run = makeRun();
     const originalSend = vi.fn(async () => run);
-    const agent = {
+    const agent: any = {
       agentId: "agent-1",
       send: originalSend,
     };
@@ -169,7 +169,7 @@ describe("CursorSDKPlugin", () => {
     };
 
     sendHandlers.start(event);
-    await event.arguments[1].onDelta({
+    await (event.arguments[1] as any).onDelta({
       update: {
         type: "turn-ended",
         usage: {

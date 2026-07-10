@@ -1,0 +1,59 @@
+{
+  "span_tree": [
+    {
+      "name": "ai-sdk-concurrent-shared-model-root",
+      "type": "task",
+      "children": [
+        {
+          "name": "generateText",
+          "type": "function",
+          "children": [
+            {
+              "name": "doGenerate",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "marker": "MARKER_A"
+              },
+              "output": {
+                "marker": "MARKER_A"
+              }
+            }
+          ],
+          "input": {
+            "marker": "MARKER_A"
+          },
+          "output": {
+            "marker": "MARKER_A"
+          }
+        },
+        {
+          "name": "generateText",
+          "type": "function",
+          "children": [
+            {
+              "name": "doGenerate",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "marker": "MARKER_B"
+              },
+              "output": {
+                "marker": "MARKER_B"
+              }
+            }
+          ],
+          "input": {
+            "marker": "MARKER_B"
+          },
+          "output": {
+            "marker": "MARKER_B"
+          }
+        }
+      ],
+      "metadata": {
+        "scenario": "ai-sdk-concurrent-shared-model"
+      }
+    }
+  ]
+}

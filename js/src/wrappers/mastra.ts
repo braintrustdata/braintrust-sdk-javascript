@@ -272,6 +272,12 @@ export class BraintrustObservabilityExporter implements MastraObservabilityExpor
       name: exported.name,
       spanAttributes: { type: spanTypeFor(exported.type) },
       startTime: epochSeconds(exported.startTime),
+      // Use the Mastra span id as the Braintrust row id so that
+      // `logFeedback({ id: <mastra span id> })` (and Mastra's score events)
+      // attach to the right row. Without this, `SpanImpl` auto-generates a
+      // row id (`this._id = eventId ?? idGenerator.getSpanId()`) that no
+      // external caller could know.
+      event: { id: exported.id },
     };
 
     const parentRecord = exported.parentSpanId

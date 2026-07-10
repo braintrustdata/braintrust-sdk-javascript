@@ -1,13 +1,18 @@
 {
   "extends": "../../../tsconfig.json",
   "compilerOptions": {
+    "module": "es2022",
+    "noEmit": true,
+    "noUnusedLocals": true,
     "rootDir": "../../..",
-    "outDir": "./dist"
+    "outDir": "./dist",
+    "types": ["node", "vitest/globals"]
   },
-  "include": ["./**/*.ts", "../../../src/**/*.ts"],
+  "include": ["./**/*.ts"],
   "exclude": [
     "node_modules/**",
     "dist/**",
+    "../../../src/**/*.test.ts",
     "../../../vendor/**",
     "**/vendor/**"
   ]

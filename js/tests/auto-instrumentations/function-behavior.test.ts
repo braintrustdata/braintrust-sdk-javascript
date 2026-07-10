@@ -21,7 +21,6 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const fixturesDir = path.join(__dirname, "fixtures");
 const testFilesDir = path.join(fixturesDir, "test-files");
 const outputDir = path.join(__dirname, "output-function-behavior");
-const nodeModulesDir = path.join(fixturesDir, "node_modules");
 
 describe("Function Behavior Preservation", () => {
   beforeAll(() => {
@@ -518,7 +517,7 @@ describe("Function Behavior Preservation", () => {
       expect(results[2].model).toBe("gpt-4-turbo");
 
       // Verify each got a unique ID
-      const ids = results.map((r) => r.id);
+      const ids = results.map((r: any) => r.id);
       expect(new Set(ids).size).toBe(3);
     });
   });

@@ -1393,26 +1393,38 @@ describe("Otel Compat tests Integration", () => {
   });
 
   test("UUID generator should share span_id as root_span_id for backwards compatibility", async () => {
-    // Ensure UUID generator is used (default behavior)
+    // Legacy UUID mode (hex ids are the default now).
     resetOtelCompat();
+    const prevLegacy = process.env.BRAINTRUST_LEGACY_IDS;
+    process.env.BRAINTRUST_LEGACY_IDS = "true";
+    _exportsForTestingOnly.resetIdGenStateForTests();
 
-    const testLogger = initLogger({
-      projectName: "test-uuid-integration",
-      projectId: "test-project-id",
-    });
+    try {
+      const testLogger = initLogger({
+        projectName: "test-uuid-integration",
+        projectId: "test-project-id",
+      });
 
-    const span = testLogger.startSpan({ name: "test-uuid-span" });
+      const span = testLogger.startSpan({ name: "test-uuid-span" });
 
-    // UUID generators should share span_id as root_span_id for backwards compatibility
-    expect(span.spanId).toBe(span.rootSpanId);
+      // UUID generators should share span_id as root_span_id for backwards compatibility
+      expect(span.spanId).toBe(span.rootSpanId);
 
-    // Verify UUID format (36 characters with dashes)
-    const uuidRegex =
-      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    expect(span.spanId).toMatch(uuidRegex);
-    expect(span.rootSpanId).toMatch(uuidRegex);
+      // Verify UUID format (36 characters with dashes)
+      const uuidRegex =
+        /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      expect(span.spanId).toMatch(uuidRegex);
+      expect(span.rootSpanId).toMatch(uuidRegex);
 
-    span.end();
+      span.end();
+    } finally {
+      if (prevLegacy === undefined) {
+        delete process.env.BRAINTRUST_LEGACY_IDS;
+      } else {
+        process.env.BRAINTRUST_LEGACY_IDS = prevLegacy;
+      }
+      _exportsForTestingOnly.resetIdGenStateForTests();
+    }
   });
 
   test("OTEL generator should not share span_id as root_span_id", async () => {
@@ -1437,30 +1449,42 @@ describe("Otel Compat tests Integration", () => {
 
   test("parent-child relationships work with UUID generators", async () => {
     resetOtelCompat();
+    const prevLegacy = process.env.BRAINTRUST_LEGACY_IDS;
+    process.env.BRAINTRUST_LEGACY_IDS = "true";
+    _exportsForTestingOnly.resetIdGenStateForTests();
 
-    const testLogger = initLogger({
-      projectName: "test-uuid-parent-child",
-      projectId: "test-project-id",
-    });
+    try {
+      const testLogger = initLogger({
+        projectName: "test-uuid-parent-child",
+        projectId: "test-project-id",
+      });
 
-    const parentSpan = testLogger.startSpan({ name: "uuid-parent" });
+      const parentSpan = testLogger.startSpan({ name: "uuid-parent" });
 
-    // Parent should have span_id === root_span_id
-    expect(parentSpan.spanId).toBe(parentSpan.rootSpanId);
+      // Parent should have span_id === root_span_id
+      expect(parentSpan.spanId).toBe(parentSpan.rootSpanId);
 
-    const childSpan = parentSpan.startSpan({ name: "uuid-child" });
+      const childSpan = parentSpan.startSpan({ name: "uuid-child" });
 
-    // Child should inherit parent's root_span_id
-    expect(childSpan.rootSpanId).toBe(parentSpan.rootSpanId);
+      // Child should inherit parent's root_span_id
+      expect(childSpan.rootSpanId).toBe(parentSpan.rootSpanId);
 
-    // Child should have parent in spanParents
-    expect(childSpan.spanParents).toContain(parentSpan.spanId);
+      // Child should have parent in spanParents
+      expect(childSpan.spanParents).toContain(parentSpan.spanId);
 
-    // Child should have its own span_id (different from parent)
-    expect(childSpan.spanId).not.toBe(parentSpan.spanId);
+      // Child should have its own span_id (different from parent)
+      expect(childSpan.spanId).not.toBe(parentSpan.spanId);
 
-    parentSpan.end();
-    childSpan.end();
+      parentSpan.end();
+      childSpan.end();
+    } finally {
+      if (prevLegacy === undefined) {
+        delete process.env.BRAINTRUST_LEGACY_IDS;
+      } else {
+        process.env.BRAINTRUST_LEGACY_IDS = prevLegacy;
+      }
+      _exportsForTestingOnly.resetIdGenStateForTests();
+    }
   });
 
   test("parent-child relationships work with OTEL generators", async () => {
@@ -1496,51 +1520,62 @@ describe("Otel Compat tests Integration", () => {
   });
 
   test("environment variable switching works correctly", async () => {
-    // Test default (UUID)
-    resetOtelCompat();
+    const prevLegacy = process.env.BRAINTRUST_LEGACY_IDS;
+    const uuidRegex =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    try {
+      // Test legacy UUID mode.
+      resetOtelCompat();
+      process.env.BRAINTRUST_LEGACY_IDS = "true";
+      _exportsForTestingOnly.resetIdGenStateForTests();
 
-    const uuidLogger = initLogger({
-      projectName: "test-env-uuid",
-      projectId: "test-project-id",
-    });
+      const uuidLogger = initLogger({
+        projectName: "test-env-uuid",
+        projectId: "test-project-id",
+      });
 
-    const uuidSpan = uuidLogger.startSpan({ name: "uuid-test" });
-    expect(uuidSpan.spanId).toBe(uuidSpan.rootSpanId);
-    expect(uuidSpan.spanId).toMatch(
-      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
-    );
-    uuidSpan.end();
+      const uuidSpan = uuidLogger.startSpan({ name: "uuid-test" });
+      expect(uuidSpan.spanId).toBe(uuidSpan.rootSpanId);
+      expect(uuidSpan.spanId).toMatch(uuidRegex);
+      uuidSpan.end();
 
-    // Switch to OTEL
-    setupOtelCompat();
-    _exportsForTestingOnly.resetIdGenStateForTests();
+      // Switch to OTEL compat (hex, wins over legacy).
+      setupOtelCompat();
+      _exportsForTestingOnly.resetIdGenStateForTests();
 
-    const otelLogger = initLogger({
-      projectName: "test-env-otel",
-      projectId: "test-project-id",
-    });
+      const otelLogger = initLogger({
+        projectName: "test-env-otel",
+        projectId: "test-project-id",
+      });
 
-    const otelSpan = otelLogger.startSpan({ name: "otel-test" });
-    expect(otelSpan.spanId).not.toBe(otelSpan.rootSpanId);
-    expect(otelSpan.spanId.length).toBe(16);
-    expect(otelSpan.rootSpanId.length).toBe(32);
-    otelSpan.end();
+      const otelSpan = otelLogger.startSpan({ name: "otel-test" });
+      expect(otelSpan.spanId).not.toBe(otelSpan.rootSpanId);
+      expect(otelSpan.spanId.length).toBe(16);
+      expect(otelSpan.rootSpanId.length).toBe(32);
+      otelSpan.end();
 
-    // Switch back to UUID
-    resetOtelCompat();
-    _exportsForTestingOnly.resetIdGenStateForTests();
+      // Switch back to legacy UUID.
+      resetOtelCompat();
+      process.env.BRAINTRUST_LEGACY_IDS = "true";
+      _exportsForTestingOnly.resetIdGenStateForTests();
 
-    const uuidLogger2 = initLogger({
-      projectName: "test-env-uuid2",
-      apiKey: "test-key",
-    });
+      const uuidLogger2 = initLogger({
+        projectName: "test-env-uuid2",
+        apiKey: "test-key",
+      });
 
-    const uuidSpan2 = uuidLogger2.startSpan({ name: "uuid-test2" });
-    expect(uuidSpan2.spanId).toBe(uuidSpan2.rootSpanId);
-    expect(uuidSpan2.spanId).toMatch(
-      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
-    );
-    uuidSpan2.end();
+      const uuidSpan2 = uuidLogger2.startSpan({ name: "uuid-test2" });
+      expect(uuidSpan2.spanId).toBe(uuidSpan2.rootSpanId);
+      expect(uuidSpan2.spanId).toMatch(uuidRegex);
+      uuidSpan2.end();
+    } finally {
+      if (prevLegacy === undefined) {
+        delete process.env.BRAINTRUST_LEGACY_IDS;
+      } else {
+        process.env.BRAINTRUST_LEGACY_IDS = prevLegacy;
+      }
+      _exportsForTestingOnly.resetIdGenStateForTests();
+    }
   });
 
   test("case insensitive environment variable", async () => {
@@ -1587,31 +1622,65 @@ describe("export() format selection based on if otel is initialized", () => {
     _exportsForTestingOnly.resetIdGenStateForTests();
   });
 
-  test("uses SpanComponentsV3 when otel is not initialized", async () => {
+  test("uses SpanComponentsV3 in legacy mode when otel is not initialized", async () => {
     resetOtelCompat();
+    const prevLegacy = process.env.BRAINTRUST_LEGACY_IDS;
+    process.env.BRAINTRUST_LEGACY_IDS = "true";
+    _exportsForTestingOnly.resetIdGenStateForTests();
+
+    try {
+      const testLogger = initLogger({
+        projectName: "test-export-v3",
+        projectId: "test-project-id",
+      });
+      const span = testLogger.startSpan({ name: "test-span" });
+
+      const exported = await span.export();
+      expect(typeof exported).toBe("string");
+      expect(exported.length).toBeGreaterThan(0);
+
+      // Verify version byte is 3 (legacy UUID mode -> V3 export)
+      expect(getExportVersion(exported)).toBe(3);
+
+      // The exported string should be parseable by both V3 and V4 (V4 can read V3)
+      const v3Components = SpanComponentsV3.fromStr(exported);
+      expect(v3Components.data.row_id).toBe(span.id);
+      expect(v3Components.data.span_id).toBe(span.spanId);
+      expect(v3Components.data.root_span_id).toBe(span.rootSpanId);
+
+      // V4 should also be able to read V3 format
+      const v4Components = SpanComponentsV4.fromStr(exported);
+      expect(v4Components.data.row_id).toBe(span.id);
+
+      span.end();
+    } finally {
+      if (prevLegacy === undefined) {
+        delete process.env.BRAINTRUST_LEGACY_IDS;
+      } else {
+        process.env.BRAINTRUST_LEGACY_IDS = prevLegacy;
+      }
+    }
+  });
+
+  test("uses SpanComponentsV4 by default when otel is not initialized", async () => {
+    resetOtelCompat();
+    _exportsForTestingOnly.resetIdGenStateForTests();
 
     const testLogger = initLogger({
-      projectName: "test-export-v3",
+      projectName: "test-export-v4-default",
       projectId: "test-project-id",
     });
     const span = testLogger.startSpan({ name: "test-span" });
 
     const exported = await span.export();
-    expect(typeof exported).toBe("string");
-    expect(exported.length).toBeGreaterThan(0);
+    // The core SDK now defaults to V4 (OTEL-compatible hex ids) even without
+    // compat installed.
+    expect(getExportVersion(exported)).toBe(4);
 
-    // Verify version byte is 3
-    expect(getExportVersion(exported)).toBe(3);
-
-    // The exported string should be parseable by both V3 and V4 (V4 can read V3)
-    const v3Components = SpanComponentsV3.fromStr(exported);
-    expect(v3Components.data.row_id).toBe(span.id);
-    expect(v3Components.data.span_id).toBe(span.spanId);
-    expect(v3Components.data.root_span_id).toBe(span.rootSpanId);
-
-    // V4 should also be able to read V3 format
     const v4Components = SpanComponentsV4.fromStr(exported);
     expect(v4Components.data.row_id).toBe(span.id);
+    expect(v4Components.data.span_id).toBe(span.spanId);
+    expect(v4Components.data.root_span_id).toBe(span.rootSpanId);
 
     span.end();
   });
@@ -1640,8 +1709,11 @@ describe("export() format selection based on if otel is initialized", () => {
   });
 
   test("Logger.export() uses correct format based on env var", async () => {
-    // Test V3
+    // Test V3 (legacy UUID mode)
     resetOtelCompat();
+    const prevLegacy = process.env.BRAINTRUST_LEGACY_IDS;
+    process.env.BRAINTRUST_LEGACY_IDS = "true";
+    _exportsForTestingOnly.resetIdGenStateForTests();
 
     const loggerV3 = initLogger({
       projectName: "test-logger-export-v3",
@@ -1652,6 +1724,13 @@ describe("export() format selection based on if otel is initialized", () => {
 
     const v3Parsed = SpanComponentsV3.fromStr(exportedV3);
     expect(v3Parsed.data.object_type).toBeDefined();
+
+    if (prevLegacy === undefined) {
+      delete process.env.BRAINTRUST_LEGACY_IDS;
+    } else {
+      process.env.BRAINTRUST_LEGACY_IDS = prevLegacy;
+    }
+    _exportsForTestingOnly.resetIdGenStateForTests();
 
     // Test V4
     setupOtelCompat();
@@ -1727,40 +1806,50 @@ describe("export() format selection based on if otel is initialized", () => {
     span.end();
   });
 
-  test("V3 format uses UUIDs when otel is not initialized", async () => {
+  test("V3 format uses UUIDs in legacy mode when otel is not initialized", async () => {
     resetOtelCompat();
-
+    const prevLegacy = process.env.BRAINTRUST_LEGACY_IDS;
+    process.env.BRAINTRUST_LEGACY_IDS = "true";
     _exportsForTestingOnly.resetIdGenStateForTests();
 
-    const testLogger = initLogger({
-      projectName: "test-uuid-ids",
-      projectId: "test-project-id",
-    });
+    try {
+      const testLogger = initLogger({
+        projectName: "test-uuid-ids",
+        projectId: "test-project-id",
+      });
 
-    const span = testLogger.startSpan({ name: "test-span-uuid" });
+      const span = testLogger.startSpan({ name: "test-span-uuid" });
 
-    // Verify the span has UUID format (with dashes)
-    expect(span.spanId.length).toBe(36); // UUID format
-    expect(span.spanId).toContain("-");
-    const uuidRegex =
-      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    expect(span.spanId).toMatch(uuidRegex);
+      // Verify the span has UUID format (with dashes)
+      expect(span.spanId.length).toBe(36); // UUID format
+      expect(span.spanId).toContain("-");
+      const uuidRegex =
+        /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      expect(span.spanId).toMatch(uuidRegex);
 
-    // Export the span
-    const exported = await span.export();
+      // Export the span
+      const exported = await span.export();
 
-    // Parse the exported data with V3
-    const parsed = SpanComponentsV3.fromStr(exported);
+      // Parse the exported data with V3
+      const parsed = SpanComponentsV3.fromStr(exported);
 
-    // Verify the parsed data has the same UUID
-    expect(parsed.data.span_id).toBe(span.spanId);
+      // Verify the parsed data has the same UUID
+      expect(parsed.data.span_id).toBe(span.spanId);
 
-    // V3 uses UUID compression in binary format
-    const rawBytes = base64ToUint8Array(exported);
+      // V3 uses UUID compression in binary format
+      const rawBytes = base64ToUint8Array(exported);
 
-    // Check that version byte is 3
-    expect(rawBytes[0]).toBe(3);
+      // Check that version byte is 3
+      expect(rawBytes[0]).toBe(3);
 
-    span.end();
+      span.end();
+    } finally {
+      if (prevLegacy === undefined) {
+        delete process.env.BRAINTRUST_LEGACY_IDS;
+      } else {
+        process.env.BRAINTRUST_LEGACY_IDS = prevLegacy;
+      }
+      _exportsForTestingOnly.resetIdGenStateForTests();
+    }
   });
 });

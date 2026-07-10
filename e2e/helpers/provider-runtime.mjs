@@ -75,11 +75,43 @@ export async function runTracedScenario(options) {
 }
 
 export async function getInstalledPackageVersion(importMetaUrl, packageName) {
-  let currentDir = path.dirname(
-    require.resolve(packageName, {
-      paths: [path.dirname(fileURLToPath(importMetaUrl))],
-    }),
-  );
+  let currentDir;
+
+  try {
+    currentDir = path.dirname(
+      require.resolve(packageName, {
+        paths: [path.dirname(fileURLToPath(importMetaUrl))],
+      }),
+    );
+  } catch {
+    currentDir = path.dirname(fileURLToPath(importMetaUrl));
+
+    while (true) {
+      const manifestPath = path.join(
+        currentDir,
+        "node_modules",
+        ...packageName.split("/"),
+        "package.json",
+      );
+
+      try {
+        const manifest = JSON.parse(await fs.readFile(manifestPath, "utf8"));
+        if (manifest && typeof manifest.version === "string") {
+          return manifest.version;
+        }
+      } catch {
+        // Keep walking upward until we find the package root.
+      }
+
+      const parentDir = path.dirname(currentDir);
+      if (parentDir === currentDir) {
+        break;
+      }
+      currentDir = parentDir;
+    }
+
+    throw new Error(`Could not resolve installed version for ${packageName}`);
+  }
 
   while (true) {
     const manifestPath = path.join(currentDir, "package.json");

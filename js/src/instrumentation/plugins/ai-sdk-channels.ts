@@ -140,6 +140,15 @@ export const aiSDKChannels = defineChannels("ai", {
     channelName: "ToolLoopAgent.stream",
     kind: "async",
   }),
+  workflowAgentStream: channel<
+    [AISDKCallParams],
+    AISDKStreamResult,
+    AISDKChannelContext,
+    unknown
+  >({
+    channelName: "WorkflowAgent.stream",
+    kind: "async",
+  }),
   v7CreateTelemetryDispatcher: channel<
     [AISDKV7CreateTelemetryDispatcherArgs],
     AISDKV7TelemetryDispatcher

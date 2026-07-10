@@ -1,4 +1,4 @@
-import { vi, expect, test, describe, beforeEach, afterEach } from "vitest";
+import { expect, test, describe } from "vitest";
 import {
   SpanComponentsV4,
   SpanComponentsV4Data,

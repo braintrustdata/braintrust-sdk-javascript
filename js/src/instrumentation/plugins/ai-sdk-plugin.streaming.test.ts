@@ -13,11 +13,12 @@ import { configureNode } from "../../node/config";
 import {
   _exportsForTestingOnly,
   initLogger,
-  Logger,
   TestBackgroundLogger,
 } from "../../logger";
-import { wrapAISDK } from "../../wrappers/ai-sdk";
+import { wrapAISDK, wrapAgentClass } from "../../wrappers/ai-sdk";
+import { workflowAgentWrapperSpanCountForTesting } from "../../wrappers/ai-sdk/workflow-agent-context";
 import { aiSDKChannels } from "./ai-sdk-channels";
+import { AISDKPlugin } from "./ai-sdk-plugin";
 
 try {
   configureNode();
@@ -28,7 +29,6 @@ const sleep = (ms: number) =>
 
 describe("AI SDK streaming instrumentation", () => {
   let backgroundLogger: TestBackgroundLogger;
-  let _logger: Logger<false>;
 
   beforeAll(async () => {
     await _exportsForTestingOnly.simulateLoginForTests();
@@ -36,7 +36,7 @@ describe("AI SDK streaming instrumentation", () => {
 
   beforeEach(() => {
     backgroundLogger = _exportsForTestingOnly.useTestBackgroundLogger();
-    _logger = initLogger({
+    initLogger({
       projectName: "ai-sdk-plugin.streaming.test.ts",
       projectId: "test-project-id",
     });
@@ -327,6 +327,459 @@ describe("AI SDK streaming instrumentation", () => {
     expect(doStreamSpan?.output?.text).toBe("DELAYED");
   });
 
+  test("wrapAISDK and wrapAgentClass instrument WorkflowAgent.stream", async () => {
+    expect(await backgroundLogger.drain()).toHaveLength(0);
+    expect(workflowAgentWrapperSpanCountForTesting()).toBe(0);
+
+    class WorkflowAgent {
+      #_name: string;
+
+      constructor(options: { name: string }) {
+        this.#_name = options.name;
+      }
+
+      getName() {
+        return this.#_name;
+      }
+
+      async stream(params: any) {
+        return {
+          messages: params.messages,
+          prompt: params.prompt,
+          steps: [],
+          text: `Streamed by ${this.#_name}`,
+        };
+      }
+    }
+
+    const wrappedWorkflow = wrapAISDK({ WorkflowAgent });
+    const namespaceAgent = new wrappedWorkflow.WorkflowAgent({
+      name: "NamespaceWorkflowAgent",
+    });
+
+    expect(namespaceAgent.getName()).toBe("NamespaceWorkflowAgent");
+    await namespaceAgent.stream({
+      headers: { authorization: "secret" },
+      maxOutputTokens: 12,
+      messages: [{ role: "user", content: "Hello" }],
+      stopWhen: () => true,
+    });
+    expect(workflowAgentWrapperSpanCountForTesting()).toBe(0);
+
+    const WrappedWorkflowAgent = wrapAgentClass(WorkflowAgent);
+    const directlyWrappedAgent = new WrappedWorkflowAgent({
+      name: "DirectWorkflowAgent",
+    });
+
+    expect(directlyWrappedAgent.getName()).toBe("DirectWorkflowAgent");
+    await directlyWrappedAgent.stream({
+      headers: { authorization: "secret" },
+      maxOutputTokens: 12,
+      prompt: "Hello again",
+      stopWhen: () => true,
+      system: "You are terse.",
+    });
+    expect(workflowAgentWrapperSpanCountForTesting()).toBe(0);
+
+    const spans = (await backgroundLogger.drain()) as any[];
+    const workflowSpans = spans.filter(
+      (span) => span.span_attributes?.name === "WorkflowAgent.stream",
+    );
+
+    expect(workflowSpans).toHaveLength(2);
+    expect(
+      workflowSpans.find((span) => Array.isArray(span.input?.messages))?.input,
+    ).toMatchObject({
+      messages: [{ role: "user", content: "Hello" }],
+    });
+    expect(
+      workflowSpans.find((span) => span.input?.prompt === "Hello again")?.input,
+    ).toMatchObject({
+      prompt: "Hello again",
+      system: "You are terse.",
+    });
+    for (const span of workflowSpans) {
+      expect(span.span_attributes).toMatchObject({
+        type: "function",
+        name: "WorkflowAgent.stream",
+      });
+      expect(span.input).not.toHaveProperty("headers");
+      expect(span.input).not.toHaveProperty("maxOutputTokens");
+      expect(span.input).not.toHaveProperty("stopWhen");
+      expect(span.metadata).toMatchObject({
+        options: {
+          maxOutputTokens: 12,
+          stopWhen: "[Function]",
+        },
+      });
+      expect(span.metadata.options).not.toHaveProperty("headers");
+      expect(span.output).toBeDefined();
+    }
+  });
+
+  test("wrapAISDK unregisters WorkflowAgent spans when stream creation fails", async () => {
+    expect(await backgroundLogger.drain()).toHaveLength(0);
+    expect(workflowAgentWrapperSpanCountForTesting()).toBe(0);
+
+    class WorkflowAgent {
+      async stream(_params?: any) {
+        throw new Error("workflow stream failed");
+      }
+    }
+
+    const wrappedWorkflow = wrapAISDK({ WorkflowAgent });
+    const agent = new wrappedWorkflow.WorkflowAgent();
+
+    await expect(
+      agent.stream({
+        messages: [{ role: "user", content: "Hello" }],
+      }),
+    ).rejects.toThrow("workflow stream failed");
+
+    expect(workflowAgentWrapperSpanCountForTesting()).toBe(0);
+  });
+
+  test("wrapAISDK unregisters WorkflowAgent spans when textStream is cancelled early", async () => {
+    expect(await backgroundLogger.drain()).toHaveLength(0);
+    expect(workflowAgentWrapperSpanCountForTesting()).toBe(0);
+
+    class WorkflowAgent {
+      async stream(params: any) {
+        return {
+          messages: params.messages,
+          steps: [],
+          baseStream: new ReadableStream({
+            start(controller) {
+              controller.enqueue({ type: "text-delta", delta: "first" });
+            },
+          }),
+          textStream: (async function* () {
+            yield "first";
+            yield "second";
+          })(),
+        };
+      }
+    }
+
+    const wrappedWorkflow = wrapAISDK({ WorkflowAgent });
+    const agent = new wrappedWorkflow.WorkflowAgent();
+    const result = await agent.stream({
+      messages: [{ role: "user", content: "Hello" }],
+    });
+
+    let text = "";
+    for await (const chunk of result.textStream) {
+      text += chunk;
+      break;
+    }
+
+    expect(text).toBe("first");
+    expect(workflowAgentWrapperSpanCountForTesting()).toBe(0);
+
+    const spans = (await backgroundLogger.drain()) as any[];
+    expect(
+      spans.find(
+        (span) => span.span_attributes?.name === "WorkflowAgent.stream",
+      ),
+    ).toBeDefined();
+  });
+
+  test("wrapAISDK unregisters WorkflowAgent spans when baseStream is cancelled", async () => {
+    expect(await backgroundLogger.drain()).toHaveLength(0);
+    expect(workflowAgentWrapperSpanCountForTesting()).toBe(0);
+
+    let cancelReason: unknown;
+    class WorkflowAgent {
+      async stream(params: any) {
+        return {
+          messages: params.messages,
+          steps: [],
+          baseStream: new ReadableStream({
+            start(controller) {
+              controller.enqueue({ type: "text-delta", delta: "first" });
+            },
+            cancel(reason) {
+              cancelReason = reason;
+            },
+          }),
+        };
+      }
+    }
+
+    const wrappedWorkflow = wrapAISDK({ WorkflowAgent });
+    const agent = new wrappedWorkflow.WorkflowAgent();
+    const result = await agent.stream({
+      messages: [{ role: "user", content: "Hello" }],
+    });
+
+    const reader = result.baseStream.getReader();
+    const first = await reader.read();
+    expect(first.done).toBe(false);
+    await reader.cancel("done early");
+
+    expect(cancelReason).toBe("done early");
+    expect(workflowAgentWrapperSpanCountForTesting()).toBe(0);
+
+    const spans = (await backgroundLogger.drain()) as any[];
+    expect(
+      spans.find(
+        (span) => span.span_attributes?.name === "WorkflowAgent.stream",
+      ),
+    ).toBeDefined();
+  });
+
+  test("wrapAISDK records WorkflowAgent instance tool spans", async () => {
+    expect(await backgroundLogger.drain()).toHaveLength(0);
+
+    class WorkflowAgent {
+      model: any;
+      tools: any;
+
+      constructor(options: { model: any; tools: any }) {
+        this.model = options.model;
+        this.tools = options.tools;
+      }
+
+      async stream(params: any) {
+        await this.model.doGenerate({
+          headers: { authorization: "secret" },
+          maxOutputTokens: 8,
+          messages: params.messages,
+          temperature: 0,
+        });
+        const output = await this.tools.get_weather.execute({
+          location: "Vienna, Austria",
+        });
+        return {
+          messages: params.messages,
+          steps: [
+            {
+              toolCalls: [
+                {
+                  toolCallId: "tool-1",
+                  toolName: "get_weather",
+                  input: { location: "Vienna, Austria" },
+                },
+              ],
+              toolResults: [
+                {
+                  toolCallId: "tool-1",
+                  toolName: "get_weather",
+                  output,
+                },
+              ],
+            },
+          ],
+          toolCalls: [
+            {
+              toolCallId: "tool-1",
+              toolName: "get_weather",
+              input: { location: "Vienna, Austria" },
+            },
+          ],
+          toolResults: [
+            {
+              toolCallId: "tool-1",
+              toolName: "get_weather",
+              output,
+            },
+          ],
+        };
+      }
+    }
+
+    const wrappedWorkflow = wrapAISDK({ WorkflowAgent });
+    const agent = new wrappedWorkflow.WorkflowAgent({
+      model: {
+        modelId: "mock-workflow-model",
+        provider: "mock-provider",
+        doGenerate: async () => ({
+          text: "Calling get_weather.",
+          usage: {
+            inputTokens: 4,
+            outputTokens: 3,
+            totalTokens: 7,
+          },
+        }),
+      },
+      tools: {
+        get_weather: {
+          execute: async ({ location }: { location: string }) => ({
+            condition: "sunny",
+            location,
+            temperatureC: 21,
+          }),
+        },
+      },
+    });
+
+    await agent.stream({
+      headers: { authorization: "secret" },
+      maxOutputTokens: 12,
+      messages: [{ role: "user", content: "Use get_weather." }],
+    });
+
+    const spans = (await backgroundLogger.drain()) as any[];
+    const workflowSpan = spans.find(
+      (span) => span.span_attributes?.name === "WorkflowAgent.stream",
+    );
+    const modelSpan = spans.find(
+      (span) => span.span_attributes?.name === "doGenerate",
+    );
+    const toolSpan = spans.find(
+      (span) => span.span_attributes?.name === "get_weather",
+    );
+
+    expect(workflowSpan).toBeDefined();
+    expect(modelSpan).toMatchObject({
+      input: { messages: [{ role: "user", content: "Use get_weather." }] },
+      metadata: {
+        options: {
+          maxOutputTokens: 8,
+          temperature: 0,
+        },
+      },
+      output: { text: "Calling get_weather." },
+      span_attributes: { name: "doGenerate", type: "llm" },
+      span_parents: [workflowSpan?.span_id],
+    });
+    expect(workflowSpan.input).toEqual({
+      messages: [{ role: "user", content: "Use get_weather." }],
+    });
+    expect(workflowSpan.metadata.options).toMatchObject({
+      maxOutputTokens: 12,
+    });
+    expect(workflowSpan.input).not.toHaveProperty("headers");
+    expect(workflowSpan.metadata.options).not.toHaveProperty("headers");
+    expect(modelSpan.input).not.toHaveProperty("headers");
+    expect(modelSpan.metadata.options).not.toHaveProperty("headers");
+    expect(toolSpan).toMatchObject({
+      input: { location: "Vienna, Austria" },
+      output: {
+        condition: "sunny",
+        location: "Vienna, Austria",
+        temperatureC: 21,
+      },
+      span_attributes: { name: "get_weather", type: "tool" },
+      span_parents: [workflowSpan?.span_id],
+    });
+  });
+
+  test("wrapAISDK parents concurrent WorkflowAgent child spans to the active stream", async () => {
+    expect(await backgroundLogger.drain()).toHaveLength(0);
+
+    let releaseA!: () => void;
+    let releaseB!: () => void;
+    const gateA = new Promise<void>((resolve) => {
+      releaseA = resolve;
+    });
+    const gateB = new Promise<void>((resolve) => {
+      releaseB = resolve;
+    });
+
+    class WorkflowAgent {
+      model: any;
+      tools: any;
+
+      constructor(options: { model: any; tools: any }) {
+        this.model = options.model;
+        this.tools = options.tools;
+      }
+
+      async stream(params: any) {
+        await params.beforeTool;
+        const generated = await this.model.doGenerate({
+          messages: params.messages,
+        });
+        const weather = await this.tools.get_weather.execute({
+          run: params.run,
+        });
+        return {
+          messages: params.messages,
+          text: `${generated.text} ${weather.run}`,
+        };
+      }
+    }
+
+    const wrappedWorkflow = wrapAISDK({ WorkflowAgent });
+    const agent = new wrappedWorkflow.WorkflowAgent({
+      model: {
+        modelId: "mock-workflow-model",
+        provider: "mock-provider",
+        doGenerate: async ({ messages }: any) => ({
+          text: messages[0].content,
+          usage: {
+            inputTokens: 4,
+            outputTokens: 2,
+            totalTokens: 6,
+          },
+        }),
+      },
+      tools: {
+        get_weather: {
+          execute: async ({ run }: { run: string }) => {
+            if (run === "B") {
+              await sleep(20);
+            }
+            return { run };
+          },
+        },
+      },
+    });
+
+    const runA = agent.stream({
+      beforeTool: gateA,
+      messages: [{ role: "user", content: "Run A" }],
+      run: "A",
+    });
+    const runB = agent.stream({
+      beforeTool: gateB,
+      messages: [{ role: "user", content: "Run B" }],
+      run: "B",
+    });
+
+    releaseA();
+    releaseB();
+    await Promise.all([runA, runB]);
+
+    const spans = (await backgroundLogger.drain()) as any[];
+    const workflowA = spans.find(
+      (span) =>
+        span.span_attributes?.name === "WorkflowAgent.stream" &&
+        JSON.stringify(span.input).includes("Run A"),
+    );
+    const workflowB = spans.find(
+      (span) =>
+        span.span_attributes?.name === "WorkflowAgent.stream" &&
+        JSON.stringify(span.input).includes("Run B"),
+    );
+    const modelA = spans.find(
+      (span) =>
+        span.span_attributes?.name === "doGenerate" &&
+        JSON.stringify(span.input).includes("Run A"),
+    );
+    const modelB = spans.find(
+      (span) =>
+        span.span_attributes?.name === "doGenerate" &&
+        JSON.stringify(span.input).includes("Run B"),
+    );
+    const toolA = spans.find(
+      (span) =>
+        span.span_attributes?.name === "get_weather" && span.input?.run === "A",
+    );
+    const toolB = spans.find(
+      (span) =>
+        span.span_attributes?.name === "get_weather" && span.input?.run === "B",
+    );
+
+    expect(workflowA).toBeDefined();
+    expect(workflowB).toBeDefined();
+    expect(modelA?.span_parents).toEqual([workflowA?.span_id]);
+    expect(modelB?.span_parents).toEqual([workflowB?.span_id]);
+    expect(toolA?.span_parents).toEqual([workflowA?.span_id]);
+    expect(toolB?.span_parents).toEqual([workflowB?.span_id]);
+  });
+
   test("streamText time_to_first_token counts streamed tool input arguments", async () => {
     expect(await backgroundLogger.drain()).toHaveLength(0);
 
@@ -387,5 +840,148 @@ describe("AI SDK streaming instrumentation", () => {
     expect(streamTextSpan?.metrics?.time_to_first_token).toBeGreaterThanOrEqual(
       contentDelayMs / 1000 / 2,
     );
+  });
+
+  test("baseStream patch preserves derived stream getters", async () => {
+    expect(await backgroundLogger.drain()).toHaveLength(0);
+
+    const plugin = new AISDKPlugin();
+    plugin.enable();
+
+    try {
+      let chunkSent = false;
+      const result = (await aiSDKChannels.streamText.tracePromise(
+        async () => {
+          const resultRecord = {
+            baseStream: new ReadableStream({
+              pull(controller) {
+                if (chunkSent) {
+                  controller.close();
+                  return;
+                }
+
+                chunkSent = true;
+                controller.enqueue({
+                  type: "text-delta",
+                  id: "text-1",
+                  delta: "fresh",
+                });
+              },
+            }),
+            text: Promise.resolve("fresh"),
+          } as any;
+
+          Object.defineProperty(resultRecord, "textStream", {
+            configurable: true,
+            enumerable: true,
+            get() {
+              const [textBranch, baseBranch] = this.baseStream.tee();
+              this.baseStream = baseBranch;
+              return textBranch.pipeThrough(
+                new TransformStream({
+                  transform(chunk: any, controller) {
+                    if (chunk.type === "text-delta") {
+                      controller.enqueue(chunk.delta);
+                    }
+                  },
+                }),
+              );
+            },
+          });
+
+          return resultRecord;
+        },
+        {
+          arguments: [
+            {
+              model: "mock-stream-model",
+              prompt: "Reply with fresh.",
+            },
+          ],
+        } as any,
+      )) as any;
+
+      expect(
+        Object.getOwnPropertyDescriptor(result, "textStream")?.get,
+      ).toEqual(expect.any(Function));
+
+      let firstText = "";
+      for await (const chunk of result.textStream) {
+        firstText += chunk;
+      }
+
+      let secondText = "";
+      for await (const chunk of result.textStream) {
+        secondText += chunk;
+      }
+
+      expect(firstText).toBe("fresh");
+      expect(secondText).toBe("fresh");
+    } finally {
+      plugin.disable();
+    }
+  });
+
+  test("async iterable stream accessors preserve ReadableStream methods", async () => {
+    expect(await backgroundLogger.drain()).toHaveLength(0);
+
+    const plugin = new AISDKPlugin();
+    plugin.enable();
+
+    try {
+      const result = (await aiSDKChannels.streamText.tracePromise(
+        async () => {
+          const resultRecord = {
+            stream: new ReadableStream({
+              start(controller) {
+                controller.enqueue("v7");
+                controller.close();
+              },
+            }),
+            text: Promise.resolve("v7"),
+          } as any;
+
+          Object.defineProperty(resultRecord, "textStream", {
+            configurable: true,
+            enumerable: true,
+            get() {
+              return this.stream.pipeThrough(
+                new TransformStream({
+                  transform(chunk: string, controller) {
+                    controller.enqueue(chunk.toUpperCase());
+                  },
+                }),
+              );
+            },
+          });
+
+          return resultRecord;
+        },
+        {
+          arguments: [
+            {
+              model: "mock-v7-stream-model",
+              prompt: "Reply with v7.",
+            },
+          ],
+        } as any,
+      )) as any;
+
+      expect(result.stream.pipeThrough).toEqual(expect.any(Function));
+      expect(result.stream.getReader).toEqual(expect.any(Function));
+
+      const textStream = result.textStream;
+      expect(textStream.pipeThrough).toEqual(expect.any(Function));
+      expect(textStream.getReader).toEqual(expect.any(Function));
+
+      const reader = textStream.getReader();
+      const first = await reader.read();
+      const second = await reader.read();
+
+      expect(first).toEqual({ done: false, value: "V7" });
+      expect(second).toEqual({ done: true, value: undefined });
+    } finally {
+      plugin.disable();
+    }
   });
 });

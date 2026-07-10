@@ -176,7 +176,7 @@ describe("bedrock runtime wrapper", () => {
         modelId: "us.amazon.nova-lite-v1:0",
       }),
     );
-    for await (const _chunk of response.stream) {
+    for await (const _chunk of (response as any).stream) {
       // Consume the stream so chunk aggregation runs.
     }
 

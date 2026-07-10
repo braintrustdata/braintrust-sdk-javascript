@@ -6,8 +6,6 @@ export type LangChainSerialized = {
   name?: string;
 };
 
-export type LangChainRunnableConfig = Record<string, unknown>;
-
 export type LangChainCallbackManager = {
   handlers?: unknown[];
   addHandler?: (handler: unknown, inherit?: boolean) => void;

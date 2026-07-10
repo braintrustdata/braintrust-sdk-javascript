@@ -257,7 +257,11 @@ export function assertLangGraphAutoInstrumentation(options: {
     spanTree,
     payloadSummary: normalizeForSnapshot(
       normalizeLangGraphPayloadRows(
-        payloadRowsForRootSpan(options.payloads, root?.span.id),
+        payloadRowsForRootSpan(
+          options.payloads,
+          root?.span.id,
+          root?.span.rootId,
+        ),
       ) as Json,
     ),
   };

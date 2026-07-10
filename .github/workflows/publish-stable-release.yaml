@@ -86,8 +86,7 @@ jobs:
         with:
           fetch-depth: 0
           ref: ${{ needs.validate-release-sha.outputs.release_sha }}
-      - name: Resolve release commits
-        id: release
+      - name: Validate release checkout
         env:
           RELEASE_SHA: ${{ needs.validate-release-sha.outputs.release_sha }}
         run: |
@@ -98,14 +97,6 @@ jobs:
             echo "Checked out $checked_out_sha, expected $RELEASE_SHA." >&2
             exit 1
           fi
-
-          first_parent="$(git rev-parse --verify HEAD^1 2>/dev/null || true)"
-          if [ -z "$first_parent" ]; then
-            echo "release_sha must identify a commit with at least one parent." >&2
-            exit 1
-          fi
-
-          echo "since_sha=$first_parent" >> "$GITHUB_OUTPUT"
       - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
         with:
@@ -118,7 +109,7 @@ jobs:
         run: node scripts/release/validate-publishable-packages.mjs
       - name: Detect stable publish work
         id: detect
-        run: node scripts/release/release-manifest.mjs --mode stable --since "${{ steps.release.outputs.since_sha }}" --output .release-manifest.json
+        run: node scripts/release/release-manifest.mjs --mode stable --output .release-manifest.json
       - name: Build packages
         if: steps.detect.outputs.needs_publish == 'true'
         run: pnpm run build

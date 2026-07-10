@@ -59,7 +59,7 @@
             "status": "ok"
           },
           "project_id": "<project_id>",
-          "root_span_id": "<span:3>",
+          "root_span_id": "<span:4>",
           "span_attributes": {
             "exec_counter": 0,
             "name": "trace-primitives-root",
@@ -74,7 +74,7 @@
             "caller_lineno": 0
           },
           "created": "<timestamp>",
-          "id": "<span:5>",
+          "id": "<span:6>",
           "input": {
             "step": "child",
             "testRunId": "<run:1>"
@@ -92,12 +92,12 @@
             "ok": true
           },
           "project_id": "<project_id>",
-          "root_span_id": "<span:3>",
+          "root_span_id": "<span:4>",
           "span_attributes": {
             "exec_counter": 1,
             "name": "basic-child"
           },
-          "span_id": "<span:6>",
+          "span_id": "<span:7>",
           "span_parents": [
             "<span:3>"
           ]
@@ -110,7 +110,7 @@
           },
           "created": "<timestamp>",
           "error": "basic boom\n\nError: basic boom\n    at logger.traced.name (<repo>/e2e/scenarios/trace-primitives-basic/scenario.ts:0:0)\n    at <repo>/js/dist/index.mjs:0:0\n    at AsyncLocalStorage.run (node:<internal>:0:0)\n    at BraintrustContextManager.runInContext (<repo>/js/dist/index.mjs:0:0)\n    at withCurrent (<repo>/js/dist/index.mjs:0:0)\n    at <repo>/js/dist/index.mjs:0:0\n    at runCatchFinally (<repo>/js/dist/index.mjs:0:0)\n    at Logger.traced (<repo>/js/dist/index.mjs:0:0)\n    at main (<repo>/e2e/scenarios/trace-primitives-basic/scenario.ts:0:0)\n    at runMain (<repo>/e2e/helpers/scenario-runtime.ts:0:0)",
-          "id": "<span:7>",
+          "id": "<span:8>",
           "log_id": "g",
           "metadata": {
             "kind": "basic-error",
@@ -121,12 +121,12 @@
             "start": 0
           },
           "project_id": "<project_id>",
-          "root_span_id": "<span:3>",
+          "root_span_id": "<span:4>",
           "span_attributes": {
             "exec_counter": 2,
             "name": "basic-error"
           },
-          "span_id": "<span:8>",
+          "span_id": "<span:9>",
           "span_parents": [
             "<span:3>"
           ]
@@ -164,7 +164,7 @@
             "status": "ok"
           },
           "project_id": "<project_id>",
-          "root_span_id": "<span:3>",
+          "root_span_id": "<span:4>",
           "span_attributes": {
             "exec_counter": 0,
             "name": "trace-primitives-root",
@@ -179,7 +179,7 @@
             "caller_lineno": 0
           },
           "created": "<timestamp>",
-          "id": "<span:5>",
+          "id": "<span:6>",
           "input": {
             "step": "child",
             "testRunId": "<run:1>"
@@ -197,12 +197,12 @@
             "ok": true
           },
           "project_id": "<project_id>",
-          "root_span_id": "<span:3>",
+          "root_span_id": "<span:4>",
           "span_attributes": {
             "exec_counter": 1,
             "name": "basic-child"
           },
-          "span_id": "<span:6>",
+          "span_id": "<span:7>",
           "span_parents": [
             "<span:3>"
           ]
@@ -215,7 +215,7 @@
           },
           "created": "<timestamp>",
           "error": "basic boom\n\nError: basic boom\n    at logger.traced.name (<repo>/e2e/scenarios/trace-primitives-basic/scenario.ts:0:0)\n    at <repo>/js/dist/index.mjs:0:0\n    at AsyncLocalStorage.run (node:<internal>:0:0)\n    at BraintrustContextManager.runInContext (<repo>/js/dist/index.mjs:0:0)\n    at withCurrent (<repo>/js/dist/index.mjs:0:0)\n    at <repo>/js/dist/index.mjs:0:0\n    at runCatchFinally (<repo>/js/dist/index.mjs:0:0)\n    at Logger.traced (<repo>/js/dist/index.mjs:0:0)\n    at main (<repo>/e2e/scenarios/trace-primitives-basic/scenario.ts:0:0)\n    at runMain (<repo>/e2e/helpers/scenario-runtime.ts:0:0)",
-          "id": "<span:7>",
+          "id": "<span:8>",
           "log_id": "g",
           "metadata": {
             "kind": "basic-error",
@@ -226,12 +226,12 @@
             "start": 0
           },
           "project_id": "<project_id>",
-          "root_span_id": "<span:3>",
+          "root_span_id": "<span:4>",
           "span_attributes": {
             "exec_counter": 2,
             "name": "basic-error"
           },
-          "span_id": "<span:8>",
+          "span_id": "<span:9>",
           "span_parents": [
             "<span:3>"
           ]

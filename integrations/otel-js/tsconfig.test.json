@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "declaration": false,
+    "noEmit": true,
+    "types": ["node"],
+    "baseUrl": ".",
+    "paths": {
+      "@braintrust/otel": ["src/index.ts"]
+    }
+  },
+  "include": ["src/**/*.test.ts", "tests/**/*.ts"],
+  "exclude": ["node_modules/**", "**/dist/**", "otel-v1/**", "otel-v2/**"]
+}

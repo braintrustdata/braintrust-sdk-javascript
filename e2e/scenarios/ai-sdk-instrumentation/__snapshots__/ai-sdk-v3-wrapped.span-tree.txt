@@ -32,11 +32,8 @@ span_tree:
     │           }
     │         },
     │         "finishReason": "stop",
-    │         "rawResponse": {
-    │           "headers": "<omitted>"
-    │         },
+    │         "rawResponse": {},
     │         "response": {
-    │           "headers": "<omitted>",
     │           "messages": [
     │             {
     │               "content": [
@@ -62,7 +59,6 @@ span_tree:
     │             "finishReason": "stop",
     │             "isContinued": false,
     │             "response": {
-    │               "headers": "<omitted>",
     │               "messages": [
     │                 {
     │                   "content": [
@@ -135,9 +131,7 @@ span_tree:
     │                 "reasoningTokens": 0
     │               }
     │             },
-    │             "rawResponse": {
-    │               "headers": "<omitted>"
-    │             },
+    │             "rawResponse": {},
     │             "response": {
     │               "modelId": "gpt-4o-mini-2024-07-18",
     │               "timestamp": "<timestamp>"
@@ -185,9 +179,7 @@ span_tree:
     │       }
     │       output: {
     │         "finishReason": "stop",
-    │         "rawResponse": {
-    │           "headers": "<omitted>"
-    │         },
+    │         "rawResponse": {},
     │         "text": "One, two, three.",
     │         "warnings": []
     │       }
@@ -328,11 +320,8 @@ span_tree:
     │           }
     │         },
     │         "finishReason": "tool-calls",
-    │         "rawResponse": {
-    │           "headers": "<omitted>"
-    │         },
+    │         "rawResponse": {},
     │         "response": {
-    │           "headers": "<omitted>",
     │           "messages": [
     │             {
     │               "content": [
@@ -375,7 +364,6 @@ span_tree:
     │             "finishReason": "tool-calls",
     │             "isContinued": false,
     │             "response": {
-    │               "headers": "<omitted>",
     │               "messages": [
     │                 {
     │                   "content": [
@@ -544,9 +532,7 @@ span_tree:
     │       │         "reasoningTokens": 0
     │       │       }
     │       │     },
-    │       │     "rawResponse": {
-    │       │       "headers": "<omitted>"
-    │       │     },
+    │       │     "rawResponse": {},
     │       │     "response": {
     │       │       "modelId": "gpt-4o-mini-2024-07-18",
     │       │       "timestamp": "<timestamp>"
@@ -626,11 +612,8 @@ span_tree:
     │         "object": {
     │           "city": "Paris"
     │         },
-    │         "rawResponse": {
-    │           "headers": "<omitted>"
-    │         },
+    │         "rawResponse": {},
     │         "response": {
-    │           "headers": "<omitted>",
     │           "modelId": "gpt-4o-mini-2024-07-18",
     │           "timestamp": "<timestamp>"
     │         },
@@ -695,9 +678,7 @@ span_tree:
     │                 "reasoningTokens": 0
     │               }
     │             },
-    │             "rawResponse": {
-    │               "headers": "<omitted>"
-    │             },
+    │             "rawResponse": {},
     │             "response": {
     │               "modelId": "gpt-4o-mini-2024-07-18",
     │               "timestamp": "<timestamp>"
@@ -766,9 +747,7 @@ span_tree:
               "object": {
                 "city": "Paris"
               },
-              "rawResponse": {
-                "headers": "<omitted>"
-              },
+              "rawResponse": {},
               "warnings": []
             }
             metadata: {

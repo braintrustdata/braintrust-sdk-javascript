@@ -379,7 +379,7 @@ describe("PromptCache", () => {
       // Modify the prompt stored by ID
       const modifiedPrompt = new Prompt(
         {
-          ...testPrompt.metadata,
+          ...(testPrompt as any).metadata,
           name: "modified-prompt",
         },
         {},

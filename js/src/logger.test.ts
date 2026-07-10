@@ -17,6 +17,7 @@ import {
   updateSpan,
   Attachment,
   deepCopyEvent,
+  ReadonlyExperiment,
   renderMessageImpl,
 } from "./logger";
 
@@ -25,7 +26,8 @@ import { type GitMetadataSettingsType as GitMetadataSettings } from "./generated
 import { writeFile, unlink } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { SpanComponentsV3 } from "../util/span_identifier_v3";
+import { SpanComponentsV4 } from "../util/span_identifier_v4";
+import { SpanCache } from "./span-cache";
 
 configureNode();
 
@@ -526,7 +528,7 @@ test.each(initGitMetadataSettingsCases)(
 
     try {
       state.gitMetadataSettings = orgSettings;
-      vi.spyOn(state, "login").mockResolvedValue(state);
+      vi.spyOn(state, "login").mockResolvedValue(state as any);
       const getRepoInfo = vi
         .spyOn(_exportsForTestingOnly.isomorph, "getRepoInfo")
         .mockResolvedValue(undefined);
@@ -569,7 +571,7 @@ test("init forwards dataset _internal_btql to experiment register", async () => 
   const state = await _exportsForTestingOnly.simulateLoginForTests();
 
   try {
-    vi.spyOn(state, "login").mockResolvedValue(state);
+    vi.spyOn(state, "login").mockResolvedValue(state as any);
     mockInitGitMetadata();
 
     const datasetFilter = {
@@ -649,7 +651,7 @@ test("dataset fetch forwards _internal_btql filter arrays to btql", async () => 
   const state = await _exportsForTestingOnly.simulateLoginForTests();
 
   try {
-    vi.spyOn(state, "login").mockResolvedValue(state);
+    vi.spyOn(state, "login").mockResolvedValue(state as any);
 
     const datasetFilter = {
       filter: [
@@ -721,7 +723,7 @@ test("initDataset applies bt eval internal BTQL runtime value to eval data", asy
   globalThis.__bt_eval_internal_btql = { sample: 5 };
 
   try {
-    vi.spyOn(state, "login").mockResolvedValue(state);
+    vi.spyOn(state, "login").mockResolvedValue(state as any);
     vi.spyOn(state.appConn(), "post_json").mockResolvedValue({
       project: {
         id: "00000000-0000-0000-0000-000000000001",
@@ -758,7 +760,7 @@ test("legacy initDataset applies bt eval internal BTQL runtime value", async () 
   globalThis.__bt_eval_internal_btql = { sample: 5 };
 
   try {
-    vi.spyOn(state, "login").mockResolvedValue(state);
+    vi.spyOn(state, "login").mockResolvedValue(state as any);
     vi.spyOn(state.appConn(), "post_json").mockResolvedValue({
       project: {
         id: "00000000-0000-0000-0000-000000000001",
@@ -797,7 +799,7 @@ test("initDataset merges bt eval internal BTQL with existing _internal_btql", as
   };
 
   try {
-    vi.spyOn(state, "login").mockResolvedValue(state);
+    vi.spyOn(state, "login").mockResolvedValue(state as any);
     vi.spyOn(state.appConn(), "post_json").mockResolvedValue({
       project: {
         id: "00000000-0000-0000-0000-000000000001",
@@ -842,7 +844,7 @@ test("initDataset preserves explicit _internal_btql sample", async () => {
   };
 
   try {
-    vi.spyOn(state, "login").mockResolvedValue(state);
+    vi.spyOn(state, "login").mockResolvedValue(state as any);
     vi.spyOn(state.appConn(), "post_json").mockResolvedValue({
       project: {
         id: "00000000-0000-0000-0000-000000000001",
@@ -885,7 +887,7 @@ test("initDataset keeps eval data unchanged without bt eval internal BTQL runtim
   globalThis.__bt_eval_internal_btql = undefined;
 
   try {
-    vi.spyOn(state, "login").mockResolvedValue(state);
+    vi.spyOn(state, "login").mockResolvedValue(state as any);
     vi.spyOn(state.appConn(), "post_json").mockResolvedValue({
       project: {
         id: "00000000-0000-0000-0000-000000000001",
@@ -919,7 +921,7 @@ test("dataset fetch forwards bt eval internal BTQL runtime value to btql", async
   globalThis.__bt_eval_internal_btql = { sample: 5 };
 
   try {
-    vi.spyOn(state, "login").mockResolvedValue(state);
+    vi.spyOn(state, "login").mockResolvedValue(state as any);
     vi.spyOn(state.appConn(), "post_json").mockResolvedValue({
       project: {
         id: "00000000-0000-0000-0000-000000000001",
@@ -970,7 +972,7 @@ test("dataset fetch forwards bt eval internal BTQL runtime value to btql", async
 
 test("initDataset prefers version over environment in eval data", async () => {
   const state = await _exportsForTestingOnly.simulateLoginForTests();
-  vi.spyOn(state, "login").mockResolvedValue(state);
+  vi.spyOn(state, "login").mockResolvedValue(state as any);
   vi.spyOn(state.appConn(), "post_json").mockResolvedValue({
     project: {
       id: "00000000-0000-0000-0000-000000000001",
@@ -1001,7 +1003,7 @@ test("initDataset prefers version over environment in eval data", async () => {
 
 test("dataset.toEvalData preserves dataset_environment", async () => {
   const state = await _exportsForTestingOnly.simulateLoginForTests();
-  vi.spyOn(state, "login").mockResolvedValue(state);
+  vi.spyOn(state, "login").mockResolvedValue(state as any);
   vi.spyOn(state.apiConn(), "get_json").mockResolvedValue({
     object_version: "123",
   });
@@ -1034,7 +1036,7 @@ test("dataset.toEvalData preserves dataset_environment", async () => {
 
 test("dataset.toEvalData preserves dataset_snapshot_name", async () => {
   const state = await _exportsForTestingOnly.simulateLoginForTests();
-  vi.spyOn(state, "login").mockResolvedValue(state);
+  vi.spyOn(state, "login").mockResolvedValue(state as any);
   const postJson = vi
     .spyOn(state.appConn(), "post_json")
     .mockResolvedValueOnce({
@@ -1127,7 +1129,7 @@ test("experiment.summarize resolves explicit comparison experiment name", async 
 
 test("dataset.version preserves pinned-version fast path", async () => {
   const state = await _exportsForTestingOnly.simulateLoginForTests();
-  const login = vi.spyOn(state, "login").mockResolvedValue(state);
+  const login = vi.spyOn(state, "login").mockResolvedValue(state as any);
   const postJson = vi.spyOn(state.appConn(), "post_json");
 
   const dataset = initDataset({
@@ -1147,7 +1149,7 @@ test("dataset.version preserves pinned-version fast path", async () => {
 
 test("dataset.createSnapshot forwards update when requested", async () => {
   const state = await _exportsForTestingOnly.simulateLoginForTests();
-  vi.spyOn(state, "login").mockResolvedValue(state);
+  vi.spyOn(state, "login").mockResolvedValue(state as any);
   const postJson = vi
     .spyOn(state.appConn(), "post_json")
     .mockResolvedValueOnce({
@@ -1204,7 +1206,7 @@ test("dataset.createSnapshot forwards update when requested", async () => {
 
 test("dataset.getSnapshot looks up snapshots by name", async () => {
   const state = await _exportsForTestingOnly.simulateLoginForTests();
-  vi.spyOn(state, "login").mockResolvedValue(state);
+  vi.spyOn(state, "login").mockResolvedValue(state as any);
   const postJson = vi
     .spyOn(state.appConn(), "post_json")
     .mockResolvedValueOnce({
@@ -1255,7 +1257,7 @@ test("dataset.getSnapshot looks up snapshots by name", async () => {
 
 test("dataset.getSnapshot looks up snapshots by xact id", async () => {
   const state = await _exportsForTestingOnly.simulateLoginForTests();
-  vi.spyOn(state, "login").mockResolvedValue(state);
+  vi.spyOn(state, "login").mockResolvedValue(state as any);
   const postJson = vi
     .spyOn(state.appConn(), "post_json")
     .mockResolvedValueOnce({
@@ -1306,7 +1308,7 @@ test("dataset.getSnapshot looks up snapshots by xact id", async () => {
 
 test("dataset.updateSnapshot patches snapshot metadata by id", async () => {
   const state = await _exportsForTestingOnly.simulateLoginForTests();
-  vi.spyOn(state, "login").mockResolvedValue(state);
+  vi.spyOn(state, "login").mockResolvedValue(state as any);
   const postJson = vi
     .spyOn(state.appConn(), "post_json")
     .mockResolvedValueOnce({
@@ -1357,7 +1359,7 @@ test("dataset.updateSnapshot patches snapshot metadata by id", async () => {
 
 test("dataset.restorePreview posts restore preview request", async () => {
   const state = await _exportsForTestingOnly.simulateLoginForTests();
-  vi.spyOn(state, "login").mockResolvedValue(state);
+  vi.spyOn(state, "login").mockResolvedValue(state as any);
   vi.spyOn(state.appConn(), "post_json").mockResolvedValueOnce({
     project: {
       id: "00000000-0000-0000-0000-000000000001",
@@ -1404,7 +1406,7 @@ test("dataset.restorePreview posts restore preview request", async () => {
 
 test("dataset.restore posts restore request", async () => {
   const state = await _exportsForTestingOnly.simulateLoginForTests();
-  vi.spyOn(state, "login").mockResolvedValue(state);
+  vi.spyOn(state, "login").mockResolvedValue(state as any);
   vi.spyOn(state.appConn(), "post_json").mockResolvedValueOnce({
     project: {
       id: "00000000-0000-0000-0000-000000000001",
@@ -1453,7 +1455,7 @@ test("dataset.restore posts restore request", async () => {
 
 test("init keeps plain dataset refs attached to the experiment", async () => {
   const state = await _exportsForTestingOnly.simulateLoginForTests();
-  vi.spyOn(state, "login").mockResolvedValue(state);
+  vi.spyOn(state, "login").mockResolvedValue(state as any);
   mockInitGitMetadata();
   vi.spyOn(state.appConn(), "post_json").mockResolvedValue({
     project: {
@@ -1489,7 +1491,7 @@ test("init keeps plain dataset refs attached to the experiment", async () => {
 
 test("init resolves dataset version from Dataset instances before experiment registration", async () => {
   const state = await _exportsForTestingOnly.simulateLoginForTests();
-  vi.spyOn(state, "login").mockResolvedValue(state);
+  vi.spyOn(state, "login").mockResolvedValue(state as any);
   mockInitGitMetadata();
   const postJson = vi
     .spyOn(state.appConn(), "post_json")
@@ -1549,7 +1551,7 @@ test("init resolves dataset version from Dataset instances before experiment reg
 
 test("init resolves dataset environment before experiment registration", async () => {
   const state = await _exportsForTestingOnly.simulateLoginForTests();
-  vi.spyOn(state, "login").mockResolvedValue(state);
+  vi.spyOn(state, "login").mockResolvedValue(state as any);
   mockInitGitMetadata();
   const getJson = vi.spyOn(state.apiConn(), "get_json").mockResolvedValue({
     object_version: "123",
@@ -1605,7 +1607,7 @@ test("init resolves dataset environment before experiment registration", async (
 test("init resolves dataset environment without org_name when orgName is unset", async () => {
   const state = await _exportsForTestingOnly.simulateLoginForTests();
   state.orgName = null;
-  vi.spyOn(state, "login").mockResolvedValue(state);
+  vi.spyOn(state, "login").mockResolvedValue(state as any);
   mockInitGitMetadata();
   const getJson = vi.spyOn(state.apiConn(), "get_json").mockResolvedValue({
     object_version: "123",
@@ -1653,7 +1655,7 @@ test("init resolves dataset environment without org_name when orgName is unset",
 
 test("init prefers dataset version over environment before experiment registration", async () => {
   const state = await _exportsForTestingOnly.simulateLoginForTests();
-  vi.spyOn(state, "login").mockResolvedValue(state);
+  vi.spyOn(state, "login").mockResolvedValue(state as any);
   mockInitGitMetadata();
   const getJson = vi.spyOn(state.apiConn(), "get_json");
   const postJson = vi.spyOn(state.appConn(), "post_json").mockResolvedValue({
@@ -1698,7 +1700,7 @@ test("init prefers dataset version over environment before experiment registrati
 
 test("init resolves dataset snapshots before experiment registration", async () => {
   const state = await _exportsForTestingOnly.simulateLoginForTests();
-  vi.spyOn(state, "login").mockResolvedValue(state);
+  vi.spyOn(state, "login").mockResolvedValue(state as any);
   mockInitGitMetadata();
   const postJson = vi
     .spyOn(state.appConn(), "post_json")
@@ -1757,7 +1759,7 @@ test("init resolves dataset snapshots before experiment registration", async () 
 
 test("init surfaces dataset environment lookup errors instead of falling back to latest", async () => {
   const state = await _exportsForTestingOnly.simulateLoginForTests();
-  vi.spyOn(state, "login").mockResolvedValue(state);
+  vi.spyOn(state, "login").mockResolvedValue(state as any);
   mockInitGitMetadata();
   vi.spyOn(state.apiConn(), "get_json").mockRejectedValue(
     new Error("environment lookup failed"),
@@ -1860,7 +1862,7 @@ describe("loader version precedence", () => {
 
   beforeEach(async () => {
     state = await _exportsForTestingOnly.simulateLoginForTests();
-    vi.spyOn(state, "login").mockResolvedValue(state);
+    vi.spyOn(state, "login").mockResolvedValue(state as any);
     getJson = vi.spyOn(state.apiConn(), "get_json");
   });
 
@@ -2273,7 +2275,10 @@ test("startSpan support ids without parent", () => {
   const logger = initLogger({});
   const span = logger.startSpan({ name: "test-span", spanId: "123" });
   expect(span.spanId).toBe("123");
-  expect(span.rootSpanId).toBe("123");
+  // With the default hex (OTEL-compatible) ids, a root span gets a distinct
+  // trace id rather than reusing its span id, so root_span_id !== span_id.
+  expect(span.rootSpanId).not.toBe("123");
+  expect(span.rootSpanId.length).toBe(32); // 16-byte hex trace id
   expect(span.spanParents).toEqual([]);
   span.end();
 });
@@ -2403,7 +2408,7 @@ describe("wrapTraced generator support", () => {
       }
     });
 
-    const results = [];
+    const results: number[] = [];
     for (const value of tracedSyncGen(3)) {
       results.push(value);
     }
@@ -2430,7 +2435,7 @@ describe("wrapTraced generator support", () => {
       throw new Error("Generator failed");
     });
 
-    const results = [];
+    const results: string[] = [];
     expect(() => {
       for (const value of failingGenerator()) {
         results.push(value);
@@ -2460,7 +2465,7 @@ describe("wrapTraced generator support", () => {
       }
     });
 
-    const results = [];
+    const results: number[] = [];
     for await (const value of tracedAsyncGen(3)) {
       results.push(value);
     }
@@ -2488,7 +2493,7 @@ describe("wrapTraced generator support", () => {
       },
     );
 
-    const results = [];
+    const results: number[] = [];
     await expect(async () => {
       for await (const value of failingAsyncGenerator()) {
         results.push(value);
@@ -2755,7 +2760,7 @@ describe("wrapTraced generator support", () => {
         const tasks = [];
         for (let i = 0; i < numLoops; i++) {
           tasks.push(
-            new Promise((resolve) => {
+            new Promise<number>((resolve) => {
               setTimeout(() => resolve(i * 2), 1);
             }),
           );
@@ -2939,6 +2944,81 @@ describe("parent precedence", () => {
     expect(byName.child.root_span_id).toBe(byName.root.root_span_id);
     expect(byName.child.span_parents).toContain(byName.root.span_id);
   });
+
+  test("ReadonlyExperiment.asDataset keeps root rows when trace id differs from span id", async () => {
+    const experiment = Object.create(ReadonlyExperiment.prototype) as any;
+    experiment.fetch = async function* () {
+      yield {
+        root_span_id: "trace-id",
+        span_id: "root-span-id",
+        is_root: true,
+        input: "root-input",
+        output: "root-output",
+      };
+      yield {
+        root_span_id: "trace-id",
+        span_id: "child-span-id",
+        is_root: false,
+        input: "child-input",
+        output: "child-output",
+      };
+      yield {
+        root_span_id: "legacy-root-id",
+        span_id: "legacy-root-id",
+        input: "legacy-input",
+        output: "legacy-output",
+      };
+    };
+
+    const rows = [];
+    for await (const row of experiment.asDataset()) {
+      rows.push(row);
+    }
+
+    expect(rows).toEqual([
+      {
+        input: "root-input",
+        expected: "root-output",
+        metadata: undefined,
+        tags: undefined,
+      },
+      {
+        input: "legacy-input",
+        expected: "legacy-output",
+        metadata: undefined,
+        tags: undefined,
+      },
+    ]);
+  });
+
+  test("span cache marks root spans by parent list", () => {
+    const experiment = _exportsForTestingOnly.initTestExperiment(
+      "cache-root",
+      "project",
+    );
+    const state = experiment.loggingState;
+    const previousSpanCache = state.spanCache;
+    state.spanCache = new SpanCache();
+    state.spanCache.start();
+    try {
+      const root = experiment.startSpan({ name: "root" });
+      const child = root.startSpan({ name: "child" });
+      child.end();
+      root.end();
+
+      const rows = state.spanCache.getByRootSpanId(root.rootSpanId) ?? [];
+      const rootRow = rows.find((row) => row.span_id === root.spanId);
+      const childRow = rows.find((row) => row.span_id === child.spanId);
+
+      expect(root.spanId).not.toBe(root.rootSpanId);
+      expect(rootRow?.is_root).toBe(true);
+      expect(childRow?.is_root).toBe(false);
+    } finally {
+      state.spanCache.stop();
+      state.spanCache.clearAll();
+      state.spanCache = previousSpanCache;
+    }
+  });
 });
 
 test("attachment with unreadable path logs warning", () => {
@@ -2983,11 +3063,10 @@ test("attachment with readable path returns data", async () => {
 describe("sensitive data redaction", () => {
   let logger: any;
   let state: BraintrustState;
-  let memoryLogger: any;
 
   beforeEach(async () => {
     state = await _exportsForTestingOnly.simulateLoginForTests();
-    memoryLogger = _exportsForTestingOnly.useTestBackgroundLogger();
+    _exportsForTestingOnly.useTestBackgroundLogger();
     logger = initLogger({ projectName: "test", projectId: "test-id" });
   });
 
@@ -3031,7 +3110,9 @@ describe("sensitive data redaction", () => {
 
   test("BraintrustState redacts loginToken and connections", () => {
     // Test custom inspect method
-    const inspectResult = state[Symbol.for("nodejs.util.inspect.custom")]();
+    const inspectResult = (state as any)[
+      Symbol.for("nodejs.util.inspect.custom")
+    ]();
     expect(inspectResult).toContain("BraintrustState");
     expect(inspectResult).toContain("orgId:");
     expect(inspectResult).toContain("orgName:");
@@ -3127,8 +3208,8 @@ describe("sensitive data redaction", () => {
     expect(typeof exported).toBe("string");
     expect(exported.length).toBeGreaterThan(0);
 
-    // The exported string should be parseable by SpanComponentsV3
-    const components = SpanComponentsV3.fromStr(exported);
+    // The default export is now V4 (OTEL-compatible hex ids).
+    const components = SpanComponentsV4.fromStr(exported);
     expect(components.data.row_id).toBe(span.id);
     expect(components.data.span_id).toBe(span.spanId);
     expect(components.data.root_span_id).toBe(span.rootSpanId);

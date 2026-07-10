@@ -1,0 +1,33 @@
+span_tree:
+└── ai-sdk-concurrent-shared-model-root [task]
+    metadata: {
+      "scenario": "ai-sdk-concurrent-shared-model"
+    }
+    ├── generateText [function]
+    │   input: {
+    │     "marker": "MARKER_A"
+    │   }
+    │   output: {
+    │     "marker": "MARKER_A"
+    │   }
+    │   └── doGenerate [llm]
+    │       input: {
+    │         "marker": "MARKER_A"
+    │       }
+    │       output: {
+    │         "marker": "MARKER_A"
+    │       }
+    └── generateText [function]
+        input: {
+          "marker": "MARKER_B"
+        }
+        output: {
+          "marker": "MARKER_B"
+        }
+        └── doGenerate [llm]
+            input: {
+              "marker": "MARKER_B"
+            }
+            output: {
+              "marker": "MARKER_B"
+            }

@@ -7,7 +7,7 @@ import type {
   BedrockRuntimeSendResult,
 } from "../../vendor-sdk-types/bedrock-runtime";
 
-export type BedrockRuntimeStreamEvent =
+type BedrockRuntimeStreamEvent =
   | BedrockRuntimeConverseStreamEvent
   | BedrockRuntimeResponseStreamEvent;
 
