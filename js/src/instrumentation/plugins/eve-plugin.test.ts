@@ -31,52 +31,21 @@ function deterministicEveIdForTest(...parts: string[]): string {
     .replace(/^(.{8})(.{4})(.{4})(.{4})(.{12})$/, "$1-$2-$3-$4-$5");
 }
 
-const EVE_CONTEXT_KEY_REGISTRY = Symbol.for("eve.context-key-registry");
-const EVE_CONTEXT_STORAGE = Symbol.for("eve.context-storage");
-const EVE_LLM_INPUT_STATE_KEY = "braintrust.eve.llmInputs";
-
-function installFakeEveContext() {
-  const hadRegistry = Reflect.has(globalThis, EVE_CONTEXT_KEY_REGISTRY);
-  const hadStorage = Reflect.has(globalThis, EVE_CONTEXT_STORAGE);
-  const previousRegistry = Reflect.get(globalThis, EVE_CONTEXT_KEY_REGISTRY);
-  const previousStorage = Reflect.get(globalThis, EVE_CONTEXT_STORAGE);
+function createFakeDefineState() {
   const values = new Map<string, unknown>();
-  const keyName = (key: unknown) =>
-    key && typeof key === "object" && "name" in key
-      ? Reflect.get(key, "name")
-      : undefined;
-  const context = {
-    get(key: unknown) {
-      const name = keyName(key);
-      return typeof name === "string" ? values.get(name) : undefined;
-    },
-    set(key: unknown, value: unknown) {
-      const name = keyName(key);
-      if (typeof name === "string") {
-        values.set(name, value);
-      }
-    },
-  };
-
-  Reflect.set(globalThis, EVE_CONTEXT_KEY_REGISTRY, new Map());
-  Reflect.set(globalThis, EVE_CONTEXT_STORAGE, {
-    getStore: () => context,
-  });
-
   return {
-    values,
-    restore() {
-      if (hadRegistry) {
-        Reflect.set(globalThis, EVE_CONTEXT_KEY_REGISTRY, previousRegistry);
-      } else {
-        Reflect.deleteProperty(globalThis, EVE_CONTEXT_KEY_REGISTRY);
-      }
-      if (hadStorage) {
-        Reflect.set(globalThis, EVE_CONTEXT_STORAGE, previousStorage);
-      } else {
-        Reflect.deleteProperty(globalThis, EVE_CONTEXT_STORAGE);
-      }
+    defineState<T>(name: string, initial: () => T) {
+      return {
+        get: () => (values.has(name) ? (values.get(name) as T) : initial()),
+        update: (fn: (current: T) => T) => {
+          values.set(
+            name,
+            fn(values.has(name) ? (values.get(name) as T) : initial()),
+          );
+        },
+      };
     },
+    values,
   };
 }
 
@@ -90,14 +59,14 @@ describe("braintrustEveHook", () => {
   let backgroundLogger: ReturnType<
     typeof _exportsForTestingOnly.useTestBackgroundLogger
   >;
-  let restoreFakeEveContext: (() => void) | undefined;
+  let defineState: ReturnType<typeof createFakeDefineState>["defineState"];
 
   beforeAll(async () => {
     await _exportsForTestingOnly.simulateLoginForTests();
   });
 
   beforeEach(() => {
-    Reflect.deleteProperty(globalThis, Symbol.for("braintrust.eve.bridge"));
+    defineState = createFakeDefineState().defineState;
     backgroundLogger = _exportsForTestingOnly.useTestBackgroundLogger();
     initLogger({
       projectName: "eve-plugin.test.ts",
@@ -107,14 +76,11 @@ describe("braintrustEveHook", () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
-    restoreFakeEveContext?.();
-    restoreFakeEveContext = undefined;
-    Reflect.deleteProperty(globalThis, Symbol.for("braintrust.eve.bridge"));
     _exportsForTestingOnly.clearTestBackgroundLogger();
   });
 
   it("returns an Eve hook definition", () => {
-    const hook = braintrustEveHook();
+    const hook = braintrustEveHook({ defineState });
 
     expect(Object.keys(hook)).toEqual(["events"]);
     expect(typeof hook.events?.["*"]).toBe("function");
@@ -122,7 +88,10 @@ describe("braintrustEveHook", () => {
 
   it("returns an Eve instrumentation definition", () => {
     const setup = vi.fn();
-    const instrumentation = braintrustEveInstrumentation({ setup });
+    const instrumentation = braintrustEveInstrumentation({
+      defineState,
+      setup,
+    });
 
     expect(instrumentation).toMatchObject({
       recordInputs: false,
@@ -130,6 +99,11 @@ describe("braintrustEveHook", () => {
       setup,
     });
     expect(typeof instrumentation.events?.["step.started"]).toBe("function");
+  });
+
+  it("requires Eve's defineState API", () => {
+    expect(() => braintrustEveHook(undefined as never)).toThrow();
+    expect(() => braintrustEveInstrumentation(undefined as never)).toThrow();
   });
 
   it("exports Eve APIs from root and instrumentation entrypoints", () => {
@@ -144,10 +118,10 @@ describe("braintrustEveHook", () => {
   });
 
   it("captures Eve instrumentation model input on the matching LLM step", async () => {
-    const fakeEve = installFakeEveContext();
-    restoreFakeEveContext = fakeEve.restore;
-    const instrumentation = braintrustEveInstrumentation();
-    const wildcard = braintrustEveHook().events?.["*"];
+    const fakeEve = createFakeDefineState();
+    defineState = fakeEve.defineState;
+    const instrumentation = braintrustEveInstrumentation({ defineState });
+    const wildcard = braintrustEveHook({ defineState }).events?.["*"];
     expect(wildcard).toBeDefined();
 
     const ctx: EveHookContext = {
@@ -218,21 +192,21 @@ describe("braintrustEveHook", () => {
         role: "user",
       },
     ]);
-    expect(fakeEve.values.get(EVE_LLM_INPUT_STATE_KEY)).toEqual({
-      entries: [],
+    expect(fakeEve.values.get("braintrust.eve.tracing")).toMatchObject({
+      llmInputs: [],
     });
   });
 
   it("skips missing or malformed Eve instrumentation state without throwing", async () => {
-    const instrumentation = braintrustEveInstrumentation();
+    const instrumentation = braintrustEveInstrumentation({ defineState });
     expect(() =>
       instrumentation.events?.["step.started"]?.({ bad: true } as never),
     ).not.toThrow();
 
-    const fakeEve = installFakeEveContext();
-    restoreFakeEveContext = fakeEve.restore;
-    fakeEve.values.set(EVE_LLM_INPUT_STATE_KEY, {
-      entries: [{ input: { content: "not an array" }, key: "bad" }],
+    const fakeEve = createFakeDefineState();
+    defineState = fakeEve.defineState;
+    fakeEve.values.set("braintrust.eve.tracing", {
+      llmInputs: [{ input: { content: "not an array" }, key: "bad" }],
     });
     expect(() =>
       instrumentation.events?.["step.started"]?.({
@@ -245,7 +219,7 @@ describe("braintrustEveHook", () => {
       }),
     ).not.toThrow();
 
-    const wildcard = braintrustEveHook().events?.["*"];
+    const wildcard = braintrustEveHook({ defineState }).events?.["*"];
     const ctx: EveHookContext = { session: { id: "session-no-state" } };
     await wildcard?.(
       {
@@ -292,6 +266,7 @@ describe("braintrustEveHook", () => {
 
   it("records a flat Eve turn with session model metadata", async () => {
     const wildcard = braintrustEveHook({
+      defineState,
       metadata: {
         scenario: "eve-plugin-unit",
         testRunId: "test-run-flat-tree",
@@ -549,7 +524,7 @@ describe("braintrustEveHook", () => {
   });
 
   it("records each user message as a separate turn in one session", async () => {
-    const wildcard = braintrustEveHook().events?.["*"];
+    const wildcard = braintrustEveHook({ defineState }).events?.["*"];
     expect(wildcard).toBeDefined();
 
     const ctx: EveHookContext = { session: { id: "session-multi-turn" } };
@@ -595,7 +570,7 @@ describe("braintrustEveHook", () => {
   });
 
   it("does not reconstruct later LLM inputs from earlier hook events", async () => {
-    const wildcard = braintrustEveHook().events?.["*"];
+    const wildcard = braintrustEveHook({ defineState }).events?.["*"];
     expect(wildcard).toBeDefined();
 
     const ctx: EveHookContext = {
@@ -740,6 +715,7 @@ describe("braintrustEveHook", () => {
 
   it("merges late tool results into tool spans closed by turn completion", async () => {
     const wildcard = braintrustEveHook({
+      defineState,
       metadata: {
         scenario: "eve-plugin-unit",
         testRunId: "test-run-late-tool-result",
@@ -786,22 +762,32 @@ describe("braintrustEveHook", () => {
       meta: { at: "2026-01-01T00:00:00.030Z" },
       type: "turn.completed",
     });
-    await emit({
-      data: {
-        result: {
-          callId: "call-late-search",
-          kind: "tool-result",
-          output: { title: "Late result" },
-          toolName: "search",
-        },
-        sequence: 0,
-        status: "completed",
-        stepIndex: 0,
-        turnId: "turn-late-tool-result",
+    const resumedWildcard = braintrustEveHook({
+      defineState,
+      metadata: {
+        scenario: "eve-plugin-unit",
+        testRunId: "test-run-late-tool-result",
       },
-      meta: { at: "2026-01-01T00:00:00.040Z" },
-      type: "action.result",
-    });
+    }).events?.["*"];
+    await resumedWildcard?.(
+      {
+        data: {
+          result: {
+            callId: "call-late-search",
+            kind: "tool-result",
+            output: { title: "Late result" },
+            toolName: "search",
+          },
+          sequence: 0,
+          status: "completed",
+          stepIndex: 0,
+          turnId: "turn-late-tool-result",
+        },
+        meta: { at: "2026-01-01T00:00:00.040Z" },
+        type: "action.result",
+      },
+      ctx,
+    );
 
     const spans = (await backgroundLogger.drain()) as Array<
       Record<string, any>
@@ -812,6 +798,9 @@ describe("braintrustEveHook", () => {
     const tool = spans.find((span) => span.span_attributes?.name === "search");
 
     expect(turns).toHaveLength(1);
+    expect(
+      spans.filter((span) => span.span_attributes?.name === "search"),
+    ).toHaveLength(1);
     expect(tool).toMatchObject({
       input: { query: "late tool result" },
       metadata: {
@@ -830,6 +819,7 @@ describe("braintrustEveHook", () => {
 
   it("keeps deterministic tool state available after session completion", async () => {
     const wildcard = braintrustEveHook({
+      defineState,
       metadata: {
         scenario: "eve-plugin-unit",
         testRunId: "test-run-late-after-session",
@@ -905,6 +895,7 @@ describe("braintrustEveHook", () => {
 
   it("records result-only tool events without invented input", async () => {
     const wildcard = braintrustEveHook({
+      defineState,
       metadata: {
         scenario: "eve-plugin-unit",
         testRunId: "test-run-result-only",
@@ -951,7 +942,7 @@ describe("braintrustEveHook", () => {
   });
 
   it("serializes events per session without blocking other sessions", async () => {
-    const wildcard = braintrustEveHook().events?.["*"];
+    const wildcard = braintrustEveHook({ defineState }).events?.["*"];
     expect(wildcard).toBeDefined();
 
     const sessionA: EveHookContext = { session: { id: "session-queue-a" } };
@@ -1002,7 +993,7 @@ describe("braintrustEveHook", () => {
   });
 
   it("uses deterministic ids and nests local subagent sessions from Eve lineage", async () => {
-    const wildcard = braintrustEveHook().events?.["*"];
+    const wildcard = braintrustEveHook({ defineState }).events?.["*"];
     expect(wildcard).toBeDefined();
 
     const parentCtx: EveHookContext = {
@@ -1100,7 +1091,7 @@ describe("braintrustEveHook", () => {
           },
         ],
         sequence: 0,
-        stepIndex: 0,
+        stepIndex: 1,
         turnId: "turn-child",
       },
       type: "actions.requested",
@@ -1115,7 +1106,7 @@ describe("braintrustEveHook", () => {
         },
         sequence: 0,
         status: "completed",
-        stepIndex: 0,
+        stepIndex: 1,
         turnId: "turn-child",
       },
       type: "action.result",
@@ -1171,7 +1162,7 @@ describe("braintrustEveHook", () => {
       type: "action.result",
     });
     await emitParent({
-      data: { sequence: 0, stepIndex: 0, turnId: "turn-parent" },
+      data: { sequence: 0, stepIndex: 1, turnId: "turn-parent" },
       type: "step.started",
     });
     await emitParent({
@@ -1185,7 +1176,7 @@ describe("braintrustEveHook", () => {
           },
         ],
         sequence: 0,
-        stepIndex: 0,
+        stepIndex: 1,
         turnId: "turn-parent",
       },
       type: "actions.requested",
@@ -1200,7 +1191,7 @@ describe("braintrustEveHook", () => {
         },
         sequence: 0,
         status: "completed",
-        stepIndex: 0,
+        stepIndex: 1,
         turnId: "turn-parent",
       },
       type: "action.result",
@@ -1209,13 +1200,13 @@ describe("braintrustEveHook", () => {
       data: {
         finishReason: "tool-calls",
         sequence: 0,
-        stepIndex: 0,
+        stepIndex: 1,
         turnId: "turn-parent",
       },
       type: "step.completed",
     });
     await emitParent({
-      data: { sequence: 0, stepIndex: 1, turnId: "turn-parent" },
+      data: { sequence: 0, stepIndex: 2, turnId: "turn-parent" },
       type: "step.started",
     });
     await emitParent({
@@ -1223,7 +1214,7 @@ describe("braintrustEveHook", () => {
         finishReason: "stop",
         message: "Parent used the child result.",
         sequence: 0,
-        stepIndex: 1,
+        stepIndex: 2,
         turnId: "turn-parent",
       },
       type: "message.completed",
@@ -1232,7 +1223,7 @@ describe("braintrustEveHook", () => {
       data: {
         finishReason: "stop",
         sequence: 0,
-        stepIndex: 1,
+        stepIndex: 2,
         turnId: "turn-parent",
       },
       type: "step.completed",
@@ -1387,7 +1378,7 @@ describe("braintrustEveHook", () => {
       projectName: "eve-plugin.test.ts",
       projectId: "test-project-id",
     });
-    const replay = braintrustEveHook().events?.["*"];
+    const replay = braintrustEveHook({ defineState }).events?.["*"];
     await replay?.(
       {
         data: { sequence: 0, turnId: "turn-parent" },
@@ -1406,17 +1397,15 @@ describe("braintrustEveHook", () => {
       Record<string, any>
     >;
     expect(
-      replaySpans.find((span) => span.span_attributes?.name === "eve.session")
-        ?.span_id,
-    ).toBe(parentSession?.span_id);
+      replaySpans.find((span) => span.span_id === parentSession?.span_id),
+    ).toMatchObject({ _is_merge: true });
     expect(
-      replaySpans.find((span) => span.span_attributes?.name === "eve.turn")
-        ?.span_id,
-    ).toBe(parentTurn?.span_id);
+      replaySpans.find((span) => span.span_id === parentTurn?.span_id),
+    ).toMatchObject({ _is_merge: true });
   });
 
   it("parents root Eve sessions under the active Braintrust span", async () => {
-    const wildcard = braintrustEveHook().events?.["*"];
+    const wildcard = braintrustEveHook({ defineState }).events?.["*"];
     expect(wildcard).toBeDefined();
 
     const ctx: EveHookContext = {
@@ -1464,7 +1453,7 @@ describe("braintrustEveHook", () => {
   });
 
   it("does not throw when Eve emits malformed events or failures", async () => {
-    const wildcard = braintrustEveHook().events?.["*"];
+    const wildcard = braintrustEveHook({ defineState }).events?.["*"];
     expect(wildcard).toBeDefined();
 
     await expect(

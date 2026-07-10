@@ -239,9 +239,6 @@
                   }
                 }
               ],
-              "input": {
-                "message": "Run the Braintrust Eve instrumentation e2e scenario"
-              },
               "output": "Researcher result: Eve instrumentation — https://eve.dev/docs/guides/instrumentation",
               "metadata": {
                 "scenario": "eve-instrumentation",
@@ -805,9 +802,6 @@
                   }
                 }
               ],
-              "input": {
-                "message": "Run the Braintrust Eve instrumentation e2e scenario again"
-              },
               "output": "Researcher result: Eve instrumentation — https://eve.dev/docs/guides/instrumentation",
               "metadata": {
                 "scenario": "eve-instrumentation",

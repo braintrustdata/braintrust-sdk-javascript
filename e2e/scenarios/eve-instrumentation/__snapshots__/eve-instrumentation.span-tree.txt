@@ -70,9 +70,6 @@ span_tree:
     │   │     "tokens": 6694
     │   │   }
     │   ├── researcher [tool]
-    │   │   input: {
-    │   │     "message": "Run the Braintrust Eve instrumentation e2e scenario"
-    │   │   }
     │   │   output: "Researcher result: Eve instrumentation — https://eve.dev/docs/guides/instrumentation"
     │   │   metadata: {
     │   │     "scenario": "eve-instrumentation",
@@ -588,9 +585,6 @@ span_tree:
         │     "tokens": 6917
         │   }
         ├── researcher [tool]
-        │   input: {
-        │     "message": "Run the Braintrust Eve instrumentation e2e scenario again"
-        │   }
         │   output: "Researcher result: Eve instrumentation — https://eve.dev/docs/guides/instrumentation"
         │   metadata: {
         │     "scenario": "eve-instrumentation",

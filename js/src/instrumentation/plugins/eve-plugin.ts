@@ -5,6 +5,7 @@ import {
   currentSpan,
   flush,
   logError,
+  resumeSpan,
   startSpan,
   withCurrent,
 } from "../../logger";
@@ -35,14 +36,12 @@ type SessionState = SpanState & {
 type StepState = SpanState & {
   input?: unknown;
   metrics: Record<string, number>;
-  ordinal: number;
   output?: unknown;
 };
 
 type TurnState = SpanState & {
   key: string;
   metrics: Record<string, number>;
-  nextStepOrdinal: number;
   output?: unknown;
   stepsByIndex: Map<number, StepState>;
 };
@@ -51,7 +50,6 @@ type ToolState = SpanState & {
   endedByTurn?: boolean;
   kind: "subagent" | "tool";
   stepIndex?: number;
-  stepOrdinal?: number;
   turnKey: string;
 };
 
@@ -63,46 +61,60 @@ type ParentLineage = {
   turnSequence?: number;
 };
 
-const EVE_BRIDGE = Symbol.for("braintrust.eve.bridge");
-const EVE_CONTEXT_KEY_REGISTRY = Symbol.for("eve.context-key-registry");
-const EVE_CONTEXT_STORAGE = Symbol.for("eve.context-storage");
-const EVE_LLM_INPUT_STATE_KEY = "braintrust.eve.llmInputs";
-const EVE_LLM_INPUT_STATE = { name: EVE_LLM_INPUT_STATE_KEY };
-const MAX_STORED_LLM_INPUTS = 100;
+type EveStateHandle<T> = {
+  get(): T;
+  update(fn: (current: T) => T): void;
+};
 
-type CapturedEveModelInput = readonly unknown[];
+type EveDefineState = <T>(name: string, initial: () => T) => EveStateHandle<T>;
 
-type EveLlmInputState = {
-  entries: readonly {
+type EveTraceState = {
+  metadata: Record<string, unknown>;
+  startedSpanRows: readonly string[];
+  stepStarts: readonly {
+    ordinal: number;
+    open: boolean;
+    stepIndex: number;
+    turnId: string;
+  }[];
+  llmInputs: readonly {
     input: CapturedEveModelInput;
     key: string;
   }[];
 };
 
+const EVE_TRACE_STATE_KEY = "braintrust.eve.tracing";
+const MAX_STORED_LLM_INPUTS = 100;
+
+type CapturedEveModelInput = readonly unknown[];
+
 /** Manual hook instrumentation for eve runtime stream events. */
-export function braintrustEveHook(
-  options: { metadata?: Record<string, unknown> } = {},
-): EveHookDefinition {
+export function braintrustEveHook(options: {
+  defineState: EveDefineState;
+  metadata?: Record<string, unknown>;
+}): EveHookDefinition {
+  const state = options.defineState(EVE_TRACE_STATE_KEY, emptyEveTraceState);
+  const bridge = new EveBridge(state);
   return {
     events: {
       "*": async (event: EveHandleMessageStreamEvent, ctx: EveHookContext) => {
-        await getEveBridge().handle(event, ctx, options.metadata);
+        await bridge.handle(event, ctx, options.metadata);
       },
     },
   };
 }
 
 /** Eve instrumentation helper for logger setup and durable LLM input capture. */
-export function braintrustEveInstrumentation(
-  options: {
-    setup?: EveInstrumentationDefinition["setup"];
-  } = {},
-): EveInstrumentationDefinition {
+export function braintrustEveInstrumentation(options: {
+  defineState: EveDefineState;
+  setup?: EveInstrumentationDefinition["setup"];
+}): EveInstrumentationDefinition {
+  const state = options.defineState(EVE_TRACE_STATE_KEY, emptyEveTraceState);
   return {
     events: {
       "step.started": (input: EveInstrumentationStepStartedEventInput) => {
         try {
-          captureEveModelInput(input);
+          captureEveModelInput(state, input);
         } catch (error) {
           debugLogger.warn("Error in Eve LLM input capture:", error);
         }
@@ -114,23 +126,6 @@ export function braintrustEveInstrumentation(
   };
 }
 
-function getEveBridge(): EveBridge {
-  const existing = Object.getOwnPropertyDescriptor(
-    globalThis,
-    EVE_BRIDGE,
-  )?.value;
-  if (existing instanceof EveBridge) {
-    return existing;
-  }
-  const bridge = new EveBridge();
-  Object.defineProperty(globalThis, EVE_BRIDGE, {
-    configurable: true,
-    value: bridge,
-    writable: true,
-  });
-  return bridge;
-}
-
 function isEveHandleMessageStreamEvent(
   event: unknown,
 ): event is EveHandleMessageStreamEvent {
@@ -138,33 +133,123 @@ function isEveHandleMessageStreamEvent(
 }
 
 class EveBridge {
+  constructor(private readonly state: EveStateHandle<EveTraceState>) {}
+
   private sessionsById = new Map<string, SessionState>();
   private completedToolKeys = new Set<string>();
-  private queuesBySessionId = new Map<string, Promise<void>>();
   private toolsByCallKey = new Map<string, ToolState>();
   private turnsByKey = new Map<string, TurnState>();
 
-  handle(
+  private async startEveSpan(
+    args: Parameters<typeof startSpan>[0],
+  ): Promise<Span> {
+    const rowId = args?.event?.id;
+    const started =
+      typeof rowId === "string" &&
+      readEveTraceState(this.state).startedSpanRows.includes(rowId);
+    const span = withCurrent(NOOP_SPAN, () =>
+      (started ? resumeSpan : startSpan)(args),
+    );
+    if (!started && typeof rowId === "string") {
+      const flushed = await this.flushInstrumentation();
+      if (!flushed) {
+        return span;
+      }
+      this.state.update((current) => {
+        const normalized = normalizeEveTraceState(current);
+        return normalized.startedSpanRows.includes(rowId)
+          ? normalized
+          : {
+              ...normalized,
+              startedSpanRows: [...normalized.startedSpanRows, rowId],
+            };
+      });
+    }
+    return span;
+  }
+
+  private async startEveChildSpan(
+    parent: Span,
+    args: Parameters<typeof startSpan>[0],
+  ): Promise<Span> {
+    return await this.startEveSpan({
+      ...args,
+      parentSpanIds: {
+        rootSpanId: parent.rootSpanId,
+        spanId: parent.spanId,
+      },
+    });
+  }
+
+  private stepOrdinal(
+    event: Extract<EveHandleMessageStreamEvent, { type: "step.started" }>,
+  ): number {
+    const state = readEveTraceState(this.state);
+    const stepsForIndex = state.stepStarts.filter(
+      (entry) =>
+        entry.turnId === event.data.turnId &&
+        entry.stepIndex === event.data.stepIndex,
+    );
+    const previous = stepsForIndex.at(-1);
+    if (previous?.open) {
+      return previous.ordinal;
+    }
+
+    const ordinal = state.stepStarts.filter(
+      (entry) => entry.turnId === event.data.turnId,
+    ).length;
+    this.state.update((current) => ({
+      ...normalizeEveTraceState(current),
+      stepStarts: [
+        ...state.stepStarts,
+        {
+          open: true,
+          ordinal,
+          stepIndex: event.data.stepIndex,
+          turnId: event.data.turnId,
+        },
+      ],
+    }));
+    return ordinal;
+  }
+
+  private markStepEnded(turnId: string, stepIndex: number): void {
+    this.state.update((current) => {
+      const state = normalizeEveTraceState(current);
+      let index = -1;
+      for (let i = state.stepStarts.length - 1; i >= 0; i--) {
+        const entry = state.stepStarts[i];
+        if (entry?.turnId === turnId && entry.stepIndex === stepIndex) {
+          index = i;
+          break;
+        }
+      }
+      if (index < 0 || !state.stepStarts[index]?.open) {
+        return state;
+      }
+      return {
+        ...state,
+        stepStarts: state.stepStarts.map((entry, entryIndex) =>
+          entryIndex === index ? { ...entry, open: false } : entry,
+        ),
+      };
+    });
+  }
+
+  async handle(
     event: unknown,
     ctx: unknown,
     hookMetadata?: Record<string, unknown>,
   ): Promise<void> {
     if (!isEveHandleMessageStreamEvent(event)) {
-      return Promise.resolve();
+      return;
     }
-
-    const queueKey = queueKeyForEvent(event, ctx);
-    const previous = this.queuesBySessionId.get(queueKey) ?? Promise.resolve();
-    const next = previous
-      .then(() => this.handleEvent(event, ctx, hookMetadata))
-      .catch(() => undefined);
-    this.queuesBySessionId.set(queueKey, next);
-    void next.finally(() => {
-      if (this.queuesBySessionId.get(queueKey) === next) {
-        this.queuesBySessionId.delete(queueKey);
-      }
-    });
-    return next;
+    try {
+      await this.handleEvent(event, ctx, hookMetadata);
+      await this.flushInstrumentation();
+    } catch (error) {
+      debugLogger.warn("Error in Eve hook instrumentation:", error);
+    }
   }
 
   private async handleEvent(
@@ -240,6 +325,13 @@ class EveBridge {
       ...(hookMetadata ?? {}),
       ...modelMetadataFromRuntime(event.data.runtime),
     };
+    this.state.update((current) => {
+      const normalized = normalizeEveTraceState(current);
+      return {
+        ...normalized,
+        metadata: { ...normalized.metadata, ...metadata },
+      };
+    });
     await this.ensureSession(sessionId, ctx, metadata, eventTime(event));
     for (const [key, turn] of this.turnsByKey) {
       if (!key.startsWith(`${sessionId}:`)) {
@@ -286,7 +378,6 @@ class EveBridge {
       key,
       metadata,
       metrics: {},
-      nextStepOrdinal: 0,
       span,
       stepsByIndex: new Map(),
     });
@@ -327,14 +418,16 @@ class EveBridge {
       });
       const endTime = eventTime(event);
       existing.span.end(endTime === undefined ? undefined : { endTime });
+      this.markStepEnded(event.data.turnId, event.data.stepIndex);
     }
 
-    const stepOrdinal = turn.nextStepOrdinal++;
+    const stepOrdinal = this.stepOrdinal(event);
     const metadata = {
       ...turn.metadata,
       ...(this.sessionsById.get(sessionId)?.metadata ?? {}),
     };
     const input = consumeCapturedEveModelInput(
+      this.state,
       sessionId,
       event.data.turnId,
       event.data.stepIndex,
@@ -343,7 +436,7 @@ class EveBridge {
       rowIdForStep(sessionId, event.data.turnId, stepOrdinal),
       spanIdForStep(sessionId, event.data.turnId, stepOrdinal),
     ]);
-    const span = startChildSpan(turn.span, {
+    const span = await this.startEveChildSpan(turn.span, {
       event: {
         id: eventId,
         ...(input !== undefined ? { input } : {}),
@@ -360,7 +453,6 @@ class EveBridge {
       ...(input !== undefined ? { input } : {}),
       metadata,
       metrics: {},
-      ordinal: stepOrdinal,
       span,
     });
   }
@@ -436,7 +528,6 @@ class EveBridge {
       return;
     }
 
-    const step = turn.stepsByIndex.get(event.data.stepIndex);
     const traceActions = event.data.actions.filter(isTraceableActionRequest);
     if (traceActions.length === 0) {
       return;
@@ -444,12 +535,13 @@ class EveBridge {
 
     for (const action of traceActions) {
       if (isToolCallAction(action)) {
-        await this.startRequestedTool(event, turn, sessionId, action, step);
+        await this.startRequestedTool(event, turn, sessionId, action);
       } else if (isLocalSubagentCallAction(action)) {
-        await this.startRequestedSubagent(event, turn, sessionId, action, step);
+        await this.startRequestedSubagent(event, turn, sessionId, action);
       }
     }
 
+    const step = turn.stepsByIndex.get(event.data.stepIndex);
     if (!step) {
       return;
     }
@@ -585,7 +677,7 @@ class EveBridge {
       }
       return;
     }
-    const span = startChildSpan(turn.span, {
+    const span = await this.startEveChildSpan(turn.span, {
       event: {
         id: eventId,
         metadata,
@@ -772,6 +864,7 @@ class EveBridge {
       }
       turn.stepsByIndex.delete(event.data.stepIndex);
     }
+    this.markStepEnded(event.data.turnId, event.data.stepIndex);
   }
 
   private handleStepFailed(
@@ -794,6 +887,7 @@ class EveBridge {
 
     const turn = this.turnForEvent(event, ctx);
     turn?.stepsByIndex.delete(event.data.stepIndex);
+    this.markStepEnded(event.data.turnId, event.data.stepIndex);
   }
 
   private async handleTurnCompleted(
@@ -946,6 +1040,10 @@ class EveBridge {
     metadata: Record<string, unknown>,
     startTime?: number,
   ): Promise<SessionState> {
+    metadata = {
+      ...readEveTraceState(this.state).metadata,
+      ...metadata,
+    };
     const existing = this.sessionsById.get(sessionId);
     if (existing) {
       existing.metadata = { ...existing.metadata, ...metadata };
@@ -973,7 +1071,7 @@ class EveBridge {
           : rootSpanIdForSession(sessionId),
       ]);
 
-    const span = startSpanWithoutCurrentContext({
+    const span = await this.startEveSpan({
       event: {
         id: eventId,
         metadata,
@@ -1038,7 +1136,6 @@ class EveBridge {
       key,
       metadata,
       metrics: {},
-      nextStepOrdinal: 0,
       span,
       stepsByIndex: new Map<number, StepState>(),
     };
@@ -1051,7 +1148,6 @@ class EveBridge {
     turn: TurnState,
     sessionId: string,
     action: EveRuntimeToolCallActionRequest,
-    step?: StepState,
   ): Promise<void> {
     const key = toolKey(sessionId, action.callId);
     if (this.toolsByCallKey.has(key) || this.completedToolKeys.has(key)) {
@@ -1066,7 +1162,7 @@ class EveBridge {
     if (this.toolsByCallKey.has(key) || this.completedToolKeys.has(key)) {
       return;
     }
-    const span = startChildSpan(turn.span, {
+    const span = await this.startEveChildSpan(turn.span, {
       event: {
         id: eventId,
         input: action.input,
@@ -1083,7 +1179,6 @@ class EveBridge {
       metadata,
       span,
       stepIndex: event.data.stepIndex,
-      stepOrdinal: step?.ordinal,
       turnKey: turnKey(sessionId, event.data.turnId),
     });
   }
@@ -1093,7 +1188,6 @@ class EveBridge {
     turn: TurnState,
     sessionId: string,
     action: Extract<EveRuntimeActionRequest, { kind: "subagent-call" }>,
-    step?: StepState,
   ): Promise<void> {
     const key = toolKey(sessionId, action.callId);
     if (this.toolsByCallKey.has(key) || this.completedToolKeys.has(key)) {
@@ -1109,7 +1203,7 @@ class EveBridge {
     if (this.toolsByCallKey.has(key) || this.completedToolKeys.has(key)) {
       return;
     }
-    const span = startChildSpan(turn.span, {
+    const span = await this.startEveChildSpan(turn.span, {
       event: {
         id: eventId,
         input: action.input,
@@ -1126,7 +1220,6 @@ class EveBridge {
       metadata,
       span,
       stepIndex: event.data.stepIndex,
-      stepOrdinal: step?.ordinal,
       turnKey: turnKey(sessionId, event.data.turnId),
     });
   }
@@ -1152,7 +1245,7 @@ class EveBridge {
     if (existing) {
       return existing;
     }
-    const span = startChildSpan(turn.span, {
+    const span = await this.startEveChildSpan(turn.span, {
       event: {
         id: eventId,
         metadata,
@@ -1196,7 +1289,7 @@ class EveBridge {
     if (existing) {
       return existing;
     }
-    const span = startChildSpan(turn.span, {
+    const span = await this.startEveChildSpan(turn.span, {
       event: {
         id: eventId,
         metadata,
@@ -1238,7 +1331,7 @@ class EveBridge {
     if (existing) {
       return existing;
     }
-    const span = startChildSpan(turn.span, {
+    const span = await this.startEveChildSpan(turn.span, {
       event: {
         id: eventId,
         metadata,
@@ -1294,7 +1387,7 @@ class EveBridge {
       spanIdForSession(session.sessionId),
     ]);
 
-    return startSpanWithoutCurrentContext({
+    return await this.startEveSpan({
       event: {
         id: eventId,
         metadata,
@@ -1343,7 +1436,7 @@ class EveBridge {
     const parentTurn = this.turnsByKey.get(
       turnKey(lineage.sessionId, lineage.turnId),
     );
-    const span = startSpanWithoutCurrentContext({
+    const span = await this.startEveSpan({
       event: {
         id: eventId,
         metadata,
@@ -1431,11 +1524,13 @@ class EveBridge {
     this.turnsByKey.delete(key);
   }
 
-  private async flushInstrumentation(): Promise<void> {
+  private async flushInstrumentation(): Promise<boolean> {
     try {
       await flush();
+      return true;
     } catch (error) {
       debugLogger.warn("Error in Eve flush instrumentation:", error);
+      return false;
     }
   }
 }
@@ -1452,7 +1547,72 @@ function subagentNameFromContext(ctx: unknown): string | undefined {
   return typeof name === "string" ? name : undefined;
 }
 
+function emptyEveTraceState(): EveTraceState {
+  return {
+    llmInputs: [],
+    metadata: {},
+    startedSpanRows: [],
+    stepStarts: [],
+  };
+}
+
+function normalizeEveTraceState(state: unknown): EveTraceState {
+  if (!isObject(state)) {
+    return emptyEveTraceState();
+  }
+  const metadata = isObject(state["metadata"]) ? state["metadata"] : {};
+  const startedSpanRows = Array.isArray(state["startedSpanRows"])
+    ? state["startedSpanRows"].filter(
+        (rowId): rowId is string => typeof rowId === "string",
+      )
+    : [];
+  const llmInputs = Array.isArray(state["llmInputs"])
+    ? state["llmInputs"].flatMap((entry): EveTraceState["llmInputs"] => {
+        if (!isObject(entry)) {
+          return [];
+        }
+        const key = entry["key"];
+        const input = entry["input"];
+        return typeof key === "string" && isCapturedModelInput(input)
+          ? [{ input, key }]
+          : [];
+      })
+    : [];
+  const stepStarts = Array.isArray(state["stepStarts"])
+    ? state["stepStarts"].flatMap((entry): EveTraceState["stepStarts"] => {
+        if (!isObject(entry)) {
+          return [];
+        }
+        const ordinal = entry["ordinal"];
+        const open = entry["open"];
+        const stepIndex = entry["stepIndex"];
+        const turnId = entry["turnId"];
+        return typeof ordinal === "number" &&
+          Number.isInteger(ordinal) &&
+          ordinal >= 0 &&
+          typeof open === "boolean" &&
+          typeof stepIndex === "number" &&
+          Number.isInteger(stepIndex) &&
+          typeof turnId === "string"
+          ? [{ open, ordinal, stepIndex, turnId }]
+          : [];
+      })
+    : [];
+  return { llmInputs, metadata: { ...metadata }, startedSpanRows, stepStarts };
+}
+
+function readEveTraceState(
+  state: EveStateHandle<EveTraceState>,
+): EveTraceState {
+  try {
+    return normalizeEveTraceState(state.get());
+  } catch {
+    return emptyEveTraceState();
+  }
+}
+
 function captureEveModelInput(
+  state: EveStateHandle<EveTraceState>,
   input: EveInstrumentationStepStartedEventInput,
 ): void {
   if (!isObject(input)) {
@@ -1482,39 +1642,38 @@ function captureEveModelInput(
     return;
   }
 
-  const state = readEveLlmInputState();
-  if (!state) {
-    return;
-  }
-
   const key = llmInputKey(sessionId, turnId, stepIndex);
-  const entries = state.entries.filter((entry) => entry.key !== key);
-  entries.push({ input: captured, key });
-  writeEveLlmInputState({
-    entries: entries.slice(-MAX_STORED_LLM_INPUTS),
+  state.update((current) => {
+    const normalized = normalizeEveTraceState(current);
+    const llmInputs = [...normalized.llmInputs, { input: captured, key }];
+    return {
+      ...normalized,
+      llmInputs: llmInputs.slice(-MAX_STORED_LLM_INPUTS),
+    };
   });
 }
 
 function consumeCapturedEveModelInput(
+  state: EveStateHandle<EveTraceState>,
   sessionId: string,
   turnId: string,
   stepIndex: number,
 ): CapturedEveModelInput | undefined {
   try {
-    const state = readEveLlmInputState();
-    if (!state) {
-      return undefined;
-    }
-
     const key = llmInputKey(sessionId, turnId, stepIndex);
-    const entry = state.entries.find((candidate) => candidate.key === key);
+    const current = readEveTraceState(state);
+    const entry = current.llmInputs.find((candidate) => candidate.key === key);
     if (!entry) {
       return undefined;
     }
 
-    writeEveLlmInputState({
-      entries: state.entries.filter((candidate) => candidate.key !== key),
-    });
+    const index = current.llmInputs.indexOf(entry);
+    state.update((value) => ({
+      ...normalizeEveTraceState(value),
+      llmInputs: current.llmInputs.filter(
+        (_, candidateIndex) => candidateIndex !== index,
+      ),
+    }));
     return entry.input;
   } catch (error) {
     debugLogger.warn("Error in Eve LLM input consumption:", error);
@@ -1550,103 +1709,6 @@ function capturedModelInput(
   } catch {
     return undefined;
   }
-}
-
-function readEveLlmInputState(): EveLlmInputState | undefined {
-  const context = activeEveContext();
-  const key = eveLlmInputStateKey();
-  if (!context || !key) {
-    return undefined;
-  }
-
-  const get = context["get"];
-  if (typeof get !== "function") {
-    return undefined;
-  }
-
-  let state: unknown;
-  try {
-    state = get.call(context, key);
-  } catch {
-    return undefined;
-  }
-  if (!isObject(state)) {
-    return { entries: [] };
-  }
-
-  const entries = state["entries"];
-  if (!Array.isArray(entries)) {
-    return { entries: [] };
-  }
-
-  return {
-    entries: entries.flatMap((entry): EveLlmInputState["entries"] => {
-      if (!isObject(entry)) {
-        return [];
-      }
-      const entryKey = entry["key"];
-      const entryInput = entry["input"];
-      if (typeof entryKey !== "string" || !isCapturedModelInput(entryInput)) {
-        return [];
-      }
-      return [{ input: entryInput, key: entryKey }];
-    }),
-  };
-}
-
-function writeEveLlmInputState(state: EveLlmInputState): void {
-  const context = activeEveContext();
-  const key = eveLlmInputStateKey();
-  if (!context || !key) {
-    return;
-  }
-
-  const set = context["set"];
-  if (typeof set !== "function") {
-    return;
-  }
-
-  try {
-    set.call(context, key, state);
-  } catch {
-    return;
-  }
-}
-
-function activeEveContext(): Record<string, unknown> | undefined {
-  const storage = Object.getOwnPropertyDescriptor(
-    globalThis,
-    EVE_CONTEXT_STORAGE,
-  )?.value;
-  if (!isObject(storage)) {
-    return undefined;
-  }
-
-  const getStore = storage["getStore"];
-  if (typeof getStore !== "function") {
-    return undefined;
-  }
-
-  const context = getStore.call(storage);
-  return isObject(context) ? context : undefined;
-}
-
-function eveLlmInputStateKey(): object | undefined {
-  const registry = Object.getOwnPropertyDescriptor(
-    globalThis,
-    EVE_CONTEXT_KEY_REGISTRY,
-  )?.value;
-  if (!(registry instanceof Map)) {
-    return undefined;
-  }
-
-  const existing = registry.get(EVE_LLM_INPUT_STATE_KEY);
-  if (isObject(existing)) {
-    return existing;
-  }
-
-  registry.set(EVE_LLM_INPUT_STATE_KEY, EVE_LLM_INPUT_STATE);
-  return EVE_LLM_INPUT_STATE;
 }
 
 function isCapturedModelInput(input: unknown): input is CapturedEveModelInput {
@@ -1698,16 +1760,6 @@ function sessionIdFromContext(ctx: unknown): string | undefined {
   }
   const id = session["id"];
   return typeof id === "string" ? id : undefined;
-}
-
-function queueKeyForEvent(event: Record<PropertyKey, unknown>, ctx: unknown) {
-  if (isObject(event.data)) {
-    const sessionId = event.data["sessionId"];
-    if (typeof sessionId === "string") {
-      return sessionId;
-    }
-  }
-  return sessionIdFromContext(ctx) ?? "__unknown__";
 }
 
 function toolMetadataFromTurn(turn: TurnState): Record<string, unknown> {
@@ -1880,21 +1932,21 @@ async function rowIdForTurn(
 async function spanIdForStep(
   sessionId: string,
   turnId: string,
-  stepOrdinal: number,
+  stepIndex: number,
 ): Promise<string> {
-  return deterministicEveId("eve:step", sessionId, turnId, String(stepOrdinal));
+  return deterministicEveId("eve:step", sessionId, turnId, String(stepIndex));
 }
 
 async function rowIdForStep(
   sessionId: string,
   turnId: string,
-  stepOrdinal: number,
+  stepIndex: number,
 ): Promise<string> {
   return deterministicEveId(
     "eve:row:step",
     sessionId,
     turnId,
-    String(stepOrdinal),
+    String(stepIndex),
   );
 }
 
@@ -1936,24 +1988,4 @@ async function deterministicEveId(...parts: string[]): Promise<string> {
   const bytes = Array.from(new Uint8Array(digest, 0, 16));
   const hex = bytes.map((byte) => byte.toString(16).padStart(2, "0")).join("");
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
-}
-
-function startChildSpan(
-  parent: Span,
-  args: Parameters<typeof startSpan>[0],
-): Span {
-  return startSpanWithoutCurrentContext({
-    ...args,
-    parentSpanIds: {
-      rootSpanId: parent.rootSpanId,
-      spanId: parent.spanId,
-    },
-  });
-}
-
-function startSpanWithoutCurrentContext(
-  args: Parameters<typeof startSpan>[0],
-): Span {
-  // Eve's deterministic parentSpanIds must win over any ambient Braintrust span.
-  return withCurrent(NOOP_SPAN, () => startSpan(args));
 }
