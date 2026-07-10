@@ -714,8 +714,9 @@ describe("braintrustEveHook", () => {
   });
 
   it("merges late tool results into tool spans closed by turn completion", async () => {
+    const eveState = createFakeDefineState();
     const wildcard = braintrustEveHook({
-      defineState,
+      defineState: eveState.defineState,
       metadata: {
         scenario: "eve-plugin-unit",
         testRunId: "test-run-late-tool-result",
@@ -762,8 +763,31 @@ describe("braintrustEveHook", () => {
       meta: { at: "2026-01-01T00:00:00.030Z" },
       type: "turn.completed",
     });
+    expect(eveState.values.get("braintrust.eve.tracing")).toMatchObject({
+      spanReferences: expect.arrayContaining([
+        expect.objectContaining({
+          exported: expect.any(String),
+          rootSpanId: deterministicEveIdForTest(
+            "eve:root",
+            "session-late-tool-result",
+          ),
+          rowId: deterministicEveIdForTest(
+            "eve:row:tool",
+            "session-late-tool-result",
+            "turn-late-tool-result",
+            "call-late-search",
+          ),
+          spanId: deterministicEveIdForTest(
+            "eve:tool",
+            "session-late-tool-result",
+            "turn-late-tool-result",
+            "call-late-search",
+          ),
+        }),
+      ]),
+    });
     const resumedWildcard = braintrustEveHook({
-      defineState,
+      defineState: eveState.defineState,
       metadata: {
         scenario: "eve-plugin-unit",
         testRunId: "test-run-late-tool-result",
@@ -993,8 +1017,16 @@ describe("braintrustEveHook", () => {
   });
 
   it("uses deterministic ids and nests local subagent sessions from Eve lineage", async () => {
-    const wildcard = braintrustEveHook({ defineState }).events?.["*"];
-    expect(wildcard).toBeDefined();
+    const parentEveState = createFakeDefineState();
+    const childEveState = createFakeDefineState();
+    const parentWildcard = braintrustEveHook({
+      defineState: parentEveState.defineState,
+    }).events?.["*"];
+    const childWildcard = braintrustEveHook({
+      defineState: childEveState.defineState,
+    }).events?.["*"];
+    expect(parentWildcard).toBeDefined();
+    expect(childWildcard).toBeDefined();
 
     const parentCtx: EveHookContext = {
       agent: { name: "eve-parent-agent" },
@@ -1015,9 +1047,9 @@ describe("braintrustEveHook", () => {
       },
     };
     const emitParent = (event: EveHandleMessageStreamEvent) =>
-      wildcard?.(event, parentCtx);
+      parentWildcard?.(event, parentCtx);
     const emitChild = (event: EveHandleMessageStreamEvent) =>
-      wildcard?.(event, childCtx);
+      childWildcard?.(event, childCtx);
 
     await emitParent({
       data: { sequence: 0, turnId: "turn-parent" },
@@ -1302,6 +1334,9 @@ describe("braintrustEveHook", () => {
     expect(parentTurn).toBeDefined();
     expect(subagentSpans).toHaveLength(1);
     expect(subagentSpans[0]?.span_id).toBe(subagentSpanId);
+    expect(subagentSpans[0]?.input).toEqual({
+      message: "Find the relevant section",
+    });
     expect(childTurn).toBeDefined();
     expect(childSearch).toBeDefined();
     expect(parentRead).toBeDefined();
@@ -1372,13 +1407,14 @@ describe("braintrustEveHook", () => {
       "eve.step",
     ]);
 
-    Reflect.deleteProperty(globalThis, Symbol.for("braintrust.eve.bridge"));
     backgroundLogger = _exportsForTestingOnly.useTestBackgroundLogger();
     initLogger({
       projectName: "eve-plugin.test.ts",
       projectId: "test-project-id",
     });
-    const replay = braintrustEveHook({ defineState }).events?.["*"];
+    const replay = braintrustEveHook({
+      defineState: parentEveState.defineState,
+    }).events?.["*"];
     await replay?.(
       {
         data: { sequence: 0, turnId: "turn-parent" },

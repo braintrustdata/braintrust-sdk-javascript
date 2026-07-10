@@ -262,12 +262,6 @@ export type SetCurrentArg = { setCurrent?: boolean };
 
 type StartSpanEventArgs = ExperimentLogPartialArgs & Partial<IdField>;
 
-const RESUME_SPAN = Symbol("braintrust.resume-span");
-
-type ResumeSpanArgs = {
-  readonly [RESUME_SPAN]?: true;
-};
-
 export type StartSpanArgs = {
   name?: string;
   type?: SpanType;
@@ -6195,20 +6189,6 @@ export function startSpan<IsAsyncFlush extends boolean = true>(
 }
 
 /**
- * Reconstruct a span whose initial row has already been written by another
- * process. This is intentionally kept off the root export surface for
- * integrations that need durable, cross-process span lifecycles.
- */
-export function resumeSpan<IsAsyncFlush extends boolean = true>(
-  args?: StartSpanArgs & AsyncFlushArg<IsAsyncFlush> & OptionalStateArg,
-): Span {
-  return startSpan({
-    ...args,
-    [RESUME_SPAN]: true,
-  } as ResumeSpanArgs & AsyncFlushArg<IsAsyncFlush> & OptionalStateArg);
-}
-
-/**
  * Flush any pending rows to the server.
  */
 export async function flush(options?: OptionalStateArg): Promise<void> {
@@ -7497,8 +7477,7 @@ export class SpanImpl implements Span {
       defaultRootType?: SpanType;
       spanId?: string;
       propagatedState?: PropagatedState | undefined;
-    } & Omit<StartSpanArgs, "parent"> &
-      ResumeSpanArgs,
+    } & Omit<StartSpanArgs, "parent">,
   ) {
     this._state = args.state;
     this._propagatedState = args.propagatedState;
@@ -7566,11 +7545,10 @@ export class SpanImpl implements Span {
     this._rootSpanId = resolvedIds.rootSpanId;
     this._spanParents = resolvedIds.spanParents;
 
-    // The first log is normally a replacement. Resumed spans already have a
-    // durable row, so their first write must be a merge and must not replace
-    // structural fields such as the original start time.
-    this.isMerge = args[RESUME_SPAN] === true;
-    this.logInternal({ event, ...(this.isMerge ? {} : { internalData }) });
+    // The first log is a replacement, but subsequent logs to the same span
+    // object will be merges.
+    this.isMerge = false;
+    this.logInternal({ event, internalData });
     this.isMerge = true;
   }
 

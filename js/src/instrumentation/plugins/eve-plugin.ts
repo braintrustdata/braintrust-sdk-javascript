@@ -4,13 +4,13 @@ import {
   NOOP_SPAN,
   currentSpan,
   flush,
-  logError,
-  resumeSpan,
   startSpan,
+  updateSpan,
   withCurrent,
 } from "../../logger";
 import type { Span } from "../../logger";
 import { SpanTypeAttribute, isObject } from "../../../util/index";
+import { getCurrentUnixTimestamp } from "../../util";
 import type {
   EveAssistantStepFinishReason,
   EveHandleMessageStreamEvent,
@@ -26,7 +26,16 @@ import type {
 
 type SpanState = {
   metadata: Record<string, unknown>;
-  span: Span;
+  span: EveSpan;
+};
+
+type EveSpan = Pick<Span, "end" | "log" | "rootSpanId" | "spanId">;
+
+type EveSpanReference = {
+  readonly exported: string;
+  readonly rootSpanId: string;
+  readonly rowId: string;
+  readonly spanId: string;
 };
 
 type SessionState = SpanState & {
@@ -57,8 +66,6 @@ type ParentLineage = {
   callId: string;
   rootSessionId: string;
   sessionId: string;
-  turnId?: string;
-  turnSequence?: number;
 };
 
 type EveStateHandle<T> = {
@@ -70,7 +77,7 @@ type EveDefineState = <T>(name: string, initial: () => T) => EveStateHandle<T>;
 
 type EveTraceState = {
   metadata: Record<string, unknown>;
-  startedSpanRows: readonly string[];
+  spanReferences: readonly EveSpanReference[];
   stepStarts: readonly {
     ordinal: number;
     open: boolean;
@@ -132,6 +139,35 @@ function isEveHandleMessageStreamEvent(
   return isObject(event) && typeof event["type"] === "string";
 }
 
+class ResumedEveSpan implements EveSpan {
+  private endTime: number | undefined;
+
+  constructor(private readonly reference: EveSpanReference) {}
+
+  get rootSpanId(): string {
+    return this.reference.rootSpanId;
+  }
+
+  get spanId(): string {
+    return this.reference.spanId;
+  }
+
+  log(event: Parameters<Span["log"]>[0]): void {
+    updateSpan({ exported: this.reference.exported, ...event });
+  }
+
+  end(args?: Parameters<Span["end"]>[0]): number {
+    if (this.endTime === undefined) {
+      this.endTime = args?.endTime ?? getCurrentUnixTimestamp();
+      updateSpan({
+        exported: this.reference.exported,
+        metrics: { end: this.endTime },
+      });
+    }
+    return this.endTime;
+  }
+}
+
 class EveBridge {
   constructor(private readonly state: EveStateHandle<EveTraceState>) {}
 
@@ -142,36 +178,51 @@ class EveBridge {
 
   private async startEveSpan(
     args: Parameters<typeof startSpan>[0],
-  ): Promise<Span> {
+  ): Promise<EveSpan> {
     const rowId = args?.event?.id;
-    const started =
+    const reference =
       typeof rowId === "string" &&
-      readEveTraceState(this.state).startedSpanRows.includes(rowId);
-    const span = withCurrent(NOOP_SPAN, () =>
-      (started ? resumeSpan : startSpan)(args),
-    );
-    if (!started && typeof rowId === "string") {
-      const flushed = await this.flushInstrumentation();
-      if (!flushed) {
-        return span;
-      }
+      readEveTraceState(this.state).spanReferences.find(
+        (candidate) => candidate.rowId === rowId,
+      );
+    if (reference) {
+      return new ResumedEveSpan(reference);
+    }
+
+    const span = withCurrent(NOOP_SPAN, () => startSpan(args));
+    if (typeof rowId !== "string" || !(await this.flushInstrumentation())) {
+      return span;
+    }
+
+    try {
+      const exported = await span.export();
+      const reference = {
+        exported,
+        rootSpanId: span.rootSpanId,
+        rowId,
+        spanId: span.spanId,
+      };
       this.state.update((current) => {
         const normalized = normalizeEveTraceState(current);
-        return normalized.startedSpanRows.includes(rowId)
+        return normalized.spanReferences.some(
+          (candidate) => candidate.rowId === rowId,
+        )
           ? normalized
           : {
               ...normalized,
-              startedSpanRows: [...normalized.startedSpanRows, rowId],
+              spanReferences: [...normalized.spanReferences, reference],
             };
       });
+    } catch (error) {
+      debugLogger.warn("Error exporting Eve span for resumption:", error);
     }
     return span;
   }
 
   private async startEveChildSpan(
-    parent: Span,
+    parent: EveSpan,
     args: Parameters<typeof startSpan>[0],
-  ): Promise<Span> {
+  ): Promise<EveSpan> {
     return await this.startEveSpan({
       ...args,
       parentSpanIds: {
@@ -873,14 +924,13 @@ class EveBridge {
   ): void {
     const step = this.stepForEvent(event, ctx);
     if (step) {
-      logError(
-        step.span,
-        errorFromMessage(
+      step.span.log({
+        error: errorFromMessage(
           event.data.message,
           event.data.code,
           event.data.details,
         ),
-      );
+      });
       const endTime = eventTime(event);
       step.span.end(endTime === undefined ? undefined : { endTime });
     }
@@ -922,10 +972,13 @@ class EveBridge {
     }
 
     this.endOpenChildrenForTurn(turn, eventTime(event));
-    logError(
-      turn.span,
-      errorFromMessage(event.data.message, event.data.code, event.data.details),
-    );
+    turn.span.log({
+      error: errorFromMessage(
+        event.data.message,
+        event.data.code,
+        event.data.details,
+      ),
+    });
     const endTime = eventTime(event);
     turn.span.end(endTime === undefined ? undefined : { endTime });
     this.cleanupTurn(event, ctx);
@@ -953,14 +1006,13 @@ class EveBridge {
         continue;
       }
       this.endOpenChildrenForTurn(turn, eventTime(event));
-      logError(
-        turn.span,
-        errorFromMessage(
+      turn.span.log({
+        error: errorFromMessage(
           event.data.message,
           event.data.code,
           event.data.details,
         ),
-      );
+      });
       const endTime = eventTime(event);
       turn.span.end(endTime === undefined ? undefined : { endTime });
       this.turnsByKey.delete(key);
@@ -977,10 +1029,13 @@ class EveBridge {
       }
     }
 
-    logError(
-      session.span,
-      errorFromMessage(event.data.message, event.data.code, event.data.details),
-    );
+    session.span.log({
+      error: errorFromMessage(
+        event.data.message,
+        event.data.code,
+        event.data.details,
+      ),
+    });
     const endTime = eventTime(event);
     session.span.end(endTime === undefined ? undefined : { endTime });
     this.sessionsById.delete(sessionId);
@@ -1052,9 +1107,8 @@ class EveBridge {
     }
 
     const lineage = parentLineageFromContext(ctx);
-    if (lineage) {
-      await this.recordChildSessionOnParentSubagent(startTime, ctx, lineage);
-    }
+    // A child session has its own durable Eve context. It can link to the
+    // deterministic parent subagent span, but must not upsert that row itself.
     const parentSubagent = lineage
       ? this.toolsByCallKey.get(toolKey(lineage.sessionId, lineage.callId))
       : undefined;
@@ -1067,7 +1121,7 @@ class EveBridge {
           ? spanIdForSubagent(lineage.sessionId, lineage.callId)
           : Promise.resolve(undefined),
         lineage
-          ? rootSpanIdForLineage(lineage)
+          ? rootSpanIdForSession(lineage.rootSessionId)
           : rootSpanIdForSession(sessionId),
       ]);
 
@@ -1380,7 +1434,7 @@ class EveBridge {
       { data: { readonly sequence: number; readonly turnId: string } }
     >,
     metadata: Record<string, unknown>,
-  ): Promise<Span> {
+  ): Promise<EveSpan> {
     const [eventId, spanId, sessionSpanId] = await Promise.all([
       rowIdForTurn(session.sessionId, event.data.turnId),
       spanIdForTurn(session.sessionId, event.data.turnId),
@@ -1400,62 +1454,6 @@ class EveBridge {
       spanAttributes: { type: SpanTypeAttribute.TASK },
       spanId,
       startTime: eventTime(event),
-    });
-  }
-
-  private async recordChildSessionOnParentSubagent(
-    startTime: number | undefined,
-    ctx: unknown,
-    lineage: ParentLineage,
-  ): Promise<void> {
-    const subagentName = subagentNameFromContext(ctx);
-    const existing = this.toolsByCallKey.get(
-      toolKey(lineage.sessionId, lineage.callId),
-    );
-    if (existing) {
-      return;
-    }
-
-    if (!lineage.turnId || typeof lineage.turnSequence !== "number") {
-      return;
-    }
-
-    const metadata = {};
-    const [eventId, spanId, parentTurnSpanId, rootSpanId] = await Promise.all([
-      rowIdForSubagent(lineage.sessionId, lineage.callId),
-      spanIdForSubagent(lineage.sessionId, lineage.callId),
-      spanIdForTurn(lineage.sessionId, lineage.turnId),
-      rootSpanIdForLineage(lineage),
-    ]);
-    const pending = this.toolsByCallKey.get(
-      toolKey(lineage.sessionId, lineage.callId),
-    );
-    if (pending) {
-      return;
-    }
-    const parentTurn = this.turnsByKey.get(
-      turnKey(lineage.sessionId, lineage.turnId),
-    );
-    const span = await this.startEveSpan({
-      event: {
-        id: eventId,
-        metadata,
-      },
-      name: subagentName ?? "agent",
-      parentSpanIds: {
-        rootSpanId: parentTurn?.span.rootSpanId ?? rootSpanId,
-        spanId: parentTurnSpanId,
-      },
-      spanAttributes: { type: SpanTypeAttribute.TOOL },
-      spanId,
-      startTime,
-    });
-    span.log({ metadata });
-    this.toolsByCallKey.set(toolKey(lineage.sessionId, lineage.callId), {
-      kind: "subagent",
-      metadata,
-      span,
-      turnKey: turnKey(lineage.sessionId, lineage.turnId),
     });
   }
 
@@ -1535,23 +1533,11 @@ class EveBridge {
   }
 }
 
-function subagentNameFromContext(ctx: unknown): string | undefined {
-  if (!isObject(ctx)) {
-    return undefined;
-  }
-  const agent = ctx["agent"];
-  if (!isObject(agent)) {
-    return undefined;
-  }
-  const name = agent["name"];
-  return typeof name === "string" ? name : undefined;
-}
-
 function emptyEveTraceState(): EveTraceState {
   return {
     llmInputs: [],
     metadata: {},
-    startedSpanRows: [],
+    spanReferences: [],
     stepStarts: [],
   };
 }
@@ -1561,9 +1547,23 @@ function normalizeEveTraceState(state: unknown): EveTraceState {
     return emptyEveTraceState();
   }
   const metadata = isObject(state["metadata"]) ? state["metadata"] : {};
-  const startedSpanRows = Array.isArray(state["startedSpanRows"])
-    ? state["startedSpanRows"].filter(
-        (rowId): rowId is string => typeof rowId === "string",
+  const spanReferences = Array.isArray(state["spanReferences"])
+    ? state["spanReferences"].flatMap(
+        (entry): EveTraceState["spanReferences"] => {
+          if (!isObject(entry)) {
+            return [];
+          }
+          const exported = entry["exported"];
+          const rootSpanId = entry["rootSpanId"];
+          const rowId = entry["rowId"];
+          const spanId = entry["spanId"];
+          return typeof exported === "string" &&
+            typeof rootSpanId === "string" &&
+            typeof rowId === "string" &&
+            typeof spanId === "string"
+            ? [{ exported, rootSpanId, rowId, spanId }]
+            : [];
+        },
       )
     : [];
   const llmInputs = Array.isArray(state["llmInputs"])
@@ -1598,7 +1598,7 @@ function normalizeEveTraceState(state: unknown): EveTraceState {
           : [];
       })
     : [];
-  return { llmInputs, metadata: { ...metadata }, startedSpanRows, stepStarts };
+  return { llmInputs, metadata: { ...metadata }, spanReferences, stepStarts };
 }
 
 function readEveTraceState(
@@ -1791,16 +1791,7 @@ function parentLineageFromContext(ctx: unknown): ParentLineage | undefined {
     return undefined;
   }
 
-  const turn = parent["turn"];
-  const turnId = isObject(turn) ? turn["id"] : undefined;
-  const turnSequence = isObject(turn) ? turn["sequence"] : undefined;
-  return {
-    callId,
-    rootSessionId,
-    sessionId,
-    ...(typeof turnId === "string" ? { turnId } : {}),
-    ...(typeof turnSequence === "number" ? { turnSequence } : {}),
-  };
+  return { callId, rootSessionId, sessionId };
 }
 
 function isToolCallAction(
@@ -1901,10 +1892,6 @@ function toolKey(sessionId: string, callId: string): string {
 
 async function rootSpanIdForSession(sessionId: string): Promise<string> {
   return deterministicEveId("eve:root", sessionId);
-}
-
-async function rootSpanIdForLineage(lineage: ParentLineage): Promise<string> {
-  return rootSpanIdForSession(lineage.rootSessionId);
 }
 
 async function spanIdForSession(sessionId: string): Promise<string> {
