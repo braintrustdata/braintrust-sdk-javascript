@@ -431,6 +431,9 @@ describe("braintrustEveHook", () => {
     const spans = (await backgroundLogger.drain()) as Array<
       Record<string, any>
     >;
+    const session = spans.find(
+      (span) => span.span_attributes?.name === "eve.session",
+    );
     const root = spans.find(
       (span) => span.span_attributes?.name === "eve.turn",
     );
@@ -440,11 +443,24 @@ describe("braintrustEveHook", () => {
     const tool = spans.find((span) => span.span_attributes?.name === "search");
 
     expect(spans.map((span) => span.span_attributes?.name)).toEqual([
+      "eve.session",
       "eve.turn",
       "eve.step",
       "search",
       "eve.step",
     ]);
+    expect(session).toMatchObject({
+      metadata: {
+        ...expectedModelMetadata,
+        scenario: "eve-plugin-unit",
+        testRunId: "test-run-flat-tree",
+      },
+      span_attributes: {
+        name: "eve.session",
+        type: "task",
+      },
+      span_parents: [],
+    });
     expect(root).toMatchObject({
       input: [{ content: "Search then read", role: "user" }],
       metadata: {
@@ -465,6 +481,7 @@ describe("braintrustEveHook", () => {
         name: "eve.turn",
         type: "task",
       },
+      span_parents: [session?.span_id],
     });
     expect(steps).toHaveLength(2);
     expect(steps.map((span) => span.span_attributes?.name)).toEqual([
@@ -528,6 +545,52 @@ describe("braintrustEveHook", () => {
           role: "assistant",
         },
       },
+    ]);
+  });
+
+  it("records each user message as a separate turn in one session", async () => {
+    const wildcard = braintrustEveHook().events?.["*"];
+    expect(wildcard).toBeDefined();
+
+    const ctx: EveHookContext = { session: { id: "session-multi-turn" } };
+    for (const [sequence, message] of [
+      [0, "First user message"],
+      [1, "Second user message"],
+    ] as const) {
+      const turnId = `turn-${sequence}`;
+      await wildcard?.(
+        { data: { sequence, turnId }, type: "turn.started" },
+        ctx,
+      );
+      await wildcard?.(
+        { data: { message, sequence, turnId }, type: "message.received" },
+        ctx,
+      );
+      await wildcard?.(
+        { data: { sequence, turnId }, type: "turn.completed" },
+        ctx,
+      );
+    }
+
+    const spans = (await backgroundLogger.drain()) as Array<
+      Record<string, any>
+    >;
+    const session = spans.find(
+      (span) => span.span_attributes?.name === "eve.session",
+    );
+    const turns = spans.filter(
+      (span) => span.span_attributes?.name === "eve.turn",
+    );
+
+    expect(session?.span_parents).toEqual([]);
+    expect(turns).toHaveLength(2);
+    expect(turns.map((turn) => turn.span_parents)).toEqual([
+      [session?.span_id],
+      [session?.span_id],
+    ]);
+    expect(turns.map((turn) => turn.input)).toEqual([
+      [{ content: "First user message", role: "user" }],
+      [{ content: "Second user message", role: "user" }],
     ]);
   });
 
@@ -1187,10 +1250,18 @@ describe("braintrustEveHook", () => {
       "session-parent",
       "turn-parent",
     );
+    const parentSessionId = deterministicEveIdForTest(
+      "eve:session",
+      "session-parent",
+    );
     const childTurnId = deterministicEveIdForTest(
       "eve:turn",
       "session-child",
       "turn-child",
+    );
+    const childSessionId = deterministicEveIdForTest(
+      "eve:session",
+      "session-child",
     );
     const subagentSpanId = deterministicEveIdForTest(
       "eve:subagent",
@@ -1202,6 +1273,11 @@ describe("braintrustEveHook", () => {
         span.span_attributes?.name === "eve.turn" &&
         span.span_id === parentTurnId,
     );
+    const parentSession = spans.find(
+      (span) =>
+        span.span_attributes?.name === "eve.session" &&
+        span.span_id === parentSessionId,
+    );
     const subagentSpans = spans.filter(
       (span) => span.span_attributes?.name === "researcher",
     );
@@ -1209,6 +1285,11 @@ describe("braintrustEveHook", () => {
       (span) =>
         span.span_attributes?.name === "eve.turn" &&
         span.span_id === childTurnId,
+    );
+    const childSession = spans.find(
+      (span) =>
+        span.span_attributes?.name === "eve.session" &&
+        span.span_id === childSessionId,
     );
     const childSearch = spans.find(
       (span) =>
@@ -1226,6 +1307,7 @@ describe("braintrustEveHook", () => {
         span.span_parents?.[0] === parentTurnId,
     );
 
+    expect(parentSession).toBeDefined();
     expect(parentTurn).toBeDefined();
     expect(subagentSpans).toHaveLength(1);
     expect(subagentSpans[0]?.span_id).toBe(subagentSpanId);
@@ -1233,7 +1315,8 @@ describe("braintrustEveHook", () => {
     expect(childSearch).toBeDefined();
     expect(parentRead).toBeDefined();
     expect(parentSteps).toHaveLength(3);
-    expect(parentTurn?.span_parents ?? []).toEqual([]);
+    expect(parentSession?.span_parents ?? []).toEqual([]);
+    expect(parentTurn?.span_parents).toEqual([parentSession?.span_id]);
     expect(parentTurn?.span_id).toBe(parentTurnId);
     expect(parentTurn?.span_id).toMatch(
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
@@ -1242,7 +1325,8 @@ describe("braintrustEveHook", () => {
       /^([0-9a-f]{32}|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/,
     );
     expect(subagentSpans[0]?.span_parents).toEqual([parentTurn?.span_id]);
-    expect(childTurn?.span_parents).toEqual([subagentSpans[0]?.span_id]);
+    expect(childSession?.span_parents).toEqual([subagentSpans[0]?.span_id]);
+    expect(childTurn?.span_parents).toEqual([childSession?.span_id]);
     expect(childTurn?.root_span_id).toBe(parentTurn?.root_span_id);
     expect(childTurn?.metadata ?? {}).toEqual({});
     expect(subagentSpans[0]?.metadata ?? {}).toEqual({});
@@ -1284,9 +1368,11 @@ describe("braintrustEveHook", () => {
       ),
     ]);
     expect(spans.map((span) => span.span_attributes?.name)).toEqual([
+      "eve.session",
       "eve.turn",
       "eve.step",
       "researcher",
+      "eve.session",
       "eve.turn",
       "eve.step",
       "search",
@@ -1320,12 +1406,16 @@ describe("braintrustEveHook", () => {
       Record<string, any>
     >;
     expect(
+      replaySpans.find((span) => span.span_attributes?.name === "eve.session")
+        ?.span_id,
+    ).toBe(parentSession?.span_id);
+    expect(
       replaySpans.find((span) => span.span_attributes?.name === "eve.turn")
         ?.span_id,
     ).toBe(parentTurn?.span_id);
   });
 
-  it("parents root Eve turns under the active Braintrust span", async () => {
+  it("parents root Eve sessions under the active Braintrust span", async () => {
     const wildcard = braintrustEveHook().events?.["*"];
     expect(wildcard).toBeDefined();
 
@@ -1357,11 +1447,19 @@ describe("braintrustEveHook", () => {
     const turn = spans.find(
       (span) => span.span_attributes?.name === "eve.turn",
     );
+    const session = spans.find(
+      (span) => span.span_attributes?.name === "eve.session",
+    );
 
+    expect(session?.span_id).toBe(
+      deterministicEveIdForTest("eve:session", "session-wrapped"),
+    );
+    expect(session?.span_parents).toEqual([parent.spanId]);
+    expect(session?.root_span_id).toBe(parent.rootSpanId);
     expect(turn?.span_id).toBe(
       deterministicEveIdForTest("eve:turn", "session-wrapped", "turn-wrapped"),
     );
-    expect(turn?.span_parents).toEqual([parent.spanId]);
+    expect(turn?.span_parents).toEqual([session?.span_id]);
     expect(turn?.root_span_id).toBe(parent.rootSpanId);
   });
 
@@ -1397,7 +1495,14 @@ describe("braintrustEveHook", () => {
       ),
     ).resolves.toBeUndefined();
 
-    const spans = await backgroundLogger.drain();
-    expect(spans).toEqual([]);
+    const spans = (await backgroundLogger.drain()) as Array<
+      Record<string, any>
+    >;
+    expect(spans).toHaveLength(1);
+    expect(spans[0]).toMatchObject({
+      metadata: {},
+      span_attributes: { name: "eve.session", type: "task" },
+      span_parents: [],
+    });
   });
 });

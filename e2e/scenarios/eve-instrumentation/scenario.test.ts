@@ -8,9 +8,9 @@ import {
 } from "../../helpers/scenario-harness";
 import { matchSpanTreeSnapshot } from "../../helpers/span-tree";
 import {
+  findAllSpans,
   findChildSpans,
   findLatestChildSpan,
-  findLatestSpan,
 } from "../../helpers/trace-selectors";
 
 const originalScenarioDir = resolveScenarioDir(import.meta.url);
@@ -46,14 +46,23 @@ describe("eve instrumentation", () => {
     );
   }, TIMEOUT_MS);
 
-  test("captures a nested Eve local subagent trace", async () => {
-    const root = findLatestSpan(events, "eve.turn");
+  test("captures multiple nested turns in one Eve session", async () => {
+    const session = findAllSpans(events, "eve.session").find(
+      (span) => span.span.parentIds.length === 0,
+    );
+    const turns = findChildSpans(events, "eve.turn", session?.span.id);
+    const [root, secondRoot] = turns;
     const steps = findChildSpans(events, "eve.step", root?.span.id);
     const researcher = findChildSpans(events, "researcher", root?.span.id)[0];
+    const childSession = findChildSpans(
+      events,
+      "eve.session",
+      researcher?.span.id,
+    )[0];
     const childTurn = findChildSpans(
       events,
       "eve.turn",
-      researcher?.span.id,
+      childSession?.span.id,
     )[0];
     const childSteps = findChildSpans(events, "eve.step", childTurn?.span.id);
     const childSearch = findLatestChildSpan(
@@ -62,10 +71,56 @@ describe("eve instrumentation", () => {
       childTurn?.span.id,
     );
     const read = findLatestChildSpan(events, "read", root?.span.id);
+    const secondSteps = findChildSpans(events, "eve.step", secondRoot?.span.id);
+    const secondResearcher = findLatestChildSpan(
+      events,
+      "researcher",
+      secondRoot?.span.id,
+    );
+    const secondChildSession = findLatestChildSpan(
+      events,
+      "eve.session",
+      secondResearcher?.span.id,
+    );
+    const secondChildTurn = findLatestChildSpan(
+      events,
+      "eve.turn",
+      secondChildSession?.span.id,
+    );
+    const secondRead = findLatestChildSpan(events, "read", secondRoot?.span.id);
+
+    expect(session).toBeDefined();
+    expect(session?.span.type).toBe("task");
+    expect(session?.span.parentIds).toEqual([]);
+    expect(session?.metadata).toMatchObject({
+      model: "gpt-5.4-mini",
+      provider: "openai",
+      scenario: "eve-instrumentation",
+      testRunId: expect.any(String),
+    });
+    expect(turns).toHaveLength(2);
+    expect(turns.map((turn) => turn.span.parentIds)).toEqual([
+      [session?.span.id],
+      [session?.span.id],
+    ]);
+    expect(turns.map((turn) => turn.input)).toEqual([
+      [
+        {
+          content: "Run the Braintrust Eve instrumentation e2e scenario",
+          role: "user",
+        },
+      ],
+      [
+        {
+          content: "Run the Braintrust Eve instrumentation e2e scenario again",
+          role: "user",
+        },
+      ],
+    ]);
 
     expect(root).toBeDefined();
     expect(root?.span.type).toBe("task");
-    expect(root?.span.parentIds).toEqual([]);
+    expect(root?.span.parentIds).toEqual([session?.span.id]);
     expect(root?.metadata).toMatchObject({
       scenario: "eve-instrumentation",
       testRunId: expect.any(String),
@@ -105,8 +160,12 @@ describe("eve instrumentation", () => {
     });
     expect(researcher?.output).toContain("Researcher result");
 
+    expect(childSession).toBeDefined();
+    expect(childSession?.span.parentIds).toEqual([researcher?.span.id]);
+    expect(childSession?.span.rootId).toEqual(session?.span.rootId);
+
     expect(childTurn).toBeDefined();
-    expect(childTurn?.span.parentIds).toEqual([researcher?.span.id]);
+    expect(childTurn?.span.parentIds).toEqual([childSession?.span.id]);
     expect(childTurn?.span.rootId).toEqual(root?.span.rootId);
     expect(childTurn?.metadata).toMatchObject({
       scenario: "eve-instrumentation",
@@ -152,6 +211,28 @@ describe("eve instrumentation", () => {
       section: "Runtime context",
       title: "Eve instrumentation",
     });
+
+    expect(secondRoot).toBeDefined();
+    expect(secondRoot?.span.type).toBe("task");
+    expect(secondRoot?.output).toContain("Final answer from read");
+    expect(secondSteps).toHaveLength(3);
+    expect(secondSteps.map((step) => step.span.type)).toEqual([
+      "llm",
+      "llm",
+      "llm",
+    ]);
+    expect(secondResearcher?.span.type).toBe("tool");
+    expect(secondResearcher?.span.ended).toBe(true);
+    expect(secondResearcher?.span.parentIds).toEqual([secondRoot?.span.id]);
+    expect(secondChildSession?.span.parentIds).toEqual([
+      secondResearcher?.span.id,
+    ]);
+    expect(secondChildTurn?.span.parentIds).toEqual([
+      secondChildSession?.span.id,
+    ]);
+    expect(secondRead?.span.type).toBe("tool");
+    expect(secondRead?.span.ended).toBe(true);
+    expect(secondRead?.span.parentIds).toEqual([secondRoot?.span.id]);
 
     await matchSpanTreeSnapshot(events, spanTreeSnapshotPath);
   });

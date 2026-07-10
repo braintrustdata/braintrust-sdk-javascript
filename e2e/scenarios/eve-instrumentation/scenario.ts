@@ -43,15 +43,46 @@ async function main() {
       );
     }
 
-    const body = (await response.json()) as { sessionId?: string };
-    if (!body.sessionId) {
-      throw new Error(`Eve session create did not return a sessionId`);
+    const body = (await response.json()) as {
+      continuationToken?: string;
+      sessionId?: string;
+    };
+    if (!body.sessionId || !body.continuationToken) {
+      throw new Error(
+        `Eve session create did not return a sessionId and continuationToken`,
+      );
     }
 
-    await streamUntilTurnCompleted(
+    const seenSessionIds = new Set([body.sessionId]);
+    const nextIndex = await streamUntil(
       baseUrl,
       body.sessionId,
-      new Set([body.sessionId]),
+      seenSessionIds,
+      "session.waiting",
+    );
+    const followUp = await fetch(
+      `${baseUrl}/eve/v1/session/${body.sessionId}`,
+      {
+        body: JSON.stringify({
+          continuationToken: body.continuationToken,
+          message: "Run the Braintrust Eve instrumentation e2e scenario again",
+        }),
+        headers: { "content-type": "application/json" },
+        method: "POST",
+      },
+    );
+    if (!followUp.ok) {
+      throw new Error(
+        `Eve session follow-up failed with ${followUp.status}: ${await followUp.text()}`,
+      );
+    }
+
+    await streamUntil(
+      baseUrl,
+      body.sessionId,
+      seenSessionIds,
+      "session.waiting",
+      nextIndex,
     );
     await new Promise((resolve) => setTimeout(resolve, 5000));
   } finally {
@@ -136,15 +167,17 @@ async function waitForEve(
   throw new Error(`Timed out waiting for eve start\n${output()}`);
 }
 
-async function streamUntilTurnCompleted(
+async function streamUntil(
   baseUrl: string,
   sessionId: string,
   seenSessionIds: Set<string>,
-): Promise<void> {
+  until: "session.waiting" | "turn.completed",
+  startIndex = 0,
+): Promise<number> {
   const controller = new AbortController();
   const childStreams: Promise<void>[] = [];
   const response = await fetch(
-    `${baseUrl}/eve/v1/session/${sessionId}/stream`,
+    `${baseUrl}/eve/v1/session/${sessionId}/stream?startIndex=${startIndex}`,
     {
       signal: controller.signal,
     },
@@ -158,11 +191,12 @@ async function streamUntilTurnCompleted(
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
   let buffer = "";
+  let nextIndex = startIndex;
   try {
     while (true) {
       const { done, value } = await reader.read();
       if (done) {
-        throw new Error("Eve stream ended before turn.completed");
+        throw new Error(`Eve stream ended before ${until}`);
       }
       buffer += decoder.decode(value, { stream: true });
       const lines = buffer.split("\n");
@@ -176,6 +210,7 @@ async function streamUntilTurnCompleted(
           data?: { childSessionId?: string; message?: string };
           type?: string;
         };
+        nextIndex++;
         if (
           event.type === "step.failed" ||
           event.type === "turn.failed" ||
@@ -192,16 +227,17 @@ async function streamUntilTurnCompleted(
         ) {
           seenSessionIds.add(event.data.childSessionId);
           childStreams.push(
-            streamUntilTurnCompleted(
+            streamUntil(
               baseUrl,
               event.data.childSessionId,
               seenSessionIds,
-            ),
+              "turn.completed",
+            ).then(() => undefined),
           );
         }
-        if (event.type === "turn.completed") {
+        if (event.type === until) {
           await Promise.all(childStreams);
-          return;
+          return nextIndex;
         }
       }
     }
