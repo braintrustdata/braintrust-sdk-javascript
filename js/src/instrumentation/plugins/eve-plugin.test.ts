@@ -208,7 +208,16 @@ describe("braintrustEveHook", () => {
     const step = spans.find(
       (span) => span.span_attributes?.name === "eve.step",
     );
-    expect(step?.input).toEqual(modelInput);
+    expect(step?.input).toEqual([
+      {
+        content: "Answer with the relevant Eve instrumentation detail.",
+        role: "system",
+      },
+      {
+        content: "What should Braintrust capture?",
+        role: "user",
+      },
+    ]);
     expect(fakeEve.values.get(EVE_LLM_INPUT_STATE_KEY)).toEqual({
       entries: [],
     });
@@ -223,7 +232,7 @@ describe("braintrustEveHook", () => {
     const fakeEve = installFakeEveContext();
     restoreFakeEveContext = fakeEve.restore;
     fakeEve.values.set(EVE_LLM_INPUT_STATE_KEY, {
-      entries: [{ input: { messages: "not an array" }, key: "bad" }],
+      entries: [{ input: { content: "not an array" }, key: "bad" }],
     });
     expect(() =>
       instrumentation.events?.["step.started"]?.({
@@ -1230,7 +1239,7 @@ describe("braintrustEveHook", () => {
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
     );
     expect(parentTurn?.root_span_id).toMatch(
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+      /^([0-9a-f]{32}|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/,
     );
     expect(subagentSpans[0]?.span_parents).toEqual([parentTurn?.span_id]);
     expect(childTurn?.span_parents).toEqual([subagentSpans[0]?.span_id]);

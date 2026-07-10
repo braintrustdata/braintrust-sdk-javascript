@@ -59,10 +59,7 @@ const EVE_LLM_INPUT_STATE_KEY = "braintrust.eve.llmInputs";
 const EVE_LLM_INPUT_STATE = { name: EVE_LLM_INPUT_STATE_KEY };
 const MAX_STORED_LLM_INPUTS = 100;
 
-type CapturedEveModelInput = {
-  instructions?: string | readonly unknown[];
-  messages: readonly unknown[];
-};
+type CapturedEveModelInput = readonly unknown[];
 
 type EveLlmInputState = {
   entries: readonly {
@@ -1455,33 +1452,18 @@ function capturedModelInput(
   }
 
   const instructions = modelInput["instructions"];
-  const value = {
-    ...(instructions !== undefined ? { instructions } : {}),
-    messages,
-  };
+  const value = [
+    ...(instructions !== undefined
+      ? [{ content: instructions, role: "system" }]
+      : []),
+    ...messages,
+  ];
   try {
     const cloned: unknown = JSON.parse(JSON.stringify(value));
-    if (!isObject(cloned)) {
+    if (!Array.isArray(cloned)) {
       return undefined;
     }
-    const clonedMessages = cloned["messages"];
-    if (!Array.isArray(clonedMessages)) {
-      return undefined;
-    }
-    const clonedInstructions = cloned["instructions"];
-    if (
-      clonedInstructions !== undefined &&
-      typeof clonedInstructions !== "string" &&
-      !Array.isArray(clonedInstructions)
-    ) {
-      return undefined;
-    }
-    return {
-      ...(clonedInstructions !== undefined
-        ? { instructions: clonedInstructions }
-        : {}),
-      messages: clonedMessages,
-    };
+    return cloned;
   } catch {
     return undefined;
   }
@@ -1585,15 +1567,7 @@ function eveLlmInputStateKey(): object | undefined {
 }
 
 function isCapturedModelInput(input: unknown): input is CapturedEveModelInput {
-  if (!isObject(input) || !Array.isArray(input["messages"])) {
-    return false;
-  }
-  const instructions = input["instructions"];
-  return (
-    instructions === undefined ||
-    typeof instructions === "string" ||
-    Array.isArray(instructions)
-  );
+  return Array.isArray(input);
 }
 
 function llmInputKey(
