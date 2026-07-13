@@ -3,7 +3,6 @@
     "metadata": {
       "scenario": "mastra-instrumentation"
     },
-    "metric_keys": [],
     "name": "mastra-instrumentation-root",
     "type": "task"
   },
@@ -11,7 +10,6 @@
     "metadata": {
       "operation": "generate"
     },
-    "metric_keys": [],
     "name": "mastra-agent-generate-operation",
     "type": null
   },
@@ -22,7 +20,6 @@
       "entity_name": "Weather Agent",
       "entity_type": "agent"
     },
-    "metric_keys": [],
     "name": "agent run: 'weather-agent'",
     "output": {
       "files": [],
@@ -60,11 +57,12 @@
       "model": "mock-model-id",
       "provider": "mock-provider"
     },
-    "metric_keys": [
-      "completion_tokens",
-      "prompt_tokens",
-      "tokens"
-    ],
+    "metrics": {
+      "completion_tokens": 20,
+      "prompt_tokens": 10,
+      "time_to_first_token": 0,
+      "tokens": 30
+    },
     "name": "llm: 'mock-model-id'",
     "output": {
       "files": [],
@@ -82,11 +80,11 @@
       "entity_name": "Weather Agent",
       "entity_type": "agent"
     },
-    "metric_keys": [
-      "completion_tokens",
-      "prompt_tokens",
-      "tokens"
-    ],
+    "metrics": {
+      "completion_tokens": 20,
+      "prompt_tokens": 10,
+      "tokens": 30
+    },
     "name": "step: 0",
     "output": {
       "text": "The forecast is sunny.",
@@ -100,7 +98,6 @@
       "entity_name": "Weather Agent",
       "entity_type": "agent"
     },
-    "metric_keys": [],
     "name": "chunk: 'text'",
     "output": {
       "text": "The forecast is sunny."
@@ -111,7 +108,6 @@
     "metadata": {
       "operation": "stream"
     },
-    "metric_keys": [],
     "name": "mastra-agent-stream-operation",
     "type": null
   },
@@ -122,7 +118,6 @@
       "entity_name": "Weather Agent",
       "entity_type": "agent"
     },
-    "metric_keys": [],
     "name": "agent run: 'weather-agent'",
     "output": {
       "files": [],
@@ -160,11 +155,12 @@
       "model": "mock-model-id",
       "provider": "mock-provider"
     },
-    "metric_keys": [
-      "completion_tokens",
-      "prompt_tokens",
-      "tokens"
-    ],
+    "metrics": {
+      "completion_tokens": 20,
+      "prompt_tokens": 10,
+      "time_to_first_token": 0,
+      "tokens": 30
+    },
     "name": "llm: 'mock-model-id'",
     "output": {
       "files": [],
@@ -182,11 +178,11 @@
       "entity_name": "Weather Agent",
       "entity_type": "agent"
     },
-    "metric_keys": [
-      "completion_tokens",
-      "prompt_tokens",
-      "tokens"
-    ],
+    "metrics": {
+      "completion_tokens": 20,
+      "prompt_tokens": 10,
+      "tokens": 30
+    },
     "name": "step: 0",
     "output": {
       "text": "The forecast is sunny.",
@@ -200,7 +196,6 @@
       "entity_name": "Weather Agent",
       "entity_type": "agent"
     },
-    "metric_keys": [],
     "name": "chunk: 'text'",
     "output": {
       "text": "The forecast is sunny."
@@ -211,7 +206,6 @@
     "metadata": {
       "operation": "tool"
     },
-    "metric_keys": [],
     "name": "mastra-tool-operation",
     "type": null
   },
@@ -219,7 +213,6 @@
     "metadata": {
       "operation": "workflow"
     },
-    "metric_keys": [],
     "name": "mastra-workflow-operation",
     "type": null
   },
@@ -232,7 +225,6 @@
       "entity_name": "travel-flow",
       "entity_type": "workflow_run"
     },
-    "metric_keys": [],
     "name": "workflow run: 'travel-flow'",
     "output": {
       "forecast": "Sunny in Berlin"
@@ -248,7 +240,6 @@
       "entity_name": "travel-flow",
       "entity_type": "workflow_step"
     },
-    "metric_keys": [],
     "name": "workflow step: 'lookup-step'",
     "output": {
       "forecast": "Sunny in Berlin"
@@ -259,7 +250,6 @@
     "metadata": {
       "scenario": "mastra-instrumentation"
     },
-    "metric_keys": [],
     "name": "mastra-instrumentation-root",
     "type": "task"
   }
