@@ -249,32 +249,37 @@ class EveBridge {
   private stepOrdinal(
     event: Extract<EveHandleMessageStreamEvent, { type: "step.started" }>,
   ): number {
-    const state = readEveTraceState(this.state);
-    const stepsForIndex = state.stepStarts.filter(
-      (entry) =>
-        entry.turnId === event.data.turnId &&
-        entry.stepIndex === event.data.stepIndex,
-    );
-    const previous = stepsForIndex.at(-1);
-    if (previous?.open) {
-      return previous.ordinal;
-    }
+    let ordinal = 0;
+    this.state.update((current) => {
+      const state = normalizeEveTraceState(current);
+      const previous = state.stepStarts
+        .filter(
+          (entry) =>
+            entry.turnId === event.data.turnId &&
+            entry.stepIndex === event.data.stepIndex,
+        )
+        .at(-1);
+      if (previous?.open) {
+        ordinal = previous.ordinal;
+        return state;
+      }
 
-    const ordinal = state.stepStarts.filter(
-      (entry) => entry.turnId === event.data.turnId,
-    ).length;
-    this.state.update((current) => ({
-      ...normalizeEveTraceState(current),
-      stepStarts: [
-        ...state.stepStarts,
-        {
-          open: true,
-          ordinal,
-          stepIndex: event.data.stepIndex,
-          turnId: event.data.turnId,
-        },
-      ].slice(-MAX_STORED_STEP_STARTS),
-    }));
+      ordinal = state.stepStarts.filter(
+        (entry) => entry.turnId === event.data.turnId,
+      ).length;
+      return {
+        ...state,
+        stepStarts: [
+          ...state.stepStarts,
+          {
+            open: true,
+            ordinal,
+            stepIndex: event.data.stepIndex,
+            turnId: event.data.turnId,
+          },
+        ].slice(-MAX_STORED_STEP_STARTS),
+      };
+    });
     return ordinal;
   }
 
@@ -310,8 +315,9 @@ class EveBridge {
       return;
     }
     try {
-      await this.handleEvent(event, ctx, hookMetadata);
-      await this.flushInstrumentation();
+      if (await this.handleEvent(event, ctx, hookMetadata)) {
+        await this.flushInstrumentation();
+      }
     } catch (error) {
       debugLogger.warn("Error in Eve hook instrumentation:", error);
     }
@@ -321,58 +327,58 @@ class EveBridge {
     event: EveHandleMessageStreamEvent,
     ctx: unknown,
     hookMetadata?: Record<string, unknown>,
-  ): Promise<void> {
+  ): Promise<boolean> {
     switch (event.type) {
       case "session.started":
         await this.handleSessionStarted(event, ctx, hookMetadata);
-        return;
+        return true;
       case "turn.started":
         await this.handleTurnStarted(event, ctx, hookMetadata);
-        return;
+        return true;
       case "message.received":
         await this.handleMessageReceived(event, ctx, hookMetadata);
-        return;
+        return true;
       case "step.started":
         await this.handleStepStarted(event, ctx, hookMetadata);
-        return;
+        return true;
       case "message.completed":
         this.handleMessageCompleted(event, ctx);
-        return;
+        return true;
       case "result.completed":
         this.handleResultCompleted(event, ctx);
-        return;
+        return true;
       case "actions.requested":
         await this.handleActionsRequested(event, ctx, hookMetadata);
-        return;
+        return true;
       case "action.result":
         await this.handleActionResult(event, ctx, hookMetadata);
-        return;
+        return true;
       case "subagent.called":
         await this.handleSubagentCalled(event, ctx, hookMetadata);
-        return;
+        return true;
       case "subagent.completed":
         await this.handleSubagentCompleted(event, ctx, hookMetadata);
-        return;
+        return true;
       case "step.completed":
         this.handleStepCompleted(event, ctx);
-        return;
+        return true;
       case "step.failed":
         this.handleStepFailed(event, ctx);
-        return;
+        return true;
       case "turn.completed":
         await this.handleTurnCompleted(event, ctx);
-        return;
+        return true;
       case "turn.failed":
         await this.handleTurnFailed(event, ctx);
-        return;
+        return true;
       case "session.failed":
         await this.handleSessionFailed(event, ctx);
-        return;
+        return true;
       case "session.completed":
         await this.handleSessionCompleted(event, ctx);
-        return;
+        return true;
       default:
-        return;
+        return false;
     }
   }
 
@@ -1709,20 +1715,24 @@ function consumeCapturedEveModelInput(
 ): CapturedEveModelInput | undefined {
   try {
     const key = llmInputKey(sessionId, turnId, stepIndex);
-    const current = readEveTraceState(state);
-    const entry = current.llmInputs.find((candidate) => candidate.key === key);
-    if (!entry) {
-      return undefined;
-    }
-
-    const index = current.llmInputs.indexOf(entry);
-    state.update((value) => ({
-      ...normalizeEveTraceState(value),
-      llmInputs: current.llmInputs.filter(
-        (_, candidateIndex) => candidateIndex !== index,
-      ),
-    }));
-    return entry.input;
+    let input: CapturedEveModelInput | undefined;
+    state.update((current) => {
+      const normalized = normalizeEveTraceState(current);
+      const index = normalized.llmInputs.findIndex(
+        (candidate) => candidate.key === key,
+      );
+      if (index < 0) {
+        return normalized;
+      }
+      input = normalized.llmInputs[index]?.input;
+      return {
+        ...normalized,
+        llmInputs: normalized.llmInputs.filter(
+          (_, candidateIndex) => candidateIndex !== index,
+        ),
+      };
+    });
+    return input;
   } catch (error) {
     debugLogger.warn("Error in Eve LLM input consumption:", error);
     return undefined;

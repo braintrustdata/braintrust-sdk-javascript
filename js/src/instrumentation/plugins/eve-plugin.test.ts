@@ -1052,6 +1052,40 @@ describe("braintrustEveHook", () => {
     });
   });
 
+  it("flushes recognized events but not ignored Eve events", async () => {
+    const wildcard = braintrustEveHook({ defineState }).events?.["*"];
+    const ctx: EveHookContext = {
+      session: { id: "session-selective-flush" },
+    };
+    const flushSpy = vi
+      .spyOn(backgroundLogger, "flush")
+      .mockResolvedValue(undefined);
+
+    await wildcard?.(
+      {
+        data: { wait: "next-user-message" },
+        type: "session.waiting",
+      },
+      ctx,
+    );
+    expect(flushSpy).not.toHaveBeenCalled();
+
+    await wildcard?.(
+      {
+        data: {
+          finishReason: "stop",
+          message: null,
+          sequence: 0,
+          stepIndex: 0,
+          turnId: "turn-selective-flush",
+        },
+        type: "message.completed",
+      },
+      ctx,
+    );
+    expect(flushSpy).toHaveBeenCalledTimes(1);
+  });
+
   it("serializes events per session without blocking other sessions", async () => {
     const wildcard = braintrustEveHook({ defineState }).events?.["*"];
     expect(wildcard).toBeDefined();
