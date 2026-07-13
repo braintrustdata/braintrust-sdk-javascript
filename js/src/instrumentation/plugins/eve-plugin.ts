@@ -1,4 +1,3 @@
-import { toLoggedError } from "../core";
 import { debugLogger } from "../../debug-logger";
 import {
   NOOP_SPAN,
@@ -14,6 +13,7 @@ import { SpanTypeAttribute, isObject } from "../../../util/index";
 import { getCurrentUnixTimestamp } from "../../util";
 import type {
   EveAssistantStepFinishReason,
+  EveActionResultError,
   EveHandleMessageStreamEvent,
   EveHookContext,
   EveHookDefinition,
@@ -33,6 +33,7 @@ type SpanState = {
 type EveSpan = Pick<Span, "end" | "log" | "rootSpanId" | "spanId">;
 
 type EveSpanReference = {
+  readonly endTime?: number;
   readonly exported: string;
   readonly rootSpanId: string;
   readonly rowId: string;
@@ -147,7 +148,9 @@ function isEveHandleMessageStreamEvent(
 class ResumedEveSpan implements EveSpan {
   private endTime: number | undefined;
 
-  constructor(private readonly reference: EveSpanReference) {}
+  constructor(private readonly reference: EveSpanReference) {
+    this.endTime = reference.endTime;
+  }
 
   get rootSpanId(): string {
     return this.reference.rootSpanId;
@@ -176,6 +179,7 @@ class ResumedEveSpan implements EveSpan {
 class EveBridge {
   constructor(private readonly state: EveStateHandle<EveTraceState>) {}
 
+  private eventQueuesBySession = new Map<string, Promise<void>>();
   private sessionsById = new LRUCache<string, SessionState>({
     max: MAX_EVE_CACHE_ENTRIES,
   });
@@ -315,12 +319,47 @@ class EveBridge {
     if (!isEveHandleMessageStreamEvent(event)) {
       return;
     }
-    try {
-      if (await this.handleEvent(event, ctx, hookMetadata)) {
-        await this.flushInstrumentation();
+    const run = async () => {
+      try {
+        if (!(await this.handleEvent(event, ctx, hookMetadata))) {
+          return;
+        }
+        if (event.type === "session.failed") {
+          const sessionId = event.data.sessionId || sessionIdFromContext(ctx);
+          await this.flushInstrumentation();
+          if (sessionId) {
+            this.cleanupSession(sessionId);
+          }
+        } else if (event.type === "session.completed") {
+          const sessionId = sessionIdFromContext(ctx);
+          await this.flushInstrumentation();
+          if (sessionId) {
+            this.cleanupSession(sessionId);
+          }
+        }
+      } catch (error) {
+        debugLogger.warn("Error in Eve hook instrumentation:", error);
       }
-    } catch (error) {
-      debugLogger.warn("Error in Eve hook instrumentation:", error);
+    };
+
+    const sessionId =
+      event.type === "session.failed"
+        ? event.data.sessionId || sessionIdFromContext(ctx)
+        : sessionIdFromContext(ctx);
+    if (!sessionId) {
+      await run();
+      return;
+    }
+
+    const previous = this.eventQueuesBySession.get(sessionId);
+    const queued = previous ? previous.then(run) : run();
+    this.eventQueuesBySession.set(sessionId, queued);
+    try {
+      await queued;
+    } finally {
+      if (this.eventQueuesBySession.get(sessionId) === queued) {
+        this.eventQueuesBySession.delete(sessionId);
+      }
     }
   }
 
@@ -688,8 +727,6 @@ class EveBridge {
     if (!tool) {
       return;
     }
-    const flushAfterCompletion = tool.endedByTurn === true;
-
     const failed =
       event.data.status === "failed" ||
       result.isError === true ||
@@ -697,7 +734,7 @@ class EveBridge {
     tool.span.log({
       ...(failed
         ? {
-            error: toLoggedError(event.data.error?.message ?? result.output),
+            error: actionResultError(event.data.error, result.output),
           }
         : {}),
       metadata: tool.metadata,
@@ -708,9 +745,6 @@ class EveBridge {
     tool.span.end(endTime === undefined ? undefined : { endTime });
     this.toolsByCallKey.delete(key);
     this.completedToolKeys.set(key, true);
-    if (flushAfterCompletion) {
-      await this.flushInstrumentation();
-    }
   }
 
   private async handleSubagentCalled(
@@ -791,22 +825,30 @@ class EveBridge {
     if (!subagent) {
       return;
     }
-    const flushAfterCompletion = subagent.endedByTurn === true;
-
-    this.completeSubagentSpan({
-      endTime: eventTime(event),
-      error: event.data.error,
-      isError: event.data.status === "failed",
-      output: event.data.output,
-      spanState: subagent,
-      status: event.data.status,
+    subagent.span.log({
+      ...(event.data.status === "failed"
+        ? {
+            error: actionResultError(event.data.error, event.data.output),
+          }
+        : {}),
+      metadata: subagent.metadata,
+      ...(event.data.output !== undefined ? { output: event.data.output } : {}),
     });
-
-    this.toolsByCallKey.delete(key);
-    this.completedToolKeys.set(key, true);
-    if (flushAfterCompletion) {
-      await this.flushInstrumentation();
-    }
+    const endTime = eventTime(event);
+    const recordedEndTime = subagent.span.end(
+      endTime === undefined ? undefined : { endTime },
+    );
+    this.state.update((current) => {
+      const normalized = normalizeEveTraceState(current);
+      return {
+        ...normalized,
+        spanReferences: normalized.spanReferences.map((reference) =>
+          reference.spanId === subagent.span.spanId
+            ? { ...reference, endTime: recordedEndTime }
+            : reference,
+        ),
+      };
+    });
   }
 
   private async handleSubagentResult(
@@ -835,25 +877,24 @@ class EveBridge {
     if (!subagent) {
       return;
     }
-    const flushAfterCompletion = subagent.endedByTurn === true;
-
-    this.completeSubagentSpan({
-      endTime: eventTime(event),
-      error: event.data.error,
-      isError:
-        event.data.status === "failed" ||
-        result.isError === true ||
-        event.data.error !== undefined,
+    const isError =
+      event.data.status === "failed" ||
+      result.isError === true ||
+      event.data.error !== undefined;
+    subagent.span.log({
+      ...(isError
+        ? {
+            error: actionResultError(event.data.error, result.output),
+          }
+        : {}),
+      metadata: subagent.metadata,
       output: result.output,
-      spanState: subagent,
-      status: event.data.status,
     });
+    const endTime = eventTime(event);
+    subagent.span.end(endTime === undefined ? undefined : { endTime });
 
     this.toolsByCallKey.delete(key);
     this.completedToolKeys.set(key, true);
-    if (flushAfterCompletion) {
-      await this.flushInstrumentation();
-    }
   }
 
   private handleStepCompleted(
@@ -964,10 +1005,10 @@ class EveBridge {
     this.markStepEnded(event.data.turnId, event.data.stepIndex);
   }
 
-  private async handleTurnCompleted(
+  private handleTurnCompleted(
     event: Extract<EveHandleMessageStreamEvent, { type: "turn.completed" }>,
     ctx: unknown,
-  ): Promise<void> {
+  ): void {
     const turn = this.turnForEvent(event, ctx);
     if (!turn) {
       return;
@@ -976,14 +1017,12 @@ class EveBridge {
     this.finalizeTurn(turn, {
       endTime: eventTime(event),
     });
-
-    await this.flushInstrumentation();
   }
 
-  private async handleTurnFailed(
+  private handleTurnFailed(
     event: Extract<EveHandleMessageStreamEvent, { type: "turn.failed" }>,
     ctx: unknown,
-  ): Promise<void> {
+  ): void {
     const turn = this.turnForEvent(event, ctx);
     if (!turn) {
       return;
@@ -997,8 +1036,6 @@ class EveBridge {
         event.data.details,
       ),
     });
-
-    await this.flushInstrumentation();
   }
 
   private async handleSessionFailed(
@@ -1045,9 +1082,6 @@ class EveBridge {
     session.span.log({ error });
     const endTime = eventTime(event);
     session.span.end(endTime === undefined ? undefined : { endTime });
-
-    await this.flushInstrumentation();
-    this.cleanupSession(sessionId);
   }
 
   private async handleSessionCompleted(
@@ -1085,9 +1119,6 @@ class EveBridge {
     session.span.log({ metadata: session.metadata });
     const endTime = eventTime(event);
     session.span.end(endTime === undefined ? undefined : { endTime });
-
-    await this.flushInstrumentation();
-    this.cleanupSession(sessionId);
   }
 
   private async ensureSession(
@@ -1409,26 +1440,6 @@ class EveBridge {
     return state;
   }
 
-  private completeSubagentSpan(input: {
-    endTime: number | undefined;
-    error?: { readonly message?: string };
-    isError: boolean;
-    output: unknown;
-    spanState: ToolState;
-    status?: string;
-  }): void {
-    input.spanState.span.log({
-      ...(input.isError
-        ? { error: toLoggedError(input.error?.message ?? input.output) }
-        : {}),
-      metadata: input.spanState.metadata,
-      output: input.output,
-    });
-    input.spanState.span.end(
-      input.endTime === undefined ? undefined : { endTime: input.endTime },
-    );
-  }
-
   private async startTurnSpan(
     session: SessionState,
     event: Extract<
@@ -1587,6 +1598,7 @@ function normalizeEveTraceState(state: unknown): EveTraceState {
             return [];
           }
           const exported = entry["exported"];
+          const endTime = entry["endTime"];
           const rootSpanId = entry["rootSpanId"];
           const rowId = entry["rowId"];
           const spanId = entry["spanId"];
@@ -1594,7 +1606,17 @@ function normalizeEveTraceState(state: unknown): EveTraceState {
             typeof rootSpanId === "string" &&
             typeof rowId === "string" &&
             typeof spanId === "string"
-            ? [{ exported, rootSpanId, rowId, spanId }]
+            ? [
+                {
+                  ...(typeof endTime === "number" && Number.isFinite(endTime)
+                    ? { endTime }
+                    : {}),
+                  exported,
+                  rootSpanId,
+                  rowId,
+                  spanId,
+                },
+              ]
             : [];
         })
         .slice(-MAX_STORED_SPAN_REFERENCES)
@@ -1911,6 +1933,20 @@ function errorFromMessage(
     error.cause = details;
   }
   return error;
+}
+
+function actionResultError(
+  error: EveActionResultError | undefined,
+  output: unknown,
+): Error {
+  if (error) {
+    return errorFromMessage(error.message, error.code);
+  }
+  const result = new Error("Eve action failed");
+  if (output !== undefined) {
+    result.cause = output;
+  }
+  return result;
 }
 
 function eventTime(event: {

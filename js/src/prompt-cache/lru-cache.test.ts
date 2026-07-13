@@ -63,6 +63,19 @@ describe("LRUCache", () => {
     expect(cache.has("b")).toBe(false);
   });
 
+  it("should track and refresh keys whose value is undefined", () => {
+    const cache = new LRUCache<string, undefined>({ max: 2 });
+    cache.set("a", undefined);
+    cache.set("b", undefined);
+
+    expect(cache.has("a")).toBe(true);
+    expect([...cache.keys()]).toEqual(["b", "a"]);
+
+    cache.set("c", undefined);
+    expect(cache.has("b")).toBe(false);
+    expect(cache.has("a")).toBe(true);
+  });
+
   it("should delete and iterate over items", () => {
     const cache = new LRUCache<string, number>();
     cache.set("a", 1);

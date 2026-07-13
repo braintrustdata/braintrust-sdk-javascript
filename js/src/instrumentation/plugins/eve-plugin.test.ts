@@ -842,6 +842,8 @@ describe("braintrustEveHook", () => {
         testRunId: "test-run-late-tool-result",
       },
     }).events?.["*"];
+    const flushSpy = vi.spyOn(backgroundLogger, "flush");
+    flushSpy.mockClear();
     await resumedWildcard?.(
       {
         data: {
@@ -861,6 +863,7 @@ describe("braintrustEveHook", () => {
       },
       ctx,
     );
+    expect(flushSpy).not.toHaveBeenCalled();
 
     const spans = (await backgroundLogger.drain()) as Array<
       Record<string, any>
@@ -888,6 +891,92 @@ describe("braintrustEveHook", () => {
       span_parents: [turns[0]?.span_id],
     });
     expect(tool?.metrics?.end).toEqual(expect.any(Number));
+  });
+
+  it("lets action results complete sparse subagent events across workflow steps", async () => {
+    const eveState = createFakeDefineState();
+    const ctx: EveHookContext = {
+      session: { id: "session-sparse-subagent" },
+    };
+    const firstWildcard = braintrustEveHook({
+      defineState: eveState.defineState,
+    }).events?.["*"];
+
+    await firstWildcard?.(
+      {
+        data: { sequence: 0, turnId: "turn-sparse-subagent" },
+        type: "turn.started",
+      },
+      ctx,
+    );
+    await firstWildcard?.(
+      {
+        data: {
+          actions: [
+            {
+              callId: "call-sparse-subagent",
+              input: { message: "Research Eve" },
+              kind: "subagent-call",
+              subagentName: "researcher",
+            },
+          ],
+          sequence: 0,
+          stepIndex: 0,
+          turnId: "turn-sparse-subagent",
+        },
+        type: "actions.requested",
+      },
+      ctx,
+    );
+    await firstWildcard?.(
+      {
+        data: {
+          callId: "call-sparse-subagent",
+          sequence: 0,
+          subagentName: "researcher",
+          turnId: "turn-sparse-subagent",
+        },
+        meta: { at: "2026-01-01T00:00:00.100Z" },
+        type: "subagent.completed",
+      },
+      ctx,
+    );
+
+    const resumedWildcard = braintrustEveHook({
+      defineState: eveState.defineState,
+    }).events?.["*"];
+    await resumedWildcard?.(
+      {
+        data: {
+          result: {
+            callId: "call-sparse-subagent",
+            kind: "subagent-result",
+            output: { answer: "Authoritative result" },
+            subagentName: "researcher",
+          },
+          sequence: 0,
+          status: "completed",
+          stepIndex: 0,
+          turnId: "turn-sparse-subagent",
+        },
+        meta: { at: "2026-01-01T00:00:00.500Z" },
+        type: "action.result",
+      },
+      ctx,
+    );
+
+    const spans = (await backgroundLogger.drain()) as Array<
+      Record<string, any>
+    >;
+    const subagents = spans.filter(
+      (span) => span.span_attributes?.name === "researcher",
+    );
+    expect(subagents).toHaveLength(1);
+    expect(subagents[0]).toMatchObject({
+      output: { answer: "Authoritative result" },
+      metrics: { end: Date.parse("2026-01-01T00:00:00.100Z") / 1000 },
+      span_attributes: { type: "tool" },
+    });
   });
 
   it("evicts tracing state after session completion", async () => {
@@ -1052,11 +1141,19 @@ describe("braintrustEveHook", () => {
     });
   });
 
-  it("flushes recognized events but not ignored Eve events", async () => {
+  it("flushes final session events but not ordinary or ignored events", async () => {
     const wildcard = braintrustEveHook({ defineState }).events?.["*"];
     const ctx: EveHookContext = {
       session: { id: "session-selective-flush" },
     };
+
+    await wildcard?.(
+      {
+        data: { sequence: 0, turnId: "turn-selective-flush" },
+        type: "turn.started",
+      },
+      ctx,
+    );
     const flushSpy = vi
       .spyOn(backgroundLogger, "flush")
       .mockResolvedValue(undefined);
@@ -1080,6 +1177,14 @@ describe("braintrustEveHook", () => {
           turnId: "turn-selective-flush",
         },
         type: "message.completed",
+      },
+      ctx,
+    );
+    expect(flushSpy).not.toHaveBeenCalled();
+
+    await wildcard?.(
+      {
+        type: "session.completed",
       },
       ctx,
     );
@@ -1116,25 +1221,40 @@ describe("braintrustEveHook", () => {
       .mockResolvedValue(undefined);
 
     const doneA = emitA({
-      data: { sequence: 0, turnId: "turn-a" },
-      type: "turn.completed",
+      type: "session.completed",
     });
     for (let i = 0; i < 10 && flushSpy.mock.calls.length < 1; i++) {
       await new Promise((resolve) => setTimeout(resolve, 0));
     }
     expect(flushSpy).toHaveBeenCalledTimes(1);
 
-    const doneB = emitB({
+    let queuedEventFinished = false;
+    const queuedA = Promise.resolve(
+      emitA({
+        data: {
+          finishReason: "stop",
+          message: "queued",
+          sequence: 0,
+          stepIndex: 0,
+          turnId: "turn-a",
+        },
+        type: "message.completed",
+      }),
+    ).then(() => {
+      queuedEventFinished = true;
+    });
+    await Promise.resolve();
+    expect(queuedEventFinished).toBe(false);
+
+    await emitB({
       data: { sequence: 0, turnId: "turn-b" },
       type: "turn.completed",
     });
-    for (let i = 0; i < 10 && flushSpy.mock.calls.length < 2; i++) {
-      await new Promise((resolve) => setTimeout(resolve, 0));
-    }
-    expect(flushSpy).toHaveBeenCalledTimes(2);
+    expect(queuedEventFinished).toBe(false);
 
     releaseFirstFlush?.();
-    await Promise.all([doneA, doneB]);
+    await Promise.all([doneA, queuedA]);
+    expect(queuedEventFinished).toBe(true);
   });
 
   it("uses deterministic ids and nests local subagent sessions from Eve lineage", async () => {
