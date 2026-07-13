@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { IncomingHttpHeaders } from "http";
 import createError from "http-errors";
-import { LRUCache } from "../src/prompt-cache/lru-cache";
+import { LRUCache } from "../src/lru-cache";
 import { BraintrustState, LoginOptions, loginToState } from "../src/logger";
 
 export interface RequestContext {
