@@ -4,7 +4,8 @@
  * Auto-instrumentation for AI SDKs using orchestrion-js and diagnostics_channel.
  *
  * This package provides:
- * - Instrumentation configs for orchestrion-js
+ * - Orchestrion configs
+ * - Declarative module export patch configs
  * - ESM loader hooks for load-time instrumentation
  * - CJS register for CommonJS instrumentation
  * - Bundler plugins for build-time instrumentation
@@ -28,26 +29,27 @@
  * ```
  */
 
-export { openaiConfigs } from "./configs/openai";
-export { openAICodexConfigs } from "./configs/openai-codex";
-export { anthropicConfigs } from "./configs/anthropic";
-export { bedrockRuntimeConfigs } from "./configs/bedrock-runtime";
-export { aiSDKConfigs } from "./configs/ai-sdk";
-export { claudeAgentSDKConfigs } from "./configs/claude-agent-sdk";
-export { cursorSDKConfigs } from "./configs/cursor-sdk";
-export { openAIAgentsCoreConfigs } from "./configs/openai-agents";
-export { googleGenAIConfigs } from "./configs/google-genai";
-export { huggingFaceConfigs } from "./configs/huggingface";
-export { openRouterAgentConfigs } from "./configs/openrouter-agent";
-export { openRouterConfigs } from "./configs/openrouter";
-export { mistralConfigs } from "./configs/mistral";
-export { googleADKConfigs } from "./configs/google-adk";
-export { cohereConfigs } from "./configs/cohere";
-export { groqConfigs } from "./configs/groq";
-export { genkitConfigs } from "./configs/genkit";
-export { gitHubCopilotConfigs } from "./configs/github-copilot";
-export { langchainConfigs } from "./configs/langchain";
-export { piCodingAgentConfigs } from "./configs/pi-coding-agent";
+export { openaiOrchestrionConfigs } from "./configs/openai";
+export { openAICodexOrchestrionConfigs } from "./configs/openai-codex";
+export { anthropicOrchestrionConfigs } from "./configs/anthropic";
+export { bedrockRuntimeOrchestrionConfigs } from "./configs/bedrock-runtime";
+export { aiSDKOrchestrionConfigs } from "./configs/ai-sdk";
+export { claudeAgentSDKOrchestrionConfigs } from "./configs/claude-agent-sdk";
+export { cursorSDKOrchestrionConfigs } from "./configs/cursor-sdk";
+export { openAIAgentsCoreOrchestrionConfigs } from "./configs/openai-agents";
+export { googleGenAIOrchestrionConfigs } from "./configs/google-genai";
+export { huggingFaceOrchestrionConfigs } from "./configs/huggingface";
+export { openRouterAgentOrchestrionConfigs } from "./configs/openrouter-agent";
+export { openRouterOrchestrionConfigs } from "./configs/openrouter";
+export { mistralOrchestrionConfigs } from "./configs/mistral";
+export { googleADKOrchestrionConfigs } from "./configs/google-adk";
+export { cohereOrchestrionConfigs } from "./configs/cohere";
+export { groqOrchestrionConfigs } from "./configs/groq";
+export { genkitOrchestrionConfigs } from "./configs/genkit";
+export { gitHubCopilotOrchestrionConfigs } from "./configs/github-copilot";
+export { langchainOrchestrionConfigs } from "./configs/langchain";
+export { piCodingAgentOrchestrionConfigs } from "./configs/pi-coding-agent";
+export { mastraModuleExportPatchConfigs } from "./configs/mastra";
 
 // Re-export orchestrion configuration types from the internal fork.
 export type { InstrumentationConfig } from "./orchestrion-js";

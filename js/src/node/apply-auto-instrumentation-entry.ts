@@ -1,9 +1,16 @@
 import * as diagnostics_channel from "node:diagnostics_channel";
 import { register } from "node:module";
 import { pathToFileURL } from "node:url";
-import { getDefaultAutoInstrumentationConfigs } from "../auto-instrumentations/configs/all";
-import { ModulePatch } from "../auto-instrumentations/loader/cjs-patch";
+import {
+  getDefaultModuleExportPatchConfigs,
+  getDefaultOrchestrionConfigs,
+} from "../auto-instrumentations/configs/all";
+import { ModulePatch } from "../auto-instrumentations/loader/cjs";
+import { nodeModuleExportPatchRuntime } from "../auto-instrumentations/loader/module-hooks/node-runtime";
+import { installModuleExportPatchRunner } from "../auto-instrumentations/loader/module-hooks/registry";
+import { installNodeModuleExportHooks } from "../auto-instrumentations/loader/module-hooks/node";
 import { patchTracingChannel } from "../auto-instrumentations/patch-tracing-channel";
+import { readDisabledInstrumentationEnvConfig } from "../instrumentation/config";
 
 interface ApplyAutoInstrumentationState {
   applied?: boolean;
@@ -32,18 +39,44 @@ if (state !== existingState) {
 if (!state.applied) {
   patchTracingChannel(diagnostics_channel.tracingChannel);
 
-  const allConfigs = getDefaultAutoInstrumentationConfigs();
+  const disabled = readDisabledInstrumentationEnvConfig(
+    process.env.BRAINTRUST_DISABLE_INSTRUMENTATION,
+  ).integrations;
+  const orchestrionConfigs = getDefaultOrchestrionConfigs({
+    disabledIntegrationConfig: disabled,
+  });
+  const moduleExportPatchConfigs = getDefaultModuleExportPatchConfigs({
+    disabledIntegrationConfig: disabled,
+    target: "node",
+  });
+
+  installModuleExportPatchRunner(
+    moduleExportPatchConfigs,
+    nodeModuleExportPatchRuntime,
+  );
 
   const currentModuleUrl = getCurrentModuleUrl();
-  register("./auto-instrumentations/loader/esm-hook.mjs", {
+  const autoInstrumentationHookUrl = new URL(
+    "./auto-instrumentations/hook.mjs",
+    currentModuleUrl,
+  ).href;
+  const asyncImportHookUrl = new URL(autoInstrumentationHookUrl);
+  asyncImportHookUrl.searchParams.set("braintrust-iitm-loader", "true");
+  installNodeModuleExportHooks({
+    asyncImportHookUrl: asyncImportHookUrl.href,
+    configs: moduleExportPatchConfigs,
+    registryImportUrl: autoInstrumentationHookUrl,
+  });
+
+  register("./auto-instrumentations/loader/esm.mjs", {
     parentURL: currentModuleUrl,
-    data: { instrumentations: allConfigs },
+    data: { instrumentations: orchestrionConfigs },
   });
 
   state.applied = true;
 
   try {
-    const patch = new ModulePatch({ instrumentations: allConfigs });
+    const patch = new ModulePatch({ instrumentations: orchestrionConfigs });
     patch.patch();
   } catch {
     // ESM instrumentation is already active; keep user code running if CJS patching fails.

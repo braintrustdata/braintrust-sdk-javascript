@@ -21,6 +21,7 @@ import { FluePlugin } from "./plugins/flue-plugin";
 import { LangChainPlugin } from "./plugins/langchain-plugin";
 import { PiCodingAgentPlugin } from "./plugins/pi-coding-agent-plugin";
 import { StrandsAgentSDKPlugin } from "./plugins/strands-agent-sdk-plugin";
+import { MastraPlugin } from "./plugins/mastra-plugin";
 import type { InstrumentationIntegrationsConfig } from "./config";
 
 export interface BraintrustPluginConfig {
@@ -40,6 +41,7 @@ export interface BraintrustPluginConfig {
  * - LangChain.js and LangGraph
  * - Mistral SDK
  * - Cohere SDK
+ * - Mastra observability
  *
  * The plugin is automatically enabled when the Braintrust library is loaded.
  * Individual integrations can be disabled via configuration.
@@ -68,6 +70,7 @@ export class BraintrustPlugin extends BasePlugin {
   private langChainPlugin: LangChainPlugin | null = null;
   private piCodingAgentPlugin: PiCodingAgentPlugin | null = null;
   private strandsAgentSDKPlugin: StrandsAgentSDKPlugin | null = null;
+  private mastraPlugin: MastraPlugin | null = null;
 
   constructor(config: BraintrustPluginConfig = {}) {
     super();
@@ -200,11 +203,10 @@ export class BraintrustPlugin extends BasePlugin {
       this.langChainPlugin.enable();
     }
 
-    // Mastra is intentionally not wired here: `@mastra/core` ships its own
-    // ObservabilityExporter contract, and `BraintrustObservabilityExporter`
-    // (wrappers/mastra.ts) is auto-installed by the loader patch in
-    // `auto-instrumentations/loader/mastra-observability-patch.ts` rather than
-    // by a BasePlugin / tracingChannel subscription.
+    if (integrations.mastra !== false) {
+      this.mastraPlugin = new MastraPlugin();
+      this.mastraPlugin.enable();
+    }
   }
 
   protected onDisable(): void {
@@ -316,6 +318,11 @@ export class BraintrustPlugin extends BasePlugin {
     if (this.langChainPlugin) {
       this.langChainPlugin.disable();
       this.langChainPlugin = null;
+    }
+
+    if (this.mastraPlugin) {
+      this.mastraPlugin.disable();
+      this.mastraPlugin = null;
     }
   }
 }

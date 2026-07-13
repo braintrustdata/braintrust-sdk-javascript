@@ -23,6 +23,10 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const fixturesDir = path.join(__dirname, "fixtures");
 const outputDir = path.join(__dirname, "output-transformation");
 const nodeModulesDir = path.join(fixturesDir, "node_modules");
+const mastraBundlerEntryPoint = path.join(
+  fixturesDir,
+  "test-mastra-bundler.js",
+);
 
 function testConfig(
   functionQuery: InstrumentationConfig["functionQuery"],
@@ -342,6 +346,105 @@ describe("Orchestrion Transformation Tests", () => {
       // Should NOT import from external diagnostics_channel
       expect(output).not.toMatch(/from\s+["']diagnostics_channel["']/);
     });
+
+    it("should apply node module export hooks", async () => {
+      const { braintrustEsbuildPlugin } =
+        await import("../../src/auto-instrumentations/bundler/esbuild.js");
+
+      const outfile = path.join(outputDir, "esbuild-mastra-bundle.js");
+
+      const result = await esbuild.build({
+        absWorkingDir: fixturesDir,
+        bundle: true,
+        entryPoints: [mastraBundlerEntryPoint],
+        format: "esm",
+        logLevel: "error",
+        outfile,
+        platform: "node",
+        plugins: [braintrustEsbuildPlugin()],
+        preserveSymlinks: true,
+        write: true,
+      });
+
+      expect(result.errors).toHaveLength(0);
+      expect(fs.existsSync(outfile)).toBe(true);
+
+      const output = fs.readFileSync(outfile, "utf-8");
+
+      expect(output).toContain("__braintrustTopLevelImportHookRunner");
+      expect(output).toContain("__braintrustExports");
+      expect(output.replace(/\\/g, "/")).not.toContain(
+        JSON.stringify(
+          path
+            .join(fixturesDir, "node_modules", "@mastra", "core")
+            .replace(/\\/g, "/"),
+        ),
+      );
+    });
+
+    it("should skip node-only module export wrappers for browser bundles", async () => {
+      const { braintrustEsbuildPlugin } =
+        await import("../../src/auto-instrumentations/bundler/esbuild.js");
+
+      const outfile = path.join(
+        outputDir,
+        "esbuild-module-export-wrapper-browser.js",
+      );
+
+      const result = await esbuild.build({
+        absWorkingDir: fixturesDir,
+        bundle: true,
+        entryPoints: [mastraBundlerEntryPoint],
+        format: "esm",
+        logLevel: "error",
+        outfile,
+        platform: "browser",
+        plugins: [
+          braintrustEsbuildPlugin({ useDiagnosticChannelCompatShim: true }),
+        ],
+        preserveSymlinks: true,
+        write: true,
+      });
+
+      expect(result.errors).toHaveLength(0);
+      expect(fs.existsSync(outfile)).toBe(true);
+
+      const output = fs.readFileSync(outfile, "utf-8");
+
+      expect(output).not.toContain("__braintrustTopLevelImportHookRunner");
+      expect(output).not.toContain("__braintrustOriginal");
+    });
+
+    it("should keep legacy default bundles browser-safe for module export wrappers", async () => {
+      const { esbuildPlugin } =
+        await import("../../src/auto-instrumentations/bundler/esbuild.js");
+
+      const outfile = path.join(
+        outputDir,
+        "esbuild-module-export-wrapper-legacy-browser.js",
+      );
+
+      const result = await esbuild.build({
+        absWorkingDir: fixturesDir,
+        bundle: true,
+        entryPoints: [mastraBundlerEntryPoint],
+        format: "esm",
+        logLevel: "error",
+        outfile,
+        platform: "browser",
+        plugins: [esbuildPlugin({})],
+        preserveSymlinks: true,
+        write: true,
+      });
+
+      expect(result.errors).toHaveLength(0);
+      expect(fs.existsSync(outfile)).toBe(true);
+
+      const output = fs.readFileSync(outfile, "utf-8");
+
+      expect(output).not.toContain("__braintrustTopLevelImportHookRunner");
+      expect(output).not.toContain("__braintrustOriginal");
+    });
   });
 
   describe("vite", () => {
@@ -601,6 +704,37 @@ describe("Orchestrion Transformation Tests", () => {
       expect(output).toContain("orchestrion:openai:chat.completions.create");
       expect(output).toContain("TracingChannel");
       expect(output).not.toMatch(/require\(["']diagnostics_channel["']\)/);
+    });
+
+    it("should apply module export wrappers (turbopack loader-only mode)", async () => {
+      const { errors, output } = await runWebpackWithLoader({
+        entry: mastraBundlerEntryPoint,
+        output: {
+          path: outputDir,
+          filename: "turbopack-module-export-wrapper-bundle.js",
+          library: { type: "module" },
+        },
+        experiments: { outputModule: true },
+        mode: "development",
+        resolve: { modules: [nodeModulesDir, "node_modules"] },
+        externals: { "node:module": "module node:module" },
+        module: {
+          rules: [
+            {
+              use: [
+                {
+                  loader: webpackLoaderPath,
+                  options: { browser: false },
+                },
+              ],
+            },
+          ],
+        },
+      });
+
+      expect(errors).toHaveLength(0);
+      expect(output).toContain("__braintrustTopLevelImportHookRunner");
+      expect(output).toContain("__braintrustExports");
     });
   });
 

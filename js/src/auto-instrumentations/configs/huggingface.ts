@@ -1,7 +1,7 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
 import { huggingFaceChannels } from "../../instrumentation/plugins/huggingface-channels";
 
-export const huggingFaceConfigs: InstrumentationConfig[] = [
+export const huggingFaceOrchestrionConfigs: InstrumentationConfig[] = [
   {
     channelName: huggingFaceChannels.chatCompletion.channelName,
     module: {

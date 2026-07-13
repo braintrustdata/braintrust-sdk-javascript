@@ -7,13 +7,13 @@ import {
 const genkitVersionRange = ">=1.0.0 <2.0.0";
 
 /**
- * Instrumentation configurations for Genkit's JavaScript SDK.
+ * Orchestrion configurations for Genkit's JavaScript SDK.
  *
  * Genkit's public instance methods live on the GenkitAI base class in
  * @genkit-ai/ai. The top-level `genkit` package subclasses that class, so
  * targeting these methods instruments regular `genkit({ ... })` instances.
  */
-export const genkitConfigs: InstrumentationConfig[] = [
+export const genkitOrchestrionConfigs: InstrumentationConfig[] = [
   {
     channelName: genkitChannels.generate.channelName,
     module: {

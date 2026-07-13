@@ -204,19 +204,9 @@ describe("CLI import restrictions", () => {
       const content = fs.readFileSync(filePath, "utf-8");
       const lines = content.split("\n");
 
-      // Exception: the Mastra observability patch *generates* CJS source code
-      // (a string of JavaScript that is appended to @mastra/core's
-      // dist/mastra/index.cjs). That source legitimately contains
-      // `require(...)` because it runs inside a CommonJS module's evaluation
-      // — it isn't a require() call from our SDK code itself. Normalize the
-      // separator so the exemption matches on Windows (`\\`) too.
-      const isMastraPatchGenerator = relativePath
-        .replaceAll(path.sep, "/")
-        .includes("auto-instrumentations/loader/mastra-observability-patch.ts");
-
       lines.forEach((line, index) => {
         // Check for require() calls
-        if (/\brequire\s*\(/.test(line) && !isMastraPatchGenerator) {
+        if (/\brequire\s*\(/.test(line)) {
           violations.push(
             `${relativePath}:${index + 1} - Found require() statement: "${line.trim()}"`,
           );

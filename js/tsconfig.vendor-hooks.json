@@ -12,7 +12,7 @@
     "src/auto-instrumentations/types/module-details-from-path.d.ts",
     "src/auto-instrumentations/orchestrion-js/vendor-deps.d.ts",
     "src/auto-instrumentations/import-in-the-middle/**/*.mts",
-    "src/auto-instrumentations/require-in-the-middle/**/*.ts"
+    "src/auto-instrumentations/loader/module-hooks/ritm.ts"
   ],
   "exclude": ["node_modules/**", "**/dist/**"]
 }

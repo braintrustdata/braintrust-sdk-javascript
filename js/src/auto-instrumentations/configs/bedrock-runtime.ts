@@ -4,7 +4,7 @@ import {
   smithyCoreChannels,
 } from "../../instrumentation/plugins/bedrock-runtime-channels";
 
-export const bedrockRuntimeConfigs: InstrumentationConfig[] = [
+export const bedrockRuntimeOrchestrionConfigs: InstrumentationConfig[] = [
   {
     channelName: smithyCoreChannels.clientSend.channelName,
     module: {

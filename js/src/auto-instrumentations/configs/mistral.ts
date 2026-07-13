@@ -1,7 +1,7 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
 import { mistralChannels } from "../../instrumentation/plugins/mistral-channels";
 
-export const mistralConfigs: InstrumentationConfig[] = [
+export const mistralOrchestrionConfigs: InstrumentationConfig[] = [
   {
     channelName: mistralChannels.chatComplete.channelName,
     module: {

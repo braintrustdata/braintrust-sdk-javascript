@@ -1,115 +1,120 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
 import {
+  filterModuleExportPatchConfigs,
+  type ModuleExportPatchConfig,
+  type ModuleExportPatchTarget,
+} from "../loader/module-hooks/registry";
+import {
   isInstrumentationIntegrationDisabled,
   readDisabledInstrumentationEnvConfig,
   type InstrumentationIntegrationsConfig,
 } from "../../instrumentation/config";
-import { aiSDKConfigs } from "./ai-sdk";
-import { anthropicConfigs } from "./anthropic";
-import { bedrockRuntimeConfigs } from "./bedrock-runtime";
-import { claudeAgentSDKConfigs } from "./claude-agent-sdk";
-import { cohereConfigs } from "./cohere";
-import { cursorSDKConfigs } from "./cursor-sdk";
-import { flueConfigs } from "./flue";
-import { genkitConfigs } from "./genkit";
-import { gitHubCopilotConfigs } from "./github-copilot";
-import { googleADKConfigs } from "./google-adk";
-import { googleGenAIConfigs } from "./google-genai";
-import { groqConfigs } from "./groq";
-import { huggingFaceConfigs } from "./huggingface";
-import { langchainConfigs } from "./langchain";
-import { mistralConfigs } from "./mistral";
-import { openAIAgentsCoreConfigs } from "./openai-agents";
-import { openaiConfigs } from "./openai";
-import { openAICodexConfigs } from "./openai-codex";
-import { openRouterConfigs } from "./openrouter";
-import { openRouterAgentConfigs } from "./openrouter-agent";
-import { piCodingAgentConfigs } from "./pi-coding-agent";
-import { strandsAgentSDKConfigs } from "./strands-agent-sdk";
+import { aiSDKOrchestrionConfigs } from "./ai-sdk";
+import { anthropicOrchestrionConfigs } from "./anthropic";
+import { bedrockRuntimeOrchestrionConfigs } from "./bedrock-runtime";
+import { claudeAgentSDKOrchestrionConfigs } from "./claude-agent-sdk";
+import { cohereOrchestrionConfigs } from "./cohere";
+import { cursorSDKOrchestrionConfigs } from "./cursor-sdk";
+import { flueOrchestrionConfigs } from "./flue";
+import { genkitOrchestrionConfigs } from "./genkit";
+import { gitHubCopilotOrchestrionConfigs } from "./github-copilot";
+import { googleADKOrchestrionConfigs } from "./google-adk";
+import { googleGenAIOrchestrionConfigs } from "./google-genai";
+import { groqOrchestrionConfigs } from "./groq";
+import { huggingFaceOrchestrionConfigs } from "./huggingface";
+import { langchainOrchestrionConfigs } from "./langchain";
+import { mistralOrchestrionConfigs } from "./mistral";
+import { mastraModuleExportPatchConfigs } from "./mastra";
+import { openAIAgentsCoreOrchestrionConfigs } from "./openai-agents";
+import { openaiOrchestrionConfigs } from "./openai";
+import { openAICodexOrchestrionConfigs } from "./openai-codex";
+import { openRouterOrchestrionConfigs } from "./openrouter";
+import { openRouterAgentOrchestrionConfigs } from "./openrouter-agent";
+import { piCodingAgentOrchestrionConfigs } from "./pi-coding-agent";
+import { strandsAgentSDKOrchestrionConfigs } from "./strands-agent-sdk";
 
-interface InstrumentationConfigGroup {
+interface OrchestrionConfigGroup {
   integrations: readonly (keyof InstrumentationIntegrationsConfig)[];
   configs: readonly InstrumentationConfig[];
 }
 
-const defaultInstrumentationConfigGroups: readonly InstrumentationConfigGroup[] =
-  [
-    { integrations: ["openai"], configs: openaiConfigs },
-    {
-      integrations: ["openaiCodexSDK"],
-      configs: openAICodexConfigs,
-    },
-    { integrations: ["anthropic"], configs: anthropicConfigs },
-    {
-      integrations: ["bedrock", "awsBedrock", "awsBedrockRuntime"],
-      configs: bedrockRuntimeConfigs,
-    },
-    {
-      integrations: ["aisdk", "vercel"],
-      configs: aiSDKConfigs,
-    },
-    {
-      integrations: ["claudeAgentSDK"],
-      configs: claudeAgentSDKConfigs,
-    },
-    { integrations: ["cursor", "cursorSDK"], configs: cursorSDKConfigs },
-    {
-      integrations: ["openAIAgents"],
-      configs: openAIAgentsCoreConfigs,
-    },
-    {
-      integrations: ["google", "googleGenAI"],
-      configs: googleGenAIConfigs,
-    },
-    { integrations: ["huggingface"], configs: huggingFaceConfigs },
-    {
-      integrations: ["langchain", "langgraph"],
-      configs: langchainConfigs,
-    },
-    { integrations: ["openrouter"], configs: openRouterConfigs },
-    {
-      integrations: ["openrouterAgent"],
-      configs: openRouterAgentConfigs,
-    },
-    { integrations: ["mistral"], configs: mistralConfigs },
-    { integrations: ["googleADK"], configs: googleADKConfigs },
-    { integrations: ["cohere"], configs: cohereConfigs },
-    { integrations: ["groq"], configs: groqConfigs },
-    {
-      integrations: ["genkit"],
-      configs: genkitConfigs,
-    },
-    {
-      integrations: ["gitHubCopilot"],
-      configs: gitHubCopilotConfigs,
-    },
-    {
-      integrations: ["piCodingAgent"],
-      configs: piCodingAgentConfigs,
-    },
-    {
-      integrations: ["strandsAgentSDK"],
-      configs: strandsAgentSDKConfigs,
-    },
-    {
-      integrations: ["flue"],
-      configs: flueConfigs,
-    },
-    // Note: `@mastra/core` is not listed here because its instrumentation
-    // doesn't go through the AST `code-transformer` matcher — Mastra's
-    // content-hashed chunks make `filePath`-based matching too brittle.
-    // Instead it's handled by the source-replacement entry in
-    // `loader/special-case-patches.ts`, which both the runtime loader
-    // (`hook.mjs` → `cjs-patch.ts`/`esm-hook.mts`) and the bundler plugin
-    // (`bundler/plugin.ts`) call. The `mastra` env-var disable still works.
-  ];
+const defaultOrchestrionConfigGroups: readonly OrchestrionConfigGroup[] = [
+  { integrations: ["openai"], configs: openaiOrchestrionConfigs },
+  {
+    integrations: ["openaiCodexSDK"],
+    configs: openAICodexOrchestrionConfigs,
+  },
+  { integrations: ["anthropic"], configs: anthropicOrchestrionConfigs },
+  {
+    integrations: ["bedrock", "awsBedrock", "awsBedrockRuntime"],
+    configs: bedrockRuntimeOrchestrionConfigs,
+  },
+  {
+    integrations: ["aisdk", "vercel"],
+    configs: aiSDKOrchestrionConfigs,
+  },
+  {
+    integrations: ["claudeAgentSDK"],
+    configs: claudeAgentSDKOrchestrionConfigs,
+  },
+  {
+    integrations: ["cursor", "cursorSDK"],
+    configs: cursorSDKOrchestrionConfigs,
+  },
+  {
+    integrations: ["openAIAgents"],
+    configs: openAIAgentsCoreOrchestrionConfigs,
+  },
+  {
+    integrations: ["google", "googleGenAI"],
+    configs: googleGenAIOrchestrionConfigs,
+  },
+  { integrations: ["huggingface"], configs: huggingFaceOrchestrionConfigs },
+  {
+    integrations: ["langchain", "langgraph"],
+    configs: langchainOrchestrionConfigs,
+  },
+  { integrations: ["openrouter"], configs: openRouterOrchestrionConfigs },
+  {
+    integrations: ["openrouterAgent"],
+    configs: openRouterAgentOrchestrionConfigs,
+  },
+  { integrations: ["mistral"], configs: mistralOrchestrionConfigs },
+  { integrations: ["googleADK"], configs: googleADKOrchestrionConfigs },
+  { integrations: ["cohere"], configs: cohereOrchestrionConfigs },
+  { integrations: ["groq"], configs: groqOrchestrionConfigs },
+  {
+    integrations: ["genkit"],
+    configs: genkitOrchestrionConfigs,
+  },
+  {
+    integrations: ["gitHubCopilot"],
+    configs: gitHubCopilotOrchestrionConfigs,
+  },
+  {
+    integrations: ["piCodingAgent"],
+    configs: piCodingAgentOrchestrionConfigs,
+  },
+  {
+    integrations: ["strandsAgentSDK"],
+    configs: strandsAgentSDKOrchestrionConfigs,
+  },
+  {
+    integrations: ["flue"],
+    configs: flueOrchestrionConfigs,
+  },
+];
 
-export function getDefaultInstrumentationConfigs({
-  additionalInstrumentations,
+const defaultModuleExportPatchConfigs: readonly ModuleExportPatchConfig[] = [
+  ...mastraModuleExportPatchConfigs,
+];
+
+export function getDefaultOrchestrionConfigs({
+  additionalOrchestrionConfigs,
   disabledIntegrationConfig,
   disabledIntegrations,
 }: {
-  additionalInstrumentations?: readonly InstrumentationConfig[];
+  additionalOrchestrionConfigs?: readonly InstrumentationConfig[];
   disabledIntegrationConfig?: InstrumentationIntegrationsConfig;
   disabledIntegrations?: ReadonlySet<string>;
 } = {}): InstrumentationConfig[] {
@@ -122,20 +127,24 @@ export function getDefaultInstrumentationConfigs({
       : undefined);
 
   return [
-    ...defaultInstrumentationConfigGroups.flatMap(
-      ({ configs, integrations }) =>
-        isInstrumentationIntegrationDisabled(disabledConfig, ...integrations)
-          ? []
-          : configs,
+    ...defaultOrchestrionConfigGroups.flatMap(({ configs, integrations }) =>
+      isInstrumentationIntegrationDisabled(disabledConfig, ...integrations)
+        ? []
+        : configs,
     ),
-    ...(additionalInstrumentations ?? []),
+    ...(additionalOrchestrionConfigs ?? []),
   ];
 }
 
-export function getDefaultAutoInstrumentationConfigs(): InstrumentationConfig[] {
-  return getDefaultInstrumentationConfigs({
-    disabledIntegrationConfig: readDisabledInstrumentationEnvConfig(
-      process.env.BRAINTRUST_DISABLE_INSTRUMENTATION,
-    ).integrations,
+export function getDefaultModuleExportPatchConfigs({
+  disabledIntegrationConfig,
+  target,
+}: {
+  disabledIntegrationConfig?: InstrumentationIntegrationsConfig;
+  target: ModuleExportPatchTarget;
+}): ModuleExportPatchConfig[] {
+  return filterModuleExportPatchConfigs(defaultModuleExportPatchConfigs, {
+    disabledIntegrationConfig,
+    target,
   });
 }

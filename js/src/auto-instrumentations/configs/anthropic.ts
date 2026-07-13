@@ -2,7 +2,7 @@ import type { InstrumentationConfig } from "../orchestrion-js";
 import { anthropicChannels } from "../../instrumentation/plugins/anthropic-channels";
 
 /**
- * Instrumentation configurations for the Anthropic SDK.
+ * Orchestrion configurations for the Anthropic SDK.
  *
  * These configs define which functions to instrument and what channel
  * to emit events on. They are used by orchestrion-js to perform AST
@@ -12,7 +12,7 @@ import { anthropicChannels } from "../../instrumentation/plugins/anthropic-chann
  * will prepend "orchestrion:" + module.name + ":" to these names, resulting in final channel names like:
  * "orchestrion:@anthropic-ai/sdk:messages.create"
  */
-export const anthropicConfigs: InstrumentationConfig[] = [
+export const anthropicOrchestrionConfigs: InstrumentationConfig[] = [
   // Each logical target is listed for both published module formats:
   // `.mjs` covers ESM imports, while `.js` covers CJS requires. The Bedrock
   // SDK delegates CJS `messages.create` calls through these Anthropic SDK

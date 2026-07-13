@@ -8,7 +8,7 @@ const lifecycleMethods = [
   ["onSpanEnd", openAIAgentsCoreChannels.onSpanEnd.channelName],
 ] as const;
 
-export const openAIAgentsCoreConfigs: InstrumentationConfig[] =
+export const openAIAgentsCoreOrchestrionConfigs: InstrumentationConfig[] =
   lifecycleMethods.flatMap(([methodName, channelName]) =>
     ["dist/tracing/processor.mjs", "dist/tracing/processor.js"].map(
       (filePath) => ({

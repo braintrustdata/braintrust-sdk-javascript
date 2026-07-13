@@ -21,31 +21,19 @@
  *     .parse()` doesn't double-read the response body. Removable once OpenAI
  *     stops sharing the same `APIPromise` between `create()` and
  *     `_thenUnwrap()`.
- *   - `@mastra/core` and `@mastra/observability` entries: Mastra ships
- *     code-split bundles with content-hashed chunk filenames, so we patch
- *     the stable submodule entries to install the
- *     `BraintrustObservabilityExporter` automatically. Removable when Mastra
- *     adopts a NPM-installable Braintrust exporter package directly, or when
- *     `import-in-the-middle` is reliable enough across Node versions to use
- *     for the same job.
  */
 
-import {
-  classifyMastraTarget,
-  patchMastraSource,
-  type MastraModuleFormat,
-} from "./mastra-observability-patch.js";
-import { OPENAI_API_PROMISE_PATCH } from "./openai-api-promise-patch.js";
+import { OPENAI_API_PROMISE_PATCH } from "./openai.js";
 
-type SpecialCaseFormat = MastraModuleFormat;
+type SourcePatchFormat = "esm" | "cjs";
 
-interface SpecialCaseInput {
+interface SourcePatchInput {
   packageName: string;
   /** Forward-slash-normalized path inside the package, e.g. `dist/index.js`. */
   modulePath: string;
   /** Original module source as a string. */
   source: string;
-  format: SpecialCaseFormat;
+  format: SourcePatchFormat;
 }
 
 /**
@@ -53,7 +41,7 @@ interface SpecialCaseInput {
  * Returns the patched source, or `null` if no entry matched (caller falls
  * through to the standard transformation pipeline).
  */
-export function applySpecialCasePatch(input: SpecialCaseInput): string | null {
+export function applySourcePatch(input: SourcePatchInput): string | null {
   // OpenAI: append idempotent .then() wrap to dist/api-promise.{m,c}js.
   if (
     input.packageName === "openai" &&
@@ -62,32 +50,19 @@ export function applySpecialCasePatch(input: SpecialCaseInput): string | null {
     return input.source + OPENAI_API_PROMISE_PATCH;
   }
 
-  // Mastra: rewrite the stable submodule entries (@mastra/core) or append a
-  // Proxy wrap to the inline class binding (@mastra/observability).
-  const mastraTarget = classifyMastraTarget(
-    input.packageName,
-    input.modulePath,
-  );
-  if (mastraTarget) {
-    return patchMastraSource(input.source, mastraTarget, input.format);
-  }
-
   return null;
 }
 
 /**
  * Synchronous predicate variant used by the ESM resolve hook to decide
  * up-front whether a URL needs to be remembered for later patching. The
- * load step still calls `applySpecialCasePatch` against the actual source.
+ * load step still calls `applySourcePatch` against the actual source.
  */
-export function isSpecialCaseTarget(
+export function isSourcePatchTarget(
   packageName: string,
   modulePath: string,
 ): boolean {
   if (packageName === "openai" && modulePath.includes("api-promise")) {
-    return true;
-  }
-  if (classifyMastraTarget(packageName, modulePath) !== null) {
     return true;
   }
   return false;

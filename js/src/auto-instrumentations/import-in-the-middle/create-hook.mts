@@ -35,8 +35,10 @@ const HANDLED_FORMATS = new Set<string>([
 const TRACE_WARNINGS = process.execArgv.includes("--trace-warnings");
 
 type LoaderMeta = { url: string };
+type HookOptions = { registerUrl?: string };
 type HookData = {
   addHookMessagePort?: MessagePort;
+  include?: readonly string[];
 };
 type AsyncLoadFunction = (
   url: string,
@@ -59,7 +61,7 @@ type ProcessModuleResult = {
   setters: SetterMap;
 };
 
-interface ImportInTheMiddleHook {
+export interface ImportInTheMiddleHook {
   applyOptions(data: HookData): void;
   initialize(data?: HookData): Promise<void>;
   load(
@@ -360,13 +362,18 @@ function addIitm(url: string): string {
   return urlObj.href;
 }
 
-export function createHook(meta: LoaderMeta): ImportInTheMiddleHook {
+export function createHook(
+  meta: LoaderMeta,
+  options: HookOptions = {},
+): ImportInTheMiddleHook {
   let cachedAsyncResolve: AsyncResolveFunction | undefined;
   let cachedSyncResolve: SyncResolveFunction | undefined;
-  const iitmURL = new URL(
-    meta.url.endsWith(".mts") ? "lib/register.mts" : "lib/register.mjs",
-    meta.url,
-  ).toString();
+  const iitmURL =
+    options.registerUrl ??
+    new URL(
+      meta.url.endsWith(".mts") ? "lib/register.mts" : "lib/register.mjs",
+      meta.url,
+    ).toString();
   const loaderThreadHookedModules = new Set<string>();
 
   // Track CJS module URLs that IITM has wrapped. On Node 24+, CJS modules loaded
@@ -433,7 +440,8 @@ export function createHook(meta: LoaderMeta): ImportInTheMiddleHook {
   }
 
   function applyOptions(data: HookData): void {
-    const { addHookMessagePort } = data;
+    const { addHookMessagePort, include } = data;
+    addExplicitHookModules(include);
     if (addHookMessagePort) {
       addHookMessagePort
         .on("message", (modules: unknown) => {

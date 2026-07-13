@@ -1,8 +1,8 @@
 const assert = require("node:assert");
 const Module = require("node:module");
 const {
-  Hook,
-} = require("../../../../src/auto-instrumentations/require-in-the-middle/index.ts");
+  default: Hook,
+} = require("../../../../src/auto-instrumentations/loader/module-hooks/ritm.ts");
 
 const originalRequire = Module.prototype.require;
 

@@ -2,9 +2,11 @@
 
 import { readFileSync } from "node:fs";
 import { createRequire, Module } from "node:module";
+import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 import { initSync, parse as parseWasm } from "es-module-lexer";
 
-const require = createRequire(import.meta.url);
+const require = createRequire(getCurrentModuleUrl());
 
 type LexerImport = {
   n: string;
@@ -34,6 +36,20 @@ let parse: typeof parseWasm = parseWasm;
 
 if (disallowCodegen) {
   parse = loadAsmParse();
+}
+
+function getCurrentModuleUrl(): string {
+  if (typeof __filename !== "undefined") {
+    return pathToFileURL(__filename).href;
+  }
+
+  const stack = new Error().stack ?? "";
+  const match =
+    stack.match(/\((file:\/\/[^)]+)\)/) ?? stack.match(/\s(file:\/\/\S+)/);
+  return (
+    match?.[1].replace(/:\d+:\d+$/, "") ??
+    pathToFileURL(join(process.cwd(), "package.json")).href
+  );
 }
 
 function loadAsmParse(): typeof parseWasm {

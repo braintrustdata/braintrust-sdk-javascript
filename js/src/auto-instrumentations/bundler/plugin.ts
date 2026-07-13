@@ -1,11 +1,22 @@
 import { createUnplugin } from "unplugin";
 import { create, type InstrumentationConfig } from "../orchestrion-js";
-import { extname, join, sep } from "path";
+import { dirname, extname, join, resolve, sep } from "path";
 import { readFileSync } from "fs";
 import { fileURLToPath } from "url";
 import moduleDetailsFromPath from "module-details-from-path";
-import { getDefaultInstrumentationConfigs } from "../configs/all";
-import { applySpecialCasePatch } from "../loader/special-case-patches";
+import {
+  getDefaultModuleExportPatchConfigs,
+  getDefaultOrchestrionConfigs,
+} from "../configs/all";
+import { applySourcePatch } from "../loader/source-patches";
+import {
+  buildModuleExportSourceWrapper,
+  type ModuleExportPatchTarget,
+} from "../loader/module-hooks/registry";
+import { readDisabledInstrumentationEnvConfig } from "../../instrumentation/config";
+
+const MODULE_EXPORT_ORIGINAL_IMPORT_PREFIX = "braintrust-top-level-original:";
+const MODULE_EXPORT_ORIGINAL_RESOLVED_PREFIX = `\0${MODULE_EXPORT_ORIGINAL_IMPORT_PREFIX}`;
 
 export interface LegacyBundlerPluginOptions {
   /**
@@ -14,7 +25,7 @@ export interface LegacyBundlerPluginOptions {
   debug?: boolean;
 
   /**
-   * Additional instrumentation configs to apply
+   * Additional Orchestrion configs to apply
    */
   instrumentations?: InstrumentationConfig[];
 
@@ -35,7 +46,7 @@ export interface BundlerPluginOptions {
   debug?: boolean;
 
   /**
-   * Additional instrumentation configs to apply
+   * Additional Orchestrion configs to apply
    */
   instrumentations?: InstrumentationConfig[];
 
@@ -72,22 +83,64 @@ function getModuleVersion(basedir: string): string | undefined {
 
 export const unplugin = createUnplugin<LegacyBundlerPluginOptions>(
   (options = {}) => {
-    const allInstrumentations = getDefaultInstrumentationConfigs({
-      additionalInstrumentations: options.instrumentations,
+    const disabledIntegrationConfig = readDisabledInstrumentationEnvConfig(
+      process.env.BRAINTRUST_DISABLE_INSTRUMENTATION,
+    ).integrations;
+    const orchestrionConfigs = getDefaultOrchestrionConfigs({
+      additionalOrchestrionConfigs: options.instrumentations,
+      disabledIntegrationConfig,
     });
+    const moduleExportPatchTarget: ModuleExportPatchTarget =
+      options.browser === false ? "node" : "browser";
+    const moduleExportPatchConfigs = getDefaultModuleExportPatchConfigs({
+      disabledIntegrationConfig,
+      target: moduleExportPatchTarget,
+    });
+    const originalSources = new Map<string, string>();
+    const originalDirectories = new Map<string, string>();
+    let nextOriginalId = 0;
 
     // Default to browser build, use polyfill unless explicitly disabled
     const dcModule = options.browser === false ? undefined : "dc-browser";
 
     // Create the code transformer instrumentor
-    const instrumentationMatcher = create(allInstrumentations, dcModule);
+    const instrumentationMatcher = create(orchestrionConfigs, dcModule);
 
     return {
       name: "code-transformer",
       enforce: "pre",
+      resolveId(id: string, importer?: string) {
+        if (id.startsWith(MODULE_EXPORT_ORIGINAL_IMPORT_PREFIX)) {
+          return `${MODULE_EXPORT_ORIGINAL_RESOLVED_PREFIX}${id.slice(
+            MODULE_EXPORT_ORIGINAL_IMPORT_PREFIX.length,
+          )}`;
+        }
+        if (
+          id.startsWith(".") &&
+          importer?.startsWith(MODULE_EXPORT_ORIGINAL_RESOLVED_PREFIX)
+        ) {
+          const originalDirectory = originalDirectories.get(importer);
+          if (originalDirectory) {
+            return resolve(originalDirectory, id);
+          }
+        }
+        return null;
+      },
+      loadInclude(id: string) {
+        return id.startsWith(MODULE_EXPORT_ORIGINAL_RESOLVED_PREFIX);
+      },
+      load(id: string) {
+        if (id.startsWith(MODULE_EXPORT_ORIGINAL_RESOLVED_PREFIX)) {
+          return originalSources.get(id) ?? null;
+        }
+        return null;
+      },
       transform(code: string, id: string) {
         if (!id) {
           // Some modules apparently don't have an id?
+          return null;
+        }
+        if (id.startsWith(MODULE_EXPORT_ORIGINAL_RESOLVED_PREFIX)) {
           return null;
         }
 
@@ -122,26 +175,54 @@ export const unplugin = createUnplugin<LegacyBundlerPluginOptions>(
         // Normalize the module path for Windows compatibility (WASM transformer expects forward slashes)
         const normalizedModulePath = moduleDetails.path.replace(/\\/g, "/");
         const moduleVersion = getModuleVersion(moduleDetails.basedir);
+        const moduleType = isModule ? "esm" : "cjs";
+        let nextCode = code;
+        let didPatch = false;
 
-        // Per-package source patches (see loader/special-case-patches.ts).
+        // Per-package source patches (see loader/source-patches/).
         // Same anti-pattern fallback the runtime loader uses — mirrored here
         // so bundled apps get the patches without relying on hook.mjs.
-        // Skipped for browser bundles since the wrapper templates use
-        // `node:module`/`require` to resolve `@mastra/observability`.
         if (options.browser !== true) {
-          const patched = applySpecialCasePatch({
+          const patched = applySourcePatch({
             packageName: moduleName,
             modulePath: normalizedModulePath,
-            source: code,
-            format: isModule ? "esm" : "cjs",
+            source: nextCode,
+            format: moduleType,
           });
           if (patched !== null) {
-            return { code: patched, map: null };
+            nextCode = patched;
+            didPatch = true;
           }
+        }
+
+        const originalModuleSpecifier = `${MODULE_EXPORT_ORIGINAL_IMPORT_PREFIX}${nextOriginalId++}`;
+        const originalModuleId = `${MODULE_EXPORT_ORIGINAL_RESOLVED_PREFIX}${originalModuleSpecifier.slice(
+          MODULE_EXPORT_ORIGINAL_IMPORT_PREFIX.length,
+        )}`;
+        const moduleExportWrapper = buildModuleExportSourceWrapper(
+          moduleExportPatchConfigs,
+          {
+            format: moduleType,
+            modulePath: normalizedModulePath,
+            moduleVersion,
+            originalModuleSpecifier,
+            packageName: moduleName,
+            source: nextCode,
+            target: moduleExportPatchTarget,
+          },
+        );
+        if (moduleExportWrapper !== null) {
+          originalSources.set(originalModuleId, nextCode);
+          originalDirectories.set(originalModuleId, dirname(filePath));
+          nextCode = moduleExportWrapper;
+          didPatch = true;
         }
 
         // If no version found
         if (!moduleVersion) {
+          if (didPatch) {
+            return { code: nextCode, map: null };
+          }
           console.warn(
             `No 'package.json' version found for module ${moduleName} at ${moduleDetails.basedir}. Skipping transformation.`,
           );
@@ -157,13 +238,12 @@ export const unplugin = createUnplugin<LegacyBundlerPluginOptions>(
 
         if (!transformer) {
           // No instrumentations match this file
-          return null;
+          return didPatch ? { code: nextCode, map: null } : null;
         }
 
         try {
           // Transform the code
-          const moduleType = isModule ? "esm" : "cjs";
-          const result = transformer.transform(code, moduleType);
+          const result = transformer.transform(nextCode, moduleType);
           const transformedCode = result.code.replace(
             /const \{tracingChannel: ([A-Za-z_$][\w$]*)\} = ([A-Za-z_$][\w$]*);/g,
             "const $1 = $2.tracingChannel;",
@@ -176,7 +256,7 @@ export const unplugin = createUnplugin<LegacyBundlerPluginOptions>(
         } catch (error) {
           // If transformation fails, warn and return original code
           console.warn(`Code transformation failed for ${id}: ${error}`);
-          return null;
+          return didPatch ? { code: nextCode, map: null } : null;
         }
       },
     };

@@ -15,12 +15,10 @@ import { getRepoInfo, getPastNAncestors } from "../gitutil";
 import { getCallerLocation } from "../stackutil";
 import { _internalSetInitialState } from "../logger";
 import { registry } from "../instrumentation/registry";
-import {
-  isInstrumentationIntegrationDisabled,
-  readDisabledInstrumentationEnvConfig,
-} from "../instrumentation/config";
-import { installMastraExporterFactory } from "../auto-instrumentations/loader/mastra-observability-patch";
-import { BraintrustObservabilityExporter } from "../wrappers/mastra";
+import { readDisabledInstrumentationEnvConfig } from "../instrumentation/config";
+import { getDefaultModuleExportPatchConfigs } from "../auto-instrumentations/configs/all";
+import { nodeModuleExportPatchRuntime } from "../auto-instrumentations/loader/module-hooks/node-runtime";
+import { installModuleExportPatchRunner } from "../auto-instrumentations/loader/module-hooks/registry";
 
 const BRAINTRUST_ENV_SEARCH_PARENT_LIMIT = 64;
 
@@ -136,18 +134,18 @@ export function configureNode() {
 
   _internalSetInitialState();
 
-  // The Mastra patches rewritten by the bundler plugin and the loader hook
-  // both look up an exporter factory on `globalThis` at runtime. Register it
-  // here too so a bundled app (where neither hook.mjs nor the loader runs
-  // against `@mastra/core`) still gets the exporter installed when its code
-  // imports `braintrust`. The loader path (hook.mjs) also calls this; the
-  // `??=` makes double-registration a no-op.
+  // Bundled wrappers call the module export runner through globalThis. Installing
+  // it here covers applications that import Braintrust without hook.mjs.
   const disabled = readDisabledInstrumentationEnvConfig(
     iso.getEnv("BRAINTRUST_DISABLE_INSTRUMENTATION"),
   ).integrations;
-  if (!isInstrumentationIntegrationDisabled(disabled, "mastra")) {
-    installMastraExporterFactory(() => new BraintrustObservabilityExporter());
-  }
+  installModuleExportPatchRunner(
+    getDefaultModuleExportPatchConfigs({
+      disabledIntegrationConfig: disabled,
+      target: "node",
+    }),
+    nodeModuleExportPatchRuntime,
+  );
 
   // Enable auto-instrumentation
   registry.enable();

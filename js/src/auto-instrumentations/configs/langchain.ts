@@ -4,7 +4,7 @@ import { langChainChannels } from "../../instrumentation/plugins/langchain-chann
 const langChainCoreVersionRange = ">=0.3.42";
 const langChainCallbackManagerFilePath = "dist/callbacks/manager.js";
 
-export const langchainConfigs: InstrumentationConfig[] = [
+export const langchainOrchestrionConfigs: InstrumentationConfig[] = [
   {
     channelName: langChainChannels.configure.channelName,
     module: {

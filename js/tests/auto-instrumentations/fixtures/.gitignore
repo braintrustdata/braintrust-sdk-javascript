@@ -2,5 +2,10 @@
 # This negates the global node_modules ignore
 !/node_modules
 
+# Mastra's mock package uses dist/ entrypoints, which are otherwise ignored by
+# js/.gitignore.
+!/node_modules/@mastra/**/dist/
+!/node_modules/@mastra/**/dist/**
+
 # Exclude dynamically generated test files
 /test-files
