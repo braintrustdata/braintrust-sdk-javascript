@@ -14,7 +14,7 @@ export type LangSmithRun = {
   error?: unknown;
   extra?: unknown;
   tags?: unknown;
-  events?: unknown;
+  events?: LangSmithRunEvent[];
   serialized?: unknown;
   parent_run_id?: unknown;
   parent_run?: LangSmithRun;

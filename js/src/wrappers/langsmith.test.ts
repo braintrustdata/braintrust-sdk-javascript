@@ -38,9 +38,12 @@ describe("LangSmith namespace wrappers", () => {
       trace_id: "run-1",
     };
     const traceable = vi.fn(
-      (fn: (...args: unknown[]) => unknown, config?: Record<string, unknown>) =>
-        async (...args: unknown[]) => {
-          const result = await fn(...args);
+      (
+        fn: (value: string) => Promise<string>,
+        config?: Record<string, unknown>,
+      ) =>
+        async (value: string) => {
+          const result = await fn(value);
           (config?.on_end as ((run: unknown) => void) | undefined)?.(run);
           return result;
         },
@@ -73,7 +76,9 @@ describe("LangSmith namespace wrappers", () => {
       start_time = 1;
       trace_id = this.id;
 
-      createChild() {
+      constructor(_config?: unknown) {}
+
+      createChild(_config?: unknown) {
         return new RunTree();
       }
 
@@ -137,7 +142,7 @@ describe("LangSmith namespace wrappers", () => {
   it("preserves Client method errors", async () => {
     const expected = new Error("client failure");
     class Client {
-      async createRun(): Promise<never> {
+      async createRun(_run: unknown): Promise<never> {
         throw expected;
       }
     }
@@ -148,7 +153,7 @@ describe("LangSmith namespace wrappers", () => {
 
   it("does not double-wrap namespaces", async () => {
     class Client {
-      createRun() {
+      createRun(_run: unknown) {
         return Promise.resolve();
       }
     }
