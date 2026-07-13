@@ -70,6 +70,8 @@ type ParentLineage = {
   sessionId: string;
 };
 
+type EveEntityKind = "session" | "step" | "subagent" | "tool" | "turn";
+
 type EveStateHandle<T> = {
   get(): T;
   update(fn: (current: T) => T): void;
@@ -505,10 +507,12 @@ class EveBridge {
       event.data.turnId,
       event.data.stepIndex,
     );
-    const [eventId, spanId] = await Promise.all([
-      rowIdForStep(sessionId, event.data.turnId, stepOrdinal),
-      spanIdForStep(sessionId, event.data.turnId, stepOrdinal),
-    ]);
+    const { rowId: eventId, spanId } = await generateEveIds(
+      "step",
+      sessionId,
+      event.data.turnId,
+      String(stepOrdinal),
+    );
     const span = await this.startEveChildSpan(turn.span, {
       event: {
         id: eventId,
@@ -738,10 +742,11 @@ class EveBridge {
       return;
     }
 
-    const [eventId, spanId] = await Promise.all([
-      rowIdForSubagent(sessionId, event.data.callId),
-      spanIdForSubagent(sessionId, event.data.callId),
-    ]);
+    const { rowId: eventId, spanId } = await generateEveIds(
+      "subagent",
+      sessionId,
+      event.data.callId,
+    );
     const pending = this.toolsByCallKey.get(key);
     if (pending || this.completedToolKeys.has(key)) {
       if (pending) {
@@ -1112,17 +1117,19 @@ class EveBridge {
       ? this.toolsByCallKey.get(toolKey(lineage.sessionId, lineage.callId))
       : undefined;
     const activeParent = currentSpan();
-    const [eventId, spanId, parentSubagentSpanId, fallbackRootSpanId] =
-      await Promise.all([
-        rowIdForSession(sessionId),
-        spanIdForSession(sessionId),
-        lineage
-          ? spanIdForSubagent(lineage.sessionId, lineage.callId)
-          : Promise.resolve(undefined),
-        lineage
-          ? rootSpanIdForSession(lineage.rootSessionId)
-          : rootSpanIdForSession(sessionId),
-      ]);
+    const [
+      { rowId: eventId, spanId },
+      parentSubagentSpanId,
+      fallbackRootSpanId,
+    ] = await Promise.all([
+      generateEveIds("session", sessionId),
+      lineage
+        ? spanIdForSubagent(lineage.sessionId, lineage.callId)
+        : Promise.resolve(undefined),
+      lineage
+        ? rootSpanIdForSession(lineage.rootSessionId)
+        : rootSpanIdForSession(sessionId),
+    ]);
 
     const span = await this.startEveSpan({
       event: {
@@ -1209,10 +1216,12 @@ class EveBridge {
     }
 
     const metadata = toolMetadataFromTurn(turn);
-    const [eventId, spanId] = await Promise.all([
-      rowIdForTool(sessionId, event.data.turnId, action.callId),
-      spanIdForTool(sessionId, event.data.turnId, action.callId),
-    ]);
+    const { rowId: eventId, spanId } = await generateEveIds(
+      "tool",
+      sessionId,
+      event.data.turnId,
+      action.callId,
+    );
     if (this.toolsByCallKey.has(key) || this.completedToolKeys.has(key)) {
       return;
     }
@@ -1250,10 +1259,11 @@ class EveBridge {
 
     const name = action.subagentName ?? action.name ?? "agent";
     const metadata = toolMetadataFromTurn(turn);
-    const [eventId, spanId] = await Promise.all([
-      rowIdForSubagent(sessionId, action.callId),
-      spanIdForSubagent(sessionId, action.callId),
-    ]);
+    const { rowId: eventId, spanId } = await generateEveIds(
+      "subagent",
+      sessionId,
+      action.callId,
+    );
     if (this.toolsByCallKey.has(key) || this.completedToolKeys.has(key)) {
       return;
     }
@@ -1291,10 +1301,12 @@ class EveBridge {
     }
 
     const metadata = toolMetadataFromTurn(turn);
-    const [eventId, spanId] = await Promise.all([
-      rowIdForTool(sessionId, event.data.turnId, result.callId),
-      spanIdForTool(sessionId, event.data.turnId, result.callId),
-    ]);
+    const { rowId: eventId, spanId } = await generateEveIds(
+      "tool",
+      sessionId,
+      event.data.turnId,
+      result.callId,
+    );
     const existing = this.toolsByCallKey.get(toolKey(sessionId, result.callId));
     if (existing) {
       return existing;
@@ -1333,10 +1345,11 @@ class EveBridge {
     }
 
     const metadata = toolMetadataFromTurn(turn);
-    const [eventId, spanId] = await Promise.all([
-      rowIdForSubagent(sessionId, event.data.callId),
-      spanIdForSubagent(sessionId, event.data.callId),
-    ]);
+    const { rowId: eventId, spanId } = await generateEveIds(
+      "subagent",
+      sessionId,
+      event.data.callId,
+    );
     const existing = this.toolsByCallKey.get(
       toolKey(sessionId, event.data.callId),
     );
@@ -1377,10 +1390,11 @@ class EveBridge {
     }
 
     const metadata = toolMetadataFromTurn(turn);
-    const [eventId, spanId] = await Promise.all([
-      rowIdForSubagent(sessionId, result.callId),
-      spanIdForSubagent(sessionId, result.callId),
-    ]);
+    const { rowId: eventId, spanId } = await generateEveIds(
+      "subagent",
+      sessionId,
+      result.callId,
+    );
     const existing = this.toolsByCallKey.get(toolKey(sessionId, result.callId));
     if (existing) {
       return existing;
@@ -1435,11 +1449,11 @@ class EveBridge {
     >,
     metadata: Record<string, unknown>,
   ): Promise<EveSpan> {
-    const [eventId, spanId, sessionSpanId] = await Promise.all([
-      rowIdForTurn(session.sessionId, event.data.turnId),
-      spanIdForTurn(session.sessionId, event.data.turnId),
-      spanIdForSession(session.sessionId),
-    ]);
+    const { rowId: eventId, spanId } = await generateEveIds(
+      "turn",
+      session.sessionId,
+      event.data.turnId,
+    );
 
     return await this.startEveSpan({
       event: {
@@ -1449,7 +1463,7 @@ class EveBridge {
       name: "eve.turn",
       parentSpanIds: {
         rootSpanId: session.span.rootSpanId,
-        spanId: sessionSpanId,
+        spanId: session.span.spanId,
       },
       spanAttributes: { type: SpanTypeAttribute.TASK },
       spanId,
@@ -1933,63 +1947,15 @@ async function rootSpanIdForSession(sessionId: string): Promise<string> {
   return deterministicEveId("eve:root", sessionId);
 }
 
-async function spanIdForSession(sessionId: string): Promise<string> {
-  return deterministicEveId("eve:session", sessionId);
-}
-
-async function rowIdForSession(sessionId: string): Promise<string> {
-  return deterministicEveId("eve:row:session", sessionId);
-}
-
-async function spanIdForTurn(
-  sessionId: string,
-  turnId: string,
-): Promise<string> {
-  return deterministicEveId("eve:turn", sessionId, turnId);
-}
-
-async function rowIdForTurn(
-  sessionId: string,
-  turnId: string,
-): Promise<string> {
-  return deterministicEveId("eve:row:turn", sessionId, turnId);
-}
-
-async function spanIdForStep(
-  sessionId: string,
-  turnId: string,
-  stepIndex: number,
-): Promise<string> {
-  return deterministicEveId("eve:step", sessionId, turnId, String(stepIndex));
-}
-
-async function rowIdForStep(
-  sessionId: string,
-  turnId: string,
-  stepIndex: number,
-): Promise<string> {
-  return deterministicEveId(
-    "eve:row:step",
-    sessionId,
-    turnId,
-    String(stepIndex),
-  );
-}
-
-async function spanIdForTool(
-  sessionId: string,
-  turnId: string,
-  callId: string,
-): Promise<string> {
-  return deterministicEveId("eve:tool", sessionId, turnId, callId);
-}
-
-async function rowIdForTool(
-  sessionId: string,
-  turnId: string,
-  callId: string,
-): Promise<string> {
-  return deterministicEveId("eve:row:tool", sessionId, turnId, callId);
+async function generateEveIds(
+  kind: EveEntityKind,
+  ...parts: string[]
+): Promise<{ rowId: string; spanId: string }> {
+  const [rowId, spanId] = await Promise.all([
+    deterministicEveId(`eve:row:${kind}`, ...parts),
+    deterministicEveId(`eve:${kind}`, ...parts),
+  ]);
+  return { rowId, spanId };
 }
 
 async function spanIdForSubagent(
@@ -1997,13 +1963,6 @@ async function spanIdForSubagent(
   callId: string,
 ): Promise<string> {
   return deterministicEveId("eve:subagent", sessionId, callId);
-}
-
-async function rowIdForSubagent(
-  sessionId: string,
-  callId: string,
-): Promise<string> {
-  return deterministicEveId("eve:row:subagent", sessionId, callId);
 }
 
 async function deterministicEveId(...parts: string[]): Promise<string> {
