@@ -1,7 +1,7 @@
 import { debugLogger } from "../debug-logger";
 import iso from "../isomorph";
 import { canUseDiskCache, DiskCache } from "./disk-cache";
-import { LRUCache } from "./lru-cache";
+import { LRUCache } from "../lru-cache";
 
 type CacheMode = "mixed" | "memory" | "disk" | "none";
 

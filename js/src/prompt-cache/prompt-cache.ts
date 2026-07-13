@@ -1,5 +1,5 @@
 import { Prompt } from "../logger";
-import { LRUCache } from "./lru-cache";
+import { LRUCache } from "../lru-cache";
 import { DiskCache } from "./disk-cache";
 
 /**
