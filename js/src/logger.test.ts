@@ -2197,9 +2197,9 @@ describe("HTTPConnection POST retries", () => {
       .mockResolvedValueOnce(new Response(null, { status: 200 }));
     state.setFetch(fetchMock as unknown as typeof globalThis.fetch);
 
-    await expect(state.apiConn().postWithRetry("btql", {})).rejects.toThrow(
-      "400: Bad Request",
-    );
+    await expect(
+      state.apiConn().post("btql", {}, undefined, 3),
+    ).rejects.toThrow("400: Bad Request");
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
@@ -2211,7 +2211,7 @@ describe("HTTPConnection POST retries", () => {
     state.setFetch(fetchMock as unknown as typeof globalThis.fetch);
 
     await expect(
-      state.apiConn().postWithRetry("btql", {}, { signal: controller.signal }),
+      state.apiConn().post("btql", {}, { signal: controller.signal }, 3),
     ).rejects.toBe(controller.signal.reason);
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });

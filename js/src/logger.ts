@@ -1320,6 +1320,7 @@ class HTTPConnection {
     path: string,
     params?: Record<string, unknown> | string,
     config?: RequestInit,
+    retries: number = 0,
   ) {
     const { headers, ...rest } = config || {};
     // On platforms like Cloudflare, we lose "this" when we make an async call,
@@ -1328,39 +1329,28 @@ class HTTPConnection {
     const this_base_url = this.base_url;
     const this_headers = this.headers;
 
-    return await checkResponse(
-      await this_fetch(_urljoin(this_base_url, path), {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-          ...this_headers,
-          ...headers,
-        },
-        body:
-          typeof params === "string"
-            ? params
-            : params
-              ? JSON.stringify(params)
-              : undefined,
-        keepalive: true,
-        ...rest,
-      }),
-    );
-  }
-
-  async postWithRetry(
-    path: string,
-    params?: Record<string, unknown> | string,
-    config?: RequestInit,
-    retries: number = BTQL_HTTP_RETRIES,
-  ) {
-    // Only use this for semantically read-only POST requests that are safe to
-    // repeat. Ordinary POST requests intentionally continue to use post().
     const tries = retries + 1;
     for (let i = 0; i < tries; i++) {
       try {
-        return await this.post(path, params, config);
+        return await checkResponse(
+          await this_fetch(_urljoin(this_base_url, path), {
+            method: "POST",
+            headers: {
+              Accept: "application/json",
+              "Content-Type": "application/json",
+              ...this_headers,
+              ...headers,
+            },
+            body:
+              typeof params === "string"
+                ? params
+                : params
+                  ? JSON.stringify(params)
+                  : undefined,
+            keepalive: true,
+            ...rest,
+          }),
+        );
       } catch (error) {
         if (config?.signal?.aborted) {
           throw getAbortReason(config.signal);
@@ -6870,7 +6860,7 @@ export class ObjectFetcher<RecordType> implements AsyncIterable<
     let cursor = undefined;
     let iterations = 0;
     while (true) {
-      const resp = await state.apiConn().postWithRetry(
+      const resp = await state.apiConn().post(
         `btql`,
         {
           query: {
@@ -6906,6 +6896,7 @@ export class ObjectFetcher<RecordType> implements AsyncIterable<
             : {}),
         },
         { headers: { "Accept-Encoding": "gzip" } },
+        BTQL_HTTP_RETRIES,
       );
       const respJson = await resp.json();
       const mutate = this.mutateRecord;
@@ -9492,7 +9483,7 @@ export async function getPromptVersions(
     },
   };
 
-  const response = await state.apiConn().postWithRetry(
+  const response = await state.apiConn().post(
     "btql",
     {
       query,
@@ -9501,6 +9492,7 @@ export async function getPromptVersions(
       brainstore_realtime: true,
     },
     { headers: { "Accept-Encoding": "gzip" } },
+    BTQL_HTTP_RETRIES,
   );
 
   if (!response.ok) {
