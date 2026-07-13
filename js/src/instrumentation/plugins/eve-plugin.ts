@@ -54,6 +54,7 @@ type TurnState = SpanState & {
   metrics: Record<string, number>;
   output?: unknown;
   stepsByIndex: Map<number, StepState>;
+  turnId: string;
 };
 
 type ToolState = SpanState & {
@@ -451,6 +452,7 @@ class EveBridge {
       metrics: {},
       span,
       stepsByIndex: new Map(),
+      turnId: event.data.turnId,
     });
   }
 
@@ -969,15 +971,9 @@ class EveBridge {
       return;
     }
 
-    this.endOpenChildrenForTurn(turn, eventTime(event));
-    turn.span.log({
-      metadata: turn.metadata,
-      metrics: turn.metrics,
-      output: turn.output,
+    this.finalizeTurn(turn, {
+      endTime: eventTime(event),
     });
-    const endTime = eventTime(event);
-    turn.span.end(endTime === undefined ? undefined : { endTime });
-    this.cleanupTurn(event, ctx);
 
     await this.flushInstrumentation();
   }
@@ -991,17 +987,14 @@ class EveBridge {
       return;
     }
 
-    this.endOpenChildrenForTurn(turn, eventTime(event));
-    turn.span.log({
+    this.finalizeTurn(turn, {
+      endTime: eventTime(event),
       error: errorFromMessage(
         event.data.message,
         event.data.code,
         event.data.details,
       ),
     });
-    const endTime = eventTime(event);
-    turn.span.end(endTime === undefined ? undefined : { endTime });
-    this.cleanupTurn(event, ctx);
 
     await this.flushInstrumentation();
   }
@@ -1021,21 +1014,19 @@ class EveBridge {
       eventTime(event),
     );
 
+    const error = errorFromMessage(
+      event.data.message,
+      event.data.code,
+      event.data.details,
+    );
     for (const [key, turn] of this.turnsByKey) {
       if (!key.startsWith(`${sessionId}:`)) {
         continue;
       }
-      this.endOpenChildrenForTurn(turn, eventTime(event));
-      turn.span.log({
-        error: errorFromMessage(
-          event.data.message,
-          event.data.code,
-          event.data.details,
-        ),
+      this.finalizeTurn(turn, {
+        endTime: eventTime(event),
+        error,
       });
-      const endTime = eventTime(event);
-      turn.span.end(endTime === undefined ? undefined : { endTime });
-      this.turnsByKey.delete(key);
     }
 
     for (const [key, tool] of this.toolsByCallKey) {
@@ -1049,13 +1040,7 @@ class EveBridge {
       }
     }
 
-    session.span.log({
-      error: errorFromMessage(
-        event.data.message,
-        event.data.code,
-        event.data.details,
-      ),
-    });
+    session.span.log({ error });
     const endTime = eventTime(event);
     session.span.end(endTime === undefined ? undefined : { endTime });
 
@@ -1082,15 +1067,9 @@ class EveBridge {
       if (!key.startsWith(`${sessionId}:`)) {
         continue;
       }
-      this.endOpenChildrenForTurn(turn, eventTime(event));
-      turn.span.log({
-        metadata: turn.metadata,
-        metrics: turn.metrics,
-        output: turn.output,
+      this.finalizeTurn(turn, {
+        endTime: eventTime(event),
       });
-      const endTime = eventTime(event);
-      turn.span.end(endTime === undefined ? undefined : { endTime });
-      this.turnsByKey.delete(key);
     }
 
     for (const [key, tool] of this.toolsByCallKey) {
@@ -1212,6 +1191,7 @@ class EveBridge {
       metrics: {},
       span,
       stepsByIndex: new Map<number, StepState>(),
+      turnId: event.data.turnId,
     };
     this.turnsByKey.set(key, state);
     return state;
@@ -1502,7 +1482,11 @@ class EveBridge {
     );
   }
 
-  private endOpenChildrenForTurn(turn: TurnState, endTime: number | undefined) {
+  private finalizeTurn(
+    turn: TurnState,
+    args: { endTime: number | undefined; error?: Error },
+  ): void {
+    const { endTime } = args;
     for (const step of turn.stepsByIndex.values()) {
       step.span.log({
         ...(step.input !== undefined ? { input: step.input } : {}),
@@ -1525,27 +1509,24 @@ class EveBridge {
       tool.span.end(endTime === undefined ? undefined : { endTime });
       tool.endedByTurn = true;
     }
-  }
 
-  private cleanupTurn(
-    event: Extract<
-      EveHandleMessageStreamEvent,
-      { data: { readonly turnId: string } }
-    >,
-    ctx: unknown,
-  ): void {
-    const sessionId = sessionIdFromContext(ctx);
-    if (!sessionId) {
-      return;
+    if (args.error) {
+      turn.span.log({ error: args.error });
+    } else {
+      turn.span.log({
+        metadata: turn.metadata,
+        metrics: turn.metrics,
+        output: turn.output,
+      });
     }
-    const key = turnKey(sessionId, event.data.turnId);
-    this.turnsByKey.delete(key);
+    turn.span.end(endTime === undefined ? undefined : { endTime });
+    this.turnsByKey.delete(turn.key);
     this.state.update((current) => {
       const normalized = normalizeEveTraceState(current);
       return {
         ...normalized,
         stepStarts: normalized.stepStarts.filter(
-          (entry) => entry.turnId !== event.data.turnId,
+          (entry) => entry.turnId !== turn.turnId,
         ),
       };
     });
