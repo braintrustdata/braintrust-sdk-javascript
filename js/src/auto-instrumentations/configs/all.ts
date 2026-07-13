@@ -18,6 +18,7 @@ import { googleGenAIConfigs } from "./google-genai";
 import { groqConfigs } from "./groq";
 import { huggingFaceConfigs } from "./huggingface";
 import { langchainConfigs } from "./langchain";
+import { langSmithConfigs } from "./langsmith";
 import { mistralConfigs } from "./mistral";
 import { openAIAgentsCoreConfigs } from "./openai-agents";
 import { openaiConfigs } from "./openai";
@@ -66,6 +67,7 @@ const defaultInstrumentationConfigGroups: readonly InstrumentationConfigGroup[] 
       integrations: ["langchain", "langgraph"],
       configs: langchainConfigs,
     },
+    { integrations: ["langsmith"], configs: langSmithConfigs },
     { integrations: ["openrouter"], configs: openRouterConfigs },
     {
       integrations: ["openrouterAgent"],

@@ -4,6 +4,16 @@ title = "Braintrust SDK gitleaks config"
 # Use the default gitleaks ruleset as the base
 useDefault = true
 
+[[allowlists]]
+description = "LangSmith E2E variant identifiers are not API keys"
+condition = "AND"
+targetRules = ["generic-api-key"]
+regexes = ['''^langsmith-v0-(3-30|5-11|8-1)$''']
+paths = [
+  '''^e2e/config/pr-comment-scenarios\.json$''',
+  '''^e2e/scenarios/langsmith-instrumentation/scenario\.test\.ts$''',
+]
+
 [[rules]]
 id = "braintrust-api-key"
 description = "Braintrust API key"

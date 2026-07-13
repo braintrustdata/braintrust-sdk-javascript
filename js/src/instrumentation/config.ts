@@ -28,6 +28,7 @@ export interface InstrumentationIntegrationsConfig {
   strandsAgentSDK?: boolean;
   langchain?: boolean;
   langgraph?: boolean;
+  langsmith?: boolean;
 }
 
 export interface InstrumentationConfig {
@@ -102,6 +103,7 @@ const envIntegrationAliases: Record<
   "langchain-js": "langchain",
   "@langchain": "langchain",
   langgraph: "langgraph",
+  langsmith: "langsmith",
 };
 
 export function getDefaultInstrumentationIntegrations(): Record<
@@ -136,6 +138,7 @@ export function getDefaultInstrumentationIntegrations(): Record<
     gitHubCopilot: true,
     langchain: true,
     langgraph: true,
+    langsmith: true,
     piCodingAgent: true,
     strandsAgentSDK: true,
   };

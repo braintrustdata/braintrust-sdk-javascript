@@ -1,0 +1,20 @@
+{
+  "name": "@braintrust/e2e-langsmith-instrumentation",
+  "private": true,
+  "type": "module",
+  "braintrustScenario": {
+    "canary": {
+      "dependencies": {
+        "langsmith-v081": "langsmith@latest"
+      }
+    }
+  },
+  "dependencies": {
+    "@langchain/core": "1.1.36",
+    "langsmith": "0.8.1",
+    "langsmith-v0330": "npm:langsmith@0.3.30",
+    "langsmith-v0511": "npm:langsmith@0.5.11",
+    "langsmith-v081": "npm:langsmith@0.8.1",
+    "openai": "4.104.0"
+  }
+}

@@ -140,6 +140,16 @@
     "metadataScenario": "langgraph-auto-instrumentation"
   },
   {
+    "scenarioDirName": "langsmith-instrumentation",
+    "label": "LangSmith Instrumentation",
+    "metadataScenario": "langsmith-instrumentation",
+    "variants": [
+      { "variantKey": "langsmith-v0-3-30", "label": "v0.3.30" },
+      { "variantKey": "langsmith-v0-5-11", "label": "v0.5.11" },
+      { "variantKey": "langsmith-v0-8-1", "label": "v0.8.1" }
+    ]
+  },
+  {
     "scenarioDirName": "mistral-instrumentation",
     "label": "Mistral Instrumentation",
     "metadataScenario": "mistral-instrumentation",

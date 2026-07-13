@@ -47,6 +47,7 @@ export { groqConfigs } from "./configs/groq";
 export { genkitConfigs } from "./configs/genkit";
 export { gitHubCopilotConfigs } from "./configs/github-copilot";
 export { langchainConfigs } from "./configs/langchain";
+export { langSmithConfigs } from "./configs/langsmith";
 export { piCodingAgentConfigs } from "./configs/pi-coding-agent";
 
 // Re-export orchestrion configuration types from the internal fork.

@@ -1,0 +1,189 @@
+span_tree:
+├── support-assistant [task]
+│   input: {
+│     "question": "What is the refund window?"
+│   }
+│   output: {
+│     "answer": "Refund requests are accepted within 30 days of purchase.",
+│     "source": "Refund policy"
+│   }
+│   tags: [
+│     "support"
+│   ]
+│   metadata: {
+│     "customer_id": "customer-123",
+│     "scenario": "langsmith-instrumentation"
+│   }
+│   ├── retrieve-context [tool]
+│   │   input: {
+│   │     "query": "What is the refund window?"
+│   │   }
+│   │   output: {
+│   │     "documents": [
+│   │       "Refund policy"
+│   │     ]
+│   │   }
+│   │   tags: [
+│   │     "knowledge-base"
+│   │   ]
+│   │   metadata: {
+│   │     "customer_id": "customer-123",
+│   │     "data_source": "support-kb",
+│   │     "scenario": "langsmith-instrumentation"
+│   │   }
+│   └── ChatOpenAI [llm]
+│       input: {
+│         "args": [
+│           {
+│             "max_tokens": 64,
+│             "messages": [
+│               {
+│                 "content": "Answer using only this context: Refund requests are accepted within 30 days of purchase.",
+│                 "role": "system"
+│               },
+│               {
+│                 "content": "What is the refund window?",
+│                 "role": "user"
+│               }
+│             ],
+│             "model": "gpt-4o-mini",
+│             "temperature": 0
+│           },
+│           {}
+│         ]
+│       }
+│       output: {
+│         "choices": [
+│           {
+│             "finish_reason": "stop",
+│             "index": 0,
+│             "message": {
+│               "content": "Refund requests are accepted within 30 days of purchase.",
+│               "role": "assistant"
+│             }
+│           }
+│         ],
+│         "created": 0,
+│         "id": "<span:1>",
+│         "model": "gpt-4o-mini-2024-07-18",
+│         "object": "chat.completion"
+│       }
+│       tags: [
+│         "openai",
+│         "chat-completion"
+│       ]
+│       metadata: {
+│         "customer_id": "customer-123",
+│         "customer_tier": "enterprise",
+│         "deployment": "local-fixture",
+│         "max_tokens": 64,
+│         "model": "gpt-4o-mini",
+│         "provider": "openai",
+│         "scenario": "langsmith-instrumentation",
+│         "temperature": 0
+│       }
+│       metrics: {
+│         "completion_tokens": 7,
+│         "prompt_cached_tokens": 4,
+│         "prompt_tokens": 18,
+│         "tokens": 25
+│       }
+├── lookup-customer-record [tool]
+│   metadata: {
+│     "scenario": "langsmith-instrumentation"
+│   }
+│   error: "Error: customer record unavailable"
+├── manual-rag-pipeline [task]
+│   input: {
+│     "question": "Which policy applies?"
+│   }
+│   output: {
+│     "matched_document": "Refund policy"
+│   }
+│   metadata: {
+│     "scenario": "langsmith-instrumentation"
+│   }
+│   └── embed-query [llm]
+│       input: {
+│         "text": "Which policy applies?"
+│       }
+│       output: {
+│         "embedding": [
+│           0.1,
+│           0.2
+│         ]
+│       }
+│       tags: [
+│         "manual"
+│       ]
+│       metadata: {
+│         "model": "manual-model",
+│         "provider": "manual-provider",
+│         "scenario": "langsmith-instrumentation"
+│       }
+│       metrics: {
+│         "completion_tokens": 0,
+│         "prompt_cached_tokens": 1,
+│         "prompt_tokens": 3,
+│         "time_to_first_token": 0,
+│         "tokens": 3
+│       }
+├── direct-search-index [tool]
+│   input: {
+│     "query": "refund window",
+│     "top_k": 3
+│   }
+│   output: {
+│     "documents": [
+│       "Refund policy"
+│     ]
+│   }
+│   metadata: {
+│     "scenario": "langsmith-instrumentation"
+│   }
+├── offline-document-enrichment [task]
+│   input: {
+│     "document_count": 1
+│   }
+│   output: {
+│     "enriched_documents": 1
+│   }
+│   metadata: {
+│     "scenario": "langsmith-instrumentation"
+│   }
+│   └── extract-keywords [tool]
+│       input: {
+│         "document": "Refund requests are accepted within 30 days."
+│       }
+│       output: {
+│         "keywords": [
+│           "refund",
+│           "30 days"
+│         ]
+│       }
+└── langchain-dedupe [task]
+    input: {
+      "input": "provider-free"
+    }
+    output: {
+      "output": "provider-free!"
+    }
+    metadata: {
+      "braintrust": {
+        "integration_name": "langchain-js",
+        "sdk_language": "javascript"
+      },
+      "metadata": {},
+      "name": "langchain-dedupe",
+      "run_id": "<uuid:1>",
+      "serialized": {
+        "id": [
+          "langchain_core",
+          "runnables",
+          "RunnableLambda"
+        ],
+        "lc": 1,
+        "type": "not_implemented"
+      },
+      "tags": []
+    }
