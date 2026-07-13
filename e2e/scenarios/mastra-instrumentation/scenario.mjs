@@ -60,12 +60,9 @@ const travelWorkflow = createWorkflow({
   .commit();
 
 // The scenario constructs `new Mastra({})` with no observability config.
-// Under `node --import braintrust/hook.mjs`, the loader patches:
-//   - `@mastra/core` Mastra constructor → injects a default Observability when
-//     `observability` is missing
-//   - `@mastra/observability` Observability constructor → injects
-//     BraintrustObservabilityExporter when not already present
-// So this snippet exercises the truly zero-line integration path.
+// `braintrust/hook.mjs` wraps the Mastra constructors in tracing channels, and
+// the Braintrust import in the shared provider runtime subscribes the Mastra
+// plugin that injects observability when it is missing.
 const mastra = new Mastra({
   agents: { "weather-agent": weatherAgent },
   workflows: { "travel-flow": travelWorkflow },

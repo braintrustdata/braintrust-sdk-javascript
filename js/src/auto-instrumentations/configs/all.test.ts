@@ -17,7 +17,7 @@ describe("module export patch configs", () => {
     expect(configs[0].modules.map((module) => module.versionRange)).toEqual([
       ">=1.20.0",
       ">=1.20.0",
-      ">=1.20.0",
+      ">=1.0.0",
     ]);
     expect(configs[0].modules.map((module) => module.patches)).toEqual([
       [

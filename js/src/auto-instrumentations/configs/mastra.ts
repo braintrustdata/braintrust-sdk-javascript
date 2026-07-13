@@ -45,7 +45,7 @@ export const mastraModuleExportPatchConfigs: readonly ModuleExportPatchConfig[] 
             modulePaths: ["dist/index.js", "dist/index.cjs"],
           },
           specifier: "@mastra/observability",
-          versionRange: ">=1.20.0",
+          versionRange: ">=1.0.0",
         },
       ],
       targets: ["node"],

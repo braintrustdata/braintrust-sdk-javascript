@@ -126,6 +126,9 @@ export const unplugin = createUnplugin<LegacyBundlerPluginOptions>(
         }
         return null;
       },
+      loadInclude(id: string) {
+        return id.startsWith(MODULE_EXPORT_ORIGINAL_RESOLVED_PREFIX);
+      },
       load(id: string) {
         if (id.startsWith(MODULE_EXPORT_ORIGINAL_RESOLVED_PREFIX)) {
           return originalSources.get(id) ?? null;
