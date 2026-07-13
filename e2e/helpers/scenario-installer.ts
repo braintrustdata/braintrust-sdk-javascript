@@ -20,6 +20,13 @@ const PNPM_COMMAND = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
 const TEMP_DIR_NAME = ".bt-tmp";
 const DEPENDENCY_CACHE_DIR_NAME = "scenario-deps";
 const CANARY_MODE_ENV = "BRAINTRUST_E2E_MODE";
+const SCENARIO_PNPM_WORKSPACE_CONFIG = `strictDepBuilds: true
+allowBuilds:
+  "@google/genai": false
+  "@openrouter/sdk": false
+  esbuild: false
+  protobufjs: false
+`;
 const INSTALL_SECRET_ENV_VARS = [
   "ANTHROPIC_API_KEY",
   "BRAINTRUST_API_KEY",
@@ -161,6 +168,27 @@ function installEnv(): NodeJS.ProcessEnv {
   return env;
 }
 
+function isTempScenarioDir(scenarioDir: string): boolean {
+  const relativeToTemp = path.relative(
+    path.join(E2E_ROOT, TEMP_DIR_NAME),
+    path.resolve(scenarioDir),
+  );
+  return !relativeToTemp.startsWith("..") && !path.isAbsolute(relativeToTemp);
+}
+
+async function writeScenarioPnpmWorkspaceConfig(
+  scenarioDir: string,
+): Promise<void> {
+  if (!isTempScenarioDir(scenarioDir)) {
+    return;
+  }
+
+  await fs.writeFile(
+    path.join(scenarioDir, "pnpm-workspace.yaml"),
+    SCENARIO_PNPM_WORKSPACE_CONFIG,
+  );
+}
+
 function scenarioNameForPath(scenarioDir: string): string {
   return path.basename(scenarioDir);
 }
@@ -238,20 +266,18 @@ async function rewriteManifestForCanary(scenarioDir: string): Promise<void> {
 
   manifest.dependencies = dependencies;
   await fs.writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+  await writeScenarioPnpmWorkspaceConfig(scenarioDir);
 
-  await spawnOrThrow(
-    PNPM_COMMAND,
-    [
-      "install",
-      "--dir",
-      scenarioDir,
-      "--ignore-workspace",
-      "--lockfile-only",
-      "--strict-peer-dependencies=false",
-    ],
-    scenarioDir,
-    installEnv(),
-  );
+  const installArgs = [
+    "install",
+    "--lockfile-only",
+    "--strict-peer-dependencies=false",
+  ];
+  if (!isTempScenarioDir(scenarioDir)) {
+    installArgs.push("--dir", scenarioDir, "--ignore-workspace");
+  }
+
+  await spawnOrThrow(PNPM_COMMAND, installArgs, scenarioDir, installEnv());
 }
 
 function findWorkspaceSpecs(
@@ -377,6 +403,7 @@ async function installCachedScenarioDependencies({
       path.join(stagingDir, "pnpm-lock.yaml"),
       inputs.lockfileRaw,
     );
+    await writeScenarioPnpmWorkspaceConfig(stagingDir);
     await installScenarioDependencies({
       mode,
       preferOffline,
@@ -465,16 +492,17 @@ export async function installScenarioDependencies({
   if (mode === "canary") {
     await rewriteManifestForCanary(scenarioDir);
   }
+  await writeScenarioPnpmWorkspaceConfig(scenarioDir);
 
   const installArgs = [
     "install",
-    "--dir",
-    scenarioDir,
-    "--ignore-workspace",
     "--frozen-lockfile",
     "--ignore-scripts=false",
     "--strict-peer-dependencies=false",
   ];
+  if (!isTempScenarioDir(scenarioDir)) {
+    installArgs.push("--dir", scenarioDir, "--ignore-workspace");
+  }
   if (preferOffline) {
     installArgs.push("--prefer-offline");
   }
