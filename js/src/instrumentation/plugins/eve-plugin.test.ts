@@ -264,6 +264,54 @@ describe("braintrustEveHook", () => {
     expect(step?.input).toBeUndefined();
   });
 
+  it("bounds pre-existing durable trace state", async () => {
+    const fakeEve = createFakeDefineState();
+    const oversizedEntryCount = 10_001;
+    fakeEve.values.set("braintrust.eve.tracing", {
+      llmInputs: [],
+      metadata: {},
+      spanReferences: Array.from(
+        { length: oversizedEntryCount },
+        (_, index) => ({
+          exported: `exported-${index}`,
+          rootSpanId: `root-${index}`,
+          rowId: `row-${index}`,
+          spanId: `span-${index}`,
+        }),
+      ),
+      stepStarts: Array.from({ length: oversizedEntryCount }, (_, index) => ({
+        open: false,
+        ordinal: index,
+        stepIndex: index,
+        turnId: `turn-${index}`,
+      })),
+    });
+    const wildcard = braintrustEveHook({
+      defineState: fakeEve.defineState,
+    }).events?.["*"];
+
+    await wildcard?.(
+      {
+        data: {
+          runtime: {
+            agentId: "agent-bounded-state",
+            eveVersion: "0.20.0",
+            modelId: "openai/gpt-5.4-mini",
+          },
+        },
+        type: "session.started",
+      },
+      { session: { id: "session-bounded-state" } },
+    );
+
+    const state = fakeEve.values.get("braintrust.eve.tracing") as {
+      spanReferences: unknown[];
+      stepStarts: unknown[];
+    };
+    expect(state.spanReferences).toHaveLength(10_000);
+    expect(state.stepStarts).toHaveLength(10_000);
+  });
+
   it("records a flat Eve turn with session model metadata", async () => {
     const wildcard = braintrustEveHook({
       defineState,
@@ -785,6 +833,7 @@ describe("braintrustEveHook", () => {
           ),
         }),
       ]),
+      stepStarts: [],
     });
     const resumedWildcard = braintrustEveHook({
       defineState: eveState.defineState,
@@ -841,7 +890,9 @@ describe("braintrustEveHook", () => {
     expect(tool?.metrics?.end).toEqual(expect.any(Number));
   });
 
-  it("keeps deterministic tool state available after session completion", async () => {
+  it("evicts tracing state after session completion", async () => {
+    const fakeEve = createFakeDefineState();
+    defineState = fakeEve.defineState;
     const wildcard = braintrustEveHook({
       defineState,
       metadata: {
@@ -889,22 +940,6 @@ describe("braintrustEveHook", () => {
       meta: { at: "2026-01-01T00:00:00.030Z" },
       type: "session.completed",
     });
-    await emit({
-      data: {
-        result: {
-          callId: "call-after-session",
-          kind: "tool-result",
-          output: { title: "After session" },
-          toolName: "search",
-        },
-        sequence: 0,
-        status: "completed",
-        stepIndex: 0,
-        turnId: "turn-late-after-session",
-      },
-      meta: { at: "2026-01-01T00:00:00.040Z" },
-      type: "action.result",
-    });
 
     const spans = (await backgroundLogger.drain()) as Array<
       Record<string, any>
@@ -912,9 +947,14 @@ describe("braintrustEveHook", () => {
     const tool = spans.find((span) => span.span_attributes?.name === "search");
     expect(tool).toMatchObject({
       input: { query: "after session" },
-      output: { title: "After session" },
     });
     expect(tool?.metrics?.end).toEqual(expect.any(Number));
+    expect(fakeEve.values.get("braintrust.eve.tracing")).toEqual({
+      llmInputs: [],
+      metadata: {},
+      spanReferences: [],
+      stepStarts: [],
+    });
   });
 
   it("records result-only tool events without invented input", async () => {
@@ -963,6 +1003,53 @@ describe("braintrustEveHook", () => {
       span_attributes: { name: "search", type: "tool" },
     });
     expect(tool?.input).toBeUndefined();
+  });
+
+  it("evicts tracing state after session failure", async () => {
+    const fakeEve = createFakeDefineState();
+    const wildcard = braintrustEveHook({
+      defineState: fakeEve.defineState,
+    }).events?.["*"];
+    const ctx: EveHookContext = {
+      session: { id: "session-failed-cleanup" },
+    };
+
+    await wildcard?.(
+      {
+        data: { sequence: 0, turnId: "turn-failed-cleanup" },
+        type: "turn.started",
+      },
+      ctx,
+    );
+    await wildcard?.(
+      {
+        data: {
+          sequence: 0,
+          stepIndex: 0,
+          turnId: "turn-failed-cleanup",
+        },
+        type: "step.started",
+      },
+      ctx,
+    );
+    await wildcard?.(
+      {
+        data: {
+          code: "session_failed",
+          message: "Session failed",
+          sessionId: "session-failed-cleanup",
+        },
+        type: "session.failed",
+      },
+      ctx,
+    );
+
+    expect(fakeEve.values.get("braintrust.eve.tracing")).toEqual({
+      llmInputs: [],
+      metadata: {},
+      spanReferences: [],
+      stepStarts: [],
+    });
   });
 
   it("serializes events per session without blocking other sessions", async () => {

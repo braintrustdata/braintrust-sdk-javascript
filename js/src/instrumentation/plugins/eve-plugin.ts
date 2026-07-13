@@ -9,6 +9,7 @@ import {
   withCurrent,
 } from "../../logger";
 import type { Span } from "../../logger";
+import { LRUCache } from "../../prompt-cache/lru-cache";
 import { SpanTypeAttribute, isObject } from "../../../util/index";
 import { getCurrentUnixTimestamp } from "../../util";
 import type {
@@ -91,7 +92,10 @@ type EveTraceState = {
 };
 
 const EVE_TRACE_STATE_KEY = "braintrust.eve.tracing";
+const MAX_EVE_CACHE_ENTRIES = 10_000;
 const MAX_STORED_LLM_INPUTS = 100;
+const MAX_STORED_SPAN_REFERENCES = 10_000;
+const MAX_STORED_STEP_STARTS = 10_000;
 
 type CapturedEveModelInput = readonly unknown[];
 
@@ -171,10 +175,18 @@ class ResumedEveSpan implements EveSpan {
 class EveBridge {
   constructor(private readonly state: EveStateHandle<EveTraceState>) {}
 
-  private sessionsById = new Map<string, SessionState>();
-  private completedToolKeys = new Set<string>();
-  private toolsByCallKey = new Map<string, ToolState>();
-  private turnsByKey = new Map<string, TurnState>();
+  private sessionsById = new LRUCache<string, SessionState>({
+    max: MAX_EVE_CACHE_ENTRIES,
+  });
+  private completedToolKeys = new LRUCache<string, true>({
+    max: MAX_EVE_CACHE_ENTRIES,
+  });
+  private toolsByCallKey = new LRUCache<string, ToolState>({
+    max: MAX_EVE_CACHE_ENTRIES,
+  });
+  private turnsByKey = new LRUCache<string, TurnState>({
+    max: MAX_EVE_CACHE_ENTRIES,
+  });
 
   private async startEveSpan(
     args: Parameters<typeof startSpan>[0],
@@ -210,7 +222,9 @@ class EveBridge {
           ? normalized
           : {
               ...normalized,
-              spanReferences: [...normalized.spanReferences, reference],
+              spanReferences: [...normalized.spanReferences, reference].slice(
+                -MAX_STORED_SPAN_REFERENCES,
+              ),
             };
       });
     } catch (error) {
@@ -259,7 +273,7 @@ class EveBridge {
           stepIndex: event.data.stepIndex,
           turnId: event.data.turnId,
         },
-      ],
+      ].slice(-MAX_STORED_STEP_STARTS),
     }));
     return ordinal;
   }
@@ -683,7 +697,7 @@ class EveBridge {
     const endTime = eventTime(event);
     tool.span.end(endTime === undefined ? undefined : { endTime });
     this.toolsByCallKey.delete(key);
-    this.completedToolKeys.add(key);
+    this.completedToolKeys.set(key, true);
     if (flushAfterCompletion) {
       await this.flushInstrumentation();
     }
@@ -779,7 +793,7 @@ class EveBridge {
     });
 
     this.toolsByCallKey.delete(key);
-    this.completedToolKeys.add(key);
+    this.completedToolKeys.set(key, true);
     if (flushAfterCompletion) {
       await this.flushInstrumentation();
     }
@@ -826,7 +840,7 @@ class EveBridge {
     });
 
     this.toolsByCallKey.delete(key);
-    this.completedToolKeys.add(key);
+    this.completedToolKeys.set(key, true);
     if (flushAfterCompletion) {
       await this.flushInstrumentation();
     }
@@ -1038,9 +1052,9 @@ class EveBridge {
     });
     const endTime = eventTime(event);
     session.span.end(endTime === undefined ? undefined : { endTime });
-    this.sessionsById.delete(sessionId);
 
     await this.flushInstrumentation();
+    this.cleanupSession(sessionId);
   }
 
   private async handleSessionCompleted(
@@ -1084,9 +1098,9 @@ class EveBridge {
     session.span.log({ metadata: session.metadata });
     const endTime = eventTime(event);
     session.span.end(endTime === undefined ? undefined : { endTime });
-    this.sessionsById.delete(sessionId);
 
     await this.flushInstrumentation();
+    this.cleanupSession(sessionId);
   }
 
   private async ensureSession(
@@ -1520,6 +1534,36 @@ class EveBridge {
     }
     const key = turnKey(sessionId, event.data.turnId);
     this.turnsByKey.delete(key);
+    this.state.update((current) => {
+      const normalized = normalizeEveTraceState(current);
+      return {
+        ...normalized,
+        stepStarts: normalized.stepStarts.filter(
+          (entry) => entry.turnId !== event.data.turnId,
+        ),
+      };
+    });
+  }
+
+  private cleanupSession(sessionId: string): void {
+    const keyPrefix = `${sessionId}:`;
+    this.sessionsById.delete(sessionId);
+    for (const key of this.turnsByKey.keys()) {
+      if (key.startsWith(keyPrefix)) {
+        this.turnsByKey.delete(key);
+      }
+    }
+    for (const key of this.toolsByCallKey.keys()) {
+      if (key.startsWith(keyPrefix)) {
+        this.toolsByCallKey.delete(key);
+      }
+    }
+    for (const key of this.completedToolKeys.keys()) {
+      if (key.startsWith(keyPrefix)) {
+        this.completedToolKeys.delete(key);
+      }
+    }
+    this.state.update(() => emptyEveTraceState());
   }
 
   private async flushInstrumentation(): Promise<boolean> {
@@ -1548,8 +1592,8 @@ function normalizeEveTraceState(state: unknown): EveTraceState {
   }
   const metadata = isObject(state["metadata"]) ? state["metadata"] : {};
   const spanReferences = Array.isArray(state["spanReferences"])
-    ? state["spanReferences"].flatMap(
-        (entry): EveTraceState["spanReferences"] => {
+    ? state["spanReferences"]
+        .flatMap((entry): EveTraceState["spanReferences"] => {
           if (!isObject(entry)) {
             return [];
           }
@@ -1563,40 +1607,44 @@ function normalizeEveTraceState(state: unknown): EveTraceState {
             typeof spanId === "string"
             ? [{ exported, rootSpanId, rowId, spanId }]
             : [];
-        },
-      )
+        })
+        .slice(-MAX_STORED_SPAN_REFERENCES)
     : [];
   const llmInputs = Array.isArray(state["llmInputs"])
-    ? state["llmInputs"].flatMap((entry): EveTraceState["llmInputs"] => {
-        if (!isObject(entry)) {
-          return [];
-        }
-        const key = entry["key"];
-        const input = entry["input"];
-        return typeof key === "string" && isCapturedModelInput(input)
-          ? [{ input, key }]
-          : [];
-      })
+    ? state["llmInputs"]
+        .flatMap((entry): EveTraceState["llmInputs"] => {
+          if (!isObject(entry)) {
+            return [];
+          }
+          const key = entry["key"];
+          const input = entry["input"];
+          return typeof key === "string" && isCapturedModelInput(input)
+            ? [{ input, key }]
+            : [];
+        })
+        .slice(-MAX_STORED_LLM_INPUTS)
     : [];
   const stepStarts = Array.isArray(state["stepStarts"])
-    ? state["stepStarts"].flatMap((entry): EveTraceState["stepStarts"] => {
-        if (!isObject(entry)) {
-          return [];
-        }
-        const ordinal = entry["ordinal"];
-        const open = entry["open"];
-        const stepIndex = entry["stepIndex"];
-        const turnId = entry["turnId"];
-        return typeof ordinal === "number" &&
-          Number.isInteger(ordinal) &&
-          ordinal >= 0 &&
-          typeof open === "boolean" &&
-          typeof stepIndex === "number" &&
-          Number.isInteger(stepIndex) &&
-          typeof turnId === "string"
-          ? [{ open, ordinal, stepIndex, turnId }]
-          : [];
-      })
+    ? state["stepStarts"]
+        .flatMap((entry): EveTraceState["stepStarts"] => {
+          if (!isObject(entry)) {
+            return [];
+          }
+          const ordinal = entry["ordinal"];
+          const open = entry["open"];
+          const stepIndex = entry["stepIndex"];
+          const turnId = entry["turnId"];
+          return typeof ordinal === "number" &&
+            Number.isInteger(ordinal) &&
+            ordinal >= 0 &&
+            typeof open === "boolean" &&
+            typeof stepIndex === "number" &&
+            Number.isInteger(stepIndex) &&
+            typeof turnId === "string"
+            ? [{ open, ordinal, stepIndex, turnId }]
+            : [];
+        })
+        .slice(-MAX_STORED_STEP_STARTS)
     : [];
   return { llmInputs, metadata: { ...metadata }, spanReferences, stepStarts };
 }

@@ -49,6 +49,13 @@ export class LRUCache<K, V> {
   }
 
   /**
+   * Checks whether a key exists and marks it as most recently used.
+   */
+  has(key: K): boolean {
+    return this.get(key) !== undefined;
+  }
+
+  /**
    * Stores a value in the cache.
    * If the key already exists, the value is updated and marked as most recently used.
    * If the cache is at its maximum size, the least recently used item is evicted.
@@ -65,6 +72,38 @@ export class LRUCache<K, V> {
       this.cache.delete(first);
     }
     this.cache.set(key, value);
+  }
+
+  /**
+   * Removes an item from the cache.
+   */
+  delete(key: K): boolean {
+    return this.cache.delete(key);
+  }
+
+  /**
+   * Iterates over cache entries from least to most recently used.
+   */
+  entries(): IterableIterator<[K, V]> {
+    return this.cache.entries();
+  }
+
+  /**
+   * Iterates over cache keys from least to most recently used.
+   */
+  keys(): IterableIterator<K> {
+    return this.cache.keys();
+  }
+
+  /**
+   * Iterates over cache values from least to most recently used.
+   */
+  values(): IterableIterator<V> {
+    return this.cache.values();
+  }
+
+  [Symbol.iterator](): IterableIterator<[K, V]> {
+    return this.entries();
   }
 
   /**
