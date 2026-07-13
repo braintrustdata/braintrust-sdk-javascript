@@ -717,6 +717,64 @@ test("dataset fetch forwards _internal_btql filter arrays to btql", async () => 
   }
 });
 
+test("dataset fetch retries an internally generated BTQL request after a transient 500", async () => {
+  vi.useFakeTimers();
+  const state = await _exportsForTestingOnly.simulateLoginForTests();
+
+  try {
+    vi.spyOn(state, "login").mockResolvedValue(state as any);
+    vi.spyOn(state.appConn(), "post_json").mockResolvedValue({
+      project: {
+        id: "00000000-0000-0000-0000-000000000001",
+        name: "test-project",
+      },
+      dataset: {
+        id: "00000000-0000-0000-0000-000000000002",
+        name: "test-dataset",
+      },
+    });
+
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response("Internal server error", {
+          status: 500,
+          statusText: "Internal Server Error",
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ data: [] }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      );
+    state.setFetch(fetchMock as unknown as typeof globalThis.fetch);
+
+    const dataset = initDataset({
+      project: "test-project",
+      dataset: "test-dataset",
+      state,
+    });
+
+    const fetchedData = dataset.fetchedData();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    await vi.advanceTimersByTimeAsync(1_200);
+    await expect(fetchedData).resolves.toEqual([]);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      1,
+      expect.stringMatching(/\/btql$/),
+      expect.objectContaining({ method: "POST" }),
+    );
+  } finally {
+    vi.useRealTimers();
+    _exportsForTestingOnly.simulateLogoutForTests();
+    vi.restoreAllMocks();
+  }
+});
+
 test("initDataset applies bt eval internal BTQL runtime value to eval data", async () => {
   const state = await _exportsForTestingOnly.simulateLoginForTests();
   const previousInternalBtql = globalThis.__bt_eval_internal_btql;
@@ -2099,6 +2157,64 @@ test("simulateLoginForTests and simulateLogoutForTests", async () => {
     expect(logoutState.apiUrl).toBe(null);
     expect(logoutState.appUrl).toBe("https://www.braintrust.dev");
   }
+});
+
+describe("HTTPConnection POST retries", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    _exportsForTestingOnly.simulateLogoutForTests();
+  });
+
+  test("does not retry ordinary POST requests", async () => {
+    const state = await _exportsForTestingOnly.simulateLoginForTests();
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response("Internal server error", {
+          status: 500,
+          statusText: "Internal Server Error",
+        }),
+      )
+      .mockResolvedValueOnce(new Response(null, { status: 200 }));
+    state.setFetch(fetchMock as unknown as typeof globalThis.fetch);
+
+    await expect(state.apiConn().post("write", {})).rejects.toThrow(
+      "500: Internal Server Error",
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  test("does not retry a non-transient response", async () => {
+    const state = await _exportsForTestingOnly.simulateLoginForTests();
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response("Invalid query", {
+          status: 400,
+          statusText: "Bad Request",
+        }),
+      )
+      .mockResolvedValueOnce(new Response(null, { status: 200 }));
+    state.setFetch(fetchMock as unknown as typeof globalThis.fetch);
+
+    await expect(state.apiConn().postWithRetry("btql", {})).rejects.toThrow(
+      "400: Bad Request",
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  test("does not retry an aborted POST request", async () => {
+    const state = await _exportsForTestingOnly.simulateLoginForTests();
+    const controller = new AbortController();
+    controller.abort();
+    const fetchMock = vi.fn().mockRejectedValue(controller.signal.reason);
+    state.setFetch(fetchMock as unknown as typeof globalThis.fetch);
+
+    await expect(
+      state.apiConn().postWithRetry("btql", {}, { signal: controller.signal }),
+    ).rejects.toBe(controller.signal.reason);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe("HTTPConnection get_json retries", () => {
