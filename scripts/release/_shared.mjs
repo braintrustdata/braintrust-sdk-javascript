@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const REPO_ROOT = path.resolve(__dirname, "../..");
-export const NPM_REGISTRY = "https://registry.npmjs.org/";
+const NPM_REGISTRY = "https://registry.npmjs.org/";
 export const GITHUB_REPO_URL =
   "git+https://github.com/braintrustdata/braintrust-sdk-javascript.git";
 export const DOCS_HOMEPAGE = "https://www.braintrust.dev/docs";
@@ -65,7 +65,7 @@ export function getApprovedPackageByName(name) {
   return PUBLISHABLE_PACKAGE_MAP.get(name);
 }
 
-export function escapeRegExp(value) {
+function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 

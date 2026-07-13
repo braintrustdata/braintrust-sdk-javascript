@@ -21,7 +21,8 @@ RUN if [ "$TEST_DIR" != "otel-v1" ] && [ "$TEST_DIR" != "otel-v2" ]; then echo "
 
 # Enable pnpm
 RUN corepack enable
-RUN corepack prepare pnpm@10 --activate
+RUN corepack prepare pnpm@10.33.0 --activate
+ENV COREPACK_ENABLE_PROJECT_SPEC=0
 
 # Install build dependencies
 RUN apt-get update && apt-get upgrade -y && apt-get install -y \
