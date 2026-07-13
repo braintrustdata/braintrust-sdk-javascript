@@ -5,7 +5,7 @@ const cursorSDKVersionRange = ">=1.0.7 <2.0.0";
 
 const cursorSDKEntrypoints = ["dist/esm/index.js", "dist/cjs/index.js"];
 
-export const cursorSDKConfigs: InstrumentationConfig[] =
+export const cursorSDKOrchestrionConfigs: InstrumentationConfig[] =
   cursorSDKEntrypoints.flatMap((filePath) => [
     {
       channelName: cursorSDKChannels.create.channelName,

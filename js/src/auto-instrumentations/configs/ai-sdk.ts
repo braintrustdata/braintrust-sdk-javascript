@@ -2,7 +2,7 @@ import type { InstrumentationConfig } from "../orchestrion-js";
 import { aiSDKChannels } from "../../instrumentation/plugins/ai-sdk-channels";
 
 /**
- * Instrumentation configurations for the Vercel AI SDK.
+ * Orchestrion configurations for the Vercel AI SDK.
  *
  * These configs define which functions to instrument and what channel
  * to emit events on. They are used by orchestrion-js to perform AST
@@ -12,7 +12,7 @@ import { aiSDKChannels } from "../../instrumentation/plugins/ai-sdk-channels";
  * will prepend "orchestrion:ai-sdk:" to these names, resulting in final channel names like:
  * "orchestrion:ai-sdk:generateText"
  */
-export const aiSDKConfigs: InstrumentationConfig[] = [
+export const aiSDKOrchestrionConfigs: InstrumentationConfig[] = [
   // generateText - async function
   {
     channelName: aiSDKChannels.generateText.channelName,

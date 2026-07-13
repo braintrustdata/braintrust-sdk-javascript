@@ -10,9 +10,9 @@
  * Two integration paths:
  *   - **Manual**: `new Mastra({ observability: new Observability({ configs: {
  *     default: { exporters: [new BraintrustObservabilityExporter()] } } }) })`
- *   - **Auto** (under `node --import braintrust/hook.mjs`): the loader patches
- *     `@mastra/core`'s `dist/mastra/index.{js,cjs}` to wrap `Mastra` so it
- *     calls `defaultInstance.registerExporter(exporter)` after construction.
+ *   - **Auto**: declarative module export patches wrap Mastra's public
+ *     constructors in tracing channels. `MastraPlugin` subscribes when the
+ *     Braintrust SDK is imported and adds this exporter to Observability.
  *
  * Minimum supported Mastra version: 1.20.0 (when `Mastra.prototype.register`
  * `Exporter` and `ObservabilityInstance.registerExporter` were added). The
@@ -368,10 +368,10 @@ function logExporterError(err: unknown): void {
  *
  * To capture Mastra spans in Braintrust, do one of:
  *
- * - **Auto-instrumentation**: run your app with
- *   `node --import braintrust/hook.mjs`. The loader installs
- *   `BraintrustObservabilityExporter` into every `new Mastra(...)`
- *   automatically.
+ * - **Auto-instrumentation**: import Braintrust and run your app with
+ *   `node --import braintrust/hook.mjs`. Declarative constructor patches emit
+ *   tracing-channel events that `MastraPlugin` uses to install
+ *   `BraintrustObservabilityExporter` into Mastra Observability configs.
  * - **Manual wiring**: pass the exporter yourself:
  *
  *   ```ts

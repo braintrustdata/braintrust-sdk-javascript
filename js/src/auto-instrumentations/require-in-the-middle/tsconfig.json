@@ -1,4 +1,0 @@
-{
-  "extends": "../../../tsconfig.vendor-hooks.json",
-  "include": ["../types/module-details-from-path.d.ts", "**/*.ts"]
-}

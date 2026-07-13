@@ -6,7 +6,7 @@ const googleADKBundledIndexV06VersionRange = ">=0.6.1 <0.7.0";
 const googleADKBundledIndexV1VersionRange = ">=1.0.0 <2.0.0";
 
 /**
- * Instrumentation configurations for the Google ADK (@google/adk).
+ * Orchestrion configurations for the Google ADK (@google/adk).
  *
  * Runner.runAsync and BaseAgent.runAsync are async generators (`async *`).
  * They synchronously return an AsyncGenerator object, so we use kind "Sync"
@@ -16,7 +16,7 @@ const googleADKBundledIndexV1VersionRange = ">=1.0.0 <2.0.0";
  * FunctionTool.runAsync is a regular async method (returns Promise<unknown>)
  * and uses kind "Async".
  */
-export const googleADKConfigs: InstrumentationConfig[] = [
+export const googleADKOrchestrionConfigs: InstrumentationConfig[] = [
   // --- Runner.runAsync --- async generator, kind "Sync" + sync-stream channel
 
   // Runner.runAsync — ESM individual module file

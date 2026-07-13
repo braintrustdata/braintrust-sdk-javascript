@@ -3,7 +3,7 @@ import { openAICodexChannels } from "../../instrumentation/plugins/openai-codex-
 
 const openAICodexVersionRange = ">=0.128.0 <1.0.0";
 
-export const openAICodexConfigs: InstrumentationConfig[] = [
+export const openAICodexOrchestrionConfigs: InstrumentationConfig[] = [
   {
     channelName: openAICodexChannels.run.channelName,
     module: {

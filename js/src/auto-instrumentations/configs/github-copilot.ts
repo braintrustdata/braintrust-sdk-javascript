@@ -1,7 +1,7 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
 import { gitHubCopilotChannels } from "../../instrumentation/plugins/github-copilot-channels";
 
-export const gitHubCopilotConfigs: InstrumentationConfig[] = [
+export const gitHubCopilotOrchestrionConfigs: InstrumentationConfig[] = [
   // ESM: CopilotClient.createSession
   {
     channelName: gitHubCopilotChannels.createSession.channelName,

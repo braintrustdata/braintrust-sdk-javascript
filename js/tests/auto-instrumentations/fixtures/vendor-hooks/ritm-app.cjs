@@ -1,7 +1,7 @@
 const assert = require("node:assert");
 const {
-  Hook,
-} = require("../../../../src/auto-instrumentations/require-in-the-middle/index.ts");
+  default: Hook,
+} = require("../../../../src/auto-instrumentations/loader/module-hooks/ritm.ts");
 
 let calls = 0;
 const hook = new Hook(["ritm-target"], (exports, name) => {

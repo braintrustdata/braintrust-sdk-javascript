@@ -44,6 +44,12 @@ function readPackageJsonWithFallback(
 }
 
 export function getPackageVersion(baseDir: string): string {
+  return getPackageVersionIfAvailable(baseDir) ?? process.version.slice(1);
+}
+
+export function getPackageVersionIfAvailable(
+  baseDir: string,
+): string | undefined {
   if (packageVersions.has(baseDir)) {
     return packageVersions.get(baseDir)!;
   }
@@ -54,7 +60,7 @@ export function getPackageVersion(baseDir: string): string {
     return packageJson.version;
   }
 
-  return process.version.slice(1);
+  return undefined;
 }
 
 export function getPackageName(baseDir: string): string | undefined {

@@ -137,7 +137,8 @@ The plugin system follows the OpenTelemetry pattern:
 
 - **Integration Configs**: `src/configs/` in this package
   - SDK-specific instrumentation configurations
-  - Consumed by orchestrion-js for transformation
+  - Orchestrion configs describe function transformations
+  - Module export patch configs describe constructor tracing channels
 
 ### Auto-Enable Mechanism
 
@@ -167,7 +168,7 @@ Configuration is merged in the following order (later overrides earlier):
 ```typescript
 import type { InstrumentationConfig } from "braintrust/vite";
 
-export const anthropicConfigs: InstrumentationConfig[] = [
+export const anthropicOrchestrionConfigs: InstrumentationConfig[] = [
   {
     channelName: "messages.create",
     module: {
@@ -187,7 +188,7 @@ export const anthropicConfigs: InstrumentationConfig[] = [
 2. **Export the configs** from `src/index.ts`:
 
 ```typescript
-export { anthropicConfigs } from "./configs/anthropic";
+export { anthropicOrchestrionConfigs } from "./configs/anthropic";
 ```
 
 3. **Add channel handlers** in `BraintrustPlugin` (in the main `braintrust` package):

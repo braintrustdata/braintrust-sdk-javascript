@@ -2,7 +2,7 @@ import type { InstrumentationConfig } from "../orchestrion-js";
 import { claudeAgentSDKChannels } from "../../instrumentation/plugins/claude-agent-sdk-channels";
 
 /**
- * Instrumentation configuration for the Claude Agent SDK.
+ * Orchestrion configuration for the Claude Agent SDK.
  *
  * This config defines which functions to instrument and what channel
  * to emit events on. It is used by orchestrion-js to perform AST
@@ -12,7 +12,7 @@ import { claudeAgentSDKChannels } from "../../instrumentation/plugins/claude-age
  * will prepend "orchestrion:claude-agent-sdk:" to these names, resulting in final channel
  * names like: "orchestrion:claude-agent-sdk:query"
  */
-export const claudeAgentSDKConfigs: InstrumentationConfig[] = [
+export const claudeAgentSDKOrchestrionConfigs: InstrumentationConfig[] = [
   // query - Main entry point for agent interactions. The SDK returns an async
   // iterable, but the exported query function itself is synchronous.
   {

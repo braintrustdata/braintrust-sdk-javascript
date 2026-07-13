@@ -7,7 +7,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const fixturesDir = path.join(__dirname, "fixtures", "vendor-hooks");
 const iitmSrc = "../../src/auto-instrumentations/import-in-the-middle/";
 
-describe("vendored import-in-the-middle and require-in-the-middle", () => {
+describe("import-in-the-middle and require-in-the-middle runtimes", () => {
   it("only wraps explicitly hooked ESM imports through the async loader", async () => {
     await runNode({
       args: [

@@ -1,7 +1,7 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
 import { openRouterChannels } from "../../instrumentation/plugins/openrouter-channels";
 
-export const openRouterConfigs: InstrumentationConfig[] = [
+export const openRouterOrchestrionConfigs: InstrumentationConfig[] = [
   {
     channelName: openRouterChannels.chatSend.channelName,
     module: {

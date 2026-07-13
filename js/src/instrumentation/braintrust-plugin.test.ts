@@ -17,6 +17,7 @@ import { GitHubCopilotPlugin } from "./plugins/github-copilot-plugin";
 import { LangChainPlugin } from "./plugins/langchain-plugin";
 import { PiCodingAgentPlugin } from "./plugins/pi-coding-agent-plugin";
 import { StrandsAgentSDKPlugin } from "./plugins/strands-agent-sdk-plugin";
+import { MastraPlugin } from "./plugins/mastra-plugin";
 
 function createPluginClassMock() {
   return vi.fn(function MockPlugin(this: {
@@ -104,6 +105,10 @@ vi.mock("./plugins/pi-coding-agent-plugin", () => ({
 
 vi.mock("./plugins/strands-agent-sdk-plugin", () => ({
   StrandsAgentSDKPlugin: createPluginClassMock(),
+}));
+
+vi.mock("./plugins/mastra-plugin", () => ({
+  MastraPlugin: createPluginClassMock(),
 }));
 
 describe("BraintrustPlugin", () => {
@@ -260,6 +265,15 @@ describe("BraintrustPlugin", () => {
       expect(mockInstance.enable).toHaveBeenCalledTimes(1);
     });
 
+    it("should create and enable Mastra plugin by default", () => {
+      const plugin = new BraintrustPlugin();
+      plugin.enable();
+
+      expect(MastraPlugin).toHaveBeenCalledTimes(1);
+      const mockInstance = vi.mocked(MastraPlugin).mock.results[0].value;
+      expect(mockInstance.enable).toHaveBeenCalledTimes(1);
+    });
+
     it("should create all plugins when enabled with no config", () => {
       const plugin = new BraintrustPlugin();
       plugin.enable();
@@ -280,6 +294,7 @@ describe("BraintrustPlugin", () => {
       expect(GitHubCopilotPlugin).toHaveBeenCalledTimes(1);
       expect(StrandsAgentSDKPlugin).toHaveBeenCalledTimes(1);
       expect(LangChainPlugin).toHaveBeenCalledTimes(1);
+      expect(MastraPlugin).toHaveBeenCalledTimes(1);
     });
 
     it("should create all plugins when enabled with empty config", () => {
@@ -302,6 +317,7 @@ describe("BraintrustPlugin", () => {
       expect(GitHubCopilotPlugin).toHaveBeenCalledTimes(1);
       expect(StrandsAgentSDKPlugin).toHaveBeenCalledTimes(1);
       expect(LangChainPlugin).toHaveBeenCalledTimes(1);
+      expect(MastraPlugin).toHaveBeenCalledTimes(1);
     });
 
     it("should create all plugins when enabled with empty integrations config", () => {
@@ -323,6 +339,7 @@ describe("BraintrustPlugin", () => {
       expect(GroqPlugin).toHaveBeenCalledTimes(1);
       expect(StrandsAgentSDKPlugin).toHaveBeenCalledTimes(1);
       expect(LangChainPlugin).toHaveBeenCalledTimes(1);
+      expect(MastraPlugin).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -582,6 +599,7 @@ describe("BraintrustPlugin", () => {
           langchain: false,
           piCodingAgent: false,
           strandsAgentSDK: false,
+          mastra: false,
         },
       });
       plugin.enable();
@@ -603,6 +621,7 @@ describe("BraintrustPlugin", () => {
       expect(LangChainPlugin).not.toHaveBeenCalled();
       expect(PiCodingAgentPlugin).not.toHaveBeenCalled();
       expect(StrandsAgentSDKPlugin).not.toHaveBeenCalled();
+      expect(MastraPlugin).not.toHaveBeenCalled();
     });
 
     it("should not create Pi Coding Agent plugin when piCodingAgent: false", () => {
@@ -623,6 +642,16 @@ describe("BraintrustPlugin", () => {
       plugin.enable();
 
       expect(StrandsAgentSDKPlugin).not.toHaveBeenCalled();
+      expect(OpenAIPlugin).toHaveBeenCalledTimes(1);
+    });
+
+    it("should not create Mastra plugin when mastra: false", () => {
+      const plugin = new BraintrustPlugin({
+        integrations: { mastra: false },
+      });
+      plugin.enable();
+
+      expect(MastraPlugin).not.toHaveBeenCalled();
       expect(OpenAIPlugin).toHaveBeenCalledTimes(1);
     });
 
@@ -784,6 +813,7 @@ describe("BraintrustPlugin", () => {
       const strandsAgentSDKMock = vi.mocked(StrandsAgentSDKPlugin).mock
         .results[0].value;
       const langChainMock = vi.mocked(LangChainPlugin).mock.results[0].value;
+      const mastraMock = vi.mocked(MastraPlugin).mock.results[0].value;
 
       expect(openaiMock.enable).toHaveBeenCalledTimes(1);
       expect(openAICodexMock.enable).toHaveBeenCalledTimes(1);
@@ -801,6 +831,7 @@ describe("BraintrustPlugin", () => {
       expect(piCodingAgentMock.enable).toHaveBeenCalledTimes(1);
       expect(strandsAgentSDKMock.enable).toHaveBeenCalledTimes(1);
       expect(langChainMock.enable).toHaveBeenCalledTimes(1);
+      expect(mastraMock.enable).toHaveBeenCalledTimes(1);
     });
 
     it("should disable and nullify all sub-plugins when disabled", () => {
@@ -831,6 +862,7 @@ describe("BraintrustPlugin", () => {
       const strandsAgentSDKMock = vi.mocked(StrandsAgentSDKPlugin).mock
         .results[0].value;
       const langChainMock = vi.mocked(LangChainPlugin).mock.results[0].value;
+      const mastraMock = vi.mocked(MastraPlugin).mock.results[0].value;
 
       plugin.disable();
 
@@ -850,6 +882,7 @@ describe("BraintrustPlugin", () => {
       expect(piCodingAgentMock.disable).toHaveBeenCalledTimes(1);
       expect(strandsAgentSDKMock.disable).toHaveBeenCalledTimes(1);
       expect(langChainMock.disable).toHaveBeenCalledTimes(1);
+      expect(mastraMock.disable).toHaveBeenCalledTimes(1);
     });
 
     it("should be idempotent on multiple enable calls", () => {

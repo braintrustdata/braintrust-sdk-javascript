@@ -2,7 +2,7 @@ import type { InstrumentationConfig } from "../orchestrion-js";
 import { openAIChannels } from "../../instrumentation/plugins/openai-channels";
 
 /**
- * Instrumentation configurations for the OpenAI SDK.
+ * Orchestrion configurations for the OpenAI SDK.
  *
  * These configs define which functions to instrument and what channel
  * to emit events on. They are used by orchestrion-js to perform AST
@@ -12,7 +12,7 @@ import { openAIChannels } from "../../instrumentation/plugins/openai-channels";
  * will prepend "orchestrion:" + module.name + ":" to these names, resulting in final channel names like:
  * "orchestrion:openai:chat.completions.create"
  */
-export const openaiConfigs: InstrumentationConfig[] = [
+export const openaiOrchestrionConfigs: InstrumentationConfig[] = [
   // Chat Completions
   {
     channelName: openAIChannels.chatCompletionsCreate.channelName,

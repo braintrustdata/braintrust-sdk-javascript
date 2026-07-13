@@ -3,7 +3,7 @@ import { strandsAgentSDKChannels } from "../../instrumentation/plugins/strands-a
 
 const strandsAgentSDKVersionRange = ">=1.0.0 <2.0.0";
 
-export const strandsAgentSDKConfigs: InstrumentationConfig[] = [
+export const strandsAgentSDKOrchestrionConfigs: InstrumentationConfig[] = [
   {
     channelName: strandsAgentSDKChannels.agentStream.channelName,
     module: {

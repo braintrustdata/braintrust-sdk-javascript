@@ -7,8 +7,8 @@ import { create, type InstrumentationConfig } from "../orchestrion-js";
 import * as NodeModule from "node:module";
 import { sep } from "node:path";
 import moduleDetailsFromPath from "module-details-from-path";
-import { getPackageName, getPackageVersion } from "./get-package-version.js";
-import { applySpecialCasePatch } from "./special-case-patches.js";
+import { getPackageName, getPackageVersion } from "./package-version.js";
+import { applySourcePatch } from "./source-patches/index.js";
 
 export class ModulePatch {
   private packages: Set<string>;
@@ -48,11 +48,11 @@ export class ModulePatch {
         const normalizedModulePath = resolvedModule.path.replace(/\\/g, "/");
         const version = getPackageVersion(resolvedModule.basedir);
 
-        // Per-package source patches (see loader/special-case-patches.ts).
+        // Per-package source patches (see loader/source-patches/).
         // Anti-pattern intentionally isolated in its own module — do not
         // expand inline here; new integrations belong in the standard plugin
         // pipeline.
-        const patched = applySpecialCasePatch({
+        const patched = applySourcePatch({
           packageName,
           modulePath: normalizedModulePath,
           source: String(content),

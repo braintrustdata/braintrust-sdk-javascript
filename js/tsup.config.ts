@@ -96,8 +96,8 @@ export default defineConfig([
   {
     entry: [
       "src/auto-instrumentations/index.ts",
-      "src/auto-instrumentations/loader/cjs-patch.ts",
-      "src/auto-instrumentations/loader/get-package-version.ts",
+      "src/auto-instrumentations/loader/cjs.ts",
+      "src/auto-instrumentations/loader/package-version.ts",
       "src/auto-instrumentations/bundler/vite.ts",
       "src/auto-instrumentations/bundler/webpack.ts",
       "src/auto-instrumentations/bundler/next.ts",
@@ -133,7 +133,7 @@ export default defineConfig([
   {
     entry: [
       "src/auto-instrumentations/hook.mts",
-      "src/auto-instrumentations/loader/esm-hook.mts",
+      "src/auto-instrumentations/loader/esm.mts",
     ],
     format: ["esm"],
     outDir: "dist/auto-instrumentations",

@@ -3,7 +3,7 @@ import { piCodingAgentChannels } from "../../instrumentation/plugins/pi-coding-a
 
 const piCodingAgentVersionRange = ">=0.79.0 <0.80.0";
 
-export const piCodingAgentConfigs: InstrumentationConfig[] = [
+export const piCodingAgentOrchestrionConfigs: InstrumentationConfig[] = [
   {
     channelName: piCodingAgentChannels.prompt.channelName,
     module: {

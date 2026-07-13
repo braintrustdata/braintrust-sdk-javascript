@@ -8,19 +8,19 @@ import { fileURLToPath } from "node:url";
 import { extname, sep } from "node:path";
 import { create, type InstrumentationConfig } from "../orchestrion-js";
 import moduleDetailsFromPath from "module-details-from-path";
-import { getPackageName, getPackageVersion } from "./get-package-version.js";
+import { getPackageName, getPackageVersion } from "./package-version.js";
 import {
-  applySpecialCasePatch,
-  isSpecialCaseTarget,
-} from "./special-case-patches.js";
+  applySourcePatch,
+  isSourcePatchTarget,
+} from "./source-patches/index.js";
 
 let instrumentator: any;
 let packages: Set<string>;
 let transformers: Map<string, any> = new Map();
-// URLs that need a per-package source patch (see special-case-patches.ts).
+// URLs that need a per-package source patch (see source-patches/).
 // Resolve records the (packageName, modulePath) it already computed so load
 // doesn't have to redo the moduleDetailsFromPath roundtrip.
-const specialCaseUrls: Map<
+const sourcePatchUrls: Map<
   string,
   { packageName: string; modulePath: string }
 > = new Map();
@@ -79,11 +79,11 @@ export async function resolve(
     const version = getPackageVersion(resolvedModule.basedir);
 
     // Track files that need per-package source patches (see
-    // loader/special-case-patches.ts). Anti-pattern fallback for SDKs we
+    // loader/source-patches/). Anti-pattern fallback for SDKs we
     // can't instrument via the standard pipeline; the load step retrieves
     // the recorded (packageName, modulePath) and applies the patch.
-    if (isSpecialCaseTarget(packageName, normalizedModulePath)) {
-      specialCaseUrls.set(url.url, {
+    if (isSourcePatchTarget(packageName, normalizedModulePath)) {
+      sourcePatchUrls.set(url.url, {
         packageName,
         modulePath: normalizedModulePath,
       });
@@ -110,18 +110,18 @@ export async function resolve(
 export async function load(url: string, context: any, nextLoad: Function) {
   const result = await nextLoad(url, context);
 
-  // Per-package source patches (see loader/special-case-patches.ts).
+  // Per-package source patches (see loader/source-patches/).
   // Anti-pattern fallback — keep this branch and the helper module narrow.
-  const specialCase = specialCaseUrls.get(url);
-  if (specialCase) {
+  const sourcePatch = sourcePatchUrls.get(url);
+  if (sourcePatch) {
     if (result.format === "commonjs") {
       const parsedUrl = new URL(result.responseURL ?? url);
       result.source ??= await readFile(parsedUrl);
     }
     if (result.source) {
-      const patched = applySpecialCasePatch({
-        packageName: specialCase.packageName,
-        modulePath: specialCase.modulePath,
+      const patched = applySourcePatch({
+        packageName: sourcePatch.packageName,
+        modulePath: sourcePatch.modulePath,
         source: result.source.toString("utf8"),
         format: result.format === "commonjs" ? "cjs" : "esm",
       });

@@ -20,6 +20,10 @@ const helperPromisePath = path.join(
   fixturesDir,
   "test-api-promise-preservation.mjs",
 );
+const importHookQueryModePath = path.join(
+  fixturesDir,
+  "import-hook-query-mode.mjs",
+);
 const runtimeApplyAutoSideEffectEsmPath = path.join(
   fixturesDir,
   "runtime-apply-auto-side-effect-esm.mjs",
@@ -28,9 +32,33 @@ const runtimeApplyAutoSideEffectCjsPath = path.join(
   fixturesDir,
   "runtime-apply-auto-side-effect-cjs.cjs",
 );
+const mastraTopLevelEsmPath = path.join(
+  fixturesDir,
+  "test-mastra-top-level-esm.mjs",
+);
+const mastraTopLevelCjsPath = path.join(
+  fixturesDir,
+  "test-mastra-top-level-cjs.cjs",
+);
+const runtimeApplyAutoMastraTopLevelEsmPath = path.join(
+  fixturesDir,
+  "runtime-apply-auto-mastra-top-level-esm.mjs",
+);
 
 interface TestResult {
   events: { start: any[]; end: any[]; error: any[] };
+}
+
+interface MastraResult {
+  root: { exporters: string[]; hasObservability: boolean };
+  subpath: { exporters: string[]; hasObservability: boolean };
+  userConfig: {
+    custom: string;
+    configs: {
+      default: { exporters: { name: string }[]; serviceName: string };
+    };
+  };
+  userObservabilityPreserved: boolean;
 }
 
 describe("Unified Loader Hook Integration Tests", () => {
@@ -83,6 +111,93 @@ describe("Unified Loader Hook Integration Tests", () => {
       expect(result.withResponseOk).toBe(true);
       expect(result.constructorName).toBe("HelperPromise");
     });
+
+    it("should expose import hook exports in query mode without bootstrapping", async () => {
+      const result = await runWithWorkerMessage<{
+        applied: boolean;
+        hasInitialize: boolean;
+        hasLoad: boolean;
+        hasRegister: boolean;
+        hasResolve: boolean;
+      }>({
+        env: {
+          BRAINTRUST_QUERY_HOOK_URL: `${pathToFileURL(hookPath).href}?braintrust-iitm-loader=true`,
+        },
+        execArgv: [],
+        messageType: "hook-query-result",
+        script: importHookQueryModePath,
+      });
+
+      expect(result).toEqual({
+        applied: false,
+        hasInitialize: true,
+        hasLoad: true,
+        hasRegister: true,
+        hasResolve: true,
+      });
+    });
+
+    it("should patch Mastra ESM exports", async () => {
+      const result = await runWithWorkerMessage<MastraResult>({
+        execArgv: ["--import", hookPath],
+        messageType: "mastra-result",
+        script: mastraTopLevelEsmPath,
+      });
+
+      expectMastraEnabled(result);
+    });
+
+    it("should leave Mastra constructor channels passive until Braintrust enables its plugins", async () => {
+      const result = await runWithWorkerMessage<MastraResult>({
+        env: { BRAINTRUST_TEST_ENABLE_MASTRA_PLUGIN: "false" },
+        execArgv: ["--import", hookPath],
+        messageType: "mastra-result",
+        script: mastraTopLevelEsmPath,
+      });
+
+      expect(result.root).toEqual({ exporters: [], hasObservability: false });
+      expect(result.subpath).toEqual({
+        exporters: [],
+        hasObservability: false,
+      });
+      expect(result.userObservabilityPreserved).toBe(true);
+      expect(
+        result.userConfig.configs.default.exporters.map(
+          (exporter) => exporter.name,
+        ),
+      ).toEqual(["other"]);
+    });
+
+    it("should patch Mastra CJS exports", async () => {
+      const result = await runWithWorkerMessage<MastraResult>({
+        execArgv: ["--import", hookPath],
+        messageType: "mastra-result",
+        script: mastraTopLevelCjsPath,
+      });
+
+      expectMastraEnabled(result);
+    });
+
+    it("should respect Mastra disable config for module export hooks", async () => {
+      const result = await runWithWorkerMessage<MastraResult>({
+        env: { BRAINTRUST_DISABLE_INSTRUMENTATION: "mastra" },
+        execArgv: ["--import", hookPath],
+        messageType: "mastra-result",
+        script: mastraTopLevelEsmPath,
+      });
+
+      expect(result.root).toEqual({ exporters: [], hasObservability: false });
+      expect(result.subpath).toEqual({
+        exporters: [],
+        hasObservability: false,
+      });
+      expect(result.userObservabilityPreserved).toBe(true);
+      expect(
+        result.userConfig.configs.default.exporters.map(
+          (exporter) => exporter.name,
+        ),
+      ).toEqual(["other"]);
+    });
   });
 
   describe("apply-auto-instrumentation side-effect runtime setup", () => {
@@ -126,8 +241,37 @@ describe("Unified Loader Hook Integration Tests", () => {
       expect(result.events.start.length).toBe(1);
       expect(result.events.end.length).toBe(1);
     });
+
+    it("should apply Mastra patches through the side-effect export", async () => {
+      const result = await runWithWorkerMessage<MastraResult>({
+        execArgv: [],
+        messageType: "mastra-result",
+        script: runtimeApplyAutoMastraTopLevelEsmPath,
+      });
+
+      expectMastraEnabled(result);
+    });
   });
 });
+
+function expectMastraEnabled(result: MastraResult): void {
+  expect(result.root).toEqual({
+    exporters: ["braintrust"],
+    hasObservability: true,
+  });
+  expect(result.subpath).toEqual({
+    exporters: ["braintrust"],
+    hasObservability: true,
+  });
+  expect(result.userObservabilityPreserved).toBe(true);
+  expect(result.userConfig.custom).toBe("kept");
+  expect(result.userConfig.configs.default.serviceName).toBe("user-service");
+  expect(
+    result.userConfig.configs.default.exporters.map(
+      (exporter) => exporter.name,
+    ),
+  ).toEqual(["other", "braintrust"]);
+}
 
 async function runWithWorker(options: {
   env?: NodeJS.ProcessEnv;

@@ -2,7 +2,7 @@ import type { InstrumentationConfig } from "../orchestrion-js";
 import { googleGenAIChannels } from "../../instrumentation/plugins/google-genai-channels";
 
 /**
- * Instrumentation configurations for the Google GenAI SDK.
+ * Orchestrion configurations for the Google GenAI SDK.
  *
  * These configs define which functions to instrument and what channel
  * to emit events on. They are used by orchestrion-js to perform AST
@@ -12,7 +12,7 @@ import { googleGenAIChannels } from "../../instrumentation/plugins/google-genai-
  * will prepend "orchestrion:google-genai:" to these names, resulting in final channel names like:
  * "orchestrion:google-genai:models.generateContent"
  */
-export const googleGenAIConfigs: InstrumentationConfig[] = [
+export const googleGenAIOrchestrionConfigs: InstrumentationConfig[] = [
   // Models.generateContentInternal - The actual class method (Node.js entry point)
   // Note: generateContent is an arrow function property that calls this internal method
   {
