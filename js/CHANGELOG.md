@@ -8,7 +8,7 @@
 
 ### Patch Changes
 
-- fix(mastra): Use the Mastra span id as the Braintrust row id so `logFeedback` attaches to the right row instead of landing as a stray. Matches the upstream `@mastra/braintrust` fix (mastra-ai/mastra#11927). Thanks @viadezo1er! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2211)
+- fix(mastra): Use the Mastra span id as the Braintrust row id so `logFeedback` attaches to the right row instead of landing as a stray (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2211)
 
 ## 3.21.0
 
