@@ -42,11 +42,11 @@
                         "entity_name": "Weather Agent",
                         "entity_type": "agent"
                       },
-                      "metric_keys": [
-                        "completion_tokens",
-                        "prompt_tokens",
-                        "tokens"
-                      ]
+                      "metrics": {
+                        "completion_tokens": 20,
+                        "prompt_tokens": 10,
+                        "tokens": 30
+                      }
                     }
                   ],
                   "input": {
@@ -85,12 +85,12 @@
                     "model": "mock-model-id",
                     "provider": "mock-provider"
                   },
-                  "metric_keys": [
-                    "completion_tokens",
-                    "prompt_tokens",
-                    "time_to_first_token",
-                    "tokens"
-                  ]
+                  "metrics": {
+                    "completion_tokens": 20,
+                    "prompt_tokens": 10,
+                    "time_to_first_token": 0,
+                    "tokens": 30
+                  }
                 }
               ],
               "input": "What is the weather in Paris?",
@@ -139,11 +139,11 @@
                         "entity_name": "Weather Agent",
                         "entity_type": "agent"
                       },
-                      "metric_keys": [
-                        "completion_tokens",
-                        "prompt_tokens",
-                        "tokens"
-                      ]
+                      "metrics": {
+                        "completion_tokens": 20,
+                        "prompt_tokens": 10,
+                        "tokens": 30
+                      }
                     }
                   ],
                   "input": {
@@ -182,12 +182,12 @@
                     "model": "mock-model-id",
                     "provider": "mock-provider"
                   },
-                  "metric_keys": [
-                    "completion_tokens",
-                    "prompt_tokens",
-                    "time_to_first_token",
-                    "tokens"
-                  ]
+                  "metrics": {
+                    "completion_tokens": 20,
+                    "prompt_tokens": 10,
+                    "time_to_first_token": 0,
+                    "tokens": 30
+                  }
                 }
               ],
               "input": "Stream the Paris forecast.",

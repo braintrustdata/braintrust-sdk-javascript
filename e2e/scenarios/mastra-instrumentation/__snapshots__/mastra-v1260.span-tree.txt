@@ -55,12 +55,12 @@ span_tree:
     │   │         "model": "mock-model-id",
     │   │         "provider": "mock-provider"
     │   │       }
-    │   │       metric_keys: [
-    │   │         "completion_tokens",
-    │   │         "prompt_tokens",
-    │   │         "time_to_first_token",
-    │   │         "tokens"
-    │   │       ]
+    │   │       metrics: {
+    │   │         "completion_tokens": 20,
+    │   │         "prompt_tokens": 10,
+    │   │         "time_to_first_token": 0,
+    │   │         "tokens": 30
+    │   │       }
     │   │       └── step: 0 [llm]
     │   │           output: {
     │   │             "text": "The forecast is sunny.",
@@ -71,11 +71,11 @@ span_tree:
     │   │             "entity_name": "Weather Agent",
     │   │             "entity_type": "agent"
     │   │           }
-    │   │           metric_keys: [
-    │   │             "completion_tokens",
-    │   │             "prompt_tokens",
-    │   │             "tokens"
-    │   │           ]
+    │   │           metrics: {
+    │   │             "completion_tokens": 20,
+    │   │             "prompt_tokens": 10,
+    │   │             "tokens": 30
+    │   │           }
     │   │           └── chunk: 'text' [llm]
     │   │               output: {
     │   │                 "text": "The forecast is sunny."
@@ -133,12 +133,12 @@ span_tree:
     │   │         "model": "mock-model-id",
     │   │         "provider": "mock-provider"
     │   │       }
-    │   │       metric_keys: [
-    │   │         "completion_tokens",
-    │   │         "prompt_tokens",
-    │   │         "time_to_first_token",
-    │   │         "tokens"
-    │   │       ]
+    │   │       metrics: {
+    │   │         "completion_tokens": 20,
+    │   │         "prompt_tokens": 10,
+    │   │         "time_to_first_token": 0,
+    │   │         "tokens": 30
+    │   │       }
     │   │       └── step: 0 [llm]
     │   │           output: {
     │   │             "text": "The forecast is sunny.",
@@ -149,11 +149,11 @@ span_tree:
     │   │             "entity_name": "Weather Agent",
     │   │             "entity_type": "agent"
     │   │           }
-    │   │           metric_keys: [
-    │   │             "completion_tokens",
-    │   │             "prompt_tokens",
-    │   │             "tokens"
-    │   │           ]
+    │   │           metrics: {
+    │   │             "completion_tokens": 20,
+    │   │             "prompt_tokens": 10,
+    │   │             "tokens": 30
+    │   │           }
     │   │           └── chunk: 'text' [llm]
     │   │               output: {
     │   │                 "text": "The forecast is sunny."
