@@ -47,26 +47,6 @@
       "dependsOn": ["^build"],
       "outputs": []
     },
-    "test:e2e:canary": {
-      "cache": false,
-      "env": [
-        "ANTHROPIC_API_KEY",
-        "BRAINTRUST_API_KEY",
-        "BRAINTRUST_E2E_PROJECT_NAME",
-        "BRAINTRUST_E2E_RUN_CONTEXT_DIR",
-        "GEMINI_API_KEY",
-        "COHERE_API_KEY",
-        "CURSOR_API_KEY",
-        "GROQ_API_KEY",
-        "OPENAI_API_KEY",
-        "OPENAI_BASE_URL",
-        "OPENROUTER_API_KEY",
-        "MISTRAL_API_KEY",
-        "HUGGINGFACE_API_KEY"
-      ],
-      "dependsOn": [],
-      "outputs": []
-    },
     "test:e2e:record": {
       "cache": false,
       "env": [

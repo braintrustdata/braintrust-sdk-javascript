@@ -9,3 +9,13 @@ id = "braintrust-api-key"
 description = "Braintrust API key"
 regex = '''\bsk-[a-zA-Z0-9]{40,}\b'''
 tags = ["key", "braintrust"]
+
+[allowlist]
+description = "E2E scenario variant keys are cassette/snapshot identifiers, not secrets"
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''e2e/config/pr-comment-scenarios\.json''',
+  '''e2e/scenarios/.*/scenario\.test\.ts''',
+]
+regexes = ['''variantKey"?\s*:\s*"[a-z0-9-]+"''']

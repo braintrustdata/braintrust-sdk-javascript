@@ -2,6 +2,7 @@
 
 import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
+import { readdir } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -18,10 +19,14 @@ const DEFAULT_OPENAI_CODEX_E2E_MODEL = "gpt-5.1-codex-mini";
 const rawArgs = process.argv.slice(2).filter((arg) => arg !== "--");
 const updateSnapshots = rawArgs.includes("--update");
 const scenarioArgs = rawArgs.filter((arg) => arg !== "--update");
+const testTargets =
+  scenarioArgs.length > 0
+    ? scenarioArgs.map((arg) => scenarioPathArg(arg))
+    : await defaultScenarioTestPaths();
 const vitestArgs = [
   "run",
   "--run",
-  ...scenarioArgs.map((arg) => scenarioPathArg(arg)),
+  ...testTargets,
   ...(updateSnapshots ? ["--update"] : []),
 ];
 const result = await runProcess(VITEST_COMMAND, vitestArgs, {
@@ -42,6 +47,24 @@ function scenarioPathArg(arg) {
 
   const scenarioPath = path.join(E2E_DIR, "scenarios", arg, "scenario.test.ts");
   return existsSync(scenarioPath) ? `scenarios/${arg}/scenario.test.ts` : arg;
+}
+
+async function defaultScenarioTestPaths() {
+  const entries = await readdir(path.join(E2E_DIR, "scenarios"), {
+    withFileTypes: true,
+  });
+  const scenarioPaths = entries
+    .filter((entry) => entry.isDirectory() && !entry.name.startsWith("."))
+    .map((entry) => `scenarios/${entry.name}/scenario.test.ts`)
+    .filter((scenarioPath) => existsSync(path.join(E2E_DIR, scenarioPath)))
+    .sort();
+
+  if (scenarioPaths.length === 0) {
+    console.error("[e2e] No scenario test files found.");
+    process.exit(1);
+  }
+
+  return scenarioPaths;
 }
 
 function replayEnv() {
