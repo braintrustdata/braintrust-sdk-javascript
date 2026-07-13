@@ -59,8 +59,6 @@ type TurnState = SpanState & {
 
 type ToolState = SpanState & {
   endedByTurn?: boolean;
-  kind: "subagent" | "tool";
-  stepIndex?: number;
   turnKey: string;
 };
 
@@ -767,7 +765,6 @@ class EveBridge {
     });
     span.log({ metadata });
     this.toolsByCallKey.set(key, {
-      kind: "subagent",
       metadata,
       span,
       turnKey: turnKey(sessionId, event.data.turnId),
@@ -1238,10 +1235,8 @@ class EveBridge {
     });
     span.log({ input: action.input, metadata });
     this.toolsByCallKey.set(key, {
-      kind: "tool",
       metadata,
       span,
-      stepIndex: event.data.stepIndex,
       turnKey: turnKey(sessionId, event.data.turnId),
     });
   }
@@ -1280,10 +1275,8 @@ class EveBridge {
     });
     span.log({ input: action.input, metadata });
     this.toolsByCallKey.set(key, {
-      kind: "subagent",
       metadata,
       span,
-      stepIndex: event.data.stepIndex,
       turnKey: turnKey(sessionId, event.data.turnId),
     });
   }
@@ -1323,10 +1316,8 @@ class EveBridge {
     });
     span.log({ metadata });
     const state = {
-      kind: "tool" as const,
       metadata,
       span,
-      stepIndex: event.data.stepIndex,
       turnKey: turnKey(sessionId, event.data.turnId),
     };
     this.toolsByCallKey.set(toolKey(sessionId, result.callId), state);
@@ -1368,7 +1359,6 @@ class EveBridge {
     });
     span.log({ metadata });
     const state = {
-      kind: "subagent" as const,
       metadata,
       span,
       turnKey: turnKey(sessionId, event.data.turnId),
@@ -1411,10 +1401,8 @@ class EveBridge {
     });
     span.log({ metadata });
     const state = {
-      kind: "subagent" as const,
       metadata,
       span,
-      stepIndex: event.data.stepIndex,
       turnKey: turnKey(sessionId, event.data.turnId),
     };
     this.toolsByCallKey.set(toolKey(sessionId, result.callId), state);
