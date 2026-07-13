@@ -22,6 +22,7 @@ import type {
   EveHandleMessageStreamEvent,
   EveHookContext,
 } from "../../vendor-sdk-types/eve";
+import { mergeRowBatch } from "../../../util/index";
 
 function deterministicEveIdForTest(...parts: string[]): string {
   return createHash("sha256")
@@ -835,6 +836,9 @@ describe("braintrustEveHook", () => {
       ]),
       stepStarts: [],
     });
+    const initialWrites = (await backgroundLogger.drain()) as Array<
+      Record<string, any> & { id: string }
+    >;
     const resumedWildcard = braintrustEveHook({
       defineState: eveState.defineState,
       metadata: {
@@ -865,9 +869,18 @@ describe("braintrustEveHook", () => {
     );
     expect(flushSpy).not.toHaveBeenCalled();
 
-    const spans = (await backgroundLogger.drain()) as Array<
-      Record<string, any>
+    const resumedWrites = (await backgroundLogger.drain()) as Array<
+      Record<string, any> & { id: string }
     >;
+    expect(
+      [...initialWrites, ...resumedWrites].every(
+        (span) => span._is_merge === true,
+      ),
+    ).toBe(true);
+
+    // The backend may ingest separate workflow uploads out of order. Because
+    // every write is a merge, a delayed initial write cannot erase the result.
+    const spans = mergeRowBatch([...resumedWrites, ...initialWrites]);
     const turns = spans.filter(
       (span) => span.span_attributes?.name === "eve.turn",
     );

@@ -1,9 +1,9 @@
 import { debugLogger } from "../../debug-logger";
 import {
   NOOP_SPAN,
+  _internalStartSpanWithInitialMerge,
   currentSpan,
   flush,
-  startSpan,
   updateSpan,
   withCurrent,
 } from "../../logger";
@@ -32,12 +32,20 @@ type SpanState = {
 
 type EveSpan = Pick<Span, "end" | "log" | "rootSpanId" | "spanId">;
 
+type EveSpanStartEvent = {
+  readonly created: string;
+  readonly metrics: { readonly start: number };
+  readonly span_attributes: Record<string, unknown>;
+  readonly span_parents: string[];
+};
+
 type EveSpanReference = {
   readonly endTime?: number;
   readonly exported: string;
   readonly rootSpanId: string;
   readonly rowId: string;
   readonly spanId: string;
+  readonly startEvent?: EveSpanStartEvent;
 };
 
 type SessionState = SpanState & {
@@ -161,16 +169,23 @@ class ResumedEveSpan implements EveSpan {
   }
 
   log(event: Parameters<Span["log"]>[0]): void {
-    updateSpan({ exported: this.reference.exported, ...event });
+    const metrics = {
+      ...this.reference.startEvent?.metrics,
+      ...(this.endTime === undefined ? {} : { end: this.endTime }),
+      ...event.metrics,
+    };
+    updateSpan({
+      exported: this.reference.exported,
+      ...this.reference.startEvent,
+      ...event,
+      ...(Object.keys(metrics).length > 0 ? { metrics } : {}),
+    });
   }
 
   end(args?: Parameters<Span["end"]>[0]): number {
     if (this.endTime === undefined) {
       this.endTime = args?.endTime ?? getCurrentUnixTimestamp();
-      updateSpan({
-        exported: this.reference.exported,
-        metrics: { end: this.endTime },
-      });
+      this.log({ metrics: { end: this.endTime } });
     }
     return this.endTime;
   }
@@ -194,7 +209,7 @@ class EveBridge {
   });
 
   private async startEveSpan(
-    args: Parameters<typeof startSpan>[0],
+    args: Parameters<typeof _internalStartSpanWithInitialMerge>[0],
   ): Promise<EveSpan> {
     const rowId = args?.event?.id;
     const reference =
@@ -206,8 +221,26 @@ class EveBridge {
       return new ResumedEveSpan(reference);
     }
 
-    const span = withCurrent(NOOP_SPAN, () => startSpan(args));
-    if (typeof rowId !== "string" || !(await this.flushInstrumentation())) {
+    const startTime = args?.startTime ?? getCurrentUnixTimestamp();
+    const parentSpanIds = args?.parentSpanIds;
+    const startEvent: EveSpanStartEvent = {
+      created: new Date().toISOString(),
+      metrics: { start: startTime },
+      span_attributes: {
+        ...(args?.name ? { name: args.name } : {}),
+        ...(args?.type ? { type: args.type } : {}),
+        ...args?.spanAttributes,
+      },
+      span_parents: parentSpanIds
+        ? "spanId" in parentSpanIds
+          ? [parentSpanIds.spanId]
+          : parentSpanIds.parentSpanIds
+        : [],
+    };
+    const span = withCurrent(NOOP_SPAN, () =>
+      _internalStartSpanWithInitialMerge({ ...args, startTime }),
+    );
+    if (typeof rowId !== "string") {
       return span;
     }
 
@@ -218,6 +251,7 @@ class EveBridge {
         rootSpanId: span.rootSpanId,
         rowId,
         spanId: span.spanId,
+        startEvent,
       };
       this.state.update((current) => {
         const normalized = normalizeEveTraceState(current);
@@ -240,7 +274,7 @@ class EveBridge {
 
   private async startEveChildSpan(
     parent: EveSpan,
-    args: Parameters<typeof startSpan>[0],
+    args: Parameters<typeof _internalStartSpanWithInitialMerge>[0],
   ): Promise<EveSpan> {
     return await this.startEveSpan({
       ...args,
@@ -1602,6 +1636,36 @@ function normalizeEveTraceState(state: unknown): EveTraceState {
           const rootSpanId = entry["rootSpanId"];
           const rowId = entry["rowId"];
           const spanId = entry["spanId"];
+          const startEvent = entry["startEvent"];
+          const startEventCreated = isObject(startEvent)
+            ? startEvent["created"]
+            : undefined;
+          const startEventMetrics = isObject(startEvent)
+            ? startEvent["metrics"]
+            : undefined;
+          const startEventSpanAttributes = isObject(startEvent)
+            ? startEvent["span_attributes"]
+            : undefined;
+          const startEventSpanParents = isObject(startEvent)
+            ? startEvent["span_parents"]
+            : undefined;
+          const normalizedStartEvent =
+            typeof startEventCreated === "string" &&
+            isObject(startEventMetrics) &&
+            typeof startEventMetrics["start"] === "number" &&
+            Number.isFinite(startEventMetrics["start"]) &&
+            isObject(startEventSpanAttributes) &&
+            Array.isArray(startEventSpanParents) &&
+            startEventSpanParents.every(
+              (parent): parent is string => typeof parent === "string",
+            )
+              ? {
+                  created: startEventCreated,
+                  metrics: { start: startEventMetrics["start"] },
+                  span_attributes: { ...startEventSpanAttributes },
+                  span_parents: [...startEventSpanParents],
+                }
+              : undefined;
           return typeof exported === "string" &&
             typeof rootSpanId === "string" &&
             typeof rowId === "string" &&
@@ -1615,6 +1679,9 @@ function normalizeEveTraceState(state: unknown): EveTraceState {
                   rootSpanId,
                   rowId,
                   spanId,
+                  ...(normalizedStartEvent
+                    ? { startEvent: normalizedStartEvent }
+                    : {}),
                 },
               ]
             : [];
