@@ -1090,14 +1090,11 @@ function processWrappedStrandsMediaBlock(
   cache: StrandsAttachmentCache,
 ): unknown | undefined {
   for (const mediaKey of ["image", "video", "document"] as const) {
-    if (!Object.hasOwn(block, mediaKey) || !isObject(block[mediaKey])) {
+    const media = block[mediaKey];
+    if (!Object.hasOwn(block, mediaKey) || !isObject(media)) {
       continue;
     }
-    const processed = createStrandsMediaAttachment(
-      mediaKey,
-      block[mediaKey],
-      cache,
-    );
+    const processed = createStrandsMediaAttachment(mediaKey, media, cache);
     if (processed !== undefined) {
       return processed;
     }
