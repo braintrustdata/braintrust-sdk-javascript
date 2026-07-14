@@ -694,6 +694,32 @@ class EveBridge {
       return;
     }
 
+    const toolCallsById = new Map<string, unknown>();
+    if (Array.isArray(step.output) && isObject(step.output[0])) {
+      const message = step.output[0]["message"];
+      if (isObject(message) && Array.isArray(message["tool_calls"])) {
+        for (const toolCall of message["tool_calls"]) {
+          if (isObject(toolCall) && typeof toolCall["id"] === "string") {
+            toolCallsById.set(toolCall["id"], toolCall);
+          }
+        }
+      }
+    }
+    for (const action of traceActions) {
+      const name =
+        action.kind === "tool-call"
+          ? action.toolName
+          : (action.subagentName ?? action.name ?? "agent");
+      toolCallsById.set(action.callId, {
+        function: {
+          arguments: JSON.stringify(action.input),
+          name,
+        },
+        id: action.callId,
+        type: "function",
+      });
+    }
+
     step.output = [
       {
         finish_reason: "tool_calls",
@@ -701,20 +727,7 @@ class EveBridge {
         message: {
           content: null,
           role: "assistant",
-          tool_calls: traceActions.map((action) => {
-            const name =
-              action.kind === "tool-call"
-                ? action.toolName
-                : (action.subagentName ?? action.name ?? "agent");
-            return {
-              function: {
-                arguments: JSON.stringify(action.input),
-                name,
-              },
-              id: action.callId,
-              type: "function",
-            };
-          }),
+          tool_calls: [...toolCallsById.values()],
         },
       },
     ];
