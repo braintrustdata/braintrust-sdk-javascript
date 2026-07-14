@@ -3,13 +3,10 @@ import { langSmithChannels } from "../instrumentation/plugins/langsmith-channels
 import type {
   LangSmithClient,
   LangSmithClientConstructor,
-  LangSmithClientModule,
   LangSmithRunTree,
   LangSmithRunTreeConstructor,
-  LangSmithRunTreesModule,
   LangSmithTraceable,
   LangSmithTraceableConfig,
-  LangSmithTraceableModule,
 } from "../vendor-sdk-types/langsmith";
 
 const WRAPPED_CLIENT_CLASS = Symbol.for(
@@ -41,7 +38,7 @@ export function wrapLangSmithTraceable<T>(namespace: T): T {
     "traceable",
     WRAPPED_TRACEABLE_NAMESPACE,
     (value) => wrapTraceable(value as LangSmithTraceable),
-  ) as T & LangSmithTraceableModule;
+  );
 }
 
 export function wrapLangSmithRunTrees<T>(namespace: T): T {
@@ -50,7 +47,7 @@ export function wrapLangSmithRunTrees<T>(namespace: T): T {
     "RunTree",
     WRAPPED_RUN_TREES_NAMESPACE,
     (value) => wrapRunTreeClass(value as LangSmithRunTreeConstructor),
-  ) as T & LangSmithRunTreesModule;
+  );
 }
 
 export function wrapLangSmithClient<T>(namespace: T): T {
@@ -59,7 +56,7 @@ export function wrapLangSmithClient<T>(namespace: T): T {
     "Client",
     WRAPPED_CLIENT_NAMESPACE,
     (value) => wrapClientClass(value as LangSmithClientConstructor),
-  ) as T & LangSmithClientModule;
+  );
 }
 
 function wrapNamespaceExport<T>(
@@ -205,17 +202,12 @@ function wrapRunTreeInstance(runTree: LangSmithRunTree): LangSmithRunTree {
   if ((runTree as Record<PropertyKey, unknown>)[WRAPPED_RUN_TREE_INSTANCE]) {
     return runTree;
   }
-  const cache = new Map<PropertyKey, unknown>();
 
   return new Proxy(runTree, {
     get(target, prop, receiver) {
       if (prop === WRAPPED_RUN_TREE_INSTANCE) {
         return true;
       }
-      if (cache.has(prop)) {
-        return cache.get(prop);
-      }
-
       const value = Reflect.get(target, prop, receiver);
       if (typeof value !== "function") {
         return value;
@@ -247,7 +239,6 @@ function wrapRunTreeInstance(runTree: LangSmithRunTree): LangSmithRunTree {
       } else {
         wrapped = value.bind(target);
       }
-      cache.set(prop, wrapped);
       return wrapped;
     },
   });
@@ -280,17 +271,12 @@ function wrapClientInstance(client: LangSmithClient): LangSmithClient {
   if ((client as Record<PropertyKey, unknown>)[WRAPPED_CLIENT_INSTANCE]) {
     return client;
   }
-  const cache = new Map<PropertyKey, unknown>();
 
   return new Proxy(client, {
     get(target, prop, receiver) {
       if (prop === WRAPPED_CLIENT_INSTANCE) {
         return true;
       }
-      if (cache.has(prop)) {
-        return cache.get(prop);
-      }
-
       const value = Reflect.get(target, prop, receiver);
       if (typeof value !== "function") {
         return value;
@@ -327,7 +313,6 @@ function wrapClientInstance(client: LangSmithClient): LangSmithClient {
       } else {
         wrapped = value.bind(target);
       }
-      cache.set(prop, wrapped);
       return wrapped;
     },
   });

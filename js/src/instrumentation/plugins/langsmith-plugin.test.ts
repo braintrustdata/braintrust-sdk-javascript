@@ -187,6 +187,69 @@ describe("LangSmithPlugin", () => {
     });
   });
 
+  it("logs outputs from completed direct and batched creates", async () => {
+    const directId = "55555555-5555-4555-8555-555555555555";
+    const batchId = "66666666-6666-4666-8666-666666666666";
+    const endTime = new Date().toISOString();
+
+    await langSmithChannels.createRun.tracePromise(async () => undefined, {
+      arguments: [
+        {
+          id: directId,
+          trace_id: directId,
+          name: "completed direct create",
+          outputs: { answer: "direct" },
+          end_time: endTime,
+        },
+      ],
+    });
+    await langSmithChannels.batchIngestRuns.tracePromise(
+      async () => undefined,
+      {
+        arguments: [
+          {
+            runCreates: [
+              {
+                id: batchId,
+                trace_id: batchId,
+                name: "completed batch create",
+                outputs: { answer: "batch" },
+                end_time: endTime,
+              },
+            ],
+          },
+        ],
+      },
+    );
+
+    const spans = (await backgroundLogger.drain()) as any[];
+    expect(spans.find((span) => span.span_id === directId)).toMatchObject({
+      output: { answer: "direct" },
+    });
+    expect(spans.find((span) => span.span_id === batchId)).toMatchObject({
+      output: { answer: "batch" },
+    });
+  });
+
+  it("completes runs containing invalid nested dates", async () => {
+    const id = "77777777-7777-4777-8777-777777777777";
+
+    await langSmithChannels.createRun.tracePromise(async () => undefined, {
+      arguments: [
+        {
+          id,
+          trace_id: id,
+          name: "invalid nested date",
+          inputs: { value: new Date(Number.NaN) },
+          end_time: new Date().toISOString(),
+        },
+      ],
+    });
+
+    const spans = (await backgroundLogger.drain()) as any[];
+    expect(spans.filter((span) => span.span_id === id)).toHaveLength(1);
+  });
+
   it("contains malformed and prototype-sensitive payloads", async () => {
     let getterCalled = false;
     const payload = Object.create({ id: "inherited-id", name: "inherited" });

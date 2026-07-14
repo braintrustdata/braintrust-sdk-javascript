@@ -152,7 +152,13 @@ export class LangSmithPlugin extends BasePlugin {
     if (active) {
       const previous = active.run;
       active.run = mergeRuns(previous, run);
-      this.logRun(active.span, active.run, previous, false);
+      this.logRun(
+        active.span,
+        active.run,
+        previous,
+        timestampSeconds(ownValue(active.run, "end_time")) !== undefined ||
+          errorMessage(ownValue(active.run, "error")) !== undefined,
+      );
       this.endIfComplete(id, active, active.run);
       return;
     }
@@ -160,7 +166,13 @@ export class LangSmithPlugin extends BasePlugin {
     const span = this.startRunSpan(id, run);
     const activeRun = { run, span };
     this.activeRuns.set(id, activeRun);
-    this.logRun(span, run, undefined, false);
+    this.logRun(
+      span,
+      run,
+      undefined,
+      timestampSeconds(ownValue(run, "end_time")) !== undefined ||
+        errorMessage(ownValue(run, "error")) !== undefined,
+    );
     this.endIfComplete(id, activeRun, run);
   }
 
@@ -526,7 +538,7 @@ function sanitizeLoggedValue(
     return Number.isFinite(value) ? value : undefined;
   }
   if (value instanceof Date) {
-    return value.toISOString();
+    return Number.isFinite(value.getTime()) ? value.toISOString() : undefined;
   }
   if (typeof value !== "object" || depth >= 20) {
     return undefined;

@@ -44,10 +44,6 @@ export type LangSmithClientConstructor = new (
   ...args: unknown[]
 ) => LangSmithClient;
 
-export type LangSmithClientModule = {
-  Client: LangSmithClientConstructor;
-};
-
 export type LangSmithRunTree = LangSmithRun & {
   createChild?: (config: unknown) => LangSmithRunTree;
   postRun?: (excludeChildRuns?: boolean) => Promise<unknown>;
@@ -58,10 +54,6 @@ export type LangSmithRunTreeConstructor = new (
   ...args: unknown[]
 ) => LangSmithRunTree;
 
-export type LangSmithRunTreesModule = {
-  RunTree: LangSmithRunTreeConstructor;
-};
-
 export type LangSmithTraceableConfig = {
   on_end?: (runTree?: LangSmithRunTree) => void;
   [key: string]: unknown;
@@ -71,7 +63,3 @@ export type LangSmithTraceable = (
   fn: (...args: never[]) => unknown,
   config?: LangSmithTraceableConfig,
 ) => (...args: never[]) => unknown;
-
-export type LangSmithTraceableModule = {
-  traceable: LangSmithTraceable;
-};

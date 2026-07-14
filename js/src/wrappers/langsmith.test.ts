@@ -104,7 +104,12 @@ describe("LangSmith namespace wrappers", () => {
     expect(tree.readSecret()).toBe("run-tree-secret");
     await expect(tree.postRun()).resolves.toBe("run-tree-secret");
     await expect(child.patchRun()).resolves.toBe("run-tree-secret");
-    expect(tracePromise).toHaveBeenCalledTimes(2);
+
+    const replacement = vi.fn(() => Promise.resolve("replacement"));
+    tree.postRun = replacement;
+    await expect(tree.postRun()).resolves.toBe("replacement");
+    expect(replacement).toHaveBeenCalledOnce();
+    expect(tracePromise).toHaveBeenCalledTimes(3);
   });
 
   it("wraps Client lifecycle methods and safely binds other methods", async () => {
@@ -136,7 +141,14 @@ describe("LangSmith namespace wrappers", () => {
     await client.createRun({ id: "create" });
     await client.updateRun("update", { output: true });
     await client.batchIngestRuns({ runCreates: [], runUpdates: [] });
-    expect(tracePromise).toHaveBeenCalledTimes(3);
+
+    const replacement = vi.fn((run: unknown) => Promise.resolve(run));
+    client.createRun = replacement;
+    await expect(client.createRun({ id: "replacement" })).resolves.toEqual({
+      id: "replacement",
+    });
+    expect(replacement).toHaveBeenCalledOnce();
+    expect(tracePromise).toHaveBeenCalledTimes(4);
   });
 
   it("preserves Client method errors", async () => {
