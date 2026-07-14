@@ -103,6 +103,21 @@ function scrubMastraProviderTimestamps(value: Json): Json {
   return value;
 }
 
+function summarizeMetrics(
+  metrics: CapturedLogEvent["metrics"],
+): Record<string, Json> | undefined {
+  if (!metrics) return undefined;
+
+  const entries = Object.entries(metrics)
+    .filter(
+      ([key, value]) => key !== "start" && key !== "end" && value !== undefined,
+    )
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([key, value]) => [key, value as Json] as const);
+
+  return entries.length > 0 ? Object.fromEntries(entries) : undefined;
+}
+
 function summarizeMastraPayload(event: CapturedLogEvent): Record<string, Json> {
   const metadata = event.row.metadata as Record<string, unknown> | undefined;
   const pickedMetadata = Object.fromEntries(
@@ -118,12 +133,14 @@ function summarizeMastraPayload(event: CapturedLogEvent): Record<string, Json> {
   const result: Record<string, Json> = {
     metadata:
       Object.keys(pickedMetadata).length > 0 ? (pickedMetadata as Json) : null,
-    metric_keys: Object.keys(event.metrics ?? {})
-      .filter((key) => key !== "start" && key !== "end")
-      .sort(),
     name: event.span.name ?? null,
     type: event.span.type ?? null,
   };
+
+  const metrics = summarizeMetrics(event.metrics);
+  if (metrics) {
+    result.metrics = metrics;
+  }
 
   if (event.input !== undefined && event.input !== null) {
     result.input = scrubMastraProviderTimestamps(event.input as Json);

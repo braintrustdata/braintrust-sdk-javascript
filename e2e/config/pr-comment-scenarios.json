@@ -481,6 +481,12 @@
     ]
   },
   {
+    "scenarioDirName": "eve-instrumentation",
+    "label": "Eve Instrumentation",
+    "metadataScenario": "eve-instrumentation",
+    "variants": [{ "variantKey": "eve-v0-20-0", "label": "v0.20.0" }]
+  },
+  {
     "scenarioDirName": "github-copilot-instrumentation",
     "label": "GitHub Copilot SDK Instrumentation",
     "metadataScenario": "github-copilot-instrumentation",

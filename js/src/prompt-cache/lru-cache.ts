@@ -22,7 +22,7 @@ interface LRUCacheOptions {
  * @template V - The type of values stored in the cache.
  */
 export class LRUCache<K, V> {
-  private cache: Map<K, V>;
+  private cache: Map<K, { value: V }>;
   private readonly maxSize?: number;
 
   constructor(options: LRUCacheOptions = {}) {
@@ -38,14 +38,25 @@ export class LRUCache<K, V> {
    * @returns The cached value if found, undefined otherwise.
    */
   get(key: K): V | undefined {
-    const value = this.cache.get(key);
-    if (value === undefined) {
+    const entry = this.cache.get(key);
+    if (entry === undefined) {
       return undefined;
     }
     // Refresh key by moving to end of Map.
     this.cache.delete(key);
-    this.cache.set(key, value);
-    return value;
+    this.cache.set(key, entry);
+    return entry.value;
+  }
+
+  /**
+   * Checks whether a key exists and marks it as most recently used.
+   */
+  has(key: K): boolean {
+    if (!this.cache.has(key)) {
+      return false;
+    }
+    this.get(key);
+    return true;
   }
 
   /**
@@ -64,7 +75,43 @@ export class LRUCache<K, V> {
       const first = this.cache.keys().next().value;
       this.cache.delete(first);
     }
-    this.cache.set(key, value);
+    this.cache.set(key, { value });
+  }
+
+  /**
+   * Removes an item from the cache.
+   */
+  delete(key: K): boolean {
+    return this.cache.delete(key);
+  }
+
+  /**
+   * Iterates over cache entries from least to most recently used.
+   */
+  *entries(): IterableIterator<[K, V]> {
+    for (const [key, entry] of this.cache) {
+      yield [key, entry.value];
+    }
+  }
+
+  /**
+   * Iterates over cache keys from least to most recently used.
+   */
+  keys(): IterableIterator<K> {
+    return this.cache.keys();
+  }
+
+  /**
+   * Iterates over cache values from least to most recently used.
+   */
+  *values(): IterableIterator<V> {
+    for (const entry of this.cache.values()) {
+      yield entry.value;
+    }
+  }
+
+  [Symbol.iterator](): IterableIterator<[K, V]> {
+    return this.entries();
   }
 
   /**

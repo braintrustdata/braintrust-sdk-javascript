@@ -1,5 +1,36 @@
 # braintrust
 
+## 3.22.0
+
+### Minor Changes
+
+- feat: Add first party eve instrumentation (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2203)
+
+### Patch Changes
+
+- fix(mastra): Use the Mastra span id as the Braintrust row id so `logFeedback` attaches to the right row instead of landing as a stray (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2211)
+
+## 3.21.0
+
+### Minor Changes
+
+- feat: Add `inject`/`extract` APIs for distributed tracing across service boundaries (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2141)
+- fix(ai-sdk): Don't capture message history in tool spans (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2179)
+- feat: Expose flag for toggling realtime mode in span fetcher (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2187)
+- feat: Add scorer that exposes helpers to evaluate agents (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2146)
+- feat(evals): Forward/pick up `bt eval <...> --sample N` flag (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2165)
+- feat(ai-sdk): Add Workflow Agent instrumentation (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2177)
+
+### Patch Changes
+
+- fix: Synthesize AI SDK total token metrics from prompt and completion counts (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2174)
+- fix(ai-sdk): Close `braintrustAISDKTelemetry()` parent spans with AI SDK 7 `onEnd` callbacks (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2172)
+- fix(ai-sdk): Keep `wrapAISDK` model child spans correctly parented for concurrent calls sharing a model instance (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2194)
+- fix: Fix function invocations by stripping `/v1/proxy` from functions endpoint (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2180)
+- ref: Fork `orchestrion-js`, `import-in-the-middle` and `require-in-the-middle` (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2154)
+- chore: Update platform types (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2196)
+- fix: Properly anchor preview domain CORS regex (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2162)
+
 ## 3.20.0
 
 ### Minor Changes
