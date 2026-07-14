@@ -43,16 +43,16 @@
                 }
               ],
               "metadata": {
-                "model": "gpt-5.4-mini",
-                "provider": "openai",
+                "model": "deepseek-v4-pro",
+                "provider": "deepseek",
                 "scenario": "eve-instrumentation",
                 "testRunId": "<run:1>"
               },
               "metrics": {
                 "completion_tokens": 28,
                 "prompt_cached_tokens": 0,
-                "prompt_tokens": 6666,
-                "tokens": 6694
+                "prompt_tokens": 2230,
+                "tokens": 2258
               }
             },
             {
@@ -109,7 +109,7 @@
                           },
                           "metrics": {
                             "completion_tokens": 26,
-                            "prompt_cached_tokens": 0,
+                            "prompt_cached_tokens": 6528,
                             "prompt_tokens": 6554,
                             "tokens": 6580
                           }
@@ -204,7 +204,7 @@
                           },
                           "metrics": {
                             "completion_tokens": 22,
-                            "prompt_cached_tokens": 5504,
+                            "prompt_cached_tokens": 6528,
                             "prompt_tokens": 6624,
                             "tokens": 6646
                           }
@@ -225,7 +225,7 @@
                       },
                       "metrics": {
                         "completion_tokens": 48,
-                        "prompt_cached_tokens": 5504,
+                        "prompt_cached_tokens": 13056,
                         "prompt_tokens": 13178,
                         "tokens": 13226
                       }
@@ -315,16 +315,16 @@
                 }
               ],
               "metadata": {
-                "model": "gpt-5.4-mini",
-                "provider": "openai",
+                "model": "deepseek-v4-pro",
+                "provider": "deepseek",
                 "scenario": "eve-instrumentation",
                 "testRunId": "<run:1>"
               },
               "metrics": {
                 "completion_tokens": 27,
-                "prompt_cached_tokens": 6528,
-                "prompt_tokens": 6724,
-                "tokens": 6751
+                "prompt_cached_tokens": 2048,
+                "prompt_tokens": 2288,
+                "tokens": 2315
               }
             },
             {
@@ -438,22 +438,22 @@
                   "finish_reason": "stop",
                   "index": 0,
                   "message": {
-                    "content": "Final answer from read: researcher result = Eve instrumentation — https://eve.dev/docs/guides/instrumentation; read title = Eve instrumentation; URL = https://eve.dev/docs/guides/instrumentation; excerpt = Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace.",
+                    "content": "Final answer from read: researcher result = Eve instrumentation — https://eve.dev/docs/guides/instrumentation; read title = Eve instrumentation; URL = https://eve.dev/docs/guides/instrumentation; read excerpt = Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace.",
                     "role": "assistant"
                   }
                 }
               ],
               "metadata": {
-                "model": "gpt-5.4-mini",
-                "provider": "openai",
+                "model": "deepseek-v4-pro",
+                "provider": "deepseek",
                 "scenario": "eve-instrumentation",
                 "testRunId": "<run:1>"
               },
               "metrics": {
-                "completion_tokens": 65,
-                "prompt_cached_tokens": 6528,
-                "prompt_tokens": 6806,
-                "tokens": 6871
+                "completion_tokens": 66,
+                "prompt_cached_tokens": 2048,
+                "prompt_tokens": 2370,
+                "tokens": 2436
               }
             }
           ],
@@ -463,18 +463,16 @@
               "role": "user"
             }
           ],
-          "output": "Final answer from read: researcher result = Eve instrumentation — https://eve.dev/docs/guides/instrumentation; read title = Eve instrumentation; URL = https://eve.dev/docs/guides/instrumentation; excerpt = Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace.",
+          "output": "Final answer from read: researcher result = Eve instrumentation — https://eve.dev/docs/guides/instrumentation; read title = Eve instrumentation; URL = https://eve.dev/docs/guides/instrumentation; read excerpt = Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace.",
           "metadata": {
-            "model": "gpt-5.4-mini",
-            "provider": "openai",
             "scenario": "eve-instrumentation",
             "testRunId": "<run:1>"
           },
           "metrics": {
-            "completion_tokens": 120,
-            "prompt_cached_tokens": 13056,
-            "prompt_tokens": 20196,
-            "tokens": 20316
+            "completion_tokens": 121,
+            "prompt_cached_tokens": 4096,
+            "prompt_tokens": 6888,
+            "tokens": 7009
           }
         },
         {
@@ -577,7 +575,7 @@
                           "phase": "final_answer"
                         }
                       },
-                      "text": "Final answer from read: researcher result = Eve instrumentation — https://eve.dev/docs/guides/instrumentation; read title = Eve instrumentation; URL = https://eve.dev/docs/guides/instrumentation; excerpt = Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace.",
+                      "text": "Final answer from read: researcher result = Eve instrumentation — https://eve.dev/docs/guides/instrumentation; read title = Eve instrumentation; URL = https://eve.dev/docs/guides/instrumentation; read excerpt = Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace.",
                       "type": "text"
                     }
                   ],
@@ -609,16 +607,16 @@
                 }
               ],
               "metadata": {
-                "model": "gpt-5.4-mini",
-                "provider": "openai",
+                "model": "deepseek-v4-pro",
+                "provider": "deepseek",
                 "scenario": "eve-instrumentation",
                 "testRunId": "<run:1>"
               },
               "metrics": {
                 "completion_tokens": 29,
-                "prompt_cached_tokens": 6528,
-                "prompt_tokens": 6888,
-                "tokens": 6917
+                "prompt_cached_tokens": 2048,
+                "prompt_tokens": 2453,
+                "tokens": 2482
               }
             },
             {
@@ -910,7 +908,7 @@
                           "phase": "final_answer"
                         }
                       },
-                      "text": "Final answer from read: researcher result = Eve instrumentation — https://eve.dev/docs/guides/instrumentation; read title = Eve instrumentation; URL = https://eve.dev/docs/guides/instrumentation; excerpt = Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace.",
+                      "text": "Final answer from read: researcher result = Eve instrumentation — https://eve.dev/docs/guides/instrumentation; read title = Eve instrumentation; URL = https://eve.dev/docs/guides/instrumentation; read excerpt = Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace.",
                       "type": "text"
                     }
                   ],
@@ -974,16 +972,16 @@
                 }
               ],
               "metadata": {
-                "model": "gpt-5.4-mini",
-                "provider": "openai",
+                "model": "deepseek-v4-pro",
+                "provider": "deepseek",
                 "scenario": "eve-instrumentation",
                 "testRunId": "<run:1>"
               },
               "metrics": {
                 "completion_tokens": 27,
-                "prompt_cached_tokens": 6528,
-                "prompt_tokens": 6947,
-                "tokens": 6974
+                "prompt_cached_tokens": 2048,
+                "prompt_tokens": 2512,
+                "tokens": 2539
               }
             },
             {
@@ -1100,7 +1098,7 @@
                           "phase": "final_answer"
                         }
                       },
-                      "text": "Final answer from read: researcher result = Eve instrumentation — https://eve.dev/docs/guides/instrumentation; read title = Eve instrumentation; URL = https://eve.dev/docs/guides/instrumentation; excerpt = Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace.",
+                      "text": "Final answer from read: researcher result = Eve instrumentation — https://eve.dev/docs/guides/instrumentation; read title = Eve instrumentation; URL = https://eve.dev/docs/guides/instrumentation; read excerpt = Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace.",
                       "type": "text"
                     }
                   ],
@@ -1190,22 +1188,22 @@
                   "finish_reason": "stop",
                   "index": 0,
                   "message": {
-                    "content": "Final answer from read: researcher result = Eve instrumentation — https://eve.dev/docs/guides/instrumentation; read title = Eve instrumentation; URL = https://eve.dev/docs/guides/instrumentation; excerpt = Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace.",
+                    "content": "Final answer from read: researcher result = Eve instrumentation — https://eve.dev/docs/guides/instrumentation; read title = Eve instrumentation; URL = https://eve.dev/docs/guides/instrumentation; read excerpt = Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace.",
                     "role": "assistant"
                   }
                 }
               ],
               "metadata": {
-                "model": "gpt-5.4-mini",
-                "provider": "openai",
+                "model": "deepseek-v4-pro",
+                "provider": "deepseek",
                 "scenario": "eve-instrumentation",
                 "testRunId": "<run:1>"
               },
               "metrics": {
-                "completion_tokens": 65,
-                "prompt_cached_tokens": 6528,
-                "prompt_tokens": 7029,
-                "tokens": 7094
+                "completion_tokens": 66,
+                "prompt_cached_tokens": 2048,
+                "prompt_tokens": 2594,
+                "tokens": 2660
               }
             }
           ],
@@ -1215,24 +1213,20 @@
               "role": "user"
             }
           ],
-          "output": "Final answer from read: researcher result = Eve instrumentation — https://eve.dev/docs/guides/instrumentation; read title = Eve instrumentation; URL = https://eve.dev/docs/guides/instrumentation; excerpt = Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace.",
+          "output": "Final answer from read: researcher result = Eve instrumentation — https://eve.dev/docs/guides/instrumentation; read title = Eve instrumentation; URL = https://eve.dev/docs/guides/instrumentation; read excerpt = Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace.",
           "metadata": {
-            "model": "gpt-5.4-mini",
-            "provider": "openai",
             "scenario": "eve-instrumentation",
             "testRunId": "<run:1>"
           },
           "metrics": {
-            "completion_tokens": 121,
-            "prompt_cached_tokens": 19584,
-            "prompt_tokens": 20864,
-            "tokens": 20985
+            "completion_tokens": 122,
+            "prompt_cached_tokens": 6144,
+            "prompt_tokens": 7559,
+            "tokens": 7681
           }
         }
       ],
       "metadata": {
-        "model": "gpt-5.4-mini",
-        "provider": "openai",
         "scenario": "eve-instrumentation",
         "testRunId": "<run:1>"
       }

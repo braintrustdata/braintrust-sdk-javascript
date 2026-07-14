@@ -36,7 +36,7 @@ describe("eve instrumentation", () => {
           },
           runContext: {
             originalScenarioDir,
-            variantKey: "eve-v0-20-0",
+            variantKey: "eve-v0-22-1",
           },
           scenarioDir,
           timeoutMs: TIMEOUT_MS,
@@ -93,11 +93,11 @@ describe("eve instrumentation", () => {
     expect(session?.span.type).toBe("task");
     expect(session?.span.parentIds).toEqual([]);
     expect(session?.metadata).toMatchObject({
-      model: "gpt-5.4-mini",
-      provider: "openai",
       scenario: "eve-instrumentation",
       testRunId: expect.any(String),
     });
+    expect(session?.metadata).not.toHaveProperty("model");
+    expect(session?.metadata).not.toHaveProperty("provider");
     expect(turns).toHaveLength(2);
     expect(turns.map((turn) => turn.span.parentIds)).toEqual([
       [session?.span.id],
@@ -140,8 +140,8 @@ describe("eve instrumentation", () => {
       }
       expect(step.input[0]).toMatchObject({ role: "system" });
       expect(step.metadata).toMatchObject({
-        model: "gpt-5.4-mini",
-        provider: "openai",
+        model: "deepseek-v4-pro",
+        provider: "deepseek",
         scenario: "eve-instrumentation",
         testRunId: expect.any(String),
       });

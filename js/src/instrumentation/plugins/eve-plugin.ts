@@ -96,8 +96,9 @@ type EveTraceState = {
     turnId: string;
   }[];
   llmInputs: readonly {
-    input: CapturedEveModelInput;
+    input?: CapturedEveModelInput;
     key: string;
+    modelId?: string;
   }[];
 };
 
@@ -568,16 +569,18 @@ class EveBridge {
     }
 
     const stepOrdinal = this.stepOrdinal(event);
-    const metadata = {
-      ...turn.metadata,
-      ...(this.sessionsById.get(sessionId)?.metadata ?? {}),
-    };
-    const input = consumeCapturedEveModelInput(
+    const captured = consumeCapturedEveModelInput(
       this.state,
       sessionId,
       event.data.turnId,
       event.data.stepIndex,
     );
+    const input = captured?.input;
+    const metadata = {
+      ...turn.metadata,
+      ...(this.sessionsById.get(sessionId)?.metadata ?? {}),
+      ...(captured?.modelId ? modelMetadataFromModelId(captured.modelId) : {}),
+    };
     const { rowId: eventId, spanId } = await generateEveIds(
       "step",
       sessionId,
@@ -1696,8 +1699,21 @@ function normalizeEveTraceState(state: unknown): EveTraceState {
           }
           const key = entry["key"];
           const input = entry["input"];
-          return typeof key === "string" && isCapturedModelInput(input)
-            ? [{ input, key }]
+          const modelId = entry["modelId"];
+          const normalizedInput = isCapturedModelInput(input)
+            ? input
+            : undefined;
+          return typeof key === "string" &&
+            (normalizedInput !== undefined || typeof modelId === "string")
+            ? [
+                {
+                  key,
+                  ...(normalizedInput !== undefined
+                    ? { input: normalizedInput }
+                    : {}),
+                  ...(typeof modelId === "string" ? { modelId } : {}),
+                },
+              ]
             : [];
         })
         .slice(-MAX_STORED_LLM_INPUTS)
@@ -1764,14 +1780,22 @@ function captureEveModelInput(
   }
 
   const captured = capturedModelInput(input["modelInput"]);
-  if (!captured) {
+  const modelId = input["modelId"];
+  if (!captured && typeof modelId !== "string") {
     return;
   }
 
   const key = llmInputKey(sessionId, turnId, stepIndex);
   state.update((current) => {
     const normalized = normalizeEveTraceState(current);
-    const llmInputs = [...normalized.llmInputs, { input: captured, key }];
+    const llmInputs = [
+      ...normalized.llmInputs,
+      {
+        key,
+        ...(captured ? { input: captured } : {}),
+        ...(typeof modelId === "string" ? { modelId } : {}),
+      },
+    ];
     return {
       ...normalized,
       llmInputs: llmInputs.slice(-MAX_STORED_LLM_INPUTS),
@@ -1784,10 +1808,10 @@ function consumeCapturedEveModelInput(
   sessionId: string,
   turnId: string,
   stepIndex: number,
-): CapturedEveModelInput | undefined {
+): EveTraceState["llmInputs"][number] | undefined {
   try {
     const key = llmInputKey(sessionId, turnId, stepIndex);
-    let input: CapturedEveModelInput | undefined;
+    let captured: EveTraceState["llmInputs"][number] | undefined;
     state.update((current) => {
       const normalized = normalizeEveTraceState(current);
       const index = normalized.llmInputs.findIndex(
@@ -1796,7 +1820,7 @@ function consumeCapturedEveModelInput(
       if (index < 0) {
         return normalized;
       }
-      input = normalized.llmInputs[index]?.input;
+      captured = normalized.llmInputs[index];
       return {
         ...normalized,
         llmInputs: normalized.llmInputs.filter(
@@ -1804,7 +1828,7 @@ function consumeCapturedEveModelInput(
         ),
       };
     });
-    return input;
+    return captured;
   } catch (error) {
     debugLogger.warn("Error in Eve LLM input consumption:", error);
     return undefined;
@@ -1858,7 +1882,9 @@ function modelMetadataFromRuntime(runtime: unknown): Record<string, unknown> {
     return {};
   }
   const modelId = runtime["modelId"];
-  return typeof modelId === "string" ? modelMetadataFromModelId(modelId) : {};
+  return typeof modelId === "string" && !modelId.trim().startsWith("dynamic:")
+    ? modelMetadataFromModelId(modelId)
+    : {};
 }
 
 function modelMetadataFromModelId(modelId: string): Record<string, unknown> {

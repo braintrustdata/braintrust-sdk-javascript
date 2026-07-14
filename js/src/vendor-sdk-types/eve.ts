@@ -317,6 +317,7 @@ export interface EveInstrumentationModelInput {
 
 export interface EveInstrumentationStepStartedEventInput {
   readonly channel?: unknown;
+  readonly modelId?: string;
   readonly modelInput: EveInstrumentationModelInput;
   readonly session: {
     readonly id?: string;

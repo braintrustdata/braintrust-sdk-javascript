@@ -1,4 +1,4 @@
-import { defineAgent } from "eve";
+import { defineAgent, defineDynamic } from "eve";
 import { createOpenAI } from "@ai-sdk/openai";
 
 const openai = createOpenAI({
@@ -7,7 +7,14 @@ const openai = createOpenAI({
     : {}),
 });
 
+const dynamicModel = openai("gpt-5.4-mini");
+
 export default defineAgent({
-  model: openai("gpt-5.4-mini"),
+  model: defineDynamic({
+    fallback: openai("gpt-5.4-mini"),
+    events: {
+      "step.started": () => dynamicModel,
+    },
+  }),
   modelContextWindowTokens: 8_192,
 });
