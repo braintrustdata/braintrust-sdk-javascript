@@ -3,8 +3,9 @@
 export const filter = [
   "default",
   {
-    // OpenAI generates the tool-call id and Strands echoes it into the next
-    // request. It is not part of the scenario contract and varies by response.
-    ignoreBodyFields: ["messages.*.tool_calls.*.id", "messages.*.tool_call_id"],
+    // Strands makes deterministic, sequential OpenAI calls. Match by call
+    // index so SDK-added defaults and generated ids do not make replay
+    // depend on the runner environment.
+    ignoreBodyFields: ["**"],
   },
 ];
