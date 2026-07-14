@@ -1,5 +1,15 @@
 # braintrust
 
+## 3.22.0
+
+### Minor Changes
+
+- feat: Add first party eve instrumentation (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2203)
+
+### Patch Changes
+
+- fix(mastra): Use the Mastra span id as the Braintrust row id so `logFeedback` attaches to the right row instead of landing as a stray (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2211)
+
 ## 3.21.0
 
 ### Minor Changes
