@@ -8,7 +8,7 @@ import {
   withCurrent,
 } from "../../logger";
 import type { Span } from "../../logger";
-import { LRUCache } from "../../prompt-cache/lru-cache";
+import { LRUCache } from "../../lru-cache";
 import { SpanTypeAttribute, isObject } from "../../../util/index";
 import { getCurrentUnixTimestamp } from "../../util";
 import type {

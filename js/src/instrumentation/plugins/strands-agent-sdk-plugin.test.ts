@@ -33,17 +33,23 @@ const {
 
 vi.mock("../../isomorph", () => ({
   default: {
+    getEnv: vi.fn(),
     newAsyncLocalStorage: mockNewAsyncLocalStorage,
     newTracingChannel: vi.fn(),
   },
 }));
 
-vi.mock("../../logger", () => ({
-  startSpan: (...args: unknown[]) => mockStartSpan(...args),
-  withCurrent: (...args: unknown[]) => mockWithCurrent(...args),
-}));
+vi.mock("../../logger", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../logger")>();
+  return {
+    ...actual,
+    startSpan: (...args: unknown[]) => mockStartSpan(...args),
+    withCurrent: (...args: unknown[]) => mockWithCurrent(...args),
+  };
+});
 
 import iso from "../../isomorph";
+import { Attachment } from "../../logger";
 import { isAutoInstrumentationSuppressed } from "../auto-instrumentation-suppression";
 import { StrandsAgentSDKPlugin } from "./strands-agent-sdk-plugin";
 
@@ -272,6 +278,72 @@ describe("StrandsAgentSDKPlugin", () => {
     );
     expect(rootSpan?.end).toHaveBeenCalledTimes(1);
   });
+
+  it.each([
+    ["binary objects", new Uint8Array([1, 2, 3])],
+    ["base64 strings", "AQID"],
+  ])(
+    "converts media from %s to one attachment shared by agent and model spans",
+    async (_description, bytes) => {
+      const plugin = new StrandsAgentSDKPlugin();
+      plugin.enable();
+
+      const handlers = handlersByName.get(
+        "orchestrion:@strands-agents/sdk:Agent.stream",
+      );
+      const documentBlock = {
+        format: "pdf",
+        name: "tiny.pdf",
+        source: { bytes, type: "documentSourceBytes" },
+        type: "documentBlock",
+      };
+      const model = {
+        modelId: "gpt-4o-mini",
+        getConfig: () => ({ modelId: "gpt-4o-mini" }),
+      };
+      const agent = {
+        messages: [{ content: [documentBlock], role: "user", type: "message" }],
+        model,
+        stream: vi.fn(),
+      };
+      const stream = makeAgentStream([
+        { agent, model, type: "beforeModelCallEvent" },
+        {
+          result: {
+            lastMessage: { role: "assistant", content: [{ text: "done" }] },
+            stopReason: "end_turn",
+          },
+          type: "agentResultEvent",
+        },
+      ]);
+      const event = {
+        arguments: [[documentBlock], undefined],
+        result: stream,
+        self: agent,
+      };
+
+      handlers.start(event);
+      handlers.end(event);
+      await consume(stream);
+
+      const rootSpan = spans.find((span) => span.args.name === "Strands Agent");
+      const modelSpan = spans.find(
+        (span) => span.args.name === "Strands model: gpt-4o-mini",
+      );
+      const rootAttachment =
+        rootSpan?.args.event.input[0].document.source.bytes;
+      const modelAttachment =
+        modelSpan?.args.event.input[0].content[0].document.source.bytes;
+
+      expect(rootAttachment).toBeInstanceOf(Attachment);
+      expect(rootAttachment.reference).toMatchObject({
+        content_type: "application/pdf",
+        filename: "tiny.pdf",
+        type: "braintrust_attachment",
+      });
+      expect(modelAttachment).toBe(rootAttachment);
+    },
+  );
 
   it("parents nested agent spans under active graph nodes", async () => {
     const plugin = new StrandsAgentSDKPlugin();

@@ -1,4 +1,9 @@
+import { Buffer } from "node:buffer";
 import { wrapStrandsAgentSDK } from "braintrust";
+import {
+  MINIMAL_PDF_BASE64,
+  MINIMAL_PNG_BASE64,
+} from "../../helpers/media-fixtures.mjs";
 import {
   collectAsync,
   runOperation,
@@ -187,7 +192,8 @@ async function runStrandsAgentSDKInstrumentationScenario(
   options = {},
 ) {
   const strands = options.decorateSDK ? options.decorateSDK(sdk) : sdk;
-  const { Agent, Graph, Swarm, tool } = strands;
+  const { Agent, DocumentBlock, Graph, ImageBlock, Swarm, TextBlock, tool } =
+    strands;
   const lookupWeather = tool({
     name: "lookup_weather",
     description: "Return a deterministic weather report for one city.",
@@ -225,6 +231,55 @@ async function runStrandsAgentSDKInstrumentationScenario(
           );
 
           expectContains(result, "STRANDS_AGENT_TOOL_OK", "agent invoke");
+        },
+      );
+
+      await runOperation(
+        "strands-agent-document-operation",
+        "agent-document",
+        async () => {
+          const agent = new Agent({
+            id: "document-agent",
+            name: "document-agent",
+            model: createOpenAIModel(OpenAIModel),
+            printer: false,
+            systemPrompt: "Reply exactly STRANDS_DOCUMENT_OK.",
+          });
+          const documentBytes = Buffer.from(MINIMAL_PDF_BASE64, "base64");
+          const result = await agent.invoke([
+            new DocumentBlock({
+              format: "pdf",
+              name: "strands-regression.pdf",
+              source: { bytes: documentBytes },
+            }),
+            new TextBlock("Reply exactly STRANDS_DOCUMENT_OK."),
+          ]);
+
+          expectContains(result, "STRANDS_DOCUMENT_OK", "agent document");
+        },
+      );
+
+      await runOperation(
+        "strands-agent-image-operation",
+        "agent-image",
+        async () => {
+          const agent = new Agent({
+            id: "image-agent",
+            name: "image-agent",
+            model: createOpenAIModel(OpenAIModel),
+            printer: false,
+            systemPrompt: "Reply exactly STRANDS_IMAGE_OK.",
+          });
+          const imageBytes = Buffer.from(MINIMAL_PNG_BASE64, "base64");
+          const result = await agent.invoke([
+            new ImageBlock({
+              format: "png",
+              source: { bytes: imageBytes },
+            }),
+            new TextBlock("Reply exactly STRANDS_IMAGE_OK."),
+          ]);
+
+          expectContains(result, "STRANDS_IMAGE_OK", "agent image");
         },
       );
 

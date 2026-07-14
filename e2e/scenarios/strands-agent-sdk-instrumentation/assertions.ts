@@ -53,6 +53,8 @@ const SNAPSHOT_METADATA_KEYS = [
 
 const OPERATION_NAMES = [
   "strands-agent-invoke-operation",
+  "strands-agent-document-operation",
+  "strands-agent-image-operation",
   "strands-agent-stream-operation",
   "strands-graph-invoke-operation",
   "strands-overlap-parent-operation",
@@ -172,6 +174,8 @@ function summarize(events: CapturedLogEvent[]): SpanTreeEntry[] {
     ROOT_NAME,
     ...OPERATION_NAMES,
     "Agent: weather-agent",
+    "Agent: document-agent",
+    "Agent: image-agent",
     "Agent: stream-agent",
     "Agent: graph-researcher",
     "Agent: graph-writer",
@@ -204,6 +208,28 @@ function findLatestChild(
   parentId: string | undefined,
 ): CapturedLogEvent | undefined {
   return findChildSpans(events, name, parentId).at(-1);
+}
+
+function findAttachmentReference(
+  value: unknown,
+): Record<string, unknown> | undefined {
+  if (!value || typeof value !== "object") {
+    return undefined;
+  }
+  if (
+    !Array.isArray(value) &&
+    "type" in value &&
+    value.type === "braintrust_attachment"
+  ) {
+    return value as Record<string, unknown>;
+  }
+  for (const child of Object.values(value)) {
+    const attachment = findAttachmentReference(child);
+    if (attachment) {
+      return attachment;
+    }
+  }
+  return undefined;
 }
 
 export function defineStrandsAgentSDKInstrumentationAssertions(options: {
@@ -313,6 +339,78 @@ export function defineStrandsAgentSDKInstrumentationAssertions(options: {
         "STRANDS_AGENT_STREAM_OK",
       );
       expect(streamModels.length).toBeGreaterThanOrEqual(1);
+    });
+
+    test("captures document bytes as attachments", testConfig, () => {
+      expect(setupError).toBeUndefined();
+      const documentOperation = findLatestSpan(
+        events,
+        "strands-agent-document-operation",
+      );
+      const documentAgent = findLatestChild(
+        events,
+        "Agent: document-agent",
+        documentOperation?.span.id,
+      );
+      const documentModel = findLatestChild(
+        events,
+        `Strands model: ${MODEL_NAME}`,
+        documentAgent?.span.id,
+      );
+
+      const agentAttachment = findAttachmentReference(documentAgent?.input);
+      const modelAttachment = findAttachmentReference(documentModel?.input);
+      expect(agentAttachment).toMatchObject({
+        type: "braintrust_attachment",
+        content_type: "application/pdf",
+        filename: "strands-regression.pdf",
+        key: expect.any(String),
+      });
+      expect(modelAttachment).toMatchObject({
+        type: "braintrust_attachment",
+        content_type: "application/pdf",
+        filename: "strands-regression.pdf",
+        key: expect.any(String),
+      });
+      expect(modelAttachment?.key).toBe(agentAttachment?.key);
+      expect(JSON.stringify(documentAgent?.output)).toContain(
+        "STRANDS_DOCUMENT_OK",
+      );
+    });
+
+    test("captures image bytes as attachments", testConfig, () => {
+      expect(setupError).toBeUndefined();
+      const imageOperation = findLatestSpan(
+        events,
+        "strands-agent-image-operation",
+      );
+      const imageAgent = findLatestChild(
+        events,
+        "Agent: image-agent",
+        imageOperation?.span.id,
+      );
+      const imageModel = findLatestChild(
+        events,
+        `Strands model: ${MODEL_NAME}`,
+        imageAgent?.span.id,
+      );
+
+      const agentAttachment = findAttachmentReference(imageAgent?.input);
+      const modelAttachment = findAttachmentReference(imageModel?.input);
+      expect(agentAttachment).toMatchObject({
+        type: "braintrust_attachment",
+        content_type: "image/png",
+        filename: "image.png",
+        key: expect.any(String),
+      });
+      expect(modelAttachment).toMatchObject({
+        type: "braintrust_attachment",
+        content_type: "image/png",
+        filename: "image.png",
+        key: expect.any(String),
+      });
+      expect(modelAttachment?.key).toBe(agentAttachment?.key);
+      expect(JSON.stringify(imageAgent?.output)).toContain("STRANDS_IMAGE_OK");
     });
 
     test("captures graph and swarm orchestration spans", testConfig, () => {
