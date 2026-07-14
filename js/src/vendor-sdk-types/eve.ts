@@ -16,25 +16,8 @@ export type EveJsonValue =
 export type EveJsonObject = { readonly [key: string]: EveJsonValue };
 
 export interface EveHookContext {
-  readonly agent?: {
-    readonly name?: string;
-    readonly nodeId?: string;
-  };
-  readonly channel?: {
-    readonly kind?: string;
-    readonly continuationToken?: string;
-  };
   readonly session?: {
     readonly id?: string;
-    readonly parent?: {
-      readonly callId?: string;
-      readonly rootSessionId?: string;
-      readonly sessionId?: string;
-      readonly turn?: {
-        readonly id?: string;
-        readonly sequence?: number;
-      };
-    };
   };
 }
 

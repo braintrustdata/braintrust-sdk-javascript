@@ -344,8 +344,6 @@ describe("braintrustEveHook", () => {
     expect(wildcard).toBeDefined();
 
     const ctx: EveHookContext = {
-      agent: { name: "eve-test-agent" },
-      channel: { kind: "http" },
       session: { id: "session-flat-tree" },
     };
     const emit = (event: EveHandleMessageStreamEvent) => wildcard?.(event, ctx);
@@ -633,8 +631,6 @@ describe("braintrustEveHook", () => {
     expect(wildcard).toBeDefined();
 
     const ctx: EveHookContext = {
-      agent: { name: "eve-test-agent" },
-      channel: { kind: "http" },
       session: { id: "session-incremental-tools" },
     };
     const emit = (event: EveHandleMessageStreamEvent) => wildcard?.(event, ctx);
@@ -784,8 +780,6 @@ describe("braintrustEveHook", () => {
     expect(wildcard).toBeDefined();
 
     const ctx: EveHookContext = {
-      agent: { name: "eve-test-agent" },
-      channel: { kind: "http" },
       session: { id: "session-late-tool-result" },
     };
     const emit = (event: EveHandleMessageStreamEvent) => wildcard?.(event, ctx);
@@ -1016,8 +1010,6 @@ describe("braintrustEveHook", () => {
     expect(wildcard).toBeDefined();
 
     const ctx: EveHookContext = {
-      agent: { name: "eve-test-agent" },
-      channel: { kind: "http" },
       session: { id: "session-late-after-session" },
     };
     const emit = (event: EveHandleMessageStreamEvent) => wildcard?.(event, ctx);
@@ -1081,8 +1073,6 @@ describe("braintrustEveHook", () => {
     expect(wildcard).toBeDefined();
 
     const ctx: EveHookContext = {
-      agent: { name: "eve-test-agent" },
-      channel: { kind: "http" },
       session: { id: "session-result-only" },
     };
     const emit = (event: EveHandleMessageStreamEvent) => wildcard?.(event, ctx);
@@ -1294,22 +1284,10 @@ describe("braintrustEveHook", () => {
     expect(childWildcard).toBeDefined();
 
     const parentCtx: EveHookContext = {
-      agent: { name: "eve-parent-agent" },
-      channel: { kind: "http" },
       session: { id: "session-parent" },
     };
     const childCtx: EveHookContext = {
-      agent: { name: "eve-child-agent", nodeId: "researcher-node" },
-      channel: { kind: "subagent" },
-      session: {
-        id: "session-child",
-        parent: {
-          callId: "call-researcher",
-          rootSessionId: "session-parent",
-          sessionId: "session-parent",
-          turn: { id: "turn-parent", sequence: 0 },
-        },
-      },
+      session: { id: "session-child" },
     };
     const emitParent = (event: EveHandleMessageStreamEvent) =>
       parentWildcard?.(event, parentCtx);

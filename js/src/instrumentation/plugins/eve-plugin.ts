@@ -390,7 +390,7 @@ class EveBridge {
   ): Promise<boolean> {
     switch (event.type) {
       case "session.started":
-        await this.handleSessionStarted(event, ctx, hookMetadata);
+        this.handleSessionStarted(event, ctx, hookMetadata);
         return true;
       case "turn.started":
         await this.handleTurnStarted(event, ctx, hookMetadata);
@@ -426,27 +426,27 @@ class EveBridge {
         this.handleStepFailed(event, ctx);
         return true;
       case "turn.completed":
-        await this.handleTurnCompleted(event, ctx);
+        this.handleTurnCompleted(event, ctx);
         return true;
       case "turn.failed":
-        await this.handleTurnFailed(event, ctx);
+        this.handleTurnFailed(event, ctx);
         return true;
       case "session.failed":
-        await this.handleSessionFailed(event, ctx);
+        this.handleSessionFailed(event, ctx);
         return true;
       case "session.completed":
-        await this.handleSessionCompleted(event, ctx);
+        this.handleSessionCompleted(event, ctx);
         return true;
       default:
         return false;
     }
   }
 
-  private async handleSessionStarted(
+  private handleSessionStarted(
     event: Extract<EveHandleMessageStreamEvent, { type: "session.started" }>,
     ctx: unknown,
     hookMetadata?: Record<string, unknown>,
-  ): Promise<void> {
+  ): void {
     const sessionId = sessionIdFromContext(ctx);
     if (!sessionId) {
       return;
@@ -1368,12 +1368,10 @@ class EveBridge {
     >,
     metadata: Record<string, unknown>,
   ): Promise<EveSpan> {
-    const { rowId: eventId, spanId } = await generateEveIds(
-      "turn",
-      sessionId,
-      event.data.turnId,
-    );
-    const rootSpanId = await rootSpanIdForTurn(sessionId, event.data.turnId);
+    const [{ rowId: eventId, spanId }, rootSpanId] = await Promise.all([
+      generateEveIds("turn", sessionId, event.data.turnId),
+      deterministicEveId("eve:root", sessionId, event.data.turnId),
+    ]);
 
     return await this.startEveSpan({
       event: {
@@ -1891,13 +1889,6 @@ function turnKey(sessionId: string, turnId: string): string {
 
 function toolKey(sessionId: string, callId: string): string {
   return `${sessionId}:${callId}`;
-}
-
-async function rootSpanIdForTurn(
-  sessionId: string,
-  turnId: string,
-): Promise<string> {
-  return deterministicEveId("eve:root", sessionId, turnId);
 }
 
 async function generateEveIds(
