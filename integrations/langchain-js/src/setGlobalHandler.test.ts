@@ -57,7 +57,7 @@ describe("setGlobalHandler", () => {
     // Not normally needed by users, but we need it for our tests.
     await flushBraintrustLogs();
 
-    const { spans, root_span_id } = logsToSpans(logs);
+    const { spans, root_span_id, root_span_span_id } = logsToSpans(logs);
 
     // Spans would be empty if the handler was not registered, let's make sure it logged what we expect.
     expect(spans).toMatchObject([
@@ -72,7 +72,7 @@ describe("setGlobalHandler", () => {
         metadata: {
           tags: [],
         },
-        span_id: root_span_id,
+        span_id: root_span_span_id,
         root_span_id,
       },
       {
@@ -91,7 +91,7 @@ describe("setGlobalHandler", () => {
         }),
         metadata: { tags: ["seq:step:1"] },
         root_span_id,
-        span_parents: [root_span_id],
+        span_parents: [root_span_span_id],
       },
       {
         span_attributes: { name: "ChatOpenAI", type: "llm" },
@@ -129,7 +129,7 @@ describe("setGlobalHandler", () => {
           model: "gpt-4o-mini-2024-07-18",
         },
         root_span_id,
-        span_parents: [root_span_id],
+        span_parents: [root_span_span_id],
       },
     ]);
 
