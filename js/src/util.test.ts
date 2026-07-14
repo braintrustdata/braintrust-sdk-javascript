@@ -1,5 +1,12 @@
 import { expect, test } from "vitest";
-import { LazyValue } from "./util";
+import { isPlainObject, LazyValue } from "./util";
+
+test("isPlainObject recognizes records without accepting class instances", () => {
+  expect(isPlainObject({ value: 1 })).toBe(true);
+  expect(isPlainObject(Object.create(null))).toBe(true);
+  expect(isPlainObject([])).toBe(false);
+  expect(isPlainObject(new Date())).toBe(false);
+});
 
 test("LazyValue evaluates exactly once", async () => {
   let callCount = 0;

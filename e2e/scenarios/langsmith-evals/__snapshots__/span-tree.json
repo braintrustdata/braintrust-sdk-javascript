@@ -1,0 +1,278 @@
+{
+  "span_tree": [
+    {
+      "name": "eval",
+      "type": "eval",
+      "children": [
+        {
+          "name": "task",
+          "type": "task",
+          "children": [],
+          "input": {
+            "value": 2
+          },
+          "output": {
+            "doubled": 4
+          }
+        },
+        {
+          "name": "correctnessEvaluator",
+          "type": "score",
+          "children": [],
+          "attributes": {
+            "purpose": "scorer"
+          },
+          "input": {
+            "expected": {
+              "id": "<span:1>",
+              "inputs": {
+                "value": 2
+              },
+              "metadata": {
+                "case": "one",
+                "testRunId": "<run:1>"
+              },
+              "outputs": {
+                "doubled": 4
+              }
+            },
+            "input": {
+              "value": 2
+            },
+            "metadata": {
+              "case": "one",
+              "testRunId": "<run:1>"
+            },
+            "output": {
+              "doubled": 4
+            }
+          },
+          "output": {
+            "score": 1
+          },
+          "scores": {
+            "correct": 1
+          },
+          "metadata": {
+            "comment": "Compared migrated output with the reference output"
+          }
+        },
+        {
+          "name": "detailEvaluator",
+          "type": "score",
+          "children": [],
+          "attributes": {
+            "purpose": "scorer"
+          },
+          "input": {
+            "expected": {
+              "id": "<span:1>",
+              "inputs": {
+                "value": 2
+              },
+              "metadata": {
+                "case": "one",
+                "testRunId": "<run:1>"
+              },
+              "outputs": {
+                "doubled": 4
+              }
+            },
+            "input": {
+              "value": 2
+            },
+            "metadata": {
+              "case": "one",
+              "testRunId": "<run:1>"
+            },
+            "output": {
+              "doubled": 4
+            }
+          },
+          "output": {
+            "has_output": {
+              "score": 1
+            },
+            "quality": {
+              "score": 0.8
+            }
+          },
+          "scores": {
+            "has_output": 1,
+            "quality": 0.8
+          },
+          "metadata": {
+            "has_output": {
+              "metadata": {
+                "source": "langsmith-evals-e2e"
+              }
+            },
+            "quality": {
+              "value": "good"
+            }
+          }
+        }
+      ],
+      "input": {
+        "value": 2
+      },
+      "output": {
+        "doubled": 4
+      },
+      "expected": {
+        "id": "<span:1>",
+        "inputs": {
+          "value": 2
+        },
+        "metadata": {
+          "case": "one",
+          "testRunId": "<run:1>"
+        },
+        "outputs": {
+          "doubled": 4
+        }
+      },
+      "metadata": {
+        "case": "one",
+        "testRunId": "<run:1>"
+      }
+    },
+    {
+      "name": "eval",
+      "type": "eval",
+      "children": [
+        {
+          "name": "task",
+          "type": "task",
+          "children": [],
+          "input": {
+            "value": 3
+          },
+          "output": {
+            "doubled": 6
+          }
+        },
+        {
+          "name": "correctnessEvaluator",
+          "type": "score",
+          "children": [],
+          "attributes": {
+            "purpose": "scorer"
+          },
+          "input": {
+            "expected": {
+              "id": "<span:1>",
+              "inputs": {
+                "value": 3
+              },
+              "metadata": {
+                "case": "two",
+                "testRunId": "<run:1>"
+              },
+              "outputs": {
+                "doubled": 6
+              }
+            },
+            "input": {
+              "value": 3
+            },
+            "metadata": {
+              "case": "two",
+              "testRunId": "<run:1>"
+            },
+            "output": {
+              "doubled": 6
+            }
+          },
+          "output": {
+            "score": 1
+          },
+          "scores": {
+            "correct": 1
+          },
+          "metadata": {
+            "comment": "Compared migrated output with the reference output"
+          }
+        },
+        {
+          "name": "detailEvaluator",
+          "type": "score",
+          "children": [],
+          "attributes": {
+            "purpose": "scorer"
+          },
+          "input": {
+            "expected": {
+              "id": "<span:1>",
+              "inputs": {
+                "value": 3
+              },
+              "metadata": {
+                "case": "two",
+                "testRunId": "<run:1>"
+              },
+              "outputs": {
+                "doubled": 6
+              }
+            },
+            "input": {
+              "value": 3
+            },
+            "metadata": {
+              "case": "two",
+              "testRunId": "<run:1>"
+            },
+            "output": {
+              "doubled": 6
+            }
+          },
+          "output": {
+            "has_output": {
+              "score": 1
+            },
+            "quality": {
+              "score": 0.8
+            }
+          },
+          "scores": {
+            "has_output": 1,
+            "quality": 0.8
+          },
+          "metadata": {
+            "has_output": {
+              "metadata": {
+                "source": "langsmith-evals-e2e"
+              }
+            },
+            "quality": {
+              "value": "good"
+            }
+          }
+        }
+      ],
+      "input": {
+        "value": 3
+      },
+      "output": {
+        "doubled": 6
+      },
+      "expected": {
+        "id": "<span:1>",
+        "inputs": {
+          "value": 3
+        },
+        "metadata": {
+          "case": "two",
+          "testRunId": "<run:1>"
+        },
+        "outputs": {
+          "doubled": 6
+        }
+      },
+      "metadata": {
+        "case": "two",
+        "testRunId": "<run:1>"
+      }
+    }
+  ]
+}

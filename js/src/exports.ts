@@ -218,6 +218,7 @@ export { wrapCohere } from "./wrappers/cohere";
 export { wrapGroq } from "./wrappers/groq";
 export { wrapBedrockRuntime } from "./wrappers/bedrock-runtime";
 export { wrapCopilotClient } from "./wrappers/github-copilot";
+export { wrapLangSmithEvaluate } from "./wrappers/langsmith";
 export { wrapVitest } from "./wrappers/vitest";
 export { initNodeTestSuite } from "./wrappers/node-test";
 export {

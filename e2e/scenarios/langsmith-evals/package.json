@@ -1,0 +1,8 @@
+{
+  "name": "@braintrust/e2e-langsmith-evals",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "langsmith": "0.8.1"
+  }
+}

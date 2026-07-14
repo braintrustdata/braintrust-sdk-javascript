@@ -37,6 +37,21 @@ export function isEmpty(a: unknown): a is null | undefined {
   return a === undefined || a === null;
 }
 
+export function isPlainObject(
+  value: unknown,
+): value is Record<string, unknown> {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    return false;
+  }
+
+  try {
+    const prototype = Object.getPrototypeOf(value);
+    return prototype === null || Object.getPrototypeOf(prototype) === null;
+  } catch {
+    return false;
+  }
+}
+
 // A simple wrapper around a callable async function which computes the value
 // on-demand and saves it for future retrievals. The difference between this and
 // a bare Promise is that the async callable is run only when asked for. There

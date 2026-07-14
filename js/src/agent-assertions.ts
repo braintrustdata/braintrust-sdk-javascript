@@ -2,6 +2,7 @@ import type { EvalScorer, EvalScorerArgs } from "./framework";
 import type { SpanData } from "./trace";
 import type { BaseMetadata, DefaultMetadataType } from "./logger";
 import type { Score } from "../util";
+import { isPlainObject } from "./util";
 
 type MaybePromise<T> = T | Promise<T>;
 
@@ -572,15 +573,6 @@ function deepEqual(left: unknown, right: unknown): boolean {
     );
   }
   return false;
-}
-
-function isPlainObject(value: unknown): value is Record<string, unknown> {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    !Array.isArray(value) &&
-    Object.getPrototypeOf(value) === Object.prototype
-  );
 }
 
 function formatSchemaError(error: unknown) {
