@@ -63,12 +63,12 @@ describe("BraintrustCallbackHandler", () => {
 
     await flush();
 
-    const { spans, root_span_id } = logsToSpans(logs);
+    const { spans, trace_id, root_span_id } = logsToSpans(logs);
 
     expect(spans).toMatchObject([
       {
         span_id: root_span_id,
-        root_span_id: root_span_id,
+        root_span_id: trace_id,
         span_attributes: {
           name: "RunnableSequence",
           type: "task",
@@ -113,7 +113,7 @@ describe("BraintrustCallbackHandler", () => {
             ],
           },
         },
-        root_span_id: root_span_id,
+        root_span_id: trace_id,
         span_parents: [root_span_id],
       },
       {
@@ -169,7 +169,7 @@ describe("BraintrustCallbackHandler", () => {
             },
           },
         },
-        root_span_id: root_span_id,
+        root_span_id: trace_id,
         span_parents: [root_span_id],
       },
     ]);
@@ -231,7 +231,7 @@ it("should handle streaming LLM calls", async () => {
 
   await flush();
 
-  const { spans, root_span_id } = logsToSpans(logs);
+  const { spans, trace_id, root_span_id } = logsToSpans(logs);
 
   expect(spans).toMatchObject([
     {
@@ -246,7 +246,7 @@ it("should handle streaming LLM calls", async () => {
         tags: [],
       },
       span_id: root_span_id,
-      root_span_id,
+      root_span_id: trace_id,
     },
     {
       span_attributes: { name: "ChatPromptTemplate", type: "task" },
@@ -263,7 +263,7 @@ it("should handle streaming LLM calls", async () => {
         }),
       }),
       metadata: { tags: ["seq:step:1"] },
-      root_span_id,
+      root_span_id: trace_id,
       span_parents: [root_span_id],
     },
     {
@@ -301,7 +301,7 @@ it("should handle streaming LLM calls", async () => {
         tags: ["seq:step:2"],
         model: "gpt-4o-mini-2024-07-18",
       },
-      root_span_id,
+      root_span_id: trace_id,
       span_parents: [root_span_id],
     },
   ]);
@@ -410,7 +410,7 @@ it("should handle multi-step chains with memory", async () => {
 
   await flush();
 
-  const { spans, root_span_id } = logsToSpans(logs);
+  const { spans, trace_id, root_span_id } = logsToSpans(logs);
 
   debugger;
 
@@ -428,7 +428,7 @@ it("should handle multi-step chains with memory", async () => {
         tags: ["test"],
       },
       span_id: root_span_id,
-      root_span_id,
+      root_span_id: trace_id,
     },
     {
       span_attributes: { name: "ChatPromptTemplate", type: "task" },
@@ -449,7 +449,7 @@ it("should handle multi-step chains with memory", async () => {
         }),
       }),
       metadata: { tags: ["seq:step:1", "test"] },
-      root_span_id,
+      root_span_id: trace_id,
       span_parents: [root_span_id],
     },
     {
@@ -488,7 +488,7 @@ it("should handle multi-step chains with memory", async () => {
         tags: ["seq:step:2", "test"],
         model: "gpt-4o-mini-2024-07-18",
       },
-      root_span_id,
+      root_span_id: trace_id,
       span_parents: [root_span_id],
     },
   ]);
@@ -551,7 +551,7 @@ it("should handle tool/agent usage", async () => {
 
   await flush();
 
-  const { spans, root_span_id } = logsToSpans(logs);
+  const { spans, trace_id, root_span_id } = logsToSpans(logs);
 
   debugger;
 
@@ -604,7 +604,7 @@ it("should handle tool/agent usage", async () => {
         tags: [],
       },
       span_id: root_span_id,
-      root_span_id,
+      root_span_id: trace_id,
     },
   ]);
 });
@@ -647,7 +647,7 @@ it("should handle parallel runnable execution", async () => {
 
   await flush();
 
-  const { spans, root_span_id } = logsToSpans(logs);
+  const { spans, trace_id, root_span_id } = logsToSpans(logs);
 
   // Check that we have the expected structure
   expect(spans).toMatchObject([
@@ -665,19 +665,19 @@ it("should handle parallel runnable execution", async () => {
         tags: [],
       },
       span_id: root_span_id,
-      root_span_id,
+      root_span_id: trace_id,
     },
     {
       // Updated for LangGraph 1.x API using Annotation
       span_attributes: { name: "RunnableSequence", type: "task" },
       input: { topic: "bear" },
-      root_span_id,
+      root_span_id: trace_id,
       span_parents: [root_span_id],
     },
     {
       span_attributes: { name: "RunnableSequence", type: "task" },
       input: { topic: "bear" },
-      root_span_id,
+      root_span_id: trace_id,
       span_parents: [root_span_id],
     },
     // Additional spans for the prompts and models
@@ -741,7 +741,7 @@ it("should handle LangGraph state management", async () => {
 
   await flush();
 
-  const { spans, root_span_id } = logsToSpans(logs);
+  const { spans, trace_id, root_span_id } = logsToSpans(logs);
 
   expect(spans).toMatchObject([
     {
@@ -751,11 +751,11 @@ it("should handle LangGraph state management", async () => {
       },
       input: {},
       span_id: root_span_id,
-      root_span_id,
+      root_span_id: trace_id,
     },
     {
       span_attributes: { name: "sayHello", type: "task" },
-      root_span_id,
+      root_span_id: trace_id,
       span_parents: [root_span_id],
     },
     {
@@ -772,12 +772,12 @@ it("should handle LangGraph state management", async () => {
       output: expect.objectContaining({
         generations: expect.anything(),
       }),
-      root_span_id,
+      root_span_id: trace_id,
       span_parents: expect.anything(),
     },
     {
       span_attributes: { name: "sayBye", type: "task" },
-      root_span_id,
+      root_span_id: trace_id,
       span_parents: [root_span_id],
     },
   ]);
@@ -848,7 +848,7 @@ it("should handle chain inputs/outputs with null/undefined values", async () => 
 
   await flush();
 
-  const { spans, root_span_id } = logsToSpans(logs);
+  const { spans, trace_id, root_span_id } = logsToSpans(logs);
 
   expect(spans).toMatchObject([
     {
@@ -868,7 +868,7 @@ it("should handle chain inputs/outputs with null/undefined values", async () => 
         tags: ["test"],
       },
       span_id: root_span_id,
-      root_span_id,
+      root_span_id: trace_id,
     },
   ]);
 });
@@ -905,7 +905,7 @@ it("should handle agent action and agent end callbacks", async () => {
 
   await flush();
 
-  const { spans, root_span_id } = logsToSpans(logs);
+  const { spans, trace_id, root_span_id } = logsToSpans(logs);
 
   expect(spans).toMatchObject([
     {
@@ -926,7 +926,7 @@ it("should handle agent action and agent end callbacks", async () => {
         tags: ["agent-test"],
       },
       span_id: root_span_id,
-      root_span_id,
+      root_span_id: trace_id,
     },
   ]);
 });
@@ -963,7 +963,7 @@ it("should handle agent action with string toolInput", async () => {
 
   await flush();
 
-  const { spans, root_span_id } = logsToSpans(logs);
+  const { spans, trace_id, root_span_id } = logsToSpans(logs);
 
   expect(spans).toMatchObject([
     {
@@ -984,7 +984,7 @@ it("should handle agent action with string toolInput", async () => {
         tags: ["search-test"],
       },
       span_id: root_span_id,
-      root_span_id,
+      root_span_id: trace_id,
     },
   ]);
 });
@@ -1039,7 +1039,7 @@ it("should handle nested agent action with parent run id", async () => {
 
   await flush();
 
-  const { spans, root_span_id } = logsToSpans(logs);
+  const { spans, trace_id, root_span_id } = logsToSpans(logs);
 
   expect(spans.length).toBe(2);
 
@@ -1054,7 +1054,7 @@ it("should handle nested agent action with parent run id", async () => {
       tags: ["agent-executor"],
     },
     span_id: root_span_id,
-    root_span_id,
+    root_span_id: trace_id,
   });
 
   expect(spans[1]).toMatchObject({
@@ -1074,7 +1074,7 @@ it("should handle nested agent action with parent run id", async () => {
     metadata: {
       tags: ["agent-action"],
     },
-    root_span_id,
+    root_span_id: trace_id,
     span_parents: [root_span_id],
   });
 });
