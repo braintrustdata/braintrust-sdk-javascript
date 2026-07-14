@@ -499,7 +499,7 @@ class EveBridge {
       return;
     }
 
-    const span = await this.startTurnSpan(sessionId, event, metadata);
+    const span = await this.startTurnSpan(sessionId, event, ctx, metadata);
     span.log({ metadata });
     this.turnsByKey.set(key, {
       key,
@@ -1138,7 +1138,7 @@ class EveBridge {
       ...readEveTraceState(this.state).metadata,
       ...(hookMetadata ?? {}),
     };
-    const span = await this.startTurnSpan(sessionId, event, metadata);
+    const span = await this.startTurnSpan(sessionId, event, ctx, metadata);
     span.log({ metadata });
     const state = {
       key,
@@ -1366,12 +1366,40 @@ class EveBridge {
       EveHandleMessageStreamEvent,
       { data: { readonly sequence: number; readonly turnId: string } }
     >,
+    ctx: unknown,
     metadata: Record<string, unknown>,
   ): Promise<EveSpan> {
-    const [{ rowId: eventId, spanId }, rootSpanId] = await Promise.all([
-      generateEveIds("turn", sessionId, event.data.turnId),
-      deterministicEveId("eve:root", sessionId, event.data.turnId),
-    ]);
+    const session = isObject(ctx) ? ctx["session"] : undefined;
+    const parent = isObject(session) ? session["parent"] : undefined;
+    const parentTurn = isObject(parent) ? parent["turn"] : undefined;
+    const parentLineage =
+      isObject(parent) &&
+      typeof parent["callId"] === "string" &&
+      typeof parent["sessionId"] === "string" &&
+      isObject(parentTurn) &&
+      typeof parentTurn["id"] === "string"
+        ? {
+            callId: parent["callId"],
+            sessionId: parent["sessionId"],
+            turnId: parentTurn["id"],
+          }
+        : undefined;
+    const [{ rowId: eventId, spanId }, rootSpanId, parentSpanId] =
+      await Promise.all([
+        generateEveIds("turn", sessionId, event.data.turnId),
+        deterministicEveId(
+          "eve:root",
+          parentLineage?.sessionId ?? sessionId,
+          parentLineage?.turnId ?? event.data.turnId,
+        ),
+        parentLineage
+          ? deterministicEveId(
+              "eve:subagent",
+              parentLineage.sessionId,
+              parentLineage.callId,
+            )
+          : Promise.resolve(undefined),
+      ]);
 
     return await this.startEveSpan({
       event: {
@@ -1379,10 +1407,9 @@ class EveBridge {
         metadata,
       },
       name: "eve.turn",
-      parentSpanIds: {
-        parentSpanIds: [],
-        rootSpanId,
-      },
+      parentSpanIds: parentSpanId
+        ? { rootSpanId, spanId: parentSpanId }
+        : { parentSpanIds: [], rootSpanId },
       spanAttributes: { type: SpanTypeAttribute.TASK },
       spanId,
       startTime: eventTime(event),

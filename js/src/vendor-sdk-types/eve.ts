@@ -18,6 +18,13 @@ export type EveJsonObject = { readonly [key: string]: EveJsonValue };
 export interface EveHookContext {
   readonly session?: {
     readonly id?: string;
+    readonly parent?: {
+      readonly callId?: string;
+      readonly sessionId?: string;
+      readonly turn?: {
+        readonly id?: string;
+      };
+    };
   };
 }
 

@@ -46,7 +46,7 @@ describe("eve instrumentation", () => {
     );
   }, TIMEOUT_MS);
 
-  test("captures every Eve turn as an independent trace", async () => {
+  test("captures user turns as traces with subagent turns attached", async () => {
     const turns = findAllSpans(events, "eve.turn");
     const root = turns.find(
       (turn) =>
@@ -94,8 +94,10 @@ describe("eve instrumentation", () => {
 
     expect(findAllSpans(events, "eve.session")).toEqual([]);
     expect(turns).toHaveLength(4);
-    expect(turns.every((turn) => turn.span.parentIds.length === 0)).toBe(true);
-    expect(new Set(turns.map((turn) => turn.span.rootId)).size).toBe(4);
+    expect(
+      turns.filter((turn) => turn.span.parentIds.length === 0),
+    ).toHaveLength(2);
+    expect(new Set(turns.map((turn) => turn.span.rootId)).size).toBe(2);
 
     expect(root).toBeDefined();
     expect(root?.span.type).toBe("task");
@@ -140,8 +142,8 @@ describe("eve instrumentation", () => {
     expect(researcher?.output).toContain("Researcher result");
 
     expect(childTurn).toBeDefined();
-    expect(childTurn?.span.parentIds).toEqual([]);
-    expect(childTurn?.span.rootId).not.toEqual(root?.span.rootId);
+    expect(childTurn?.span.parentIds).toEqual([researcher?.span.id]);
+    expect(childTurn?.span.rootId).toEqual(root?.span.rootId);
     expect(childTurn?.metadata).toMatchObject({
       scenario: "eve-instrumentation",
       testRunId: expect.any(String),
@@ -189,6 +191,8 @@ describe("eve instrumentation", () => {
 
     expect(secondRoot).toBeDefined();
     expect(secondRoot?.span.type).toBe("task");
+    expect(secondRoot?.span.parentIds).toEqual([]);
+    expect(secondRoot?.span.rootId).not.toEqual(root?.span.rootId);
     expect(secondRoot?.output).toContain("Final answer from read");
     expect(secondSteps).toHaveLength(3);
     expect(secondSteps.map((step) => step.span.type)).toEqual([
@@ -199,8 +203,10 @@ describe("eve instrumentation", () => {
     expect(secondResearcher?.span.type).toBe("tool");
     expect(secondResearcher?.span.ended).toBe(true);
     expect(secondResearcher?.span.parentIds).toEqual([secondRoot?.span.id]);
-    expect(secondChildTurn?.span.parentIds).toEqual([]);
-    expect(secondChildTurn?.span.rootId).not.toEqual(secondRoot?.span.rootId);
+    expect(secondChildTurn?.span.parentIds).toEqual([
+      secondResearcher?.span.id,
+    ]);
+    expect(secondChildTurn?.span.rootId).toEqual(secondRoot?.span.rootId);
     expect(secondRead?.span.type).toBe("tool");
     expect(secondRead?.span.ended).toBe(true);
     expect(secondRead?.span.parentIds).toEqual([secondRoot?.span.id]);

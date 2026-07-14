@@ -1271,7 +1271,7 @@ describe("braintrustEveHook", () => {
     expect(queuedEventFinished).toBe(true);
   });
 
-  it("uses deterministic ids and gives local subagent turns independent roots", async () => {
+  it("uses deterministic ids and attaches local subagent turns to their tool span", async () => {
     const parentEveState = createFakeDefineState();
     const childEveState = createFakeDefineState();
     const parentWildcard = braintrustEveHook({
@@ -1287,7 +1287,14 @@ describe("braintrustEveHook", () => {
       session: { id: "session-parent" },
     };
     const childCtx: EveHookContext = {
-      session: { id: "session-child" },
+      session: {
+        id: "session-child",
+        parent: {
+          callId: "call-researcher",
+          sessionId: "session-parent",
+          turn: { id: "turn-parent" },
+        },
+      },
     };
     const emitParent = (event: EveHandleMessageStreamEvent) =>
       parentWildcard?.(event, parentCtx);
@@ -1577,11 +1584,8 @@ describe("braintrustEveHook", () => {
       deterministicEveIdForTest("eve:root", "session-parent", "turn-parent"),
     );
     expect(subagentSpans[0]?.span_parents).toEqual([parentTurn?.span_id]);
-    expect(childTurn?.span_parents).toEqual([]);
-    expect(childTurn?.root_span_id).toBe(
-      deterministicEveIdForTest("eve:root", "session-child", "turn-child"),
-    );
-    expect(childTurn?.root_span_id).not.toBe(parentTurn?.root_span_id);
+    expect(childTurn?.span_parents).toEqual([subagentSpanId]);
+    expect(childTurn?.root_span_id).toBe(parentTurn?.root_span_id);
     expect(childTurn?.metadata ?? {}).toEqual({});
     expect(subagentSpans[0]?.metadata ?? {}).toEqual({});
     expect(childSearch?.span_parents).toEqual([childTurn?.span_id]);
