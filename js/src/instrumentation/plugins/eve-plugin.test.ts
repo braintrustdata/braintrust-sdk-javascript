@@ -491,6 +491,7 @@ describe("braintrustEveHook", () => {
       input: [{ content: "Search then read", role: "user" }],
       metadata: {
         ...expectedModelMetadata,
+        "eve.session_id": "session-flat-tree",
         scenario: "eve-plugin-unit",
         testRunId: "test-run-flat-tree",
       },
@@ -530,6 +531,7 @@ describe("braintrustEveHook", () => {
     for (const step of steps) {
       expect(step.metadata).toEqual({
         ...expectedModelMetadata,
+        "eve.session_id": "session-flat-tree",
         scenario: "eve-plugin-unit",
         testRunId: "test-run-flat-tree",
       });
@@ -539,6 +541,7 @@ describe("braintrustEveHook", () => {
     expect(tool).toMatchObject({
       input: { query: "Eve instrumentation" },
       metadata: {
+        "eve.session_id": "session-flat-tree",
         scenario: "eve-plugin-unit",
         testRunId: "test-run-flat-tree",
       },
@@ -1586,8 +1589,21 @@ describe("braintrustEveHook", () => {
     expect(subagentSpans[0]?.span_parents).toEqual([parentTurn?.span_id]);
     expect(childTurn?.span_parents).toEqual([subagentSpanId]);
     expect(childTurn?.root_span_id).toBe(parentTurn?.root_span_id);
-    expect(childTurn?.metadata ?? {}).toEqual({});
-    expect(subagentSpans[0]?.metadata ?? {}).toEqual({});
+    expect(parentTurn?.metadata).toEqual({
+      "eve.session_id": "session-parent",
+    });
+    expect(subagentSpans[0]?.metadata).toEqual({
+      "eve.session_id": "session-parent",
+    });
+    expect(childTurn?.metadata).toEqual({
+      "eve.session_id": "session-child",
+    });
+    expect(childSearch?.metadata).toEqual({
+      "eve.session_id": "session-child",
+    });
+    expect(parentRead?.metadata).toEqual({
+      "eve.session_id": "session-parent",
+    });
     expect(childSearch?.span_parents).toEqual([childTurn?.span_id]);
     expect(childSearch?.span_id).toBe(
       deterministicEveIdForTest(

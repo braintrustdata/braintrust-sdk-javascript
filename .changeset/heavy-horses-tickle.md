@@ -1,5 +1,5 @@
 ---
-"braintrust": patch
+"braintrust": minor
 ---
 
-feat: Track eve turns as individual traces
+feat: Track Eve turns as individual traces and record Eve session IDs on all spans

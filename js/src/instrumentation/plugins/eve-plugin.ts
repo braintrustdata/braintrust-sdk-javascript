@@ -491,6 +491,7 @@ class EveBridge {
     const metadata = {
       ...readEveTraceState(this.state).metadata,
       ...(hookMetadata ?? {}),
+      "eve.session_id": sessionId,
     };
     const existing = this.turnsByKey.get(key);
     if (existing) {
@@ -1137,6 +1138,7 @@ class EveBridge {
     const metadata = {
       ...readEveTraceState(this.state).metadata,
       ...(hookMetadata ?? {}),
+      "eve.session_id": sessionId,
     };
     const span = await this.startTurnSpan(sessionId, event, ctx, metadata);
     span.log({ metadata });

@@ -8,6 +8,7 @@ span_tree:
 │   ]
 │   output: "Final answer from read: researcher result = Eve instrumentation — https://eve.dev/docs/guides/instrumentation; read title = Eve instrumentation; URL = https://eve.dev/docs/guides/instrumentation; excerpt = Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace."
 │   metadata: {
+│     "eve.session_id": "<eve.session_id:1>",
 │     "model": "gpt-5.4-mini",
 │     "provider": "openai",
 │     "scenario": "eve-instrumentation",
@@ -51,6 +52,7 @@ span_tree:
 │   │     }
 │   │   ]
 │   │   metadata: {
+│   │     "eve.session_id": "<eve.session_id:1>",
 │   │     "model": "gpt-5.4-mini",
 │   │     "provider": "openai",
 │   │     "scenario": "eve-instrumentation",
@@ -68,6 +70,7 @@ span_tree:
 │   │   }
 │   │   output: "Researcher result: Eve instrumentation — https://eve.dev/docs/guides/instrumentation"
 │   │   metadata: {
+│   │     "eve.session_id": "<eve.session_id:1>",
 │   │     "scenario": "eve-instrumentation",
 │   │     "testRunId": "<run:1>"
 │   │   }
@@ -80,6 +83,7 @@ span_tree:
 │   │       ]
 │   │       output: "Researcher result: Eve instrumentation — https://eve.dev/docs/guides/instrumentation"
 │   │       metadata: {
+│   │         "eve.session_id": "<eve.session_id:1>",
 │   │         "model": "gpt-5.4-mini",
 │   │         "provider": "openai",
 │   │         "scenario": "eve-instrumentation",
@@ -123,6 +127,7 @@ span_tree:
 │   │       │     }
 │   │       │   ]
 │   │       │   metadata: {
+│   │       │     "eve.session_id": "<eve.session_id:1>",
 │   │       │     "model": "gpt-5.4-mini",
 │   │       │     "provider": "openai",
 │   │       │     "scenario": "eve-instrumentation",
@@ -144,6 +149,7 @@ span_tree:
 │   │       │     "url": "https://eve.dev/docs/guides/instrumentation"
 │   │       │   }
 │   │       │   metadata: {
+│   │       │     "eve.session_id": "<eve.session_id:1>",
 │   │       │     "scenario": "eve-instrumentation",
 │   │       │     "testRunId": "<run:1>"
 │   │       │   }
@@ -210,6 +216,7 @@ span_tree:
 │   │             }
 │   │           ]
 │   │           metadata: {
+│   │             "eve.session_id": "<eve.session_id:1>",
 │   │             "model": "gpt-5.4-mini",
 │   │             "provider": "openai",
 │   │             "scenario": "eve-instrumentation",
@@ -285,6 +292,7 @@ span_tree:
 │   │     }
 │   │   ]
 │   │   metadata: {
+│   │     "eve.session_id": "<eve.session_id:1>",
 │   │     "model": "gpt-5.4-mini",
 │   │     "provider": "openai",
 │   │     "scenario": "eve-instrumentation",
@@ -307,6 +315,7 @@ span_tree:
 │   │     "url": "https://eve.dev/docs/guides/instrumentation"
 │   │   }
 │   │   metadata: {
+│   │     "eve.session_id": "<eve.session_id:1>",
 │   │     "scenario": "eve-instrumentation",
 │   │     "testRunId": "<run:1>"
 │   │   }
@@ -406,6 +415,7 @@ span_tree:
 │         }
 │       ]
 │       metadata: {
+│         "eve.session_id": "<eve.session_id:1>",
 │         "model": "gpt-5.4-mini",
 │         "provider": "openai",
 │         "scenario": "eve-instrumentation",
@@ -426,6 +436,7 @@ span_tree:
     ]
     output: "Final answer from read: researcher result = Eve instrumentation — https://eve.dev/docs/guides/instrumentation; read title = Eve instrumentation; URL = https://eve.dev/docs/guides/instrumentation; excerpt = Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace."
     metadata: {
+      "eve.session_id": "<eve.session_id:1>",
       "model": "gpt-5.4-mini",
       "provider": "openai",
       "scenario": "eve-instrumentation",
@@ -562,6 +573,7 @@ span_tree:
     │     }
     │   ]
     │   metadata: {
+    │     "eve.session_id": "<eve.session_id:1>",
     │     "model": "gpt-5.4-mini",
     │     "provider": "openai",
     │     "scenario": "eve-instrumentation",
@@ -579,6 +591,7 @@ span_tree:
     │   }
     │   output: "Researcher result: Eve instrumentation — https://eve.dev/docs/guides/instrumentation"
     │   metadata: {
+    │     "eve.session_id": "<eve.session_id:1>",
     │     "scenario": "eve-instrumentation",
     │     "testRunId": "<run:1>"
     │   }
@@ -591,6 +604,7 @@ span_tree:
     │       ]
     │       output: "Researcher result: Eve instrumentation — https://eve.dev/docs/guides/instrumentation"
     │       metadata: {
+    │         "eve.session_id": "<eve.session_id:1>",
     │         "model": "gpt-5.4-mini",
     │         "provider": "openai",
     │         "scenario": "eve-instrumentation",
@@ -634,6 +648,7 @@ span_tree:
     │       │     }
     │       │   ]
     │       │   metadata: {
+    │       │     "eve.session_id": "<eve.session_id:1>",
     │       │     "model": "gpt-5.4-mini",
     │       │     "provider": "openai",
     │       │     "scenario": "eve-instrumentation",
@@ -655,6 +670,7 @@ span_tree:
     │       │     "url": "https://eve.dev/docs/guides/instrumentation"
     │       │   }
     │       │   metadata: {
+    │       │     "eve.session_id": "<eve.session_id:1>",
     │       │     "scenario": "eve-instrumentation",
     │       │     "testRunId": "<run:1>"
     │       │   }
@@ -721,6 +737,7 @@ span_tree:
     │             }
     │           ]
     │           metadata: {
+    │             "eve.session_id": "<eve.session_id:1>",
     │             "model": "gpt-5.4-mini",
     │             "provider": "openai",
     │             "scenario": "eve-instrumentation",
@@ -889,6 +906,7 @@ span_tree:
     │     }
     │   ]
     │   metadata: {
+    │     "eve.session_id": "<eve.session_id:1>",
     │     "model": "gpt-5.4-mini",
     │     "provider": "openai",
     │     "scenario": "eve-instrumentation",
@@ -911,6 +929,7 @@ span_tree:
     │     "url": "https://eve.dev/docs/guides/instrumentation"
     │   }
     │   metadata: {
+    │     "eve.session_id": "<eve.session_id:1>",
     │     "scenario": "eve-instrumentation",
     │     "testRunId": "<run:1>"
     │   }
@@ -1103,6 +1122,7 @@ span_tree:
           }
         ]
         metadata: {
+          "eve.session_id": "<eve.session_id:1>",
           "model": "gpt-5.4-mini",
           "provider": "openai",
           "scenario": "eve-instrumentation",
