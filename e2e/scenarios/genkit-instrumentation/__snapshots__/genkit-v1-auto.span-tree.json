@@ -1,0 +1,253 @@
+{
+  "span_tree": [
+    {
+      "name": "genkit-instrumentation-root",
+      "type": "task",
+      "children": [
+        {
+          "name": "genkit-flow-operation",
+          "children": [
+            {
+              "name": "genkit.flow: instrumentationFlow",
+              "type": "task",
+              "children": [
+                {
+                  "name": "genkit-generate-operation",
+                  "children": [
+                    {
+                      "name": "genkit.generate",
+                      "type": "llm",
+                      "children": [],
+                      "input": "Reply with exactly OK.",
+                      "output": {
+                        "finishReason": "stop",
+                        "message": {
+                          "content": [
+                            {
+                              "metadata": {
+                                "thoughtSignature": "EjQKMgERTTIPCenzIrrFORXHn4ylNEDciDk2LSOpQQqdtb2502fgM/eTUdwBKrgaClY2RAIL"
+                              },
+                              "text": "OK."
+                            }
+                          ],
+                          "role": "model"
+                        },
+                        "output": null,
+                        "text": "OK."
+                      },
+                      "metadata": {
+                        "finishReason": "stop",
+                        "maxOutputTokens": 24,
+                        "model": "googleai/gemini-3.1-flash-lite",
+                        "provider": "genkit",
+                        "temperature": 0
+                      },
+                      "metrics": {
+                        "completion_tokens": 2,
+                        "prompt_tokens": 6,
+                        "tokens": 8
+                      }
+                    }
+                  ],
+                  "metadata": {
+                    "operation": "generate",
+                    "testRunId": "<run:1>"
+                  }
+                },
+                {
+                  "name": "genkit-stream-operation",
+                  "children": [
+                    {
+                      "name": "genkit.generateStream",
+                      "type": "llm",
+                      "children": [],
+                      "input": "Stream a short phrase.",
+                      "output": {
+                        "finishReason": "stop",
+                        "message": {
+                          "content": [
+                            {
+                              "text": "The sun rises on a new horizon."
+                            },
+                            {
+                              "metadata": {
+                                "thoughtSignature": "EjQKMgERTTIPnjU7agD4GU/twl+9J7Sv+KZjhLywmt20p6tzgQf3fPpI0jRiP62RloBw3Q7S"
+                              },
+                              "text": ""
+                            }
+                          ],
+                          "role": "model"
+                        },
+                        "output": null,
+                        "streamedText": "The sun rises on a new horizon.",
+                        "text": "The sun rises on a new horizon."
+                      },
+                      "metadata": {
+                        "finishReason": "stop",
+                        "maxOutputTokens": 32,
+                        "model": "googleai/gemini-3.1-flash-lite",
+                        "provider": "genkit",
+                        "temperature": 0
+                      },
+                      "metrics": {
+                        "completion_tokens": 8,
+                        "prompt_tokens": 6,
+                        "time_to_first_token": 0,
+                        "tokens": 14
+                      }
+                    }
+                  ],
+                  "metadata": {
+                    "operation": "stream",
+                    "testRunId": "<run:1>"
+                  }
+                },
+                {
+                  "name": "genkit-embed-operation",
+                  "children": [
+                    {
+                      "name": "genkit.embed",
+                      "type": "function",
+                      "children": [],
+                      "input": "embed this",
+                      "output": {
+                        "dimensions": 3072,
+                        "embedding_count": 1
+                      },
+                      "metadata": {
+                        "model": "googleai/gemini-embedding-001",
+                        "provider": "genkit"
+                      }
+                    }
+                  ],
+                  "metadata": {
+                    "operation": "embed",
+                    "testRunId": "<run:1>"
+                  }
+                },
+                {
+                  "name": "genkit-tool-operation",
+                  "children": [
+                    {
+                      "name": "genkit.tool: summarizeCity",
+                      "type": "tool",
+                      "children": [],
+                      "input": {
+                        "city": "Vienna"
+                      },
+                      "output": {
+                        "summary": "Vienna has precise instrumentation weather."
+                      },
+                      "metadata": {
+                        "genkit.action_key": "/tool/summarizeCity",
+                        "genkit.action_name": "summarizeCity",
+                        "genkit.action_type": "tool",
+                        "provider": "genkit"
+                      },
+                      "metrics": {
+                        "duration": 0
+                      }
+                    }
+                  ],
+                  "metadata": {
+                    "operation": "tool",
+                    "testRunId": "<run:1>"
+                  }
+                },
+                {
+                  "name": "genkit-model-tool-operation",
+                  "children": [
+                    {
+                      "name": "genkit.generate",
+                      "type": "llm",
+                      "children": [
+                        {
+                          "name": "genkit.tool: cityMarkerTool",
+                          "type": "tool",
+                          "children": [],
+                          "input": {
+                            "city": "Vienna"
+                          },
+                          "output": {
+                            "marker": "genkit-model-tool-called-vienna"
+                          },
+                          "metadata": {
+                            "genkit.action_key": "/tool/cityMarkerTool",
+                            "genkit.action_name": "cityMarkerTool",
+                            "genkit.action_type": "tool",
+                            "provider": "genkit"
+                          },
+                          "metrics": {
+                            "duration": 0
+                          }
+                        }
+                      ],
+                      "input": "Use the cityMarkerTool tool with city Vienna before answering.",
+                      "output": {
+                        "finishReason": "stop",
+                        "message": {
+                          "content": [
+                            {
+                              "metadata": {
+                                "thoughtSignature": "EjQKMgERTTIPCHze1XlblxOkYBaIaYPGkIBeNKrvxDOgy6h/GNDofgmOh69U/QoD6BsuA+eu"
+                              },
+                              "text": "The city marker for Vienna is `genkit-model-tool-called-vienna`."
+                            }
+                          ],
+                          "role": "model"
+                        },
+                        "output": null,
+                        "text": "The city marker for Vienna is `genkit-model-tool-called-vienna`."
+                      },
+                      "metadata": {
+                        "finishReason": "stop",
+                        "maxOutputTokens": 64,
+                        "model": "googleai/gemini-3.1-flash-lite",
+                        "provider": "genkit",
+                        "temperature": 0
+                      },
+                      "metrics": {
+                        "completion_tokens": 19,
+                        "prompt_tokens": 119,
+                        "tokens": 138
+                      }
+                    }
+                  ],
+                  "output": {
+                    "marker": "genkit-model-tool-called-vienna",
+                    "toolCalled": true
+                  },
+                  "metadata": {
+                    "operation": "model-tool",
+                    "testRunId": "<run:1>"
+                  }
+                }
+              ],
+              "input": "run",
+              "output": {
+                "completed": true
+              },
+              "metadata": {
+                "genkit.action_key": "/flow/instrumentationFlow",
+                "genkit.action_name": "instrumentationFlow",
+                "genkit.action_type": "flow",
+                "provider": "genkit"
+              },
+              "metrics": {
+                "duration": 0
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "flow",
+            "testRunId": "<run:1>"
+          }
+        }
+      ],
+      "metadata": {
+        "scenario": "genkit-instrumentation",
+        "testRunId": "<run:1>"
+      }
+    }
+  ]
+}

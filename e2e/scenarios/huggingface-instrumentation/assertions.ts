@@ -342,6 +342,7 @@ export function defineHuggingFaceInstrumentationAssertions(options: {
   name: string;
   runScenario: RunHuggingFaceScenario;
   snapshotName: string;
+  supportsToolCalls?: boolean;
   testFileUrl: string;
   timeoutMs: number;
 }): void {
@@ -381,7 +382,7 @@ export function defineHuggingFaceInstrumentationAssertions(options: {
       },
     );
 
-    test(
+    (options.supportsToolCalls === false ? test.skip : test)(
       "captures streamed tool calls and request tool metadata",
       { timeout: options.timeoutMs },
       () => {

@@ -1,4 +1,8 @@
 import {
+  MINIMAL_PDF_BASE64,
+  MINIMAL_PNG_BASE64,
+} from "../../helpers/media-fixtures.mjs";
+import {
   collectAsync,
   runOperation,
   runTracedScenario,
@@ -9,10 +13,6 @@ const EMBEDDING_MODEL = "text-embedding-3-small";
 const MODERATION_MODEL = "omni-moderation-2024-09-26";
 const ROOT_NAME = "openai-instrumentation-root";
 const SCENARIO_NAME = "openai-instrumentation";
-const BASE64_IMAGE =
-  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFBQIAX8jx0gAAAABJRU5ErkJggg==";
-const BASE64_PDF =
-  "JVBERi0xLjAKMSAwIG9iago8PC9UeXBlL0NhdGFsb2cvUGFnZXMgMiAwIFI+PmVuZG9iagoyIDAgb2JqCjw8L1R5cGUvUGFnZXMvS2lkc1szIDAgUl0vQ291bnQgMT4+ZW5kb2JqCjMgMCBvYmoKPDwvVHlwZS9QYWdlL01lZGlhQm94WzAgMCA2MTIgNzkyXT4+ZW5kb2JqCnhyZWYKMCA0CjAwMDAwMDAwMDAgNjU1MzUgZg0KMDAwMDAwMDAxMCAwMDAwMCBuDQowMDAwMDAwMDUzIDAwMDAwIG4NCjAwMDAwMDAxMDIgMDAwMDAgbg0KdHJhaWxlcgo8PC9TaXplIDQvUm9vdCAxIDAgUj4+CnN0YXJ0eHJlZgoxNDkKJUVPRg==";
 const CHAT_TOOLS = [
   {
     type: "function",
@@ -212,7 +212,7 @@ export async function runOpenAIInstrumentationScenario(options) {
                     {
                       type: "image_url",
                       image_url: {
-                        url: `data:image/png;base64,${BASE64_IMAGE}`,
+                        url: `data:image/png;base64,${MINIMAL_PNG_BASE64}`,
                       },
                     },
                   ],
@@ -241,7 +241,7 @@ export async function runOpenAIInstrumentationScenario(options) {
                     {
                       type: "file",
                       file: {
-                        file_data: `data:application/pdf;base64,${BASE64_PDF}`,
+                        file_data: `data:application/pdf;base64,${MINIMAL_PDF_BASE64}`,
                         filename: "document.pdf",
                       },
                     },

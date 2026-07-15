@@ -170,6 +170,30 @@ function modelMetrics(
   return Object.keys(out).length > 0 ? out : undefined;
 }
 
+/**
+ * Compute time-to-first-token for streaming model spans. Mastra records
+ * `completionStartTime` (the wall-clock time the first token/chunk arrived) in
+ * a `MODEL_GENERATION` / `MODEL_INFERENCE` span's attributes; Braintrust
+ * expects `time_to_first_token` as the elapsed **seconds** between the span
+ * start and that first token. Returns undefined for non-streaming spans (no
+ * `completionStartTime`) or when either timestamp is unusable.
+ */
+function timeToFirstTokenSeconds(
+  attributes: Record<string, unknown> | undefined,
+  spanStartSeconds: number | undefined,
+): number | undefined {
+  if (!isObject(attributes)) return undefined;
+  if (spanStartSeconds === undefined) return undefined;
+  const raw = attributes.completionStartTime;
+  const completionStart =
+    raw instanceof Date || typeof raw === "string" || typeof raw === "number"
+      ? epochSeconds(raw)
+      : undefined;
+  if (completionStart === undefined) return undefined;
+  const ttft = completionStart - spanStartSeconds;
+  return Number.isFinite(ttft) && ttft >= 0 ? ttft : undefined;
+}
+
 /** Build the metadata payload Braintrust shows on the span, merging
  *  Mastra's own `metadata`, `attributes` (sans usage), and entity fields. */
 function buildMetadata(exported: MastraExportedSpan): Record<string, unknown> {
@@ -183,6 +207,10 @@ function buildMetadata(exported: MastraExportedSpan): Record<string, unknown> {
   if (exported.attributes && isObject(exported.attributes)) {
     for (const [key, value] of Object.entries(exported.attributes)) {
       if (key === "usage") continue; // surfaced via metrics
+      // `completionStartTime` is also surfaced as the `time_to_first_token`
+      // metric, but we keep the raw value in metadata too: earlier released
+      // versions exposed it there, so dropping it would be a backward-
+      // incompatible removal of a consumer-visible field.
       if (value !== undefined) out[key] = value;
     }
   }
@@ -353,8 +381,15 @@ export class BraintrustObservabilityExporter implements MastraObservabilityExpor
     }
 
     const metrics = modelMetrics(exported.attributes);
-    if (metrics) {
-      event.metrics = metrics;
+    const ttft = timeToFirstTokenSeconds(
+      exported.attributes,
+      epochSeconds(exported.startTime),
+    );
+    if (metrics || ttft !== undefined) {
+      event.metrics = {
+        ...(metrics ?? {}),
+        ...(ttft !== undefined ? { time_to_first_token: ttft } : {}),
+      };
     }
 
     if (Object.keys(event).length > 0) {

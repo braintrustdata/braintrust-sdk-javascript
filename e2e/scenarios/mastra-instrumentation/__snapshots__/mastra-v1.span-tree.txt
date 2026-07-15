@@ -1,0 +1,201 @@
+span_tree:
+└── mastra-instrumentation-root [task]
+    metadata: {
+      "scenario": "mastra-instrumentation"
+    }
+    ├── mastra-agent-generate-operation
+    │   metadata: {
+    │     "operation": "generate"
+    │   }
+    │   ├── agent run: 'weather-agent' [task]
+    │   │   input: "What is the weather in Paris?"
+    │   │   output: {
+    │   │     "files": [],
+    │   │     "text": "The forecast is sunny."
+    │   │   }
+    │   │   metadata: {
+    │   │     "entity_id": "weather-agent",
+    │   │     "entity_name": "Weather Agent",
+    │   │     "entity_type": "agent"
+    │   │   }
+    │   │   └── llm: 'mock-model-id' [llm]
+    │   │       input: {
+    │   │         "messages": [
+    │   │           {
+    │   │             "content": "Answer weather questions with the provided mock forecast.",
+    │   │             "role": "system"
+    │   │           },
+    │   │           {
+    │   │             "content": [
+    │   │               {
+    │   │                 "providerOptions": {
+    │   │                   "mastra": {
+    │   │                     "createdAt": 0
+    │   │                   }
+    │   │                 },
+    │   │                 "text": "What is the weather in Paris?",
+    │   │                 "type": "text"
+    │   │               }
+    │   │             ],
+    │   │             "role": "user"
+    │   │           }
+    │   │         ]
+    │   │       }
+    │   │       output: {
+    │   │         "files": [],
+    │   │         "reasoning": [],
+    │   │         "sources": [],
+    │   │         "text": "The forecast is sunny.",
+    │   │         "warnings": []
+    │   │       }
+    │   │       metadata: {
+    │   │         "entity_id": "weather-agent",
+    │   │         "entity_name": "Weather Agent",
+    │   │         "entity_type": "agent",
+    │   │         "model": "mock-model-id",
+    │   │         "provider": "mock-provider"
+    │   │       }
+    │   │       metrics: {
+    │   │         "completion_tokens": 20,
+    │   │         "prompt_tokens": 10,
+    │   │         "time_to_first_token": 0,
+    │   │         "tokens": 30
+    │   │       }
+    │   │       └── step: 0 [llm]
+    │   │           output: {
+    │   │             "text": "The forecast is sunny.",
+    │   │             "toolCalls": []
+    │   │           }
+    │   │           metadata: {
+    │   │             "entity_id": "weather-agent",
+    │   │             "entity_name": "Weather Agent",
+    │   │             "entity_type": "agent"
+    │   │           }
+    │   │           metrics: {
+    │   │             "completion_tokens": 20,
+    │   │             "prompt_tokens": 10,
+    │   │             "tokens": 30
+    │   │           }
+    │   │           └── chunk: 'text' [llm]
+    │   │               output: {
+    │   │                 "text": "The forecast is sunny."
+    │   │               }
+    │   │               metadata: {
+    │   │                 "entity_id": "weather-agent",
+    │   │                 "entity_name": "Weather Agent",
+    │   │                 "entity_type": "agent"
+    │   │               }
+    │   ├── agent run: 'weather-agent' [task]
+    │   │   input: "Stream the Paris forecast."
+    │   │   output: {
+    │   │     "files": [],
+    │   │     "text": "The forecast is sunny."
+    │   │   }
+    │   │   metadata: {
+    │   │     "entity_id": "weather-agent",
+    │   │     "entity_name": "Weather Agent",
+    │   │     "entity_type": "agent"
+    │   │   }
+    │   │   └── llm: 'mock-model-id' [llm]
+    │   │       input: {
+    │   │         "messages": [
+    │   │           {
+    │   │             "content": "Answer weather questions with the provided mock forecast.",
+    │   │             "role": "system"
+    │   │           },
+    │   │           {
+    │   │             "content": [
+    │   │               {
+    │   │                 "providerOptions": {
+    │   │                   "mastra": {
+    │   │                     "createdAt": 0
+    │   │                   }
+    │   │                 },
+    │   │                 "text": "Stream the Paris forecast.",
+    │   │                 "type": "text"
+    │   │               }
+    │   │             ],
+    │   │             "role": "user"
+    │   │           }
+    │   │         ]
+    │   │       }
+    │   │       output: {
+    │   │         "files": [],
+    │   │         "reasoning": [],
+    │   │         "sources": [],
+    │   │         "text": "The forecast is sunny.",
+    │   │         "warnings": []
+    │   │       }
+    │   │       metadata: {
+    │   │         "entity_id": "weather-agent",
+    │   │         "entity_name": "Weather Agent",
+    │   │         "entity_type": "agent",
+    │   │         "model": "mock-model-id",
+    │   │         "provider": "mock-provider"
+    │   │       }
+    │   │       metrics: {
+    │   │         "completion_tokens": 20,
+    │   │         "prompt_tokens": 10,
+    │   │         "time_to_first_token": 0,
+    │   │         "tokens": 30
+    │   │       }
+    │   │       └── step: 0 [llm]
+    │   │           output: {
+    │   │             "text": "The forecast is sunny.",
+    │   │             "toolCalls": []
+    │   │           }
+    │   │           metadata: {
+    │   │             "entity_id": "weather-agent",
+    │   │             "entity_name": "Weather Agent",
+    │   │             "entity_type": "agent"
+    │   │           }
+    │   │           metrics: {
+    │   │             "completion_tokens": 20,
+    │   │             "prompt_tokens": 10,
+    │   │             "tokens": 30
+    │   │           }
+    │   │           └── chunk: 'text' [llm]
+    │   │               output: {
+    │   │                 "text": "The forecast is sunny."
+    │   │               }
+    │   │               metadata: {
+    │   │                 "entity_id": "weather-agent",
+    │   │                 "entity_name": "Weather Agent",
+    │   │                 "entity_type": "agent"
+    │   │               }
+    │   └── workflow run: 'travel-flow' [task]
+    │       input: {
+    │         "city": "Berlin"
+    │       }
+    │       output: {
+    │         "forecast": "Sunny in Berlin"
+    │       }
+    │       metadata: {
+    │         "entity_id": "travel-flow",
+    │         "entity_name": "travel-flow",
+    │         "entity_type": "workflow_run"
+    │       }
+    │       └── workflow step: 'lookup-step' [function]
+    │           input: {
+    │             "city": "Berlin"
+    │           }
+    │           output: {
+    │             "forecast": "Sunny in Berlin"
+    │           }
+    │           metadata: {
+    │             "entity_id": "lookup-step",
+    │             "entity_name": "travel-flow",
+    │             "entity_type": "workflow_step"
+    │           }
+    ├── mastra-agent-stream-operation
+    │   metadata: {
+    │     "operation": "stream"
+    │   }
+    ├── mastra-tool-operation
+    │   metadata: {
+    │     "operation": "tool"
+    │   }
+    └── mastra-workflow-operation
+        metadata: {
+          "operation": "workflow"
+        }

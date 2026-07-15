@@ -4,9 +4,30 @@
     "label": "OpenAI Instrumentation",
     "metadataScenario": "openai-instrumentation",
     "variants": [
-      { "variantKey": "openai-v4", "label": "v4" },
-      { "variantKey": "openai-v5", "label": "v5" },
-      { "variantKey": "openai-v6", "label": "v6" }
+      {
+        "variantKey": "openai-v4",
+        "label": "v4 pinned"
+      },
+      {
+        "variantKey": "openai-v4-latest",
+        "label": "v4 latest"
+      },
+      {
+        "variantKey": "openai-v5",
+        "label": "v5 pinned"
+      },
+      {
+        "variantKey": "openai-v5-latest",
+        "label": "v5 latest"
+      },
+      {
+        "variantKey": "openai-v6",
+        "label": "v6 pinned"
+      },
+      {
+        "variantKey": "openai-v6-latest",
+        "label": "v6 latest"
+      }
     ]
   },
   {
@@ -14,10 +35,21 @@
     "label": "OpenAI Codex Instrumentation",
     "metadataScenario": "openai-codex-instrumentation",
     "variants": [
-      { "variantKey": "openai-codex-v0128-wrapped", "label": "v0.128 wrapped" },
       {
-        "variantKey": "openai-codex-v0128-auto-hook",
-        "label": "v0.128 auto-hook"
+        "variantKey": "openai-codex-v0-wrapped",
+        "label": "v0 pinned wrapped"
+      },
+      {
+        "variantKey": "openai-codex-v0-auto-hook",
+        "label": "v0 pinned auto-hook"
+      },
+      {
+        "variantKey": "openai-codex-v0-latest-wrapped",
+        "label": "v0 latest wrapped"
+      },
+      {
+        "variantKey": "openai-codex-v0-latest-auto-hook",
+        "label": "v0 latest auto-hook"
       }
     ]
   },
@@ -25,20 +57,45 @@
     "scenarioDirName": "pi-coding-agent-instrumentation",
     "label": "Pi Coding Agent Instrumentation",
     "metadataScenario": "pi-coding-agent-instrumentation",
-    "variants": [{ "variantKey": "pi-coding-agent-v079", "label": "v0.79" }]
+    "variants": [
+      {
+        "variantKey": "pi-coding-agent-v0",
+        "label": "v0 pinned"
+      },
+      {
+        "variantKey": "pi-coding-agent-v0-latest",
+        "label": "v0 latest"
+      }
+    ]
   },
   {
     "scenarioDirName": "strands-agent-sdk-instrumentation",
     "label": "Strands Agent SDK Instrumentation",
     "metadataScenario": "strands-agent-sdk-instrumentation",
-    "variants": [{ "variantKey": "strands-agent-sdk-v160", "label": "v1.6.0" }]
+    "variants": [
+      {
+        "variantKey": "strands-agent-sdk-v1",
+        "label": "v1 pinned"
+      },
+      {
+        "variantKey": "strands-agent-sdk-v1-latest",
+        "label": "v1 latest"
+      }
+    ]
   },
   {
     "scenarioDirName": "openai-agents-instrumentation",
     "label": "OpenAI Agents Instrumentation",
     "metadataScenario": "openai-agents-instrumentation",
     "variants": [
-      { "variantKey": "openai-agents-auto-hook", "label": "Auto-hook" }
+      {
+        "variantKey": "openai-agents-v0",
+        "label": "v0 pinned"
+      },
+      {
+        "variantKey": "openai-agents-v0-latest",
+        "label": "v0 latest"
+      }
     ]
   },
   {
@@ -46,12 +103,14 @@
     "label": "Anthropic Instrumentation",
     "metadataScenario": "anthropic-instrumentation",
     "variants": [
-      { "variantKey": "anthropic-v0273", "label": "v0.27.3" },
-      { "variantKey": "anthropic-v0390", "label": "v0.39.0" },
-      { "variantKey": "anthropic-v0712", "label": "v0.71.2" },
-      { "variantKey": "anthropic-v0730", "label": "v0.73.0" },
-      { "variantKey": "anthropic-v0780", "label": "v0.78.0" },
-      { "variantKey": "anthropic-v0800", "label": "v0.80.0" }
+      {
+        "variantKey": "anthropic-v0",
+        "label": "v0 pinned"
+      },
+      {
+        "variantKey": "anthropic-v0-latest",
+        "label": "v0 latest"
+      }
     ]
   },
   {
@@ -60,16 +119,28 @@
     "metadataScenario": "anthropic-bedrock-instrumentation",
     "variants": [
       {
-        "variantKey": "anthropic-bedrock-v0302-wrapped",
-        "label": "v0.30.2 wrapped"
+        "variantKey": "anthropic-bedrock-v0-wrapped",
+        "label": "v0 pinned wrapped"
       },
       {
-        "variantKey": "anthropic-bedrock-v0302-auto-esm",
-        "label": "v0.30.2 auto ESM"
+        "variantKey": "anthropic-bedrock-v0-auto-esm",
+        "label": "v0 pinned auto ESM"
       },
       {
-        "variantKey": "anthropic-bedrock-v0302-auto-cjs",
-        "label": "v0.30.2 auto CJS"
+        "variantKey": "anthropic-bedrock-v0-auto-cjs",
+        "label": "v0 pinned auto CJS"
+      },
+      {
+        "variantKey": "anthropic-bedrock-v0-latest-wrapped",
+        "label": "v0 latest wrapped"
+      },
+      {
+        "variantKey": "anthropic-bedrock-v0-latest-auto-esm",
+        "label": "v0 latest auto ESM"
+      },
+      {
+        "variantKey": "anthropic-bedrock-v0-latest-auto-cjs",
+        "label": "v0 latest auto CJS"
       }
     ]
   },
@@ -78,8 +149,22 @@
     "label": "Google ADK Instrumentation",
     "metadataScenario": "google-adk-instrumentation",
     "variants": [
-      { "variantKey": "google-adk-v061", "label": "v0.6.1" },
-      { "variantKey": "google-adk-v1000", "label": "v1.0.0" }
+      {
+        "variantKey": "google-adk-v0",
+        "label": "v0 pinned"
+      },
+      {
+        "variantKey": "google-adk-v0-latest",
+        "label": "v0 latest"
+      },
+      {
+        "variantKey": "google-adk-v1",
+        "label": "v1 pinned"
+      },
+      {
+        "variantKey": "google-adk-v1-latest",
+        "label": "v1 latest"
+      }
     ]
   },
   {
@@ -87,32 +172,75 @@
     "label": "Google GenAI Instrumentation",
     "metadataScenario": "google-genai-instrumentation",
     "variants": [
-      { "variantKey": "google-genai-v1300", "label": "v1.30.0" },
-      { "variantKey": "google-genai-v1440", "label": "v1.44.0" },
-      { "variantKey": "google-genai-v1450", "label": "v1.45.0" },
-      { "variantKey": "google-genai-v1460", "label": "v1.46.0" },
-      { "variantKey": "google-genai-v280", "label": "v2.8.0" }
+      {
+        "variantKey": "google-genai-v1",
+        "label": "v1 pinned"
+      },
+      {
+        "variantKey": "google-genai-v1-latest",
+        "label": "v1 latest"
+      },
+      {
+        "variantKey": "google-genai-v2",
+        "label": "v2 pinned"
+      },
+      {
+        "variantKey": "google-genai-v2-latest",
+        "label": "v2 latest"
+      }
     ]
   },
   {
     "scenarioDirName": "genkit-instrumentation",
     "label": "Genkit Instrumentation",
     "metadataScenario": "genkit-instrumentation",
-    "variants": [{ "variantKey": "genkit-v1-33-0", "label": "v1.33.0" }]
+    "variants": [
+      {
+        "variantKey": "genkit-v1",
+        "label": "v1 pinned"
+      },
+      {
+        "variantKey": "genkit-v1-latest",
+        "label": "v1 latest"
+      }
+    ]
   },
   {
     "scenarioDirName": "mastra-instrumentation",
     "label": "Mastra Instrumentation",
     "metadataScenario": "mastra-instrumentation",
-    "variants": [{ "variantKey": "mastra-v1260", "label": "v1.26.0" }]
+    "variants": [
+      {
+        "variantKey": "mastra-v1",
+        "label": "v1 pinned"
+      },
+      {
+        "variantKey": "mastra-v1-latest",
+        "label": "v1 latest"
+      }
+    ]
   },
   {
     "scenarioDirName": "groq-instrumentation",
     "label": "Groq Instrumentation",
     "metadataScenario": "groq-instrumentation",
     "variants": [
-      { "variantKey": "groq-v1-wrapped", "label": "Wrapped" },
-      { "variantKey": "groq-v1-auto", "label": "Auto-hook" }
+      {
+        "variantKey": "groq-v1-wrapped",
+        "label": "v1 pinned wrapped"
+      },
+      {
+        "variantKey": "groq-v1-auto",
+        "label": "v1 pinned auto-hook"
+      },
+      {
+        "variantKey": "groq-v1-latest-wrapped",
+        "label": "v1 latest wrapped"
+      },
+      {
+        "variantKey": "groq-v1-latest-auto",
+        "label": "v1 latest auto-hook"
+      }
     ]
   },
   {
@@ -120,8 +248,22 @@
     "label": "Bedrock Runtime Instrumentation",
     "metadataScenario": "bedrock-runtime-instrumentation",
     "variants": [
-      { "variantKey": "bedrock-runtime-v3-1048-wrapped", "label": "Wrapped" },
-      { "variantKey": "bedrock-runtime-v3-1048-auto", "label": "Auto-hook" }
+      {
+        "variantKey": "bedrock-runtime-v3-wrapped",
+        "label": "v3 pinned wrapped"
+      },
+      {
+        "variantKey": "bedrock-runtime-v3-auto",
+        "label": "v3 pinned auto-hook"
+      },
+      {
+        "variantKey": "bedrock-runtime-v3-latest-wrapped",
+        "label": "v3 latest wrapped"
+      },
+      {
+        "variantKey": "bedrock-runtime-v3-latest-auto",
+        "label": "v3 latest auto-hook"
+      }
     ]
   },
   {
@@ -129,15 +271,46 @@
     "label": "HuggingFace Instrumentation",
     "metadataScenario": "huggingface-instrumentation",
     "variants": [
-      { "variantKey": "huggingface-v281", "label": "v2.8.1" },
-      { "variantKey": "huggingface-v3150", "label": "v3.15.0" },
-      { "variantKey": "huggingface-v41315", "label": "v4.13.15" }
+      {
+        "variantKey": "huggingface-v2",
+        "label": "v2 pinned"
+      },
+      {
+        "variantKey": "huggingface-v2-latest",
+        "label": "v2 latest"
+      },
+      {
+        "variantKey": "huggingface-v3",
+        "label": "v3 pinned"
+      },
+      {
+        "variantKey": "huggingface-v3-latest",
+        "label": "v3 latest"
+      },
+      {
+        "variantKey": "huggingface-v4",
+        "label": "v4 pinned"
+      },
+      {
+        "variantKey": "huggingface-v4-latest",
+        "label": "v4 latest"
+      }
     ]
   },
   {
     "scenarioDirName": "langgraph-auto-instrumentation",
     "label": "LangGraph Auto-Instrumentation",
-    "metadataScenario": "langgraph-auto-instrumentation"
+    "metadataScenario": "langgraph-auto-instrumentation",
+    "variants": [
+      {
+        "variantKey": "langgraph-v1",
+        "label": "v1 pinned"
+      },
+      {
+        "variantKey": "langgraph-v1-latest",
+        "label": "v1 latest"
+      }
+    ]
   },
   {
     "scenarioDirName": "langsmith-instrumentation",
@@ -154,12 +327,22 @@
     "label": "Mistral Instrumentation",
     "metadataScenario": "mistral-instrumentation",
     "variants": [
-      { "variantKey": "mistral-v1-3-4", "label": "v1.3.4" },
-      { "variantKey": "mistral-v1-10-0", "label": "v1.10.0" },
-      { "variantKey": "mistral-v1-14-1", "label": "v1.14.1" },
-      { "variantKey": "mistral-v1-15-1", "label": "v1.15.1" },
-      { "variantKey": "mistral-v1", "label": "latest v1" },
-      { "variantKey": "mistral-v2", "label": "latest v2" }
+      {
+        "variantKey": "mistral-v1",
+        "label": "v1 pinned"
+      },
+      {
+        "variantKey": "mistral-v1-latest",
+        "label": "v1 latest"
+      },
+      {
+        "variantKey": "mistral-v2",
+        "label": "v2 pinned"
+      },
+      {
+        "variantKey": "mistral-v2-latest",
+        "label": "v2 latest"
+      }
     ]
   },
   {
@@ -167,25 +350,52 @@
     "label": "Cohere Instrumentation",
     "metadataScenario": "cohere-instrumentation",
     "variants": [
-      { "variantKey": "cohere-v7-14-0", "label": "v7.14.0" },
-      { "variantKey": "cohere-v7-20-0", "label": "v7.20.0" },
-      { "variantKey": "cohere-v7-21-0", "label": "v7.21.0" },
-      { "variantKey": "cohere-v7", "label": "latest v7" },
-      { "variantKey": "cohere-v8", "label": "latest v8" }
+      {
+        "variantKey": "cohere-v7",
+        "label": "v7 pinned"
+      },
+      {
+        "variantKey": "cohere-v7-latest",
+        "label": "v7 latest"
+      },
+      {
+        "variantKey": "cohere-v8",
+        "label": "v8 pinned"
+      },
+      {
+        "variantKey": "cohere-v8-latest",
+        "label": "v8 latest"
+      }
     ]
   },
   {
     "scenarioDirName": "openrouter-instrumentation",
     "label": "OpenRouter Instrumentation",
     "metadataScenario": "openrouter-instrumentation",
-    "variants": [{ "variantKey": "openrouter-current", "label": "Current" }]
+    "variants": [
+      {
+        "variantKey": "openrouter-v0",
+        "label": "v0 pinned"
+      },
+      {
+        "variantKey": "openrouter-v0-latest",
+        "label": "v0 latest"
+      }
+    ]
   },
   {
     "scenarioDirName": "openrouter-agent-instrumentation",
     "label": "OpenRouter Agent Instrumentation",
     "metadataScenario": "openrouter-agent-instrumentation",
     "variants": [
-      { "variantKey": "openrouter-agent-current", "label": "Current" }
+      {
+        "variantKey": "openrouter-agent-v0",
+        "label": "v0 pinned"
+      },
+      {
+        "variantKey": "openrouter-agent-v0-latest",
+        "label": "v0 latest"
+      }
     ]
   },
   {
@@ -193,11 +403,46 @@
     "label": "AI SDK Instrumentation",
     "metadataScenario": "ai-sdk-instrumentation",
     "variants": [
-      { "variantKey": "ai-sdk-v3", "label": "v3" },
-      { "variantKey": "ai-sdk-v4", "label": "v4" },
-      { "variantKey": "ai-sdk-v5", "label": "v5" },
-      { "variantKey": "ai-sdk-v6", "label": "v6" },
-      { "variantKey": "ai-sdk-v7", "label": "v7" }
+      {
+        "variantKey": "ai-sdk-v3",
+        "label": "v3 pinned"
+      },
+      {
+        "variantKey": "ai-sdk-v3-latest",
+        "label": "v3 latest"
+      },
+      {
+        "variantKey": "ai-sdk-v4",
+        "label": "v4 pinned"
+      },
+      {
+        "variantKey": "ai-sdk-v4-latest",
+        "label": "v4 latest"
+      },
+      {
+        "variantKey": "ai-sdk-v5",
+        "label": "v5 pinned"
+      },
+      {
+        "variantKey": "ai-sdk-v5-latest",
+        "label": "v5 latest"
+      },
+      {
+        "variantKey": "ai-sdk-v6",
+        "label": "v6 pinned"
+      },
+      {
+        "variantKey": "ai-sdk-v6-latest",
+        "label": "v6 latest"
+      },
+      {
+        "variantKey": "ai-sdk-v7",
+        "label": "v7 pinned"
+      },
+      {
+        "variantKey": "ai-sdk-v7-latest",
+        "label": "v7 latest"
+      }
     ]
   },
   {
@@ -206,16 +451,12 @@
     "metadataScenario": "claude-agent-sdk-traces",
     "variants": [
       {
-        "variantKey": "claude-agent-sdk-v0.2.76",
-        "label": "v0.2.76"
+        "variantKey": "claude-agent-sdk-v0",
+        "label": "v0 pinned"
       },
       {
-        "variantKey": "claude-agent-sdk-v0.2.79",
-        "label": "v0.2.79"
-      },
-      {
-        "variantKey": "claude-agent-sdk-v0.2.81",
-        "label": "v0.2.81"
+        "variantKey": "claude-agent-sdk-v0-latest",
+        "label": "v0 latest"
       }
     ]
   },
@@ -223,24 +464,59 @@
     "scenarioDirName": "cursor-sdk-instrumentation",
     "label": "Cursor SDK Instrumentation",
     "metadataScenario": "cursor-sdk-instrumentation",
-    "variants": [{ "variantKey": "cursor-sdk-v1", "label": "v1" }]
+    "variants": [
+      {
+        "variantKey": "cursor-sdk-v1",
+        "label": "v1 pinned"
+      },
+      {
+        "variantKey": "cursor-sdk-v1-latest",
+        "label": "v1 latest"
+      }
+    ]
   },
   {
     "scenarioDirName": "flue-instrumentation",
     "label": "Flue Instrumentation",
     "metadataScenario": "flue-instrumentation",
     "variants": [
-      { "variantKey": "flue-v0-8-0", "label": "v0.8.0" },
-      { "variantKey": "flue-v1-0-0-beta-3", "label": "v1.0.0-beta.3" }
+      {
+        "variantKey": "flue-v0-8-0",
+        "label": "v0.8.0"
+      },
+      {
+        "variantKey": "flue-v1-0-0-beta-3",
+        "label": "v1.0.0-beta.3"
+      }
     ]
+  },
+  {
+    "scenarioDirName": "eve-instrumentation",
+    "label": "Eve Instrumentation",
+    "metadataScenario": "eve-instrumentation",
+    "variants": [{ "variantKey": "eve-v0-20-0", "label": "v0.20.0" }]
   },
   {
     "scenarioDirName": "github-copilot-instrumentation",
     "label": "GitHub Copilot SDK Instrumentation",
     "metadataScenario": "github-copilot-instrumentation",
     "variants": [
-      { "variantKey": "github-copilot-v0-wrapped", "label": "Wrapped" },
-      { "variantKey": "github-copilot-v0-auto", "label": "Auto-hook" }
+      {
+        "variantKey": "github-copilot-v0-wrapped",
+        "label": "v0 pinned wrapped"
+      },
+      {
+        "variantKey": "github-copilot-v0-auto",
+        "label": "v0 pinned auto-hook"
+      },
+      {
+        "variantKey": "github-copilot-v0-latest-wrapped",
+        "label": "v0 latest wrapped"
+      },
+      {
+        "variantKey": "github-copilot-v0-latest-auto",
+        "label": "v0 latest auto-hook"
+      }
     ]
   },
   {
@@ -248,9 +524,30 @@
     "label": "Vitest Test Framework Evals",
     "metadataScenario": "test-framework-evals-vitest",
     "variants": [
-      { "variantKey": "v2", "label": "v2" },
-      { "variantKey": "v3", "label": "v3" },
-      { "variantKey": "v4.1", "label": "v4.1" }
+      {
+        "variantKey": "vitest-v2",
+        "label": "v2 pinned"
+      },
+      {
+        "variantKey": "vitest-v2-latest",
+        "label": "v2 latest"
+      },
+      {
+        "variantKey": "vitest-v3",
+        "label": "v3 pinned"
+      },
+      {
+        "variantKey": "vitest-v3-latest",
+        "label": "v3 latest"
+      },
+      {
+        "variantKey": "vitest-v4",
+        "label": "v4 pinned"
+      },
+      {
+        "variantKey": "vitest-v4-latest",
+        "label": "v4 latest"
+      }
     ],
     "evals": [
       {
@@ -262,11 +559,18 @@
     ]
   },
   {
-    "scenarioDirName": "openai-agents-instrumentation",
-    "label": "OpenAI Agents Instrumentation",
-    "metadataScenario": "openai-agents-instrumentation",
+    "scenarioDirName": "wrap-langchain-js-traces",
+    "label": "LangChain JS Wrapper Traces",
+    "metadataScenario": "wrap-langchain-js-traces",
     "variants": [
-      { "variantKey": "openai-agents-auto-hook", "label": "Auto-hook" }
+      {
+        "variantKey": "wrap-langchain-js-traces-v1",
+        "label": "v1 pinned"
+      },
+      {
+        "variantKey": "wrap-langchain-js-traces-v1-latest",
+        "label": "v1 latest"
+      }
     ]
   }
 ]

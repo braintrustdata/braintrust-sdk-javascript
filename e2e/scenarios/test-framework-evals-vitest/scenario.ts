@@ -8,7 +8,8 @@ import {
 
 const require = createRequire(import.meta.url);
 const scenarioDir = resolveScenarioDir(import.meta.url);
-const vitestCliPath = require.resolve("vitest-v2/vitest.mjs");
+const vitestPackageName = process.env.VITEST_PACKAGE_NAME ?? "vitest-v2-latest";
+const vitestCliPath = require.resolve(`${vitestPackageName}/vitest.mjs`);
 
 async function main() {
   const testRunId = getTestRunId();
@@ -18,6 +19,7 @@ async function main() {
     cwd: scenarioDir,
     env: {
       BRAINTRUST_E2E_RUN_ID: testRunId,
+      VITEST_CONFIG_PACKAGE_NAME: vitestPackageName,
     },
     timeoutMs: 60_000,
   });

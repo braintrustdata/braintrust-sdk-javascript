@@ -3,10 +3,17 @@ import type { ChannelMessage } from "../core/channel-definitions";
 import { isAsyncIterable, patchStreamIfNeeded } from "../core/stream-patcher";
 import type { IsoChannelHandlers } from "../../isomorph";
 import { debugLogger } from "../../debug-logger";
-import { startSpan, withCurrent } from "../../logger";
+import {
+  Attachment,
+  BaseAttachment,
+  startSpan,
+  withCurrent,
+} from "../../logger";
 import type { Span } from "../../logger";
+import { LRUCache } from "../../lru-cache";
 import { getCurrentUnixTimestamp } from "../../util";
 import { SpanTypeAttribute, isObject } from "../../../util/index";
+import { convertDataToBlob } from "../../wrappers/attachment-utils";
 import {
   bindAutoInstrumentationSuppressionToStart,
   runWithAutoInstrumentationSuppressed,
@@ -23,6 +30,7 @@ import type {
   StrandsBeforeNodeCallEvent,
   StrandsBeforeToolCallEvent,
   StrandsContentBlock,
+  StrandsMediaBlock,
   StrandsModel,
   StrandsModelMetrics,
   StrandsModelStreamUpdateEvent,
@@ -39,6 +47,7 @@ import type {
 type AgentStreamState = {
   activeModel?: ModelSpanState;
   activeTools: Map<string, ToolSpanState>;
+  attachmentCache: StrandsAttachmentCache;
   finalized: boolean;
   metadata: Record<string, unknown>;
   span: Span;
@@ -80,6 +89,13 @@ type MultiAgentStreamChannel =
   | typeof strandsAgentSDKChannels.swarmStream;
 
 type ActiveChildParents = WeakMap<object, Set<Span>>;
+
+const MAX_STRANDS_STRING_ATTACHMENT_CACHE_ENTRIES = 32;
+
+type StrandsAttachmentCache = {
+  objects: WeakMap<object, Map<string, Attachment>>;
+  strings: LRUCache<string, Map<string, Attachment>>;
+};
 
 export class StrandsAgentSDKPlugin extends BasePlugin {
   private readonly activeChildParents: ActiveChildParents = new WeakMap();
@@ -255,11 +271,16 @@ function startAgentStream(
   const parentSpan = agent
     ? getOnlyChildParent(activeChildParents, agent)
     : undefined;
+  const attachmentCache = createStrandsAttachmentCache();
+  const input = processStrandsInputAttachments(
+    event.arguments[0],
+    attachmentCache,
+  );
   const span = parentSpan
     ? withCurrent(parentSpan, () =>
         startSpan({
           event: {
-            input: event.arguments[0],
+            input,
             metadata,
           },
           name: formatAgentSpanName(agent),
@@ -268,7 +289,7 @@ function startAgentStream(
       )
     : startSpan({
         event: {
-          input: event.arguments[0],
+          input,
           metadata,
         },
         name: formatAgentSpanName(agent),
@@ -277,6 +298,7 @@ function startAgentStream(
 
   return {
     activeTools: new Map(),
+    attachmentCache,
     finalized: false,
     metadata,
     span,
@@ -301,11 +323,12 @@ function startMultiAgentStream(
   const parentSpan = orchestrator
     ? getOnlyChildParent(activeChildParents, orchestrator)
     : undefined;
+  const input = processStrandsInputAttachments(event.arguments[0]);
   const span = parentSpan
     ? withCurrent(parentSpan, () =>
         startSpan({
           event: {
-            input: event.arguments[0],
+            input,
             metadata,
           },
           name:
@@ -315,7 +338,7 @@ function startMultiAgentStream(
       )
     : startSpan({
         event: {
-          input: event.arguments[0],
+          input,
           metadata,
         },
         name: operation === "Graph.stream" ? "Strands Graph" : "Strands Swarm",
@@ -443,7 +466,10 @@ function startModelSpan(
     startSpan({
       event: {
         input: Array.isArray(event.agent?.messages)
-          ? event.agent.messages
+          ? processStrandsInputAttachments(
+              event.agent.messages,
+              state.attachmentCache,
+            )
           : undefined,
         metadata,
       },
@@ -737,6 +763,7 @@ function finalizeAgentStream(
     ...(output !== undefined ? { output } : {}),
   });
   state.span.end();
+  state.attachmentCache.strings.clear();
 }
 
 function finalizeMultiAgentStream(
@@ -932,6 +959,232 @@ function extractNodeResultOutput(result: StrandsNodeResultEvent["result"]) {
     return normalizeContentBlocks(result.content);
   }
   return result;
+}
+
+const STRANDS_MEDIA_TYPES: Record<string, string> = {
+  png: "image/png",
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  gif: "image/gif",
+  webp: "image/webp",
+  mkv: "video/x-matroska",
+  mov: "video/quicktime",
+  mp4: "video/mp4",
+  webm: "video/webm",
+  flv: "video/x-flv",
+  mpeg: "video/mpeg",
+  mpg: "video/mpeg",
+  wmv: "video/x-ms-wmv",
+  "3gp": "video/3gpp",
+  pdf: "application/pdf",
+  csv: "text/csv",
+  doc: "application/msword",
+  docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  xls: "application/vnd.ms-excel",
+  xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  html: "text/html",
+  txt: "text/plain",
+  md: "text/markdown",
+  json: "application/json",
+  xml: "application/xml",
+};
+
+function createStrandsAttachmentCache(): StrandsAttachmentCache {
+  return {
+    objects: new WeakMap(),
+    strings: new LRUCache({
+      max: MAX_STRANDS_STRING_ATTACHMENT_CACHE_ENTRIES,
+    }),
+  };
+}
+
+function processStrandsInputAttachments(
+  input: unknown,
+  cache = createStrandsAttachmentCache(),
+): unknown {
+  try {
+    return processStrandsInputNode(input, cache);
+  } catch (error) {
+    logInstrumentationError("Strands Agent SDK input attachments", error);
+    return input;
+  }
+}
+
+function processStrandsInputNode(
+  value: unknown,
+  cache: StrandsAttachmentCache,
+): unknown {
+  if (value instanceof BaseAttachment) {
+    return value;
+  }
+  if (Array.isArray(value)) {
+    return value.map((child) => processStrandsInputNode(child, cache));
+  }
+  if (!isObject(value)) {
+    return value;
+  }
+
+  const directMedia = processDirectStrandsMediaBlock(value, cache);
+  if (directMedia !== undefined) {
+    return directMedia;
+  }
+
+  const wrappedMedia = processWrappedStrandsMediaBlock(value, cache);
+  if (wrappedMedia !== undefined) {
+    return wrappedMedia;
+  }
+
+  if (value.type === "message" && Array.isArray(value.content)) {
+    return {
+      role: value.role,
+      content: value.content.map((child) =>
+        processStrandsInputNode(child, cache),
+      ),
+      ...(value.metadata !== undefined ? { metadata: value.metadata } : {}),
+    };
+  }
+
+  if (typeof value.toJSON === "function") {
+    return processStrandsInputNode(value.toJSON(), cache);
+  }
+
+  return Object.fromEntries(
+    Object.entries(value).map(([key, child]) => [
+      key,
+      processStrandsInputNode(child, cache),
+    ]),
+  );
+}
+
+function processDirectStrandsMediaBlock(
+  block: Record<string, unknown>,
+  cache: StrandsAttachmentCache,
+): unknown | undefined {
+  if (!isStrandsMediaBlock(block)) {
+    return undefined;
+  }
+  const mediaKey =
+    block.type === "imageBlock"
+      ? "image"
+      : block.type === "videoBlock"
+        ? "video"
+        : "document";
+
+  return createStrandsMediaAttachment(mediaKey, block, cache);
+}
+
+function isStrandsMediaBlock(
+  block: Record<string, unknown>,
+): block is StrandsMediaBlock {
+  return (
+    (block.type === "imageBlock" ||
+      block.type === "videoBlock" ||
+      block.type === "documentBlock") &&
+    typeof block.format === "string" &&
+    isObject(block.source)
+  );
+}
+
+function processWrappedStrandsMediaBlock(
+  block: Record<string, unknown>,
+  cache: StrandsAttachmentCache,
+): unknown | undefined {
+  for (const mediaKey of ["image", "video", "document"] as const) {
+    const media = block[mediaKey];
+    if (!Object.hasOwn(block, mediaKey) || !isObject(media)) {
+      continue;
+    }
+    const processed = createStrandsMediaAttachment(mediaKey, media, cache);
+    if (processed !== undefined) {
+      return processed;
+    }
+  }
+  return undefined;
+}
+
+function createStrandsMediaAttachment(
+  mediaKey: "image" | "video" | "document",
+  media: Record<string, unknown>,
+  cache: StrandsAttachmentCache,
+): unknown | undefined {
+  const format = media.format;
+  const source = media.source;
+  if (
+    typeof format !== "string" ||
+    !isObject(source) ||
+    !Object.hasOwn(source, "bytes")
+  ) {
+    return undefined;
+  }
+
+  const contentType = STRANDS_MEDIA_TYPES[format.toLowerCase()];
+  if (!contentType) {
+    return undefined;
+  }
+  const filename =
+    mediaKey === "document" &&
+    typeof media.name === "string" &&
+    media.name.length > 0
+      ? media.name
+      : `${mediaKey}.${format.toLowerCase()}`;
+  const attachment = getOrCreateStrandsAttachment(
+    source.bytes,
+    filename,
+    contentType,
+    cache,
+  );
+  if (!attachment) {
+    return undefined;
+  }
+  const { type: _type, ...serializedMedia } = media;
+  const { type: _sourceType, ...serializedSource } = source;
+
+  return {
+    [mediaKey]: {
+      ...serializedMedia,
+      source: {
+        ...serializedSource,
+        bytes: attachment,
+      },
+    },
+  };
+}
+
+function getOrCreateStrandsAttachment(
+  data: unknown,
+  filename: string,
+  contentType: string,
+  cache: StrandsAttachmentCache,
+): Attachment | undefined {
+  const key = `${contentType}\0${filename}`;
+  const attachments =
+    typeof data === "string"
+      ? cache.strings.get(data)
+      : isObject(data)
+        ? cache.objects.get(data)
+        : undefined;
+  const cached = attachments?.get(key);
+  if (cached) {
+    return cached;
+  }
+
+  const blob = convertDataToBlob(data, contentType);
+  if (!blob) {
+    return undefined;
+  }
+  const attachment = new Attachment({
+    data: blob,
+    filename,
+    contentType,
+  });
+  const updatedAttachments = attachments ?? new Map<string, Attachment>();
+  updatedAttachments.set(key, attachment);
+  if (typeof data === "string") {
+    cache.strings.set(data, updatedAttachments);
+  } else if (isObject(data)) {
+    cache.objects.set(data, updatedAttachments);
+  }
+  return attachment;
 }
 
 function normalizeContentBlocks(blocks: StrandsContentBlock[]): unknown {

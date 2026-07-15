@@ -101,10 +101,10 @@ span_tree:
     │       ]
     │       output: [
     │         {
-    │           "finishReason": "length",
+    │           "finishReason": "stop",
     │           "index": 0,
     │           "message": {
-    │             "content": "Let's break down the problem step by step to find John's age.\n\n1. **First Sister's Age:**\n   - Given: The first sister is **4 years old**.\n\n2. **Second Sister's Age Next Year:**\n   - Next year, the second sister will be twice as old as the first sister.\n   - First sister's age next year: \\(4 + 1 = 5\\) years.\n   - Therefore, second sister's age next year: \\(2 \\times 5 = 10\\) years.\n   - **Current age of the second sister:** \\(10 - 1 = 9\\) years.\n\n3. **Third Sister's Age:**\n   - The third sister is two years older than the second sister.\n   - **Current age of the third sister:** \\(9 + 2 = 11\\) years.\n\n4. **Older Brother's Age:**\n   - The third sister is half the age of her older brother.\n   - Therefore, older brother's age: \\(11 \\times 2 = 22\\) years.\n\n5. **John's Age:**\n   - John is one of the 4 children. Assuming the older brother is not John, the remaining children are the three sisters.\n   -",
+    │             "content": "Let's break down the problem step by step to find John's age.\n\n1. **First Sister's Age:**\n   - Given: The first sister is **4 years old**.\n\n2. **Second Sister's Age Next Year:**\n   - Next year, the second sister will be twice as old as the first sister.\n   - First sister's age next year: \\(4 + 1 = 5\\) years.\n   - Therefore, second sister's age next year: \\(2 \\times 5 = 10\\) years.\n   - **Current age of the second sister:** \\(10 - 1 = 9\\) years.\n\n3. **Third Sister's Age:**\n   - The third sister is two years older than the second sister.\n   - **Current age of the third sister:** \\(9 + 2 = 11\\) years.\n\n4. **John's Age:**\n   - The third sister is half the age of her older brother (John).\n   - Therefore, John's age: \\(11 \\times 2 = 22\\) years.\n\n**Final Answer:**\n\\[\n\\boxed{22}\n\\]",
     │             "role": "assistant"
     │           }
     │         }
@@ -121,11 +121,11 @@ span_tree:
     │         "temperature": 0
     │       }
     │       metrics: {
-    │         "completion_tokens": 256,
-    │         "prompt_cached_tokens": 64,
+    │         "completion_tokens": 234,
+    │         "prompt_cached_tokens": 0,
     │         "prompt_tokens": 83,
     │         "time_to_first_token": 0,
-    │         "tokens": 339
+    │         "tokens": 317
     │       }
     ├── mistral-chat-thinking-stream-operation
     │   metadata: {
@@ -193,7 +193,8 @@ span_tree:
     │   │               "name": "get_weather"
     │   │             },
     │   │             "id": "<span:1>",
-    │   │             "index": 0
+    │   │             "index": 0,
+    │   │             "type": "function"
     │   │           }
     │   │         ]
     │   │       }
@@ -238,7 +239,8 @@ span_tree:
     │   │               "name": "get_exchange_rate"
     │   │             },
     │   │             "id": "<span:1>",
-    │   │             "index": 0
+    │   │             "index": 0,
+    │   │             "type": "function"
     │   │           }
     │   │         ]
     │   │       }
@@ -287,7 +289,8 @@ span_tree:
     │                   "name": "get_weather"
     │                 },
     │                 "id": "<span:1>",
-    │                 "index": 0
+    │                 "index": 0,
+    │                 "type": "function"
     │               },
     │               {
     │                 "function": {
@@ -295,7 +298,8 @@ span_tree:
     │                   "name": "get_exchange_rate"
     │                 },
     │                 "id": "<span:2>",
-    │                 "index": 1
+    │                 "index": 1,
+    │                 "type": "function"
     │               }
     │             ]
     │           }
@@ -458,7 +462,8 @@ span_tree:
     │                   "name": "get_time_in_city"
     │                 },
     │                 "id": "<span:1>",
-    │                 "index": 0
+    │                 "index": 0,
+    │                 "type": "function"
     │               }
     │             ]
     │           }
@@ -480,7 +485,7 @@ span_tree:
     │       }
     │       metrics: {
     │         "completion_tokens": 14,
-    │         "prompt_cached_tokens": 0,
+    │         "prompt_cached_tokens": 64,
     │         "prompt_tokens": 107,
     │         "time_to_first_token": 0,
     │         "tokens": 121
@@ -572,17 +577,17 @@ span_tree:
     │             "violence_and_threats": false
     │           },
     │           "categoryScores": {
-    │             "criminal": 0.00806199200451374,
-    │             "dangerous": 0.005911068990826607,
-    │             "financial": 0.00011591934162424877,
-    │             "hate_and_discrimination": 0.0023231625091284513,
-    │             "health": 0.0003799845289904624,
-    │             "jailbreaking": 0.018689308315515518,
+    │             "criminal": 0.007937993854284286,
+    │             "dangerous": 0.005730246659368277,
+    │             "financial": 0.00011235327838221565,
+    │             "hate_and_discrimination": 0.002251847181469202,
+    │             "health": 0.00036259007174521685,
+    │             "jailbreaking": 0.019271135330200195,
     │             "law": 0.00020342697098385543,
     │             "pii": 0.001098731067031622,
     │             "selfharm": 0.0006361911655403674,
-    │             "sexual": 0.0031236486975103617,
-    │             "violence_and_threats": 0.004609572701156139
+    │             "sexual": 0.0030278353951871395,
+    │             "violence_and_threats": 0.0045384312979876995
     │           }
     │         }
     │       ]
@@ -619,17 +624,17 @@ span_tree:
                   "violence_and_threats": false
                 },
                 "categoryScores": {
-                  "criminal": 0.000755405577365309,
-                  "dangerous": 0.00022693384380545467,
-                  "financial": 0.00006402006692951545,
-                  "hate_and_discrimination": 0.0007096704212017357,
+                  "criminal": 0.0007672925130464137,
+                  "dangerous": 0.00023050671734381467,
+                  "financial": 0.00006605214002775028,
+                  "hate_and_discrimination": 0.0007208380266092718,
                   "health": 0.00008481103577651083,
-                  "jailbreaking": 0.0030278353951871395,
+                  "jailbreaking": 0.0031236486975103617,
                   "law": 0.00011235327838221565,
-                  "pii": 0.000552778597921133,
-                  "selfharm": 0.00004133539550821297,
+                  "pii": 0.0005703156930394471,
+                  "selfharm": 0.00004264746530679986,
                   "sexual": 0.0003799845289904624,
-                  "violence_and_threats": 0.00024923254386521876
+                  "violence_and_threats": 0.0002531563804950565
                 }
               }
             ]

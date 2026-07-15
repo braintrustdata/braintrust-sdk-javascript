@@ -12,18 +12,15 @@ importers:
 
   .:
     dependencies:
-      cohere-sdk-v7:
+      cohere-sdk-v7-latest:
         specifier: npm:cohere-ai@7.21.0
         version: cohere-ai@7.21.0
-      cohere-sdk-v7-14-0:
+      cohere-sdk-v7:
         specifier: npm:cohere-ai@7.14.0
         version: cohere-ai@7.14.0
-      cohere-sdk-v7-20-0:
-        specifier: npm:cohere-ai@7.20.0
-        version: cohere-ai@7.20.0
-      cohere-sdk-v7-21-0:
-        specifier: npm:cohere-ai@7.21.0
-        version: cohere-ai@7.21.0
+      cohere-sdk-v8-latest:
+        specifier: npm:cohere-ai@8.0.0
+        version: cohere-ai@8.0.0(@aws-crypto/sha256-js@5.2.0)(@aws-sdk/credential-providers@3.1028.0)(@smithy/protocol-http@5.3.13)(@smithy/signature-v4@5.3.13)
       cohere-sdk-v8:
         specifier: npm:cohere-ai@8.0.0
         version: cohere-ai@8.0.0(@aws-crypto/sha256-js@5.2.0)(@aws-sdk/credential-providers@3.1028.0)(@smithy/protocol-http@5.3.13)(@smithy/signature-v4@5.3.13)
@@ -411,10 +408,6 @@ packages:
 
   cohere-ai@7.14.0:
     resolution: {integrity: sha512-hSo2/tFV29whjFFtVtdS7kHmtUsjfMO1sgwE/d5bhOE4O7Vkj5G1R9lLIqkIprp/+rrvCq3HGvEaOgry7xRcDA==}
-
-  cohere-ai@7.20.0:
-    resolution: {integrity: sha512-h/3h3pcLXRUmkzp/W+/FWViEMcAFtSZ8YayCTFQXpib112uNSj3feApOtJg7v9lreWR1t7gznhE6N9KNCX5FOA==}
-    engines: {node: '>=18.0.0'}
 
   cohere-ai@7.21.0:
     resolution: {integrity: sha512-AouvBkDho9gnEAnk5oY99p/VHfjP6AkDhZLv/tyB2TIFm7IEd6QQl00jaqBtAbOZnMT297Scq3pkqOUCTr886A==}
@@ -1429,21 +1422,6 @@ snapshots:
     transitivePeerDependencies:
       - aws-crt
       - encoding
-
-  cohere-ai@7.20.0:
-    dependencies:
-      '@aws-crypto/sha256-js': 5.2.0
-      '@aws-sdk/client-sagemaker': 3.1028.0
-      '@aws-sdk/credential-providers': 3.1028.0
-      '@smithy/protocol-http': 5.3.13
-      '@smithy/signature-v4': 5.3.13
-      convict: 6.2.5
-      form-data: 4.0.5
-      form-data-encoder: 4.1.0
-      formdata-node: 6.0.3
-      readable-stream: 4.7.0
-    transitivePeerDependencies:
-      - aws-crt
 
   cohere-ai@7.21.0:
     dependencies:

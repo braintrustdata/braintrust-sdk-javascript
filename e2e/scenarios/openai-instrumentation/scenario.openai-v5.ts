@@ -1,19 +1,20 @@
 import { wrapOpenAI } from "braintrust";
-import OpenAI from "openai-v5";
+const openaiPackageName = process.env.OPENAI_PACKAGE_NAME ?? "openai-v5-latest";
 import {
   getInstalledPackageVersion,
   runMain,
 } from "../../helpers/scenario-runtime";
 import { runOpenAIInstrumentationScenario } from "./scenario.impl.mjs";
 
-runMain(async () =>
-  runOpenAIInstrumentationScenario({
+runMain(async () => {
+  const { default: OpenAI } = await import(openaiPackageName);
+  await runOpenAIInstrumentationScenario({
     OpenAI,
     chatHelperNamespace: "ga",
     decorateClient: wrapOpenAI,
     openaiSdkVersion: await getInstalledPackageVersion(
       import.meta.url,
-      "openai-v5",
+      openaiPackageName,
     ),
-  }),
-);
+  });
+});

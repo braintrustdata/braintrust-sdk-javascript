@@ -879,6 +879,20 @@
           "type": {
             "type": "string",
             "enum": ["file"]
+          },
+          "cache_control": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["ephemeral"]
+              },
+              "ttl": {
+                "type": "string",
+                "enum": ["5m", "1h"]
+              }
+            },
+            "required": ["type"]
           }
         },
         "required": ["file", "type"],
@@ -918,6 +932,20 @@
           "type": {
             "type": "string",
             "enum": ["image_url"]
+          },
+          "cache_control": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["ephemeral"]
+              },
+              "ttl": {
+                "type": "string",
+                "enum": ["5m", "1h"]
+              }
+            },
+            "required": ["type"]
           }
         },
         "required": ["image_url", "type"],
@@ -940,6 +968,10 @@
               "type": {
                 "type": "string",
                 "enum": ["ephemeral"]
+              },
+              "ttl": {
+                "type": "string",
+                "enum": ["5m", "1h"]
               }
             },
             "required": ["type"]
@@ -964,6 +996,10 @@
               "type": {
                 "type": "string",
                 "enum": ["ephemeral"]
+              },
+              "ttl": {
+                "type": "string",
+                "enum": ["5m", "1h"]
               }
             },
             "required": ["type"]

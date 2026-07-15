@@ -262,6 +262,14 @@ export type SetCurrentArg = { setCurrent?: boolean };
 
 type StartSpanEventArgs = ExperimentLogPartialArgs & Partial<IdField>;
 
+const INITIAL_SPAN_WRITE_AS_MERGE = Symbol(
+  "braintrust.initial-span-write-as-merge",
+);
+
+type InitialSpanWriteAsMergeArg = {
+  readonly [INITIAL_SPAN_WRITE_AS_MERGE]?: true;
+};
+
 export type StartSpanArgs = {
   name?: string;
   type?: SpanType;
@@ -6188,6 +6196,19 @@ export function startSpan<IsAsyncFlush extends boolean = true>(
   return startSpanAndIsLogger(args).span;
 }
 
+/** @internal Start a span whose initial row is merged with concurrent writes. */
+export function _internalStartSpanWithInitialMerge<
+  IsAsyncFlush extends boolean = true,
+>(args?: StartSpanArgs & AsyncFlushArg<IsAsyncFlush> & OptionalStateArg): Span {
+  return startSpanAndIsLogger({
+    ...args,
+    [INITIAL_SPAN_WRITE_AS_MERGE]: true,
+  } as StartSpanArgs &
+    AsyncFlushArg<IsAsyncFlush> &
+    OptionalStateArg &
+    InitialSpanWriteAsMergeArg).span;
+}
+
 /**
  * Flush any pending rows to the server.
  */
@@ -7477,7 +7498,8 @@ export class SpanImpl implements Span {
       defaultRootType?: SpanType;
       spanId?: string;
       propagatedState?: PropagatedState | undefined;
-    } & Omit<StartSpanArgs, "parent">,
+    } & Omit<StartSpanArgs, "parent"> &
+      InitialSpanWriteAsMergeArg,
   ) {
     this._state = args.state;
     this._propagatedState = args.propagatedState;
@@ -7545,9 +7567,9 @@ export class SpanImpl implements Span {
     this._rootSpanId = resolvedIds.rootSpanId;
     this._spanParents = resolvedIds.spanParents;
 
-    // The first log is a replacement, but subsequent logs to the same span
-    // object will be merges.
-    this.isMerge = false;
+    // Deterministic spans can be initialized concurrently by separate
+    // workflow executions, so their first write must not replace later merges.
+    this.isMerge = args[INITIAL_SPAN_WRITE_AS_MERGE] === true;
     this.logInternal({ event, internalData });
     this.isMerge = true;
   }

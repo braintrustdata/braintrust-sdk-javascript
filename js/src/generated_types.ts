@@ -1,4 +1,4 @@
-// Auto-generated file (content hash 0ba4b792e8f1345d) -- do not modify
+// Auto-generated file (content hash 7817da7abc7229e4) -- do not modify
 
 import { z } from "zod/v3";
 
@@ -375,7 +375,12 @@ export type CallEventType = z.infer<typeof CallEvent>;
 export const ChatCompletionContentPartTextWithTitle = z.object({
   text: z.string().default(""),
   type: z.literal("text"),
-  cache_control: z.object({ type: z.literal("ephemeral") }).optional(),
+  cache_control: z
+    .object({
+      type: z.literal("ephemeral"),
+      ttl: z.enum(["5m", "1h"]).optional(),
+    })
+    .optional(),
 });
 export type ChatCompletionContentPartTextWithTitleType = z.infer<
   typeof ChatCompletionContentPartTextWithTitle
@@ -388,6 +393,12 @@ export const ChatCompletionContentPartImageWithTitle = z.object({
       .optional(),
   }),
   type: z.literal("image_url"),
+  cache_control: z
+    .object({
+      type: z.literal("ephemeral"),
+      ttl: z.enum(["5m", "1h"]).optional(),
+    })
+    .optional(),
 });
 export type ChatCompletionContentPartImageWithTitleType = z.infer<
   typeof ChatCompletionContentPartImageWithTitle
@@ -401,6 +412,12 @@ export type ChatCompletionContentPartFileFileType = z.infer<
 export const ChatCompletionContentPartFileWithTitle = z.object({
   file: ChatCompletionContentPartFileFile,
   type: z.literal("file"),
+  cache_control: z
+    .object({
+      type: z.literal("ephemeral"),
+      ttl: z.enum(["5m", "1h"]).optional(),
+    })
+    .optional(),
 });
 export type ChatCompletionContentPartFileWithTitleType = z.infer<
   typeof ChatCompletionContentPartFileWithTitle
@@ -416,7 +433,12 @@ export type ChatCompletionContentPartType = z.infer<
 export const ChatCompletionContentPartText = z.object({
   text: z.string().default(""),
   type: z.literal("text"),
-  cache_control: z.object({ type: z.literal("ephemeral") }).optional(),
+  cache_control: z
+    .object({
+      type: z.literal("ephemeral"),
+      ttl: z.enum(["5m", "1h"]).optional(),
+    })
+    .optional(),
 });
 export type ChatCompletionContentPartTextType = z.infer<
   typeof ChatCompletionContentPartText

@@ -22,7 +22,6 @@ import {
 } from "./mock-braintrust-server";
 import {
   installScenarioDependencies,
-  isCanaryMode,
   prepareScenarioDir,
   readInstalledPackageVersion,
   type InstallScenarioDependenciesOptions,
@@ -900,7 +899,6 @@ export async function withScenarioHarness(
 
 export {
   installScenarioDependencies,
-  isCanaryMode,
   prepareScenarioDir,
   readInstalledPackageVersion,
   type InstallScenarioDependenciesResult,

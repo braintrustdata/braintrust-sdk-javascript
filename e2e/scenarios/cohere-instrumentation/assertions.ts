@@ -272,7 +272,11 @@ export function defineCohereInstrumentationAssertions(options: {
     });
 
     test("matches span tree snapshot", testConfig, async () => {
-      await matchSpanTreeSnapshot(events, spanSnapshotPath);
+      await matchSpanTreeSnapshot(events, spanSnapshotPath, {
+        normalize: {
+          omittedKeys: ["prompt_cached_tokens", "relevance_score"],
+        },
+      });
     });
   });
 }

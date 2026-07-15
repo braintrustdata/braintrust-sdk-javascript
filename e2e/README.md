@@ -113,11 +113,13 @@ Provider credentials are only required when recording or explicitly running live
 
 `anthropic-bedrock-instrumentation` uses `AWS_BEARER_TOKEN_BEDROCK`; when recording, its region resolves from `AWS_REGION`, then `AWS_DEFAULT_REGION`, then `us-east-1`, and its model can be overridden with `BRAINTRUST_ANTHROPIC_BEDROCK_MODEL`.
 
-`test:e2e:canary` runs inside Docker because it installs packages on the latest versions and those packages may contain malicious code (supply-chain attacks).
+`test:e2e:bump` runs inside Docker because it installs freshly selected package versions and those packages may contain malicious code (supply-chain attacks). The command loads `.env` / `.env.local` from the repo root on the host, forwards the provider keys into the container, bumps configured scenario-local dependencies to the latest policy-compliant version for each tested major, refreshes scenario lockfiles, records cassettes/snapshots, and then verifies replay.
 
 ### Scenario-local `package.json`
 
 Scenario-local manifests are optional and should stay slim. They are only for scenario-specific external dependencies, such as OpenAI version matrices. Shared test tooling and workspace-local packages stay in `e2e/package.json`.
+
+Scenarios that should participate in `test:e2e:bump` declare `braintrustScenario.bump.dependencies` in their existing scenario-local `package.json`. Each rule points at the real npm package and the tested range for that dependency alias; prereleases are ignored unless the rule sets `allowPrerelease: true`.
 
 `workspace:` dependency specs are intentionally not supported in scenario-local manifests. If a scenario needs a workspace package, keep that dependency in `e2e/package.json`.
 
@@ -128,7 +130,7 @@ pnpm run test:e2e # Run all e2e tests
 pnpm run test:e2e:update # Update snapshots in cassette replay mode
 pnpm run test:e2e:record # Re-record provider cassettes and update snapshots
 pnpm run test:e2e:record -- <name> # Re-record one scenario from the repo root
-pnpm run test:e2e:canary # Run canary e2e tests
+pnpm run test:e2e:bump # Bump latest-per-major scenario deps, record, then replay in Docker
 ```
 
 ## Cassettes (provider HTTP record/replay)

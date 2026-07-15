@@ -1,7 +1,14 @@
-import { anthropic, createAnthropic } from "ai-sdk-anthropic-v6";
-import { createOpenAI, openai } from "ai-sdk-openai-v6";
-import { cohere, createCohere } from "ai-sdk-cohere-v6";
-import * as ai from "ai-sdk-v6";
+const aiPackageName = process.env.AI_SDK_PACKAGE_NAME ?? "ai-sdk-v6-latest";
+const anthropicPackageName =
+  process.env.AI_SDK_ANTHROPIC_PACKAGE_NAME ?? "ai-sdk-anthropic-v6-latest";
+const coherePackageName =
+  process.env.AI_SDK_COHERE_PACKAGE_NAME ?? "ai-sdk-cohere-v6-latest";
+const openaiPackageName =
+  process.env.AI_SDK_OPENAI_PACKAGE_NAME ?? "ai-sdk-openai-v6-latest";
+const ai = await import(aiPackageName);
+const { anthropic, createAnthropic } = await import(anthropicPackageName);
+const { cohere, createCohere } = await import(coherePackageName);
+const { createOpenAI, openai } = await import(openaiPackageName);
 import {
   getInstalledPackageVersion,
   runMain,
@@ -20,7 +27,10 @@ runMain(async () =>
     createOpenAI,
     maxTokensKey: "maxOutputTokens",
     openai,
-    sdkVersion: await getInstalledPackageVersion(import.meta.url, "ai-sdk-v6"),
+    sdkVersion: await getInstalledPackageVersion(
+      import.meta.url,
+      aiPackageName,
+    ),
     supportsAgentToolLoop: true,
     supportsEmbedMany: false,
     supportsGenerateObject: true,

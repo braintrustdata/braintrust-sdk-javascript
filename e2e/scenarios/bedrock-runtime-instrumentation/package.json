@@ -2,14 +2,18 @@
   "name": "@braintrust/e2e-bedrock-runtime-instrumentation",
   "private": true,
   "braintrustScenario": {
-    "canary": {
+    "bump": {
       "dependencies": {
-        "@aws-sdk/client-bedrock-runtime": "latest"
+        "bedrock-runtime-sdk-v3-latest": {
+          "package": "@aws-sdk/client-bedrock-runtime",
+          "range": "3"
+        }
       }
     }
   },
   "dependencies": {
-    "@aws-sdk/client-bedrock-runtime": "3.1048.0",
-    "@smithy/node-http-handler": "4.8.1"
+    "@smithy/node-http-handler": "4.8.1",
+    "bedrock-runtime-sdk-v3": "npm:@aws-sdk/client-bedrock-runtime@3.1048.0",
+    "bedrock-runtime-sdk-v3-latest": "npm:@aws-sdk/client-bedrock-runtime@3.1079.0"
   }
 }

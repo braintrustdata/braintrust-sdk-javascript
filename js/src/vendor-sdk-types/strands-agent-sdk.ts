@@ -111,6 +111,21 @@ export type StrandsContentBlock = {
   [key: string]: unknown;
 };
 
+export interface StrandsMediaBlock {
+  type: "imageBlock" | "videoBlock" | "documentBlock";
+  format: string;
+  name?: string;
+  source: {
+    type?: string;
+    bytes?: string | Uint8Array;
+    [key: string]: unknown;
+  };
+  citations?: unknown;
+  context?: unknown;
+  toJSON?: () => unknown;
+  [key: string]: unknown;
+}
+
 export interface StrandsToolUse {
   name: string;
   toolUseId: string;

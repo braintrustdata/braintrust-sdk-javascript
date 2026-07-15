@@ -2,22 +2,38 @@
   "name": "@braintrust/e2e-ai-sdk-otel-export",
   "private": true,
   "braintrustScenario": {
-    "canary": {
+    "bump": {
       "dependencies": {
-        "ai-sdk-openai-v5": "@ai-sdk/openai@2",
-        "ai-sdk-openai-v6": "@ai-sdk/openai@3",
-        "ai-sdk-v5": "ai@5",
-        "ai-sdk-v6": "ai@6"
+        "ai-sdk-v5-latest": {
+          "package": "ai",
+          "range": "5"
+        },
+        "ai-sdk-openai-v5-latest": {
+          "package": "@ai-sdk/openai",
+          "range": "2"
+        },
+        "ai-sdk-v6-latest": {
+          "package": "ai",
+          "range": "6"
+        },
+        "ai-sdk-openai-v6-latest": {
+          "package": "@ai-sdk/openai",
+          "range": "3"
+        }
       }
     }
   },
   "dependencies": {
     "@opentelemetry/sdk-node": "0.201.1",
-    "ai-sdk-openai-v5": "npm:@ai-sdk/openai@2.0.57",
-    "ai-sdk-openai-v6": "npm:@ai-sdk/openai@3.0.7",
+    "zod": "3.25.76",
     "ai-sdk-v5": "npm:ai@5.0.82",
+    "ai-sdk-v5-latest": "npm:ai@5.0.210",
+    "ai-sdk-openai-v5": "npm:@ai-sdk/openai@2.0.57",
+    "ai-sdk-openai-v5-latest": "npm:@ai-sdk/openai@2.0.110",
     "ai-sdk-v6": "npm:ai@6.0.1",
-    "zod": "3.25.76"
+    "ai-sdk-v6-latest": "npm:ai@6.0.219",
+    "ai-sdk-openai-v6": "npm:@ai-sdk/openai@3.0.7",
+    "ai-sdk-openai-v6-latest": "npm:@ai-sdk/openai@3.0.80"
   },
   "pnpm": {
     "overrides": {

@@ -5,8 +5,7 @@
   "scripts": {
     "test:e2e": "node ./scripts/run-e2e-tests.mjs",
     "test:e2e:update": "node ./scripts/run-e2e-tests.mjs --update",
-    "test:e2e:record": "node ./scripts/run-record-tests.mjs",
-    "test:e2e:canary": "node ./scripts/run-canary-tests-docker.mjs"
+    "test:e2e:record": "node ./scripts/run-record-tests.mjs"
   },
   "devDependencies": {
     "@braintrust/langchain-js": "workspace:^",

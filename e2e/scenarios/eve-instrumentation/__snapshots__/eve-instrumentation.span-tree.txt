@@ -1,0 +1,887 @@
+span_tree:
+├── eve.turn [task]
+│   input: [
+│     {
+│       "content": "Run the Braintrust Eve instrumentation e2e scenario",
+│       "role": "user"
+│     }
+│   ]
+│   output: "Final answer from read: Researcher result: Eve instrumentation — https://eve.dev/docs/guides/instrumentation; read title: Eve instrumentation; URL: https://eve.dev/docs/guides/instrumentation; excerpt: Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace."
+│   metadata: {
+│     "eve.session_id": "<eve.session_id:1>",
+│     "model": "gpt-5.4-mini",
+│     "provider": "openai",
+│     "scenario": "eve-instrumentation",
+│     "testRunId": "<run:1>"
+│   }
+│   metrics: {
+│     "completion_tokens": 133,
+│     "prompt_cached_tokens": 6528,
+│     "prompt_tokens": 13638,
+│     "tokens": 13771
+│   }
+│   ├── eve.step [llm]
+│   │   input: [
+│   │     {
+│   │       "content": "Instructions (instructions)\nYou are a deterministic fixture agent for Braintrust Eve instrumentation tests.\n\nFor every user task, follow these steps exactly:\n\n1. Your first response MUST contain exactly these two tool calls and no text:\n   - researcher with only this argument: {\"message\":\"<the full user message>\"}.\n     Do not pass outputSchema.\n   - read with only this argument:\n     {\"url\":\"https://eve.dev/docs/guides/instrumentation\"}.\n     Emit both calls simultaneously in the same response, with researcher first\n     and read second, so Eve executes them as one parallel batch. The calls are\n     independent. NEVER call one by itself, wait for its result, or emit either\n     call in a separate response.\n2. Only after both results are available, answer with a single sentence that\n   starts with \"Final answer from read:\" and includes the researcher result, read\n   title, URL, and read excerpt.\n\nTool execution\nA single tool or subagent call runs as one serial action. If you call multiple independent tools or subagents in one response, eve treats that batch as parallel work. Only batch work that is independent and does not rely on another call in the same response.",
+│   │       "role": "system"
+│   │     },
+│   │     {
+│   │       "content": "Run the Braintrust Eve instrumentation e2e scenario",
+│   │       "role": "user"
+│   │     }
+│   │   ]
+│   │   output: [
+│   │     {
+│   │       "finish_reason": "tool_calls",
+│   │       "index": 0,
+│   │       "message": {
+│   │         "content": null,
+│   │         "role": "assistant",
+│   │         "tool_calls": [
+│   │           {
+│   │             "function": {
+│   │               "arguments": "{\"message\":\"Run the Braintrust Eve instrumentation e2e scenario\"}",
+│   │               "name": "researcher"
+│   │             },
+│   │             "id": "<span:1>",
+│   │             "type": "function"
+│   │           },
+│   │           {
+│   │             "function": {
+│   │               "arguments": "{\"url\":\"https://eve.dev/docs/guides/instrumentation\"}",
+│   │               "name": "read"
+│   │             },
+│   │             "id": "<span:2>",
+│   │             "type": "function"
+│   │           }
+│   │         ]
+│   │       }
+│   │     }
+│   │   ]
+│   │   metadata: {
+│   │     "eve.session_id": "<eve.session_id:1>",
+│   │     "model": "gpt-5.4-mini",
+│   │     "provider": "openai",
+│   │     "scenario": "eve-instrumentation",
+│   │     "testRunId": "<run:1>"
+│   │   }
+│   │   metrics: {
+│   │     "completion_tokens": 67,
+│   │     "prompt_cached_tokens": 0,
+│   │     "prompt_tokens": 6744,
+│   │     "tokens": 6811
+│   │   }
+│   ├── researcher [tool]
+│   │   input: {
+│   │     "message": "Run the Braintrust Eve instrumentation e2e scenario"
+│   │   }
+│   │   output: "Researcher result: Eve instrumentation — https://eve.dev/docs/guides/instrumentation"
+│   │   metadata: {
+│   │     "eve.session_id": "<eve.session_id:1>",
+│   │     "scenario": "eve-instrumentation",
+│   │     "testRunId": "<run:1>"
+│   │   }
+│   │   └── eve.turn [task]
+│   │       input: [
+│   │         {
+│   │           "content": "You are the subagent \"researcher\".\nDescription: Research the Eve instrumentation documentation before the parent reads it.\n\nThe caller delegated the following task to you. Complete it and return the final result directly.\n\nCaller message:\nRun the Braintrust Eve instrumentation e2e scenario",
+│   │           "role": "user"
+│   │         }
+│   │       ]
+│   │       output: "Researcher result: Eve instrumentation — https://eve.dev/docs/guides/instrumentation"
+│   │       metadata: {
+│   │         "eve.session_id": "<eve.session_id:1>",
+│   │         "model": "gpt-5.4-mini",
+│   │         "provider": "openai",
+│   │         "scenario": "eve-instrumentation",
+│   │         "testRunId": "<run:1>"
+│   │       }
+│   │       metrics: {
+│   │         "completion_tokens": 48,
+│   │         "prompt_cached_tokens": 12032,
+│   │         "prompt_tokens": 13178,
+│   │         "tokens": 13226
+│   │       }
+│   │       ├── eve.step [llm]
+│   │       │   input: [
+│   │       │     {
+│   │       │       "content": "Instructions (instructions)\nYou are the deterministic researcher subagent for Braintrust Eve instrumentation tests.\n\nFor every task:\n\n1. Call the search tool exactly once with the full task as the query.\n2. After the search result is available, answer with a single sentence that starts\n   with \"Researcher result:\" and includes the search title and URL.\n\nTool execution\nA single tool or subagent call runs as one serial action. If you call multiple independent tools or subagents in one response, eve treats that batch as parallel work. Only batch work that is independent and does not rely on another call in the same response.",
+│   │       │       "role": "system"
+│   │       │     },
+│   │       │     {
+│   │       │       "content": "You are the subagent \"researcher\".\nDescription: Research the Eve instrumentation documentation before the parent reads it.\n\nThe caller delegated the following task to you. Complete it and return the final result directly.\n\nCaller message:\nRun the Braintrust Eve instrumentation e2e scenario",
+│   │       │       "role": "user"
+│   │       │     }
+│   │       │   ]
+│   │       │   output: [
+│   │       │     {
+│   │       │       "finish_reason": "tool_calls",
+│   │       │       "index": 0,
+│   │       │       "message": {
+│   │       │         "content": null,
+│   │       │         "role": "assistant",
+│   │       │         "tool_calls": [
+│   │       │           {
+│   │       │             "function": {
+│   │       │               "arguments": "{\"query\":\"Run the Braintrust Eve instrumentation e2e scenario\"}",
+│   │       │               "name": "search"
+│   │       │             },
+│   │       │             "id": "<span:1>",
+│   │       │             "type": "function"
+│   │       │           }
+│   │       │         ]
+│   │       │       }
+│   │       │     }
+│   │       │   ]
+│   │       │   metadata: {
+│   │       │     "eve.session_id": "<eve.session_id:1>",
+│   │       │     "model": "gpt-5.4-mini",
+│   │       │     "provider": "openai",
+│   │       │     "scenario": "eve-instrumentation",
+│   │       │     "testRunId": "<run:1>"
+│   │       │   }
+│   │       │   metrics: {
+│   │       │     "completion_tokens": 26,
+│   │       │     "prompt_cached_tokens": 5504,
+│   │       │     "prompt_tokens": 6554,
+│   │       │     "tokens": 6580
+│   │       │   }
+│   │       ├── search [tool]
+│   │       │   input: {
+│   │       │     "query": "Run the Braintrust Eve instrumentation e2e scenario"
+│   │       │   }
+│   │       │   output: {
+│   │       │     "query": "Run the Braintrust Eve instrumentation e2e scenario",
+│   │       │     "title": "Eve instrumentation",
+│   │       │     "url": "https://eve.dev/docs/guides/instrumentation"
+│   │       │   }
+│   │       │   metadata: {
+│   │       │     "eve.session_id": "<eve.session_id:1>",
+│   │       │     "scenario": "eve-instrumentation",
+│   │       │     "testRunId": "<run:1>"
+│   │       │   }
+│   │       └── eve.step [llm]
+│   │           input: [
+│   │             {
+│   │               "content": "Instructions (instructions)\nYou are the deterministic researcher subagent for Braintrust Eve instrumentation tests.\n\nFor every task:\n\n1. Call the search tool exactly once with the full task as the query.\n2. After the search result is available, answer with a single sentence that starts\n   with \"Researcher result:\" and includes the search title and URL.\n\nTool execution\nA single tool or subagent call runs as one serial action. If you call multiple independent tools or subagents in one response, eve treats that batch as parallel work. Only batch work that is independent and does not rely on another call in the same response.",
+│   │               "role": "system"
+│   │             },
+│   │             {
+│   │               "content": "You are the subagent \"researcher\".\nDescription: Research the Eve instrumentation documentation before the parent reads it.\n\nThe caller delegated the following task to you. Complete it and return the final result directly.\n\nCaller message:\nRun the Braintrust Eve instrumentation e2e scenario",
+│   │               "role": "user"
+│   │             },
+│   │             {
+│   │               "content": [
+│   │                 {
+│   │                   "input": {
+│   │                     "query": "Run the Braintrust Eve instrumentation e2e scenario"
+│   │                   },
+│   │                   "providerOptions": {
+│   │                     "openai": {
+│   │                       "itemId": "<itemId:2>"
+│   │                     }
+│   │                   },
+│   │                   "toolCallId": "<toolCallId:1>",
+│   │                   "toolName": "search",
+│   │                   "type": "tool-call"
+│   │                 }
+│   │               ],
+│   │               "role": "assistant"
+│   │             },
+│   │             {
+│   │               "content": [
+│   │                 {
+│   │                   "output": {
+│   │                     "type": "json",
+│   │                     "value": {
+│   │                       "query": "Run the Braintrust Eve instrumentation e2e scenario",
+│   │                       "title": "Eve instrumentation",
+│   │                       "url": "https://eve.dev/docs/guides/instrumentation"
+│   │                     }
+│   │                   },
+│   │                   "providerOptions": {
+│   │                     "openai": {
+│   │                       "itemId": "<itemId:2>"
+│   │                     }
+│   │                   },
+│   │                   "toolCallId": "<toolCallId:1>",
+│   │                   "toolName": "search",
+│   │                   "type": "tool-result"
+│   │                 }
+│   │               ],
+│   │               "role": "tool"
+│   │             }
+│   │           ]
+│   │           output: [
+│   │             {
+│   │               "finish_reason": "stop",
+│   │               "index": 0,
+│   │               "message": {
+│   │                 "content": "Researcher result: Eve instrumentation — https://eve.dev/docs/guides/instrumentation",
+│   │                 "role": "assistant"
+│   │               }
+│   │             }
+│   │           ]
+│   │           metadata: {
+│   │             "eve.session_id": "<eve.session_id:1>",
+│   │             "model": "gpt-5.4-mini",
+│   │             "provider": "openai",
+│   │             "scenario": "eve-instrumentation",
+│   │             "testRunId": "<run:1>"
+│   │           }
+│   │           metrics: {
+│   │             "completion_tokens": 22,
+│   │             "prompt_cached_tokens": 6528,
+│   │             "prompt_tokens": 6624,
+│   │             "tokens": 6646
+│   │           }
+│   ├── read [tool]
+│   │   input: {
+│   │     "url": "https://eve.dev/docs/guides/instrumentation"
+│   │   }
+│   │   output: {
+│   │     "excerpt": "Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace.",
+│   │     "section": "Runtime context",
+│   │     "title": "Eve instrumentation",
+│   │     "url": "https://eve.dev/docs/guides/instrumentation"
+│   │   }
+│   │   metadata: {
+│   │     "eve.session_id": "<eve.session_id:1>",
+│   │     "scenario": "eve-instrumentation",
+│   │     "testRunId": "<run:1>"
+│   │   }
+│   └── eve.step [llm]
+│       input: [
+│         {
+│           "content": "Instructions (instructions)\nYou are a deterministic fixture agent for Braintrust Eve instrumentation tests.\n\nFor every user task, follow these steps exactly:\n\n1. Your first response MUST contain exactly these two tool calls and no text:\n   - researcher with only this argument: {\"message\":\"<the full user message>\"}.\n     Do not pass outputSchema.\n   - read with only this argument:\n     {\"url\":\"https://eve.dev/docs/guides/instrumentation\"}.\n     Emit both calls simultaneously in the same response, with researcher first\n     and read second, so Eve executes them as one parallel batch. The calls are\n     independent. NEVER call one by itself, wait for its result, or emit either\n     call in a separate response.\n2. Only after both results are available, answer with a single sentence that\n   starts with \"Final answer from read:\" and includes the researcher result, read\n   title, URL, and read excerpt.\n\nTool execution\nA single tool or subagent call runs as one serial action. If you call multiple independent tools or subagents in one response, eve treats that batch as parallel work. Only batch work that is independent and does not rely on another call in the same response.",
+│           "role": "system"
+│         },
+│         {
+│           "content": "Run the Braintrust Eve instrumentation e2e scenario",
+│           "role": "user"
+│         },
+│         {
+│           "content": [
+│             {
+│               "input": {
+│                 "message": "Run the Braintrust Eve instrumentation e2e scenario"
+│               },
+│               "providerOptions": {
+│                 "openai": {
+│                   "itemId": "<itemId:2>"
+│                 }
+│               },
+│               "toolCallId": "<toolCallId:1>",
+│               "toolName": "researcher",
+│               "type": "tool-call"
+│             },
+│             {
+│               "input": {
+│                 "url": "https://eve.dev/docs/guides/instrumentation"
+│               },
+│               "providerOptions": {
+│                 "openai": {
+│                   "itemId": "<itemId:4>"
+│                 }
+│               },
+│               "toolCallId": "<toolCallId:3>",
+│               "toolName": "read",
+│               "type": "tool-call"
+│             }
+│           ],
+│           "role": "assistant"
+│         },
+│         {
+│           "content": [
+│             {
+│               "output": {
+│                 "type": "json",
+│                 "value": {
+│                   "excerpt": "Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace.",
+│                   "section": "Runtime context",
+│                   "title": "Eve instrumentation",
+│                   "url": "https://eve.dev/docs/guides/instrumentation"
+│                 }
+│               },
+│               "providerOptions": {
+│                 "openai": {
+│                   "itemId": "<itemId:4>"
+│                 }
+│               },
+│               "toolCallId": "<toolCallId:3>",
+│               "toolName": "read",
+│               "type": "tool-result"
+│             }
+│           ],
+│           "role": "tool"
+│         },
+│         {
+│           "content": [
+│             {
+│               "output": {
+│                 "type": "text",
+│                 "value": "Researcher result: Eve instrumentation — https://eve.dev/docs/guides/instrumentation"
+│               },
+│               "toolCallId": "<toolCallId:1>",
+│               "toolName": "researcher",
+│               "type": "tool-result"
+│             }
+│           ],
+│           "role": "tool"
+│         }
+│       ]
+│       output: [
+│         {
+│           "finish_reason": "stop",
+│           "index": 0,
+│           "message": {
+│             "content": "Final answer from read: Researcher result: Eve instrumentation — https://eve.dev/docs/guides/instrumentation; read title: Eve instrumentation; URL: https://eve.dev/docs/guides/instrumentation; excerpt: Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace.",
+│             "role": "assistant"
+│           }
+│         }
+│       ]
+│       metadata: {
+│         "eve.session_id": "<eve.session_id:1>",
+│         "model": "gpt-5.4-mini",
+│         "provider": "openai",
+│         "scenario": "eve-instrumentation",
+│         "testRunId": "<run:1>"
+│       }
+│       metrics: {
+│         "completion_tokens": 66,
+│         "prompt_cached_tokens": 6528,
+│         "prompt_tokens": 6894,
+│         "tokens": 6960
+│       }
+└── eve.turn [task]
+    input: [
+      {
+        "content": "Run the Braintrust Eve instrumentation e2e scenario again",
+        "role": "user"
+      }
+    ]
+    output: "Final answer from read: Researcher result: Eve instrumentation — https://eve.dev/docs/guides/instrumentation; read title: Eve instrumentation; URL: https://eve.dev/docs/guides/instrumentation; excerpt: Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace."
+    metadata: {
+      "eve.session_id": "<eve.session_id:1>",
+      "model": "gpt-5.4-mini",
+      "provider": "openai",
+      "scenario": "eve-instrumentation",
+      "testRunId": "<run:1>"
+    }
+    metrics: {
+      "completion_tokens": 134,
+      "prompt_cached_tokens": 6528,
+      "prompt_tokens": 14105,
+      "tokens": 14239
+    }
+    ├── eve.step [llm]
+    │   input: [
+    │     {
+    │       "content": "Instructions (instructions)\nYou are a deterministic fixture agent for Braintrust Eve instrumentation tests.\n\nFor every user task, follow these steps exactly:\n\n1. Your first response MUST contain exactly these two tool calls and no text:\n   - researcher with only this argument: {\"message\":\"<the full user message>\"}.\n     Do not pass outputSchema.\n   - read with only this argument:\n     {\"url\":\"https://eve.dev/docs/guides/instrumentation\"}.\n     Emit both calls simultaneously in the same response, with researcher first\n     and read second, so Eve executes them as one parallel batch. The calls are\n     independent. NEVER call one by itself, wait for its result, or emit either\n     call in a separate response.\n2. Only after both results are available, answer with a single sentence that\n   starts with \"Final answer from read:\" and includes the researcher result, read\n   title, URL, and read excerpt.\n\nTool execution\nA single tool or subagent call runs as one serial action. If you call multiple independent tools or subagents in one response, eve treats that batch as parallel work. Only batch work that is independent and does not rely on another call in the same response.",
+    │       "role": "system"
+    │     },
+    │     {
+    │       "content": "Run the Braintrust Eve instrumentation e2e scenario",
+    │       "role": "user"
+    │     },
+    │     {
+    │       "content": [
+    │         {
+    │           "input": {
+    │             "message": "Run the Braintrust Eve instrumentation e2e scenario"
+    │           },
+    │           "providerOptions": {
+    │             "openai": {
+    │               "itemId": "<itemId:2>"
+    │             }
+    │           },
+    │           "toolCallId": "<toolCallId:1>",
+    │           "toolName": "researcher",
+    │           "type": "tool-call"
+    │         },
+    │         {
+    │           "input": {
+    │             "url": "https://eve.dev/docs/guides/instrumentation"
+    │           },
+    │           "providerOptions": {
+    │             "openai": {
+    │               "itemId": "<itemId:4>"
+    │             }
+    │           },
+    │           "toolCallId": "<toolCallId:3>",
+    │           "toolName": "read",
+    │           "type": "tool-call"
+    │         }
+    │       ],
+    │       "role": "assistant"
+    │     },
+    │     {
+    │       "content": [
+    │         {
+    │           "output": {
+    │             "type": "json",
+    │             "value": {
+    │               "excerpt": "Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace.",
+    │               "section": "Runtime context",
+    │               "title": "Eve instrumentation",
+    │               "url": "https://eve.dev/docs/guides/instrumentation"
+    │             }
+    │           },
+    │           "providerOptions": {
+    │             "openai": {
+    │               "itemId": "<itemId:4>"
+    │             }
+    │           },
+    │           "toolCallId": "<toolCallId:3>",
+    │           "toolName": "read",
+    │           "type": "tool-result"
+    │         }
+    │       ],
+    │       "role": "tool"
+    │     },
+    │     {
+    │       "content": [
+    │         {
+    │           "output": {
+    │             "type": "text",
+    │             "value": "Researcher result: Eve instrumentation — https://eve.dev/docs/guides/instrumentation"
+    │           },
+    │           "toolCallId": "<toolCallId:1>",
+    │           "toolName": "researcher",
+    │           "type": "tool-result"
+    │         }
+    │       ],
+    │       "role": "tool"
+    │     },
+    │     {
+    │       "content": [
+    │         {
+    │           "providerOptions": {
+    │             "openai": {
+    │               "itemId": "<itemId:5>",
+    │               "phase": "final_answer"
+    │             }
+    │           },
+    │           "text": "Final answer from read: Researcher result: Eve instrumentation — https://eve.dev/docs/guides/instrumentation; read title: Eve instrumentation; URL: https://eve.dev/docs/guides/instrumentation; excerpt: Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace.",
+    │           "type": "text"
+    │         }
+    │       ],
+    │       "role": "assistant"
+    │     },
+    │     {
+    │       "content": "Run the Braintrust Eve instrumentation e2e scenario again",
+    │       "role": "user"
+    │     }
+    │   ]
+    │   output: [
+    │     {
+    │       "finish_reason": "tool_calls",
+    │       "index": 0,
+    │       "message": {
+    │         "content": null,
+    │         "role": "assistant",
+    │         "tool_calls": [
+    │           {
+    │             "function": {
+    │               "arguments": "{\"message\":\"Run the Braintrust Eve instrumentation e2e scenario again\"}",
+    │               "name": "researcher"
+    │             },
+    │             "id": "<span:1>",
+    │             "type": "function"
+    │           },
+    │           {
+    │             "function": {
+    │               "arguments": "{\"url\":\"https://eve.dev/docs/guides/instrumentation\"}",
+    │               "name": "read"
+    │             },
+    │             "id": "<span:2>",
+    │             "type": "function"
+    │           }
+    │         ]
+    │       }
+    │     }
+    │   ]
+    │   metadata: {
+    │     "eve.session_id": "<eve.session_id:1>",
+    │     "model": "gpt-5.4-mini",
+    │     "provider": "openai",
+    │     "scenario": "eve-instrumentation",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   metrics: {
+    │     "completion_tokens": 68,
+    │     "prompt_cached_tokens": 6528,
+    │     "prompt_tokens": 6977,
+    │     "tokens": 7045
+    │   }
+    ├── researcher [tool]
+    │   input: {
+    │     "message": "Run the Braintrust Eve instrumentation e2e scenario again"
+    │   }
+    │   output: "Researcher result: Eve instrumentation — https://eve.dev/docs/guides/instrumentation"
+    │   metadata: {
+    │     "eve.session_id": "<eve.session_id:1>",
+    │     "scenario": "eve-instrumentation",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── eve.turn [task]
+    │       input: [
+    │         {
+    │           "content": "You are the subagent \"researcher\".\nDescription: Research the Eve instrumentation documentation before the parent reads it.\n\nThe caller delegated the following task to you. Complete it and return the final result directly.\n\nCaller message:\nRun the Braintrust Eve instrumentation e2e scenario again",
+    │           "role": "user"
+    │         }
+    │       ]
+    │       output: "Researcher result: Eve instrumentation — https://eve.dev/docs/guides/instrumentation"
+    │       metadata: {
+    │         "eve.session_id": "<eve.session_id:1>",
+    │         "model": "gpt-5.4-mini",
+    │         "provider": "openai",
+    │         "scenario": "eve-instrumentation",
+    │         "testRunId": "<run:1>"
+    │       }
+    │       metrics: {
+    │         "completion_tokens": 49,
+    │         "prompt_cached_tokens": 13056,
+    │         "prompt_tokens": 13182,
+    │         "tokens": 13231
+    │       }
+    │       ├── eve.step [llm]
+    │       │   input: [
+    │       │     {
+    │       │       "content": "Instructions (instructions)\nYou are the deterministic researcher subagent for Braintrust Eve instrumentation tests.\n\nFor every task:\n\n1. Call the search tool exactly once with the full task as the query.\n2. After the search result is available, answer with a single sentence that starts\n   with \"Researcher result:\" and includes the search title and URL.\n\nTool execution\nA single tool or subagent call runs as one serial action. If you call multiple independent tools or subagents in one response, eve treats that batch as parallel work. Only batch work that is independent and does not rely on another call in the same response.",
+    │       │       "role": "system"
+    │       │     },
+    │       │     {
+    │       │       "content": "You are the subagent \"researcher\".\nDescription: Research the Eve instrumentation documentation before the parent reads it.\n\nThe caller delegated the following task to you. Complete it and return the final result directly.\n\nCaller message:\nRun the Braintrust Eve instrumentation e2e scenario again",
+    │       │       "role": "user"
+    │       │     }
+    │       │   ]
+    │       │   output: [
+    │       │     {
+    │       │       "finish_reason": "tool_calls",
+    │       │       "index": 0,
+    │       │       "message": {
+    │       │         "content": null,
+    │       │         "role": "assistant",
+    │       │         "tool_calls": [
+    │       │           {
+    │       │             "function": {
+    │       │               "arguments": "{\"query\":\"Run the Braintrust Eve instrumentation e2e scenario again\"}",
+    │       │               "name": "search"
+    │       │             },
+    │       │             "id": "<span:1>",
+    │       │             "type": "function"
+    │       │           }
+    │       │         ]
+    │       │       }
+    │       │     }
+    │       │   ]
+    │       │   metadata: {
+    │       │     "eve.session_id": "<eve.session_id:1>",
+    │       │     "model": "gpt-5.4-mini",
+    │       │     "provider": "openai",
+    │       │     "scenario": "eve-instrumentation",
+    │       │     "testRunId": "<run:1>"
+    │       │   }
+    │       │   metrics: {
+    │       │     "completion_tokens": 27,
+    │       │     "prompt_cached_tokens": 6528,
+    │       │     "prompt_tokens": 6555,
+    │       │     "tokens": 6582
+    │       │   }
+    │       ├── search [tool]
+    │       │   input: {
+    │       │     "query": "Run the Braintrust Eve instrumentation e2e scenario again"
+    │       │   }
+    │       │   output: {
+    │       │     "query": "Run the Braintrust Eve instrumentation e2e scenario again",
+    │       │     "title": "Eve instrumentation",
+    │       │     "url": "https://eve.dev/docs/guides/instrumentation"
+    │       │   }
+    │       │   metadata: {
+    │       │     "eve.session_id": "<eve.session_id:1>",
+    │       │     "scenario": "eve-instrumentation",
+    │       │     "testRunId": "<run:1>"
+    │       │   }
+    │       └── eve.step [llm]
+    │           input: [
+    │             {
+    │               "content": "Instructions (instructions)\nYou are the deterministic researcher subagent for Braintrust Eve instrumentation tests.\n\nFor every task:\n\n1. Call the search tool exactly once with the full task as the query.\n2. After the search result is available, answer with a single sentence that starts\n   with \"Researcher result:\" and includes the search title and URL.\n\nTool execution\nA single tool or subagent call runs as one serial action. If you call multiple independent tools or subagents in one response, eve treats that batch as parallel work. Only batch work that is independent and does not rely on another call in the same response.",
+    │               "role": "system"
+    │             },
+    │             {
+    │               "content": "You are the subagent \"researcher\".\nDescription: Research the Eve instrumentation documentation before the parent reads it.\n\nThe caller delegated the following task to you. Complete it and return the final result directly.\n\nCaller message:\nRun the Braintrust Eve instrumentation e2e scenario again",
+    │               "role": "user"
+    │             },
+    │             {
+    │               "content": [
+    │                 {
+    │                   "input": {
+    │                     "query": "Run the Braintrust Eve instrumentation e2e scenario again"
+    │                   },
+    │                   "providerOptions": {
+    │                     "openai": {
+    │                       "itemId": "<itemId:2>"
+    │                     }
+    │                   },
+    │                   "toolCallId": "<toolCallId:1>",
+    │                   "toolName": "search",
+    │                   "type": "tool-call"
+    │                 }
+    │               ],
+    │               "role": "assistant"
+    │             },
+    │             {
+    │               "content": [
+    │                 {
+    │                   "output": {
+    │                     "type": "json",
+    │                     "value": {
+    │                       "query": "Run the Braintrust Eve instrumentation e2e scenario again",
+    │                       "title": "Eve instrumentation",
+    │                       "url": "https://eve.dev/docs/guides/instrumentation"
+    │                     }
+    │                   },
+    │                   "providerOptions": {
+    │                     "openai": {
+    │                       "itemId": "<itemId:2>"
+    │                     }
+    │                   },
+    │                   "toolCallId": "<toolCallId:1>",
+    │                   "toolName": "search",
+    │                   "type": "tool-result"
+    │                 }
+    │               ],
+    │               "role": "tool"
+    │             }
+    │           ]
+    │           output: [
+    │             {
+    │               "finish_reason": "stop",
+    │               "index": 0,
+    │               "message": {
+    │                 "content": "Researcher result: Eve instrumentation — https://eve.dev/docs/guides/instrumentation",
+    │                 "role": "assistant"
+    │               }
+    │             }
+    │           ]
+    │           metadata: {
+    │             "eve.session_id": "<eve.session_id:1>",
+    │             "model": "gpt-5.4-mini",
+    │             "provider": "openai",
+    │             "scenario": "eve-instrumentation",
+    │             "testRunId": "<run:1>"
+    │           }
+    │           metrics: {
+    │             "completion_tokens": 22,
+    │             "prompt_cached_tokens": 6528,
+    │             "prompt_tokens": 6627,
+    │             "tokens": 6649
+    │           }
+    ├── read [tool]
+    │   input: {
+    │     "url": "https://eve.dev/docs/guides/instrumentation"
+    │   }
+    │   output: {
+    │     "excerpt": "Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace.",
+    │     "section": "Runtime context",
+    │     "title": "Eve instrumentation",
+    │     "url": "https://eve.dev/docs/guides/instrumentation"
+    │   }
+    │   metadata: {
+    │     "eve.session_id": "<eve.session_id:1>",
+    │     "scenario": "eve-instrumentation",
+    │     "testRunId": "<run:1>"
+    │   }
+    └── eve.step [llm]
+        input: [
+          {
+            "content": "Instructions (instructions)\nYou are a deterministic fixture agent for Braintrust Eve instrumentation tests.\n\nFor every user task, follow these steps exactly:\n\n1. Your first response MUST contain exactly these two tool calls and no text:\n   - researcher with only this argument: {\"message\":\"<the full user message>\"}.\n     Do not pass outputSchema.\n   - read with only this argument:\n     {\"url\":\"https://eve.dev/docs/guides/instrumentation\"}.\n     Emit both calls simultaneously in the same response, with researcher first\n     and read second, so Eve executes them as one parallel batch. The calls are\n     independent. NEVER call one by itself, wait for its result, or emit either\n     call in a separate response.\n2. Only after both results are available, answer with a single sentence that\n   starts with \"Final answer from read:\" and includes the researcher result, read\n   title, URL, and read excerpt.\n\nTool execution\nA single tool or subagent call runs as one serial action. If you call multiple independent tools or subagents in one response, eve treats that batch as parallel work. Only batch work that is independent and does not rely on another call in the same response.",
+            "role": "system"
+          },
+          {
+            "content": "Run the Braintrust Eve instrumentation e2e scenario",
+            "role": "user"
+          },
+          {
+            "content": [
+              {
+                "input": {
+                  "message": "Run the Braintrust Eve instrumentation e2e scenario"
+                },
+                "providerOptions": {
+                  "openai": {
+                    "itemId": "<itemId:2>"
+                  }
+                },
+                "toolCallId": "<toolCallId:1>",
+                "toolName": "researcher",
+                "type": "tool-call"
+              },
+              {
+                "input": {
+                  "url": "https://eve.dev/docs/guides/instrumentation"
+                },
+                "providerOptions": {
+                  "openai": {
+                    "itemId": "<itemId:4>"
+                  }
+                },
+                "toolCallId": "<toolCallId:3>",
+                "toolName": "read",
+                "type": "tool-call"
+              }
+            ],
+            "role": "assistant"
+          },
+          {
+            "content": [
+              {
+                "output": {
+                  "type": "json",
+                  "value": {
+                    "excerpt": "Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace.",
+                    "section": "Runtime context",
+                    "title": "Eve instrumentation",
+                    "url": "https://eve.dev/docs/guides/instrumentation"
+                  }
+                },
+                "providerOptions": {
+                  "openai": {
+                    "itemId": "<itemId:4>"
+                  }
+                },
+                "toolCallId": "<toolCallId:3>",
+                "toolName": "read",
+                "type": "tool-result"
+              }
+            ],
+            "role": "tool"
+          },
+          {
+            "content": [
+              {
+                "output": {
+                  "type": "text",
+                  "value": "Researcher result: Eve instrumentation — https://eve.dev/docs/guides/instrumentation"
+                },
+                "toolCallId": "<toolCallId:1>",
+                "toolName": "researcher",
+                "type": "tool-result"
+              }
+            ],
+            "role": "tool"
+          },
+          {
+            "content": [
+              {
+                "providerOptions": {
+                  "openai": {
+                    "itemId": "<itemId:5>",
+                    "phase": "final_answer"
+                  }
+                },
+                "text": "Final answer from read: Researcher result: Eve instrumentation — https://eve.dev/docs/guides/instrumentation; read title: Eve instrumentation; URL: https://eve.dev/docs/guides/instrumentation; excerpt: Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace.",
+                "type": "text"
+              }
+            ],
+            "role": "assistant"
+          },
+          {
+            "content": "Run the Braintrust Eve instrumentation e2e scenario again",
+            "role": "user"
+          },
+          {
+            "content": [
+              {
+                "input": {
+                  "message": "Run the Braintrust Eve instrumentation e2e scenario again"
+                },
+                "providerOptions": {
+                  "openai": {
+                    "itemId": "<itemId:7>"
+                  }
+                },
+                "toolCallId": "<toolCallId:6>",
+                "toolName": "researcher",
+                "type": "tool-call"
+              },
+              {
+                "input": {
+                  "url": "https://eve.dev/docs/guides/instrumentation"
+                },
+                "providerOptions": {
+                  "openai": {
+                    "itemId": "<itemId:9>"
+                  }
+                },
+                "toolCallId": "<toolCallId:8>",
+                "toolName": "read",
+                "type": "tool-call"
+              }
+            ],
+            "role": "assistant"
+          },
+          {
+            "content": [
+              {
+                "output": {
+                  "type": "json",
+                  "value": {
+                    "excerpt": "Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace.",
+                    "section": "Runtime context",
+                    "title": "Eve instrumentation",
+                    "url": "https://eve.dev/docs/guides/instrumentation"
+                  }
+                },
+                "providerOptions": {
+                  "openai": {
+                    "itemId": "<itemId:9>"
+                  }
+                },
+                "toolCallId": "<toolCallId:8>",
+                "toolName": "read",
+                "type": "tool-result"
+              }
+            ],
+            "role": "tool"
+          },
+          {
+            "content": [
+              {
+                "output": {
+                  "type": "text",
+                  "value": "Researcher result: Eve instrumentation — https://eve.dev/docs/guides/instrumentation"
+                },
+                "toolCallId": "<toolCallId:6>",
+                "toolName": "researcher",
+                "type": "tool-result"
+              }
+            ],
+            "role": "tool"
+          }
+        ]
+        output: [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "content": "Final answer from read: Researcher result: Eve instrumentation — https://eve.dev/docs/guides/instrumentation; read title: Eve instrumentation; URL: https://eve.dev/docs/guides/instrumentation; excerpt: Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace.",
+              "role": "assistant"
+            }
+          }
+        ]
+        metadata: {
+          "eve.session_id": "<eve.session_id:1>",
+          "model": "gpt-5.4-mini",
+          "provider": "openai",
+          "scenario": "eve-instrumentation",
+          "testRunId": "<run:1>"
+        }
+        metrics: {
+          "completion_tokens": 66,
+          "prompt_cached_tokens": 0,
+          "prompt_tokens": 7128,
+          "tokens": 7194
+        }

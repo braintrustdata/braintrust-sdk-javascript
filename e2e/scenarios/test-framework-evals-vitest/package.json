@@ -2,21 +2,32 @@
   "name": "@braintrust/e2e-test-framework-evals-vitest",
   "private": true,
   "braintrustScenario": {
-    "canary": {
+    "bump": {
       "dependencies": {
-        "vitest": "vitest@4",
-        "vitest-v2": "vitest@2.1.9",
-        "vitest-v3": "vitest@3",
-        "vitest-v4": "vitest@4"
+        "vitest-v2-latest": {
+          "package": "vitest",
+          "range": "2"
+        },
+        "vitest-v3-latest": {
+          "package": "vitest",
+          "range": "3"
+        },
+        "vitest-v4-latest": {
+          "package": "vitest",
+          "range": "4"
+        }
       }
     }
   },
   "dependencies": {
     "tinyrainbow": "3.1.0",
-    "vitest": "4.1.5",
     "vitest-evals": "0.13.1",
+    "vitest": "4.1.5",
     "vitest-v2": "npm:vitest@2.1.9",
+    "vitest-v2-latest": "npm:vitest@2.1.9",
     "vitest-v3": "npm:vitest@3.2.4",
-    "vitest-v4": "npm:vitest@4.1.5"
+    "vitest-v3-latest": "npm:vitest@3.2.6",
+    "vitest-v4": "npm:vitest@4.1.5",
+    "vitest-v4-latest": "npm:vitest@4.1.9"
   }
 }

@@ -1,5 +1,9 @@
-import * as claudeAgentSDK from "claude-agent-sdk-v0.2.76";
+const claudeAgentSDKPackageName =
+  process.env.CLAUDE_AGENT_SDK_PACKAGE_NAME ?? "claude-agent-sdk-v0";
 import { runMain } from "../../helpers/scenario-runtime";
 import { runWrappedClaudeAgentSDKInstrumentation } from "./scenario.impl.mjs";
 
-runMain(async () => runWrappedClaudeAgentSDKInstrumentation(claudeAgentSDK));
+runMain(async () => {
+  const claudeAgentSDK = await import(claudeAgentSDKPackageName);
+  await runWrappedClaudeAgentSDKInstrumentation(claudeAgentSDK);
+});

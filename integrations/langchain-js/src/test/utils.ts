@@ -33,6 +33,7 @@ export const logsToSpans = (logs: LogsRequest[]) => {
 
   return {
     spans,
+    trace_id: spans[0].root_span_id,
     root_span_id: spans[0].span_id,
     root_run_id: spans[0].metadata?.runId,
   };

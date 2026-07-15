@@ -1,0 +1,273 @@
+{
+  "span_tree": [
+    {
+      "name": "bedrock-runtime-instrumentation-root",
+      "type": "task",
+      "children": [
+        {
+          "name": "bedrock-converse-operation",
+          "children": [
+            {
+              "name": "bedrock.converse",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "messages": [
+                  {
+                    "content": [
+                      {
+                        "text": "<bedrock-cacheable-context>"
+                      },
+                      {
+                        "cachePoint": {
+                          "type": "default"
+                        }
+                      },
+                      {
+                        "text": "Reply with exactly OK."
+                      }
+                    ],
+                    "role": "user"
+                  }
+                ]
+              },
+              "output": {
+                "content": [
+                  {
+                    "text": "OK"
+                  }
+                ],
+                "role": "assistant"
+              },
+              "metadata": {
+                "command": "ConverseCommand",
+                "maxTokens": 16,
+                "model": "us.amazon.nova-lite-v1:0",
+                "operation": "converse",
+                "provider": "aws-bedrock",
+                "stopReason": "end_turn",
+                "temperature": 0,
+                "topP": 0.9
+              },
+              "metrics": {
+                "completion_tokens": 2,
+                "latency_ms": 0,
+                "prompt_cache_creation_tokens": 0,
+                "prompt_cached_tokens": 14921,
+                "prompt_tokens": 6,
+                "tokens": 14929
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "converse",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "bedrock-converse-stream-operation",
+          "children": [
+            {
+              "name": "bedrock.converseStream",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "messages": [
+                  {
+                    "content": [
+                      {
+                        "text": "<bedrock-cacheable-context>"
+                      },
+                      {
+                        "cachePoint": {
+                          "type": "default"
+                        }
+                      },
+                      {
+                        "text": "Reply with exactly STREAM."
+                      }
+                    ],
+                    "role": "user"
+                  }
+                ]
+              },
+              "output": {
+                "content": [
+                  {
+                    "text": "Sorry, I can't respond in a way that might reveal internal information."
+                  }
+                ],
+                "role": "assistant"
+              },
+              "metadata": {
+                "command": "ConverseStreamCommand",
+                "maxTokens": 16,
+                "model": "us.amazon.nova-lite-v1:0",
+                "operation": "converseStream",
+                "provider": "aws-bedrock",
+                "stopReason": "max_tokens",
+                "temperature": 0,
+                "topP": 0.9
+              },
+              "metrics": {
+                "completion_tokens": 16,
+                "latency_ms": 0,
+                "prompt_cache_creation_tokens": 0,
+                "prompt_cached_tokens": 14922,
+                "prompt_tokens": 6,
+                "time_to_first_token": 0,
+                "tokens": 14944
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "converse-stream",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "bedrock-invoke-model-operation",
+          "children": [
+            {
+              "name": "bedrock.invokeModel",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "inferenceConfig": {
+                  "maxTokens": 16,
+                  "temperature": 0,
+                  "topP": 0.9
+                },
+                "messages": [
+                  {
+                    "content": [
+                      {
+                        "cachePoint": {
+                          "type": "default"
+                        },
+                        "text": "<bedrock-cacheable-context>"
+                      },
+                      {
+                        "text": "Reply with exactly RAW."
+                      }
+                    ],
+                    "role": "user"
+                  }
+                ],
+                "schemaVersion": "messages-v1"
+              },
+              "output": {
+                "output": {
+                  "message": {
+                    "content": [
+                      {
+                        "text": "RAW"
+                      }
+                    ],
+                    "role": "assistant"
+                  }
+                },
+                "stopReason": "end_turn",
+                "usage": {
+                  "cacheReadInputTokenCount": 14921,
+                  "cacheWriteInputTokenCount": 0,
+                  "inputTokens": 6,
+                  "outputTokens": 2,
+                  "totalTokens": 14929
+                }
+              },
+              "metadata": {
+                "accept": "application/json",
+                "command": "InvokeModelCommand",
+                "contentType": "application/json",
+                "model": "us.amazon.nova-lite-v1:0",
+                "operation": "invokeModel",
+                "provider": "aws-bedrock"
+              },
+              "metrics": {
+                "completion_tokens": 2,
+                "prompt_cache_creation_tokens": 0,
+                "prompt_cached_tokens": 14921,
+                "prompt_tokens": 6,
+                "tokens": 14929
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "invoke-model",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "bedrock-invoke-model-stream-operation",
+          "children": [
+            {
+              "name": "bedrock.invokeModelWithResponseStream",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "inferenceConfig": {
+                  "maxTokens": 16,
+                  "temperature": 0,
+                  "topP": 0.9
+                },
+                "messages": [
+                  {
+                    "content": [
+                      {
+                        "cachePoint": {
+                          "type": "default"
+                        },
+                        "text": "<bedrock-cacheable-context>"
+                      },
+                      {
+                        "text": "Reply with exactly RAWSTREAM."
+                      }
+                    ],
+                    "role": "user"
+                  }
+                ],
+                "schemaVersion": "messages-v1"
+              },
+              "output": {
+                "text": "RAWSTREAM"
+              },
+              "metadata": {
+                "accept": "application/json",
+                "command": "InvokeModelWithResponseStreamCommand",
+                "contentType": "application/json",
+                "metrics": {},
+                "model": "us.amazon.nova-lite-v1:0",
+                "operation": "invokeModelWithResponseStream",
+                "provider": "aws-bedrock",
+                "trace": {},
+                "usage": {
+                  "cacheReadInputTokenCount": 14922,
+                  "cacheWriteInputTokenCount": 0,
+                  "inputTokens": 6,
+                  "outputTokens": 3
+                }
+              },
+              "metrics": {
+                "completion_tokens": 3,
+                "prompt_cache_creation_tokens": 0,
+                "prompt_cached_tokens": 14922,
+                "prompt_tokens": 6,
+                "time_to_first_token": 0,
+                "tokens": 14931
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "invoke-model-stream",
+            "testRunId": "<run:1>"
+          }
+        }
+      ],
+      "metadata": {
+        "scenario": "bedrock-runtime-instrumentation",
+        "testRunId": "<run:1>"
+      }
+    }
+  ]
+}

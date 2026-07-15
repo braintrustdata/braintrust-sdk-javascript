@@ -36,7 +36,6 @@
               },
               "metrics": {
                 "completion_tokens": 2,
-                "prompt_cached_tokens": 0,
                 "prompt_tokens": 5,
                 "time_to_first_token": 0,
                 "tokens": 7
@@ -75,7 +74,6 @@
               },
               "metrics": {
                 "completion_tokens": 2,
-                "prompt_cached_tokens": 0,
                 "prompt_tokens": 5,
                 "time_to_first_token": 0,
                 "tokens": 7
@@ -109,7 +107,7 @@
                 "inputType": "search_document",
                 "model": "embed-english-v3.0",
                 "provider": "cohere",
-                "responseType": "embeddings_by_type"
+                "response_type": "embeddings_by_type"
               },
               "metrics": {
                 "prompt_tokens": 3
@@ -138,12 +136,10 @@
               },
               "output": [
                 {
-                  "index": 0,
-                  "relevance_score": 0.9980122
+                  "index": 0
                 },
                 {
-                  "index": 2,
-                  "relevance_score": 0.00015720345
+                  "index": 2
                 }
               ],
               "metadata": {

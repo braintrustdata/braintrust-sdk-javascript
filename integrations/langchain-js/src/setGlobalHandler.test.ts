@@ -57,7 +57,7 @@ describe("setGlobalHandler", () => {
     // Not normally needed by users, but we need it for our tests.
     await flushBraintrustLogs();
 
-    const { spans, root_span_id } = logsToSpans(logs);
+    const { spans, trace_id, root_span_id } = logsToSpans(logs);
 
     // Spans would be empty if the handler was not registered, let's make sure it logged what we expect.
     expect(spans).toMatchObject([
@@ -73,7 +73,7 @@ describe("setGlobalHandler", () => {
           tags: [],
         },
         span_id: root_span_id,
-        root_span_id,
+        root_span_id: trace_id,
       },
       {
         span_attributes: { name: "ChatPromptTemplate", type: "task" },
@@ -90,7 +90,7 @@ describe("setGlobalHandler", () => {
           }),
         }),
         metadata: { tags: ["seq:step:1"] },
-        root_span_id,
+        root_span_id: trace_id,
         span_parents: [root_span_id],
       },
       {
@@ -128,7 +128,7 @@ describe("setGlobalHandler", () => {
           tags: ["seq:step:2"],
           model: "gpt-4o-mini-2024-07-18",
         },
-        root_span_id,
+        root_span_id: trace_id,
         span_parents: [root_span_id],
       },
     ]);

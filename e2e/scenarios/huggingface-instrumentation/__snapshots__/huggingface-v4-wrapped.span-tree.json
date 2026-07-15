@@ -1,0 +1,62 @@
+{
+  "span_tree": [
+    {
+      "name": "huggingface-instrumentation-root",
+      "type": "task",
+      "children": [
+        {
+          "name": "huggingface-chat-operation",
+          "children": [],
+          "metadata": {
+            "operation": "chat",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "huggingface-chat-stream-operation",
+          "children": [],
+          "metadata": {
+            "operation": "chat-stream",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "huggingface-chat-stream-tool-call-operation",
+          "children": [],
+          "metadata": {
+            "operation": "chat-stream-tool-call",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "huggingface-text-generation-operation",
+          "children": [],
+          "metadata": {
+            "operation": "text-generation",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "huggingface-text-generation-stream-operation",
+          "children": [],
+          "metadata": {
+            "operation": "text-generation-stream",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "huggingface-feature-extraction-operation",
+          "children": [],
+          "metadata": {
+            "operation": "feature-extraction",
+            "testRunId": "<run:1>"
+          }
+        }
+      ],
+      "metadata": {
+        "scenario": "huggingface-instrumentation",
+        "testRunId": "<run:1>"
+      }
+    }
+  ]
+}
