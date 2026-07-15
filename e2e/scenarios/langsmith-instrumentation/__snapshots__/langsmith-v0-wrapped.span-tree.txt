@@ -12,7 +12,8 @@ span_tree:
 │   ]
 │   metadata: {
 │     "customer_id": "customer-123",
-│     "scenario": "langsmith-instrumentation"
+│     "scenario": "langsmith-instrumentation",
+│     "testRunId": "<run:1>"
 │   }
 │   ├── retrieve-context [tool]
 │   │   input: {
@@ -27,7 +28,6 @@ span_tree:
 │   │     "knowledge-base"
 │   │   ]
 │   │   metadata: {
-│   │     "customer_id": "customer-123",
 │   │     "data_source": "support-kb",
 │   │     "scenario": "langsmith-instrumentation"
 │   │   }
@@ -73,7 +73,6 @@ span_tree:
 │         "chat-completion"
 │       ]
 │       metadata: {
-│         "customer_id": "customer-123",
 │         "customer_tier": "enterprise",
 │         "deployment": "local-fixture",
 │         "max_tokens": 64,
@@ -90,7 +89,8 @@ span_tree:
 │       }
 ├── lookup-customer-record [tool]
 │   metadata: {
-│     "scenario": "langsmith-instrumentation"
+│     "scenario": "langsmith-instrumentation",
+│     "testRunId": "<run:1>"
 │   }
 │   error: "Error: customer record unavailable"
 ├── manual-rag-pipeline [task]
@@ -101,7 +101,8 @@ span_tree:
 │     "matched_document": "Refund policy"
 │   }
 │   metadata: {
-│     "scenario": "langsmith-instrumentation"
+│     "scenario": "langsmith-instrumentation",
+│     "testRunId": "<run:1>"
 │   }
 │   └── embed-query [llm]
 │       input: {
@@ -118,8 +119,7 @@ span_tree:
 │       ]
 │       metadata: {
 │         "model": "manual-model",
-│         "provider": "manual-provider",
-│         "scenario": "langsmith-instrumentation"
+│         "provider": "manual-provider"
 │       }
 │       metrics: {
 │         "completion_tokens": 0,
@@ -139,7 +139,8 @@ span_tree:
 │     ]
 │   }
 │   metadata: {
-│     "scenario": "langsmith-instrumentation"
+│     "scenario": "langsmith-instrumentation",
+│     "testRunId": "<run:1>"
 │   }
 └── offline-document-enrichment [task]
     input: {
@@ -149,7 +150,8 @@ span_tree:
       "enriched_documents": 1
     }
     metadata: {
-      "scenario": "langsmith-instrumentation"
+      "scenario": "langsmith-instrumentation",
+      "testRunId": "<run:1>"
     }
     └── extract-keywords [tool]
         input: {

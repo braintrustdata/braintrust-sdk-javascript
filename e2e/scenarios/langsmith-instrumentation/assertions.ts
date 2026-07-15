@@ -22,6 +22,7 @@ type RunLangSmithScenario = (harness: {
     scenarioDir: string;
     timeoutMs: number;
   }) => Promise<unknown>;
+  testRunId: string;
 }) => Promise<void>;
 
 const expectedNames = [
@@ -52,9 +53,11 @@ export function defineLangSmithInstrumentationAssertions(options: {
 
   describe(options.name, () => {
     let events: CapturedLogEvent[] = [];
+    let testRunId = "";
 
     beforeAll(async () => {
       await withScenarioHarness(async (harness) => {
+        testRunId = harness.testRunId;
         await options.runScenario(harness);
         events = harness.events();
       });
@@ -75,6 +78,10 @@ export function defineLangSmithInstrumentationAssertions(options: {
       for (const root of roots) {
         expect(root?.span.parentIds).toEqual([]);
         expect(root?.span.rootId).toBe(root?.span.id);
+        expect(root?.row.metadata).toMatchObject({
+          scenario: "langsmith-instrumentation",
+          testRunId,
+        });
       }
 
       const assistant = findLatestSpan(events, "support-assistant");

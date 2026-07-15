@@ -12,7 +12,8 @@ span_tree:
 │   ]
 │   metadata: {
 │     "customer_id": "customer-123",
-│     "scenario": "langsmith-instrumentation"
+│     "scenario": "langsmith-instrumentation",
+│     "testRunId": "<run:1>"
 │   }
 │   ├── retrieve-context [tool]
 │   │   input: {
@@ -29,7 +30,8 @@ span_tree:
 │   │   metadata: {
 │   │     "customer_id": "customer-123",
 │   │     "data_source": "support-kb",
-│   │     "scenario": "langsmith-instrumentation"
+│   │     "scenario": "langsmith-instrumentation",
+│   │     "testRunId": "<run:1>"
 │   │   }
 │   └── ChatOpenAI [llm]
 │       input: {
@@ -80,7 +82,8 @@ span_tree:
 │         "model": "gpt-4o-mini",
 │         "provider": "openai",
 │         "scenario": "langsmith-instrumentation",
-│         "temperature": 0
+│         "temperature": 0,
+│         "testRunId": "<run:1>"
 │       }
 │       metrics: {
 │         "completion_tokens": 7,
@@ -90,7 +93,8 @@ span_tree:
 │       }
 ├── lookup-customer-record [tool]
 │   metadata: {
-│     "scenario": "langsmith-instrumentation"
+│     "scenario": "langsmith-instrumentation",
+│     "testRunId": "<run:1>"
 │   }
 │   error: "Error: customer record unavailable"
 ├── manual-rag-pipeline [task]
@@ -101,7 +105,8 @@ span_tree:
 │     "matched_document": "Refund policy"
 │   }
 │   metadata: {
-│     "scenario": "langsmith-instrumentation"
+│     "scenario": "langsmith-instrumentation",
+│     "testRunId": "<run:1>"
 │   }
 │   └── embed-query [llm]
 │       input: {
@@ -119,7 +124,8 @@ span_tree:
 │       metadata: {
 │         "model": "manual-model",
 │         "provider": "manual-provider",
-│         "scenario": "langsmith-instrumentation"
+│         "scenario": "langsmith-instrumentation",
+│         "testRunId": "<run:1>"
 │       }
 │       metrics: {
 │         "completion_tokens": 0,
@@ -139,25 +145,53 @@ span_tree:
 │     ]
 │   }
 │   metadata: {
-│     "scenario": "langsmith-instrumentation"
+│     "scenario": "langsmith-instrumentation",
+│     "testRunId": "<run:1>"
 │   }
-└── offline-document-enrichment [task]
+├── offline-document-enrichment [task]
+│   input: {
+│     "document_count": 1
+│   }
+│   output: {
+│     "enriched_documents": 1
+│   }
+│   metadata: {
+│     "scenario": "langsmith-instrumentation",
+│     "testRunId": "<run:1>"
+│   }
+│   └── extract-keywords [tool]
+│       input: {
+│         "document": "Refund requests are accepted within 30 days."
+│       }
+│       output: {
+│         "keywords": [
+│           "refund",
+│           "30 days"
+│         ]
+│       }
+└── langchain-dedupe [task]
     input: {
-      "document_count": 1
+      "input": "provider-free"
     }
     output: {
-      "enriched_documents": 1
+      "output": "provider-free!"
     }
     metadata: {
-      "scenario": "langsmith-instrumentation"
+      "braintrust": {
+        "integration_name": "langchain-js",
+        "sdk_language": "javascript"
+      },
+      "metadata": {},
+      "name": "langchain-dedupe",
+      "run_id": "<uuid:1>",
+      "serialized": {
+        "id": [
+          "langchain_core",
+          "runnables",
+          "RunnableLambda"
+        ],
+        "lc": 1,
+        "type": "not_implemented"
+      },
+      "tags": []
     }
-    └── extract-keywords [tool]
-        input: {
-          "document": "Refund requests are accepted within 30 days."
-        }
-        output: {
-          "keywords": [
-            "refund",
-            "30 days"
-          ]
-        }

@@ -20,8 +20,10 @@
             "knowledge-base"
           ],
           "metadata": {
+            "customer_id": "customer-123",
             "data_source": "support-kb",
-            "scenario": "langsmith-instrumentation"
+            "scenario": "langsmith-instrumentation",
+            "testRunId": "<run:1>"
           }
         },
         {
@@ -69,13 +71,15 @@
             "chat-completion"
           ],
           "metadata": {
+            "customer_id": "customer-123",
             "customer_tier": "enterprise",
             "deployment": "local-fixture",
             "max_tokens": 64,
             "model": "gpt-4o-mini",
             "provider": "openai",
             "scenario": "langsmith-instrumentation",
-            "temperature": 0
+            "temperature": 0,
+            "testRunId": "<run:1>"
           },
           "metrics": {
             "completion_tokens": 7,
@@ -97,7 +101,8 @@
       ],
       "metadata": {
         "customer_id": "customer-123",
-        "scenario": "langsmith-instrumentation"
+        "scenario": "langsmith-instrumentation",
+        "testRunId": "<run:1>"
       }
     },
     {
@@ -105,7 +110,8 @@
       "type": "tool",
       "children": [],
       "metadata": {
-        "scenario": "langsmith-instrumentation"
+        "scenario": "langsmith-instrumentation",
+        "testRunId": "<run:1>"
       },
       "error": "Error: customer record unavailable"
     },
@@ -131,7 +137,9 @@
           ],
           "metadata": {
             "model": "manual-model",
-            "provider": "manual-provider"
+            "provider": "manual-provider",
+            "scenario": "langsmith-instrumentation",
+            "testRunId": "<run:1>"
           },
           "metrics": {
             "completion_tokens": 0,
@@ -149,7 +157,8 @@
         "matched_document": "Refund policy"
       },
       "metadata": {
-        "scenario": "langsmith-instrumentation"
+        "scenario": "langsmith-instrumentation",
+        "testRunId": "<run:1>"
       }
     },
     {
@@ -166,7 +175,8 @@
         ]
       },
       "metadata": {
-        "scenario": "langsmith-instrumentation"
+        "scenario": "langsmith-instrumentation",
+        "testRunId": "<run:1>"
       }
     },
     {
@@ -195,7 +205,8 @@
         "enriched_documents": 1
       },
       "metadata": {
-        "scenario": "langsmith-instrumentation"
+        "scenario": "langsmith-instrumentation",
+        "testRunId": "<run:1>"
       }
     }
   ]

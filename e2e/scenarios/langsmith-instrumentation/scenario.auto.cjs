@@ -1,9 +1,9 @@
-const root = require("langsmith-v081");
-const client = require("langsmith-v081/client");
+const root = require("langsmith-v0-latest");
+const client = require("langsmith-v0-latest/client");
 const openAI = require("openai");
-const openAIWrapper = require("langsmith-v081/wrappers");
-const runTrees = require("langsmith-v081/run_trees");
-const traceable = require("langsmith-v081/traceable");
+const openAIWrapper = require("langsmith-v0-latest/wrappers");
+const runTrees = require("langsmith-v0-latest/run_trees");
+const traceable = require("langsmith-v0-latest/traceable");
 
 void (async () => {
   const { runMain } = await import("../../helpers/provider-runtime.mjs");

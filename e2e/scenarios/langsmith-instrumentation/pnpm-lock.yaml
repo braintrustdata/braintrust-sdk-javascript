@@ -11,16 +11,10 @@ importers:
       '@langchain/core':
         specifier: 1.1.36
         version: 1.1.36(openai@4.104.0)
-      langsmith:
-        specifier: 0.8.1
-        version: 0.8.1(openai@4.104.0)
-      langsmith-v0330:
+      langsmith-v0:
         specifier: npm:langsmith@0.3.30
         version: langsmith@0.3.30(openai@4.104.0)
-      langsmith-v0511:
-        specifier: npm:langsmith@0.5.11
-        version: langsmith@0.5.11(openai@4.104.0)
-      langsmith-v081:
+      langsmith-v0-latest:
         specifier: npm:langsmith@0.8.1
         version: langsmith@0.8.1(openai@4.104.0)
       openai:
@@ -84,10 +78,6 @@ packages:
   chalk@4.1.2:
     resolution: {integrity: sha512-oKnbhFyRIXpUuez8iBMmyEa4nbj4IOQyuhc/wy9kY7/WVPcwIO9VA668Pu8RkO7+0G76SLROeyw9CpQ061i4mA==}
     engines: {node: '>=10'}
-
-  chalk@5.6.2:
-    resolution: {integrity: sha512-7NzBL0rN6fMUW+f7A6Io4h40qQlG+xGmtMxfbnH/K7TAtt8JQWVQK+6g0UXKMeVJoyV5EkkNsErQ8pVD3bLHbA==}
-    engines: {node: ^12.17.0 || ^14.13 || >=16.0.0}
 
   color-convert@2.0.1:
     resolution: {integrity: sha512-RRECPsj7iu/xb5oKYcsFHSppFNnsj/52OVTRKb4zP5onXwVF3zVmmToNcOfGC+CRDpfK/U584fMg38ZHCaElKQ==}
@@ -192,26 +182,6 @@ packages:
       openai: '*'
     peerDependenciesMeta:
       openai:
-        optional: true
-
-  langsmith@0.5.11:
-    resolution: {integrity: sha512-Yio502Ow2vbVt16P1sybNMNpMsr5BMqoeonoi4flrcDsP55No/aCe2zydtBNOv0+kjKQw4WSKAzTsNwenDeD5w==}
-    peerDependencies:
-      '@opentelemetry/api': '*'
-      '@opentelemetry/exporter-trace-otlp-proto': '*'
-      '@opentelemetry/sdk-trace-base': '*'
-      openai: '*'
-      ws: '>=7'
-    peerDependenciesMeta:
-      '@opentelemetry/api':
-        optional: true
-      '@opentelemetry/exporter-trace-otlp-proto':
-        optional: true
-      '@opentelemetry/sdk-trace-base':
-        optional: true
-      openai:
-        optional: true
-      ws:
         optional: true
 
   langsmith@0.8.1:
@@ -408,8 +378,6 @@ snapshots:
       ansi-styles: 4.3.0
       supports-color: 7.2.0
 
-  chalk@5.6.2: {}
-
   color-convert@2.0.1:
     dependencies:
       color-name: 1.1.4
@@ -517,17 +485,6 @@ snapshots:
       console-table-printer: 2.16.1
       p-queue: 6.6.2
       p-retry: 4.6.2
-      semver: 7.8.5
-      uuid: 10.0.0
-    optionalDependencies:
-      openai: 4.104.0
-
-  langsmith@0.5.11(openai@4.104.0):
-    dependencies:
-      '@types/uuid': 10.0.0
-      chalk: 5.6.2
-      console-table-printer: 2.16.1
-      p-queue: 6.6.2
       semver: 7.8.5
       uuid: 10.0.0
     optionalDependencies:

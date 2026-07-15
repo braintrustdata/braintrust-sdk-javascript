@@ -57,7 +57,7 @@ describe.concurrent("variants", () => {
       });
 
       defineLangSmithInstrumentationAssertions({
-        includeLangChain: scenario.dependencyName === "langsmith-v081",
+        includeLangChain: scenario.dependencyName === "langsmith-v0-latest",
         name: "auto-hook instrumentation ESM",
         runScenario: async ({ runNodeScenarioDir }) => {
           await runNodeScenarioDir({
@@ -65,7 +65,7 @@ describe.concurrent("variants", () => {
             env: {
               ...baseEnv,
               LANGSMITH_INCLUDE_LANGCHAIN:
-                scenario.dependencyName === "langsmith-v081" ? "1" : "0",
+                scenario.dependencyName === "langsmith-v0-latest" ? "1" : "0",
               LANGSMITH_PACKAGE_NAME: scenario.dependencyName,
             },
             nodeArgs: ["--import", "braintrust/hook.mjs"],
@@ -94,13 +94,13 @@ defineLangSmithInstrumentationAssertions({
       nodeArgs: ["--import", "braintrust/hook.mjs"],
       runContext: {
         originalScenarioDir,
-        variantKey: "langsmith-v0-8-1",
+        variantKey: "langsmith-v0-latest",
       },
       scenarioDir,
       timeoutMs: LANGSMITH_SCENARIO_TIMEOUT_MS,
     });
   },
-  snapshotName: "langsmith-v0-8-1-auto-cjs",
+  snapshotName: "langsmith-v0-latest-auto-cjs",
   testFileUrl: import.meta.url,
   timeoutMs: LANGSMITH_SCENARIO_TIMEOUT_MS,
 });

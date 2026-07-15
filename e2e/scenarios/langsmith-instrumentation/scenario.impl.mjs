@@ -4,21 +4,17 @@ import {
   wrapLangSmithRunTrees,
   wrapLangSmithTraceable,
 } from "braintrust";
-import { scopedName } from "../../helpers/provider-runtime.mjs";
+import { getTestRunId, scopedName } from "../../helpers/provider-runtime.mjs";
 
 export const LANGSMITH_SCENARIO_TIMEOUT_MS = 120_000;
 export const LANGSMITH_SCENARIO_SPECS = [
   {
-    dependencyName: "langsmith-v0330",
-    snapshotName: "langsmith-v0-3-30",
+    dependencyName: "langsmith-v0",
+    snapshotName: "langsmith-v0",
   },
   {
-    dependencyName: "langsmith-v0511",
-    snapshotName: "langsmith-v0-5-11",
-  },
-  {
-    dependencyName: "langsmith-v081",
-    snapshotName: "langsmith-v0-8-1",
+    dependencyName: "langsmith-v0-latest",
+    snapshotName: "langsmith-v0-latest",
   },
 ];
 
@@ -45,6 +41,7 @@ export async function runLangSmithScenario({
   namespaces,
   wrapped,
 }) {
+  const testRunId = getTestRunId();
   const rootNamespace = namespaces.root;
   const clientNamespace = wrapped
     ? wrapLangSmithClient(namespaces.client)
@@ -173,6 +170,7 @@ export async function runLangSmithScenario({
       metadata: {
         customer_id: "customer-123",
         scenario: SCENARIO_NAME,
+        testRunId,
       },
       name: "support-assistant",
       run_type: "chain",
@@ -187,7 +185,7 @@ export async function runLangSmithScenario({
     },
     {
       client,
-      metadata: { scenario: SCENARIO_NAME },
+      metadata: { scenario: SCENARIO_NAME, testRunId },
       name: "lookup-customer-record",
       run_type: "tool",
     },
@@ -196,7 +194,7 @@ export async function runLangSmithScenario({
 
   const manualParent = new runTreesNamespace.RunTree({
     client,
-    extra: { metadata: { scenario: SCENARIO_NAME } },
+    extra: { metadata: { scenario: SCENARIO_NAME, testRunId } },
     inputs: { question: "Which policy applies?" },
     name: "manual-rag-pipeline",
     run_type: "chain",
@@ -232,7 +230,7 @@ export async function runLangSmithScenario({
   const now = Date.now();
   await client.createRun({
     dotted_order: `20260713T000000000000Z${IDS.client}`,
-    extra: { metadata: { scenario: SCENARIO_NAME } },
+    extra: { metadata: { scenario: SCENARIO_NAME, testRunId } },
     id: IDS.client,
     inputs: { query: "refund window", top_k: 3 },
     name: "direct-search-index",
@@ -260,7 +258,7 @@ export async function runLangSmithScenario({
       },
       {
         dotted_order: `20260713T000000000000Z${IDS.batchParent}`,
-        extra: { metadata: { scenario: SCENARIO_NAME } },
+        extra: { metadata: { scenario: SCENARIO_NAME, testRunId } },
         id: IDS.batchParent,
         inputs: { document_count: 1 },
         name: "offline-document-enrichment",
