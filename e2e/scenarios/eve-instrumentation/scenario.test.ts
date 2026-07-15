@@ -112,8 +112,19 @@ describe("eve instrumentation", () => {
     expect(root?.metrics?.tokens).toEqual(expect.any(Number));
     expect(root?.output).toContain("Final answer from read");
 
-    expect(steps).toHaveLength(3);
-    expect(steps.map((step) => step.span.type)).toEqual(["llm", "llm", "llm"]);
+    expect(steps).toHaveLength(2);
+    expect(steps.map((step) => step.span.type)).toEqual(["llm", "llm"]);
+    expect(steps[0]?.output).toMatchObject([
+      {
+        finish_reason: "tool_calls",
+        message: {
+          tool_calls: [
+            { function: { name: "researcher" }, type: "function" },
+            { function: { name: "read" }, type: "function" },
+          ],
+        },
+      },
+    ]);
     for (const step of steps) {
       expect(step.span.parentIds).toEqual([root?.span.id]);
       expect(Array.isArray(step.input)).toBe(true);
@@ -211,11 +222,18 @@ describe("eve instrumentation", () => {
       "eve.session_id": root?.metadata?.["eve.session_id"],
     });
     expect(secondRoot?.output).toContain("Final answer from read");
-    expect(secondSteps).toHaveLength(3);
-    expect(secondSteps.map((step) => step.span.type)).toEqual([
-      "llm",
-      "llm",
-      "llm",
+    expect(secondSteps).toHaveLength(2);
+    expect(secondSteps.map((step) => step.span.type)).toEqual(["llm", "llm"]);
+    expect(secondSteps[0]?.output).toMatchObject([
+      {
+        finish_reason: "tool_calls",
+        message: {
+          tool_calls: [
+            { function: { name: "researcher" }, type: "function" },
+            { function: { name: "read" }, type: "function" },
+          ],
+        },
+      },
     ]);
     expect(secondResearcher?.span.type).toBe("tool");
     expect(secondResearcher?.span.ended).toBe(true);

@@ -629,7 +629,7 @@ describe("braintrustEveHook", () => {
     ]);
   });
 
-  it("does not reconstruct later LLM inputs from earlier hook events", async () => {
+  it("merges incremental tool-call batches without reconstructing later LLM inputs", async () => {
     const wildcard = braintrustEveHook({ defineState }).events?.["*"];
     expect(wildcard).toBeDefined();
 
@@ -660,6 +660,22 @@ describe("braintrustEveHook", () => {
           {
             callId: "call-search",
             input: { query: "Eve instrumentation" },
+            kind: "tool-call",
+            toolName: "search",
+          },
+        ],
+        sequence: 0,
+        stepIndex: 0,
+        turnId: "turn-incremental-tools",
+      },
+      type: "actions.requested",
+    });
+    await emit({
+      data: {
+        actions: [
+          {
+            callId: "call-search",
+            input: { query: "Updated Eve instrumentation" },
             kind: "tool-call",
             toolName: "search",
           },
@@ -764,7 +780,28 @@ describe("braintrustEveHook", () => {
       {
         finish_reason: "tool_calls",
         message: {
-          tool_calls: [{ id: "call-read", function: { name: "read" } }],
+          tool_calls: [
+            {
+              function: {
+                arguments: JSON.stringify({
+                  query: "Updated Eve instrumentation",
+                }),
+                name: "search",
+              },
+              id: "call-search",
+              type: "function",
+            },
+            {
+              function: {
+                arguments: JSON.stringify({
+                  url: "https://eve.dev/docs/guides/instrumentation",
+                }),
+                name: "read",
+              },
+              id: "call-read",
+              type: "function",
+            },
+          ],
         },
       },
     ]);
