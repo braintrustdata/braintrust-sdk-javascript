@@ -115,6 +115,163 @@
           }
         },
         {
+          "name": "strands-agent-document-operation",
+          "children": [
+            {
+              "name": "Agent: document-agent",
+              "type": "task",
+              "children": [
+                {
+                  "name": "Strands model: gpt-4o-mini-2024-07-18",
+                  "type": "llm",
+                  "children": [],
+                  "metadata": {
+                    "model": "gpt-4o-mini-2024-07-18",
+                    "provider": "openai",
+                    "strands.operation": "model.stream",
+                    "strands.stop_reason": "endTurn"
+                  },
+                  "metrics": {
+                    "completion_tokens": 5,
+                    "duration": "<duration>",
+                    "prompt_tokens": 247,
+                    "tokens": 252
+                  }
+                }
+              ],
+              "input": [
+                {
+                  "document": {
+                    "format": "pdf",
+                    "name": "strands-regression.pdf",
+                    "source": {
+                      "bytes": {
+                        "content_type": "application/pdf",
+                        "filename": "strands-regression.pdf",
+                        "key": "<uuid:1>",
+                        "type": "braintrust_attachment"
+                      }
+                    }
+                  }
+                },
+                {
+                  "text": "Reply exactly STRANDS_DOCUMENT_OK."
+                }
+              ],
+              "output": {
+                "content": [
+                  {
+                    "text": "STRANDS_DOCUMENT_OK."
+                  }
+                ],
+                "metadata": {
+                  "usage": {
+                    "inputTokens": 247,
+                    "outputTokens": 5,
+                    "totalTokens": 252
+                  }
+                },
+                "role": "assistant"
+              },
+              "metadata": {
+                "model": "gpt-4o-mini-2024-07-18",
+                "provider": "openai",
+                "strands.agent.id": "document-agent",
+                "strands.agent.name": "document-agent",
+                "strands.operation": "Agent.stream",
+                "strands.stop_reason": "endTurn"
+              },
+              "metrics": {
+                "completion_tokens": 5,
+                "duration": "<duration>",
+                "prompt_tokens": 247,
+                "tokens": 252
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "agent-document"
+          }
+        },
+        {
+          "name": "strands-agent-image-operation",
+          "children": [
+            {
+              "name": "Agent: image-agent",
+              "type": "task",
+              "children": [
+                {
+                  "name": "Strands model: gpt-4o-mini-2024-07-18",
+                  "type": "llm",
+                  "children": [],
+                  "metadata": {
+                    "model": "gpt-4o-mini-2024-07-18",
+                    "provider": "openai",
+                    "strands.operation": "model.stream",
+                    "strands.stop_reason": "endTurn"
+                  },
+                  "metrics": {
+                    "completion_tokens": 5,
+                    "duration": "<duration>",
+                    "prompt_tokens": 8525,
+                    "tokens": 8530
+                  }
+                }
+              ],
+              "input": [
+                {
+                  "image": {
+                    "format": "png",
+                    "source": {
+                      "bytes": {
+                        "content_type": "image/png",
+                        "filename": "image.png",
+                        "key": "<uuid:1>",
+                        "type": "braintrust_attachment"
+                      }
+                    }
+                  }
+                },
+                {
+                  "text": "Reply exactly STRANDS_IMAGE_OK."
+                }
+              ],
+              "output": {
+                "content": [
+                  {
+                    "text": "STRANDS_IMAGE_OK."
+                  }
+                ],
+                "metadata": {
+                  "usage": {
+                    "inputTokens": 8525,
+                    "outputTokens": 5,
+                    "totalTokens": 8530
+                  }
+                },
+                "role": "assistant"
+              },
+              "metadata": {
+                "model": "gpt-4o-mini-2024-07-18",
+                "provider": "openai",
+                "strands.agent.id": "image-agent",
+                "strands.agent.name": "image-agent",
+                "strands.operation": "Agent.stream",
+                "strands.stop_reason": "endTurn"
+              },
+              "metrics": {
+                "completion_tokens": 5,
+                "duration": "<duration>",
+                "prompt_tokens": 8525,
+                "tokens": 8530
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "agent-image"
+          }
+        },
+        {
           "name": "strands-agent-stream-operation",
           "children": [
             {

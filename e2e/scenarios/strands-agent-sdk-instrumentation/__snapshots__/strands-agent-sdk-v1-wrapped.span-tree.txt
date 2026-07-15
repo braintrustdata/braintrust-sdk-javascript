@@ -92,6 +92,137 @@ span_tree:
     │             "prompt_tokens": 127,
     │             "tokens": 133
     │           }
+    ├── strands-agent-document-operation
+    │   metadata: {
+    │     "operation": "agent-document"
+    │   }
+    │   └── Agent: document-agent [task]
+    │       input: [
+    │         {
+    │           "document": {
+    │             "format": "pdf",
+    │             "name": "strands-regression.pdf",
+    │             "source": {
+    │               "bytes": {
+    │                 "content_type": "application/pdf",
+    │                 "filename": "strands-regression.pdf",
+    │                 "key": "<uuid:1>",
+    │                 "type": "braintrust_attachment"
+    │               }
+    │             }
+    │           }
+    │         },
+    │         {
+    │           "text": "Reply exactly STRANDS_DOCUMENT_OK."
+    │         }
+    │       ]
+    │       output: {
+    │         "content": [
+    │           {
+    │             "text": "STRANDS_DOCUMENT_OK."
+    │           }
+    │         ],
+    │         "metadata": {
+    │           "usage": {
+    │             "inputTokens": 247,
+    │             "outputTokens": 5,
+    │             "totalTokens": 252
+    │           }
+    │         },
+    │         "role": "assistant"
+    │       }
+    │       metadata: {
+    │         "model": "gpt-4o-mini-2024-07-18",
+    │         "provider": "openai",
+    │         "strands.agent.id": "document-agent",
+    │         "strands.agent.name": "document-agent",
+    │         "strands.operation": "Agent.stream",
+    │         "strands.stop_reason": "endTurn"
+    │       }
+    │       metrics: {
+    │         "completion_tokens": 5,
+    │         "duration": "<duration>",
+    │         "prompt_tokens": 247,
+    │         "tokens": 252
+    │       }
+    │       └── Strands model: gpt-4o-mini-2024-07-18 [llm]
+    │           metadata: {
+    │             "model": "gpt-4o-mini-2024-07-18",
+    │             "provider": "openai",
+    │             "strands.operation": "model.stream",
+    │             "strands.stop_reason": "endTurn"
+    │           }
+    │           metrics: {
+    │             "completion_tokens": 5,
+    │             "duration": "<duration>",
+    │             "prompt_tokens": 247,
+    │             "tokens": 252
+    │           }
+    ├── strands-agent-image-operation
+    │   metadata: {
+    │     "operation": "agent-image"
+    │   }
+    │   └── Agent: image-agent [task]
+    │       input: [
+    │         {
+    │           "image": {
+    │             "format": "png",
+    │             "source": {
+    │               "bytes": {
+    │                 "content_type": "image/png",
+    │                 "filename": "image.png",
+    │                 "key": "<uuid:1>",
+    │                 "type": "braintrust_attachment"
+    │               }
+    │             }
+    │           }
+    │         },
+    │         {
+    │           "text": "Reply exactly STRANDS_IMAGE_OK."
+    │         }
+    │       ]
+    │       output: {
+    │         "content": [
+    │           {
+    │             "text": "STRANDS_IMAGE_OK."
+    │           }
+    │         ],
+    │         "metadata": {
+    │           "usage": {
+    │             "inputTokens": 8525,
+    │             "outputTokens": 5,
+    │             "totalTokens": 8530
+    │           }
+    │         },
+    │         "role": "assistant"
+    │       }
+    │       metadata: {
+    │         "model": "gpt-4o-mini-2024-07-18",
+    │         "provider": "openai",
+    │         "strands.agent.id": "image-agent",
+    │         "strands.agent.name": "image-agent",
+    │         "strands.operation": "Agent.stream",
+    │         "strands.stop_reason": "endTurn"
+    │       }
+    │       metrics: {
+    │         "completion_tokens": 5,
+    │         "duration": "<duration>",
+    │         "prompt_tokens": 8525,
+    │         "tokens": 8530
+    │       }
+    │       └── Strands model: gpt-4o-mini-2024-07-18 [llm]
+    │           metadata: {
+    │             "model": "gpt-4o-mini-2024-07-18",
+    │             "provider": "openai",
+    │             "strands.operation": "model.stream",
+    │             "strands.stop_reason": "endTurn"
+    │           }
+    │           metrics: {
+    │             "completion_tokens": 5,
+    │             "duration": "<duration>",
+    │             "prompt_tokens": 8525,
+    │             "tokens": 8530
+    │           }
     ├── strands-agent-stream-operation
     │   metadata: {
     │     "operation": "agent-stream"
