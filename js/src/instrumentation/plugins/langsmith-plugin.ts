@@ -2,7 +2,7 @@ import { SpanTypeAttribute } from "../../../util/index";
 import { debugLogger } from "../../debug-logger";
 import { startSpan } from "../../logger";
 import type { Span } from "../../logger";
-import { LRUCache } from "../../prompt-cache/lru-cache";
+import { LRUCache } from "../../lru-cache";
 import type {
   LangSmithBatchIngestRuns,
   LangSmithRun,

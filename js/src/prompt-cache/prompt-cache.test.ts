@@ -7,7 +7,7 @@ import { beforeEach, describe, it, afterEach, expect } from "vitest";
 import type { PromptKey } from "./prompt-cache";
 import { DiskCache } from "./disk-cache";
 import { configureNode } from "../node/config";
-import { LRUCache } from "./lru-cache";
+import { LRUCache } from "../lru-cache";
 
 describe("PromptCache", () => {
   configureNode();
