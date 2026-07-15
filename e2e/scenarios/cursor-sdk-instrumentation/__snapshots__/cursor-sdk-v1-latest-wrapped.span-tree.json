@@ -1,0 +1,134 @@
+{
+  "span_tree": [
+    {
+      "name": "cursor-sdk-root",
+      "type": "task",
+      "children": [
+        {
+          "name": "cursor-sdk-prompt-operation",
+          "children": [
+            {
+              "name": "Cursor Agent",
+              "type": "task",
+              "children": [],
+              "input": "Reply with exactly: CURSOR_PROMPT_OK. Do not modify files.",
+              "output": {
+                "durationMs": 0,
+                "id": "<span:1>",
+                "model": {
+                  "id": "<span:2>"
+                },
+                "status": "error"
+              },
+              "metadata": {
+                "cursor_sdk.duration_ms": 0,
+                "cursor_sdk.local.cwd": "<repo>/e2e/scenarios/cursor-sdk-instrumentation/",
+                "cursor_sdk.model": "composer-2",
+                "cursor_sdk.operation": "Agent.prompt",
+                "cursor_sdk.run_id": "run-<uuid:1>",
+                "cursor_sdk.runtime": "local",
+                "cursor_sdk.status": "error",
+                "model": "composer-2",
+                "provider": "cursor"
+              },
+              "metrics": {
+                "duration": 0
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "prompt",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "cursor-sdk-stream-operation",
+          "children": [
+            {
+              "name": "Cursor Agent",
+              "type": "task",
+              "children": [],
+              "input": "First use the reviewer subagent to confirm exactly CURSOR_SUBAGENT_OK. Then run the shell command `printf cursor_tool_ok` and report the output. Do not edit files.",
+              "metadata": {
+                "cursor_sdk.agent_id": "agent-<uuid:1>",
+                "cursor_sdk.duration_ms": 0,
+                "cursor_sdk.model": "composer-2",
+                "cursor_sdk.operation": "agent.send",
+                "cursor_sdk.run_id": "run-<uuid:2>",
+                "cursor_sdk.status": "error",
+                "model": "composer-2",
+                "provider": "cursor"
+              },
+              "metrics": {
+                "duration": 0
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "stream",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "cursor-sdk-wait-operation",
+          "children": [
+            {
+              "name": "Cursor Agent",
+              "type": "task",
+              "children": [],
+              "input": "Reply with exactly: CURSOR_WAIT_OK. Do not modify files.",
+              "metadata": {
+                "cursor_sdk.agent_id": "agent-<uuid:1>",
+                "cursor_sdk.duration_ms": 0,
+                "cursor_sdk.model": "composer-2",
+                "cursor_sdk.operation": "agent.send",
+                "cursor_sdk.run_id": "run-<uuid:2>",
+                "cursor_sdk.status": "error",
+                "model": "composer-2",
+                "provider": "cursor"
+              },
+              "metrics": {
+                "duration": 0
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "wait",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "cursor-sdk-resume-conversation-operation",
+          "children": [
+            {
+              "name": "Cursor Agent",
+              "type": "task",
+              "children": [],
+              "input": "Reply with exactly: CURSOR_CONVERSATION_OK. Do not modify files.",
+              "metadata": {
+                "cursor_sdk.agent_id": "agent-<uuid:1>",
+                "cursor_sdk.model": "composer-2",
+                "cursor_sdk.operation": "agent.send",
+                "cursor_sdk.run_id": "run-<uuid:2>",
+                "cursor_sdk.status": "error",
+                "model": "composer-2",
+                "provider": "cursor"
+              },
+              "metrics": {
+                "duration": 0
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "resume-conversation",
+            "testRunId": "<run:1>"
+          }
+        }
+      ],
+      "metadata": {
+        "scenario": "cursor-sdk-instrumentation",
+        "testRunId": "<run:1>"
+      }
+    }
+  ]
+}

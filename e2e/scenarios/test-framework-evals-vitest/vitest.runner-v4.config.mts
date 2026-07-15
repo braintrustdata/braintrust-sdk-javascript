@@ -1,4 +1,6 @@
-import { defineConfig } from "vitest-v4/config";
+const vitestConfigPackageName =
+  process.env.VITEST_CONFIG_PACKAGE_NAME ?? "vitest-v4-latest";
+const { defineConfig } = await import(`${vitestConfigPackageName}/config`);
 
 export default defineConfig({
   test: {

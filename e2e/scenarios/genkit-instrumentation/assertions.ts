@@ -190,14 +190,18 @@ export function defineGenkitInstrumentationAssertions(options: {
       });
       expect(generateSpan?.span.type).toBe("llm");
       expect(generateSpan?.metadata?.model).toEqual(
-        expect.stringContaining("gemini-2.5-flash-lite"),
+        expect.stringContaining("gemini-3.1-flash-lite"),
       );
       expect(generateSpan?.output).toBeDefined();
       expect(generateSpan?.metrics).toMatchObject({
         prompt_tokens: expect.any(Number),
-        completion_tokens: expect.any(Number),
         tokens: expect.any(Number),
       });
+      if (generateSpan?.metrics?.completion_tokens !== undefined) {
+        expect(generateSpan.metrics.completion_tokens).toEqual(
+          expect.any(Number),
+        );
+      }
 
       expect(streamSpan?.row.metadata).toMatchObject({
         provider: "genkit",

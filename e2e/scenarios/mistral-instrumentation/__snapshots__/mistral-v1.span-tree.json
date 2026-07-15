@@ -70,7 +70,7 @@
               ],
               "output": [
                 {
-                  "finishReason": "stop",
+                  "finishReason": null,
                   "index": 0,
                   "message": {
                     "content": "streamed output",
@@ -89,10 +89,7 @@
                 "temperature": 0
               },
               "metrics": {
-                "completion_tokens": 4,
-                "prompt_tokens": 10,
-                "time_to_first_token": 0,
-                "tokens": 14
+                "time_to_first_token": 0
               }
             }
           ],
@@ -116,10 +113,10 @@
               ],
               "output": [
                 {
-                  "finishReason": "stop",
+                  "finishReason": null,
                   "index": 0,
                   "message": {
-                    "content": "Let's break down the problem step by step to find John's age.\n\n1. **First Sister's Age:**\n   - Given: The first sister is **4 years old**.\n\n2. **Second Sister's Age Next Year:**\n   - Next year, the second sister will be twice as old as the first sister.\n   - First sister's age next year: \\(4 + 1 = 5\\) years.\n   - Therefore, second sister's age next year: \\(2 \\times 5 = 10\\) years.\n   - **Current age of the second sister:** \\(10 - 1 = 9\\) years.\n\n3. **Third Sister's Age:**\n   - The third sister is two years older than the second sister.\n   - **Current age of the third sister:** \\(9 + 2 = 11\\) years.\n\n4. **John's Age:**\n   - The third sister is half the age of her older brother (John).\n   - Therefore, John's age: \\(11 \\times 2 = 22\\) years.\n\n**Final Answer:**\n\\[\n\\boxed{22}\n\\]",
+                    "content": "Let's break down the problem step by step to find John's age.\n\n1. **First Sister's Age:**\n   - Given: The first sister is **4 years old**.\n\n2. **Second Sister's Age Next Year:**\n   - Next year, the second sister will be twice as old as the first sister.\n   - First sister's age next year: \\(4 + 1 = 5\\) years.\n   - Therefore, second sister's age next year: \\(2 \\times 5 = 10\\) years.\n   - **Current age of the second sister:** \\(10 - 1 = 9\\) years.\n\n3. **Third Sister's Age:**\n   - The third sister is two years older than the second sister.\n   - **Current age of the third sister:** \\(9 + 2 = 11\\) years.\n\n4. **John's Age:**\n   - The third sister is half the age of her older brother (John).\n   - Therefore, John's age: \\(11 \\times 2 = 2",
                     "role": "assistant"
                   }
                 }
@@ -136,10 +133,7 @@
                 "temperature": 0
               },
               "metrics": {
-                "completion_tokens": 234,
-                "prompt_tokens": 83,
-                "time_to_first_token": 0,
-                "tokens": 317
+                "time_to_first_token": 0
               }
             }
           ],
@@ -149,54 +143,27 @@
           }
         },
         {
-          "name": "mistral-chat-thinking-stream-operation",
+          "name": "mistral-chat-tool-call-operation",
           "children": [
             {
-              "name": "mistral.chat.stream",
+              "name": "mistral.chat.complete",
               "type": "llm",
               "children": [],
               "input": [
                 {
-                  "content": "What is 2+2? Reply with just the number.",
+                  "content": "Call the get_weather tool for Vienna. Do not answer with plain text.",
                   "role": "user"
                 }
               ],
-              "output": [
-                {
-                  "finishReason": "stop",
-                  "index": 0,
-                  "message": {
-                    "content": "4",
-                    "role": "assistant"
-                  }
-                }
-              ],
               "metadata": {
-                "created": 0,
-                "id": "<span:1>",
-                "maxTokens": 1024,
-                "model": "magistral-small-latest",
-                "object": "chat.completion.chunk",
+                "maxTokens": 48,
+                "model": "mistral-small-2506",
                 "provider": "mistral",
-                "stream": true,
-                "temperature": 0
+                "temperature": 0,
+                "toolChoice": "required"
               },
-              "metrics": {
-                "completion_tokens": 2,
-                "prompt_tokens": 28,
-                "time_to_first_token": 0,
-                "tokens": 30
-              }
-            }
-          ],
-          "metadata": {
-            "operation": "chat-stream-thinking",
-            "testRunId": "<run:1>"
-          }
-        },
-        {
-          "name": "mistral-chat-tool-call-operation",
-          "children": [
+              "error": "Input validation failed: TypeError: Cannot read properties of undefined (reading '_zod')"
+            },
             {
               "name": "mistral.chat.complete",
               "type": "llm",
@@ -218,11 +185,11 @@
                     "toolCalls": [
                       {
                         "function": {
-                          "arguments": "{\"location\": \"Vienna\"}",
+                          "arguments": "{}",
                           "name": "get_weather"
                         },
                         "id": "<span:1>",
-                        "index": 0
+                        "type": "function"
                       }
                     ]
                   }
@@ -239,11 +206,30 @@
                 "toolChoice": "required"
               },
               "metrics": {
-                "completion_tokens": 13,
-                "prompt_tokens": 91,
+                "completion_tokens": 7,
+                "prompt_tokens": 55,
                 "time_to_first_token": 0,
-                "tokens": 104
+                "tokens": 62
               }
+            },
+            {
+              "name": "mistral.chat.complete",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "Call the get_exchange_rate tool for USD to EUR. Do not answer with plain text.",
+                  "role": "user"
+                }
+              ],
+              "metadata": {
+                "maxTokens": 48,
+                "model": "mistral-small-2506",
+                "provider": "mistral",
+                "temperature": 0,
+                "toolChoice": "required"
+              },
+              "error": "Input validation failed: TypeError: Cannot read properties of undefined (reading '_zod')"
             },
             {
               "name": "mistral.chat.complete",
@@ -266,11 +252,11 @@
                     "toolCalls": [
                       {
                         "function": {
-                          "arguments": "{\"from_currency\": \"USD\", \"to_currency\": \"EUR\"}",
+                          "arguments": "{\"from\": \"USD\", \"to\": \"EUR\"}",
                           "name": "get_exchange_rate"
                         },
                         "id": "<span:1>",
-                        "index": 0
+                        "type": "function"
                       }
                     ]
                   }
@@ -287,11 +273,34 @@
                 "toolChoice": "required"
               },
               "metrics": {
-                "completion_tokens": 22,
-                "prompt_tokens": 125,
+                "completion_tokens": 20,
+                "prompt_tokens": 58,
                 "time_to_first_token": 0,
-                "tokens": 147
+                "tokens": 78
               }
+            },
+            {
+              "name": "mistral.chat.complete",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "You must return only tool calls and no plain text.",
+                  "role": "system"
+                },
+                {
+                  "content": "In a single assistant response, call exactly two tools: get_weather with location Vienna and get_exchange_rate with from_currency USD and to_currency EUR.",
+                  "role": "user"
+                }
+              ],
+              "metadata": {
+                "maxTokens": 96,
+                "model": "mistral-small-2506",
+                "provider": "mistral",
+                "temperature": 0,
+                "toolChoice": "required"
+              },
+              "error": "Input validation failed: TypeError: Cannot read properties of undefined (reading '_zod')"
             },
             {
               "name": "mistral.chat.complete",
@@ -322,7 +331,7 @@
                           "name": "get_weather"
                         },
                         "id": "<span:1>",
-                        "index": 0
+                        "type": "function"
                       },
                       {
                         "function": {
@@ -330,7 +339,7 @@
                           "name": "get_exchange_rate"
                         },
                         "id": "<span:2>",
-                        "index": 1
+                        "type": "function"
                       }
                     ]
                   }
@@ -348,9 +357,9 @@
               },
               "metrics": {
                 "completion_tokens": 34,
-                "prompt_tokens": 219,
+                "prompt_tokens": 116,
                 "time_to_first_token": 0,
-                "tokens": 253
+                "tokens": 150
               }
             }
           ],
@@ -411,10 +420,10 @@
               "input": "const project = ",
               "output": [
                 {
-                  "finishReason": "length",
+                  "finishReason": null,
                   "index": 0,
                   "message": {
-                    "content": "{\n  name: 'project',\n  title: 'Projects',\n  type:",
+                    "content": "{\n  name: 'project',\n  title: 'Projects',\n ",
                     "role": "assistant"
                   }
                 }
@@ -430,10 +439,7 @@
                 "temperature": 0
               },
               "metrics": {
-                "completion_tokens": 16,
-                "prompt_tokens": 9,
-                "time_to_first_token": 0,
-                "tokens": 25
+                "time_to_first_token": 0
               }
             }
           ],
@@ -506,6 +512,28 @@
                   "role": "user"
                 }
               ],
+              "metadata": {
+                "agentId": "<agentId:1>",
+                "maxTokens": 32,
+                "provider": "mistral",
+                "responseFormat": {
+                  "type": "text"
+                },
+                "temperature": 0,
+                "toolChoice": "required"
+              },
+              "error": "Input validation failed: TypeError: Cannot read properties of undefined (reading '_zod')"
+            },
+            {
+              "name": "mistral.agents.complete",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "Call the get_time_in_city tool for Vienna. Do not answer with plain text.",
+                  "role": "user"
+                }
+              ],
               "output": [
                 {
                   "finishReason": "tool_calls",
@@ -517,11 +545,11 @@
                     "toolCalls": [
                       {
                         "function": {
-                          "arguments": "{\"city\": \"Vienna\"}",
+                          "arguments": "{}",
                           "name": "get_time_in_city"
                         },
                         "id": "<span:1>",
-                        "index": 0
+                        "type": "function"
                       }
                     ]
                   }
@@ -542,10 +570,10 @@
                 "toolChoice": "required"
               },
               "metrics": {
-                "completion_tokens": 14,
-                "prompt_tokens": 107,
+                "completion_tokens": 8,
+                "prompt_tokens": 71,
                 "time_to_first_token": 0,
-                "tokens": 121
+                "tokens": 79
               }
             }
           ],
@@ -630,111 +658,6 @@
           ],
           "metadata": {
             "operation": "embeddings-create",
-            "testRunId": "<run:1>"
-          }
-        },
-        {
-          "name": "mistral-classifiers-moderate-operation",
-          "children": [
-            {
-              "name": "mistral.classifiers.moderate",
-              "type": "llm",
-              "children": [],
-              "input": "A short and harmless moderation fixture.",
-              "output": [
-                {
-                  "categories": {
-                    "criminal": false,
-                    "dangerous": false,
-                    "financial": false,
-                    "hate_and_discrimination": false,
-                    "health": false,
-                    "jailbreaking": false,
-                    "law": false,
-                    "pii": false,
-                    "selfharm": false,
-                    "sexual": false,
-                    "violence_and_threats": false
-                  },
-                  "categoryScores": {
-                    "criminal": 0.00806199200451374,
-                    "dangerous": 0.005911068990826607,
-                    "financial": 0.00011591934162424877,
-                    "hate_and_discrimination": 0.0023231625091284513,
-                    "health": 0.0003799845289904624,
-                    "jailbreaking": 0.018689308315515518,
-                    "law": 0.00020342697098385543,
-                    "pii": 0.001098731067031622,
-                    "selfharm": 0.0006361911655403674,
-                    "sexual": 0.0031236486975103617,
-                    "violence_and_threats": 0.004609572701156139
-                  }
-                }
-              ],
-              "metadata": {
-                "id": "<span:1>",
-                "model": "mistral-moderation-2603",
-                "provider": "mistral"
-              }
-            }
-          ],
-          "metadata": {
-            "operation": "classifiers-moderate",
-            "testRunId": "<run:1>"
-          }
-        },
-        {
-          "name": "mistral-classifiers-moderate-chat-operation",
-          "children": [
-            {
-              "name": "mistral.classifiers.moderateChat",
-              "type": "llm",
-              "children": [],
-              "input": [
-                {
-                  "content": "Please classify this harmless chat message.",
-                  "role": "user"
-                }
-              ],
-              "output": [
-                {
-                  "categories": {
-                    "criminal": false,
-                    "dangerous": false,
-                    "financial": false,
-                    "hate_and_discrimination": false,
-                    "health": false,
-                    "jailbreaking": false,
-                    "law": false,
-                    "pii": false,
-                    "selfharm": false,
-                    "sexual": false,
-                    "violence_and_threats": false
-                  },
-                  "categoryScores": {
-                    "criminal": 0.000755405577365309,
-                    "dangerous": 0.00022693384380545467,
-                    "financial": 0.00006402006692951545,
-                    "hate_and_discrimination": 0.0007096704212017357,
-                    "health": 0.00008481103577651083,
-                    "jailbreaking": 0.0030278353951871395,
-                    "law": 0.00011235327838221565,
-                    "pii": 0.000552778597921133,
-                    "selfharm": 0.00004133539550821297,
-                    "sexual": 0.0003799845289904624,
-                    "violence_and_threats": 0.00024923254386521876
-                  }
-                }
-              ],
-              "metadata": {
-                "id": "<span:1>",
-                "model": "mistral-moderation-2603",
-                "provider": "mistral"
-              }
-            }
-          ],
-          "metadata": {
-            "operation": "classifiers-moderate-chat",
             "testRunId": "<run:1>"
           }
         }

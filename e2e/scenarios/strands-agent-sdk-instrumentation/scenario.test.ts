@@ -11,56 +11,75 @@ const scenarioDir = await prepareScenarioDir({
   scenarioDir: originalScenarioDir,
 });
 const TIMEOUT_MS = 240_000;
-const strandsAgentSDKScenario = {
-  autoEntry: "scenario.mjs",
-  autoSnapshotName: "strands-agent-sdk-v160-auto-hook",
-  version: await readInstalledPackageVersion(
-    scenarioDir,
-    "@strands-agents/sdk",
-  ),
-  wrapperEntry: "scenario.ts",
-  wrapperSnapshotName: "strands-agent-sdk-v160-wrapped",
-  variantKey: "strands-agent-sdk-v160",
-};
+const strandsAgentSDKScenarios = await Promise.all(
+  [
+    {
+      autoEntry: "scenario.mjs",
+      autoSnapshotName: "strands-agent-sdk-v1-auto-hook",
+      dependencyName: "strands-agent-sdk-v1",
+      variantKey: "strands-agent-sdk-v1",
+      wrapperEntry: "scenario.ts",
+      wrapperSnapshotName: "strands-agent-sdk-v1-wrapped",
+    },
+    {
+      autoEntry: "scenario.mjs",
+      autoSnapshotName: "strands-agent-sdk-v1-latest-auto-hook",
+      dependencyName: "strands-agent-sdk-v1-latest",
+      variantKey: "strands-agent-sdk-v1-latest",
+      wrapperEntry: "scenario.ts",
+      wrapperSnapshotName: "strands-agent-sdk-v1-latest-wrapped",
+    },
+  ].map(async (scenario) => ({
+    ...scenario,
+    version: await readInstalledPackageVersion(
+      scenarioDir,
+      scenario.dependencyName,
+    ),
+  })),
+);
 
-describe("wrapped instrumentation", () => {
-  defineStrandsAgentSDKInstrumentationAssertions({
-    expectOverlapParentProbe: true,
-    name: `Strands Agent SDK ${strandsAgentSDKScenario.version}`,
-    runScenario: async ({ runScenarioDir }) => {
-      await runScenarioDir({
-        entry: strandsAgentSDKScenario.wrapperEntry,
-        runContext: {
-          variantKey: strandsAgentSDKScenario.variantKey,
-          originalScenarioDir,
+describe.concurrent("variants", () => {
+  for (const scenario of strandsAgentSDKScenarios) {
+    describe.sequential(`Strands Agent SDK ${scenario.version}`, () => {
+      defineStrandsAgentSDKInstrumentationAssertions({
+        expectOverlapParentProbe: scenario.dependencyName.endsWith("pinned"),
+        name: "wrapped instrumentation",
+        runScenario: async ({ runScenarioDir }) => {
+          await runScenarioDir({
+            entry: scenario.wrapperEntry,
+            env: { STRANDS_AGENT_SDK_PACKAGE_NAME: scenario.dependencyName },
+            runContext: {
+              variantKey: scenario.variantKey,
+              originalScenarioDir,
+            },
+            scenarioDir,
+            timeoutMs: TIMEOUT_MS,
+          });
         },
-        scenarioDir,
+        snapshotName: scenario.wrapperSnapshotName,
+        testFileUrl: import.meta.url,
         timeoutMs: TIMEOUT_MS,
       });
-    },
-    snapshotName: strandsAgentSDKScenario.wrapperSnapshotName,
-    testFileUrl: import.meta.url,
-    timeoutMs: TIMEOUT_MS,
-  });
-});
 
-describe("auto-hook instrumentation", () => {
-  defineStrandsAgentSDKInstrumentationAssertions({
-    name: `Strands Agent SDK ${strandsAgentSDKScenario.version}`,
-    runScenario: async ({ runNodeScenarioDir }) => {
-      await runNodeScenarioDir({
-        entry: strandsAgentSDKScenario.autoEntry,
-        nodeArgs: ["--import", "braintrust/hook.mjs"],
-        runContext: {
-          variantKey: strandsAgentSDKScenario.variantKey,
-          originalScenarioDir,
+      defineStrandsAgentSDKInstrumentationAssertions({
+        name: "auto-hook instrumentation",
+        runScenario: async ({ runNodeScenarioDir }) => {
+          await runNodeScenarioDir({
+            entry: scenario.autoEntry,
+            env: { STRANDS_AGENT_SDK_PACKAGE_NAME: scenario.dependencyName },
+            nodeArgs: ["--import", "braintrust/hook.mjs"],
+            runContext: {
+              variantKey: scenario.variantKey,
+              originalScenarioDir,
+            },
+            scenarioDir,
+            timeoutMs: TIMEOUT_MS,
+          });
         },
-        scenarioDir,
+        snapshotName: scenario.autoSnapshotName,
+        testFileUrl: import.meta.url,
         timeoutMs: TIMEOUT_MS,
       });
-    },
-    snapshotName: strandsAgentSDKScenario.autoSnapshotName,
-    testFileUrl: import.meta.url,
-    timeoutMs: TIMEOUT_MS,
-  });
+    });
+  }
 });

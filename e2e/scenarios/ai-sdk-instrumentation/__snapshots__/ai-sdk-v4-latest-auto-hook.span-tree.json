@@ -1,0 +1,1335 @@
+{
+  "span_tree": [
+    {
+      "name": "ai-sdk-instrumentation-root",
+      "type": "task",
+      "children": [
+        {
+          "name": "ai-sdk-generate-operation",
+          "children": [
+            {
+              "name": "generateText",
+              "type": "function",
+              "children": [
+                {
+                  "name": "doGenerate",
+                  "type": "llm",
+                  "children": [],
+                  "input": {
+                    "inputFormat": "prompt",
+                    "maxTokens": 24,
+                    "mode": {
+                      "type": "regular"
+                    },
+                    "prompt": [
+                      {
+                        "content": [
+                          {
+                            "text": "Reply with the single token PARIS and no punctuation.",
+                            "type": "text"
+                          }
+                        ],
+                        "role": "user"
+                      }
+                    ],
+                    "temperature": 0
+                  },
+                  "output": {
+                    "finishReason": "stop",
+                    "providerMetadata": {
+                      "openai": {
+                        "acceptedPredictionTokens": 0,
+                        "reasoningTokens": 0,
+                        "rejectedPredictionTokens": 0
+                      }
+                    },
+                    "rawResponse": {
+                      "body": {
+                        "choices": [
+                          {
+                            "finish_reason": "stop",
+                            "index": 0,
+                            "logprobs": null,
+                            "message": {
+                              "annotations": [],
+                              "content": "PARIS",
+                              "refusal": null,
+                              "role": "assistant"
+                            }
+                          }
+                        ],
+                        "created": 0,
+                        "model": "gpt-4o-mini-2024-07-18",
+                        "object": "chat.completion",
+                        "service_tier": "default",
+                        "system_fingerprint": "<system_fingerprint>",
+                        "usage": {
+                          "completion_tokens": 2,
+                          "completion_tokens_details": {
+                            "accepted_prediction_tokens": 0,
+                            "audio_tokens": 0,
+                            "reasoning_tokens": 0,
+                            "rejected_prediction_tokens": 0
+                          },
+                          "prompt_tokens": 18,
+                          "prompt_tokens_details": {
+                            "audio_tokens": 0,
+                            "cached_tokens": 0
+                          },
+                          "total_tokens": 20
+                        }
+                      }
+                    },
+                    "response": {
+                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "timestamp": "<timestamp>"
+                    },
+                    "text": "PARIS",
+                    "usage": {
+                      "completionTokens": 2,
+                      "promptTokens": 18
+                    },
+                    "warnings": []
+                  },
+                  "metadata": {
+                    "braintrust": {
+                      "integration_name": "ai-sdk",
+                      "sdk_language": "typescript"
+                    },
+                    "finish_reason": "stop",
+                    "model": "gpt-4o-mini-2024-07-18",
+                    "provider": "openai.chat"
+                  },
+                  "metrics": {
+                    "completion_tokens": 2,
+                    "prompt_tokens": 18,
+                    "tokens": 20
+                  }
+                }
+              ],
+              "input": {
+                "maxTokens": 24,
+                "model": {
+                  "config": {
+                    "compatibility": "compatible",
+                    "provider": "openai.chat"
+                  },
+                  "modelId": "gpt-4o-mini-2024-07-18",
+                  "settings": {},
+                  "specificationVersion": "v1"
+                },
+                "prompt": "Reply with the single token PARIS and no punctuation.",
+                "temperature": 0
+              },
+              "output": {
+                "experimental_providerMetadata": {
+                  "openai": {
+                    "acceptedPredictionTokens": 0,
+                    "reasoningTokens": 0,
+                    "rejectedPredictionTokens": 0
+                  }
+                },
+                "finishReason": "stop",
+                "providerMetadata": {
+                  "openai": {
+                    "acceptedPredictionTokens": 0,
+                    "reasoningTokens": 0,
+                    "rejectedPredictionTokens": 0
+                  }
+                },
+                "response": {
+                  "body": "<omitted>",
+                  "messages": [
+                    {
+                      "content": [
+                        {
+                          "text": "PARIS",
+                          "type": "text"
+                        }
+                      ],
+                      "role": "assistant"
+                    }
+                  ],
+                  "modelId": "gpt-4o-mini-2024-07-18",
+                  "timestamp": "<timestamp>"
+                },
+                "steps": [
+                  {
+                    "experimental_providerMetadata": {
+                      "openai": {
+                        "acceptedPredictionTokens": 0,
+                        "reasoningTokens": 0,
+                        "rejectedPredictionTokens": 0
+                      }
+                    },
+                    "files": [],
+                    "finishReason": "stop",
+                    "isContinued": false,
+                    "providerMetadata": {
+                      "openai": {
+                        "acceptedPredictionTokens": 0,
+                        "reasoningTokens": 0,
+                        "rejectedPredictionTokens": 0
+                      }
+                    },
+                    "reasoningDetails": [],
+                    "response": {
+                      "body": "<omitted>",
+                      "messages": [
+                        {
+                          "content": [
+                            {
+                              "text": "PARIS",
+                              "type": "text"
+                            }
+                          ],
+                          "role": "assistant"
+                        }
+                      ],
+                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "timestamp": "<timestamp>"
+                    },
+                    "sources": [],
+                    "stepType": "initial",
+                    "text": "PARIS",
+                    "toolCalls": [],
+                    "toolResults": [],
+                    "usage": {
+                      "completionTokens": 2,
+                      "promptTokens": 18,
+                      "totalTokens": 20
+                    },
+                    "warnings": []
+                  }
+                ],
+                "text": "PARIS",
+                "toolCalls": [],
+                "toolResults": [],
+                "usage": {
+                  "completionTokens": 2,
+                  "promptTokens": 18,
+                  "totalTokens": 20
+                },
+                "warnings": []
+              },
+              "metadata": {
+                "braintrust": {
+                  "integration_name": "ai-sdk",
+                  "sdk_language": "typescript"
+                },
+                "model": "gpt-4o-mini-2024-07-18",
+                "provider": "openai.chat"
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "generate",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "ai-sdk-output-object-operation",
+          "children": [
+            {
+              "name": "generateText",
+              "type": "function",
+              "children": [
+                {
+                  "name": "doGenerate",
+                  "type": "llm",
+                  "children": [],
+                  "input": {
+                    "inputFormat": "prompt",
+                    "maxTokens": 32,
+                    "mode": {
+                      "type": "regular"
+                    },
+                    "prompt": [
+                      {
+                        "content": "JSON schema:\n{\"type\":\"object\",\"properties\":{\"answer\":{\"type\":\"string\"}},\"required\":[\"answer\"],\"additionalProperties\":false,\"$schema\":\"http://json-schema.org/draft-07/schema#\"}\nYou MUST answer with a JSON object that matches the JSON schema above.",
+                        "role": "system"
+                      },
+                      {
+                        "content": [
+                          {
+                            "text": "Return a short answer for 2 + 2. Keep the answer concise.",
+                            "type": "text"
+                          }
+                        ],
+                        "role": "user"
+                      }
+                    ],
+                    "responseFormat": {
+                      "type": "json"
+                    },
+                    "temperature": 0
+                  },
+                  "output": {
+                    "finishReason": "stop",
+                    "providerMetadata": {
+                      "openai": {
+                        "acceptedPredictionTokens": 0,
+                        "reasoningTokens": 0,
+                        "rejectedPredictionTokens": 0
+                      }
+                    },
+                    "rawResponse": {
+                      "body": {
+                        "choices": [
+                          {
+                            "finish_reason": "stop",
+                            "index": 0,
+                            "logprobs": null,
+                            "message": {
+                              "annotations": [],
+                              "content": "{\"answer\":\"4\"}",
+                              "refusal": null,
+                              "role": "assistant"
+                            }
+                          }
+                        ],
+                        "created": 0,
+                        "model": "gpt-4o-mini-2024-07-18",
+                        "object": "chat.completion",
+                        "service_tier": "default",
+                        "system_fingerprint": "<system_fingerprint>",
+                        "usage": {
+                          "completion_tokens": 5,
+                          "completion_tokens_details": {
+                            "accepted_prediction_tokens": 0,
+                            "audio_tokens": 0,
+                            "reasoning_tokens": 0,
+                            "rejected_prediction_tokens": 0
+                          },
+                          "prompt_tokens": 83,
+                          "prompt_tokens_details": {
+                            "audio_tokens": 0,
+                            "cached_tokens": 0
+                          },
+                          "total_tokens": 88
+                        }
+                      }
+                    },
+                    "response": {
+                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "timestamp": "<timestamp>"
+                    },
+                    "text": "{\"answer\":\"4\"}",
+                    "usage": {
+                      "completionTokens": 5,
+                      "promptTokens": 83
+                    },
+                    "warnings": []
+                  },
+                  "metadata": {
+                    "braintrust": {
+                      "integration_name": "ai-sdk",
+                      "sdk_language": "typescript"
+                    },
+                    "finish_reason": "stop",
+                    "model": "gpt-4o-mini-2024-07-18",
+                    "provider": "openai.chat"
+                  },
+                  "metrics": {
+                    "completion_tokens": 5,
+                    "prompt_tokens": 83,
+                    "tokens": 88
+                  }
+                }
+              ],
+              "input": {
+                "maxTokens": 32,
+                "model": {
+                  "config": {
+                    "compatibility": "compatible",
+                    "provider": "openai.chat"
+                  },
+                  "modelId": "gpt-4o-mini-2024-07-18",
+                  "settings": {},
+                  "specificationVersion": "v1"
+                },
+                "output": {
+                  "response_format": {
+                    "schema": {
+                      "$schema": "http://json-schema.org/draft-07/schema#",
+                      "additionalProperties": false,
+                      "properties": {
+                        "answer": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "answer"
+                      ],
+                      "type": "object"
+                    },
+                    "type": "json"
+                  },
+                  "type": "object"
+                },
+                "prompt": "Return a short answer for 2 + 2. Keep the answer concise.",
+                "temperature": 0
+              },
+              "output": {
+                "experimental_providerMetadata": {
+                  "openai": {
+                    "acceptedPredictionTokens": 0,
+                    "reasoningTokens": 0,
+                    "rejectedPredictionTokens": 0
+                  }
+                },
+                "finishReason": "stop",
+                "providerMetadata": {
+                  "openai": {
+                    "acceptedPredictionTokens": 0,
+                    "reasoningTokens": 0,
+                    "rejectedPredictionTokens": 0
+                  }
+                },
+                "response": {
+                  "body": "<omitted>",
+                  "messages": [
+                    {
+                      "content": [
+                        {
+                          "text": "{\"answer\":\"4\"}",
+                          "type": "text"
+                        }
+                      ],
+                      "role": "assistant"
+                    }
+                  ],
+                  "modelId": "gpt-4o-mini-2024-07-18",
+                  "timestamp": "<timestamp>"
+                },
+                "steps": [
+                  {
+                    "experimental_providerMetadata": {
+                      "openai": {
+                        "acceptedPredictionTokens": 0,
+                        "reasoningTokens": 0,
+                        "rejectedPredictionTokens": 0
+                      }
+                    },
+                    "files": [],
+                    "finishReason": "stop",
+                    "isContinued": false,
+                    "providerMetadata": {
+                      "openai": {
+                        "acceptedPredictionTokens": 0,
+                        "reasoningTokens": 0,
+                        "rejectedPredictionTokens": 0
+                      }
+                    },
+                    "reasoningDetails": [],
+                    "response": {
+                      "body": "<omitted>",
+                      "messages": [
+                        {
+                          "content": [
+                            {
+                              "text": "{\"answer\":\"4\"}",
+                              "type": "text"
+                            }
+                          ],
+                          "role": "assistant"
+                        }
+                      ],
+                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "timestamp": "<timestamp>"
+                    },
+                    "sources": [],
+                    "stepType": "initial",
+                    "text": "{\"answer\":\"4\"}",
+                    "toolCalls": [],
+                    "toolResults": [],
+                    "usage": {
+                      "completionTokens": 5,
+                      "promptTokens": 83,
+                      "totalTokens": 88
+                    },
+                    "warnings": []
+                  }
+                ],
+                "text": "{\"answer\":\"4\"}",
+                "toolCalls": [],
+                "toolResults": [],
+                "usage": {
+                  "completionTokens": 5,
+                  "promptTokens": 83,
+                  "totalTokens": 88
+                },
+                "warnings": []
+              },
+              "metadata": {
+                "braintrust": {
+                  "integration_name": "ai-sdk",
+                  "sdk_language": "typescript"
+                },
+                "model": "gpt-4o-mini-2024-07-18",
+                "provider": "openai.chat"
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "output-object",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "ai-sdk-stream-operation",
+          "children": [
+            {
+              "name": "streamText",
+              "type": "function",
+              "children": [
+                {
+                  "name": "doStream",
+                  "type": "llm",
+                  "children": [],
+                  "input": {
+                    "inputFormat": "prompt",
+                    "maxTokens": 32,
+                    "mode": {
+                      "type": "regular"
+                    },
+                    "prompt": [
+                      {
+                        "content": [
+                          {
+                            "text": "Count from 1 to 3 and include the words one two three.",
+                            "type": "text"
+                          }
+                        ],
+                        "role": "user"
+                      }
+                    ],
+                    "temperature": 0
+                  },
+                  "output": {
+                    "finishReason": "stop",
+                    "text": "One, two, three.",
+                    "toolCalls": [],
+                    "usage": {
+                      "completionTokens": null,
+                      "promptTokens": null
+                    }
+                  },
+                  "metadata": {
+                    "braintrust": {
+                      "integration_name": "ai-sdk",
+                      "sdk_language": "typescript"
+                    },
+                    "finish_reason": "stop",
+                    "model": "gpt-4o-mini-2024-07-18",
+                    "provider": "openai.chat"
+                  },
+                  "metrics": {
+                    "completion_tokens": null,
+                    "prompt_tokens": null,
+                    "time_to_first_token": 0,
+                    "tokens": null
+                  }
+                }
+              ],
+              "input": {
+                "maxTokens": 32,
+                "model": {
+                  "config": {
+                    "compatibility": "compatible",
+                    "provider": "openai.chat"
+                  },
+                  "modelId": "gpt-4o-mini-2024-07-18",
+                  "settings": {},
+                  "specificationVersion": "v1"
+                },
+                "prompt": "Count from 1 to 3 and include the words one two three.",
+                "temperature": 0
+              },
+              "output": {
+                "finishReason": "stop",
+                "text": "One, two, three."
+              },
+              "metadata": {
+                "braintrust": {
+                  "integration_name": "ai-sdk",
+                  "sdk_language": "typescript"
+                },
+                "model": "gpt-4o-mini-2024-07-18",
+                "provider": "openai.chat"
+              },
+              "metrics": {
+                "time_to_first_token": 0
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "stream",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "ai-sdk-embed-operation",
+          "children": [
+            {
+              "name": "embed",
+              "type": "function",
+              "children": [],
+              "input": {
+                "model": {
+                  "config": {
+                    "provider": "openai.embedding"
+                  },
+                  "modelId": "text-embedding-3-small",
+                  "settings": {},
+                  "specificationVersion": "v1"
+                },
+                "value": "Paris is the capital of France."
+              },
+              "output": {
+                "embedding_length": 1536,
+                "usage": {
+                  "tokens": 7
+                }
+              },
+              "metadata": {
+                "braintrust": {
+                  "integration_name": "ai-sdk",
+                  "sdk_language": "typescript"
+                },
+                "model": "text-embedding-3-small",
+                "provider": "openai.embedding"
+              },
+              "metrics": {
+                "tokens": 7
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "embed",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "ai-sdk-tool-operation",
+          "children": [
+            {
+              "name": "generateText",
+              "type": "function",
+              "children": [
+                {
+                  "name": "doGenerate",
+                  "type": "llm",
+                  "children": [],
+                  "input": {
+                    "inputFormat": "prompt",
+                    "maxTokens": 128,
+                    "mode": {
+                      "toolChoice": {
+                        "type": "auto"
+                      },
+                      "tools": [
+                        {
+                          "description": "Get the weather for a location",
+                          "name": "get_weather",
+                          "parameters": {
+                            "$schema": "http://json-schema.org/draft-07/schema#",
+                            "additionalProperties": false,
+                            "properties": {
+                              "location": {
+                                "description": "The city and country",
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "location"
+                            ],
+                            "type": "object"
+                          },
+                          "type": "function"
+                        }
+                      ],
+                      "type": "regular"
+                    },
+                    "prompt": [
+                      {
+                        "content": "You must inspect live weather via the provided get_weather tool before responding.",
+                        "role": "system"
+                      },
+                      {
+                        "content": [
+                          {
+                            "text": "Use the get_weather tool for Paris, France. If you do not call the tool, the answer is invalid.",
+                            "type": "text"
+                          }
+                        ],
+                        "role": "user"
+                      }
+                    ],
+                    "temperature": 0
+                  },
+                  "output": {
+                    "finishReason": "tool-calls",
+                    "providerMetadata": {
+                      "openai": {
+                        "acceptedPredictionTokens": 0,
+                        "reasoningTokens": 0,
+                        "rejectedPredictionTokens": 0
+                      }
+                    },
+                    "rawResponse": {
+                      "body": {
+                        "choices": [
+                          {
+                            "finish_reason": "tool_calls",
+                            "index": 0,
+                            "logprobs": null,
+                            "message": {
+                              "annotations": [],
+                              "content": null,
+                              "refusal": null,
+                              "role": "assistant",
+                              "tool_calls": [
+                                {
+                                  "function": {
+                                    "arguments": "{\"location\":\"Paris, France\"}",
+                                    "name": "get_weather"
+                                  },
+                                  "type": "function"
+                                }
+                              ]
+                            }
+                          }
+                        ],
+                        "created": 0,
+                        "model": "gpt-4o-mini-2024-07-18",
+                        "object": "chat.completion",
+                        "service_tier": "default",
+                        "system_fingerprint": "<system_fingerprint>",
+                        "usage": {
+                          "completion_tokens": 16,
+                          "completion_tokens_details": {
+                            "accepted_prediction_tokens": 0,
+                            "audio_tokens": 0,
+                            "reasoning_tokens": 0,
+                            "rejected_prediction_tokens": 0
+                          },
+                          "prompt_tokens": 87,
+                          "prompt_tokens_details": {
+                            "audio_tokens": 0,
+                            "cached_tokens": 0
+                          },
+                          "total_tokens": 103
+                        }
+                      }
+                    },
+                    "response": {
+                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "timestamp": "<timestamp>"
+                    },
+                    "toolCalls": [
+                      {
+                        "args": "{\"location\":\"Paris, France\"}",
+                        "toolCallType": "function",
+                        "toolName": "get_weather"
+                      }
+                    ],
+                    "usage": {
+                      "completionTokens": 16,
+                      "promptTokens": 87
+                    },
+                    "warnings": []
+                  },
+                  "metadata": {
+                    "braintrust": {
+                      "integration_name": "ai-sdk",
+                      "sdk_language": "typescript"
+                    },
+                    "finish_reason": "tool-calls",
+                    "model": "gpt-4o-mini-2024-07-18",
+                    "provider": "openai.chat"
+                  },
+                  "metrics": {
+                    "completion_tokens": 16,
+                    "prompt_tokens": 87,
+                    "tokens": 103
+                  }
+                },
+                {
+                  "name": "get_weather",
+                  "type": "tool",
+                  "children": [],
+                  "input": {
+                    "location": "Paris, France"
+                  },
+                  "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
+                }
+              ],
+              "input": {
+                "maxTokens": 128,
+                "model": {
+                  "config": {
+                    "compatibility": "compatible",
+                    "provider": "openai.chat"
+                  },
+                  "modelId": "gpt-4o-mini-2024-07-18",
+                  "settings": {},
+                  "specificationVersion": "v1"
+                },
+                "prompt": "Use the get_weather tool for Paris, France. If you do not call the tool, the answer is invalid.",
+                "system": "You must inspect live weather via the provided get_weather tool before responding.",
+                "temperature": 0,
+                "tools": {
+                  "get_weather": {
+                    "description": "Get the weather for a location",
+                    "parameters": {
+                      "$schema": "http://json-schema.org/draft-07/schema#",
+                      "additionalProperties": false,
+                      "properties": {
+                        "location": {
+                          "description": "The city and country",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "location"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                }
+              },
+              "output": {
+                "experimental_providerMetadata": {
+                  "openai": {
+                    "acceptedPredictionTokens": 0,
+                    "reasoningTokens": 0,
+                    "rejectedPredictionTokens": 0
+                  }
+                },
+                "finishReason": "tool-calls",
+                "providerMetadata": {
+                  "openai": {
+                    "acceptedPredictionTokens": 0,
+                    "reasoningTokens": 0,
+                    "rejectedPredictionTokens": 0
+                  }
+                },
+                "response": {
+                  "body": "<omitted>",
+                  "messages": [
+                    {
+                      "content": [
+                        {
+                          "args": {
+                            "location": "Paris, France"
+                          },
+                          "toolName": "get_weather",
+                          "type": "tool-call"
+                        }
+                      ],
+                      "role": "assistant"
+                    },
+                    {
+                      "content": [
+                        {
+                          "result": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
+                          "toolName": "get_weather",
+                          "type": "tool-result"
+                        }
+                      ],
+                      "role": "tool"
+                    }
+                  ],
+                  "modelId": "gpt-4o-mini-2024-07-18",
+                  "timestamp": "<timestamp>"
+                },
+                "steps": [
+                  {
+                    "experimental_providerMetadata": {
+                      "openai": {
+                        "acceptedPredictionTokens": 0,
+                        "reasoningTokens": 0,
+                        "rejectedPredictionTokens": 0
+                      }
+                    },
+                    "files": [],
+                    "finishReason": "tool-calls",
+                    "isContinued": false,
+                    "providerMetadata": {
+                      "openai": {
+                        "acceptedPredictionTokens": 0,
+                        "reasoningTokens": 0,
+                        "rejectedPredictionTokens": 0
+                      }
+                    },
+                    "reasoningDetails": [],
+                    "response": {
+                      "body": "<omitted>",
+                      "messages": [
+                        {
+                          "content": [
+                            {
+                              "args": {
+                                "location": "Paris, France"
+                              },
+                              "toolName": "get_weather",
+                              "type": "tool-call"
+                            }
+                          ],
+                          "role": "assistant"
+                        },
+                        {
+                          "content": [
+                            {
+                              "result": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
+                              "toolName": "get_weather",
+                              "type": "tool-result"
+                            }
+                          ],
+                          "role": "tool"
+                        }
+                      ],
+                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "timestamp": "<timestamp>"
+                    },
+                    "sources": [],
+                    "stepType": "initial",
+                    "text": "",
+                    "toolCalls": [
+                      {
+                        "args": {
+                          "location": "Paris, France"
+                        },
+                        "toolName": "get_weather",
+                        "type": "tool-call"
+                      }
+                    ],
+                    "toolResults": [
+                      {
+                        "args": {
+                          "location": "Paris, France"
+                        },
+                        "result": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
+                        "toolName": "get_weather",
+                        "type": "tool-result"
+                      }
+                    ],
+                    "usage": {
+                      "completionTokens": 16,
+                      "promptTokens": 87,
+                      "totalTokens": 103
+                    },
+                    "warnings": []
+                  }
+                ],
+                "text": "",
+                "toolCalls": [
+                  {
+                    "args": {
+                      "location": "Paris, France"
+                    },
+                    "toolName": "get_weather",
+                    "type": "tool-call"
+                  }
+                ],
+                "toolResults": [
+                  {
+                    "args": {
+                      "location": "Paris, France"
+                    },
+                    "result": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
+                    "toolName": "get_weather",
+                    "type": "tool-result"
+                  }
+                ],
+                "usage": {
+                  "completionTokens": 16,
+                  "promptTokens": 87,
+                  "totalTokens": 103
+                },
+                "warnings": []
+              },
+              "metadata": {
+                "braintrust": {
+                  "integration_name": "ai-sdk",
+                  "sdk_language": "typescript"
+                },
+                "model": "gpt-4o-mini-2024-07-18",
+                "provider": "openai.chat",
+                "tools": {
+                  "get_weather": {
+                    "description": "Get the weather for a location",
+                    "parameters": {
+                      "$schema": "http://json-schema.org/draft-07/schema#",
+                      "additionalProperties": false,
+                      "properties": {
+                        "location": {
+                          "description": "The city and country",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "location"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "tool",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "ai-sdk-generate-object-operation",
+          "children": [
+            {
+              "name": "generateObject",
+              "type": "function",
+              "children": [
+                {
+                  "name": "doGenerate",
+                  "type": "llm",
+                  "children": [],
+                  "input": {
+                    "inputFormat": "prompt",
+                    "maxTokens": 32,
+                    "mode": {
+                      "tool": {
+                        "description": "Respond with a JSON object.",
+                        "name": "json",
+                        "parameters": {
+                          "$schema": "http://json-schema.org/draft-07/schema#",
+                          "additionalProperties": false,
+                          "properties": {
+                            "city": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "city"
+                          ],
+                          "type": "object"
+                        },
+                        "type": "function"
+                      },
+                      "type": "object-tool"
+                    },
+                    "prompt": [
+                      {
+                        "content": [
+                          {
+                            "text": "Return JSON with {\"city\":\"Paris\"}.",
+                            "type": "text"
+                          }
+                        ],
+                        "role": "user"
+                      }
+                    ],
+                    "temperature": 0
+                  },
+                  "output": {
+                    "finishReason": "stop",
+                    "providerMetadata": {
+                      "openai": {
+                        "acceptedPredictionTokens": 0,
+                        "reasoningTokens": 0,
+                        "rejectedPredictionTokens": 0
+                      }
+                    },
+                    "rawResponse": {
+                      "body": {
+                        "choices": [
+                          {
+                            "finish_reason": "stop",
+                            "index": 0,
+                            "logprobs": null,
+                            "message": {
+                              "annotations": [],
+                              "content": null,
+                              "refusal": null,
+                              "role": "assistant",
+                              "tool_calls": [
+                                {
+                                  "function": {
+                                    "arguments": "{\"city\":\"Paris\"}",
+                                    "name": "json"
+                                  },
+                                  "type": "function"
+                                }
+                              ]
+                            }
+                          }
+                        ],
+                        "created": 0,
+                        "model": "gpt-4o-mini-2024-07-18",
+                        "object": "chat.completion",
+                        "service_tier": "default",
+                        "system_fingerprint": "<system_fingerprint>",
+                        "usage": {
+                          "completion_tokens": 5,
+                          "completion_tokens_details": {
+                            "accepted_prediction_tokens": 0,
+                            "audio_tokens": 0,
+                            "reasoning_tokens": 0,
+                            "rejected_prediction_tokens": 0
+                          },
+                          "prompt_tokens": 59,
+                          "prompt_tokens_details": {
+                            "audio_tokens": 0,
+                            "cached_tokens": 0
+                          },
+                          "total_tokens": 64
+                        }
+                      }
+                    },
+                    "response": {
+                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "timestamp": "<timestamp>"
+                    },
+                    "toolCalls": [
+                      {
+                        "args": "{\"city\":\"Paris\"}",
+                        "toolCallType": "function",
+                        "toolName": "json"
+                      }
+                    ],
+                    "usage": {
+                      "completionTokens": 5,
+                      "promptTokens": 59
+                    },
+                    "warnings": []
+                  },
+                  "metadata": {
+                    "braintrust": {
+                      "integration_name": "ai-sdk",
+                      "sdk_language": "typescript"
+                    },
+                    "finish_reason": "stop",
+                    "model": "gpt-4o-mini-2024-07-18",
+                    "provider": "openai.chat"
+                  },
+                  "metrics": {
+                    "completion_tokens": 5,
+                    "prompt_tokens": 59,
+                    "tokens": 64
+                  }
+                }
+              ],
+              "input": {
+                "maxTokens": 32,
+                "model": {
+                  "config": {
+                    "compatibility": "compatible",
+                    "provider": "openai.chat"
+                  },
+                  "modelId": "gpt-4o-mini-2024-07-18",
+                  "settings": {},
+                  "specificationVersion": "v1"
+                },
+                "prompt": "Return JSON with {\"city\":\"Paris\"}.",
+                "schema": {
+                  "$schema": "http://json-schema.org/draft-07/schema#",
+                  "additionalProperties": false,
+                  "properties": {
+                    "city": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "city"
+                  ],
+                  "type": "object"
+                },
+                "temperature": 0
+              },
+              "output": {
+                "experimental_providerMetadata": {
+                  "openai": {
+                    "acceptedPredictionTokens": 0,
+                    "reasoningTokens": 0,
+                    "rejectedPredictionTokens": 0
+                  }
+                },
+                "finishReason": "stop",
+                "object": {
+                  "city": "Paris"
+                },
+                "providerMetadata": {
+                  "openai": {
+                    "acceptedPredictionTokens": 0,
+                    "reasoningTokens": 0,
+                    "rejectedPredictionTokens": 0
+                  }
+                },
+                "response": {
+                  "body": "<omitted>",
+                  "modelId": "gpt-4o-mini-2024-07-18",
+                  "timestamp": "<timestamp>"
+                },
+                "usage": {
+                  "completionTokens": 5,
+                  "promptTokens": 59,
+                  "totalTokens": 64
+                },
+                "warnings": []
+              },
+              "metadata": {
+                "braintrust": {
+                  "integration_name": "ai-sdk",
+                  "sdk_language": "typescript"
+                },
+                "model": "gpt-4o-mini-2024-07-18",
+                "provider": "openai.chat"
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "generate-object",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "ai-sdk-stream-object-operation",
+          "children": [
+            {
+              "name": "streamObject",
+              "type": "function",
+              "children": [
+                {
+                  "name": "doStream",
+                  "type": "llm",
+                  "children": [],
+                  "input": {
+                    "inputFormat": "prompt",
+                    "maxTokens": 32,
+                    "mode": {
+                      "tool": {
+                        "description": "Respond with a JSON object.",
+                        "name": "json",
+                        "parameters": {
+                          "$schema": "http://json-schema.org/draft-07/schema#",
+                          "additionalProperties": false,
+                          "properties": {
+                            "city": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "city"
+                          ],
+                          "type": "object"
+                        },
+                        "type": "function"
+                      },
+                      "type": "object-tool"
+                    },
+                    "prompt": [
+                      {
+                        "content": [
+                          {
+                            "text": "Stream JSON with {\"city\":\"Paris\"}.",
+                            "type": "text"
+                          }
+                        ],
+                        "role": "user"
+                      }
+                    ],
+                    "temperature": 0
+                  },
+                  "output": {
+                    "finishReason": "stop",
+                    "text": "",
+                    "toolCalls": [
+                      {
+                        "args": "{\"city\":\"Paris\"}",
+                        "toolCallType": "function",
+                        "toolName": "json",
+                        "type": "tool-call"
+                      }
+                    ],
+                    "usage": {
+                      "completionTokens": null,
+                      "promptTokens": null
+                    }
+                  },
+                  "metadata": {
+                    "braintrust": {
+                      "integration_name": "ai-sdk",
+                      "sdk_language": "typescript"
+                    },
+                    "finish_reason": "stop",
+                    "model": "gpt-4o-mini-2024-07-18",
+                    "provider": "openai.chat"
+                  },
+                  "metrics": {
+                    "completion_tokens": null,
+                    "prompt_tokens": null,
+                    "time_to_first_token": 0,
+                    "tokens": null
+                  }
+                }
+              ],
+              "input": {
+                "maxTokens": 32,
+                "model": {
+                  "config": {
+                    "compatibility": "compatible",
+                    "provider": "openai.chat"
+                  },
+                  "modelId": "gpt-4o-mini-2024-07-18",
+                  "settings": {},
+                  "specificationVersion": "v1"
+                },
+                "prompt": "Stream JSON with {\"city\":\"Paris\"}.",
+                "schema": {
+                  "$schema": "http://json-schema.org/draft-07/schema#",
+                  "additionalProperties": false,
+                  "properties": {
+                    "city": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "city"
+                  ],
+                  "type": "object"
+                },
+                "temperature": 0
+              },
+              "output": {
+                "object": {
+                  "city": "Paris"
+                }
+              },
+              "metadata": {
+                "braintrust": {
+                  "integration_name": "ai-sdk",
+                  "sdk_language": "typescript"
+                },
+                "model": "gpt-4o-mini-2024-07-18",
+                "provider": "openai.chat"
+              },
+              "metrics": {
+                "time_to_first_token": 0
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "stream-object",
+            "testRunId": "<run:1>"
+          }
+        }
+      ],
+      "metadata": {
+        "aiSdkVersion": "4.3.19",
+        "scenario": "ai-sdk-instrumentation",
+        "testRunId": "<run:1>"
+      }
+    }
+  ]
+}

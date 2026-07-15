@@ -16,22 +16,42 @@ const openaiScenarios = await Promise.all(
   [
     {
       autoEntry: "scenario.openai-v4.mjs",
-      disablePrivateFieldMethodsAssertion: true,
       dependencyName: "openai-v4",
+      disablePrivateFieldMethodsAssertion: true,
       snapshotName: "openai-v4",
       wrapperEntry: "scenario.openai-v4.ts",
     },
     {
-      autoEntry: "scenario.openai-v5.mjs",
+      autoEntry: "scenario.openai-v4.mjs",
+      dependencyName: "openai-v4-latest",
       disablePrivateFieldMethodsAssertion: true,
+      snapshotName: "openai-v4-latest",
+      wrapperEntry: "scenario.openai-v4.ts",
+    },
+    {
+      autoEntry: "scenario.openai-v5.mjs",
       dependencyName: "openai-v5",
+      disablePrivateFieldMethodsAssertion: true,
       snapshotName: "openai-v5",
       wrapperEntry: "scenario.openai-v5.ts",
     },
     {
+      autoEntry: "scenario.openai-v5.mjs",
+      dependencyName: "openai-v5-latest",
+      disablePrivateFieldMethodsAssertion: true,
+      snapshotName: "openai-v5-latest",
+      wrapperEntry: "scenario.openai-v5.ts",
+    },
+    {
       autoEntry: "scenario.mjs",
-      dependencyName: "openai",
+      dependencyName: "openai-v6",
       snapshotName: "openai-v6",
+      wrapperEntry: "scenario.ts",
+    },
+    {
+      autoEntry: "scenario.mjs",
+      dependencyName: "openai-v6-latest",
+      snapshotName: "openai-v6-latest",
       wrapperEntry: "scenario.ts",
     },
   ].map(async (scenario) => ({
@@ -72,6 +92,7 @@ describe.concurrent("variants", () => {
         runScenario: async ({ runScenarioDir }) => {
           await runScenarioDir({
             entry: scenario.wrapperEntry,
+            env: { OPENAI_PACKAGE_NAME: scenario.dependencyName },
             runContext: {
               variantKey: scenario.snapshotName,
               originalScenarioDir,
@@ -92,6 +113,7 @@ describe.concurrent("variants", () => {
         runScenario: async ({ runNodeScenarioDir }) => {
           await runNodeScenarioDir({
             entry: scenario.autoEntry,
+            env: { OPENAI_PACKAGE_NAME: scenario.dependencyName },
             nodeArgs: ["--import", "braintrust/hook.mjs"],
             runContext: {
               variantKey: scenario.snapshotName,

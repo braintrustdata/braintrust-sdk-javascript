@@ -6,7 +6,7 @@ import {
   runTracedScenario,
 } from "../../helpers/provider-runtime.mjs";
 
-const GOOGLE_MODEL = "gemini-2.5-flash-lite";
+const GOOGLE_MODEL = "gemini-2.5-flash";
 const GOOGLE_EMBEDDING_MODEL = "gemini-embedding-001";
 const GOOGLE_GROUNDING_MODEL = "gemini-2.5-flash";
 const GOOGLE_INTERACTIONS_MODEL = "gemini-2.5-flash";

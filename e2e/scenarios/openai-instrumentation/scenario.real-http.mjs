@@ -15,7 +15,7 @@
  *   node --import braintrust/hook.mjs scenario.real-http.mjs
  */
 import * as http from "node:http";
-import OpenAI from "openai";
+import OpenAI from "openai-v6-latest";
 import { runMain } from "../../helpers/provider-runtime.mjs";
 
 const CHAT_RESPONSE = JSON.stringify({

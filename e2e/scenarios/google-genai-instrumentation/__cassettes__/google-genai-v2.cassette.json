@@ -1,0 +1,1285 @@
+{
+  "entries": [
+    {
+      "callIndex": 0,
+      "id": "1d79381ba4242fc8",
+      "matchKey": "POST generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+      "recordedAt": "2026-07-07T13:33:32.006Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "contents": [
+              {
+                "parts": [
+                  {
+                    "text": "Reply with exactly PARIS."
+                  }
+                ],
+                "role": "user"
+              }
+            ],
+            "generationConfig": {
+              "maxOutputTokens": 24,
+              "temperature": 0
+            }
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "candidates": [
+              {
+                "content": {
+                  "parts": [
+                    {
+                      "text": "PAR"
+                    }
+                  ],
+                  "role": "model"
+                },
+                "finishReason": "MAX_TOKENS",
+                "index": 0
+              }
+            ],
+            "modelVersion": "gemini-2.5-flash",
+            "responseId": "KwBNavOEK4DSxN8PqaP28AI",
+            "usageMetadata": {
+              "candidatesTokenCount": 1,
+              "promptTokenCount": 6,
+              "promptTokensDetails": [
+                {
+                  "modality": "TEXT",
+                  "tokenCount": 6
+                }
+              ],
+              "serviceTier": "standard",
+              "thoughtsTokenCount": 19,
+              "totalTokenCount": 26
+            }
+          }
+        },
+        "headers": {
+          "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
+          "content-encoding": "gzip",
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Tue, 07 Jul 2026 13:33:32 GMT",
+          "server": "scaffolding on HTTPServer2",
+          "server-timing": "gfet4t7; dur=410",
+          "transfer-encoding": "chunked",
+          "vary": "Origin, X-Origin, Referer",
+          "x-content-type-options": "nosniff",
+          "x-frame-options": "SAMEORIGIN",
+          "x-gemini-service-tier": "standard",
+          "x-xss-protection": "0"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 1,
+      "id": "d26f446b69680129",
+      "matchKey": "POST generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+      "recordedAt": "2026-07-07T13:33:32.641Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "contents": [
+              {
+                "parts": [
+                  {
+                    "text": "Tell me about the weather."
+                  }
+                ],
+                "role": "user"
+              }
+            ],
+            "generationConfig": {
+              "maxOutputTokens": 64,
+              "temperature": 0
+            },
+            "systemInstruction": {
+              "parts": [
+                {
+                  "text": "You are a pirate. Always respond in pirate speak."
+                }
+              ],
+              "role": "user"
+            }
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "candidates": [
+              {
+                "content": {
+                  "parts": [
+                    {
+                      "text": "Ahoy there"
+                    }
+                  ],
+                  "role": "model"
+                },
+                "finishReason": "MAX_TOKENS",
+                "index": 0
+              }
+            ],
+            "modelVersion": "gemini-2.5-flash",
+            "responseId": "LABNasysCNftxN8P6LzaoAI",
+            "usageMetadata": {
+              "candidatesTokenCount": 3,
+              "promptTokenCount": 19,
+              "promptTokensDetails": [
+                {
+                  "modality": "TEXT",
+                  "tokenCount": 19
+                }
+              ],
+              "serviceTier": "standard",
+              "thoughtsTokenCount": 57,
+              "totalTokenCount": 79
+            }
+          }
+        },
+        "headers": {
+          "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
+          "content-encoding": "gzip",
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Tue, 07 Jul 2026 13:33:32 GMT",
+          "server": "scaffolding on HTTPServer2",
+          "server-timing": "gfet4t7; dur=609",
+          "transfer-encoding": "chunked",
+          "vary": "Origin, X-Origin, Referer",
+          "x-content-type-options": "nosniff",
+          "x-frame-options": "SAMEORIGIN",
+          "x-gemini-service-tier": "standard",
+          "x-xss-protection": "0"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 2,
+      "id": "f50f98cdf2dd13d3",
+      "matchKey": "POST generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+      "recordedAt": "2026-07-07T13:33:33.502Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "contents": [
+              {
+                "parts": [
+                  {
+                    "text": "Hi, my name is Alice."
+                  }
+                ],
+                "role": "user"
+              },
+              {
+                "parts": [
+                  {
+                    "text": "Hello Alice! Nice to meet you."
+                  }
+                ],
+                "role": "model"
+              },
+              {
+                "parts": [
+                  {
+                    "text": "What did I just tell you my name was?"
+                  }
+                ],
+                "role": "user"
+              }
+            ],
+            "generationConfig": {
+              "maxOutputTokens": 64,
+              "temperature": 0
+            }
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "candidates": [
+              {
+                "content": {
+                  "parts": [
+                    {
+                      "text": "You told me"
+                    }
+                  ],
+                  "role": "model"
+                },
+                "finishReason": "MAX_TOKENS",
+                "index": 0
+              }
+            ],
+            "modelVersion": "gemini-2.5-flash",
+            "responseId": "LABNavCELpvgxs0P1aW-wQ8",
+            "usageMetadata": {
+              "candidatesTokenCount": 3,
+              "promptTokenCount": 28,
+              "promptTokensDetails": [
+                {
+                  "modality": "TEXT",
+                  "tokenCount": 28
+                }
+              ],
+              "serviceTier": "standard",
+              "thoughtsTokenCount": 57,
+              "totalTokenCount": 88
+            }
+          }
+        },
+        "headers": {
+          "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
+          "content-encoding": "gzip",
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Tue, 07 Jul 2026 13:33:33 GMT",
+          "server": "scaffolding on HTTPServer2",
+          "server-timing": "gfet4t7; dur=832",
+          "transfer-encoding": "chunked",
+          "vary": "Origin, X-Origin, Referer",
+          "x-content-type-options": "nosniff",
+          "x-frame-options": "SAMEORIGIN",
+          "x-gemini-service-tier": "standard",
+          "x-xss-protection": "0"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 0,
+      "id": "12df4c602bba7e02",
+      "matchKey": "POST generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:batchEmbedContents",
+      "recordedAt": "2026-07-07T13:33:33.822Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "requests": [
+              {
+                "content": {
+                  "parts": [
+                    {
+                      "text": "Paris is the capital of France."
+                    }
+                  ],
+                  "role": "user"
+                },
+                "model": "models/gemini-embedding-001"
+              }
+            ]
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:batchEmbedContents"
+      },
+      "response": {
+        "body": {
+          "contentType": "application/json; charset=UTF-8",
+          "kind": "binary",
+          "path": "google-genai-v2.cassette.blobs/f752a173720235fbf2f963c9be0779dbc62fdb779b5dad731f03d38e4ed5448d.bin",
+          "sha256": "f752a173720235fbf2f963c9be0779dbc62fdb779b5dad731f03d38e4ed5448d"
+        },
+        "headers": {
+          "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
+          "content-encoding": "gzip",
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Tue, 07 Jul 2026 13:33:33 GMT",
+          "server": "scaffolding on HTTPServer2",
+          "server-timing": "gfet4t7; dur=283",
+          "transfer-encoding": "chunked",
+          "vary": "Origin, X-Origin, Referer",
+          "x-content-type-options": "nosniff",
+          "x-frame-options": "SAMEORIGIN",
+          "x-xss-protection": "0"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 0,
+      "id": "286e9c61096bbe71",
+      "matchKey": "POST generativelanguage.googleapis.com/v1beta/interactions",
+      "recordedAt": "2026-07-07T13:33:35.320Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "generation_config": {
+              "max_output_tokens": 256,
+              "temperature": 0,
+              "thinking_level": "minimal"
+            },
+            "input": {
+              "text": "Reply with exactly ROME.",
+              "type": "text"
+            },
+            "model": "gemini-2.5-flash"
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/interactions"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "created": "2026-07-07T13:33:34Z",
+            "id": "v1_ChdMZ0JOYXU2TUVNT0UyOG9QcHVTSHVBOBIXTGdCTmF1Nk1FTU9FMjhvUHB1U0h1QTg",
+            "model": "gemini-2.5-flash",
+            "object": "interaction",
+            "service_tier": "standard",
+            "status": "completed",
+            "steps": [
+              {
+                "signature": "CkABEU0yD860vU9pHsOSaMIaEwvu4Z6pSduJwlNdkKGRU2RG4CFJHUsGD2zse8/cRLZzIWsv6rDfPSpAXlRlhxAC",
+                "type": "thought"
+              },
+              {
+                "content": [
+                  {
+                    "text": "ROME",
+                    "type": "text"
+                  }
+                ],
+                "type": "model_output"
+              }
+            ],
+            "updated": "2026-07-07T13:33:34Z",
+            "usage": {
+              "input_tokens_by_modality": [
+                {
+                  "modality": "text",
+                  "tokens": 7
+                }
+              ],
+              "total_cached_tokens": 0,
+              "total_input_tokens": 7,
+              "total_output_tokens": 1,
+              "total_thought_tokens": 7,
+              "total_tokens": 15,
+              "total_tool_use_tokens": 0
+            }
+          }
+        },
+        "headers": {
+          "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
+          "content-encoding": "gzip",
+          "content-type": "application/json",
+          "date": "Tue, 07 Jul 2026 13:33:35 GMT",
+          "server": "scaffolding on HTTPServer2",
+          "server-timing": "gfet4t7; dur=1465",
+          "transfer-encoding": "chunked",
+          "vary": "Origin, X-Origin, Referer",
+          "x-content-type-options": "nosniff",
+          "x-frame-options": "SAMEORIGIN",
+          "x-xss-protection": "0"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 1,
+      "id": "63aa0bcdb49225c7",
+      "matchKey": "POST generativelanguage.googleapis.com/v1beta/interactions",
+      "recordedAt": "2026-07-07T13:33:37.200Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "generation_config": {
+              "max_output_tokens": 256,
+              "temperature": 0,
+              "thinking_level": "minimal"
+            },
+            "input": {
+              "text": "Count from 1 to 3 and include the words one two three.",
+              "type": "text"
+            },
+            "model": "gemini-2.5-flash",
+            "stream": true
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/interactions"
+      },
+      "response": {
+        "body": {
+          "chunks": [
+            "event: interaction.created\ndata: {\"interaction\":{\"id\":\"v1_ChdMd0JOYXB2UEhkSFF2ZElQd1pUdzJBVRIXTHdCTmFwdlBIZEhRdmRJUHdaVHcyQVU\",\"status\":\"in_progress\",\"object\":\"interaction\",\"model\":\"gemini-2.5-flash\"},\"event_type\":\"interaction.created\"}",
+            "event: interaction.status_update\ndata: {\"interaction_id\":\"v1_ChdMd0JOYXB2UEhkSFF2ZElQd1pUdzJBVRIXTHdCTmFwdlBIZEhRdmRJUHdaVHcyQVU\",\"status\":\"in_progress\",\"event_type\":\"interaction.status_update\"}",
+            "event: step.start\ndata: {\"index\":0,\"step\":{\"type\":\"thought\"},\"event_type\":\"step.start\"}",
+            "event: step.delta\ndata: {\"index\":0,\"delta\":{\"signature\":\"CiQBEU0yD+4+m6BeXcd/qCgGFXlMr3P9wWDK6C+dpic43GwRElIKQQERTTIP0llWw3A7RWxUXfZryPsZ19z1UZLX9uBA+RGY/gCBo+3v8nkqwktU8M8FhB5btPp6xu6tGbrrV6c4n2I2\",\"type\":\"thought_signature\"},\"event_type\":\"step.delta\"}",
+            "event: step.stop\ndata: {\"index\":0,\"event_type\":\"step.stop\"}",
+            "event: step.start\ndata: {\"index\":1,\"step\":{\"type\":\"model_output\"},\"event_type\":\"step.start\"}",
+            "event: step.delta\ndata: {\"index\":1,\"delta\":{\"text\":\"1, one\\n2, two\",\"type\":\"text\"},\"event_type\":\"step.delta\"}",
+            "event: step.delta\ndata: {\"index\":1,\"delta\":{\"text\":\"\\n3, three\",\"type\":\"text\"},\"event_type\":\"step.delta\"}",
+            "event: step.stop\ndata: {\"index\":1,\"event_type\":\"step.stop\"}",
+            "event: interaction.completed\ndata: {\"interaction\":{\"id\":\"v1_ChdMd0JOYXB2UEhkSFF2ZElQd1pUdzJBVRIXTHdCTmFwdlBIZEhRdmRJUHdaVHcyQVU\",\"status\":\"completed\",\"usage\":{\"total_tokens\":38,\"total_input_tokens\":16,\"input_tokens_by_modality\":[{\"modality\":\"text\",\"tokens\":16}],\"total_cached_tokens\":0,\"total_output_tokens\":10,\"total_tool_use_tokens\":0,\"total_thought_tokens\":12},\"created\":\"2026-07-07T13:33:35Z\",\"updated\":\"2026-07-07T13:33:35Z\",\"service_tier\":\"standard\",\"object\":\"interaction\",\"model\":\"gemini-2.5-flash\"},\"event_type\":\"interaction.completed\"}",
+            "event: done\ndata: [DONE]"
+          ],
+          "kind": "sse"
+        },
+        "headers": {
+          "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
+          "content-encoding": "gzip",
+          "content-type": "text/event-stream",
+          "date": "Tue, 07 Jul 2026 13:33:35 GMT",
+          "server": "scaffolding on HTTPServer2",
+          "server-timing": "gfet4t7; dur=95",
+          "transfer-encoding": "chunked",
+          "vary": "Origin, X-Origin, Referer",
+          "x-content-type-options": "nosniff",
+          "x-frame-options": "SAMEORIGIN",
+          "x-xss-protection": "0"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 2,
+      "id": "47067fb240e44306",
+      "matchKey": "POST generativelanguage.googleapis.com/v1beta/interactions",
+      "recordedAt": "2026-07-07T13:33:38.948Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "generation_config": {
+              "max_output_tokens": 256,
+              "temperature": 0,
+              "thinking_level": "minimal"
+            },
+            "input": {
+              "text": "Hi, my name is Amir.",
+              "type": "text"
+            },
+            "model": "gemini-2.5-flash"
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/interactions"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "created": "2026-07-07T13:33:37Z",
+            "id": "v1_ChdNUUJOYXZDeU1mQ0p2ZElQc1BhcXFBbxIXTVFCTmF2Q3lNZkNKdmRJUHNQYXFxQW8",
+            "model": "gemini-2.5-flash",
+            "object": "interaction",
+            "service_tier": "standard",
+            "status": "completed",
+            "steps": [
+              {
+                "signature": "CkQBEU0yDzw98FvIThzseAKynLM6hjJK/szONSz+T4v9YhvBHwW6toyIKxn1DbfNUFQnqrdgJxs+AQCPCYiL2FPAWdLJCQ==",
+                "type": "thought"
+              },
+              {
+                "content": [
+                  {
+                    "text": "Hi Amir, it's nice to meet you! How can I help you today?",
+                    "type": "text"
+                  }
+                ],
+                "type": "model_output"
+              }
+            ],
+            "updated": "2026-07-07T13:33:37Z",
+            "usage": {
+              "input_tokens_by_modality": [
+                {
+                  "modality": "text",
+                  "tokens": 8
+                }
+              ],
+              "total_cached_tokens": 0,
+              "total_input_tokens": 8,
+              "total_output_tokens": 18,
+              "total_thought_tokens": 6,
+              "total_tokens": 32,
+              "total_tool_use_tokens": 0
+            }
+          }
+        },
+        "headers": {
+          "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
+          "content-encoding": "gzip",
+          "content-type": "application/json",
+          "date": "Tue, 07 Jul 2026 13:33:38 GMT",
+          "server": "scaffolding on HTTPServer2",
+          "server-timing": "gfet4t7; dur=1591",
+          "transfer-encoding": "chunked",
+          "vary": "Origin, X-Origin, Referer",
+          "x-content-type-options": "nosniff",
+          "x-frame-options": "SAMEORIGIN",
+          "x-xss-protection": "0"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 3,
+      "id": "e71e778d1d54f773",
+      "matchKey": "POST generativelanguage.googleapis.com/v1beta/interactions",
+      "recordedAt": "2026-07-07T13:33:41.493Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "generation_config": {
+              "max_output_tokens": 256,
+              "temperature": 0,
+              "thinking_level": "minimal"
+            },
+            "input": {
+              "text": "What is my name? Reply with exactly AMIR.",
+              "type": "text"
+            },
+            "model": "gemini-2.5-flash",
+            "previous_interaction_id": "v1_ChdNUUJOYXZDeU1mQ0p2ZElQc1BhcXFBbxIXTVFCTmF2Q3lNZkNKdmRJUHNQYXFxQW8"
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/interactions"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "created": "2026-07-07T13:33:40Z",
+            "id": "v1_ChdNUUJOYXZDeU1mQ0p2ZElQc1BhcXFBbxIXTkFCTmF0ZTlDYVNDMjhvUC1hdTZ3QTA",
+            "model": "gemini-2.5-flash",
+            "object": "interaction",
+            "service_tier": "standard",
+            "status": "completed",
+            "steps": [
+              {
+                "signature": "CmkBEU0yD9Cm11cTg+QzZZ6aQh+DCfbQCBWyHWRPe+Br2k5r5xJkezTR2RdmWach3117dQL4z/452ADyzmwicp+88Kfq8wcGbaPVnOyzKegkvmYTVGI96Lc+J8GCS+Zc0sCGOiMvJqyYfU0=",
+                "type": "thought"
+              },
+              {
+                "content": [
+                  {
+                    "text": "AMIR",
+                    "type": "text"
+                  }
+                ],
+                "type": "model_output"
+              }
+            ],
+            "updated": "2026-07-07T13:33:40Z",
+            "usage": {
+              "input_tokens_by_modality": [
+                {
+                  "modality": "text",
+                  "tokens": 39
+                }
+              ],
+              "total_cached_tokens": 0,
+              "total_input_tokens": 39,
+              "total_output_tokens": 2,
+              "total_thought_tokens": 18,
+              "total_tokens": 59,
+              "total_tool_use_tokens": 0
+            }
+          }
+        },
+        "headers": {
+          "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
+          "content-encoding": "gzip",
+          "content-type": "application/json",
+          "date": "Tue, 07 Jul 2026 13:33:41 GMT",
+          "server": "scaffolding on HTTPServer2",
+          "server-timing": "gfet4t7; dur=2511",
+          "transfer-encoding": "chunked",
+          "vary": "Origin, X-Origin, Referer",
+          "x-content-type-options": "nosniff",
+          "x-frame-options": "SAMEORIGIN",
+          "x-xss-protection": "0"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 4,
+      "id": "625d528f7a8a4ea1",
+      "matchKey": "POST generativelanguage.googleapis.com/v1beta/interactions",
+      "recordedAt": "2026-07-07T13:33:41.624Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "background": true,
+            "generation_config": {
+              "max_output_tokens": 256,
+              "temperature": 0,
+              "thinking_level": "minimal"
+            },
+            "input": {
+              "text": "Reply with exactly BACKGROUND.",
+              "type": "text"
+            },
+            "model": "gemini-2.5-flash"
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/interactions"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "error": {
+              "code": "invalid_request",
+              "message": "Model 'gemini-2.5-flash' does not support background interactions."
+            }
+          }
+        },
+        "headers": {
+          "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
+          "content-encoding": "gzip",
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Tue, 07 Jul 2026 13:33:41 GMT",
+          "server": "scaffolding on HTTPServer2",
+          "server-timing": "gfet4t7; dur=106",
+          "transfer-encoding": "chunked",
+          "vary": "Origin, X-Origin, Referer",
+          "x-content-type-options": "nosniff",
+          "x-frame-options": "SAMEORIGIN",
+          "x-xss-protection": "0"
+        },
+        "status": 400,
+        "statusText": "Bad Request"
+      }
+    },
+    {
+      "callIndex": 3,
+      "id": "e749c1b573536078",
+      "matchKey": "POST generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+      "recordedAt": "2026-07-07T13:33:43.743Z",
+      "request": {
+        "body": {
+          "contentType": "application/json",
+          "kind": "binary",
+          "path": "google-genai-v2.cassette.blobs/c7ed7651edb386a72ece84063dac4154ebf7aa888dd2454e399607e3012b1f7d.bin",
+          "sha256": "c7ed7651edb386a72ece84063dac4154ebf7aa888dd2454e399607e3012b1f7d"
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "candidates": [
+              {
+                "content": {
+                  "parts": [
+                    {
+                      "text": "A majestic"
+                    }
+                  ],
+                  "role": "model"
+                },
+                "finishReason": "MAX_TOKENS",
+                "index": 0
+              }
+            ],
+            "modelVersion": "gemini-2.5-flash",
+            "responseId": "NgBNat3UCcHmvdIP_8m0qQU",
+            "usageMetadata": {
+              "candidatesTokenCount": 2,
+              "promptTokenCount": 268,
+              "promptTokensDetails": [
+                {
+                  "modality": "TEXT",
+                  "tokenCount": 10
+                },
+                {
+                  "modality": "IMAGE",
+                  "tokenCount": 258
+                }
+              ],
+              "serviceTier": "standard",
+              "thoughtsTokenCount": 42,
+              "totalTokenCount": 312
+            }
+          }
+        },
+        "headers": {
+          "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
+          "content-encoding": "gzip",
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Tue, 07 Jul 2026 13:33:43 GMT",
+          "server": "scaffolding on HTTPServer2",
+          "server-timing": "gfet4t7; dur=1877",
+          "transfer-encoding": "chunked",
+          "vary": "Origin, X-Origin, Referer",
+          "x-content-type-options": "nosniff",
+          "x-frame-options": "SAMEORIGIN",
+          "x-gemini-service-tier": "standard",
+          "x-xss-protection": "0"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 0,
+      "id": "249263a9626ccd1e",
+      "matchKey": "POST generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent",
+      "recordedAt": "2026-07-07T13:33:44.516Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "contents": [
+              {
+                "parts": [
+                  {
+                    "text": "Count from 1 to 3 and include the words one two three."
+                  }
+                ],
+                "role": "user"
+              }
+            ],
+            "generationConfig": {
+              "maxOutputTokens": 64,
+              "temperature": 0
+            }
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?alt=sse"
+      },
+      "response": {
+        "body": {
+          "kind": "empty"
+        },
+        "headers": {
+          "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
+          "content-disposition": "attachment",
+          "content-length": "0",
+          "content-type": "text/event-stream",
+          "date": "Tue, 07 Jul 2026 13:33:44 GMT",
+          "server": "scaffolding on HTTPServer2",
+          "server-timing": "gfet4t7; dur=681",
+          "vary": "Origin, X-Origin, Referer",
+          "x-content-type-options": "nosniff",
+          "x-frame-options": "SAMEORIGIN",
+          "x-xss-protection": "0"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 1,
+      "id": "0910717cbe1a4175",
+      "matchKey": "POST generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent",
+      "recordedAt": "2026-07-07T13:33:44.974Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "contents": [
+              {
+                "parts": [
+                  {
+                    "text": "Reply with exactly BONJOUR."
+                  }
+                ],
+                "role": "user"
+              }
+            ],
+            "generationConfig": {
+              "maxOutputTokens": 24,
+              "temperature": 0
+            }
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?alt=sse"
+      },
+      "response": {
+        "body": {
+          "chunks": [
+            "data: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"BON\"}],\"role\":\"model\"},\"finishReason\":\"MAX_TOKENS\",\"index\":0}],\"usageMetadata\":{\"promptTokenCount\":7,\"candidatesTokenCount\":1,\"totalTokenCount\":27,\"promptTokensDetails\":[{\"modality\":\"TEXT\",\"tokenCount\":7}],\"thoughtsTokenCount\":19,\"serviceTier\":\"standard\"},\"modelVersion\":\"gemini-2.5-flash\",\"responseId\":\"OABNarjgJrrzxs0Po8f4mAE\"}"
+          ],
+          "kind": "sse"
+        },
+        "headers": {
+          "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
+          "content-disposition": "attachment",
+          "content-type": "text/event-stream",
+          "date": "Tue, 07 Jul 2026 13:33:45 GMT",
+          "server": "scaffolding on HTTPServer2",
+          "server-timing": "gfet4t7; dur=426",
+          "transfer-encoding": "chunked",
+          "vary": "Origin, X-Origin, Referer",
+          "x-content-type-options": "nosniff",
+          "x-frame-options": "SAMEORIGIN",
+          "x-xss-protection": "0"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 4,
+      "id": "093eb691f93df47f",
+      "matchKey": "POST generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+      "recordedAt": "2026-07-07T13:33:47.995Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "contents": [
+              {
+                "parts": [
+                  {
+                    "text": "Use Google Search grounding and answer in one sentence: What is the current population of Paris, France?"
+                  }
+                ],
+                "role": "user"
+              }
+            ],
+            "generationConfig": {
+              "maxOutputTokens": 256,
+              "temperature": 0
+            },
+            "tools": [
+              {
+                "googleSearch": {}
+              }
+            ]
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "candidates": [
+              {
+                "content": {
+                  "parts": [
+                    {
+                      "text": "The current estimated population of Paris, France, for"
+                    }
+                  ],
+                  "role": "model"
+                },
+                "finishReason": "MAX_TOKENS",
+                "groundingMetadata": {
+                  "searchEntryPoint": {
+                    "renderedContent": "<style>\n.container {\n  align-items: center;\n  border-radius: 8px;\n  display: flex;\n  font-family: Google Sans, Roboto, sans-serif;\n  font-size: 14px;\n  line-height: 20px;\n  padding: 8px 12px;\n}\n.chip {\n  display: inline-block;\n  border: solid 1px;\n  border-radius: 16px;\n  min-width: 14px;\n  padding: 5px 16px;\n  text-align: center;\n  user-select: none;\n  margin: 0 8px;\n  -webkit-tap-highlight-color: transparent;\n}\n.carousel {\n  overflow: auto;\n  scrollbar-width: none;\n  white-space: nowrap;\n  margin-right: -12px;\n}\n.headline {\n  display: flex;\n  margin-right: 4px;\n}\n.gradient-container {\n  position: relative;\n}\n.gradient {\n  position: absolute;\n  transform: translate(3px, -9px);\n  height: 36px;\n  width: 9px;\n}\n@media (prefers-color-scheme: light) {\n  .container {\n    background-color: #fafafa;\n    box-shadow: 0 0 0 1px #0000000f;\n  }\n  .headline-label {\n    color: #1f1f1f;\n  }\n  .chip {\n    background-color: #ffffff;\n    border-color: #d2d2d2;\n    color: #5e5e5e;\n    text-decoration: none;\n  }\n  .chip:hover {\n    background-color: #f2f2f2;\n  }\n  .chip:focus {\n    background-color: #f2f2f2;\n  }\n  .chip:active {\n    background-color: #d8d8d8;\n    border-color: #b6b6b6;\n  }\n  .logo-dark {\n    display: none;\n  }\n  .gradient {\n    background: linear-gradient(90deg, #fafafa 15%, #fafafa00 100%);\n  }\n}\n@media (prefers-color-scheme: dark) {\n  .container {\n    background-color: #1f1f1f;\n    box-shadow: 0 0 0 1px #ffffff26;\n  }\n  .headline-label {\n    color: #fff;\n  }\n  .chip {\n    background-color: #2c2c2c;\n    border-color: #3c4043;\n    color: #fff;\n    text-decoration: none;\n  }\n  .chip:hover {\n    background-color: #353536;\n  }\n  .chip:focus {\n    background-color: #353536;\n  }\n  .chip:active {\n    background-color: #464849;\n    border-color: #53575b;\n  }\n  .logo-light {\n    display: none;\n  }\n  .gradient {\n    background: linear-gradient(90deg, #1f1f1f 15%, #1f1f1f00 100%);\n  }\n}\n</style>\n<div class=\"container\">\n  <div class=\"headline\">\n    <svg class=\"logo-light\" width=\"18\" height=\"18\" viewBox=\"9 9 35 35\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n      <path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M42.8622 27.0064C42.8622 25.7839 42.7525 24.6084 42.5487 23.4799H26.3109V30.1568H35.5897C35.1821 32.3041 33.9596 34.1222 32.1258 35.3448V39.6864H37.7213C40.9814 36.677 42.8622 32.2571 42.8622 27.0064V27.0064Z\" fill=\"#4285F4\"/>\n      <path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M26.3109 43.8555C30.9659 43.8555 34.8687 42.3195 37.7213 39.6863L32.1258 35.3447C30.5898 36.3792 28.6306 37.0061 26.3109 37.0061C21.8282 37.0061 18.0195 33.9811 16.6559 29.906H10.9194V34.3573C13.7563 39.9841 19.5712 43.8555 26.3109 43.8555V43.8555Z\" fill=\"#34A853\"/>\n      <path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M16.6559 29.8904C16.3111 28.8559 16.1074 27.7588 16.1074 26.6146C16.1074 25.4704 16.3111 24.3733 16.6559 23.3388V18.8875H10.9194C9.74388 21.2072 9.06992 23.8247 9.06992 26.6146C9.06992 29.4045 9.74388 32.022 10.9194 34.3417L15.3864 30.8621L16.6559 29.8904V29.8904Z\" fill=\"#FBBC05\"/>\n      <path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M26.3109 16.2386C28.85 16.2386 31.107 17.1164 32.9095 18.8091L37.8466 13.8719C34.853 11.082 30.9659 9.3736 26.3109 9.3736C19.5712 9.3736 13.7563 13.245 10.9194 18.8875L16.6559 23.3388C18.0195 19.2636 21.8282 16.2386 26.3109 16.2386V16.2386Z\" fill=\"#EA4335\"/>\n    </svg>\n    <svg class=\"logo-dark\" width=\"18\" height=\"18\" viewBox=\"0 0 48 48\" xmlns=\"http://www.w3.org/2000/svg\">\n      <circle cx=\"24\" cy=\"23\" fill=\"#FFF\" r=\"22\"/>\n      <path d=\"M33.76 34.26c2.75-2.56 4.49-6.37 4.49-11.26 0-.89-.08-1.84-.29-3H24.01v5.99h8.03c-.4 2.02-1.5 3.56-3.07 4.56v.75l3.91 2.97h.88z\" fill=\"#4285F4\"/>\n      <path d=\"M15.58 25.77A8.845 8.845 0 0 0 24 31.86c1.92 0 3.62-.46 4.97-1.31l4.79 3.71C31.14 36.7 27.65 38 24 38c-5.93 0-11.01-3.4-13.45-8.36l.17-1.01 4.06-2.85h.8z\" fill=\"#34A853\"/>\n      <path d=\"M15.59 20.21a8.864 8.864 0 0 0 0 5.58l-5.03 3.86c-.98-2-1.53-4.25-1.53-6.64 0-2.39.55-4.64 1.53-6.64l1-.22 3.81 2.98.22 1.08z\" fill=\"#FBBC05\"/>\n      <path d=\"M24 14.14c2.11 0 4.02.75 5.52 1.98l4.36-4.36C31.22 9.43 27.81 8 24 8c-5.93 0-11.01 3.4-13.45 8.36l5.03 3.85A8.86 8.86 0 0 1 24 14.14z\" fill=\"#EA4335\"/>\n    </svg>\n    <div class=\"gradient-container\"><div class=\"gradient\"></div></div>\n  </div>\n  <div class=\"carousel\">\n    <a class=\"chip\" href=\"https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHmMpjfCzhOcCUvmMDYG1RIAK5RH3BFez0uLXULQCgKzHiBCElHbIKV9RZV25_4lfAz92w8a4m_hhyKjoL6BNKVVfjuLAt_k6J2YO8yKT5rnUORmUvxuDsqiW2Ze92B_PrSfOa_fHy2UnshoEfrCjTazPFKvSQYQMkostjhn7M3C97E9E0_qvMp2UrRSnUWejIPbGNU_q7CLg==\">Paris population 2026</a>\n    <a class=\"chip\" href=\"https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEbP_Tz-V2T9WtUAdwwpWk98OgmKbSsR8uhVhoo6TIEmQCDqv0ORHM05ELgm0qnOhdUk_lLrnJSJi0PEa_GUwmSRf_bWnTWrbH5MBA09Dgh7PaBArFaf5BumzQdtjG8eCcTOCguMc30lJ0UKYL8C7N_wfK9yL7RhLiiW0Ryow0LeAEVsT_1DIj4Xls5eQ4WNQOp76aS4lGv8oFyBpnZenBYV3du9Wpu\">current population of Paris, France</a>\n  </div>\n</div>\n"
+                  },
+                  "webSearchQueries": [
+                    "current population of Paris, France",
+                    "Paris population 2026"
+                  ]
+                },
+                "index": 0
+              }
+            ],
+            "modelVersion": "gemini-2.5-flash",
+            "responseId": "OQBNapWKBsiJvdIP_tW2yQI",
+            "usageMetadata": {
+              "candidatesTokenCount": 36,
+              "promptTokenCount": 21,
+              "promptTokensDetails": [
+                {
+                  "modality": "TEXT",
+                  "tokenCount": 21
+                }
+              ],
+              "serviceTier": "standard",
+              "thoughtsTokenCount": 295,
+              "toolUsePromptTokenCount": 100,
+              "toolUsePromptTokensDetails": [
+                {
+                  "modality": "TEXT",
+                  "tokenCount": 100
+                }
+              ],
+              "totalTokenCount": 452
+            }
+          }
+        },
+        "headers": {
+          "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
+          "content-encoding": "gzip",
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Tue, 07 Jul 2026 13:33:48 GMT",
+          "server": "scaffolding on HTTPServer2",
+          "server-timing": "gfet4t7; dur=2990",
+          "transfer-encoding": "chunked",
+          "vary": "Origin, X-Origin, Referer",
+          "x-content-type-options": "nosniff",
+          "x-frame-options": "SAMEORIGIN",
+          "x-gemini-service-tier": "standard",
+          "x-xss-protection": "0"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 2,
+      "id": "b229ac448c0d5458",
+      "matchKey": "POST generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent",
+      "recordedAt": "2026-07-07T13:33:50.152Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "contents": [
+              {
+                "parts": [
+                  {
+                    "text": "Use Google Search grounding and answer in one sentence: What is the current weather in Paris?"
+                  }
+                ],
+                "role": "user"
+              }
+            ],
+            "generationConfig": {
+              "maxOutputTokens": 256,
+              "temperature": 0
+            },
+            "tools": [
+              {
+                "googleSearch": {}
+              }
+            ]
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?alt=sse"
+      },
+      "response": {
+        "body": {
+          "chunks": [
+            "data: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"The current weather in Paris, France, is cloudy with a\"}],\"role\":\"model\"},\"index\":0,\"groundingMetadata\":{}}],\"usageMetadata\":{\"promptTokenCount\":19,\"candidatesTokenCount\":27,\"totalTokenCount\":201,\"cachedContentTokenCount\":8,\"promptTokensDetails\":[{\"modality\":\"TEXT\",\"tokenCount\":19}],\"cacheTokensDetails\":[{\"modality\":\"TEXT\",\"tokenCount\":8}],\"toolUsePromptTokenCount\":69,\"toolUsePromptTokensDetails\":[{\"modality\":\"TEXT\",\"tokenCount\":69}],\"thoughtsTokenCount\":86,\"serviceTier\":\"standard\"},\"modelVersion\":\"gemini-2.5-flash\",\"responseId\":\"PABNasnFCIn6vdIP5qWOkA8\"}",
+            "data: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\" temperature of 92-93°F (33°C) and a 10% chance of rain.\"}],\"role\":\"model\"},\"finishReason\":\"STOP\",\"index\":0,\"groundingMetadata\":{\"searchEntryPoint\":{\"renderedContent\":\"<style>\\n.container {\\n  align-items: center;\\n  border-radius: 8px;\\n  display: flex;\\n  font-family: Google Sans, Roboto, sans-serif;\\n  font-size: 14px;\\n  line-height: 20px;\\n  padding: 8px 12px;\\n}\\n.chip {\\n  display: inline-block;\\n  border: solid 1px;\\n  border-radius: 16px;\\n  min-width: 14px;\\n  padding: 5px 16px;\\n  text-align: center;\\n  user-select: none;\\n  margin: 0 8px;\\n  -webkit-tap-highlight-color: transparent;\\n}\\n.carousel {\\n  overflow: auto;\\n  scrollbar-width: none;\\n  white-space: nowrap;\\n  margin-right: -12px;\\n}\\n.headline {\\n  display: flex;\\n  margin-right: 4px;\\n}\\n.gradient-container {\\n  position: relative;\\n}\\n.gradient {\\n  position: absolute;\\n  transform: translate(3px, -9px);\\n  height: 36px;\\n  width: 9px;\\n}\\n@media (prefers-color-scheme: light) {\\n  .container {\\n    background-color: #fafafa;\\n    box-shadow: 0 0 0 1px #0000000f;\\n  }\\n  .headline-label {\\n    color: #1f1f1f;\\n  }\\n  .chip {\\n    background-color: #ffffff;\\n    border-color: #d2d2d2;\\n    color: #5e5e5e;\\n    text-decoration: none;\\n  }\\n  .chip:hover {\\n    background-color: #f2f2f2;\\n  }\\n  .chip:focus {\\n    background-color: #f2f2f2;\\n  }\\n  .chip:active {\\n    background-color: #d8d8d8;\\n    border-color: #b6b6b6;\\n  }\\n  .logo-dark {\\n    display: none;\\n  }\\n  .gradient {\\n    background: linear-gradient(90deg, #fafafa 15%, #fafafa00 100%);\\n  }\\n}\\n@media (prefers-color-scheme: dark) {\\n  .container {\\n    background-color: #1f1f1f;\\n    box-shadow: 0 0 0 1px #ffffff26;\\n  }\\n  .headline-label {\\n    color: #fff;\\n  }\\n  .chip {\\n    background-color: #2c2c2c;\\n    border-color: #3c4043;\\n    color: #fff;\\n    text-decoration: none;\\n  }\\n  .chip:hover {\\n    background-color: #353536;\\n  }\\n  .chip:focus {\\n    background-color: #353536;\\n  }\\n  .chip:active {\\n    background-color: #464849;\\n    border-color: #53575b;\\n  }\\n  .logo-light {\\n    display: none;\\n  }\\n  .gradient {\\n    background: linear-gradient(90deg, #1f1f1f 15%, #1f1f1f00 100%);\\n  }\\n}\\n</style>\\n<div class=\\\"container\\\">\\n  <div class=\\\"headline\\\">\\n    <svg class=\\\"logo-light\\\" width=\\\"18\\\" height=\\\"18\\\" viewBox=\\\"9 9 35 35\\\" fill=\\\"none\\\" xmlns=\\\"http://www.w3.org/2000/svg\\\">\\n      <path fill-rule=\\\"evenodd\\\" clip-rule=\\\"evenodd\\\" d=\\\"M42.8622 27.0064C42.8622 25.7839 42.7525 24.6084 42.5487 23.4799H26.3109V30.1568H35.5897C35.1821 32.3041 33.9596 34.1222 32.1258 35.3448V39.6864H37.7213C40.9814 36.677 42.8622 32.2571 42.8622 27.0064V27.0064Z\\\" fill=\\\"#4285F4\\\"/>\\n      <path fill-rule=\\\"evenodd\\\" clip-rule=\\\"evenodd\\\" d=\\\"M26.3109 43.8555C30.9659 43.8555 34.8687 42.3195 37.7213 39.6863L32.1258 35.3447C30.5898 36.3792 28.6306 37.0061 26.3109 37.0061C21.8282 37.0061 18.0195 33.9811 16.6559 29.906H10.9194V34.3573C13.7563 39.9841 19.5712 43.8555 26.3109 43.8555V43.8555Z\\\" fill=\\\"#34A853\\\"/>\\n      <path fill-rule=\\\"evenodd\\\" clip-rule=\\\"evenodd\\\" d=\\\"M16.6559 29.8904C16.3111 28.8559 16.1074 27.7588 16.1074 26.6146C16.1074 25.4704 16.3111 24.3733 16.6559 23.3388V18.8875H10.9194C9.74388 21.2072 9.06992 23.8247 9.06992 26.6146C9.06992 29.4045 9.74388 32.022 10.9194 34.3417L15.3864 30.8621L16.6559 29.8904V29.8904Z\\\" fill=\\\"#FBBC05\\\"/>\\n      <path fill-rule=\\\"evenodd\\\" clip-rule=\\\"evenodd\\\" d=\\\"M26.3109 16.2386C28.85 16.2386 31.107 17.1164 32.9095 18.8091L37.8466 13.8719C34.853 11.082 30.9659 9.3736 26.3109 9.3736C19.5712 9.3736 13.7563 13.245 10.9194 18.8875L16.6559 23.3388C18.0195 19.2636 21.8282 16.2386 26.3109 16.2386V16.2386Z\\\" fill=\\\"#EA4335\\\"/>\\n    </svg>\\n    <svg class=\\\"logo-dark\\\" width=\\\"18\\\" height=\\\"18\\\" viewBox=\\\"0 0 48 48\\\" xmlns=\\\"http://www.w3.org/2000/svg\\\">\\n      <circle cx=\\\"24\\\" cy=\\\"23\\\" fill=\\\"#FFF\\\" r=\\\"22\\\"/>\\n      <path d=\\\"M33.76 34.26c2.75-2.56 4.49-6.37 4.49-11.26 0-.89-.08-1.84-.29-3H24.01v5.99h8.03c-.4 2.02-1.5 3.56-3.07 4.56v.75l3.91 2.97h.88z\\\" fill=\\\"#4285F4\\\"/>\\n      <path d=\\\"M15.58 25.77A8.845 8.845 0 0 0 24 31.86c1.92 0 3.62-.46 4.97-1.31l4.79 3.71C31.14 36.7 27.65 38 24 38c-5.93 0-11.01-3.4-13.45-8.36l.17-1.01 4.06-2.85h.8z\\\" fill=\\\"#34A853\\\"/>\\n      <path d=\\\"M15.59 20.21a8.864 8.864 0 0 0 0 5.58l-5.03 3.86c-.98-2-1.53-4.25-1.53-6.64 0-2.39.55-4.64 1.53-6.64l1-.22 3.81 2.98.22 1.08z\\\" fill=\\\"#FBBC05\\\"/>\\n      <path d=\\\"M24 14.14c2.11 0 4.02.75 5.52 1.98l4.36-4.36C31.22 9.43 27.81 8 24 8c-5.93 0-11.01 3.4-13.45 8.36l5.03 3.85A8.86 8.86 0 0 1 24 14.14z\\\" fill=\\\"#EA4335\\\"/>\\n    </svg>\\n    <div class=\\\"gradient-container\\\"><div class=\\\"gradient\\\"></div></div>\\n  </div>\\n  <div class=\\\"carousel\\\">\\n    <a class=\\\"chip\\\" href=\\\"https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHAaFVPQcaqdZxQL5Rxol4f_UrOak8SBlS9L6A4dr48IbYig1em0f5Q8e_OjcmPwyuSI_UpowaF_cF_idKIyoYc1XtK3exIaMXJZ_E07qWoV01nD3ahTPSO3j7I0_JcnWmywWK09waWAMBzO34hXQo8In983Yhlfvm9_gsJ9h8bZsZ3uon5V9nd0vE_yOaI7JUTkQ0zB_jbHEYE1g==\\\">current weather in Paris</a>\\n  </div>\\n</div>\\n\"},\"groundingChunks\":[{\"web\":{\"uri\":\"https://www.google.com/search?q=weather+in+Paris,+FR\",\"title\":\"Weather information for Paris, FR\"}},{\"web\":{\"uri\":\"https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH2VuqOFNZIzNcxFdVXXNZ4VDoC-M9Xn47y0FITPbC0dAeo42sjvlDsF9aAi9zJ320vrMT9zO4ap88bXkrmRevnNBLRPBQNYNQqtGwQQEA7I0c4PoELc-yeSVOm9ZufRXTaUtuF1-M5SDUBavmTUqkCvHtvo6UlDC7kYtN0-dqPpd51\",\"title\":\"accuweather.com\"}}],\"groundingSupports\":[{\"segment\":{\"endIndex\":112,\"text\":\"The current weather in Paris, France, is cloudy with a temperature of 92-93°F (33°C) and a 10% chance of rain.\"},\"groundingChunkIndices\":[0,1]}],\"webSearchQueries\":[\"current weather in Paris\"]}}],\"usageMetadata\":{\"promptTokenCount\":19,\"candidatesTokenCount\":53,\"totalTokenCount\":227,\"cachedContentTokenCount\":8,\"promptTokensDetails\":[{\"modality\":\"TEXT\",\"tokenCount\":19}],\"cacheTokensDetails\":[{\"modality\":\"TEXT\",\"tokenCount\":8}],\"toolUsePromptTokenCount\":69,\"toolUsePromptTokensDetails\":[{\"modality\":\"TEXT\",\"tokenCount\":69}],\"thoughtsTokenCount\":86,\"serviceTier\":\"standard\"},\"modelVersion\":\"gemini-2.5-flash\",\"responseId\":\"PABNasnFCIn6vdIP5qWOkA8\"}"
+          ],
+          "kind": "sse"
+        },
+        "headers": {
+          "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
+          "content-disposition": "attachment",
+          "content-type": "text/event-stream",
+          "date": "Tue, 07 Jul 2026 13:33:50 GMT",
+          "server": "scaffolding on HTTPServer2",
+          "server-timing": "gfet4t7; dur=2035",
+          "transfer-encoding": "chunked",
+          "vary": "Origin, X-Origin, Referer",
+          "x-content-type-options": "nosniff",
+          "x-frame-options": "SAMEORIGIN",
+          "x-xss-protection": "0"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 5,
+      "id": "9a41abd9b39b7ad3",
+      "matchKey": "POST generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+      "recordedAt": "2026-07-07T13:33:50.953Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "contents": [
+              {
+                "parts": [
+                  {
+                    "text": "Use the get_weather function for Paris, France. Do not answer from memory."
+                  }
+                ],
+                "role": "user"
+              }
+            ],
+            "generationConfig": {
+              "maxOutputTokens": 128,
+              "temperature": 0
+            },
+            "toolConfig": {
+              "functionCallingConfig": {
+                "allowedFunctionNames": ["get_weather"],
+                "mode": "ANY"
+              }
+            },
+            "tools": [
+              {
+                "functionDeclarations": [
+                  {
+                    "description": "Get the current weather in a given location",
+                    "name": "get_weather",
+                    "parametersJsonSchema": {
+                      "properties": {
+                        "location": {
+                          "description": "The city and state or city and country",
+                          "type": "string"
+                        }
+                      },
+                      "required": ["location"],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "candidates": [
+              {
+                "content": {
+                  "parts": [
+                    {
+                      "functionCall": {
+                        "args": {
+                          "location": "Paris, France"
+                        },
+                        "name": "get_weather"
+                      },
+                      "thoughtSignature": "CooDARFNMg/YiZ0s1PFHRO+sb/wkOo44bjhquhXYm1feaChqr/GitNcD5nWo7q3L5CDJbGqxKEphw00TYq0aSbMdMaeiJBtUF9vwNvOeHDUyrxQQ1/H1xl0fMk7mhAYPSsUEcUkw463f4aPb2IulyzvveBm6T6V+YRCuhZI033bBWrWnDQ6i6eD0c34yWZzoO9wy/QdKsowTh44iwViDtaovZ0u9kaj+4z3h0Z4ODt9ZPXsP8mqy+zYbSptljL9ADVVN52XiPvT7OT6/4fgxNh06QYe6Oxtg+Y6P5JRDlHBMb5f1/+lomlkqgY1OABpCpppNUQ1Zg2YEeABTaumUnTCn0Wxv0XOpxzAp9cE4PvYoQ24wiCEXujza68AYWtA3Y+ChRCwKKBkjPE+xuFis3T8cFfsKxR26P1ZvXfPvdF3+Xfv8fC0YRnoI3XK1mRswK+s/opMIRqANIZp4wNIbBn8xr8CIzTUl5RjoOHU5I/nlbfraleV8c7cvMbYhr7Dqwcr3i7wKRhHXV7ALMQ=="
+                    }
+                  ],
+                  "role": "model"
+                },
+                "finishMessage": "Model generated function call(s).",
+                "finishReason": "STOP",
+                "index": 0
+              }
+            ],
+            "modelVersion": "gemini-2.5-flash",
+            "responseId": "PgBNaruFEf3dxs0PvOykiAU",
+            "usageMetadata": {
+              "candidatesTokenCount": 17,
+              "promptTokenCount": 65,
+              "promptTokensDetails": [
+                {
+                  "modality": "TEXT",
+                  "tokenCount": 65
+                }
+              ],
+              "serviceTier": "standard",
+              "thoughtsTokenCount": 87,
+              "totalTokenCount": 169
+            }
+          }
+        },
+        "headers": {
+          "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
+          "content-encoding": "gzip",
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Tue, 07 Jul 2026 13:33:50 GMT",
+          "server": "scaffolding on HTTPServer2",
+          "server-timing": "gfet4t7; dur=773",
+          "transfer-encoding": "chunked",
+          "vary": "Origin, X-Origin, Referer",
+          "x-content-type-options": "nosniff",
+          "x-frame-options": "SAMEORIGIN",
+          "x-gemini-service-tier": "standard",
+          "x-xss-protection": "0"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 6,
+      "id": "89b9cc5ccd58352d",
+      "matchKey": "POST generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+      "recordedAt": "2026-07-07T13:33:52.198Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "contents": [
+              {
+                "parts": [
+                  {
+                    "text": "Use the get_weather function for New York and get_time for Tokyo. Do not answer from memory."
+                  }
+                ],
+                "role": "user"
+              }
+            ],
+            "generationConfig": {
+              "maxOutputTokens": 128,
+              "temperature": 0
+            },
+            "toolConfig": {
+              "functionCallingConfig": {
+                "allowedFunctionNames": ["get_weather", "get_time"],
+                "mode": "ANY"
+              }
+            },
+            "tools": [
+              {
+                "functionDeclarations": [
+                  {
+                    "description": "Get the weather for a location",
+                    "name": "get_weather",
+                    "parametersJsonSchema": {
+                      "properties": {
+                        "location": {
+                          "description": "The location to get weather for",
+                          "type": "string"
+                        }
+                      },
+                      "required": ["location"],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "description": "Get the current time for a timezone",
+                    "name": "get_time",
+                    "parametersJsonSchema": {
+                      "properties": {
+                        "timezone": {
+                          "description": "The timezone to get time for",
+                          "type": "string"
+                        }
+                      },
+                      "required": ["timezone"],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "candidates": [
+              {
+                "content": {
+                  "parts": [
+                    {
+                      "functionCall": {
+                        "args": {
+                          "location": "New York"
+                        },
+                        "name": "get_weather"
+                      },
+                      "thoughtSignature": "CqcCARFNMg/DhSqveYDZDzvbxuI1f85MNvkkya0XZiZkOnP3wIpW76XDM3ntHDa9XC31rJCNVMWKquKHTP1breWHj4HQF8eZ3qnpbHj6O7ql/JMoAdE2PjQ3BtPANEUNI7GSce9QEaCVBMiHGQ7c+m4UnXJ0c0qFGWYsXYm4LEMeJuElilkwO8PIkxmG64XjCjAQIz1PE+EuHKVjbfO3NZhfN+Jq+Ix08CPBd8G4O2alAh3uMz/jhOhO01Q2EG1xTtu3BAG5kQZ77TKwpWeF6vThkfL/Dg4y2Da1YRj12hpzBwppsDkfT7AERMOUfVek1sNJvicAJXI+UAKBgEGYoFlcZNcMh2bmgs0l2RWeHZfpTcqAx/WVNwDexNvWzfVUQrjKw9SalXEKpw=="
+                    },
+                    {
+                      "functionCall": {
+                        "args": {
+                          "timezone": "Asia/Tokyo"
+                        },
+                        "name": "get_time"
+                      }
+                    }
+                  ],
+                  "role": "model"
+                },
+                "finishMessage": "Model generated function call(s).",
+                "finishReason": "STOP",
+                "index": 0
+              }
+            ],
+            "modelVersion": "gemini-2.5-flash",
+            "responseId": "PwBNapOCDbyCxN8P3Lys4QI",
+            "usageMetadata": {
+              "candidatesTokenCount": 33,
+              "promptTokenCount": 110,
+              "promptTokensDetails": [
+                {
+                  "modality": "TEXT",
+                  "tokenCount": 110
+                }
+              ],
+              "serviceTier": "standard",
+              "thoughtsTokenCount": 64,
+              "totalTokenCount": 207
+            }
+          }
+        },
+        "headers": {
+          "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
+          "content-encoding": "gzip",
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Tue, 07 Jul 2026 13:33:52 GMT",
+          "server": "scaffolding on HTTPServer2",
+          "server-timing": "gfet4t7; dur=1216",
+          "transfer-encoding": "chunked",
+          "vary": "Origin, X-Origin, Referer",
+          "x-content-type-options": "nosniff",
+          "x-frame-options": "SAMEORIGIN",
+          "x-gemini-service-tier": "standard",
+          "x-xss-protection": "0"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    }
+  ],
+  "meta": {
+    "createdAt": "2026-07-06T14:04:24.146Z"
+  }
+}

@@ -1,0 +1,11 @@
+span_tree:
+└── huggingface-instrumentation-root [task]
+    metadata: {
+      "scenario": "huggingface-instrumentation",
+      "testRunId": "<run:1>"
+    }
+    └── huggingface-chat-operation
+        metadata: {
+          "operation": "chat",
+          "testRunId": "<run:1>"
+        }

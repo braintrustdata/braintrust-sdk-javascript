@@ -15,51 +15,17 @@ const anthropicScenarios = await Promise.all(
   [
     {
       autoEntry: "scenario.anthropic-v0273.mjs",
-      dependencyName: "anthropic-sdk-v0273",
-      snapshotName: "anthropic-v0273",
+      dependencyName: "anthropic-sdk-v0",
+      snapshotName: "anthropic-v0",
       supportsBetaMessages: false,
       supportsServerToolUse: false,
       supportsThinking: false,
       wrapperEntry: "scenario.anthropic-v0273.ts",
     },
     {
-      autoEntry: "scenario.anthropic-v0390.mjs",
-      dependencyName: "anthropic-sdk-v0390",
-      snapshotName: "anthropic-v0390",
-      supportsBetaMessages: true,
-      supportsBetaToolRunner: false,
-      supportsServerToolUse: false,
-      supportsThinking: false,
-      wrapperEntry: "scenario.anthropic-v0390.ts",
-    },
-    {
-      autoEntry: "scenario.anthropic-v0712.mjs",
-      dependencyName: "anthropic-sdk-v0712",
-      snapshotName: "anthropic-v0712",
-      supportsBetaMessages: true,
-      supportsThinking: true,
-      wrapperEntry: "scenario.anthropic-v0712.ts",
-    },
-    {
-      autoEntry: "scenario.anthropic-v0730.mjs",
-      dependencyName: "anthropic-sdk-v0730",
-      snapshotName: "anthropic-v0730",
-      supportsBetaMessages: true,
-      supportsThinking: true,
-      wrapperEntry: "scenario.anthropic-v0730.ts",
-    },
-    {
-      autoEntry: "scenario.anthropic-v0780.mjs",
-      dependencyName: "anthropic-sdk-v0780",
-      snapshotName: "anthropic-v0780",
-      supportsBetaMessages: true,
-      supportsThinking: true,
-      wrapperEntry: "scenario.anthropic-v0780.ts",
-    },
-    {
       autoEntry: "scenario.mjs",
-      dependencyName: "@anthropic-ai/sdk",
-      snapshotName: "anthropic-v0800",
+      dependencyName: "anthropic-sdk-v0-latest",
+      snapshotName: "anthropic-v0-latest",
       supportsBetaMessages: true,
       supportsThinking: true,
       wrapperEntry: "scenario.ts",
@@ -81,6 +47,7 @@ describe.concurrent("variants", () => {
         runScenario: async ({ runScenarioDir }) => {
           await runScenarioDir({
             entry: scenario.wrapperEntry,
+            env: { ANTHROPIC_PACKAGE_NAME: scenario.dependencyName },
             runContext: {
               variantKey: scenario.snapshotName,
               originalScenarioDir,
@@ -103,6 +70,7 @@ describe.concurrent("variants", () => {
         runScenario: async ({ runNodeScenarioDir }) => {
           await runNodeScenarioDir({
             entry: scenario.autoEntry,
+            env: { ANTHROPIC_PACKAGE_NAME: scenario.dependencyName },
             nodeArgs: ["--import", "braintrust/hook.mjs"],
             runContext: {
               variantKey: scenario.snapshotName,

@@ -14,14 +14,28 @@ import {
 import { matchSpanTreeSnapshot } from "../../helpers/span-tree";
 import { findLatestSpan } from "../../helpers/trace-selectors";
 
+const originalScenarioDir = resolveScenarioDir(import.meta.url);
 const scenarioDir = await prepareScenarioDir({
-  scenarioDir: resolveScenarioDir(import.meta.url),
+  scenarioDir: originalScenarioDir,
 });
-const mastraVersion = await readInstalledPackageVersion(
-  scenarioDir,
-  "@mastra/core",
+const mastraScenarios = await Promise.all(
+  [
+    {
+      dependencyName: "mastra-core-v1",
+      snapshotName: "mastra-v1",
+    },
+    {
+      dependencyName: "mastra-core-v1-latest",
+      snapshotName: "mastra-v1-latest",
+    },
+  ].map(async (scenario) => ({
+    ...scenario,
+    version: await readInstalledPackageVersion(
+      scenarioDir,
+      scenario.dependencyName,
+    ),
+  })),
 );
-const snapshotName = resolveSnapshotName(mastraVersion);
 const TIMEOUT_MS = 90_000;
 const ROOT_NAME = "mastra-instrumentation-root";
 const SCENARIO_NAME = "mastra-instrumentation";
@@ -137,116 +151,111 @@ function summarizeMastraPayload(event: CapturedLogEvent): Record<string, Json> {
   return result;
 }
 
-function resolveSnapshotName(version: string): string {
-  switch (version) {
-    case "1.26.0":
-      return "mastra-v1260";
-    case "1.26.1-alpha.0":
-      return "mastra-v1261-alpha0";
-    default:
-      throw new Error(
-        `Unsupported @mastra/core version for e2e snapshots: ${version}`,
-      );
-  }
-}
+for (const scenario of mastraScenarios) {
+  describe(`mastra sdk ${scenario.version} auto-hook instrumentation`, () => {
+    let events: CapturedLogEvent[] = [];
 
-describe(`mastra sdk ${mastraVersion} auto-hook instrumentation`, () => {
-  let events: CapturedLogEvent[] = [];
-
-  beforeAll(async () => {
-    await withScenarioHarness(async (harness) => {
-      await harness.runNodeScenarioDir({
-        entry: "scenario.mjs",
-        nodeArgs: ["--import", "braintrust/hook.mjs"],
-        runContext: { variantKey: snapshotName },
-        scenarioDir,
-        timeoutMs: TIMEOUT_MS,
+    beforeAll(async () => {
+      await withScenarioHarness(async (harness) => {
+        await harness.runNodeScenarioDir({
+          entry: "scenario.mjs",
+          nodeArgs: ["--import", "braintrust/hook.mjs"],
+          env: { MASTRA_CORE_PACKAGE_NAME: scenario.dependencyName },
+          runContext: {
+            variantKey: scenario.snapshotName,
+            originalScenarioDir,
+          },
+          scenarioDir,
+          timeoutMs: TIMEOUT_MS,
+        });
+        events = harness.events();
       });
-      events = harness.events();
+    }, TIMEOUT_MS);
+
+    test("captures the root trace for the scenario", () => {
+      const root = findLatestSpan(events, ROOT_NAME);
+
+      expect(root).toBeDefined();
+      expect(root?.row.metadata).toMatchObject({
+        scenario: SCENARIO_NAME,
+      });
     });
-  }, TIMEOUT_MS);
 
-  test("captures the root trace for the scenario", () => {
-    const root = findLatestSpan(events, ROOT_NAME);
-
-    expect(root).toBeDefined();
-    expect(root?.row.metadata).toMatchObject({
-      scenario: SCENARIO_NAME,
+    // Anchored on entity_type strings emitted by Mastra's ObservabilityExporter
+    // (lowercased, matching the SpanType enum's serialized form) rather than
+    // version-specific span name conventions.
+    test("captures agent run spans for the registered agent", () => {
+      const agentSpans = events.filter(
+        (event) =>
+          event.row.metadata?.entity_type === "agent" &&
+          event.span.type === "task" &&
+          (event.row.metadata?.entity_id === "weather-agent" ||
+            event.row.metadata?.entity_name === "Weather Agent"),
+      );
+      expect(agentSpans.length).toBeGreaterThanOrEqual(2);
     });
-  });
 
-  // Anchored on entity_type strings emitted by Mastra's ObservabilityExporter
-  // (lowercased, matching the SpanType enum's serialized form) rather than
-  // version-specific span name conventions.
-  test("captures agent run spans for the registered agent", () => {
-    const agentSpans = events.filter(
-      (event) =>
-        event.row.metadata?.entity_type === "agent" &&
-        event.span.type === "task" &&
-        (event.row.metadata?.entity_id === "weather-agent" ||
-          event.row.metadata?.entity_name === "Weather Agent"),
-    );
-    expect(agentSpans.length).toBeGreaterThanOrEqual(2);
-  });
+    test("captures workflow run and step spans", () => {
+      const workflowRunSpans = events.filter(
+        (event) =>
+          event.row.metadata?.entity_type === "workflow_run" &&
+          event.span.type === "task",
+      );
+      expect(workflowRunSpans.length).toBeGreaterThanOrEqual(1);
 
-  test("captures workflow run and step spans", () => {
-    const workflowRunSpans = events.filter(
-      (event) =>
-        event.row.metadata?.entity_type === "workflow_run" &&
-        event.span.type === "task",
-    );
-    expect(workflowRunSpans.length).toBeGreaterThanOrEqual(1);
+      const workflowStepSpans = events.filter(
+        (event) =>
+          event.row.metadata?.entity_type === "workflow_step" &&
+          event.span.type === "function",
+      );
+      expect(workflowStepSpans.length).toBeGreaterThanOrEqual(1);
+    });
 
-    const workflowStepSpans = events.filter(
-      (event) =>
-        event.row.metadata?.entity_type === "workflow_step" &&
-        event.span.type === "function",
-    );
-    expect(workflowStepSpans.length).toBeGreaterThanOrEqual(1);
-  });
+    test("captures model generation spans with token usage metrics", () => {
+      const modelSpans = events.filter(
+        (event) =>
+          event.span.type === "llm" &&
+          Object.keys(event.metrics ?? {}).some((key) =>
+            ["prompt_tokens", "completion_tokens", "tokens"].includes(key),
+          ),
+      );
+      expect(modelSpans.length).toBeGreaterThanOrEqual(1);
+    });
 
-  test("captures model generation spans with token usage metrics", () => {
-    const modelSpans = events.filter(
-      (event) =>
-        event.span.type === "llm" &&
-        Object.keys(event.metrics ?? {}).some((key) =>
-          ["prompt_tokens", "completion_tokens", "tokens"].includes(key),
+    test("matches the shared span tree snapshot", async () => {
+      await matchSpanTreeSnapshot(
+        relevantMastraEvents(events).map((event) => {
+          const fields = summarizeMastraPayload(event);
+          delete fields.name;
+          delete fields.type;
+          return {
+            event,
+            fields,
+            name: normalizeForSnapshot(
+              event.span.name ?? "<unnamed>",
+            ) as string,
+          };
+        }),
+        resolveFileSnapshotPath(
+          import.meta.url,
+          `${scenario.snapshotName}.span-tree.json`,
         ),
-    );
-    expect(modelSpans.length).toBeGreaterThanOrEqual(1);
-  });
+      );
+    });
 
-  test("matches the shared span tree snapshot", async () => {
-    await matchSpanTreeSnapshot(
-      relevantMastraEvents(events).map((event) => {
-        const fields = summarizeMastraPayload(event);
-        delete fields.name;
-        delete fields.type;
-        return {
-          event,
-          fields,
-          name: normalizeForSnapshot(event.span.name ?? "<unnamed>") as string,
-        };
-      }),
-      resolveFileSnapshotPath(
-        import.meta.url,
-        `${snapshotName}.span-tree.json`,
-      ),
-    );
-  });
+    test("matches the shared payload snapshot", async () => {
+      const payloadSummary = normalizeForSnapshot(
+        relevantMastraEvents(events).map((event) =>
+          summarizeMastraPayload(event),
+        ) as Json,
+      );
 
-  test("matches the shared payload snapshot", async () => {
-    const payloadSummary = normalizeForSnapshot(
-      relevantMastraEvents(events).map((event) =>
-        summarizeMastraPayload(event),
-      ) as Json,
-    );
-
-    await expect(formatJsonFileSnapshot(payloadSummary)).toMatchFileSnapshot(
-      resolveFileSnapshotPath(
-        import.meta.url,
-        `${snapshotName}.log-payloads.json`,
-      ),
-    );
+      await expect(formatJsonFileSnapshot(payloadSummary)).toMatchFileSnapshot(
+        resolveFileSnapshotPath(
+          import.meta.url,
+          `${scenario.snapshotName}.log-payloads.json`,
+        ),
+      );
+    });
   });
-});
+}

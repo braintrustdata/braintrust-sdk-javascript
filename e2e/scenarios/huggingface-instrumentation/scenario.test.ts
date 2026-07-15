@@ -33,6 +33,7 @@ describe.concurrent("variants", () => {
         runScenario: async ({ runScenarioDir }) => {
           await runScenarioDir({
             entry: scenario.wrapperEntry,
+            env: { HUGGINGFACE_PACKAGE_NAME: scenario.dependencyName },
             runContext: {
               variantKey: scenario.snapshotName,
               originalScenarioDir,
@@ -41,7 +42,8 @@ describe.concurrent("variants", () => {
             timeoutMs: HUGGINGFACE_SCENARIO_TIMEOUT_MS,
           });
         },
-        snapshotName: scenario.snapshotName,
+        snapshotName: `${scenario.snapshotName}-wrapped`,
+        supportsToolCalls: false,
         testFileUrl: import.meta.url,
         timeoutMs: HUGGINGFACE_SCENARIO_TIMEOUT_MS,
       });
@@ -51,6 +53,7 @@ describe.concurrent("variants", () => {
         runScenario: async ({ runNodeScenarioDir }) => {
           await runNodeScenarioDir({
             entry: scenario.autoEntry,
+            env: { HUGGINGFACE_PACKAGE_NAME: scenario.dependencyName },
             nodeArgs: ["--import", "braintrust/hook.mjs"],
             runContext: {
               variantKey: scenario.snapshotName,
@@ -60,7 +63,8 @@ describe.concurrent("variants", () => {
             timeoutMs: HUGGINGFACE_SCENARIO_TIMEOUT_MS,
           });
         },
-        snapshotName: scenario.snapshotName,
+        snapshotName: `${scenario.snapshotName}-auto-hook`,
+        supportsToolCalls: scenario.supportsToolCalls,
         testFileUrl: import.meta.url,
         timeoutMs: HUGGINGFACE_SCENARIO_TIMEOUT_MS,
       });

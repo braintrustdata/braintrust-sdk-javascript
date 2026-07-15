@@ -2,19 +2,24 @@
   "name": "@braintrust/e2e-cohere-instrumentation",
   "private": true,
   "braintrustScenario": {
-    "canary": {
+    "bump": {
       "dependencies": {
-        "cohere-sdk-v7": "cohere-ai@7",
-        "cohere-sdk-v8": "cohere-ai@8"
+        "cohere-sdk-v7-latest": {
+          "package": "cohere-ai",
+          "range": "7"
+        },
+        "cohere-sdk-v8-latest": {
+          "package": "cohere-ai",
+          "range": "8"
+        }
       }
     }
   },
   "dependencies": {
-    "cohere-sdk-v7": "npm:cohere-ai@7.21.0",
-    "cohere-sdk-v7-14-0": "npm:cohere-ai@7.14.0",
-    "cohere-sdk-v7-20-0": "npm:cohere-ai@7.20.0",
-    "cohere-sdk-v7-21-0": "npm:cohere-ai@7.21.0",
-    "cohere-sdk-v8": "npm:cohere-ai@8.0.0"
+    "cohere-sdk-v7": "npm:cohere-ai@7.14.0",
+    "cohere-sdk-v7-latest": "npm:cohere-ai@7.21.0",
+    "cohere-sdk-v8": "npm:cohere-ai@8.0.0",
+    "cohere-sdk-v8-latest": "npm:cohere-ai@8.0.0"
   },
   "pnpm": {
     "overrides": {

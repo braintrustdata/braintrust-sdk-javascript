@@ -2,15 +2,24 @@
   "name": "@braintrust/e2e-google-adk-instrumentation",
   "private": true,
   "braintrustScenario": {
-    "canary": {
+    "bump": {
       "dependencies": {
-        "@google/adk": "latest"
+        "google-adk-sdk-v0-latest": {
+          "package": "@google/adk",
+          "range": "0"
+        },
+        "google-adk-sdk-v1-latest": {
+          "package": "@google/adk",
+          "range": "1"
+        }
       }
     }
   },
   "dependencies": {
-    "@google/adk": "1.0.0",
-    "google-adk-sdk-v061": "npm:@google/adk@0.6.1"
+    "google-adk-sdk-v0": "npm:@google/adk@0.6.1",
+    "google-adk-sdk-v0-latest": "npm:@google/adk@0.6.1",
+    "google-adk-sdk-v1": "npm:@google/adk@1.0.0",
+    "google-adk-sdk-v1-latest": "npm:@google/adk@1.3.0"
   },
   "pnpm": {
     "overrides": {

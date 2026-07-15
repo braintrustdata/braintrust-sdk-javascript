@@ -676,13 +676,18 @@ export function defineOpenAIInstrumentationAssertions(options: {
     }
 
     const scenarioDir = path.dirname(fileURLToPath(options.testFileUrl));
-    const cassetteEngaged = existsSync(
-      path.join(
-        scenarioDir,
-        "__cassettes__",
-        `${options.cassetteName ?? options.snapshotName}.cassette.json`,
-      ),
-    );
+    const cassetteMode = process.env.BRAINTRUST_E2E_CASSETTE_MODE;
+    const cassetteEngaged =
+      cassetteMode === "record" ||
+      cassetteMode === "record-missing" ||
+      cassetteMode === "replay" ||
+      existsSync(
+        path.join(
+          scenarioDir,
+          "__cassettes__",
+          `${options.cassetteName ?? options.snapshotName}.cassette.json`,
+        ),
+      );
 
     for (const spec of operationSpecs) {
       test(spec.testName, testConfig, () => {
@@ -728,7 +733,13 @@ export function defineOpenAIInstrumentationAssertions(options: {
     }
 
     test("matches the shared span tree snapshot", testConfig, async () => {
-      await matchSpanTreeSnapshot(events, spanSnapshotPath);
+      await matchSpanTreeSnapshot(
+        buildSpanTree(events, operationSpecs),
+        spanSnapshotPath,
+        {
+          normalize: { omittedKeys: ["prompt_cache_key"] },
+        },
+      );
     });
   });
 }

@@ -14,15 +14,49 @@ const scenarioDir = await prepareScenarioDir({
 const TIMEOUT_MS = 90_000;
 
 interface VitestScenario {
+  dependencyName: string;
   entry: string;
   label: string;
   variantKey: string;
 }
 
 const scenarios: VitestScenario[] = [
-  { entry: "scenario.ts", label: "v2", variantKey: "v2" },
-  { entry: "scenario.vitest-v3.ts", label: "v3", variantKey: "v3" },
-  { entry: "scenario.vitest-v4.ts", label: "v4.1", variantKey: "v4.1" },
+  {
+    dependencyName: "vitest-v2",
+    entry: "scenario.ts",
+    label: "vitest-v2",
+    variantKey: "vitest-v2",
+  },
+  {
+    dependencyName: "vitest-v2-latest",
+    entry: "scenario.ts",
+    label: "vitest-v2-latest",
+    variantKey: "vitest-v2-latest",
+  },
+  {
+    dependencyName: "vitest-v3",
+    entry: "scenario.vitest-v3.ts",
+    label: "vitest-v3",
+    variantKey: "vitest-v3",
+  },
+  {
+    dependencyName: "vitest-v3-latest",
+    entry: "scenario.vitest-v3.ts",
+    label: "vitest-v3-latest",
+    variantKey: "vitest-v3-latest",
+  },
+  {
+    dependencyName: "vitest-v4",
+    entry: "scenario.vitest-v4.ts",
+    label: "vitest-v4",
+    variantKey: "vitest-v4",
+  },
+  {
+    dependencyName: "vitest-v4-latest",
+    entry: "scenario.vitest-v4.ts",
+    label: "vitest-v4-latest",
+    variantKey: "vitest-v4-latest",
+  },
 ];
 
 for (const scenario of scenarios) {
@@ -36,6 +70,7 @@ for (const scenario of scenarios) {
         async ({ runScenarioDir, testRunEvents, testRunId }) => {
           await runScenarioDir({
             entry: scenario.entry,
+            env: { VITEST_PACKAGE_NAME: scenario.dependencyName },
             runContext: {
               cassette: false,
               variantKey: scenario.variantKey,

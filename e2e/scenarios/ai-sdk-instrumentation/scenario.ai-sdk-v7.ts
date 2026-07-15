@@ -1,5 +1,6 @@
-import { createOpenAI, openai } from "ai-sdk-openai-v7";
-import * as ai from "ai-sdk-v7";
+const aiPackageName = process.env.AI_SDK_PACKAGE_NAME ?? "ai-sdk-v7-latest";
+const openaiPackageName =
+  process.env.AI_SDK_OPENAI_PACKAGE_NAME ?? "ai-sdk-openai-v7-latest";
 import { braintrustAISDKTelemetry } from "braintrust";
 import {
   getInstalledPackageVersion,
@@ -7,16 +8,22 @@ import {
 } from "../../helpers/scenario-runtime";
 import { runAutoAISDKInstrumentation } from "./scenario.impl.mjs";
 
-ai.registerTelemetry(braintrustAISDKTelemetry());
+runMain(async () => {
+  const ai = await import(aiPackageName);
+  const { createOpenAI, openai } = await import(openaiPackageName);
 
-runMain(async () =>
-  runAutoAISDKInstrumentation({
+  ai.registerTelemetry(braintrustAISDKTelemetry());
+
+  await runAutoAISDKInstrumentation({
     agentClassExport: "ToolLoopAgent",
     ai,
     createOpenAI,
     maxTokensKey: "maxOutputTokens",
     openai,
-    sdkVersion: await getInstalledPackageVersion(import.meta.url, "ai-sdk-v7"),
+    sdkVersion: await getInstalledPackageVersion(
+      import.meta.url,
+      aiPackageName,
+    ),
     supportsDenyOutputOverrideScenario: false,
     supportsAgentToolLoop: true,
     supportsEmbedMany: true,
@@ -28,5 +35,5 @@ runMain(async () =>
     supportsStreamObject: true,
     supportsToolExecution: true,
     toolSchemaKey: "inputSchema",
-  }),
-);
+  });
+});
