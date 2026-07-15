@@ -1,0 +1,424 @@
+span_tree:
+├── HarnessAgent.generate [task]
+│   input: {
+│     "prompt": "Run the built-in bash command \"touch /workspace/generate-started; sleep 5; printf GENERATE_OK\" exactly once. After it finishes, reply exactly GENERATE_OK."
+│   }
+│   output: {
+│     "content": [
+│       {
+│         "text": "Running the requested bash command once, then I’ll return only its output.",
+│         "type": "text"
+│       }
+│     ],
+│     "finishReason": "other",
+│     "response": {
+│       "id": "<span:1>",
+│       "messages": [],
+│       "modelId": "shared-harness-session",
+│       "timestamp": "<timestamp>"
+│     },
+│     "responseMessages": "<omitted>",
+│     "steps": [
+│       {
+│         "content": [
+│           {
+│             "text": "Running the requested bash command once, then I’ll return only its output.",
+│             "type": "text"
+│           }
+│         ],
+│         "finishReason": "other",
+│         "model": {
+│           "modelId": "shared-harness-session",
+│           "provider": "harness:codex"
+│         },
+│         "performance": {
+│           "effectiveOutputTokensPerSecond": 0,
+│           "effectiveTotalTokensPerSecond": 0,
+│           "responseTimeMs": 0,
+│           "stepTimeMs": 0,
+│           "toolExecutionMs": {}
+│         },
+│         "response": {
+│           "id": "<span:1>",
+│           "messages": [],
+│           "modelId": "shared-harness-session",
+│           "timestamp": "<timestamp>"
+│         },
+│         "runtimeContext": {},
+│         "stepNumber": 0,
+│         "usage": {
+│           "inputTokenDetails": {},
+│           "outputTokenDetails": {}
+│         }
+│       }
+│     ],
+│     "text": "Running the requested bash command once, then I’ll return only its output.",
+│     "toolCalls": [],
+│     "toolResults": [],
+│     "totalUsage": {
+│       "inputTokenDetails": {},
+│       "outputTokenDetails": {}
+│     },
+│     "usage": {
+│       "inputTokenDetails": {},
+│       "outputTokenDetails": {}
+│     },
+│     "warnings": []
+│   }
+│   metadata: {
+│     "braintrust": {
+│       "integration_name": "ai-sdk",
+│       "sdk_language": "typescript"
+│     },
+│     "harnessId": "codex",
+│     "permissionMode": "allow-all",
+│     "sessionId": "shared-harness-session",
+│     "tools": {
+│       "bash": {
+│         "commonName": "bash",
+│         "description": "Execute a shell command",
+│         "inputSchema": {
+│           "$schema": "http://json-schema.org/draft-07/schema#",
+│           "additionalProperties": false,
+│           "properties": {
+│             "command": {
+│               "type": "string"
+│             }
+│           },
+│           "required": [
+│             "command"
+│           ],
+│           "type": "object"
+│         },
+│         "nativeName": "shell",
+│         "toolUseKind": "bash"
+│       },
+│       "webSearch": {
+│         "commonName": "webSearch",
+│         "description": "Search the web",
+│         "inputSchema": {
+│           "$schema": "http://json-schema.org/draft-07/schema#",
+│           "additionalProperties": false,
+│           "properties": {
+│             "query": {
+│               "type": "string"
+│             }
+│           },
+│           "required": [
+│             "query"
+│           ],
+│           "type": "object"
+│         },
+│         "nativeName": "web_search",
+│         "toolUseKind": "readonly"
+│       }
+│     }
+│   }
+├── HarnessAgent.continueGenerate [task]
+│   input: {
+│     "toolApprovalContinuations": []
+│   }
+│   output: {
+│     "content": [
+│       {
+│         "input": {
+│           "command": "/bin/bash -lc 'touch /workspace/generate-started; sleep 5; printf GENERATE_OK'"
+│         },
+│         "providerExecuted": true,
+│         "toolCallId": "<toolCallId:1>",
+│         "toolName": "bash",
+│         "type": "tool-call"
+│       },
+│       {
+│         "text": "GENERATE_OK",
+│         "type": "text"
+│       }
+│     ],
+│     "finishReason": "stop",
+│     "response": {
+│       "id": "<span:2>",
+│       "messages": [],
+│       "modelId": "shared-harness-session",
+│       "timestamp": "<timestamp>"
+│     },
+│     "responseMessages": "<omitted>",
+│     "steps": [
+│       {
+│         "content": [
+│           {
+│             "input": {
+│               "command": "/bin/bash -lc 'touch /workspace/generate-started; sleep 5; printf GENERATE_OK'"
+│             },
+│             "providerExecuted": true,
+│             "toolCallId": "<toolCallId:1>",
+│             "toolName": "bash",
+│             "type": "tool-call"
+│           },
+│           {
+│             "text": "GENERATE_OK",
+│             "type": "text"
+│           }
+│         ],
+│         "finishReason": "stop",
+│         "model": {
+│           "modelId": "shared-harness-session",
+│           "provider": "harness:codex"
+│         },
+│         "performance": {
+│           "effectiveOutputTokensPerSecond": 0,
+│           "effectiveTotalTokensPerSecond": 0,
+│           "responseTimeMs": 0,
+│           "stepTimeMs": 0,
+│           "toolExecutionMs": {}
+│         },
+│         "rawFinishReason": "stop",
+│         "response": {
+│           "id": "<span:2>",
+│           "messages": [],
+│           "modelId": "shared-harness-session",
+│           "timestamp": "<timestamp>"
+│         },
+│         "runtimeContext": {},
+│         "stepNumber": 0,
+│         "usage": {
+│           "inputTokenDetails": {
+│             "cacheReadTokens": 7168,
+│             "cacheWriteTokens": 0,
+│             "noCacheTokens": 7603
+│           },
+│           "inputTokens": 14771,
+│           "outputTokenDetails": {
+│             "textTokens": 112
+│           },
+│           "outputTokens": 112,
+│           "totalTokens": 14883
+│         }
+│       }
+│     ],
+│     "text": "GENERATE_OK",
+│     "toolCalls": [
+│       {
+│         "input": {
+│           "command": "/bin/bash -lc 'touch /workspace/generate-started; sleep 5; printf GENERATE_OK'"
+│         },
+│         "providerExecuted": true,
+│         "toolCallId": "<toolCallId:1>",
+│         "toolName": "bash",
+│         "type": "tool-call"
+│       }
+│     ],
+│     "toolResults": [],
+│     "totalUsage": {
+│       "inputTokenDetails": {
+│         "cacheReadTokens": 7168,
+│         "cacheWriteTokens": 0,
+│         "noCacheTokens": 7603
+│       },
+│       "inputTokens": 14771,
+│       "outputTokenDetails": {
+│         "textTokens": 112
+│       },
+│       "outputTokens": 112,
+│       "totalTokens": 14883
+│     },
+│     "usage": {
+│       "inputTokenDetails": {
+│         "cacheReadTokens": 7168,
+│         "cacheWriteTokens": 0,
+│         "noCacheTokens": 7603
+│       },
+│       "inputTokens": 14771,
+│       "outputTokenDetails": {
+│         "textTokens": 112
+│       },
+│       "outputTokens": 112,
+│       "totalTokens": 14883
+│     },
+│     "warnings": []
+│   }
+│   metadata: {
+│     "braintrust": {
+│       "integration_name": "ai-sdk",
+│       "sdk_language": "typescript"
+│     },
+│     "harnessId": "codex",
+│     "permissionMode": "allow-all",
+│     "sessionId": "shared-harness-session",
+│     "tools": {
+│       "bash": {
+│         "commonName": "bash",
+│         "description": "Execute a shell command",
+│         "inputSchema": {
+│           "$schema": "http://json-schema.org/draft-07/schema#",
+│           "additionalProperties": false,
+│           "properties": {
+│             "command": {
+│               "type": "string"
+│             }
+│           },
+│           "required": [
+│             "command"
+│           ],
+│           "type": "object"
+│         },
+│         "nativeName": "shell",
+│         "toolUseKind": "bash"
+│       },
+│       "webSearch": {
+│         "commonName": "webSearch",
+│         "description": "Search the web",
+│         "inputSchema": {
+│           "$schema": "http://json-schema.org/draft-07/schema#",
+│           "additionalProperties": false,
+│           "properties": {
+│             "query": {
+│               "type": "string"
+│             }
+│           },
+│           "required": [
+│             "query"
+│           ],
+│           "type": "object"
+│         },
+│         "nativeName": "web_search",
+│         "toolUseKind": "readonly"
+│       }
+│     }
+│   }
+│   metrics: {
+│     "completion_tokens": 112,
+│     "prompt_cache_creation_tokens": 0,
+│     "prompt_cached_tokens": 7168,
+│     "prompt_tokens": 14771,
+│     "tokens": 14883
+│   }
+├── HarnessAgent.stream [task]
+│   input: {
+│     "messages": [
+│       {
+│         "content": "Run the built-in bash command \"touch /workspace/stream-started; sleep 5; printf STREAM_OK\" exactly once. After it finishes, reply exactly STREAM_OK.",
+│         "role": "user"
+│       }
+│     ]
+│   }
+│   output: {
+│     "finishReason": "other",
+│     "text": "I’m running the requested bash command once now and will return only the exact result after it completes."
+│   }
+│   metadata: {
+│     "braintrust": {
+│       "integration_name": "ai-sdk",
+│       "sdk_language": "typescript"
+│     },
+│     "harnessId": "codex",
+│     "permissionMode": "allow-all",
+│     "sessionId": "shared-harness-session",
+│     "tools": {
+│       "bash": {
+│         "commonName": "bash",
+│         "description": "Execute a shell command",
+│         "inputSchema": {
+│           "$schema": "http://json-schema.org/draft-07/schema#",
+│           "additionalProperties": false,
+│           "properties": {
+│             "command": {
+│               "type": "string"
+│             }
+│           },
+│           "required": [
+│             "command"
+│           ],
+│           "type": "object"
+│         },
+│         "nativeName": "shell",
+│         "toolUseKind": "bash"
+│       },
+│       "webSearch": {
+│         "commonName": "webSearch",
+│         "description": "Search the web",
+│         "inputSchema": {
+│           "$schema": "http://json-schema.org/draft-07/schema#",
+│           "additionalProperties": false,
+│           "properties": {
+│             "query": {
+│               "type": "string"
+│             }
+│           },
+│           "required": [
+│             "query"
+│           ],
+│           "type": "object"
+│         },
+│         "nativeName": "web_search",
+│         "toolUseKind": "readonly"
+│       }
+│     }
+│   }
+│   metrics: {
+│     "time_to_first_token": 0
+│   }
+└── HarnessAgent.continueStream [task]
+    input: {
+      "toolApprovalContinuations": []
+    }
+    output: {
+      "finishReason": "stop",
+      "text": "The command is still running; I’m waiting for it to finish before responding.STREAM_OK"
+    }
+    metadata: {
+      "braintrust": {
+        "integration_name": "ai-sdk",
+        "sdk_language": "typescript"
+      },
+      "harnessId": "codex",
+      "permissionMode": "allow-all",
+      "sessionId": "shared-harness-session",
+      "tools": {
+        "bash": {
+          "commonName": "bash",
+          "description": "Execute a shell command",
+          "inputSchema": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "additionalProperties": false,
+            "properties": {
+              "command": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "command"
+            ],
+            "type": "object"
+          },
+          "nativeName": "shell",
+          "toolUseKind": "bash"
+        },
+        "webSearch": {
+          "commonName": "webSearch",
+          "description": "Search the web",
+          "inputSchema": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "additionalProperties": false,
+            "properties": {
+              "query": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "query"
+            ],
+            "type": "object"
+          },
+          "nativeName": "web_search",
+          "toolUseKind": "readonly"
+        }
+      }
+    }
+    metrics: {
+      "completion_tokens": 196,
+      "prompt_cache_creation_tokens": 0,
+      "prompt_cached_tokens": 14336,
+      "prompt_tokens": 22371,
+      "time_to_first_token": 0,
+      "tokens": 22567
+    }

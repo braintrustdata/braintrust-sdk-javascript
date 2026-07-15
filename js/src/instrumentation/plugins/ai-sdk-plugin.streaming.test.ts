@@ -984,4 +984,184 @@ describe("AI SDK streaming instrumentation", () => {
       plugin.disable();
     }
   });
+
+  test("wrapAgentClass instruments all HarnessAgent turn methods without serializing sessions", async () => {
+    expect(await backgroundLogger.drain()).toHaveLength(0);
+
+    const receivedParams: any[] = [];
+    const usage = {
+      inputTokens: { total: 7 },
+      outputTokens: { total: 3 },
+      totalTokens: 10,
+    };
+    const streamingResult = (text: string) => ({
+      fullStream: new ReadableStream({
+        start(controller) {
+          controller.enqueue({ type: "text-delta", text });
+          controller.enqueue({ type: "finish", usage });
+          controller.close();
+        },
+      }),
+      text: Promise.resolve(text),
+      totalUsage: Promise.resolve(usage),
+      usage: Promise.resolve(usage),
+    });
+
+    class HarnessAgent {
+      #secret = "preserved";
+      readonly harnessId = "mock-harness";
+      readonly permissionMode = "allow-edits";
+      readonly settings = { shouldNeverReachCall: true };
+      readonly tools = {
+        lookup: {
+          description: "Look up a value",
+          inputSchema: { type: "object" },
+        },
+      };
+
+      private record(params: any) {
+        expect(this.#secret).toBe("preserved");
+        receivedParams.push(params);
+      }
+
+      async generate(params: any) {
+        this.record(params);
+        return { text: "generated", usage };
+      }
+
+      async stream(params: any) {
+        this.record(params);
+        return streamingResult("streamed");
+      }
+
+      async continueGenerate(params: any) {
+        this.record(params);
+        return { text: "continued", usage };
+      }
+
+      async continueStream(params: any) {
+        this.record(params);
+        return streamingResult("continued-stream");
+      }
+    }
+
+    const WrappedHarnessAgent = wrapAgentClass(HarnessAgent);
+    const agent = new WrappedHarnessAgent();
+    const session: any = { sessionId: "session-123" };
+    session.self = session;
+    const toolApprovalContinuations = [
+      {
+        approvalResponse: { id: "approval-1", approved: true },
+        toolCall: {
+          type: "tool-call",
+          toolCallId: "call-1",
+          toolName: "lookup",
+          input: { key: "value" },
+        },
+      },
+    ];
+
+    await agent.generate({
+      abortSignal: new AbortController().signal,
+      onStepFinish: () => {},
+      prompt: "generate prompt",
+      providerOptions: { mock: { option: true } },
+      session,
+      telemetry: {},
+    });
+    const streamResult = await agent.stream({
+      messages: [{ role: "user", content: "stream prompt" }],
+      session,
+    });
+    for await (const _chunk of streamResult.fullStream) {
+      // Drain the stream so the root span records its final output and usage.
+    }
+    await agent.continueGenerate({ session, toolApprovalContinuations });
+    const continueStreamResult = await agent.continueStream({
+      session,
+      toolApprovalContinuations,
+    });
+    for await (const _chunk of continueStreamResult.fullStream) {
+      // Drain the stream so the root span records its final output and usage.
+    }
+
+    expect(receivedParams).toHaveLength(4);
+    for (const params of receivedParams) {
+      expect(params).not.toHaveProperty("shouldNeverReachCall");
+      expect(params.session).toBe(session);
+    }
+
+    const spans = (await backgroundLogger.drain()) as any[];
+    const harnessSpans = spans.filter((span) =>
+      span.span_attributes?.name?.startsWith("HarnessAgent."),
+    );
+    expect(harnessSpans).toHaveLength(4);
+    expect(new Set(harnessSpans.map((span) => span.root_span_id)).size).toBe(4);
+
+    const byName = Object.fromEntries(
+      harnessSpans.map((span) => [span.span_attributes.name, span]),
+    );
+    expect(byName["HarnessAgent.generate"]?.input).toEqual({
+      prompt: "generate prompt",
+    });
+    expect(byName["HarnessAgent.stream"]?.input).toEqual({
+      messages: [{ role: "user", content: "stream prompt" }],
+    });
+    expect(byName["HarnessAgent.continueGenerate"]?.input).toEqual({
+      toolApprovalContinuations,
+    });
+    expect(byName["HarnessAgent.continueStream"]?.input).toEqual({
+      toolApprovalContinuations,
+    });
+
+    for (const span of harnessSpans) {
+      expect(span.span_attributes.type).toBe("task");
+      expect(span.metadata).toMatchObject({
+        harnessId: "mock-harness",
+        permissionMode: "allow-edits",
+        sessionId: "session-123",
+      });
+      expect(span.metadata.tools).toBeDefined();
+      expect(span.input).not.toHaveProperty("session");
+      expect(span.metrics).toMatchObject({
+        completion_tokens: 3,
+        prompt_tokens: 7,
+        tokens: 10,
+      });
+    }
+  });
+
+  test("wrapAgentClass preserves HarnessAgent errors", async () => {
+    class HarnessAgent {
+      readonly harnessId = "failing-harness";
+      readonly permissionMode = "allow-all";
+      readonly tools = {};
+
+      async generate() {
+        throw new Error("harness turn failed");
+      }
+    }
+
+    const WrappedHarnessAgent = wrapAgentClass(HarnessAgent);
+    const agent = new WrappedHarnessAgent();
+    await expect(
+      agent.generate({ session: { sessionId: "failed-session" } }),
+    ).rejects.toThrow("harness turn failed");
+
+    const spans = (await backgroundLogger.drain()) as any[];
+    expect(spans).toHaveLength(1);
+    expect(spans[0]).toMatchObject({
+      error: expect.anything(),
+      metadata: {
+        braintrust: expect.anything(),
+        harnessId: "failing-harness",
+        permissionMode: "allow-all",
+        sessionId: "failed-session",
+      },
+      span_attributes: {
+        name: "HarnessAgent.generate",
+        type: "task",
+      },
+    });
+  });
 });

@@ -1,0 +1,776 @@
+span_tree:
+├── HarnessAgent.generate [task]
+│   input: {
+│     "prompt": "Run the built-in bash command \"touch /workspace/generate-started; sleep 5; printf GENERATE_OK\" exactly once. After it finishes, reply exactly GENERATE_OK."
+│   }
+│   output: {
+│     "content": [
+│       {
+│         "text": "Running the requested shell command once, then I’ll return only its result.",
+│         "type": "text"
+│       }
+│     ],
+│     "finishReason": "other",
+│     "response": {
+│       "id": "<span:1>",
+│       "messages": [],
+│       "modelId": "shared-harness-session",
+│       "timestamp": "<timestamp>"
+│     },
+│     "responseMessages": "<omitted>",
+│     "steps": [
+│       {
+│         "content": [
+│           {
+│             "text": "Running the requested shell command once, then I’ll return only its result.",
+│             "type": "text"
+│           }
+│         ],
+│         "finishReason": "other",
+│         "model": {
+│           "modelId": "shared-harness-session",
+│           "provider": "harness:codex"
+│         },
+│         "performance": {
+│           "effectiveOutputTokensPerSecond": 0,
+│           "effectiveTotalTokensPerSecond": 0,
+│           "responseTimeMs": 0,
+│           "stepTimeMs": 0,
+│           "toolExecutionMs": {}
+│         },
+│         "response": {
+│           "id": "<span:1>",
+│           "messages": [],
+│           "modelId": "shared-harness-session",
+│           "timestamp": "<timestamp>"
+│         },
+│         "runtimeContext": {},
+│         "stepNumber": 0,
+│         "usage": {
+│           "inputTokenDetails": {},
+│           "outputTokenDetails": {}
+│         }
+│       }
+│     ],
+│     "text": "Running the requested shell command once, then I’ll return only its result.",
+│     "toolCalls": [],
+│     "toolResults": [],
+│     "totalUsage": {
+│       "inputTokenDetails": {},
+│       "outputTokenDetails": {}
+│     },
+│     "usage": {
+│       "inputTokenDetails": {},
+│       "outputTokenDetails": {}
+│     },
+│     "warnings": []
+│   }
+│   metadata: {
+│     "braintrust": {
+│       "integration_name": "ai-sdk",
+│       "sdk_language": "typescript"
+│     },
+│     "harnessId": "codex",
+│     "permissionMode": "allow-all",
+│     "sessionId": "shared-harness-session",
+│     "tools": {
+│       "bash": {
+│         "commonName": "bash",
+│         "description": "Execute a shell command",
+│         "inputSchema": {
+│           "$schema": "http://json-schema.org/draft-07/schema#",
+│           "additionalProperties": false,
+│           "properties": {
+│             "command": {
+│               "type": "string"
+│             }
+│           },
+│           "required": [
+│             "command"
+│           ],
+│           "type": "object"
+│         },
+│         "nativeName": "shell",
+│         "toolUseKind": "bash"
+│       },
+│       "webSearch": {
+│         "commonName": "webSearch",
+│         "description": "Search the web",
+│         "inputSchema": {
+│           "$schema": "http://json-schema.org/draft-07/schema#",
+│           "additionalProperties": false,
+│           "properties": {
+│             "query": {
+│               "type": "string"
+│             }
+│           },
+│           "required": [
+│             "query"
+│           ],
+│           "type": "object"
+│         },
+│         "nativeName": "web_search",
+│         "toolUseKind": "readonly"
+│       }
+│     }
+│   }
+│   └── harness [function]
+│       input: {
+│         "maxRetries": 0,
+│         "messages": [
+│           {
+│             "content": "Run the built-in bash command \"touch /workspace/generate-started; sleep 5; printf GENERATE_OK\" exactly once. After it finishes, reply exactly GENERATE_OK.",
+│             "role": "user"
+│           }
+│         ],
+│         "model": {
+│           "modelId": "gpt-5.4-mini",
+│           "provider": "codex"
+│         }
+│       }
+│       metadata: {
+│         "braintrust": {
+│           "integration_name": "ai-sdk",
+│           "sdk_language": "typescript"
+│         },
+│         "model": "gpt-5.4-mini",
+│         "provider": "codex"
+│       }
+│       └── doGenerate [llm]
+│           input: {
+│             "messages": [
+│               {
+│                 "content": "Run the built-in bash command \"touch /workspace/generate-started; sleep 5; printf GENERATE_OK\" exactly once. After it finishes, reply exactly GENERATE_OK.",
+│                 "role": "user"
+│               }
+│             ],
+│             "model": {
+│               "modelId": "gpt-5.4-mini",
+│               "provider": "codex"
+│             }
+│           }
+│           metadata: {
+│             "braintrust": {
+│               "integration_name": "ai-sdk",
+│               "sdk_language": "typescript"
+│             },
+│             "model": "gpt-5.4-mini",
+│             "provider": "codex"
+│           }
+├── HarnessAgent.continueGenerate [task]
+│   input: {
+│     "toolApprovalContinuations": []
+│   }
+│   output: {
+│     "content": [
+│       {
+│         "input": {
+│           "command": "/bin/bash -lc 'touch /workspace/generate-started; sleep 5; printf GENERATE_OK'"
+│         },
+│         "providerExecuted": true,
+│         "toolCallId": "<toolCallId:1>",
+│         "toolName": "bash",
+│         "type": "tool-call"
+│       },
+│       {
+│         "text": "The command is still running; I’m waiting for it to complete so I can return the exact output.GENERATE_OK",
+│         "type": "text"
+│       }
+│     ],
+│     "finishReason": "stop",
+│     "response": {
+│       "id": "<span:2>",
+│       "messages": [],
+│       "modelId": "shared-harness-session",
+│       "timestamp": "<timestamp>"
+│     },
+│     "responseMessages": "<omitted>",
+│     "steps": [
+│       {
+│         "content": [
+│           {
+│             "input": {
+│               "command": "/bin/bash -lc 'touch /workspace/generate-started; sleep 5; printf GENERATE_OK'"
+│             },
+│             "providerExecuted": true,
+│             "toolCallId": "<toolCallId:1>",
+│             "toolName": "bash",
+│             "type": "tool-call"
+│           },
+│           {
+│             "text": "The command is still running; I’m waiting for it to complete so I can return the exact output.GENERATE_OK",
+│             "type": "text"
+│           }
+│         ],
+│         "finishReason": "stop",
+│         "model": {
+│           "modelId": "shared-harness-session",
+│           "provider": "harness:codex"
+│         },
+│         "performance": {
+│           "effectiveOutputTokensPerSecond": 0,
+│           "effectiveTotalTokensPerSecond": 0,
+│           "responseTimeMs": 0,
+│           "stepTimeMs": 0,
+│           "toolExecutionMs": {}
+│         },
+│         "rawFinishReason": "stop",
+│         "response": {
+│           "id": "<span:2>",
+│           "messages": [],
+│           "modelId": "shared-harness-session",
+│           "timestamp": "<timestamp>"
+│         },
+│         "runtimeContext": {},
+│         "stepNumber": 0,
+│         "usage": {
+│           "inputTokenDetails": {
+│             "cacheReadTokens": 14336,
+│             "cacheWriteTokens": 0,
+│             "noCacheTokens": 8021
+│           },
+│           "inputTokens": 22357,
+│           "outputTokenDetails": {
+│             "textTokens": 189
+│           },
+│           "outputTokens": 189,
+│           "totalTokens": 22546
+│         }
+│       }
+│     ],
+│     "text": "The command is still running; I’m waiting for it to complete so I can return the exact output.GENERATE_OK",
+│     "toolCalls": [
+│       {
+│         "input": {
+│           "command": "/bin/bash -lc 'touch /workspace/generate-started; sleep 5; printf GENERATE_OK'"
+│         },
+│         "providerExecuted": true,
+│         "toolCallId": "<toolCallId:1>",
+│         "toolName": "bash",
+│         "type": "tool-call"
+│       }
+│     ],
+│     "toolResults": [],
+│     "totalUsage": {
+│       "inputTokenDetails": {
+│         "cacheReadTokens": 14336,
+│         "cacheWriteTokens": 0,
+│         "noCacheTokens": 8021
+│       },
+│       "inputTokens": 22357,
+│       "outputTokenDetails": {
+│         "textTokens": 189
+│       },
+│       "outputTokens": 189,
+│       "totalTokens": 22546
+│     },
+│     "usage": {
+│       "inputTokenDetails": {
+│         "cacheReadTokens": 14336,
+│         "cacheWriteTokens": 0,
+│         "noCacheTokens": 8021
+│       },
+│       "inputTokens": 22357,
+│       "outputTokenDetails": {
+│         "textTokens": 189
+│       },
+│       "outputTokens": 189,
+│       "totalTokens": 22546
+│     },
+│     "warnings": []
+│   }
+│   metadata: {
+│     "braintrust": {
+│       "integration_name": "ai-sdk",
+│       "sdk_language": "typescript"
+│     },
+│     "harnessId": "codex",
+│     "permissionMode": "allow-all",
+│     "sessionId": "shared-harness-session",
+│     "tools": {
+│       "bash": {
+│         "commonName": "bash",
+│         "description": "Execute a shell command",
+│         "inputSchema": {
+│           "$schema": "http://json-schema.org/draft-07/schema#",
+│           "additionalProperties": false,
+│           "properties": {
+│             "command": {
+│               "type": "string"
+│             }
+│           },
+│           "required": [
+│             "command"
+│           ],
+│           "type": "object"
+│         },
+│         "nativeName": "shell",
+│         "toolUseKind": "bash"
+│       },
+│       "webSearch": {
+│         "commonName": "webSearch",
+│         "description": "Search the web",
+│         "inputSchema": {
+│           "$schema": "http://json-schema.org/draft-07/schema#",
+│           "additionalProperties": false,
+│           "properties": {
+│             "query": {
+│               "type": "string"
+│             }
+│           },
+│           "required": [
+│             "query"
+│           ],
+│           "type": "object"
+│         },
+│         "nativeName": "web_search",
+│         "toolUseKind": "readonly"
+│       }
+│     }
+│   }
+│   metrics: {
+│     "completion_tokens": 189,
+│     "prompt_cache_creation_tokens": 0,
+│     "prompt_cached_tokens": 14336,
+│     "prompt_tokens": 22357,
+│     "tokens": 22546
+│   }
+│   └── harness [function]
+│       input: {
+│         "maxRetries": 0,
+│         "messages": [
+│           {
+│             "content": "",
+│             "role": "user"
+│           }
+│         ],
+│         "model": {
+│           "modelId": "gpt-5.4-mini",
+│           "provider": "codex"
+│         }
+│       }
+│       output: {
+│         "content": [],
+│         "finishReason": {
+│           "raw": "stop",
+│           "unified": "stop"
+│         },
+│         "response": {
+│           "id": "<span:1>",
+│           "messages": [],
+│           "modelId": "gpt-5.4-mini",
+│           "timestamp": "<timestamp>"
+│         },
+│         "steps": [
+│           null
+│         ],
+│         "totalUsage": {
+│           "inputTokens": {
+│             "cacheRead": 14336,
+│             "cacheWrite": 0,
+│             "noCache": 8021,
+│             "total": 22357
+│           },
+│           "outputTokens": {
+│             "text": 189,
+│             "total": 189
+│           }
+│         },
+│         "usage": {
+│           "inputTokens": {
+│             "cacheRead": 14336,
+│             "cacheWrite": 0,
+│             "noCache": 8021,
+│             "total": 22357
+│           },
+│           "outputTokens": {
+│             "text": 189,
+│             "total": 189
+│           }
+│         }
+│       }
+│       metadata: {
+│         "braintrust": {
+│           "integration_name": "ai-sdk",
+│           "sdk_language": "typescript"
+│         },
+│         "model": "gpt-5.4-mini",
+│         "provider": "codex"
+│       }
+│       ├── doGenerate [llm]
+│       │   input: {
+│       │     "messages": [
+│       │       {
+│       │         "content": "",
+│       │         "role": "user"
+│       │       }
+│       │     ],
+│       │     "model": {
+│       │       "modelId": "gpt-5.4-mini",
+│       │       "provider": "codex"
+│       │     }
+│       │   }
+│       │   output: {
+│       │     "content": [
+│       │       {
+│       │         "text": "The command is still running; I’m waiting for it to complete so I can return the exact output.GENERATE_OK",
+│       │         "type": "text"
+│       │       },
+│       │       {
+│       │         "input": "{\"command\":\"/bin/bash -lc 'touch /workspace/generate-started; sleep 5; printf GENERATE_OK'\"}",
+│       │         "toolCallId": "<toolCallId:2>",
+│       │         "toolName": "bash",
+│       │         "type": "tool-call"
+│       │       }
+│       │     ],
+│       │     "finishReason": {
+│       │       "raw": "stop",
+│       │       "unified": "stop"
+│       │     },
+│       │     "response": {
+│       │       "id": "<span:1>"
+│       │     },
+│       │     "usage": {
+│       │       "inputTokens": {
+│       │         "cacheRead": 14336,
+│       │         "cacheWrite": 0,
+│       │         "noCache": 8021,
+│       │         "total": 22357
+│       │       },
+│       │       "outputTokens": {
+│       │         "text": 189,
+│       │         "total": 189
+│       │       }
+│       │     }
+│       │   }
+│       │   metadata: {
+│       │     "braintrust": {
+│       │       "integration_name": "ai-sdk",
+│       │       "sdk_language": "typescript"
+│       │     },
+│       │     "model": "gpt-5.4-mini",
+│       │     "provider": "codex"
+│       │   }
+│       │   metrics: {
+│       │     "completion_tokens": 189,
+│       │     "prompt_cache_creation_tokens": 0,
+│       │     "prompt_cached_tokens": 14336,
+│       │     "prompt_tokens": 22357,
+│       │     "tokens": 22546
+│       │   }
+│       └── bash [tool]
+│           input: "{\"command\":\"/bin/bash -lc 'touch /workspace/generate-started; sleep 5; printf GENERATE_OK'\"}"
+│           metadata: {
+│             "braintrust": {
+│               "integration_name": "ai-sdk",
+│               "sdk_language": "typescript"
+│             },
+│             "toolCallId": "<toolCallId:1>",
+│             "toolName": "bash"
+│           }
+├── HarnessAgent.stream [task]
+│   input: {
+│     "messages": [
+│       {
+│         "content": "Run the built-in bash command \"touch /workspace/stream-started; sleep 5; printf STREAM_OK\" exactly once. After it finishes, reply exactly STREAM_OK.",
+│         "role": "user"
+│       }
+│     ]
+│   }
+│   output: {
+│     "finishReason": "other",
+│     "text": "I’m running the requested bash command once and will return only its final output."
+│   }
+│   metadata: {
+│     "braintrust": {
+│       "integration_name": "ai-sdk",
+│       "sdk_language": "typescript"
+│     },
+│     "harnessId": "codex",
+│     "permissionMode": "allow-all",
+│     "sessionId": "shared-harness-session",
+│     "tools": {
+│       "bash": {
+│         "commonName": "bash",
+│         "description": "Execute a shell command",
+│         "inputSchema": {
+│           "$schema": "http://json-schema.org/draft-07/schema#",
+│           "additionalProperties": false,
+│           "properties": {
+│             "command": {
+│               "type": "string"
+│             }
+│           },
+│           "required": [
+│             "command"
+│           ],
+│           "type": "object"
+│         },
+│         "nativeName": "shell",
+│         "toolUseKind": "bash"
+│       },
+│       "webSearch": {
+│         "commonName": "webSearch",
+│         "description": "Search the web",
+│         "inputSchema": {
+│           "$schema": "http://json-schema.org/draft-07/schema#",
+│           "additionalProperties": false,
+│           "properties": {
+│             "query": {
+│               "type": "string"
+│             }
+│           },
+│           "required": [
+│             "query"
+│           ],
+│           "type": "object"
+│         },
+│         "nativeName": "web_search",
+│         "toolUseKind": "readonly"
+│       }
+│     }
+│   }
+│   metrics: {
+│     "time_to_first_token": 0
+│   }
+│   └── harness [function]
+│       input: {
+│         "maxRetries": 0,
+│         "messages": [
+│           {
+│             "content": "Run the built-in bash command \"touch /workspace/stream-started; sleep 5; printf STREAM_OK\" exactly once. After it finishes, reply exactly STREAM_OK.",
+│             "role": "user"
+│           }
+│         ],
+│         "model": {
+│           "modelId": "gpt-5.4-mini",
+│           "provider": "codex"
+│         }
+│       }
+│       metadata: {
+│         "braintrust": {
+│           "integration_name": "ai-sdk",
+│           "sdk_language": "typescript"
+│         },
+│         "model": "gpt-5.4-mini",
+│         "provider": "codex"
+│       }
+│       └── doGenerate [llm]
+│           input: {
+│             "messages": [
+│               {
+│                 "content": "Run the built-in bash command \"touch /workspace/stream-started; sleep 5; printf STREAM_OK\" exactly once. After it finishes, reply exactly STREAM_OK.",
+│                 "role": "user"
+│               }
+│             ],
+│             "model": {
+│               "modelId": "gpt-5.4-mini",
+│               "provider": "codex"
+│             }
+│           }
+│           metadata: {
+│             "braintrust": {
+│               "integration_name": "ai-sdk",
+│               "sdk_language": "typescript"
+│             },
+│             "model": "gpt-5.4-mini",
+│             "provider": "codex"
+│           }
+└── HarnessAgent.continueStream [task]
+    input: {
+      "toolApprovalContinuations": []
+    }
+    output: {
+      "finishReason": "stop",
+      "text": "STREAM_OK"
+    }
+    metadata: {
+      "braintrust": {
+        "integration_name": "ai-sdk",
+        "sdk_language": "typescript"
+      },
+      "harnessId": "codex",
+      "permissionMode": "allow-all",
+      "sessionId": "shared-harness-session",
+      "tools": {
+        "bash": {
+          "commonName": "bash",
+          "description": "Execute a shell command",
+          "inputSchema": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "additionalProperties": false,
+            "properties": {
+              "command": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "command"
+            ],
+            "type": "object"
+          },
+          "nativeName": "shell",
+          "toolUseKind": "bash"
+        },
+        "webSearch": {
+          "commonName": "webSearch",
+          "description": "Search the web",
+          "inputSchema": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "additionalProperties": false,
+            "properties": {
+              "query": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "query"
+            ],
+            "type": "object"
+          },
+          "nativeName": "web_search",
+          "toolUseKind": "readonly"
+        }
+      }
+    }
+    metrics: {
+      "completion_tokens": 153,
+      "prompt_cache_creation_tokens": 0,
+      "prompt_cached_tokens": 14336,
+      "prompt_tokens": 22309,
+      "time_to_first_token": 0,
+      "tokens": 22462
+    }
+    └── harness [function]
+        input: {
+          "maxRetries": 0,
+          "messages": [
+            {
+              "content": "",
+              "role": "user"
+            }
+          ],
+          "model": {
+            "modelId": "gpt-5.4-mini",
+            "provider": "codex"
+          }
+        }
+        output: {
+          "content": [],
+          "finishReason": {
+            "raw": "stop",
+            "unified": "stop"
+          },
+          "response": {
+            "id": "<span:1>",
+            "messages": [],
+            "modelId": "gpt-5.4-mini",
+            "timestamp": "<timestamp>"
+          },
+          "steps": [
+            null
+          ],
+          "totalUsage": {
+            "inputTokens": {
+              "cacheRead": 14336,
+              "cacheWrite": 0,
+              "noCache": 7973,
+              "total": 22309
+            },
+            "outputTokens": {
+              "text": 153,
+              "total": 153
+            }
+          },
+          "usage": {
+            "inputTokens": {
+              "cacheRead": 14336,
+              "cacheWrite": 0,
+              "noCache": 7973,
+              "total": 22309
+            },
+            "outputTokens": {
+              "text": 153,
+              "total": 153
+            }
+          }
+        }
+        metadata: {
+          "braintrust": {
+            "integration_name": "ai-sdk",
+            "sdk_language": "typescript"
+          },
+          "model": "gpt-5.4-mini",
+          "provider": "codex"
+        }
+        ├── doGenerate [llm]
+        │   input: {
+        │     "messages": [
+        │       {
+        │         "content": "",
+        │         "role": "user"
+        │       }
+        │     ],
+        │     "model": {
+        │       "modelId": "gpt-5.4-mini",
+        │       "provider": "codex"
+        │     }
+        │   }
+        │   output: {
+        │     "content": [
+        │       {
+        │         "text": "STREAM_OK",
+        │         "type": "text"
+        │       },
+        │       {
+        │         "input": "{\"command\":\"/bin/bash -lc 'touch /workspace/stream-started; sleep 5; printf STREAM_OK'\"}",
+        │         "toolCallId": "<toolCallId:2>",
+        │         "toolName": "bash",
+        │         "type": "tool-call"
+        │       }
+        │     ],
+        │     "finishReason": {
+        │       "raw": "stop",
+        │       "unified": "stop"
+        │     },
+        │     "response": {
+        │       "id": "<span:1>"
+        │     },
+        │     "usage": {
+        │       "inputTokens": {
+        │         "cacheRead": 14336,
+        │         "cacheWrite": 0,
+        │         "noCache": 7973,
+        │         "total": 22309
+        │       },
+        │       "outputTokens": {
+        │         "text": 153,
+        │         "total": 153
+        │       }
+        │     }
+        │   }
+        │   metadata: {
+        │     "braintrust": {
+        │       "integration_name": "ai-sdk",
+        │       "sdk_language": "typescript"
+        │     },
+        │     "model": "gpt-5.4-mini",
+        │     "provider": "codex"
+        │   }
+        │   metrics: {
+        │     "completion_tokens": 153,
+        │     "prompt_cache_creation_tokens": 0,
+        │     "prompt_cached_tokens": 14336,
+        │     "prompt_tokens": 22309,
+        │     "tokens": 22462
+        │   }
+        └── bash [tool]
+            input: "{\"command\":\"/bin/bash -lc 'touch /workspace/stream-started; sleep 5; printf STREAM_OK'\"}"
+            metadata: {
+              "braintrust": {
+                "integration_name": "ai-sdk",
+                "sdk_language": "typescript"
+              },
+              "toolCallId": "<toolCallId:1>",
+              "toolName": "bash"
+            }
