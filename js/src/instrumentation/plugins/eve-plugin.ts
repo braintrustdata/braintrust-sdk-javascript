@@ -96,9 +96,8 @@ type EveTraceState = {
     turnId: string;
   }[];
   llmInputs: readonly {
-    input?: CapturedEveModelInput;
+    input: CapturedEveModelInput;
     key: string;
-    modelId?: string;
   }[];
 };
 
@@ -569,17 +568,15 @@ class EveBridge {
     }
 
     const stepOrdinal = this.stepOrdinal(event);
-    const captured = consumeCapturedEveModelInput(
+    const input = consumeCapturedEveModelInput(
       this.state,
       sessionId,
       event.data.turnId,
       event.data.stepIndex,
     );
-    const input = captured?.input;
     const metadata = {
       ...turn.metadata,
       ...(this.sessionsById.get(sessionId)?.metadata ?? {}),
-      ...(captured?.modelId ? modelMetadataFromModelId(captured.modelId) : {}),
     };
     const { rowId: eventId, spanId } = await generateEveIds(
       "step",
@@ -1699,21 +1696,8 @@ function normalizeEveTraceState(state: unknown): EveTraceState {
           }
           const key = entry["key"];
           const input = entry["input"];
-          const modelId = entry["modelId"];
-          const normalizedInput = isCapturedModelInput(input)
-            ? input
-            : undefined;
-          return typeof key === "string" &&
-            (normalizedInput !== undefined || typeof modelId === "string")
-            ? [
-                {
-                  key,
-                  ...(normalizedInput !== undefined
-                    ? { input: normalizedInput }
-                    : {}),
-                  ...(typeof modelId === "string" ? { modelId } : {}),
-                },
-              ]
+          return typeof key === "string" && isCapturedModelInput(input)
+            ? [{ input, key }]
             : [];
         })
         .slice(-MAX_STORED_LLM_INPUTS)
@@ -1780,22 +1764,14 @@ function captureEveModelInput(
   }
 
   const captured = capturedModelInput(input["modelInput"]);
-  const modelId = input["modelId"];
-  if (!captured && typeof modelId !== "string") {
+  if (!captured) {
     return;
   }
 
   const key = llmInputKey(sessionId, turnId, stepIndex);
   state.update((current) => {
     const normalized = normalizeEveTraceState(current);
-    const llmInputs = [
-      ...normalized.llmInputs,
-      {
-        key,
-        ...(captured ? { input: captured } : {}),
-        ...(typeof modelId === "string" ? { modelId } : {}),
-      },
-    ];
+    const llmInputs = [...normalized.llmInputs, { input: captured, key }];
     return {
       ...normalized,
       llmInputs: llmInputs.slice(-MAX_STORED_LLM_INPUTS),
@@ -1808,10 +1784,10 @@ function consumeCapturedEveModelInput(
   sessionId: string,
   turnId: string,
   stepIndex: number,
-): EveTraceState["llmInputs"][number] | undefined {
+): CapturedEveModelInput | undefined {
   try {
     const key = llmInputKey(sessionId, turnId, stepIndex);
-    let captured: EveTraceState["llmInputs"][number] | undefined;
+    let input: CapturedEveModelInput | undefined;
     state.update((current) => {
       const normalized = normalizeEveTraceState(current);
       const index = normalized.llmInputs.findIndex(
@@ -1820,7 +1796,7 @@ function consumeCapturedEveModelInput(
       if (index < 0) {
         return normalized;
       }
-      captured = normalized.llmInputs[index];
+      input = normalized.llmInputs[index]?.input;
       return {
         ...normalized,
         llmInputs: normalized.llmInputs.filter(
@@ -1828,7 +1804,7 @@ function consumeCapturedEveModelInput(
         ),
       };
     });
-    return captured;
+    return input;
   } catch (error) {
     debugLogger.warn("Error in Eve LLM input consumption:", error);
     return undefined;

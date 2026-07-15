@@ -118,7 +118,7 @@ describe("braintrustEveHook", () => {
     );
   });
 
-  it("captures Eve instrumentation model input on the matching LLM step", async () => {
+  it("captures model input without unresolved dynamic model metadata", async () => {
     const fakeEve = createFakeDefineState();
     defineState = fakeEve.defineState;
     const instrumentation = braintrustEveInstrumentation({ defineState });
@@ -154,7 +154,6 @@ describe("braintrustEveHook", () => {
       type: "turn.started",
     });
     instrumentation.events?.["step.started"]?.({
-      modelId: "deepseek/deepseek-v4-pro",
       modelInput,
       session: { id: "session-captured-input" },
       step: { index: 0 },
@@ -210,58 +209,11 @@ describe("braintrustEveHook", () => {
         role: "user",
       },
     ]);
-    expect(step?.metadata).toEqual({
-      model: "deepseek-v4-pro",
-      provider: "deepseek",
-    });
+    expect(step?.metadata).toEqual({});
     expect(session?.metadata).toEqual({});
     expect(turn?.metadata).toEqual({});
     expect(fakeEve.values.get("braintrust.eve.tracing")).toMatchObject({
       llmInputs: [],
-    });
-  });
-
-  it("captures resolved model metadata without a serializable model input", async () => {
-    const fakeEve = createFakeDefineState();
-    defineState = fakeEve.defineState;
-    const instrumentation = braintrustEveInstrumentation({ defineState });
-    const wildcard = braintrustEveHook({ defineState }).events?.["*"];
-    const ctx: EveHookContext = {
-      session: { id: "session-model-only" },
-    };
-
-    instrumentation.events?.["step.started"]?.({
-      modelId: "deepseek/deepseek-v4-pro",
-      modelInput: { messages: undefined } as never,
-      session: { id: "session-model-only" },
-      step: { index: 0 },
-      turn: { id: "turn-model-only", sequence: 0 },
-    });
-    await wildcard?.(
-      {
-        data: { sequence: 0, turnId: "turn-model-only" },
-        type: "turn.started",
-      },
-      ctx,
-    );
-    await wildcard?.(
-      {
-        data: { sequence: 0, stepIndex: 0, turnId: "turn-model-only" },
-        type: "step.started",
-      },
-      ctx,
-    );
-
-    const spans = (await backgroundLogger.drain()) as Array<
-      Record<string, any>
-    >;
-    const step = spans.find(
-      (span) => span.span_attributes?.name === "eve.step",
-    );
-    expect(step?.input).toBeUndefined();
-    expect(step?.metadata).toEqual({
-      model: "deepseek-v4-pro",
-      provider: "deepseek",
     });
   });
 

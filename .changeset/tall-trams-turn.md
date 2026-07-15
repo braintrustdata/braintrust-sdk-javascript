@@ -2,4 +2,4 @@
 "braintrust": patch
 ---
 
-fix(eve): Capture dynamic model ids on llm spans
+fix(eve): Avoid reporting unresolved dynamic model fallbacks as model metadata

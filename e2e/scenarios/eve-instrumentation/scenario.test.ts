@@ -140,11 +140,11 @@ describe("eve instrumentation", () => {
       }
       expect(step.input[0]).toMatchObject({ role: "system" });
       expect(step.metadata).toMatchObject({
-        model: "deepseek-v4-pro",
-        provider: "deepseek",
         scenario: "eve-instrumentation",
         testRunId: expect.any(String),
       });
+      expect(step.metadata).not.toHaveProperty("model");
+      expect(step.metadata).not.toHaveProperty("provider");
     }
 
     expect(researcher).toBeDefined();

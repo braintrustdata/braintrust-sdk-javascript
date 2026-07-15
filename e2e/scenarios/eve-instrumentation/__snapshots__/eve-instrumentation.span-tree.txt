@@ -54,8 +54,6 @@ span_tree:
     │   │     }
     │   │   ]
     │   │   metadata: {
-    │   │     "model": "deepseek-v4-pro",
-    │   │     "provider": "deepseek",
     │   │     "scenario": "eve-instrumentation",
     │   │     "testRunId": "<run:1>"
     │   │   }
@@ -295,8 +293,6 @@ span_tree:
     │   │     }
     │   │   ]
     │   │   metadata: {
-    │   │     "model": "deepseek-v4-pro",
-    │   │     "provider": "deepseek",
     │   │     "scenario": "eve-instrumentation",
     │   │     "testRunId": "<run:1>"
     │   │   }
@@ -416,8 +412,6 @@ span_tree:
     │         }
     │       ]
     │       metadata: {
-    │         "model": "deepseek-v4-pro",
-    │         "provider": "deepseek",
     │         "scenario": "eve-instrumentation",
     │         "testRunId": "<run:1>"
     │       }
@@ -570,8 +564,6 @@ span_tree:
         │     }
         │   ]
         │   metadata: {
-        │     "model": "deepseek-v4-pro",
-        │     "provider": "deepseek",
         │     "scenario": "eve-instrumentation",
         │     "testRunId": "<run:1>"
         │   }
@@ -904,8 +896,6 @@ span_tree:
         │     }
         │   ]
         │   metadata: {
-        │     "model": "deepseek-v4-pro",
-        │     "provider": "deepseek",
         │     "scenario": "eve-instrumentation",
         │     "testRunId": "<run:1>"
         │   }
@@ -1118,8 +1108,6 @@ span_tree:
               }
             ]
             metadata: {
-              "model": "deepseek-v4-pro",
-              "provider": "deepseek",
               "scenario": "eve-instrumentation",
               "testRunId": "<run:1>"
             }
