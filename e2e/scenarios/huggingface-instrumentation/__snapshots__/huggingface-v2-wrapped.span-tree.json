@@ -1,0 +1,22 @@
+{
+  "span_tree": [
+    {
+      "name": "huggingface-instrumentation-root",
+      "type": "task",
+      "children": [
+        {
+          "name": "huggingface-chat-operation",
+          "children": [],
+          "metadata": {
+            "operation": "chat",
+            "testRunId": "<run:1>"
+          }
+        }
+      ],
+      "metadata": {
+        "scenario": "huggingface-instrumentation",
+        "testRunId": "<run:1>"
+      }
+    }
+  ]
+}

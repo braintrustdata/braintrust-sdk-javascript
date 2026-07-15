@@ -44,20 +44,47 @@ const HUGGINGFACE_SCENARIO_SPECS = [
   {
     autoEntry: "scenario.huggingface-v281.mjs",
     dependencyName: "huggingface-inference-sdk-v2",
-    snapshotName: "huggingface-v281",
+    snapshotName: "huggingface-v2",
+    supportsChatStream: false,
+    supportsFeatureExtraction: false,
     supportsLiveTextGeneration: false,
+    supportsTextGenerationStream: false,
+    supportsToolCalls: false,
+    wrapperEntry: "scenario.huggingface-v281.ts",
+  },
+  {
+    autoEntry: "scenario.huggingface-v281.mjs",
+    dependencyName: "huggingface-inference-sdk-v2-latest",
+    snapshotName: "huggingface-v2-latest",
+    supportsChatStream: false,
+    supportsFeatureExtraction: false,
+    supportsLiveTextGeneration: false,
+    supportsTextGenerationStream: false,
+    supportsToolCalls: false,
     wrapperEntry: "scenario.huggingface-v281.ts",
   },
   {
     autoEntry: "scenario.huggingface-v3150.mjs",
     dependencyName: "huggingface-inference-sdk-v3",
-    snapshotName: "huggingface-v3150",
+    snapshotName: "huggingface-v3",
+    wrapperEntry: "scenario.huggingface-v3150.ts",
+  },
+  {
+    autoEntry: "scenario.huggingface-v3150.mjs",
+    dependencyName: "huggingface-inference-sdk-v3-latest",
+    snapshotName: "huggingface-v3-latest",
     wrapperEntry: "scenario.huggingface-v3150.ts",
   },
   {
     autoEntry: "scenario.mjs",
-    dependencyName: "@huggingface/inference",
-    snapshotName: "huggingface-v41315",
+    dependencyName: "huggingface-inference-sdk-v4",
+    snapshotName: "huggingface-v4",
+    wrapperEntry: "scenario.ts",
+  },
+  {
+    autoEntry: "scenario.mjs",
+    dependencyName: "huggingface-inference-sdk-v4-latest",
+    snapshotName: "huggingface-v4-latest",
     wrapperEntry: "scenario.ts",
   },
 ];
@@ -76,7 +103,12 @@ function getHuggingFaceApiKey() {
 
 function getScenarioCapabilities(options) {
   return {
+    supportsChatStream: options.supportsChatStream !== false,
+    supportsFeatureExtraction: options.supportsFeatureExtraction !== false,
     supportsLiveTextGeneration: options.supportsLiveTextGeneration !== false,
+    supportsTextGenerationStream:
+      options.supportsTextGenerationStream !== false,
+    supportsToolCalls: options.supportsToolCalls !== false,
   };
 }
 
@@ -110,12 +142,7 @@ const HUGGINGFACE_REQUEST_OPTIONS = HUGGINGFACE_FETCH
   : undefined;
 
 function createClient(Client, apiKey, options) {
-  const client = new Client(
-    apiKey,
-    options.supportsLiveTextGeneration === false
-      ? undefined
-      : HUGGINGFACE_REQUEST_OPTIONS,
-  );
+  const client = new Client(apiKey, HUGGINGFACE_REQUEST_OPTIONS);
 
   if (options.supportsLiveTextGeneration === false) {
     if (typeof client.endpoint !== "function") {
@@ -159,49 +186,53 @@ async function runHuggingFaceInstrumentationScenario(sdk, options = {}) {
         });
       });
 
-      await runOperation(
-        "huggingface-chat-stream-operation",
-        "chat-stream",
-        async () => {
-          const stream = client.chatCompletionStream({
-            max_tokens: 16,
-            messages: [
-              {
-                role: "user",
-                content: "Reply with exactly OK.",
-              },
-            ],
-            model: CHAT_MODEL,
-            ...(capabilities.supportsLiveTextGeneration
-              ? { provider: CHAT_PROVIDER }
-              : {}),
-            temperature: 0,
-          });
-          await collectAsync(stream);
-        },
-      );
+      if (capabilities.supportsChatStream) {
+        await runOperation(
+          "huggingface-chat-stream-operation",
+          "chat-stream",
+          async () => {
+            const stream = client.chatCompletionStream({
+              max_tokens: 16,
+              messages: [
+                {
+                  role: "user",
+                  content: "Reply with exactly OK.",
+                },
+              ],
+              model: CHAT_MODEL,
+              ...(capabilities.supportsLiveTextGeneration
+                ? { provider: CHAT_PROVIDER }
+                : {}),
+              temperature: 0,
+            });
+            await collectAsync(stream);
+          },
+        );
+      }
 
-      await runOperation(
-        "huggingface-chat-stream-tool-call-operation",
-        "chat-stream-tool-call",
-        async () => {
-          const stream = client.chatCompletionStream({
-            max_tokens: 64,
-            messages: [
-              {
-                role: "user",
-                content: `What is the weather in San Francisco? Call the ${TOOL_NAME} tool.`,
-              },
-            ],
-            model: CHAT_MODEL,
-            provider: CHAT_PROVIDER,
-            temperature: 0,
-            tool_choice: "required",
-            tools: [CHAT_TOOL],
-          });
-          await collectAsync(stream);
-        },
-      );
+      if (capabilities.supportsToolCalls) {
+        await runOperation(
+          "huggingface-chat-stream-tool-call-operation",
+          "chat-stream-tool-call",
+          async () => {
+            const stream = client.chatCompletionStream({
+              max_tokens: 64,
+              messages: [
+                {
+                  role: "user",
+                  content: `What is the weather in San Francisco? Call the ${TOOL_NAME} tool.`,
+                },
+              ],
+              model: CHAT_MODEL,
+              provider: CHAT_PROVIDER,
+              temperature: 0,
+              tool_choice: "required",
+              tools: [CHAT_TOOL],
+            });
+            await collectAsync(stream);
+          },
+        );
+      }
 
       if (capabilities.supportsLiveTextGeneration) {
         await runOperation(
@@ -226,56 +257,60 @@ async function runHuggingFaceInstrumentationScenario(sdk, options = {}) {
         );
       }
 
-      await runOperation(
-        "huggingface-text-generation-stream-operation",
-        "text-generation-stream",
-        async () => {
-          const stream = decoratedSDK.textGenerationStream(
-            {
-              ...(capabilities.supportsLiveTextGeneration
-                ? {
-                    accessToken: apiKey,
-                    inputs: "The capital of France is",
-                    model: TEXT_GENERATION_MODEL,
-                    parameters: {
-                      do_sample: false,
-                      max_new_tokens: 4,
-                      return_full_text: false,
-                    },
-                    provider: TEXT_GENERATION_PROVIDER,
-                  }
-                : {
-                    accessToken: apiKey,
-                    endpointUrl: V2_TEXT_GENERATION_ENDPOINT_URL,
-                    inputs: "The capital of France is",
-                    max_tokens: 4,
-                    model: V2_TEXT_GENERATION_MODEL,
-                    prompt: "The capital of France is",
-                  }),
-            },
-            HUGGINGFACE_REQUEST_OPTIONS,
-          );
-          await collectAsync(stream);
-        },
-      );
+      if (capabilities.supportsTextGenerationStream) {
+        await runOperation(
+          "huggingface-text-generation-stream-operation",
+          "text-generation-stream",
+          async () => {
+            const stream = decoratedSDK.textGenerationStream(
+              {
+                ...(capabilities.supportsLiveTextGeneration
+                  ? {
+                      accessToken: apiKey,
+                      inputs: "The capital of France is",
+                      model: TEXT_GENERATION_MODEL,
+                      parameters: {
+                        do_sample: false,
+                        max_new_tokens: 4,
+                        return_full_text: false,
+                      },
+                      provider: TEXT_GENERATION_PROVIDER,
+                    }
+                  : {
+                      accessToken: apiKey,
+                      endpointUrl: V2_TEXT_GENERATION_ENDPOINT_URL,
+                      inputs: "The capital of France is",
+                      max_tokens: 4,
+                      model: V2_TEXT_GENERATION_MODEL,
+                      prompt: "The capital of France is",
+                    }),
+              },
+              HUGGINGFACE_REQUEST_OPTIONS,
+            );
+            await collectAsync(stream);
+          },
+        );
+      }
 
-      await runOperation(
-        "huggingface-feature-extraction-operation",
-        "feature-extraction",
-        async () => {
-          await decoratedSDK.featureExtraction(
-            {
-              accessToken: apiKey,
-              inputs: "Paris France",
-              model: EMBEDDING_MODEL,
-              ...(capabilities.supportsLiveTextGeneration
-                ? { provider: EMBEDDING_PROVIDER }
-                : { endpointUrl: V2_FEATURE_EXTRACTION_ENDPOINT_URL }),
-            },
-            HUGGINGFACE_REQUEST_OPTIONS,
-          );
-        },
-      );
+      if (capabilities.supportsFeatureExtraction) {
+        await runOperation(
+          "huggingface-feature-extraction-operation",
+          "feature-extraction",
+          async () => {
+            await decoratedSDK.featureExtraction(
+              {
+                accessToken: apiKey,
+                inputs: "Paris France",
+                model: EMBEDDING_MODEL,
+                ...(capabilities.supportsLiveTextGeneration
+                  ? { provider: EMBEDDING_PROVIDER }
+                  : { endpointUrl: V2_FEATURE_EXTRACTION_ENDPOINT_URL }),
+              },
+              HUGGINGFACE_REQUEST_OPTIONS,
+            );
+          },
+        );
+      }
     },
     metadata: {
       scenario: SCENARIO_NAME,

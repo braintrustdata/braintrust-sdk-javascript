@@ -35,14 +35,14 @@
                 "temperature": 0
               },
               "metrics": {
-                "completion_time": 0.006650543,
+                "completion_time": 0.008207114,
                 "completion_tokens": 2,
-                "prompt_time": 0.002703216,
+                "prompt_time": 0.002191425,
                 "prompt_tokens": 40,
-                "queue_time": 0.109831551,
+                "queue_time": 0.05190801,
                 "time_to_first_token": 0,
                 "tokens": 42,
-                "total_time": 0.009353759
+                "total_time": 0.010398539
               }
             }
           ],
@@ -82,14 +82,14 @@
                 "temperature": 0
               },
               "metrics": {
-                "completion_time": 0.007875603,
+                "completion_time": 0.007154731,
                 "completion_tokens": 2,
-                "prompt_time": 0.001919959,
+                "prompt_time": 0.001665917,
                 "prompt_tokens": 40,
-                "queue_time": 0.10031125,
+                "queue_time": 0.047459398,
                 "time_to_first_token": 0,
                 "tokens": 42,
-                "total_time": 0.009795562
+                "total_time": 0.008820648
               }
             }
           ],
@@ -118,7 +118,7 @@
                   "logprobs": null,
                   "message": {
                     "content": "14",
-                    "reasoning": "Okay, let's see. Elena has 3 boxes, each with 4 marbles. So first, I need to figure out how many marbles she has in total. If each box has 4 marbles and there are 3 boxes, that's 3 multiplied by 4. Let me write that down: 3 × 4 = 12 marbles. \n\nThen, she gives away 5 marbles. So from the initial 12, subtract 5. That would be 12 - 5. Let me calculate that: 12 minus 5 is 7. So now she has 7 marbles left.\n\nNext step is doubling what remains. So she has 7 marbles and then doubles them. Doubling means multiplying by 2. So 7 × 2. Hmm, 7 times 2 is 14. \n\nWait, let me check again to make sure I didn't make a mistake. Starting with 3 boxes ×4 marbles each: yes, 12. Then giving away 5 leaves 7. Then doubling 7 is 14. That seems right. I don't think I missed any steps here. The problem didn't mention any other actions, so the final number should be 14. I think that's it.\n",
+                    "reasoning": "Okay, let's see. So the problem is about Elena having some marbles and doing some operations. Let me break it down step by step. First, she has 3 boxes with 4 marbles each. So, each box has 4 marbles, and there are 3 boxes. To find the total marbles she starts with, I should multiply the number of boxes by the marbles per box. That would be 3 times 4. Let me calculate that: 3*4 equals 12 marbles. So, she starts with 12 marbles.\n\nNext, she gives away 5 marbles. So, if she had 12 and gives away 5, we need to subtract 5 from 12. Let me do that: 12 minus 5 is 7. Now she has 7 marbles left after giving some away.\n\nThen, the problem says she doubles what remains. So, doubling means multiplying by 2. So, taking the 7 marbles she has after giving away 5 and doubling it would be 7 times 2. Let me compute that: 7*2 equals 14. So, after doubling, she has 14 marbles. \n\nWait, let me make sure I didn't skip any steps. Starting with 3 boxes of 4 marbles each: 3*4=12. Then subtract 5: 12-5=7. Then double that amount: 7*2=14. Yeah, that seems right. I don't think I made any mistakes here. Let me just confirm each operation. Multiplication first, then subtraction, then multiplication again. The order of operations here is straightforward because it's a sequence of actions: starting amount, giving away, then doubling. So yes, 14 is the final number.\n",
                     "role": "assistant"
                   }
                 }
@@ -132,15 +132,15 @@
                 "temperature": 0.6
               },
               "metrics": {
-                "completion_reasoning_tokens": 273,
-                "completion_time": 0.494818307,
-                "completion_tokens": 280,
-                "prompt_time": 0.002014349,
+                "completion_reasoning_tokens": 385,
+                "completion_time": 0.71020218,
+                "completion_tokens": 392,
+                "prompt_time": 0.002383977,
                 "prompt_tokens": 46,
-                "queue_time": 0.046694304,
+                "queue_time": 0.562942222,
                 "time_to_first_token": 0,
-                "tokens": 326,
-                "total_time": 0.496832656
+                "tokens": 438,
+                "total_time": 0.712586157
               }
             }
           ],
@@ -215,14 +215,14 @@
                 ]
               },
               "metrics": {
-                "completion_time": 0.038301771,
+                "completion_time": 0.036754475,
                 "completion_tokens": 11,
-                "prompt_time": 0.0136988,
+                "prompt_time": 0.014626775,
                 "prompt_tokens": 246,
-                "queue_time": 0.091345947,
+                "queue_time": 0.051886972,
                 "time_to_first_token": 0,
                 "tokens": 257,
-                "total_time": 0.052000571
+                "total_time": 0.05138125
               }
             }
           ],

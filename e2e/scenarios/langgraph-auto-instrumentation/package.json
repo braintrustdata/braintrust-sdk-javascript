@@ -2,18 +2,30 @@
   "name": "@braintrust/e2e-langgraph-auto-instrumentation",
   "private": true,
   "braintrustScenario": {
-    "canary": {
+    "bump": {
       "dependencies": {
-        "@langchain/core": "latest",
-        "@langchain/langgraph": "latest",
-        "@langchain/openai": "latest"
+        "langchain-core-v1-latest": {
+          "package": "@langchain/core",
+          "range": "1"
+        },
+        "langchain-langgraph-v1-latest": {
+          "package": "@langchain/langgraph",
+          "range": "1"
+        },
+        "langchain-openai-v1-latest": {
+          "package": "@langchain/openai",
+          "range": "1"
+        }
       }
     }
   },
   "dependencies": {
-    "@langchain/core": "1.1.35",
-    "@langchain/langgraph": "1.0.7",
-    "@langchain/openai": "1.3.0"
+    "langchain-core-v1": "npm:@langchain/core@1.1.35",
+    "langchain-core-v1-latest": "npm:@langchain/core@1.2.1",
+    "langchain-langgraph-v1": "npm:@langchain/langgraph@1.0.7",
+    "langchain-langgraph-v1-latest": "npm:@langchain/langgraph@1.4.7",
+    "langchain-openai-v1": "npm:@langchain/openai@1.3.0",
+    "langchain-openai-v1-latest": "npm:@langchain/openai@1.5.3"
   },
   "pnpm": {
     "overrides": {

@@ -8,15 +8,24 @@ importers:
 
   .:
     dependencies:
-      openai:
-        specifier: 6.25.0
-        version: 6.25.0
+      openai-v4-latest:
+        specifier: npm:openai@4.104.0
+        version: openai@4.104.0
       openai-v4:
         specifier: npm:openai@4.104.0
         version: openai@4.104.0
+      openai-v5-latest:
+        specifier: npm:openai@5.23.2
+        version: openai@5.23.2
       openai-v5:
         specifier: npm:openai@5.11.0
         version: openai@5.11.0
+      openai-v6-latest:
+        specifier: npm:openai@6.45.0
+        version: openai@6.45.0
+      openai-v6:
+        specifier: npm:openai@6.25.0
+        version: openai@6.25.0
 
 packages:
 
@@ -167,6 +176,18 @@ packages:
       zod:
         optional: true
 
+  openai@5.23.2:
+    resolution: {integrity: sha512-MQBzmTulj+MM5O8SKEk/gL8a7s5mktS9zUtAkU257WjvobGc9nKcBuVwjyEEcb9SI8a8Y2G/mzn3vm9n1Jlleg==}
+    hasBin: true
+    peerDependencies:
+      ws: ^8.18.0
+      zod: ^3.23.8
+    peerDependenciesMeta:
+      ws:
+        optional: true
+      zod:
+        optional: true
+
   openai@6.25.0:
     resolution: {integrity: sha512-mEh6VZ2ds2AGGokWARo18aPISI1OhlgdEIC1ewhkZr8pSIT31dec0ecr9Nhxx0JlybyOgoAT1sWeKtwPZzJyww==}
     hasBin: true
@@ -174,6 +195,26 @@ packages:
       ws: ^8.18.0
       zod: ^3.25 || ^4.0
     peerDependenciesMeta:
+      ws:
+        optional: true
+      zod:
+        optional: true
+
+  openai@6.45.0:
+    resolution: {integrity: sha512-5DQVNErssk0afNpTTHUm/qZPU4iKR9OYdNid8Ib4puq4gHNNvGWZht2zY4h9a8JMF949Ik6m8gQutllVPbjdnw==}
+    peerDependencies:
+      '@aws-sdk/credential-provider-node': '>=3.972.0 <4'
+      '@smithy/hash-node': '>=4.3.0 <5'
+      '@smithy/signature-v4': '>=5.4.0 <6'
+      ws: ^8.18.0
+      zod: ^3.25 || ^4.0
+    peerDependenciesMeta:
+      '@aws-sdk/credential-provider-node':
+        optional: true
+      '@smithy/hash-node':
+        optional: true
+      '@smithy/signature-v4':
+        optional: true
       ws:
         optional: true
       zod:
@@ -331,7 +372,11 @@ snapshots:
 
   openai@5.11.0: {}
 
+  openai@5.23.2: {}
+
   openai@6.25.0: {}
+
+  openai@6.45.0: {}
 
   tr46@0.0.3: {}
 

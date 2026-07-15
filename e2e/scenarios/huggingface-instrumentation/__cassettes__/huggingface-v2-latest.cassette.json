@@ -1,0 +1,112 @@
+{
+  "entries": [
+    {
+      "callIndex": 0,
+      "id": "2bb2abdc43ebde9d",
+      "matchKey": "POST router.huggingface.co/v1/chat/completions",
+      "recordedAt": "2026-07-07T13:52:24.945Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "max_tokens": 16,
+            "messages": [
+              {
+                "content": "Reply with exactly OK.",
+                "role": "user"
+              }
+            ],
+            "model": "meta-llama/Llama-3.1-8B-Instruct",
+            "temperature": 0
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://router.huggingface.co/v1/chat/completions"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "choices": [
+              {
+                "content_filter_results": {
+                  "hate": {
+                    "filtered": false
+                  },
+                  "jailbreak": {
+                    "detected": false,
+                    "filtered": false
+                  },
+                  "profanity": {
+                    "detected": false,
+                    "filtered": false
+                  },
+                  "self_harm": {
+                    "filtered": false
+                  },
+                  "sexual": {
+                    "filtered": false
+                  },
+                  "violence": {
+                    "filtered": false
+                  }
+                },
+                "finish_reason": "stop",
+                "index": 0,
+                "message": {
+                  "content": "OK.",
+                  "role": "assistant"
+                }
+              }
+            ],
+            "created": 1783432344,
+            "id": "fe2323fab28ae8bc8119a3913397f153",
+            "model": "meta-llama/llama-3.1-8b-instruct",
+            "object": "chat.completion",
+            "system_fingerprint": "",
+            "usage": {
+              "completion_tokens": 3,
+              "completion_tokens_details": null,
+              "prompt_tokens": 40,
+              "prompt_tokens_details": null,
+              "total_tokens": 43
+            }
+          }
+        },
+        "headers": {
+          "access-control-allow-origin": "*",
+          "access-control-expose-headers": "X-Repo-Commit,X-Request-Id,X-Error-Code,X-Error-Message,X-Total-Count,ETag,Link,Accept-Ranges,Content-Range,X-Linked-Size,X-Linked-ETag,X-Xet-Hash",
+          "connection": "keep-alive",
+          "content-length": "620",
+          "content-type": "application/json",
+          "cross-origin-opener-policy": "same-origin",
+          "date": "Tue, 07 Jul 2026 13:52:24 GMT",
+          "inference-id": "0-019f3cd9-f333-7492-874c-81a2a8ff1dde",
+          "referrer-policy": "strict-origin-when-cross-origin",
+          "vary": "Origin",
+          "via": "1.1 a40452b50d020fed241266888afec252.cloudfront.net (CloudFront)",
+          "x-amz-cf-id": "d1qb4eDVttffqmJgRiiXgxILhD4ThOcduUznI9EBI9KBCARVoWqJDA==",
+          "x-amz-cf-pop": "VIE50-P4",
+          "x-cache": "Miss from cloudfront",
+          "x-inference-provider": "novita",
+          "x-powered-by": "huggingface-moon",
+          "x-ratelimit-limit-requests": "6000",
+          "x-ratelimit-limit-tokens": "50000000",
+          "x-ratelimit-remaining-requests": "5969",
+          "x-ratelimit-remaining-tokens": "49976055",
+          "x-ratelimit-reset-requests": "310ms",
+          "x-ratelimit-reset-tokens": "29ms",
+          "x-request-id": "Root=1-6a4d0498-70ee0b04125ca7676a7d7234",
+          "x-robots-tag": "none",
+          "x-trace-id": "fe2323fab28ae8bc8119a3913397f153"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    }
+  ],
+  "meta": {
+    "createdAt": "2026-07-06T14:01:28.204Z"
+  }
+}

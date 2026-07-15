@@ -2,17 +2,21 @@
   "name": "@braintrust/e2e-mastra-instrumentation",
   "private": true,
   "braintrustScenario": {
-    "canary": {
+    "bump": {
       "dependencies": {
-        "@mastra/core": "@mastra/core@1.26.1-alpha.0",
-        "@mastra/observability": "@mastra/observability@latest"
+        "mastra-core-v1-latest": {
+          "package": "@mastra/core",
+          "range": "1.26.1-alpha.0",
+          "allowPrerelease": true
+        }
       }
     }
   },
   "dependencies": {
-    "@mastra/core": "1.26.0",
-    "@mastra/observability": "latest",
-    "zod": "4.3.6"
+    "zod": "4.3.6",
+    "mastra-core-v1": "npm:@mastra/core@1.26.0",
+    "mastra-core-v1-latest": "npm:@mastra/core@1.26.1-alpha.0",
+    "@mastra/observability": "npm:@mastra/observability@1.15.2"
   },
   "pnpm": {
     "overrides": {

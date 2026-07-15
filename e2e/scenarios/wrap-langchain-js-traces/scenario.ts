@@ -1,8 +1,8 @@
 import { BraintrustCallbackHandler } from "@braintrust/langchain-js";
-import { AIMessage, HumanMessage, ToolMessage } from "@langchain/core/messages";
-import { ChatPromptTemplate } from "@langchain/core/prompts";
-import { DynamicStructuredTool } from "@langchain/core/tools";
-import { ChatOpenAI } from "@langchain/openai";
+const langchainCorePackageName =
+  process.env.LANGCHAIN_CORE_PACKAGE_NAME ?? "langchain-core-v1-latest";
+const langchainOpenAIPackageName =
+  process.env.LANGCHAIN_OPENAI_PACKAGE_NAME ?? "langchain-openai-v1-latest";
 import { z } from "zod";
 import {
   collectAsync,
@@ -14,6 +14,17 @@ import { runMain } from "../../helpers/scenario-runtime";
 const OPENAI_MODEL = "gpt-4o-mini-2024-07-18";
 
 runMain(async () => {
+  const { AIMessage, HumanMessage, ToolMessage } = await import(
+    `${langchainCorePackageName}/messages`
+  );
+  const { ChatPromptTemplate } = await import(
+    `${langchainCorePackageName}/prompts`
+  );
+  const { DynamicStructuredTool } = await import(
+    `${langchainCorePackageName}/tools`
+  );
+  const { ChatOpenAI } = await import(langchainOpenAIPackageName);
+
   await runTracedScenario({
     callback: async () => {
       // The handler attaches as a child of the current traced span via

@@ -2,16 +2,24 @@
   "name": "@braintrust/e2e-genkit-instrumentation",
   "private": true,
   "braintrustScenario": {
-    "canary": {
+    "bump": {
       "dependencies": {
-        "@genkit-ai/google-genai": "latest",
-        "genkit": "latest"
+        "genkit-v1-latest": {
+          "package": "genkit",
+          "range": ">=1 <1.34.0"
+        },
+        "genkit-google-genai-v1-latest": {
+          "package": "@genkit-ai/google-genai",
+          "range": ">=1 <1.34.0"
+        }
       }
     }
   },
   "dependencies": {
-    "@genkit-ai/google-genai": "1.33.0",
-    "genkit": "1.33.0"
+    "genkit-v1": "npm:genkit@1.33.0",
+    "genkit-v1-latest": "npm:genkit@1.33.0",
+    "genkit-google-genai-v1": "npm:@genkit-ai/google-genai@1.33.0",
+    "genkit-google-genai-v1-latest": "npm:@genkit-ai/google-genai@1.33.0"
   },
   "pnpm": {
     "overrides": {

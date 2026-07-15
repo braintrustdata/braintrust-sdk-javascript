@@ -1,0 +1,4330 @@
+span_tree:
+└── ai-sdk-instrumentation-root [task]
+    metadata: {
+      "aiSdkVersion": "7.0.0",
+      "scenario": "ai-sdk-instrumentation",
+      "testRunId": "<run:1>"
+    }
+    ├── ai-sdk-generate-operation
+    │   metadata: {
+    │     "operation": "generate",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── generateText [function]
+    │       input: {
+    │         "maxOutputTokens": 24,
+    │         "maxRetries": 2,
+    │         "messages": [
+    │           {
+    │             "content": "Reply with the single token PARIS and no punctuation.",
+    │             "role": "user"
+    │           }
+    │         ],
+    │         "model": {
+    │           "modelId": "gpt-4o-mini-2024-07-18",
+    │           "provider": "openai.responses"
+    │         },
+    │         "temperature": 0
+    │       }
+    │       output: {
+    │         "content": [
+    │           {
+    │             "providerMetadata": {
+    │               "openai": {
+    │                 "itemId": "<itemId:2>"
+    │               }
+    │             },
+    │             "text": "PARIS",
+    │             "type": "text"
+    │           }
+    │         ],
+    │         "finishReason": "stop",
+    │         "providerMetadata": {
+    │           "openai": {
+    │             "responseId": "<responseId:3>",
+    │             "serviceTier": "default"
+    │           }
+    │         },
+    │         "response": {
+    │           "messages": [
+    │             {
+    │               "content": [
+    │                 {
+    │                   "providerOptions": {
+    │                     "openai": {
+    │                       "itemId": "<itemId:2>"
+    │                     }
+    │                   },
+    │                   "text": "PARIS",
+    │                   "type": "text"
+    │                 }
+    │               ],
+    │               "role": "assistant"
+    │             }
+    │           ],
+    │           "modelId": "gpt-4o-mini-2024-07-18",
+    │           "timestamp": "<timestamp>"
+    │         },
+    │         "responseMessages": "<omitted>",
+    │         "steps": [
+    │           {
+    │             "callId": "<callId:1>",
+    │             "content": [
+    │               {
+    │                 "providerMetadata": {
+    │                   "openai": {
+    │                     "itemId": "<itemId:2>"
+    │                   }
+    │                 },
+    │                 "text": "PARIS",
+    │                 "type": "text"
+    │               }
+    │             ],
+    │             "finishReason": "stop",
+    │             "model": {
+    │               "modelId": "gpt-4o-mini-2024-07-18",
+    │               "provider": "openai.responses"
+    │             },
+    │             "providerMetadata": {
+    │               "openai": {
+    │                 "responseId": "<responseId:3>",
+    │                 "serviceTier": "default"
+    │               }
+    │             },
+    │             "response": {
+    │               "messages": [
+    │                 {
+    │                   "content": [
+    │                     {
+    │                       "providerOptions": {
+    │                         "openai": {
+    │                           "itemId": "<itemId:2>"
+    │                         }
+    │                       },
+    │                       "text": "PARIS",
+    │                       "type": "text"
+    │                     }
+    │                   ],
+    │                   "role": "assistant"
+    │                 }
+    │               ],
+    │               "modelId": "gpt-4o-mini-2024-07-18",
+    │               "timestamp": "<timestamp>"
+    │             },
+    │             "runtimeContext": {},
+    │             "stepNumber": 0,
+    │             "toolsContext": {},
+    │             "usage": {
+    │               "inputTokenDetails": {
+    │                 "cacheReadTokens": 0,
+    │                 "noCacheTokens": 18
+    │               },
+    │               "inputTokens": 18,
+    │               "outputTokenDetails": {
+    │                 "reasoningTokens": 0,
+    │                 "textTokens": 3
+    │               },
+    │               "outputTokens": 3,
+    │               "raw": {
+    │                 "input_tokens": 18,
+    │                 "input_tokens_details": {
+    │                   "cached_tokens": 0
+    │                 },
+    │                 "output_tokens": 3,
+    │                 "output_tokens_details": {
+    │                   "reasoning_tokens": 0
+    │                 }
+    │               },
+    │               "totalTokens": 21
+    │             },
+    │             "warnings": []
+    │           }
+    │         ],
+    │         "text": "PARIS",
+    │         "toolCalls": [],
+    │         "toolResults": [],
+    │         "totalUsage": {
+    │           "inputTokenDetails": {
+    │             "cacheReadTokens": 0,
+    │             "noCacheTokens": 18
+    │           },
+    │           "inputTokens": 18,
+    │           "outputTokenDetails": {
+    │             "reasoningTokens": 0,
+    │             "textTokens": 3
+    │           },
+    │           "outputTokens": 3,
+    │           "totalTokens": 21
+    │         },
+    │         "usage": {
+    │           "inputTokenDetails": {
+    │             "cacheReadTokens": 0,
+    │             "noCacheTokens": 18
+    │           },
+    │           "inputTokens": 18,
+    │           "outputTokenDetails": {
+    │             "reasoningTokens": 0,
+    │             "textTokens": 3
+    │           },
+    │           "outputTokens": 3,
+    │           "totalTokens": 21
+    │         },
+    │         "warnings": []
+    │       }
+    │       metadata: {
+    │         "braintrust": {
+    │           "integration_name": "ai-sdk",
+    │           "sdk_language": "typescript"
+    │         },
+    │         "model": "gpt-4o-mini-2024-07-18",
+    │         "provider": "openai.responses"
+    │       }
+    │       └── doGenerate [llm]
+    │           input: {
+    │             "maxOutputTokens": 24,
+    │             "messages": [
+    │               {
+    │                 "content": "Reply with the single token PARIS and no punctuation.",
+    │                 "role": "user"
+    │               }
+    │             ],
+    │             "model": {
+    │               "modelId": "gpt-4o-mini-2024-07-18",
+    │               "provider": "openai.responses"
+    │             },
+    │             "temperature": 0
+    │           }
+    │           output: {
+    │             "content": [
+    │               {
+    │                 "providerMetadata": {
+    │                   "openai": {
+    │                     "itemId": "<itemId:1>"
+    │                   }
+    │                 },
+    │                 "text": "PARIS",
+    │                 "type": "text"
+    │               }
+    │             ],
+    │             "finishReason": "stop",
+    │             "response": {},
+    │             "usage": {
+    │               "inputTokenDetails": {
+    │                 "cacheReadTokens": 0,
+    │                 "noCacheTokens": 18
+    │               },
+    │               "inputTokens": 18,
+    │               "outputTokenDetails": {
+    │                 "reasoningTokens": 0,
+    │                 "textTokens": 3
+    │               },
+    │               "outputTokens": 3,
+    │               "raw": {
+    │                 "input_tokens": 18,
+    │                 "input_tokens_details": {
+    │                   "cached_tokens": 0
+    │                 },
+    │                 "output_tokens": 3,
+    │                 "output_tokens_details": {
+    │                   "reasoning_tokens": 0
+    │                 }
+    │               },
+    │               "totalTokens": 21
+    │             }
+    │           }
+    │           metadata: {
+    │             "braintrust": {
+    │               "integration_name": "ai-sdk",
+    │               "sdk_language": "typescript"
+    │             },
+    │             "model": "gpt-4o-mini-2024-07-18",
+    │             "provider": "openai.responses"
+    │           }
+    │           metrics: {
+    │             "completion_tokens": 3,
+    │             "prompt_cached_tokens": 0,
+    │             "prompt_tokens": 18,
+    │             "tokens": 21
+    │           }
+    ├── ai-sdk-output-object-response-format-operation
+    │   metadata: {
+    │     "operation": "output-object-response-format",
+    │     "testRunId": "<run:1>"
+    │   }
+    ├── ai-sdk-output-object-operation
+    │   metadata: {
+    │     "operation": "output-object",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── generateText [function]
+    │       input: {
+    │         "maxOutputTokens": 32,
+    │         "maxRetries": 2,
+    │         "messages": [
+    │           {
+    │             "content": "Return a short answer for 2 + 2. Keep the answer concise.",
+    │             "role": "user"
+    │           }
+    │         ],
+    │         "model": {
+    │           "modelId": "gpt-4o-mini-2024-07-18",
+    │           "provider": "openai.responses"
+    │         },
+    │         "output": {
+    │           "response_format": {
+    │             "schema": {
+    │               "$schema": "http://json-schema.org/draft-07/schema#",
+    │               "additionalProperties": false,
+    │               "properties": {
+    │                 "answer": {
+    │                   "type": "string"
+    │                 }
+    │               },
+    │               "required": [
+    │                 "answer"
+    │               ],
+    │               "type": "object"
+    │             },
+    │             "type": "json"
+    │           }
+    │         },
+    │         "temperature": 0
+    │       }
+    │       output: {
+    │         "content": [
+    │           {
+    │             "providerMetadata": {
+    │               "openai": {
+    │                 "itemId": "<itemId:2>"
+    │               }
+    │             },
+    │             "text": "{\"answer\":\"4\"}",
+    │             "type": "text"
+    │           }
+    │         ],
+    │         "finishReason": "stop",
+    │         "providerMetadata": {
+    │           "openai": {
+    │             "responseId": "<responseId:3>",
+    │             "serviceTier": "default"
+    │           }
+    │         },
+    │         "response": {
+    │           "messages": [
+    │             {
+    │               "content": [
+    │                 {
+    │                   "providerOptions": {
+    │                     "openai": {
+    │                       "itemId": "<itemId:2>"
+    │                     }
+    │                   },
+    │                   "text": "{\"answer\":\"4\"}",
+    │                   "type": "text"
+    │                 }
+    │               ],
+    │               "role": "assistant"
+    │             }
+    │           ],
+    │           "modelId": "gpt-4o-mini-2024-07-18",
+    │           "timestamp": "<timestamp>"
+    │         },
+    │         "responseMessages": "<omitted>",
+    │         "steps": [
+    │           {
+    │             "callId": "<callId:1>",
+    │             "content": [
+    │               {
+    │                 "providerMetadata": {
+    │                   "openai": {
+    │                     "itemId": "<itemId:2>"
+    │                   }
+    │                 },
+    │                 "text": "{\"answer\":\"4\"}",
+    │                 "type": "text"
+    │               }
+    │             ],
+    │             "finishReason": "stop",
+    │             "model": {
+    │               "modelId": "gpt-4o-mini-2024-07-18",
+    │               "provider": "openai.responses"
+    │             },
+    │             "providerMetadata": {
+    │               "openai": {
+    │                 "responseId": "<responseId:3>",
+    │                 "serviceTier": "default"
+    │               }
+    │             },
+    │             "response": {
+    │               "messages": [
+    │                 {
+    │                   "content": [
+    │                     {
+    │                       "providerOptions": {
+    │                         "openai": {
+    │                           "itemId": "<itemId:2>"
+    │                         }
+    │                       },
+    │                       "text": "{\"answer\":\"4\"}",
+    │                       "type": "text"
+    │                     }
+    │                   ],
+    │                   "role": "assistant"
+    │                 }
+    │               ],
+    │               "modelId": "gpt-4o-mini-2024-07-18",
+    │               "timestamp": "<timestamp>"
+    │             },
+    │             "runtimeContext": {},
+    │             "stepNumber": 0,
+    │             "toolsContext": {},
+    │             "usage": {
+    │               "inputTokenDetails": {
+    │                 "cacheReadTokens": 0,
+    │                 "noCacheTokens": 45
+    │               },
+    │               "inputTokens": 45,
+    │               "outputTokenDetails": {
+    │                 "reasoningTokens": 0,
+    │                 "textTokens": 6
+    │               },
+    │               "outputTokens": 6,
+    │               "raw": {
+    │                 "input_tokens": 45,
+    │                 "input_tokens_details": {
+    │                   "cached_tokens": 0
+    │                 },
+    │                 "output_tokens": 6,
+    │                 "output_tokens_details": {
+    │                   "reasoning_tokens": 0
+    │                 }
+    │               },
+    │               "totalTokens": 51
+    │             },
+    │             "warnings": []
+    │           }
+    │         ],
+    │         "text": "{\"answer\":\"4\"}",
+    │         "toolCalls": [],
+    │         "toolResults": [],
+    │         "totalUsage": {
+    │           "inputTokenDetails": {
+    │             "cacheReadTokens": 0,
+    │             "noCacheTokens": 45
+    │           },
+    │           "inputTokens": 45,
+    │           "outputTokenDetails": {
+    │             "reasoningTokens": 0,
+    │             "textTokens": 6
+    │           },
+    │           "outputTokens": 6,
+    │           "totalTokens": 51
+    │         },
+    │         "usage": {
+    │           "inputTokenDetails": {
+    │             "cacheReadTokens": 0,
+    │             "noCacheTokens": 45
+    │           },
+    │           "inputTokens": 45,
+    │           "outputTokenDetails": {
+    │             "reasoningTokens": 0,
+    │             "textTokens": 6
+    │           },
+    │           "outputTokens": 6,
+    │           "totalTokens": 51
+    │         },
+    │         "warnings": []
+    │       }
+    │       metadata: {
+    │         "braintrust": {
+    │           "integration_name": "ai-sdk",
+    │           "sdk_language": "typescript"
+    │         },
+    │         "model": "gpt-4o-mini-2024-07-18",
+    │         "provider": "openai.responses"
+    │       }
+    │       └── doGenerate [llm]
+    │           input: {
+    │             "maxOutputTokens": 32,
+    │             "messages": [
+    │               {
+    │                 "content": "Return a short answer for 2 + 2. Keep the answer concise.",
+    │                 "role": "user"
+    │               }
+    │             ],
+    │             "model": {
+    │               "modelId": "gpt-4o-mini-2024-07-18",
+    │               "provider": "openai.responses"
+    │             },
+    │             "temperature": 0
+    │           }
+    │           output: {
+    │             "content": [
+    │               {
+    │                 "providerMetadata": {
+    │                   "openai": {
+    │                     "itemId": "<itemId:1>"
+    │                   }
+    │                 },
+    │                 "text": "{\"answer\":\"4\"}",
+    │                 "type": "text"
+    │               }
+    │             ],
+    │             "finishReason": "stop",
+    │             "response": {},
+    │             "usage": {
+    │               "inputTokenDetails": {
+    │                 "cacheReadTokens": 0,
+    │                 "noCacheTokens": 45
+    │               },
+    │               "inputTokens": 45,
+    │               "outputTokenDetails": {
+    │                 "reasoningTokens": 0,
+    │                 "textTokens": 6
+    │               },
+    │               "outputTokens": 6,
+    │               "raw": {
+    │                 "input_tokens": 45,
+    │                 "input_tokens_details": {
+    │                   "cached_tokens": 0
+    │                 },
+    │                 "output_tokens": 6,
+    │                 "output_tokens_details": {
+    │                   "reasoning_tokens": 0
+    │                 }
+    │               },
+    │               "totalTokens": 51
+    │             }
+    │           }
+    │           metadata: {
+    │             "braintrust": {
+    │               "integration_name": "ai-sdk",
+    │               "sdk_language": "typescript"
+    │             },
+    │             "model": "gpt-4o-mini-2024-07-18",
+    │             "provider": "openai.responses"
+    │           }
+    │           metrics: {
+    │             "completion_tokens": 6,
+    │             "prompt_cached_tokens": 0,
+    │             "prompt_tokens": 45,
+    │             "tokens": 51
+    │           }
+    ├── ai-sdk-stream-operation
+    │   metadata: {
+    │     "operation": "stream",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── streamText [function]
+    │       input: {
+    │         "maxOutputTokens": 32,
+    │         "maxRetries": 2,
+    │         "messages": [
+    │           {
+    │             "content": "Count from 1 to 3 and include the words one two three.",
+    │             "role": "user"
+    │           }
+    │         ],
+    │         "model": {
+    │           "modelId": "gpt-4o-mini-2024-07-18",
+    │           "provider": "openai.responses"
+    │         },
+    │         "temperature": 0
+    │       }
+    │       output: {
+    │         "content": [
+    │           {
+    │             "providerMetadata": {
+    │               "openai": {
+    │                 "itemId": "<itemId:2>"
+    │               }
+    │             },
+    │             "text": "One, two, three.",
+    │             "type": "text"
+    │           }
+    │         ],
+    │         "finishReason": "stop",
+    │         "providerMetadata": {
+    │           "openai": {
+    │             "responseId": "<responseId:3>",
+    │             "serviceTier": "default"
+    │           }
+    │         },
+    │         "response": {
+    │           "messages": [
+    │             {
+    │               "content": [
+    │                 {
+    │                   "providerOptions": {
+    │                     "openai": {
+    │                       "itemId": "<itemId:2>"
+    │                     }
+    │                   },
+    │                   "text": "One, two, three.",
+    │                   "type": "text"
+    │                 }
+    │               ],
+    │               "role": "assistant"
+    │             }
+    │           ],
+    │           "modelId": "gpt-4o-mini-2024-07-18",
+    │           "timestamp": "<timestamp>"
+    │         },
+    │         "responseMessages": "<omitted>",
+    │         "steps": [
+    │           {
+    │             "callId": "<callId:1>",
+    │             "content": [
+    │               {
+    │                 "providerMetadata": {
+    │                   "openai": {
+    │                     "itemId": "<itemId:2>"
+    │                   }
+    │                 },
+    │                 "text": "One, two, three.",
+    │                 "type": "text"
+    │               }
+    │             ],
+    │             "finishReason": "stop",
+    │             "model": {
+    │               "modelId": "gpt-4o-mini-2024-07-18",
+    │               "provider": "openai.responses"
+    │             },
+    │             "providerMetadata": {
+    │               "openai": {
+    │                 "responseId": "<responseId:3>",
+    │                 "serviceTier": "default"
+    │               }
+    │             },
+    │             "response": {
+    │               "messages": [
+    │                 {
+    │                   "content": [
+    │                     {
+    │                       "providerOptions": {
+    │                         "openai": {
+    │                           "itemId": "<itemId:2>"
+    │                         }
+    │                       },
+    │                       "text": "One, two, three.",
+    │                       "type": "text"
+    │                     }
+    │                   ],
+    │                   "role": "assistant"
+    │                 }
+    │               ],
+    │               "modelId": "gpt-4o-mini-2024-07-18",
+    │               "timestamp": "<timestamp>"
+    │             },
+    │             "runtimeContext": {},
+    │             "stepNumber": 0,
+    │             "toolsContext": {},
+    │             "usage": {
+    │               "inputTokenDetails": {
+    │                 "cacheReadTokens": 0,
+    │                 "noCacheTokens": 22
+    │               },
+    │               "inputTokens": 22,
+    │               "outputTokenDetails": {
+    │                 "reasoningTokens": 0,
+    │                 "textTokens": 7
+    │               },
+    │               "outputTokens": 7,
+    │               "raw": {
+    │                 "input_tokens": 22,
+    │                 "input_tokens_details": {
+    │                   "cached_tokens": 0
+    │                 },
+    │                 "output_tokens": 7,
+    │                 "output_tokens_details": {
+    │                   "reasoning_tokens": 0
+    │                 }
+    │               },
+    │               "totalTokens": 29
+    │             },
+    │             "warnings": []
+    │           }
+    │         ],
+    │         "text": "One, two, three.",
+    │         "toolCalls": [],
+    │         "toolResults": [],
+    │         "totalUsage": {
+    │           "inputTokenDetails": {
+    │             "cacheReadTokens": 0,
+    │             "noCacheTokens": 22
+    │           },
+    │           "inputTokens": 22,
+    │           "outputTokenDetails": {
+    │             "reasoningTokens": 0,
+    │             "textTokens": 7
+    │           },
+    │           "outputTokens": 7,
+    │           "totalTokens": 29
+    │         },
+    │         "usage": {
+    │           "inputTokenDetails": {
+    │             "cacheReadTokens": 0,
+    │             "noCacheTokens": 22
+    │           },
+    │           "inputTokens": 22,
+    │           "outputTokenDetails": {
+    │             "reasoningTokens": 0,
+    │             "textTokens": 7
+    │           },
+    │           "outputTokens": 7,
+    │           "totalTokens": 29
+    │         },
+    │         "warnings": []
+    │       }
+    │       metadata: {
+    │         "braintrust": {
+    │           "integration_name": "ai-sdk",
+    │           "sdk_language": "typescript"
+    │         },
+    │         "model": "gpt-4o-mini-2024-07-18",
+    │         "provider": "openai.responses"
+    │       }
+    │       metrics: {
+    │         "time_to_first_token": 0
+    │       }
+    │       └── doStream [llm]
+    │           input: {
+    │             "maxOutputTokens": 32,
+    │             "messages": [
+    │               {
+    │                 "content": "Count from 1 to 3 and include the words one two three.",
+    │                 "role": "user"
+    │               }
+    │             ],
+    │             "model": {
+    │               "modelId": "gpt-4o-mini-2024-07-18",
+    │               "provider": "openai.responses"
+    │             },
+    │             "temperature": 0
+    │           }
+    │           output: {
+    │             "content": [
+    │               {
+    │                 "providerMetadata": {
+    │                   "openai": {
+    │                     "itemId": "<itemId:1>"
+    │                   }
+    │                 },
+    │                 "text": "One, two, three.",
+    │                 "type": "text"
+    │               }
+    │             ],
+    │             "finishReason": "stop",
+    │             "response": {},
+    │             "usage": {
+    │               "inputTokenDetails": {
+    │                 "cacheReadTokens": 0,
+    │                 "noCacheTokens": 22
+    │               },
+    │               "inputTokens": 22,
+    │               "outputTokenDetails": {
+    │                 "reasoningTokens": 0,
+    │                 "textTokens": 7
+    │               },
+    │               "outputTokens": 7,
+    │               "raw": {
+    │                 "input_tokens": 22,
+    │                 "input_tokens_details": {
+    │                   "cached_tokens": 0
+    │                 },
+    │                 "output_tokens": 7,
+    │                 "output_tokens_details": {
+    │                   "reasoning_tokens": 0
+    │                 }
+    │               },
+    │               "totalTokens": 29
+    │             }
+    │           }
+    │           metadata: {
+    │             "braintrust": {
+    │               "integration_name": "ai-sdk",
+    │               "sdk_language": "typescript"
+    │             },
+    │             "model": "gpt-4o-mini-2024-07-18",
+    │             "provider": "openai.responses"
+    │           }
+    │           metrics: {
+    │             "completion_tokens": 7,
+    │             "prompt_cached_tokens": 0,
+    │             "prompt_tokens": 22,
+    │             "tokens": 29
+    │           }
+    ├── ai-sdk-embed-operation
+    │   metadata: {
+    │     "operation": "embed",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── embed [function]
+    │       input: {
+    │         "model": {
+    │           "modelId": "text-embedding-3-small",
+    │           "provider": "openai.embedding"
+    │         },
+    │         "value": "Paris is the capital of France."
+    │       }
+    │       output: {
+    │         "embedding_length": 1536,
+    │         "usage": {
+    │           "tokens": 7
+    │         },
+    │         "warnings": []
+    │       }
+    │       metadata: {
+    │         "braintrust": {
+    │           "integration_name": "ai-sdk",
+    │           "sdk_language": "typescript"
+    │         },
+    │         "model": "text-embedding-3-small",
+    │         "provider": "openai.embedding"
+    │       }
+    │       └── doEmbed [llm]
+    │           input: {
+    │             "values": [
+    │               "Paris is the capital of France."
+    │             ]
+    │           }
+    │           output: {
+    │             "embedding_count": 1,
+    │             "embedding_length": 1536,
+    │             "usage": {
+    │               "tokens": 7
+    │             }
+    │           }
+    │           metadata: {
+    │             "braintrust": {
+    │               "integration_name": "ai-sdk",
+    │               "sdk_language": "typescript"
+    │             },
+    │             "model": "text-embedding-3-small",
+    │             "provider": "openai.embedding"
+    │           }
+    │           metrics: {
+    │             "tokens": 7
+    │           }
+    ├── ai-sdk-embed-many-operation
+    │   metadata: {
+    │     "operation": "embed-many",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── embedMany [function]
+    │       input: {
+    │         "model": {
+    │           "modelId": "text-embedding-3-small",
+    │           "provider": "openai.embedding"
+    │         },
+    │         "values": [
+    │           "Paris is in France.",
+    │           "Berlin is in Germany.",
+    │           "Vienna is in Austria."
+    │         ]
+    │       }
+    │       output: {
+    │         "embedding_count": 3,
+    │         "embedding_length": 1536,
+    │         "usage": {
+    │           "tokens": 16
+    │         },
+    │         "warnings": []
+    │       }
+    │       metadata: {
+    │         "braintrust": {
+    │           "integration_name": "ai-sdk",
+    │           "sdk_language": "typescript"
+    │         },
+    │         "model": "text-embedding-3-small",
+    │         "provider": "openai.embedding"
+    │       }
+    │       └── doEmbed [llm]
+    │           input: {
+    │             "values": [
+    │               "Paris is in France.",
+    │               "Berlin is in Germany.",
+    │               "Vienna is in Austria."
+    │             ]
+    │           }
+    │           output: {
+    │             "embedding_count": 3,
+    │             "embedding_length": 1536,
+    │             "usage": {
+    │               "tokens": 16
+    │             }
+    │           }
+    │           metadata: {
+    │             "braintrust": {
+    │               "integration_name": "ai-sdk",
+    │               "sdk_language": "typescript"
+    │             },
+    │             "model": "text-embedding-3-small",
+    │             "provider": "openai.embedding"
+    │           }
+    │           metrics: {
+    │             "tokens": 16
+    │           }
+    ├── ai-sdk-tool-operation
+    │   metadata: {
+    │     "operation": "tool",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── generateText [function]
+    │       input: {
+    │         "instructions": "You must inspect live weather via the provided get_weather tool before responding.",
+    │         "maxOutputTokens": 128,
+    │         "maxRetries": 2,
+    │         "messages": [
+    │           {
+    │             "content": "Use the get_weather tool for Paris, France. If you do not call the tool, the answer is invalid.",
+    │             "role": "user"
+    │           }
+    │         ],
+    │         "model": {
+    │           "modelId": "gpt-4o-mini-2024-07-18",
+    │           "provider": "openai.responses"
+    │         },
+    │         "temperature": 0,
+    │         "toolChoice": "required",
+    │         "tools": {
+    │           "get_weather": {
+    │             "description": "Get the weather for a location",
+    │             "inputSchema": {
+    │               "$schema": "http://json-schema.org/draft-07/schema#",
+    │               "additionalProperties": false,
+    │               "properties": {
+    │                 "location": {
+    │                   "description": "The city and country",
+    │                   "type": "string"
+    │                 }
+    │               },
+    │               "required": [
+    │                 "location"
+    │               ],
+    │               "type": "object"
+    │             }
+    │           }
+    │         }
+    │       }
+    │       output: {
+    │         "content": [
+    │           {
+    │             "input": {
+    │               "location": "Paris, France"
+    │             },
+    │             "providerMetadata": {
+    │               "openai": {
+    │                 "itemId": "<itemId:2>"
+    │               }
+    │             },
+    │             "toolName": "get_weather",
+    │             "type": "tool-call"
+    │           },
+    │           {
+    │             "dynamic": false,
+    │             "input": {
+    │               "location": "Paris, France"
+    │             },
+    │             "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
+    │             "providerMetadata": {
+    │               "openai": {
+    │                 "itemId": "<itemId:2>"
+    │               }
+    │             },
+    │             "toolName": "get_weather",
+    │             "type": "tool-result"
+    │           },
+    │           {
+    │             "input": {
+    │               "location": "Paris, France"
+    │             },
+    │             "providerMetadata": {
+    │               "openai": {
+    │                 "itemId": "<itemId:4>"
+    │               }
+    │             },
+    │             "toolName": "get_weather",
+    │             "type": "tool-call"
+    │           },
+    │           {
+    │             "dynamic": false,
+    │             "input": {
+    │               "location": "Paris, France"
+    │             },
+    │             "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
+    │             "providerMetadata": {
+    │               "openai": {
+    │                 "itemId": "<itemId:4>"
+    │               }
+    │             },
+    │             "toolName": "get_weather",
+    │             "type": "tool-result"
+    │           },
+    │           {
+    │             "input": {
+    │               "location": "Paris, France"
+    │             },
+    │             "providerMetadata": {
+    │               "openai": {
+    │                 "itemId": "<itemId:6>"
+    │               }
+    │             },
+    │             "toolName": "get_weather",
+    │             "type": "tool-call"
+    │           },
+    │           {
+    │             "dynamic": false,
+    │             "input": {
+    │               "location": "Paris, France"
+    │             },
+    │             "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
+    │             "providerMetadata": {
+    │               "openai": {
+    │                 "itemId": "<itemId:6>"
+    │               }
+    │             },
+    │             "toolName": "get_weather",
+    │             "type": "tool-result"
+    │           },
+    │           {
+    │             "input": {
+    │               "location": "Paris, France"
+    │             },
+    │             "providerMetadata": {
+    │               "openai": {
+    │                 "itemId": "<itemId:8>"
+    │               }
+    │             },
+    │             "toolName": "get_weather",
+    │             "type": "tool-call"
+    │           },
+    │           {
+    │             "dynamic": false,
+    │             "input": {
+    │               "location": "Paris, France"
+    │             },
+    │             "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
+    │             "providerMetadata": {
+    │               "openai": {
+    │                 "itemId": "<itemId:8>"
+    │               }
+    │             },
+    │             "toolName": "get_weather",
+    │             "type": "tool-result"
+    │           }
+    │         ],
+    │         "finishReason": "tool-calls",
+    │         "providerMetadata": {
+    │           "openai": {
+    │             "responseId": "<responseId:9>",
+    │             "serviceTier": "default"
+    │           }
+    │         },
+    │         "response": {
+    │           "messages": [
+    │             {
+    │               "content": [
+    │                 {
+    │                   "input": {
+    │                     "location": "Paris, France"
+    │                   },
+    │                   "providerOptions": {
+    │                     "openai": {
+    │                       "itemId": "<itemId:8>"
+    │                     }
+    │                   },
+    │                   "toolName": "get_weather",
+    │                   "type": "tool-call"
+    │                 }
+    │               ],
+    │               "role": "assistant"
+    │             },
+    │             {
+    │               "content": [
+    │                 {
+    │                   "output": {
+    │                     "type": "text",
+    │                     "value": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
+    │                   },
+    │                   "providerOptions": {
+    │                     "openai": {
+    │                       "itemId": "<itemId:8>"
+    │                     }
+    │                   },
+    │                   "toolName": "get_weather",
+    │                   "type": "tool-result"
+    │                 }
+    │               ],
+    │               "role": "tool"
+    │             }
+    │           ],
+    │           "modelId": "gpt-4o-mini-2024-07-18",
+    │           "timestamp": "<timestamp>"
+    │         },
+    │         "responseMessages": "<omitted>",
+    │         "steps": [
+    │           {
+    │             "callId": "<callId:1>",
+    │             "content": [
+    │               {
+    │                 "input": {
+    │                   "location": "Paris, France"
+    │                 },
+    │                 "providerMetadata": {
+    │                   "openai": {
+    │                     "itemId": "<itemId:2>"
+    │                   }
+    │                 },
+    │                 "toolName": "get_weather",
+    │                 "type": "tool-call"
+    │               },
+    │               {
+    │                 "dynamic": false,
+    │                 "input": {
+    │                   "location": "Paris, France"
+    │                 },
+    │                 "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
+    │                 "providerMetadata": {
+    │                   "openai": {
+    │                     "itemId": "<itemId:2>"
+    │                   }
+    │                 },
+    │                 "toolName": "get_weather",
+    │                 "type": "tool-result"
+    │               }
+    │             ],
+    │             "finishReason": "tool-calls",
+    │             "model": {
+    │               "modelId": "gpt-4o-mini-2024-07-18",
+    │               "provider": "openai.responses"
+    │             },
+    │             "providerMetadata": {
+    │               "openai": {
+    │                 "responseId": "<responseId:3>",
+    │                 "serviceTier": "default"
+    │               }
+    │             },
+    │             "response": {
+    │               "messages": [
+    │                 {
+    │                   "content": [
+    │                     {
+    │                       "input": {
+    │                         "location": "Paris, France"
+    │                       },
+    │                       "providerOptions": {
+    │                         "openai": {
+    │                           "itemId": "<itemId:2>"
+    │                         }
+    │                       },
+    │                       "toolName": "get_weather",
+    │                       "type": "tool-call"
+    │                     }
+    │                   ],
+    │                   "role": "assistant"
+    │                 },
+    │                 {
+    │                   "content": [
+    │                     {
+    │                       "output": {
+    │                         "type": "text",
+    │                         "value": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
+    │                       },
+    │                       "providerOptions": {
+    │                         "openai": {
+    │                           "itemId": "<itemId:2>"
+    │                         }
+    │                       },
+    │                       "toolName": "get_weather",
+    │                       "type": "tool-result"
+    │                     }
+    │                   ],
+    │                   "role": "tool"
+    │                 }
+    │               ],
+    │               "modelId": "gpt-4o-mini-2024-07-18",
+    │               "timestamp": "<timestamp>"
+    │             },
+    │             "runtimeContext": {},
+    │             "stepNumber": 0,
+    │             "toolsContext": {},
+    │             "usage": {
+    │               "inputTokenDetails": {
+    │                 "cacheReadTokens": 0,
+    │                 "noCacheTokens": 94
+    │               },
+    │               "inputTokens": 94,
+    │               "outputTokenDetails": {
+    │                 "reasoningTokens": 0,
+    │                 "textTokens": 8
+    │               },
+    │               "outputTokens": 8,
+    │               "raw": {
+    │                 "input_tokens": 94,
+    │                 "input_tokens_details": {
+    │                   "cached_tokens": 0
+    │                 },
+    │                 "output_tokens": 8,
+    │                 "output_tokens_details": {
+    │                   "reasoning_tokens": 0
+    │                 }
+    │               },
+    │               "totalTokens": 102
+    │             },
+    │             "warnings": []
+    │           },
+    │           {
+    │             "callId": "<callId:1>",
+    │             "content": [
+    │               {
+    │                 "input": {
+    │                   "location": "Paris, France"
+    │                 },
+    │                 "providerMetadata": {
+    │                   "openai": {
+    │                     "itemId": "<itemId:4>"
+    │                   }
+    │                 },
+    │                 "toolName": "get_weather",
+    │                 "type": "tool-call"
+    │               },
+    │               {
+    │                 "dynamic": false,
+    │                 "input": {
+    │                   "location": "Paris, France"
+    │                 },
+    │                 "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
+    │                 "providerMetadata": {
+    │                   "openai": {
+    │                     "itemId": "<itemId:4>"
+    │                   }
+    │                 },
+    │                 "toolName": "get_weather",
+    │                 "type": "tool-result"
+    │               }
+    │             ],
+    │             "finishReason": "tool-calls",
+    │             "model": {
+    │               "modelId": "gpt-4o-mini-2024-07-18",
+    │               "provider": "openai.responses"
+    │             },
+    │             "providerMetadata": {
+    │               "openai": {
+    │                 "responseId": "<responseId:5>",
+    │                 "serviceTier": "default"
+    │               }
+    │             },
+    │             "response": {
+    │               "messages": [
+    │                 {
+    │                   "content": [
+    │                     {
+    │                       "input": {
+    │                         "location": "Paris, France"
+    │                       },
+    │                       "providerOptions": {
+    │                         "openai": {
+    │                           "itemId": "<itemId:4>"
+    │                         }
+    │                       },
+    │                       "toolName": "get_weather",
+    │                       "type": "tool-call"
+    │                     }
+    │                   ],
+    │                   "role": "assistant"
+    │                 },
+    │                 {
+    │                   "content": [
+    │                     {
+    │                       "output": {
+    │                         "type": "text",
+    │                         "value": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
+    │                       },
+    │                       "providerOptions": {
+    │                         "openai": {
+    │                           "itemId": "<itemId:4>"
+    │                         }
+    │                       },
+    │                       "toolName": "get_weather",
+    │                       "type": "tool-result"
+    │                     }
+    │                   ],
+    │                   "role": "tool"
+    │                 }
+    │               ],
+    │               "modelId": "gpt-4o-mini-2024-07-18",
+    │               "timestamp": "<timestamp>"
+    │             },
+    │             "runtimeContext": {},
+    │             "stepNumber": 1,
+    │             "toolsContext": {},
+    │             "usage": {
+    │               "inputTokenDetails": {
+    │                 "cacheReadTokens": 0,
+    │                 "noCacheTokens": 133
+    │               },
+    │               "inputTokens": 133,
+    │               "outputTokenDetails": {
+    │                 "reasoningTokens": 0,
+    │                 "textTokens": 8
+    │               },
+    │               "outputTokens": 8,
+    │               "raw": {
+    │                 "input_tokens": 133,
+    │                 "input_tokens_details": {
+    │                   "cached_tokens": 0
+    │                 },
+    │                 "output_tokens": 8,
+    │                 "output_tokens_details": {
+    │                   "reasoning_tokens": 0
+    │                 }
+    │               },
+    │               "totalTokens": 141
+    │             },
+    │             "warnings": []
+    │           },
+    │           {
+    │             "callId": "<callId:1>",
+    │             "content": [
+    │               {
+    │                 "input": {
+    │                   "location": "Paris, France"
+    │                 },
+    │                 "providerMetadata": {
+    │                   "openai": {
+    │                     "itemId": "<itemId:6>"
+    │                   }
+    │                 },
+    │                 "toolName": "get_weather",
+    │                 "type": "tool-call"
+    │               },
+    │               {
+    │                 "dynamic": false,
+    │                 "input": {
+    │                   "location": "Paris, France"
+    │                 },
+    │                 "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
+    │                 "providerMetadata": {
+    │                   "openai": {
+    │                     "itemId": "<itemId:6>"
+    │                   }
+    │                 },
+    │                 "toolName": "get_weather",
+    │                 "type": "tool-result"
+    │               }
+    │             ],
+    │             "finishReason": "tool-calls",
+    │             "model": {
+    │               "modelId": "gpt-4o-mini-2024-07-18",
+    │               "provider": "openai.responses"
+    │             },
+    │             "providerMetadata": {
+    │               "openai": {
+    │                 "responseId": "<responseId:7>",
+    │                 "serviceTier": "default"
+    │               }
+    │             },
+    │             "response": {
+    │               "messages": [
+    │                 {
+    │                   "content": [
+    │                     {
+    │                       "input": {
+    │                         "location": "Paris, France"
+    │                       },
+    │                       "providerOptions": {
+    │                         "openai": {
+    │                           "itemId": "<itemId:6>"
+    │                         }
+    │                       },
+    │                       "toolName": "get_weather",
+    │                       "type": "tool-call"
+    │                     }
+    │                   ],
+    │                   "role": "assistant"
+    │                 },
+    │                 {
+    │                   "content": [
+    │                     {
+    │                       "output": {
+    │                         "type": "text",
+    │                         "value": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
+    │                       },
+    │                       "providerOptions": {
+    │                         "openai": {
+    │                           "itemId": "<itemId:6>"
+    │                         }
+    │                       },
+    │                       "toolName": "get_weather",
+    │                       "type": "tool-result"
+    │                     }
+    │                   ],
+    │                   "role": "tool"
+    │                 }
+    │               ],
+    │               "modelId": "gpt-4o-mini-2024-07-18",
+    │               "timestamp": "<timestamp>"
+    │             },
+    │             "runtimeContext": {},
+    │             "stepNumber": 2,
+    │             "toolsContext": {},
+    │             "usage": {
+    │               "inputTokenDetails": {
+    │                 "cacheReadTokens": 0,
+    │                 "noCacheTokens": 172
+    │               },
+    │               "inputTokens": 172,
+    │               "outputTokenDetails": {
+    │                 "reasoningTokens": 0,
+    │                 "textTokens": 8
+    │               },
+    │               "outputTokens": 8,
+    │               "raw": {
+    │                 "input_tokens": 172,
+    │                 "input_tokens_details": {
+    │                   "cached_tokens": 0
+    │                 },
+    │                 "output_tokens": 8,
+    │                 "output_tokens_details": {
+    │                   "reasoning_tokens": 0
+    │                 }
+    │               },
+    │               "totalTokens": 180
+    │             },
+    │             "warnings": []
+    │           },
+    │           {
+    │             "callId": "<callId:1>",
+    │             "content": [
+    │               {
+    │                 "input": {
+    │                   "location": "Paris, France"
+    │                 },
+    │                 "providerMetadata": {
+    │                   "openai": {
+    │                     "itemId": "<itemId:8>"
+    │                   }
+    │                 },
+    │                 "toolName": "get_weather",
+    │                 "type": "tool-call"
+    │               },
+    │               {
+    │                 "dynamic": false,
+    │                 "input": {
+    │                   "location": "Paris, France"
+    │                 },
+    │                 "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
+    │                 "providerMetadata": {
+    │                   "openai": {
+    │                     "itemId": "<itemId:8>"
+    │                   }
+    │                 },
+    │                 "toolName": "get_weather",
+    │                 "type": "tool-result"
+    │               }
+    │             ],
+    │             "finishReason": "tool-calls",
+    │             "model": {
+    │               "modelId": "gpt-4o-mini-2024-07-18",
+    │               "provider": "openai.responses"
+    │             },
+    │             "providerMetadata": {
+    │               "openai": {
+    │                 "responseId": "<responseId:9>",
+    │                 "serviceTier": "default"
+    │               }
+    │             },
+    │             "response": {
+    │               "messages": [
+    │                 {
+    │                   "content": [
+    │                     {
+    │                       "input": {
+    │                         "location": "Paris, France"
+    │                       },
+    │                       "providerOptions": {
+    │                         "openai": {
+    │                           "itemId": "<itemId:8>"
+    │                         }
+    │                       },
+    │                       "toolName": "get_weather",
+    │                       "type": "tool-call"
+    │                     }
+    │                   ],
+    │                   "role": "assistant"
+    │                 },
+    │                 {
+    │                   "content": [
+    │                     {
+    │                       "output": {
+    │                         "type": "text",
+    │                         "value": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
+    │                       },
+    │                       "providerOptions": {
+    │                         "openai": {
+    │                           "itemId": "<itemId:8>"
+    │                         }
+    │                       },
+    │                       "toolName": "get_weather",
+    │                       "type": "tool-result"
+    │                     }
+    │                   ],
+    │                   "role": "tool"
+    │                 }
+    │               ],
+    │               "modelId": "gpt-4o-mini-2024-07-18",
+    │               "timestamp": "<timestamp>"
+    │             },
+    │             "runtimeContext": {},
+    │             "stepNumber": 3,
+    │             "toolsContext": {},
+    │             "usage": {
+    │               "inputTokenDetails": {
+    │                 "cacheReadTokens": 0,
+    │                 "noCacheTokens": 211
+    │               },
+    │               "inputTokens": 211,
+    │               "outputTokenDetails": {
+    │                 "reasoningTokens": 0,
+    │                 "textTokens": 8
+    │               },
+    │               "outputTokens": 8,
+    │               "raw": {
+    │                 "input_tokens": 211,
+    │                 "input_tokens_details": {
+    │                   "cached_tokens": 0
+    │                 },
+    │                 "output_tokens": 8,
+    │                 "output_tokens_details": {
+    │                   "reasoning_tokens": 0
+    │                 }
+    │               },
+    │               "totalTokens": 219
+    │             },
+    │             "warnings": []
+    │           }
+    │         ],
+    │         "text": "",
+    │         "toolCalls": [
+    │           {
+    │             "input": {
+    │               "location": "Paris, France"
+    │             },
+    │             "providerMetadata": {
+    │               "openai": {
+    │                 "itemId": "<itemId:2>"
+    │               }
+    │             },
+    │             "toolName": "get_weather",
+    │             "type": "tool-call"
+    │           },
+    │           {
+    │             "input": {
+    │               "location": "Paris, France"
+    │             },
+    │             "providerMetadata": {
+    │               "openai": {
+    │                 "itemId": "<itemId:4>"
+    │               }
+    │             },
+    │             "toolName": "get_weather",
+    │             "type": "tool-call"
+    │           },
+    │           {
+    │             "input": {
+    │               "location": "Paris, France"
+    │             },
+    │             "providerMetadata": {
+    │               "openai": {
+    │                 "itemId": "<itemId:6>"
+    │               }
+    │             },
+    │             "toolName": "get_weather",
+    │             "type": "tool-call"
+    │           },
+    │           {
+    │             "input": {
+    │               "location": "Paris, France"
+    │             },
+    │             "providerMetadata": {
+    │               "openai": {
+    │                 "itemId": "<itemId:8>"
+    │               }
+    │             },
+    │             "toolName": "get_weather",
+    │             "type": "tool-call"
+    │           }
+    │         ],
+    │         "toolResults": [
+    │           {
+    │             "dynamic": false,
+    │             "input": {
+    │               "location": "Paris, France"
+    │             },
+    │             "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
+    │             "providerMetadata": {
+    │               "openai": {
+    │                 "itemId": "<itemId:2>"
+    │               }
+    │             },
+    │             "toolName": "get_weather",
+    │             "type": "tool-result"
+    │           },
+    │           {
+    │             "dynamic": false,
+    │             "input": {
+    │               "location": "Paris, France"
+    │             },
+    │             "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
+    │             "providerMetadata": {
+    │               "openai": {
+    │                 "itemId": "<itemId:4>"
+    │               }
+    │             },
+    │             "toolName": "get_weather",
+    │             "type": "tool-result"
+    │           },
+    │           {
+    │             "dynamic": false,
+    │             "input": {
+    │               "location": "Paris, France"
+    │             },
+    │             "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
+    │             "providerMetadata": {
+    │               "openai": {
+    │                 "itemId": "<itemId:6>"
+    │               }
+    │             },
+    │             "toolName": "get_weather",
+    │             "type": "tool-result"
+    │           },
+    │           {
+    │             "dynamic": false,
+    │             "input": {
+    │               "location": "Paris, France"
+    │             },
+    │             "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
+    │             "providerMetadata": {
+    │               "openai": {
+    │                 "itemId": "<itemId:8>"
+    │               }
+    │             },
+    │             "toolName": "get_weather",
+    │             "type": "tool-result"
+    │           }
+    │         ],
+    │         "totalUsage": {
+    │           "inputTokenDetails": {
+    │             "cacheReadTokens": 0,
+    │             "noCacheTokens": 610
+    │           },
+    │           "inputTokens": 610,
+    │           "outputTokenDetails": {
+    │             "reasoningTokens": 0,
+    │             "textTokens": 32
+    │           },
+    │           "outputTokens": 32,
+    │           "totalTokens": 642
+    │         },
+    │         "usage": {
+    │           "inputTokenDetails": {
+    │             "cacheReadTokens": 0,
+    │             "noCacheTokens": 610
+    │           },
+    │           "inputTokens": 610,
+    │           "outputTokenDetails": {
+    │             "reasoningTokens": 0,
+    │             "textTokens": 32
+    │           },
+    │           "outputTokens": 32,
+    │           "totalTokens": 642
+    │         },
+    │         "warnings": []
+    │       }
+    │       metadata: {
+    │         "braintrust": {
+    │           "integration_name": "ai-sdk",
+    │           "sdk_language": "typescript"
+    │         },
+    │         "model": "gpt-4o-mini-2024-07-18",
+    │         "provider": "openai.responses"
+    │       }
+    │       ├── doGenerate [llm]
+    │       │   input: {
+    │       │     "instructions": "You must inspect live weather via the provided get_weather tool before responding.",
+    │       │     "maxOutputTokens": 128,
+    │       │     "messages": [
+    │       │       {
+    │       │         "content": "Use the get_weather tool for Paris, France. If you do not call the tool, the answer is invalid.",
+    │       │         "role": "user"
+    │       │       }
+    │       │     ],
+    │       │     "model": {
+    │       │       "modelId": "gpt-4o-mini-2024-07-18",
+    │       │       "provider": "openai.responses"
+    │       │     },
+    │       │     "temperature": 0,
+    │       │     "tools": [
+    │       │       {
+    │       │         "description": "Get the weather for a location",
+    │       │         "inputSchema": {
+    │       │           "$schema": "http://json-schema.org/draft-07/schema#",
+    │       │           "additionalProperties": false,
+    │       │           "properties": {
+    │       │             "location": {
+    │       │               "description": "The city and country",
+    │       │               "type": "string"
+    │       │             }
+    │       │           },
+    │       │           "required": [
+    │       │             "location"
+    │       │           ],
+    │       │           "type": "object"
+    │       │         },
+    │       │         "name": "get_weather",
+    │       │         "type": "function"
+    │       │       }
+    │       │     ]
+    │       │   }
+    │       │   output: {
+    │       │     "content": [
+    │       │       {
+    │       │         "input": {
+    │       │           "location": "Paris, France"
+    │       │         },
+    │       │         "providerMetadata": {
+    │       │           "openai": {
+    │       │             "itemId": "<itemId:1>"
+    │       │           }
+    │       │         },
+    │       │         "toolName": "get_weather",
+    │       │         "type": "tool-call"
+    │       │       }
+    │       │     ],
+    │       │     "finishReason": "tool-calls",
+    │       │     "response": {},
+    │       │     "usage": {
+    │       │       "inputTokenDetails": {
+    │       │         "cacheReadTokens": 0,
+    │       │         "noCacheTokens": 94
+    │       │       },
+    │       │       "inputTokens": 94,
+    │       │       "outputTokenDetails": {
+    │       │         "reasoningTokens": 0,
+    │       │         "textTokens": 8
+    │       │       },
+    │       │       "outputTokens": 8,
+    │       │       "raw": {
+    │       │         "input_tokens": 94,
+    │       │         "input_tokens_details": {
+    │       │           "cached_tokens": 0
+    │       │         },
+    │       │         "output_tokens": 8,
+    │       │         "output_tokens_details": {
+    │       │           "reasoning_tokens": 0
+    │       │         }
+    │       │       },
+    │       │       "totalTokens": 102
+    │       │     }
+    │       │   }
+    │       │   metadata: {
+    │       │     "braintrust": {
+    │       │       "integration_name": "ai-sdk",
+    │       │       "sdk_language": "typescript"
+    │       │     },
+    │       │     "model": "gpt-4o-mini-2024-07-18",
+    │       │     "provider": "openai.responses"
+    │       │   }
+    │       │   metrics: {
+    │       │     "completion_tokens": 8,
+    │       │     "prompt_cached_tokens": 0,
+    │       │     "prompt_tokens": 94,
+    │       │     "tokens": 102
+    │       │   }
+    │       ├── get_weather [tool]
+    │       │   input: {
+    │       │     "location": "Paris, France"
+    │       │   }
+    │       │   output: "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
+    │       │   metadata: {
+    │       │     "braintrust": {
+    │       │       "integration_name": "ai-sdk",
+    │       │       "sdk_language": "typescript"
+    │       │     },
+    │       │     "toolName": "get_weather"
+    │       │   }
+    │       ├── doGenerate [llm]
+    │       │   input: {
+    │       │     "instructions": "You must inspect live weather via the provided get_weather tool before responding.",
+    │       │     "maxOutputTokens": 128,
+    │       │     "messages": [
+    │       │       {
+    │       │         "content": "Use the get_weather tool for Paris, France. If you do not call the tool, the answer is invalid.",
+    │       │         "role": "user"
+    │       │       },
+    │       │       {
+    │       │         "content": [
+    │       │           {
+    │       │             "input": {
+    │       │               "location": "Paris, France"
+    │       │             },
+    │       │             "providerOptions": {
+    │       │               "openai": {
+    │       │                 "itemId": "<itemId:1>"
+    │       │               }
+    │       │             },
+    │       │             "toolName": "get_weather",
+    │       │             "type": "tool-call"
+    │       │           }
+    │       │         ],
+    │       │         "role": "assistant"
+    │       │       },
+    │       │       {
+    │       │         "content": [
+    │       │           {
+    │       │             "output": {
+    │       │               "type": "text",
+    │       │               "value": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
+    │       │             },
+    │       │             "providerOptions": {
+    │       │               "openai": {
+    │       │                 "itemId": "<itemId:1>"
+    │       │               }
+    │       │             },
+    │       │             "toolName": "get_weather",
+    │       │             "type": "tool-result"
+    │       │           }
+    │       │         ],
+    │       │         "role": "tool"
+    │       │       }
+    │       │     ],
+    │       │     "model": {
+    │       │       "modelId": "gpt-4o-mini-2024-07-18",
+    │       │       "provider": "openai.responses"
+    │       │     },
+    │       │     "temperature": 0,
+    │       │     "tools": [
+    │       │       {
+    │       │         "description": "Get the weather for a location",
+    │       │         "inputSchema": {
+    │       │           "$schema": "http://json-schema.org/draft-07/schema#",
+    │       │           "additionalProperties": false,
+    │       │           "properties": {
+    │       │             "location": {
+    │       │               "description": "The city and country",
+    │       │               "type": "string"
+    │       │             }
+    │       │           },
+    │       │           "required": [
+    │       │             "location"
+    │       │           ],
+    │       │           "type": "object"
+    │       │         },
+    │       │         "name": "get_weather",
+    │       │         "type": "function"
+    │       │       }
+    │       │     ]
+    │       │   }
+    │       │   output: {
+    │       │     "content": [
+    │       │       {
+    │       │         "input": {
+    │       │           "location": "Paris, France"
+    │       │         },
+    │       │         "providerMetadata": {
+    │       │           "openai": {
+    │       │             "itemId": "<itemId:1>"
+    │       │           }
+    │       │         },
+    │       │         "toolName": "get_weather",
+    │       │         "type": "tool-call"
+    │       │       }
+    │       │     ],
+    │       │     "finishReason": "tool-calls",
+    │       │     "response": {},
+    │       │     "usage": {
+    │       │       "inputTokenDetails": {
+    │       │         "cacheReadTokens": 0,
+    │       │         "noCacheTokens": 133
+    │       │       },
+    │       │       "inputTokens": 133,
+    │       │       "outputTokenDetails": {
+    │       │         "reasoningTokens": 0,
+    │       │         "textTokens": 8
+    │       │       },
+    │       │       "outputTokens": 8,
+    │       │       "raw": {
+    │       │         "input_tokens": 133,
+    │       │         "input_tokens_details": {
+    │       │           "cached_tokens": 0
+    │       │         },
+    │       │         "output_tokens": 8,
+    │       │         "output_tokens_details": {
+    │       │           "reasoning_tokens": 0
+    │       │         }
+    │       │       },
+    │       │       "totalTokens": 141
+    │       │     }
+    │       │   }
+    │       │   metadata: {
+    │       │     "braintrust": {
+    │       │       "integration_name": "ai-sdk",
+    │       │       "sdk_language": "typescript"
+    │       │     },
+    │       │     "model": "gpt-4o-mini-2024-07-18",
+    │       │     "provider": "openai.responses"
+    │       │   }
+    │       │   metrics: {
+    │       │     "completion_tokens": 8,
+    │       │     "prompt_cached_tokens": 0,
+    │       │     "prompt_tokens": 133,
+    │       │     "tokens": 141
+    │       │   }
+    │       ├── get_weather [tool]
+    │       │   input: {
+    │       │     "location": "Paris, France"
+    │       │   }
+    │       │   output: "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
+    │       │   metadata: {
+    │       │     "braintrust": {
+    │       │       "integration_name": "ai-sdk",
+    │       │       "sdk_language": "typescript"
+    │       │     },
+    │       │     "toolName": "get_weather"
+    │       │   }
+    │       ├── doGenerate [llm]
+    │       │   input: {
+    │       │     "instructions": "You must inspect live weather via the provided get_weather tool before responding.",
+    │       │     "maxOutputTokens": 128,
+    │       │     "messages": [
+    │       │       {
+    │       │         "content": "Use the get_weather tool for Paris, France. If you do not call the tool, the answer is invalid.",
+    │       │         "role": "user"
+    │       │       },
+    │       │       {
+    │       │         "content": [
+    │       │           {
+    │       │             "input": {
+    │       │               "location": "Paris, France"
+    │       │             },
+    │       │             "providerOptions": {
+    │       │               "openai": {
+    │       │                 "itemId": "<itemId:1>"
+    │       │               }
+    │       │             },
+    │       │             "toolName": "get_weather",
+    │       │             "type": "tool-call"
+    │       │           }
+    │       │         ],
+    │       │         "role": "assistant"
+    │       │       },
+    │       │       {
+    │       │         "content": [
+    │       │           {
+    │       │             "output": {
+    │       │               "type": "text",
+    │       │               "value": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
+    │       │             },
+    │       │             "providerOptions": {
+    │       │               "openai": {
+    │       │                 "itemId": "<itemId:1>"
+    │       │               }
+    │       │             },
+    │       │             "toolName": "get_weather",
+    │       │             "type": "tool-result"
+    │       │           }
+    │       │         ],
+    │       │         "role": "tool"
+    │       │       },
+    │       │       {
+    │       │         "content": [
+    │       │           {
+    │       │             "input": {
+    │       │               "location": "Paris, France"
+    │       │             },
+    │       │             "providerOptions": {
+    │       │               "openai": {
+    │       │                 "itemId": "<itemId:2>"
+    │       │               }
+    │       │             },
+    │       │             "toolName": "get_weather",
+    │       │             "type": "tool-call"
+    │       │           }
+    │       │         ],
+    │       │         "role": "assistant"
+    │       │       },
+    │       │       {
+    │       │         "content": [
+    │       │           {
+    │       │             "output": {
+    │       │               "type": "text",
+    │       │               "value": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
+    │       │             },
+    │       │             "providerOptions": {
+    │       │               "openai": {
+    │       │                 "itemId": "<itemId:2>"
+    │       │               }
+    │       │             },
+    │       │             "toolName": "get_weather",
+    │       │             "type": "tool-result"
+    │       │           }
+    │       │         ],
+    │       │         "role": "tool"
+    │       │       }
+    │       │     ],
+    │       │     "model": {
+    │       │       "modelId": "gpt-4o-mini-2024-07-18",
+    │       │       "provider": "openai.responses"
+    │       │     },
+    │       │     "temperature": 0,
+    │       │     "tools": [
+    │       │       {
+    │       │         "description": "Get the weather for a location",
+    │       │         "inputSchema": {
+    │       │           "$schema": "http://json-schema.org/draft-07/schema#",
+    │       │           "additionalProperties": false,
+    │       │           "properties": {
+    │       │             "location": {
+    │       │               "description": "The city and country",
+    │       │               "type": "string"
+    │       │             }
+    │       │           },
+    │       │           "required": [
+    │       │             "location"
+    │       │           ],
+    │       │           "type": "object"
+    │       │         },
+    │       │         "name": "get_weather",
+    │       │         "type": "function"
+    │       │       }
+    │       │     ]
+    │       │   }
+    │       │   output: {
+    │       │     "content": [
+    │       │       {
+    │       │         "input": {
+    │       │           "location": "Paris, France"
+    │       │         },
+    │       │         "providerMetadata": {
+    │       │           "openai": {
+    │       │             "itemId": "<itemId:1>"
+    │       │           }
+    │       │         },
+    │       │         "toolName": "get_weather",
+    │       │         "type": "tool-call"
+    │       │       }
+    │       │     ],
+    │       │     "finishReason": "tool-calls",
+    │       │     "response": {},
+    │       │     "usage": {
+    │       │       "inputTokenDetails": {
+    │       │         "cacheReadTokens": 0,
+    │       │         "noCacheTokens": 172
+    │       │       },
+    │       │       "inputTokens": 172,
+    │       │       "outputTokenDetails": {
+    │       │         "reasoningTokens": 0,
+    │       │         "textTokens": 8
+    │       │       },
+    │       │       "outputTokens": 8,
+    │       │       "raw": {
+    │       │         "input_tokens": 172,
+    │       │         "input_tokens_details": {
+    │       │           "cached_tokens": 0
+    │       │         },
+    │       │         "output_tokens": 8,
+    │       │         "output_tokens_details": {
+    │       │           "reasoning_tokens": 0
+    │       │         }
+    │       │       },
+    │       │       "totalTokens": 180
+    │       │     }
+    │       │   }
+    │       │   metadata: {
+    │       │     "braintrust": {
+    │       │       "integration_name": "ai-sdk",
+    │       │       "sdk_language": "typescript"
+    │       │     },
+    │       │     "model": "gpt-4o-mini-2024-07-18",
+    │       │     "provider": "openai.responses"
+    │       │   }
+    │       │   metrics: {
+    │       │     "completion_tokens": 8,
+    │       │     "prompt_cached_tokens": 0,
+    │       │     "prompt_tokens": 172,
+    │       │     "tokens": 180
+    │       │   }
+    │       ├── get_weather [tool]
+    │       │   input: {
+    │       │     "location": "Paris, France"
+    │       │   }
+    │       │   output: "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
+    │       │   metadata: {
+    │       │     "braintrust": {
+    │       │       "integration_name": "ai-sdk",
+    │       │       "sdk_language": "typescript"
+    │       │     },
+    │       │     "toolName": "get_weather"
+    │       │   }
+    │       ├── doGenerate [llm]
+    │       │   input: {
+    │       │     "instructions": "You must inspect live weather via the provided get_weather tool before responding.",
+    │       │     "maxOutputTokens": 128,
+    │       │     "messages": [
+    │       │       {
+    │       │         "content": "Use the get_weather tool for Paris, France. If you do not call the tool, the answer is invalid.",
+    │       │         "role": "user"
+    │       │       },
+    │       │       {
+    │       │         "content": [
+    │       │           {
+    │       │             "input": {
+    │       │               "location": "Paris, France"
+    │       │             },
+    │       │             "providerOptions": {
+    │       │               "openai": {
+    │       │                 "itemId": "<itemId:1>"
+    │       │               }
+    │       │             },
+    │       │             "toolName": "get_weather",
+    │       │             "type": "tool-call"
+    │       │           }
+    │       │         ],
+    │       │         "role": "assistant"
+    │       │       },
+    │       │       {
+    │       │         "content": [
+    │       │           {
+    │       │             "output": {
+    │       │               "type": "text",
+    │       │               "value": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
+    │       │             },
+    │       │             "providerOptions": {
+    │       │               "openai": {
+    │       │                 "itemId": "<itemId:1>"
+    │       │               }
+    │       │             },
+    │       │             "toolName": "get_weather",
+    │       │             "type": "tool-result"
+    │       │           }
+    │       │         ],
+    │       │         "role": "tool"
+    │       │       },
+    │       │       {
+    │       │         "content": [
+    │       │           {
+    │       │             "input": {
+    │       │               "location": "Paris, France"
+    │       │             },
+    │       │             "providerOptions": {
+    │       │               "openai": {
+    │       │                 "itemId": "<itemId:2>"
+    │       │               }
+    │       │             },
+    │       │             "toolName": "get_weather",
+    │       │             "type": "tool-call"
+    │       │           }
+    │       │         ],
+    │       │         "role": "assistant"
+    │       │       },
+    │       │       {
+    │       │         "content": [
+    │       │           {
+    │       │             "output": {
+    │       │               "type": "text",
+    │       │               "value": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
+    │       │             },
+    │       │             "providerOptions": {
+    │       │               "openai": {
+    │       │                 "itemId": "<itemId:2>"
+    │       │               }
+    │       │             },
+    │       │             "toolName": "get_weather",
+    │       │             "type": "tool-result"
+    │       │           }
+    │       │         ],
+    │       │         "role": "tool"
+    │       │       },
+    │       │       {
+    │       │         "content": [
+    │       │           {
+    │       │             "input": {
+    │       │               "location": "Paris, France"
+    │       │             },
+    │       │             "providerOptions": {
+    │       │               "openai": {
+    │       │                 "itemId": "<itemId:3>"
+    │       │               }
+    │       │             },
+    │       │             "toolName": "get_weather",
+    │       │             "type": "tool-call"
+    │       │           }
+    │       │         ],
+    │       │         "role": "assistant"
+    │       │       },
+    │       │       {
+    │       │         "content": [
+    │       │           {
+    │       │             "output": {
+    │       │               "type": "text",
+    │       │               "value": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
+    │       │             },
+    │       │             "providerOptions": {
+    │       │               "openai": {
+    │       │                 "itemId": "<itemId:3>"
+    │       │               }
+    │       │             },
+    │       │             "toolName": "get_weather",
+    │       │             "type": "tool-result"
+    │       │           }
+    │       │         ],
+    │       │         "role": "tool"
+    │       │       }
+    │       │     ],
+    │       │     "model": {
+    │       │       "modelId": "gpt-4o-mini-2024-07-18",
+    │       │       "provider": "openai.responses"
+    │       │     },
+    │       │     "temperature": 0,
+    │       │     "tools": [
+    │       │       {
+    │       │         "description": "Get the weather for a location",
+    │       │         "inputSchema": {
+    │       │           "$schema": "http://json-schema.org/draft-07/schema#",
+    │       │           "additionalProperties": false,
+    │       │           "properties": {
+    │       │             "location": {
+    │       │               "description": "The city and country",
+    │       │               "type": "string"
+    │       │             }
+    │       │           },
+    │       │           "required": [
+    │       │             "location"
+    │       │           ],
+    │       │           "type": "object"
+    │       │         },
+    │       │         "name": "get_weather",
+    │       │         "type": "function"
+    │       │       }
+    │       │     ]
+    │       │   }
+    │       │   output: {
+    │       │     "content": [
+    │       │       {
+    │       │         "input": {
+    │       │           "location": "Paris, France"
+    │       │         },
+    │       │         "providerMetadata": {
+    │       │           "openai": {
+    │       │             "itemId": "<itemId:1>"
+    │       │           }
+    │       │         },
+    │       │         "toolName": "get_weather",
+    │       │         "type": "tool-call"
+    │       │       }
+    │       │     ],
+    │       │     "finishReason": "tool-calls",
+    │       │     "response": {},
+    │       │     "usage": {
+    │       │       "inputTokenDetails": {
+    │       │         "cacheReadTokens": 0,
+    │       │         "noCacheTokens": 211
+    │       │       },
+    │       │       "inputTokens": 211,
+    │       │       "outputTokenDetails": {
+    │       │         "reasoningTokens": 0,
+    │       │         "textTokens": 8
+    │       │       },
+    │       │       "outputTokens": 8,
+    │       │       "raw": {
+    │       │         "input_tokens": 211,
+    │       │         "input_tokens_details": {
+    │       │           "cached_tokens": 0
+    │       │         },
+    │       │         "output_tokens": 8,
+    │       │         "output_tokens_details": {
+    │       │           "reasoning_tokens": 0
+    │       │         }
+    │       │       },
+    │       │       "totalTokens": 219
+    │       │     }
+    │       │   }
+    │       │   metadata: {
+    │       │     "braintrust": {
+    │       │       "integration_name": "ai-sdk",
+    │       │       "sdk_language": "typescript"
+    │       │     },
+    │       │     "model": "gpt-4o-mini-2024-07-18",
+    │       │     "provider": "openai.responses"
+    │       │   }
+    │       │   metrics: {
+    │       │     "completion_tokens": 8,
+    │       │     "prompt_cached_tokens": 0,
+    │       │     "prompt_tokens": 211,
+    │       │     "tokens": 219
+    │       │   }
+    │       └── get_weather [tool]
+    │           input: {
+    │             "location": "Paris, France"
+    │           }
+    │           output: "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}"
+    │           metadata: {
+    │             "braintrust": {
+    │               "integration_name": "ai-sdk",
+    │               "sdk_language": "typescript"
+    │             },
+    │             "toolName": "get_weather"
+    │           }
+    ├── ai-sdk-generate-object-operation
+    │   metadata: {
+    │     "operation": "generate-object",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── generateObject [function]
+    │       input: {
+    │         "maxOutputTokens": 32,
+    │         "maxRetries": 2,
+    │         "model": {
+    │           "modelId": "gpt-4o-mini-2024-07-18",
+    │           "provider": "openai.responses"
+    │         },
+    │         "output": "object",
+    │         "prompt": "Return JSON with {\"city\":\"Paris\"}.",
+    │         "schema": {
+    │           "$schema": "http://json-schema.org/draft-07/schema#",
+    │           "additionalProperties": false,
+    │           "properties": {
+    │             "city": {
+    │               "type": "string"
+    │             }
+    │           },
+    │           "required": [
+    │             "city"
+    │           ],
+    │           "type": "object"
+    │         },
+    │         "temperature": 0
+    │       }
+    │       output: {
+    │         "finishReason": "stop",
+    │         "object": {
+    │           "city": "Paris"
+    │         },
+    │         "providerMetadata": {
+    │           "openai": {
+    │             "responseId": "<responseId:1>",
+    │             "serviceTier": "default"
+    │           }
+    │         },
+    │         "response": {
+    │           "body": "<omitted>",
+    │           "modelId": "gpt-4o-mini-2024-07-18",
+    │           "timestamp": "<timestamp>"
+    │         },
+    │         "usage": {
+    │           "inputTokenDetails": {
+    │             "cacheReadTokens": 0,
+    │             "noCacheTokens": 38
+    │           },
+    │           "inputTokens": 38,
+    │           "outputTokenDetails": {
+    │             "reasoningTokens": 0,
+    │             "textTokens": 6
+    │           },
+    │           "outputTokens": 6,
+    │           "raw": {
+    │             "input_tokens": 38,
+    │             "input_tokens_details": {
+    │               "cached_tokens": 0
+    │             },
+    │             "output_tokens": 6,
+    │             "output_tokens_details": {
+    │               "reasoning_tokens": 0
+    │             }
+    │           },
+    │           "totalTokens": 44
+    │         },
+    │         "warnings": []
+    │       }
+    │       metadata: {
+    │         "braintrust": {
+    │           "integration_name": "ai-sdk",
+    │           "sdk_language": "typescript"
+    │         },
+    │         "model": "gpt-4o-mini-2024-07-18",
+    │         "provider": "openai.responses"
+    │       }
+    │       └── doGenerate [llm]
+    │           input: {
+    │             "prompt": [
+    │               {
+    │                 "content": [
+    │                   {
+    │                     "text": "Return JSON with {\"city\":\"Paris\"}.",
+    │                     "type": "text"
+    │                   }
+    │                 ],
+    │                 "role": "user"
+    │               }
+    │             ]
+    │           }
+    │           output: {
+    │             "finishReason": "stop",
+    │             "providerMetadata": {
+    │               "openai": {
+    │                 "responseId": "<responseId:1>",
+    │                 "serviceTier": "default"
+    │               }
+    │             },
+    │             "response": {
+    │               "body": "<omitted>",
+    │               "modelId": "gpt-4o-mini-2024-07-18",
+    │               "timestamp": "<timestamp>"
+    │             },
+    │             "text": "{\"city\":\"Paris\"}",
+    │             "usage": {
+    │               "inputTokenDetails": {
+    │                 "cacheReadTokens": 0,
+    │                 "noCacheTokens": 38
+    │               },
+    │               "inputTokens": 38,
+    │               "outputTokenDetails": {
+    │                 "reasoningTokens": 0,
+    │                 "textTokens": 6
+    │               },
+    │               "outputTokens": 6,
+    │               "raw": {
+    │                 "input_tokens": 38,
+    │                 "input_tokens_details": {
+    │                   "cached_tokens": 0
+    │                 },
+    │                 "output_tokens": 6,
+    │                 "output_tokens_details": {
+    │                   "reasoning_tokens": 0
+    │                 }
+    │               },
+    │               "totalTokens": 44
+    │             },
+    │             "warnings": []
+    │           }
+    │           metadata: {
+    │             "braintrust": {
+    │               "integration_name": "ai-sdk",
+    │               "sdk_language": "typescript"
+    │             },
+    │             "model": "gpt-4o-mini-2024-07-18",
+    │             "provider": "openai.responses"
+    │           }
+    │           metrics: {
+    │             "completion_tokens": 6,
+    │             "prompt_cached_tokens": 0,
+    │             "prompt_tokens": 38,
+    │             "tokens": 44
+    │           }
+    ├── ai-sdk-stream-object-operation
+    │   metadata: {
+    │     "operation": "stream-object",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── streamObject [function]
+    │       input: {
+    │         "maxOutputTokens": 32,
+    │         "maxRetries": 2,
+    │         "model": {
+    │           "modelId": "gpt-4o-mini-2024-07-18",
+    │           "provider": "openai.responses"
+    │         },
+    │         "output": "object",
+    │         "prompt": "Stream JSON with {\"city\":\"Paris\"}.",
+    │         "schema": {
+    │           "$schema": "http://json-schema.org/draft-07/schema#",
+    │           "additionalProperties": false,
+    │           "properties": {
+    │             "city": {
+    │               "type": "string"
+    │             }
+    │           },
+    │           "required": [
+    │             "city"
+    │           ],
+    │           "type": "object"
+    │         },
+    │         "temperature": 0
+    │       }
+    │       output: {
+    │         "finishReason": "stop",
+    │         "object": {
+    │           "city": "Paris"
+    │         },
+    │         "providerMetadata": {
+    │           "openai": {
+    │             "responseId": "<responseId:1>",
+    │             "serviceTier": "default"
+    │           }
+    │         },
+    │         "response": {
+    │           "modelId": "gpt-4o-mini-2024-07-18",
+    │           "timestamp": "<timestamp>"
+    │         },
+    │         "usage": {
+    │           "inputTokenDetails": {
+    │             "cacheReadTokens": 0,
+    │             "noCacheTokens": 38
+    │           },
+    │           "inputTokens": 38,
+    │           "outputTokenDetails": {
+    │             "reasoningTokens": 0,
+    │             "textTokens": 6
+    │           },
+    │           "outputTokens": 6,
+    │           "raw": {
+    │             "input_tokens": 38,
+    │             "input_tokens_details": {
+    │               "cached_tokens": 0
+    │             },
+    │             "output_tokens": 6,
+    │             "output_tokens_details": {
+    │               "reasoning_tokens": 0
+    │             }
+    │           },
+    │           "totalTokens": 44
+    │         },
+    │         "warnings": []
+    │       }
+    │       metadata: {
+    │         "braintrust": {
+    │           "integration_name": "ai-sdk",
+    │           "sdk_language": "typescript"
+    │         },
+    │         "model": "gpt-4o-mini-2024-07-18",
+    │         "provider": "openai.responses"
+    │       }
+    │       └── doStream [llm]
+    │           input: {
+    │             "prompt": [
+    │               {
+    │                 "content": [
+    │                   {
+    │                     "text": "Stream JSON with {\"city\":\"Paris\"}.",
+    │                     "type": "text"
+    │                   }
+    │                 ],
+    │                 "role": "user"
+    │               }
+    │             ]
+    │           }
+    │           output: {
+    │             "finishReason": "stop",
+    │             "providerMetadata": {
+    │               "openai": {
+    │                 "responseId": "<responseId:1>",
+    │                 "serviceTier": "default"
+    │               }
+    │             },
+    │             "response": {
+    │               "modelId": "gpt-4o-mini-2024-07-18",
+    │               "timestamp": "<timestamp>"
+    │             },
+    │             "text": "{\"city\":\"Paris\"}",
+    │             "usage": {
+    │               "inputTokenDetails": {
+    │                 "cacheReadTokens": 0,
+    │                 "noCacheTokens": 38
+    │               },
+    │               "inputTokens": 38,
+    │               "outputTokenDetails": {
+    │                 "reasoningTokens": 0,
+    │                 "textTokens": 6
+    │               },
+    │               "outputTokens": 6,
+    │               "raw": {
+    │                 "input_tokens": 38,
+    │                 "input_tokens_details": {
+    │                   "cached_tokens": 0
+    │                 },
+    │                 "output_tokens": 6,
+    │                 "output_tokens_details": {
+    │                   "reasoning_tokens": 0
+    │                 }
+    │               },
+    │               "totalTokens": 44
+    │             },
+    │             "warnings": []
+    │           }
+    │           metadata: {
+    │             "braintrust": {
+    │               "integration_name": "ai-sdk",
+    │               "sdk_language": "typescript"
+    │             },
+    │             "model": "gpt-4o-mini-2024-07-18",
+    │             "provider": "openai.responses"
+    │           }
+    │           metrics: {
+    │             "completion_tokens": 6,
+    │             "prompt_cached_tokens": 0,
+    │             "prompt_tokens": 38,
+    │             "tokens": 44
+    │           }
+    ├── ai-sdk-agent-generate-operation
+    │   metadata: {
+    │     "operation": "agent-generate",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── generateText [function]
+    │       input: {
+    │         "instructions": "You are a terse assistant.",
+    │         "maxOutputTokens": 24,
+    │         "maxRetries": 2,
+    │         "messages": [
+    │           {
+    │             "content": "Reply with exactly HELLO and no punctuation.",
+    │             "role": "user"
+    │           }
+    │         ],
+    │         "model": {
+    │           "modelId": "gpt-4o-mini-2024-07-18",
+    │           "provider": "openai.responses"
+    │         }
+    │       }
+    │       output: {
+    │         "content": [
+    │           {
+    │             "providerMetadata": {
+    │               "openai": {
+    │                 "itemId": "<itemId:2>"
+    │               }
+    │             },
+    │             "text": "HELLO",
+    │             "type": "text"
+    │           }
+    │         ],
+    │         "finishReason": "stop",
+    │         "providerMetadata": {
+    │           "openai": {
+    │             "responseId": "<responseId:3>",
+    │             "serviceTier": "default"
+    │           }
+    │         },
+    │         "response": {
+    │           "messages": [
+    │             {
+    │               "content": [
+    │                 {
+    │                   "providerOptions": {
+    │                     "openai": {
+    │                       "itemId": "<itemId:2>"
+    │                     }
+    │                   },
+    │                   "text": "HELLO",
+    │                   "type": "text"
+    │                 }
+    │               ],
+    │               "role": "assistant"
+    │             }
+    │           ],
+    │           "modelId": "gpt-4o-mini-2024-07-18",
+    │           "timestamp": "<timestamp>"
+    │         },
+    │         "responseMessages": "<omitted>",
+    │         "steps": [
+    │           {
+    │             "callId": "<callId:1>",
+    │             "content": [
+    │               {
+    │                 "providerMetadata": {
+    │                   "openai": {
+    │                     "itemId": "<itemId:2>"
+    │                   }
+    │                 },
+    │                 "text": "HELLO",
+    │                 "type": "text"
+    │               }
+    │             ],
+    │             "finishReason": "stop",
+    │             "model": {
+    │               "modelId": "gpt-4o-mini-2024-07-18",
+    │               "provider": "openai.responses"
+    │             },
+    │             "providerMetadata": {
+    │               "openai": {
+    │                 "responseId": "<responseId:3>",
+    │                 "serviceTier": "default"
+    │               }
+    │             },
+    │             "response": {
+    │               "messages": [
+    │                 {
+    │                   "content": [
+    │                     {
+    │                       "providerOptions": {
+    │                         "openai": {
+    │                           "itemId": "<itemId:2>"
+    │                         }
+    │                       },
+    │                       "text": "HELLO",
+    │                       "type": "text"
+    │                     }
+    │                   ],
+    │                   "role": "assistant"
+    │                 }
+    │               ],
+    │               "modelId": "gpt-4o-mini-2024-07-18",
+    │               "timestamp": "<timestamp>"
+    │             },
+    │             "runtimeContext": {},
+    │             "stepNumber": 0,
+    │             "toolsContext": {},
+    │             "usage": {
+    │               "inputTokenDetails": {
+    │                 "cacheReadTokens": 0,
+    │                 "noCacheTokens": 26
+    │               },
+    │               "inputTokens": 26,
+    │               "outputTokenDetails": {
+    │                 "reasoningTokens": 0,
+    │                 "textTokens": 3
+    │               },
+    │               "outputTokens": 3,
+    │               "raw": {
+    │                 "input_tokens": 26,
+    │                 "input_tokens_details": {
+    │                   "cached_tokens": 0
+    │                 },
+    │                 "output_tokens": 3,
+    │                 "output_tokens_details": {
+    │                   "reasoning_tokens": 0
+    │                 }
+    │               },
+    │               "totalTokens": 29
+    │             },
+    │             "warnings": []
+    │           }
+    │         ],
+    │         "text": "HELLO",
+    │         "toolCalls": [],
+    │         "toolResults": [],
+    │         "totalUsage": {
+    │           "inputTokenDetails": {
+    │             "cacheReadTokens": 0,
+    │             "noCacheTokens": 26
+    │           },
+    │           "inputTokens": 26,
+    │           "outputTokenDetails": {
+    │             "reasoningTokens": 0,
+    │             "textTokens": 3
+    │           },
+    │           "outputTokens": 3,
+    │           "totalTokens": 29
+    │         },
+    │         "usage": {
+    │           "inputTokenDetails": {
+    │             "cacheReadTokens": 0,
+    │             "noCacheTokens": 26
+    │           },
+    │           "inputTokens": 26,
+    │           "outputTokenDetails": {
+    │             "reasoningTokens": 0,
+    │             "textTokens": 3
+    │           },
+    │           "outputTokens": 3,
+    │           "totalTokens": 29
+    │         },
+    │         "warnings": []
+    │       }
+    │       metadata: {
+    │         "braintrust": {
+    │           "integration_name": "ai-sdk",
+    │           "sdk_language": "typescript"
+    │         },
+    │         "model": "gpt-4o-mini-2024-07-18",
+    │         "provider": "openai.responses"
+    │       }
+    │       └── doGenerate [llm]
+    │           input: {
+    │             "instructions": "You are a terse assistant.",
+    │             "maxOutputTokens": 24,
+    │             "messages": [
+    │               {
+    │                 "content": "Reply with exactly HELLO and no punctuation.",
+    │                 "role": "user"
+    │               }
+    │             ],
+    │             "model": {
+    │               "modelId": "gpt-4o-mini-2024-07-18",
+    │               "provider": "openai.responses"
+    │             }
+    │           }
+    │           output: {
+    │             "content": [
+    │               {
+    │                 "providerMetadata": {
+    │                   "openai": {
+    │                     "itemId": "<itemId:1>"
+    │                   }
+    │                 },
+    │                 "text": "HELLO",
+    │                 "type": "text"
+    │               }
+    │             ],
+    │             "finishReason": "stop",
+    │             "response": {},
+    │             "usage": {
+    │               "inputTokenDetails": {
+    │                 "cacheReadTokens": 0,
+    │                 "noCacheTokens": 26
+    │               },
+    │               "inputTokens": 26,
+    │               "outputTokenDetails": {
+    │                 "reasoningTokens": 0,
+    │                 "textTokens": 3
+    │               },
+    │               "outputTokens": 3,
+    │               "raw": {
+    │                 "input_tokens": 26,
+    │                 "input_tokens_details": {
+    │                   "cached_tokens": 0
+    │                 },
+    │                 "output_tokens": 3,
+    │                 "output_tokens_details": {
+    │                   "reasoning_tokens": 0
+    │                 }
+    │               },
+    │               "totalTokens": 29
+    │             }
+    │           }
+    │           metadata: {
+    │             "braintrust": {
+    │               "integration_name": "ai-sdk",
+    │               "sdk_language": "typescript"
+    │             },
+    │             "model": "gpt-4o-mini-2024-07-18",
+    │             "provider": "openai.responses"
+    │           }
+    │           metrics: {
+    │             "completion_tokens": 3,
+    │             "prompt_cached_tokens": 0,
+    │             "prompt_tokens": 26,
+    │             "tokens": 29
+    │           }
+    ├── ai-sdk-agent-stream-operation
+    │   metadata: {
+    │     "operation": "agent-stream",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── streamText [function]
+    │       input: {
+    │         "instructions": "You are a terse assistant.",
+    │         "maxOutputTokens": 24,
+    │         "maxRetries": 2,
+    │         "messages": [
+    │           {
+    │             "content": "Reply with exactly STREAM HELLO and no punctuation.",
+    │             "role": "user"
+    │           }
+    │         ],
+    │         "model": {
+    │           "modelId": "gpt-4o-mini-2024-07-18",
+    │           "provider": "openai.responses"
+    │         }
+    │       }
+    │       output: {
+    │         "content": [
+    │           {
+    │             "providerMetadata": {
+    │               "openai": {
+    │                 "itemId": "<itemId:2>"
+    │               }
+    │             },
+    │             "text": "STREAM HELLO",
+    │             "type": "text"
+    │           }
+    │         ],
+    │         "finishReason": "stop",
+    │         "providerMetadata": {
+    │           "openai": {
+    │             "responseId": "<responseId:3>",
+    │             "serviceTier": "default"
+    │           }
+    │         },
+    │         "response": {
+    │           "messages": [
+    │             {
+    │               "content": [
+    │                 {
+    │                   "providerOptions": {
+    │                     "openai": {
+    │                       "itemId": "<itemId:2>"
+    │                     }
+    │                   },
+    │                   "text": "STREAM HELLO",
+    │                   "type": "text"
+    │                 }
+    │               ],
+    │               "role": "assistant"
+    │             }
+    │           ],
+    │           "modelId": "gpt-4o-mini-2024-07-18",
+    │           "timestamp": "<timestamp>"
+    │         },
+    │         "responseMessages": "<omitted>",
+    │         "steps": [
+    │           {
+    │             "callId": "<callId:1>",
+    │             "content": [
+    │               {
+    │                 "providerMetadata": {
+    │                   "openai": {
+    │                     "itemId": "<itemId:2>"
+    │                   }
+    │                 },
+    │                 "text": "STREAM HELLO",
+    │                 "type": "text"
+    │               }
+    │             ],
+    │             "finishReason": "stop",
+    │             "model": {
+    │               "modelId": "gpt-4o-mini-2024-07-18",
+    │               "provider": "openai.responses"
+    │             },
+    │             "providerMetadata": {
+    │               "openai": {
+    │                 "responseId": "<responseId:3>",
+    │                 "serviceTier": "default"
+    │               }
+    │             },
+    │             "response": {
+    │               "messages": [
+    │                 {
+    │                   "content": [
+    │                     {
+    │                       "providerOptions": {
+    │                         "openai": {
+    │                           "itemId": "<itemId:2>"
+    │                         }
+    │                       },
+    │                       "text": "STREAM HELLO",
+    │                       "type": "text"
+    │                     }
+    │                   ],
+    │                   "role": "assistant"
+    │                 }
+    │               ],
+    │               "modelId": "gpt-4o-mini-2024-07-18",
+    │               "timestamp": "<timestamp>"
+    │             },
+    │             "runtimeContext": {},
+    │             "stepNumber": 0,
+    │             "toolsContext": {},
+    │             "usage": {
+    │               "inputTokenDetails": {
+    │                 "cacheReadTokens": 0,
+    │                 "noCacheTokens": 27
+    │               },
+    │               "inputTokens": 27,
+    │               "outputTokenDetails": {
+    │                 "reasoningTokens": 0,
+    │                 "textTokens": 4
+    │               },
+    │               "outputTokens": 4,
+    │               "raw": {
+    │                 "input_tokens": 27,
+    │                 "input_tokens_details": {
+    │                   "cached_tokens": 0
+    │                 },
+    │                 "output_tokens": 4,
+    │                 "output_tokens_details": {
+    │                   "reasoning_tokens": 0
+    │                 }
+    │               },
+    │               "totalTokens": 31
+    │             },
+    │             "warnings": []
+    │           }
+    │         ],
+    │         "text": "STREAM HELLO",
+    │         "toolCalls": [],
+    │         "toolResults": [],
+    │         "totalUsage": {
+    │           "inputTokenDetails": {
+    │             "cacheReadTokens": 0,
+    │             "noCacheTokens": 27
+    │           },
+    │           "inputTokens": 27,
+    │           "outputTokenDetails": {
+    │             "reasoningTokens": 0,
+    │             "textTokens": 4
+    │           },
+    │           "outputTokens": 4,
+    │           "totalTokens": 31
+    │         },
+    │         "usage": {
+    │           "inputTokenDetails": {
+    │             "cacheReadTokens": 0,
+    │             "noCacheTokens": 27
+    │           },
+    │           "inputTokens": 27,
+    │           "outputTokenDetails": {
+    │             "reasoningTokens": 0,
+    │             "textTokens": 4
+    │           },
+    │           "outputTokens": 4,
+    │           "totalTokens": 31
+    │         },
+    │         "warnings": []
+    │       }
+    │       metadata: {
+    │         "braintrust": {
+    │           "integration_name": "ai-sdk",
+    │           "sdk_language": "typescript"
+    │         },
+    │         "model": "gpt-4o-mini-2024-07-18",
+    │         "provider": "openai.responses"
+    │       }
+    │       metrics: {
+    │         "time_to_first_token": 0
+    │       }
+    │       └── doStream [llm]
+    │           input: {
+    │             "instructions": "You are a terse assistant.",
+    │             "maxOutputTokens": 24,
+    │             "messages": [
+    │               {
+    │                 "content": "Reply with exactly STREAM HELLO and no punctuation.",
+    │                 "role": "user"
+    │               }
+    │             ],
+    │             "model": {
+    │               "modelId": "gpt-4o-mini-2024-07-18",
+    │               "provider": "openai.responses"
+    │             }
+    │           }
+    │           output: {
+    │             "content": [
+    │               {
+    │                 "providerMetadata": {
+    │                   "openai": {
+    │                     "itemId": "<itemId:1>"
+    │                   }
+    │                 },
+    │                 "text": "STREAM HELLO",
+    │                 "type": "text"
+    │               }
+    │             ],
+    │             "finishReason": "stop",
+    │             "response": {},
+    │             "usage": {
+    │               "inputTokenDetails": {
+    │                 "cacheReadTokens": 0,
+    │                 "noCacheTokens": 27
+    │               },
+    │               "inputTokens": 27,
+    │               "outputTokenDetails": {
+    │                 "reasoningTokens": 0,
+    │                 "textTokens": 4
+    │               },
+    │               "outputTokens": 4,
+    │               "raw": {
+    │                 "input_tokens": 27,
+    │                 "input_tokens_details": {
+    │                   "cached_tokens": 0
+    │                 },
+    │                 "output_tokens": 4,
+    │                 "output_tokens_details": {
+    │                   "reasoning_tokens": 0
+    │                 }
+    │               },
+    │               "totalTokens": 31
+    │             }
+    │           }
+    │           metadata: {
+    │             "braintrust": {
+    │               "integration_name": "ai-sdk",
+    │               "sdk_language": "typescript"
+    │             },
+    │             "model": "gpt-4o-mini-2024-07-18",
+    │             "provider": "openai.responses"
+    │           }
+    │           metrics: {
+    │             "completion_tokens": 4,
+    │             "prompt_cached_tokens": 0,
+    │             "prompt_tokens": 27,
+    │             "tokens": 31
+    │           }
+    └── ai-sdk-agent-tool-loop-operation
+        metadata: {
+          "operation": "agent-tool-loop",
+          "testRunId": "<run:1>"
+        }
+        └── generateText [function]
+            input: {
+              "instructions": "You are a shopping assistant. Use the tools before answering pricing questions.",
+              "maxOutputTokens": 256,
+              "maxRetries": 2,
+              "messages": [
+                {
+                  "content": "I need help comparing laptop prices before checkout.",
+                  "role": "user"
+                },
+                {
+                  "content": "I can compare store prices and apply a discount code.",
+                  "role": "assistant"
+                },
+                {
+                  "content": "Call get_store_price for a laptop at StoreA and StoreB, then call apply_discount with code SAVE20 for the cheaper price. Finish with the discounted total.",
+                  "role": "user"
+                }
+              ],
+              "model": {
+                "modelId": "gpt-4o-mini-2024-07-18",
+                "provider": "openai.responses"
+              },
+              "temperature": 0,
+              "tools": {
+                "apply_discount": {
+                  "description": "Apply a discount code to a total",
+                  "inputSchema": {
+                    "$schema": "http://json-schema.org/draft-07/schema#",
+                    "additionalProperties": false,
+                    "properties": {
+                      "discountCode": {
+                        "description": "The discount code to apply",
+                        "type": "string"
+                      },
+                      "total": {
+                        "description": "The original total",
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "discountCode",
+                      "total"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "get_store_price": {
+                  "description": "Get the price of an item at a store",
+                  "inputSchema": {
+                    "$schema": "http://json-schema.org/draft-07/schema#",
+                    "additionalProperties": false,
+                    "properties": {
+                      "item": {
+                        "description": "The item to price",
+                        "type": "string"
+                      },
+                      "store": {
+                        "description": "The store name",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "item",
+                      "store"
+                    ],
+                    "type": "object"
+                  }
+                }
+              }
+            }
+            output: {
+              "content": [
+                {
+                  "input": {
+                    "item": "laptop",
+                    "store": "StoreA"
+                  },
+                  "providerMetadata": {
+                    "openai": {
+                      "itemId": "<itemId:2>"
+                    }
+                  },
+                  "toolName": "get_store_price",
+                  "type": "tool-call"
+                },
+                {
+                  "input": {
+                    "item": "laptop",
+                    "store": "StoreB"
+                  },
+                  "providerMetadata": {
+                    "openai": {
+                      "itemId": "<itemId:3>"
+                    }
+                  },
+                  "toolName": "get_store_price",
+                  "type": "tool-call"
+                },
+                {
+                  "dynamic": false,
+                  "input": {
+                    "item": "laptop",
+                    "store": "StoreA"
+                  },
+                  "output": "{\"item\":\"laptop\",\"price\":999,\"store\":\"StoreA\"}",
+                  "providerMetadata": {
+                    "openai": {
+                      "itemId": "<itemId:2>"
+                    }
+                  },
+                  "toolName": "get_store_price",
+                  "type": "tool-result"
+                },
+                {
+                  "dynamic": false,
+                  "input": {
+                    "item": "laptop",
+                    "store": "StoreB"
+                  },
+                  "output": "{\"item\":\"laptop\",\"price\":1099,\"store\":\"StoreB\"}",
+                  "providerMetadata": {
+                    "openai": {
+                      "itemId": "<itemId:3>"
+                    }
+                  },
+                  "toolName": "get_store_price",
+                  "type": "tool-result"
+                },
+                {
+                  "input": {
+                    "discountCode": "SAVE20",
+                    "total": 999
+                  },
+                  "providerMetadata": {
+                    "openai": {
+                      "itemId": "<itemId:5>"
+                    }
+                  },
+                  "toolName": "apply_discount",
+                  "type": "tool-call"
+                },
+                {
+                  "dynamic": false,
+                  "input": {
+                    "discountCode": "SAVE20",
+                    "total": 999
+                  },
+                  "output": "{\"discountCode\":\"SAVE20\",\"finalTotal\":799.2,\"originalTotal\":999}",
+                  "providerMetadata": {
+                    "openai": {
+                      "itemId": "<itemId:5>"
+                    }
+                  },
+                  "toolName": "apply_discount",
+                  "type": "tool-result"
+                },
+                {
+                  "providerMetadata": {
+                    "openai": {
+                      "itemId": "<itemId:7>"
+                    }
+                  },
+                  "text": "Here are the prices for the laptop:\n\n- **Store A**: $999\n- **Store B**: $1099\n\nThe cheaper price is from **Store A** at $999. After applying the discount code **SAVE20**, the final total is **$799.20**.",
+                  "type": "text"
+                }
+              ],
+              "finishReason": "stop",
+              "providerMetadata": {
+                "openai": {
+                  "responseId": "<responseId:8>",
+                  "serviceTier": "default"
+                }
+              },
+              "response": {
+                "messages": [
+                  {
+                    "content": [
+                      {
+                        "providerOptions": {
+                          "openai": {
+                            "itemId": "<itemId:7>"
+                          }
+                        },
+                        "text": "Here are the prices for the laptop:\n\n- **Store A**: $999\n- **Store B**: $1099\n\nThe cheaper price is from **Store A** at $999. After applying the discount code **SAVE20**, the final total is **$799.20**.",
+                        "type": "text"
+                      }
+                    ],
+                    "role": "assistant"
+                  }
+                ],
+                "modelId": "gpt-4o-mini-2024-07-18",
+                "timestamp": "<timestamp>"
+              },
+              "responseMessages": "<omitted>",
+              "steps": [
+                {
+                  "callId": "<callId:1>",
+                  "content": [
+                    {
+                      "input": {
+                        "item": "laptop",
+                        "store": "StoreA"
+                      },
+                      "providerMetadata": {
+                        "openai": {
+                          "itemId": "<itemId:2>"
+                        }
+                      },
+                      "toolName": "get_store_price",
+                      "type": "tool-call"
+                    },
+                    {
+                      "input": {
+                        "item": "laptop",
+                        "store": "StoreB"
+                      },
+                      "providerMetadata": {
+                        "openai": {
+                          "itemId": "<itemId:3>"
+                        }
+                      },
+                      "toolName": "get_store_price",
+                      "type": "tool-call"
+                    },
+                    {
+                      "dynamic": false,
+                      "input": {
+                        "item": "laptop",
+                        "store": "StoreA"
+                      },
+                      "output": "{\"item\":\"laptop\",\"price\":999,\"store\":\"StoreA\"}",
+                      "providerMetadata": {
+                        "openai": {
+                          "itemId": "<itemId:2>"
+                        }
+                      },
+                      "toolName": "get_store_price",
+                      "type": "tool-result"
+                    },
+                    {
+                      "dynamic": false,
+                      "input": {
+                        "item": "laptop",
+                        "store": "StoreB"
+                      },
+                      "output": "{\"item\":\"laptop\",\"price\":1099,\"store\":\"StoreB\"}",
+                      "providerMetadata": {
+                        "openai": {
+                          "itemId": "<itemId:3>"
+                        }
+                      },
+                      "toolName": "get_store_price",
+                      "type": "tool-result"
+                    }
+                  ],
+                  "finishReason": "tool-calls",
+                  "model": {
+                    "modelId": "gpt-4o-mini-2024-07-18",
+                    "provider": "openai.responses"
+                  },
+                  "providerMetadata": {
+                    "openai": {
+                      "responseId": "<responseId:4>",
+                      "serviceTier": "default"
+                    }
+                  },
+                  "response": {
+                    "messages": [
+                      {
+                        "content": [
+                          {
+                            "input": {
+                              "item": "laptop",
+                              "store": "StoreA"
+                            },
+                            "providerOptions": {
+                              "openai": {
+                                "itemId": "<itemId:2>"
+                              }
+                            },
+                            "toolName": "get_store_price",
+                            "type": "tool-call"
+                          },
+                          {
+                            "input": {
+                              "item": "laptop",
+                              "store": "StoreB"
+                            },
+                            "providerOptions": {
+                              "openai": {
+                                "itemId": "<itemId:3>"
+                              }
+                            },
+                            "toolName": "get_store_price",
+                            "type": "tool-call"
+                          }
+                        ],
+                        "role": "assistant"
+                      },
+                      {
+                        "content": [
+                          {
+                            "output": {
+                              "type": "text",
+                              "value": "{\"item\":\"laptop\",\"price\":999,\"store\":\"StoreA\"}"
+                            },
+                            "providerOptions": {
+                              "openai": {
+                                "itemId": "<itemId:2>"
+                              }
+                            },
+                            "toolName": "get_store_price",
+                            "type": "tool-result"
+                          },
+                          {
+                            "output": {
+                              "type": "text",
+                              "value": "{\"item\":\"laptop\",\"price\":1099,\"store\":\"StoreB\"}"
+                            },
+                            "providerOptions": {
+                              "openai": {
+                                "itemId": "<itemId:3>"
+                              }
+                            },
+                            "toolName": "get_store_price",
+                            "type": "tool-result"
+                          }
+                        ],
+                        "role": "tool"
+                      }
+                    ],
+                    "modelId": "gpt-4o-mini-2024-07-18",
+                    "timestamp": "<timestamp>"
+                  },
+                  "runtimeContext": {},
+                  "stepNumber": 0,
+                  "toolsContext": {},
+                  "usage": {
+                    "inputTokenDetails": {
+                      "cacheReadTokens": 0,
+                      "noCacheTokens": 173
+                    },
+                    "inputTokens": 173,
+                    "outputTokenDetails": {
+                      "reasoningTokens": 0,
+                      "textTokens": 59
+                    },
+                    "outputTokens": 59,
+                    "raw": {
+                      "input_tokens": 173,
+                      "input_tokens_details": {
+                        "cached_tokens": 0
+                      },
+                      "output_tokens": 59,
+                      "output_tokens_details": {
+                        "reasoning_tokens": 0
+                      }
+                    },
+                    "totalTokens": 232
+                  },
+                  "warnings": []
+                },
+                {
+                  "callId": "<callId:1>",
+                  "content": [
+                    {
+                      "input": {
+                        "discountCode": "SAVE20",
+                        "total": 999
+                      },
+                      "providerMetadata": {
+                        "openai": {
+                          "itemId": "<itemId:5>"
+                        }
+                      },
+                      "toolName": "apply_discount",
+                      "type": "tool-call"
+                    },
+                    {
+                      "dynamic": false,
+                      "input": {
+                        "discountCode": "SAVE20",
+                        "total": 999
+                      },
+                      "output": "{\"discountCode\":\"SAVE20\",\"finalTotal\":799.2,\"originalTotal\":999}",
+                      "providerMetadata": {
+                        "openai": {
+                          "itemId": "<itemId:5>"
+                        }
+                      },
+                      "toolName": "apply_discount",
+                      "type": "tool-result"
+                    }
+                  ],
+                  "finishReason": "tool-calls",
+                  "model": {
+                    "modelId": "gpt-4o-mini-2024-07-18",
+                    "provider": "openai.responses"
+                  },
+                  "providerMetadata": {
+                    "openai": {
+                      "responseId": "<responseId:6>",
+                      "serviceTier": "default"
+                    }
+                  },
+                  "response": {
+                    "messages": [
+                      {
+                        "content": [
+                          {
+                            "input": {
+                              "discountCode": "SAVE20",
+                              "total": 999
+                            },
+                            "providerOptions": {
+                              "openai": {
+                                "itemId": "<itemId:5>"
+                              }
+                            },
+                            "toolName": "apply_discount",
+                            "type": "tool-call"
+                          }
+                        ],
+                        "role": "assistant"
+                      },
+                      {
+                        "content": [
+                          {
+                            "output": {
+                              "type": "text",
+                              "value": "{\"discountCode\":\"SAVE20\",\"finalTotal\":799.2,\"originalTotal\":999}"
+                            },
+                            "providerOptions": {
+                              "openai": {
+                                "itemId": "<itemId:5>"
+                              }
+                            },
+                            "toolName": "apply_discount",
+                            "type": "tool-result"
+                          }
+                        ],
+                        "role": "tool"
+                      }
+                    ],
+                    "modelId": "gpt-4o-mini-2024-07-18",
+                    "timestamp": "<timestamp>"
+                  },
+                  "runtimeContext": {},
+                  "stepNumber": 1,
+                  "toolsContext": {},
+                  "usage": {
+                    "inputTokenDetails": {
+                      "cacheReadTokens": 0,
+                      "noCacheTokens": 260
+                    },
+                    "inputTokens": 260,
+                    "outputTokenDetails": {
+                      "reasoningTokens": 0,
+                      "textTokens": 21
+                    },
+                    "outputTokens": 21,
+                    "raw": {
+                      "input_tokens": 260,
+                      "input_tokens_details": {
+                        "cached_tokens": 0
+                      },
+                      "output_tokens": 21,
+                      "output_tokens_details": {
+                        "reasoning_tokens": 0
+                      }
+                    },
+                    "totalTokens": 281
+                  },
+                  "warnings": []
+                },
+                {
+                  "callId": "<callId:1>",
+                  "content": [
+                    {
+                      "providerMetadata": {
+                        "openai": {
+                          "itemId": "<itemId:7>"
+                        }
+                      },
+                      "text": "Here are the prices for the laptop:\n\n- **Store A**: $999\n- **Store B**: $1099\n\nThe cheaper price is from **Store A** at $999. After applying the discount code **SAVE20**, the final total is **$799.20**.",
+                      "type": "text"
+                    }
+                  ],
+                  "finishReason": "stop",
+                  "model": {
+                    "modelId": "gpt-4o-mini-2024-07-18",
+                    "provider": "openai.responses"
+                  },
+                  "providerMetadata": {
+                    "openai": {
+                      "responseId": "<responseId:8>",
+                      "serviceTier": "default"
+                    }
+                  },
+                  "response": {
+                    "messages": [
+                      {
+                        "content": [
+                          {
+                            "providerOptions": {
+                              "openai": {
+                                "itemId": "<itemId:7>"
+                              }
+                            },
+                            "text": "Here are the prices for the laptop:\n\n- **Store A**: $999\n- **Store B**: $1099\n\nThe cheaper price is from **Store A** at $999. After applying the discount code **SAVE20**, the final total is **$799.20**.",
+                            "type": "text"
+                          }
+                        ],
+                        "role": "assistant"
+                      }
+                    ],
+                    "modelId": "gpt-4o-mini-2024-07-18",
+                    "timestamp": "<timestamp>"
+                  },
+                  "runtimeContext": {},
+                  "stepNumber": 2,
+                  "toolsContext": {},
+                  "usage": {
+                    "inputTokenDetails": {
+                      "cacheReadTokens": 0,
+                      "noCacheTokens": 308
+                    },
+                    "inputTokens": 308,
+                    "outputTokenDetails": {
+                      "reasoningTokens": 0,
+                      "textTokens": 62
+                    },
+                    "outputTokens": 62,
+                    "raw": {
+                      "input_tokens": 308,
+                      "input_tokens_details": {
+                        "cached_tokens": 0
+                      },
+                      "output_tokens": 62,
+                      "output_tokens_details": {
+                        "reasoning_tokens": 0
+                      }
+                    },
+                    "totalTokens": 370
+                  },
+                  "warnings": []
+                }
+              ],
+              "text": "Here are the prices for the laptop:\n\n- **Store A**: $999\n- **Store B**: $1099\n\nThe cheaper price is from **Store A** at $999. After applying the discount code **SAVE20**, the final total is **$799.20**.",
+              "toolCalls": [
+                {
+                  "input": {
+                    "item": "laptop",
+                    "store": "StoreA"
+                  },
+                  "providerMetadata": {
+                    "openai": {
+                      "itemId": "<itemId:2>"
+                    }
+                  },
+                  "toolName": "get_store_price",
+                  "type": "tool-call"
+                },
+                {
+                  "input": {
+                    "item": "laptop",
+                    "store": "StoreB"
+                  },
+                  "providerMetadata": {
+                    "openai": {
+                      "itemId": "<itemId:3>"
+                    }
+                  },
+                  "toolName": "get_store_price",
+                  "type": "tool-call"
+                },
+                {
+                  "input": {
+                    "discountCode": "SAVE20",
+                    "total": 999
+                  },
+                  "providerMetadata": {
+                    "openai": {
+                      "itemId": "<itemId:5>"
+                    }
+                  },
+                  "toolName": "apply_discount",
+                  "type": "tool-call"
+                }
+              ],
+              "toolResults": [
+                {
+                  "dynamic": false,
+                  "input": {
+                    "item": "laptop",
+                    "store": "StoreA"
+                  },
+                  "output": "{\"item\":\"laptop\",\"price\":999,\"store\":\"StoreA\"}",
+                  "providerMetadata": {
+                    "openai": {
+                      "itemId": "<itemId:2>"
+                    }
+                  },
+                  "toolName": "get_store_price",
+                  "type": "tool-result"
+                },
+                {
+                  "dynamic": false,
+                  "input": {
+                    "item": "laptop",
+                    "store": "StoreB"
+                  },
+                  "output": "{\"item\":\"laptop\",\"price\":1099,\"store\":\"StoreB\"}",
+                  "providerMetadata": {
+                    "openai": {
+                      "itemId": "<itemId:3>"
+                    }
+                  },
+                  "toolName": "get_store_price",
+                  "type": "tool-result"
+                },
+                {
+                  "dynamic": false,
+                  "input": {
+                    "discountCode": "SAVE20",
+                    "total": 999
+                  },
+                  "output": "{\"discountCode\":\"SAVE20\",\"finalTotal\":799.2,\"originalTotal\":999}",
+                  "providerMetadata": {
+                    "openai": {
+                      "itemId": "<itemId:5>"
+                    }
+                  },
+                  "toolName": "apply_discount",
+                  "type": "tool-result"
+                }
+              ],
+              "totalUsage": {
+                "inputTokenDetails": {
+                  "cacheReadTokens": 0,
+                  "noCacheTokens": 741
+                },
+                "inputTokens": 741,
+                "outputTokenDetails": {
+                  "reasoningTokens": 0,
+                  "textTokens": 142
+                },
+                "outputTokens": 142,
+                "totalTokens": 883
+              },
+              "usage": {
+                "inputTokenDetails": {
+                  "cacheReadTokens": 0,
+                  "noCacheTokens": 741
+                },
+                "inputTokens": 741,
+                "outputTokenDetails": {
+                  "reasoningTokens": 0,
+                  "textTokens": 142
+                },
+                "outputTokens": 142,
+                "totalTokens": 883
+              },
+              "warnings": []
+            }
+            metadata: {
+              "braintrust": {
+                "integration_name": "ai-sdk",
+                "sdk_language": "typescript"
+              },
+              "model": "gpt-4o-mini-2024-07-18",
+              "provider": "openai.responses"
+            }
+            ├── doGenerate [llm]
+            │   input: {
+            │     "instructions": "You are a shopping assistant. Use the tools before answering pricing questions.",
+            │     "maxOutputTokens": 256,
+            │     "messages": [
+            │       {
+            │         "content": "I need help comparing laptop prices before checkout.",
+            │         "role": "user"
+            │       },
+            │       {
+            │         "content": "I can compare store prices and apply a discount code.",
+            │         "role": "assistant"
+            │       },
+            │       {
+            │         "content": "Call get_store_price for a laptop at StoreA and StoreB, then call apply_discount with code SAVE20 for the cheaper price. Finish with the discounted total.",
+            │         "role": "user"
+            │       }
+            │     ],
+            │     "model": {
+            │       "modelId": "gpt-4o-mini-2024-07-18",
+            │       "provider": "openai.responses"
+            │     },
+            │     "temperature": 0,
+            │     "tools": [
+            │       {
+            │         "description": "Get the price of an item at a store",
+            │         "inputSchema": {
+            │           "$schema": "http://json-schema.org/draft-07/schema#",
+            │           "additionalProperties": false,
+            │           "properties": {
+            │             "item": {
+            │               "description": "The item to price",
+            │               "type": "string"
+            │             },
+            │             "store": {
+            │               "description": "The store name",
+            │               "type": "string"
+            │             }
+            │           },
+            │           "required": [
+            │             "item",
+            │             "store"
+            │           ],
+            │           "type": "object"
+            │         },
+            │         "name": "get_store_price",
+            │         "type": "function"
+            │       },
+            │       {
+            │         "description": "Apply a discount code to a total",
+            │         "inputSchema": {
+            │           "$schema": "http://json-schema.org/draft-07/schema#",
+            │           "additionalProperties": false,
+            │           "properties": {
+            │             "discountCode": {
+            │               "description": "The discount code to apply",
+            │               "type": "string"
+            │             },
+            │             "total": {
+            │               "description": "The original total",
+            │               "type": "number"
+            │             }
+            │           },
+            │           "required": [
+            │             "discountCode",
+            │             "total"
+            │           ],
+            │           "type": "object"
+            │         },
+            │         "name": "apply_discount",
+            │         "type": "function"
+            │       }
+            │     ]
+            │   }
+            │   output: {
+            │     "content": [
+            │       {
+            │         "input": {
+            │           "item": "laptop",
+            │           "store": "StoreA"
+            │         },
+            │         "providerMetadata": {
+            │           "openai": {
+            │             "itemId": "<itemId:1>"
+            │           }
+            │         },
+            │         "toolName": "get_store_price",
+            │         "type": "tool-call"
+            │       },
+            │       {
+            │         "input": {
+            │           "item": "laptop",
+            │           "store": "StoreB"
+            │         },
+            │         "providerMetadata": {
+            │           "openai": {
+            │             "itemId": "<itemId:2>"
+            │           }
+            │         },
+            │         "toolName": "get_store_price",
+            │         "type": "tool-call"
+            │       }
+            │     ],
+            │     "finishReason": "tool-calls",
+            │     "response": {},
+            │     "usage": {
+            │       "inputTokenDetails": {
+            │         "cacheReadTokens": 0,
+            │         "noCacheTokens": 173
+            │       },
+            │       "inputTokens": 173,
+            │       "outputTokenDetails": {
+            │         "reasoningTokens": 0,
+            │         "textTokens": 59
+            │       },
+            │       "outputTokens": 59,
+            │       "raw": {
+            │         "input_tokens": 173,
+            │         "input_tokens_details": {
+            │           "cached_tokens": 0
+            │         },
+            │         "output_tokens": 59,
+            │         "output_tokens_details": {
+            │           "reasoning_tokens": 0
+            │         }
+            │       },
+            │       "totalTokens": 232
+            │     }
+            │   }
+            │   metadata: {
+            │     "braintrust": {
+            │       "integration_name": "ai-sdk",
+            │       "sdk_language": "typescript"
+            │     },
+            │     "model": "gpt-4o-mini-2024-07-18",
+            │     "provider": "openai.responses"
+            │   }
+            │   metrics: {
+            │     "completion_tokens": 59,
+            │     "prompt_cached_tokens": 0,
+            │     "prompt_tokens": 173,
+            │     "tokens": 232
+            │   }
+            ├── get_store_price [tool]
+            │   input: {
+            │     "item": "laptop",
+            │     "store": "StoreA"
+            │   }
+            │   output: "{\"item\":\"laptop\",\"price\":999,\"store\":\"StoreA\"}"
+            │   metadata: {
+            │     "braintrust": {
+            │       "integration_name": "ai-sdk",
+            │       "sdk_language": "typescript"
+            │     },
+            │     "toolName": "get_store_price"
+            │   }
+            ├── get_store_price [tool]
+            │   input: {
+            │     "item": "laptop",
+            │     "store": "StoreB"
+            │   }
+            │   output: "{\"item\":\"laptop\",\"price\":1099,\"store\":\"StoreB\"}"
+            │   metadata: {
+            │     "braintrust": {
+            │       "integration_name": "ai-sdk",
+            │       "sdk_language": "typescript"
+            │     },
+            │     "toolName": "get_store_price"
+            │   }
+            ├── doGenerate [llm]
+            │   input: {
+            │     "instructions": "You are a shopping assistant. Use the tools before answering pricing questions.",
+            │     "maxOutputTokens": 256,
+            │     "messages": [
+            │       {
+            │         "content": "I need help comparing laptop prices before checkout.",
+            │         "role": "user"
+            │       },
+            │       {
+            │         "content": "I can compare store prices and apply a discount code.",
+            │         "role": "assistant"
+            │       },
+            │       {
+            │         "content": "Call get_store_price for a laptop at StoreA and StoreB, then call apply_discount with code SAVE20 for the cheaper price. Finish with the discounted total.",
+            │         "role": "user"
+            │       },
+            │       {
+            │         "content": [
+            │           {
+            │             "input": {
+            │               "item": "laptop",
+            │               "store": "StoreA"
+            │             },
+            │             "providerOptions": {
+            │               "openai": {
+            │                 "itemId": "<itemId:1>"
+            │               }
+            │             },
+            │             "toolName": "get_store_price",
+            │             "type": "tool-call"
+            │           },
+            │           {
+            │             "input": {
+            │               "item": "laptop",
+            │               "store": "StoreB"
+            │             },
+            │             "providerOptions": {
+            │               "openai": {
+            │                 "itemId": "<itemId:2>"
+            │               }
+            │             },
+            │             "toolName": "get_store_price",
+            │             "type": "tool-call"
+            │           }
+            │         ],
+            │         "role": "assistant"
+            │       },
+            │       {
+            │         "content": [
+            │           {
+            │             "output": {
+            │               "type": "text",
+            │               "value": "{\"item\":\"laptop\",\"price\":999,\"store\":\"StoreA\"}"
+            │             },
+            │             "providerOptions": {
+            │               "openai": {
+            │                 "itemId": "<itemId:1>"
+            │               }
+            │             },
+            │             "toolName": "get_store_price",
+            │             "type": "tool-result"
+            │           },
+            │           {
+            │             "output": {
+            │               "type": "text",
+            │               "value": "{\"item\":\"laptop\",\"price\":1099,\"store\":\"StoreB\"}"
+            │             },
+            │             "providerOptions": {
+            │               "openai": {
+            │                 "itemId": "<itemId:2>"
+            │               }
+            │             },
+            │             "toolName": "get_store_price",
+            │             "type": "tool-result"
+            │           }
+            │         ],
+            │         "role": "tool"
+            │       }
+            │     ],
+            │     "model": {
+            │       "modelId": "gpt-4o-mini-2024-07-18",
+            │       "provider": "openai.responses"
+            │     },
+            │     "temperature": 0,
+            │     "tools": [
+            │       {
+            │         "description": "Get the price of an item at a store",
+            │         "inputSchema": {
+            │           "$schema": "http://json-schema.org/draft-07/schema#",
+            │           "additionalProperties": false,
+            │           "properties": {
+            │             "item": {
+            │               "description": "The item to price",
+            │               "type": "string"
+            │             },
+            │             "store": {
+            │               "description": "The store name",
+            │               "type": "string"
+            │             }
+            │           },
+            │           "required": [
+            │             "item",
+            │             "store"
+            │           ],
+            │           "type": "object"
+            │         },
+            │         "name": "get_store_price",
+            │         "type": "function"
+            │       },
+            │       {
+            │         "description": "Apply a discount code to a total",
+            │         "inputSchema": {
+            │           "$schema": "http://json-schema.org/draft-07/schema#",
+            │           "additionalProperties": false,
+            │           "properties": {
+            │             "discountCode": {
+            │               "description": "The discount code to apply",
+            │               "type": "string"
+            │             },
+            │             "total": {
+            │               "description": "The original total",
+            │               "type": "number"
+            │             }
+            │           },
+            │           "required": [
+            │             "discountCode",
+            │             "total"
+            │           ],
+            │           "type": "object"
+            │         },
+            │         "name": "apply_discount",
+            │         "type": "function"
+            │       }
+            │     ]
+            │   }
+            │   output: {
+            │     "content": [
+            │       {
+            │         "input": {
+            │           "discountCode": "SAVE20",
+            │           "total": 999
+            │         },
+            │         "providerMetadata": {
+            │           "openai": {
+            │             "itemId": "<itemId:1>"
+            │           }
+            │         },
+            │         "toolName": "apply_discount",
+            │         "type": "tool-call"
+            │       }
+            │     ],
+            │     "finishReason": "tool-calls",
+            │     "response": {},
+            │     "usage": {
+            │       "inputTokenDetails": {
+            │         "cacheReadTokens": 0,
+            │         "noCacheTokens": 260
+            │       },
+            │       "inputTokens": 260,
+            │       "outputTokenDetails": {
+            │         "reasoningTokens": 0,
+            │         "textTokens": 21
+            │       },
+            │       "outputTokens": 21,
+            │       "raw": {
+            │         "input_tokens": 260,
+            │         "input_tokens_details": {
+            │           "cached_tokens": 0
+            │         },
+            │         "output_tokens": 21,
+            │         "output_tokens_details": {
+            │           "reasoning_tokens": 0
+            │         }
+            │       },
+            │       "totalTokens": 281
+            │     }
+            │   }
+            │   metadata: {
+            │     "braintrust": {
+            │       "integration_name": "ai-sdk",
+            │       "sdk_language": "typescript"
+            │     },
+            │     "model": "gpt-4o-mini-2024-07-18",
+            │     "provider": "openai.responses"
+            │   }
+            │   metrics: {
+            │     "completion_tokens": 21,
+            │     "prompt_cached_tokens": 0,
+            │     "prompt_tokens": 260,
+            │     "tokens": 281
+            │   }
+            ├── apply_discount [tool]
+            │   input: {
+            │     "discountCode": "SAVE20",
+            │     "total": 999
+            │   }
+            │   output: "{\"discountCode\":\"SAVE20\",\"finalTotal\":799.2,\"originalTotal\":999}"
+            │   metadata: {
+            │     "braintrust": {
+            │       "integration_name": "ai-sdk",
+            │       "sdk_language": "typescript"
+            │     },
+            │     "toolName": "apply_discount"
+            │   }
+            └── doGenerate [llm]
+                input: {
+                  "instructions": "You are a shopping assistant. Use the tools before answering pricing questions.",
+                  "maxOutputTokens": 256,
+                  "messages": [
+                    {
+                      "content": "I need help comparing laptop prices before checkout.",
+                      "role": "user"
+                    },
+                    {
+                      "content": "I can compare store prices and apply a discount code.",
+                      "role": "assistant"
+                    },
+                    {
+                      "content": "Call get_store_price for a laptop at StoreA and StoreB, then call apply_discount with code SAVE20 for the cheaper price. Finish with the discounted total.",
+                      "role": "user"
+                    },
+                    {
+                      "content": [
+                        {
+                          "input": {
+                            "item": "laptop",
+                            "store": "StoreA"
+                          },
+                          "providerOptions": {
+                            "openai": {
+                              "itemId": "<itemId:1>"
+                            }
+                          },
+                          "toolName": "get_store_price",
+                          "type": "tool-call"
+                        },
+                        {
+                          "input": {
+                            "item": "laptop",
+                            "store": "StoreB"
+                          },
+                          "providerOptions": {
+                            "openai": {
+                              "itemId": "<itemId:2>"
+                            }
+                          },
+                          "toolName": "get_store_price",
+                          "type": "tool-call"
+                        }
+                      ],
+                      "role": "assistant"
+                    },
+                    {
+                      "content": [
+                        {
+                          "output": {
+                            "type": "text",
+                            "value": "{\"item\":\"laptop\",\"price\":999,\"store\":\"StoreA\"}"
+                          },
+                          "providerOptions": {
+                            "openai": {
+                              "itemId": "<itemId:1>"
+                            }
+                          },
+                          "toolName": "get_store_price",
+                          "type": "tool-result"
+                        },
+                        {
+                          "output": {
+                            "type": "text",
+                            "value": "{\"item\":\"laptop\",\"price\":1099,\"store\":\"StoreB\"}"
+                          },
+                          "providerOptions": {
+                            "openai": {
+                              "itemId": "<itemId:2>"
+                            }
+                          },
+                          "toolName": "get_store_price",
+                          "type": "tool-result"
+                        }
+                      ],
+                      "role": "tool"
+                    },
+                    {
+                      "content": [
+                        {
+                          "input": {
+                            "discountCode": "SAVE20",
+                            "total": 999
+                          },
+                          "providerOptions": {
+                            "openai": {
+                              "itemId": "<itemId:3>"
+                            }
+                          },
+                          "toolName": "apply_discount",
+                          "type": "tool-call"
+                        }
+                      ],
+                      "role": "assistant"
+                    },
+                    {
+                      "content": [
+                        {
+                          "output": {
+                            "type": "text",
+                            "value": "{\"discountCode\":\"SAVE20\",\"finalTotal\":799.2,\"originalTotal\":999}"
+                          },
+                          "providerOptions": {
+                            "openai": {
+                              "itemId": "<itemId:3>"
+                            }
+                          },
+                          "toolName": "apply_discount",
+                          "type": "tool-result"
+                        }
+                      ],
+                      "role": "tool"
+                    }
+                  ],
+                  "model": {
+                    "modelId": "gpt-4o-mini-2024-07-18",
+                    "provider": "openai.responses"
+                  },
+                  "temperature": 0,
+                  "tools": [
+                    {
+                      "description": "Get the price of an item at a store",
+                      "inputSchema": {
+                        "$schema": "http://json-schema.org/draft-07/schema#",
+                        "additionalProperties": false,
+                        "properties": {
+                          "item": {
+                            "description": "The item to price",
+                            "type": "string"
+                          },
+                          "store": {
+                            "description": "The store name",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "item",
+                          "store"
+                        ],
+                        "type": "object"
+                      },
+                      "name": "get_store_price",
+                      "type": "function"
+                    },
+                    {
+                      "description": "Apply a discount code to a total",
+                      "inputSchema": {
+                        "$schema": "http://json-schema.org/draft-07/schema#",
+                        "additionalProperties": false,
+                        "properties": {
+                          "discountCode": {
+                            "description": "The discount code to apply",
+                            "type": "string"
+                          },
+                          "total": {
+                            "description": "The original total",
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "discountCode",
+                          "total"
+                        ],
+                        "type": "object"
+                      },
+                      "name": "apply_discount",
+                      "type": "function"
+                    }
+                  ]
+                }
+                output: {
+                  "content": [
+                    {
+                      "providerMetadata": {
+                        "openai": {
+                          "itemId": "<itemId:1>"
+                        }
+                      },
+                      "text": "Here are the prices for the laptop:\n\n- **Store A**: $999\n- **Store B**: $1099\n\nThe cheaper price is from **Store A** at $999. After applying the discount code **SAVE20**, the final total is **$799.20**.",
+                      "type": "text"
+                    }
+                  ],
+                  "finishReason": "stop",
+                  "response": {},
+                  "usage": {
+                    "inputTokenDetails": {
+                      "cacheReadTokens": 0,
+                      "noCacheTokens": 308
+                    },
+                    "inputTokens": 308,
+                    "outputTokenDetails": {
+                      "reasoningTokens": 0,
+                      "textTokens": 62
+                    },
+                    "outputTokens": 62,
+                    "raw": {
+                      "input_tokens": 308,
+                      "input_tokens_details": {
+                        "cached_tokens": 0
+                      },
+                      "output_tokens": 62,
+                      "output_tokens_details": {
+                        "reasoning_tokens": 0
+                      }
+                    },
+                    "totalTokens": 370
+                  }
+                }
+                metadata: {
+                  "braintrust": {
+                    "integration_name": "ai-sdk",
+                    "sdk_language": "typescript"
+                  },
+                  "model": "gpt-4o-mini-2024-07-18",
+                  "provider": "openai.responses"
+                }
+                metrics: {
+                  "completion_tokens": 62,
+                  "prompt_cached_tokens": 0,
+                  "prompt_tokens": 308,
+                  "tokens": 370
+                }

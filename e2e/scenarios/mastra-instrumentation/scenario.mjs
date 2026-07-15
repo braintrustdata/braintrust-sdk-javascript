@@ -1,8 +1,14 @@
-import { Mastra } from "@mastra/core";
-import { Agent } from "@mastra/core/agent";
-import { createMockModel } from "@mastra/core/test-utils/llm-mock";
-import { createTool } from "@mastra/core/tools";
-import { createStep, createWorkflow } from "@mastra/core/workflows";
+const mastraCorePackageName =
+  process.env.MASTRA_CORE_PACKAGE_NAME ?? "mastra-core-v1-latest";
+const { Mastra } = await import(mastraCorePackageName);
+const { Agent } = await import(`${mastraCorePackageName}/agent`);
+const { createMockModel } = await import(
+  `${mastraCorePackageName}/test-utils/llm-mock`
+);
+const { createTool } = await import(`${mastraCorePackageName}/tools`);
+const { createStep, createWorkflow } = await import(
+  `${mastraCorePackageName}/workflows`
+);
 import { z } from "zod";
 import {
   runMain,

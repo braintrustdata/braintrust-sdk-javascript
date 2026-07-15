@@ -255,7 +255,7 @@ function normalizeLegacyV134PayloadSummaryRow(
   let normalizedSummaryRow = summaryRow;
 
   if (
-    snapshotName === "mistral-v1-3-4" &&
+    snapshotName === "mistral-v1" &&
     spanName &&
     unstableLegacyV134SpanNames.has(spanName) &&
     isRecord(summaryRow)
@@ -583,7 +583,7 @@ export function defineMistralInstrumentationAssertions(options: {
         });
         expect(span?.metrics).toMatchObject({
           time_to_first_token: expect.any(Number),
-          ...(options.snapshotName === "mistral-v1-3-4"
+          ...(options.snapshotName === "mistral-v1"
             ? {}
             : {
                 prompt_tokens: expect.any(Number),

@@ -1,0 +1,65 @@
+span_tree:
+└── huggingface-instrumentation-root [task]
+    metadata: {
+      "scenario": "huggingface-instrumentation",
+      "testRunId": "<run:1>"
+    }
+    └── huggingface-chat-operation
+        metadata: {
+          "operation": "chat",
+          "testRunId": "<run:1>"
+        }
+        └── huggingface.chat_completion [llm]
+            input: [
+              {
+                "content": "Reply with exactly OK.",
+                "role": "user"
+              }
+            ]
+            output: [
+              {
+                "content_filter_results": {
+                  "hate": {
+                    "filtered": false
+                  },
+                  "jailbreak": {
+                    "detected": false,
+                    "filtered": false
+                  },
+                  "profanity": {
+                    "detected": false,
+                    "filtered": false
+                  },
+                  "self_harm": {
+                    "filtered": false
+                  },
+                  "sexual": {
+                    "filtered": false
+                  },
+                  "violence": {
+                    "filtered": false
+                  }
+                },
+                "finish_reason": "stop",
+                "index": 0,
+                "message": {
+                  "content": "OK.",
+                  "role": "assistant"
+                }
+              }
+            ]
+            metadata: {
+              "created": 0,
+              "endpointUrl": "<mock-server>/huggingface-router",
+              "id": "<span:1>",
+              "max_tokens": 16,
+              "model": "meta-llama/llama-3.1-8b-instruct",
+              "object": "chat.completion",
+              "provider": "huggingface",
+              "temperature": 0
+            }
+            metrics: {
+              "completion_tokens": 3,
+              "prompt_tokens": 40,
+              "tokens": 43
+            }

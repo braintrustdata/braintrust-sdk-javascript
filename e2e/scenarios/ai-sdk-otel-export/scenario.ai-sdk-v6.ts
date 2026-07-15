@@ -1,5 +1,6 @@
-import { createOpenAI, openai } from "ai-sdk-openai-v6";
-import * as ai from "ai-sdk-v6";
+const aiPackageName = process.env.AI_SDK_PACKAGE_NAME ?? "ai-sdk-v6-latest";
+const openaiPackageName =
+  process.env.AI_SDK_OPENAI_PACKAGE_NAME ?? "ai-sdk-openai-v6-latest";
 import * as z from "zod";
 import {
   getInstalledPackageVersion,
@@ -7,15 +8,20 @@ import {
 } from "../../helpers/scenario-runtime";
 import { runAISDKOtelExport } from "./scenario.impl";
 
-runMain(async () =>
-  runAISDKOtelExport({
+runMain(async () => {
+  const ai = await import(aiPackageName);
+  const { createOpenAI, openai } = await import(openaiPackageName);
+  await runAISDKOtelExport({
     ai,
     createOpenAI,
     maxTokensKey: "maxOutputTokens",
     openai,
-    sdkVersion: await getInstalledPackageVersion(import.meta.url, "ai-sdk-v6"),
+    sdkVersion: await getInstalledPackageVersion(
+      import.meta.url,
+      aiPackageName,
+    ),
     supportsToolExecution: true,
     toolSchemaKey: "inputSchema",
     zod: z,
-  }),
-);
+  });
+});

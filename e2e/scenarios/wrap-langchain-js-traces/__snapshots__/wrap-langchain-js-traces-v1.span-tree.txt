@@ -1,0 +1,1464 @@
+span_tree:
+└── langchain-wrapper-root [task]
+    metadata: {
+      "scenario": "wrap-langchain-js-traces",
+      "testRunId": "<run:1>"
+    }
+    ├── langchain-invoke-operation
+    │   metadata: {
+    │     "operation": "invoke",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── ChatOpenAI [llm]
+    │       input: [
+    │         [
+    │           {
+    │             "id": [
+    │               "langchain_core",
+    │               "messages",
+    │               "HumanMessage"
+    │             ],
+    │             "kwargs": {
+    │               "additional_kwargs": {},
+    │               "content": "Reply with exactly OK.",
+    │               "response_metadata": {}
+    │             },
+    │             "lc": 1,
+    │             "type": "constructor"
+    │           }
+    │         ]
+    │       ]
+    │       output: {
+    │         "generations": [
+    │           [
+    │             {
+    │               "generationInfo": {
+    │                 "finish_reason": "stop"
+    │               },
+    │               "message": {
+    │                 "id": [
+    │                   "langchain_core",
+    │                   "messages",
+    │                   "AIMessage"
+    │                 ],
+    │                 "kwargs": {
+    │                   "additional_kwargs": {},
+    │                   "content": "OK.",
+    │                   "id": "<span:1>",
+    │                   "invalid_tool_calls": [],
+    │                   "response_metadata": {
+    │                     "finish_reason": "stop",
+    │                     "model_name": "gpt-4o-mini-2024-07-18",
+    │                     "model_provider": "openai",
+    │                     "system_fingerprint": "<system_fingerprint>",
+    │                     "tokenUsage": {
+    │                       "completionTokens": 2,
+    │                       "promptTokens": 12,
+    │                       "totalTokens": 14
+    │                     },
+    │                     "usage": {
+    │                       "completion_tokens": 2,
+    │                       "completion_tokens_details": {
+    │                         "accepted_prediction_tokens": 0,
+    │                         "audio_tokens": 0,
+    │                         "reasoning_tokens": 0,
+    │                         "rejected_prediction_tokens": 0
+    │                       },
+    │                       "prompt_tokens": 12,
+    │                       "prompt_tokens_details": {
+    │                         "audio_tokens": 0,
+    │                         "cached_tokens": 0
+    │                       },
+    │                       "total_tokens": 14
+    │                     }
+    │                   },
+    │                   "tool_calls": [],
+    │                   "type": "ai",
+    │                   "usage_metadata": {
+    │                     "input_token_details": {
+    │                       "audio": 0,
+    │                       "cache_read": 0
+    │                     },
+    │                     "input_tokens": 12,
+    │                     "output_token_details": {
+    │                       "audio": 0,
+    │                       "reasoning": 0
+    │                     },
+    │                     "output_tokens": 2,
+    │                     "total_tokens": 14
+    │                   }
+    │                 },
+    │                 "lc": 1,
+    │                 "type": "constructor"
+    │               },
+    │               "text": "OK."
+    │             }
+    │           ]
+    │         ],
+    │         "llmOutput": {
+    │           "tokenUsage": {
+    │             "completionTokens": 2,
+    │             "promptTokens": 12,
+    │             "totalTokens": 14
+    │           }
+    │         }
+    │       }
+    │       metadata: {
+    │         "batch_size": 1,
+    │         "braintrust": {
+    │           "integration_name": "langchain-js",
+    │           "sdk_language": "javascript"
+    │         },
+    │         "invocation_params": {
+    │           "max_tokens": 24,
+    │           "model": "gpt-4o-mini-2024-07-18",
+    │           "stream": false,
+    │           "temperature": 0
+    │         },
+    │         "metadata": {
+    │           "ls_integration": "langchain_chat_model",
+    │           "ls_max_tokens": 24,
+    │           "ls_model_name": "gpt-4o-mini-2024-07-18",
+    │           "ls_model_type": "chat",
+    │           "ls_provider": "openai",
+    │           "ls_temperature": 0,
+    │           "versions": {
+    │             "@langchain/core": "1.2.1",
+    │             "@langchain/openai": "1.3.0"
+    │           }
+    │         },
+    │         "model": "gpt-4o-mini-2024-07-18",
+    │         "options": {},
+    │         "run_id": "<uuid:1>",
+    │         "serialized": {
+    │           "id": [
+    │             "langchain",
+    │             "chat_models",
+    │             "openai",
+    │             "ChatOpenAI"
+    │           ],
+    │           "kwargs": {
+    │             "max_tokens": 24,
+    │             "model": "gpt-4o-mini-2024-07-18",
+    │             "openai_api_key": {
+    │               "id": [
+    │                 "OPENAI_API_KEY"
+    │               ],
+    │               "lc": 1,
+    │               "type": "secret"
+    │             },
+    │             "temperature": 0
+    │           },
+    │           "lc": 1,
+    │           "type": "constructor"
+    │         },
+    │         "tags": []
+    │       }
+    │       metrics: {
+    │         "completion_tokens": 2,
+    │         "prompt_cached_tokens": 0,
+    │         "prompt_tokens": 12,
+    │         "total_tokens": 14
+    │       }
+    ├── langchain-chain-operation
+    │   metadata: {
+    │     "operation": "chain",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── RunnableSequence [task]
+    │       input: {
+    │         "word": "PARIS"
+    │       }
+    │       output: {
+    │         "id": [
+    │           "langchain_core",
+    │           "messages",
+    │           "AIMessage"
+    │         ],
+    │         "kwargs": {
+    │           "additional_kwargs": {},
+    │           "content": "PARIS",
+    │           "id": "<span:1>",
+    │           "invalid_tool_calls": [],
+    │           "response_metadata": {
+    │             "finish_reason": "stop",
+    │             "model_name": "gpt-4o-mini-2024-07-18",
+    │             "model_provider": "openai",
+    │             "system_fingerprint": "<system_fingerprint>",
+    │             "tokenUsage": {
+    │               "completionTokens": 2,
+    │               "promptTokens": 18,
+    │               "totalTokens": 20
+    │             },
+    │             "usage": {
+    │               "completion_tokens": 2,
+    │               "completion_tokens_details": {
+    │                 "accepted_prediction_tokens": 0,
+    │                 "audio_tokens": 0,
+    │                 "reasoning_tokens": 0,
+    │                 "rejected_prediction_tokens": 0
+    │               },
+    │               "prompt_tokens": 18,
+    │               "prompt_tokens_details": {
+    │                 "audio_tokens": 0,
+    │                 "cached_tokens": 0
+    │               },
+    │               "total_tokens": 20
+    │             }
+    │           },
+    │           "tool_calls": [],
+    │           "type": "ai",
+    │           "usage_metadata": {
+    │             "input_token_details": {
+    │               "audio": 0,
+    │               "cache_read": 0
+    │             },
+    │             "input_tokens": 18,
+    │             "output_token_details": {
+    │               "audio": 0,
+    │               "reasoning": 0
+    │             },
+    │             "output_tokens": 2,
+    │             "total_tokens": 20
+    │           }
+    │         },
+    │         "lc": 1,
+    │         "type": "constructor"
+    │       }
+    │       metadata: {
+    │         "braintrust": {
+    │           "integration_name": "langchain-js",
+    │           "sdk_language": "javascript"
+    │         },
+    │         "metadata": {},
+    │         "run_id": "<uuid:1>",
+    │         "serialized": {
+    │           "id": [
+    │             "langchain_core",
+    │             "runnables",
+    │             "RunnableSequence"
+    │           ],
+    │           "kwargs": {
+    │             "first": {
+    │               "id": [
+    │                 "langchain_core",
+    │                 "prompts",
+    │                 "chat",
+    │                 "ChatPromptTemplate"
+    │               ],
+    │               "kwargs": {
+    │                 "input_variables": [
+    │                   "word"
+    │                 ],
+    │                 "messages": [
+    │                   {
+    │                     "id": [
+    │                       "langchain_core",
+    │                       "prompts",
+    │                       "chat",
+    │                       "HumanMessagePromptTemplate"
+    │                     ],
+    │                     "kwargs": {
+    │                       "prompt": {
+    │                         "id": [
+    │                           "langchain_core",
+    │                           "prompts",
+    │                           "prompt",
+    │                           "PromptTemplate"
+    │                         ],
+    │                         "kwargs": {
+    │                           "input_variables": [
+    │                             "word"
+    │                           ],
+    │                           "template": "Reply with the single word {word} and nothing else.",
+    │                           "template_format": "f-string"
+    │                         },
+    │                         "lc": 1,
+    │                         "type": "constructor"
+    │                       }
+    │                     },
+    │                     "lc": 1,
+    │                     "type": "constructor"
+    │                   }
+    │                 ]
+    │               },
+    │               "lc": 1,
+    │               "type": "constructor"
+    │             },
+    │             "last": {
+    │               "id": [
+    │                 "langchain",
+    │                 "chat_models",
+    │                 "openai",
+    │                 "ChatOpenAI"
+    │               ],
+    │               "kwargs": {
+    │                 "max_tokens": 32,
+    │                 "model": "gpt-4o-mini-2024-07-18",
+    │                 "openai_api_key": {
+    │                   "id": [
+    │                     "OPENAI_API_KEY"
+    │                   ],
+    │                   "lc": 1,
+    │                   "type": "secret"
+    │                 },
+    │                 "temperature": 0
+    │               },
+    │               "lc": 1,
+    │               "type": "constructor"
+    │             }
+    │           },
+    │           "lc": 1,
+    │           "type": "constructor"
+    │         },
+    │         "tags": []
+    │       }
+    │       ├── ChatPromptTemplate [task]
+    │       │   input: {
+    │       │     "word": "PARIS"
+    │       │   }
+    │       │   output: {
+    │       │     "id": [
+    │       │       "langchain_core",
+    │       │       "prompt_values",
+    │       │       "ChatPromptValue"
+    │       │     ],
+    │       │     "kwargs": {
+    │       │       "messages": [
+    │       │         {
+    │       │           "id": [
+    │       │             "langchain_core",
+    │       │             "messages",
+    │       │             "HumanMessage"
+    │       │           ],
+    │       │           "kwargs": {
+    │       │             "additional_kwargs": {},
+    │       │             "content": "Reply with the single word PARIS and nothing else.",
+    │       │             "response_metadata": {}
+    │       │           },
+    │       │           "lc": 1,
+    │       │           "type": "constructor"
+    │       │         }
+    │       │       ]
+    │       │     },
+    │       │     "lc": 1,
+    │       │     "type": "constructor"
+    │       │   }
+    │       │   metadata: {
+    │       │     "braintrust": {
+    │       │       "integration_name": "langchain-js",
+    │       │       "sdk_language": "javascript"
+    │       │     },
+    │       │     "metadata": {},
+    │       │     "name": "ChatPromptTemplate",
+    │       │     "parent_run_id": "<uuid:2>",
+    │       │     "run_id": "<uuid:1>",
+    │       │     "run_type": "prompt",
+    │       │     "serialized": {
+    │       │       "id": [
+    │       │         "langchain_core",
+    │       │         "prompts",
+    │       │         "chat",
+    │       │         "ChatPromptTemplate"
+    │       │       ],
+    │       │       "kwargs": {
+    │       │         "input_variables": [
+    │       │           "word"
+    │       │         ],
+    │       │         "messages": [
+    │       │           {
+    │       │             "id": [
+    │       │               "langchain_core",
+    │       │               "prompts",
+    │       │               "chat",
+    │       │               "HumanMessagePromptTemplate"
+    │       │             ],
+    │       │             "kwargs": {
+    │       │               "prompt": {
+    │       │                 "id": [
+    │       │                   "langchain_core",
+    │       │                   "prompts",
+    │       │                   "prompt",
+    │       │                   "PromptTemplate"
+    │       │                 ],
+    │       │                 "kwargs": {
+    │       │                   "input_variables": [
+    │       │                     "word"
+    │       │                   ],
+    │       │                   "template": "Reply with the single word {word} and nothing else.",
+    │       │                   "template_format": "f-string"
+    │       │                 },
+    │       │                 "lc": 1,
+    │       │                 "type": "constructor"
+    │       │               }
+    │       │             },
+    │       │             "lc": 1,
+    │       │             "type": "constructor"
+    │       │           }
+    │       │         ]
+    │       │       },
+    │       │       "lc": 1,
+    │       │       "type": "constructor"
+    │       │     },
+    │       │     "tags": [
+    │       │       "seq:step:1"
+    │       │     ]
+    │       │   }
+    │       └── ChatOpenAI [llm]
+    │           input: [
+    │             [
+    │               {
+    │                 "id": [
+    │                   "langchain_core",
+    │                   "messages",
+    │                   "HumanMessage"
+    │                 ],
+    │                 "kwargs": {
+    │                   "additional_kwargs": {},
+    │                   "content": "Reply with the single word PARIS and nothing else.",
+    │                   "response_metadata": {}
+    │                 },
+    │                 "lc": 1,
+    │                 "type": "constructor"
+    │               }
+    │             ]
+    │           ]
+    │           output: {
+    │             "generations": [
+    │               [
+    │                 {
+    │                   "generationInfo": {
+    │                     "finish_reason": "stop"
+    │                   },
+    │                   "message": {
+    │                     "id": [
+    │                       "langchain_core",
+    │                       "messages",
+    │                       "AIMessage"
+    │                     ],
+    │                     "kwargs": {
+    │                       "additional_kwargs": {},
+    │                       "content": "PARIS",
+    │                       "id": "<span:1>",
+    │                       "invalid_tool_calls": [],
+    │                       "response_metadata": {
+    │                         "finish_reason": "stop",
+    │                         "model_name": "gpt-4o-mini-2024-07-18",
+    │                         "model_provider": "openai",
+    │                         "system_fingerprint": "<system_fingerprint>",
+    │                         "tokenUsage": {
+    │                           "completionTokens": 2,
+    │                           "promptTokens": 18,
+    │                           "totalTokens": 20
+    │                         },
+    │                         "usage": {
+    │                           "completion_tokens": 2,
+    │                           "completion_tokens_details": {
+    │                             "accepted_prediction_tokens": 0,
+    │                             "audio_tokens": 0,
+    │                             "reasoning_tokens": 0,
+    │                             "rejected_prediction_tokens": 0
+    │                           },
+    │                           "prompt_tokens": 18,
+    │                           "prompt_tokens_details": {
+    │                             "audio_tokens": 0,
+    │                             "cached_tokens": 0
+    │                           },
+    │                           "total_tokens": 20
+    │                         }
+    │                       },
+    │                       "tool_calls": [],
+    │                       "type": "ai",
+    │                       "usage_metadata": {
+    │                         "input_token_details": {
+    │                           "audio": 0,
+    │                           "cache_read": 0
+    │                         },
+    │                         "input_tokens": 18,
+    │                         "output_token_details": {
+    │                           "audio": 0,
+    │                           "reasoning": 0
+    │                         },
+    │                         "output_tokens": 2,
+    │                         "total_tokens": 20
+    │                       }
+    │                     },
+    │                     "lc": 1,
+    │                     "type": "constructor"
+    │                   },
+    │                   "text": "PARIS"
+    │                 }
+    │               ]
+    │             ],
+    │             "llmOutput": {
+    │               "tokenUsage": {
+    │                 "completionTokens": 2,
+    │                 "promptTokens": 18,
+    │                 "totalTokens": 20
+    │               }
+    │             }
+    │           }
+    │           metadata: {
+    │             "batch_size": 1,
+    │             "braintrust": {
+    │               "integration_name": "langchain-js",
+    │               "sdk_language": "javascript"
+    │             },
+    │             "invocation_params": {
+    │               "max_tokens": 32,
+    │               "model": "gpt-4o-mini-2024-07-18",
+    │               "stream": false,
+    │               "temperature": 0
+    │             },
+    │             "metadata": {
+    │               "ls_integration": "langchain_chat_model",
+    │               "ls_max_tokens": 32,
+    │               "ls_model_name": "gpt-4o-mini-2024-07-18",
+    │               "ls_model_type": "chat",
+    │               "ls_provider": "openai",
+    │               "ls_temperature": 0,
+    │               "versions": {
+    │                 "@langchain/core": "1.2.1",
+    │                 "@langchain/openai": "1.3.0"
+    │               }
+    │             },
+    │             "model": "gpt-4o-mini-2024-07-18",
+    │             "options": {},
+    │             "parent_run_id": "<uuid:2>",
+    │             "run_id": "<uuid:1>",
+    │             "serialized": {
+    │               "id": [
+    │                 "langchain",
+    │                 "chat_models",
+    │                 "openai",
+    │                 "ChatOpenAI"
+    │               ],
+    │               "kwargs": {
+    │                 "max_tokens": 32,
+    │                 "model": "gpt-4o-mini-2024-07-18",
+    │                 "openai_api_key": {
+    │                   "id": [
+    │                     "OPENAI_API_KEY"
+    │                   ],
+    │                   "lc": 1,
+    │                   "type": "secret"
+    │                 },
+    │                 "temperature": 0
+    │               },
+    │               "lc": 1,
+    │               "type": "constructor"
+    │             },
+    │             "tags": [
+    │               "seq:step:2"
+    │             ]
+    │           }
+    │           metrics: {
+    │             "completion_tokens": 2,
+    │             "prompt_cached_tokens": 0,
+    │             "prompt_tokens": 18,
+    │             "total_tokens": 20
+    │           }
+    ├── langchain-stream-operation
+    │   metadata: {
+    │     "operation": "stream",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── ChatOpenAI [llm]
+    │       input: [
+    │         [
+    │           {
+    │             "id": [
+    │               "langchain_core",
+    │               "messages",
+    │               "HumanMessage"
+    │             ],
+    │             "kwargs": {
+    │               "additional_kwargs": {},
+    │               "content": "Count from 1 to 3 and include the words one two three.",
+    │               "response_metadata": {}
+    │             },
+    │             "lc": 1,
+    │             "type": "constructor"
+    │           }
+    │         ]
+    │       ]
+    │       output: {
+    │         "generations": [
+    │           [
+    │             {
+    │               "generationInfo": {
+    │                 "completion": 0,
+    │                 "finish_reason": "stop",
+    │                 "model_name": "gpt-4o-mini-2024-07-18",
+    │                 "prompt": 0,
+    │                 "service_tier": "default",
+    │                 "system_fingerprint": "<system_fingerprint>"
+    │               },
+    │               "message": {
+    │                 "id": [
+    │                   "langchain_core",
+    │                   "messages",
+    │                   "AIMessageChunk"
+    │                 ],
+    │                 "kwargs": {
+    │                   "additional_kwargs": {},
+    │                   "content": "One, two, three.",
+    │                   "id": "<span:1>",
+    │                   "invalid_tool_calls": [],
+    │                   "response_metadata": {
+    │                     "completion": 0,
+    │                     "finish_reason": "stop",
+    │                     "model_name": "gpt-4o-mini-2024-07-18",
+    │                     "model_provider": "openai",
+    │                     "prompt": 0,
+    │                     "service_tier": "default",
+    │                     "system_fingerprint": "<system_fingerprint>",
+    │                     "usage": {
+    │                       "completion_tokens": 6,
+    │                       "completion_tokens_details": {
+    │                         "accepted_prediction_tokens": 0,
+    │                         "audio_tokens": 0,
+    │                         "reasoning_tokens": 0,
+    │                         "rejected_prediction_tokens": 0
+    │                       },
+    │                       "prompt_tokens": 22,
+    │                       "prompt_tokens_details": {
+    │                         "audio_tokens": 0,
+    │                         "cached_tokens": 0
+    │                       },
+    │                       "total_tokens": 28
+    │                     }
+    │                   },
+    │                   "tool_call_chunks": [],
+    │                   "tool_calls": [],
+    │                   "usage_metadata": {
+    │                     "input_token_details": {
+    │                       "audio": 0,
+    │                       "cache_read": 0
+    │                     },
+    │                     "input_tokens": 22,
+    │                     "output_token_details": {
+    │                       "audio": 0,
+    │                       "reasoning": 0
+    │                     },
+    │                     "output_tokens": 6,
+    │                     "total_tokens": 28
+    │                   }
+    │                 },
+    │                 "lc": 1,
+    │                 "type": "constructor"
+    │               },
+    │               "text": "One, two, three."
+    │             }
+    │           ]
+    │         ],
+    │         "llmOutput": {
+    │           "tokenUsage": {
+    │             "completionTokens": 6,
+    │             "promptTokens": 22,
+    │             "totalTokens": 28
+    │           }
+    │         }
+    │       }
+    │       metadata: {
+    │         "batch_size": 1,
+    │         "braintrust": {
+    │           "integration_name": "langchain-js",
+    │           "sdk_language": "javascript"
+    │         },
+    │         "invocation_params": {
+    │           "max_tokens": 32,
+    │           "model": "gpt-4o-mini-2024-07-18",
+    │           "stream": true,
+    │           "stream_options": {
+    │             "include_usage": true
+    │           },
+    │           "temperature": 0
+    │         },
+    │         "metadata": {
+    │           "ls_integration": "langchain_chat_model",
+    │           "ls_max_tokens": 32,
+    │           "ls_model_name": "gpt-4o-mini-2024-07-18",
+    │           "ls_model_type": "chat",
+    │           "ls_provider": "openai",
+    │           "ls_temperature": 0,
+    │           "versions": {
+    │             "@langchain/core": "1.2.1",
+    │             "@langchain/openai": "1.3.0"
+    │           }
+    │         },
+    │         "model": "gpt-4o-mini-2024-07-18",
+    │         "options": {},
+    │         "run_id": "<uuid:1>",
+    │         "serialized": {
+    │           "id": [
+    │             "langchain",
+    │             "chat_models",
+    │             "openai",
+    │             "ChatOpenAI"
+    │           ],
+    │           "kwargs": {
+    │             "max_tokens": 32,
+    │             "model": "gpt-4o-mini-2024-07-18",
+    │             "openai_api_key": {
+    │               "id": [
+    │                 "OPENAI_API_KEY"
+    │               ],
+    │               "lc": 1,
+    │               "type": "secret"
+    │             },
+    │             "streaming": true,
+    │             "temperature": 0
+    │           },
+    │           "lc": 1,
+    │           "type": "constructor"
+    │         },
+    │         "tags": []
+    │       }
+    │       metrics: {
+    │         "completion_tokens": 6,
+    │         "prompt_cached_tokens": 0,
+    │         "prompt_tokens": 22,
+    │         "time_to_first_token": 0,
+    │         "total_tokens": 28
+    │       }
+    ├── langchain-tool-operation
+    │   metadata: {
+    │     "operation": "tool",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── ChatOpenAI [llm]
+    │       input: [
+    │         [
+    │           {
+    │             "id": [
+    │               "langchain_core",
+    │               "messages",
+    │               "HumanMessage"
+    │             ],
+    │             "kwargs": {
+    │               "additional_kwargs": {},
+    │               "content": "Use the get_weather tool for Paris, France. Do not answer from memory.",
+    │               "response_metadata": {}
+    │             },
+    │             "lc": 1,
+    │             "type": "constructor"
+    │           }
+    │         ]
+    │       ]
+    │       output: {
+    │         "generations": [
+    │           [
+    │             {
+    │               "generationInfo": {
+    │                 "finish_reason": "tool_calls"
+    │               },
+    │               "message": {
+    │                 "id": [
+    │                   "langchain_core",
+    │                   "messages",
+    │                   "AIMessage"
+    │                 ],
+    │                 "kwargs": {
+    │                   "additional_kwargs": {
+    │                     "tool_calls": [
+    │                       {
+    │                         "function": {
+    │                           "arguments": "{\"location\":\"Paris, France\"}",
+    │                           "name": "get_weather"
+    │                         },
+    │                         "id": "<span:2>",
+    │                         "type": "function"
+    │                       }
+    │                     ]
+    │                   },
+    │                   "content": "",
+    │                   "id": "<span:1>",
+    │                   "invalid_tool_calls": [],
+    │                   "response_metadata": {
+    │                     "finish_reason": "tool_calls",
+    │                     "model_name": "gpt-4o-mini-2024-07-18",
+    │                     "model_provider": "openai",
+    │                     "system_fingerprint": "<system_fingerprint>",
+    │                     "tokenUsage": {
+    │                       "completionTokens": 16,
+    │                       "promptTokens": 72,
+    │                       "totalTokens": 88
+    │                     },
+    │                     "usage": {
+    │                       "completion_tokens": 16,
+    │                       "completion_tokens_details": {
+    │                         "accepted_prediction_tokens": 0,
+    │                         "audio_tokens": 0,
+    │                         "reasoning_tokens": 0,
+    │                         "rejected_prediction_tokens": 0
+    │                       },
+    │                       "prompt_tokens": 72,
+    │                       "prompt_tokens_details": {
+    │                         "audio_tokens": 0,
+    │                         "cached_tokens": 0
+    │                       },
+    │                       "total_tokens": 88
+    │                     }
+    │                   },
+    │                   "tool_calls": [
+    │                     {
+    │                       "args": {
+    │                         "location": "Paris, France"
+    │                       },
+    │                       "id": "<span:2>",
+    │                       "name": "get_weather",
+    │                       "type": "tool_call"
+    │                     }
+    │                   ],
+    │                   "type": "ai",
+    │                   "usage_metadata": {
+    │                     "input_token_details": {
+    │                       "audio": 0,
+    │                       "cache_read": 0
+    │                     },
+    │                     "input_tokens": 72,
+    │                     "output_token_details": {
+    │                       "audio": 0,
+    │                       "reasoning": 0
+    │                     },
+    │                     "output_tokens": 16,
+    │                     "total_tokens": 88
+    │                   }
+    │                 },
+    │                 "lc": 1,
+    │                 "type": "constructor"
+    │               },
+    │               "text": ""
+    │             }
+    │           ]
+    │         ],
+    │         "llmOutput": {
+    │           "tokenUsage": {
+    │             "completionTokens": 16,
+    │             "promptTokens": 72,
+    │             "totalTokens": 88
+    │           }
+    │         }
+    │       }
+    │       metadata: {
+    │         "batch_size": 1,
+    │         "braintrust": {
+    │           "integration_name": "langchain-js",
+    │           "sdk_language": "javascript"
+    │         },
+    │         "invocation_params": {
+    │           "max_tokens": 128,
+    │           "model": "gpt-4o-mini-2024-07-18",
+    │           "stream": false,
+    │           "temperature": 0,
+    │           "tools": [
+    │             {
+    │               "function": {
+    │                 "description": "Get the current weather in a given location",
+    │                 "name": "get_weather",
+    │                 "parameters": {
+    │                   "$schema": "http://json-schema.org/draft-07/schema#",
+    │                   "additionalProperties": false,
+    │                   "properties": {
+    │                     "location": {
+    │                       "description": "The city and state or city and country",
+    │                       "type": "string"
+    │                     }
+    │                   },
+    │                   "required": [
+    │                     "location"
+    │                   ],
+    │                   "type": "object"
+    │                 }
+    │               },
+    │               "type": "function"
+    │             }
+    │           ]
+    │         },
+    │         "metadata": {
+    │           "ls_integration": "langchain_chat_model",
+    │           "ls_max_tokens": 128,
+    │           "ls_model_name": "gpt-4o-mini-2024-07-18",
+    │           "ls_model_type": "chat",
+    │           "ls_provider": "openai",
+    │           "ls_temperature": 0,
+    │           "versions": {
+    │             "@langchain/core": "1.2.1",
+    │             "@langchain/openai": "1.3.0"
+    │           }
+    │         },
+    │         "model": "gpt-4o-mini-2024-07-18",
+    │         "options": {
+    │           "tools": [
+    │             {
+    │               "function": {
+    │                 "description": "Get the current weather in a given location",
+    │                 "name": "get_weather",
+    │                 "parameters": {
+    │                   "$schema": "http://json-schema.org/draft-07/schema#",
+    │                   "additionalProperties": false,
+    │                   "properties": {
+    │                     "location": {
+    │                       "description": "The city and state or city and country",
+    │                       "type": "string"
+    │                     }
+    │                   },
+    │                   "required": [
+    │                     "location"
+    │                   ],
+    │                   "type": "object"
+    │                 }
+    │               },
+    │               "type": "function"
+    │             }
+    │           ]
+    │         },
+    │         "run_id": "<uuid:1>",
+    │         "serialized": {
+    │           "id": [
+    │             "langchain",
+    │             "chat_models",
+    │             "openai",
+    │             "ChatOpenAI"
+    │           ],
+    │           "kwargs": {
+    │             "max_tokens": 128,
+    │             "model": "gpt-4o-mini-2024-07-18",
+    │             "openai_api_key": {
+    │               "id": [
+    │                 "OPENAI_API_KEY"
+    │               ],
+    │               "lc": 1,
+    │               "type": "secret"
+    │             },
+    │             "temperature": 0
+    │           },
+    │           "lc": 1,
+    │           "type": "constructor"
+    │         },
+    │         "tags": []
+    │       }
+    │       metrics: {
+    │         "completion_tokens": 16,
+    │         "prompt_cached_tokens": 0,
+    │         "prompt_tokens": 72,
+    │         "total_tokens": 88
+    │       }
+    └── langchain-tool-result-operation
+        metadata: {
+          "operation": "tool-result",
+          "testRunId": "<run:1>"
+        }
+        ├── ChatOpenAI [llm]
+        │   input: [
+        │     [
+        │       {
+        │         "id": [
+        │           "langchain_core",
+        │           "messages",
+        │           "HumanMessage"
+        │         ],
+        │         "kwargs": {
+        │           "additional_kwargs": {},
+        │           "content": "What is 127 multiplied by 49? Use the calculate tool.",
+        │           "response_metadata": {}
+        │         },
+        │         "lc": 1,
+        │         "type": "constructor"
+        │       }
+        │     ]
+        │   ]
+        │   output: {
+        │     "generations": [
+        │       [
+        │         {
+        │           "generationInfo": {
+        │             "finish_reason": "tool_calls"
+        │           },
+        │           "message": {
+        │             "id": [
+        │               "langchain_core",
+        │               "messages",
+        │               "AIMessage"
+        │             ],
+        │             "kwargs": {
+        │               "additional_kwargs": {
+        │                 "tool_calls": [
+        │                   {
+        │                     "function": {
+        │                       "arguments": "{\"operation\":\"multiply\",\"a\":127,\"b\":49}",
+        │                       "name": "calculate"
+        │                     },
+        │                     "id": "<span:2>",
+        │                     "type": "function"
+        │                   }
+        │                 ]
+        │               },
+        │               "content": "",
+        │               "id": "<span:1>",
+        │               "invalid_tool_calls": [],
+        │               "response_metadata": {
+        │                 "finish_reason": "tool_calls",
+        │                 "model_name": "gpt-4o-mini-2024-07-18",
+        │                 "model_provider": "openai",
+        │                 "system_fingerprint": "<system_fingerprint>",
+        │                 "tokenUsage": {
+        │                   "completionTokens": 21,
+        │                   "promptTokens": 76,
+        │                   "totalTokens": 97
+        │                 },
+        │                 "usage": {
+        │                   "completion_tokens": 21,
+        │                   "completion_tokens_details": {
+        │                     "accepted_prediction_tokens": 0,
+        │                     "audio_tokens": 0,
+        │                     "reasoning_tokens": 0,
+        │                     "rejected_prediction_tokens": 0
+        │                   },
+        │                   "prompt_tokens": 76,
+        │                   "prompt_tokens_details": {
+        │                     "audio_tokens": 0,
+        │                     "cached_tokens": 0
+        │                   },
+        │                   "total_tokens": 97
+        │                 }
+        │               },
+        │               "tool_calls": [
+        │                 {
+        │                   "args": {
+        │                     "a": 127,
+        │                     "b": 49,
+        │                     "operation": "multiply"
+        │                   },
+        │                   "id": "<span:2>",
+        │                   "name": "calculate",
+        │                   "type": "tool_call"
+        │                 }
+        │               ],
+        │               "type": "ai",
+        │               "usage_metadata": {
+        │                 "input_token_details": {
+        │                   "audio": 0,
+        │                   "cache_read": 0
+        │                 },
+        │                 "input_tokens": 76,
+        │                 "output_token_details": {
+        │                   "audio": 0,
+        │                   "reasoning": 0
+        │                 },
+        │                 "output_tokens": 21,
+        │                 "total_tokens": 97
+        │               }
+        │             },
+        │             "lc": 1,
+        │             "type": "constructor"
+        │           },
+        │           "text": ""
+        │         }
+        │       ]
+        │     ],
+        │     "llmOutput": {
+        │       "tokenUsage": {
+        │         "completionTokens": 21,
+        │         "promptTokens": 76,
+        │         "totalTokens": 97
+        │       }
+        │     }
+        │   }
+        │   metadata: {
+        │     "batch_size": 1,
+        │     "braintrust": {
+        │       "integration_name": "langchain-js",
+        │       "sdk_language": "javascript"
+        │     },
+        │     "invocation_params": {
+        │       "max_tokens": 128,
+        │       "model": "gpt-4o-mini-2024-07-18",
+        │       "stream": false,
+        │       "temperature": 0,
+        │       "tools": [
+        │         {
+        │           "function": {
+        │             "description": "Perform a mathematical calculation",
+        │             "name": "calculate",
+        │             "parameters": {
+        │               "$schema": "http://json-schema.org/draft-07/schema#",
+        │               "additionalProperties": false,
+        │               "properties": {
+        │                 "a": {
+        │                   "type": "number"
+        │                 },
+        │                 "b": {
+        │                   "type": "number"
+        │                 },
+        │                 "operation": {
+        │                   "enum": [
+        │                     "add",
+        │                     "subtract",
+        │                     "multiply",
+        │                     "divide"
+        │                   ],
+        │                   "type": "string"
+        │                 }
+        │               },
+        │               "required": [
+        │                 "operation",
+        │                 "a",
+        │                 "b"
+        │               ],
+        │               "type": "object"
+        │             }
+        │           },
+        │           "type": "function"
+        │         }
+        │       ]
+        │     },
+        │     "metadata": {
+        │       "ls_integration": "langchain_chat_model",
+        │       "ls_max_tokens": 128,
+        │       "ls_model_name": "gpt-4o-mini-2024-07-18",
+        │       "ls_model_type": "chat",
+        │       "ls_provider": "openai",
+        │       "ls_temperature": 0,
+        │       "versions": {
+        │         "@langchain/core": "1.2.1",
+        │         "@langchain/openai": "1.3.0"
+        │       }
+        │     },
+        │     "model": "gpt-4o-mini-2024-07-18",
+        │     "options": {
+        │       "tools": [
+        │         {
+        │           "function": {
+        │             "description": "Perform a mathematical calculation",
+        │             "name": "calculate",
+        │             "parameters": {
+        │               "$schema": "http://json-schema.org/draft-07/schema#",
+        │               "additionalProperties": false,
+        │               "properties": {
+        │                 "a": {
+        │                   "type": "number"
+        │                 },
+        │                 "b": {
+        │                   "type": "number"
+        │                 },
+        │                 "operation": {
+        │                   "enum": [
+        │                     "add",
+        │                     "subtract",
+        │                     "multiply",
+        │                     "divide"
+        │                   ],
+        │                   "type": "string"
+        │                 }
+        │               },
+        │               "required": [
+        │                 "operation",
+        │                 "a",
+        │                 "b"
+        │               ],
+        │               "type": "object"
+        │             }
+        │           },
+        │           "type": "function"
+        │         }
+        │       ]
+        │     },
+        │     "run_id": "<uuid:1>",
+        │     "serialized": {
+        │       "id": [
+        │         "langchain",
+        │         "chat_models",
+        │         "openai",
+        │         "ChatOpenAI"
+        │       ],
+        │       "kwargs": {
+        │         "max_tokens": 128,
+        │         "model": "gpt-4o-mini-2024-07-18",
+        │         "openai_api_key": {
+        │           "id": [
+        │             "OPENAI_API_KEY"
+        │           ],
+        │           "lc": 1,
+        │           "type": "secret"
+        │         },
+        │         "temperature": 0
+        │       },
+        │       "lc": 1,
+        │       "type": "constructor"
+        │     },
+        │     "tags": []
+        │   }
+        │   metrics: {
+        │     "completion_tokens": 21,
+        │     "prompt_cached_tokens": 0,
+        │     "prompt_tokens": 76,
+        │     "total_tokens": 97
+        │   }
+        └── ChatOpenAI [llm]
+            input: [
+              [
+                {
+                  "id": [
+                    "langchain_core",
+                    "messages",
+                    "HumanMessage"
+                  ],
+                  "kwargs": {
+                    "additional_kwargs": {},
+                    "content": "What is 127 multiplied by 49? Use the calculate tool.",
+                    "response_metadata": {}
+                  },
+                  "lc": 1,
+                  "type": "constructor"
+                },
+                {
+                  "id": [
+                    "langchain_core",
+                    "messages",
+                    "AIMessage"
+                  ],
+                  "kwargs": {
+                    "additional_kwargs": {},
+                    "content": "",
+                    "invalid_tool_calls": [],
+                    "response_metadata": {},
+                    "tool_calls": [
+                      {
+                        "args": {
+                          "a": 127,
+                          "b": 49,
+                          "operation": "multiply"
+                        },
+                        "id": "<span:1>",
+                        "name": "calculate",
+                        "type": "tool_call"
+                      }
+                    ]
+                  },
+                  "lc": 1,
+                  "type": "constructor"
+                },
+                {
+                  "id": [
+                    "langchain_core",
+                    "messages",
+                    "ToolMessage"
+                  ],
+                  "kwargs": {
+                    "additional_kwargs": {},
+                    "content": "6223",
+                    "response_metadata": {},
+                    "tool_call_id": "call_CntJIwZg1SsU86VjMiAhxghE"
+                  },
+                  "lc": 1,
+                  "type": "constructor"
+                }
+              ]
+            ]
+            output: {
+              "generations": [
+                [
+                  {
+                    "generationInfo": {
+                      "finish_reason": "stop"
+                    },
+                    "message": {
+                      "id": [
+                        "langchain_core",
+                        "messages",
+                        "AIMessage"
+                      ],
+                      "kwargs": {
+                        "additional_kwargs": {},
+                        "content": "127 multiplied by 49 is 6223.",
+                        "id": "<span:1>",
+                        "invalid_tool_calls": [],
+                        "response_metadata": {
+                          "finish_reason": "stop",
+                          "model_name": "gpt-4o-mini-2024-07-18",
+                          "model_provider": "openai",
+                          "system_fingerprint": "<system_fingerprint>",
+                          "tokenUsage": {
+                            "completionTokens": 11,
+                            "promptTokens": 106,
+                            "totalTokens": 117
+                          },
+                          "usage": {
+                            "completion_tokens": 11,
+                            "completion_tokens_details": {
+                              "accepted_prediction_tokens": 0,
+                              "audio_tokens": 0,
+                              "reasoning_tokens": 0,
+                              "rejected_prediction_tokens": 0
+                            },
+                            "prompt_tokens": 106,
+                            "prompt_tokens_details": {
+                              "audio_tokens": 0,
+                              "cached_tokens": 0
+                            },
+                            "total_tokens": 117
+                          }
+                        },
+                        "tool_calls": [],
+                        "type": "ai",
+                        "usage_metadata": {
+                          "input_token_details": {
+                            "audio": 0,
+                            "cache_read": 0
+                          },
+                          "input_tokens": 106,
+                          "output_token_details": {
+                            "audio": 0,
+                            "reasoning": 0
+                          },
+                          "output_tokens": 11,
+                          "total_tokens": 117
+                        }
+                      },
+                      "lc": 1,
+                      "type": "constructor"
+                    },
+                    "text": "127 multiplied by 49 is 6223."
+                  }
+                ]
+              ],
+              "llmOutput": {
+                "tokenUsage": {
+                  "completionTokens": 11,
+                  "promptTokens": 106,
+                  "totalTokens": 117
+                }
+              }
+            }
+            metadata: {
+              "batch_size": 1,
+              "braintrust": {
+                "integration_name": "langchain-js",
+                "sdk_language": "javascript"
+              },
+              "invocation_params": {
+                "max_tokens": 128,
+                "model": "gpt-4o-mini-2024-07-18",
+                "stream": false,
+                "temperature": 0,
+                "tools": [
+                  {
+                    "function": {
+                      "description": "Perform a mathematical calculation",
+                      "name": "calculate",
+                      "parameters": {
+                        "$schema": "http://json-schema.org/draft-07/schema#",
+                        "additionalProperties": false,
+                        "properties": {
+                          "a": {
+                            "type": "number"
+                          },
+                          "b": {
+                            "type": "number"
+                          },
+                          "operation": {
+                            "enum": [
+                              "add",
+                              "subtract",
+                              "multiply",
+                              "divide"
+                            ],
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "operation",
+                          "a",
+                          "b"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "type": "function"
+                  }
+                ]
+              },
+              "metadata": {
+                "ls_integration": "langchain_chat_model",
+                "ls_max_tokens": 128,
+                "ls_model_name": "gpt-4o-mini-2024-07-18",
+                "ls_model_type": "chat",
+                "ls_provider": "openai",
+                "ls_temperature": 0,
+                "versions": {
+                  "@langchain/core": "1.2.1",
+                  "@langchain/openai": "1.3.0"
+                }
+              },
+              "model": "gpt-4o-mini-2024-07-18",
+              "options": {
+                "tools": [
+                  {
+                    "function": {
+                      "description": "Perform a mathematical calculation",
+                      "name": "calculate",
+                      "parameters": {
+                        "$schema": "http://json-schema.org/draft-07/schema#",
+                        "additionalProperties": false,
+                        "properties": {
+                          "a": {
+                            "type": "number"
+                          },
+                          "b": {
+                            "type": "number"
+                          },
+                          "operation": {
+                            "enum": [
+                              "add",
+                              "subtract",
+                              "multiply",
+                              "divide"
+                            ],
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "operation",
+                          "a",
+                          "b"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "type": "function"
+                  }
+                ]
+              },
+              "run_id": "<uuid:1>",
+              "serialized": {
+                "id": [
+                  "langchain",
+                  "chat_models",
+                  "openai",
+                  "ChatOpenAI"
+                ],
+                "kwargs": {
+                  "max_tokens": 128,
+                  "model": "gpt-4o-mini-2024-07-18",
+                  "openai_api_key": {
+                    "id": [
+                      "OPENAI_API_KEY"
+                    ],
+                    "lc": 1,
+                    "type": "secret"
+                  },
+                  "temperature": 0
+                },
+                "lc": 1,
+                "type": "constructor"
+              },
+              "tags": []
+            }
+            metrics: {
+              "completion_tokens": 11,
+              "prompt_cached_tokens": 0,
+              "prompt_tokens": 106,
+              "total_tokens": 117
+            }

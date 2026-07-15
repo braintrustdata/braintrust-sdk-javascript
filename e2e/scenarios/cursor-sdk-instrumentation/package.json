@@ -2,14 +2,18 @@
   "name": "@braintrust/e2e-cursor-sdk-instrumentation",
   "private": true,
   "braintrustScenario": {
-    "canary": {
+    "bump": {
       "dependencies": {
-        "cursor-sdk-v1": "@cursor/sdk@latest"
+        "cursor-sdk-v1-latest": {
+          "package": "@cursor/sdk",
+          "range": ">=1 <1.0.13"
+        }
       }
     }
   },
   "dependencies": {
-    "cursor-sdk-v1": "npm:@cursor/sdk@1.0.12"
+    "cursor-sdk-v1": "npm:@cursor/sdk@1.0.12",
+    "cursor-sdk-v1-latest": "npm:@cursor/sdk@1.0.12"
   },
   "pnpm": {
     "overrides": {

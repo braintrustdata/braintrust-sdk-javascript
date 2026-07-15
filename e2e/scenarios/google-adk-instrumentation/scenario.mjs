@@ -1,4 +1,6 @@
-import * as adk from "@google/adk";
+const googleADKPackageName =
+  process.env.GOOGLE_ADK_PACKAGE_NAME ?? "google-adk-sdk-v1-latest";
+const adk = await import(googleADKPackageName);
 import { runMain } from "../../helpers/provider-runtime.mjs";
 import { runAutoGoogleADKInstrumentation } from "./scenario.impl.mjs";
 

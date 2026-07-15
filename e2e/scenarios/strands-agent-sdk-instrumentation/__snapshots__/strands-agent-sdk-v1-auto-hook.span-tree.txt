@@ -1,0 +1,563 @@
+span_tree:
+└── strands-agent-sdk-instrumentation-root [task]
+    metadata: {
+      "scenario": "strands-agent-sdk-instrumentation"
+    }
+    ├── strands-agent-invoke-operation
+    │   metadata: {
+    │     "operation": "agent-invoke"
+    │   }
+    │   └── Agent: weather-agent [task]
+    │       input: "Use lookup_weather for Vienna, then answer exactly STRANDS_AGENT_TOOL_OK."
+    │       output: {
+    │         "content": [
+    │           {
+    │             "text": "STRANDS_AGENT_TOOL_OK"
+    │           }
+    │         ],
+    │         "metadata": {
+    │           "usage": {
+    │             "inputTokens": 127,
+    │             "outputTokens": 6,
+    │             "totalTokens": 133
+    │           }
+    │         },
+    │         "role": "assistant"
+    │       }
+    │       metadata: {
+    │         "model": "gpt-4o-mini-2024-07-18",
+    │         "provider": "openai",
+    │         "strands.agent.id": "weather-agent",
+    │         "strands.agent.name": "weather-agent",
+    │         "strands.operation": "Agent.stream",
+    │         "strands.stop_reason": "endTurn"
+    │       }
+    │       metrics: {
+    │         "completion_tokens": 21,
+    │         "duration": "<duration>",
+    │         "prompt_tokens": 213,
+    │         "tokens": 234
+    │       }
+    │       ├── Strands model: gpt-4o-mini-2024-07-18 [llm]
+    │       │   metadata: {
+    │       │     "model": "gpt-4o-mini-2024-07-18",
+    │       │     "provider": "openai",
+    │       │     "strands.operation": "model.stream",
+    │       │     "strands.stop_reason": "toolUse"
+    │       │   }
+    │       │   metrics: {
+    │       │     "completion_tokens": 15,
+    │       │     "duration": "<duration>",
+    │       │     "prompt_tokens": 86,
+    │       │     "tokens": 101
+    │       │   }
+    │       ├── tool: lookup_weather [tool]
+    │       │   input: {
+    │       │     "city": "Vienna"
+    │       │   }
+    │       │   output: {
+    │       │     "toolResult": {
+    │       │       "content": [
+    │       │         {
+    │       │           "json": {
+    │       │             "city": "Vienna",
+    │       │             "forecast": "sunny",
+    │       │             "marker": "STRANDS_TOOL_OK"
+    │       │           }
+    │       │         }
+    │       │       ],
+    │       │       "status": "success",
+    │       │       "toolUseId": "<tool-call-id>"
+    │       │     }
+    │       │   }
+    │       │   metadata: {
+    │       │     "gen_ai.tool.name": "lookup_weather",
+    │       │     "provider": "strands",
+    │       │     "strands.operation": "tool.call",
+    │       │     "strands.tool.name": "lookup_weather"
+    │       │   }
+    │       │   metrics: {
+    │       │     "duration": "<duration>"
+    │       │   }
+    │       └── Strands model: gpt-4o-mini-2024-07-18 [llm]
+    │           metadata: {
+    │             "model": "gpt-4o-mini-2024-07-18",
+    │             "provider": "openai",
+    │             "strands.operation": "model.stream",
+    │             "strands.stop_reason": "endTurn"
+    │           }
+    │           metrics: {
+    │             "completion_tokens": 6,
+    │             "duration": "<duration>",
+    │             "prompt_tokens": 127,
+    │             "tokens": 133
+    │           }
+    ├── strands-agent-document-operation
+    │   metadata: {
+    │     "operation": "agent-document"
+    │   }
+    │   └── Agent: document-agent [task]
+    │       input: [
+    │         {
+    │           "document": {
+    │             "format": "pdf",
+    │             "name": "strands-regression.pdf",
+    │             "source": {
+    │               "bytes": {
+    │                 "content_type": "application/pdf",
+    │                 "filename": "strands-regression.pdf",
+    │                 "key": "<uuid:1>",
+    │                 "type": "braintrust_attachment"
+    │               }
+    │             }
+    │           }
+    │         },
+    │         {
+    │           "text": "Reply exactly STRANDS_DOCUMENT_OK."
+    │         }
+    │       ]
+    │       output: {
+    │         "content": [
+    │           {
+    │             "text": "STRANDS_DOCUMENT_OK."
+    │           }
+    │         ],
+    │         "metadata": {
+    │           "usage": {
+    │             "inputTokens": 247,
+    │             "outputTokens": 5,
+    │             "totalTokens": 252
+    │           }
+    │         },
+    │         "role": "assistant"
+    │       }
+    │       metadata: {
+    │         "model": "gpt-4o-mini-2024-07-18",
+    │         "provider": "openai",
+    │         "strands.agent.id": "document-agent",
+    │         "strands.agent.name": "document-agent",
+    │         "strands.operation": "Agent.stream",
+    │         "strands.stop_reason": "endTurn"
+    │       }
+    │       metrics: {
+    │         "completion_tokens": 5,
+    │         "duration": "<duration>",
+    │         "prompt_tokens": 247,
+    │         "tokens": 252
+    │       }
+    │       └── Strands model: gpt-4o-mini-2024-07-18 [llm]
+    │           metadata: {
+    │             "model": "gpt-4o-mini-2024-07-18",
+    │             "provider": "openai",
+    │             "strands.operation": "model.stream",
+    │             "strands.stop_reason": "endTurn"
+    │           }
+    │           metrics: {
+    │             "completion_tokens": 5,
+    │             "duration": "<duration>",
+    │             "prompt_tokens": 247,
+    │             "tokens": 252
+    │           }
+    ├── strands-agent-image-operation
+    │   metadata: {
+    │     "operation": "agent-image"
+    │   }
+    │   └── Agent: image-agent [task]
+    │       input: [
+    │         {
+    │           "image": {
+    │             "format": "png",
+    │             "source": {
+    │               "bytes": {
+    │                 "content_type": "image/png",
+    │                 "filename": "image.png",
+    │                 "key": "<uuid:1>",
+    │                 "type": "braintrust_attachment"
+    │               }
+    │             }
+    │           }
+    │         },
+    │         {
+    │           "text": "Reply exactly STRANDS_IMAGE_OK."
+    │         }
+    │       ]
+    │       output: {
+    │         "content": [
+    │           {
+    │             "text": "STRANDS_IMAGE_OK."
+    │           }
+    │         ],
+    │         "metadata": {
+    │           "usage": {
+    │             "inputTokens": 8525,
+    │             "outputTokens": 5,
+    │             "totalTokens": 8530
+    │           }
+    │         },
+    │         "role": "assistant"
+    │       }
+    │       metadata: {
+    │         "model": "gpt-4o-mini-2024-07-18",
+    │         "provider": "openai",
+    │         "strands.agent.id": "image-agent",
+    │         "strands.agent.name": "image-agent",
+    │         "strands.operation": "Agent.stream",
+    │         "strands.stop_reason": "endTurn"
+    │       }
+    │       metrics: {
+    │         "completion_tokens": 5,
+    │         "duration": "<duration>",
+    │         "prompt_tokens": 8525,
+    │         "tokens": 8530
+    │       }
+    │       └── Strands model: gpt-4o-mini-2024-07-18 [llm]
+    │           metadata: {
+    │             "model": "gpt-4o-mini-2024-07-18",
+    │             "provider": "openai",
+    │             "strands.operation": "model.stream",
+    │             "strands.stop_reason": "endTurn"
+    │           }
+    │           metrics: {
+    │             "completion_tokens": 5,
+    │             "duration": "<duration>",
+    │             "prompt_tokens": 8525,
+    │             "tokens": 8530
+    │           }
+    ├── strands-agent-stream-operation
+    │   metadata: {
+    │     "operation": "agent-stream"
+    │   }
+    │   └── Agent: stream-agent [task]
+    │       input: "Reply exactly STRANDS_AGENT_STREAM_OK."
+    │       output: {
+    │         "content": [
+    │           {
+    │             "text": "STRANDS_AGENT_STREAM_OK."
+    │           }
+    │         ],
+    │         "metadata": {
+    │           "usage": {
+    │             "inputTokens": 27,
+    │             "outputTokens": 6,
+    │             "totalTokens": 33
+    │           }
+    │         },
+    │         "role": "assistant"
+    │       }
+    │       metadata: {
+    │         "model": "gpt-4o-mini-2024-07-18",
+    │         "provider": "openai",
+    │         "strands.agent.id": "stream-agent",
+    │         "strands.agent.name": "stream-agent",
+    │         "strands.operation": "Agent.stream",
+    │         "strands.stop_reason": "endTurn"
+    │       }
+    │       metrics: {
+    │         "completion_tokens": 6,
+    │         "duration": "<duration>",
+    │         "prompt_tokens": 27,
+    │         "tokens": 33
+    │       }
+    │       └── Strands model: gpt-4o-mini-2024-07-18 [llm]
+    │           metadata: {
+    │             "model": "gpt-4o-mini-2024-07-18",
+    │             "provider": "openai",
+    │             "strands.operation": "model.stream",
+    │             "strands.stop_reason": "endTurn"
+    │           }
+    │           metrics: {
+    │             "completion_tokens": 6,
+    │             "duration": "<duration>",
+    │             "prompt_tokens": 27,
+    │             "tokens": 33
+    │           }
+    ├── strands-graph-invoke-operation
+    │   metadata: {
+    │     "operation": "graph-invoke"
+    │   }
+    │   └── Strands Graph [task]
+    │       input: "Have the first node finish, then have the writer answer exactly STRANDS_GRAPH_OK."
+    │       output: "STRANDS_GRAPH_OK"
+    │       metadata: {
+    │         "provider": "strands",
+    │         "strands.handoffs": [
+    │           {
+    │             "source": "graph-researcher",
+    │             "targets": [
+    │               "graph-writer"
+    │             ]
+    │           }
+    │         ],
+    │         "strands.operation": "Graph.stream",
+    │         "strands.orchestrator.id": "weather-graph",
+    │         "strands.status": "COMPLETED"
+    │       }
+    │       metrics: {
+    │         "completion_tokens": 8,
+    │         "duration": "<duration>",
+    │         "prompt_tokens": 81,
+    │         "tokens": 89
+    │       }
+    │       ├── node: graph-researcher [task]
+    │       │   output: "GRAPH_RESEARCH_DONE"
+    │       │   metadata: {
+    │       │     "provider": "strands",
+    │       │     "strands.node.id": "graph-researcher",
+    │       │     "strands.node.status": "COMPLETED",
+    │       │     "strands.node.type": "agentNode",
+    │       │     "strands.operation": "node.call"
+    │       │   }
+    │       │   metrics: {
+    │       │     "completion_tokens": 4,
+    │       │     "duration": "<duration>",
+    │       │     "prompt_tokens": 35,
+    │       │     "strands.node.duration_ms": "<duration>",
+    │       │     "tokens": 39
+    │       │   }
+    │       │   └── Agent: graph-researcher [task]
+    │       │       input: "Have the first node finish, then have the writer answer exactly STRANDS_GRAPH_OK."
+    │       │       output: {
+    │       │         "content": [
+    │       │           {
+    │       │             "text": "GRAPH_RESEARCH_DONE"
+    │       │           }
+    │       │         ],
+    │       │         "metadata": {
+    │       │           "usage": {
+    │       │             "inputTokens": 35,
+    │       │             "outputTokens": 4,
+    │       │             "totalTokens": 39
+    │       │           }
+    │       │         },
+    │       │         "role": "assistant"
+    │       │       }
+    │       │       metadata: {
+    │       │         "model": "gpt-4o-mini-2024-07-18",
+    │       │         "provider": "openai",
+    │       │         "strands.agent.id": "graph-researcher",
+    │       │         "strands.agent.name": "graph-researcher",
+    │       │         "strands.operation": "Agent.stream",
+    │       │         "strands.stop_reason": "endTurn"
+    │       │       }
+    │       │       metrics: {
+    │       │         "completion_tokens": 4,
+    │       │         "duration": "<duration>",
+    │       │         "prompt_tokens": 35,
+    │       │         "tokens": 39
+    │       │       }
+    │       │       └── Strands model: gpt-4o-mini-2024-07-18 [llm]
+    │       │           metadata: {
+    │       │             "model": "gpt-4o-mini-2024-07-18",
+    │       │             "provider": "openai",
+    │       │             "strands.operation": "model.stream",
+    │       │             "strands.stop_reason": "endTurn"
+    │       │           }
+    │       │           metrics: {
+    │       │             "completion_tokens": 4,
+    │       │             "duration": "<duration>",
+    │       │             "prompt_tokens": 35,
+    │       │             "tokens": 39
+    │       │           }
+    │       └── node: graph-writer [task]
+    │           output: "STRANDS_GRAPH_OK"
+    │           metadata: {
+    │             "provider": "strands",
+    │             "strands.node.id": "graph-writer",
+    │             "strands.node.status": "COMPLETED",
+    │             "strands.node.type": "agentNode",
+    │             "strands.operation": "node.call"
+    │           }
+    │           metrics: {
+    │             "completion_tokens": 4,
+    │             "duration": "<duration>",
+    │             "prompt_tokens": 46,
+    │             "strands.node.duration_ms": "<duration>",
+    │             "tokens": 50
+    │           }
+    │           └── Agent: graph-writer [task]
+    │               input: [
+    │                 {
+    │                   "text": "Have the first node finish, then have the writer answer exactly STRANDS_GRAPH_OK."
+    │                 },
+    │                 {
+    │                   "text": "[node: graph-researcher]"
+    │                 },
+    │                 {
+    │                   "text": "GRAPH_RESEARCH_DONE"
+    │                 }
+    │               ]
+    │               output: {
+    │                 "content": [
+    │                   {
+    │                     "text": "STRANDS_GRAPH_OK"
+    │                   }
+    │                 ],
+    │                 "metadata": {
+    │                   "usage": {
+    │                     "inputTokens": 46,
+    │                     "outputTokens": 4,
+    │                     "totalTokens": 50
+    │                   }
+    │                 },
+    │                 "role": "assistant"
+    │               }
+    │               metadata: {
+    │                 "model": "gpt-4o-mini-2024-07-18",
+    │                 "provider": "openai",
+    │                 "strands.agent.id": "graph-writer",
+    │                 "strands.agent.name": "graph-writer",
+    │                 "strands.operation": "Agent.stream",
+    │                 "strands.stop_reason": "endTurn"
+    │               }
+    │               metrics: {
+    │                 "completion_tokens": 4,
+    │                 "duration": "<duration>",
+    │                 "prompt_tokens": 46,
+    │                 "tokens": 50
+    │               }
+    │               └── Strands model: gpt-4o-mini-2024-07-18 [llm]
+    │                   metadata: {
+    │                     "model": "gpt-4o-mini-2024-07-18",
+    │                     "provider": "openai",
+    │                     "strands.operation": "model.stream",
+    │                     "strands.stop_reason": "endTurn"
+    │                   }
+    │                   metrics: {
+    │                     "completion_tokens": 4,
+    │                     "duration": "<duration>",
+    │                     "prompt_tokens": 46,
+    │                     "tokens": 50
+    │                   }
+    └── strands-swarm-invoke-operation
+        metadata: {
+          "operation": "swarm-invoke"
+        }
+        └── Strands Swarm [task]
+            input: "Route to the finisher, then finish exactly STRANDS_SWARM_OK."
+            output: "STRANDS_SWARM_OK"
+            metadata: {
+              "provider": "strands",
+              "strands.handoffs": [
+                {
+                  "source": "swarm-router",
+                  "targets": [
+                    "swarm-finisher"
+                  ]
+                }
+              ],
+              "strands.operation": "Swarm.stream",
+              "strands.orchestrator.id": "weather-swarm",
+              "strands.status": "COMPLETED"
+            }
+            metrics: {
+              "completion_tokens": 52,
+              "duration": "<duration>",
+              "prompt_tokens": 389,
+              "tokens": 441
+            }
+            ├── node: swarm-router [task]
+            │   output: {
+            │     "agentId": "<agentId:1>",
+            │     "message": "finish with STRANDS_SWARM_OK"
+            │   }
+            │   metadata: {
+            │     "provider": "strands",
+            │     "strands.node.id": "swarm-router",
+            │     "strands.node.status": "COMPLETED",
+            │     "strands.node.type": "agentNode",
+            │     "strands.operation": "node.call"
+            │   }
+            │   metrics: {
+            │     "completion_tokens": 31,
+            │     "duration": "<duration>",
+            │     "prompt_tokens": 198,
+            │     "strands.node.duration_ms": "<duration>",
+            │     "tokens": 229
+            │   }
+            │   └── Agent: swarm-router [task]
+            │       input: "Route to the finisher, then finish exactly STRANDS_SWARM_OK."
+            │       output: {
+            │         "agentId": "<agentId:1>",
+            │         "message": "finish with STRANDS_SWARM_OK"
+            │       }
+            │       metadata: {
+            │         "model": "gpt-4o-mini-2024-07-18",
+            │         "provider": "openai",
+            │         "strands.agent.id": "swarm-router",
+            │         "strands.agent.name": "swarm-router",
+            │         "strands.operation": "Agent.stream",
+            │         "strands.stop_reason": "toolUse"
+            │       }
+            │       metrics: {
+            │         "completion_tokens": 31,
+            │         "duration": "<duration>",
+            │         "prompt_tokens": 198,
+            │         "tokens": 229
+            │       }
+            │       └── Strands model: gpt-4o-mini-2024-07-18 [llm]
+            │           metadata: {
+            │             "model": "gpt-4o-mini-2024-07-18",
+            │             "provider": "openai",
+            │             "strands.operation": "model.stream",
+            │             "strands.stop_reason": "toolUse"
+            │           }
+            │           metrics: {
+            │             "completion_tokens": 31,
+            │             "duration": "<duration>",
+            │             "prompt_tokens": 198,
+            │             "tokens": 229
+            │           }
+            └── node: swarm-finisher [task]
+                output: {
+                  "message": "STRANDS_SWARM_OK"
+                }
+                metadata: {
+                  "provider": "strands",
+                  "strands.node.id": "swarm-finisher",
+                  "strands.node.status": "COMPLETED",
+                  "strands.node.type": "agentNode",
+                  "strands.operation": "node.call"
+                }
+                metrics: {
+                  "completion_tokens": 21,
+                  "duration": "<duration>",
+                  "prompt_tokens": 191,
+                  "strands.node.duration_ms": "<duration>",
+                  "tokens": 212
+                }
+                └── Agent: swarm-finisher [task]
+                    input: [
+                      {
+                        "text": "finish with STRANDS_SWARM_OK"
+                      }
+                    ]
+                    output: {
+                      "message": "STRANDS_SWARM_OK"
+                    }
+                    metadata: {
+                      "model": "gpt-4o-mini-2024-07-18",
+                      "provider": "openai",
+                      "strands.agent.id": "swarm-finisher",
+                      "strands.agent.name": "swarm-finisher",
+                      "strands.operation": "Agent.stream",
+                      "strands.stop_reason": "toolUse"
+                    }
+                    metrics: {
+                      "completion_tokens": 21,
+                      "duration": "<duration>",
+                      "prompt_tokens": 191,
+                      "tokens": 212
+                    }
+                    └── Strands model: gpt-4o-mini-2024-07-18 [llm]
+                        metadata: {
+                          "model": "gpt-4o-mini-2024-07-18",
+                          "provider": "openai",
+                          "strands.operation": "model.stream",
+                          "strands.stop_reason": "toolUse"
+                        }
+                        metrics: {
+                          "completion_tokens": 21,
+                          "duration": "<duration>",
+                          "prompt_tokens": 191,
+                          "tokens": 212
+                        }

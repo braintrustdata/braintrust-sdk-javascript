@@ -1,5 +1,8 @@
-import { createOpenAI, openai } from "ai-sdk-openai-v4";
-import * as ai from "ai-sdk-v4";
+const aiPackageName = process.env.AI_SDK_PACKAGE_NAME ?? "ai-sdk-v4-latest";
+const openaiPackageName =
+  process.env.AI_SDK_OPENAI_PACKAGE_NAME ?? "ai-sdk-openai-v4-latest";
+const ai = await import(aiPackageName);
+const { createOpenAI, openai } = await import(openaiPackageName);
 import { getInstalledPackageVersion } from "../../helpers/provider-runtime.mjs";
 import { runAutoAISDKInstrumentationOrExit } from "./scenario.impl.mjs";
 
@@ -8,7 +11,7 @@ runAutoAISDKInstrumentationOrExit({
   createOpenAI,
   maxTokensKey: "maxTokens",
   openai,
-  sdkVersion: await getInstalledPackageVersion(import.meta.url, "ai-sdk-v4"),
+  sdkVersion: await getInstalledPackageVersion(import.meta.url, aiPackageName),
   supportsEmbedMany: false,
   supportsGenerateObject: true,
   supportsRerank: false,

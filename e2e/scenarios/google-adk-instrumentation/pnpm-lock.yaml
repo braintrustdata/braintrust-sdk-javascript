@@ -23,12 +23,18 @@ importers:
 
   .:
     dependencies:
-      '@google/adk':
-        specifier: 1.0.0
-        version: 1.0.0(@grpc/grpc-js@1.14.3)(@mikro-orm/mariadb@6.6.12(@mikro-orm/core@6.6.12)(pg@8.20.0))(@mikro-orm/mssql@6.6.12(@azure/core-client@1.10.1)(@mikro-orm/core@6.6.12)(mariadb@3.4.5)(pg@8.20.0))(@mikro-orm/mysql@6.6.12(@mikro-orm/core@6.6.12)(@types/node@25.5.2)(mariadb@3.4.5)(pg@8.20.0))(@mikro-orm/postgresql@6.6.12(@mikro-orm/core@6.6.12)(mariadb@3.4.5))(@mikro-orm/sqlite@6.6.12(@mikro-orm/core@6.6.12)(mariadb@3.4.5)(pg@8.20.0))(@opentelemetry/core@2.6.1(@opentelemetry/api@1.9.0))(encoding@0.1.13)
-      google-adk-sdk-v061:
+      google-adk-sdk-v0-latest:
         specifier: npm:@google/adk@0.6.1
         version: '@google/adk@0.6.1(71c6fbe96c14c583afc78db44c65d7e5)'
+      google-adk-sdk-v0:
+        specifier: npm:@google/adk@0.6.1
+        version: '@google/adk@0.6.1(71c6fbe96c14c583afc78db44c65d7e5)'
+      google-adk-sdk-v1-latest:
+        specifier: npm:@google/adk@1.3.0
+        version: '@google/adk@1.3.0(@grpc/grpc-js@1.14.3)(@mikro-orm/mariadb@6.6.12(@mikro-orm/core@6.6.12)(pg@8.20.0))(@mikro-orm/mssql@6.6.12(@azure/core-client@1.10.1)(@mikro-orm/core@6.6.12)(mariadb@3.4.5)(pg@8.20.0))(@mikro-orm/mysql@6.6.12(@mikro-orm/core@6.6.12)(@types/node@25.5.2)(mariadb@3.4.5)(pg@8.20.0))(@mikro-orm/postgresql@6.6.12(@mikro-orm/core@6.6.12)(mariadb@3.4.5))(@mikro-orm/sqlite@6.6.12(@mikro-orm/core@6.6.12)(mariadb@3.4.5)(pg@8.20.0))(@opentelemetry/core@2.6.1(@opentelemetry/api@1.9.0))(encoding@0.1.13)'
+      google-adk-sdk-v1:
+        specifier: npm:@google/adk@1.0.0
+        version: '@google/adk@1.0.0(@grpc/grpc-js@1.14.3)(@mikro-orm/mariadb@6.6.12(@mikro-orm/core@6.6.12)(pg@8.20.0))(@mikro-orm/mssql@6.6.12(@azure/core-client@1.10.1)(@mikro-orm/core@6.6.12)(mariadb@3.4.5)(pg@8.20.0))(@mikro-orm/mysql@6.6.12(@mikro-orm/core@6.6.12)(@types/node@25.5.2)(mariadb@3.4.5)(pg@8.20.0))(@mikro-orm/postgresql@6.6.12(@mikro-orm/core@6.6.12)(mariadb@3.4.5))(@mikro-orm/sqlite@6.6.12(@mikro-orm/core@6.6.12)(mariadb@3.4.5)(pg@8.20.0))(@opentelemetry/core@2.6.1(@opentelemetry/api@1.9.0))(encoding@0.1.13)'
 
 packages:
 
@@ -173,6 +179,10 @@ packages:
     resolution: {integrity: sha512-n2FjE7NAOYyshogdc7KQOl/VZb4sneqPjWouSyia9CMDdMhRX5+RIbqalNmC7LOLzuLAN89VlF2HvG8na9G+zQ==}
     engines: {node: '>=14'}
 
+  '@google-cloud/vertexai@1.12.0':
+    resolution: {integrity: sha512-XMJIk7GIeavFLP5A3YEUlowKa5Y5PZRrnnuTJcqR0k+lFKkv7+IWpdRp+Xbqb8xNDrvQaE2hP2RYPUylyD5EdA==}
+    engines: {node: '>=18.0.0'}
+
   '@google/adk@0.6.1':
     resolution: {integrity: sha512-AHWWM5pEOaZCZq4MASFbnnm5v6L71rt5LRt4qcnyJBjltCTgLevEj7VDGSYNe3FExsSVFyMmc9/1FYpbkjYzAw==}
     peerDependencies:
@@ -198,6 +208,15 @@ packages:
 
   '@google/adk@1.0.0':
     resolution: {integrity: sha512-BRUnfoArCbBmPn4pvTBOYxjQQyDvUR99v40Bl2P5L8G7rgP5NVzpE8HCeKSIziNoU4yW7lgor0GyzaPt0YHQeA==}
+    peerDependencies:
+      '@mikro-orm/mariadb': ^6.6.6
+      '@mikro-orm/mssql': ^6.6.6
+      '@mikro-orm/mysql': ^6.6.6
+      '@mikro-orm/postgresql': ^6.6.6
+      '@mikro-orm/sqlite': ^6.6.6
+
+  '@google/adk@1.3.0':
+    resolution: {integrity: sha512-axo10BpBtB9utsxBL+C2NgTtEDHTQIrn9bYGtBVDmdlhEb3WPGGWmpkGRjHmFLld98u6IbsBjtOhkrTCV1/zfA==}
     peerDependencies:
       '@mikro-orm/mariadb': ^6.6.6
       '@mikro-orm/mssql': ^6.6.6
@@ -532,6 +551,10 @@ packages:
   accepts@2.0.0:
     resolution: {integrity: sha512-5cvg6CtKwfgdmVqY1WIiXKc3Q1bkRqGLi+2W/6ao+6Y7gu/RCwRuAhGEzh5B4KlszSuTLgZYuqFqo5bImjNKng==}
     engines: {node: '>= 0.6'}
+
+  adm-zip@0.5.18:
+    resolution: {integrity: sha512-ufJnssQGbxzLNS1Ho9bCtX4rQKCCvoVuDLHoJyc3F9dOGDB4BkWs2Ci0kv53lqocAEQ/Cbi+I2XCsNYGqVYqng==}
+    engines: {node: '>=12.0'}
 
   agent-base@6.0.2:
     resolution: {integrity: sha512-RZNwNclF7+MS/8bDg70amg32dyeZGZxiDuQmZxKLAlQjr3jGyLx+4Kkk58UO7D2QdgFIQCovuSuZESne6RG6XQ==}
@@ -2460,6 +2483,17 @@ snapshots:
       - encoding
       - supports-color
 
+  '@google-cloud/vertexai@1.12.0(@modelcontextprotocol/sdk@1.29.0(zod@4.3.6))(encoding@0.1.13)':
+    dependencies:
+      '@google/genai': 1.49.0(@modelcontextprotocol/sdk@1.29.0(zod@4.3.6))
+      google-auth-library: 9.15.1(encoding@0.1.13)
+    transitivePeerDependencies:
+      - '@modelcontextprotocol/sdk'
+      - bufferutil
+      - encoding
+      - supports-color
+      - utf-8-validate
+
   '@google/adk@0.6.1(71c6fbe96c14c583afc78db44c65d7e5)':
     dependencies:
       '@a2a-js/sdk': 0.3.13(@grpc/grpc-js@1.14.3)(express@4.22.1)
@@ -2526,6 +2560,52 @@ snapshots:
       '@opentelemetry/sdk-metrics': 2.6.1(@opentelemetry/api@1.9.0)
       '@opentelemetry/sdk-trace-base': 2.6.1(@opentelemetry/api@1.9.0)
       '@opentelemetry/sdk-trace-node': 2.6.1(@opentelemetry/api@1.9.0)
+      express: 4.22.1
+      google-auth-library: 10.6.2
+      js-yaml: 4.1.1
+      jsonpath-plus: 10.4.0
+      lodash-es: 4.18.1
+      winston: 3.19.0
+      zod: 4.3.6
+      zod-to-json-schema: 3.25.2(zod@4.3.6)
+    transitivePeerDependencies:
+      - '@bufbuild/protobuf'
+      - '@cfworker/json-schema'
+      - '@grpc/grpc-js'
+      - '@opentelemetry/core'
+      - bufferutil
+      - encoding
+      - supports-color
+      - utf-8-validate
+
+  '@google/adk@1.3.0(@grpc/grpc-js@1.14.3)(@mikro-orm/mariadb@6.6.12(@mikro-orm/core@6.6.12)(pg@8.20.0))(@mikro-orm/mssql@6.6.12(@azure/core-client@1.10.1)(@mikro-orm/core@6.6.12)(mariadb@3.4.5)(pg@8.20.0))(@mikro-orm/mysql@6.6.12(@mikro-orm/core@6.6.12)(@types/node@25.5.2)(mariadb@3.4.5)(pg@8.20.0))(@mikro-orm/postgresql@6.6.12(@mikro-orm/core@6.6.12)(mariadb@3.4.5))(@mikro-orm/sqlite@6.6.12(@mikro-orm/core@6.6.12)(mariadb@3.4.5)(pg@8.20.0))(@opentelemetry/core@2.6.1(@opentelemetry/api@1.9.0))(encoding@0.1.13)':
+    dependencies:
+      '@a2a-js/sdk': 0.3.13(@grpc/grpc-js@1.14.3)(express@4.22.1)
+      '@google-cloud/opentelemetry-cloud-monitoring-exporter': 0.21.0(@opentelemetry/api@1.9.0)(@opentelemetry/core@2.6.1(@opentelemetry/api@1.9.0))(@opentelemetry/resources@2.6.1(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-metrics@2.6.1(@opentelemetry/api@1.9.0))(encoding@0.1.13)
+      '@google-cloud/opentelemetry-cloud-trace-exporter': 3.0.0(@opentelemetry/api@1.9.0)(@opentelemetry/core@2.6.1(@opentelemetry/api@1.9.0))(@opentelemetry/resources@2.6.1(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.6.1(@opentelemetry/api@1.9.0))(encoding@0.1.13)
+      '@google-cloud/storage': 7.19.0(encoding@0.1.13)
+      '@google-cloud/vertexai': 1.12.0(@modelcontextprotocol/sdk@1.29.0(zod@4.3.6))(encoding@0.1.13)
+      '@google/genai': 1.49.0(@modelcontextprotocol/sdk@1.29.0(zod@4.3.6))
+      '@mikro-orm/core': 6.6.12
+      '@mikro-orm/mariadb': 6.6.12(@mikro-orm/core@6.6.12)(pg@8.20.0)
+      '@mikro-orm/mssql': 6.6.12(@azure/core-client@1.10.1)(@mikro-orm/core@6.6.12)(mariadb@3.4.5)(pg@8.20.0)
+      '@mikro-orm/mysql': 6.6.12(@mikro-orm/core@6.6.12)(@types/node@25.5.2)(mariadb@3.4.5)(pg@8.20.0)
+      '@mikro-orm/postgresql': 6.6.12(@mikro-orm/core@6.6.12)(mariadb@3.4.5)
+      '@mikro-orm/reflection': 6.6.12(@mikro-orm/core@6.6.12)
+      '@mikro-orm/sqlite': 6.6.12(@mikro-orm/core@6.6.12)(mariadb@3.4.5)(pg@8.20.0)
+      '@modelcontextprotocol/sdk': 1.29.0(zod@4.3.6)
+      '@opentelemetry/api': 1.9.0
+      '@opentelemetry/api-logs': 0.205.0
+      '@opentelemetry/exporter-logs-otlp-http': 0.205.0(@opentelemetry/api@1.9.0)
+      '@opentelemetry/exporter-metrics-otlp-http': 0.205.0(@opentelemetry/api@1.9.0)
+      '@opentelemetry/exporter-trace-otlp-http': 0.205.0(@opentelemetry/api@1.9.0)
+      '@opentelemetry/resource-detector-gcp': 0.40.3(@opentelemetry/api@1.9.0)(encoding@0.1.13)
+      '@opentelemetry/resources': 2.6.1(@opentelemetry/api@1.9.0)
+      '@opentelemetry/sdk-logs': 0.205.0(@opentelemetry/api@1.9.0)
+      '@opentelemetry/sdk-metrics': 2.6.1(@opentelemetry/api@1.9.0)
+      '@opentelemetry/sdk-trace-base': 2.6.1(@opentelemetry/api@1.9.0)
+      '@opentelemetry/sdk-trace-node': 2.6.1(@opentelemetry/api@1.9.0)
+      adm-zip: 0.5.18
       express: 4.22.1
       google-auth-library: 10.6.2
       js-yaml: 4.1.1
@@ -3029,6 +3109,8 @@ snapshots:
     dependencies:
       mime-types: 3.0.2
       negotiator: 1.0.0
+
+  adm-zip@0.5.18: {}
 
   agent-base@6.0.2:
     dependencies:

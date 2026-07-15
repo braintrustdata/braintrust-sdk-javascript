@@ -2,18 +2,24 @@
   "name": "@braintrust/e2e-google-genai-instrumentation",
   "private": true,
   "braintrustScenario": {
-    "canary": {
+    "bump": {
       "dependencies": {
-        "@google/genai": "latest"
+        "google-genai-sdk-v1-latest": {
+          "package": "@google/genai",
+          "range": "1"
+        },
+        "google-genai-sdk-v2-latest": {
+          "package": "@google/genai",
+          "range": ">=2 <2.9.0"
+        }
       }
     }
   },
   "dependencies": {
-    "@google/genai": "1.46.0",
-    "google-genai-sdk-v1300": "npm:@google/genai@1.30.0",
-    "google-genai-sdk-v1440": "npm:@google/genai@1.44.0",
-    "google-genai-sdk-v1450": "npm:@google/genai@1.45.0",
-    "google-genai-sdk-v280": "npm:@google/genai@2.8.0"
+    "google-genai-sdk-v1": "npm:@google/genai@1.30.0",
+    "google-genai-sdk-v1-latest": "npm:@google/genai@1.52.0",
+    "google-genai-sdk-v2": "npm:@google/genai@2.8.0",
+    "google-genai-sdk-v2-latest": "npm:@google/genai@2.8.0"
   },
   "pnpm": {
     "overrides": {
