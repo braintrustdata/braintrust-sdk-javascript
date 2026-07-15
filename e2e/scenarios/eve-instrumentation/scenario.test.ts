@@ -36,7 +36,7 @@ describe("eve instrumentation", () => {
           },
           runContext: {
             originalScenarioDir,
-            variantKey: "eve-v0-20-0",
+            variantKey: "eve-v0-22-1",
           },
           scenarioDir,
           timeoutMs: TIMEOUT_MS,
@@ -107,6 +107,8 @@ describe("eve instrumentation", () => {
       scenario: "eve-instrumentation",
       testRunId: expect.any(String),
     });
+    expect(root?.metadata).not.toHaveProperty("model");
+    expect(root?.metadata).not.toHaveProperty("provider");
     expect(root?.metrics?.completion_tokens).toEqual(expect.any(Number));
     expect(root?.metrics?.prompt_tokens).toEqual(expect.any(Number));
     expect(root?.metrics?.tokens).toEqual(expect.any(Number));
@@ -134,11 +136,11 @@ describe("eve instrumentation", () => {
       expect(step.input[0]).toMatchObject({ role: "system" });
       expect(step.metadata).toMatchObject({
         "eve.session_id": root?.metadata?.["eve.session_id"],
-        model: "gpt-5.4-mini",
-        provider: "openai",
         scenario: "eve-instrumentation",
         testRunId: expect.any(String),
       });
+      expect(step.metadata).not.toHaveProperty("model");
+      expect(step.metadata).not.toHaveProperty("provider");
     }
 
     expect(researcher).toBeDefined();
@@ -160,6 +162,8 @@ describe("eve instrumentation", () => {
     expect(childTurn?.span.rootId).toEqual(root?.span.rootId);
     expect(childTurn?.metadata).toMatchObject({
       "eve.session_id": expect.any(String),
+      model: "gpt-5.4-mini",
+      provider: "openai",
       scenario: "eve-instrumentation",
       testRunId: expect.any(String),
     });
@@ -221,9 +225,20 @@ describe("eve instrumentation", () => {
     expect(secondRoot?.metadata).toMatchObject({
       "eve.session_id": root?.metadata?.["eve.session_id"],
     });
+    expect(secondRoot?.metadata).not.toHaveProperty("model");
+    expect(secondRoot?.metadata).not.toHaveProperty("provider");
     expect(secondRoot?.output).toContain("Final answer from read");
     expect(secondSteps).toHaveLength(2);
     expect(secondSteps.map((step) => step.span.type)).toEqual(["llm", "llm"]);
+    for (const step of secondSteps) {
+      expect(step.metadata).toMatchObject({
+        "eve.session_id": secondRoot?.metadata?.["eve.session_id"],
+        scenario: "eve-instrumentation",
+        testRunId: expect.any(String),
+      });
+      expect(step.metadata).not.toHaveProperty("model");
+      expect(step.metadata).not.toHaveProperty("provider");
+    }
     expect(secondSteps[0]?.output).toMatchObject([
       {
         finish_reason: "tool_calls",
@@ -247,6 +262,8 @@ describe("eve instrumentation", () => {
     expect(secondChildTurn?.span.rootId).toEqual(secondRoot?.span.rootId);
     expect(secondChildTurn?.metadata).toMatchObject({
       "eve.session_id": expect.any(String),
+      model: "gpt-5.4-mini",
+      provider: "openai",
     });
     expect(secondChildTurn?.metadata?.["eve.session_id"]).not.toEqual(
       secondRoot?.metadata?.["eve.session_id"],

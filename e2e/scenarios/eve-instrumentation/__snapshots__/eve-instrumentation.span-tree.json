@@ -48,16 +48,14 @@
           ],
           "metadata": {
             "eve.session_id": "<eve.session_id:1>",
-            "model": "gpt-5.4-mini",
-            "provider": "openai",
             "scenario": "eve-instrumentation",
             "testRunId": "<run:1>"
           },
           "metrics": {
             "completion_tokens": 67,
             "prompt_cached_tokens": 0,
-            "prompt_tokens": 6744,
-            "tokens": 6811
+            "prompt_tokens": 2308,
+            "tokens": 2375
           }
         },
         {
@@ -111,7 +109,7 @@
                   },
                   "metrics": {
                     "completion_tokens": 26,
-                    "prompt_cached_tokens": 5504,
+                    "prompt_cached_tokens": 0,
                     "prompt_tokens": 6554,
                     "tokens": 6580
                   }
@@ -230,7 +228,7 @@
               },
               "metrics": {
                 "completion_tokens": 48,
-                "prompt_cached_tokens": 12032,
+                "prompt_cached_tokens": 6528,
                 "prompt_tokens": 13178,
                 "tokens": 13226
               }
@@ -360,16 +358,14 @@
           ],
           "metadata": {
             "eve.session_id": "<eve.session_id:1>",
-            "model": "gpt-5.4-mini",
-            "provider": "openai",
             "scenario": "eve-instrumentation",
             "testRunId": "<run:1>"
           },
           "metrics": {
             "completion_tokens": 66,
-            "prompt_cached_tokens": 6528,
-            "prompt_tokens": 6894,
-            "tokens": 6960
+            "prompt_cached_tokens": 2048,
+            "prompt_tokens": 2458,
+            "tokens": 2524
           }
         }
       ],
@@ -382,16 +378,14 @@
       "output": "Final answer from read: Researcher result: Eve instrumentation — https://eve.dev/docs/guides/instrumentation; read title: Eve instrumentation; URL: https://eve.dev/docs/guides/instrumentation; excerpt: Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace.",
       "metadata": {
         "eve.session_id": "<eve.session_id:1>",
-        "model": "gpt-5.4-mini",
-        "provider": "openai",
         "scenario": "eve-instrumentation",
         "testRunId": "<run:1>"
       },
       "metrics": {
         "completion_tokens": 133,
-        "prompt_cached_tokens": 6528,
-        "prompt_tokens": 13638,
-        "tokens": 13771
+        "prompt_cached_tokens": 2048,
+        "prompt_tokens": 4766,
+        "tokens": 4899
       }
     },
     {
@@ -530,16 +524,14 @@
           ],
           "metadata": {
             "eve.session_id": "<eve.session_id:1>",
-            "model": "gpt-5.4-mini",
-            "provider": "openai",
             "scenario": "eve-instrumentation",
             "testRunId": "<run:1>"
           },
           "metrics": {
             "completion_tokens": 68,
-            "prompt_cached_tokens": 6528,
-            "prompt_tokens": 6977,
-            "tokens": 7045
+            "prompt_cached_tokens": 2048,
+            "prompt_tokens": 2541,
+            "tokens": 2609
           }
         },
         {
@@ -593,7 +585,7 @@
                   },
                   "metrics": {
                     "completion_tokens": 27,
-                    "prompt_cached_tokens": 6528,
+                    "prompt_cached_tokens": 0,
                     "prompt_tokens": 6555,
                     "tokens": 6582
                   }
@@ -712,7 +704,7 @@
               },
               "metrics": {
                 "completion_tokens": 49,
-                "prompt_cached_tokens": 13056,
+                "prompt_cached_tokens": 6528,
                 "prompt_tokens": 13182,
                 "tokens": 13231
               }
@@ -930,16 +922,14 @@
           ],
           "metadata": {
             "eve.session_id": "<eve.session_id:1>",
-            "model": "gpt-5.4-mini",
-            "provider": "openai",
             "scenario": "eve-instrumentation",
             "testRunId": "<run:1>"
           },
           "metrics": {
             "completion_tokens": 66,
-            "prompt_cached_tokens": 0,
-            "prompt_tokens": 7128,
-            "tokens": 7194
+            "prompt_cached_tokens": 2048,
+            "prompt_tokens": 2692,
+            "tokens": 2758
           }
         }
       ],
@@ -952,16 +942,14 @@
       "output": "Final answer from read: Researcher result: Eve instrumentation — https://eve.dev/docs/guides/instrumentation; read title: Eve instrumentation; URL: https://eve.dev/docs/guides/instrumentation; excerpt: Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace.",
       "metadata": {
         "eve.session_id": "<eve.session_id:1>",
-        "model": "gpt-5.4-mini",
-        "provider": "openai",
         "scenario": "eve-instrumentation",
         "testRunId": "<run:1>"
       },
       "metrics": {
         "completion_tokens": 134,
-        "prompt_cached_tokens": 6528,
-        "prompt_tokens": 14105,
-        "tokens": 14239
+        "prompt_cached_tokens": 4096,
+        "prompt_tokens": 5233,
+        "tokens": 5367
       }
     }
   ]

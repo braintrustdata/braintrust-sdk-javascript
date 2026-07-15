@@ -1784,7 +1784,9 @@ function modelMetadataFromRuntime(runtime: unknown): Record<string, unknown> {
     return {};
   }
   const modelId = runtime["modelId"];
-  return typeof modelId === "string" ? modelMetadataFromModelId(modelId) : {};
+  return typeof modelId === "string" && !modelId.trim().startsWith("dynamic:")
+    ? modelMetadataFromModelId(modelId)
+    : {};
 }
 
 function modelMetadataFromModelId(modelId: string): Record<string, unknown> {

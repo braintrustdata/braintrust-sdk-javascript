@@ -118,7 +118,7 @@ describe("braintrustEveHook", () => {
     );
   });
 
-  it("captures Eve instrumentation model input on the matching LLM step", async () => {
+  it("captures model input without unresolved dynamic model metadata", async () => {
     const fakeEve = createFakeDefineState();
     defineState = fakeEve.defineState;
     const instrumentation = braintrustEveInstrumentation({ defineState });
@@ -139,6 +139,16 @@ describe("braintrustEveHook", () => {
       ],
     };
 
+    await emit({
+      data: {
+        runtime: {
+          agentId: "agent-captured-input",
+          eveVersion: "0.22.1",
+          modelId: "dynamic:anthropic/claude-sonnet-5",
+        },
+      },
+      type: "session.started",
+    });
     await emit({
       data: { sequence: 0, turnId: "turn-captured-input" },
       type: "turn.started",
@@ -183,6 +193,12 @@ describe("braintrustEveHook", () => {
     const step = spans.find(
       (span) => span.span_attributes?.name === "eve.step",
     );
+    const session = spans.find(
+      (span) => span.span_attributes?.name === "eve.session",
+    );
+    const turn = spans.find(
+      (span) => span.span_attributes?.name === "eve.turn",
+    );
     expect(step?.input).toEqual([
       {
         content: "Answer with the relevant Eve instrumentation detail.",
@@ -193,6 +209,17 @@ describe("braintrustEveHook", () => {
         role: "user",
       },
     ]);
+    expect(step?.metadata).toEqual({
+      "eve.session_id": "session-captured-input",
+    });
+    expect(session).toBeUndefined();
+    expect(turn?.metadata).toEqual({
+      "eve.session_id": "session-captured-input",
+    });
+    expect(step?.metadata).not.toHaveProperty("model");
+    expect(step?.metadata).not.toHaveProperty("provider");
+    expect(turn?.metadata).not.toHaveProperty("model");
+    expect(turn?.metadata).not.toHaveProperty("provider");
     expect(fakeEve.values.get("braintrust.eve.tracing")).toMatchObject({
       llmInputs: [],
     });

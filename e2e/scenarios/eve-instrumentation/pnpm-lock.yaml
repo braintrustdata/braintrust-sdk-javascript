@@ -12,8 +12,8 @@ importers:
         specifier: 4.0.0-beta.44
         version: 4.0.0-beta.44(zod@4.3.6)
       eve:
-        specifier: 0.20.0
-        version: 0.20.0(ai@7.0.15(zod@4.3.6))
+        specifier: 0.22.1
+        version: 0.22.1(ai@7.0.15(zod@4.3.6))
       zod:
         specifier: 4.3.6
         version: 4.3.6
@@ -240,8 +240,8 @@ packages:
       wrangler:
         optional: true
 
-  eve@0.20.0:
-    resolution: {integrity: sha512-O218jbwGCjg0ygTcBKuIy+c4UqL84/Zyala9qOAEhiMEVUpllUU6VZriQcnQJkkQscpOiOikF0rcWgUABBVrrw==}
+  eve@0.22.1:
+    resolution: {integrity: sha512-4nqy8SEJpS94fM8sxd0Or+irvf/CmS0qENxouKyyegst3Qtn06xZbuSEoI1p7i4wB6sprr95udXh7Ulct6ABrA==}
     engines: {node: '>=24'}
     hasBin: true
     peerDependencies:
@@ -576,7 +576,7 @@ snapshots:
       httpxy: 0.5.4
       srvx: 0.11.21
 
-  eve@0.20.0(ai@7.0.15(zod@4.3.6)):
+  eve@0.22.1(ai@7.0.15(zod@4.3.6)):
     dependencies:
       ai: 7.0.15(zod@4.3.6)
       nitro: 3.0.260610-beta
