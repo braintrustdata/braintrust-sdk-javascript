@@ -2,7 +2,6 @@ import { debugLogger } from "../../debug-logger";
 import {
   NOOP_SPAN,
   _internalStartSpanWithInitialMerge,
-  currentSpan,
   flush,
   updateSpan,
   withCurrent,
@@ -48,10 +47,6 @@ type EveSpanReference = {
   readonly startEvent?: EveSpanStartEvent;
 };
 
-type SessionState = SpanState & {
-  sessionId: string;
-};
-
 type StepState = SpanState & {
   input?: unknown;
   metrics: Record<string, number>;
@@ -71,13 +66,7 @@ type ToolState = SpanState & {
   turnKey: string;
 };
 
-type ParentLineage = {
-  callId: string;
-  rootSessionId: string;
-  sessionId: string;
-};
-
-type EveEntityKind = "session" | "step" | "subagent" | "tool" | "turn";
+type EveEntityKind = "step" | "subagent" | "tool" | "turn";
 
 type EveStateHandle<T> = {
   get(): T;
@@ -195,9 +184,6 @@ class EveBridge {
   constructor(private readonly state: EveStateHandle<EveTraceState>) {}
 
   private eventQueuesBySession = new Map<string, Promise<void>>();
-  private sessionsById = new LRUCache<string, SessionState>({
-    max: MAX_EVE_CACHE_ENTRIES,
-  });
   private completedToolKeys = new LRUCache<string, true>({
     max: MAX_EVE_CACHE_ENTRIES,
   });
@@ -404,7 +390,7 @@ class EveBridge {
   ): Promise<boolean> {
     switch (event.type) {
       case "session.started":
-        await this.handleSessionStarted(event, ctx, hookMetadata);
+        this.handleSessionStarted(event, ctx, hookMetadata);
         return true;
       case "turn.started":
         await this.handleTurnStarted(event, ctx, hookMetadata);
@@ -440,27 +426,27 @@ class EveBridge {
         this.handleStepFailed(event, ctx);
         return true;
       case "turn.completed":
-        await this.handleTurnCompleted(event, ctx);
+        this.handleTurnCompleted(event, ctx);
         return true;
       case "turn.failed":
-        await this.handleTurnFailed(event, ctx);
+        this.handleTurnFailed(event, ctx);
         return true;
       case "session.failed":
-        await this.handleSessionFailed(event, ctx);
+        this.handleSessionFailed(event, ctx);
         return true;
       case "session.completed":
-        await this.handleSessionCompleted(event, ctx);
+        this.handleSessionCompleted(event, ctx);
         return true;
       default:
         return false;
     }
   }
 
-  private async handleSessionStarted(
+  private handleSessionStarted(
     event: Extract<EveHandleMessageStreamEvent, { type: "session.started" }>,
     ctx: unknown,
     hookMetadata?: Record<string, unknown>,
-  ): Promise<void> {
+  ): void {
     const sessionId = sessionIdFromContext(ctx);
     if (!sessionId) {
       return;
@@ -477,7 +463,6 @@ class EveBridge {
         metadata: { ...normalized.metadata, ...metadata },
       };
     });
-    await this.ensureSession(sessionId, ctx, metadata, eventTime(event));
     for (const [key, turn] of this.turnsByKey) {
       if (!key.startsWith(`${sessionId}:`)) {
         continue;
@@ -502,14 +487,12 @@ class EveBridge {
       return;
     }
 
-    const session = await this.ensureSession(
-      sessionId,
-      ctx,
-      hookMetadata ?? {},
-      eventTime(event),
-    );
     const key = turnKey(sessionId, event.data.turnId);
-    const metadata = { ...session.metadata };
+    const metadata = {
+      ...readEveTraceState(this.state).metadata,
+      ...(hookMetadata ?? {}),
+      "eve.session_id": sessionId,
+    };
     const existing = this.turnsByKey.get(key);
     if (existing) {
       existing.metadata = { ...existing.metadata, ...metadata };
@@ -517,7 +500,7 @@ class EveBridge {
       return;
     }
 
-    const span = await this.startTurnSpan(session, event, metadata);
+    const span = await this.startTurnSpan(sessionId, event, ctx, metadata);
     span.log({ metadata });
     this.turnsByKey.set(key, {
       key,
@@ -568,16 +551,13 @@ class EveBridge {
     }
 
     const stepOrdinal = this.stepOrdinal(event);
+    const metadata = { ...turn.metadata };
     const input = consumeCapturedEveModelInput(
       this.state,
       sessionId,
       event.data.turnId,
       event.data.stepIndex,
     );
-    const metadata = {
-      ...turn.metadata,
-      ...(this.sessionsById.get(sessionId)?.metadata ?? {}),
-    };
     const { rowId: eventId, spanId } = await generateEveIds(
       "step",
       sessionId,
@@ -694,6 +674,32 @@ class EveBridge {
       return;
     }
 
+    const toolCallsById = new Map<string, unknown>();
+    if (Array.isArray(step.output) && isObject(step.output[0])) {
+      const message = step.output[0]["message"];
+      if (isObject(message) && Array.isArray(message["tool_calls"])) {
+        for (const toolCall of message["tool_calls"]) {
+          if (isObject(toolCall) && typeof toolCall["id"] === "string") {
+            toolCallsById.set(toolCall["id"], toolCall);
+          }
+        }
+      }
+    }
+    for (const action of traceActions) {
+      const name =
+        action.kind === "tool-call"
+          ? action.toolName
+          : (action.subagentName ?? action.name ?? "agent");
+      toolCallsById.set(action.callId, {
+        function: {
+          arguments: JSON.stringify(action.input),
+          name,
+        },
+        id: action.callId,
+        type: "function",
+      });
+    }
+
     step.output = [
       {
         finish_reason: "tool_calls",
@@ -701,20 +707,7 @@ class EveBridge {
         message: {
           content: null,
           role: "assistant",
-          tool_calls: traceActions.map((action) => {
-            const name =
-              action.kind === "tool-call"
-                ? action.toolName
-                : (action.subagentName ?? action.name ?? "agent");
-            return {
-              function: {
-                arguments: JSON.stringify(action.input),
-                name,
-              },
-              id: action.callId,
-              type: "function",
-            };
-          }),
+          tool_calls: [...toolCallsById.values()],
         },
       },
     ];
@@ -1072,21 +1065,14 @@ class EveBridge {
     });
   }
 
-  private async handleSessionFailed(
+  private handleSessionFailed(
     event: Extract<EveHandleMessageStreamEvent, { type: "session.failed" }>,
     ctx: unknown,
-  ): Promise<void> {
+  ): void {
     const sessionId = event.data.sessionId || sessionIdFromContext(ctx);
     if (!sessionId) {
       return;
     }
-    const session = await this.ensureSession(
-      sessionId,
-      ctx,
-      {},
-      eventTime(event),
-    );
-
     const error = errorFromMessage(
       event.data.message,
       event.data.code,
@@ -1112,27 +1098,16 @@ class EveBridge {
         }
       }
     }
-
-    session.span.log({ error });
-    const endTime = eventTime(event);
-    session.span.end(endTime === undefined ? undefined : { endTime });
   }
 
-  private async handleSessionCompleted(
+  private handleSessionCompleted(
     event: Extract<EveHandleMessageStreamEvent, { type: "session.completed" }>,
     ctx: unknown,
-  ): Promise<void> {
+  ): void {
     const sessionId = sessionIdFromContext(ctx);
     if (!sessionId) {
       return;
     }
-    const session = await this.ensureSession(
-      sessionId,
-      ctx,
-      {},
-      eventTime(event),
-    );
-
     for (const [key, turn] of this.turnsByKey) {
       if (!key.startsWith(`${sessionId}:`)) {
         continue;
@@ -1150,78 +1125,6 @@ class EveBridge {
         tool.endedByTurn = true;
       }
     }
-    session.span.log({ metadata: session.metadata });
-    const endTime = eventTime(event);
-    session.span.end(endTime === undefined ? undefined : { endTime });
-  }
-
-  private async ensureSession(
-    sessionId: string,
-    ctx: unknown,
-    metadata: Record<string, unknown>,
-    startTime?: number,
-  ): Promise<SessionState> {
-    metadata = {
-      ...readEveTraceState(this.state).metadata,
-      ...metadata,
-    };
-    const existing = this.sessionsById.get(sessionId);
-    if (existing) {
-      existing.metadata = { ...existing.metadata, ...metadata };
-      existing.span.log({ metadata: existing.metadata });
-      return existing;
-    }
-
-    const lineage = parentLineageFromContext(ctx);
-    // A child session has its own durable Eve context. It can link to the
-    // deterministic parent subagent span, but must not upsert that row itself.
-    const parentSubagent = lineage
-      ? this.toolsByCallKey.get(toolKey(lineage.sessionId, lineage.callId))
-      : undefined;
-    const activeParent = currentSpan();
-    const [
-      { rowId: eventId, spanId },
-      parentSubagentSpanId,
-      fallbackRootSpanId,
-    ] = await Promise.all([
-      generateEveIds("session", sessionId),
-      lineage
-        ? spanIdForSubagent(lineage.sessionId, lineage.callId)
-        : Promise.resolve(undefined),
-      lineage
-        ? rootSpanIdForSession(lineage.rootSessionId)
-        : rootSpanIdForSession(sessionId),
-    ]);
-
-    const span = await this.startEveSpan({
-      event: {
-        id: eventId,
-        metadata,
-      },
-      name: "eve.session",
-      parentSpanIds:
-        lineage && parentSubagentSpanId
-          ? {
-              rootSpanId: parentSubagent?.span.rootSpanId ?? fallbackRootSpanId,
-              spanId: parentSubagentSpanId,
-            }
-          : !Object.is(activeParent, NOOP_SPAN)
-            ? {
-                rootSpanId: activeParent.rootSpanId,
-                spanId: activeParent.spanId,
-              }
-            : {
-                parentSpanIds: [],
-                rootSpanId: fallbackRootSpanId,
-              },
-      spanAttributes: { type: SpanTypeAttribute.TASK },
-      spanId,
-      startTime,
-    });
-    span.log({ metadata });
-    const session = { metadata, sessionId, span };
-    this.sessionsById.set(sessionId, session);
-    return session;
   }
 
   private async ensureTurn(
@@ -1239,20 +1142,18 @@ class EveBridge {
       return undefined;
     }
 
-    const session = await this.ensureSession(
-      sessionId,
-      ctx,
-      hookMetadata ?? {},
-      eventTime(event),
-    );
     const key = turnKey(sessionId, event.data.turnId);
     const existing = this.turnsByKey.get(key);
     if (existing) {
       return existing;
     }
 
-    const metadata = { ...session.metadata };
-    const span = await this.startTurnSpan(session, event, metadata);
+    const metadata = {
+      ...readEveTraceState(this.state).metadata,
+      ...(hookMetadata ?? {}),
+      "eve.session_id": sessionId,
+    };
+    const span = await this.startTurnSpan(sessionId, event, ctx, metadata);
     span.log({ metadata });
     const state = {
       key,
@@ -1475,18 +1376,45 @@ class EveBridge {
   }
 
   private async startTurnSpan(
-    session: SessionState,
+    sessionId: string,
     event: Extract<
       EveHandleMessageStreamEvent,
       { data: { readonly sequence: number; readonly turnId: string } }
     >,
+    ctx: unknown,
     metadata: Record<string, unknown>,
   ): Promise<EveSpan> {
-    const { rowId: eventId, spanId } = await generateEveIds(
-      "turn",
-      session.sessionId,
-      event.data.turnId,
-    );
+    const session = isObject(ctx) ? ctx["session"] : undefined;
+    const parent = isObject(session) ? session["parent"] : undefined;
+    const parentTurn = isObject(parent) ? parent["turn"] : undefined;
+    const parentLineage =
+      isObject(parent) &&
+      typeof parent["callId"] === "string" &&
+      typeof parent["sessionId"] === "string" &&
+      isObject(parentTurn) &&
+      typeof parentTurn["id"] === "string"
+        ? {
+            callId: parent["callId"],
+            sessionId: parent["sessionId"],
+            turnId: parentTurn["id"],
+          }
+        : undefined;
+    const [{ rowId: eventId, spanId }, rootSpanId, parentSpanId] =
+      await Promise.all([
+        generateEveIds("turn", sessionId, event.data.turnId),
+        deterministicEveId(
+          "eve:root",
+          parentLineage?.sessionId ?? sessionId,
+          parentLineage?.turnId ?? event.data.turnId,
+        ),
+        parentLineage
+          ? deterministicEveId(
+              "eve:subagent",
+              parentLineage.sessionId,
+              parentLineage.callId,
+            )
+          : Promise.resolve(undefined),
+      ]);
 
     return await this.startEveSpan({
       event: {
@@ -1494,10 +1422,9 @@ class EveBridge {
         metadata,
       },
       name: "eve.turn",
-      parentSpanIds: {
-        rootSpanId: session.span.rootSpanId,
-        spanId: session.span.spanId,
-      },
+      parentSpanIds: parentSpanId
+        ? { rootSpanId, spanId: parentSpanId }
+        : { parentSpanIds: [], rootSpanId },
       spanAttributes: { type: SpanTypeAttribute.TASK },
       spanId,
       startTime: eventTime(event),
@@ -1581,7 +1508,6 @@ class EveBridge {
 
   private cleanupSession(sessionId: string): void {
     const keyPrefix = `${sessionId}:`;
-    this.sessionsById.delete(sessionId);
     for (const key of this.turnsByKey.keys()) {
       if (key.startsWith(keyPrefix)) {
         this.turnsByKey.delete(key);
@@ -1899,33 +1825,6 @@ function toolMetadataFromTurn(turn: TurnState): Record<string, unknown> {
   return metadata;
 }
 
-function parentLineageFromContext(ctx: unknown): ParentLineage | undefined {
-  if (!isObject(ctx)) {
-    return undefined;
-  }
-  const session = ctx.session;
-  if (!isObject(session)) {
-    return undefined;
-  }
-  const parent = session["parent"];
-  if (!isObject(parent)) {
-    return undefined;
-  }
-
-  const callId = parent["callId"];
-  const rootSessionId = parent["rootSessionId"];
-  const sessionId = parent["sessionId"];
-  if (
-    typeof callId !== "string" ||
-    typeof rootSessionId !== "string" ||
-    typeof sessionId !== "string"
-  ) {
-    return undefined;
-  }
-
-  return { callId, rootSessionId, sessionId };
-}
-
 function isToolCallAction(
   action: unknown,
 ): action is EveRuntimeToolCallActionRequest {
@@ -2036,10 +1935,6 @@ function toolKey(sessionId: string, callId: string): string {
   return `${sessionId}:${callId}`;
 }
 
-async function rootSpanIdForSession(sessionId: string): Promise<string> {
-  return deterministicEveId("eve:root", sessionId);
-}
-
 async function generateEveIds(
   kind: EveEntityKind,
   ...parts: string[]
@@ -2049,13 +1944,6 @@ async function generateEveIds(
     deterministicEveId(`eve:${kind}`, ...parts),
   ]);
   return { rowId, spanId };
-}
-
-async function spanIdForSubagent(
-  sessionId: string,
-  callId: string,
-): Promise<string> {
-  return deterministicEveId("eve:subagent", sessionId, callId);
 }
 
 async function deterministicEveId(...parts: string[]): Promise<string> {
