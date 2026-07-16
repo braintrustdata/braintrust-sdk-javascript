@@ -1,5 +1,11 @@
 # braintrust
 
+## 3.23.1
+
+### Patch Changes
+
+- feat(claude-agent-sdk): Clean up span metadata (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2240)
+
 ## 3.23.0
 
 ### Minor Changes
