@@ -6,17 +6,17 @@ span_tree:
 │       "role": "user"
 │     }
 │   ]
-│   output: "Final answer from read: Researcher result: Eve instrumentation — https://eve.dev/docs/guides/instrumentation; read title: Eve instrumentation; URL: https://eve.dev/docs/guides/instrumentation; excerpt: Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace."
+│   output: "Final answer from read: researcher result: Eve instrumentation — https://eve.dev/docs/guides/instrumentation; read title: Eve instrumentation; URL: https://eve.dev/docs/guides/instrumentation; excerpt: Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace."
 │   metadata: {
 │     "eve.session_id": "<eve.session_id:1>",
 │     "scenario": "eve-instrumentation",
 │     "testRunId": "<run:1>"
 │   }
 │   metrics: {
-│     "completion_tokens": 133,
-│     "prompt_cached_tokens": 2048,
-│     "prompt_tokens": 4766,
-│     "tokens": 4899
+│     "completion_tokens": 198,
+│     "prompt_cached_tokens": 3584,
+│     "prompt_tokens": 4802,
+│     "tokens": 5000
 │   }
 │   ├── eve.step [llm]
 │   │   input: [
@@ -35,6 +35,11 @@ span_tree:
 │   │       "index": 0,
 │   │       "message": {
 │   │         "content": null,
+│   │         "reasoning": [
+│   │           {
+│   │             "content": "Inspect the current Eve step before continuing."
+│   │           }
+│   │         ],
 │   │         "role": "assistant",
 │   │         "tool_calls": [
 │   │           {
@@ -63,10 +68,10 @@ span_tree:
 │   │     "testRunId": "<run:1>"
 │   │   }
 │   │   metrics: {
-│   │     "completion_tokens": 67,
-│   │     "prompt_cached_tokens": 0,
+│   │     "completion_tokens": 103,
+│   │     "prompt_cached_tokens": 1536,
 │   │     "prompt_tokens": 2308,
-│   │     "tokens": 2375
+│   │     "tokens": 2411
 │   │   }
 │   ├── researcher [tool]
 │   │   input: {
@@ -94,10 +99,10 @@ span_tree:
 │   │         "testRunId": "<run:1>"
 │   │       }
 │   │       metrics: {
-│   │         "completion_tokens": 48,
-│   │         "prompt_cached_tokens": 6528,
-│   │         "prompt_tokens": 13178,
-│   │         "tokens": 13226
+│   │         "completion_tokens": 135,
+│   │         "prompt_cached_tokens": 9984,
+│   │         "prompt_tokens": 13265,
+│   │         "tokens": 13400
 │   │       }
 │   │       ├── eve.step [llm]
 │   │       │   input: [
@@ -116,6 +121,11 @@ span_tree:
 │   │       │       "index": 0,
 │   │       │       "message": {
 │   │       │         "content": null,
+│   │       │         "reasoning": [
+│   │       │           {
+│   │       │             "content": "Inspect the current Eve step before continuing."
+│   │       │           }
+│   │       │         ],
 │   │       │         "role": "assistant",
 │   │       │         "tool_calls": [
 │   │       │           {
@@ -138,10 +148,10 @@ span_tree:
 │   │       │     "testRunId": "<run:1>"
 │   │       │   }
 │   │       │   metrics: {
-│   │       │     "completion_tokens": 26,
-│   │       │     "prompt_cached_tokens": 0,
+│   │       │     "completion_tokens": 113,
+│   │       │     "prompt_cached_tokens": 3456,
 │   │       │     "prompt_tokens": 6554,
-│   │       │     "tokens": 6580
+│   │       │     "tokens": 6667
 │   │       │   }
 │   │       ├── search [tool]
 │   │       │   input: {
@@ -170,13 +180,16 @@ span_tree:
 │   │             {
 │   │               "content": [
 │   │                 {
+│   │                   "text": "Inspect the current Eve step before continuing.",
+│   │                   "type": "reasoning"
+│   │                 },
+│   │                 {
+│   │                   "text": "",
+│   │                   "type": "reasoning"
+│   │                 },
+│   │                 {
 │   │                   "input": {
 │   │                     "query": "Run the Braintrust Eve instrumentation e2e scenario"
-│   │                   },
-│   │                   "providerOptions": {
-│   │                     "openai": {
-│   │                       "itemId": "<itemId:2>"
-│   │                     }
 │   │                   },
 │   │                   "toolCallId": "<toolCallId:1>",
 │   │                   "toolName": "search",
@@ -196,11 +209,6 @@ span_tree:
 │   │                       "url": "https://eve.dev/docs/guides/instrumentation"
 │   │                     }
 │   │                   },
-│   │                   "providerOptions": {
-│   │                     "openai": {
-│   │                       "itemId": "<itemId:2>"
-│   │                     }
-│   │                   },
 │   │                   "toolCallId": "<toolCallId:1>",
 │   │                   "toolName": "search",
 │   │                   "type": "tool-result"
@@ -215,6 +223,11 @@ span_tree:
 │   │               "index": 0,
 │   │               "message": {
 │   │                 "content": "Researcher result: Eve instrumentation — https://eve.dev/docs/guides/instrumentation",
+│   │                 "reasoning": [
+│   │                   {
+│   │                     "content": "Inspect the current Eve step before continuing."
+│   │                   }
+│   │                 ],
 │   │                 "role": "assistant"
 │   │               }
 │   │             }
@@ -229,8 +242,8 @@ span_tree:
 │   │           metrics: {
 │   │             "completion_tokens": 22,
 │   │             "prompt_cached_tokens": 6528,
-│   │             "prompt_tokens": 6624,
-│   │             "tokens": 6646
+│   │             "prompt_tokens": 6711,
+│   │             "tokens": 6733
 │   │           }
 │   ├── read [tool]
 │   │   input: {
@@ -260,13 +273,16 @@ span_tree:
 │         {
 │           "content": [
 │             {
+│               "text": "Inspect the current Eve step before continuing.",
+│               "type": "reasoning"
+│             },
+│             {
+│               "text": "",
+│               "type": "reasoning"
+│             },
+│             {
 │               "input": {
 │                 "message": "Run the Braintrust Eve instrumentation e2e scenario"
-│               },
-│               "providerOptions": {
-│                 "openai": {
-│                   "itemId": "<itemId:2>"
-│                 }
 │               },
 │               "toolCallId": "<toolCallId:1>",
 │               "toolName": "researcher",
@@ -276,12 +292,7 @@ span_tree:
 │               "input": {
 │                 "url": "https://eve.dev/docs/guides/instrumentation"
 │               },
-│               "providerOptions": {
-│                 "openai": {
-│                   "itemId": "<itemId:4>"
-│                 }
-│               },
-│               "toolCallId": "<toolCallId:3>",
+│               "toolCallId": "<toolCallId:2>",
 │               "toolName": "read",
 │               "type": "tool-call"
 │             }
@@ -300,12 +311,7 @@ span_tree:
 │                   "url": "https://eve.dev/docs/guides/instrumentation"
 │                 }
 │               },
-│               "providerOptions": {
-│                 "openai": {
-│                   "itemId": "<itemId:4>"
-│                 }
-│               },
-│               "toolCallId": "<toolCallId:3>",
+│               "toolCallId": "<toolCallId:2>",
 │               "toolName": "read",
 │               "type": "tool-result"
 │             }
@@ -332,7 +338,12 @@ span_tree:
 │           "finish_reason": "stop",
 │           "index": 0,
 │           "message": {
-│             "content": "Final answer from read: Researcher result: Eve instrumentation — https://eve.dev/docs/guides/instrumentation; read title: Eve instrumentation; URL: https://eve.dev/docs/guides/instrumentation; excerpt: Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace.",
+│             "content": "Final answer from read: researcher result: Eve instrumentation — https://eve.dev/docs/guides/instrumentation; read title: Eve instrumentation; URL: https://eve.dev/docs/guides/instrumentation; excerpt: Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace.",
+│             "reasoning": [
+│               {
+│                 "content": "Inspect the current Eve step before continuing."
+│               }
+│             ],
 │             "role": "assistant"
 │           }
 │         }
@@ -343,10 +354,10 @@ span_tree:
 │         "testRunId": "<run:1>"
 │       }
 │       metrics: {
-│         "completion_tokens": 66,
+│         "completion_tokens": 95,
 │         "prompt_cached_tokens": 2048,
-│         "prompt_tokens": 2458,
-│         "tokens": 2524
+│         "prompt_tokens": 2494,
+│         "tokens": 2589
 │       }
 └── eve.turn [task]
     input: [
@@ -355,17 +366,17 @@ span_tree:
         "role": "user"
       }
     ]
-    output: "Final answer from read: Researcher result: Eve instrumentation — https://eve.dev/docs/guides/instrumentation; read title: Eve instrumentation; URL: https://eve.dev/docs/guides/instrumentation; excerpt: Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace."
+    output: "Final answer from read: researcher result: Eve instrumentation — https://eve.dev/docs/guides/instrumentation; read title: Eve instrumentation; URL: https://eve.dev/docs/guides/instrumentation; excerpt: Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace."
     metadata: {
       "eve.session_id": "<eve.session_id:1>",
       "scenario": "eve-instrumentation",
       "testRunId": "<run:1>"
     }
     metrics: {
-      "completion_tokens": 134,
-      "prompt_cached_tokens": 4096,
-      "prompt_tokens": 5233,
-      "tokens": 5367
+      "completion_tokens": 240,
+      "prompt_cached_tokens": 4608,
+      "prompt_tokens": 5338,
+      "tokens": 5578
     }
     ├── eve.step [llm]
     │   input: [
@@ -380,13 +391,16 @@ span_tree:
     │     {
     │       "content": [
     │         {
+    │           "text": "Inspect the current Eve step before continuing.",
+    │           "type": "reasoning"
+    │         },
+    │         {
+    │           "text": "",
+    │           "type": "reasoning"
+    │         },
+    │         {
     │           "input": {
     │             "message": "Run the Braintrust Eve instrumentation e2e scenario"
-    │           },
-    │           "providerOptions": {
-    │             "openai": {
-    │               "itemId": "<itemId:2>"
-    │             }
     │           },
     │           "toolCallId": "<toolCallId:1>",
     │           "toolName": "researcher",
@@ -396,12 +410,7 @@ span_tree:
     │           "input": {
     │             "url": "https://eve.dev/docs/guides/instrumentation"
     │           },
-    │           "providerOptions": {
-    │             "openai": {
-    │               "itemId": "<itemId:4>"
-    │             }
-    │           },
-    │           "toolCallId": "<toolCallId:3>",
+    │           "toolCallId": "<toolCallId:2>",
     │           "toolName": "read",
     │           "type": "tool-call"
     │         }
@@ -420,12 +429,7 @@ span_tree:
     │               "url": "https://eve.dev/docs/guides/instrumentation"
     │             }
     │           },
-    │           "providerOptions": {
-    │             "openai": {
-    │               "itemId": "<itemId:4>"
-    │             }
-    │           },
-    │           "toolCallId": "<toolCallId:3>",
+    │           "toolCallId": "<toolCallId:2>",
     │           "toolName": "read",
     │           "type": "tool-result"
     │         }
@@ -449,13 +453,15 @@ span_tree:
     │     {
     │       "content": [
     │         {
-    │           "providerOptions": {
-    │             "openai": {
-    │               "itemId": "<itemId:5>",
-    │               "phase": "final_answer"
-    │             }
-    │           },
-    │           "text": "Final answer from read: Researcher result: Eve instrumentation — https://eve.dev/docs/guides/instrumentation; read title: Eve instrumentation; URL: https://eve.dev/docs/guides/instrumentation; excerpt: Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace.",
+    │           "text": "Inspect the current Eve step before continuing.",
+    │           "type": "reasoning"
+    │         },
+    │         {
+    │           "text": "",
+    │           "type": "reasoning"
+    │         },
+    │         {
+    │           "text": "Final answer from read: researcher result: Eve instrumentation — https://eve.dev/docs/guides/instrumentation; read title: Eve instrumentation; URL: https://eve.dev/docs/guides/instrumentation; excerpt: Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace.",
     │           "type": "text"
     │         }
     │       ],
@@ -472,6 +478,11 @@ span_tree:
     │       "index": 0,
     │       "message": {
     │         "content": null,
+    │         "reasoning": [
+    │           {
+    │             "content": "Inspect the current Eve step before continuing.**Following developer instructions**\n\nI need to make sure I'm obeying the developer's instructions about my first response. For a new user, I might be repeating a pattern. It seems I must execute my tool calls in parallel without any additional text in the first response. I'll focus on using multi_tool_use.parallel to call the functions.researcher and functions.read since those are the developer tools I'm supposed to use. Let's get started!"
+    │           }
+    │         ],
     │         "role": "assistant",
     │         "tool_calls": [
     │           {
@@ -500,10 +511,10 @@ span_tree:
     │     "testRunId": "<run:1>"
     │   }
     │   metrics: {
-    │     "completion_tokens": 68,
+    │     "completion_tokens": 175,
     │     "prompt_cached_tokens": 2048,
-    │     "prompt_tokens": 2541,
-    │     "tokens": 2609
+    │     "prompt_tokens": 2540,
+    │     "tokens": 2715
     │   }
     ├── researcher [tool]
     │   input: {
@@ -531,10 +542,10 @@ span_tree:
     │         "testRunId": "<run:1>"
     │       }
     │       metrics: {
-    │         "completion_tokens": 49,
-    │         "prompt_cached_tokens": 6528,
-    │         "prompt_tokens": 13182,
-    │         "tokens": 13231
+    │         "completion_tokens": 105,
+    │         "prompt_cached_tokens": 13056,
+    │         "prompt_tokens": 13238,
+    │         "tokens": 13343
     │       }
     │       ├── eve.step [llm]
     │       │   input: [
@@ -553,6 +564,11 @@ span_tree:
     │       │       "index": 0,
     │       │       "message": {
     │       │         "content": null,
+    │       │         "reasoning": [
+    │       │           {
+    │       │             "content": "Inspect the current Eve step before continuing."
+    │       │           }
+    │       │         ],
     │       │         "role": "assistant",
     │       │         "tool_calls": [
     │       │           {
@@ -575,10 +591,10 @@ span_tree:
     │       │     "testRunId": "<run:1>"
     │       │   }
     │       │   metrics: {
-    │       │     "completion_tokens": 27,
-    │       │     "prompt_cached_tokens": 0,
+    │       │     "completion_tokens": 83,
+    │       │     "prompt_cached_tokens": 6528,
     │       │     "prompt_tokens": 6555,
-    │       │     "tokens": 6582
+    │       │     "tokens": 6638
     │       │   }
     │       ├── search [tool]
     │       │   input: {
@@ -607,13 +623,16 @@ span_tree:
     │             {
     │               "content": [
     │                 {
+    │                   "text": "Inspect the current Eve step before continuing.",
+    │                   "type": "reasoning"
+    │                 },
+    │                 {
+    │                   "text": "",
+    │                   "type": "reasoning"
+    │                 },
+    │                 {
     │                   "input": {
     │                     "query": "Run the Braintrust Eve instrumentation e2e scenario again"
-    │                   },
-    │                   "providerOptions": {
-    │                     "openai": {
-    │                       "itemId": "<itemId:2>"
-    │                     }
     │                   },
     │                   "toolCallId": "<toolCallId:1>",
     │                   "toolName": "search",
@@ -633,11 +652,6 @@ span_tree:
     │                       "url": "https://eve.dev/docs/guides/instrumentation"
     │                     }
     │                   },
-    │                   "providerOptions": {
-    │                     "openai": {
-    │                       "itemId": "<itemId:2>"
-    │                     }
-    │                   },
     │                   "toolCallId": "<toolCallId:1>",
     │                   "toolName": "search",
     │                   "type": "tool-result"
@@ -652,6 +666,11 @@ span_tree:
     │               "index": 0,
     │               "message": {
     │                 "content": "Researcher result: Eve instrumentation — https://eve.dev/docs/guides/instrumentation",
+    │                 "reasoning": [
+    │                   {
+    │                     "content": "Inspect the current Eve step before continuing."
+    │                   }
+    │                 ],
     │                 "role": "assistant"
     │               }
     │             }
@@ -666,8 +685,8 @@ span_tree:
     │           metrics: {
     │             "completion_tokens": 22,
     │             "prompt_cached_tokens": 6528,
-    │             "prompt_tokens": 6627,
-    │             "tokens": 6649
+    │             "prompt_tokens": 6683,
+    │             "tokens": 6705
     │           }
     ├── read [tool]
     │   input: {
@@ -697,13 +716,16 @@ span_tree:
           {
             "content": [
               {
+                "text": "Inspect the current Eve step before continuing.",
+                "type": "reasoning"
+              },
+              {
+                "text": "",
+                "type": "reasoning"
+              },
+              {
                 "input": {
                   "message": "Run the Braintrust Eve instrumentation e2e scenario"
-                },
-                "providerOptions": {
-                  "openai": {
-                    "itemId": "<itemId:2>"
-                  }
                 },
                 "toolCallId": "<toolCallId:1>",
                 "toolName": "researcher",
@@ -713,12 +735,7 @@ span_tree:
                 "input": {
                   "url": "https://eve.dev/docs/guides/instrumentation"
                 },
-                "providerOptions": {
-                  "openai": {
-                    "itemId": "<itemId:4>"
-                  }
-                },
-                "toolCallId": "<toolCallId:3>",
+                "toolCallId": "<toolCallId:2>",
                 "toolName": "read",
                 "type": "tool-call"
               }
@@ -737,12 +754,7 @@ span_tree:
                     "url": "https://eve.dev/docs/guides/instrumentation"
                   }
                 },
-                "providerOptions": {
-                  "openai": {
-                    "itemId": "<itemId:4>"
-                  }
-                },
-                "toolCallId": "<toolCallId:3>",
+                "toolCallId": "<toolCallId:2>",
                 "toolName": "read",
                 "type": "tool-result"
               }
@@ -766,13 +778,15 @@ span_tree:
           {
             "content": [
               {
-                "providerOptions": {
-                  "openai": {
-                    "itemId": "<itemId:5>",
-                    "phase": "final_answer"
-                  }
-                },
-                "text": "Final answer from read: Researcher result: Eve instrumentation — https://eve.dev/docs/guides/instrumentation; read title: Eve instrumentation; URL: https://eve.dev/docs/guides/instrumentation; excerpt: Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace.",
+                "text": "Inspect the current Eve step before continuing.",
+                "type": "reasoning"
+              },
+              {
+                "text": "",
+                "type": "reasoning"
+              },
+              {
+                "text": "Final answer from read: researcher result: Eve instrumentation — https://eve.dev/docs/guides/instrumentation; read title: Eve instrumentation; URL: https://eve.dev/docs/guides/instrumentation; excerpt: Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace.",
                 "type": "text"
               }
             ],
@@ -785,15 +799,18 @@ span_tree:
           {
             "content": [
               {
+                "text": "Inspect the current Eve step before continuing.",
+                "type": "reasoning"
+              },
+              {
+                "text": "**Following developer instructions**\n\nI need to make sure I'm obeying the developer's instructions about my first response. For a new user, I might be repeating a pattern. It seems I must execute my tool calls in parallel without any additional text in the first response. I'll focus on using multi_tool_use.parallel to call the functions.researcher and functions.read since those are the developer tools I'm supposed to use. Let's get started!",
+                "type": "reasoning"
+              },
+              {
                 "input": {
                   "message": "Run the Braintrust Eve instrumentation e2e scenario again"
                 },
-                "providerOptions": {
-                  "openai": {
-                    "itemId": "<itemId:7>"
-                  }
-                },
-                "toolCallId": "<toolCallId:6>",
+                "toolCallId": "<toolCallId:3>",
                 "toolName": "researcher",
                 "type": "tool-call"
               },
@@ -801,12 +818,7 @@ span_tree:
                 "input": {
                   "url": "https://eve.dev/docs/guides/instrumentation"
                 },
-                "providerOptions": {
-                  "openai": {
-                    "itemId": "<itemId:9>"
-                  }
-                },
-                "toolCallId": "<toolCallId:8>",
+                "toolCallId": "<toolCallId:4>",
                 "toolName": "read",
                 "type": "tool-call"
               }
@@ -825,12 +837,7 @@ span_tree:
                     "url": "https://eve.dev/docs/guides/instrumentation"
                   }
                 },
-                "providerOptions": {
-                  "openai": {
-                    "itemId": "<itemId:9>"
-                  }
-                },
-                "toolCallId": "<toolCallId:8>",
+                "toolCallId": "<toolCallId:4>",
                 "toolName": "read",
                 "type": "tool-result"
               }
@@ -844,7 +851,7 @@ span_tree:
                   "type": "text",
                   "value": "Researcher result: Eve instrumentation — https://eve.dev/docs/guides/instrumentation"
                 },
-                "toolCallId": "<toolCallId:6>",
+                "toolCallId": "<toolCallId:3>",
                 "toolName": "researcher",
                 "type": "tool-result"
               }
@@ -857,7 +864,12 @@ span_tree:
             "finish_reason": "stop",
             "index": 0,
             "message": {
-              "content": "Final answer from read: Researcher result: Eve instrumentation — https://eve.dev/docs/guides/instrumentation; read title: Eve instrumentation; URL: https://eve.dev/docs/guides/instrumentation; excerpt: Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace.",
+              "content": "Final answer from read: researcher result: Eve instrumentation — https://eve.dev/docs/guides/instrumentation; read title: Eve instrumentation; URL: https://eve.dev/docs/guides/instrumentation; excerpt: Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace.",
+              "reasoning": [
+                {
+                  "content": "Inspect the current Eve step before continuing."
+                }
+              ],
               "role": "assistant"
             }
           }
@@ -868,8 +880,8 @@ span_tree:
           "testRunId": "<run:1>"
         }
         metrics: {
-          "completion_tokens": 66,
-          "prompt_cached_tokens": 2048,
-          "prompt_tokens": 2692,
-          "tokens": 2758
+          "completion_tokens": 65,
+          "prompt_cached_tokens": 2560,
+          "prompt_tokens": 2798,
+          "tokens": 2863
         }

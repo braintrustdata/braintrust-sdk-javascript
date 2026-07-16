@@ -120,10 +120,19 @@ describe("eve instrumentation", () => {
       {
         finish_reason: "tool_calls",
         message: {
+          reasoning: [{ content: expect.any(String) }],
           tool_calls: [
             { function: { name: "researcher" }, type: "function" },
             { function: { name: "read" }, type: "function" },
           ],
+        },
+      },
+    ]);
+    expect(steps[1]?.output).toMatchObject([
+      {
+        finish_reason: "stop",
+        message: {
+          reasoning: [{ content: expect.any(String) }],
         },
       },
     ]);
@@ -187,6 +196,13 @@ describe("eve instrumentation", () => {
         scenario: "eve-instrumentation",
         testRunId: expect.any(String),
       });
+      expect(step.output).toMatchObject([
+        {
+          message: {
+            reasoning: [{ content: expect.any(String) }],
+          },
+        },
+      ]);
     }
 
     expect(childSearch).toBeDefined();
@@ -243,10 +259,19 @@ describe("eve instrumentation", () => {
       {
         finish_reason: "tool_calls",
         message: {
+          reasoning: [{ content: expect.any(String) }],
           tool_calls: [
             { function: { name: "researcher" }, type: "function" },
             { function: { name: "read" }, type: "function" },
           ],
+        },
+      },
+    ]);
+    expect(secondSteps[1]?.output).toMatchObject([
+      {
+        finish_reason: "stop",
+        message: {
+          reasoning: [{ content: expect.any(String) }],
         },
       },
     ]);

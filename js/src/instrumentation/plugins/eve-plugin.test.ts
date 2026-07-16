@@ -118,7 +118,7 @@ describe("braintrustEveHook", () => {
     );
   });
 
-  it("captures model input without unresolved dynamic model metadata", async () => {
+  it("captures stable model input without provider options", async () => {
     const fakeEve = createFakeDefineState();
     defineState = fakeEve.defineState;
     const instrumentation = braintrustEveInstrumentation({ defineState });
@@ -130,11 +130,70 @@ describe("braintrustEveHook", () => {
     };
     const emit = (event: EveHandleMessageStreamEvent) => wildcard?.(event, ctx);
     const modelInput = {
-      instructions: "Answer with the relevant Eve instrumentation detail.",
+      instructions: [
+        {
+          content: "Answer with the relevant Eve instrumentation detail.",
+          providerOptions: {
+            openai: { reasoningEncryptedContent: "system-provider-secret" },
+          },
+          role: "system",
+        },
+        {
+          content: "Keep the answer concise.",
+          role: "system",
+        },
+      ],
       messages: [
         {
-          content: "What should Braintrust capture?",
-          role: "user",
+          content: [
+            {
+              providerOptions: {
+                openai: {
+                  itemId: "reasoning-item",
+                  reasoningEncryptedContent: "must-not-be-logged",
+                },
+              },
+              text: "Readable reasoning",
+              type: "reasoning",
+            },
+            {
+              input: {
+                providerOptions: { application: "tool-input" },
+                reasoningEncryptedContent: "legitimate-tool-input",
+              },
+              providerOptions: {
+                openai: { reasoningEncryptedContent: "tool-provider-secret" },
+              },
+              toolCallId: "call-1",
+              toolName: "lookup",
+              type: "tool-call",
+            },
+            {
+              output: {
+                providerOptions: {
+                  openai: {
+                    reasoningEncryptedContent: "output-provider-secret",
+                  },
+                },
+                type: "json",
+                value: {
+                  reasoningEncryptedContent: "legitimate-tool-output",
+                },
+              },
+              providerOptions: {
+                openai: {
+                  reasoningEncryptedContent: "result-provider-secret",
+                },
+              },
+              toolCallId: "call-1",
+              toolName: "lookup",
+              type: "tool-result",
+            },
+          ],
+          providerOptions: {
+            openai: { reasoningEncryptedContent: "message-provider-secret" },
+          },
+          role: "assistant",
         },
       ],
     };
@@ -205,10 +264,41 @@ describe("braintrustEveHook", () => {
         role: "system",
       },
       {
-        content: "What should Braintrust capture?",
-        role: "user",
+        content: "Keep the answer concise.",
+        role: "system",
+      },
+      {
+        content: [
+          {
+            text: "Readable reasoning",
+            type: "reasoning",
+          },
+          {
+            input: {
+              providerOptions: { application: "tool-input" },
+              reasoningEncryptedContent: "legitimate-tool-input",
+            },
+            toolCallId: "call-1",
+            toolName: "lookup",
+            type: "tool-call",
+          },
+          {
+            output: {
+              type: "json",
+              value: {
+                reasoningEncryptedContent: "legitimate-tool-output",
+              },
+            },
+            toolCallId: "call-1",
+            toolName: "lookup",
+            type: "tool-result",
+          },
+        ],
+        role: "assistant",
       },
     ]);
+    expect(JSON.stringify(step?.input)).not.toContain("provider-secret");
+    expect(JSON.stringify(step?.input)).not.toContain("must-not-be-logged");
     expect(step?.metadata).toEqual({
       "eve.session_id": "session-captured-input",
     });
@@ -835,6 +925,320 @@ describe("braintrustEveHook", () => {
     expect(steps[1]?.input).toBeUndefined();
   });
 
+  it("preserves reasoning across tool, text, and structured outputs", async () => {
+    const wildcard = braintrustEveHook({ defineState }).events?.["*"];
+    const ctx: EveHookContext = {
+      session: { id: "session-reasoning-outputs" },
+    };
+    const emit = (event: EveHandleMessageStreamEvent) => wildcard?.(event, ctx);
+    const turnId = "turn-reasoning-outputs";
+
+    await emit({ data: { sequence: 0, turnId }, type: "turn.started" });
+
+    await emit({
+      data: { sequence: 0, stepIndex: 0, turnId },
+      type: "step.started",
+    });
+    await emit({
+      data: {
+        reasoning: "I should inspect the available tools.",
+        sequence: 0,
+        stepIndex: 0,
+        turnId,
+      },
+      meta: { at: "2026-01-01T00:00:00.010Z" },
+      type: "reasoning.completed",
+    });
+    await emit({
+      data: {
+        finishReason: "tool-calls",
+        message: null,
+        sequence: 0,
+        stepIndex: 0,
+        turnId,
+      },
+      type: "message.completed",
+    });
+    await emit({
+      data: {
+        actions: [
+          {
+            callId: "call-reasoning-search",
+            input: { query: "Eve reasoning" },
+            kind: "tool-call",
+            toolName: "search",
+          },
+        ],
+        sequence: 0,
+        stepIndex: 0,
+        turnId,
+      },
+      type: "actions.requested",
+    });
+    await emit({
+      data: { finishReason: "tool-calls", sequence: 0, stepIndex: 0, turnId },
+      type: "step.completed",
+    });
+
+    await emit({
+      data: { sequence: 0, stepIndex: 1, turnId },
+      type: "step.started",
+    });
+    await emit({
+      data: {
+        reasoning: "The tool returned the relevant guide.",
+        sequence: 0,
+        stepIndex: 1,
+        turnId,
+      },
+      meta: { at: "2026-01-01T00:00:00.020Z" },
+      type: "reasoning.completed",
+    });
+    await emit({
+      data: {
+        reasoning: "I can now answer concisely.",
+        sequence: 0,
+        stepIndex: 1,
+        turnId,
+      },
+      meta: { at: "2026-01-01T00:00:00.030Z" },
+      type: "reasoning.completed",
+    });
+    await emit({
+      data: {
+        finishReason: "stop",
+        message: "Eve exposes completed reasoning events.",
+        sequence: 0,
+        stepIndex: 1,
+        turnId,
+      },
+      type: "message.completed",
+    });
+    await emit({
+      data: { finishReason: "stop", sequence: 0, stepIndex: 1, turnId },
+      type: "step.completed",
+    });
+
+    await emit({
+      data: { sequence: 0, stepIndex: 2, turnId },
+      type: "step.started",
+    });
+    await emit({
+      data: {
+        reasoning: "The response must match the requested schema.",
+        sequence: 0,
+        stepIndex: 2,
+        turnId,
+      },
+      meta: { at: "2026-01-01T00:00:00.040Z" },
+      type: "reasoning.completed",
+    });
+    await emit({
+      data: {
+        result: { supported: true },
+        sequence: 0,
+        stepIndex: 2,
+        turnId,
+      },
+      type: "result.completed",
+    });
+    await emit({
+      data: { finishReason: "stop", sequence: 0, stepIndex: 2, turnId },
+      type: "step.completed",
+    });
+    await emit({ data: { sequence: 0, turnId }, type: "turn.completed" });
+
+    const spans = (await backgroundLogger.drain()) as Array<
+      Record<string, any>
+    >;
+    const steps = spans.filter(
+      (span) => span.span_attributes?.name === "eve.step",
+    );
+    expect(steps).toHaveLength(3);
+    expect(steps[0]?.output).toMatchObject([
+      {
+        finish_reason: "tool_calls",
+        message: {
+          content: null,
+          reasoning: [{ content: "I should inspect the available tools." }],
+          tool_calls: [
+            {
+              function: { name: "search" },
+              id: "call-reasoning-search",
+              type: "function",
+            },
+          ],
+        },
+      },
+    ]);
+    expect(steps[1]?.output).toMatchObject([
+      {
+        finish_reason: "stop",
+        message: {
+          content: "Eve exposes completed reasoning events.",
+          reasoning: [
+            { content: "The tool returned the relevant guide." },
+            { content: "I can now answer concisely." },
+          ],
+        },
+      },
+    ]);
+    expect(steps[2]?.output).toMatchObject([
+      {
+        finish_reason: "stop",
+        message: {
+          content: { supported: true },
+          reasoning: [
+            { content: "The response must match the requested schema." },
+          ],
+        },
+      },
+    ]);
+  });
+
+  it("rehydrates reasoning idempotently across Vercel Workflow steps", async () => {
+    const eveState = createFakeDefineState();
+    const ctx: EveHookContext = {
+      session: { id: "session-reasoning-replay" },
+    };
+    const turnId = "turn-reasoning-replay";
+    const reasoningEvent = {
+      data: {
+        reasoning: "Use the search tool before answering.",
+        sequence: 0,
+        stepIndex: 0,
+        turnId,
+      },
+      meta: { at: "2026-01-01T00:00:00.020Z" },
+      type: "reasoning.completed",
+    } as const satisfies EveHandleMessageStreamEvent;
+    const initialHook = braintrustEveHook({
+      defineState: eveState.defineState,
+    }).events?.["*"];
+
+    await initialHook?.(
+      {
+        data: { sequence: 0, turnId },
+        meta: { at: "2026-01-01T00:00:00.000Z" },
+        type: "turn.started",
+      },
+      ctx,
+    );
+    await initialHook?.(
+      {
+        data: { sequence: 0, stepIndex: 0, turnId },
+        meta: { at: "2026-01-01T00:00:00.010Z" },
+        type: "step.started",
+      },
+      ctx,
+    );
+    await initialHook?.(reasoningEvent, ctx);
+
+    const initialWrites = (await backgroundLogger.drain()) as Array<
+      Record<string, any> & { id: string }
+    >;
+    for (const [key, value] of eveState.values) {
+      eveState.values.set(key, JSON.parse(JSON.stringify(value)));
+    }
+
+    const resumedHook = braintrustEveHook({
+      defineState: eveState.defineState,
+    }).events?.["*"];
+    await resumedHook?.(
+      {
+        data: { sequence: 0, turnId },
+        meta: { at: "2026-01-01T00:00:00.000Z" },
+        type: "turn.started",
+      },
+      ctx,
+    );
+    await resumedHook?.(
+      {
+        data: { sequence: 0, stepIndex: 0, turnId },
+        meta: { at: "2026-01-01T00:00:00.010Z" },
+        type: "step.started",
+      },
+      ctx,
+    );
+    await resumedHook?.(reasoningEvent, ctx);
+    await resumedHook?.(
+      {
+        data: {
+          finishReason: "tool-calls",
+          message: null,
+          sequence: 0,
+          stepIndex: 0,
+          turnId,
+        },
+        type: "message.completed",
+      },
+      ctx,
+    );
+    await resumedHook?.(
+      {
+        data: {
+          actions: [
+            {
+              callId: "call-replayed-search",
+              input: { query: "Vercel Workflow reasoning" },
+              kind: "tool-call",
+              toolName: "search",
+            },
+          ],
+          sequence: 0,
+          stepIndex: 0,
+          turnId,
+        },
+        type: "actions.requested",
+      },
+      ctx,
+    );
+    await resumedHook?.(
+      {
+        data: { finishReason: "tool-calls", sequence: 0, stepIndex: 0, turnId },
+        type: "step.completed",
+      },
+      ctx,
+    );
+    await resumedHook?.(
+      { data: { sequence: 0, turnId }, type: "turn.completed" },
+      ctx,
+    );
+
+    const resumedWrites = (await backgroundLogger.drain()) as Array<
+      Record<string, any> & { id: string }
+    >;
+    const spans = mergeRowBatch([...resumedWrites, ...initialWrites]);
+    const steps = spans.filter(
+      (span) => span.span_attributes?.name === "eve.step",
+    );
+    expect(steps).toHaveLength(1);
+    expect(steps[0]?.span_id).toBe(
+      deterministicEveIdForTest(
+        "eve:step",
+        "session-reasoning-replay",
+        turnId,
+        "0",
+      ),
+    );
+    expect(steps[0]?.output?.[0]?.message).toMatchObject({
+      content: null,
+      reasoning: [{ content: "Use the search tool before answering." }],
+      tool_calls: [
+        {
+          function: { name: "search" },
+          id: "call-replayed-search",
+          type: "function",
+        },
+      ],
+    });
+    expect(steps[0]?.output?.[0]?.message?.reasoning).toHaveLength(1);
+    expect(eveState.values.get("braintrust.eve.tracing")).toMatchObject({
+      reasoningBlocks: [],
+      stepStarts: [],
+    });
+  });
+
   it("merges late tool results into tool spans closed by turn completion", async () => {
     const eveState = createFakeDefineState();
     const wildcard = braintrustEveHook({
@@ -1124,6 +1528,7 @@ describe("braintrustEveHook", () => {
     expect(fakeEve.values.get("braintrust.eve.tracing")).toEqual({
       llmInputs: [],
       metadata: {},
+      reasoningBlocks: [],
       spanReferences: [],
       stepStarts: [],
     });
@@ -1217,6 +1622,7 @@ describe("braintrustEveHook", () => {
     expect(fakeEve.values.get("braintrust.eve.tracing")).toEqual({
       llmInputs: [],
       metadata: {},
+      reasoningBlocks: [],
       spanReferences: [],
       stepStarts: [],
     });
@@ -1794,7 +2200,7 @@ describe("braintrustEveHook", () => {
     expect(wildcard).toBeDefined();
 
     await expect(
-      wildcard?.({ bad: true } as never, {}),
+      wildcard?.({ bad: true } as never, {} as never),
     ).resolves.toBeUndefined();
     await expect(
       wildcard?.(
@@ -1808,7 +2214,7 @@ describe("braintrustEveHook", () => {
           },
           type: "step.failed",
         },
-        {},
+        {} as never,
       ),
     ).resolves.toBeUndefined();
     await expect(

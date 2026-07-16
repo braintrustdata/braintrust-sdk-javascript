@@ -11,6 +11,9 @@ importers:
       '@ai-sdk/openai':
         specifier: 4.0.0-beta.44
         version: 4.0.0-beta.44(zod@4.3.6)
+      ai:
+        specifier: 7.0.15
+        version: 7.0.15(zod@4.3.6)
       eve:
         specifier: 0.22.1
         version: 0.22.1(ai@7.0.15(zod@4.3.6))
