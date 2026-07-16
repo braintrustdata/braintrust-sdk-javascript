@@ -6,12 +6,12 @@
 
 - feat: Track Eve turns as individual traces and record Eve session IDs on all spans (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2230)
 - feat: Add `langsmith` tracing (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2224)
-- feat(strands): Log inline document, image, and video bytes as Braintrust attachments. (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2229)
+- feat(strands): Log inline document, image, and video bytes as Braintrust attachments (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2229)
 
 ### Patch Changes
 
-- fix(mastra): Record `time_to_first_token` for streaming Mastra model spans The Mastra observability exporter now derives `time_to_first_token` (in seconds) from a streaming model span's `completionStartTime` attribute and its start time, matching the metric Braintrust surfaces for other streaming LLM calls. Ports the TTFT portion of mastra-ai/mastra#11029. Thanks @viadezo1er! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2214)
-- Retry transient failures for internal, read-only BTQL requests used to fetch datasets, objects, spans, and prompt versions. Thanks @stretpjc! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2227)
+- fix(mastra): Record `time_to_first_token` for streaming (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2214)
+- feat: Retry transient failures for internal, read-only BTQL requests used to fetch datasets, objects, spans, and prompt versions (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2227)
 - fix(eve): Avoid reporting unresolved dynamic model fallbacks as model metadata (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2233)
 - fix: Capture parallel tool calls in eve llm span output (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2232)
 
