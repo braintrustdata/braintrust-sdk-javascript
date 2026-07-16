@@ -1,5 +1,5 @@
 import { spawn as spawnChildProcess } from "node:child_process";
-import { createServer } from "node:net";
+import { connect, createServer } from "node:net";
 import { Readable } from "node:stream";
 
 export async function createDockerSandbox() {
@@ -17,6 +17,7 @@ export async function createDockerSandbox() {
     });
   });
   const children = new Set();
+  const loopbackForwarders = new Map();
   let containerStarted = false;
   let session;
 
@@ -41,6 +42,35 @@ export async function createDockerSandbox() {
       );
     }
     return { ...result, stdout, stderr };
+  }
+
+  async function forwardLoopbackPort(targetPort) {
+    const existing = loopbackForwarders.get(targetPort);
+    if (existing != null) return existing.port;
+
+    const sockets = new Set();
+    const server = createServer((socket) => {
+      const target = connect(targetPort, "127.0.0.1");
+      sockets.add(socket);
+      sockets.add(target);
+      socket.pipe(target).pipe(socket);
+      socket.on("close", () => sockets.delete(socket));
+      target.on("close", () => sockets.delete(target));
+      socket.on("error", () => target.destroy());
+      target.on("error", () => socket.destroy());
+    });
+    await new Promise((resolve, reject) => {
+      server.once("error", reject);
+      server.listen(0, "0.0.0.0", resolve);
+    });
+    const address = server.address();
+    if (address == null || typeof address === "string") {
+      server.close();
+      throw new Error("Could not create a Docker-to-host port forwarder.");
+    }
+    const forwarder = { port: address.port, server, sockets };
+    loopbackForwarders.set(targetPort, forwarder);
+    return forwarder.port;
   }
 
   async function ensureContainer() {
@@ -75,10 +105,21 @@ export async function createDockerSandbox() {
     env,
     abortSignal,
   }) {
-    const envArgs = Object.entries(env ?? {}).flatMap(([key, value]) => [
-      "--env",
-      `${key}=${String(value).replaceAll("127.0.0.1", "host.docker.internal")}`,
-    ]);
+    const envArgs = [];
+    for (const [key, value] of Object.entries(env ?? {})) {
+      let serializedValue = String(value);
+      try {
+        const url = new URL(serializedValue);
+        if (url.hostname === "127.0.0.1" && url.port !== "") {
+          url.hostname = "host.docker.internal";
+          url.port = String(await forwardLoopbackPort(Number(url.port)));
+          serializedValue = url.toString();
+        }
+      } catch {
+        // Non-URL environment values do not need Docker host rewriting.
+      }
+      envArgs.push("--env", `${key}=${serializedValue}`);
+    }
     const child = spawnChildProcess(
       "docker",
       [
@@ -188,6 +229,10 @@ export async function createDockerSandbox() {
       for (const child of children) child.kill("SIGTERM");
       if (containerStarted) {
         await docker(["rm", "--force", containerName]).catch(() => {});
+      }
+      for (const { server, sockets } of loopbackForwarders.values()) {
+        for (const socket of sockets) socket.destroy();
+        await new Promise((resolve) => server.close(resolve));
       }
     },
   };
