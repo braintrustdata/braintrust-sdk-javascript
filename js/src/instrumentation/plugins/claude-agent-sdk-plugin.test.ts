@@ -9,6 +9,7 @@ vi.mock("../../isomorph", () => ({
 
 import { ClaudeAgentSDKPlugin } from "./claude-agent-sdk-plugin";
 import iso from "../../isomorph";
+import { startSpan } from "../../logger";
 
 const mockNewTracingChannel = iso.newTracingChannel as ReturnType<typeof vi.fn>;
 
@@ -205,6 +206,31 @@ describe("ClaudeAgentSDKPlugin", () => {
 
         // Verify no errors thrown
         expect(true).toBe(true);
+      });
+
+      it("does not capture API keys in span metadata", () => {
+        const event = {
+          arguments: [
+            {
+              prompt: "Hello, world!",
+              options: {
+                apiKey: "sk-ant-secret",
+                apiKeySource: "user",
+                model: "claude-3-5-sonnet-20241022",
+              },
+            },
+          ],
+        };
+
+        handlers.start(event);
+
+        const span = vi.mocked(startSpan).mock.results[0]?.value;
+        expect(span?.log).toHaveBeenCalledWith({
+          input: "Hello, world!",
+          metadata: {
+            model: "claude-3-5-sonnet-20241022",
+          },
+        });
       });
 
       it("should handle AsyncIterable prompt", () => {

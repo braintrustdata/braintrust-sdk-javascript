@@ -84,8 +84,6 @@ function filterSerializableOptions(
     "additionalDirectories",
     "permissionMode",
     "debug",
-    "apiKey",
-    "apiKeySource",
     "agentName",
     "instructions",
   ];
