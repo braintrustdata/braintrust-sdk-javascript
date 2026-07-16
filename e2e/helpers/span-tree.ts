@@ -1,3 +1,4 @@
+import type { ExpectStatic } from "vitest";
 import { matchFileSnapshot } from "./file-snapshot";
 import type { CapturedLogEvent } from "./mock-braintrust-server";
 import {
@@ -31,6 +32,7 @@ type SpanTreeJsonNode = {
 
 type SpanTreeSnapshotOptions = {
   normalize?: NormalizeOptions;
+  snapshotExpect?: ExpectStatic;
 };
 
 const FIELD_ORDER = [
@@ -403,9 +405,11 @@ export async function matchSpanTreeSnapshot(
   await matchFileSnapshot(
     formatSpanTreeSnapshot(entries, options),
     txtSnapshotPath(jsonSnapshotPath),
+    options?.snapshotExpect,
   );
   await matchFileSnapshot(
     formatSpanTreeJsonSnapshot(entries, options),
     jsonSnapshotPath,
+    options?.snapshotExpect,
   );
 }
