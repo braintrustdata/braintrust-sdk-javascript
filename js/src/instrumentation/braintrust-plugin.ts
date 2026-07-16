@@ -19,6 +19,7 @@ import { GenkitPlugin } from "./plugins/genkit-plugin";
 import { GitHubCopilotPlugin } from "./plugins/github-copilot-plugin";
 import { FluePlugin } from "./plugins/flue-plugin";
 import { LangChainPlugin } from "./plugins/langchain-plugin";
+import { LangSmithPlugin } from "./plugins/langsmith-plugin";
 import { PiCodingAgentPlugin } from "./plugins/pi-coding-agent-plugin";
 import { StrandsAgentSDKPlugin } from "./plugins/strands-agent-sdk-plugin";
 import type { InstrumentationIntegrationsConfig } from "./config";
@@ -66,6 +67,7 @@ export class BraintrustPlugin extends BasePlugin {
   private gitHubCopilotPlugin: GitHubCopilotPlugin | null = null;
   private fluePlugin: FluePlugin | null = null;
   private langChainPlugin: LangChainPlugin | null = null;
+  private langSmithPlugin: LangSmithPlugin | null = null;
   private piCodingAgentPlugin: PiCodingAgentPlugin | null = null;
   private strandsAgentSDKPlugin: StrandsAgentSDKPlugin | null = null;
 
@@ -200,6 +202,13 @@ export class BraintrustPlugin extends BasePlugin {
       this.langChainPlugin.enable();
     }
 
+    if (integrations.langsmith !== false) {
+      this.langSmithPlugin = new LangSmithPlugin({
+        skipLangChainRuns: integrations.langchain !== false,
+      });
+      this.langSmithPlugin.enable();
+    }
+
     // Mastra is intentionally not wired here: `@mastra/core` ships its own
     // ObservabilityExporter contract, and `BraintrustObservabilityExporter`
     // (wrappers/mastra.ts) is auto-installed by the loader patch in
@@ -316,6 +325,11 @@ export class BraintrustPlugin extends BasePlugin {
     if (this.langChainPlugin) {
       this.langChainPlugin.disable();
       this.langChainPlugin = null;
+    }
+
+    if (this.langSmithPlugin) {
+      this.langSmithPlugin.disable();
+      this.langSmithPlugin = null;
     }
   }
 }
